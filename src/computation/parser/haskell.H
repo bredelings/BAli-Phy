@@ -446,11 +446,38 @@ struct Alt
 struct Alts: public Object
 {
     std::vector<Alt> alts;
+
     Alts* clone() const { return new Alts(*this);}
     std::string print() const;
 
     Alts() = default;
     Alts(const std::vector<Alt>& v):alts(v) {};
+};
+
+struct GuardedRHS
+{
+    std::vector<expression_ref> guards;
+    expression_ref body;
+
+    std::string print() const;
+
+    GuardedRHS() = default;
+    GuardedRHS(const std::vector<expression_ref> v, const expression_ref& e)
+        :guards(v),
+         body(e)
+    { }
+};
+
+struct MultiGuardedRHS: public Object
+{
+    std::vector<GuardedRHS> guarded_rhss;
+    expression_ref decls;
+
+    MultiGuardedRHS* clone() const { return new MultiGuardedRHS(*this);}
+    std::string print() const;
+
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v):guarded_rhss(v) {}
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const expression_ref& ds):guarded_rhss(v), decls(ds) {}
 };
 
 

@@ -74,18 +74,11 @@ failable_expression get_body(const expression_ref& decl)
 }
 
 
-failable_expression desugar_state::desugar_gdrh(const expression_ref& E)
+failable_expression desugar_state::desugar_gdrh(const Haskell::GuardedRHS& grhs)
 {
-    assert(is_AST(E,"gdrh") or is_AST(E,"gdpat"));
+    auto F = failable_expression(desugar(grhs.body));
 
-    auto& guards = E.sub()[0];
-    auto& body   = E.sub()[1];
-
-    assert(is_AST(guards,"guards"));
-
-    auto F = failable_expression(desugar(body));
-
-    for(auto& guard: std::reverse(guards.sub()))
+    for(auto& guard: std::reverse(grhs.guards))
     {
 	if (guard.is_a<Hs::SimpleQual>())
 	{
@@ -223,22 +216,26 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
     if (E.is_a<Haskell::SimpleRHS>())
     {
         auto& R = E.as_<Haskell::SimpleRHS>();
+
 	auto rhs = failable_expression(desugar(R.body));
+
 	if (R.decls)
 	    rhs.add_binding(desugar_decls(R.decls));
+
 	return rhs;
     }
-    else if (is_AST(E,"gdrhs"))
+    else if (E.is_a<Haskell::MultiGuardedRHS>())
     {
-	auto& guards = E.sub()[0];
+        auto& R = E.as_<Haskell::MultiGuardedRHS>();
 	vector<failable_expression> gdrhs;
-	for(auto& guard: guards.sub())
-	    gdrhs.push_back(desugar_gdrh(guard));
+	for(auto& guarded_rhs: R.guarded_rhss)
+	    gdrhs.push_back(desugar_gdrh(guarded_rhs));
 
 	auto rhs = fold(gdrhs);
 
-	if (E.size() == 2)
-	    rhs.add_binding(desugar_decls(E.sub()[1]));
+	if (R.decls)
+	    rhs.add_binding(desugar_decls(R.decls));
+
 	return rhs;
     }
     else

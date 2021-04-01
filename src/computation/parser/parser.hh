@@ -92,8 +92,8 @@
   expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
   Haskell::SimpleRHS make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
-  expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
-  expression_ref make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& wherebinds);
+  Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const expression_ref& wherebinds);
+  Haskell::GuardedRHS make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& wherebinds);
 
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
@@ -487,25 +487,29 @@ namespace yy {
       // infix
       char dummy6[sizeof (Haskell::Fixity)];
 
+      // gdrh
+      // gdpat
+      char dummy7[sizeof (Haskell::GuardedRHS)];
+
       // stmtlist
-      char dummy7[sizeof (Haskell::Stmts)];
+      char dummy8[sizeof (Haskell::Stmts)];
 
       // strict_mark
       // strictness
-      char dummy8[sizeof (Haskell::StrictLazy)];
+      char dummy9[sizeof (Haskell::StrictLazy)];
 
       // maybe_src
       // maybe_safe
       // optqualified
-      char dummy9[sizeof (bool)];
+      char dummy10[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy10[sizeof (char)];
+      char dummy11[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy11[sizeof (double)];
+      char dummy12[sizeof (double)];
 
       // module
       // body
@@ -548,7 +552,6 @@ namespace yy {
       // decl_no_th
       // decl
       // rhs
-      // gdrh
       // sigdecl
       // exp
       // exp10_top
@@ -559,33 +562,32 @@ namespace yy {
       // texp
       // list
       // alt_rhs
-      // gdpat
       // pat
       // bindpat
       // apat
       // stmt
       // qual
       // literal
-      char dummy12[sizeof (expression_ref)];
+      char dummy13[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy13[sizeof (float)];
+      char dummy14[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy14[sizeof (int)];
+      char dummy15[sizeof (int)];
 
       // prec
-      char dummy15[sizeof (std::optional<int>)];
+      char dummy16[sizeof (std::optional<int>)];
 
       // maybe_pkg
       // maybeas
-      char dummy16[sizeof (std::optional<std::string>)];
+      char dummy17[sizeof (std::optional<std::string>)];
 
       // tycl_hdr
-      char dummy17[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy18[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // "VARID"
       // "CONID"
@@ -642,15 +644,19 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy18[sizeof (std::string)];
+      char dummy19[sizeof (std::string)];
 
       // alts
       // alts1
-      char dummy19[sizeof (std::vector<Haskell::Alt>)];
+      char dummy20[sizeof (std::vector<Haskell::Alt>)];
 
       // fielddecls
       // fielddecls1
-      char dummy20[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy21[sizeof (std::vector<Haskell::FieldDecl>)];
+
+      // gdrhs
+      // gdpats
+      char dummy22[sizeof (std::vector<Haskell::GuardedRHS>)];
 
       // exportlist
       // exportlist1
@@ -669,7 +675,6 @@ namespace yy {
       // tv_bndrs
       // constrs
       // constrs1
-      // gdrhs
       // infixexp
       // infixexp_top
       // fexp
@@ -678,14 +683,13 @@ namespace yy {
       // squals
       // guardquals
       // guardquals1
-      // gdpats
       // apats1
       // stmts
-      char dummy21[sizeof (std::vector<expression_ref>)];
+      char dummy23[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy22[sizeof (std::vector<std::string>)];
+      char dummy24[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1272,6 +1276,11 @@ namespace yy {
         value.move< Haskell::Fixity > (std::move (that.value));
         break;
 
+      case symbol_kind::S_gdrh: // gdrh
+      case symbol_kind::S_gdpat: // gdpat
+        value.move< Haskell::GuardedRHS > (std::move (that.value));
+        break;
+
       case symbol_kind::S_stmtlist: // stmtlist
         value.move< Haskell::Stmts > (std::move (that.value));
         break;
@@ -1338,7 +1347,6 @@ namespace yy {
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
       case symbol_kind::S_rhs: // rhs
-      case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
@@ -1349,7 +1357,6 @@ namespace yy {
       case symbol_kind::S_texp: // texp
       case symbol_kind::S_list: // list
       case symbol_kind::S_alt_rhs: // alt_rhs
-      case symbol_kind::S_gdpat: // gdpat
       case symbol_kind::S_pat: // pat
       case symbol_kind::S_bindpat: // bindpat
       case symbol_kind::S_apat: // apat
@@ -1451,6 +1458,11 @@ namespace yy {
         value.move< std::vector<Haskell::FieldDecl> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_gdrhs: // gdrhs
+      case symbol_kind::S_gdpats: // gdpats
+        value.move< std::vector<Haskell::GuardedRHS> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
       case symbol_kind::S_qcnames: // qcnames
@@ -1468,7 +1480,6 @@ namespace yy {
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-      case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_fexp: // fexp
@@ -1477,7 +1488,6 @@ namespace yy {
       case symbol_kind::S_squals: // squals
       case symbol_kind::S_guardquals: // guardquals
       case symbol_kind::S_guardquals1: // guardquals1
-      case symbol_kind::S_gdpats: // gdpats
       case symbol_kind::S_apats1: // apats1
       case symbol_kind::S_stmts: // stmts
         value.move< std::vector<expression_ref> > (std::move (that.value));
@@ -1589,6 +1599,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Haskell::Fixity& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::GuardedRHS&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::GuardedRHS& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1792,6 +1816,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<Haskell::GuardedRHS>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::GuardedRHS>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<expression_ref>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -1866,6 +1904,11 @@ switch (yykind)
         value.template destroy< Haskell::Fixity > ();
         break;
 
+      case symbol_kind::S_gdrh: // gdrh
+      case symbol_kind::S_gdpat: // gdpat
+        value.template destroy< Haskell::GuardedRHS > ();
+        break;
+
       case symbol_kind::S_stmtlist: // stmtlist
         value.template destroy< Haskell::Stmts > ();
         break;
@@ -1932,7 +1975,6 @@ switch (yykind)
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
       case symbol_kind::S_rhs: // rhs
-      case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
@@ -1943,7 +1985,6 @@ switch (yykind)
       case symbol_kind::S_texp: // texp
       case symbol_kind::S_list: // list
       case symbol_kind::S_alt_rhs: // alt_rhs
-      case symbol_kind::S_gdpat: // gdpat
       case symbol_kind::S_pat: // pat
       case symbol_kind::S_bindpat: // bindpat
       case symbol_kind::S_apat: // apat
@@ -2045,6 +2086,11 @@ switch (yykind)
         value.template destroy< std::vector<Haskell::FieldDecl> > ();
         break;
 
+      case symbol_kind::S_gdrhs: // gdrhs
+      case symbol_kind::S_gdpats: // gdpats
+        value.template destroy< std::vector<Haskell::GuardedRHS> > ();
+        break;
+
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
       case symbol_kind::S_qcnames: // qcnames
@@ -2062,7 +2108,6 @@ switch (yykind)
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-      case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_fexp: // fexp
@@ -2071,7 +2116,6 @@ switch (yykind)
       case symbol_kind::S_squals: // squals
       case symbol_kind::S_guardquals: // guardquals
       case symbol_kind::S_guardquals1: // guardquals1
-      case symbol_kind::S_gdpats: // gdpats
       case symbol_kind::S_apats1: // apats1
       case symbol_kind::S_stmts: // stmts
         value.template destroy< std::vector<expression_ref> > ();
@@ -4775,6 +4819,11 @@ switch (yykind)
         value.copy< Haskell::Fixity > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_gdrh: // gdrh
+      case symbol_kind::S_gdpat: // gdpat
+        value.copy< Haskell::GuardedRHS > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_stmtlist: // stmtlist
         value.copy< Haskell::Stmts > (YY_MOVE (that.value));
         break;
@@ -4841,7 +4890,6 @@ switch (yykind)
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
       case symbol_kind::S_rhs: // rhs
-      case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
@@ -4852,7 +4900,6 @@ switch (yykind)
       case symbol_kind::S_texp: // texp
       case symbol_kind::S_list: // list
       case symbol_kind::S_alt_rhs: // alt_rhs
-      case symbol_kind::S_gdpat: // gdpat
       case symbol_kind::S_pat: // pat
       case symbol_kind::S_bindpat: // bindpat
       case symbol_kind::S_apat: // apat
@@ -4954,6 +5001,11 @@ switch (yykind)
         value.copy< std::vector<Haskell::FieldDecl> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_gdrhs: // gdrhs
+      case symbol_kind::S_gdpats: // gdpats
+        value.copy< std::vector<Haskell::GuardedRHS> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
       case symbol_kind::S_qcnames: // qcnames
@@ -4971,7 +5023,6 @@ switch (yykind)
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-      case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_fexp: // fexp
@@ -4980,7 +5031,6 @@ switch (yykind)
       case symbol_kind::S_squals: // squals
       case symbol_kind::S_guardquals: // guardquals
       case symbol_kind::S_guardquals1: // guardquals1
-      case symbol_kind::S_gdpats: // gdpats
       case symbol_kind::S_apats1: // apats1
       case symbol_kind::S_stmts: // stmts
         value.copy< std::vector<expression_ref> > (YY_MOVE (that.value));
@@ -5043,6 +5093,11 @@ switch (yykind)
 
       case symbol_kind::S_infix: // infix
         value.move< Haskell::Fixity > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_gdrh: // gdrh
+      case symbol_kind::S_gdpat: // gdpat
+        value.move< Haskell::GuardedRHS > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_stmtlist: // stmtlist
@@ -5111,7 +5166,6 @@ switch (yykind)
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
       case symbol_kind::S_rhs: // rhs
-      case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
@@ -5122,7 +5176,6 @@ switch (yykind)
       case symbol_kind::S_texp: // texp
       case symbol_kind::S_list: // list
       case symbol_kind::S_alt_rhs: // alt_rhs
-      case symbol_kind::S_gdpat: // gdpat
       case symbol_kind::S_pat: // pat
       case symbol_kind::S_bindpat: // bindpat
       case symbol_kind::S_apat: // apat
@@ -5224,6 +5277,11 @@ switch (yykind)
         value.move< std::vector<Haskell::FieldDecl> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_gdrhs: // gdrhs
+      case symbol_kind::S_gdpats: // gdpats
+        value.move< std::vector<Haskell::GuardedRHS> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
       case symbol_kind::S_qcnames: // qcnames
@@ -5241,7 +5299,6 @@ switch (yykind)
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-      case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_fexp: // fexp
@@ -5250,7 +5307,6 @@ switch (yykind)
       case symbol_kind::S_squals: // squals
       case symbol_kind::S_guardquals: // guardquals
       case symbol_kind::S_guardquals1: // guardquals1
-      case symbol_kind::S_gdpats: // gdpats
       case symbol_kind::S_apats1: // apats1
       case symbol_kind::S_stmts: // stmts
         value.move< std::vector<expression_ref> > (YY_MOVE (s.value));
@@ -5323,7 +5379,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5327 "parser.hh"
+#line 5383 "parser.hh"
 
 
 

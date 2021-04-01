@@ -180,6 +180,24 @@ string Alts::print() const
     return "{" + join(alt_string, "\n;") + "\n}";
 }
 
+std::string GuardedRHS::print() const
+{
+    vector<string> guard_string;
+    for(auto& guard: guards)
+        guard_string.push_back(guard.print());
+    return "| " + join(guard_string,", ") + " = " + body.print();
+}
+
+std::string MultiGuardedRHS::print() const
+{
+    string result = "= ";
+    for(auto& guarded_rhs: guarded_rhss)
+        result += guarded_rhs.print() + "\n";
+
+    if (decls)
+        result = result + "where " + decls.print();
+    return result;
+}
 
 std::string SimpleRHS::print() const
 {

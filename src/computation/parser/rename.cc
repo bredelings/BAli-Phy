@@ -355,6 +355,23 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             R.decls = rename_infix(m, R.decls);
         return R;
     }
+    else if (E.is_a<Haskell::MultiGuardedRHS>())
+    {
+        auto R = E.as_<Haskell::MultiGuardedRHS>();
+
+        for(auto& guarded_rhs: R.guarded_rhss)
+        {
+            for(auto& guard: guarded_rhs.guards)
+                guard = rename_infix(m, guard);
+
+            guarded_rhs.body = rename_infix(m, guarded_rhs.body);
+        }
+
+        if (R.decls)
+            R.decls = rename_infix(m, R.decls);
+
+        return R;
+    }
 
     if (not E.is_expression()) return E;
 
@@ -1202,8 +1219,27 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 
         auto R = E.as_<Haskell::SimpleRHS>();
         if (R.decls)
-            add(bound2, rename_decls(R.decls,bound));
+            add(bound2, rename_decls(R.decls, bound));
         R.body = rename(R.body, bound2);
+
+        return R;
+    }
+    else if (E.is_a<Haskell::MultiGuardedRHS>())
+    {
+        auto bound2 = bound;
+
+        auto R = E.as_<Haskell::MultiGuardedRHS>();
+        if (R.decls)
+            add(bound2, rename_decls(R.decls, bound));
+
+        for(auto& guarded_rhs: R.guarded_rhss)
+        {
+            auto bound3 = bound2;
+            for(auto& guard: guarded_rhs.guards)
+                add(bound3, rename_stmt(guard, bound3));
+
+            guarded_rhs.body = rename(guarded_rhs.body, bound3);
+        }
 
         return R;
     }
@@ -1226,31 +1262,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	else if (n.type == "rhs")
             std::abort();
 	else if (n.type == "gdrhs")
-	{
-	    if (v.size() == 2)
-	    {
-		auto bound2 = bound;
-		add(bound2, rename_decls(v[1],bound));
-		v[0] = rename(v[0], bound2);
-	    }
-	    else
-		v[0] = rename(v[0], bound);
-	    return expression_ref{E.head(),v};
-	}
-	else if (n.type == "gdrh")
-	{
-	    auto& guards = v[0];
-	    vector<expression_ref> w = guards.sub();
-	    auto bound2 = bound;
-	    for(int i=0;i<w.size();i++)
-		add(bound2, rename_stmt(w[i], bound2));
-	    guards = expression_ref{guards.head(),std::move(w)};
-
-	    auto& rh = v[1];
-	    rh = rename(rh, bound2);
-
-	    return expression_ref{E.head(),std::move(v)};
-	}
+            std::abort();
 	else if (n.type == "ListComprehension")
 	{
 	    auto bound2 = bound;

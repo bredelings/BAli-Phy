@@ -54,8 +54,8 @@
   expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
   Haskell::SimpleRHS make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
-  expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
-  expression_ref make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& wherebinds);
+  Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const expression_ref& wherebinds);
+  Haskell::GuardedRHS make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& wherebinds);
 
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
@@ -387,8 +387,8 @@
 %type <expression_ref> decl_no_th
 %type <expression_ref> decl
 %type <expression_ref> rhs
-%type <std::vector<expression_ref>> gdrhs
-%type <expression_ref> gdrh
+%type <std::vector<Haskell::GuardedRHS>> gdrhs
+%type <Haskell::GuardedRHS> gdrh
 %type <expression_ref> sigdecl
  /*
 %type <void> activation
@@ -428,9 +428,9 @@
 %type <std::vector<Haskell::Alt>> alts1
 %type <Haskell::Alt> alt
 %type <expression_ref> alt_rhs
-%type <std::vector<expression_ref>> gdpats
+%type <std::vector<Haskell::GuardedRHS>> gdpats
  /* %type <expression_ref> ifgdpats */
-%type <expression_ref> gdpat
+%type <Haskell::GuardedRHS> gdpat
 %type <expression_ref> pat
 %type <expression_ref> bindpat
 %type <expression_ref> apat
@@ -1811,17 +1811,14 @@ Haskell::Alt yy_make_alt(const expression_ref& pat, const expression_ref& alt_rh
     return {pat, alt_rhs};
 }
 
-expression_ref make_gdrhs(const vector<expression_ref>& guards, const expression_ref& wherebinds)
+Haskell::MultiGuardedRHS make_gdrhs(const vector<Haskell::GuardedRHS>& guards, const expression_ref& wherebinds)
 {
-    vector<expression_ref> e = {expression_ref{AST_node("guards"),guards}};
-    if (wherebinds and wherebinds.size())
-	e.push_back(wherebinds);
-    return expression_ref{AST_node("gdrhs"),std::move(e)};
+    return {guards, wherebinds};
 }
 
-expression_ref make_gdrh(const vector<expression_ref>& guardquals, const expression_ref& exp)
+Haskell::GuardedRHS make_gdrh(const vector<expression_ref>& guardquals, const expression_ref& exp)
 {
-    return expression_ref(AST_node("gdrh"), {expression_ref(AST_node("guards"),guardquals),exp});
+    return {guardquals, exp};
 }
 
 Haskell::Stmts make_stmts(const vector<expression_ref>& stmts)

@@ -77,7 +77,7 @@ struct desugar_state: public fresh_vars
 
     failable_expression combine(const failable_expression& E1, const failable_expression& E2);
     failable_expression fold(const std::vector<failable_expression>& Es);
-    failable_expression desugar_gdrh(const expression_ref& E);
+    failable_expression desugar_gdrh(const Haskell::GuardedRHS& ghrs);
     failable_expression desugar_rhs(const expression_ref& E);
 
     void clean_up_pattern(const expression_ref& x, equation_info_t& eqn);
