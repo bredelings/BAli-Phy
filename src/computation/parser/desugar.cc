@@ -520,17 +520,14 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	{
 	    expression_ref obj = desugar(v[0]);
 	    assert(v[1].is_a<Haskell::Alts>());
-	    vector<expression_ref> alts = v[1].as_<Haskell::Alts>().alts;
+
+	    auto alts = v[1].as_<Haskell::Alts>().alts;
 	    vector<expression_ref> patterns;
 	    vector<failable_expression> bodies;
 	    for(const auto& alt: alts)
 	    {
-		assert(is_AST(alt,"alt"));
-		auto& pat = alt.sub()[0];
-		auto& rhs = alt.sub()[1];
-
-		patterns.push_back( desugar(pat) );
-		bodies.push_back( desugar_rhs(rhs) );
+		patterns.push_back( desugar(alt.pattern) );
+		bodies.push_back( desugar_rhs(alt.rhs) );
 	    }
 	    return case_expression(obj, patterns, bodies).result(error("case: failed pattern match"));
 	}

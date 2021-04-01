@@ -100,8 +100,8 @@
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
 
-  expression_ref make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& body);
-  expression_ref make_lazy_pattern(const expression_ref& pat);
+  Haskell::AsPattern make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& body);
+  Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat);
   expression_ref make_strict_pattern(const expression_ref& pat);
 
   expression_ref make_lambda(const std::vector<expression_ref>& pats, const expression_ref& body);
@@ -113,8 +113,8 @@
   expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
 
   expression_ref make_list(const std::vector<expression_ref>& items);
-  Haskell::Alts make_alts(const std::vector<expression_ref>& alts);
-  expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs);
+  Haskell::Alts make_alts(const std::vector<Haskell::Alt>& alts);
+  Haskell::Alt yy_make_alt(const Haskell::Pattern& pat, const expression_ref& alt_rhs);
 
   Haskell::Stmts make_stmts(const std::vector<expression_ref>& stmts);
 
@@ -468,38 +468,44 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
+      // alt
+      char dummy1[sizeof (Haskell::Alt)];
+
+      // altslist
+      char dummy2[sizeof (Haskell::Alts)];
+
       // context
       // context_no_ops
-      char dummy1[sizeof (Haskell::Context)];
+      char dummy3[sizeof (Haskell::Context)];
 
       // data_or_newtype
-      char dummy2[sizeof (Haskell::DataOrNewtype)];
+      char dummy4[sizeof (Haskell::DataOrNewtype)];
 
       // fielddecl
-      char dummy3[sizeof (Haskell::FieldDecl)];
+      char dummy5[sizeof (Haskell::FieldDecl)];
 
       // infix
-      char dummy4[sizeof (Haskell::Fixity)];
+      char dummy6[sizeof (Haskell::Fixity)];
 
       // stmtlist
-      char dummy5[sizeof (Haskell::Stmts)];
+      char dummy7[sizeof (Haskell::Stmts)];
 
       // strict_mark
       // strictness
-      char dummy6[sizeof (Haskell::StrictLazy)];
+      char dummy8[sizeof (Haskell::StrictLazy)];
 
       // maybe_src
       // maybe_safe
       // optqualified
-      char dummy7[sizeof (bool)];
+      char dummy9[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy8[sizeof (char)];
+      char dummy10[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy9[sizeof (double)];
+      char dummy11[sizeof (double)];
 
       // module
       // body
@@ -553,9 +559,7 @@ namespace yy {
       // texp
       // list
       // transformqual
-      // alt
       // alt_rhs
-      // ifgdpats
       // gdpat
       // pat
       // bindpat
@@ -563,26 +567,26 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy10[sizeof (expression_ref)];
+      char dummy12[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy11[sizeof (float)];
+      char dummy13[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy12[sizeof (int)];
+      char dummy14[sizeof (int)];
 
       // prec
-      char dummy13[sizeof (std::optional<int>)];
+      char dummy15[sizeof (std::optional<int>)];
 
       // maybe_pkg
       // maybeas
-      char dummy14[sizeof (std::optional<std::string>)];
+      char dummy16[sizeof (std::optional<std::string>)];
 
       // tycl_hdr
-      char dummy15[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy17[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // "VARID"
       // "CONID"
@@ -639,11 +643,15 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy16[sizeof (std::string)];
+      char dummy18[sizeof (std::string)];
+
+      // alts
+      // alts1
+      char dummy19[sizeof (std::vector<Haskell::Alt>)];
 
       // fielddecls
       // fielddecls1
-      char dummy17[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy20[sizeof (std::vector<Haskell::FieldDecl>)];
 
       // exportlist
       // exportlist1
@@ -671,17 +679,14 @@ namespace yy {
       // squals
       // guardquals
       // guardquals1
-      // altslist
-      // alts
-      // alts1
       // gdpats
       // apats1
       // stmts
-      char dummy18[sizeof (std::vector<expression_ref>)];
+      char dummy21[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy19[sizeof (std::vector<std::string>)];
+      char dummy22[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1149,66 +1154,65 @@ namespace yy {
         S_alt = 261,                             // alt
         S_alt_rhs = 262,                         // alt_rhs
         S_gdpats = 263,                          // gdpats
-        S_ifgdpats = 264,                        // ifgdpats
-        S_gdpat = 265,                           // gdpat
-        S_pat = 266,                             // pat
-        S_bindpat = 267,                         // bindpat
-        S_apat = 268,                            // apat
-        S_apats1 = 269,                          // apats1
-        S_stmtlist = 270,                        // stmtlist
-        S_stmts = 271,                           // stmts
-        S_stmt = 272,                            // stmt
-        S_qual = 273,                            // qual
-        S_fbinds = 274,                          // fbinds
-        S_fbinds1 = 275,                         // fbinds1
-        S_fbind = 276,                           // fbind
-        S_qcon = 277,                            // qcon
-        S_gen_qcon = 278,                        // gen_qcon
-        S_con = 279,                             // con
-        S_con_list = 280,                        // con_list
-        S_sysdcon_no_list = 281,                 // sysdcon_no_list
-        S_sysdcon = 282,                         // sysdcon
-        S_conop = 283,                           // conop
-        S_qconop = 284,                          // qconop
-        S_gtycon = 285,                          // gtycon
-        S_ntgtycon = 286,                        // ntgtycon
-        S_oqtycon = 287,                         // oqtycon
-        S_oqtycon_no_varcon = 288,               // oqtycon_no_varcon
-        S_qtyconop = 289,                        // qtyconop
-        S_qtycondoc = 290,                       // qtycondoc
-        S_qtycon = 291,                          // qtycon
-        S_tycon = 292,                           // tycon
-        S_qtyconsym = 293,                       // qtyconsym
-        S_tyconsym = 294,                        // tyconsym
-        S_op = 295,                              // op
-        S_varop = 296,                           // varop
-        S_qop = 297,                             // qop
-        S_qopm = 298,                            // qopm
-        S_hole_op = 299,                         // hole_op
-        S_qvarop = 300,                          // qvarop
-        S_qvaropm = 301,                         // qvaropm
-        S_tyvar = 302,                           // tyvar
-        S_tyvarop = 303,                         // tyvarop
-        S_tyvarid = 304,                         // tyvarid
-        S_var = 305,                             // var
-        S_qvar = 306,                            // qvar
-        S_qvarid = 307,                          // qvarid
-        S_varid = 308,                           // varid
-        S_qvarsym = 309,                         // qvarsym
-        S_qvarsym_no_minus = 310,                // qvarsym_no_minus
-        S_qvarsym1 = 311,                        // qvarsym1
-        S_varsym = 312,                          // varsym
-        S_varsym_no_minus = 313,                 // varsym_no_minus
-        S_special_id = 314,                      // special_id
-        S_special_sym = 315,                     // special_sym
-        S_qconid = 316,                          // qconid
-        S_conid = 317,                           // conid
-        S_qconsym = 318,                         // qconsym
-        S_consym = 319,                          // consym
-        S_literal = 320,                         // literal
-        S_close = 321,                           // close
-        S_modid = 322,                           // modid
-        S_commas = 323                           // commas
+        S_gdpat = 264,                           // gdpat
+        S_pat = 265,                             // pat
+        S_bindpat = 266,                         // bindpat
+        S_apat = 267,                            // apat
+        S_apats1 = 268,                          // apats1
+        S_stmtlist = 269,                        // stmtlist
+        S_stmts = 270,                           // stmts
+        S_stmt = 271,                            // stmt
+        S_qual = 272,                            // qual
+        S_fbinds = 273,                          // fbinds
+        S_fbinds1 = 274,                         // fbinds1
+        S_fbind = 275,                           // fbind
+        S_qcon = 276,                            // qcon
+        S_gen_qcon = 277,                        // gen_qcon
+        S_con = 278,                             // con
+        S_con_list = 279,                        // con_list
+        S_sysdcon_no_list = 280,                 // sysdcon_no_list
+        S_sysdcon = 281,                         // sysdcon
+        S_conop = 282,                           // conop
+        S_qconop = 283,                          // qconop
+        S_gtycon = 284,                          // gtycon
+        S_ntgtycon = 285,                        // ntgtycon
+        S_oqtycon = 286,                         // oqtycon
+        S_oqtycon_no_varcon = 287,               // oqtycon_no_varcon
+        S_qtyconop = 288,                        // qtyconop
+        S_qtycondoc = 289,                       // qtycondoc
+        S_qtycon = 290,                          // qtycon
+        S_tycon = 291,                           // tycon
+        S_qtyconsym = 292,                       // qtyconsym
+        S_tyconsym = 293,                        // tyconsym
+        S_op = 294,                              // op
+        S_varop = 295,                           // varop
+        S_qop = 296,                             // qop
+        S_qopm = 297,                            // qopm
+        S_hole_op = 298,                         // hole_op
+        S_qvarop = 299,                          // qvarop
+        S_qvaropm = 300,                         // qvaropm
+        S_tyvar = 301,                           // tyvar
+        S_tyvarop = 302,                         // tyvarop
+        S_tyvarid = 303,                         // tyvarid
+        S_var = 304,                             // var
+        S_qvar = 305,                            // qvar
+        S_qvarid = 306,                          // qvarid
+        S_varid = 307,                           // varid
+        S_qvarsym = 308,                         // qvarsym
+        S_qvarsym_no_minus = 309,                // qvarsym_no_minus
+        S_qvarsym1 = 310,                        // qvarsym1
+        S_varsym = 311,                          // varsym
+        S_varsym_no_minus = 312,                 // varsym_no_minus
+        S_special_id = 313,                      // special_id
+        S_special_sym = 314,                     // special_sym
+        S_qconid = 315,                          // qconid
+        S_conid = 316,                           // conid
+        S_qconsym = 317,                         // qconsym
+        S_consym = 318,                          // consym
+        S_literal = 319,                         // literal
+        S_close = 320,                           // close
+        S_modid = 321,                           // modid
+        S_commas = 322                           // commas
       };
     };
 
@@ -1245,6 +1249,14 @@ namespace yy {
       {
         switch (this->kind ())
     {
+      case symbol_kind::S_alt: // alt
+        value.move< Haskell::Alt > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_altslist: // altslist
+        value.move< Haskell::Alts > (std::move (that.value));
+        break;
+
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
         value.move< Haskell::Context > (std::move (that.value));
@@ -1339,9 +1351,7 @@ namespace yy {
       case symbol_kind::S_texp: // texp
       case symbol_kind::S_list: // list
       case symbol_kind::S_transformqual: // transformqual
-      case symbol_kind::S_alt: // alt
       case symbol_kind::S_alt_rhs: // alt_rhs
-      case symbol_kind::S_ifgdpats: // ifgdpats
       case symbol_kind::S_gdpat: // gdpat
       case symbol_kind::S_pat: // pat
       case symbol_kind::S_bindpat: // bindpat
@@ -1434,6 +1444,11 @@ namespace yy {
         value.move< std::string > (std::move (that.value));
         break;
 
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        value.move< std::vector<Haskell::Alt> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.move< std::vector<Haskell::FieldDecl> > (std::move (that.value));
@@ -1465,9 +1480,6 @@ namespace yy {
       case symbol_kind::S_squals: // squals
       case symbol_kind::S_guardquals: // guardquals
       case symbol_kind::S_guardquals1: // guardquals1
-      case symbol_kind::S_altslist: // altslist
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
       case symbol_kind::S_gdpats: // gdpats
       case symbol_kind::S_apats1: // apats1
       case symbol_kind::S_stmts: // stmts
@@ -1498,6 +1510,34 @@ namespace yy {
 #else
       basic_symbol (typename Base::kind_type t, const location_type& l)
         : Base (t)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::Alt&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::Alt& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::Alts&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::Alts& v, const location_type& l)
+        : Base (t)
+        , value (v)
         , location (l)
       {}
 #endif
@@ -1727,6 +1767,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<Haskell::Alt>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::Alt>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<Haskell::FieldDecl>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -1790,6 +1844,14 @@ namespace yy {
         // Value type destructor.
 switch (yykind)
     {
+      case symbol_kind::S_alt: // alt
+        value.template destroy< Haskell::Alt > ();
+        break;
+
+      case symbol_kind::S_altslist: // altslist
+        value.template destroy< Haskell::Alts > ();
+        break;
+
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
         value.template destroy< Haskell::Context > ();
@@ -1884,9 +1946,7 @@ switch (yykind)
       case symbol_kind::S_texp: // texp
       case symbol_kind::S_list: // list
       case symbol_kind::S_transformqual: // transformqual
-      case symbol_kind::S_alt: // alt
       case symbol_kind::S_alt_rhs: // alt_rhs
-      case symbol_kind::S_ifgdpats: // ifgdpats
       case symbol_kind::S_gdpat: // gdpat
       case symbol_kind::S_pat: // pat
       case symbol_kind::S_bindpat: // bindpat
@@ -1979,6 +2039,11 @@ switch (yykind)
         value.template destroy< std::string > ();
         break;
 
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        value.template destroy< std::vector<Haskell::Alt> > ();
+        break;
+
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.template destroy< std::vector<Haskell::FieldDecl> > ();
@@ -2010,9 +2075,6 @@ switch (yykind)
       case symbol_kind::S_squals: // squals
       case symbol_kind::S_guardquals: // guardquals
       case symbol_kind::S_guardquals1: // guardquals1
-      case symbol_kind::S_altslist: // altslist
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
       case symbol_kind::S_gdpats: // gdpats
       case symbol_kind::S_apats1: // apats1
       case symbol_kind::S_stmts: // stmts
@@ -4610,8 +4672,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 4926,     ///< Last index in yytable_.
-      yynnts_ = 185,  ///< Number of nonterminal symbols.
+      yylast_ = 4534,     ///< Last index in yytable_.
+      yynnts_ = 184,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
 
@@ -4692,6 +4754,14 @@ switch (yykind)
   {
     switch (this->kind ())
     {
+      case symbol_kind::S_alt: // alt
+        value.copy< Haskell::Alt > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_altslist: // altslist
+        value.copy< Haskell::Alts > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
         value.copy< Haskell::Context > (YY_MOVE (that.value));
@@ -4786,9 +4856,7 @@ switch (yykind)
       case symbol_kind::S_texp: // texp
       case symbol_kind::S_list: // list
       case symbol_kind::S_transformqual: // transformqual
-      case symbol_kind::S_alt: // alt
       case symbol_kind::S_alt_rhs: // alt_rhs
-      case symbol_kind::S_ifgdpats: // ifgdpats
       case symbol_kind::S_gdpat: // gdpat
       case symbol_kind::S_pat: // pat
       case symbol_kind::S_bindpat: // bindpat
@@ -4881,6 +4949,11 @@ switch (yykind)
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        value.copy< std::vector<Haskell::Alt> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.copy< std::vector<Haskell::FieldDecl> > (YY_MOVE (that.value));
@@ -4912,9 +4985,6 @@ switch (yykind)
       case symbol_kind::S_squals: // squals
       case symbol_kind::S_guardquals: // guardquals
       case symbol_kind::S_guardquals1: // guardquals1
-      case symbol_kind::S_altslist: // altslist
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
       case symbol_kind::S_gdpats: // gdpats
       case symbol_kind::S_apats1: // apats1
       case symbol_kind::S_stmts: // stmts
@@ -4955,6 +5025,14 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
+      case symbol_kind::S_alt: // alt
+        value.move< Haskell::Alt > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_altslist: // altslist
+        value.move< Haskell::Alts > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
         value.move< Haskell::Context > (YY_MOVE (s.value));
@@ -5049,9 +5127,7 @@ switch (yykind)
       case symbol_kind::S_texp: // texp
       case symbol_kind::S_list: // list
       case symbol_kind::S_transformqual: // transformqual
-      case symbol_kind::S_alt: // alt
       case symbol_kind::S_alt_rhs: // alt_rhs
-      case symbol_kind::S_ifgdpats: // ifgdpats
       case symbol_kind::S_gdpat: // gdpat
       case symbol_kind::S_pat: // pat
       case symbol_kind::S_bindpat: // bindpat
@@ -5144,6 +5220,11 @@ switch (yykind)
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        value.move< std::vector<Haskell::Alt> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.move< std::vector<Haskell::FieldDecl> > (YY_MOVE (s.value));
@@ -5175,9 +5256,6 @@ switch (yykind)
       case symbol_kind::S_squals: // squals
       case symbol_kind::S_guardquals: // guardquals
       case symbol_kind::S_guardquals1: // guardquals1
-      case symbol_kind::S_altslist: // altslist
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
       case symbol_kind::S_gdpats: // gdpats
       case symbol_kind::S_apats1: // apats1
       case symbol_kind::S_stmts: // stmts
@@ -5251,7 +5329,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5255 "parser.hh"
+#line 5333 "parser.hh"
 
 
 

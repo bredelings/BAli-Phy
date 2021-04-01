@@ -167,6 +167,11 @@ string MDo::print() const
     return "mdo " + stmts.print();
 }
 
+string Alt::print() const
+{
+    return pattern.print() + " -> " + rhs.print();
+}
+
 string Alts::print() const
 {
     vector<string> alt_string;

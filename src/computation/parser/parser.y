@@ -62,8 +62,8 @@
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
 
-  expression_ref make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& body);
-  expression_ref make_lazy_pattern(const expression_ref& pat);
+  Haskell::AsPattern make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& body);
+  Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat);
   expression_ref make_strict_pattern(const expression_ref& pat);
 
   expression_ref make_lambda(const std::vector<expression_ref>& pats, const expression_ref& body);
@@ -75,8 +75,8 @@
   expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
 
   expression_ref make_list(const std::vector<expression_ref>& items);
-  Haskell::Alts make_alts(const std::vector<expression_ref>& alts);
-  expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs);
+  Haskell::Alts make_alts(const std::vector<Haskell::Alt>& alts);
+  Haskell::Alt yy_make_alt(const Haskell::Pattern& pat, const expression_ref& alt_rhs);
 
   Haskell::Stmts make_stmts(const std::vector<expression_ref>& stmts);
 
@@ -423,13 +423,13 @@
 %type <std::vector<expression_ref>> guardquals
 %type <std::vector<expression_ref>> guardquals1
 
-%type <std::vector<expression_ref>> altslist
-%type <std::vector<expression_ref>> alts
-%type <std::vector<expression_ref>> alts1
-%type <expression_ref> alt
+%type <Haskell::Alts> altslist
+%type <std::vector<Haskell::Alt>> alts
+%type <std::vector<Haskell::Alt>> alts1
+%type <Haskell::Alt> alt
 %type <expression_ref> alt_rhs
 %type <std::vector<expression_ref>> gdpats
-%type <expression_ref> ifgdpats
+ /* %type <expression_ref> ifgdpats */
 %type <expression_ref> gdpat
 %type <expression_ref> pat
 %type <expression_ref> bindpat
@@ -509,7 +509,7 @@
 %type  <int> bars
 */
 
-%expect 141
+%expect 139
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -1090,13 +1090,13 @@ aexp: qvar "@" aexp              {$$ = make_as_pattern(make_id(@1,$1),$3);}
 |     "~" aexp                   {$$ = make_lazy_pattern($2);}
 |     "\\" apats1 "->" exp       {$$ = make_lambda($2,$4);}
 |     "let" binds "in" exp       {$$ = make_let($2,$4);}
-|     "\\" "case" altslist       {}
+/* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
 |     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = make_if($2,$5,$8);}
-|     "if" ifgdpats              {}
-|     "case" exp "of" altslist   {$$ = make_case($2,make_alts($4));}
+/* |     "if" ifgdpats              {} MultiWayIf extension not currently handled */
+|     "case" exp "of" altslist   {$$ = make_case($2,$4);}
 |     "do" stmtlist              {$$ = make_do($2);}
 |     "mdo" stmtlist             {$$ = make_mdo($2);}
-|     "proc" aexp "->" exp       {}
+/* |     "proc" aexp "->" exp       {} -XArrows not currently handled */
 |     aexp1                      {$$ = $1;}
 
 aexp1: aexp1 "{" fbinds "}"   {}
@@ -1107,8 +1107,10 @@ aexp2: qvar                   {$$ = make_id(@1,$1);}
 |      literal                {$$ = $1;}
 |      "(" texp ")"           {$$ = $2;}
 |      "(" tup_exprs ")"      {$$ = yy_make_tuple($2);}
+/* 
 |      "(#" texp "#)"         {}
 |      "(#" tup_exprs "#)"    {}
+*/
 |      "[" list "]"           {$$ = $2;}
 |      "_"                    {$$ = Haskell::WildcardPattern();}
 /* Skip Template Haskell Extensions */
@@ -1179,8 +1181,8 @@ guardquals1: guardquals1 "," qual  {$$ = $1;$$.push_back($3);}
 |            qual                  {$$.push_back($1);}
 
 /* ------------- Case alternatives ------------------------------- */
-altslist: "{" alts "}"           {$$ = $2;}
-|         VOCURLY alts close     {$$ = $2;}
+altslist: "{" alts "}"           {$$ = make_alts($2);}
+|         VOCURLY alts close     {$$ = make_alts($2);}
 |         "{" "}"                {}
 |         VOCURLY close          {}
 
@@ -1199,8 +1201,12 @@ alt_rhs: "->" exp wherebinds     {$$ = make_rhs($2,$3);}
 gdpats: gdpats gdpat             {$$ = $1; $$.push_back($2);}
 |       gdpat                    {$$.push_back($1);}
 
+/*
+Used in MultiWayIf extension:
+
 ifgdpats : "{" gdpats "}"        {}
 |          gdpats close          {}
+*/
 
 gdpat: "|" guardquals "->" exp   {$$=make_gdrh($2,$4);}
 
@@ -1739,12 +1745,12 @@ expression_ref make_fexp(const vector<expression_ref>& args)
     }
 }
 
-expression_ref make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& pat)
+Haskell::AsPattern make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& pat)
 {
     return Haskell::AsPattern(x,pat);
 }
 
-expression_ref make_lazy_pattern(const expression_ref& pat)
+Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat)
 {
     return Haskell::LazyPattern(pat);
 }
@@ -1796,14 +1802,14 @@ expression_ref make_list(const vector<expression_ref>& elements)
     return Haskell::List(elements);
 }
 
-Haskell::Alts make_alts(const vector<expression_ref>& alts)
+Haskell::Alts make_alts(const vector<Haskell::Alt>& alts)
 {
     return {alts};
 }
 
-expression_ref yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs)
+Haskell::Alt yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs)
 {
-    return AST_node("alt") + pat + alt_rhs;
+    return {pat, alt_rhs};
 }
 
 expression_ref make_gdrhs(const vector<expression_ref>& guards, const expression_ref& wherebinds)

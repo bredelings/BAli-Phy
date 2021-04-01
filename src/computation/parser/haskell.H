@@ -83,6 +83,8 @@ LPat = WildPat          -- wildcard pattern
 */
 
 typedef expression_ref Type;
+typedef expression_ref Pattern;
+typedef expression_ref Expression;
 
 struct Context
 {
@@ -430,14 +432,25 @@ struct MDo: public Object
     MDo(const Stmts& s):stmts(s) {}
 };
 
+struct Alt
+{
+    Pattern pattern;
+    expression_ref rhs;
+
+    std::string print() const;
+
+    Alt() = default;
+    Alt(const Pattern& p, const expression_ref& r):pattern(p), rhs(r) {};
+};
+
 struct Alts: public Object
 {
-    std::vector<expression_ref> alts;
+    std::vector<Alt> alts;
     Alts* clone() const { return new Alts(*this);}
     std::string print() const;
 
     Alts() = default;
-    Alts(const std::vector<expression_ref>& v):alts(v) {};
+    Alts(const std::vector<Alt>& v):alts(v) {};
 };
 
 

@@ -340,8 +340,16 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         auto A = E.as_<Haskell::Alts>();
         for(auto& alt: A.alts)
-            alt = rename_infix(m, alt);
+        {
+            alt.pattern = rename_infix(m, alt.pattern);
+            alt.pattern = unapply(alt.pattern);
+            alt.rhs = rename_infix(m, alt.rhs);
+        }
         return A;
+    }
+    else if (E.is_a<Haskell::Alt>())
+    {
+        std::abort();
     }
 
     if (not E.is_expression()) return E;
@@ -356,11 +364,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 	/* lhs */
 	v[0] = unapply(v[0]);
 	assert(v[0].head().is_a<Located<Hs::ID>>() or v[0].is_a<Haskell::List>() or v[0].is_a<Haskell::Tuple>());
-    }
-    else if (is_AST(E,"alt"))
-    {
-	/* pat */
-	v[0] = unapply(v[0]);
     }
     else if (is_AST(E,"Lambda"))
     {
@@ -438,7 +441,7 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
             for(auto& [field_name, constrs]: constructor_fields)
             {
                 expression_ref name = Located<Hs::ID>({},field_name);
-                vector<expression_ref> alts;
+                vector<Haskell::Alt> alts;
 
                 for(auto& [ConName,pos]: constrs)
                 {
@@ -452,13 +455,13 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
 
                     expression_ref pattern = expression_ref{Located<Hs::ID>({},ConName),f};
                     expression_ref body = AST_node("rhs") + name;
-                    alts.push_back(AST_node("alt") + pattern + body);
+                    alts.push_back({pattern,body});
                 }
                 {
                     expression_ref pattern = Haskell::WildcardPattern();
                     expression_ref body = error(field_name+": pattern match failure");
                     body = AST_node("rhs") + body;
-                    alts.push_back(AST_node("alt") + pattern + body);
+                    alts.push_back({pattern,body});
                 }
 
                 Located<Hs::ID> x({},"#0");
@@ -1179,8 +1182,17 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     {
         auto A = E.as_<Haskell::Alts>();
         for(auto& alt: A.alts)
-            alt = rename(alt,bound);
+        {
+            auto bound2 = bound;
+
+            add(bound2, rename_pattern(alt.pattern));
+            alt.rhs = rename(alt.rhs, bound2);
+        }
         return A;
+    }
+    else if (E.is_a<Haskell::Alt>())
+    {
+        std::abort();
     }
     else if (E.is_a<Haskell::WildcardPattern>())
         return var(-1);
@@ -1268,16 +1280,6 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 
 	    auto bound2 = bound;
 	    add(bound2, rename_decls(decls, bound));
-	    body = rename(body, bound2);
-
-	    return expression_ref{E.head(),v};
-	}
-	else if (n.type == "alt")
-	{
-	    auto& pat = v[0];
-	    auto& body = v[1];
-	    auto bound2 = bound;
-	    add(bound2, rename_pattern(pat));
 	    body = rename(body, bound2);
 
 	    return expression_ref{E.head(),v};
