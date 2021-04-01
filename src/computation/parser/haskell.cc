@@ -180,6 +180,15 @@ string Alts::print() const
     return "{" + join(alt_string, "\n;") + "\n}";
 }
 
+
+std::string SimpleRHS::print() const
+{
+    string result = "= " + body.print();
+    if (decls)
+        result = result + "where " + decls.print();
+    return result;
+}
+
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t)
 {
     std::vector<Type> args;

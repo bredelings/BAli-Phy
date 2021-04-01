@@ -91,7 +91,7 @@
   expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t);
   expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
-  expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
+  Haskell::SimpleRHS make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
   expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
   expression_ref make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& wherebinds);
 

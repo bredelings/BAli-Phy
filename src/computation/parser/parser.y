@@ -53,7 +53,7 @@
   expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t);
   expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
-  expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
+  Haskell::SimpleRHS make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
   expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
   expression_ref make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& wherebinds);
 
@@ -1713,12 +1713,9 @@ expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& t
     return new expression(AST_node("typed_exp"),{exp,type});
 }
 
-expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds)
+Haskell::SimpleRHS make_rhs(const expression_ref& exp, const expression_ref& wherebinds)
 {
-    vector<expression_ref> e = {exp};
-    if (wherebinds and wherebinds.size())
-	e.push_back(wherebinds);
-    return expression_ref{AST_node("rhs"), std::move(e)};
+    return {exp, wherebinds};
 }
 
 expression_ref make_infixexp(const vector<expression_ref>& args)

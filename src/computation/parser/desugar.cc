@@ -220,11 +220,12 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
     //       - if we do this we would put back the ralt rule in the parser
     //         and extract the (ralt: -> exp| gdpats) rule from alt_rhs again.
 
-    if (is_AST(E,"rhs"))
+    if (E.is_a<Haskell::SimpleRHS>())
     {
-	auto rhs = failable_expression(desugar(E.sub()[0]));
-	if (E.size() == 2)
-	    rhs.add_binding(desugar_decls(E.sub()[1]));
+        auto& R = E.as_<Haskell::SimpleRHS>();
+	auto rhs = failable_expression(desugar(R.body));
+	if (R.decls)
+	    rhs.add_binding(desugar_decls(R.decls));
 	return rhs;
     }
     else if (is_AST(E,"gdrhs"))
@@ -339,12 +340,12 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             {
                 expression_ref ok = get_fresh_var("ok");
                 expression_ref lhs1 = ok + p;
-                expression_ref rhs1 = AST_node("rhs") + do_stmts;
+                expression_ref rhs1 = Haskell::SimpleRHS(do_stmts);
                 expression_ref decl1 = AST_node("Decl") + lhs1 + rhs1;
 
                 expression_ref fail = {var("Compiler.Base.fail"),"Fail!"};
                 expression_ref lhs2 = ok + var(-1);
-                expression_ref rhs2 = AST_node("rhs") + fail;
+                expression_ref rhs2 = Haskell::SimpleRHS(fail);
                 expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
 
                 expression_ref decls = AST_node("Decls") + decl1 +  decl2;
@@ -442,11 +443,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 			// Problem: "ok" needs to be a fresh variable.
 			expression_ref ok = get_fresh_var("ok");
 			expression_ref lhs1 = ok + p;
-			expression_ref rhs1 = AST_node("rhs") + E2;
+			expression_ref rhs1 = Haskell::SimpleRHS(E2);
 			expression_ref decl1 = AST_node("Decl") + lhs1 + rhs1;
 
 			expression_ref lhs2 = ok + var(-1);
-			expression_ref rhs2 = AST_node("rhs") + var("[]");
+			expression_ref rhs2 = Haskell::SimpleRHS(var("[]"));
 			expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
 
 			expression_ref decls = AST_node("Decls") + decl1 + decl2;

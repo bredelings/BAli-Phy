@@ -454,6 +454,18 @@ struct Alts: public Object
 };
 
 
+struct SimpleRHS: public Object
+{
+    expression_ref body;
+    expression_ref decls;
+
+    SimpleRHS* clone() const { return new SimpleRHS(*this);}
+    std::string print() const;
+
+    SimpleRHS(const expression_ref& b): body(b) {}
+    SimpleRHS(const expression_ref& b, const expression_ref& ds): body(b), decls(ds) {}
+};
+
 }
 
 namespace Hs = Haskell;

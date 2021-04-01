@@ -347,6 +347,14 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         std::abort();
     }
+    else if (E.is_a<Haskell::SimpleRHS>())
+    {
+        auto R = E.as_<Haskell::SimpleRHS>();
+        R.body = rename_infix(m, R.body);
+        if (R.decls)
+            R.decls = rename_infix(m, R.decls);
+        return R;
+    }
 
     if (not E.is_expression()) return E;
 
@@ -450,20 +458,20 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
                             f.push_back(Haskell::WildcardPattern());
 
                     expression_ref pattern = expression_ref{Located<Hs::ID>({},ConName),f};
-                    expression_ref body = AST_node("rhs") + name;
+                    expression_ref body = Haskell::SimpleRHS(name);
                     alts.push_back({pattern,body});
                 }
                 {
                     expression_ref pattern = Haskell::WildcardPattern();
                     expression_ref body = error(field_name+": pattern match failure");
-                    body = AST_node("rhs") + body;
+                    body = Haskell::SimpleRHS(body);
                     alts.push_back({pattern,body});
                 }
 
                 Located<Hs::ID> x({},"#0");
                 expression_ref body = AST_node("Case") + x + Haskell::Alts(alts);
                 body = AST_node("Lambda") + x + body;
-                body = AST_node("rhs") + body;
+                body = Haskell::SimpleRHS(body);
 
                 v.push_back(AST_node("Decl") + name + body);
             }
@@ -1188,6 +1196,17 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     }
     else if (E.is_a<Haskell::WildcardPattern>())
         return var(-1);
+    else if (E.is_a<Haskell::SimpleRHS>())
+    {
+        auto bound2 = bound;
+
+        auto R = E.as_<Haskell::SimpleRHS>();
+        if (R.decls)
+            add(bound2, rename_decls(R.decls,bound));
+        R.body = rename(R.body, bound2);
+
+        return R;
+    }
 
     vector<expression_ref> v = E.copy_sub();
       
@@ -1205,17 +1224,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	else if (n.type == "Decl")
 	    std::abort();
 	else if (n.type == "rhs")
-	{
-	    if (v.size() == 2)
-	    {
-		auto bound2 = bound;
-		add(bound2, rename_decls(v[1],bound));
-		v[0] = rename(v[0], bound2);
-	    }
-	    else
-		v[0] = rename(v[0], bound);
-	    return expression_ref{E.head(),v};
-	}
+            std::abort();
 	else if (n.type == "gdrhs")
 	{
 	    if (v.size() == 2)
