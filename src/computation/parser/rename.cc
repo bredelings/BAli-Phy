@@ -188,19 +188,17 @@ expression_ref unapply(expression_ref E)
 {
     if (E.is_a<Haskell::List>())
     {
-        auto& L = E.as_<Haskell::List>();
-        vector<expression_ref> patterns = L.elements;
-        for(auto& pattern: patterns)
+        auto L = E.as_<Haskell::List>();
+        for(auto& pattern: L.elements)
             pattern = unapply(pattern);
-        return Haskell::List(patterns);
+        return L;
     }
     else if (E.is_a<Haskell::Tuple>())
     {
-        auto& T = E.as_<Haskell::Tuple>();
-        vector<expression_ref> patterns = T.elements;
-        for(auto& pattern: patterns)
+        auto T = E.as_<Haskell::Tuple>();
+        for(auto& pattern: T.elements)
             pattern = unapply(pattern);
-        return Haskell::Tuple(patterns);
+        return T;
     }
     else if (E.is_a<Haskell::AsPattern>())
     {
@@ -261,19 +259,17 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     }
     else if (E.is_a<Haskell::List>())
     {
-        auto& L = E.as_<Haskell::List>();
-        vector<expression_ref> elements;
+        auto L = E.as_<Haskell::List>();
         for(auto& element: L.elements)
-            elements.push_back(rename_infix(m, element));
-        return Haskell::List(elements);
+            element = rename_infix(m, element);
+        return L;
     }
     else if (E.is_a<Haskell::Tuple>())
     {
-        auto& T = E.as_<Haskell::Tuple>();
-        vector<expression_ref> elements;
+        auto T = E.as_<Haskell::Tuple>();
         for(auto& element: T.elements)
-            elements.push_back(rename_infix(m, element));
-        return Haskell::Tuple(elements);
+            element = rename_infix(m, element);
+        return T;
     }
     else if (E.is_a<Haskell::PatQual>())
     {
@@ -707,19 +703,17 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     //4. Handle List pattern.
     if (pat.is_a<Haskell::List>())
     {
-        auto& L = pat.as_<Haskell::List>();
-        auto patterns = L.elements;
-        auto bound = rename_patterns(patterns,top);
-        pat = Haskell::List(patterns);
+        auto L = pat.as_<Haskell::List>();
+        auto bound = rename_patterns(L.elements,top);
+        pat = L;
         return bound;
     }
     //5. Handle List pattern.
     else if (pat.is_a<Haskell::Tuple>())
     {
-        auto& T = pat.as_<Haskell::Tuple>();
-        auto patterns = T.elements;
-        auto bound = rename_patterns(patterns,top);
-        pat = Haskell::Tuple(patterns);
+        auto T = pat.as_<Haskell::Tuple>();
+        auto bound = rename_patterns(T.elements,top);
+        pat = T;
         return bound;
     }
 
@@ -1091,19 +1085,17 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 {
     if (E.is_a<Haskell::List>())
     {
-        auto& L = E.as_<Haskell::List>();
-        vector<expression_ref> elements;
+        auto L = E.as_<Haskell::List>();
         for(auto& element: L.elements)
-            elements.push_back(rename(element, bound));
-        return Haskell::List(elements);
+            element = rename(element, bound);
+        return L;
     }
     else if (E.is_a<Haskell::Tuple>())
     {
-        auto& T = E.as_<Haskell::Tuple>();
-        vector<expression_ref> elements;
+        auto T = E.as_<Haskell::Tuple>();
         for(auto& element: T.elements)
-            elements.push_back(rename(element, bound));
-        return Haskell::Tuple(elements);
+            element = rename(element, bound);
+        return T;
     }
     else if (E.is_a<Located<Hs::ID>>())
     {

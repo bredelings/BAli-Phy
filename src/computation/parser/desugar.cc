@@ -260,19 +260,17 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     }
     else if (E.is_a<Haskell::List>())
     {
-        auto& L = E.as_<Haskell::List>();
-        vector<expression_ref> elements;
+        auto L = E.as_<Haskell::List>();
         for(auto& element: L.elements)
-            elements.push_back(desugar(element));
-        return get_list(elements);
+            element = desugar(element);
+        return get_list(L.elements);
     }
     else if (E.is_a<Haskell::Tuple>())
     {
-        auto& T = E.as_<Haskell::Tuple>();
-        vector<expression_ref> elements;
+        auto T = E.as_<Haskell::Tuple>();
         for(auto& element: T.elements)
-            elements.push_back(desugar(element));
-        return get_tuple(elements);
+            element = desugar(element);
+        return get_tuple(T.elements);
     }
     else if (E.is_a<Located<Hs::ID>>())
         std::abort();
