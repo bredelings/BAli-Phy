@@ -418,7 +418,7 @@
 %type <std::vector<expression_ref>> pquals
  */
 %type <std::vector<expression_ref>> squals
-%type <expression_ref> transformqual
+ /* %type <expression_ref> transformqual */
 
 %type <std::vector<expression_ref>> guardquals
 %type <std::vector<expression_ref>> guardquals1
@@ -509,7 +509,7 @@
 %type  <int> bars
 */
 
-%expect 139
+%expect 138
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -1164,15 +1164,17 @@ pquals: squals "|" pquals                 {$$.push_back(make_squals($1));$$.inse
 |       squals                            {$$.push_back(make_squals($1));}
 */
 
-squals: squals "," transformqual          {$$ = $1; $$.push_back($3);}
-|       squals "," qual                   {$$ = $1; $$.push_back($3);}
-|       transformqual                     {$$.push_back($1);}
+squals: /* squals "," transformqual          {$$ = $1; $$.push_back($3);} */
+        squals "," qual                   {$$ = $1; $$.push_back($3);}
+/* |       transformqual                     {$$.push_back($1);} */
 |       qual                              {$$.push_back($1);}
 
+/*
 transformqual: "then" exp                           {}
 |              "then" exp "by" exp                  {}
 |              "then" "group" "using" exp           {}
 |              "then" "group" "by" exp "using" exp  {}
+*/
 
 /* ------------- Guards ------------------------------------------ */
 guardquals: guardquals1            {$$ = $1;}
