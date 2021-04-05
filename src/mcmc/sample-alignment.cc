@@ -38,10 +38,11 @@ using std::abs;
 using std::pair;
 using std::vector;
 using std::shared_ptr;
+using std::optional;
 using boost::dynamic_bitset;
 using namespace A2;
 
-shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const TreeInterface& t, const indel::PairHMM& hmm, int b)
+shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const TreeInterface& t, const indel::PairHMM& hmm, int b, optional<int> bandwidth)
 {
     assert(P.variable_alignment());
 
@@ -72,7 +73,7 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
     state_emit[2] |= (1<<0);
     state_emit[3] |= 0;
 
-    int I = P.seqlength(t.source(b)); 
+    int I = P.seqlength(t.source(b));
     int J = P.seqlength(t.source(bb));
 
     shared_ptr<DPmatrixSimple> 
@@ -80,18 +81,30 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
 				     std::move(dists1), std::move(dists2), P.WeightedFrequencyMatrix())
 	    );
 
-    //------------------ Compute the DP matrix ---------------------//
+    //-------------- Compute ymin and ymax for each x --------------//
     vector<std::pair<int,int>> yboundaries(I+1, std::pair<int,int>(0,J));
 
+    if (bandwidth)
+    {
+        int W = *bandwidth;
+        for(int i=0;i<I+1;i++)
+        {
+            int ymax = std::min(J,i + W);
+            int ymin = std::max(0,i + (J - I) - W);
+            yboundaries[i] = {ymin, ymax};
+        }
+    }
+
+    //------------------ Compute the DP matrix ---------------------//
     Matrices->forward_band(yboundaries);
 
     return Matrices;
 }
 
 
-pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b) 
+pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b, optional<int> bandwidth) 
 {
-    auto Matrices = sample_alignment_forward(P, P.t(), hmm, b);
+    auto Matrices = sample_alignment_forward(P, P.t(), hmm, b, bandwidth);
 
     // If the DP matrix ended up having probability 0, don't try to sample a path through it!
     if (Matrices->Pr_sum_all_paths() <= 0.0)
@@ -107,9 +120,9 @@ pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data
     return {Matrices, Matrices->Pr_sum_all_paths() / Matrices->path_Q(path)};
 }
 
-pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data_partition P, int b)
+pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data_partition P, int b, optional<int> bandwidth)
 {
-    return sample_alignment_base(P, P.get_branch_HMM(b), b);
+    return sample_alignment_base(P, P.get_branch_HMM(b), b, bandwidth);
 }
 
 log_double_t sample_alignment(Parameters& P,int b)
@@ -124,6 +137,10 @@ log_double_t sample_alignment(Parameters& P,int b)
     if (t.is_leaf_node(t.target(b)))
 	b = t.reverse(b);
   
+    optional<int> bandwidth;
+    if (P.contains_key("simple_bandwidth"))
+        bandwidth  = (int)P.lookup_key("simple_bandwidth");
+
 #if !defined(NDEBUG_DP) || !defined(NDEBUG)
     const Parameters P0 = P;
 #endif
@@ -137,7 +154,7 @@ log_double_t sample_alignment(Parameters& P,int b)
 	for(int j=0;j<p[i].n_data_partitions();j++) 
 	    if (p[i][j].variable_alignment()) 
 	    {
-                auto [M, ratio] = sample_alignment_base(p[i][j], b);
+                auto [M, ratio] = sample_alignment_base(p[i][j], b, bandwidth);
                 total_ratio *= ratio;
 		Matrices[i].push_back(M);
 		// If Pr_sum_all_paths() == 0, then the alignment for this partition will be unchanged.

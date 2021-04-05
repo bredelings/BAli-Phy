@@ -572,6 +572,10 @@ log_double_t realign_and_propose_parameter(context_ref& P, const vector<int>& pa
     int B = CPP.t().n_branches();
     int N = CPP.n_data_partitions();
 
+    std::optional<int> bandwidth;
+    if (CPP.contains_key("simple_bandwidth"))
+        bandwidth  = (int)CPP.lookup_key("simple_bandwidth");
+
     // 1. Get the old branch HMMs;
     vector<vector<indel::PairHMM>> old_hmms(N);
     for(int i=0; i < N; i++)
@@ -608,14 +612,14 @@ log_double_t realign_and_propose_parameter(context_ref& P, const vector<int>& pa
 	    {
 		{
 		    // Calculate the proposal probability for the backward move.
-		    auto matrix_old = sample_alignment_forward(PP[j], PP.t(), old_hmms[j][b], b);
+		    auto matrix_old = sample_alignment_forward(PP[j], PP.t(), old_hmms[j][b], b, bandwidth);
 		    auto a_old = PP[j].get_pairwise_alignment(b);
 		    vector<int> path_old = A2::get_path_from_pairwise_alignment(a_old);
 		    ratio *= matrix_old->path_P(path_old);
 		}
 		{
 		    // Resample the alignment and calculate the proposal probability for the forward more.
-		    auto [matrix_new,_] = sample_alignment_base(PP[j], b);
+		    auto [matrix_new,_] = sample_alignment_base(PP[j], b, bandwidth);
 		    auto a_new = PP[j].get_pairwise_alignment(b);
 		    vector<int> path_new = A2::get_path_from_pairwise_alignment(a_new);
 
