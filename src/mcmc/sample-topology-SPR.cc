@@ -1180,11 +1180,15 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     nodes[1] = nodes_for_branch.at(I.attachment_branch_pairs[C].edge);              // in this formulation.
     bool do_cube = (uniform() < p[0].load_value("cube_fraction",0.0));
 
+    optional<int> bandwidth;
+    if (P.contains_key("simple_bandwidth"))
+        bandwidth  = (int)P.lookup_key("simple_bandwidth");
+
     shared_ptr<sample_A3_multi_calculation> tri;
     if (do_cube)
-	tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes));
+	tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, bandwidth));
     else
-	tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes));
+	tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, bandwidth));
     tri->run_dp();
 
     //--------- Compute PrL2: reverse proposal probabilities ---------//

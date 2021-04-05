@@ -58,7 +58,7 @@ using boost::dynamic_bitset;
 
 pair<shared_ptr<DPmatrixConstrained>,log_double_t>
 tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, const vector<HMM::bitmask_t>& a23,
-			  int /* bandwidth */)
+			  optional<int> bandwidth)
 {
 
     const auto t = P.t();
@@ -87,7 +87,6 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     m123.B = P.get_beta();
 
     //------------- Compute sequence properties --------------//
-    int a1 = P.seqlength(nodes[1]);
 
     HMM::bitmask_t m23; m23.set(1); m23.set(2);
 
@@ -139,13 +138,20 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     }
 
     //------------------ Compute the DP matrix ---------------------//
+    auto yboundaries = yboundaries_everything(*Matrices);
+
+    if (bandwidth)
+        yboundaries = yboundaries_simple_band(*Matrices, *bandwidth);
+
+    Matrices->forward_band(yboundaries);
+
+/*
     //  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23);
     vector<vector<int> > pins(2);
 
     //  Note: we don't even HAVE an a123 unless tree_changed == false!
     //  vector< pair<int,int> > yboundaries = get_y_ranges_for_band(bandwidth, seq23, seq1, seq123);
     //  vector<pair<int,int>> yboundaries(seq1.size()+1,pair<int,int>(0,seq23.size()));
-    vector<pair<int,int>> yboundaries(a1+1,{0,a23.size()});
   
     // if the constraints are currently met but cannot be met
     if (pins.size() == 1 and pins[0][0] == -1)
@@ -160,6 +166,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
 	if (Matrices->Pr_sum_all_paths() <= 0.0) 
 	    std::cerr<<"Constraints give this choice probability 0"<<std::endl;
     }
+*/
 
     // If the DP matrix ended up having probability 0, don't try to sample a path through it!
     if (Matrices->Pr_sum_all_paths() <= 0.0) 
@@ -211,7 +218,7 @@ vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, co
 pair<shared_ptr<DPmatrixConstrained>,log_double_t>
 tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 			  const vector<int>& nodes, const vector<int>& nodes0,
-			  int bandwidth)
+			  optional<int> bandwidth)
 {
     const auto t0 = P0.t();
 
@@ -222,7 +229,6 @@ tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
     // If the tree changed, assert that previously nodes 2 and 3 were connected.
     if (tree_changed)
     {
-	assert(bandwidth < 0);
 	assert(t0.is_connected(nodes[2],nodes[3]));
     }
     else
@@ -249,7 +255,7 @@ tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 
 
 sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
-                                                         int b)
+                                                         optional<int> b)
     :
     p(pp),
 #ifndef NDEBUG_DP
@@ -460,7 +466,7 @@ pair<shared_ptr<DPengine>,log_double_t> sample_tri_multi_calculation::compute_ma
 }
 
 sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
-							   int b)
+							   optional<int> b)
     :sample_A3_multi_calculation(pp, nodes_, b)
 { }
 
@@ -470,12 +476,16 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
 int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 		     const vector<log_double_t>& rho) 
 {
+    optional<int> bandwidth;
+    if (p[0].contains_key("simple_bandwidth"))
+        bandwidth  = (int)p[0].lookup_key("simple_bandwidth");
+
     try {
 	shared_ptr<sample_A3_multi_calculation> tri;
 	if (uniform() < p[0].load_value("cube_fraction",0.0))
-	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes));
+	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, bandwidth));
 	else
-	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes));
+	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, bandwidth));
 	tri->run_dp();
 
 	// The DP matrix construction didn't work.
@@ -490,6 +500,14 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	return -1;
     }
 }
+
+/*
+ * NOTE: This version of the bandwidth uses a bandwidth around the CURRENT PATH,
+ *       instead of the around the DIAGONAL.
+ *       It is broken, but maintains some logic for reverse proposals, since we
+ *       need to find the probability of proposing the original path given the
+ *       bandwidth around the old path.
+ */
 
 int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 		     const vector<log_double_t>& rho, int bandwidth) 
@@ -550,8 +568,6 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
 void tri_sample_alignment(Parameters& P,int node1,int node2) 
 {
-    int bandwidth = P.load_value("bandwidth", -1);
-
     P.set_root(node1);
 
     //------------(Gibbs) sample from proposal distribution ------------------//
@@ -563,10 +579,7 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
     vector<log_double_t> rho(1,1);
 
     int C = -1;
-    if (bandwidth >= 0)
-	C = sample_tri_multi(p,nodes,rho,bandwidth);
-    else
-	C = sample_tri_multi(p,nodes,rho);
+    C = sample_tri_multi(p,nodes,rho);
 
     if (C != -1) {
 	P = p[C];

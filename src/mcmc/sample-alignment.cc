@@ -73,27 +73,16 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
     state_emit[2] |= (1<<0);
     state_emit[3] |= 0;
 
-    int I = P.seqlength(t.source(b));
-    int J = P.seqlength(t.source(bb));
-
     shared_ptr<DPmatrixSimple> 
 	Matrices( new DPmatrixSimple(HMM(state_emit, hmm.start_pi(), hmm, P.get_beta()),
 				     std::move(dists1), std::move(dists2), P.WeightedFrequencyMatrix())
 	    );
 
     //-------------- Compute ymin and ymax for each x --------------//
-    vector<std::pair<int,int>> yboundaries(I+1, std::pair<int,int>(0,J));
+    auto yboundaries = yboundaries_everything(*Matrices);
 
     if (bandwidth)
-    {
-        int W = *bandwidth;
-        for(int i=0;i<I+1;i++)
-        {
-            int ymax = std::min(J,i + W);
-            int ymin = std::max(0,i + (J - I) - W);
-            yboundaries[i] = {ymin, ymax};
-        }
-    }
+        yboundaries = yboundaries_simple_band(*Matrices, *bandwidth);
 
     //------------------ Compute the DP matrix ---------------------//
     Matrices->forward_band(yboundaries);

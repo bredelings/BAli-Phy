@@ -44,6 +44,7 @@ class DPengine;
 
 using std::abs;
 using std::vector;
+using std::optional;
 using std::pair;
 using std::endl;
 using std::shared_ptr;
@@ -52,7 +53,7 @@ using boost::dynamic_bitset;
 pair<shared_ptr<DPcubeSimple>,log_double_t>
 cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0, 
                            const vector<int>& nodes, const vector<int>& nodes0,
-                           int bandwidth)
+                           optional<int> /*bandwidth*/)
 {
     const auto t = P.t();
     const auto t0 = P0.t();
@@ -70,7 +71,6 @@ cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
     // If the tree changed, assert that previously nodes 2 and 3 were connected.
     if (tree_changed)
     {
-	assert(bandwidth < 0);
 	assert(t0.is_connected(nodes[2],nodes[3]));
     }
     else
@@ -178,8 +178,8 @@ pair<shared_ptr<DPengine>,log_double_t> sample_cube_multi_calculation::compute_m
 }
 
 sample_cube_multi_calculation::sample_cube_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
-							   int b)
-    :sample_A3_multi_calculation(pp, nodes_, b)
+    optional<int> bw)
+    :sample_A3_multi_calculation(pp, nodes_, bw)
 { }
 
 // Consider making into object! That would make it easier to mix
@@ -188,8 +188,12 @@ sample_cube_multi_calculation::sample_cube_multi_calculation(vector<Parameters>&
 int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 		     const vector<log_double_t>& rho) 
 {
+    optional<int> bandwidth;
+    if (p[0].contains_key("simple_bandwidth"))
+        bandwidth  = (int)p[0].lookup_key("simple_bandwidth");
+
     try {
-	sample_cube_multi_calculation tri(p, nodes);
+	sample_cube_multi_calculation tri(p, nodes, bandwidth);
 
 	// The DP matrix construction didn't work.
 	if (tri.Pr[0] <= 0.0) return -1;
@@ -205,9 +209,8 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 }
 
 int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		     const vector<log_double_t>& rho, int bandwidth) 
+		     const vector<log_double_t>& rho, optional<int> bandwidth)
 {
-    assert(bandwidth >= 0);
     try {
 	vector<Parameters> p2 = p;
 

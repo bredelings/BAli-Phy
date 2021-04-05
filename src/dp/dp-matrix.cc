@@ -113,6 +113,39 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
     }
 } 
 
+
+
+vector<pair<int,int>> yboundaries_everything(const DPmatrix& M)
+{
+    const int I = M.seqlength1();
+    const int J = M.seqlength2();
+
+    return {std::size_t(I+1), {0,J}};
+}
+
+// The equation through a point (x1,y1) of slope 1 is y = y1 + (x-x1)
+// For the upper boundaries, we take the higher of two lines through (0,W) and (I-W,J).
+// (Then we do min(J,y) to avoid getting outside the rectangle.
+// For the lower bounadries, we take the lower  of two lines through (W,0) and (I,J-W).
+// (Then we do max(0,u) to avoid getting outside the rectangle.
+
+vector<pair<int,int>> yboundaries_simple_band(const DPmatrix& M, int W)
+{
+    const int I = M.seqlength1();
+    const int J = M.seqlength2();
+
+    auto yboundaries = vector<pair<int,int>>(I+1);
+
+    for(int i=0;i<I+1;i++)
+    {
+        int ymax = std::min(J, i + W + std::max(0, J - I) );
+        int ymin = std::max(0, i - W + std::min(0, J - I) );
+        yboundaries[i] = {ymin, ymax};
+    }
+
+    return yboundaries;
+}
+
 void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries) 
 {
     // note: (x,y) is located at (x+1,y+1) in the matrix.

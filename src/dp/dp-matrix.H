@@ -110,6 +110,9 @@ public:
     bitmask_t emit1 = 1;
     bitmask_t emit2 = 2;
 
+    int seqlength1() const {return size1()-2;}
+    int seqlength2() const {return size2()-2;}
+
     /// Does state S emit in dimension 1?
     bool di(int S) const {return (state_emit[S]&emit1).any();}
     /// Does state S emit in dimension 2?
@@ -221,4 +224,6 @@ public:
     virtual ~DPmatrixConstrained() {}
 };
 
+std::vector<std::pair<int,int>> yboundaries_everything(const DPmatrix& M);
+std::vector<std::pair<int,int>> yboundaries_simple_band(const DPmatrix& M, int bandwidth);
 #endif

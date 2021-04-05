@@ -58,7 +58,7 @@ int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<i
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		     const std::vector<log_double_t>& rho, int bandwidth);
+		     const std::vector<log_double_t>& rho, std::optional<int> bandwidth);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_cube_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
@@ -76,14 +76,14 @@ struct sample_A3_multi_calculation
     std::vector<std::vector<std::shared_ptr<DPengine> > > Matrices;
     std::vector<log_double_t> Pr;
     log_double_t C1;
-    int bandwidth;
+    std::optional<int> bandwidth;
 
     virtual std::pair<std::shared_ptr<DPengine>,log_double_t> compute_matrix(int,int) = 0;
 
     void run_dp();
 
     sample_A3_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
-                                int b=-1);
+                                std::optional<int> b);
 
     void set_proposal_probabilities(const std::vector<log_double_t>&);
 
@@ -96,7 +96,7 @@ struct sample_tri_multi_calculation: public sample_A3_multi_calculation
     virtual std::pair<std::shared_ptr<DPengine>,log_double_t> compute_matrix(int,int);
 
     sample_tri_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
-				 int b=-1);
+				 std::optional<int> b);
 };
 
 struct sample_cube_multi_calculation: public sample_A3_multi_calculation
@@ -104,7 +104,7 @@ struct sample_cube_multi_calculation: public sample_A3_multi_calculation
     virtual std::pair<std::shared_ptr<DPengine>,log_double_t> compute_matrix(int,int);
 
     sample_cube_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
-				  int b=-1);
+                                  std::optional<int> b);
 };
 
 //------------------- Checking Routines ------------------------//
