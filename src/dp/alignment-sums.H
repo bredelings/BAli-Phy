@@ -29,8 +29,9 @@
 #include <vector>
 #include <memory>
 
-#include <memory>                  // for shared_ptr
-#include <vector>                  // for vector
+#include <memory>                  // for std::shared_ptr
+#include <vector>                  // for std::vector
+#include <optional>                // for std::optional
 #include "dp-engine.H"             // for DPengine
 #include "util/math/log-double.H"  // for log_double_t
 #ifndef NDEBUG
