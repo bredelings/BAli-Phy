@@ -6096,12 +6096,12 @@ expression_ref make_strict_pattern(const expression_ref& pat)
 
 Haskell::LambdaExp make_lambdaexp(const vector<expression_ref>& pats, const expression_ref& body)
 {
-    return {pats, body};
+    return { pats, body };
 }
 
-expression_ref make_let(const expression_ref& binds, const expression_ref& body)
+Haskell::LetExp make_let(const expression_ref& binds, const expression_ref& body)
 {
-    return new expression(AST_node("Let"), {binds, body});
+    return { binds, body };
 }
 
 expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false)

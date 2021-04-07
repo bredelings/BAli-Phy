@@ -504,6 +504,20 @@ struct LambdaExp: public Object
     LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b): args(ps), body(b) {};
 };
 
+
+struct LetExp: public Object
+{
+    expression_ref decls;
+    expression_ref body;
+
+    LetExp* clone() const {return new LetExp(*this);}
+    std::string print() const;
+
+    LetExp(const expression_ref& d, const expression_ref& b): decls(d), body(b) {};
+};
+
+
+
 }
 
 namespace Hs = Haskell;

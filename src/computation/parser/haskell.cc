@@ -239,6 +239,15 @@ string LambdaExp::print() const
     result += body.print();
     return result;
 }
-    
+
+string LetExp::print() const
+{
+    vector<expression_ref> decl_string;
+    for(auto& decl: decls.sub())
+        decl_string.push_back( decl.print() );
+
+    return "let { " + join( decl_string, "; " ) + " } in " + body.print();
+}
+
 
 }

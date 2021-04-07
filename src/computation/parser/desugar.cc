@@ -349,14 +349,14 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
                 expression_ref body = {qop,e,ok};
 
-                result = AST_node("Let") + decls + body;
+                result = Haskell::LetExp(decls, body);
             }
         }
         // do {let decls ; rest} = let decls in do {stmts}
         else if (first.is_a<Haskell::LetQual>())
         {
             auto& LQ = first.as_<Haskell::LetQual>();
-            result = AST_node("Let") + LQ.binds + do_stmts;
+            result = Haskell::LetExp( LQ.binds, do_stmts);
         }
         else
             std::abort();
@@ -374,6 +374,16 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         L.body = desugar(L.body);
 
         return def_function({{L.args, failable_expression(L.body)}}, error("lambda: pattern match failure"));
+    }
+    else if (E.is_a<Haskell::LetExp>())
+    {
+        auto& L = E.as_<Haskell::LetExp>();
+
+        CDecls decls = desugar_decls(L.decls);
+        auto body = desugar(L.body);
+
+        // construct the new let expression.
+        return let_expression(decls, body);
     }
 
     vector<expression_ref> v = E.copy_sub();
@@ -458,13 +468,13 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 			expression_ref decls = AST_node("Decls") + decl1 + decl2;
 			expression_ref body = {var("Data.List.concatMap"),ok,l};
 
-			E2 = AST_node("Let") + decls + body;
+			E2 = Haskell::LetExp( decls, body );
 		    }
 		}
 		else if (B.is_a<Haskell::LetQual>())
                 {
                     auto& LQ = B.as_<Haskell::LetQual>();
-		    E2 = AST_node("Let") + LQ.binds + E2;
+		    E2 = Haskell::LetExp( LQ.binds, E2 );
                 }
 		else
 		    std::abort();
@@ -492,14 +502,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
 	    auto x = get_fresh_var();
 	    return lambda_quantify(x,apply_expression(apply_expression(v[0],x),v[1]));
-	}
-	else if (n.type == "Let")
-	{
-	    CDecls decls = desugar_decls(v[0]);
-	    auto body = desugar(v[1]);
-
-	    // construct the new let expression.
-	    return let_expression(decls, body);
 	}
 	else if (n.type == "Case")
 	{

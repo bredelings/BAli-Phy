@@ -381,6 +381,15 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
         return L;
     }
+    else if (E.is_a<Haskell::LetExp>())
+    {
+        auto L = E.as_<Haskell::LetExp>();
+
+        L.decls = rename_infix(m, L.decls);
+        L.body = rename_infix(m, L.body);
+
+        return L;
+    }
 
     if (not E.is_expression()) return E;
 
@@ -1261,6 +1270,16 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 
         return L;
     }
+    else if (E.is_a<Haskell::LetExp>())
+    {
+        auto L = E.as_<Haskell::LetExp>();
+
+        auto bound2 = bound;
+        add(bound2, rename_decls(L.decls, bound));
+        L. body = rename(L.body, bound2);
+
+        return L;
+    }
 
     vector<expression_ref> v = E.copy_sub();
       
@@ -1288,17 +1307,6 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    for(int i=0;i<v.size()-1;i++)
 		add(bound2, rename_stmt(v[i], bound2));
 	    v.back() = rename(v.back(), bound2);
-
-	    return expression_ref{E.head(),v};
-	}
-	else if (n.type == "Let")
-	{
-	    auto& decls = v[0];
-	    auto& body = v[1];
-
-	    auto bound2 = bound;
-	    add(bound2, rename_decls(decls, bound));
-	    body = rename(body, bound2);
 
 	    return expression_ref{E.head(),v};
 	}
