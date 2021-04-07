@@ -493,6 +493,17 @@ struct SimpleRHS: public Object
     SimpleRHS(const expression_ref& b, const expression_ref& ds): body(b), decls(ds) {}
 };
 
+struct LambdaExp: public Object
+{
+    std::vector<Pattern> args;
+    expression_ref body;
+
+    LambdaExp* clone() const {return new LambdaExp(*this);}
+    std::string print() const;
+
+    LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b): args(ps), body(b) {};
+};
+
 }
 
 namespace Hs = Haskell;

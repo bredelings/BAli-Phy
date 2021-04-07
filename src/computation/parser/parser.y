@@ -66,7 +66,7 @@
   Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat);
   expression_ref make_strict_pattern(const expression_ref& pat);
 
-  expression_ref make_lambda(const std::vector<expression_ref>& pats, const expression_ref& body);
+  Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
   expression_ref make_let(const expression_ref& binds, const expression_ref& body);
   expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
   expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
@@ -1088,7 +1088,7 @@ fexp: fexp aexp                  {$$ = $1; $$.push_back($2);}
 
 aexp: qvar "@" aexp              {$$ = make_as_pattern(make_id(@1,$1),$3);}
 |     "~" aexp                   {$$ = make_lazy_pattern($2);}
-|     "\\" apats1 "->" exp       {$$ = make_lambda($2,$4);}
+|     "\\" apats1 "->" exp       {$$ = make_lambdaexp($2,$4);}
 |     "let" binds "in" exp       {$$ = make_let($2,$4);}
 /* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
 |     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = make_if($2,$5,$8);}
@@ -1759,11 +1759,9 @@ expression_ref make_strict_pattern(const expression_ref& pat)
     return new expression(AST_node("StrictPattern"), {pat});
 }
 
-expression_ref make_lambda(const vector<expression_ref>& pats, const expression_ref& body)
+Haskell::LambdaExp make_lambdaexp(const vector<expression_ref>& pats, const expression_ref& body)
 {
-    auto e = pats;
-    e.push_back(body);
-    return new expression(AST_node("Lambda"), e);
+    return {pats, body};
 }
 
 expression_ref make_let(const expression_ref& binds, const expression_ref& body)

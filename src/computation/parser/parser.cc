@@ -2889,7 +2889,7 @@ namespace yy {
 
   case 236: // aexp: "\\" apats1 "->" exp
 #line 1091 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = make_lambda(yystack_[2].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ());}
+                                 {yylhs.value.as < expression_ref > () = make_lambdaexp(yystack_[2].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ());}
 #line 2894 "parser.cc"
     break;
 
@@ -6094,11 +6094,9 @@ expression_ref make_strict_pattern(const expression_ref& pat)
     return new expression(AST_node("StrictPattern"), {pat});
 }
 
-expression_ref make_lambda(const vector<expression_ref>& pats, const expression_ref& body)
+Haskell::LambdaExp make_lambdaexp(const vector<expression_ref>& pats, const expression_ref& body)
 {
-    auto e = pats;
-    e.push_back(body);
-    return new expression(AST_node("Lambda"), e);
+    return {pats, body};
 }
 
 expression_ref make_let(const expression_ref& binds, const expression_ref& body)

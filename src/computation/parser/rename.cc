@@ -372,6 +372,15 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
         return R;
     }
+    else if (E.is_a<Haskell::LambdaExp>())
+    {
+        auto L = E.as_<Haskell::LambdaExp>();
+        for(auto& arg: L.args)
+            arg = unapply(rename_infix(m, arg));
+        L.body = rename_infix(m, L.body);
+
+        return L;
+    }
 
     if (not E.is_expression()) return E;
 
@@ -385,11 +394,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 	/* lhs */
 	v[0] = unapply(v[0]);
 	assert(v[0].head().is_a<Located<Hs::ID>>() or v[0].is_a<Haskell::List>() or v[0].is_a<Haskell::Tuple>());
-    }
-    else if (is_AST(E,"Lambda"))
-    {
-	for(int i=0;i<v.size()-1;i++)
-	    v[i] = unapply(v[i]);
     }
     else if (is_apply(E.head()))
     {
@@ -487,7 +491,7 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
 
                 Located<Hs::ID> x({},"#0");
                 expression_ref body = AST_node("Case") + x + Haskell::Alts(alts);
-                body = AST_node("Lambda") + x + body;
+                body = Haskell::LambdaExp({x},body);
                 body = Haskell::SimpleRHS(body);
 
                 v.push_back(AST_node("Decl") + name + body);
@@ -1064,7 +1068,7 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
 
     // 4. Construct the lambda function
     expression_ref rec_tuple_pattern = unapply(rec_tuple); // This makes the tuple expression into a pattern by translating `@ (@ ((,) x))` into `(,) x y`
-    expression_ref rec_lambda = AST_node("Lambda") + (Haskell::LazyPattern(rec_tuple_pattern)) + rec_do;      // \ ~(b,c) -> do { ... }
+    expression_ref rec_lambda = Haskell::LambdaExp({Haskell::LazyPattern(rec_tuple_pattern)}, rec_do);      // \ ~(b,c) -> do { ... }
 
     // 5. Construct rec_tuple_pattern <- mfix rec_lambda
     expression_ref mfix = Located<Hs::ID>({},"mfix");
@@ -1243,6 +1247,20 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 
         return R;
     }
+    else if (E.is_a<Haskell::LambdaExp>())
+    {
+        auto L = E.as_<Haskell::LambdaExp>();
+
+        // 1. Rename patterns for lambda arguments
+        auto bound2 = bound;
+        for(auto& arg: L.args)
+            add(bound2, rename_pattern(arg));
+
+        // 2. Rename the body
+        L.body = rename(L. body, bound2);
+
+        return L;
+    }
 
     vector<expression_ref> v = E.copy_sub();
       
@@ -1270,19 +1288,6 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    for(int i=0;i<v.size()-1;i++)
 		add(bound2, rename_stmt(v[i], bound2));
 	    v.back() = rename(v.back(), bound2);
-
-	    return expression_ref{E.head(),v};
-	}
-	else if (n.type == "Lambda")
-	{
-	    // 1. Rename patterns for lambda arguments
-	    auto bound2 = bound;
-	    for(int i=0; i<v.size()-1; i++)
-		add(bound2, rename_pattern(v[i]));
-
-	    // 2. Rename the body
-	    auto& body = v.back();
-	    body = rename(body, bound2);
 
 	    return expression_ref{E.head(),v};
 	}

@@ -53,16 +53,26 @@ string WildcardPattern::print() const
     return "_";
 }
 
+string parenthesize_pattern(const Pattern& p)
+{
+    string result = p.print();
+    if (p.is_a<Located<ID>>() or p.is_a<Tuple>() or p.is_a<WildcardPattern>() or p.is_a<LazyPattern>() or p.is_a<AsPattern>() or p.is_a<List>())
+        ;
+    else
+        result = "(" + result + ")";
+    return result;
+}
+
 string LazyPattern::print() const
 {
     // FIXME -- do we need parentheses around the pattern, and if so, when?
-    return "~"+pattern.print();
+    return "~"+parenthesize_pattern(pattern);
 }
 
 string AsPattern::print() const
 {
     // FIXME -- do we need parentheses around the pattern, and if so, when?
-    return var.print()+"@"+pattern.print();
+    return var.print()+"@"+parenthesize_pattern(pattern);
 }
 
 string TupleType::print() const
@@ -218,6 +228,16 @@ std::pair<Type,std::vector<Type>> decompose_type_apps(Type t)
     }
     std::reverse(args.begin(), args.end());
     return {t,args};
+}
+
+string LambdaExp::print() const
+{
+    string result = "\\";
+    for(auto& arg: args)
+        result += parenthesize_pattern(arg) + " ";
+    result += "-> ";
+    result += body.print();
+    return result;
 }
     
 

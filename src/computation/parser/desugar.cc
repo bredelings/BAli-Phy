@@ -330,7 +330,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
             if (is_irrefutable_pat(p))
             {
-                expression_ref lambda = AST_node("Lambda") + p + do_stmts;
+                expression_ref lambda = Haskell::LambdaExp({p}, do_stmts);
                 result = {qop,e,lambda};
             }
             else
@@ -362,6 +362,18 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             std::abort();
 
         return desugar(result);
+    }
+    else if (E.is_a<Haskell::LambdaExp>())
+    {
+        auto L = E.as_<Haskell::LambdaExp>();
+
+        for(auto& arg: L.args)
+            arg = desugar(arg);
+
+        // 2. Desugar the body, binding vars mentioned in the lambda patterns.
+        L.body = desugar(L.body);
+
+        return def_function({{L.args, failable_expression(L.body)}}, error("lambda: pattern match failure"));
     }
 
     vector<expression_ref> v = E.copy_sub();
@@ -395,10 +407,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
 	    return expression_ref{E.head(),std::move(v)};
 	}
-	else if (n.type == "rhs")
-	    std::abort();
-	else if (n.type == "gdrhs")
-	    std::abort();
 	else if (n.type == "ListComprehension")
 	{
 	    expression_ref E2 = E;
@@ -432,7 +440,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 		    expression_ref l = PQ.exp;
 		    if (is_irrefutable_pat(p))
 		    {
-			expression_ref f  = AST_node("Lambda") + p + E2;
+			expression_ref f  = Haskell::LambdaExp({p}, E2);
 			E2 = {var("Data.List.concatMap"),f,l};
 		    }
 		    else
@@ -462,25 +470,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 		    std::abort();
 	    }
 	    return desugar(E2);
-	}
-	else if (n.type == "Lambda")
-	{
-	    // 1. Extract the lambda body
-	    expression_ref body = v.back();
-	    v.pop_back();
-
-            vector<expression_ref> args = v;
-            for(auto& arg: args)
-                arg = desugar(arg);
-
-	    // 2. Desugar the body, binding vars mentioned in the lambda patterns.
-	    body = desugar(body);
-
-	    return def_function({{args,failable_expression(body)}}, error("lambda: pattern match failure"));
-	}
-	else if (n.type == "Do")
-	{
-            std::abort();
 	}
 	else if (n.type == "If")
 	{
