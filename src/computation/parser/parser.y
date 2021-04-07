@@ -72,9 +72,9 @@
   expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
   Haskell::Do make_do(const Haskell::Stmts& stmts);
   Haskell::MDo make_mdo(const Haskell::Stmts& stmts);
-  expression_ref yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
+  Haskell::Tuple yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
 
-  expression_ref make_list(const std::vector<expression_ref>& items);
+  Haskell::List make_list(const std::vector<expression_ref>& items);
   Haskell::Alts make_alts(const std::vector<Haskell::Alt>& alts);
   Haskell::Alt yy_make_alt(const Haskell::Pattern& pat, const expression_ref& alt_rhs);
 
@@ -1789,12 +1789,12 @@ Haskell::MDo make_mdo(const Haskell::Stmts& stmts)
     return {stmts};
 }
 
-expression_ref yy_make_tuple(const vector<expression_ref>& elements)
+Haskell::Tuple yy_make_tuple(const vector<expression_ref>& elements)
 {
     return Haskell::Tuple(elements);
 }
 
-expression_ref make_list(const vector<expression_ref>& elements)
+Haskell::List make_list(const vector<expression_ref>& elements)
 {
     return Haskell::List(elements);
 }

@@ -6124,12 +6124,12 @@ Haskell::MDo make_mdo(const Haskell::Stmts& stmts)
     return {stmts};
 }
 
-expression_ref yy_make_tuple(const vector<expression_ref>& elements)
+Haskell::Tuple yy_make_tuple(const vector<expression_ref>& elements)
 {
     return Haskell::Tuple(elements);
 }
 
-expression_ref make_list(const vector<expression_ref>& elements)
+Haskell::List make_list(const vector<expression_ref>& elements)
 {
     return Haskell::List(elements);
 }
