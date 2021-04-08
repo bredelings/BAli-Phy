@@ -94,7 +94,7 @@ failable_expression desugar_state::desugar_gdrh(const Haskell::GuardedRHS& grhs)
 	else if (guard.is_a<Haskell::LetQual>())
 	{
             auto& LQ = guard.as_<Haskell::LetQual>();
-	    auto binds = desugar_decls(LQ.binds);
+	    auto binds = desugar_decls(unloc(LQ.binds));
 
 	    F.add_binding(binds);
 	}
@@ -355,14 +355,14 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
                 expression_ref body = {qop,e,ok};
 
-                result = Haskell::LetExp(decls, body);
+                result = Haskell::LetExp({noloc,decls}, {noloc,body});
             }
         }
         // do {let decls ; rest} = let decls in do {stmts}
         else if (first.is_a<Haskell::LetQual>())
         {
             auto& LQ = first.as_<Haskell::LetQual>();
-            result = Haskell::LetExp( LQ.binds, do_stmts);
+            result = Haskell::LetExp( LQ.binds, {noloc, do_stmts});
         }
         else
             std::abort();
@@ -385,8 +385,8 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         auto& L = E.as_<Haskell::LetExp>();
 
-        CDecls decls = desugar_decls(L.decls);
-        auto body = desugar(L.body);
+        CDecls decls = desugar_decls(unloc(L.decls));
+        auto body = desugar(unloc(L.body));
 
         // construct the new let expression.
         return let_expression(decls, body);
@@ -474,13 +474,13 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 			expression_ref decls = AST_node("Decls") + decl1 + decl2;
 			expression_ref body = {var("Data.List.concatMap"),ok,l};
 
-			E2 = Haskell::LetExp( decls, body );
+			E2 = Haskell::LetExp( {noloc, decls}, {noloc, body} );
 		    }
 		}
 		else if (B.is_a<Haskell::LetQual>())
                 {
                     auto& LQ = B.as_<Haskell::LetQual>();
-		    E2 = Haskell::LetExp( LQ.binds, E2 );
+		    E2 = Haskell::LetExp( LQ.binds, {noloc, E2} );
                 }
 		else
 		    std::abort();

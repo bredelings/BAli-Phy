@@ -297,7 +297,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     else if (E.is_a<Haskell::LetQual>())
     {
         auto LQ = E.as_<Haskell::LetQual>();
-        LQ.binds = rename_infix(m, LQ.binds);
+        unloc(LQ.binds) = rename_infix(m, unloc(LQ.binds));
         return LQ;
     }
     else if (E.is_a<Haskell::AsPattern>())
@@ -397,8 +397,8 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         auto L = E.as_<Haskell::LetExp>();
 
-        L.decls = rename_infix(m, L.decls);
-        L.body = rename_infix(m, L.body);
+        unloc(L.decls) = rename_infix(m, unloc(L.decls));
+        unloc(L.body)  = rename_infix(m, unloc(L.body));
 
         return L;
     }
@@ -1046,7 +1046,7 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt
     else if (stmt.is_a<Haskell::LetQual>())
     {
         auto& LQ = stmt.as_<Haskell::LetQual>();
-        return find_bound_vars_in_decls(LQ.binds);
+        return find_bound_vars_in_decls(unloc(LQ.binds));
     }
     else if (stmt.is_a<Haskell::RecStmt>())
         throw myexception()<<"find_bound_vars_in_stmt: should not have a rec stmt inside a rec stmt!";
@@ -1131,7 +1131,7 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
     else if (stmt.is_a<Haskell::LetQual>())
     {
         auto LQ = stmt.as_<Haskell::LetQual>();
-	auto bound_vars = rename_decls(LQ.binds, bound);
+	auto bound_vars = rename_decls(unloc(LQ.binds), bound);
 	stmt = LQ;
 	return bound_vars;
     }
@@ -1299,8 +1299,8 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         auto L = E.as_<Haskell::LetExp>();
 
         auto bound2 = bound;
-        add(bound2, rename_decls(L.decls, bound));
-        L. body = rename(L.body, bound2);
+        add(bound2, rename_decls(unloc(L.decls), bound));
+        unloc(L.body) = rename(unloc(L.body), bound2);
 
         return L;
     }

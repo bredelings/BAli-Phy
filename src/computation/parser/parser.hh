@@ -105,7 +105,7 @@
   Haskell::StrictPattern make_strict_pattern(const expression_ref& pat);
 
   Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
-  Haskell::LetExp make_let(const expression_ref& binds, const expression_ref& body);
+  Haskell::LetExp make_let(const Located<expression_ref>& binds, const Located<expression_ref>& body);
   expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
   expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
   Haskell::Do make_do(const Haskell::Stmts& stmts);

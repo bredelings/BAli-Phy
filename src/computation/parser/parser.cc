@@ -2895,7 +2895,7 @@ namespace yy {
 
   case 237: // aexp: "let" binds "in" exp
 #line 1092 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = make_let(yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
+                                 {yylhs.value.as < expression_ref > () = make_let({yystack_[2].location,yystack_[2].value.as < expression_ref > ()},{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 2900 "parser.cc"
     break;
 
@@ -3297,7 +3297,7 @@ namespace yy {
 
   case 304: // qual: "let" binds
 #line 1244 "parser.y"
-                        {yylhs.value.as < expression_ref > () = Haskell::LetQual(yystack_[0].value.as < expression_ref > ());}
+                        {yylhs.value.as < expression_ref > () = Haskell::LetQual({yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 3302 "parser.cc"
     break;
 
@@ -6099,7 +6099,7 @@ Haskell::LambdaExp make_lambdaexp(const vector<expression_ref>& pats, const expr
     return { pats, body };
 }
 
-Haskell::LetExp make_let(const expression_ref& binds, const expression_ref& body)
+Haskell::LetExp make_let(const Located<expression_ref>& binds, const Located<expression_ref>& body)
 {
     return { binds, body };
 }

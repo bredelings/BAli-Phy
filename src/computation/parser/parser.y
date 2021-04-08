@@ -67,7 +67,7 @@
   Haskell::StrictPattern make_strict_pattern(const expression_ref& pat);
 
   Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
-  Haskell::LetExp make_let(const expression_ref& binds, const expression_ref& body);
+  Haskell::LetExp make_let(const Located<expression_ref>& binds, const Located<expression_ref>& body);
   expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
   expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
   Haskell::Do make_do(const Haskell::Stmts& stmts);
@@ -1089,7 +1089,7 @@ fexp: fexp aexp                  {$$ = $1; $$.push_back($2);}
 aexp: qvar "@" aexp              {$$ = make_as_pattern(make_id(@1,$1),$3);}
 |     "~" aexp                   {$$ = make_lazy_pattern($2);}
 |     "\\" apats1 "->" exp       {$$ = make_lambdaexp($2,$4);}
-|     "let" binds "in" exp       {$$ = make_let($2,$4);}
+|     "let" binds "in" exp       {$$ = make_let({@2,$2},{@4,$4});}
 /* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
 |     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = make_if($2,$5,$8);}
 /* |     "if" ifgdpats              {} MultiWayIf extension not currently handled */
@@ -1241,7 +1241,7 @@ stmt: qual              {$$ = $1;}
 
 qual: bindpat "<-" exp  {$$ = Haskell::PatQual($1,$3);}
 |     exp               {$$ = Haskell::SimpleQual($1);}
-|     "let" binds       {$$ = Haskell::LetQual($2);}
+|     "let" binds       {$$ = Haskell::LetQual({@2,$2});}
 
 
 /* ------------- Record Field Update/Construction ---------------- */
@@ -1764,7 +1764,7 @@ Haskell::LambdaExp make_lambdaexp(const vector<expression_ref>& pats, const expr
     return { pats, body };
 }
 
-Haskell::LetExp make_let(const expression_ref& binds, const expression_ref& body)
+Haskell::LetExp make_let(const Located<expression_ref>& binds, const Located<expression_ref>& body)
 {
     return { binds, body };
 }

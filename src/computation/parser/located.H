@@ -43,6 +43,8 @@ inline yy::location merge_loc(const yy::location& l1, const yy::location& l2)
     return {l1.begin, l2.end};
 }
 
+inline std::nullopt_t noloc = std::nullopt;
+
 template <typename T>
 const T& unloc(const Located<T>& l) {return l.obj;}
 

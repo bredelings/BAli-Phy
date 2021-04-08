@@ -251,10 +251,10 @@ struct Stmts: public Object
 
 struct LetQual: public Object
 {
-    expression_ref binds;
+    Located<expression_ref> binds;
     LetQual* clone() const { return new LetQual(*this);}
     std::string print()  const;
-    LetQual(const expression_ref& b): binds(b) {}
+    LetQual(const Located<expression_ref>& b): binds(b) {}
 };
 
 struct SimpleQual: public Object
@@ -515,13 +515,13 @@ struct LambdaExp: public Object
 
 struct LetExp: public Object
 {
-    expression_ref decls;
-    expression_ref body;
+    Located<expression_ref> decls;
+    Located<expression_ref> body;
 
     LetExp* clone() const {return new LetExp(*this);}
     std::string print() const;
 
-    LetExp(const expression_ref& d, const expression_ref& b): decls(d), body(b) {};
+    LetExp(const Located<expression_ref>& d, const Located<expression_ref>& b): decls(d), body(b) {};
 };
 
 
