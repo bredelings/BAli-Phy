@@ -260,8 +260,16 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     if (E.is_a<Haskell::ClassDecl>())
     {
         auto C = E.as_<Haskell::ClassDecl>();
-        unloc(C.decls) = rename_infix(m, unloc(C.decls));
+        if (C.decls)
+            unloc(*C.decls) = rename_infix(m, unloc(*C.decls));
         return C;
+    }
+    else if (E.is_a<Haskell::InstanceDecl>())
+    {
+        auto I = E.as_<Haskell::InstanceDecl>();
+        if (I.decls)
+            unloc(*I.decls) = rename_infix(m, unloc(*I.decls));
+        return I;
     }
     else if (E.is_a<Haskell::List>())
     {
@@ -316,12 +324,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         SP.pattern = rename_infix(m, SP.pattern);
         return SP;
     }
-    else if (E.is_a<Haskell::InstanceDecl>())
-    {
-        auto I = E.as_<Haskell::InstanceDecl>();
-        unloc(I.decls) = rename_infix(m, unloc(I.decls));
-        return I;
-    }
     else if (E.is_a<Haskell::RecStmt>())
     {
         auto R = E.as_<Haskell::RecStmt>();
@@ -363,8 +365,8 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         auto R = E.as_<Haskell::SimpleRHS>();
         unloc(R.body) = rename_infix(m, unloc(R.body));
-        if (unloc(R.decls))
-            unloc(R.decls) = rename_infix(m, unloc(R.decls));
+        if (R.decls)
+            unloc(*R.decls) = rename_infix(m, unloc(*R.decls));
         return R;
     }
     else if (E.is_a<Haskell::MultiGuardedRHS>())
@@ -379,8 +381,8 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             guarded_rhs.body = rename_infix(m, guarded_rhs.body);
         }
 
-        if (unloc(R.decls))
-            unloc(R.decls) = rename_infix(m, unloc(R.decls));
+        if (R.decls)
+            unloc(*R.decls) = rename_infix(m, unloc(*R.decls));
 
         return R;
     }
@@ -972,31 +974,37 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
-            auto class_decls = unloc(C.decls);
-            assert(is_AST(class_decls, "Decls"));
-            auto cdecls = class_decls.sub();
-            for(auto& cdecl: cdecls)
-                if (is_AST(cdecl,"Decl"))
-                    add(bound_names,rename_decl_head(cdecl, true));
-                else if (is_AST(cdecl,"Decl:sigtype"))
-                {
-                    auto id = cdecl.sub()[0];
-                    auto type = cdecl.sub()[1];
-                    assert(id.is_a<Located<Hs::ID>>());
-                    add(bound_names, rename_pattern(id, true));
-                    cdecl = expression_ref(AST_node("Decl:sigtype"),{id,type});
-                }
-            unloc(C.decls) = expression_ref(AST_node("Decls"),cdecls);
+            if (C.decls)
+            {
+                auto class_decls = unloc(*C.decls);
+                assert(is_AST(class_decls, "Decls"));
+                auto cdecls = class_decls.sub();
+                for(auto& cdecl: cdecls)
+                    if (is_AST(cdecl,"Decl"))
+                        add(bound_names,rename_decl_head(cdecl, true));
+                    else if (is_AST(cdecl,"Decl:sigtype"))
+                    {
+                        auto id = cdecl.sub()[0];
+                        auto type = cdecl.sub()[1];
+                        assert(id.is_a<Located<Hs::ID>>());
+                        add(bound_names, rename_pattern(id, true));
+                        cdecl = expression_ref(AST_node("Decl:sigtype"),{id,type});
+                    }
+                unloc(*C.decls) = expression_ref(AST_node("Decls"),cdecls);
+            }
             decl = C;
         }
         if (decl.is_a<Haskell::InstanceDecl>())
         {
             auto I = decl.as_<Haskell::InstanceDecl>();
-            auto idecls = unloc(I.decls).sub();
-            for(auto& idecl: idecls)
-                if (is_AST(idecl,"Decl"))
-                    rename_decl_head(idecl, true);
-            unloc(I.decls) = expression_ref(AST_node("Decls"),idecls);
+            if (I.decls)
+            {
+                auto idecls = unloc(*I.decls).sub();
+                for(auto& idecl: idecls)
+                    if (is_AST(idecl,"Decl"))
+                        rename_decl_head(idecl, true);
+                unloc(*I.decls) = expression_ref(AST_node("Decls"),idecls);
+            }
             decl = I;
         }
     }
@@ -1010,22 +1018,28 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
-            auto class_decls = unloc(C.decls);
-            auto cdecls = class_decls.sub();
-            for(auto& cdecl: cdecls)
-                if (is_AST(cdecl,"Decl"))
-                    cdecl = rename_decl(cdecl, bound2);
-            unloc(C.decls) = expression_ref(AST_node("Decls"),cdecls);
+            if (C.decls)
+            {
+                auto class_decls = unloc(*C.decls);
+                auto cdecls = class_decls.sub();
+                for(auto& cdecl: cdecls)
+                    if (is_AST(cdecl,"Decl"))
+                        cdecl = rename_decl(cdecl, bound2);
+                unloc(*C.decls) = expression_ref(AST_node("Decls"),cdecls);
+            }
             decl = C;
         }
         if (decl.is_a<Haskell::InstanceDecl>())
         {
             auto I = decl.as_<Haskell::InstanceDecl>();
-            auto idecls = unloc(I.decls).sub();
-            for(auto& idecl: idecls)
-                if (is_AST(idecl,"Decl"))
-                    idecl = rename_decl(idecl,bound2);
-            unloc(I.decls) = expression_ref(AST_node("Decls"),idecls);
+            if (I.decls)
+            {
+                auto idecls = unloc(*I.decls).sub();
+                for(auto& idecl: idecls)
+                    if (is_AST(idecl,"Decl"))
+                        idecl = rename_decl(idecl,bound2);
+                unloc(*I.decls) = expression_ref(AST_node("Decls"),idecls);
+            }
             decl = I;
         }
     }
@@ -1255,8 +1269,8 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         auto bound2 = bound;
 
         auto R = E.as_<Haskell::SimpleRHS>();
-        if (unloc(R.decls))
-            add(bound2, rename_decls(unloc(R.decls), bound));
+        if (R.decls)
+            add(bound2, rename_decls(unloc(*R.decls), bound));
         unloc(R.body) = rename(unloc(R.body), bound2);
 
         return R;
@@ -1266,8 +1280,8 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         auto bound2 = bound;
 
         auto R = E.as_<Haskell::MultiGuardedRHS>();
-        if (unloc(R.decls))
-            add(bound2, rename_decls(unloc(R.decls), bound));
+        if (R.decls)
+            add(bound2, rename_decls(unloc(*R.decls), bound));
 
         for(auto& guarded_rhs: R.guarded_rhss)
         {

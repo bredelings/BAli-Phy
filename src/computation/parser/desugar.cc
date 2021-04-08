@@ -219,8 +219,8 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
 
 	auto rhs = failable_expression(desugar(unloc(R.body)));
 
-	if (unloc(R.decls))
-	    rhs.add_binding(desugar_decls(unloc(R.decls)));
+	if (R.decls)
+	    rhs.add_binding(desugar_decls(unloc(*R.decls)));
 
 	return rhs;
     }
@@ -233,8 +233,8 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
 
 	auto rhs = fold(gdrhs);
 
-	if (unloc(R.decls))
-	    rhs.add_binding(desugar_decls(unloc(R.decls)));
+	if (R.decls)
+	    rhs.add_binding(desugar_decls(unloc(*R.decls)));
 
 	return rhs;
     }
@@ -253,8 +253,16 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     if (E.is_a<Haskell::ClassDecl>())
     {
         auto C = E.as_<Haskell::ClassDecl>();
-        unloc(C.decls) = desugar(unloc(C.decls));
+        if (C.decls)
+            unloc(*C.decls) = desugar(unloc(*C.decls));
         return C;
+    }
+    else if (E.is_a<Haskell::InstanceDecl>())
+    {
+        auto I = E.as_<Haskell::InstanceDecl>();
+        if (I.decls)
+            unloc(*I.decls) = desugar(unloc(*I.decls));
+        return I;
     }
     else if (E.is_a<Haskell::List>())
     {
@@ -289,12 +297,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         auto SP = E.as_<Haskell::StrictPattern>();
         SP.pattern = desugar(SP.pattern);
         return SP;
-    }
-    else if (E.is_a<Haskell::InstanceDecl>())
-    {
-        auto I = E.as_<Haskell::InstanceDecl>();
-        unloc(I.decls) = desugar(unloc(I.decls));
-        return I;
     }
     else if (E.is_a<Haskell::Do>())
     {

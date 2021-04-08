@@ -71,11 +71,11 @@
 
   Haskell::Type make_kind(const Haskell::Type& kind);
   Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, const Haskell::Type& type);
-  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls);
+  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<expression_ref>>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
                                                   const expression_ref& header, const std::vector<expression_ref>& constrs);
-  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const Located<expression_ref>& decls);
+  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<expression_ref>>& decls);
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
@@ -91,8 +91,8 @@
   expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t);
   expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
-  Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const Located<expression_ref>& wherebinds);
-  Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const Located<expression_ref>& wherebinds);
+  Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const std::optional<Located<expression_ref>>& wherebinds);
+  Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const std::optional<Located<expression_ref>>& wherebinds);
   Haskell::GuardedRHS make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& wherebinds);
 
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
@@ -501,7 +501,6 @@ namespace yy {
 
       // decllist
       // binds
-      // wherebinds
       char dummy10[sizeof (Located<expression_ref>)];
 
       // maybe_src
@@ -582,15 +581,18 @@ namespace yy {
       // commas
       char dummy16[sizeof (int)];
 
+      // wherebinds
+      char dummy17[sizeof (std::optional<Located<expression_ref>>)];
+
       // prec
-      char dummy17[sizeof (std::optional<int>)];
+      char dummy18[sizeof (std::optional<int>)];
 
       // maybe_pkg
       // maybeas
-      char dummy18[sizeof (std::optional<std::string>)];
+      char dummy19[sizeof (std::optional<std::string>)];
 
       // tycl_hdr
-      char dummy19[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy20[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // "VARID"
       // "CONID"
@@ -647,19 +649,19 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy20[sizeof (std::string)];
+      char dummy21[sizeof (std::string)];
 
       // alts
       // alts1
-      char dummy21[sizeof (std::vector<Haskell::Alt>)];
+      char dummy22[sizeof (std::vector<Haskell::Alt>)];
 
       // fielddecls
       // fielddecls1
-      char dummy22[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy23[sizeof (std::vector<Haskell::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy23[sizeof (std::vector<Haskell::GuardedRHS>)];
+      char dummy24[sizeof (std::vector<Haskell::GuardedRHS>)];
 
       // exportlist
       // exportlist1
@@ -688,11 +690,11 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy24[sizeof (std::vector<expression_ref>)];
+      char dummy25[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy25[sizeof (std::vector<std::string>)];
+      char dummy26[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1295,7 +1297,6 @@ namespace yy {
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-      case symbol_kind::S_wherebinds: // wherebinds
         value.move< Located<expression_ref> > (std::move (that.value));
         break;
 
@@ -1381,6 +1382,10 @@ namespace yy {
       case symbol_kind::S_PRINTWORD: // "PRIMWORD"
       case symbol_kind::S_commas: // commas
         value.move< int > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_wherebinds: // wherebinds
+        value.move< std::optional<Located<expression_ref>> > (std::move (that.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -1752,6 +1757,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::optional<Located<expression_ref>>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::optional<Located<expression_ref>>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::optional<int>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -1940,7 +1959,6 @@ switch (yykind)
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-      case symbol_kind::S_wherebinds: // wherebinds
         value.template destroy< Located<expression_ref> > ();
         break;
 
@@ -2026,6 +2044,10 @@ switch (yykind)
       case symbol_kind::S_PRINTWORD: // "PRIMWORD"
       case symbol_kind::S_commas: // commas
         value.template destroy< int > ();
+        break;
+
+      case symbol_kind::S_wherebinds: // wherebinds
+        value.template destroy< std::optional<Located<expression_ref>> > ();
         break;
 
       case symbol_kind::S_prec: // prec
@@ -4858,7 +4880,6 @@ switch (yykind)
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-      case symbol_kind::S_wherebinds: // wherebinds
         value.copy< Located<expression_ref> > (YY_MOVE (that.value));
         break;
 
@@ -4944,6 +4965,10 @@ switch (yykind)
       case symbol_kind::S_PRINTWORD: // "PRIMWORD"
       case symbol_kind::S_commas: // commas
         value.copy< int > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_wherebinds: // wherebinds
+        value.copy< std::optional<Located<expression_ref>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -5137,7 +5162,6 @@ switch (yykind)
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-      case symbol_kind::S_wherebinds: // wherebinds
         value.move< Located<expression_ref> > (YY_MOVE (s.value));
         break;
 
@@ -5223,6 +5247,10 @@ switch (yykind)
       case symbol_kind::S_PRINTWORD: // "PRIMWORD"
       case symbol_kind::S_commas: // commas
         value.move< int > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_wherebinds: // wherebinds
+        value.move< std::optional<Located<expression_ref>> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -5408,7 +5436,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5412 "parser.hh"
+#line 5440 "parser.hh"
 
 
 

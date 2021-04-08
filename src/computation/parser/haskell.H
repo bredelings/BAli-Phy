@@ -105,7 +105,7 @@ struct ClassDecl: public Object
     std::vector<expression_ref> type_vars;
     Context context;
 
-    Located<expression_ref> decls;
+    std::optional<Located<expression_ref>> decls;
     // std::vector<Located<expression_ref>> signatures;
     // std::vector<Located<expression_ref>> default_decls;
 
@@ -113,7 +113,7 @@ struct ClassDecl: public Object
     ClassDecl(const std::string& s,
               const std::vector<expression_ref>& as,
               const Context& ct,
-              const Located<expression_ref>& ds)
+              const std::optional<Located<expression_ref>>& ds)
         :name(s),
          type_vars(as),
          context(ct),
@@ -127,12 +127,12 @@ struct InstanceDecl: public Object
 
     // This should be something like Eq a => Eq [a]
     Located<expression_ref> type;
-    Located<expression_ref> decls;
+    std::optional<Located<expression_ref>> decls;
 
     InstanceDecl* clone() const { return new InstanceDecl(*this);}
 
     InstanceDecl(const Located<expression_ref>& t,
-                 const Located<expression_ref>& d)
+                 const std::optional<Located<expression_ref>>& d)
         :type(t),
          decls(d)
         {}
@@ -479,26 +479,26 @@ struct GuardedRHS
 struct MultiGuardedRHS: public Object
 {
     std::vector<GuardedRHS> guarded_rhss;
-    Located<expression_ref> decls;
+    std::optional<Located<expression_ref>> decls;
 
     MultiGuardedRHS* clone() const { return new MultiGuardedRHS(*this);}
     std::string print() const;
 
-    MultiGuardedRHS(const std::vector<GuardedRHS>& v):guarded_rhss(v), decls(noloc,{}) {}
-    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const Located<expression_ref>& ds):guarded_rhss(v), decls(ds) {}
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v):guarded_rhss(v) {}
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const std::optional<Located<expression_ref>>& ds):guarded_rhss(v), decls(ds) {}
 };
 
 
 struct SimpleRHS: public Object
 {
     Located<expression_ref> body;
-    Located<expression_ref> decls;
+    std::optional<Located<expression_ref>> decls;
 
     SimpleRHS* clone() const { return new SimpleRHS(*this);}
     std::string print() const;
 
-    SimpleRHS(const Located<expression_ref>& b): body(b), decls({noloc,{}}) {}
-    SimpleRHS(const Located<expression_ref>& b, const Located<expression_ref>& ds): body(b), decls(ds) {}
+    SimpleRHS(const Located<expression_ref>& b): body(b) {}
+    SimpleRHS(const Located<expression_ref>& b, const std::optional<Located<expression_ref>>& ds): body(b), decls(ds) {}
 };
 
 struct LambdaExp: public Object

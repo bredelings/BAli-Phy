@@ -33,11 +33,11 @@
 
   Haskell::Type make_kind(const Haskell::Type& kind);
   Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, const Haskell::Type& type);
-  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls);
+  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<expression_ref>>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
                                                   const expression_ref& header, const std::vector<expression_ref>& constrs);
-  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const Located<expression_ref>& decls);
+  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<expression_ref>>& decls);
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
@@ -53,8 +53,8 @@
   expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t);
   expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
-  Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const Located<expression_ref>& wherebinds);
-  Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const Located<expression_ref>& wherebinds);
+  Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const std::optional<Located<expression_ref>>& wherebinds);
+  Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const std::optional<Located<expression_ref>>& wherebinds);
   Haskell::GuardedRHS make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& wherebinds);
 
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
@@ -325,7 +325,7 @@
 %type <std::vector<expression_ref>> decls
 %type <Located<expression_ref>> decllist
 %type <Located<expression_ref>> binds
-%type <Located<expression_ref>> wherebinds
+%type <std::optional<Located<expression_ref>>> wherebinds
  /*
 
 %type <void> strings
@@ -1564,11 +1564,6 @@ Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, 
     return {field_names, type};
 }
 
-Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const Located<expression_ref>& decls)
-{
-    return {type, decls};
-}
-
 Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type)
 {
     auto [name, type_args] = check_type_or_class_header(lhs_type);
@@ -1584,7 +1579,12 @@ Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_
     return {d_or_n, name, type_args, context, constrs};
 }
 
-Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const Located<expression_ref>& decls)
+Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const optional<Located<expression_ref>>& decls)
+{
+    return {type, decls};
+}
+
+Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const optional<Located<expression_ref>>& decls)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     return {name,type_args,context,decls};
@@ -1714,7 +1714,7 @@ expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& t
     return new expression(AST_node("typed_exp"),{exp,type});
 }
 
-Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const Located<expression_ref>& wherebinds)
+Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const optional<Located<expression_ref>>& wherebinds)
 {
     return {exp, wherebinds};
 }
@@ -1816,7 +1816,7 @@ Haskell::Alt yy_make_alt(const expression_ref& pat, const expression_ref& alt_rh
     return {pat, alt_rhs};
 }
 
-Haskell::MultiGuardedRHS make_gdrhs(const vector<Haskell::GuardedRHS>& guards, const Located<expression_ref>& wherebinds)
+Haskell::MultiGuardedRHS make_gdrhs(const vector<Haskell::GuardedRHS>& guards, const optional<Located<expression_ref>>& wherebinds)
 {
     return {guards, wherebinds};
 }

@@ -1384,7 +1384,11 @@ void Module::declare_fixities()
 
     for(const auto& topdecl: topdecls.sub())
         if (topdecl.is_a<Haskell::ClassDecl>())
-            declare_fixities(unloc(topdecl.as_<Haskell::ClassDecl>().decls));
+        {
+            auto& C = topdecl.as_<Haskell::ClassDecl>();
+            if (C.decls)
+                declare_fixities(unloc(*C.decls));
+        }
 }
 
 void Module::add_local_symbols()
