@@ -104,6 +104,7 @@
   Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat);
   Haskell::StrictPattern make_strict_pattern(const expression_ref& pat);
 
+  Located<expression_ref> make_decls(const yy::location& loc, std::vector<expression_ref>& decls);
   Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
   Haskell::LetExp make_let(const Located<expression_ref>& binds, const Located<expression_ref>& body);
   expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
@@ -120,7 +121,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 124 "parser.hh"
+#line 125 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -254,7 +255,7 @@
 #endif
 
 namespace yy {
-#line 258 "parser.hh"
+#line 259 "parser.hh"
 
 
 
@@ -498,18 +499,23 @@ namespace yy {
       // strictness
       char dummy9[sizeof (Haskell::StrictLazy)];
 
+      // decllist
+      // binds
+      // wherebinds
+      char dummy10[sizeof (Located<expression_ref>)];
+
       // maybe_src
       // maybe_safe
       // optqualified
-      char dummy10[sizeof (bool)];
+      char dummy11[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy11[sizeof (char)];
+      char dummy12[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy12[sizeof (double)];
+      char dummy13[sizeof (double)];
 
       // module
       // body
@@ -528,9 +534,6 @@ namespace yy {
       // cl_decl
       // ty_decl
       // inst_decl
-      // decllist
-      // binds
-      // wherebinds
       // opt_sig
       // opt_tyconsig
       // sigtype
@@ -568,26 +571,26 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy13[sizeof (expression_ref)];
+      char dummy14[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy14[sizeof (float)];
+      char dummy15[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy15[sizeof (int)];
+      char dummy16[sizeof (int)];
 
       // prec
-      char dummy16[sizeof (std::optional<int>)];
+      char dummy17[sizeof (std::optional<int>)];
 
       // maybe_pkg
       // maybeas
-      char dummy17[sizeof (std::optional<std::string>)];
+      char dummy18[sizeof (std::optional<std::string>)];
 
       // tycl_hdr
-      char dummy18[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy19[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // "VARID"
       // "CONID"
@@ -644,19 +647,19 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy19[sizeof (std::string)];
+      char dummy20[sizeof (std::string)];
 
       // alts
       // alts1
-      char dummy20[sizeof (std::vector<Haskell::Alt>)];
+      char dummy21[sizeof (std::vector<Haskell::Alt>)];
 
       // fielddecls
       // fielddecls1
-      char dummy21[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy22[sizeof (std::vector<Haskell::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy22[sizeof (std::vector<Haskell::GuardedRHS>)];
+      char dummy23[sizeof (std::vector<Haskell::GuardedRHS>)];
 
       // exportlist
       // exportlist1
@@ -685,11 +688,11 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy23[sizeof (std::vector<expression_ref>)];
+      char dummy24[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy24[sizeof (std::vector<std::string>)];
+      char dummy25[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1290,6 +1293,12 @@ namespace yy {
         value.move< Haskell::StrictLazy > (std::move (that.value));
         break;
 
+      case symbol_kind::S_decllist: // decllist
+      case symbol_kind::S_binds: // binds
+      case symbol_kind::S_wherebinds: // wherebinds
+        value.move< Located<expression_ref> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_maybe_src: // maybe_src
       case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
@@ -1323,9 +1332,6 @@ namespace yy {
       case symbol_kind::S_cl_decl: // cl_decl
       case symbol_kind::S_ty_decl: // ty_decl
       case symbol_kind::S_inst_decl: // inst_decl
-      case symbol_kind::S_decllist: // decllist
-      case symbol_kind::S_binds: // binds
-      case symbol_kind::S_wherebinds: // wherebinds
       case symbol_kind::S_opt_sig: // opt_sig
       case symbol_kind::S_opt_tyconsig: // opt_tyconsig
       case symbol_kind::S_sigtype: // sigtype
@@ -1648,6 +1654,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Located<expression_ref>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Located<expression_ref>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, bool&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -1918,6 +1938,12 @@ switch (yykind)
         value.template destroy< Haskell::StrictLazy > ();
         break;
 
+      case symbol_kind::S_decllist: // decllist
+      case symbol_kind::S_binds: // binds
+      case symbol_kind::S_wherebinds: // wherebinds
+        value.template destroy< Located<expression_ref> > ();
+        break;
+
       case symbol_kind::S_maybe_src: // maybe_src
       case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
@@ -1951,9 +1977,6 @@ switch (yykind)
       case symbol_kind::S_cl_decl: // cl_decl
       case symbol_kind::S_ty_decl: // ty_decl
       case symbol_kind::S_inst_decl: // inst_decl
-      case symbol_kind::S_decllist: // decllist
-      case symbol_kind::S_binds: // binds
-      case symbol_kind::S_wherebinds: // wherebinds
       case symbol_kind::S_opt_sig: // opt_sig
       case symbol_kind::S_opt_tyconsig: // opt_tyconsig
       case symbol_kind::S_sigtype: // sigtype
@@ -4833,6 +4856,12 @@ switch (yykind)
         value.copy< Haskell::StrictLazy > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_decllist: // decllist
+      case symbol_kind::S_binds: // binds
+      case symbol_kind::S_wherebinds: // wherebinds
+        value.copy< Located<expression_ref> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_maybe_src: // maybe_src
       case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
@@ -4866,9 +4895,6 @@ switch (yykind)
       case symbol_kind::S_cl_decl: // cl_decl
       case symbol_kind::S_ty_decl: // ty_decl
       case symbol_kind::S_inst_decl: // inst_decl
-      case symbol_kind::S_decllist: // decllist
-      case symbol_kind::S_binds: // binds
-      case symbol_kind::S_wherebinds: // wherebinds
       case symbol_kind::S_opt_sig: // opt_sig
       case symbol_kind::S_opt_tyconsig: // opt_tyconsig
       case symbol_kind::S_sigtype: // sigtype
@@ -5109,6 +5135,12 @@ switch (yykind)
         value.move< Haskell::StrictLazy > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_decllist: // decllist
+      case symbol_kind::S_binds: // binds
+      case symbol_kind::S_wherebinds: // wherebinds
+        value.move< Located<expression_ref> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_maybe_src: // maybe_src
       case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
@@ -5142,9 +5174,6 @@ switch (yykind)
       case symbol_kind::S_cl_decl: // cl_decl
       case symbol_kind::S_ty_decl: // ty_decl
       case symbol_kind::S_inst_decl: // inst_decl
-      case symbol_kind::S_decllist: // decllist
-      case symbol_kind::S_binds: // binds
-      case symbol_kind::S_wherebinds: // wherebinds
       case symbol_kind::S_opt_sig: // opt_sig
       case symbol_kind::S_opt_tyconsig: // opt_tyconsig
       case symbol_kind::S_sigtype: // sigtype
@@ -5379,7 +5408,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5383 "parser.hh"
+#line 5412 "parser.hh"
 
 
 

@@ -66,6 +66,7 @@
   Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat);
   Haskell::StrictPattern make_strict_pattern(const expression_ref& pat);
 
+  Located<expression_ref> make_decls(const yy::location& loc, std::vector<expression_ref>& decls);
   Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
   Haskell::LetExp make_let(const Located<expression_ref>& binds, const Located<expression_ref>& body);
   expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
@@ -322,9 +323,9 @@
 */
 
 %type <std::vector<expression_ref>> decls
-%type <expression_ref> decllist
-%type <expression_ref> binds
-%type <expression_ref> wherebinds
+%type <Located<expression_ref>> decllist
+%type <Located<expression_ref>> binds
+%type <Located<expression_ref>> wherebinds
  /*
 
 %type <void> strings
@@ -676,7 +677,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        "builtin" varop INTEGER STRING STRING {$$ = make_builtin_expr($2,$3,$4,$5);}
 |        "builtin" varop INTEGER STRING        {$$ = make_builtin_expr($2,$3,$4);}
 
-cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2.first,$2.second,{@3,$3});}
+cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2.first,$2.second,$3);}
 
 ty_decl: "type" type "=" ctypedoc                                          {$$ = make_type_synonym({@2,$2},{@4,$4});}
 |        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1,$3.first,$3.second,$4);}
@@ -685,7 +686,7 @@ ty_decl: "type" type "=" ctypedoc                                          {$$ =
 /* |        "data" "family" type opt_datafam_kind_sig */
 
 // inst_type -> sigtype -> ctype --maybe--> context => type
-inst_decl: "instance" overlap_pragma inst_type wherebinds                  {$$ = make_instance_decl({@3,$3},{@4,$4});}
+inst_decl: "instance" overlap_pragma inst_type wherebinds                  {$$ = make_instance_decl({@3,$3},$4);}
 /* |          "type" "instance" ty_fam_inst_eqn */
 /* |          data_or_newtype "instance" capi_ctype tycl_hdr constrs
    |          data_or_newtype "instance" capi_ctype opt_kind_sig */
@@ -807,12 +808,12 @@ decls: decls ";" decl   {$$ = $1; $$.push_back($3);}
 |      decl             {$$.push_back($1);}
 |      %empty           {}
 
-decllist: "{" decls "}"          {$$ = expression_ref{AST_node("Decls"),$2};}
-|         VOCURLY decls close    {$$ = expression_ref{AST_node("Decls"),$2};}
+decllist: "{" decls "}"          {$$ = make_decls(@2,$2);}  // location here should include { }?
+|         VOCURLY decls close    {$$ = make_decls(@2,$2);}
 
 binds: decllist                  {$$ = $1;}
 
-wherebinds: "where" binds        {$$ = $2;}
+wherebinds: "where" binds        {$$ = $2;}                   // location here should include "where"?
 |           %empty               {}
 
 
@@ -1025,8 +1026,8 @@ decl: decl_no_th              {$$ = $1;}
 /*  | splice_exp */
 
 // rhs is like altrhs but with = instead of ->
-rhs: "=" exp wherebinds       {$$ = make_rhs({@2,$2},{@3,$3});}
-|    gdrhs wherebinds         {$$ = make_gdrhs($1,{@2,$2});}
+rhs: "=" exp wherebinds       {$$ = make_rhs({@2,$2},$3);}
+|    gdrhs wherebinds         {$$ = make_gdrhs($1,$2);}
 
 gdrhs: gdrhs gdrh             {$$ = $1; $$.push_back($2);}
 |      gdrh                   {$$.push_back($1);}
@@ -1089,7 +1090,7 @@ fexp: fexp aexp                  {$$ = $1; $$.push_back($2);}
 aexp: qvar "@" aexp              {$$ = make_as_pattern(make_id(@1,$1),$3);}
 |     "~" aexp                   {$$ = make_lazy_pattern($2);}
 |     "\\" apats1 "->" exp       {$$ = make_lambdaexp($2,$4);}
-|     "let" binds "in" exp       {$$ = make_let({@2,$2},{@4,$4});}
+|     "let" binds "in" exp       {$$ = make_let($2,{@4,$4});}
 /* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
 |     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = make_if($2,$5,$8);}
 /* |     "if" ifgdpats              {} MultiWayIf extension not currently handled */
@@ -1197,8 +1198,8 @@ alts1: alts1 ";" alt             {$$ = $1; $$.push_back($3);}
 
 alt:   pat alt_rhs               {$$ = yy_make_alt($1,$2);}
 
-alt_rhs: "->" exp wherebinds     {$$ = make_rhs({@2,$2},{@3,$3});}
-|        gdpats   wherebinds     {$$ = make_gdrhs($1,{@2,$2});}
+alt_rhs: "->" exp wherebinds     {$$ = make_rhs({@2,$2},$3);}
+|        gdpats   wherebinds     {$$ = make_gdrhs($1,$2);}
 
 gdpats: gdpats gdpat             {$$ = $1; $$.push_back($2);}
 |       gdpat                    {$$.push_back($1);}
@@ -1241,7 +1242,7 @@ stmt: qual              {$$ = $1;}
 
 qual: bindpat "<-" exp  {$$ = Haskell::PatQual($1,$3);}
 |     exp               {$$ = Haskell::SimpleQual($1);}
-|     "let" binds       {$$ = Haskell::LetQual({@2,$2});}
+|     "let" binds       {$$ = Haskell::LetQual($2);}
 
 
 /* ------------- Record Field Update/Construction ---------------- */
@@ -1757,6 +1758,12 @@ Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat)
 Haskell::StrictPattern make_strict_pattern(const expression_ref& pat)
 {
     return { pat };
+}
+
+Located<expression_ref> make_decls(const yy::location& loc, std::vector<expression_ref>& decls)
+{
+    auto ds = expression_ref{AST_node("Decls"),decls};
+    return {loc, ds};
 }
 
 Haskell::LambdaExp make_lambdaexp(const vector<expression_ref>& pats, const expression_ref& body)
