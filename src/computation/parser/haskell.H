@@ -121,6 +121,24 @@ struct ClassDecl: public Object
         {}
 };
 
+struct InstanceDecl: public Object
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    // This should be something like Eq a => Eq [a]
+    Located<expression_ref> type;
+    Located<expression_ref> decls;
+
+    InstanceDecl* clone() const { return new InstanceDecl(*this);}
+
+    InstanceDecl(const Located<expression_ref>& t,
+                 const Located<expression_ref>& d)
+        :type(t),
+         decls(d)
+        {}
+};
+
+
 enum class Fixity {infixl, infix, infixr, unknown};
 
 struct FixityDecl: public Object
@@ -203,24 +221,6 @@ struct TypeSynonymDecl: public Object
          rhs_type(rhs)
         {}
 };
-
-struct InstanceDecl: public Object
-{
-    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
-
-    // This should be something like Eq a => Eq [a]
-    Located<expression_ref> type;
-    Located<expression_ref> decls;
-
-    InstanceDecl* clone() const { return new InstanceDecl(*this);}
-    
-    InstanceDecl(const Located<expression_ref>& t,
-                 const Located<expression_ref>& d)
-        :type(t),
-         decls(d)
-        {}
-};
-
 
 struct List: public Object
 {
