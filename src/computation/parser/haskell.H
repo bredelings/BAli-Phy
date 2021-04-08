@@ -479,26 +479,26 @@ struct GuardedRHS
 struct MultiGuardedRHS: public Object
 {
     std::vector<GuardedRHS> guarded_rhss;
-    expression_ref decls;
+    Located<expression_ref> decls;
 
     MultiGuardedRHS* clone() const { return new MultiGuardedRHS(*this);}
     std::string print() const;
 
-    MultiGuardedRHS(const std::vector<GuardedRHS>& v):guarded_rhss(v) {}
-    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const expression_ref& ds):guarded_rhss(v), decls(ds) {}
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v):guarded_rhss(v), decls(noloc,{}) {}
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const Located<expression_ref>& ds):guarded_rhss(v), decls(ds) {}
 };
 
 
 struct SimpleRHS: public Object
 {
-    expression_ref body;
-    expression_ref decls;
+    Located<expression_ref> body;
+    Located<expression_ref> decls;
 
     SimpleRHS* clone() const { return new SimpleRHS(*this);}
     std::string print() const;
 
-    SimpleRHS(const expression_ref& b): body(b) {}
-    SimpleRHS(const expression_ref& b, const expression_ref& ds): body(b), decls(ds) {}
+    SimpleRHS(const Located<expression_ref>& b): body(b), decls({noloc,{}}) {}
+    SimpleRHS(const Located<expression_ref>& b, const Located<expression_ref>& ds): body(b), decls(ds) {}
 };
 
 struct LambdaExp: public Object

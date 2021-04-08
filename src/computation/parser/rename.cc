@@ -362,9 +362,9 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     else if (E.is_a<Haskell::SimpleRHS>())
     {
         auto R = E.as_<Haskell::SimpleRHS>();
-        R.body = rename_infix(m, R.body);
-        if (R.decls)
-            R.decls = rename_infix(m, R.decls);
+        unloc(R.body) = rename_infix(m, unloc(R.body));
+        if (unloc(R.decls))
+            unloc(R.decls) = rename_infix(m, unloc(R.decls));
         return R;
     }
     else if (E.is_a<Haskell::MultiGuardedRHS>())
@@ -379,8 +379,8 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             guarded_rhs.body = rename_infix(m, guarded_rhs.body);
         }
 
-        if (R.decls)
-            R.decls = rename_infix(m, R.decls);
+        if (unloc(R.decls))
+            unloc(R.decls) = rename_infix(m, unloc(R.decls));
 
         return R;
     }
@@ -500,20 +500,20 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
                             f.push_back(Haskell::WildcardPattern());
 
                     expression_ref pattern = expression_ref{Located<Hs::ID>({},ConName),f};
-                    expression_ref body = Haskell::SimpleRHS(name);
+                    expression_ref body = Haskell::SimpleRHS({noloc, name});
                     alts.push_back({pattern,body});
                 }
                 {
                     expression_ref pattern = Haskell::WildcardPattern();
                     expression_ref body = error(field_name+": pattern match failure");
-                    body = Haskell::SimpleRHS(body);
+                    body = Haskell::SimpleRHS({noloc,body});
                     alts.push_back({pattern,body});
                 }
 
                 Located<Hs::ID> x({},"#0");
                 expression_ref body = AST_node("Case") + x + Haskell::Alts(alts);
                 body = Haskell::LambdaExp({x},body);
-                body = Haskell::SimpleRHS(body);
+                body = Haskell::SimpleRHS({noloc,body});
 
                 v.push_back(AST_node("Decl") + name + body);
             }
@@ -1255,9 +1255,9 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         auto bound2 = bound;
 
         auto R = E.as_<Haskell::SimpleRHS>();
-        if (R.decls)
-            add(bound2, rename_decls(R.decls, bound));
-        R.body = rename(R.body, bound2);
+        if (unloc(R.decls))
+            add(bound2, rename_decls(unloc(R.decls), bound));
+        unloc(R.body) = rename(unloc(R.body), bound2);
 
         return R;
     }
@@ -1266,8 +1266,8 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         auto bound2 = bound;
 
         auto R = E.as_<Haskell::MultiGuardedRHS>();
-        if (R.decls)
-            add(bound2, rename_decls(R.decls, bound));
+        if (unloc(R.decls))
+            add(bound2, rename_decls(unloc(R.decls), bound));
 
         for(auto& guarded_rhs: R.guarded_rhss)
         {

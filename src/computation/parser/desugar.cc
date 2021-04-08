@@ -217,10 +217,10 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
     {
         auto& R = E.as_<Haskell::SimpleRHS>();
 
-	auto rhs = failable_expression(desugar(R.body));
+	auto rhs = failable_expression(desugar(unloc(R.body)));
 
-	if (R.decls)
-	    rhs.add_binding(desugar_decls(R.decls));
+	if (unloc(R.decls))
+	    rhs.add_binding(desugar_decls(unloc(R.decls)));
 
 	return rhs;
     }
@@ -233,8 +233,8 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
 
 	auto rhs = fold(gdrhs);
 
-	if (R.decls)
-	    rhs.add_binding(desugar_decls(R.decls));
+	if (unloc(R.decls))
+	    rhs.add_binding(desugar_decls(unloc(R.decls)));
 
 	return rhs;
     }
@@ -343,12 +343,12 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             {
                 expression_ref ok = get_fresh_var("ok");
                 expression_ref lhs1 = ok + p;
-                expression_ref rhs1 = Haskell::SimpleRHS(do_stmts);
+                expression_ref rhs1 = Haskell::SimpleRHS({noloc,do_stmts});
                 expression_ref decl1 = AST_node("Decl") + lhs1 + rhs1;
 
                 expression_ref fail = {var("Compiler.Base.fail"),"Fail!"};
                 expression_ref lhs2 = ok + var(-1);
-                expression_ref rhs2 = Haskell::SimpleRHS(fail);
+                expression_ref rhs2 = Haskell::SimpleRHS({noloc,fail});
                 expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
 
                 expression_ref decls = AST_node("Decls") + decl1 +  decl2;
@@ -464,11 +464,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 			// Problem: "ok" needs to be a fresh variable.
 			expression_ref ok = get_fresh_var("ok");
 			expression_ref lhs1 = ok + p;
-			expression_ref rhs1 = Haskell::SimpleRHS(E2);
+			expression_ref rhs1 = Haskell::SimpleRHS({noloc,E2});
 			expression_ref decl1 = AST_node("Decl") + lhs1 + rhs1;
 
 			expression_ref lhs2 = ok + var(-1);
-			expression_ref rhs2 = Haskell::SimpleRHS(var("[]"));
+			expression_ref rhs2 = Haskell::SimpleRHS({noloc,var("[]")});
 			expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
 
 			expression_ref decls = AST_node("Decls") + decl1 + decl2;

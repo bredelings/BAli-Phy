@@ -53,8 +53,8 @@
   expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t);
   expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
-  Haskell::SimpleRHS make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
-  Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const expression_ref& wherebinds);
+  Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const Located<expression_ref>& wherebinds);
+  Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const Located<expression_ref>& wherebinds);
   Haskell::GuardedRHS make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& wherebinds);
 
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
@@ -1025,8 +1025,8 @@ decl: decl_no_th              {$$ = $1;}
 /*  | splice_exp */
 
 // rhs is like altrhs but with = instead of ->
-rhs: "=" exp wherebinds       {$$ = make_rhs($2,$3);}
-|    gdrhs wherebinds         {$$ = make_gdrhs($1,$2);}
+rhs: "=" exp wherebinds       {$$ = make_rhs({@2,$2},{@3,$3});}
+|    gdrhs wherebinds         {$$ = make_gdrhs($1,{@2,$2});}
 
 gdrhs: gdrhs gdrh             {$$ = $1; $$.push_back($2);}
 |      gdrh                   {$$.push_back($1);}
@@ -1197,8 +1197,8 @@ alts1: alts1 ";" alt             {$$ = $1; $$.push_back($3);}
 
 alt:   pat alt_rhs               {$$ = yy_make_alt($1,$2);}
 
-alt_rhs: "->" exp wherebinds     {$$ = make_rhs($2,$3);}
-|        gdpats   wherebinds     {$$ = make_gdrhs($1,$2);}
+alt_rhs: "->" exp wherebinds     {$$ = make_rhs({@2,$2},{@3,$3});}
+|        gdpats   wherebinds     {$$ = make_gdrhs($1,{@2,$2});}
 
 gdpats: gdpats gdpat             {$$ = $1; $$.push_back($2);}
 |       gdpat                    {$$.push_back($1);}
@@ -1713,7 +1713,7 @@ expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& t
     return new expression(AST_node("typed_exp"),{exp,type});
 }
 
-Haskell::SimpleRHS make_rhs(const expression_ref& exp, const expression_ref& wherebinds)
+Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const Located<expression_ref>& wherebinds)
 {
     return {exp, wherebinds};
 }
@@ -1809,7 +1809,7 @@ Haskell::Alt yy_make_alt(const expression_ref& pat, const expression_ref& alt_rh
     return {pat, alt_rhs};
 }
 
-Haskell::MultiGuardedRHS make_gdrhs(const vector<Haskell::GuardedRHS>& guards, const expression_ref& wherebinds)
+Haskell::MultiGuardedRHS make_gdrhs(const vector<Haskell::GuardedRHS>& guards, const Located<expression_ref>& wherebinds)
 {
     return {guards, wherebinds};
 }

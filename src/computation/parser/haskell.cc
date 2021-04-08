@@ -207,16 +207,16 @@ std::string MultiGuardedRHS::print() const
     for(auto& guarded_rhs: guarded_rhss)
         result += guarded_rhs.print() + "\n";
 
-    if (decls)
-        result = result + "where " + decls.print();
+    if (unloc(decls))
+        result = result + "where " + unloc(decls).print();
     return result;
 }
 
 std::string SimpleRHS::print() const
 {
-    string result = "= " + body.print();
-    if (decls)
-        result = result + "where " + decls.print();
+    string result = "= " + unloc(body).print();
+    if (unloc(decls))
+        result = result + "where " + unloc(decls).print();
     return result;
 }
 

@@ -2697,13 +2697,13 @@ namespace yy {
 
   case 196: // rhs: "=" exp wherebinds
 #line 1028 "parser.y"
-                              {yylhs.value.as < expression_ref > () = make_rhs(yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
+                              {yylhs.value.as < expression_ref > () = make_rhs({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 2702 "parser.cc"
     break;
 
   case 197: // rhs: gdrhs wherebinds
 #line 1029 "parser.y"
-                              {yylhs.value.as < expression_ref > () = make_gdrhs(yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (),yystack_[0].value.as < expression_ref > ());}
+                              {yylhs.value.as < expression_ref > () = make_gdrhs(yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (),{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 2708 "parser.cc"
     break;
 
@@ -3159,13 +3159,13 @@ namespace yy {
 
   case 281: // alt_rhs: "->" exp wherebinds
 #line 1200 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = make_rhs(yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
+                                 {yylhs.value.as < expression_ref > () = make_rhs({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 3164 "parser.cc"
     break;
 
   case 282: // alt_rhs: gdpats wherebinds
 #line 1201 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = make_gdrhs(yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (),yystack_[0].value.as < expression_ref > ());}
+                                 {yylhs.value.as < expression_ref > () = make_gdrhs(yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (),{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 3170 "parser.cc"
     break;
 
@@ -6048,7 +6048,7 @@ expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& t
     return new expression(AST_node("typed_exp"),{exp,type});
 }
 
-Haskell::SimpleRHS make_rhs(const expression_ref& exp, const expression_ref& wherebinds)
+Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const Located<expression_ref>& wherebinds)
 {
     return {exp, wherebinds};
 }
@@ -6144,7 +6144,7 @@ Haskell::Alt yy_make_alt(const expression_ref& pat, const expression_ref& alt_rh
     return {pat, alt_rhs};
 }
 
-Haskell::MultiGuardedRHS make_gdrhs(const vector<Haskell::GuardedRHS>& guards, const expression_ref& wherebinds)
+Haskell::MultiGuardedRHS make_gdrhs(const vector<Haskell::GuardedRHS>& guards, const Located<expression_ref>& wherebinds)
 {
     return {guards, wherebinds};
 }
