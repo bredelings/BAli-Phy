@@ -210,6 +210,12 @@ expression_ref unapply(expression_ref E)
         auto LP = E.as_<Haskell::LazyPattern>();
         return Haskell::LazyPattern(unapply(LP.pattern));
     }
+    else if (E.is_a<Haskell::StrictPattern>())
+    {
+        auto SP = E.as_<Haskell::StrictPattern>();
+        SP.pattern = unapply(SP.pattern);
+        return SP;
+    }
 
     if (not E.size()) return E;
 
@@ -303,6 +309,12 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         auto LP = E.as_<Haskell::LazyPattern>();
         return Haskell::LazyPattern(rename_infix(m,LP.pattern));
+    }
+    else if (E.is_a<Haskell::StrictPattern>())
+    {
+        auto SP = E.as_<Haskell::StrictPattern>();
+        SP.pattern = rename_infix(m, SP.pattern);
+        return SP;
     }
     else if (E.is_a<Haskell::InstanceDecl>())
     {
@@ -613,11 +625,16 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
     if (pat.is_a<Haskell::WildcardPattern>())
 	return {};
 
-    // 2. Handle ~pat
+    // 2. Handle ~pat or !pat
     if (pat.is_a<Haskell::LazyPattern>())
     {
         auto LP = pat.as_<Haskell::LazyPattern>();
         return find_vars_in_pattern(LP.pattern, top);
+    }
+    if (pat.is_a<Haskell::StrictPattern>())
+    {
+        auto SP = pat.as_<Haskell::StrictPattern>();
+        return find_vars_in_pattern(SP.pattern, top);
     }
 
     // 3. Handle x@pat
@@ -720,6 +737,13 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         auto LP = pat.as_<Haskell::LazyPattern>();
 	auto bound = rename_pattern(LP.pattern, top);
 	pat = LP;
+	return bound;
+    }
+    else if (pat.is_a<Haskell::StrictPattern>())
+    {
+        auto SP = pat.as_<Haskell::StrictPattern>();
+	auto bound = rename_pattern(SP.pattern, top);
+	pat = SP;
 	return bound;
     }
 

@@ -149,8 +149,11 @@ pattern_type classify_equation(const equation_info_t& equation)
 	return pattern_type::constructor;
     else if (pat.is_log_double())
 	return pattern_type::constructor;
-    else if (is_AST(pat, "StrictPattern"))
+    else if (pat.is_a<Haskell::StrictPattern>())
+    {
 	throw myexception()<<"The BangPattern extension is not implemented!";
+        return pattern_type::bang;
+    }
     else
 	throw myexception()<<"I don't understand pattern '"<<pat<<"'";
 }
@@ -310,7 +313,6 @@ failable_expression desugar_state::match_empty(const vector<expression_ref>& x, 
     return E;
 }
 
-
 // Make this a member function of equation_info_t?
 void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& eqn)
 {
@@ -346,6 +348,28 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
 	    binds.push_back({y,case_expression(x, {LP.pattern}, {failable_expression(y)}).result(error("lazy pattern: failed pattern match"))});
 	rhs.add_binding(binds);
 	pat1 = var(-1);
+    }
+
+    // case x of {!pat -> rhs; _ -> rhs_fail}  =>  x `seq` case x of {pat -> rhs, _ -> rhs_fail}
+    else if (pat1.is_a<Haskell::StrictPattern>())
+    {
+        // Note that let !(x,y) = e is handled differently -- this is considered a bang-pattern binding,
+        // and is not really part of handling case x of !pat.
+
+        // "A bang only really has an effect if it precedes a variable or wild-card pattern: "
+        // f !(x,y) = E  is the same as f (x,y) = E, since we have f = \z -> case z of (x,y) -> E.
+
+        // Recursively clean up the strict pattern underneat the strictness mark,
+        //  then restore the strictness mark.
+        // We could end up with (for example) a strict wildcard.
+        auto SP = pat1.as_<Haskell::StrictPattern>();
+        pat1 = SP.pattern;
+        clean_up_pattern(x, eqn);
+        pat1 = Haskell::StrictPattern(pat1);
+
+        // FIXME: does this work?
+
+	throw myexception()<<"The BangPattern extension is not implemented!";
     }
 
     // case x of y@pat2 -> rhs  => case x of pat2 => let{y=x} in rhs

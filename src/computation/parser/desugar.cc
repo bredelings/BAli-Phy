@@ -284,6 +284,12 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         auto LP = E.as_<Haskell::LazyPattern>();
         return Haskell::LazyPattern(desugar(LP.pattern));
     }
+    else if (E.is_a<Haskell::StrictPattern>())
+    {
+        auto SP = E.as_<Haskell::StrictPattern>();
+        SP.pattern = desugar(SP.pattern);
+        return SP;
+    }
     else if (E.is_a<Haskell::InstanceDecl>())
     {
         auto I = E.as_<Haskell::InstanceDecl>();

@@ -64,7 +64,7 @@
 
   Haskell::AsPattern make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& body);
   Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat);
-  expression_ref make_strict_pattern(const expression_ref& pat);
+  Haskell::StrictPattern make_strict_pattern(const expression_ref& pat);
 
   Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
   Haskell::LetExp make_let(const expression_ref& binds, const expression_ref& body);
@@ -1751,12 +1751,12 @@ Haskell::AsPattern make_as_pattern(const Located<Haskell::ID>& x, const expressi
 
 Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat)
 {
-    return Haskell::LazyPattern(pat);
+    return { pat };
 }
 
-expression_ref make_strict_pattern(const expression_ref& pat)
+Haskell::StrictPattern make_strict_pattern(const expression_ref& pat)
 {
-    return new expression(AST_node("StrictPattern"), {pat});
+    return { pat };
 }
 
 Haskell::LambdaExp make_lambdaexp(const vector<expression_ref>& pats, const expression_ref& body)

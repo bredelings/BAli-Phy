@@ -307,6 +307,14 @@ struct LazyPattern: public Object
     LazyPattern(const expression_ref& p):pattern(p) {}
 };
 
+struct StrictPattern: public Object
+{
+    expression_ref pattern;
+    StrictPattern* clone() const { return new StrictPattern(*this);}
+    std::string print() const;
+    StrictPattern(const expression_ref& p):pattern(p) {}
+};
+
 struct AsPattern: public Object
 {
     expression_ref var;      // FIXME: change to a located ID after we stop changing the type from ID to var.

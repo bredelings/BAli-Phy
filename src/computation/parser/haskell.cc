@@ -65,13 +65,16 @@ string parenthesize_pattern(const Pattern& p)
 
 string LazyPattern::print() const
 {
-    // FIXME -- do we need parentheses around the pattern, and if so, when?
     return "~"+parenthesize_pattern(pattern);
+}
+
+string StrictPattern::print() const
+{
+    return "!"+parenthesize_pattern(pattern);
 }
 
 string AsPattern::print() const
 {
-    // FIXME -- do we need parentheses around the pattern, and if so, when?
     return var.print()+"@"+parenthesize_pattern(pattern);
 }
 
