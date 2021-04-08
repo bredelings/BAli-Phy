@@ -83,7 +83,9 @@ struct desugar_state: public fresh_vars
     void clean_up_pattern(const expression_ref& x, equation_info_t& eqn);
 
     expression_ref desugar(const expression_ref& E);
-    CDecls desugar_decls(const expression_ref& E);
+    expression_ref desugar_decls(const expression_ref& E);
+    CDecls translate_decls_to_cdecls(const expression_ref& E);
+    CDecls desugar_decls_to_cdecls(const expression_ref& E);
 
     desugar_state(const Module&);
 };

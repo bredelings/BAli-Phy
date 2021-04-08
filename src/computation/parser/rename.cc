@@ -1320,7 +1320,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     }
 
     vector<expression_ref> v = E.copy_sub();
-      
+
     if (E.head().is_a<AST_node>())
     {
 	auto& n = E.head().as_<AST_node>();

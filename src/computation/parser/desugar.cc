@@ -94,7 +94,7 @@ failable_expression desugar_state::desugar_gdrh(const Haskell::GuardedRHS& grhs)
 	else if (guard.is_a<Haskell::LetQual>())
 	{
             auto& LQ = guard.as_<Haskell::LetQual>();
-	    auto binds = desugar_decls(unloc(LQ.binds));
+	    auto binds = desugar_decls_to_cdecls(unloc(LQ.binds));
 
 	    F.add_binding(binds);
 	}
@@ -185,14 +185,12 @@ vector<expression_ref> desugar_state::parse_fundecls(const vector<expression_ref
     return decls;
 }
 
-CDecls desugar_state::desugar_decls(const expression_ref& E)
+CDecls desugar_state::translate_decls_to_cdecls(const expression_ref& E)
 {
     assert(is_AST(E,"Decls"));
 
-    auto E2 = desugar(E);
-
     CDecls decls;
-    for(const auto& decl: E2.sub())
+    for(const auto& decl: E.sub())
     {
 	assert(is_AST(decl,"Decl"));
 
@@ -203,6 +201,29 @@ CDecls desugar_state::desugar_decls(const expression_ref& E)
     }
 
     return decls;
+}
+
+expression_ref desugar_state::desugar_decls(const expression_ref& E)
+{
+    assert(is_AST(E,"Decls") or is_AST(E,"TopDecls"));
+
+    vector<expression_ref> v = E.copy_sub();
+
+    // translate each individual decl
+    for(auto& e: v)
+        e = desugar(e);
+
+    // Convert fundecls to normal decls
+    vector<expression_ref> decls = parse_fundecls(v);
+
+    return expression_ref{E.head(),decls};
+}
+
+CDecls desugar_state::desugar_decls_to_cdecls(const expression_ref& E)
+{
+    assert(is_AST(E,"Decls"));
+
+    return translate_decls_to_cdecls(desugar(E));
 }
 
 failable_expression desugar_state::desugar_rhs(const expression_ref& E)
@@ -220,7 +241,7 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
 	auto rhs = failable_expression(desugar(unloc(R.body)));
 
 	if (R.decls)
-	    rhs.add_binding(desugar_decls(unloc(*R.decls)));
+	    rhs.add_binding(desugar_decls_to_cdecls(unloc(*R.decls)));
 
 	return rhs;
     }
@@ -234,7 +255,7 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
 	auto rhs = fold(gdrhs);
 
 	if (R.decls)
-	    rhs.add_binding(desugar_decls(unloc(*R.decls)));
+	    rhs.add_binding(desugar_decls_to_cdecls(unloc(*R.decls)));
 
 	return rhs;
     }
@@ -387,7 +408,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         auto& L = E.as_<Haskell::LetExp>();
 
-        CDecls decls = desugar_decls(unloc(L.decls));
+        CDecls decls = desugar_decls_to_cdecls(unloc(L.decls));
         auto body = desugar(unloc(L.body));
 
         // construct the new let expression.
@@ -402,16 +423,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	if (n.type == "infixexp")
 	    std::abort();
 	else if (n.type == "Decls" or n.type == "TopDecls")
-	{
-	    // translate each individual decl
-	    for(auto& e: v)
-		e = desugar(e);
-
-	    // Convert fundecls to normal decls
-	    vector<expression_ref> decls = parse_fundecls(v);
-
-	    return expression_ref{E.head(),decls};
-	}
+            return desugar_decls(E);
 	else if (n.type == "Decl")
 	{
 
