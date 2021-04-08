@@ -51,7 +51,7 @@ symbol_info get_op_sym(const Module& m, const expression_ref& O)
 	throw myexception()<<"Can't use expression '"<<O.print()<<"' as infix operator.";
 
     symbol_info op_sym;
-    auto name = O.as_<Located<Hs::ID>>().obj.name;
+    auto name = unloc(O.as_<Located<Hs::ID>>()).name;
 
     if (m.is_declared( name ) )
 	op_sym = m.get_operator( name );
@@ -135,7 +135,7 @@ set<string> find_bound_vars(const expression_ref& E)
     }
     else if (E.is_a<Located<Hs::ID>>())
     {
-        auto& value = E.as_<Located<Hs::ID>>().obj.name;
+        auto& value = unloc(E.as_<Located<Hs::ID>>()).name;
 	if (not is_haskell_con_name(value))
 	    return {value};
     }
@@ -147,7 +147,7 @@ string get_func_name(const expression_ref& decl)
     assert(is_AST(decl,"Decl"));
     auto& lhs = decl.sub()[0];
     assert(lhs.head().is_a<Located<Hs::ID>>());
-    return lhs.head().as_<Located<Hs::ID>>().obj.name;
+    return unloc(lhs.head().as_<Located<Hs::ID>>()).name;
 }
 
 string desugar_get_func_name(const expression_ref& decl)
@@ -260,7 +260,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     if (E.is_a<Haskell::ClassDecl>())
     {
         auto C = E.as_<Haskell::ClassDecl>();
-        C.decls.obj = rename_infix(m, C.decls.obj);
+        unloc(C.decls) = rename_infix(m, unloc(C.decls));
         return C;
     }
     else if (E.is_a<Haskell::List>())
@@ -319,7 +319,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     else if (E.is_a<Haskell::InstanceDecl>())
     {
         auto I = E.as_<Haskell::InstanceDecl>();
-        I.decls.obj = rename_infix(m, I.decls.obj);
+        unloc(I.decls) = rename_infix(m, unloc(I.decls));
         return I;
     }
     else if (E.is_a<Haskell::RecStmt>())
@@ -669,7 +669,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
     expression_ref head = pat.head();
     if (not head.is_a<Located<Hs::ID>>())
 	throw myexception()<<"Pattern '"<<pat<<"' doesn't start with an identifier!";
-    auto id = head.as_<Located<Hs::ID>>().obj.name;
+    auto id = unloc(head.as_<Located<Hs::ID>>()).name;
 
     // 6. Handle if identifier is a variable
     if (not is_haskell_con_name(id))
@@ -786,7 +786,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     expression_ref head = pat.head();
     if (not head.is_a<Located<Hs::ID>>())
 	throw myexception()<<"Pattern '"<<pat<<"' doesn't start with an identifier!";
-    auto id = head.as_<Located<Hs::ID>>().obj.name;
+    auto id = unloc(head.as_<Located<Hs::ID>>()).name;
 
     // 6. Handle if identifier is a variable
     if (not is_haskell_con_name(id))
@@ -920,7 +920,7 @@ bound_var_info renamer_state::rename_decl_head(expression_ref& decl, bool is_top
     auto head = lhs.head();
     assert(head.is_a<Located<Hs::ID>>() or head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>());
     // For a constructor pattern, rename the whole lhs.
-    if (head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>() or (head.is_a<Located<Hs::ID>>() and is_haskell_con_name(head.as_<Located<Hs::ID>>().obj.name)))
+    if (head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>() or (head.is_a<Located<Hs::ID>>() and is_haskell_con_name(unloc(head.as_<Located<Hs::ID>>()).name)))
     {
         add(bound_names, rename_pattern(lhs, is_top_level));
     }
@@ -972,7 +972,7 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
-            auto class_decls = C.decls.obj;
+            auto class_decls = unloc(C.decls);
             assert(is_AST(class_decls, "Decls"));
             auto cdecls = class_decls.sub();
             for(auto& cdecl: cdecls)
@@ -986,17 +986,17 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
                     add(bound_names, rename_pattern(id, true));
                     cdecl = expression_ref(AST_node("Decl:sigtype"),{id,type});
                 }
-            C.decls.obj = expression_ref(AST_node("Decls"),cdecls);
+            unloc(C.decls) = expression_ref(AST_node("Decls"),cdecls);
             decl = C;
         }
         if (decl.is_a<Haskell::InstanceDecl>())
         {
             auto I = decl.as_<Haskell::InstanceDecl>();
-            auto idecls = I.decls.obj.sub();
+            auto idecls = unloc(I.decls).sub();
             for(auto& idecl: idecls)
                 if (is_AST(idecl,"Decl"))
                     rename_decl_head(idecl, true);
-            I.decls.obj = expression_ref(AST_node("Decls"),idecls);
+            unloc(I.decls) = expression_ref(AST_node("Decls"),idecls);
             decl = I;
         }
     }
@@ -1010,22 +1010,22 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
-            auto class_decls = C.decls.obj;
+            auto class_decls = unloc(C.decls);
             auto cdecls = class_decls.sub();
             for(auto& cdecl: cdecls)
                 if (is_AST(cdecl,"Decl"))
                     cdecl = rename_decl(cdecl, bound2);
-            C.decls.obj = expression_ref(AST_node("Decls"),cdecls);
+            unloc(C.decls) = expression_ref(AST_node("Decls"),cdecls);
             decl = C;
         }
         if (decl.is_a<Haskell::InstanceDecl>())
         {
             auto I = decl.as_<Haskell::InstanceDecl>();
-            auto idecls = I.decls.obj.sub();
+            auto idecls = unloc(I.decls).sub();
             for(auto& idecl: idecls)
                 if (is_AST(idecl,"Decl"))
                     idecl = rename_decl(idecl,bound2);
-            I.decls.obj = expression_ref(AST_node("Decls"),idecls);
+            unloc(I.decls) = expression_ref(AST_node("Decls"),idecls);
             decl = I;
         }
     }
@@ -1161,7 +1161,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     }
     else if (E.is_a<Located<Hs::ID>>())
     {
-        auto& name = E.as_<Located<Hs::ID>>().obj.name;
+        auto& name = unloc(E.as_<Located<Hs::ID>>()).name;
         auto& loc = E.as_<Located<Hs::ID>>().loc;
 
         // Local vars bind id's tighter than global vars.

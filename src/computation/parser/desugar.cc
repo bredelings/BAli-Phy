@@ -253,7 +253,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     if (E.is_a<Haskell::ClassDecl>())
     {
         auto C = E.as_<Haskell::ClassDecl>();
-        C.decls.obj = desugar(C.decls.obj);
+        unloc(C.decls) = desugar(unloc(C.decls));
         return C;
     }
     else if (E.is_a<Haskell::List>())
@@ -293,7 +293,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     else if (E.is_a<Haskell::InstanceDecl>())
     {
         auto I = E.as_<Haskell::InstanceDecl>();
-        I.decls.obj = desugar(I.decls.obj);
+        unloc(I.decls) = desugar(unloc(I.decls));
         return I;
     }
     else if (E.is_a<Haskell::Do>())
