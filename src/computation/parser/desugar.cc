@@ -414,6 +414,16 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         // construct the new let expression.
         return let_expression(decls, body);
     }
+    else if (E.is_a<Haskell::IfExp>())
+    {
+        auto& I = E.as_<Haskell::IfExp>();
+
+        auto condition = desugar(unloc(I.condition));
+        auto true_branch = desugar(unloc(I.true_branch));
+        auto false_branch = desugar(unloc(I.false_branch));
+
+        return case_expression(condition,{true},{failable_expression(true_branch)}).result(false_branch);
+    }
 
     vector<expression_ref> v = E.copy_sub();
 
@@ -461,7 +471,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 		if (B.is_a<Hs::SimpleQual>())
                 {
                     auto cond = B.as_<Hs::SimpleQual>().exp;
-		    E2 = AST_node("If") + cond + E2 + var("[]");
+		    E2 = Haskell::IfExp({noloc, cond}, {noloc, E2}, {noloc, var("[]")});
                 }
 		else if (B.is_a<Haskell::PatQual>())
 		{
@@ -500,13 +510,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 		    std::abort();
 	    }
 	    return desugar(E2);
-	}
-	else if (n.type == "If")
-	{
-	    for(auto& e: v)
-		e = desugar(e);
-
-	    return case_expression(v[0],{true},{failable_expression(v[1])}).result(v[2]);
 	}
 	else if (n.type == "LeftSection")
 	{

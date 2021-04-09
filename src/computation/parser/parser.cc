@@ -2931,7 +2931,7 @@ namespace yy {
 
   case 238: // aexp: "if" exp optSemi "then" exp optSemi "else" exp
 #line 1095 "parser.y"
-                                                       {yylhs.value.as < expression_ref > () = make_if(yystack_[6].value.as < expression_ref > (),yystack_[3].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
+                                                       {yylhs.value.as < expression_ref > () = make_if({yystack_[6].location,yystack_[6].value.as < expression_ref > ()},{yystack_[3].location,yystack_[3].value.as < expression_ref > ()},{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 2936 "parser.cc"
     break;
 
@@ -6140,9 +6140,9 @@ Haskell::LetExp make_let(const Located<expression_ref>& binds, const Located<exp
     return { binds, body };
 }
 
-expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false)
+Haskell::IfExp make_if(const Located<expression_ref>& cond, const Located<expression_ref>& alt_true, const Located<expression_ref>& alt_false)
 {
-    return new expression(AST_node("If"), {cond, alt_true, alt_false});
+    return {cond, alt_true, alt_false};
 }
 
 expression_ref make_case(const expression_ref& obj, const expression_ref& alts)

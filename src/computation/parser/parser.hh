@@ -107,7 +107,7 @@
   Located<expression_ref> make_decls(const yy::location& loc, std::vector<expression_ref>& decls);
   Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
   Haskell::LetExp make_let(const Located<expression_ref>& binds, const Located<expression_ref>& body);
-  expression_ref make_if(const expression_ref& cond, const expression_ref& alt_true, const expression_ref& alt_false);
+  Haskell::IfExp make_if(const Located<expression_ref>& cond, const Located<expression_ref>& alt_true, const Located<expression_ref>& alt_false);
   expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
   Haskell::Do make_do(const Haskell::Stmts& stmts);
   Haskell::MDo make_mdo(const Haskell::Stmts& stmts);

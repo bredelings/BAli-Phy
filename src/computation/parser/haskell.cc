@@ -253,5 +253,8 @@ string LetExp::print() const
     return "let { " + join( decl_string, "; " ) + " } in " + body.print();
 }
 
-
+string IfExp::print() const
+{
+    return "if " + condition.print() + " then " + true_branch.print() + " else " + false_branch.print();
+}
 }

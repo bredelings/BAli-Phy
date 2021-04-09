@@ -524,7 +524,21 @@ struct LetExp: public Object
     LetExp(const Located<expression_ref>& d, const Located<expression_ref>& b): decls(d), body(b) {};
 };
 
+struct IfExp: public Object
+{
+    Located<expression_ref> condition;
+    Located<expression_ref> true_branch;
+    Located<expression_ref> false_branch;
 
+    IfExp* clone() const {return new IfExp(*this);}
+    std::string print() const;
+
+    IfExp(const Located<expression_ref>& c, const Located<expression_ref>& t, const Located<expression_ref>& f)
+        : condition(c),
+          true_branch(t),
+          false_branch(f)
+        { }
+};
 
 }
 

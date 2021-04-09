@@ -21,6 +21,18 @@ using std::set;
 using std::map;
 using std::deque;
 
+// 1. Some part of the routines in expression/let.cc work on Haskell::LetExp,
+//    and some part work on the desugared (let_obj()) or executable (Let())
+//    objects.  We need to seprate these...
+
+// 2. Convert let_obj() and Let (the operation) into full objects that don't
+//    use AST nodes or expression_refs, at least for the let part.
+
+// 3. Convert "Case" and "If" and to AST structs.
+
+// 4. Convert Located<ID> to Located<Var>
+
+
 expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
@@ -403,6 +415,14 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         unloc(L.body)  = rename_infix(m, unloc(L.body));
 
         return L;
+    }
+    else if (E.is_a<Haskell::IfExp>())
+    {
+        auto I = E.as_<Haskell::IfExp>();
+        unloc(I.condition) = rename_infix(m, unloc(I.condition));
+        unloc(I.true_branch) = rename_infix(m, unloc(I.true_branch));
+        unloc(I.false_branch) = rename_infix(m, unloc(I.false_branch));
+        return I;
     }
 
     if (not E.is_expression()) return E;
@@ -1317,6 +1337,16 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         unloc(L.body) = rename(unloc(L.body), bound2);
 
         return L;
+    }
+    else if (E.is_a<Haskell::IfExp>())
+    {
+        auto I = E.as_<Haskell::IfExp>();
+
+        unloc(I.condition)    = rename(unloc(I.condition), bound);
+        unloc(I.true_branch)  = rename(unloc(I.true_branch), bound);
+        unloc(I.false_branch) = rename(unloc(I.false_branch), bound);
+
+        return I;
     }
 
     vector<expression_ref> v = E.copy_sub();
