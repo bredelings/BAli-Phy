@@ -6145,9 +6145,9 @@ Haskell::IfExp make_if(const Located<expression_ref>& cond, const Located<expres
     return {cond, alt_true, alt_false};
 }
 
-expression_ref make_case(const expression_ref& obj, const expression_ref& alts)
+Haskell::CaseExp make_case(const expression_ref& obj, const Haskell::Alts& alts)
 {
-    return new expression(AST_node("Case"), {obj, alts});
+    return {obj, alts};
 }
 
 Haskell::Do make_do(const Haskell::Stmts& stmts)

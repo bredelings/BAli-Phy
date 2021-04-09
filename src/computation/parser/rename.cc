@@ -28,9 +28,7 @@ using std::deque;
 // 2. Convert let_obj() and Let (the operation) into full objects that don't
 //    use AST nodes or expression_refs, at least for the let part.
 
-// 3. Convert "Case" and "If" and to AST structs.
-
-// 4. Convert Located<ID> to Located<Var>
+// 3. Convert Located<ID> to Located<Var>
 
 
 expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
@@ -424,6 +422,15 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         unloc(I.false_branch) = rename_infix(m, unloc(I.false_branch));
         return I;
     }
+    else if (E.is_a<Haskell::CaseExp>())
+    {
+        auto C = E.as_<Haskell::CaseExp>();
+
+        C.object = rename_infix(m, C.object);
+        C.alts = rename_infix(m, C.alts).as_<Haskell::Alts>();
+
+        return C;
+    }
 
     if (not E.is_expression()) return E;
 
@@ -437,10 +444,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 	/* lhs */
 	v[0] = unapply(v[0]);
 	assert(v[0].head().is_a<Located<Hs::ID>>() or v[0].is_a<Haskell::List>() or v[0].is_a<Haskell::Tuple>());
-    }
-    else if (is_AST(E, "Case"))
-    {
-        return Haskell::CaseExp(v[0], v[1].as_<Haskell::Alts>());
     }
     else if (is_apply(E.head()))
     {
@@ -537,7 +540,7 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
                 }
 
                 Located<Hs::ID> x({},"#0");
-                expression_ref body = AST_node("Case") + x + Haskell::Alts(alts);
+                expression_ref body = Haskell::CaseExp(x,Haskell::Alts(alts));
                 body = Haskell::LambdaExp({x},body);
                 body = Haskell::SimpleRHS({noloc,body});
 

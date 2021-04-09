@@ -108,7 +108,7 @@
   Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
   Haskell::LetExp make_let(const Located<expression_ref>& binds, const Located<expression_ref>& body);
   Haskell::IfExp make_if(const Located<expression_ref>& cond, const Located<expression_ref>& alt_true, const Located<expression_ref>& alt_false);
-  expression_ref make_case(const expression_ref& obj, const expression_ref& alts);
+  Haskell::CaseExp make_case(const expression_ref& obj, const Haskell::Alts& alts);
   Haskell::Do make_do(const Haskell::Stmts& stmts);
   Haskell::MDo make_mdo(const Haskell::Stmts& stmts);
   Haskell::Tuple yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
