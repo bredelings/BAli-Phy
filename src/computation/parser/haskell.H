@@ -451,11 +451,10 @@ struct Alt
     Alt(const Pattern& p, const expression_ref& r):pattern(p), rhs(r) {};
 };
 
-struct Alts: public Object
+struct Alts
 {
     std::vector<Located<Alt>> alts;
 
-    Alts* clone() const { return new Alts(*this);}
     std::string print() const;
 
     Alts() = default;

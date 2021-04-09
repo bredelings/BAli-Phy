@@ -356,17 +356,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             stmt = rename_infix(m, stmt);
         return D;
     }
-    else if (E.is_a<Haskell::Alts>())
-    {
-        auto A = E.as_<Haskell::Alts>();
-        for(auto& alt: A.alts)
-        {
-            unloc(alt).pattern = rename_infix(m, unloc(alt).pattern);
-            unloc(alt).pattern = unapply(unloc(alt).pattern);
-            unloc(alt).rhs = rename_infix(m, unloc(alt).rhs);
-        }
-        return A;
-    }
     else if (E.is_a<Haskell::Alt>())
     {
         std::abort();
@@ -427,7 +416,13 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         auto C = E.as_<Haskell::CaseExp>();
 
         C.object = rename_infix(m, C.object);
-        C.alts = rename_infix(m, C.alts).as_<Haskell::Alts>();
+
+        for(auto& alt: C.alts.alts)
+        {
+            unloc(alt).pattern = rename_infix(m, unloc(alt).pattern);
+            unloc(alt).pattern = unapply(unloc(alt).pattern);
+            unloc(alt).rhs = rename_infix(m, unloc(alt).rhs);
+        }
 
         return C;
     }
@@ -1275,22 +1270,19 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     }
     else if (E.is_a<Haskell::CaseExp>())
     {
-        auto& C = E.as_<Haskell::CaseExp>();
-        auto object = rename(C.object, bound);
-        auto alts = rename(C.alts, bound);
-        return Haskell::CaseExp(object, alts.as_<Haskell::Alts>());
-    }
-    else if (E.is_a<Haskell::Alts>())
-    {
-        auto A = E.as_<Haskell::Alts>();
-        for(auto& alt: A.alts)
+        auto C = E.as_<Haskell::CaseExp>();
+
+        C.object = rename(C.object, bound);
+
+        for(auto& alt: C.alts.alts)
         {
             auto bound2 = bound;
 
             add(bound2, rename_pattern(unloc(alt).pattern));
             unloc(alt).rhs = rename(unloc(alt).rhs, bound2);
         }
-        return A;
+
+        return C;
     }
     else if (E.is_a<Haskell::Alt>())
     {
