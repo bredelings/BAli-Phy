@@ -30,6 +30,7 @@ using std::deque;
 
 // 3. Convert Located<ID> to Located<Var>
 
+// 4. Make Located<> NOT an object!!
 
 expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
