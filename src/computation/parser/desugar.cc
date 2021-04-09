@@ -432,7 +432,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
         vector<expression_ref> patterns;
         vector<failable_expression> bodies;
-        for(const auto& alt: C.alts.alts)
+        for(const auto& alt: C.alts)
         {
             patterns.push_back( desugar( unloc(alt).pattern) );
             bodies.push_back( desugar_rhs(unloc(alt).rhs) );

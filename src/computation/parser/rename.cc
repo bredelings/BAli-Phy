@@ -417,7 +417,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
         C.object = rename_infix(m, C.object);
 
-        for(auto& alt: C.alts.alts)
+        for(auto& alt: C.alts)
         {
             unloc(alt).pattern = rename_infix(m, unloc(alt).pattern);
             unloc(alt).pattern = unapply(unloc(alt).pattern);
@@ -1274,7 +1274,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 
         C.object = rename(C.object, bound);
 
-        for(auto& alt: C.alts.alts)
+        for(auto& alt: C.alts)
         {
             auto bound2 = bound;
 

@@ -451,14 +451,12 @@ struct Alt
     Alt(const Pattern& p, const expression_ref& r):pattern(p), rhs(r) {};
 };
 
-struct Alts
+struct Alts: public std::vector<Located<Alt>>
 {
-    std::vector<Located<Alt>> alts;
-
     std::string print() const;
 
     Alts() = default;
-    Alts(const std::vector<Located<Alt>>& v):alts(v) {};
+    Alts(const std::vector<Located<Alt>>& v): std::vector<Located<Alt>>(v) {};
 };
 
 struct CaseExp: public Object
