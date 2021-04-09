@@ -206,10 +206,6 @@ namespace yy {
   {
     switch (that.kind ())
     {
-      case symbol_kind::S_alt: // alt
-        value.YY_MOVE_OR_COPY< Haskell::Alt > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_altslist: // altslist
         value.YY_MOVE_OR_COPY< Haskell::Alts > (YY_MOVE (that.value));
         break;
@@ -243,6 +239,10 @@ namespace yy {
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.YY_MOVE_OR_COPY< Haskell::StrictLazy > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_alt: // alt
+        value.YY_MOVE_OR_COPY< Located<Haskell::Alt> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_decllist: // decllist
@@ -409,11 +409,6 @@ namespace yy {
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
-        value.YY_MOVE_OR_COPY< std::vector<Haskell::Alt> > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.YY_MOVE_OR_COPY< std::vector<Haskell::FieldDecl> > (YY_MOVE (that.value));
@@ -422,6 +417,11 @@ namespace yy {
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
         value.YY_MOVE_OR_COPY< std::vector<Haskell::GuardedRHS> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        value.YY_MOVE_OR_COPY< std::vector<Located<Haskell::Alt>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_exportlist: // exportlist
@@ -474,10 +474,6 @@ namespace yy {
   {
     switch (that.kind ())
     {
-      case symbol_kind::S_alt: // alt
-        value.move< Haskell::Alt > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_altslist: // altslist
         value.move< Haskell::Alts > (YY_MOVE (that.value));
         break;
@@ -511,6 +507,10 @@ namespace yy {
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.move< Haskell::StrictLazy > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_alt: // alt
+        value.move< Located<Haskell::Alt> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_decllist: // decllist
@@ -677,11 +677,6 @@ namespace yy {
         value.move< std::string > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
-        value.move< std::vector<Haskell::Alt> > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.move< std::vector<Haskell::FieldDecl> > (YY_MOVE (that.value));
@@ -690,6 +685,11 @@ namespace yy {
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
         value.move< std::vector<Haskell::GuardedRHS> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        value.move< std::vector<Located<Haskell::Alt>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_exportlist: // exportlist
@@ -742,10 +742,6 @@ namespace yy {
     state = that.state;
     switch (that.kind ())
     {
-      case symbol_kind::S_alt: // alt
-        value.copy< Haskell::Alt > (that.value);
-        break;
-
       case symbol_kind::S_altslist: // altslist
         value.copy< Haskell::Alts > (that.value);
         break;
@@ -779,6 +775,10 @@ namespace yy {
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.copy< Haskell::StrictLazy > (that.value);
+        break;
+
+      case symbol_kind::S_alt: // alt
+        value.copy< Located<Haskell::Alt> > (that.value);
         break;
 
       case symbol_kind::S_decllist: // decllist
@@ -945,11 +945,6 @@ namespace yy {
         value.copy< std::string > (that.value);
         break;
 
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
-        value.copy< std::vector<Haskell::Alt> > (that.value);
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.copy< std::vector<Haskell::FieldDecl> > (that.value);
@@ -958,6 +953,11 @@ namespace yy {
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
         value.copy< std::vector<Haskell::GuardedRHS> > (that.value);
+        break;
+
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        value.copy< std::vector<Located<Haskell::Alt>> > (that.value);
         break;
 
       case symbol_kind::S_exportlist: // exportlist
@@ -1009,10 +1009,6 @@ namespace yy {
     state = that.state;
     switch (that.kind ())
     {
-      case symbol_kind::S_alt: // alt
-        value.move< Haskell::Alt > (that.value);
-        break;
-
       case symbol_kind::S_altslist: // altslist
         value.move< Haskell::Alts > (that.value);
         break;
@@ -1046,6 +1042,10 @@ namespace yy {
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.move< Haskell::StrictLazy > (that.value);
+        break;
+
+      case symbol_kind::S_alt: // alt
+        value.move< Located<Haskell::Alt> > (that.value);
         break;
 
       case symbol_kind::S_decllist: // decllist
@@ -1212,11 +1212,6 @@ namespace yy {
         value.move< std::string > (that.value);
         break;
 
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
-        value.move< std::vector<Haskell::Alt> > (that.value);
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.move< std::vector<Haskell::FieldDecl> > (that.value);
@@ -1225,6 +1220,11 @@ namespace yy {
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
         value.move< std::vector<Haskell::GuardedRHS> > (that.value);
+        break;
+
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        value.move< std::vector<Located<Haskell::Alt>> > (that.value);
         break;
 
       case symbol_kind::S_exportlist: // exportlist
@@ -1521,10 +1521,6 @@ namespace yy {
          when using variants.  */
       switch (yyr1_[yyn])
     {
-      case symbol_kind::S_alt: // alt
-        yylhs.value.emplace< Haskell::Alt > ();
-        break;
-
       case symbol_kind::S_altslist: // altslist
         yylhs.value.emplace< Haskell::Alts > ();
         break;
@@ -1558,6 +1554,10 @@ namespace yy {
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         yylhs.value.emplace< Haskell::StrictLazy > ();
+        break;
+
+      case symbol_kind::S_alt: // alt
+        yylhs.value.emplace< Located<Haskell::Alt> > ();
         break;
 
       case symbol_kind::S_decllist: // decllist
@@ -1724,11 +1724,6 @@ namespace yy {
         yylhs.value.emplace< std::string > ();
         break;
 
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
-        yylhs.value.emplace< std::vector<Haskell::Alt> > ();
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         yylhs.value.emplace< std::vector<Haskell::FieldDecl> > ();
@@ -1737,6 +1732,11 @@ namespace yy {
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
         yylhs.value.emplace< std::vector<Haskell::GuardedRHS> > ();
+        break;
+
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        yylhs.value.emplace< std::vector<Located<Haskell::Alt>> > ();
         break;
 
       case symbol_kind::S_exportlist: // exportlist
@@ -3129,13 +3129,13 @@ namespace yy {
 
   case 271: // altslist: "{" alts "}"
 #line 1187 "parser.y"
-                                 {yylhs.value.as < Haskell::Alts > () = make_alts(yystack_[1].value.as < std::vector<Haskell::Alt> > ());}
+                                 {yylhs.value.as < Haskell::Alts > () = make_alts(yystack_[1].value.as < std::vector<Located<Haskell::Alt>> > ());}
 #line 3134 "parser.cc"
     break;
 
   case 272: // altslist: "vocurly" alts close
 #line 1188 "parser.y"
-                                 {yylhs.value.as < Haskell::Alts > () = make_alts(yystack_[1].value.as < std::vector<Haskell::Alt> > ());}
+                                 {yylhs.value.as < Haskell::Alts > () = make_alts(yystack_[1].value.as < std::vector<Located<Haskell::Alt>> > ());}
 #line 3140 "parser.cc"
     break;
 
@@ -3153,37 +3153,37 @@ namespace yy {
 
   case 275: // alts: alts1
 #line 1192 "parser.y"
-                                 {yylhs.value.as < std::vector<Haskell::Alt> > () = yystack_[0].value.as < std::vector<Haskell::Alt> > ();}
+                                 {yylhs.value.as < std::vector<Located<Haskell::Alt>> > () = yystack_[0].value.as < std::vector<Located<Haskell::Alt>> > ();}
 #line 3158 "parser.cc"
     break;
 
   case 276: // alts: ";" alts
 #line 1193 "parser.y"
-                                 {yylhs.value.as < std::vector<Haskell::Alt> > () = yystack_[0].value.as < std::vector<Haskell::Alt> > ();}
+                                 {yylhs.value.as < std::vector<Located<Haskell::Alt>> > () = yystack_[0].value.as < std::vector<Located<Haskell::Alt>> > ();}
 #line 3164 "parser.cc"
     break;
 
   case 277: // alts1: alts1 ";" alt
 #line 1195 "parser.y"
-                                 {yylhs.value.as < std::vector<Haskell::Alt> > () = yystack_[2].value.as < std::vector<Haskell::Alt> > (); yylhs.value.as < std::vector<Haskell::Alt> > ().push_back(yystack_[0].value.as < Haskell::Alt > ());}
+                                 {yylhs.value.as < std::vector<Located<Haskell::Alt>> > () = yystack_[2].value.as < std::vector<Located<Haskell::Alt>> > (); yylhs.value.as < std::vector<Located<Haskell::Alt>> > ().push_back(yystack_[0].value.as < Located<Haskell::Alt> > ());}
 #line 3170 "parser.cc"
     break;
 
   case 278: // alts1: alts1 ";"
 #line 1196 "parser.y"
-                                 {yylhs.value.as < std::vector<Haskell::Alt> > () = yystack_[1].value.as < std::vector<Haskell::Alt> > ();}
+                                 {yylhs.value.as < std::vector<Located<Haskell::Alt>> > () = yystack_[1].value.as < std::vector<Located<Haskell::Alt>> > ();}
 #line 3176 "parser.cc"
     break;
 
   case 279: // alts1: alt
 #line 1197 "parser.y"
-                                 {yylhs.value.as < std::vector<Haskell::Alt> > ().push_back(yystack_[0].value.as < Haskell::Alt > ());}
+                                 {yylhs.value.as < std::vector<Located<Haskell::Alt>> > ().push_back(yystack_[0].value.as < Located<Haskell::Alt> > ());}
 #line 3182 "parser.cc"
     break;
 
   case 280: // alt: pat alt_rhs
 #line 1199 "parser.y"
-                                 {yylhs.value.as < Haskell::Alt > () = yy_make_alt(yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
+                                 {yylhs.value.as < Located<Haskell::Alt> > () = yy_make_alt(yystack_[1].location+yystack_[0].location,yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
 #line 3188 "parser.cc"
     break;
 
@@ -6170,14 +6170,14 @@ Haskell::List make_list(const vector<expression_ref>& elements)
     return Haskell::List(elements);
 }
 
-Haskell::Alts make_alts(const vector<Haskell::Alt>& alts)
+Haskell::Alts make_alts(const vector<Located<Haskell::Alt>>& alts)
 {
     return {alts};
 }
 
-Haskell::Alt yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs)
+Located<Haskell::Alt> yy_make_alt(const yy::location& loc, const expression_ref& pat, const expression_ref& alt_rhs)
 {
-    return {pat, alt_rhs};
+    return {loc, {pat, alt_rhs}};
 }
 
 Haskell::MultiGuardedRHS make_gdrhs(const vector<Haskell::GuardedRHS>& guards, const optional<Located<expression_ref>>& wherebinds)

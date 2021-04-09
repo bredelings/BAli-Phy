@@ -453,13 +453,13 @@ struct Alt
 
 struct Alts: public Object
 {
-    std::vector<Alt> alts;
+    std::vector<Located<Alt>> alts;
 
     Alts* clone() const { return new Alts(*this);}
     std::string print() const;
 
     Alts() = default;
-    Alts(const std::vector<Alt>& v):alts(v) {};
+    Alts(const std::vector<Located<Alt>>& v):alts(v) {};
 };
 
 struct GuardedRHS

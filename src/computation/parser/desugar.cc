@@ -536,8 +536,8 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	    vector<failable_expression> bodies;
 	    for(const auto& alt: alts)
 	    {
-		patterns.push_back( desugar(alt.pattern) );
-		bodies.push_back( desugar_rhs(alt.rhs) );
+		patterns.push_back( desugar( unloc(alt).pattern) );
+		bodies.push_back( desugar_rhs(unloc(alt).rhs) );
 	    }
 	    return case_expression(obj, patterns, bodies).result(error("case: failed pattern match"));
 	}

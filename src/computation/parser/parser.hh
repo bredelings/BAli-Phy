@@ -114,8 +114,8 @@
   Haskell::Tuple yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
 
   Haskell::List make_list(const std::vector<expression_ref>& items);
-  Haskell::Alts make_alts(const std::vector<Haskell::Alt>& alts);
-  Haskell::Alt yy_make_alt(const Haskell::Pattern& pat, const expression_ref& alt_rhs);
+  Haskell::Alts make_alts(const std::vector<Located<Haskell::Alt>>& alts);
+  Located<Haskell::Alt> yy_make_alt(const yy::location& loc, const Haskell::Pattern& pat, const expression_ref& alt_rhs);
 
   Haskell::Stmts make_stmts(const std::vector<expression_ref>& stmts);
 
@@ -469,35 +469,35 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
-      // alt
-      char dummy1[sizeof (Haskell::Alt)];
-
       // altslist
-      char dummy2[sizeof (Haskell::Alts)];
+      char dummy1[sizeof (Haskell::Alts)];
 
       // context
       // context_no_ops
-      char dummy3[sizeof (Haskell::Context)];
+      char dummy2[sizeof (Haskell::Context)];
 
       // data_or_newtype
-      char dummy4[sizeof (Haskell::DataOrNewtype)];
+      char dummy3[sizeof (Haskell::DataOrNewtype)];
 
       // fielddecl
-      char dummy5[sizeof (Haskell::FieldDecl)];
+      char dummy4[sizeof (Haskell::FieldDecl)];
 
       // infix
-      char dummy6[sizeof (Haskell::Fixity)];
+      char dummy5[sizeof (Haskell::Fixity)];
 
       // gdrh
       // gdpat
-      char dummy7[sizeof (Haskell::GuardedRHS)];
+      char dummy6[sizeof (Haskell::GuardedRHS)];
 
       // stmtlist
-      char dummy8[sizeof (Haskell::Stmts)];
+      char dummy7[sizeof (Haskell::Stmts)];
 
       // strict_mark
       // strictness
-      char dummy9[sizeof (Haskell::StrictLazy)];
+      char dummy8[sizeof (Haskell::StrictLazy)];
+
+      // alt
+      char dummy9[sizeof (Located<Haskell::Alt>)];
 
       // decllist
       // binds
@@ -651,17 +651,17 @@ namespace yy {
       // modid
       char dummy21[sizeof (std::string)];
 
-      // alts
-      // alts1
-      char dummy22[sizeof (std::vector<Haskell::Alt>)];
-
       // fielddecls
       // fielddecls1
-      char dummy23[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy22[sizeof (std::vector<Haskell::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy24[sizeof (std::vector<Haskell::GuardedRHS>)];
+      char dummy23[sizeof (std::vector<Haskell::GuardedRHS>)];
+
+      // alts
+      // alts1
+      char dummy24[sizeof (std::vector<Located<Haskell::Alt>>)];
 
       // exportlist
       // exportlist1
@@ -1256,10 +1256,6 @@ namespace yy {
       {
         switch (this->kind ())
     {
-      case symbol_kind::S_alt: // alt
-        value.move< Haskell::Alt > (std::move (that.value));
-        break;
-
       case symbol_kind::S_altslist: // altslist
         value.move< Haskell::Alts > (std::move (that.value));
         break;
@@ -1293,6 +1289,10 @@ namespace yy {
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.move< Haskell::StrictLazy > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_alt: // alt
+        value.move< Located<Haskell::Alt> > (std::move (that.value));
         break;
 
       case symbol_kind::S_decllist: // decllist
@@ -1459,11 +1459,6 @@ namespace yy {
         value.move< std::string > (std::move (that.value));
         break;
 
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
-        value.move< std::vector<Haskell::Alt> > (std::move (that.value));
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.move< std::vector<Haskell::FieldDecl> > (std::move (that.value));
@@ -1472,6 +1467,11 @@ namespace yy {
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
         value.move< std::vector<Haskell::GuardedRHS> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        value.move< std::vector<Located<Haskell::Alt>> > (std::move (that.value));
         break;
 
       case symbol_kind::S_exportlist: // exportlist
@@ -1528,20 +1528,6 @@ namespace yy {
 #else
       basic_symbol (typename Base::kind_type t, const location_type& l)
         : Base (t)
-        , location (l)
-      {}
-#endif
-
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::Alt&& v, location_type&& l)
-        : Base (t)
-        , value (std::move (v))
-        , location (std::move (l))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const Haskell::Alt& v, const location_type& l)
-        : Base (t)
-        , value (v)
         , location (l)
       {}
 #endif
@@ -1652,6 +1638,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Haskell::StrictLazy& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Located<Haskell::Alt>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Located<Haskell::Alt>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1827,20 +1827,6 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<Haskell::Alt>&& v, location_type&& l)
-        : Base (t)
-        , value (std::move (v))
-        , location (std::move (l))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::Alt>& v, const location_type& l)
-        : Base (t)
-        , value (v)
-        , location (l)
-      {}
-#endif
-
-#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<Haskell::FieldDecl>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -1862,6 +1848,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const std::vector<Haskell::GuardedRHS>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<Located<Haskell::Alt>>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<Located<Haskell::Alt>>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1918,10 +1918,6 @@ namespace yy {
         // Value type destructor.
 switch (yykind)
     {
-      case symbol_kind::S_alt: // alt
-        value.template destroy< Haskell::Alt > ();
-        break;
-
       case symbol_kind::S_altslist: // altslist
         value.template destroy< Haskell::Alts > ();
         break;
@@ -1955,6 +1951,10 @@ switch (yykind)
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.template destroy< Haskell::StrictLazy > ();
+        break;
+
+      case symbol_kind::S_alt: // alt
+        value.template destroy< Located<Haskell::Alt> > ();
         break;
 
       case symbol_kind::S_decllist: // decllist
@@ -2121,11 +2121,6 @@ switch (yykind)
         value.template destroy< std::string > ();
         break;
 
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
-        value.template destroy< std::vector<Haskell::Alt> > ();
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.template destroy< std::vector<Haskell::FieldDecl> > ();
@@ -2134,6 +2129,11 @@ switch (yykind)
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
         value.template destroy< std::vector<Haskell::GuardedRHS> > ();
+        break;
+
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        value.template destroy< std::vector<Located<Haskell::Alt>> > ();
         break;
 
       case symbol_kind::S_exportlist: // exportlist
@@ -4839,10 +4839,6 @@ switch (yykind)
   {
     switch (this->kind ())
     {
-      case symbol_kind::S_alt: // alt
-        value.copy< Haskell::Alt > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_altslist: // altslist
         value.copy< Haskell::Alts > (YY_MOVE (that.value));
         break;
@@ -4876,6 +4872,10 @@ switch (yykind)
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.copy< Haskell::StrictLazy > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_alt: // alt
+        value.copy< Located<Haskell::Alt> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_decllist: // decllist
@@ -5042,11 +5042,6 @@ switch (yykind)
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
-        value.copy< std::vector<Haskell::Alt> > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.copy< std::vector<Haskell::FieldDecl> > (YY_MOVE (that.value));
@@ -5055,6 +5050,11 @@ switch (yykind)
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
         value.copy< std::vector<Haskell::GuardedRHS> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        value.copy< std::vector<Located<Haskell::Alt>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_exportlist: // exportlist
@@ -5121,10 +5121,6 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
-      case symbol_kind::S_alt: // alt
-        value.move< Haskell::Alt > (YY_MOVE (s.value));
-        break;
-
       case symbol_kind::S_altslist: // altslist
         value.move< Haskell::Alts > (YY_MOVE (s.value));
         break;
@@ -5158,6 +5154,10 @@ switch (yykind)
       case symbol_kind::S_strict_mark: // strict_mark
       case symbol_kind::S_strictness: // strictness
         value.move< Haskell::StrictLazy > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_alt: // alt
+        value.move< Located<Haskell::Alt> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_decllist: // decllist
@@ -5324,11 +5324,6 @@ switch (yykind)
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_alts: // alts
-      case symbol_kind::S_alts1: // alts1
-        value.move< std::vector<Haskell::Alt> > (YY_MOVE (s.value));
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.move< std::vector<Haskell::FieldDecl> > (YY_MOVE (s.value));
@@ -5337,6 +5332,11 @@ switch (yykind)
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
         value.move< std::vector<Haskell::GuardedRHS> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_alts: // alts
+      case symbol_kind::S_alts1: // alts1
+        value.move< std::vector<Located<Haskell::Alt>> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_exportlist: // exportlist

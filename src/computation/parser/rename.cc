@@ -363,9 +363,9 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         auto A = E.as_<Haskell::Alts>();
         for(auto& alt: A.alts)
         {
-            alt.pattern = rename_infix(m, alt.pattern);
-            alt.pattern = unapply(alt.pattern);
-            alt.rhs = rename_infix(m, alt.rhs);
+            unloc(alt).pattern = rename_infix(m, unloc(alt).pattern);
+            unloc(alt).pattern = unapply(unloc(alt).pattern);
+            unloc(alt).rhs = rename_infix(m, unloc(alt).rhs);
         }
         return A;
     }
@@ -509,7 +509,7 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
             for(auto& [field_name, constrs]: constructor_fields)
             {
                 expression_ref name = Located<Hs::ID>({},field_name);
-                vector<Haskell::Alt> alts;
+                vector<Located<Haskell::Alt>> alts;
 
                 for(auto& [ConName,pos]: constrs)
                 {
@@ -523,13 +523,13 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
 
                     expression_ref pattern = expression_ref{Located<Hs::ID>({},ConName),f};
                     expression_ref body = Haskell::SimpleRHS({noloc, name});
-                    alts.push_back({pattern,body});
+                    alts.push_back({noloc,{pattern,body}});
                 }
                 {
                     expression_ref pattern = Haskell::WildcardPattern();
                     expression_ref body = error(field_name+": pattern match failure");
                     body = Haskell::SimpleRHS({noloc,body});
-                    alts.push_back({pattern,body});
+                    alts.push_back({noloc,{pattern,body}});
                 }
 
                 Located<Hs::ID> x({},"#0");
@@ -1273,8 +1273,8 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         {
             auto bound2 = bound;
 
-            add(bound2, rename_pattern(alt.pattern));
-            alt.rhs = rename(alt.rhs, bound2);
+            add(bound2, rename_pattern(unloc(alt).pattern));
+            unloc(alt).rhs = rename(unloc(alt).rhs, bound2);
         }
         return A;
     }

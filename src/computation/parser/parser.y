@@ -76,8 +76,8 @@
   Haskell::Tuple yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
 
   Haskell::List make_list(const std::vector<expression_ref>& items);
-  Haskell::Alts make_alts(const std::vector<Haskell::Alt>& alts);
-  Haskell::Alt yy_make_alt(const Haskell::Pattern& pat, const expression_ref& alt_rhs);
+  Haskell::Alts make_alts(const std::vector<Located<Haskell::Alt>>& alts);
+  Located<Haskell::Alt> yy_make_alt(const yy::location& loc, const Haskell::Pattern& pat, const expression_ref& alt_rhs);
 
   Haskell::Stmts make_stmts(const std::vector<expression_ref>& stmts);
 
@@ -425,9 +425,9 @@
 %type <std::vector<expression_ref>> guardquals1
 
 %type <Haskell::Alts> altslist
-%type <std::vector<Haskell::Alt>> alts
-%type <std::vector<Haskell::Alt>> alts1
-%type <Haskell::Alt> alt
+%type <std::vector<Located<Haskell::Alt>>> alts
+%type <std::vector<Located<Haskell::Alt>>> alts1
+%type <Located<Haskell::Alt>> alt
 %type <expression_ref> alt_rhs
 %type <std::vector<Haskell::GuardedRHS>> gdpats
  /* %type <expression_ref> ifgdpats */
@@ -1196,7 +1196,7 @@ alts1: alts1 ";" alt             {$$ = $1; $$.push_back($3);}
 |      alts1 ";"                 {$$ = $1;}
 |      alt                       {$$.push_back($1);}
 
-alt:   pat alt_rhs               {$$ = yy_make_alt($1,$2);}
+alt:   pat alt_rhs               {$$ = yy_make_alt(@1+@2,$1,$2);}
 
 alt_rhs: "->" exp wherebinds     {$$ = make_rhs({@2,$2},$3);}
 |        gdpats   wherebinds     {$$ = make_gdrhs($1,$2);}
@@ -1806,14 +1806,14 @@ Haskell::List make_list(const vector<expression_ref>& elements)
     return Haskell::List(elements);
 }
 
-Haskell::Alts make_alts(const vector<Haskell::Alt>& alts)
+Haskell::Alts make_alts(const vector<Located<Haskell::Alt>>& alts)
 {
     return {alts};
 }
 
-Haskell::Alt yy_make_alt(const expression_ref& pat, const expression_ref& alt_rhs)
+Located<Haskell::Alt> yy_make_alt(const yy::location& loc, const expression_ref& pat, const expression_ref& alt_rhs)
 {
-    return {pat, alt_rhs};
+    return {loc, {pat, alt_rhs}};
 }
 
 Haskell::MultiGuardedRHS make_gdrhs(const vector<Haskell::GuardedRHS>& guards, const optional<Located<expression_ref>>& wherebinds)
