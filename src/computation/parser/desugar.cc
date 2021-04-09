@@ -424,6 +424,21 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
         return case_expression(condition,{true},{failable_expression(true_branch)}).result(false_branch);
     }
+    else if (E.is_a<Haskell::CaseExp>())
+    {
+        auto& C = E.as_<Haskell::CaseExp>();
+
+        expression_ref obj = desugar(C.object);
+
+        vector<expression_ref> patterns;
+        vector<failable_expression> bodies;
+        for(const auto& alt: C.alts.alts)
+        {
+            patterns.push_back( desugar( unloc(alt).pattern) );
+            bodies.push_back( desugar_rhs(unloc(alt).rhs) );
+        }
+        return case_expression(obj, patterns, bodies).result(error("case: failed pattern match"));
+    }
 
     vector<expression_ref> v = E.copy_sub();
 
@@ -525,21 +540,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
 	    auto x = get_fresh_var();
 	    return lambda_quantify(x,apply_expression(apply_expression(v[0],x),v[1]));
-	}
-	else if (n.type == "Case")
-	{
-	    expression_ref obj = desugar(v[0]);
-	    assert(v[1].is_a<Haskell::Alts>());
-
-	    auto alts = v[1].as_<Haskell::Alts>().alts;
-	    vector<expression_ref> patterns;
-	    vector<failable_expression> bodies;
-	    for(const auto& alt: alts)
-	    {
-		patterns.push_back( desugar( unloc(alt).pattern) );
-		bodies.push_back( desugar_rhs(unloc(alt).rhs) );
-	    }
-	    return case_expression(obj, patterns, bodies).result(error("case: failed pattern match"));
 	}
 	else if (n.type == "enumFrom")
 	{

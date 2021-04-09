@@ -462,6 +462,17 @@ struct Alts: public Object
     Alts(const std::vector<Located<Alt>>& v):alts(v) {};
 };
 
+struct CaseExp: public Object
+{
+    Expression object;
+    Alts alts;
+
+    CaseExp* clone() const { return new CaseExp(*this);}
+    std::string print() const;
+
+    CaseExp(const Expression& o, Alts as): object(o), alts(as) {}
+};
+
 struct GuardedRHS
 {
     std::vector<expression_ref> guards;

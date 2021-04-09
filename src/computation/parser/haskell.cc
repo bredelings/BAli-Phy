@@ -193,6 +193,11 @@ string Alts::print() const
     return "{" + join(alt_string, "\n;") + "\n}";
 }
 
+string CaseExp::print() const
+{
+    return "case " + object.print() + " of " + alts.print();
+}
+
 std::string GuardedRHS::print() const
 {
     vector<string> guard_string;

@@ -438,6 +438,10 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 	v[0] = unapply(v[0]);
 	assert(v[0].head().is_a<Located<Hs::ID>>() or v[0].is_a<Haskell::List>() or v[0].is_a<Haskell::Tuple>());
     }
+    else if (is_AST(E, "Case"))
+    {
+        return Haskell::CaseExp(v[0], v[1].as_<Haskell::Alts>());
+    }
     else if (is_apply(E.head()))
     {
 	expression_ref E2;
@@ -1265,6 +1269,13 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         for(auto& stmt: MD.stmts.stmts)
             add(bound2, rename_stmt(stmt, bound2));
         return MD;
+    }
+    else if (E.is_a<Haskell::CaseExp>())
+    {
+        auto& C = E.as_<Haskell::CaseExp>();
+        auto object = rename(C.object, bound);
+        auto alts = rename(C.alts, bound);
+        return Haskell::CaseExp(object, alts.as_<Haskell::Alts>());
     }
     else if (E.is_a<Haskell::Alts>())
     {
