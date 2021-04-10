@@ -94,22 +94,18 @@ std::set<var> get_bound_indices(const expression_ref& E)
 {
     std::set<var> bound;
 
-    if (not E.size()) return bound;
-
     // Make sure we don't try to substitute for lambda-quantified dummies
     if (E.head().type() == lambda_type)
     {
 	if (E.sub()[0].is_a<var>())
 	    bound.insert(E.sub()[0].as_<var>());
     }
-    else 
+    else if (is_let_expression(E))
     {
-	if (is_let_expression(E))
-	{
-	    auto decls = let_decls(E);
-	    for(auto& decl: decls)
-		bound.insert(decl.first);
-	}
+        auto& L = E.as_<let_exp>();
+        for(auto& [x,_]: L.binds)
+            bound.insert(x);
+
 	assert(not is_case(E));
     }
 
@@ -127,10 +123,8 @@ void get_free_indices2(const expression_ref& E, multiset<var>& bound, set<var>& 
 	return;
     }
 
-    // fv c = { }
-    if (not E.size()) return;
-
     // for case expressions get_bound_indices doesn't work correctly.
+    // .. we need to handle each Alt separately.
     expression_ref object;
     vector<expression_ref> patterns;
     vector<expression_ref> bodies;
@@ -159,8 +153,20 @@ void get_free_indices2(const expression_ref& E, multiset<var>& bound, set<var>& 
     std::set<var> bound_ = get_bound_indices(E);
     for(const auto& d: bound_)
 	bound.insert(d);
-    for(int i=0;i<E.size();i++)
-	get_free_indices2(E.sub()[i], bound, free);
+
+    if (is_let_expression(E))
+    {
+        auto& L = E.as_<let_exp>();
+        for(auto [_,e]: L.binds)
+            get_free_indices2(e, bound, free);
+        get_free_indices2(L.body, bound, free);
+    }
+    else
+    {
+        for(int i=0;i<E.size();i++)
+            get_free_indices2(E.sub()[i], bound, free);
+    }
+
     for(const auto& d: bound_)
     {
 	auto it = bound.find(d);

@@ -68,17 +68,16 @@ expression_ref graph_normalize(const expression_ref& E)
     // 5. Let 
     if (is_let_expression(E))
     {
-	auto decls = let_decls(E);
-	auto body  = let_body(E);
+        auto L = E.as_<let_exp>();
 
 	// Normalize the body
-	body = graph_normalize(body);
+	L.body = graph_normalize(L.body);
 
 	// Just normalize the bound statements
-	for(auto& decl: decls)
-	    decl.second = graph_normalize(decl.second);
+	for(auto& [x,e]: L.binds)
+	    e = graph_normalize(e);
 
-	return let_expression(decls, body);
+	return L;
     }
 
     // 1. Var
@@ -208,16 +207,26 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
 
 	return index_var(index);
     }
+    else if (is_let_expression(E))
+    {
+        auto L = E.as_<let_exp>();
+        for(auto& [_,e]: L.binds)
+            e = translate_refs(e, Env);
+        L.body = translate_refs(L. body, Env);
+        return L;
+    }
 
     // Other constants have no parts, and don't need to be translated
     else if (not E.size()) return E;
+    else
+    {
+        // Translate the parts of the expression
+        object_ptr<expression> V = E.as_expression().clone();
+        for(int i=0;i<V->size();i++)
+            V->sub[i] = translate_refs(V->sub[i], Env);
 
-    // Translate the parts of the expression
-    object_ptr<expression> V = E.as_expression().clone();
-    for(int i=0;i<V->size();i++)
-	V->sub[i] = translate_refs(V->sub[i], Env);
-
-    return V;
+        return V;
+    }
 }
 
 closure reg_heap::translate_refs(closure&& C)

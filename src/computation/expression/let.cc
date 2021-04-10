@@ -8,23 +8,37 @@
 #include "constructor.H"
 #include "computation/operations.H"
 #include "util/range.H" // for reverse( )
+#include "util/string/join.H" // for join( )
 
 using std::vector;
 using std::set;
 using std::string;
 using std::pair;
 
-bool let_obj::operator==(const Object& o) const 
+bool let_exp::operator==(const Object& o) const 
 {
-    return dynamic_cast<const let_obj*>(&o);
+    if (this == &o) return true;
+
+    if (typeid(*this) != typeid(o)) return false;
+
+    auto& lo = static_cast<const let_exp&>(o);
+    if (binds.size() != lo.binds.size()) return false;
+
+    for(int i=0; i < binds.size();i++)
+        if (binds[i] != lo.binds[i]) return false;
+
+    return body == lo.body;
 }
 
-string let_obj::print() const 
+string let_exp::print() const 
 {
-    return "let";
+    vector<string> bind_strings;
+    for(auto& [x,e]: binds)
+        bind_strings.push_back(x.print() + " = " + e.print());
+    return "let {" + join(bind_strings,"; ") + "} in " + body.print();
 }
 
-expression_ref indexed_let_expression(const vector<expression_ref>& bodies, const expression_ref& T)
+Let indexed_let_expression(const vector<expression_ref>& bodies, const expression_ref& T)
 {
     return Let(bodies, T);
 }
@@ -68,13 +82,7 @@ expression_ref let_expression(const CDecls& decls, const expression_ref& T)
 {
     if (decls.size() == 0) return T;
 
-    auto Decls = make_decls(decls);
-
-    object_ptr<expression> E = new expression(let_obj());
-    E->sub.push_back(Decls);
-    E->sub.push_back(T);
-
-    return E;
+    return let_exp(decls, T);
 }
 
 expression_ref let_expression(const vector<CDecls>& decl_groups, const expression_ref& T)
@@ -98,8 +106,9 @@ bool parse_let_expression(const expression_ref& E, CDecls& decls, expression_ref
 
     if (not is_let_expression(E)) return false;
 
-    decls = let_decls(E);
-    body = let_body(E);
+    auto& L = E.as_<let_exp>();
+    decls = L.binds;
+    body = L.body;
 
     return true;
 }
@@ -251,11 +260,11 @@ expression_ref unlet(const expression_ref& E)
 
     // 1. Var
     // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    if (not E.size() or is_modifiable(E))
+    else if (not E.size() or is_modifiable(E))
 	return E;
   
     // 4. Constructor
-    if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    else if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
     {
 	expression* V = E.as_expression().clone();
 	for(int i=0;i<E.size();i++)
@@ -281,12 +290,6 @@ void get_decls(const expression_ref& E, CDecls& decls)
     }
 }
 
-void let_decls(const expression_ref& E, CDecls& decls)
-{
-    assert(is_let_expression(E));
-    get_decls(E.sub()[0], decls);
-}
-
 CDecls parse_decls(const expression_ref& E)
 {
     CDecls decls;
@@ -294,23 +297,10 @@ CDecls parse_decls(const expression_ref& E)
     return decls;
 }
 
-CDecls let_decls(const expression_ref& E)
-{
-    CDecls decls;
-    let_decls(E, decls);
-    return decls;
-}
-
-expression_ref let_body(const expression_ref& E)
-{
-    assert(is_let_expression(E));
-    return E.sub()[1];
-}
-
 expression_ref multi_let_body(expression_ref E)
 {
     while(is_let_expression(E))
-	E = let_body(E);
+	E = E.as_<let_exp>().body;
     return E;
 }
 
@@ -319,8 +309,9 @@ std::vector<CDecls> strip_multi_let(expression_ref& E)
     std::vector<CDecls> decl_groups;
     while(is_let_expression(E))
     {
-	decl_groups.push_back(let_decls(E));
-	E = let_body(E);
+        auto& L = E.as_<let_exp>();
+	decl_groups.push_back(L.binds);
+	E = L.body;
     }
     return decl_groups;
 }

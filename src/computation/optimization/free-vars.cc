@@ -95,12 +95,6 @@ add_free_variable_annotations(const expression_ref& E)
         return {free_vars.insert(x), E};
     }
 
-    // 2. Constant
-    else if (not E.size())
-    {
-        return {FreeVarSet{},E};
-    }
-
     // 3. Lambda
     else if (is_lambda_exp(E))
     {
@@ -139,14 +133,13 @@ add_free_variable_annotations(const expression_ref& E)
     // 5. Let
     else if (is_let_expression(E))
     {
-        auto decls = let_decls(E);
-        auto body = let_body(E);
+        auto L = E.as_<let_exp>();
 
-        auto body2 = add_free_variable_annotations(body);
-        FreeVarSet free_vars = get_free_vars(body2);
+        L.body = add_free_variable_annotations(L.body);
+        FreeVarSet free_vars = get_free_vars(L.body);
         vector<var> binders;
 
-        for(auto& [var,rhs]: decls)
+        for(auto& [var,rhs]: L.binds)
         {
             binders.push_back(var);
             rhs = add_free_variable_annotations(rhs);
@@ -154,7 +147,13 @@ add_free_variable_annotations(const expression_ref& E)
         }
         free_vars = erase(free_vars, binders);
 
-        return {free_vars, let_expression(decls,body2)};
+        return {free_vars, L};
+    }
+
+    // 2. Constant
+    else if (not E.size())
+    {
+        return {FreeVarSet{},E};
     }
 
     // 6. Apply or constructor or Operation

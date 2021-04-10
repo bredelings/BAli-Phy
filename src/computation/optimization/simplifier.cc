@@ -748,11 +748,6 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	}
     }
 
-     // Do we need something to handle WHNF variables?
-    
-    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    if (not E.size()) return E;
-
     // 2. Lambda (E = \x -> body)
     if (is_lambda_exp(E))
     {
@@ -804,7 +799,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     }
 
     // ?. Apply
-    if (is_apply_exp(E))
+    else if (is_apply_exp(E))
     {
 	object_ptr<expression> V2 = E.as_expression().clone();
 	
@@ -821,8 +816,27 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	return rebuild_apply(options, V2, S, bound_vars, context);
     }
 
+    // 5. Let (let {x[i] = F[i]} in body)
+    //
+    // Here we know that F[i] can only mention x[j<i] unless F[i] is a loop-breaker.
+    // 
+    else if (is_let_expression(E))
+    {
+        auto L = E.as_<let_exp>();
+
+	auto S2 = simplify_decls(options, L.binds, S, bound_vars, false);
+
+        // 5.2 Simplify the let-body
+	return rebuild_let(options, L.binds, L.body, S2, bound_vars, context);
+    }
+
+     // Do we need something to handle WHNF variables?
+
+    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+    else if (not E.size()) return E;
+
     // 4. Constructor or Operation
-    if (is_constructor_exp(E) or is_non_apply_op_exp(E))
+    else if (is_constructor_exp(E) or is_non_apply_op_exp(E))
     {
 	object_ptr<expression> E2 = E.as_expression().clone();
 	for(int i=0;i<E.size();i++)
@@ -833,24 +847,20 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	return E2;
     }
 
-
-    // 5. Let (let {x[i] = F[i]} in body)
-    //
-    // Here we know that F[i] can only mention x[j<i] unless F[i] is a loop-breaker.
-    // 
-    if (is_let_expression(E))
-    {
-	auto body  = let_body(E);
-	auto decls = let_decls(E);
-
-	auto S2 = simplify_decls(options, decls, S, bound_vars, false);
-
-        // 5.2 Simplify the let-body
-	return rebuild_let(options, decls, body, S2, bound_vars, context);
-    }
-
     std::abort();
 }
+
+/*
+ * Data.List.concatMap is used in desugaring list comprehensions,
+ *   so it can be used before it is defined in Data.List.
+ * (This happens in Data.Ord, which does not include Data.List).
+ * This can make it part of small_decls_in_free_vars, which means that
+ *  it gets added to the list of bound vars for the module Data.List.
+ *
+ * We haven't really solved this, but the problem currently isn't biting
+ * us because the simple_size( ) function in inliner.cc apparently isn't
+ * computing a small enough size for us to inline Data.Ord.compare_all
+ */
 
 
 vector<CDecls> simplify_module_one(const simplifier_options& options, const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,

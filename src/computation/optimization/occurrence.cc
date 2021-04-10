@@ -377,6 +377,7 @@ expression_ref maybe_eta_reduce(const expression_ref& E)
 
 pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_context context)
 {
+    assert(E);
     if (not E) return {E,set<var>{}};
 
     // 1. Var
@@ -389,9 +390,6 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 	x.context = context;
 	return {E,{x}};
     }
-
-    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    if (not E.size()) return {E,set<var>{}};
 
     // 2. Lambda (E = \x -> body)
     if (is_lambda_exp(E))
@@ -460,8 +458,24 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 	return {make_case_expression(object,patterns,bodies),free_vars};
     }
 
+    // 5. Let (let {x[i] = F[i]} in body)
+    else if (is_let_expression(E))
+    {
+        auto& L = E.as_<let_exp>();
+
+	// 1. Analyze the body
+	auto [body, free_vars] = occurrence_analyzer(L.body);
+
+	auto decls_groups = occurrence_analyze_decls(L.binds, free_vars);
+
+	return {let_expression(decls_groups, body), free_vars};
+    }
+
+    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+    else if (not E.size()) return {E,set<var>{}};
+
     // 4. Constructor, Operation (including Apply)
-    if (is_constructor_exp(E) or is_apply_exp(E) or is_non_apply_op_exp(E))
+    else if (is_constructor_exp(E) or is_apply_exp(E) or is_non_apply_op_exp(E))
     {
 	set<var> free_vars;
 	object_ptr<expression> F = new expression(E.head());
@@ -475,19 +489,6 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 	return {F,free_vars};
     }
 
-
-    // 5. Let (let {x[i] = F[i]} in body)
-    if (is_let_expression(E))
-    {
-	auto decls = let_decls(E);
-
-	// 1. Analyze the body
-	auto [body, free_vars] = occurrence_analyzer(let_body(E));
-
-	auto decls_groups = occurrence_analyze_decls(decls, free_vars);
-
-	return {let_expression(decls_groups, body), free_vars};
-    }
 
     throw myexception()<<"occurrence_analyzer: I don't recognize expression '"+ E.print() + "'";
 }

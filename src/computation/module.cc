@@ -661,7 +661,7 @@ void erase_one(multiset<T>& mset, const T& elem)
 
 expression_ref rename(const expression_ref& E, const map<var,var>& substitution, multiset<var>& bound)
 {
-    if (not E) return E;
+    assert(E);
 
     // 1. Var (x)
     if (E.is_a<var>())
@@ -673,9 +673,6 @@ expression_ref rename(const expression_ref& E, const map<var,var>& substitution,
         else
             return E;
     }
-
-    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    if (not E.size()) return E;
 
     // 2. Lambda (E = \x -> body)
     if (E.head().is_a<lambda>())
@@ -721,34 +718,35 @@ expression_ref rename(const expression_ref& E, const map<var,var>& substitution,
         return make_case_expression(object, patterns, bodies);
     }
 
+    // 5. Let (let {x[i] = F[i]} in body)
+    else if (is_let_expression(E))
+    {
+        auto L = E.as_<let_exp>();
+
+        for(auto& [x,_]: L.binds)
+            bound.insert(x);
+
+        L.body = rename(L.body, substitution, bound);
+
+        for(auto& [_,e]: L.binds)
+            e = rename(e, substitution, bound);
+
+        for(auto& [x,e]: L.binds)
+            erase_one(bound, x);
+
+        return L;
+    }
+
+    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+    else if (not E.size()) return E;
+
     // 4. Constructor or Operation or Apply
-    if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    else if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
     {
         object_ptr<expression> E2 = E.as_expression().clone();
         for(int i=0;i<E.size();i++)
             E2->sub[i] = rename(E2->sub[i], substitution, bound);
         return E2;
-    }
-
-    // 5. Let (let {x[i] = F[i]} in body)
-    if (is_let_expression(E))
-    {
-        auto body  = let_body(E);
-        auto decls = let_decls(E);
-
-        for(auto& decl: decls)
-            bound.insert(decl.first);
-
-        body = rename(body, substitution, bound);
-
-        for(auto& decl: decls)
-            decl.second = rename(decl.second, substitution, bound);
-
-        for(auto& decl: decls)
-            erase_one(bound, decl.first);
-
-        // 5.2 Simplify the let-body
-        return let_expression(decls, body);
     }
 
     std::abort();

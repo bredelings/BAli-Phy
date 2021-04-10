@@ -205,22 +205,6 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
             return strip_level(x);
     }
 
-    // 2. Constant
-    else if (not E.size())
-        return E;
-
-    // 3. Apply or constructor or Operation
-    else if (is_apply_exp(E) or is_constructor_exp(E) or is_non_apply_op_exp(E))
-    {
-        object_ptr<expression> V2 = E.as_expression().clone();
-
-        // All the arguments except the first one are supposed to be vars .... I think?
-        for(int i=0;i<E.size();i++)
-            V2->sub[i] = set_level(V2->sub[i], level, env);
-
-        return V2;
-    }
-
     // 4. Lambda
     else if (is_lambda_exp(E))
     {
@@ -285,13 +269,29 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
     // 5. Let
     else if (is_let_expression(E))
     {
-        auto decls = let_decls(E);
-        auto env2 = set_level_decl_group(decls, env);
+        auto L = E.as_<let_exp>();
 
-        auto body = let_body(E);
-        auto body2 = set_level_maybe_MFE(body, level, env2);
+        auto env2 = set_level_decl_group(L.binds, env);
 
-        return let_expression(decls,body2);
+        L.body = set_level_maybe_MFE(L.body, level, env2);
+
+        return L;
+    }
+
+    // 2. Constant
+    else if (not E.size())
+        return E;
+
+    // 3. Apply or constructor or Operation
+    else if (is_apply_exp(E) or is_constructor_exp(E) or is_non_apply_op_exp(E))
+    {
+        object_ptr<expression> V2 = E.as_expression().clone();
+
+        // All the arguments except the first one are supposed to be vars .... I think?
+        for(int i=0;i<E.size();i++)
+            V2->sub[i] = set_level(V2->sub[i], level, env);
+
+        return V2;
     }
 
     std::abort();

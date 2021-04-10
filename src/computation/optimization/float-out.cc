@@ -205,14 +205,6 @@ float_lets(expression_ref& E, int level)
         return {};
     }
 
-    // 2. Constant
-    else if (not E.size())
-        return {};
-
-    // 3. Constructor or Operation
-    else if (is_constructor_exp(E) or is_non_apply_op_exp(E))
-        return {};
-
     // 4. Apply @ E x1 x2 x3 ... x[n-1];
     else if (is_apply_exp(E))
     {
@@ -267,13 +259,12 @@ float_lets(expression_ref& E, int level)
     // 7. Let
     else if (is_let_expression(E))
     {
-        auto decls = let_decls(E);
-        auto body = let_body(E);
+        auto L = E.as_<let_exp>();
 
-        auto [float_binds, level2] = float_out_from_decl_group(decls);
+        auto [float_binds, level2] = float_out_from_decl_group(L.binds);
         assert(level2 <= level);
 
-        auto float_binds_from_body = float_lets(body, level);
+        auto float_binds_from_body = float_lets(L.body, level);
 
         float_binds.append(float_binds_from_body);
 
@@ -282,21 +273,30 @@ float_lets(expression_ref& E, int level)
             // The decls here have to go BEFORE the decls from the (i) the body and (ii) the decl rhs's.
             float_binds_t float_binds_first;
             if (level2 == 0)
-                float_binds_first.append_top( decls );
+                float_binds_first.append_top( L.binds );
             else
-                float_binds_first.append_level( level2, decls );
+                float_binds_first.append_level( level2, L.binds );
             float_binds_first.append(float_binds);
             std::swap(float_binds_first, float_binds);
-            E = body;
+            E = L.body;
         }
         // Prevents floated bindings at the same level from getting installed HIGHER than
         // bindings that they reference.
         // Does this place floated bindings as deep as possible at the correct level?
         else
-            E = let_expression(decls, install_current_level(float_binds, level, body));
+            E = let_expression(L.binds, install_current_level(float_binds, level, L.body));
 
         return float_binds;
     }
+
+    // 2. Constant
+    else if (not E.size())
+        return {};
+
+
+    // 3. Constructor or Operation
+    else if (is_constructor_exp(E) or is_non_apply_op_exp(E))
+        return {};
 
     std::abort();
 }
