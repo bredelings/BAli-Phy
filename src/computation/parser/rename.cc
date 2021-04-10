@@ -21,22 +21,28 @@ using std::set;
 using std::map;
 using std::deque;
 
-// 1. Some part of the routines in expression/let.cc work on Haskell::LetExp,
-//    and some part work on the desugared (let_obj()) or executable (Let())
-//    objects.  We need to seprate these...
+// So... let_exp is like Core, and Let is like STG.
 
-/* 2. Convert let_obj() and Let (the operation) into full objects that don't
- *    use AST nodes or expression_refs, at least for the let part.
- *
- *    When changing Let() to a complete object instead of just an expression head:
- *    - We assume that if E.size() == 0, then it can't be a let in:
- *      * graph_normalize
- *      * trim.cc:get_free_index_vars( )
- *      * trim.cc:remap_free_indices( )
- *      * is_WHNF( )
- *    - We assume that ops/constructors have >= 1 arg in graph_normalize
- *    - 
- */
+// 1. Debug optimizer 14 -> why are we getting different results here?
+
+// 2. Ideally convert lambda expressions to lambda_exp and LambdaExp
+
+// 3. Ideally convert case expressions to case_exp and CaseExp
+
+// 4. convert "Decls" to struct Decls
+
+// 5. convert "Decl" to  struct Decl -> this could be one part of a func defn.
+
+// 6. convert module, imports, exports, etc.
+
+// 7. convert constructors and stuff
+
+// 8. Extract the type dependencies
+
+// 9. Divide into dependency groups
+
+// 10. Infer kinds for type variables.
+
 expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
