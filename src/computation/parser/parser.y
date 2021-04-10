@@ -1566,7 +1566,7 @@ Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, 
 
 Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type)
 {
-    auto [name, type_args] = check_type_or_class_header(lhs_type);
+    auto [name, type_args] = check_type_or_class_header(unloc(lhs_type));
     return {name, type_args, rhs_type};
 }
 

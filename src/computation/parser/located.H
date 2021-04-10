@@ -4,7 +4,7 @@
 #include "location.hh"
 
 template <typename T>
-struct Located: public Object
+struct Located
 {
 public:
     std::optional<yy::location> loc;
