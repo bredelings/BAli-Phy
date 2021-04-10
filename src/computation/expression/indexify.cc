@@ -36,29 +36,6 @@ var get_named_var(int n)
 /// Convert to using de Bruijn indices.
 expression_ref indexify(const expression_ref& E, vector<var>& variables)
 {
-    if (not E.size())
-    {
-	// Indexed Variable - This is assumed to be a free variable, so just shift it.
-	if (E.is_index_var())
-	    return index_var(E.as_index_var() + variables.size());
-
-	// Variable
-	else if (E.is_a<var>())
-	{
-	    auto& D = E.as_<var>();
-	    assert(not is_wildcard(E));
-
-	    int index = find_index_backward(variables, D);
-	    if (index == -1)
-		throw myexception()<<"Dummy '"<<D<<"' is apparently not a bound variable in '"<<E<<"'?";
-	    else
-		return index_var(index);
-	}
-	// Constant
-	else
-	    return E;
-    }
-  
     // Lambda expression - /\x.e
     if (E.head().is_a<lambda>())
     {
@@ -120,6 +97,30 @@ expression_ref indexify(const expression_ref& E, vector<var>& variables)
 	return make_case_expression(T, patterns, bodies);
     }
 
+    else if (not E.size())
+    {
+	// Indexed Variable - This is assumed to be a free variable, so just shift it.
+	if (E.is_index_var())
+	    return index_var(E.as_index_var() + variables.size());
+
+	// Variable
+	else if (E.is_a<var>())
+	{
+	    auto& D = E.as_<var>();
+	    assert(not is_wildcard(E));
+
+	    int index = find_index_backward(variables, D);
+	    if (index == -1)
+		throw myexception()<<"Dummy '"<<D<<"' is apparently not a bound variable in '"<<E<<"'?";
+	    else
+		return index_var(index);
+	}
+	// Constant
+	else
+	    return E;
+    }
+  
+
     // If we've gotten this far, just transform the sub-expressions.
     // (This could be: Op, constructor, 
     expression* V = E.as_expression().clone();
@@ -137,22 +138,6 @@ expression_ref indexify(const expression_ref& E)
 /// Convert to using de Bruijn indices.
 expression_ref deindexify(const expression_ref& E, const vector<expression_ref>& variables)
 {
-    if (not E.size())
-    {
-	// Indexed Variable - This is assumed to be a free variable, so just shift it.
-	if (E.is_index_var())
-	{
-	    int index = E.as_index_var();
-	    if (index >= variables.size())
-		return index_var(index - variables.size());
-
-	    return variables[variables.size()-1 - index];
-	}
-	// Constant
-	else
-	    return E;
-    }
-  
     // Lambda expression - /\x.e
     if (E.head().is_a<lambda2>())
     {
@@ -225,6 +210,22 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
 	return make_case_expression(T, patterns, bodies);
     }
 
+    else if (not E.size())
+    {
+	// Indexed Variable - This is assumed to be a free variable, so just shift it.
+	if (E.is_index_var())
+	{
+	    int index = E.as_index_var();
+	    if (index >= variables.size())
+		return index_var(index - variables.size());
+
+	    return variables[variables.size()-1 - index];
+	}
+	// Constant
+	else
+	    return E;
+    }
+  
     // If we've gotten this far, just transform the sub-expressions.
     // (This could be: Op, constructor, 
     expression* V = E.as_expression().clone();

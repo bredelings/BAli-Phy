@@ -30,10 +30,6 @@ expression_ref graph_normalize(const expression_ref& E)
 {
     if (not E) return E;
 
-    // 1. Var
-    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    if (not E.size()) return E;
-  
     // 2. Lambda
     if (E.head().is_a<lambda>())
     {
@@ -69,6 +65,26 @@ expression_ref graph_normalize(const expression_ref& E)
 	}
     }
 
+    // 5. Let 
+    if (is_let_expression(E))
+    {
+	auto decls = let_decls(E);
+	auto body  = let_body(E);
+
+	// Normalize the body
+	body = graph_normalize(body);
+
+	// Just normalize the bound statements
+	for(auto& decl: decls)
+	    decl.second = graph_normalize(decl.second);
+
+	return let_expression(decls, body);
+    }
+
+    // 1. Var
+    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+    else if (not E.size()) return E;
+  
     // 4. Constructor
     if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
     {
@@ -95,22 +111,6 @@ expression_ref graph_normalize(const expression_ref& E)
 	}
 
 	return let_expression(decls, object_ptr<const expression>(E2));
-    }
-
-    // 5. Let 
-    if (is_let_expression(E))
-    {
-	auto decls = let_decls(E);
-	auto body  = let_body(E);
-
-	// Normalize the body
-	body = graph_normalize(body);
-
-	// Just normalize the bound statements
-	for(auto& decl: decls)
-	    decl.second = graph_normalize(decl.second);
-
-	return let_expression(decls, body);
     }
 
     throw myexception()<<"graph_normalize: I don't recognize expression '"+ E.print() + "'";
@@ -210,7 +210,7 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
     }
 
     // Other constants have no parts, and don't need to be translated
-    if (not E.size()) return E;
+    else if (not E.size()) return E;
 
     // Translate the parts of the expression
     object_ptr<expression> V = E.as_expression().clone();

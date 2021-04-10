@@ -26,14 +26,7 @@ string let_obj::print() const
 
 expression_ref indexed_let_expression(const vector<expression_ref>& bodies, const expression_ref& T)
 {
-    expression* E = new expression( Let() );
-
-    E->sub.push_back(T);
-
-    for(const auto& body: bodies)
-	E->sub.push_back(body);
-
-    return E;
+    return Let(bodies, T);
 }
 
 
@@ -118,11 +111,9 @@ bool parse_indexed_let_expression(const expression_ref& E, vector<expression_ref
 
     if (E.head().type() != let2_type) return false;
 
-    T = E.sub()[0];
-    const int L = E.size()-1;
-    bodies.resize(L);
-    for(int i=0;i<L;i++)
-	bodies[i] = E.sub()[i+1];
+    auto& L = E.as_<Let>();
+    T = L.body;
+    bodies = L.binds;
 
     return true;
 }
@@ -186,11 +177,6 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
 
 expression_ref unlet(const expression_ref& E)
 {
-    // 1. Var
-    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    if (not E.size() or is_modifiable(E))
-	return E;
-  
     // 2. Lambda
     if (E.head().is_a<lambda>())
     {
@@ -219,15 +205,6 @@ expression_ref unlet(const expression_ref& E)
 	    bodies[i] = unlet(bodies[i]);
     
 	return make_case_expression(object, patterns, bodies);
-    }
-
-    // 4. Constructor
-    if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
-    {
-	expression* V = E.as_expression().clone();
-	for(int i=0;i<E.size();i++)
-	    V->sub[i] = unlet(E.sub()[i]);
-	return V;
     }
 
     // 5. Let 
@@ -270,6 +247,20 @@ expression_ref unlet(const expression_ref& E)
 	}
 
 	return let_expression(decls, T);
+    }
+
+    // 1. Var
+    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+    if (not E.size() or is_modifiable(E))
+	return E;
+  
+    // 4. Constructor
+    if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    {
+	expression* V = E.as_expression().clone();
+	for(int i=0;i<E.size();i++)
+	    V->sub[i] = unlet(E.sub()[i]);
+	return V;
     }
 
     std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";

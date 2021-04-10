@@ -4,6 +4,7 @@
 #include "case.H"
 #include "index_var.H"
 #include "constructor.H"
+#include "computation/operations.H"
 
 using std::vector;
 using std::string;
@@ -58,16 +59,6 @@ vector<int> merge_vars(const vector<int>& v1, const vector<int>& v2)
 
 vector<int> get_free_index_vars(const expression_ref& E)
 {
-    if (not E.size()) 
-    {
-	// Variable
-	if (E.is_index_var())
-	    return {E.as_index_var()};
-	// Constant
-	else
-	    return vector<int>{};
-    }
-
     vector<expression_ref> bodies;
     vector<expression_ref> patterns;
     expression_ref T;
@@ -118,6 +109,15 @@ vector<int> get_free_index_vars(const expression_ref& E)
 	    vars = merge_vars(vars, pop_vars(n, get_free_index_vars(bodies[i])) );
 	}
     }
+    else if (not E.size()) 
+    {
+	// Variable
+	if (E.is_index_var())
+	    return {E.as_index_var()};
+	// Constant
+	else
+	    return vector<int>{};
+    }
     else
     {
 	for(int i=0;i<E.size();i++)
@@ -131,9 +131,6 @@ vector<int> get_free_index_vars(const expression_ref& E)
 
 expression_ref trim_normalize(const expression_ref& E)
 {
-    // Already normalized (though not trimmed)
-    if (not E.size()) return E;
-
     vector<expression_ref> bodies;
     vector<expression_ref> patterns;
     expression_ref T;
@@ -162,6 +159,9 @@ expression_ref trim_normalize(const expression_ref& E)
 
 	return make_case_expression(T, patterns, bodies);
     }
+    // Already normalized (though not trimmed)
+    else if (not E.size()) return E;
+
     else
     {
 	expression* V = E.as_expression().clone();
@@ -190,29 +190,6 @@ expression_ref make_trim(const expression_ref& E, const vector<int>& indices)
 
 expression_ref remap_free_indices(const expression_ref& E, const vector<int>& mapping, int depth)
 {
-    if (not E.size())
-    {
-	// Variable
-	if (E.is_index_var())
-	{
-	    int index = E.as_index_var();
-	    int delta = index - depth;
-	    if (delta >= 0)
-	    {
-		assert(delta < mapping.size());
-		assert(mapping[delta] != -1);
-
-		return index_var(depth + mapping[delta]);
-	    }
-	    else
-		// Var that is to new to be remapped.
-		return E;
-	}
-	// Constant
-	else
-	    return E;
-    }
-
     vector<expression_ref> bodies;
     vector<expression_ref> patterns;
     expression_ref T;
@@ -286,6 +263,28 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
 
 	return make_case_expression(T, patterns, bodies);
     }
+    else if (not E.size())
+    {
+	// Variable
+	if (E.is_index_var())
+	{
+	    int index = E.as_index_var();
+	    int delta = index - depth;
+	    if (delta >= 0)
+	    {
+		assert(delta < mapping.size());
+		assert(mapping[delta] != -1);
+
+		return index_var(depth + mapping[delta]);
+	    }
+	    else
+		// Var that is to new to be remapped.
+		return E;
+	}
+	// Constant
+	else
+	    return E;
+    }
     else
     {
 	expression* V = E.as_expression().clone();
@@ -325,9 +324,6 @@ expression_ref untrim(const expression_ref& E)
 //  just like trim_normalize( ))
 expression_ref trim_unnormalize(const expression_ref& E)
 {
-    // Already normalized (though not trimmed)
-    if (not E.size()) return E;
-
     vector<expression_ref> bodies;
     vector<expression_ref> patterns;
     expression_ref T;
@@ -356,6 +352,9 @@ expression_ref trim_unnormalize(const expression_ref& E)
 
 	return make_case_expression(T, patterns, bodies);
     }
+    // Already normalized (though not trimmed)
+    else if (not E.size()) return E;
+
     else
     {
 	expression* V = E.as_expression().clone();

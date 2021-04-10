@@ -99,7 +99,7 @@ bool is_WHNF(const expression_ref& E)
     }
     else
     {
-	if (is_reglike(E))
+	if (is_reglike(E) or type == let2_type)
 	    return false;
 	else
 	    return true;
@@ -113,11 +113,6 @@ bool is_reglike(const expression_ref& E)
 
 expression_ref launchbury_unnormalize(const expression_ref& E)
 {
-    // 1. Var
-    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    if (not E.size() or is_modifiable(E))
-	return E;
-
     // 2. Lambda
     if (E.head().is_a<lambda>())
     {
@@ -146,15 +141,6 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 	    bodies[i] = launchbury_unnormalize(bodies[i]);
     
 	return make_case_expression(object, patterns, bodies);
-    }
-
-    // 4. Constructor
-    if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
-    {
-	expression* V = E.as_expression().clone();
-	for(int i=0;i<E.size();i++)
-	    V->sub[i] = launchbury_unnormalize(E.sub()[i]);
-	return V;
     }
 
     // 5. Let 
@@ -208,6 +194,18 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 	}
 
 	return let_expression(decls, body);
+    }
+    // 1. Var
+    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+    else if (not E.size() or is_modifiable(E))
+	return E;
+    // 4. Constructor
+    else if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    {
+	expression* V = E.as_expression().clone();
+	for(int i=0;i<E.size();i++)
+	    V->sub[i] = launchbury_unnormalize(E.sub()[i]);
+	return V;
     }
 
     std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";

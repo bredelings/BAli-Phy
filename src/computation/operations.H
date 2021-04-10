@@ -47,7 +47,17 @@ struct Let: public Operation
 
     type_constant type() const {return let2_type;}
 
-    Let():Operation(2, let_op, "let") {}
+    std::string print() const;
+
+    std::vector<expression_ref> binds;
+
+    expression_ref body;
+
+    Let(const std::vector<expression_ref>& bs, const expression_ref& b)
+        :Operation(0, let_op, "let"),
+         binds(bs),
+         body(b)
+        {}
 };
 
 closure seq_op(OperationArgs&);

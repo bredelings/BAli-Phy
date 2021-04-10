@@ -344,6 +344,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         // Check for WHNF *OR* heap variables
         else if (is_WHNF(expression_at(r)))
         {
+            assert(not expression_at(r).is_a<Operation>());
             if (regs[r].forced_regs.empty())
                 mark_reg_constant_no_force(r);
             else

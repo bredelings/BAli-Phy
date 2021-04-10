@@ -25,13 +25,18 @@ using std::deque;
 //    and some part work on the desugared (let_obj()) or executable (Let())
 //    objects.  We need to seprate these...
 
-// 2. Convert let_obj() and Let (the operation) into full objects that don't
-//    use AST nodes or expression_refs, at least for the let part.
-
-// 3. Convert Located<ID> to Located<Var>
-
-// 4. Make Located<> NOT an object!!
-
+/* 2. Convert let_obj() and Let (the operation) into full objects that don't
+ *    use AST nodes or expression_refs, at least for the let part.
+ *
+ *    When changing Let() to a complete object instead of just an expression head:
+ *    - We assume that if E.size() == 0, then it can't be a let in:
+ *      * graph_normalize
+ *      * trim.cc:get_free_index_vars( )
+ *      * trim.cc:remap_free_indices( )
+ *      * is_WHNF( )
+ *    - We assume that ops/constructors have >= 1 arg in graph_normalize
+ *    - 
+ */
 expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.

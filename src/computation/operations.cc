@@ -9,6 +9,7 @@
 #include "expression/case.H"
 #include "expression/var.H"
 #include "expression/apply.H"
+#include "util/string/join.H"
 
 using std::vector;
 using std::string;
@@ -38,6 +39,14 @@ using std::string;
 //       (b) Both seq and $ avoid evaluating the reg at this location. 
 // Thus: Every instead of reference(slot) actually looks up the relevant reg, except for
 //       the case operation, which instead uses reference to determine the branches.
+
+string Let::print() const
+{
+    vector<string> bind_strings;
+    for(auto& bind: binds)
+        bind_strings.push_back(bind.print());
+    return "let {"+join(bind_strings,";")+"} in "+body.print();
+}
 
 using boost::dynamic_pointer_cast;
 
@@ -260,23 +269,21 @@ closure let_op(OperationArgs& Args)
     {
 	int start = C.Env.size();
 
-	const vector<expression_ref>& args = C.exp.sub();
+	auto& L = C.exp.as_<Let>();
 
-	const expression_ref& body = args[0];
-
-	int n_bodies = int(args.size())-1;
+	int n_binds = L.binds.size();
 
 	// 1. Allocate the new vars on the heap
-	for(int i=0;i<n_bodies;i++)
+	for(int i=0;i<n_binds;i++)
 	    C.Env.push_back( Args.allocate_reg() );
       
 	// 2. Substitute the new heap vars for the var vars in expression T and in the bodies
-	for(int i=0;i<n_bodies;i++)
-	    M.set_C(C.Env[start+i], get_trimmed({args[i+1],C.Env}));
+	for(int i=0;i<n_binds;i++)
+	    M.set_C(C.Env[start+i], get_trimmed({L.binds[i],C.Env}));
 
-	total_allocated_vars += n_bodies;
+	total_allocated_vars += n_binds;
 
-	C.exp = body;
+	C.exp = L.body;
 	do_trim(C);
     }
     while (C.exp.head().type() == let2_type);
