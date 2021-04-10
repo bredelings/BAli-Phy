@@ -30,26 +30,9 @@ using std::pair;
 
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 
-// See list in computation/loader.C
-//
-
-int max_index(const expression_ref& x)
-{
-    int index = -1;
-    if (x)
-    {
-	if (x.head().is_a<var>())
-	    index =  std::max(index,x.head().as_<var>().index);
-
-	if (x.size())
-	    for(auto& e: x.sub())
-		index = std::max(max_index(e),index);
-    }
-    return index;
-}
-
 desugar_state::desugar_state(const Module& m_)
-    :fresh_vars(1+max_index(m_.topdecls)), m(m_)
+    :fresh_vars(1),  // We shouldn't be making any numerical vars in rename.cc, only var(-1) and var(string).
+     m(m_)
 {}
 
 bool is_irrefutable_pat(const expression_ref& E)
