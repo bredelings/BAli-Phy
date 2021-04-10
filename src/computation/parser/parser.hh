@@ -79,7 +79,7 @@
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
-  Located<Haskell::ID> make_id(const yy::location& loc, const std::string& id);
+  Located<Haskell::Var> make_var(const yy::location& loc, const std::string& id);
   Haskell::TypeVar make_type_var(const std::string& id);
   Haskell::TypeVarOfKind make_type_var_of_kind(const std::string& id, const Haskell::Type& kind);
   Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& id, const Haskell::Type& kind);
@@ -100,7 +100,7 @@
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
 
-  Haskell::AsPattern make_as_pattern(const Located<Haskell::ID>& x, const expression_ref& body);
+  Haskell::AsPattern make_as_pattern(const Located<Haskell::Var>& x, const expression_ref& body);
   Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat);
   Haskell::StrictPattern make_strict_pattern(const expression_ref& pat);
 

@@ -284,13 +284,13 @@ struct RecStmt: public Object
     RecStmt(const Stmts& s):stmts(s) {}
 };
 
-struct ID: public Object
+struct Var: public Object
 {
     std::string name;
-    ID* clone() const { return new ID(*this);}
+    Var* clone() const { return new Var(*this);}
     std::string print() const;
-    ID(const std::string& s):name(s) {}
-    ID(const char* s):name(s) {}
+    Var(const std::string& s):name(s) {}
+    Var(const char* s):name(s) {}
 };
 
 struct WildcardPattern: public Object
