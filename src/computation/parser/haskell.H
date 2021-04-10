@@ -286,10 +286,10 @@ struct RecStmt: public Object
 
 struct Var: public Object
 {
-    std::string name;
+    Located<std::string> name;
     Var* clone() const { return new Var(*this);}
     std::string print() const;
-    Var(const std::string& s):name(s) {}
+    Var(const Located<std::string>& s):name(s) {}
 };
 
 struct WildcardPattern: public Object

@@ -41,7 +41,7 @@
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
-  Located<Haskell::Var> make_var(const yy::location& loc, const std::string& id);
+  Haskell::Var make_var(const Located<std::string>& id);
   Haskell::TypeVar make_type_var(const std::string& id);
   Haskell::TypeVarOfKind make_type_var_of_kind(const std::string& id, const Haskell::Type& kind);
   Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& id, const Haskell::Type& kind);
@@ -62,7 +62,7 @@
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
 
-  Haskell::AsPattern make_as_pattern(const Located<Haskell::Var>& x, const expression_ref& body);
+  Haskell::AsPattern make_as_pattern(const Haskell::Var& x, const expression_ref& body);
   Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat);
   Haskell::StrictPattern make_strict_pattern(const expression_ref& pat);
 
@@ -1061,10 +1061,10 @@ exp: infixexp "::" sigtype { $$ = make_typed_exp(make_infixexp($1),$3); }
 |    infixexp              { $$ = make_infixexp($1); }
 
 infixexp: exp10                 {$$.push_back($1);}
-|         infixexp qop exp10    {$$ = $1; $$.push_back(make_var(@2,$2)); $$.push_back($3);}
+|         infixexp qop exp10    {$$ = $1; $$.push_back(make_var({@2,$2})); $$.push_back($3);}
 
 infixexp_top: exp10_top         {$$.push_back($1);}
-|             infixexp_top qop exp10_top  {$$ = $1; $$.push_back(make_var(@2,$2)); $$.push_back($3);}
+|             infixexp_top qop exp10_top  {$$ = $1; $$.push_back(make_var({@2,$2})); $$.push_back($3);}
 
 exp10_top: "-" fexp                {$$ = make_minus(make_fexp($2));}
 |          "{-# CORE" STRING "#-}" {}
@@ -1087,7 +1087,7 @@ fexp: fexp aexp                  {$$ = $1; $$.push_back($2);}
 |     "static" aexp              {}
 |     aexp                       {$$.push_back($1);}
 
-aexp: qvar "@" aexp              {$$ = make_as_pattern(make_var(@1,$1),$3);}
+aexp: qvar "@" aexp              {$$ = make_as_pattern(make_var({@1,$1}),$3);}
 |     "~" aexp                   {$$ = make_lazy_pattern($2);}
 |     "\\" apats1 "->" exp       {$$ = make_lambdaexp($2,$4);}
 |     "let" binds "in" exp       {$$ = make_let($2,{@4,$4});}
@@ -1103,8 +1103,8 @@ aexp: qvar "@" aexp              {$$ = make_as_pattern(make_var(@1,$1),$3);}
 aexp1: aexp1 "{" fbinds "}"   {}
 |      aexp2                  {$$ = $1;}
 
-aexp2: qvar                   {$$ = make_var(@1,$1);}
-|      qcon                   {$$ = make_var(@1,$1);}
+aexp2: qvar                   {$$ = make_var({@1,$1});}
+|      qcon                   {$$ = make_var({@1,$1});}
 |      literal                {$$ = $1;}
 |      "(" texp ")"           {$$ = $2;}
 |      "(" tup_exprs ")"      {$$ = yy_make_tuple($2);}
@@ -1119,8 +1119,8 @@ aexp2: qvar                   {$$ = make_var(@1,$1);}
 /* ------------- Tuple expressions ------------------------------- */
 
 texp: exp             {$$ = $1;}
-|     infixexp qop    {$$ = new expression(AST_node("LeftSection"),{make_infixexp($1),make_var(@2,$2)});}
-|     qopm infixexp   {$$ = new expression(AST_node("RightSection"),{make_var(@1,$1),make_infixexp($2)});}
+|     infixexp qop    {$$ = new expression(AST_node("LeftSection"),{make_infixexp($1),make_var({@2,$2})});}
+|     qopm infixexp   {$$ = new expression(AST_node("RightSection"),{make_var({@1,$1}),make_infixexp($2)});}
 /* view patterns 
 |     exp "->" texp
 */
@@ -1621,9 +1621,9 @@ expression_ref make_tyapps(const std::vector<expression_ref>& tyapps)
     return E;
 }
 
-Located<Haskell::Var> make_var(const yy::location& loc, const string& id)
+Haskell::Var make_var(const Located<string>& v)
 {
-    return Located<Haskell::Var>(loc, {id});
+    return {v};
 }
 
 bool check_kind(const Haskell::Type& kind)
@@ -1745,7 +1745,7 @@ expression_ref make_fexp(const vector<expression_ref>& args)
     }
 }
 
-Haskell::AsPattern make_as_pattern(const Located<Haskell::Var>& x, const expression_ref& pat)
+Haskell::AsPattern make_as_pattern(const Haskell::Var& x, const expression_ref& pat)
 {
     return Haskell::AsPattern(x,pat);
 }

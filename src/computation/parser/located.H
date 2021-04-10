@@ -32,6 +32,11 @@ inline std::string Located<T>::print() const {
     return obj.print();
 }
 
+template <>
+inline std::string Located<std::string>::print() const {
+    return obj;
+}
+
 template <typename T>
 std::ostream& operator<<(std::ostream& o,const Located<T>& lt)
 {

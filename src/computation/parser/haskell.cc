@@ -45,7 +45,7 @@ string RecStmt::print() const
 
 string Var::print() const
 {
-    return name;
+    return unloc(name);
 }
 
 string WildcardPattern::print() const

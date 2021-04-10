@@ -282,7 +282,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             element = desugar(element);
         return get_tuple(T.elements);
     }
-    else if (E.is_a<Located<Hs::Var>>())
+    else if (E.is_a<Hs::Var>())
         std::abort();
     else if (E.is_a<Haskell::WildcardPattern>())
         return var(-1);
