@@ -49,7 +49,7 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
 
 	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol, 2,6,left_fix), T);
 
-	return infix_parse(m, op1, {Located<Hs::Var>({},"negate"),E1}, T);
+	return infix_parse(m, op1, {Located<Hs::Var>({},{"negate"}),E1}, T);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
@@ -535,7 +535,7 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
                     alts.push_back({noloc,{pattern,body}});
                 }
 
-                Located<Hs::Var> x({},"#0");
+                Located<Hs::Var> x({},{"#0"}); // FIXME??
                 expression_ref body = Haskell::CaseExp(x,Haskell::Alts(alts));
                 body = Haskell::LambdaExp({x},body);
                 body = Haskell::SimpleRHS({noloc,body});
@@ -1131,7 +1131,7 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
 
     // 3. Construct the do stmt
     auto stmts = rec_stmt.as_<Haskell::RecStmt>().stmts.stmts;
-    expression_ref rec_return = Located<Hs::Var>({},"return");
+    expression_ref rec_return = Located<Hs::Var>({},{"return"});
     expression_ref rec_return_stmt = {rec_return, rec_tuple};
     stmts.push_back(Hs::SimpleQual(rec_return_stmt));
     auto rec_do = Haskell::Do(Haskell::Stmts(stmts));
@@ -1141,7 +1141,7 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
     expression_ref rec_lambda = Haskell::LambdaExp({Haskell::LazyPattern(rec_tuple_pattern)}, rec_do);      // \ ~(b,c) -> do { ... }
 
     // 5. Construct rec_tuple_pattern <- mfix rec_lambda
-    expression_ref mfix = Located<Hs::Var>({},"mfix");
+    expression_ref mfix = Located<Hs::Var>({},{"mfix"});
     rec_stmt = Haskell::PatQual(rec_tuple_pattern, expression_ref{mfix, rec_lambda});
 
     // Combine the set of bound variables and rename our rewritten statement;

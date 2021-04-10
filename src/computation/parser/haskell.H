@@ -290,7 +290,6 @@ struct Var: public Object
     Var* clone() const { return new Var(*this);}
     std::string print() const;
     Var(const std::string& s):name(s) {}
-    Var(const char* s):name(s) {}
 };
 
 struct WildcardPattern: public Object
