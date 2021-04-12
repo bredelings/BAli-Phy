@@ -56,6 +56,8 @@ struct substitution_range
 
 typedef pair<expression_ref,occurrence_info> bound_variable_info;
 
+// This should be "variables and literals", but we don't currently allow literals as function arguments.
+// So, we only allow variables to be "trivial".
 bool is_trivial(const expression_ref& E)
 {
     return is_reglike(E);

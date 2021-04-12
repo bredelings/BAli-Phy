@@ -87,10 +87,11 @@ using boost::dynamic_pointer_cast;
 
 bool is_WHNF(const expression_ref& E)
 {
+    assert(E);
+
     int type = E.head().type();
-    if (not E)
-        return false;
-    else if (E.size())
+
+    if (E.size())
     {
 	if (type == lambda_type or type == lambda2_type or type == constructor_type) 
 	    return true;

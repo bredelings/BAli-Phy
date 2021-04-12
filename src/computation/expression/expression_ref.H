@@ -27,7 +27,7 @@ class expression_ref
 
 public:
 
-    bool is_object_type() const {return type_ > index_var_type;}
+    bool is_object_type() const {return ::is_object_type(type_);}
 
     bool operator==(const expression_ref& E2) const
 	{
