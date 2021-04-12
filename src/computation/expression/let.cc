@@ -2,6 +2,7 @@
 #include "lambda.H"
 #include "let.H"
 #include "case.H"
+#include "apply.H"
 #include "substitute.H"
 #include "modifiable.H"
 #include "AST_node.H"
@@ -257,14 +258,16 @@ expression_ref unlet(const expression_ref& E)
 
 	return let_expression(decls, T);
     }
-
     // 1. Var
-    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    else if (not E.size() or is_modifiable(E))
-	return E;
+    else if (E.is_a<var>())
+        return E;
+
+    // Constant or 0-arg constructor
+    else if (is_literal_type(E.type()) or is_constructor(E))
+        return E;
   
     // 4. Constructor
-    else if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    else if (is_constructor_exp(E) or is_apply_exp(E) or E.head().is_a<Operation>())
     {
 	expression* V = E.as_expression().clone();
 	for(int i=0;i<E.size();i++)
@@ -273,7 +276,7 @@ expression_ref unlet(const expression_ref& E)
     }
 
     std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";
-    return E;
+    std::abort();
 }
 
 void get_decls(const expression_ref& E, CDecls& decls)
