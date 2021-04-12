@@ -1,4 +1,5 @@
 #include "var.H"
+#include "reg_var.H"
 #include "lambda.H"
 #include "let.H"
 #include "case.H"
@@ -259,7 +260,7 @@ expression_ref unlet(const expression_ref& E)
 	return let_expression(decls, T);
     }
     // 1. Var
-    else if (E.is_a<var>())
+    else if (E.is_a<var>() or is_reg_var(E))
         return E;
 
     // Constant or 0-arg constructor
