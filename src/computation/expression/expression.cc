@@ -186,11 +186,14 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
     }
     // 1. Var
     // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    else if (not E.size() or is_modifiable(E))
+    else if (is_reglike(E) or is_literal_type(E.type()))
 	return E;
     // 4. Constructor
     else if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
     {
+        if (E.is_expression())
+            return E;
+
 	expression* V = E.as_expression().clone();
 	for(int i=0;i<E.size();i++)
 	    V->sub[i] = launchbury_unnormalize(E.sub()[i]);
@@ -198,7 +201,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
     }
 
     std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";
-    return E;
+    std::abort();
 }
 
 expression_ref parse_object(const string& s)

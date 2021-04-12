@@ -388,10 +388,7 @@ void context_ref::set_modifiable_value_(int R, closure&& C)
 
 void context_ref::set_modifiable_value(int R, const expression_ref& E)
 {
-    assert(not E.size());
-    assert(not E.is_index_var());
-    assert(not E.is_a<reg_var>());
-    assert(not E.is_a<var>());
+    assert(is_literal_type(E.type()));
     set_modifiable_value_(R, E);
 }
 
