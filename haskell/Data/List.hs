@@ -108,20 +108,20 @@ minimum = foldl1 (min)
 --
 
 scanl f z []      = [z]
-scanl f z (x:xs)  = let zx = z `f` x in (zx:scanl f zx xs)
+scanl f z (x:xs)  = z:scanl f (f z x) xs
 
 scanl' f z []     = [z]
-scanl' f z (x:xs) = let zx = z `f` x in zx `seq` (zx:scanl f zx xs)
+scanl' f z (x:xs) = let fzx = f z x in fzx `seq` (z:scanl' f fzx xs)
 
 scanl1 f (x:xs)   = scanl f x xs
 scanl1 f []       = error "Applying scanl1 to empty list!"
 
 scanr  f z []     = [z]
-scanr  f z (x:xs) = let ys = scanr f z xs in (x `f` (head ys)):ys
+-- scanr  f z (x:xs) = ((f x y):ys) where ys@(y:_) = scanr f z xs
 
 scanr1 f [x]    = [x]
-scanr1 f (x:xs) = let ys = scanr1 f xs in (x `f` (head ys)):ys
-scanr1 _ []     = error "Data.List.scanr1: empty list"
+-- scanr1 f (x:xs) = (f x y):ys where ys@(y:_) = scanr1 f xs
+-- scanr1 _ []     = error "Data.List.scanr1: empty list"
 
 --
 
