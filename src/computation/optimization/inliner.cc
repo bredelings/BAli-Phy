@@ -253,7 +253,7 @@ bool do_inline(const simplifier_options& options, const expression_ref& rhs, con
     }
 
     // If its "trivial" but not a variable, we should substitute if we can.
-    if (is_WHNF(rhs) and rhs.size() == 0)
+    if (is_WHNF(rhs) and rhs.size() == 0 and rhs.type() != let_type)
 	return true;
 
     // MultiSafe
