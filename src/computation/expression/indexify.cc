@@ -5,6 +5,7 @@
 #include "let.H"
 #include "case.H"
 #include "index_var.H"
+#include "apply.H"
 
 using std::pair;
 using std::vector;
@@ -97,36 +98,34 @@ expression_ref indexify(const expression_ref& E, vector<var>& variables)
 	return make_case_expression(T, patterns, bodies);
     }
 
-    else if (not E.size())
+    // Indexed Variable - This is assumed to be a free variable, so just shift it.
+    else if (E.is_index_var())
+        return index_var(E.as_index_var() + variables.size());
+
+    // Variable
+    else if (E.is_a<var>())
     {
-	// Indexed Variable - This is assumed to be a free variable, so just shift it.
-	if (E.is_index_var())
-	    return index_var(E.as_index_var() + variables.size());
+        auto& D = E.as_<var>();
+        assert(not is_wildcard(E));
 
-	// Variable
-	else if (E.is_a<var>())
-	{
-	    auto& D = E.as_<var>();
-	    assert(not is_wildcard(E));
-
-	    int index = find_index_backward(variables, D);
-	    if (index == -1)
-		throw myexception()<<"Dummy '"<<D<<"' is apparently not a bound variable in '"<<E<<"'?";
-	    else
-		return index_var(index);
-	}
-	// Constant
-	else
-	    return E;
+        int index = find_index_backward(variables, D);
+        if (index == -1)
+            throw myexception()<<"Dummy '"<<D<<"' is apparently not a bound variable in '"<<E<<"'?";
+        else
+            return index_var(index);
     }
-  
+    // Constant or 0-arg constructor
+    else if (is_literal_type(E.type()) or is_constructor(E))
+        return E;
+    else if (is_constructor_exp(E) or is_apply_exp(E) or E.head().is_a<Operation>())
+    {
+        expression* V = E.as_expression().clone();
+        for(int i=0;i<V->size();i++)
+            V->sub[i] = indexify(V->sub[i], variables);
+        return V;
+    }
 
-    // If we've gotten this far, just transform the sub-expressions.
-    // (This could be: Op, constructor, 
-    expression* V = E.as_expression().clone();
-    for(int i=0;i<V->size();i++)
-	V->sub[i] = indexify(V->sub[i], variables);
-    return V;
+    std::abort();
 }
 
 expression_ref indexify(const expression_ref& E)
@@ -210,28 +209,27 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
 	return make_case_expression(T, patterns, bodies);
     }
 
-    else if (not E.size())
+    // Indexed Variable - This is assumed to be a free variable, so just shift it.
+    else if (E.is_index_var())
     {
-	// Indexed Variable - This is assumed to be a free variable, so just shift it.
-	if (E.is_index_var())
-	{
-	    int index = E.as_index_var();
-	    if (index >= variables.size())
-		return index_var(index - variables.size());
+        int index = E.as_index_var();
+        if (index >= variables.size())
+            return index_var(index - variables.size());
 
-	    return variables[variables.size()-1 - index];
-	}
-	// Constant
-	else
-	    return E;
+        return variables[variables.size()-1 - index];
     }
-  
-    // If we've gotten this far, just transform the sub-expressions.
-    // (This could be: Op, constructor, 
-    expression* V = E.as_expression().clone();
-    for(int i=0;i<V->size();i++)
-	V->sub[i] = deindexify(V->sub[i], variables);
-    return V;
+    // Constant or 0-arg constructor
+    else if (is_literal_type(E.type()) or is_constructor(E))
+        return E;
+    else if (is_constructor_exp(E) or is_apply_exp(E) or E.head().is_a<Operation>())
+    {
+        expression* V = E.as_expression().clone();
+        for(int i=0;i<V->size();i++)
+            V->sub[i] = deindexify(V->sub[i], variables);
+        return V;
+    }
+
+    std::abort();
 }
 
 expression_ref deindexify(const expression_ref& E)
