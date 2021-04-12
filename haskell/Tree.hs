@@ -45,7 +45,8 @@ branch_lengths   (BranchLengthTree _ ds) = ds
 branch_lengths t@(TimeTree _ hs)   = mkArray (numBranches t) (\b -> branch_length t b)
 
 time_tree topology times = TimeTree topology (listArray n times) where n = numNodes topology
-node_time (TimeTree t hs) n = hs!n
+node_times (TimeTree t hs) = hs
+node_time t n = (node_times t)!n
 
 branch_length (BranchLengthTree _ ds) b = ds!b
 branch_length (TimeTree t   hs) b = abs (hs!source - hs!target)
