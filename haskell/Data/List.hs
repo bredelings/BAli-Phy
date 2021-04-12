@@ -114,6 +114,7 @@ scanl' f z []     = [z]
 scanl' f z (x:xs) = let zx = z `f` x in zx `seq` (zx:scanl f zx xs)
 
 scanl1 f (x:xs)   = scanl f x xs
+scanl1 f []       = error "Applying scanl1 to empty list!"
 
 scanr  f z []     = [z]
 scanr  f z (x:xs) = let ys = scanr f z xs in (x `f` (head ys)):ys
