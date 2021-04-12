@@ -9,8 +9,10 @@ import Data.Ord      -- for <=
 import Compiler.Num  -- for -,+
 import Data.Bool     -- for otherwise
 
+-- This isn't a standard function -- I made it up..
 enumByFrom by from = from:enumByFrom by (from+by)
 
+-- This isn't right for negative "by"
 enumByToFrom by to from | from <= to    = from:enumByToFrom by to (from+by)
                         | otherwise     = []
 
