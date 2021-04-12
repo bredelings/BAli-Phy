@@ -23,7 +23,8 @@ using std::deque;
 
 // So... let_exp is like Core, and Let is like STG.
 
-// 1. Debug optimizer 14 -> why are we getting different results here?
+// 1. Go through and explicitly handle different expression types
+//    instead of using E.size() == 0.
 
 // 2. Ideally convert lambda expressions to lambda_exp and LambdaExp
 
@@ -42,6 +43,14 @@ using std::deque;
 // 9. Divide into dependency groups
 
 // 10. Infer kinds for type variables.
+
+// A. coalescent -- why is the root of the sampled tree a trifurcation?
+
+// B. coalescent -- why does MCMC lead to infinitely long branches?
+
+// C. pop size changes -- how to implement?
+
+// D. try some different data sets from skyline papers -- hcv2, bison, etc.
 
 expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
