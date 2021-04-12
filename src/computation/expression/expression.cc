@@ -89,22 +89,10 @@ bool is_WHNF(const expression_ref& E)
 {
     assert(E);
 
-    int type = E.head().type();
+    auto type = E.head().type();
 
-    if (E.size())
-    {
-	if (type == lambda_type or type == lambda2_type or type == constructor_type) 
-	    return true;
-	else
-	    return false;
-    }
-    else
-    {
-	if (is_reglike(E) or type == let2_type)
-	    return false;
-	else
-	    return true;
-    }
+    // FIXME - Should we allow vars (reglike) here or not??
+    return is_whnf_type(type) and not is_reglike(E);
 }
 
 bool is_reglike(const expression_ref& E)
