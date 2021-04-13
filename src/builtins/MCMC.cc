@@ -373,36 +373,32 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
 
-    //------------- 1a. Get argument X -----------------
-    int x_reg = Args.evaluate_slot_unchangeable(0);
+    // 2. context index = int
+    int context_index = Args.evaluate(2).as_int();
+    context_ref C(M,context_index);
+
+    // 3. IO state = int
+    int io_state = Args.evaluate(3).as_int();
+
+    auto evaluate_slot = [&](int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+
+    // 0. x = reg to sample
+    int x_reg = Args.reg_for_slot(0);
+    if (auto x_mod_reg = C.find_modifiable_reg(x_reg))
+        x_reg = *x_mod_reg;
+    else
+        throw myexception()<<"slice_sample_real_random_variable: reg "<<x_reg<<" is not a modifiable!";
 
     if (log_verbose >= 3) std::cerr<<"\n\n[slice_sample_real_random_variable] <"<<x_reg<<">\n";
 
-    //------------- 1c. Get context index --------------
-    int c1 = Args.evaluate(2).as_int();
-    context_ref C1(M, c1);
-
-    //------------- 1b. Get bounds --------------
-    int bnds_reg = Args.reg_for_slot(1);
-    auto bnds_result = M.precomputed_value_in_context(bnds_reg, c1);
-    if (not bnds_result)
-        throw myexception()<<"slice_sample_real_random_variable: bounds not precomputed at reg "<<bnds_reg<<"  in context "<<c1<<"!";
-    auto bnds = M.expression_at(*bnds_result);
-
-    //------------- 1d. Get monad thread state ---------
-    int state = Args.evaluate(3).as_int();
-
-    //------------- 2. Find the location of the variable -------------//
-    if (auto r = M.find_modifiable_reg(x_reg))
-        x_reg = *r;
-    else
-        throw myexception()<<"slice_sample_real_random_variable: reg "<<x_reg<<" is not a modifiable!";
+    // 1. bounds
+    auto bnds = evaluate_slot(1);
 
     //------------- 3. Get initial value x1 for variable -------------//
     if (not bnds.is_a<Bounds<double>>())
         throw myexception()<<"random variable doesn't have a range that is bounds<double>";
 
-    random_variable_slice_function logp(C1, bnds.as_<Bounds<double>>(), x_reg);
+    random_variable_slice_function logp(C, bnds.as_<Bounds<double>>(), x_reg);
 
     // Tuning this would be better.
     // However, we now find slice boundaries by doubling instead of stepping out.
@@ -415,7 +411,7 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
 
     if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";
 
-    return EPair(state+1,constructor("()",0));
+    return EPair(io_state+1,constructor("()",0));
 }
 
 // slice_sample_integer_random_variable x context state
