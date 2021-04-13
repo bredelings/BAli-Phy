@@ -178,18 +178,24 @@ modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree 
 
 triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree force_time_tree
 
+-- Add moves for non-root internal-node times.
+-- FIXME: check that the leaves times are fixed?
+-- FIXME: check that numLeaves tree is not changeable?
 uniform_time_tree_effect tree = sequence_ [ add_move $ slice_sample_real_random_variable (node_time tree node) (above 0.0)
-                                          | node <- [0..numNodes tree - 1], node /= root tree
+                                          | node <- [numLeaves tree..numNodes tree - 1], node /= root tree
                                           ]
 
+-- FIXME -- maybe we should incorporate the "age" reg directly, here?
 uniform_time_tree age n = Distribution (uniform_time_tree_pr age n)
                                        (no_quantile "uniform_time_tree")
                                        (RandomStructure uniform_time_tree_effect triggered_modifiable_time_tree (sample_uniform_time_tree age n))
                                        (TreeRange n)
 
-----
+-- Add moves for internal-node times INCLUDING the root.
+-- FIXME: check that the leaves times are fixed?
+-- FIXME: check that numLeaves tree is not changeable?
 coalescent_tree_effect tree = sequence_ [ add_move $ slice_sample_real_random_variable (node_time tree node) (above 0.0)
-                                        | node <- [numLeaves..numNodes tree - 1], node /= root tree
+                                        | node <- [numLeaves tree..numNodes tree - 1]
                                         ]
 
 data CoalEvent = Leaf | Internal | RateShift rate
