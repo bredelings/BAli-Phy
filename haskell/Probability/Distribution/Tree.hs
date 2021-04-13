@@ -129,11 +129,13 @@ possible = doubleToLogDouble 1.0
 impossible = doubleToLogDouble 0.0
 require p = if p then possible else impossible
 
-uniform_time_tree_pr age n_leaves tree = factor0 : [factor n | n <- [0 .. 2*n_leaves-2] ]
-    where factor0 = doubleToLogDouble age ** intToDouble (2-n_leaves)
-          time = node_time tree
+parent_before_child_prs n_leaves tree = [factor n | n <- [0 .. 2*n_leaves-2] ]
+    where time = node_time tree
           factor n = case parentNode tree n of Nothing -> possible
                                                Just p  -> require $ time n <= time p
+
+uniform_time_tree_pr age n_leaves tree = factor0 : parent_before_child_prs n_leaves tree
+    where factor0 = doubleToLogDouble age ** intToDouble (2-n_leaves)
 
 -- rooted_tree: force / modifiable / triggered_modifiable
 force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq` force_tree unrooted_tree
@@ -201,7 +203,7 @@ coalescent_tree_effect tree = sequence_ [ add_move $ slice_sample_real_random_va
 data CoalEvent = Leaf | Internal | RateShift rate
 node_type tree node = if is_leaf_node tree node then Leaf else Internal
 
-coalescent_tree_pr theta n_leaves tree = go (0.0) (0) (2.0/theta) (doubleToLogDouble 1.0) times
+coalescent_tree_pr_factors theta n_leaves tree = go (0.0) (0) (2.0/theta) (doubleToLogDouble 1.0) times: parent_before_child_prs n_leaves tree
     where times = sortOn fst [ (node_time tree node, node_type tree node) | node <- [0..numNodes tree -1]]
           go prev_time n rate pr [] = pr
           go prev_time n rate pr ((time,event):events) =
@@ -234,7 +236,7 @@ sample_coalescent_tree theta n_leaves = do
   return (time_tree topology times)
 
 
-coalescent_tree theta n = Distribution (\tree -> [coalescent_tree_pr theta n tree])
+coalescent_tree theta n = Distribution (coalescent_tree_pr_factors theta n)
                                        (no_quantile "coalescent")
                                        (RandomStructure coalescent_tree_effect triggered_modifiable_time_tree (sample_coalescent_tree theta n))
                                        (TreeRange n)
