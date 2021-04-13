@@ -206,10 +206,10 @@ coalescent_tree_pr theta n_leaves tree = go (0.0) (0) (2.0/theta) (doubleToLogDo
           go prev_time n rate pr [] = pr
           go prev_time n rate pr ((time,event):events) =
               let delta_t = time - prev_time
-                  n_choose_2 = intToDouble $ n*(n-1) `div` 2
+                  n_choose_2 = intToDouble $ (n*(n-1)) `div` 2
                   rate_all = rate * n_choose_2
-                  dist = exponential (1.0/rate_all)
-                  pr' = density dist delta_t
+                  pr_nothing = doubleToLogDouble $ exp $ (-rate_all * delta_t)
+                  pr' = pr * pr_nothing
               in case event of Leaf     -> go time (n+1) rate pr' events
                                -- For Internal, we divided out the n_choose2
                                Internal -> go time (n-1) rate (pr' * (doubleToLogDouble rate)) events
