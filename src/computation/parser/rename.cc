@@ -44,13 +44,9 @@ using std::deque;
 
 // 10. Infer kinds for type variables.
 
-// A. coalescent -- why is the root of the sampled tree a trifurcation?
+// A. pop size changes -- how to implement?
 
-// B. coalescent -- why does MCMC lead to infinitely long branches?
-
-// C. pop size changes -- how to implement?
-
-// D. try some different data sets from skyline papers -- hcv2, bison, etc.
+// B. try some different data sets from skyline papers -- hcv2, bison, etc.
 
 expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 

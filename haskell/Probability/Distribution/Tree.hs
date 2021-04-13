@@ -4,6 +4,7 @@ import           Tree
 import           Probability.Random
 import           Probability.Distribution.Uniform
 import           Probability.Distribution.List
+import           Probability.Distribution.Exponential
 import           MCMC
 
 xrange start end | start < end = start : xrange (start + 1) end
@@ -185,3 +186,50 @@ uniform_time_tree age n = Distribution (uniform_time_tree_pr age n)
                                        (no_quantile "uniform_time_tree")
                                        (RandomStructure uniform_time_tree_effect triggered_modifiable_time_tree (sample_uniform_time_tree age n))
                                        (TreeRange n)
+
+----
+coalescent_tree_effect tree = sequence_ [ add_move $ slice_sample_real_random_variable (node_time tree node) (above 0.0)
+                                        | node <- [numLeaves..numNodes tree - 1], node /= root tree
+                                        ]
+
+data CoalEvent = Leaf | Internal | RateShift rate
+node_type tree node = if is_leaf_node tree node then Leaf else Internal
+
+coalescent_tree_pr theta n_leaves tree = go (0.0) (0) (2.0/theta) (doubleToLogDouble 1.0) times
+    where times = sortOn fst [ (node_time tree node, node_type tree node) | node <- [0..numNodes tree -1]]
+          go prev_time n rate pr [] = pr
+          go prev_time n rate pr ((time,event):events) =
+              let delta_t = time - prev_time
+                  n_choose_2 = intToDouble $ n*(n-1) `div` 2
+                  rate_all = rate * n_choose_2
+                  dist = exponential (1.0/rate_all)
+                  pr' = density dist delta_t
+              in case event of Leaf     -> go time (n+1) rate pr' events
+                               -- For Internal, we divided out the n_choose2
+                               Internal -> go time (n-1) rate (pr' * (doubleToLogDouble rate)) events
+                               RateShift new_rate -> go time n new_rate pr' events
+
+
+-- This doesn't handle serially-sampled tips... for that we would need to
+-- * modify sample_uniform_ordered_tree
+-- * pass in a list of (node,time) pairs.
+
+-- We would sort and merge the Leaf and RateShift r events, and then
+-- add the Internal events (effectively -- we would also need to
+-- Or should it be (name,time) pairs?
+
+sample_coalescent_tree theta n_leaves = do
+  topology <- sample_uniform_ordered_tree n_leaves
+
+  let rate = 2.0/theta
+  dts <- sequence [ exponential (1.0 / (rate* n_choose_2) )| n <- reverse [2..n_leaves],
+                                                             let n_choose_2 = intToDouble $ n*(n-1) `div` 2]
+  let times = (replicate n_leaves 0.0) ++ (scanl1 (+) dts)
+  return (time_tree topology times)
+
+
+coalescent_tree theta n = Distribution (\tree -> [coalescent_tree_pr theta n tree])
+                                       (no_quantile "coalescent")
+                                       (RandomStructure coalescent_tree_effect triggered_modifiable_time_tree (sample_coalescent_tree theta n))
+                                       (TreeRange n)
+
