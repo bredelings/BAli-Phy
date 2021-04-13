@@ -171,7 +171,9 @@ force_time_tree (TimeTree rooted_tree times) = force_rooted_tree rooted_tree `se
 
 modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree times where
     rooted_tree = modifiable_rooted_tree modf rooted_tree'
-    times     = arrayMap modf times'
+    maybe_modf node x | node < numLeaves rooted_tree'   = x
+                      | otherwise                       = modf x
+    times     = mkArray (numElements times') (\node -> maybe_modf node (times'!node))
 
 triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree force_time_tree
 
