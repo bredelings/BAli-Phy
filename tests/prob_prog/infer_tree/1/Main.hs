@@ -6,6 +6,7 @@ import           Tree.Newick
 import           SModel
 import           IModel
 import           Probability.Distribution.OnTree
+import           System.Environment  -- for getArgs
 
 -- issues: 1. likelihood seems wrong - -1300 vs -700.
 --         2. no topology moves included.
@@ -81,5 +82,9 @@ observe_data seq_data = do
     return loggers
 
 main = do
-  let seq_data        = load_sequences "5d-muscle.fasta"
-  mcmc $ observe_data seq_data
+    args <- getArgs
+
+    let filename = args !! 0
+        seq_data = load_sequences filename
+
+    mcmc $ observe_data seq_data

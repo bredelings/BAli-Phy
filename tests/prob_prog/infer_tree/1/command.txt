@@ -1,1 +1,1 @@
--m Main.hs --test
+-m Main.hs --test --- 5d-muscle.fasta

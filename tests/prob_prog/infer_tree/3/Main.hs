@@ -5,6 +5,7 @@ import           Tree
 import           Tree.Newick
 import           SModel
 import           Probability.Distribution.OnTree
+import           System.Environment  -- for getArgs
 
 smodel_prior codons = do
     let nucleotides = getNucleotides codons
@@ -57,5 +58,9 @@ observe_data seq_data = do
     return loggers
 
 main = do
-    let seq_data = load_sequences "bglobin.fasta"
+    args <- getArgs
+
+    let filename = args !! 0
+        seq_data = load_sequences filename
+
     mcmc $ observe_data seq_data
