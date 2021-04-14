@@ -266,7 +266,7 @@ void Module::compile(const Program& P)
     {
         // It should be possible to replace each of these (i) an object (ii) that is located.
         vector<expression_ref> tmp;
-        for(auto& decl: topdecls.sub())
+        for(auto& decl: topdecls.as_<Haskell::Decls>())
             if (decl.is_a<Haskell::ClassDecl>() or decl.is_a<Haskell::DataOrNewtypeDecl>() or is_AST(decl,"instance") or decl.is_a<Haskell::TypeSynonymDecl>())
                 tmp.push_back(decl);
 
@@ -287,15 +287,15 @@ void Module::compile(const Program& P)
     if (topdecls)
     {
         vector<expression_ref> decls;
-        for(auto& decl: topdecls.sub())
+        for(auto& decl: topdecls.as_<Haskell::Decls>())
             if (is_AST(decl,"Decl"))
                 decls.push_back(decl);
-        topdecls = expression_ref{AST_node("TopDecls"),decls};
+        topdecls = Haskell::Decls(decls, true);
     }
 
     // Check for duplicate top-level names.
     if (topdecls)
-        check_duplicate_var(topdecls);
+        check_duplicate_var(translate_decls_to_cdecls(topdecls.as_<Haskell::Decls>()));
 
     import_small_decls(P);
 
@@ -426,6 +426,7 @@ void Module::rename(const Program& P)
     {
         assert(is_AST(topdecls,"TopDecls"));
         topdecls = ::rename(*this,topdecls);
+        assert(topdecls.is_a<Haskell::Decls>());
     }
     if (P.get_module_loader()->dump_renamed)
         std::cout<<name<<"[renamed]:\n"<<topdecls<<"\n\n";
@@ -518,8 +519,8 @@ void Module::desugar(const Program& P)
 {
     if (topdecls)
     {
-        assert(is_AST(topdecls,"TopDecls"));
-        topdecls = ::desugar(*this,topdecls);
+        assert(topdecls.is_a<Haskell::Decls>());
+        topdecls = ::desugar(*this,topdecls.as_<Haskell::Decls>());
     }
     if (P.get_module_loader()->dump_desugared)
         std::cout<<name<<"[desugared]:\n"<<topdecls<<"\n\n";
@@ -882,7 +883,7 @@ void Module::optimize(const Program& P)
     if (topdecls)
     {
         vector<expression_ref> new_decls;
-        for(auto& decl: topdecls.sub())
+        for(auto& decl: topdecls.as_<Haskell::Decls>())
         {
             if (not is_AST(decl,"Decl"))
                 ; //new_decls.push_back(decl);
@@ -896,11 +897,11 @@ void Module::optimize(const Program& P)
                 new_decls.push_back(AST_node("Decl") + decl.sub()[0] + body);
             }
         }
-        topdecls = expression_ref{AST_node("TopDecls"),new_decls};
+        topdecls = Haskell::Decls(new_decls,true);
 
         if (do_optimize)
         {
-            auto decls = parse_decls(topdecls);
+            auto decls = translate_decls_to_cdecls(topdecls.as_<Haskell::Decls>());
             mark_exported_decls(decls, exported_symbols(), name);
 
             vector<CDecls> decl_groups = {decls};
@@ -949,7 +950,7 @@ void Module::load_builtins(const module_loader& L)
     if (not topdecls) return;
 
     vector<expression_ref> new_decls;
-    for(const auto& decl: topdecls.sub())
+    for(const auto& decl: topdecls.as_<Haskell::Decls>())
         if (is_AST(decl,"Builtin"))
         {
             auto x = parse_builtin(decl, L);
@@ -962,7 +963,7 @@ void Module::load_builtins(const module_loader& L)
         }
         else
             new_decls.push_back(decl);
-    topdecls = expression_ref{AST_node("TopDecls"), new_decls};
+    topdecls = Haskell::Decls(new_decls, true);
 }
 
 int get_constructor_arity(const expression_ref& constr)
@@ -996,7 +997,7 @@ void Module::load_constructors()
 
     vector<expression_ref> new_decls;
 
-    for(const auto& decl: topdecls.sub())
+    for(const auto& decl: topdecls.as_<Haskell::Decls>())
         if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
             auto constrs = decl.as_<Haskell::DataOrNewtypeDecl>().constructors;
@@ -1016,7 +1017,7 @@ void Module::load_constructors()
         else
             new_decls.push_back(decl);
 
-    topdecls = expression_ref{AST_node("TopDecls"), new_decls};
+    topdecls = Haskell::Decls(new_decls, true);
 }
 
 bool Module::is_declared(const std::string& name) const

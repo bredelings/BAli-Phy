@@ -7,6 +7,15 @@ using std::vector;
 namespace Haskell
 {
 
+string Decls::print() const
+{
+    vector<expression_ref> decl_string;
+    for(auto& decl: *this)
+        decl_string.push_back( decl.print() );
+
+    return "{"+join( decl_string, "\n;" ) + "\n}";
+}
+
 string List::print() const
 {
     vector<string> parts;

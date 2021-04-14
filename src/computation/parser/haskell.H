@@ -97,6 +97,20 @@ struct Context
     Context(const std::vector<Haskell::Type>& cs): constraints(cs) {}
 };
 
+struct Decls: public Vector<expression_ref>
+{
+protected:
+    bool is_top = false;
+public:
+    bool is_top_level() const {return is_top;}
+
+    Decls* clone() const { return new Decls(*this);}
+    std::string print() const;
+
+    Decls(bool b=false): is_top(b) {}
+    Decls(const vector<expression_ref>& ds,bool b=false): Vector<expression_ref>(ds),is_top(b) {}
+};
+
 struct ClassDecl: public Object
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.

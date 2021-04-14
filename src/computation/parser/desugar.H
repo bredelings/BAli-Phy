@@ -59,11 +59,13 @@ public:
     fresh_vars(int start):var_index(start) {}
 };
 
+CDecls translate_decls_to_cdecls(const Haskell::Decls&);
+
 struct desugar_state: public fresh_vars
 {
     const Module& m;
 
-    std::vector<expression_ref> parse_fundecls(const std::vector<expression_ref>& v);
+    Haskell::Decls parse_fundecls(Haskell::Decls);
 
     expression_ref def_function(const std::vector< equation_info_t >&, const expression_ref& otherwise);
 
@@ -83,9 +85,8 @@ struct desugar_state: public fresh_vars
     void clean_up_pattern(const expression_ref& x, equation_info_t& eqn);
 
     expression_ref desugar(const expression_ref& E);
-    expression_ref desugar_decls(const expression_ref& E);
-    CDecls translate_decls_to_cdecls(const expression_ref& E);
-    CDecls desugar_decls_to_cdecls(const expression_ref& E);
+    Haskell::Decls desugar_decls(Haskell::Decls);
+    CDecls desugar_decls_to_cdecls(const Haskell::Decls& D);
 
     desugar_state(const Module&);
 };

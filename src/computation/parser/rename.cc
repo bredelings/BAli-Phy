@@ -986,7 +986,11 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
 {
     assert(is_AST(decls,"TopDecls") or is_AST(decls,"Decls"));
 
-    if (not decls.size()) return {};
+    if (not decls.size())
+    {
+        decls = Haskell::Decls({}, is_AST(decls,"TopDecls"));
+        return {};
+    }
 
     vector<expression_ref> v = decls.sub();
 
@@ -1064,7 +1068,7 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
                 for(auto& cdecl: cdecls)
                     if (is_AST(cdecl,"Decl"))
                         cdecl = rename_decl(cdecl, bound2);
-                unloc(*C.decls) = expression_ref(AST_node("Decls"),cdecls);
+                unloc(*C.decls) = Haskell::Decls(cdecls);
             }
             decl = C;
         }
@@ -1077,13 +1081,13 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
                 for(auto& idecl: idecls)
                     if (is_AST(idecl,"Decl"))
                         idecl = rename_decl(idecl,bound2);
-                unloc(*I.decls) = expression_ref(AST_node("Decls"),idecls);
+                unloc(*I.decls) = Haskell::Decls(idecls);
             }
             decl = I;
         }
     }
 
-    decls = expression_ref{decls.head(),v};
+    decls = Haskell::Decls(v, is_AST(decls,"TopDecls"));
     return bound_names;
 }
 
