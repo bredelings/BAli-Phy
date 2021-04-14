@@ -8,10 +8,10 @@
 
 class Module;
 
-std::string get_func_name(const expression_ref& decl);
+std::string get_func_name(const Haskell::ValueDecl& decl);
 std::set<std::string> find_bound_vars(const expression_ref& E);
-bool is_pattern_binding(const expression_ref& decl);
-bool is_function_binding(const expression_ref& decl);
+bool is_pattern_binding(const Haskell::ValueDecl& decl);
+bool is_function_binding(const Haskell::ValueDecl& decl);
 
 Haskell::Decls rename_infix_top(const Module& p, const Haskell::Decls&);
 expression_ref rename_infix(const Module& p, const expression_ref&);

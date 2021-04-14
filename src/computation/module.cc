@@ -67,13 +67,8 @@ Haskell::Decls make_topdecls(const CDecls& cdecls)
 
     vector<expression_ref> decls;
     for(auto& [x,e]: cdecls)
-    {
-	object_ptr<expression> Decl = new expression(AST_node("Decl"));
-	Decl->sub.push_back(x);
-	assert(e);
-	Decl->sub.push_back(e);
-	decls.push_back(Decl);
-    }
+	decls.push_back( Haskell::ValueDecl(x,e) );
+
     return {decls, true};
 }
 
@@ -305,7 +300,7 @@ void Module::compile(const Program& P)
     {
         vector<expression_ref> decls;
         for(auto& decl: *topdecls)
-            if (is_AST(decl,"Decl"))
+            if (decl.is_a<Haskell::ValueDecl>())
                 decls.push_back(decl);
         topdecls = Haskell::Decls(decls, true);
     }
@@ -411,17 +406,18 @@ map<string,expression_ref> Module::code_defs() const
 
     for(const auto& decl: *topdecls)
     {
-        assert(is_AST(decl,"Decl"));
-        auto& x = decl.sub()[0].as_<var>();
+        assert(decl.is_a<Haskell::ValueDecl>());
+        auto& D = decl.as_<Haskell::ValueDecl>();
+
+        auto& x = D.lhs.as_<var>();
         assert(is_qualified_symbol(x.name));
 
         if (this->name == get_module_name(x.name))
         {
             // get the body for the  decl
-            auto& body = decl.sub()[1];
-            assert(body);
+            assert(D.rhs);
 
-            code[x.name] = body;
+            code[x.name] = D.rhs;
         }
     }
 
@@ -585,14 +581,12 @@ void Module::export_small_decls()
 
     for(auto& decl: *topdecls)
     {
-        auto& x = decl.sub()[0].as_<var>();
+        auto& D = decl.as_<Haskell::ValueDecl>();
+        auto& x = D.lhs.as_<var>();
         assert(not x.name.empty());
 
-        auto& body = decl.sub()[1];
-        if (simple_size(body) <= 5)
-        {
-            small_decls_out.insert({x, body});
-        }
+        if (simple_size(D.rhs) <= 5)
+            small_decls_out.insert({x, D.rhs});
     }
 
     // Find free vars in the decls that are not bound by *other* decls.
@@ -797,7 +791,8 @@ Haskell::Decls rename_top_level(const Haskell::Decls& decls, const string& modul
 
     for(int i = 0; i< decls.size(); i++)
     {
-        auto x = decls[i].sub()[0].as_<var>();
+        auto& D = decls[i].as_<Haskell::ValueDecl>();
+        auto x = D.lhs.as_<var>();
         var x2 = x;
         assert(not substitution.count(x));
 
@@ -808,7 +803,7 @@ Haskell::Decls rename_top_level(const Haskell::Decls& decls, const string& modul
             substitution.insert({x,x2});
         }
 
-        decls2.push_back({x2,decls[i].sub()[1]});
+        decls2.push_back({x2,D.rhs});
 
         // None of the renamed vars should have the same name;
         assert(not top_level_vars.count(x2));
@@ -816,10 +811,10 @@ Haskell::Decls rename_top_level(const Haskell::Decls& decls, const string& modul
     }
 
     multiset<var> bound;
-    for(auto& decl: decls2)
+    for(auto& [_,e]: decls2)
     {
         assert(bound.empty());
-        decl.second = rename(decl.second, substitution, bound);
+        e = rename(e, substitution, bound);
         assert(bound.empty());
     }
 
@@ -896,16 +891,17 @@ void Module::optimize(const Program& P)
         vector<expression_ref> new_decls;
         for(auto& decl: *topdecls)
         {
-            if (not is_AST(decl,"Decl"))
+            if (not decl.is_a<Haskell::ValueDecl>())
                 ; //new_decls.push_back(decl);
             else
             {
+                auto D = decl.as_<Haskell::ValueDecl>();
                 // This won't float things to the top level!
-                auto name = decl.sub()[0].as_<var>().name;
-                auto body = decl.sub()[1];
-                body = graph_normalize(body);
+                auto name = D.lhs.as_<var>().name;
+                auto body = D.rhs;
+                D.rhs = graph_normalize(D.rhs);
 
-                new_decls.push_back(AST_node("Decl") + decl.sub()[0] + body);
+                new_decls.push_back( D );
             }
         }
         topdecls = Haskell::Decls(new_decls,true);
@@ -970,7 +966,7 @@ void Module::load_builtins(const module_loader& L)
 
             function_name = lookup_symbol(function_name).name;
 
-            new_decls.push_back(AST_node("Decl") + var(function_name) + body);
+            new_decls.push_back( Haskell::ValueDecl{ var(function_name), body} );
         }
         else
             new_decls.push_back(decl);
@@ -1021,7 +1017,7 @@ void Module::load_constructors()
 
                 string qualified_name = name+"."+cname;
                 expression_ref body = lambda_expression( constructor(qualified_name, arity) );
-                new_decls.push_back(AST_node("Decl") + var(qualified_name) + body);
+                new_decls.push_back( Haskell::ValueDecl{ var(qualified_name) , body} );
             }
             // Strip out the constructor definition here new_decls.push_back(decl);
         }
@@ -1405,15 +1401,15 @@ void Module::add_local_symbols()
 
     // 0. Get names that are being declared.
     for(const auto& decl: *topdecls)
-        if (is_AST(decl,"Decl"))
+        if (decl.is_a<Haskell::ValueDecl>())
         {
+            auto& D = decl.as_<Haskell::ValueDecl>();
             set<string> vars;
-            if (is_function_binding(decl))
-                vars.insert( get_func_name(decl) );
+            if (is_function_binding(D))
+                vars.insert( get_func_name(D) );
             else
             {
-                auto& lhs = decl.sub()[0];
-                vars = find_bound_vars(lhs);
+                vars = find_bound_vars(D.lhs);
             }
 
             for(const auto& var_name: vars)
@@ -1480,7 +1476,10 @@ std::ostream& operator<<(std::ostream& o, const Module& M)
 {
     if (M.topdecls)
         for(const auto& decl: *M.topdecls)
-            o<<decl.sub()[0]<<" = "<<decl.sub()[1]<<")\n";
+        {
+            auto& D = decl.as_<Haskell::ValueDecl>();
+            o<<D.print()<<"\n";
+        }
     return o;
 }
 

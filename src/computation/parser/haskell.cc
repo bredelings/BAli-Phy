@@ -7,6 +7,32 @@ using std::vector;
 namespace Haskell
 {
 
+string ValueDecl::print() const
+{
+    string result = lhs.print() + " ";
+    if (not (rhs.is_a<SimpleRHS>() or rhs.is_a<MultiGuardedRHS>()))
+        result += "= ";
+    result += rhs.print();
+    return result;
+}
+
+bool ValueDecl::operator==(const Object& O) const
+{
+    if (this == &O) return true;
+
+    auto vd = dynamic_cast<const ValueDecl*>(&O);
+
+    if (vd)
+        return operator==(*vd);
+    else
+        return false;
+}
+
+bool ValueDecl::operator==(const ValueDecl& V) const
+{
+    return (lhs == V.lhs) and (rhs == V.rhs);
+}
+
 string Decls::print() const
 {
     vector<expression_ref> decl_string;

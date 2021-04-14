@@ -67,6 +67,7 @@
   Haskell::StrictPattern make_strict_pattern(const expression_ref& pat);
 
   Located<Haskell::Decls> make_decls(const yy::location& loc, std::vector<expression_ref>& decls);
+  Haskell::ValueDecl make_value_decl(const expression_ref& lhs, const expression_ref& rhs);
   Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
   Haskell::LetExp make_let(const Located<Haskell::Decls>& binds, const Located<expression_ref>& body);
   Haskell::IfExp make_if(const Located<expression_ref>& cond, const Located<expression_ref>& alt_true, const Located<expression_ref>& alt_false);
@@ -330,8 +331,8 @@
 
 %type <void> strings
 %type <void> stringlist
- */
 %type <expression_ref> opt_sig
+ */
 %type <expression_ref> opt_tyconsig
 %type <expression_ref> sigtype
 %type <expression_ref> sigtypedoc
@@ -835,8 +836,10 @@ stringlist: stringlist "," STRING
 
 /* ------------- Type signatures --------------------------------- */
 
+/*
 opt_sig: %empty  {}
 | "::" sigtype   {$$ = $2;}
+*/
 
 opt_tyconsig: %empty {}
 | "::" gtycon        {$$ = make_type_var($2);}
@@ -1017,8 +1020,13 @@ deriv_clause_types: qtycondoc
 decl_no_th: sigdecl           {$$ = $1;}
 /* I guess this is a strict let. Code as DeclStrict, rather than StrictPattern, since docs say this is part of the binding, not part of the patter */
 | "!" aexp rhs                {$$ = new expression(AST_node("Decl:Strict"),{($2),$3});}
-/* what is the opt_sig doing here? */
-| infixexp_top opt_sig rhs    {$$ = new expression(AST_node("Decl"),{make_infixexp($1),$3});}
+
+/* What is the opt_sig doing here?
+ * If you try 'let x :: Int = 1 in x' you get 'Type signatures are only allowed in patterns with ScopedTypeVariables'
+ * GHC Parser.y suggests that you could have (^^) :: Int->Int = ...  But I don't see it.
+ */
+| infixexp_top /*opt_sig*/ rhs    {$$ = make_value_decl(make_infixexp($1),$2);}
+
 /* | pattern_synonym_decl        {} */
 /* | docdel */
 
@@ -1763,6 +1771,11 @@ Haskell::StrictPattern make_strict_pattern(const expression_ref& pat)
 Located<Haskell::Decls> make_decls(const yy::location& loc, std::vector<expression_ref>& decls)
 {
     return {loc, Haskell::Decls(decls)};
+}
+
+Haskell::ValueDecl make_value_decl(const expression_ref& lhs,  const expression_ref& rhs)
+{
+    return {lhs, rhs};
 }
 
 Haskell::LambdaExp make_lambdaexp(const vector<expression_ref>& pats, const expression_ref& body)

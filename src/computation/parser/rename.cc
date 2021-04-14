@@ -29,19 +29,15 @@ using std::deque;
 
 // 3. Ideally convert case expressions to case_exp and CaseExp
 
-// 4. convert "Decls" to struct Decls
+// 4. convert module, imports, exports, etc.
 
-// 5. convert "Decl" to  struct Decl -> this could be one part of a func defn.
+// 5. convert constructors and stuff
 
-// 6. convert module, imports, exports, etc.
+// 6. Extract the type dependencies
 
-// 7. convert constructors and stuff
+// 7. Divide into dependency groups
 
-// 8. Extract the type dependencies
-
-// 9. Divide into dependency groups
-
-// 10. Infer kinds for type variables.
+// 8. Infer kinds for type variables.
 
 // A. pop size changes -- how to implement?
 
@@ -168,31 +164,27 @@ set<string> find_bound_vars(const expression_ref& E)
     return {};
 }
 
-string get_func_name(const expression_ref& decl)
+string get_func_name(const Haskell::ValueDecl& decl)
 {
-    assert(is_AST(decl,"Decl"));
-    auto& lhs = decl.sub()[0];
-    assert(lhs.head().is_a<Hs::Var>());
-    return unloc(lhs.head().as_<Hs::Var>().name);
+    assert(decl.lhs.head().is_a<Hs::Var>());
+    return unloc(decl.lhs.head().as_<Hs::Var>().name);
 }
 
-string desugar_get_func_name(const expression_ref& decl)
+string desugar_get_func_name(const Haskell::ValueDecl& decl)
 {
-    auto& lhs = decl.sub()[0];
-    return lhs.head().as_<var>().name;
+    return decl.lhs.head().as_<var>().name;
 }
 
-bool is_pattern_binding(const expression_ref& decl)
+bool is_pattern_binding(const Haskell::ValueDecl& decl)
 {
-    assert(is_AST(decl,"Decl"));
-    if (decl.sub()[0].is_a<Haskell::List>())
+    if (decl.lhs.is_a<Haskell::List>())
         return true;
-    if (decl.sub()[0].is_a<Haskell::Tuple>())
+    if (decl.lhs.is_a<Haskell::Tuple>())
         return true;
     return is_haskell_con_name(get_func_name(decl));
 }
 
-bool is_function_binding(const expression_ref& decl)
+bool is_function_binding(const Haskell::ValueDecl& decl)
 {
     return not is_pattern_binding(decl);
 }
@@ -452,6 +444,18 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     }
     else if (E.is_a<Haskell::Decls>())
         std::abort();
+    else if (E.is_a<Haskell::ValueDecl>())
+    {
+        auto D = E.as_<Haskell::ValueDecl>();
+
+        D.lhs = rename_infix(m, D.lhs);
+	D.lhs = unapply(D.lhs);
+        D.rhs = rename_infix(m, D.rhs);
+
+	assert(D.lhs.head().is_a<Hs::Var>() or D.lhs.is_a<Haskell::List>() or D.lhs.is_a<Haskell::Tuple>());
+
+        return D;
+    }
 
     if (not E.is_expression()) return E;
 
@@ -460,13 +464,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     for(auto& e: v)
 	e = rename_infix(m, e);
 
-    if (is_AST(E,"Decl"))
-    {
-	/* lhs */
-	v[0] = unapply(v[0]);
-	assert(v[0].head().is_a<Hs::Var>() or v[0].is_a<Haskell::List>() or v[0].is_a<Haskell::Tuple>());
-    }
-    else if (is_apply(E.head()))
+    if (is_apply(E.head()))
     {
 	expression_ref E2;
 	if (is_apply(v[0].head()))
@@ -563,7 +561,7 @@ Haskell::Decls rename_infix_top(const Module& m, const Haskell::Decls& decls)
                 body = Haskell::LambdaExp({x},body);
                 body = Haskell::SimpleRHS({noloc,body});
 
-                v.push_back(AST_node("Decl") + name + body);
+                v.push_back(Haskell::ValueDecl(name,body));
             }
         }
     }
@@ -625,8 +623,8 @@ struct renamer_state
     bound_var_info find_bound_vars_in_decls(const Haskell::Decls& decls);
     bound_var_info rename_patterns(vector<expression_ref>& pat, bool top = false);
     bound_var_info rename_pattern(expression_ref& pat, bool top = false);
-    bound_var_info rename_decl_head(expression_ref& decl, bool is_top_level);
-    expression_ref rename_decl(const expression_ref& decl, const bound_var_info& bound);
+    bound_var_info rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level);
+    Haskell::ValueDecl rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound);
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound);
@@ -887,17 +885,11 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 }
 
 // FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
-expression_ref renamer_state::rename_decl(const expression_ref& decl, const bound_var_info& bound)
+Haskell::ValueDecl renamer_state::rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound)
 {
-    assert(is_AST(decl,"Decl"));
-    assert(decl.is_expression());
-    vector<expression_ref> v = decl.sub();
+    assert(not is_apply(decl.lhs.head()));
 
-    auto& lhs = v[0];
-    auto& rhs = v[1];
-    assert(not is_apply(lhs.head()));
-
-    auto f = lhs.head();
+    auto f = decl.lhs.head();
 
     // 1. We discover bound variables for the decls group in rename_decls( ), before we call this.
     auto bound2 = bound;
@@ -912,31 +904,31 @@ expression_ref renamer_state::rename_decl(const expression_ref& decl, const boun
 	assert(f.is_a<var>());
 	assert(bound.count(f.as_<var>().name));
 
-	if (lhs.size())
+	if (decl.lhs.size())
 	{
-	    auto args = lhs.sub();
+	    auto args = decl.lhs.sub();
 	    assert(args.size());
 
             bool overlap = false;
 	    bound_var_info arg_vars;
             for(auto& arg: args)
 		overlap = overlap or not disjoint_add(arg_vars, rename_pattern(arg));
-	    lhs = expression_ref{f, args};
+	    decl.lhs = expression_ref{f, args};
 	    if (overlap)
-		throw myexception()<<"Function declaration '"<<lhs<<"' uses a variable twice!";
+		throw myexception()<<"Function declaration '"<<decl.lhs<<"' uses a variable twice!";
 
             // The args should be in scope when we process the rhs
             add(bound2,arg_vars);
 	}
 	else
-	    lhs = f;
-	assert(lhs.head().is_a<var>());
+	    decl.lhs = f;
+	assert(decl.lhs.head().is_a<var>());
     }
 
     // 3. Rename the body given variables bound in the lhs
-    rhs = rename(rhs, bound2);
+    decl.rhs = rename(decl.rhs, bound2);
 
-    return expression_ref{decl.head(),v};
+    return decl;
 }
 
 bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& decls)
@@ -946,40 +938,37 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& dec
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
     bound_var_info bound_names;
-    for(auto decl: decls)
-	if (is_AST(decl,"Decl"))
-            add(bound_names, rename_decl_head(decl, false));
+    for(auto& decl: decls)
+	if (decl.is_a<Haskell::ValueDecl>())
+        {
+            auto D = decl.as_<Haskell::ValueDecl>();
+            add(bound_names, rename_decl_head(D, false));
+        }
     return bound_names;
 }
 
-bound_var_info renamer_state::rename_decl_head(expression_ref& decl, bool is_top_level)
+bound_var_info renamer_state::rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level)
 {
     bound_var_info bound_names;
 
-    assert(is_AST(decl,"Decl"));
-
-    auto w = decl.sub();
-    auto& lhs = w[0];
-    auto head = lhs.head();
+    auto head = decl.lhs.head();
     assert(head.is_a<Hs::Var>() or head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>());
     // For a constructor pattern, rename the whole lhs.
     if (head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>() or (head.is_a<Hs::Var>() and is_haskell_con_name(unloc(head.as_<Hs::Var>().name))))
     {
-        add(bound_names, rename_pattern(lhs, is_top_level));
+        add(bound_names, rename_pattern(decl.lhs, is_top_level));
     }
     // For a function pattern, just rename the variable being defined
-    else if (lhs.size())
+    else if (decl.lhs.size())
     {
         add(bound_names, rename_pattern(head, is_top_level));
-        lhs = expression_ref{head,lhs.sub()};
+        decl.lhs = expression_ref{head, decl.lhs.sub()};
     }
     // For a variable pattern, the variable being defined is the whole lhs
     else
     {
-        add(bound_names,rename_pattern(lhs, is_top_level));
+        add(bound_names,rename_pattern(decl.lhs, is_top_level));
     }
-
-    decl = expression_ref{decl.head(),w};
 
     return bound_names;
 }
@@ -998,8 +987,12 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
     bound_var_info bound_names;
     for(auto& decl: decls)
     {
-	if (is_AST(decl,"Decl"))
-            add(bound_names, rename_decl_head(decl, top));
+	if (decl.is_a<Haskell::ValueDecl>())
+        {
+            auto D = decl.as_<Haskell::ValueDecl>();
+            add(bound_names, rename_decl_head(D, top));
+            decl = D;
+        }
         else if (is_AST(decl,"Decl:sigtype"))
         {
             auto id = decl.sub()[0];
@@ -1014,8 +1007,12 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
             if (C.decls)
             {
                 for(auto& cdecl: unloc(*C.decls))
-                    if (is_AST(cdecl,"Decl"))
-                        add(bound_names,rename_decl_head(cdecl, true));
+                    if (cdecl.is_a<Haskell::ValueDecl>())
+                    {
+                        auto D = cdecl.as_<Haskell::ValueDecl>(); 
+                        add(bound_names,rename_decl_head(D, true));
+                        cdecl = D;
+                    }
                     else if (is_AST(cdecl,"Decl:sigtype"))
                     {
                         auto id = cdecl.sub()[0];
@@ -1033,8 +1030,12 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
             if (I.decls)
             {
                 for(auto& idecl: unloc(*I.decls))
-                    if (is_AST(idecl,"Decl"))
-                        rename_decl_head(idecl, true);
+                    if (idecl.is_a<Haskell::ValueDecl>())
+                    {
+                        auto D = idecl.as_<Haskell::ValueDecl>();
+                        rename_decl_head(D, true);
+                        idecl = D;
+                    }
             }
             decl = I;
         }
@@ -1044,16 +1045,16 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
     add(bound2, bound_names);
     for(auto& decl: decls)
     {
-	if (is_AST(decl,"Decl"))
-	    decl = rename_decl(decl, bound2);
+	if (decl.is_a<Haskell::ValueDecl>())
+	    decl = rename_decl(decl.as_<Haskell::ValueDecl>(), bound2);
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
             if (C.decls)
             {
                 for(auto& cdecl: unloc(*C.decls))
-                    if (is_AST(cdecl,"Decl"))
-                        cdecl = rename_decl(cdecl, bound2);
+                    if (cdecl.is_a<Haskell::ValueDecl>())
+                        cdecl = rename_decl(cdecl.as_<Haskell::ValueDecl>(), bound2);
             }
             decl = C;
         }
@@ -1063,8 +1064,8 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
             if (I.decls)
             {
                 for(auto& idecl: unloc(*I.decls))
-                    if (is_AST(idecl,"Decl"))
-                        idecl = rename_decl(idecl,bound2);
+                    if (idecl.is_a<Haskell::ValueDecl>())
+                        idecl = rename_decl(idecl.as_<Haskell::ValueDecl>(), bound2);
             }
             decl = I;
         }
@@ -1368,8 +1369,6 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	    std::abort();
 	else if (n.type == "Decls" or n.type == "TopDecls")
             std::abort();
-	else if (n.type == "Decl")
-	    std::abort();
 	else if (n.type == "rhs")
             std::abort();
 	else if (n.type == "gdrhs")

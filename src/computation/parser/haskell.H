@@ -97,6 +97,20 @@ struct Context
     Context(const std::vector<Haskell::Type>& cs): constraints(cs) {}
 };
 
+struct ValueDecl: public Object
+{
+    expression_ref lhs;
+    expression_ref rhs;
+
+    bool operator==(const Object& O) const;
+    bool operator==(const ValueDecl& V) const;
+    ValueDecl* clone() const { return new ValueDecl(*this);}
+    std::string print() const;
+
+    ValueDecl() = default;
+    ValueDecl(const expression_ref& l, const expression_ref& r): lhs(l), rhs(r) {}
+};
+
 struct Decls: public std::vector<expression_ref>
 {
 protected:
