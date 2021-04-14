@@ -45,41 +45,6 @@ Let indexed_let_expression(const vector<expression_ref>& bodies, const expressio
     return Let(bodies, T);
 }
 
-
-expression_ref make_decls(const CDecls& decls)
-{
-    if (decls.empty()) return {};
-
-    object_ptr<expression> Decls = new expression(AST_node("Decls"));
-    for(auto& decl: decls)
-    {
-	object_ptr<expression> Decl = new expression(AST_node("Decl"));
-	Decl->sub.push_back(decl.first);
-	assert(decl.second);
-	Decl->sub.push_back(decl.second);
-	Decls->sub.push_back(Decl);
-    }
-    return Decls;
-}
-
-
-expression_ref make_topdecls(const CDecls& decls)
-{
-    if (decls.empty()) return {};
-
-    object_ptr<expression> Decls = new expression(AST_node("TopDecls"));
-    for(auto& decl: decls)
-    {
-	object_ptr<expression> Decl = new expression(AST_node("Decl"));
-	Decl->sub.push_back(decl.first);
-	assert(decl.second);
-	Decl->sub.push_back(decl.second);
-	Decls->sub.push_back(Decl);
-    }
-    return Decls;
-}
-
-
 expression_ref let_expression(const CDecls& decls, const expression_ref& T)
 {
     if (decls.size() == 0) return T;
@@ -280,27 +245,6 @@ expression_ref unlet(const expression_ref& E)
     std::abort();
 }
 
-void get_decls(const expression_ref& E, CDecls& decls)
-{
-    if (not E) return;
-
-    assert(is_AST(E,"Decls") or is_AST(E,"TopDecls"));
-    auto& Decls = E.sub();
-    for(int i=0;i<Decls.size();i++)
-    {
-	assert(is_AST(Decls[i],"Decl"));
-	auto& Decl = Decls[i].sub();
-	decls.push_back({Decl[0].as_<var>(), Decl[1]});
-    }
-}
-
-CDecls parse_decls(const expression_ref& E)
-{
-    CDecls decls;
-    get_decls(E, decls);
-    return decls;
-}
-
 expression_ref multi_let_body(expression_ref E)
 {
     while(is_let_expression(E))
@@ -333,19 +277,7 @@ std::optional<var> find_first_duplicate_var(const CDecls& decls)
     return {};
 }
 
-std::optional<var> find_first_duplicate_var(const expression_ref& decls)
-{
-    return find_first_duplicate_var(parse_decls(decls));
-}
-
 void check_duplicate_var(const CDecls& decls)
-{
-    auto var = find_first_duplicate_var(decls);
-    if (var)
-	throw myexception()<<"variable '"<<var->print()<<"' occurs twice!";
-}
-
-void check_duplicate_var(const expression_ref& decls)
 {
     auto var = find_first_duplicate_var(decls);
     if (var)

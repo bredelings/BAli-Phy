@@ -247,7 +247,7 @@ namespace yy {
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        value.YY_MOVE_OR_COPY< Located<expression_ref> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Located<Haskell::Decls> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_maybe_src: // maybe_src
@@ -335,7 +335,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.YY_MOVE_OR_COPY< std::optional<Located<expression_ref>> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::optional<Located<Haskell::Decls>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -515,7 +515,7 @@ namespace yy {
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        value.move< Located<expression_ref> > (YY_MOVE (that.value));
+        value.move< Located<Haskell::Decls> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_maybe_src: // maybe_src
@@ -603,7 +603,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.move< std::optional<Located<expression_ref>> > (YY_MOVE (that.value));
+        value.move< std::optional<Located<Haskell::Decls>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -783,7 +783,7 @@ namespace yy {
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        value.copy< Located<expression_ref> > (that.value);
+        value.copy< Located<Haskell::Decls> > (that.value);
         break;
 
       case symbol_kind::S_maybe_src: // maybe_src
@@ -871,7 +871,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.copy< std::optional<Located<expression_ref>> > (that.value);
+        value.copy< std::optional<Located<Haskell::Decls>> > (that.value);
         break;
 
       case symbol_kind::S_prec: // prec
@@ -1050,7 +1050,7 @@ namespace yy {
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        value.move< Located<expression_ref> > (that.value);
+        value.move< Located<Haskell::Decls> > (that.value);
         break;
 
       case symbol_kind::S_maybe_src: // maybe_src
@@ -1138,7 +1138,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.move< std::optional<Located<expression_ref>> > (that.value);
+        value.move< std::optional<Located<Haskell::Decls>> > (that.value);
         break;
 
       case symbol_kind::S_prec: // prec
@@ -1562,7 +1562,7 @@ namespace yy {
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        yylhs.value.emplace< Located<expression_ref> > ();
+        yylhs.value.emplace< Located<Haskell::Decls> > ();
         break;
 
       case symbol_kind::S_maybe_src: // maybe_src
@@ -1650,7 +1650,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        yylhs.value.emplace< std::optional<Located<expression_ref>> > ();
+        yylhs.value.emplace< std::optional<Located<Haskell::Decls>> > ();
         break;
 
       case symbol_kind::S_prec: // prec
@@ -2205,7 +2205,7 @@ namespace yy {
 
   case 78: // cl_decl: "class" tycl_hdr wherebinds
 #line 680 "parser.y"
-                                               {yylhs.value.as < expression_ref > () = make_class_decl(yystack_[1].value.as < std::pair<Haskell::Context,expression_ref> > ().first,yystack_[1].value.as < std::pair<Haskell::Context,expression_ref> > ().second,yystack_[0].value.as < std::optional<Located<expression_ref>> > ());}
+                                               {yylhs.value.as < expression_ref > () = make_class_decl(yystack_[1].value.as < std::pair<Haskell::Context,expression_ref> > ().first,yystack_[1].value.as < std::pair<Haskell::Context,expression_ref> > ().second,yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ());}
 #line 2210 "parser.cc"
     break;
 
@@ -2229,7 +2229,7 @@ namespace yy {
 
   case 82: // inst_decl: "instance" overlap_pragma inst_type wherebinds
 #line 689 "parser.y"
-                                                                           {yylhs.value.as < expression_ref > () = make_instance_decl({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<expression_ref>> > ());}
+                                                                           {yylhs.value.as < expression_ref > () = make_instance_decl({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ());}
 #line 2234 "parser.cc"
     break;
 
@@ -2283,25 +2283,25 @@ namespace yy {
 
   case 105: // decllist: "{" decls "}"
 #line 811 "parser.y"
-                                 {yylhs.value.as < Located<expression_ref> > () = make_decls(yystack_[1].location,yystack_[1].value.as < std::vector<expression_ref> > ());}
+                                 {yylhs.value.as < Located<Haskell::Decls> > () = make_decls(yystack_[1].location,yystack_[1].value.as < std::vector<expression_ref> > ());}
 #line 2288 "parser.cc"
     break;
 
   case 106: // decllist: "vocurly" decls close
 #line 812 "parser.y"
-                                 {yylhs.value.as < Located<expression_ref> > () = make_decls(yystack_[1].location,yystack_[1].value.as < std::vector<expression_ref> > ());}
+                                 {yylhs.value.as < Located<Haskell::Decls> > () = make_decls(yystack_[1].location,yystack_[1].value.as < std::vector<expression_ref> > ());}
 #line 2294 "parser.cc"
     break;
 
   case 107: // binds: decllist
 #line 814 "parser.y"
-                                 {yylhs.value.as < Located<expression_ref> > () = yystack_[0].value.as < Located<expression_ref> > ();}
+                                 {yylhs.value.as < Located<Haskell::Decls> > () = yystack_[0].value.as < Located<Haskell::Decls> > ();}
 #line 2300 "parser.cc"
     break;
 
   case 108: // wherebinds: "where" binds
 #line 816 "parser.y"
-                                 {yylhs.value.as < std::optional<Located<expression_ref>> > () = yystack_[0].value.as < Located<expression_ref> > ();}
+                                 {yylhs.value.as < std::optional<Located<Haskell::Decls>> > () = yystack_[0].value.as < Located<Haskell::Decls> > ();}
 #line 2306 "parser.cc"
     break;
 
@@ -2727,13 +2727,13 @@ namespace yy {
 
   case 196: // rhs: "=" exp wherebinds
 #line 1029 "parser.y"
-                              {yylhs.value.as < expression_ref > () = make_rhs({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<expression_ref>> > ());}
+                              {yylhs.value.as < expression_ref > () = make_rhs({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ());}
 #line 2732 "parser.cc"
     break;
 
   case 197: // rhs: gdrhs wherebinds
 #line 1030 "parser.y"
-                              {yylhs.value.as < expression_ref > () = make_gdrhs(yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (),yystack_[0].value.as < std::optional<Located<expression_ref>> > ());}
+                              {yylhs.value.as < expression_ref > () = make_gdrhs(yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (),yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ());}
 #line 2738 "parser.cc"
     break;
 
@@ -2925,7 +2925,7 @@ namespace yy {
 
   case 237: // aexp: "let" binds "in" exp
 #line 1093 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = make_let(yystack_[2].value.as < Located<expression_ref> > (),{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
+                                 {yylhs.value.as < expression_ref > () = make_let(yystack_[2].value.as < Located<Haskell::Decls> > (),{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 2930 "parser.cc"
     break;
 
@@ -3189,13 +3189,13 @@ namespace yy {
 
   case 281: // alt_rhs: "->" exp wherebinds
 #line 1201 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = make_rhs({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<expression_ref>> > ());}
+                                 {yylhs.value.as < expression_ref > () = make_rhs({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ());}
 #line 3194 "parser.cc"
     break;
 
   case 282: // alt_rhs: gdpats wherebinds
 #line 1202 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = make_gdrhs(yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (),yystack_[0].value.as < std::optional<Located<expression_ref>> > ());}
+                                 {yylhs.value.as < expression_ref > () = make_gdrhs(yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (),yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ());}
 #line 3200 "parser.cc"
     break;
 
@@ -3327,7 +3327,7 @@ namespace yy {
 
   case 304: // qual: "let" binds
 #line 1245 "parser.y"
-                        {yylhs.value.as < expression_ref > () = Haskell::LetQual(yystack_[0].value.as < Located<expression_ref> > ());}
+                        {yylhs.value.as < expression_ref > () = Haskell::LetQual(yystack_[0].value.as < Located<Haskell::Decls> > ());}
 #line 3332 "parser.cc"
     break;
 
@@ -5943,12 +5943,12 @@ Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_
     return {d_or_n, name, type_args, context, constrs};
 }
 
-Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const optional<Located<expression_ref>>& decls)
+Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const optional<Located<Haskell::Decls>>& decls)
 {
     return {type, decls};
 }
 
-Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const optional<Located<expression_ref>>& decls)
+Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const optional<Located<Haskell::Decls>>& decls)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     return {name,type_args,context,decls};
@@ -6078,7 +6078,7 @@ expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& t
     return new expression(AST_node("typed_exp"),{exp,type});
 }
 
-Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const optional<Located<expression_ref>>& wherebinds)
+Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const optional<Located<Haskell::Decls>>& wherebinds)
 {
     return {exp, wherebinds};
 }
@@ -6124,10 +6124,9 @@ Haskell::StrictPattern make_strict_pattern(const expression_ref& pat)
     return { pat };
 }
 
-Located<expression_ref> make_decls(const yy::location& loc, std::vector<expression_ref>& decls)
+Located<Haskell::Decls> make_decls(const yy::location& loc, std::vector<expression_ref>& decls)
 {
-    auto ds = expression_ref{AST_node("Decls"),decls};
-    return {loc, ds};
+    return {loc, Haskell::Decls(decls)};
 }
 
 Haskell::LambdaExp make_lambdaexp(const vector<expression_ref>& pats, const expression_ref& body)
@@ -6135,7 +6134,7 @@ Haskell::LambdaExp make_lambdaexp(const vector<expression_ref>& pats, const expr
     return { pats, body };
 }
 
-Haskell::LetExp make_let(const Located<expression_ref>& binds, const Located<expression_ref>& body)
+Haskell::LetExp make_let(const Located<Haskell::Decls>& binds, const Located<expression_ref>& body)
 {
     return { binds, body };
 }
@@ -6180,7 +6179,7 @@ Located<Haskell::Alt> yy_make_alt(const yy::location& loc, const expression_ref&
     return {loc, {pat, alt_rhs}};
 }
 
-Haskell::MultiGuardedRHS make_gdrhs(const vector<Haskell::GuardedRHS>& guards, const optional<Located<expression_ref>>& wherebinds)
+Haskell::MultiGuardedRHS make_gdrhs(const vector<Haskell::GuardedRHS>& guards, const optional<Located<Haskell::Decls>>& wherebinds)
 {
     return {guards, wherebinds};
 }

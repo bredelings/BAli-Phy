@@ -60,8 +60,8 @@ std::string get_unqualified_name(const std::string&);
 
 std::vector<std::string> get_haskell_identifier_path(const std::string& s);
 
-void parse_module(const expression_ref& M, std::string& name, expression_ref& exports, expression_ref& impdecls, expression_ref& topdecls);
-expression_ref create_module(const std::string& name, const expression_ref& exports, const expression_ref& impdecls, const expression_ref& topdecls);
+void parse_module(const expression_ref& M, std::string& name, expression_ref& exports, expression_ref& impdecls, std::optional<Haskell::Decls>& topdecls);
+expression_ref create_module(const std::string& name, const expression_ref& exports, const expression_ref& impdecls, const std::optional<Haskell::Decls>& topdecls);
 
 struct module_import
 {
@@ -102,7 +102,7 @@ public:
     expression_ref impdecls;
     expression_ref exports;
 
-    expression_ref topdecls;
+    std::optional<Haskell::Decls> topdecls;
 
     std::vector<std::vector<expression_ref>> class_and_type_decls;
 
@@ -154,7 +154,7 @@ public:
 
     void declare_fixities();
 
-    void declare_fixities(const expression_ref& decls);
+    void declare_fixities(const Haskell::Decls& decls);
 
     void add_local_symbols();
 

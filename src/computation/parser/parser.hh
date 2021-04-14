@@ -71,11 +71,11 @@
 
   Haskell::Type make_kind(const Haskell::Type& kind);
   Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, const Haskell::Type& type);
-  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<expression_ref>>& decls);
+  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
                                                   const expression_ref& header, const std::vector<expression_ref>& constrs);
-  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<expression_ref>>& decls);
+  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
@@ -91,9 +91,9 @@
   expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t);
   expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
-  Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const std::optional<Located<expression_ref>>& wherebinds);
-  Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const std::optional<Located<expression_ref>>& wherebinds);
-  Haskell::GuardedRHS make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& wherebinds);
+  Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const std::optional<Located<Haskell::Decls>>& wherebinds);
+  Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const std::optional<Located<Haskell::Decls>>& wherebinds);
+  Haskell::GuardedRHS make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& body);
 
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
@@ -104,9 +104,9 @@
   Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat);
   Haskell::StrictPattern make_strict_pattern(const expression_ref& pat);
 
-  Located<expression_ref> make_decls(const yy::location& loc, std::vector<expression_ref>& decls);
+  Located<Haskell::Decls> make_decls(const yy::location& loc, std::vector<expression_ref>& decls);
   Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
-  Haskell::LetExp make_let(const Located<expression_ref>& binds, const Located<expression_ref>& body);
+  Haskell::LetExp make_let(const Located<Haskell::Decls>& binds, const Located<expression_ref>& body);
   Haskell::IfExp make_if(const Located<expression_ref>& cond, const Located<expression_ref>& alt_true, const Located<expression_ref>& alt_false);
   Haskell::CaseExp make_case(const expression_ref& obj, const Haskell::Alts& alts);
   Haskell::Do make_do(const Haskell::Stmts& stmts);
@@ -501,7 +501,7 @@ namespace yy {
 
       // decllist
       // binds
-      char dummy10[sizeof (Located<expression_ref>)];
+      char dummy10[sizeof (Located<Haskell::Decls>)];
 
       // maybe_src
       // maybe_safe
@@ -582,7 +582,7 @@ namespace yy {
       char dummy16[sizeof (int)];
 
       // wherebinds
-      char dummy17[sizeof (std::optional<Located<expression_ref>>)];
+      char dummy17[sizeof (std::optional<Located<Haskell::Decls>>)];
 
       // prec
       char dummy18[sizeof (std::optional<int>)];
@@ -1297,7 +1297,7 @@ namespace yy {
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        value.move< Located<expression_ref> > (std::move (that.value));
+        value.move< Located<Haskell::Decls> > (std::move (that.value));
         break;
 
       case symbol_kind::S_maybe_src: // maybe_src
@@ -1385,7 +1385,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.move< std::optional<Located<expression_ref>> > (std::move (that.value));
+        value.move< std::optional<Located<Haskell::Decls>> > (std::move (that.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -1659,13 +1659,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Located<expression_ref>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Located<Haskell::Decls>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Located<expression_ref>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Located<Haskell::Decls>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1757,13 +1757,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::optional<Located<expression_ref>>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::optional<Located<Haskell::Decls>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::optional<Located<expression_ref>>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::optional<Located<Haskell::Decls>>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1959,7 +1959,7 @@ switch (yykind)
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        value.template destroy< Located<expression_ref> > ();
+        value.template destroy< Located<Haskell::Decls> > ();
         break;
 
       case symbol_kind::S_maybe_src: // maybe_src
@@ -2047,7 +2047,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.template destroy< std::optional<Located<expression_ref>> > ();
+        value.template destroy< std::optional<Located<Haskell::Decls>> > ();
         break;
 
       case symbol_kind::S_prec: // prec
@@ -4880,7 +4880,7 @@ switch (yykind)
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        value.copy< Located<expression_ref> > (YY_MOVE (that.value));
+        value.copy< Located<Haskell::Decls> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_maybe_src: // maybe_src
@@ -4968,7 +4968,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.copy< std::optional<Located<expression_ref>> > (YY_MOVE (that.value));
+        value.copy< std::optional<Located<Haskell::Decls>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -5162,7 +5162,7 @@ switch (yykind)
 
       case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        value.move< Located<expression_ref> > (YY_MOVE (s.value));
+        value.move< Located<Haskell::Decls> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_maybe_src: // maybe_src
@@ -5250,7 +5250,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.move< std::optional<Located<expression_ref>> > (YY_MOVE (s.value));
+        value.move< std::optional<Located<Haskell::Decls>> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_prec: // prec

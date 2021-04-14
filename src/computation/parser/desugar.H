@@ -10,6 +10,7 @@
 class Module;
 
 expression_ref desugar(const Module& p, const expression_ref&);
+Haskell::Decls desugar(const Module& p, Haskell::Decls);
 
 struct failable_expression: public Object
 {

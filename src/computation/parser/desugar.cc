@@ -77,7 +77,7 @@ failable_expression desugar_state::desugar_gdrh(const Haskell::GuardedRHS& grhs)
 	else if (guard.is_a<Haskell::LetQual>())
 	{
             auto& LQ = guard.as_<Haskell::LetQual>();
-	    auto binds = desugar_decls_to_cdecls(unloc(LQ.binds).as_<Haskell::Decls>());
+	    auto binds = desugar_decls_to_cdecls(unloc(LQ.binds));
 
 	    F.add_binding(binds);
 	}
@@ -165,7 +165,7 @@ Haskell::Decls desugar_state::parse_fundecls(Haskell::Decls v)
 	// skip the other bindings for this function
 	i += (equations.size()-1);
     }
-    return decls;
+    return {decls, v.is_top_level()};
 }
 
 CDecls translate_decls_to_cdecls(const Haskell::Decls& hdecls)
@@ -214,7 +214,7 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
 	auto rhs = failable_expression(desugar(unloc(R.body)));
 
 	if (R.decls)
-	    rhs.add_binding(desugar_decls_to_cdecls(unloc(*R.decls).as_<Haskell::Decls>()));
+	    rhs.add_binding(desugar_decls_to_cdecls(unloc(*R.decls)));
 
 	return rhs;
     }
@@ -228,7 +228,7 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
 	auto rhs = fold(gdrhs);
 
 	if (R.decls)
-	    rhs.add_binding(desugar_decls_to_cdecls(unloc(*R.decls).as_<Haskell::Decls>()));
+	    rhs.add_binding(desugar_decls_to_cdecls(unloc(*R.decls)));
 
 	return rhs;
     }
@@ -248,14 +248,14 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         auto C = E.as_<Haskell::ClassDecl>();
         if (C.decls)
-            unloc(*C.decls) = desugar(unloc(*C.decls));
+            unloc(*C.decls) = desugar_decls(unloc(*C.decls));
         return C;
     }
     else if (E.is_a<Haskell::InstanceDecl>())
     {
         auto I = E.as_<Haskell::InstanceDecl>();
         if (I.decls)
-            unloc(*I.decls) = desugar(unloc(*I.decls));
+            unloc(*I.decls) = desugar_decls(unloc(*I.decls));
         return I;
     }
     else if (E.is_a<Haskell::List>())
@@ -347,7 +347,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                 expression_ref rhs2 = Haskell::SimpleRHS({noloc,fail});
                 expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
 
-                expression_ref decls = Haskell::Decls({decl1,decl2});
+                auto decls = Haskell::Decls({decl1,decl2});
 
                 expression_ref body = {qop,e,ok};
 
@@ -381,7 +381,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         auto& L = E.as_<Haskell::LetExp>();
 
-        CDecls decls = desugar_decls_to_cdecls(unloc(L.decls).as_<Haskell::Decls>());
+        CDecls decls = desugar_decls_to_cdecls(unloc(L.decls));
         auto body = desugar(unloc(L.body));
 
         // construct the new let expression.
@@ -411,10 +411,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             bodies.push_back( desugar_rhs(unloc(alt).rhs) );
         }
         return case_expression(obj, patterns, bodies).result(error("case: failed pattern match"));
-    }
-    else if (E.is_a<Haskell::Decls>())
-    {
-        return desugar_decls(E.as_<Haskell::Decls>());
     }
 
     vector<expression_ref> v = E.copy_sub();
@@ -487,7 +483,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 			expression_ref rhs2 = Haskell::SimpleRHS({noloc,var("[]")});
 			expression_ref decl2 = AST_node("Decl") + lhs2 + rhs2;
 
-			expression_ref decls = Haskell::Decls({decl1, decl2});
+			auto decls = Haskell::Decls({decl1, decl2});
 			expression_ref body = {var("Data.List.concatMap"),ok,l};
 
 			E2 = Haskell::LetExp( {noloc, decls}, {noloc, body} );
@@ -562,3 +558,8 @@ expression_ref desugar(const Module& m, const expression_ref& E)
     return ds.desugar(E);
 }
 
+Haskell::Decls desugar(const Module& m, Haskell::Decls D)
+{
+    desugar_state ds(m);
+    return ds.desugar_decls(D);
+}

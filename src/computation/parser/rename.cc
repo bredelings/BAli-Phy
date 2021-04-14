@@ -11,7 +11,6 @@
 #include "computation/expression/list.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/AST_node.H"
-#include "computation/parser/haskell.H"
 #include "util/set.H"
 
 using std::string;
@@ -282,6 +281,14 @@ expression_ref unapply(expression_ref E)
 // What are the rules for well-formed patterns?
 // Only one op can be a non-constructor (in decl patterns), and that op needs to end up at the top level.
 
+Haskell::Decls rename_infix(const Module& m, Haskell::Decls decls)
+{
+    for(auto& e: decls)
+        e = rename_infix(m, e);
+
+    return decls;
+}
+
 expression_ref rename_infix(const Module& m, const expression_ref& E)
 {
     if (E.is_a<Haskell::ClassDecl>())
@@ -443,6 +450,8 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
         return C;
     }
+    else if (E.is_a<Haskell::Decls>())
+        std::abort();
 
     if (not E.is_expression()) return E;
 
@@ -481,15 +490,13 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 }
 
 
-expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
+Haskell::Decls rename_infix_top(const Module& m, const Haskell::Decls& decls)
 {
-    if (not decls.is_expression()) return decls;
+    if (not decls.size()) return decls;
 
-    assert(is_AST(decls, "TopDecls"));
+    auto v = decls;
 
-    auto v = decls.sub();
-
-    for(auto& decl: decls.sub())
+    for(auto& decl: decls)
     {
         if (not decl.is_a<Haskell::DataOrNewtypeDecl>()) continue;
         auto D = decl.as_<Haskell::DataOrNewtypeDecl>();
@@ -561,9 +568,7 @@ expression_ref rename_infix_top(const Module& m, const expression_ref& decls)
         }
     }
 
-    expression_ref E{AST_node("TopDecls"),v};
-
-    return rename_infix(m, E);
+    return rename_infix(m, Haskell::Decls(v));
 }
 
 // 1. The primary purpose of the rename pass is to convert identifiers to (possibly qualified) vars.
@@ -617,12 +622,12 @@ struct renamer_state
     bound_var_info find_vars_in_patterns(const vector<expression_ref>& pats, bool top = false);
     bound_var_info find_vars_in_pattern(const expression_ref& pat, bool top = false);
     bound_var_info find_bound_vars_in_stmt(const expression_ref& stmt);
-    bound_var_info find_bound_vars_in_decls(const expression_ref& stmt);
+    bound_var_info find_bound_vars_in_decls(const Haskell::Decls& decls);
     bound_var_info rename_patterns(vector<expression_ref>& pat, bool top = false);
     bound_var_info rename_pattern(expression_ref& pat, bool top = false);
     bound_var_info rename_decl_head(expression_ref& decl, bool is_top_level);
     expression_ref rename_decl(const expression_ref& decl, const bound_var_info& bound);
-    bound_var_info rename_decls(expression_ref& decls, const bound_var_info& bound);
+    bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound);
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound);
     expression_ref rename(const expression_ref& E, const bound_var_info& bound);
@@ -630,10 +635,11 @@ struct renamer_state
     renamer_state(const Module& m_):m(m_) {}
 };
 
-expression_ref rename(const Module& m, const expression_ref& E)
+Haskell::Decls rename(const Module& m, Haskell::Decls decls)
 {
     renamer_state Rn(m);
-    return Rn.rename(E,set<string>());
+    Rn.rename_decls(decls,{});
+    return decls;
 }
 
 bound_var_info renamer_state::find_vars_in_patterns(const vector<expression_ref>& pats, bool top)
@@ -933,18 +939,14 @@ expression_ref renamer_state::rename_decl(const expression_ref& decl, const boun
     return expression_ref{decl.head(),v};
 }
 
-bound_var_info renamer_state::find_bound_vars_in_decls(const expression_ref& decls)
+bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& decls)
 {
-    assert(is_AST(decls,"Decls"));
-
     if (not decls.size()) return {};
-
-    vector<expression_ref> v = decls.sub();
 
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
     bound_var_info bound_names;
-    for(auto& decl: v)
+    for(auto decl: decls)
 	if (is_AST(decl,"Decl"))
             add(bound_names, rename_decl_head(decl, false));
     return bound_names;
@@ -982,27 +984,19 @@ bound_var_info renamer_state::rename_decl_head(expression_ref& decl, bool is_top
     return bound_names;
 }
 
-bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_var_info& bound)
+bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_var_info& bound)
 {
-    assert(is_AST(decls,"TopDecls") or is_AST(decls,"Decls"));
-
-    if (not decls.size())
-    {
-        decls = Haskell::Decls({}, is_AST(decls,"TopDecls"));
-        return {};
-    }
-
-    vector<expression_ref> v = decls.sub();
+    if (not decls.size()) return {};
 
     auto bound2 = bound;
-    bool top = is_AST(decls,"TopDecls");
+    bool top = decls.is_top_level();
 
     // Find all the names bound HERE, versus in individual decls.
 
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
     bound_var_info bound_names;
-    for(auto& decl: v)
+    for(auto& decl: decls)
     {
 	if (is_AST(decl,"Decl"))
             add(bound_names, rename_decl_head(decl, top));
@@ -1019,10 +1013,7 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
             auto C = decl.as_<Haskell::ClassDecl>();
             if (C.decls)
             {
-                auto class_decls = unloc(*C.decls);
-                assert(is_AST(class_decls, "Decls"));
-                auto cdecls = class_decls.sub();
-                for(auto& cdecl: cdecls)
+                for(auto& cdecl: unloc(*C.decls))
                     if (is_AST(cdecl,"Decl"))
                         add(bound_names,rename_decl_head(cdecl, true));
                     else if (is_AST(cdecl,"Decl:sigtype"))
@@ -1033,7 +1024,6 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
                         add(bound_names, rename_pattern(id, true));
                         cdecl = expression_ref(AST_node("Decl:sigtype"),{id,type});
                     }
-                unloc(*C.decls) = expression_ref(AST_node("Decls"),cdecls);
             }
             decl = C;
         }
@@ -1042,11 +1032,9 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
             auto I = decl.as_<Haskell::InstanceDecl>();
             if (I.decls)
             {
-                auto idecls = unloc(*I.decls).sub();
-                for(auto& idecl: idecls)
+                for(auto& idecl: unloc(*I.decls))
                     if (is_AST(idecl,"Decl"))
                         rename_decl_head(idecl, true);
-                unloc(*I.decls) = expression_ref(AST_node("Decls"),idecls);
             }
             decl = I;
         }
@@ -1054,7 +1042,7 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
 
     // Replace ids with dummies
     add(bound2, bound_names);
-    for(auto& decl: v)
+    for(auto& decl: decls)
     {
 	if (is_AST(decl,"Decl"))
 	    decl = rename_decl(decl, bound2);
@@ -1063,12 +1051,9 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
             auto C = decl.as_<Haskell::ClassDecl>();
             if (C.decls)
             {
-                auto class_decls = unloc(*C.decls);
-                auto cdecls = class_decls.sub();
-                for(auto& cdecl: cdecls)
+                for(auto& cdecl: unloc(*C.decls))
                     if (is_AST(cdecl,"Decl"))
                         cdecl = rename_decl(cdecl, bound2);
-                unloc(*C.decls) = Haskell::Decls(cdecls);
             }
             decl = C;
         }
@@ -1077,18 +1062,15 @@ bound_var_info renamer_state::rename_decls(expression_ref& decls, const bound_va
             auto I = decl.as_<Haskell::InstanceDecl>();
             if (I.decls)
             {
-                auto idecls = unloc(*I.decls).sub();
-                for(auto& idecl: idecls)
+                for(auto& idecl: unloc(*I.decls))
                     if (is_AST(idecl,"Decl"))
                         idecl = rename_decl(idecl,bound2);
-                unloc(*I.decls) = Haskell::Decls(idecls);
             }
             decl = I;
         }
     }
 
-    decls = Haskell::Decls(v, is_AST(decls,"TopDecls"));
-    return bound_names;
+   return bound_names;
 }
 
 bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt)
@@ -1385,11 +1367,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	if (n.type == "infixexp")
 	    std::abort();
 	else if (n.type == "Decls" or n.type == "TopDecls")
-	{
-	    expression_ref E2 = E;
-	    rename_decls(E2, bound);
-	    return E2;
-	}
+            std::abort();
 	else if (n.type == "Decl")
 	    std::abort();
 	else if (n.type == "rhs")

@@ -55,20 +55,11 @@ bool parse_let_expression(const expression_ref& E, CDecls& decls, expression_ref
 
 bool parse_indexed_let_expression(const expression_ref& E, std::vector<expression_ref>& bodies, expression_ref& T);
 
-void get_decls(const expression_ref& E, CDecls& decls);
-
-CDecls parse_decls(const expression_ref& E);
-
-expression_ref make_decls(const CDecls&);
-
-expression_ref make_topdecls(const CDecls&);
-
 expression_ref multi_let_body(expression_ref E);
 
 std::vector<CDecls> strip_multi_let(expression_ref& E);
 
 std::optional<var> find_first_duplicate_var(const CDecls& decls);
-std::optional<var> find_first_duplicate_var(const expression_ref& decls);
 void check_duplicate_var(const CDecls& decls);
 void check_duplicate_var(const expression_ref& decls);
 
