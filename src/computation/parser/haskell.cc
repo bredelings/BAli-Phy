@@ -215,6 +215,20 @@ std::string GuardedRHS::print() const
     return "| " + join(guard_string,", ") + " = " + body.print();
 }
 
+std::string DataOrNewtypeDecl::print() const
+{
+    string result = (data_or_newtype == DataOrNewtype::data) ? "data" : "newtype";
+    result += " " + name + " ";
+    for(auto& type_var: type_vars)
+        result += type_var.print() + " ";
+    result += "= ";
+    vector<string> cons;
+    for(auto& con: constructors)
+        cons.push_back(con.print());
+    result += join(cons, " | ");
+    return result;
+}
+
 std::string MultiGuardedRHS::print() const
 {
     string result = "= ";

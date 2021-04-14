@@ -202,6 +202,7 @@ struct DataOrNewtypeDecl: public Object
     std::vector<expression_ref> constructors;
 
     DataOrNewtypeDecl* clone() const { return new DataOrNewtypeDecl(*this);}
+    std::string print() const;
 
     DataOrNewtypeDecl(DataOrNewtype dn,
                       const std::string& s,
