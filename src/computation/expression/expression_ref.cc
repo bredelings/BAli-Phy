@@ -165,16 +165,15 @@ string expression::print() const
 	    return result;
 	}
 
-	expression_ref body;
-	vector<pair<var, expression_ref>> decls;
-	if (parse_let_expression(*this, decls, body))
+	if (is_let_expression(head))
 	{
+            auto& L = head.as_<let_exp>();
 	    result = "let {";
 	    vector<string> parts;
-	    for(int i=0;i<decls.size();i++)
-		parts.push_back(decls[i].first.print() + " = " + decls[i].second.print());
+	    for(auto& [x,e] : L.binds)
+		parts.push_back(x.print() + " = " + e.print());
 	    result += join(parts,"; ");
-	    result += "} in " + body.print();
+	    result += "} in " + L.body.print();
 	    return result;
 	}
 

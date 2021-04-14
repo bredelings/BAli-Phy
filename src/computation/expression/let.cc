@@ -65,21 +65,6 @@ bool is_let_expression(const expression_ref& E)
     return (E.head().type() == let_type);
 }
 
-//let [(x[i], bodies[i])] T
-bool parse_let_expression(const expression_ref& E, CDecls& decls, expression_ref& body)
-{
-    decls.clear();
-    body = {};
-
-    if (not is_let_expression(E)) return false;
-
-    auto& L = E.as_<let_exp>();
-    decls = L.binds;
-    body = L.body;
-
-    return true;
-}
-
 //let T bodies[i]
 bool parse_indexed_let_expression(const expression_ref& E, vector<expression_ref>& bodies, expression_ref& T)
 {
@@ -186,12 +171,13 @@ expression_ref unlet(const expression_ref& E)
     // 5. Let 
     CDecls decls;
     expression_ref T;
-    if (parse_let_expression(E, decls, T))
+    if (is_let_expression(E))
     {
+        auto L = E.as_<let_exp>();
 	// unnormalize T and the bodies
-	T = unlet(T);
-	for(int i=0; i<decls.size(); i++)
-	    decls[i].second = unlet(decls[i].second);
+	L.body = unlet(L.body);
+	for(int i=0; i<L.binds.size(); i++)
+	    L.binds[i].second = unlet(L.binds[i].second);
 
 	// substitute for non-recursive lets
 	bool changed = true;
@@ -199,30 +185,30 @@ expression_ref unlet(const expression_ref& E)
 	{
 	    changed = false;
 
-	    for(int i=decls.size()-1; i>=0; i--)
+	    for(int i=L.binds.size()-1; i>=0; i--)
 	    {
-		if (n_free_occurrences(decls[i].second, decls[i].first)) continue;
+		if (n_free_occurrences(L.binds[i].second, L.binds[i].first)) continue;
 
-		int count = n_free_occurrences(T, decls[i].first);
-		for(const auto& decl: decls)
+		int count = n_free_occurrences(T, L.binds[i].first);
+		for(const auto& decl: L.binds)
 		    count += n_free_occurrences(decl.second, decl.first);
 
 		if (count != 1) continue;
 
 		changed = true;
 	
-		auto decl = decls[i];
+		auto decl = L.binds[i];
 	
-		decls.erase(decls.begin() + i);
+		L.binds.erase(L.binds.begin() + i);
 	
 		// substitute for the value of this variable in T and in the remaining bodies;
-		for(int j=0;j<decls.size();j++)
-		    decls[j].second = substitute(decls[j].second, decl.first, decl.second);
-		T = substitute(T, decl.first, decl.second);
+		for(int j=0;j<L.binds.size();j++)
+		    L.binds[j].second = substitute(L.binds[j].second, decl.first, decl.second);
+		L.body = substitute(L.body, decl.first, decl.second);
 	    }
 	}
 
-	return let_expression(decls, T);
+        return L;
     }
     // 1. Var
     else if (E.is_a<var>() or is_reg_var(E))

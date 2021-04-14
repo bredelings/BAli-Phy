@@ -135,14 +135,12 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
     // 5. Let 
     if (is_let_expression(E))
     {
-	vector<pair<var,expression_ref>> decls;
-	expression_ref body;
-	parse_let_expression(E, decls, body);
+        auto L = E.as_<let_exp>();
 
 	// unnormalize body and the decls
-	body = launchbury_unnormalize(body);
-	for(auto& decl: decls)
-	    decl.second = launchbury_unnormalize(decl.second);
+	L.body = launchbury_unnormalize(L.body);
+	for(auto& [_,e]: L.binds)
+	    e = launchbury_unnormalize(e);
 
 	/*
 	  Identify cycles of size > 1...
@@ -163,9 +161,9 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 	{
 	    changed = false;
 
-	    for(int i=decls.size()-1; i>=0; i--)
+	    for(int i=L.binds.size()-1; i>=0; i--)
 	    {
-		auto [x,E] = decls[i];
+		auto [x,E] = L.binds[i];
 		std::set<var> free = get_free_indices(E);
 
 		// if x references itself then don't substitute it.
@@ -173,16 +171,16 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 	
 		changed = true;
 	
-		decls.erase(decls.begin() + i);
+		L.binds.erase(L.binds.begin() + i);
 	
 		// substitute for the value of this variable in T and in the remaining bodies;
-		for(auto& [x2,E2]: decls)
+		for(auto& [x2,E2]: L.binds)
 		    E2 = substitute(E2, x, E);
-		body = substitute(body, x, E);
+		L.body = substitute(L.body, x, E);
 	    }
 	}
 
-	return let_expression(decls, body);
+        return L;
     }
     // 1. Var
     // 5. (partial) Literal constant.  Treat as 0-arg constructor.

@@ -47,27 +47,28 @@ expression_ref indexify(const expression_ref& E, vector<var>& variables)
     }
 
     // Let expression
-    vector<pair<var,expression_ref>> decls;
-    vector<expression_ref> bodies;
-    expression_ref T;
-    if (parse_let_expression(E, decls, T))
+    if (is_let_expression(E))
     {
-	for(const auto& decl: decls)
-	    variables.push_back(decl.first);
+        auto& L = E.as_<let_exp>();
+	for(auto& [x,_]: L.binds)
+	    variables.push_back(x);
 
-	for(int i=0;i<decls.size();i++)
-	    bodies.push_back( indexify(decls[i].second, variables) );
+        vector<expression_ref> es;
+	for(auto& [_,e]: L.binds)
+	    es.push_back( indexify(e, variables) );
 
-	T = indexify(T, variables);
+        auto body = indexify(L.body, variables);
 
-	for(int i=0;i<decls.size();i++)
+	for(int i=0;i<L.binds.size();i++)
 	    variables.pop_back();
 
-	return indexed_let_expression(bodies,T);
+	return indexed_let_expression(es,body);
     }
 
     // case expression
+    expression_ref T;
     vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
     if (parse_case_expression(E, T, patterns, bodies))
     {
 	T = indexify(T, variables);
