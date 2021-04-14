@@ -4,6 +4,7 @@
 #include "util/range.H"
 #include "util/set.H"
 #include "util/log-level.H"
+#include "computation/expression/bool.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/list.H"
@@ -390,23 +391,101 @@ tree_edge TreeInterface::edge(int n1, int n2) const
     return edge(find_branch(n1,n2));
 }
 
+bool TreeInterface::has_root() const
+{
+    if (get_tree_constants().root)
+        return true;
+    else
+        return false;
+}
+
+int TreeInterface::root() const
+{
+    auto& r = *get_tree_constants().root;
+    return r.get_value(get_const_context()).as_int();
+}
+
+bool TreeInterface::away_from_root(int b) const
+{
+    auto& away = *get_tree_constants().away_from_root;
+    auto result = away[b].get_value(get_const_context());
+    if (is_bool_true(result))
+        return true;
+    else if (is_bool_false(result))
+        return false;
+    std::abort();
+}
+
+std::optional<int> TreeInterface::parent_branch_for_node(int n) const
+{
+    for(auto& b: all_branches_from_node(n))
+        if (not away_from_root(b))
+            return reverse(b);
+
+    assert(n == root());
+
+    return {};
+}
+
+std::optional<int> TreeInterface::parent_of_node(int n) const
+{
+    auto b = parent_branch_for_node(n);
+    if (b)
+        return source(*b);
+    else
+        return {};
+}
+
+std::vector<int> TreeInterface::children_of_node(int n) const
+{
+    vector<int> children;
+    for(auto& b: all_branches_from_node(n))
+        if (away_from_root(b))
+            children.push_back(target(b));
+    return children;
+}
+
+bool TreeInterface::has_branch_lengths() const
+{
+    if (get_tree_constants().branch_durations)
+        return true;
+    else
+        return false;
+}
+
 double TreeInterface::branch_length(int b) const
 {
     b %= n_branches();
-    return get_tree_constants().branch_durations[b].get_value(get_const_context()).as_double();
+    auto& L = *get_tree_constants().branch_durations;
+    return L[b].get_value(get_const_context()).as_double();
 }
 
 bool TreeInterface::can_set_branch_length(int b)
 {
     b %= n_branches();
-    return bool(get_tree_constants().branch_durations[b].is_modifiable(get_const_context()));
+    auto& L = *get_tree_constants().branch_durations;
+    return bool(L[b].is_modifiable(get_const_context()));
 }
 
 void TreeInterface::set_branch_length(int b, double l)
 {
     b %= n_branches();
-    auto& R = get_tree_constants().branch_durations[b];
-    R.set_value(get_context(), l);
+    auto& L = *get_tree_constants().branch_durations;
+    L[b].set_value(get_context(), l);
+}
+
+bool TreeInterface::has_node_times() const
+{
+    if (get_tree_constants().node_times)
+        return true;
+    else
+        return false;
+}
+
+double TreeInterface::node_time(int n) const
+{
+    auto& T = *get_tree_constants().node_times;
+    return T[n].get_value(get_const_context()).as_double();
 }
 
 const tree_constants& ParametersTreeInterface::get_tree_constants() const

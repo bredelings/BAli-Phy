@@ -10,6 +10,11 @@
 class context_ref;
 class Parameters;
 
+// We need to be able to handle
+// * rooted trees
+// * time trees
+// * labelled trees
+
 struct tree_constants: public Object
 {
     // The tree
@@ -17,11 +22,15 @@ struct tree_constants: public Object
     std::vector<std::vector<param>> parameters_for_tree_node;
     std::vector<std::tuple<param,param,param>> parameters_for_tree_branch;
 
-    std::vector<param> branch_durations;
+    std::optional<std::vector<param>> branch_durations;
 
     int n_leaves;
 
     std::vector<std::string> node_labels;
+
+    std::optional<param> root;
+    std::optional<std::vector<param>> away_from_root;
+    std::optional<std::vector<param>> node_times;
 
     void register_branch_lengths(context_ref&, const expression_ref&);
 
@@ -109,9 +118,22 @@ public:
     tree_edge edge(int n1, int n2) const;
     tree_edge edge(int b) const;
 
+    bool has_root() const;
+    int root() const;
+    bool away_from_root(int b) const;
+    std::optional<int> parent_branch_for_node(int n) const;
+    std::optional<int> parent_of_node(int n) const;
+    std::vector<int> children_of_node(int n) const;
+
+    bool has_branch_lengths() const;
     double branch_length(int b) const;
     bool can_set_branch_length(int b);
     void set_branch_length(int b, double l);
+
+    bool has_node_times() const;
+    double node_time(int n) const;
+    bool can_set_node_time(int n) const;
+    void set_node_time(int n, double t) const;
 
     void read_tree(const Tree&);
 
@@ -121,6 +143,8 @@ public:
 
     virtual ~TreeInterface() = default;
 };
+
+
 
 class ParametersTreeInterface: public TreeInterface
 {
