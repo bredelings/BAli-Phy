@@ -241,6 +241,49 @@ std::string GuardedRHS::print() const
     return "| " + join(guard_string,", ") + " = " + body.print();
 }
 
+std::string Constructor::print() const
+{
+    string result;
+    if (forall)
+    {
+        vector<string> var_strings;
+        for(auto& var: forall.sub())
+            var_strings.push_back(var.print());
+        result += "forall " + join(var_strings," ")+".";
+    }
+    if (context)
+    {
+        result += context->print() + " => ";
+    }
+    result += name;
+    if (fields.index() == 0)
+    {
+        for(auto& arg_type: std::get<0>(fields))
+            result += " " + arg_type.print();
+    }
+    else
+        result += " " + std::get<1>(fields).print();
+    return result;
+}
+
+bool Constructor::is_record_constructor() const
+{
+    return fields.index() == 1;
+}
+
+int Constructor::arity() const
+{
+    if (is_record_constructor())
+    {
+        int i = 0;
+        for(auto& field_group: std::get<1>(fields).field_decls)
+            i += field_group.field_names.size();
+        return i;
+    }
+    else
+        return std::get<0>(fields).size();
+}
+
 std::string DataOrNewtypeDecl::print() const
 {
     string result = (data_or_newtype == DataOrNewtype::data) ? "data" : "newtype";

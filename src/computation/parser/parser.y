@@ -32,11 +32,12 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
   Haskell::Type make_kind(const Haskell::Type& kind);
+  Haskell::Constructor make_constructor(const expression_ref& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish);
   Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, const Haskell::Type& type);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
-                                                  const expression_ref& header, const std::vector<expression_ref>& constrs);
+                                                  const expression_ref& header, const std::vector<Haskell::Constructor>& constrs);
   Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
@@ -372,9 +373,9 @@
  */
 %type <expression_ref> kind
 
-%type <std::vector<expression_ref>> constrs
-%type <std::vector<expression_ref>> constrs1
-%type <expression_ref> constr
+%type <std::vector<Haskell::Constructor>> constrs
+%type <std::vector<Haskell::Constructor>> constrs1
+%type <Haskell::Constructor> constr
 %type <expression_ref> forall
 %type <expression_ref> constr_stuff
 %type <std::vector<Haskell::FieldDecl>> fielddecls
@@ -983,8 +984,8 @@ constrs: "=" constrs1           {$$ = $2;}
 constrs1: constrs1 "|" constr   {$$ = $1; $$.push_back($3);}
 |         constr                {$$.push_back($1);}
 
-constr: forall context_no_ops "=>" constr_stuff {$$ = $4;}  // expand the constructor AST struct to have a context.
-|       forall constr_stuff                     {$$ = $2;}
+constr: forall context_no_ops "=>" constr_stuff {$$ = make_constructor($1,$2, $4);}
+|       forall constr_stuff                     {$$ = make_constructor($1,{}, $2);}
 
 forall: "forall" tv_bndrs "."   {if ($2.size()>1) $$ = make_tv_bndrs($2);}
 |       %empty                  {}
@@ -1507,6 +1508,7 @@ bars: bars "|"     {$$ = $1 + 1;}
 using std::optional;
 using std::string;
 using std::vector;
+using std::pair;
 
 void
 yy::parser::error (const location_type& l, const std::string& m)
@@ -1579,7 +1581,7 @@ Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_ty
 }
 
 Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context&  context,
-                                                const expression_ref& header, const vector<expression_ref>& constrs)
+                                                const expression_ref& header, const vector<Haskell::Constructor>& constrs)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     if (d_or_n == Haskell::DataOrNewtype::newtype and constrs.size() != 1)
@@ -1689,6 +1691,47 @@ Haskell::ListType make_list_type(const Haskell::Type& type)
 Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg)
 {
     return {head, arg};
+}
+
+optional<pair<string, Haskell::FieldDecls>> is_record_con(const expression_ref& typeish)
+{
+    auto [head,args] = Haskell::decompose_type_apps(typeish);
+
+    if (args.size() != 1) return {};
+
+    if (not head.is_a<Haskell::TypeVar>()) return {};
+
+    if (not args[0].is_a<Haskell::FieldDecls>()) return {};
+
+    return {{head.as_<Haskell::TypeVar>().name, args[0].as_<Haskell::FieldDecls>()}};
+}
+
+optional<pair<string, std::vector<expression_ref>>> is_normal_con(const expression_ref& typeish)
+{
+    if (is_record_con(typeish)) return {};
+
+    auto [head,args] = Haskell::decompose_type_apps(typeish);
+
+    if (not head.is_a<Haskell::TypeVar>())
+        return {};
+
+    return {{head.as_<Haskell::TypeVar>().name, args}};
+}
+
+Haskell::Constructor make_constructor(const expression_ref& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish)
+{
+    if (auto constr = is_record_con(typeish))
+    {
+        auto [name, fields] = *constr;
+        return {forall, c, name, fields};
+    }
+    else if (auto constr = is_normal_con(typeish))
+    {
+        auto [name, fields] = *constr;
+        return {forall, c, name, fields};
+    }
+    else
+        throw myexception()<<"constructor '"<<typeish<<"' does not make sense";
 }
 
 Haskell::FieldDecls make_field_decls(const std::vector<Haskell::FieldDecl>& ds)

@@ -973,24 +973,6 @@ void Module::load_builtins(const module_loader& L)
     topdecls = Haskell::Decls(new_decls, true);
 }
 
-int get_constructor_arity(const expression_ref& constr)
-{
-    auto [con,args] = Haskell::decompose_type_apps(constr);
-
-    if (args.size() == 1 and args[0].is_a<Haskell::FieldDecls>())
-    {
-        auto& fields = args[0].as_<Haskell::FieldDecls>();
-        // We could have e.g. f1,f2 :: Int, adding 2 to the arity.
-        int arity = 0;
-        for(auto& field_group: fields.field_decls)
-            arity += field_group.field_names.size();
-
-        return arity;
-    }
-    else
-        return args.size();
-}
-
 string get_constructor_name(const expression_ref& constr)
 {
     auto [con,_] = Haskell::decompose_type_apps(constr);
@@ -1012,8 +994,8 @@ void Module::load_constructors()
 
             for(const auto& constr: constrs)
             {
-                auto arity = get_constructor_arity(constr);
-                auto cname = get_constructor_name(constr);
+                auto arity = constr.arity();
+                auto cname = constr.name;
 
                 string qualified_name = name+"."+cname;
                 expression_ref body = lambda_expression( constructor(qualified_name, arity) );
@@ -1440,11 +1422,7 @@ void Module::add_local_symbols()
             if (not constrs.size()) continue;
 
             for(const auto& constr: constrs)
-            {
-                auto arity = get_constructor_arity(constr);
-                auto cname = get_constructor_name(constr);
-                def_constructor(cname,arity);
-            }
+                def_constructor(constr.name, constr.arity());
         }
 }
 

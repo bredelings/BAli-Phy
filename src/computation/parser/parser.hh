@@ -70,11 +70,12 @@
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
   Haskell::Type make_kind(const Haskell::Type& kind);
+  Haskell::Constructor make_constructor(const expression_ref& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish);
   Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, const Haskell::Type& type);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
-                                                  const expression_ref& header, const std::vector<expression_ref>& constrs);
+                                                  const expression_ref& header, const std::vector<Haskell::Constructor>& constrs);
   Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
@@ -122,7 +123,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 126 "parser.hh"
+#line 127 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -256,7 +257,7 @@
 #endif
 
 namespace yy {
-#line 260 "parser.hh"
+#line 261 "parser.hh"
 
 
 
@@ -473,49 +474,52 @@ namespace yy {
       // altslist
       char dummy1[sizeof (Haskell::Alts)];
 
+      // constr
+      char dummy2[sizeof (Haskell::Constructor)];
+
       // context
       // context_no_ops
-      char dummy2[sizeof (Haskell::Context)];
+      char dummy3[sizeof (Haskell::Context)];
 
       // data_or_newtype
-      char dummy3[sizeof (Haskell::DataOrNewtype)];
+      char dummy4[sizeof (Haskell::DataOrNewtype)];
 
       // fielddecl
-      char dummy4[sizeof (Haskell::FieldDecl)];
+      char dummy5[sizeof (Haskell::FieldDecl)];
 
       // infix
-      char dummy5[sizeof (Haskell::Fixity)];
+      char dummy6[sizeof (Haskell::Fixity)];
 
       // gdrh
       // gdpat
-      char dummy6[sizeof (Haskell::GuardedRHS)];
+      char dummy7[sizeof (Haskell::GuardedRHS)];
 
       // stmtlist
-      char dummy7[sizeof (Haskell::Stmts)];
+      char dummy8[sizeof (Haskell::Stmts)];
 
       // strict_mark
       // strictness
-      char dummy8[sizeof (Haskell::StrictLazy)];
+      char dummy9[sizeof (Haskell::StrictLazy)];
 
       // alt
-      char dummy9[sizeof (Located<Haskell::Alt>)];
+      char dummy10[sizeof (Located<Haskell::Alt>)];
 
       // decllist
       // binds
-      char dummy10[sizeof (Located<Haskell::Decls>)];
+      char dummy11[sizeof (Located<Haskell::Decls>)];
 
       // maybe_src
       // maybe_safe
       // optqualified
-      char dummy11[sizeof (bool)];
+      char dummy12[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy12[sizeof (char)];
+      char dummy13[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy13[sizeof (double)];
+      char dummy14[sizeof (double)];
 
       // module
       // body
@@ -548,7 +552,6 @@ namespace yy {
       // inst_type
       // tv_bndr
       // kind
-      // constr
       // forall
       // constr_stuff
       // decl_no_th
@@ -570,29 +573,29 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy14[sizeof (expression_ref)];
+      char dummy15[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy15[sizeof (float)];
+      char dummy16[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy16[sizeof (int)];
+      char dummy17[sizeof (int)];
 
       // wherebinds
-      char dummy17[sizeof (std::optional<Located<Haskell::Decls>>)];
+      char dummy18[sizeof (std::optional<Located<Haskell::Decls>>)];
 
       // prec
-      char dummy18[sizeof (std::optional<int>)];
+      char dummy19[sizeof (std::optional<int>)];
 
       // maybe_pkg
       // maybeas
-      char dummy19[sizeof (std::optional<std::string>)];
+      char dummy20[sizeof (std::optional<std::string>)];
 
       // tycl_hdr
-      char dummy20[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy21[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // "VARID"
       // "CONID"
@@ -649,19 +652,23 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy21[sizeof (std::string)];
+      char dummy22[sizeof (std::string)];
+
+      // constrs
+      // constrs1
+      char dummy23[sizeof (std::vector<Haskell::Constructor>)];
 
       // fielddecls
       // fielddecls1
-      char dummy22[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy24[sizeof (std::vector<Haskell::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy23[sizeof (std::vector<Haskell::GuardedRHS>)];
+      char dummy25[sizeof (std::vector<Haskell::GuardedRHS>)];
 
       // alts
       // alts1
-      char dummy24[sizeof (std::vector<Located<Haskell::Alt>>)];
+      char dummy26[sizeof (std::vector<Located<Haskell::Alt>>)];
 
       // exportlist
       // exportlist1
@@ -678,8 +685,6 @@ namespace yy {
       // comma_types0
       // comma_types1
       // tv_bndrs
-      // constrs
-      // constrs1
       // infixexp
       // infixexp_top
       // fexp
@@ -690,11 +695,11 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy25[sizeof (std::vector<expression_ref>)];
+      char dummy27[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy26[sizeof (std::vector<std::string>)];
+      char dummy28[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1259,6 +1264,10 @@ namespace yy {
         value.move< Haskell::Alts > (std::move (that.value));
         break;
 
+      case symbol_kind::S_constr: // constr
+        value.move< Haskell::Constructor > (std::move (that.value));
+        break;
+
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
         value.move< Haskell::Context > (std::move (that.value));
@@ -1346,7 +1355,6 @@ namespace yy {
       case symbol_kind::S_inst_type: // inst_type
       case symbol_kind::S_tv_bndr: // tv_bndr
       case symbol_kind::S_kind: // kind
-      case symbol_kind::S_constr: // constr
       case symbol_kind::S_forall: // forall
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
@@ -1457,6 +1465,11 @@ namespace yy {
         value.move< std::string > (std::move (that.value));
         break;
 
+      case symbol_kind::S_constrs: // constrs
+      case symbol_kind::S_constrs1: // constrs1
+        value.move< std::vector<Haskell::Constructor> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.move< std::vector<Haskell::FieldDecl> > (std::move (that.value));
@@ -1487,8 +1500,6 @@ namespace yy {
       case symbol_kind::S_comma_types0: // comma_types0
       case symbol_kind::S_comma_types1: // comma_types1
       case symbol_kind::S_tv_bndrs: // tv_bndrs
-      case symbol_kind::S_constrs: // constrs
-      case symbol_kind::S_constrs1: // constrs1
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_fexp: // fexp
@@ -1538,6 +1549,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Haskell::Alts& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::Constructor&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::Constructor& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1825,6 +1850,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<Haskell::Constructor>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::Constructor>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<Haskell::FieldDecl>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -1920,6 +1959,10 @@ switch (yykind)
         value.template destroy< Haskell::Alts > ();
         break;
 
+      case symbol_kind::S_constr: // constr
+        value.template destroy< Haskell::Constructor > ();
+        break;
+
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
         value.template destroy< Haskell::Context > ();
@@ -2007,7 +2050,6 @@ switch (yykind)
       case symbol_kind::S_inst_type: // inst_type
       case symbol_kind::S_tv_bndr: // tv_bndr
       case symbol_kind::S_kind: // kind
-      case symbol_kind::S_constr: // constr
       case symbol_kind::S_forall: // forall
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
@@ -2118,6 +2160,11 @@ switch (yykind)
         value.template destroy< std::string > ();
         break;
 
+      case symbol_kind::S_constrs: // constrs
+      case symbol_kind::S_constrs1: // constrs1
+        value.template destroy< std::vector<Haskell::Constructor> > ();
+        break;
+
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.template destroy< std::vector<Haskell::FieldDecl> > ();
@@ -2148,8 +2195,6 @@ switch (yykind)
       case symbol_kind::S_comma_types0: // comma_types0
       case symbol_kind::S_comma_types1: // comma_types1
       case symbol_kind::S_tv_bndrs: // tv_bndrs
-      case symbol_kind::S_constrs: // constrs
-      case symbol_kind::S_constrs1: // constrs1
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_fexp: // fexp
@@ -4840,6 +4885,10 @@ switch (yykind)
         value.copy< Haskell::Alts > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_constr: // constr
+        value.copy< Haskell::Constructor > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
         value.copy< Haskell::Context > (YY_MOVE (that.value));
@@ -4927,7 +4976,6 @@ switch (yykind)
       case symbol_kind::S_inst_type: // inst_type
       case symbol_kind::S_tv_bndr: // tv_bndr
       case symbol_kind::S_kind: // kind
-      case symbol_kind::S_constr: // constr
       case symbol_kind::S_forall: // forall
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
@@ -5038,6 +5086,11 @@ switch (yykind)
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_constrs: // constrs
+      case symbol_kind::S_constrs1: // constrs1
+        value.copy< std::vector<Haskell::Constructor> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.copy< std::vector<Haskell::FieldDecl> > (YY_MOVE (that.value));
@@ -5068,8 +5121,6 @@ switch (yykind)
       case symbol_kind::S_comma_types0: // comma_types0
       case symbol_kind::S_comma_types1: // comma_types1
       case symbol_kind::S_tv_bndrs: // tv_bndrs
-      case symbol_kind::S_constrs: // constrs
-      case symbol_kind::S_constrs1: // constrs1
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_fexp: // fexp
@@ -5119,6 +5170,10 @@ switch (yykind)
     {
       case symbol_kind::S_altslist: // altslist
         value.move< Haskell::Alts > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_constr: // constr
+        value.move< Haskell::Constructor > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_context: // context
@@ -5208,7 +5263,6 @@ switch (yykind)
       case symbol_kind::S_inst_type: // inst_type
       case symbol_kind::S_tv_bndr: // tv_bndr
       case symbol_kind::S_kind: // kind
-      case symbol_kind::S_constr: // constr
       case symbol_kind::S_forall: // forall
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
@@ -5319,6 +5373,11 @@ switch (yykind)
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_constrs: // constrs
+      case symbol_kind::S_constrs1: // constrs1
+        value.move< std::vector<Haskell::Constructor> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.move< std::vector<Haskell::FieldDecl> > (YY_MOVE (s.value));
@@ -5349,8 +5408,6 @@ switch (yykind)
       case symbol_kind::S_comma_types0: // comma_types0
       case symbol_kind::S_comma_types1: // comma_types1
       case symbol_kind::S_tv_bndrs: // tv_bndrs
-      case symbol_kind::S_constrs: // constrs
-      case symbol_kind::S_constrs1: // constrs1
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_fexp: // fexp
@@ -5431,7 +5488,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5435 "parser.hh"
+#line 5492 "parser.hh"
 
 
 

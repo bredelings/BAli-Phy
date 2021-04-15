@@ -509,23 +509,21 @@ Haskell::Decls rename_infix_top(const Module& m, const Haskell::Decls& decls)
 
         for(auto& constr: constrs)
         {
-            auto [con, args] = Haskell::decompose_type_apps(constr);
-            if (args.empty()) continue;
-
-            auto ConName = con.as_<Haskell::TypeVar>().name;
-            if (not args[0].is_a<Haskell::FieldDecls>()) continue;
-            auto fields = args[0].as_<Haskell::FieldDecls>();
-
-            int i = 0;
-            for(auto& field_group: fields.field_decls)
+            if (constr.is_record_constructor())
             {
-                for(auto& field_name: field_group.field_names)
+                auto& fields = std::get<1>(constr.fields);
+
+                int i = 0;
+                for(auto& field_group: fields.field_decls)
                 {
-                    constructor_fields[field_name][ConName] = i;
-                    i++;
+                    for(auto& field_name: field_group.field_names)
+                    {
+                        constructor_fields[field_name][constr.name] = i;
+                        i++;
+                    }
                 }
+                arity[constr.name] = i;
             }
-            arity[ConName] = i;
         }
 
         if (not arity.empty())

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <utility>
+#include <variant>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
 #include "located.H"
@@ -202,6 +203,37 @@ struct FieldDecls: public Object
 };
 
 
+struct Constructor
+{
+    expression_ref forall;           // list of type variables we are forall-ing over.
+    std::optional<Context> context;  // type constraints
+
+    std::string name;                // the name of the constructor
+    std::variant< std::vector<Type>, FieldDecls> fields;
+
+    std::string print() const;
+
+    bool is_record_constructor() const;
+
+    int arity() const;
+
+    Constructor() = default;
+
+    Constructor(const expression_ref e, std::optional<Context> c, const std::string& s, std::vector<Type>& as)
+        :forall(e),
+         context(c),
+         name(s),
+         fields(as)
+   { }
+
+    Constructor(const expression_ref e, std::optional<Context> c, const std::string& s, const FieldDecls& fds)
+        :forall(e),
+         context(c),
+         name(s),
+         fields(fds)
+   { }
+};
+
 enum class DataOrNewtype {data,newtype};
 
 struct DataOrNewtypeDecl: public Object
@@ -213,7 +245,9 @@ struct DataOrNewtypeDecl: public Object
     std::vector<expression_ref> type_vars;
     Context context;
 
-    std::vector<expression_ref> constructors;
+    std::vector<Constructor> constructors;
+
+    // std::optional<derivings> derivings;
 
     DataOrNewtypeDecl* clone() const { return new DataOrNewtypeDecl(*this);}
     std::string print() const;
@@ -222,7 +256,7 @@ struct DataOrNewtypeDecl: public Object
                       const std::string& s,
                       const std::vector<expression_ref>& as,
                       const Context& ct,
-                      const std::vector<expression_ref>& cs)
+                      const std::vector<Constructor>& cs)
         :data_or_newtype(dn),
          name(s),
          type_vars(as),
