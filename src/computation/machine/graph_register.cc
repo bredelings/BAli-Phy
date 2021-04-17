@@ -1006,20 +1006,18 @@ optional<int> reg_heap::find_precomputed_modifiable_reg_in_context(int r, int c)
     // unreachable
 }
 
+// We used to perform this execution in a new context, and then
+// roll it back.  However, this meant that when doing random samples
+// during proposals, a random sample could be lost and re-sampled during
+// evaluation of another argument in the same context.
 
 optional<int> reg_heap::find_modifiable_reg_in_context(int R, int c1)
 {
-    // 1. Make a new context in which to do extra evaluation, so as to leave c1 unchanged.
-    int c2 = copy_context(c1);
-
     // 2. Evaluate R in context c2, and get the first changeable reg on the path.
-    auto [r, _] = incremental_evaluate_in_context(R, c2);
+    auto [r, _] = incremental_evaluate_in_context(R, c1);
 
     // 3. Walk the call chain to find the modifiable, if any.
-    auto mod_reg = find_precomputed_modifiable_reg_in_context(r, c2);
-
-    // 4. Release the temporary context.
-    release_context(c2);
+    auto mod_reg = find_precomputed_modifiable_reg_in_context(r, c1);
 
     // 5. Check that mod_reg is executed in c1, where R may not be evaluated.
     if (mod_reg)
