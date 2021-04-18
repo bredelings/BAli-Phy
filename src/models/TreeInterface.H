@@ -32,8 +32,6 @@ struct tree_constants: public Object
     std::optional<std::vector<param>> away_from_root;
     std::optional<std::vector<param>> node_times;
 
-    void register_branch_lengths(context_ref&, const expression_ref&);
-
     tree_constants* clone() const {return new tree_constants(*this);}
 
     tree_constants(context_ref&, const expression_ref&);

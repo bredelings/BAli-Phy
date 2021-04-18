@@ -13,17 +13,6 @@ using std::vector;
 using std::string;
 using boost::dynamic_bitset;
 
-void tree_constants::register_branch_lengths(context_ref& C, const expression_ref& branch_lengths_exp)
-{
-    int B = parameters_for_tree_branch.size()/2;
-    if (B == 0) return;
-
-    int branch_lengths_index = C.add_compute_expression( branch_lengths_exp );
-    auto branch_lengths = C.get_expression(branch_lengths_index);
-
-    branch_durations = get_params_from_list(C, branch_lengths, B);
-}
-
 tree_constants::tree_constants(context_ref& C, const expression_ref& E)
     :tree_exp(E),
      n_leaves(0)
@@ -38,13 +27,38 @@ tree_constants::tree_constants(context_ref& C, const expression_ref& E)
     if (has_constructor(tree_structure,"Tree.BranchLengthTree"))
     {
         assert(tree_structure.sub().size() == 2);
+
+        branch_durations = get_params_from_array_(C, tree_structure.sub()[1]);
+
         tree_structure = tree_structure.sub()[0];
     }
+
+    if (has_constructor(tree_structure,"Tree.TimeTree"))
+    {
+        assert(tree_structure.sub().size() == 2);
+        node_times = get_params_from_array_(C, tree_structure.sub()[1]);
+
+        tree_structure = tree_structure.sub()[0];
+    }
+
     if (has_constructor(tree_structure,"Tree.LabelledTree"))
     {
         assert(tree_structure.sub().size() == 2);
+        // FIXME - set labels!
+
         tree_structure = tree_structure.sub()[0];
     }
+
+    if (has_constructor(tree_structure,"Tree.RootedTree"))
+    {
+        assert(tree_structure.sub().size() == 3);
+        // FIXME - set root
+        // FIXME - set branch_away
+
+        tree_structure = tree_structure.sub()[0];
+    }
+
+    assert(has_constructor(tree_structure,"Tree.Tree"));
     assert(tree_structure.sub().size() == 3);
 
     auto edges_out_of_node = tree_structure.sub()[0];

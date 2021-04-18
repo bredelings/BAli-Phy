@@ -1918,9 +1918,6 @@ Parameters::Parameters(const Program& prog,
 
     /* --------------------------------------------------------------- */
 
-    // R1. Register branch lengths
-    TC->register_branch_lengths(*this, {var("BAliPhy.ATModel.branch_lengths"),my_atmodel()});
-
     param scales_list = add_compute_expression( {var("BAliPhy.ATModel.scales"),my_atmodel()} );
 
     // R2. Register individual scales
