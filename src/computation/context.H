@@ -64,6 +64,8 @@ public:
 
     std::optional<int> compute_expression_is_modifiable_reg(int p) const;
 
+    bool reg_is_modifiable(int p) const;
+
     const closure* precomputed_value_for_reg(int r) const;
 
     const closure* precomputed_value_for_head(int index) const;
