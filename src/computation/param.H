@@ -3,6 +3,7 @@
 
 #include <optional>
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/reg_var.H"
 #include "util/bounds.H"
 
 class context_ref;
@@ -11,6 +12,7 @@ enum class eval_strategy {unset, unchangeable, precomputed, changeable};
 
 class param
 {
+    std::optional<int> reg;
     std::optional<int> head;
     std::optional<expression_ref> value;
     eval_strategy strategy=eval_strategy::unset;
@@ -29,6 +31,7 @@ public:
     explicit operator bool() const {return head or value;}
 
     param() {}
+    param(const reg_var& rv, eval_strategy s=eval_strategy::changeable):reg(rv.target), strategy(s) {}
     param(int h, eval_strategy s=eval_strategy::changeable)
         :head(h), strategy(s)
         {}
@@ -37,6 +40,8 @@ public:
 
 param get_param(context_ref& C, const expression_ref& E, eval_strategy s = eval_strategy::changeable);
 
+std::vector<param> get_params_from_list_(context_ref& C, const expression_ref& list, std::optional<int> check_size = {});
 std::vector<param> get_params_from_list(context_ref& C, const expression_ref& list, std::optional<int> check_size = {});
+std::vector<param> get_params_from_array_(context_ref& C, const expression_ref& array, std::optional<int> check_size = {});
 std::vector<param> get_params_from_array(context_ref& C, const expression_ref& array, std::optional<int> check_size = {});
 #endif

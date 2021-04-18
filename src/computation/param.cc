@@ -13,7 +13,9 @@ using std::vector;
 
 expression_ref param::ref(const context_ref& C) const
 {
-    if (head)
+    if (reg)
+        return reg_var(*reg);
+    else if (head)
         return C.get_expression(*head);
     else
         return *value;
@@ -21,7 +23,14 @@ expression_ref param::ref(const context_ref& C) const
 
 optional<int> param::is_modifiable(const context_ref& C) const
 {
-    if (head)
+    if (reg)
+    {
+        if (C.reg_is_modifiable(*reg))
+            return *reg;
+        else
+            return {};
+    }
+    else if (head)
         return C.compute_expression_is_modifiable_reg(*head);
     else
         return {};
@@ -29,7 +38,22 @@ optional<int> param::is_modifiable(const context_ref& C) const
 
 expression_ref param::get_value(const context_ref& C) const
 {
-    if (head)
+    if (reg)
+    {
+        if (strategy == eval_strategy::changeable)
+            return C.evaluate_reg(*reg);
+        else if (strategy == eval_strategy::precomputed)
+        {
+            auto result = C.precomputed_value_for_reg(*reg);
+            assert(result);
+            return result->exp;
+        }
+        else if (strategy == eval_strategy::unchangeable)
+            std::abort();
+        else
+            std::abort();
+    }
+    else if (head)
     {
         if (strategy == eval_strategy::changeable)
             return C.evaluate(*head);
@@ -73,7 +97,11 @@ param get_param(context_ref& C, const expression_ref& E, eval_strategy s)
 
         return param(C.add_compute_expression(reg), s);
     }
-    else if (is_reg_var(E) or E.size())
+    else if (is_reg_var(E))
+    {
+        return param(E.as_<reg_var>(), s);
+    }
+    else if (E.size())
     {
         throw myexception()<<"get_param: expression "<<E<<" is neither an atomic constant nor a modifiable";
     }
@@ -83,13 +111,12 @@ param get_param(context_ref& C, const expression_ref& E, eval_strategy s)
     }
 }
 
-vector<param> get_params_from_list(context_ref& C, const expression_ref& list, std::optional<int> check_size)
+vector<param> get_params_from_list_(context_ref& C, const expression_ref& structure, std::optional<int> check_size)
 {
-    vector<param> params;
-    expression_ref structure = C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), list});
-
     if (log_verbose >= 3)
         std::cerr<<"structure = "<<structure<<"\n\n";
+
+    vector<param> params;
 
     auto vec = *list_to_evector(structure);
     for(auto& e: vec)
@@ -101,10 +128,16 @@ vector<param> get_params_from_list(context_ref& C, const expression_ref& list, s
     return params;
 }
 
-vector<param> get_params_from_array(context_ref& C, const expression_ref& array, std::optional<int> check_size)
+vector<param> get_params_from_list(context_ref& C, const expression_ref& list, std::optional<int> check_size)
+{
+    expression_ref structure = C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), list});
+
+    return get_params_from_list_(C, structure, check_size);
+}
+
+vector<param> get_params_from_array_(context_ref& C, const expression_ref& structure, std::optional<int> check_size)
 {
     vector<param> params;
-    expression_ref structure = C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), array});
 
     if (log_verbose >= 3)
         std::cerr<<"structure = "<<structure<<"\n\n";
@@ -116,5 +149,12 @@ vector<param> get_params_from_array(context_ref& C, const expression_ref& array,
         throw myexception()<<"Expected an array "<<*check_size<<", but got one of length "<<params.size()<<"!";
 
     return params;
+}
+
+vector<param> get_params_from_array(context_ref& C, const expression_ref& array, std::optional<int> check_size)
+{
+    expression_ref structure = C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), array});
+
+    return get_params_from_array_(C, structure, check_size);
 }
 
