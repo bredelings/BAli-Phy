@@ -71,16 +71,16 @@ public:
     const closure* precomputed_value_for_head(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
-    const closure& lazy_evaluate(int index) const;
+    const closure& lazy_evaluate_head(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
-    const expression_ref& evaluate(int index) const;
+    const expression_ref& evaluate_head(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
-    const expression_ref& evaluate_unchangeable(int index) const;
+    const expression_ref& evaluate_head_unchangeable(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
-    const expression_ref& perform(int index, bool ec = false) const;
+    const expression_ref& perform_head(int index, bool ec = false) const;
 
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate_expression_(closure&&,bool=true) const;
@@ -104,7 +104,7 @@ public:
     expression_ref recursive_evaluate_reg(int r) const;
 
     /// Return a structure where all fields are evaluated and substituted.
-    expression_ref recursive_evaluate(int r) const;
+    expression_ref recursive_evaluate_head(int r) const;
 
     /// Get the value of a modifiable - by its location in memory
     const expression_ref& get_reg_value(int R) const;
@@ -118,10 +118,10 @@ public:
     void set_reg_value(int R, closure&&);
 
     /// Set the value of a modifiable
-    void set_modifiable_value_(int index, closure&&);
+    void set_modifiable_value_(int r, closure&&);
 
     /// Set the value of a modifiable
-    void set_modifiable_value(int index, const expression_ref&);
+    void set_modifiable_value(int r, const expression_ref&);
 
 public:
     /// Create a new modifiable head with initial value 'value'

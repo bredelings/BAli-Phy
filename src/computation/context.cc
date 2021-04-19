@@ -68,31 +68,31 @@ const closure* context_ref::precomputed_value_for_head(int index) const
 }
 
 /// Return the value of a particular index, computing it if necessary
-const closure& context_ref::lazy_evaluate(int index) const
+const closure& context_ref::lazy_evaluate_head(int index) const
 {
     return memory()->lazy_evaluate_head(index, context_index);
 }
 
 /// Return the value of a particular index, computing it if necessary
-const expression_ref& context_ref::evaluate(int index) const
+const expression_ref& context_ref::evaluate_head(int index) const
 {
-    return lazy_evaluate(index).exp;
+    return lazy_evaluate_head(index).exp;
 }
 
 /// Return the value of a particular index, computing it if necessary
-const expression_ref& context_ref::evaluate_unchangeable(int index) const
+const expression_ref& context_ref::evaluate_head_unchangeable(int index) const
 {
-    int H = heads()[index];
+    int R = heads()[index];
 
-    return memory()->lazy_evaluate_unchangeable(H).exp;
+    return memory()->lazy_evaluate_unchangeable(R).exp;
 }
 
 /// Return the value of a particular index, computing it if necessary
-const expression_ref& context_ref::perform(int index, bool ec) const
+const expression_ref& context_ref::perform_head(int index, bool ec) const
 {
-    int H = heads()[index];
+    int R = heads()[index];
 
-    return perform_expression(reg_var(H), ec);
+    return perform_expression(reg_var(R), ec);
 }
 
 const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) const
@@ -173,7 +173,7 @@ expression_ref context_ref::recursive_evaluate_reg(int r) const
     return expression_ref(std::move(E));
 }
 
-expression_ref context_ref::recursive_evaluate(int i) const
+expression_ref context_ref::recursive_evaluate_head(int i) const
 {
     return recursive_evaluate_reg(get_compute_expression_reg(i));
 }
@@ -529,7 +529,7 @@ json context_ref::get_logged_parameters() const
     evaluate_program();
 
     // 3. Evaluate the logging head
-    auto L = evaluate(*memory()->logging_head);
+    auto L = evaluate_head(*memory()->logging_head);
 
     // 4. Check that the result is a JSON object.
     return L.as_checked<Box<json>>().value();

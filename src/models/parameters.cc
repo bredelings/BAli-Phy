@@ -185,25 +185,25 @@ const EVector& data_partition::transition_P(int b) const
 int data_partition::n_base_models() const
 {
     int s = *P->smodel_index_for_partition(partition_index);
-    return P->evaluate(P->PC->SModels[s].n_base_models).as_int();
+    return P->evaluate_head(P->PC->SModels[s].n_base_models).as_int();
 }
 
 int data_partition::n_states() const
 {
     int s = *P->smodel_index_for_partition(partition_index);
-    return P->evaluate(P->PC->SModels[s].n_states).as_int();
+    return P->evaluate_head(P->PC->SModels[s].n_states).as_int();
 }
 
 Matrix data_partition::WeightedFrequencyMatrix() const
 {
     int s = *P->smodel_index_for_partition(partition_index);
-    return P->evaluate(P->PC->SModels[s].weighted_frequency_matrix).as_<Box<Matrix>>();
+    return P->evaluate_head(P->PC->SModels[s].weighted_frequency_matrix).as_<Box<Matrix>>();
 }
 
 EVector data_partition::state_letters() const
 {
     int s = *P->smodel_index_for_partition(partition_index);
-    return P->evaluate(P->PC->SModels[s].state_letters).as_<EVector>();
+    return P->evaluate_head(P->PC->SModels[s].state_letters).as_<EVector>();
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -305,7 +305,7 @@ log_double_t data_partition::prior_alignment() const
 
 const Likelihood_Cache_Branch& data_partition::cache(int b) const
 {
-    return P->evaluate(DPC().conditional_likelihoods_for_branch[b]).as_<Likelihood_Cache_Branch>();
+    return P->evaluate_head(DPC().conditional_likelihoods_for_branch[b]).as_<Likelihood_Cache_Branch>();
 }
 
 log_double_t data_partition::likelihood() const 

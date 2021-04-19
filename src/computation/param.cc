@@ -56,7 +56,7 @@ expression_ref param::get_value(const context_ref& C) const
     else if (head)
     {
         if (strategy == eval_strategy::changeable)
-            return C.evaluate(*head);
+            return C.evaluate_head(*head);
         else if (strategy == eval_strategy::precomputed)
         {
             auto result = C.precomputed_value_for_head(*head);
@@ -64,7 +64,7 @@ expression_ref param::get_value(const context_ref& C) const
             return result->exp;
         }
         else if (strategy == eval_strategy::unchangeable)
-            return C.evaluate_unchangeable(*head);
+            return C.evaluate_head_unchangeable(*head);
         else
             std::abort();
     }
