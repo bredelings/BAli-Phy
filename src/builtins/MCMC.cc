@@ -559,6 +559,21 @@ void NNI_move(context_ref& C1, int tree_reg, int b)
     C1 = c[j];
 }
 
+void FNPR_move(context_ref& c, int tree_reg, int n)
+{
+    ModifiablesTreeInterface T(c, tree_reg);
+
+    // Return if the parent node is the root.
+    int p;
+    if (auto pp = T.parent_of_node(n))
+        p = *pp;
+    else
+        return;
+
+    double p_t = T.node_time(p);
+}
+
+
 extern "C" closure builtin_function_walk_tree_path(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
@@ -586,6 +601,26 @@ extern "C" closure builtin_function_walk_tree_path(OperationArgs& Args)
         v->push_back(branch);
 
     return v;
+}
+
+extern "C" closure builtin_function_FNPR_unsafe(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.evaluate_slot_unchangeable(0);
+
+    int n = Args.evaluate(1).as_int();
+
+    int c1 = Args.evaluate(2).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    FNPR_move(C1, tree_reg, n);
+
+    return constructor("()",0);
 }
 
 extern "C" closure builtin_function_NNI_on_branch_unsafe(OperationArgs& Args)
