@@ -6,8 +6,9 @@
 #include "util/log-level.H"
 #include "computation/expression/bool.H"
 #include "computation/expression/reg_var.H"
-#include "computation/expression/constructor.H"
 #include "computation/expression/list.H"
+#include "computation/expression/constructor.H"
+#include "computation/machine/graph_register.H"
 
 using std::vector;
 using std::string;
@@ -20,44 +21,56 @@ tree_constants::tree_constants(context_ref& C, const expression_ref& E)
     int tree_reg = E.as_<reg_var>().target;
 
     //------------------------- Create the tree structure -----------------------//
-    auto tree_structure = C.maybe_modifiable_structure(tree_reg);
+    auto tree_closure = C.lazy_evaluate_reg(tree_reg);
     if (log_verbose >= 3)
-        std::cerr<<"tree = "<<tree_structure<<"\n\n";
+        std::cerr<<"tree = "<<tree_closure.print()<<"\n\n";
 
-    if (has_constructor(tree_structure,"Tree.BranchLengthTree"))
+    if (has_constructor(tree_closure.exp, "Tree.BranchLengthTree"))
     {
-        assert(tree_structure.sub().size() == 2);
+        // We assume that the path to the array isn't changeable... ???
+        auto [_, r] = C.incremental_evaluate(tree_closure.reg_for_slot(1));
+        branch_durations_array_reg = r;
 
-        branch_durations = get_params_from_array_(C, tree_structure.sub()[1]);
-
-        tree_structure = tree_structure.sub()[0];
+        tree_reg = tree_closure.reg_for_slot(0);
+        tree_closure = C.lazy_evaluate_reg(tree_reg);
     }
 
-    if (has_constructor(tree_structure,"Tree.TimeTree"))
+    if (has_constructor(tree_closure.exp, "Tree.TimeTree"))
     {
-        assert(tree_structure.sub().size() == 2);
-        node_times = get_params_from_array_(C, tree_structure.sub()[1]);
+        // We assume that the path to the array isn't changeable... ???
+        auto [_, r] = C.incremental_evaluate(tree_closure.reg_for_slot(1));
+        node_times_array_reg = r;
 
-        tree_structure = tree_structure.sub()[0];
+        tree_reg = tree_closure.reg_for_slot(0);
+        tree_closure = C.lazy_evaluate_reg(tree_reg);
     }
 
-    if (has_constructor(tree_structure,"Tree.LabelledTree"))
+    if (has_constructor(tree_closure.exp, "Tree.LabelledTree"))
     {
-        assert(tree_structure.sub().size() == 2);
+        assert(tree_closure.exp.sub().size() == 2);
         // FIXME - set labels!
 
-        tree_structure = tree_structure.sub()[0];
+        tree_reg = tree_closure.reg_for_slot(0);
+        tree_closure = C.lazy_evaluate_reg(tree_reg);
     }
 
-    if (has_constructor(tree_structure,"Tree.RootedTree"))
+    if (has_constructor(tree_closure.exp, "Tree.RootedTree"))
     {
-        assert(tree_structure.sub().size() == 3);
-        // FIXME - set root
-        // FIXME - set branch_away
+        assert(tree_closure.exp.sub().size() == 3);
 
-        tree_structure = tree_structure.sub()[0];
+        // We need to evaluate this to avoid getting an index_var.
+        auto [r_root, _1] = C.incremental_evaluate(tree_closure.reg_for_slot(1));
+        root_reg = r_root;
+
+        // We need to evaluate this to avoid getting an index_var.
+        auto [r_away, _2] = C.incremental_evaluate(tree_closure.reg_for_slot(2));
+        away_from_root_array_reg = r_away;
+
+        tree_reg = tree_closure.reg_for_slot(0);
+        tree_closure = C.lazy_evaluate_reg(tree_reg);
     }
 
+    auto tree_structure = C.maybe_modifiable_structure(tree_reg);
     assert(has_constructor(tree_structure,"Tree.Tree"));
     assert(tree_structure.sub().size() == 3);
 
@@ -102,6 +115,26 @@ tree_constants::tree_constants(context_ref& C, const vector<string>& labels, con
     node_labels = labels;
     int n_nodes = parameters_for_tree_node.size();
     assert(node_labels.size() == n_nodes);
+}
+
+std::optional<int> TreeInterface::branch_durations_array_reg() const
+{
+    return get_tree_constants().branch_durations_array_reg;
+}
+
+std::optional<int> TreeInterface::root_reg() const
+{
+    return get_tree_constants().root_reg;
+}
+
+std::optional<int> TreeInterface::node_times_array_reg() const
+{
+    return get_tree_constants().node_times_array_reg;
+}
+
+std::optional<int> TreeInterface::away_from_root_array_reg() const
+{
+    return get_tree_constants().away_from_root_array_reg;
 }
 
 int TreeInterface::n_nodes() const {
@@ -407,7 +440,7 @@ tree_edge TreeInterface::edge(int n1, int n2) const
 
 bool TreeInterface::has_root() const
 {
-    if (get_tree_constants().root)
+    if (root_reg())
         return true;
     else
         return false;
@@ -415,19 +448,23 @@ bool TreeInterface::has_root() const
 
 int TreeInterface::root() const
 {
-    auto& r = *get_tree_constants().root;
-    return r.get_value(get_const_context()).as_int();
+    int r = *root_reg();
+    return get_const_context().evaluate_reg(r).as_int();
 }
 
 bool TreeInterface::away_from_root(int b) const
 {
-    auto& away = *get_tree_constants().away_from_root;
-    auto result = away[b].get_value(get_const_context());
-    if (is_bool_true(result))
-        return true;
-    else if (is_bool_false(result))
-        return false;
-    std::abort();
+    assert(has_root());
+
+    int array_reg = *away_from_root_array_reg();
+
+    auto& C = get_const_context();
+
+    auto& M = C.get_memory();
+
+    int r = M[array_reg].reg_for_slot(b);
+
+    return is_bool_true(C.evaluate_reg(r));
 }
 
 std::optional<int> TreeInterface::parent_branch_for_node(int n) const
@@ -461,7 +498,7 @@ std::vector<int> TreeInterface::children_of_node(int n) const
 
 bool TreeInterface::has_branch_lengths() const
 {
-    if (get_tree_constants().branch_durations)
+    if (branch_durations_array_reg())
         return true;
     else
         return false;
@@ -470,27 +507,50 @@ bool TreeInterface::has_branch_lengths() const
 double TreeInterface::branch_length(int b) const
 {
     b %= n_branches();
-    auto& L = *get_tree_constants().branch_durations;
-    return L[b].get_value(get_const_context()).as_double();
+
+    int array_reg = *branch_durations_array_reg();
+
+    auto& C = get_const_context();
+
+    auto& M = C.get_memory();
+    int r = M[array_reg].reg_for_slot(b);
+
+    return C.evaluate_reg(r).as_double();
 }
 
-bool TreeInterface::can_set_branch_length(int b)
+bool TreeInterface::can_set_branch_length(int b) const
 {
     b %= n_branches();
-    auto& L = *get_tree_constants().branch_durations;
-    return bool(L[b].is_modifiable(get_const_context()));
+
+    int array_reg = *branch_durations_array_reg();
+
+    auto& C = get_const_context();
+
+    auto& M = C.get_memory();
+    int r = M[array_reg].reg_for_slot(b);
+
+    auto m = C.find_modifiable_reg(r);
+    return bool(m);
 }
 
 void TreeInterface::set_branch_length(int b, double l)
 {
     b %= n_branches();
-    auto& L = *get_tree_constants().branch_durations;
-    L[b].set_value(get_context(), l);
+
+    int array_reg = *branch_durations_array_reg();
+
+    auto& C = get_context();
+
+    auto& M = C.get_memory();
+    int r = M[array_reg].reg_for_slot(b);
+
+    auto m = C.find_modifiable_reg(r);
+    C.set_modifiable_value(*m, l);
 }
 
 bool TreeInterface::has_node_times() const
 {
-    if (get_tree_constants().node_times)
+    if (node_times_array_reg())
         return true;
     else
         return false;
@@ -498,8 +558,40 @@ bool TreeInterface::has_node_times() const
 
 double TreeInterface::node_time(int n) const
 {
-    auto& T = *get_tree_constants().node_times;
-    return T[n].get_value(get_const_context()).as_double();
+    int array_reg = *node_times_array_reg();
+
+    auto& C = get_const_context();
+
+    auto& M = C.get_memory();
+    int r = M[array_reg].reg_for_slot(n);
+
+    return C.evaluate_reg(r).as_double();
+}
+
+bool TreeInterface::can_set_node_time(int n) const
+{
+    int array_reg = *node_times_array_reg();
+
+    auto& C = get_const_context();
+
+    auto& M = C.get_memory();
+    int r = M[array_reg].reg_for_slot(n);
+
+    auto m = C.find_modifiable_reg(r);
+    return bool(m);
+}
+
+void TreeInterface::set_node_time(int n, double t)
+{
+    int array_reg = *node_times_array_reg();
+
+    auto& C = get_context();
+
+    auto& M = C.get_memory();
+    int r = M[array_reg].reg_for_slot(n);
+
+    auto m = C.find_modifiable_reg(r);
+    C.set_modifiable_value(*m, t);
 }
 
 const tree_constants& ParametersTreeInterface::get_tree_constants() const

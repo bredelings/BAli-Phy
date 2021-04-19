@@ -21,19 +21,24 @@ struct tree_constants: public Object
     expression_ref tree_exp;
     std::vector<std::vector<param>> parameters_for_tree_node;
     std::vector<std::tuple<param,param,param>> parameters_for_tree_branch;
-
-    std::optional<std::vector<param>> branch_durations;
-
     int n_leaves;
 
+    // Root info
+    std::optional<int> root_reg;
+    std::optional<int> away_from_root_array_reg;
+
+    // Node labels
     std::vector<std::string> node_labels;
 
-    std::optional<param> root;
-    std::optional<std::vector<param>> away_from_root;
-    std::optional<std::vector<param>> node_times;
+    // Branch lengths
+    std::optional<int> branch_durations_array_reg;
+
+    // Node times
+    std::optional<int> node_times_array_reg;
 
     tree_constants* clone() const {return new tree_constants(*this);}
 
+    tree_constants(context_ref&, int);
     tree_constants(context_ref&, const expression_ref&);
     tree_constants(context_ref&, const std::vector<std::string>&, const expression_ref&);
 };
@@ -42,6 +47,14 @@ class TreeInterface
 {
     void read_tree_node(const Tree&, int n);
     void end_modify_node(int n);
+
+    std::optional<int> branch_durations_array_reg() const;
+
+    std::optional<int> root_reg() const;
+
+    std::optional<int> node_times_array_reg() const;
+
+    std::optional<int> away_from_root_array_reg() const;
 
     virtual const tree_constants& get_tree_constants() const = 0;
     virtual const context_ref& get_const_context() const = 0;
@@ -125,13 +138,13 @@ public:
 
     bool has_branch_lengths() const;
     double branch_length(int b) const;
-    bool can_set_branch_length(int b);
+    bool can_set_branch_length(int b) const;
     void set_branch_length(int b, double l);
 
     bool has_node_times() const;
     double node_time(int n) const;
     bool can_set_node_time(int n) const;
-    void set_node_time(int n, double t) const;
+    void set_node_time(int n, double t);
 
     void read_tree(const Tree&);
 
