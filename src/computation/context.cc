@@ -74,6 +74,18 @@ const closure& context_ref::lazy_evaluate_head(int index) const
 }
 
 /// Return the value of a particular index, computing it if necessary
+const closure& context_ref::lazy_evaluate_reg(int r) const
+{
+    return memory()->lazy_evaluate(r, context_index);
+}
+
+/// Return the value of a particular index, computing it if necessary
+std::pair<int,int> context_ref::incremental_evaluate(int r) const
+{
+    return memory()->incremental_evaluate_in_context(r, context_index);
+}
+
+/// Return the value of a particular index, computing it if necessary
 const expression_ref& context_ref::evaluate_head(int index) const
 {
     return lazy_evaluate_head(index).exp;

@@ -74,6 +74,12 @@ public:
     const closure& lazy_evaluate_head(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
+    const closure& lazy_evaluate_reg(int r) const;
+
+    /// Return the value of a particular index, computing it if necessary
+    std::pair<int,int> incremental_evaluate(int r) const;
+
+    /// Return the value of a particular index, computing it if necessary
     const expression_ref& evaluate_head(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
