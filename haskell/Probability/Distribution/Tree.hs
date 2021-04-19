@@ -196,9 +196,14 @@ uniform_time_tree age n = Distribution (uniform_time_tree_pr age n)
 -- Add moves for internal-node times INCLUDING the root.
 -- FIXME: check that the leaves times are fixed?
 -- FIXME: check that numLeaves tree is not changeable?
-coalescent_tree_effect tree = sequence_ [ add_move $ slice_sample_real_random_variable (node_time tree node) (above 0.0)
-                                        | node <- [numLeaves tree..numNodes tree - 1]
-                                        ]
+coalescent_tree_effect tree = do
+  sequence_ [ add_move $ slice_sample_real_random_variable (node_time tree node) (above 0.0)
+            | node <- [numLeaves tree..numNodes tree - 1]
+            ]
+  sequence_ [ add_move $ fnpr_unsafe tree node
+            | node <- [0..numNodes tree - 1]
+            ]
+
 
 data CoalEvent = Leaf | Internal | RateShift rate
 node_type tree node = if is_leaf_node tree node then Leaf else Internal
