@@ -2482,6 +2482,19 @@ vector<pair<int,int>>& reg_heap::get_pair_scratch_list() const
 // (ii)  translate modifiables -> modifiable + reg_var(r)
 // (iii) translate other non-constant fields to reg_var(r)
 
+// Also.... sometimes we might want to look through changeables to find a modifiable (in a particular context?)
+// But sometimes we actually want the changeables themselves -- we just want to compute the value!
+
+// We can't actually record index_vars, because they might go away.
+
+// If we had an iterative interface, then perhaps we would decide when to do this...
+
+// Perhaps random sampling operations should NOT be changeable?
+// * It would seem that, if they are always pointed to by a modifiable, then we would forget their value
+//   if the modifiable is not used?
+// * No.. the modifiable points to a reg, that would then take on a PARTICULAR value.
+//   Whereas we would want the value (or program?) to be executed again each time.
+
 expression_ref reg_heap::maybe_modifiable_structure(int r1)
 {
     // FIXME - we might need to handle random variables when generating here, as we do in reg_head::find_update_modifiable_reg( ).
@@ -2535,11 +2548,6 @@ expression_ref reg_heap::maybe_modifiable_structure(int r1)
              reg_is_index_var_with_force_to_nonchangeable(r2))
     {
         int r3 = closure_at(r2).reg_for_index_var();
-        return maybe_modifiable_structure(r3);
-    }
-    else if (reg_is_changeable(r2) and reg_has_call(r2))
-    {
-        int r3 = call_for_reg(r2);
         return maybe_modifiable_structure(r3);
     }
     assert(reg_is_changeable(r2));
