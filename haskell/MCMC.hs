@@ -31,6 +31,10 @@ walk_tree_path tree c = vector_to_list $ builtin_walk_tree_path tree c
 builtin builtin_nni_on_branch_unsafe 3 "NNI_on_branch_unsafe" "MCMC"
 nni_on_branch_unsafe tree branch c = IOAction (\s->(s,builtin_nni_on_branch_unsafe tree branch c))
 
+-- This is "unsafe" because it doesn't update alignments
+builtin builtin_fnpr_unsafe 3 "FNPR_unsafe" "MCMC"
+fnpr_unsafe tree node c = IOAction (\s->(s,builtin_fnpr_unsafe tree node c))
+
 walk_tree_sample_nni_unsafe tree c = sequence_ [ nni_on_branch_unsafe tree branch c | branch <- walk_tree_path tree c]
 
 builtin builtin_copy_context 2 "copy_context" "MCMC"
