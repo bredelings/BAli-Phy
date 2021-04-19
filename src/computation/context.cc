@@ -74,7 +74,7 @@ const closure& context_ref::lazy_evaluate_head(int index) const
 }
 
 /// Return the value of a particular index, computing it if necessary
-const closure& context_ref::lazy_evaluate_reg(int r) const
+const closure& context_ref::lazy_evaluate_reg(int& r) const
 {
     return memory()->lazy_evaluate(r, context_index);
 }
