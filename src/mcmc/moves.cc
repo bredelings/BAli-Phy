@@ -62,7 +62,7 @@ void sample_tri_one(owned_ptr<Model>& P, MoveStats&,int b)
     if (uniform() < 0.5)
         std::swap(node1,node2);
 
-    if (node1 < t.n_leaves())
+    if (t.is_leaf_node(node1))
         std::swap(node1,node2);
     
     tri_sample_alignment(*PP,node1,node2);
@@ -84,7 +84,7 @@ void sample_tri_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
     if (uniform() < 0.5)
         std::swap(node1,node2);
 
-    if (node1 < t.n_leaves())
+    if (t.is_leaf_node(node1))
         std::swap(node1,node2);
     
     const double sigma = 0.3/2;
@@ -111,7 +111,7 @@ void sample_cube_one(owned_ptr<Model>& P, MoveStats&,int b)
     if (uniform() < 0.5)
         std::swap(node1,node2);
 
-    if (node1 < t.n_leaves())
+    if (t.is_leaf_node(node1))
         std::swap(node1,node2);
     
     cube_sample_alignment(*PP,node1,node2);
@@ -133,7 +133,7 @@ void sample_cube_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
     if (uniform() < 0.5)
         std::swap(node1,node2);
 
-    if (node1 < t.n_leaves())
+    if (t.is_leaf_node(node1))
         std::swap(node1,node2);
     
     const double sigma = 0.3/2;
@@ -166,7 +166,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& St
     if (uniform() < 0.5)
         std::swap(node1,node2);
 
-    if (node1 < t.n_leaves())
+    if (t.is_leaf_node(node1))
         std::swap(node1,node2);
     
     if (tri_sample_alignment_and_parameter(*PP, node1, node2, proposal))
@@ -196,7 +196,7 @@ void sample_tri_branch_type_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
     if (uniform() < 0.5)
         std::swap(node1,node2);
 
-    if (node1 < t.n_leaves())
+    if (t.is_leaf_node(node1))
         std::swap(node1,node2);
     
     if (tri_sample_alignment_branch_model(*PP,node1,node2)) {
@@ -621,7 +621,7 @@ void realign_from_tips(owned_ptr<Model>& P, MoveStats& Stats)
             }
             std::cerr<<"\n";
         }
-        if (node2 >= t.n_leaves())
+        if (t.is_internal_node(node2))
         {
             if (log_verbose >=3) std::cerr<<"     Performing 3-way alignment\n";
             tri_sample_alignment(*P.as<Parameters>(), node2, node1);
