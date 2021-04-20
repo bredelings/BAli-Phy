@@ -474,8 +474,8 @@ bool TreeInterface::toward_root(int b) const
 
 std::optional<int> TreeInterface::parent_branch_for_node(int n) const
 {
-    for(auto& b: all_branches_from_node(n))
-        if (not away_from_root(b))
+    for(auto& b: branches_out(n))
+        if (toward_root(b))
             return reverse(b);
 
     assert(n == root());
@@ -495,7 +495,7 @@ std::optional<int> TreeInterface::parent_of_node(int n) const
 std::vector<int> TreeInterface::children_of_node(int n) const
 {
     vector<int> children;
-    for(auto& b: all_branches_from_node(n))
+    for(auto& b: branches_out(n))
         if (away_from_root(b))
             children.push_back(target(b));
     return children;
