@@ -255,10 +255,12 @@ vector<int> get_cost(const TreeInterface& t) {
     vector<int> cost(t.n_branches()*2,-1);
     vector<int> stack1; stack1.reserve(t.n_branches()*2);
     vector<int> stack2; stack2.reserve(t.n_branches()*2);
-    for(int i=0;i<t.n_leaves();i++) {
-        int b = t.reverse(i);
-        cost[b] = 0;
-        stack1.push_back(b);
+
+    for(auto b: t.leaf_branches())
+    {
+        int b2 = t.reverse(b);
+        cost[b2] = 0;
+        stack1.push_back(b2);
     }
     
     while(not stack1.empty()) {
