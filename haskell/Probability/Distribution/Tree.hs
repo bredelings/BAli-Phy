@@ -203,6 +203,9 @@ coalescent_tree_effect tree = do
   sequence_ [ add_move $ fnpr_unsafe tree node
             | node <- [0..numNodes tree - 1]
             ]
+  sequence_ [ add_move $ tnni_on_branch_unsafe tree branch
+            | branch <- [0..2*numBranches tree - 1]
+            ]
 
 
 data CoalEvent = Leaf | Internal | RateShift rate
