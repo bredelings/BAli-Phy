@@ -194,6 +194,7 @@ class ModifiablesTreeInterface: public TreeInterface
 public:
 
     ModifiablesTreeInterface(context_ref& c, int tree_head_);
+    ~ModifiablesTreeInterface();
 };
 
 double tree_length(const TreeInterface& t);

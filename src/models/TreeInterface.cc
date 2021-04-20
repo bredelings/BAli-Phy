@@ -671,6 +671,11 @@ ModifiablesTreeInterface::ModifiablesTreeInterface(context_ref& c, int tree_reg)
 {
 }
 
+ModifiablesTreeInterface::~ModifiablesTreeInterface()
+{
+    delete TC;
+}
+
 vector<int> branches_from_leaves(const TreeInterface& t) 
 {
     vector<int> branch_list;
