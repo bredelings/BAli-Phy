@@ -38,14 +38,7 @@ sample_uniform_topology 1 = return $ Tree (listArray' [[]]) (listArray' []) 1
 sample_uniform_topology n = do
     let num_nodes = 2 * n - 2
     edges <- uniform_topology_edges [0 .. n - 1] [n .. num_nodes - 1]
-    -- This flipping is suppose flip edges from (internal,leaf) -> (leaf, internal)
-    let maybe_flip (x, y) | (y < x)   = (y, x)
-                          | otherwise = (x, y)
-    -- Then the sorting is supposed order edges like (0,_), (1,_), (2,_)
-    -- in order to assign leaf branches the names 0..n-1
-    let sorted_edges     = sortOn fst $ map maybe_flip edges
-    -- The number of edges should be 2*n-3, unchangably.
-    return $ tree_from_edges num_nodes sorted_edges
+    return $ tree_from_edges num_nodes edges
 
 
 force_tree tree@(Tree nodes branches n_nodes) = force_nodes `seq` force_branches where
