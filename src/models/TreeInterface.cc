@@ -467,6 +467,11 @@ bool TreeInterface::away_from_root(int b) const
     return is_bool_true(C.evaluate_reg(r));
 }
 
+bool TreeInterface::toward_root(int b) const
+{
+    return not away_from_root(b);
+}
+
 std::optional<int> TreeInterface::parent_branch_for_node(int n) const
 {
     for(auto& b: all_branches_from_node(n))

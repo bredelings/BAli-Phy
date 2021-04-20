@@ -132,6 +132,7 @@ public:
     bool has_root() const;
     int root() const;
     bool away_from_root(int b) const;
+    bool toward_root(int b) const;
     std::optional<int> parent_branch_for_node(int n) const;
     std::optional<int> parent_of_node(int n) const;
     std::vector<int> children_of_node(int n) const;
