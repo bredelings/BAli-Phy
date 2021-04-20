@@ -901,7 +901,16 @@ void TreeInterface::reconnect_branch(int s1, int t1, int t2)
 {
     int b1 = find_branch(s1,t1);
     // Handle case where we have a loop from a leaf node s1 to a leaf node s1 -- ensure that we select the original branch away from s1.
-    if (is_leaf_node(s1)) b1 = s1;
+    if (is_leaf_node(s1))
+    {
+        int b1_ = s1;
+        if (source(b1_) == s1 and target(b1_) == t1)
+            b1 = b1_;
+    }
+    if (is_leaf_node(t1))
+    {
+        std::abort();
+    }
     int b2 = reverse(b1);
 
     if (not branches_from_affected_node(t1))
