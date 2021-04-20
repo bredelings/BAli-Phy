@@ -1911,6 +1911,9 @@ Parameters::Parameters(const Program& prog,
     for(auto node: tt.leaf_nodes())
         assert(tt.get_label(node) == labels[node]);
 
+    // 4. We need to do this so that we can compute the likelihood of specified trees.
+    t().read_tree(tt);
+
     PC->subst_root         = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.subst_root"), my_atmodel_export()}}));
 
     /* --------------------------------------------------------------- */
