@@ -149,6 +149,29 @@ int TreeInterface::n_leaf_branches() const {
     return (n_branches() == 1)?1:n_leaves();
 }
 
+vector<int> TreeInterface::leaf_branches() const
+{
+    vector<int> branches;
+    for(int node=0; node<n_nodes(); node++)
+    {
+        if (degree(node) == 0) continue;
+
+        int b = branch_out(node, 0);
+
+        if (not is_leaf_branch(b)) continue;
+
+        if (is_leaf_node(target(b)))
+        {
+            // both directions are leaf branches, just return one.
+            if (source(b) > target(b))
+                continue;
+        }
+
+        branches.push_back(b);
+    }
+    return branches;
+}
+
 int TreeInterface::n_branches() const {
     return get_tree_constants().parameters_for_tree_branch.size()/2;
 }
