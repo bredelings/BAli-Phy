@@ -773,39 +773,28 @@ unsigned topology_distance(const TreeInterface& T1, const TreeInterface& T2)
 {
     assert(T1.n_leaves() == T2.n_leaves());
 
-    unsigned l1 = T1.n_leaf_branches();
-    unsigned l2 = T2.n_leaf_branches();
-
-    unsigned n1 = T1.n_branches() - l1;
-    unsigned n2 = T2.n_branches() - l2;
-
-    auto partitions1 = get_partitions(T1);
-    auto partitions2 = get_partitions(T2);
-
-    std::set<dynamic_bitset<>> informative1;
-    std::set<dynamic_bitset<>> informative2;
+    std::set<dynamic_bitset<>> partitions1;
+    std::set<dynamic_bitset<>> partitions2;
   
-    for(auto& partition: partitions1)
+    for(auto partition: get_partitions(T1))
+    {
 	partition.resize(T1.n_leaves());
+        partitions1.insert(std::move(partition));
+    }
 
-    for(auto& partition: partitions2)
+    for(auto partition: get_partitions(T2))
+    {
 	partition.resize(T2.n_leaves());
-
-    // get partitions and lengths for T1
-    for(int i=0;i<n1;i++)
-	informative1.insert(std::move(partitions1[i+l1]));
-
-    // get partitions and lengths for T2
-    for(int i=0;i<n1;i++)
-	informative2.insert(std::move(partitions2[i+l1]));
+        partitions2.insert(std::move(partition));
+    }
 
     // Accumulate distances for T1 partitions
     unsigned shared=0;
-    for(const auto& partition: informative1)
-	if (informative2.count(partition) or informative2.count(~partition))
+    for(const auto& partition: partitions1)
+	if (partitions2.count(partition) or partitions2.count(~partition))
 	    shared++;
 
-    return (n1-shared) + (n2-shared);
+    return partitions1.size() + partitions2.size() - 2*shared;
 }
 
 double tree_length(const TreeInterface& t)
