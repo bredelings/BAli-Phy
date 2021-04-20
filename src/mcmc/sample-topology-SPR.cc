@@ -1493,13 +1493,13 @@ void sample_SPR_A_search_all(owned_ptr<Model>& P,MoveStats& Stats)
 
 vector<int> path_to(const TreeInterface& T,int n1, int n2) 
 {
-    assert(0 <= n1 and n1 < T.n_leaves());
-    assert(0 <= n2 and n2 < T.n_leaves());
+    assert(T.is_leaf_node(n1));
+    assert(T.is_leaf_node(n2));
     assert(n1 != n2);
 
     vector<int> path; 
     path.push_back(n1);
-    path.push_back(T.target(T.undirected(n1)));
+    path.push_back(T.neighbor(n1,0));
 
     while(path.back() != n2) 
     {
