@@ -560,6 +560,86 @@ void NNI_move(context_ref& C1, int tree_reg, int b)
 }
 
 
+/* Like NNI, except
+ * + we can only swap branches pointing away from the root
+ * + we need to avoid children being older than their parents.
+ * + there is a degree 2 node.
+ *
+ * Specificially, we need u to be younger than y.
+ *
+ *
+ *                       |
+ *                    ---x---
+ *                    |     |
+ *                  --y--   |
+ *                  |   |   |
+ *                  z   w   u
+ *
+ *
+ * Here, branches[0] = (y,z)
+ *       branches[1] = (y,w)
+ *       branches[2] = (x,u)
+ *       b           = (x,y)
+ */
+
+
+void TT_NNI_move(context_ref& C1, int tree_reg, int b)
+{
+    ModifiablesTreeInterface T(C1,tree_reg);
+
+    //------------ Skip if invalid branch -------------//
+
+    if (T.is_leaf_branch(b)) return;
+
+    if (not T.away_from_root(b)) return;
+
+    //-------------- Set subst_root(s)----------------//
+
+    // * FIXME! set subst root!
+
+    //--  get neighboring branches pointing TIPWARD --//
+    vector<int> branches;
+    T.append_branches_after(b, branches);
+    assert(T.away_from_root(branches[0]));
+    assert(T.away_from_root(branches[1]));
+
+    T.append_branches_after(T.reverse(b), branches);
+    if (branches.size() == 4)
+    {
+        if (not T.away_from_root(branches[2]))
+            branches.erase(branches.begin()+2);
+        else
+            branches.erase(branches.begin()+3);
+    }
+    assert(T.away_from_root(branches[2]));
+
+    //----------- Check node u < node y -------------//
+    int y = T.target(b);
+    double t_y = T.node_time(y);
+
+    int u = T.target(branches[2]);
+    double t_u = T.node_time(u);
+
+    if (t_u > t_y) return;
+
+    //------------ Perform the NNIs -----------------//
+    vector<context> c(3,C1);
+
+    NNI(c[1], tree_reg, branches[0], branches[2]);
+    NNI(c[2], tree_reg, branches[1], branches[2]);
+
+    //------------ Select the topology --------------//
+    vector<log_double_t> pr(3);
+    for(int i=0;i<3;i++)
+        pr[i] = c[i].heated_probability();
+
+    int j = choose_MH(0,pr);
+
+    //---------- Set the selected topology ----------//
+    C1 = c[j];
+}
+
+
 /*
  *        gp
  *        |           np
@@ -699,6 +779,26 @@ extern "C" closure builtin_function_NNI_on_branch_unsafe(OperationArgs& Args)
     context_ref C1(M, c1);
 
     NNI_move(C1, tree_reg, b);
+
+    return constructor("()",0);
+}
+
+extern "C" closure builtin_function_TT_NNI_on_branch_unsafe(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.evaluate_slot_unchangeable(0);
+
+    int b = Args.evaluate(1).as_int();
+
+    int c1 = Args.evaluate(2).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    TT_NNI_move(C1, tree_reg, b);
 
     return constructor("()",0);
 }

@@ -32,6 +32,10 @@ builtin builtin_nni_on_branch_unsafe 3 "NNI_on_branch_unsafe" "MCMC"
 nni_on_branch_unsafe tree branch c = IOAction (\s->(s,builtin_nni_on_branch_unsafe tree branch c))
 
 -- This is "unsafe" because it doesn't update alignments
+builtin builtin_tnni_on_branch_unsafe 3 "TT_NNI_on_branch_unsafe" "MCMC"
+tnni_on_branch_unsafe tree branch c = IOAction (\s->(s,builtin_tnni_on_branch_unsafe tree branch c))
+
+-- This is "unsafe" because it doesn't update alignments
 builtin builtin_fnpr_unsafe 3 "FNPR_unsafe" "MCMC"
 fnpr_unsafe tree node c = IOAction (\s->(s,builtin_fnpr_unsafe tree node c))
 
