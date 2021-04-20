@@ -390,15 +390,17 @@ vector<int> walk_tree_path(const TreeInterface& t, int root)
     vector<int> children;
     children.reserve(3);
 
-    // get a leaf with minimum 'tcost'
-    int leaf = 0;
-    leaf = myrandom(t.n_leaves());
-    for(int b=0;b<t.n_leaves();b++)
-        if (tcost[b] < tcost[leaf])
-            leaf = b;
+    // get a leaf branch with minimum 'tcost'
+    std::optional<int> best_leaf_branch;
+    for(auto b: t.leaf_branches())
+    {
+        if (not best_leaf_branch)
+            best_leaf_branch = b;
+        else if (tcost[b] < tcost[*best_leaf_branch])
+            best_leaf_branch = b;
+    }
 
-    assert(t.source(leaf) == leaf);
-    b_stack.push_back(leaf);
+    b_stack.push_back(*best_leaf_branch);
 
     while(not b_stack.empty()) {
         // pop stack into list
