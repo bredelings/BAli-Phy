@@ -780,11 +780,11 @@ void mutable_data_partition::set_alignment(const alignment& A)
     auto AA = link_A(A, labels, T);
 
     // 3. Check that the alignment doesn't disagree with existing leaf sequences lengths!
-    for(int i=0;i<T.n_leaves();i++)
+    for(auto node: T.leaf_nodes())
     {
-        assert(AA.seq(i).name == labels[i]);
-        if (AA.seqlength(i) != seqlength(i))
-            throw myexception()<<"partition "<<partition_index+1<<", sequence "<<AA.seq(i).name<<": alignment sequence length "<<AA.seqlength(i)<<" does not match required sequence length "<<seqlength(i);
+        assert(AA.seq(node).name == labels[node]);
+        if (AA.seqlength(node) != seqlength(node))
+            throw myexception()<<"partition "<<partition_index+1<<", sequence "<<AA.seq(node).name<<": alignment sequence length "<<AA.seqlength(node)<<" does not match required sequence length "<<seqlength(node);
     }
 
     // 4. Set pairwise alignment parameters.
@@ -1908,11 +1908,8 @@ Parameters::Parameters(const Program& prog,
     auto tt = ttt;
     assert(tt.n_leaves() == leaf_labels.size());
     remap_T_leaf_indices(tt, leaf_labels);
-    for(int i=0;i<tt.n_leaves();i++)
-        assert(tt.get_label(i) == labels[i]);
-
-    // 4. Load the specified tree TOPOLOGY into the machine. (branch lengths are loaded later).
-    t().read_tree(tt);
+    for(auto node: tt.leaf_nodes())
+        assert(tt.get_label(node) == labels[node]);
 
     PC->subst_root         = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.subst_root"), my_atmodel_export()}}));
 
@@ -1928,20 +1925,6 @@ Parameters::Parameters(const Program& prog,
     evaluate_expression( {var("Tree.numBranches"), my_tree()});
     evaluate_expression( {var("Tree.edgesOutOfNode"), my_tree(), 0});
     evaluate_expression( {var("Tree.neighbors"), my_tree(), 0});
-
-    for(int b=0; b < 2*tt.n_branches(); b++)
-    {
-        vector<const_branchview> branch_list;
-        append(tt.directed_branch(b).branches_before(),branch_list);
-        vector<int> branch_list_;
-        for(auto b: branch_list)
-            branch_list_.push_back(b);
-
-        auto b2 = (vector<int>) evaluate_expression( {var("Foreign.Vector.list_to_vector"),{var("Tree.edgesBeforeEdge"),my_tree(),b}}).as_<EVector>();
-        assert(b2.size() == branch_list_.size());
-        for( int i: branch_list_)
-            assert(includes(b2,i));
-    }
 #endif
 
     // R3. Register methods for each of the individual substitution models

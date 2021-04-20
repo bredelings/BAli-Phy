@@ -80,6 +80,7 @@ public:
     int n_leaves() const;
     int n_leaf_branches() const;
     std::vector<int> leaf_branches() const;
+    std::vector<int> leaf_nodes() const;
 
     int degree(int n) const;
     int branch_out(int n, int i) const;
