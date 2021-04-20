@@ -706,14 +706,13 @@ ModifiablesTreeInterface::~ModifiablesTreeInterface()
 
 vector<int> branches_from_leaves(const TreeInterface& t) 
 {
-    vector<int> branch_list;
-    branch_list.reserve(2*t.n_branches());
-    vector<bool> visited(2*t.n_branches(),false);
+    // Start with the leaf branches.
+    vector<int> branch_list = t.leaf_branches();
 
-    for(int i=0;i<t.n_leaves();i++) {
-	branch_list.push_back(i);
-	visited[i] = true;
-    }
+    // Mark the leaf branches visited
+    vector<bool> visited(2*t.n_branches(),false);
+    for(auto& b: branch_list)
+	visited[b] = true;
 
     for(int i=0;i<branch_list.size();i++) 
     {
