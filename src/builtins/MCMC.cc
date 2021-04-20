@@ -559,18 +559,78 @@ void NNI_move(context_ref& C1, int tree_reg, int b)
     C1 = c[j];
 }
 
+
+/*
+ *        gp
+ *        |           np
+ *        |           |
+ *        p . . . . . |
+ *        |\          |
+ *        | \         n2
+ *        n  s
+ */
+
+
 void FNPR_move(context_ref& c, int tree_reg, int n)
 {
     ModifiablesTreeInterface T(c, tree_reg);
 
-    // Return if the parent node is the root.
+    // Return if n is the root.
     int p;
     if (auto pp = T.parent_of_node(n))
         p = *pp;
     else
         return;
 
+    // Return if parent(n) is the root.
+    int gp;
+    if (auto gpp = T.parent_of_node(p))
+        gp = *gpp;
+    else
+        return;
+
+    int sibling;
+    {
+        auto cs = T.children_of_node(p);
+        assert(n == cs[0] or n == cs[1]);
+        sibling = (n == cs[1]) ? cs[0] : cs[1];
+        assert(sibling != n);
+    }
+
     double p_t = T.node_time(p);
+
+    vector<int> branch_targets;
+    for(int n2=0; n2 < T.n_nodes(); n2++)
+    {
+        auto b = T.parent_branch_for_node(n2);
+        if (not b) continue;
+
+        int p2 = T.source(*b);
+
+        // We're looking for branches other than
+        // (p,n), (p,s) and (gp,p)
+        if (n2 == n or n2 == p or n2 == sibling) continue;
+
+        auto n2_t = T.node_time(n2);
+        auto p2_t = T.node_time(p2);
+
+        if (n2_t < p_t and p_t < p2_t)
+            branch_targets.push_back(*b);
+    }
+
+    if (not branch_targets.empty())
+    {
+        int i = uniform_int(0, branch_targets.size()-1);
+        int b = branch_targets[i];
+        int n2 = T.target(b);
+        int p2 = T.source(b);
+
+        T.begin_modify_topology();
+        T.reconnect_branch(gp, p, n);
+        T.reconnect_branch(p, n, n2);
+        T.reconnect_branch(p2, n2, p);
+        T.end_modify_topology();
+    }
 }
 
 
