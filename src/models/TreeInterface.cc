@@ -79,9 +79,6 @@ tree_constants::tree_constants(context_ref& C, const expression_ref& E)
     int n_nodes            = tree_structure.sub()[2].as_int();
     int n_branches         = n_nodes - 1;
 
-    if (log_verbose >= 3)
-        std::cerr<<"num_branches = "<<C.evaluate_expression({var("Parameters.maybe_modifiable_structure"), {var("Tree.numBranches"), tree_exp}})<<"\n\n";;
-
     for(int n=0; n < n_nodes; n++)
     {
         auto edges = list_to_evector(edges_out_of_node.sub()[n]);
