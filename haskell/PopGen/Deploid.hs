@@ -63,3 +63,19 @@ propose_two_haplotypes_from_plaf hap_index1 hap_index2 freqs w reads haps e c co
 -- But we are evaluating the proposal unchangeably -- so an IO action that evaluates (say) the number of haplotypes will not work.
 -- Maybe the whole proposal needs to run in the specific context, instead of running unchangeably?
 -- In that case, what does it mean for the context to change itself during the proposal??
+
+---
+
+builtin propose_weights_and_haplotype_from_plaf'' 11 "propose_weights_and_haplotype_from_plaf" "SMC"
+
+propose_weights_and_haplotype_from_plaf' titre hap hap_index freqs w reads haps e c context io_state =
+    propose_weights_and_haplotype_from_plaf'' context io_state titre hap hap_index freqs' w' reads' haps' e c
+           where
+             freqs' = list_to_vector freqs
+             w'     = list_to_vector w
+             reads' = list_to_vector $ map (\(x,y) -> c_pair x y) reads
+             haps'  = list_to_vector haps
+
+propose_weights_and_haplotype_from_plaf titres hap_index freqs w reads haps e c context =
+    IOAction $ pair_from_c . propose_weights_and_haplotype_from_plaf' (titres !! hap_index) (haps !! hap_index) hap_index freqs w reads haps e c context
+

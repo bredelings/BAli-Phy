@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "mcmc/proposals.H"
 #include "math/pow2.H"
 #include "math/logprod.H"
 #include "util/matrix.H"
@@ -1486,6 +1487,177 @@ extern "C" closure builtin_function_propose_two_haplotypes_from_plaf(OperationAr
     C.set_reg_value(haplotype_reg2, new_haplotype2);
 
     ratio = pr_sample_old / pr_sample_new;
+
+    return EPair(io_state+1, ratio);
+}
+
+
+log_double_t shift_gaussian(context_ref& C, int r, double scale)
+{
+    double x = C.evaluate_reg(r).as_double();
+
+    x += gaussian(0, scale);
+
+    C.set_reg_value(r, {x});
+
+    return exp_to<log_double_t>(0.0);
+}
+
+Proposal shift_gaussian(int r, double scale)
+{
+    return [=](context_ref& C) {return shift_gaussian(C, r, scale);};
+}
+
+log_double_t shift_laplace(context_ref& C, int r, double scale)
+{
+    double x = C.evaluate_reg(r).as_double();
+
+    x += laplace(0, scale);
+
+    C.set_reg_value(r, {x});
+
+    return exp_to<log_double_t>(0.0);
+}
+
+Proposal shift_laplace(int r, double scale)
+{
+    return [=](context_ref& C) {return shift_laplace(C, r, scale);};
+}
+
+// We need the markov blanket for h[i]:
+//   Pr(h[i] | plaf) * Pr(data | h, w, error_rates, c)
+
+// We need x[i], h[i], i, plaf, data, h, w, error_rate, c
+
+extern "C" closure builtin_function_propose_weights_and_haplotype_from_plaf(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    auto evaluate_slot = [&](context_ref& C, int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+
+    reg_heap& M = Args.memory();
+
+    // 0. context index = int
+    int context_index = Args.evaluate(0).as_int();
+    context_ref C0(M,context_index);
+
+    // 1. IO state = int
+    int io_state = Args.evaluate(1).as_int();
+
+    // 2. Get x[i]
+    int titre_reg = Args.reg_for_slot(2);
+    if (auto titre_mod_reg = C0.find_modifiable_reg(titre_reg))
+        titre_reg = *titre_mod_reg;
+    else
+        throw myexception()<<"propose_weights_and_haplotype_from_plaf: titre reg "<<titre_reg<<" is not a modifiable!";
+
+    // 3. Get h[i]
+    int haplotype_reg = Args.reg_for_slot(3);
+    if (auto haplotype_mod_reg = C0.find_modifiable_reg(haplotype_reg))
+        haplotype_reg = *haplotype_mod_reg;
+    else
+        throw myexception()<<"propose_haplotype_from_plaf: haplotype reg "<<haplotype_reg<<" is not a modifiable!";
+
+    // 4. Get haplotype index
+    int haplotype_index = evaluate_slot(C0, 4).as_int();
+
+    // 5. Get frequencies
+    auto arg4 = evaluate_slot(C0, 5);
+    auto& frequencies = arg4.as_<EVector>();
+
+    // 6. Mixture weights = EVector of double.
+    auto weights1 = evaluate_slot(C0, 6).as_<EVector>();
+
+    // 7. data = EVector of EPair of Int
+    auto arg6 = evaluate_slot(C0, 7);
+    auto& data = arg6.as_<EVector>();
+
+    // 8. haplotypes = EVector of EVector of Int
+    auto arg7 = evaluate_slot(C0, 8);
+    auto& haplotypes = arg7.as_<EVector>();
+
+    // 9. error_rate = double
+    double error_rate = evaluate_slot(C0, 9).as_double();
+
+    // 10. concentration = double
+    double concentration = evaluate_slot(C0, 10).as_double();
+
+    int L = haplotypes[0].as_<EVector>().size();
+
+    //------------- Copy the context indices ------------------//
+
+    context C1 = C0; // old weights, new haplotype
+
+    context C2 = C0; // new weights, new haplotype
+
+    //---------------- Propose a new weight -------------------//
+
+    log_double_t w_ratio = shift_laplace(C2, titre_reg, 1.0);
+
+    auto weights2 = evaluate_slot(C2, 6).as_<EVector>();
+
+    //---------- Compute emission probabilities for the two weight vectors -----------//
+
+    auto E1 = emission_pr(haplotype_index, data, haplotypes, weights1, error_rate, concentration);
+
+    auto E2 = emission_pr(haplotype_index, data, haplotypes, weights2, error_rate, concentration);
+
+    EVector new_haplotype1(L);
+
+    log_double_t pr_sample_hap0 = 1;
+    log_double_t pr_sample_hap1 = 1;
+    for(int site = 0; site < L; site++)
+    {
+        double f = frequencies[site].as_double();
+        auto F0 = E1(site,0)*(1.0 - f);
+        auto F1 = E1(site,1)*f;
+
+        int old_allele = get_allele(haplotypes, haplotype_index, site);
+        pr_sample_hap0 *= choose2_P(old_allele, F0, F1);
+
+        int new_allele = choose2(F0, F1);
+        pr_sample_hap1 *= choose2_P(new_allele, F0, F1);
+        new_haplotype1[site] = new_allele;
+    }
+
+    EVector new_haplotype2(L);
+    log_double_t pr_sample_hap2 = 1;
+    for(int site = 0; site < L; site++)
+    {
+        double f = frequencies[site].as_double();
+        auto F0 = E2(site,0)*(1.0 - f);
+        auto F1 = E2(site,1)*f;
+
+        int new_allele = choose2(F0, F1);
+        pr_sample_hap2 *= choose2_P(new_allele, F0, F1);
+        new_haplotype2[site] = new_allele;
+    }
+
+    C1.set_reg_value(haplotype_reg, new_haplotype1);
+    auto Pr1_over_Pr0 = C1.heated_probability_ratio(C0);
+
+    // ASSUME Pr(h0)/sample_hap0 = Pr(h1)/sample_hap1
+    //        Pr(h1)/Pr(h0) = sample_hap1 / sample_hap0
+    assert( std::abs( log(Pr1_over_Pr0) - log(pr_sample_hap1/pr_sample_hap0) ) < 1.0e-9 );
+
+    C2.set_reg_value(haplotype_reg, new_haplotype2);
+    auto Pr2_over_Pr0 = C2.heated_probability_ratio(C0);
+
+    auto Pr = vector<log_double_t>{Pr1_over_Pr0/pr_sample_hap1, w_ratio * Pr2_over_Pr0/pr_sample_hap2};
+
+    int choice_index = choose(Pr);
+
+    log_double_t ratio = 1;
+    if (choice_index == 0)
+    {
+        C0 = C1;
+        ratio = 1.0/Pr1_over_Pr0;
+    }
+    else if (choice_index == 1)
+    {
+        C0 = C2;
+        ratio = 1.0/Pr2_over_Pr0;
+    }
 
     return EPair(io_state+1, ratio);
 }
