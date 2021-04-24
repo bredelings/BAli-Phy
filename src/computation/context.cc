@@ -414,12 +414,6 @@ void context_ref::set_reg_value(int P, closure&& C)
     memory()->set_reg_value_in_context(P, std::move(C), context_index);
 }
 
-param context_ref::new_modifiable(const expression_ref& value)
-{
-    expression_ref M{var("Parameters.modifiable"), value};
-    return add_compute_expression(M);
-}
-
 /// Add an expression that may be replaced by its reduced form
 int context_ref::add_compute_expression(const expression_ref& E)
 {

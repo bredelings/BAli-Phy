@@ -4,7 +4,6 @@
 #include <unordered_set>
 #include <vector>
 #include "computation/closure.H"
-#include "computation/param.H"
 #include "computation/program.H"
 #include "util/math/log-double.H"
 #include "util/bounds.H"
@@ -130,8 +129,6 @@ public:
     void set_modifiable_value(int r, const expression_ref&);
 
 public:
-    /// Create a new modifiable head with initial value 'value'
-    param new_modifiable(const expression_ref& value);
 
     /// Add a literal expression that MAY be reduced
     int add_compute_expression(const expression_ref& e);
