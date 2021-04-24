@@ -26,11 +26,9 @@ tree_constants::tree_constants(context_ref& C, const expression_ref& E)
      n_leaves(0)
 {
     int tree_reg = E.as_<reg_var>().target;
-    auto tree = context_ptr(C, tree_reg);
+    auto tree = context_ptr(C, tree_reg).result();
 
     //------------------------- Create the tree structure -----------------------//
-    auto tree_con = tree.head();
-
     if (has_constructor(tree.head(), "Tree.BranchLengthTree"))
     {
         // We assume that the path to the array isn't changeable... ???
