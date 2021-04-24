@@ -26,11 +26,12 @@ optional<int> param::is_modifiable(const context_ref& C) const
 {
     if (reg)
     {
-        if (C.reg_is_modifiable(*reg))
+        if (C.find_modifiable_reg(*reg))
             return *reg;
         else
             return {};
     }
+    // FIXME - this doesn't search for the modifiable.
     else if (head)
         return C.compute_expression_is_modifiable_reg(*head);
     else
