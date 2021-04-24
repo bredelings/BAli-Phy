@@ -6,6 +6,7 @@
 #include "math/pow2.H"
 #include "math/logprod.H"
 #include "util/matrix.H"
+#include "util/log-level.H"
 #include "util/range.H"
 #include "util/math/log-double.H"
 #include "alignment/alignment.H"
@@ -1306,6 +1307,55 @@ matrix<log_double_t> emission_pr2(int k1, int k2, const EVector& data, const EVe
     return E;
 }
 
+std::tuple<int,int,int> get_alleles3(int A)
+{
+    return {(A&1)?1:0, (A&2)?1:0, (A&4)?1:0};
+}
+
+double get_prior(int A, double f, int n)
+{
+    double prior = 1;
+    for(int i=0;i<n;i++)
+    {
+        if (A&(1<<i))
+            prior *= f;
+        else
+            prior *= (1.0-f);
+    }
+    return prior;
+}
+
+matrix<log_double_t> emission_pr3(int k1, int k2, int k3, const EVector& data, const EVector& frequency, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration)
+{
+    int L = haplotypes[0].as_<EVector>().size();
+    assert(L == frequency.size());
+
+    auto E = matrix<log_double_t>(L,8);
+    for(int site=0; site<L; site++)
+    {
+        double plaf = frequency[site].as_double();
+        double current_wsaf = wsaf_at_site(site, weights, haplotypes);
+        for(int A = 0; A < 8; A++)
+        {
+            auto [allele1, allele2, allele3] = get_alleles3(A);
+
+            int current_allele1 = get_allele(haplotypes, k1, site);
+            int current_allele2 = get_allele(haplotypes, k2, site);
+            int current_allele3 = get_allele(haplotypes, k3, site);
+
+            double wsaf = current_wsaf + weights[k1].as_double() * (allele1 - current_allele1)
+                                       + weights[k2].as_double() * (allele2 - current_allele2)
+                                       + weights[k3].as_double() * (allele3 - current_allele3);
+
+            // Avoid out-of-bounds terms caused by rounding error.
+            wsaf = std::max(0.0,std::min(1.0,wsaf));
+
+            E(site, A) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration) * get_prior(A, plaf, 3);
+        }
+    }
+    return E;
+}
+
 // We need the markov blanket for h[i]:
 //   Pr(h[i] | plaf) * Pr(data | h, w, rror_rates, c)
 
@@ -1847,6 +1897,228 @@ extern "C" closure builtin_function_propose_weights_and_two_haplotypes_from_plaf
     {
         C0 = C2;
         ratio = 1.0/Pr2_over_Pr0;
+    }
+
+    return EPair(io_state+1, ratio);
+}
+
+
+// We need the markov blanket for h[i]:
+//   Pr(h[i] | plaf) * Pr(data | h, w, rror_rates, c)
+
+// Therefore, we need(x[i], x[j], h[i], h[j], i, j, plaf, data, h, w, error_rate, c)
+
+extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_plaf(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    auto evaluate_slot = [&](context_ref& C, int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+
+    reg_heap& M = Args.memory();
+
+    // 0. context index = int
+    int context_index = Args.evaluate(0).as_int();
+    context_ref C0(M,context_index);
+
+    // 1. IO state = int
+    int io_state = Args.evaluate(1).as_int();
+
+    // 2. Get x[i]
+    int titre1_reg = Args.reg_for_slot(2);
+    if (auto titre1_mod_reg = C0.find_modifiable_reg(titre1_reg))
+        titre1_reg = *titre1_mod_reg;
+    else
+        throw myexception()<<"propose_weights_and_haplotype_from_plaf: titre1 reg "<<titre1_reg<<" is not a modifiable!";
+
+    // 3. Get x[j]
+    int titre2_reg = Args.reg_for_slot(3);
+    if (auto titre2_mod_reg = C0.find_modifiable_reg(titre2_reg))
+        titre2_reg = *titre2_mod_reg;
+    else
+        throw myexception()<<"propose_weights_and_haplotype_from_plaf: titre2 reg "<<titre2_reg<<" is not a modifiable!";
+
+    // 4. Get x[k]
+    int titre3_reg = Args.reg_for_slot(4);
+    if (auto titre3_mod_reg = C0.find_modifiable_reg(titre3_reg))
+        titre3_reg = *titre3_mod_reg;
+    else
+        throw myexception()<<"propose_weights_and_haplotype_from_plaf: titre3 reg "<<titre3_reg<<" is not a modifiable!";
+
+    // 5. Get h[i]
+    int haplotype1_reg = Args.reg_for_slot(5);
+    if (auto haplotype_mod1_reg = C0.find_modifiable_reg(haplotype1_reg))
+        haplotype1_reg = *haplotype_mod1_reg;
+    else
+        throw myexception()<<"propose_haplotype_from_plaf: haplotype1 reg "<<haplotype1_reg<<" is not a modifiable!";
+
+    // 6. Get h[j]
+    int haplotype2_reg = Args.reg_for_slot(6);
+    if (auto haplotype_mod2_reg = C0.find_modifiable_reg(haplotype2_reg))
+        haplotype2_reg = *haplotype_mod2_reg;
+    else
+        throw myexception()<<"propose_haplotype_from_plaf: haplotype2 reg "<<haplotype2_reg<<" is not a modifiable!";
+
+    // 7. Get h[k]
+    int haplotype3_reg = Args.reg_for_slot(7);
+    if (auto haplotype_mod3_reg = C0.find_modifiable_reg(haplotype3_reg))
+        haplotype3_reg = *haplotype_mod3_reg;
+    else
+        throw myexception()<<"propose_haplotype_from_plaf: haplotype3 reg "<<haplotype3_reg<<" is not a modifiable!";
+
+    // 8. Get haplotype index
+    int haplotype_index1 = evaluate_slot(C0, 8).as_int();
+
+    // 9. Get haplotype index
+    int haplotype_index2 = evaluate_slot(C0, 9).as_int();
+
+    // 10. Get haplotype index
+    int haplotype_index3 = evaluate_slot(C0, 10).as_int();
+
+    // 11. Get frequencies
+    auto arg4 = evaluate_slot(C0, 11);
+    auto& frequencies = arg4.as_<EVector>();
+
+    // 12. Mixture weights = EVector of double.
+    auto weights1 = evaluate_slot(C0, 12).as_<EVector>();
+
+    // 13. data = EVector of EPair of Int
+    auto arg6 = evaluate_slot(C0, 13);
+    auto& data = arg6.as_<EVector>();
+
+    // 14. haplotypes = EVector of EVector of Int
+    auto arg7 = evaluate_slot(C0,14);
+    auto& haplotypes = arg7.as_<EVector>();
+
+    // 15. error_rate = double
+    double error_rate = evaluate_slot(C0, 15).as_double();
+
+    // 16. concentration = double
+    double concentration = evaluate_slot(C0, 16).as_double();
+
+    // Make sure that the two haplotypes are DIFFERENT.
+    if (haplotype_index1 == haplotype_index2) return EPair(io_state+1, log_double_t(1));
+
+    // Make sure that the two haplotypes are DIFFERENT.
+    if (haplotype_index1 == haplotype_index3) return EPair(io_state+1, log_double_t(1));
+
+    // Make sure that the two haplotypes are DIFFERENT.
+    if (haplotype_index2 == haplotype_index3) return EPair(io_state+1, log_double_t(1));
+
+    int L = haplotypes[0].as_<EVector>().size();
+
+    //------------- Copy the context indices ------------------//
+
+    context C1 = C0; // old weights, new haplotype
+
+    context C2 = C0; // new weights, new haplotype
+
+    //---------------- Propose a new weight -------------------//
+
+    log_double_t w_ratio1 = shift_laplace(C2, titre1_reg, 0.125);
+
+    log_double_t w_ratio2 = shift_laplace(C2, titre2_reg, 0.25);
+
+    log_double_t w_ratio3 = shift_laplace(C2, titre3_reg, 1.5);
+
+    log_double_t w_ratio = w_ratio1 * w_ratio2 * w_ratio3;
+
+    auto weights2 = evaluate_slot(C2, 12).as_<EVector>();
+
+    //---------- Compute emission probabilities for the two weight vectors -----------//
+
+    auto E1 = emission_pr3(haplotype_index1, haplotype_index2, haplotype_index3, data, frequencies, haplotypes, weights1, error_rate, concentration);
+
+    auto E2 = emission_pr3(haplotype_index1, haplotype_index2, haplotype_index3, data, frequencies, haplotypes, weights2, error_rate, concentration);
+
+    //---------- Sample new haplotypes for C1 -----------//
+    EVector new_haplotype1_1(L);
+    EVector new_haplotype1_2(L);
+    EVector new_haplotype1_3(L);
+
+    log_double_t pr_sample_0 = 1;
+    log_double_t pr_sample_1 = 1;
+
+    for(int site = 0; site < L; site++)
+    {
+        vector<log_double_t> F(8);
+        for(int i=0;i<8;i++)
+            F[i] = E1(site,i);
+
+        int old_allele1 = get_allele(haplotypes, haplotype_index1, site);
+        int old_allele2 = get_allele(haplotypes, haplotype_index2, site);
+        int old_allele3 = get_allele(haplotypes, haplotype_index3, site);
+        int old_A = (old_allele3<<2)+(old_allele2<<1)+(old_allele1);
+        pr_sample_0 *= choose_P(old_A, F);
+
+        int new_A = choose(F);
+        pr_sample_1 *= choose_P(new_A, F);
+
+        auto [new_allele1, new_allele2, new_allele3] = get_alleles3(new_A);
+        new_haplotype1_1[site] = new_allele1;
+        new_haplotype1_2[site] = new_allele2;
+        new_haplotype1_3[site] = new_allele3;
+    }
+
+    //---------- Sample new haplotypes for C2 -----------//
+    EVector new_haplotype2_1(L);
+    EVector new_haplotype2_2(L);
+    EVector new_haplotype2_3(L);
+
+    log_double_t pr_sample_2 = 1;
+
+    for(int site = 0; site < L; site++)
+    {
+        vector<log_double_t> F(8);
+        for(int i=0;i<8;i++)
+            F[i] = E2(site,i);
+
+        int new_A = choose(F);
+        pr_sample_2 *= choose_P(new_A, F);
+
+        auto [new_allele1, new_allele2, new_allele3] = get_alleles3(new_A);
+        new_haplotype2_1[site] = new_allele1;
+        new_haplotype2_2[site] = new_allele2;
+        new_haplotype2_3[site] = new_allele3;
+    }
+
+    C1.set_reg_value(haplotype1_reg, new_haplotype1_1);
+    C1.set_reg_value(haplotype2_reg, new_haplotype1_2);
+    C1.set_reg_value(haplotype3_reg, new_haplotype1_3);
+    auto Pr1_over_Pr0 = C1.heated_probability_ratio(C0);
+
+    // ASSUME Pr(h0)/sample_hap0 = Pr(h1)/sample_hap1
+    //        Pr(h1)/Pr(h0) = sample_hap1 / sample_hap0
+    assert( std::abs( log(Pr1_over_Pr0) - log(pr_sample_1/pr_sample_0) ) < 1.0e-9 );
+
+    C2.set_reg_value(haplotype1_reg, new_haplotype2_1);
+    C2.set_reg_value(haplotype2_reg, new_haplotype2_2);
+    C2.set_reg_value(haplotype3_reg, new_haplotype2_3);
+    auto Pr2_over_Pr0 = C2.heated_probability_ratio(C0);
+
+    if (log_verbose >= 4)
+    {
+        std::cerr<<"propose_weights_and_three_haplotypes: Pr1/Pr0 = "<<Pr1_over_Pr0<<"      Pr2/Pr0 = "<<Pr2_over_Pr0<<"\n";
+    }
+
+    auto Pr = vector<log_double_t>{Pr1_over_Pr0/pr_sample_1, w_ratio * Pr2_over_Pr0/pr_sample_2};
+
+    int choice_index = choose(Pr);
+
+    log_double_t ratio = 1;
+    if (choice_index == 0)
+    {
+        C0 = C1;
+        ratio = 1.0/Pr1_over_Pr0;
+    }
+    else if (choice_index == 1)
+    {
+        C0 = C2;
+        ratio = 1.0/Pr2_over_Pr0;
+    }
+
+    if (log_verbose >= 4)
+    {
+        std::cerr<<"propose_weights_and_three_haplotypes: choice = "<<choice_index<<"\n";
     }
 
     return EPair(io_state+1, ratio);

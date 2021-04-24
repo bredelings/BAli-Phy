@@ -93,3 +93,22 @@ propose_weights_and_two_haplotypes_from_plaf' titre1 titre2 hap1 hap2 hap_index1
 
 propose_weights_and_two_haplotypes_from_plaf titres hap_index1 hap_index2 freqs w reads haps e c context =
     IOAction $ pair_from_c . propose_weights_and_two_haplotypes_from_plaf' (titres !! hap_index1) (titres !! hap_index2) (haps !! hap_index1) (haps !! hap_index2) hap_index1 hap_index2 freqs w reads haps e c context
+
+---
+
+builtin propose_weights_and_three_haplotypes_from_plaf'' 17 "propose_weights_and_three_haplotypes_from_plaf" "SMC"
+
+propose_weights_and_three_haplotypes_from_plaf' titre1 titre2 titre3 hap1 hap2 hap3 hap_index1 hap_index2 hap_index3 freqs w reads haps e c context io_state =
+    propose_weights_and_three_haplotypes_from_plaf'' context io_state titre1 titre2 titre3 hap1 hap2 hap3 hap_index1 hap_index2 hap_index3 freqs' w' reads' haps' e c
+           where
+             freqs' = list_to_vector freqs
+             w'     = list_to_vector w
+             reads' = list_to_vector $ map (\(x,y) -> c_pair x y) reads
+             haps'  = list_to_vector haps
+
+propose_weights_and_three_haplotypes_from_plaf titres hap_index1 hap_index2 hap_index3 freqs w reads haps e c context =
+    IOAction $ pair_from_c . propose_weights_and_three_haplotypes_from_plaf'
+                 (titres !! hap_index1) (titres !! hap_index2) (titres !! hap_index3)
+                 (haps !! hap_index1) (haps !! hap_index2) (haps !! hap_index3)
+                 hap_index1 hap_index2 hap_index3
+                 freqs w reads haps e c context
