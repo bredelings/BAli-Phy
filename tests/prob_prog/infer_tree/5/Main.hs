@@ -8,12 +8,12 @@ import           Probability.Distribution.OnTree
 import           Probability.Distribution.Tree
 import           System.Environment  -- for getArgs
 
-smodel_prior = do
-    freqs  <- symmetric_dirichlet_on ["A", "C", "G", "T"] 1.0
-    kappa1 <- log_normal 0.0 1.0
-    kappa2 <- log_normal 0.0 1.0
+smodel_prior nucleotides =  do
+    freqs  <- symmetric_dirichlet_on (letters nucleotides) 1.0
+    kappa1 <- log_normal (log 2.0) 0.25
+    kappa2 <- log_normal (log 2.0) 0.25
 
-    let tn93_model = tn93' dna kappa1 kappa2 freqs
+    let tn93_model = tn93' nucleotides kappa1 kappa2 freqs
     let loggers    = ["kappa1" %=% kappa1, "kappa2" %=% kappa2, "frequencies" %=% freqs]
 
     return (tn93_model, loggers)
@@ -32,7 +32,7 @@ prior taxa = do
 
     (tree  , tree_loggers) <- tree_prior taxa
 
-    (smodel, sloggers    ) <- smodel_prior
+    (smodel, sloggers    ) <- smodel_prior dna
 
     let loggers = tree_loggers ++ ["tn93" %>% sloggers]
 
