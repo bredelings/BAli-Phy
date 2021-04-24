@@ -95,7 +95,7 @@ param get_param(context_ref& C, const expression_ref& E, eval_strategy s)
         if (not is_reg_var(reg))
             throw myexception()<<"get_param: modifiable expression "<<E<<" should have a reg_var as its object.";
 
-        return param(C.add_compute_expression(reg), s);
+        return param(reg.as_<reg_var>(), s);
     }
     else if (is_reg_var(E))
     {
