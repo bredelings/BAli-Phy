@@ -70,13 +70,12 @@ tree_constants::tree_constants(context_ref& C, const expression_ref& E)
         tree_closure = C.lazy_evaluate_reg(tree_reg);
     }
 
-    auto tree_structure = C.maybe_modifiable_structure(tree_reg);
-    assert(has_constructor(tree_structure,"Tree.Tree"));
-    assert(tree_structure.sub().size() == 3);
+    assert(has_constructor(tree_closure.exp,"Tree.Tree"));
+    assert(tree_closure.exp.sub().size() == 3);
 
-    auto edges_out_of_node = tree_structure.sub()[0];
-    auto nodes_for_edge    = tree_structure.sub()[1];
-    int n_nodes            = tree_structure.sub()[2].as_int();
+    auto edges_out_of_node = C.maybe_modifiable_structure(  tree_closure.reg_for_slot(0) );
+    auto nodes_for_edge    = C.maybe_modifiable_structure(  tree_closure.reg_for_slot(1) );
+    int n_nodes            = C.evaluate_reg( tree_closure.reg_for_slot(2) ).as_int();
     int n_branches         = n_nodes - 1;
 
     for(int n=0; n < n_nodes; n++)
