@@ -18,6 +18,7 @@ class context;
 class context_ref
 {
     friend class context;
+    friend class context_ptr;
 
 protected:
     // FIXME - disallow operator=() as long as there are any regs on the stack?
@@ -175,7 +176,7 @@ public:
 
     context_ref& operator=(const context_ref& c);
 
-    context_ref(const context_ref&) = delete;
+    explicit context_ref(const context_ref&) = default;
 
     context_ref(reg_heap& M);
 

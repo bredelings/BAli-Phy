@@ -4,11 +4,37 @@
 #include <optional>
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/reg_var.H"
+#include "computation/context.H"
 #include "util/bounds.H"
 
-class context_ref;
-
 enum class eval_strategy {unset, unchangeable, precomputed, changeable};
+
+class context_ptr
+{
+    context_ref C;
+    int reg;
+public:
+    context_ptr operator[](int i) const;
+    context_ptr result() const;
+    std::optional<context_ptr> modifiable() const;
+
+    void move_to_result();
+    bool move_to_modifiable();
+
+    int size() const;
+    expression_ref head() const;
+
+    int get_reg() const {return reg;}
+    context_ref& get_context() {return C;}
+
+    context_ptr& operator=(const context_ptr&) = default;
+    context_ptr& operator=(context_ptr&&) = default;
+
+    context_ptr(const context_ptr&) = default;
+    context_ptr(context_ptr&&) = default;
+
+    context_ptr(const context_ref& c, int i);
+};
 
 class param
 {
@@ -31,6 +57,7 @@ public:
     explicit operator bool() const {return head or value;}
 
     param() {}
+    param(const context_ptr& p, eval_strategy s=eval_strategy::changeable):reg(p.get_reg()), strategy(s) {}
     param(const reg_var& rv, eval_strategy s=eval_strategy::changeable):reg(rv.target), strategy(s) {}
     param(int h, eval_strategy s=eval_strategy::changeable)
         :head(h), strategy(s)
