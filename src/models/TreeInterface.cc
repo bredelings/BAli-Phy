@@ -14,78 +14,79 @@ using std::vector;
 using std::string;
 using boost::dynamic_bitset;
 
+// We use the context_ptr class to avoid pointing to index_var regs, which
+// could disappear.
+//
+// What if... the route to the constant structure is modifiable, and the route changes???
+// Suppose I make a pointer: {memory, context_index, reg} === {context, tree_reg}
+// To deref a field, we would look up the reg, get the field, and evaluate.
+
 tree_constants::tree_constants(context_ref& C, const expression_ref& E)
     :tree_exp(E),
      n_leaves(0)
 {
     int tree_reg = E.as_<reg_var>().target;
+    auto tree = context_ptr(C, tree_reg);
 
     //------------------------- Create the tree structure -----------------------//
-    auto tree_closure = C.lazy_evaluate_reg(tree_reg);
-    if (log_verbose >= 3)
-        std::cerr<<"tree = "<<tree_closure.print()<<"\n\n";
+    auto tree_con = tree.head();
 
-    if (has_constructor(tree_closure.exp, "Tree.BranchLengthTree"))
+    if (has_constructor(tree.head(), "Tree.BranchLengthTree"))
     {
         // We assume that the path to the array isn't changeable... ???
-        auto [_, r] = C.incremental_evaluate(tree_closure.reg_for_slot(1));
-        branch_durations_array_reg = r;
+        branch_durations_array_reg = tree[1].result().get_reg();
 
-        tree_reg = tree_closure.reg_for_slot(0);
-        tree_closure = C.lazy_evaluate_reg(tree_reg);
+        tree = tree[0];
     }
 
-    if (has_constructor(tree_closure.exp, "Tree.TimeTree"))
+    if (has_constructor(tree.head(), "Tree.TimeTree"))
     {
         // We assume that the path to the array isn't changeable... ???
-        auto [_, r] = C.incremental_evaluate(tree_closure.reg_for_slot(1));
-        node_times_array_reg = r;
+        node_times_array_reg = tree[1].result().get_reg();
 
-        tree_reg = tree_closure.reg_for_slot(0);
-        tree_closure = C.lazy_evaluate_reg(tree_reg);
+        tree = tree[0];
     }
 
-    if (has_constructor(tree_closure.exp, "Tree.LabelledTree"))
+    if (has_constructor(tree.head(), "Tree.LabelledTree"))
     {
-        assert(tree_closure.exp.sub().size() == 2);
+        assert(tree.size() == 2);
         // FIXME - set labels!
 
-        tree_reg = tree_closure.reg_for_slot(0);
-        tree_closure = C.lazy_evaluate_reg(tree_reg);
+        tree = tree[0];
     }
 
-    if (has_constructor(tree_closure.exp, "Tree.RootedTree"))
+    if (has_constructor(tree.head(), "Tree.RootedTree"))
     {
-        assert(tree_closure.exp.sub().size() == 3);
+        assert(tree.size() == 3);
 
         // We need to evaluate this to avoid getting an index_var.
-        auto [r_root, _1] = C.incremental_evaluate(tree_closure.reg_for_slot(1));
-        root_reg = r_root;
+        root_reg = tree[1].get_reg();
 
         // We need to evaluate this to avoid getting an index_var.
-        auto [r_away, _2] = C.incremental_evaluate(tree_closure.reg_for_slot(2));
-        away_from_root_array_reg = r_away;
+        away_from_root_array_reg = tree[2].get_reg();
 
-        tree_reg = tree_closure.reg_for_slot(0);
-        tree_closure = C.lazy_evaluate_reg(tree_reg);
+        tree = tree[0];
     }
 
-    assert(has_constructor(tree_closure.exp,"Tree.Tree"));
-    assert(tree_closure.exp.sub().size() == 3);
+    assert(has_constructor(tree.head(),"Tree.Tree"));
+    assert(tree.size() == 3);
 
-    auto edges_out_of_node = C.maybe_modifiable_structure(  tree_closure.reg_for_slot(0) );
-    auto nodes_for_edge    = C.maybe_modifiable_structure(  tree_closure.reg_for_slot(1) );
-    int n_nodes            = C.evaluate_reg( tree_closure.reg_for_slot(2) ).as_int();
+    auto edges_out_of_node = tree[0];
+    auto nodes_for_edge    = tree[1];
+    int n_nodes            = tree[2].head().as_int();
     int n_branches         = n_nodes - 1;
 
     for(int n=0; n < n_nodes; n++)
     {
-        auto edges = list_to_evector(edges_out_of_node.sub()[n]);
-        assert(edges);
+        auto neighbor_branches = edges_out_of_node[n];
 
         vector<param> m_edges;
-        for(auto& edge: *edges)
-            m_edges.push_back(get_param(C,edge));
+        while(neighbor_branches.size() == 2)
+        {
+            m_edges.push_back( neighbor_branches[0] );
+
+            neighbor_branches = neighbor_branches[1];
+        }
 
         parameters_for_tree_node.push_back ( m_edges );
 
@@ -94,14 +95,13 @@ tree_constants::tree_constants(context_ref& C, const expression_ref& E)
 
     for(int b=0; b < 2*n_branches; b++)
     {
-        auto nodes = nodes_for_edge.sub()[b];
+        auto info = nodes_for_edge[b];
 
-        assert(has_constructor(nodes,"(,,,)"));
-        param m_source = get_param(C, nodes.sub()[0]);
-        param m_source_index = get_param(C, nodes.sub()[1]);
-        param m_target = get_param(C, nodes.sub()[2]);
+        param m_source = info[0];
+        param m_source_index = info[1];
+        param m_target = info[2];
 
-        parameters_for_tree_branch.push_back( std::tuple<param, param, param>{m_source, m_source_index, m_target} );
+        parameters_for_tree_branch.push_back( {m_source, m_source_index, m_target} );
     }
 }
 
