@@ -192,7 +192,7 @@ coalescent_tree_effect tree = do
   sequence_ [ add_move $ slice_sample_real_random_variable (node_time tree node) (above 0.0)
             | node <- [numLeaves tree..numNodes tree - 1]
             ]
-  sequence_ [ add_move $ fnpr_unsafe tree node
+  sequence_ [ add_move $ metropolis_hastings $ fnpr_unsafe_proposal tree node
             | node <- [0..numNodes tree - 1]
             ]
   sequence_ [ add_move $ tnni_on_branch_unsafe tree branch

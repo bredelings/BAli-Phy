@@ -753,14 +753,16 @@ extern "C" closure builtin_function_FNPR_unsafe(OperationArgs& Args)
 
     int n = Args.evaluate(1).as_int();
 
-    int c1 = Args.evaluate(2).as_int();
+    int context_index = Args.evaluate(2).as_int();
+
+    int io_state = Args.evaluate(3).as_int();
 
     //------------ 2. Make a TreeInterface -------------//
-    context_ref C1(M, c1);
+    context_ref C(M, context_index);
 
-    FNPR_move(C1, tree_reg, n);
+    FNPR_move(C, tree_reg, n);
 
-    return constructor("()",0);
+    return EPair(io_state+1,log_double_t(1.0));
 }
 
 extern "C" closure builtin_function_NNI_on_branch_unsafe(OperationArgs& Args)
