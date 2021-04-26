@@ -494,32 +494,33 @@ namespace yy {
       // gdpat
       char dummy7[sizeof (Haskell::GuardedRHS)];
 
+      // importdecl
+      char dummy8[sizeof (Haskell::ImpDecl)];
+
       // stmtlist
-      char dummy8[sizeof (Haskell::Stmts)];
+      char dummy9[sizeof (Haskell::Stmts)];
 
       // strict_mark
       // strictness
-      char dummy9[sizeof (Haskell::StrictLazy)];
+      char dummy10[sizeof (Haskell::StrictLazy)];
 
       // alt
-      char dummy10[sizeof (Located<Haskell::Alt>)];
+      char dummy11[sizeof (Located<Haskell::Alt>)];
 
       // decllist
       // binds
-      char dummy11[sizeof (Located<Haskell::Decls>)];
+      char dummy12[sizeof (Located<Haskell::Decls>)];
 
-      // maybe_src
-      // maybe_safe
       // optqualified
-      char dummy12[sizeof (bool)];
+      char dummy13[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy13[sizeof (char)];
+      char dummy14[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy14[sizeof (double)];
+      char dummy15[sizeof (double)];
 
       // module
       // body
@@ -531,7 +532,6 @@ namespace yy {
       // qcname_ext_w_wildcard
       // qcname_ext
       // qcname
-      // importdecl
       // maybeimpspec
       // impspec
       // topdecl
@@ -573,29 +573,28 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy15[sizeof (expression_ref)];
+      char dummy16[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy16[sizeof (float)];
+      char dummy17[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy17[sizeof (int)];
+      char dummy18[sizeof (int)];
 
       // wherebinds
-      char dummy18[sizeof (std::optional<Located<Haskell::Decls>>)];
+      char dummy19[sizeof (std::optional<Located<Haskell::Decls>>)];
 
       // prec
-      char dummy19[sizeof (std::optional<int>)];
+      char dummy20[sizeof (std::optional<int>)];
 
-      // maybe_pkg
       // maybeas
-      char dummy20[sizeof (std::optional<std::string>)];
+      char dummy21[sizeof (std::optional<std::string>)];
 
       // tycl_hdr
-      char dummy21[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy22[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // "VARID"
       // "CONID"
@@ -652,23 +651,23 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy22[sizeof (std::string)];
+      char dummy23[sizeof (std::string)];
 
       // constrs
       // constrs1
-      char dummy23[sizeof (std::vector<Haskell::Constructor>)];
+      char dummy24[sizeof (std::vector<Haskell::Constructor>)];
 
       // fielddecls
       // fielddecls1
-      char dummy24[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy25[sizeof (std::vector<Haskell::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy25[sizeof (std::vector<Haskell::GuardedRHS>)];
+      char dummy26[sizeof (std::vector<Haskell::GuardedRHS>)];
 
       // alts
       // alts1
-      char dummy26[sizeof (std::vector<Located<Haskell::Alt>>)];
+      char dummy27[sizeof (std::vector<Located<Haskell::Alt>>)];
 
       // exportlist
       // exportlist1
@@ -695,11 +694,11 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy27[sizeof (std::vector<expression_ref>)];
+      char dummy28[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy28[sizeof (std::vector<std::string>)];
+      char dummy29[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1066,164 +1065,161 @@ namespace yy {
         S_importdecls = 160,                     // importdecls
         S_importdecls_semi = 161,                // importdecls_semi
         S_importdecl = 162,                      // importdecl
-        S_maybe_src = 163,                       // maybe_src
-        S_maybe_safe = 164,                      // maybe_safe
-        S_maybe_pkg = 165,                       // maybe_pkg
-        S_optqualified = 166,                    // optqualified
-        S_maybeas = 167,                         // maybeas
-        S_maybeimpspec = 168,                    // maybeimpspec
-        S_impspec = 169,                         // impspec
-        S_prec = 170,                            // prec
-        S_infix = 171,                           // infix
-        S_ops = 172,                             // ops
-        S_topdecls = 173,                        // topdecls
-        S_topdecls_semi = 174,                   // topdecls_semi
-        S_topdecl = 175,                         // topdecl
-        S_cl_decl = 176,                         // cl_decl
-        S_ty_decl = 177,                         // ty_decl
-        S_inst_decl = 178,                       // inst_decl
-        S_overlap_pragma = 179,                  // overlap_pragma
-        S_deriv_strategy_no_via = 180,           // deriv_strategy_no_via
-        S_deriv_strategy_via = 181,              // deriv_strategy_via
-        S_data_or_newtype = 182,                 // data_or_newtype
-        S_opt_kind_sig = 183,                    // opt_kind_sig
-        S_tycl_hdr = 184,                        // tycl_hdr
-        S_capi_ctype = 185,                      // capi_ctype
-        S_decls = 186,                           // decls
-        S_decllist = 187,                        // decllist
-        S_binds = 188,                           // binds
-        S_wherebinds = 189,                      // wherebinds
-        S_strings = 190,                         // strings
-        S_stringlist = 191,                      // stringlist
-        S_opt_tyconsig = 192,                    // opt_tyconsig
-        S_sigtype = 193,                         // sigtype
-        S_sigtypedoc = 194,                      // sigtypedoc
-        S_sig_vars = 195,                        // sig_vars
-        S_sigtypes1 = 196,                       // sigtypes1
-        S_strict_mark = 197,                     // strict_mark
-        S_strictness = 198,                      // strictness
-        S_ctype = 199,                           // ctype
-        S_ctypedoc = 200,                        // ctypedoc
-        S_context = 201,                         // context
-        S_context_no_ops = 202,                  // context_no_ops
-        S_type = 203,                            // type
-        S_typedoc = 204,                         // typedoc
-        S_btype = 205,                           // btype
-        S_btype_no_ops = 206,                    // btype_no_ops
-        S_tyapps = 207,                          // tyapps
-        S_tyapp = 208,                           // tyapp
-        S_atype_docs = 209,                      // atype_docs
-        S_atype = 210,                           // atype
-        S_inst_type = 211,                       // inst_type
-        S_deriv_types = 212,                     // deriv_types
-        S_comma_types0 = 213,                    // comma_types0
-        S_comma_types1 = 214,                    // comma_types1
-        S_tv_bndrs = 215,                        // tv_bndrs
-        S_tv_bndr = 216,                         // tv_bndr
-        S_kind = 217,                            // kind
-        S_constrs = 218,                         // constrs
-        S_constrs1 = 219,                        // constrs1
-        S_constr = 220,                          // constr
-        S_forall = 221,                          // forall
-        S_constr_stuff = 222,                    // constr_stuff
-        S_fielddecls = 223,                      // fielddecls
-        S_fielddecls1 = 224,                     // fielddecls1
-        S_fielddecl = 225,                       // fielddecl
-        S_maybe_derivings = 226,                 // maybe_derivings
-        S_derivings = 227,                       // derivings
-        S_deriving = 228,                        // deriving
-        S_deriv_clause_types = 229,              // deriv_clause_types
-        S_decl_no_th = 230,                      // decl_no_th
-        S_decl = 231,                            // decl
-        S_rhs = 232,                             // rhs
-        S_gdrhs = 233,                           // gdrhs
-        S_gdrh = 234,                            // gdrh
-        S_sigdecl = 235,                         // sigdecl
-        S_activation = 236,                      // activation
-        S_explicit_activation = 237,             // explicit_activation
-        S_exp = 238,                             // exp
-        S_infixexp = 239,                        // infixexp
-        S_infixexp_top = 240,                    // infixexp_top
-        S_exp10_top = 241,                       // exp10_top
-        S_exp10 = 242,                           // exp10
-        S_optSemi = 243,                         // optSemi
-        S_scc_annot = 244,                       // scc_annot
-        S_fexp = 245,                            // fexp
-        S_aexp = 246,                            // aexp
-        S_aexp1 = 247,                           // aexp1
-        S_aexp2 = 248,                           // aexp2
-        S_texp = 249,                            // texp
-        S_tup_exprs = 250,                       // tup_exprs
-        S_list = 251,                            // list
-        S_lexps = 252,                           // lexps
-        S_squals = 253,                          // squals
-        S_guardquals = 254,                      // guardquals
-        S_guardquals1 = 255,                     // guardquals1
-        S_altslist = 256,                        // altslist
-        S_alts = 257,                            // alts
-        S_alts1 = 258,                           // alts1
-        S_alt = 259,                             // alt
-        S_alt_rhs = 260,                         // alt_rhs
-        S_gdpats = 261,                          // gdpats
-        S_gdpat = 262,                           // gdpat
-        S_pat = 263,                             // pat
-        S_bindpat = 264,                         // bindpat
-        S_apat = 265,                            // apat
-        S_apats1 = 266,                          // apats1
-        S_stmtlist = 267,                        // stmtlist
-        S_stmts = 268,                           // stmts
-        S_stmt = 269,                            // stmt
-        S_qual = 270,                            // qual
-        S_fbinds = 271,                          // fbinds
-        S_fbinds1 = 272,                         // fbinds1
-        S_fbind = 273,                           // fbind
-        S_qcon = 274,                            // qcon
-        S_gen_qcon = 275,                        // gen_qcon
-        S_con = 276,                             // con
-        S_con_list = 277,                        // con_list
-        S_sysdcon_no_list = 278,                 // sysdcon_no_list
-        S_sysdcon = 279,                         // sysdcon
-        S_conop = 280,                           // conop
-        S_qconop = 281,                          // qconop
-        S_gtycon = 282,                          // gtycon
-        S_ntgtycon = 283,                        // ntgtycon
-        S_oqtycon = 284,                         // oqtycon
-        S_oqtycon_no_varcon = 285,               // oqtycon_no_varcon
-        S_qtyconop = 286,                        // qtyconop
-        S_qtycondoc = 287,                       // qtycondoc
-        S_qtycon = 288,                          // qtycon
-        S_tycon = 289,                           // tycon
-        S_qtyconsym = 290,                       // qtyconsym
-        S_tyconsym = 291,                        // tyconsym
-        S_op = 292,                              // op
-        S_varop = 293,                           // varop
-        S_qop = 294,                             // qop
-        S_qopm = 295,                            // qopm
-        S_hole_op = 296,                         // hole_op
-        S_qvarop = 297,                          // qvarop
-        S_qvaropm = 298,                         // qvaropm
-        S_tyvar = 299,                           // tyvar
-        S_tyvarop = 300,                         // tyvarop
-        S_tyvarid = 301,                         // tyvarid
-        S_var = 302,                             // var
-        S_qvar = 303,                            // qvar
-        S_qvarid = 304,                          // qvarid
-        S_varid = 305,                           // varid
-        S_qvarsym = 306,                         // qvarsym
-        S_qvarsym_no_minus = 307,                // qvarsym_no_minus
-        S_qvarsym1 = 308,                        // qvarsym1
-        S_varsym = 309,                          // varsym
-        S_varsym_no_minus = 310,                 // varsym_no_minus
-        S_special_id = 311,                      // special_id
-        S_special_sym = 312,                     // special_sym
-        S_qconid = 313,                          // qconid
-        S_conid = 314,                           // conid
-        S_qconsym = 315,                         // qconsym
-        S_consym = 316,                          // consym
-        S_literal = 317,                         // literal
-        S_close = 318,                           // close
-        S_modid = 319,                           // modid
-        S_commas = 320                           // commas
+        S_optqualified = 163,                    // optqualified
+        S_maybeas = 164,                         // maybeas
+        S_maybeimpspec = 165,                    // maybeimpspec
+        S_impspec = 166,                         // impspec
+        S_prec = 167,                            // prec
+        S_infix = 168,                           // infix
+        S_ops = 169,                             // ops
+        S_topdecls = 170,                        // topdecls
+        S_topdecls_semi = 171,                   // topdecls_semi
+        S_topdecl = 172,                         // topdecl
+        S_cl_decl = 173,                         // cl_decl
+        S_ty_decl = 174,                         // ty_decl
+        S_inst_decl = 175,                       // inst_decl
+        S_overlap_pragma = 176,                  // overlap_pragma
+        S_deriv_strategy_no_via = 177,           // deriv_strategy_no_via
+        S_deriv_strategy_via = 178,              // deriv_strategy_via
+        S_data_or_newtype = 179,                 // data_or_newtype
+        S_opt_kind_sig = 180,                    // opt_kind_sig
+        S_tycl_hdr = 181,                        // tycl_hdr
+        S_capi_ctype = 182,                      // capi_ctype
+        S_decls = 183,                           // decls
+        S_decllist = 184,                        // decllist
+        S_binds = 185,                           // binds
+        S_wherebinds = 186,                      // wherebinds
+        S_strings = 187,                         // strings
+        S_stringlist = 188,                      // stringlist
+        S_opt_tyconsig = 189,                    // opt_tyconsig
+        S_sigtype = 190,                         // sigtype
+        S_sigtypedoc = 191,                      // sigtypedoc
+        S_sig_vars = 192,                        // sig_vars
+        S_sigtypes1 = 193,                       // sigtypes1
+        S_strict_mark = 194,                     // strict_mark
+        S_strictness = 195,                      // strictness
+        S_ctype = 196,                           // ctype
+        S_ctypedoc = 197,                        // ctypedoc
+        S_context = 198,                         // context
+        S_context_no_ops = 199,                  // context_no_ops
+        S_type = 200,                            // type
+        S_typedoc = 201,                         // typedoc
+        S_btype = 202,                           // btype
+        S_btype_no_ops = 203,                    // btype_no_ops
+        S_tyapps = 204,                          // tyapps
+        S_tyapp = 205,                           // tyapp
+        S_atype_docs = 206,                      // atype_docs
+        S_atype = 207,                           // atype
+        S_inst_type = 208,                       // inst_type
+        S_deriv_types = 209,                     // deriv_types
+        S_comma_types0 = 210,                    // comma_types0
+        S_comma_types1 = 211,                    // comma_types1
+        S_tv_bndrs = 212,                        // tv_bndrs
+        S_tv_bndr = 213,                         // tv_bndr
+        S_kind = 214,                            // kind
+        S_constrs = 215,                         // constrs
+        S_constrs1 = 216,                        // constrs1
+        S_constr = 217,                          // constr
+        S_forall = 218,                          // forall
+        S_constr_stuff = 219,                    // constr_stuff
+        S_fielddecls = 220,                      // fielddecls
+        S_fielddecls1 = 221,                     // fielddecls1
+        S_fielddecl = 222,                       // fielddecl
+        S_maybe_derivings = 223,                 // maybe_derivings
+        S_derivings = 224,                       // derivings
+        S_deriving = 225,                        // deriving
+        S_deriv_clause_types = 226,              // deriv_clause_types
+        S_decl_no_th = 227,                      // decl_no_th
+        S_decl = 228,                            // decl
+        S_rhs = 229,                             // rhs
+        S_gdrhs = 230,                           // gdrhs
+        S_gdrh = 231,                            // gdrh
+        S_sigdecl = 232,                         // sigdecl
+        S_activation = 233,                      // activation
+        S_explicit_activation = 234,             // explicit_activation
+        S_exp = 235,                             // exp
+        S_infixexp = 236,                        // infixexp
+        S_infixexp_top = 237,                    // infixexp_top
+        S_exp10_top = 238,                       // exp10_top
+        S_exp10 = 239,                           // exp10
+        S_optSemi = 240,                         // optSemi
+        S_scc_annot = 241,                       // scc_annot
+        S_fexp = 242,                            // fexp
+        S_aexp = 243,                            // aexp
+        S_aexp1 = 244,                           // aexp1
+        S_aexp2 = 245,                           // aexp2
+        S_texp = 246,                            // texp
+        S_tup_exprs = 247,                       // tup_exprs
+        S_list = 248,                            // list
+        S_lexps = 249,                           // lexps
+        S_squals = 250,                          // squals
+        S_guardquals = 251,                      // guardquals
+        S_guardquals1 = 252,                     // guardquals1
+        S_altslist = 253,                        // altslist
+        S_alts = 254,                            // alts
+        S_alts1 = 255,                           // alts1
+        S_alt = 256,                             // alt
+        S_alt_rhs = 257,                         // alt_rhs
+        S_gdpats = 258,                          // gdpats
+        S_gdpat = 259,                           // gdpat
+        S_pat = 260,                             // pat
+        S_bindpat = 261,                         // bindpat
+        S_apat = 262,                            // apat
+        S_apats1 = 263,                          // apats1
+        S_stmtlist = 264,                        // stmtlist
+        S_stmts = 265,                           // stmts
+        S_stmt = 266,                            // stmt
+        S_qual = 267,                            // qual
+        S_fbinds = 268,                          // fbinds
+        S_fbinds1 = 269,                         // fbinds1
+        S_fbind = 270,                           // fbind
+        S_qcon = 271,                            // qcon
+        S_gen_qcon = 272,                        // gen_qcon
+        S_con = 273,                             // con
+        S_con_list = 274,                        // con_list
+        S_sysdcon_no_list = 275,                 // sysdcon_no_list
+        S_sysdcon = 276,                         // sysdcon
+        S_conop = 277,                           // conop
+        S_qconop = 278,                          // qconop
+        S_gtycon = 279,                          // gtycon
+        S_ntgtycon = 280,                        // ntgtycon
+        S_oqtycon = 281,                         // oqtycon
+        S_oqtycon_no_varcon = 282,               // oqtycon_no_varcon
+        S_qtyconop = 283,                        // qtyconop
+        S_qtycondoc = 284,                       // qtycondoc
+        S_qtycon = 285,                          // qtycon
+        S_tycon = 286,                           // tycon
+        S_qtyconsym = 287,                       // qtyconsym
+        S_tyconsym = 288,                        // tyconsym
+        S_op = 289,                              // op
+        S_varop = 290,                           // varop
+        S_qop = 291,                             // qop
+        S_qopm = 292,                            // qopm
+        S_hole_op = 293,                         // hole_op
+        S_qvarop = 294,                          // qvarop
+        S_qvaropm = 295,                         // qvaropm
+        S_tyvar = 296,                           // tyvar
+        S_tyvarop = 297,                         // tyvarop
+        S_tyvarid = 298,                         // tyvarid
+        S_var = 299,                             // var
+        S_qvar = 300,                            // qvar
+        S_qvarid = 301,                          // qvarid
+        S_varid = 302,                           // varid
+        S_qvarsym = 303,                         // qvarsym
+        S_qvarsym_no_minus = 304,                // qvarsym_no_minus
+        S_qvarsym1 = 305,                        // qvarsym1
+        S_varsym = 306,                          // varsym
+        S_varsym_no_minus = 307,                 // varsym_no_minus
+        S_special_id = 308,                      // special_id
+        S_special_sym = 309,                     // special_sym
+        S_qconid = 310,                          // qconid
+        S_conid = 311,                           // conid
+        S_qconsym = 312,                         // qconsym
+        S_consym = 313,                          // consym
+        S_literal = 314,                         // literal
+        S_close = 315,                           // close
+        S_modid = 316,                           // modid
+        S_commas = 317                           // commas
       };
     };
 
@@ -1290,6 +1286,10 @@ namespace yy {
         value.move< Haskell::GuardedRHS > (std::move (that.value));
         break;
 
+      case symbol_kind::S_importdecl: // importdecl
+        value.move< Haskell::ImpDecl > (std::move (that.value));
+        break;
+
       case symbol_kind::S_stmtlist: // stmtlist
         value.move< Haskell::Stmts > (std::move (that.value));
         break;
@@ -1308,8 +1308,6 @@ namespace yy {
         value.move< Located<Haskell::Decls> > (std::move (that.value));
         break;
 
-      case symbol_kind::S_maybe_src: // maybe_src
-      case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
         value.move< bool > (std::move (that.value));
         break;
@@ -1334,7 +1332,6 @@ namespace yy {
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
       case symbol_kind::S_qcname_ext: // qcname_ext
       case symbol_kind::S_qcname: // qcname
-      case symbol_kind::S_importdecl: // importdecl
       case symbol_kind::S_maybeimpspec: // maybeimpspec
       case symbol_kind::S_impspec: // impspec
       case symbol_kind::S_topdecl: // topdecl
@@ -1398,7 +1395,6 @@ namespace yy {
         value.move< std::optional<int> > (std::move (that.value));
         break;
 
-      case symbol_kind::S_maybe_pkg: // maybe_pkg
       case symbol_kind::S_maybeas: // maybeas
         value.move< std::optional<std::string> > (std::move (that.value));
         break;
@@ -1633,6 +1629,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Haskell::GuardedRHS& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::ImpDecl&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::ImpDecl& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1985,6 +1995,10 @@ switch (yykind)
         value.template destroy< Haskell::GuardedRHS > ();
         break;
 
+      case symbol_kind::S_importdecl: // importdecl
+        value.template destroy< Haskell::ImpDecl > ();
+        break;
+
       case symbol_kind::S_stmtlist: // stmtlist
         value.template destroy< Haskell::Stmts > ();
         break;
@@ -2003,8 +2017,6 @@ switch (yykind)
         value.template destroy< Located<Haskell::Decls> > ();
         break;
 
-      case symbol_kind::S_maybe_src: // maybe_src
-      case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
         value.template destroy< bool > ();
         break;
@@ -2029,7 +2041,6 @@ switch (yykind)
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
       case symbol_kind::S_qcname_ext: // qcname_ext
       case symbol_kind::S_qcname: // qcname
-      case symbol_kind::S_importdecl: // importdecl
       case symbol_kind::S_maybeimpspec: // maybeimpspec
       case symbol_kind::S_impspec: // impspec
       case symbol_kind::S_topdecl: // topdecl
@@ -2093,7 +2104,6 @@ switch (yykind)
         value.template destroy< std::optional<int> > ();
         break;
 
-      case symbol_kind::S_maybe_pkg: // maybe_pkg
       case symbol_kind::S_maybeas: // maybeas
         value.template destroy< std::optional<std::string> > ();
         break;
@@ -4799,8 +4809,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 4280,     ///< Last index in yytable_.
-      yynnts_ = 182,  ///< Number of nonterminal symbols.
+      yylast_ = 4227,     ///< Last index in yytable_.
+      yynnts_ = 179,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
 
@@ -4911,6 +4921,10 @@ switch (yykind)
         value.copy< Haskell::GuardedRHS > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_importdecl: // importdecl
+        value.copy< Haskell::ImpDecl > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_stmtlist: // stmtlist
         value.copy< Haskell::Stmts > (YY_MOVE (that.value));
         break;
@@ -4929,8 +4943,6 @@ switch (yykind)
         value.copy< Located<Haskell::Decls> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_maybe_src: // maybe_src
-      case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
         value.copy< bool > (YY_MOVE (that.value));
         break;
@@ -4955,7 +4967,6 @@ switch (yykind)
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
       case symbol_kind::S_qcname_ext: // qcname_ext
       case symbol_kind::S_qcname: // qcname
-      case symbol_kind::S_importdecl: // importdecl
       case symbol_kind::S_maybeimpspec: // maybeimpspec
       case symbol_kind::S_impspec: // impspec
       case symbol_kind::S_topdecl: // topdecl
@@ -5019,7 +5030,6 @@ switch (yykind)
         value.copy< std::optional<int> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_maybe_pkg: // maybe_pkg
       case symbol_kind::S_maybeas: // maybeas
         value.copy< std::optional<std::string> > (YY_MOVE (that.value));
         break;
@@ -5198,6 +5208,10 @@ switch (yykind)
         value.move< Haskell::GuardedRHS > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_importdecl: // importdecl
+        value.move< Haskell::ImpDecl > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_stmtlist: // stmtlist
         value.move< Haskell::Stmts > (YY_MOVE (s.value));
         break;
@@ -5216,8 +5230,6 @@ switch (yykind)
         value.move< Located<Haskell::Decls> > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_maybe_src: // maybe_src
-      case symbol_kind::S_maybe_safe: // maybe_safe
       case symbol_kind::S_optqualified: // optqualified
         value.move< bool > (YY_MOVE (s.value));
         break;
@@ -5242,7 +5254,6 @@ switch (yykind)
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
       case symbol_kind::S_qcname_ext: // qcname_ext
       case symbol_kind::S_qcname: // qcname
-      case symbol_kind::S_importdecl: // importdecl
       case symbol_kind::S_maybeimpspec: // maybeimpspec
       case symbol_kind::S_impspec: // impspec
       case symbol_kind::S_topdecl: // topdecl
@@ -5306,7 +5317,6 @@ switch (yykind)
         value.move< std::optional<int> > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_maybe_pkg: // maybe_pkg
       case symbol_kind::S_maybeas: // maybeas
         value.move< std::optional<std::string> > (YY_MOVE (s.value));
         break;
@@ -5488,7 +5498,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5492 "parser.hh"
+#line 5502 "parser.hh"
 
 
 

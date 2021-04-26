@@ -191,36 +191,33 @@ void Module::import_module(const Program& P, const module_import& I)
         }
 }
 
-module_import parse_import(const expression_ref& impdecl)
+module_import parse_import(const Haskell::ImpDecl& impdecl)
 {
     module_import mi;
 
-    int i=0;
-    mi.qualified = is_AST(impdecl.sub()[0], "qualified");
-    if (mi.qualified) i++;
+    mi.qualified = impdecl.qualified;
             
-    mi.name = impdecl.sub()[i++].as_<String>();
+    mi.name = impdecl.modid;
             
-    if (i < impdecl.size() and is_AST(impdecl.sub()[i],"as"))
-        mi.as = impdecl.sub()[i++].as_<AST_node>().value;
+    if (impdecl.as)
+        mi.as = *impdecl.as;
     else
         mi.as = mi.name;
 
-    if (i < impdecl.size() and (is_AST(impdecl.sub()[i], "only") or is_AST(impdecl.sub()[i],"hiding")))
+    if (auto impspec = impdecl.impspec)
     {
-        mi.hiding = is_AST(impdecl.sub()[i],"hiding");
-        mi.only = is_AST(impdecl.sub()[i],"only");
+        mi.hiding = is_AST(impspec,"hiding");
+        mi.only = is_AST(impspec,"only");
         assert(mi.hiding or mi.only);
 
-        auto& objects = impdecl.sub()[i++].sub();
-        for(auto& x: objects)
+
+        for(auto& x: impspec.sub())
             mi.symbols.insert(x.as_<AST_node>().value);
     }
 
     // only:   handle import qualified A as B (x, y)
     // hiding:  handle import qualified A as B hiding (x, y)
 
-    assert(i == impdecl.size());
     return mi;
 }
 
@@ -232,7 +229,7 @@ vector<module_import> Module::imports() const
     if (impdecls)
         for(const auto& impdecl:impdecls.sub())
         {
-            auto import = parse_import(impdecl);
+            auto import = parse_import(impdecl.as_<Haskell::ImpDecl>());
             if (import.name == "Prelude")
                 seen_Prelude = true;
             imports_list.push_back(import);

@@ -7,6 +7,20 @@ using std::vector;
 namespace Haskell
 {
 
+string ImpDecl::print() const
+{
+    vector<string> v;
+    v.push_back("import");
+    if (qualified)
+        v.push_back("qualified");
+    v.push_back(modid);
+    if (as)
+        v.push_back(*as);
+    if (impspec)
+        v.push_back(impspec.print());
+    return join(v, " ");
+}
+    
 string ValueDecl::print() const
 {
     string result = lhs.print() + " ";

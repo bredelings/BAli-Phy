@@ -275,10 +275,10 @@
 
 %type <std::vector<expression_ref>> importdecls
 %type <std::vector<expression_ref>> importdecls_semi
-%type <expression_ref> importdecl
-%type <bool> maybe_src
-%type <bool> maybe_safe
-%type <std::optional<std::string>> maybe_pkg
+%type <Haskell::ImpDecl> importdecl
+ // %type <bool> maybe_src
+ // %type <bool> maybe_safe
+ // %type <std::optional<std::string>> maybe_pkg
 %type <bool> optqualified
 %type <std::optional<std::string>> maybeas
 %type <expression_ref> maybeimpspec
@@ -609,15 +609,10 @@ importdecls: importdecls_semi importdecl { $$ = $1, $$.push_back($2); }
 importdecls_semi: importdecls_semi importdecl semis1 { $$ = $1; $$.push_back($2); }
 |                 %empty { }
 
-importdecl: "import" maybe_src maybe_safe optqualified maybe_pkg modid maybeas maybeimpspec {
-    std::vector<expression_ref> e;
-    if ($4) e.push_back(AST_node("qualified"));
-    e.push_back(String($6));
-    if ($7) e.push_back(AST_node("as", *$7));
-    if ($8) e.push_back($8);
-    $$ = expression_ref(new expression(AST_node("ImpDecl"),std::move(e)));
+importdecl: "import" /*maybe_src*/ /*maybe_safe*/ optqualified /*maybe_pkg*/ modid maybeas maybeimpspec {
+    $$ = Haskell::ImpDecl($2,$3,$4,$5);
 }
-
+/*
 maybe_src: "{-# SOURCE" "#-}"  { $$ = true; }
 |          %empty              { $$ = false; }
 
@@ -626,7 +621,7 @@ maybe_safe: "safe"             { $$ = true; }
 
 maybe_pkg: STRING              { $$ = $1; }
 |          %empty              { }
-
+*/
 optqualified: "qualified"      { $$ = true; }
 |             %empty           { $$ = false; }
 

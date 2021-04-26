@@ -11,6 +11,27 @@
 namespace Haskell
 {
 
+typedef expression_ref ImpSpec;
+    
+struct ImpDecl: public Object
+{
+    bool qualified;
+    std::string modid;
+    std::optional<std::string> as;
+    expression_ref impspec;
+
+    ImpDecl* clone() const { return new ImpDecl(*this);}
+    std::string print() const;
+
+    ImpDecl() = default;
+    ImpDecl(bool b, const std::string& s, const std::optional<std::string>& a, const ImpSpec& is)
+        :qualified(b),
+         modid(s),
+         as(a),
+         impspec(is)
+    {}
+};
+
 // HsDecl = type or class declaration
 //          instance declaration
 //          deriving declaration
