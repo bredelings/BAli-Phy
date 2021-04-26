@@ -1377,7 +1377,8 @@ Module::Module(const char *n)
 
 Module::Module(const Haskell::Module& M, const set<string>& lo)
     :language_options(lo),
-     module(M)
+     module(M),
+     name(module.modid)
 {
 }
 
