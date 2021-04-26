@@ -12,7 +12,12 @@ string Module::print() const
     string result = "module " + modid;
 
     if (exports)
-        result += "(" + exports.print() + ")";
+    {
+        vector<string> export_strings;
+        for(auto& e: *exports)
+            export_strings.push_back(e.print());
+        result += "(" + join(export_strings, ", ") + ")";
+    }
 
     result += " where {";
 

@@ -633,7 +633,7 @@ struct IfExp: public Object
 struct Module
 {
     std::string modid;
-    expression_ref exports;
+    std::optional<std::vector<expression_ref>> exports;
     std::vector<ImpDecl> impdecls;
     std::optional<Decls> topdecls;
 
@@ -641,7 +641,7 @@ struct Module
 
     Module() = default;
     Module(const std::string&s,
-           const expression_ref& e,
+           const std::optional<std::vector<expression_ref>>& e,
            const std::vector<ImpDecl>& i,
            const std::optional<Decls>& t)
         :modid(s),

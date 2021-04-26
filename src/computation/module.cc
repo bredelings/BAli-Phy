@@ -368,12 +368,11 @@ void Module::export_module(const string& modid)
 void Module::perform_exports()
 {
     // Currently we just export the local symbols
-    if (not exports or exports.sub().size() == 0)
+    if (not exports or exports->size() == 0)
         export_module(name);
     else
     {
-        assert(is_AST(exports,"Exports"));
-        for(auto& ex: exports.sub())
+        for(auto& ex: *exports)
         {
             if (is_AST(ex,"qvar"))
             {
@@ -597,7 +596,7 @@ void Module::export_small_decls()
     }
 }
 
-void parse_module(const Haskell::Module& M, string& name, expression_ref& exports, vector<Haskell::ImpDecl>& impdecls, optional<Haskell::Decls>& topdecls)
+void parse_module(const Haskell::Module& M, string& name, optional<vector<expression_ref>>& exports, vector<Haskell::ImpDecl>& impdecls, optional<Haskell::Decls>& topdecls)
 {
     name = M.modid;
     exports = M.exports;
@@ -605,7 +604,7 @@ void parse_module(const Haskell::Module& M, string& name, expression_ref& export
     topdecls = M.topdecls;
 }
 
-Haskell::Module create_module(const string& name, const expression_ref& exports, const vector<Haskell::ImpDecl>& impdecls, const optional<Haskell::Decls>& topdecls)
+Haskell::Module create_module(const string& name, const optional<vector<expression_ref>>& exports, const vector<Haskell::ImpDecl>& impdecls, const optional<Haskell::Decls>& topdecls)
 {
     return {name, exports, impdecls, topdecls};
 }

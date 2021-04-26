@@ -61,10 +61,9 @@
 
   class driver;
 
-  Haskell::Module make_module(const std::string& name, const expression_ref& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls);
+  Haskell::Module make_module(const std::string& name, const std::optional<std::vector<expression_ref>>& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls);
   std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
-  expression_ref make_exports(const std::vector<expression_ref>& exports);
   Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, std::vector<std::string>& ops);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
@@ -123,7 +122,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 127 "parser.hh"
+#line 126 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -257,7 +256,7 @@
 #endif
 
 namespace yy {
-#line 261 "parser.hh"
+#line 260 "parser.hh"
 
 
 
@@ -529,7 +528,6 @@ namespace yy {
       // "PRIMDOUBLE"
       char dummy17[sizeof (double)];
 
-      // maybeexports
       // export
       // qcname_ext_w_wildcard
       // qcname_ext
@@ -595,14 +593,17 @@ namespace yy {
       // maybeas
       char dummy23[sizeof (std::optional<std::string>)];
 
+      // maybeexports
+      char dummy24[sizeof (std::optional<std::vector<expression_ref>>)];
+
       // tycl_hdr
-      char dummy24[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy25[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // body
       // body2
       // top
       // top1
-      char dummy25[sizeof (std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>)];
+      char dummy26[sizeof (std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>)];
 
       // "VARID"
       // "CONID"
@@ -659,27 +660,27 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy26[sizeof (std::string)];
+      char dummy27[sizeof (std::string)];
 
       // constrs
       // constrs1
-      char dummy27[sizeof (std::vector<Haskell::Constructor>)];
+      char dummy28[sizeof (std::vector<Haskell::Constructor>)];
 
       // fielddecls
       // fielddecls1
-      char dummy28[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy29[sizeof (std::vector<Haskell::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy29[sizeof (std::vector<Haskell::GuardedRHS>)];
+      char dummy30[sizeof (std::vector<Haskell::GuardedRHS>)];
 
       // importdecls
       // importdecls_semi
-      char dummy30[sizeof (std::vector<Haskell::ImpDecl>)];
+      char dummy31[sizeof (std::vector<Haskell::ImpDecl>)];
 
       // alts
       // alts1
-      char dummy31[sizeof (std::vector<Located<Haskell::Alt>>)];
+      char dummy32[sizeof (std::vector<Located<Haskell::Alt>>)];
 
       // exportlist
       // exportlist1
@@ -702,11 +703,11 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy32[sizeof (std::vector<expression_ref>)];
+      char dummy33[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy33[sizeof (std::vector<std::string>)];
+      char dummy34[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1339,7 +1340,6 @@ namespace yy {
         value.move< double > (std::move (that.value));
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
       case symbol_kind::S_export: // export
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
       case symbol_kind::S_qcname_ext: // qcname_ext
@@ -1409,6 +1409,10 @@ namespace yy {
 
       case symbol_kind::S_maybeas: // maybeas
         value.move< std::optional<std::string> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_maybeexports: // maybeexports
+        value.move< std::optional<std::vector<expression_ref>> > (std::move (that.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -1880,6 +1884,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::optional<std::vector<expression_ref>>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::optional<std::vector<expression_ref>>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::pair<Haskell::Context,expression_ref>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -2116,7 +2134,6 @@ switch (yykind)
         value.template destroy< double > ();
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
       case symbol_kind::S_export: // export
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
       case symbol_kind::S_qcname_ext: // qcname_ext
@@ -2186,6 +2203,10 @@ switch (yykind)
 
       case symbol_kind::S_maybeas: // maybeas
         value.template destroy< std::optional<std::string> > ();
+        break;
+
+      case symbol_kind::S_maybeexports: // maybeexports
+        value.template destroy< std::optional<std::vector<expression_ref>> > ();
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -5054,7 +5075,6 @@ switch (yykind)
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
       case symbol_kind::S_export: // export
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
       case symbol_kind::S_qcname_ext: // qcname_ext
@@ -5124,6 +5144,10 @@ switch (yykind)
 
       case symbol_kind::S_maybeas: // maybeas
         value.copy< std::optional<std::string> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_maybeexports: // maybeexports
+        value.copy< std::optional<std::vector<expression_ref>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -5353,7 +5377,6 @@ switch (yykind)
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
       case symbol_kind::S_export: // export
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
       case symbol_kind::S_qcname_ext: // qcname_ext
@@ -5423,6 +5446,10 @@ switch (yykind)
 
       case symbol_kind::S_maybeas: // maybeas
         value.move< std::optional<std::string> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_maybeexports: // maybeexports
+        value.move< std::optional<std::vector<expression_ref>> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -5610,7 +5637,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5614 "parser.hh"
+#line 5641 "parser.hh"
 
 
 

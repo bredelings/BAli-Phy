@@ -23,10 +23,9 @@
 
   class driver;
 
-  Haskell::Module make_module(const std::string& name, const expression_ref& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls);
+  Haskell::Module make_module(const std::string& name, const std::optional<std::vector<expression_ref>>& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls);
   std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
-  expression_ref make_exports(const std::vector<expression_ref>& exports);
   Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, std::vector<std::string>& ops);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
@@ -262,7 +261,7 @@
 %type <std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>> top
 %type <std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>> top1
 
-%type <expression_ref> maybeexports
+%type <std::optional<std::vector<expression_ref>>> maybeexports
 %type <std::vector<expression_ref>> exportlist
 %type <std::vector<expression_ref>> exportlist1
 %type <expression_ref> export
@@ -566,7 +565,7 @@ top1: importdecls_semi topdecls_semi       {$$ = make_body($1,$2);}
 
 /* ------------- The Export List --------------------------------- */
 
-maybeexports: "(" exportlist ")"      {$$ = make_exports($2);}
+maybeexports: "(" exportlist ")"      {$$ = $2;}
 |             %empty                  {}
 
 exportlist: exportlist1               {$$ = $1;}
@@ -1511,7 +1510,7 @@ yy::parser::error (const location_type& l, const std::string& m)
     drv.push_error_message({l,m});
 }
 
-Haskell::Module make_module(const std::string& name, const expression_ref& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls)
+Haskell::Module make_module(const std::string& name, const std::optional<std::vector<expression_ref>>& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls)
 {
     return {name, exports, impdecls, topdecls};
 }
@@ -1525,11 +1524,6 @@ pair<vector<Haskell::ImpDecl>, optional<Haskell::Decls>> make_body(const std::ve
     }
     else
         return {imports, {}};
-}
-
-expression_ref make_exports(const vector<expression_ref>& exports)
-{
-    return new expression(AST_node("Exports"),exports);
 }
 
 expression_ref make_builtin_expr(const string& name, int args, const string& s1, const string& s2)
