@@ -1642,7 +1642,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotype_from_plaf(Oper
 
     //---------------- Propose a new weight -------------------//
 
-    log_double_t w_ratio = shift_laplace(C2, titre_reg, 1.0);
+    log_double_t w_ratio = shift_laplace(C2, titre_reg, 3.0);
 
     auto weights2 = evaluate_slot(C2, 6).as_<EVector>();
 
@@ -1800,9 +1800,9 @@ extern "C" closure builtin_function_propose_weights_and_two_haplotypes_from_plaf
 
     //---------------- Propose a new weight -------------------//
 
-    log_double_t w_ratio1 = shift_laplace(C2, titre1_reg, 1.0);
+    log_double_t w_ratio1 = shift_laplace(C2, titre1_reg, 3.0);
 
-    log_double_t w_ratio2 = shift_laplace(C2, titre2_reg, 1.0);
+    log_double_t w_ratio2 = shift_laplace(C2, titre2_reg, 0.125);
 
     log_double_t w_ratio = w_ratio1 * w_ratio2;
 
@@ -2014,13 +2014,11 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
 
     //---------------- Propose a new weight -------------------//
 
-    log_double_t w_ratio1 = shift_laplace(C2, titre1_reg, 0.125);
+    log_double_t w_ratio1 = shift_laplace(C2, titre1_reg, 3.0);
 
-    log_double_t w_ratio2 = shift_laplace(C2, titre2_reg, 0.25);
+    log_double_t w_ratio2 = shift_laplace(C2, titre2_reg, 0.125);
 
-    log_double_t w_ratio3 = shift_laplace(C2, titre3_reg, 1.5);
-
-    log_double_t w_ratio = w_ratio1 * w_ratio2 * w_ratio3;
+    log_double_t w_ratio = w_ratio1 * w_ratio2;
 
     auto weights2 = evaluate_slot(C2, 12).as_<EVector>();
 
