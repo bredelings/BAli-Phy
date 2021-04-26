@@ -226,14 +226,13 @@ vector<module_import> Module::imports() const
     vector<module_import> imports_list;
 
     bool seen_Prelude = false;
-    if (impdecls)
-        for(const auto& impdecl:impdecls.sub())
-        {
-            auto import = parse_import(impdecl.as_<Haskell::ImpDecl>());
-            if (import.name == "Prelude")
-                seen_Prelude = true;
-            imports_list.push_back(import);
-        }
+    for(const auto& impdecl:impdecls)
+    {
+        auto import = parse_import(impdecl);
+        if (import.name == "Prelude")
+            seen_Prelude = true;
+        imports_list.push_back(import);
+    }
 
     // Import the Prelude if it wasn't explicitly mentioned in the import list.
     if (not seen_Prelude and name != "Prelude" and not language_options.count("NoImplicitPrelude"))
@@ -598,36 +597,17 @@ void Module::export_small_decls()
     }
 }
 
-void parse_module(const Haskell::Module& M, string& name, expression_ref& exports, expression_ref& body, expression_ref& impdecls, optional<Haskell::Decls>& topdecls)
+void parse_module(const Haskell::Module& M, string& name, expression_ref& exports, vector<Haskell::ImpDecl>& impdecls, optional<Haskell::Decls>& topdecls)
 {
     name = M.modid;
     exports = M.exports;
-    body = M.body;
-
-    assert(is_AST(body,"Body"));
-
-    // 2. body = impdecls + [optional topdecls]
-    for(const auto& E: body.sub())
-        if (is_AST(E,"TopDecls"))
-            topdecls = Haskell::Decls(E.sub(),true);
-        else if (is_AST(E,"impdecls"))
-            impdecls = E;
+    impdecls = M.impdecls;
+    topdecls = M.topdecls;
 }
 
-Haskell::Module create_module(const string& name, const expression_ref& exports, const expression_ref& impdecls, const optional<Haskell::Decls>& topdecls)
+Haskell::Module create_module(const string& name, const expression_ref& exports, const vector<Haskell::ImpDecl>& impdecls, const optional<Haskell::Decls>& topdecls)
 {
-    expression_ref body = AST_node("Body");
-    if (impdecls)
-    {
-        assert(is_AST(impdecls, "impdecls"));
-        body = body + impdecls;
-    }
-    if (topdecls)
-    {
-        body = body + Box<Haskell::Decls>(*topdecls);
-    }
-
-    return {name, exports, body};
+    return {name, exports, impdecls, topdecls};
 }
 
 template <typename T>
@@ -1415,7 +1395,7 @@ Module::Module(const Haskell::Module& M, const set<string>& lo)
     :language_options(lo),
      module(M)
 {
-    parse_module(module, name, exports, body, impdecls, topdecls);
+    parse_module(module, name, exports, impdecls, topdecls);
 }
 
 std::ostream& operator<<(std::ostream& o, const Module& M)

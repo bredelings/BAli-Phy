@@ -9,7 +9,21 @@ namespace Haskell
 
 string Module::print() const
 {
-    string result = "module " + modid + " " + exports.print() + " where {" + body.print() + "}";;
+    string result = "module " + modid;
+
+    if (exports)
+        result += "(" + exports.print() + ")";
+
+    result += " where {";
+
+    for(auto& i: impdecls)
+        result += i.print() + "; ";
+
+    if (topdecls)
+        for(auto& t: *topdecls)
+            result += t.print() + "; ";
+
+    result += "}";
 
     return result;
 }

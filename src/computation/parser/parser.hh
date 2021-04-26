@@ -61,8 +61,8 @@
 
   class driver;
 
-  Haskell::Module make_module(const std::string& name, const expression_ref& exports, const expression_ref& body);
-  expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls);
+  Haskell::Module make_module(const std::string& name, const expression_ref& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls);
+  std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
   expression_ref make_exports(const std::vector<expression_ref>& exports);
   Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, std::vector<std::string>& ops);
@@ -484,51 +484,51 @@ namespace yy {
       // data_or_newtype
       char dummy4[sizeof (Haskell::DataOrNewtype)];
 
+      // topdecls
+      // topdecls_semi
+      char dummy5[sizeof (Haskell::Decls)];
+
       // fielddecl
-      char dummy5[sizeof (Haskell::FieldDecl)];
+      char dummy6[sizeof (Haskell::FieldDecl)];
 
       // infix
-      char dummy6[sizeof (Haskell::Fixity)];
+      char dummy7[sizeof (Haskell::Fixity)];
 
       // gdrh
       // gdpat
-      char dummy7[sizeof (Haskell::GuardedRHS)];
+      char dummy8[sizeof (Haskell::GuardedRHS)];
 
       // importdecl
-      char dummy8[sizeof (Haskell::ImpDecl)];
+      char dummy9[sizeof (Haskell::ImpDecl)];
 
       // module
-      char dummy9[sizeof (Haskell::Module)];
+      char dummy10[sizeof (Haskell::Module)];
 
       // stmtlist
-      char dummy10[sizeof (Haskell::Stmts)];
+      char dummy11[sizeof (Haskell::Stmts)];
 
       // strict_mark
       // strictness
-      char dummy11[sizeof (Haskell::StrictLazy)];
+      char dummy12[sizeof (Haskell::StrictLazy)];
 
       // alt
-      char dummy12[sizeof (Located<Haskell::Alt>)];
+      char dummy13[sizeof (Located<Haskell::Alt>)];
 
       // decllist
       // binds
-      char dummy13[sizeof (Located<Haskell::Decls>)];
+      char dummy14[sizeof (Located<Haskell::Decls>)];
 
       // optqualified
-      char dummy14[sizeof (bool)];
+      char dummy15[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy15[sizeof (char)];
+      char dummy16[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy16[sizeof (double)];
+      char dummy17[sizeof (double)];
 
-      // body
-      // body2
-      // top
-      // top1
       // maybeexports
       // export
       // qcname_ext_w_wildcard
@@ -575,28 +575,34 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy17[sizeof (expression_ref)];
+      char dummy18[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy18[sizeof (float)];
+      char dummy19[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy19[sizeof (int)];
+      char dummy20[sizeof (int)];
 
       // wherebinds
-      char dummy20[sizeof (std::optional<Located<Haskell::Decls>>)];
+      char dummy21[sizeof (std::optional<Located<Haskell::Decls>>)];
 
       // prec
-      char dummy21[sizeof (std::optional<int>)];
+      char dummy22[sizeof (std::optional<int>)];
 
       // maybeas
-      char dummy22[sizeof (std::optional<std::string>)];
+      char dummy23[sizeof (std::optional<std::string>)];
 
       // tycl_hdr
-      char dummy23[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy24[sizeof (std::pair<Haskell::Context,expression_ref>)];
+
+      // body
+      // body2
+      // top
+      // top1
+      char dummy25[sizeof (std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>)];
 
       // "VARID"
       // "CONID"
@@ -653,32 +659,32 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy24[sizeof (std::string)];
+      char dummy26[sizeof (std::string)];
 
       // constrs
       // constrs1
-      char dummy25[sizeof (std::vector<Haskell::Constructor>)];
+      char dummy27[sizeof (std::vector<Haskell::Constructor>)];
 
       // fielddecls
       // fielddecls1
-      char dummy26[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy28[sizeof (std::vector<Haskell::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy27[sizeof (std::vector<Haskell::GuardedRHS>)];
+      char dummy29[sizeof (std::vector<Haskell::GuardedRHS>)];
+
+      // importdecls
+      // importdecls_semi
+      char dummy30[sizeof (std::vector<Haskell::ImpDecl>)];
 
       // alts
       // alts1
-      char dummy28[sizeof (std::vector<Located<Haskell::Alt>>)];
+      char dummy31[sizeof (std::vector<Located<Haskell::Alt>>)];
 
       // exportlist
       // exportlist1
       // qcnames
       // qcnames1
-      // importdecls
-      // importdecls_semi
-      // topdecls
-      // topdecls_semi
       // decls
       // sigtypes1
       // btype_no_ops
@@ -696,11 +702,11 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy29[sizeof (std::vector<expression_ref>)];
+      char dummy32[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy30[sizeof (std::vector<std::string>)];
+      char dummy33[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1275,6 +1281,11 @@ namespace yy {
         value.move< Haskell::DataOrNewtype > (std::move (that.value));
         break;
 
+      case symbol_kind::S_topdecls: // topdecls
+      case symbol_kind::S_topdecls_semi: // topdecls_semi
+        value.move< Haskell::Decls > (std::move (that.value));
+        break;
+
       case symbol_kind::S_fielddecl: // fielddecl
         value.move< Haskell::FieldDecl > (std::move (that.value));
         break;
@@ -1328,10 +1339,6 @@ namespace yy {
         value.move< double > (std::move (that.value));
         break;
 
-      case symbol_kind::S_body: // body
-      case symbol_kind::S_body2: // body2
-      case symbol_kind::S_top: // top
-      case symbol_kind::S_top1: // top1
       case symbol_kind::S_maybeexports: // maybeexports
       case symbol_kind::S_export: // export
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
@@ -1408,6 +1415,13 @@ namespace yy {
         value.move< std::pair<Haskell::Context,expression_ref> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_body: // body
+      case symbol_kind::S_body2: // body2
+      case symbol_kind::S_top: // top
+      case symbol_kind::S_top1: // top1
+        value.move< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_VARID: // "VARID"
       case symbol_kind::S_CONID: // "CONID"
       case symbol_kind::S_VARSYM: // "VARSYM"
@@ -1481,6 +1495,11 @@ namespace yy {
         value.move< std::vector<Haskell::GuardedRHS> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_importdecls: // importdecls
+      case symbol_kind::S_importdecls_semi: // importdecls_semi
+        value.move< std::vector<Haskell::ImpDecl> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.move< std::vector<Located<Haskell::Alt>> > (std::move (that.value));
@@ -1490,10 +1509,6 @@ namespace yy {
       case symbol_kind::S_exportlist1: // exportlist1
       case symbol_kind::S_qcnames: // qcnames
       case symbol_kind::S_qcnames1: // qcnames1
-      case symbol_kind::S_importdecls: // importdecls
-      case symbol_kind::S_importdecls_semi: // importdecls_semi
-      case symbol_kind::S_topdecls: // topdecls
-      case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
@@ -1592,6 +1607,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Haskell::DataOrNewtype& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::Decls&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::Decls& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1865,6 +1894,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -1914,6 +1957,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const std::vector<Haskell::GuardedRHS>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<Haskell::ImpDecl>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::ImpDecl>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2001,6 +2058,11 @@ switch (yykind)
         value.template destroy< Haskell::DataOrNewtype > ();
         break;
 
+      case symbol_kind::S_topdecls: // topdecls
+      case symbol_kind::S_topdecls_semi: // topdecls_semi
+        value.template destroy< Haskell::Decls > ();
+        break;
+
       case symbol_kind::S_fielddecl: // fielddecl
         value.template destroy< Haskell::FieldDecl > ();
         break;
@@ -2054,10 +2116,6 @@ switch (yykind)
         value.template destroy< double > ();
         break;
 
-      case symbol_kind::S_body: // body
-      case symbol_kind::S_body2: // body2
-      case symbol_kind::S_top: // top
-      case symbol_kind::S_top1: // top1
       case symbol_kind::S_maybeexports: // maybeexports
       case symbol_kind::S_export: // export
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
@@ -2134,6 +2192,13 @@ switch (yykind)
         value.template destroy< std::pair<Haskell::Context,expression_ref> > ();
         break;
 
+      case symbol_kind::S_body: // body
+      case symbol_kind::S_body2: // body2
+      case symbol_kind::S_top: // top
+      case symbol_kind::S_top1: // top1
+        value.template destroy< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > ();
+        break;
+
       case symbol_kind::S_VARID: // "VARID"
       case symbol_kind::S_CONID: // "CONID"
       case symbol_kind::S_VARSYM: // "VARSYM"
@@ -2207,6 +2272,11 @@ switch (yykind)
         value.template destroy< std::vector<Haskell::GuardedRHS> > ();
         break;
 
+      case symbol_kind::S_importdecls: // importdecls
+      case symbol_kind::S_importdecls_semi: // importdecls_semi
+        value.template destroy< std::vector<Haskell::ImpDecl> > ();
+        break;
+
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.template destroy< std::vector<Located<Haskell::Alt>> > ();
@@ -2216,10 +2286,6 @@ switch (yykind)
       case symbol_kind::S_exportlist1: // exportlist1
       case symbol_kind::S_qcnames: // qcnames
       case symbol_kind::S_qcnames1: // qcnames1
-      case symbol_kind::S_importdecls: // importdecls
-      case symbol_kind::S_importdecls_semi: // importdecls_semi
-      case symbol_kind::S_topdecls: // topdecls
-      case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
@@ -4930,6 +4996,11 @@ switch (yykind)
         value.copy< Haskell::DataOrNewtype > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_topdecls: // topdecls
+      case symbol_kind::S_topdecls_semi: // topdecls_semi
+        value.copy< Haskell::Decls > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_fielddecl: // fielddecl
         value.copy< Haskell::FieldDecl > (YY_MOVE (that.value));
         break;
@@ -4983,10 +5054,6 @@ switch (yykind)
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_body: // body
-      case symbol_kind::S_body2: // body2
-      case symbol_kind::S_top: // top
-      case symbol_kind::S_top1: // top1
       case symbol_kind::S_maybeexports: // maybeexports
       case symbol_kind::S_export: // export
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
@@ -5063,6 +5130,13 @@ switch (yykind)
         value.copy< std::pair<Haskell::Context,expression_ref> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_body: // body
+      case symbol_kind::S_body2: // body2
+      case symbol_kind::S_top: // top
+      case symbol_kind::S_top1: // top1
+        value.copy< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_VARID: // "VARID"
       case symbol_kind::S_CONID: // "CONID"
       case symbol_kind::S_VARSYM: // "VARSYM"
@@ -5136,6 +5210,11 @@ switch (yykind)
         value.copy< std::vector<Haskell::GuardedRHS> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_importdecls: // importdecls
+      case symbol_kind::S_importdecls_semi: // importdecls_semi
+        value.copy< std::vector<Haskell::ImpDecl> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.copy< std::vector<Located<Haskell::Alt>> > (YY_MOVE (that.value));
@@ -5145,10 +5224,6 @@ switch (yykind)
       case symbol_kind::S_exportlist1: // exportlist1
       case symbol_kind::S_qcnames: // qcnames
       case symbol_kind::S_qcnames1: // qcnames1
-      case symbol_kind::S_importdecls: // importdecls
-      case symbol_kind::S_importdecls_semi: // importdecls_semi
-      case symbol_kind::S_topdecls: // topdecls
-      case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
@@ -5220,6 +5295,11 @@ switch (yykind)
         value.move< Haskell::DataOrNewtype > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_topdecls: // topdecls
+      case symbol_kind::S_topdecls_semi: // topdecls_semi
+        value.move< Haskell::Decls > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_fielddecl: // fielddecl
         value.move< Haskell::FieldDecl > (YY_MOVE (s.value));
         break;
@@ -5273,10 +5353,6 @@ switch (yykind)
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_body: // body
-      case symbol_kind::S_body2: // body2
-      case symbol_kind::S_top: // top
-      case symbol_kind::S_top1: // top1
       case symbol_kind::S_maybeexports: // maybeexports
       case symbol_kind::S_export: // export
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
@@ -5353,6 +5429,13 @@ switch (yykind)
         value.move< std::pair<Haskell::Context,expression_ref> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_body: // body
+      case symbol_kind::S_body2: // body2
+      case symbol_kind::S_top: // top
+      case symbol_kind::S_top1: // top1
+        value.move< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_VARID: // "VARID"
       case symbol_kind::S_CONID: // "CONID"
       case symbol_kind::S_VARSYM: // "VARSYM"
@@ -5426,6 +5509,11 @@ switch (yykind)
         value.move< std::vector<Haskell::GuardedRHS> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_importdecls: // importdecls
+      case symbol_kind::S_importdecls_semi: // importdecls_semi
+        value.move< std::vector<Haskell::ImpDecl> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.move< std::vector<Located<Haskell::Alt>> > (YY_MOVE (s.value));
@@ -5435,10 +5523,6 @@ switch (yykind)
       case symbol_kind::S_exportlist1: // exportlist1
       case symbol_kind::S_qcnames: // qcnames
       case symbol_kind::S_qcnames1: // qcnames1
-      case symbol_kind::S_importdecls: // importdecls
-      case symbol_kind::S_importdecls_semi: // importdecls_semi
-      case symbol_kind::S_topdecls: // topdecls
-      case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
@@ -5526,7 +5610,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5530 "parser.hh"
+#line 5614 "parser.hh"
 
 
 

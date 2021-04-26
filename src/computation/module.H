@@ -60,8 +60,8 @@ std::string get_unqualified_name(const std::string&);
 
 std::vector<std::string> get_haskell_identifier_path(const std::string& s);
 
-void parse_module(const Haskell::Module& M, std::string& name, expression_ref& exports, expression_ref& impdecls, std::optional<Haskell::Decls>& topdecls);
-Haskell::Module create_module(const std::string& name, const expression_ref& exports, const expression_ref& impdecls, const std::optional<Haskell::Decls>& topdecls);
+void parse_module(const Haskell::Module& M, std::string& name, expression_ref& exports, std::vector<Haskell::ImpDecl>& impdecls, std::optional<Haskell::Decls>& topdecls);
+Haskell::Module create_module(const std::string& name, const expression_ref& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls);
 
 struct module_import
 {
@@ -98,10 +98,8 @@ public:
     bool do_optimize = true;
     
     Haskell::Module module;
-    expression_ref body;
-    expression_ref impdecls;
     expression_ref exports;
-
+    std::vector<Haskell::ImpDecl> impdecls;
     std::optional<Haskell::Decls> topdecls;
 
     std::vector<std::vector<expression_ref>> class_and_type_decls;

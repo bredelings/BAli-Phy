@@ -23,8 +23,8 @@
 
   class driver;
 
-  Haskell::Module make_module(const std::string& name, const expression_ref& exports, const expression_ref& body);
-  expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls);
+  Haskell::Module make_module(const std::string& name, const expression_ref& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls);
+  std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
   expression_ref make_exports(const std::vector<expression_ref>& exports);
   Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, std::vector<std::string>& ops);
@@ -257,10 +257,10 @@
 %type <Haskell::Module> module
  /* %type <void> missing_module_keyword */
  /* %type <expression_ref> maybemodwarning */
-%type <expression_ref> body2
-%type <expression_ref> body
-%type <expression_ref> top
-%type <expression_ref> top1
+%type <std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>> body2
+%type <std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>> body
+%type <std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>> top
+%type <std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>> top1
 
 %type <expression_ref> maybeexports
 %type <std::vector<expression_ref>> exportlist
@@ -273,8 +273,8 @@
 %type <expression_ref> qcname_ext
 %type <expression_ref> qcname
 
-%type <std::vector<expression_ref>> importdecls
-%type <std::vector<expression_ref>> importdecls_semi
+%type <std::vector<Haskell::ImpDecl>> importdecls
+%type <std::vector<Haskell::ImpDecl>> importdecls_semi
 %type <Haskell::ImpDecl> importdecl
  // %type <bool> maybe_src
  // %type <bool> maybe_safe
@@ -289,8 +289,8 @@
 %type <std::vector<std::string>> ops
 
 
-%type <std::vector<expression_ref>> topdecls
-%type <std::vector<expression_ref>> topdecls_semi
+%type <Haskell::Decls> topdecls
+%type <Haskell::Decls> topdecls_semi
 %type <expression_ref> topdecl
 %type <expression_ref> cl_decl
 %type <expression_ref> ty_decl
@@ -536,8 +536,8 @@ identifier: qvar
 
 /* signature: backpack stuff */
 
-module: "module" modid maybemodwarning maybeexports "where" body {$$ = make_module($2,$4,$6);}
-| body2                                                          {$$ = make_module("Main",{},$1);}
+module: "module" modid maybemodwarning maybeexports "where" body {$$ = make_module($2,$4,$6.first, $6.second);}
+| body2                                                          {$$ = make_module("Main",{},$1.first, $1.second);}
 
 missing_module_keyword: %empty                                   {drv.push_module_context();}
 
@@ -1511,16 +1511,20 @@ yy::parser::error (const location_type& l, const std::string& m)
     drv.push_error_message({l,m});
 }
 
-Haskell::Module make_module(const string& name, const expression_ref& exports, const expression_ref& body)
+Haskell::Module make_module(const std::string& name, const expression_ref& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls)
 {
-    return {name, exports, body};
+    return {name, exports, impdecls, topdecls};
 }
 
-expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls)
+pair<vector<Haskell::ImpDecl>, optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls)
 {
-    expression_ref i = new expression(AST_node("impdecls"),imports);
-    expression_ref t = new expression(AST_node("TopDecls"),topdecls);
-    return new expression(AST_node("Body"),{i,t});
+    if (topdecls)
+    {
+        auto topdecls2 = Haskell::Decls(*topdecls, true);
+        return {imports, topdecls2};
+    }
+    else
+        return {imports, {}};
 }
 
 expression_ref make_exports(const vector<expression_ref>& exports)

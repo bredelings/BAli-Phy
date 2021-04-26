@@ -11,35 +11,15 @@
 namespace Haskell
 {
 
-struct Module
-{
-    std::string modid;
-    expression_ref exports;
-    expression_ref body;
-
-    std::string print() const;
-
-    Module() = default;
-    Module(const std::string&s,
-           const expression_ref& e,
-           const expression_ref& b)
-        :modid(s),
-         exports(e),
-         body(b)
-    {}
-};
-
-
 typedef expression_ref ImpSpec;
     
-struct ImpDecl: public Object
+struct ImpDecl
 {
     bool qualified;
     std::string modid;
     std::optional<std::string> as;
     expression_ref impspec;
 
-    ImpDecl* clone() const { return new ImpDecl(*this);}
     std::string print() const;
 
     ImpDecl() = default;
@@ -649,6 +629,28 @@ struct IfExp: public Object
           false_branch(f)
         { }
 };
+
+struct Module
+{
+    std::string modid;
+    expression_ref exports;
+    std::vector<ImpDecl> impdecls;
+    std::optional<Decls> topdecls;
+
+    std::string print() const;
+
+    Module() = default;
+    Module(const std::string&s,
+           const expression_ref& e,
+           const std::vector<ImpDecl>& i,
+           const std::optional<Decls>& t)
+        :modid(s),
+         exports(e),
+         impdecls(i),
+         topdecls(t)
+    {}
+};
+
 
 }
 
