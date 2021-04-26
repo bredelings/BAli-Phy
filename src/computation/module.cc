@@ -440,22 +440,27 @@ void Module::rename(const Program& P)
 
 vector<string> free_type_vars(const Haskell::Context& context)
 {
+    return {};
 }
 
 vector<string> free_type_vars(const Haskell::ClassDecl& class_decl)
 {
+    return {};
 }
 
 vector<string> free_type_vars(const Haskell::DataOrNewtypeDecl& type_decl)
 {
+    return {};
 }
 
 vector<string> free_type_vars(const Haskell::TypeSynonymDecl& synonym_decl)
 {
+    return {};
 }
 
 vector<string> free_type_vars(const Haskell::InstanceDecl& instance_decl)
 {
+    return {};
 }
 
 vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_ref>& initial_class_and_type_decls)
