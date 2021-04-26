@@ -105,7 +105,7 @@ Module module_loader::load_module_from_file(const string& filename) const
 	    auto m = parse_module_file(file_contents, *fname);
 
 	    if (dump_parsed)
-		std::cout<<m<<std::endl;
+		std::cout<<m.print()<<std::endl;
 
 	    modules.insert( {filename, Module(m, lang_options)} );
 

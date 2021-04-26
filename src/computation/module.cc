@@ -598,28 +598,12 @@ void Module::export_small_decls()
     }
 }
 
-void parse_module(const expression_ref& M, string& name, expression_ref& exports, expression_ref& body, expression_ref& impdecls, optional<Haskell::Decls>& topdecls)
+void parse_module(const Haskell::Module& M, string& name, expression_ref& exports, expression_ref& body, expression_ref& impdecls, optional<Haskell::Decls>& topdecls)
 {
-    assert(is_AST(M, "Module"));
-    if (M.size() == 1)
-    {
-        name = "Main";
-        exports = {};
-        body = M.sub()[0];
-    }
-    else if (M.size() == 2)
-    {
-        name = M.sub()[0].as_<String>();
-        exports = {};
-        body = M.sub()[1];
-    }
-    else if (M.size() == 3)
-    {
-        name = M.sub()[0].as_<String>();
-        exports = M.sub()[1];
-        assert(is_AST(exports,"Exports"));
-        body = M.sub()[2];
-    }
+    name = M.modid;
+    exports = M.exports;
+    body = M.body;
+
     assert(is_AST(body,"Body"));
 
     // 2. body = impdecls + [optional topdecls]
@@ -630,7 +614,7 @@ void parse_module(const expression_ref& M, string& name, expression_ref& exports
             impdecls = E;
 }
 
-expression_ref create_module(const string& name, const expression_ref& exports, const expression_ref& impdecls, const optional<Haskell::Decls>& topdecls)
+Haskell::Module create_module(const string& name, const expression_ref& exports, const expression_ref& impdecls, const optional<Haskell::Decls>& topdecls)
 {
     expression_ref body = AST_node("Body");
     if (impdecls)
@@ -642,16 +626,8 @@ expression_ref create_module(const string& name, const expression_ref& exports, 
     {
         body = body + Box<Haskell::Decls>(*topdecls);
     }
-    expression_ref module = AST_node("Module");
-    if (not name.empty())
-        module = module + String(name);
-    if (exports)
-    {
-        assert(is_AST(exports,"Exports"));
-        module = module + exports;
-    }
-    module = module + body;
-    return module;
+
+    return {name, exports, body};
 }
 
 template <typename T>
@@ -1435,16 +1411,11 @@ Module::Module(const char *n)
     :Module(string(n))
 { }
 
-Module::Module(const expression_ref& E, const set<string>& lo)
-    :language_options(lo)
+Module::Module(const Haskell::Module& M, const set<string>& lo)
+    :language_options(lo),
+     module(M)
 {
-    assert(is_AST(E,"Module"));
-    assert(not module);
-    module = E;
-
     parse_module(module, name, exports, body, impdecls, topdecls);
-
-    assert(module);
 }
 
 std::ostream& operator<<(std::ostream& o, const Module& M)

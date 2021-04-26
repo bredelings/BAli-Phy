@@ -11,6 +11,25 @@
 namespace Haskell
 {
 
+struct Module
+{
+    std::string modid;
+    expression_ref exports;
+    expression_ref body;
+
+    std::string print() const;
+
+    Module() = default;
+    Module(const std::string&s,
+           const expression_ref& e,
+           const expression_ref& b)
+        :modid(s),
+         exports(e),
+         body(b)
+    {}
+};
+
+
 typedef expression_ref ImpSpec;
     
 struct ImpDecl: public Object

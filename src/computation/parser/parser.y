@@ -23,7 +23,7 @@
 
   class driver;
 
-  expression_ref make_module(const std::string& name, const expression_ref& exports, const expression_ref& body);
+  Haskell::Module make_module(const std::string& name, const expression_ref& exports, const expression_ref& body);
   expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls);
 
   expression_ref make_exports(const std::vector<expression_ref>& exports);
@@ -254,7 +254,7 @@
  /* Template Haskell: skipped tokens.*/
 
 
-%type <expression_ref> module
+%type <Haskell::Module> module
  /* %type <void> missing_module_keyword */
  /* %type <expression_ref> maybemodwarning */
 %type <expression_ref> body2
@@ -1511,13 +1511,9 @@ yy::parser::error (const location_type& l, const std::string& m)
     drv.push_error_message({l,m});
 }
 
-expression_ref make_module(const string& name, const expression_ref& exports, const expression_ref& body)
+Haskell::Module make_module(const string& name, const expression_ref& exports, const expression_ref& body)
 {
-    vector<expression_ref> e = {String(name)};
-    if (exports)
-	e.push_back(exports);
-    e.push_back(body);
-    return new expression(AST_node("Module"),e);
+    return {name, exports, body};
 }
 
 expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls)

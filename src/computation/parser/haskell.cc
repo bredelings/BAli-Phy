@@ -7,6 +7,13 @@ using std::vector;
 namespace Haskell
 {
 
+string Module::print() const
+{
+    string result = "module " + modid + " " + exports.print() + " where {" + body.print() + "}";;
+
+    return result;
+}
+
 string ImpDecl::print() const
 {
     vector<string> v;

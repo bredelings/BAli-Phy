@@ -61,7 +61,7 @@
 
   class driver;
 
-  expression_ref make_module(const std::string& name, const expression_ref& exports, const expression_ref& body);
+  Haskell::Module make_module(const std::string& name, const expression_ref& exports, const expression_ref& body);
   expression_ref make_body(const std::vector<expression_ref>& imports, const std::vector<expression_ref>& topdecls);
 
   expression_ref make_exports(const std::vector<expression_ref>& exports);
@@ -497,32 +497,34 @@ namespace yy {
       // importdecl
       char dummy8[sizeof (Haskell::ImpDecl)];
 
+      // module
+      char dummy9[sizeof (Haskell::Module)];
+
       // stmtlist
-      char dummy9[sizeof (Haskell::Stmts)];
+      char dummy10[sizeof (Haskell::Stmts)];
 
       // strict_mark
       // strictness
-      char dummy10[sizeof (Haskell::StrictLazy)];
+      char dummy11[sizeof (Haskell::StrictLazy)];
 
       // alt
-      char dummy11[sizeof (Located<Haskell::Alt>)];
+      char dummy12[sizeof (Located<Haskell::Alt>)];
 
       // decllist
       // binds
-      char dummy12[sizeof (Located<Haskell::Decls>)];
+      char dummy13[sizeof (Located<Haskell::Decls>)];
 
       // optqualified
-      char dummy13[sizeof (bool)];
+      char dummy14[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy14[sizeof (char)];
+      char dummy15[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy15[sizeof (double)];
+      char dummy16[sizeof (double)];
 
-      // module
       // body
       // body2
       // top
@@ -573,28 +575,28 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy16[sizeof (expression_ref)];
+      char dummy17[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy17[sizeof (float)];
+      char dummy18[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy18[sizeof (int)];
+      char dummy19[sizeof (int)];
 
       // wherebinds
-      char dummy19[sizeof (std::optional<Located<Haskell::Decls>>)];
+      char dummy20[sizeof (std::optional<Located<Haskell::Decls>>)];
 
       // prec
-      char dummy20[sizeof (std::optional<int>)];
+      char dummy21[sizeof (std::optional<int>)];
 
       // maybeas
-      char dummy21[sizeof (std::optional<std::string>)];
+      char dummy22[sizeof (std::optional<std::string>)];
 
       // tycl_hdr
-      char dummy22[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy23[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // "VARID"
       // "CONID"
@@ -651,23 +653,23 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy23[sizeof (std::string)];
+      char dummy24[sizeof (std::string)];
 
       // constrs
       // constrs1
-      char dummy24[sizeof (std::vector<Haskell::Constructor>)];
+      char dummy25[sizeof (std::vector<Haskell::Constructor>)];
 
       // fielddecls
       // fielddecls1
-      char dummy25[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy26[sizeof (std::vector<Haskell::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy26[sizeof (std::vector<Haskell::GuardedRHS>)];
+      char dummy27[sizeof (std::vector<Haskell::GuardedRHS>)];
 
       // alts
       // alts1
-      char dummy27[sizeof (std::vector<Located<Haskell::Alt>>)];
+      char dummy28[sizeof (std::vector<Located<Haskell::Alt>>)];
 
       // exportlist
       // exportlist1
@@ -694,11 +696,11 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy28[sizeof (std::vector<expression_ref>)];
+      char dummy29[sizeof (std::vector<expression_ref>)];
 
       // ops
       // sig_vars
-      char dummy29[sizeof (std::vector<std::string>)];
+      char dummy30[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1290,6 +1292,10 @@ namespace yy {
         value.move< Haskell::ImpDecl > (std::move (that.value));
         break;
 
+      case symbol_kind::S_module: // module
+        value.move< Haskell::Module > (std::move (that.value));
+        break;
+
       case symbol_kind::S_stmtlist: // stmtlist
         value.move< Haskell::Stmts > (std::move (that.value));
         break;
@@ -1322,7 +1328,6 @@ namespace yy {
         value.move< double > (std::move (that.value));
         break;
 
-      case symbol_kind::S_module: // module
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
@@ -1643,6 +1648,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Haskell::ImpDecl& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::Module&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::Module& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1999,6 +2018,10 @@ switch (yykind)
         value.template destroy< Haskell::ImpDecl > ();
         break;
 
+      case symbol_kind::S_module: // module
+        value.template destroy< Haskell::Module > ();
+        break;
+
       case symbol_kind::S_stmtlist: // stmtlist
         value.template destroy< Haskell::Stmts > ();
         break;
@@ -2031,7 +2054,6 @@ switch (yykind)
         value.template destroy< double > ();
         break;
 
-      case symbol_kind::S_module: // module
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
@@ -4925,6 +4947,10 @@ switch (yykind)
         value.copy< Haskell::ImpDecl > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_module: // module
+        value.copy< Haskell::Module > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_stmtlist: // stmtlist
         value.copy< Haskell::Stmts > (YY_MOVE (that.value));
         break;
@@ -4957,7 +4983,6 @@ switch (yykind)
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_module: // module
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
@@ -5212,6 +5237,10 @@ switch (yykind)
         value.move< Haskell::ImpDecl > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_module: // module
+        value.move< Haskell::Module > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_stmtlist: // stmtlist
         value.move< Haskell::Stmts > (YY_MOVE (s.value));
         break;
@@ -5244,7 +5273,6 @@ switch (yykind)
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_module: // module
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
@@ -5498,7 +5526,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5502 "parser.hh"
+#line 5530 "parser.hh"
 
 
 

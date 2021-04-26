@@ -48,7 +48,7 @@ public:
     void pop_error_message();
 
     // Store the result
-    expression_ref result;
+    Haskell::Module result;
     // Run the parser on file F.  Return 0 on success.
     int parse_file (const std::string& filename);
     int parse_string (const std::string& content, const std::string& input_name);
@@ -66,6 +66,6 @@ public:
     yy::location location;
 };
 
-expression_ref parse_module_file(const std::string& content, const std::string& input_name);
+Haskell::Module parse_module_file(const std::string& content, const std::string& input_name);
 #endif // ! DRIVER_HH
 

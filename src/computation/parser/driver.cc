@@ -91,11 +91,10 @@ driver::parse_string (const string& file_contents, const std::string &input_name
   }
   if (error_messages.size())
       throw myexception()<<"Parsing failed.";
-  assert(result);
   return res;
 }
 
-expression_ref parse_module_file(const string& content, const std::string& input_name)
+Haskell::Module parse_module_file(const string& content, const std::string& input_name)
 {
     driver D;
     D.parse_string(content, input_name);
