@@ -438,37 +438,54 @@ void Module::rename(const Program& P)
 
 // Q: how/when do we rename default method definitions?
 
+vector<string> free_type_vars(const Haskell::Context& context)
+{
+}
+
+vector<string> free_type_vars(const Haskell::ClassDecl& class_decl)
+{
+}
+
+vector<string> free_type_vars(const Haskell::DataOrNewtypeDecl& type_decl)
+{
+}
+
+vector<string> free_type_vars(const Haskell::TypeSynonymDecl& synonym_decl)
+{
+}
+
+vector<string> free_type_vars(const Haskell::InstanceDecl& instance_decl)
+{
+}
+
 vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_ref>& initial_class_and_type_decls)
 {
     // [(name,decl,names-we-depend-on)]
     vector<tuple<string,expression_ref,vector<string>>> class_type_no_instance_decls;
 
-    vector<tuple<expression_ref,vector<string>>> instance_decls;
+    vector<tuple<Haskell::InstanceDecl,vector<string>>> instance_decls;
 
     for(auto& decl: initial_class_and_type_decls)
     {
         if (decl.is_a<Haskell::ClassDecl>())
         {
-            string name = decl.as_<Haskell::ClassDecl>().name;
-            vector<string> free_type_vars;
-            class_type_no_instance_decls.push_back({name, decl, free_type_vars});
+            auto& class_decl = decl.as_<Haskell::ClassDecl>();
+            class_type_no_instance_decls.push_back({class_decl.name, decl, free_type_vars(class_decl)});
         }
         else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
-            string name = decl.as_<Haskell::DataOrNewtypeDecl>().name;
-            vector<string> free_type_vars;
-            class_type_no_instance_decls.push_back({name, decl, free_type_vars});
+            auto& type_decl = decl.as_<Haskell::DataOrNewtypeDecl>();
+            class_type_no_instance_decls.push_back({type_decl.name, decl, free_type_vars(type_decl)});
         }
         else if (decl.is_a<Haskell::TypeSynonymDecl>())
         {
-            string name = decl.as_<Haskell::TypeSynonymDecl>().name;
-            vector<string> free_type_vars;
-            class_type_no_instance_decls.push_back({name, decl, free_type_vars});
+            auto& type_decl = decl.as_<Haskell::TypeSynonymDecl>();
+            class_type_no_instance_decls.push_back({type_decl.name, decl, free_type_vars(type_decl)});
         }
         else if (decl.is_a<Haskell::InstanceDecl>())
         {
-            vector<string> free_type_vars;
-            instance_decls.push_back({decl, free_type_vars});
+            auto& instance_decl = decl.as_<Haskell::InstanceDecl>();
+            instance_decls.push_back({instance_decl, free_type_vars(instance_decl)});
         }
         else
             std::abort();
