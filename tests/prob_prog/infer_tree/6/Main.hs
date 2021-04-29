@@ -17,24 +17,29 @@ smodel_prior nucs = do
 
     return (tn93_model, loggers)
 
-
+-- Non-zero branches are slightly longer to keep to average length correct.
 maybe_zero p dist = do
-  zero <- bernoulli p
-  l <- dist
-  if zero == 1 then
+  is_zero <- bernoulli p
+  length <- dist
+  if is_zero == 1 then
       return 0.0
   else
-      return (l/(1.0-p))
+      return (length/(1.0-p))
 
 tree_prior taxa = do
 
     topology <- uniform_labelled_topology taxa
 
-    let b = numBranches topology
     zero_p <- beta 0.1 1.0
-    let branch_length_dist' = gamma 0.5 (2.0/ intToDouble b)
-        branch_length_dist = maybe_zero zero_p branch_length_dist'
-    times <- iid b branch_length_dist
+
+    let nb = numBranches topology
+        branch_dist_leaf = gamma 0.5 (2.0/ intToDouble nb)
+        branch_dist_internal = maybe_zero zero_p branch_dist_leaf
+        branch_dist b | is_internal_branch topology b = branch_dist_internal
+                      | otherwise                     = branch_dist_leaf
+
+    times <- independent [branch_dist b | b <- [0..nb-1]]
+
     scale <- gamma 0.5 2.0
     let distances = map (scale *) times
 
@@ -48,14 +53,15 @@ prior taxa = do
 
     (tree  , tree_loggers) <- tree_prior taxa
 
-    (smodel, sloggers    ) <- smodel_prior dna
+    (smodel, smodel_loggers    ) <- smodel_prior dna
 
-    let loggers = tree_loggers ++ ["tn93" %>% sloggers]
+    let loggers = tree_loggers ++ ["tn93" %>% smodel_loggers]
 
     return (tree, smodel, loggers)
 
 
 model seq_data = do
+
     let taxa = map sequence_name seq_data
 
     (tree, smodel, loggers) <- sample $ prior taxa
