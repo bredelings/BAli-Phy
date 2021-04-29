@@ -115,6 +115,8 @@ edgesAfterEdge t b  = map (reverseEdge t) $ edgesBeforeEdge t $ reverseEdge t b
 
 is_leaf_node t n = (nodeDegree t n < 2)
 is_internal_node t n = not $ is_leaf_node t n
+is_internal_branch t b = is_internal_node t (sourceNode t b) && is_internal_node t (targetNode t b)
+is_leaf_branch t b = not $ is_internal_branch t b
 
 nodes t = [0..numNodes t - 1]
 leaf_nodes t = filter (is_leaf_node t) (nodes t)
