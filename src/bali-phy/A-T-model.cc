@@ -871,8 +871,8 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     P.evaluate_program();
     //-------- Set the alignments for variable partitions ---------//
     for(int i=0;i<P.n_data_partitions();i++)
-        if (not unalign and P.get_data_partition(i).has_IModel())
-            P.get_data_partition(i).set_alignment(A[i]);
+        if (unalign and P.get_data_partition(i).has_IModel())
+            P.get_data_partition(i).set_alignment(unalign_A(A[i]));
     P.evaluate_program();
 
     // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
