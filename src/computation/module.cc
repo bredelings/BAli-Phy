@@ -46,18 +46,10 @@ symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a, int p, f
     fixity = f;
 }
 
-symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a, int p, fixity_t f, const expression_ref& t)
-    :name(s), symbol_type(st), arity(a), type(t)
-{
-    precedence = p;
-    fixity = f;
-}
-
 bool operator==(const symbol_info&S1, const symbol_info& S2)
 {
     return (S1.name == S2.name) and (S1.symbol_type == S2.symbol_type) and 
-        (S1.arity == S2.arity) and (S1.precedence == S2.precedence) and (S1.fixity == S2.fixity) and
-        (S1.type == S2.type);
+        (S1.arity == S2.arity) and (S1.precedence == S2.precedence) and (S1.fixity == S2.fixity);
 }
 
 bool operator!=(const symbol_info&S1, const symbol_info& S2)
@@ -140,7 +132,7 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     string s2 = name + "." + s;
 
     if (not symbols.count(s2))
-        declare_symbol({s, unknown_symbol, -1, -1, unknown_fix, {}});
+        declare_symbol({s, unknown_symbol, -1, -1, unknown_fix});
 
     symbol_info& S = symbols.find(s2)->second;
 
@@ -1284,7 +1276,7 @@ void Module::def_function(const std::string& fname)
             throw myexception()<<"Can't add function with name '"<<fname<<"': that name is already used!";
     }
     else
-        declare_symbol({fname, variable_symbol, -1, -1, unknown_fix, {}});
+        declare_symbol({fname, variable_symbol, -1, -1, unknown_fix});
 }
 
 void Module::def_constructor(const std::string& cname, int arity)
@@ -1299,14 +1291,14 @@ void Module::def_constructor(const std::string& cname, int arity)
     {
         symbol_info& S = loc->second;
         // Only the fixity has been declared!
-        if (S.symbol_type == unknown_symbol and not S.type)
+        if (S.symbol_type == unknown_symbol)
         {
             S.symbol_type = constructor_symbol;
             return;
         }
     }
 
-    declare_symbol( {cname, constructor_symbol, arity, -1, unknown_fix, {}} );
+    declare_symbol( {cname, constructor_symbol, arity, -1, unknown_fix} );
 }
 
 void Module::declare_fixities(const Haskell::Decls& decls)
@@ -1369,7 +1361,7 @@ void Module::add_local_symbols()
                 {
                     symbol_info& S = loc->second;
                     // Only the fixity has been declared!
-                    if (S.symbol_type == unknown_symbol and not S.type)
+                    if (S.symbol_type == unknown_symbol)
                         S.symbol_type = variable_symbol;
                 }
                 else

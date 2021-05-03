@@ -31,12 +31,10 @@ struct symbol_info: public fixity_info
     std::string name;
     symbol_type_t symbol_type;
     int arity = -1;
-    expression_ref type;
 
     symbol_info() {};
     symbol_info(const std::string&, symbol_type_t, int);
     symbol_info(const std::string&, symbol_type_t, int, int, fixity_t);
-    symbol_info(const std::string&, symbol_type_t, int, int, fixity_t, const expression_ref&);
 };
 
 bool operator==(const symbol_info&S1, const symbol_info& S2);
