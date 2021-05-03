@@ -2670,7 +2670,7 @@ adequately mix between modes.</para>
 
       <section><info><title>ESS for split frequencies</title></info>
 	
-      <para>To calculate the split ESS values, run:
+      <para>As desribed in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.3852/10-120">Gaya et al (2011)</link>, we can also compute ESS values for splits on the tree:
 <screen><prompt>%</prompt> trees-bootstrap <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees ... <replaceable>dir-n</replaceable>/C1.trees &gt; partitions.bs</screen>
       To compute the ESS for a split, we consider the presence or absence
       of a split in each iteration as a series of binary values.  We
