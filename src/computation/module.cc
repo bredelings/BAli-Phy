@@ -40,12 +40,18 @@ symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a)
 { }
 
 symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a, int p, fixity_t f)
-    :name(s), symbol_type(st), arity(a), precedence(p), fixity(f)
-{ }
+    :name(s), symbol_type(st), arity(a)
+{
+    precedence = p;
+    fixity = f;
+}
 
 symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a, int p, fixity_t f, const expression_ref& t)
-    :name(s), symbol_type(st), arity(a), precedence(p), fixity(f), type(t)
-{ }
+    :name(s), symbol_type(st), arity(a), type(t)
+{
+    precedence = p;
+    fixity = f;
+}
 
 bool operator==(const symbol_info&S1, const symbol_info& S2)
 {

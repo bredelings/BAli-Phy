@@ -17,15 +17,20 @@ constexpr auto right_fix = Haskell::Fixity::infixr;
 constexpr auto non_fix = Haskell::Fixity::infix;
 typedef Haskell::Fixity fixity_t;
 
+struct fixity_info
+{
+    int precedence = -1;
+    fixity_t fixity = unknown_fix;
+};
+
+
 enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, type_symbol = 3, unknown_symbol = 4};
 
-struct symbol_info
+struct symbol_info: public fixity_info
 {
     std::string name;
     symbol_type_t symbol_type;
     int arity = -1;
-    int precedence = -1;
-    fixity_t fixity = unknown_fix;
     expression_ref type;
 
     symbol_info() {};
