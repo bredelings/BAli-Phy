@@ -209,10 +209,11 @@ void sample_tri_branch_type_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 
 void sample_alignments_one(owned_ptr<Model>& P, MoveStats& Stats, int b)
 {
+    double alignment_plus_branch_length_fraction = P->load_value("alignment_plus_branch_length_fraction",0.01);
     Parameters* PP = P.as<Parameters>();
     assert(PP->variable_alignment()); 
 
-    if (uniform() < 0.01)
+    if (uniform() < alignment_plus_branch_length_fraction)
         alignment_slice_sample_branch_length(P, Stats, b);
     else
         sample_alignment(*PP,b);
