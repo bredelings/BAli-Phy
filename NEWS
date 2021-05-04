@@ -11,10 +11,10 @@
    - New distributions
      + half_cauchy
      + negative_binomial
-     + poission_process
+     + poisson_process
    - MCMC
      - Allow rates of moves to change dynamically.
-     - Allow move to appear or disappear during an iteration.
+     - Allow moves to appear or disappear during an iteration.
      - Add moves when variables are created for more distributions.
  - Probabilities
    - Eliminate prior_no_alignment(), OS (other_subst) and OP (other_prior).
