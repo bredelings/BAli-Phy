@@ -17,10 +17,12 @@ constexpr auto right_fix = Haskell::Fixity::infixr;
 constexpr auto non_fix = Haskell::Fixity::infix;
 typedef Haskell::Fixity fixity_t;
 
+// "Fixity is a property of a particular entity (constructor or variable), just like its type;
+//  fixity is not a property of that entity’s name."
 struct fixity_info
 {
-    int precedence = -1;
     fixity_t fixity = unknown_fix;
+    int precedence = -1;
 };
 
 

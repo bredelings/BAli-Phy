@@ -156,17 +156,17 @@ int reg_heap::reg_for_id(const string& name)
     {
 	if (is_haskell_builtin_con_name(name))
 	{
-	    auto S = Module::lookup_builtin_symbol(name);
-	    add_identifier(S.first.name);
+	    auto [sym,code] = Module::lookup_builtin_symbol(name);
+	    add_identifier(sym.name);
 
 	    // get the root for each identifier
-	    loc = identifiers.find(S.first.name);
+	    loc = identifiers.find(sym.name);
 	    assert(loc != identifiers.end());
 
 	    int R = loc->second;
 
 	    assert(R != -1);
-	    set_C(R, preprocess(S.second) );
+	    set_C(R, preprocess(code) );
 	}
 	else
 	    throw myexception()<<"Can't translate undefined identifier '"<<name<<"' in expression!";
