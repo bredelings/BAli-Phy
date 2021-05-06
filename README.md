@@ -57,7 +57,7 @@ Build BAli-Phy
 ```
 git clone https://github.com/bredelings/BAli-Phy.git
 cd BAli-Phy
-meson build --prefix=$HOME/Applications/bali-phy --buildtype=release
+meson build --prefix=$HOME/Applications/bali-phy --buildtype=release -Db_ndebug=true
 ninja -C build install
 ninja -C build test
 ```
