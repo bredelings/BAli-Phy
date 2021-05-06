@@ -36,15 +36,17 @@ You will also need
 
 Install Prerequisites
 ---------------------
+On Ubuntu, you can use apt-get:
 ```bash
-sudo apt-get install g++ libcairo2-dev ninja-build python3
-```
-You also need to install meson.  First try:
-```bash
-sudo apt-get install meson
+sudo apt-get install g++ libcairo2-dev meson
 ```
 
-If the version of meson is not at least 0.49, then you need to install
+On Mac (or Linux, actually) you can use homebrew:
+```bash
+brew install cairo meson
+```
+
+If the version of meson is not at least 0.53, then you need to install
 meson through pip:
 ```bash
 python3 -m venv meson
