@@ -26,14 +26,6 @@ You will need a C++ compiler that understands C++17.
  * clang 8 (or higher) works
  * XCode 11 (or higher) works
 
-You will also need to install
- * cairo graphics library (optional, but required to build the `draw-tree` program)
-
-You will also need
- * python3
- * ninja
- * meson >= 0.53
-
 Install Prerequisites
 ---------------------
 On Ubuntu, you can use apt-get:
