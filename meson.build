@@ -207,6 +207,6 @@ summary({'prefix': get_option('prefix'),
         },section: 'Directories')
 
 summary({'optimization': get_option('optimization'),
-         'b_ndebug': get_option('b_ndebug'),
          'debug': get_option('debug'),
+         'debug assertions': not assertions_off,
         },section: 'Configuration')
