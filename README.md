@@ -66,8 +66,7 @@ Further Documentation
 
 * [http://bali-phy.org/](http://bali-phy.org/)
 * [Manual](http://bali-phy.org/README.xhtml)
-* [Tutorial](http://bali-phy.org/Tutorial3.html)
-* [Developer's Guide](http://bali-phy.org/developer.html)
+* [Tutorial](http://bali-phy.org/Tutorial4.html)
 
 The Manual describes [how to install](http://bali-phy.org/README.xhtml#installation) bali-phy in greater detail.
 
