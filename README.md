@@ -4,19 +4,9 @@
 Install
 -------
 
-Please visit the [releases page](http://www.bali-phy.org/download.php) to download official binaries.
+Most users don't need to compile BAli-Phy from source.  If you just want down install bali-phy, please visit the [release page](http://www.bali-phy.org/download.php).
 
-You can also install via homebrew on a Mac, and using `apt-get` on recent version of Debian or Ubuntu.
-
-Documentation
-------------
-
-* [http://bali-phy.org/](http://bali-phy.org/)
-* [Manual](http://bali-phy.org/README.xhtml)
-* [Tutorial](http://bali-phy.org/Tutorial3.html)
-* [Developer's Guide](http://bali-phy.org/developer.html)
-
-The Manual describes [how to install](http://bali-phy.org/README.xhtml#installation) bali-phy in detail.  Simplified instructions are below.
+If you want to compile BAli-phy from source, the quick start instructions are below.
 
 Compiling
 ---------
@@ -39,7 +29,7 @@ brew install cairo meson
 ```
 
 If the version of meson is not at least 0.53, then you need to install
-meson through pip:
+meson through the python package manager "pip":
 ```bash
 python3 -m venv meson
 source meson/bin/activate
@@ -51,7 +41,7 @@ Build BAli-Phy
 ```
 git clone https://github.com/bredelings/BAli-Phy.git
 cd BAli-Phy
-meson build --prefix=$HOME/Applications/bali-phy --buildtype=release -Db_ndebug=true
+meson build --prefix=$HOME/Applications/bali-phy
 ninja -C build install
 ninja -C build test
 ```
@@ -72,4 +62,14 @@ If you installed in `$HOME/Applications/bali-phy/` as recommended above, then fi
 | ~/Applications/bali-phy/share/bali-phy/examples/sequences      | Example files.          |
 | ~/Applications/bali-phy/share/doc/bali-phy/                    | Documentation.          |
 
+
+Further Documentation
+---------------------
+
+* [http://bali-phy.org/](http://bali-phy.org/)
+* [Manual](http://bali-phy.org/README.xhtml)
+* [Tutorial](http://bali-phy.org/Tutorial3.html)
+* [Developer's Guide](http://bali-phy.org/developer.html)
+
+The Manual describes [how to install](http://bali-phy.org/README.xhtml#installation) bali-phy in greater detail.
 
