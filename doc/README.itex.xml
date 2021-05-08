@@ -106,7 +106,7 @@ C:\cygwin64\home\<emphasis>username</emphasis>\Applications\
 
     <section><info><title>Install on Mac OS X</title></info>
     <section><info><title>Install BAli-Phy using homebrew (recommended) </title></info>
-    <para>First install the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or higher) command line tools:
+    <para>First install the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 11 or higher) command line tools:
     <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
 
     Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> and use homebrew to compile and install <command>bali-phy</command>:
@@ -2926,7 +2926,7 @@ Otherwise you can install meson through pip3:
     </section>
 
     <section><info><title>Mac</title></info>
-    <para>On Mac OS X, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or newer) command line tools, which come with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">clang</link>.
+    <para>On Mac OS X, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 11 or newer) command line tools, which come with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">clang</link>.
  <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>    To get the other tools, first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>, and then type:
 <screen><prompt>%</prompt> <userinput>brew install git meson cairo pandoc</userinput></screen>
     </para>
