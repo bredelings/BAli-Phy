@@ -31,14 +31,31 @@ configure_file(output : 'config.h', configuration : conf_data)
 root_inc = include_directories('.','src')
 add_project_arguments('-DHAVE_CONFIG_H', language : 'cpp')
 
+
+# 3. Set compiler flags
+
+# 3.1 Set warning flags
 warn_flags = ['-Wno-sign-compare','-Wno-maybe-uninitialized','-Woverloaded-virtual','-Wstrict-aliasing','-Wno-unknown-pragmas', '-fdiagnostics-show-template-tree']
 
 add_project_arguments(cpp.get_supported_arguments(warn_flags), language : 'cpp')
 
+# 3.2 Set optimization flags
+
 if get_option('optimization') == '2' or get_option('optimization') == '3'
   opt_flags = ['-funroll-loops','-fno-math-errno','-fno-signed-zeros']
-  add_project_arguments(['-DNDEBUG','-DNDEBUG_DP']+cpp.get_supported_arguments(opt_flags), language : 'cpp')
+  add_project_arguments(cpp.get_supported_arguments(opt_flags), language : 'cpp')
 endif
+
+# 3.3 Enable/Disable extra debugging for dynamic programming
+assertions_off = get_option('b_ndebug') == 'true' or (get_option('b_ndebug') == 'if-release' and
+                                                      (get_option('buildtype') == 'release' or
+                                                       get_option('buildtype') == 'plain')
+                                                     )
+if assertions_off
+  add_project_arguments('-DNDEBUG_DP', language : 'cpp')
+endif
+
+# 4. Dependencies
 
 threads = dependency('threads')
 
