@@ -71,18 +71,6 @@ else
   used_cairo = 'system'
 endif
 
-install_data('scripts/bp-analyze', install_mode: 'rwxr-xr-x', install_dir: 'bin')
-install_data('scripts/bali-phy-pkg', install_mode: 'rwxr-xr-x', install_dir: 'bin')
-install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R',
-              'scripts/tree-plot.R', 'scripts/tree-plot-3D.R'],
-             install_dir:'lib/bali-phy/libexec')
-
-## we need to build libdl if we are on windows (cygwin or mingw64, and then find the library
-install_subdir('haskell', install_dir: 'lib/bali-phy')
-install_subdir('bindings', install_dir: 'lib/bali-phy')
-install_subdir('help', install_dir: 'lib/bali-phy')
-install_subdir('examples', install_dir: get_option('datadir')/'doc/bali-phy')
-
 if get_option('with-mpi')
   mpi = dependency('mpi', language='cpp')
 endif
@@ -192,6 +180,21 @@ test('bali-phy testsuite',
      timeout: 3000,
      workdir: meson.source_root()/'tests',
      args:[baliphy.full_path(), packagepath])
+
+# Install non-executable files
+
+install_data('scripts/bp-analyze', install_mode: 'rwxr-xr-x', install_dir: 'bin')
+install_data('scripts/bali-phy-pkg', install_mode: 'rwxr-xr-x', install_dir: 'bin')
+install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R',
+              'scripts/tree-plot.R', 'scripts/tree-plot-3D.R'],
+             install_dir:'lib/bali-phy/libexec')
+
+install_subdir('haskell', install_dir: 'lib/bali-phy')
+install_subdir('bindings', install_dir: 'lib/bali-phy')
+install_subdir('help', install_dir: 'lib/bali-phy')
+install_subdir('examples', install_dir: get_option('datadir')/'doc/bali-phy')
+
+# Print a summary of the configuration
 
 summary({'host': host_machine.system()
         }, section: 'Architecture')
