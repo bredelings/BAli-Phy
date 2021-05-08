@@ -4,9 +4,7 @@
 Install
 -------
 
-Most users don't need to compile BAli-Phy from source.  If you just want down install bali-phy, please visit the [release page](http://www.bali-phy.org/download.php).
-
-If you want to compile BAli-phy from source, the quick start instructions are below.
+If you just want to install bali-phy, please visit the [release page](http://www.bali-phy.org/download.php).  If you want to compile BAli-phy from source, the quick start instructions are below.
 
 Compiling
 ---------
