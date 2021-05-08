@@ -209,7 +209,12 @@ summary({'BOOST': used_boost,
 summary({'prefix': get_option('prefix'),
         },section: 'Directories')
 
+assertions_enabled = 'enabled'
+if assertions_off
+  assertions_enabled = 'disabled'
+endif
+
 summary({'optimization': get_option('optimization'),
          'debug': get_option('debug'),
-         'debug assertions': not assertions_off,
+         'assertions': assertions_enabled,
         },section: 'Configuration')
