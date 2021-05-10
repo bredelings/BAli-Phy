@@ -39,8 +39,24 @@ struct symbol_info: public fixity_info
     symbol_info(const std::string&, symbol_type_t, int, int, fixity_t);
 };
 
+enum class type_name_category {type_class, type_syn, ADT};
+
+struct type_info
+{
+    std::string name;
+    type_name_category category;
+    std::optional<fixity_info> fixity;
+    // kind?  Kind of like arity
+};
+
+bool operator==(const fixity_info& F1, const fixity_info& F2);
+bool operator!=(const fixity_info& F1, const fixity_info& F2);
+
 bool operator==(const symbol_info&S1, const symbol_info& S2);
 bool operator!=(const symbol_info&S1, const symbol_info& S2);
+
+bool operator==(const type_info&S1, const type_info& S2);
+bool operator!=(const type_info&S1, const type_info& S2);
 
 bool is_haskell_varid(const std::string& s);
 bool is_haskell_conid(const std::string& s);
@@ -49,6 +65,7 @@ bool is_haskell_varsym(const std::string& s);
 bool is_haskell_consym(const std::string& s);
 bool is_haskell_normal_con_name(const std::string& s);
 bool is_haskell_builtin_con_name(const std::string& s);
+bool is_haskell_builtin_type_name(const std::string& s);
 bool is_haskell_sym(const std::string& s);
 bool is_haskell_uqsym(const std::string& s);
 bool is_haskell_qsym(const std::string& s);
@@ -86,6 +103,10 @@ class Module
     std::map<std::string, symbol_info> symbols;
 
     std::multimap<std::string, std::string> aliases;
+
+    std::map<std::string, type_info> types;
+
+    std::multimap<std::string, std::string> type_aliases;
 
     std::map<std::string, symbol_info> exported_symbols_;
 
@@ -135,13 +156,23 @@ public:
     /// Add a constructor
     void def_constructor(const std::string& name, int arity);
 
+    /// Add an ADT
+    void def_ADT(const std::string& name);
+    void def_ADT(const std::string& name, const fixity_info&);
+
     void add_symbol(const symbol_info&);
 
+    void add_type(const type_info&);
+
     void add_alias(const std::string&, const std::string&);
+
+    void add_type_alias(const std::string&, const std::string&);
 
     void declare_fixity(const std::string&, int precedence, fixity_t f);
 
     void declare_symbol(const symbol_info&);
+
+    void declare_type(const type_info&);
 
     void import_symbol(const symbol_info&, const std::string&, bool qualified);
 
@@ -184,6 +215,8 @@ public:
     bool is_declared(const std::string&) const;
 
     bool symbol_in_scope_with_name(const std::string&, const std::string&) const;
+
+    bool type_in_scope_with_name(const std::string&, const std::string&) const;
 
     static std::pair<symbol_info,expression_ref> lookup_builtin_symbol(const std::string&);
 

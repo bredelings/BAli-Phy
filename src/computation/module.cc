@@ -46,6 +46,16 @@ symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a, int p, f
     fixity = f;
 }
 
+bool operator==(const fixity_info& F1, const fixity_info& F2)
+{
+    return (F1.precedence == F2.precedence) and (F1.fixity == F2.fixity);
+}
+
+bool operator!=(const fixity_info& F1, const fixity_info& F2)
+{
+    return not (F1 == F2);
+}
+
 bool operator==(const symbol_info&S1, const symbol_info& S2)
 {
     return (S1.name == S2.name) and (S1.symbol_type == S2.symbol_type) and 
@@ -55,6 +65,16 @@ bool operator==(const symbol_info&S1, const symbol_info& S2)
 bool operator!=(const symbol_info&S1, const symbol_info& S2)
 {
     return not (S1 == S2);
+}
+
+bool operator==(const type_info& T1, const type_info& T2)
+{
+    return (T1.name == T2.name) and (T1.category == T2.category) and (T1.fixity == T2.fixity);
+}
+
+bool operator!=(const type_info& T1, const type_info& T2)
+{
+    return not (T1 == T2);
 }
 
 symbol_info lookup_symbol(const string& name, const Program& P);
@@ -68,6 +88,21 @@ Haskell::Decls make_topdecls(const CDecls& cdecls)
 	decls.push_back( Haskell::ValueDecl(x,e) );
 
     return {decls, true};
+}
+
+void Module::add_type(const type_info& T)
+{
+    if (is_haskell_builtin_type_name(T.name))
+        throw myexception()<<"Can't add builtin symbol '"<<T.name<<"'";
+
+    if (not is_qualified_symbol(T.name))
+        throw myexception()<<"Type '"<<T.name<<"' unqualified, can't be added to symbol table";
+
+    auto loc = types.find(T.name);
+    if (loc == types.end())
+        types[T.name] = T;
+    else if (loc != types.end() and loc->second != T)
+        throw myexception()<<"Trying to add type '"<<T.name<<"' twice to module '"<<name<<"' with different body";
 }
 
 void Module::add_symbol(const symbol_info& S)
@@ -96,6 +131,17 @@ void Module::add_alias(const string& identifier_name, const string& resolved_nam
     aliases.insert( {identifier_name, resolved_name} );
 }
 
+void Module::add_type_alias(const string& identifier_name, const string& resolved_name)
+{
+    if (not types.count(resolved_name))
+        throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_name<<"' in module '"<<name<<"' because '"<<resolved_name<<"' is neither declared nor imported.";
+
+    // Don't add duplicate aliases.
+    if (type_in_scope_with_name(resolved_name, identifier_name)) return;
+
+    type_aliases.insert( {identifier_name, resolved_name} );
+}
+
 void Module::declare_symbol(const symbol_info& S)
 {
     if (is_qualified_symbol(S.name))
@@ -113,6 +159,25 @@ void Module::declare_symbol(const symbol_info& S)
     add_alias(S2.name, S2.name);
     // Add the alias for unqualified name: S.name -> S2.name;
     add_alias(S.name, S2.name);
+}
+
+void Module::declare_type(const type_info& T)
+{
+    if (is_qualified_symbol(T.name))
+        throw myexception()<<"Locally defined symbol '"<<T.name<<"' should not be qualified in declaration.";
+
+    auto T2 = T;
+    T2.name = name + "." + T.name;
+
+    if (types.count(T2.name))
+        throw myexception()<<"Trying to declare '"<<T.name<<"' twice in module '"<<name<<"'";
+
+    // Add the symbol first.
+    add_type(T2);
+    // Add the alias for qualified name: S.name -> S2.name;
+    add_type_alias(T2.name, T2.name);
+    // Add the alias for unqualified name: S.name -> S2.name;
+    add_type_alias(T.name, T2.name);
 }
 
 // "Also like a type signature, a fixity declaration can only occur in the same sequence of declarations as the declaration of the operator itself, and at most one fixity declaration may be given for any operator."
@@ -332,6 +397,15 @@ bool Module::symbol_in_scope_with_name(const string& symbol_name, const string& 
     auto range = aliases.equal_range(id_name);
     for(auto it = range.first; it != range.second; it++)
         if (it->second == symbol_name)
+            return true;
+    return false;
+}
+
+bool Module::type_in_scope_with_name(const string& type_name, const string& id_name) const
+{
+    auto range = type_aliases.equal_range(id_name);
+    for(auto it = range.first; it != range.second; it++)
+        if (it->second == type_name)
             return true;
     return false;
 }
@@ -1187,6 +1261,14 @@ bool is_haskell_builtin_con_name(const std::string& s)
         return false;
 }
 
+bool is_haskell_builtin_type_name(const std::string& s)
+{
+    if (s == "()" or s == "[]" or s == "->" or is_tuple_name(s)) 
+        return true;
+    else
+        return false;
+}
+
 bool valid_path_prefix(const vector<string>& path)
 {
     if (path.empty()) return false;
@@ -1301,6 +1383,30 @@ void Module::def_constructor(const std::string& cname, int arity)
     declare_symbol( {cname, constructor_symbol, arity, -1, unknown_fix} );
 }
 
+void Module::def_ADT(const std::string& tname)
+{
+    if (is_qualified_symbol(tname))
+        throw myexception()<<"Locally defined symbol '"<<tname<<"' should not be qualified.";
+
+    string qualified_name = name+"."+tname;
+
+    auto loc = types.find(qualified_name);
+
+    declare_type( {tname, type_name_category::ADT, {}} );
+}
+
+void Module::def_ADT(const std::string& tname, const fixity_info& fixity)
+{
+    if (is_qualified_symbol(tname))
+        throw myexception()<<"Locally defined symbol '"<<tname<<"' should not be qualified.";
+
+    string qualified_name = name+"."+tname;
+
+    auto loc = types.find(qualified_name);
+
+    declare_type( {tname, type_name_category::ADT, fixity} );
+}
+
 void Module::declare_fixities(const Haskell::Decls& decls)
 {
     // 0. Get names that are being declared.
@@ -1375,6 +1481,9 @@ void Module::add_local_symbols()
         }
         else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
+            auto& ADT = decl.as_<Haskell::DataOrNewtypeDecl>();
+            def_ADT(ADT.name);
+
             auto constrs = decl.as_<Haskell::DataOrNewtypeDecl>().constructors;
             if (not constrs.size()) continue;
 
