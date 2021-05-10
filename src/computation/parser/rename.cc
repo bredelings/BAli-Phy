@@ -58,7 +58,7 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
     {
 	if (op1.fixity.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
-	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol, 2,{left_fix,6}), T);
+	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol, {}, 2,{left_fix,6}), T);
 
 	return infix_parse(m, op1, {Hs::Var({noloc,"negate"}),E1}, T);
     }
@@ -125,7 +125,7 @@ expression_ref desugar_infix(const Module& m, const vector<expression_ref>& T)
     deque<expression_ref> T2;
     T2.insert(T2.begin(), T.begin(), T.end());
 
-    return infix_parse_neg(m, {"",variable_symbol,2,{non_fix,-1}}, T2);
+    return infix_parse_neg(m, {"",variable_symbol,{}, 2,{non_fix,-1}}, T2);
 }
 
 set<string> find_bound_vars(const expression_ref& E)

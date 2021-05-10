@@ -32,12 +32,13 @@ struct symbol_info
 {
     std::string name;
     symbol_type_t symbol_type;
+    std::optional<std::string> parent;
     int arity = -1;
     fixity_info fixity;
 
     symbol_info() {};
-    symbol_info(const std::string&, symbol_type_t, int);
-    symbol_info(const std::string&, symbol_type_t, int, fixity_info);
+    symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int);
+    symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int, fixity_info);
 };
 
 enum class type_name_category {type_class, type_syn, ADT};
@@ -152,7 +153,7 @@ public:
     void def_function(const std::string& name);
 
     /// Add a constructor
-    void def_constructor(const std::string& name, int arity);
+    void def_constructor(const std::string& name, int arity, const std::string& type_name);
 
     /// Add an ADT
     void def_ADT(const std::string& name);

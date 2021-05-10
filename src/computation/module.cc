@@ -35,12 +35,12 @@ using std::string;
 using std::vector;
 using std::tuple;
 
-symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a)
-    :name(s), symbol_type(st), arity(a)
+symbol_info::symbol_info(const std::string& s, symbol_type_t st, const optional<string>& p, int a)
+    :name(s), symbol_type(st), parent(p), arity(a)
 { }
 
-symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a, fixity_info f)
-    :name(s), symbol_type(st), arity(a), fixity(f)
+symbol_info::symbol_info(const std::string& s, symbol_type_t st, const optional<string>& p, int a, fixity_info f)
+    :name(s), symbol_type(st), parent(p), arity(a), fixity(f)
 {
 }
 
@@ -186,7 +186,7 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     string s2 = name + "." + s;
 
     if (not symbols.count(s2))
-        declare_symbol({s, unknown_symbol, -1, {unknown_fix,-1}});
+        declare_symbol({s, unknown_symbol, {}, -1, {unknown_fix,-1}});
 
     symbol_info& S = symbols.find(s2)->second;
 
@@ -1037,16 +1037,16 @@ bool Module::is_declared(const std::string& name) const
 pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string& name)
 {
     if (name == "()")
-        return {symbol_info("()", constructor_symbol, 0), constructor("()",0)};
+        return {symbol_info("()", constructor_symbol, "()", 0), constructor("()",0)};
     else if (name == "[]")
-        return {symbol_info("[]", constructor_symbol, 0), constructor("[]",0)};
+        return {symbol_info("[]", constructor_symbol, "[]", 0), constructor("[]",0)};
     else if (name == ":")
-        return {symbol_info(":", constructor_symbol, 2, {right_fix,5}), lambda_expression( right_assoc_constructor(":",2) )};
+        return {symbol_info(":", constructor_symbol, "[]", 2, {right_fix,5}), lambda_expression( right_assoc_constructor(":",2) )};
     else if (is_tuple_name(name))
     {
         int arity = name.size() - 1;
         expression_ref body = lambda_expression( tuple_head(arity) );
-        return {symbol_info(name, constructor_symbol, arity), body};
+        return {symbol_info(name, constructor_symbol, name, arity), body};
     }
     throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
 }
@@ -1347,10 +1347,10 @@ void Module::def_function(const std::string& fname)
             throw myexception()<<"Can't add function with name '"<<fname<<"': that name is already used!";
     }
     else
-        declare_symbol({fname, variable_symbol, -1, {unknown_fix, -1}});
+        declare_symbol({fname, variable_symbol, {}, -1, {unknown_fix, -1}});
 }
 
-void Module::def_constructor(const std::string& cname, int arity)
+void Module::def_constructor(const string& cname, int arity, const string& type_name)
 {
     if (is_qualified_symbol(cname))
         throw myexception()<<"Locally defined symbol '"<<cname<<"' should not be qualified.";
@@ -1365,11 +1365,13 @@ void Module::def_constructor(const std::string& cname, int arity)
         if (S.symbol_type == unknown_symbol)
         {
             S.symbol_type = constructor_symbol;
+            S.arity = arity;
+            S.parent = type_name;
             return;
         }
     }
 
-    declare_symbol( {cname, constructor_symbol, arity, {unknown_fix, -1}} );
+    declare_symbol( {cname, constructor_symbol, type_name, arity, {unknown_fix, -1}} );
 }
 
 void Module::def_ADT(const std::string& tname)
@@ -1384,10 +1386,6 @@ void Module::def_ADT(const std::string& tname, const fixity_info& fixity)
 {
     if (is_qualified_symbol(tname))
         throw myexception()<<"Locally defined symbol '"<<tname<<"' should not be qualified.";
-
-    string qualified_name = name+"."+tname;
-
-    auto loc = types.find(qualified_name);
 
     declare_type( {tname, type_name_category::ADT, fixity} );
 }
@@ -1489,7 +1487,7 @@ void Module::add_local_symbols()
             if (not constrs.size()) continue;
 
             for(const auto& constr: constrs)
-                def_constructor(constr.name, constr.arity());
+                def_constructor(constr.name, constr.arity(), ADT.name);
         }
         else if (decl.is_a<Haskell::ClassDecl>())
         {
