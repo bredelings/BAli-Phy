@@ -26,7 +26,7 @@ struct fixity_info
 };
 
 
-enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, type_symbol = 3, unknown_symbol = 4};
+enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, unknown_symbol = 3};
 
 struct symbol_info
 {
