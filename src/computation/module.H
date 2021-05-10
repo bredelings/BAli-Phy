@@ -158,6 +158,10 @@ public:
     void def_ADT(const std::string& name);
     void def_ADT(const std::string& name, const fixity_info&);
 
+    void def_type_class(const std::string& class_name);
+
+    void def_type_synonym(const std::string& syn_name);
+
     void add_symbol(const symbol_info&);
 
     void add_type(const type_info&);

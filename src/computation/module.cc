@@ -1375,11 +1375,7 @@ void Module::def_constructor(const std::string& cname, int arity)
 void Module::def_ADT(const std::string& tname)
 {
     if (is_qualified_symbol(tname))
-        throw myexception()<<"Locally defined symbol '"<<tname<<"' should not be qualified.";
-
-    string qualified_name = name+"."+tname;
-
-    auto loc = types.find(qualified_name);
+        throw myexception()<<"Locally defined type '"<<tname<<"' should not be qualified.";
 
     declare_type( {tname, type_name_category::ADT, {}} );
 }
@@ -1394,6 +1390,22 @@ void Module::def_ADT(const std::string& tname, const fixity_info& fixity)
     auto loc = types.find(qualified_name);
 
     declare_type( {tname, type_name_category::ADT, fixity} );
+}
+
+void Module::def_type_synonym(const std::string& sname)
+{
+    if (is_qualified_symbol(sname))
+        throw myexception()<<"Locally defined type '"<<sname<<"' should not be qualified.";
+
+    declare_type( {sname, type_name_category::type_syn, {}} );
+}
+
+void Module::def_type_class(const std::string& cname)
+{
+    if (is_qualified_symbol(cname))
+        throw myexception()<<"Locally defined type '"<<cname<<"' should not be qualified.";
+
+    declare_type( {cname, type_name_category::type_syn, {}} );
 }
 
 void Module::declare_fixities(const Haskell::Decls& decls)
@@ -1478,6 +1490,18 @@ void Module::add_local_symbols()
 
             for(const auto& constr: constrs)
                 def_constructor(constr.name, constr.arity());
+        }
+        else if (decl.is_a<Haskell::ClassDecl>())
+        {
+            auto& Class = decl.as_<Haskell::ClassDecl>();
+
+            def_type_class(Class.name);
+        }
+        else if (decl.is_a<Haskell::TypeSynonymDecl>())
+        {
+            auto& Syn = decl.as_<Haskell::TypeSynonymDecl>();
+
+            def_type_synonym(Syn.name);
         }
 }
 
