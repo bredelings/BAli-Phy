@@ -209,6 +209,21 @@ void Module::import_symbol(const symbol_info& S, const string& modid, bool quali
         add_alias(get_unqualified_name(S.name), S.name);
 }
 
+// Question: what if we import m1.s, which depends on an unimported m2.s?
+void Module::import_type(const type_info& T, const string& modid, bool qualified)
+{
+    if (not is_qualified_symbol(T.name))
+        throw myexception()<<"Imported symbols must have qualified names.";
+
+    // Add the symbol.
+    add_type(T);
+    // Add the alias for qualified name.
+    add_type_alias(modid+"."+get_unqualified_name(T.name), T.name);
+    // Add the alias for unqualified name.
+    if (not qualified)
+        add_type_alias(get_unqualified_name(T.name), T.name);
+}
+
 void Module::import_module(const Program& P, const module_import& I)
 {
     auto& M2 = P.get_module(I.name);
@@ -219,28 +234,46 @@ void Module::import_module(const Program& P, const module_import& I)
     // Right now 'exports' only has functions, not data types or constructors
 
     auto& m2_exports = M2.exported_symbols();
+    auto& m2_exported_types = M2.exported_types();
 
     if (I.only)
+    {
         for(const auto& s_name: I.symbols)
         {
-            if (not m2_exports.count(s_name))
+            if (m2_exports.count(s_name))
+            {
+                const symbol_info& S = m2_exports.at(s_name);
+                import_symbol(S, modid, qualified);
+            }
+            else if (m2_exported_types.count(s_name))
+            {
+                auto& T = m2_exported_types.at(s_name);
+                import_type(T, modid, qualified);
+            }
+            else
                 throw myexception()<<"Module '"<<I.name<<"' has no symbol '"<<s_name<<"'";
 
-            const symbol_info& S = m2_exports.at(s_name);
-
-            import_symbol(S, modid, qualified);
         }
+    }
     else
-        for(const auto& p: m2_exports)
+    {
+        for(const auto& [_,S]: m2_exports)
         {
-            const symbol_info& S = p.second;
-
             auto unqualified_name = get_unqualified_name(S.name);
 
             if (I.hiding and I.symbols.count(unqualified_name)) continue;
 
             import_symbol(S, modid, qualified);
         }
+        for(const auto& [_,T]: m2_exported_types)
+        {
+            auto unqualified_name = get_unqualified_name(T.name);
+
+            if (I.hiding and I.symbols.count(unqualified_name)) continue;
+
+            import_type(T, modid, qualified);
+        }
+    }
 }
 
 module_import parse_import(const Haskell::ImpDecl& impdecl)
@@ -381,6 +414,17 @@ void Module::export_symbol(const symbol_info& S)
         throw myexception()<<"attempting to export both '"<<exported_symbols_[uname].name<<"' and '"<<S.name<<"', which have the same unqualified name!";
 }
 
+void Module::export_type(const type_info& T)
+{
+    assert(is_qualified_symbol(T.name));
+    auto uname = get_unqualified_name(T.name);
+    if (not exported_types_.count(uname))
+        exported_types_[uname] = T;
+    // FIXME, this doesn't really say how the entities (which are different) were referenced in the export list
+    else if (exported_types_[uname].name != T.name)
+        throw myexception()<<"attempting to export both '"<<exported_types_[uname].name<<"' and '"<<T.name<<"', which have the same unqualified name!";
+}
+
 bool Module::symbol_in_scope_with_name(const string& symbol_name, const string& id_name) const
 {
     auto range = aliases.equal_range(id_name);
@@ -424,6 +468,24 @@ void Module::export_module(const string& modid)
                 throw;
             }
         }
+
+    // Find all the symbols that are in scope as both `modid.e` and `e`
+    for(auto& [id_name, type_name]: type_aliases)
+        if (is_qualified_symbol(id_name) and
+            get_module_name(id_name) == modid and
+            type_in_scope_with_name(type_name, get_unqualified_name(id_name)))
+        {
+            try
+            {
+                auto T = lookup_type(id_name);
+                export_type(T);
+            }
+            catch (myexception& e)
+            {
+                e.prepend("exporting module '"+modid+"': ");
+                throw;
+            }
+        }
 }
 
 void Module::perform_exports()
@@ -440,6 +502,8 @@ void Module::perform_exports()
                 string qvarid = ex.as_<AST_node>().value; // This ignores export subspec - see grammar.
                 if (aliases.count(qvarid))
                     export_symbol(lookup_symbol(qvarid));
+                else if (type_aliases.count(qvarid))
+                    export_type(lookup_type(qvarid));
                 else
                     throw myexception()<<"trying to export variable '"<<qvarid<<"', which is not in scope.";
             }
@@ -1051,6 +1115,19 @@ pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string
     throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
 }
 
+type_info Module::lookup_builtin_type(const std::string& name)
+{
+    if (name == "()")
+        return {"()", type_name_category::ADT, {}};
+    else if (name == "[]")
+        return {"[]", type_name_category::ADT, {}};
+    else if (name == "->")
+        return {"->", type_name_category::type_func, {{right_fix,0}}};
+    else if (is_tuple_name(name))
+        return {name, type_name_category::ADT,{}};
+    throw myexception()<<"Symbol 'name' is not a builtin (type) symbol.";
+}
+
 symbol_info Module::lookup_symbol(const std::string& name) const
 {
     if (is_haskell_builtin_con_name(name))
@@ -1101,6 +1178,43 @@ symbol_info Module::get_operator(const string& name) const
     }
 
     return S;
+}
+
+type_info Module::lookup_type(const std::string& name) const
+{
+    if (is_haskell_builtin_con_name(name))
+        return lookup_builtin_type(name);
+
+    int count = type_aliases.count(name);
+    if (count == 0)
+        throw myexception()<<"Type identifier '"<<name<<"' not declared.";
+    else if (count == 1)
+    {
+        string type_name = type_aliases.find(name)->second;
+        if (not types.count(type_name))
+            throw myexception()<<"Identifier '"<<name<<"' -> '"<<type_name<<"', which does not exist!";
+        return types.find(type_name)->second;
+    }
+    else
+    {
+        myexception e;
+        e<<"Type identifier '"<<name<<"' is ambiguous!";
+        auto range = type_aliases.equal_range(name);
+        for(auto i = range.first; i != range.second ;i++)
+            e<<"\n "<<i->first<<" -> "<<i->second;
+        throw e;
+    }
+}
+
+type_info Module::lookup_resolved_type(const std::string& type_name) const
+{
+    if (is_haskell_builtin_type_name(type_name))
+        return lookup_builtin_type(type_name);
+
+    if (not types.count(type_name))
+        throw myexception()<<"Identifier '"<<name<<"' -> '"<<type_name<<"', which does not exist!";
+
+    return types.find(type_name)->second;
 }
 
 void parse_combinator_application(const expression_ref& E, string& name, vector<expression_ref>& patterns)

@@ -41,7 +41,7 @@ struct symbol_info
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int, fixity_info);
 };
 
-enum class type_name_category {type_class, type_syn, ADT};
+enum class type_name_category {type_class, type_syn, type_func, ADT};
 
 struct type_info
 {
@@ -109,6 +109,8 @@ class Module
 
     std::map<std::string, symbol_info> exported_symbols_;
 
+    std::map<std::string, type_info> exported_types_;
+
     std::set<std::string> language_options;
 
     bool resolved = false;
@@ -145,7 +147,11 @@ public:
 
     const std::map<std::string, symbol_info>& exported_symbols() const {return exported_symbols_;}
 
+    const std::map<std::string, type_info>& exported_types() const {return exported_types_;}
+
     void export_symbol(const symbol_info& S);
+
+    void export_type(const type_info& S);
 
     void export_module(const std::string& S);
 
@@ -178,6 +184,8 @@ public:
     void declare_type(const type_info&);
 
     void import_symbol(const symbol_info&, const std::string&, bool qualified);
+
+    void import_type(const type_info&, const std::string&, bool qualified);
 
     void import_module(const Program& P, const module_import& I);
 
@@ -223,11 +231,17 @@ public:
 
     static std::pair<symbol_info,expression_ref> lookup_builtin_symbol(const std::string&);
 
+    static type_info lookup_builtin_type(const std::string&);
+
     symbol_info lookup_symbol(const std::string&) const;
 
     symbol_info lookup_resolved_symbol(const std::string&) const;
 
     symbol_info get_operator(const std::string& name) const;
+
+    type_info lookup_type(const std::string&) const;
+
+    type_info lookup_resolved_type(const std::string&) const;
 
     explicit Module(const std::string&);
 
