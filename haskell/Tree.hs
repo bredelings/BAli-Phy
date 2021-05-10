@@ -38,7 +38,6 @@ numBranches t = numNodes t - 1
 branch_length_tree topology lengths = BranchLengthTree topology (listArray' lengths)
 
 branch_lengths   (BranchLengthTree _ ds) = ds
-branch_lengths t@(TimeTree _ hs)   = mkArray (numBranches t) (\b -> branch_length t b)
 
 time_tree topology times = TimeTree topology (listArray n times) where n = numNodes topology
 node_times (TimeTree t hs) = hs
