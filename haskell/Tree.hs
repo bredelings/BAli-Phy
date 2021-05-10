@@ -13,25 +13,32 @@ data LabelledTree = LabelledTree Tree [String]
 -- It looks like add_labels would be a bit more complicated...
 data BranchLengthTree = BranchLengthTree Tree (Array Double)
 
+-- The array stores the node times
 data TimeTree   = TimeTree RootedTree (Array Double)
+
+-- The array stores the branch rates
+data RateTimeTree = RateTimeTree TimeTree (Array Double)
 
 edgesOutOfNode (Tree nodesArray _ _) node = nodesArray ! node
 edgesOutOfNode (RootedTree t _ _) node      = edgesOutOfNode t node
 edgesOutOfNode (LabelledTree t _) node      = edgesOutOfNode t node
 edgesOutOfNode (BranchLengthTree t _) node  = edgesOutOfNode t node
 edgesOutOfNode (TimeTree t _) node          = edgesOutOfNode t node
+edgesOutOfNode (RateTimeTree t _) node      = edgesOutOfNode t node
 
 nodesForEdge (Tree _ branchesArray _) edgeIndex   = branchesArray ! edgeIndex
 nodesForEdge (RootedTree t _ _) edgeIndex         = nodesForEdge t edgeIndex
 nodesForEdge (LabelledTree t _) edgeIndex         = nodesForEdge t edgeIndex
 nodesForEdge (BranchLengthTree t _) edgeIndex     = nodesForEdge t edgeIndex
 nodesForEdge (TimeTree t _) edgeIndex             = nodesForEdge t edgeIndex
+nodesForEdge (RateTimeTree t _) edgeIndex         = nodesForEdge t edgeIndex
 
 numNodes (Tree _ _ n)           = n
 numNodes (RootedTree t _ _)     = numNodes t
 numNodes (LabelledTree t _)     = numNodes t
 numNodes (BranchLengthTree t _) = numNodes t
 numNodes (TimeTree t _)         = numNodes t
+numNodes (RateTimeTree t _)     = numNodes t
 
 numBranches t = numNodes t - 1
 
@@ -41,12 +48,20 @@ branch_lengths   (BranchLengthTree _ ds) = ds
 
 time_tree topology times = TimeTree topology (listArray n times) where n = numNodes topology
 node_times (TimeTree t hs) = hs
+node_times (RateTimeTree tt _) = node_times tt
 node_time t n = (node_times t)!n
 
-branch_length (BranchLengthTree _ ds) b = ds!b
-branch_length (TimeTree t   hs) b = abs (hs!source - hs!target)
+rate_time_tree time_tree rates = RateTimeTree time_tree (listArray nb rates) where nb = numBranches time_tree
+branch_rates (RateTimeTree _ rs) = rs
+branch_rate t b = (branch_rates t)!b
+
+branch_duration t b = abs (node_time t source - node_time t target)
     where source = sourceNode t b
           target = targetNode t b
+
+branch_length (BranchLengthTree _ ds) b = ds!b
+branch_length t@(TimeTree _  _) b = branch_duration t b
+branch_length t@(RateTimeTree _  _) b = branch_duration t b * branch_rate t b
 
 scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
     where ds' = arrayMap (factor*) ds
@@ -57,6 +72,7 @@ numLeaves t = length $ leaf_nodes t
 root (RootedTree _ r _) = r
 root (LabelledTree t _) = root t
 root (TimeTree t _)     = root t
+root (RateTimeTree t _) = root t
 
 remove_root (RootedTree t _ _) = t
 remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
@@ -66,12 +82,14 @@ get_labels (RootedTree _ _ _)      = error "get_labels: trying to get labels fro
 get_labels (LabelledTree _ labels) = labels
 get_labels (BranchLengthTree t _)  = get_labels t
 get_labels (TimeTree t _)          = get_labels t
+get_labels (RateTimeTree t _)      = get_labels t
 
 add_labels labels t@(Tree _ _ _)          = LabelledTree t labels
 add_labels labels rt@(RootedTree _ _ _)   = LabelledTree rt labels
 add_labels labels (LabelledTree _ _)      = error "add_labels: trying to add labels to an already-labelled tree!"
 add_labels labels (BranchLengthTree t ds) = BranchLengthTree (add_labels labels t) ds
 add_labels labels (TimeTree t hs)         = TimeTree (add_labels labels t) hs
+add_labels labels (RateTimeTree t hs)     = RateTimeTree (add_labels labels t) hs
 
 add_root r (LabelledTree t labels) = LabelledTree (add_root r t) labels
 add_root r (BranchLengthTree t ds) = BranchLengthTree (add_root r t) ds
@@ -86,6 +104,7 @@ away_from_root (RootedTree t r arr    ) b = arr!b
 away_from_root (LabelledTree t _      ) b = away_from_root t b
 away_from_root (BranchLengthTree t _  ) b = away_from_root t b
 away_from_root (TimeTree   t _        ) b = away_from_root t b
+away_from_root (RateTimeTree t _      ) b = away_from_root t b
 away_from_root (Tree _ _ _            ) b = error "away_from_root: unrooted tree!"
 
 toward_root    rt b = not $ away_from_root rt b
