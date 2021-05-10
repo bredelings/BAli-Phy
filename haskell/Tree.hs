@@ -33,11 +33,7 @@ numNodes (LabelledTree t _)     = numNodes t
 numNodes (BranchLengthTree t _) = numNodes t
 numNodes (TimeTree t _)         = numNodes t
 
-numBranches t@(Tree _ _ _)         = numNodes t - 1
-numBranches (RootedTree t _ _)     = numBranches t
-numBranches (LabelledTree t _)     = numBranches t
-numBranches (BranchLengthTree t _) = numBranches t
-numBranches (TimeTree t _)         = numBranches t
+numBranches t = numNodes t - 1
 
 branch_length_tree topology lengths = BranchLengthTree topology (listArray' lengths)
 
