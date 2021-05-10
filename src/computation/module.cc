@@ -39,27 +39,16 @@ symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a)
     :name(s), symbol_type(st), arity(a)
 { }
 
-symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a, int p, fixity_t f)
-    :name(s), symbol_type(st), arity(a)
+symbol_info::symbol_info(const std::string& s, symbol_type_t st, int a, fixity_info f)
+    :name(s), symbol_type(st), arity(a), fixity(f)
 {
-    precedence = p;
-    fixity = f;
 }
 
-bool operator==(const fixity_info& F1, const fixity_info& F2)
-{
-    return (F1.precedence == F2.precedence) and (F1.fixity == F2.fixity);
-}
-
-bool operator!=(const fixity_info& F1, const fixity_info& F2)
-{
-    return not (F1 == F2);
-}
 
 bool operator==(const symbol_info&S1, const symbol_info& S2)
 {
     return (S1.name == S2.name) and (S1.symbol_type == S2.symbol_type) and 
-        (S1.arity == S2.arity) and (S1.precedence == S2.precedence) and (S1.fixity == S2.fixity);
+        (S1.arity == S2.arity);
 }
 
 bool operator!=(const symbol_info&S1, const symbol_info& S2)
@@ -69,7 +58,7 @@ bool operator!=(const symbol_info&S1, const symbol_info& S2)
 
 bool operator==(const type_info& T1, const type_info& T2)
 {
-    return (T1.name == T2.name) and (T1.category == T2.category) and (T1.fixity == T2.fixity);
+    return (T1.name == T2.name) and (T1.category == T2.category);
 }
 
 bool operator!=(const type_info& T1, const type_info& T2)
@@ -197,12 +186,12 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     string s2 = name + "." + s;
 
     if (not symbols.count(s2))
-        declare_symbol({s, unknown_symbol, -1, -1, unknown_fix});
+        declare_symbol({s, unknown_symbol, -1, {unknown_fix,-1}});
 
     symbol_info& S = symbols.find(s2)->second;
 
-    S.precedence = precedence;
-    S.fixity = fixity;
+    S.fixity.precedence = precedence;
+    S.fixity.fixity = fixity;
 }
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
@@ -1052,7 +1041,7 @@ pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string
     else if (name == "[]")
         return {symbol_info("[]", constructor_symbol, 0), constructor("[]",0)};
     else if (name == ":")
-        return {symbol_info(":", constructor_symbol, 2, 5, right_fix), lambda_expression( right_assoc_constructor(":",2) )};
+        return {symbol_info(":", constructor_symbol, 2, {right_fix,5}), lambda_expression( right_assoc_constructor(":",2) )};
     else if (is_tuple_name(name))
     {
         int arity = name.size() - 1;
@@ -1103,12 +1092,12 @@ symbol_info Module::get_operator(const string& name) const
     symbol_info S = lookup_symbol(name);
 
     // An operator of undefined precedence is treated as if it has the highest precedence
-    if (S.precedence == -1 or S.fixity == unknown_fix) 
+    if (S.fixity.precedence == -1 or S.fixity.fixity == unknown_fix) 
     {
         // If either is unset, then both must be unset!
-        assert(S.precedence == -1 and S.fixity == unknown_fix);
-        S.precedence = 9;
-        S.fixity = left_fix;
+        assert(S.fixity.precedence == -1 and S.fixity.fixity == unknown_fix);
+        S.fixity.precedence = 9;
+        S.fixity.fixity = left_fix;
     }
 
     return S;
@@ -1358,7 +1347,7 @@ void Module::def_function(const std::string& fname)
             throw myexception()<<"Can't add function with name '"<<fname<<"': that name is already used!";
     }
     else
-        declare_symbol({fname, variable_symbol, -1, -1, unknown_fix});
+        declare_symbol({fname, variable_symbol, -1, {unknown_fix, -1}});
 }
 
 void Module::def_constructor(const std::string& cname, int arity)
@@ -1380,7 +1369,7 @@ void Module::def_constructor(const std::string& cname, int arity)
         }
     }
 
-    declare_symbol( {cname, constructor_symbol, arity, -1, unknown_fix} );
+    declare_symbol( {cname, constructor_symbol, arity, {unknown_fix, -1}} );
 }
 
 void Module::def_ADT(const std::string& tname)

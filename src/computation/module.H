@@ -28,15 +28,16 @@ struct fixity_info
 
 enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, type_symbol = 3, unknown_symbol = 4};
 
-struct symbol_info: public fixity_info
+struct symbol_info
 {
     std::string name;
     symbol_type_t symbol_type;
     int arity = -1;
+    fixity_info fixity;
 
     symbol_info() {};
     symbol_info(const std::string&, symbol_type_t, int);
-    symbol_info(const std::string&, symbol_type_t, int, int, fixity_t);
+    symbol_info(const std::string&, symbol_type_t, int, fixity_info);
 };
 
 enum class type_name_category {type_class, type_syn, ADT};
@@ -48,9 +49,6 @@ struct type_info
     std::optional<fixity_info> fixity;
     // kind?  Kind of like arity
 };
-
-bool operator==(const fixity_info& F1, const fixity_info& F2);
-bool operator!=(const fixity_info& F1, const fixity_info& F2);
 
 bool operator==(const symbol_info&S1, const symbol_info& S2);
 bool operator!=(const symbol_info&S1, const symbol_info& S2);

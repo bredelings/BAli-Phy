@@ -56,9 +56,9 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
     // We are starting with a Neg
     if (E1.head() == AST_node("neg"))
     {
-	if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
+	if (op1.fixity.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
-	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol, 2,6,left_fix), T);
+	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol, 2,{left_fix,6}), T);
 
 	return infix_parse(m, op1, {Hs::Var({noloc,"negate"}),E1}, T);
     }
@@ -81,8 +81,7 @@ symbol_info get_op_sym(const Module& m, const expression_ref& O)
     {
 	// FIXME: if this name is simply never declared, we should warn here.
 	op_sym.name = name;
-	op_sym.precedence = 9;
-	op_sym.fixity = left_fix;
+	op_sym.fixity = {left_fix,9};
     }
 
     return op_sym;
@@ -102,11 +101,11 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
     symbol_info op2 = get_op_sym(m, op2_E);
 
     // illegal expressions
-    if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
+    if (op1.fixity.precedence == op2.fixity.precedence and (op1.fixity.fixity != op2.fixity.fixity or op1.fixity.fixity == non_fix))
 	throw myexception()<<"Must use parenthesis to order operators '"<<op1.name<<"' and '"<<op2.name<<"'";
 
     // left association: ... op1 E1) op2 ...
-    if (op1.precedence > op2.precedence or (op1.precedence == op2.precedence and op1.fixity == left_fix))
+    if (op1.fixity.precedence > op2.fixity.precedence or (op1.fixity.precedence == op2.fixity.precedence and op1.fixity.fixity == left_fix))
 	return E1;
 
     // right association: .. op1 (E1 op2 {...E3...}) ...
@@ -126,7 +125,7 @@ expression_ref desugar_infix(const Module& m, const vector<expression_ref>& T)
     deque<expression_ref> T2;
     T2.insert(T2.begin(), T.begin(), T.end());
 
-    return infix_parse_neg(m, {"",variable_symbol,2,-1,non_fix}, T2);
+    return infix_parse_neg(m, {"",variable_symbol,2,{non_fix,-1}}, T2);
 }
 
 set<string> find_bound_vars(const expression_ref& E)
