@@ -1,5 +1,4 @@
 ![Build and test](https://github.com/bredelings/BAli-Phy/workflows/Build%20and%20test/badge.svg)
-[![Appveyor](https://ci.appveyor.com/api/projects/status/q68hnnoelqqvwsy2?svg=true)](https://ci.appveyor.com/project/bredelings/bali-phy)
 
 Install
 -------
