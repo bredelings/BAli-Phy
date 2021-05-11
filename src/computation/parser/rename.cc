@@ -603,6 +603,8 @@ void add(bound_var_info& bv1, const bound_var_info& bv2)
     bv1.insert(bv2.begin(), bv2.end());
 }
 
+typedef set<string> bound_type_var_info;
+
 struct renamer_state
 {
     const Module& m;
@@ -625,15 +627,158 @@ struct renamer_state
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound);
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound);
+
+    Haskell::Decls rename_type_decls(Haskell::Decls decls);
+    Haskell::ClassDecl rename(Haskell::ClassDecl);
+    Haskell::TypeSynonymDecl rename(Haskell::TypeSynonymDecl);
+    Haskell::DataOrNewtypeDecl rename(Haskell::DataOrNewtypeDecl);
+    Haskell::Type rename_type(const Haskell::Type&, const bound_type_var_info& vars);
+    Haskell::Context rename(Haskell::Context, const bound_type_var_info& vars);
+
     expression_ref rename(const expression_ref& E, const bound_var_info& bound);
 
     renamer_state(const Module& m_):m(m_) {}
 };
 
+Haskell::Type renamer_state::rename_type(const Haskell::Type& type, const bound_type_var_info& bound)
+{
+    if (type.is_a<Haskell::TypeVar>())
+    {
+        auto& tv = type.as_<Haskell::TypeVar>();
+        auto& name = unloc(tv.name);
+        auto& loc = tv.name.loc;
+
+        if (includes(bound,name))
+            return type;
+        else if (m.type_is_declared(name))
+        {
+            auto T = m.lookup_type(name);
+            auto& qualified_name = T.name;
+            return Haskell::TypeVar({tv.name.loc, qualified_name});
+        }
+        else if (is_haskell_varid(name))
+            return type;
+        else
+        {
+            if (loc)
+                throw myexception()<<"Can't find id '"<<name<<"' at "<<*loc;
+            else
+                throw myexception()<<"Can't find id '"<<name<<"'";
+        }
+    }
+    else if (type.is_a<Haskell::TypeApp>())
+    {
+        auto app = type.as_<Haskell::TypeApp>();
+        app.head = rename_type(app.head, bound);
+        app.arg  = rename_type(app.arg, bound);
+        return app;
+    }
+    else if (type.is_a<Haskell::TupleType>())
+    {
+        auto tuple = type.as_<Haskell::TupleType>();
+        for(auto type: tuple.element_types)
+            type = rename_type(type, bound);
+        return tuple;
+    }
+    else if (type.is_a<Haskell::ListType>())
+    {
+        auto list = type.as_<Haskell::ListType>();
+        list.element_type = rename_type(list.element_type, bound);
+        return list;
+    }
+    return type;
+}
+
+Haskell::Context renamer_state::rename(Haskell::Context context, const bound_type_var_info& vars)
+{
+    for(auto& constraint: context.constraints)
+        constraint = rename_type(constraint, vars);
+    return context;
+}
+
+Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl)
+{
+    decl.name = m.name + "." + decl.name;
+    bound_type_var_info bound_vars;
+    for(auto& var: decl.type_vars)
+    {
+        if (var.is_a<Haskell::TypeVar>())
+        {
+            auto& v = var.as_<Haskell::TypeVar>();
+            auto& name = unloc(v.name);
+            if (is_haskell_varid(name))
+            {
+                bound_vars.insert(name);
+                continue;
+            }
+            else if (v.name.loc)
+                throw myexception()<<"Can't use '"<<name<<"' in argument to data declaration at "<<*v.name.loc;
+            else
+                throw myexception()<<"Can't use '"<<name<<"' in argument to data declaration";
+        }
+
+        throw myexception()<<"Can't use '"<<var<<"' in argument to data declaration";
+    }
+
+    decl.context = rename(decl.context, bound_vars);
+
+    for(auto& constructor: decl.constructors)
+    {
+        if (constructor.is_record_constructor())
+        {
+            for(auto& field: std::get<1>(constructor.fields).field_decls)
+            {
+                for(auto& name: field.field_names)
+                    name = m.name + "." + name;
+                field.type = rename_type(field.type, bound_vars);
+            }
+        }
+        else
+        {
+            for(auto& type: std::get<0>(constructor.fields))
+                type = rename_type(type, bound_vars);
+        }
+    }
+
+    return decl;
+}
+
+Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl decl)
+{
+    decl.name = m.name + "." + decl.name;
+    return decl;
+}
+
+Haskell::TypeSynonymDecl renamer_state::rename(Haskell::TypeSynonymDecl decl)
+{
+    decl.name = m.name + "." + decl.name;
+    return decl;
+}
+
+
+Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
+{
+    for(auto& decl: decls)
+    {
+        if (decl.is_a<Haskell::DataOrNewtypeDecl>())
+            decl = rename(decl.as_<Haskell::DataOrNewtypeDecl>());
+        else if (decl.is_a<Haskell::ClassDecl>())
+            decl = rename(decl.as_<Haskell::ClassDecl>());
+        else if (decl.is_a<Haskell::TypeSynonymDecl>())
+            decl = rename(decl.as_<Haskell::TypeSynonymDecl>());
+    }
+
+    return decls;
+}
+
 Haskell::Decls rename(const Module& m, Haskell::Decls decls)
 {
     renamer_state Rn(m);
+
+    decls = Rn.rename_type_decls(decls);
+
     Rn.rename_decls(decls,{});
+
     return decls;
 }
 
