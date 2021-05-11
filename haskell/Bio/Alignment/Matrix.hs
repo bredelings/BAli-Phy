@@ -1,6 +1,7 @@
 module Bio.Alignment.Matrix where
 
 import Bio.Sequence
+import Bio.Alphabet
 import Data.BitVector
 
 data AlignmentMatrix

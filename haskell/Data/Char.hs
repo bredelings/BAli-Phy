@@ -6,8 +6,6 @@ import Compiler.Num
 import Data.Eq
 import Data.Ord
 
-data Char
-
 builtin_isControl :: Char -> Int
 builtin builtin_isControl 1 "isControl" "Char"
 
@@ -134,11 +132,11 @@ chr :: Int -> Char
 builtin chr 1 "chr" "Char"
 
 -- string representations
-showLitChar :: Char -> ShowS
+-- showLitChar :: Char -> ShowS
 -- not implemented
 
-lexLitChar :: ReadS String
+-- lexLitChar :: ReadS String
 -- not implemented
 
-readLitChar :: ReadS Char
+-- readLitChar :: ReadS Char
 -- not implemented

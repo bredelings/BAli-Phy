@@ -4,7 +4,7 @@ module Data.Text where
 
 import Foreign.String
 
-data Text = Text CppString
+data Text = Text CPPString
 
 builtin builtin_pack 1 "pack" "Text"
 

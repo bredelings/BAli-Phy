@@ -11,6 +11,7 @@ module Data.Array (module Data.Array,
 -- See Data.Array.IO     - Mutable boxed and unboxed array in the IO monad.
 -- See Data.Array.Unboxed
 
+import Data.Bool
 import Data.Ix
 import Data.List
 import Data.Function

@@ -1,5 +1,7 @@
 module Bio.Alphabet where
 
+data Alphabet
+
 builtin getNucleotides 1 "getNucleotides" "Alphabet"
 
 builtin getAminoAcids 1 "getAminoAcids" "Alphabet"

@@ -3,7 +3,7 @@ module Foreign.String where
 
 import Compiler.Num -- for (-)
 
-data CppString
+data CPPString
 
 builtin getStringElement 2 "getStringElement" "Vector"
 builtin sizeOfString 1 "sizeOfString" "Vector"

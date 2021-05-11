@@ -6,7 +6,7 @@ import Foreign.String
 builtin builtin_c_json 1 "c_json" "Foreign"
 
 -- Hmm... it doesn't look like we can have a JSON object, just JSON representation, because a JSON object would have to have existential type fields.
-data JSON = Array [JSON] | Object [(String,JSON)] | Number a | Bool Bool | String CppString | Null
+data JSON = Array [JSON] | Object [(String,JSON)] | Number a | Bool Bool | String CPPString | Null
 
 json_to_string (Array x) = "["++intercalate "," (map json_to_string x) ++ "]"
 -- we aren't escaping strings here...
