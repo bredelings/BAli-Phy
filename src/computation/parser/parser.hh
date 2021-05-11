@@ -64,7 +64,8 @@
   Haskell::Module make_module(const std::string& name, const std::optional<std::vector<expression_ref>>& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls);
   std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
-  Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, std::vector<std::string>& ops);
+  Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, const std::vector<std::string>& ops);
+  Haskell::TypeDecl make_type_decl(const std::vector<std::string>& vars, Haskell::Type& type);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
@@ -122,7 +123,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 126 "parser.hh"
+#line 127 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -256,7 +257,7 @@
 #endif
 
 namespace yy {
-#line 260 "parser.hh"
+#line 261 "parser.hh"
 
 
 
@@ -4918,7 +4919,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 4227,     ///< Last index in yytable_.
+      yylast_ = 4245,     ///< Last index in yytable_.
       yynnts_ = 179,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
@@ -5637,7 +5638,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5641 "parser.hh"
+#line 5642 "parser.hh"
 
 
 

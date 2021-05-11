@@ -686,7 +686,8 @@ Haskell::Type renamer_state::rename_type(const Haskell::Type& type, const bound_
         list.element_type = rename_type(list.element_type, bound);
         return list;
     }
-    return type;
+    else
+        std::abort();
 }
 
 Haskell::Context renamer_state::rename(Haskell::Context context, const bound_type_var_info& vars)
@@ -1135,13 +1136,11 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
             add(bound_names, rename_decl_head(D, top));
             decl = D;
         }
-        else if (is_AST(decl,"Decl:sigtype"))
+        else if (decl.is_a<Haskell::TypeDecl>())
         {
-            auto id = decl.sub()[0];
-            auto type = decl.sub()[1];
-            assert(id.is_a<Hs::Var>());
-            add(bound_names, rename_pattern(id, top));
-            decl = expression_ref(AST_node("Decl:sigtype"),{id,type});
+            auto T = decl.as_<Haskell::TypeDecl>();
+            T.type = rename_type(T.type, {});
+            decl = T;
         }
         if (decl.is_a<Haskell::ClassDecl>())
         {
@@ -1155,13 +1154,11 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
                         add(bound_names,rename_decl_head(D, true));
                         cdecl = D;
                     }
-                    else if (is_AST(cdecl,"Decl:sigtype"))
+                    else if (cdecl.is_a<Haskell::TypeDecl>())
                     {
-                        auto id = cdecl.sub()[0];
-                        auto type = cdecl.sub()[1];
-                        assert(id.is_a<Hs::Var>());
-                        add(bound_names, rename_pattern(id, true));
-                        cdecl = expression_ref(AST_node("Decl:sigtype"),{id,type});
+                        auto T = cdecl.as_<Haskell::TypeDecl>();
+                        T.type = rename_type(T.type, {});
+                        cdecl = T;
                     }
             }
             decl = C;
