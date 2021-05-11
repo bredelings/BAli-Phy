@@ -1122,7 +1122,11 @@ pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string
 
 type_info Module::lookup_builtin_type(const std::string& name)
 {
-    if (name == "()")
+    if (name == "Double")
+        return {"Double", type_name_category::ADT, {}};
+    else if (name == "Int")
+        return {"Int", type_name_category::ADT, {}};
+    else if (name == "()")
         return {"()", type_name_category::ADT, {}};
     else if (name == "[]")
         return {"[]", type_name_category::ADT, {}};
@@ -1372,6 +1376,8 @@ bool is_haskell_builtin_con_name(const std::string& s)
 bool is_haskell_builtin_type_name(const std::string& s)
 {
     if (s == "()" or s == "[]" or s == "->" or is_tuple_name(s)) 
+        return true;
+    else if (s == "Double" or s == "Int")
         return true;
     else
         return false;
