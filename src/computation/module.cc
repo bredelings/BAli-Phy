@@ -152,6 +152,9 @@ void Module::declare_symbol(const symbol_info& S)
 
 void Module::declare_type(const type_info& T)
 {
+    if (is_haskell_builtin_type_name(T.name))
+        throw myexception()<<"Can't declare builtin type name '"<<T.name<<"' as local type!.";
+
     if (is_qualified_symbol(T.name))
         throw myexception()<<"Locally defined symbol '"<<T.name<<"' should not be qualified in declaration.";
 
