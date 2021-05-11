@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.7.5.
+// A Bison parser, made by GNU Bison 3.7.6.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -15,7 +15,7 @@
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // As a special exception, you may create a larger work that contains
 // part or all of the Bison parser skeleton and distribute that work
@@ -2378,7 +2378,7 @@ namespace yy {
 
   case 110: // opt_tyconsig: "::" gtycon
 #line 840 "parser.y"
-                     {yylhs.value.as < expression_ref > () = make_type_var(yystack_[0].value.as < std::string > ());}
+                     {yylhs.value.as < expression_ref > () = make_type_var({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 2383 "parser.cc"
     break;
 
@@ -2480,7 +2480,7 @@ namespace yy {
 
   case 127: // type: btype "->" ctype
 #line 887 "parser.y"
-                                   {yylhs.value.as < expression_ref > () = make_tyapps({make_type_var("->"),yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
+                                   {yylhs.value.as < expression_ref > () = make_tyapps({make_type_var({yystack_[1].location,"->"}),yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
 #line 2485 "parser.cc"
     break;
 
@@ -2528,13 +2528,13 @@ namespace yy {
 
   case 135: // tyapp: qtyconop
 #line 901 "parser.y"
-                                   {yylhs.value.as < expression_ref > () = make_type_var(yystack_[0].value.as < std::string > ());}
+                                   {yylhs.value.as < expression_ref > () = make_type_var({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 2533 "parser.cc"
     break;
 
   case 136: // tyapp: tyvarop
 #line 902 "parser.y"
-                                   {yylhs.value.as < expression_ref > () = make_type_var(yystack_[0].value.as < std::string > ());}
+                                   {yylhs.value.as < expression_ref > () = make_type_var({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 2539 "parser.cc"
     break;
 
@@ -2546,19 +2546,19 @@ namespace yy {
 
   case 138: // atype: ntgtycon
 #line 915 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = make_type_var(yystack_[0].value.as < std::string > ());}
+                                       {yylhs.value.as < expression_ref > () = make_type_var({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 2551 "parser.cc"
     break;
 
   case 139: // atype: tyvar
 #line 916 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = make_type_var(yystack_[0].value.as < std::string > ());}
+                                       {yylhs.value.as < expression_ref > () = make_type_var({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 2557 "parser.cc"
     break;
 
   case 140: // atype: "*"
 #line 917 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = make_type_var("*");}
+                                       {yylhs.value.as < expression_ref > () = make_type_var({yystack_[0].location,"*"});}
 #line 2563 "parser.cc"
     break;
 
@@ -2576,7 +2576,7 @@ namespace yy {
 
   case 143: // atype: "(" ")"
 #line 920 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = make_type_var("()");}
+                                       {yylhs.value.as < expression_ref > () = make_type_var({yystack_[1].location,"()"});}
 #line 2581 "parser.cc"
     break;
 
@@ -2648,7 +2648,7 @@ namespace yy {
 
   case 157: // tv_bndr: tyvar
 #line 951 "parser.y"
-                                    {yylhs.value.as < expression_ref > () = make_type_var(yystack_[0].value.as < std::string > ());}
+                                    {yylhs.value.as < expression_ref > () = make_type_var({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 2653 "parser.cc"
     break;
 
@@ -2714,7 +2714,7 @@ namespace yy {
 
   case 168: // constr_stuff: btype_no_ops conop btype_no_ops
 #line 988 "parser.y"
-                                                {yylhs.value.as < expression_ref > () = make_tyapps({make_type_var(yystack_[1].value.as < std::string > ()),make_tyapps(yystack_[2].value.as < std::vector<expression_ref> > ()),make_tyapps(yystack_[0].value.as < std::vector<expression_ref> > ())});}
+                                                {yylhs.value.as < expression_ref > () = make_tyapps({make_type_var({yystack_[1].location,yystack_[1].value.as < std::string > ()}),make_tyapps(yystack_[2].value.as < std::vector<expression_ref> > ()),make_tyapps(yystack_[0].value.as < std::vector<expression_ref> > ())});}
 #line 2719 "parser.cc"
     break;
 
@@ -5941,7 +5941,7 @@ check_type_or_class_header(expression_ref type)
     // FIXME -- add location!
     if (not type_head.is_a<Haskell::TypeVar>())
         throw myexception()<<"Malformed type or class header '"<<type<<"'";
-    auto name = type_head.as_<Haskell::TypeVar>().name;
+    auto name = unloc(type_head.as_<Haskell::TypeVar>().name);
 
     return {name, type_args};
 }
@@ -6022,11 +6022,11 @@ bool check_kind(const Haskell::Type& kind)
     auto V = kind_head.as_<Haskell::TypeVar>();
     if (kind_args.empty())
     {
-        return (V.name == "*");
+        return (unloc(V.name) == "*");
     }
     else if (kind_args.size() == 2)
     {
-        return (V.name == "->") and check_kind(kind_args[0]) and check_kind(kind_args[1]);
+        return (unloc(V.name) == "->") and check_kind(kind_args[0]) and check_kind(kind_args[1]);
     }
     else
         return false;
@@ -6040,9 +6040,9 @@ Haskell::Type make_kind(const Haskell::Type& kind)
     return kind;
 }
 
-Haskell::TypeVar make_type_var(const string& id)
+Haskell::TypeVar make_type_var(const Located<string>& id)
 {
-    return Haskell::TypeVar(id);
+    return {id};
 }
 
 Haskell::TypeVarOfKind make_type_var_of_kind(const string& id, const Haskell::Type& kind)
@@ -6080,7 +6080,7 @@ optional<pair<string, Haskell::FieldDecls>> is_record_con(const expression_ref& 
 
     if (not args[0].is_a<Haskell::FieldDecls>()) return {};
 
-    return {{head.as_<Haskell::TypeVar>().name, args[0].as_<Haskell::FieldDecls>()}};
+    return {{unloc(head.as_<Haskell::TypeVar>().name), args[0].as_<Haskell::FieldDecls>()}};
 }
 
 optional<pair<string, std::vector<expression_ref>>> is_normal_con(const expression_ref& typeish)
@@ -6092,7 +6092,7 @@ optional<pair<string, std::vector<expression_ref>>> is_normal_con(const expressi
     if (not head.is_a<Haskell::TypeVar>())
         return {};
 
-    return {{head.as_<Haskell::TypeVar>().name, args}};
+    return {{unloc(head.as_<Haskell::TypeVar>().name), args}};
 }
 
 Haskell::Constructor make_constructor(const expression_ref& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish)

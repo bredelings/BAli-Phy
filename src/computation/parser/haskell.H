@@ -429,11 +429,11 @@ struct ListType: public Object
 
 struct TypeVar: public Object
 {
-    std::string name;
+    Located<std::string> name;
 
     TypeVar* clone() const { return new TypeVar(*this);}
     std::string print() const;
-    TypeVar(const std::string& s):name(s) {}
+    TypeVar(const Located<std::string>& s):name(s) {}
 };
 
 struct TypeVarOfKind: public Object

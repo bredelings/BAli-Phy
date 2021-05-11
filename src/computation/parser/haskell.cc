@@ -168,7 +168,7 @@ string ListType::print() const
 
 string TypeVar::print() const
 {
-    return name;
+    return unloc(name);
 }
 
 string TypeVarOfKind::print() const
@@ -197,7 +197,7 @@ string TypeApp::print() const
         if (H.head.is_a<TypeVar>())
         {
             auto& A = H.head.as_<TypeVar>();
-            if (A.name == "->")
+            if (unloc(A.name) == "->")
                 return H.arg.print() + " -> " + arg.print();
         }
     }

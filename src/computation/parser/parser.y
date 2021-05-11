@@ -42,7 +42,7 @@
   expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
   Haskell::Var make_var(const Located<std::string>& id);
-  Haskell::TypeVar make_type_var(const std::string& id);
+  Haskell::TypeVar make_type_var(const Located<std::string>& id);
   Haskell::TypeVarOfKind make_type_var_of_kind(const std::string& id, const Haskell::Type& kind);
   Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& id, const Haskell::Type& kind);
   Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& tup_exprs);
@@ -837,7 +837,7 @@ opt_sig: %empty  {}
 */
 
 opt_tyconsig: %empty {}
-| "::" gtycon        {$$ = make_type_var($2);}
+| "::" gtycon        {$$ = make_type_var({@2,$2});}
 
 sigtype: ctype   {$$ = $1;}
 
@@ -884,7 +884,7 @@ context: btype                     {$$ = make_context($1);}
 context_no_ops: btype_no_ops       {$$ = make_context(make_tyapps($1));}
 
 type: btype                        {$$ = $1;}
-|     btype "->" ctype             {$$ = make_tyapps({make_type_var("->"),$1,$3});}
+|     btype "->" ctype             {$$ = make_tyapps({make_type_var({@2,"->"}),$1,$3});}
 
 typedoc: type                      {$$ = $1;}
 /* typedoc: .... */
@@ -898,8 +898,8 @@ tyapps: tyapp                      {$$.push_back($1);}
 |       tyapps tyapp               {$$ = $1; $$.push_back($2);}
 
 tyapp: atype                       {$$ = $1;}
-|      qtyconop                    {$$ = make_type_var($1);}
-|      tyvarop                     {$$ = make_type_var($1);}
+|      qtyconop                    {$$ = make_type_var({@1,$1});}
+|      tyvarop                     {$$ = make_type_var({@1,$1});}
 /* Template Haskell
 |      SIMPLEQUOTE qconop
 |      SIMPLEQUOTE varop
@@ -912,12 +912,12 @@ atype_docs: atype /* FIX */        {$$ = $1;}
  * Do I need a separate rule for it if I'm not using StarIsType?
  */
 
-atype: ntgtycon                        {$$ = make_type_var($1);}
-|      tyvar                           {$$ = make_type_var($1);}
-|      "*"                             {$$ = make_type_var("*");}
+atype: ntgtycon                        {$$ = make_type_var({@1,$1});}
+|      tyvar                           {$$ = make_type_var({@1,$1});}
+|      "*"                             {$$ = make_type_var({@1,"*"});}
 |      strict_mark atype               {$$ = make_strict_lazy_type($1,$2);}
 |      "{" fielddecls "}"              {$$ = make_field_decls($2);}
-|      "(" ")"                         {$$ = make_type_var("()");}
+|      "(" ")"                         {$$ = make_type_var({@1,"()"});}
 |      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = make_tuple_type(ts);}
 /*
 |      "(#" "#)"                       {}
@@ -948,7 +948,7 @@ bar_types2: ctype "|" ctype
 tv_bndrs:   tv_bndrs tv_bndr   {$$ = $1; $$.push_back($2);}
 |           %empty             { /* default construction OK */}
 
-tv_bndr:    tyvar                   {$$ = make_type_var($1);}
+tv_bndr:    tyvar                   {$$ = make_type_var({@1,$1});}
 |           "(" tyvar "::" kind ")" {$$ = make_type_var_of_kind($2,$4);}
 
 
@@ -985,7 +985,7 @@ forall: "forall" tv_bndrs "."   {if ($2.size()>1) $$ = make_tv_bndrs($2);}
 |       %empty                  {}
 
 constr_stuff: btype_no_ops                      {$$ = make_tyapps($1);}
-|             btype_no_ops conop btype_no_ops   {$$ = make_tyapps({make_type_var($2),make_tyapps($1),make_tyapps($3)});}
+|             btype_no_ops conop btype_no_ops   {$$ = make_tyapps({make_type_var({@2,$2}),make_tyapps($1),make_tyapps($3)});}
 
 fielddecls: %empty              {}
 |           fielddecls1         {$$ = $1;}
@@ -1553,7 +1553,7 @@ check_type_or_class_header(expression_ref type)
     // FIXME -- add location!
     if (not type_head.is_a<Haskell::TypeVar>())
         throw myexception()<<"Malformed type or class header '"<<type<<"'";
-    auto name = type_head.as_<Haskell::TypeVar>().name;
+    auto name = unloc(type_head.as_<Haskell::TypeVar>().name);
 
     return {name, type_args};
 }
@@ -1634,11 +1634,11 @@ bool check_kind(const Haskell::Type& kind)
     auto V = kind_head.as_<Haskell::TypeVar>();
     if (kind_args.empty())
     {
-        return (V.name == "*");
+        return (unloc(V.name) == "*");
     }
     else if (kind_args.size() == 2)
     {
-        return (V.name == "->") and check_kind(kind_args[0]) and check_kind(kind_args[1]);
+        return (unloc(V.name) == "->") and check_kind(kind_args[0]) and check_kind(kind_args[1]);
     }
     else
         return false;
@@ -1652,9 +1652,9 @@ Haskell::Type make_kind(const Haskell::Type& kind)
     return kind;
 }
 
-Haskell::TypeVar make_type_var(const string& id)
+Haskell::TypeVar make_type_var(const Located<string>& id)
 {
-    return Haskell::TypeVar(id);
+    return {id};
 }
 
 Haskell::TypeVarOfKind make_type_var_of_kind(const string& id, const Haskell::Type& kind)
@@ -1692,7 +1692,7 @@ optional<pair<string, Haskell::FieldDecls>> is_record_con(const expression_ref& 
 
     if (not args[0].is_a<Haskell::FieldDecls>()) return {};
 
-    return {{head.as_<Haskell::TypeVar>().name, args[0].as_<Haskell::FieldDecls>()}};
+    return {{unloc(head.as_<Haskell::TypeVar>().name), args[0].as_<Haskell::FieldDecls>()}};
 }
 
 optional<pair<string, std::vector<expression_ref>>> is_normal_con(const expression_ref& typeish)
@@ -1704,7 +1704,7 @@ optional<pair<string, std::vector<expression_ref>>> is_normal_con(const expressi
     if (not head.is_a<Haskell::TypeVar>())
         return {};
 
-    return {{head.as_<Haskell::TypeVar>().name, args}};
+    return {{unloc(head.as_<Haskell::TypeVar>().name), args}};
 }
 
 Haskell::Constructor make_constructor(const expression_ref& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish)

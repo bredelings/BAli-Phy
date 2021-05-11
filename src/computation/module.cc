@@ -1061,7 +1061,7 @@ string get_constructor_name(const expression_ref& constr)
 {
     auto [con,_] = Haskell::decompose_type_apps(constr);
     assert(con.is_a<Haskell::TypeVar>());
-    return con.as_<Haskell::TypeVar>().name;
+    return unloc(con.as_<Haskell::TypeVar>().name);
 }
 
 void Module::load_constructors()
