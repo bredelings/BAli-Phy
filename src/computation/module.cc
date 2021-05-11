@@ -1187,7 +1187,7 @@ symbol_info Module::get_operator(const string& name) const
 
 type_info Module::lookup_type(const std::string& name) const
 {
-    if (is_haskell_builtin_con_name(name))
+    if (is_haskell_builtin_type_name(name))
         return lookup_builtin_type(name);
 
     int count = type_aliases.count(name);
