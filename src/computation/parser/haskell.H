@@ -118,6 +118,31 @@ struct Context
     Context(const std::vector<Haskell::Type>& cs): constraints(cs) {}
 };
 
+
+struct TypedExp: public Object
+{
+    Expression exp;
+    Type type;
+
+    TypedExp* clone() const { return new TypedExp(*this);}
+    std::string print() const;
+
+    TypedExp() = default;
+    TypedExp(const Expression& e, const Type& t): exp(e), type(t) {}
+};
+
+struct TypeDecl: public Object
+{
+    std::vector<std::string> vars;
+    Type type;
+
+    TypeDecl* clone() const { return new TypeDecl(*this);}
+    std::string print() const;
+
+    TypeDecl() = default;
+    TypeDecl(const std::vector<std::string>& vs, const Type& t): vars(vs), type(t) {}
+};
+
 struct ValueDecl: public Object
 {
     expression_ref lhs;

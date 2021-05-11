@@ -46,7 +46,17 @@ string ImpDecl::print() const
         v.push_back(impspec.print());
     return join(v, " ");
 }
-    
+
+string TypedExp::print() const
+{
+    return exp.print() + " :: " + type.print();
+}
+
+string TypeDecl::print() const
+{
+    return join(vars,", ") + " :: " + type.print();
+}
+
 string ValueDecl::print() const
 {
     string result = lhs.print() + " ";
