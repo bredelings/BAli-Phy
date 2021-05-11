@@ -313,7 +313,7 @@ transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_
 
 -- So, how are we going to handle rate scaling?  That should be part of the model!
 
-data SingleBranchLengthModel a = SingleBranchLengthModel TreeWithBranchLengths a
+data SingleBranchLengthModel a = SingleBranchLengthModel BranchLengthTree a
 get_tree' (SingleBranchLengthModel t _) = t        -- Avoid aliasing with get_tree from DataPartition
 
 get_smap (ReversibleMarkov _ s _ _ _ _ _) = s

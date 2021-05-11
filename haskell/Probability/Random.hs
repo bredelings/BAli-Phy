@@ -35,7 +35,7 @@ data Random a = RandomStructure (a->Effects) (a->Effects->a) (Random a)
               | SamplingRate Double (Random a)
               | Lazy (Random a)
               | WithEffect (Random a) (Random a)
-              | PerformEffect Effect
+              | PerformEffect Effects
               | LiftIO (IO a)
 
 -- I feel sample_with_initial_value actually needs to run the sampler... and make the result come out of that.
