@@ -3,6 +3,8 @@ module Compiler.Base where
 
 import Foreign.Pair
 
+type String = [Char]
+
 deep_eval_list [] = []
 deep_eval_list (x:xs) = c_pair x (deep_eval_list xs)
 
