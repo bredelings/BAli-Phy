@@ -21,6 +21,15 @@ struct Var: public Object
     Var(const Located<std::string>& s):name(s) {}
 };
 
+struct TypeVar: public Object
+{
+    Located<std::string> name;
+
+    TypeVar* clone() const { return new TypeVar(*this);}
+    std::string print() const;
+    TypeVar(const Located<std::string>& s):name(s) {}
+};
+
 struct ImpDecl
 {
     bool qualified;
@@ -151,6 +160,24 @@ struct TypeDecl: public Object
     TypeDecl(const std::vector<Haskell::Var>& vs, const Type& t): vars(vs), type(t) {}
 };
 
+struct BuiltinDecl: public Object
+{
+    std::string function_name;
+    int n_args;
+    std::string symbol_name;
+    std::string plugin_name;
+
+    BuiltinDecl* clone() const {return new BuiltinDecl(*this);}
+    std::string print() const;
+
+    BuiltinDecl(const std::string& n, int a, const std::string& o)
+        :function_name(n), n_args(a), symbol_name(n), plugin_name(o)
+    {};
+    BuiltinDecl(const std::string& n, int a, const std::string& l, const std::string& o)
+        :function_name(n), n_args(a), symbol_name(l), plugin_name(o)
+    {};
+};
+
 struct ValueDecl: public Object
 {
     expression_ref lhs;
@@ -178,48 +205,6 @@ public:
     Decls(bool b=false): is_top(b) {}
     Decls(const vector<expression_ref>& ds,bool b=false): std::vector<expression_ref>(ds),is_top(b) {}
 };
-
-struct ClassDecl: public Object
-{
-    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
-
-    std::string name;
-    std::vector<expression_ref> type_vars;
-    Context context;
-
-    std::optional<Located<Haskell::Decls>> decls;
-    // std::vector<Located<expression_ref>> signatures;
-    // std::vector<Located<expression_ref>> default_decls;
-
-    ClassDecl* clone() const { return new ClassDecl(*this);}
-    ClassDecl(const std::string& s,
-              const std::vector<expression_ref>& as,
-              const Context& ct,
-              const std::optional<Located<Haskell::Decls>>& ds)
-        :name(s),
-         type_vars(as),
-         context(ct),
-         decls(ds)
-        {}
-};
-
-struct InstanceDecl: public Object
-{
-    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
-
-    // This should be something like Eq a => Eq [a]
-    Located<expression_ref> type;
-    std::optional<Located<Haskell::Decls>> decls;
-
-    InstanceDecl* clone() const { return new InstanceDecl(*this);}
-
-    InstanceDecl(const Located<expression_ref>& t,
-                 const std::optional<Located<Haskell::Decls>>& d)
-        :type(t),
-         decls(d)
-        {}
-};
-
 
 enum class Fixity {infixl, infix, infixr, unknown};
 
@@ -294,7 +279,7 @@ struct DataOrNewtypeDecl: public Object
 
     DataOrNewtype data_or_newtype;
     std::string name;
-    std::vector<expression_ref> type_vars;
+    std::vector<Haskell::TypeVar> type_vars;
     Context context;
 
     std::vector<Constructor> constructors;
@@ -306,12 +291,12 @@ struct DataOrNewtypeDecl: public Object
 
     DataOrNewtypeDecl(DataOrNewtype dn,
                       const std::string& s,
-                      const std::vector<expression_ref>& as,
+                      const std::vector<Haskell::TypeVar>& tvs,
                       const Context& ct,
                       const std::vector<Constructor>& cs)
         :data_or_newtype(dn),
          name(s),
-         type_vars(as),
+         type_vars(tvs),
          context(ct),
          constructors(cs)
         {}
@@ -322,14 +307,14 @@ struct TypeSynonymDecl: public Object
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
     std::string name;
-    std::vector<expression_ref> type_vars;
+    std::vector<Haskell::TypeVar> type_vars;
 
     Located<expression_ref> rhs_type;
 
     TypeSynonymDecl* clone() const { return new TypeSynonymDecl(*this);}
 
     TypeSynonymDecl(const std::string& s,
-                    const std::vector<expression_ref>& tvs,
+                    const std::vector<Haskell::TypeVar>& tvs,
                     const Located<expression_ref>& rhs)
         :name(s),
          type_vars(tvs),
@@ -337,23 +322,47 @@ struct TypeSynonymDecl: public Object
         {}
 };
 
-struct BuiltinDecl: public Object
+struct ClassDecl: public Object
 {
-    std::string function_name;
-    int n_args;
-    std::string symbol_name;
-    std::string plugin_name;
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
-    BuiltinDecl* clone() const {return new BuiltinDecl(*this);}
-    std::string print() const;
+    std::string name;
+    std::vector<Haskell::TypeVar> type_vars;
+    Context context;
 
-    BuiltinDecl(const std::string& n, int a, const std::string& o)
-        :function_name(n), n_args(a), symbol_name(n), plugin_name(o)
-    {};
-    BuiltinDecl(const std::string& n, int a, const std::string& l, const std::string& o)
-        :function_name(n), n_args(a), symbol_name(l), plugin_name(o)
-    {};
+    std::optional<Located<Haskell::Decls>> decls;
+    // std::vector<Located<expression_ref>> signatures;
+    // std::vector<Located<expression_ref>> default_decls;
+
+    ClassDecl* clone() const { return new ClassDecl(*this);}
+    ClassDecl(const std::string& s,
+              const std::vector<Haskell::TypeVar>& tvs,
+              const Context& ct,
+              const std::optional<Located<Haskell::Decls>>& ds)
+        :name(s),
+         type_vars(tvs),
+         context(ct),
+         decls(ds)
+        {}
 };
+
+struct InstanceDecl: public Object
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    // This should be something like Eq a => Eq [a]
+    Located<expression_ref> type;
+    std::optional<Located<Haskell::Decls>> decls;
+
+    InstanceDecl* clone() const { return new InstanceDecl(*this);}
+
+    InstanceDecl(const Located<expression_ref>& t,
+                 const std::optional<Located<Haskell::Decls>>& d)
+        :type(t),
+         decls(d)
+        {}
+};
+
 
 struct List: public Object
 {
@@ -467,15 +476,6 @@ struct ListType: public Object
     ListType* clone() const { return new ListType(*this);}
     std::string print() const;
     ListType(const Type& t):element_type(t) {};
-};
-
-struct TypeVar: public Object
-{
-    Located<std::string> name;
-
-    TypeVar* clone() const { return new TypeVar(*this);}
-    std::string print() const;
-    TypeVar(const Located<std::string>& s):name(s) {}
 };
 
 struct TypeVarOfKind: public Object

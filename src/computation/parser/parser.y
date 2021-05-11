@@ -1568,6 +1568,23 @@ check_type_or_class_header(expression_ref type)
     return {name, type_args};
 }
 
+vector<Haskell::TypeVar> check_all_type_vars(const vector<Haskell::Type>& types)
+{
+    vector<Haskell::TypeVar> type_vars;
+    for(auto& type: types)
+    {
+        if (type.is_a<Haskell::TypeVar>())
+        {
+            type_vars.push_back(type.as_<Haskell::TypeVar>());
+        }
+        else
+        {
+            throw myexception()<<"Type '"<<type<<"' is not a type variable";
+        }
+    }
+    return type_vars;
+}
+
 Haskell::FieldDecl make_field_decl(const std::vector<Haskell::Var>& field_names, const Haskell::Type& type)
 {
     return {field_names, type};
@@ -1576,7 +1593,7 @@ Haskell::FieldDecl make_field_decl(const std::vector<Haskell::Var>& field_names,
 Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type)
 {
     auto [name, type_args] = check_type_or_class_header(unloc(lhs_type));
-    return {name, type_args, rhs_type};
+    return {name, check_all_type_vars(type_args), rhs_type};
 }
 
 Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context&  context,
@@ -1585,7 +1602,7 @@ Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_
     auto [name, type_args] = check_type_or_class_header(header);
     if (d_or_n == Haskell::DataOrNewtype::newtype and constrs.size() != 1)
         throw myexception()<<"newtype '"<<name<<"' may only have 1 constructors with 1 field";
-    return {d_or_n, name, type_args, context, constrs};
+    return {d_or_n, name, check_all_type_vars(type_args), context, constrs};
 }
 
 Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const optional<Located<Haskell::Decls>>& decls)
@@ -1596,7 +1613,7 @@ Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, co
 Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const optional<Located<Haskell::Decls>>& decls)
 {
     auto [name, type_args] = check_type_or_class_header(header);
-    return {name,type_args,context,decls};
+    return {name, check_all_type_vars(type_args), context, decls};
 }
 
 // Can we change the context parsing rule to expect:
