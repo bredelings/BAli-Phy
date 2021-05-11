@@ -677,7 +677,7 @@ cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2.first,$2
 
 ty_decl: "type" type "=" ctypedoc                                          {$$ = make_type_synonym({@2,$2},{@4,$4});}
 |        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1,$3.first,$3.second,$4);}
-|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig                  {}
+|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig                  {$$ = make_data_or_newtype($1,$3.first,$3.second,{});}
 /* |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family */
 /* |        "data" "family" type opt_datafam_kind_sig */
 

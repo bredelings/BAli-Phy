@@ -2282,7 +2282,7 @@ namespace yy {
 
   case 75: // ty_decl: data_or_newtype capi_ctype tycl_hdr opt_kind_sig
 #line 680 "parser.y"
-                                                                           {}
+                                                                           {yylhs.value.as < expression_ref > () = make_data_or_newtype(yystack_[3].value.as < Haskell::DataOrNewtype > (),yystack_[1].value.as < std::pair<Haskell::Context,expression_ref> > ().first,yystack_[1].value.as < std::pair<Haskell::Context,expression_ref> > ().second,{});}
 #line 2287 "parser.cc"
     break;
 
