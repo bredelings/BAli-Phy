@@ -54,7 +54,11 @@ string TypedExp::print() const
 
 string TypeDecl::print() const
 {
-    return join(vars,", ") + " :: " + type.print();
+    vector<string> var_strings;
+    for(auto& var: vars)
+        var_strings.push_back(unloc(var.name));
+
+    return join(var_strings,", ") + " :: " + type.print();
 }
 
 string ValueDecl::print() const

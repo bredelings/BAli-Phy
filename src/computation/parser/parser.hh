@@ -65,13 +65,13 @@
   std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
   Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, const std::vector<std::string>& ops);
-  Haskell::TypeDecl make_type_decl(const std::vector<std::string>& vars, Haskell::Type& type);
+  Haskell::TypeDecl make_type_decl(const std::vector<Haskell::Var>& vars, Haskell::Type& type);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
   Haskell::Type make_kind(const Haskell::Type& kind);
   Haskell::Constructor make_constructor(const expression_ref& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish);
-  Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, const Haskell::Type& type);
+  Haskell::FieldDecl make_field_decl(const std::vector<Haskell::Var>& field_names, const Haskell::Type& type);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
@@ -679,9 +679,12 @@ namespace yy {
       // importdecls_semi
       char dummy31[sizeof (std::vector<Haskell::ImpDecl>)];
 
+      // sig_vars
+      char dummy32[sizeof (std::vector<Haskell::Var>)];
+
       // alts
       // alts1
-      char dummy32[sizeof (std::vector<Located<Haskell::Alt>>)];
+      char dummy33[sizeof (std::vector<Located<Haskell::Alt>>)];
 
       // exportlist
       // exportlist1
@@ -704,11 +707,10 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy33[sizeof (std::vector<expression_ref>)];
+      char dummy34[sizeof (std::vector<expression_ref>)];
 
       // ops
-      // sig_vars
-      char dummy34[sizeof (std::vector<std::string>)];
+      char dummy35[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1505,6 +1507,10 @@ namespace yy {
         value.move< std::vector<Haskell::ImpDecl> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_sig_vars: // sig_vars
+        value.move< std::vector<Haskell::Var> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.move< std::vector<Located<Haskell::Alt>> > (std::move (that.value));
@@ -1535,7 +1541,6 @@ namespace yy {
         break;
 
       case symbol_kind::S_ops: // ops
-      case symbol_kind::S_sig_vars: // sig_vars
         value.move< std::vector<std::string> > (std::move (that.value));
         break;
 
@@ -1997,6 +2002,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<Haskell::Var>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::Var>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<Located<Haskell::Alt>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -2299,6 +2318,10 @@ switch (yykind)
         value.template destroy< std::vector<Haskell::ImpDecl> > ();
         break;
 
+      case symbol_kind::S_sig_vars: // sig_vars
+        value.template destroy< std::vector<Haskell::Var> > ();
+        break;
+
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.template destroy< std::vector<Located<Haskell::Alt>> > ();
@@ -2329,7 +2352,6 @@ switch (yykind)
         break;
 
       case symbol_kind::S_ops: // ops
-      case symbol_kind::S_sig_vars: // sig_vars
         value.template destroy< std::vector<std::string> > ();
         break;
 
@@ -5240,6 +5262,10 @@ switch (yykind)
         value.copy< std::vector<Haskell::ImpDecl> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_sig_vars: // sig_vars
+        value.copy< std::vector<Haskell::Var> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.copy< std::vector<Located<Haskell::Alt>> > (YY_MOVE (that.value));
@@ -5270,7 +5296,6 @@ switch (yykind)
         break;
 
       case symbol_kind::S_ops: // ops
-      case symbol_kind::S_sig_vars: // sig_vars
         value.copy< std::vector<std::string> > (YY_MOVE (that.value));
         break;
 
@@ -5542,6 +5567,10 @@ switch (yykind)
         value.move< std::vector<Haskell::ImpDecl> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_sig_vars: // sig_vars
+        value.move< std::vector<Haskell::Var> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.move< std::vector<Located<Haskell::Alt>> > (YY_MOVE (s.value));
@@ -5572,7 +5601,6 @@ switch (yykind)
         break;
 
       case symbol_kind::S_ops: // ops
-      case symbol_kind::S_sig_vars: // sig_vars
         value.move< std::vector<std::string> > (YY_MOVE (s.value));
         break;
 
@@ -5638,7 +5666,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5642 "parser.hh"
+#line 5670 "parser.hh"
 
 
 

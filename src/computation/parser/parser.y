@@ -27,13 +27,13 @@
   std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
   Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, const std::vector<std::string>& ops);
-  Haskell::TypeDecl make_type_decl(const std::vector<std::string>& vars, Haskell::Type& type);
+  Haskell::TypeDecl make_type_decl(const std::vector<Haskell::Var>& vars, Haskell::Type& type);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   expression_ref make_builtin_expr(const std::string& name, int args, const std::string& s);
 
   Haskell::Type make_kind(const Haskell::Type& kind);
   Haskell::Constructor make_constructor(const expression_ref& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish);
-  Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, const Haskell::Type& type);
+  Haskell::FieldDecl make_field_decl(const std::vector<Haskell::Var>& field_names, const Haskell::Type& type);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
@@ -337,7 +337,7 @@
 %type <expression_ref> opt_tyconsig
 %type <expression_ref> sigtype
 %type <expression_ref> sigtypedoc
-%type <std::vector<std::string>> sig_vars
+%type <std::vector<Haskell::Var>> sig_vars
 %type <std::vector<expression_ref>> sigtypes1
 
 %type <Haskell::StrictLazy> strict_mark
@@ -844,8 +844,8 @@ sigtype: ctype   {$$ = $1;}
 
 sigtypedoc: ctypedoc {$$ = $1;}
 
-sig_vars: sig_vars "," var {$$ = $1; $$.push_back($3);}
-|         var              {$$.push_back($1);}
+sig_vars: sig_vars "," var {$$ = $1; $$.push_back(Haskell::Var({@3,$3}));}
+|         var              {$$.push_back(Haskell::Var({@1,$1}));}
 
 sigtypes1: sigtype               {$$.push_back($1);}
 |          sigtypes1 "," sigtype {$$ = $1; $$.push_back($3);}
@@ -1568,7 +1568,7 @@ check_type_or_class_header(expression_ref type)
     return {name, type_args};
 }
 
-Haskell::FieldDecl make_field_decl(const std::vector<std::string>& field_names, const Haskell::Type& type)
+Haskell::FieldDecl make_field_decl(const std::vector<Haskell::Var>& field_names, const Haskell::Type& type)
 {
     return {field_names, type};
 }
@@ -1890,7 +1890,7 @@ Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, optional<int
     return {fixity, prec, op_names};
 }
 
-Haskell::TypeDecl make_type_decl(const std::vector<std::string>& vars, Haskell::Type& type)
+Haskell::TypeDecl make_type_decl(const std::vector<Haskell::Var>& vars, Haskell::Type& type)
 {
     return {vars, type};
 }

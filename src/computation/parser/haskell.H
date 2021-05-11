@@ -13,6 +13,14 @@ namespace Haskell
 
 typedef expression_ref ImpSpec;
     
+struct Var: public Object
+{
+    Located<std::string> name;
+    Var* clone() const { return new Var(*this);}
+    std::string print() const;
+    Var(const Located<std::string>& s):name(s) {}
+};
+
 struct ImpDecl
 {
     bool qualified;
@@ -133,14 +141,14 @@ struct TypedExp: public Object
 
 struct TypeDecl: public Object
 {
-    std::vector<std::string> vars;
+    std::vector<Haskell::Var> vars;
     Type type;
 
     TypeDecl* clone() const { return new TypeDecl(*this);}
     std::string print() const;
 
     TypeDecl() = default;
-    TypeDecl(const std::vector<std::string>& vs, const Type& t): vars(vs), type(t) {}
+    TypeDecl(const std::vector<Haskell::Var>& vs, const Type& t): vars(vs), type(t) {}
 };
 
 struct ValueDecl: public Object
@@ -230,11 +238,11 @@ struct FixityDecl: public Object
 
 struct FieldDecl
 {
-    std::vector<std::string> field_names;
+    std::vector<Haskell::Var> field_names;
     Type type;
 
     FieldDecl() = default;       // so this can be a token value.
-    FieldDecl(const std::vector<std::string>& ns, const Type& t):field_names(ns),type(t) {}
+    FieldDecl(const std::vector<Haskell::Var>& vs, const Type& t):field_names(vs),type(t) {}
 };
 
 
@@ -390,14 +398,6 @@ struct RecStmt: public Object
     std::string print() const;
 
     RecStmt(const Stmts& s):stmts(s) {}
-};
-
-struct Var: public Object
-{
-    Located<std::string> name;
-    Var* clone() const { return new Var(*this);}
-    std::string print() const;
-    Var(const Located<std::string>& s):name(s) {}
 };
 
 struct WildcardPattern: public Object

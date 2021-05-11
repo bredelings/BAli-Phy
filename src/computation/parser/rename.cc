@@ -517,7 +517,7 @@ Haskell::Decls rename_infix_top(const Module& m, const Haskell::Decls& decls)
                 {
                     for(auto& field_name: field_group.field_names)
                     {
-                        constructor_fields[field_name][constr.name] = i;
+                        constructor_fields[unloc(field_name.name)][constr.name] = i;
                         i++;
                     }
                 }
@@ -729,8 +729,8 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
         {
             for(auto& field: std::get<1>(constructor.fields).field_decls)
             {
-                for(auto& name: field.field_names)
-                    name = m.name + "." + name;
+                for(auto& var: field.field_names)
+                    unloc(var.name) = m.name + "." + unloc(var.name);
                 field.type = rename_type(field.type, bound_vars);
             }
         }
