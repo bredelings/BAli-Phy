@@ -1098,6 +1098,11 @@ bool Module::is_declared(const std::string& name) const
     return is_haskell_builtin_con_name(name) or (aliases.count(name) > 0);
 }
 
+bool Module::type_is_declared(const std::string& name) const
+{
+    return is_haskell_builtin_type_name(name) or (type_aliases.count(name) > 0);
+}
+
 pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string& name)
 {
     if (name == "()")

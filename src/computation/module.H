@@ -225,6 +225,8 @@ public:
 
     bool is_declared(const std::string&) const;
 
+    bool type_is_declared(const std::string&) const;
+
     bool symbol_in_scope_with_name(const std::string&, const std::string&) const;
 
     bool type_in_scope_with_name(const std::string&, const std::string&) const;
