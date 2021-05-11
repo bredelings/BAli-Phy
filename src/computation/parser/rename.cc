@@ -632,15 +632,15 @@ struct renamer_state
     Haskell::ClassDecl rename(Haskell::ClassDecl);
     Haskell::TypeSynonymDecl rename(Haskell::TypeSynonymDecl);
     Haskell::DataOrNewtypeDecl rename(Haskell::DataOrNewtypeDecl);
-    Haskell::Type rename_type(const Haskell::Type&, const bound_type_var_info& vars);
-    Haskell::Context rename(Haskell::Context, const bound_type_var_info& vars);
+    Haskell::Type rename_type(const Haskell::Type&);
+    Haskell::Context rename(Haskell::Context);
 
     expression_ref rename(const expression_ref& E, const bound_var_info& bound);
 
     renamer_state(const Module& m_):m(m_) {}
 };
 
-Haskell::Type renamer_state::rename_type(const Haskell::Type& type, const bound_type_var_info& bound)
+Haskell::Type renamer_state::rename_type(const Haskell::Type& type)
 {
     if (type.is_a<Haskell::TypeVar>())
     {
@@ -648,16 +648,16 @@ Haskell::Type renamer_state::rename_type(const Haskell::Type& type, const bound_
         auto& name = unloc(tv.name);
         auto& loc = tv.name.loc;
 
-        if (includes(bound,name))
+        // Lower-case
+        if (is_haskell_varid(name))
             return type;
+        // Upper-case
         else if (m.type_is_declared(name))
         {
             auto T = m.lookup_type(name);
             auto& qualified_name = T.name;
             return Haskell::TypeVar({tv.name.loc, qualified_name});
         }
-        else if (is_haskell_varid(name))
-            return type;
         else
         {
             if (loc)
@@ -669,59 +669,39 @@ Haskell::Type renamer_state::rename_type(const Haskell::Type& type, const bound_
     else if (type.is_a<Haskell::TypeApp>())
     {
         auto app = type.as_<Haskell::TypeApp>();
-        app.head = rename_type(app.head, bound);
-        app.arg  = rename_type(app.arg, bound);
+        app.head = rename_type(app.head);
+        app.arg  = rename_type(app.arg);
         return app;
     }
     else if (type.is_a<Haskell::TupleType>())
     {
         auto tuple = type.as_<Haskell::TupleType>();
         for(auto type: tuple.element_types)
-            type = rename_type(type, bound);
+            type = rename_type(type);
         return tuple;
     }
     else if (type.is_a<Haskell::ListType>())
     {
         auto list = type.as_<Haskell::ListType>();
-        list.element_type = rename_type(list.element_type, bound);
+        list.element_type = rename_type(list.element_type);
         return list;
     }
     else
         std::abort();
 }
 
-Haskell::Context renamer_state::rename(Haskell::Context context, const bound_type_var_info& vars)
+Haskell::Context renamer_state::rename(Haskell::Context context)
 {
     for(auto& constraint: context.constraints)
-        constraint = rename_type(constraint, vars);
+        constraint = rename_type(constraint);
     return context;
 }
 
 Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl)
 {
     decl.name = m.name + "." + decl.name;
-    bound_type_var_info bound_vars;
-    for(auto& var: decl.type_vars)
-    {
-        if (var.is_a<Haskell::TypeVar>())
-        {
-            auto& v = var.as_<Haskell::TypeVar>();
-            auto& name = unloc(v.name);
-            if (is_haskell_varid(name))
-            {
-                bound_vars.insert(name);
-                continue;
-            }
-            else if (v.name.loc)
-                throw myexception()<<"Can't use '"<<name<<"' in argument to data declaration at "<<*v.name.loc;
-            else
-                throw myexception()<<"Can't use '"<<name<<"' in argument to data declaration";
-        }
 
-        throw myexception()<<"Can't use '"<<var<<"' in argument to data declaration";
-    }
-
-    decl.context = rename(decl.context, bound_vars);
+    decl.context = rename(decl.context);
 
     for(auto& constructor: decl.constructors)
     {
@@ -731,13 +711,13 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
             {
                 for(auto& var: field.field_names)
                     unloc(var.name) = m.name + "." + unloc(var.name);
-                field.type = rename_type(field.type, bound_vars);
+                field.type = rename_type(field.type);
             }
         }
         else
         {
             for(auto& type: std::get<0>(constructor.fields))
-                type = rename_type(type, bound_vars);
+                type = rename_type(type);
         }
     }
 
@@ -1139,7 +1119,7 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
         else if (decl.is_a<Haskell::TypeDecl>())
         {
             auto T = decl.as_<Haskell::TypeDecl>();
-            T.type = rename_type(T.type, {});
+            T.type = rename_type(T.type);
             decl = T;
         }
         if (decl.is_a<Haskell::ClassDecl>())
@@ -1157,7 +1137,7 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
                     else if (cdecl.is_a<Haskell::TypeDecl>())
                     {
                         auto T = cdecl.as_<Haskell::TypeDecl>();
-                        T.type = rename_type(T.type, {});
+                        T.type = rename_type(T.type);
                         cdecl = T;
                     }
             }
