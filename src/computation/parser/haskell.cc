@@ -96,6 +96,12 @@ string Decls::print() const
     return "{"+join( decl_string, "\n;" ) + "\n}";
 }
 
+string BuiltinDecl::print() const
+{
+    vector<string> v{"builtin", function_name, std::to_string(n_args), symbol_name, plugin_name};
+    return join(v," ");
+}
+
 string List::print() const
 {
     vector<string> parts;

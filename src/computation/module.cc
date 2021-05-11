@@ -1021,22 +1021,15 @@ void Module::optimize(const Program& P)
         module.topdecls = rename_top_level(*module.topdecls, name);
 }
 
-pair<string,expression_ref> parse_builtin(const expression_ref& decl, const module_loader& L)
+pair<string,expression_ref> parse_builtin(const Haskell::BuiltinDecl& B, const module_loader& L)
 {
     const string builtin_prefix = "builtin_function_";
 
-    assert(is_AST(decl, "Builtin"));
+    string operation_name = B.plugin_name+":"+B.symbol_name;
 
-    string function_name = decl.sub()[0].as_<String>();
-    int n_args           = decl.sub()[1].as_int();
-    string symbol_name   = decl.sub()[2].as_<String>();
-    string plugin_name   = decl.sub()[3].as_<String>();
+    auto body = load_builtin(L, builtin_prefix + B.symbol_name, B.plugin_name, B.n_args, operation_name);
 
-    string operation_name = plugin_name+":"+symbol_name;
-
-    auto body = load_builtin(L, builtin_prefix + symbol_name, plugin_name, n_args, operation_name);
-
-    return {function_name, body};
+    return {B.function_name, body};
 }
 
 void Module::load_builtins(const module_loader& L)
@@ -1045,11 +1038,9 @@ void Module::load_builtins(const module_loader& L)
 
     vector<expression_ref> new_decls;
     for(const auto& decl: *module.topdecls)
-        if (is_AST(decl,"Builtin"))
+        if (decl.is_a<Haskell::BuiltinDecl>())
         {
-            auto x = parse_builtin(decl, L);
-            auto function_name = x.first;
-            auto body = x.second;
+            auto [function_name, body] = parse_builtin(decl.as_<Haskell::BuiltinDecl>(), L);
 
             function_name = lookup_symbol(function_name).name;
 
@@ -1603,9 +1594,9 @@ void Module::add_local_symbols()
                     def_function(var_name);
             }
         }
-        else if (is_AST(decl,"Builtin"))
+        else if (decl.is_a<Haskell::BuiltinDecl>())
         {
-            string bname = decl.sub()[0].as_<String>();
+            string bname = decl.as_<Haskell::BuiltinDecl>().function_name;
             def_function(bname);
         }
         else if (decl.is_a<Haskell::DataOrNewtypeDecl>())

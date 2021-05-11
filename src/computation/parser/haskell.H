@@ -255,7 +255,6 @@ struct FieldDecls: public Object
     FieldDecls(const std::vector<FieldDecl>& ds):field_decls(ds) {}
 };
 
-
 struct Constructor
 {
     expression_ref forall;           // list of type variables we are forall-ing over.
@@ -336,6 +335,24 @@ struct TypeSynonymDecl: public Object
          type_vars(tvs),
          rhs_type(rhs)
         {}
+};
+
+struct BuiltinDecl: public Object
+{
+    std::string function_name;
+    int n_args;
+    std::string symbol_name;
+    std::string plugin_name;
+
+    BuiltinDecl* clone() const {return new BuiltinDecl(*this);}
+    std::string print() const;
+
+    BuiltinDecl(const std::string& n, int a, const std::string& o)
+        :function_name(n), n_args(a), symbol_name(n), plugin_name(o)
+    {};
+    BuiltinDecl(const std::string& n, int a, const std::string& l, const std::string& o)
+        :function_name(n), n_args(a), symbol_name(l), plugin_name(o)
+    {};
 };
 
 struct List: public Object

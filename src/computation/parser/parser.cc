@@ -5927,14 +5927,14 @@ pair<vector<Haskell::ImpDecl>, optional<Haskell::Decls>> make_body(const std::ve
         return {imports, {}};
 }
 
-expression_ref make_builtin_expr(const string& name, int args, const string& s1, const string& s2)
+Haskell::BuiltinDecl make_builtin_expr(const string& name, int args, const string& s1, const string& s2)
 {
-    return new expression(AST_node("Builtin"),{String(name), args, String(s1), String(s2)});
+    return {name, args, s1, s2};
 }
 
-expression_ref make_builtin_expr(const string& name, int args, const string& s1)
+Haskell::BuiltinDecl make_builtin_expr(const string& name, int args, const string& s1)
 {
-    return new expression(AST_node("Builtin"),{String(name), args, String(s1)});
+    return {name, args, s1};
 }
 
 vector<expression_ref> make_String_vec(const vector<string>& strings)
