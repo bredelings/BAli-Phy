@@ -1122,7 +1122,9 @@ pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string
 
 type_info Module::lookup_builtin_type(const std::string& name)
 {
-    if (name == "Double")
+    if (name == "Char")
+        return {"Char", type_name_category::ADT, {}};
+    else if (name == "Double")
         return {"Double", type_name_category::ADT, {}};
     else if (name == "Int")
         return {"Int", type_name_category::ADT, {}};
