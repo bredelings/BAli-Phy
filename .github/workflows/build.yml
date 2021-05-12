@@ -139,7 +139,7 @@ jobs:
         if [ "${{ matrix.arch }}" = "win64" ]; then
           ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
-        meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} ${ARGS}
+        meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Db_sanitize=address ${ARGS}
 
     - name: Build
       run: |
