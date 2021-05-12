@@ -473,9 +473,28 @@ log_double_t L_gamma(double x)
     return exp_to<log_double_t>(std::lgamma(x));
 }
 
+log_double_t L_factorial(int k)
+{
+    return L_gamma(k+1);
+}
+
 log_double_t L_beta(double x, double y)
 {
     return L_gamma(x) * L_gamma(y) / L_gamma(x+y);
+}
+
+log_double_t multinomial_pdf(int n, const std::vector<log_double_t>& ps, const std::vector<int>& ks)
+{
+    assert(ps.size() == ks.size());
+
+    log_double_t Pr = L_factorial(n);
+    for(int i=0;i<ps.size();i++)
+    {
+        Pr /= L_factorial(ks[i]);
+        Pr *= pow(ps[i],ks[i]);
+    }
+
+    return Pr;
 }
 
 log_double_t beta_binomial_pdf(int n, double a, double b, int k)

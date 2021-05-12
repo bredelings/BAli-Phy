@@ -230,6 +230,25 @@ extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
     return { ::binomial_pdf(n,p,k) };
 }
 
+extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
+{
+    int n = Args.evaluate(0).as_int();
+    auto ps = Args.evaluate(1).as_<EVector>();
+    auto ks = Args.evaluate(2).as_<EVector>();
+
+    if (ps.size() != ks.size()) throw myexception()<<"multinomial_density: |ps| != |ks|";
+
+    vector<log_double_t> ps2(ps.size());
+    vector<int> ks2(ps.size());
+    for(int i=0;i<ps.size();i++)
+    {
+        ps2[i] = ps[i].as_double();
+        ks2[i] = ks[i].as_int();
+    }
+
+    return { ::multinomial_pdf(n,ps2,ks2) };
+}
+
 extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
 {
     int n = Args.evaluate_(0).as_int();

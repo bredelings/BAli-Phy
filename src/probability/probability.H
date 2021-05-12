@@ -75,6 +75,8 @@ log_double_t beta_binomial_pdf(int n, double a, double b, int k);
 
 log_double_t binomial_pdf(int n, double p, int k);
 
+log_double_t multinomial_pdf(int n, const std::vector<log_double_t>& ps, const std::vector<int>& ks);
+
 log_double_t geometric_pdf(double p, int n);
 
 log_double_t geometric_pdf(log_double_t p, int n);
