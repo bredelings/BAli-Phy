@@ -38,4 +38,7 @@ instance Eq a => Eq [a] where
     _      == _      = False
 
 class (Eq a, Eq [a]) => Foo a where
-    fffff :: a -> a
+    infix 6 `fffff`
+    fffff :: a -> a -> a
+    fffff x y = y
+
