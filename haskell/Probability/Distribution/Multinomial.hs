@@ -19,4 +19,9 @@ sample_multinomial n (p:ps) = do
 
 multinomial n ps = Distribution (make_densities $ multinomial_density n ps) (no_quantile "multinomial") (sample_multinomial n ps) ()
 
-random_composition sum n_groups  = multinomial sum (replicate n_groups (1.0/intToDouble n_groups))
+-- Not sure this is the same as sorting discrete uniforms.
+random_composition' sum n_groups = multinomial sum (replicate n_groups (1.0/intToDouble n_groups))
+
+-- Not sure this is the same as conditioning on not having any zeros.
+random_composition sum n_groups | sum < n_groups = error "random_composition: sum < n_groups!"
+                                | otherwise      = map (1+) <$> random_composition' (sum-n_groups) n_groups
