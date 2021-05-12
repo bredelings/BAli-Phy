@@ -11,6 +11,7 @@ module Probability (module Probability,
                     module Probability.Distribution.Dirichlet,
                     module Probability.Distribution.Laplace,
                     module Probability.Distribution.Binomial,
+                    module Probability.Distribution.Multinomial,
                     module Probability.Distribution.Geometric,
                     module Probability.Distribution.Poisson,
                     module Probability.Distribution.Bernoulli,
@@ -45,6 +46,7 @@ import Probability.Distribution.Normal
 import Probability.Distribution.Dirichlet
 import Probability.Distribution.Laplace
 import Probability.Distribution.Binomial
+import Probability.Distribution.Multinomial
 import Probability.Distribution.Geometric
 import Probability.Distribution.Poisson
 import Probability.Distribution.Bernoulli
