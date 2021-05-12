@@ -487,6 +487,16 @@ log_double_t multinomial_pdf(int n, const std::vector<log_double_t>& ps, const s
 {
     assert(ps.size() == ks.size());
 
+    // First check that the ks are in bounds
+    int sum = 0;
+    for(auto& k : ks)
+    {
+        if (k < 0) return 0;
+        sum += k;
+    }
+    if (n != sum) return 0;
+
+    // If so, then compute the non-zero probability
     log_double_t Pr = L_factorial(n);
     for(int i=0;i<ps.size();i++)
     {
