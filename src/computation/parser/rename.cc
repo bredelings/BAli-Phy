@@ -727,12 +727,14 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
 Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl decl)
 {
     decl.name = m.name + "." + decl.name;
+    decl.context = rename(decl.context);
     return decl;
 }
 
 Haskell::TypeSynonymDecl renamer_state::rename(Haskell::TypeSynonymDecl decl)
 {
     decl.name = m.name + "." + decl.name;
+    unloc(decl.rhs_type) = rename_type(unloc(decl.rhs_type));
     return decl;
 }
 
