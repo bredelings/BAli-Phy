@@ -63,6 +63,25 @@ string TypedExp::print() const
     return exp.print() + " :: " + type.print();
 }
 
+string FixityDecl::print() const
+{
+    string result;
+    if (fixity == Fixity::infixl)
+        result = "infixl";
+    else if (fixity == Fixity::infixr)
+        result = "infixr";
+    else if (fixity == Fixity::infix)
+        result = "infix";
+    else
+        result = "fixity:unknown";
+
+    if (precedence)
+        result += " " + std::to_string(*precedence);
+
+    result += " " + join(names, ", ");
+    return result;
+}
+
 string TypeDecl::print() const
 {
     vector<string> var_strings;
