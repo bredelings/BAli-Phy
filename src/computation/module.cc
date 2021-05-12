@@ -140,7 +140,19 @@ void Module::declare_symbol(const symbol_info& S)
     S2.name = name + "." + S.name;
 
     if (symbols.count(S2.name))
-        throw myexception()<<"Trying to declare '"<<S.name<<"' twice in module '"<<name<<"'";
+    {
+        // FIXME! We created a partially-empty symbol to hold the fixity information.
+        auto& S3 = symbols.at(S2.name);
+
+        if (S3.symbol_type == unknown_symbol)
+        {
+            S2.fixity = S3.fixity;
+            S3 = S2;
+            return;
+        }
+        else
+            throw myexception()<<"Trying to declare '"<<S.name<<"' twice in module '"<<name<<"'";
+    }
 
     // Add the symbol first.
     add_symbol(S2);
@@ -1453,22 +1465,7 @@ void Module::def_function(const std::string& fname)
     if (is_qualified_symbol(fname))
         throw myexception()<<"Locally defined symbol '"<<fname<<"' should not be qualified in function declaration.";
 
-    string qualified_name = name+"."+fname;
-    auto loc = symbols.find(qualified_name);
-
-    if (loc != symbols.end())
-    {
-        symbol_info& S = loc->second;
-        // Only the fixity has been declared!
-        if (S.symbol_type == unknown_symbol)
-        {
-            S.symbol_type = variable_symbol;
-        }
-        else
-            throw myexception()<<"Can't add function with name '"<<fname<<"': that name is already used!";
-    }
-    else
-        declare_symbol({fname, variable_symbol, {}, -1, {unknown_fix, -1}});
+    declare_symbol({fname, variable_symbol, {}, -1, {unknown_fix, -1}});
 }
 
 void Module::def_constructor(const string& cname, int arity, const string& type_name)
@@ -1478,22 +1475,6 @@ void Module::def_constructor(const string& cname, int arity, const string& type_
 
 //    if (not is_qualified_symbol(type_name))
 //        throw myexception()<<"Locally defined symbol '"<<type_name<<"' should not be qualified.";
-
-    string qualified_name = name+"."+cname;
-
-    auto loc = symbols.find(qualified_name);
-    if (loc != symbols.end())
-    {
-        symbol_info& S = loc->second;
-        // Only the fixity has been declared!
-        if (S.symbol_type == unknown_symbol)
-        {
-            S.symbol_type = constructor_symbol;
-            S.arity = arity;
-            S.parent = type_name;
-            return;
-        }
-    }
 
     declare_symbol( {cname, constructor_symbol, type_name, arity, {unknown_fix, -1}} );
 }
