@@ -147,6 +147,10 @@ jobs:
         export PATH=$HOME/local/bin:$PATH
         export seed=$RANDOM
         echo "Running tests with seed=$seed"
+        echo ::group::Basic tests
+        bali-phy help
+        bali-phy --seed=$seed $HOME/local/share/doc/bali-phy/examples/sequences/5S-rRNA/5d-muscle.fasta --test
+        bali-phy --seed=$seed $HOME/local/share/doc/bali-phy/examples/sequences/5S-rRNA/5d-muscle.fasta --iter=20
         echo ::group::Test suite
         cd tests
         ./run-tests.py bali-phy --seed=$seed
