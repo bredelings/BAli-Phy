@@ -26,36 +26,43 @@ jobs:
             os: ubuntu-latest
             compiler: gcc
             version: "9"
+            buildtype: "release"
 
           - name: ubuntu-gcc-10
             os: ubuntu-latest
             compiler: gcc
             version: "10"
+            buildtype: "release"
 
           - name: ubuntu-clang-9
             os: ubuntu-latest
             compiler: clang
             version: "9"
+            buildtype: "debug"
 
           - name: ubuntu-clang-10
             os: ubuntu-latest
             compiler: clang
             version: "10"
+            buildtype: "release"
 
           - name: ubuntu-clang-11
             os: ubuntu-latest
             compiler: clang
             version: "11"
+            buildtype: "release"
 
           - name: macos-xcode-12.3
             os: macos-latest
             compiler: xcode
             version: "12.3"
+            buildtype: "release"
 
           - name: windows
             os: ubuntu-20.04
             compiler: mingw
             version: "N/A"
+            buildtype: "release"
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -132,7 +139,7 @@ jobs:
         if [ "${{ matrix.arch }}" = "win64" ]; then
           ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
-        meson build --prefix=$HOME/local --buildtype=release ${ARGS}
+        meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} ${ARGS}
 
     - name: Build
       run: |
