@@ -7,6 +7,17 @@ using std::vector;
 namespace Haskell
 {
 
+string show_type_or_class_header(const Context& context, const string& name, const vector<TypeVar>& tvs)
+{
+    vector<string> ss;
+    if (context.constraints.size())
+        ss = {context.print(), "=>"};
+    ss.push_back(name);
+    for(auto& tv: tvs)
+        ss.push_back(tv.print());
+    return join(ss, " ");
+}
+
 string Module::print() const
 {
     string result = "module " + modid;
@@ -344,13 +355,25 @@ int Constructor::arity() const
         return std::get<0>(fields).size();
 }
 
+string ClassDecl::print() const
+{
+    string result = "class " + show_type_or_class_header(context, name, type_vars);
+    if (decls)
+        result += " where " + decls->print();
+    return result;
+}
+
+string TypeSynonymDecl::print() const
+{
+    string result = "type " + show_type_or_class_header({}, name, type_vars) + " = " + rhs_type.print();
+    return result;
+}
+
 std::string DataOrNewtypeDecl::print() const
 {
     string result = (data_or_newtype == DataOrNewtype::data) ? "data" : "newtype";
-    result += " " + name + " ";
-    for(auto& type_var: type_vars)
-        result += type_var.print() + " ";
-    result += "= ";
+    result += show_type_or_class_header(context, name, type_vars);
+    result += " = ";
     vector<string> cons;
     for(auto& con: constructors)
         cons.push_back(con.print());

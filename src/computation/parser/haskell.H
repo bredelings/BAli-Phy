@@ -312,6 +312,7 @@ struct TypeSynonymDecl: public Object
     Located<expression_ref> rhs_type;
 
     TypeSynonymDecl* clone() const { return new TypeSynonymDecl(*this);}
+    std::string print() const;
 
     TypeSynonymDecl(const std::string& s,
                     const std::vector<Haskell::TypeVar>& tvs,
@@ -335,6 +336,8 @@ struct ClassDecl: public Object
     // std::vector<Located<expression_ref>> default_decls;
 
     ClassDecl* clone() const { return new ClassDecl(*this);}
+    std::string print() const;
+
     ClassDecl(const std::string& s,
               const std::vector<Haskell::TypeVar>& tvs,
               const Context& ct,
