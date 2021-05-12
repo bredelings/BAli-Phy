@@ -23,6 +23,7 @@ module Probability (module Probability,
                     module Probability.Distribution.ExpTransform,
 
                     module Probability.Distribution.List,
+                    module Probability.Distribution.Markov,
                     module Probability.Distribution.Tree,
                     module Probability.Distribution.RandomAlignment,
                     module Probability.Distribution.FakeDist
@@ -58,6 +59,7 @@ import Probability.Distribution.Discrete
 import Probability.Distribution.ExpTransform
 
 import Probability.Distribution.List
+import Probability.Distribution.Markov
 import Probability.Distribution.Tree
 import Probability.Distribution.RandomAlignment
 import Probability.Distribution.FakeDist

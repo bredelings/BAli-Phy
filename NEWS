@@ -13,6 +13,7 @@
      + negative_binomial
      + poisson_process
      + multinomial
+     + sample_markov
    - MCMC
      - Allow rates of moves to change dynamically.
      - Allow moves to appear or disappear during an iteration.
