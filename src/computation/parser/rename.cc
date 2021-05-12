@@ -625,6 +625,7 @@ struct renamer_state
     bound_var_info rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::TypeDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level);
+    Haskell::ValueDecl rename_decl_(Haskell::ValueDecl decl, const bound_var_info& bound);
     Haskell::ValueDecl rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound);
@@ -1012,14 +1013,53 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 }
 
 // FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
+Haskell::ValueDecl renamer_state::rename_decl_(Haskell::ValueDecl decl, const bound_var_info& bound)
+{
+    assert(not is_apply(decl.lhs.head()));
+
+    auto f = decl.lhs.head();
+    assert(f.is_a<var>());
+
+    // 1. Discover variables bound in the LHS function arguments.
+    // We discover variables bound by the decls group in rename_decls( ), before we call this.
+    auto bound2 = bound;
+    if (decl.lhs.size())
+    {
+        auto args = decl.lhs.sub();
+        assert(args.size());
+
+        bool overlap = false;
+        bound_var_info arg_vars;
+        for(auto& arg: args)
+            overlap = overlap or not disjoint_add(arg_vars, rename_pattern(arg));
+        decl.lhs = expression_ref{f, args};
+        if (overlap)
+            throw myexception()<<"Function declaration '"<<decl.lhs<<"' uses a variable twice!";
+
+        // The lhs args should be in scope when we process the rhs
+        add(bound2,arg_vars);
+    }
+    else
+        decl.lhs = f;
+
+    assert(decl.lhs.head().is_a<var>());
+
+    // 3. Rename the body given variables bound in the lhs
+    decl.rhs = rename(decl.rhs, bound2);
+
+    return decl;
+}
+
+// FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
 Haskell::ValueDecl renamer_state::rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound)
 {
     assert(not is_apply(decl.lhs.head()));
 
     auto f = decl.lhs.head();
 
-    // 1. We discover bound variables for the decls group in rename_decls( ), before we call this.
-    auto bound2 = bound;
+    // 1. We discover bound variables for the whole decls group in rename_decls( ), before we call this.
+    //    This probably includes pattern-bound variables like (x,y) = ....
+    //    Since they are in scope for all decls in the group.
 
     // 2. If this is not a pattern binding, then rename the argument patterns x y z in `f x y z = ... `.
     //
@@ -1028,34 +1068,16 @@ Haskell::ValueDecl renamer_state::rename_decl(Haskell::ValueDecl decl, const bou
     bool pattern_bind = f.is_a<constructor>() or f.is_a<Haskell::List>() or f.is_a<Haskell::Tuple>();
     if (not pattern_bind)
     {
-	assert(f.is_a<var>());
 	assert(bound.count(f.as_<var>().name));
-
-	if (decl.lhs.size())
-	{
-	    auto args = decl.lhs.sub();
-	    assert(args.size());
-
-            bool overlap = false;
-	    bound_var_info arg_vars;
-            for(auto& arg: args)
-		overlap = overlap or not disjoint_add(arg_vars, rename_pattern(arg));
-	    decl.lhs = expression_ref{f, args};
-	    if (overlap)
-		throw myexception()<<"Function declaration '"<<decl.lhs<<"' uses a variable twice!";
-
-            // The args should be in scope when we process the rhs
-            add(bound2,arg_vars);
-	}
-	else
-	    decl.lhs = f;
-	assert(decl.lhs.head().is_a<var>());
+        return rename_decl_(decl, bound);
     }
+    else
+    {
+        // 3. Rename the body given variables bound in the lhs
+        decl.rhs = rename(decl.rhs, bound);
 
-    // 3. Rename the body given variables bound in the lhs
-    decl.rhs = rename(decl.rhs, bound2);
-
-    return decl;
+        return decl;
+    }
 }
 
 bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& decls)
@@ -1238,9 +1260,12 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
             auto I = decl.as_<Haskell::InstanceDecl>();
             if (I.decls)
             {
+                // Names for method instances are for defining dictionary entries,
+                //   so they don't resolve to `Module.name`.
+                // What SHOULD they resolve to?
                 for(auto& idecl: unloc(*I.decls))
                     if (idecl.is_a<Haskell::ValueDecl>())
-                        idecl = rename_decl(idecl.as_<Haskell::ValueDecl>(), bound2);
+                        idecl = rename_decl_(idecl.as_<Haskell::ValueDecl>(), bound2);
             }
             decl = I;
         }
