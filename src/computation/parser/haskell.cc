@@ -89,7 +89,7 @@ bool ValueDecl::operator==(const ValueDecl& V) const
 
 string Decls::print() const
 {
-    vector<expression_ref> decl_string;
+    vector<string> decl_string;
     for(auto& decl: *this)
         decl_string.push_back( decl.print() );
 
