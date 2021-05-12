@@ -26,7 +26,7 @@ struct fixity_info
 };
 
 
-enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, unknown_symbol = 3};
+enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, class_method_symbol = 2, unknown_symbol = 3};
 
 struct symbol_info
 {
@@ -166,6 +166,8 @@ public:
     void def_ADT(const std::string& name, const fixity_info&);
 
     void def_type_class(const std::string& class_name);
+
+    void def_type_class_method(const std::string& method_name, const std::string& class_name);
 
     void def_type_synonym(const std::string& syn_name);
 

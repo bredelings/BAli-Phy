@@ -1476,6 +1476,9 @@ void Module::def_constructor(const string& cname, int arity, const string& type_
     if (is_qualified_symbol(cname))
         throw myexception()<<"Locally defined symbol '"<<cname<<"' should not be qualified.";
 
+//    if (not is_qualified_symbol(type_name))
+//        throw myexception()<<"Locally defined symbol '"<<type_name<<"' should not be qualified.";
+
     string qualified_name = name+"."+cname;
 
     auto loc = symbols.find(qualified_name);
@@ -1525,6 +1528,17 @@ void Module::def_type_class(const std::string& cname)
         throw myexception()<<"Locally defined type '"<<cname<<"' should not be qualified.";
 
     declare_type( {cname, type_name_category::type_syn, {}} );
+}
+
+void Module::def_type_class_method(const string& method_name, const string& class_name)
+{
+    if (is_qualified_symbol(method_name))
+        throw myexception()<<"Locally defined type class method '"<<method_name<<"' should not be qualified.";
+
+//    if (not is_qualified_symbol(class_name))
+//        throw myexception()<<"Locally defined type class '"<<class_name<<"' should be qualified.";
+
+    declare_symbol( {method_name, class_method_symbol, class_name, {}, {unknown_fix, -1}} );
 }
 
 void Module::declare_fixities(const Haskell::Decls& decls)
@@ -1615,6 +1629,21 @@ void Module::add_local_symbols()
             auto& Class = decl.as_<Haskell::ClassDecl>();
 
             def_type_class(Class.name);
+
+            if (Class.decls)
+            {
+                for(auto& decl: unloc(*Class.decls))
+                {
+                    if (decl.is_a<Haskell::TypeDecl>())
+                    {
+                        auto& T = decl.as_<Haskell::TypeDecl>();
+                        for(auto& var: T.vars)
+                        {
+                            def_type_class_method(unloc(var.name), Class.name);
+                        }
+                    }
+                }
+            }
         }
         else if (decl.is_a<Haskell::TypeSynonymDecl>())
         {

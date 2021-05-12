@@ -11,11 +11,11 @@ import Foreign.Introspection -- for get_arg, get_n_args
 
 builtin equals_top 2 "equals_top" "Prelude"
 
-class Eq a where
-    (==) :: a -> a -> Bool
-    (/=) :: a -> a -> Bool
-    x == y = not (x /= y)
-    x /= y = not (x == y)
+class Eq a where {}
+--    (==) :: a -> a -> Bool
+--    (/=) :: a -> a -> Bool
+--    x == y = not (x /= y)
+--    x /= y = not (x == y)
 
 instance Eq Int where
     x == y = not (x /= y)
