@@ -26,7 +26,7 @@ jobs:
             os: ubuntu-latest
             compiler: gcc
             version: "9"
-            buildtype: "release"
+            buildtype: "debug"
 
           - name: ubuntu-gcc-10
             os: ubuntu-latest
@@ -38,7 +38,7 @@ jobs:
             os: ubuntu-latest
             compiler: clang
             version: "9"
-            buildtype: "debug"
+            buildtype: "release"
 
           - name: ubuntu-clang-10
             os: ubuntu-latest
@@ -139,7 +139,12 @@ jobs:
         if [ "${{ matrix.arch }}" = "win64" ]; then
           ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
-        meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Db_sanitize=address ${ARGS}
+        if [ "$RUNNER_OS" = "Linux"] && [ "${{ matrix.name }}" != "windows" ]; then
+          # Address sanitizer can't find its dylibs on OS X?
+          ARGS="${ARGS} -Db_sanitize=address"
+        fi
+        if [ "${{ matrix.arch }}" != 
+        meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args='-g'
 
     - name: Build
       run: |
