@@ -1562,7 +1562,7 @@ void Module::def_type_class(const std::string& cname)
     if (is_qualified_symbol(cname))
         throw myexception()<<"Locally defined type '"<<cname<<"' should not be qualified.";
 
-    declare_type( {cname, type_name_category::type_syn, {}} );
+    declare_type( {cname, type_name_category::type_class, {}} );
 }
 
 void Module::def_type_class_method(const string& method_name, const string& class_name)
