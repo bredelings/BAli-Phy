@@ -139,10 +139,11 @@ jobs:
         if [ "${{ matrix.name }}" = "windows" ]; then
           ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
-        if [ "${{ runner.os }}" = "Linux"] && [ "${{ matrix.name }}" != "windows" ]; then
+        if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows" ]; then
           # Address sanitizer can't find its dylibs on OS X?
           ARGS="${ARGS} -Db_sanitize=address"
         fi
+        echo meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args='-g' ${ARGS}
         meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args='-g' ${ARGS}
 
     - name: Build
