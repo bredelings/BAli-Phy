@@ -43,7 +43,7 @@ public:
     operator double() const {return exp(value);}
 
     constexpr log_double_t& operator=(double y) {
-	assert(y >= 0);
+	assert(std::isnan(y) or y >= 0);
 	if (y == 0)
 	    value = log_0;
 	else if (y == 1)
