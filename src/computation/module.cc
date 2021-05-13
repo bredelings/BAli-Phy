@@ -654,7 +654,13 @@ set<string> free_type_vars(const Haskell::TypeSynonymDecl& synonym_decl)
 
 set<string> free_type_vars(const Haskell::InstanceDecl& instance_decl)
 {
-    return free_type_vars(instance_decl.context);
+    set<string> tvars;
+    add(tvars, free_type_vars(instance_decl.context));
+    tvars.insert(instance_decl.name);
+    for(auto& type_arg: instance_decl.type_args)
+        add(tvars, free_type_vars_from_type(type_arg));
+    return tvars;
+
 }
 
 vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_ref>& initial_class_and_type_decls)
