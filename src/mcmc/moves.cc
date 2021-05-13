@@ -252,7 +252,13 @@ void sample_two_nodes_move(owned_ptr<Model>& P, MoveStats&,int n0)
 //   be on one of the endpoints of the branch
 // * the cost of a non-leaf branch with branches_out={l,r} is 2*cost[l]+cost[r]
 //   if we visit the subtree in front of l first.
-vector<int> get_cost(const TreeInterface& t) {
+vector<int> get_cost(const TreeInterface& t)
+{
+    if (t.n_leaves() < 2)
+        return {};
+    else if (t.n_leaves() == 2)
+        return {0, 0};
+
     vector<int> cost(t.n_branches()*2,-1);
     vector<int> stack1; stack1.reserve(t.n_branches()*2);
     vector<int> stack2; stack2.reserve(t.n_branches()*2);
