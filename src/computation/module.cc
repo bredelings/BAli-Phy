@@ -4,6 +4,7 @@
 #include "computation/module.H"
 #include "util/myexception.H"
 #include "util/range.H"
+#include "util/set.H"   // for add( , )
 #include "util/string/split.H"
 #include "util/string/join.H"
 #include "program.H"
@@ -582,37 +583,86 @@ void Module::rename(const Program& P)
 
 // Q: how/when do we rename default method definitions?
 
-vector<string> free_type_vars(const Haskell::Context& context)
+set<string> free_type_vars_from_type(const Haskell::Type& type)
 {
-    return {};
+    set<string> tvars;
+    if (type.is_a<Haskell::TypeVar>())
+    {
+        auto& tv = type.as_<Haskell::TypeVar>();
+        auto& name = unloc(tv.name);
+        if (is_qualified_symbol(name))
+            tvars.insert(name);
+    }
+    else if (type.is_a<Haskell::TypeApp>())
+    {
+        auto& app = type.as_<Haskell::TypeApp>();
+        add(tvars, free_type_vars_from_type(app.head));
+        add(tvars, free_type_vars_from_type(app.arg));
+    }
+    else if (type.is_a<Haskell::TupleType>())
+    {
+        auto& tuple = type.as_<Haskell::TupleType>();
+        for(auto element_type: tuple.element_types)
+            add(tvars, free_type_vars_from_type(element_type));
+    }
+    else if (type.is_a<Haskell::ListType>())
+    {
+        auto& list = type.as_<Haskell::ListType>();
+        add(tvars, free_type_vars_from_type(list.element_type));
+    }
+    return tvars;
 }
 
-vector<string> free_type_vars(const Haskell::ClassDecl& class_decl)
+set<string> free_type_vars(const Haskell::Context& context)
 {
-    return {};
+    set<string> tvars;
+    for(auto& constraint: context.constraints)
+        add(tvars, free_type_vars_from_type(constraint));
+    return tvars;
 }
 
-vector<string> free_type_vars(const Haskell::DataOrNewtypeDecl& type_decl)
+set<string> free_type_vars(const Haskell::ClassDecl& class_decl)
 {
-    return {};
+    // QUESTION: We are ignoring default methods here -- should we?
+    set<string> tvars;
+    add(tvars, free_type_vars(class_decl.context));
+    if (class_decl.decls)
+    {
+        for(auto& decl: unloc(*class_decl.decls))
+        {
+            if (decl.is_a<Haskell::TypeDecl>())
+            {
+                auto& T = decl.as_<Haskell::TypeDecl>();
+                add(tvars, free_type_vars_from_type(T.type));
+            }
+        }
+    }
+    return tvars;
 }
 
-vector<string> free_type_vars(const Haskell::TypeSynonymDecl& synonym_decl)
+set<string> free_type_vars(const Haskell::DataOrNewtypeDecl& type_decl)
 {
-    return {};
+    set<string> tvars;
+    add(tvars, free_type_vars(type_decl.context));
+    return tvars;
 }
 
-vector<string> free_type_vars(const Haskell::InstanceDecl& instance_decl)
+set<string> free_type_vars(const Haskell::TypeSynonymDecl& synonym_decl)
 {
-    return {};
+    return free_type_vars_from_type(unloc(synonym_decl.rhs_type));
+}
+
+set<string> free_type_vars(const Haskell::InstanceDecl& instance_decl)
+{
+    return free_type_vars(instance_decl.context);
 }
 
 vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_ref>& initial_class_and_type_decls)
 {
     // [(name,decl,names-we-depend-on)]
-    vector<tuple<string,expression_ref,vector<string>>> class_type_no_instance_decls;
+    vector<tuple<string,expression_ref,set<string>>> class_type_no_instance_decls;
 
-    vector<tuple<Haskell::InstanceDecl,vector<string>>> instance_decls;
+    vector<tuple<Haskell::InstanceDecl,set<string>>> instance_decls;
 
     for(auto& decl: initial_class_and_type_decls)
     {
