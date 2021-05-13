@@ -745,6 +745,8 @@ Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
     for(auto& type_arg: I.type_args)
         type_arg = rename_type(type_arg);
 
+    // Renaming of the decl group is done in rename_decls
+
     return I;
 }
 
@@ -752,6 +754,7 @@ Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl decl)
 {
     decl.name = m.name + "." + decl.name;
     decl.context = rename(decl.context);
+    // Renaming of the decl group is done in rename_decls
     return decl;
 }
 
