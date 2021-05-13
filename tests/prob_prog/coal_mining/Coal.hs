@@ -16,7 +16,7 @@ prior t1 t2 = do
   let lam = 3.0; nMax = 30; a = 1.0; b = 365.0/200.0
 
   -- n change points, n+1 intervals
-  n <- poisson lam
+  n <- min nMax <$> poisson lam
 
   -- even numbered order statistics over the interval [t1,t2]
   s' <- orderedSample (2*n+1) (uniform t1 t2)
