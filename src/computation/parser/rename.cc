@@ -632,6 +632,7 @@ struct renamer_state
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound);
 
     Haskell::Decls rename_type_decls(Haskell::Decls decls);
+    Haskell::InstanceDecl rename(Haskell::InstanceDecl);
     Haskell::ClassDecl rename(Haskell::ClassDecl);
     Haskell::TypeSynonymDecl rename(Haskell::TypeSynonymDecl);
     Haskell::DataOrNewtypeDecl rename(Haskell::DataOrNewtypeDecl);
@@ -727,6 +728,26 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
     return decl;
 }
 
+Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
+{
+    I.context = rename(I.context);
+
+    if (m.type_is_declared(I.name))
+    {
+        auto T = m.lookup_type(I.name);
+        if (T.category != type_name_category::type_class)
+            throw myexception()<<"Instance for type '"<<T.name<<"' that is not a class.";
+        I.name = T.name;
+    }
+    else
+        throw myexception()<<"Instance for non-existant class '"<<I.name<<"'.";
+
+    for(auto& type_arg: I.type_args)
+        type_arg = rename_type(type_arg);
+
+    return I;
+}
+
 Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl decl)
 {
     decl.name = m.name + "." + decl.name;
@@ -746,10 +767,12 @@ Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
 {
     for(auto& decl: decls)
     {
-        if (decl.is_a<Haskell::DataOrNewtypeDecl>())
-            decl = rename(decl.as_<Haskell::DataOrNewtypeDecl>());
-        else if (decl.is_a<Haskell::ClassDecl>())
+        if (decl.is_a<Haskell::ClassDecl>())
             decl = rename(decl.as_<Haskell::ClassDecl>());
+        else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
+            decl = rename(decl.as_<Haskell::DataOrNewtypeDecl>());
+        else if (decl.is_a<Haskell::InstanceDecl>())
+            decl = rename(decl.as_<Haskell::InstanceDecl>());
         else if (decl.is_a<Haskell::TypeSynonymDecl>())
             decl = rename(decl.as_<Haskell::TypeSynonymDecl>());
     }
