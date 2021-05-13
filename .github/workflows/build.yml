@@ -26,7 +26,7 @@ jobs:
             os: ubuntu-latest
             compiler: gcc
             version: "9"
-            buildtype: "debug"
+            buildtype: "debugoptimized"
 
           - name: ubuntu-gcc-10
             os: ubuntu-latest
