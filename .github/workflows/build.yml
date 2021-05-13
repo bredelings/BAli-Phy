@@ -143,7 +143,6 @@ jobs:
           # Address sanitizer can't find its dylibs on OS X?
           ARGS="${ARGS} -Db_sanitize=address"
         fi
-        if [ "${{ matrix.arch }}" != 
         meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args='-g'
 
     - name: Build
