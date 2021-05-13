@@ -86,11 +86,11 @@ Matrix expm1(const EigenValues& solution,double t)
 	    E(i,j) = temp;
 	}
 	
-#ifndef NDEBUG
-    for(int i=0;i<E.size1();i++)
-	for(int j=0;j<E.size2();j++)
-	    assert(E(i,j) + ((i==j)?1.0:0.0) >= -1.0e-10);
-#endif
+//#ifndef NDEBUG
+//    for(int i=0;i<E.size1();i++)
+//	for(int j=0;j<E.size2();j++)
+//	    assert(E(i,j) + ((i==j)?1.0:0.0) >= -1.0e-10);
+//#endif
 
     return E;
 }
@@ -117,11 +117,11 @@ Matrix exp(const EigenValues& solution,double t)
 	    E(i,j) = temp;
 	}
 
-#ifndef NDEBUG
-    for(int i=0;i<E.size1();i++)
-	for(int j=0;j<E.size2();j++)
-	    assert(E(i,j) >= -1.0e-10);
-#endif
+//#ifndef NDEBUG
+//    for(int i=0;i<E.size1();i++)
+//	for(int j=0;j<E.size2();j++)
+//	    assert(E(i,j) >= -1.0e-10);
+//#endif
 
     return E;
 }
@@ -185,13 +185,16 @@ Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const doubl
     {
         double sum = 0;
 	for(int j=0;j<E.size2();j++) {
-	    assert(E(i,j) >= -1.0e-10);
+	    // assert(E(i,j) >= -1.0e-10);
+
             // Force positive
             E(i,j) = std::max(0.0, E(i,j));
             sum += E(i,j);
 	}
+
+        // assert(t > 10 or std::abs(sum - 1.0) < 1.0e-10*E.size1());
+
         // Renormalize rows
-        assert(t > 10 or std::abs(sum - 1.0) < 1.0e-10*E.size1());
         double factor = 1.0/sum;
 	for(int j=0;j<E.size2();j++)
             E(i,j) *= factor;
