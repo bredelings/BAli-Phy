@@ -446,12 +446,11 @@ int main(int argc,char* argv[])
     owned_ptr<Model> M; // Declare early so we can reference from catch block.
 
     try {
-
-#if defined(HAVE_FEENABLEEXCEPT) && !defined(NDEBUG)
+// This should probably be a run-time switch.
+#if defined(HAVE_FEENABLEEXCEPT) && defined(DEBUG_FPE)
         feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
-        //    feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
 #endif
-#if defined(HAVE_CLEAREXCEPT) && defined(NDEBUG)
+#if defined(HAVE_CLEAREXCEPT) && !defined(DEBUG_FPE)
         feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
 #endif
         fp_scale::initialize();
