@@ -7,6 +7,14 @@ using std::vector;
 namespace Haskell
 {
 
+string parenthesize_type(const expression_ref& t)
+{
+    if (t.is_a<TypeVar>() or t.is_a<TupleType>() or t.is_a<ListType>())
+        return t.print();
+    else
+        return "(" + t.print() + ")";
+}
+
 string show_type_or_class_header(const Context& context, const string& name, const vector<TypeVar>& tvs)
 {
     vector<string> ss;
@@ -15,6 +23,17 @@ string show_type_or_class_header(const Context& context, const string& name, con
     ss.push_back(name);
     for(auto& tv: tvs)
         ss.push_back(tv.print());
+    return join(ss, " ");
+}
+
+string show_instance_header(const Context& context, const string& name, const vector<Type>& type_args)
+{
+    vector<string> ss;
+    if (context.constraints.size())
+        ss = {context.print(), "=>"};
+    ss.push_back(name);
+    for(auto& type_arg: type_args)
+        ss.push_back(parenthesize_type(type_arg));
     return join(ss, " ");
 }
 
@@ -231,14 +250,6 @@ string TypeOfKind::print() const
     return type.print() + "::" + kind.print();
 }
 
-string parenthesize_type(const expression_ref& t)
-{
-    if (t.is_a<TypeVar>() or t.is_a<TupleType>() or t.is_a<ListType>())
-        return t.print();
-    else
-        return "(" + t.print() + ")";
-}
-
 string TypeApp::print() const
 {
     if (head.is_a<TypeApp>())
@@ -377,6 +388,14 @@ int Constructor::arity() const
 string ClassDecl::print() const
 {
     string result = "class " + show_type_or_class_header(context, name, type_vars);
+    if (decls)
+        result += " where " + decls->print();
+    return result;
+}
+
+string InstanceDecl::print() const
+{
+    string result = "instance " + show_instance_header(context, name, type_args);
     if (decls)
         result += " where " + decls->print();
     return result;

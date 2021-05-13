@@ -949,6 +949,7 @@ bar_types2: ctype "|" ctype
 tv_bndrs:   tv_bndrs tv_bndr   {$$ = $1; $$.push_back($2);}
 |           %empty             { /* default construction OK */}
 
+/* If we put the kind into the type var (maybe as an optional) we could unify these two */
 tv_bndr:    tyvar                   {$$ = make_type_var({@1,$1});}
 |           "(" tyvar "::" kind ")" {$$ = make_type_var_of_kind($2,$4);}
 
@@ -1605,9 +1606,24 @@ Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_
     return {d_or_n, name, check_all_type_vars(type_args), context, constrs};
 }
 
-Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const optional<Located<Haskell::Decls>>& decls)
+Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, const optional<Located<Haskell::Decls>>& decls)
 {
-    return {type, decls};
+    // GHC stores the instance as a polytype?
+    // This would seem to allow (instance forall a.Eq a => forall a.Eq [a] x y ....)
+
+    auto type = unloc(ltype);
+    if (type.is_a<Haskell::ForallType>())
+        throw myexception()<<"instance declaration '"<<type<<"' is malformed";
+    Haskell::Context context;
+    if (type.is_a<Haskell::ConstrainedType>())
+    {
+        auto& T = type.as_<Haskell::ConstrainedType>();
+        context = T.context;
+        type = T.type;
+    }
+
+    auto [name, type_args] = check_type_or_class_header(type);
+    return {context, name, type_args, decls};
 }
 
 Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const optional<Located<Haskell::Decls>>& decls)

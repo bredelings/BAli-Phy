@@ -354,14 +354,23 @@ struct InstanceDecl: public Object
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
     // This should be something like Eq a => Eq [a]
-    Located<expression_ref> type;
+    // Right now it could be either ForallType or ConstrainedType
+    Haskell::Context context;
+    std::string name;
+    std::vector<Haskell::Type> type_args;
+
     std::optional<Located<Haskell::Decls>> decls;
 
     InstanceDecl* clone() const { return new InstanceDecl(*this);}
+    std::string print() const;
 
-    InstanceDecl(const Located<expression_ref>& t,
+    InstanceDecl(const Haskell::Context& c,
+                 const std::string& n,
+                 const std::vector<Haskell::Type> ta,
                  const std::optional<Located<Haskell::Decls>>& d)
-        :type(t),
+        :context(c),
+         name(n),
+         type_args(ta),
          decls(d)
         {}
 };
