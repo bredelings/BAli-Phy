@@ -136,3 +136,45 @@ void register_transition_kernel::unregister_effect(reg_heap& M, int s) const
         std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<kernel_reg<<"]: UNREGISTER!\n";
     M.unregister_transition_kernel(*this, s);
 }
+
+//--------------------------------------------------------------------
+
+bool in_edge::operator==(const in_edge& e) const
+{
+    return from_reg == e.from_reg and to_reg == e.to_reg and role == e.role;
+}
+
+bool in_edge::operator==(const Object& O) const
+{
+    if (this == &O) return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    auto* e = dynamic_cast<const in_edge*>(&O);
+
+    return (*this) == *e;
+}
+
+string in_edge::print() const
+{
+    std::ostringstream result;
+    result<<"in_edge[from="<<from_reg<<",to="<<to_reg<<",role="<<role<<"]";
+    return result.str();
+}
+
+in_edge::in_edge(int i1, int i2, const string& s)
+    :from_reg(i1), to_reg(i2), role(s)
+{ }
+
+void in_edge::register_effect(reg_heap& M, int s) const
+{
+    if (log_verbose >= 5) std::cerr<<(*this)<<": REGISTER!\n";
+    M.register_in_edge(*this, s);
+}
+
+void in_edge::unregister_effect(reg_heap& M, int s) const
+{
+    if (log_verbose >= 5)std::cerr<<(*this)<<": UNREGISTER!\n";
+    M.unregister_in_edge(*this, s);
+}
+

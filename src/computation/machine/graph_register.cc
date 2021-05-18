@@ -949,6 +949,22 @@ optional<int> reg_heap::compute_expression_is_modifiable_reg(int index)
     return find_update_modifiable_reg(H);
 }
 
+void reg_heap::register_in_edge(const effect& e, int /* s */)
+{
+    auto& I = dynamic_cast<const in_edge&>(e);
+
+    // Check that there is in fact a distribution at I.to_reg?
+
+    in_edges.insert({I.from_reg,{I.to_reg, I.role}});
+}
+
+void reg_heap::unregister_in_edge(const effect& e, int /* s */)
+{
+    auto& I = dynamic_cast<const in_edge&>(e);
+
+    in_edges.erase(I.from_reg);
+}
+
 optional<int> reg_heap::find_update_modifiable_reg(int& R)
 {
     // Note: here we always update R

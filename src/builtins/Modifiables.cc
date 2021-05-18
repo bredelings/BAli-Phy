@@ -60,6 +60,28 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
     return effect;
 }
 
+// Q. How do we ensure that each call is unique?
+//    We don't have a state thread...
+
+extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
+{
+    Args.evaluate_slot_force(0);
+    int r_from = Args.current_closure().reg_for_slot(0);
+    r_from = Args.memory().follow_index_var_no_force(r_from);
+
+    Args.evaluate_slot_force(1);
+    int r_to = Args.current_closure().reg_for_slot(1);
+    r_to = Args.memory().follow_index_var_no_force(r_to);
+
+    std::string role = Args.evaluate(2).as_<String>();
+
+    auto effect = new in_edge(r_from, r_to, role);
+
+    Args.set_effect(*effect);
+
+    return effect;
+}
+
 extern "C" closure builtin_function_modifiable(OperationArgs& Args)
 {
     int r_value = Args.reg_for_slot(0);

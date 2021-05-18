@@ -354,6 +354,11 @@ public:
     void register_transition_kernel(const effect& e, int s);
     void unregister_transition_kernel(const effect& e, int s);
 
+    std::multimap<int, std::pair<int, std::string>> in_edges;
+
+    void register_in_edge(const effect& e, int s);
+    void unregister_in_edge(const effect& e, int s);
+
     /// Probably this would be non-parameter identifiers
     std::map<std::string, int> identifiers;
   

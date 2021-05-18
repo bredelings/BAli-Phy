@@ -56,4 +56,24 @@ struct register_transition_kernel: public effect
     register_transition_kernel(double r, int k);
 };
 
+struct in_edge: public effect
+{
+    int from_reg;
+    int to_reg;
+    std::string role;
+
+    in_edge* clone() const {return new in_edge(*this);}
+
+    bool operator==(const in_edge&) const;
+    bool operator==(const Object& O) const;
+
+    std::string print() const;
+
+    void register_effect(reg_heap&,int) const;
+    void unregister_effect(reg_heap&,int) const;
+
+    in_edge(int i1, int i2, const std::string& s);
+};
+
+
 #endif
