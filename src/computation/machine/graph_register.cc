@@ -429,6 +429,12 @@ void reg_heap::unregister_effect_at_step(int s)
     e.as_<effect>().unregister_effect(*this, s);
 }
 
+bool reg_heap::step_has_effect(int s) const
+{
+    assert(not steps.is_free(s));
+    return steps[s].has_effect();
+}
+
 const effect& reg_heap::get_effect(int s) const
 {
     assert(not steps.is_free(s));

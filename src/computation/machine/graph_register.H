@@ -300,6 +300,8 @@ private:
 
     void unregister_effect_at_step(int s);
 public:
+    bool step_has_effect(int s) const;
+
     const effect& get_effect(int s) const;
 
     template <typename T>
