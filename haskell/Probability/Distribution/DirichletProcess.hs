@@ -13,6 +13,7 @@ import Foreign.Vector
 import Control.DeepSeq
 import MCMC -- for GibbsSampleCategorical
 
+-- Select one element from the (possibly infinite) list of values.
 stick (p:ps) (x:xs) = do keep <- bernoulli p
                          if keep == 1 then
                              return x
