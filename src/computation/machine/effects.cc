@@ -141,7 +141,7 @@ void register_transition_kernel::unregister_effect(reg_heap& M, int s) const
 
 bool in_edge::operator==(const in_edge& e) const
 {
-    return from_reg == e.from_reg and to_reg == e.to_reg and role == e.role;
+    return r_from_var == e.r_from_var and s_to_dist == e.s_to_dist and role == e.role;
 }
 
 bool in_edge::operator==(const Object& O) const
@@ -158,12 +158,12 @@ bool in_edge::operator==(const Object& O) const
 string in_edge::print() const
 {
     std::ostringstream result;
-    result<<"in_edge[from="<<from_reg<<",to="<<to_reg<<",role="<<role<<"]";
+    result<<"in_edge[from="<<r_from_var<<",to="<<s_to_dist<<",role="<<role<<"]";
     return result.str();
 }
 
 in_edge::in_edge(int i1, int i2, const string& s)
-    :from_reg(i1), to_reg(i2), role(s)
+    :r_from_var(i1), s_to_dist(i2), role(s)
 { }
 
 void in_edge::register_effect(reg_heap& M, int s) const
@@ -178,3 +178,125 @@ void in_edge::unregister_effect(reg_heap& M, int s) const
     M.unregister_in_edge(*this, s);
 }
 
+//--------------------------------------------------------------------
+
+bool out_edge::operator==(const out_edge& e) const
+{
+    return s_from_dist == e.s_from_dist and r_to_var == e.r_to_var and role == e.role;
+}
+
+bool out_edge::operator==(const Object& O) const
+{
+    if (this == &O) return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    auto* e = dynamic_cast<const out_edge*>(&O);
+
+    return (*this) == *e;
+}
+
+string out_edge::print() const
+{
+    std::ostringstream result;
+    result<<"out_edge[from="<<s_from_dist<<",to="<<r_to_var<<",role="<<role<<"]";
+    return result.str();
+}
+
+out_edge::out_edge(int i1, int i2, const string& s)
+    :s_from_dist(i1), r_to_var(i2), role(s)
+{ }
+
+void out_edge::register_effect(reg_heap& M, int s) const
+{
+    if (log_verbose >= 5) std::cerr<<(*this)<<": REGISTER!\n";
+    M.register_out_edge(*this, s);
+}
+
+void out_edge::unregister_effect(reg_heap& M, int s) const
+{
+    if (log_verbose >= 5)std::cerr<<(*this)<<": UNREGISTER!\n";
+    M.unregister_out_edge(*this, s);
+}
+
+//--------------------------------------------------------------------
+
+bool register_dist::operator==(const register_dist& e) const
+{
+    return name == e.name;
+}
+
+bool register_dist::operator==(const Object& O) const
+{
+    if (this == &O) return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    auto* e = dynamic_cast<const register_dist*>(&O);
+
+    return (*this) == *e;
+}
+
+string register_dist::print() const
+{
+    std::ostringstream result;
+    result<<"register_dist[name="<<name<<"]";
+    return result.str();
+}
+
+register_dist::register_dist(const string& s)
+    :name(s)
+{ }
+
+void register_dist::register_effect(reg_heap& M, int s) const
+{
+    if (log_verbose >= 5) std::cerr<<(*this)<<": REGISTER!\n";
+    M.register_dist(*this, s);
+}
+
+void register_dist::unregister_effect(reg_heap& M, int s) const
+{
+    if (log_verbose >= 5)std::cerr<<(*this)<<": UNREGISTER!\n";
+    M.unregister_dist(*this, s);
+}
+
+//--------------------------------------------------------------------
+
+bool dist_property::operator==(const dist_property& e) const
+{
+    return s_from_dist == e.s_from_dist and r_to_prop == e.r_to_prop and property == e.property;
+}
+
+bool dist_property::operator==(const Object& O) const
+{
+    if (this == &O) return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    auto* e = dynamic_cast<const dist_property*>(&O);
+
+    return (*this) == *e;
+}
+
+string dist_property::print() const
+{
+    std::ostringstream result;
+    result<<"dist_property[from="<<s_from_dist<<",to="<<r_to_prop<<",property="<<property<<"]";
+    return result.str();
+}
+
+dist_property::dist_property(int i1, int i2, const string& s)
+    :s_from_dist(i1), r_to_prop(i2), property(s)
+{ }
+
+void dist_property::register_effect(reg_heap& M, int s) const
+{
+    if (log_verbose >= 5) std::cerr<<(*this)<<": REGISTER!\n";
+    M.register_dist_property(*this, s);
+}
+
+void dist_property::unregister_effect(reg_heap& M, int s) const
+{
+    if (log_verbose >= 5)std::cerr<<(*this)<<": UNREGISTER!\n";
+    M.unregister_dist_property(*this, s);
+}

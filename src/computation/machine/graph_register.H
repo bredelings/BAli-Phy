@@ -356,10 +356,24 @@ public:
     void register_transition_kernel(const effect& e, int s);
     void unregister_transition_kernel(const effect& e, int s);
 
-    std::multimap<int, std::pair<int, std::string>> in_edges;
+    std::map<int, std::string> dist_type;
+
+    // For each distribution, the "role" should be unique.
+    std::map<int, std::multiset<std::pair<int, std::string>>> in_edges;
+    std::map<int, std::map<std::string, int>> out_edges;
+    std::map<int, std::map<std::string, int>> dist_properties;
 
     void register_in_edge(const effect& e, int s);
     void unregister_in_edge(const effect& e, int s);
+
+    void register_out_edge(const effect& e, int s);
+    void unregister_out_edge(const effect& e, int s);
+
+    void register_dist(const effect& e, int s);
+    void unregister_dist(const effect& e, int s);
+
+    void register_dist_property(const effect& e, int s);
+    void unregister_dist_property(const effect& e, int s);
 
     /// Probably this would be non-parameter identifiers
     std::map<std::string, int> identifiers;

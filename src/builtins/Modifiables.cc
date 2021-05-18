@@ -15,6 +15,16 @@ using boost::dynamic_pointer_cast;
 using std::optional;
 using std::vector;
 
+int force_slot_to_safe_reg(OperationArgs& Args, int slot)
+{
+    // Force the slot so that we get a unique location for it.
+    Args.evaluate_slot_force(slot);
+
+    int r = Args.current_closure().reg_for_slot(slot);
+
+    return Args.memory().follow_index_var(r);
+}
+
 extern "C" closure builtin_function_maybe_modifiable_structure(OperationArgs& Args)
 {
     Args.evaluate_slot_use(0);
@@ -27,13 +37,7 @@ extern "C" closure builtin_function_maybe_modifiable_structure(OperationArgs& Ar
 extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 {
     // We are supposed to evaluate the random_variable before we register
-
-    // Force the raw_x so that we get a unique location for it.
-    Args.evaluate_slot_force(0);
-
-    int r_var = Args.current_closure().reg_for_slot(0);
-
-    r_var = Args.memory().follow_index_var(r_var);
+    int r_var = force_slot_to_safe_reg(Args, 0);
 
     auto pdf = Args.evaluate(1).as_log_double();
 
@@ -65,21 +69,67 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 
 extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
 {
-    Args.evaluate_slot_force(0);
-    int r_from = Args.current_closure().reg_for_slot(0);
-    r_from = Args.memory().follow_index_var_no_force(r_from);
-
-    Args.evaluate_slot_force(1);
-    int r_to = Args.current_closure().reg_for_slot(1);
-    r_to = Args.memory().follow_index_var_no_force(r_to);
-
+    int r_from_var = force_slot_to_safe_reg(Args,0);
+    int s_to_dist  = Args.evaluate(1).as_int();
     std::string role = Args.evaluate(2).as_<String>();
 
-    auto effect = new in_edge(r_from, r_to, role);
+    auto effect = new in_edge(r_from_var, s_to_dist, role);
 
     Args.set_effect(*effect);
 
     return effect;
+}
+
+extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
+{
+    int s_from_dist = Args.evaluate(0).as_int();
+    int r_to_var    = force_slot_to_safe_reg(Args,1);
+    std::string role = Args.evaluate(2).as_<String>();
+
+    auto effect = new out_edge(s_from_dist, r_to_var, role);
+
+    Args.set_effect(*effect);
+
+    return effect;
+}
+
+extern "C" closure builtin_function_register_dist(OperationArgs& Args)
+{
+    std::string name = Args.evaluate(0).as_<String>();
+
+    auto effect = new register_dist(name);
+
+    Args.set_effect(*effect);
+
+    return effect;
+}
+
+extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
+{
+    int s_from_dist = Args.evaluate(0).as_int();
+    int r_to_prop   = force_slot_to_safe_reg(Args,1);
+    std::string property = Args.evaluate(2).as_<String>();
+
+    auto effect = new dist_property(s_from_dist, r_to_prop, property);
+
+    Args.set_effect(*effect);
+
+    return effect;
+}
+
+extern "C" closure builtin_function_get_step_for_effect(OperationArgs& Args)
+{
+    // Force the particular effect, and make a use edge.
+    int r = Args.evaluate_reg_use(Args.reg_for_slot(0));
+
+    auto& M = Args.memory();
+    assert(M.expression_at(r).is_a<effect>());
+    auto s = M.creator_of_reg(r);
+
+    assert(s);
+    assert(M.step_has_effect(*s));
+
+    return {*s};
 }
 
 extern "C" closure builtin_function_modifiable(OperationArgs& Args)

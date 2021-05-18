@@ -960,15 +960,93 @@ void reg_heap::register_in_edge(const effect& e, int /* s */)
     auto& I = dynamic_cast<const in_edge&>(e);
 
     // Check that there is in fact a distribution at I.to_reg?
+    assert(dist_type.count(I.s_to_dist));
 
-    in_edges.insert({I.from_reg,{I.to_reg, I.role}});
+    in_edges[I.r_from_var].insert({I.s_to_dist, I.role});
 }
 
 void reg_heap::unregister_in_edge(const effect& e, int /* s */)
 {
     auto& I = dynamic_cast<const in_edge&>(e);
 
-    in_edges.erase(I.from_reg);
+    // Check that there is in fact a distribution at I.to_reg?
+    assert(dist_type.count(I.s_to_dist));
+
+    auto& in_edges_from_var = in_edges.at(I.r_from_var);
+    in_edges_from_var.erase({I.s_to_dist, I.role});
+
+    if (in_edges_from_var.empty())
+        in_edges.erase(I.r_from_var);
+}
+
+void reg_heap::register_out_edge(const effect& e, int /* s */)
+{
+    auto& O = dynamic_cast<const out_edge&>(e);
+
+    // Check that there is in fact a distribution at I.to_reg?
+    assert(dist_type.count(O.s_from_dist));
+
+    auto & dist_out_edges = out_edges[O.s_from_dist];
+    assert(not dist_out_edges.count(O.role));
+    dist_out_edges.insert({O.role, O.r_to_var});
+}
+
+void reg_heap::unregister_out_edge(const effect& e, int /* s */)
+{
+    auto& O = dynamic_cast<const out_edge&>(e);
+
+    // Check that there is in fact a distribution at O.from_reg?
+    assert(dist_type.count(O.s_from_dist));
+
+    auto & dist_out_edges = out_edges.at(O.s_from_dist);
+    auto it = dist_out_edges.find(O.role);
+    assert(it != dist_out_edges.end());
+    dist_out_edges.erase(it);
+
+    if (dist_out_edges.empty())
+        out_edges.erase(O.s_from_dist);
+}
+
+void reg_heap::register_dist(const effect& e, int s)
+{
+    auto& D = dynamic_cast<const ::register_dist&>(e);
+
+    assert(not dist_type.count(s));
+
+    dist_type.insert({s,D.name});
+}
+
+void reg_heap::unregister_dist(const effect& /*e*/, int s)
+{
+    assert(dist_type.count(s));
+
+    dist_type.erase(s);
+}
+
+void reg_heap::register_dist_property(const effect& e, int /* s */)
+{
+    auto& P = dynamic_cast<const dist_property&>(e);
+
+    // Check that there is in fact a distribution at P.s_from_dist.
+    assert(dist_type.count(P.s_from_dist));
+
+    dist_properties[P.s_from_dist].insert({P.property, P.r_to_prop});
+}
+
+void reg_heap::unregister_dist_property(const effect& e, int /* s */)
+{
+    auto& P = dynamic_cast<const dist_property&>(e);
+
+    // Check that there is in fact a distribution at P.s_from_dist.
+    assert(dist_type.count(P.s_from_dist));
+
+    auto& this_dist_properties = dist_properties.at(P.s_from_dist);
+    auto it = this_dist_properties.find(P.property);
+    assert(it != this_dist_properties.end());
+    this_dist_properties.erase(it);
+
+    if (this_dist_properties.empty())
+        dist_properties.erase(P.s_from_dist);
 }
 
 optional<int> reg_heap::find_update_modifiable_reg(int& R)
