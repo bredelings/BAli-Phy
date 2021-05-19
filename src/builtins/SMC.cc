@@ -1189,7 +1189,7 @@ log_double_t site_likelihood_for_reads01(int ref, int alt, double wsaf, double e
 {
     assert(0 <= ref);
     assert(0 <= alt);
-    assert(0 <= wsaf and wsaf <= 1.0);
+    assert(std::isnan(wsaf) or (0 <= wsaf and wsaf <= 1.0));
     assert(0 <= error_rate and error_rate <= 1.0);
     assert(0 <= c);
 
