@@ -1185,7 +1185,7 @@ double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
     return std::min(q,1.0);
 }
 
-log_double_t site_likelihood_for_reads01(int ref, int alt, double wsaf, double error_rate, double c)
+log_double_t site_likelihood_for_reads01(int ref, int alt, double wsaf, double error_rate, double c, double outlier_frac)
 {
     assert(0 <= ref);
     assert(0 <= alt);
@@ -1195,15 +1195,16 @@ log_double_t site_likelihood_for_reads01(int ref, int alt, double wsaf, double e
 
     double pi = wsaf + error_rate*(1.0 - 2.0*wsaf);
 
-    return beta_binomial_pdf(ref+alt, c*pi, c*(1.0-pi), alt);
+    return (1.0-outlier_frac) * beta_binomial_pdf(ref+alt, c*pi, c*(1.0-pi), alt)
+           +outlier_frac      * beta_binomial_pdf(ref+alt, 1.0, 1.0, alt);
 }
 
-log_double_t site_likelihood_for_reads01(const expression_ref& data, double wsaf, double error_rate, double c)
+log_double_t site_likelihood_for_reads01(const expression_ref& data, double wsaf, double error_rate, double c, double outlier_frac)
 {
     int ref = data.as_<EPair>().first.as_int();
     int alt = data.as_<EPair>().second.as_int();
 
-    return site_likelihood_for_reads01(ref, alt, wsaf, error_rate, c);
+    return site_likelihood_for_reads01(ref, alt, wsaf, error_rate, c, outlier_frac);
 }
 
 // Pr(D|h, w, n, \psi) where psi includes
@@ -1231,6 +1232,10 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     double c = Args.evaluate(4).as_double();
     assert(c > 0);
 
+    // 1f. Outlier fraction
+    double outlier_frac = Args.evaluate(5).as_double();
+    assert(outlier_frac >= 0 and outlier_frac <= 1);
+
     int num_strains = weights.size();
     assert(haplotypes.size() == weights.size());
 
@@ -1246,13 +1251,13 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     {
         double wsaf = wsaf_at_site(site, weights, haplotypes);
 
-        Pr *= site_likelihood_for_reads01(reads[site], wsaf, error_rate, c);
+        Pr *= site_likelihood_for_reads01(reads[site], wsaf, error_rate, c, outlier_frac);
     }
 
     return { Pr };
 }
 
-matrix<log_double_t> emission_pr(int k, const EVector& data, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration)
+matrix<log_double_t> emission_pr(int k, const EVector& data, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration, double outlier_frac)
 {
     int L = haplotypes[0].as_<EVector>().size();
 
@@ -1269,13 +1274,13 @@ matrix<log_double_t> emission_pr(int k, const EVector& data, const EVector& hapl
             // Avoid out-of-bounds terms caused by rounding error.
             wsaf = std::max(0.0,std::min(1.0,wsaf));
 
-            E(site, allele) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration);
+            E(site, allele) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration, outlier_frac);
         }
     }
     return E;
 }
 
-matrix<log_double_t> emission_pr2(int k1, int k2, const EVector& data, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration)
+matrix<log_double_t> emission_pr2(int k1, int k2, const EVector& data, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration, double outlier_frac)
 {
     int L = haplotypes[0].as_<EVector>().size();
 
@@ -1301,7 +1306,7 @@ matrix<log_double_t> emission_pr2(int k1, int k2, const EVector& data, const EVe
             // Avoid out-of-bounds terms caused by rounding error.
             wsaf = std::max(0.0,std::min(1.0,wsaf));
 
-            E(site, A) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration);
+            E(site, A) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration, outlier_frac);
         }
     }
     return E;
@@ -1325,7 +1330,7 @@ double get_prior(int A, double f, int n)
     return prior;
 }
 
-matrix<log_double_t> emission_pr3(int k1, int k2, int k3, const EVector& data, const EVector& frequency, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration)
+matrix<log_double_t> emission_pr3(int k1, int k2, int k3, const EVector& data, const EVector& frequency, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration, double outlier_frac)
 {
     int L = haplotypes[0].as_<EVector>().size();
     assert(L == frequency.size());
@@ -1350,7 +1355,7 @@ matrix<log_double_t> emission_pr3(int k1, int k2, int k3, const EVector& data, c
             // Avoid out-of-bounds terms caused by rounding error.
             wsaf = std::max(0.0,std::min(1.0,wsaf));
 
-            E(site, A) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration) * get_prior(A, plaf, 3);
+            E(site, A) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration, outlier_frac) * get_prior(A, plaf, 3);
         }
     }
     return E;
@@ -1408,9 +1413,12 @@ extern "C" closure builtin_function_propose_haplotype_from_plaf(OperationArgs& A
     // 9. concentration = double
     double concentration = evaluate_slot(9).as_double();
 
+    // 10. outlier fraction = double
+    double outlier_frac = evaluate_slot(10).as_double();
+
     int L = haplotypes[0].as_<EVector>().size();
 
-    auto E = emission_pr(haplotype_index, data, haplotypes, weights, error_rate, concentration);
+    auto E = emission_pr(haplotype_index, data, haplotypes, weights, error_rate, concentration, outlier_frac);
 
     EVector new_haplotype(L);
 
@@ -1493,6 +1501,9 @@ extern "C" closure builtin_function_propose_two_haplotypes_from_plaf(OperationAr
     // 11. concentration = double
     double concentration = evaluate_slot(11).as_double();
 
+    // 12. concentration = double
+    double outlier_frac = evaluate_slot(12).as_double();
+
     log_double_t ratio = 1;
 
     // Make sure that the two haplotypes are DIFFERENT.
@@ -1500,7 +1511,7 @@ extern "C" closure builtin_function_propose_two_haplotypes_from_plaf(OperationAr
 
     int L = haplotypes[0].as_<EVector>().size();
 
-    auto E = emission_pr2(haplotype_index1, haplotype_index2, data, haplotypes, weights, error_rate, concentration);
+    auto E = emission_pr2(haplotype_index1, haplotype_index2, data, haplotypes, weights, error_rate, concentration, outlier_frac);
 
     EVector new_haplotype1(L);
 
@@ -1632,6 +1643,9 @@ extern "C" closure builtin_function_propose_weights_and_haplotype_from_plaf(Oper
     // 10. concentration = double
     double concentration = evaluate_slot(C0, 10).as_double();
 
+    // 11. outlier_frac = double
+    double outlier_frac = evaluate_slot(C0, 11).as_double();
+
     int L = haplotypes[0].as_<EVector>().size();
 
     //------------- Copy the context indices ------------------//
@@ -1648,9 +1662,9 @@ extern "C" closure builtin_function_propose_weights_and_haplotype_from_plaf(Oper
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
-    auto E1 = emission_pr(haplotype_index, data, haplotypes, weights1, error_rate, concentration);
+    auto E1 = emission_pr(haplotype_index, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
 
-    auto E2 = emission_pr(haplotype_index, data, haplotypes, weights2, error_rate, concentration);
+    auto E2 = emission_pr(haplotype_index, data, haplotypes, weights2, error_rate, concentration, outlier_frac);
 
     EVector new_haplotype1(L);
 
@@ -1787,6 +1801,9 @@ extern "C" closure builtin_function_propose_weights_and_two_haplotypes_from_plaf
     // 13. concentration = double
     double concentration = evaluate_slot(C0, 13).as_double();
 
+    // 14. outlier_frac = double
+    double outlier_frac = evaluate_slot(C0, 14).as_double();
+
     // Make sure that the two haplotypes are DIFFERENT.
     if (haplotype_index1 == haplotype_index2) return EPair(io_state+1, log_double_t(1));
 
@@ -1810,9 +1827,9 @@ extern "C" closure builtin_function_propose_weights_and_two_haplotypes_from_plaf
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
-    auto E1 = emission_pr2(haplotype_index1, haplotype_index2, data, haplotypes, weights1, error_rate, concentration);
+    auto E1 = emission_pr2(haplotype_index1, haplotype_index2, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
 
-    auto E2 = emission_pr2(haplotype_index1, haplotype_index2, data, haplotypes, weights2, error_rate, concentration);
+    auto E2 = emission_pr2(haplotype_index1, haplotype_index2, data, haplotypes, weights2, error_rate, concentration, outlier_frac);
 
     //---------- Sample new haplotypes for C1 -----------//
     EVector new_haplotype1_1(L);
@@ -1995,6 +2012,9 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
     // 16. concentration = double
     double concentration = evaluate_slot(C0, 16).as_double();
 
+    // 17. outlier_frac = double
+    double outlier_frac = evaluate_slot(C0, 17).as_double();
+
     // Make sure that the two haplotypes are DIFFERENT.
     if (haplotype_index1 == haplotype_index2) return EPair(io_state+1, log_double_t(1));
 
@@ -2024,9 +2044,9 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
-    auto E1 = emission_pr3(haplotype_index1, haplotype_index2, haplotype_index3, data, frequencies, haplotypes, weights1, error_rate, concentration);
+    auto E1 = emission_pr3(haplotype_index1, haplotype_index2, haplotype_index3, data, frequencies, haplotypes, weights1, error_rate, concentration, outlier_frac);
 
-    auto E2 = emission_pr3(haplotype_index1, haplotype_index2, haplotype_index3, data, frequencies, haplotypes, weights2, error_rate, concentration);
+    auto E2 = emission_pr3(haplotype_index1, haplotype_index2, haplotype_index3, data, frequencies, haplotypes, weights2, error_rate, concentration, outlier_frac);
 
     //---------- Sample new haplotypes for C1 -----------//
     EVector new_haplotype1_1(L);
