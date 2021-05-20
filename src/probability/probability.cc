@@ -510,8 +510,8 @@ log_double_t multinomial_pdf(int n, const std::vector<log_double_t>& ps, const s
 log_double_t beta_binomial_pdf(int n, double a, double b, int k)
 {
     assert(n >= 0);
-    assert(a >= 0);
-    assert(b >= 0);
+    assert(std::isnan(a) or a >= 0);
+    assert(std::isnan(a) or b >= 0);
 
     if (k < 0) return 0;
     if (k > n) return 0;
