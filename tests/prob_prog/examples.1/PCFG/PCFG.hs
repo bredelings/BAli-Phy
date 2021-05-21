@@ -34,10 +34,11 @@ pcfg (Rule s)        = case lookup s rules of
                                                  groups <- mapM pcfg next
                                                  return (concat groups)
 
-main = do
+model = do
   words <- sample $ pcfg (Rule "start")
   let sentence = map (\w -> case w of (Word s) -> s) words
   return ["sentence" %=% sentence]
 
+main = mcmc model
 
 -- question: if the sentence starts with "tall John", what's next?
