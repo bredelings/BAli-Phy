@@ -38,7 +38,7 @@ sample_alignment tree imodel tip_seq_lengths = do
         ds         = Tree.branch_lengths tree
         hmms       = branch_hmms imodel ds n_branches
     alignment_on_tree <- random_alignment tree hmms imodel tip_seq_lengths
-    return $ Bio.Alignment.pairwise_alignments alignment_on_tree
+    return alignment_on_tree
 
 tree_prior taxa = do
     topology <- uniform_labelled_topology taxa
@@ -59,17 +59,15 @@ prior taxa tip_seq_lengths = do
 
     (tree,tree_loggers)       <- tree_prior taxa
 
-    let root        = targetNode tree 0
-
     (smodel, smodel_loggers) <- smodel_prior
 
     (imodel, imodel_loggers) <- imodel_prior tree
 
-    as                       <- Main.sample_alignment tree imodel tip_seq_lengths
+    alignment                <- Main.sample_alignment tree imodel tip_seq_lengths
 
     let loggers = ["tree" %=% write_newick tree, "tree" %>% tree_loggers, "tn93" %>% smodel_loggers, "rs07" %>% imodel_loggers]
 
-    return (ctmc_on_tree tree root as smodel, loggers)
+    return (ctmc_on_tree tree alignment smodel, loggers)
 
 observe_data seq_data = do
     let taxa            = map sequence_name seq_data
