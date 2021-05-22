@@ -182,7 +182,7 @@ void in_edge::unregister_effect(reg_heap& M, int s) const
 
 bool out_edge::operator==(const out_edge& e) const
 {
-    return s_from_dist == e.s_from_dist and r_to_var == e.r_to_var and role == e.role;
+    return s_from_dist == e.s_from_dist and r_to_var == e.r_to_var;
 }
 
 bool out_edge::operator==(const Object& O) const
@@ -199,12 +199,12 @@ bool out_edge::operator==(const Object& O) const
 string out_edge::print() const
 {
     std::ostringstream result;
-    result<<"out_edge[from="<<s_from_dist<<",to="<<r_to_var<<",role="<<role<<"]";
+    result<<"out_edge[from="<<s_from_dist<<",to="<<r_to_var<<"]";
     return result.str();
 }
 
-out_edge::out_edge(int i1, int i2, const string& s)
-    :s_from_dist(i1), r_to_var(i2), role(s)
+out_edge::out_edge(int i1, int i2)
+    :s_from_dist(i1), r_to_var(i2)
 { }
 
 void out_edge::register_effect(reg_heap& M, int s) const

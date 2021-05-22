@@ -84,9 +84,8 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
 {
     int s_from_dist = Args.evaluate(0).as_int();
     int r_to_var    = force_slot_to_safe_reg(Args,1);
-    std::string role = Args.evaluate(2).as_<String>();
 
-    auto effect = new out_edge(s_from_dist, r_to_var, role);
+    auto effect = new out_edge(s_from_dist, r_to_var);
 
     Args.set_effect(*effect);
 

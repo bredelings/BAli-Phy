@@ -80,7 +80,6 @@ struct out_edge: public effect
 {
     int s_from_dist;
     int r_to_var;
-    std::string role;
 
     out_edge* clone() const {return new out_edge(*this);}
 
@@ -92,7 +91,7 @@ struct out_edge: public effect
     void register_effect(reg_heap&,int) const;
     void unregister_effect(reg_heap&,int) const;
 
-    out_edge(int i1, int i2, const std::string& s);
+    out_edge(int i1, int i2);
 };
 
 

@@ -356,11 +356,15 @@ public:
     void register_transition_kernel(const effect& e, int s);
     void unregister_transition_kernel(const effect& e, int s);
 
+    // Since there is only one out-edges, should we remove this?
+    // No, if we observe the same data twice, we still need separate sampling events.
     std::map<int, std::string> dist_type;
 
     // For each distribution, the "role" should be unique.
     std::map<int, std::multiset<std::pair<int, std::string>>> in_edges;
-    std::map<int, std::map<std::string, int>> out_edges;
+    // FIXME: Use boost::multi-index?
+    std::map<int, int> out_edges_from_dist;
+    std::map<int, int> out_edges_to_var;
     std::map<int, std::map<std::string, int>> dist_properties;
 
     void register_in_edge(const effect& e, int s);
