@@ -103,9 +103,12 @@ run_strict' rate (IOAndPass f g) = do
   run_strict' rate $ g x
 run_strict' rate (IOReturn v) = return v
 run_strict' rate (LiftIO a) = a
-run_strict' rate (Observe dist datum) = go [register_likelihood term | term <- densities dist datum] `seq` return ()
-    where go [] = []
-          go (x:xs) = x `seq` go xs
+run_strict' rate (Observe dist datum) = do_effects `seq` return ()
+    where effects = do
+            s <- register_dist (dist_name dist)
+            register_out_edge s datum
+            sequence_ [register_likelihood term | term <- densities dist datum]
+          do_effects = run_effects 1.0 effects
 run_strict' rate (Print s) = putStrLn (show s)
 run_strict' rate (Lazy r) = run_lazy' rate r
 run_strict' rate (PerformEffect e) = run_effects rate e `seq` return ()
