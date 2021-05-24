@@ -25,4 +25,6 @@ register_dist_property dist value property = builtin_register_dist_property dist
 
 builtin builtin_register_dist 1 "register_dist" "Modifiables"
 builtin get_step_for_effect 1 "get_step_for_effect" "Modifiables"
-register_dist name = get_step_for_effect $  builtin_register_dist (list_to_string name)
+-- The extra parameter to prevent invocations out of functions being floated
+-- out of let statements by referencing a local variable.
+register_dist name _ = get_step_for_effect $  builtin_register_dist (list_to_string name)
