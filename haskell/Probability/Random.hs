@@ -136,7 +136,12 @@ run_lazy' rate dist@(Distribution _ _ _ (RandomStructure effect structure do_sam
       -- We use the number of density terms to track the number of random variables...
       pdf = density dist raw_x
       -- Note: registering the pdf forces it.
-      do_effects = (run_effects rate $ (effect raw_x >> return ())) `seq` register_prior raw_x pdf
+      effect' = do
+        effect raw_x
+        s <- register_dist (dist_name dist)
+        register_prior raw_x pdf
+        register_out_edge s triggered_x
+      do_effects = run_effects rate effect'
   return triggered_x
 run_lazy' rate (Distribution _ _ _ s _) = run_lazy' rate s
 run_lazy' rate (MFix f) = MFix ((run_lazy' rate).f)
