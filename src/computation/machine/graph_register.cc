@@ -959,14 +959,22 @@ void reg_heap::register_in_edge(const effect& e, int /* s */)
 {
     auto& I = dynamic_cast<const in_edge&>(e);
 
-    // Check that this edge is not a duplicate.
-    auto& in_edge_from_var = in_edges[I.r_from_var];
-    assert(not in_edge_from_var.count({I.s_to_dist, I.role}));
+    // 1. Check that this edge is not a duplicate:
 
-    // Check that there is in fact a distribution at I.to_reg.
+    //   No other in-edges should have the same role.
+    auto& roles_for_var_to_dist = in_edges_from_var[I.r_from_var][I.s_to_dist];
+    assert(not roles_for_var_to_dist.count(I.role));
+
+    //   Only one in-edges to this dist should have this role.
+    auto& in_edges_to_this_dist = in_edges_to_dist[I.s_to_dist];
+    assert(not in_edges_to_this_dist.count(I.role));
+
+    // 2. Check that there is in fact a distribution at I.s_to_dist;
     assert(dist_type.count(I.s_to_dist));
 
-    in_edge_from_var.insert({I.s_to_dist, I.role});
+    // 3. Insert the edge.
+    roles_for_var_to_dist.insert(I.role);                 // I.r_from_var -> I.s_to_dist -> {I.role}
+    in_edges_to_this_dist.insert({I.role, I.r_from_var}); // I.s_to_dist -> I.role -> I.r_var
 }
 
 void reg_heap::unregister_in_edge(const effect& e, int /* s */)
@@ -974,19 +982,39 @@ void reg_heap::unregister_in_edge(const effect& e, int /* s */)
     auto& I = dynamic_cast<const in_edge&>(e);
 
     // Check that this edge is registered.
-    auto& in_edge_from_var = in_edges.at(I.r_from_var);
-    auto it = in_edge_from_var.find({I.s_to_dist, I.role});
-    assert(it != in_edge_from_var.end());
+    // I.r_from_var -> I.s_to_dist -> {I.role}
+    assert(in_edges_from_var.count(I.r_from_var));
+    auto& dists_for_var = in_edges_from_var.at(I.r_from_var);
+    assert(dists_for_var.count(I.s_to_dist));
+    auto& roles_for_var_to_dist = dists_for_var.at(I.s_to_dist);
+    assert(roles_for_var_to_dist.count(I.role));
 
-    // Check that there is in fact a distribution at I.to_reg?
+    assert(in_edges_to_dist.count(I.s_to_dist));
+    auto& in_edges_to_this_dist = in_edges_to_dist.at(I.s_to_dist);
+    assert(in_edges_to_this_dist.count(I.role));
+
+    // 2. Check that there is in fact a distribution at I.to_reg?
     assert(dist_type.count(I.s_to_dist));
 
-    // Erase the edge
-    in_edge_from_var.erase(it);
+    // 3. Erase the edge
+    roles_for_var_to_dist.erase(I.role);
+    if (roles_for_var_to_dist.empty())
+    {
+        // Erase the set, if there are no more roles for this (var,dist) pair.
+        dists_for_var.erase(I.s_to_dist);
+        if (dists_for_var.empty())
+        {
+            // Erase the map, if there are no more edges from this var.
+            in_edges_from_var.erase(I.r_from_var);
+        }
+    }
 
-    // Erase the map, if there are no more edges from this var.
-    if (in_edge_from_var.empty())
-        in_edges.erase(I.r_from_var);
+    in_edges_to_this_dist.erase(I.role);
+    if (in_edges_to_this_dist.empty())
+    {
+        // Erase the map, if there are no more edges to this dist.
+        in_edges_to_dist.erase(I.s_to_dist);
+    }
 }
 
 void reg_heap::register_out_edge(const effect& e, int /* s */)

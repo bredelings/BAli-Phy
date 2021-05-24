@@ -361,7 +361,9 @@ public:
     std::map<int, std::string> dist_type;
 
     // For each distribution, the "role" should be unique.
-    std::map<int, std::multiset<std::pair<int, std::string>>> in_edges;
+    std::map<int, std::map<std::string, int>> in_edges_to_dist;
+    std::map<int, std::map<int, std::set<std::string>>> in_edges_from_var;
+
     // FIXME: Use boost::multi-index?
     std::map<int, int> out_edges_from_dist;
     std::map<int, int> out_edges_to_var;
