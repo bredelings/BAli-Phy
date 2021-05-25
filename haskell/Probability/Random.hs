@@ -25,17 +25,15 @@ distRange (Distribution _ _ _ r) = r
 --        presumably this indicates that its an IO action versus a Random a
 --        but its only used inside Distribution...
 
-data Effects = Effects
+data Effects a = SamplingRate Double (Random a) | AddMove (Int->a)
 
 -- This implements the Random monad by transforming it into the IO monad.
 data Random a = RandomStructure (a->Effects) (a->Effects->a) (Random a)
               | Observe (Distribution b) b
-              | AddMove (Int->a)
               | Print b
-              | SamplingRate Double (Random a)
               | Lazy (Random a)
-              | WithEffect (Random a) (Random a)
-              | PerformEffect Effects
+              | WithEffect (Random a) (Effects b)
+              | PerformEffect (Effects a)
               | LiftIO (IO a)
 
 -- I feel sample_with_initial_value actually needs to run the sampler... and make the result come out of that.
@@ -79,10 +77,9 @@ run_strict (Lazy r) = run_lazy r
 run_effects rate (IOAndPass f g) = let x = run_effects rate f
                                    in x `seq` run_effects rate $ g x
 run_effects rate (IOReturn v) = v
--- LiftIO and Print are only here for debugging purposes
--- run_effects alpha rate (LiftIO a) = a
--- run_effects alpha rate (Print s) = putStrLn (show s)
--- FIXME: We don't use the rate here, but we should!
+-- LiftIO and Print are only here for debugging purposes:
+--  run_effects alpha rate (LiftIO a) = a
+--  run_effects alpha rate (Print s) = putStrLn (show s)
 run_effects rate (AddMove m) = register_transition_kernel rate m
 run_effects rate (SamplingRate rate2 a) = run_effects (rate*rate2) a
 
