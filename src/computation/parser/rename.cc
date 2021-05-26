@@ -165,8 +165,14 @@ set<string> find_bound_vars(const expression_ref& E)
 
 string get_func_name(const Haskell::ValueDecl& decl)
 {
-    assert(decl.lhs.head().is_a<Hs::Var>());
-    return unloc(decl.lhs.head().as_<Hs::Var>().name);
+    auto& head = decl.lhs.head();
+    assert(head.is_a<Hs::Var>() or head.is_a<var>());
+    if (head.is_a<Hs::Var>())
+        return unloc(head.as_<Hs::Var>().name);
+    else if (head.is_a<var>())
+        return head.as_<var>().name;
+    else
+        std::abort();
 }
 
 string desugar_get_func_name(const Haskell::ValueDecl& decl)
@@ -179,6 +185,14 @@ bool is_pattern_binding(const Haskell::ValueDecl& decl)
     if (decl.lhs.is_a<Haskell::List>())
         return true;
     if (decl.lhs.is_a<Haskell::Tuple>())
+        return true;
+    if (decl.lhs.is_a<Haskell::AsPattern>())
+        return true;
+    if (decl.lhs.is_a<Haskell::LazyPattern>())
+        return true;
+    if (decl.lhs.is_a<Haskell::StrictPattern>())
+        return true;
+    if (decl.lhs.head().is_a<constructor>()) // this happens when called from desugar.cc
         return true;
     return is_haskell_con_name(get_func_name(decl));
 }
@@ -451,7 +465,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 	D.lhs = unapply(D.lhs);
         D.rhs = rename_infix(m, D.rhs);
 
-	assert(D.lhs.head().is_a<Hs::Var>() or D.lhs.is_a<Haskell::List>() or D.lhs.is_a<Haskell::Tuple>());
+	assert(D.lhs.head().is_a<Hs::Var>() or is_pattern_binding(D));
 
         return D;
     }
@@ -1091,8 +1105,7 @@ Haskell::ValueDecl renamer_state::rename_decl(Haskell::ValueDecl decl, const bou
     //
     //    We deal with these here, since they are only in scope for this decl, whereas e.g. f is in scope
     //      for all decls in the decls group.
-    bool pattern_bind = f.is_a<constructor>() or f.is_a<Haskell::List>() or f.is_a<Haskell::Tuple>();
-    if (not pattern_bind)
+    if (not is_pattern_binding(decl))
     {
 	assert(bound.count(f.as_<var>().name));
         return rename_decl_(decl, bound);
@@ -1127,9 +1140,9 @@ bound_var_info renamer_state::rename_decl_head(Haskell::ValueDecl& decl, bool is
     bound_var_info bound_names;
 
     auto head = decl.lhs.head();
-    assert(head.is_a<Hs::Var>() or head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>());
+    assert(head.is_a<Hs::Var>() or is_pattern_binding(decl));
     // For a constructor pattern, rename the whole lhs.
-    if (head.is_a<Haskell::List>() or head.is_a<Haskell::Tuple>() or (head.is_a<Hs::Var>() and is_haskell_con_name(unloc(head.as_<Hs::Var>().name))))
+    if (is_pattern_binding(decl))
     {
         add(bound_names, rename_pattern(decl.lhs, is_top_level));
     }

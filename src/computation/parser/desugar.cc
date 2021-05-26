@@ -18,6 +18,7 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/bool.H"
 #include "desugar.H"
+#include "rename.H" // for is_pattern_binding
 #include "util/assert.hh"
 #include "util/range.H"
 #include "computation/parser/haskell.H"
@@ -123,10 +124,20 @@ Haskell::Decls desugar_state::parse_fundecls(Haskell::Decls v)
 	auto& f = lhs.head();
 
 	// Skip pattern bindings
-	if (f.is_a<constructor>())
+	if (is_pattern_binding(D))
 	{
-	    auto& pat = lhs;
-	    auto z = get_fresh_var();
+            expression_ref pat;
+            expression_ref z;
+            if (f.is_a<Haskell::AsPattern>())
+            {
+                pat = f.as_<Haskell::AsPattern>().pattern;
+                z = f.as_<Haskell::AsPattern>().var;
+            }
+            else
+            {
+                pat = lhs;
+                z = get_fresh_var();
+            }
 
 	    assert(not rhs_fail.can_fail);
 	    decls.push_back( Haskell::ValueDecl(z,rhs_fail.result(0)));
