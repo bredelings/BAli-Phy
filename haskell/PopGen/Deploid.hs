@@ -2,6 +2,7 @@ module PopGen.Deploid where
 
 import Probability
 import Range
+import Data.CSV
 
 builtin builtin_sample_haplotype01_from_plaf 1 "sample_haplotype01_from_plaf" "SMC"
 sample_haplotype01_from_plaf plafs = let raw_action = builtin_sample_haplotype01_from_plaf $ list_to_vector plafs
@@ -114,3 +115,28 @@ propose_weights_and_three_haplotypes_from_plaf titres hap_index1 hap_index2 hap_
                  (haps !! hap_index1) (haps !! hap_index2) (haps !! hap_index3)
                  hap_index1 hap_index2 hap_index3
                  freqs w reads haps e c outlier_frac context
+
+-- Currently, these ignore the "chromosome" column.
+read_plaf filename = do
+  plaf_table <- tail <$> read_tsv filename
+
+  let plaf_sites = [ read_int $ row!!1 | row <- plaf_table]
+      plaf_freq  = [ read_double $ row!!2 | row <- plaf_table]
+
+  return (plaf_sites, plaf_freq)
+
+read_panel filename = do
+  panel_table <- tail <$> read_tsv filename
+  let sites = [ read_int $ row!!1 | row <- panel_table]
+      n_haplotypes = length (head panel_table) - 2
+      get_ith_hap i = list_to_vector [ read_int $ row !! (i+2) | row <- panel_table]
+      haplotypes = [ get_ith_hap i | i <- [0..n_haplotypes-1]]
+  return (sites, haplotypes)
+
+load_reads filename = do
+  reads_table <- tail <$> read_tsv filename
+  let sites = [ read_int $ row!!1 | row <- reads_table]
+      ref = [ read_int $ row!!2 | row <- reads_table]
+      alt = [ read_int $ row!!3 | row <- reads_table]
+      reads = zip ref alt
+  return (sites, reads)
