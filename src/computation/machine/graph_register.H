@@ -360,7 +360,7 @@ public:
     // No, if we observe the same data twice, we still need separate sampling events.
     std::map<int, std::string> dist_type;
 
-    // For each distribution, the "role" should be unique.
+    // For each distribution, the argument name should be unique.
     std::map<int, std::map<std::string, int>> in_edges_to_dist;
     std::map<int, std::map<int, std::set<std::string>>> in_edges_from_var;
 

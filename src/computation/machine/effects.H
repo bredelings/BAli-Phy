@@ -60,7 +60,7 @@ struct in_edge: public effect
 {
     int r_from_var;
     int s_to_dist;
-    std::string role;
+    std::string arg_name;
 
     in_edge* clone() const {return new in_edge(*this);}
 
