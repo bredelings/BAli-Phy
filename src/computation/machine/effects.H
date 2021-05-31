@@ -59,7 +59,7 @@ struct register_transition_kernel: public effect
 struct in_edge: public effect
 {
     int r_from_var;
-    int s_to_dist;
+    int r_to_dist;
     std::string arg_name;
 
     in_edge* clone() const {return new in_edge(*this);}
@@ -78,7 +78,7 @@ struct in_edge: public effect
 
 struct out_edge: public effect
 {
-    int s_from_dist;
+    int r_from_dist;
     int r_to_var;
 
     out_edge* clone() const {return new out_edge(*this);}
@@ -98,6 +98,7 @@ struct out_edge: public effect
 struct register_dist: public effect
 {
     std::string name;
+    int r;
 
     register_dist* clone() const {return new register_dist(*this);}
 
@@ -109,13 +110,13 @@ struct register_dist: public effect
     void register_effect(reg_heap&,int) const;
     void unregister_effect(reg_heap&,int) const;
 
-    register_dist(const std::string& s);
+    register_dist(const std::string& s, int r);
 };
 
 
 struct dist_property: public effect
 {
-    int s_from_dist;
+    int r_from_dist;
     int r_to_prop;
     std::string property;
 

@@ -962,19 +962,20 @@ void reg_heap::register_in_edge(const effect& e, int /* s */)
     // 1. Check that this edge is not a duplicate:
 
     //   No other in-edges should have the same arg_name.
-    auto& arg_names_for_var_to_dist = in_edges_from_var[I.r_from_var][I.s_to_dist];
+    auto& arg_names_for_var_to_dist = in_edges_from_var[I.r_from_var][I.r_to_dist];
     assert(not arg_names_for_var_to_dist.count(I.arg_name));
 
     //   Only one in-edges to this dist should have this arg_name.
-    auto& in_edges_to_this_dist = in_edges_to_dist[I.s_to_dist];
+    auto& in_edges_to_this_dist = in_edges_to_dist[I.r_to_dist];
     assert(not in_edges_to_this_dist.count(I.arg_name));
 
-    // 2. Check that there is in fact a distribution at I.s_to_dist;
-    assert(dist_type.count(I.s_to_dist));
+    // 2. Check that there is in fact a distribution at I.r_to_dist;
+    assert(dist_type.count(I.r_to_dist));
+    assert(reg_is_constant(I.r_from_var) or (reg_is_changeable(I.r_from_var) and is_modifiable(expression_at(I.r_from_var))));
 
     // 3. Insert the edge.
-    arg_names_for_var_to_dist.insert(I.arg_name);                 // I.r_from_var -> I.s_to_dist -> {I.arg_name}
-    in_edges_to_this_dist.insert({I.arg_name, I.r_from_var}); // I.s_to_dist -> I.arg_name -> I.r_var
+    arg_names_for_var_to_dist.insert(I.arg_name);                 // I.r_from_var -> I.r_to_dist -> {I.arg_name}
+    in_edges_to_this_dist.insert({I.arg_name, I.r_from_var}); // I.r_to_dist -> I.arg_name -> I.r_var
 }
 
 void reg_heap::unregister_in_edge(const effect& e, int /* s */)
@@ -982,26 +983,26 @@ void reg_heap::unregister_in_edge(const effect& e, int /* s */)
     auto& I = dynamic_cast<const in_edge&>(e);
 
     // Check that this edge is registered.
-    // I.r_from_var -> I.s_to_dist -> {I.arg_name}
+    // I.r_from_var -> I.r_to_dist -> {I.arg_name}
     assert(in_edges_from_var.count(I.r_from_var));
     auto& dists_for_var = in_edges_from_var.at(I.r_from_var);
-    assert(dists_for_var.count(I.s_to_dist));
-    auto& arg_names_for_var_to_dist = dists_for_var.at(I.s_to_dist);
+    assert(dists_for_var.count(I.r_to_dist));
+    auto& arg_names_for_var_to_dist = dists_for_var.at(I.r_to_dist);
     assert(arg_names_for_var_to_dist.count(I.arg_name));
 
-    assert(in_edges_to_dist.count(I.s_to_dist));
-    auto& in_edges_to_this_dist = in_edges_to_dist.at(I.s_to_dist);
+    assert(in_edges_to_dist.count(I.r_to_dist));
+    auto& in_edges_to_this_dist = in_edges_to_dist.at(I.r_to_dist);
     assert(in_edges_to_this_dist.count(I.arg_name));
 
     // 2. Check that there is in fact a distribution at I.to_reg?
-    assert(dist_type.count(I.s_to_dist));
+    assert(dist_type.count(I.r_to_dist));
 
     // 3. Erase the edge
     arg_names_for_var_to_dist.erase(I.arg_name);
     if (arg_names_for_var_to_dist.empty())
     {
         // Erase the set, if there are no more arg_names for this (var,dist) pair.
-        dists_for_var.erase(I.s_to_dist);
+        dists_for_var.erase(I.r_to_dist);
         if (dists_for_var.empty())
         {
             // Erase the map, if there are no more edges from this var.
@@ -1013,7 +1014,7 @@ void reg_heap::unregister_in_edge(const effect& e, int /* s */)
     if (in_edges_to_this_dist.empty())
     {
         // Erase the map, if there are no more edges to this dist.
-        in_edges_to_dist.erase(I.s_to_dist);
+        in_edges_to_dist.erase(I.r_to_dist);
     }
 }
 
@@ -1022,14 +1023,15 @@ void reg_heap::register_out_edge(const effect& e, int /* s */)
     auto& O = dynamic_cast<const out_edge&>(e);
 
     // Check that this edge is not a duplicate.
-    assert(not out_edges_from_dist.count(O.s_from_dist));
+    assert(not out_edges_from_dist.count(O.r_from_dist));
     assert(not out_edges_to_var.count(O.r_to_var));
     
     // Check that there is in fact a distribution at I.to_reg.
-    assert(dist_type.count(O.s_from_dist));
+    assert(dist_type.count(O.r_from_dist));
+    assert(reg_is_constant(O.r_to_var) or (reg_is_changeable(O.r_to_var) and is_modifiable(expression_at(O.r_to_var))));
 
-    out_edges_from_dist.insert({O.s_from_dist, O.r_to_var});
-    out_edges_to_var.insert({O.r_to_var, O.s_from_dist});
+    out_edges_from_dist.insert({O.r_from_dist, O.r_to_var});
+    out_edges_to_var.insert({O.r_to_var, O.r_from_dist});
 }
 
 void reg_heap::unregister_out_edge(const effect& e, int /* s */)
@@ -1037,14 +1039,14 @@ void reg_heap::unregister_out_edge(const effect& e, int /* s */)
     auto& O = dynamic_cast<const out_edge&>(e);
 
     // Check that this edge is registered.
-    assert(out_edges_from_dist.count(O.s_from_dist));
+    assert(out_edges_from_dist.count(O.r_from_dist));
     assert(out_edges_to_var.count(O.r_to_var));
 
-    // Check that there is in fact a distribution at O.s_from_dist.
-    assert(dist_type.count(O.s_from_dist));
+    // Check that there is in fact a distribution at O.r_from_dist.
+    assert(dist_type.count(O.r_from_dist));
 
     // Erase the edge
-    out_edges_from_dist.erase(O.s_from_dist);
+    out_edges_from_dist.erase(O.r_from_dist);
     out_edges_to_var.erase(O.r_to_var);
 }
 
@@ -1052,16 +1054,18 @@ void reg_heap::register_dist(const effect& e, int s)
 {
     auto& D = dynamic_cast<const ::register_dist&>(e);
 
-    assert(not dist_type.count(s));
+    assert(not dist_type.count(D.r));
 
-    dist_type.insert({s,D.name});
+    dist_type.insert({D.r,D.name});
 }
 
-void reg_heap::unregister_dist(const effect& /*e*/, int s)
+void reg_heap::unregister_dist(const effect& e, int s)
 {
-    assert(dist_type.count(s));
+    auto& D = dynamic_cast<const ::register_dist&>(e);
 
-    dist_type.erase(s);
+    assert(dist_type.count(D.r));
+
+    dist_type.erase(D.r);
 }
 
 void reg_heap::register_dist_property(const effect& e, int /* s */)
@@ -1069,25 +1073,25 @@ void reg_heap::register_dist_property(const effect& e, int /* s */)
     auto& P = dynamic_cast<const dist_property&>(e);
 
     // Check that there is in fact a distribution at P.s_from_dist.
-    assert(dist_type.count(P.s_from_dist));
+    assert(dist_type.count(P.r_from_dist));
 
-    dist_properties[P.s_from_dist].insert({P.property, P.r_to_prop});
+    dist_properties[P.r_from_dist].insert({P.property, P.r_to_prop});
 }
 
 void reg_heap::unregister_dist_property(const effect& e, int /* s */)
 {
     auto& P = dynamic_cast<const dist_property&>(e);
 
-    // Check that there is in fact a distribution at P.s_from_dist.
-    assert(dist_type.count(P.s_from_dist));
+    // Check that there is in fact a distribution at P.r_from_dist.
+    assert(dist_type.count(P.r_from_dist));
 
-    auto& this_dist_properties = dist_properties.at(P.s_from_dist);
+    auto& this_dist_properties = dist_properties.at(P.r_from_dist);
     auto it = this_dist_properties.find(P.property);
     assert(it != this_dist_properties.end());
     this_dist_properties.erase(it);
 
     if (this_dist_properties.empty())
-        dist_properties.erase(P.s_from_dist);
+        dist_properties.erase(P.r_from_dist);
 }
 
 optional<int> reg_heap::find_update_modifiable_reg(int& R)
