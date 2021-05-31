@@ -16,7 +16,7 @@ geometric_effect x = do
 
 sample_geometric p_success = RandomStructure geometric_effect modifiable_structure $ liftIO (IOAction (\s->(s,builtin_sample_geometric p_success s)))
 
-geometric2 p_fail p_success = Distribution (make_densities $ geometric_density p_fail p_success) (no_quantile "geometric") (sample_geometric p_success) (integer_above 0)
+geometric2 p_fail p_success = Distribution "geometric" (make_densities $ geometric_density p_fail p_success) (no_quantile "geometric") (sample_geometric p_success) (integer_above 0)
 
 geometric p = geometric2 (1.0-p) p
 rgeometric q = geometric2 q (1.0-q)

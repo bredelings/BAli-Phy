@@ -9,12 +9,13 @@ import MCMC
 import Data.JSON as J
 
 -- Define the Distribution type
-data Distribution a = Distribution (a->Double) (Double->a) (IO a) Range
-densities (Distribution ds _ _ _) = ds
+data Distribution a = Distribution String (a->Double) (Double->a) (IO a) Range
+dist_name (Distribution n _ _ _ _) = n
+densities (Distribution _ ds _ _ _) = ds
 density dist x = balanced_product (densities dist x)
-quantile (Distribution _ q _ _) = q
-sampler (Distribution _ _ s _) = s
-distRange (Distribution _ _ _ r) = r
+quantile (Distribution _ _ q _ _) = q
+sampler (Distribution _ _ _ s _) = s
+distRange (Distribution _ _ _ _ r) = r
 
 -- FIXME: We might need GADTS for
 --   Independant :: (Random a, Random b) -> Random (a,b)
@@ -89,7 +90,7 @@ run_lazy (IOAndPass f g) = do
   run_lazy $ g x
 run_lazy (IOReturn v) = return v
 run_lazy (LiftIO a) = a
-run_lazy (Distribution _ _ a _) = unsafeInterleaveIO $ run_lazy a
+run_lazy (Distribution _ _ _ a _) = unsafeInterleaveIO $ run_lazy a
 run_lazy (SamplingRate _ model) = run_lazy model
 run_lazy (MFix f) = MFix (run_lazy.f)
 run_lazy (WithEffect action _) = run_lazy action
@@ -126,7 +127,7 @@ run_lazy' rate (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy' rate f
   run_lazy' rate $ g x
 run_lazy' rate (IOReturn v) = return v
-run_lazy' rate dist@(Distribution _ _ (RandomStructure effect structure do_sample) range) = do
+run_lazy' rate dist@(Distribution _ _ _ (RandomStructure effect structure do_sample) range) = do
   -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy do_sample
   let (raw_x,triggered_x) = structure value do_effects
@@ -136,7 +137,7 @@ run_lazy' rate dist@(Distribution _ _ (RandomStructure effect structure do_sampl
       -- Note: registering the pdf forces it.
       do_effects = (run_effects rate $ effect raw_x) `seq` register_prior raw_x pdf
   return triggered_x
-run_lazy' rate (Distribution _ _ s _) = run_lazy' rate s
+run_lazy' rate (Distribution _ _ _ s _) = run_lazy' rate s
 run_lazy' rate (MFix f) = MFix ((run_lazy' rate).f)
 run_lazy' rate (SamplingRate rate2 a) = run_lazy' (rate*rate2) a
 run_lazy' rate (WithEffect action effect) = unsafeInterleaveIO $ do

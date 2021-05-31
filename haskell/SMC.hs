@@ -17,4 +17,4 @@ smc_trace   rho_over_theta rates level_boundaries error_rate sequences = builtin
                                                                 where rates' = list_to_vector rates
                                                                       level_boundaries' = list_to_vector level_boundaries
 
-smc rho_over_theta rates level_boundaries error_rate = Distribution (\a->[smc_density rho_over_theta rates level_boundaries error_rate a]) (error "SMC has no quantile") (return 0) (list_to_string("AlignmentRangeString"))
+smc rho_over_theta rates level_boundaries error_rate = Distribution "SMC" (\a->[smc_density rho_over_theta rates level_boundaries error_rate a]) (error "SMC has no quantile") (return 0) (list_to_string("AlignmentRangeString"))

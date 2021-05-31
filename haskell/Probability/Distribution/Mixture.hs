@@ -9,7 +9,8 @@ mixture_density [] _ x = (doubleToLogDouble 1.0)
 sample_mixture weights dists = do cat <- categorical weights
                                   dists!!cat
 
-mixture weights dists = Distribution (make_densities $ mixture_density weights dists)
+mixture weights dists = Distribution "mixture"
+                                     (make_densities $ mixture_density weights dists)
                                      (no_quantile "mixture")
                                      (sample_mixture weights dists)
                                      (mixtureRange weights dists)

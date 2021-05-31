@@ -14,4 +14,4 @@ negative_binomial_effect r x = do
 
 sample_negative_binomial r p = RandomStructure (negative_binomial_effect r) modifiable_structure $ liftIO (IOAction (\s->(s,builtin_sample_negative_binomial r p s)))
 
-negative_binomial r p = Distribution (make_densities $ negative_binomial_density r p) (no_quantile "negative_binomial") (sample_negative_binomial r p) (negative_binomial_bounds n)
+negative_binomial r p = Distribution "negative_binomial" (make_densities $ negative_binomial_density r p) (no_quantile "negative_binomial") (sample_negative_binomial r p) (negative_binomial_bounds n)

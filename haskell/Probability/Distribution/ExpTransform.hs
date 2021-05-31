@@ -8,13 +8,14 @@ import Probability.Distribution.Laplace
 import Probability.Distribution.Cauchy
 
 -- This contains exp-transformed functions
-expTransform (Distribution d q s r) = Distribution pdf' q' s' r'
+expTransform dist@(Distribution name d q s r) = Distribution name' pdf' q' s' r'
  where
   pdf' x = case (d $ log x) of [pdf] -> pdf/(doubleToLogDouble x)
   q'   = exp . q
-  s'   = do v <- Distribution d q s r
+  s'   = do v <- dist
             return $ exp v
   r'   = expTransformRange r
+  name' = "log_"++name
 
 log_normal mu sigma = expTransform $ normal mu sigma
 log_exponential mu = expTransform $  exponential mu

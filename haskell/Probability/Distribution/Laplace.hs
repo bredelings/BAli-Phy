@@ -10,4 +10,4 @@ laplace_bounds = realLine
 laplace_effect x = add_move $ slice_sample_real_random_variable x laplace_bounds
 sample_laplace m s = RandomStructure laplace_effect modifiable_structure $ liftIO (IOAction (\state->(state,builtin_sample_laplace m s state)))
 
-laplace m s = Distribution (make_densities $ laplace_density m s) () (sample_laplace m s) laplace_bounds
+laplace m s = Distribution "laplace" (make_densities $ laplace_density m s) () (sample_laplace m s) laplace_bounds

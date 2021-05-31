@@ -13,7 +13,7 @@ cauchy_bounds = realLine
 cauchy_effect x = add_move $ slice_sample_real_random_variable x cauchy_bounds
 sample_cauchy m s = RandomStructure cauchy_effect modifiable_structure $ liftIO (IOAction (\state->(state,builtin_sample_cauchy m s state)))
 
-cauchy m s = Distribution (make_densities $ cauchy_density m s) (cauchy_quantile m s) (sample_cauchy m s) cauchy_bounds
+cauchy m s = Distribution "cauchy" (make_densities $ cauchy_density m s) (cauchy_quantile m s) (sample_cauchy m s) cauchy_bounds
 
 ---- half_cauchy
 
@@ -27,19 +27,4 @@ sample_half_cauchy m s = do
 half_cauchy_quantile m s p = cauchy_quantile m s ((p+1.0)/2.0)
 half_cauchy_bounds m = above m
 
-half_cauchy m s = Distribution (make_densities $ half_cauchy_density m s) (half_cauchy_quantile m s) (sample_half_cauchy m s) (half_cauchy_bounds m)
-
---- truncated_cauchy m s t = draw from cauchy until we are within > t
-
--- truncated t dist@(Distribution densities cdf quantile sample bounds) = Distribution densities' cdf' quantile' sample' bounds' where
---     cdf_t = cdf t
---     cdf' x | x < t     = return 0.0
---            | otherwise = (cdf x - cdf_t)/(1.0 - cdf_t)
---
---     quantile' p = quantile p' where p' = cdf_t + (1.0-cdf_t)*p
---     sample' = do
---       u <- uniform 0.0 1.0
---       return $ quantile' u
---     dens x = density dist x
---     density' x = density x / (1.0-cdf_t)
---     densities' x = [ density' x]
+half_cauchy m s = Distribution "half_cauchy" (make_densities $ half_cauchy_density m s) (half_cauchy_quantile m s) (sample_half_cauchy m s) (half_cauchy_bounds m)

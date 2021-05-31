@@ -11,4 +11,4 @@ beta_bounds = between 0.0 1.0
 beta_effect x = add_move $ slice_sample_real_random_variable x beta_bounds
 sample_beta a b = RandomStructure beta_effect modifiable_structure $ liftIO (IOAction (\s->(s,builtin_sample_beta a b s)))
 
-beta a b = Distribution (make_densities $ beta_density a b) (beta_quantile a b) (sample_beta a b) beta_bounds
+beta a b = Distribution "beta" (make_densities $ beta_density a b) (beta_quantile a b) (sample_beta a b) beta_bounds

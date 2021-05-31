@@ -17,7 +17,7 @@ poisson_effect x = do
 
 sample_poisson mu = RandomStructure poisson_effect modifiable_structure $ liftIO (IOAction (\s -> (s, builtin_sample_poisson mu s)))
 
-poisson mu = Distribution (make_densities $ poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (integer_above 0)
+poisson mu = Distribution "poisson" (make_densities $ poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (integer_above 0)
 
 --- Poisson process, constant rate --
 poisson_process_density' rate t1 t2 n = expToLogDouble $ (-rate*(t2-t1)) + ((intToDouble n)*log rate)
@@ -27,7 +27,7 @@ sample_poisson_process rate t1 t2 = do
   xs <- iid n (uniform t1 t2)
   return $ sort xs
 
-poisson_process rate t1 t2 = Distribution (make_densities $ poisson_process_density rate t1 t2) (no_quantile "poisson_process") (sample_poisson_process rate t1 t2) Nothing
+poisson_process rate t1 t2 = Distribution "poisson_process" (make_densities $ poisson_process_density rate t1 t2) (no_quantile "poisson_process") (sample_poisson_process rate t1 t2) Nothing
 
 --- Poisson process, piecewise constant
 
@@ -48,5 +48,5 @@ sample_poisson_processes ((rate,t1,t2):intervals) = do
   -- FIXME - this doesn't seem very efficient!
   return $ points1 ++ points2
 
-poisson_processes intervals = Distribution (poisson_processes_densities intervals) (no_quantile "poisson_processes") (sample_poisson_processes intervals) Nothing
+poisson_processes intervals = Distribution "poisson_processes" (poisson_processes_densities intervals) (no_quantile "poisson_processes") (sample_poisson_processes intervals) Nothing
 

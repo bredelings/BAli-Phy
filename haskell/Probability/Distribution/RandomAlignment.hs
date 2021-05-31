@@ -59,7 +59,8 @@ triggered_modifiable_alignment value effect = (raw_a, triggered_a) where
     effect'     = force_alignment raw_a `seq` effect
     triggered_a = effect' `seq` raw_a
 
-random_alignment tree hmms model tip_lengths = Distribution (\a -> [alignment_pr a hmms model])
+random_alignment tree hmms model tip_lengths = Distribution "random_alignment"
+                                                            (\a -> [alignment_pr a hmms model])
                                                             (no_quantile "random_alignment")
                                                             (RandomStructure do_nothing triggered_modifiable_alignment do_sample)
                                                             ()

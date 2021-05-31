@@ -14,4 +14,4 @@ binomial_effect n x = do
 
 sample_binomial n p = RandomStructure (binomial_effect n) modifiable_structure $ liftIO (IOAction (\s->(s,builtin_sample_binomial n p s)))
 
-binomial n p = Distribution (make_densities $ binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (binomial_bounds n)
+binomial n p = Distribution "binomial" (make_densities $ binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (binomial_bounds n)

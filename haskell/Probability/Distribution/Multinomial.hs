@@ -17,7 +17,7 @@ sample_multinomial n (p:ps) = do
   ms <- sample_multinomial (n-m) (normalize ps)
   return (m:ms)
 
-multinomial n ps = Distribution (make_densities $ multinomial_density n ps) (no_quantile "multinomial") (sample_multinomial n ps) ()
+multinomial n ps = Distribution "multinomial" (make_densities $ multinomial_density n ps) (no_quantile "multinomial") (sample_multinomial n ps) ()
 
 -- Not sure this is the same as sorting discrete uniforms.
 random_composition' sum n_groups = multinomial sum (replicate n_groups (1.0/intToDouble n_groups))

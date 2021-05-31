@@ -16,11 +16,11 @@ subst_like_on_tree tree alignment smodel seqs = likelihood
           subst_root = numNodes tree - 1
 
 ctmc_on_tree tree alignment smodel =
-    Distribution (\seqs -> [subst_like_on_tree tree alignment smodel seqs]) (no_quantile "ctmc_on_tree") () ()
+    Distribution "ctmc_on_tree" (\seqs -> [subst_like_on_tree tree alignment smodel seqs]) (no_quantile "ctmc_on_tree") () ()
 
 subst_likelihood_fixed_A tree smodel sequences = likelihood
     where (_,_,_,likelihood) = observe_partition_type_1 tree smodel sequences subst_root
           subst_root = numNodes tree - 1
 
 ctmc_on_tree_fixed_A tree smodel =
-    Distribution (\seqs -> [subst_likelihood_fixed_A tree smodel seqs]) (no_quantile "ctmc_on_tree_fixed_A") () ()
+    Distribution "ctmc_on_tree_fixed_A" (\seqs -> [subst_likelihood_fixed_A tree smodel seqs]) (no_quantile "ctmc_on_tree_fixed_A") () ()

@@ -11,10 +11,11 @@ builtin builtin_haplotype01_from_plaf_probability 2 "haplotype01_from_plaf_proba
 haplotype01_from_plaf_probability plaf hap = builtin_haplotype01_from_plaf_probability (list_to_vector plaf) hap
 
 haplotype01_from_plaf plafs = Distribution
-                                       (make_densities $ haplotype01_from_plaf_probability plafs)
-                                       (error "no quantile")
-                                       (sample_haplotype01_from_plaf plafs)
-                                       ()
+                              "haplotype01_from_plaf"
+                              (make_densities $ haplotype01_from_plaf_probability plafs)
+                              (error "no quantile")
+                              (sample_haplotype01_from_plaf plafs)
+                              ()
 
 -- This version does not use the builtins above, and also produces a list, not a vector.
 --haplotype01_from_plaf plafs = independent [ bernoulli f | f <- plafs ]
@@ -27,6 +28,7 @@ probability_of_reads01 weights haplotypes error_rate c reads = builtin_probabili
 
 -- We can't sample from this because we are using the random data to tell us the coverage at each position.
 reads01_from_haps weights haplotypes error_rate c = Distribution
+                                                                 "reads01_from_haps"
                                                     (make_densities $ probability_of_reads01 weights haplotypes error_rate c)
                                                     (error "no quantile")
                                                     ()
