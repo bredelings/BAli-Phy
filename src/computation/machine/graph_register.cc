@@ -970,8 +970,9 @@ void reg_heap::register_in_edge(const effect& e, int /* s */)
     assert(not in_edges_to_this_dist.count(I.arg_name));
 
     // 2. Check that there is in fact a distribution at I.r_to_dist;
-    assert(dist_type.count(I.r_to_dist));
-    assert(reg_is_constant(I.r_from_var) or (reg_is_changeable(I.r_from_var) and is_modifiable(expression_at(I.r_from_var))));
+    assert(reg_is_constant(I.r_from_var) or (reg_is_changeable(I.r_from_var)));
+    assert(expression_at(I.r_to_dist).is_a<::register_dist>());
+    // assert(dist_type.count(I.r_to_dist));
 
     // 3. Insert the edge.
     arg_names_for_var_to_dist.insert(I.arg_name);                 // I.r_from_var -> I.r_to_dist -> {I.arg_name}
@@ -995,7 +996,8 @@ void reg_heap::unregister_in_edge(const effect& e, int /* s */)
     assert(in_edges_to_this_dist.count(I.arg_name));
 
     // 2. Check that there is in fact a distribution at I.to_reg?
-    assert(dist_type.count(I.r_to_dist));
+    assert(expression_at(I.r_to_dist).is_a<::register_dist>());
+    // assert(dist_type.count(I.r_to_dist));
 
     // 3. Erase the edge
     arg_names_for_var_to_dist.erase(I.arg_name);
@@ -1027,7 +1029,8 @@ void reg_heap::register_out_edge(const effect& e, int /* s */)
     assert(not out_edges_to_var.count(O.r_to_var));
     
     // Check that there is in fact a distribution at I.to_reg.
-    assert(dist_type.count(O.r_from_dist));
+    assert(expression_at(O.r_from_dist).is_a<::register_dist>());
+    // assert(dist_type.count(O.r_from_dist));
     assert(reg_is_constant(O.r_to_var) or (reg_is_changeable(O.r_to_var) and is_modifiable(expression_at(O.r_to_var))));
 
     out_edges_from_dist.insert({O.r_from_dist, O.r_to_var});
@@ -1043,7 +1046,8 @@ void reg_heap::unregister_out_edge(const effect& e, int /* s */)
     assert(out_edges_to_var.count(O.r_to_var));
 
     // Check that there is in fact a distribution at O.r_from_dist.
-    assert(dist_type.count(O.r_from_dist));
+    assert(expression_at(O.r_from_dist).is_a<::register_dist>());
+    // assert(dist_type.count(O.r_from_dist));
 
     // Erase the edge
     out_edges_from_dist.erase(O.r_from_dist);
