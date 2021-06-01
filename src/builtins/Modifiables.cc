@@ -70,7 +70,7 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
 {
     int r_from_var = force_slot_to_safe_reg(Args,0);
-    int r_to_dist  = force_slot_to_safe_reg(Args,1);
+    int r_to_dist  = Args.evaluate_slot_use(1);
     std::string role = Args.evaluate(2).as_<String>();
 
     object_ptr<effect> e(new in_edge(r_from_var, r_to_dist, role));
@@ -82,7 +82,7 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
 
 extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
 {
-    int r_from_dist = force_slot_to_safe_reg(Args,0);
+    int r_from_dist = Args.evaluate_slot_use(0);
     int r_to_var    = force_slot_to_safe_reg(Args,1);
 
     object_ptr<effect> e(new out_edge(r_from_dist, r_to_var));
