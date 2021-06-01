@@ -73,11 +73,11 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
     int r_to_dist  = force_slot_to_safe_reg(Args,1);
     std::string role = Args.evaluate(2).as_<String>();
 
-    auto effect = new in_edge(r_from_var, r_to_dist, role);
+    object_ptr<effect> e(new in_edge(r_from_var, r_to_dist, role));
 
-    Args.set_effect(*effect);
+    Args.set_effect(*e);
 
-    return effect;
+    return e;
 }
 
 extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
@@ -85,11 +85,11 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
     int r_from_dist = force_slot_to_safe_reg(Args,0);
     int r_to_var    = force_slot_to_safe_reg(Args,1);
 
-    auto effect = new out_edge(r_from_dist, r_to_var);
+    object_ptr<effect> e(new out_edge(r_from_dist, r_to_var));
 
-    Args.set_effect(*effect);
+    Args.set_effect(*e);
 
-    return effect;
+    return e;
 }
 
 extern "C" closure builtin_function_register_dist(OperationArgs& Args)
