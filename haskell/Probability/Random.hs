@@ -143,7 +143,7 @@ run_lazy' rate dist@(Distribution _ _ _ (RandomStructure effect structure do_sam
         effect raw_x
         s <- register_dist (dist_name dist)
         register_prior raw_x pdf
-        register_out_edge s triggered_x
+        register_out_edge s raw_x
       do_effects = run_effects rate effect'
   return triggered_x
 run_lazy' rate (Distribution _ _ _ s _) = run_lazy' rate s
