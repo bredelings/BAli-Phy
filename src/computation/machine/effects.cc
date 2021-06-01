@@ -141,7 +141,7 @@ void register_transition_kernel::unregister_effect(reg_heap& M, int s) const
 
 bool in_edge::operator==(const in_edge& e) const
 {
-    return r_from_var == e.r_from_var and r_to_dist == e.r_to_dist and arg_name == e.arg_name;
+    return r_from_node == e.r_from_node and r_to_dist == e.r_to_dist and arg_name == e.arg_name;
 }
 
 bool in_edge::operator==(const Object& O) const
@@ -158,12 +158,12 @@ bool in_edge::operator==(const Object& O) const
 string in_edge::print() const
 {
     std::ostringstream result;
-    result<<"in_edge[from="<<r_from_var<<",to="<<r_to_dist<<",arg_name="<<arg_name<<"]";
+    result<<"in_edge[from="<<r_from_node<<",to="<<r_to_dist<<",arg_name="<<arg_name<<"]";
     return result.str();
 }
 
 in_edge::in_edge(int i1, int i2, const string& s)
-    :r_from_var(i1), r_to_dist(i2), arg_name(s)
+    :r_from_node(i1), r_to_dist(i2), arg_name(s)
 { }
 
 void in_edge::register_effect(reg_heap& M, int s) const

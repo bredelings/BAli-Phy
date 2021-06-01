@@ -58,7 +58,7 @@ struct register_transition_kernel: public effect
 
 struct in_edge: public effect
 {
-    int r_from_var;
+    int r_from_node;
     int r_to_dist;
     std::string arg_name;
 
