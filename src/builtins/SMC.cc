@@ -1129,7 +1129,7 @@ log_double_t deploid_01_plaf_only_CSD(const EVector& alt_allele_frequency, const
     return {Pr};
 }
 
-log_double_t deploid_01_CSD(const EVector& panel, const EVector& sites, double switching_rate, double emission_diff_state, const EVector& haplotype)
+log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double switching_rate, double emission_diff_state, const EVector& haplotype)
 {
     int k = panel.size();
     assert(k >= 1);
@@ -1164,7 +1164,7 @@ log_double_t deploid_01_CSD(const EVector& panel, const EVector& sites, double s
         double transition_diff_parent = pr_switch / k;
         double transition_same_parent = (1.0 - pr_switch) + (pr_switch / k);
 
-        int emitted_letter = get_allele(haplotype, column2); // This will be 0 or 1, or negative for a missing value.
+        int emitted_letter = get_allele(haplotype, column1); // This will be 0 or 1, or negative for a missing value.
 
         bool all_previous_missing = true;
         for(int i2=0;i2<k;i2++)
@@ -1223,6 +1223,33 @@ extern "C" closure builtin_function_haplotype01_from_plaf_probability(OperationA
     return {Pr};
 }
 
+extern "C" closure builtin_function_haplotype01_from_panel_probability(OperationArgs& Args)
+{
+    // 0. Population-Level Allele Frequencies (PLAF) - an EVector of double.
+    auto arg0 = Args.evaluate(0);
+    auto& panel = arg0.as_<EVector>();
+
+    // 1. Population-Level Allele Frequencies (PLAF) - an EVector of double.
+    auto arg1 = Args.evaluate(1);
+    auto& sites = arg1.as_<EVector>();
+
+    // 2. Switching rate
+    double switching_rate = Args.evaluate(2).as_double();
+
+    // 3. State-flipping probability
+    double diff_state = Args.evaluate(3).as_double();
+
+    // 4. Haplotypes - an EVector of EVector of Int
+    auto arg4 = Args.evaluate(4);
+    auto& haplotype = arg1.as_<EVector>();
+
+    auto Pr = panel_01_CSD(panel, sites, switching_rate, diff_state, haplotype);
+
+    return {Pr};
+}
+
+
+
 // In theory we could construct this in Haskell by something like
 //    haplotype <- independant [ bernoulli f | f <- frequencies ]
 // In that case redrawing individual element would come automatically.
@@ -1247,6 +1274,57 @@ extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& 
     }
     return H;
 }
+
+extern "C" closure builtin_function_sample_haplotype01_from_panel(OperationArgs& Args)
+{
+    // 0. Population-Level Allele Frequencies (PLAF) - an EVector of double.
+    auto arg0 = Args.evaluate(0);
+    auto& panel = arg0.as_<EVector>();
+
+    // 1. Population-Level Allele Frequencies (PLAF) - an EVector of double.
+    auto arg1 = Args.evaluate(1);
+    auto& sites = arg1.as_<EVector>();
+
+    // 2. Switching rate
+    double switching_rate = Args.evaluate(2).as_double();
+
+    // 3. State-flipping probability
+    double diff_state = Args.evaluate(3).as_double();
+
+    int k = panel.size();
+    assert(k > 0);
+    int L = panel[0].as_<EVector>().size();
+    for(int i=0;i<k;i++)
+        assert(panel[i].as_<EVector>().size() == L);
+    assert(sites.size() == L);
+
+    EVector haplotype(L);
+    int source_haplotype = uniform_int(0,k-1);
+
+    int prev_site = 0;
+    for(int i=0; i<L; i++)
+    {
+        // Get an emitted letter
+        int source_letter = get_allele(panel, source_haplotype, i);
+        int emitted_letter = source_letter;
+        if (bernoulli(diff_state) and emitted_letter >= 0)
+            emitted_letter = 1 - emitted_letter;
+        if (emitted_letter <= 0)
+            emitted_letter = bernoulli(0.5);
+
+        // Maybe switch to new source haplotype for next site.
+        double dist = sites[i].as_int() - prev_site;
+        double pr_switch = (1.0-exp(-switching_rate*dist));
+        if (bernoulli(pr_switch))
+            source_haplotype = uniform_int(0,k-1);
+
+        // Record the value for the haplotype
+        haplotype[i] = emitted_letter;
+    }
+    return {haplotype};
+}
+
+
 
 double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
 {
