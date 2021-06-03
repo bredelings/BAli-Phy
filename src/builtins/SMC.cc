@@ -1111,7 +1111,7 @@ int get_allele(const expression_ref& haplotypes, int individual, int site)
 //   Technically, this could be a VCF, but that would take a lot of space.
 //   Maybe just the first 3 fields - site,ref,alt?
 
-// CSD = conditional sampling distribution?
+// CSD = conditional sampling distribution
 
 log_double_t deploid_01_plaf_only_CSD(const EVector& alt_allele_frequency, const EVector& haplotype)
 {
@@ -1127,6 +1127,85 @@ log_double_t deploid_01_plaf_only_CSD(const EVector& alt_allele_frequency, const
     }
     log_double_t Pr = total;
     return {Pr};
+}
+
+log_double_t deploid_01_CSD(const EVector& panel, const EVector& sites, double switching_rate, double emission_diff_state, const EVector& haplotype)
+{
+    int k = panel.size();
+    assert(k >= 1);
+
+    // 1. Determine mutation probabilities when copying from a given parent.
+    double emission_same_state = 1.0 - emission_diff_state;
+
+    // 2. Check haplotype lengths and number of sites
+    double L = panel[0].as_<EVector>().size();
+    for(int i=0;i<panel.size();i++)
+        assert(panel[i].as_<EVector>().size() == L);
+    assert(sites.size() == L);
+    assert(haplotype.size() == L);
+
+    // 3. Set the probability of copying from each of the k parents to 1/k at location 0.
+    Matrix m(L+1,k);
+    vector<int> scale(L+1,0);
+    for(int i=0;i<k;i++)
+        m(0,i) = 1.0/k;
+
+    // 4. Perform the forward algorithm
+    int prev_column = 0;
+    for(int column1=0; column1<L; column1++)
+    {
+        double maximum = 0;
+
+        // Compute the probability of going from panel haplotype i -> j.
+        // Note that the switching probability includes the probability of "switching" from i->i.
+        int column2 = column1 + 1;
+        double dist = sites[column1].as_int() - prev_column;
+        double pr_switch = (1.0-exp(-switching_rate*dist));
+        double transition_diff_parent = pr_switch / k;
+        double transition_same_parent = (1.0 - pr_switch) + (pr_switch / k);
+
+        int emitted_letter = get_allele(haplotype, column2); // This will be 0 or 1, or negative for a missing value.
+
+        bool all_previous_missing = true;
+        for(int i2=0;i2<k;i2++)
+        {
+            // Emission is 1.0 if missing data at i2
+            int copied_letter  = get_allele(panel, i2, column1);
+            double emission_i2 = emission_probability( copied_letter, emitted_letter, emission_diff_state, emission_same_state, all_previous_missing );
+            if (copied_letter >= 0) all_previous_missing = false;
+
+            double total = 0;
+            for(int i1=0;i1<k;i1++)
+            {
+                double transition_i1_i2 = (i1==i2) ? transition_same_parent : transition_diff_parent;
+                total += m(column1,i1) * transition_i1_i2 * emission_i2;
+            }
+            if (total > maximum) maximum = total;
+            m(column2,i2) = total;
+        }
+        prev_column = sites[column1].as_int();
+
+        scale[column2] = scale[column1];
+
+        //------- if exponent is too low, rescale ------//
+        if (maximum > 0 and maximum < fp_scale::lo_cutoff)
+        {
+            int logs = -(int)log2(maximum);
+            double scale_factor = pow2(logs);
+            for(int i2=0;i2<k;i2++)
+                m(column2,i2) *= scale_factor;
+            scale[column2] -= logs;
+        }
+    }
+
+    // 3. Compute the total probability
+    double total = 0;
+    for(int i=0;i<k;i++)
+        total += m(L-1,i);
+
+    log_double_t Pr = pow(log_double_t(2.0),scale[L-1]) * total;
+
+    return { Pr };
 }
 
 extern "C" closure builtin_function_haplotype01_from_plaf_probability(OperationArgs& Args)
