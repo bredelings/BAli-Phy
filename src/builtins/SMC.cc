@@ -1487,15 +1487,13 @@ double get_prior(int A, double f, int n)
     return prior;
 }
 
-matrix<log_double_t> emission_pr3(int k1, int k2, int k3, const EVector& data, const EVector& frequency, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration, double outlier_frac)
+matrix<log_double_t> emission_pr3(int k1, int k2, int k3, const EVector& data, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration, double outlier_frac)
 {
     int L = haplotypes[0].as_<EVector>().size();
-    assert(L == frequency.size());
 
     auto E = matrix<log_double_t>(L,8);
     for(int site=0; site<L; site++)
     {
-        double plaf = frequency[site].as_double();
         double current_wsaf = wsaf_at_site(site, weights, haplotypes);
         for(int A = 0; A < 8; A++)
         {
@@ -1512,7 +1510,7 @@ matrix<log_double_t> emission_pr3(int k1, int k2, int k3, const EVector& data, c
             // Avoid out-of-bounds terms caused by rounding error.
             wsaf = std::max(0.0,std::min(1.0,wsaf));
 
-            E(site, A) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration, outlier_frac) * get_prior(A, plaf, 3);
+            E(site, A) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration, outlier_frac);
         }
     }
     return E;
@@ -2201,9 +2199,9 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
-    auto E1 = emission_pr3(haplotype_index1, haplotype_index2, haplotype_index3, data, frequencies, haplotypes, weights1, error_rate, concentration, outlier_frac);
+    auto E1 = emission_pr3(haplotype_index1, haplotype_index2, haplotype_index3, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
 
-    auto E2 = emission_pr3(haplotype_index1, haplotype_index2, haplotype_index3, data, frequencies, haplotypes, weights2, error_rate, concentration, outlier_frac);
+    auto E2 = emission_pr3(haplotype_index1, haplotype_index2, haplotype_index3, data, haplotypes, weights2, error_rate, concentration, outlier_frac);
 
     //---------- Sample new haplotypes for C1 -----------//
     EVector new_haplotype1_1(L);
@@ -2215,9 +2213,10 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
 
     for(int site = 0; site < L; site++)
     {
+        double plaf = frequencies[site].as_double();
         vector<log_double_t> F(8);
         for(int i=0;i<8;i++)
-            F[i] = E1(site,i);
+            F[i] = E1(site,i) * get_prior(i, plaf, 3);
 
         int old_allele1 = get_allele(haplotypes, haplotype_index1, site);
         int old_allele2 = get_allele(haplotypes, haplotype_index2, site);
@@ -2243,9 +2242,10 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
 
     for(int site = 0; site < L; site++)
     {
+        double plaf = frequencies[site].as_double();
         vector<log_double_t> F(8);
         for(int i=0;i<8;i++)
-            F[i] = E2(site,i);
+            F[i] = E2(site,i) * get_prior(i, plaf, 3);
 
         int new_A = choose(F);
         pr_sample_2 *= choose_P(new_A, F);
