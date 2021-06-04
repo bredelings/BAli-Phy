@@ -2020,6 +2020,15 @@ extern "C" closure builtin_function_propose_weights_and_two_haplotypes_from_plaf
     return EPair(io_state+1, ratio);
 }
 
+bool all_different(vector<int> v)
+{
+    std::sort(v.begin(), v.end());
+    for(int i=1;i<v.size();i++)
+        if (v[i-1] == v[i]) return false;
+
+    return true;
+}
+
 int get_state_from_haplotypes(const EVector& haplotypes, const vector<int>& K, int site)
 {
     int N = K.size();
@@ -2131,16 +2140,17 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
     // 17. outlier_frac = double
     double outlier_frac = evaluate_slot(C0, 17).as_double();
 
-    // Make sure that the two haplotypes are DIFFERENT.
-    if (haplotype_index1 == haplotype_index2) return EPair(io_state+1, log_double_t(1));
+    //----------- Make sure that the N haplotypes are DIFFERENT -------------
+    vector<int> K = {haplotype_index1, haplotype_index2, haplotype_index3};
 
-    // Make sure that the two haplotypes are DIFFERENT.
-    if (haplotype_index1 == haplotype_index3) return EPair(io_state+1, log_double_t(1));
+    int N = K.size();
 
-    // Make sure that the two haplotypes are DIFFERENT.
-    if (haplotype_index2 == haplotype_index3) return EPair(io_state+1, log_double_t(1));
+    int n_states = (1<<N);
 
     int L = haplotypes[0].as_<EVector>().size();
+
+    if (not all_different(K))
+        return EPair(io_state+1, log_double_t(1));
 
     //------------- Copy the context indices ------------------//
 
@@ -2159,10 +2169,6 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
     auto weights2 = evaluate_slot(C2, 12).as_<EVector>();
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
-
-    vector<int> K = {haplotype_index1, haplotype_index2, haplotype_index3};
-    int N = K.size();
-    int n_states = (1<<N);
 
     auto E1 = emission_pr(K, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
 
