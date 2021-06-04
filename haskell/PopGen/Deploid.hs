@@ -69,36 +69,6 @@ propose_two_haplotypes_from_plaf hap_index1 hap_index2 freqs w reads haps e c ou
 
 ---
 
-builtin propose_weights_and_haplotype_from_plaf'' 12 "propose_weights_and_haplotype_from_plaf" "SMC"
-
-propose_weights_and_haplotype_from_plaf' titre hap hap_index freqs w reads haps e c outlier_frac context io_state =
-    propose_weights_and_haplotype_from_plaf'' context io_state titre hap hap_index freqs' w' reads' haps' e c outlier_frac
-           where
-             freqs' = list_to_vector freqs
-             w'     = list_to_vector w
-             reads' = list_to_vector $ map (\(x,y) -> c_pair x y) reads
-             haps'  = list_to_vector haps
-
-propose_weights_and_haplotype_from_plaf titres hap_index freqs w reads haps e c outlier_frac context =
-    IOAction $ pair_from_c . propose_weights_and_haplotype_from_plaf' (titres !! hap_index) (haps !! hap_index) hap_index freqs w reads haps e c outlier_frac context
-
----
-
-builtin propose_weights_and_two_haplotypes_from_plaf'' 15 "propose_weights_and_two_haplotypes_from_plaf" "SMC"
-
-propose_weights_and_two_haplotypes_from_plaf' titre1 titre2 hap1 hap2 hap_index1 hap_index2 freqs w reads haps e c outlier_frac context io_state =
-    propose_weights_and_two_haplotypes_from_plaf'' context io_state titre1 titre2 hap1 hap2 hap_index1 hap_index2 freqs' w' reads' haps' e c outlier_frac
-           where
-             freqs' = list_to_vector freqs
-             w'     = list_to_vector w
-             reads' = list_to_vector $ map (\(x,y) -> c_pair x y) reads
-             haps'  = list_to_vector haps
-
-propose_weights_and_two_haplotypes_from_plaf titres hap_index1 hap_index2 freqs w reads haps e c outlier_frac context =
-    IOAction $ pair_from_c . propose_weights_and_two_haplotypes_from_plaf' (titres !! hap_index1) (titres !! hap_index2) (haps !! hap_index1) (haps !! hap_index2) hap_index1 hap_index2 freqs w reads haps e c outlier_frac context
-
----
-
 builtin propose_weights_and_haplotypes_from_plaf'' 11 "propose_weights_and_haplotypes_from_plaf" "SMC"
 
 propose_weights_and_haplotypes_from_plaf' indices titres haps freqs w reads e c outlier_frac context io_state =
