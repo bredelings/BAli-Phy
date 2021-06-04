@@ -2063,29 +2063,31 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
     // 1. IO state = int
     int io_state = Args.evaluate(1).as_int();
 
+    // 8. Get haplotype indices
+    vector<int> K = (vector<int>)evaluate_slot(C0,8).as_<EVector>();
+
+    int N = K.size();
+
+    int n_states = (1<<N);
+
     // 2. Get x[i]
-    int titre1_reg = Args.reg_for_slot(2);
-    if (auto titre1_mod_reg = C0.find_modifiable_reg(titre1_reg))
-        titre1_reg = *titre1_mod_reg;
-    else
-        throw myexception()<<"propose_weights_and_haplotype_from_plaf: titre1 reg "<<titre1_reg<<" is not a modifiable!";
+    vector<int> titre_regs(N);
 
-    // 3. Get x[j]
-    int titre2_reg = Args.reg_for_slot(3);
-    if (auto titre2_mod_reg = C0.find_modifiable_reg(titre2_reg))
-        titre2_reg = *titre2_mod_reg;
-    else
-        throw myexception()<<"propose_weights_and_haplotype_from_plaf: titre2 reg "<<titre2_reg<<" is not a modifiable!";
+    titre_regs[0] = Args.reg_for_slot(2);
+    titre_regs[1] = Args.reg_for_slot(3);
+    titre_regs[2] = Args.reg_for_slot(4);
 
-    // 4. Get x[k]
-    int titre3_reg = Args.reg_for_slot(4);
-    if (auto titre3_mod_reg = C0.find_modifiable_reg(titre3_reg))
-        titre3_reg = *titre3_mod_reg;
-    else
-        throw myexception()<<"propose_weights_and_haplotype_from_plaf: titre3 reg "<<titre3_reg<<" is not a modifiable!";
+    for(int i=0; i<N; i++)
+    {
+        int& r = titre_regs[i];
+        if (auto titre_mod_reg = C0.find_modifiable_reg(r))
+            r = *titre_mod_reg;
+        else
+            throw myexception()<<"propose_weights_and_haplotype_from_plaf: titre reg"<<i+1<<" "<<r<<" is not a modifiable!";
+    }
 
     // 5. Get h[i]
-    vector<int> haplotype_regs(3);
+    vector<int> haplotype_regs(N);
 
     haplotype_regs[0] = Args.reg_for_slot(5);
     if (auto haplotype_mod1_reg = C0.find_modifiable_reg(haplotype_regs[0]))
@@ -2106,9 +2108,6 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
         haplotype_regs[2] = *haplotype_mod3_reg;
     else
         throw myexception()<<"propose_haplotype_from_plaf: haplotype3 reg "<<haplotype_regs[2]<<" is not a modifiable!";
-
-    // 8. Get haplotype indices
-    vector<int> K = (vector<int>)evaluate_slot(C0,8).as_<EVector>();
 
     // 9. Get frequencies
     auto arg4 = evaluate_slot(C0, 9);
@@ -2139,10 +2138,6 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
     if (not all_different(K))
         return EPair(io_state+1, log_double_t(1));
 
-    int N = K.size();
-
-    int n_states = (1<<N);
-
     int L = haplotypes[0].as_<EVector>().size();
 
     //------------- Copy the context indices ------------------//
@@ -2153,9 +2148,9 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
 
     //---------------- Propose a new weight -------------------//
 
-    log_double_t w_ratio1 = shift_laplace(C2, titre1_reg, 3.0);
+    log_double_t w_ratio1 = shift_laplace(C2, titre_regs[0], 3.0);
 
-    log_double_t w_ratio2 = shift_laplace(C2, titre2_reg, 0.125);
+    log_double_t w_ratio2 = shift_laplace(C2, titre_regs[1], 0.125);
 
     log_double_t w_ratio = w_ratio1 * w_ratio2;
 
