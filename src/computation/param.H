@@ -12,9 +12,13 @@ enum class eval_strategy {unset, unchangeable, precomputed, changeable};
 class context_ptr
 {
     context_ref C;
+
+    // This reg will never point to an index_var_no_force, since it is the result of evaluation.
+    // Therefore, this reg will never be deleted behind our back!
     int reg;
 public:
     context_ptr operator[](int i) const;
+    context_ptr list_element(int i) const;
     context_ptr result() const;
     std::optional<context_ptr> modifiable() const;
 
@@ -23,6 +27,8 @@ public:
 
     int size() const;
     expression_ref head() const;
+    expression_ref value() const;
+    EVector list_to_vector() const;
 
     int get_reg() const {return reg;}
     context_ref& get_context() {return C;}

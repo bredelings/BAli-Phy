@@ -166,6 +166,46 @@ context_ptr context_ptr::operator[](int i) const
     return {C, r};
 }
 
+context_ptr context_ptr::list_element(int index) const
+{
+    context_ptr L = result();
+    int i=0;
+    for(;L.size() > 0 and i < index;i++)
+    {
+        assert(L.size() == 2);
+        L = L[1].result();
+    }
+    if (i < index)
+        throw myexception()<<"Trying to get list element "<<index<<" for a list of size "<<i<<"!";
+
+    assert(L.size() == 2);
+
+    // If we return the result here, then we can't find a modifiable!
+    return L[0];
+}
+
+expression_ref context_ptr::value() const
+{
+    return result().head();
+}
+
+EVector context_ptr::list_to_vector() const
+{
+    object_ptr<EVector> vec(new EVector);
+
+    context_ptr L = result();
+    while(L.size() > 0)
+    {
+        assert(L.size() == 2);
+
+        vec->push_back(L[0].value());
+
+        L = L[1].result();
+    }
+
+    return std::move(*vec);
+}
+
 context_ptr context_ptr::result() const
 {
     auto cp2 = *this;
