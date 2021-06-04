@@ -2118,25 +2118,27 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
         throw myexception()<<"propose_weights_and_haplotype_from_plaf: titre3 reg "<<titre3_reg<<" is not a modifiable!";
 
     // 5. Get h[i]
-    int haplotype1_reg = Args.reg_for_slot(5);
-    if (auto haplotype_mod1_reg = C0.find_modifiable_reg(haplotype1_reg))
-        haplotype1_reg = *haplotype_mod1_reg;
+    vector<int> haplotype_regs(3);
+
+    haplotype_regs[0] = Args.reg_for_slot(5);
+    if (auto haplotype_mod1_reg = C0.find_modifiable_reg(haplotype_regs[0]))
+        haplotype_regs[0] = *haplotype_mod1_reg;
     else
-        throw myexception()<<"propose_haplotype_from_plaf: haplotype1 reg "<<haplotype1_reg<<" is not a modifiable!";
+        throw myexception()<<"propose_haplotype_from_plaf: haplotype1 reg "<<haplotype_regs[0]<<" is not a modifiable!";
 
     // 6. Get h[j]
-    int haplotype2_reg = Args.reg_for_slot(6);
-    if (auto haplotype_mod2_reg = C0.find_modifiable_reg(haplotype2_reg))
-        haplotype2_reg = *haplotype_mod2_reg;
+    haplotype_regs[1] = Args.reg_for_slot(6);
+    if (auto haplotype_mod2_reg = C0.find_modifiable_reg(haplotype_regs[1]))
+        haplotype_regs[1] = *haplotype_mod2_reg;
     else
-        throw myexception()<<"propose_haplotype_from_plaf: haplotype2 reg "<<haplotype2_reg<<" is not a modifiable!";
+        throw myexception()<<"propose_haplotype_from_plaf: haplotype2 reg "<<haplotype_regs[1]<<" is not a modifiable!";
 
     // 7. Get h[k]
-    int haplotype3_reg = Args.reg_for_slot(7);
-    if (auto haplotype_mod3_reg = C0.find_modifiable_reg(haplotype3_reg))
-        haplotype3_reg = *haplotype_mod3_reg;
+    haplotype_regs[2] = Args.reg_for_slot(7);
+    if (auto haplotype_mod3_reg = C0.find_modifiable_reg(haplotype_regs[2]))
+        haplotype_regs[2] = *haplotype_mod3_reg;
     else
-        throw myexception()<<"propose_haplotype_from_plaf: haplotype3 reg "<<haplotype3_reg<<" is not a modifiable!";
+        throw myexception()<<"propose_haplotype_from_plaf: haplotype3 reg "<<haplotype_regs[2]<<" is not a modifiable!";
 
     // 8. Get haplotype index
     int haplotype_index1 = evaluate_slot(C0, 8).as_int();
@@ -2256,18 +2258,16 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
             (*new_haplotypes2[i])[site] = get_allele_from_state(new_A,i);
     }
 
-    C1.set_reg_value(haplotype1_reg, new_haplotypes1[0]);
-    C1.set_reg_value(haplotype2_reg, new_haplotypes1[1]);
-    C1.set_reg_value(haplotype3_reg, new_haplotypes1[2]);
+    for(int i=0;i<N;i++)
+        C1.set_reg_value(haplotype_regs[i], new_haplotypes1[i]);
     auto Pr1_over_Pr0 = C1.heated_probability_ratio(C0);
 
     // ASSUME Pr(h0)/sample_hap0 = Pr(h1)/sample_hap1
     //        Pr(h1)/Pr(h0) = sample_hap1 / sample_hap0
     assert( std::abs( log(Pr1_over_Pr0) - log(pr_sample_1/pr_sample_0) ) < 1.0e-9 );
 
-    C2.set_reg_value(haplotype1_reg, new_haplotypes2[0]);
-    C2.set_reg_value(haplotype2_reg, new_haplotypes2[1]);
-    C2.set_reg_value(haplotype3_reg, new_haplotypes2[2]);
+    for(int i=0;i<N;i++)
+        C2.set_reg_value(haplotype_regs[i], new_haplotypes2[i]);
     auto Pr2_over_Pr0 = C2.heated_probability_ratio(C0);
 
     if (log_verbose >= 4)
