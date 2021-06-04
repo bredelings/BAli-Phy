@@ -1469,6 +1469,11 @@ matrix<log_double_t> emission_pr2(int k1, int k2, const EVector& data, const EVe
     return E;
 }
 
+int get_allele_from_state(int state, int i)
+{
+    return (state&(1<<i))?1:0;
+}
+
 std::tuple<int,int,int> get_alleles3(int A)
 {
     return {(A&1)?1:0, (A&2)?1:0, (A&4)?1:0};
@@ -1487,30 +1492,31 @@ double get_prior(int A, double f, int n)
     return prior;
 }
 
-matrix<log_double_t> emission_pr3(int k1, int k2, int k3, const EVector& data, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration, double outlier_frac)
+matrix<log_double_t> emission_pr(const vector<int>& K, const EVector& data, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration, double outlier_frac)
 {
     int L = haplotypes[0].as_<EVector>().size();
+    int N = K.size();
+    int n_states = (1<<N); // 2^N
 
-    auto E = matrix<log_double_t>(L,8);
+    auto E = matrix<log_double_t>(L, n_states);
     for(int site=0; site<L; site++)
     {
         double current_wsaf = wsaf_at_site(site, weights, haplotypes);
-        for(int A = 0; A < 8; A++)
+        for(int state = 0; state < n_states; state++)
         {
-            auto [allele1, allele2, allele3] = get_alleles3(A);
-
-            int current_allele1 = get_allele(haplotypes, k1, site);
-            int current_allele2 = get_allele(haplotypes, k2, site);
-            int current_allele3 = get_allele(haplotypes, k3, site);
-
-            double wsaf = current_wsaf + weights[k1].as_double() * (allele1 - current_allele1)
-                                       + weights[k2].as_double() * (allele2 - current_allele2)
-                                       + weights[k3].as_double() * (allele3 - current_allele3);
+            double wsaf = current_wsaf;
+            for(int i=0; i<N; i++)
+            {
+                int k = K[i];
+                int old_allele = get_allele(haplotypes, k, site);
+                int new_allele = get_allele_from_state(state,i);
+                wsaf += weights[k].as_double() * (new_allele - old_allele);
+            }
 
             // Avoid out-of-bounds terms caused by rounding error.
             wsaf = std::max(0.0,std::min(1.0,wsaf));
 
-            E(site, A) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration, outlier_frac);
+            E(site, state) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration, outlier_frac);
         }
     }
     return E;
@@ -2199,9 +2205,11 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
-    auto E1 = emission_pr3(haplotype_index1, haplotype_index2, haplotype_index3, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
+    vector<int> haplotype_indices = {haplotype_index1, haplotype_index2, haplotype_index3};
 
-    auto E2 = emission_pr3(haplotype_index1, haplotype_index2, haplotype_index3, data, haplotypes, weights2, error_rate, concentration, outlier_frac);
+    auto E1 = emission_pr(haplotype_indices, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
+
+    auto E2 = emission_pr(haplotype_indices, data, haplotypes, weights2, error_rate, concentration, outlier_frac);
 
     //---------- Sample new haplotypes for C1 -----------//
     EVector new_haplotype1_1(L);
