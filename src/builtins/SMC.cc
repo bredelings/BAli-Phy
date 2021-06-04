@@ -1437,38 +1437,6 @@ matrix<log_double_t> emission_pr(int k, const EVector& data, const EVector& hapl
     return E;
 }
 
-matrix<log_double_t> emission_pr2(int k1, int k2, const EVector& data, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration, double outlier_frac)
-{
-    int L = haplotypes[0].as_<EVector>().size();
-
-    auto E = matrix<log_double_t>(L,4);
-    // 0 -> 00
-    // 1 -> 01
-    // 2 -> 10
-    // 3 -> 11
-    for(int site=0; site<L; site++)
-    {
-        double current_wsaf = wsaf_at_site(site, weights, haplotypes);
-        for(int A = 0; A < 4; A++)
-        {
-            int allele1 = (A&1)?1:0;
-            int allele2 = (A&2)?1:0;
-
-            int current_allele1 = get_allele(haplotypes, k1, site);
-            int current_allele2 = get_allele(haplotypes, k2, site);
-
-            double wsaf = current_wsaf + weights[k1].as_double() * (allele1 - current_allele1)
-                                       + weights[k2].as_double() * (allele2 - current_allele2);
-
-            // Avoid out-of-bounds terms caused by rounding error.
-            wsaf = std::max(0.0,std::min(1.0,wsaf));
-
-            E(site, A) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration, outlier_frac);
-        }
-    }
-    return E;
-}
-
 int get_allele_from_state(int state, int i)
 {
     return (state&(1<<i))?1:0;
@@ -1667,7 +1635,7 @@ extern "C" closure builtin_function_propose_two_haplotypes_from_plaf(OperationAr
 
     int L = haplotypes[0].as_<EVector>().size();
 
-    auto E = emission_pr2(haplotype_index1, haplotype_index2, data, haplotypes, weights, error_rate, concentration, outlier_frac);
+    auto E = emission_pr({haplotype_index1, haplotype_index2}, data, haplotypes, weights, error_rate, concentration, outlier_frac);
 
     EVector new_haplotype1(L);
 
@@ -1983,9 +1951,9 @@ extern "C" closure builtin_function_propose_weights_and_two_haplotypes_from_plaf
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
-    auto E1 = emission_pr2(haplotype_index1, haplotype_index2, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
+    auto E1 = emission_pr({haplotype_index1, haplotype_index2}, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
 
-    auto E2 = emission_pr2(haplotype_index1, haplotype_index2, data, haplotypes, weights2, error_rate, concentration, outlier_frac);
+    auto E2 = emission_pr({haplotype_index1, haplotype_index2}, data, haplotypes, weights2, error_rate, concentration, outlier_frac);
 
     //---------- Sample new haplotypes for C1 -----------//
     EVector new_haplotype1_1(L);
