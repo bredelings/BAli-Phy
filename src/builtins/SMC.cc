@@ -1474,11 +1474,6 @@ int get_allele_from_state(int state, int i)
     return (state&(1<<i))?1:0;
 }
 
-std::tuple<int,int,int> get_alleles3(int A)
-{
-    return {(A&1)?1:0, (A&2)?1:0, (A&4)?1:0};
-}
-
 double get_prior(int A, double f, int n)
 {
     double prior = 1;
@@ -2205,16 +2200,17 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
-    vector<int> haplotype_indices = {haplotype_index1, haplotype_index2, haplotype_index3};
+    vector<int> K = {haplotype_index1, haplotype_index2, haplotype_index3};
+    int N = K.size();
 
-    auto E1 = emission_pr(haplotype_indices, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
+    auto E1 = emission_pr(K, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
 
-    auto E2 = emission_pr(haplotype_indices, data, haplotypes, weights2, error_rate, concentration, outlier_frac);
+    auto E2 = emission_pr(K, data, haplotypes, weights2, error_rate, concentration, outlier_frac);
 
     //---------- Sample new haplotypes for C1 -----------//
-    EVector new_haplotype1_1(L);
-    EVector new_haplotype1_2(L);
-    EVector new_haplotype1_3(L);
+    vector<object_ptr<EVector>> new_haplotypes1( N );
+    for(auto& h: new_haplotypes1)
+        h = object_ptr<EVector>(new EVector(L));
 
     log_double_t pr_sample_0 = 1;
     log_double_t pr_sample_1 = 1;
@@ -2235,16 +2231,14 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
         int new_A = choose(F);
         pr_sample_1 *= choose_P(new_A, F);
 
-        auto [new_allele1, new_allele2, new_allele3] = get_alleles3(new_A);
-        new_haplotype1_1[site] = new_allele1;
-        new_haplotype1_2[site] = new_allele2;
-        new_haplotype1_3[site] = new_allele3;
+        for(int i=0;i<N;i++)
+            (*new_haplotypes1[i])[site] = get_allele_from_state(new_A,i);
     }
 
     //---------- Sample new haplotypes for C2 -----------//
-    EVector new_haplotype2_1(L);
-    EVector new_haplotype2_2(L);
-    EVector new_haplotype2_3(L);
+    vector<object_ptr<EVector>> new_haplotypes2( N );
+    for(auto& h: new_haplotypes2)
+        h = object_ptr<EVector>(new EVector(L));
 
     log_double_t pr_sample_2 = 1;
 
@@ -2258,24 +2252,22 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
         int new_A = choose(F);
         pr_sample_2 *= choose_P(new_A, F);
 
-        auto [new_allele1, new_allele2, new_allele3] = get_alleles3(new_A);
-        new_haplotype2_1[site] = new_allele1;
-        new_haplotype2_2[site] = new_allele2;
-        new_haplotype2_3[site] = new_allele3;
+        for(int i=0;i<N;i++)
+            (*new_haplotypes2[i])[site] = get_allele_from_state(new_A,i);
     }
 
-    C1.set_reg_value(haplotype1_reg, new_haplotype1_1);
-    C1.set_reg_value(haplotype2_reg, new_haplotype1_2);
-    C1.set_reg_value(haplotype3_reg, new_haplotype1_3);
+    C1.set_reg_value(haplotype1_reg, new_haplotypes1[0]);
+    C1.set_reg_value(haplotype2_reg, new_haplotypes1[1]);
+    C1.set_reg_value(haplotype3_reg, new_haplotypes1[2]);
     auto Pr1_over_Pr0 = C1.heated_probability_ratio(C0);
 
     // ASSUME Pr(h0)/sample_hap0 = Pr(h1)/sample_hap1
     //        Pr(h1)/Pr(h0) = sample_hap1 / sample_hap0
     assert( std::abs( log(Pr1_over_Pr0) - log(pr_sample_1/pr_sample_0) ) < 1.0e-9 );
 
-    C2.set_reg_value(haplotype1_reg, new_haplotype2_1);
-    C2.set_reg_value(haplotype2_reg, new_haplotype2_2);
-    C2.set_reg_value(haplotype3_reg, new_haplotype2_3);
+    C2.set_reg_value(haplotype1_reg, new_haplotypes2[0]);
+    C2.set_reg_value(haplotype2_reg, new_haplotypes2[1]);
+    C2.set_reg_value(haplotype3_reg, new_haplotypes2[2]);
     auto Pr2_over_Pr0 = C2.heated_probability_ratio(C0);
 
     if (log_verbose >= 4)
