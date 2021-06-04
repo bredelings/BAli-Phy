@@ -1414,29 +1414,6 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     return { Pr };
 }
 
-matrix<log_double_t> emission_pr(int k, const EVector& data, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration, double outlier_frac)
-{
-    int L = haplotypes[0].as_<EVector>().size();
-
-    auto E = matrix<log_double_t>(L,2);
-    for(int site=0; site<L; site++)
-    {
-        double current_wsaf = wsaf_at_site(site, weights, haplotypes);
-        for(int allele = 0; allele < 2; allele++)
-        {
-            int current_allele = get_allele(haplotypes, k, site);
-
-            double wsaf = current_wsaf + weights[k].as_double() * (allele - current_allele);
-
-            // Avoid out-of-bounds terms caused by rounding error.
-            wsaf = std::max(0.0,std::min(1.0,wsaf));
-
-            E(site, allele) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration, outlier_frac);
-        }
-    }
-    return E;
-}
-
 int get_allele_from_state(int state, int i)
 {
     return (state&(1<<i))?1:0;
@@ -1542,7 +1519,7 @@ extern "C" closure builtin_function_propose_haplotype_from_plaf(OperationArgs& A
 
     int L = haplotypes[0].as_<EVector>().size();
 
-    auto E = emission_pr(haplotype_index, data, haplotypes, weights, error_rate, concentration, outlier_frac);
+    auto E = emission_pr({haplotype_index}, data, haplotypes, weights, error_rate, concentration, outlier_frac);
 
     EVector new_haplotype(L);
 
@@ -1786,9 +1763,9 @@ extern "C" closure builtin_function_propose_weights_and_haplotype_from_plaf(Oper
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
-    auto E1 = emission_pr(haplotype_index, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
+    auto E1 = emission_pr({haplotype_index}, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
 
-    auto E2 = emission_pr(haplotype_index, data, haplotypes, weights2, error_rate, concentration, outlier_frac);
+    auto E2 = emission_pr({haplotype_index}, data, haplotypes, weights2, error_rate, concentration, outlier_frac);
 
     EVector new_haplotype1(L);
 
