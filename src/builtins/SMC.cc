@@ -2180,7 +2180,7 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
         double plaf = frequencies[site].as_double();
         vector<log_double_t> F(n_states);
         for(int i=0;i<n_states;i++)
-            F[i] = E1(site,i) * get_prior(i, plaf, 3);
+            F[i] = E1(site,i) * get_prior(i, plaf, N);
 
         int old_A = get_state_from_haplotypes(haplotypes, K, site);
         pr_sample_0 *= choose_P(old_A, F);
@@ -2204,7 +2204,7 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
         double plaf = frequencies[site].as_double();
         vector<log_double_t> F(n_states);
         for(int i=0;i<n_states;i++)
-            F[i] = E2(site,i) * get_prior(i, plaf, 3);
+            F[i] = E2(site,i) * get_prior(i, plaf, N);
 
         int new_A = choose(F);
         pr_sample_2 *= choose_P(new_A, F);
