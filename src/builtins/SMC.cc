@@ -1463,198 +1463,6 @@ matrix<log_double_t> emission_pr(const vector<int>& K, const EVector& data, cons
     return E;
 }
 
-// We need the markov blanket for h[i]:
-//   Pr(h[i] | plaf) * Pr(data | h, w, rror_rates, c)
-
-// Therefore, we need(h[i], i, plaf, data, h, w, error_rate, c)
-
-extern "C" closure builtin_function_propose_haplotype_from_plaf(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-
-    reg_heap& M = Args.memory();
-
-    // 0. context index = int
-    int context_index = Args.evaluate(0).as_int();
-    context_ref C(M,context_index);
-
-    // 1. IO state = int
-    int io_state = Args.evaluate(1).as_int();
-
-    auto evaluate_slot = [&](int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
-
-    // 2. Get haplotype reg
-    int haplotype_reg = Args.reg_for_slot(2);
-    if (auto haplotype_mod_reg = C.find_modifiable_reg(haplotype_reg))
-        haplotype_reg = *haplotype_mod_reg;
-    else
-        throw myexception()<<"propose_haplotype_from_plaf: haplotype reg "<<haplotype_reg<<" is not a modifiable!";
-
-    // 3. Get haplotype index
-    int haplotype_index = evaluate_slot(3).as_int();
-
-    // 4. Get frequencies
-    auto arg4 = evaluate_slot(4);
-    auto& frequencies = arg4.as_<EVector>();
-
-    // 5. Mixture weights = EVector of double.
-    auto arg5 = evaluate_slot(5);
-    auto& weights = arg5.as_<EVector>();
-
-    // 6. data = EVector of EPair of Int
-    auto arg6 = evaluate_slot(6);
-    auto& data = arg6.as_<EVector>();
-
-    // 7. haplotypes = EVector of EVector of Int
-    auto arg7 = evaluate_slot(7);
-    auto& haplotypes = arg7.as_<EVector>();
-
-    // 8. error_rate = double
-    double error_rate = evaluate_slot(8).as_double();
-
-    // 9. concentration = double
-    double concentration = evaluate_slot(9).as_double();
-
-    // 10. outlier fraction = double
-    double outlier_frac = evaluate_slot(10).as_double();
-
-    int L = haplotypes[0].as_<EVector>().size();
-
-    auto E = emission_pr({haplotype_index}, data, haplotypes, weights, error_rate, concentration, outlier_frac);
-
-    EVector new_haplotype(L);
-
-    log_double_t ratio = 1;
-    for(int site = 0; site < L; site++)
-    {
-        double f = frequencies[site].as_double();
-        auto F0 = E(site,0)*(1.0 - f);
-        auto F1 = E(site,1)*f;
-        int old_allele = get_allele(haplotypes, haplotype_index, site);
-        int new_allele = choose2(F0, F1);
-        ratio *= (choose2_P(old_allele, F0, F1) / choose2_P(new_allele, F0, F1));
-        new_haplotype[site] = new_allele;
-    }
-
-    C.set_reg_value(haplotype_reg, new_haplotype);
-
-    return EPair(io_state+1, ratio);
-}
-
-// We need the markov blanket for h[i]:
-//   Pr(h[i] | plaf) * Pr(data | h, w, rror_rates, c)
-
-// Therefore, we need(h[i], h[j], i, j, plaf, data, h, w, error_rate, c)
-
-extern "C" closure builtin_function_propose_two_haplotypes_from_plaf(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-
-    reg_heap& M = Args.memory();
-
-    // 0. context index = int
-    int context_index = Args.evaluate(0).as_int();
-    context_ref C(M,context_index);
-
-    // 1. IO state = int
-    int io_state = Args.evaluate(1).as_int();
-
-    auto evaluate_slot = [&](int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
-
-    // 2. Get h[i]
-    int haplotype_reg1 = Args.reg_for_slot(2);
-    if (auto haplotype_mod_reg1 = C.find_modifiable_reg(haplotype_reg1))
-        haplotype_reg1 = *haplotype_mod_reg1;
-    else
-        throw myexception()<<"propose_haplotype_from_plaf: haplotype reg "<<haplotype_reg1<<" is not a modifiable!";
-
-    // 3. Get h[j]
-    int haplotype_reg2 = Args.reg_for_slot(3);
-    if (auto haplotype_mod_reg2 = C.find_modifiable_reg(haplotype_reg2))
-        haplotype_reg2 = *haplotype_mod_reg2;
-    else
-        throw myexception()<<"propose_haplotype_from_plaf: haplotype reg "<<haplotype_reg2<<" is not a modifiable!";
-
-    // 4. Get haplotype index
-    int haplotype_index1 = evaluate_slot(4).as_int();
-
-    // 5. Get haplotype index
-    int haplotype_index2 = evaluate_slot(5).as_int();
-
-    // 6. Get frequencies
-    auto arg4 = evaluate_slot(6);
-    auto& frequencies = arg4.as_<EVector>();
-
-    // 7. Mixture weights = EVector of double.
-    auto arg5 = evaluate_slot(7);
-    auto& weights = arg5.as_<EVector>();
-
-    // 8. data = EVector of EPair of Int
-    auto arg6 = evaluate_slot(8);
-    auto& data = arg6.as_<EVector>();
-
-    // 9. haplotypes = EVector of EVector of Int
-    auto arg7 = evaluate_slot(9);
-    auto& haplotypes = arg7.as_<EVector>();
-
-    // 10. error_rate = double
-    double error_rate = evaluate_slot(10).as_double();
-
-    // 11. concentration = double
-    double concentration = evaluate_slot(11).as_double();
-
-    // 12. concentration = double
-    double outlier_frac = evaluate_slot(12).as_double();
-
-    log_double_t ratio = 1;
-
-    // Make sure that the two haplotypes are DIFFERENT.
-    if (haplotype_index1 == haplotype_index2) return EPair(io_state+1, ratio);
-
-    int L = haplotypes[0].as_<EVector>().size();
-
-    auto E = emission_pr({haplotype_index1, haplotype_index2}, data, haplotypes, weights, error_rate, concentration, outlier_frac);
-
-    EVector new_haplotype1(L);
-
-    EVector new_haplotype2(L);
-
-    log_double_t pr_sample_old = 1;
-    log_double_t pr_sample_new = 1;
-
-    for(int site = 0; site < L; site++)
-    {
-        double f = frequencies[site].as_double();
-        auto F00 = E(site,0)*(1.0 - f)*(1.0-f);
-        auto F01 = E(site,1)*(1.0 - f)*f;
-        auto F10 = E(site,2)*(1.0 - f)*f;
-        auto F11 = E(site,3)*f*f;
-        auto F = vector<log_double_t>{F00,F01,F10,F11};
-
-        int old_allele1 = get_allele(haplotypes, haplotype_index1, site);
-        int old_allele2 = get_allele(haplotypes, haplotype_index2, site);
-        int old_A = (old_allele2<<1)+(old_allele1);
-        int new_A = choose(F);
-
-        int new_allele1 = (new_A&1)?1:0;
-        int new_allele2 = (new_A&2)?1:0;
-
-        pr_sample_old *= choose_P(old_A, F);
-        pr_sample_new *= choose_P(new_A, F);
-
-        new_haplotype1[site] = new_allele1;
-        new_haplotype2[site] = new_allele2;
-    }
-
-    C.set_reg_value(haplotype_reg1, new_haplotype1);
-    C.set_reg_value(haplotype_reg2, new_haplotype2);
-
-    ratio = pr_sample_old / pr_sample_new;
-
-    return EPair(io_state+1, ratio);
-}
-
-
 log_double_t shift_gaussian(context_ref& C, int r, double scale)
 {
     double x = C.evaluate_reg(r).as_double();
@@ -1709,6 +1517,112 @@ int get_state_from_haplotypes(const EVector& haplotypes, const vector<int>& K, i
 
     return state;
 }
+
+// We need the markov blanket for h[i]:
+//   Pr(h[i] | plaf) * Pr(data | h, w, rror_rates, c)
+
+// Therefore, we need(x[i], x[j], h[i], h[j], i, j, plaf, data, h, w, error_rate, c)
+
+extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    auto evaluate_slot = [&](context_ref& C, int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+
+    reg_heap& M = Args.memory();
+
+    // 0. context index = int
+    int context_index = Args.evaluate(0).as_int();
+    context_ref C(M,context_index);
+
+    // 1. IO state = int
+    int io_state = Args.evaluate(1).as_int();
+
+    // 2. Get haplotype indices
+    context_ptr hap_indices(C, Args.reg_for_slot(2));
+    vector<int> K = (vector<int>) hap_indices.list_to_vector();
+
+    int N = K.size();
+
+    int n_states = (1<<N);
+
+    // 3. Get h[i]
+    vector<int> haplotype_regs(N);
+
+    context_ptr haplotypes_ptr(C, Args.reg_for_slot(3));
+    for(int i=0; i<N; i++)
+    {
+        if (auto haplotype_mod = haplotypes_ptr.list_element(K[i]).modifiable())
+            haplotype_regs[i] = haplotype_mod->get_reg();
+        else
+            throw myexception()<<"propose_weights_and_haplotypes_from_plaf: haplotype"<<i+1<<" reg "<<haplotype_regs[0]<<" is not a modifiable!";
+    }
+
+    EVector haplotypes = haplotypes_ptr.list_to_vector();
+
+    // 4. Get frequencies
+    auto arg4 = evaluate_slot(C, 4);
+    auto& frequencies = arg4.as_<EVector>();
+
+    // 5. Mixture weights = EVector of double.
+    auto weights1 = evaluate_slot(C, 5).as_<EVector>();
+
+    // 6. data = EVector of EPair of Int
+    auto arg6 = evaluate_slot(C, 6);
+    auto& data = arg6.as_<EVector>();
+
+    // 7. error_rate = double
+    double error_rate = evaluate_slot(C, 7).as_double();
+
+    // 8. concentration = double
+    double concentration = evaluate_slot(C, 8).as_double();
+
+    // 9. outlier_frac = double
+    double outlier_frac = evaluate_slot(C, 9).as_double();
+
+    //----------- Make sure that the N haplotypes are DIFFERENT -------------
+    if (not all_different(K))
+        return EPair(io_state+1, log_double_t(1));
+
+    int L = haplotypes[0].as_<EVector>().size();
+
+    //---------- Compute emission probabilities for the two weight vectors -----------//
+
+    auto E = emission_pr(K, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
+
+    //---------- Sample new haplotypes -----------//
+    vector<object_ptr<EVector>> new_haplotypes( N );
+    for(auto& h: new_haplotypes)
+        h = object_ptr<EVector>(new EVector(L));
+
+    log_double_t pr_sample_0 = 1;
+    log_double_t pr_sample_1 = 1;
+
+    for(int site = 0; site < L; site++)
+    {
+        double plaf = frequencies[site].as_double();
+        vector<log_double_t> F(n_states);
+        for(int i=0;i<n_states;i++)
+            F[i] = E(site,i) * get_prior(i, plaf, N);
+
+        int old_A = get_state_from_haplotypes(haplotypes, K, site);
+        pr_sample_0 *= choose_P(old_A, F);
+
+        int new_A = choose(F);
+        pr_sample_1 *= choose_P(new_A, F);
+
+        for(int i=0;i<N;i++)
+            (*new_haplotypes[i])[site] = get_allele_from_state(new_A,i);
+    }
+
+    for(int i=0;i<N;i++)
+        C.set_reg_value(haplotype_regs[i], new_haplotypes[i]);
+
+    log_double_t ratio = pr_sample_0 / pr_sample_1;
+
+    return EPair(io_state+1, ratio);
+}
+
 
 // We need the markov blanket for h[i]:
 //   Pr(h[i] | plaf) * Pr(data | h, w, rror_rates, c)
