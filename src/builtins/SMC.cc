@@ -2075,6 +2075,19 @@ extern "C" closure builtin_function_propose_weights_and_two_haplotypes_from_plaf
     return EPair(io_state+1, ratio);
 }
 
+int get_state_from_haplotypes(const EVector& haplotypes, const vector<int>& K, int site)
+{
+    int N = K.size();
+    int state = 0;
+
+    for(int i=0; i < N; i++)
+    {
+        int old_allele = get_allele(haplotypes, K[i], site);
+        state += (old_allele << i);
+    }
+
+    return state;
+}
 
 // We need the markov blanket for h[i]:
 //   Pr(h[i] | plaf) * Pr(data | h, w, rror_rates, c)
@@ -2204,6 +2217,7 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
 
     vector<int> K = {haplotype_index1, haplotype_index2, haplotype_index3};
     int N = K.size();
+    int n_states = (1<<N);
 
     auto E1 = emission_pr(K, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
 
@@ -2220,14 +2234,11 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
     for(int site = 0; site < L; site++)
     {
         double plaf = frequencies[site].as_double();
-        vector<log_double_t> F(8);
-        for(int i=0;i<8;i++)
+        vector<log_double_t> F(n_states);
+        for(int i=0;i<n_states;i++)
             F[i] = E1(site,i) * get_prior(i, plaf, 3);
 
-        int old_allele1 = get_allele(haplotypes, haplotype_index1, site);
-        int old_allele2 = get_allele(haplotypes, haplotype_index2, site);
-        int old_allele3 = get_allele(haplotypes, haplotype_index3, site);
-        int old_A = (old_allele3<<2)+(old_allele2<<1)+(old_allele1);
+        int old_A = get_state_from_haplotypes(haplotypes, K, site);
         pr_sample_0 *= choose_P(old_A, F);
 
         int new_A = choose(F);
@@ -2247,8 +2258,8 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
     for(int site = 0; site < L; site++)
     {
         double plaf = frequencies[site].as_double();
-        vector<log_double_t> F(8);
-        for(int i=0;i<8;i++)
+        vector<log_double_t> F(n_states);
+        for(int i=0;i<n_states;i++)
             F[i] = E2(site,i) * get_prior(i, plaf, 3);
 
         int new_A = choose(F);
