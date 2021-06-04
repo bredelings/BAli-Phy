@@ -2107,50 +2107,43 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
     else
         throw myexception()<<"propose_haplotype_from_plaf: haplotype3 reg "<<haplotype_regs[2]<<" is not a modifiable!";
 
-    // 8. Get haplotype index
-    int haplotype_index1 = evaluate_slot(C0, 8).as_int();
+    // 8. Get haplotype indices
+    vector<int> K = (vector<int>)evaluate_slot(C0,8).as_<EVector>();
 
-    // 9. Get haplotype index
-    int haplotype_index2 = evaluate_slot(C0, 9).as_int();
-
-    // 10. Get haplotype index
-    int haplotype_index3 = evaluate_slot(C0, 10).as_int();
-
-    // 11. Get frequencies
-    auto arg4 = evaluate_slot(C0, 11);
+    // 9. Get frequencies
+    auto arg4 = evaluate_slot(C0, 9);
     auto& frequencies = arg4.as_<EVector>();
 
-    // 12. Mixture weights = EVector of double.
-    auto weights1 = evaluate_slot(C0, 12).as_<EVector>();
+    // 10. Mixture weights = EVector of double.
+    constexpr int weight_slot = 10;
+    auto weights1 = evaluate_slot(C0, weight_slot).as_<EVector>();
 
-    // 13. data = EVector of EPair of Int
-    auto arg6 = evaluate_slot(C0, 13);
+    // 11. data = EVector of EPair of Int
+    auto arg6 = evaluate_slot(C0, 11);
     auto& data = arg6.as_<EVector>();
 
-    // 14. haplotypes = EVector of EVector of Int
-    auto arg7 = evaluate_slot(C0,14);
+    // 12. haplotypes = EVector of EVector of Int
+    auto arg7 = evaluate_slot(C0,12);
     auto& haplotypes = arg7.as_<EVector>();
 
-    // 15. error_rate = double
-    double error_rate = evaluate_slot(C0, 15).as_double();
+    // 13. error_rate = double
+    double error_rate = evaluate_slot(C0, 13).as_double();
 
-    // 16. concentration = double
-    double concentration = evaluate_slot(C0, 16).as_double();
+    // 14. concentration = double
+    double concentration = evaluate_slot(C0, 14).as_double();
 
-    // 17. outlier_frac = double
-    double outlier_frac = evaluate_slot(C0, 17).as_double();
+    // 15. outlier_frac = double
+    double outlier_frac = evaluate_slot(C0, 15).as_double();
 
     //----------- Make sure that the N haplotypes are DIFFERENT -------------
-    vector<int> K = {haplotype_index1, haplotype_index2, haplotype_index3};
+    if (not all_different(K))
+        return EPair(io_state+1, log_double_t(1));
 
     int N = K.size();
 
     int n_states = (1<<N);
 
     int L = haplotypes[0].as_<EVector>().size();
-
-    if (not all_different(K))
-        return EPair(io_state+1, log_double_t(1));
 
     //------------- Copy the context indices ------------------//
 
@@ -2166,7 +2159,7 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
 
     log_double_t w_ratio = w_ratio1 * w_ratio2;
 
-    auto weights2 = evaluate_slot(C2, 12).as_<EVector>();
+    auto weights2 = evaluate_slot(C2, weight_slot).as_<EVector>();
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
