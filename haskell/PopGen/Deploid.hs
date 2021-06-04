@@ -99,23 +99,17 @@ propose_weights_and_two_haplotypes_from_plaf titres hap_index1 hap_index2 freqs 
 
 ---
 
-builtin propose_weights_and_three_haplotypes_from_plaf'' 16 "propose_weights_and_three_haplotypes_from_plaf" "SMC"
+builtin propose_weights_and_haplotypes_from_plaf'' 11 "propose_weights_and_haplotypes_from_plaf" "SMC"
 
-propose_weights_and_three_haplotypes_from_plaf' titre1 titre2 titre3 hap1 hap2 hap3 hap_indices freqs w reads haps e c outlier_frac context io_state =
-    propose_weights_and_three_haplotypes_from_plaf'' context io_state titre1 titre2 titre3 hap1 hap2 hap3 hap_indices' freqs' w' reads' haps' e c outlier_frac
+propose_weights_and_haplotypes_from_plaf' indices titres haps freqs w reads e c outlier_frac context io_state =
+    propose_weights_and_haplotypes_from_plaf'' context io_state indices titres haps freqs' w' reads' e c outlier_frac
            where
              freqs' = list_to_vector freqs
              w'     = list_to_vector w
              reads' = list_to_vector $ map (\(x,y) -> c_pair x y) reads
-             haps'  = list_to_vector haps
-             hap_indices' = list_to_vector hap_indices
 
-propose_weights_and_three_haplotypes_from_plaf titres (hap_indices@[hap_index1,hap_index2,hap_index3]) freqs w reads haps e c outlier_frac context =
-    IOAction $ pair_from_c . propose_weights_and_three_haplotypes_from_plaf'
-                 (titres !! hap_index1) (titres !! hap_index2) (titres !! hap_index3)
-                 (haps !! hap_index1) (haps !! hap_index2) (haps !! hap_index3)
-                 hap_indices
-                 freqs w reads haps e c outlier_frac context
+propose_weights_and_haplotypes_from_plaf indices titres freqs weights reads haplotypes error_rate c outlier_frac context =
+    IOAction $ pair_from_c . propose_weights_and_haplotypes_from_plaf' indices titres haplotypes freqs weights reads error_rate c outlier_frac context
 
 -- Currently, these ignore the "chromosome" column.
 read_plaf filename = do

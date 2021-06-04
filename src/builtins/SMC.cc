@@ -17,6 +17,7 @@
 #include "computation/expression/constructor.H"
 #include "computation/machine/graph_register.H"
 #include "computation/context.H"
+#include "computation/param.H"
 
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
@@ -2048,7 +2049,7 @@ int get_state_from_haplotypes(const EVector& haplotypes, const vector<int>& K, i
 
 // Therefore, we need(x[i], x[j], h[i], h[j], i, j, plaf, data, h, w, error_rate, c)
 
-extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_plaf(OperationArgs& Args)
+extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
@@ -2063,76 +2064,61 @@ extern "C" closure builtin_function_propose_weights_and_three_haplotypes_from_pl
     // 1. IO state = int
     int io_state = Args.evaluate(1).as_int();
 
-    // 8. Get haplotype indices
-    vector<int> K = (vector<int>)evaluate_slot(C0,8).as_<EVector>();
+    // 2. Get haplotype indices
+    context_ptr hap_indices(C0, Args.reg_for_slot(2));
+    vector<int> K = (vector<int>) hap_indices.list_to_vector();
 
     int N = K.size();
 
     int n_states = (1<<N);
 
-    // 2. Get x[i]
+    // 3. Get x[i]
     vector<int> titre_regs(N);
 
-    titre_regs[0] = Args.reg_for_slot(2);
-    titre_regs[1] = Args.reg_for_slot(3);
-    titre_regs[2] = Args.reg_for_slot(4);
+    context_ptr titres_ptr(C0, Args.reg_for_slot(3));
 
     for(int i=0; i<N; i++)
     {
-        int& r = titre_regs[i];
-        if (auto titre_mod_reg = C0.find_modifiable_reg(r))
-            r = *titre_mod_reg;
+        if (auto titre_mod = titres_ptr.list_element(K[i]).modifiable())
+            titre_regs[i] = titre_mod->get_reg();
         else
-            throw myexception()<<"propose_weights_and_haplotype_from_plaf: titre reg"<<i+1<<" "<<r<<" is not a modifiable!";
+            throw myexception()<<"propose_weights_and_haplotypes_from_plaf: titre reg"<<i+1<<" is not a modifiable!";
     }
 
-    // 5. Get h[i]
+    // 4. Get h[i]
     vector<int> haplotype_regs(N);
 
-    haplotype_regs[0] = Args.reg_for_slot(5);
-    if (auto haplotype_mod1_reg = C0.find_modifiable_reg(haplotype_regs[0]))
-        haplotype_regs[0] = *haplotype_mod1_reg;
-    else
-        throw myexception()<<"propose_haplotype_from_plaf: haplotype1 reg "<<haplotype_regs[0]<<" is not a modifiable!";
+    context_ptr haplotypes_ptr(C0, Args.reg_for_slot(4));
+    for(int i=0; i<N; i++)
+    {
+        if (auto haplotype_mod = haplotypes_ptr.list_element(K[i]).modifiable())
+            haplotype_regs[i] = haplotype_mod->get_reg();
+        else
+            throw myexception()<<"propose_weights_and_haplotypes_from_plaf: haplotype"<<i+1<<" reg "<<haplotype_regs[0]<<" is not a modifiable!";
+    }
 
-    // 6. Get h[j]
-    haplotype_regs[1] = Args.reg_for_slot(6);
-    if (auto haplotype_mod2_reg = C0.find_modifiable_reg(haplotype_regs[1]))
-        haplotype_regs[1] = *haplotype_mod2_reg;
-    else
-        throw myexception()<<"propose_haplotype_from_plaf: haplotype2 reg "<<haplotype_regs[1]<<" is not a modifiable!";
+    EVector haplotypes = haplotypes_ptr.list_to_vector();
 
-    // 7. Get h[k]
-    haplotype_regs[2] = Args.reg_for_slot(7);
-    if (auto haplotype_mod3_reg = C0.find_modifiable_reg(haplotype_regs[2]))
-        haplotype_regs[2] = *haplotype_mod3_reg;
-    else
-        throw myexception()<<"propose_haplotype_from_plaf: haplotype3 reg "<<haplotype_regs[2]<<" is not a modifiable!";
-
-    // 9. Get frequencies
-    auto arg4 = evaluate_slot(C0, 9);
+    // 5. Get frequencies
+    auto arg4 = evaluate_slot(C0, 5);
     auto& frequencies = arg4.as_<EVector>();
 
-    // 10. Mixture weights = EVector of double.
-    constexpr int weight_slot = 10;
+    // 6. Mixture weights = EVector of double.
+    constexpr int weight_slot = 6;
     auto weights1 = evaluate_slot(C0, weight_slot).as_<EVector>();
 
-    // 11. data = EVector of EPair of Int
-    auto arg6 = evaluate_slot(C0, 11);
+    // 7. data = EVector of EPair of Int
+    auto arg6 = evaluate_slot(C0, 7);
     auto& data = arg6.as_<EVector>();
 
-    // 12. haplotypes = EVector of EVector of Int
-    auto arg7 = evaluate_slot(C0,12);
-    auto& haplotypes = arg7.as_<EVector>();
+    // 8. error_rate = double
+    double error_rate = evaluate_slot(C0, 8).as_double();
 
-    // 13. error_rate = double
-    double error_rate = evaluate_slot(C0, 13).as_double();
+    // 9. concentration = double
+    double concentration = evaluate_slot(C0, 9).as_double();
 
-    // 14. concentration = double
-    double concentration = evaluate_slot(C0, 14).as_double();
-
-    // 15. outlier_frac = double
-    double outlier_frac = evaluate_slot(C0, 15).as_double();
+    // 10. outlier_frac = double
+    double outlier_frac = evaluate_slot(C0, 10).as_double();
 
     //----------- Make sure that the N haplotypes are DIFFERENT -------------
     if (not all_different(K))
