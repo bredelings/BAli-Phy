@@ -83,7 +83,7 @@ run_effects rate (IOReturn v) = v
 --  run_effects alpha rate (Print s) = putStrLn (show s)
 run_effects rate (AddMove m) = register_transition_kernel rate m
 run_effects rate (SamplingRate rate2 a) = run_effects (rate*rate2) a
-run_effects rate effect                 = effect
+run_effects rate (IOAction action) = snd (action 0)
 
 run_lazy (RandomStructure _ _ a) = run_lazy a
 run_lazy (IOAndPass f g) = do
