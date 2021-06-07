@@ -34,7 +34,7 @@ void register_prior::register_effect(reg_heap& M, int s) const
     if (log_verbose >= 5)
     {
         std::cerr<<"register_prior[var="<<r_dist<<",pdf="<<pdf<<",step="<<s<<"]: ";
-        std::cerr<<"  REGISTER! ("<<M.random_variables.size()<<" -> "<<M.random_variables.size()+1<<")\n";
+        std::cerr<<"  REGISTER! ("<<M.prior_terms.size()<<" -> "<<M.prior_terms.size()+1<<")\n";
     }
     M.register_prior(*this, s);
 }
@@ -44,7 +44,7 @@ void register_prior::unregister_effect(reg_heap& M, int s) const
     if (log_verbose >= 5)
     {
         std::cerr<<"register_prior[var="<<r_dist<<",pdf="<<pdf<<",step="<<s<<"]: ";
-        std::cerr<<"UNregister! ("<<M.random_variables.size()<<" -> "<<M.random_variables.size()-1<<")\n";
+        std::cerr<<"UNregister! ("<<M.prior_terms.size()<<" -> "<<M.prior_terms.size()-1<<")\n";
     }
     M.unregister_prior(*this, s);
 }

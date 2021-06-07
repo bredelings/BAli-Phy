@@ -73,7 +73,7 @@ log_double_t reg_heap::prior_for_context(int c)
      *       This ensures that a range-for is OK. (Range-for's assume that begin() and end() do not change).
      */
 
-    for(auto [s, _]: random_variables)
+    for(auto [s, _]: prior_terms)
     {
         auto r_pdf_effect = steps[s].call;
 	auto X = value_for_precomputed_reg(r_pdf_effect).exp.as_<::register_prior>().pdf;

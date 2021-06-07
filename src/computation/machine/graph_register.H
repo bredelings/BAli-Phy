@@ -343,7 +343,7 @@ public:
     prob_ratios_t probability_ratios(int c1, int c2);
 
     // the list of random variables
-    std::unordered_map<int,int> random_variables;
+    std::unordered_map<int,int> prior_terms;
 
     void register_prior(const effect& e, int s);
     void unregister_prior(const effect& e, int s);

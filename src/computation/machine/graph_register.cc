@@ -614,7 +614,7 @@ void reg_heap::first_evaluate_program(int c)
         assert(access_value_for_reg(r_likelihood).exp.is_log_double());
     }
 
-    for(auto [s,r_var]: random_variables)
+    for(auto [s,r_var]: prior_terms)
     {
         assert(reg_exists(r_var));
         assert(reg_has_value(r_var));
@@ -768,7 +768,7 @@ expression_ref reg_heap::evaluate_program(int c)
         assert(reg_has_value(r_likelihood));
     }
 
-    for(auto [s,r_pdf]: random_variables)
+    for(auto [s,r_pdf]: prior_terms)
     {
         assert(reg_exists(r_pdf));
         assert(reg_has_value(r_pdf));
@@ -892,16 +892,16 @@ void reg_heap::register_prior(const effect& e, int s)
 {
     auto& E = dynamic_cast<const ::register_prior&>(e);
     // We aren't supposed to ever register the same step twice.
-    assert(not random_variables.count(s));
-    random_variables[s] = E.r_dist;
+    assert(not prior_terms.count(s));
+    prior_terms[s] = E.r_dist;
     for(auto& handler: register_prior_handlers)
         handler(e, s);
 }
 
 void reg_heap::unregister_prior(const effect& e, int s)
 {
-    assert(random_variables.count(s));
-    random_variables.erase(s);
+    assert(prior_terms.count(s));
+    prior_terms.erase(s);
 
     // FIXME: run these in reverse order?
     for(auto& handler: unregister_prior_handlers)
