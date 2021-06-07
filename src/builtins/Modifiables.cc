@@ -111,7 +111,7 @@ extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 
 extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
 {
-    int r_from_dist = force_slot_to_safe_reg(Args,0);
+    int r_from_dist = Args.evaluate_slot_use(0);
     int r_to_prop   = force_slot_to_safe_reg(Args,1);
     std::string property = Args.evaluate(2).as_<String>();
 
