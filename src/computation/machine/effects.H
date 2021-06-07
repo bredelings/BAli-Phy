@@ -4,7 +4,7 @@
 
 struct register_prior: public effect
 {
-    int variable_reg;
+    int r_dist;
     log_double_t pdf;
 
     register_prior* clone() const {return new register_prior(*this);}

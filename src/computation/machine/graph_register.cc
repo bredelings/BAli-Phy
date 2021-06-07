@@ -799,28 +799,24 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     std::function<void(const effect&, int)> register_prior_handler = [&](const effect& e, int)
     {
         auto & E = dynamic_cast<const ::register_prior&>(e);
-        assert(not priors2.count(E.variable_reg));
-        priors2.insert({E.variable_reg, E.pdf});
+        priors2.insert({E.r_dist, E.pdf});
     };
 
     std::function<void(const effect&, int)> unregister_prior_handler = [&](const effect& e, int)
     {
         auto & E = dynamic_cast<const ::register_prior&>(e);
-        assert(not priors1.count(E.variable_reg));
-        priors1.insert({E.variable_reg, E.pdf});
+        priors1.insert({E.r_dist, E.pdf});
     };
 
     std::function<void(const effect&, int)> register_likelihood_handler = [&](const effect& e, int)
     {
         auto & E = dynamic_cast<const register_likelihood&>(e);
-        assert(not likelihoods2.count(E.likelihood_reg));
         likelihoods2.insert({E.likelihood_reg, E.likelihood});
     };
 
     std::function<void(const effect&, int)> unregister_likelihood_handler = [&](const effect& e, int)
     {
         auto & E = dynamic_cast<const register_likelihood&>(e);
-        assert(not likelihoods1.count(E.likelihood_reg));
         likelihoods1.insert({E.likelihood_reg, E.likelihood});
     };
 
@@ -836,9 +832,9 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     prob_ratios_t R;
     R.variables_changed = priors1.size() != priors2.size();
 
-    for(auto [r_variable, pdf1]: priors1)
+    for(auto [r_dist, pdf1]: priors1)
     {
-        auto it2 = priors2.find(r_variable);
+        auto it2 = priors2.find(r_dist);
 
         if (it2 == priors2.end())
         {
@@ -897,7 +893,7 @@ void reg_heap::register_prior(const effect& e, int s)
     auto& E = dynamic_cast<const ::register_prior&>(e);
     // We aren't supposed to ever register the same step twice.
     assert(not random_variables.count(s));
-    random_variables[s] = E.variable_reg;
+    random_variables[s] = E.r_dist;
     for(auto& handler: register_prior_handlers)
         handler(e, s);
 }
