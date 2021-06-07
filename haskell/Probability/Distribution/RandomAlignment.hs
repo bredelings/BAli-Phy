@@ -48,6 +48,12 @@ alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model | numNodes tree < 1 
                                                             | numNodes tree == 1 = alignment_pr1 (ls ! 0) model
                                                             | otherwise = (alignment_pr_top as tree hmms) / (alignment_pr_bot as tree model)
 
+alignment_prs_bot as tree (_, lengthp) = map ((\x -> x*x) . (doubleToLogDouble 1.0/) . lengthp . seqlength as tree) (internal_nodes tree)
+alignment_prs_top as tree hmms = map (alignment_branch_pr as hmms) [0 .. numBranches tree - 1]
+alignment_prs hmms model (AlignmentOnTree tree n_seqs ls as) | numNodes tree < 1  = error "Tree only has " ++ numNodes ++ " nodes."
+                                                             | numNodes tree == 1 = [alignment_pr1 (ls ! 0) model]
+                                                             | otherwise = alignment_prs_top as tree hmms ++ alignment_prs_bot as tree model -- [ doubleToLogDouble 1.0 / alignment_pr_bot as tree model]
+
 force_alignment a@(AlignmentOnTree tree n_seqs ls as) = force_ls `seq` force_as where
     force_as = force_struct as
     force_ls = force_struct ls
@@ -60,7 +66,7 @@ triggered_modifiable_alignment value effect = (raw_a, triggered_a) where
     triggered_a = effect' `seq` raw_a
 
 random_alignment tree hmms model tip_lengths = Distribution "random_alignment"
-                                                            (\a -> [alignment_pr a hmms model])
+                                                            (alignment_prs hmms model)
                                                             (no_quantile "random_alignment")
                                                             (RandomStructure do_nothing triggered_modifiable_alignment do_sample)
                                                             ()
