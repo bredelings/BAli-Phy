@@ -117,7 +117,7 @@ log_double_t reg_heap::likelihood_for_context(int c)
 
     double log_pr = 0.0;
     double C = 0.0;
-    for(auto [s,_]: likelihood_heads)
+    for(auto [s,_]: likelihood_terms)
     {
         int r_likelihood_effect = steps[s].call;
 	auto X = value_for_precomputed_reg(r_likelihood_effect).exp.as_<register_likelihood>().likelihood;

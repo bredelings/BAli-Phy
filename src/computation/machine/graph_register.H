@@ -330,7 +330,7 @@ public:
 
     log_double_t prior_for_context(int c);
 
-    std::unordered_map<int,int> likelihood_heads;
+    std::unordered_map<int,int> likelihood_terms;
 
     void register_likelihood_(const effect& e, int s);
 

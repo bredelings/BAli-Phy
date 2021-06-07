@@ -81,7 +81,7 @@ void register_likelihood::register_effect(reg_heap& M, int s) const
     if (log_verbose >= 5)
     {
         std::cerr<<"register_likelihood["<<likelihood_reg<<", likelihood="<<likelihood<<", step="<<s<<"]: ";
-        std::cerr<<"  REGISTER! ("<<M.likelihood_heads.size()<<" -> "<<M.likelihood_heads.size()+1<<")\n";
+        std::cerr<<"  REGISTER! ("<<M.likelihood_terms.size()<<" -> "<<M.likelihood_terms.size()+1<<")\n";
     }
     M.register_likelihood_(*this, s);
 }
@@ -91,7 +91,7 @@ void register_likelihood::unregister_effect(reg_heap& M, int s) const
     if (log_verbose >= 5)
     {
         std::cerr<<"register_likelihood["<<likelihood_reg<<", likelihood="<<likelihood<<", step="<<s<<"]: ";
-        std::cerr<<"UNregister! ("<<M.likelihood_heads.size()<<" -> "<<M.likelihood_heads.size()-1<<")\n";
+        std::cerr<<"UNregister! ("<<M.likelihood_terms.size()<<" -> "<<M.likelihood_terms.size()-1<<")\n";
     }
     M.unregister_likelihood_(*this, s);
 }

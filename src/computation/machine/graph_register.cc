@@ -305,16 +305,16 @@ size_t reg_heap::size() const
 void reg_heap::register_likelihood_(const effect& e, int s)
 {
     auto & E = dynamic_cast<const register_likelihood&>(e);
-    assert(not likelihood_heads.count(s));
-    likelihood_heads[s] = E.likelihood_reg;
+    assert(not likelihood_terms.count(s));
+    likelihood_terms[s] = E.likelihood_reg;
     for(auto& handler: register_likelihood_handlers)
         handler(e, s);
 }
 
 void reg_heap::unregister_likelihood_(const effect& e, int s)
 {
-    assert(likelihood_heads.count(s));
-    likelihood_heads.erase(s);
+    assert(likelihood_terms.count(s));
+    likelihood_terms.erase(s);
     // FIXME: run these in reverse order?
     for(auto& handler: unregister_likelihood_handlers)
         handler(e, s);
@@ -607,7 +607,7 @@ void reg_heap::first_evaluate_program(int c)
 
     // Check that all the priors and likelihoods are forced.
 #ifndef NDEBUG
-    for(auto [s,r_likelihood]: likelihood_heads)
+    for(auto [s,r_likelihood]: likelihood_terms)
     {
         assert(reg_exists(r_likelihood));
         assert(reg_has_value(r_likelihood));
@@ -762,7 +762,7 @@ expression_ref reg_heap::evaluate_program(int c)
 
     // 5. Check that all the priors and likelihoods are forced.
 #ifndef NDEBUG
-    for(auto [s,r_likelihood]: likelihood_heads)
+    for(auto [s,r_likelihood]: likelihood_terms)
     {
         assert(reg_exists(r_likelihood));
         assert(reg_has_value(r_likelihood));
