@@ -37,11 +37,11 @@ extern "C" closure builtin_function_maybe_modifiable_structure(OperationArgs& Ar
 extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 {
     // We are supposed to evaluate the random_variable before we register
-    int r_var = force_slot_to_safe_reg(Args, 0);
+    int r_from_dist = Args.evaluate_slot_use(0);
 
     auto pdf = Args.evaluate(1).as_log_double();
 
-    auto effect = new register_prior(r_var, pdf);
+    auto effect = new register_prior(r_from_dist, pdf);
 
     Args.set_effect(*effect);
 
