@@ -4,7 +4,8 @@ import Foreign.Pair
 import Foreign.Vector
 import Range
 
-builtin register_transition_kernel 2 "register_transition_kernel" "MCMC"
+builtin builtin_register_transition_kernel 2 "register_transition_kernel" "MCMC"
+register_transition_kernel rate move = IOAction (\s -> (s,builtin_register_transition_kernel rate move))
 
 -- Transition kernel: Perform gibbs sampling on modifiable x, which takes values [0..n-1], in context c
 builtin builtin_gibbs_sample_categorical 4 "gibbs_sample_categorical" "MCMC"

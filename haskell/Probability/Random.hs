@@ -67,23 +67,28 @@ run_strict (Print s) = putStrLn (show s)
 run_strict (Lazy r) = run_lazy r
 
 
--- The machine should have certain side-effects that can be registered
--- and unregistered, such as registering random_variables, and adding
--- transition kernels.  (LiftIO and Print are here only for debugging
--- purposes.)
+-- OK, so the original form of "run_effects" really only handles transition kernels.
+-- It allows us to use do-blocks and sequence_ to add multiple transition kernels,
+-- and also to avoid specifying the rate explicitly.
 --
--- Moving such effects out of the "strict" monad leaves that monad as
--- containing just random sampling and observations.
+-- We should probably be making run_effects translate into the IO monad.
 --
-run_effects rate (IOAndPass f g) = let x = run_effects rate f
-                                   in x `seq` run_effects rate $ g x
-run_effects rate (IOReturn v) = v
+-- And the other effects (like register_dist) should be running in the IO monad.
+-- So, probably run_effect should be renamed to run_add_transition_kernels.
+-- And it should be a State monad, that is translated to the IO monad when run.
+
+-- And we need to fix up the IO monad to return (x,s) instead of (s,x)!
+-- And register_transition kernel needs to become an State that returns
+-- a take a rate and return an (IO action,rate) pair.
+
+run_effects rate (IOAndPass f g) = (run_effects rate f) >>= (\x -> run_effects rate $ g x)
+run_effects rate (IOReturn v) = return v
+run_effects rate (AddMove m) = register_transition_kernel rate m
+run_effects rate (SamplingRate rate2 a) = run_effects (rate*rate2) a
 -- LiftIO and Print are only here for debugging purposes:
 --  run_effects alpha rate (LiftIO a) = a
 --  run_effects alpha rate (Print s) = putStrLn (show s)
-run_effects rate (AddMove m) = register_transition_kernel rate m
-run_effects rate (SamplingRate rate2 a) = run_effects (rate*rate2) a
-run_effects rate (IOAction action) = snd (action 0)
+
 
 run_lazy (RandomStructure _ _ a) = run_lazy a
 run_lazy (IOAndPass f g) = do
@@ -108,10 +113,10 @@ run_strict' rate (Observe dist datum) = do_effects `seq` return ()
             s <- register_dist (dist_name dist)
             register_out_edge s datum
             sequence_ [register_likelihood term | term <- densities dist datum]
-          do_effects = run_effects 1.0 effects
+          do_effects = unsafePerformIO effects
 run_strict' rate (Print s) = putStrLn (show s)
 run_strict' rate (Lazy r) = run_lazy' rate r
-run_strict' rate (PerformEffect e) = run_effects rate e `seq` return ()
+run_strict' rate (PerformEffect e) = unsafePerformIO (run_effects rate e) `seq` return ()
 
 -- 1. Could we somehow implement slice sampling windows for non-contingent variables?
 
@@ -140,11 +145,11 @@ run_lazy' rate dist@(Distribution _ _ _ (RandomStructure effect structure do_sam
       pdf = density dist raw_x
       -- Note: registering the pdf forces it.
       effect' = do
-        effect raw_x
+        run_effects rate $ effect raw_x
         s <- register_dist (dist_name dist)
         register_prior s pdf
         register_out_edge s raw_x
-      do_effects = run_effects rate effect'
+      do_effects = unsafePerformIO effect'
   return triggered_x
 run_lazy' rate (Distribution _ _ _ s _) = run_lazy' rate s
 run_lazy' rate (MFix f) = MFix ((run_lazy' rate).f)
