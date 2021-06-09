@@ -8,9 +8,11 @@ import Data.Function -- for id
 -- drat -- my implementation of IO assumes that the state is FIRST, but should be SECOND.
 
 -- data State s a = State {runState::(s->(a,s))}
+data State s a = State (s->(a,s))
 
 runState :: s -> (a,s)
 runState s (IOReturn x)             = (x,s)
+runState s (State f)                = f s
 runState s (IOAction f)             = let (s', x) = f s in (x,s')
 -- maybe we need the msplit operation to generically do interleaved stuff in the State monad?
 runState s (LazyIO f)               = runState s f
