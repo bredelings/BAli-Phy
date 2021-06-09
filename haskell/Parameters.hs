@@ -11,8 +11,8 @@ builtin modifiable 1 "modifiable" "Modifiables"
 builtin builtin_register_prior 2 "register_prior" "Modifiables"
 register_prior event prob = IOAction (\s -> (s+1, builtin_register_prior event prob))
 
-builtin builtin_register_likelihood 1 "register_likelihood" "Modifiables"
-register_likelihood prob = IOAction (\s -> (s+1, builtin_register_likelihood prob))
+builtin builtin_register_likelihood 2 "register_likelihood" "Modifiables"
+register_likelihood event prob = IOAction (\s -> (s+1, builtin_register_likelihood event prob))
 
 
 builtin builtin_register_in_edge 3 "register_in_edge" "Modifiables"

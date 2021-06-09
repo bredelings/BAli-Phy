@@ -50,10 +50,12 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 
 extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 {
-    // We are supposed to evaluate the likelihood before we register
-    auto likelihood = Args.evaluate(0).as_log_double();
+    int r_from_dist = Args.evaluate_slot_use(0);
 
-    int r_likelihood = Args.current_closure().reg_for_slot(0);
+    // We are supposed to evaluate the likelihood before we register
+    auto likelihood = Args.evaluate(1).as_log_double();
+
+    int r_likelihood = Args.current_closure().reg_for_slot(1);
 
     r_likelihood = Args.memory().follow_index_var_no_force(r_likelihood);
 

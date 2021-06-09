@@ -112,7 +112,7 @@ run_strict' rate (Observe dist datum) = do_effects `seq` return ()
     where effects = do
             s <- register_dist (dist_name dist)
             register_out_edge s datum
-            sequence_ [register_likelihood term | term <- densities dist datum]
+            sequence_ [register_likelihood s term | term <- densities dist datum]
           do_effects = unsafePerformIO effects
 run_strict' rate (Print s) = putStrLn (show s)
 run_strict' rate (Lazy r) = run_lazy' rate r
