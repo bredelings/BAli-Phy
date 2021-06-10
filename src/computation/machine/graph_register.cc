@@ -749,33 +749,33 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     std::unordered_map<int,log_double_t> likelihoods1;
     std::unordered_map<int,log_double_t> likelihoods2;
 
-    std::function<void(const register_prob&, int)> register_prior_handler = [&](const register_prob& E, int)
+    auto register_prior_handler = [&](const register_prob& E, int)
     {
         priors2.insert({E.r_prob, {E.r_dist,E.prob}});
     };
 
-    std::function<void(const register_prob&, int)> unregister_prior_handler = [&](const register_prob& E, int)
+    auto unregister_prior_handler = [&](const register_prob& E, int)
     {
         priors1.insert({E.r_prob, {E.r_dist, E.prob}});
     };
 
-    std::function<void(const register_prob&, int)> register_likelihood_handler = [&](const register_prob& E, int)
+    auto register_likelihood_handler = [&](const register_prob& E, int)
     {
         likelihoods2.insert({E.r_prob, E.prob});
     };
 
-    std::function<void(const register_prob&, int)> unregister_likelihood_handler = [&](const register_prob& E, int)
+    auto unregister_likelihood_handler = [&](const register_prob& E, int)
     {
         likelihoods1.insert({E.r_prob, E.prob});
     };
 
-    std::function<void(const ::register_dist&, int)> register_dist_handler = [&](const ::register_dist& E, int)
+    auto register_dist_handler = [&](const ::register_dist& E, int)
     {
         if (not E.observation)
             random_vars_added.insert(E.r);
     };
 
-    std::function<void(const ::register_dist&, int)> unregister_dist_handler = [&](const ::register_dist& E, int)
+    auto unregister_dist_handler = [&](const ::register_dist& E, int)
     {
         if (not E.observation)
             random_vars_removed.insert(E.r);
