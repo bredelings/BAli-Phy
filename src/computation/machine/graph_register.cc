@@ -749,15 +749,13 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     std::unordered_map<int,log_double_t> likelihoods1;
     std::unordered_map<int,log_double_t> likelihoods2;
 
-    std::function<void(const effect&, int)> register_prior_handler = [&](const effect& e, int)
+    std::function<void(const register_prob&, int)> register_prior_handler = [&](const register_prob& E, int)
     {
-        auto & E = dynamic_cast<const ::register_prior&>(e);
         priors2.insert({E.r_prob, {E.r_dist,E.prob}});
     };
 
-    std::function<void(const effect&, int)> unregister_prior_handler = [&](const effect& e, int)
+    std::function<void(const register_prob&, int)> unregister_prior_handler = [&](const register_prob& E, int)
     {
-        auto & E = dynamic_cast<const ::register_prior&>(e);
         priors1.insert({E.r_prob, {E.r_dist, E.prob}});
     };
 
@@ -896,24 +894,23 @@ void reg_heap::unregister_likelihood_(const register_prob& E, int s)
         handler(E, s);
 }
 
-void reg_heap::register_prior(const effect& e, int s)
+void reg_heap::register_prior(const register_prob& E, int s)
 {
-    auto& E = dynamic_cast<const ::register_prior&>(e);
     // We aren't supposed to ever register the same step twice.
     assert(not prior_terms.count(s));
     prior_terms.insert({s,E});
     for(auto& handler: register_prior_handlers)
-        handler(e, s);
+        handler(E, s);
 }
 
-void reg_heap::unregister_prior(const effect& e, int s)
+void reg_heap::unregister_prior(const register_prob& E, int s)
 {
     assert(prior_terms.count(s));
     prior_terms.erase(s);
 
     // FIXME: run these in reverse order?
     for(auto& handler: unregister_prior_handlers)
-        handler(e, s);
+        handler(E, s);
 }
 
 void reg_heap::register_transition_kernel(const effect& e, int s)

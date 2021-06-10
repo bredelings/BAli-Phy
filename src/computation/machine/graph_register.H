@@ -184,8 +184,8 @@ class reg_heap: public Object
     std::vector<std::function<void(const register_prob&, int)>> register_likelihood_handlers;
     std::vector<std::function<void(const register_prob&, int)>> unregister_likelihood_handlers;
 
-    std::vector<std::function<void(const effect&, int)>> register_prior_handlers;
-    std::vector<std::function<void(const effect&, int)>> unregister_prior_handlers;
+    std::vector<std::function<void(const register_prob&, int)>> register_prior_handlers;
+    std::vector<std::function<void(const register_prob&, int)>> unregister_prior_handlers;
 public:
     std::vector<std::function<void(const effect&, int)>> register_tk_handlers;
     std::vector<std::function<void(const effect&, int)>> unregister_tk_handlers;
@@ -350,8 +350,8 @@ public:
     // the prior terms
     std::unordered_map<int, register_prob> prior_terms;
 
-    void register_prior(const effect& e, int s);
-    void unregister_prior(const effect& e, int s);
+    void   register_prior(const register_prob& e, int s);
+    void unregister_prior(const register_prob& e, int s);
 
     // the list of transition kernels
     std::unordered_set<int> transition_kernels_;
