@@ -1057,6 +1057,9 @@ void reg_heap::register_dist(const effect& e, int s)
     assert(not dist_type.count(D.r));
 
     dist_type.insert({D.r,D.name});
+
+    for(auto& handler: register_dist_handlers)
+        handler(e,s);
 }
 
 void reg_heap::unregister_dist(const effect& e, int s)
@@ -1066,6 +1069,9 @@ void reg_heap::unregister_dist(const effect& e, int s)
     assert(dist_type.count(D.r));
 
     dist_type.erase(D.r);
+
+    for(auto& handler: register_dist_handlers)
+        handler(e,s);
 }
 
 void reg_heap::register_dist_property(const effect& e, int /* s */)

@@ -177,8 +177,12 @@ class reg_heap: public Object
     mutable int n_active_pair_scratch_lists = 0;
     mutable std::vector< object_ptr<Vector<std::pair<int,int>> > > pair_scratch_lists;
 
+    std::vector<std::function<void(const effect&, int)>> register_dist_handlers;
+    std::vector<std::function<void(const effect&, int)>> unregister_dist_handlers;
+
     std::vector<std::function<void(const effect&, int)>> register_likelihood_handlers;
     std::vector<std::function<void(const effect&, int)>> unregister_likelihood_handlers;
+
     std::vector<std::function<void(const effect&, int)>> register_prior_handlers;
     std::vector<std::function<void(const effect&, int)>> unregister_prior_handlers;
 public:
