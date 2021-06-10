@@ -605,22 +605,6 @@ void reg_heap::first_evaluate_program(int c)
     // 5. Mark unconditionally-evaluated regs.
     mark_unconditional_regs();
 
-    // Check that all the priors and likelihoods are forced.
-#ifndef NDEBUG
-    for(auto [s,r_likelihood]: likelihood_terms)
-    {
-        assert(reg_exists(r_likelihood));
-        assert(reg_has_value(r_likelihood));
-        assert(access_value_for_reg(r_likelihood).exp.is_log_double());
-    }
-
-    for(auto [s,r_var]: prior_terms)
-    {
-        assert(reg_exists(r_var));
-        assert(reg_has_value(r_var));
-    }
-#endif
-
 #ifdef DEBUG_MACHINE
     check_force_counts();
 #endif
@@ -759,21 +743,6 @@ expression_ref reg_heap::evaluate_program(int c)
     do_pending_effect_registrations();
     assert(steps_pending_effect_unregistration.empty());
     assert(steps_pending_effect_registration.empty());
-
-    // 5. Check that all the priors and likelihoods are forced.
-#ifndef NDEBUG
-    for(auto [s,r_likelihood]: likelihood_terms)
-    {
-        assert(reg_exists(r_likelihood));
-        assert(reg_has_value(r_likelihood));
-    }
-
-    for(auto [s,r_pdf]: prior_terms)
-    {
-        assert(reg_exists(r_pdf));
-        assert(reg_has_value(r_pdf));
-    }
-#endif
 
     return result;
 }
