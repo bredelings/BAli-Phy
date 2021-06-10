@@ -187,8 +187,8 @@ class reg_heap: public Object
     std::vector<std::function<void(const register_prob&, int)>> register_prior_handlers;
     std::vector<std::function<void(const register_prob&, int)>> unregister_prior_handlers;
 public:
-    std::vector<std::function<void(const effect&, int)>> register_tk_handlers;
-    std::vector<std::function<void(const effect&, int)>> unregister_tk_handlers;
+    std::vector<std::function<void(const ::register_transition_kernel&, int)>>   register_tk_handlers;
+    std::vector<std::function<void(const ::register_transition_kernel&, int)>> unregister_tk_handlers;
 
 private:
     void resize(int s);
@@ -358,8 +358,8 @@ public:
 
     const std::unordered_set<int>& transition_kernels() const;
 
-    void register_transition_kernel(const effect& e, int s);
-    void unregister_transition_kernel(const effect& e, int s);
+    void   register_transition_kernel(const ::register_transition_kernel&, int s);
+    void unregister_transition_kernel(const ::register_transition_kernel&, int s);
 
     // Since there is only one out-edges, should we remove this?
     // No, if we observe the same data twice, we still need separate sampling events.

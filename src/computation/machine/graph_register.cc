@@ -911,11 +911,9 @@ void reg_heap::unregister_prior(const register_prob& E, int s)
         handler(E, s);
 }
 
-void reg_heap::register_transition_kernel(const effect& e, int s)
+void reg_heap::register_transition_kernel(const ::register_transition_kernel& E, int s)
 {
     assert(not steps.is_free(s));
-
-    auto& E = dynamic_cast<const ::register_transition_kernel&>(e);
 
     int r_kernel = E.kernel_reg;
 
@@ -926,15 +924,13 @@ void reg_heap::register_transition_kernel(const effect& e, int s)
     transition_kernels_.insert(s);
 
     for(auto& handler: register_tk_handlers)
-        handler(e,s);
+        handler(E,s);
 }
 
-void reg_heap::unregister_transition_kernel(const effect& e, int s)
+void reg_heap::unregister_transition_kernel(const ::register_transition_kernel& E, int s)
 {
-    auto& E = dynamic_cast<const ::register_transition_kernel&>(e);
-
     for(auto& handler: unregister_tk_handlers)
-        handler(e,s);
+        handler(E,s);
 
     if (not transition_kernels_.count(s))
         throw myexception()<<"unregister_transition_kernel: transition kernel <r="<<E.kernel_reg<<",s="<<s<<"> not found!";
