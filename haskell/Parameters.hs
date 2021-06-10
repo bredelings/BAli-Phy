@@ -24,7 +24,8 @@ register_out_edge dist var = IOAction (\s -> (s+1, builtin_register_out_edge dis
 builtin builtin_register_dist_property 3 "register_dist_property" "Modifiables"
 register_dist_property dist value property = IOAction (\s -> (s+1, builtin_register_dist_property dist value (list_to_string property)))
 
-builtin builtin_register_dist 1 "register_dist" "Modifiables"
+builtin builtin_register_dist 2 "register_dist" "Modifiables"
 -- The extra parameter to prevent invocations out of functions being floated
 -- out of let statements by referencing a local variable.
-register_dist name = IOAction (\s -> (s+1, builtin_register_dist (list_to_string name)))
+register_dist_sample  name = IOAction (\s -> (s+1, builtin_register_dist (list_to_string name) 0))
+register_dist_observe name = IOAction (\s -> (s+1, builtin_register_dist (list_to_string name) 1))

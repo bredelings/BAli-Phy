@@ -98,11 +98,13 @@ extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 {
     std::string name = Args.evaluate(0).as_<String>();
 
+    bool observation = Args.evaluate(1).as_int() == 1;
+
     auto& M = Args.memory();
 
     int r = Args.allocate_reg();
 
-    object_ptr<effect> e(new register_dist(name, r));
+    object_ptr<effect> e(new register_dist(name, r, observation));
 
     M.set_C(r, e);
 

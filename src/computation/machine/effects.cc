@@ -240,17 +240,17 @@ bool register_dist::operator==(const Object& O) const
 string register_dist::print() const
 {
     std::ostringstream result;
-    result<<"register_dist[name="<<name<<",r="<<r<<"]";
+    result<<"register_dist[name="<<name<<",r="<<r<<",observation="<<observation<<"]";
     return result.str();
 }
 
-register_dist::register_dist(const string& s, int i)
-    :name(s),r(i)
+register_dist::register_dist(const string& s, int i, bool b)
+    :name(s),r(i),observation(b)
 { }
 
 void register_dist::register_effect(reg_heap& M, int s) const
 {
-    if (log_verbose >= 5) std::cerr<<(*this)<<": REGISTER!\n";
+    if (log_verbose >= 5) std::cerr<<(*this)<<":  REGISTER!\n";
     M.register_dist(*this, s);
 }
 

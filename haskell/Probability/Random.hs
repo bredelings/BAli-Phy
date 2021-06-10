@@ -110,7 +110,7 @@ run_strict' rate (IOReturn v) = return v
 run_strict' rate (LiftIO a) = a
 run_strict' rate (Observe dist datum) = do_effects `seq` return ()
     where effects = do
-            s <- register_dist (dist_name dist)
+            s <- register_dist_observe (dist_name dist)
             register_out_edge s datum
             sequence_ [register_likelihood s term | term <- densities dist datum]
           do_effects = unsafePerformIO effects
@@ -146,7 +146,7 @@ run_lazy' rate dist@(Distribution _ _ _ (RandomStructure effect structure do_sam
       -- Note: registering the pdf forces it.
       effect' = do
         run_effects rate $ effect raw_x
-        s <- register_dist (dist_name dist)
+        s <- register_dist_sample (dist_name dist)
         register_prior s pdf
         register_out_edge s raw_x
       do_effects = unsafePerformIO effect'

@@ -99,6 +99,7 @@ struct register_dist: public effect
 {
     std::string name;
     int r;
+    bool observation;
 
     register_dist* clone() const {return new register_dist(*this);}
 
@@ -110,7 +111,7 @@ struct register_dist: public effect
     void register_effect(reg_heap&,int) const;
     void unregister_effect(reg_heap&,int) const;
 
-    register_dist(const std::string& s, int r);
+    register_dist(const std::string& s, int r, bool b);
 };
 
 
