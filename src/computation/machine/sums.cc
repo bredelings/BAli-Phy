@@ -76,7 +76,7 @@ log_double_t reg_heap::prior_for_context(int c)
     for(auto [s, _]: prior_terms)
     {
         auto r_pdf_effect = steps[s].call;
-	auto X = value_for_precomputed_reg(r_pdf_effect).exp.as_<::register_prior>().pdf;
+	auto X = value_for_precomputed_reg(r_pdf_effect).exp.as_<::register_prior>().prob;
 
 	double t;
 	if (std::abs(X.log()) > std::abs(log_pr))
@@ -120,7 +120,7 @@ log_double_t reg_heap::likelihood_for_context(int c)
     for(auto [s,_]: likelihood_terms)
     {
         int r_likelihood_effect = steps[s].call;
-	auto X = value_for_precomputed_reg(r_likelihood_effect).exp.as_<register_likelihood>().likelihood;
+	auto X = value_for_precomputed_reg(r_likelihood_effect).exp.as_<register_likelihood>().prob;
 
 	double t;
 	if (std::abs(X.log()) > std::abs(log_pr))

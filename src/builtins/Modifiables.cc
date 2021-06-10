@@ -39,9 +39,13 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
     // We are supposed to evaluate the random_variable before we register
     int r_from_dist = Args.evaluate_slot_use(0);
 
-    auto pdf = Args.evaluate(1).as_log_double();
+    auto prob = Args.evaluate(1).as_log_double();
 
-    auto effect = new register_prior(r_from_dist, pdf);
+    int r_prob = Args.current_closure().reg_for_slot(1);
+
+    r_prob = Args.memory().follow_index_var_no_force(r_prob);
+
+    auto effect = new register_prior(r_from_dist, r_prob, prob);
 
     Args.set_effect(*effect);
 
@@ -53,13 +57,13 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
     int r_from_dist = Args.evaluate_slot_use(0);
 
     // We are supposed to evaluate the likelihood before we register
-    auto likelihood = Args.evaluate(1).as_log_double();
+    auto prob = Args.evaluate(1).as_log_double();
 
-    int r_likelihood = Args.current_closure().reg_for_slot(1);
+    int r_prob = Args.current_closure().reg_for_slot(1);
 
-    r_likelihood = Args.memory().follow_index_var_no_force(r_likelihood);
+    r_prob = Args.memory().follow_index_var_no_force(r_prob);
 
-    auto effect = new register_likelihood(r_likelihood, likelihood);
+    auto effect = new register_likelihood(r_from_dist, r_prob, prob);
 
     Args.set_effect(*effect);
 

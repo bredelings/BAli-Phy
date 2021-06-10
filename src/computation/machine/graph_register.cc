@@ -306,7 +306,7 @@ void reg_heap::register_likelihood_(const effect& e, int s)
 {
     auto & E = dynamic_cast<const register_likelihood&>(e);
     assert(not likelihood_terms.count(s));
-    likelihood_terms[s] = E.likelihood_reg;
+    likelihood_terms[s] = E.r_dist;
     for(auto& handler: register_likelihood_handlers)
         handler(e, s);
 }
@@ -786,12 +786,14 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 #endif
 
     // 1. reroot to c1 and force the program
-//  auto L1 = likelihood_for_context(c1);
     evaluate_program(c1);
 
-    // 2. install handlers for register_prior and register_likelihood
-    std::unordered_map<int,log_double_t> priors1;
-    std::unordered_map<int,log_double_t> priors2;
+    // 2. install handlers for register_dist, register_prior, and register_likelihood
+    std::unordered_set<int> random_vars_removed;
+    std::unordered_set<int> random_vars_added;
+
+    std::unordered_map<int,pair<int,log_double_t>> priors1;
+    std::unordered_map<int,pair<int,log_double_t>> priors2;
 
     std::unordered_map<int,log_double_t> likelihoods1;
     std::unordered_map<int,log_double_t> likelihoods2;
@@ -799,51 +801,89 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     std::function<void(const effect&, int)> register_prior_handler = [&](const effect& e, int)
     {
         auto & E = dynamic_cast<const ::register_prior&>(e);
-        priors2.insert({E.r_dist, E.pdf});
+        priors2.insert({E.r_prob, {E.r_dist,E.prob}});
     };
 
     std::function<void(const effect&, int)> unregister_prior_handler = [&](const effect& e, int)
     {
         auto & E = dynamic_cast<const ::register_prior&>(e);
-        priors1.insert({E.r_dist, E.pdf});
+        priors1.insert({E.r_prob, {E.r_dist, E.prob}});
     };
 
     std::function<void(const effect&, int)> register_likelihood_handler = [&](const effect& e, int)
     {
         auto & E = dynamic_cast<const register_likelihood&>(e);
-        likelihoods2.insert({E.likelihood_reg, E.likelihood});
+        likelihoods2.insert({E.r_prob, E.prob});
     };
 
     std::function<void(const effect&, int)> unregister_likelihood_handler = [&](const effect& e, int)
     {
         auto & E = dynamic_cast<const register_likelihood&>(e);
-        likelihoods1.insert({E.likelihood_reg, E.likelihood});
+        likelihoods1.insert({E.r_prob, E.prob});
+    };
+
+    std::function<void(const effect&, int)> register_dist_handler = [&](const effect& e, int)
+    {
+        auto & E = dynamic_cast<const ::register_dist&>(e);
+        if (not E.observation)
+            random_vars_added.insert(E.r);
+    };
+
+    std::function<void(const effect&, int)> unregister_dist_handler = [&](const effect& e, int)
+    {
+        auto & E = dynamic_cast<const ::register_dist&>(e);
+        if (not E.observation)
+            random_vars_removed.insert(E.r);
     };
 
     register_likelihood_handlers.push_back(register_likelihood_handler);
     unregister_likelihood_handlers.push_back(unregister_likelihood_handler);
     register_prior_handlers.push_back(register_prior_handler);
     unregister_prior_handlers.push_back(unregister_prior_handler);
+    register_dist_handlers.push_back(register_dist_handler);
+    unregister_dist_handlers.push_back(unregister_dist_handler);
 
     // 3. reroot to c2 and force the program
     evaluate_program(c2);
 
     // 4. compute the ratio only for (i) changed pdfs that (ii) exist in both c1 and c2
     prob_ratios_t R;
-    R.variables_changed = priors1.size() != priors2.size();
+    R.variables_changed = (not random_vars_added.empty()) or (not random_vars_removed.empty());
 
-    for(auto [r_dist, pdf1]: priors1)
+    for(auto [r_pdf1, r_dist_and_pdf1]: priors1)
     {
-        auto it2 = priors2.find(r_dist);
+        auto& [r_dist1, pdf1] = r_dist_and_pdf1;
 
-        if (it2 == priors2.end())
+        if (random_vars_removed.count(r_dist1))
         {
-            R.variables_changed = true;
+            assert(not random_vars_added.count(r_dist1));
             continue;
         }
 
-        auto pdf2 = it2->second;
-        R.prior_ratio *= (pdf2 / pdf1);
+        auto it2 = priors2.find(r_pdf1);
+
+        if (it2 == priors2.end())
+            R.prior_ratio /= pdf1;
+        else
+        {
+            auto& [r_dist2, pdf2] = it2->second;
+            assert(r_dist2 == r_dist1);
+            R.prior_ratio *= (pdf2 / pdf1);
+        }
+    }
+
+    for(auto [r_pdf2, r_dist_and_pdf2]: priors2)
+    {
+        auto& [r_dist2, pdf2] = r_dist_and_pdf2;
+
+        if (random_vars_added.count(r_dist2))
+        {
+            assert(not random_vars_removed.count(r_dist2));
+            continue;
+        }
+
+        if (not priors2.count(r_pdf2))
+            R.prior_ratio *= pdf2;
     }
 
     for(auto [r_likelihood, likelihood1]: likelihoods1)
@@ -877,6 +917,8 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     unregister_likelihood_handlers.pop_back();
     register_prior_handlers.pop_back();
     unregister_prior_handlers.pop_back();
+    register_dist_handlers.pop_back();
+    unregister_dist_handlers.pop_back();
 
 //  auto L2 = likelihood_for_context(c2);
 //

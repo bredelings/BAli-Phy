@@ -2,11 +2,20 @@
 #define EFFECTS_H
 #include "effect.H"
 
-struct register_prior: public effect
+struct register_prob
 {
     int r_dist;
-    log_double_t pdf;
+    int r_prob;
+    log_double_t prob;
 
+    bool operator==(const register_prob&) const;
+
+    register_prob(int r1, int r2, log_double_t);
+};
+
+
+struct register_prior: public register_prob, public effect
+{
     register_prior* clone() const {return new register_prior(*this);}
 
     bool operator==(const register_prior&) const;
@@ -17,14 +26,11 @@ struct register_prior: public effect
     void register_effect(reg_heap&,int) const;
     void unregister_effect(reg_heap&,int) const;
 
-    register_prior(int r, log_double_t pr);
+    using register_prob::register_prob;
 };
 
-struct register_likelihood: public effect
+struct register_likelihood: public register_prob, public effect
 {
-    int likelihood_reg;
-    log_double_t likelihood;
-
     register_likelihood* clone() const {return new register_likelihood(*this);}
 
     bool operator==(const register_likelihood&) const;
@@ -35,7 +41,7 @@ struct register_likelihood: public effect
     void register_effect(reg_heap&,int) const;
     void unregister_effect(reg_heap&,int) const;
 
-    register_likelihood(int r, log_double_t lk);
+    using register_prob::register_prob;
 };
 
 struct register_transition_kernel: public effect

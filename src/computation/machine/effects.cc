@@ -4,9 +4,19 @@
 
 using std::string;
 
+register_prob::register_prob(int r1, int r2, log_double_t p)
+    :r_dist(r1), r_prob(r2), prob(p)
+{
+}
+
+bool register_prob::operator==(const register_prob& e) const
+{
+    return r_dist == e.r_dist and r_prob == e.r_prob;
+}
+
 bool register_prior::operator==(const register_prior& e) const
 {
-    return r_dist == e.r_dist and pdf == e.pdf;
+    return register_prob::operator==(e);
 }
 
 bool register_prior::operator==(const Object& O) const
@@ -22,30 +32,21 @@ bool register_prior::operator==(const Object& O) const
 
 string register_prior::print() const
 {
-    return string("register_prior[")+std::to_string(r_dist)+","+std::to_string(pdf)+"]";
+    return string("register_prior[")+std::to_string(r_dist)+","+std::to_string(r_prob)+","+std::to_string(prob)+"]";
 }
-
-register_prior::register_prior(int r, log_double_t pr)
-    :r_dist(r), pdf(pr)
-{ }
 
 void register_prior::register_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 5)
-    {
-        std::cerr<<"register_prior[var="<<r_dist<<",pdf="<<pdf<<",step="<<s<<"]: ";
-        std::cerr<<"  REGISTER! ("<<M.prior_terms.size()<<" -> "<<M.prior_terms.size()+1<<")\n";
-    }
+        std::cerr<<print()<<":   REGISTER! ("<<M.prior_terms.size()<<" -> "<<M.prior_terms.size()+1<<")\n";
     M.register_prior(*this, s);
 }
 
 void register_prior::unregister_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 5)
-    {
-        std::cerr<<"register_prior[var="<<r_dist<<",pdf="<<pdf<<",step="<<s<<"]: ";
-        std::cerr<<"UNregister! ("<<M.prior_terms.size()<<" -> "<<M.prior_terms.size()-1<<")\n";
-    }
+        std::cerr<<print()<<": UNregister! ("<<M.prior_terms.size()<<" -> "<<M.prior_terms.size()-1<<")\n";
+
     M.unregister_prior(*this, s);
 }
 
@@ -53,7 +54,7 @@ void register_prior::unregister_effect(reg_heap& M, int s) const
 
 bool register_likelihood::operator==(const register_likelihood& e) const
 {
-    return likelihood_reg == e.likelihood_reg;
+    return register_prob::operator==(e);
 }
 
 bool register_likelihood::operator==(const Object& O) const
@@ -69,30 +70,20 @@ bool register_likelihood::operator==(const Object& O) const
 
 string register_likelihood::print() const
 {
-    return string("register_likelihood[")+std::to_string(likelihood_reg)+","+std::to_string(likelihood)+"]";
+    return string("register_likelihood[")+std::to_string(r_dist)+","+std::to_string(r_prob)+","+std::to_string(prob)+"]";
 }
-
-register_likelihood::register_likelihood(int r, log_double_t lk)
-    :likelihood_reg(r), likelihood(lk)
-{ }
 
 void register_likelihood::register_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 5)
-    {
-        std::cerr<<"register_likelihood["<<likelihood_reg<<", likelihood="<<likelihood<<", step="<<s<<"]: ";
-        std::cerr<<"  REGISTER! ("<<M.likelihood_terms.size()<<" -> "<<M.likelihood_terms.size()+1<<")\n";
-    }
+        std::cerr<<print()<<":   REGISTER! ("<<M.likelihood_terms.size()<<" -> "<<M.likelihood_terms.size()+1<<")\n";
     M.register_likelihood_(*this, s);
 }
 
 void register_likelihood::unregister_effect(reg_heap& M, int s) const
 {
     if (log_verbose >= 5)
-    {
-        std::cerr<<"register_likelihood["<<likelihood_reg<<", likelihood="<<likelihood<<", step="<<s<<"]: ";
-        std::cerr<<"UNregister! ("<<M.likelihood_terms.size()<<" -> "<<M.likelihood_terms.size()-1<<")\n";
-    }
+        std::cerr<<print()<<": UNregister! ("<<M.likelihood_terms.size()<<" -> "<<M.likelihood_terms.size()-1<<")\n";
     M.unregister_likelihood_(*this, s);
 }
 
@@ -223,7 +214,7 @@ void out_edge::unregister_effect(reg_heap& M, int s) const
 
 bool register_dist::operator==(const register_dist& e) const
 {
-    return name == e.name and r == e.r;
+    return name == e.name and r == e.r and observation == e.observation;
 }
 
 bool register_dist::operator==(const Object& O) const
