@@ -769,16 +769,14 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
         likelihoods1.insert({E.r_prob, E.prob});
     };
 
-    std::function<void(const effect&, int)> register_dist_handler = [&](const effect& e, int)
+    std::function<void(const ::register_dist&, int)> register_dist_handler = [&](const ::register_dist& E, int)
     {
-        auto & E = dynamic_cast<const ::register_dist&>(e);
         if (not E.observation)
             random_vars_added.insert(E.r);
     };
 
-    std::function<void(const effect&, int)> unregister_dist_handler = [&](const effect& e, int)
+    std::function<void(const ::register_dist&, int)> unregister_dist_handler = [&](const ::register_dist& E, int)
     {
-        auto & E = dynamic_cast<const ::register_dist&>(e);
         if (not E.observation)
             random_vars_removed.insert(E.r);
     };
@@ -1055,28 +1053,24 @@ void reg_heap::unregister_out_edge(const effect& e, int /* s */)
     out_edges_to_var.erase(O.r_to_var);
 }
 
-void reg_heap::register_dist(const effect& e, int s)
+void reg_heap::register_dist(const ::register_dist& D, int s)
 {
-    auto& D = dynamic_cast<const ::register_dist&>(e);
-
     assert(not dist_type.count(D.r));
 
     dist_type.insert({D.r,D.name});
 
     for(auto& handler: register_dist_handlers)
-        handler(e,s);
+        handler(D,s);
 }
 
-void reg_heap::unregister_dist(const effect& e, int s)
+void reg_heap::unregister_dist(const ::register_dist& D, int s)
 {
-    auto& D = dynamic_cast<const ::register_dist&>(e);
-
     assert(dist_type.count(D.r));
 
     dist_type.erase(D.r);
 
     for(auto& handler: register_dist_handlers)
-        handler(e,s);
+        handler(D,s);
 }
 
 void reg_heap::register_dist_property(const effect& e, int /* s */)
