@@ -302,23 +302,6 @@ size_t reg_heap::size() const
     return regs.size();
 }
 
-void reg_heap::register_likelihood_(const register_prob& E, int s)
-{
-    assert(not likelihood_terms.count(s));
-    likelihood_terms.insert({s,E});
-    for(auto& handler: register_likelihood_handlers)
-        handler(E, s);
-}
-
-void reg_heap::unregister_likelihood_(const register_prob& E, int s)
-{
-    assert(likelihood_terms.count(s));
-    likelihood_terms.erase(s);
-    // FIXME: run these in reverse order?
-    for(auto& handler: unregister_likelihood_handlers)
-        handler(E, s);
-}
-
 log_double_t reg_heap::probability_for_context(int c)
 {
     total_context_pr++;
@@ -894,6 +877,23 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
 
 
     return R;
+}
+
+void reg_heap::register_likelihood_(const register_prob& E, int s)
+{
+    assert(not likelihood_terms.count(s));
+    likelihood_terms.insert({s,E});
+    for(auto& handler: register_likelihood_handlers)
+        handler(E, s);
+}
+
+void reg_heap::unregister_likelihood_(const register_prob& E, int s)
+{
+    assert(likelihood_terms.count(s));
+    likelihood_terms.erase(s);
+    // FIXME: run these in reverse order?
+    for(auto& handler: unregister_likelihood_handlers)
+        handler(E, s);
 }
 
 void reg_heap::register_prior(const effect& e, int s)

@@ -335,19 +335,19 @@ public:
 
     log_double_t prior_for_context(int c);
 
-    std::unordered_map<int, register_prob> likelihood_terms;
-
-    void register_likelihood_(const register_prob& E, int s);
-
-    void unregister_likelihood_(const register_prob& E, int s);
-
     log_double_t likelihood_for_context(int c);
 
     log_double_t probability_for_context(int c);
 
     prob_ratios_t probability_ratios(int c1, int c2);
 
-    // the list of random variables
+    // the likelihood term
+    std::unordered_map<int, register_prob> likelihood_terms;
+
+    void register_likelihood_(const register_prob& E, int s);
+    void unregister_likelihood_(const register_prob& E, int s);
+
+    // the prior terms
     std::unordered_map<int, register_prob> prior_terms;
 
     void register_prior(const effect& e, int s);
