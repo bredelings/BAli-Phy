@@ -181,8 +181,8 @@ class reg_heap: public Object
     std::vector<std::function<void(const effect&, int)>> register_dist_handlers;
     std::vector<std::function<void(const effect&, int)>> unregister_dist_handlers;
 
-    std::vector<std::function<void(const effect&, int)>> register_likelihood_handlers;
-    std::vector<std::function<void(const effect&, int)>> unregister_likelihood_handlers;
+    std::vector<std::function<void(const register_prob&, int)>> register_likelihood_handlers;
+    std::vector<std::function<void(const register_prob&, int)>> unregister_likelihood_handlers;
 
     std::vector<std::function<void(const effect&, int)>> register_prior_handlers;
     std::vector<std::function<void(const effect&, int)>> unregister_prior_handlers;
@@ -337,9 +337,9 @@ public:
 
     std::unordered_map<int, register_prob> likelihood_terms;
 
-    void register_likelihood_(const effect& e, int s);
+    void register_likelihood_(const register_prob& E, int s);
 
-    void unregister_likelihood_(const effect& e, int s);
+    void unregister_likelihood_(const register_prob& E, int s);
 
     log_double_t likelihood_for_context(int c);
 
