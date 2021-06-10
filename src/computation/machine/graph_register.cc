@@ -306,7 +306,7 @@ void reg_heap::register_likelihood_(const effect& e, int s)
 {
     auto & E = dynamic_cast<const register_likelihood&>(e);
     assert(not likelihood_terms.count(s));
-    likelihood_terms[s] = E.r_dist;
+    likelihood_terms.insert({s,E});
     for(auto& handler: register_likelihood_handlers)
         handler(e, s);
 }
@@ -904,7 +904,7 @@ void reg_heap::register_prior(const effect& e, int s)
     auto& E = dynamic_cast<const ::register_prior&>(e);
     // We aren't supposed to ever register the same step twice.
     assert(not prior_terms.count(s));
-    prior_terms[s] = E.r_dist;
+    prior_terms.insert({s,E});
     for(auto& handler: register_prior_handlers)
         handler(e, s);
 }

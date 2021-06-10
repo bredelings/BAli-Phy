@@ -18,6 +18,7 @@
 #include "kahan.H"
 #include "mcmc/prob_ratios.H"
 #include "mapping.H"
+#include "effects.H"
 
 struct prev_prog_token_t
 {
@@ -334,7 +335,7 @@ public:
 
     log_double_t prior_for_context(int c);
 
-    std::unordered_map<int,int> likelihood_terms;
+    std::unordered_map<int, register_prob> likelihood_terms;
 
     void register_likelihood_(const effect& e, int s);
 
@@ -347,7 +348,7 @@ public:
     prob_ratios_t probability_ratios(int c1, int c2);
 
     // the list of random variables
-    std::unordered_map<int,int> prior_terms;
+    std::unordered_map<int, register_prob> prior_terms;
 
     void register_prior(const effect& e, int s);
     void unregister_prior(const effect& e, int s);

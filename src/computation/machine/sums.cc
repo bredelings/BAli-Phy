@@ -54,29 +54,12 @@ log_double_t reg_heap::prior_for_context(int c)
     evaluate_program(c);
     reroot_at_context(c);
 
-    /*
-      This version doesn't really change the amount of time in incremental_evaluate.
-      However, it drastically increases the amount of time spent in reg_has_value( 30% ),
-      get_reg_value_in_context( 13% ), and prior_for_context( 3% ).
-
-      With those removed, this could be comparable, or even faster.
-    */
-
     double log_pr = 0.0;
     double C = 0.0;
 
-    /*
-     * NOTE: Evaluating a PDF should NOT cause the creation of any new
-     *       random variables, since all the parameters should be forced by the sampling
-     *       operation.
-     *
-     *       This ensures that a range-for is OK. (Range-for's assume that begin() and end() do not change).
-     */
-
-    for(auto [s, _]: prior_terms)
+    for(auto& [s, E]: prior_terms)
     {
-        auto r_pdf_effect = steps[s].call;
-	auto X = value_for_precomputed_reg(r_pdf_effect).exp.as_<::register_prior>().prob;
+	auto X = E.prob;
 
 	double t;
 	if (std::abs(X.log()) > std::abs(log_pr))
@@ -105,22 +88,14 @@ log_double_t reg_heap::likelihood_for_context(int c)
 {
     total_context_like++;
 
-    /*
-      This version doesn't really change the amount of time in incremental_evaluate.
-      However, it drastically increases the amount of time spent in reg_has_value( 30% ),
-      get_reg_value_in_context( 13% ), and likelihood_for_context( 3% ).
-
-      With those removed, this could be comparable, or even faster.
-    */
     evaluate_program(c);
     reroot_at_context(c);
 
     double log_pr = 0.0;
     double C = 0.0;
-    for(auto [s,_]: likelihood_terms)
+    for(auto& [s,E]: likelihood_terms)
     {
-        int r_likelihood_effect = steps[s].call;
-	auto X = value_for_precomputed_reg(r_likelihood_effect).exp.as_<register_likelihood>().prob;
+	auto& X = E.prob;
 
 	double t;
 	if (std::abs(X.log()) > std::abs(log_pr))
