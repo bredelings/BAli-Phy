@@ -1065,7 +1065,7 @@ void reg_heap::unregister_dist(const ::register_dist& D, int s)
 
     dist_type.erase(D.r);
 
-    for(auto& handler: register_dist_handlers)
+    for(auto& handler: unregister_dist_handlers)
         handler(D,s);
 }
 
