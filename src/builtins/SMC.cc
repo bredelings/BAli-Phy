@@ -1189,7 +1189,7 @@ log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double swi
         m(0,i) = 1.0/k;
 
     // 4. Perform the forward algorithm
-    int prev_column = 0;
+    auto transition_probs = get_transition_probs_deploid(switching_rate, k, sites);
     for(int column1=0; column1<L; column1++)
     {
         double maximum = 0;
@@ -1197,10 +1197,7 @@ log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double swi
         // Compute the probability of going from panel haplotype i -> j.
         // Note that the switching probability includes the probability of "switching" from i->i.
         int column2 = column1 + 1;
-        double dist = sites[column1].as_int() - prev_column;
-        double pr_switch = (1.0-exp(-switching_rate*dist));
-        double transition_diff_parent = pr_switch / k;
-        double transition_same_parent = (1.0 - pr_switch) + (pr_switch / k);
+        auto [transition_diff_parent, transition_same_parent] = transition_probs[column1];
 
         int emitted_letter = get_allele(haplotype, column1); // This will be 0 or 1, or negative for a missing value.
 
@@ -1221,7 +1218,6 @@ log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double swi
             if (total > maximum) maximum = total;
             m(column2,i2) = total;
         }
-        prev_column = sites[column1].as_int();
 
         scale[column2] = scale[column1];
 
