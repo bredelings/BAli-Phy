@@ -1130,6 +1130,43 @@ log_double_t deploid_01_plaf_only_CSD(const EVector& alt_allele_frequency, const
     return {Pr};
 }
 
+vector<double> get_switching_probs(double switching_rate, const EVector& sites)
+{
+    const int L = sites.size();
+    vector<double> pr_switch(L);
+
+    int prev_column = 0;
+    for(int i=0;i<sites.size();i++)
+    {
+        double dist = sites[i].as_int() - prev_column;
+
+        pr_switch[i] = (1.0-exp(-switching_rate*dist));
+
+        prev_column = sites[i].as_int();
+    }
+
+    return pr_switch;
+}
+
+vector<pair<double,double>> get_transition_probs_deploid(double switching_rate, int k, const EVector& sites)
+{
+    const int L = sites.size();
+    auto pr_switch = get_switching_probs(switching_rate, sites);
+
+    vector<pair<double,double>> transition_pr(L);
+
+    for(int i=0;i<L;i++)
+    {
+        double transition_diff_parent = pr_switch[i] / k;
+
+        double transition_same_parent = (1.0 - pr_switch[i]) + transition_diff_parent;
+
+        transition_pr[i] = {transition_diff_parent, transition_same_parent};
+    }
+
+    return transition_pr;
+}
+
 log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double switching_rate, double emission_diff_state, const EVector& haplotype)
 {
     int k = panel.size();
