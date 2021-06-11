@@ -1335,22 +1335,22 @@ extern "C" closure builtin_function_sample_haplotype01_from_panel(OperationArgs&
     EVector haplotype(L);
     int source_haplotype = uniform_int(0,k-1);
 
-    int prev_site = 0;
+    auto pr_switch = get_switching_probs(switching_rate, sites);
     for(int i=0; i<L; i++)
     {
+        // Maybe switch to new source haplotype for this site.
+        if (bernoulli(pr_switch[i]))
+            source_haplotype = uniform_int(0,k-1);
+
         // Get an emitted letter
         int source_letter = get_allele(panel, source_haplotype, i);
         int emitted_letter = source_letter;
-        if (bernoulli(diff_state) and emitted_letter >= 0)
-            emitted_letter = 1 - emitted_letter;
-        if (emitted_letter <= 0)
-            emitted_letter = bernoulli(0.5);
 
-        // Maybe switch to new source haplotype for next site.
-        double dist = sites[i].as_int() - prev_site;
-        double pr_switch = (1.0-exp(-switching_rate*dist));
-        if (bernoulli(pr_switch))
-            source_haplotype = uniform_int(0,k-1);
+        // Handle missing data in panel
+        if (source_letter < 0)
+            emitted_letter = bernoulli(0.5);
+        else if (bernoulli(diff_state))
+            emitted_letter = 1 - emitted_letter;
 
         // Record the value for the haplotype
         haplotype[i] = emitted_letter;
