@@ -89,11 +89,11 @@ load_reads filename = do
   return (sites, reads)
 
 
-builtin builtin_sample_haplotype01_from_panel 4 "sample_haplotype01_from_panel" "SMC"
-sample_haplotype01_from_panel (p_sites,p_haps) switch_rate flip_prob = let raw_action = builtin_sample_haplotype01_from_panel p_haps' p_sites' switch_rate flip_prob
+builtin builtin_sample_haplotype01_from_panel 5 "sample_haplotype01_from_panel" "SMC"
+sample_haplotype01_from_panel (p_sites,p_haps) switch_rate flip_prob = let raw_action s = builtin_sample_haplotype01_from_panel p_haps' p_sites' switch_rate flip_prob s
                                                                            p_haps' = list_to_vector p_haps
                                                                            p_sites' = list_to_vector p_sites
-                                                                       in RandomStructure do_nothing modifiable_structure $ liftIO $ IOAction (\s->(s,raw_action))
+                                                                       in RandomStructure do_nothing modifiable_structure $ liftIO $ IOAction (\s->(s,raw_action s))
 
 builtin builtin_haplotype01_from_panel_probability 5 "haplotype01_from_panel_probability" "SMC"
 haplotype01_from_panel_probability (p_sites,p_haps) switch_rate flip_prob hap = builtin_haplotype01_from_panel_probability p_haps' p_sites' switch_rate flip_prob hap
