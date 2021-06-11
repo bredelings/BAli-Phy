@@ -106,3 +106,15 @@ haplotype01_from_panel panel switch_rate flip_prob  = Distribution
                                                       (error "no quantile")
                                                       (sample_haplotype01_from_panel panel switch_rate flip_prob)
                                                       ()
+
+builtin resample_haplotypes_from_panel'' 13 "resample_haplotypes_from_panel" "SMC"
+
+resample_haplotypes_from_panel' indices (p_sites, p_haps) switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context io_state =
+    resample_haplotypes_from_panel'' context io_state indices haplotypes p_haps p_sites' switch_rate flip_prob weights' reads' error_rate c outlier_frac
+        where
+          p_sites' = list_to_vector p_sites
+          weights' = list_to_vector weights
+          reads' = list_to_vector $ map (\(x,y) -> c_pair x y) reads
+
+resample_haplotypes_from_panel indices panel switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context =
+    IOAction $ pair_from_c . resample_haplotypes_from_panel' indices panel switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context
