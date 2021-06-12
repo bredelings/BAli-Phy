@@ -32,7 +32,7 @@ bool register_prior::operator==(const Object& O) const
 
 string register_prior::print() const
 {
-    return string("register_prior[")+std::to_string(r_dist)+","+std::to_string(r_prob)+","+std::to_string(prob)+"]";
+    return string("register_prior[")+std::to_string(r_dist)+","+std::to_string(r_prob)+","+std::to_string(prob.log())+"]";
 }
 
 void register_prior::register_effect(reg_heap& M, int s) const
@@ -70,7 +70,7 @@ bool register_likelihood::operator==(const Object& O) const
 
 string register_likelihood::print() const
 {
-    return string("register_likelihood[")+std::to_string(r_dist)+","+std::to_string(r_prob)+","+std::to_string(prob)+"]";
+    return string("register_likelihood[")+std::to_string(r_dist)+","+std::to_string(r_prob)+","+std::to_string(prob.log())+"]";
 }
 
 void register_likelihood::register_effect(reg_heap& M, int s) const
