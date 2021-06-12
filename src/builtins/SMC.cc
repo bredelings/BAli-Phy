@@ -1321,19 +1321,19 @@ extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& 
 
 extern "C" closure builtin_function_sample_haplotype01_from_panel(OperationArgs& Args)
 {
-    // 0. Population-Level Allele Frequencies (PLAF) - an EVector of double.
-    auto arg0 = Args.evaluate(0);
+    // 0. Panel - EVector of Evector of Int
+    auto arg0 = Args.evaluate_(0);
     auto& panel = arg0.as_<EVector>();
 
-    // 1. Population-Level Allele Frequencies (PLAF) - an EVector of double.
-    auto arg1 = Args.evaluate(1);
+    // 1. Sites - EVector of Int
+    auto arg1 = Args.evaluate_(1);
     auto& sites = arg1.as_<EVector>();
 
     // 2. Switching rate
-    double switching_rate = Args.evaluate(2).as_double();
+    double switching_rate = Args.evaluate_(2).as_double();
 
     // 3. State-flipping probability
-    double diff_state = Args.evaluate(3).as_double();
+    double diff_state = Args.evaluate_(3).as_double();
 
     int k = panel.size();
     assert(k > 0);
