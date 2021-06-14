@@ -12,10 +12,18 @@ namespace Haskell
 {
 
 typedef expression_ref ImpSpec;
+
+typedef expression_ref Kind;
+typedef expression_ref Type;
+typedef expression_ref Pattern;
+typedef expression_ref Expression;
+
     
 struct Var: public Object
 {
     Located<std::string> name;
+    std::optional<Type> type;
+
     Var* clone() const { return new Var(*this);}
     std::string print() const;
     Var(const Located<std::string>& s):name(s) {}
@@ -24,6 +32,7 @@ struct Var: public Object
 struct TypeVar: public Object
 {
     Located<std::string> name;
+    std::optional<Kind> kind;
 
     TypeVar* clone() const { return new TypeVar(*this);}
     std::string print() const;
@@ -119,10 +128,6 @@ LPat = WildPat          -- wildcard pattern
      | NPlusKPat        -- n+k patterns
      | SigPat LPat (HsPatSigType NoGhcTc) -- pattern with a type signature?
 */
-
-typedef expression_ref Type;
-typedef expression_ref Pattern;
-typedef expression_ref Expression;
 
 struct Context
 {
