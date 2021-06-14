@@ -690,9 +690,49 @@ set<string> from_this_module(const string& mod_name, set<string> names)
             ok_names.insert(name);
     return ok_names;
 }
-
+/*
+data C a => D a = Foo (S a)
+type S a = [D a]
+class C a where
+   bar :: a -> D a -> Bool
+*/
 vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group)
 {
+    // The primarily goal here is to infer the kind for the type and class names!
+    // This will depend on the kinds of earlier type_decl_groups, as well as earlier modules.
+
+
+    // How can type variables come up?
+    // * In type/class headers (context => T u1 u2 .. un)
+    //   (Note that the context can't contain any variables other than u1..u[n].
+
+    // For data/newtype declarations
+    // * In types or constraints on individual data constructors
+    //   (Again, only the variables u1...u[n] can occur.
+    // * The type constructor T has kind k1 -> k2 -> ... -> k[n] -> *, where
+    //     u[i] :: k[i]
+    // * These type constructors can be partially applied.
+
+    // For type synonym declarations
+    // * there is no context
+    // * the rhs can only contain u1....u[n]
+    // * T has kind k[1] -> k[2] -> ... -> k[n] -> k  where u[i] :: k[i]
+    //   and  k is the kind of the rhs.
+    // * These type constructors can NOT be partially applied.
+    // * Recursive type synonyms are not allowed, unless an ADT intervenes.
+    // * A synonym and its rhs are completely interchangeable, except in ... instance decls? (Section 4.3.2)
+
+    // For newtype declarations
+    // ?? they are more like data declarations, but shouldn't have runtime overhead.
+
+    // For class declarations:
+    // * Class variables are scoped over the body.
+    // * the type for each method must mention the class variable u[1].
+    // * the type for each method MAY mention over variables.
+    // * constraints on a class method may ONLY mention NON-class variables.
+    // * 
+    
+    
     return type_decl_group;
 }
 
@@ -743,6 +783,8 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
 
     for(auto& type_decl_group: type_decl_groups)
         type_decl_group = infer_kinds(type_decl_group);
+
+    // FIXME: Handle instances.
 
 // See equivalents in GHC Rename/Module.hs
     // We are trying to find strongly connected components of
