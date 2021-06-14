@@ -682,6 +682,20 @@ set<string> free_type_vars(const Haskell::InstanceDecl& instance_decl)
 
 }
 
+set<string> from_this_module(const string& mod_name, set<string> names)
+{
+    set<string> ok_names;
+    for(auto& name: names)
+        if (get_module_name(name) == mod_name)
+            ok_names.insert(name);
+    return ok_names;
+}
+
+vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group)
+{
+    return type_decl_group;
+}
+
 vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_ref>& initial_class_and_type_decls)
 {
     // [(name,names-we-depend-on)]  No instances.
@@ -720,12 +734,15 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
             std::abort();
     }
 
+    for(auto& [type, referenced_types]: referenced_types)
+        referenced_types = from_this_module(name, referenced_types);
+
     auto ordered_name_groups = get_ordered_strong_components(referenced_types);
 
     auto type_decl_groups = map_groups( ordered_name_groups, decl_for_type );
 
     for(auto& type_decl_group: type_decl_groups)
-        ;
+        type_decl_group = infer_kinds(type_decl_group);
 
 // See equivalents in GHC Rename/Module.hs
     // We are trying to find strongly connected components of
