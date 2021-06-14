@@ -645,6 +645,24 @@ set<string> free_type_vars(const Haskell::DataOrNewtypeDecl& type_decl)
 {
     set<string> tvars;
     add(tvars, free_type_vars(type_decl.context));
+    for(auto& constr: type_decl.constructors)
+    {
+        if (constr.context)
+            add(tvars, free_type_vars(*constr.context));
+
+        if (constr.is_record_constructor())
+        {
+            auto& field_decls = std::get<1>(constr.fields).field_decls;
+            for(auto& field: field_decls)
+                add(tvars, free_type_vars_from_type(field.type));
+        }
+        else
+        {
+            auto& types = std::get<0>(constr.fields);
+            for(auto& type: types)
+                add(tvars, free_type_vars_from_type(type));
+        }
+    }
     return tvars;
 }
 
