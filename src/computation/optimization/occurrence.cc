@@ -20,12 +20,6 @@
 
 #include "simplifier.H"
 
-// TODO: split out dependency analysis into own file.
-
-typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph; 
-typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
-typedef boost::graph_traits<Graph>::edge_descriptor Edge_t;
-
 using std::string;
 using std::vector;
 using std::list;
