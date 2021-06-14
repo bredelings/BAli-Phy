@@ -26,6 +26,7 @@
 #include "computation/optimization/float-out.H"
 #include "computation/optimization/inliner.H"
 #include "computation/parser/haskell.H"
+#include "util/graph.H"
 
 using std::pair;
 using std::map;
@@ -665,8 +666,10 @@ set<string> free_type_vars(const Haskell::InstanceDecl& instance_decl)
 
 vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_ref>& initial_class_and_type_decls)
 {
-    // [(name,decl,names-we-depend-on)]
-    vector<tuple<string,expression_ref,set<string>>> class_type_no_instance_decls;
+    // [(name,names-we-depend-on)]  No instances.
+    map<string,set<string>> referenced_types;
+
+    map<string, expression_ref> decl_for_type;
 
     vector<tuple<Haskell::InstanceDecl,set<string>>> instance_decls;
 
@@ -675,17 +678,20 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto& class_decl = decl.as_<Haskell::ClassDecl>();
-            class_type_no_instance_decls.push_back({class_decl.name, decl, free_type_vars(class_decl)});
+            referenced_types[class_decl.name] = free_type_vars(class_decl);
+            decl_for_type[class_decl.name] = decl;
         }
         else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
             auto& type_decl = decl.as_<Haskell::DataOrNewtypeDecl>();
-            class_type_no_instance_decls.push_back({type_decl.name, decl, free_type_vars(type_decl)});
+            referenced_types[type_decl.name] = free_type_vars(type_decl);
+            decl_for_type[type_decl.name] = decl;
         }
         else if (decl.is_a<Haskell::TypeSynonymDecl>())
         {
             auto& type_decl = decl.as_<Haskell::TypeSynonymDecl>();
-            class_type_no_instance_decls.push_back({type_decl.name, decl, free_type_vars(type_decl)});
+            referenced_types[type_decl.name] = free_type_vars(type_decl);
+            decl_for_type[type_decl.name] = decl;
         }
         else if (decl.is_a<Haskell::InstanceDecl>())
         {
@@ -696,7 +702,14 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
             std::abort();
     }
 
-    // See equivalents in GHC Rename/Module.hs
+    auto ordered_name_groups = get_ordered_strong_components(referenced_types);
+
+    auto type_decl_groups = map_groups( ordered_name_groups, decl_for_type );
+
+    for(auto& type_decl_group: type_decl_groups)
+        ;
+
+// See equivalents in GHC Rename/Module.hs
     // We are trying to find strongly connected components of
     //  types, type classes, and instances.
 
@@ -738,7 +751,7 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
 
     // Looks like code for determining inlining
 
-    return {};
+    return type_decl_groups;
 }
 
 void Module::desugar(const Program& P)
