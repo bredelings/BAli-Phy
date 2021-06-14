@@ -409,7 +409,7 @@ string TypeSynonymDecl::print() const
 
 std::string DataOrNewtypeDecl::print() const
 {
-    string result = (data_or_newtype == DataOrNewtype::data) ? "data" : "newtype";
+    string result = (data_or_newtype == DataOrNewtype::data) ? "data " : "newtype ";
     result += show_type_or_class_header(context, name, type_vars);
     result += " = ";
     vector<string> cons;
