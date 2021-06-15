@@ -1121,8 +1121,9 @@ void mark_exported_decls(CDecls& decls, const map<string,symbol_info>& exports, 
     }
 
     // Check that we don't export things that don't exist
-    if (not exported.empty())
+    if (false and not exported.empty())
     {
+        // FIXME: class members don't have a value def, and so this doesn't work.
         myexception e;
         e<<"Module '"<<module_name<<"' exports undefined symbols:\n";
         for(auto& name: exported)
