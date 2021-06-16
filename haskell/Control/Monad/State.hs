@@ -10,20 +10,20 @@ import Data.Function -- for id
 -- data State s a = State {runState::(s->(a,s))}
 data State s a = State (s->(a,s))
 
-runState :: s -> (a,s)
-runState s (IOReturn x)             = (x,s)
-runState s (State f)                = f s
-runState s (IOAction f)             = let (s', x) = f s in (x,s')
+runState :: State s a -> s -> (a,s)
+runState (IOReturn x) s             = (x,s)
+runState (State f) s                = f s
+runState (IOAction f) s             = let (s', x) = f s in (x,s')
 -- maybe we need the msplit operation to generically do interleaved stuff in the State monad?
-runState s (LazyIO f)               = runState s f
-runState s (IOAndPass (LazyIO f) g) = let (x , _) = runState s f in runState s  (g x)
-runState s (IOAndPass f          g) = let (x, s') = runState s f in runState s' (g x)
-runState s (MFix f)                 = let xs@(x, s') = runState s (f x) in xs -- is this right?
+runState (LazyIO f) s               = runState f s
+runState (IOAndPass (LazyIO f) g) s = let (x , _) = runState f s in runState (g x) s
+runState (IOAndPass f          g) s = let (x, s') = runState f s in runState (g x) s'
+runState (MFix f) s                 = let xs@(x, s') = runState (f x) s in xs -- is this right?
 
-get = IOAction id
-put s = IOAction (\_ -> (s,()))
-modify f = IOAction (\s -> (f s,()))
+get      = State ( \s -> (s , s)   )
+put s    = State ( \_ -> ((), s)   )
+modify f = State ( \s -> ((), f s) )
 
-evalState x s = fst $ runState s x
-execState x s = snd $ runState s x
+evalState x s = fst $ runState x s
+execState x s = snd $ runState x s
 -- mapState
