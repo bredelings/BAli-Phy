@@ -1212,21 +1212,21 @@ log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double swi
         int emitted_letter = get_allele(haplotype, column1); // This will be 0 or 1, or negative for a missing value.
 
         bool all_previous_missing = true;
-        for(int i2=0;i2<k;i2++)
+        for(int state2=0;state2<k;state2++)
         {
-            // Emission is 1.0 if missing data at i2
-            int copied_letter  = get_allele(panel, i2, column1);
-            double emission_i2 = emission_probability( copied_letter, emitted_letter, emission_diff_state, emission_same_state, all_previous_missing );
+            // Emission is 1.0 if missing data at state2
+            int copied_letter  = get_allele(panel, state2, column1);
+            double emission_state2 = emission_probability( copied_letter, emitted_letter, emission_diff_state, emission_same_state, all_previous_missing );
             if (copied_letter >= 0) all_previous_missing = false;
 
             double total = 0;
-            for(int i1=0;i1<k;i1++)
+            for(int state1=0;state1<k;state1++)
             {
-                double transition_i1_i2 = (i1==i2) ? transition_same_parent : transition_diff_parent;
-                total += m(column1,i1) * transition_i1_i2 * emission_i2;
+                double transition_state1_state2 = (state1==state2) ? transition_same_parent : transition_diff_parent;
+                total += m(column1,state1) * transition_state1_state2 * emission_state2;
             }
             if (total > maximum) maximum = total;
-            m(column2,i2) = total;
+            m(column2,state2) = total;
         }
 
         scale[column2] = scale[column1];
@@ -1236,8 +1236,8 @@ log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double swi
         {
             int logs = -(int)log2(maximum);
             double scale_factor = pow2(logs);
-            for(int i2=0;i2<k;i2++)
-                m(column2,i2) *= scale_factor;
+            for(int state2=0;state2<k;state2++)
+                m(column2,state2) *= scale_factor;
             scale[column2] -= logs;
         }
     }
