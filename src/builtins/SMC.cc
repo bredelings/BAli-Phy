@@ -1193,40 +1193,43 @@ log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double swi
     assert(haplotype.size() == L);
 
     // 3. Set the probability of copying from each of the k parents to 1/k at location 0.
-    Matrix m(L+1,k);
+    Matrix F(L+1,k);
     vector<int> scale(L+1,0);
     for(int i=0;i<k;i++)
-        m(0,i) = 1.0/k;
+        F(0,i) = 1.0/k;
+
+
+    auto transition_probs = get_transition_probs_deploid(switching_rate, k, sites);
+    auto T = [&](int site, int path_state1, int path_state2)
+    {
+        auto& [transition_diff_state, transition_same_state] = transition_probs[site];
+        return (path_state1 == path_state2) ? transition_same_state : transition_diff_state;
+    };
 
     // 4. Perform the forward algorithm
-    auto transition_probs = get_transition_probs_deploid(switching_rate, k, sites);
-    for(int column1=0; column1<L; column1++)
+    for(int site=0; site<L; site++)
     {
-        double maximum = 0;
-
-        // Compute the probability of going from panel haplotype i -> j.
-        // Note that the switching probability includes the probability of "switching" from i->i.
-        int column2 = column1 + 1;
-        auto [transition_diff_parent, transition_same_parent] = transition_probs[column1];
-
-        int emitted_letter = get_allele(haplotype, column1); // This will be 0 or 1, or negative for a missing value.
+        int column1 = site;
+        int column2 = site + 1;
 
         bool all_previous_missing = true;
         for(int state2=0;state2<k;state2++)
         {
-            // Emission is 1.0 if missing data at state2
-            int copied_letter  = get_allele(panel, state2, column1);
-            double emission_state2 = emission_probability( copied_letter, emitted_letter, emission_diff_state, emission_same_state, all_previous_missing );
-            if (copied_letter >= 0) all_previous_missing = false;
-
             double total = 0;
             for(int state1=0;state1<k;state1++)
-            {
-                double transition_state1_state2 = (state1==state2) ? transition_same_parent : transition_diff_parent;
-                total += m(column1,state1) * transition_state1_state2 * emission_state2;
-            }
-            if (total > maximum) maximum = total;
-            m(column2,state2) = total;
+                total += F(column1,state1) * T(column1, state1, state2);
+            F(column2,state2) = total;
+        }
+
+        double maximum = 0;
+        for(int state2=0;state2<k;state2++)
+        {
+            // Emission is 1.0 if missing data at state2
+            int emitted_letter = get_allele(haplotype, column1); // This will be 0 or 1, or negative for a missing value.
+            int copied_letter  = get_allele(panel, state2, column1);
+            if (copied_letter >= 0) all_previous_missing = false;
+            F(column2,state2) *= emission_probability( copied_letter, emitted_letter, emission_diff_state, emission_same_state, all_previous_missing );
+            maximum = std::max(maximum, F(column2,state2) );
         }
 
         scale[column2] = scale[column1];
@@ -1237,7 +1240,7 @@ log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double swi
             int logs = -(int)log2(maximum);
             double scale_factor = pow2(logs);
             for(int state2=0;state2<k;state2++)
-                m(column2,state2) *= scale_factor;
+                F(column2,state2) *= scale_factor;
             scale[column2] -= logs;
         }
     }
@@ -1245,7 +1248,7 @@ log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double swi
     // 3. Compute the total probability
     double total = 0;
     for(int i=0;i<k;i++)
-        total += m(L-1,i);
+        total += F(L-1,i);
 
     log_double_t Pr = pow(log_double_t(2.0),scale[L-1]) * total;
 
