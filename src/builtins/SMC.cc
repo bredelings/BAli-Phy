@@ -1907,13 +1907,13 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
     int n_panel_haps = panel.size();
 
     // 5. Get sites (EVector)
-    EVector sites = Args.evaluate(5).as_<EVector>();
+    EVector sites = evaluate_slot(C,5).as_<EVector>();
 
     // 6. Get switching rate
-    double switching_rate = Args.evaluate(6).as_double();
+    double switching_rate = evaluate_slot(C,6).as_double();
 
     // 7. Get emission_diff_state
-    double emission_diff_state = Args.evaluate(7).as_double();
+    double emission_diff_state = evaluate_slot(C,7).as_double();
     double emission_same_state = 1.0 - emission_diff_state;
 
     // 8. Mixture weights = EVector of double.
