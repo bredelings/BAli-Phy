@@ -1862,86 +1862,29 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
     return EPair(io_state+1, ratio);
 }
 
-
-// We need the markov blanket for h[i]:
-//   Pr(h[i] | panel) * Pr(data | h, w, rror_rates, c)
-
-// Therefore, we need(indices, haplotypes, panel, switch_rate, miscopy_prob, data, w, error_rate, c)
-
-extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs& Args)
+log_double_t resample_haps_from_panel(context_ref& C,
+                                      const vector<int>& K,
+                                      const vector<int>& haplotype_regs,
+                                      const EVector& haplotypes,
+                                      const EVector& panel,
+                                      const EVector& sites,
+                                      double switching_rate,
+                                      double miscopy_prob,
+                                      const EVector& weights,
+                                      const EVector& data,
+                                      double error_rate,
+                                      double concentration,
+                                      double outlier_frac)
 {
-    assert(not Args.evaluate_changeables());
-
-    auto evaluate_slot = [&](context_ref& C, int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
-
-    reg_heap& M = Args.memory();
-
-    // 0. context index = int
-    int context_index = Args.evaluate(0).as_int();
-    context_ref C(M,context_index);
-
-    // 1. IO state = int
-    int io_state = Args.evaluate(1).as_int();
-
-    // 2. Get haplotype indices ([])
-    context_ptr hap_indices(C, Args.reg_for_slot(2));
-    vector<int> K = (vector<int>) hap_indices.list_to_vector();
+    assert(all_different(K));
 
     int n_resample_haps = K.size();
-
-    // 3. Get haplotypes ([])
-    vector<int> haplotype_regs(n_resample_haps);
-
-    context_ptr haplotypes_ptr(C, Args.reg_for_slot(3));
-    for(int i=0; i<n_resample_haps; i++)
-    {
-        if (auto haplotype_mod = haplotypes_ptr.list_element(K[i]).modifiable())
-            haplotype_regs[i] = haplotype_mod->get_reg();
-        else
-            throw myexception()<<"propose_weights_and_haplotypes_from_plaf: haplotype"<<i+1<<" reg "<<haplotype_regs[0]<<" is not a modifiable!";
-    }
-
-    EVector haplotypes = haplotypes_ptr.list_to_vector();
-
-    // 4. Get panel ([])
-    context_ptr panel_ptr(C, Args.reg_for_slot(4));
-    EVector panel = panel_ptr.list_to_vector();
-
     int n_panel_haps = panel.size();
-
-    // 5. Get sites (EVector)
-    EVector sites = evaluate_slot(C,5).as_<EVector>();
-
-    // 6. Get switching rate
-    double switching_rate = evaluate_slot(C,6).as_double();
-
-    // 7. Get emission_diff_state
-    double emission_diff_state = evaluate_slot(C,7).as_double();
+    double emission_diff_state = miscopy_prob;
     double emission_same_state = 1.0 - emission_diff_state;
-
-    // 8. Mixture weights = EVector of double.
-    auto weights = evaluate_slot(C, 8).as_<EVector>();
-
-    // 9. data = EVector of EPair of Int
-    auto arg6 = evaluate_slot(C, 9);
-    auto& data = arg6.as_<EVector>();
-
-    // 10. error_rate = double
-    double error_rate = evaluate_slot(C, 10).as_double();
-
-    // 11. concentration = double
-    double concentration = evaluate_slot(C, 11).as_double();
-
-    // 12. outlier_frac = double
-    double outlier_frac = evaluate_slot(C, 12).as_double();
-
-    // ---- 1. Make sure that the haplotypes to resample are DIFFERENT --------//
-    if (not all_different(K))
-        return EPair(io_state+1, log_double_t(1));
-
     int L = haplotypes[0].as_<EVector>().size();
 
-    //---------- 2. Compute transition probabilities -----------//
+    //---------- 1. Compute transition probabilities -----------//
     int n_path_states = ipow(n_panel_haps, n_resample_haps);
 
     // get a single path state, and advance the iterator
@@ -1970,7 +1913,7 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
         return pr;
     };
 
-    //---------- 3. Compute emission probabilities -----------//
+    //---------- 2. Compute emission probabilities -----------//
 
     int n_haplotype_states = (1<<n_resample_haps);
     auto emission_prs = emission_pr(K, data, haplotypes, weights, error_rate, concentration, outlier_frac);
@@ -2001,7 +1944,7 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
     };
 
 
-    //----------------------- 4. Forward matrix-----------------------//
+    //----------------------- 3. Forward matrix-----------------------//
     matrix<log_double_t> F(L+1, n_path_states, 0.0);
 
     // Initially each combination of paths is equally likely.
@@ -2024,8 +1967,8 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
         for(int state2=0;state2<n_path_states;state2++)
             F(column2,state2) *= E(site, state2);
     }
-
-    //--------- 5. Back-sample path_states from forward matrix -------//
+    
+    //--------- 4. Back-sample path_states from forward matrix -------//
     vector<log_double_t> pr_path(n_path_states);
     for(int path_state=0; path_state<n_path_states; path_state++)
         pr_path[path_state] = F(L, path_state);
@@ -2044,7 +1987,7 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
     }
     std::reverse(path_states.begin(), path_states.end());
 
-    //---------- 6. Sample new haplotypes given path states-----------//
+    //---------- 5. Sample new haplotypes given path states-----------//
     vector<object_ptr<EVector>> new_haplotypes( n_resample_haps );
     for(auto& h: new_haplotypes)
         h = object_ptr<EVector>(new EVector(L));
@@ -2063,6 +2006,88 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
 
     for(int i=0;i<n_resample_haps;i++)
         C.set_reg_value(haplotype_regs[i], new_haplotypes[i]);
+
+    //---------- 6. Compute total probability-----------//
+    log_double_t total = 0;
+    for(int s=0;s<n_path_states;s++)
+        total += F(L,s);
+
+    return total;
+}
+
+// We need the markov blanket for h[i]:
+//   Pr(h[i] | panel) * Pr(data | h, w, rror_rates, c)
+
+// Therefore, we need(indices, haplotypes, panel, switch_rate, miscopy_prob, data, w, error_rate, c)
+
+extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    auto evaluate_slot = [&](context_ref& C, int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+
+    reg_heap& M = Args.memory();
+
+    // 0. context index = int
+    int context_index = Args.evaluate(0).as_int();
+    context_ref C(M,context_index);
+
+    // 1. IO state = int
+    int io_state = Args.evaluate(1).as_int();
+
+    // 2. Get haplotype indices ([])
+    context_ptr hap_indices(C, Args.reg_for_slot(2));
+    vector<int> K = (vector<int>) hap_indices.list_to_vector();
+
+    // 3. Get haplotypes ([])
+    vector<int> haplotype_regs(K.size());
+
+    context_ptr haplotypes_ptr(C, Args.reg_for_slot(3));
+    for(int i=0; i<K.size(); i++)
+    {
+        if (auto haplotype_mod = haplotypes_ptr.list_element(K[i]).modifiable())
+            haplotype_regs[i] = haplotype_mod->get_reg();
+        else
+            throw myexception()<<"propose_weights_and_haplotypes_from_plaf: haplotype"<<i+1<<" reg "<<haplotype_regs[0]<<" is not a modifiable!";
+    }
+
+    EVector haplotypes = haplotypes_ptr.list_to_vector();
+
+    // 4. Get panel ([])
+    context_ptr panel_ptr(C, Args.reg_for_slot(4));
+    EVector panel = panel_ptr.list_to_vector();
+
+    // 5. Get sites (EVector)
+    EVector sites = evaluate_slot(C,5).as_<EVector>();
+
+    // 6. Get switching rate
+    double switching_rate = evaluate_slot(C,6).as_double();
+
+    // 7. Get emission_diff_state
+    double miscopy_prob = evaluate_slot(C,7).as_double();
+
+    // 8. Mixture weights = EVector of double.
+    auto weights = evaluate_slot(C, 8).as_<EVector>();
+
+    // 9. data = EVector of EPair of Int
+    auto arg6 = evaluate_slot(C, 9);
+    auto& reads = arg6.as_<EVector>();
+
+    // 10. error_rate = double
+    double error_rate = evaluate_slot(C, 10).as_double();
+
+    // 11. concentration = double
+    double concentration = evaluate_slot(C, 11).as_double();
+
+    // 12. outlier_frac = double
+    double outlier_frac = evaluate_slot(C, 12).as_double();
+
+    // ---- 1. Make sure that the haplotypes to resample are DIFFERENT --------//
+    if (not all_different(K))
+        return EPair(io_state+1, log_double_t(1));
+
+    // ---- 2. Resample the haplotypes
+    resample_haps_from_panel(C, K, haplotype_regs, haplotypes, panel, sites, switching_rate, miscopy_prob, weights, reads, error_rate, concentration, outlier_frac);
 
     return EPair(io_state+1, constructor("()",0));
 }
