@@ -1403,10 +1403,10 @@ log_double_t site_likelihood_for_reads01(int ref, int alt, double wsaf, double e
            +outlier_frac      * beta_binomial_pdf(ref+alt, 1.0, 1.0, alt);
 }
 
-log_double_t site_likelihood_for_reads01(const expression_ref& data, double wsaf, double error_rate, double c, double outlier_frac)
+log_double_t site_likelihood_for_reads01(const expression_ref& reads, double wsaf, double error_rate, double c, double outlier_frac)
 {
-    int ref = data.as_<EPair>().first.as_int();
-    int alt = data.as_<EPair>().second.as_int();
+    int ref = reads.as_<EPair>().first.as_int();
+    int alt = reads.as_<EPair>().second.as_int();
 
     return site_likelihood_for_reads01(ref, alt, wsaf, error_rate, c, outlier_frac);
 }
@@ -1479,7 +1479,7 @@ double get_prior(int A, double f, int n)
     return prior;
 }
 
-matrix<log_double_t> emission_pr(const vector<int>& K, const EVector& data, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration, double outlier_frac)
+matrix<log_double_t> emission_pr(const vector<int>& K, const EVector& reads, const EVector& haplotypes, const EVector& weights, double error_rate, double concentration, double outlier_frac)
 {
     int L = haplotypes[0].as_<EVector>().size();
     int N = K.size();
@@ -1503,7 +1503,7 @@ matrix<log_double_t> emission_pr(const vector<int>& K, const EVector& data, cons
             // Avoid out-of-bounds terms caused by rounding error.
             wsaf = std::max(0.0,std::min(1.0,wsaf));
 
-            E(site, state) = site_likelihood_for_reads01(data[site], wsaf, error_rate, concentration, outlier_frac);
+            E(site, state) = site_likelihood_for_reads01(reads[site], wsaf, error_rate, concentration, outlier_frac);
         }
     }
     return E;
@@ -1565,9 +1565,9 @@ int get_state_from_haplotypes(const EVector& haplotypes, const vector<int>& K, i
 }
 
 // We need the markov blanket for h[i]:
-//   Pr(h[i] | plaf) * Pr(data | h, w, rror_rates, c)
+//   Pr(h[i] | plaf) * Pr(reads | h, w, rror_rates, c)
 
-// Therefore, we need(x[i], x[j], h[i], h[j], i, j, plaf, data, h, w, error_rate, c)
+// Therefore, we need(x[i], x[j], h[i], h[j], i, j, plaf, reads, h, w, error_rate, c)
 
 extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& Args)
 {
@@ -1613,9 +1613,9 @@ extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& 
     // 5. Mixture weights = EVector of double.
     auto weights1 = evaluate_slot(C, 5).as_<EVector>();
 
-    // 6. data = EVector of EPair of Int
+    // 6. reads = EVector of EPair of Int
     auto arg6 = evaluate_slot(C, 6);
-    auto& data = arg6.as_<EVector>();
+    auto& reads = arg6.as_<EVector>();
 
     // 7. error_rate = double
     double error_rate = evaluate_slot(C, 7).as_double();
@@ -1634,7 +1634,7 @@ extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& 
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
-    auto E = emission_pr(K, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
+    auto E = emission_pr(K, reads, haplotypes, weights1, error_rate, concentration, outlier_frac);
 
     //---------- Sample new haplotypes -----------//
     vector<object_ptr<EVector>> new_haplotypes( N );
@@ -1671,9 +1671,9 @@ extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& 
 
 
 // We need the markov blanket for h[i]:
-//   Pr(h[i] | plaf) * Pr(data | h, w, rror_rates, c)
+//   Pr(h[i] | plaf) * Pr(reads | h, w, rror_rates, c)
 
-// Therefore, we need(x[i], x[j], h[i], h[j], i, j, plaf, data, h, w, error_rate, c)
+// Therefore, we need(x[i], x[j], h[i], h[j], i, j, plaf, reads, h, w, error_rate, c)
 
 extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(OperationArgs& Args)
 {
@@ -1733,9 +1733,9 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
     constexpr int weight_slot = 6;
     auto weights1 = evaluate_slot(C0, weight_slot).as_<EVector>();
 
-    // 7. data = EVector of EPair of Int
+    // 7. reads = EVector of EPair of Int
     auto arg6 = evaluate_slot(C0, 7);
-    auto& data = arg6.as_<EVector>();
+    auto& reads = arg6.as_<EVector>();
 
     // 8. error_rate = double
     double error_rate = evaluate_slot(C0, 8).as_double();
@@ -1771,9 +1771,9 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
-    auto E1 = emission_pr(K, data, haplotypes, weights1, error_rate, concentration, outlier_frac);
+    auto E1 = emission_pr(K, reads, haplotypes, weights1, error_rate, concentration, outlier_frac);
 
-    auto E2 = emission_pr(K, data, haplotypes, weights2, error_rate, concentration, outlier_frac);
+    auto E2 = emission_pr(K, reads, haplotypes, weights2, error_rate, concentration, outlier_frac);
 
     //---------- Sample new haplotypes for C1 -----------//
     vector<object_ptr<EVector>> new_haplotypes1( N );
@@ -1871,7 +1871,7 @@ log_double_t resample_haps_from_panel(context_ref& C,
                                       double switching_rate,
                                       double miscopy_prob,
                                       const EVector& weights,
-                                      const EVector& data,
+                                      const EVector& reads,
                                       double error_rate,
                                       double concentration,
                                       double outlier_frac)
@@ -1916,7 +1916,7 @@ log_double_t resample_haps_from_panel(context_ref& C,
     //---------- 2. Compute emission probabilities -----------//
 
     int n_haplotype_states = (1<<n_resample_haps);
-    auto emission_prs = emission_pr(K, data, haplotypes, weights, error_rate, concentration, outlier_frac);
+    auto emission_prs = emission_pr(K, reads, haplotypes, weights, error_rate, concentration, outlier_frac);
 
     // The probability of emitting a specific haplotype state, given the paths for all resampled haplotypes.
     auto E2 = [&](int site, int haplotype_state, int path_state)
@@ -2016,9 +2016,9 @@ log_double_t resample_haps_from_panel(context_ref& C,
 }
 
 // We need the markov blanket for h[i]:
-//   Pr(h[i] | panel) * Pr(data | h, w, rror_rates, c)
+//   Pr(h[i] | panel) * Pr(reads | h, w, rror_rates, c)
 
-// Therefore, we need(indices, haplotypes, panel, switch_rate, miscopy_prob, data, w, error_rate, c)
+// Therefore, we need(indices, haplotypes, panel, switch_rate, miscopy_prob, reads, w, error_rate, c)
 
 extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs& Args)
 {
@@ -2069,7 +2069,7 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
     // 8. Mixture weights = EVector of double.
     auto weights = evaluate_slot(C, 8).as_<EVector>();
 
-    // 9. data = EVector of EPair of Int
+    // 9. reads = EVector of EPair of Int
     auto arg6 = evaluate_slot(C, 9);
     auto& reads = arg6.as_<EVector>();
 
