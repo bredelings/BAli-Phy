@@ -118,3 +118,14 @@ resample_haplotypes_from_panel' indices (p_sites, p_haps) switch_rate flip_prob 
 
 resample_haplotypes_from_panel indices panel switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context =
     IOAction $ pair_from_c . resample_haplotypes_from_panel' indices panel switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context
+
+builtin resample_weights_and_haplotypes_from_panel'' 14 "resample_weights_and_haplotypes_from_panel" "SMC"
+
+resample_weights_and_haplotypes_from_panel' indices titres haps (p_sites, p_haps) switching_rate miscopy_prob w reads e c outlier_frac context io_state =
+    resample_weights_and_haplotypes_from_panel'' context io_state indices titres haps p_haps p_sites switching_rate miscopy_prob w' reads' e c outlier_frac
+           where
+             w'       = list_to_vector w
+             reads'   = list_to_vector $ map (\(x,y) -> c_pair x y) reads
+
+resample_weights_and_haplotypes_from_panel indices titres panel switching_rate miscopy_prob weights reads haplotypes error_rate c outlier_frac context =
+    IOAction $ pair_from_c . resample_weights_and_haplotypes_from_panel' indices titres haplotypes panel switching_rate miscopy_prob weights reads error_rate c outlier_frac context

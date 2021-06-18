@@ -2093,3 +2093,135 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
 }
 
 
+extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    auto evaluate_slot = [&](context_ref& C, int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+
+    reg_heap& M = Args.memory();
+
+    // 0. context index = int
+    int context_index = Args.evaluate(0).as_int();
+    context_ref C0(M,context_index);
+
+    // 1. IO state = int
+    int io_state = Args.evaluate(1).as_int();
+
+    // 2. Get haplotype indices
+    context_ptr hap_indices(C0, Args.reg_for_slot(2));
+    vector<int> K = (vector<int>) hap_indices.list_to_vector();
+
+    int N = K.size();
+
+    int n_states = (1<<N);
+
+    // 3. Get x[i]
+    vector<int> titre_regs(N);
+
+    context_ptr titres_ptr(C0, Args.reg_for_slot(3));
+
+    for(int i=0; i<N; i++)
+    {
+        if (auto titre_mod = titres_ptr.list_element(K[i]).modifiable())
+            titre_regs[i] = titre_mod->get_reg();
+        else
+            throw myexception()<<"propose_weights_and_haplotypes_from_plaf: titre reg"<<i+1<<" is not a modifiable!";
+    }
+
+    // 4. Get h[i]
+    vector<int> haplotype_regs(N);
+
+    context_ptr haplotypes_ptr(C0, Args.reg_for_slot(4));
+    for(int i=0; i<N; i++)
+    {
+        if (auto haplotype_mod = haplotypes_ptr.list_element(K[i]).modifiable())
+            haplotype_regs[i] = haplotype_mod->get_reg();
+        else
+            throw myexception()<<"propose_weights_and_haplotypes_from_plaf: haplotype"<<i+1<<" reg "<<haplotype_regs[0]<<" is not a modifiable!";
+    }
+
+    EVector haplotypes = haplotypes_ptr.list_to_vector();
+
+    // 5. Get panel ([])
+    context_ptr panel_ptr(C0, Args.reg_for_slot(5));
+    EVector panel = panel_ptr.list_to_vector();
+
+    // 6. Get sites (EVector)
+    context_ptr sites_ptr(C0, Args.reg_for_slot(6));
+    EVector sites = sites_ptr.list_to_vector();
+
+    // 7. Get switching rate
+    double switching_rate = evaluate_slot(C0,7).as_double();
+
+    // 8. Get emission_diff_state
+    double miscopy_prob = evaluate_slot(C0,8).as_double();
+
+    // 9. Mixture weights = EVector of double.
+    constexpr int weight_slot = 9;
+    auto weights1 = evaluate_slot(C0, weight_slot).as_<EVector>();
+
+    // 10. reads = EVector of EPair of Int
+    auto arg6 = evaluate_slot(C0, 10);
+    auto& reads = arg6.as_<EVector>();
+
+    // 11. error_rate = double
+    double error_rate = evaluate_slot(C0, 11).as_double();
+
+    // 12. concentration = double
+    double concentration = evaluate_slot(C0, 12).as_double();
+
+    // 13. outlier_frac = double
+    double outlier_frac = evaluate_slot(C0, 13).as_double();
+
+    //----------- 1. Make sure that the N haplotypes are DIFFERENT -------------
+    if (not all_different(K))
+        return EPair(io_state+1, log_double_t(1));
+
+    int L = haplotypes[0].as_<EVector>().size();
+
+    //------------- 2. Copy the context indices ------------------//
+
+    context C1 = C0; // old weights, new haplotype
+
+    context C2 = C0; // new weights, new haplotype
+
+    //-------------- 3. Propose new weights in C2 ----------------//
+
+    log_double_t w_ratio = 1;
+
+    w_ratio *= shift_laplace(C2, titre_regs[0], 3.0);
+
+    if (N >= 2)
+        w_ratio *= shift_laplace(C2, titre_regs[1], 0.125);
+
+    auto weights2 = evaluate_slot(C2, weight_slot).as_<EVector>();
+
+    //---------- 4. Sum out haplotypes and resample -----------//
+
+    auto prob1 = resample_haps_from_panel(C1, K, haplotype_regs, haplotypes, panel, sites, switching_rate, miscopy_prob, weights1, reads, error_rate, concentration, outlier_frac);
+
+    auto prob2 = resample_haps_from_panel(C2, K, haplotype_regs, haplotypes, panel, sites, switching_rate, miscopy_prob, weights2, reads, error_rate, concentration, outlier_frac);
+
+    // NOTE: Unfortunately, we (probably?) can't compute the proposal probability for the haplotypes.
+    //       We CAN compute the proposal probability for the haplotypes+paths.
+    //       But its not clear how to to compute the probability for proposing a haplotype.
+
+    //--------- 5. Choose which weights we will use ----------//
+    auto Pr = vector<log_double_t>{prob1, w_ratio * prob2};
+
+    int choice_index = choose(Pr);
+
+    log_double_t ratio = 1;
+    if (choice_index == 0)
+        C0 = C1;
+    else if (choice_index == 1)
+        C0 = C2;
+
+    if (log_verbose >= 4)
+    {
+        std::cerr<<"propose_weights_and_haplotypes_from_panel: choice = "<<choice_index<<"    Pr = {"<<Pr[0]<<","<<Pr[1]<<"}   ratio = "<<ratio<<"\n";
+    }
+
+    return EPair(io_state+1, constructor("()",0));
+}
