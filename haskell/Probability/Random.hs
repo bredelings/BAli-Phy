@@ -160,14 +160,10 @@ run_lazy' rate dist@(Distribution _ _ _ (RandomStructure effect structure do_sam
   -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy do_sample
   let (raw_x,triggered_x) = structure value do_effects
-      -- Maybe we should register the sequence of density terms, but we are not doing that.
-      -- We use the number of density terms to track the number of random variables...
-      pdf = density dist raw_x
-      -- Note: registering the pdf forces it.
       effect' = do
         run_effects rate $ effect raw_x
         s <- register_dist_sample (dist_name dist)
-        register_prior s pdf
+        sequence_ [register_prior s term | term <- densities dist raw_x]
         register_out_edge s raw_x
       do_effects = unsafePerformIO effect'
   return triggered_x
