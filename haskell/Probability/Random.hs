@@ -31,7 +31,8 @@ make_edges event (PropertyEdge node name) = register_dist_property event node na
 -- Define the Distribution type
 data Distribution a = Distribution String (a->Double) (Double->a) (IO a) Range
 dist_name (Distribution n _ _ _ _) = n
-densities (Distribution _ ds _ _ _) = ds
+annotated_densities (Distribution _ ds _ _ _) = ds
+densities dist x = get_densities $ annotated_densities dist x
 density dist x = balanced_product (densities dist x)
 quantile (Distribution _ _ q _ _) = q
 sampler (Distribution _ _ _ s _) = s
@@ -132,7 +133,8 @@ run_strict' rate (Observe dist datum) = do_effects `seq` return ()
     where effects = do
             s <- register_dist_observe (dist_name dist)
             register_out_edge s datum
-            sequence_ [register_likelihood s term | term <- densities dist datum]
+            density_terms <- make_edges s $ annotated_densities dist datum
+            sequence_ [register_likelihood s term | term <- density_terms]
           do_effects = unsafePerformIO effects
 run_strict' rate (Print s) = putStrLn (show s)
 run_strict' rate (Lazy r) = run_lazy' rate r
@@ -163,7 +165,8 @@ run_lazy' rate dist@(Distribution _ _ _ (RandomStructure effect structure do_sam
       effect' = do
         run_effects rate $ effect raw_x
         s <- register_dist_sample (dist_name dist)
-        sequence_ [register_prior s term | term <- densities dist raw_x]
+        density_terms <- make_edges s $ annotated_densities dist raw_x
+        sequence_ [register_prior s term | term <- density_terms]
         register_out_edge s raw_x
       do_effects = unsafePerformIO effect'
   return triggered_x
@@ -193,7 +196,7 @@ log_to_json loggers = J.Object $ concatMap log_to_json_one loggers
 
 -- Define some helper functions
 no_quantile name = error ("Distribution '"++name++"' has no quantile function")
-make_densities density x = [density x]
+make_densities density x = return [density x]
 
 pair_apply f (x:y:t) = f x y : pair_apply f t
 pair_apply _ t       = t
