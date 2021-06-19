@@ -11,5 +11,10 @@ normal_bounds = realLine
 normal_effect x = add_move $ slice_sample_real_random_variable x normal_bounds
 sample_normal m s = RandomStructure normal_effect modifiable_structure $ liftIO (IOAction (\state -> (state, builtin_sample_normal m s state)))
 
-normal m s = Distribution "normal" (make_densities $ normal_density m s) (normal_quantile m s) (sample_normal m s) normal_bounds
+annotated_normal_density mu sigma x = do
+  mu' <- in_edge mu "mu"
+  sigma' <-  in_edge sigma "sigma"
+  return [normal_density mu' sigma' x]
+
+normal m s = Distribution "normal" (annotated_normal_density m s) (normal_quantile m s) (sample_normal m s) normal_bounds
 
