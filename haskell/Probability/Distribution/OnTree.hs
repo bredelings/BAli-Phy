@@ -41,7 +41,7 @@ annotated_subst_likelihood_fixed_A tree' smodel' sequences = do
   -- we may want to make almost every variable from observe_partition_type into a property
   property "transition_prs" transition_ps
   property "condition likelihoods" cls
---  property "ancestral sequences" anc_seqs
+  property "ancestral sequences" anc_seqs
   property "likelihood" likelihood
   property "weighted frequencies" ()
 
