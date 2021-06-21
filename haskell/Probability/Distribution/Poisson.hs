@@ -48,5 +48,5 @@ sample_poisson_processes ((rate,t1,t2):intervals) = do
   -- FIXME - this doesn't seem very efficient!
   return $ points1 ++ points2
 
-poisson_processes intervals = Distribution "poisson_processes" (poisson_processes_densities intervals) (no_quantile "poisson_processes") (sample_poisson_processes intervals) Nothing
+poisson_processes intervals = Distribution "poisson_processes" (make_densities' $ poisson_processes_densities intervals) (no_quantile "poisson_processes") (sample_poisson_processes intervals) Nothing
 

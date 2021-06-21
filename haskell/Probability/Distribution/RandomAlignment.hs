@@ -65,8 +65,12 @@ triggered_modifiable_alignment value effect = (raw_a, triggered_a) where
     effect'     = force_alignment raw_a `seq` effect
     triggered_a = effect' `seq` raw_a
 
-random_alignment tree hmms model tip_lengths = Distribution "random_alignment"
-                                                            (alignment_prs hmms model)
+
+annotated_alignment_prs hmms' model' alignment = do
+  hmms <- in_edge hmms' "hmms"
+  model <- in_edge model' "imodel"
+  return $ alignment_prs hmms model alignment
+random_alignment tree hmms model tip_lengths = Distribution "random_alignment" (annotated_alignment_prs hmms model)
                                                             (no_quantile "random_alignment")
                                                             (RandomStructure do_nothing triggered_modifiable_alignment do_sample)
                                                             ()

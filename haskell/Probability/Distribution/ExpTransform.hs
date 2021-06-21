@@ -10,7 +10,9 @@ import Probability.Distribution.Cauchy
 -- This contains exp-transformed functions
 expTransform dist@(Distribution name d q s r) = Distribution name' pdf' q' s' r'
  where
-  pdf' x = case (d $ log x) of [pdf] -> pdf/(doubleToLogDouble x)
+  pdf' x = do
+    ds <- d
+    return $ (1.0/doubleToLogDouble x):ds
   q'   = exp . q
   s'   = do v <- dist
             return $ exp v

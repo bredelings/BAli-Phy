@@ -79,7 +79,7 @@ triggered_modifiable_tree = triggered_modifiable_structure modifiable_cayley_tre
 uniform_topology_effect tree = tree `seq` add_move (walk_tree_sample_nni_unsafe tree)
 
 uniform_topology n = Distribution "uniform_topology"
-                                  (\tree -> [uniform_topology_pr n])
+                                  (\tree -> return [uniform_topology_pr n])
                                   (no_quantile "uniform_topology")
                                   (RandomStructure uniform_topology_effect triggered_modifiable_tree (sample_uniform_topology n))
                                   (TreeRange n)
@@ -182,7 +182,7 @@ uniform_time_tree_effect tree = sequence_ [ add_move $ slice_sample_real_random_
 
 -- FIXME -- maybe we should incorporate the "age" reg directly, here?
 uniform_time_tree age n = Distribution "uniform_time_tree"
-                                       (uniform_time_tree_pr age n)
+                                       (make_densities' $ uniform_time_tree_pr age n)
                                        (no_quantile "uniform_time_tree")
                                        (RandomStructure uniform_time_tree_effect triggered_modifiable_time_tree (sample_uniform_time_tree age n))
                                        (TreeRange n)
@@ -239,7 +239,7 @@ sample_coalescent_tree theta n_leaves = do
 
 
 coalescent_tree theta n = Distribution "coalescent_tree"
-                                       (coalescent_tree_pr_factors theta n)
+                                       (make_densities' $ coalescent_tree_pr_factors theta n)
                                        (no_quantile "coalescent")
                                        (RandomStructure coalescent_tree_effect triggered_modifiable_time_tree (sample_coalescent_tree theta n))
                                        (TreeRange n)

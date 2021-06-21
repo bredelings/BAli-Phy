@@ -153,6 +153,9 @@ triggered_modifiable_structure mod_structure force_structure value effect = (raw
 
 modifiable_structure = triggered_modifiable_structure ($) id
 
+-- It seems like we could return raw_x in most cases, except the case of a tree.
+-- But in the tree case, we could return triggered_x.
+
 run_lazy' rate (LiftIO a) = a
 run_lazy' rate (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy' rate f
@@ -197,7 +200,7 @@ log_to_json loggers = J.Object $ concatMap log_to_json_one loggers
 -- Define some helper functions
 no_quantile name = error ("Distribution '"++name++"' has no quantile function")
 make_densities density x = return [density x]
-
+make_densities' densities x = return $ densities x
 pair_apply f (x:y:t) = f x y : pair_apply f t
 pair_apply _ t       = t
 
