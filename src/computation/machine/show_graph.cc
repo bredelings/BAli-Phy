@@ -674,7 +674,7 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
 
     for(auto& [s,name]: C.dist_type)
     {
-        o<<"s"<<s<<"   [label=\""<<name<<"\"]\n";
+        o<<"s"<<s<<"   [label=\" \",xlabel=\""<<name<<"\",color=\"black\"]\n";
 
         if (C.in_edges_to_dist.count(s))
             for(auto& [arg_name,r]: C.in_edges_to_dist.at(s))
