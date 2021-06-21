@@ -9,7 +9,7 @@ import MCMC
 import Data.JSON as J
 
 data SamplingEvent
-data ProbEventMonad = InEdge a String | PropertyEdge a String | ProbFactor Double
+data ProbEventMonad = InEdge String a | PropertyEdge String a | ProbFactor Double
 in_edge node name = InEdge node name
 property node name = PropertyEdge node name
 
@@ -17,16 +17,16 @@ property node name = PropertyEdge node name
 -- No ProbFactor events yet.
 get_densities (IOReturn x) = x
 get_densities (IOAndPass f g) = let x = get_densities f in get_densities (g x)
-get_densities (InEdge x _) = x
+get_densities (InEdge _ x) = x
 get_densities (PropertyEdge _ _) = ()
 
 make_edges event (IOReturn x) = return x
 make_edges event (IOAndPass f g) = do x <- make_edges event f
                                       make_edges event (g x)
-make_edges event (InEdge node name) = unsafeInterleaveIO $ do
+make_edges event (InEdge name node) = unsafeInterleaveIO $ do
                                         register_in_edge node event name
                                         return node
-make_edges event (PropertyEdge node name) = register_dist_property event node name
+make_edges event (PropertyEdge name node) = register_dist_property event node name
 
 -- Define the Distribution type
 data Distribution a = Distribution String (a->Double) (Double->a) (IO a) Range
