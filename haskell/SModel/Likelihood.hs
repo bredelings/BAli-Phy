@@ -98,7 +98,7 @@ sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed 
         ancestor_seqs = mkArray (numNodes t) ancestor_for_node
         ancestor_for_node n = ancestor_for_branch n (parentBranch rt n)
         ancestor_for_branch n Nothing = case edgesTowardNode t n of [b0,b1,b2] -> sample_root_sequence_SEV (cl!b0) (cl!b1) (cl!b2) f col_to_compressed
-                                                                    [b0,b1]    -> sample_root_sequence_SEV (cl!b0) (cl!b1) f col_to_compressed
+                                                                    [b0,b1]    -> sample_root_deg2_sequence_SEV (cl!b0) (cl!b1) f col_to_compressed
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs!p
                                                 b0 = reverseEdge t to_p
@@ -112,7 +112,7 @@ sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed 
                                                           alpha
                                                           smap
                                                           col_to_compressed
-                                                 [b1] -> sample_internal_sequence_SEV
+                                                 [b1] -> sample_deg2_sequence_SEV
                                                                parent_seq
                                                                ps_for_b0
                                                                (cl!b1)
