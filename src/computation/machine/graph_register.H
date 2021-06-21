@@ -720,9 +720,16 @@ public:
 
 expression_ref graph_normalize(const expression_ref& R);
 
-void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o);
+void write_dot_graph(const reg_heap& C, std::ostream& o);
 
-void dot_graph_for_token(const reg_heap& C, int t);
+void write_dot_graph(const reg_heap& C);
+
+
+void write_factor_graph(const reg_heap& C, std::ostream& o);
+
+void write_factor_graph(const reg_heap& C);
+
+
 
 void write_token_graph(const reg_heap& C, std::ostream& o);
 

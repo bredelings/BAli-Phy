@@ -505,17 +505,23 @@ void context_ref::collect_garbage() const
     memory()->collect_garbage();
 }
 
+void context_ref::write_factor_graph() const
+{
+    evaluate_program();
+    collect_garbage();
+    ::write_factor_graph(*memory());
+}
+
 void context_ref::show_graph() const
 {
-    prior();
+    evaluate_program();
     collect_garbage();
-    int t = memory()->token_for_context(context_index);
-    dot_graph_for_token(*memory(), t);
+    write_dot_graph(*memory());
 }
 
 void context_ref::show_graph_for_root_token() const
 {
-    dot_graph_for_token(*memory(), memory()->get_root_token());
+    write_dot_graph(*memory());
 }
 
 expression_ref context_ref::evaluate_program() const

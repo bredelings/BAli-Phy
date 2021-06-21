@@ -160,6 +160,8 @@ protected:
 
 public:
 
+    void write_factor_graph() const;
+
     void show_graph() const;
   
     void show_graph_for_root_token() const;

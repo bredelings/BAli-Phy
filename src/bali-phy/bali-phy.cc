@@ -621,7 +621,10 @@ int main(int argc,char* argv[])
                 std::cout<<logged_params_and_some_computed_stuff(*M, 0)<<"\n";
 
             if (args.count("verbose"))
+            {
                 M->show_graph();
+                M->write_factor_graph();
+            }
         }
         else 
         {

@@ -1224,7 +1224,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
             string SSS = untranslate_vars(deindexify(trim_unnormalize(closure_at(r))),
                                           get_identifiers()).print();
             if (log_verbose >= 3)
-                dot_graph_for_token(*this, root_token);
+                write_dot_graph(*this);
 #endif
 
             try

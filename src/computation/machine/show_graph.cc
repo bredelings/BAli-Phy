@@ -398,11 +398,12 @@ expression_ref untranslate_vars(const expression_ref& E, const map<string, int>&
 }
 
 
-void dot_graph_for_token(const reg_heap& C, int t)
+void write_dot_graph(const reg_heap& C)
 {
+    int t = C.get_root_token();
     string filename = "token" + convertToString(t)+".dot";
     std::ofstream file(filename);
-    dot_graph_for_token(C, t, file);
+    write_dot_graph(C,file);
     file.close();
 }
 
@@ -416,8 +417,10 @@ void dot_graph_for_token(const reg_heap& C, int t)
 
 */
 
-void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
+void write_dot_graph(const reg_heap& C, std::ostream& o)
 {
+    int t = C.get_root_token();
+
     const auto& ids = C.get_identifiers();
 
     map<int,string> reg_names = get_register_names(ids);
@@ -643,6 +646,57 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
     }
     o<<"}"<<std::endl;
+}
+
+void write_factor_graph(const reg_heap& C, std::ostream& o)
+{
+    int t = C.get_root_token();
+
+    const auto& ids = C.get_identifiers();
+
+    map<int,string> reg_names = get_register_names(ids);
+
+    map<string,string> simplify = get_simplified_names(get_names(ids));
+
+    map<int,string> constants = get_constants(C, t);
+
+    vector<int> regs = C.find_all_used_regs_in_context(t,false);
+    std::unordered_set<int> regs_set;
+#ifndef NDEBUG
+    for(int r: regs)
+        regs_set.insert(r);
+#endif
+
+    o<<"digraph \"token"<<t<<"\" {\n";
+    o<<"graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];\n";
+    o<<"node [fontname=Arial, style=filled, height=0, width=0, shape=box];\n";
+    o<<"edge [style=\"setlinewidth(2)\"];\n";
+
+    for(auto& [s,name]: C.dist_type)
+    {
+        o<<"s"<<s<<"   [label=\""<<name<<"\"]\n";
+
+        if (C.in_edges_to_dist.count(s))
+            for(auto& [arg_name,r]: C.in_edges_to_dist.at(s))
+            {
+                o<<"r"<<r<<" -> s"<<s<<"  [label=\""<<arg_name<<"\"]\n";
+            }
+        int r_out = C.out_edges_from_dist.at(s);
+        o<<"s"<<s<<" -> r"<<r_out<<"\n";
+        // Is `s` an observation or not?
+        o<<"r"<<r_out<<"   [shape=\"circle\"]\n";
+    }
+
+    o<<"}"<<std::endl;
+}
+
+void write_factor_graph(const reg_heap& C)
+{
+    int t = C.get_root_token();
+    string filename = "factor-" + convertToString(t)+".dot";
+    std::ofstream file(filename);
+    write_factor_graph(C,file);
+    file.close();
 }
 
 void write_token_graph(const reg_heap& C, std::ostream& o)
