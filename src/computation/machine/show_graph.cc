@@ -661,6 +661,7 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
     map<int,string> constants = get_constants(C, t);
 
     vector<int> regs = C.find_all_used_regs_in_context(t,false);
+
     std::unordered_set<int> regs_set;
 #ifndef NDEBUG
     for(int r: regs)
@@ -684,7 +685,7 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
         int r_out = C.out_edges_from_dist.at(s);
         o<<"s"<<s<<" -> r"<<r_out<<"\n";
         // Is `s` an observation or not?
-        o<<"r"<<r_out<<"   [shape=\"circle\"]\n";
+        o<<"r"<<r_out<<"   [shape=\"circle\",color=\"#cc9999\"]\n";
     }
 
     o<<"}"<<std::endl;
