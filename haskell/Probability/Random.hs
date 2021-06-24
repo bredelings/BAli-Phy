@@ -47,15 +47,15 @@ distRange (Distribution _ _ _ _ r) = r
 --        presumably this indicates that its an IO action versus a Random a
 --        but its only used inside Distribution...
 
-data Effects a = SamplingRate Double (Random a) | AddMove (Int->a)
+data TKEffects a = SamplingRate Double (Random a) | AddMove (Int->a)
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = RandomStructure (a->Effects) (a->Effects->a) (Random a)
+data Random a = RandomStructure (a->TKEffects) (a->TKEffects->a) (Random a)
               | Observe (Distribution b) b
               | Print b
               | Lazy (Random a)
-              | WithEffect (Random a) (Effects b)
-              | PerformEffect (Effects a)
+              | WithTKEffect (Random a) (TKEffects b)
+              | PerformTKEffect (TKEffects a)
               | LiftIO (IO a)
 
 -- I feel sample_with_initial_value actually needs to run the sampler... and make the result come out of that.
@@ -67,9 +67,9 @@ infix 0 ~>
 liftIO = LiftIO
 sample = Lazy
 add_move = AddMove
-perform_effect = PerformEffect
-infixl 2 `with_effect`
-with_effect = WithEffect
+perform_tk_effect = PerformTKEffect
+infixl 2 `with_tk_effect`
+with_tk_effect = WithTKEffect
 
 do_nothing _ = return ()
 
@@ -88,27 +88,13 @@ run_strict (Print s) = putStrLn (show s)
 run_strict (Lazy r) = run_lazy r
 
 
--- OK, so the original form of "run_effects" really only handles transition kernels.
--- It allows us to use do-blocks and sequence_ to add multiple transition kernels,
--- and also to avoid specifying the rate explicitly.
---
--- We should probably be making run_effects translate into the IO monad.
---
--- And the other effects (like register_dist) should be running in the IO monad.
--- So, probably run_effect should be renamed to run_add_transition_kernels.
--- And it should be a State monad, that is translated to the IO monad when run.
-
--- And we need to fix up the IO monad to return (x,s) instead of (s,x)!
--- And register_transition kernel needs to become an State that returns
--- a take a rate and return an (IO action,rate) pair.
-
-run_effects rate (IOAndPass f g) = (run_effects rate f) >>= (\x -> run_effects rate $ g x)
-run_effects rate (IOReturn v) = return v
-run_effects rate (AddMove m) = register_transition_kernel rate m
-run_effects rate (SamplingRate rate2 a) = run_effects (rate*rate2) a
+run_tk_effects rate (IOAndPass f g) = (run_tk_effects rate f) >>= (\x -> run_tk_effects rate $ g x)
+run_tk_effects rate (IOReturn v) = return v
+run_tk_effects rate (AddMove m) = register_transition_kernel rate m
+run_tk_effects rate (SamplingRate rate2 a) = run_tk_effects (rate*rate2) a
 -- LiftIO and Print are only here for debugging purposes:
---  run_effects alpha rate (LiftIO a) = a
---  run_effects alpha rate (Print s) = putStrLn (show s)
+--  run_tk_effects alpha rate (LiftIO a) = a
+--  run_tk_effects alpha rate (Print s) = putStrLn (show s)
 
 
 run_lazy (RandomStructure _ _ a) = run_lazy a
@@ -120,7 +106,7 @@ run_lazy (LiftIO a) = a
 run_lazy (Distribution _ _ _ a _) = unsafeInterleaveIO $ run_lazy a
 run_lazy (SamplingRate _ model) = run_lazy model
 run_lazy (MFix f) = MFix (run_lazy.f)
-run_lazy (WithEffect action _) = run_lazy action
+run_lazy (WithTKEffect action _) = run_lazy action
 
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
 
@@ -138,7 +124,7 @@ run_strict' rate (Observe dist datum) = do_effects `seq` return ()
           do_effects = unsafePerformIO effects
 run_strict' rate (Print s) = putStrLn (show s)
 run_strict' rate (Lazy r) = run_lazy' rate r
-run_strict' rate (PerformEffect e) = unsafePerformIO (run_effects rate e) `seq` return ()
+run_strict' rate (PerformTKEffect e) = unsafePerformIO (run_tk_effects rate e) `seq` return ()
 
 -- 1. Could we somehow implement slice sampling windows for non-contingent variables?
 
@@ -161,25 +147,25 @@ run_lazy' rate (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy' rate f
   run_lazy' rate $ g x
 run_lazy' rate (IOReturn v) = return v
-run_lazy' rate dist@(Distribution _ _ _ (RandomStructure effect structure do_sample) range) = do
-  -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
+run_lazy' rate dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_sample) range) = do 
+ -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy do_sample
   let (raw_x,triggered_x) = structure value do_effects
-      effect' = do
-        run_effects rate $ effect raw_x
+      effect = do
+        run_tk_effects rate $ tk_effect raw_x
         s <- register_dist_sample (dist_name dist)
         density_terms <- make_edges s $ annotated_densities dist raw_x
         sequence_ [register_prior s term | term <- density_terms]
         register_out_edge s raw_x
-      do_effects = unsafePerformIO effect'
+      do_effects = unsafePerformIO effect
   return triggered_x
 run_lazy' rate (Distribution _ _ _ s _) = run_lazy' rate s
 run_lazy' rate (MFix f) = MFix ((run_lazy' rate).f)
 run_lazy' rate (SamplingRate rate2 a) = run_lazy' (rate*rate2) a
-run_lazy' rate (WithEffect action effect) = unsafeInterleaveIO $ do
+run_lazy' rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
   result <- run_lazy' rate action
-  let effect_result = run_effects rate $ effect result
-  return (effect_result `seq` result)
+  run_tk_effects rate $ tk_effect result
+  return result
 
 gen_model_no_alphabet m = run_strict' 1.0 m
 mcmc = gen_model_no_alphabet
