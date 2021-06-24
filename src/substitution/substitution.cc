@@ -192,6 +192,9 @@ inline double element_prod_sum(Matrix& M1,const Matrix& M2,const Matrix& M3,cons
 pair<int,int> sample(const Matrix& M)
 {
     double total = element_sum(M);
+    if (std::isnan(total))
+        throw myexception()<<"substitution.cc:sample(M): Matrix contains NaN!\n";
+
     double r = uniform()*total;
 
     double sum = 0;
@@ -202,7 +205,8 @@ pair<int,int> sample(const Matrix& M)
             if (r <= sum)
                 return {m,l};
         }
-    return {-1,-1};
+
+    return {-2,-2};
 }
 
 inline void element_assign(double* M1, int size, double d)
@@ -638,7 +642,7 @@ namespace substitution {
         log_double_t Pr = total;
         if (std::isnan(Pr.log()))
         {
-            std::cerr<<"calc_root_probability_SEV: probability is NaN!";
+            std::cerr<<"calc_root_probability_SEV: probability is NaN!\n";
             return log_double_t(0.0);
         }
         Pr.log() += log_scale_min * scale;
