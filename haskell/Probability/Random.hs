@@ -115,16 +115,14 @@ run_strict' rate (IOAndPass f g) = do
   run_strict' rate $ g x
 run_strict' rate (IOReturn v) = return v
 run_strict' rate (LiftIO a) = a
-run_strict' rate (Observe dist datum) = do_effects `seq` return ()
-    where effects = do
-            s <- register_dist_observe (dist_name dist)
-            register_out_edge s datum
-            density_terms <- make_edges s $ annotated_densities dist datum
-            sequence_ [register_likelihood s term | term <- density_terms]
-          do_effects = unsafePerformIO effects
+run_strict' rate (Observe dist datum) = do
+  s <- register_dist_observe (dist_name dist)
+  register_out_edge s datum
+  density_terms <- make_edges s $ annotated_densities dist datum
+  sequence_ [register_likelihood s term | term <- density_terms]
 run_strict' rate (Print s) = putStrLn (show s)
 run_strict' rate (Lazy r) = run_lazy' rate r
-run_strict' rate (PerformTKEffect e) = unsafePerformIO (run_tk_effects rate e) `seq` return ()
+run_strict' rate (PerformTKEffect e) = run_tk_effects rate e
 
 -- 1. Could we somehow implement slice sampling windows for non-contingent variables?
 
