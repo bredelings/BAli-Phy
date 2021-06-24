@@ -514,6 +514,89 @@ string label_for_reg(int R, const reg_heap& C, const map<int,string>& reg_names,
     return label;
 }
 
+string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names,
+                      const map<int,string>& constants, const map<string,string>& simplify)
+{
+    auto CR = C[R];
+    for(int& r: CR.Env)
+        r = C.follow_index_var(r);
+
+    expression_ref F = CR.exp;
+    // node label = R/name: expression
+    string label;
+    if (reg_names.count(R))
+        label = "/" + reg_names.at(R) + ":";
+
+    if (print_as_record(F))
+    {
+        label = "<table border='0' cellborder='1' cellspacing='0'><tr>";
+
+        string head_name = F.head().print();
+
+        // Chop for module prefix in module:builtin
+        int where = head_name.find(':');
+        std::cerr<<head_name<<"     "<<where<<"     ";
+        if (where != string::npos and where+1 < head_name.size())
+            head_name = head_name.substr(where+1);
+        std::cerr<<head_name<<"\n";
+
+        label += "<td>"+escape(head_name)+"</td>";
+        if (F.is_expression())
+            for(const expression_ref& E: F.sub())
+            {
+                int index = E.as_index_var();
+                int R2 = CR.lookup_in_env( index );
+
+                string reg_name = " ";
+                if (constants.count(R2))
+                    reg_name = constants.at(R2);
+                else if (reg_names.count(R2))
+                {
+                    reg_name = reg_names.at(R2);
+                    auto loc = simplify.find(reg_name);
+                    if (loc != simplify.end())
+                        reg_name = loc->second;
+                }
+
+                label += "<td port=\"r" +convertToString(R2)+"\">" + escape(reg_name) + "</td>";
+            }
+        label += "</tr></table>";
+    }
+    else if (F.type() == index_var_type)
+    {
+        int R2 = C[R].reg_for_index_var();
+
+        string reg_name = " ";
+        if (reg_names.count(R2))
+        {
+            reg_name = reg_names.at(R2);
+            auto loc = simplify.find(reg_name);
+            if (loc != simplify.end())
+                reg_name = "<" + loc->second + ">";
+        }
+        else if (constants.count(R2))
+            reg_name = constants.at(R2);
+        label += reg_name;
+	
+        //      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names));
+        //      E = map_symbol_names(E, simplify);
+        //      label += E.print();
+        label = escape(wrap(label,40));
+    }
+    else if (is_modifiable(F))
+        label="modifiable";
+    else
+    {
+        expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names),constants));
+
+        E = map_symbol_names(E, simplify);
+
+        label += E.print();
+        label = escape(wrap(label,40));
+    }
+    return label;
+}
+
 void write_dot_graph(const reg_heap& C, std::ostream& o)
 {
     int t = C.get_root_token();
@@ -758,9 +841,9 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
 	string name = "r" + convertToString(r);
 
         if (print_as_record(F))
-            o<<"r"<<r<<"  [label=<"<<label_for_reg(r,C,reg_names,constants,simplify, true)<<">,shape=plain]\n";
+            o<<"r"<<r<<"  [label=<"<<label_for_reg2(r,C,reg_names,constants,simplify)<<">,shape=plain]\n";
         else
-            o<<"r"<<r<<"  [label=<"<<label_for_reg(r,C,reg_names,constants,simplify, true)<<">]\n";
+            o<<"r"<<r<<"  [label=<"<<label_for_reg2(r,C,reg_names,constants,simplify)<<">]\n";
 
         // out-edges
 	if (print_as_record(F))
@@ -787,7 +870,7 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
 		// Don't draw ref edges to things like fmap.
 		if (constants.count(r2) and not C.reg_is_changeable(r2)) continue;
 
-                o<<name2<<" -> "<<name<<":r"<<r2<<";\n";
+                o<<name2<<":s -> "<<name<<":r"<<r2<<";\n";
 	    }
 	}
 	else
@@ -807,7 +890,7 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
 		// Don't draw ref edges to things like fmap.
 		if (constants.count(r2) and not C.reg_is_changeable(r2)) continue;
 
-                o<<name2<<" -> "<<name<<";\n";
+                o<<name2<<":s -> "<<name<<";\n";
 	    }
 	}
     }
