@@ -417,6 +417,90 @@ void write_dot_graph(const reg_heap& C)
 
 */
 
+bool print_as_record(const expression_ref& E)
+{
+    if (E.head().type() == operation_type or E.head().type() == constructor_type)
+    {
+        if (not is_case(E) and not E.head().is_a<Apply>())
+            return true;
+    }
+    return false;
+}
+
+bool print_as_record(const closure& c)
+{
+    return print_as_record(c.exp);
+}
+
+string label_for_reg(int R, const reg_heap& C, const map<int,string>& reg_names,
+                     const map<int,string>& constants, const map<string,string>& simplify)
+{
+    expression_ref F = C[R].exp;
+    // node label = R/name: expression
+    string label = convertToString(R);
+    if (reg_names.count(R))
+        label += "/" + reg_names.at(R);
+    label += ":";
+
+    if (print_as_record(F))
+    {
+        label = "<table border='0' cellborder='1' cellspacing='0'><tr><td>"+escape(label) + "</td>";
+
+        label += "<td>"+escape(F.head().print())+"</td>";
+        if (F.is_expression())
+            for(const expression_ref& E: F.sub())
+            {
+                int index = E.as_index_var();
+                int R2 = C[R].lookup_in_env( index );
+	  
+                string reg_name = "<" + convertToString(R2) + ">";
+                if (constants.count(R2))
+                    reg_name = constants.at(R2) + " " + reg_name;
+                else if (reg_names.count(R2))
+                {
+                    reg_name = reg_names.at(R2);
+                    auto loc = simplify.find(reg_name);
+                    if (loc != simplify.end())
+                        reg_name = loc->second;
+                }
+
+                label += "<td port=\"r" +convertToString(R2)+"\">" + escape(reg_name) + "</td>";
+            }
+        label += "</tr></table>";
+    }
+    else if (F.type() == index_var_type)
+    {
+        int R2 = C[R].reg_for_index_var();
+
+        string reg_name = "<" + convertToString(R2) + ">";
+        if (reg_names.count(R2))
+        {
+            reg_name = reg_names.at(R2);
+            auto loc = simplify.find(reg_name);
+            if (loc != simplify.end())
+                reg_name = "<" + loc->second + ">";
+        }
+        else if (constants.count(R2))
+            reg_name = constants.at(R2) + " " + reg_name;
+        label += reg_name;
+	
+        //      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names));
+        //      E = map_symbol_names(E, simplify);
+        //      label += E.print();
+        label = escape(wrap(label,40));
+    }
+    else
+    {
+        expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names),constants));
+
+        E = map_symbol_names(E, simplify);
+
+        label += E.print();
+        label = escape(wrap(label,40));
+    }
+    return label;
+}
+
 void write_dot_graph(const reg_heap& C, std::ostream& o)
 {
     int t = C.get_root_token();
@@ -449,81 +533,12 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 
 	expression_ref F = C[R].exp;
 
-	bool print_record = false;
-	if (F.head().type() == operation_type or F.head().type() == constructor_type)
-	{
-	    if (not is_case(F) and not F.head().is_a<Apply>())
-	    {
-		print_record = true;
-		o<<"shape = plain, ";
-	    }
-	}
+	bool print_record = print_as_record(F);
+        if (print_as_record(F))
+            o<<"shape = plain, ";
 
-	// node label = R/name: expression
-	string label = convertToString(R);
-	if (reg_names.count(R))
-	    label += "/" + reg_names[R];
-	label += ":";
-
-	vector<int> targets;
-	if (print_record)
-	{
-	    label = "<table border='0' cellborder='1' cellspacing='0'><tr><td>"+escape(label) + "</td>";
-
-	    label += "<td>"+escape(F.head().print())+"</td>";
-	    if (F.is_expression())
-		for(const expression_ref& E: F.sub())
-		{
-		    int index = E.as_index_var();
-		    int R2 = C[R].lookup_in_env( index );
-		    targets.push_back(R2);
-	  
-		    string reg_name = "<" + convertToString(R2) + ">";
-		    if (constants.count(R2))
-			reg_name = constants[R2] + " " + reg_name;
-		    else if (reg_names.count(R2))
-		    {
-			reg_name = reg_names[R2];
-			auto loc = simplify.find(reg_name);
-			if (loc != simplify.end())
-			    reg_name = loc->second;
-		    }
-
-		    label += "<td port=\"r" +convertToString(R2)+"\">" + escape(reg_name) + "</td>";
-		}
-	    label += "</tr></table>";
-	}
-	else if (F.type() == index_var_type)
-	{
-	    int R2 = C[R].reg_for_index_var();
-
-	    string reg_name = "<" + convertToString(R2) + ">";
-	    if (reg_names.count(R2))
-	    {
-		reg_name = reg_names[R2];
-		auto loc = simplify.find(reg_name);
-		if (loc != simplify.end())
-		    reg_name = "<" + loc->second + ">";
-	    }
-	    else if (constants.count(R2))
-		reg_name = constants[R2] + " " + reg_name;
-	    label += reg_name;
-	
-	    //      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names));
-	    //      E = map_symbol_names(E, simplify);
-	    //      label += E.print();
-	    label = escape(wrap(label,40));
-	}
-	else
-	{
-	    expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names),constants));
-
-	    E = map_symbol_names(E, simplify);
-
-	    label += E.print();
-	    label = escape(wrap(label,40));
-	}
-
+        // node label = R/name: expression
+	string label = label_for_reg(R, C, reg_names, constants, simplify);
 	o<<"label = <"<<label<<">";
 //	if (this is a gc root) // maybe call get_roots, and then make a set<int> of all the roots?
 //	    o<<",style=\"dashed,filled\",color=orange";
@@ -543,6 +558,15 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 	// out-edges
 	if (print_record)
 	{
+            vector<int> targets;
+            if (F.is_expression())
+                for(const expression_ref& E: F.sub())
+                {
+                    int index = E.as_index_var();
+                    int R2 = C[R].lookup_in_env( index );
+                    targets.push_back(R2);
+                }
+
 	    for(int R2: targets)
 	    {
 		if (not C.reg_is_used(R2)) continue;
@@ -662,11 +686,8 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
 
     vector<int> regs = C.find_all_used_regs_in_context(t,false);
 
-    std::unordered_set<int> regs_set;
-#ifndef NDEBUG
-    for(int r: regs)
-        regs_set.insert(r);
-#endif
+    std::unordered_set<int> regs2_set;
+    vector<int> regs2;
 
     o<<"digraph \"token"<<t<<"\" {\n";
     o<<"graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];\n";
@@ -681,13 +702,96 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
             for(auto& [arg_name,r]: C.in_edges_to_dist.at(s))
             {
                 o<<"r"<<r<<" -> s"<<s<<"  [label=\""<<arg_name<<"\"]\n";
+                regs2_set.insert(r);
             }
         int r_out = C.out_edges_from_dist.at(s);
         o<<"s"<<s<<" -> r"<<r_out<<"\n";
         // Is `s` an observation or not?
-        o<<"r"<<r_out<<"   [shape=\"circle\",color=\"#cc9999\"]\n";
+        o<<"r"<<r_out<<"   [color=\"#cc9999\"]\n";
+        regs2_set.insert(r_out);
     }
 
+    for(auto r: regs2_set)
+        regs2.push_back(r);
+    
+    for(int i=0;i<regs2.size();i++)
+    {
+        int r = regs2[i];
+        if (is_modifiable(C[r].exp)) continue;
+        for(auto r2: C[r].Env)
+            if (not regs2_set.count(r2))
+            {
+                regs2_set.insert(r2);
+                regs2.push_back(r2);
+            }
+    }
+
+    for(int r: regs2)
+    {
+        if (not C.reg_is_changeable(r))
+        {
+            if (reg_names.count(r) or constants.count(r)) continue;
+        }
+
+        expression_ref F = C[r].exp;
+        // node label = R/name: expression
+	string name = "r" + convertToString(r);
+
+        if (print_as_record(F))
+            o<<"r"<<r<<"  [label=<"<<label_for_reg(r,C,reg_names,constants,simplify)<<">,shape=plain]\n";
+        else
+            o<<"r"<<r<<"  [label=<"<<label_for_reg(r,C,reg_names,constants,simplify)<<">]\n";
+
+        // out-edges
+	if (print_as_record(F))
+	{
+            vector<int> targets;
+            if (F.is_expression())
+                for(const expression_ref& E: F.sub())
+                {
+                    int index = E.as_index_var();
+                    int r2 = C[r].lookup_in_env( index );
+                    targets.push_back(r2);
+                }
+
+	    for(int r2: targets)
+	    {
+		if (not C.reg_is_used(r2)) continue;
+
+		string name2 = "r" + convertToString(r2);
+
+		// Don't draw ref edges to things like fmap.
+		if (reg_names.count(r2) and not C.reg_is_changeable(r2)) continue;
+
+		// Don't draw ref edges to things like fmap.
+		if (constants.count(r2) and not C.reg_is_changeable(r2)) continue;
+
+                o<<name2<<" -> "<<name<<":r"<<r2<<";\n";
+	    }
+	}
+	else
+	{
+            if (is_modifiable(C[r].exp)) continue;
+
+	    for(int r2: C[r].Env)
+	    {
+		if (not C.reg_is_used(r2)) continue;
+
+		string name2 = "r" + convertToString(r2);
+		bool used = false;
+		for(int i: C.used_regs_for_reg(r))
+		    if (i == r2) used = true;
+
+		// Don't draw ref edges to things like fmap.
+		if (reg_names.count(r2) and not C.reg_is_changeable(r2) and not used) continue;
+	
+		// Don't draw ref edges to things like fmap.
+		if (constants.count(r2) and not C.reg_is_changeable(r2) and not used) continue;
+
+                o<<name2<<" -> "<<name<<";\n";
+	    }
+	}
+    }
     o<<"}"<<std::endl;
 }
 
