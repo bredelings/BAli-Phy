@@ -335,11 +335,19 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
     return launchbury_unnormalize(names[R]);
 }
 
-map<int,string> get_register_names(const map<string, int>& ids)
+map<int,string> get_register_names(const map<string, int>& ids, bool allow_compiler_vars=true)
 {
     map<int,string> ids2;
-    for(const auto& i:ids)
-	ids2[i.second] = i.first;
+    for(const auto& [name, r]:ids)
+    {
+        if (not allow_compiler_vars)
+        {
+            auto uname = get_unqualified_name(name);
+            if (uname.size() > 1 and (uname[0] == '$' or uname[0] == '#'))
+                continue;
+        }
+	ids2[r] = name;
+    }
     return ids2;
 }
 
@@ -433,9 +441,14 @@ bool print_as_record(const closure& c)
 }
 
 string label_for_reg(int R, const reg_heap& C, const map<int,string>& reg_names,
-                     const map<int,string>& constants, const map<string,string>& simplify)
+                     const map<int,string>& constants, const map<string,string>& simplify, bool skip_index_var = false)
 {
-    expression_ref F = C[R].exp;
+    auto CR = C[R];
+    if (skip_index_var)
+        for(int& r: CR.Env)
+            r = C.follow_index_var(r);
+
+    expression_ref F = CR.exp;
     // node label = R/name: expression
     string label = convertToString(R);
     if (reg_names.count(R))
@@ -451,7 +464,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,string>& reg_names,
             for(const expression_ref& E: F.sub())
             {
                 int index = E.as_index_var();
-                int R2 = C[R].lookup_in_env( index );
+                int R2 = CR.lookup_in_env( index );
 	  
                 string reg_name = "<" + convertToString(R2) + ">";
                 if (constants.count(R2))
@@ -507,7 +520,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 
     const auto& ids = C.get_identifiers();
 
-    map<int,string> reg_names = get_register_names(ids);
+    map<int,string> reg_names = get_register_names(ids, false);
 
     map<string,string> simplify = get_simplified_names(get_names(ids));
 
@@ -678,7 +691,7 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
 
     const auto& ids = C.get_identifiers();
 
-    map<int,string> reg_names = get_register_names(ids);
+    map<int,string> reg_names = get_register_names(ids, false);
 
     map<string,string> simplify = get_simplified_names(get_names(ids));
 
@@ -701,16 +714,19 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
         if (C.in_edges_to_dist.count(s))
             for(auto& [arg_name,r]: C.in_edges_to_dist.at(s))
             {
-                o<<"r"<<r<<" -> s"<<s<<"  [label=\""<<arg_name<<"\"]\n";
-                regs2_set.insert(r);
+                int r2 = C.follow_index_var(r);
+                o<<"r"<<r2<<" -> s"<<s<<"  [label=\""<<arg_name<<"\"]\n";
+                regs2_set.insert(r2);
             }
         int r_out = C.out_edges_from_dist.at(s);
+        r_out = C.follow_index_var(r_out);
         o<<"s"<<s<<" -> r"<<r_out<<"\n";
         // Is `s` an observation or not?
         o<<"r"<<r_out<<"   [color=\"#cc9999\"]\n";
         regs2_set.insert(r_out);
     }
 
+    std::unordered_set<int> direct_regs = regs2_set;
     for(auto r: regs2_set)
         regs2.push_back(r);
     
@@ -719,16 +735,20 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
         int r = regs2[i];
         if (is_modifiable(C[r].exp)) continue;
         for(auto r2: C[r].Env)
+        {
+            r2 = C.follow_index_var(r2);
             if (not regs2_set.count(r2))
             {
                 regs2_set.insert(r2);
                 regs2.push_back(r2);
             }
+        }
     }
 
     for(int r: regs2)
     {
-        if (not C.reg_is_changeable(r))
+        // This isn't quite good enough -- are there any in-edges to this node?
+        if (not C.reg_is_changeable(r) and not direct_regs.count(r))
         {
             if (reg_names.count(r) or constants.count(r)) continue;
         }
@@ -738,9 +758,9 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
 	string name = "r" + convertToString(r);
 
         if (print_as_record(F))
-            o<<"r"<<r<<"  [label=<"<<label_for_reg(r,C,reg_names,constants,simplify)<<">,shape=plain]\n";
+            o<<"r"<<r<<"  [label=<"<<label_for_reg(r,C,reg_names,constants,simplify, true)<<">,shape=plain]\n";
         else
-            o<<"r"<<r<<"  [label=<"<<label_for_reg(r,C,reg_names,constants,simplify)<<">]\n";
+            o<<"r"<<r<<"  [label=<"<<label_for_reg(r,C,reg_names,constants,simplify, true)<<">]\n";
 
         // out-edges
 	if (print_as_record(F))
@@ -751,6 +771,7 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
                 {
                     int index = E.as_index_var();
                     int r2 = C[r].lookup_in_env( index );
+                    r2 = C.follow_index_var(r2);
                     targets.push_back(r2);
                 }
 
@@ -777,16 +798,14 @@ void write_factor_graph(const reg_heap& C, std::ostream& o)
 	    {
 		if (not C.reg_is_used(r2)) continue;
 
+                r2 = C.follow_index_var(r2);
 		string name2 = "r" + convertToString(r2);
-		bool used = false;
-		for(int i: C.used_regs_for_reg(r))
-		    if (i == r2) used = true;
 
 		// Don't draw ref edges to things like fmap.
-		if (reg_names.count(r2) and not C.reg_is_changeable(r2) and not used) continue;
+		if (reg_names.count(r2) and not C.reg_is_changeable(r2)) continue;
 	
 		// Don't draw ref edges to things like fmap.
-		if (constants.count(r2) and not C.reg_is_changeable(r2) and not used) continue;
+		if (constants.count(r2) and not C.reg_is_changeable(r2)) continue;
 
                 o<<name2<<" -> "<<name<<";\n";
 	    }
