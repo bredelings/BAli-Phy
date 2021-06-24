@@ -11,9 +11,14 @@ sample_haplotype01_from_plaf plafs = let raw_action = builtin_sample_haplotype01
 builtin builtin_haplotype01_from_plaf_probability 2 "haplotype01_from_plaf_probability" "SMC"
 haplotype01_from_plaf_probability plaf hap = builtin_haplotype01_from_plaf_probability (list_to_vector plaf) hap
 
+
+annotated_haplotype01_from_plaf_probability plafs' haplotype = do
+  plafs <- in_edge "PLAFs" plafs'
+  return [haplotype01_from_plaf_probability plafs haplotype]
+
 haplotype01_from_plaf plafs = Distribution
                               "haplotype01_from_plaf"
-                              (make_densities $ haplotype01_from_plaf_probability plafs)
+                              (annotated_haplotype01_from_plaf_probability plafs)
                               (error "no quantile")
                               (sample_haplotype01_from_plaf plafs)
                               ()
@@ -28,9 +33,17 @@ probability_of_reads01 weights haplotypes error_rate c outlier_frac reads = buil
           reads'      = list_to_vector $ map (\(x,y) -> c_pair x y) reads
 
 -- We can't sample from this because we are using the random data to tell us the coverage at each position.
+annotated_probability_of_reads01 weights' haplotypes' error_rate' c' outlier_frac' reads = do
+                          weights <- in_edge "weights" weights'
+                          haplotypes <- in_edge "haplotypes" haplotypes'
+                          error_rate <- in_edge "error_rate" error_rate'
+                          c <- in_edge "error_rate" c'
+                          outlier_frac <- in_edge "outlier_frac" outlier_frac'
+                          return [probability_of_reads01 weights haplotypes error_rate c outlier_frac reads]
+
 reads01_from_haps weights haplotypes error_rate c outlier_frac = Distribution
                                                                  "reads01_from_haps"
-                                                                 (make_densities $ probability_of_reads01 weights haplotypes error_rate c outlier_frac)
+                                                                 (annotated_probability_of_reads01 weights haplotypes error_rate c outlier_frac)
                                                                  (error "no quantile")
                                                                  ()
                                                                  ()
@@ -100,9 +113,15 @@ haplotype01_from_panel_probability (p_sites,p_haps) switch_rate flip_prob hap = 
     where p_haps' = list_to_vector p_haps
           p_sites' = list_to_vector p_sites
 
+annotated_haplotype01_from_panel_probability panel' switch_rate' miscopy_prob' haplotype = do
+  panel <- in_edge "panel" panel'
+  switch_rate <- in_edge "switch_rate" switch_rate'
+  miscopy_prob <- in_edge "miscopy_prob" miscopy_prob'
+  return [haplotype01_from_panel_probability panel switch_rate miscopy_prob haplotype]
+
 haplotype01_from_panel panel switch_rate flip_prob  = Distribution
                                                       "haplotype01_from_panel"
-                                                      (make_densities $ haplotype01_from_panel_probability panel switch_rate flip_prob)
+                                                      (annotated_haplotype01_from_panel_probability panel switch_rate flip_prob)
                                                       (error "no quantile")
                                                       (sample_haplotype01_from_panel panel switch_rate flip_prob)
                                                       ()
