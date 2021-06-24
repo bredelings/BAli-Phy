@@ -26,7 +26,7 @@ make_edges event (IOAndPass f g) = do x <- make_edges event f
 make_edges event (InEdge name node) = unsafeInterleaveIO $ do
                                         register_in_edge node event name
                                         return node
-make_edges event (PropertyEdge name node) = register_dist_property event node name
+make_edges event (PropertyEdge name node) = return () -- register_dist_property event node name
 
 -- Define the Distribution type
 data Distribution a = Distribution String (a->Double) (Double->a) (IO a) Range
