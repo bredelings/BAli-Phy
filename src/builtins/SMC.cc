@@ -1541,6 +1541,30 @@ Proposal shift_laplace(int r, double scale)
     return [=](context_ref& C) {return shift_laplace(C, r, scale);};
 }
 
+log_double_t propose_two_titres_constant_sum(context_ref& C, int r1, int r2)
+{
+    double x1 = C.evaluate_reg(r1).as_double();
+    double x2 = C.evaluate_reg(r2).as_double();
+
+    log_double_t w1 = exp_to<log_double_t>(x1);
+    log_double_t w2 = exp_to<log_double_t>(x2);
+
+    log_double_t total = w1 + w2;
+
+    log_double_t w1_new = uniform()*total;
+    log_double_t w2_new = total - w1_new;
+
+    double x1_new = log(w1_new);
+    double x2_new = log(w2_new);
+
+    C.set_reg_value(r1, {x1_new});
+    C.set_reg_value(r2, {x2_new});
+
+    return (w1 * w2) / (w1_new * w2_new);
+}
+
+
+
 bool all_different(vector<int> v)
 {
     std::sort(v.begin(), v.end());
@@ -2190,10 +2214,18 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
 
     log_double_t w_ratio = 1;
 
-    w_ratio *= shift_laplace(C2, titre_regs[0], 3.0);
+    if (uniform() < 0.5)
+    {
+        w_ratio *= shift_laplace(C2, titre_regs[0], 3.0);
 
-    if (N >= 2)
-        w_ratio *= shift_laplace(C2, titre_regs[1], 0.125);
+        if (N >= 2)
+            w_ratio *= shift_laplace(C2, titre_regs[1], 0.125);
+    }
+    else
+    {
+        if (N >= 2)
+            w_ratio = propose_two_titres_constant_sum(C2, titre_regs[0], titre_regs[1]);
+    }
 
     auto weights2 = evaluate_slot(C2, weight_slot).as_<EVector>();
 
