@@ -582,7 +582,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
         label = escape(wrap(label,40));
     }
     else if (is_modifiable(F))
-        label="modifiable";
+        label="mod";
     else
     {
         expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names),constants));
