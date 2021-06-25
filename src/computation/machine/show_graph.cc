@@ -535,10 +535,8 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
 
         // Chop for module prefix in module:builtin
         int where = head_name.find(':');
-        std::cerr<<head_name<<"     "<<where<<"     ";
         if (where != string::npos and where+1 < head_name.size())
             head_name = head_name.substr(where+1);
-        std::cerr<<head_name<<"\n";
 
         label += "<td>"+escape(head_name)+"</td>";
         if (F.is_expression())
