@@ -37,7 +37,7 @@ annotated_probability_of_reads01 weights' haplotypes' error_rate' c' outlier_fra
                           weights <- in_edge "weights" weights'
                           haplotypes <- in_edge "haplotypes" haplotypes'
                           error_rate <- in_edge "error_rate" error_rate'
-                          c <- in_edge "error_rate" c'
+                          c <- in_edge "c" c'
                           outlier_frac <- in_edge "outlier_frac" outlier_frac'
                           return [probability_of_reads01 weights haplotypes error_rate c outlier_frac reads]
 
