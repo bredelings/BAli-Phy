@@ -1829,6 +1829,12 @@ int reg_heap::stack_pop()
     return r;
 }
 
+int reg_heap::reg_for_head(int index) const
+{
+    return heads[index];
+}
+
+
 int reg_heap::set_head(int index, int R2)
 {
     int R1 = heads[index];

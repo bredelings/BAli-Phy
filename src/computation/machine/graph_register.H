@@ -570,6 +570,9 @@ public:
     const std::map<std::string,int>& get_identifiers() const {return identifiers;}
     std::map<std::string,int>& get_identifiers()       {return identifiers;}
 
+    /// Find out which reg the head `index` points to.
+    int reg_for_head(int index) const;
+
     /// Make heads[index] point to r
     int set_head(int index, int r);
     int set_head(int index, closure&& C);
