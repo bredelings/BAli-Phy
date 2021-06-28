@@ -1734,6 +1734,8 @@ std::string generate_atmodel_program(int n_sequences,
         {
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
                         {var("observe_partition_type_0"), tree, alignment, smodel, sequence_data_var, subst_root_var});
+
+            program.perform({var("~>"),sequence_data_var,{var("fake_dist"),likelihood_var}});
         }
         else if (likelihood_calculator == 1)
         {
@@ -1742,6 +1744,8 @@ std::string generate_atmodel_program(int n_sequences,
 
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
                         {var("observe_partition_type_1"), tree, smodel,sequence_data_var, subst_root_var});
+
+            program.perform({var("~>"),sequence_data_var,{var("fake_dist"),likelihood_var}});
         }
         else
             std::abort();
@@ -1765,8 +1769,6 @@ std::string generate_atmodel_program(int n_sequences,
     program.let(var("cond_likes"),get_list(cond_likes));
     program.let(var("anc_seqs"),get_list(anc_seqs));
     program.let(var("likelihoods"),get_list(likelihoods));
-    program.empty_stmt();
-    program.perform({var("~>"),sequence_data_var,{var("fake_dist"),var("likelihoods")}});
     program.empty_stmt();
     program.finish_return(
         Tuple(
