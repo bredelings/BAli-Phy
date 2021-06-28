@@ -14,6 +14,7 @@ annotated_fake_dist_0_pr tree' alignment' smodel' subst_root transition_ps cls a
   property "subst_root" subst_root
   property "transition_ps" transition_ps
   property "cond_likes" cls
+  property "anc_seqs" ancestral_sequences
   return $ tree `seq` alignment `seq` smodel `seq` [likelihood]
 
 fake_dist_0 tree alignment smodel subst_root transition_ps cls ancestral_sequences likelihood =
