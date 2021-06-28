@@ -162,7 +162,8 @@ vector<param> get_params_from_array(context_ref& C, const expression_ref& array,
 
 context_ptr context_ptr::operator[](int i) const
 {
-    int r = C.memory()->closure_at(reg).reg_for_slot(i);
+    int r = C.memory()->follow_index_var(reg);
+    r = C.memory()->closure_at(r).reg_for_slot(i);
     return {C, r};
 }
 
@@ -206,6 +207,23 @@ EVector context_ptr::list_to_vector() const
     return std::move(*vec);
 }
 
+vector<context_ptr> context_ptr::list_elements() const
+{
+    vector<context_ptr> elements;
+
+    context_ptr L = result();
+    while(L.size() > 0)
+    {
+        assert(L.size() == 2);
+
+        elements.push_back(L[0]);
+
+        L = L[1].result();
+    }
+
+    return elements;
+}
+
 context_ptr context_ptr::result() const
 {
     auto cp2 = *this;
@@ -242,12 +260,14 @@ bool context_ptr::move_to_modifiable()
 
 int context_ptr::size() const
 {
-    return C.memory()->expression_at(reg).size();
+    int r = C.memory()->follow_index_var(reg);
+    return C.memory()->expression_at(r).size();
 }
 
 expression_ref context_ptr::head() const
 {
-    return C.memory()->expression_at(reg).head();
+    int r = C.memory()->follow_index_var(reg);
+    return C.memory()->expression_at(r).head();
 }
 
 context_ptr::context_ptr(const context_ref& c, int i)

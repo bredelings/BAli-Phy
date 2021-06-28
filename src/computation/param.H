@@ -15,10 +15,11 @@ class context_ptr
 
     // This reg will never point to an index_var_no_force, since it is the result of evaluation.
     // Therefore, this reg will never be deleted behind our back!
+
+    // But it could point to an index-var-with-force.  So be careful to follow_index_var( ) before
+    // looking at the closure.
     int reg;
 public:
-    context_ptr operator[](int i) const;
-    context_ptr list_element(int i) const;
     context_ptr result() const;
     std::optional<context_ptr> modifiable() const;
 
@@ -26,9 +27,12 @@ public:
     bool move_to_modifiable();
 
     int size() const;
+    context_ptr operator[](int i) const;
     expression_ref head() const;
     expression_ref value() const;
+    context_ptr list_element(int i) const;
     EVector list_to_vector() const;
+    std::vector<context_ptr> list_elements() const;
 
     int get_reg() const {return reg;}
     context_ref& get_context() {return C;}
