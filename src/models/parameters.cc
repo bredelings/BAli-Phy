@@ -1859,13 +1859,16 @@ Parameters::Parameters(const Program& prog,
  variable_alignment_( n_imodels() > 0 ),
  updown(-1)
 {
+    PC->constants.push_back(-1);
+
     bool allow_compression = load_value("site-compression", ttt.n_nodes() > 2) and not load_value("write-fixed-alignments",false);
     const int n_partitions = filename_ranges.size();
-    param atmodel_plus_partitions = *memory()->program_result_head;
+    int result_head = *memory()->program_result_head;
+    param atmodel_plus_partitions = result_head;
     PC->atmodel_export = add_compute_expression({var("Data.Tuple.fst"),atmodel_plus_partitions.ref(*this)});
-    param sequence_data = add_compute_expression({var("Data.Tuple.snd"),atmodel_plus_partitions.ref(*this)});
     
-    PC->constants.push_back(-1);
+    context_ptr program_result(*this, memory()->reg_for_head(result_head));
+    auto sequence_data = program_result[1].list_elements();
 
     /* ---------------- compress alignments -------------------------- */
 
