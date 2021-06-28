@@ -1768,17 +1768,22 @@ std::string generate_atmodel_program(int n_sequences,
     program.empty_stmt();
     program.perform({var("~>"),sequence_data_var,{var("fake_dist"),var("likelihoods")}});
     program.empty_stmt();
-    program.finish_return(Tuple({var("ATModelExport"),
-                                 var("atmodel"),
-                                 var("transition_ps"),
-                                 var("cond_likes"),
-                                 var("anc_seqs"),
-                                 var("likelihoods"),
-                                 sequence_data_var,
-                                 subst_root_var,
-                                 taxon_names_var},
-
-                           var("loggers")));
+    program.finish_return(
+        Tuple(
+            Tuple(
+                {var("ATModelExport"),
+                 var("atmodel"),
+                 var("transition_ps"),
+                 var("cond_likes"),
+                 var("anc_seqs"),
+                 var("likelihoods"),
+                 sequence_data_var,
+                 subst_root_var,
+                 taxon_names_var},
+                var("sequence_data")),
+            var("loggers")
+            )
+        );
     program_file<<"\nprior taxa sequence_data = "<<sample_atmodel.get_expression().print()<<"\n";
 
     program_file<<"\nobserve_data sequence_data = "<<program.get_expression().print()<<"\n";
@@ -1854,8 +1859,10 @@ Parameters::Parameters(const Program& prog,
 {
     bool allow_compression = load_value("site-compression", ttt.n_nodes() > 2) and not load_value("write-fixed-alignments",false);
     const int n_partitions = filename_ranges.size();
-    PC->atmodel_export = *memory()->program_result_head;
-
+    param atmodel_plus_partitions = *memory()->program_result_head;
+    PC->atmodel_export = add_compute_expression({var("Data.Tuple.fst"),atmodel_plus_partitions.ref(*this)});
+    param sequence_data = add_compute_expression({var("Data.Tuple.snd"),atmodel_plus_partitions.ref(*this)});
+    
     PC->constants.push_back(-1);
 
     /* ---------------- compress alignments -------------------------- */
