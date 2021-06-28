@@ -1870,6 +1870,14 @@ Parameters::Parameters(const Program& prog,
     context_ptr program_result(*this, memory()->reg_for_head(result_head));
     auto sequence_data = program_result[1].list_elements();
 
+    vector<int> partition_sampling_events;
+    for(auto sequences: sequence_data)
+    {
+        int r = sequences.get_reg();
+
+        int s = memory()->out_edges_to_var.at(r);
+    }
+
     /* ---------------- compress alignments -------------------------- */
 
     vector<optional<compressed_alignment>> compressed_alignments(n_partitions);
