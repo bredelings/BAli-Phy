@@ -1745,7 +1745,7 @@ std::string generate_atmodel_program(int n_sequences,
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
                         {var("observe_partition_type_1"), tree, smodel,sequence_data_var, subst_root_var});
 
-            program.perform({var("~>"),sequence_data_var,{var("fake_dist"),likelihood_var}});
+            program.perform({var("~>"),sequence_data_var,{var("fake_dist_1"),tree, smodel, subst_root_var, transition_ps, cls_var, ancestral_sequences_var, likelihood_var}});
         }
         else
             std::abort();
