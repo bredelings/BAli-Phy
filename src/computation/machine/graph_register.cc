@@ -1130,7 +1130,7 @@ void reg_heap::register_out_edge(const effect& e, int /* s */)
 
     // Check that this edge is not a duplicate.
     assert(not out_edges_from_dist.count(O.r_from_dist));
-    assert(not out_edges_to_var.count(O.r_to_var));
+    assert(not out_edges_to_var.count(O.r_to_var) or not out_edges_to_var.at(O.r_to_var).count(O.r_from_dist));
     
     // Check that there is in fact a distribution at I.to_reg.
     assert(has_constructor(expression_at(O.r_from_dist), "Effect.Dist"));
@@ -1138,7 +1138,11 @@ void reg_heap::register_out_edge(const effect& e, int /* s */)
     assert(reg_is_constant(O.r_to_var) or (reg_is_changeable(O.r_to_var) and is_modifiable(expression_at(O.r_to_var))));
 
     out_edges_from_dist.insert({O.r_from_dist, O.r_to_var});
-    out_edges_to_var.insert({O.r_to_var, O.r_from_dist});
+    out_edges_to_var[O.r_to_var].insert(O.r_from_dist);
+
+    // Check that this edge is registered.
+    assert(out_edges_from_dist.count(O.r_from_dist));
+    assert(out_edges_to_var.count(O.r_to_var) and out_edges_to_var.at(O.r_to_var).count(O.r_from_dist));
 }
 
 void reg_heap::unregister_out_edge(const effect& e, int /* s */)
@@ -1147,7 +1151,7 @@ void reg_heap::unregister_out_edge(const effect& e, int /* s */)
 
     // Check that this edge is registered.
     assert(out_edges_from_dist.count(O.r_from_dist));
-    assert(out_edges_to_var.count(O.r_to_var));
+    assert(not out_edges_to_var.count(O.r_to_var) or not out_edges_to_var.at(O.r_to_var).count(O.r_from_dist));
 
     // Check that there is in fact a distribution at O.r_from_dist.
     assert(has_constructor(expression_at(O.r_from_dist), "Effect.Dist"));
@@ -1155,7 +1159,14 @@ void reg_heap::unregister_out_edge(const effect& e, int /* s */)
 
     // Erase the edge
     out_edges_from_dist.erase(O.r_from_dist);
-    out_edges_to_var.erase(O.r_to_var);
+    auto& to_var = out_edges_to_var.at(O.r_to_var);
+    to_var.erase(O.r_from_dist);
+    if (to_var.empty())
+        out_edges_to_var.erase(O.r_to_var);
+
+    // Check that this edge is not registered.
+    assert(not out_edges_from_dist.count(O.r_from_dist));
+    assert(not out_edges_to_var.count(O.r_to_var) or not out_edges_to_var.at(O.r_to_var).count(O.r_from_dist));
 }
 
 void reg_heap::register_dist(int r, int s)

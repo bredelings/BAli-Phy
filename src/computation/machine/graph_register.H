@@ -380,7 +380,7 @@ public:
 
     // FIXME: Use boost::multi-index?
     std::map<int, int> out_edges_from_dist;
-    std::map<int, int> out_edges_to_var;
+    std::map<int, std::set<int>> out_edges_to_var;
     std::map<int, std::map<std::string, int>> dist_properties;
 
     void register_in_edge(const effect& e, int s);

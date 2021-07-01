@@ -1875,7 +1875,11 @@ Parameters::Parameters(const Program& prog,
     {
         int r = sequences.get_reg();
 
-        int s = memory()->out_edges_to_var.at(r);
+        auto& to_var = memory()->out_edges_to_var.at(r);
+        if (to_var.size() > 1)
+            throw myexception()<<"Some partitions are identical!";
+
+        int s_sequences = *to_var.begin();
     }
 
     /* ---------------- compress alignments -------------------------- */
