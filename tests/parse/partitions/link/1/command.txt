@@ -1,1 +1,1 @@
---test dna.fasta dna.fasta dna.fasta dna.fasta dna.fasta --link=1,3 --link=2,4
+--test dna1.fasta dna2.fasta dna3.fasta dna4.fasta dna5.fasta --link=1,3 --link=2,4

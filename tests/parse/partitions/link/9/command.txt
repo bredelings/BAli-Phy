@@ -1,1 +1,1 @@
---test dna.fasta dna.fasta -I 2:none
+--test dna1.fasta dna2.fasta -I 2:none

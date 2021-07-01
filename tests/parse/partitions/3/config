@@ -3,9 +3,9 @@
  test = test
 
  # Sequence data for the three partitions.
- align = dna.fasta
+ align = dna1.fasta
  align = rna.fasta
- align = dna.fasta
+ align = dna2.fasta
 
  # Link the first and third partitions
  smodel = 1,3:tn93+Rates.free[n=3]
