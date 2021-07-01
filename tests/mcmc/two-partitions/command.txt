@@ -1,0 +1,1 @@
+5d-muscle.fasta:1-20 5d-muscle.fasta:21- --iter=5 --name ignore
