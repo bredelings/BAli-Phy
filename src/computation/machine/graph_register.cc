@@ -1151,7 +1151,7 @@ void reg_heap::unregister_out_edge(const effect& e, int /* s */)
 
     // Check that this edge is registered.
     assert(out_edges_from_dist.count(O.r_from_dist));
-    assert(not out_edges_to_var.count(O.r_to_var) or not out_edges_to_var.at(O.r_to_var).count(O.r_from_dist));
+    assert(out_edges_to_var.count(O.r_to_var) and out_edges_to_var.at(O.r_to_var).count(O.r_from_dist));
 
     // Check that there is in fact a distribution at O.r_from_dist.
     assert(has_constructor(expression_at(O.r_from_dist), "Effect.Dist"));
