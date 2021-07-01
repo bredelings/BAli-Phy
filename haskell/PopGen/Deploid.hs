@@ -26,24 +26,26 @@ haplotype01_from_plaf plafs = Distribution
 -- This version does not use the builtins above, and also produces a list, not a vector.
 --haplotype01_from_plaf plafs = independent [ bernoulli f | f <- plafs ]
 
-builtin builtin_probability_of_reads01 6 "probability_of_reads01" "SMC"
-probability_of_reads01 weights haplotypes error_rate c outlier_frac reads = builtin_probability_of_reads01 weights' haplotypes' reads' error_rate c outlier_frac
-    where weights'    = list_to_vector weights
+builtin builtin_probability_of_reads01 7 "probability_of_reads01" "SMC"
+probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads = builtin_probability_of_reads01 counts' weights' haplotypes' error_rate c outlier_frac reads'
+    where counts'     = list_to_vector counts
+          weights'    = list_to_vector weights
           haplotypes' = list_to_vector haplotypes
           reads'      = list_to_vector $ map (\(x,y) -> c_pair x y) reads
 
 -- We can't sample from this because we are using the random data to tell us the coverage at each position.
-annotated_probability_of_reads01 weights' haplotypes' error_rate' c' outlier_frac' reads = do
+annotated_probability_of_reads01 counts' weights' haplotypes' error_rate' c' outlier_frac' reads = do
+                          counts <- in_edge "counts" counts'
                           weights <- in_edge "weights" weights'
                           haplotypes <- in_edge "haplotypes" haplotypes'
                           error_rate <- in_edge "error_rate" error_rate'
                           c <- in_edge "c" c'
                           outlier_frac <- in_edge "outlier_frac" outlier_frac'
-                          return [probability_of_reads01 weights haplotypes error_rate c outlier_frac reads]
+                          return [probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads]
 
-reads01_from_haps weights haplotypes error_rate c outlier_frac = Distribution
+reads01_from_haps counts weights haplotypes error_rate c outlier_frac = Distribution
                                                                  "reads01_from_haps"
-                                                                 (annotated_probability_of_reads01 weights haplotypes error_rate c outlier_frac)
+                                                                 (annotated_probability_of_reads01 counts weights haplotypes error_rate c outlier_frac)
                                                                  (error "no quantile")
                                                                  ()
                                                                  ()

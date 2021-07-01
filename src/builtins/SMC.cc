@@ -1389,7 +1389,7 @@ double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
     return std::min(q,1.0);
 }
 
-log_double_t site_likelihood_for_reads01(int ref, int alt, double wsaf, double error_rate, double c, double outlier_frac)
+log_double_t site_likelihood_for_reads01(int counts, int ref, int alt, double wsaf, double error_rate, double c, double outlier_frac)
 {
     assert(0 <= ref);
     assert(0 <= alt);
@@ -1397,18 +1397,21 @@ log_double_t site_likelihood_for_reads01(int ref, int alt, double wsaf, double e
     assert(0 <= error_rate and error_rate <= 1.0);
     assert(0 <= c);
 
+    if (counts != ref + alt)
+        return 0.0;
+
     double pi = wsaf + error_rate*(1.0 - 2.0*wsaf);
 
     return (1.0-outlier_frac) * beta_binomial_pdf(ref+alt, c*pi, c*(1.0-pi), alt)
            +outlier_frac      * beta_binomial_pdf(ref+alt, 1.0, 1.0, alt);
 }
 
-log_double_t site_likelihood_for_reads01(const expression_ref& reads, double wsaf, double error_rate, double c, double outlier_frac)
+log_double_t site_likelihood_for_reads01(int counts, const expression_ref& reads, double wsaf, double error_rate, double c, double outlier_frac)
 {
     int ref = reads.as_<EPair>().first.as_int();
     int alt = reads.as_<EPair>().second.as_int();
 
-    return site_likelihood_for_reads01(ref, alt, wsaf, error_rate, c, outlier_frac);
+    return site_likelihood_for_reads01(counts, ref, alt, wsaf, error_rate, c, outlier_frac);
 }
 
 // Pr(D|h, w, n, \psi) where psi includes
@@ -1416,29 +1419,33 @@ log_double_t site_likelihood_for_reads01(const expression_ref& reads, double wsa
 // * c = concentration parameter for beta in beta-binomial
 extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
 {
-    // 1a. Mixture weights - an EVector of double.
+    // 1. Read counts at each locus
     auto arg0 = Args.evaluate(0);
-    auto& weights = arg0.as_<EVector>();
+    auto& counts = arg0.as_<EVector>();
 
-    // 1b. Haplotypes - an EVector of EVector of Int
+    // 2. Mixture weights - an EVector of double.
     auto arg1 = Args.evaluate(1);
-    auto& haplotypes = arg1.as_<EVector>();
+    auto& weights = arg1.as_<EVector>();
 
-    // 1c. Reads = EVector of EPair of Int
+    // 3. Haplotypes - an EVector of EVector of Int
     auto arg2 = Args.evaluate(2);
-    auto& reads = arg2.as_<EVector>();
+    auto& haplotypes = arg2.as_<EVector>();
 
-    // 1d. Error rate
+    // 4. Error rate
     double error_rate = Args.evaluate(3).as_double();
     assert(0 <= error_rate and error_rate <= 1.0);
 
-    // 1e. Beta concentration parameter
+    // 5. Beta concentration parameter
     double c = Args.evaluate(4).as_double();
     assert(c > 0);
 
-    // 1f. Outlier fraction
+    // 6. Outlier fraction
     double outlier_frac = Args.evaluate(5).as_double();
     assert(outlier_frac >= 0 and outlier_frac <= 1);
+
+    // 7. Reads = EVector of EPair of Int
+    auto arg6 = Args.evaluate(6);
+    auto& reads = arg6.as_<EVector>();
 
     int num_strains = weights.size();
     assert(haplotypes.size() == weights.size());
@@ -1455,7 +1462,15 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     {
         double wsaf = wsaf_at_site(site, weights, haplotypes);
 
-        Pr *= site_likelihood_for_reads01(reads[site], wsaf, error_rate, c, outlier_frac);
+        auto pr = site_likelihood_for_reads01(counts[site].as_int(), reads[site], wsaf, error_rate, c, outlier_frac);
+
+        if (pr == 0.0)
+        {
+            Pr = 0.0;
+            break;
+        }
+
+        Pr *= pr;
     }
 
     return { Pr };
@@ -1503,7 +1518,9 @@ matrix<log_double_t> emission_pr(const vector<int>& K, const EVector& reads, con
             // Avoid out-of-bounds terms caused by rounding error.
             wsaf = std::max(0.0,std::min(1.0,wsaf));
 
-            E(site, state) = site_likelihood_for_reads01(reads[site], wsaf, error_rate, concentration, outlier_frac);
+            int ref = reads[site].as_<EPair>().first.as_int();
+            int alt = reads[site].as_<EPair>().second.as_int();
+            E(site, state) = site_likelihood_for_reads01(ref+alt, reads[site], wsaf, error_rate, concentration, outlier_frac);
         }
     }
     return E;
