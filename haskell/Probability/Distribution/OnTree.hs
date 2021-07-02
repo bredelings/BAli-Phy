@@ -16,9 +16,9 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
 
   let (transition_ps, cls, anc_seqs, likelihood) = observe_partition_type_0 tree alignment smodel sequences subst_root
 
-  tree <- in_edge "tree" tree
-  alignment <- in_edge "alignment" alignment
-  smodel <- in_edge "smodel" smodel
+  in_edge "tree" tree
+  in_edge "alignment" alignment
+  in_edge "smodel" smodel
 
   property "subst_root" subst_root
   property "transition_ps" transition_ps
