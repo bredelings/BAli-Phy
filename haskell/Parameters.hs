@@ -19,7 +19,7 @@ builtin builtin_register_in_edge 3 "register_in_edge" "Modifiables"
 register_in_edge var dist role = IOAction (\s -> (s+1,builtin_register_in_edge var dist (list_to_string role)))
 
 builtin builtin_register_out_edge 2 "register_out_edge" "Modifiables"
-register_out_edge dist var = IOAction (\s -> (s+1, builtin_register_out_edge dist var))
+register_out_edge dist var = IOAction (\s -> (s+1, builtin_register_out_edge dist var `seq` var))
 
 builtin builtin_register_dist_property 3 "register_dist_property" "Modifiables"
 register_dist_property dist value property = IOAction (\s -> (s+1, builtin_register_dist_property dist value (list_to_string property)))
