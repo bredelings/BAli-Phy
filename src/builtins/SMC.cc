@@ -1389,6 +1389,21 @@ double wsaf_at_site(int site, const EVector& weights, const EVector& haplotypes)
     return std::min(q,1.0);
 }
 
+EPair sample_site_reads01(int N, double wsaf, double error_rate, double c, double outlier_frac)
+{
+    assert(0 <= N);
+    assert(0 <= wsaf and wsaf <= 1.0);
+    assert(0 <= error_rate and error_rate <= 1.0);
+    assert(0 <= c);
+
+    double pi = wsaf + error_rate*(1.0 - 2.0*wsaf);
+
+    int alt = (bernoulli(outlier_frac)) ? beta_binomial(N, 1.0, 1.0) : beta_binomial(N, c*pi, c*(1-pi));
+    int ref = N - alt;
+
+    return EPair(ref,alt);
+}
+
 log_double_t site_likelihood_for_reads01(int counts, int ref, int alt, double wsaf, double error_rate, double c, double outlier_frac)
 {
     assert(0 <= ref);
@@ -1450,7 +1465,10 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     int num_strains = weights.size();
     assert(haplotypes.size() == weights.size());
 
-    int num_sites = reads.size();
+    int num_sites = counts.size();
+    if (reads.size() != num_sites)
+        return { log_double_t(0.0) };
+
 #ifndef NDEBUG
     for(int i=0;i<num_strains;i++)
         assert(haplotypes[i].as_<EVector>().size() == num_sites);
@@ -1474,6 +1492,59 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     }
 
     return { Pr };
+}
+
+// Pr(D|h, w, n, \psi) where psi includes
+// * e = error rate
+// * c = concentration parameter for beta in beta-binomial
+extern "C" closure builtin_function_sample_reads01(OperationArgs& Args)
+{
+    // 1. Read counts at each locus
+    auto arg0 = Args.evaluate_(0);
+    auto& counts = arg0.as_<EVector>();
+
+    // 2. Mixture weights - an EVector of double.
+    auto arg1 = Args.evaluate_(1);
+    auto& weights = arg1.as_<EVector>();
+
+    // 3. Haplotypes - an EVector of EVector of Int
+    auto arg2 = Args.evaluate_(2);
+    auto& haplotypes = arg2.as_<EVector>();
+
+    // 4. Error rate
+    double error_rate = Args.evaluate_(3).as_double();
+    assert(0 <= error_rate and error_rate <= 1.0);
+
+    // 5. Beta concentration parameter
+    double c = Args.evaluate_(4).as_double();
+    assert(c > 0);
+
+    // 6. Outlier fraction
+    double outlier_frac = Args.evaluate_(5).as_double();
+    assert(outlier_frac >= 0 and outlier_frac <= 1);
+
+    Args.make_changeable();
+
+    int num_strains = weights.size();
+    assert(haplotypes.size() == weights.size());
+
+    int num_sites = counts.size();
+#ifndef NDEBUG
+    for(int i=0;i<num_strains;i++)
+        assert(haplotypes[i].as_<EVector>().size() == num_sites);
+#endif
+
+    // 2. Accumulate observation probabilities!
+    EVector reads(num_sites);
+
+    for(int site=0; site<num_sites; site++)
+    {
+        double wsaf = wsaf_at_site(site, weights, haplotypes);
+
+        reads[site] = sample_site_reads01(counts[site].as_int(), wsaf, error_rate, c, outlier_frac);
+    }
+
+    return reads;
 }
 
 int get_allele_from_state(int state, int i)

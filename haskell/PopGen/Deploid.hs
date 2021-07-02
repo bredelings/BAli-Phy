@@ -26,6 +26,17 @@ haplotype01_from_plaf plafs = Distribution
 -- This version does not use the builtins above, and also produces a list, not a vector.
 --haplotype01_from_plaf plafs = independent [ bernoulli f | f <- plafs ]
 
+builtin builtin_sample_reads01 6 "sample_reads01" "SMC"
+sample_reads01 counts weights haplotypes error_rate c outlier_frac =
+    IOAction (\s->(s, f $ builtin_sample_reads01 counts' weights' haplotypes' error_rate c outlier_frac))
+    where counts'     = list_to_vector counts
+          weights'    = list_to_vector weights
+          haplotypes' = list_to_vector haplotypes
+          f reads = map pair_from_c $ list_from_vector reads
+
+random_structure_reads01 counts weights haplotypes error_rate c outlier_frac =
+    RandomStructure do_nothing modifiable_structure $ liftIO $ sample_reads01 counts weights haplotypes error_rate c outlier_frac
+
 builtin builtin_probability_of_reads01 7 "probability_of_reads01" "SMC"
 probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads = builtin_probability_of_reads01 counts' weights' haplotypes' error_rate c outlier_frac reads'
     where counts'     = list_to_vector counts
@@ -47,7 +58,7 @@ reads01_from_haps counts weights haplotypes error_rate c outlier_frac = Distribu
                                                                  "reads01_from_haps"
                                                                  (annotated_probability_of_reads01 counts weights haplotypes error_rate c outlier_frac)
                                                                  (error "no quantile")
-                                                                 ()
+                                                                 (random_structure_reads01 counts weights haplotypes error_rate c outlier_frac)
                                                                  ()
 
 ---
