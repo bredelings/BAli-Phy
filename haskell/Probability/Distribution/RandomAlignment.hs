@@ -66,9 +66,9 @@ triggered_modifiable_alignment value effect = (raw_a, triggered_a) where
     triggered_a = effect' `seq` raw_a
 
 
-annotated_alignment_prs hmms' model' alignment = do
-  hmms <- in_edge "hmms" hmms'
-  model <- in_edge "imodel" model'
+annotated_alignment_prs hmms model alignment = do
+  in_edge "hmms" hmms
+  in_edge "imodel" model
   return $ alignment_prs hmms model alignment
 
 random_alignment tree hmms model tip_lengths = Distribution "random_alignment" (annotated_alignment_prs hmms model)
