@@ -2155,8 +2155,6 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
 
     int N = K.size();
 
-    int n_states = (1<<N);
-
     // 3. Get x[i]
     vector<int> titre_regs(N);
 
@@ -2218,8 +2216,6 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
     //----------- 1. Make sure that the N haplotypes are DIFFERENT -------------
     if (not all_different(K))
         return EPair(io_state+1, log_double_t(1));
-
-    int L = haplotypes[0].as_<EVector>().size();
 
     //------------- 2. Copy the context indices ------------------//
 
