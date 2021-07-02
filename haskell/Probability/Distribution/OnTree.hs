@@ -21,7 +21,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   smodel <- in_edge "smodel" smodel
 
   property "subst_root" subst_root
-  property "transition_prs" transition_ps
+  property "transition_ps" transition_ps
   property "cond_likes" cls
   property "anc_seqs" anc_seqs
   property "likelihood" likelihood
@@ -40,7 +40,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   in_edge "smodel" smodel
 
   property "subst_root" subst_root
-  property "transition_prs" transition_ps
+  property "transition_ps" transition_ps
   property "cond_likes" cls
   property "anc_seqs" anc_seqs
   property "likelihood" likelihood
