@@ -60,7 +60,10 @@ unsigned geometric(double p);
 int negative_binomial(int r, double p);
 
 // return a binomial random variate
-unsigned binomial(int n, double p);
+int binomial(int n, double p);
+
+// return a binomial random variate
+int beta_binomial(int n, double a, double b);
 
 // return a binomial random variate
 unsigned bernoulli(double p);

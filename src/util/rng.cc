@@ -154,7 +154,7 @@ int negative_binomial(int r, double p)
     return std::negative_binomial_distribution<>(r,p)(standard);
 }
 
-unsigned binomial(int n, double p) {
+int binomial(int n, double p) {
     assert(n >= 0);
     assert(0 <= p and p <= 1);
 
@@ -163,6 +163,12 @@ unsigned binomial(int n, double p) {
     if (p == 1) return n;
 
     return std::binomial_distribution<>(n,p)(standard);
+}
+
+int beta_binomial(int n, double a, double b)
+{
+    double p = beta(a,b);
+    return binomial(n,p);
 }
 
 unsigned bernoulli(double p)
