@@ -1601,18 +1601,12 @@ std::string generate_atmodel_program(int n_sequences,
         // L4. let smodel_P = ...
         expression_ref smodel = smodels[smodel_index];
 
-        // L4. let imodel_P = Nothing | Just
-        expression_ref maybe_imodel = var("Nothing");
-        expression_ref maybe_hmms   = var("Nothing");
-
         // Sample the alignment
         var alignment_on_tree("alignment_on_tree_part"+part);
         if (imodel_index)
         {
             assert(like_calcs[i] == 0);
             expression_ref imodel = imodels[*imodel_index];
-
-            maybe_imodel = {var("Just"), imodel};
 
             var leaf_sequence_lengths("sequence_lengths_part"+part);
             expression_ref alphabet = {var("getAlphabet"),smodel};
@@ -1630,7 +1624,7 @@ std::string generate_atmodel_program(int n_sequences,
         }
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
-        partitions.push_back({var("Partition"), smodel, maybe_imodel, tree_var, alignment_on_tree});
+        partitions.push_back({var("Partition"), smodel, tree_var, alignment_on_tree});
     }
 
     // FIXME - we need to observe the likelihoods for each partition here.
@@ -1673,13 +1667,11 @@ std::string generate_atmodel_program(int n_sequences,
         string part = std::to_string(i+1);
         int likelihood_calculator = like_calcs[i];
 
-        // let DataPartition smodel imodel tree alignment hmms = partitions atmodel !! i
+        // let DataPartition smodel tree alignment = partitions atmodel !! i
         expression_ref smodel = var("smodel_part"+part);
-        expression_ref imodel = wildcard();
         expression_ref tree = var("tree_part"+part);
         expression_ref alignment = (likelihood_calculator == 0)?var("alignment_part"+part):wildcard();
-        expression_ref hmms = wildcard();
-        program.let({var("Partition"),smodel, imodel, tree, alignment},{var("!!"),{var("partitions"),var("atmodel")},i});
+        program.let({var("Partition"),smodel, tree, alignment},{var("!!"),{var("partitions"),var("atmodel")},i});
 
         var transition_ps("transition_ps_part"+part);
         var cls_var("cls_part"+part);
