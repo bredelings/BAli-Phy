@@ -55,6 +55,12 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   property "cond_likes" cls
   property "anc_seqs" ancestral_sequences
   property "likelihood" likelihood
+  property "taxa" taxa
+  property "weighted_frequency_matrix" f
+  property "smap" smap
+  property "leaf_sequences" leaf_sequences
+  property "alphabet" alphabet
+  property "as" as
 
   return [likelihood]
 
@@ -114,6 +120,12 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   property "cond_likes" cls
   property "anc_seqs" ancestral_sequences
   property "likelihood" likelihood
+  property "taxa" taxa
+  property "weighted_frequency_matrix" f
+  property "smap" smap
+  property "leaf_sequences" leaf_sequences
+  property "alphabet" alphabet
+  -- How about stuff related to alignment compression?
 
   return [likelihood]
 
