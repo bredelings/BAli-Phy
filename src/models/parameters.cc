@@ -432,6 +432,9 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     auto properties = p->dist_properties(s_sequences);
     auto in_edges = p->in_edges_to_dist(s_sequences);
 
+    // TODO: get the like_calc from the dist_type.
+    // TODO: get the alphabet from the "alphabet" property.
+
     subst_root = reg_var( *properties->get("subst_root") );
 
     cl_index = reg_var(*properties->get("cond_likes"));
@@ -482,7 +485,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     if (like_calc == 0)
     {
         // Extract pairwise alignments from data partition
-        auto alignment_on_tree = reg_var( *in_edges->get("alignment") );
+        int r_alignment = *in_edges->get("alignment");
+        auto alignment_on_tree = reg_var( r_alignment );
 
         /* Initialize params -- from alignments.ref(*p) */
         auto as = expression_ref{var("Bio.Alignment.pairwise_alignments"), alignment_on_tree};
@@ -493,6 +497,19 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
             sequence_length_indices[n] = p->add_compute_expression( {var("Data.Array.!"), seq_lengths, n} );
 
         // Add method indices for calculating branch HMMs and alignment prior
+
+        int s_alignment = *p->out_edges_to_var( r_alignment )->begin();
+//        auto A_in_edges = p->in_edges_to_dist(s_alignment);
+        auto A_properties = p->dist_properties(s_alignment);
+        if (A_properties->get("hmms"))
+        {
+            auto hmms = reg_var( *A_properties->get("hmms") );
+            for(int b=0;b<B;b++)
+                branch_HMMs.push_back( p->add_compute_expression( {var("Data.Array.!"), hmms, b} ) );
+
+            alignment_prior_index = reg_var( *A_properties->get("pr") );
+        }
+
         if (imodel_index)
         {
             // D = Params.substitutionBranchLengths!scale_index
@@ -505,14 +522,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
                 expression_ref l = sequence_length_indices[n].ref(*p);
                 sequence_length_pr_indices[n] = p->add_compute_expression( {lengthp,l} );
             }
-
-            // R6. Register branch HMMs
-            param hmms = p->add_compute_expression({fromJust,{var("BAliPhy.ATModel.DataPartition.get_hmms"),partition}});
-            for(int b=0;b<B;b++)
-                branch_HMMs.push_back( p->add_compute_expression( {var("Data.Array.!"), hmms.ref(*p), b} ) );
-
-            // Alignment prior
-            alignment_prior_index = p->add_compute_expression( {var("Probability.Distribution.RandomAlignment.alignment_pr"), alignment_on_tree, hmms.ref(*p), model} );
         }
     }
 }
