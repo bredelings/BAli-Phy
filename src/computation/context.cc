@@ -439,6 +439,56 @@ expression_ref context_ref::get_expression(int i) const
     return reg_var(H);
 }
 
+std::optional<int> context_ref::out_edges_from_dist(int r) const
+{
+    auto& from_dist = memory()->out_edges_from_dist;
+    auto it = from_dist.find(r);
+    if (it == from_dist.end())
+        return {};
+    else
+        return it->second;
+}
+
+const std::set<int>* context_ref::out_edges_to_var(int r) const
+{
+    auto& to_var = memory()->out_edges_to_var;
+    auto it = to_var.find(r);
+    if (it == to_var.end())
+        return nullptr;
+    else
+        return &(it->second);
+}
+
+const std::map<std::string,int>* context_ref::in_edges_to_dist(int r)  const
+{
+    auto& to_dist = memory()->in_edges_to_dist;
+    auto it = to_dist.find(r);
+    if (it == to_dist.end())
+        return nullptr;
+    else
+        return &(it->second);
+}
+
+const std::map<int,std::set<std::string>>* context_ref::in_edges_from_var(int r)  const
+{
+    auto& from_var = memory()->in_edges_from_var;
+    auto it = from_var.find(r);
+    if (it == from_var.end())
+        return nullptr;
+    else
+        return &(it->second);
+}
+
+const std::map<std::string,int>* context_ref::dist_properties(int s) const
+{
+    auto& dist_properties = memory()->dist_properties;
+    auto it = dist_properties.find(s);
+    if (it == dist_properties.end())
+        return nullptr;
+    else
+        return &(it->second);
+}
+
 void context_ref::compile()
 {
 }
