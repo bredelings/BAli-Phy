@@ -1622,7 +1622,7 @@ std::string generate_atmodel_program(int n_sequences,
             sample_atmodel.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  {var("!!"),var("sequence_data"),i}});
 
             // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
-            sample_atmodel.perform(alignment_on_tree, {var("random_alignment"), branch_dist_trees[i], branch_hmms, imodel, leaf_sequence_lengths});
+            sample_atmodel.perform(alignment_on_tree, {var("random_alignment"), branch_dist_trees[i], imodel, leaf_sequence_lengths});
             sample_atmodel.empty_stmt();
         }
         else

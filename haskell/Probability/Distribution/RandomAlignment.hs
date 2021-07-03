@@ -66,8 +66,8 @@ triggered_modifiable_alignment value effect = (raw_a, triggered_a) where
     triggered_a = effect' `seq` raw_a
 
 
-annotated_alignment_prs hmms model alignment = do
-  in_edge "hmms" hmms
+annotated_alignment_prs tree hmms model alignment = do
+  in_edge "tree" tree
   in_edge "imodel" model
   let prs = alignment_prs hmms model alignment
   property "lengthp" (snd model)
@@ -75,9 +75,9 @@ annotated_alignment_prs hmms model alignment = do
   property "pr" (product' prs)
   return $ prs
 
-random_alignment tree hmms model tip_lengths = Distribution "random_alignment" (annotated_alignment_prs hmms model)
-                                                            (no_quantile "random_alignment")
-                                                            (RandomStructure do_nothing triggered_modifiable_alignment do_sample)
-                                                            ()
+random_alignment tree model tip_lengths = Distribution "random_alignment" (annotated_alignment_prs tree hmms model)
+                                                       (no_quantile "random_alignment")
+                                                       (RandomStructure do_nothing triggered_modifiable_alignment do_sample)
+                                                       ()
     where do_sample = sample_alignment tree hmms tip_lengths
-
+          hmms = branch_hmms model (Tree.branch_lengths tree) (numBranches tree)
