@@ -430,6 +430,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
     int s_sequences = *to_var->begin();
     auto properties = p->dist_properties(s_sequences);
+    auto in_edges = p->in_edges_to_dist(s_sequences);
 
     subst_root = reg_var( *properties->get("subst_root") );
 
@@ -463,11 +464,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // This would be like what we get when we start with a line graph for each sequence and then begin
     // merging columns.
 
-    expression_ref partition = {var("Data.List.!!"), {var("BAliPhy.ATModel.partitions"), p->my_atmodel()}, i};
-
-    //  const int n_states = state_letters().size();
-    auto imodel_index = p->imodel_index_for_partition(i);
-
     if (like_calc == 0)
     {
         auto leaf_sequences = reg_var( *properties->get( "leaf_sequences" ) );
@@ -478,11 +474,15 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
             sequences.push_back( (vector<int>)(leaf_sequence_indices[i].get_value(*p).as_<EVector>()) );
     }
 
+    expression_ref partition = {var("Data.List.!!"), {var("BAliPhy.ATModel.partitions"), p->my_atmodel()}, i};
+
+    //  const int n_states = state_letters().size();
+    auto imodel_index = p->imodel_index_for_partition(i);
+
     if (like_calc == 0)
     {
         // Extract pairwise alignments from data partition
-        auto alignment_on_tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_alignment"), partition};
-        alignment_on_tree = p->get_expression( p->add_compute_expression(alignment_on_tree) );
+        auto alignment_on_tree = reg_var( *in_edges->get("alignment") );
 
         /* Initialize params -- from alignments.ref(*p) */
         auto as = expression_ref{var("Bio.Alignment.pairwise_alignments"), alignment_on_tree};
