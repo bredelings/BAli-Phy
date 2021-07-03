@@ -70,6 +70,7 @@ annotated_alignment_prs hmms model alignment = do
   in_edge "hmms" hmms
   in_edge "imodel" model
   let prs = alignment_prs hmms model alignment
+  property "lengthp" (snd model)
   property "hmms" hmms
   property "pr" (product' prs)
   return $ prs

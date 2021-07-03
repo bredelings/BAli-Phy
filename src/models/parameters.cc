@@ -499,7 +499,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
         // Add method indices for calculating branch HMMs and alignment prior
 
         int s_alignment = *p->out_edges_to_var( r_alignment )->begin();
-//        auto A_in_edges = p->in_edges_to_dist(s_alignment);
+
         auto A_properties = p->dist_properties(s_alignment);
         if (A_properties->get("hmms"))
         {
@@ -508,15 +508,8 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
                 branch_HMMs.push_back( p->add_compute_expression( {var("Data.Array.!"), hmms, b} ) );
 
             alignment_prior_index = reg_var( *A_properties->get("pr") );
-        }
 
-        if (imodel_index)
-        {
-            // D = Params.substitutionBranchLengths!scale_index
-
-            // R5. Register probabilities of each sequence length
-            expression_ref model = {fromJust,{var("BAliPhy.ATModel.DataPartition.get_imodel"),partition}};
-            expression_ref lengthp = {snd,model};
+            auto lengthp = reg_var( *A_properties->get("lengthp") );
             for(int n=0;n<sequence_length_pr_indices.size();n++)
             {
                 expression_ref l = sequence_length_indices[n].ref(*p);
