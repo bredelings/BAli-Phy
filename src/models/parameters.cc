@@ -475,15 +475,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
         for(int i=0; i<p->t().n_leaves(); i++)
             sequences.push_back( (vector<int>)(leaf_sequence_indices[i].get_value(*p).as_<EVector>()) );
-    }
 
-    expression_ref partition = {var("Data.List.!!"), {var("BAliPhy.ATModel.partitions"), p->my_atmodel()}, i};
-
-    //  const int n_states = state_letters().size();
-    auto imodel_index = p->imodel_index_for_partition(i);
-
-    if (like_calc == 0)
-    {
         // Extract pairwise alignments from data partition
         int r_alignment = *in_edges->get("alignment");
         auto alignment_on_tree = reg_var( r_alignment );
