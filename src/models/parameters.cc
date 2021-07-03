@@ -1612,10 +1612,7 @@ std::string generate_atmodel_program(int n_sequences,
             assert(like_calcs[i] == 0);
             expression_ref imodel = imodels[*imodel_index];
 
-            var branch_hmms("branch_hmms_part"+part);
-            sample_atmodel.let(branch_hmms, {var("branch_hmms"), imodel, distances[i], n_branches});
             maybe_imodel = {var("Just"), imodel};
-            maybe_hmms   = {var("Just"), branch_hmms};
 
             var leaf_sequence_lengths("sequence_lengths_part"+part);
             expression_ref alphabet = {var("getAlphabet"),smodel};
@@ -1633,7 +1630,7 @@ std::string generate_atmodel_program(int n_sequences,
         }
 
         // FIXME - to make an AT *model* we probably need to remove the data from here.
-        partitions.push_back({var("Partition"), smodel, maybe_imodel, tree_var, alignment_on_tree, maybe_hmms});
+        partitions.push_back({var("Partition"), smodel, maybe_imodel, tree_var, alignment_on_tree});
     }
 
     // FIXME - we need to observe the likelihoods for each partition here.
@@ -1682,7 +1679,7 @@ std::string generate_atmodel_program(int n_sequences,
         expression_ref tree = var("tree_part"+part);
         expression_ref alignment = (likelihood_calculator == 0)?var("alignment_part"+part):wildcard();
         expression_ref hmms = wildcard();
-        program.let({var("Partition"),smodel, imodel, tree, alignment, hmms},{var("!!"),{var("partitions"),var("atmodel")},i});
+        program.let({var("Partition"),smodel, imodel, tree, alignment},{var("!!"),{var("partitions"),var("atmodel")},i});
 
         var transition_ps("transition_ps_part"+part);
         var cls_var("cls_part"+part);
