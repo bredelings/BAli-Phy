@@ -447,21 +447,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
     if (like_calc == 0)
     {
-        // Can we extract the "leaf_sequences" intermediate value from (leaf_sequences atmodel_export!!i)?
-
-        // R2. Register array of leaf sequences
-        expression_ref sequences_exp = {var("Data.List.!!"),{var("BAliPhy.ATModel.leaf_sequences"),p->my_atmodel_export()},i};
-
-        auto tree = expression_ref{var("BAliPhy.ATModel.DataPartition.get_tree"), partition};
-
-        auto taxa = expression_ref{var("Tree.get_labels"),tree};
-
-        expression_ref leaf_sequences_exp = {var("Bio.Sequence.reorder_sequences"),taxa,sequences_exp};
-        auto smodel = expression_ref{var("BAliPhy.ATModel.DataPartition.get_smodel"),partition};
-        auto alphabet = expression_ref{var("SModel.getAlphabet"),smodel};
-        leaf_sequences_exp = {var("Data.List.map"), {var("Bio.Sequence.sequence_to_indices"),alphabet},leaf_sequences_exp};
-
-        auto leaf_sequences = p->get_expression( p->add_compute_expression({var("Data.Array.listArray'"),leaf_sequences_exp}) );
+        auto leaf_sequences = reg_var( properties->at( "leaf_sequences" ) );
         for(int i=0; i<p->t().n_leaves(); i++)
             leaf_sequence_indices.push_back( p->add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
 
