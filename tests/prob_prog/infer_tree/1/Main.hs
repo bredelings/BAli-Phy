@@ -29,17 +29,6 @@ smodel_prior = do
 
     return (tn93_model, loggers)
 
--- Here, hmms should be a property of the imodel on the tree, like the transition_ps
---   are a property of smodelOnTree (or however it is spelled).
--- However, we currently pass them in to random_alignment because we need to export
---   them, and its not clear how to get them out if we generate them inside random-alignment.
-sample_alignment tree imodel tip_seq_lengths = do
-    let n_branches = numBranches tree
-        ds         = Tree.branch_lengths tree
-        hmms       = branch_hmms imodel ds n_branches
-    alignment_on_tree <- random_alignment tree hmms imodel tip_seq_lengths
-    return alignment_on_tree
-
 tree_prior taxa = do
     topology <- uniform_labelled_topology taxa
 
@@ -63,7 +52,7 @@ prior taxa tip_seq_lengths = do
 
     (imodel, imodel_loggers) <- imodel_prior tree
 
-    alignment                <- Main.sample_alignment tree imodel tip_seq_lengths
+    alignment                <- random_alignment tree imodel tip_seq_lengths
 
     let loggers = ["tree" %=% write_newick tree, "tree" %>% tree_loggers, "tn93" %>% smodel_loggers, "rs07" %>% imodel_loggers]
 
