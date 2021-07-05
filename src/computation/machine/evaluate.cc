@@ -156,10 +156,11 @@ public:
             return r_alloc;
         }
 
-    void set_effect(const effect& e)
+    void set_effect(int r)
         {
+            const effect& e = M.closure_at(r).exp.head().as_<effect>();
             make_changeable();
-            memory().mark_step_with_effect(s);
+            M.mark_step_with_effect(s);
             e.register_effect(M, s);
         }
 

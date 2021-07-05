@@ -119,7 +119,7 @@ int OperationArgs::allocate_reg()
     return r;
 }
 
-void OperationArgs::set_effect(const effect& /*e*/)
+void OperationArgs::set_effect(int /*r*/)
 {
     make_changeable();
 }

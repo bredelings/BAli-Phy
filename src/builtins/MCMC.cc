@@ -34,7 +34,7 @@ extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Ar
 
     int r_effect = Args.allocate(closure(e));
 
-    Args.set_effect(*e);
+    Args.set_effect(r_effect);
 
     return {index_var(0), {r_effect}};
 }

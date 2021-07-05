@@ -49,7 +49,7 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 
     int r_effect = Args.allocate(closure(e));
 
-    Args.set_effect(*e);
+    Args.set_effect(r_effect);
 
     return {index_var(0), {r_effect}};
 }
@@ -69,7 +69,7 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 
     int r_effect = Args.allocate(closure(e));
 
-    Args.set_effect(*e);
+    Args.set_effect(r_effect);
 
     return {index_var(0), {r_effect}};
 }
@@ -87,7 +87,7 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
 
     int r_effect = Args.allocate(closure(e));
 
-    Args.set_effect(*e);
+    Args.set_effect(r_effect);
 
     return {index_var(0), {r_effect}};
 }
@@ -101,7 +101,7 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
 
     int r_effect = Args.allocate(closure(e));
 
-    Args.set_effect(*e);
+    Args.set_effect(r_effect);
 
     return {index_var(0), {r_effect}};
 }
@@ -120,7 +120,7 @@ extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 
     M.set_C(r, e);
 
-    Args.set_effect(*e);
+    Args.set_effect(r);
 
     return {index_var(0),{r}};
 }
@@ -135,7 +135,7 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
 
     int r_effect = Args.allocate(closure(e));
 
-    Args.set_effect(*e);
+    Args.set_effect(r_effect);
 
     return {index_var(0), {r_effect}};
 }
