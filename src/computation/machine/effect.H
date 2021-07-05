@@ -6,9 +6,6 @@ class reg_heap;
 
 class effect:public Object
 {
-public:
-    virtual void register_effect(reg_heap&, int) const = 0;
-    virtual void unregister_effect(reg_heap&, int) const = 0;
 };
 
 #endif

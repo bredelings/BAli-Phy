@@ -23,9 +23,6 @@ struct register_prior: public register_prob, public effect
 
     std::string print () const;
 
-    void register_effect(reg_heap&,int) const;
-    void unregister_effect(reg_heap&,int) const;
-
     using register_prob::register_prob;
 };
 
@@ -37,9 +34,6 @@ struct register_likelihood: public register_prob, public effect
     bool operator==(const Object& O) const;
 
     std::string print () const;
-
-    void register_effect(reg_heap&,int) const;
-    void unregister_effect(reg_heap&,int) const;
 
     using register_prob::register_prob;
 };
@@ -55,9 +49,6 @@ struct register_transition_kernel: public effect
     bool operator==(const Object& O) const;
 
     std::string print () const;
-
-    void register_effect(reg_heap&,int) const;
-    void unregister_effect(reg_heap&,int) const;
 
     register_transition_kernel(double r, int k);
 };
@@ -75,9 +66,6 @@ struct in_edge: public effect
 
     std::string print() const;
 
-    void register_effect(reg_heap&,int) const;
-    void unregister_effect(reg_heap&,int) const;
-
     in_edge(int i1, int i2, const std::string& s);
 };
 
@@ -93,9 +81,6 @@ struct out_edge: public effect
     bool operator==(const Object& O) const;
 
     std::string print() const;
-
-    void register_effect(reg_heap&,int) const;
-    void unregister_effect(reg_heap&,int) const;
 
     out_edge(int i1, int i2);
 };
@@ -114,9 +99,6 @@ struct register_dist: public effect
 
     std::string print() const;
 
-    void register_effect(reg_heap&,int) const;
-    void unregister_effect(reg_heap&,int) const;
-
     register_dist(const std::string& s, int r, bool b);
 };
 
@@ -133,9 +115,6 @@ struct dist_property: public effect
     bool operator==(const Object& O) const;
 
     std::string print() const;
-
-    void register_effect(reg_heap&,int) const;
-    void unregister_effect(reg_heap&,int) const;
 
     dist_property(int i1, int i2, const std::string& s);
 };
