@@ -108,17 +108,19 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
 
 extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 {
-    std::string name = Args.evaluate(0).as_<String>();
+    String name = Args.evaluate(0).as_<String>();
 
-    bool observation = Args.evaluate(1).as_int() == 1;
+    int observation = Args.evaluate(1).as_int();
 
-    auto& M = Args.memory();
+    // The effect to register the sampling event is self-referential,
+    // so we need to allocate the location BEFORE we construct the object.
 
     int r = Args.allocate_reg();
 
-    object_ptr<effect> e(new register_dist(name, r, observation));
+    expression_ref E(constructor("Effect.Dist",3), {index_var(0), observation, name});
 
-    M.set_C(r, e);
+    auto& M = Args.memory();
+    M.set_C(r, closure{E,{r}});
 
     Args.set_effect(r);
 
@@ -131,7 +133,7 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
     int r_to_prop   = force_slot_to_safe_reg(Args,1);
     String property = Args.evaluate(2).as_<String>();
 
-    expression_ref E(constructor("DistProperty",3), {index_var(1),property,index_var(0)});
+    expression_ref E(constructor("Effect.DistProperty",3), {index_var(1),property,index_var(0)});
 
     int r_effect = Args.allocate(closure{E,{r_from_dist, r_to_prop}});
 

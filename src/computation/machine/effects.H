@@ -85,21 +85,4 @@ struct out_edge: public effect
     out_edge(int i1, int i2);
 };
 
-
-struct register_dist: public effect
-{
-    std::string name;
-    int r;
-    bool observation;
-
-    register_dist* clone() const {return new register_dist(*this);}
-
-    bool operator==(const register_dist&) const;
-    bool operator==(const Object& O) const;
-
-    std::string print() const;
-
-    register_dist(const std::string& s, int r, bool b);
-};
-
 #endif

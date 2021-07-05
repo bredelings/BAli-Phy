@@ -143,32 +143,3 @@ out_edge::out_edge(int i1, int i2)
     :r_from_dist(i1), r_to_var(i2)
 { }
 
-//--------------------------------------------------------------------
-
-bool register_dist::operator==(const register_dist& e) const
-{
-    return name == e.name and r == e.r and observation == e.observation;
-}
-
-bool register_dist::operator==(const Object& O) const
-{
-    if (this == &O) return true;
-
-    if (typeid(*this) != typeid(O)) return false;
-
-    auto* e = dynamic_cast<const register_dist*>(&O);
-
-    return (*this) == *e;
-}
-
-string register_dist::print() const
-{
-    std::ostringstream result;
-    result<<"register_dist[name="<<name<<",r="<<r<<",observation="<<observation<<"]";
-    return result.str();
-}
-
-register_dist::register_dist(const string& s, int i, bool b)
-    :name(s),r(i),observation(b)
-{ }
-

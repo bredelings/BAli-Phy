@@ -178,8 +178,8 @@ class reg_heap: public Object
     mutable int n_active_pair_scratch_lists = 0;
     mutable std::vector< object_ptr<Vector<std::pair<int,int>> > > pair_scratch_lists;
 
-    std::vector<std::function<void(const ::register_dist&, int)>> register_dist_handlers;
-    std::vector<std::function<void(const ::register_dist&, int)>> unregister_dist_handlers;
+    std::vector<std::function<void(int, int)>> register_dist_handlers;
+    std::vector<std::function<void(int, int)>> unregister_dist_handlers;
 
     std::vector<std::function<void(const register_prob&, int)>> register_likelihood_handlers;
     std::vector<std::function<void(const register_prob&, int)>> unregister_likelihood_handlers;
@@ -389,8 +389,8 @@ public:
     void register_out_edge(const effect& e, int s);
     void unregister_out_edge(const effect& e, int s);
 
-    void   register_dist(const ::register_dist&, int s);
-    void unregister_dist(const ::register_dist&, int s);
+    void   register_dist(int r, int s);
+    void unregister_dist(int r, int s);
 
     void register_dist_property(int r, int s);
     void unregister_dist_property(int r, int s);
