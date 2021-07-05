@@ -454,7 +454,7 @@ void reg_heap::_register_effect_at_reg(int r, int s)
         register_dist_property(e, s);
     }
     else
-        std::abort();
+        throw myexception()<<"register_effect_at_reg("<<r<<","<<s<<"): unknown effect "<<E;
 }
 
 void reg_heap::_unregister_effect_at_reg(int r, int s)
@@ -507,7 +507,7 @@ void reg_heap::_unregister_effect_at_reg(int r, int s)
         unregister_dist_property(e, s);
     }
     else
-        std::abort();
+        throw myexception()<<"unregister_effect_at_reg("<<r<<","<<s<<"): unknown effect "<<E;
 }
 
 bool reg_heap::step_has_effect(int s) const
