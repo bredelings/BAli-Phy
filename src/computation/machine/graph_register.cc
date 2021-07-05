@@ -388,10 +388,7 @@ void reg_heap::register_effect_at_step(int s)
     else
         assert(not steps_pending_effect_registration.count(s));
 
-    int call = steps[s].call;
-    auto& e = expression_at(call);
-    assert(e.is_a<effect>());
-    e.as_<effect>().register_effect(*this, s);
+    _register_effect_at_reg(steps[s].call, s);
 }
 
 void reg_heap::unregister_effect_at_step(int s)
@@ -405,20 +402,19 @@ void reg_heap::unregister_effect_at_step(int s)
     else
         assert(not steps_pending_effect_unregistration.count(s));
 
-    int call = steps[s].call;
-    auto& e = expression_at(call);
-    assert(e.is_a<effect>());
-    e.as_<effect>().unregister_effect(*this, s);
+    _unregister_effect_at_reg(steps[s].call, s);
 }
 
 void reg_heap::_register_effect_at_reg(int r, int s)
 {
+    assert(closure_at(r).exp.head().is_a<effect>());
     const effect& e = closure_at(r).exp.head().as_<effect>();
     e.register_effect(*this, s);
 }
 
 void reg_heap::_unregister_effect_at_reg(int r, int s)
 {
+    assert(closure_at(r).exp.head().is_a<effect>());
     const effect& e = closure_at(r).exp.head().as_<effect>();
     e.unregister_effect(*this, s);
 }
