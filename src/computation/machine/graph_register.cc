@@ -408,15 +408,106 @@ void reg_heap::unregister_effect_at_step(int s)
 void reg_heap::_register_effect_at_reg(int r, int s)
 {
     assert(closure_at(r).exp.head().is_a<effect>());
-    const effect& e = closure_at(r).exp.head().as_<effect>();
-    e.register_effect(*this, s);
+    auto& E = closure_at(r).exp.head();
+
+    if (E.is_a<::register_prior>())
+    {
+        if (log_verbose >= 5)
+            std::cerr<<print()<<":   REGISTER! ("<<prior_terms.size()<<" -> "<<prior_terms.size()+1<<")\n";
+        register_prior(E.as_<::register_prior>(), s);
+    }
+    else if (E.is_a<register_likelihood>())
+    {
+        if (log_verbose >= 5)
+            std::cerr<<print()<<":   REGISTER! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()+1<<")\n";
+        register_likelihood_(E.as_<register_likelihood>(), s);
+    }
+    else if (E.is_a<::register_transition_kernel>())
+    {
+        auto& e = E.as_<::register_transition_kernel>();
+        if (log_verbose >= 5)
+            std::cerr<<"register_transition_kernel[rate="<<e.rate<<",kernel="<<e.kernel_reg<<"]: REGISTER!\n";
+        register_transition_kernel(e, s);
+    }
+    else if (E.is_a<in_edge>())
+    {
+        auto& e = E.as_<in_edge>();
+        if (log_verbose >= 5) std::cerr<<e<<": REGISTER!\n";
+        register_in_edge(e, s);
+    }
+    else if (E.is_a<out_edge>())
+    {
+        auto& e = E.as_<out_edge>();
+        if (log_verbose >= 5) std::cerr<<e<<": REGISTER!\n";
+        register_out_edge(e, s);
+    }
+    else if (E.is_a<::register_dist>())
+    {
+        auto& e = E.as_<::register_dist>();
+        if (log_verbose >= 5) std::cerr<<e<<":  REGISTER!\n";
+        register_dist(e, s);
+    }
+    else if (E.is_a<::dist_property>())
+    {
+        auto& e = E.as_<::dist_property>();
+        if (log_verbose >= 5) std::cerr<<e<<": REGISTER!\n";
+        register_dist_property(e, s);
+    }
+    else
+        std::abort();
 }
 
 void reg_heap::_unregister_effect_at_reg(int r, int s)
 {
     assert(closure_at(r).exp.head().is_a<effect>());
-    const effect& e = closure_at(r).exp.head().as_<effect>();
-    e.unregister_effect(*this, s);
+    auto& E = closure_at(r).exp.head();
+
+    if (E.is_a<::register_prior>())
+    {
+        if (log_verbose >= 5)
+            std::cerr<<print()<<": UNregister! ("<<prior_terms.size()<<" -> "<<prior_terms.size()-1<<")\n";
+
+        unregister_prior(E.as_<::register_prior>(), s);
+    }
+    else if (E.is_a<register_likelihood>())
+    {
+        if (log_verbose >= 5)
+            std::cerr<<print()<<": UNregister! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()-1<<")\n";
+        unregister_likelihood_(E.as_<register_likelihood>(), s);
+    }
+    else if (E.is_a<::register_transition_kernel>())
+    {
+        auto& e = E.as_<::register_transition_kernel>();
+        if (log_verbose >= 5)
+            std::cerr<<"register_transition_kernel[rate="<<e.rate<<",kernel="<<e.kernel_reg<<"]: UNREGISTER!\n";
+        unregister_transition_kernel(e, s);
+    }
+    else if (E.is_a<in_edge>())
+    {
+        auto& e = E.as_<in_edge>();
+        if (log_verbose >= 5)std::cerr<<e<<": UNREGISTER!\n";
+        unregister_in_edge(e, s);
+    }
+    else if (E.is_a<out_edge>())
+    {
+        auto& e = E.as_<out_edge>();
+        if (log_verbose >= 5) std::cerr<<e<<": UNREGISTER!\n";
+        unregister_out_edge(e, s);
+    }
+    else if (E.is_a<::register_dist>())
+    {
+        auto& e = E.as_<::register_dist>();
+        if (log_verbose >= 5)std::cerr<<e<<": UNREGISTER!\n";
+        unregister_dist(e, s);
+    }
+    else if (E.is_a<::dist_property>())
+    {
+        auto& e = E.as_<::dist_property>();
+        if (log_verbose >= 5)std::cerr<<e<<": UNREGISTER!\n";
+        unregister_dist_property(e, s);
+    }
+    else
+        std::abort();
 }
 
 bool reg_heap::step_has_effect(int s) const
