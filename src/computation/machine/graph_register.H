@@ -304,6 +304,15 @@ private:
     void register_effect_at_step(int s);
 
     void unregister_effect_at_step(int s);
+
+    friend class RegOperationArgs1;
+    friend class RegOperationArgs2Changeable;
+    friend class RegOperationArgs2Unevaluated;
+
+    void _register_effect_at_reg(int r, int s);
+
+    void _unregister_effect_at_reg(int r, int s);
+
 public:
     bool step_has_effect(int s) const;
 

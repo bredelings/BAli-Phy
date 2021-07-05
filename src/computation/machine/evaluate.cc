@@ -158,10 +158,9 @@ public:
 
     void set_effect(int r)
         {
-            const effect& e = M.closure_at(r).exp.head().as_<effect>();
             make_changeable();
             M.mark_step_with_effect(s);
-            e.register_effect(M, s);
+            M._register_effect_at_reg(r, s);
         }
 
     RegOperationArgs1* clone() const {return new RegOperationArgs1(*this);}
@@ -511,10 +510,10 @@ public:
             return r;
         }
 
-    void set_effect(const effect& e)
+    void set_effect(int r)
         {
             memory().mark_step_with_effect(s);
-            e.register_effect(M, s);
+            M._register_effect_at_reg(r, s);
         }
 
     RegOperationArgs2Changeable* clone() const {return new RegOperationArgs2Changeable(*this);}
@@ -603,11 +602,11 @@ public:
             return r_alloc;
         }
 
-    void set_effect(const effect& e)
+    void set_effect(int r)
         {
             make_changeable();
             memory().mark_step_with_effect(s);
-            e.register_effect(M, s);
+            M._register_effect_at_reg(r, s);
         }
 
     RegOperationArgs2Unevaluated* clone() const {return new RegOperationArgs2Unevaluated(*this);}
