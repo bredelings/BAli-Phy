@@ -392,8 +392,8 @@ public:
     void   register_dist(const ::register_dist&, int s);
     void unregister_dist(const ::register_dist&, int s);
 
-    void register_dist_property(const effect& e, int s);
-    void unregister_dist_property(const effect& e, int s);
+    void register_dist_property(int r, int s);
+    void unregister_dist_property(int r, int s);
 
     /// Probably this would be non-parameter identifiers
     std::map<std::string, int> identifiers;

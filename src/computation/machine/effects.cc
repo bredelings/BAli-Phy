@@ -172,32 +172,3 @@ register_dist::register_dist(const string& s, int i, bool b)
     :name(s),r(i),observation(b)
 { }
 
-//--------------------------------------------------------------------
-
-bool dist_property::operator==(const dist_property& e) const
-{
-    return r_from_dist == e.r_from_dist and r_to_prop == e.r_to_prop and property == e.property;
-}
-
-bool dist_property::operator==(const Object& O) const
-{
-    if (this == &O) return true;
-
-    if (typeid(*this) != typeid(O)) return false;
-
-    auto* e = dynamic_cast<const dist_property*>(&O);
-
-    return (*this) == *e;
-}
-
-string dist_property::print() const
-{
-    std::ostringstream result;
-    result<<"dist_property[from="<<r_from_dist<<",to="<<r_to_prop<<",property="<<property<<"]";
-    return result.str();
-}
-
-dist_property::dist_property(int i1, int i2, const string& s)
-    :r_from_dist(i1), r_to_prop(i2), property(s)
-{ }
-

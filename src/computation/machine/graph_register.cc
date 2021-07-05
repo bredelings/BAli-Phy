@@ -407,7 +407,7 @@ void reg_heap::unregister_effect_at_step(int s)
 
 void reg_heap::_register_effect_at_reg(int r, int s)
 {
-    assert(closure_at(r).exp.head().is_a<effect>());
+    assert(closure_at(r).exp.head().is_a<effect>() or closure_at(r).exp.head().is_a<constructor>());
     auto& E = closure_at(r).exp.head();
 
     if (E.is_a<::register_prior>())
@@ -432,26 +432,25 @@ void reg_heap::_register_effect_at_reg(int r, int s)
     else if (E.is_a<in_edge>())
     {
         auto& e = E.as_<in_edge>();
-        if (log_verbose >= 5) std::cerr<<e<<": REGISTER!\n";
+        if (log_verbose >= 5) std::cerr<<E<<": REGISTER!\n";
         register_in_edge(e, s);
     }
     else if (E.is_a<out_edge>())
     {
         auto& e = E.as_<out_edge>();
-        if (log_verbose >= 5) std::cerr<<e<<": REGISTER!\n";
+        if (log_verbose >= 5) std::cerr<<E<<": REGISTER!\n";
         register_out_edge(e, s);
     }
     else if (E.is_a<::register_dist>())
     {
         auto& e = E.as_<::register_dist>();
-        if (log_verbose >= 5) std::cerr<<e<<":  REGISTER!\n";
+        if (log_verbose >= 5) std::cerr<<E<<":  REGISTER!\n";
         register_dist(e, s);
     }
-    else if (E.is_a<::dist_property>())
+    else if (E.is_a<constructor>())
     {
-        auto& e = E.as_<::dist_property>();
-        if (log_verbose >= 5) std::cerr<<e<<": REGISTER!\n";
-        register_dist_property(e, s);
+        if (log_verbose >= 5) std::cerr<<E<<": REGISTER!\n";
+        register_dist_property(r, s);
     }
     else
         throw myexception()<<"register_effect_at_reg("<<r<<","<<s<<"): unknown effect "<<E;
@@ -459,7 +458,7 @@ void reg_heap::_register_effect_at_reg(int r, int s)
 
 void reg_heap::_unregister_effect_at_reg(int r, int s)
 {
-    assert(closure_at(r).exp.head().is_a<effect>());
+    assert(closure_at(r).exp.head().is_a<effect>() or closure_at(r).exp.head().is_a<constructor>());
     auto& E = closure_at(r).exp.head();
 
     if (E.is_a<::register_prior>())
@@ -485,26 +484,25 @@ void reg_heap::_unregister_effect_at_reg(int r, int s)
     else if (E.is_a<in_edge>())
     {
         auto& e = E.as_<in_edge>();
-        if (log_verbose >= 5)std::cerr<<e<<": UNREGISTER!\n";
+        if (log_verbose >= 5)std::cerr<<E<<": UNREGISTER!\n";
         unregister_in_edge(e, s);
     }
     else if (E.is_a<out_edge>())
     {
         auto& e = E.as_<out_edge>();
-        if (log_verbose >= 5) std::cerr<<e<<": UNREGISTER!\n";
+        if (log_verbose >= 5) std::cerr<<E<<": UNREGISTER!\n";
         unregister_out_edge(e, s);
     }
     else if (E.is_a<::register_dist>())
     {
         auto& e = E.as_<::register_dist>();
-        if (log_verbose >= 5)std::cerr<<e<<": UNREGISTER!\n";
+        if (log_verbose >= 5) std::cerr<<E<<": UNREGISTER!\n";
         unregister_dist(e, s);
     }
-    else if (E.is_a<::dist_property>())
+    else if (E.is_a<constructor>())
     {
-        auto& e = E.as_<::dist_property>();
-        if (log_verbose >= 5)std::cerr<<e<<": UNREGISTER!\n";
-        unregister_dist_property(e, s);
+        if (log_verbose >= 5) std::cerr<<E<<": UNREGISTER!\n";
+        unregister_dist_property(r, s);
     }
     else
         throw myexception()<<"unregister_effect_at_reg("<<r<<","<<s<<"): unknown effect "<<E;
@@ -1168,30 +1166,33 @@ void reg_heap::unregister_dist(const ::register_dist& D, int s)
         handler(D,s);
 }
 
-void reg_heap::register_dist_property(const effect& e, int /* s */)
+void reg_heap::register_dist_property(int r, int /* s */)
 {
-    auto& P = dynamic_cast<const dist_property&>(e);
+    int r_from_dist = closure_at(r).reg_for_slot(0);
+    const string& property =  expression_at(r).sub()[1].as_<String>();
+    int r_to_prop   = closure_at(r).reg_for_slot(2);
 
     // Check that there is in fact a distribution at P.s_from_dist.
-    assert(dist_type.count(P.r_from_dist));
+    assert(dist_type.count(r_from_dist));
 
-    dist_properties[P.r_from_dist].insert({P.property, P.r_to_prop});
+    dist_properties[r_from_dist].insert({property, r_to_prop});
 }
 
-void reg_heap::unregister_dist_property(const effect& e, int /* s */)
+void reg_heap::unregister_dist_property(int r, int /* s */)
 {
-    auto& P = dynamic_cast<const dist_property&>(e);
+    int r_from_dist = closure_at(r).reg_for_slot(0);
+    const string& property =  expression_at(r).sub()[1].as_<String>();
 
     // Check that there is in fact a distribution at P.r_from_dist.
-    assert(dist_type.count(P.r_from_dist));
+    assert(dist_type.count(r_from_dist));
 
-    auto& this_dist_properties = dist_properties.at(P.r_from_dist);
-    auto it = this_dist_properties.find(P.property);
+    auto& this_dist_properties = dist_properties.at(r_from_dist);
+    auto it = this_dist_properties.find(property);
     assert(it != this_dist_properties.end());
     this_dist_properties.erase(it);
 
     if (this_dist_properties.empty())
-        dist_properties.erase(P.r_from_dist);
+        dist_properties.erase(r_from_dist);
 }
 
 optional<int> reg_heap::find_update_modifiable_reg(int& R)

@@ -102,22 +102,4 @@ struct register_dist: public effect
     register_dist(const std::string& s, int r, bool b);
 };
 
-
-struct dist_property: public effect
-{
-    int r_from_dist;
-    int r_to_prop;
-    std::string property;
-
-    dist_property* clone() const {return new dist_property(*this);}
-
-    bool operator==(const dist_property&) const;
-    bool operator==(const Object& O) const;
-
-    std::string print() const;
-
-    dist_property(int i1, int i2, const std::string& s);
-};
-
-
 #endif
