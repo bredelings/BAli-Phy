@@ -45,11 +45,13 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 
     r_prob = Args.memory().follow_index_var_no_force(r_prob);
 
-    auto effect = new register_prior(r_from_dist, r_prob, prob);
+    object_ptr<effect> e(new register_prior(r_from_dist, r_prob, prob));
 
-    Args.set_effect(*effect);
+    int r_effect = Args.allocate(closure(e));
 
-    return effect;
+    Args.set_effect(*e);
+
+    return {index_var(0), {r_effect}};
 }
 
 extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
@@ -63,11 +65,13 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 
     r_prob = Args.memory().follow_index_var_no_force(r_prob);
 
-    auto effect = new register_likelihood(r_from_dist, r_prob, prob);
+    object_ptr<effect> e(new register_likelihood(r_from_dist, r_prob, prob));
 
-    Args.set_effect(*effect);
+    int r_effect = Args.allocate(closure(e));
 
-    return effect;
+    Args.set_effect(*e);
+
+    return {index_var(0), {r_effect}};
 }
 
 // Q. How do we ensure that each call is unique?
@@ -81,9 +85,11 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
 
     object_ptr<effect> e(new in_edge(r_from_var, r_to_dist, role));
 
+    int r_effect = Args.allocate(closure(e));
+
     Args.set_effect(*e);
 
-    return e;
+    return {index_var(0), {r_effect}};
 }
 
 extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
@@ -93,9 +99,11 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
 
     object_ptr<effect> e(new out_edge(r_from_dist, r_to_var));
 
+    int r_effect = Args.allocate(closure(e));
+
     Args.set_effect(*e);
 
-    return e;
+    return {index_var(0), {r_effect}};
 }
 
 extern "C" closure builtin_function_register_dist(OperationArgs& Args)
@@ -123,11 +131,13 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
     int r_to_prop   = force_slot_to_safe_reg(Args,1);
     std::string property = Args.evaluate(2).as_<String>();
 
-    auto effect = new dist_property(r_from_dist, r_to_prop, property);
+    object_ptr<effect> e(new dist_property(r_from_dist, r_to_prop, property));
 
-    Args.set_effect(*effect);
+    int r_effect = Args.allocate(closure(e));
 
-    return effect;
+    Args.set_effect(*e);
+
+    return {index_var(0), {r_effect}};
 }
 
 extern "C" closure builtin_function_modifiable(OperationArgs& Args)
