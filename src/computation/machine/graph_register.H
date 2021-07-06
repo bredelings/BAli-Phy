@@ -383,11 +383,11 @@ public:
     std::map<int, std::set<int>> out_edges_to_var;
     std::map<int, std::map<std::string, int>> dist_properties;
 
-    void register_in_edge(const effect& e, int s);
-    void unregister_in_edge(const effect& e, int s);
+    void register_in_edge(int r, int s);
+    void unregister_in_edge(int r, int s);
 
-    void register_out_edge(const effect& e, int s);
-    void unregister_out_edge(const effect& e, int s);
+    void register_out_edge(int r, int s);
+    void unregister_out_edge(int r, int s);
 
     void   register_dist(int r, int s);
     void unregister_dist(int r, int s);

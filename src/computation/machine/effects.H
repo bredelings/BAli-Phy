@@ -53,36 +53,4 @@ struct register_transition_kernel: public effect
     register_transition_kernel(double r, int k);
 };
 
-struct in_edge: public effect
-{
-    int r_from_node;
-    int r_to_dist;
-    std::string arg_name;
-
-    in_edge* clone() const {return new in_edge(*this);}
-
-    bool operator==(const in_edge&) const;
-    bool operator==(const Object& O) const;
-
-    std::string print() const;
-
-    in_edge(int i1, int i2, const std::string& s);
-};
-
-
-struct out_edge: public effect
-{
-    int r_from_dist;
-    int r_to_var;
-
-    out_edge* clone() const {return new out_edge(*this);}
-
-    bool operator==(const out_edge&) const;
-    bool operator==(const Object& O) const;
-
-    std::string print() const;
-
-    out_edge(int i1, int i2);
-};
-
 #endif

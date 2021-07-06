@@ -429,21 +429,19 @@ void reg_heap::_register_effect_at_reg(int r, int s)
             std::cerr<<"register_transition_kernel[rate="<<e.rate<<",kernel="<<e.kernel_reg<<"]: REGISTER!\n";
         register_transition_kernel(e, s);
     }
-    else if (E.is_a<in_edge>())
-    {
-        auto& e = E.as_<in_edge>();
-        if (log_verbose >= 5) std::cerr<<E<<": REGISTER!\n";
-        register_in_edge(e, s);
-    }
-    else if (E.is_a<out_edge>())
-    {
-        auto& e = E.as_<out_edge>();
-        if (log_verbose >= 5) std::cerr<<E<<": REGISTER!\n";
-        register_out_edge(e, s);
-    }
     else if (E.is_a<constructor>())
     {
-        if (has_constructor(E, "Effect.Dist"))
+        if (has_constructor(E, "Effect.InEdge"))
+        {
+            if (log_verbose >= 5) std::cerr<<E<<": REGISTER!\n";
+            register_in_edge(r, s);
+        }
+        else if (has_constructor(E, "Effect.OutEdge"))
+        {
+            if (log_verbose >= 5) std::cerr<<E<<":  REGISTER!\n";
+            register_out_edge(r, s);
+        }
+        else if (has_constructor(E, "Effect.Dist"))
         {
             if (log_verbose >= 5) std::cerr<<E<<":  REGISTER!\n";
             register_dist(r, s);
@@ -485,21 +483,19 @@ void reg_heap::_unregister_effect_at_reg(int r, int s)
             std::cerr<<"register_transition_kernel[rate="<<e.rate<<",kernel="<<e.kernel_reg<<"]: UNREGISTER!\n";
         unregister_transition_kernel(e, s);
     }
-    else if (E.is_a<in_edge>())
-    {
-        auto& e = E.as_<in_edge>();
-        if (log_verbose >= 5)std::cerr<<E<<": UNREGISTER!\n";
-        unregister_in_edge(e, s);
-    }
-    else if (E.is_a<out_edge>())
-    {
-        auto& e = E.as_<out_edge>();
-        if (log_verbose >= 5) std::cerr<<E<<": UNREGISTER!\n";
-        unregister_out_edge(e, s);
-    }
     else if (E.is_a<constructor>())
     {
-        if (has_constructor(E, "Effect.Dist"))
+        if (has_constructor(E, "Effect.InEdge"))
+        {
+            if (log_verbose >= 5)std::cerr<<E<<": UNREGISTER!\n";
+            unregister_in_edge(r, s);
+        }
+        else if (has_constructor(E, "Effect.OutEdge"))
+        {
+            if (log_verbose >= 5) std::cerr<<E<<": UNREGISTER!\n";
+            unregister_out_edge(r, s);
+        }
+        else if (has_constructor(E, "Effect.Dist"))
         {
             if (log_verbose >= 5) std::cerr<<E<<": UNREGISTER!\n";
             unregister_dist(r, s);
@@ -1059,114 +1055,119 @@ optional<int> reg_heap::compute_expression_is_modifiable_reg(int index)
     return find_update_modifiable_reg(H);
 }
 
-void reg_heap::register_in_edge(const effect& e, int /* s */)
+void reg_heap::register_in_edge(int r, int /* s */)
 {
-    auto& I = dynamic_cast<const in_edge&>(e);
+    int r_from_node = closure_at(r).reg_for_slot(0);
+    int r_to_dist   = closure_at(r).reg_for_slot(1);
+    string arg_name = expression_at(r).sub()[2].as_<String>();
 
     // 1. Check that this edge is not a duplicate:
 
     //   No other in-edges should have the same arg_name.
-    auto& arg_names_for_node_to_dist = in_edges_from_var[I.r_from_node][I.r_to_dist];
-    assert(not arg_names_for_node_to_dist.count(I.arg_name));
+    auto& arg_names_for_node_to_dist = in_edges_from_var[r_from_node][r_to_dist];
+    assert(not arg_names_for_node_to_dist.count(arg_name));
 
     //   Only one in-edges to this dist should have this arg_name.
-    auto& in_edges_to_this_dist = in_edges_to_dist[I.r_to_dist];
-    assert(not in_edges_to_this_dist.count(I.arg_name));
+    auto& in_edges_to_this_dist = in_edges_to_dist[r_to_dist];
+    assert(not in_edges_to_this_dist.count(arg_name));
 
-    // 2. Check that there is in fact a distribution at I.r_to_dist;
-    assert(reg_is_constant(I.r_from_node) or (reg_is_changeable(I.r_from_node)));
-    assert(has_constructor(expression_at(I.r_to_dist), "Effect.Dist"));
-    // assert(dist_type.count(I.r_to_dist));
+    // 2. Check that there is in fact a distribution at r_to_dist;
+    assert(reg_is_constant(r_from_node) or (reg_is_changeable(r_from_node)));
+    assert(has_constructor(expression_at(r_to_dist), "Effect.Dist"));
+    // assert(dist_type.count(r_to_dist));
 
     // 3. Insert the edge.
-    arg_names_for_node_to_dist.insert(I.arg_name);                 // I.r_from_node -> I.r_to_dist -> {I.arg_name}
-    in_edges_to_this_dist.insert({I.arg_name, I.r_from_node}); // I.r_to_dist -> I.arg_name -> I.r_var
+    arg_names_for_node_to_dist.insert(arg_name);             // r_from_node -> r_to_dist -> {arg_name}
+    in_edges_to_this_dist.insert({arg_name, r_from_node}); // r_to_dist -> arg_name -> r_var
 }
 
-void reg_heap::unregister_in_edge(const effect& e, int /* s */)
+void reg_heap::unregister_in_edge(int r, int /* s */)
 {
-    auto& I = dynamic_cast<const in_edge&>(e);
+    int r_from_node = closure_at(r).reg_for_slot(0);
+    int r_to_dist   = closure_at(r).reg_for_slot(1);
+    string arg_name = expression_at(r).sub()[2].as_<String>();
 
     // Check that this edge is registered.
-    // I.r_from_node -> I.r_to_dist -> {I.arg_name}
-    assert(in_edges_from_var.count(I.r_from_node));
-    auto& dists_for_var = in_edges_from_var.at(I.r_from_node);
-    assert(dists_for_var.count(I.r_to_dist));
-    auto& arg_names_for_node_to_dist = dists_for_var.at(I.r_to_dist);
-    assert(arg_names_for_node_to_dist.count(I.arg_name));
+    assert(in_edges_from_var.count(r_from_node));
+    auto& dists_for_var = in_edges_from_var.at(r_from_node);
+    assert(dists_for_var.count(r_to_dist));
+    auto& arg_names_for_node_to_dist = dists_for_var.at(r_to_dist);
+    assert(arg_names_for_node_to_dist.count(arg_name));
 
-    assert(in_edges_to_dist.count(I.r_to_dist));
-    auto& in_edges_to_this_dist = in_edges_to_dist.at(I.r_to_dist);
-    assert(in_edges_to_this_dist.count(I.arg_name));
+    assert(in_edges_to_dist.count(r_to_dist));
+    auto& in_edges_to_this_dist = in_edges_to_dist.at(r_to_dist);
+    assert(in_edges_to_this_dist.count(arg_name));
 
-    // 2. Check that there is in fact a distribution at I.to_reg?
-    assert(has_constructor(expression_at(I.r_to_dist), "Effect.Dist"));
-    // assert(dist_type.count(I.r_to_dist));
+    // 2. Check that there is in fact a distribution at to_reg?
+    assert(has_constructor(expression_at(r_to_dist), "Effect.Dist"));
+    // assert(dist_type.count(r_to_dist));
 
     // 3. Erase the edge
-    arg_names_for_node_to_dist.erase(I.arg_name);
+    arg_names_for_node_to_dist.erase(arg_name);
     if (arg_names_for_node_to_dist.empty())
     {
         // Erase the set, if there are no more arg_names for this (var,dist) pair.
-        dists_for_var.erase(I.r_to_dist);
+        dists_for_var.erase(r_to_dist);
         if (dists_for_var.empty())
         {
             // Erase the map, if there are no more edges from this var.
-            in_edges_from_var.erase(I.r_from_node);
+            in_edges_from_var.erase(r_from_node);
         }
     }
 
-    in_edges_to_this_dist.erase(I.arg_name);
+    in_edges_to_this_dist.erase(arg_name);
     if (in_edges_to_this_dist.empty())
     {
         // Erase the map, if there are no more edges to this dist.
-        in_edges_to_dist.erase(I.r_to_dist);
+        in_edges_to_dist.erase(r_to_dist);
     }
 }
 
-void reg_heap::register_out_edge(const effect& e, int /* s */)
+void reg_heap::register_out_edge(int r, int /* s */)
 {
-    auto& O = dynamic_cast<const out_edge&>(e);
+    int r_from_dist = closure_at(r).reg_for_slot(0);
+    int r_to_var    = closure_at(r).reg_for_slot(1);
 
     // Check that this edge is not a duplicate.
-    assert(not out_edges_from_dist.count(O.r_from_dist));
-    assert(not out_edges_to_var.count(O.r_to_var) or not out_edges_to_var.at(O.r_to_var).count(O.r_from_dist));
+    assert(not out_edges_from_dist.count(r_from_dist));
+    assert(not out_edges_to_var.count(r_to_var) or not out_edges_to_var.at(r_to_var).count(r_from_dist));
     
     // Check that there is in fact a distribution at I.to_reg.
-    assert(has_constructor(expression_at(O.r_from_dist), "Effect.Dist"));
+    assert(has_constructor(expression_at(r_from_dist), "Effect.Dist"));
     // assert(dist_type.count(O.r_from_dist));
-    assert(reg_is_constant(O.r_to_var) or (reg_is_changeable(O.r_to_var) and is_modifiable(expression_at(O.r_to_var))));
+    assert(reg_is_constant(r_to_var) or (reg_is_changeable(r_to_var) and is_modifiable(expression_at(r_to_var))));
 
-    out_edges_from_dist.insert({O.r_from_dist, O.r_to_var});
-    out_edges_to_var[O.r_to_var].insert(O.r_from_dist);
+    out_edges_from_dist.insert({r_from_dist, r_to_var});
+    out_edges_to_var[r_to_var].insert(r_from_dist);
 
     // Check that this edge is registered.
-    assert(out_edges_from_dist.count(O.r_from_dist));
-    assert(out_edges_to_var.count(O.r_to_var) and out_edges_to_var.at(O.r_to_var).count(O.r_from_dist));
+    assert(out_edges_from_dist.count(r_from_dist));
+    assert(out_edges_to_var.count(r_to_var) and out_edges_to_var.at(r_to_var).count(r_from_dist));
 }
 
-void reg_heap::unregister_out_edge(const effect& e, int /* s */)
+void reg_heap::unregister_out_edge(int r, int /* s */)
 {
-    auto& O = dynamic_cast<const out_edge&>(e);
+    int r_from_dist = closure_at(r).reg_for_slot(0);
+    int r_to_var    = closure_at(r).reg_for_slot(1);
 
     // Check that this edge is registered.
-    assert(out_edges_from_dist.count(O.r_from_dist));
-    assert(out_edges_to_var.count(O.r_to_var) and out_edges_to_var.at(O.r_to_var).count(O.r_from_dist));
+    assert(out_edges_from_dist.count(r_from_dist));
+    assert(out_edges_to_var.count(r_to_var) and out_edges_to_var.at(r_to_var).count(r_from_dist));
 
-    // Check that there is in fact a distribution at O.r_from_dist.
-    assert(has_constructor(expression_at(O.r_from_dist), "Effect.Dist"));
-    // assert(dist_type.count(O.r_from_dist));
+    // Check that there is in fact a distribution at r_from_dist.
+    assert(has_constructor(expression_at(r_from_dist), "Effect.Dist"));
+    // assert(dist_type.count(r_from_dist));
 
     // Erase the edge
-    out_edges_from_dist.erase(O.r_from_dist);
-    auto& to_var = out_edges_to_var.at(O.r_to_var);
-    to_var.erase(O.r_from_dist);
+    out_edges_from_dist.erase(r_from_dist);
+    auto& to_var = out_edges_to_var.at(r_to_var);
+    to_var.erase(r_from_dist);
     if (to_var.empty())
-        out_edges_to_var.erase(O.r_to_var);
+        out_edges_to_var.erase(r_to_var);
 
     // Check that this edge is not registered.
-    assert(not out_edges_from_dist.count(O.r_from_dist));
-    assert(not out_edges_to_var.count(O.r_to_var) or not out_edges_to_var.at(O.r_to_var).count(O.r_from_dist));
+    assert(not out_edges_from_dist.count(r_from_dist));
+    assert(not out_edges_to_var.count(r_to_var) or not out_edges_to_var.at(r_to_var).count(r_from_dist));
 }
 
 void reg_heap::register_dist(int r, int s)
