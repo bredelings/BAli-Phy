@@ -30,9 +30,9 @@ extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Ar
 
     int r_transition_kernel = Args.evaluate_reg_use(Args.reg_for_slot(1));
 
-    object_ptr<effect> e(new register_transition_kernel(rate, r_transition_kernel));
+    expression_ref E(constructor("Effect.TransitionKernel",2),{rate, index_var(0)});
 
-    int r_effect = Args.allocate(closure(e));
+    int r_effect = Args.allocate(closure{E,{r_transition_kernel}});
 
     Args.set_effect(r_effect);
 

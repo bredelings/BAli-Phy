@@ -227,12 +227,12 @@ typedef multi_index_container<
             >
         > set_tk_group;
 
-void add_transition_kernel(const effect& e, int s, double t, set_tk_group& tk_groups)
+void add_transition_kernel(const closure& e, int s, double t, set_tk_group& tk_groups)
 {
-    auto& reg_tk = dynamic_cast<const ::register_transition_kernel&>(e);
+    double rate = e.exp.sub()[0].as_double();
 
     // how many total
-    int n_total = get_reps(reg_tk.rate);
+    int n_total = get_reps(rate);
     // how many in the remaining interval
     int n_remaining = binomial(n_total, 1.0-t);
 
@@ -284,7 +284,7 @@ void context_ref::run_transition_kernels()
     std::set<int> tk_steps_removed;
     std::set<int> tk_steps_added;
 
-    std::function<void(const effect&, int)> register_tk_handler = [&](const effect&, int s)
+    std::function<void(int, int)> register_tk_handler = [&](int, int s)
     {
         auto it = tk_steps_removed.find(s);
         if (it != tk_steps_removed.end())
@@ -296,7 +296,7 @@ void context_ref::run_transition_kernels()
         }
     };
 
-    std::function<void(const effect&, int)> unregister_tk_handler = [&](const effect&, int s)
+    std::function<void(int, int)> unregister_tk_handler = [&](int, int s)
     {
         auto it = tk_steps_added.find(s);
         if (it != tk_steps_added.end())
@@ -347,9 +347,9 @@ void context_ref::run_transition_kernels()
 
 void context_ref::perform_transition_kernel(int s)
 {
-    auto e = memory()->get_effect_as< ::register_transition_kernel>(s);
+    auto& e = memory()->get_effect(s);
 
-    int r = e.kernel_reg;
+    int r = e.reg_for_slot(1);
     assert(memory()->reg_is_constant(r));
     expression_ref E = {reg_var(r), get_context_index()};
     perform_expression(E);

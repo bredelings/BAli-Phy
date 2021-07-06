@@ -5,6 +5,8 @@
 struct register_prob
 {
     int r_dist;
+    // We use this to compute ratios when both contexts have the same r_prob.
+    // If each r_dist had only one pdf terms, we probably wouldn't need this.
     int r_prob;
     log_double_t prob;
 
@@ -36,21 +38,6 @@ struct register_likelihood: public register_prob, public effect
     std::string print () const;
 
     using register_prob::register_prob;
-};
-
-struct register_transition_kernel: public effect
-{
-    double rate;
-    int kernel_reg;
-
-    register_transition_kernel* clone() const {return new register_transition_kernel(*this);}
-
-    bool operator==(const register_transition_kernel&) const;
-    bool operator==(const Object& O) const;
-
-    std::string print () const;
-
-    register_transition_kernel(double r, int k);
 };
 
 #endif

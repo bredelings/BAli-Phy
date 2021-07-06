@@ -57,31 +57,3 @@ string register_likelihood::print() const
 {
     return string("register_likelihood[")+std::to_string(r_dist)+","+std::to_string(r_prob)+","+std::to_string(prob.log())+"]";
 }
-
-//--------------------------------------------------------------------
-
-bool register_transition_kernel::operator==(const register_transition_kernel& e) const
-{
-    return rate == e.rate and kernel_reg == e.kernel_reg;
-}
-
-bool register_transition_kernel::operator==(const Object& O) const
-{
-    if (this == &O) return true;
-
-    if (typeid(*this) != typeid(O)) return false;
-
-    auto* e = dynamic_cast<const register_transition_kernel*>(&O);
-
-    return (*this) == *e;
-}
-
-string register_transition_kernel::print() const
-{
-    return string("register_transition_kernel[")+std::to_string(kernel_reg)+"]";
-}
-
-register_transition_kernel::register_transition_kernel(double r, int k)
-    :rate(r), kernel_reg(k)
-{ }
-

@@ -422,16 +422,17 @@ void reg_heap::_register_effect_at_reg(int r, int s)
             std::cerr<<print()<<":   REGISTER! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()+1<<")\n";
         register_likelihood_(E.as_<register_likelihood>(), s);
     }
-    else if (E.is_a<::register_transition_kernel>())
-    {
-        auto& e = E.as_<::register_transition_kernel>();
-        if (log_verbose >= 5)
-            std::cerr<<"register_transition_kernel[rate="<<e.rate<<",kernel="<<e.kernel_reg<<"]: REGISTER!\n";
-        register_transition_kernel(e, s);
-    }
     else if (E.is_a<constructor>())
     {
-        if (has_constructor(E, "Effect.InEdge"))
+        if (has_constructor(E, "Effect.TransitionKernel"))
+        {
+            double rate = expression_at(r).sub()[0].as_double();
+            int r_kernel = closure_at(r).reg_for_slot(1);
+            if (log_verbose >= 5)
+                std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<"]: REGISTER!\n";
+            register_transition_kernel(r, s);
+        }
+        else if (has_constructor(E, "Effect.InEdge"))
         {
             if (log_verbose >= 5) std::cerr<<E<<": REGISTER!\n";
             register_in_edge(r, s);
@@ -476,16 +477,17 @@ void reg_heap::_unregister_effect_at_reg(int r, int s)
             std::cerr<<print()<<": UNregister! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()-1<<")\n";
         unregister_likelihood_(E.as_<register_likelihood>(), s);
     }
-    else if (E.is_a<::register_transition_kernel>())
-    {
-        auto& e = E.as_<::register_transition_kernel>();
-        if (log_verbose >= 5)
-            std::cerr<<"register_transition_kernel[rate="<<e.rate<<",kernel="<<e.kernel_reg<<"]: UNREGISTER!\n";
-        unregister_transition_kernel(e, s);
-    }
     else if (E.is_a<constructor>())
     {
-        if (has_constructor(E, "Effect.InEdge"))
+        if (has_constructor(E, "Effect.TransitionKernel"))
+        {
+            double rate = expression_at(r).sub()[0].as_double();
+            int r_kernel = closure_at(r).reg_for_slot(1);
+            if (log_verbose >= 5)
+                std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<"]: UNREGISTER!\n";
+            unregister_transition_kernel(r, s);
+        }
+        else if (has_constructor(E, "Effect.InEdge"))
         {
             if (log_verbose >= 5)std::cerr<<E<<": UNREGISTER!\n";
             unregister_in_edge(r, s);
@@ -518,12 +520,13 @@ bool reg_heap::step_has_effect(int s) const
     return steps[s].has_effect();
 }
 
-const effect& reg_heap::get_effect(int s) const
+const closure& reg_heap::get_effect(int s) const
 {
     assert(not steps.is_free(s));
     int r = steps[s].call;
+    assert(steps[s].has_effect());
 
-    return expression_at(r).as_<effect>();
+    return closure_at(r);
 }
 
 void reg_heap::do_pending_effect_registrations()
@@ -1016,11 +1019,11 @@ void reg_heap::unregister_prior(const register_prob& E, int s)
         handler(E, s);
 }
 
-void reg_heap::register_transition_kernel(const ::register_transition_kernel& E, int s)
+void reg_heap::register_transition_kernel(int r, int s)
 {
     assert(not steps.is_free(s));
 
-    int r_kernel = E.kernel_reg;
+    int r_kernel = closure_at(r).reg_for_slot(1);
 
     assert(reg_is_constant(r_kernel));
 
@@ -1029,16 +1032,18 @@ void reg_heap::register_transition_kernel(const ::register_transition_kernel& E,
     transition_kernels_.insert(s);
 
     for(auto& handler: register_tk_handlers)
-        handler(E,s);
+        handler(r,s);
 }
 
-void reg_heap::unregister_transition_kernel(const ::register_transition_kernel& E, int s)
+void reg_heap::unregister_transition_kernel(int r, int s)
 {
+    int r_kernel = closure_at(r).reg_for_slot(1);
+
     for(auto& handler: unregister_tk_handlers)
-        handler(E,s);
+        handler(r,s);
 
     if (not transition_kernels_.count(s))
-        throw myexception()<<"unregister_transition_kernel: transition kernel <r="<<E.kernel_reg<<",s="<<s<<"> not found!";
+        throw myexception()<<"unregister_transition_kernel: transition kernel <r="<<r_kernel<<",s="<<s<<"> not found!";
 
     transition_kernels_.erase(s);
 }

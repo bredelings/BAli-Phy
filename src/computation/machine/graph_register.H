@@ -187,8 +187,8 @@ class reg_heap: public Object
     std::vector<std::function<void(const register_prob&, int)>> register_prior_handlers;
     std::vector<std::function<void(const register_prob&, int)>> unregister_prior_handlers;
 public:
-    std::vector<std::function<void(const ::register_transition_kernel&, int)>>   register_tk_handlers;
-    std::vector<std::function<void(const ::register_transition_kernel&, int)>> unregister_tk_handlers;
+    std::vector<std::function<void(int, int)>>   register_tk_handlers;
+    std::vector<std::function<void(int, int)>> unregister_tk_handlers;
 
 private:
     void resize(int s);
@@ -316,14 +316,8 @@ private:
 public:
     bool step_has_effect(int s) const;
 
-    const effect& get_effect(int s) const;
+    const closure& get_effect(int s) const;
 
-    template <typename T>
-    const T& get_effect_as(int s) const
-    {
-        auto& e = get_effect(s);
-        return dynamic_cast<const T&>(e);
-    }
 private:
     void compute_initial_force_counts();
     void mark_unconditional_regs();
@@ -367,8 +361,8 @@ public:
 
     const std::unordered_set<int>& transition_kernels() const;
 
-    void   register_transition_kernel(const ::register_transition_kernel&, int s);
-    void unregister_transition_kernel(const ::register_transition_kernel&, int s);
+    void   register_transition_kernel(int r, int s);
+    void unregister_transition_kernel(int r, int s);
 
     // Since there is only one out-edges, should we remove this?
     // No, if we observe the same data twice, we still need separate sampling events.
