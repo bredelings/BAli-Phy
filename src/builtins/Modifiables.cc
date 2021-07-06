@@ -79,7 +79,7 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 
 extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
 {
-    int r_from_var = force_slot_to_safe_reg(Args,0);
+    int r_from_var = Args.evaluate_slot_unchangeable(0);
     int r_to_dist  = Args.evaluate_slot_use(1);
     String role = Args.evaluate(2).as_<String>();
 
@@ -130,7 +130,7 @@ extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
 {
     int r_from_dist = Args.evaluate_slot_use(0);
-    int r_to_prop   = force_slot_to_safe_reg(Args,1);
+    int r_to_prop = Args.evaluate_slot_unchangeable(1);
     String property = Args.evaluate(2).as_<String>();
 
     expression_ref E(constructor("Effect.DistProperty",3), {index_var(1),property,index_var(0)});
