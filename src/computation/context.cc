@@ -459,34 +459,24 @@ const std::set<int>* context_ref::out_edges_to_var(int r) const
         return &(it->second);
 }
 
-const std::map<std::string,int>* context_ref::in_edges_to_dist(int r)  const
+std::optional<context_ref::lazy_attribute_map> context_ref::in_edges_to_dist(int r)  const
 {
     auto& to_dist = memory()->in_edges_to_dist;
     auto it = to_dist.find(r);
     if (it == to_dist.end())
-        return nullptr;
+        return {};
     else
-        return &(it->second);
+        return lazy_attribute_map(*this, &(it->second));
 }
 
-const std::map<int,std::set<std::string>>* context_ref::in_edges_from_var(int r)  const
-{
-    auto& from_var = memory()->in_edges_from_var;
-    auto it = from_var.find(r);
-    if (it == from_var.end())
-        return nullptr;
-    else
-        return &(it->second);
-}
-
-const std::map<std::string,int>* context_ref::dist_properties(int s) const
+std::optional<context_ref::lazy_attribute_map> context_ref::dist_properties(int s) const
 {
     auto& dist_properties = memory()->dist_properties;
     auto it = dist_properties.find(s);
     if (it == dist_properties.end())
-        return nullptr;
+        return {};
     else
-        return &(it->second);
+        return lazy_attribute_map(*this, &(it->second));
 }
 
 void context_ref::compile()
@@ -682,6 +672,27 @@ context_ref::context_ref(reg_heap& M, int c)
      context_index(c)
 {
 }
+
+/*----------------------*/
+std::optional<int> context_ref::lazy_attribute_map::get(const string& attribute) const
+{
+    auto it = m->find(attribute);
+    if (it == m->end())
+        return {};
+    else
+    {
+        int r = it->second;
+        r = C.memory()->closure_at(r).Env[0];
+        // See params.cc: class context_ptr
+        auto [r1,_] = C.incremental_evaluate(r);
+        int r2 = C.memory()->follow_index_var(r1);
+        return r2;
+    }
+}
+
+context_ref::lazy_attribute_map::lazy_attribute_map(const context_ref& CC, const std::map<string,int>* mm)
+    :C(CC),m(mm)
+{ }
 
 /*----------------------*/
 

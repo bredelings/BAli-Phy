@@ -1062,8 +1062,9 @@ optional<int> reg_heap::compute_expression_is_modifiable_reg(int index)
 
 void reg_heap::register_in_edge(int r, int /* s */)
 {
-    int r_from_node = closure_at(r).reg_for_slot(0);
-    int r_to_dist   = closure_at(r).reg_for_slot(1);
+    // NOTE: the source node is lazy -- it could be an index-var
+    // int r_from_node = closure_at(r).reg_for_slot(0);
+    int r_to_dist   = expression_at(r).sub()[1].as_int();
     string arg_name = expression_at(r).sub()[2].as_<String>();
 
     // 1. Check that this edge is not a duplicate:
@@ -1073,18 +1074,18 @@ void reg_heap::register_in_edge(int r, int /* s */)
     assert(not in_edges_to_this_dist.count(arg_name));
 
     // 2. Check that there is in fact a distribution at r_to_dist;
-    assert(reg_is_constant(r_from_node) or (reg_is_changeable(r_from_node)));
     assert(has_constructor(expression_at(r_to_dist), "Effect.Dist"));
     // assert(dist_type.count(r_to_dist));
 
     // 3. Insert the edge.
-    in_edges_to_this_dist.insert({arg_name, r_from_node}); // r_to_dist -> arg_name -> r_var
+    in_edges_to_this_dist.insert({arg_name, r}); // r_to_dist -> arg_name -> r
 }
 
 void reg_heap::unregister_in_edge(int r, int /* s */)
 {
+    // NOTE: the source node is lazy -- it could be an index-var
     // int r_from_node = closure_at(r).reg_for_slot(0);
-    int r_to_dist   = closure_at(r).reg_for_slot(1);
+    int r_to_dist   = expression_at(r).sub()[1].as_int();
     string arg_name = expression_at(r).sub()[2].as_<String>();
 
     // Check that this edge is registered.
@@ -1180,19 +1181,20 @@ void reg_heap::unregister_dist(int r, int s)
 
 void reg_heap::register_dist_property(int r, int /* s */)
 {
-    int r_from_dist = closure_at(r).reg_for_slot(0);
+    int r_from_dist = expression_at(r).sub()[0].as_int();
     const string& property =  expression_at(r).sub()[1].as_<String>();
-    int r_to_prop   = closure_at(r).reg_for_slot(2);
+    // NOTE: the target (property) reg is lazy -- it could be an index-var.
+    // int r_to_prop   = closure_at(r).reg_for_slot(2);
 
     // Check that there is in fact a distribution at P.s_from_dist.
     assert(dist_type.count(r_from_dist));
 
-    dist_properties[r_from_dist].insert({property, r_to_prop});
+    dist_properties[r_from_dist].insert({property, r});
 }
 
 void reg_heap::unregister_dist_property(int r, int /* s */)
 {
-    int r_from_dist = closure_at(r).reg_for_slot(0);
+    int r_from_dist = expression_at(r).sub()[0].as_int();
     const string& property =  expression_at(r).sub()[1].as_<String>();
 
     // Check that there is in fact a distribution at P.r_from_dist.

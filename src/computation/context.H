@@ -20,6 +20,15 @@ class context_ref
     friend class context;
     friend class context_ptr;
 
+    class lazy_attribute_map
+    {
+        const context_ref& C;
+        const std::map<std::string,int>* m;
+    public:
+        std::optional<int> get(const std::string& s) const;
+        lazy_attribute_map(const context_ref&, const std::map<std::string,int>*);
+    };
+
 protected:
     // FIXME - disallow operator=() as long as there are any regs on the stack?
     //         (that is, which we are in the middle of modifying the context)?
@@ -131,9 +140,8 @@ public:
 
     std::optional<int> out_edges_from_dist(int r) const;
     const std::set<int>* out_edges_to_var(int r) const;
-    const std::map<std::string,int>* in_edges_to_dist(int r)  const;
-    const std::map<int,std::set<std::string>>* in_edges_from_var(int r)  const;
-    const std::map<std::string,int>* dist_properties(int s) const;
+    std::optional<lazy_attribute_map> in_edges_to_dist(int r)  const;
+    std::optional<lazy_attribute_map> dist_properties(int s) const;
 
 public:
 

@@ -83,9 +83,9 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
     int r_to_dist  = Args.evaluate_slot_use(1);
     String role = Args.evaluate(2).as_<String>();
 
-    expression_ref E(constructor("Effect.InEdge",3),{index_var(1),index_var(0),role});
+    expression_ref E(constructor("Effect.InEdge",3),{index_var(0), r_to_dist, role});
 
-    int r_effect = Args.allocate(closure{E,{r_from_var,r_to_dist}});
+    int r_effect = Args.allocate(closure{E,{r_from_var}});
 
     Args.set_effect(r_effect);
 
@@ -133,9 +133,9 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
     int r_to_prop = Args.evaluate_slot_unchangeable(1);
     String property = Args.evaluate(2).as_<String>();
 
-    expression_ref E(constructor("Effect.DistProperty",3), {index_var(1),property,index_var(0)});
+    expression_ref E(constructor("Effect.DistProperty",3), {r_from_dist, property, index_var(0)});
 
-    int r_effect = Args.allocate(closure{E,{r_from_dist, r_to_prop}});
+    int r_effect = Args.allocate(closure{E,{r_to_prop}});
 
     Args.set_effect(r_effect);
 
