@@ -370,7 +370,7 @@ public:
 
     // For each distribution, the argument name should be unique.
     std::map<int, std::map<std::string, int>> in_edges_to_dist;
-    std::map<int, std::map<int, std::set<std::string>>> in_edges_from_var;
+    // NOTE: no indexing by node (->dist) because node is lazily evaluated.
 
     // FIXME: Use boost::multi-index?
     std::map<int, int> out_edges_from_dist;

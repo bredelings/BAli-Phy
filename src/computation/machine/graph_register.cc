@@ -1068,10 +1068,6 @@ void reg_heap::register_in_edge(int r, int /* s */)
 
     // 1. Check that this edge is not a duplicate:
 
-    //   No other in-edges should have the same arg_name.
-    auto& arg_names_for_node_to_dist = in_edges_from_var[r_from_node][r_to_dist];
-    assert(not arg_names_for_node_to_dist.count(arg_name));
-
     //   Only one in-edges to this dist should have this arg_name.
     auto& in_edges_to_this_dist = in_edges_to_dist[r_to_dist];
     assert(not in_edges_to_this_dist.count(arg_name));
@@ -1082,23 +1078,16 @@ void reg_heap::register_in_edge(int r, int /* s */)
     // assert(dist_type.count(r_to_dist));
 
     // 3. Insert the edge.
-    arg_names_for_node_to_dist.insert(arg_name);             // r_from_node -> r_to_dist -> {arg_name}
     in_edges_to_this_dist.insert({arg_name, r_from_node}); // r_to_dist -> arg_name -> r_var
 }
 
 void reg_heap::unregister_in_edge(int r, int /* s */)
 {
-    int r_from_node = closure_at(r).reg_for_slot(0);
+    // int r_from_node = closure_at(r).reg_for_slot(0);
     int r_to_dist   = closure_at(r).reg_for_slot(1);
     string arg_name = expression_at(r).sub()[2].as_<String>();
 
     // Check that this edge is registered.
-    assert(in_edges_from_var.count(r_from_node));
-    auto& dists_for_var = in_edges_from_var.at(r_from_node);
-    assert(dists_for_var.count(r_to_dist));
-    auto& arg_names_for_node_to_dist = dists_for_var.at(r_to_dist);
-    assert(arg_names_for_node_to_dist.count(arg_name));
-
     assert(in_edges_to_dist.count(r_to_dist));
     auto& in_edges_to_this_dist = in_edges_to_dist.at(r_to_dist);
     assert(in_edges_to_this_dist.count(arg_name));
@@ -1108,18 +1097,6 @@ void reg_heap::unregister_in_edge(int r, int /* s */)
     // assert(dist_type.count(r_to_dist));
 
     // 3. Erase the edge
-    arg_names_for_node_to_dist.erase(arg_name);
-    if (arg_names_for_node_to_dist.empty())
-    {
-        // Erase the set, if there are no more arg_names for this (var,dist) pair.
-        dists_for_var.erase(r_to_dist);
-        if (dists_for_var.empty())
-        {
-            // Erase the map, if there are no more edges from this var.
-            in_edges_from_var.erase(r_from_node);
-        }
-    }
-
     in_edges_to_this_dist.erase(arg_name);
     if (in_edges_to_this_dist.empty())
     {
