@@ -1159,7 +1159,7 @@ void reg_heap::register_dist(int r, int s)
 //    int observation = expression_at(r).sub()[1].as_<String>();
     const string& name = expression_at(r).sub()[2].as_<String>();
 
-    assert(not dist_type.count(r_dist));
+//    assert(not dist_type.count(r_dist));
 
     dist_type.insert({r_dist, name});
 
@@ -1171,7 +1171,8 @@ void reg_heap::unregister_dist(int r, int s)
 {
     int r_dist = closure_at(r).reg_for_slot(0);
 
-    assert(dist_type.count(r_dist));
+    assert(has_constructor(expression_at(r_dist), "Effect.Dist"));
+//    assert(dist_type.count(r_dist));
 
     dist_type.erase(r_dist);
 
@@ -1187,7 +1188,8 @@ void reg_heap::register_dist_property(int r, int /* s */)
     // int r_to_prop   = closure_at(r).reg_for_slot(2);
 
     // Check that there is in fact a distribution at P.s_from_dist.
-    assert(dist_type.count(r_from_dist));
+    assert(has_constructor(expression_at(r_from_dist), "Effect.Dist"));
+    // assert(dist_type.count(r_from_dist));
 
     dist_properties[r_from_dist].insert({property, r});
 }
@@ -1198,7 +1200,8 @@ void reg_heap::unregister_dist_property(int r, int /* s */)
     const string& property =  expression_at(r).sub()[1].as_<String>();
 
     // Check that there is in fact a distribution at P.r_from_dist.
-    assert(dist_type.count(r_from_dist));
+    assert(has_constructor(expression_at(r_from_dist), "Effect.Dist"));
+    // assert(dist_type.count(r_from_dist));
 
     auto& this_dist_properties = dist_properties.at(r_from_dist);
     auto it = this_dist_properties.find(property);
