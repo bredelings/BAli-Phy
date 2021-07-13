@@ -447,7 +447,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
     if (like_calc == 0)
     {
-        auto leaf_sequences = reg_var( properties->at( "leaf_sequences" ) );
+        auto leaf_sequences = reg_var( *properties->get( "leaf_sequences" ) );
         for(int i=0; i<p->t().n_leaves(); i++)
             leaf_sequence_indices.push_back( p->add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
 
