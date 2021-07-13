@@ -525,7 +525,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
     likelihood_index = reg_var(*properties->get("likelihood"));
 
-    ancestral_sequences_index = p->add_compute_expression({var("Data.List.!!"),p->my_partition_ancestral_sequences(),i});
+    ancestral_sequences_index = reg_var(*properties->get("anc_seqs"));
 
     for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
         conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cl_index.ref(*p),b});
