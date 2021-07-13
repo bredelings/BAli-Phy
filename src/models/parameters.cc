@@ -523,7 +523,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
     cl_index = reg_var(*properties->get("cond_likes"));
 
-    likelihood_index = p->add_compute_expression({var("Data.List.!!"),p->my_partition_likelihoods(),i});
+    likelihood_index = reg_var(*properties->get("likelihood"));
 
     ancestral_sequences_index = p->add_compute_expression({var("Data.List.!!"),p->my_partition_ancestral_sequences(),i});
 
