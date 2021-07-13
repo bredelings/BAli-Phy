@@ -1365,6 +1365,7 @@ std::string generate_atmodel_program(int n_sequences,
     imports.insert("Bio.Alphabet");                          // for Bio.Alphabet.dna, etc.
     imports.insert("BAliPhy.ATModel");                   // for ATModel
     imports.insert("BAliPhy.ATModel.DataPartition");     // for Partition
+    imports.insert("Probability.Distribution.OnTree");   // for ctmc_on_tree{,fixed_A}
     for(auto& m: SMs)
         add(imports, m.imports);
     for(auto& m: IMs)
@@ -1721,7 +1722,7 @@ std::string generate_atmodel_program(int n_sequences,
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
                         {var("observe_partition_type_0"), tree, alignment, smodel, sequence_data_var, subst_root_var});
 
-            program.perform({var("~>"),sequence_data_var,{var("fake_dist_0"),tree, alignment, smodel, subst_root_var, transition_ps, cls_var, ancestral_sequences_var, likelihood_var}});
+            program.perform({var("~>"),sequence_data_var,{var("ctmc_on_tree"),tree, alignment, smodel}});
         }
         else if (likelihood_calculator == 1)
         {
@@ -1731,7 +1732,7 @@ std::string generate_atmodel_program(int n_sequences,
             program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
                         {var("observe_partition_type_1"), tree, smodel,sequence_data_var, subst_root_var});
 
-            program.perform({var("~>"),sequence_data_var,{var("fake_dist_1"),tree, smodel, subst_root_var, transition_ps, cls_var, ancestral_sequences_var, likelihood_var}});
+            program.perform({var("~>"),sequence_data_var,{var("ctmc_on_tree_fixed_A"),tree, smodel}});
         }
         else
             std::abort();
