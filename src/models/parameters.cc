@@ -521,7 +521,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     int r_subst_root = *properties->get("subst_root");
     subst_root = reg_var(r_subst_root);
 
-    cl_index = p->add_compute_expression({var("Data.List.!!"),p->my_partition_cond_likes(),i});
+    cl_index = reg_var(*properties->get("cond_likes"));
 
     likelihood_index = p->add_compute_expression({var("Data.List.!!"),p->my_partition_likelihoods(),i});
 
