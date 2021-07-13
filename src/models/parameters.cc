@@ -423,6 +423,29 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     const auto& t = p->t();
     int B = t.n_branches();
 
+    // -------------- Extract method indices from dist properties -----------------//
+    auto to_var = p->out_edges_to_var(r_data);
+    if (to_var->size() > 1)
+        throw myexception()<<"Some partitions are identical!";
+
+    int s_sequences = *to_var->begin();
+    auto properties = p->dist_properties(s_sequences);
+
+    subst_root = reg_var( *properties->get("subst_root") );
+
+    cl_index = reg_var(*properties->get("cond_likes"));
+
+    likelihood_index = reg_var(*properties->get("likelihood"));
+
+    ancestral_sequences_index = reg_var(*properties->get("anc_seqs"));
+
+    expression_ref transition_ps = reg_var(*properties->get("transition_ps"));
+    for(int b=0;b<B;b++)
+        transition_p_method_indices.push_back( p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
+
+    for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
+        conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cl_index.ref(*p),b});
+
     auto labels = p->get_labels();
     for(int i=0;i<t.n_nodes();i++)
         seqs[i].name = labels[i];
@@ -492,29 +515,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
             alignment_prior_index = p->add_compute_expression( {var("Probability.Distribution.RandomAlignment.alignment_pr"), alignment_on_tree, hmms.ref(*p), model} );
         }
     }
-
-    auto to_var = p->out_edges_to_var(r_data);
-    if (to_var->size() > 1)
-        throw myexception()<<"Some partitions are identical!";
-
-    int s_sequences = *to_var->begin();
-    auto properties = p->dist_properties(s_sequences);
-    int r_subst_root = *properties->get("subst_root");
-    subst_root = reg_var(r_subst_root);
-
-    cl_index = reg_var(*properties->get("cond_likes"));
-
-    likelihood_index = reg_var(*properties->get("likelihood"));
-
-    ancestral_sequences_index = reg_var(*properties->get("anc_seqs"));
-
-    expression_ref transition_ps = reg_var(*properties->get("transition_ps"));
-    for(int b=0;b<B;b++)
-        transition_p_method_indices.push_back( p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
-
-    for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
-        conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cl_index.ref(*p),b});
-
 }
 
 //-----------------------------------------------------------------------------//
