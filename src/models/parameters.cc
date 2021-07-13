@@ -445,11 +445,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     //  const int n_states = state_letters().size();
     auto imodel_index = p->imodel_index_for_partition(i);
 
-    // R1. Add method indices for calculating transition matrices.
-    expression_ref transition_ps = {var("Data.List.!!"),p->my_partition_transition_ps(),i};
-    for(int b=0;b<B;b++)
-        transition_p_method_indices.push_back( p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
-
     if (like_calc == 0)
     {
         // Can we extract the "leaf_sequences" intermediate value from (leaf_sequences atmodel_export!!i)?
@@ -526,6 +521,10 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     likelihood_index = reg_var(*properties->get("likelihood"));
 
     ancestral_sequences_index = reg_var(*properties->get("anc_seqs"));
+
+    expression_ref transition_ps = reg_var(*properties->get("transition_ps"));
+    for(int b=0;b<B;b++)
+        transition_p_method_indices.push_back( p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
 
     for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
         conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cl_index.ref(*p),b});
