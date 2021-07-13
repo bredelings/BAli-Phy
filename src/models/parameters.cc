@@ -1129,29 +1129,6 @@ expression_ref Parameters::my_atmodel_export() const
     return PC->atmodel_export.ref(*this);
 }
 
-expression_ref Parameters::my_partition_likelihoods() const
-{
-    assert(PC);
-    return PC->partition_likelihoods.ref(*this);
-}
-
-expression_ref Parameters::my_partition_cond_likes() const
-{
-    assert(PC);
-    return PC->partition_cond_likes.ref(*this);
-}
-
-expression_ref Parameters::my_partition_ancestral_sequences() const
-{
-    assert(PC);
-    return PC->partition_ancestral_seqs.ref(*this);
-}
-
-expression_ref Parameters::my_partition_transition_ps() const
-{
-    assert(PC);
-    return PC->partition_transition_ps.ref(*this);
-}
 
 int num_distinct(const vector<optional<int>>& v)
 {

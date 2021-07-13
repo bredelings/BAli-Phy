@@ -363,11 +363,6 @@ public:
     expression_ref my_atmodel() const;
     expression_ref my_atmodel_export() const;
 
-    expression_ref my_partition_likelihoods() const;
-    expression_ref my_partition_cond_likes() const;
-    expression_ref my_partition_transition_ps() const;
-    expression_ref my_partition_ancestral_sequences() const;
-
     // bool
     bool variable_alignment() const;
 
