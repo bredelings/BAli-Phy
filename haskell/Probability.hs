@@ -25,8 +25,7 @@ module Probability (module Probability,
                     module Probability.Distribution.List,
                     module Probability.Distribution.Markov,
                     module Probability.Distribution.Tree,
-                    module Probability.Distribution.RandomAlignment,
-                    module Probability.Distribution.FakeDist
+                    module Probability.Distribution.RandomAlignment
                    )
     where
 
@@ -62,4 +61,3 @@ import Probability.Distribution.List
 import Probability.Distribution.Markov
 import Probability.Distribution.Tree
 import Probability.Distribution.RandomAlignment
-import Probability.Distribution.FakeDist
