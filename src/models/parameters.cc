@@ -1344,7 +1344,6 @@ std::string generate_atmodel_program(int n_sequences,
     int n_partitions = filename_ranges.size();
 
     int n_leaves   = n_sequences;
-    int n_nodes    = (n_leaves==1)?1:2*n_leaves - 2;
     int n_branches = (n_leaves==1)?0:2*n_leaves - 3;
 
     set<string> imports;
