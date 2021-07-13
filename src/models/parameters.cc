@@ -1420,17 +1420,10 @@ std::string generate_atmodel_program(int n_sequences,
     do_block program;
 
     do_block sample_atmodel;
-    var subst_root_var("subst_root");
-    var modifiable("Parameters.modifiable");
 
     // FIXME: We can't load the alignments to read their names until we know the alphabets!
     // FIXME: Can we load the alignments as SEQUENCES first?
     var taxon_names_var("taxa");
-
-    program.let({
-            {subst_root_var,         {modifiable, n_nodes-1}}
-        });
-    program.empty_stmt();
 
     // ATModel smodels imodels scales branch_lengths
     // Loggers = [(string,(Maybe a,Loggers)]
@@ -1719,18 +1712,12 @@ std::string generate_atmodel_program(int n_sequences,
         expression_ref sequence_data_var = {var("!!"),var("sequence_data"),i};
         if (likelihood_calculator == 0)
         {
-            program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
-                        {var("observe_partition_type_0"), tree, alignment, smodel, sequence_data_var, subst_root_var});
-
             program.perform({var("~>"),sequence_data_var,{var("ctmc_on_tree"),tree, alignment, smodel}});
         }
         else if (likelihood_calculator == 1)
         {
             assert(not i_mapping[i]);
             assert(likelihood_calculator == 1);
-
-            program.let(Tuple(transition_ps, cls_var, ancestral_sequences_var, likelihood_var),
-                        {var("observe_partition_type_1"), tree, smodel,sequence_data_var, subst_root_var});
 
             program.perform({var("~>"),sequence_data_var,{var("ctmc_on_tree_fixed_A"),tree, smodel}});
         }
@@ -1739,35 +1726,12 @@ std::string generate_atmodel_program(int n_sequences,
     }
     program.empty_stmt();
 
-    vector<expression_ref> transition_ps;
-    vector<expression_ref> cond_likes;
-    vector<expression_ref> anc_seqs;
-    vector<expression_ref> likelihoods;
-    for(int i=0; i < n_partitions; i++)
-    {
-        string part = std::to_string(i+1);
-        transition_ps.push_back(var("transition_ps_part"+part));
-        cond_likes.push_back(var("cls_part"+part));
-        anc_seqs.push_back(var("ancestral_sequences_part"+part));
-        likelihoods.push_back(var("likelihood_part"+part));
-    }
-
-    program.let(var("transition_ps"),get_list(transition_ps));
-    program.let(var("cond_likes"),get_list(cond_likes));
-    program.let(var("anc_seqs"),get_list(anc_seqs));
-    program.let(var("likelihoods"),get_list(likelihoods));
-    program.empty_stmt();
     program.finish_return(
         Tuple(
             Tuple(
                 {var("ATModelExport"),
                  var("atmodel"),
-                 var("transition_ps"),
-                 var("cond_likes"),
-                 var("anc_seqs"),
-                 var("likelihoods"),
                  sequence_data_var,
-                 subst_root_var,
                  taxon_names_var},
                 var("sequence_data")),
             var("loggers")
@@ -1889,11 +1853,6 @@ Parameters::Parameters(const Program& prog,
     branches_from_affected_node.resize(ttt.n_nodes());
 
     PC->atmodel = add_compute_expression({var("BAliPhy.ATModel.get_atmodel"), my_atmodel_export()});
-
-    PC->partition_transition_ps = add_compute_expression({var("BAliPhy.ATModel.get_all_transition_ps"),my_atmodel_export()});
-    PC->partition_cond_likes = add_compute_expression({var("BAliPhy.ATModel.get_all_cond_likes"),my_atmodel_export()});
-    PC->partition_likelihoods = add_compute_expression({var("BAliPhy.ATModel.get_all_likelihoods"),my_atmodel_export()});
-    PC->partition_ancestral_seqs = add_compute_expression({var("BAliPhy.ATModel.get_all_ancestral_sequences"),my_atmodel_export()});
 
     // 1. Get the leaf labels out of the machine.  These should be based on the leaf sequences alignment for partition 1.
     // FIXME, if partition 1 has ancestral sequences, we will do the wrong thing here, even if we pass in a tree.

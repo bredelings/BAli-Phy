@@ -219,10 +219,6 @@ struct parameters_constants: public Object
 {
     param atmodel_export;
     param atmodel;
-    param partition_likelihoods;
-    param partition_cond_likes;
-    param partition_ancestral_seqs;
-    param partition_transition_ps;
     param sequence_names;
 
     std::vector<param> branch_categories;

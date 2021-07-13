@@ -26,12 +26,7 @@ data LeafSequence
 data ATModelExport = ATModelExport
     {
       get_atmodel :: ATModel,
-      get_all_transition_ps :: [Array Int Matrix],
-      get_all_cond_likes :: [Array Int EVector],
-      get_all_ancestral_sequences :: [Array Int ConditionalLikelihoodVector],
-      get_all_likelihoods :: [Double],
       leaf_sequences :: [Array Int LeafSequence],
-      subst_root :: Int,
       sequence_names :: EVector
     }
 
