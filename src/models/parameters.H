@@ -64,6 +64,8 @@ struct data_partition_constants
     /// The pairwise alignment for each branch
     std::vector<param> pairwise_alignment_for_branch;
 
+    param subst_root;
+
     param likelihood_index;
 
     param cl_index;
@@ -99,7 +101,7 @@ struct data_partition_constants
 
     int likelihood_calculator;
 
-    data_partition_constants(Parameters* P, int i, const alphabet&, int like_calc);
+    data_partition_constants(Parameters* P, int i, const alphabet&, int like_calc, int r_data);
 };
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)
@@ -215,7 +217,6 @@ struct smodel_methods
 
 struct parameters_constants: public Object
 {
-    param subst_root;
     param atmodel_export;
     param atmodel;
     param partition_likelihoods;
@@ -371,10 +372,10 @@ public:
     bool variable_alignment() const;
 
     // int
-    expression_ref my_subst_root() const;
     void select_root(int b) const;
     void set_root_(int n) const;
     void set_root(int n) const;
+    int subst_root(int i) const;
     int subst_root() const;
 
     // int

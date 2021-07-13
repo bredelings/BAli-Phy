@@ -410,7 +410,7 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
     return alignments;
 }
 
-data_partition_constants::data_partition_constants(Parameters* p, int i, const alphabet& a_, int like_calc)
+data_partition_constants::data_partition_constants(Parameters* p, int i, const alphabet& a_, int like_calc, int r_data)
     :conditional_likelihoods_for_branch(2*p->t().n_branches()),
      sequence_length_indices(p->t().n_nodes()),
      sequence_length_pr_indices(p->t().n_nodes()),
@@ -511,6 +511,15 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
             alignment_prior_index = p->add_compute_expression( {var("Probability.Distribution.RandomAlignment.alignment_pr"), alignment_on_tree, hmms.ref(*p), model} );
         }
     }
+
+    auto to_var = p->out_edges_to_var(r_data);
+    if (to_var->size() > 1)
+        throw myexception()<<"Some partitions are identical!";
+
+    int s_sequences = *to_var->begin();
+    auto properties = p->dist_properties(s_sequences);
+    int r_subst_root = *properties->get("subst_root");
+    subst_root = reg_var(r_subst_root);
 
     cl_index = p->add_compute_expression({var("Data.List.!!"),p->my_partition_cond_likes(),i});
 
@@ -1033,7 +1042,9 @@ void Parameters::set_root_(int node) const
 {
     assert(not t().is_leaf_node(node));
     const context* C = this;
-    PC->subst_root.set_value(*const_cast<context*>(C), node);
+    // What if all the partitions have the SAME subst_root modifiable?
+    for(int p=0;p<n_data_partitions();p++)
+        PC->DPC[p].subst_root.set_value(*const_cast<context*>(C), node);
 }
 
 void Parameters::set_root(int node) const
@@ -1043,9 +1054,14 @@ void Parameters::set_root(int node) const
     assert(subst_root() == node);
 }
 
+int Parameters::subst_root(int i) const
+{
+    return PC->DPC[i].subst_root.get_value(*this).as_int();
+}
+
 int Parameters::subst_root() const
 {
-    return PC->subst_root.get_value(*this).as_int();
+    return subst_root(0);
 }
 
 int Parameters::get_branch_category(int b) const
@@ -1136,12 +1152,6 @@ expression_ref Parameters::my_partition_transition_ps() const
 {
     assert(PC);
     return PC->partition_transition_ps.ref(*this);
-}
-
-expression_ref Parameters::my_subst_root() const
-{
-    assert(PC);
-    return PC->subst_root.ref(*this);
 }
 
 int num_distinct(const vector<optional<int>>& v)
@@ -1943,8 +1953,6 @@ Parameters::Parameters(const Program& prog,
     // 4. We need to do this so that we can compute the likelihood of specified trees.
     t().read_tree(tt);
 
-    PC->subst_root         = get_param(*this, evaluate_expression({var("Parameters.maybe_modifiable_structure"),{var("BAliPhy.ATModel.subst_root"), my_atmodel_export()}}));
-
     /* --------------------------------------------------------------- */
 
     param scales_list = add_compute_expression( {var("BAliPhy.ATModel.scales"),my_atmodel()} );
@@ -1986,14 +1994,14 @@ Parameters::Parameters(const Program& prog,
         {
             // construct compressed alignment, counts, and mapping
             auto& [AA, counts, mapping] = *compressed_alignments[i];
-            PC->DPC.emplace_back(this, i, AA.get_alphabet(), like_calcs[i]);
+            PC->DPC.emplace_back(this, i, AA.get_alphabet(), like_calcs[i], sequence_data[i].get_reg());
             if (like_calcs[i] == 0)
                 get_data_partition(i).set_alignment(AA);
         }
         else
         {
             auto counts = vector<int>(A[i].length(), 1);
-            PC->DPC.emplace_back(this, i, A[i].get_alphabet(), like_calcs[i]);
+            PC->DPC.emplace_back(this, i, A[i].get_alphabet(), like_calcs[i], sequence_data[i].get_reg());
             if (like_calcs[i] == 0)
                 get_data_partition(i).set_alignment(A[i]);
         }
