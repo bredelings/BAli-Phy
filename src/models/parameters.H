@@ -208,9 +208,7 @@ struct mutable_data_partition: public data_partition
 
 struct parameters_constants: public Object
 {
-    param atmodel_export;
     param atmodel;
-    param sequence_names;
 
     std::vector<param> branch_categories;
 

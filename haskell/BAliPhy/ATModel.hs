@@ -22,9 +22,3 @@ data ATModel = ATModel {
 data ConditionalLikelihoodVector
 data Matrix
 data LeafSequence
-data ATModelExport = ATModelExport
-    {
-      get_atmodel :: ATModel,
-      leaf_sequences :: [Array Int LeafSequence]
-    }
-

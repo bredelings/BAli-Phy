@@ -1100,13 +1100,6 @@ expression_ref Parameters::my_atmodel() const
     return PC->atmodel.ref(*this);
 }
 
-expression_ref Parameters::my_atmodel_export() const
-{
-    assert(PC);
-    return PC->atmodel_export.ref(*this);
-}
-
-
 int num_distinct(const vector<optional<int>>& v)
 {
     int m = -1;
@@ -1694,10 +1687,9 @@ std::string generate_atmodel_program(int n_sequences,
     program.finish_return(
         Tuple(
             Tuple(
-                {var("ATModelExport"),
-                 var("atmodel"),
-                 sequence_data_var},
-                var("sequence_data")),
+                var("atmodel"),
+                var("sequence_data")
+                ),
             var("loggers")
             )
         );
@@ -1780,7 +1772,7 @@ Parameters::Parameters(const Program& prog,
     const int n_partitions = filename_ranges.size();
     int result_head = *memory()->program_result_head;
     param atmodel_plus_partitions = result_head;
-    PC->atmodel_export = add_compute_expression({var("Data.Tuple.fst"),atmodel_plus_partitions.ref(*this)});
+    PC->atmodel = add_compute_expression({var("Data.Tuple.fst"),atmodel_plus_partitions.ref(*this)});
     
     context_ptr program_result(*this, memory()->reg_for_head(result_head));
     auto sequence_data = program_result[1].list_elements();
@@ -1822,8 +1814,6 @@ Parameters::Parameters(const Program& prog,
 
     /* ---------------- Set up the tree ------------------------------ */
     branches_from_affected_node.resize(ttt.n_nodes());
-
-    PC->atmodel = add_compute_expression({var("BAliPhy.ATModel.get_atmodel"), my_atmodel_export()});
 
     // 1. Get the leaf labels out of the machine.  These should be based on the leaf sequences alignment for partition 1.
     context_ptr taxa_ptr(*this, *r_taxa);
