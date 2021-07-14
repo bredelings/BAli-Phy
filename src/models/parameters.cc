@@ -1696,8 +1696,7 @@ std::string generate_atmodel_program(int n_sequences,
             Tuple(
                 {var("ATModelExport"),
                  var("atmodel"),
-                 sequence_data_var,
-                 taxon_names_var},
+                 sequence_data_var},
                 var("sequence_data")),
             var("loggers")
             )

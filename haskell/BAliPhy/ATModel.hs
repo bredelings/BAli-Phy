@@ -25,7 +25,6 @@ data LeafSequence
 data ATModelExport = ATModelExport
     {
       get_atmodel :: ATModel,
-      leaf_sequences :: [Array Int LeafSequence],
-      sequence_names :: EVector
+      leaf_sequences :: [Array Int LeafSequence]
     }
 
