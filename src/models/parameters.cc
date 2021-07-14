@@ -1329,7 +1329,6 @@ std::string generate_atmodel_program(int n_sequences,
     int n_branches = (n_leaves==1)?0:2*n_leaves - 3;
 
     set<string> imports;
-    imports.insert("Parameters");                        // for Parameters.modifiable
     imports.insert("Bio.Alignment");                         // for Alignment.load_alignment
     imports.insert("Bio.Alphabet");                          // for Bio.Alphabet.dna, etc.
     imports.insert("BAliPhy.ATModel");                   // for ATModel
