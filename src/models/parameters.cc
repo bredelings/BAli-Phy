@@ -525,23 +525,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int r_data)
         throw myexception()<<"data_partition_constant: I don't recognize data from distribution '"<<dist_type<<"'";
 }
 
-//-----------------------------------------------------------------------------//
-smodel_methods::smodel_methods(const expression_ref& E, context& C)
-{
-    expression_ref V = var("Foreign.Vector.list_to_vector");
-
-    main = C.add_compute_expression( E );
-    expression_ref S = C.get_expression(main);
-
-    n_base_models = C.add_compute_expression({var("SModel.nBaseModels"), S});
-    n_states =  C.add_compute_expression({var("SModel.nStates"), S});
-    weighted_frequency_matrix = C.add_compute_expression({var("SModel.weighted_frequency_matrix"), S});
-    get_alphabet = C.add_compute_expression({var("SModel.getAlphabet"), S});
-    state_letters = C.add_compute_expression({var("SModel.stateLetters"), S});
-    n_states = C.add_compute_expression({var("SModel.nStates"), S});
-    rate = C.add_compute_expression({var("SModel.rate"), S});
-}
-
 vector<int> edges_connecting_to_node(const Tree& T, int n)
 {
     vector<const_branchview> branch_list;
@@ -1884,15 +1867,6 @@ Parameters::Parameters(const Program& prog,
     evaluate_expression( {var("Tree.edgesOutOfNode"), my_tree(), 0});
     evaluate_expression( {var("Tree.neighbors"), my_tree(), 0});
 #endif
-
-    // R3. Register methods for each of the individual substitution models
-    int n_smodels = get_num_models(s_mapping);
-    for(int i=0;i<n_smodels;i++)
-    {
-        expression_ref smodel = {var("Data.List.!!"),{var("BAliPhy.ATModel.smodels"), my_atmodel()}, i};
-
-        PC->SModels.push_back( smodel_methods( smodel, *this) );
-    }
 
     // don't constrain any branch lengths
     for(int b=0;b<PC->TC.n_branches();b++)

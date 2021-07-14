@@ -206,23 +206,6 @@ struct mutable_data_partition: public data_partition
     mutable_data_partition(const Parameters* P, int i);
 };
 
-struct smodel_methods
-{
-    int main;
-    int n_base_models;
-    int n_states;
-    int state_letters;
-    int weighted_frequency_matrix;
-    int get_alphabet;
-    int rate;
-  
-    // also:
-    // Q1: can we use evaluate_expression( ) to pass in arguments?  what are the pitfalls?
-    // Q2: how could we control the peeling from haskell?
-    // 
-    smodel_methods(const expression_ref&, context&);
-};
-
 struct parameters_constants: public Object
 {
     param atmodel_export;
@@ -232,7 +215,6 @@ struct parameters_constants: public Object
     std::vector<param> branch_categories;
 
     /// The substitution::Model
-    std::vector<smodel_methods> SModels;
     std::vector<std::optional<int>> smodel_for_partition;
 
     /// The IndelModel
@@ -348,9 +330,6 @@ public:
 
     void cache_likelihood_branches() const;
 
-    /// How many substitution models?
-    int n_smodels() const {return PC->SModels.size();}
-  
     /// How many substitution models?
     int n_imodels() const {return PC->n_imodels;}
 

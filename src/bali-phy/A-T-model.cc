@@ -275,7 +275,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     }
 
     json smodels = json::array();
-    for(int i=0;i<P.n_smodels();i++)
+    for(int i=0;i<SModels.size();i++)
     {
         //    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
         out_cache<<"subst model"<<i+1<<" "<<SModels[i].show()<<endl<<endl;
@@ -286,7 +286,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     }
 
     json imodels = json::array();
-    for(int i=0;i<P.n_imodels();i++)
+    for(int i=0;i<IModels.size();i++)
     {
         out_cache<<"indel model"<<i+1<<" "<<IModels[i].show()<<endl<<endl;
         imodels.push_back(IModels[i].pretty_model());
