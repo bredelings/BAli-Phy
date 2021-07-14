@@ -1333,7 +1333,6 @@ std::string generate_atmodel_program(int n_sequences,
     imports.insert("Bio.Alignment");                         // for Alignment.load_alignment
     imports.insert("Bio.Alphabet");                          // for Bio.Alphabet.dna, etc.
     imports.insert("BAliPhy.ATModel");                   // for ATModel
-    imports.insert("BAliPhy.ATModel.DataPartition");     // for Partition
     imports.insert("Probability.Distribution.OnTree");   // for ctmc_on_tree{,fixed_A}
     for(auto& m: SMs)
         add(imports, m.imports);

@@ -2,7 +2,6 @@ module Probability.Distribution.OnTree where
 
 import Probability.Random
 import BAliPhy.ATModel
-import BAliPhy.ATModel.DataPartition
 import Tree
 import SModel
 import Bio.Sequence -- for sequence_to_indices

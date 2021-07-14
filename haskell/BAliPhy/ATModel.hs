@@ -1,7 +1,5 @@
 module BAliPhy.ATModel where
 
-import BAliPhy.ATModel.DataPartition
-import BAliPhy.ATModel.DataPartition as DP
 import Foreign.Vector
 import Tree
 import SModel
