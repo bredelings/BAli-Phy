@@ -1836,8 +1836,9 @@ Parameters::Parameters(const Program& prog,
     }
     auto leaf_labels = labels;
 
-    // FIXME: maybe do this inside the program?
+    // FIXME: we should ask the tree how many nodes there are -- this is only correct for a rooted tree!
     int n_nodes = 2*leaf_labels.size()-2;
+    // FIXME: maybe do this inside the program?
     for(int i=leaf_labels.size();i<n_nodes;i++)
         labels.push_back("A"+std::to_string(i));
 
