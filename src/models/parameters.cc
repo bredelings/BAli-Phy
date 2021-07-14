@@ -1787,8 +1787,10 @@ Parameters::Parameters(const Program& prog,
     auto sequence_data = program_result[1].list_elements();
 
     vector<int> partition_sampling_events;
-    for(auto sequences: sequence_data)
+    optional<int> r_taxa;
+    for(int i=0;i<sequence_data.size();i++)
     {
+        auto& sequences = sequence_data[i];
         int r = sequences.get_reg();
 
         auto& to_var = memory()->out_edges_to_var.at(r);
@@ -1796,6 +1798,11 @@ Parameters::Parameters(const Program& prog,
             throw myexception()<<"Some partitions are identical!";
 
         int s_sequences = *to_var.begin();
+        auto properties = dist_properties(s_sequences);
+        if (i==0)
+        {
+            r_taxa = properties->get("taxa");
+        }
     }
 
     /* ---------------- compress alignments -------------------------- */
@@ -1820,21 +1827,18 @@ Parameters::Parameters(const Program& prog,
     PC->atmodel = add_compute_expression({var("BAliPhy.ATModel.get_atmodel"), my_atmodel_export()});
 
     // 1. Get the leaf labels out of the machine.  These should be based on the leaf sequences alignment for partition 1.
-    // FIXME, if partition 1 has ancestral sequences, we will do the wrong thing here, even if we pass in a tree.
-    expression_ref sequence_names_exp = {var("BAliPhy.ATModel.sequence_names"), my_atmodel_export()};
-    sequence_names_exp = {var("Data.List.map"),var("Foreign.Vector.pack_cpp_string"),sequence_names_exp};
-    sequence_names_exp = {var("Foreign.Vector.list_to_vector"),sequence_names_exp};
-    PC->sequence_names     = add_compute_expression(sequence_names_exp);
-
-    // FIXME: make the program represent these as [String], and translate it to an EVector just for export purposes?
-    auto sequence_names = PC->sequence_names.get_value(*this).as_<EVector>();
+    context_ptr taxa_ptr(*this, *r_taxa);
     vector<string> labels;
-    for(auto& name: sequence_names)
+    for(auto taxon_vec: taxa_ptr.list_elements())
+    {
+        auto name = taxon_vec.value();
         labels.push_back(name.as_<String>());
+    }
     auto leaf_labels = labels;
 
     // FIXME: maybe do this inside the program?
-    for(int i=sequence_names.size();i<2*sequence_names.size()-2;i++)
+    int n_nodes = 2*leaf_labels.size()-2;
+    for(int i=leaf_labels.size();i<n_nodes;i++)
         labels.push_back("A"+std::to_string(i));
 
     // 2. Set up the TreeInterface mapping to the tree inside the machine
