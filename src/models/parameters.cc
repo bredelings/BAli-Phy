@@ -1613,9 +1613,9 @@ std::string generate_atmodel_program(int n_sequences,
         }
 
         if (like_calcs[i] == 0)
-            distributions.push_back({var("ctmc_on_tree"), tree_var, alignment_on_tree, smodel});
+            distributions.push_back({var("ctmc_on_tree"), branch_dist_trees[i], alignment_on_tree, smodel});
         else
-            distributions.push_back({var("ctmc_on_tree_fixed_A"), tree_var, smodel});
+            distributions.push_back({var("ctmc_on_tree_fixed_A"), branch_dist_trees[i], smodel});
     }
 
     // FIXME - we need to observe the likelihoods for each partition here.
