@@ -10,7 +10,6 @@ import SModel
 data IndelModel = IndelModel
 data ATModel = ATModel {
       tree:: Tree ,
-      smodels :: [MixtureModels],
       scales :: [Double],
       branch_lengths :: [Double],
       branch_categories :: [Int]

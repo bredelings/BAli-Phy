@@ -1636,7 +1636,7 @@ std::string generate_atmodel_program(int n_sequences,
 
     sample_atmodel.finish_return(
         Tuple(
-            {var("ATModel"), tree_var, get_list(smodels), get_list(scales), branch_lengths, maybe_branch_categories},
+            {var("ATModel"), tree_var, get_list(scales), branch_lengths, maybe_branch_categories},
             distributions_var,
             get_list(program_loggers))
         );
