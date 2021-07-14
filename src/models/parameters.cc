@@ -1684,10 +1684,9 @@ std::string generate_atmodel_program(int n_sequences,
         );
     program_file<<"\nprior taxa sequence_data = "<<sample_atmodel.get_expression().print()<<"\n";
 
-    program_file<<"\nobserve_data sequence_data = "<<program.get_expression().print()<<"\n";
+    program_file<<"\nmodel sequence_data = "<<program.get_expression().print()<<"\n";
 
-    main.let(var("model"),{var("observe_data"),var("sequence_data")});
-    main.perform({var("mcmc"),var("model")});
+    main.perform({var("$"),var("mcmc"),{var("model"),var("sequence_data")}});
     program_file<<"\nmain = "<<main.get_expression().print()<<"\n";
 
     return program_file.str();
