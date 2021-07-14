@@ -184,26 +184,22 @@ const EVector& data_partition::transition_P(int b) const
 
 int data_partition::n_base_models() const
 {
-    int s = *P->smodel_index_for_partition(partition_index);
-    return P->evaluate_head(P->PC->SModels[s].n_base_models).as_int();
+    return DPC().n_base_models_index.get_value(*P).as_int();
 }
 
 int data_partition::n_states() const
 {
-    int s = *P->smodel_index_for_partition(partition_index);
-    return P->evaluate_head(P->PC->SModels[s].n_states).as_int();
+    return DPC().n_states_index.get_value(*P).as_int();
 }
 
 Matrix data_partition::WeightedFrequencyMatrix() const
 {
-    int s = *P->smodel_index_for_partition(partition_index);
-    return P->evaluate_head(P->PC->SModels[s].weighted_frequency_matrix).as_<Box<Matrix>>();
+    return DPC().weighted_frequency_matrix_index.get_value(*P).as_<Box<Matrix>>();
 }
 
 EVector data_partition::state_letters() const
 {
-    int s = *P->smodel_index_for_partition(partition_index);
-    return P->evaluate_head(P->PC->SModels[s].state_letters).as_<EVector>();
+    return DPC().state_letters_index.get_value(*P).as_<EVector>();
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -440,6 +436,14 @@ data_partition_constants::data_partition_constants(Parameters* p, int r_data)
     likelihood_index = reg_var(*properties->get("likelihood"));
 
     ancestral_sequences_index = reg_var(*properties->get("anc_seqs"));
+
+    weighted_frequency_matrix_index = reg_var(*properties->get("weighted_frequency_matrix"));
+
+    state_letters_index = reg_var(*properties->get("smap"));
+
+    n_states_index = reg_var(*properties->get("n_states"));
+
+    n_base_models_index = reg_var(*properties->get("n_base_models"));
 
     context_ptr alphabet_ptr(*p, *properties->get("alphabet"));
     a = alphabet_ptr.value().as_<PtrBox<alphabet>>();

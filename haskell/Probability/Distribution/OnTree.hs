@@ -61,6 +61,8 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   property "leaf_sequences" leaf_sequences
   property "alphabet" alphabet
   property "as" as
+  property "n_states" (SModel.nStates smodel)
+  property "n_base_models" (SModel.nBaseModels smodel)
 
   return [likelihood]
 

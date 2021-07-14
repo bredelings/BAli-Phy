@@ -72,6 +72,14 @@ struct data_partition_constants
 
     param ancestral_sequences_index;
 
+    param weighted_frequency_matrix_index;
+
+    param state_letters_index;
+
+    param n_states_index;
+
+    param n_base_models_index;
+
     std::vector<int> conditional_likelihoods_for_branch;
 
     std::vector<param> leaf_sequence_indices;
