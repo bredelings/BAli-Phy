@@ -1633,11 +1633,18 @@ std::string generate_atmodel_program(int n_sequences,
     sample_atmodel.let(distributions_var, get_list(distributions));
     sample_atmodel.empty_stmt();
 
-    sample_atmodel.finish_return(
-        Tuple(
-            {var("ATModel"), tree_var, get_list(scales), branch_lengths, maybe_branch_categories},
-            distributions_var,
-            get_list(program_loggers))
+    var loggers_var("loggers");
+    sample_atmodel.let(loggers_var, get_list(program_loggers));
+    sample_atmodel.empty_stmt();
+
+    var atmodel_var("atmodel");
+    sample_atmodel.let(atmodel_var, {var("ATModel"), tree_var, get_list(scales), branch_lengths, maybe_branch_categories});
+    sample_atmodel.empty_stmt();
+
+    sample_atmodel.finish_return( Tuple( atmodel_var,
+                                         distributions_var,
+                                         loggers_var
+                                       )
         );
     
     if (log_verbose >= 4)
