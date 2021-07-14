@@ -410,15 +410,13 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
     return alignments;
 }
 
-data_partition_constants::data_partition_constants(Parameters* p, int i, const alphabet& a_, int like_calc, int r_data)
+data_partition_constants::data_partition_constants(Parameters* p, int r_data)
     :conditional_likelihoods_for_branch(2*p->t().n_branches()),
      sequence_length_indices(p->t().n_nodes()),
      sequence_length_pr_indices(p->t().n_nodes()),
      seqs( p->t().n_nodes() ),
      sequences(),
-     a(a_.clone()),
-     branch_HMM_type(p->t().n_branches(),0),
-     likelihood_calculator(like_calc)
+     branch_HMM_type(p->t().n_branches(),0)
 {
     const auto& t = p->t();
     int B = t.n_branches();
@@ -442,6 +440,11 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     likelihood_index = reg_var(*properties->get("likelihood"));
 
     ancestral_sequences_index = reg_var(*properties->get("anc_seqs"));
+
+    context_ptr alphabet_ptr(*p, *properties->get("alphabet"));
+    a = alphabet_ptr.value().as_<PtrBox<alphabet>>();
+
+    auto dist_type = *p->dist_type(s_sequences);
 
     expression_ref transition_ps = reg_var(*properties->get("transition_ps"));
     for(int b=0;b<B;b++)
@@ -467,8 +470,9 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     // This would be like what we get when we start with a line graph for each sequence and then begin
     // merging columns.
 
-    if (like_calc == 0)
+    if (dist_type == "ctmc_on_tree")
     {
+        likelihood_calculator = 0;
         auto leaf_sequences = reg_var( *properties->get( "leaf_sequences" ) );
         for(int i=0; i<p->t().n_leaves(); i++)
             leaf_sequence_indices.push_back( p->add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
@@ -509,6 +513,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
             }
         }
     }
+    else if (dist_type == "ctmc_on_tree_fixed_A")
+    {
+        likelihood_calculator = 1;
+    }
+    else
+        throw myexception()<<"data_partition_constant: I don't recognize data from distribution '"<<dist_type<<"'";
 }
 
 //-----------------------------------------------------------------------------//
@@ -1898,14 +1908,14 @@ Parameters::Parameters(const Program& prog,
         {
             // construct compressed alignment, counts, and mapping
             auto& [AA, counts, mapping] = *compressed_alignments[i];
-            PC->DPC.emplace_back(this, i, AA.get_alphabet(), like_calcs[i], sequence_data[i].get_reg());
+            PC->DPC.emplace_back(this, sequence_data[i].get_reg());
             if (like_calcs[i] == 0)
                 get_data_partition(i).set_alignment(AA);
         }
         else
         {
             auto counts = vector<int>(A[i].length(), 1);
-            PC->DPC.emplace_back(this, i, A[i].get_alphabet(), like_calcs[i], sequence_data[i].get_reg());
+            PC->DPC.emplace_back(this, sequence_data[i].get_reg());
             if (like_calcs[i] == 0)
                 get_data_partition(i).set_alignment(A[i]);
         }

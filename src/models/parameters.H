@@ -92,7 +92,7 @@ struct data_partition_constants
     /// The leaf sequence data of this partition
     std::vector< std::vector<int> > sequences;
 
-    std::shared_ptr<alphabet> a;
+    std::shared_ptr<const alphabet> a;
 
     std::vector<int> branch_HMM_type;
 
@@ -101,7 +101,7 @@ struct data_partition_constants
 
     int likelihood_calculator;
 
-    data_partition_constants(Parameters* P, int i, const alphabet&, int like_calc, int r_data);
+    data_partition_constants(Parameters* P, int r_data);
 };
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)
