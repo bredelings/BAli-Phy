@@ -479,6 +479,16 @@ std::optional<context_ref::lazy_attribute_map> context_ref::dist_properties(int 
         return lazy_attribute_map(*this, &(it->second));
 }
 
+std::optional<std::string> context_ref::dist_type(int s) const
+{
+    auto& dist_to_type = memory()->dist_type;
+    auto it = dist_to_type.find(s);
+    if (it == dist_to_type.end())
+        return {};
+    else
+        return it->second;
+}
+
 void context_ref::compile()
 {
 }
