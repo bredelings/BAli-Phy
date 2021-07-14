@@ -1544,7 +1544,7 @@ std::string generate_atmodel_program(int n_sequences,
     // FIXME: We are loading files multiple times!
 
     // P6. Create objects for data partitions
-    vector<expression_ref> partitions;
+    vector<expression_ref> distributions;
     vector<expression_ref> sequence_data;
 
     // Emit filenames var
@@ -1613,8 +1613,10 @@ std::string generate_atmodel_program(int n_sequences,
             alignment_on_tree = var("Nothing");
         }
 
-        // FIXME - to make an AT *model* we probably need to remove the data from here.
-        partitions.push_back({var("Partition"), smodel, tree_var, alignment_on_tree});
+        if (like_calcs[i] == 0)
+            distributions.push_back({var("ctmc_on_tree"), tree_var, alignment_on_tree, smodel});
+        else
+            distributions.push_back({var("ctmc_on_tree_fixed_A"), tree_var, smodel});
     }
 
     // FIXME - we need to observe the likelihoods for each partition here.
@@ -1629,10 +1631,14 @@ std::string generate_atmodel_program(int n_sequences,
     //      seqs' = listArray' seqs
     // observe (ctmc_on_tree topology root as alphabet smodel ts scale branch_cats) seqs
 
+    var distributions_var("distributions");
+    sample_atmodel.let(distributions_var, get_list(distributions));
+    sample_atmodel.empty_stmt();
 
     sample_atmodel.finish_return(
         Tuple(
-            {var("ATModel"), tree_var, get_list(smodels), get_list(scales), branch_lengths, maybe_branch_categories, get_list(partitions)},
+            {var("ATModel"), tree_var, get_list(smodels), get_list(scales), branch_lengths, maybe_branch_categories},
+            distributions_var,
             get_list(program_loggers))
         );
     
@@ -1649,7 +1655,7 @@ std::string generate_atmodel_program(int n_sequences,
         program.empty_stmt();
     }
 
-    program.perform(Tuple(var("atmodel"),var("loggers")), {var("$"),var("sample"),{var("prior"),taxon_names_var,sequence_data_var}});
+    program.perform(Tuple(var("atmodel"),distributions_var, var("loggers")), {var("$"),var("sample"),{var("prior"),taxon_names_var,sequence_data_var}});
 
     for(int i=0; i < n_partitions; i++)
     {
@@ -1661,26 +1667,10 @@ std::string generate_atmodel_program(int n_sequences,
         expression_ref smodel = var("smodel_part"+part);
         expression_ref tree = var("tree_part"+part);
         expression_ref alignment = (likelihood_calculator == 0)?var("alignment_part"+part):wildcard();
-        program.let({var("Partition"),smodel, tree, alignment},{var("!!"),{var("partitions"),var("atmodel")},i});
-
-        var transition_ps("transition_ps_part"+part);
-        var cls_var("cls_part"+part);
-        var ancestral_sequences_var("ancestral_sequences_part"+part);
-        var likelihood_var("likelihood_part"+part);
+        expression_ref distribution = {var("!!"),distributions_var,i};
         expression_ref sequence_data_var = {var("!!"),var("sequence_data"),i};
-        if (likelihood_calculator == 0)
-        {
-            program.perform({var("~>"),sequence_data_var,{var("ctmc_on_tree"),tree, alignment, smodel}});
-        }
-        else if (likelihood_calculator == 1)
-        {
-            assert(not i_mapping[i]);
-            assert(likelihood_calculator == 1);
 
-            program.perform({var("~>"),sequence_data_var,{var("ctmc_on_tree_fixed_A"),tree, smodel}});
-        }
-        else
-            std::abort();
+        program.perform({var("~>"),sequence_data_var,distribution});
     }
     program.empty_stmt();
 

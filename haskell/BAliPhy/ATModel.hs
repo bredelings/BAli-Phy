@@ -15,8 +15,7 @@ data ATModel = ATModel {
       smodels :: [MixtureModels],
       scales :: [Double],
       branch_lengths :: [Double],
-      branch_categories :: [Int],
-      partitions :: [Partition]
+      branch_categories :: [Int]
     }
 
 data ConditionalLikelihoodVector
