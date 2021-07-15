@@ -11,7 +11,6 @@ data IndelModel = IndelModel
 data ATModel = ATModel {
       tree:: Tree ,
       scales :: [Double],
-      branch_lengths :: [Double],
       branch_categories :: [Int]
     }
 

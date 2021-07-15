@@ -1638,7 +1638,7 @@ std::string generate_atmodel_program(int n_sequences,
     sample_atmodel.empty_stmt();
 
     var atmodel_var("atmodel");
-    sample_atmodel.let(atmodel_var, {var("ATModel"), tree_var, get_list(scales), branch_lengths, maybe_branch_categories});
+    sample_atmodel.let(atmodel_var, {var("ATModel"), tree_var, get_list(scales), maybe_branch_categories});
     sample_atmodel.empty_stmt();
 
     sample_atmodel.finish_return( Tuple( atmodel_var,
