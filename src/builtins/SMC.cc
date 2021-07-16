@@ -1177,8 +1177,43 @@ vector<pair<double,double>> get_transition_probs_deploid(double switching_rate, 
     return transition_pr;
 }
 
+log_double_t panel_01_CSD_single(const EVector& source_hap, double emission_diff_state, const EVector& haplotype)
+{
+    // 1. Determine mutation probabilities when copying from a given parent.
+    double emission_same_state = 1.0 - emission_diff_state;
+
+    // 2. Check haplotype lengths and number of sites
+    int L = source_hap.size();
+    assert(haplotype.size() == L);
+
+    log_prod Pr;
+
+    // 3. Perform the forward algorithm
+    for(int site=0; site<L; site++)
+    {
+        // Emission is 1.0 if missing data at state2
+        int emitted_letter = get_allele(haplotype, site);
+        int copied_letter  = get_allele(source_hap, site);
+        Pr *= emission_probability( copied_letter, emitted_letter, emission_diff_state, emission_same_state, false );
+    }
+
+    return Pr;
+}
+
+log_double_t panel_01_CSD_no_recomb(const EVector& panel, double emission_diff_state, const EVector& haplotype)
+{
+    log_double_t Pr = 0;
+    for(auto& source_hap: panel)
+        Pr += panel_01_CSD_single(source_hap.as_<EVector>(), emission_diff_state, haplotype);
+    Pr /= panel.size();
+    return Pr;
+}
+
 log_double_t panel_01_CSD(const EVector& panel, const EVector& sites, double switching_rate, double emission_diff_state, const EVector& haplotype)
 {
+    if (switching_rate == 0)
+        return panel_01_CSD_no_recomb(panel, emission_diff_state, haplotype);
+
     int k = panel.size();
     assert(k >= 1);
 
