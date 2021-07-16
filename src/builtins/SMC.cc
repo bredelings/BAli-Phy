@@ -2167,8 +2167,6 @@ log_double_t resample_haps_from_panel_no_recomb(context_ref& C,
                                                 const vector<int>& haplotype_regs,
                                                 const EVector& haplotypes,
                                                 const EVector& panel,
-                                                const EVector& sites,
-                                                double switching_rate,
                                                 double miscopy_prob,
                                                 const EVector& weights,
                                                 const EVector& reads,
@@ -2196,21 +2194,6 @@ log_double_t resample_haps_from_panel_no_recomb(context_ref& C,
         path_state /= n_panel_haps;
 
         return result;
-    };
-
-    auto transition_prs = get_transition_probs_deploid(switching_rate, n_panel_haps, sites);
-
-    auto T = [&](int site, int path_state1, int path_state2)
-    {
-        double pr = 1;
-        auto& [transition_diff_state, transition_same_state] = transition_prs[site];
-        for(int i=0;i<n_resample_haps;i++)
-        {
-            int this_path_state1 = get_one_path_state(path_state1);
-            int this_path_state2 = get_one_path_state(path_state2);
-            pr *= (this_path_state1 == this_path_state2) ? transition_same_state : transition_diff_state;
-        }
-        return pr;
     };
 
     //---------- 2. Compute emission probabilities -----------//
@@ -2257,35 +2240,16 @@ log_double_t resample_haps_from_panel_no_recomb(context_ref& C,
         int column2 = site+1;
 
         // Get the probabability of transitioning to (column1,state2)
-        for(int state1=0;state1<n_path_states;state1++)
-            for(int state2=0;state2<n_path_states;state2++)
-            {
-                F(column2,state2) += F(column1,state1) * T(site, state1, state2);
-            }
-
-        // Multiply by the emission probability for (column2, state2)
-        for(int state2=0;state2<n_path_states;state2++)
-            F(column2,state2) *= E(site, state2);
+        for(int path_state=0; path_state<n_path_states; path_state++)
+            F(column2, path_state) = F(column1, path_state) * E(site, path_state);
     }
-    
+
     //--------- 4. Back-sample path_states from forward matrix -------//
     vector<log_double_t> pr_path(n_path_states);
     for(int path_state=0; path_state<n_path_states; path_state++)
         pr_path[path_state] = F(L, path_state);
-    int current_path_state = choose(pr_path);
 
-    vector<int> path_states;
-    path_states.push_back(current_path_state);
-
-    for(int site=L-2;site >= 0; site--)
-    {
-        for(int path_state=0; path_state<n_path_states; path_state++)
-            pr_path[path_state] = F(site+1,path_state)*T(site+1,path_state, current_path_state);
-
-         current_path_state = choose(pr_path);
-         path_states.push_back(current_path_state);
-    }
-    std::reverse(path_states.begin(), path_states.end());
+    int chosen_path_state = choose(pr_path);
 
     //---------- 5. Sample new haplotypes given path states-----------//
     vector<object_ptr<EVector>> new_haplotypes( n_resample_haps );
@@ -2296,7 +2260,7 @@ log_double_t resample_haps_from_panel_no_recomb(context_ref& C,
     {
         vector<log_double_t> pr_haplotypes(n_haplotype_states);
         for(int haplotype_state = 0; haplotype_state < n_haplotype_states; haplotype_state++)
-            pr_haplotypes[haplotype_state] = E2(site, haplotype_state, path_states[site]);
+            pr_haplotypes[haplotype_state] = E2(site, haplotype_state, chosen_path_state);
 
         int new_haplotype_state = choose(pr_haplotypes);
 
