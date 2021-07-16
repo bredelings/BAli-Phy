@@ -2162,6 +2162,159 @@ log_double_t resample_haps_from_panel(context_ref& C,
     return total;
 }
 
+log_double_t resample_haps_from_panel_no_recomb(context_ref& C,
+                                                const vector<int>& K,
+                                                const vector<int>& haplotype_regs,
+                                                const EVector& haplotypes,
+                                                const EVector& panel,
+                                                const EVector& sites,
+                                                double switching_rate,
+                                                double miscopy_prob,
+                                                const EVector& weights,
+                                                const EVector& reads,
+                                                double error_rate,
+                                                double concentration,
+                                                double outlier_frac)
+{
+    assert(all_different(K));
+
+    int n_resample_haps = K.size();
+    int n_panel_haps = panel.size();
+    double emission_diff_state = miscopy_prob;
+    double emission_same_state = 1.0 - emission_diff_state;
+    int L = haplotypes[0].as_<EVector>().size();
+
+    //---------- 1. Compute transition probabilities -----------//
+    int n_path_states = ipow(n_panel_haps, n_resample_haps);
+
+    // get a single path state, and advance the iterator
+    auto get_one_path_state = [&](int& path_state)
+    {
+        int result = path_state % n_panel_haps;
+        assert(result >= 0 and result < n_panel_haps);
+
+        path_state /= n_panel_haps;
+
+        return result;
+    };
+
+    auto transition_prs = get_transition_probs_deploid(switching_rate, n_panel_haps, sites);
+
+    auto T = [&](int site, int path_state1, int path_state2)
+    {
+        double pr = 1;
+        auto& [transition_diff_state, transition_same_state] = transition_prs[site];
+        for(int i=0;i<n_resample_haps;i++)
+        {
+            int this_path_state1 = get_one_path_state(path_state1);
+            int this_path_state2 = get_one_path_state(path_state2);
+            pr *= (this_path_state1 == this_path_state2) ? transition_same_state : transition_diff_state;
+        }
+        return pr;
+    };
+
+    //---------- 2. Compute emission probabilities -----------//
+
+    int n_haplotype_states = (1<<n_resample_haps);
+    auto emission_prs = emission_pr(K, reads, haplotypes, weights, error_rate, concentration, outlier_frac);
+
+    // The probability of emitting a specific haplotype state, given the paths for all resampled haplotypes.
+    auto E2 = [&](int site, int haplotype_state, int path_state)
+    {
+        double prior_haplotype_state = 1;
+
+        for(int i=0;i<n_resample_haps;i++)
+        {
+            int this_path_state = get_one_path_state(path_state);
+            int parent_state = get_allele(panel, this_path_state, site);
+            int child_state = get_allele_from_state(haplotype_state, i);
+            prior_haplotype_state *= (parent_state == child_state) ? emission_same_state : emission_diff_state;
+        };
+
+        return prior_haplotype_state * emission_prs(site,haplotype_state);
+    };
+
+    // The probability of emitting ANY/ALL specific haplotype states, given the paths for all resampled haplotypes.
+    auto E = [&](int site, int path_state)
+    {
+        log_double_t pr = 0;
+        for(int haplotype_state=0; haplotype_state < n_haplotype_states; haplotype_state++)
+            pr += E2(site, haplotype_state, path_state);
+        return pr;
+    };
+
+
+    //----------------------- 3. Forward matrix-----------------------//
+    matrix<log_double_t> F(L+1, n_path_states, 0.0);
+
+    // Initially each combination of paths is equally likely.
+    for(int s=0;s<n_path_states;s++)
+        F(0,s) = 1.0/n_path_states;
+
+    for(int site = 0; site < L; site++)
+    {
+        int column1 = site;
+        int column2 = site+1;
+
+        // Get the probabability of transitioning to (column1,state2)
+        for(int state1=0;state1<n_path_states;state1++)
+            for(int state2=0;state2<n_path_states;state2++)
+            {
+                F(column2,state2) += F(column1,state1) * T(site, state1, state2);
+            }
+
+        // Multiply by the emission probability for (column2, state2)
+        for(int state2=0;state2<n_path_states;state2++)
+            F(column2,state2) *= E(site, state2);
+    }
+    
+    //--------- 4. Back-sample path_states from forward matrix -------//
+    vector<log_double_t> pr_path(n_path_states);
+    for(int path_state=0; path_state<n_path_states; path_state++)
+        pr_path[path_state] = F(L, path_state);
+    int current_path_state = choose(pr_path);
+
+    vector<int> path_states;
+    path_states.push_back(current_path_state);
+
+    for(int site=L-2;site >= 0; site--)
+    {
+        for(int path_state=0; path_state<n_path_states; path_state++)
+            pr_path[path_state] = F(site+1,path_state)*T(site+1,path_state, current_path_state);
+
+         current_path_state = choose(pr_path);
+         path_states.push_back(current_path_state);
+    }
+    std::reverse(path_states.begin(), path_states.end());
+
+    //---------- 5. Sample new haplotypes given path states-----------//
+    vector<object_ptr<EVector>> new_haplotypes( n_resample_haps );
+    for(auto& h: new_haplotypes)
+        h = object_ptr<EVector>(new EVector(L));
+
+    for(int site=0; site < L; site++)
+    {
+        vector<log_double_t> pr_haplotypes(n_haplotype_states);
+        for(int haplotype_state = 0; haplotype_state < n_haplotype_states; haplotype_state++)
+            pr_haplotypes[haplotype_state] = E2(site, haplotype_state, path_states[site]);
+
+        int new_haplotype_state = choose(pr_haplotypes);
+
+        for(int i=0;i<n_resample_haps;i++)
+            (*new_haplotypes[i])[site] = get_allele_from_state(new_haplotype_state,i);
+    }
+
+    for(int i=0;i<n_resample_haps;i++)
+        C.set_reg_value(haplotype_regs[i], new_haplotypes[i]);
+
+    //---------- 6. Compute total probability-----------//
+    log_double_t total = 0;
+    for(int s=0;s<n_path_states;s++)
+        total += F(L,s);
+
+    return total;
+}
+
 // We need the markov blanket for h[i]:
 //   Pr(h[i] | panel) * Pr(reads | h, w, rror_rates, c)
 
