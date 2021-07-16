@@ -29,7 +29,7 @@ prior t1 t2 = do
 
   return (n, s, g, intervals)
 
-observe_data times_data = do
+model times_data = do
   (n, s, g, intervals) <- sample $ prior 1851.0 1963.0
 
   times_data ~> poisson_processes intervals
@@ -43,6 +43,4 @@ main = do
 
   let times = frame $$ ("time", AsDouble)
 
-  let model = observe_data times
-
-  mcmc model
+  mcmc $ model times
