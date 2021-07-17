@@ -33,7 +33,7 @@
             "arg_name": "posP",
             "arg_type": "Double",
             "default_value": "~beta[1,10]",
-	    "description": "The fraction of neutral sites"
+            "description": "The fraction of positively selected sites"
         }
     ],
     "description": "A site-heterogeneous model with a discrete Beta distribution on dN/dS values, plus a category of neutral sites.  See the m7 model for the definition of mu and gamma.",

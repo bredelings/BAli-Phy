@@ -33,7 +33,7 @@
             "arg_name": "posP",
             "arg_type": "Double",
             "default_value": "~beta[1,10]",
-	    "description": "The fraction of neutral sites"
+            "description": "The fraction of positively selected sites"
         },
         {
             "arg_name": "posW",
