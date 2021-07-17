@@ -42,7 +42,8 @@
             "description": "The dN\/dS value for positively selected sites"
         }
     ],
-    "description": "A site-heterogeneous model with a discrete Beta distribution on dN/dS values, plus a category of positively-selected sites.  See the m7 model for the definition of mu and gamma.",
+    "see": ["m7", "m8a","m8a_test"],
+    "description": "The m8 model is an m7 model with an additional category of positively-selected sites.  The additional category of sites has proportion=posP and dN/dS=posW.",
     "citation": {"type": "article",
 		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
 		 "year": "2000",
