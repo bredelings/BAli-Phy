@@ -39,7 +39,7 @@
             "arg_name": "posSelection",
             "arg_type": "Int",
             "default_value": "~bernoulli[0.5]",
-            "description": "The model selector: 1 if positive selection, 0 if not."
+            "description": "The model selector: 1 if positive selection, 0 if not"
         },
         {
             "arg_name": "n",
