@@ -348,7 +348,7 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
     }
 
     if (print.code.is_action())
-        program_file<<"  result <- run_lazy (print_model alphabet)\n";
+        program_file<<"  result <- run_lazy ("<<E<<")\n";
     else
         program_file<<"  let result = "<<E<<"\n";
 
