@@ -1,7 +1,7 @@
 import           Probability
 import           Data.Frame
 
-prior = do
+model xs ys = do
 
     b     <- normal 0.0 1.0
 
@@ -9,17 +9,11 @@ prior = do
 
     sigma <- exponential 1.0
 
-    let loggers = ["b" %=% b, "a" %=% a, "sigma" %=% sigma]
-
-    return (a, b, sigma, loggers)
-
-observe_data xs observed_ys = do
-
-    (a, b, sigma, loggers) <- sample $ prior
-
     let f x = b * x + a
 
-    observed_ys ~> independent [ normal (f x) sigma | x <- xs ]
+    ys ~> independent [ normal (f x) sigma | x <- xs ]
+
+    let loggers = ["b" %=% b, "a" %=% a, "sigma" %=% sigma]
 
     return loggers
 
@@ -29,7 +23,5 @@ main = do
   let xs = xy_data $$ ("x", AsDouble)
       ys = xy_data $$ ("y", AsDouble)
 
-  let model = observe_data xs ys
-
-  mcmc model
+  mcmc $ model xs ys
 
