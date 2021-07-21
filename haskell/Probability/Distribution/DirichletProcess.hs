@@ -72,7 +72,7 @@ dpm_lognormal n alpha mean_dist noise_dist = dpm n alpha sample_dist
 -- I need the take to be at the end:
 --   liftM (take n) $ sequence $ dp alpha sample_dist
 
-dpm n alpha sample_dist = do
+dpm n alpha sample_dist = lazy $ do
 
   dists  <- sequence $ repeat $ sample_dist
 
@@ -82,7 +82,7 @@ dpm n alpha sample_dist = do
   iid n (join $ stick breaks dists)
 
 
-dp n alpha dist = do
+dp n alpha dist = lazy $ do
 
   atoms  <- sequence $ repeat $ dist
 
