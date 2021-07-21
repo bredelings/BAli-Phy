@@ -187,6 +187,7 @@ run_lazy' rate dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_
 run_lazy' rate (Distribution _ _ _ s _) = run_lazy' rate s
 run_lazy' rate (MFix f) = MFix ((run_lazy' rate).f)
 run_lazy' rate (SamplingRate rate2 a) = run_lazy' (rate*rate2) a
+run_lazy' rate (Lazy r) = run_lazy' rate r
 run_lazy' rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
   result <- unsafeInterleaveIO $ run_lazy' rate action
   run_tk_effects rate $ tk_effect result
