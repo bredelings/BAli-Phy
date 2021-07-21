@@ -96,6 +96,110 @@ struct log_prod_underflow
     constexpr log_prod_underflow() {}
 };
 
+struct log_prod_underoverflow
+{
+    log_double_t accum = 1.0;
+    double prod = 1.0;
+
+    log_prod_underoverflow& operator*=(log_double_t x)
+    {
+	accum *= x;
+	return *this;
+    }
+
+    // NOTE: by not using the smallest/largest possible values, we avoid FPE exceptions on underflow / overflow (mostly).
+    static constexpr double max_value = 115792089237316195423570985008687907853269984665640564039457584007913129639936e0;
+    // static constexpr double min_value = std::numeric_limits<double>::min();
+    static constexpr double min_value = 1.0/max_value;
+
+    log_prod_underoverflow& operator*=(double x)
+    {
+	bool was_zero = is_zero();
+
+	double mult = prod * x;
+        if (mult < min_value)
+        {
+            // keep the larger of {prod,x} in the "prod" slot.
+            if (prod < x)
+            {
+                accum *= prod;
+                prod = x;
+            }
+            else
+                accum *= x;
+        }
+        else if (mult > max_value)
+        {
+            // keep the smaller of {prod,x} in the "prod" slot.
+            if (prod > x)
+            {
+                accum *= prod;
+                prod = x;
+            }
+            else
+                accum *= x;
+        }
+        else
+	    prod = mult;
+
+
+	assert(not this->is_zero() or x == 0 or was_zero);
+	return *this;
+    }
+
+    log_prod_underoverflow& mult_with_count(double x, int c)
+    {
+	assert(c >= 0);
+	assert(prod >= 0);
+
+	constexpr int count_limit = 4;
+
+	bool was_zero = is_zero();
+
+	if (c >= count_limit)
+	    accum *= pow(log_double_t(x),c);
+	else
+	{
+	    double f = x;
+	    for(int i=1;i<c;i++)
+		f *= x;
+
+	    double mult = prod * f;
+            if (mult < min_value)
+            {
+                // keep the larger of {prod,x} in the "prod" slot.
+                if (prod < x)
+                {
+                    accum *= prod;
+                    prod = f;
+                }
+                else
+                    accum *= pow(log_double_t(x),c);
+            }
+            else if (mult > max_value)
+            {
+                if (prod > x)
+                {
+                    accum *= prod;
+                    prod = f;
+                }
+                else
+                    accum *= pow(log_double_t(x),c);
+            }
+            else
+                prod = mult;
+	}
+
+	assert(not this->is_zero() or x == 0 or was_zero);
+	return *this;
+    }
+
+    log_double_t value() const {return accum * prod;}
+    operator log_double_t () const {return value();}
+    bool is_zero() const {return value() <= 0.0;}
+    constexpr log_prod_underoverflow() {}
+};
+
 struct log_prod_rescale
 {
     static constexpr double scale_factor = 115792089237316195423570985008687907853269984665640564039457584007913129639936e0;
@@ -116,6 +220,11 @@ struct log_prod_rescale
 	    prod *= scale_factor;
 	    scale++;
 	}
+        else if (prod > scale_factor)
+        {
+            prod *= scale_min;
+            scale--;
+        }
 
 	assert(not this->is_zero() or x == 0 or was_zero);
 	return *this;
