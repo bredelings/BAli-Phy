@@ -9,6 +9,7 @@
 #include "util/string/split.H"
 #include "util/string/strip.H"
 #include "util/log-level.H"
+#include "math/logprod.H"
 
 using std::string;
 using std::optional;
@@ -534,17 +535,10 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
     n /= 2;
     assert(n == I.size());
 
-    double Pr = 1.0;
-    log_double_t Pr2 = 1.0;
+    log_prod_underoverflow Pr;
     int n_theta_pow = 0;
     for(int i=0,total=0;i<n;i++)
     {
-	if (Pr < 1.0e-30)
-	{
-	    Pr2 *= Pr;
-	    Pr = 1.0;
-	}
-
 	int a1 = alleles[2*i].as_int();
 	int a2 = alleles[2*i+1].as_int();
 
@@ -568,7 +562,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 	    // Heterozygotes coalesce before outbreeding with probability 0.
 	    if (heterozygote and coalesced)
 	    {
-		Pr2 *= 0.0;  // This accumulates zeros, in order to penalize them.
+		Pr *= 0.0;  // This accumulates zeros, in order to penalize them.
 		continue;
 	    }
 
@@ -581,12 +575,9 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 	}
     }
 
-    Pr2 *= Pr * pow(log_double_t(theta), n_theta_pow);
+    Pr *= pow(log_double_t(theta), n_theta_pow);
   
-    assert(Pr > 0.0);
-    //  assert(Pr2 > 0.0);
-  
-    return {Pr2};
+    return expression_ref{Pr};
 }
 
 // Pr(I|s) = \sum_t=0^\infty s^t (1-s) (1/2^t)^(L-n) (1-(1/2^t))^n
