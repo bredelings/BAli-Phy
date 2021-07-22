@@ -2072,8 +2072,8 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;Covarion.hb02</userinput></para>
-                <para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Covarion.hb02</userinput></para>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;Covarion.gt01</userinput></para>
+                <para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Covarion.gt01</userinput></para>
               </entry>
 	      <entry>
                 <para>df(<replaceable>Q+Rates.gamma</replaceable>)+2</para>
@@ -2089,8 +2089,8 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;Covarion.hb02</userinput></para>
-                <para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Covarion.hb02</userinput></para>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;Covarion.wssr07</userinput></para>
+                <para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Covarion.wssr07</userinput></para>
               </entry>
 	      <entry>
                 <para>df(<replaceable>Q+Rates.gamma</replaceable>)+4</para>
