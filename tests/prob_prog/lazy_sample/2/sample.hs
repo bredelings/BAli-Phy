@@ -1,15 +1,11 @@
 import           Probability
 
-prior = do
+model z' = do
     x  <- normal 0.0 1.0
-    ys <- independent (repeat $ normal 0.0 1.0)
-    return $ (x * x) : (take 10 ys)
-
-observe_data z' = do
-    zs <- sample $ prior
+    ys <- lazy $ independent $ repeat $ normal 0.0 1.0
+    let zs = (x * x) : (take 10 ys)
     z' ~> normal (zs !! 2) 1.0
     return ["zs" %=% zs]
 
 main = do
-  let model = observe_data 10.0
-  mcmc model
+  mcmc $ model 10.0
