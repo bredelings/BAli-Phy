@@ -64,7 +64,6 @@ infix 0 ~>
 
 liftIO = LiftIO
 lazy = Lazy
-sample = Lazy
 add_move = AddMove
 perform_tk_effect = PerformTKEffect
 infixl 2 `with_tk_effect`
