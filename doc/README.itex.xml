@@ -1225,8 +1225,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>19</entry>
 	      <entry>
 		<para>Empirical exchange rates, all proteins.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF02101694">
-		  (Jones, Taylor, Thornton 1992)
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/bioinformatics/8.3.275">
+		  (Jones, Taylor, and Thornton, 1992)
 		</link>
 	      </entry>
 	    </row>
@@ -1239,7 +1239,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>
 		<para>Empirical exchange rates, all proteins.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a003851">
-		  Whelan and Goldman (2001)
+		  (Whelan and Goldman, 2001)
 		</link>
 	      </entry>
 	    </row>
@@ -1252,7 +1252,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>
 		<para>Empirical exchange rates, all proteins.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msn067">
-		  <para>Le and Gascuel (2008)</para>
+		  (Le and Gascuel, 2008)
 		</link>
 	      </entry>
 	    </row>
@@ -1390,7 +1390,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<para>This model has separate frequencies for each dinucleotide, and distinguishes between transitions and transversion between match states (including GU/UG).</para>
 		<para>Simultaneous changes of both letters <emphasis>are</emphasis> allowed, but only between match states.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.ncbi.nlm.nih.gov/pubmed/11139520">
-		(Savill, N. et al 2001)
+		(Savill et al., 2001)
 	      </link>
 	      </entry>
 	    </row>
@@ -1731,7 +1731,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		</entry>
 	      </row>
 
-o	      <row>
+	      <row>
 		<entry><userinput><replaceable>nuc_model</replaceable>+x3+mut_sel_aa</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+19</entry>
 		<entry><para>Mutation-selection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each amino acid</emphasis>.</para>
@@ -1835,7 +1835,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>
 		  <para>A mixture of conserved and neutral sites.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1534/genetics.104.031153">
-		    (Wong, et. al. 2004)
+		    (Wong et al., 2004)
 		  </link>
 		</entry>
 	      </row>
@@ -1848,7 +1848,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>
 		  <para>A mixture of conserved, neutral, and positively-selected sites.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1534/genetics.104.031153">
-		    (Wong, et. al. 2004)
+		    (Wong et al., 2004)
 		  </link>
 		</entry>
 	      </row>
@@ -1859,7 +1859,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>
 		  <para>A Bayesian test for positive selection that compares M2a with M1a.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1534/genetics.104.031153">
-		    (Wong, et. al. 2004)
+		    (Wong et al., 2004)
 		  </link>
 		</entry>
 	      </row>
@@ -1869,7 +1869,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>df(<replaceable>submodel</replaceable>)+2*$n$-1</entry>
 		<entry><para>An free mixture of $n$ categories of conserved dN/dS values.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/155/1/431.full">
-		  (Yang et. al. 2000)
+		  (Yang et al., 2000)
 		</link>
 		</entry>
 	      </row>
@@ -1889,7 +1889,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>df(<replaceable>submodel</replaceable>)+2</entry>
 		<entry><para>The M7 model places a beta distribution on dN/dS.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/155/1/431.full">
-		  (Yang et. al. 2000)
+		  (Yang et al., 2000)
 		</link>
 		</entry>
 	      </row>
@@ -1899,7 +1899,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>df(<replaceable>submodel</replaceable>)+3</entry>
 		<entry><para>The M8a model adds a category of <emphasis>neutral</emphasis> sites to the M7 model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004233">
-		  (Swanson et. al. 2003)
+		  (Swanson et al., 2003)
 		</link>
 		</entry>
 	      </row>
@@ -1909,7 +1909,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>The M8 model adds a category of <emphasis>positively-selected</emphasis> sites to the M7 model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/155/1/431.full">
-		  (Yang et. al. 2000)
+		  (Yang et al., 2000)
 		</link>
 		</entry>
 	      </row>
@@ -1919,7 +1919,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>A Bayesian test for positive selection that compares the M8 to the M8a model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004233">
-		  (Swanson et. al. 2003)
+		  (Swanson et al., 2003)
 		</link>
 		</entry>
 	      </row>
@@ -1929,7 +1929,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>A Bayesian test for positive selection that on some (unknown) sites and some (known) branches.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/22/12/2472/1009544">
-		  (Zhang et. al 2005)
+		  (Zhang et al., 2005)
 		</link>
 		</entry>
 
@@ -1979,7 +1979,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Site rates follow a discrete approximation to the Gamma distribution</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF00160154">
-		    (Yang 1994)
+		    (Yang, 1994)
 		  </link>
 	      </entry>
 	    </row>
@@ -1998,7 +1998,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	      <entry>df(<replaceable>submodel</replaceable>)+2($n$-1)</entry>
 	      <entry><para>Sites fall in one of $n$ categories. Each category has its own rate.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1206396">
-		    (Yang 1995)
+		    (Yang, 1995)
 		  </link>
 	      </entry>
 	    </row>
@@ -2048,7 +2048,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	      <entry>
                 <para>Each state in rate matrix Q is split into an ON and OFF variant.  Models burstiness.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="https://doi.org/10.1016/S0025-5564(97)00081-3">
-		    (Tuffley and Steel 1998)
+		    (Tuffley and Steel, 1998)
 		  </link>
 	      </entry>
 	    </row>
@@ -2065,7 +2065,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	      <entry>
                 <para>Combines Gamma (or other) rate heterogeneity with the Tuffley-Steel model.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004128">
-		    (Huelsenbeck 2002)
+		    (Huelsenbeck, 2002)
 		  </link>
 	      </entry>
 	    </row>
@@ -2082,7 +2082,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	      <entry>
                 <para>Allows switching between Gamma (or other) rate classes over time.  Models changes in conservation.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a003868">
-		    (Galtier 2001)
+		    (Galtier, 2001)
 		  </link>
 	      </entry>
 	    </row>
@@ -2099,7 +2099,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	      <entry>
                 <para>Allows switching between ON/OFF states and <emphasis>also</emphasis> between Gamma (or other) rate classes over time.  Models both burstiness and changes in conservation.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="https://doi.org/10.1093/molbev/msl155">
-		    (Wang et al 2007)
+		    (Wang et al., 2007)
 		  </link>
 	      </entry>
 	    </row>
@@ -2603,7 +2603,7 @@ acceptable if it is &lt; 0.01.
 	<para>To generate the split-frequency comparison plot, you must have R installed.  Locate the script <filename>compare-runs.R</filename>.  Then run:
 <screen><prompt>%</prompt> trees-bootstrap <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees ... <replaceable>dir-n</replaceable>/C1.trees --LOD-table=LOD-table &gt; partitions.bs 
 <prompt>%</prompt> R --slave --vanilla --args LOD-table compare-SF.pdf &lt; compare-runs.R</screen>
-	  Following <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://dx.doi.org/10.1080/10635150600812544">Beiko et al (2006)</link>, this displays the variation in
+	  Following <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://dx.doi.org/10.1080/10635150600812544">Beiko et al. (2006)</link>, this displays the variation in
 	  estimates of split frequencies across runs.  Splits are
 	  arranged on the x-axis in increasing order of 
 	  Posterior Probability (PP), which is obtained by averaging over
@@ -2670,7 +2670,7 @@ adequately mix between modes.</para>
 
       <section><info><title>ESS for split frequencies</title></info>
 	
-      <para>As desribed in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.3852/10-120">Gaya et al (2011)</link>, we can also compute ESS values for splits on the tree:
+      <para>As desribed in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.3852/10-120">Gaya et al. (2011)</link>, we can also compute ESS values for splits on the tree:
 <screen><prompt>%</prompt> trees-bootstrap <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees ... <replaceable>dir-n</replaceable>/C1.trees &gt; partitions.bs</screen>
       To compute the ESS for a split, we consider the presence or absence
       of a split in each iteration as a series of binary values.  We
@@ -2705,7 +2705,7 @@ values in the sequence.</para>
 	parameters, it is important to examine convergence diagnostics
 	for the topology as well
 	(<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://dx.doi.org/10.1080/10635150600812544">Beiko
-	et al 2006</link>).  In theory, we recommend the web tool <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ceb.csit.fsu.edu/awty/">Are We There Yet (AWTY)</link> (Wilgenbush et al, 2004).  However, AWTY gives incorrect results if you upload plain NEWICK tree samples -- which is what BAli-Phy outputs.  Therefore, if you wish to use AWTY, you must convert the tree samples files to NEXUS before you upload them to AWTY in order to get correct results.</para>
+	et al., 2006</link>).  In theory, we recommend the web tool <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ceb.csit.fsu.edu/awty/">Are We There Yet (AWTY)</link> (Wilgenbush et al., 2004).  However, AWTY gives incorrect results if you upload plain NEWICK tree samples -- which is what BAli-Phy outputs.  Therefore, if you wish to use AWTY, you must convert the tree samples files to NEXUS before you upload them to AWTY in order to get correct results.</para>
 
 <para>It is also be possible to assess stabilization of tree topologies using tools distributed with <application>bali-phy</application> by using commands like the following.  Here, sub-sampling and burnin does not apply to the equilibrium tree files. Also, note that you need to manually construct the equilibrium samples, which we recommend to contain at least 500 trees; you might do this by sub-sampling using the <application>BAli-Phy</application> tool <command>sub-sample</command>.</para>
 
