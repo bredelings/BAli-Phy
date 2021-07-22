@@ -1751,7 +1751,7 @@ o	      <row>
 	  <listitem><userinput>mg94k</userinput> is equivalent to <userinput>hky85+x3+dNdS</userinput>.</listitem>
 	  <listitem><userinput>gy94</userinput> is equivalent to <userinput>hky85_sym+x3_sym+f+dNdS</userinput>.</listitem>
 	  <listitem><userinput>fMutSel</userinput> is equivalent to <userinput>gtr+x3+dNdS+mut_sel</userinput>.</listitem>
-	  <listitem><userinput>fMutSel0</userinput> is equivalent to <userinput>gtr+x3+dNdS+mut_sel_aa</userinput>.</listitem>
+	  <listitem><userinput>fMutSel0</userinput> is equivalent to <userinput>hky85+x3+dNdS+mut_sel_aa</userinput>.</listitem>
 	</itemizedlist>
 	</para>
       </section>
