@@ -1928,7 +1928,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry><userinput>branch_site</userinput></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>A Bayesian test for positive selection that on some (unknown) sites and some (known) branches.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004233">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/22/12/2472/1009544">
 		  (Zhang et. al 2005)
 		</link>
 		</entry>
