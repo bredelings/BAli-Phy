@@ -2006,7 +2006,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	    <row>
 	      <entry><userinput><replaceable>submodel</replaceable> + multi_rate[<replaceable>dist</replaceable>]</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+df(<replaceable>dist</replaceable>)</entry>
-	      <entry><para>Sites rates follow a discrete approximation to the distribution <replaceable>dist</replaceable>.</para></entry>
+	      <entry><para>Site rates follow a discrete approximation to the distribution <replaceable>dist</replaceable>.</para></entry>
 	    </row>
 
 	    <row>
