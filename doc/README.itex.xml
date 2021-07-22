@@ -1679,7 +1679,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry><userinput>fMutSel</userinput></entry>
 		<entry>65</entry>
 		<entry><para>MG94-like model with fitnesses for each codon.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/25/3/568/1060947">
 		  (Yang and Nielsen, 2008)
 		</link>
 		</entry>
@@ -1689,7 +1689,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry><userinput>fMutSel0</userinput></entry>
 		<entry>24</entry>
 		<entry><para>MG94-like model with fitnesses for each amino-acid.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/25/3/568/1060947">
 		  (Yang and Nielsen, 2008)
 		</link>
 		</entry>
