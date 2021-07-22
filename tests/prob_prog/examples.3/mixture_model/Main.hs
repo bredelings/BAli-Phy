@@ -9,23 +9,17 @@ generate size = do
   return ["xs" %=% xs]
 
 
-main_generate = sample $ generate 1000
+main_generate = generate 1000
 
+model xs = do
 
-prior n_components = do
+  let n_components = 3
 
   w <- symmetric_dirichlet n_components 1.0
   mu <- sort <$> iid n_components (cauchy 0.0 1.0)
   tau <- iid n_components (gamma 1.0 1.0)
 
   let loggers = [ "dists" %=% zip w (zip mu tau) ]
-
-  return (w, mu, tau, loggers)
-
-
-observe_data xs = do
-
-  (w, mu, tau, loggers) <- sample $ prior 3
 
   let n_points = length xs
 
@@ -39,6 +33,4 @@ main = do
 
   let xs = frame $$ ("x",AsDouble)
 
-  let model = observe_data xs
-
-  mcmc model
+  mcmc $ model xs 

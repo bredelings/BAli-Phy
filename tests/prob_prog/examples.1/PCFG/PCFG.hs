@@ -35,7 +35,7 @@ pcfg (Rule s)        = case lookup s rules of
                                                  return (concat groups)
 
 model = do
-  words <- sample $ pcfg (Rule "start")
+  words <- pcfg (Rule "start")
   let sentence = map (\w -> case w of (Word s) -> s) words
   return ["sentence" %=% sentence]
 
