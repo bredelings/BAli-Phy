@@ -114,30 +114,19 @@ run_strict' rate (IOAndPass f g) = do
   run_strict' rate $ g x
 run_strict' rate (IOReturn v) = return v
 run_strict' rate (LiftIO a) = a
-run_strict' rate dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_sample) range) = unsafeInterleaveIO $ do
- -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
-  value <- unsafeInterleaveIO $ run_lazy do_sample
-  let (raw_x,triggered_x) = structure value do_effects
-      effect = do
-        run_tk_effects rate $ tk_effect raw_x
-        s <- register_dist_sample (dist_name dist)
-        density_terms <- make_edges s $ annotated_densities dist raw_x
-        sequence_ [register_prior s term | term <- density_terms]
-        register_out_edge s raw_x
-      do_effects = unsafePerformIO effect
-  return triggered_x
-run_strict' rate (Distribution _ _ _ s _) = unsafeInterleaveIO $ run_lazy' rate s
 run_strict' rate (Observe dist datum) = do
   s <- register_dist_observe (dist_name dist)
   register_out_edge s datum
   density_terms <- make_edges s $ annotated_densities dist datum
   sequence_ [register_likelihood s term | term <- density_terms]
 run_strict' rate (Print s) = putStrLn (show s)
-run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
-run_strict' rate (MFix f) = unsafeInterleaveIO $ MFix ((run_lazy' rate).f)
 run_strict' rate (PerformTKEffect e) = run_tk_effects rate e
 run_strict' rate (AddMove m) = register_transition_kernel rate m
 run_strict' rate (SamplingRate rate2 a) = run_strict' (rate*rate2) a
+-- These are the lazily executed parts of the strict monad.
+run_strict' rate dist@(Distribution _ _ _ _ _) = unsafeInterleaveIO $ run_lazy' rate dist
+run_strict' rate (MFix f) = unsafeInterleaveIO $ MFix ((run_lazy' rate).f)
+run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
 
 -- 1. Could we somehow implement slice sampling windows for non-contingent variables?
 
