@@ -1607,7 +1607,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry>62</entry>
 		<entry><para>Model of dN/dS with a separate frequency for each codon.</para>
 		<para>Rate for changing a nucleotide depends on neighboring nucleotides.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/725/1008711">
 		  (Goldman and Yang, 1994)
 		</link>
 		</entry>
@@ -1617,7 +1617,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry><userinput>gy94[pi=f1x4]</userinput></entry>
 		<entry>5</entry>
 		<entry><para>The GY94 model with codon frequencies constructed from nucleotide frequencies.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/725/1008711">
 		  (Goldman and Yang, 1994)
 		</link>
 		</entry>
@@ -1627,7 +1627,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry><userinput>gy94[pi=f3x4]</userinput></entry>
 		<entry>11</entry>
 		<entry><para>The GY94 model with codon frequencies constructed from nucleotide frequencies for each codon position.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/725/1008711">
 		  (Goldman and Yang, 1994)
 		</link>
 		</entry>
@@ -1637,7 +1637,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry><userinput>gy94_ext[<replaceable>nuc_model</replaceable>]</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+61</entry>
 		<entry><para>GY94 model extended with a generic nucleotide exchangeability matrix.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/725/1008711">
 		  (Goldman and Yang, 1994)
 		</link>
 		</entry>
