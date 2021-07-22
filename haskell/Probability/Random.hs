@@ -84,7 +84,13 @@ run_strict (IOAndPass f g) = do
 run_strict (IOReturn v) = return v
 run_strict (LiftIO a) = a
 run_strict (Print s) = putStrLn (show s)
-run_strict (Lazy r) = run_lazy r
+run_strict (PerformTKEffect _) = return ()
+run_strict (AddMove _) = return ()
+run_strict (SamplingRate _ a) = run_strict a
+-- These are the lazily executed parts of the strict monad.
+run_strict dist@(Distribution _ _ _ _ _) = unsafeInterleaveIO $ run_lazy dist
+run_strict (MFix f) = unsafeInterleaveIO $ MFix (run_lazy.f)
+run_strict (Lazy r) = unsafeInterleaveIO $ run_lazy r
 
 
 run_tk_effects rate (IOAndPass f g) = (run_tk_effects rate f) >>= (\x -> run_tk_effects rate $ g x)
