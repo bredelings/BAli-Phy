@@ -1,17 +1,13 @@
 import           Probability
 
-prior = do
-    n <- geometric 0.33
-    y <- if n > 1 then normal 0.0 1.0 else exponential 1.0
-    let loggers = ["n" %=% n, "y" %=% y]
-    return (y,loggers)
+model x = do
 
-observe_data x = do
-    (y,loggers) <- sample $ prior
+    n <- geometric 0.33
+
+    y <- if n > 1 then normal 0.0 1.0 else exponential 1.0
 
     x ~> normal y 1.0
 
-    return loggers
+    return ["n" %=% n, "y" %=% y]
 
-main = do
-  mcmc $ observe_data 3.0
+main = mcmc $ model 3.0

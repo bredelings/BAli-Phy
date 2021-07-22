@@ -6,24 +6,15 @@ import           Probability
 import           PopGen
 import           System.Environment
 
-prior = do
+model sequence_data = do
 
-    rho       <- log_laplace 0.01 1.0
-
-    return rho
-
-observe_data sequence_data = do
-
-    rho <- sample $ prior
+    rho <- log_laplace 0.01 1.0
 
     sequence_data ~> li_stephens_2003 rho
 
     return ["rho" %=% rho ]
 
 main = do
-  args <- getArgs
-  let filename = args !! 0
-      sequence_data = load_alignment dna filename
-
-  let model = observe_data sequence_data
-  mcmc model
+  [filename] <- getArgs
+  let sequence_data = load_alignment dna filename
+  mcmc $ model sequence_data
