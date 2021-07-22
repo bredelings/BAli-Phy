@@ -1382,11 +1382,7 @@ std::string generate_atmodel_program(int n_sequences,
     program_file<<"\nsample_topology_1 taxa = uniform_labelled_topology taxa\n";
 
     /* --------------------------------------------------------------- */
-    do_block main;
-
     do_block program;
-
-    do_block sample_atmodel;
 
     // FIXME: We can't load the alignments to read their names until we know the alphabets!
     // FIXME: Can we load the alignments as SEQUENCES first?
@@ -1397,11 +1393,20 @@ std::string generate_atmodel_program(int n_sequences,
     vector<expression_ref> program_loggers;
     // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
 
-    // P1. Topology
-    auto topology_var = var("topology1");
-    sample_atmodel.perform(topology_var, {var("SamplingRate"),0.0,{var("sample_topology_1"),taxon_names_var}});
+    // M1. Taxa
 
-    // P2. Branch lengths
+    if (n_partitions > 0)
+    {
+        expression_ref sequence_data1 = {var("!!"),var("sequence_data"),0};
+        program.let(taxon_names_var, {var("map"),var("sequence_name"),sequence_data1});
+        program.empty_stmt();
+    }
+
+    // M2. Topology
+    auto topology_var = var("topology1");
+    program.perform(topology_var, {var("SamplingRate"),0.0,{var("sample_topology_1"),taxon_names_var}});
+
+    // M3. Branch lengths
     expression_ref branch_lengths = List();
     if (n_branches > 0)
     {
@@ -1410,28 +1415,28 @@ std::string generate_atmodel_program(int n_sequences,
         expression_ref E = {var("sample_"+var_name),topology_var};
         E = {var("SamplingRate"),0.0,E};
 
-        branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
+        branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
     }
-    // P3. Branch-length tree
+    // M4. Branch-length tree
     auto tree_var = var("tree1");
-    sample_atmodel.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
+    program.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
 
     set<string> used_states;
     for(int i=0;i<SMs.size();i++)
         add(used_states, SMs[i].code.used_states);
 
-    // P4. Branch categories
+    // M5. Branch categories
     expression_ref maybe_branch_categories = var("Nothing");
     expression_ref branch_categories;
     if (used_states.count("branch_categories"))
     {
         var branch_categories_var("branch_categories");
-        sample_atmodel.let(branch_categories_var, { var("map"), var("modifiable"), {var("replicate"), n_branches, 0} });
+        program.let(branch_categories_var, { var("map"), var("modifiable"), {var("replicate"), n_branches, 0} });
         branch_categories = branch_categories_var;
         maybe_branch_categories = {var("Just"),branch_categories_var};
     }
 
-    // P5. Scales
+    // M6. Scales
     vector<expression_ref> scales;
     for(int i=0; i<scaleMs.size(); i++)
     {
@@ -1442,45 +1447,14 @@ std::string generate_atmodel_program(int n_sequences,
         auto code = scaleMs[i].code;
         expression_ref E = var("sample_scale_"+convertToString(i+1));
 
-        auto scale_var = bind_and_log(true, var_name, E, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
+        auto scale_var = bind_and_log(true, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
 
         scales.push_back(scale_var);
     }
     if (auto l = logger("scale", get_list(scales), List()) )
         program_loggers.push_back( l );
 
-    // P6. Branch-length trees
-    vector<expression_ref> branch_dist_trees;
-    for(int i=0; i < n_partitions; i++)
-    {
-        string part = std::to_string(i+1);
-        int scale_index = *scale_mapping[i];
-
-        // L1. scale_P ...
-        expression_ref scale = scales[scale_index];
-
-        // L2. tree_part<i> = scale_branch_lengths scale tree
-        var branch_dist_tree("tree_part"+part);
-        sample_atmodel.let(branch_dist_tree, {var("scale_branch_lengths"),scale,tree_var});
-        branch_dist_trees.push_back(branch_dist_tree);
-    }
-
-    // P5. Distances
-    vector<expression_ref> distances;
-    for(int i=0; i < n_partitions; i++)
-    {
-        string part = std::to_string(i+1);
-        int scale_index = *scale_mapping[i];
-
-        // L1. scale_P ...
-        expression_ref scale = scales[scale_index];
-
-        // L2. distances_P = map (*scale_P) branch_lengths
-        distances.push_back( {var("Tree.branch_lengths"),branch_dist_trees[i]} );
-    }
-    sample_atmodel.empty_stmt();
-
-    // P6. Substitution models
+    // M7. Substitution models
     vector<expression_ref> smodels;
     for(int i=0;i<SMs.size();i++)
     {
@@ -1509,12 +1483,12 @@ std::string generate_atmodel_program(int n_sequences,
 
         auto smodel_var = var("smodel_"+std::to_string(i+1));
         auto log_smodel = var("log_"+smodel_var.name);
-        bind_and_log(false, smodel_var, log_smodel, prefix, smodel, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
+        bind_and_log(false, smodel_var, log_smodel, prefix, smodel, code.is_action(), code.has_loggers(), program, program_loggers);
         smodels.push_back(smodel_var);
     }
 
 
-    // P2. Indel models
+    // M8. Indel models
     vector<expression_ref> imodels;
     for(int i=0;i<IMs.size();i++)
     {
@@ -1531,39 +1505,10 @@ std::string generate_atmodel_program(int n_sequences,
 
         auto imodel_var = var("imodel_"+std::to_string(i+1));
         auto log_imodel = var("log_"+imodel_var.name);
-        bind_and_log(false, imodel_var, log_imodel, prefix, imodel, code.is_action(), code.has_loggers(), sample_atmodel, program_loggers);
+        bind_and_log(false, imodel_var, log_imodel, prefix, imodel, code.is_action(), code.has_loggers(), program, program_loggers);
         imodels.push_back(imodel_var);
     }
-    sample_atmodel.empty_stmt();
-
-
-    // FIXME: We aren't using the ranges to select columns!
-
-    // FIXME: We are loading files multiple times!
-
-    // P6. Create objects for data partitions
-    vector<expression_ref> distributions;
-    vector<expression_ref> sequence_data;
-
-    // Emit filenames var
-    var filenames_var("filenames");
-    {
-        set<string> filenames;
-        for(auto& [filename,_]: filename_ranges)
-            filenames.insert(filename);
-        vector<expression_ref> filenames_;
-        for(auto& filename: filenames)
-            filenames_.push_back(String(filename));
-        main.let(filenames_var,get_list(filenames_));
-    }
-
-    var filename_to_seqs("filename_to_seqs");
-    {
-        expression_ref body = Tuple(var("filename"),{var("load_sequences"),var("filename")});
-        vector<expression_ref> quals = { PatQual(var("filename"),filenames_var) };
-        main.let(filename_to_seqs,{var("Map.fromList"), list_comprehension( body, quals)});
-    }
-    main.empty_stmt();
+    program.empty_stmt();
 
     for(int i=0; i < n_partitions; i++)
     {
@@ -1571,25 +1516,14 @@ std::string generate_atmodel_program(int n_sequences,
         int scale_index = *scale_mapping[i];
         int smodel_index = *s_mapping[i];
         auto imodel_index = i_mapping[i];
-
-        // L1. Sequence data ...
-        var sequence_data_var("sequence_data"+part);
-        expression_ref loaded_sequences = {var("Map.!"),filename_to_seqs,String(filename_ranges[i].first)};
-        if (not filename_ranges[i].second.empty())
-            loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
-        main.let(sequence_data_var, loaded_sequences);
-
-        // L2. Alignment ...
-        sequence_data.push_back(sequence_data_var);
-        main.empty_stmt();
-
-        // L3. scale_P ...
         expression_ref scale = scales[scale_index];
-
-        // L4. let smodel_P = ...
         expression_ref smodel = smodels[smodel_index];
 
-        // Sample the alignment
+        // Model.Partition.1. tree_part<i> = scale_branch_lengths scale tree
+        var branch_dist_tree("tree_part"+part);
+        program.let(branch_dist_tree, {var("scale_branch_lengths"), scale, tree_var});
+
+        // Model.Partition.2. Sample the alignment
         var alignment_on_tree("alignment_on_tree_part"+part);
         if (imodel_index)
         {
@@ -1598,85 +1532,28 @@ std::string generate_atmodel_program(int n_sequences,
 
             var leaf_sequence_lengths("sequence_lengths_part"+part);
             expression_ref alphabet = {var("getAlphabet"),smodel};
-            sample_atmodel.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  {var("!!"),var("sequence_data"),i}});
-
-            // alignment_on_tree <- sample $ random_alignment tree hmms model leaf_seqs_array p->my_variable_alignment()
-            sample_atmodel.perform(alignment_on_tree, {var("random_alignment"), branch_dist_trees[i], imodel, leaf_sequence_lengths});
-            sample_atmodel.empty_stmt();
-        }
-        else
-        {
-            assert(like_calcs[i] == 1);
-
-            alignment_on_tree = var("Nothing");
+            program.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  {var("!!"),var("sequence_data"),i}});
+            program.perform(alignment_on_tree, {var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths});
         }
 
+        // Model.Partition.3. Observe the sequence data from the distribution
+        expression_ref sequence_data_var = {var("!!"),var("sequence_data"),i};
+        expression_ref distribution;
         if (like_calcs[i] == 0)
-            distributions.push_back({var("ctmc_on_tree"), branch_dist_trees[i], alignment_on_tree, smodel});
+            distribution = {var("ctmc_on_tree"), branch_dist_tree, alignment_on_tree, smodel};
         else
-            distributions.push_back({var("ctmc_on_tree_fixed_A"), branch_dist_trees[i], smodel});
+            distribution = {var("ctmc_on_tree_fixed_A"), branch_dist_tree, smodel};
+        program.perform({var("~>"),sequence_data_var,distribution});
+
+        program.empty_stmt();
     }
-
-    // FIXME - we need to observe the likelihoods for each partition here.
-    //       - Current we are creating data_partition_constants::likelihood_index in data_partition_constants()
-
-    //       - In tests/prob_prog/infer_tree/1/infer.hs, we are doing this:
-    //  subst_like_on_tree topology root as alphabet smodel ts scale branch_cats seqs = substitution_likelihood topology root seqs' as' alphabet ps f
-    //      where f = weighted_frequency_matrix smodel
-    //      ps = transition_p_index topology smodel branch_cats ds
-    //      ds = listArray' $ map (scale*) ts
-    //      as' = listArray' as
-    //      seqs' = listArray' seqs
-    // observe (ctmc_on_tree topology root as alphabet smodel ts scale branch_cats) seqs
-
-    var distributions_var("distributions");
-    sample_atmodel.let(distributions_var, get_list(distributions));
-    sample_atmodel.empty_stmt();
 
     var loggers_var("loggers");
-    sample_atmodel.let(loggers_var, get_list(program_loggers));
-    sample_atmodel.empty_stmt();
+    program.let(loggers_var, get_list(program_loggers));
+    program.empty_stmt();
 
     var atmodel_var("atmodel");
-    sample_atmodel.let(atmodel_var, {var("ATModel"), tree_var, get_list(scales), maybe_branch_categories});
-    sample_atmodel.empty_stmt();
-
-    sample_atmodel.finish_return( Tuple( atmodel_var,
-                                         distributions_var,
-                                         loggers_var
-                                       )
-        );
-    
-    if (log_verbose >= 4)
-        std::cout<<sample_atmodel.get_expression()<<std::endl;
-
-    var sequence_data_var("sequence_data");
-    main.let(sequence_data_var, get_list(sequence_data));
-    main.empty_stmt();
-    if (n_partitions > 0)
-    {
-        expression_ref sequence_data1 = {var("!!"),var("sequence_data"),0};
-        program.let(taxon_names_var, {var("map"),var("sequence_name"),sequence_data1});
-        program.empty_stmt();
-    }
-
-    program.perform(Tuple(var("atmodel"),distributions_var, var("loggers")), {var("$"),var("sample"),{var("prior"),taxon_names_var,sequence_data_var}});
-
-    for(int i=0; i < n_partitions; i++)
-    {
-        program.empty_stmt();
-        string part = std::to_string(i+1);
-        int likelihood_calculator = like_calcs[i];
-
-        // let DataPartition smodel tree alignment = partitions atmodel !! i
-        expression_ref smodel = var("smodel_part"+part);
-        expression_ref tree = var("tree_part"+part);
-        expression_ref alignment = (likelihood_calculator == 0)?var("alignment_part"+part):wildcard();
-        expression_ref distribution = {var("!!"),distributions_var,i};
-        expression_ref sequence_data_var = {var("!!"),var("sequence_data"),i};
-
-        program.perform({var("~>"),sequence_data_var,distribution});
-    }
+    program.let(atmodel_var, {var("ATModel"), tree_var, get_list(scales), maybe_branch_categories});
     program.empty_stmt();
 
     program.finish_return(
@@ -1688,11 +1565,54 @@ std::string generate_atmodel_program(int n_sequences,
             var("loggers")
             )
         );
-    program_file<<"\nprior taxa sequence_data = "<<sample_atmodel.get_expression().print()<<"\n";
 
     program_file<<"\nmodel sequence_data = "<<program.get_expression().print()<<"\n";
 
+    do_block main;
+
+    // Main.1: Emit let filenames = ...
+    var filenames_var("filenames");
+    {
+        set<string> filenames;
+        for(auto& [filename,_]: filename_ranges)
+            filenames.insert(filename);
+        vector<expression_ref> filenames_;
+        for(auto& filename: filenames)
+            filenames_.push_back(String(filename));
+        main.let(filenames_var,get_list(filenames_));
+    }
+
+    // Main.2: Emit let filenames_to_seqs = ...
+    var filename_to_seqs("filename_to_seqs");
+    {
+        expression_ref body = Tuple(var("filename"),{var("load_sequences"),var("filename")});
+        vector<expression_ref> quals = { PatQual(var("filename"),filenames_var) };
+        main.let(filename_to_seqs,{var("Map.fromList"), list_comprehension( body, quals)});
+    }
+    main.empty_stmt();
+
+    // Main.3. Emit let sequence_data<n> = 
+    vector<expression_ref> sequence_data;
+    for(int i=0;i<n_partitions;i++)
+    {
+        string part = std::to_string(i+1);
+        var sequence_data_var("sequence_data"+part);
+        expression_ref loaded_sequences = {var("Map.!"),filename_to_seqs,String(filename_ranges[i].first)};
+        if (not filename_ranges[i].second.empty())
+            loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
+        main.let(sequence_data_var, loaded_sequences);
+        sequence_data.push_back(sequence_data_var);
+        main.empty_stmt();
+    }
+
+    // Main.4. Emit let sequence_data = ...
+    var sequence_data_var("sequence_data");
+    main.let(sequence_data_var, get_list(sequence_data));
+    main.empty_stmt();
+
+    // Main.5. Emit mcmc $ model sequence_data
     main.perform({var("$"),var("mcmc"),{var("model"),var("sequence_data")}});
+
     program_file<<"\nmain = "<<main.get_expression().print()<<"\n";
 
     return program_file.str();
