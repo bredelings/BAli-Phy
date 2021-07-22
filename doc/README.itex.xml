@@ -68,7 +68,7 @@
     <section><info><title>Install a Unix command line: Cygwin (recommended)</title></info>
     <para>
        Before you can use <application>BAli-Phy</application> on Windows, you need to install a Unix command-line environment.  
-       We recommand installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>: 
+       We recommend installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>:
 <itemizedlist>
 <listitem>Run the Cygwin installer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/setup-x86_64.exe"><filename>setup-x86_64.exe</filename></link>. </listitem>
 <listitem>In the installer, add the following extra packages: <userinput>R</userinput>, <userinput>gnuplot</userinput>, <userinput>perl</userinput>, <userinput>python3</userinput>, <userinput>wget</userinput>, and <userinput>nano</userinput>.</listitem>
@@ -1102,7 +1102,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry><userinput>f81</userinput></entry>
 	      <entry>3</entry>
-	      <entry><para>Equal exchangabilities, unequal frequencies.</para>
+	      <entry><para>Equal exchangeabilities, unequal frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01734359">
 		(Felsenstein, 1981)
 	      </link>
@@ -1123,7 +1123,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry><userinput>tn93</userinput></entry>
 	      <entry>5</entry>
 	      <entry>
-		<para>Unequal rates for transitions (purines), transitions (pyrimadies) and transversions, unequal base frequencies.</para>
+		<para>Unequal rates for transitions (purines), transitions (pyrimidines) and transversions, unequal base frequencies.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040023">
 		  (Tamura and Nei, 1993)
 		</link>
@@ -1211,7 +1211,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry><userinput>f81</userinput></entry>
 	      <entry>19</entry>
-	      <entry><para>Equal exchangabilities, unequal frequencies.</para>
+	      <entry><para>Equal exchangeabilities, unequal frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01734359">
 		(Felsenstein, 1981)
 	      </link>
@@ -1496,7 +1496,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	    <row>
 	      <entry><userinput><replaceable>nuc_model</replaceable>+x3_sym+f</userinput></entry>
 	      <entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
-	      <entry><para>GY94-style rate matrix constructed from nucleotide exchangability matrix.</para>
+	      <entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix.</para>
 	      </entry>
 	    </row>
 
@@ -1518,7 +1518,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      <row>
 		<entry><userinput><replaceable>nuc_model</replaceable>+x3+mut_sel</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
-		<entry><para>Mutation-selelection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
+		<entry><para>Mutation-selection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
 		</entry>
 	      </row>
 
@@ -1698,7 +1698,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      <row>
 		<entry><userinput><replaceable>nuc_model</replaceable>+x3_sym+f</userinput></entry>
 		<entry>df(nuc_model)+60</entry>
-		<entry><para>GY94-style rate matrix constructed from nucleotide exchangability matrix (dN/dS = 1).</para>
+		<entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix (dN/dS = 1).</para>
 	               <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on codons only if the frequency of stop codons is zero.</para>
 		</entry>
 	      </row>
@@ -1727,14 +1727,14 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      <row>
 		<entry><userinput><replaceable>codon_model</replaceable>+mut_sel</userinput></entry>
 		<entry>df(<replaceable>codon_model</replaceable>)+60</entry>
-		<entry><para>Mutation-selelection model with neutral mutation following <replaceable>codon_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
+		<entry><para>Mutation-selection model with neutral mutation following <replaceable>codon_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
 		</entry>
 	      </row>
 
 o	      <row>
 		<entry><userinput><replaceable>nuc_model</replaceable>+x3+mut_sel_aa</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+19</entry>
-		<entry><para>Mutation-selelection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each amino acid</emphasis>.</para>
+		<entry><para>Mutation-selection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each amino acid</emphasis>.</para>
 		</entry>
 	      </row>
 	      
