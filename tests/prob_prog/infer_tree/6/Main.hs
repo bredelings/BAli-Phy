@@ -49,31 +49,23 @@ tree_prior taxa = do
     return (tree, loggers)
 
 
-prior taxa = do
+model seq_data = do
+
+    let taxa = map sequence_name seq_data
 
     (tree  , tree_loggers) <- tree_prior taxa
 
     (smodel, smodel_loggers    ) <- smodel_prior dna
 
-    let loggers = tree_loggers ++ ["tn93" %>% smodel_loggers]
-
-    return (tree, smodel, loggers)
-
-
-model seq_data = do
-
-    let taxa = map sequence_name seq_data
-
-    (tree, smodel, loggers) <- sample $ prior taxa
-
     seq_data ~> ctmc_on_tree_fixed_A tree smodel
+
+    let loggers = tree_loggers ++ ["tn93" %>% smodel_loggers]
 
     return loggers
 
 main = do
-    args <- getArgs
+    [filename] <- getArgs
 
-    let filename = args !! 0
-        seq_data = load_sequences filename
+    let seq_data = load_sequences filename
 
     mcmc $ model seq_data

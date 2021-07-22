@@ -36,8 +36,8 @@ tree_prior taxa = do
     let loggers   = ["tree" %=% write_newick tree, "scale" %=% scale]
     return (tree, loggers)
 
-
-prior taxa = do
+model seq_data = do
+    let taxa = map sequence_name seq_data
 
     (tree  , tree_loggers) <- tree_prior taxa
 
@@ -45,22 +45,13 @@ prior taxa = do
 
     let loggers = tree_loggers ++ ["S1" %>% sloggers]
 
-    return (tree, smodel, loggers)
-
-
-observe_data seq_data = do
-    let taxa = map sequence_name seq_data
-
-    (tree, smodel, loggers) <- sample $ prior taxa
-
     seq_data ~> ctmc_on_tree_fixed_A tree smodel
 
     return loggers
 
 main = do
-    args <- getArgs
+    [filename] <- getArgs
 
-    let filename = args !! 0
-        seq_data = load_sequences filename
+    let seq_data = load_sequences filename
 
-    mcmc $ observe_data seq_data
+    mcmc $ model seq_data
