@@ -12,7 +12,7 @@ orderedSample n dist = do
 get_intervals (r:[]) (t:[]) tend = [(r,t,tend)]
 get_intervals (r:rs) (t1:ts@(t2:_)) tend = (r,t1,t2):get_intervals rs ts tend
 
-prior t1 t2 = do
+model (t1,t2) times = do
   let lam = 3.0; nMax = 30; a = 1.0; b = 365.0/200.0
 
   -- n change points, n+1 intervals
@@ -27,12 +27,7 @@ prior t1 t2 = do
 
   let intervals = get_intervals g s t2
 
-  return (n, s, g, intervals)
-
-model times_data = do
-  (n, s, g, intervals) <- sample $ prior 1851.0 1963.0
-
-  times_data ~> poisson_processes intervals
+  times ~> poisson_processes intervals
 
   return [ "n" %=% n, "s" %=% s, "g" %=% g, "intervals" %=% intervals]
 
@@ -43,4 +38,4 @@ main = do
 
   let times = frame $$ ("time", AsDouble)
 
-  mcmc $ model times
+  mcmc $ model (1851.0,1963.0) times

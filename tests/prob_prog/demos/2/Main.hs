@@ -1,6 +1,6 @@
 import           Probability
 
-model = sample $ do
+model = do
 
     xs <- iid 10 (normal 0.0 1.0)
 
