@@ -52,26 +52,25 @@ double log1pexp(double x)
 	return x;
 }
 
-log_double_t get_multiplier(reg_heap& M, const vector<int>& I_regs, int c1)
+log_double_t get_multiplier(context_ref& C1, const vector<int>& I_regs)
 {
     // So, why is this sum allowed?
     log_double_t multiplier(1);
 
     for(int r : I_regs)
     {
-	int i = M.get_reg_value_in_context(r, c1).as_int();
+        int i = C1.get_reg_value(r).as_int();
 
-	int c2 = M.copy_context(c1);
-	M.set_reg_value_in_context(r, expression_ref(1-i), c2);
-	auto ratio = M.probability_ratios(c1,c2).total_ratio();
-	if (uniform() < ratio/(1.0+ratio))
-	{
-	    M.switch_to_context(c1, c2);
-	    multiplier *= 1.0+(1.0/ratio);
-	}
-	else
-	    multiplier *= 1.0+ratio;
-	M.release_context(c2);
+        context C2 = C1;
+        C2.set_reg_value(r, expression_ref(1-i));
+        auto ratio = C2.probability_ratios(C1).total_ratio();
+        if (uniform() < ratio/(1.0+ratio))
+        {
+            C1 = C2;
+            multiplier *= 1.0+(1.0/ratio);
+        }
+        else
+            multiplier *= 1.0+ratio;
     }
     return multiplier;
 }
@@ -111,7 +110,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     int t1 = C1.evaluate_reg(t_reg).as_int();
 
     // The sum is this multiplier times the probability of the current Is.
-    auto multiplier1 = get_multiplier(M, I_regs, c1);
+    auto multiplier1 = get_multiplier(C1, I_regs);
 
     //------------- 3. Figure out the multiplier for summing over all the Is for t2 ------------//
     int t2 = t1 + 1;
@@ -122,20 +121,19 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 	    t2 = 0;
     }
 
-    int c2 = M.copy_context(c1);
-    M.set_reg_value_in_context(t_reg, expression_ref(t2), c2);
+    context C2 = C1;
+    C2.set_reg_value(t_reg, expression_ref(t2));
 
-    auto multiplier2 = get_multiplier(M, I_regs, c2);
+    auto multiplier2 = get_multiplier(C2, I_regs);
 
     //------------- 5. Choose to accept or not, depending on the relative probabilities.
-    auto ratio = M.probability_ratios(c1,c2).total_ratio();
+    auto ratio = C2.probability_ratios(C1).total_ratio();
 
     int choice = choose2(multiplier1, ratio*multiplier2);
 
     //------------- 6. Set x depending on the choice
     if (choice == 1)
-	M.switch_to_context(c1,c2);
-    M.release_context(c2);
+	C1 = C2;
     
     return EPair(state+1,constructor("()",0));
 }
