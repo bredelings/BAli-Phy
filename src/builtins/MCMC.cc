@@ -78,54 +78,37 @@ log_double_t get_multiplier(reg_heap& M, const vector<int>& I_regs, int c1)
 
 extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 {
-    int state = Args.evaluate(3).as_int();
-
     assert(not Args.evaluate_changeables());
-
-    reg_heap& M = Args.memory();
 
     if (log_verbose >= 3) std::cerr<<"\n\n[sum_out_coals]\n";
 
+    int state = Args.evaluate(3).as_int();
+
     int c1 = Args.evaluate(2).as_int();
+    reg_heap& M = Args.memory();
+    context_ref C1(M, c1);
 
     //------------- 1a. Get argument X -----------------
-    int t_reg = Args.evaluate_slot_unchangeable(0);
-    if (auto t_mod_reg = M.find_modifiable_reg(t_reg))
-        t_reg = *t_mod_reg;
+    int t_reg = -1;
+    if (auto time_mod = context_ptr(C1, Args.reg_for_slot(0)).modifiable())
+        t_reg = time_mod->get_reg();
     else
         throw myexception()<<"sum_out_coals: time variable is not modifiable!";
 
     //------------- 1b. Get arguments Y_i  -----------------
     vector<int> I_regs;
 
-    int next_reg = Args.reg_for_slot(1);
-    const closure* top = &M.lazy_evaluate(next_reg, c1);
-    while(top->exp.size())
+    auto I_ptrs = context_ptr(C1, Args.reg_for_slot(1)).list_elements();
+    for(auto& I_ptr: I_ptrs)
     {
-	assert(has_constructor(top->exp,":"));
-	assert(top->exp.size() == 2);
-
-	int element_reg = top->reg_for_slot(0);
-
-	next_reg = top->reg_for_slot(1);
-
-	// evaluate the list element in token 0
-	element_reg = Args.evaluate_reg_unchangeable(element_reg);
-        if (auto element_mod_reg = M.find_modifiable_reg(element_reg))
-            element_reg = *element_mod_reg;
+        if (auto I_mod = I_ptr.modifiable())
+            I_regs.push_back( I_mod->get_reg() );
         else
             throw myexception()<<"sum_out_coals: indicator variable is not modifiable!";
-
-	// Add the element to the list.
-	I_regs.push_back( element_reg );
-	// Move to the next element or end
-	top = &M.lazy_evaluate(next_reg, c1);
     }
-    assert(has_constructor(top->exp,"[]"));
 
     //------------- 2. For t1, sample Is and sum over the Is ------------//
-
-    int t1 = M.lazy_evaluate(t_reg, c1).exp.as_int();
+    int t1 = C1.evaluate_reg(t_reg).as_int();
 
     // The sum is this multiplier times the probability of the current Is.
     auto multiplier1 = get_multiplier(M, I_regs, c1);
