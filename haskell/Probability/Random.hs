@@ -88,7 +88,6 @@ run_strict (AddMove _) = return ()
 run_strict (SamplingRate _ a) = run_strict a
 -- These are the lazily executed parts of the strict monad.
 run_strict dist@(Distribution _ _ _ _ _) = unsafeInterleaveIO $ run_lazy dist
-run_strict (MFix f) = unsafeInterleaveIO $ MFix (run_lazy.f)
 run_strict (Lazy r) = unsafeInterleaveIO $ run_lazy r
 
 
@@ -130,7 +129,6 @@ run_strict' rate (AddMove m) = register_transition_kernel rate m
 run_strict' rate (SamplingRate rate2 a) = run_strict' (rate*rate2) a
 -- These are the lazily executed parts of the strict monad.
 run_strict' rate dist@(Distribution _ _ _ _ _) = unsafeInterleaveIO $ run_lazy' rate dist
-run_strict' rate (MFix f) = unsafeInterleaveIO $ MFix ((run_lazy' rate).f)
 run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
 
 -- 1. Could we somehow implement slice sampling windows for non-contingent variables?
