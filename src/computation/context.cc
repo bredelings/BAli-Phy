@@ -459,6 +459,14 @@ const std::set<int>* context_ref::out_edges_to_var(int r) const
         return &(it->second);
 }
 
+std::vector<std::string> context_ref::lazy_attribute_map::arg_names() const
+{
+    vector<string> names;
+    for(auto& [name,_]: *m)
+        names.push_back(name);
+    return names;
+}
+
 std::optional<context_ref::lazy_attribute_map> context_ref::in_edges_to_dist(int r)  const
 {
     auto& to_dist = memory()->in_edges_to_dist;
@@ -553,13 +561,6 @@ log_double_t context_ref::heated_probability_ratio(const context& C1) const
 void context_ref::collect_garbage() const
 {
     memory()->collect_garbage();
-}
-
-void context_ref::write_factor_graph() const
-{
-    evaluate_program();
-    collect_garbage();
-    ::write_factor_graph(*memory());
 }
 
 void context_ref::show_graph() const

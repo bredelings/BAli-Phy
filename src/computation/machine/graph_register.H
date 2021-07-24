@@ -731,12 +731,6 @@ void write_dot_graph(const reg_heap& C, std::ostream& o);
 void write_dot_graph(const reg_heap& C);
 
 
-void write_factor_graph(const reg_heap& C, std::ostream& o);
-
-void write_factor_graph(const reg_heap& C);
-
-
-
 void write_token_graph(const reg_heap& C, std::ostream& o);
 
 void write_token_graph(const reg_heap& C);
