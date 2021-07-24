@@ -6,7 +6,7 @@ makeGaussian dim = do
   stds <- replicateM dim (uniform 5.0 50.0)
   return [normal mean std | (mean,std) <- zip means stds]
 
-prior = do
+model = do
   mixtureWeight <- uniform 0.0 1.0
   gaussian1 <- makeGaussian 2
   gaussian2 <- makeGaussian 2
@@ -18,10 +18,8 @@ prior = do
           else
               independent gaussian2
 
-  replicateM 100 gaussianMixture
+  x <- replicateM 100 gaussianMixture
 
-model = do
-  x <- sample $ prior
   return ["x" %=% x]
 
 main = do

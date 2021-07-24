@@ -6,7 +6,10 @@ normal' mu sigma = do
   z <- normal 0.0 1.0
   return $ mu + z*sigma
 
-prior n_counties = do
+model floor_values county_code_values log_radon_data = do
+
+  let n_counties = length $ nub $ county_code_values
+
   mu_a <- normal 0.0 (100.0**2.0)
   sigma_a <- half_cauchy 0.0 5.0
 
@@ -22,14 +25,6 @@ prior n_counties = do
   let dist county_code floor = normal (a!!county_code + b!!county_code*floor) eps
 
   let loggers = ["mu_a" %=% mu_a, "sigma_a" %=% sigma_a, "mu_b" %=% mu_b, "sigma_b" %=% sigma_b]
-  return (dist, loggers)
-
-
-observe_data floor_values county_code_values log_radon_data = do
-
-  let n_counties = length $ nub $ county_code_values
-
-  (dist, loggers) <- sample $ prior n_counties
 
   log_radon_data ~> independent [ dist county_code floor | (floor,county_code) <- zip floor_values county_code_values]
 
@@ -43,7 +38,5 @@ main = do
       county_code_values = radon $$ ("county_code", AsInt)
       log_radon_data     = radon $$ ("log_radon",   AsDouble)
 
-  let model = observe_data floor_values county_code_values log_radon_data
-
-  mcmc model
+  mcmc $ model floor_values county_code_values log_radon_data
 

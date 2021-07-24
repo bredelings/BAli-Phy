@@ -63,7 +63,7 @@ x ~> dist = observe dist x
 infix 0 ~>
 
 liftIO = LiftIO
-sample = Lazy
+lazy = Lazy
 add_move = AddMove
 perform_tk_effect = PerformTKEffect
 infixl 2 `with_tk_effect`
@@ -83,7 +83,14 @@ run_strict (IOAndPass f g) = do
 run_strict (IOReturn v) = return v
 run_strict (LiftIO a) = a
 run_strict (Print s) = putStrLn (show s)
-run_strict (Lazy r) = run_lazy r
+run_strict (PerformTKEffect _) = return ()
+run_strict (AddMove _) = return ()
+run_strict (SamplingRate _ a) = run_strict a
+-- These are the lazily executed parts of the strict monad.
+run_strict dist@(Distribution _ _ _ _ _) = run_lazy dist
+run_strict e@(WithTKEffect _ _) = run_lazy e
+run_strict (MFix f) = mfix (run_lazy . f)
+run_strict (Lazy r) = unsafeInterleaveIO $ run_lazy r
 
 
 run_tk_effects rate (IOAndPass f g) = (run_tk_effects rate f) >>= (\x -> run_tk_effects rate $ g x)
@@ -119,8 +126,14 @@ run_strict' rate (Observe dist datum) = do
   density_terms <- make_edges s $ annotated_densities dist datum
   sequence_ [register_likelihood s term | term <- density_terms]
 run_strict' rate (Print s) = putStrLn (show s)
-run_strict' rate (Lazy r) = run_lazy' rate r
 run_strict' rate (PerformTKEffect e) = run_tk_effects rate e
+run_strict' rate (AddMove m) = register_transition_kernel rate m
+run_strict' rate (SamplingRate rate2 a) = run_strict' (rate*rate2) a
+-- These are the lazily executed parts of the strict monad.
+run_strict' rate dist@(Distribution _ _ _ _ _) = run_lazy' rate dist
+run_strict' rate e@(WithTKEffect _ _) = run_lazy' rate e
+run_strict' rate (MFix f) = mfix (run_lazy' rate . f)
+run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
 
 -- 1. Could we somehow implement slice sampling windows for non-contingent variables?
 
@@ -138,6 +151,19 @@ modifiable_structure = triggered_modifiable_structure ($) id
 -- It seems like we could return raw_x in most cases, except the case of a tree.
 -- But in the tree case, we could return triggered_x.
 
+-- Note on unsafeInterleaveIO:
+--       Simply using run_lazy does not guarantee that the result of run_lazy
+--       will not be demanded.  (It guarantees that f >>= g that are INSIDE run_lazy
+--       won't demand the result of the f).
+--       We need to guard any IO operations with unsafeInterleaveIO if we
+--       want to prevent their results from being demanded.
+--
+-- QUESTION: So, do we need to guard the execution of Distributions with unsafeInterleaveIO?
+-- ANSWER: No.  If its not the last entry in a sequence, it will get unsafeInterleaveIO from
+--         run_lazy' _ (IOAndPass _ _).
+--         If it is run from run_strict' directly, then it is run with
+--         unsafeInterleaveIO $ run_lazy', so we get an unsafeInterleaveIO from there.
+--
 run_lazy' rate (LiftIO a) = a
 run_lazy' rate (IOAndPass f g) = do
   x <- unsafeInterleaveIO $ run_lazy' rate f
@@ -158,8 +184,9 @@ run_lazy' rate dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_
 run_lazy' rate (Distribution _ _ _ s _) = run_lazy' rate s
 run_lazy' rate (MFix f) = MFix ((run_lazy' rate).f)
 run_lazy' rate (SamplingRate rate2 a) = run_lazy' (rate*rate2) a
+run_lazy' rate (Lazy r) = run_lazy' rate r
 run_lazy' rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
-  result <- run_lazy' rate action
+  result <- unsafeInterleaveIO $ run_lazy' rate action
   run_tk_effects rate $ tk_effect result
   return result
 

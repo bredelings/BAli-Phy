@@ -2,8 +2,8 @@ import           Probability.Random
 import           Probability.Distribution.Normal
 
 observe_data z' = do
-    x <- sample $ normal 0.0 1.0
-    y <- sample $ normal x   1.0
+    x <- normal 0.0 1.0
+    y <- normal x   1.0
     z' ~> normal y 1.0
     return ["x" %=% x, "y" %=% y]
 

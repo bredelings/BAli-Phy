@@ -24,9 +24,6 @@ import Tree                 -- for Tree
 
 -- Question: can we sample a distribution on tips, that we can then observe from, a la prob_prog/sample_tree/3/sample.hs?
 
-treefile =  getArgs !! 0
-xs_file =  getArgs !! 0
-
 node_times_from_branch_lengths topology lengths root_time = let node_times = listArray [ get_node_time node | node <- nodes topology ]
                                                                 get_node_time node = case (parentBranch topology node) of
                                                                                        None -> root_time
@@ -38,21 +35,14 @@ scale_internal_node_times topology node_times lambda = mkArray (numNodes topolog
                                                                                                 then time
                                                                                                 else time * lambda)
 
--- H0: lambda=1, H1: lambda~Uniform[0,1]
-sample_lambda_from_prior = do
+model topology lengths = do
 
+  -- H0 (h=0) or H1 (h=1)
   h <- bernoulli 0.5
 
   lambda' <- uniform 0.0 1.0
 
   let lambda = if h==0 then 1.0 else lambda'
-
-  return (h,lambda)
-
-
-model topology lengths = do
-
-  (h,lambda) <- sample_lambda_from_prior
 
   let times = node_times_from_branch_lengths topology lengths 0.0
 
@@ -60,7 +50,9 @@ model topology lengths = do
 
       lengths2 = branch_lengths_from_node_times
 
-  return (lengths,["lambda" %=% lambda, "H" %=% h])
+  xs ~> phylo_brownian topology lengths2 sigma
+
+  return ["lambda" %=% lambda, "H" %=% h]
   
 
 get_tree tree_file = do
@@ -71,12 +63,12 @@ get_tree tree_file = do
   
 
 main = do
-  (topology,lengths) <- liftIO $ get_tree tree_file
+  (treefile:xs_file:_) <- getArgs
 
-  let xs = map read_double $ head $ read_csv xs_file
+  (topology,lengths) <- get_tree tree_file
 
-  (lengths2, loggers) <- sample $ model topology lengths
+  xtable <- readTable xs_file
 
-  xs ~> phylo_brownian topology lengths2 sigma
+  let xs = xtable $$ ("x", AsDouble)
 
-  return loggers
+  mcmc $ model topology lengths xs

@@ -7,7 +7,7 @@ n_leaves = 3
 
 allStrings = [ c : s | s <- "" : allStrings, c <- ['a','b','c','d','e','f','g','h','i','j'] ]
 
-model = sample $ do
+model = do
     tree <- uniform_time_tree 1.0 n_leaves
     let ltree = add_labels (take n_leaves allStrings) tree
     let pr = uniform_time_tree_pr 1.0 n_leaves ltree

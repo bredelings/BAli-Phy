@@ -42,9 +42,13 @@ tree_prior taxa = do
 
     let loggers = ["scale" %=% scale]
 
-    return (branch_length_tree topology distances, loggers)
+    let tree = branch_length_tree topology distances
 
-prior taxa tip_seq_lengths = do
+    return (tree, loggers)
+
+model seq_data = do
+    let taxa            = map sequence_name seq_data
+        tip_seq_lengths = get_sequence_lengths dna seq_data
 
     (tree,tree_loggers)       <- tree_prior taxa
 
@@ -54,24 +58,13 @@ prior taxa tip_seq_lengths = do
 
     alignment                <- random_alignment tree imodel tip_seq_lengths
 
-    let loggers = ["tree" %=% write_newick tree, "tree" %>% tree_loggers, "tn93" %>% smodel_loggers, "rs07" %>% imodel_loggers]
+    seq_data ~> ctmc_on_tree tree alignment smodel
 
-    return (ctmc_on_tree tree alignment smodel, loggers)
-
-observe_data seq_data = do
-    let taxa            = map sequence_name seq_data
-        tip_seq_lengths = get_sequence_lengths dna seq_data
-
-    (seq_dist, loggers) <- sample $ prior taxa tip_seq_lengths
-
-    seq_data ~> seq_dist
-
-    return loggers
+    return ["tree" %=% write_newick tree, "tree" %>% tree_loggers, "tn93" %>% smodel_loggers, "rs07" %>% imodel_loggers]
 
 main = do
-    args <- getArgs
+    [filename] <- getArgs
 
-    let filename = args !! 0
-        seq_data = load_sequences filename
+    let seq_data = load_sequences filename
 
-    mcmc $ observe_data seq_data
+    mcmc $ model seq_data

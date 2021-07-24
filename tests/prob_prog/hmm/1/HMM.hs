@@ -6,9 +6,9 @@ transition_matrix s = categorical ([[0.7, 0.3], [0.3, 0.7]]!!s)
 emission_matrix s = categorical ([[0.9, 0.1], [0.1, 0.9]]!!s)
 
 markov :: (a->Random a) -> a -> Random [a]
-markov f state0 = do state1 <- f state0
-                     states <- markov f state1
-                     return (state0:states)
+markov f state0 = lazy $ do state1 <- f state0
+                            states <- markov f state1
+                            return (state0:states)
 
 observations =  [1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,1,1,0,0,0,1,1,1,0,1,0,0,0,0,1,1,1,1,1,1,0,1,1,0,1,1,1,0,0,0,0,0,0,1,1,1]
 
@@ -20,14 +20,12 @@ n_diffs (x:xs) (y:ys) | x == y    =     n_diffs xs ys
 
 hmm emission states = independent $ map emission states
 
-prior n = take n <$> markov transition_matrix 1
-
-observe_data n = do
-  hidden_states <- sample $ prior n
+model n = do
+  hidden_states <- take n <$> markov transition_matrix 1
   observations ~> hmm emission_matrix hidden_states
   return ["hidden_states" %=% hidden_states,
           "diff-true" %=% n_diffs hidden_states true_hidden_states,
           "diff-obs" %=% n_diffs hidden_states observations]
 
 main = do
-  mcmc $ observe_data 100
+  mcmc $ model 100

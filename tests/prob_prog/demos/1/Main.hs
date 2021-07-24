@@ -1,6 +1,6 @@
 import           Probability
 
-model = sample $ do
+model = do
 
     p <- beta 5.0 1.0
 

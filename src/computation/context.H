@@ -25,6 +25,7 @@ class context_ref
         const context_ref& C;
         const std::map<std::string,int>* m;
     public:
+        std::vector<std::string> arg_names() const;
         std::optional<int> get(const std::string& s) const;
         lazy_attribute_map(const context_ref&, const std::map<std::string,int>*);
     };
@@ -176,6 +177,8 @@ protected:
 public:
 
     void write_factor_graph() const;
+
+    void write_factor_graph(std::ostream&) const;
 
     void show_graph() const;
   
