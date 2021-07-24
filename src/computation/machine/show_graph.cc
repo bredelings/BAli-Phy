@@ -784,6 +784,25 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
     o<<"}"<<std::endl;
 }
 
+struct dist_group
+{
+    string dist_type;
+    std::map<std::string,int> inputs;
+};
+
+bool operator==(const dist_group& d1, const dist_group& d2)
+{
+    return d1.dist_type == d2.dist_type and d1.inputs == d2.inputs;
+}
+
+bool operator<(const dist_group& d1, const dist_group& d2)
+{
+    if (d1.dist_type < d2.dist_type) return true;
+    if (d1.dist_type > d2.dist_type) return false;
+
+    return (d1.inputs < d2.inputs);
+}
+
 void context_ref::write_factor_graph(std::ostream& o) const
 {
     evaluate_program();
@@ -805,30 +824,57 @@ void context_ref::write_factor_graph(std::ostream& o) const
 
     std::unordered_set<int> regs2_set;
     vector<int> regs2;
+    std::map<dist_group,int> distributions;
 
     o<<"digraph \"token"<<t<<"\" {\n";
     o<<"graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];\n";
     o<<"node [fontname=Arial, style=filled, height=0, width=0, shape=box];\n";
     o<<"edge [style=\"setlinewidth(2)\"];\n";
 
+    // We need to group sampling events with the same:
+    // (a) name
+    // (b) map: string -> r
+
     for(auto& [s,name]: M.dist_type)
     {
-        o<<"s"<<s<<"   [label=\" \",xlabel=\""<<name<<"\",color=\"black\"]\n";
-
+        // Characterize the distribution here.
+        dist_group D;
+        D.dist_type = name;
         if (auto in_edges = in_edges_to_dist(s))
             for(auto& arg_name: in_edges->arg_names())
             {
                 int r = *in_edges->get(arg_name);
                 int r2 = M.follow_index_var(r);
-                o<<"r"<<r2<<" -> s"<<s<<"  [label=\""<<arg_name<<"\"]\n";
+                D.inputs.insert({arg_name,r2});
                 regs2_set.insert(r2);
             }
+
+        // Characterize the out-edge here.
         int r_out = *out_edges_from_dist(s);
         r_out = M.follow_index_var(r_out);
-        o<<"s"<<s<<" -> r"<<r_out<<"\n";
+
+        // Get a node number for the distribution.
+        int S = s;
+        auto it = distributions.find(D);
+        if (it == distributions.end())
+            distributions[D] = S;
+        else
+            S = it->second;
+
+        // Draw the out-edge
+        o<<"s"<<S<<" -> r"<<r_out<<"\n";
+
         // Is `s` an observation or not?
         o<<"r"<<r_out<<"   [color=\"#cc9999\"]\n";
         regs2_set.insert(r_out);
+    }
+
+    // Draw edges for the distributions.
+    for(auto& [D,s]: distributions)
+    {
+        o<<"s"<<s<<"   [label=\" \",xlabel=\""<<D.dist_type<<"\",color=\"black\"]\n";
+        for(auto& [arg_name, r]: D.inputs)
+            o<<"r"<<r<<" -> s"<<s<<"  [label=\""<<arg_name<<"\"]\n";
     }
 
     std::unordered_set<int> direct_regs = regs2_set;
