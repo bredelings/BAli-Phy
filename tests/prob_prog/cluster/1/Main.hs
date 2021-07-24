@@ -1,4 +1,5 @@
 import Probability
+import System.Environment
 import Data.Frame
 
 cluster_dist = do
@@ -23,8 +24,9 @@ model xs = do
 
 
 main = do
+  [filename] <- getArgs
 
-  xtable <- readTable "x.csv"
+  xtable <- readTable filename
 
   let xs = xtable $$ ("x", AsDouble)
 
