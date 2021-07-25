@@ -68,7 +68,7 @@
     <section><info><title>Install a Unix command line: Cygwin (recommended)</title></info>
     <para>
        Before you can use <application>BAli-Phy</application> on Windows, you need to install a Unix command-line environment.  
-       We recommand installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>: 
+       We recommend installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>:
 <itemizedlist>
 <listitem>Run the Cygwin installer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/setup-x86_64.exe"><filename>setup-x86_64.exe</filename></link>. </listitem>
 <listitem>In the installer, add the following extra packages: <userinput>R</userinput>, <userinput>gnuplot</userinput>, <userinput>perl</userinput>, <userinput>python3</userinput>, <userinput>wget</userinput>, and <userinput>nano</userinput>.</listitem>
@@ -1102,7 +1102,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry><userinput>f81</userinput></entry>
 	      <entry>3</entry>
-	      <entry><para>Equal exchangabilities, unequal frequencies.</para>
+	      <entry><para>Equal exchangeabilities, unequal frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01734359">
 		(Felsenstein, 1981)
 	      </link>
@@ -1123,7 +1123,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry><userinput>tn93</userinput></entry>
 	      <entry>5</entry>
 	      <entry>
-		<para>Unequal rates for transitions (purines), transitions (pyrimadies) and transversions, unequal base frequencies.</para>
+		<para>Unequal rates for transitions (purines), transitions (pyrimidines) and transversions, unequal base frequencies.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040023">
 		  (Tamura and Nei, 1993)
 		</link>
@@ -1211,7 +1211,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry><userinput>f81</userinput></entry>
 	      <entry>19</entry>
-	      <entry><para>Equal exchangabilities, unequal frequencies.</para>
+	      <entry><para>Equal exchangeabilities, unequal frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01734359">
 		(Felsenstein, 1981)
 	      </link>
@@ -1225,8 +1225,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>19</entry>
 	      <entry>
 		<para>Empirical exchange rates, all proteins.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF02101694">
-		  (Jones, Taylor, Thornton 1992)
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/bioinformatics/8.3.275">
+		  (Jones, Taylor, and Thornton, 1992)
 		</link>
 	      </entry>
 	    </row>
@@ -1239,7 +1239,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>
 		<para>Empirical exchange rates, all proteins.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a003851">
-		  Whelan and Goldman (2001)
+		  (Whelan and Goldman, 2001)
 		</link>
 	      </entry>
 	    </row>
@@ -1252,7 +1252,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>
 		<para>Empirical exchange rates, all proteins.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msn067">
-		  <para>Le and Gascuel (2008)</para>
+		  (Le and Gascuel, 2008)
 		</link>
 	      </entry>
 	    </row>
@@ -1389,8 +1389,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>
 		<para>This model has separate frequencies for each dinucleotide, and distinguishes between transitions and transversion between match states (including GU/UG).</para>
 		<para>Simultaneous changes of both letters <emphasis>are</emphasis> allowed, but only between match states.</para>
-	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.ncbi.nlm.nih.gov/pubmed/11139520">
-		(Savill, N. et al 2001)
+	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/157.1.399">
+		(Savill et al., 2001)
 	      </link>
 	      </entry>
 	    </row>
@@ -1496,7 +1496,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	    <row>
 	      <entry><userinput><replaceable>nuc_model</replaceable>+x3_sym+f</userinput></entry>
 	      <entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
-	      <entry><para>GY94-style rate matrix constructed from nucleotide exchangability matrix.</para>
+	      <entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix.</para>
 	      </entry>
 	    </row>
 
@@ -1518,7 +1518,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      <row>
 		<entry><userinput><replaceable>nuc_model</replaceable>+x3+mut_sel</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
-		<entry><para>Mutation-selelection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
+		<entry><para>Mutation-selection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
 		</entry>
 	      </row>
 
@@ -1607,7 +1607,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry>62</entry>
 		<entry><para>Model of dN/dS with a separate frequency for each codon.</para>
 		<para>Rate for changing a nucleotide depends on neighboring nucleotides.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
 		  (Goldman and Yang, 1994)
 		</link>
 		</entry>
@@ -1617,7 +1617,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry><userinput>gy94[pi=f1x4]</userinput></entry>
 		<entry>5</entry>
 		<entry><para>The GY94 model with codon frequencies constructed from nucleotide frequencies.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
 		  (Goldman and Yang, 1994)
 		</link>
 		</entry>
@@ -1627,7 +1627,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry><userinput>gy94[pi=f3x4]</userinput></entry>
 		<entry>11</entry>
 		<entry><para>The GY94 model with codon frequencies constructed from nucleotide frequencies for each codon position.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
 		  (Goldman and Yang, 1994)
 		</link>
 		</entry>
@@ -1637,7 +1637,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry><userinput>gy94_ext[<replaceable>nuc_model</replaceable>]</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+61</entry>
 		<entry><para>GY94 model extended with a generic nucleotide exchangeability matrix.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/148/3/929.short">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
 		  (Goldman and Yang, 1994)
 		</link>
 		</entry>
@@ -1649,7 +1649,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry>
 		  <para>Model of dN/dS with f81 as the neutral model.</para>
 		  <para>Rate for changing a nucleotide depends only on that nucleotide.</para>
-		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040152">
 		    (Muse and Gaut, 1994)
 		  </link>
 		</entry>
@@ -1659,7 +1659,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry><userinput>mg94k</userinput></entry>
 		<entry>5</entry>
 		<entry><para>Model of dN/dS with hky85 as the neutral model.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040152">
 		  (Muse and Gaut, 1994)
 		</link>
 		</entry>
@@ -1669,7 +1669,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry><userinput>mg94_ext[<replaceable>nuc_model</replaceable>]</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+1</entry>
 		<entry><para>Model of dN/dS with <replaceable>nuc_model</replaceable> as the neutral model.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040152">
 		  (Muse and Gaut, 1994)
 		</link>
 		</entry>
@@ -1679,7 +1679,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry><userinput>fMutSel</userinput></entry>
 		<entry>65</entry>
 		<entry><para>MG94-like model with fitnesses for each codon.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msm284">
 		  (Yang and Nielsen, 2008)
 		</link>
 		</entry>
@@ -1689,7 +1689,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 		<entry><userinput>fMutSel0</userinput></entry>
 		<entry>24</entry>
 		<entry><para>MG94-like model with fitnesses for each amino-acid.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://academic.oup.com/mbe/article/11/5/715/1008710">
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msm284">
 		  (Yang and Nielsen, 2008)
 		</link>
 		</entry>
@@ -1698,7 +1698,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      <row>
 		<entry><userinput><replaceable>nuc_model</replaceable>+x3_sym+f</userinput></entry>
 		<entry>df(nuc_model)+60</entry>
-		<entry><para>GY94-style rate matrix constructed from nucleotide exchangability matrix (dN/dS = 1).</para>
+		<entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix (dN/dS = 1).</para>
 	               <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on codons only if the frequency of stop codons is zero.</para>
 		</entry>
 	      </row>
@@ -1727,14 +1727,14 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      <row>
 		<entry><userinput><replaceable>codon_model</replaceable>+mut_sel</userinput></entry>
 		<entry>df(<replaceable>codon_model</replaceable>)+60</entry>
-		<entry><para>Mutation-selelection model with neutral mutation following <replaceable>codon_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
+		<entry><para>Mutation-selection model with neutral mutation following <replaceable>codon_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
 		</entry>
 	      </row>
 
-o	      <row>
+	      <row>
 		<entry><userinput><replaceable>nuc_model</replaceable>+x3+mut_sel_aa</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+19</entry>
-		<entry><para>Mutation-selelection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each amino acid</emphasis>.</para>
+		<entry><para>Mutation-selection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each amino acid</emphasis>.</para>
 		</entry>
 	      </row>
 	      
@@ -1835,7 +1835,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>
 		  <para>A mixture of conserved and neutral sites.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1534/genetics.104.031153">
-		    (Wong, et. al. 2004)
+		    (Wong et al., 2004)
 		  </link>
 		</entry>
 	      </row>
@@ -1848,7 +1848,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>
 		  <para>A mixture of conserved, neutral, and positively-selected sites.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1534/genetics.104.031153">
-		    (Wong, et. al. 2004)
+		    (Wong et al., 2004)
 		  </link>
 		</entry>
 	      </row>
@@ -1859,7 +1859,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>
 		  <para>A Bayesian test for positive selection that compares M2a with M1a.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1534/genetics.104.031153">
-		    (Wong, et. al. 2004)
+		    (Wong et al., 2004)
 		  </link>
 		</entry>
 	      </row>
@@ -1868,8 +1868,8 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry><userinput>m3</userinput></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+2*$n$-1</entry>
 		<entry><para>An free mixture of $n$ categories of conserved dN/dS values.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/155/1/431.full">
-		  (Yang et. al. 2000)
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/155.1.431">
+		  (Yang et al., 2000)
 		</link>
 		</entry>
 	      </row>
@@ -1888,8 +1888,8 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry><para><userinput>m7</userinput></para></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+2</entry>
 		<entry><para>The M7 model places a beta distribution on dN/dS.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/155/1/431.full">
-		  (Yang et. al. 2000)
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/155.1.431">
+		  (Yang et al., 2000)
 		</link>
 		</entry>
 	      </row>
@@ -1899,7 +1899,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>df(<replaceable>submodel</replaceable>)+3</entry>
 		<entry><para>The M8a model adds a category of <emphasis>neutral</emphasis> sites to the M7 model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004233">
-		  (Swanson et. al. 2003)
+		  (Swanson et al., 2003)
 		</link>
 		</entry>
 	      </row>
@@ -1908,8 +1908,8 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry><userinput>m8</userinput></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>The M8 model adds a category of <emphasis>positively-selected</emphasis> sites to the M7 model.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.genetics.org/content/155/1/431.full">
-		  (Yang et. al. 2000)
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/155.1.431">
+		  (Yang et al., 2000)
 		</link>
 		</entry>
 	      </row>
@@ -1919,7 +1919,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>A Bayesian test for positive selection that compares the M8 to the M8a model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004233">
-		  (Swanson et. al. 2003)
+		  (Swanson et al., 2003)
 		</link>
 		</entry>
 	      </row>
@@ -1928,8 +1928,8 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 		<entry><userinput>branch_site</userinput></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>A Bayesian test for positive selection that on some (unknown) sites and some (known) branches.</para>
-		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004233">
-		  (Zhang et. al 2005)
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msi237">
+		  (Zhang et al., 2005)
 		</link>
 		</entry>
 
@@ -1979,7 +1979,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Site rates follow a discrete approximation to the Gamma distribution</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF00160154">
-		    (Yang 1994)
+		    (Yang, 1994)
 		  </link>
 	      </entry>
 	    </row>
@@ -1997,8 +1997,8 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	      <entry><para><userinput><replaceable>submodel</replaceable> + Rates.free</userinput></para></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+2($n$-1)</entry>
 	      <entry><para>Sites fall in one of $n$ categories. Each category has its own rate.</para>
-		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1206396">
-		    (Yang 1995)
+		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/139.2.993">
+		    (Yang, 1995)
 		  </link>
 	      </entry>
 	    </row>
@@ -2006,7 +2006,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	    <row>
 	      <entry><userinput><replaceable>submodel</replaceable> + multi_rate[<replaceable>dist</replaceable>]</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+df(<replaceable>dist</replaceable>)</entry>
-	      <entry><para>Sites rates follow a discrete approximation to the distribution <replaceable>dist</replaceable>.</para></entry>
+	      <entry><para>Site rates follow a discrete approximation to the distribution <replaceable>dist</replaceable>.</para></entry>
 	    </row>
 
 	    <row>
@@ -2048,7 +2048,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	      <entry>
                 <para>Each state in rate matrix Q is split into an ON and OFF variant.  Models burstiness.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="https://doi.org/10.1016/S0025-5564(97)00081-3">
-		    (Tuffley and Steel 1998)
+		    (Tuffley and Steel, 1998)
 		  </link>
 	      </entry>
 	    </row>
@@ -2065,15 +2065,15 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	      <entry>
                 <para>Combines Gamma (or other) rate heterogeneity with the Tuffley-Steel model.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004128">
-		    (Huelsenbeck 2002)
+		    (Huelsenbeck, 2002)
 		  </link>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;Covarion.hb02</userinput></para>
-                <para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Covarion.hb02</userinput></para>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;Covarion.gt01</userinput></para>
+                <para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Covarion.gt01</userinput></para>
               </entry>
 	      <entry>
                 <para>df(<replaceable>Q+Rates.gamma</replaceable>)+2</para>
@@ -2082,15 +2082,15 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	      <entry>
                 <para>Allows switching between Gamma (or other) rate classes over time.  Models changes in conservation.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a003868">
-		    (Galtier 2001)
+		    (Galtier, 2001)
 		  </link>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;Covarion.hb02</userinput></para>
-                <para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Covarion.hb02</userinput></para>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;Covarion.wssr07</userinput></para>
+                <para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Covarion.wssr07</userinput></para>
               </entry>
 	      <entry>
                 <para>df(<replaceable>Q+Rates.gamma</replaceable>)+4</para>
@@ -2099,7 +2099,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	      <entry>
                 <para>Allows switching between ON/OFF states and <emphasis>also</emphasis> between Gamma (or other) rate classes over time.  Models both burstiness and changes in conservation.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="https://doi.org/10.1093/molbev/msl155">
-		    (Wang et al 2007)
+		    (Wang et al., 2007)
 		  </link>
 	      </entry>
 	    </row>
@@ -2603,7 +2603,7 @@ acceptable if it is &lt; 0.01.
 	<para>To generate the split-frequency comparison plot, you must have R installed.  Locate the script <filename>compare-runs.R</filename>.  Then run:
 <screen><prompt>%</prompt> trees-bootstrap <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees ... <replaceable>dir-n</replaceable>/C1.trees --LOD-table=LOD-table &gt; partitions.bs 
 <prompt>%</prompt> R --slave --vanilla --args LOD-table compare-SF.pdf &lt; compare-runs.R</screen>
-	  Following <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://dx.doi.org/10.1080/10635150600812544">Beiko et al (2006)</link>, this displays the variation in
+	  Following <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1080/10635150600812544">Beiko et al. (2006)</link>, this displays the variation in
 	  estimates of split frequencies across runs.  Splits are
 	  arranged on the x-axis in increasing order of 
 	  Posterior Probability (PP), which is obtained by averaging over
@@ -2670,7 +2670,7 @@ adequately mix between modes.</para>
 
       <section><info><title>ESS for split frequencies</title></info>
 	
-      <para>As desribed in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.3852/10-120">Gaya et al (2011)</link>, we can also compute ESS values for splits on the tree:
+      <para>As desribed in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.3852/10-120">Gaya et al. (2011)</link>, we can also compute ESS values for splits on the tree:
 <screen><prompt>%</prompt> trees-bootstrap <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees ... <replaceable>dir-n</replaceable>/C1.trees &gt; partitions.bs</screen>
       To compute the ESS for a split, we consider the presence or absence
       of a split in each iteration as a series of binary values.  We
@@ -2704,8 +2704,8 @@ values in the sequence.</para>
 	<para>In addition to examining convergence diagnostics for continuous
 	parameters, it is important to examine convergence diagnostics
 	for the topology as well
-	(<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://dx.doi.org/10.1080/10635150600812544">Beiko
-	et al 2006</link>).  In theory, we recommend the web tool <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ceb.csit.fsu.edu/awty/">Are We There Yet (AWTY)</link> (Wilgenbush et al, 2004).  However, AWTY gives incorrect results if you upload plain NEWICK tree samples -- which is what BAli-Phy outputs.  Therefore, if you wish to use AWTY, you must convert the tree samples files to NEXUS before you upload them to AWTY in order to get correct results.</para>
+	(<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1080/10635150600812544">Beiko
+	et al., 2006</link>).  In theory, we recommend the web tool <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ceb.csit.fsu.edu/awty/">Are We There Yet (AWTY)</link> (Wilgenbush et al., 2004).  However, AWTY gives incorrect results if you upload plain NEWICK tree samples -- which is what BAli-Phy outputs.  Therefore, if you wish to use AWTY, you must convert the tree samples files to NEXUS before you upload them to AWTY in order to get correct results.</para>
 
 <para>It is also be possible to assess stabilization of tree topologies using tools distributed with <application>bali-phy</application> by using commands like the following.  Here, sub-sampling and burnin does not apply to the equilibrium tree files. Also, note that you need to manually construct the equilibrium samples, which we recommend to contain at least 500 trees; you might do this by sub-sampling using the <application>BAli-Phy</application> tool <command>sub-sample</command>.</para>
 
