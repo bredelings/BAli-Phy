@@ -529,6 +529,24 @@ const closure& reg_heap::get_effect(int s) const
     return closure_at(r);
 }
 
+std::set<int> reg_heap::find_affected_sampling_events(const std::function<void(void)>& do_changes)
+{
+    std::set<int> downstream_sampling_events;
+
+    auto register_sampling_event = [&](const register_prob& r,int) { downstream_sampling_events.insert(r.r_dist);};
+
+    unregister_likelihood_handlers.push_back(register_sampling_event);
+    unregister_prior_handlers.push_back(register_sampling_event);
+
+    do_changes();
+    do_pending_effect_unregistrations();
+
+    unregister_prior_handlers.pop_back();
+    unregister_likelihood_handlers.pop_back();
+
+    return downstream_sampling_events;
+}
+
 void reg_heap::do_pending_effect_registrations()
 {
     // Don't modify `steps_pending_effect_registration` while we are walking it!

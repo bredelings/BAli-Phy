@@ -288,6 +288,8 @@ public:
     void stack_pop(int r);
     int stack_pop();
 
+    std::set<int> find_affected_sampling_events(const std::function<void()>& do_changes);
+
 private:
     void do_pending_effect_registrations();
 

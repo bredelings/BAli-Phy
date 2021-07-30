@@ -414,6 +414,19 @@ void context_ref::set_reg_value(int P, closure&& C)
     memory()->set_reg_value_in_context(P, std::move(C), context_index);
 }
 
+
+std::set<int> context_ref::tweak_and_find_affected_sampling_events(const std::function<void(context_ref&)>& tweak)
+{
+    auto do_changes = [&]() {tweak(*this);};
+    return memory()->find_affected_sampling_events(do_changes);
+}
+
+std::set<int> context_ref::find_affected_sampling_events(const std::function<void(context_ref&)>& tweak)
+{
+    context C2 = *this;
+    return C2.tweak_and_find_affected_sampling_events(tweak);
+}
+
 /// Add an expression that may be replaced by its reduced form
 int context_ref::add_compute_expression(const expression_ref& E)
 {
