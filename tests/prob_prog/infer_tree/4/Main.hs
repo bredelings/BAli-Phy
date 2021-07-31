@@ -7,38 +7,25 @@ import           SModel
 import           Probability.Distribution.OnTree
 import           System.Environment  -- for getArgs
 
-smodel_prior = do
+model seq_data = do
+
+    let taxa = map sequence_name seq_data
+
+    age    <- gamma 0.5 2.0
+    tree   <- add_labels taxa <$> uniform_time_tree age (length taxa)
+
     freqs  <- symmetric_dirichlet_on ["A", "C", "G", "T"] 1.0
     kappa1 <- log_normal 0.0 1.0
     kappa2 <- log_normal 0.0 1.0
-
     let tn93_model = tn93' dna kappa1 kappa2 freqs
-    let loggers    = ["kappa1" %=% kappa1, "kappa2" %=% kappa2, "frequencies" %=% freqs]
 
-    return (tn93_model, loggers)
+    seq_data ~> ctmc_on_tree_fixed_A tree tn93_model
 
-
-tree_prior taxa = do
-
-    age <- gamma 0.5 2.0
-    tree <- add_labels taxa <$> uniform_time_tree age (length taxa)
-
-    let loggers   = ["tree" %=% write_newick tree, "age" %=% age]
-    return (tree, loggers)
-
-
-model seq_data = do
-    let taxa = map sequence_name seq_data
-
-    (tree  , tree_loggers) <- tree_prior taxa
-
-    (smodel, sloggers    ) <- smodel_prior
-
-    let loggers = tree_loggers ++ ["tn93" %>% sloggers]
-
-    seq_data ~> ctmc_on_tree_fixed_A tree smodel
-
-    return loggers
+    return ["tree" %=% write_newick tree,
+            "age" %=% age,
+            "tn93:kappa1" %=% kappa1,
+            "tn93:kappa2" %=% kappa2,
+            "tn93:frequencies" %=% freqs]
 
 main = do
     [filename] <- getArgs
