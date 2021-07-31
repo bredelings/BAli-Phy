@@ -29,28 +29,15 @@ smodel_prior = do
 
     return (tn93_model, loggers)
 
-tree_prior taxa = do
-    topology <- uniform_labelled_topology taxa
-
-    let b           = numBranches topology
-
-    times                     <- iid b (gamma 0.5 (2.0 / intToDouble b))
-
-    scale                     <- gamma 0.5 2.0
-
-    let distances = map (scale*) times
-
-    let loggers = ["scale" %=% scale]
-
-    let tree = branch_length_tree topology distances
-
-    return (tree, loggers)
+branch_length_dist topology = iid n (gamma 0.5 (2.0 / intToDouble n)) where n = numBranches topology
 
 model seq_data = do
     let taxa            = map sequence_name seq_data
         tip_seq_lengths = get_sequence_lengths dna seq_data
 
-    (tree,tree_loggers)       <- tree_prior taxa
+    scale                     <- gamma 0.5 2.0
+
+    tree <- scale_branch_lengths scale <$> uniform_labelled_tree taxa branch_length_dist
 
     (smodel, smodel_loggers) <- smodel_prior
 
@@ -60,7 +47,7 @@ model seq_data = do
 
     seq_data ~> ctmc_on_tree tree alignment smodel
 
-    return ["tree" %=% write_newick tree, "tree" %>% tree_loggers, "tn93" %>% smodel_loggers, "rs07" %>% imodel_loggers]
+    return ["tree" %=% write_newick tree, "tn93" %>% smodel_loggers, "rs07" %>% imodel_loggers ,"scale" %=% scale]
 
 main = do
     [filename] <- getArgs
