@@ -7,43 +7,25 @@ import           SModel
 import           Probability.Distribution.OnTree
 import           System.Environment  -- for getArgs
 
-smodel_prior = do
+branch_length_dist topology b = gamma 0.5 (2.0 / intToDouble n) where n = numBranches topology
+
+model seq_data = do
+
+    let taxa = map sequence_name seq_data
+
+    scale  <- gamma 0.5 2.0
+
+    tree   <- scaled_branch_lengths scale <$> uniform_labelled_tree taxa branch_length_dist
+
     freqs  <- symmetric_dirichlet_on ["A", "C", "G", "T"] 1.0
     kappa1 <- log_normal 0.0 1.0
     kappa2 <- log_normal 0.0 1.0
-
     let tn93_model = tn93' dna kappa1 kappa2 freqs
-    let loggers    = ["kappa1" %=% kappa1, "kappa2" %=% kappa2, "frequencies" %=% freqs]
 
-    return (tn93_model, loggers)
+    seq_data ~> ctmc_on_tree_fixed_A tree tn93_model
 
-
-tree_prior taxa = do
-
-    topology <- uniform_labelled_topology taxa
-
-    let b = numBranches topology
-    times <- iid b (gamma 0.5 (2.0 / intToDouble b))
-    scale <- gamma 0.5 2.0
-    let distances = map (scale *) times
-
-    let tree      = branch_length_tree topology distances
-
-    let loggers   = ["tree" %=% write_newick tree, "scale" %=% scale]
-    return (tree, loggers)
-
-model seq_data = do
-    let taxa = map sequence_name seq_data
-
-    (tree  , tree_loggers) <- tree_prior taxa
-
-    (smodel, sloggers    ) <- smodel_prior
-
-    let loggers = tree_loggers ++ ["tn93" %>% sloggers]
-
-    seq_data ~> ctmc_on_tree_fixed_A tree smodel
-
-    return loggers
+    return
+        ["tree" %=% write_newick tree, "scale" %=% scale, "tn93:kappa1" %=% kappa1, "tn93:kappa2" %=% kappa2, "tn93:frequencies" %=% freqs]
 
 main = do
     [filename] <- getArgs
