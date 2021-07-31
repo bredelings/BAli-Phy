@@ -1,4 +1,19 @@
-* 4.0 (unreleased)
+* 4.0-alpha2 (Jul 31, 2021)
+ - Preliminary relaxed-clock trees.
+ - Simplify the Haskell modelling language -- use the strict monad.
+ - Create a dynamic factor graph and record properties on it.
+ - Simplify BAli-Phy.Main.hs generated from the command-line.
+ - Fixes:
+   - fix--print.
+   - fix and update documentation for m8, m8a, and m8a_test.
+ - Type system:
+   - sort declarations into groups, in preparation for kind inference / kind checking.
+   - parse and load type classes and instances.
+ - Parser:
+   - create AST objects instead of treating everything as an s-expression
+   - print line numbers for undeclared variables.
+
+* 4.0-alpha1 (May 6, 2021)
  + Lazy random variable creation and destruction.
  - MCMC
    + Switch to slice sampling by "doubling", instead of "stepping out".
