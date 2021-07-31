@@ -15,7 +15,7 @@ model seq_data = do
 
     scale  <- gamma 0.5 2.0
 
-    tree   <- scaled_branch_lengths scale <$> uniform_labelled_tree taxa branch_length_dist
+    tree   <- scale_branch_lengths scale <$> uniform_labelled_tree taxa branch_length_dist
 
     freqs  <- symmetric_dirichlet_on ["A", "C", "G", "T"] 1.0
     kappa1 <- log_normal 0.0 1.0
