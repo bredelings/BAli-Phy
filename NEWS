@@ -4,7 +4,7 @@
  - Create a dynamic factor graph and record properties on it.
  - Simplify BAli-Phy.Main.hs generated from the command-line.
  - Fixes:
-   - fix--print.
+   - fix --print.
    - fix and update documentation for m8, m8a, and m8a_test.
  - Type system:
    - sort declarations into groups, in preparation for kind inference / kind checking.
