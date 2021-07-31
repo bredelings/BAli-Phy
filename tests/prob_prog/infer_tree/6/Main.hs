@@ -13,15 +13,12 @@ maybe_zero p dist = do
     length  <- dist
     if is_zero == 1 then return 0.0 else return (length / (1.0 - p))
 
-branch_length_dist zero_p topology = independent [ branch_dist b | b <- [0 .. n - 1] ]
+branch_length_dist zero_p topology b | is_internal_branch topology b = branch_dist_internal
+                                     | otherwise                     = branch_dist_leaf
   where
     n                    = numBranches topology
-
     branch_dist_leaf     = gamma 0.5 (2.0 / intToDouble n)
     branch_dist_internal = maybe_zero zero_p branch_dist_leaf
-
-    branch_dist b | is_internal_branch topology b = branch_dist_internal
-                  | otherwise                     = branch_dist_leaf
 
 model seq_data = do
 

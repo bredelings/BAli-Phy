@@ -29,7 +29,7 @@ smodel_prior = do
 
     return (tn93_model, loggers)
 
-branch_length_dist topology = iid n (gamma 0.5 (2.0 / intToDouble n)) where n = numBranches topology
+branch_length_dist topology b = gamma 0.5 (2.0 / intToDouble n) where n = numBranches topology
 
 model seq_data = do
     let taxa            = map sequence_name seq_data
