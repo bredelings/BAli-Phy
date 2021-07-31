@@ -88,6 +88,14 @@ uniform_labelled_topology taxa = do
   topology <- uniform_topology (length taxa)
   return $ add_labels taxa topology
 
+uniform_labelled_tree taxa branch_lengths_dist = do
+  -- These lines should be under SamplingRate 0.0
+  topology <- uniform_labelled_topology taxa
+  branch_lengths <- branch_lengths_dist topology
+  -- Add MCMC moves here!
+  -- How can we do walk_tree and then run the MCMC kernels that affect a given branch?
+  return $ branch_length_tree topology branch_lengths
+
 ----
 -- choose 2 leaves, connect them to an internal node, and put that internal node on the list of leaves
 -- This is I think gives more weight to more balanced trees?
