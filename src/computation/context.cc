@@ -418,6 +418,7 @@ void context_ref::set_reg_value(int P, closure&& C)
 std::set<int> context_ref::tweak_and_find_affected_sampling_events(const std::function<void(context_ref&)>& tweak)
 {
     auto do_changes = [&]() {tweak(*this);};
+    evaluate_program();
     return memory()->find_affected_sampling_events(do_changes);
 }
 
@@ -454,6 +455,7 @@ expression_ref context_ref::get_expression(int i) const
 
 std::optional<int> context_ref::out_edges_from_dist(int r) const
 {
+    evaluate_program();
     auto& from_dist = memory()->out_edges_from_dist;
     auto it = from_dist.find(r);
     if (it == from_dist.end())
@@ -464,6 +466,7 @@ std::optional<int> context_ref::out_edges_from_dist(int r) const
 
 const std::set<int>* context_ref::out_edges_to_var(int r) const
 {
+    evaluate_program();
     auto& to_var = memory()->out_edges_to_var;
     auto it = to_var.find(r);
     if (it == to_var.end())
@@ -482,6 +485,7 @@ std::vector<std::string> context_ref::lazy_attribute_map::arg_names() const
 
 std::optional<context_ref::lazy_attribute_map> context_ref::in_edges_to_dist(int r)  const
 {
+    evaluate_program();
     auto& to_dist = memory()->in_edges_to_dist;
     auto it = to_dist.find(r);
     if (it == to_dist.end())
@@ -492,6 +496,7 @@ std::optional<context_ref::lazy_attribute_map> context_ref::in_edges_to_dist(int
 
 std::optional<context_ref::lazy_attribute_map> context_ref::dist_properties(int s) const
 {
+    evaluate_program();
     auto& dist_properties = memory()->dist_properties;
     auto it = dist_properties.find(s);
     if (it == dist_properties.end())
@@ -502,6 +507,7 @@ std::optional<context_ref::lazy_attribute_map> context_ref::dist_properties(int 
 
 std::optional<std::string> context_ref::dist_type(int s) const
 {
+    evaluate_program();
     auto& dist_to_type = memory()->dist_type;
     auto it = dist_to_type.find(s);
     if (it == dist_to_type.end())
