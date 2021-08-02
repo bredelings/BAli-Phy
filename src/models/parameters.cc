@@ -406,15 +406,14 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
     return alignments;
 }
 
-data_partition_constants::data_partition_constants(Parameters* p, int r_data)
-    :conditional_likelihoods_for_branch(2*p->t().n_branches()),
-     sequence_length_indices(p->t().n_nodes()),
-     sequence_length_pr_indices(p->t().n_nodes()),
-     seqs( p->t().n_nodes() ),
+data_partition_constants::data_partition_constants(Parameters* p, const TreeInterface& t, int r_data)
+    :conditional_likelihoods_for_branch(2*t.n_branches()),
+     sequence_length_indices(t.n_nodes()),
+     sequence_length_pr_indices(t.n_nodes()),
+     seqs( t.n_nodes() ),
      sequences(),
-     branch_HMM_type(p->t().n_branches(),0)
+     branch_HMM_type(t.n_branches(),0)
 {
-    const auto& t = p->t();
     int B = t.n_branches();
 
     // -------------- Extract method indices from dist properties -----------------//
@@ -478,10 +477,10 @@ data_partition_constants::data_partition_constants(Parameters* p, int r_data)
     {
         likelihood_calculator = 0;
         auto leaf_sequences = reg_var( *properties->get( "leaf_sequences" ) );
-        for(int i=0; i<p->t().n_leaves(); i++)
+        for(int i=0; i<t.n_leaves(); i++)
             leaf_sequence_indices.push_back( p->add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
 
-        for(int i=0; i<p->t().n_leaves(); i++)
+        for(int i=0; i<t.n_leaves(); i++)
             sequences.push_back( (vector<int>)(leaf_sequence_indices[i].get_value(*p).as_<EVector>()) );
 
         // Extract pairwise alignments from data partition
@@ -1794,14 +1793,14 @@ Parameters::Parameters(const Program& prog,
         {
             // construct compressed alignment, counts, and mapping
             auto& [AA, counts, mapping] = *compressed_alignments[i];
-            PC->DPC.emplace_back(this, sequence_data[i].get_reg());
+            PC->DPC.emplace_back(this, t(), sequence_data[i].get_reg());
             if (like_calcs[i] == 0)
                 get_data_partition(i).set_alignment(AA);
         }
         else
         {
             auto counts = vector<int>(A[i].length(), 1);
-            PC->DPC.emplace_back(this, sequence_data[i].get_reg());
+            PC->DPC.emplace_back(this, t(), sequence_data[i].get_reg());
             if (like_calcs[i] == 0)
                 get_data_partition(i).set_alignment(A[i]);
         }
