@@ -406,7 +406,7 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
     return alignments;
 }
 
-data_partition_constants::data_partition_constants(const vector<string>& labels, context_ref& C, const TreeInterface& t, int r_data)
+data_partition_constants::data_partition_constants(context_ref& C, const TreeInterface& t, int r_data)
     :conditional_likelihoods_for_branch(2*t.n_branches()),
      sequence_length_indices(t.n_nodes()),
      sequence_length_pr_indices(t.n_nodes()),
@@ -456,8 +456,18 @@ data_partition_constants::data_partition_constants(const vector<string>& labels,
     for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
         conditional_likelihoods_for_branch[b] = C.add_compute_expression({var("Data.Array.!"),cl_index.ref(C),b});
 
+    auto taxa = context_ptr(C, *properties->get("taxa") ).list_elements();
+    vector<string> labels;
+    for(auto& taxon: taxa)
+        labels.push_back( taxon.value().as_<String>() );
+
     for(int i=0;i<t.n_nodes();i++)
-        seqs[i].name = labels[i];
+    {
+        if (i < labels.size())
+            seqs[i].name = labels[i];
+        else
+            seqs[i].name = "A"+std::to_string(i);
+    }
 
     // Can we compute the pairwise alignment in such a way that recomputing the alignments when
     // the tree changes has the same cost as modifying the solution and setting the alignment to the
@@ -1792,14 +1802,14 @@ Parameters::Parameters(const Program& prog,
         {
             // construct compressed alignment, counts, and mapping
             auto& [AA, counts, mapping] = *compressed_alignments[i];
-            PC->DPC.emplace_back(get_labels(), *this, t(), sequence_data[i].get_reg());
+            PC->DPC.emplace_back(*this, t(), sequence_data[i].get_reg());
             if (like_calcs[i] == 0)
                 get_data_partition(i).set_alignment(AA);
         }
         else
         {
             auto counts = vector<int>(A[i].length(), 1);
-            PC->DPC.emplace_back(get_labels(), *this, t(), sequence_data[i].get_reg());
+            PC->DPC.emplace_back(*this, t(), sequence_data[i].get_reg());
             if (like_calcs[i] == 0)
                 get_data_partition(i).set_alignment(A[i]);
         }
