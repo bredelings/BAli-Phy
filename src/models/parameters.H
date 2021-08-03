@@ -109,7 +109,7 @@ struct data_partition_constants
 
     int likelihood_calculator;
 
-    data_partition_constants(Parameters* P, const TreeInterface& t, int r_data);
+    data_partition_constants(const std::vector<std::string>& labels, context_ref& C, const TreeInterface& t, int r_data);
 };
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)

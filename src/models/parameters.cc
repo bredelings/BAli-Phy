@@ -406,7 +406,7 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
     return alignments;
 }
 
-data_partition_constants::data_partition_constants(Parameters* p, const TreeInterface& t, int r_data)
+data_partition_constants::data_partition_constants(const vector<string>& labels, context_ref& C, const TreeInterface& t, int r_data)
     :conditional_likelihoods_for_branch(2*t.n_branches()),
      sequence_length_indices(t.n_nodes()),
      sequence_length_pr_indices(t.n_nodes()),
@@ -417,13 +417,13 @@ data_partition_constants::data_partition_constants(Parameters* p, const TreeInte
     int B = t.n_branches();
 
     // -------------- Extract method indices from dist properties -----------------//
-    auto to_var = p->out_edges_to_var(r_data);
+    auto to_var = C.out_edges_to_var(r_data);
     if (to_var->size() > 1)
         throw myexception()<<"Some partitions are identical!";
 
     int s_sequences = *to_var->begin();
-    auto properties = p->dist_properties(s_sequences);
-    auto in_edges = p->in_edges_to_dist(s_sequences);
+    auto properties = C.dist_properties(s_sequences);
+    auto in_edges = C.in_edges_to_dist(s_sequences);
 
     // TODO: get the like_calc from the dist_type.
     // TODO: get the alphabet from the "alphabet" property.
@@ -444,19 +444,18 @@ data_partition_constants::data_partition_constants(Parameters* p, const TreeInte
 
     n_base_models_index = reg_var(*properties->get("n_base_models"));
 
-    context_ptr alphabet_ptr(*p, *properties->get("alphabet"));
+    context_ptr alphabet_ptr(C, *properties->get("alphabet"));
     a = alphabet_ptr.value().as_<PtrBox<alphabet>>();
 
-    auto dist_type = *p->dist_type(s_sequences);
+    auto dist_type = *C.dist_type(s_sequences);
 
     expression_ref transition_ps = reg_var(*properties->get("transition_ps"));
     for(int b=0;b<B;b++)
-        transition_p_method_indices.push_back( p->add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
+        transition_p_method_indices.push_back( C.add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
 
     for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
-        conditional_likelihoods_for_branch[b] = p->add_compute_expression({var("Data.Array.!"),cl_index.ref(*p),b});
+        conditional_likelihoods_for_branch[b] = C.add_compute_expression({var("Data.Array.!"),cl_index.ref(C),b});
 
-    auto labels = p->get_labels();
     for(int i=0;i<t.n_nodes();i++)
         seqs[i].name = labels[i];
 
@@ -478,10 +477,10 @@ data_partition_constants::data_partition_constants(Parameters* p, const TreeInte
         likelihood_calculator = 0;
         auto leaf_sequences = reg_var( *properties->get( "leaf_sequences" ) );
         for(int i=0; i<t.n_leaves(); i++)
-            leaf_sequence_indices.push_back( p->add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
+            leaf_sequence_indices.push_back( C.add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
 
         for(int i=0; i<t.n_leaves(); i++)
-            sequences.push_back( (vector<int>)(leaf_sequence_indices[i].get_value(*p).as_<EVector>()) );
+            sequences.push_back( (vector<int>)(leaf_sequence_indices[i].get_value(C).as_<EVector>()) );
 
         // Extract pairwise alignments from data partition
         int r_alignment = *in_edges->get("alignment");
@@ -489,30 +488,30 @@ data_partition_constants::data_partition_constants(Parameters* p, const TreeInte
 
         /* Initialize params -- from alignments.ref(*p) */
         auto as = expression_ref{var("Bio.Alignment.pairwise_alignments"), alignment_on_tree};
-        pairwise_alignment_for_branch = get_params_from_array(*p, as, 2*B);
+        pairwise_alignment_for_branch = get_params_from_array(C, as, 2*B);
 
         auto seq_lengths = expression_ref{var("Bio.Alignment.sequence_lengths"),alignment_on_tree};
         for(int n=0;n<t.n_nodes();n++)
-            sequence_length_indices[n] = p->add_compute_expression( {var("Data.Array.!"), seq_lengths, n} );
+            sequence_length_indices[n] = C.add_compute_expression( {var("Data.Array.!"), seq_lengths, n} );
 
         // Add method indices for calculating branch HMMs and alignment prior
 
-        int s_alignment = *p->out_edges_to_var( r_alignment )->begin();
+        int s_alignment = *C.out_edges_to_var( r_alignment )->begin();
 
-        auto A_properties = p->dist_properties(s_alignment);
+        auto A_properties = C.dist_properties(s_alignment);
         if (A_properties->get("hmms"))
         {
             auto hmms = reg_var( *A_properties->get("hmms") );
             for(int b=0;b<B;b++)
-                branch_HMMs.push_back( p->add_compute_expression( {var("Data.Array.!"), hmms, b} ) );
+                branch_HMMs.push_back( C.add_compute_expression( {var("Data.Array.!"), hmms, b} ) );
 
             alignment_prior_index = reg_var( *A_properties->get("pr") );
 
             auto lengthp = reg_var( *A_properties->get("lengthp") );
             for(int n=0;n<sequence_length_pr_indices.size();n++)
             {
-                expression_ref l = sequence_length_indices[n].ref(*p);
-                sequence_length_pr_indices[n] = p->add_compute_expression( {lengthp,l} );
+                expression_ref l = sequence_length_indices[n].ref(C);
+                sequence_length_pr_indices[n] = C.add_compute_expression( {lengthp,l} );
             }
         }
     }
@@ -1793,14 +1792,14 @@ Parameters::Parameters(const Program& prog,
         {
             // construct compressed alignment, counts, and mapping
             auto& [AA, counts, mapping] = *compressed_alignments[i];
-            PC->DPC.emplace_back(this, t(), sequence_data[i].get_reg());
+            PC->DPC.emplace_back(get_labels(), *this, t(), sequence_data[i].get_reg());
             if (like_calcs[i] == 0)
                 get_data_partition(i).set_alignment(AA);
         }
         else
         {
             auto counts = vector<int>(A[i].length(), 1);
-            PC->DPC.emplace_back(this, t(), sequence_data[i].get_reg());
+            PC->DPC.emplace_back(get_labels(), *this, t(), sequence_data[i].get_reg());
             if (like_calcs[i] == 0)
                 get_data_partition(i).set_alignment(A[i]);
         }
