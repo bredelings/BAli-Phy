@@ -66,8 +66,6 @@ struct data_partition_constants
 
     int properties_reg;
 
-    param ancestral_sequences_index;
-
     std::vector<param> sequence_length_indices;
 
     std::vector<param> sequence_length_pr_indices;

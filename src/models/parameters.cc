@@ -438,8 +438,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
 
     properties_reg = *properties->get("properties");
 
-    ancestral_sequences_index = reg_var(*properties->get("anc_seqs"));
-
     context_ptr alphabet_ptr(C, *properties->get("alphabet"));
     a = alphabet_ptr.value().as_<PtrBox<alphabet>>();
 
