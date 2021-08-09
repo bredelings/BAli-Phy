@@ -6,10 +6,27 @@ import Tree
 import SModel
 import Bio.Sequence -- for sequence_to_indices
 import Bio.Alignment
+import Bio.Alphabet  -- for type Alphabet
 
 -- FIXME: need polymorphism.
 --        This needs to be after weighted_frequency_matrix.
 --        Because we have no polymorphism, wfm needs to be defined after MixtureModel and MixtureModels.
+
+data CTMCOnTreeProperties = CTMCOnTreeProperties {
+      subst_root :: Int,
+      transition_ps :: Array Int (EVector Matrix),
+      cond_likes :: Array Int (EVector ()),
+      anc_seqs :: EVector (),
+      likelihood :: LogDouble,
+      taxa :: [ CPPString ],
+      get_weighted_frequency_matrix :: Matrix,
+      smap :: EVector Int,
+      leaf_sequences :: Array Int (EVector Int),
+      alphabet :: Alphabet,
+      as :: Array Int PairwiseAlignment,
+      n_states :: Int,
+      n_base_models :: Int
+    }
 
 
 annotated_subst_like_on_tree tree alignment smodel sequences = do
