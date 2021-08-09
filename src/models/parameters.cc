@@ -178,8 +178,7 @@ const EVector& data_partition::transition_P(int b) const
 {
     b = t().undirected(b);
     assert(b >= 0 and b < t().n_branches());
-
-    return DPC().transition_p_method_indices[b].get_value(*P).as_<EVector>();
+    return properties()[1][b].value().as_<EVector>();
 }
 
 context_ptr data_partition::properties() const
@@ -446,10 +445,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
     a = alphabet_ptr.value().as_<PtrBox<alphabet>>();
 
     auto dist_type = *C.dist_type(s_sequences);
-
-    expression_ref transition_ps = reg_var(*properties->get("transition_ps"));
-    for(int b=0;b<B;b++)
-        transition_p_method_indices.push_back( C.add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
 
     auto taxa = context_ptr(C, *properties->get("taxa") ).list_elements();
     vector<string> labels;
