@@ -194,7 +194,7 @@ int data_partition::n_states() const
 
 Matrix data_partition::WeightedFrequencyMatrix() const
 {
-    return DPC().weighted_frequency_matrix_index.get_value(*P).as_<Box<Matrix>>();
+    return context_ptr( *P, DPC().properties_reg )[6].value().as_<Box<Matrix>>();
 }
 
 EVector data_partition::state_letters() const
