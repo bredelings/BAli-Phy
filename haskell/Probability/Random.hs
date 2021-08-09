@@ -8,6 +8,8 @@ import Parameters
 import MCMC
 import Data.JSON as J
 
+data LogDouble
+
 data SamplingEvent
 data ProbEventMonad = InEdge String a | PropertyEdge String a | ProbFactor Double
 in_edge node name = InEdge node name
