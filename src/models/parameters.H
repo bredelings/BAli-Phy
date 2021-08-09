@@ -70,13 +70,9 @@ struct data_partition_constants
 
     param likelihood_index;
 
-    param cl_index;
-
     param ancestral_sequences_index;
 
     param state_letters_index;
-
-    std::vector<int> conditional_likelihoods_for_branch;
 
     std::vector<param> leaf_sequence_indices;
 

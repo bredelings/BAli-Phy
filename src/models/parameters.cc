@@ -306,7 +306,7 @@ log_double_t data_partition::prior_alignment() const
 
 const Likelihood_Cache_Branch& data_partition::cache(int b) const
 {
-    return P->evaluate_head(DPC().conditional_likelihoods_for_branch[b]).as_<Likelihood_Cache_Branch>();
+    return properties()[2][b].value().as_<Likelihood_Cache_Branch>();
 }
 
 log_double_t data_partition::likelihood() const 
@@ -412,8 +412,7 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
 }
 
 data_partition_constants::data_partition_constants(context_ref& C, const TreeInterface& t, int r_data)
-    :conditional_likelihoods_for_branch(2*t.n_branches()),
-     sequence_length_indices(t.n_nodes()),
+    :sequence_length_indices(t.n_nodes()),
      sequence_length_pr_indices(t.n_nodes()),
      seqs( t.n_nodes() ),
      sequences(),
@@ -437,8 +436,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
 
     subst_root = reg_var( *properties->get("subst_root") );
 
-    cl_index = reg_var(*properties->get("cond_likes"));
-
     likelihood_index = reg_var(*properties->get("likelihood"));
 
     ancestral_sequences_index = reg_var(*properties->get("anc_seqs"));
@@ -453,9 +450,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
     expression_ref transition_ps = reg_var(*properties->get("transition_ps"));
     for(int b=0;b<B;b++)
         transition_p_method_indices.push_back( C.add_compute_expression( {var("Data.Array.!"), transition_ps, b} ) );
-
-    for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
-        conditional_likelihoods_for_branch[b] = C.add_compute_expression({var("Data.Array.!"),cl_index.ref(C),b});
 
     auto taxa = context_ptr(C, *properties->get("taxa") ).list_elements();
     vector<string> labels;
