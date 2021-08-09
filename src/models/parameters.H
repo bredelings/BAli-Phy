@@ -64,6 +64,8 @@ struct data_partition_constants
     /// The pairwise alignment for each branch
     std::vector<param> pairwise_alignment_for_branch;
 
+    int properties_reg;
+
     param subst_root;
 
     param likelihood_index;

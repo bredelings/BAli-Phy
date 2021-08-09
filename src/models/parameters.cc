@@ -428,6 +428,8 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
     // TODO: get the like_calc from the dist_type.
     // TODO: get the alphabet from the "alphabet" property.
 
+    properties_reg = *properties->get("properties");
+
     subst_root = reg_var( *properties->get("subst_root") );
 
     cl_index = reg_var(*properties->get("cond_likes"));
