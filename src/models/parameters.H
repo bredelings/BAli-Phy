@@ -129,6 +129,8 @@ protected:
 
     int likelihood_calculator() const;
 
+    context_ptr properties() const;
+
 public:
 
     bool has_pairwise_alignments() const;
