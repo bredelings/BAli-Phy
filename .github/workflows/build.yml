@@ -121,7 +121,8 @@ jobs:
         echo "::set-output name=timestamp::${stamp}"
 
     - name: ccache cache files
-      uses: actions/cache@v2
+#      uses: actions/cache@v2
+      uses: pat-s/always-upload-cache@v2
       with:
          path: ~/.ccache
          key: ${{ matrix.name }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
