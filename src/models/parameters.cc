@@ -182,6 +182,11 @@ const EVector& data_partition::transition_P(int b) const
     return DPC().transition_p_method_indices[b].get_value(*P).as_<EVector>();
 }
 
+context_ptr data_partition::properties() const
+{
+    return context_ptr(*P, DPC().properties_reg);
+}
+
 int data_partition::n_base_models() const
 {
     return DPC().n_base_models_index.get_value(*P).as_int();
@@ -194,7 +199,7 @@ int data_partition::n_states() const
 
 Matrix data_partition::WeightedFrequencyMatrix() const
 {
-    return context_ptr( *P, DPC().properties_reg )[6].value().as_<Box<Matrix>>();
+    return properties()[6].value().as_<Box<Matrix>>();
 }
 
 EVector data_partition::state_letters() const
