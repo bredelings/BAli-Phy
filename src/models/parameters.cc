@@ -189,12 +189,12 @@ context_ptr data_partition::properties() const
 
 int data_partition::n_base_models() const
 {
-    return DPC().n_base_models_index.get_value(*P).as_int();
+    return properties()[12].value().as_int();
 }
 
 int data_partition::n_states() const
 {
-    return DPC().n_states_index.get_value(*P).as_int();
+    return properties()[11].value().as_int();
 }
 
 Matrix data_partition::WeightedFrequencyMatrix() const
@@ -444,10 +444,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
     ancestral_sequences_index = reg_var(*properties->get("anc_seqs"));
 
     state_letters_index = reg_var(*properties->get("smap"));
-
-    n_states_index = reg_var(*properties->get("n_states"));
-
-    n_base_models_index = reg_var(*properties->get("n_base_models"));
 
     context_ptr alphabet_ptr(C, *properties->get("alphabet"));
     a = alphabet_ptr.value().as_<PtrBox<alphabet>>();
