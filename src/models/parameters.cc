@@ -161,7 +161,7 @@ double data_partition::get_beta() const
 }
 
 int data_partition::subst_root() const {
-    return P->subst_root();
+    return property(0).value().as_int();
 }
 
 bool data_partition::has_IModel() const
@@ -437,8 +437,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
     // TODO: get the alphabet from the "alphabet" property.
 
     properties_reg = *properties->get("properties");
-
-    subst_root = reg_var( *properties->get("subst_root") );
 
     likelihood_index = reg_var(*properties->get("likelihood"));
 
@@ -1023,7 +1021,13 @@ void Parameters::set_root_(int node) const
     const context* C = this;
     // What if all the partitions have the SAME subst_root modifiable?
     for(int p=0;p<n_data_partitions();p++)
-        PC->DPC[p].subst_root.set_value(*const_cast<context*>(C), node);
+    {
+        auto subst_root = get_data_partition(p).property(0);
+        if (auto m = subst_root.modifiable())
+        {
+            const_cast<context*>(C)->set_modifiable_value(m->get_reg(), node);
+        }
+    }
 }
 
 void Parameters::set_root(int node) const
@@ -1035,7 +1039,7 @@ void Parameters::set_root(int node) const
 
 int Parameters::subst_root(int i) const
 {
-    return PC->DPC[i].subst_root.get_value(*this).as_int();
+    return get_data_partition(i).subst_root();
 }
 
 int Parameters::subst_root() const

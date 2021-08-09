@@ -66,8 +66,6 @@ struct data_partition_constants
 
     int properties_reg;
 
-    param subst_root;
-
     param likelihood_index;
 
     param ancestral_sequences_index;
