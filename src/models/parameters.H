@@ -74,8 +74,6 @@ struct data_partition_constants
 
     param ancestral_sequences_index;
 
-    param weighted_frequency_matrix_index;
-
     param state_letters_index;
 
     param n_states_index;
