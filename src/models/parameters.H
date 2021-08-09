@@ -66,13 +66,7 @@ struct data_partition_constants
 
     int properties_reg;
 
-    param likelihood_index;
-
     param ancestral_sequences_index;
-
-    param state_letters_index;
-
-    std::vector<param> leaf_sequence_indices;
 
     std::vector<param> sequence_length_indices;
 

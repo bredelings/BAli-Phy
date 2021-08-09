@@ -438,11 +438,7 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
 
     properties_reg = *properties->get("properties");
 
-    likelihood_index = reg_var(*properties->get("likelihood"));
-
     ancestral_sequences_index = reg_var(*properties->get("anc_seqs"));
-
-    state_letters_index = reg_var(*properties->get("smap"));
 
     context_ptr alphabet_ptr(C, *properties->get("alphabet"));
     a = alphabet_ptr.value().as_<PtrBox<alphabet>>();
@@ -478,9 +474,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
     if (dist_type == "ctmc_on_tree")
     {
         likelihood_calculator = 0;
-        auto leaf_sequences = reg_var( *properties->get( "leaf_sequences" ) );
-        for(int i=0; i<t.n_leaves(); i++)
-            leaf_sequence_indices.push_back( C.add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
 
         for(int i=0; i<t.n_leaves(); i++)
             sequences.push_back( (vector<int>)(context_ptr(C,properties_reg)[8][i].value().as_<EVector>()) );
