@@ -443,8 +443,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
 
     ancestral_sequences_index = reg_var(*properties->get("anc_seqs"));
 
-    weighted_frequency_matrix_index = reg_var(*properties->get("weighted_frequency_matrix"));
-
     state_letters_index = reg_var(*properties->get("smap"));
 
     n_states_index = reg_var(*properties->get("n_states"));
