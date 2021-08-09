@@ -178,7 +178,7 @@ const EVector& data_partition::transition_P(int b) const
 {
     b = t().undirected(b);
     assert(b >= 0 and b < t().n_branches());
-    return properties()[1][b].value().as_<EVector>();
+    return property(1)[b].value().as_<EVector>();
 }
 
 context_ptr data_partition::properties() const
@@ -186,19 +186,24 @@ context_ptr data_partition::properties() const
     return context_ptr(*P, DPC().properties_reg);
 }
 
+context_ptr data_partition::property(int i) const
+{
+    return properties()[i];
+}
+
 int data_partition::n_base_models() const
 {
-    return properties()[12].value().as_int();
+    return property(12).value().as_int();
 }
 
 int data_partition::n_states() const
 {
-    return properties()[11].value().as_int();
+    return property(11).value().as_int();
 }
 
 Matrix data_partition::WeightedFrequencyMatrix() const
 {
-    return properties()[6].value().as_<Box<Matrix>>();
+    return property(6).value().as_<Box<Matrix>>();
 }
 
 EVector data_partition::state_letters() const
@@ -305,7 +310,7 @@ log_double_t data_partition::prior_alignment() const
 
 const Likelihood_Cache_Branch& data_partition::cache(int b) const
 {
-    return properties()[2][b].value().as_<Likelihood_Cache_Branch>();
+    return property(2)[b].value().as_<Likelihood_Cache_Branch>();
 }
 
 log_double_t data_partition::likelihood() const 
