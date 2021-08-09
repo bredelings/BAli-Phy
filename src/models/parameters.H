@@ -119,6 +119,8 @@ protected:
 
     context_ptr properties() const;
 
+    context_ptr property(int i) const;
+
 public:
 
     bool has_pairwise_alignments() const;
