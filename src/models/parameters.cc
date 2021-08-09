@@ -171,7 +171,7 @@ bool data_partition::has_IModel() const
 
 const EVector& data_partition::get_sequence(int i) const
 {
-    return DPC().leaf_sequence_indices[i].get_value(*P).as_<EVector>();
+    return property(8)[i].value().as_<EVector>();
 }
 
 const EVector& data_partition::transition_P(int b) const
@@ -208,7 +208,7 @@ Matrix data_partition::WeightedFrequencyMatrix() const
 
 EVector data_partition::state_letters() const
 {
-    return DPC().state_letters_index.get_value(*P).as_<EVector>();
+    return property(7).value().as_<EVector>();
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -316,17 +316,17 @@ const Likelihood_Cache_Branch& data_partition::cache(int b) const
 log_double_t data_partition::likelihood() const 
 {
     substitution::total_likelihood++;
-    return DPC().likelihood_index.get_value(*P).as_log_double();
+    return property(4).value().as_log_double();
 }
 
 EVector data_partition::ancestral_sequences() const
 {
-    return DPC().ancestral_sequences_index.get_value(*P).as_<EVector>();
+    return property(3).value().as_<EVector>();
 }
 
 expression_ref data_partition::ancestral_sequence_alignment() const
 {
-    return DPC().ancestral_sequences_index.get_value(*P);
+    return property(3).value();
 }
 
 log_double_t data_partition::heated_likelihood() const 
@@ -483,7 +483,7 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
             leaf_sequence_indices.push_back( C.add_compute_expression({var("Data.Array.!"),leaf_sequences,i}) );
 
         for(int i=0; i<t.n_leaves(); i++)
-            sequences.push_back( (vector<int>)(leaf_sequence_indices[i].get_value(C).as_<EVector>()) );
+            sequences.push_back( (vector<int>)(context_ptr(C,properties_reg)[8][i].value().as_<EVector>()) );
 
         // Extract pairwise alignments from data partition
         int r_alignment = *in_edges->get("alignment");
