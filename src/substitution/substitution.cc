@@ -404,7 +404,7 @@ namespace substitution {
             {
                 assert(A0.has_character1(i0));
                 double p_col = element_prod_sum(F.begin(), (*LCB1)[s0], matrix_size );
-                assert(0 <= p_col and p_col <= 1.00000000001);
+                assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
                 scale += LCB1->scale(s0);
                 i0++;
@@ -415,7 +415,7 @@ namespace substitution {
             {
                 assert(A1.has_character1(i1));
                 double p_col = element_prod_sum(F.begin(), (*LCB2)[s1], matrix_size );
-                assert(0 <= p_col and p_col <= 1.00000000001);
+                assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
                 scale += LCB2->scale(s1);
                 i1++;
@@ -426,7 +426,7 @@ namespace substitution {
             {
                 assert(A2.has_character1(i2));
                 double p_col = element_prod_sum(F.begin(), (*LCB3)[s2], matrix_size );
-                assert(0 <= p_col and p_col <= 1.00000000001);
+                assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
                 scale += LCB3->scale(s2);
                 i2++;
@@ -500,7 +500,7 @@ namespace substitution {
                 for(int s=0;s<n_states;s++)
                     p_model += S(m,s);
                 // A specific model (e.g. the INV model) could be impossible
-                assert(0 <= p_model and p_model <= 1.00000000001);
+                assert(std::isnan(p_model) or (0 <= p_model and p_model <= 1.00000000001));
             }
 
             double p_col2 = element_sum(S);
@@ -509,7 +509,7 @@ namespace substitution {
 #endif
 
             // SOME model must be possible
-            assert(0 <= p_col and p_col <= 1.00000000001);
+            assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 
             // This might do a log( ) operation.
             total *= p_col;
@@ -524,6 +524,11 @@ namespace substitution {
         Pr *= LCB2->other_subst;
         Pr *= LCB3->other_subst;
         Pr.log() += log_scale_min * scale;
+        if (std::isnan(Pr.log()))
+        {
+            std::cerr<<"calc_root_probability: probability is NaN!\n";
+            return log_double_t(0.0);
+        }
         return Pr;
     }
 
@@ -620,7 +625,7 @@ namespace substitution {
                 for(int s=0;s<n_states;s++)
                     p_model += S(m,s);
                 // A specific model (e.g. the INV model) could be impossible
-                assert(0 <= p_model and p_model <= 1.00000000001);
+                assert(std::isnan(p_model) or (0 <= p_model and p_model <= 1.00000000001));
             }
 
             double p_col2 = element_sum(S);
@@ -629,7 +634,7 @@ namespace substitution {
 #endif
 
             // SOME model must be possible
-            assert(0 <= p_col and p_col <= 1.00000000001);
+            assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 
             if (non_gap1) i1++;
             if (non_gap2) i2++;
@@ -728,7 +733,7 @@ namespace substitution {
                 for(int s=0;s<n_states;s++)
                     p_model += S(m,s);
                 // A specific model (e.g. the INV model) could be impossible
-                assert(0 <= p_model and p_model <= 1.00000000001);
+                assert(std::isnan(p_model) or (0 <= p_model and p_model <= 1.00000000001));
             }
 
             double p_col2 = element_sum(S);
@@ -737,7 +742,7 @@ namespace substitution {
 #endif
 
             // SOME model must be possible
-            assert(0 <= p_col and p_col <= 1.00000000001);
+            assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 
             if (non_gap1) i1++;
             if (non_gap2) i2++;
@@ -1135,7 +1140,7 @@ namespace substitution {
             {
                 assert(A0.has_character1(i0));
                 double p_col = element_prod_sum(F.begin(), (*LCB1)[s0], matrix_size );
-                assert(0 <= p_col and p_col <= 1.00000000001);
+                assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
                 total_scale += LCB1->scale(s0);
                 i0++;
@@ -1145,7 +1150,7 @@ namespace substitution {
             {
                 assert(A1.has_character1(i1));
                 double p_col = element_prod_sum(F.begin(), (*LCB2)[s1], matrix_size );
-                assert(0 <= p_col and p_col <= 1.00000000001);
+                assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
                 total_scale += LCB2->scale(s1);
                 i1++;
