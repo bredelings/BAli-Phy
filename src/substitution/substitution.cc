@@ -1488,7 +1488,8 @@ namespace substitution {
         element_assign(R,0.0);
 
         // FIXME - its wasteful to do this for each letter.
-        auto smap = P.state_letters();
+        auto smap_ptr = P.state_letters();
+        auto& smap = *smap_ptr;
 
         if (a.is_letter(l))
         {
@@ -1550,9 +1551,9 @@ namespace substitution {
     Likelihood_Cache_Branch
     get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
     {
-        const auto& sequence = P.get_sequence(n);
+        const auto sequence = P.get_sequence(n);
         const alphabet& a = P.get_alphabet();
-        return get_leaf_seq_likelihoods(sequence, a, P, delta);
+        return get_leaf_seq_likelihoods(*sequence, a, P, delta);
     }
 
     /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
@@ -1577,9 +1578,9 @@ namespace substitution {
         for(int i=0;i<delta;i++)
             LCB.set(i,0);
 
-        vector<const Likelihood_Cache_Branch*> cache;
+        vector<object_ptr<const Likelihood_Cache_Branch>> cache;
         for(int branch: b)
-            cache.push_back(&P.cache(branch));
+            cache.push_back(P.cache(branch));
 
         // For each column in the index (e.g. for each present character at node 'root')
         for(int i=0;i<index.size1();i++) 
@@ -1659,7 +1660,7 @@ namespace substitution {
 
         log_double_t Pr3 = 1;
         for(int b: leaf_branch_list)
-            Pr3 *= P.cache(b).other_subst;
+            Pr3 *= P.cache(b)->other_subst;
 
         return Pr3;
     }

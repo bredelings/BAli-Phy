@@ -123,7 +123,8 @@ int* peel_muts_leaf_branch(int b, const data_partition& P, const matrix<int>& co
     int n_letters = a.size();
 
     int source = P.t().source(b);
-    auto& letters = P.get_sequence(source);
+    auto letters_ptr = P.get_sequence(source);
+    auto& letters = *letters_ptr;
     int L = P.seqlength(source);
 
     auto n_muts = new int[L * n_letters];
@@ -238,7 +239,8 @@ int accumulate_root_leaf(int b, const data_partition& P, const matrix<int>& cost
 {
     int root = P.t().target(b);
     assert(P.t().is_leaf_node(root));
-    const auto& letters = P.get_sequence(root);
+    const auto letters_ptr = P.get_sequence(root);
+    const auto& letters = *letters_ptr;
 
     auto& a = P.get_alphabet();
     int n_letters = a.size();

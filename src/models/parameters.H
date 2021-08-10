@@ -125,20 +125,20 @@ public:
     ParametersTreeInterface t() const;
 
     /// Cached Transition Probabilities
-    const EVector& transition_P(int b) const;   // used only to force transition_Ps in sample-topology-SPR.cc [ SPR_search_attachment_points ]
+    object_ptr<const EVector> transition_P(int b) const;   // used only to force transition_Ps in sample-topology-SPR.cc [ SPR_search_attachment_points ]
   
-    const EVector& get_sequence(int i) const;   // used in substitution.cc [get_leaf_seq_likelihoods, sample_subst_history], parsimony.cc [peel_muts_leaf_branch, accumulate_root_leaf]
+    object_ptr<const EVector> get_sequence(int i) const;   // used in substitution.cc [get_leaf_seq_likelihoods, sample_subst_history], parsimony.cc [peel_muts_leaf_branch, accumulate_root_leaf]
 
     int n_base_models() const;                  // used in substitution.CC for get_letter_likelihoods, get_leaf_seq_likelihoods, get_column_likelihoods, sample_subst_history
 
     int n_states() const;                       // used in substitution.CC for get_letter_likelihoods, get_leaf_seq_likelihoods, get_column_likelihoods, sample_subst_history
 
     // Perhaps this should also be per-mixture-component.
-    EVector state_letters() const;
+    object_ptr<const EVector> state_letters() const;
   
-    Matrix WeightedFrequencyMatrix() const;     // used in sample-alignment.cc, sample-cube.cc, sample-tri.cc, substitution.cc[sample_subst_history]
+    object_ptr<const Box<Matrix>> WeightedFrequencyMatrix() const;     // used in sample-alignment.cc, sample-cube.cc, sample-tri.cc, substitution.cc[sample_subst_history]
 
-    const Likelihood_Cache_Branch& cache(int b) const;  // used in get_column_likelihoods( ), other_subst( ), sample_subst_history( )
+    object_ptr<const Likelihood_Cache_Branch> cache(int b) const;  // used in get_column_likelihoods( ), other_subst( ), sample_subst_history( )
 
     int subst_root() const;
 

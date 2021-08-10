@@ -169,16 +169,16 @@ bool data_partition::has_IModel() const
     return bool(P->imodel_index_for_partition(partition_index));
 }
 
-const EVector& data_partition::get_sequence(int i) const
+object_ptr<const EVector> data_partition::get_sequence(int i) const
 {
-    return property(8)[i].value().as_<EVector>();
+    return property(8)[i].value().as_ptr_to<EVector>();
 }
 
-const EVector& data_partition::transition_P(int b) const
+object_ptr<const EVector> data_partition::transition_P(int b) const
 {
     b = t().undirected(b);
     assert(b >= 0 and b < t().n_branches());
-    return property(1)[b].value().as_<EVector>();
+    return property(1)[b].value().as_ptr_to<EVector>();
 }
 
 context_ptr data_partition::properties() const
@@ -201,14 +201,14 @@ int data_partition::n_states() const
     return property(11).value().as_int();
 }
 
-Matrix data_partition::WeightedFrequencyMatrix() const
+object_ptr<const Box<Matrix>> data_partition::WeightedFrequencyMatrix() const
 {
-    return property(6).value().as_<Box<Matrix>>();
+    return property(6).value().as_ptr_to<Box<Matrix>>();
 }
 
-EVector data_partition::state_letters() const
+object_ptr<const EVector> data_partition::state_letters() const
 {
-    return property(7).value().as_<EVector>();
+    return property(7).value().as_ptr_to<EVector>();
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -308,9 +308,9 @@ log_double_t data_partition::prior_alignment() const
     return Pr;
 }
 
-const Likelihood_Cache_Branch& data_partition::cache(int b) const
+object_ptr<const Likelihood_Cache_Branch> data_partition::cache(int b) const
 {
-    return property(2)[b].value().as_<Likelihood_Cache_Branch>();
+    return property(2)[b].value().as_ptr_to<Likelihood_Cache_Branch>();
 }
 
 log_double_t data_partition::likelihood() const 

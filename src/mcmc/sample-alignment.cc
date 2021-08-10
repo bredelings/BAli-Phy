@@ -75,7 +75,7 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
 
     shared_ptr<DPmatrixSimple> 
 	Matrices( new DPmatrixSimple(HMM(state_emit, hmm.start_pi(), hmm, P.get_beta()),
-				     std::move(dists1), std::move(dists2), P.WeightedFrequencyMatrix())
+				     std::move(dists1), std::move(dists2), *P.WeightedFrequencyMatrix())
 	    );
 
     //-------------- Compute ymin and ymax for each x --------------//

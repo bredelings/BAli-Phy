@@ -100,7 +100,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
 	branches[i] = t.find_branch(nodes[0],nodes[i+1]);
 
     shared_ptr<DPmatrixConstrained> 
-	Matrices(new DPmatrixConstrained(m123, std::move(dists1), std::move(dists23), P.WeightedFrequencyMatrix()));
+	Matrices(new DPmatrixConstrained(m123, std::move(dists1), std::move(dists23), *P.WeightedFrequencyMatrix()));
     Matrices->emit1 = 1;
     Matrices->emit2 = 2|4;
 

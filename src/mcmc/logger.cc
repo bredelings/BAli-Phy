@@ -427,7 +427,7 @@ namespace MCMC {
 	    for(int j=0;j<columns.size();j++)
 	    {
 		int state = node_states[j].second;
-		int letter = smap[state].as_int();;
+		int letter = (*smap)[state].as_int();;
 
 		int c = columns[j];
 		assert(A.character(c,i));
