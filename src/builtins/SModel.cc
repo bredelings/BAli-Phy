@@ -1398,10 +1398,10 @@ extern "C" closure builtin_function_peel_leaf_branch_SEV(OperationArgs& Args)
 
 
 namespace substitution {
-    Box<matrix<int>>*
+    object_ptr<const Box<matrix<int>>>
     alignment_index2(const pairwise_alignment_t&, const pairwise_alignment_t&);
     
-    Box<matrix<int>>*
+    object_ptr<const Box<matrix<int>>>
     alignment_index3(const pairwise_alignment_t&, const pairwise_alignment_t&, const pairwise_alignment_t&);
 
     object_ptr<const Likelihood_Cache_Branch>

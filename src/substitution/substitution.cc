@@ -345,7 +345,7 @@ namespace substitution {
     };
 
 
-    Box<matrix<int>>*
+    object_ptr<const Box<matrix<int>>>
     alignment_index3(const pairwise_alignment_t& A1, const pairwise_alignment_t& A2, const pairwise_alignment_t& A3)
     {
         auto a10 = convert_to_bits(A1,1,0);
@@ -353,7 +353,7 @@ namespace substitution {
         auto a30 = convert_to_bits(A3,3,0);
         auto a0123 = Glue_A(a10, Glue_A(a20,a30));
 
-        auto index = new Box<matrix<int>>;
+        auto index = object_ptr<Box<matrix<int>>>(new Box<matrix<int>>);
         *index = get_indices_from_bitpath(a0123, {1,2,3});
         return index;
     }
@@ -1377,14 +1377,14 @@ namespace substitution {
         return LCB2;
     }
   
-    Box<matrix<int>>* alignment_index2(const pairwise_alignment_t& A0, const pairwise_alignment_t& A1)
+    object_ptr<const Box<matrix<int>>> alignment_index2(const pairwise_alignment_t& A0, const pairwise_alignment_t& A1)
     {
         auto a0 = convert_to_bits(A0, 0, 2);
         auto a1 = convert_to_bits(A1, 1, 2);
         auto a012 = Glue_A(a0, a1);
 
         // get the relationships with the sub-alignments for the (two) branches behind b0
-        auto index = new Box<matrix<int>>;
+        auto index = object_ptr<Box<matrix<int>>>(new Box<matrix<int>>);
         *index = get_indices_from_bitpath(a012, {0,1,2});
         return index;
     }
