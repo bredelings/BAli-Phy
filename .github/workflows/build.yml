@@ -14,6 +14,8 @@ jobs:
       matrix:
         name: [ubuntu-gcc-9,
                ubuntu-gcc-10,
+               ubuntu-gcc-11-debugoptimized,
+               ubuntu-gcc-11,
                ubuntu-clang-9,
                ubuntu-clang-10,
                ubuntu-clang-11,
@@ -26,12 +28,24 @@ jobs:
             os: ubuntu-latest
             compiler: gcc
             version: "9"
-            buildtype: "debugoptimized"
+            buildtype: "release"
 
           - name: ubuntu-gcc-10
             os: ubuntu-latest
             compiler: gcc
             version: "10"
+            buildtype: "release"
+
+          - name: ubuntu-gcc-11-debugoptimized
+            os: ubuntu-latest
+            compiler: gcc
+            version: "11"
+            buildtype: "debugoptimized"
+
+          - name: ubuntu-gcc-11
+            os: ubuntu-latest
+            compiler: gcc
+            version: "11"
             buildtype: "release"
 
           - name: ubuntu-clang-9
