@@ -60,7 +60,7 @@ jobs:
             buildtype: "release"
 
           - name: windows
-            os: ubuntu-20.04
+            os: ubuntu-latest
             compiler: mingw
             version: "N/A"
             buildtype: "release"
