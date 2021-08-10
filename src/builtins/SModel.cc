@@ -1405,21 +1405,21 @@ namespace substitution {
     alignment_index3(const pairwise_alignment_t&, const pairwise_alignment_t&, const pairwise_alignment_t&);
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
-			 const Likelihood_Cache_Branch* LCB2,
+    peel_internal_branch(const Likelihood_Cache_Branch& LCB1,
+			 const Likelihood_Cache_Branch& LCB2,
 			 const pairwise_alignment_t&,
 			 const pairwise_alignment_t&,
 			 const EVector& transition_P,
 			 const Matrix& F);
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_internal_branch_SEV(const Likelihood_Cache_Branch* LCB1,
-			     const Likelihood_Cache_Branch* LCB2,
+    peel_internal_branch_SEV(const Likelihood_Cache_Branch& LCB1,
+			     const Likelihood_Cache_Branch& LCB2,
 			     const EVector& transition_P,
 			     const Matrix& F);
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_deg2_branch_SEV(const Likelihood_Cache_Branch* LCB1,
+    peel_deg2_branch_SEV(const Likelihood_Cache_Branch& LCB1,
                          const EVector& transition_P,
                          const Matrix& /*F*/);
 }
@@ -1450,8 +1450,8 @@ extern "C" closure builtin_function_peel_internal_branch(OperationArgs& Args)
     auto arg4 = Args.evaluate(4);
     auto arg5 = Args.evaluate(5);
 
-    return substitution::peel_internal_branch(&arg0.as_<Likelihood_Cache_Branch>(),
-					      &arg1.as_<Likelihood_Cache_Branch>(),
+    return substitution::peel_internal_branch(arg0.as_<Likelihood_Cache_Branch>(),
+					      arg1.as_<Likelihood_Cache_Branch>(),
 					      arg2.as_<Box<pairwise_alignment_t>>(),
 					      arg3.as_<Box<pairwise_alignment_t>>(),
 					      arg4.as_<EVector>(),
@@ -1465,8 +1465,8 @@ extern "C" closure builtin_function_peel_internal_branch_SEV(OperationArgs& Args
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    return substitution::peel_internal_branch_SEV(&arg0.as_<Likelihood_Cache_Branch>(),
-						  &arg1.as_<Likelihood_Cache_Branch>(),
+    return substitution::peel_internal_branch_SEV(arg0.as_<Likelihood_Cache_Branch>(),
+						  arg1.as_<Likelihood_Cache_Branch>(),
 						  arg2.as_<EVector>(),
 						  arg3.as_<Box<Matrix>>());
 }
@@ -1477,7 +1477,7 @@ extern "C" closure builtin_function_peel_deg2_branch_SEV(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
 
-    return substitution::peel_deg2_branch_SEV(&arg0.as_<Likelihood_Cache_Branch>(),
+    return substitution::peel_deg2_branch_SEV(arg0.as_<Likelihood_Cache_Branch>(),
                                               arg1.as_<EVector>(),
                                               arg2.as_<Box<Matrix>>());
 }
@@ -1538,22 +1538,22 @@ namespace substitution {
                                                         const EVector& smap1,
                                                         const EVector& compressed_col_for_col);
 
-    log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
-				       const Likelihood_Cache_Branch* LCB2,
-				       const Likelihood_Cache_Branch* LCB3,
+    log_double_t calc_root_probability(const Likelihood_Cache_Branch& LCB1,
+				       const Likelihood_Cache_Branch& LCB2,
+				       const Likelihood_Cache_Branch& LCB3,
 				       const pairwise_alignment_t& A1,
 				       const pairwise_alignment_t& A2,
 				       const pairwise_alignment_t& A3,
 				       const Matrix& F);
 
-    log_double_t calc_root_probability_SEV(const Likelihood_Cache_Branch* LCB1,
-					   const Likelihood_Cache_Branch* LCB2,
-					   const Likelihood_Cache_Branch* LCB3,
+    log_double_t calc_root_probability_SEV(const Likelihood_Cache_Branch& LCB1,
+					   const Likelihood_Cache_Branch& LCB2,
+					   const Likelihood_Cache_Branch& LCB3,
 					   const Matrix& F,
 					   const EVector& counts);
 
-    log_double_t calc_root_deg2_probability_SEV(const Likelihood_Cache_Branch* LCB1,
-                                                const Likelihood_Cache_Branch* LCB2,
+    log_double_t calc_root_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
+                                                const Likelihood_Cache_Branch& LCB2,
                                                 const Matrix& F,
                                                 const EVector& counts);
 }
@@ -1568,9 +1568,9 @@ extern "C" closure builtin_function_calc_root_probability(OperationArgs& Args)
     auto arg5 = Args.evaluate(5);
     auto arg6 = Args.evaluate(6);
 
-    log_double_t Pr = substitution::calc_root_probability(&arg0.as_<Likelihood_Cache_Branch>(),
-							  &arg1.as_<Likelihood_Cache_Branch>(),
-							  &arg2.as_<Likelihood_Cache_Branch>(),
+    log_double_t Pr = substitution::calc_root_probability(arg0.as_<Likelihood_Cache_Branch>(),
+							  arg1.as_<Likelihood_Cache_Branch>(),
+							  arg2.as_<Likelihood_Cache_Branch>(),
 							  arg3.as_<Box<pairwise_alignment_t>>(),
 							  arg4.as_<Box<pairwise_alignment_t>>(),
 							  arg5.as_<Box<pairwise_alignment_t>>(),
@@ -1720,9 +1720,9 @@ extern "C" closure builtin_function_calc_root_probability_SEV(OperationArgs& Arg
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
 
-    log_double_t Pr = substitution::calc_root_probability_SEV(&arg0.as_<Likelihood_Cache_Branch>(),
-							      &arg1.as_<Likelihood_Cache_Branch>(),
-							      &arg2.as_<Likelihood_Cache_Branch>(),
+    log_double_t Pr = substitution::calc_root_probability_SEV(arg0.as_<Likelihood_Cache_Branch>(),
+							      arg1.as_<Likelihood_Cache_Branch>(),
+							      arg2.as_<Likelihood_Cache_Branch>(),
 							      arg3.as_<Box<Matrix>>(),
 							      arg4.as_<EVector>());
     return {Pr};
@@ -1735,8 +1735,8 @@ extern "C" closure builtin_function_calc_root_deg2_probability_SEV(OperationArgs
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    log_double_t Pr = substitution::calc_root_deg2_probability_SEV(&arg0.as_<Likelihood_Cache_Branch>(),
-                                                                   &arg1.as_<Likelihood_Cache_Branch>(),
+    log_double_t Pr = substitution::calc_root_deg2_probability_SEV(arg0.as_<Likelihood_Cache_Branch>(),
+                                                                   arg1.as_<Likelihood_Cache_Branch>(),
                                                                    arg2.as_<Box<Matrix>>(),
                                                                    arg3.as_<EVector>());
     return {Pr};

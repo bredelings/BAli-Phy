@@ -359,31 +359,31 @@ namespace substitution {
     }
 
 
-    log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
-                                       const Likelihood_Cache_Branch* LCB2,
-                                       const Likelihood_Cache_Branch* LCB3,
+    log_double_t calc_root_probability(const Likelihood_Cache_Branch& LCB1,
+                                       const Likelihood_Cache_Branch& LCB2,
+                                       const Likelihood_Cache_Branch& LCB3,
                                        const pairwise_alignment_t& A0,
                                        const pairwise_alignment_t& A1,
                                        const pairwise_alignment_t& A2,
                                        const Matrix& F)
     {
-        assert(LCB1->n_columns() == A0.length1());
-        assert(LCB2->n_columns() == A1.length1());
-        assert(LCB3->n_columns() == A2.length1());
+        assert(LCB1.n_columns() == A0.length1());
+        assert(LCB2.n_columns() == A1.length1());
+        assert(LCB3.n_columns() == A2.length1());
         total_calc_root_prob++;
 
         const int n_models = F.size1();
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
 
-        assert(n_models == LCB1->n_models());
-        assert(n_states == LCB1->n_states());
+        assert(n_models == LCB1.n_models());
+        assert(n_states == LCB1.n_states());
 
-        assert(n_models == LCB2->n_models());
-        assert(n_states == LCB2->n_states());
+        assert(n_models == LCB2.n_models());
+        assert(n_states == LCB2.n_states());
 
-        assert(n_models == LCB3->n_models());
-        assert(n_states == LCB3->n_states());
+        assert(n_models == LCB3.n_models());
+        assert(n_states == LCB3.n_states());
 
 #ifdef DEBUG_SUBSTITUTION
         // scratch matrix
@@ -403,10 +403,10 @@ namespace substitution {
             while(i0 < AL0 and not A0.has_character2(i0))
             {
                 assert(A0.has_character1(i0));
-                double p_col = element_prod_sum(F.begin(), (*LCB1)[s0], matrix_size );
+                double p_col = element_prod_sum(F.begin(), LCB1[s0], matrix_size );
                 assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
-                scale += LCB1->scale(s0);
+                scale += LCB1.scale(s0);
                 i0++;
                 s0++;
                 total_root_clv_length++;
@@ -414,10 +414,10 @@ namespace substitution {
             while (i1 < AL1 and not A1.has_character2(i1))
             {
                 assert(A1.has_character1(i1));
-                double p_col = element_prod_sum(F.begin(), (*LCB2)[s1], matrix_size );
+                double p_col = element_prod_sum(F.begin(), LCB2[s1], matrix_size );
                 assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
-                scale += LCB2->scale(s1);
+                scale += LCB2.scale(s1);
                 i1++;
                 s1++;
                 total_root_clv_length++;
@@ -425,10 +425,10 @@ namespace substitution {
             while (i2 < AL2 and not A2.has_character2(i2))
             {
                 assert(A2.has_character1(i2));
-                double p_col = element_prod_sum(F.begin(), (*LCB3)[s2], matrix_size );
+                double p_col = element_prod_sum(F.begin(), LCB3[s2], matrix_size );
                 assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
-                scale += LCB3->scale(s2);
+                scale += LCB3.scale(s2);
                 i2++;
                 s2++;
                 total_root_clv_length++;
@@ -457,20 +457,20 @@ namespace substitution {
             int mi=0;
             if (not_gap0)
             {
-                m[mi++] = ((*LCB1)[s0]);
-                scale += (*LCB1).scale(s0);
+                m[mi++] = LCB1[s0];
+                scale += LCB1.scale(s0);
                 s0++;
             }
             if (not_gap1)
             {
-                m[mi++] = ((*LCB2)[s1]);
-                scale += (*LCB2).scale(s1);
+                m[mi++] = LCB2[s1];
+                scale += LCB2.scale(s1);
                 s1++;
             }
             if (not_gap2)
             {
-                m[mi++] = ((*LCB3)[s2]);
-                scale += (*LCB3).scale(s2);
+                m[mi++] = LCB3[s2];
+                scale += LCB3.scale(s2);
                 s2++;
             }
 
@@ -488,11 +488,10 @@ namespace substitution {
 
             //-------------- Propagate and collect information at 'root' -----------//
             if (not_gap0)
-                element_prod_modify(S.begin(),(*LCB1)[s0], matrix_size);
             if (not_gap1)
-                element_prod_modify(S.begin(),(*LCB2)[s1], matrix_size);
+                element_prod_modify(S.begin(),LCB2[s1], matrix_size);
             if (not_gap2)
-                element_prod_modify(S.begin(),(*LCB3)[s2], matrix_size);
+                element_prod_modify(S.begin(),LCB3[s2], matrix_size);
 
             //------------ Check that individual models are not crazy -------------//
             for(int m=0;m<n_models;m++) {
@@ -520,9 +519,9 @@ namespace substitution {
         }
 
         log_double_t Pr = total;
-        Pr *= LCB1->other_subst;
-        Pr *= LCB2->other_subst;
-        Pr *= LCB3->other_subst;
+        Pr *= LCB1.other_subst;
+        Pr *= LCB2.other_subst;
+        Pr *= LCB3.other_subst;
         Pr.log() += log_scale_min * scale;
         if (std::isnan(Pr.log()))
         {
@@ -532,9 +531,9 @@ namespace substitution {
         return Pr;
     }
 
-    log_double_t calc_root_probability_SEV(const Likelihood_Cache_Branch* LCB1,
-                                           const Likelihood_Cache_Branch* LCB2,
-                                           const Likelihood_Cache_Branch* LCB3,
+    log_double_t calc_root_probability_SEV(const Likelihood_Cache_Branch& LCB1,
+                                           const Likelihood_Cache_Branch& LCB2,
+                                           const Likelihood_Cache_Branch& LCB3,
                                            const Matrix& F,
                                            const EVector& counts)
     {
@@ -544,23 +543,23 @@ namespace substitution {
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
 
-        assert(n_models == LCB1->n_models());
-        assert(n_states == LCB1->n_states());
+        assert(n_models == LCB1.n_models());
+        assert(n_states == LCB1.n_states());
 
-        assert(n_models == LCB2->n_models());
-        assert(n_states == LCB2->n_states());
+        assert(n_models == LCB2.n_models());
+        assert(n_states == LCB2.n_states());
 
-        assert(n_models == LCB3->n_models());
-        assert(n_states == LCB3->n_states());
+        assert(n_models == LCB3.n_models());
+        assert(n_states == LCB3.n_states());
 
 #ifdef DEBUG_SUBSTITUTION
         // scratch matrix
         Matrix S(n_models,n_states);
 #endif
 
-        const auto& bits1 = LCB1->bits;
-        const auto& bits2 = LCB2->bits;
-        const auto& bits3 = LCB3->bits;
+        const auto& bits1 = LCB1.bits;
+        const auto& bits2 = LCB2.bits;
+        const auto& bits3 = LCB3.bits;
 
         const int L = bits1.size();
         assert(L > 0);
@@ -585,18 +584,18 @@ namespace substitution {
 
             if (non_gap1)
             {
-                m[mi++] = ((*LCB1)[i1]);
-                scale += (*LCB1).scale(i1);
+                m[mi++] = LCB1[i1];
+                scale += LCB1.scale(i1);
             }
             if (non_gap2)
             {
-                m[mi++] = ((*LCB2)[i2]);
-                scale += (*LCB2).scale(i2);
+                m[mi++] = LCB2[i2];
+                scale += LCB2.scale(i2);
             }
             if (non_gap3)
             {
-                m[mi++] = ((*LCB3)[i3]);
-                scale += (*LCB3).scale(i3);
+                m[mi++] = LCB3[i3];
+                scale += LCB3.scale(i3);
             }
 
             double p_col = 1.0;
@@ -613,11 +612,10 @@ namespace substitution {
 
             //-------------- Propagate and collect information at 'root' -----------//
             if (non_gap1)
-                element_prod_modify(S.begin(),(*LCB1)[i1], matrix_size);
             if (non_gap2)
-                element_prod_modify(S.begin(),(*LCB2)[i2], matrix_size);
+                element_prod_modify(S.begin(),LCB2[i2], matrix_size);
             if (non_gap3)
-                element_prod_modify(S.begin(),(*LCB3)[i3], matrix_size);
+                element_prod_modify(S.begin(),LCB3[i3], matrix_size);
 
             //------------ Check that individual models are not crazy -------------//
             for(int m=0;m<n_models;m++) {
@@ -656,8 +654,8 @@ namespace substitution {
 
 
     // Generalize to degree n>=1?
-    log_double_t calc_root_deg2_probability_SEV(const Likelihood_Cache_Branch* LCB1,
-                                                const Likelihood_Cache_Branch* LCB2,
+    log_double_t calc_root_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
+                                                const Likelihood_Cache_Branch& LCB2,
                                                 const Matrix& F,
                                                 const EVector& counts)
     {
@@ -667,19 +665,19 @@ namespace substitution {
         const int n_states = F.size2();
         const int matrix_size = n_models * n_states;
 
-        assert(n_models == LCB1->n_models());
-        assert(n_states == LCB1->n_states());
+        assert(n_models == LCB1.n_models());
+        assert(n_states == LCB1.n_states());
 
-        assert(n_models == LCB2->n_models());
-        assert(n_states == LCB2->n_states());
+        assert(n_models == LCB2.n_models());
+        assert(n_states == LCB2.n_states());
 
 #ifdef DEBUG_SUBSTITUTION
         // scratch matrix
         Matrix S(n_models,n_states);
 #endif
 
-        const auto& bits1 = LCB1->bits;
-        const auto& bits2 = LCB2->bits;
+        const auto& bits1 = LCB1.bits;
+        const auto& bits2 = LCB2.bits;
 
         const int L = bits1.size();
         assert(L > 0);
@@ -702,13 +700,13 @@ namespace substitution {
 
             if (non_gap1)
             {
-                m[mi++] = ((*LCB1)[i1]);
-                scale += (*LCB1).scale(i1);
+                m[mi++] = LCB1[i1];
+                scale += LCB1.scale(i1);
             }
             if (non_gap2)
             {
-                m[mi++] = ((*LCB2)[i2]);
-                scale += (*LCB2).scale(i2);
+                m[mi++] = LCB2[i2];
+                scale += LCB2.scale(i2);
             }
 
             double p_col = 1.0;
@@ -723,9 +721,9 @@ namespace substitution {
 
             //-------------- Propagate and collect information at 'root' -----------//
             if (non_gap1)
-                element_prod_modify(S.begin(),(*LCB1)[i1], matrix_size);
+                element_prod_modify(S.begin(),LCB1[i1], matrix_size);
             if (non_gap2)
-                element_prod_modify(S.begin(),(*LCB2)[i2], matrix_size);
+                element_prod_modify(S.begin(),LCB2[i2], matrix_size);
 
             //------------ Check that individual models are not crazy -------------//
             for(int m=0;m<n_models;m++) {
@@ -1102,8 +1100,8 @@ namespace substitution {
         
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
-                         const Likelihood_Cache_Branch* LCB2,
+    peel_internal_branch(const Likelihood_Cache_Branch& LCB1,
+                         const Likelihood_Cache_Branch& LCB2,
                          const pairwise_alignment_t& A0,
                          const pairwise_alignment_t& A1,
                          const EVector& transition_P,
@@ -1120,8 +1118,8 @@ namespace substitution {
         // Do this before accessing matrices or other_subst
         auto LCB3 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(A0.length2(), n_models, n_states));
         assert(A0.length2() == A1.length2());
-        assert(A0.length1() == LCB1->n_columns());
-        assert(A1.length1() == LCB2->n_columns());
+        assert(A0.length1() == LCB1.n_columns());
+        assert(A1.length1() == LCB2.n_columns());
 
         // scratch matrix
         double* S = LCB3->scratch(0);
@@ -1139,20 +1137,20 @@ namespace substitution {
             while (i0 < AL0 and not A0.has_character2(i0))
             {
                 assert(A0.has_character1(i0));
-                double p_col = element_prod_sum(F.begin(), (*LCB1)[s0], matrix_size );
+                double p_col = element_prod_sum(F.begin(), LCB1[s0], matrix_size );
                 assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
-                total_scale += LCB1->scale(s0);
+                total_scale += LCB1.scale(s0);
                 i0++;
                 s0++;
             }
             while (i1 < AL1 and not A1.has_character2(i1))
             {
                 assert(A1.has_character1(i1));
-                double p_col = element_prod_sum(F.begin(), (*LCB2)[s1], matrix_size );
+                double p_col = element_prod_sum(F.begin(), LCB2[s1], matrix_size );
                 assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
-                total_scale += LCB2->scale(s1);
+                total_scale += LCB2.scale(s1);
                 i1++;
                 s1++;
             }
@@ -1175,21 +1173,21 @@ namespace substitution {
             i1++;
             if (not_gap0 and not_gap1)
             {
-                element_prod_assign(S, (*LCB1)[s0], (*LCB2)[s1], matrix_size);
-                scale = LCB1->scale(s0) + LCB2->scale(s1);
+                element_prod_assign(S, LCB1[s0], LCB2[s1], matrix_size);
+                scale = LCB1.scale(s0) + LCB2.scale(s1);
                 s0++;
                 s1++;
             }
             else if (not_gap0)
             {
-                C = (*LCB1)[s0];
-                scale = LCB1->scale(s0);
+                C = LCB1[s0];
+                scale = LCB1.scale(s0);
                 s0++;
             }
             else if (not_gap1)
             {
-                C = (*LCB2)[s1];
-                scale = LCB2->scale(s1);
+                C = LCB2[s1];
+                scale = LCB2.scale(s1);
                 s1++;
             }
             else
@@ -1221,14 +1219,14 @@ namespace substitution {
             s2++;
         }
 
-        LCB3->other_subst = LCB1->other_subst * LCB2->other_subst * total;
+        LCB3->other_subst = LCB1.other_subst * LCB2.other_subst * total;
         LCB3->other_subst.log() += total_scale*log_scale_min;
         return LCB3;
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_internal_branch_SEV(const Likelihood_Cache_Branch* LCB1,
-                             const Likelihood_Cache_Branch* LCB2,
+    peel_internal_branch_SEV(const Likelihood_Cache_Branch& LCB1,
+                             const Likelihood_Cache_Branch& LCB2,
                              const EVector& transition_P,
                              const Matrix& /*F*/)
     {
@@ -1238,8 +1236,8 @@ namespace substitution {
         const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
         const int matrix_size = n_models * n_states;
     
-        const auto& bits1 = LCB1->bits;
-        const auto& bits2 = LCB2->bits;
+        const auto& bits1 = LCB1.bits;
+        const auto& bits2 = LCB2.bits;
 
         int L = bits1.size();
         assert(L > 0);
@@ -1247,7 +1245,7 @@ namespace substitution {
 
         // Do this before accessing matrices or other_subst
         auto LCB3 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
-        LCB3->bits = LCB1->bits | LCB2->bits;
+        LCB3->bits = LCB1.bits | LCB2.bits;
         const auto& bits3 = LCB3->bits;
         assert(bits3.size() == L);
 
@@ -1265,18 +1263,18 @@ namespace substitution {
             const double* C = S;
             if (nongap1 and nongap2)
             {
-                element_prod_assign(S, (*LCB1)[i1], (*LCB2)[i2], matrix_size);
-                scale = LCB1->scale(i1) + LCB2->scale(i2);
+                element_prod_assign(S, LCB1[i1], LCB2[i2], matrix_size);
+                scale = LCB1.scale(i1) + LCB2.scale(i2);
             }
             else if (nongap1)
             {
-                C = (*LCB1)[i1];
-                scale = LCB1->scale(i1);
+                C = LCB1[i1];
+                scale = LCB1.scale(i1);
             }
             else if (nongap2)
             {
-                C = (*LCB2)[i2];
-                scale = LCB2->scale(i2);
+                C = LCB2[i2];
+                scale = LCB2.scale(i2);
             }
             else
             {
@@ -1318,7 +1316,7 @@ namespace substitution {
 
     // Generalize to degree n>=1?
     object_ptr<const Likelihood_Cache_Branch>
-    peel_deg2_branch_SEV(const Likelihood_Cache_Branch* LCB1,
+    peel_deg2_branch_SEV(const Likelihood_Cache_Branch& LCB1,
                          const EVector& transition_P,
                          const Matrix& /*F*/)
     {
@@ -1328,14 +1326,14 @@ namespace substitution {
         const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
         const int matrix_size = n_models * n_states;
 
-        const auto& bits1 = LCB1->bits;
+        const auto& bits1 = LCB1.bits;
 
         int L = bits1.size();
         assert(L > 0);
 
         // Do this before accessing matrices or other_subst
         auto LCB2 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
-        LCB2->bits = LCB1->bits;
+        LCB2->bits = LCB1.bits;
 
         for(int c=0,i=0;c<L;c++)
         {
@@ -1343,8 +1341,8 @@ namespace substitution {
 
             int scale = 0;
 
-            const double* C = (*LCB1)[i];
-            scale = LCB1->scale(i);
+            const double* C = LCB1[i];
+            scale = LCB1.scale(i);
 
             // propagate from the source distribution
             double* R = (*LCB2)[i];            //name the result matrix
@@ -1390,8 +1388,8 @@ namespace substitution {
     }
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_internal_branch_F81(const Likelihood_Cache_Branch* LCB1,
-                             const Likelihood_Cache_Branch* LCB2,
+    peel_internal_branch_F81(const Likelihood_Cache_Branch& LCB1,
+                             const Likelihood_Cache_Branch& LCB2,
                              const pairwise_alignment_t& A0,
                              const pairwise_alignment_t& A1,
                              const vector<double>& exp_a_t,
@@ -1430,11 +1428,11 @@ namespace substitution {
 
             const double* C = S;
             if (i0 != alphabet::gap and i1 != alphabet::gap)
-                element_prod_assign(S, (*LCB1)[i0], (*LCB2)[i1], matrix_size);
+                element_prod_assign(S, LCB1[i0], LCB2[i1], matrix_size);
             else if (i0 != alphabet::gap)
-                C = (*LCB1)[i0];
+                C = LCB1[i0];
             else if (i1 != alphabet::gap)
-                C = (*LCB2)[i1];
+                C = LCB2[i1];
             else
                 C = ones.begin();
 
