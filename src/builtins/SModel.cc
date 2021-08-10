@@ -1367,10 +1367,10 @@ extern "C" closure builtin_function_frequency_matrix(OperationArgs& Args)
 using boost::dynamic_bitset;
 
 namespace substitution {
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch(const EVector& sequence, const alphabet& a, const EVector& transition_P, const EVector& smap);
 
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_SEV(const EVector& sequence, const alphabet& a, const EVector& transition_P, const dynamic_bitset<>& mask, const EVector& smap);
 }
 

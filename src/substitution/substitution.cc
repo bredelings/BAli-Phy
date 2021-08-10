@@ -789,7 +789,7 @@ namespace substitution {
     }
 
 
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_simple(const EVector& sequence, const alphabet& a, const EVector& transition_P)
     {
         total_peel_leaf_branches++;
@@ -801,7 +801,7 @@ namespace substitution {
         const int matrix_size = n_models * n_states;
         const int n_letters = a.n_letters();
 
-        auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
+        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L0, n_models, n_states));
     
         assert(n_states >= n_letters and n_states%n_letters == 0);
 
@@ -850,7 +850,7 @@ namespace substitution {
     // they are otherwise identical.
     // how could we share the code?
 
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_simple_SEV(const EVector& sequence, const alphabet& a, const EVector& transition_P, const boost::dynamic_bitset<>& mask)
     {
         total_peel_leaf_branches++;
@@ -862,7 +862,7 @@ namespace substitution {
         const int matrix_size = n_models * n_states;
         const int n_letters = a.n_letters();
 
-        auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
+        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L0, n_models, n_states));
         LCB->bits = mask;
     
         assert(n_states >= n_letters and n_states%n_letters == 0);
@@ -994,7 +994,7 @@ namespace substitution {
 
     // This version differs from the 'simple' version because it has to use sum(Q,smap,s1,l2)
     // instead of just Q(s1,l2).
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch(const EVector& sequence, const alphabet& a, const EVector& transition_P, const EVector& smap)
     {
         // Do this before accessing matrices or other_subst
@@ -1010,7 +1010,7 @@ namespace substitution {
 
         total_peel_leaf_branches++;
 
-        auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
+        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L0, n_models, n_states));
 
         assert(n_states >= n_letters and n_states%n_letters == 0);
 
@@ -1042,7 +1042,7 @@ namespace substitution {
         return LCB;
     }
 
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_SEV(const EVector& sequence, const alphabet& a, const EVector& transition_P, const boost::dynamic_bitset<>& mask, const EVector& smap)
     {
         // Do this before accessing matrices or other_subst
@@ -1058,7 +1058,7 @@ namespace substitution {
 
         total_peel_leaf_branches++;
 
-        auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
+        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L0, n_models, n_states));
         LCB->bits = mask;
 
         assert(n_states >= n_letters and n_states%n_letters == 0);
