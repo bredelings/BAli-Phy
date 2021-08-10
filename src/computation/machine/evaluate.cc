@@ -375,7 +375,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             try
             {
                 RegOperationArgs1 Args(r, s, sp, *this);
-                auto O = expression_at(r).head().assert_is_a<Operation>()->op;
+                auto O = expression_at(r).head().as_ptr_to<Operation>()->op;
                 closure value = (*O)(Args);
                 total_reductions++;
 
@@ -823,7 +823,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
             try
             {
                 RegOperationArgs2Unevaluated Args(r, s, sp, *this);
-                auto O = expression_at(r).head().assert_is_a<Operation>()->op;
+                auto O = expression_at(r).head().as_ptr_to<Operation>()->op;
                 closure value = (*O)(Args);
                 total_reductions2++;
 
@@ -1026,7 +1026,7 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
     {
         int s = get_shared_step(r);
         RegOperationArgs2Changeable Args(r, s, *this);
-        auto O = expression_at(r).head().assert_is_a<Operation>()->op;
+        auto O = expression_at(r).head().as_ptr_to<Operation>()->op;
         closure value = (*O)(Args);
         total_reductions2++;
         total_changeable_reductions2++;
@@ -1213,7 +1213,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
         // 3. Reduction: Operation (includes @, case, +, etc.)
         else
         {
-            auto O = expression_at(r).head().assert_is_a<Operation>()->op;
+            auto O = expression_at(r).head().as_ptr_to<Operation>()->op;
 
             // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
             // Therefore, we cannot do "assert(not result_for_reg(t,r).changeable);" here.

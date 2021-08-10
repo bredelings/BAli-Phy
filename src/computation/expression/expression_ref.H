@@ -148,7 +148,7 @@ public:
 	}
 
     template <typename T>
-    object_ptr<const T> assert_is_a() const
+    object_ptr<const T> as_ptr_to() const
 	{
 	    return convert<const T>(ptr());
 	}
