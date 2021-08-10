@@ -1404,7 +1404,7 @@ namespace substitution {
     Box<matrix<int>>*
     alignment_index3(const pairwise_alignment_t&, const pairwise_alignment_t&, const pairwise_alignment_t&);
 
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
 			 const Likelihood_Cache_Branch* LCB2,
 			 const pairwise_alignment_t&,
@@ -1412,13 +1412,13 @@ namespace substitution {
 			 const EVector& transition_P,
 			 const Matrix& F);
 
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_internal_branch_SEV(const Likelihood_Cache_Branch* LCB1,
 			     const Likelihood_Cache_Branch* LCB2,
 			     const EVector& transition_P,
 			     const Matrix& F);
 
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_deg2_branch_SEV(const Likelihood_Cache_Branch* LCB1,
                          const EVector& transition_P,
                          const Matrix& /*F*/);

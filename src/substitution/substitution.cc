@@ -925,7 +925,7 @@ namespace substitution {
         return exp_a_t;
     }
   
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_F81(const EVector& sequence, const alphabet& a, const vector<double>& exp_a_t, const Matrix& FF)
     {
         total_peel_leaf_branches++;
@@ -937,7 +937,7 @@ namespace substitution {
         const int n_states  = a.n_letters();
         const int matrix_size = n_models * n_states;
 
-        auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
+        auto LCB = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L0, n_models, n_states));
 
         //    const vector<unsigned>& smap = P.state_letters();
 
@@ -1101,7 +1101,7 @@ namespace substitution {
     }
         
 
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
                          const Likelihood_Cache_Branch* LCB2,
                          const pairwise_alignment_t& A0,
@@ -1118,7 +1118,7 @@ namespace substitution {
         // get the relationships with the sub-alignments for the (two) branches behind b0
 
         // Do this before accessing matrices or other_subst
-        auto* LCB3 = new Likelihood_Cache_Branch(A0.length2(), n_models, n_states);
+        auto LCB3 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(A0.length2(), n_models, n_states));
         assert(A0.length2() == A1.length2());
         assert(A0.length1() == LCB1->n_columns());
         assert(A1.length1() == LCB2->n_columns());
@@ -1226,7 +1226,7 @@ namespace substitution {
         return LCB3;
     }
 
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_internal_branch_SEV(const Likelihood_Cache_Branch* LCB1,
                              const Likelihood_Cache_Branch* LCB2,
                              const EVector& transition_P,
@@ -1246,7 +1246,7 @@ namespace substitution {
         assert(bits2.size() == L);
 
         // Do this before accessing matrices or other_subst
-        auto* LCB3 = new Likelihood_Cache_Branch(L, n_models, n_states);
+        auto LCB3 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
         LCB3->bits = LCB1->bits | LCB2->bits;
         const auto& bits3 = LCB3->bits;
         assert(bits3.size() == L);
@@ -1317,7 +1317,7 @@ namespace substitution {
     }
 
     // Generalize to degree n>=1?
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_deg2_branch_SEV(const Likelihood_Cache_Branch* LCB1,
                          const EVector& transition_P,
                          const Matrix& /*F*/)
@@ -1334,7 +1334,7 @@ namespace substitution {
         assert(L > 0);
 
         // Do this before accessing matrices or other_subst
-        auto* LCB2 = new Likelihood_Cache_Branch(L, n_models, n_states);
+        auto LCB2 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
         LCB2->bits = LCB1->bits;
 
         for(int c=0,i=0;c<L;c++)
@@ -1389,7 +1389,7 @@ namespace substitution {
         return index;
     }
 
-    Likelihood_Cache_Branch*
+    object_ptr<const Likelihood_Cache_Branch>
     peel_internal_branch_F81(const Likelihood_Cache_Branch* LCB1,
                              const Likelihood_Cache_Branch* LCB2,
                              const pairwise_alignment_t& A0,
@@ -1414,7 +1414,7 @@ namespace substitution {
         const int n_states = FF.size2();
         const int matrix_size = n_models * n_states;
 
-        auto LCB3 = new Likelihood_Cache_Branch(index.size1(), n_models, n_states);
+        auto LCB3 = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(index.size1(), n_models, n_states));
 
         // scratch matrix
         double* S = LCB3->scratch(0);
