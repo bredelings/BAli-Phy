@@ -5,9 +5,7 @@ import os
 import subprocess
 import re
 
-NUM_TESTS = 0
-FAILED_TESTS = []
-XFAILED_TESTS = []
+from collections import defaultdict
 
 def indent(n,s):
     space = ' '*n
@@ -76,10 +74,10 @@ class Program(object):
         test_dir = tester.dir_for_test(test_subdir)
         args_filename = os.path.join(test_dir,self.control_file())
         if self.exec_file:
-            return cmd + self.extra_args + [args_filename]
+            return self.cmd + self.extra_args + [args_filename]
         else:
             args = open(args_filename,'r').read()
-            return cmd + args.split() + self.extra_args
+            return self.cmd + args.split() + self.extra_args
 
     def stdin(self, tester, test_subdir):
         return ""
@@ -143,9 +141,9 @@ class raxml_ng(Program):
     def __init__(self, cmd):
         Program.__init__(self,cmd)
         self.name = "raxml-ng"
-        self.likelihood_regex = r".*. initial LogLikelihood: ([^ ]+)$"
-#        self.extra_args = ['--opt-branches','off','--opt-model','off','--threads','1','--evaluate','--nofiles']
-        self.extra_args = ['--loglh','--nofiles','--threads','1','--precision','16']
+        self.likelihood_regex = r"Final LogLikelihood: ([^ ]+)$"
+        self.extra_args = ['--loglh','--threads','1','--precision','16']
+
 
 class PhyML(Program):
     def __init__(self, cmd):
@@ -153,7 +151,7 @@ class PhyML(Program):
         self.name = "phyml"
         self.y = r". Log likelihood of the current tree: ([^ ]+)\$."
         self.likelihood_regex = r". Log likelihood of the current tree: ([^ ]+)\.$"
-        self.extra_args = ['--leave_duplicates','-b','0','-o','n']
+        self.extra_args = ['--leave_duplicates','-b','0','-o','n','--l_min','1.0e-100']
 
 class hyphymp(Program):
     def __init__(self, cmd):
@@ -171,6 +169,9 @@ class Tester:
         self.top_test_dir = top_test_dir
         self.data_dir = data_dir
         self.method = method
+        self.NUM_TESTS = 0
+        self.FAILED_TESTS = []
+        self.XFAILED_TESTS = []
 
     def dir_for_test(self, test_subdir):
         return os.path.join(self.top_test_dir, test_subdir)
@@ -187,7 +188,6 @@ class Tester:
         return test_dirs
 
     def run_test_cmd(self,test_subdir):
-        print("Running test:",test_subdir," ",end="", flush=True)
         rundir = self.rundir_for_test(test_subdir)
         prefix = self.method.prefix() + "obtained-"
         obt_outf = os.path.join(rundir, prefix + 'output')
@@ -301,9 +301,9 @@ class Tester:
 
     def perform_test(self, test_subdir):
         import re
-        global NUM_TESTS, FAILED_TESTS, XFAILED_TESTS
-        NUM_TESTS += 1
+        self.NUM_TESTS += 1
 
+        print("Running {} test:".format(self.method.name),test_subdir," ",end="", flush=True)
         self.run_test_cmd(test_subdir)
         failures,xfail,message = self.check_test_output(test_subdir)
         if not failures:
@@ -311,14 +311,90 @@ class Tester:
         elif failures:
             if xfail:
                 expected="(expected)"
-                XFAILED_TESTS.append(test_subdir)
+                self.XFAILED_TESTS.append(test_subdir)
             else:
-                FAILED_TESTS.append(test_subdir)
+                self.FAILED_TESTS.append(test_subdir)
                 expected=""
             print("... FAIL! {} {}".format(failures,expected))
             if message:
                 message = message.rstrip('\n')+"\n"
                 print(message)
+
+    def test_result_string(self, test_subdir):
+        print("Running {} test:".format(self.method.name),test_subdir," ",file=sys.stderr)
+        self.run_test_cmd(test_subdir)
+        failures,xfail,message = self.check_test_output(test_subdir)
+        if xfail and failures:
+            return 'XFAIL'
+        elif failures:
+            return 'FAIL'
+        else:
+            return 'PASS'
+
+def get_test_method(cmd):
+    prog = prog_name(cmd[0])
+    if prog == 'bali-phy':
+        return BAliPhy(cmd)
+    elif prog == 'rb' or prog.startswith('rb-'):
+        return RevBayes(cmd)
+    elif prog == 'paup':
+        return Paup(cmd)
+    elif prog == 'phyml':
+        return PhyML(cmd)
+    elif prog == 'iqtree':
+        return IQTREE(cmd)
+    elif prog == 'raxml-ng':
+        return raxml_ng(cmd)
+    elif prog.startswith('hyphy'):
+        return hyphymp(cmd)
+    else:
+        print("I don't recognize program '{}' - cowardly refusing to run tests for it.".format(prog))
+        exit(1)
+    
+def coverage_dict(top_test_dir, data_dir, progs):
+    coverage = defaultdict(dict)
+    for prog in progs:
+        method = get_test_method([prog])
+        tester = Tester(top_test_dir, data_dir, method)
+        supported_tests = tester.get_test_dirs()
+        for test in supported_tests:
+            coverage[test][prog] = "X"
+    return coverage
+
+def results_dict(top_test_dir, data_dir, progs):
+    results = defaultdict(dict)
+    for prog in progs:
+        method = get_test_method([prog])
+        tester = Tester(top_test_dir, data_dir, method)
+        supported_tests = tester.get_test_dirs()
+        for test in supported_tests:
+            results[test][prog] = tester.test_result_string(test)
+    return results
+
+def remove_prefix(s,prefix):
+    return s[len(prefix):] if s.startswith(prefix) else s
+
+
+def test_matrix_from_dict(results,progs):
+    header = ["test"]+progs
+    rows = [header]
+    for test in results:
+        testname = test
+        testname = remove_prefix(testname, 'tests/')
+        testname = remove_prefix(testname, 'likelihood/')
+        row = [testname]
+        for prog in progs:
+            if prog in results[test]:
+                row.append(results[test][prog])
+            else:
+                row.append("")
+        rows.append(row)
+    return rows
+
+
+def print_test_matrix(rows):
+    for row in rows:
+        print(','.join(row))
 
 def prog_name(pathname):
     import re
@@ -343,24 +419,19 @@ if __name__ == '__main__':
     if not cmd:
         print("Please specify which program to test! (e.g. 'bali-phy', 'rb', etc.)")
         exit(1)
-    prog = prog_name(cmd[0])
-    if prog == 'bali-phy':
-        method = BAliPhy(cmd)
-    elif prog == 'rb' or prog.startswith('rb-'):
-        method = RevBayes(cmd)
-    elif prog == 'paup':
-        method = Paup(cmd)
-    elif prog == 'phyml':
-        method = PhyML(cmd)
-    elif prog == 'iqtree':
-        method = IQTREE(cmd)
-    elif prog == 'raxml-ng':
-        method = raxml_ng(cmd)
-    elif prog == 'hyphymp':
-        method = hyphymp(cmd)
-    else:
-        print("I don't recognize program '{}' - cowardly refusing to run tests for it.".format(prog))
+
+    if cmd[0] == 'test':
+        cmd = cmd[1:]
+    elif cmd[0] == 'coverage':
+        progs = cmd[1:]
+        print_test_matrix(test_matrix_from_dict(coverage_dict(top_test_dir, data_dir, progs),progs))
         exit(1)
+    elif cmd[0] == 'results':
+        progs = cmd[1:]
+        print_test_matrix(test_matrix_from_dict(results_dict(top_test_dir, data_dir, progs),progs))
+        exit(1)
+
+    method = get_test_method(cmd)
 
     print("Running tests for '{}':\n".format(method.name))
     if os.path.isabs(cmd[0]) and not os.path.exists(cmd[0]):
@@ -371,10 +442,10 @@ if __name__ == '__main__':
 
     for test_subdir in tester.get_test_dirs():
         tester.perform_test(test_subdir)
-    if (len(FAILED_TESTS) > 0):
-        print("FAIL! ({} unexpected failures, {} expected failures, {} tests total)".format(len(FAILED_TESTS), len(XFAILED_TESTS), NUM_TESTS))
+    if (len(tester.FAILED_TESTS) > 0):
+        print("FAIL! ({} unexpected failures, {} expected failures, {} tests total)".format(len(tester.FAILED_TESTS), len(tester.XFAILED_TESTS), tester.NUM_TESTS))
         exit(1)
     else:
-        print("SUCCESS! ({} unexpected failures, {} expected failures, {} tests total)".format(len(FAILED_TESTS), len(XFAILED_TESTS), NUM_TESTS))
+        print("SUCCESS! ({} unexpected failures, {} expected failures, {} tests total)".format(len(tester.FAILED_TESTS), len(tester.XFAILED_TESTS), tester.NUM_TESTS))
 
         exit(0)
