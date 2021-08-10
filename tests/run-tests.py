@@ -289,7 +289,7 @@ class Tester:
                 message = self.read_obtained(test_subdir, 'error').rstrip()
                 if message == "":
                     message = self.read_obtained(test_subdir, 'output').rstrip()
-                message = "\n".join(message.splitlines()[-6:])
+#                message = "\n".join(message.splitlines()[-6:])
                 message = message.lstrip()
 
         if (len(message) > 0):
