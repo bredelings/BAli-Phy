@@ -13,11 +13,9 @@ jobs:
     strategy:
       matrix:
         name: [ubuntu-gcc-9,
-               ubuntu-gcc-10,
+               ubuntu-gcc-11-sanitize,
                ubuntu-gcc-11-debugoptimized,
                ubuntu-gcc-11,
-               ubuntu-clang-9,
-               ubuntu-clang-10,
                ubuntu-clang-11,
                macos-xcode-12.3,
                windows
@@ -30,11 +28,12 @@ jobs:
             version: "9"
             buildtype: "release"
 
-          - name: ubuntu-gcc-10
+          - name: ubuntu-gcc-11-sanitize
             os: ubuntu-latest
             compiler: gcc
-            version: "10"
+            version: "11"
             buildtype: "release"
+            sanitize: "address"
 
           - name: ubuntu-gcc-11-debugoptimized
             os: ubuntu-latest
@@ -46,18 +45,6 @@ jobs:
             os: ubuntu-latest
             compiler: gcc
             version: "11"
-            buildtype: "release"
-
-          - name: ubuntu-clang-9
-            os: ubuntu-latest
-            compiler: clang
-            version: "9"
-            buildtype: "release"
-
-          - name: ubuntu-clang-10
-            os: ubuntu-latest
-            compiler: clang
-            version: "10"
             buildtype: "release"
 
           - name: ubuntu-clang-11
@@ -154,9 +141,9 @@ jobs:
         if [ "${{ matrix.name }}" = "windows" ]; then
           ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
-        if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows" ]; then
+        if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows" ] && [ "${{ matrix.sanitize }}" != "" ] ; then
           # Address sanitizer can't find its dylibs on OS X?
-          ARGS="${ARGS} -Db_sanitize=address"
+          ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
         echo meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args='-g' ${ARGS}
         meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args='-g' ${ARGS}
