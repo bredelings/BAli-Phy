@@ -240,6 +240,15 @@ optional<context_ptr> context_ptr::modifiable() const
         return {};
 }
 
+void context_ptr::set_value(const expression_ref& v)
+{
+    auto m = modifiable();
+    if (not m)
+        throw myexception()<<"Trying to set the value of non-modifiable reg "<<get_reg();
+    int r = m->get_reg();
+    const_cast<context_ref&>(C).set_reg_value(r,v);
+}
+
 void context_ptr::move_to_result()
 {
     reg = C.memory()->value_for_reg(reg);

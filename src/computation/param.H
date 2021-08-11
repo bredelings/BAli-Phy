@@ -22,6 +22,7 @@ class context_ptr
 public:
     context_ptr result() const;
     std::optional<context_ptr> modifiable() const;
+    void set_value(const expression_ref& v);
 
     void move_to_result();
     bool move_to_modifiable();
