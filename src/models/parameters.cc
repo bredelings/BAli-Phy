@@ -270,9 +270,8 @@ void mutable_data_partition::unset_pairwise_alignment(int b)
     int B = t().reverse(b);
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
 
-    const context* C = P;
-    DPC().pairwise_alignment_for_branch[b].set_value(*const_cast<context*>(C),0);
-    DPC().pairwise_alignment_for_branch[B].set_value(*const_cast<context*>(C),0);
+    alignment_property(3)[b].set_value( 0 );
+    alignment_property(3)[B].set_value( 0 );
     assert(pairwise_alignment_is_unset(b));
 }
 
@@ -282,9 +281,8 @@ void mutable_data_partition::set_pairwise_alignment(int b, const pairwise_alignm
     assert(likelihood_calculator() == 0);
     int B = t().reverse(b);
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
-    const context* C = P;
-    DPC().pairwise_alignment_for_branch[b].set_value(*const_cast<context*>(C), new Box<pairwise_alignment_t>(pi));
-    DPC().pairwise_alignment_for_branch[B].set_value(*const_cast<context*>(C), new Box<pairwise_alignment_t>(pi.flipped()));
+    alignment_property(3)[b].set_value( new Box<pairwise_alignment_t>(pi) );
+    alignment_property(3)[B].set_value( new Box<pairwise_alignment_t>(pi.flipped()));
     assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
 }
 
@@ -490,9 +488,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
         auto alignment_on_tree = reg_var( r_alignment );
 
         /* Initialize params -- from alignments.ref(*p) */
-        auto as = expression_ref{var("Bio.Alignment.pairwise_alignments"), alignment_on_tree};
-        pairwise_alignment_for_branch = get_params_from_array(C, as, 2*B);
-
         auto seq_lengths = expression_ref{var("Bio.Alignment.sequence_lengths"),alignment_on_tree};
         for(int n=0;n<t.n_nodes();n++)
             sequence_length_indices[n] = C.add_compute_expression( {var("Data.Array.!"), seq_lengths, n} );
