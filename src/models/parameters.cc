@@ -72,8 +72,6 @@ using std::optional;
 namespace fs = boost::filesystem;
 
 /*
- * DONE:
- *
  * \todo: List of things to do to clean up programs.
  *
  * See list in models/parameters.C 
@@ -82,35 +80,18 @@ namespace fs = boost::filesystem;
  *
  * 2. Avoid recomputing likelihoods when recomputed branch lengths are unchanged.
  *    - Cast to single precision, and then only recompute when that changes.
- * 3. Rewrite multi-case code to take patterns in terms of expression_ref's that might be seen from the parser.
- *     + Allows moving towards 16 incrementally.
  *
- * 6. Make Context load an entire program, instead of adding pieces incrementally.
+ * 3. Compare the monadic interface with Acar's interface.
  *
- * 7. Optimizations
- *     - Remove let bindings for unused variables?
- *     - Merge let bidings with identical bodies?
- *     - Simplify some case expressions based on knowledge of let-bound variable?
- *
- * 8. Print out simpler names than Test.i for parameter i.
- *     - I think parameters are in a separate namespace?
- *
- * 9. Add the ability to store newtype definitions.
- *
- * 10. Compare the monadic interface with Acar's interface.
- *
- * 11.
+ * 4.
  *     - Handle sequences with lengths not divisible by 3.
  *     - Handle loading alignments with codons not together.
  *     - Could we actually handle all SEEN codon triplets?
  *
- * 12. Store alignments in a more sparse format?
+ * 5. Store alignments in a more sparse format?
  *
- * 13. Rename reg_heap -> something more descriptive/attractive.
+ * 6. Rename reg_heap -> something more descriptive/attractive.
  *
- * 14. Not printing RS07 model parameters??
- *     - To force all names to be generated before the layout for C1.p is constructed,
- *       I compute the probability at the end of Parameters::Parameters( ).
  */
 
 /// Is the alignment allowed to vary?
