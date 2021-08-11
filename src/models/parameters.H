@@ -65,9 +65,6 @@ struct data_partition_constants
 
     std::optional<int> alignment_properties_reg;
 
-    /// The names and comments for the sequences
-    std::vector< sequence > seqs;
-
     int likelihood_calculator;
 
     data_partition_constants(context_ref& C, const TreeInterface& t, int r_data);
@@ -115,6 +112,10 @@ public:
     object_ptr<const EVector> get_sequence(int i) const;   // used in substitution.cc [get_leaf_seq_likelihoods, sample_subst_history], parsimony.cc [peel_muts_leaf_branch, accumulate_root_leaf]
 
     std::vector< std::vector<int> > leaf_sequences() const;
+
+    std::string label(int i) const;
+
+    std::vector< sequence > all_seqs() const;
 
     int n_base_models() const;                  // used in substitution.CC for get_letter_likelihoods, get_leaf_seq_likelihoods, get_column_likelihoods, sample_subst_history
 

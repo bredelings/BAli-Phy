@@ -146,7 +146,7 @@ alignment data_partition::A() const
         M = construct(t(), As);
     }
 
-    return get_alignment(*get_alphabet(), DPC().seqs, leaf_sequences(), M);
+    return get_alignment(*get_alphabet(), all_seqs(), leaf_sequences(), M);
 }
 
 ParametersTreeInterface data_partition::t() const
@@ -169,6 +169,25 @@ vector< vector<int> > data_partition::leaf_sequences() const
     vector< vector<int> > sequences;
     for(int i=0;i<t().n_leaves();i++)
         sequences.push_back( (vector<int>)(*get_sequence(i)) );
+    return sequences;
+}
+
+string data_partition::label(int i) const
+{
+    auto labels = property(5);
+    if (i < labels.size())
+        return labels[i].value().as_<String>();
+    else
+        return "A"+std::to_string(i);
+}
+
+vector< sequence> data_partition::all_seqs() const
+{
+    vector< sequence > sequences ( t().n_nodes() );
+
+    for(int i=0;i<sequences.size();i++)
+        sequences[i].name = label(i);
+
     return sequences;
 }
 
@@ -424,7 +443,6 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
 }
 
 data_partition_constants::data_partition_constants(context_ref& C, const TreeInterface& t, int r_data)
-    :seqs( t.n_nodes() )
 {
     // -------------- Extract method indices from dist properties -----------------//
     auto to_var = C.out_edges_to_var(r_data);
@@ -441,19 +459,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
     properties_reg = *properties->get("properties");
 
     auto dist_type = *C.dist_type(s_sequences);
-
-    auto taxa = context_ptr(C, properties_reg)[5].list_elements();
-    vector<string> labels;
-    for(auto& taxon: taxa)
-        labels.push_back( taxon.value().as_<String>() );
-
-    for(int i=0;i<t.n_nodes();i++)
-    {
-        if (i < labels.size())
-            seqs[i].name = labels[i];
-        else
-            seqs[i].name = "A"+std::to_string(i);
-    }
 
     // Can we compute the pairwise alignment in such a way that recomputing the alignments when
     // the tree changes has the same cost as modifying the solution and setting the alignment to the
