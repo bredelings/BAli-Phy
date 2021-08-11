@@ -435,7 +435,7 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
 
     auto dist_type = *C.dist_type(s_sequences);
 
-    auto taxa = context_ptr(C, *properties->get("taxa") ).list_elements();
+    auto taxa = context_ptr(C, properties_reg)[5].list_elements();
     vector<string> labels;
     for(auto& taxon: taxa)
         labels.push_back( taxon.value().as_<String>() );
