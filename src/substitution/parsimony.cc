@@ -119,8 +119,8 @@ int* peel_muts_leaf_branch(int b, const data_partition& P, const matrix<int>& co
 {
     int max_cost = max_element(cost)+1;
 
-    auto& a = P.get_alphabet();
-    int n_letters = a.size();
+    auto a = P.get_alphabet();
+    int n_letters = a->size();
 
     int source = P.t().source(b);
     auto letters_ptr = P.get_sequence(source);
@@ -133,16 +133,16 @@ int* peel_muts_leaf_branch(int b, const data_partition& P, const matrix<int>& co
     for(int i=0;i<L;i++)
     {
 	int l1 = letters[i].as_int();
-	if (a.is_letter_class(l1))
+	if (a->is_letter_class(l1))
 	    for(int l2=0;l2<n_letters;l2++)
 	    {
 		int c = max_cost;
 		for(int l=0;l<n_letters;l++)
-		    if (a.matches(l,l1))
+		    if (a->matches(l,l1))
 			c = std::min(c, cost(l,l2));
 		n_muts[n_letters*i + l2] = c;
 	    }
-	else if (a.is_letter(l1))
+	else if (a->is_letter(l1))
 	    for(int l2=0;l2<n_letters;l2++)
 		n_muts[n_letters*i + l2] = cost(l1,l2);
 	else  // wildcard
@@ -169,8 +169,8 @@ void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const matrix<int
 int* peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>& cost,
 			       vector<int*>& cache, int& total)
 {
-    auto& a = P.get_alphabet();
-    int n_letters = a.size();
+    auto a = P.get_alphabet();
+    int n_letters = a->size();
 
     auto t = P.t();
     int source = t.source(b);
@@ -242,8 +242,8 @@ int accumulate_root_leaf(int b, const data_partition& P, const matrix<int>& cost
     const auto letters_ptr = P.get_sequence(root);
     const auto& letters = *letters_ptr;
 
-    auto& a = P.get_alphabet();
-    int n_letters = a.size();
+    auto a = P.get_alphabet();
+    int n_letters = a->size();
 
     int max_cost = max_element(cost)+1;
 
@@ -263,19 +263,19 @@ int accumulate_root_leaf(int b, const data_partition& P, const matrix<int>& cost
 	}
 
 	int l1 = letters[i1].as_int();
-	if (a.is_letter(l1))
+	if (a->is_letter(l1))
 	{
 	    int c = cost(l1,0) + n_muts[i0*n_letters + 0];
 	    for(int l2=1; l2<n_letters; l2++)
 		c = std::min(c, cost(l1,l2) + n_muts[i0*n_letters + l2]);
 	    total += c;
 	}
-	else if (a.is_letter_class(l1))
+	else if (a->is_letter_class(l1))
 	{
 	    int c = max_cost + max(n_muts + i0*n_letters, n_letters);
 	    for(int l2=0; l2<n_letters; l2++)
 		for(int l=0; l<n_letters; l++)
-		    if (a.matches(l,l1))
+		    if (a->matches(l,l1))
 			c = std::min(c, cost(l,l2) + n_muts[i0*n_letters + l2]);
 	    total += c;
 	}
@@ -476,7 +476,7 @@ int n_mutations_fixed_A(const data_partition& P, const matrix<int>& cost)
             auto& n_muts0 = *cache[B[0]];
             auto& n_muts1 = *cache[B[1]];
 
-	    cache[b] = peel_muts_internal_branch_fixed_A(n_muts0, n_muts1, P.get_alphabet(), cost);
+	    cache[b] = peel_muts_internal_branch_fixed_A(n_muts0, n_muts1, *P.get_alphabet(), cost);
 
             delete cache[B[0]]; cache[B[0]] = nullptr;
             delete cache[B[1]]; cache[B[1]] = nullptr;
@@ -486,7 +486,7 @@ int n_mutations_fixed_A(const data_partition& P, const matrix<int>& cost)
     int b_root = branches.back();
     assert(t.target(b_root) == root);
 
-    int total = accumulate_root_leaf_fixed_A(root, A, *cache[b_root], P.get_alphabet(), cost);
+    int total = accumulate_root_leaf_fixed_A(root, A, *cache[b_root], *P.get_alphabet(), cost);
 
     for(auto p: cache)
 	delete p;
@@ -504,5 +504,5 @@ int n_mutations(const data_partition& P, const matrix<int>& cost)
 
 int n_mutations(const data_partition& P)
 {
-    return n_mutations(P, unit_cost_matrix(P.get_alphabet()));
+    return n_mutations(P, unit_cost_matrix(*P.get_alphabet()));
 }

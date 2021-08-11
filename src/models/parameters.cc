@@ -124,9 +124,9 @@ const data_partition_constants& data_partition::DPC() const
     return P->PC->DPC[partition_index];
 }
 
-const alphabet& data_partition::get_alphabet() const
+std::shared_ptr<const alphabet> data_partition::get_alphabet() const
 {
-    return *DPC().a;
+    return DPC().a;
 }
 
 alignment data_partition::A() const
@@ -146,7 +146,7 @@ alignment data_partition::A() const
         M = construct(t(), As);
     }
 
-    return get_alignment(get_alphabet(), DPC().seqs, DPC().sequences, M);
+    return get_alignment(*get_alphabet(), DPC().seqs, DPC().sequences, M);
 }
 
 ParametersTreeInterface data_partition::t() const
@@ -723,8 +723,8 @@ void disconnect_subtree(vector<HMM::bitmask_t>& a123456)
 void mutable_data_partition::set_alignment(const alignment& A)
 {
     // 1. Check if the alphabet on the alignment is right.
-    if (get_alphabet() != A.get_alphabet())
-        throw myexception()<<"Can't set alignment with alphabet '"<<A.get_alphabet().print()<<"' in partition with alphabet '"<<get_alphabet().name<<"'";
+    if (*get_alphabet() != A.get_alphabet())
+        throw myexception()<<"Can't set alignment with alphabet '"<<A.get_alphabet().print()<<"' in partition with alphabet '"<<get_alphabet()->name<<"'";
 
     auto T = t();
 

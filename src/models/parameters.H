@@ -141,7 +141,7 @@ public:
     double get_beta() const;
 
     // get the alphabet for partition i
-    const alphabet& get_alphabet() const;
+    std::shared_ptr<const alphabet> get_alphabet() const;
 
     bool has_IModel() const;
 

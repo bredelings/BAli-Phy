@@ -165,14 +165,14 @@ json logged_params_and_some_computed_stuff(const Model& M, long t)
 		add_value(partition_j, "|indels|", total_length_indels(part));
 	    }
 
-	    const alphabet& a = (*P)[i].get_alphabet();
-	    add_value(partition_j, "#substs", n_mutations(part, unit_cost_matrix(a)));
+	    auto a = (*P)[i].get_alphabet();
+	    add_value(partition_j, "#substs", n_mutations(part, unit_cost_matrix(*a)));
 
-	    if (const Doublets* Do = dynamic_cast<const Doublets*>(&a))
+	    if (auto Do = dynamic_pointer_cast<const Doublets>(a))
 		add_value(partition_j, "#substs(nuc)", n_mutations(part, nucleotide_cost_matrix(*Do)));
-	    if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
+	    if (auto Tr = dynamic_pointer_cast<const Triplets>(a))
 		add_value(partition_j, "#substs(nuc)", n_mutations(part, nucleotide_cost_matrix(*Tr)));
-	    if (const Codons* C = dynamic_cast<const Codons*>(&a))
+	    if (auto C = dynamic_pointer_cast<const Codons>(a))
 		add_value(partition_j, "#substs(aa)", n_mutations(part, amino_acid_cost_matrix(*C)));
 
             add_children(j, "P"+convertToString(i+1), partition_j);
@@ -244,13 +244,13 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 		TL->add_field(prefix+"#indels", [i](const Parameters& P){return convertToString(n_indels(P[i]));});
 		TL->add_field(prefix+"|indels|", [i](const Parameters& P){return convertToString(total_length_indels(P[i]));});
 	    }
-	    const alphabet& a = (*P)[i].get_alphabet();
-	    TL->add_field(prefix+"#substs", [i,cost = unit_cost_matrix(a)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
-	    if (const Doublets* Do = dynamic_cast<const Doublets*>(&a))
+	    auto a = (*P)[i].get_alphabet();
+	    TL->add_field(prefix+"#substs", [i,cost = unit_cost_matrix(*a)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
+	    if (auto Do = dynamic_pointer_cast<const Doublets>(a))
 		TL->add_field(prefix+"#substs(nuc)", [i,cost = nucleotide_cost_matrix(*Do)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
-	    if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
+	    if (auto Tr = dynamic_pointer_cast<const Triplets>(a))
 		TL->add_field(prefix+"#substs(nuc)", [i,cost = nucleotide_cost_matrix(*Tr)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
-	    if (const Codons* C = dynamic_cast<const Codons*>(&a))
+	    if (auto C = dynamic_pointer_cast<const Codons>(a))
 		TL->add_field(prefix+"#substs(aa)", [i,cost = amino_acid_cost_matrix(*C)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
 	}
 

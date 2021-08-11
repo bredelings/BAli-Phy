@@ -244,7 +244,7 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
         partition["range"] = range;
 
         // 2. alphabet
-        string a_name = P[i].get_alphabet().name;
+        string a_name = P[i].get_alphabet()->name;
         out_screen<<"    alphabet = "<<bold(a_name)<<"\n";
         out_cache<<"alphabet"<<i+1<<" = "<<a_name<<endl;
         partition["alphabet"] = a_name;

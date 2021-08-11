@@ -383,7 +383,7 @@ namespace MCMC {
 
 	const Parameters& P = dynamic_cast<const Parameters&>(M);
 
-	const alphabet& a = P[p].get_alphabet();
+	auto a = P[p].get_alphabet();
 
         if (not P[p].has_IModel())
         {
@@ -432,10 +432,10 @@ namespace MCMC {
 		int c = columns[j];
 		assert(A.character(c,i));
 
-		if (a.is_letter(A(c,i)))
+		if (a->is_letter(A(c,i)))
 		    assert( A(c,i) == letter );
 		else if (not overwrite)
-		    assert( a.matches(letter, A(c,i)) );
+		    assert( a->matches(letter, A(c,i)) );
 		else
 		    A.set_value(c,i, letter);
 	    }

@@ -1550,8 +1550,8 @@ namespace substitution {
     get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
     {
         const auto sequence = P.get_sequence(n);
-        const alphabet& a = P.get_alphabet();
-        return get_leaf_seq_likelihoods(*sequence, a, P, delta);
+        auto a = P.get_alphabet();
+        return get_leaf_seq_likelihoods(*sequence, *a, P, delta);
     }
 
     /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
