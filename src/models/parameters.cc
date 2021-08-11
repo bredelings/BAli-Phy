@@ -134,7 +134,7 @@ alignment data_partition::A() const
     matrix<int> M;
     if (t().n_nodes() == 1)
     {
-        M = matrix<int>(DPC().sequences[0].size(),1);
+        M = matrix<int>(get_sequence(0)->size(),1);
         for(int i=0;i<M.size1();i++)
             M(i,0) = i;
     }
@@ -146,7 +146,7 @@ alignment data_partition::A() const
         M = construct(t(), As);
     }
 
-    return get_alignment(*get_alphabet(), DPC().seqs, DPC().sequences, M);
+    return get_alignment(*get_alphabet(), DPC().seqs, leaf_sequences(), M);
 }
 
 ParametersTreeInterface data_partition::t() const
@@ -162,6 +162,14 @@ double data_partition::get_beta() const
 
 int data_partition::subst_root() const {
     return property(0).value().as_int();
+}
+
+vector< vector<int> > data_partition::leaf_sequences() const
+{
+    vector< vector<int> > sequences;
+    for(int i=0;i<t().n_leaves();i++)
+        sequences.push_back( (vector<int>)(*get_sequence(i)) );
+    return sequences;
 }
 
 bool data_partition::has_IModel() const
@@ -248,8 +256,8 @@ log_double_t data_partition::sequence_length_pr(int n) const
 
 int data_partition::seqlength(int n) const
 {
-    if (n < DPC().sequences.size())
-        return DPC().sequences[n].size();
+    if (n < t().n_leaves())
+        return get_sequence(n)->size();
 
     assert(has_pairwise_alignments());
 
@@ -416,8 +424,7 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
 }
 
 data_partition_constants::data_partition_constants(context_ref& C, const TreeInterface& t, int r_data)
-    :seqs( t.n_nodes() ),
-     sequences()
+    :seqs( t.n_nodes() )
 {
     // -------------- Extract method indices from dist properties -----------------//
     auto to_var = C.out_edges_to_var(r_data);
@@ -464,9 +471,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
     if (dist_type == "ctmc_on_tree")
     {
         likelihood_calculator = 0;
-
-        for(int i=0; i<t.n_leaves(); i++)
-            sequences.push_back( (vector<int>)(context_ptr(C,properties_reg)[8][i].value().as_<EVector>()) );
 
         // Extract pairwise alignments from data partition
         int r_alignment = *in_edges->get("alignment");
