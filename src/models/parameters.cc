@@ -253,9 +253,7 @@ int data_partition::seqlength(int n) const
 
     assert(has_pairwise_alignments());
 
-    int l = DPC().sequence_length_indices[n].get_value(*P).as_int();
-
-    return l;
+    return alignment_property(4)[n].value().as_int();
 }
 
 bool data_partition::pairwise_alignment_is_unset(int b) const
@@ -429,8 +427,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
      sequences(),
      branch_HMM_type(t.n_branches(),0)
 {
-    int B = t.n_branches();
-
     // -------------- Extract method indices from dist properties -----------------//
     auto to_var = C.out_edges_to_var(r_data);
     if (to_var->size() > 1)

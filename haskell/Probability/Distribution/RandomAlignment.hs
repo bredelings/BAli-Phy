@@ -71,7 +71,8 @@ data RandomAlignmentProperties = RandomAlignmentProperties
       probability :: LogDouble,
       hmms :: Array Int (),
       lengthp :: Int -> LogDouble,
-      as :: Array Int PairwiseAlignment
+      as :: Array Int PairwiseAlignment,
+      get_lengths :: Array Int Int
     }
 
 annotated_alignment_prs tree hmms model alignment = do
@@ -82,7 +83,7 @@ annotated_alignment_prs tree hmms model alignment = do
   property "lengthp" (snd model)
   property "hmms" hmms
   property "pr" pr
-  property "properties" (RandomAlignmentProperties pr hmms (snd model) (pairwise_alignments alignment))
+  property "properties" (RandomAlignmentProperties pr hmms (snd model) (pairwise_alignments alignment) (sequence_lengths alignment))
   return $ prs
 
 random_alignment tree model tip_lengths = Distribution "random_alignment" (annotated_alignment_prs tree hmms model)
