@@ -432,33 +432,16 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
 
     int s_sequences = *to_var->begin();
     auto properties = C.dist_properties(s_sequences);
-    auto in_edges = C.in_edges_to_dist(s_sequences);
-
-    // TODO: get the like_calc from the dist_type.
-    // TODO: get the alphabet from the "alphabet" property.
-
     properties_reg = *properties->get("properties");
 
     auto dist_type = *C.dist_type(s_sequences);
-
-    // Can we compute the pairwise alignment in such a way that recomputing the alignments when
-    // the tree changes has the same cost as modifying the solution and setting the alignment to the
-    // new modified solution?
-
-    // Until we find a way to do that, we need to find a way to create modifiables for the alignment
-    // even when it is not random.
-    
-    // Suppose we convert the alignment matrix into a graph of partially-ordered columns, where
-    // each column object just records pointers to the next column object for each sequence with
-    // a character in that column.
-    // This would be like what we get when we start with a line graph for each sequence and then begin
-    // merging columns.
 
     if (dist_type == "ctmc_on_tree")
     {
         likelihood_calculator = 0;
 
         // Extract pairwise alignments from data partition
+        auto in_edges = C.in_edges_to_dist(s_sequences);
         int r_alignment = *in_edges->get("alignment");
         auto alignment_on_tree = reg_var( r_alignment );
 
