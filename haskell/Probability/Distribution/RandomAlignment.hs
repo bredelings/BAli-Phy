@@ -66,13 +66,22 @@ triggered_modifiable_alignment value effect = (raw_a, triggered_a) where
     triggered_a = effect' `seq` raw_a
 
 
+data RandomAlignmentProperties = RandomAlignmentProperties 
+    {
+      lengthp :: Int -> LogDouble,
+      hmms :: Array Int PairwiseAlignment,
+      probability :: LogDouble
+    }
+
 annotated_alignment_prs tree hmms model alignment = do
   in_edge "tree" tree
   in_edge "imodel" model
   let prs = alignment_prs hmms model alignment
+      pr = product' prs
   property "lengthp" (snd model)
   property "hmms" hmms
-  property "pr" (product' prs)
+  property "pr" pr
+  property "properties" (RandomAlignmentProperties (snd model) hmms pr)
   return $ prs
 
 random_alignment tree model tip_lengths = Distribution "random_alignment" (annotated_alignment_prs tree hmms model)
