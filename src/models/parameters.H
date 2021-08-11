@@ -66,6 +66,8 @@ struct data_partition_constants
 
     int properties_reg;
 
+    std::optional<int> alignment_properties_reg;
+
     std::vector<param> sequence_length_indices;
 
     std::vector<param> sequence_length_pr_indices;
@@ -110,6 +112,10 @@ protected:
     context_ptr properties() const;
 
     context_ptr property(int i) const;
+
+    context_ptr alignment_properties() const;
+
+    context_ptr alignment_property(int i) const;
 
 public:
 

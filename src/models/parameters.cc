@@ -191,6 +191,17 @@ context_ptr data_partition::property(int i) const
     return properties()[i];
 }
 
+context_ptr data_partition::alignment_properties() const
+{
+    assert(DPC().alignment_properties_reg);
+    return context_ptr(*P, *DPC().alignment_properties_reg);
+}
+
+context_ptr data_partition::alignment_property(int i) const
+{
+    return alignment_properties()[i];
+}
+
 int data_partition::n_base_models() const
 {
     return property(12).value().as_int();
@@ -493,6 +504,8 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
         int s_alignment = *C.out_edges_to_var( r_alignment )->begin();
 
         auto A_properties = C.dist_properties(s_alignment);
+        alignment_properties_reg = A_properties->get("properties");
+
         if (A_properties->get("hmms"))
         {
             auto hmms = reg_var( *A_properties->get("hmms") );
