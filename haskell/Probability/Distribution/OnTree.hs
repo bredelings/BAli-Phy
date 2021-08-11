@@ -79,7 +79,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   property "as" as
   property "n_states" (SModel.nStates smodel)
   property "n_base_models" (SModel.nBaseModels smodel)
-  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood (map list_to_string taxa) f smap leaf_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) )
+  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood (listArray' $ map list_to_string taxa) f smap leaf_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) )
 
   return [likelihood]
 
