@@ -228,7 +228,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 
     b = t().undirected(b);
 
-    return DPC().branch_HMMs[b].get_value(*P).as_<indel::PairHMM>();
+    return alignment_property(1)[b].value().as_<indel::PairHMM>();
 }
 
 vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) const
