@@ -314,9 +314,7 @@ log_double_t data_partition::prior_alignment() const
 {
     if (not variable_alignment()) return 1;
 
-    log_double_t Pr = DPC().alignment_prior_index.get_value(*P).as_log_double();
-
-    return Pr;
+    return alignment_property(0).value().as_log_double();
 }
 
 object_ptr<const Likelihood_Cache_Branch> data_partition::cache(int b) const
@@ -508,8 +506,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
 
         if (A_properties->get("hmms"))
         {
-            alignment_prior_index = reg_var( *A_properties->get("pr") );
-
             auto lengthp = reg_var( *A_properties->get("lengthp") );
             for(int n=0;n<sequence_length_pr_indices.size();n++)
             {
