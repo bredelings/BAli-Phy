@@ -296,7 +296,7 @@ const matrix<int>& data_partition::alignment_constraint() const
 expression_ref data_partition::get_pairwise_alignment_(int b) const
 {
     assert(likelihood_calculator() == 0);
-    return DPC().pairwise_alignment_for_branch[b].get_value(*P);
+    return alignment_property(3)[b].value();
 }
 
 const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
