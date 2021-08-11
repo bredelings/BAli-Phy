@@ -241,9 +241,9 @@ vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) co
     return HMMs;
 }
 
-double data_partition::sequence_length_pr(int n) const
+log_double_t data_partition::sequence_length_pr(int n) const
 {
-    return DPC().sequence_length_pr_indices[n].get_value(*P).as_log_double();
+    return alignment_property(5)[n].value().as_log_double();
 }
 
 int data_partition::seqlength(int n) const
@@ -421,9 +421,7 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
 }
 
 data_partition_constants::data_partition_constants(context_ref& C, const TreeInterface& t, int r_data)
-    :sequence_length_indices(t.n_nodes()),
-     sequence_length_pr_indices(t.n_nodes()),
-     seqs( t.n_nodes() ),
+    :seqs( t.n_nodes() ),
      sequences(),
      branch_HMM_type(t.n_branches(),0)
 {
@@ -483,27 +481,11 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
         int r_alignment = *in_edges->get("alignment");
         auto alignment_on_tree = reg_var( r_alignment );
 
-        /* Initialize params -- from alignments.ref(*p) */
-        auto seq_lengths = expression_ref{var("Bio.Alignment.sequence_lengths"),alignment_on_tree};
-        for(int n=0;n<t.n_nodes();n++)
-            sequence_length_indices[n] = C.add_compute_expression( {var("Data.Array.!"), seq_lengths, n} );
-
         // Add method indices for calculating branch HMMs and alignment prior
-
         int s_alignment = *C.out_edges_to_var( r_alignment )->begin();
 
         auto A_properties = C.dist_properties(s_alignment);
         alignment_properties_reg = A_properties->get("properties");
-
-        if (A_properties->get("hmms"))
-        {
-            auto lengthp = reg_var( *A_properties->get("lengthp") );
-            for(int n=0;n<sequence_length_pr_indices.size();n++)
-            {
-                expression_ref l = sequence_length_indices[n].ref(C);
-                sequence_length_pr_indices[n] = C.add_compute_expression( {lengthp,l} );
-            }
-        }
     }
     else if (dist_type == "ctmc_on_tree_fixed_A")
     {

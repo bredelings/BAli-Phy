@@ -65,10 +65,6 @@ struct data_partition_constants
 
     std::optional<int> alignment_properties_reg;
 
-    std::vector<param> sequence_length_indices;
-
-    std::vector<param> sequence_length_pr_indices;
-
     /// The names and comments for the sequences
     std::vector< sequence > seqs;
 
@@ -145,7 +141,7 @@ public:
     const indel::PairHMM& get_branch_HMM(int b) const;
     std::vector<indel::PairHMM> get_branch_HMMs(const std::vector<int>&) const;
 
-    double sequence_length_pr(int i) const;     // used in dp/3way.cc, dp/5way.cc, dp/alignment-sums.cc
+    log_double_t sequence_length_pr(int i) const;     // used in dp/3way.cc, dp/5way.cc, dp/alignment-sums.cc
 
     double get_beta() const;
 
