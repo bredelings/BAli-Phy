@@ -771,9 +771,9 @@ void do_sampling(const variables_map& args,
     if (is_parameters)
     {
 	owned_ptr<Parameters> PP = P.as<Parameters>();
-	//-------------------- Report alignment alignments -----------------------//
-	for(int i=0;i<PP->n_data_partitions();i++)
-	    std::cout<<"Partition "<<i+1<<": using "<<(*PP)[i].alignment_constraint().size1()<<" constraints.\n";
+	//-------------------- Report alignment constraints -----------------------//
+//	for(int i=0;i<PP->n_data_partitions();i++)
+//	    std::cout<<"Partition "<<i+1<<": using "<<(*PP)[i].alignment_constraint().size1()<<" constraints.\n";
     
 //	for(int i=0;i<PP->n_data_partitions();i++) 
 //	{

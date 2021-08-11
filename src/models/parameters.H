@@ -73,11 +73,6 @@ struct data_partition_constants
 
     std::shared_ptr<const alphabet> a;
 
-    std::vector<int> branch_HMM_type;
-
-    /// Alignment constraint
-    matrix<int> alignment_constraint;
-
     int likelihood_calculator;
 
     data_partition_constants(context_ref& C, const TreeInterface& t, int r_data);
@@ -157,8 +152,6 @@ public:
     const pairwise_alignment_t& get_pairwise_alignment(int b) const;
 
     bool pairwise_alignment_is_unset(int b) const;
-
-    const matrix<int>& alignment_constraint() const;
 
     EVector ancestral_sequences() const;
 

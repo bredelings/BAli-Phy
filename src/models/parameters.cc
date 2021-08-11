@@ -284,11 +284,6 @@ void mutable_data_partition::set_pairwise_alignment(int b, const pairwise_alignm
     assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
 }
 
-const matrix<int>& data_partition::alignment_constraint() const
-{
-    return DPC().alignment_constraint;
-}
-
 expression_ref data_partition::get_pairwise_alignment_(int b) const
 {
     assert(likelihood_calculator() == 0);
@@ -422,8 +417,7 @@ EVector unaligned_alignments_on_tree(const Tree& t, const vector<vector<int>>& s
 
 data_partition_constants::data_partition_constants(context_ref& C, const TreeInterface& t, int r_data)
     :seqs( t.n_nodes() ),
-     sequences(),
-     branch_HMM_type(t.n_branches(),0)
+     sequences()
 {
     // -------------- Extract method indices from dist properties -----------------//
     auto to_var = C.out_edges_to_var(r_data);

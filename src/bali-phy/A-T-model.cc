@@ -904,8 +904,8 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
             throw myexception()<<"Need "<<P.n_data_partitions()<<" alignment constraints (possibly empty) separated by colons, but got "<<ac_filenames.size();
     }
 
-    for(int i=0;i<P.n_data_partitions();i++)
-        P.PC->DPC[i].alignment_constraint = load_alignment_constraint(ac_filenames[i],T);
+//    for(int i=0;i<P.n_data_partitions();i++)
+//        P.PC->DPC[i].alignment_constraint = load_alignment_constraint(ac_filenames[i],T);
 
     //------------------- Handle heating ---------------------//
     setup_heating(proc_id,args,P);
