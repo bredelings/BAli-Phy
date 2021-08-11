@@ -884,29 +884,6 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     //-------------------- Log model -------------------------//
     info.update( log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, branch_length_model, P,args) );
 
-    //----------------- Tree-based constraints ----------------//
-    if (args.count("t-constraint"))
-        P.PC->TC = load_constraint_tree(args["t-constraint"].as<string>(), T.get_leaf_labels());
-
-    if (args.count("a-constraint"))
-        P.PC->AC = load_alignment_branch_constraints(args["a-constraint"].as<string>(),P.PC->TC);
-
-    if (not extends(T, P.PC->TC))
-        throw myexception()<<"Initial tree violates topology constraints.";
-
-    //---------- Alignment constraint (horizontal) -----------//
-    vector<string> ac_filenames(P.n_data_partitions(),"");
-    if (args.count("align-constraint")) 
-    {
-        ac_filenames = split(args["align-constraint"].as<string>(),':');
-
-        if (ac_filenames.size() != P.n_data_partitions())
-            throw myexception()<<"Need "<<P.n_data_partitions()<<" alignment constraints (possibly empty) separated by colons, but got "<<ac_filenames.size();
-    }
-
-//    for(int i=0;i<P.n_data_partitions();i++)
-//        P.PC->DPC[i].alignment_constraint = load_alignment_constraint(ac_filenames[i],T);
-
     //------------------- Handle heating ---------------------//
     setup_heating(proc_id,args,P);
 

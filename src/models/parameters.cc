@@ -1074,9 +1074,7 @@ parameters_constants::parameters_constants(int n_partitions, const SequenceTree&
      imodel_for_partition(i_mapping),
      n_imodels(num_distinct(i_mapping)),
      scale_for_partition(scale_mapping),
-     n_scales(num_distinct(scale_mapping)),
-     TC(star_tree(t.get_leaf_labels())),
-     branch_HMM_type(t.n_branches(),0)
+     n_scales(num_distinct(scale_mapping))
 {
     // check that smodel mapping has correct size.
     if (smodel_for_partition.size() != n_partitions)
@@ -1620,8 +1618,6 @@ Parameters::Parameters(const Program& prog,
  variable_alignment_( n_imodels() > 0 ),
  updown(-1)
 {
-    PC->constants.push_back(-1);
-
     bool allow_compression = load_value("site-compression", ttt.n_nodes() > 2) and not load_value("write-fixed-alignments",false);
     const int n_partitions = filename_ranges.size();
     int result_head = *memory()->program_result_head;
@@ -1715,10 +1711,6 @@ Parameters::Parameters(const Program& prog,
     evaluate_expression( {var("Tree.edgesOutOfNode"), my_tree(), 0});
     evaluate_expression( {var("Tree.neighbors"), my_tree(), 0});
 #endif
-
-    // don't constrain any branch lengths
-    for(int b=0;b<PC->TC.n_branches();b++)
-        PC->TC.branch(b).set_length(-1);
 
     // R5. Register branch categories
     auto maybe_branch_cats = evaluate_expression( {var("BAliPhy.ATModel.branch_categories"), my_atmodel()} );

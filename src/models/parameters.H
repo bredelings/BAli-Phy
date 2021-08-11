@@ -195,26 +195,6 @@ struct parameters_constants: public Object
     int n_scales;
     std::vector<param> branch_scales_;
 
-    /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
-    int branch_prior_type = 0;
-
-    /// Topology and Branch-Length Constraint
-    SequenceTree TC;
-
-    /// Alignment-constrained branches
-    std::vector<int> AC;
-
-    std::vector<int> branch_HMM_type;
-
-    /// Tree partitions to weight
-    std::vector<Partition> partitions;
-    std::vector<log_double_t> partition_weights;
-
-    /// Is pinning enabled or not?
-    std::vector<double> constants;
-    /// Is pinning enabled or not?
-    int features = 0;
-
     std::vector<double> beta_series;
 
     std::vector<double> all_betas;
@@ -287,11 +267,6 @@ public:
 
     /// Did we most recently hit beta==1 (1) or beta=0 (0)
     int updown;
-    int branch_prior_type() const {return PC->branch_prior_type;}
-    int branch_HMM_type(int b) const {
-	assert(0 <= b and b < PC->branch_HMM_type.size());
-	return PC->branch_HMM_type[b];
-    }
   
     // The prior, likelihood, and probability
     log_double_t prior_alignment() const;
