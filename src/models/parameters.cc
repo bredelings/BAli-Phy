@@ -174,7 +174,7 @@ vector< sequence> data_partition::all_seqs() const
 
 bool data_partition::has_IModel() const
 {
-    return bool(P->imodel_index_for_partition(partition_index));
+    return (bool)DPC().alignment_properties_reg;
 }
 
 object_ptr<const EVector> data_partition::get_sequence(int i) const
