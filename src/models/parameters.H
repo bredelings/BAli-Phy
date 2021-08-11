@@ -72,8 +72,6 @@ struct data_partition_constants
 
     std::vector<param> sequence_length_pr_indices;
 
-    std::vector<param> branch_HMMs;
-
     param alignment_prior_index;
 
     /// The names and comments for the sequences

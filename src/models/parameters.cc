@@ -508,10 +508,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
 
         if (A_properties->get("hmms"))
         {
-            auto hmms = reg_var( *A_properties->get("hmms") );
-            for(int b=0;b<B;b++)
-                branch_HMMs.push_back( C.add_compute_expression( {var("Data.Array.!"), hmms, b} ) );
-
             alignment_prior_index = reg_var( *A_properties->get("pr") );
 
             auto lengthp = reg_var( *A_properties->get("lengthp") );
