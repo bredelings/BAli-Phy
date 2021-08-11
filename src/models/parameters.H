@@ -71,8 +71,6 @@ struct data_partition_constants
     /// The leaf sequence data of this partition
     std::vector< std::vector<int> > sequences;
 
-    std::shared_ptr<const alphabet> a;
-
     int likelihood_calculator;
 
     data_partition_constants(context_ref& C, const TreeInterface& t, int r_data);

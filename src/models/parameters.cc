@@ -126,7 +126,7 @@ const data_partition_constants& data_partition::DPC() const
 
 std::shared_ptr<const alphabet> data_partition::get_alphabet() const
 {
-    return DPC().a;
+    return property(9).value().as_<PtrBox<alphabet>>();
 }
 
 alignment data_partition::A() const
@@ -432,9 +432,6 @@ data_partition_constants::data_partition_constants(context_ref& C, const TreeInt
     // TODO: get the alphabet from the "alphabet" property.
 
     properties_reg = *properties->get("properties");
-
-    context_ptr alphabet_ptr(C, *properties->get("alphabet"));
-    a = alphabet_ptr.value().as_<PtrBox<alphabet>>();
 
     auto dist_type = *C.dist_type(s_sequences);
 
