@@ -74,11 +74,10 @@ struct data_partition_constants
 class data_partition
 {
     friend class Parameters;
-  
-public:
-    const Parameters* P;
 
 protected:
+    const Parameters* P;
+
     int partition_index;
 
     const data_partition_constants& DPC() const;
