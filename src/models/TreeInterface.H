@@ -17,10 +17,11 @@ class Parameters;
 
 struct tree_constants: public Object
 {
+    int topology_reg;
+
     // The tree
     expression_ref tree_exp;
     std::vector<std::vector<param>> parameters_for_tree_node;
-    std::vector<std::tuple<param,param,param>> parameters_for_tree_branch;
     int n_leaves;
 
     // Root info
@@ -74,6 +75,8 @@ class TreeInterface
     {
         return branches_from_affected_nodes()[n];
     }
+
+    context_ptr topology_field(int i) const;
 public:
     int n_nodes() const;
     int n_branches() const;

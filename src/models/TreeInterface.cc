@@ -68,6 +68,7 @@ tree_constants::tree_constants(context_ref& C, const expression_ref& E)
 
     assert(has_constructor(tree.head(),"Tree.Tree"));
     assert(tree.size() == 3);
+    topology_reg = tree.get_reg();
 
     auto edges_out_of_node = tree[0];
     auto nodes_for_edge    = tree[1];
@@ -90,17 +91,6 @@ tree_constants::tree_constants(context_ref& C, const expression_ref& E)
 
         if (m_edges.size() < 2) n_leaves++;
     }
-
-    for(int b=0; b < 2*n_branches; b++)
-    {
-        auto info = nodes_for_edge[b];
-
-        param m_source = info[0];
-        param m_source_index = info[1];
-        param m_target = info[2];
-
-        parameters_for_tree_branch.push_back( {m_source, m_source_index, m_target} );
-    }
 }
 
 tree_constants::tree_constants(context_ref& C, const vector<string>& labels, const expression_ref& E)
@@ -109,6 +99,12 @@ tree_constants::tree_constants(context_ref& C, const vector<string>& labels, con
     node_labels = labels;
     int n_nodes = parameters_for_tree_node.size();
     assert(node_labels.size() == n_nodes);
+}
+
+context_ptr TreeInterface::topology_field(int i) const
+{
+    int topology_reg = get_tree_constants().topology_reg;
+    return context_ptr(get_const_context(), topology_reg)[i];
 }
 
 std::optional<int> TreeInterface::branch_durations_array_reg() const
@@ -180,7 +176,7 @@ vector<int> TreeInterface::leaf_branches() const
 }
 
 int TreeInterface::n_branches() const {
-    return get_tree_constants().parameters_for_tree_branch.size()/2;
+    return topology_field(1).size()/2;
 }
 
 int TreeInterface::degree(int n) const {
@@ -389,15 +385,15 @@ bool TreeInterface::subtree_contains_branch(int b1,int b2) const
 
 
 int TreeInterface::source(int b) const {
-    return std::get<0>(get_tree_constants().parameters_for_tree_branch[b]).get_value(get_const_context()).as_int();
+    return topology_field(1)[b][0].value().as_int();
 }
 
 int TreeInterface::source_index(int b) const {
-    return std::get<1>(get_tree_constants().parameters_for_tree_branch[b]).get_value(get_const_context()).as_int();
+    return topology_field(1)[b][1].value().as_int();
 }
 
 int TreeInterface::target(int b) const {
-    return std::get<2>(get_tree_constants().parameters_for_tree_branch[b]).get_value(get_const_context()).as_int();
+    return topology_field(1)[b][2].value().as_int();
 }
 
 int TreeInterface::undirected(int b) const {
@@ -899,7 +895,7 @@ void TreeInterface::read_tree_node(const Tree& T, int n)
     {
 	int b = edges[i];
 	get_tree_constants().parameters_for_tree_node[n][i].set_value(get_context(), b);
-	std::get<1>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), i);
+	topology_field(1)[b][1].set_value(i);
     }
 }
 
@@ -910,8 +906,8 @@ void TreeInterface::read_tree(const Tree& T)
 
     for(int b=0; b < 2*T.n_branches(); b++)
     {
-        std::get<0>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), (int)T.directed_branch(b).source());
-        std::get<2>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), (int)T.directed_branch(b).target());
+	topology_field(1)[b][0].set_value( (int)T.directed_branch(b).source() );
+	topology_field(1)[b][2].set_value( (int)T.directed_branch(b).target() );
     }
 }
 
@@ -941,8 +937,8 @@ void TreeInterface::reconnect_branch(int s1, int t1, int t2)
     branches_from_affected_node(t2)->push_back(b2);
 
     // Update branch source and target nodes
-    std::get<2>(get_tree_constants().parameters_for_tree_branch[b1]).set_value(get_context(), t2);
-    std::get<0>(get_tree_constants().parameters_for_tree_branch[b2]).set_value(get_context(), t2);
+    topology_field(1)[b1][2].set_value( t2 );
+    topology_field(1)[b2][0].set_value( t2 );
 }
 
 void TreeInterface::begin_modify_topology()
@@ -967,7 +963,7 @@ void TreeInterface::end_modify_node(int n)
     {
 	int b = branches[i];
 	get_tree_constants().parameters_for_tree_node[n][i].set_value(get_context(), b);
-	std::get<1>(get_tree_constants().parameters_for_tree_branch[b]).set_value(get_context(), i);
+        topology_field(1)[b][1].set_value(i);
     }
 
     delete branches_from_affected_node(n);
