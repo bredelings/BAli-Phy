@@ -203,9 +203,13 @@ string show_model(const model_t& m)
 }
 
 json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
-                 const vector<model_t>& IModels, const vector<model_t>& SModels,
+                 const vector<model_t>& IModels,
+                 const vector<model_t>& SModels,
                  const vector<model_t>& ScaleModels,
                  const model_t& branch_length_model,
+                 std::vector<std::optional<int>>& smodel_index_for_partition,
+                 std::vector<std::optional<int>>& imodel_index_for_partition,
+                 std::vector<std::optional<int>>& scale_index_for_partition,
                  const Parameters& P,const variables_map& args)
 {
     json info;
@@ -250,24 +254,24 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
         partition["alphabet"] = a_name;
 
         // 3. substitution model
-        auto s_index = P.smodel_index_for_partition(i);
+        auto s_index = smodel_index_for_partition[i];
         out_screen<<"    subst "<<show_model(SModels[*s_index])<<" ("<<bold_blue(tag("S",*s_index))<<")\n";
-        out_cache<<"smodel-index"<<i+1<<" = "<<P.smodel_index_for_partition(i)<<endl;
-        partition["smodel"] = optional_to_json( P.smodel_index_for_partition(i) );
+        out_cache<<"smodel-index"<<i+1<<" = "<<smodel_index_for_partition[i]<<endl;
+        partition["smodel"] = optional_to_json( smodel_index_for_partition[i] );
 
         // 4. indel model
-        if (auto i_index = P.imodel_index_for_partition(i))
+        if (auto i_index = imodel_index_for_partition[i])
             out_screen<<"    indel "<<show_model(IModels[*i_index])<<" ("<<bold_red(tag("I",*i_index))<<")\n";
         else
             out_screen<<"    indel = "<<bold("none")<<"\n";
-        out_cache<<"imodel-index"<<i+1<<" = "<<P.imodel_index_for_partition(i)<<endl;
-        partition["imodel"] = optional_to_json( P.imodel_index_for_partition(i) );
+        out_cache<<"imodel-index"<<i+1<<" = "<<imodel_index_for_partition[i]<<endl;
+        partition["imodel"] = optional_to_json( imodel_index_for_partition[i] );
 
         // 5. scale model
-        auto scale_index = P.scale_index_for_partition(i);
+        auto scale_index = scale_index_for_partition[i];
         out_screen<<"    scale "<<show_model(ScaleModels[*scale_index])<<" ("<<green(tag("Scale",*scale_index))<<")\n";
-        out_cache<<"scale-index"<<i+1<<" = "<<P.scale_index_for_partition(i)<<endl;
-        partition["scale"] = optional_to_json( P.scale_index_for_partition(i) );
+        out_cache<<"scale-index"<<i+1<<" = "<<scale_index_for_partition[i]<<endl;
+        partition["scale"] = optional_to_json( scale_index_for_partition[i] );
 
         out_screen<<endl;
         out_cache<<endl;
@@ -882,7 +886,10 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     write_branch_numbers(out_cache, T);
 
     //-------------------- Log model -------------------------//
-    info.update( log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, branch_length_model, P,args) );
+    info.update( log_summary(out_cache, out_screen, out_both,
+                             full_imodels, full_smodels, full_scale_models, branch_length_model,
+                             smodel_mapping, imodel_mapping, scale_mapping,
+                             P,args) );
 
     //------------------- Handle heating ---------------------//
     setup_heating(proc_id,args,P);

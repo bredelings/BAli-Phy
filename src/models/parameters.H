@@ -182,16 +182,11 @@ struct parameters_constants: public Object
 
     std::vector<param> branch_categories;
 
-    /// The substitution::Model
-    std::vector<std::optional<int>> smodel_for_partition;
-
     /// The IndelModel
-    std::vector<std::optional<int>> imodel_for_partition;
     int n_imodels;
     param imodels_param;
 
     // Scale for partition
-    std::vector<std::optional<int>> scale_for_partition;
     int n_scales;
     std::vector<param> branch_scales_;
 
@@ -237,16 +232,6 @@ public:
 
     mutable_data_partition operator[](int i)       {return get_data_partition(i);}
 
-    std::optional<int> smodel_index_for_partition(int i) const {return PC->smodel_for_partition[i];}
-
-    std::optional<int> imodel_index_for_partition(int i) const {return PC->imodel_for_partition[i];}
-
-    std::vector<int> partitions_for_imodel(int i) const;
-
-    std::vector<int> partitions_for_scale(int i) const;
-
-    std::optional<int> scale_index_for_partition(int i) const {return PC->scale_for_partition[i];}
-  
     ParametersTreeInterface t() const;
 
     std::vector<std::string> get_labels() const;

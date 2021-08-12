@@ -1070,49 +1070,24 @@ parameters_constants::parameters_constants(int n_partitions, const SequenceTree&
                                            const vector<optional<int>>& s_mapping,
                                            const vector<optional<int>>& i_mapping,
                                            const vector<optional<int>>& scale_mapping)
-    :smodel_for_partition(s_mapping),
-     imodel_for_partition(i_mapping),
-     n_imodels(num_distinct(i_mapping)),
-     scale_for_partition(scale_mapping),
+    :n_imodels(num_distinct(i_mapping)),
      n_scales(num_distinct(scale_mapping))
 {
     // check that smodel mapping has correct size.
-    if (smodel_for_partition.size() != n_partitions)
+    if (s_mapping.size() != n_partitions)
         throw myexception()<<"There are "<<n_partitions
                            <<" data partitions, but you mapped smodels onto "
-                           <<smodel_for_partition.size();
+                           <<s_mapping.size();
 
     int n_smodels = get_num_models(s_mapping);
 
     // check that we only map existing smodels to data partitions
-    for(int i=0;i<smodel_for_partition.size();i++) {
-        int m = *smodel_for_partition[i];
+    for(int i=0;i<s_mapping.size();i++) {
+        int m = *s_mapping[i];
         if (m >= n_smodels)
             throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
                                <<" because there are only "<<n_smodels<<" smodels.";
     }
-}
-
-vector<int> Parameters::partitions_for_imodel(int i) const
-{
-    assert(0 <= i and i < n_imodels());
-    vector<int> partitions;
-    for(int p=0;p<n_data_partitions();p++)
-        if (auto index = imodel_index_for_partition(p))
-            if (*index == i)
-                partitions.push_back(p);
-    return partitions;
-}
-
-vector<int> Parameters::partitions_for_scale(int i) const
-{
-    assert(0 <= i and i < n_branch_scales());
-    vector<int> partitions;
-    for(int p=0;p<n_data_partitions();p++)
-        if (auto index = scale_index_for_partition(p))
-            if (*index == i)
-                partitions.push_back(p);
-    return partitions;
 }
 
 /* OK, so we should in theory be able to do two different things:
@@ -1652,7 +1627,7 @@ Parameters::Parameters(const Program& prog,
     vector<const alignment*> alignments(n_partitions);
     for(int i=0;i<n_partitions;i++)
     {
-        if (not imodel_index_for_partition(i) and allow_compression)
+        if (not i_mapping[i] and allow_compression)
         {
             compressed_alignments[i] = compress_alignment(A[i], ttt);
             alignments[i] = &compressed_alignments[i]->compressed;
