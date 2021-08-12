@@ -1,6 +1,6 @@
 module Tree where
 
-data Tree = Tree (Array Int [Int]) (Array Int (Int,Int,Int,Int)) Int
+data Tree = Tree (Array Int (Array Int Int)) (Array Int (Int,Int,Int,Int)) Int
 -- Polymorphism here really should be handled with a class that has the members below
 -- If we allow adding branches to functions later, we could move polymorphic definitions into files. e.g. for show.
 data RootedTree = RootedTree Tree Int (Array Int Bool)
@@ -19,12 +19,14 @@ data TimeTree   = TimeTree RootedTree (Array Double)
 -- The array stores the branch rates
 data RateTimeTree = RateTimeTree TimeTree (Array Double)
 
-edgesOutOfNode (Tree nodesArray _ _) node = nodesArray ! node
-edgesOutOfNode (RootedTree t _ _) node      = edgesOutOfNode t node
-edgesOutOfNode (LabelledTree t _) node      = edgesOutOfNode t node
-edgesOutOfNode (BranchLengthTree t _) node  = edgesOutOfNode t node
-edgesOutOfNode (TimeTree t _) node          = edgesOutOfNode t node
-edgesOutOfNode (RateTimeTree t _) node      = edgesOutOfNode t node
+edgesOutOfNode tree node = elems $ edgesArrayOutOfNode tree node
+
+edgesArrayOutOfNode (Tree nodesArray _ _) node = nodesArray ! node
+edgesArrayOutOfNode (RootedTree t _ _) node      = edgesArrayOutOfNode t node
+edgesArrayOutOfNode (LabelledTree t _) node      = edgesArrayOutOfNode t node
+edgesArrayOutOfNode (BranchLengthTree t _) node  = edgesArrayOutOfNode t node
+edgesArrayOutOfNode (TimeTree t _) node          = edgesArrayOutOfNode t node
+edgesArrayOutOfNode (RateTimeTree t _) node      = edgesArrayOutOfNode t node
 
 nodesForEdge (Tree _ branchesArray _) edgeIndex   = branchesArray ! edgeIndex
 nodesForEdge (RootedTree t _ _) edgeIndex         = nodesForEdge t edgeIndex
@@ -116,6 +118,7 @@ parentNode rooted_tree n = case parentBranch rooted_tree n of Just b  -> Just $ 
 
 -- For numNodes, numBranches, edgesOutOfNode, and nodesForEdge I'm currently using fake polymorphism
 edgesTowardNode t node = map (reverseEdge t) $ edgesOutOfNode t node
+edgesArrayTowardNode t node = arrayMap (reverseEdge t) $ edgesArrayOutOfNode t node
 sourceNode  tree b = let (s,_,_,_) = nodesForEdge tree b in s
 sourceIndex tree b = let (_,i,_,_) = nodesForEdge tree b in i
 targetNode  tree b = let (_,_,t,_) = nodesForEdge tree b in t
@@ -140,6 +143,11 @@ remove_element _ []     = []
 remove_element 0 (x:xs) = xs
 remove_element i (x:xs) = x:(remove_element (i-1) xs)
 
+elemIndexArray e arr = go 0 e arr where
+    go i e arr | i >= numElements arr  = Nothing
+               | (arr!i) == e          = Just i
+               | otherwise             = go (i+1) e arr
+
 tree_from_edges num_nodes edges = Tree nodesArray (listArray (2*num_branches) branches) num_nodes where
 
     num_branches   = num_nodes - 1
@@ -153,10 +161,10 @@ tree_from_edges num_nodes edges = Tree nodesArray (listArray (2*num_branches) br
     find_branch b = listToMaybe [(s,t) | (b',(s,t)) <- branch_edges, b==b']
 
     nodesArray = listArray num_nodes nodes where
-        nodes = [ [b | (b,(x,y)) <- branch_edges, x==n] | n <- [0..num_nodes-1]]
+        nodes = [ listArray' [b | (b,(x,y)) <- branch_edges, x==n] | n <- [0..num_nodes-1]]
 
     branches = [ let Just (s,t) = find_branch b
-                     Just i     = elemIndex b (nodesArray!s)
+                     Just i     = elemIndexArray b (nodesArray!s)
                  in (s,i,t,reverse b) | b <- [0..2*num_branches-1] ]
 
 

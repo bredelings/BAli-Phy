@@ -21,7 +21,6 @@ struct tree_constants: public Object
 
     // The tree
     expression_ref tree_exp;
-    std::vector<std::vector<param>> parameters_for_tree_node;
     int n_leaves;
 
     // Root info

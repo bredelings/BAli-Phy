@@ -77,19 +77,7 @@ tree_constants::tree_constants(context_ref& C, const expression_ref& E)
 
     for(int n=0; n < n_nodes; n++)
     {
-        auto neighbor_branches = edges_out_of_node[n];
-
-        vector<param> m_edges;
-        while(neighbor_branches.size() == 2)
-        {
-            m_edges.push_back( neighbor_branches[0] );
-
-            neighbor_branches = neighbor_branches[1];
-        }
-
-        parameters_for_tree_node.push_back ( m_edges );
-
-        if (m_edges.size() < 2) n_leaves++;
+        if (edges_out_of_node[n].size() < 2) n_leaves++;
     }
 }
 
@@ -97,7 +85,7 @@ tree_constants::tree_constants(context_ref& C, const vector<string>& labels, con
     :tree_constants(C, E)
 {
     node_labels = labels;
-    int n_nodes = parameters_for_tree_node.size();
+    int n_nodes = context_ptr(C, topology_reg)[2].value().as_int();
     assert(node_labels.size() == n_nodes);
 }
 
@@ -128,7 +116,7 @@ std::optional<int> TreeInterface::away_from_root_array_reg() const
 }
 
 int TreeInterface::n_nodes() const {
-    return get_tree_constants().parameters_for_tree_node.size();
+    return topology_field(2).value().as_int();
 }
 
 int TreeInterface::n_leaves() const {
@@ -183,7 +171,7 @@ int TreeInterface::degree(int n) const {
     if (branches_from_affected_node(n))
 	return branches_from_affected_node(n)->size();
     else
-	return get_tree_constants().parameters_for_tree_node[n].size();
+	return topology_field(0)[n].size();
 }
 
 int TreeInterface::branch_out(int n, int i) const
@@ -191,7 +179,7 @@ int TreeInterface::branch_out(int n, int i) const
     if (branches_from_affected_node(n))
 	return (*branches_from_affected_node(n))[i];
   
-    return get_tree_constants().parameters_for_tree_node[n][i].get_value(get_const_context()).as_int();
+    return topology_field(0)[n][i].value().as_int();
 }
 
 int TreeInterface::branch_in(int n, int i) const {
@@ -884,7 +872,7 @@ vector<int> edges_connecting_to_node(const Tree& T, int n);
  */
 void TreeInterface::read_tree_node(const Tree& T, int n)
 {
-    assert(get_tree_constants().parameters_for_tree_node[n].size() == T.node(n).degree());
+    assert(degree(n) == T.node(n).degree());
 
     // These are the edges we seek to impose.
     vector<int> edges = edges_connecting_to_node(T,n);
@@ -894,7 +882,7 @@ void TreeInterface::read_tree_node(const Tree& T, int n)
     for(int i=0;i<edges.size();i++)
     {
 	int b = edges[i];
-	get_tree_constants().parameters_for_tree_node[n][i].set_value(get_context(), b);
+	topology_field(0)[n][i].set_value(b);
 	topology_field(1)[b][1].set_value(i);
     }
 }
@@ -953,16 +941,16 @@ void TreeInterface::begin_modify_topology()
 void TreeInterface::end_modify_node(int n)
 {
     assert(branches_from_affected_node(n));
-    assert(get_tree_constants().parameters_for_tree_node[n].size() == branches_from_affected_node(n)->size());
+    assert(degree(n) == branches_from_affected_node(n)->size());
 
     // These are the current edges.
     const auto& branches = *branches_from_affected_node(n);
 
-    assert(branches.size() == get_tree_constants().parameters_for_tree_node[n].size());
+    assert(branches.size() == degree(n));
     for(int i=0;i<branches.size();i++)
     {
 	int b = branches[i];
-	get_tree_constants().parameters_for_tree_node[n][i].set_value(get_context(), b);
+        topology_field(0)[n][i].set_value(b);
         topology_field(1)[b][1].set_value(i);
     }
 
