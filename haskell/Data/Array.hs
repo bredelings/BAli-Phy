@@ -43,4 +43,5 @@ elems   arr = [ arr!ix | ix <- indices arr ]
 
 assocs  arr = [ (ix, arr!ix) | ix <- indices arr ]
 
-arrayMap f arr = mkArray (numElements arr) (\i -> f (arr!i))
+arrayMapN n f arr = mkArray n (\i -> f (arr!i))
+arrayMap    f arr = arrayMapN (numElements arr) f arr
