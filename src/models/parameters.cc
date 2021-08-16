@@ -1686,9 +1686,6 @@ Parameters::Parameters(const Program& prog,
             get_data_partition(i).set_alignment(A[i]);
     }
 
-    // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
-    evaluate_program();
-
     // Load the specified tree BRANCH LENGTHS into the machine.
     bool some_branch_lengths_not_set = false;
     for(int b=0;b<tt.n_branches();b++)
