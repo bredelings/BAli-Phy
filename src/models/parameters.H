@@ -304,8 +304,7 @@ public:
                const SequenceTree&,
 	       const std::vector<std::optional<int>>&,
 	       const std::vector<std::optional<int>>&,
-	       const std::vector<std::optional<int>>&,
-	       const std::vector<int>&);
+	       const std::vector<std::optional<int>>&);
 };
 
 std::string write_newick(const Parameters&, bool=true);

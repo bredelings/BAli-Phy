@@ -1585,8 +1585,7 @@ Parameters::Parameters(const Program& prog,
                        const SequenceTree& ttt,
                        const vector<optional<int>>& s_mapping,
                        const vector<optional<int>>& i_mapping,
-                       const vector<optional<int>>& scale_mapping,
-                       const std::vector<int>& like_calcs)
+                       const vector<optional<int>>& scale_mapping)
 :Model(prog, keys),
  PC(new parameters_constants(filename_ranges.size(), ttt, s_mapping, i_mapping, scale_mapping)),
  variable_alignment_( false ),
@@ -1675,15 +1674,8 @@ Parameters::Parameters(const Program& prog,
         PC->branch_categories = get_params_from_list(*this, {fromJust,{var("BAliPhy.ATModel.branch_categories"), my_atmodel()}}, tt.n_branches());
 
     // create data partitions
-
-    assert(like_calcs.size() == n_partitions);
     for(int i=0;i<n_partitions;i++)
-    {
         PC->DPC.emplace_back(*this, t(), sequence_data[i].get_reg());
-
-        if (like_calcs[i] == 0)
-            get_data_partition(i).set_alignment(A[i]);
-    }
 
     // Load the specified tree BRANCH LENGTHS into the machine.
     bool some_branch_lengths_not_set = false;
@@ -1700,5 +1692,8 @@ Parameters::Parameters(const Program& prog,
 
     for(int i=0;i<n_partitions;i++)
         if (get_data_partition(i).has_pairwise_alignments())
+        {
             variable_alignment_ = true;
+            get_data_partition(i).set_alignment(A[i]);
+        }
 }
