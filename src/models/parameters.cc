@@ -1070,8 +1070,7 @@ parameters_constants::parameters_constants(int n_partitions, const SequenceTree&
                                            const vector<optional<int>>& s_mapping,
                                            const vector<optional<int>>& i_mapping,
                                            const vector<optional<int>>& scale_mapping)
-    :n_imodels(num_distinct(i_mapping)),
-     n_scales(num_distinct(scale_mapping))
+    :n_scales(num_distinct(scale_mapping))
 {
     // check that smodel mapping has correct size.
     if (s_mapping.size() != n_partitions)
@@ -1590,7 +1589,7 @@ Parameters::Parameters(const Program& prog,
                        const std::vector<int>& like_calcs)
 :Model(prog, keys),
  PC(new parameters_constants(filename_ranges.size(), ttt, s_mapping, i_mapping, scale_mapping)),
- variable_alignment_( n_imodels() > 0 ),
+ variable_alignment_( false ),
  updown(-1)
 {
     const int n_partitions = filename_ranges.size();
@@ -1698,4 +1697,8 @@ Parameters::Parameters(const Program& prog,
         }
     if (some_branch_lengths_not_set)
         std::cerr<<"Warning!  Some branch lengths not set because they are not directly modifiable.\n\n";
+
+    for(int i=0;i<n_partitions;i++)
+        if (get_data_partition(i).has_pairwise_alignments())
+            variable_alignment_ = true;
 }

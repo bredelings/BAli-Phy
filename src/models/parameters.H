@@ -181,10 +181,6 @@ struct parameters_constants: public Object
 
     std::vector<param> branch_categories;
 
-    /// The IndelModel
-    int n_imodels;
-    param imodels_param;
-
     // Scale for partition
     int n_scales;
     std::vector<param> branch_scales_;
@@ -256,9 +252,6 @@ public:
     log_double_t prior_alignment() const;
 
     void cache_likelihood_branches() const;
-
-    /// How many substitution models?
-    int n_imodels() const {return PC->n_imodels;}
 
     /// How many substitution models?
     int n_branch_scales() const {return PC->n_scales;}
