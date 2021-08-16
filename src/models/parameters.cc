@@ -1593,7 +1593,6 @@ Parameters::Parameters(const Program& prog,
  variable_alignment_( n_imodels() > 0 ),
  updown(-1)
 {
-    bool allow_compression = load_value("site-compression", ttt.n_nodes() > 2) and not load_value("write-fixed-alignments",false);
     const int n_partitions = filename_ranges.size();
     int result_head = *memory()->program_result_head;
     param atmodel_plus_partitions = result_head;
@@ -1619,22 +1618,6 @@ Parameters::Parameters(const Program& prog,
         {
             r_taxa = properties->get("taxa");
         }
-    }
-
-    /* ---------------- compress alignments -------------------------- */
-
-    vector<optional<compressed_alignment>> compressed_alignments(n_partitions);
-    vector<const alignment*> alignments(n_partitions);
-    for(int i=0;i<n_partitions;i++)
-    {
-        if (not i_mapping[i] and allow_compression)
-        {
-            compressed_alignments[i] = compress_alignment(A[i], ttt);
-            alignments[i] = &compressed_alignments[i]->compressed;
-            std::cerr<<"Partition #"<<i+1<<": "<<A[i].length()<<" columns -> "<<alignments[i]->length()<<" unique patterns.\n";
-        }
-        else
-            alignments[i] = &A[i];
     }
 
     /* ---------------- Set up the tree ------------------------------ */
