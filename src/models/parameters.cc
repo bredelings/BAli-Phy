@@ -1697,21 +1697,10 @@ Parameters::Parameters(const Program& prog,
     assert(like_calcs.size() == n_partitions);
     for(int i=0;i<n_partitions;i++)
     {
-        if (compressed_alignments[i])
-        {
-            // construct compressed alignment, counts, and mapping
-            auto& [AA, counts, mapping] = *compressed_alignments[i];
-            PC->DPC.emplace_back(*this, t(), sequence_data[i].get_reg());
-            if (like_calcs[i] == 0)
-                get_data_partition(i).set_alignment(AA);
-        }
-        else
-        {
-            auto counts = vector<int>(A[i].length(), 1);
-            PC->DPC.emplace_back(*this, t(), sequence_data[i].get_reg());
-            if (like_calcs[i] == 0)
-                get_data_partition(i).set_alignment(A[i]);
-        }
+        PC->DPC.emplace_back(*this, t(), sequence_data[i].get_reg());
+
+        if (like_calcs[i] == 0)
+            get_data_partition(i).set_alignment(A[i]);
     }
 
     // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
