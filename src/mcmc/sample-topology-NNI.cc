@@ -280,17 +280,21 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
     MCMC::Result result(2);
 
+    double L0 = 1;
+    if (PP.t().has_branch_lengths())
+        L0 = PP.t().branch_length(b);
+
     result.totals[0] = (C>0)?1:0;
     // This gives us the average length of branches prior to successful swaps
     if (C>0)
-	result.totals[1] = p[0].t().branch_length(b);
+	result.totals[1] = L0;
     else
 	result.counts[1] = 0;
 
     if (smart)
-	NNI_inc(Stats,"NNI (2-way smart)", result, p[0].t().branch_length(b));
+	NNI_inc(Stats,"NNI (2-way smart)", result, L0);
     else
-	NNI_inc(Stats,"NNI (2-way stupid)", result, p[0].t().branch_length(b));
+	NNI_inc(Stats,"NNI (2-way stupid)", result, L0);
 }
 
 void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
@@ -535,7 +539,9 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     //------ Generate Topologies and alter caches ------///
     vector<Parameters> p(3,PP);
 
-    double L0 = PP.t().branch_length(b);
+    double L0 = 1;
+    if (PP.t().has_branch_lengths())
+        L0 = PP.t().branch_length(b);
 
     vector< A5::hmm_order > orders(3);
     orders[0] = A5::get_nodes_random(p[0].t(), b);
