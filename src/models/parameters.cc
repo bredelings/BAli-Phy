@@ -29,6 +29,7 @@
 #include "util/assert.hh"
 
 #include "models/parameters.H"
+#include "models/TreeInterface.H"
 #include "dp/2way.H"
 #include "util/rng.H"
 #include "util/set.H"
@@ -1700,4 +1701,59 @@ Parameters::Parameters(const Program& prog,
             variable_alignment_ = true;
             get_data_partition(i).set_alignment(A[i]);
         }
+}
+
+Parameters::Parameters(const context_ref& C, int tree_reg)
+    :Model(C)
+{
+    TC = new tree_constants(*this, tree_reg);
+    branches_from_affected_node.resize(t().n_nodes());
+
+    // Find the downstream partitions.
+    vector<int> partition_regs;
+    {
+        auto tweak_tree = [&](context_ref& C)
+        {
+            ModifiablesTreeInterface T(C, tree_reg);
+            optional<int> internal_branch;
+            for(int b=0;b<T.n_branches();b++)
+                if (T.is_internal_branch(b))
+                    internal_branch=b;
+            if (internal_branch)
+            {
+                vector<int> branches;
+                T.append_branches_after(T.reverse(*internal_branch), branches);
+                T.append_branches_after(*internal_branch, branches);
+                ::NNI(T, branches[0], branches[2]);
+            }
+
+            if (T.can_set_branch_length(0))
+                T.set_branch_length(0,1.0);
+        };
+
+        auto downstream_sampling_events = find_affected_sampling_events(tweak_tree);
+
+        for(auto se: downstream_sampling_events)
+        {
+            // Under what circumstances would se get unregistered?
+            if (auto type = dist_type(se))
+            {
+                if (*type == "ctmc_on_tree" or *type == "ctmc_on_tree_fixed_A")
+                {
+                    auto r_out = out_edges_from_dist(se);
+                    if (not r_out)
+                        throw myexception()<<"Can't find output reg for sampling event";
+                    partition_regs.push_back(*r_out);
+                }
+            }
+            else
+                throw myexception()<<"missing sampling event";
+        }
+    }
+
+    PC = new parameters_constants();
+
+    // create data partitions
+    for(int partition_reg: partition_regs)
+        PC->DPC.emplace_back(*this, t(), partition_reg);
 }

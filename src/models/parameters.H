@@ -307,6 +307,9 @@ public:
 	       const std::vector<std::optional<int>>&,
 	       const std::vector<std::optional<int>>&,
 	       const std::vector<std::optional<int>>&);
+
+    // Can we  create a Parameters from a context and a tree_reg?
+    Parameters(const context_ref& C, int tree_reg);
 };
 
 std::string write_newick(const Parameters&, bool=true);
