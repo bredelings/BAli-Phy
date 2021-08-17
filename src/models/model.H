@@ -91,6 +91,9 @@ public:
     /// Construct an empty model
     Model(const Program& P, const key_map_t& k = {});
 
+    /// Construct an empty model
+    Model(const context_ref& C, const key_map_t& k = {});
+
     Model(const Model&) = default;
     Model(Model&&) = default;
 
