@@ -182,7 +182,7 @@ struct parameters_constants: public Object
     std::vector<param> branch_categories;
 
     // Scale for partition
-    int n_scales;
+    int n_scales = 0;
     std::vector<param> branch_scales_;
 
     std::vector<double> beta_series;
@@ -192,6 +192,8 @@ struct parameters_constants: public Object
     std::vector<data_partition_constants> DPC;
 
     parameters_constants* clone() const {return new parameters_constants(*this);}
+
+    parameters_constants();
 
     parameters_constants(int n_partitions, const SequenceTree&, 
 			 const std::vector<std::optional<int>>&,

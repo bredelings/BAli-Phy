@@ -1066,6 +1066,10 @@ int get_num_models(const vector<optional<int>>& mapping)
     return n;
 }
 
+parameters_constants::parameters_constants()
+{
+}
+
 parameters_constants::parameters_constants(int n_partitions, const SequenceTree& t,
                                            const vector<optional<int>>& s_mapping,
                                            const vector<optional<int>>& i_mapping,
