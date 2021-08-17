@@ -548,6 +548,7 @@ double TreeInterface::branch_length(int b) const
 {
     b %= n_branches();
 
+    assert(has_branch_lengths());
     int array_reg = *branch_durations_array_reg();
 
     auto& C = get_const_context();
@@ -562,12 +563,13 @@ bool TreeInterface::can_set_branch_length(int b) const
 {
     b %= n_branches();
 
-    int array_reg = *branch_durations_array_reg();
+    auto array_reg = branch_durations_array_reg();
+    if (not array_reg) return false;
 
     auto& C = get_const_context();
 
     auto& M = C.get_memory();
-    int r = M[array_reg].reg_for_slot(b);
+    int r = M[*array_reg].reg_for_slot(b);
 
     auto m = C.find_modifiable_reg(r);
     return bool(m);
