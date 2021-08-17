@@ -998,7 +998,7 @@ log_double_t subst_likelihood(const Parameters& P)
 }
 
 vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, const vector<int>& nodes, bool original);
-log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes);
+optional<log_double_t> pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes);
 
 void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_attachment_points& locations, const tree_edge& subtree_edge, const tree_edge& target_edge, Parameters p2, const map<tree_edge,vector<int>>& nodes, const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignment3way, bool sum_out_A)
 {
@@ -1023,7 +1023,10 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
     {
         //Resample the alignment and compute the sampling probability.
         auto A_sampling_pr = pr_sum_out_A_tri(p2, a23_constraint, nodes_);
-        Pr[target_edge] = subst_likelihood_and_alignment_prior(p2) / A_sampling_pr;
+        if (A_sampling_pr)
+            Pr[target_edge] = subst_likelihood_and_alignment_prior(p2) / *A_sampling_pr;
+        else
+            Pr[target_edge] = 0;
     }
     // 3b. Compute substitution likelihood
     else
@@ -1064,7 +1067,10 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 	auto& nodes_ = nodes.at(I.initial_edge);
         P.set_root(root_node);
         auto A_sampling_pr = pr_sum_out_A_tri(P, A23_constraints(P, nodes_, true), nodes_) ;
-	Pr[I.initial_edge] = subst_likelihood_and_alignment_prior(P) / A_sampling_pr;
+        if (A_sampling_pr)
+            Pr[I.initial_edge] = subst_likelihood_and_alignment_prior(P) / *A_sampling_pr;
+        else
+            Pr[I.initial_edge] = 0;
     }
     else
     {

@@ -268,7 +268,7 @@ sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,
 {
 }
 
-log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes)
+optional<log_double_t> pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes)
 {
     log_double_t Pr = 1.0;
 
@@ -278,7 +278,13 @@ log_double_t pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bi
 	if (P[j].variable_alignment())
         {
             // This computes the sampling probability of the CHOSEN path, not the INPUT path!
-	    auto [Matrices,sampling_pr] = tri_sample_alignment_base(P[j], nodes, *a23[j], -1);
+	    auto [M, sampling_pr] = tri_sample_alignment_base(P[j], nodes, *a23[j], -1);
+            if (M->Pr_sum_all_paths() <= 0.0)
+            {
+                std::cerr<<"pr_sum_out_A_tri: Pr = 0   j="<<j<<" \n";
+                return {};
+            }
+
 	    Pr *= sampling_pr;
             Pr /= A3::correction(P[j], nodes);
             // FIXME! These sums still need to be accepted/rejected!
@@ -304,7 +310,7 @@ void sample_A3_multi_calculation::run_dp()
       //      return;// -1;
       }
     */
-  
+
     //----------- Generate the different states and Matrices ---------//
     C1 = A3::correction(p[0],nodes[0]);
 
@@ -315,10 +321,18 @@ void sample_A3_multi_calculation::run_dp()
 #ifndef NDEBUG        
 	Matrices[i].resize(p[i].n_data_partitions());
 #endif
+        bool ok = true;
 	for(int j=0;j<p[i].n_data_partitions();j++) {
 	    if (p[i][j].variable_alignment())
             {
-		auto [M,sampling_pr] = compute_matrix(i,j);
+		auto [M, sampling_pr] = compute_matrix(i,j);
+		if (M->Pr_sum_all_paths() <= 0.0)
+                {
+		    std::cerr<<"sample-tri: Pr = 0   i = "<<i<<"   j="<<j<<" \n";
+                    ok = false;
+                    break;
+                }
+
                 Pr[i] /= sampling_pr;
                 Pr[i] *= A3::correction(p[i][j], nodes[i]);
 #ifndef NDEBUG                
@@ -326,7 +340,13 @@ void sample_A3_multi_calculation::run_dp()
 #endif
             }
 	}
-        Pr[i] *= p[i].heated_probability();
+
+        // Don't compute the probability if the alignment wasn't resampled!
+        // Should we treat i=0 differently, since the old alignment is consistent?
+        if (ok)
+            Pr[i] *= p[i].heated_probability();
+        else
+            Pr[i] = 0;
     }
 
     assert(Pr[0] > 0.0);
