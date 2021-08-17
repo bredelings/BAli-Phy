@@ -823,6 +823,8 @@ extern "C" closure builtin_function_walk_tree_sample_alignments(OperationArgs& A
 
     int c1 = Args.evaluate(1).as_int();
 
+    int io_state = Args.evaluate(2).as_int();
+
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
 
@@ -831,7 +833,7 @@ extern "C" closure builtin_function_walk_tree_sample_alignments(OperationArgs& A
     walk_tree_sample_alignments(P,Stats);
     C1 = *P;
 
-    return constructor("()",0);
+    return EPair(io_state+1,constructor("()",0));
 }
 
 /// realign_from_tips
@@ -858,6 +860,8 @@ extern "C" closure builtin_function_walk_tree_sample_NNI_and_branch_lengths(Oper
 
     int c1 = Args.evaluate(1).as_int();
 
+    int io_state = Args.evaluate(2).as_int();
+
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
 
@@ -866,7 +870,7 @@ extern "C" closure builtin_function_walk_tree_sample_NNI_and_branch_lengths(Oper
     walk_tree_sample_NNI_and_branch_lengths(P,Stats);
     C1 = *P;
 
-    return constructor("()",0);
+    return EPair(io_state+1,constructor("()",0));
 }
 
 extern "C" closure builtin_function_walk_tree_sample_NNI(OperationArgs& Args)
@@ -879,6 +883,8 @@ extern "C" closure builtin_function_walk_tree_sample_NNI(OperationArgs& Args)
 
     int c1 = Args.evaluate(1).as_int();
 
+    int io_state = Args.evaluate(2).as_int();
+
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
 
@@ -887,7 +893,7 @@ extern "C" closure builtin_function_walk_tree_sample_NNI(OperationArgs& Args)
     walk_tree_sample_NNI(P,Stats);
     C1 = *P;
 
-    return constructor("()",0);
+    return EPair(io_state+1,constructor("()",0));
 }
 
 /// scale_scales_only (MH)
