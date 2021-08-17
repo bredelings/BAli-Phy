@@ -268,7 +268,7 @@ sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,
 {
 }
 
-optional<log_double_t> pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes)
+optional<log_double_t> pr_sum_out_A_tri(Parameters& P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes)
 {
     log_double_t Pr = 1.0;
 

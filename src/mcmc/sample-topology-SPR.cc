@@ -998,7 +998,7 @@ log_double_t subst_likelihood(const Parameters& P)
 }
 
 vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, const vector<int>& nodes, bool original);
-optional<log_double_t> pr_sum_out_A_tri(Parameters P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes);
+optional<log_double_t> pr_sum_out_A_tri(Parameters& P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes);
 
 void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_attachment_points& locations, const tree_edge& subtree_edge, const tree_edge& target_edge, Parameters p2, const map<tree_edge,vector<int>>& nodes, const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignment3way, bool sum_out_A)
 {
