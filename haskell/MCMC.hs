@@ -42,6 +42,10 @@ fnpr_unsafe_proposal tree node c = IOAction (pair_from_c . builtin_fnpr_unsafe_p
 
 walk_tree_sample_nni_unsafe tree c = sequence_ [ nni_on_branch_unsafe tree branch c | branch <- walk_tree_path tree c]
 
+builtin walk_tree_sample_alignments 2 "walk_tree_sample_alignments" "MCMC"
+builtin walk_tree_sample_NNI 2 "walk_tree_sample_NNI" "MCMC"
+builtin walk_tree_sample_NNI_and_branch_lengths 2 "walk_tree_sample_NNI_and_branch_lengths" "MCMC"
+
 builtin builtin_copy_context 2 "copy_context" "MCMC"
 copy_context c = IOAction (pair_from_c . builtin_copy_context c)
 

@@ -788,43 +788,6 @@ extern "C" closure builtin_function_TT_NNI_on_branch_unsafe(OperationArgs& Args)
     return constructor("()",0);
 }
 
-extern "C" closure builtin_function_walk_tree_sample_alignment(OperationArgs& Args)
-{
-    assert(not Args.evaluate_changeables());
-    auto& M = Args.memory();
-
-    //------------- 1a. Get argument X -----------------//
-    int tree_reg = Args.evaluate_slot_unchangeable(0);
-
-    int c1 = Args.evaluate(2).as_int();
-
-    //------------ 2. Make a TreeInterface -------------//
-    context_ref C1(M, c1);
-    ModifiablesTreeInterface T(C1,tree_reg);
-
-    //------------ 3. Get the substitution root --------//
-
-    // FIXME: encode the subst_root in the tree somehow?
-    int subst_root = T.n_nodes()-1;
-
-    //------------ 4. Walk the tree and realign --------//
-    auto branches = walk_tree_path(T, subst_root);
-
-    for(int branch: branches)
-    {
-        if ((uniform() < 0.15) and T.n_leaves() >2)
-        {
-            sample_tri_one(C1, T, branch);
-        }
-        else
-        {
-            sample_alignments_one(C1, T, branch);
-        }
-    }
-
-    return constructor("()",0);
-}
-
 extern "C" closure builtin_function_sample_alignments_one(OperationArgs&)
 {
     // int b = evaluate(1).as_int();
@@ -850,7 +813,26 @@ extern "C" closure builtin_function_sample_alignments_one(OperationArgs&)
 }
 
 
-/// walk_tree_sample_alignments
+extern "C" closure builtin_function_walk_tree_sample_alignments(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.reg_for_slot(0);
+
+    int c1 = Args.evaluate(1).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    MCMC::MoveStats Stats;
+    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    walk_tree_sample_alignments(P,Stats);
+    C1 = *P;
+
+    return constructor("()",0);
+}
 
 /// realign_from_tips
 
@@ -866,9 +848,47 @@ extern "C" closure builtin_function_sample_alignments_one(OperationArgs&)
 
 /// walk_tree_sample_branch_lengths
 
-/// walk_tree_NNI_and_lengths
+extern "C" closure builtin_function_walk_tree_sample_NNI_and_branch_lengths(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
 
-/// walk_tree_NNI
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.reg_for_slot(0);
+
+    int c1 = Args.evaluate(1).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    MCMC::MoveStats Stats;
+    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    walk_tree_sample_NNI_and_branch_lengths(P,Stats);
+    C1 = *P;
+
+    return constructor("()",0);
+}
+
+extern "C" closure builtin_function_walk_tree_sample_NNI(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.reg_for_slot(0);
+
+    int c1 = Args.evaluate(1).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    MCMC::MoveStats Stats;
+    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    walk_tree_sample_NNI(P,Stats);
+    C1 = *P;
+
+    return constructor("()",0);
+}
 
 /// scale_scales_only (MH)
 
