@@ -76,7 +76,10 @@ uniform_topology_pr n = uniform_topology_pr (n - 1) / (doubleToLogDouble $ intTo
 -- This is why triggered tree still uses 'tree' as input to 'modifiable_tree'.
 triggered_modifiable_tree = triggered_modifiable_structure modifiable_cayley_tree force_tree
 
-uniform_topology_effect tree = tree `seq` add_move (walk_tree_sample_nni_unsafe tree)
+uniform_topology_effect tree = do
+--  add_move $ walk_tree_sample_NNI_unsafe tree  -- probably we should ensure that the probability of the alignment is zero if pairwise alignments don't match?
+  add_move $ walk_tree_sample_alignments tree  -- maybe this should be elsewhere?
+  add_move $ walk_tree_sample_NNI tree         -- does this handle situations with no data partitions?
 
 uniform_topology n = Distribution "uniform_topology"
                                   (\tree -> return [uniform_topology_pr n])
