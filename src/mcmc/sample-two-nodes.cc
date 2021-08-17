@@ -163,25 +163,36 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
         Matrices[i].resize(p[i].n_data_partitions());
 #endif
 
+        bool ok = true;
 	for(int j=0;j<p[i].n_data_partitions();j++)
         {
 	    if (p[i][j].variable_alignment())
 	    {
                 auto [M, sampling_pr] = sample_two_nodes_base(p[i][j], *a123456[j], order[i], order[0]);
+		if (M->Pr_sum_all_paths() <= 0.0)
+                {
+		    std::cerr<<"Pr = 0   i = "<<i<<"   j="<<j<<" \n";
+                    ok = false;
+                    break;
+                }
+
                 Pr[i] /= sampling_pr;
                 Pr[i] *= A5::correction(p[i][j], order[i]);
 
-		if (M->Pr_sum_all_paths() <= 0.0)
-		    std::cerr<<"Pr = 0   i = "<<i<<"   j="<<j<<" \n";
 
 #ifndef NDEBUG_DP
                 p[i][j].likelihood();  // check the likelihood calculation
-		Matrices[i][j] = M;
+                Matrices[i][j] = M;
 #endif
             }
         }
 
-        Pr[i] *= p[i].heated_probability();
+        // Don't compute the probability if the alignment wasn't resampled!
+        // Should we treat i=0 differently, since the old alignment is consistent?
+        if (ok)
+            Pr[i] *= p[i].heated_probability();
+        else
+            Pr[i] = 0;
     }
 
     // Fail if Pr[0] is 0
