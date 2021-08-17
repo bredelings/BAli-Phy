@@ -830,8 +830,11 @@ extern "C" closure builtin_function_walk_tree_sample_alignments(OperationArgs& A
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
-    walk_tree_sample_alignments(P,Stats);
-    C1 = *P;
+    if (P.as<Parameters>()->n_data_partitions())
+    {
+        walk_tree_sample_alignments(P,Stats);
+        C1 = *P;
+    }
 
     return EPair(io_state+1,constructor("()",0));
 }
@@ -867,8 +870,11 @@ extern "C" closure builtin_function_walk_tree_sample_NNI_and_branch_lengths(Oper
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
-    walk_tree_sample_NNI_and_branch_lengths(P,Stats);
-    C1 = *P;
+    if (P.as<Parameters>()->n_data_partitions())
+    {
+        walk_tree_sample_NNI_and_branch_lengths(P,Stats);
+        C1 = *P;
+    }
 
     return EPair(io_state+1,constructor("()",0));
 }
@@ -890,8 +896,11 @@ extern "C" closure builtin_function_walk_tree_sample_NNI(OperationArgs& Args)
 
     MCMC::MoveStats Stats;
     owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
-    walk_tree_sample_NNI(P,Stats);
-    C1 = *P;
+    if (P.as<Parameters>()->n_data_partitions())
+    {
+        walk_tree_sample_NNI(P,Stats);
+        C1 = *P;
+    }
 
     return EPair(io_state+1,constructor("()",0));
 }
