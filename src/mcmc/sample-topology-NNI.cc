@@ -301,6 +301,7 @@ void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
+    if (not PP.t().has_branch_lengths()) return;
 
     A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
     const auto& nodes = order.nodes;
@@ -365,6 +366,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
+    if (not PP.t().has_branch_lengths()) return;
 
     A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
     const auto& nodes = order.nodes;
