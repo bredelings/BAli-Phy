@@ -1041,29 +1041,39 @@ void reg_heap::register_transition_kernel(int r, int s)
 {
     assert(not steps.is_free(s));
 
+    double rate = expression_at(r).sub()[0].as_double();
     int r_kernel = closure_at(r).reg_for_slot(1);
 
     assert(reg_is_constant(r_kernel));
 
     // Multiple steps from different contexts COULD register the same transition kernel.
     assert(not transition_kernels_.count(s));
-    transition_kernels_.insert(s);
 
-    for(auto& handler: register_tk_handlers)
-        handler(r,s);
+    if (rate > 0)
+    {
+        transition_kernels_.insert(s);
+
+        for(auto& handler: register_tk_handlers)
+            handler(r,s);
+    }
 }
 
 void reg_heap::unregister_transition_kernel(int r, int s)
 {
+    double rate = expression_at(r).sub()[0].as_double();
     int r_kernel = closure_at(r).reg_for_slot(1);
 
-    for(auto& handler: unregister_tk_handlers)
-        handler(r,s);
+    if (rate > 0)
+    {
+        for(auto& handler: unregister_tk_handlers)
+            handler(r,s);
 
-    if (not transition_kernels_.count(s))
-        throw myexception()<<"unregister_transition_kernel: transition kernel <r="<<r_kernel<<",s="<<s<<"> not found!";
+        if (not transition_kernels_.count(s))
+            throw myexception()<<"unregister_transition_kernel: transition kernel <r="<<r_kernel<<",s="<<s<<"> not found!";
 
-    transition_kernels_.erase(s);
+        transition_kernels_.erase(s);
+    }
+    assert(not transition_kernels_.count(s));
 }
 
 const std::unordered_set<int>& reg_heap::transition_kernels() const
