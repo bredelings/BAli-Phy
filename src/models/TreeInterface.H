@@ -38,7 +38,7 @@ struct tree_constants: public Object
 
     tree_constants* clone() const {return new tree_constants(*this);}
 
-    tree_constants(context_ref&, int);
+    tree_constants(context_ref&, int tree_reg);
     tree_constants(context_ref&, const expression_ref&);
     tree_constants(context_ref&, const std::vector<std::string>&, const expression_ref&);
 };

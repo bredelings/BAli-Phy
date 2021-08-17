@@ -22,10 +22,15 @@ using boost::dynamic_bitset;
 // To deref a field, we would look up the reg, get the field, and evaluate.
 
 tree_constants::tree_constants(context_ref& C, const expression_ref& E)
-    :tree_exp(E),
+    :tree_constants(C, E.as_<reg_var>().target)
+{
+}
+
+
+tree_constants::tree_constants(context_ref& C, int tree_reg)
+    :tree_exp(reg_var(tree_reg)),
      n_leaves(0)
 {
-    int tree_reg = E.as_<reg_var>().target;
     auto tree = context_ptr(C, tree_reg).result();
 
     //------------------------- Create the tree structure -----------------------//
