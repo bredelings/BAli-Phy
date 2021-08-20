@@ -54,6 +54,7 @@ compress_alignment a = (compressed, counts, mapping) where ca = builtin_compress
                                                            counts = get_vector_index ca 1
                                                            mapping = get_vector_index ca 2
 
+alignment_on_tree_length (AlignmentOnTree t _ ls as) = (ls!0) + sumi [numInsert (as!b) | b <- allEdgesFromNode t 0]
 
 builtin builtin_uncompress_alignment 2 "uncompress_alignment" "Alignment"
 
