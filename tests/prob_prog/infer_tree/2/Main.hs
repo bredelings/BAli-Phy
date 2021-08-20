@@ -13,24 +13,25 @@ model seq_data = do
 
     let taxa = map sequence_name seq_data
 
-    scale  <- gamma 0.5 2.0
+    scale1  <- gamma 0.5 2.0
 
-    tree   <- scale_branch_lengths scale <$> uniform_labelled_tree taxa branch_length_dist
+    tree   <- uniform_labelled_tree taxa branch_length_dist
+    let tree1 = scale_branch_lengths scale1 tree
 
     freqs  <- symmetric_dirichlet_on ["A", "C", "G", "T"] 1.0
     kappa1 <- log_normal 0.0 1.0
     kappa2 <- log_normal 0.0 1.0
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 
-    seq_data ~> ctmc_on_tree_fixed_A tree tn93_model
+    seq_data ~> ctmc_on_tree_fixed_A tree1 tn93_model
 
-    return ["tree" %=% write_newick tree,
-            "scale" %=% scale,
+    return ["tree1" %=% write_newick tree1,
+            "scale" %=% scale1,
             "tn93:kappa1" %=% kappa1,
             "tn93:kappa2" %=% kappa2,
             "tn93:frequencies" %=% freqs,
             "|T|" %=% tree_length tree,
-            "scale*|T|" %=% scale * tree_length tree]
+            "scale1*|T|" %=% tree_length tree1]
 
 main = do
     [filename] <- getArgs

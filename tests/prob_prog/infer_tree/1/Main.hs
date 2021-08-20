@@ -35,24 +35,25 @@ model seq_data = do
     let taxa            = map sequence_name seq_data
         tip_seq_lengths = get_sequence_lengths dna seq_data
 
-    scale                     <- gamma 0.5 2.0
+    scale1                     <- gamma 0.5 2.0
 
-    tree <- scale_branch_lengths scale <$> uniform_labelled_tree taxa branch_length_dist
+    tree <- uniform_labelled_tree taxa branch_length_dist
+    let tree1 = scale_branch_lengths scale1 tree
 
     (smodel, smodel_loggers) <- smodel_prior
 
-    (imodel, imodel_loggers) <- imodel_prior tree
+    (imodel, imodel_loggers) <- imodel_prior tree1
 
-    alignment                <- random_alignment tree imodel tip_seq_lengths
+    alignment                <- random_alignment tree1 imodel tip_seq_lengths
 
-    seq_data ~> ctmc_on_tree tree alignment smodel
+    seq_data ~> ctmc_on_tree tree1 alignment smodel
 
-    return ["tree" %=% write_newick tree,
+    return ["tree1" %=% write_newick tree1,
             "tn93" %>% smodel_loggers,
             "rs07" %>% imodel_loggers ,
-            "scale" %=% scale,
+            "scale1" %=% scale1,
             "|T|" %=% tree_length tree,
-            "scale*|T|" %=% scale * tree_length tree]
+            "scale1*|T|" %=% tree_length tree1]
 
 main = do
     [filename] <- getArgs
