@@ -160,3 +160,4 @@ tree_from_edges num_nodes edges = Tree nodesArray (listArray (2*num_branches) br
                  in (s,i,t,reverse b) | b <- [0..2*num_branches-1] ]
 
 
+tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
