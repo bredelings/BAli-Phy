@@ -845,13 +845,112 @@ extern "C" closure builtin_function_walk_tree_sample_alignments(OperationArgs& A
 
 /// sample_two_nodes
 
-/// SPR_flat
+extern "C" closure builtin_function_sample_SPR_flat(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
 
-/// SPR_nodes
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.reg_for_slot(0);
 
-/// SPR_all
+    int c1 = Args.evaluate(1).as_int();
 
-/// walk_tree_sample_branch_lengths
+    int io_state = Args.evaluate(2).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    MCMC::MoveStats Stats;
+    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    if (P.as<Parameters>()->n_data_partitions())
+    {
+        sample_SPR_flat(P,Stats);
+        C1 = *P;
+    }
+
+    return EPair(io_state+1,constructor("()",0));
+}
+
+
+extern "C" closure builtin_function_sample_SPR_nodes(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.reg_for_slot(0);
+
+    int c1 = Args.evaluate(1).as_int();
+
+    int io_state = Args.evaluate(2).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    MCMC::MoveStats Stats;
+    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    if (P.as<Parameters>()->n_data_partitions())
+    {
+        sample_SPR_nodes(P,Stats);
+        C1 = *P;
+    }
+
+    return EPair(io_state+1,constructor("()",0));
+}
+
+extern "C" closure builtin_function_sample_SPR_all(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.reg_for_slot(0);
+
+    int c1 = Args.evaluate(1).as_int();
+
+    int io_state = Args.evaluate(2).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    MCMC::MoveStats Stats;
+    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    if (P.as<Parameters>()->n_data_partitions())
+    {
+        sample_SPR_all(P,Stats);
+        C1 = *P;
+    }
+
+    return EPair(io_state+1,constructor("()",0));
+}
+
+
+extern "C" closure builtin_function_walk_tree_sample_branch_lengths(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.reg_for_slot(0);
+
+    int c1 = Args.evaluate(1).as_int();
+
+    int io_state = Args.evaluate(2).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    MCMC::MoveStats Stats;
+    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    if (P.as<Parameters>()->n_data_partitions())
+    {
+        walk_tree_sample_branch_lengths(P,Stats);
+        C1 = *P;
+    }
+
+    return EPair(io_state+1,constructor("()",0));
+}
+
 
 extern "C" closure builtin_function_walk_tree_sample_NNI_and_branch_lengths(OperationArgs& Args)
 {

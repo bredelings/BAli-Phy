@@ -51,6 +51,18 @@ walk_tree_sample_NNI tree c = IOAction (pair_from_c . builtin_walk_tree_sample_N
 builtin builtin_walk_tree_sample_NNI_and_branch_lengths 3 "walk_tree_sample_NNI_and_branch_lengths" "MCMC"
 walk_tree_sample_NNI_and_branch_lengths tree c = IOAction (pair_from_c . builtin_walk_tree_sample_NNI_and_branch_lengths tree c)
 
+builtin builtin_walk_tree_sample_branch_lengths 3 "walk_tree_sample_branch_lengths" "MCMC"
+walk_tree_sample_branch_lengths tree c = IOAction (pair_from_c . builtin_walk_tree_sample_branch_lengths tree c)
+
+builtin builtin_sample_SPR_all 3 "sample_SPR_all" "MCMC"
+sample_SPR_all tree c = IOAction (pair_from_c . builtin_sample_SPR_all tree c)
+
+builtin builtin_sample_SPR_nodes 3 "sample_SPR_nodes" "MCMC"
+sample_SPR_nodes tree c = IOAction (pair_from_c . builtin_sample_SPR_nodes tree c)
+
+builtin builtin_sample_SPR_flat 3 "sample_SPR_flat" "MCMC"
+sample_SPR_flat tree c = IOAction (pair_from_c . builtin_sample_SPR_flat tree c)
+
 builtin builtin_copy_context 2 "copy_context" "MCMC"
 copy_context c = IOAction (pair_from_c . builtin_copy_context c)
 
