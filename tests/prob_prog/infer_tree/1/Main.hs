@@ -53,7 +53,8 @@ model seq_data = do
             "rs07" %>% imodel_loggers ,
             "scale1" %=% scale1,
             "|T|" %=% tree_length tree,
-            "scale1*|T|" %=% tree_length tree1]
+            "scale1*|T|" %=% tree_length tree1,
+            "|A|" %=% alignment_on_tree_length alignment]
 
 main = do
     [filename] <- getArgs
