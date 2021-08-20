@@ -839,7 +839,31 @@ extern "C" closure builtin_function_walk_tree_sample_alignments(OperationArgs& A
     return EPair(io_state+1,constructor("()",0));
 }
 
-/// realign_from_tips
+extern "C" closure builtin_function_realign_from_tips(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.reg_for_slot(0);
+
+    int c1 = Args.evaluate(1).as_int();
+
+    int io_state = Args.evaluate(2).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    MCMC::MoveStats Stats;
+    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    if (P.as<Parameters>()->n_data_partitions())
+    {
+        realign_from_tips(P,Stats);
+        C1 = *P;
+    }
+
+    return EPair(io_state+1,constructor("()",0));
+}
 
 /// sample_node
 
@@ -998,6 +1022,32 @@ extern "C" closure builtin_function_walk_tree_sample_NNI(OperationArgs& Args)
     if (P.as<Parameters>()->n_data_partitions())
     {
         walk_tree_sample_NNI(P,Stats);
+        C1 = *P;
+    }
+
+    return EPair(io_state+1,constructor("()",0));
+}
+
+extern "C" closure builtin_function_walk_tree_sample_NNI_and_A(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1a. Get argument X -----------------//
+    int tree_reg = Args.reg_for_slot(0);
+
+    int c1 = Args.evaluate(1).as_int();
+
+    int io_state = Args.evaluate(2).as_int();
+
+    //------------ 2. Make a TreeInterface -------------//
+    context_ref C1(M, c1);
+
+    MCMC::MoveStats Stats;
+    owned_ptr<Model> P(claim(new Parameters(C1, tree_reg)));
+    if (P.as<Parameters>()->n_data_partitions())
+    {
+        walk_tree_sample_NNI_and_A(P,Stats);
         C1 = *P;
     }
 

@@ -45,8 +45,14 @@ walk_tree_sample_nni_unsafe tree c = sequence_ [ nni_on_branch_unsafe tree branc
 builtin builtin_walk_tree_sample_alignments 3 "walk_tree_sample_alignments" "MCMC"
 walk_tree_sample_alignments tree c = IOAction (pair_from_c . builtin_walk_tree_sample_alignments tree c)
 
+builtin builtin_realign_from_tips 3 "realign_from_tips" "MCMC"
+realign_from_tips tree c = IOAction (pair_from_c . builtin_realign_from_tips tree c)
+
 builtin builtin_walk_tree_sample_NNI 3 "walk_tree_sample_NNI" "MCMC"
 walk_tree_sample_NNI tree c = IOAction (pair_from_c . builtin_walk_tree_sample_NNI tree c)
+
+builtin builtin_walk_tree_sample_NNI_and_A 3 "walk_tree_sample_NNI_and_A" "MCMC"
+walk_tree_sample_NNI_and_A tree c = IOAction (pair_from_c . builtin_walk_tree_sample_NNI_and_A tree c)
 
 builtin builtin_walk_tree_sample_NNI_and_branch_lengths 3 "walk_tree_sample_NNI_and_branch_lengths" "MCMC"
 walk_tree_sample_NNI_and_branch_lengths tree c = IOAction (pair_from_c . builtin_walk_tree_sample_NNI_and_branch_lengths tree c)
