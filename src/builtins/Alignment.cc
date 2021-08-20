@@ -66,6 +66,21 @@ extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(O
     return {P};
 }
 
+extern "C" closure builtin_function_numInsert(OperationArgs& Args)
+{
+    return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().count_insert()};
+}
+
+extern "C" closure builtin_function_numMatch(OperationArgs& Args)
+{
+    return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().count_match()};
+}
+
+extern "C" closure builtin_function_numDelete(OperationArgs& Args)
+{
+    return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().count_delete()};
+}
+
 extern "C" closure builtin_function_pairwise_alignment_length1(OperationArgs& Args)
 {
     return {Args.evaluate(0).as_<Box<pairwise_alignment_t>>().length1()};

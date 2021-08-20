@@ -4,6 +4,15 @@ import Data.BitVector
 
 data PairwiseAlignment = PairwiseAlignment
 
+numInsertions :: PairwiseAlignment -> Int
+builtin numInsert 1 "numInsert" "Alignment"
+
+numMatch :: PairwiseAlignment -> Int
+builtin numMatch 1 "numMatch" "Alignment"
+
+numDelete :: PairwiseAlignment -> Int
+builtin numDelete 1 "numDelete" "Alignment"
+
 pairwise_alignment_length1 :: PairwiseAlignment -> Int
 builtin pairwise_alignment_length1 1 "pairwise_alignment_length1" "Alignment"
 
