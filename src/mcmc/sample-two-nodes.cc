@@ -169,6 +169,10 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 	    if (p[i][j].variable_alignment())
 	    {
                 auto [M, sampling_pr] = sample_two_nodes_base(p[i][j], *a123456[j], order[i], order[0]);
+
+#ifndef NDEBUG_DP
+                Matrices[i][j] = M;
+#endif
 		if (M->Pr_sum_all_paths() <= 0.0)
                 {
 		    std::cerr<<"Pr = 0   i = "<<i<<"   j="<<j<<" \n";
@@ -179,10 +183,8 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
                 Pr[i] /= sampling_pr;
                 Pr[i] *= A5::correction(p[i][j], order[i]);
 
-
 #ifndef NDEBUG_DP
                 p[i][j].likelihood();  // check the likelihood calculation
-                Matrices[i][j] = M;
 #endif
             }
         }

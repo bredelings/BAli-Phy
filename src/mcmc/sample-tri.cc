@@ -318,7 +318,7 @@ void sample_A3_multi_calculation::run_dp()
     {
         Pr[i] = 1.0;
 
-#ifndef NDEBUG        
+#ifndef NDEBUG
 	Matrices[i].resize(p[i].n_data_partitions());
 #endif
         bool ok = true;
@@ -326,6 +326,9 @@ void sample_A3_multi_calculation::run_dp()
 	    if (p[i][j].variable_alignment())
             {
 		auto [M, sampling_pr] = compute_matrix(i,j);
+#ifndef NDEBUG
+		Matrices[i][j] = M;
+#endif
 		if (M->Pr_sum_all_paths() <= 0.0)
                 {
 		    std::cerr<<"sample-tri: Pr = 0   i = "<<i<<"   j="<<j<<" \n";
@@ -335,9 +338,6 @@ void sample_A3_multi_calculation::run_dp()
 
                 Pr[i] /= sampling_pr;
                 Pr[i] *= A3::correction(p[i][j], nodes[i]);
-#ifndef NDEBUG                
-		Matrices[i][j] = M;
-#endif
             }
 	}
 
