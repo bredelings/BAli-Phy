@@ -24,8 +24,13 @@ model seq_data = do
 
     seq_data ~> ctmc_on_tree_fixed_A tree tn93_model
 
-    return
-        ["tree" %=% write_newick tree, "scale" %=% scale, "tn93:kappa1" %=% kappa1, "tn93:kappa2" %=% kappa2, "tn93:frequencies" %=% freqs]
+    return ["tree" %=% write_newick tree,
+            "scale" %=% scale,
+            "tn93:kappa1" %=% kappa1,
+            "tn93:kappa2" %=% kappa2,
+            "tn93:frequencies" %=% freqs,
+            "|T|" %=% tree_length tree,
+            "scale*|T|" %=% scale * tree_length tree]
 
 main = do
     [filename] <- getArgs
