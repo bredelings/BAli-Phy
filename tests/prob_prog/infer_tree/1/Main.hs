@@ -47,7 +47,12 @@ model seq_data = do
 
     seq_data ~> ctmc_on_tree tree alignment smodel
 
-    return ["tree" %=% write_newick tree, "tn93" %>% smodel_loggers, "rs07" %>% imodel_loggers ,"scale" %=% scale]
+    return ["tree" %=% write_newick tree,
+            "tn93" %>% smodel_loggers,
+            "rs07" %>% imodel_loggers ,
+            "scale" %=% scale,
+            "|T|" %=% tree_length tree,
+            "scale*|T|" %=% scale * tree_length tree]
 
 main = do
     [filename] <- getArgs
