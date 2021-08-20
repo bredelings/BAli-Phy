@@ -161,3 +161,6 @@ tree_from_edges num_nodes edges = Tree nodesArray (listArray (2*num_branches) br
 
 
 tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
+
+allEdgesAfterEdge tree b = b:concat [allEdgesAfterEdge tree b' | b' <- edgesAfterEdge tree b]
+allEdgesFromNode tree n = concat [allEdgesAfterEdge tree b | b <- edgesOutOfNode tree n]
