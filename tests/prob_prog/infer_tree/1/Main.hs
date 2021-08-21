@@ -38,7 +38,7 @@ model seq_data = do
 
     return
         [ "tree1" %=% write_newick tree1
-        , "indel_rate" %=% indel_rate
+        , "log(indel_rate)" %=% log indel_rate
         , "mean_length" %=% mean_length
         , "kappa1" %=% kappa1
         , "kappa2" %=% kappa2
