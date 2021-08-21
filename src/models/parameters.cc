@@ -1756,4 +1756,9 @@ Parameters::Parameters(const context_ref& C, int tree_reg)
     // create data partitions
     for(int partition_reg: partition_regs)
         PC->DPC.emplace_back(*this, t(), partition_reg);
+
+    // set variable_alignment_
+    for(int i=0;i<n_data_partitions();i++)
+        if (get_data_partition(i).has_IModel())
+            variable_alignment_ = true;
 }
