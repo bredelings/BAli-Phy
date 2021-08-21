@@ -1,3 +1,15 @@
+* 4.0-alpha3 (unreleased)
+ - Create a dynamic factor graph
+ - Annotate random variables in the factor graph with "properties".
+ - Allow constructing data_partition objects from factor graph properties.
+ - Allow constructing Parameters objects from a tree reg.
+ - Port C++ transition kernels to Haskell models.
+   + Tree and alignment estimation now actually work.
+ - Optimization: ignore zero-rate transition kernels.
+ - Logging:
+   - Allow logging the |T| and |A|
+ - Change rs07 function to take the indel rate, instead of the log.
+
 * 4.0-alpha2 (Jul 31, 2021)
  - Preliminary relaxed-clock trees.
  - Simplify the Haskell modelling language -- use the strict monad.
