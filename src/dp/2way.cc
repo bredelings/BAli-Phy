@@ -537,3 +537,21 @@ pairwise_alignment_t make_unaligned_pairwise_alignment(int L1, int L2)
 	pi.set_insert(L1+i);
     return pi;
 }
+
+pairwise_alignment_t make_left_aligned_pairwise_alignment(int L1, int L2)
+{
+    pairwise_alignment_t pi;
+    pi.resize(std::max(L1,L2));
+    int M = min(L1,L2);
+    for(int i=0; i<M; i++)
+	pi.set_match(i);
+    for(int i=M; i<L1; i++)
+	pi.set_delete(i);
+    for(int i=M; i<L2; i++)
+	pi.set_insert(i);
+
+    assert(pi.length1() == L1);
+    assert(pi.length2() == L2);
+
+    return pi;
+}

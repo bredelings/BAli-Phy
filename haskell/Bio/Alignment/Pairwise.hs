@@ -28,6 +28,9 @@ pairwise_alignment_from_bits (BitVector x) (BitVector y) = builtin_pairwise_alig
 unaligned_pairwise_alignment :: Int -> Int -> PairwiseAlignment
 builtin unaligned_pairwise_alignment 2 "unaligned_pairwise_alignment" "Alignment"
 
+left_aligned_pairwise_alignment :: Int -> Int -> PairwiseAlignment
+builtin left_aligned_pairwise_alignment 2 "left_aligned_pairwise_alignment" "Alignment"
+
 flip_alignment :: PairwiseAlignment -> PairwiseAlignment
 builtin flip_alignment 1 "flip_alignment" "Alignment"
 

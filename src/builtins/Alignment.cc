@@ -34,6 +34,14 @@ extern "C" closure builtin_function_unaligned_pairwise_alignment(OperationArgs& 
     return Box<pairwise_alignment_t>(make_unaligned_pairwise_alignment(l1,l2));
 }
 
+extern "C" closure builtin_function_left_aligned_pairwise_alignment(OperationArgs& Args)
+{
+    int l1 = Args.evaluate(0).as_int();
+    int l2 = Args.evaluate(1).as_int();
+
+    return Box<pairwise_alignment_t>(make_left_aligned_pairwise_alignment(l1,l2));
+}
+
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
 {
     const matrix<int>& counts = Args.evaluate(0).as_<Box<matrix<int>>>();

@@ -118,4 +118,5 @@ int n_indels(const pairwise_alignment_t& a);
 int total_length_indels(const pairwise_alignment_t& a);
 
 pairwise_alignment_t make_unaligned_pairwise_alignment(int L1, int L2);
+pairwise_alignment_t make_left_aligned_pairwise_alignment(int L1, int L2);
 #endif
