@@ -116,6 +116,9 @@ void change_branch_length_log_scale(owned_ptr<Model>& P,
 void slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
 {
     Parameters& PP = *P.as<Parameters>();
+    if (not PP.t().can_set_branch_length(b))
+        return;
+
     PP.select_root(b);
   
     const double L = PP.t().branch_length(b);
