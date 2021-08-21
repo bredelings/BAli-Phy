@@ -21,9 +21,8 @@ rs05 logRate meanIndelLength tau tree = (\d b -> m, rs05_lengthp m) where
 
 rs07_lengthp e l = doubleToLogDouble (builtin_rs07_lengthp e l)
 
-rs07 logLambda meanIndelLength tree = (\d b ->rs07_branch_HMM epsilon (lambda*d!b) 1.0 False, rs07_lengthp epsilon)
-    where lambda = exp logLambda
-          epsilon = (meanIndelLength-1.0)/meanIndelLength
+rs07 rate mean_length tree = (\d b ->rs07_branch_HMM epsilon (rate * d!b) 1.0 False, rs07_lengthp epsilon)
+    where epsilon = (mean_length-1.0)/mean_length
 
 rs07_relaxed_rates_model tree = do 
    let n_branches = numBranches tree
