@@ -23,6 +23,29 @@ unaligned_alignments_on_tree tree ls = [ make_a' b | b <- [0 .. 2 * numBranches 
             l2 = length_for_node $ targetNode tree b
         in  unaligned_pairwise_alignment l1 l2
 
+median xs = ys !! n where
+    ys = sort xs
+    n = length xs `div` 2
+
+-- Compare to unaligned_alignments_on_tree in parameters.cc
+left_aligned_alignments_on_tree tree ls = [ make_A b | b <- [0 .. 2 * numBranches tree - 1] ]
+  where
+    taxa = listArray' $ get_labels tree
+    internal_sequence_length = median $ Map.elems $ ls
+    -- FIXME: can we assume that the leaf nodes are [0..n_leaves-1]?
+    -- If we check leaf nodes instead, then what if the root node was an unnamed leaf?
+    length_for_node node = if node < numElements taxa then ls Map.! (taxa ! node) else internal_sequence_length
+    make_A b = let b2 = reverseEdge tree b in
+               if (b > b2) then
+                   flip_alignment $ make_A' b2
+               else
+                   make_A' b
+    make_A' branch =
+        let l1 = length_for_node $ sourceNode tree branch
+            l2 = length_for_node $ targetNode tree branch
+        in  left_aligned_pairwise_alignment l1 l2
+
+
 -- Here we want to (i) force the tree, (ii) force the hmms, and (iii) match parameters.cc:unaligned_alignments_on_tree 
 sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree tree n_nodes ls as))
   where
