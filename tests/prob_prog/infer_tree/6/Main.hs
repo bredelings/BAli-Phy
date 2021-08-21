@@ -8,6 +8,7 @@ import           Probability.Distribution.OnTree
 import           System.Environment  -- for getArgs
 
 -- Non-zero branches are slightly longer to keep to average length correct.
+-- The division means that we can't set the value though.
 maybe_zero p dist = do
     is_zero <- bernoulli p
     length  <- dist
