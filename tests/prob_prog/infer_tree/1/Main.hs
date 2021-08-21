@@ -1,5 +1,5 @@
 import           Probability
-import           Bio.Alignment               hiding ( sample_alignment )
+import           Bio.Alignment
 import           Bio.Alphabet
 import           Tree
 import           Tree.Newick
@@ -8,8 +8,6 @@ import           IModel
 import           Probability.Distribution.OnTree
 import           System.Environment  -- for getArgs
 
--- issues: 1. likelihood seems wrong - -1300 vs -700.
---         2. no topology moves included.
 imodel_prior topology = do
     logLambda   <- log_laplace (-4.0) 0.707
     mean_length <- (1.0+) <$> exponential 10.0
