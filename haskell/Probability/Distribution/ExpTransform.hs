@@ -11,8 +11,8 @@ import Probability.Distribution.Cauchy
 expTransform dist@(Distribution name d q s r) = Distribution name' pdf' q' s' r'
  where
   pdf' x = do
-    ds <- d
-    return $ (1.0/doubleToLogDouble x):ds
+    ds <- d x
+    return $ (doubleToLogDouble 1.0/ doubleToLogDouble x):ds
   q'   = exp . q
   s'   = do v <- dist
             return $ exp v
