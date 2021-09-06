@@ -157,11 +157,19 @@ double alignment_branch_length_slice_function::operator()(double x)
     if (count == 1) C0.evaluate_program();
     C = C0;
     set_value(x);
-    auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C),b);
+    auto maybe_sampling_pr_1 = sample_alignment(static_cast<Parameters&>(C),b);
+    if (not maybe_sampling_pr_1)
+        current_fn_value = 0.0;
+    else
+    {
+        auto sampling_pr_1 = *maybe_sampling_pr_1;
+        // Here is where we return 0 if the number of variables changes.
+        // How can we automate this so that it is called only once?
 
-    // Here is where we return 0 if the number of variables changes.
-    // How can we automate this so that it is called only once?
-    current_fn_value = C.heated_probability_ratio(C0)*alignment_sum_ratio_1/alignment_sum_ratio_0;
+        current_fn_value = C.heated_probability_ratio(C0) * (sampling_pr_0 / sampling_pr_1);
+        // NOTE: this should equal to (Pr1/sampling_pr_1)/(Pr0/sampling_pr_0)
+    }
+
     return operator()();
 }
 
@@ -179,8 +187,19 @@ alignment_branch_length_slice_function::alignment_branch_length_slice_function(P
     :context_slice_function(P),b(b_)
 { 
     set_lower_bound(0);
-    alignment_sum_ratio_0 = sample_alignment(P, b);
+
+    // Save the initial alignment in case alignment resampling fails.
     C0 = P;
+
+    auto maybe_sampling_pr_0 = sample_alignment(P, b);
+
+    if (not maybe_sampling_pr_0)
+        sampling_pr_0 = 0;
+    else
+    {
+        sampling_pr_0 = *maybe_sampling_pr_0;
+        C0 = P;
+    }
 }
 
 void slide_node_slice_function::set_value(double x) 

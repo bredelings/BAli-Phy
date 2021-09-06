@@ -141,7 +141,7 @@ struct branch_length_slice_function: public context_slice_function
 /// A slice_function for slice-sampling a single branch length
 struct alignment_branch_length_slice_function: public context_slice_function
 {
-    log_double_t alignment_sum_ratio_0;
+    log_double_t sampling_pr_0;
     int b;
 
     double operator()() {return context_slice_function::operator()();};
