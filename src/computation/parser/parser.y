@@ -42,6 +42,8 @@
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
   Located<Haskell::ID> make_id(const yy::location& loc, const std::string& id);
   expression_ref make_type_id(const std::string& id);
+  expression_ref make_type_var(const std::string& id);
+  expression_ref make_type_con(const std::string& id);
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
   expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
@@ -825,7 +827,7 @@ opt_sig: %empty  {}
 | "::" sigtype   {$$ = $2;}
 
 opt_tyconsig: %empty {}
-| "::" gtycon        {$$ = make_type_id($2);}
+| "::" gtycon        {$$ = make_type_con($2);}
 
 sigtype: ctype   {$$ = $1;}
 
@@ -868,7 +870,7 @@ context: btype                     {$$ = make_context($1);}
 context_no_ops: btype_no_ops       {$$ = make_context(make_tyapps($1));}
 
 type: btype                        {$$ = $1;}
-|     btype "->" ctype             {$$ = make_tyapps({make_type_id("->"),$1,$3});}
+|     btype "->" ctype             {$$ = make_tyapps({make_type_con("->"),$1,$3});}
 
 typedoc: type                      {$$ = $1;}
 /* typedoc: .... */
@@ -882,8 +884,8 @@ tyapps: tyapp                      {$$.push_back($1);}
 |       tyapps tyapp               {$$ = $1; $$.push_back($2);}
 
 tyapp: atype                       {$$ = $1;}
-|      qtyconop                    {$$ = make_type_id($1);}
-|      tyvarop                     {$$ = make_type_id($1);}
+|      qtyconop                    {$$ = make_type_con($1);}
+|      tyvarop                     {$$ = make_type_var($1);}
 /* Template Haskell
 |      SIMPLEQUOTE qconop
 |      SIMPLEQUOTE varop
@@ -891,12 +893,12 @@ tyapp: atype                       {$$ = $1;}
 
 atype_docs: atype /* FIX */        {$$ = $1;}
 
-atype: ntgtycon                        {$$ = make_type_id($1);}
-|      tyvar                           {$$ = make_type_id($1);}
+atype: ntgtycon                        {$$ = make_type_con($1);}
+|      tyvar                           {$$ = make_type_var($1);}
 |      "*"                             {$$ = AST_node("kind_star");}
 |      strict_mark atype               {$$ = expression_ref(AST_node("strictness"),{$1,$2});}
 |      "{" fielddecls "}"              {$$ = expression_ref{AST_node("FieldDecls"),$2};}
-|      "(" ")"                         {$$ = make_type_id("()");}
+|      "(" ")"                         {$$ = make_type_con("()");}
 |      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = expression_ref{AST_node("TupleType"),ts};}
 |      "(#" "#)"                       {}
 |      "(#" comma_types1 "#)"          {}
@@ -1602,9 +1604,14 @@ Located<Haskell::ID> make_id(const yy::location& loc, const string& id)
     return Located<Haskell::ID>(loc, {id});
 }
 
-expression_ref make_type_id(const string& id)
+expression_ref make_type_var(const string& id)
 {
-    return AST_node("type_id",id);
+    return AST_node("type_var",id);
+}
+
+expression_ref make_type_con(const string& id)
+{
+    return AST_node("type_con",id);
 }
 
 expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type)

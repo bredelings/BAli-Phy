@@ -80,6 +80,8 @@
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
   Located<Haskell::ID> make_id(const yy::location& loc, const std::string& id);
   expression_ref make_type_id(const std::string& id);
+  expression_ref make_type_var(const std::string& id);
+  expression_ref make_type_con(const std::string& id);
 
   expression_ref make_rhs(const expression_ref& exp, const expression_ref& wherebinds);
   expression_ref make_gdrhs(const std::vector<expression_ref>& gdrhs, const expression_ref& wherebinds);
@@ -110,7 +112,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 114 "parser.hh"
+#line 116 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -244,7 +246,7 @@
 #endif
 
 namespace yy {
-#line 248 "parser.hh"
+#line 250 "parser.hh"
 
 
 
@@ -5127,7 +5129,7 @@ switch (yykind)
   }
 
 } // yy
-#line 5131 "parser.hh"
+#line 5133 "parser.hh"
 
 
 

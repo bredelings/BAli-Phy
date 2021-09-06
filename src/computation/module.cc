@@ -997,7 +997,7 @@ string get_constructor_name(const expression_ref& constr)
     auto id = constr;
     if (is_AST(id,"TypeApply"))
         id = constr.sub()[0];
-    assert(is_AST(id,"type_id"));
+    assert(is_AST(id,"type_con"));
     return id.head().as_<AST_node>().value;
 }
 
