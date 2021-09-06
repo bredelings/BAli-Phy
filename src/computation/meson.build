@@ -32,7 +32,7 @@ computation_sources = [
   'machine/evaluate.cc', 'machine/sums.cc',
   'machine/gc.cc','machine/reroot.cc', 'machine/effects.cc',
 
-  'expression/kind.cc',
+  'expression/kind.cc', 'typecheck/typecheck.cc',
 
   'optimization/free-vars.cc', 'optimization/set-levels.cc', 'optimization/float-out.cc',
 
