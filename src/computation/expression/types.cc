@@ -152,6 +152,17 @@ bool is_type_forall(const expression_ref& E)
     return pred;
 }
 
+bool is_type(const expression_ref& E)
+{
+    if (is_type_forall(E)) return true;
+
+    if (is_type_var(E)) return true;
+
+    if (is_type_con(E)) return true;
+
+    if (is_type_apply(E)) return true;
+}
+
 // function types
 
 

@@ -102,6 +102,7 @@ expression_ref function_type(const expression_ref& t1, const expression_ref& t2)
 
 bool is_function_type(const expression_ref& E);
 
+bool is_type(const expression_ref& E);
 
 
 // free type variables

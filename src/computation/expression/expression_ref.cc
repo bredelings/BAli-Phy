@@ -125,6 +125,69 @@ bool is_infix_expression(const expression_ref& e)
     return is_haskell_sym(id);
 }
 
+string print_expanded_type(const expression_ref& type)
+{
+    assert(not is_type_apply(type));
+
+    if (is_type_var(type))
+    {
+        // how about operators?
+        return type.print();
+    }
+
+    else if (is_type_forall(type))
+    {
+        auto& tv = type.sub()[0];
+        auto& subtype = type.sub()[1];
+        return "forall "+tv.print()+"."+print_expanded_type(subtype);
+    }
+
+    else if (is_type_con(type.head()))
+    {
+        // how about type operators?
+        auto& con = type.head().as_<type_con>();
+
+        vector<string> sub_names;
+        for(int i=0;i<type.size();i++)
+            sub_names.push_back( print_expanded_type( type.sub()[i] ) );
+
+        // Handle ([] a) -> [a]
+        if (con == type_con("[]"))
+        {
+            if (sub_names.size() == 1)
+                return "[" + sub_names[0] + "]";
+        }
+
+        // Handle (,,) a b c -> (a,b,c)
+        if (is_tuple_name(con.name) and type.size() == con.name.size()-1)
+        {
+            // Should Tuple's parenthesis sub-expressions?
+            return "(" + join(sub_names,", ") + ")";
+        }
+
+        // Handle (->) 
+        if (is_function_type_con_node(con))
+        {
+            assert(type.size() == 2);
+            if (type.sub()[0].size() > 0)
+                sub_names[0] = "("+sub_names[0]+")";
+            return sub_names[0] + " -> " + sub_names[1];
+        }
+
+        // Handle k a (b c) d
+
+        // parenthesis non-atomic expressions
+        for(int i=0;i<type.size();i++)
+            if (type.sub()[i].size() > 0)
+                sub_names[i] = "(" + sub_names[i] + ")";
+        return con.name + " " + join(sub_names, " ");
+    }
+
+
+
+    std::abort();
+}
+
 // How do I make constructor-specific methods of printing data expressions?
 // Can I move to defining the print function using an expression?
 string expression::print() const 
@@ -206,23 +269,10 @@ string expression::print() const
 	    return result;
 	}
 
-        if (is_function_type(*this))
+        if (is_type(*this))
         {
-            auto& t1 = sub[0].sub()[1];
-            auto& t2 = sub[1];
-
-            string s1 = t1.print();
-            if (not t1.is_a<type_var>())
-                s1 = "("+s1+")";
-
-            return s1+" -> "+t2.print();
-        }
-
-        if (is_type_forall(*this))
-        {
-            auto& tv = sub[0];
-            auto& subtype = sub[1];
-            return "forall "+tv.print()+"."+subtype.print();
+            auto type = expand_type(*this);
+            return print_expanded_type(type);
         }
     }
 
