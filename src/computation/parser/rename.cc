@@ -1090,6 +1090,10 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         else if (m.is_declared(name))
         {
             const symbol_info& S = m.lookup_symbol(name);
+            if (is_haskell_con_name(S.name) and S.arity == 0)
+            {
+                return  constructor(S.name,S.arity);
+            }
             string qualified_name = S.name;
             return var(qualified_name);
         }
