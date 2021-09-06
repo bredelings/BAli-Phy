@@ -611,6 +611,24 @@ set<string> free_type_vars_from_type(const Haskell::Type& type)
         auto& list = type.as_<Haskell::ListType>();
         add(tvars, free_type_vars_from_type(list.element_type));
     }
+    else if (type.is_a<Haskell::ForallType>())
+    {
+        auto& forall = type.as_<Haskell::ForallType>();
+        tvars = free_type_vars_from_type(forall.type);
+        for(auto& type_var: forall.type_var_binders)
+        {
+            if (type_var.is_a<Haskell::TypeVar>())
+            {
+                auto& tv = type_var.as_<Haskell::TypeVar>();
+                tvars.erase(unloc(tv.name));
+            }
+            if (type_var.is_a<Haskell::TypeVarOfKind>())
+            {
+                auto& tv = type_var.as_<Haskell::TypeVarOfKind>();
+                tvars.erase(tv.name);
+            }
+        }
+    }
     return tvars;
 }
 
