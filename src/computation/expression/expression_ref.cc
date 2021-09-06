@@ -125,6 +125,20 @@ bool is_infix_expression(const expression_ref& e)
     return is_haskell_sym(id);
 }
 
+bool type_needs_paren(const expression_ref& type)
+{
+    // kind * or type variable
+    if (type.size() == 0) return false;
+
+    // [a]
+    if (is_list_type_con_node(type.head())) return false;
+
+    // (a,b)
+    if (is_tuple_type_con_node(type.head())) return false;
+
+    return true;
+}
+
 string print_expanded_type(const expression_ref& type)
 {
     assert(not is_type_apply(type));
@@ -169,7 +183,7 @@ string print_expanded_type(const expression_ref& type)
         if (is_function_type_con_node(con))
         {
             assert(type.size() == 2);
-            if (type.sub()[0].size() > 0)
+            if (type_needs_paren(type.sub()[0]))
                 sub_names[0] = "("+sub_names[0]+")";
             return sub_names[0] + " -> " + sub_names[1];
         }
@@ -178,8 +192,12 @@ string print_expanded_type(const expression_ref& type)
 
         // parenthesis non-atomic expressions
         for(int i=0;i<type.size();i++)
-            if (type.sub()[i].size() > 0)
+        {
+            auto t = type.sub()[i];
+
+            if (type_needs_paren(t))
                 sub_names[i] = "(" + sub_names[i] + ")";
+        }
         return con.name + " " + join(sub_names, " ");
     }
 
