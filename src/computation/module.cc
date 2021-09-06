@@ -698,7 +698,13 @@ class C a where
 */
 vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group)
 {
+    int kindex = 1;
+    for(auto& type_decl: type_decl_group)
+    {
+    }
+
     // The primarily goal here is to infer the kind for the type and class names!
+    // But we probably have to label each type variable with its kind as well.
     // This will depend on the kinds of earlier type_decl_groups, as well as earlier modules.
 
 
@@ -718,7 +724,7 @@ vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group
     // * the rhs can only contain u1....u[n]
     // * T has kind k[1] -> k[2] -> ... -> k[n] -> k  where u[i] :: k[i]
     //   and  k is the kind of the rhs.
-    // * These type constructors can NOT be partially applied.
+    // * These type constructors CANNOT be partially applied.
     // * Recursive type synonyms are not allowed, unless an ADT intervenes.
     // * A synonym and its rhs are completely interchangeable, except in ... instance decls? (Section 4.3.2)
 
@@ -728,7 +734,7 @@ vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group
     // For class declarations:
     // * Class variables are scoped over the body.
     // * the type for each method must mention the class variable u[1].
-    // * the type for each method MAY mention over variables.
+    // * the type for each method MAY mention other variables.
     // * constraints on a class method may ONLY mention NON-class variables.
     // * 
     
