@@ -1579,7 +1579,7 @@ expression_ref make_tv_bndrs(const vector<expression_ref>& tv_bndrs)
     return new expression(AST_node("tv_bndrs"),tv_bndrs);
 }
 
-expression_ref type_apply(const expression_ref& e1, const expression_ref& e2)
+expression_ref type_apply_ast(const expression_ref& e1, const expression_ref& e2)
 {
     if (is_AST(e1, "TypeApply"))
 	return e1 + e2;
@@ -1593,7 +1593,7 @@ expression_ref make_tyapps(const std::vector<expression_ref>& tyapps)
     assert(not tyapps.empty());
     expression_ref E = tyapps[0];
     for(int i=1;i<tyapps.size();i++)
-	E = type_apply(E,tyapps[i]);
+	E = type_apply_ast(E,tyapps[i]);
     return E;
 }
 

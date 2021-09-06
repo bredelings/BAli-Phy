@@ -12,6 +12,7 @@
 #include "list.H" // for char_list
 #include "bool.H"
 #include "do_block.H"
+#include "types.H"
 #include "index_var.H"
 #include "computation/operations.H"
 #include "computation/module.H"
@@ -204,6 +205,18 @@ string expression::print() const
 	    result += "}";
 	    return result;
 	}
+
+        if (is_function_type(*this))
+        {
+            auto& t1 = sub[0].sub()[1];
+            auto& t2 = sub[1];
+
+            string s1 = t1.print();
+            if (not t1.is_a<type_var>())
+                s1 = "("+s1+")";
+
+            return s1+" -> "+t2.print();
+        }
     }
 
     // We have to do this BEFORE we compute pargs, otherwise we do everything twice, which leads to exponential growth.

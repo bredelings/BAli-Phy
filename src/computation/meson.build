@@ -25,7 +25,7 @@ computation_sources = [
   'expression/reg_var.cc',
   'expression/bool.cc', 'expression/resolved_symbol.cc',
   'expression/maybe.cc',
-  'expression/do_block.cc',
+  'expression/do_block.cc', 'expression/types.cc',
 
   'machine/args.cc','machine/tokens.cc', 'machine/graph_register.cc',
   'machine/show_graph.cc',
