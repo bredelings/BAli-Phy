@@ -708,6 +708,82 @@ set<string> from_this_module(const string& mod_name, set<string> names)
             ok_names.insert(name);
     return ok_names;
 }
+
+
+struct Kind: public Object
+{
+    virtual bool is_kstar() const {return false;}
+    virtual bool is_karrow() const {return false;}
+    virtual bool is_kvar() const {return false;}
+};
+
+typedef object_ptr<Kind> kind;
+
+struct KindStar: public Kind
+{
+    virtual bool is_kstar() const {return true;}
+    KindStar* clone()  const { return new KindStar(); }
+    std::string print() const { return "*"; }
+};
+
+typedef object_ptr<KindStar> kind_star;
+kind_star make_kind_star() {return new KindStar();}
+
+struct KindArrow: public Kind
+{
+    kind k1;
+    kind k2;
+    virtual bool is_karrow() const {return true;}
+    KindArrow* clone()  const { return new KindArrow(*this); }
+    KindArrow(const kind& _k1, const kind& _k2):k1(_k1),k2(_k2) {}
+    std::string print() const {
+        string s1 = k1->print();
+        string s2 = k2->print();
+        if (k1->is_karrow())
+            s1 = "("+s1+")";
+        return s1+"->"+s2;
+    }
+};
+
+typedef object_ptr<KindArrow> kind_arrow;
+kind_arrow make_kind_arrow(const kind& k1, kind& k2) {return new KindArrow{k1,k2};}
+
+struct KindVar: public Kind
+{
+    string name;
+    std::optional<int> index;
+    virtual bool is_kvar() const {return true;}
+    KindVar* clone()  const { return new KindVar(*this); }
+    std::string print() const {
+        string s = name;
+        if (index)
+            s += "_" + std::to_string(*index);
+        return s;
+    }
+    KindVar(const string& s, int i): name(s), index(i) {}
+};
+
+typedef object_ptr<KindVar> kind_var;
+kind_var make_kind_var(const string& s, int i) {return new KindVar(s,i);}
+
+
+struct kindchecker_state
+{
+    int next_kvar_index = 1;
+
+    kind_var fresh_named_kind_var(const string& s) {return make_kind_var(s,next_kvar_index++);}
+    kind_var fresh_kind_var() {return fresh_named_kind_var("k");}
+
+    // These two together form the "type context"
+    std::map<std::string,kind> data_to_kind;
+    std::map<Haskell::TypeVar,kind> type_var_to_kind;
+
+    // Kind check a group.
+    // Doesn't GHC first "guess" the kinds, and then "check" them?
+    vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group);
+};
+
+
 /*
 data C a => D a = Foo (S a)
 type S a = [D a]
