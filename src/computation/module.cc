@@ -760,8 +760,36 @@ struct KindVar: public Kind
             s += "_" + std::to_string(*index);
         return s;
     }
+    bool operator==(const Object&) const;
+    bool operator==(const KindVar&) const;
+    bool operator<(const KindVar&) const;
+
     KindVar(const string& s, int i): name(s), index(i) {}
 };
+
+bool KindVar::operator==(const Object& o) const
+{
+    auto K = dynamic_cast<const KindVar*>(&o);
+    if (not K)
+        return false;
+
+    return (*this) == *K;
+}
+
+bool KindVar::operator==(const KindVar& k) const
+{
+    return name == k.name and index == k.index;
+}
+
+bool KindVar::operator<(const KindVar& k) const
+{
+    if (index < k.index) return true;
+    if (index > k.index) return false;
+
+    int cmp = name.compare(k.name);
+
+    return (cmp < 0);
+}
 
 typedef object_ptr<KindVar> kind_var;
 kind_var make_kind_var(const string& s, int i) {return new KindVar(s,i);}
