@@ -3,6 +3,7 @@
 #include <tuple>
 #include "computation/module.H"
 #include "util/myexception.H"
+#include "range/v3/all.hpp"
 #include "util/range.H"
 #include "util/set.H"   // for add( , )
 #include "util/string/split.H"
@@ -27,6 +28,8 @@
 #include "computation/optimization/inliner.H"
 #include "computation/parser/haskell.H"
 #include "util/graph.H"
+
+namespace views = ranges::views;
 
 using std::pair;
 using std::map;
@@ -802,15 +805,23 @@ struct kindchecker_state
     kind_var fresh_named_kind_var(const string& s) {return make_kind_var(s,next_kvar_index++);}
     kind_var fresh_kind_var() {return fresh_named_kind_var("k");}
 
-    // These two together form the "type context"
+    // These three together form the "type context"
     std::map<std::string,kind> data_to_kind;
     std::map<Haskell::TypeVar,kind> type_var_to_kind;
+    std::map<KindVar,kind> kind_var_to_kind;
+    // We also need the kinds for type classes and type constructors of previous groups.
 
     // Kind check a group.
     // Doesn't GHC first "guess" the kinds, and then "check" them?
+    bool unify(const kind& k1, const kind& k2);
     vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group);
 };
 
+
+bool kindchecker_state::unify(const kind& k1, const kind& k2)
+{
+    return true;
+}
 
 /*
 data C a => D a = Foo (S a)
@@ -818,11 +829,55 @@ type S a = [D a]
 class C a where
    bar :: a -> D a -> Bool
 */
-vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group)
+vector<expression_ref> kindchecker_state::infer_kinds(const vector<expression_ref>& type_decl_group)
 {
-    int kindex = 1;
+    // 1. Add a kind variable for each data type in the group.
     for(auto& type_decl: type_decl_group)
     {
+        if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
+        {
+            auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
+
+            data_to_kind.insert({D.name, fresh_kind_var()});
+        }
+    }
+
+    for(auto& type_decl: type_decl_group)
+    {
+        if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
+        {
+            auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
+            kind k = data_to_kind.at(D.name);
+            kind k2 = make_kind_star();
+            for(auto& tv: D.type_vars | views::reverse)
+            {
+                auto a = fresh_kind_var();
+                type_var_to_kind.insert({tv,a});
+                k2 = make_kind_arrow(a,k2);
+                kind_var_to_kind.insert({*a,{}});
+                unify(k,k2);
+            }
+        }
+        // add kind vars to the environment for each declared name.
+        // for each declared name 'data T a1 a2 .. an = ... ':
+        //     kappa <- load the kind from the environment && substitute so that any remaining unification vars are still open
+        //     A[i] <- add kind vars for each type var a[i]
+        //     unify k~a1 -> a2 -> ... an -> *
+        //     for each constructor
+        //         ???
+        // So... we are supposed to get the type of the class and also each constructor out of this???
+
+
+        // for each declared class `class (G (a1 a2),H a3) => C a1 a2 ... an where ...`
+        //    kappa <- load the kind from the environment && substitute so that any remaining unification vars are still open
+        //    A[i] <- add kind vars for each type var a[i]
+        //    the kind of the class is (a1,a2,a3...,an)
+        //    for each method declaration:
+        //       ???
+        //
+
+        // Hmm... just as we have |-c rules for constructors, we probably have some kind of rule for handling context.
+        // What do each of these things return?  They have SIDE-EFFECTS, but some also return something!
     }
 
     // The primarily goal here is to infer the kind for the type and class names!
@@ -909,8 +964,9 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
 
     auto type_decl_groups = map_groups( ordered_name_groups, decl_for_type );
 
+    kindchecker_state K;
     for(auto& type_decl_group: type_decl_groups)
-        type_decl_group = infer_kinds(type_decl_group);
+        type_decl_group = K.infer_kinds(type_decl_group);
 
     // FIXME: Handle instances.
 
