@@ -33,6 +33,11 @@ struct TypeVar: public Object
 {
     Located<std::string> name;
     std::optional<Kind> kind;
+    std::optional<int> index;
+
+    bool operator==(const Object&) const;
+    bool operator==(const TypeVar&) const;
+    bool operator<(const TypeVar&) const;
 
     TypeVar* clone() const { return new TypeVar(*this);}
     std::string print() const;

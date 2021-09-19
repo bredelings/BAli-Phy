@@ -240,6 +240,30 @@ string TypeVar::print() const
     return unloc(name);
 }
 
+bool TypeVar::operator==(const Object& o) const
+{
+    auto T = dynamic_cast<const TypeVar*>(&o);
+    if (not T)
+        return false;
+
+    return (*this) == *T;
+}
+
+bool TypeVar::operator==(const TypeVar& tv) const
+{
+    return unloc(name) == unloc(tv.name) and index == tv.index;
+}
+
+bool TypeVar::operator<(const TypeVar& tv) const
+{
+    if (index < tv.index) return true;
+    if (index > tv.index) return false;
+
+    int cmp = unloc(name).compare(unloc(tv.name));
+
+    return (cmp < 0);
+}
+
 string TypeVarOfKind::print() const
 {
     return name + "::" + kind.print();
