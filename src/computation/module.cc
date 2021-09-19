@@ -746,7 +746,7 @@ struct KindArrow: public Kind
 };
 
 typedef object_ptr<KindArrow> kind_arrow;
-kind_arrow make_kind_arrow(const kind& k1, kind& k2) {return new KindArrow{k1,k2};}
+kind_arrow make_kind_arrow(const kind& k1, const kind& k2) {return new KindArrow{k1,k2};}
 
 struct KindVar: public Kind
 {
