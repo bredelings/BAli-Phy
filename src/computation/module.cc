@@ -798,6 +798,110 @@ typedef object_ptr<KindVar> kind_var;
 kind_var make_kind_var(const string& s, int i) {return new KindVar(s,i);}
 
 
+typedef std::map<KindVar,kind> k_substitution_t;
+
+kind apply_subst(const k_substitution_t& s, const kind& k)
+{
+    if (k->is_kvar())
+    {
+        auto& kv = dynamic_cast<KindVar&>(*k);
+        auto k2 = s.find(kv);
+        if (k2 != s.end())
+            return k2->second;
+        else
+            return k;
+    }
+    else if (k->is_karrow())
+    {
+        auto& a = dynamic_cast<KindArrow&>(*k);
+        auto k1 = apply_subst(s,a.k1);
+        auto k2 = apply_subst(s,a.k2);
+        if (k1 != a.k1 or k2 != a.k2)
+            return make_kind_arrow(k1,k2);
+        else
+            return k;
+    }
+    else if (k->is_kstar())
+        return k;
+
+    std::abort();
+}
+
+// This should yield a substitution that is equivalent to apply FIRST s1 and THEN s2,
+k_substitution_t compose(const k_substitution_t& s1, const k_substitution_t s2)
+{
+    if (s2.empty()) return s1;
+
+    auto s3 = s2;
+    for(auto& [kv,k]: s1)
+    {
+        if (s3.count(kv))
+            s3.erase(kv);
+        s3.insert({kv,apply_subst(s2,k)});
+    }
+
+    return s3;
+}
+
+bool occurs_check(const KindVar& kv, const kind& k)
+{
+    if (k->is_kstar())
+        return false;
+    else if (k->is_kvar())
+        return kv == dynamic_cast<const KindVar&>(*k);
+    else if (k->is_karrow())
+    {
+        auto& a = dynamic_cast<const KindArrow&>(*k);
+        return occurs_check(kv, a.k1) or occurs_check(kv, a.k2);
+    }
+
+    std::abort();
+}
+
+std::optional<k_substitution_t> unify(const kind& k1, const kind& k2)
+{
+    if (k1->is_karrow() and k2->is_karrow())
+    {
+        auto& A = dynamic_cast<const KindArrow&>(*k1);
+        auto& B = dynamic_cast<const KindArrow&>(*k2);
+        auto s1 = unify(A.k1, B.k1);
+        if (not s1) return {};
+
+        auto s2 = unify(apply_subst(*s1, A.k2), apply_subst(*s1, A.k2));
+        if (not s2) return {};
+
+        return compose(*s2,*s1);
+    }
+    else if (k1->is_kvar())
+    {
+        auto& kv1 = dynamic_cast<const KindVar&>(*k1);
+
+        if (k2->is_kvar() and kv1 == dynamic_cast<const KindVar&>(*k2))
+            return {{}};
+        if (occurs_check(kv1,k2)) return {};
+
+        k_substitution_t s;
+        s.insert({kv1,k2});
+        return s;
+    }
+    else if (k2->is_kvar())
+    {
+        auto& kv2 = dynamic_cast<const KindVar&>(*k2);
+
+        if (k1->is_kvar() and kv2 == dynamic_cast<const KindVar&>(*k1))
+            return {{}};
+        if (occurs_check(kv2,k1)) return {};
+
+        k_substitution_t s;
+        s.insert({kv2,k1});
+        return s;
+    }
+    else if (k1->is_kstar() and k2->is_kstar())
+        return {{}};
+    else
+        return {};
+}
+
 struct kindchecker_state
 {
     int next_kvar_index = 1;
@@ -807,20 +911,115 @@ struct kindchecker_state
 
     // These three together form the "type context"
     std::map<std::string,kind> data_to_kind;
+    std::map<std::string,std::vector<kind>> type_class_to_kinds;
     std::map<Haskell::TypeVar,kind> type_var_to_kind;
-    std::map<KindVar,kind> kind_var_to_kind;
+    k_substitution_t kind_var_to_kind;
     // We also need the kinds for type classes and type constructors of previous groups.
+
+    kind kind_for_data_type(const std::string&) const;
+    kind kind_for_type_var(const Haskell::TypeVar&) const;
 
     // Kind check a group.
     // Doesn't GHC first "guess" the kinds, and then "check" them?
     bool unify(const kind& k1, const kind& k2);
+
+    void kind_check_type_of_kind(const Haskell::Type& t, const kind& k);
+    void kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
+    void kind_check_context(const Haskell::Context& context);
+    void kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
     vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group);
 };
 
+kind kindchecker_state::kind_for_data_type(const std::string& name) const
+{
+    auto k = data_to_kind.at(name);
+    return apply_subst(kind_var_to_kind, k);
+}
+
+
+kind kindchecker_state::kind_for_type_var(const Haskell::TypeVar& tv) const
+{
+    auto k = type_var_to_kind.at(tv);
+    return apply_subst(kind_var_to_kind, k);
+}
 
 bool kindchecker_state::unify(const kind& k1, const kind& k2)
 {
+    auto s = ::unify(k1,k2);
+    if (not s) return false;
+
+    kind_var_to_kind = compose(*s, kind_var_to_kind);
     return true;
+}
+
+void kindchecker_state::kind_check_type_of_kind(const Haskell::Type& t, const kind& k)
+{
+
+}
+
+void kindchecker_state::kind_check_context(const Haskell::Context& context)
+{
+    for(auto& constraint: context.constraints)
+    {
+        // convert Type to Class type1 type2 type3
+        // lookup the kind for arguments to Class: k1, k2, k3
+        // kind_check_type_of_kind(type[i],k[i])
+    }
+}
+
+void kindchecker_state::kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type)
+{
+    auto type2 = data_type;
+
+    if (constructor.is_record_constructor())
+    {
+        auto& fields = std::get<1>(constructor.fields);
+
+        for(auto& field_decl: fields.field_decls | views::reverse)
+        {
+            for(int i=0;i<field_decl.field_names.size();i++)
+                type2 = Haskell::TypeApp(field_decl.type, type2);
+        }
+    }
+    else
+    {
+        auto& types = std::get<0>(constructor.fields);
+
+        for(auto& type: types | views::reverse)
+            type2 = Haskell::TypeApp(type,type2);
+
+    }
+
+    kind_check_type_of_kind(type2, make_kind_star());
+}
+
+void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl)
+{
+    // a. Look up kind for this data type.
+    kind k = kind_for_data_type(data_decl.name);
+
+    // b. Put each type variable into the kind.
+    kind k2 = make_kind_star();
+    for(auto& tv: data_decl.type_vars | views::reverse)
+    {
+        auto a = fresh_kind_var();
+        type_var_to_kind.insert({tv,a});
+        k2 = make_kind_arrow(a,k2);
+    }
+    if (not unify(k,k2))
+        throw myexception()<<"Can't unify kinds "<<k->print()<<" ~ "<<k2->print()<<"\n";
+
+    // c. Handle the context
+    kind_check_context(data_decl.context);
+
+    // d. construct the data type
+    Haskell::Type data_type = Haskell::TypeVar({{},data_decl.name});
+    for(auto& tv: data_decl.type_vars)
+        data_type = Haskell::TypeApp(data_type, tv);
+
+    // e. Handle the constructor terms
+    for(auto& constructor: data_decl.constructors)
+        kind_check_constructor(constructor, data_type);
 }
 
 /*
@@ -845,19 +1044,8 @@ vector<expression_ref> kindchecker_state::infer_kinds(const vector<expression_re
     for(auto& type_decl: type_decl_group)
     {
         if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
-        {
-            auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
-            kind k = data_to_kind.at(D.name);
-            kind k2 = make_kind_star();
-            for(auto& tv: D.type_vars | views::reverse)
-            {
-                auto a = fresh_kind_var();
-                type_var_to_kind.insert({tv,a});
-                k2 = make_kind_arrow(a,k2);
-                kind_var_to_kind.insert({*a,{}});
-                unify(k,k2);
-            }
-        }
+            kind_check_data_type( type_decl.as_<Haskell::DataOrNewtypeDecl>() );
+
         // add kind vars to the environment for each declared name.
         // for each declared name 'data T a1 a2 .. an = ... ':
         //     kappa <- load the kind from the environment && substitute so that any remaining unification vars are still open
