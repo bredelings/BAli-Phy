@@ -922,6 +922,7 @@ struct kindchecker_state
     kind apply_substitution(const kind& k) const;
 
     kind kind_for_data_type(const std::string&) const;
+    std::vector<kind> kinds_for_type_class(const std::string&) const;
     kind kind_for_type_var(const Haskell::TypeVar&) const;
 
     // Kind check a group.
@@ -933,10 +934,19 @@ struct kindchecker_state
     kind kind_check_type_con(const std::string&);
     kind kind_check_type(const Haskell::Type& t);
     void kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
+    void kind_check_constraint(const Haskell::Type& constraint);
     void kind_check_context(const Haskell::Context& context);
     void kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
     vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group);
 };
+
+std::vector<kind> kindchecker_state::kinds_for_type_class(const std::string& name) const
+{
+    auto kinds = type_class_to_kinds.at(name);
+    for(auto& kind: kinds)
+        kind = apply_substitution(kind);
+    return kinds;
+}
 
 kind kindchecker_state::apply_substitution(const kind& k) const
 {
@@ -1053,14 +1063,25 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
         std::abort();
 }
 
+
+void kindchecker_state::kind_check_constraint(const Haskell::Type& constraint)
+{
+    auto [head,types] = Haskell::decompose_type_apps(constraint);
+
+    assert(head.is_a<Haskell::TypeVar>());
+    const string& class_name = unloc(head.as_<Haskell::TypeVar>().name);
+
+    const auto kinds = kinds_for_type_class(class_name);
+
+    // Kind-check the type-parameters for the type class
+    for(auto&& [t,k]: views::zip(types,kinds))
+        kind_check_type_of_kind(t,k);
+}
+
 void kindchecker_state::kind_check_context(const Haskell::Context& context)
 {
     for(auto& constraint: context.constraints)
-    {
-        // convert Type to Class type1 type2 type3
-        // lookup the kind for arguments to Class: k1, k2, k3
-        // kind_check_type_of_kind(type[i],k[i])
-    }
+        kind_check_constraint(constraint);
 }
 
 void kindchecker_state::kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type)
