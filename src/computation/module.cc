@@ -1047,6 +1047,7 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
                 throw myexception()<<"";
             return a.k2;
         }
+        std::abort();
     }
     else
         std::abort();
