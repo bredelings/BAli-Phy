@@ -744,7 +744,7 @@ struct KindArrow: public Kind
         string s2 = k2->print();
         if (k1->is_karrow())
             s1 = "("+s1+")";
-        return s1+"->"+s2;
+        return s1+" -> "+s2;
     }
 };
 
@@ -916,6 +916,11 @@ struct kindchecker_state
     k_substitution_t kind_var_to_kind;
     // We also need the kinds for type classes and type constructors of previous groups.
 
+    void add_substitution(const KindVar& kv, const kind& k);
+    void add_substitution(const k_substitution_t& s);
+
+    kind apply_substitution(const kind& k) const;
+
     kind kind_for_data_type(const std::string&) const;
     kind kind_for_type_var(const Haskell::TypeVar&) const;
 
@@ -924,11 +929,31 @@ struct kindchecker_state
     bool unify(const kind& k1, const kind& k2);
 
     void kind_check_type_of_kind(const Haskell::Type& t, const kind& k);
+    kind kind_check_type_var(const Haskell::TypeVar& tv);
+    kind kind_check_type_con(const std::string&);
+    kind kind_check_type(const Haskell::Type& t);
     void kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
     void kind_check_context(const Haskell::Context& context);
     void kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
     vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group);
 };
+
+kind kindchecker_state::apply_substitution(const kind& k) const
+{
+    return apply_subst(kind_var_to_kind, k);
+}
+
+void kindchecker_state::add_substitution(const KindVar& kv, const kind& k)
+{
+    assert(not kind_var_to_kind.count(kv));
+
+    kind_var_to_kind.insert({kv,k});
+}
+
+void kindchecker_state::add_substitution(const k_substitution_t& s)
+{
+    kind_var_to_kind = compose(s,kind_var_to_kind);
+}
 
 kind kindchecker_state::kind_for_data_type(const std::string& name) const
 {
@@ -946,15 +971,85 @@ kind kindchecker_state::kind_for_type_var(const Haskell::TypeVar& tv) const
 bool kindchecker_state::unify(const kind& k1, const kind& k2)
 {
     auto s = ::unify(k1,k2);
-    if (not s) return false;
-
-    kind_var_to_kind = compose(*s, kind_var_to_kind);
-    return true;
+    if (s)
+    {
+        add_substitution(*s);
+        return true;
+    }
+    else
+        return false;
 }
 
 void kindchecker_state::kind_check_type_of_kind(const Haskell::Type& t, const kind& k)
 {
+    auto k2 = kind_check_type(t);
+    if (not unify(k,k2))
+        throw myexception()<<"Type "<<t<<" has kind "<<apply_substitution(k2)<<", but should have kind "<<apply_substitution(k)<<"\n";
+}
 
+kind kindchecker_state::kind_check_type_var(const Haskell::TypeVar& tv)
+{
+    return kind_for_type_var(tv);
+}
+
+kind kindchecker_state::kind_check_type_con(const string& name)
+{
+    if (name == "->")
+        return make_kind_arrow(make_kind_star(),make_kind_arrow(make_kind_star(),make_kind_star()));
+    else if (name == "()")
+        return make_kind_star();
+    else if (name == "(,)")
+        return make_kind_arrow(make_kind_star(),make_kind_arrow(make_kind_star(),make_kind_star()));
+    else if (name == "Int")
+        return make_kind_star();
+    else if (name == "Double")
+        return make_kind_star();
+    else if (name == "Char")
+        return make_kind_star();
+    else
+        return kind_for_data_type(name);
+}
+
+kind kindchecker_state::kind_check_type(const Haskell::Type& t)
+{
+    if (t.is_a<Haskell::TypeVar>())
+    {
+        auto& tv = t.as_<Haskell::TypeVar>();
+        auto& name = unloc(tv.name);
+        assert(name.size() > 0);
+        if (std::islower(name[0]))
+            return kind_check_type_var(tv);
+        else
+            return kind_check_type_con(name);
+    }
+    else if (t.is_a<Haskell::TypeApp>())
+    {
+        auto& tapp = t.as_<Haskell::TypeApp>();
+
+        auto k1 = kind_check_type(tapp.head);
+        auto k2 = kind_check_type(tapp.arg);
+
+        if (k1->is_kstar())
+            throw myexception()<<"Can't apply type "<<tapp.head<<" :: * to type "<<tapp.arg<<".";
+        else if (k1->is_kvar())
+        {
+            auto& a = dynamic_cast<const KindVar&>(*k1);
+            auto a1 = fresh_kind_var();
+            auto a2 = fresh_kind_var();
+            add_substitution(a, make_kind_arrow(a1,a2));
+            unify(a1, k2); /// can't fail.
+            return a2;
+        }
+        else if (k1->is_karrow())
+        {
+            auto& a = dynamic_cast<const KindArrow&>(*k1);
+            if (not unify(a.k1, k2))
+                throw myexception()<<"";
+            return a.k2;
+        }
+    }
+    else
+        std::abort();
 }
 
 void kindchecker_state::kind_check_context(const Haskell::Context& context)
@@ -985,8 +1080,9 @@ void kindchecker_state::kind_check_constructor(const Haskell::Constructor& const
     {
         auto& types = std::get<0>(constructor.fields);
 
+        Haskell::TypeVar type_arrow({{},"->"});
         for(auto& type: types | views::reverse)
-            type2 = Haskell::TypeApp(type,type2);
+            type2 = Haskell::TypeApp(Haskell::TypeApp(type_arrow,type),type2);
 
     }
 
@@ -1152,9 +1248,11 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
 
     auto type_decl_groups = map_groups( ordered_name_groups, decl_for_type );
 
-    kindchecker_state K;
     for(auto& type_decl_group: type_decl_groups)
+    {
+        kindchecker_state K;
         type_decl_group = K.infer_kinds(type_decl_group);
+    }
 
     // FIXME: Handle instances.
 
