@@ -587,6 +587,55 @@ void Module::rename(const Program& P)
 
 // Q: how/when do we rename default method definitions?
 
+set<Haskell::TypeVar> free_type_VARS_from_type(const Haskell::Type& type)
+{
+    // This version finds varids -- the other version finds qualified names.
+    set<Haskell::TypeVar> tvars;
+    if (type.is_a<Haskell::TypeVar>())
+    {
+        auto& tv = type.as_<Haskell::TypeVar>();
+        auto& name = unloc(tv.name);
+        assert(name.size());
+        if (is_haskell_varid(name))
+            tvars.insert(tv);
+    }
+    else if (type.is_a<Haskell::TypeApp>())
+    {
+        auto& app = type.as_<Haskell::TypeApp>();
+        add(tvars, free_type_VARS_from_type(app.head));
+        add(tvars, free_type_VARS_from_type(app.arg));
+    }
+    else if (type.is_a<Haskell::TupleType>())
+    {
+        auto& tuple = type.as_<Haskell::TupleType>();
+        for(auto element_type: tuple.element_types)
+            add(tvars, free_type_VARS_from_type(element_type));
+    }
+    else if (type.is_a<Haskell::ListType>())
+    {
+        auto& list = type.as_<Haskell::ListType>();
+        add(tvars, free_type_VARS_from_type(list.element_type));
+    }
+    else if (type.is_a<Haskell::ForallType>())
+    {
+        auto& forall = type.as_<Haskell::ForallType>();
+        tvars = free_type_VARS_from_type(forall.type);
+        for(auto& type_var: forall.type_var_binders)
+        {
+            if (type_var.is_a<Haskell::TypeVar>())
+            {
+                auto& tv = type_var.as_<Haskell::TypeVar>();
+                tvars.erase(tv);
+            }
+            if (type_var.is_a<Haskell::TypeVarOfKind>())
+            {
+                std::abort();
+            }
+        }
+    }
+    return tvars;
+}
+
 set<string> free_type_vars_from_type(const Haskell::Type& type)
 {
     set<string> tvars;
