@@ -984,10 +984,14 @@ struct kindchecker_state
     // Doesn't GHC first "guess" the kinds, and then "check" them?
     bool unify(const kind& k1, const kind& k2);
 
+    void add_data_or_newtype_of_kind(const string& name, const kind& kinds);
+    void add_type_class_of_kinds(const string& name, const std::vector<kind>& kinds);
+
     void kind_check_type_of_kind(const Haskell::Type& t, const kind& k);
     kind kind_check_type_var(const Haskell::TypeVar& tv);
     kind kind_check_type_con(const std::string&);
     kind kind_check_type(const Haskell::Type& t);
+    void kind_check_type_class(const Haskell::ClassDecl& class_decl);
     void kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
     void kind_check_constraint(const Haskell::Type& constraint);
     void kind_check_context(const Haskell::Context& context);
@@ -1028,6 +1032,19 @@ void kindchecker_state::pop_type_var_scope()
     type_var_to_kind.pop_back();
     assert(not type_var_to_kind.empty());
 }
+
+void kindchecker_state::add_data_or_newtype_of_kind(const string& name, const kind& k)
+{
+    assert(not data_to_kind.count(name));
+    data_to_kind.insert({name,k});
+}
+
+void kindchecker_state::add_type_class_of_kinds(const string& name, const std::vector<kind>& kinds)
+{
+    assert(not type_class_to_kinds.count(name));
+    type_class_to_kinds.insert({name,kinds});
+}
+
 std::vector<kind> kindchecker_state::kinds_for_type_class(const std::string& name) const
 {
     auto kinds = type_class_to_kinds.at(name);
@@ -1238,6 +1255,60 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
     pop_type_var_scope();
 }
 
+void kindchecker_state::kind_check_type_class(const Haskell::ClassDecl& class_decl)
+{
+    // Bind type parameters for class
+    push_type_var_scope();
+
+    auto& name = class_decl.name;
+
+    auto kinds = kinds_for_type_class(name);
+
+    // Should we introduce fresh kind vars for each parameters, and then unify them?
+    // FIXME: can we check that all uses of a type class have the right number of parameters in `rename`?
+    for(auto&& [tv,k]: views::zip(class_decl.type_vars, kinds))
+        bind_type_var(tv,k);
+
+    if (class_decl.decls)
+    {
+        for(auto& decl: unloc(*class_decl.decls))
+        {
+            if (decl.is_a<Haskell::TypeDecl>())
+            {
+                // Bind type parameters for type declaration
+                push_type_var_scope();
+
+                std::optional<Haskell::Context> context;
+
+                auto type = decl.as_<Haskell::TypeDecl>().type;
+
+                if (type.is_a<Haskell::ConstrainedType>())
+                {
+                    auto& ct = type.as_<Haskell::ConstrainedType>();
+                    context = ct.context;
+                    type = ct.type;
+                }
+
+                auto ftvs = free_type_VARS_from_type(type);
+                for(auto& ftv: ftvs)
+                {
+                    if (not type_var_in_scope(ftv))
+                    {
+                        auto a = fresh_kind_var();
+                        bind_type_var(ftv,a);
+                    }
+                }
+
+                if (context)
+                    kind_check_context(*context);
+                kind_check_type_of_kind(type, make_kind_star());
+
+                pop_type_var_scope();
+            }
+        }
+    }
+
+    pop_type_var_scope();
 }
 
 /*
@@ -1246,6 +1317,7 @@ type S a = [D a]
 class C a where
    bar :: a -> D a -> Bool
 */
+
 vector<expression_ref> kindchecker_state::infer_kinds(const vector<expression_ref>& type_decl_group)
 {
     // 1. Add a kind variable for each data type in the group.
@@ -1255,7 +1327,21 @@ vector<expression_ref> kindchecker_state::infer_kinds(const vector<expression_re
         {
             auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
 
-            data_to_kind.insert({D.name, fresh_kind_var()});
+            // Maybe I should create fresh kind variables and enforce the arity here.
+            // We would have to create new kind variables later when we bring the type vars into scope.
+            add_data_or_newtype_of_kind(D.name, fresh_kind_var());
+        }
+        else if (type_decl.is_a<Haskell::ClassDecl>())
+        {
+            auto& C = type_decl.as_<Haskell::ClassDecl>();
+
+            vector<kind> kinds;
+            for(int i=0;i<C.type_vars.size();i++)
+                kinds.push_back(fresh_kind_var());
+
+            // If I created a tuple kind, I could just add a single kind variable here.
+            // We will have to create new kind variables later when we bring the type parameter names into scope.
+            add_type_class_of_kinds(C.name, kinds);
         }
     }
 
@@ -1263,6 +1349,8 @@ vector<expression_ref> kindchecker_state::infer_kinds(const vector<expression_re
     {
         if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
             kind_check_data_type( type_decl.as_<Haskell::DataOrNewtypeDecl>() );
+        else if (type_decl.is_a<Haskell::ClassDecl>())
+            kind_check_type_class( type_decl.as_<Haskell::ClassDecl>() );
 
         // add kind vars to the environment for each declared name.
         // for each declared name 'data T a1 a2 .. an = ... ':
