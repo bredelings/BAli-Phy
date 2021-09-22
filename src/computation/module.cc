@@ -961,9 +961,15 @@ struct kindchecker_state
     // These three together form the "type context"
     std::map<std::string,kind> data_to_kind;
     std::map<std::string,std::vector<kind>> type_class_to_kinds;
-    std::map<Haskell::TypeVar,kind> type_var_to_kind;
+    // How to we pop scopes for this?
+    std::vector<std::map<Haskell::TypeVar,kind>> type_var_to_kind;
     k_substitution_t kind_var_to_kind;
     // We also need the kinds for type classes and type constructors of previous groups.
+
+    void bind_type_var(const Haskell::TypeVar& tv, const kind& k);
+    void push_type_var_scope();
+    void pop_type_var_scope();
+    bool type_var_in_scope(const Haskell::TypeVar& tv) const;
 
     void add_substitution(const KindVar& kv, const kind& k);
     void add_substitution(const k_substitution_t& s);
@@ -987,8 +993,41 @@ struct kindchecker_state
     void kind_check_context(const Haskell::Context& context);
     void kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
     vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group);
+
+    kindchecker_state()
+    {
+        type_var_to_kind.push_back({});
+    }
 };
 
+bool kindchecker_state::type_var_in_scope(const Haskell::TypeVar& tv) const
+{
+    return type_var_to_kind.back().count(tv);
+}
+
+void kindchecker_state::bind_type_var(const Haskell::TypeVar& tv, const kind& k)
+{
+    // We can't modify the initial empty scope.
+    assert(type_var_to_kind.size() > 1);
+
+    auto& tvk = type_var_to_kind.back();
+    if (tvk.count(tv))
+        tvk.erase(tv);
+    tvk.insert({tv,k});
+}
+
+void kindchecker_state::push_type_var_scope()
+{
+    assert(not type_var_to_kind.empty());
+    type_var_to_kind.push_back( type_var_to_kind.back() );
+}
+
+void kindchecker_state::pop_type_var_scope()
+{
+    assert(type_var_to_kind.size() > 1);
+    type_var_to_kind.pop_back();
+    assert(not type_var_to_kind.empty());
+}
 std::vector<kind> kindchecker_state::kinds_for_type_class(const std::string& name) const
 {
     auto kinds = type_class_to_kinds.at(name);
@@ -1023,7 +1062,7 @@ kind kindchecker_state::kind_for_data_type(const std::string& name) const
 
 kind kindchecker_state::kind_for_type_var(const Haskell::TypeVar& tv) const
 {
-    auto k = type_var_to_kind.at(tv);
+    auto k = type_var_to_kind.back().at(tv);
     return apply_subst(kind_var_to_kind, k);
 }
 
@@ -1075,8 +1114,8 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
     {
         auto& tv = t.as_<Haskell::TypeVar>();
         auto& name = unloc(tv.name);
-        assert(name.size() > 0);
-        if (std::islower(name[0]))
+
+        if (is_haskell_varid(name))
             return kind_check_type_var(tv);
         else
             return kind_check_type_con(name);
@@ -1157,11 +1196,16 @@ void kindchecker_state::kind_check_constructor(const Haskell::Constructor& const
 
     }
 
+    // FIXME: how about constraints?
+    // Perhaps constraints on constructors lead to records that contain pointers to dictionaries??
+
     kind_check_type_of_kind(type2, make_kind_star());
 }
 
 void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl)
 {
+    push_type_var_scope();
+
     // a. Look up kind for this data type.
     kind k = kind_for_data_type(data_decl.name);
 
@@ -1170,11 +1214,14 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
     for(auto& tv: data_decl.type_vars | views::reverse)
     {
         auto a = fresh_kind_var();
-        type_var_to_kind.insert({tv,a});
+        bind_type_var(tv,a);
         k2 = make_kind_arrow(a,k2);
     }
     if (not unify(k,k2))
+    {
+        pop_type_var_scope();
         throw myexception()<<"Can't unify kinds "<<k->print()<<" ~ "<<k2->print()<<"\n";
+    }
 
     // c. Handle the context
     kind_check_context(data_decl.context);
@@ -1187,6 +1234,10 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
     // e. Handle the constructor terms
     for(auto& constructor: data_decl.constructors)
         kind_check_constructor(constructor, data_type);
+
+    pop_type_var_scope();
+}
+
 }
 
 /*
