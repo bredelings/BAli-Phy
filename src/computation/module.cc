@@ -773,9 +773,7 @@ struct kindchecker_state
     kind_var fresh_kind_var() {return fresh_named_kind_var("k");}
 
     // These three together form the "type context"
-    std::map<std::string,kind> data_to_kind;
-    std::map<std::string,std::vector<kind>> type_class_to_kinds;
-    // How to we pop scopes for this?
+    std::map<std::string,kind> type_con_to_kind;
     std::vector<std::map<Haskell::TypeVar,kind>> type_var_to_kind;
     k_substitution_t kind_var_to_kind;
     // We also need the kinds for type classes and type constructors of previous groups.
@@ -790,27 +788,25 @@ struct kindchecker_state
 
     kind apply_substitution(const kind& k) const;
 
-    kind kind_for_data_type(const std::string&) const;
-    std::vector<kind> kinds_for_type_class(const std::string&) const;
+    kind kind_for_type_con(const std::string&) const;
     kind kind_for_type_var(const Haskell::TypeVar&) const;
+    void add_type_con_of_kind(const string& name, const kind& k);
 
     // Kind check a group.
     // Doesn't GHC first "guess" the kinds, and then "check" them?
     bool unify(const kind& k1, const kind& k2);
-
-    void add_data_or_newtype_of_kind(const string& name, const kind& kinds);
-    void add_type_class_of_kinds(const string& name, const std::vector<kind>& kinds);
 
     void kind_check_type_of_kind(const Haskell::Type& t, const kind& k);
     kind kind_check_type_var(const Haskell::TypeVar& tv);
     kind kind_check_type_con(const std::string&);
     kind kind_check_type(const Haskell::Type& t);
     void kind_check_type_class(const Haskell::ClassDecl& class_decl);
+    void kind_check_type_synonym(const Haskell::TypeSynonymDecl& type_syn_decl);
     void kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
     void kind_check_constraint(const Haskell::Type& constraint);
     void kind_check_context(const Haskell::Context& context);
     void kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
-    vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group);
+    std::map<std::string, std::pair<int,kind>> infer_kinds(const vector<expression_ref>& type_decl_group);
 
     kindchecker_state(const Module& m)
         :mod(m)
@@ -848,24 +844,10 @@ void kindchecker_state::pop_type_var_scope()
     assert(not type_var_to_kind.empty());
 }
 
-void kindchecker_state::add_data_or_newtype_of_kind(const string& name, const kind& k)
+void kindchecker_state::add_type_con_of_kind(const string& name, const kind& k)
 {
-    assert(not data_to_kind.count(name));
-    data_to_kind.insert({name,k});
-}
-
-void kindchecker_state::add_type_class_of_kinds(const string& name, const std::vector<kind>& kinds)
-{
-    assert(not type_class_to_kinds.count(name));
-    type_class_to_kinds.insert({name,kinds});
-}
-
-std::vector<kind> kindchecker_state::kinds_for_type_class(const std::string& name) const
-{
-    auto kinds = type_class_to_kinds.at(name);
-    for(auto& kind: kinds)
-        kind = apply_substitution(kind);
-    return kinds;
+    assert(not type_con_to_kind.count(name));
+    type_con_to_kind.insert({name,k});
 }
 
 kind kindchecker_state::apply_substitution(const kind& k) const
@@ -880,21 +862,26 @@ void kindchecker_state::add_substitution(const KindVar& kv, const kind& k)
     kind_var_to_kind.insert({kv,k});
 }
 
+
+//FIXME -- is this the right order?
 void kindchecker_state::add_substitution(const k_substitution_t& s)
 {
     kind_var_to_kind = compose(s,kind_var_to_kind);
 }
 
-kind kindchecker_state::kind_for_data_type(const std::string& name) const
+kind kindchecker_state::kind_for_type_con(const std::string& name) const
 {
-    auto k = data_to_kind.at(name);
-    return apply_subst(kind_var_to_kind, k);
+    auto k = type_con_to_kind.at(name);
+    return apply_substitution(k);
 }
 
 
 kind kindchecker_state::kind_for_type_var(const Haskell::TypeVar& tv) const
 {
-    auto k = type_var_to_kind.back().at(tv);
+    auto it = type_var_to_kind.back().find(tv);
+    if (it == type_var_to_kind.back().end())
+        throw myexception()<<"Can't find type variable '"<<tv.print()<<"'";
+    auto k = it->second;
     return apply_subst(kind_var_to_kind, k);
 }
 
@@ -924,20 +911,14 @@ kind kindchecker_state::kind_check_type_var(const Haskell::TypeVar& tv)
 
 kind kindchecker_state::kind_check_type_con(const string& name)
 {
-    if (name == "->")
-        return make_kind_arrow(make_kind_star(),make_kind_arrow(make_kind_star(),make_kind_star()));
-    else if (name == "()")
-        return make_kind_star();
-    else if (name == "(,)")
-        return make_kind_arrow(make_kind_star(),make_kind_arrow(make_kind_star(),make_kind_star()));
-    else if (name == "Int")
-        return make_kind_star();
-    else if (name == "Double")
-        return make_kind_star();
-    else if (name == "Char")
-        return make_kind_star();
+    if (type_con_to_kind.count(name))
+        return kind_for_type_con(name);
     else
-        return kind_for_data_type(name);
+    {
+        auto tinfo = mod.lookup_resolved_type(name);
+        assert(tinfo.k);
+        return tinfo.k;
+    }
 }
 
 kind kindchecker_state::kind_check_type(const Haskell::Type& t)
@@ -986,16 +967,7 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
 
 void kindchecker_state::kind_check_constraint(const Haskell::Type& constraint)
 {
-    auto [head,types] = Haskell::decompose_type_apps(constraint);
-
-    assert(head.is_a<Haskell::TypeVar>());
-    const string& class_name = unloc(head.as_<Haskell::TypeVar>().name);
-
-    const auto kinds = kinds_for_type_class(class_name);
-
-    // Kind-check the type-parameters for the type class
-    for(auto&& [t,k]: views::zip(types,kinds))
-        kind_check_type_of_kind(t,k);
+    return kind_check_type_of_kind(constraint, make_kind_star());
 }
 
 void kindchecker_state::kind_check_context(const Haskell::Context& context)
@@ -1039,7 +1011,7 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
     push_type_var_scope();
 
     // a. Look up kind for this data type.
-    kind k = kind_for_data_type(data_decl.name);
+    kind k = kind_for_type_con(data_decl.name);  // FIXME -- check that this is a data type?
 
     // b. Put each type variable into the kind.
     kind k2 = make_kind_star();
@@ -1049,11 +1021,8 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
         bind_type_var(tv,a);
         k2 = make_kind_arrow(a,k2);
     }
-    if (not unify(k,k2))
-    {
-        pop_type_var_scope();
-        throw myexception()<<"Can't unify kinds "<<k->print()<<" ~ "<<k2->print()<<"\n";
-    }
+    bool ok = unify(k,k2);
+    assert(ok);
 
     // c. Handle the context
     kind_check_context(data_decl.context);
@@ -1077,12 +1046,19 @@ void kindchecker_state::kind_check_type_class(const Haskell::ClassDecl& class_de
 
     auto& name = class_decl.name;
 
-    auto kinds = kinds_for_type_class(name);
+    // a. Look up kind for this data type.
+    auto k = kind_for_type_con(name); // FIXME -- check that this is a type class?
 
-    // Should we introduce fresh kind vars for each parameters, and then unify them?
-    // FIXME: can we check that all uses of a type class have the right number of parameters in `rename`?
-    for(auto&& [tv,k]: views::zip(class_decl.type_vars, kinds))
-        bind_type_var(tv,k);
+    // b. Put each type variable into the kind.
+    kind k2 = make_kind_star();
+    for(auto& tv: class_decl.type_vars | views::reverse)
+    {
+        auto a = fresh_kind_var();
+        bind_type_var(tv,a);
+        k2 = make_kind_arrow(a,k2);
+    }
+    bool ok = unify(k,k2);
+    assert(ok);
 
     if (class_decl.decls)
     {
@@ -1133,68 +1109,118 @@ class C a where
    bar :: a -> D a -> Bool
 */
 
-vector<expression_ref> kindchecker_state::infer_kinds(const vector<expression_ref>& type_decl_group)
+void kindchecker_state::kind_check_type_synonym(const Haskell::TypeSynonymDecl& type_syn_decl)
 {
-    // 1. Add a kind variable for each data type in the group.
+    // Bind type parameters for class
+    push_type_var_scope();
+
+    auto& name = type_syn_decl.name;
+
+    // a. Look up kind for this data type.
+    auto k = kind_for_type_con(name); // FIXME -- check that this is a type class?
+
+    // b. Put each type variable into the kind.
+    kind k2 = make_kind_star();
+    for(auto& tv: type_syn_decl.type_vars | views::reverse)
+    {
+        auto a = fresh_kind_var();
+        bind_type_var(tv,a);
+        k2 = make_kind_arrow(a,k2);
+    }
+    bool ok = unify(k,k2);
+    assert(ok);
+
+    kind_check_type_of_kind( unloc(type_syn_decl.rhs_type), make_kind_star() );
+
+    pop_type_var_scope();
+}
+
+std::map<string,std::pair<int,kind>> kindchecker_state::infer_kinds(const vector<expression_ref>& type_decl_group)
+{
+    // 1. Infer initial kinds for types and type classes
+    for(auto& type_decl: type_decl_group)
+    {
+        string name;
+        int arity;
+        if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
+        {
+            auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
+            name = D.name;
+            arity = D.type_vars.size();
+        }
+        else if (type_decl.is_a<Haskell::ClassDecl>())
+        {
+            auto& C = type_decl.as_<Haskell::ClassDecl>();
+            name = C.name;
+            arity = C.type_vars.size();
+        }
+        else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
+        {
+            auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
+            name = T.name;
+            arity = T.type_vars.size();
+        }
+
+        // Create an initial kind here...
+        kind k = make_kind_star();
+        for(int i=0;i<arity;i++)
+            k = make_kind_arrow( fresh_kind_var(), k );
+
+        add_type_con_of_kind(name, k);
+    }
+
+    // 2. Do kind inference for each declaration
     for(auto& type_decl: type_decl_group)
     {
         if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
             auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
-
-            // Maybe I should create fresh kind variables and enforce the arity here.
-            // We would have to create new kind variables later when we bring the type vars into scope.
-            add_data_or_newtype_of_kind(D.name, fresh_kind_var());
+            kind_check_data_type( D );
         }
         else if (type_decl.is_a<Haskell::ClassDecl>())
         {
             auto& C = type_decl.as_<Haskell::ClassDecl>();
-
-            vector<kind> kinds;
-            for(int i=0;i<C.type_vars.size();i++)
-                kinds.push_back(fresh_kind_var());
-
-            // If I created a tuple kind, I could just add a single kind variable here.
-            // We will have to create new kind variables later when we bring the type parameter names into scope.
-            add_type_class_of_kinds(C.name, kinds);
+            kind_check_type_class( C );
+        }
+        else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
+        {
+            auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
+            kind_check_type_synonym( T );
         }
     }
 
+    map<string,pair<int,kind>> kind_and_arity;
     for(auto& type_decl: type_decl_group)
     {
+        string name;
+        int arity;
         if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
-            kind_check_data_type( type_decl.as_<Haskell::DataOrNewtypeDecl>() );
+        {
+            auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
+            name = D.name;
+            arity = D.type_vars.size();
+        }
         else if (type_decl.is_a<Haskell::ClassDecl>())
-            kind_check_type_class( type_decl.as_<Haskell::ClassDecl>() );
+        {
+            auto& C = type_decl.as_<Haskell::ClassDecl>();
+            name = C.name;
+            arity = C.type_vars.size();
+        }
+        else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
+        {
+            auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
+            name = T.name;
+            arity = T.type_vars.size();
+        }
 
-        // add kind vars to the environment for each declared name.
-        // for each declared name 'data T a1 a2 .. an = ... ':
-        //     kappa <- load the kind from the environment && substitute so that any remaining unification vars are still open
-        //     A[i] <- add kind vars for each type var a[i]
-        //     unify k~a1 -> a2 -> ... an -> *
-        //     for each constructor
-        //         ???
-        // So... we are supposed to get the type of the class and also each constructor out of this???
-
-
-        // for each declared class `class (G (a1 a2),H a3) => C a1 a2 ... an where ...`
-        //    kappa <- load the kind from the environment && substitute so that any remaining unification vars are still open
-        //    A[i] <- add kind vars for each type var a[i]
-        //    the kind of the class is (a1,a2,a3...,an)
-        //    for each method declaration:
-        //       ???
-        //
-
-        // Hmm... just as we have |-c rules for constructors, we probably have some kind of rule for handling context.
-        // What do each of these things return?  They have SIDE-EFFECTS, but some also return something!
+        auto k = kind_for_type_con(name);
+        k = replace_kvar_with_star(k);
+        kind_and_arity.insert({name,{arity,k}});
     }
 
-    // The primarily goal here is to infer the kind for the type and class names!
-    // But we probably have to label each type variable with its kind as well.
-    // This will depend on the kinds of earlier type_decl_groups, as well as earlier modules.
-
-
-    // How can type variables come up?
+    return kind_and_arity;
+}
+     // How can type variables come up?
     // * In type/class headers (context => T u1 u2 .. un)
     //   (Note that the context can't contain any variables other than u1..u[n].
 
@@ -1221,12 +1247,7 @@ vector<expression_ref> kindchecker_state::infer_kinds(const vector<expression_re
     // * Class variables are scoped over the body.
     // * the type for each method must mention the class variable u[1].
     // * the type for each method MAY mention other variables.
-    // * constraints on a class method may ONLY mention NON-class variables.
-    // * 
-    
-    
-    return type_decl_group;
-}
+    // * constraints on a class method may ONLY mention NON-class variables. (but this is a "silly" rule)
 
 vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_ref>& initial_class_and_type_decls)
 {
@@ -1276,7 +1297,13 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
     for(auto& type_decl_group: type_decl_groups)
     {
         kindchecker_state K(*this);
-        type_decl_group = K.infer_kinds(type_decl_group);
+        for(auto& [name,ka]: K.infer_kinds(type_decl_group))
+        {
+            auto& [arity,k] = ka;
+            auto tinfo = types.at(name);
+            tinfo.arity = arity;
+            tinfo.k     = k;
+        }
     }
 
     // FIXME: Handle instances.

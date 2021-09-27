@@ -158,3 +158,26 @@ kind make_n_args_kind(int n)
         k = make_kind_arrow(star,k);
     return k;
 }
+
+kind replace_kvar_with_star(const kind& k)
+{
+    if (k->is_kvar())
+    {
+        return make_kind_star();
+    }
+    else if (k->is_karrow())
+    {
+        auto& a = dynamic_cast<KindArrow&>(*k);
+        auto k1 = replace_kvar_with_star( a.k1 );
+        auto k2 = replace_kvar_with_star( a.k2 );
+        if (k1 != a.k1 or k2 != a.k2)
+            return make_kind_arrow(k1,k2);
+        else
+            return k;
+    }
+    else
+        return k;
+
+    std::abort();
+}
+

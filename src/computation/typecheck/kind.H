@@ -67,4 +67,6 @@ std::optional<k_substitution_t> unify(const kind& k1, const kind& k2);
 
 kind make_n_args_kind(int n);
 
+kind replace_kvar_with_star(const kind& k);
+
 #endif /*KIND_H*/
