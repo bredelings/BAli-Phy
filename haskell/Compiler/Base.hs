@@ -14,11 +14,11 @@ list_to_string x = builtin_list_to_string (deep_eval_list x)
 builtin builtin_error 1 "error" "Prelude"
 error x = builtin_error (list_to_string x)
 
-data IO a = IOAction  (s->(s,a)) |
+data IO a = IOAction  (Int->(Int,a)) |
             LazyIO a |
             MFix a |
             IOReturn a |
-            IOAndPass (IO b) (b -> IO a)
+            IOAndPass (IO Int) (Int -> IO a)
 
 infixl 1 >>, >>=
 

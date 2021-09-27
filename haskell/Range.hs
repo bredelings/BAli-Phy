@@ -1,6 +1,6 @@
 module Range where
 
-data Range = OpenInterval Double Double | IntegerInterval Int Int | TrueFalseRange | Simplex Int Double | ListRange [Range] | LabelledSimplex [a] Double | TreeRange Int
+data Range = OpenInterval Double Double | IntegerInterval Int Int | TrueFalseRange | Simplex Int Double | ListRange [Range] | LabelledSimplex [Int] Double | TreeRange Int
  
 builtin builtinGetBounds 2 "get_bounds" "Range"
 builtin builtinGetIntegerBounds 2 "get_integer_bounds" "Range"
