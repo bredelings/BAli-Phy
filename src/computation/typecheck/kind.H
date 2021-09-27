@@ -9,6 +9,7 @@
 struct Kind: public Object
 {
     virtual bool is_kstar() const {return false;}
+    virtual bool is_kconstraint() const {return false;}
     virtual bool is_karrow() const {return false;}
     virtual bool is_kvar() const {return false;}
 };
@@ -24,6 +25,16 @@ struct KindStar: public Kind
 
 typedef object_ptr<KindStar> kind_star;
 kind_star make_kind_star();
+
+struct KindConstraint: public Kind
+{
+    virtual bool is_kconstraint() const {return true;}
+    KindConstraint* clone()  const { return new KindConstraint(); }
+    std::string print() const { return "Constraint"; }
+};
+
+typedef object_ptr<KindConstraint> kind_constraint;
+kind_constraint make_kind_constraint();
 
 struct KindArrow: public Kind
 {

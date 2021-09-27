@@ -4,6 +4,8 @@ using std::string;
 
 kind_star make_kind_star() {return new KindStar();}
 
+kind_constraint make_kind_constraint() {return new KindConstraint();}
+
 string KindArrow::print() const {
     string s1 = k1->print();
     string s2 = k2->print();
@@ -69,10 +71,8 @@ kind apply_subst(const k_substitution_t& s, const kind& k)
         else
             return k;
     }
-    else if (k->is_kstar())
+    else
         return k;
-
-    std::abort();
 }
 
 // This should yield a substitution that is equivalent to apply FIRST s1 and THEN s2,
@@ -93,17 +93,15 @@ k_substitution_t compose(const k_substitution_t& s1, const k_substitution_t s2)
 
 bool occurs_check(const KindVar& kv, const kind& k)
 {
-    if (k->is_kstar())
-        return false;
-    else if (k->is_kvar())
+    if (k->is_kvar())
         return kv == dynamic_cast<const KindVar&>(*k);
     else if (k->is_karrow())
     {
         auto& a = dynamic_cast<const KindArrow&>(*k);
         return occurs_check(kv, a.k1) or occurs_check(kv, a.k2);
     }
-
-    std::abort();
+    else
+        return false;
 }
 
 std::optional<k_substitution_t> unify(const kind& k1, const kind& k2)
@@ -145,6 +143,8 @@ std::optional<k_substitution_t> unify(const kind& k1, const kind& k2)
         return s;
     }
     else if (k1->is_kstar() and k2->is_kstar())
+        return {{}};
+    else if (k1->is_kconstraint() and k2->is_kconstraint())
         return {{}};
     else
         return {};
