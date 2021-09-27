@@ -765,6 +765,8 @@ set<string> from_this_module(const string& mod_name, set<string> names)
 
 struct kindchecker_state
 {
+    const Module& mod;
+
     int next_kvar_index = 1;
 
     kind_var fresh_named_kind_var(const string& s) {return make_kind_var(s,next_kvar_index++);}
@@ -810,7 +812,8 @@ struct kindchecker_state
     void kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
     vector<expression_ref> infer_kinds(const vector<expression_ref>& type_decl_group);
 
-    kindchecker_state()
+    kindchecker_state(const Module& m)
+        :mod(m)
     {
         type_var_to_kind.push_back({});
     }
@@ -1272,7 +1275,7 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
 
     for(auto& type_decl_group: type_decl_groups)
     {
-        kindchecker_state K;
+        kindchecker_state K(*this);
         type_decl_group = K.infer_kinds(type_decl_group);
     }
 
