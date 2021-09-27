@@ -65,4 +65,6 @@ bool occurs_check(const KindVar& kv, const kind& k);
 
 std::optional<k_substitution_t> unify(const kind& k1, const kind& k2);
 
+kind make_n_args_kind(int n);
+
 #endif /*KIND_H*/

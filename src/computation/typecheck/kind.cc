@@ -150,3 +150,11 @@ std::optional<k_substitution_t> unify(const kind& k1, const kind& k2)
         return {};
 }
 
+kind make_n_args_kind(int n)
+{
+    auto star = make_kind_star();
+    kind k = star;
+    for(int i=0;i<n;i++)
+        k = make_kind_arrow(star,k);
+    return k;
+}
