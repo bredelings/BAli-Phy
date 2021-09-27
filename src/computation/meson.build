@@ -34,6 +34,8 @@ computation_sources = [
 
   'expression/kind.cc',
 
+  'typecheck/kind.cc',
+
   'optimization/free-vars.cc', 'optimization/set-levels.cc', 'optimization/float-out.cc',
 
   'optimization/occurrence.cc', 'optimization/inliner.cc', 'optimization/simplifier.cc'
