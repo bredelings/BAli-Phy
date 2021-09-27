@@ -940,9 +940,7 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
         auto k1 = kind_check_type(tapp.head);
         auto k2 = kind_check_type(tapp.arg);
 
-        if (k1->is_kstar())
-            throw myexception()<<"Can't apply type "<<tapp.head<<" :: * to type "<<tapp.arg<<".";
-        else if (k1->is_kvar())
+        if (k1->is_kvar())
         {
             auto& a = dynamic_cast<const KindVar&>(*k1);
             auto a1 = fresh_kind_var();
@@ -958,7 +956,9 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
                 throw myexception()<<"";
             return a.k2;
         }
-        std::abort();
+        else
+            throw myexception()<<"Can't apply type "<<tapp.head<<" :: "<<k1->print()<<" to type "<<tapp.arg<<".";
+
     }
     else if (t.is_a<Haskell::ListType>())
     {
@@ -967,8 +967,17 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
         Haskell::Type list_type = Haskell::TypeApp(list_con, L.element_type);
         return kind_check_type(list_type);
     }
+    else if (t.is_a<Haskell::TupleType>())
+    {
+        auto& T = t.as_<Haskell::TupleType>();
+        auto n = T.element_types.size();
+        Haskell::Type tuple_type = Haskell::TypeVar({{},tuple_name(n)});
+        for(auto& element_type: T.element_types)
+            tuple_type = Haskell::TypeApp(tuple_type, element_type);
+        return kind_check_type(tuple_type);
+    }
     else
-        std::abort();
+        throw myexception()<<"I don't recognize type '"<<t.print()<<"'";
 }
 
 
