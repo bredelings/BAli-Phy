@@ -24,6 +24,15 @@ bool is_tuple_name(const string& s)
     return s == tuple_name(s.size()-1);
 }
 
+int tuple_arity(const string& s)
+{
+    if (s == "()") return 0;
+    assert(is_tuple_name(s));
+    int n = s.size()-1;
+    assert(s == tuple_name(n));
+    return n;
+}
+
 string tuple_name(int n)
 {
     if (n == 0)

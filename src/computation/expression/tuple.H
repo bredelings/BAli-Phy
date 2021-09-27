@@ -5,6 +5,7 @@
 #include "constructor.H"
 
 std::string tuple_name(int n);
+int tuple_arity(const std::string&);
 bool is_tuple_name(const std::string&);
 constructor tuple_head(int n);
 
