@@ -10,6 +10,7 @@
 #include <utility>                                  // for pair
 #include <iostream>
 #include "computation/parser/haskell.H"
+#include "computation/typecheck/kind.H"
 
 constexpr auto unknown_fix = Haskell::Fixity::unknown;
 constexpr auto left_fix = Haskell::Fixity::infixl;
@@ -48,7 +49,8 @@ struct type_info
     std::string name;
     type_name_category category;
     std::optional<fixity_info> fixity;
-    // kind?  Kind of like arity
+    std::optional<int> arity;
+    kind k;
 };
 
 bool operator==(const symbol_info&S1, const symbol_info& S2);
