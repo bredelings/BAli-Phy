@@ -1772,19 +1772,26 @@ pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string
 type_info Module::lookup_builtin_type(const std::string& name)
 {
     if (name == "Char")
-        return {"Char", type_name_category::ADT, {}};
+        return {"Char", type_name_category::ADT, {}, 0, make_kind_star()};
     else if (name == "Double")
-        return {"Double", type_name_category::ADT, {}};
+        return {"Double", type_name_category::ADT, {}, 0, make_kind_star()};
     else if (name == "Int")
-        return {"Int", type_name_category::ADT, {}};
+        return {"Int", type_name_category::ADT, {}, 0, make_kind_star()};
     else if (name == "()")
-        return {"()", type_name_category::ADT, {}};
+        return {"()", type_name_category::ADT, {}, 0, make_kind_star()};
     else if (name == "[]")
-        return {"[]", type_name_category::ADT, {}};
+        return {"[]", type_name_category::ADT, {}, 1, make_n_args_kind(1)};
     else if (name == "->")
-        return {"->", type_name_category::type_func, {{right_fix,0}}};
+    {
+        return {"->", type_name_category::type_func, {{right_fix,0}}, 2, make_n_args_kind(2)};
+    }
+    // This doesn't include ()
     else if (is_tuple_name(name))
-        return {name, type_name_category::ADT,{}};
+    {
+        int n = tuple_arity(name);
+
+        return {name, type_name_category::ADT,{}, n, make_n_args_kind(n)};
+    }
     throw myexception()<<"Symbol 'name' is not a builtin (type) symbol.";
 }
 
