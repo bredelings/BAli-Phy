@@ -960,6 +960,13 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
         }
         std::abort();
     }
+    else if (t.is_a<Haskell::ListType>())
+    {
+        auto& L = t.as_<Haskell::ListType>();
+        Haskell::Type list_con = Haskell::TypeVar({{},"[]"});
+        Haskell::Type list_type = Haskell::TypeApp(list_con, L.element_type);
+        return kind_check_type(list_type);
+    }
     else
         std::abort();
 }
@@ -967,7 +974,7 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
 
 void kindchecker_state::kind_check_constraint(const Haskell::Type& constraint)
 {
-    return kind_check_type_of_kind(constraint, make_kind_star());
+    return kind_check_type_of_kind(constraint, make_kind_constraint());
 }
 
 void kindchecker_state::kind_check_context(const Haskell::Context& context)
@@ -1142,27 +1149,30 @@ std::map<string,std::pair<int,kind>> kindchecker_state::infer_kinds(const vector
     {
         string name;
         int arity;
+        kind k;
         if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
             auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
             name = D.name;
             arity = D.type_vars.size();
+            k = make_kind_star();
         }
         else if (type_decl.is_a<Haskell::ClassDecl>())
         {
             auto& C = type_decl.as_<Haskell::ClassDecl>();
             name = C.name;
             arity = C.type_vars.size();
+            k = make_kind_constraint();
         }
         else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
         {
             auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
             name = T.name;
             arity = T.type_vars.size();
+            k = make_kind_star();
         }
 
         // Create an initial kind here...
-        kind k = make_kind_star();
         for(int i=0;i<arity;i++)
             k = make_kind_arrow( fresh_kind_var(), k );
 
