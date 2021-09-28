@@ -116,7 +116,7 @@ std::optional<k_substitution_t> unify(const kind& k1, const kind& k2)
         auto s2 = unify(apply_subst(*s1, A.k2), apply_subst(*s1, A.k2));
         if (not s2) return {};
 
-        return compose(*s2,*s1);
+        return compose(*s1,*s2);
     }
     else if (k1->is_kvar())
     {
