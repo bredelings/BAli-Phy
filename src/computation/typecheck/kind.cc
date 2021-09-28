@@ -57,7 +57,7 @@ kind apply_subst(const k_substitution_t& s, const kind& k)
         auto& kv = dynamic_cast<KindVar&>(*k);
         auto k2 = s.find(kv);
         if (k2 != s.end())
-            return k2->second;
+            return apply_subst(s, k2->second);
         else
             return k;
     }
