@@ -240,7 +240,7 @@ coalescent_tree_effect tree = do
             ]
 
 
-data CoalEvent = Leaf | Internal | RateShift rate
+data CoalEvent = Leaf | Internal | RateShift Double
 node_type tree node = if is_leaf_node tree node then Leaf else Internal
 
 coalescent_tree_pr_factors theta n_leaves tree = go (0.0) (0) (2.0/theta) (doubleToLogDouble 1.0) times: parent_before_child_prs n_leaves tree
