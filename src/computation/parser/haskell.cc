@@ -366,6 +366,23 @@ std::string GuardedRHS::print() const
     return "| " + join(guard_string,", ") + " = " + body.print();
 }
 
+std::string FieldDecl::print() const
+{
+    vector<string> names;
+    for(auto& field_name: field_names)
+        names.push_back(field_name.print());
+
+    return join(names, ", ") + " :: " + type.print();
+}
+
+std::string FieldDecls::print() const
+{
+    vector<string> field_decl_strings;
+    for(auto& field_decl: field_decls)
+        field_decl_strings.push_back(field_decl.print());
+    return "{ " + join(field_decl_strings,"; ") + " }";
+}
+
 std::string Constructor::print() const
 {
     string result;

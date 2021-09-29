@@ -235,6 +235,7 @@ struct FieldDecl
 {
     std::vector<Haskell::Var> field_names;
     Type type;
+    std::string print()  const;
 
     FieldDecl() = default;       // so this can be a token value.
     FieldDecl(const std::vector<Haskell::Var>& vs, const Type& t):field_names(vs),type(t) {}
@@ -245,6 +246,7 @@ struct FieldDecls: public Object
 {
     std::vector<FieldDecl> field_decls;
 
+    std::string print()  const;
     FieldDecls* clone() const { return new FieldDecls(*this);}
     FieldDecls() = default;      // so this can be a token value.
     FieldDecls(const std::vector<FieldDecl>& ds):field_decls(ds) {}
