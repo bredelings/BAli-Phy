@@ -1319,7 +1319,7 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
         for(auto& [name,ka]: K.infer_kinds(type_decl_group))
         {
             auto& [arity,k] = ka;
-            auto tinfo = types.at(name);
+            auto& tinfo = types.at(name);
             tinfo.arity = arity;
             tinfo.k     = k;
         }
