@@ -1211,7 +1211,7 @@ std::map<string,std::pair<int,kind>> kindchecker_state::infer_kinds(const vector
         catch (myexception& e)
         {
             std::ostringstream o;
-            o<<"\n In declaration: "<<type_decl.print()<<"\n   ";
+            o<<"\n  In declaration: "<<type_decl.print()<<"\n    ";
             e.prepend(o.str());
             throw;
         }
