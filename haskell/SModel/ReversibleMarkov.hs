@@ -11,7 +11,9 @@ builtin builtin_gtr_sym 2 "gtr_sym" "SModel"
 builtin fixup_diagonal_rates 1 "fixup_diagonal_rates" "SModel"
 builtin %*% 2 "elementwise_multiply" "SModel"
 
-data ReversibleMarkov = ReversibleMarkov a b c d e f g
+data EigenSystem
+
+data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) Matrix (EVector Double) EigenSystem Double Double
 
 qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t
 
