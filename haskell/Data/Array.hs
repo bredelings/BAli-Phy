@@ -17,7 +17,7 @@ import Data.List
 import Data.Function
 import Compiler.Num
 
-data Array a
+data Array a b
 
 -- hack, until we have a type system
 is_array :: a -> Bool
