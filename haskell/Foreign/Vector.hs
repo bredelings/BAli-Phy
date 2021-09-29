@@ -6,7 +6,7 @@ import Compiler.Num
 import Data.Ord
 import Data.Array
 
-data EVector = EVector
+data EVector a
 
 builtin get_vector_index 2 "get_vector_index" "Vector"
 builtin vector_size 1 "vector_size" "Vector"
