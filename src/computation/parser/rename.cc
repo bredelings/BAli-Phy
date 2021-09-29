@@ -694,7 +694,7 @@ Haskell::Type renamer_state::rename_type(const Haskell::Type& type)
     else if (type.is_a<Haskell::TupleType>())
     {
         auto tuple = type.as_<Haskell::TupleType>();
-        for(auto type: tuple.element_types)
+        for(auto& type: tuple.element_types)
             type = rename_type(type);
         return tuple;
     }
