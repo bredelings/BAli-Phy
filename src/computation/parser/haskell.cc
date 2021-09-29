@@ -516,4 +516,12 @@ string IfExp::print() const
 {
     return "if " + condition.print() + " then " + true_branch.print() + " else " + false_branch.print();
 }
+
+
+Type make_arrow_type(const Type& t1, const Type& t2)
+{
+    static Haskell::TypeVar type_arrow({{},"->"});
+    return Haskell::TypeApp(Haskell::TypeApp(type_arrow,t1),t2);
+}
+
 }

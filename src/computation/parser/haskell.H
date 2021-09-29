@@ -717,6 +717,7 @@ struct Module
     {}
 };
 
+Type make_arrow_type(const Type& t1, const Type& t2);
 
 }
 
