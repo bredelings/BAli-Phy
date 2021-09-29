@@ -35,7 +35,7 @@ builtin builtin_modulated_markov_rates 2 "modulated_markov_rates" "SModel"
 builtin builtin_modulated_markov_pi 2 "modulated_markov_pi" "SModel"
 builtin builtin_modulated_markov_smap 1 "modulated_markov_smap" "SModel"
 
-data F81 = F81 a b c d
+data F81 = F81 Alphabet (EVector Int) () (EVector Double)
 data MixtureModel a = MixtureModel [(Double,a)]
 -- Currently we are weirdly duplicating the mixture probabilities for each component.
 -- Probably the actual data-type is something like [(Double,\Int->a)] or [(Double,[a])] where all the [a] should have the same length.
