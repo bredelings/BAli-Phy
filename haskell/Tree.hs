@@ -11,13 +11,13 @@ data LabelledTree = LabelledTree Tree [String]
 -- Should we make LabelledTree,LabelledBranchLengthTree,LabelledNodeHeighTree
 --  and have them implement get_labels?
 -- It looks like add_labels would be a bit more complicated...
-data BranchLengthTree = BranchLengthTree Tree (Array Double)
+data BranchLengthTree = BranchLengthTree Tree (Array Int Double)
 
 -- The array stores the node times
-data TimeTree   = TimeTree RootedTree (Array Double)
+data TimeTree   = TimeTree RootedTree (Array Int Double)
 
 -- The array stores the branch rates
-data RateTimeTree = RateTimeTree TimeTree (Array Double)
+data RateTimeTree = RateTimeTree TimeTree (Array Int Double)
 
 edgesOutOfNode (Tree nodesArray _ _) node = nodesArray ! node
 edgesOutOfNode (RootedTree t _ _) node      = edgesOutOfNode t node
