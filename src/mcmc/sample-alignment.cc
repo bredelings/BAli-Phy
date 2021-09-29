@@ -114,7 +114,7 @@ pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data
     return sample_alignment_base(P, P.get_branch_HMM(b), b, bandwidth);
 }
 
-optional<log_double_t> sample_alignment(Parameters& P,int b)
+log_double_t sample_alignment(Parameters& P,int b)
 {
     //  if (any_branches_constrained(vector<int>(1,b), P.t(), P.PC->TC, P.PC->AC))
     //    return;
@@ -137,33 +137,22 @@ optional<log_double_t> sample_alignment(Parameters& P,int b)
     p.push_back(P);
 
     vector< vector< shared_ptr<DPmatrixSimple> > > Matrices(1);
-    vector<optional<log_double_t>> SamplingPr(p.size());
+    log_double_t total_ratio = 1.0;
     for(int i=0;i<p.size();i++) 
     {
-        SamplingPr[i] = 1.0;
-        for(int j=0;j<p[i].n_data_partitions();j++)
-        {
+	for(int j=0;j<p[i].n_data_partitions();j++) 
 	    if (p[i][j].variable_alignment()) 
 	    {
-                auto [M, sampling_pr] = sample_alignment_base(p[i][j], b, bandwidth);
-#ifndef NDEBUG
+                auto [M, ratio] = sample_alignment_base(p[i][j], b, bandwidth);
+                total_ratio *= ratio;
 		Matrices[i].push_back(M);
-#endif
-                if (M->Pr_sum_all_paths() <= 0.0)
-                {
-                    std::cerr<<"sample_alignment: Pr = 0   i = "<<i<<"  j="<<j<<" \n";
-                    SamplingPr[i] = {};
-                    break;
-                }
-
-                (*SamplingPr[i]) *= sampling_pr;
+		// If Pr_sum_all_paths() == 0, then the alignment for this partition will be unchanged.
 #ifndef NDEBUG
 		p[i][j].likelihood();  // check the likelihood calculation
 #endif
 	    }
 	    else
 		Matrices[i].push_back(shared_ptr<DPmatrixSimple>());
-        }
     }
 
 #ifndef NDEBUG_DP
@@ -257,6 +246,6 @@ optional<log_double_t> sample_alignment(Parameters& P,int b)
 
     P = p[0];
 
-    return SamplingPr[0];
+    return total_ratio;
 }
 

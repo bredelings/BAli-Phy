@@ -32,7 +32,7 @@ void alignment_slice_sample_branch_length(owned_ptr<Model>&, MCMC::MoveStats&, i
 void change_branch_length_multi(owned_ptr<Model>&, MCMC::MoveStats&, int);
 
 /// Resample the alignment parent->child
-std::optional<log_double_t> sample_alignment(Parameters&,int b);
+log_double_t sample_alignment(Parameters&,int b);
 
 /// Resample the 3-star alignment, holding the n2/n3 order constant.
 void tri_sample_alignment(Parameters& P,int node1,int node2);
