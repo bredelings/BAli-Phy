@@ -1190,20 +1190,30 @@ std::map<string,std::pair<int,kind>> kindchecker_state::infer_kinds(const vector
     // 2. Do kind inference for each declaration
     for(auto& type_decl: type_decl_group)
     {
-        if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
+        try
         {
-            auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
-            kind_check_data_type( D );
+            if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
+            {
+                auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
+                kind_check_data_type( D );
+            }
+            else if (type_decl.is_a<Haskell::ClassDecl>())
+            {
+                auto& C = type_decl.as_<Haskell::ClassDecl>();
+                kind_check_type_class( C );
+            }
+            else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
+            {
+                auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
+                kind_check_type_synonym( T );
+            }
         }
-        else if (type_decl.is_a<Haskell::ClassDecl>())
+        catch (myexception& e)
         {
-            auto& C = type_decl.as_<Haskell::ClassDecl>();
-            kind_check_type_class( C );
-        }
-        else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
-        {
-            auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
-            kind_check_type_synonym( T );
+            std::ostringstream o;
+            o<<"\n In declaration: "<<type_decl.print()<<"\n   ";
+            e.prepend(o.str());
+            throw;
         }
     }
 
