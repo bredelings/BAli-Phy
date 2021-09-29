@@ -1003,16 +1003,15 @@ void kindchecker_state::kind_check_constructor(const Haskell::Constructor& const
         for(auto& field_decl: fields.field_decls | views::reverse)
         {
             for(int i=0;i<field_decl.field_names.size();i++)
-                type2 = Haskell::TypeApp(field_decl.type, type2);
+                type2 = Haskell::make_arrow_type(field_decl.type, type2);
         }
     }
     else
     {
         auto& types = std::get<0>(constructor.fields);
 
-        Haskell::TypeVar type_arrow({{},"->"});
         for(auto& type: types | views::reverse)
-            type2 = Haskell::TypeApp(Haskell::TypeApp(type_arrow,type),type2);
+            type2 = Haskell::make_arrow_type(type, type2);
 
     }
 
