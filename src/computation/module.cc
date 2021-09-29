@@ -953,7 +953,7 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
         {
             auto& a = dynamic_cast<const KindArrow&>(*k1);
             if (not unify(a.k1, k2))
-                throw myexception()<<"";
+                throw myexception()<<"In type '"<<t<<"', can't apply type ("<<tapp.head<<" :: "<<apply_substitution(k1)<<") to type ("<<tapp.arg<<" :: "<<apply_substitution(k2)<<")";
             return a.k2;
         }
         else
