@@ -11,7 +11,8 @@ import Data.JSON as J
 data LogDouble
 
 data SamplingEvent
-data ProbEventMonad = InEdge String a | PropertyEdge String a | ProbFactor Double
+-- Here Int should be `a`
+data ProbEventMonad = InEdge String Int | PropertyEdge String Int | ProbFactor Double
 in_edge node name = InEdge node name
 property node name = PropertyEdge node name
 
@@ -50,11 +51,11 @@ distRange (Distribution _ _ _ _ r) = r
 data TKEffects a = SamplingRate Double (Random a) | AddMove (Int->a)
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = RandomStructure (a->TKEffects) (a->TKEffects->a) (Random a)
-              | Observe (Distribution b) b
-              | Print b
+data Random a = RandomStructure (a->TKEffects a) (a->TKEffects a->a) (Random a)
+              | Observe (Distribution Int) Int
+              | Print Int
               | Lazy (Random a)
-              | WithTKEffect (Random a) (TKEffects b)
+              | WithTKEffect (Random a) (TKEffects Int)
               | PerformTKEffect (TKEffects a)
               | LiftIO (IO a)
 
