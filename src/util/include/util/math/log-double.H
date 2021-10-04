@@ -64,91 +64,93 @@ constexpr double log(log_double_t x) {
     return x.log();
 }
 
-inline log_double_t operator+(log_double_t x,log_double_t y) {
+inline log_double_t operator+(log_double_t x, log_double_t y) {
     log_double_t z = x;
     z += y;
     return z;
 }
 
-inline log_double_t operator-(log_double_t x,log_double_t y) {
+inline log_double_t operator-(log_double_t x, log_double_t y) {
     log_double_t z = x;
     z -= y;
     return z;
 }
 
-constexpr log_double_t operator*(log_double_t x,log_double_t y) {
+constexpr log_double_t operator*(log_double_t x, log_double_t y) {
     log_double_t z = x;
     z *= y;
     return z;
 }
 
-constexpr log_double_t operator/(log_double_t x,log_double_t y) {
+constexpr log_double_t operator/(log_double_t x, log_double_t y) {
     log_double_t z=x;
     z /= y;
     return z;
 }
 
-constexpr bool operator< (log_double_t x,log_double_t y) {
+constexpr bool operator==(log_double_t x, log_double_t y) {
+    return log(x)==log(y);
+}
+
+constexpr bool operator!=(log_double_t x, log_double_t y) {
+    return log(x) != log(y);
+}
+
+constexpr bool operator< (log_double_t x, log_double_t y) {
     return log(x)<log(y);
 }
 
-constexpr bool operator<=(log_double_t x,log_double_t y) {
-    return log(x)<=log(y);
-}
-
-constexpr bool operator> (log_double_t x,log_double_t y) {
+constexpr bool operator> (log_double_t x, log_double_t y) {
     return log(x)>log(y);
 }
 
-constexpr bool operator>(log_double_t x,double y) {
-    if (y==0)
+constexpr bool operator<=(log_double_t x, log_double_t y) {
+    return log(x)<=log(y);
+}
+
+constexpr bool operator>=(log_double_t x, log_double_t y) {
+    return log(x)>=log(y);
+}
+
+
+/******** Begin: Comparisons with 0 ********/
+
+constexpr bool operator>(log_double_t x, double y) {
+    if (y == 0)
 	return log(x) > log_limit;
     else
 	return x > log_double_t(y);
 }
 
-constexpr bool operator>(double  x,log_double_t y) {
-    return log_double_t(x) > y;
+// NOTE: no operator<(log_double_t x,double y) since x<0 isn't a thing.
+
+constexpr bool operator<(double x, log_double_t y) {
+    return (y > x);
 }
 
-constexpr bool operator>=(log_double_t x,log_double_t y) {
-    return log(x)>=log(y);
-}
-
-
-constexpr bool operator==(log_double_t x,log_double_t y) {
-    return log(x)==log(y);
-}
-
-inline bool operator==(log_double_t x,double y) {
-    if (y==0.0)
+constexpr bool operator==(log_double_t x, double y) {
+    if (y == 0)
 	return log(x) <= log_limit;
-    else if (y==1)
-	return log(x) == 0.0;
     else
-	return log(x) == log(y);
+	return x == log_double_t(y);
 }
 
-constexpr bool operator!=(log_double_t x,log_double_t y) {
-    return log(x)!=log(y);
-}
+constexpr bool operator==(double x, log_double_t y) { return (y == x);}
 
-inline bool operator!=(log_double_t x,double y) {
-    if (y==0.0)
-	return log(x) > log_limit;
-    else if (y==1)
-	return log(x) != 0.0;
-    else
-	return log(x) != log(y);
-}
+constexpr bool operator!=(double x, log_double_t y) { return not (x == y);}
 
-constexpr log_double_t pow(log_double_t x,double p) 
+constexpr bool operator!=(log_double_t x, double y) { return not (x == y); }
+
+
+/******** End: Comparisons with 0 ********/
+
+constexpr log_double_t pow(log_double_t x,double p)
 {
     x.log() *= p;
     return x;
 }
 
-inline log_double_t sqrt(log_double_t x)
+constexpr log_double_t sqrt(log_double_t x)
 {
     return pow(x,0.5);
 }
