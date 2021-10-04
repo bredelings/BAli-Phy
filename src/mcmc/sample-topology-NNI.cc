@@ -394,7 +394,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
 
 	auto factor = exp_to<log_double_t>(gaussian(0,0.05));
 
-	double L = p[1].t().branch_length( branches[i] ) * factor;
+	double L = p[1].t().branch_length( branches[i] ) * double(factor);
 
         if (not PP.t().can_set_branch_length(branches[i])) return;
 	p[1].setlength(branches[i], L);

@@ -1846,7 +1846,7 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
 			    p += WF(m,l1) * P[m].as_<Box<Matrix>>()(l1,j) * fmask[j];
 		}
 		else
-		    p += LF[l1];
+		    p += F[l1];
 		Pr *= p;
 	    }
 	    else if (alpha.is_letter_class(l1))
@@ -2004,9 +2004,9 @@ extern "C" closure builtin_function_peel_likelihood_2_SEV(OperationArgs& Args)
 	    }
 	}
 	else if (l1 >= 0)
-            p = letter_frequency(l1, alpha, F, LF);
+            p = (double)letter_frequency(l1, alpha, F, LF);
 	else if (l2 >= 0)
-	    p = letter_frequency(l2, alpha, F, LF);
+	    p = (double)letter_frequency(l2, alpha, F, LF);
         else
             std::abort();
 

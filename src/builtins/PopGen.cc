@@ -466,7 +466,7 @@ extern "C" closure builtin_function_ewens_sampling_mixture_probability(Operation
     log_double_t Pr = 1;
     for(const auto& a: afs)
     {
-	double pr = 0;
+	log_double_t pr = 0;
 	for(int i=0;i<thetas.size();i++)
 	    pr += ps[i] * ewens_sampling_probability(thetas[i],a);
 

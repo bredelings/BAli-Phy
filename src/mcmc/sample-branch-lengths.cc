@@ -292,7 +292,7 @@ log_double_t slide_node_expand_branch(vector<double>& lengths,double sigma)
 {
     auto ratio = exp_to<log_double_t>( gaussian(0,sigma) );
 
-    double L = (lengths[0] + lengths[1]) * ratio;
+    double L = (lengths[0] + lengths[1]) * double(ratio);
 
     lengths[0] = L * uniform();
     lengths[1] = L - lengths[0];
@@ -460,9 +460,9 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
 	auto R23 = exp_to<log_double_t>(gaussian(0,sigma));
 	auto R31 = exp_to<log_double_t>(gaussian(0,sigma));
 
-	double S12_ = S12 * R12;
-	double S23_ = S23 * R23;
-	double S31_ = S31 * R31;
+	double S12_ = double(S12 * R12);
+	double S23_ = double(S23 * R23);
+	double S31_ = double(S31 * R31);
 
 	//---------------- Change back ------------------//
 	T1_ = (S12_ + S31_ - S23_)/2.0;

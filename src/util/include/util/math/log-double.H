@@ -40,7 +40,7 @@ public:
     constexpr log_double_t& operator *=(const log_double_t& y) {value += y.log(); return *this;}
     constexpr log_double_t& operator /=(const log_double_t& y) {value -= y.log(); return *this;}
 
-    operator double() const {return exp(value);}
+    explicit operator double() const {return exp(value);}
 
     constexpr log_double_t& operator=(double y) {
 	assert(std::isnan(y) or y >= 0);
@@ -63,15 +63,6 @@ public:
 constexpr double log(log_double_t x) {
     return x.log();
 }
-
-#define decl_double(rtype,op)					\
-    inline rtype operator op (double x,log_double_t y) {	\
-	return log_double_t(x) op y;				\
-    }								\
-								\
-    inline rtype operator op (log_double_t x,double y) {	\
-	return x op log_double_t(y);				\
-    }
 
 inline log_double_t operator+(log_double_t x,log_double_t y) {
     log_double_t z = x;
@@ -97,22 +88,13 @@ constexpr log_double_t operator/(log_double_t x,log_double_t y) {
     return z;
 }
 
-decl_double(log_double_t,+)
-decl_double(log_double_t,-)
-decl_double(log_double_t,*)
-decl_double(log_double_t,/)
-
 constexpr bool operator< (log_double_t x,log_double_t y) {
     return log(x)<log(y);
 }
 
-decl_double(bool,<)
-
 constexpr bool operator<=(log_double_t x,log_double_t y) {
     return log(x)<=log(y);
 }
-
-decl_double(bool,<=)
 
 constexpr bool operator> (log_double_t x,log_double_t y) {
     return log(x)>log(y);
@@ -133,8 +115,6 @@ constexpr bool operator>=(log_double_t x,log_double_t y) {
     return log(x)>=log(y);
 }
 
-decl_double(bool,>=)
-
 
 constexpr bool operator==(log_double_t x,log_double_t y) {
     return log(x)==log(y);
@@ -149,17 +129,6 @@ inline bool operator==(log_double_t x,double y) {
 	return log(x) == log(y);
 }
 
-/*
-  constexpr bool operator==(log_double_t x,double y) {
-  if (y==0)
-  return (x==log_0);
-  else if (y==1)
-  return (x==0);
-  else
-  return (x==log(y));
-  }
-*/
-
 constexpr bool operator!=(log_double_t x,log_double_t y) {
     return log(x)!=log(y);
 }
@@ -173,12 +142,15 @@ inline bool operator!=(log_double_t x,double y) {
 	return log(x) != log(y);
 }
 
-#undef decl_double
-
 constexpr log_double_t pow(log_double_t x,double p) 
 {
     x.log() *= p;
     return x;
+}
+
+inline log_double_t sqrt(log_double_t x)
+{
+    return pow(x,0.5);
 }
 
 inline bool different(log_double_t x,log_double_t y,double tol=1.0e-9)
@@ -199,16 +171,6 @@ template<> constexpr log_double_t exp_to<log_double_t>(double x) {
     y.log() = x;
     return y;
 }
-
-// Don't do pow<log_double_t>(x,y): do pow(log_double_t(x),y), instead.
-//
-// template<class T> T pow(double,double);
-// 
-// template<> constexpr log_double_t pow<log_double_t>(double x,double p) {
-//   log_double_t y;
-//   y.log() = p * ::log(x);
-//   return y;
-// }
 
 inline std::ostream& operator<<(std::ostream& o,const log_double_t& e) {
     return o<<log(e);

@@ -65,7 +65,7 @@ log_double_t dirichlet_fiddle(vector< expression_ref >& p,double N)
 log_double_t scale_gaussian(double& x, double sigma)
 {
     auto scale = exp_to<log_double_t>( gaussian(0,sigma) );
-    x *= scale;
+    x *= (double)scale;
     return scale;
 }
 
