@@ -1632,6 +1632,51 @@ matrix<log_double_t> emission_pr(const vector<int>& K, const EVector& reads, con
     return E;
 }
 
+
+// FIXME -- should we really be taking a context index here?
+// FIXME -- how are we going to call this from the proposal function?
+
+extern "C" closure builtin_function_emission_pr_for_reads01(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    auto evaluate_slot = [&](context_ref& C, int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
+
+    reg_heap& M = Args.memory();
+
+    // 0. context index = int
+    int context_index = Args.evaluate(0).as_int();
+    context_ref C0(M,context_index);
+
+    // 1. Get haplotype indices
+    context_ptr hap_indices(C0, Args.reg_for_slot(1));
+    vector<int> K = (vector<int>) hap_indices.list_to_vector();
+
+    // 2. reads = EVector (EPair Int Int)
+    auto arg2 = evaluate_slot(C0, 2);
+    auto& reads = arg2.as_<EVector>();
+
+    // 3. haplotypes = EVector (EVector Int)
+    context_ptr haplotypes_ptr(C0, Args.reg_for_slot(3));
+    EVector haplotypes = haplotypes_ptr.list_to_vector();
+
+    // 4. weights = EVector Double
+    auto weights = evaluate_slot(C0, 4).as_<EVector>();
+
+    // 5. error_rate = double
+    double error_rate = evaluate_slot(C0, 5).as_double();
+
+    // 6. concentration = double
+    double concentration = evaluate_slot(C0, 6).as_double();
+
+    // 7. outlier_frac = double
+    double outlier_frac = evaluate_slot(C0, 7).as_double();
+
+    object_ptr<Box<matrix<log_double_t>>> result = new Box<matrix<log_double_t>>;
+    *result = emission_pr(K, reads, haplotypes, weights, error_rate, concentration, outlier_frac);
+    return result;
+}
+
 log_double_t shift_gaussian(context_ref& C, int r, double scale)
 {
     double x = C.evaluate_reg(r).as_double();
