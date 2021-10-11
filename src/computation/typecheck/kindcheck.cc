@@ -522,6 +522,7 @@ std::map<string,std::pair<int,kind>> kindchecker_state::infer_child_types(const 
         }
     }
 
+    return {};
 }
 
 // How can type variables come up?
