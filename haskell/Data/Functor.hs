@@ -6,13 +6,15 @@ import Data.Function
 
 class Functor f
 
+-- This should move to Control.Applicative
 pure = return
 
+-- fmap should be a method of `Functor`.
+-- fmap should stop mentioning `pure`.
 fmap f x = do x' <- x
               pure (f x')
 
-a <$ bs = do bs
-             pure a
+(<$) = fmap . const
 
 ($>) = flip (<$)
 
@@ -20,5 +22,4 @@ a <$ bs = do bs
 
 (<&>) = flip fmap
 
-void as = do as
-             pure ()
+void x = () <$ x
