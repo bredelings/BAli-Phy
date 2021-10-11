@@ -3,6 +3,8 @@ module Control.Applicative where
 
 import Data.Functor
 
+class Functor f => Applicative f
+
 f <*> x = do fresult <- f
              xresult <- x
              pure (fresult xresult)
