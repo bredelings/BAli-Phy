@@ -3,6 +3,7 @@ module PopGen.Deploid where
 import Probability
 import Range
 import Data.CSV
+import Data.Matrix
 
 builtin builtin_sample_haplotype01_from_plaf 1 "sample_haplotype01_from_plaf" "SMC"
 sample_haplotype01_from_plaf plafs = let raw_action = builtin_sample_haplotype01_from_plaf $ list_to_vector plafs
@@ -44,6 +45,12 @@ probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads
           haplotypes' = list_to_vector haplotypes
           reads'      = list_to_vector $ map (\(x,y) -> c_pair x y) reads
 
+
+data Reads01Properties = Reads01Properties { emission_prs :: EVector Int -> Matrix LogDouble}
+builtin builtin_emission_pr_for_reads01 8 "emission_pr_for_reads01" "SMC"
+emission_pr_for_reads01 ks reads haplotypes weights error_rate concentration outlier_frac context =
+    builtin_emission_pr_for_reads01 context (list_to_vector ks) haplotypes weights error_rate concentration outlier_frac
+
 -- We can't sample from this because we are using the random data to tell us the coverage at each position.
 annotated_probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads = do
                           in_edge "counts" counts
@@ -52,6 +59,8 @@ annotated_probability_of_reads01 counts weights haplotypes error_rate c outlier_
                           in_edge "error_rate" error_rate
                           in_edge "c" c
                           in_edge "outlier_frac" outlier_frac
+                          let emit_pr_func ks = emission_prs ks reads haplotypes weights error_rate c outlier_frac
+                          property "properties" (Reads01Properties emit_pr_func)
                           return [probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads]
 
 reads01_from_haps counts weights haplotypes error_rate c outlier_frac = Distribution
