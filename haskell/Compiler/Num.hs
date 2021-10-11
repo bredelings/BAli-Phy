@@ -10,3 +10,4 @@ builtin * 2 "multiply" "Prelude"
 builtin negate 1 "negate" "Prelude"
 builtin abs    1 "abs"    "Prelude"
 
+class Num a
