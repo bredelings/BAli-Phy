@@ -4,6 +4,13 @@
 #include "location.hh"
 
 template <typename T>
+struct Unlocated
+{
+    const T& obj;
+    Unlocated(const T& t):obj(t) {}
+};
+
+template <typename T>
 struct Located
 {
 public:
@@ -15,6 +22,20 @@ public:
     Located<T>& operator=(const Located<T>& t) = default;
     Located<T>& operator=(Located<T>&& t) = default;
 
+    template <typename U>
+    Located<T>& operator=(const Unlocated<U>& u)
+    {
+        loc = {};
+        obj = u;
+    }
+
+    template <typename U>
+    Located<T>& operator=(Unlocated<U>&& u)
+    {
+        loc = {};
+        obj = std::move(u);
+    }
+
     std::string print() const;
 
     expression_ref copy() const {
@@ -24,6 +45,13 @@ public:
     Located() = default;
     Located(const Located<T>&) = default;
     Located(Located<T>&&) = default;
+
+    template <typename U>
+    Located(const Unlocated<U>& u):obj(u.obj) {}
+
+    template <typename U>
+    Located(Unlocated<U>&& u):obj(std::move(u.obj)) {}
+
     Located(const std::optional<yy::location>& l, const T& t):loc(l),obj(t) {}
 };
 
