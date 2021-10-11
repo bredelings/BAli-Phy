@@ -237,7 +237,10 @@ string ListType::print() const
 
 string TypeVar::print() const
 {
-    return unloc(name);
+    if (kind)
+        return "("+unloc(name) + "::" + (*kind).print()+")";
+    else
+        return unloc(name);
 }
 
 bool TypeVar::operator==(const Object& o) const
@@ -262,11 +265,6 @@ bool TypeVar::operator<(const TypeVar& tv) const
     int cmp = unloc(name).compare(unloc(tv.name));
 
     return (cmp < 0);
-}
-
-string TypeVarOfKind::print() const
-{
-    return name + "::" + kind.print();
 }
 
 string TypeOfKind::print() const
@@ -386,10 +384,10 @@ std::string FieldDecls::print() const
 std::string Constructor::print() const
 {
     string result;
-    if (forall)
+    if (forall.size())
     {
         vector<string> var_strings;
-        for(auto& var: forall.sub())
+        for(auto& var: forall)
             var_strings.push_back(var.print());
         result += "forall " + join(var_strings," ")+".";
     }
@@ -520,7 +518,7 @@ string IfExp::print() const
 
 Type make_arrow_type(const Type& t1, const Type& t2)
 {
-    static Haskell::TypeVar type_arrow({{},"->"});
+    static Haskell::TypeVar type_arrow(Located<string>({},"->"));
     return Haskell::TypeApp(Haskell::TypeApp(type_arrow,t1),t2);
 }
 

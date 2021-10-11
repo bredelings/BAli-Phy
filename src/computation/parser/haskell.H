@@ -41,7 +41,10 @@ struct TypeVar: public Object
 
     TypeVar* clone() const { return new TypeVar(*this);}
     std::string print() const;
+
+    TypeVar() = default;
     TypeVar(const Located<std::string>& s):name(s) {}
+    TypeVar(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
 };
 
 struct ImpDecl
@@ -254,7 +257,7 @@ struct FieldDecls: public Object
 
 struct Constructor
 {
-    expression_ref forall;           // list of type variables we are forall-ing over.
+    std::vector<TypeVar> forall;           // list of type variables we are forall-ing over.
     std::optional<Context> context;  // type constraints
 
     std::string name;                // the name of the constructor
@@ -268,15 +271,15 @@ struct Constructor
 
     Constructor() = default;
 
-    Constructor(const expression_ref e, std::optional<Context> c, const std::string& s, std::vector<Type>& as)
-        :forall(e),
+    Constructor(const std::vector<TypeVar>& tvs, std::optional<Context> c, const std::string& s, std::vector<Type>& as)
+        :forall(tvs),
          context(c),
          name(s),
          fields(as)
    { }
 
-    Constructor(const expression_ref e, std::optional<Context> c, const std::string& s, const FieldDecls& fds)
-        :forall(e),
+    Constructor(const std::vector<TypeVar>& tvs, std::optional<Context> c, const std::string& s, const FieldDecls& fds)
+        :forall(tvs),
          context(c),
          name(s),
          fields(fds)
@@ -291,7 +294,7 @@ struct DataOrNewtypeDecl: public Object
 
     DataOrNewtype data_or_newtype;
     std::string name;
-    std::vector<Haskell::TypeVar> type_vars;
+    std::vector<TypeVar> type_vars;
     Context context;
 
     std::vector<Constructor> constructors;
@@ -303,7 +306,7 @@ struct DataOrNewtypeDecl: public Object
 
     DataOrNewtypeDecl(DataOrNewtype dn,
                       const std::string& s,
-                      const std::vector<Haskell::TypeVar>& tvs,
+                      const std::vector<TypeVar>& tvs,
                       const Context& ct,
                       const std::vector<Constructor>& cs)
         :data_or_newtype(dn),
@@ -319,7 +322,7 @@ struct TypeSynonymDecl: public Object
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
     std::string name;
-    std::vector<Haskell::TypeVar> type_vars;
+    std::vector<TypeVar> type_vars;
 
     Located<expression_ref> rhs_type;
 
@@ -327,7 +330,7 @@ struct TypeSynonymDecl: public Object
     std::string print() const;
 
     TypeSynonymDecl(const std::string& s,
-                    const std::vector<Haskell::TypeVar>& tvs,
+                    const std::vector<TypeVar>& tvs,
                     const Located<expression_ref>& rhs)
         :name(s),
          type_vars(tvs),
@@ -340,7 +343,7 @@ struct ClassDecl: public Object
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
     std::string name;
-    std::vector<Haskell::TypeVar> type_vars;
+    std::vector<TypeVar> type_vars;
     Context context;
 
     std::optional<Located<Haskell::Decls>> decls;
@@ -351,7 +354,7 @@ struct ClassDecl: public Object
     std::string print() const;
 
     ClassDecl(const std::string& s,
-              const std::vector<Haskell::TypeVar>& tvs,
+              const std::vector<TypeVar>& tvs,
               const Context& ct,
               const std::optional<Located<Haskell::Decls>>& ds)
         :name(s),
@@ -502,16 +505,6 @@ struct ListType: public Object
     ListType(const Type& t):element_type(t) {};
 };
 
-struct TypeVarOfKind: public Object
-{
-    std::string name;
-    Type kind;
-
-    TypeVarOfKind* clone() const { return new TypeVarOfKind(*this);}
-    std::string print() const;
-    TypeVarOfKind(const std::string& s,const Type& k):name(s),kind(k) {}
-};
-
 struct TypeOfKind: public Object
 {
     Type type;
@@ -534,12 +527,12 @@ struct TypeApp: public Object
 
 struct ForallType: public Object
 {
-    std::vector<expression_ref> type_var_binders;
+    std::vector<TypeVar> type_var_binders;
     Type type;
 
     ForallType* clone() const { return new ForallType(*this);}
     std::string print() const;
-    ForallType(const std::vector<expression_ref>& tvb, const Type& t):type_var_binders(tvb), type(t) {}
+    ForallType(const std::vector<TypeVar>& tvb, const Type& t):type_var_binders(tvb), type(t) {}
 };
 
 struct ConstrainedType: public Object

@@ -48,17 +48,7 @@ set<Haskell::TypeVar> free_type_VARS_from_type(const Haskell::Type& type)
         auto& forall = type.as_<Haskell::ForallType>();
         tvars = free_type_VARS_from_type(forall.type);
         for(auto& type_var: forall.type_var_binders)
-        {
-            if (type_var.is_a<Haskell::TypeVar>())
-            {
-                auto& tv = type_var.as_<Haskell::TypeVar>();
-                tvars.erase(tv);
-            }
-            if (type_var.is_a<Haskell::TypeVarOfKind>())
-            {
-                std::abort();
-            }
-        }
+            tvars.erase(type_var);
     }
     else
         throw myexception()<<"free_type_VARS_from_type: unrecognized type \""<<type.print()<<"\"";
@@ -214,7 +204,7 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
     else if (t.is_a<Haskell::ListType>())
     {
         auto& L = t.as_<Haskell::ListType>();
-        Haskell::Type list_con = Haskell::TypeVar({{},"[]"});
+        Haskell::Type list_con = Haskell::TypeVar(Unlocated("[]"));
         Haskell::Type list_type = Haskell::TypeApp(list_con, L.element_type);
         return kind_check_type(list_type);
     }
@@ -222,7 +212,7 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
     {
         auto& T = t.as_<Haskell::TupleType>();
         auto n = T.element_types.size();
-        Haskell::Type tuple_type = Haskell::TypeVar({{},tuple_name(n)});
+        Haskell::Type tuple_type = Haskell::TypeVar(Unlocated(tuple_name(n)));
         for(auto& element_type: T.element_types)
             tuple_type = Haskell::TypeApp(tuple_type, element_type);
         return kind_check_type(tuple_type);
@@ -294,7 +284,7 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
     kind_check_context(data_decl.context);
 
     // d. construct the data type
-    Haskell::Type data_type = Haskell::TypeVar({{},data_decl.name});
+    Haskell::Type data_type = Haskell::TypeVar(Unlocated(data_decl.name));
     for(auto& tv: data_decl.type_vars)
         data_type = Haskell::TypeApp(data_type, tv);
 

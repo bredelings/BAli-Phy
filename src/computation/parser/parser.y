@@ -32,7 +32,7 @@
   Haskell::BuiltinDecl make_builtin_expr(const std::string& name, int args, const std::string& s);
 
   Haskell::Type make_kind(const Haskell::Type& kind);
-  Haskell::Constructor make_constructor(const expression_ref& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish);
+  Haskell::Constructor make_constructor(const std::vector<Haskell::TypeVar>& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish);
   Haskell::FieldDecl make_field_decl(const std::vector<Haskell::Var>& field_names, const Haskell::Type& type);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
@@ -40,19 +40,18 @@
                                                   const expression_ref& header, const std::vector<Haskell::Constructor>& constrs);
   Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::Context make_context(const expression_ref& context);
-  expression_ref make_tv_bndrs(const std::vector<expression_ref>& tv_bndrs);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
   Haskell::Var make_var(const Located<std::string>& id);
   Haskell::TypeVar make_type_var(const Located<std::string>& id);
-  Haskell::TypeVarOfKind make_type_var_of_kind(const std::string& id, const Haskell::Type& kind);
+  Haskell::TypeVar make_type_var_of_kind(const Located<std::string>& id, const Haskell::Type& kind);
   Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& id, const Haskell::Type& kind);
   Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& tup_exprs);
   Haskell::ListType make_list_type(const Haskell::Type& type);
   Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
   Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy&, const Haskell::Type& t);
   Haskell::FieldDecls make_field_decls(const std::vector<Haskell::FieldDecl>&);
-  expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t);
-  expression_ref make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
+  Haskell::ForallType make_forall_type(const std::vector<Haskell::TypeVar>& tv_bndrs, const Haskell::Type& t);
+  Haskell::ConstrainedType make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
   Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const std::optional<Located<Haskell::Decls>>& wherebinds);
   Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const std::optional<Located<Haskell::Decls>>& wherebinds);
@@ -363,8 +362,8 @@
  /*
 %type <void> bar_types2
  */
-%type <std::vector<expression_ref>> tv_bndrs
-%type <expression_ref> tv_bndr
+%type <std::vector<Haskell::TypeVar>> tv_bndrs
+%type <Haskell::TypeVar> tv_bndr
  /*
 %type <void> fds
 %type <void> fds1
@@ -376,7 +375,7 @@
 %type <std::vector<Haskell::Constructor>> constrs
 %type <std::vector<Haskell::Constructor>> constrs1
 %type <Haskell::Constructor> constr
-%type <expression_ref> forall
+%type <std::vector<Haskell::TypeVar>> forall
 %type <expression_ref> constr_stuff
 %type <std::vector<Haskell::FieldDecl>> fielddecls
 %type <std::vector<Haskell::FieldDecl>> fielddecls1
@@ -951,7 +950,7 @@ tv_bndrs:   tv_bndrs tv_bndr   {$$ = $1; $$.push_back($2);}
 
 /* If we put the kind into the type var (maybe as an optional) we could unify these two */
 tv_bndr:    tyvar                   {$$ = make_type_var({@1,$1});}
-|           "(" tyvar "::" kind ")" {$$ = make_type_var_of_kind($2,$4);}
+|           "(" tyvar "::" kind ")" {$$ = make_type_var_of_kind({@2,$2},$4);}
 
 
 /* fds are functional dependencies = FunDeps 
@@ -983,7 +982,7 @@ constrs1: constrs1 "|" constr   {$$ = $1; $$.push_back($3);}
 constr: forall context_no_ops "=>" constr_stuff {$$ = make_constructor($1,$2, $4);}
 |       forall constr_stuff                     {$$ = make_constructor($1,{}, $2);}
 
-forall: "forall" tv_bndrs "."   {if ($2.size()>1) $$ = make_tv_bndrs($2);}
+forall: "forall" tv_bndrs "."   {$$ = $2;}
 |       %empty                  {}
 
 constr_stuff: btype_no_ops                      {$$ = make_tyapps($1);}
@@ -1668,7 +1667,7 @@ Haskell::Var make_var(const Located<string>& v)
     return {v};
 }
 
-bool check_kind(const Haskell::Type& kind)
+bool check_kind(const Haskell::Kind& kind)
 {
     auto [kind_head, kind_args] = Haskell::decompose_type_apps(kind);
 
@@ -1687,7 +1686,7 @@ bool check_kind(const Haskell::Type& kind)
         return false;
 }
 
-Haskell::Type make_kind(const Haskell::Type& kind)
+Haskell::Type make_kind(const Haskell::Kind& kind)
 {
     if (not check_kind(kind))
         throw myexception()<<"Kind '"<<kind<<"' is malformed";
@@ -1700,12 +1699,12 @@ Haskell::TypeVar make_type_var(const Located<string>& id)
     return {id};
 }
 
-Haskell::TypeVarOfKind make_type_var_of_kind(const string& id, const Haskell::Type& kind)
+Haskell::TypeVar make_type_var_of_kind(const Located<string>& id, const Haskell::Kind& kind)
 {
     return {id, kind};
 }
 
-Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& type, const Haskell::Type& kind)
+Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& type, const Haskell::Kind& kind)
 {
     return {type, kind};
 }
@@ -1750,7 +1749,7 @@ optional<pair<string, std::vector<expression_ref>>> is_normal_con(const expressi
     return {{unloc(head.as_<Haskell::TypeVar>().name), args}};
 }
 
-Haskell::Constructor make_constructor(const expression_ref& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish)
+Haskell::Constructor make_constructor(const vector<Haskell::TypeVar>& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish)
 {
     if (auto constr = is_record_con(typeish))
     {
@@ -1776,20 +1775,14 @@ Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy& sl, con
     return {sl, t};
 }
 
-expression_ref make_forall_type(const std::vector<expression_ref>& tv_bndrs, const Haskell::Type& t)
+Haskell::ForallType make_forall_type(const std::vector<Haskell::TypeVar>& tv_bndrs, const Haskell::Type& t)
 {
-    if (tv_bndrs.empty())
-        return t;
-    else
-        return Haskell::ForallType(tv_bndrs, t);
+    return {tv_bndrs, t};
 }
 
-expression_ref make_constrained_type(const Haskell::Context& context, const Haskell::Type& t)
+Haskell::ConstrainedType make_constrained_type(const Haskell::Context& context, const Haskell::Type& t)
 {
-    if (context.constraints.empty())
-        return t;
-    else
-        return Haskell::ConstrainedType(context, t);
+    return Haskell::ConstrainedType(context, t);
 }
 
 expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type)
