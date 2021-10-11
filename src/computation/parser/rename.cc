@@ -704,8 +704,15 @@ Haskell::Type renamer_state::rename_type(const Haskell::Type& type)
         list.element_type = rename_type(list.element_type);
         return list;
     }
+    else if (type.is_a<Haskell::ConstrainedType>())
+    {
+        auto ctype = type.as_<Haskell::ConstrainedType>();
+        ctype.context = rename(ctype.context);
+        ctype.type = rename_type(ctype.type);
+        return ctype;
+    }
     else
-        std::abort();
+        throw myexception()<<"rename_type: unrecognized type \""<<type.print()<<"\"";
 }
 
 Haskell::Context renamer_state::rename(Haskell::Context context)
