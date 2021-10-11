@@ -28,7 +28,8 @@ jobs:
     strategy:
       matrix:
         name: [ubuntu-gcc-9,
-               macos-xcode-11.3.1
+               macos-xcode-12.5,
+               windows
                ]
 
         include:
@@ -38,10 +39,10 @@ jobs:
             version: "9"
             arch: "linux64"
 
-          - name: macos-xcode-11.3.1
+          - name: macos-xcode-12.5
             os: macos-latest
             compiler: xcode
-            version: "11.3.1"
+            version: "12.5"
             arch: "mac64"
 
           - name: windows
