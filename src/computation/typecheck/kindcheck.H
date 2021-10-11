@@ -49,6 +49,7 @@ struct kindchecker_state
     void kind_check_context(const Haskell::Context& context);
     void kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
     std::map<std::string, std::pair<int,kind>> infer_kinds(const std::vector<expression_ref>& type_decl_group);
+    std::map<std::string, std::pair<int,kind>> infer_child_types(const std::vector<expression_ref>& type_decl_group);
 
     kindchecker_state(const Module& m)
         :mod(m)

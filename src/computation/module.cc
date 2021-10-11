@@ -713,6 +713,8 @@ set<string> from_this_module(const string& mod_name, set<string> names)
 
 vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_ref>& initial_class_and_type_decls)
 {
+    // 1. Collection type and instance declarations
+
     // [(name,names-we-depend-on)]  No instances.
     map<string,set<string>> referenced_types;
 
@@ -749,6 +751,11 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
             std::abort();
     }
 
+    // 2. Get order list of mutually dependent TYPE declarations
+
+    // Input to the dependency analysis is a list of
+    // * (declaration, name, names that this declaration depends on)
+
     for(auto& [type, referenced_types]: referenced_types)
         referenced_types = from_this_module(name, referenced_types);
 
@@ -756,6 +763,7 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
 
     auto type_decl_groups = map_groups( ordered_name_groups, decl_for_type );
 
+    // 3. Compute kinds for type/class constructors.
     for(auto& type_decl_group: type_decl_groups)
     {
         kindchecker_state K(*this);
@@ -768,9 +776,31 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
         }
     }
 
+
+    // 4. Compute types and kinds for data constructors and class methods?
+    for(auto& type_decl_group: type_decl_groups)
+    {
+        kindchecker_state K(*this);
+        for(auto& _: K.infer_child_types(type_decl_group))
+        {
+//            auto& [arity,k] = ka;
+//            auto& tinfo = types.at(name);
+//            tinfo.arity = arity;
+//            tinfo.k     = k;
+        }
+    }
+
     // FIXME: Handle instances.
 
-// See equivalents in GHC Rename/Module.hs
+    // Instances: an instance is a function from dictionaries a dictionaries.
+    //    instance (A a, B b) => A (b a) is a function of the form \dict_A_a dict_B_b -> dict_A_(b_a)
+
+    // Q: How are instances grouped?
+    // A: Each instance needs to be at-or-after all the types/classes referenced,
+    //    Do instances depend on other instances?  Maybe this is check in the context...
+    //    e.g. instance Eq a => Eq [a] where
+
+    // See equivalents in GHC Rename/Module.hs
     // We are trying to find strongly connected components of
     //  types, type classes, and instances.
 
@@ -779,27 +809,30 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
     //   also has data family instances and type family instances.
 
     // GHC looks at types and classes first, then adds instances to the SCCs later.
-    
-    // go through topdecls and put classes, types,
-    // newtypes, and data members into 
+
+
+    // 5. Compute types for functions.
+
+    //   Does the type-checker need to augment all bound variables with their type?
+
+    //   Does the type-checker need to add type lambdas?
+
+    //   Does the type-checker need to specify type arguments to type lambdas?
+
+    //   So, let, lambda, and case would need to specify the type
+
+    // 6. Compute types for class default methods?
+
+    // Q: How are default method declarations handled here?
+    //    Do they affect type class resolution?
+    //    Do we need to do more work on them when handling value decls?
+    // A: I think default methods do not affect the type.
 
     // See function `rnTyClDecls`, which calls `depAnalTyClDecls`.
     // * Dependency analysis on values can be done by name, since instances are not included.
     // * Code is in GHC.Data.Graph.Directed.
 
-    // Q: How are instances grouped?
-    // A: Each instance needs to be at-or-after all the types/classes referenced,
-    //    Do instances depend on other instances?  Maybe this is check in the context...
-    //    e.g. instance Eq a => Eq [a] where
-
-    // Input to the dependency analysis is a list of
-    // * (declaration, name, names that this declaration depends on)
-
-    // Q: How are default method declarations handled here?
-    //    Do they affect type class resolution?
-    //    Do we need to do more work on them when handling value decls?
-
-    // I don't think we need to look up "parents" unless we are promoting data constructors
+    // I don't think we need to look up "parents" during typechecking unless we are promoting data constructors
     // to types or kinds.
 
     // For values, each value can have a body decl, a fixity decl, and a signature decl.

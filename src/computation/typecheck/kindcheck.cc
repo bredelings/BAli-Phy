@@ -499,7 +499,42 @@ std::map<string,std::pair<int,kind>> kindchecker_state::infer_kinds(const vector
 
     return kind_and_arity;
 }
-     // How can type variables come up?
+
+std::map<string,std::pair<int,kind>> kindchecker_state::infer_child_types(const vector<expression_ref>& type_decl_group)
+{
+    // 1. Do kind inference for each declaration
+    for(auto& type_decl: type_decl_group)
+    {
+        try
+        {
+            if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
+            {
+//                auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
+//                kind_check_data_type( D );
+            }
+            else if (type_decl.is_a<Haskell::ClassDecl>())
+            {
+//                auto& C = type_decl.as_<Haskell::ClassDecl>();
+//                kind_check_type_class( C );
+            }
+            else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
+            {
+//                auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
+//                kind_check_type_synonym( T );
+            }
+        }
+        catch (myexception& e)
+        {
+            std::ostringstream o;
+            o<<"\n  In declaration: "<<type_decl.print()<<"\n    ";
+            e.prepend(o.str());
+            throw;
+        }
+    }
+
+}
+
+// How can type variables come up?
     // * In type/class headers (context => T u1 u2 .. un)
     //   (Note that the context can't contain any variables other than u1..u[n].
 
