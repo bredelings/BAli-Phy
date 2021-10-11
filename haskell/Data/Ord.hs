@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Ord (module Data.Eq,
+                 Ord,
                 (<),
                 (<=),
                 (>),
@@ -14,6 +15,8 @@ import Compiler.Num          -- for (-)
 import Foreign.Introspection -- for get_arg, get_n_args
 
 data Ordering = EQ | LT | GT
+
+class Eq a => Ord a
 
 builtin compare_top 2 "compare_top" "Prelude"
 
@@ -44,3 +47,4 @@ x >= y = case compare x y of LT -> False
 
 min x y = if (x <= y) then x else y
 max x y = if (x >= y) then x else y
+
