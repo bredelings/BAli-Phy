@@ -53,10 +53,10 @@ jobs:
             version: "11"
             buildtype: "release"
 
-          - name: macos-xcode-12.3
+          - name: macos-xcode-12.5
             os: macos-latest
             compiler: xcode
-            version: "12.3"
+            version: "12.5"
             buildtype: "release"
 
           - name: windows
