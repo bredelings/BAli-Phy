@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Eq (module Data.Bool,
+                Eq,
                 (==),
                 (/=)
                )
