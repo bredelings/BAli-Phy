@@ -17,7 +17,7 @@ jobs:
                ubuntu-gcc-11-debugoptimized,
                ubuntu-gcc-11,
                ubuntu-clang-11,
-               macos-xcode-12.3,
+               macos-xcode-12.5,
                windows
                ]
 
