@@ -13,7 +13,7 @@ builtin %*% 2 "elementwise_multiply" "SModel"
 
 data EigenSystem
 
-data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) Matrix (EVector Double) EigenSystem Double Double
+data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) (Matrix Double) (EVector Double) EigenSystem Double Double
 
 qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t
 

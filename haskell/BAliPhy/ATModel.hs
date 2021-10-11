@@ -15,5 +15,4 @@ data ATModel = ATModel {
     }
 
 data ConditionalLikelihoodVector
-data Matrix
 data LeafSequence

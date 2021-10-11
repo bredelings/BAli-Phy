@@ -287,10 +287,10 @@ transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_
 --   We should also be able to constructing mixtures of mixtures of rate matrices -> mixtures of rate matrices.  This sounds like the join operation.
 
 -- class SModelOnTree a where
---   branch_transition_p       :: (SingleBranchLengthModel a) Int -> EVector<Matrix>
+--   branch_transition_p       :: (SingleBranchLengthModel a) Int -> EVector (Matrix Double)
 --   distribution              :: a -> [Double]
---   weighted_frequency_matrix :: a -> Matrix
---   weighted_matrix           :: a -> Matrix
+--   weighted_frequency_matrix :: a -> Matrix Double
+--   weighted_matrix           :: a -> Matrix Double
 --   nBaseModels               :: a -> Int
 --   stateLetters              :: a -> EVector
 --   getAlphabet               :: a -> b
@@ -298,7 +298,7 @@ transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_
 
 -- How about
 --   scale :: a -> a ?
---   qExp  :: a -> Matrix?
+--   qExp  :: a -> Matrix Double?
 -- What kind of things can be scaled?  Things built on rate matrices, I guess?
 
 -- If a mixture of mixture can be flattened, Mixture (Mixture) -> Mixture, isn't that like the monadic operation "join"?
@@ -333,7 +333,7 @@ distribution (MixtureModel l) = map fst l
 distribution (MixtureModels _ (m:ms))                  = distribution m
 distribution (ReversibleMarkov _ _ _ _ _ _ _) = [1.0]
 
--- weighted_frequency_matrix :: a -> Matrix
+-- weighted_frequency_matrix :: a -> Matrix Double
 weighted_frequency_matrix (MixtureModels _ (m:ms)) = weighted_frequency_matrix m
 weighted_frequency_matrix (MixtureModel d) = let model = MixtureModel d
                                                  dist = list_to_vector $ distribution model
@@ -341,7 +341,7 @@ weighted_frequency_matrix (MixtureModel d) = let model = MixtureModel d
                                              in builtin_weighted_frequency_matrix dist freqs
 weighted_frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _ _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [pi])
 
--- frequency_matrix :: a -> Matrix
+-- frequency_matrix :: a -> Matrix Double
 frequency_matrix (MixtureModels _ (m:ms)) = frequency_matrix m
 frequency_matrix (MixtureModel d) = let model = MixtureModel d
                                     in  builtin_frequency_matrix $ list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]

@@ -7,6 +7,7 @@ import SModel
 import Bio.Sequence -- for sequence_to_indices
 import Bio.Alignment
 import Bio.Alphabet  -- for type Alphabet
+import Data.Matrix
 
 -- FIXME: need polymorphism.
 --        This needs to be after weighted_frequency_matrix.
@@ -14,12 +15,12 @@ import Bio.Alphabet  -- for type Alphabet
 
 data CTMCOnTreeProperties = CTMCOnTreeProperties {
       subst_root :: Int,
-      transition_ps :: Array Int (EVector Matrix),
+      transition_ps :: Array Int (EVector (Matrix Double)),
       cond_likes :: Array Int (EVector ()),
       anc_seqs :: EVector (),
       likelihood :: LogDouble,
       taxa :: [ CPPString ],
-      get_weighted_frequency_matrix :: Matrix,
+      get_weighted_frequency_matrix :: Matrix Double,
       smap :: EVector Int,
       leaf_sequences :: Array Int (EVector Int),
       alphabet :: Alphabet,
