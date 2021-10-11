@@ -60,6 +60,9 @@ set<Haskell::TypeVar> free_type_VARS_from_type(const Haskell::Type& type)
             }
         }
     }
+    else
+        throw myexception()<<"free_type_VARS_from_type: unrecognized type \""<<type.print()<<"\"";
+
     return tvars;
 }
 
