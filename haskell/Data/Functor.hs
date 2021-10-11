@@ -4,6 +4,8 @@ module Data.Functor where
 import Compiler.Base
 import Data.Function
 
+class Functor f
+
 pure = return
 
 fmap f x = do x' <- x
