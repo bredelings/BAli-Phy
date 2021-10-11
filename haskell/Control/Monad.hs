@@ -7,6 +7,10 @@ import Data.Function
 import Data.Ord
 import Compiler.Num
 
+import Control.Applicative
+
+class Applicative m => Monad m
+
 mapM f = sequence . map f
 
 mapM_ f = sequence_ . map f
