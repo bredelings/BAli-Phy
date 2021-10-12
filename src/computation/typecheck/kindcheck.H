@@ -42,14 +42,22 @@ struct kindchecker_state
     kind kind_check_type_var(const Haskell::TypeVar& tv);
     kind kind_check_type_con(const std::string&);
     kind kind_check_type(const Haskell::Type& t);
-    void kind_check_type_class(const Haskell::ClassDecl& class_decl);
-    void kind_check_type_synonym(const Haskell::TypeSynonymDecl& type_syn_decl);
-    std::map<std::string, Haskell::Type> type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
-    void kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
     void kind_check_constraint(const Haskell::Type& constraint);
     void kind_check_context(const Haskell::Context& context);
+
+    // class
+    void kind_check_class_method_type(const Haskell::TypeDecl& decl);
+    void kind_check_type_class(const Haskell::ClassDecl& class_decl);
+
+    // data or newtype
+    std::map<std::string, Haskell::Type> type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
+    void kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
     Haskell::Type type_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
     void kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
+
+    // type synonym
+    void kind_check_type_synonym(const Haskell::TypeSynonymDecl& type_syn_decl);
+
     std::map<std::string, std::pair<int,kind>> infer_kinds(const std::vector<expression_ref>& type_decl_group);
     std::map<std::string, std::pair<int,kind>> infer_child_types(const std::vector<expression_ref>& type_decl_group);
 

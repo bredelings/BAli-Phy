@@ -382,6 +382,44 @@ map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell:
     return types;
 }
 
+void kindchecker_state::kind_check_class_method_type(const Haskell::TypeDecl& decl)
+{
+    // 1. Bind type parameters for type declaration
+    push_type_var_scope();
+
+    std::optional<Haskell::Context> context;
+
+    // 2. Find the unconstrained type
+    auto unconstrained_type = decl.type;
+    if (unconstrained_type.is_a<Haskell::ConstrainedType>())
+    {
+        auto& ct = unconstrained_type.as_<Haskell::ConstrainedType>();
+        context = ct.context;
+        unconstrained_type = ct.type;
+    }
+
+    // 3. Find the free type variables
+    auto ftvs = free_type_VARS_from_type(unconstrained_type);
+    for(auto& ftv: ftvs)
+    {
+        if (not type_var_in_scope(ftv))
+        {
+            auto a = fresh_kind_var();
+            bind_type_var(ftv,a);
+        }
+    }
+
+    // 4. Check the context
+    if (context)
+        kind_check_context(*context);
+
+    // 5. Check the unconstrained type
+    kind_check_type_of_kind(unconstrained_type, make_kind_star());
+
+    // 6. Unbind type parameters
+    pop_type_var_scope();
+}
+
 void kindchecker_state::kind_check_type_class(const Haskell::ClassDecl& class_decl)
 {
     // Bind type parameters for class
@@ -409,35 +447,8 @@ void kindchecker_state::kind_check_type_class(const Haskell::ClassDecl& class_de
         {
             if (decl.is_a<Haskell::TypeDecl>())
             {
-                // Bind type parameters for type declaration
-                push_type_var_scope();
-
-                std::optional<Haskell::Context> context;
-
-                auto type = decl.as_<Haskell::TypeDecl>().type;
-
-                if (type.is_a<Haskell::ConstrainedType>())
-                {
-                    auto& ct = type.as_<Haskell::ConstrainedType>();
-                    context = ct.context;
-                    type = ct.type;
-                }
-
-                auto ftvs = free_type_VARS_from_type(type);
-                for(auto& ftv: ftvs)
-                {
-                    if (not type_var_in_scope(ftv))
-                    {
-                        auto a = fresh_kind_var();
-                        bind_type_var(ftv,a);
-                    }
-                }
-
-                if (context)
-                    kind_check_context(*context);
-                kind_check_type_of_kind(type, make_kind_star());
-
-                pop_type_var_scope();
+                auto& TD = decl.as_<Haskell::TypeDecl>();
+                kind_check_class_method_type(TD);
             }
         }
     }
@@ -592,7 +603,7 @@ std::map<string,std::pair<int,kind>> kindchecker_state::infer_child_types(const 
             else if (type_decl.is_a<Haskell::ClassDecl>())
             {
                 auto& C = type_decl.as_<Haskell::ClassDecl>();
-//                kind_check_type_class( C );
+//                type_check_type_class( C );
             }
             else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
             {
