@@ -262,6 +262,35 @@ void kindchecker_state::kind_check_constructor(const Haskell::Constructor& const
     kind_check_type_of_kind(type2, make_kind_star());
 }
 
+Haskell::Type kindchecker_state::type_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type)
+{
+    // At the moment, constructors cannot introduce new type variables.
+    // So, we just need to construct the type.
+
+    auto type2 = data_type;
+
+    if (constructor.is_record_constructor())
+    {
+        auto& fields = std::get<1>(constructor.fields);
+
+        for(auto& field_decl: fields.field_decls | views::reverse)
+        {
+            for(int i=0;i<field_decl.field_names.size();i++)
+                type2 = Haskell::make_arrow_type(field_decl.type, type2);
+        }
+    }
+    else
+    {
+        auto& types = std::get<0>(constructor.fields);
+
+        for(auto& type: types | views::reverse)
+            type2 = Haskell::make_arrow_type(type, type2);
+
+    }
+
+    return type2;
+}
+
 void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl)
 {
     push_type_var_scope();
@@ -293,6 +322,64 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
         kind_check_constructor(constructor, data_type);
 
     pop_type_var_scope();
+}
+
+map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl)
+{
+    push_type_var_scope();
+
+    // a. Look up kind for this data type.
+    kind k = kind_check_type_con(data_decl.name);  // FIXME -- check that this is a data type?
+
+    // b. Bind each type variable.
+    vector<Haskell::TypeVar> datatype_typevars;
+    for(auto& tv: data_decl.type_vars)
+    {
+        // the kind should be an arrow kind.
+        assert(k->is_karrow());
+        auto& ka = dynamic_cast<const KindArrow&>(*k);
+
+        // map the name to its kind
+        bind_type_var(tv, ka.k1);
+
+        // record a version of the var with that contains its kind
+        auto tv2 = tv;
+        tv2.kind = ka.k1;
+        datatype_typevars.push_back(tv2);
+
+        // set up the next iteration
+        k = ka.k2;
+    }
+    assert(k->is_kstar());
+
+    // c. handle the context
+    // The context should already be type-checked.
+    // We should already have checked that it doesn't contain any unbound variables.
+
+    // d. construct the data type
+    Haskell::Type data_type = Haskell::TypeVar(Unlocated(data_decl.name));
+    for(auto& tv: data_decl.type_vars)
+        data_type = Haskell::TypeApp(data_type, tv);
+
+    // e. Handle the constructor terms
+    map<string,Haskell::Type> types;
+    for(auto& constructor: data_decl.constructors)
+    {
+        // Constructors are not allowed to introduce new variables w/o GADT form, with a where clause.
+        // This should have already been checked.
+
+        Haskell::Type constructor_type = type_check_constructor(constructor, data_type);
+
+        // QUESTION: do we need to replace the original user type vars with the new kind-annotated versions?
+        if (datatype_typevars.size())
+            constructor_type = Haskell::ForallType(datatype_typevars, constructor_type);
+
+        types.insert({constructor.name, constructor_type});
+    }
+
+    pop_type_var_scope();
+
+    return types;
 }
 
 void kindchecker_state::kind_check_type_class(const Haskell::ClassDecl& class_decl)
@@ -499,17 +586,17 @@ std::map<string,std::pair<int,kind>> kindchecker_state::infer_child_types(const 
         {
             if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
             {
-//                auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
-//                kind_check_data_type( D );
+                auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
+                type_check_data_type( D );
             }
             else if (type_decl.is_a<Haskell::ClassDecl>())
             {
-//                auto& C = type_decl.as_<Haskell::ClassDecl>();
+                auto& C = type_decl.as_<Haskell::ClassDecl>();
 //                kind_check_type_class( C );
             }
             else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
             {
-//                auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
+                auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
 //                kind_check_type_synonym( T );
             }
         }
