@@ -41,6 +41,7 @@ struct TypeVar: public Object
 
     TypeVar* clone() const { return new TypeVar(*this);}
     std::string print() const;
+    std::string print_with_kind() const;
 
     TypeVar() = default;
     TypeVar(const Located<std::string>& s):name(s) {}
