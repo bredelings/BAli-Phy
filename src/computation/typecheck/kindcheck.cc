@@ -382,7 +382,7 @@ map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell:
     return types;
 }
 
-void kindchecker_state::kind_check_class_method_type(const Haskell::TypeDecl& decl)
+void kindchecker_state::kind_check_class_method_type(const Haskell::Type& type)
 {
     // 1. Bind type parameters for type declaration
     push_type_var_scope();
@@ -390,7 +390,7 @@ void kindchecker_state::kind_check_class_method_type(const Haskell::TypeDecl& de
     std::optional<Haskell::Context> context;
 
     // 2. Find the unconstrained type
-    auto unconstrained_type = decl.type;
+    auto unconstrained_type = type;
     if (unconstrained_type.is_a<Haskell::ConstrainedType>())
     {
         auto& ct = unconstrained_type.as_<Haskell::ConstrainedType>();
@@ -448,7 +448,7 @@ void kindchecker_state::kind_check_type_class(const Haskell::ClassDecl& class_de
             if (decl.is_a<Haskell::TypeDecl>())
             {
                 auto& TD = decl.as_<Haskell::TypeDecl>();
-                kind_check_class_method_type(TD);
+                kind_check_class_method_type(TD.type);
             }
         }
     }
