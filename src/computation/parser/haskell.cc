@@ -238,7 +238,7 @@ string ListType::print() const
 string TypeVar::print() const
 {
     if (kind)
-        return "("+unloc(name) + "::" + (*kind).print()+")";
+        return "("+unloc(name) + " :: " + (*kind).print()+")";
     else
         return unloc(name);
 }
@@ -293,7 +293,7 @@ string ForallType::print() const
     vector<string> binders;
     for(auto& type_var_binder: type_var_binders)
         binders.push_back(type_var_binder.print());
-    return "forall "+join(binders," ")+"."+type.print();
+    return "forall "+join(binders," ")+". "+type.print();
 }
 
 string ConstrainedType::print() const
