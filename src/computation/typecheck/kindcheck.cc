@@ -358,7 +358,7 @@ map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell:
 
     // d. construct the data type
     Haskell::Type data_type = Haskell::TypeVar(Unlocated(data_decl.name));
-    for(auto& tv: data_decl.type_vars)
+    for(auto& tv: datatype_typevars)
         data_type = Haskell::TypeApp(data_type, tv);
 
     // e. Handle the constructor terms
