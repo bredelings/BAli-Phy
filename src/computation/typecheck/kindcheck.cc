@@ -14,6 +14,38 @@ namespace views = ranges::views;
 
 // Q: how/when do we rename default method definitions?
 
+Haskell::Type add_context(const vector<Haskell::Type>& constraints, const Haskell::Type& type)
+{
+    if (constraints.empty())
+        return type;
+    else if (type.is_a<Haskell::ConstrainedType>())
+    {
+        auto CT = type.as_<Haskell::ConstrainedType>();
+        for(auto& constraint: constraints)
+            CT.context.constraints.push_back(constraint);
+        return CT;
+    }
+    else
+        return Haskell::ConstrainedType(Haskell::Context(constraints),type);
+}
+
+Haskell::Type add_forall_vars(const std::vector<Haskell::TypeVar>& type_vars, const Haskell::Type& type)
+{
+    if (type.is_a<Haskell::ForallType>())
+    {
+        auto FAT = type.as_<Haskell::ForallType>();
+        auto new_type_vars = type_vars;
+        for(auto& type_var: FAT.type_var_binders)
+        {
+            assert(not includes(type_vars, type_var));
+            new_type_vars.push_back(type_var);
+        }
+        return Haskell::ForallType(new_type_vars, FAT.type);
+    }
+    else
+        return Haskell::ForallType(type_vars, type);
+}
+
 set<Haskell::TypeVar> free_type_VARS_from_type(const Haskell::Type& type)
 {
     // This version finds varids -- the other version finds qualified names.
@@ -456,6 +488,124 @@ void kindchecker_state::kind_check_type_class(const Haskell::ClassDecl& class_de
     pop_type_var_scope();
 }
 
+Haskell::Type kindchecker_state::type_check_class_method_type(Haskell::Type type, const Haskell::Type& constraint)
+{
+    // 1. Bind type parameters for type declaration
+    push_type_var_scope();
+
+    std::optional<Haskell::Context> context;
+
+    // 2. Find the unconstrained type
+    auto unconstrained_type = type;
+    if (unconstrained_type.is_a<Haskell::ConstrainedType>())
+    {
+        auto& ct = unconstrained_type.as_<Haskell::ConstrainedType>();
+        context = ct.context;
+        unconstrained_type = ct.type;
+    }
+
+    // 3. Find the NEW free type variables
+    auto new_ftvs = free_type_VARS_from_type(unconstrained_type);
+    vector<Haskell::TypeVar> to_erase;
+    for(auto& type_var: new_ftvs)
+        if (type_var_in_scope(type_var))
+            to_erase.push_back(type_var);
+    for(auto& type_var: to_erase)
+        new_ftvs.erase(type_var);
+
+    // 4. Bind fresh kind vars to new type variables
+    for(auto& ftv: new_ftvs)
+    {
+        auto a = fresh_kind_var();
+        bind_type_var(ftv,a);
+    }
+
+    // 5. Check the context
+    if (context)
+        kind_check_context(*context);
+
+    // 6. Check the unconstrained type and infer kinds.
+    kind_check_type_of_kind(unconstrained_type, make_kind_star());
+
+    // 7. Bind fresh kind vars to new type variables
+    vector<Haskell::TypeVar> new_type_vars;
+    for(auto& type_var: new_ftvs)
+    {
+        auto type_var_with_kind = type_var;
+        type_var_with_kind.kind = replace_kvar_with_star( kind_for_type_var(type_var) );
+        new_type_vars.push_back( type_var_with_kind );
+    }
+
+    // Don't we need to simplify constraints if we do this?
+    type = add_context({constraint}, type);
+
+    type = add_forall_vars(new_type_vars, type);
+    
+    // 6. Unbind type parameters
+    pop_type_var_scope();
+
+    return type;
+}
+
+map<string, Haskell::Type> kindchecker_state::type_check_type_class(const Haskell::ClassDecl& class_decl)
+{
+    // Bind type parameters for class
+    push_type_var_scope();
+
+    auto& name = class_decl.name;
+
+    // a. Look up kind for this data type.
+    auto k = kind_check_type_con(name);
+
+    // b. Put each type variable into the kind.
+    vector<Haskell::TypeVar> class_typevars;
+    for(auto& tv: class_decl.type_vars)
+    {
+        // the kind should be an arrow kind.
+        assert(k->is_karrow());
+        auto& ka = dynamic_cast<const KindArrow&>(*k);
+
+        // map the name to its kind
+        bind_type_var(tv, ka.k1);
+
+        // record a version of the var with that contains its kind
+        auto tv2 = tv;
+        tv2.kind = ka.k1;
+        class_typevars.push_back(tv2);
+
+        // set up the next iteration
+        k = ka.k2;
+    }
+    assert(k->is_kconstraint());
+
+    // d. construct the constraint
+    Haskell::Type constraint = Haskell::TypeVar(Unlocated(class_decl.name));
+    for(auto& tv: class_typevars)
+        constraint = Haskell::TypeApp(constraint, tv);
+
+    // e. handle the class methods
+    map<string,Haskell::Type> types;
+    if (class_decl.decls)
+    {
+        for(auto& decl: unloc(*class_decl.decls))
+        {
+            if (decl.is_a<Haskell::TypeDecl>())
+            {
+                auto& TD = decl.as_<Haskell::TypeDecl>();
+                Haskell::Type method_type = type_check_class_method_type(TD.type, constraint);
+                if (class_typevars.size())
+                    method_type = add_forall_vars(class_typevars, method_type);
+                for(auto& var: TD.vars)
+                    types.insert({unloc(var.name), method_type});
+            }
+        }
+    }
+
+    pop_type_var_scope();
+
+    return types;
+}
+
 /*
 data C a => D a = Foo (S a)
 type S a = [D a]
@@ -603,12 +753,13 @@ std::map<string,std::pair<int,kind>> kindchecker_state::infer_child_types(const 
             else if (type_decl.is_a<Haskell::ClassDecl>())
             {
                 auto& C = type_decl.as_<Haskell::ClassDecl>();
-//                type_check_type_class( C );
+                type_check_type_class( C );
             }
             else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
             {
-                auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
-//                kind_check_type_synonym( T );
+                // auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
+                // Is there actually anything to do here?
+                // Type synonyms don't have any children.
             }
         }
         catch (myexception& e)
