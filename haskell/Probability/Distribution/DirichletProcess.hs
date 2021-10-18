@@ -7,18 +7,34 @@ import Probability.Distribution.Normal
 import Probability.Distribution.Bernoulli
 import Probability.Distribution.Beta
 import Probability.Distribution.Categorical
+import Probability.Distribution.Exponential
+import Probability.Distribution.Uniform
+import Numeric.Log -- for log1p
 
 import Foreign.Vector
 
 import Control.DeepSeq
 import MCMC -- for GibbsSampleCategorical
 
+-- PROBLEM: Does the new stick' yield the same results in the example BES analysis?
+--          It seems like stick' allows rather more categories to exist at a time.
+--          With the original "stick", its usually just 1 or 2 categories.
+
 -- Select one element from the (possibly infinite) list of values.
+-- This version performs `n` bernoulli choices to select category `n`.
 stick (p:ps) (x:xs) = do keep <- bernoulli p
                          if keep == 1 then
                              return x
                          else
                              stick ps xs
+
+-- This version performs 1 exponential sample to select category n.
+stick' ps xs = exponential 1.0 <&> negate <&> go_log ps xs  where
+    go_log (p:ps) (x:xs) q  = let q' = q - log1p(-p)
+                              in if q' > 0.0
+                                 then x
+                                 else go_log ps xs q'
+
 
 normalize v = map (/total) v where total=sum v
 
