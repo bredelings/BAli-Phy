@@ -3,11 +3,29 @@ module Compiler.Real where
 
 import Compiler.Base
 import Compiler.Num
+import Compiler.Enum -- for class Enum
 import Data.Ord      -- for <
 import Data.Function -- for .
 
 infixl 8 ^, ^^, **
 infixl 7 /, `quot`, `rem`, `div`, `mod`
+
+class Num a => Fractional a where { }
+-- (/) :: a -> a -> a
+-- recip :: a -> a
+-- fromRational :: Rational -> a
+
+class (Num a, Ord a) => Real a where { }
+--    toRational :: a -> Rational
+
+class (Real a, Enum a) => Integral a  where { }
+-- quot :: a -> a -> a
+-- rem  :: a -> a -> a
+-- div  :: a -> a -> a
+-- mod  :: a -> a -> a
+-- quotRem :: a -> a -> (a,a)
+-- divMod  :: a -> a -> (a,a)
+-- toInteger :: a -> Integer
 
 builtin / 2 "divide" "Prelude"
 builtin div 2 "div" "Prelude"
