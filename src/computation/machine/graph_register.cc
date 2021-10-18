@@ -413,13 +413,13 @@ void reg_heap::_register_effect_at_reg(int r, int s)
     if (E.is_a<::register_prior>())
     {
         if (log_verbose >= 5)
-            std::cerr<<print()<<":   REGISTER! ("<<prior_terms.size()<<" -> "<<prior_terms.size()+1<<")\n";
+            std::cerr<<E.print()<<":   REGISTER! ("<<prior_terms.size()<<" -> "<<prior_terms.size()+1<<")\n";
         register_prior(E.as_<::register_prior>(), s);
     }
     else if (E.is_a<register_likelihood>())
     {
         if (log_verbose >= 5)
-            std::cerr<<print()<<":   REGISTER! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()+1<<")\n";
+            std::cerr<<E.print()<<":   REGISTER! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()+1<<")\n";
         register_likelihood_(E.as_<register_likelihood>(), s);
     }
     else if (E.is_a<constructor>())
@@ -467,14 +467,14 @@ void reg_heap::_unregister_effect_at_reg(int r, int s)
     if (E.is_a<::register_prior>())
     {
         if (log_verbose >= 5)
-            std::cerr<<print()<<": UNregister! ("<<prior_terms.size()<<" -> "<<prior_terms.size()-1<<")\n";
+            std::cerr<<E.print()<<": UNregister! ("<<prior_terms.size()<<" -> "<<prior_terms.size()-1<<")\n";
 
         unregister_prior(E.as_<::register_prior>(), s);
     }
     else if (E.is_a<register_likelihood>())
     {
         if (log_verbose >= 5)
-            std::cerr<<print()<<": UNregister! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()-1<<")\n";
+            std::cerr<<E.print()<<": UNregister! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()-1<<")\n";
         unregister_likelihood_(E.as_<register_likelihood>(), s);
     }
     else if (E.is_a<constructor>())
