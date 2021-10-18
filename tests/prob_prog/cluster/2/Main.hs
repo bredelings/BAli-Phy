@@ -1,5 +1,6 @@
 module Main where
 
+import System.Environment
 import Probability
 import Data.Frame
 
@@ -24,7 +25,10 @@ model xs = do
   return ["n_clusters" %=% n, "weights" %=% ps, "clusters" %=% clusters]
 
 main = do
-  xtable <- readTable "x.csv"
+  [filename] <- getArgs
+
+  xtable <- readTable filename
+
   let xs = xtable $$ ("x", AsDouble)
 
   mcmc $ model xs
