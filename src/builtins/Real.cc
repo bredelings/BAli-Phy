@@ -7,9 +7,25 @@ using std::vector;
 
 extern "C" closure builtin_function_exp(OperationArgs& Args)
 {
-    double x = Args.evaluate(0).as_double();
+    auto x = Args.evaluate(0);
 
-    return {exp(x)};
+    if (not x.is_double())
+        throw myexception()<<"log1p: object '"<<x.print()<<"' is not double!";
+
+    double xx = x.as_double();
+
+    return {exp(xx)};
+}
+
+extern "C" closure builtin_function_expm1(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+
+    if (not x.is_double())
+        throw myexception()<<"log1p: object '"<<x.print()<<"' is not double!";
+
+    double xx = x.as_double();
+    return {expm1(xx)};
 }
 
 extern "C" closure builtin_function_log(OperationArgs& Args)
@@ -22,19 +38,27 @@ extern "C" closure builtin_function_log(OperationArgs& Args)
 	assert(xx > 0.0);
 	return {log(xx)};
     }
-    else if (x.is_int())
-    {
-	double xx = x.as_int();
-	assert(xx > 0.0);
-	return {log(xx)};
-    }
     else if (x.is_log_double())
     {
 	log_double_t xx = x.as_log_double();
 	return {log(xx)};
     }
 
-    throw myexception()<<"log: object '"<<x.print()<<"' is not double, int, or log_double";
+    throw myexception()<<"log: object '"<<x.print()<<"' is not double or log_double";
+}
+
+extern "C" closure builtin_function_log1p(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+
+    if (not x.is_double())
+        throw myexception()<<"log1p: object '"<<x.print()<<"' is not double!";
+
+    // QUESTION: should we implement this for logdouble?
+
+    double xx = x.as_double();
+    assert(xx >= -1.0);
+    return {log1p(xx)};
 }
 
 extern "C" closure builtin_function_pow(OperationArgs& Args)
