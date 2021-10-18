@@ -11,3 +11,5 @@ builtin negate 1 "negate" "Prelude"
 builtin abs    1 "abs"    "Prelude"
 
 class Num a
+
+data Integer
