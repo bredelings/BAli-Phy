@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-module Compiler.Enum (enumFrom,
+module Compiler.Enum (Enum,
+                      enumFrom,
                       enumFromThen,
                       enumFromTo,
                       enumFromThenTo)
@@ -8,6 +9,16 @@ module Compiler.Enum (enumFrom,
 import Data.Ord      -- for <=
 import Compiler.Num  -- for -,+
 import Data.Bool     -- for otherwise
+
+class Enum a where { }
+-- succ :: a -> a
+-- pred :: a -> a
+-- toEnum :: Int -> a
+-- fromEnum :: a -> Int
+-- enumFrom :: a -> [a]
+-- enumFromThen :: a -> a -> [a]
+-- enumFromTo   :: a -> a -> [a]
+-- enumFromThenTo :: a -> a -> a -> [a]
 
 -- This isn't a standard function -- I made it up..
 enumByFrom by from = from:enumByFrom by (from+by)
