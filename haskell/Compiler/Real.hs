@@ -61,6 +61,11 @@ builtin asinh 1 "asinh" "Real"
 builtin atanh 1 "atanh" "Real"
 builtin acosh 1 "acosh" "Real"
 
+class (Real a, Fractional a) => RealFrac a where
+    properFraction :: (Integral b) => a -> (b,a)
+--    truncate, round  :: (Integral b) => a -> b
+--    ceiling, floor   :: (Integral b) => a -> b
+
 builtin truncate 1 "truncate" "Prelude"
 builtin ceiling 1 "ceiling" "Prelude"
 builtin floor 1 "floor" "Prelude"
