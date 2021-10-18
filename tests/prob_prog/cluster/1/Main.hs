@@ -4,7 +4,7 @@ import Data.Frame
 
 cluster_dist = do
   mean <- normal 0.0 10.0
-  prec <- gamma 1.0 1.0
+  prec <- gamma 2.0 1.0
   let sigma = 1.0/prec
   return (mean,sigma)
 
