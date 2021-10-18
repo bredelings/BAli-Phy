@@ -33,6 +33,15 @@ builtin mod 2 "mod" "Prelude"
 builtin quot 2 "quot" "Prelude"
 builtin rem 2 "rem" "Prelude"
 
+class Fractional a => Floating a where { }
+-- pi :: a
+-- exp, sqrt, log :: a -> a
+-- (**), logBase :: a -> a -> a
+-- sin, tan, cos :: a -> a
+-- asin, atan, acos :: a -> a
+-- sinh, tanh, cosh :: a -> a
+-- asinh, atanh, acosh :: a -> a
+
 pi = 3.14159265358979323846
 builtin exp 1 "exp" "Real"
 builtin sqrt 1 "sqrt" "Real"
