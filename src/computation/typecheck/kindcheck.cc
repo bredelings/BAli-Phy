@@ -331,15 +331,19 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
     kind k = kind_for_type_con(data_decl.name);  // FIXME -- check that this is a data type?
 
     // b. Put each type variable into the kind.
-    kind k2 = make_kind_star();
-    for(auto& tv: data_decl.type_vars | views::reverse)
+    for(auto& tv: data_decl.type_vars)
     {
-        auto a = fresh_kind_var();
-        bind_type_var(tv,a);
-        k2 = make_kind_arrow(a,k2);
+        // the kind should be an arrow kind.
+        assert(k->is_karrow());
+        auto& ka = dynamic_cast<const KindArrow&>(*k);
+
+        // map the name to its kind
+        bind_type_var(tv, ka.k1);
+
+        // set up the next iteration
+        k = ka.k2;
     }
-    bool ok = unify(k,k2);
-    assert(ok);
+    assert(k->is_kstar());
 
     // c. Handle the context
     kind_check_context(data_decl.context);
@@ -464,14 +468,19 @@ void kindchecker_state::kind_check_type_class(const Haskell::ClassDecl& class_de
 
     // b. Put each type variable into the kind.
     kind k2 = make_kind_star();
-    for(auto& tv: class_decl.type_vars | views::reverse)
+    for(auto& tv: class_decl.type_vars)
     {
-        auto a = fresh_kind_var();
-        bind_type_var(tv,a);
-        k2 = make_kind_arrow(a,k2);
+        // the kind should be an arrow kind.
+        assert(k->is_karrow());
+        auto& ka = dynamic_cast<const KindArrow&>(*k);
+
+        // map the name to its kind
+        bind_type_var(tv, ka.k1);
+
+        // set up the next iteration
+        k = ka.k2;
     }
-    bool ok = unify(k,k2);
-    assert(ok);
+    assert(k->is_kconstraint());
 
     if (class_decl.decls)
     {
@@ -624,15 +633,19 @@ void kindchecker_state::kind_check_type_synonym(const Haskell::TypeSynonymDecl& 
     auto k = kind_for_type_con(name); // FIXME -- check that this is a type class?
 
     // b. Put each type variable into the kind.
-    kind k2 = make_kind_star();
-    for(auto& tv: type_syn_decl.type_vars | views::reverse)
+    for(auto& tv: type_syn_decl.type_vars)
     {
-        auto a = fresh_kind_var();
-        bind_type_var(tv,a);
-        k2 = make_kind_arrow(a,k2);
+        // the kind should be an arrow kind.
+        assert(k->is_karrow());
+        auto& ka = dynamic_cast<const KindArrow&>(*k);
+
+        // map the name to its kind
+        bind_type_var(tv, ka.k1);
+
+        // set up the next iteration
+        k = ka.k2;
     }
-    bool ok = unify(k,k2);
-    assert(ok);
+    assert(k->is_kstar());
 
     kind_check_type_of_kind( unloc(type_syn_decl.rhs_type), make_kind_star() );
 
