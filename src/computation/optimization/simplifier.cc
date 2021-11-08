@@ -19,6 +19,8 @@
 #include "simplifier.H"
 #include "util/assert.hh"
 
+using namespace simplifier;
+
 // TODO: when building let expressions to bind variables, pass those expressions into the simplifier
 //       * 1. stop translating wildcards to named variables.
 //       * 2. make the occurrence analyzer replace dead variables with wildcards in case patterns and lambdas.
@@ -39,20 +41,6 @@ using std::map;
 using std::cerr;
 using std::endl;
 
-
-struct substitution_range;
-struct substitution: public map<var, substitution_range>
-{
-    using map::map;
-};
-
-struct substitution_range
-{
-    expression_ref E;
-    const substitution* S = nullptr;
-    substitution_range(const expression_ref& e):E(e) {}
-    substitution_range(const expression_ref& e, const substitution& s):E(e),S(&s) {}
-};
 
 typedef pair<expression_ref,occurrence_info> bound_variable_info;
 
