@@ -3,38 +3,70 @@
 
 #include <vector>
 #include <string>
+#include <variant>
+#include <memory>
 #include "expression/AST_node.H"
 #include "computation/expression/expression_ref.H"
 
-class inline_context
+struct apply_context;
+struct case_context;
+struct stop_context;
+
+class inline_context: public std::variant<std::shared_ptr<const stop_context>, std::shared_ptr<const apply_context>, std::shared_ptr<const case_context>>
 {
-    expression_ref data;
 public:
-    inline_context prev_context() const {
-	if (data)
-	    assert(data.head().is_a<AST_node>());
-	return inline_context(data.sub()[1]);
+    std::shared_ptr<const case_context> is_case_context() const
+    {
+        if (index() == 2)
+            return std::get<std::shared_ptr<const case_context>>(*this);
+        else
+            return {};
     }
 
-    bool is_case_object() const {return is_AST(data,"case_object");}
-    bool is_apply_object() const {return is_AST(data,"apply_object");}
-    bool is_argument() const {return is_AST(data,"argument");}
-    bool is_unknown() const {return is_AST(data,"unknown");}
-    bool is_null() const {return not data;}
-    expression_ref get_expression() const {return data.sub()[0];};
+    std::shared_ptr<const apply_context> is_apply_context() const
+    {
+        if (index() == 1)
+            return std::get<std::shared_ptr<const apply_context>>(*this);
+        else
+            return {};
+    }
 
-    inline_context() {};
-    inline_context(const expression_ref& E):data(E) {}
-    inline_context(const std::string& s, const expression_ref E, const inline_context& context)
-	:data(AST_node(s) + E + context.data) {}
+    std::shared_ptr<const stop_context> is_stop_context() const
+    {
+        if (index() == 0)
+            return std::get<std::shared_ptr<const stop_context>>(*this);
+        else
+            return {};
+    }
+
+    std::optional<inline_context> prev_context() const;
+
+    using variant::variant;
+};
+
+struct apply_context
+{
+    expression_ref arg;
+    inline_context next;
+    apply_context(const expression_ref& e, const inline_context& i):arg(e),next(i) {}
+};
+
+struct case_context
+{
+    expression_ref alts;
+    inline_context next;
+    case_context(const expression_ref& e, const inline_context& i):alts(e),next(i) {}
+};
+
+struct stop_context
+{
 };
 
 
-inline_context unknown_context();
-inline_context argument_context(const inline_context& context);
-inline_context apply_object_context_one_arg(const inline_context& context, const expression_ref& arg);
-inline_context apply_object_context(const expression_ref E, inline_context context);
-inline_context case_object_context(const expression_ref E, const inline_context& context);
+std::shared_ptr<const stop_context> make_stop_context();
+std::shared_ptr<const apply_context> make_apply_context_one_arg(const inline_context& context, const expression_ref& arg);
+std::shared_ptr<const apply_context> make_apply_context(const expression_ref E, inline_context context);
+std::shared_ptr<const case_context> make_case_context(const expression_ref E, const inline_context& context);
 
 bool do_inline(const simplifier_options& options, const expression_ref& rhs, const occurrence_info& occur, const inline_context& context);
 

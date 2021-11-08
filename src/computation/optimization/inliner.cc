@@ -22,10 +22,56 @@ using std::vector;
 using std::pair;
 using std::set;
 using std::map;
+using std::shared_ptr;
 
 using std::cerr;
 using std::endl;
 
+std::optional<inline_context> inline_context::prev_context() const
+{
+    if (auto c = is_case_context())
+        return {c->next};
+    else if (auto a = is_apply_context())
+        return {a->next};
+    else
+        return {};
+}
+
+int num_arguments(inline_context context)
+{
+    int num = 0;
+    while(auto a = context.is_apply_context())
+    {
+	num++;
+	context = a->next;
+    }
+    return num;
+}
+
+shared_ptr<const case_context> make_case_context(const expression_ref E, const inline_context& context)
+{
+    assert(is_case(E));
+    return std::make_shared<const case_context>(E.sub()[1], context);
+}
+
+shared_ptr<const apply_context> make_apply_context_one_arg(const expression_ref arg, const inline_context& context)
+{
+    return std::make_shared<const apply_context>(arg, context);
+}
+
+shared_ptr<const apply_context> make_apply_context(const expression_ref E, inline_context context)
+{
+    assert(E.head().is_a<Apply>());
+    auto A = make_apply_context_one_arg(E.sub().back(), context);
+    for(int i=E.size()-2;i>=1;i--)
+	A = make_apply_context_one_arg(E.sub()[i], inline_context(A));
+    return A;
+}
+
+shared_ptr<const stop_context> make_stop_context()
+{
+    return std::make_shared<const stop_context>();
+}
 
 int nodes_size(const expression_ref& E)
 {
@@ -92,53 +138,14 @@ int simple_size(const expression_ref& E)
     std::abort();
 }
 
-int num_arguments(inline_context context)
-{
-    int num = 0;
-    while(context.is_apply_object())
-    {
-	num++;
-	context = context.prev_context();
-    }
-    return num;
-}
-
-inline_context case_object_context(const expression_ref E, const inline_context& context)
-{
-    assert(is_case(E));
-    return inline_context("case_object",E,context);
-}
-
-inline_context apply_object_context_one_arg(const inline_context& context, const expression_ref& arg)
-{
-    return inline_context("apply_object", arg, context);
-}
-
-inline_context apply_object_context(const expression_ref E, inline_context context)
-{
-    assert(E.head().is_a<Apply>());
-    for(int i=E.size()-1;i>=1;i--)
-	context = apply_object_context_one_arg(context, E.sub()[i]);
-    return context;
-}
-
-inline_context argument_context(const inline_context& context)
-{
-    return inline_context("argument", {}, context);
-}
-
-inline_context unknown_context()
-{
-    return inline_context("unknown", {}, {});
-}
-
 inline_context remove_arguments(inline_context context, int n)
 {
     for(int i=0;i<n;i++)
     {
-	if (not context.is_apply_object())
+	if (auto a = context.is_apply_context())
+            context = a->next;
+        else
 	    throw myexception()<<"Trying to remove "<<n<<" applications from context, but it only had "<<i<<".";
-	context = context.prev_context();
     }
     return context;
 }
@@ -149,7 +156,7 @@ bool no_size_increase(const expression_ref& rhs, const inline_context& context)
     if (is_trivial(rhs)) return true;
 
     // If we are inlining a constant into a case object, then there will eventually be no size increase... right?
-    if (context.is_case_object() and is_WHNF(rhs))
+    if (context.is_case_context() and is_WHNF(rhs))
     {
 	assert(not rhs.is_a<lambda>());
 	return true;
@@ -157,7 +164,7 @@ bool no_size_increase(const expression_ref& rhs, const inline_context& context)
 
     // If we are inlining a function body that is smaller than its call (e.g. @ . f x ===> @ (\a b -> @ a b) f x ===> let {a=f;b=x} in @ a b ===> @ f x)
     // (e.g. @ $ f ===> @ (\a b -> @ a b) f ===> let a=f in (\b -> @ a b)  ===> (\b -> @ f b) ... wait isn't that the same as f?
-    if (context.is_apply_object() and is_WHNF(rhs))
+    if (context.is_apply_context() and is_WHNF(rhs))
     {
 	int n_args_supplied = num_arguments(context);
 	assert(n_args_supplied >= 1);
@@ -176,9 +183,9 @@ bool no_size_increase(const expression_ref& rhs, const inline_context& context)
 
 bool very_boring(const inline_context& context)
 {
-    if (context.is_case_object()) return false;
+    if (context.is_case_context()) return false;
 
-    if (context.is_apply_object()) return false;
+    if (context.is_apply_context()) return false;
 
     // This avoids substituting into constructor (and function) arguments.
     return true;
@@ -240,7 +247,7 @@ bool do_inline(const simplifier_options& options, const expression_ref& rhs, con
 	return false;
 
     // Function and constructor arguments
-    else if (context.is_argument() and not is_trivial(rhs))
+    else if (context.is_stop_context() and not is_trivial(rhs))
 	return false;
 
     // OnceSafe

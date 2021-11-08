@@ -407,7 +407,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	}
 
 	// 4. Simplify the alternative body
-	bodies[i] = simplify(options, bodies[i], S2, bound_vars, unknown_context());
+	bodies[i] = simplify(options, bodies[i], S2, bound_vars, make_stop_context());
 
 	// 5. Restore informatation about an object variable to information outside this case branch.
 	if (is_var(object))
@@ -624,7 +624,7 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
 	    */
 
 	    // 5.1.2 Simplify F.
-	    F = simplify(options, F, S2, bound_vars, unknown_context());
+	    F = simplify(options, F, S2, bound_vars, make_stop_context());
 
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
@@ -761,7 +761,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	var x2 = rename_and_bind_var(Evar, S2, bound_vars);
 
 	// 2.3 Simplify the body with x added to the bound set.
-	auto new_body = simplify(options, E.sub()[1], S2, bound_vars, unknown_context());
+	auto new_body = simplify(options, E.sub()[1], S2, bound_vars, make_stop_context());
 
 	// 2.4 Remove x2 from the bound set.
 	unbind_var(bound_vars,x2);
@@ -782,7 +782,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     if (parse_case_expression(E, object, patterns, bodies))
     {
 	// Analyze the object
-	object = simplify(options, object, S, bound_vars, case_object_context(E, context));
+	object = simplify(options, object, S, bound_vars, make_case_context(E, context));
 	auto E2 = make_case_expression(object, patterns, bodies);
 
 	return rebuild_case(options, E2, S, bound_vars, context);
@@ -794,13 +794,13 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	object_ptr<expression> V2 = E.as_expression().clone();
 	
 	// 1. Simplify the object.
-	V2->sub[0] = simplify(options, V2->sub[0], S, bound_vars, apply_object_context(E, context));
+	V2->sub[0] = simplify(options, V2->sub[0], S, bound_vars, make_apply_context(E, context));
 
 	// 2. Simplify the arguments
 	for(int i=1;i<E.size();i++)
 	{
 	    assert(is_trivial(V2->sub[i]));
-	    V2->sub[i] = simplify(options, V2->sub[i], S, bound_vars, argument_context(context));
+	    V2->sub[i] = simplify(options, V2->sub[i], S, bound_vars, make_stop_context());
 	}
 	
 	return rebuild_apply(options, V2, S, bound_vars, context);
@@ -832,7 +832,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	for(int i=0;i<E.size();i++)
 	{
 	    assert(is_trivial(E2->sub[i]));
-	    E2->sub[i] = simplify(options, E2->sub[i], S, bound_vars, argument_context(context));
+	    E2->sub[i] = simplify(options, E2->sub[i], S, bound_vars, make_stop_context());
 	}
 	return E2;
     }
