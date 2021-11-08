@@ -48,23 +48,23 @@ int num_arguments(inline_context context)
     return num;
 }
 
-shared_ptr<const case_context> make_case_context(const expression_ref E, const inline_context& context)
+shared_ptr<const case_context> make_case_context(const expression_ref E, const simplifier::substitution& S, const inline_context& context)
 {
     assert(is_case(E));
-    return std::make_shared<const case_context>(E.sub()[1], context);
+    return std::make_shared<const case_context>(E.sub()[1], S, context);
 }
 
-shared_ptr<const apply_context> make_apply_context_one_arg(const expression_ref arg, const inline_context& context)
+shared_ptr<const apply_context> make_apply_context_one_arg(const expression_ref arg, const simplifier::substitution& S, const inline_context& context)
 {
-    return std::make_shared<const apply_context>(arg, context);
+    return std::make_shared<const apply_context>(arg, S, context);
 }
 
-shared_ptr<const apply_context> make_apply_context(const expression_ref E, inline_context context)
+shared_ptr<const apply_context> make_apply_context(const expression_ref E,  const simplifier::substitution& S, inline_context context)
 {
     assert(E.head().is_a<Apply>());
-    auto A = make_apply_context_one_arg(E.sub().back(), context);
+    auto A = make_apply_context_one_arg(E.sub().back(), S, context);
     for(int i=E.size()-2;i>=1;i--)
-	A = make_apply_context_one_arg(E.sub()[i], inline_context(A));
+	A = make_apply_context_one_arg(E.sub()[i], S, inline_context(A));
     return A;
 }
 

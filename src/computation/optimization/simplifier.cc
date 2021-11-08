@@ -782,7 +782,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     if (parse_case_expression(E, object, patterns, bodies))
     {
 	// Analyze the object
-	object = simplify(options, object, S, bound_vars, make_case_context(E, context));
+	object = simplify(options, object, S, bound_vars, make_case_context(E, S, context));
 	auto E2 = make_case_expression(object, patterns, bodies);
 
 	return rebuild_case(options, E2, S, bound_vars, context);
@@ -794,7 +794,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	object_ptr<expression> V2 = E.as_expression().clone();
 	
 	// 1. Simplify the object.
-	V2->sub[0] = simplify(options, V2->sub[0], S, bound_vars, make_apply_context(E, context));
+	V2->sub[0] = simplify(options, V2->sub[0], S, bound_vars, make_apply_context(E, S, context));
 
 	// 2. Simplify the arguments
 	for(int i=1;i<E.size();i++)

@@ -7,6 +7,7 @@
 #include <memory>
 #include "expression/AST_node.H"
 #include "computation/expression/expression_ref.H"
+#include "simplifier.H"
 
 struct apply_context;
 struct case_context;
@@ -47,15 +48,17 @@ public:
 struct apply_context
 {
     expression_ref arg;
+    const simplifier::substitution& subst;
     inline_context next;
-    apply_context(const expression_ref& e, const inline_context& i):arg(e),next(i) {}
+    apply_context(const expression_ref& e, const simplifier::substitution& s, const inline_context& i):arg(e), subst(s), next(i) {}
 };
 
 struct case_context
 {
     expression_ref alts;
+    const simplifier::substitution& subst;
     inline_context next;
-    case_context(const expression_ref& e, const inline_context& i):alts(e),next(i) {}
+    case_context(const expression_ref& e, const simplifier::substitution& s, const inline_context& i):alts(e), subst(s), next(i) {}
 };
 
 struct stop_context
@@ -64,9 +67,9 @@ struct stop_context
 
 
 std::shared_ptr<const stop_context> make_stop_context();
-std::shared_ptr<const apply_context> make_apply_context_one_arg(const inline_context& context, const expression_ref& arg);
-std::shared_ptr<const apply_context> make_apply_context(const expression_ref E, inline_context context);
-std::shared_ptr<const case_context> make_case_context(const expression_ref E, const inline_context& context);
+std::shared_ptr<const apply_context> make_apply_context_one_arg(const inline_context& context, const simplifier::substitution& S, const expression_ref& arg);
+std::shared_ptr<const apply_context> make_apply_context(const expression_ref E, const simplifier::substitution& S, inline_context context);
+std::shared_ptr<const case_context> make_case_context(const expression_ref E, const simplifier::substitution& S, const inline_context& context);
 
 bool do_inline(const simplifier_options& options, const expression_ref& rhs, const occurrence_info& occur, const inline_context& context);
 
