@@ -2,6 +2,10 @@ import Probability
 import System.Environment
 import Data.Frame
 
+-- Ideally, the categories and their weights would be exchangeable!
+-- Currently if the first category is bad, there is not a good way
+-- to eliminate it.
+
 cluster_dist = do
   mean <- normal 0.0 10.0
   prec <- gamma 2.0 1.0
