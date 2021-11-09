@@ -501,7 +501,7 @@ expression_ref peel_n_lambdas1(const expression_ref& E, int n)
     }
     return E2;
 }
-      
+
 // @ E x1 .. xn.  The E and the x[i] have already been simplified.
 expression_ref rebuild_apply(const simplifier_options& options, expression_ref E, const substitution& /*S*/, in_scope_set& /*bound_vars*/, inline_context /*context*/)
 {
@@ -782,7 +782,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     if (parse_case_expression(E, object, patterns, bodies))
     {
 	// Analyze the object
-	object = simplify(options, object, S, bound_vars, make_case_context(E, S, context));
+	object = simplify(options, object, S, bound_vars, make_case_context(E, S, bound_vars, context));
 	auto E2 = make_case_expression(object, patterns, bodies);
 
 	return rebuild_case(options, E2, S, bound_vars, context);
@@ -802,7 +802,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	    assert(is_trivial(V2->sub[i]));
 	    V2->sub[i] = simplify(options, V2->sub[i], S, bound_vars, make_stop_context());
 	}
-	
+
 	return rebuild_apply(options, V2, S, bound_vars, context);
     }
 

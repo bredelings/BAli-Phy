@@ -48,10 +48,10 @@ int num_arguments(inline_context context)
     return num;
 }
 
-shared_ptr<const case_context> make_case_context(const expression_ref E, const simplifier::substitution& S, const inline_context& context)
+shared_ptr<const case_context> make_case_context(const expression_ref E, const simplifier::substitution& S,  const in_scope_set& bound_vars, const inline_context& context)
 {
     assert(is_case(E));
-    return std::make_shared<const case_context>(E.sub()[1], S, context);
+    return std::make_shared<const case_context>(E.sub()[1], S, bound_vars, context);
 }
 
 shared_ptr<const apply_context> make_apply_context_one_arg(const expression_ref arg, const simplifier::substitution& S, const inline_context& context)
