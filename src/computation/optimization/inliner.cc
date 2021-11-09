@@ -73,6 +73,11 @@ shared_ptr<const stop_context> make_stop_context()
     return std::make_shared<const stop_context>();
 }
 
+shared_ptr<const ok_context> make_ok_context()
+{
+    return std::make_shared<const ok_context>();
+}
+
 int nodes_size(const expression_ref& E)
 {
     int total = 1;

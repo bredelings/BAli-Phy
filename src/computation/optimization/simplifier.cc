@@ -407,7 +407,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	}
 
 	// 4. Simplify the alternative body
-	bodies[i] = simplify(options, bodies[i], S2, bound_vars, make_stop_context());
+	bodies[i] = simplify(options, bodies[i], S2, bound_vars, make_ok_context());
 
 	// 5. Restore informatation about an object variable to information outside this case branch.
 	if (is_var(object))
@@ -624,7 +624,7 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
 	    */
 
 	    // 5.1.2 Simplify F.
-	    F = simplify(options, F, S2, bound_vars, make_stop_context());
+	    F = simplify(options, F, S2, bound_vars, make_ok_context());
 
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
@@ -761,7 +761,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	var x2 = rename_and_bind_var(Evar, S2, bound_vars);
 
 	// 2.3 Simplify the body with x added to the bound set.
-	auto new_body = simplify(options, E.sub()[1], S2, bound_vars, make_stop_context());
+	auto new_body = simplify(options, E.sub()[1], S2, bound_vars, make_ok_context());
 
 	// 2.4 Remove x2 from the bound set.
 	unbind_var(bound_vars,x2);
