@@ -295,12 +295,11 @@ bool is_constant_case(const vector<expression_ref>& patterns, const vector<expre
 }
 
 // case E of alts.  Here E has been simplified, but the alts have not.
-expression_ref rebuild_case(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+expression_ref rebuild_case(const simplifier_options& options, expression_ref object, const expression_ref& alts, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
-    expression_ref object;
     vector<expression_ref> patterns;
     vector<expression_ref> bodies;
-    parse_case_expression(E, object, patterns, bodies);
+    parse_alts(alts, patterns, bodies);
     const int L = patterns.size();
 
     auto decls = strip_multi_let(object);
@@ -776,16 +775,14 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     }
 
     // 6. Case
-    expression_ref object;
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    if (parse_case_expression(E, object, patterns, bodies))
+    if (is_case(E))
     {
 	// Analyze the object
+        auto object = E.sub()[0];
+        auto alts = E.sub()[1];
 	object = simplify(options, object, S, bound_vars, make_case_context(E, S, bound_vars, context));
-	auto E2 = make_case_expression(object, patterns, bodies);
 
-	return rebuild_case(options, E2, S, bound_vars, context);
+	return rebuild_case(options, object, alts, S, bound_vars, context);
     }
 
     // ?. Apply
