@@ -9,6 +9,15 @@
 
 using std::vector;
 
+void parse_alts(const expression_ref& alts, vector<expression_ref>& patterns, vector<expression_ref>& bodies)
+{
+    for(auto& alt: alts.sub())
+    {
+	patterns.push_back( alt.sub()[0] );
+	bodies.push_back( alt.sub()[1] );
+    }
+}
+
 /// R = case T of {patterns[i] -> bodies[i]}
 bool parse_case_expression(const expression_ref& E, expression_ref& object, vector<expression_ref>& patterns, vector<expression_ref>& bodies)
 {
@@ -19,11 +28,7 @@ bool parse_case_expression(const expression_ref& E, expression_ref& object, vect
 
     object = E.sub()[0];
 
-    for(auto& alt: E.sub()[1].sub())
-    {
-	patterns.push_back( alt.sub()[0] );
-	bodies.push_back( alt.sub()[1] );
-    }
+    parse_alts(E.sub()[1], patterns, bodies);
 
     return true;
 }
