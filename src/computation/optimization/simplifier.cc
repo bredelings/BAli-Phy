@@ -713,7 +713,13 @@ expression_ref maybe_eta_reduce2(const expression_ref& E)
 
 expression_ref rebuild(const simplifier_options& options, const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
 {
-    return E;
+    if (auto cc = context.is_case_context())
+    {
+        auto E2 = rebuild_case(options, E, cc->alts, cc->subst, bound_vars, cc->next);
+        return rebuild(options, E2, bound_vars, cc->next);
+    }
+    else
+        return E;
 }
 
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
@@ -788,13 +794,10 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     // 6. Case
     if (is_case(E))
     {
-	// Analyze the object
+        // Simplfy the object
         auto object = E.sub()[0];
-        auto alts = E.sub()[1];
-	object = simplify(options, object, S, bound_vars, make_case_context(E, S, context));
 
-	auto E2 = rebuild_case(options, object, alts, S, bound_vars, context);
-        return rebuild(options, E2, bound_vars, context);
+        return simplify(options, object, S, bound_vars, make_case_context(E, S, context));
     }
 
     // ?. Apply
