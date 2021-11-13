@@ -102,6 +102,7 @@ void unbind_decls(in_scope_set& bound_vars, const vector<CDecls>& decl_groups)
 }
 
 expression_ref simplify(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context);
+expression_ref rebuild(const simplifier_options& options, const expression_ref& E, in_scope_set& bound_vars, const inline_context& context);
 
 // Do we have to explicitly skip loop breakers here?
 expression_ref consider_inline(const simplifier_options& options, const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
@@ -116,7 +117,7 @@ expression_ref consider_inline(const simplifier_options& options, const expressi
     if (binding.first and do_inline(options, binding.first, binding.second, context))
 	return simplify(options, binding.first, {}, bound_vars, context);
     else
-	return E;
+	return rebuild(options, E, bound_vars, context);
 }
 
 var get_new_name(var x, const in_scope_set& bound_vars)
@@ -712,6 +713,11 @@ expression_ref maybe_eta_reduce2(const expression_ref& E)
     }
 }
 
+expression_ref rebuild(const simplifier_options& options, const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
+{
+    return E;
+}
+
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
@@ -789,7 +795,8 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
         auto alts = E.sub()[1];
 	object = simplify(options, object, S, bound_vars, make_case_context(E, S, context));
 
-	return rebuild_case(options, object, alts, S, bound_vars, context);
+	auto E2 = rebuild_case(options, object, alts, S, bound_vars, context);
+        return rebuild(options, E2, bound_vars, context);
     }
 
     // ?. Apply
@@ -807,7 +814,8 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	    V2->sub[i] = simplify(options, V2->sub[i], S, bound_vars, make_stop_context());
 	}
 
-	return rebuild_apply(options, V2, S, bound_vars, context);
+	auto E2 = rebuild_apply(options, V2, S, bound_vars, context);
+        return rebuild(options, E2, bound_vars, context);
     }
 
     // 5. Let (let {x[i] = F[i]} in body)
@@ -827,7 +835,8 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
      // Do we need something to handle WHNF variables?
 
     // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    else if (not E.size()) return E;
+    else if (not E.size())
+        return rebuild(options, E, bound_vars, context);
 
     // 4. Constructor or Operation
     else if (is_constructor_exp(E) or is_non_apply_op_exp(E))
@@ -838,7 +847,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	    assert(is_trivial(E2->sub[i]));
 	    E2->sub[i] = simplify(options, E2->sub[i], S, bound_vars, make_stop_context());
 	}
-	return E2;
+	return rebuild(options, E2, bound_vars, context);
     }
 
     std::abort();
