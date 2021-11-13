@@ -40,10 +40,10 @@ std::optional<inline_context> inline_context::prev_context() const
 int num_arguments(inline_context context)
 {
     int num = 0;
-    while(auto a = context.is_apply_context())
+    while(auto ac = context.is_apply_context())
     {
-	num++;
-	context = a->next;
+	num += ac->args.size();
+	context = ac->next;
     }
     return num;
 }
@@ -54,6 +54,7 @@ shared_ptr<const case_context> make_case_context(const expression_ref E, const s
     return std::make_shared<const case_context>(E.sub()[1], S, context);
 }
 
+/*
 shared_ptr<const apply_context> make_apply_context_one_arg(const expression_ref arg, const simplifier::substitution& S, const inline_context& context)
 {
     return std::make_shared<const apply_context>(arg, S, context);
@@ -67,6 +68,7 @@ shared_ptr<const apply_context> make_apply_context(const expression_ref E,  cons
 	A = make_apply_context_one_arg(E.sub()[i], S, inline_context(A));
     return A;
 }
+*/
 
 shared_ptr<const stop_context> make_stop_context()
 {

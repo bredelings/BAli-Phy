@@ -56,10 +56,9 @@ public:
 
 struct apply_context
 {
-    expression_ref arg;
-    const simplifier::substitution& subst;
+    std::vector<expression_ref> args;
     inline_context next;
-    apply_context(const expression_ref& e, const simplifier::substitution& s, const inline_context& i):arg(e), subst(s), next(i) {}
+    apply_context(const std::vector<expression_ref>& es, const inline_context& i):args(es), next(i) {}
 };
 
 struct case_context

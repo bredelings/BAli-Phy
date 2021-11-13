@@ -718,6 +718,11 @@ expression_ref rebuild(const simplifier_options& options, const expression_ref& 
         auto E2 = rebuild_case(options, E, cc->alts, cc->subst, bound_vars, cc->next);
         return rebuild(options, E2, bound_vars, cc->next);
     }
+    else if (auto ac = context.is_apply_context())
+    {
+	auto E2 = rebuild_apply(options, E, ac->args);
+        return rebuild(options, E2, bound_vars, ac->next);
+    }
     else
         return E;
 }
@@ -806,7 +811,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     else if (is_apply_exp(E))
     {
 	// 1. Simplify the object.
-	auto object = simplify(options, E.sub()[0], S, bound_vars, make_apply_context(E, S, context));
+        auto object = E.sub()[0];
 
 	// 2. Simplify the arguments
         vector<expression_ref> args;
@@ -817,8 +822,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
             args.push_back(arg);
 	}
 
-	auto E2 = rebuild_apply(options, object, args);
-        return rebuild(options, E2, bound_vars, context);
+	return simplify(options, object, S, bound_vars, std::make_shared<apply_context>(args,context));
     }
 
     // 5. Let (let {x[i] = F[i]} in body)
