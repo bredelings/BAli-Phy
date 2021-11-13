@@ -137,7 +137,7 @@ var get_new_name(var x, const in_scope_set& bound_vars)
     return x;
 }
 
-var rename_and_bind_var(const expression_ref& Evar, substitution& S, in_scope_set& bound_vars)
+var rename_var(const expression_ref& Evar, substitution& S, const in_scope_set& bound_vars)
 {
     var x = Evar.as_<var>();
     assert(x.code_dup != amount_t::Unknown);
@@ -154,9 +154,16 @@ var rename_and_bind_var(const expression_ref& Evar, substitution& S, in_scope_se
 	S.insert({x, expression_ref(x2)});
     }
 
-    bind_var(bound_vars, x2, {});
-
     if (x.is_exported) assert(x == x2);
+
+    return x2;
+}
+
+var rename_and_bind_var(const expression_ref& Evar, substitution& S, in_scope_set& bound_vars)
+{
+    var x2 = rename_var(Evar, S, bound_vars);
+
+    bind_var(bound_vars, x2, {});
 
     return x2;
 }
