@@ -788,7 +788,9 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
         // 2.6 Maybe eta reduce
         //     I don't think there can be any substitutions that make the function body or other arguments
         //     depend on x here, so this SHOULD be safe...
-        return maybe_eta_reduce2( E2 );
+        E2 = maybe_eta_reduce2( E2 );
+
+        return rebuild(options, E2, bound_vars, context);
     }
 
     // 6. Case
