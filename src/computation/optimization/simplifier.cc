@@ -780,7 +780,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	// Analyze the object
         auto object = E.sub()[0];
         auto alts = E.sub()[1];
-	object = simplify(options, object, S, bound_vars, make_case_context(E, S, bound_vars, context));
+	object = simplify(options, object, S, bound_vars, make_case_context(E, S, context));
 
 	return rebuild_case(options, object, alts, S, bound_vars, context);
     }
