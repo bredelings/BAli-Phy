@@ -510,17 +510,15 @@ expression_ref peel_n_lambdas1(const expression_ref& E, int n)
 }
 
 // @ E x1 .. xn.  The E and the x[i] have already been simplified.
-expression_ref rebuild_apply(const simplifier_options& options, expression_ref E, const substitution& /*S*/, in_scope_set& /*bound_vars*/, inline_context /*context*/)
+expression_ref rebuild_apply(const simplifier_options& options, expression_ref object, const std::vector<expression_ref>& args, const substitution& /*S*/, in_scope_set& /*bound_vars*/, inline_context /*context*/)
 {
-    expression_ref object = E.sub()[0];
-
     // 1. Optionally float let's out of the apply object
     vector<CDecls> decls;
     if (options.let_float_from_apply)
 	decls = strip_multi_let(object);
 
     // 2. Determine how many arguments we can apply
-    int applied_arguments = E.size() - 1;
+    int applied_arguments = args.size();
     int lambda_arguments = get_n_lambdas1(object);
     int used_arguments = std::min(applied_arguments, lambda_arguments);
     if (not options.beta_reduction) applied_arguments = 0;
@@ -529,7 +527,7 @@ expression_ref rebuild_apply(const simplifier_options& options, expression_ref E
     CDecls apply_decls;
     for(int i=0;i<applied_arguments;i++)
     {
-	auto argument = E.sub()[1+i];
+	auto argument = args[i];
 	if (i<used_arguments)
 	{
 	    auto x = object.sub()[0].as_<var>();
@@ -802,19 +800,19 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     // ?. Apply
     else if (is_apply_exp(E))
     {
-	object_ptr<expression> V2 = E.as_expression().clone();
-	
 	// 1. Simplify the object.
-	V2->sub[0] = simplify(options, V2->sub[0], S, bound_vars, make_apply_context(E, S, context));
+	auto object = simplify(options, E.sub()[0], S, bound_vars, make_apply_context(E, S, context));
 
 	// 2. Simplify the arguments
+        vector<expression_ref> args;
 	for(int i=1;i<E.size();i++)
 	{
-	    assert(is_trivial(V2->sub[i]));
-	    V2->sub[i] = simplify(options, V2->sub[i], S, bound_vars, make_stop_context());
+	    assert(is_trivial(E.sub()[i]));
+	    auto arg = simplify(options, E.sub()[i], S, bound_vars, make_stop_context());
+            args.push_back(arg);
 	}
 
-	auto E2 = rebuild_apply(options, V2, S, bound_vars, context);
+	auto E2 = rebuild_apply(options, object, args, S, bound_vars, context);
         return rebuild(options, E2, bound_vars, context);
     }
 
