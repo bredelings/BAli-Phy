@@ -510,7 +510,7 @@ expression_ref peel_n_lambdas1(const expression_ref& E, int n)
 }
 
 // @ E x1 .. xn.  The E and the x[i] have already been simplified.
-expression_ref rebuild_apply(const simplifier_options& options, expression_ref object, const std::vector<expression_ref>& args, const substitution& /*S*/, in_scope_set& /*bound_vars*/, inline_context /*context*/)
+expression_ref rebuild_apply(const simplifier_options& options, expression_ref object, const std::vector<expression_ref>& args)
 {
     // 1. Optionally float let's out of the apply object
     vector<CDecls> decls;
@@ -815,7 +815,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
             args.push_back(arg);
 	}
 
-	auto E2 = rebuild_apply(options, object, args, S, bound_vars, context);
+	auto E2 = rebuild_apply(options, object, args);
         return rebuild(options, E2, bound_vars, context);
     }
 
