@@ -169,8 +169,6 @@ expression_ref unlet(const expression_ref& E)
     }
 
     // 5. Let 
-    CDecls decls;
-    expression_ref T;
     if (is_let_expression(E))
     {
         auto L = E.as_<let_exp>();
@@ -189,7 +187,7 @@ expression_ref unlet(const expression_ref& E)
 	    {
 		if (n_free_occurrences(L.binds[i].second, L.binds[i].first)) continue;
 
-		int count = n_free_occurrences(T, L.binds[i].first);
+		int count = n_free_occurrences(L.body, L.binds[i].first);
 		for(const auto& decl: L.binds)
 		    count += n_free_occurrences(decl.second, decl.first);
 
@@ -208,7 +206,10 @@ expression_ref unlet(const expression_ref& E)
 	    }
 	}
 
-        return L;
+        if (L.binds.size() == 0)
+            return L.body;
+        else
+            return L;
     }
     // 1. Var
     else if (E.is_a<var>() or is_reg_var(E))
