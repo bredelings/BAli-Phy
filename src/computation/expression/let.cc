@@ -79,18 +79,18 @@ bool parse_indexed_let_expression(const expression_ref& E, vector<expression_ref
     return true;
 }
 
-int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
+int n_free_occurrences(const expression_ref& E1, const var& x)
 {
-    assert(not is_wildcard(D));
+    assert(not is_wildcard(x));
 
     // If this is the relevant var, then substitute
-    if (E1.size() == 0)
+    if (E1.is_a<var>())
     {
-	if (E1 == D)
-	    return 1;
-	// If this is any other constant, then it doesn't contain the var
-	else
-	    return 0;
+        auto& y = E1.as_<var>();
+        if (x == y)
+            return 1;
+        else
+            return 0;
     }
 
     // Handle case expressions differently
@@ -100,25 +100,37 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
 	vector<expression_ref> bodies;
 	if (parse_case_expression(E1,T,patterns,bodies))
 	{
-	    int count = n_free_occurrences(T, D);
+	    int count = n_free_occurrences(T, x);
 
-	    const int L = (E1.size()-1)/2;
-
-	    for(int i=0;i<L;i++)
+	    for(int i=0;i<bodies.size();i++)
 	    {
 		// don't substitute into subtree where this variable is bound
 		std::set<var> bound = get_free_indices(patterns[i]);
 
-		bool D_is_bound = false;
+		bool x_is_bound = false;
 		for(const auto& b: bound)
-		    if (D == b) D_is_bound=true;
+		    if (x == b) x_is_bound=true;
 
-		if (not D_is_bound)
-		    count += n_free_occurrences(bodies[i], D);
+		if (not x_is_bound)
+		    count += n_free_occurrences(bodies[i], x);
 	    }
 
 	    return count;
 	}
+    }
+
+    if (is_let_expression(E1))
+    {
+        auto& L = E1.as_<let_exp>();
+        int count = n_free_occurrences(L.body, x);
+
+        for(auto& [y,E]: L.binds)
+        {
+            if (x == y) return 0;
+            count += n_free_occurrences(E, x);
+        }
+
+        return count;
     }
 
     // What indices are bound at the top level?
@@ -126,12 +138,12 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
 
     // Don't substitute into local variables
     for(const auto& b: bound)
-	if (D == b) return 0;
+	if (x == b) return 0;
     
     // Since this is an expression, count occurrences in sub-expressions
     int count = 0;
     for(int i=0;i<E1.size();i++)
-	count += n_free_occurrences(E1.sub()[i], D);
+	count += n_free_occurrences(E1.sub()[i], x);
 
     return count;
 }
@@ -185,6 +197,9 @@ expression_ref unlet(const expression_ref& E)
 
 	    for(int i=L.binds.size()-1; i>=0; i--)
 	    {
+                // If the variables binds to a case expression, then don't substitute.
+                if (is_case(L.binds[i].second)) continue;
+
 		if (n_free_occurrences(L.binds[i].second, L.binds[i].first)) continue;
 
 		int count = n_free_occurrences(L.body, L.binds[i].first);
