@@ -310,9 +310,6 @@ expression_ref rebuild_case(const simplifier_options& options, expression_ref ob
     parse_alts(alts, patterns, bodies);
     const int L = patterns.size();
 
-    auto decls = strip_multi_let(object);
-    bind_decls(bound_vars, decls);
-
     // NOTE: Any thing that relies on occurrence info for pattern vars should be done here, before
     //       we simplify alternatives, because that simplification can introduce new uses of the pattern vars.
     // Example: case #1 of {x:xs -> case #1 of {y:ys -> ys}} ==> case #1 of {x:xs -> xs} 
@@ -320,7 +317,13 @@ expression_ref rebuild_case(const simplifier_options& options, expression_ref ob
 
     // 0. If all alternatives are the same expression that doesn't depend on any bound pattern variables.
     if (is_constant_case(patterns,bodies))
+    {
+        // We can ignore any let bindings inside the object, since we don't depend on the object.
 	return simplify(options, bodies[0], S, bound_vars, context);
+    }
+
+    auto decls = strip_multi_let(object);
+    bind_decls(bound_vars, decls);
 
     // 6. Take a specific branch if the object is a constant
     expression_ref E2;
