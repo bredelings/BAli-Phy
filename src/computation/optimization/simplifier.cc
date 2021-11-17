@@ -42,6 +42,31 @@ using std::cerr;
 using std::endl;
 
 
+int get_n_lambdas1(const expression_ref& E)
+{
+    expression_ref E2 = E;
+    int n = 0;
+    assert(E2.head().type() != lambda2_type);
+    while(E2.head().type() == lambda_type)
+    {
+	E2 = E2.sub()[1];
+	n++;
+    }
+    return n;
+}
+
+expression_ref peel_n_lambdas1(const expression_ref& E, int n)
+{
+    expression_ref E2 = E;
+    for(int i=0;i<n;i++)
+    {
+	assert(E2.head().type() == lambda_type);
+	assert(E2.head().type() != lambda2_type);
+	E2 = E2.sub()[1];
+    }
+    return E2;
+}
+
 typedef pair<expression_ref,occurrence_info> bound_variable_info;
 
 // This should be "variables and literals", but we don't currently allow literals as function arguments.
@@ -487,31 +512,6 @@ expression_ref rebuild_case(const simplifier_options& options, expression_ref ob
     E2 = rebuild(options, E2, bound_vars, context);
 
     return let_expression(decls, E2);
-}
-
-int get_n_lambdas1(const expression_ref& E)
-{
-    expression_ref E2 = E;
-    int n = 0;
-    assert(E2.head().type() != lambda2_type);
-    while(E2.head().type() == lambda_type)
-    {
-	E2 = E2.sub()[1];
-	n++;
-    }
-    return n;
-}
-
-expression_ref peel_n_lambdas1(const expression_ref& E, int n)
-{
-    expression_ref E2 = E;
-    for(int i=0;i<n;i++)
-    {
-	assert(E2.head().type() == lambda_type);
-	assert(E2.head().type() != lambda2_type);
-	E2 = E2.sub()[1];
-    }
-    return E2;
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
