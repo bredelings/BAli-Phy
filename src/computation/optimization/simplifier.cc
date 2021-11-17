@@ -690,6 +690,8 @@ expression_ref rebuild(const simplifier_options& options, const expression_ref& 
     }
     else if (auto ac = context.is_apply_context())
     {
+        // FIXME: Should we lift let's out of E here?
+
         auto x = simplify(options, ac->arg, ac->subst, bound_vars, make_stop_context());
         return rebuild(options, {E,x}, bound_vars, ac->next);
     }
