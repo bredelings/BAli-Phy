@@ -722,6 +722,11 @@ expression_ref rebuild(const simplifier_options& options, const expression_ref& 
     {
         return rebuild_case(options, E, cc->alts, cc->subst, bound_vars, cc->next);
     }
+    else if (auto ac = context.is_apply_context())
+    {
+        auto x = simplify(options, ac->arg, ac->subst, bound_vars, make_stop_context());
+        return rebuild(options, {E,x}, bound_vars, ac->next);
+    }
     else
         return E;
 }
@@ -774,14 +779,33 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
             // return simplify(options, E2, S, bound_vars, context);
         // }
 
-	auto S2 = S;
-
 	auto Evar = E.sub()[0];
+        auto Ebody = E.sub()[1];
+
+        auto S2 = S;
+
+        if (auto ac = context.is_apply_context())
+        {
+            auto x = Evar.as_<var>();
+            auto arg = simplify(options, ac->arg, ac->subst, bound_vars, make_stop_context());
+            if (x.pre_inline() and options.pre_inline_unconditionally)
+            {
+                S2.erase(x);
+                S2.insert({x,arg});
+                return simplify(options, Ebody, S2, bound_vars, ac->next);
+            }
+            else
+            {
+                auto x2 = rename_var(Evar, S2, bound_vars);
+                return rebuild_let(options,{{x2,arg}}, Ebody, S2, bound_vars, ac->next);
+            }
+        }
+
 	// 2.2. Get the new name, possibly adding a substitution
 	var x2 = rename_and_bind_var(Evar, S2, bound_vars);
 
 	// 2.3 Simplify the body with x added to the bound set.
-	auto new_body = simplify(options, E.sub()[1], S2, bound_vars, make_ok_context());
+	auto new_body = simplify(options, Ebody, S2, bound_vars, make_ok_context());
 
 	// 2.4 Remove x2 from the bound set.
 	unbind_var(bound_vars,x2);
@@ -800,29 +824,19 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     // 6. Case
     if (is_case(E))
     {
-        // Simplfy the object
+	// Simplfy the object
         auto object = E.sub()[0];
 
-        return simplify(options, object, S, bound_vars, make_case_context(E, S, context));
+	return simplify(options, object, S, bound_vars, make_case_context(E, S, context));
     }
 
     // ?. Apply
     else if (is_apply_exp(E))
     {
-	// 1. Simplify the object.
-	auto object = simplify(options, E.sub()[0], S, bound_vars, make_apply_context(E, S, context));
+        // Simplify the function
+        auto f = E.sub()[0];
 
-	// 2. Simplify the arguments
-        vector<expression_ref> args;
-	for(int i=1;i<E.size();i++)
-	{
-	    assert(is_trivial(E.sub()[i]));
-	    auto arg = simplify(options, E.sub()[i], S, bound_vars, make_stop_context());
-            args.push_back(arg);
-	}
-
-	auto E2 = rebuild_apply(options, object, args);
-        return rebuild(options, E2, bound_vars, context);
+	return simplify(options, f, S, bound_vars, make_apply_context(E, S, context));
     }
 
     // 5. Let (let {x[i] = F[i]} in body)
