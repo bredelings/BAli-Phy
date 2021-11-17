@@ -484,6 +484,8 @@ expression_ref rebuild_case(const simplifier_options& options, expression_ref ob
 
     unbind_decls(bound_vars, decls);
 
+    E2 = rebuild(options, E2, bound_vars, context);
+
     return let_expression(decls, E2);
 }
 
@@ -718,8 +720,7 @@ expression_ref rebuild(const simplifier_options& options, const expression_ref& 
 {
     if (auto cc = context.is_case_context())
     {
-        auto E2 = rebuild_case(options, E, cc->alts, cc->subst, bound_vars, cc->next);
-        return rebuild(options, E2, bound_vars, cc->next);
+        return rebuild_case(options, E, cc->alts, cc->subst, bound_vars, cc->next);
     }
     else
         return E;
