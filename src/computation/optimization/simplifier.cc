@@ -514,40 +514,6 @@ expression_ref peel_n_lambdas1(const expression_ref& E, int n)
     return E2;
 }
 
-// @ E x1 .. xn.  The E and the x[i] have already been simplified.
-expression_ref rebuild_apply(const simplifier_options& options, expression_ref object, const std::vector<expression_ref>& args)
-{
-    // 1. Optionally float let's out of the apply object
-    vector<CDecls> decls;
-    if (options.let_float_from_apply)
-	decls = strip_multi_let(object);
-
-    // 2. Determine how many arguments we can apply
-    int applied_arguments = args.size();
-    int lambda_arguments = get_n_lambdas1(object);
-    int used_arguments = std::min(applied_arguments, lambda_arguments);
-    if (not options.beta_reduction) applied_arguments = 0;
-
-    // 3. For each applied argument, peel the lambda and add {var=argument} to the decls
-    CDecls apply_decls;
-    for(int i=0;i<applied_arguments;i++)
-    {
-	auto argument = args[i];
-	if (i<used_arguments)
-	{
-	    auto x = object.sub()[0].as_<var>();
-	    apply_decls.push_back({x, argument});
-	    object = peel_n_lambdas1(object,1);
-	}
-	else
-	    object = {object, argument};
-    }
-    object = let_expression(apply_decls, object);
-
-    // 5. Rebuild the application with floated-lets and let-bound arguments outside any remaining applications.
-    return let_expression(decls, object);
-}
-
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
 expression_ref rebuild_let(const simplifier_options& options, const CDecls& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
