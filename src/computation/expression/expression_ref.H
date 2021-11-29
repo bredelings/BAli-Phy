@@ -114,24 +114,36 @@ public:
 	}
 
     template <typename T>
-    bool is_a() const
+    const T* to() const
 	{
 	    if (not is_object_type())
-		return false;
+		return nullptr;
 	    else
-		return (bool)dynamic_cast<const T*>(ptr().get());
+		return dynamic_cast<const T*>(ptr().get());
 	}
 
     template <typename T1, typename T2>
-    bool poly_is_a() const
+    const T2* poly_to() const
 	{
 	    if (not is_object_type())
-		return false;
+		return nullptr;
             const T1* converted1 = dynamic_cast<const PtrBox<T1>*>(ptr().get())->get();
             if (not converted1)
                 return false;
-            return (bool)dynamic_cast<const T2*>(converted1);
+            return dynamic_cast<const T2*>(converted1);
 	}
+
+    template <typename T>
+    bool is_a() const
+    {
+        return (bool)to<T>();
+    }
+
+    template <typename T1, typename T2>
+    bool poly_is_a() const
+    {
+        return (bool)poly_to<T1,T2>();
+    }
 
     template <typename T1, typename T2>
     std::shared_ptr<const T2> poly_cast() const
