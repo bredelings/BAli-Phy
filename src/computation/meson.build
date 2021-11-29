@@ -34,7 +34,7 @@ computation_sources = [
 
   'expression/kind.cc',
 
-  'typecheck/kind.cc', 'typecheck/kindcheck.cc',
+  'typecheck/kind.cc', 'typecheck/kindcheck.cc', 'typecheck/typecheck.cc',
 
   'optimization/free-vars.cc', 'optimization/set-levels.cc', 'optimization/float-out.cc',
 
