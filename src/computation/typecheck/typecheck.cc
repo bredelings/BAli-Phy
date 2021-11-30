@@ -142,3 +142,46 @@ substitution_t unify(const expression_ref& t1, const expression_ref& t2)
         throw myexception()<<"types do not unify!";
     }
 }
+
+
+typedef Haskell::Type monotype;
+typedef Haskell::Type overtype;
+typedef Haskell::Type polytype;
+
+// A = out typevar
+// T = out monotype
+// K = class typecon.  Also a kind of data declaration for dictionaries.
+
+// E = (TCE, TVE, VE = (CVE, GVE, LVE), CE, IE = (GIE, LIE))
+
+// TCE = type constructor environment = tycon -> /\A1 A2 .. An.T
+
+// TVE = type variable environment = tyvar -> A (destination language typevar)
+
+// CE = class environment = class name -> (K,(forall A (context, methods: GVE)))
+
+// IE = instance environment = (GIE, LIE)
+
+// GIE = global instance environment = dfun -> forall A1 A2 .. An. context => K T
+
+// LIE = dvar -> K T
+
+// VE = (CVE, GVE, LVE)
+// CVE = con -> polytype
+// GVE = var -> polytype
+// LVE = var -> monotype
+
+
+typedef immer::map<Haskell::Var, Haskell::Type> env_var_to_type_t;
+
+env_var_to_type_t apply_subst(const substitution_t& s, const env_var_to_type_t& env1)
+{
+    env_var_to_type_t env2;
+    for(auto& [x,type]: env1)
+        env2 = env2.insert({x, apply_subst(s,type)});
+    return env2;
+}
+
+
+// What is the output of the kind checker?
+// 
