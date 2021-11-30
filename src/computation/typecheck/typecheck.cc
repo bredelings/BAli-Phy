@@ -11,6 +11,18 @@ typedef immer::map<Haskell::TypeVar,expression_ref> substitution_t;
 namespace std
 {
     template <>
+    class hash < Haskell::Var >{
+    public :
+        size_t operator()(const Haskell::Var &x) const
+        {
+            size_t h = std::hash<std::string>()(unloc(x.name));
+            if (x.index)
+                size_t h = std::hash<int>()(*x.index) ^ h;
+            return  h ;
+        }
+    };
+
+    template <>
     class hash < Haskell::TypeVar >{
     public :
         size_t operator()(const Haskell::TypeVar &x) const
