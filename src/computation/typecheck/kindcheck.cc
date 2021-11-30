@@ -50,13 +50,16 @@ set<Haskell::TypeVar> free_type_VARS_from_type(const Haskell::Type& type)
 {
     // This version finds varids -- the other version finds qualified names.
     set<Haskell::TypeVar> tvars;
-    if (type.is_a<Haskell::TypeVar>())
+    if (type.is_a<Haskell::TypeCon>())
+    {
+    }
+    else if (type.is_a<Haskell::TypeVar>())
     {
         auto& tv = type.as_<Haskell::TypeVar>();
         auto& name = unloc(tv.name);
         assert(name.size());
-        if (is_haskell_varid(name))
-            tvars.insert(tv);
+        assert(is_haskell_varid(name));
+        tvars.insert(tv);
     }
     else if (type.is_a<Haskell::TypeApp>())
     {
@@ -196,15 +199,15 @@ kind kindchecker_state::kind_check_type_con(const string& name)
 
 kind kindchecker_state::kind_check_type(const Haskell::Type& t)
 {
-    if (t.is_a<Haskell::TypeVar>())
+    if (auto tc = t.to<Haskell::TypeCon>())
     {
-        auto& tv = t.as_<Haskell::TypeVar>();
-        auto& name = unloc(tv.name);
+        auto& name = unloc(tc->name);
 
-        if (is_haskell_varid(name))
-            return kind_check_type_var(tv);
-        else
-            return kind_check_type_con(name);
+        return kind_check_type_con(name);
+    }
+    else if (auto tv = t.to<Haskell::TypeVar>())
+    {
+        return kind_check_type_var(*tv);
     }
     else if (t.is_a<Haskell::TypeApp>())
     {
@@ -236,7 +239,7 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
     else if (t.is_a<Haskell::ListType>())
     {
         auto& L = t.as_<Haskell::ListType>();
-        Haskell::Type list_con = Haskell::TypeVar(Unlocated("[]"));
+        Haskell::Type list_con = Haskell::TypeCon(Unlocated("[]"));
         Haskell::Type list_type = Haskell::TypeApp(list_con, L.element_type);
         return kind_check_type(list_type);
     }
@@ -244,7 +247,7 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
     {
         auto& T = t.as_<Haskell::TupleType>();
         auto n = T.element_types.size();
-        Haskell::Type tuple_type = Haskell::TypeVar(Unlocated(tuple_name(n)));
+        Haskell::Type tuple_type = Haskell::TypeCon(Unlocated(tuple_name(n)));
         for(auto& element_type: T.element_types)
             tuple_type = Haskell::TypeApp(tuple_type, element_type);
         return kind_check_type(tuple_type);
@@ -349,7 +352,7 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
     kind_check_context(data_decl.context);
 
     // d. construct the data type
-    Haskell::Type data_type = Haskell::TypeVar(Unlocated(data_decl.name));
+    Haskell::Type data_type = Haskell::TypeCon(Unlocated(data_decl.name));
     for(auto& tv: data_decl.type_vars)
         data_type = Haskell::TypeApp(data_type, tv);
 
@@ -393,7 +396,7 @@ map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell:
     // We should already have checked that it doesn't contain any unbound variables.
 
     // d. construct the data type
-    Haskell::Type data_type = Haskell::TypeVar(Unlocated(data_decl.name));
+    Haskell::Type data_type = Haskell::TypeCon(Unlocated(data_decl.name));
     for(auto& tv: datatype_typevars)
         data_type = Haskell::TypeApp(data_type, tv);
 
@@ -588,7 +591,7 @@ map<string, Haskell::Type> kindchecker_state::type_check_type_class(const Haskel
     assert(k->is_kconstraint());
 
     // d. construct the constraint
-    Haskell::Type constraint = Haskell::TypeVar(Unlocated(class_decl.name));
+    Haskell::Type constraint = Haskell::TypeCon(Unlocated(class_decl.name));
     for(auto& tv: class_typevars)
         constraint = Haskell::TypeApp(constraint, tv);
 

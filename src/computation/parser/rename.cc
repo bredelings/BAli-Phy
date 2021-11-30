@@ -660,29 +660,32 @@ struct renamer_state
 
 Haskell::Type renamer_state::rename_type(const Haskell::Type& type)
 {
-    if (type.is_a<Haskell::TypeVar>())
+    if (auto tc = type.to<Haskell::TypeCon>())
     {
-        auto& tv = type.as_<Haskell::TypeVar>();
-        auto& name = unloc(tv.name);
-        auto& loc = tv.name.loc;
+        auto& name = unloc(tc->name);
+        auto& loc = tc->name.loc;
 
-        // Lower-case
-        if (is_haskell_varid(name))
-            return type;
-        // Upper-case
-        else if (m.type_is_declared(name))
+        if (m.type_is_declared(name))
         {
             auto T = m.lookup_type(name);
             auto& qualified_name = T.name;
-            return Haskell::TypeVar({tv.name.loc, qualified_name});
+            return Haskell::TypeCon({loc, qualified_name});
         }
         else
         {
             if (loc)
-                throw myexception()<<"Can't find id '"<<name<<"' at "<<*loc;
+                throw myexception()<<"Can't find tycon '"<<name<<"' at "<<*loc;
             else
-                throw myexception()<<"Can't find id '"<<name<<"'";
+                throw myexception()<<"Can't find tycon '"<<name<<"'";
         }
+    }
+    else if (auto tv = type.to<Haskell::TypeVar>())
+    {
+        auto& name = unloc(tv->name);
+
+        assert(is_haskell_varid(name));
+
+        return type;
     }
     else if (type.is_a<Haskell::TypeApp>())
     {

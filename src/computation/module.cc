@@ -586,15 +586,46 @@ void Module::rename(const Program& P)
         std::cout<<name<<"[renamed]:\n"<<module.topdecls->print()<<"\n\n";
 }
 
+set<string> free_type_names_from_type(const Haskell::Type& type)
+{
+    set<string> tvars;
+    if (auto tc = type.to<Haskell::TypeCon>())
+    {
+        auto& name = unloc(tc->name);
+        if (is_qualified_symbol(name))
+            tvars.insert(name);
+    }
+    else if (type.is_a<Haskell::TypeApp>())
+    {
+        auto& app = type.as_<Haskell::TypeApp>();
+        add(tvars, free_type_names_from_type(app.head));
+        add(tvars, free_type_names_from_type(app.arg));
+    }
+    else if (type.is_a<Haskell::TupleType>())
+    {
+        auto& tuple = type.as_<Haskell::TupleType>();
+        for(auto element_type: tuple.element_types)
+            add(tvars, free_type_names_from_type(element_type));
+    }
+    else if (type.is_a<Haskell::ListType>())
+    {
+        auto& list = type.as_<Haskell::ListType>();
+        return free_type_names_from_type(list.element_type);
+    }
+    else if (auto forall = type.to<Haskell::ForallType>())
+    {
+        return free_type_names_from_type(forall->type);
+    }
+    return tvars;
+}
+
 set<string> free_type_vars_from_type(const Haskell::Type& type)
 {
     set<string> tvars;
-    if (type.is_a<Haskell::TypeVar>())
+    if (auto tv = type.to<Haskell::TypeVar>())
     {
-        auto& tv = type.as_<Haskell::TypeVar>();
-        auto& name = unloc(tv.name);
-        if (is_qualified_symbol(name))
-            tvars.insert(name);
+        auto& name = unloc(tv->name);
+        tvars.insert(name);
     }
     else if (type.is_a<Haskell::TypeApp>())
     {
@@ -611,13 +642,12 @@ set<string> free_type_vars_from_type(const Haskell::Type& type)
     else if (type.is_a<Haskell::ListType>())
     {
         auto& list = type.as_<Haskell::ListType>();
-        add(tvars, free_type_vars_from_type(list.element_type));
+        return free_type_vars_from_type(list.element_type);
     }
-    else if (type.is_a<Haskell::ForallType>())
+    else if (auto forall = type.to<Haskell::ForallType>())
     {
-        auto& forall = type.as_<Haskell::ForallType>();
-        tvars = free_type_vars_from_type(forall.type);
-        for(auto& type_var: forall.type_var_binders)
+        tvars = free_type_vars_from_type(forall->type);
+        for(auto& type_var: forall->type_var_binders)
         {
             tvars.erase(unloc(type_var.name));
         }
@@ -633,11 +663,19 @@ set<string> free_type_vars(const Haskell::Context& context)
     return tvars;
 }
 
-set<string> free_type_vars(const Haskell::ClassDecl& class_decl)
+set<string> free_type_names(const Haskell::Context& context)
+{
+    set<string> tvars;
+    for(auto& constraint: context.constraints)
+        add(tvars, free_type_names_from_type(constraint));
+    return tvars;
+}
+
+set<string> free_type_names(const Haskell::ClassDecl& class_decl)
 {
     // QUESTION: We are ignoring default methods here -- should we?
     set<string> tvars;
-    add(tvars, free_type_vars(class_decl.context));
+    add(tvars, free_type_names(class_decl.context));
     if (class_decl.decls)
     {
         for(auto& decl: unloc(*class_decl.decls))
@@ -645,50 +683,50 @@ set<string> free_type_vars(const Haskell::ClassDecl& class_decl)
             if (decl.is_a<Haskell::TypeDecl>())
             {
                 auto& T = decl.as_<Haskell::TypeDecl>();
-                add(tvars, free_type_vars_from_type(T.type));
+                add(tvars, free_type_names_from_type(T.type));
             }
         }
     }
     return tvars;
 }
 
-set<string> free_type_vars(const Haskell::DataOrNewtypeDecl& type_decl)
+set<string> free_type_names(const Haskell::DataOrNewtypeDecl& type_decl)
 {
     set<string> tvars;
-    add(tvars, free_type_vars(type_decl.context));
+    add(tvars, free_type_names(type_decl.context));
     for(auto& constr: type_decl.constructors)
     {
         if (constr.context)
-            add(tvars, free_type_vars(*constr.context));
+            add(tvars, free_type_names(*constr.context));
 
         if (constr.is_record_constructor())
         {
             auto& field_decls = std::get<1>(constr.fields).field_decls;
             for(auto& field: field_decls)
-                add(tvars, free_type_vars_from_type(field.type));
+                add(tvars, free_type_names_from_type(field.type));
         }
         else
         {
             auto& types = std::get<0>(constr.fields);
             for(auto& type: types)
-                add(tvars, free_type_vars_from_type(type));
+                add(tvars, free_type_names_from_type(type));
         }
     }
     return tvars;
 }
 
-set<string> free_type_vars(const Haskell::TypeSynonymDecl& synonym_decl)
+set<string> free_type_names(const Haskell::TypeSynonymDecl& synonym_decl)
 {
-    return free_type_vars_from_type(unloc(synonym_decl.rhs_type));
+    return free_type_names_from_type(unloc(synonym_decl.rhs_type));
 }
 
-set<string> free_type_vars(const Haskell::InstanceDecl& instance_decl)
+set<string> free_type_names(const Haskell::InstanceDecl& instance_decl)
 {
     set<string> tvars;
-    add(tvars, free_type_vars(instance_decl.context));
+    add(tvars, free_type_names(instance_decl.context));
     tvars.insert(instance_decl.name);
     for(auto& type_arg: instance_decl.type_args)
-        add(tvars, free_type_vars_from_type(type_arg));
+        add(tvars, free_type_names_from_type(type_arg));
     return tvars;
 
 }
@@ -718,25 +756,25 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto& class_decl = decl.as_<Haskell::ClassDecl>();
-            referenced_types[class_decl.name] = free_type_vars(class_decl);
+            referenced_types[class_decl.name] = free_type_names(class_decl);
             decl_for_type[class_decl.name] = decl;
         }
         else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
             auto& type_decl = decl.as_<Haskell::DataOrNewtypeDecl>();
-            referenced_types[type_decl.name] = free_type_vars(type_decl);
+            referenced_types[type_decl.name] = free_type_names(type_decl);
             decl_for_type[type_decl.name] = decl;
         }
         else if (decl.is_a<Haskell::TypeSynonymDecl>())
         {
             auto& type_decl = decl.as_<Haskell::TypeSynonymDecl>();
-            referenced_types[type_decl.name] = free_type_vars(type_decl);
+            referenced_types[type_decl.name] = free_type_names(type_decl);
             decl_for_type[type_decl.name] = decl;
         }
         else if (decl.is_a<Haskell::InstanceDecl>())
         {
             auto& instance_decl = decl.as_<Haskell::InstanceDecl>();
-            instance_decls.push_back({instance_decl, free_type_vars(instance_decl)});
+            instance_decls.push_back({instance_decl, free_type_names(instance_decl)});
         }
         else
             std::abort();
@@ -1225,8 +1263,8 @@ void Module::load_builtins(const module_loader& L)
 string get_constructor_name(const expression_ref& constr)
 {
     auto [con,_] = Haskell::decompose_type_apps(constr);
-    assert(con.is_a<Haskell::TypeVar>());
-    return unloc(con.as_<Haskell::TypeVar>().name);
+    assert(con.is_a<Haskell::TypeCon>());
+    return unloc(con.as_<Haskell::TypeCon>().name);
 }
 
 void Module::load_constructors()
