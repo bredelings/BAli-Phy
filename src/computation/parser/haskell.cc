@@ -187,11 +187,6 @@ string RecStmt::print() const
     return "rec " + stmts.print();
 }
 
-string Var::print() const
-{
-    return unloc(name);
-}
-
 string WildcardPattern::print() const
 {
     return "_";
@@ -233,6 +228,43 @@ string TupleType::print() const
 string ListType::print() const
 {
     return "[" + element_type.print() + "]";
+}
+
+string Var::print() const
+{
+    return unloc(name);
+}
+
+string Var::print_with_type() const
+{
+    if (type)
+        return "("+unloc(name) + " :: " + (*type).print()+")";
+    else
+        return unloc(name);
+}
+
+bool Var::operator==(const Object& o) const
+{
+    auto V = dynamic_cast<const Var*>(&o);
+    if (not V)
+        return false;
+
+    return (*this) == *V;
+}
+
+bool Var::operator==(const Var& v) const
+{
+    return unloc(name) == unloc(v.name) and index == v.index;
+}
+
+bool Var::operator<(const Var& v) const
+{
+    if (index < v.index) return true;
+    if (index > v.index) return false;
+
+    int cmp = unloc(name).compare(unloc(v.name));
+
+    return (cmp < 0);
 }
 
 string TypeVar::print() const

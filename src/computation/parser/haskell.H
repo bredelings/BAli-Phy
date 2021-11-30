@@ -18,15 +18,23 @@ typedef expression_ref Type;
 typedef expression_ref Pattern;
 typedef expression_ref Expression;
 
-    
+
 struct Var: public Object
 {
     Located<std::string> name;
     std::optional<Type> type;
+    std::optional<int> index;
+
+    bool operator==(const Object&) const;
+    bool operator==(const Var&) const;
+    bool operator<(const Var&) const;
 
     Var* clone() const { return new Var(*this);}
     std::string print() const;
+    std::string print_with_type() const;
+
     Var(const Located<std::string>& s):name(s) {}
+    Var(const Located<std::string>& s, const Type& t):name(s),type(t) {}
 };
 
 struct TypeVar: public Object
