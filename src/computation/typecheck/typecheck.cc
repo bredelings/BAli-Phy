@@ -50,8 +50,8 @@ expression_ref apply_subst(const substitution_t& s, const Haskell::Type& t)
         app.arg  = apply_subst(s, app.arg);
         return app;
     }
-//    else if (is_type_con(t))
-//        return t;
+    else if (t.is_a<Haskell::TypeCon>())
+        return t;
 
     std::abort();
 }
@@ -81,8 +81,8 @@ bool occurs_check(const Haskell::TypeVar& tv, const expression_ref& t)
     }
     else if (auto p_app = t.to<Haskell::TypeApp>())
         return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
-//    else if (is_type_con(t))
-//        return false;
+    else if (t.is_a<Haskell::TypeCon>())
+        return false;
     else
     {
         throw myexception()<<"types do not unify!";
@@ -119,12 +119,12 @@ substitution_t unify(const expression_ref& t1, const expression_ref& t2)
             throw myexception()<<"Occurs check: cannot construct infinite type: "<<*tv2<<" ~ "<<t1<<"\n";
         return s.insert({*tv2, t1});
     }
-//    else if (is_type_con(t1) and
-//             is_type_con(t2) and
-//             t1.as_<type_con>() == t2.as_<type_con>())
-//    {
-//        return {};
-//    }
+    else if (t1.is_a<Haskell::TypeCon>() and
+             t2.is_a<Haskell::TypeCon>() and
+             t1.as_<Haskell::TypeCon>() == t2.as_<Haskell::TypeCon>())
+    {
+        return {};
+    }
     else
     {
         throw myexception()<<"types do not unify!";
