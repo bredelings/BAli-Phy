@@ -48,6 +48,25 @@ struct TypeVar: public Object
     TypeVar(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
 };
 
+struct TypeCon: public Object
+{
+    Located<std::string> name;
+    std::optional<Kind> kind;
+    std::optional<int> index;
+
+    bool operator==(const Object&) const;
+    bool operator==(const TypeCon&) const;
+    bool operator<(const TypeCon&) const;
+
+    TypeCon* clone() const { return new TypeCon(*this);}
+    std::string print() const;
+    std::string print_with_kind() const;
+
+    TypeCon() = default;
+    TypeCon(const Located<std::string>& s):name(s) {}
+    TypeCon(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
+};
+
 struct ImpDecl
 {
     bool qualified;

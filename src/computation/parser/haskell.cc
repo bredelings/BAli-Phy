@@ -9,7 +9,7 @@ namespace Haskell
 
 string parenthesize_type(const expression_ref& t)
 {
-    if (t.is_a<TypeVar>() or t.is_a<TupleType>() or t.is_a<ListType>())
+    if (t.is_a<TypeCon>() or t.is_a<TypeVar>() or t.is_a<TupleType>() or t.is_a<ListType>())
         return t.print();
     else
         return "(" + t.print() + ")";
@@ -272,6 +272,43 @@ bool TypeVar::operator<(const TypeVar& tv) const
     return (cmp < 0);
 }
 
+string TypeCon::print() const
+{
+    return unloc(name);
+}
+
+string TypeCon::print_with_kind() const
+{
+    if (kind)
+        return "("+unloc(name) + " :: " + (*kind).print()+")";
+    else
+        return unloc(name);
+}
+
+bool TypeCon::operator==(const Object& o) const
+{
+    auto T = dynamic_cast<const TypeCon*>(&o);
+    if (not T)
+        return false;
+
+    return (*this) == *T;
+}
+
+bool TypeCon::operator==(const TypeCon& tv) const
+{
+    return unloc(name) == unloc(tv.name) and index == tv.index;
+}
+
+bool TypeCon::operator<(const TypeCon& tv) const
+{
+    if (index < tv.index) return true;
+    if (index > tv.index) return false;
+
+    int cmp = unloc(name).compare(unloc(tv.name));
+
+    return (cmp < 0);
+}
+
 string TypeOfKind::print() const
 {
     return type.print() + "::" + kind.print();
@@ -282,9 +319,9 @@ string TypeApp::print() const
     if (head.is_a<TypeApp>())
     {
         auto& H = head.as_<TypeApp>();
-        if (H.head.is_a<TypeVar>())
+        if (H.head.is_a<TypeCon>())
         {
-            auto& A = H.head.as_<TypeVar>();
+            auto& A = H.head.as_<TypeCon>();
             if (unloc(A.name) == "->")
                 return H.arg.print() + " -> " + arg.print();
         }
@@ -523,7 +560,7 @@ string IfExp::print() const
 
 Type make_arrow_type(const Type& t1, const Type& t2)
 {
-    static Haskell::TypeVar type_arrow(Located<string>({},"->"));
+    static Haskell::TypeCon type_arrow(Located<string>({},"->"));
     return Haskell::TypeApp(Haskell::TypeApp(type_arrow,t1),t2);
 }
 
