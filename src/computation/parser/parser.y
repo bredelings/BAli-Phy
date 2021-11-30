@@ -1649,11 +1649,6 @@ Haskell::Context make_context(const expression_ref& context)
     return {constraints};
 }
 
-expression_ref make_tv_bndrs(const vector<expression_ref>& tv_bndrs)
-{
-    return new expression(AST_node("tv_bndrs"),tv_bndrs);
-}
-
 expression_ref make_tyapps(const std::vector<expression_ref>& tyapps)
 {
     assert(not tyapps.empty());
