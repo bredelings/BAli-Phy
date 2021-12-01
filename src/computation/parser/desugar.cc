@@ -270,6 +270,30 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             element = desugar(element);
         return get_list(L.elements);
     }
+    else if (auto L = E.to<Haskell::ListFrom>())
+    {
+        expression_ref E2 = var("Compiler.Enum.enumFrom");
+        E2 = {E2, L->from};
+        return desugar(E2);
+    }
+    else if (auto L = E.to<Haskell::ListFromTo>())
+    {
+        expression_ref E2 = var("Compiler.Enum.enumFromTo");
+        E2 = {E2, L->from, L->to};
+        return desugar(E2);
+    }
+    else if (auto L = E.to<Haskell::ListFromThen>())
+    {
+        expression_ref E2 = var("Compiler.Enum.enumFromThen");
+        E2 = {E2, L->from, L->then};
+        return desugar(E2);
+    }
+    else if (auto L = E.to<Haskell::ListFromThenTo>())
+    {
+        expression_ref E2 = var("Compiler.Enum.enumFromThenTo");
+        E2 = {E2, L->from, L->then, L->to};
+        return desugar(E2);
+    }
     else if (E.is_a<Haskell::Tuple>())
     {
         auto T = E.as_<Haskell::Tuple>();
@@ -522,34 +546,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
 	    auto x = get_fresh_var();
 	    return lambda_quantify(x,apply_expression(apply_expression(v[0],x),v[1]));
-	}
-	else if (n.type == "enumFrom")
-	{
-	    expression_ref E2 = var("Compiler.Enum.enumFrom");
-	    for(auto& e: v)
-		E2 = {E2, e};
-	    return desugar(E2);
-	}
-	else if (n.type == "enumFromTo")
-	{
-	    expression_ref E2 = var("Compiler.Enum.enumFromTo");
-	    for(auto& e: v)
-		E2 = {E2, e};
-	    return desugar(E2);
-	}
-	else if (n.type == "enumFromThen")
-	{
-	    expression_ref E2 = var("Compiler.Enum.enumFromThen");
-	    for(auto& e: v)
-		E2 = {E2, e};
-	    return desugar(E2);
-	}
-	else if (n.type == "enumFromThenTo")
-	{
-	    expression_ref E2 = var("Compiler.Enum.enumFromThenTo");
-	    for(auto& e: v)
-		E2 = {E2, e};
-	    return desugar(E2);
 	}
     }
 

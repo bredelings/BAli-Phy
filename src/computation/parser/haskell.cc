@@ -159,6 +159,26 @@ string List::print() const
     return "[" + join(parts,",") +"]";
 }
 
+string ListFrom::print() const
+{
+    return "[ " + from.print() +" .. ]";
+}
+
+string ListFromThen::print() const
+{
+    return "[ " + from.print() + ", " + then.print() + " .. ]";
+}
+
+string ListFromTo::print() const
+{
+    return "[ " + from.print() +" .. " + to.print() + " ]";
+}
+
+string ListFromThenTo::print() const
+{
+    return "[" + from.print() + ", " + then.print() + " .. " + to.print() + " ]";
+}
+
 string Tuple::print() const
 {
     vector<string> parts;

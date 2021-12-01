@@ -1160,10 +1160,10 @@ tup_tail: texp commas_tup_tail
 
 list: texp                       { $$ = make_list({$1}); }
 |     lexps                      { $$ = make_list($1); }
-|     texp ".."                  { $$ = expression_ref(AST_node("enumFrom"),{$1}); }
-|     texp "," exp ".."          { $$ = expression_ref(AST_node("enumFromThen"),{$1,$3}); }
-|     texp ".." exp              { $$ = expression_ref(AST_node("enumFromTo"),{$1,$3}); }
-|     texp "," exp ".." exp      { $$ = expression_ref(AST_node("enumFromThenTo"),{$1,$3,$5}); }
+|     texp ".."                  { $$ = Haskell::ListFrom($1); }
+|     texp "," exp ".."          { $$ = Haskell::ListFromThen($1,$3); }
+|     texp ".." exp              { $$ = Haskell::ListFromTo($1,$3); }
+|     texp "," exp ".." exp      { $$ = Haskell::ListFromThenTo($1, $3, $5); }
 |     texp "|" squals            { auto quals = $3; quals.push_back($1); $$ = expression_ref(AST_node("ListComprehension"),quals); }
 
 lexps: lexps "," texp            { $$ = $1; $$.push_back($3);}

@@ -427,6 +427,43 @@ struct List: public Object
     List(const std::vector<expression_ref>& es): elements(es) {}
 };
 
+struct ListFrom: public Object
+{
+    expression_ref from;
+    ListFrom* clone() const { return new ListFrom(*this);}
+    std::string print() const;
+    ListFrom(const expression_ref& e): from(e) {}
+};
+
+struct ListFromThen: public Object
+{
+    expression_ref from;
+    expression_ref then;
+    ListFromThen* clone() const { return new ListFromThen(*this);}
+    std::string print() const;
+    ListFromThen(const expression_ref& e1, const expression_ref& e2): from(e1), then(e2) {}
+};
+
+struct ListFromTo: public Object
+{
+    expression_ref from;
+    expression_ref to;
+    ListFromTo* clone() const { return new ListFromTo(*this);}
+    std::string print() const;
+    ListFromTo(const expression_ref& e1, const expression_ref& e2): from(e1), to(e2) {}
+};
+
+struct ListFromThenTo: public Object
+{
+    expression_ref from;
+    expression_ref then;
+    expression_ref to;
+    ListFromThenTo* clone() const { return new ListFromThenTo(*this);}
+    std::string print() const;
+    ListFromThenTo(const expression_ref& e1, const expression_ref& e2, const expression_ref& e3): from(e1), then(e2), to(e3) {}
+};
+
+
 struct Tuple: public Object
 {
     std::vector<expression_ref> elements;

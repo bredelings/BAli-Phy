@@ -317,6 +317,34 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             element = rename_infix(m, element);
         return L;
     }
+    else if (E.is_a<Haskell::ListFrom>())
+    {
+        auto L = E.as_<Haskell::ListFrom>();
+        L.from = rename_infix(m, L.from);
+        return L;
+    }
+    else if (E.is_a<Haskell::ListFromThen>())
+    {
+        auto L = E.as_<Haskell::ListFromThen>();
+        L.from = rename_infix(m, L.from);
+        L.then = rename_infix(m, L.then);
+        return L;
+    }
+    else if (E.is_a<Haskell::ListFromTo>())
+    {
+        auto L = E.as_<Haskell::ListFromTo>();
+        L.from = rename_infix(m, L.from);
+        L.to   = rename_infix(m, L.to);
+        return L;
+    }
+    else if (E.is_a<Haskell::ListFromThenTo>())
+    {
+        auto L = E.as_<Haskell::ListFromThenTo>();
+        L.from = rename_infix(m, L.from);
+        L.then = rename_infix(m, L.then);
+        L.to   = rename_infix(m, L.to);
+        return L;
+    }
     else if (E.is_a<Haskell::Tuple>())
     {
         auto T = E.as_<Haskell::Tuple>();
@@ -1439,6 +1467,34 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         auto L = E.as_<Haskell::List>();
         for(auto& element: L.elements)
             element = rename(element, bound);
+        return L;
+    }
+    else if (E.is_a<Haskell::ListFrom>())
+    {
+        auto L = E.as_<Haskell::ListFrom>();
+        L.from = rename(L.from, bound);
+        return L;
+    }
+    else if (E.is_a<Haskell::ListFromThen>())
+    {
+        auto L = E.as_<Haskell::ListFromThen>();
+        L.from = rename(L.from, bound);
+        L.then = rename(L.then, bound);
+        return L;
+    }
+    else if (E.is_a<Haskell::ListFromTo>())
+    {
+        auto L = E.as_<Haskell::ListFromTo>();
+        L.from = rename(L.from, bound);
+        L.to   = rename(L.to  , bound);
+        return L;
+    }
+    else if (E.is_a<Haskell::ListFromThenTo>())
+    {
+        auto L = E.as_<Haskell::ListFromThenTo>();
+        L.from = rename(L.from, bound);
+        L.then = rename(L.then, bound);
+        L.to   = rename(L.to  , bound);
         return L;
     }
     else if (E.is_a<Haskell::Tuple>())
