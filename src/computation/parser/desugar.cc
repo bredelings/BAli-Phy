@@ -361,6 +361,15 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         }
         std::abort();
     }
+    else if (auto S = E.to<Haskell::LeftSection>())
+    {
+        return expression_ref({desugar(S->op), desugar(S->l_arg)});
+    }
+    else if (auto S = E.to<Haskell::RightSection>())
+    {
+        auto x = get_fresh_var();
+        return lambda_quantify(x, {desugar(S->op), x, desugar(S->r_arg)} );
+    }
     else if (E.is_a<Haskell::Tuple>())
     {
         auto T = E.as_<Haskell::Tuple>();

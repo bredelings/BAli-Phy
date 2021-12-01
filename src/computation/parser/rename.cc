@@ -353,6 +353,18 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             qual = rename_infix(m, qual);
         return L;
     }
+    else if (E.is_a<Haskell::LeftSection>())
+    {
+        auto S = E.as_<Haskell::LeftSection>();
+        S.l_arg = rename_infix(m, S.l_arg);
+        return S;
+    }
+    else if (E.is_a<Haskell::RightSection>())
+    {
+        auto S = E.as_<Haskell::RightSection>();
+        S.r_arg = rename_infix(m, S.r_arg);
+        return S;
+    }
     else if (E.is_a<Haskell::Tuple>())
     {
         auto T = E.as_<Haskell::Tuple>();
@@ -1515,6 +1527,20 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 
         L.body = rename(L.body, bound2);
         return L;
+    }
+    else if (E.is_a<Haskell::LeftSection>())
+    {
+        auto S = E.as_<Haskell::LeftSection>();
+        S.l_arg = rename(S.l_arg, bound);
+        S.op = rename(S.op, bound);
+        return S;
+    }
+    else if (E.is_a<Haskell::RightSection>())
+    {
+        auto S = E.as_<Haskell::RightSection>();
+        S.op = rename(S.op, bound);
+        S.r_arg = rename(S.r_arg, bound);
+        return S;
     }
     else if (E.is_a<Haskell::Tuple>())
     {

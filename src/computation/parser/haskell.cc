@@ -187,6 +187,16 @@ string ListComprehension::print() const
     return "[" + body.print() + " | " + join(qual_strings,", ") + "]";
 }
 
+string LeftSection::print() const
+{
+    return "("+l_arg.print() + " " + op.print() + ")";
+}
+
+string RightSection::print() const
+{
+    return "("+op.print() + " " +r_arg.print() + ")";
+}
+
 string Tuple::print() const
 {
     vector<string> parts;

@@ -472,6 +472,24 @@ struct ListComprehension: public Object
     ListComprehension(const expression_ref& e, const std::vector<expression_ref>& es): body(e), quals(es) {}
 };
 
+struct LeftSection: public Object
+{
+    expression_ref l_arg;
+    expression_ref op;
+    LeftSection* clone() const {return new LeftSection(*this);}
+    std::string print() const;
+    LeftSection(const expression_ref& e, const expression_ref& v):l_arg(e),op(v) {}
+};
+
+struct RightSection: public Object
+{
+    expression_ref op;
+    expression_ref r_arg;
+    RightSection* clone() const {return new RightSection(*this);}
+    std::string print() const;
+    RightSection(const expression_ref& v, const expression_ref& e):op(v), r_arg(e) {}
+};
+
 struct Tuple: public Object
 {
     std::vector<expression_ref> elements;

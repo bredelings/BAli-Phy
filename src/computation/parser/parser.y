@@ -1133,8 +1133,8 @@ aexp2: qvar                   {$$ = make_var({@1,$1});}
 /* ------------- Tuple expressions ------------------------------- */
 
 texp: exp             {$$ = $1;}
-|     infixexp qop    {$$ = new expression(AST_node("LeftSection"),{make_infixexp($1),make_var({@2,$2})});}
-|     qopm infixexp   {$$ = new expression(AST_node("RightSection"),{make_var({@1,$1}),make_infixexp($2)});}
+|     infixexp qop    {$$ = Haskell::LeftSection ( make_infixexp($1), make_var({@2,$2}) ); }
+|     qopm infixexp   {$$ = Haskell::RightSection( make_var({@1,$1}), make_infixexp($2) ); }
 /* view patterns 
 |     exp "->" texp
 */
