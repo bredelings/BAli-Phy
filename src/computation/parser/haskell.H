@@ -463,6 +463,14 @@ struct ListFromThenTo: public Object
     ListFromThenTo(const expression_ref& e1, const expression_ref& e2, const expression_ref& e3): from(e1), then(e2), to(e3) {}
 };
 
+struct ListComprehension: public Object
+{
+    expression_ref body;
+    std::vector<expression_ref> quals;
+    ListComprehension* clone() const { return new ListComprehension(*this);}
+    std::string print() const;
+    ListComprehension(const expression_ref& e, const std::vector<expression_ref>& es): body(e), quals(es) {}
+};
 
 struct Tuple: public Object
 {

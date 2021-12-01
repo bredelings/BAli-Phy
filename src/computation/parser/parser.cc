@@ -3167,7 +3167,7 @@ namespace yy {
 
   case 254: // list: texp "|" squals
 #line 1167 "parser.y"
-                                 { auto quals = yystack_[0].value.as < std::vector<expression_ref> > (); quals.push_back(yystack_[2].value.as < expression_ref > ()); yylhs.value.as < expression_ref > () = expression_ref(AST_node("ListComprehension"),quals); }
+                                 { yylhs.value.as < expression_ref > () = Haskell::ListComprehension(yystack_[2].value.as < expression_ref > (), yystack_[0].value.as < std::vector<expression_ref> > ()); }
 #line 3172 "parser.cc"
     break;
 

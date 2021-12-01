@@ -345,6 +345,14 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         L.to   = rename_infix(m, L.to);
         return L;
     }
+    else if (E.is_a<Haskell::ListComprehension>())
+    {
+        auto L = E.as_<Haskell::ListComprehension>();
+        L.body = rename_infix(m, L.body);
+        for(auto& qual: L.quals)
+            qual = rename_infix(m, qual);
+        return L;
+    }
     else if (E.is_a<Haskell::Tuple>())
     {
         auto T = E.as_<Haskell::Tuple>();
@@ -1497,6 +1505,17 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         L.to   = rename(L.to  , bound);
         return L;
     }
+    else if (E.is_a<Haskell::ListComprehension>())
+    {
+        auto L = E.as_<Haskell::ListComprehension>();
+
+        auto bound2 = bound;
+        for(auto& qual: L.quals)
+            add(bound2, rename_stmt(qual, bound2));
+
+        L.body = rename(L.body, bound2);
+        return L;
+    }
     else if (E.is_a<Haskell::Tuple>())
     {
         auto T = E.as_<Haskell::Tuple>();
@@ -1679,15 +1698,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 	else if (n.type == "gdrhs")
             std::abort();
 	else if (n.type == "ListComprehension")
-	{
-	    auto bound2 = bound;
-
-	    for(int i=0;i<v.size()-1;i++)
-		add(bound2, rename_stmt(v[i], bound2));
-	    v.back() = rename(v.back(), bound2);
-
-	    return expression_ref{E.head(),v};
-	}
+            std::abort();
     }
 
     for(auto& e: v)

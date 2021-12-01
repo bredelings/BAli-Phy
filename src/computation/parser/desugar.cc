@@ -38,6 +38,8 @@ desugar_state::desugar_state(const Module& m_)
 
 bool is_irrefutable_pat(const expression_ref& E)
 {
+    assert(not E.is_a<Haskell::WildcardPattern>());
+    assert(not E.is_a<Haskell::Var>());
     return E.head().is_a<var>();
 }
 
@@ -294,6 +296,71 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         E2 = {E2, L->from, L->then, L->to};
         return desugar(E2);
     }
+    else if (E.is_a<Haskell::ListComprehension>())
+    {
+        auto L = E.as_<Haskell::ListComprehension>();
+
+        // [ e | True   ]  =  [ e ]
+        // [ e | q      ]  =  [ e | q, True ]
+        // [ e | b, Q   ]  =  if b then [ e | Q ] else []
+        // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
+        // [ e | let decls, Q] = let decls in [ e | Q ]
+
+        // [ e | True   ]  =  [ e ]
+        if (L.quals.size() == 1 and L.quals[0].is_a<Hs::SimpleQual>() and L.quals[0].as_<Hs::SimpleQual>().exp == bool_true)
+        {
+            return desugar( List({L.body}) );
+        }
+
+        // [ e | q      ]  =  [ e | q, True ]
+        else if (L.quals.size() == 1)
+        {
+            L.quals.push_back( Hs::SimpleQual(bool_true) );
+            return desugar( L );
+        }
+
+        else
+        {
+            // Pop the next qual from the FRONT of the list
+            expression_ref B = L.quals[0];
+            L.quals.erase(L.quals.begin());
+            expression_ref E2 = L;
+
+            // [ e | b, Q   ]  =  if b then [ e | Q ] else []
+            if (auto cond = B.to<Hs::SimpleQual>())
+                return desugar( Haskell::IfExp({noloc, cond->exp}, {noloc, E2}, {noloc, Haskell::List({})}) );
+            // [ e | let decls, Q] = let decls in [ e | Q ]
+            else if (auto LQ = B.to<Haskell::LetQual>())
+                return desugar( Haskell::LetExp( LQ->binds, {noloc, E2} ) );
+            // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
+            else if (auto PQ = B.to<Haskell::PatQual>())
+            {
+                if (is_irrefutable_pat(PQ->bindpat))
+                {
+                    expression_ref f = Haskell::LambdaExp({PQ->bindpat}, L);
+                    return desugar( {var("Data.List.concatMap"), f, PQ->exp} );
+                }
+                else
+                {
+                    // Problem: "ok" needs to be a fresh variable.
+                    expression_ref ok = get_fresh_var("ok");
+                    expression_ref lhs1 = ok + PQ->bindpat;
+                    expression_ref rhs1 = Haskell::SimpleRHS({noloc, L});
+                    auto decl1 = Haskell::ValueDecl(lhs1, rhs1);
+
+                    expression_ref lhs2 = ok + var(-1);
+                    expression_ref rhs2 = Haskell::SimpleRHS({noloc, Haskell::List({})});
+                    auto decl2 = Haskell::ValueDecl(lhs2, rhs2);
+
+                    auto decls = Haskell::Decls({decl1, decl2});
+                    expression_ref body = {var("Data.List.concatMap"), ok, PQ->exp};
+
+                    return desugar( Haskell::LetExp( {noloc, decls}, {noloc, body} ) );
+                }
+            }
+        }
+        std::abort();
+    }
     else if (E.is_a<Haskell::Tuple>())
     {
         auto T = E.as_<Haskell::Tuple>();
@@ -301,7 +368,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             element = desugar(element);
         return get_tuple(T.elements);
     }
-    else if (E.is_a<Hs::Var>())
+    else if (E.is_a<Haskell::Var>())
         std::abort();
     else if (E.is_a<Haskell::WildcardPattern>())
         return var(-1);
@@ -469,69 +536,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	else if (n.type == "Decl")
             std::abort();
 	else if (n.type == "ListComprehension")
-	{
-	    expression_ref E2 = E;
-	    // [ e | True   ]  =  [ e ]
-	    // [ e | q      ]  =  [ e | q, True ]
-	    // [ e | b, Q   ]  =  if b then [ e | Q ] else []
-	    // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
-	    // [ e | let decls, Q] = let decls in [ e | Q ]
-
-	    assert(v.size() >= 2);
-	    if (v.size() == 2 and v[0].is_a<Hs::SimpleQual>() and v[0].as_<Hs::SimpleQual>().exp == bool_true)
-		E2 = {var(":"),v[1],var("[]")};
-	    else if (v.size() == 2)
-		E2 = E.head() + v[0] + Hs::SimpleQual(bool_true) + v[1];
-	    else
-	    {
-		// Pop the next qual from the FRONT of the list
-		expression_ref B = v[0];
-		v.erase(v.begin());
-		E2 = expression_ref{E.head(),v};
-
-		if (B.is_a<Hs::SimpleQual>())
-                {
-                    auto cond = B.as_<Hs::SimpleQual>().exp;
-		    E2 = Haskell::IfExp({noloc, cond}, {noloc, E2}, {noloc, var("[]")});
-                }
-		else if (B.is_a<Haskell::PatQual>())
-		{
-                    auto& PQ = B.as_<Haskell::PatQual>();
-		    expression_ref p = PQ.bindpat;
-		    expression_ref l = PQ.exp;
-		    if (is_irrefutable_pat(p))
-		    {
-			expression_ref f  = Haskell::LambdaExp({p}, E2);
-			E2 = {var("Data.List.concatMap"),f,l};
-		    }
-		    else
-		    {
-			// Problem: "ok" needs to be a fresh variable.
-			expression_ref ok = get_fresh_var("ok");
-			expression_ref lhs1 = ok + p;
-			expression_ref rhs1 = Haskell::SimpleRHS({noloc,E2});
-			auto decl1 = Haskell::ValueDecl(lhs1, rhs1);
-
-			expression_ref lhs2 = ok + var(-1);
-			expression_ref rhs2 = Haskell::SimpleRHS({noloc,var("[]")});
-			auto decl2 = Haskell::ValueDecl(lhs2, rhs2);
-
-			auto decls = Haskell::Decls({decl1, decl2});
-			expression_ref body = {var("Data.List.concatMap"),ok,l};
-
-			E2 = Haskell::LetExp( {noloc, decls}, {noloc, body} );
-		    }
-		}
-		else if (B.is_a<Haskell::LetQual>())
-                {
-                    auto& LQ = B.as_<Haskell::LetQual>();
-		    E2 = Haskell::LetExp( LQ.binds, {noloc, E2} );
-                }
-		else
-		    std::abort();
-	    }
-	    return desugar(E2);
-	}
+            std::abort();
 	else if (n.type == "LeftSection")
 	{
 	    for(auto& e: v)

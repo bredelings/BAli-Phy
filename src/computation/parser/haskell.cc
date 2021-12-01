@@ -179,6 +179,14 @@ string ListFromThenTo::print() const
     return "[" + from.print() + ", " + then.print() + " .. " + to.print() + " ]";
 }
 
+string ListComprehension::print() const
+{
+    vector<string> qual_strings;
+    for(auto& qual: quals)
+        qual_strings.push_back(qual.print());
+    return "[" + body.print() + " | " + join(qual_strings,", ") + "]";
+}
+
 string Tuple::print() const
 {
     vector<string> parts;

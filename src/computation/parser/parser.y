@@ -1164,7 +1164,7 @@ list: texp                       { $$ = make_list({$1}); }
 |     texp "," exp ".."          { $$ = Haskell::ListFromThen($1,$3); }
 |     texp ".." exp              { $$ = Haskell::ListFromTo($1,$3); }
 |     texp "," exp ".." exp      { $$ = Haskell::ListFromThenTo($1, $3, $5); }
-|     texp "|" squals            { auto quals = $3; quals.push_back($1); $$ = expression_ref(AST_node("ListComprehension"),quals); }
+|     texp "|" squals            { $$ = Haskell::ListComprehension($1, $3); }
 
 lexps: lexps "," texp            { $$ = $1; $$.push_back($3);}
 |      texp "," texp             { $$.push_back($1); $$.push_back($3);}
