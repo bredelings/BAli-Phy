@@ -8,6 +8,18 @@
 #include "computation/expression/expression_ref.H"
 #include "located.H"
 
+/*
+  - convert patterns to use Haskell::Var
+  - use WildcardPattern instead of var(-1)
+  - stop using Haskell::Var for constructors -- make a Haskell::Con
+    + but... infixexp can have both a Var or a Con as an operator.
+    + maybe we need to just read Names, and then convert them to Var or Con in rename?
+    + look at Parser.y
+  - make sections use Name for the op?
+  - make infix use Name for the op?
+  - remove make_foo( ) functions from parser.y in honor of Haskell::Foo( ).
+*/
+
 namespace Haskell
 {
 
