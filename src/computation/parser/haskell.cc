@@ -552,6 +552,14 @@ string InstanceDecl::print() const
     return result;
 }
 
+string DefaultDecl::print() const
+{
+    vector<string> ts;
+    for(auto& type: types)
+        ts.push_back(type.print());
+    return "default (" + join(ts,", ") + " )";
+}
+
 string TypeSynonymDecl::print() const
 {
     string result = "type " + show_type_or_class_header({}, name, type_vars) + " = " + rhs_type.print();

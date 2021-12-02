@@ -2267,7 +2267,7 @@ namespace yy {
 
   case 65: // topdecl: "default" "(" comma_types0 ")"
 #line 662 "parser.y"
-                                               {}
+                                               {yylhs.value.as < expression_ref > () = Haskell::DefaultDecl(yystack_[1].value.as < std::vector<expression_ref> > ()); }
 #line 2272 "parser.cc"
     break;
 
@@ -3107,13 +3107,13 @@ namespace yy {
 
   case 244: // texp: infixexp qop
 #line 1136 "parser.y"
-                      {yylhs.value.as < expression_ref > () = new expression(AST_node("LeftSection"),{make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ()),make_var({yystack_[0].location,yystack_[0].value.as < std::string > ()})});}
+                      {yylhs.value.as < expression_ref > () = Haskell::LeftSection ( make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ()), make_var({yystack_[0].location,yystack_[0].value.as < std::string > ()}) ); }
 #line 3112 "parser.cc"
     break;
 
   case 245: // texp: qopm infixexp
 #line 1137 "parser.y"
-                      {yylhs.value.as < expression_ref > () = new expression(AST_node("RightSection"),{make_var({yystack_[1].location,yystack_[1].value.as < std::string > ()}),make_infixexp(yystack_[0].value.as < std::vector<expression_ref> > ())});}
+                      {yylhs.value.as < expression_ref > () = Haskell::RightSection( make_var({yystack_[1].location,yystack_[1].value.as < std::string > ()}), make_infixexp(yystack_[0].value.as < std::vector<expression_ref> > ()) ); }
 #line 3118 "parser.cc"
     break;
 

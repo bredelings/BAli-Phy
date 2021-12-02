@@ -430,6 +430,15 @@ struct InstanceDecl: public Object
         {}
 };
 
+struct DefaultDecl: public Object
+{
+    std::vector<Haskell::Type> types;
+    DefaultDecl() {}
+    DefaultDecl* clone() const { return new DefaultDecl(*this);}
+    std::string print() const;
+    DefaultDecl(const std::vector<Haskell::Type>& ts):types(ts) {}
+};
+
 
 struct List: public Object
 {

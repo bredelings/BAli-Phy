@@ -659,7 +659,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        inst_decl                             {$$ = $1;}
 /*|        stand_alone_deriving
   |        role_annot*/
-|        "default" "(" comma_types0 ")"        {}
+|        "default" "(" comma_types0 ")"        {$$ = Haskell::DefaultDecl($3); }
 /*
 |        "foreign" fdecl
 |        "{-# DEPRECATED" deprecations "#-}"
