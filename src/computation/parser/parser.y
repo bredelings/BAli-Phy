@@ -45,8 +45,6 @@
   Haskell::TypeVar make_type_var(const Located<std::string>& id);
   Haskell::TypeVar make_type_var_of_kind(const Located<std::string>& id, const Haskell::Type& kind);
   Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& id, const Haskell::Type& kind);
-  Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& tup_exprs);
-  Haskell::ListType make_list_type(const Haskell::Type& type);
   Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
   Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy&, const Haskell::Type& t);
   Haskell::FieldDecls make_field_decls(const std::vector<Haskell::FieldDecl>&);
@@ -70,13 +68,6 @@
   Haskell::CaseExp make_case(const expression_ref& obj, const Haskell::Alts& alts);
   Haskell::Do make_do(const Haskell::Stmts& stmts);
   Haskell::MDo make_mdo(const Haskell::Stmts& stmts);
-  Haskell::Tuple yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
-
-  Haskell::List make_list(const std::vector<expression_ref>& items);
-  Haskell::Alts make_alts(const std::vector<Located<Haskell::Alt>>& alts);
-  Located<Haskell::Alt> yy_make_alt(const yy::location& loc, const Haskell::Pattern& pat, const expression_ref& alt_rhs);
-
-  Haskell::Stmts make_stmts(const std::vector<expression_ref>& stmts);
 
   expression_ref yy_make_string(const std::string&);
 }
@@ -914,15 +905,15 @@ atype: ntgtycon                        {$$ = make_type_con({@1,$1});}
 |      strict_mark atype               {$$ = make_strict_lazy_type($1,$2);}
 |      "{" fielddecls "}"              {$$ = make_field_decls($2);}
 |      "(" ")"                         {$$ = make_type_con({@1,"()"});}
-|      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = make_tuple_type(ts);}
+|      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = Haskell::TupleType(ts);}
 /*
 |      "(#" "#)"                       {}
 |      "(#" comma_types1 "#)"          {}
 |      "(#" bar_types2   "#)"          {}
 */
-|      "[" ctype "]"                   {$$ = make_list_type($2);}
+|      "[" ctype "]"                   {$$ = Haskell::ListType{$2}; }
 |      "(" ctype ")"                   {$$ = $2;}
-|      "(" ctype "::" kind ")"         {$$ = make_type_of_kind($2,$4);}
+|      "(" ctype "::" kind ")"         {$$ = make_type_of_kind($2,$4); }
 /* Template Haskell */
 
 inst_type: sigtype                     {$$ = $1;}
@@ -1116,7 +1107,7 @@ aexp2: qvar                   {$$ = make_var({@1,$1});}
 |      qcon                   {$$ = make_var({@1,$1});}
 |      literal                {$$ = $1;}
 |      "(" texp ")"           {$$ = $2;}
-|      "(" tup_exprs ")"      {$$ = yy_make_tuple($2);}
+|      "(" tup_exprs ")"      {$$ = Haskell::Tuple($2);}
 /* 
 |      "(#" texp "#)"         {}
 |      "(#" tup_exprs "#)"    {}
@@ -1153,8 +1144,8 @@ tup_tail: texp commas_tup_tail
 */
 /* ------------- List expressions -------------------------------- */
 
-list: texp                       { $$ = make_list({$1}); }
-|     lexps                      { $$ = make_list($1); }
+list: texp                       { $$ = Haskell::List{{$1}}; }
+|     lexps                      { $$ = Haskell::List{$1}; }
 |     texp ".."                  { $$ = Haskell::ListFrom($1); }
 |     texp "," exp ".."          { $$ = Haskell::ListFromThen($1,$3); }
 |     texp ".." exp              { $$ = Haskell::ListFromTo($1,$3); }
@@ -1193,8 +1184,8 @@ guardquals1: guardquals1 "," qual  {$$ = $1;$$.push_back($3);}
 |            qual                  {$$.push_back($1);}
 
 /* ------------- Case alternatives ------------------------------- */
-altslist: "{" alts "}"           {$$ = make_alts($2);}
-|         VOCURLY alts close     {$$ = make_alts($2);}
+altslist: "{" alts "}"           {$$ = Haskell::Alts{$2};}
+|         VOCURLY alts close     {$$ = Haskell::Alts{$2};}
 |         "{" "}"                {}
 |         VOCURLY close          {}
 
@@ -1205,7 +1196,7 @@ alts1: alts1 ";" alt             {$$ = $1; $$.push_back($3);}
 |      alts1 ";"                 {$$ = $1;}
 |      alt                       {$$.push_back($1);}
 
-alt:   pat alt_rhs               {$$ = yy_make_alt(@1+@2,$1,$2);}
+alt:   pat alt_rhs               {$$ = Located<Haskell::Alt>{@1+@2,{$1,$2}};}
 
 alt_rhs: "->" exp wherebinds     {$$ = Haskell::SimpleRHS{{@2,$2},$3};}
 |        gdpats   wherebinds     {$$ = Haskell::MultiGuardedRHS{$1,$2};}
@@ -1700,11 +1691,6 @@ Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& type, const Haskell::
     return {type, kind};
 }
 
-Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& types)
-{
-    return {types};
-}
-
 Haskell::ListType make_list_type(const Haskell::Type& type)
 {
     return {type};
@@ -1862,31 +1848,11 @@ Haskell::MDo make_mdo(const Haskell::Stmts& stmts)
     return {stmts};
 }
 
-Haskell::Tuple yy_make_tuple(const vector<expression_ref>& elements)
-{
-    return Haskell::Tuple(elements);
-}
-
-Haskell::List make_list(const vector<expression_ref>& elements)
-{
-    return Haskell::List(elements);
-}
-
-Haskell::Alts make_alts(const vector<Located<Haskell::Alt>>& alts)
-{
-    return {alts};
-}
-
-Located<Haskell::Alt> yy_make_alt(const yy::location& loc, const expression_ref& pat, const expression_ref& alt_rhs)
-{
-    return {loc, {pat, alt_rhs}};
-}
-
 expression_ref yy_make_string(const std::string& s)
 {
     vector<expression_ref> chars;
     for(char c: s)
 	chars.push_back(c);
-    return make_list(chars);
+    return Haskell::List(chars);
 }
 

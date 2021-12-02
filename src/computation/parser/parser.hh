@@ -83,8 +83,6 @@
   Haskell::TypeVar make_type_var(const Located<std::string>& id);
   Haskell::TypeVar make_type_var_of_kind(const Located<std::string>& id, const Haskell::Type& kind);
   Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& id, const Haskell::Type& kind);
-  Haskell::TupleType make_tuple_type(const std::vector<Haskell::Type>& tup_exprs);
-  Haskell::ListType make_list_type(const Haskell::Type& type);
   Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
   Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy&, const Haskell::Type& t);
   Haskell::FieldDecls make_field_decls(const std::vector<Haskell::FieldDecl>&);
@@ -108,17 +106,10 @@
   Haskell::CaseExp make_case(const expression_ref& obj, const Haskell::Alts& alts);
   Haskell::Do make_do(const Haskell::Stmts& stmts);
   Haskell::MDo make_mdo(const Haskell::Stmts& stmts);
-  Haskell::Tuple yy_make_tuple(const std::vector<expression_ref>& tup_exprs);
-
-  Haskell::List make_list(const std::vector<expression_ref>& items);
-  Haskell::Alts make_alts(const std::vector<Located<Haskell::Alt>>& alts);
-  Located<Haskell::Alt> yy_make_alt(const yy::location& loc, const Haskell::Pattern& pat, const expression_ref& alt_rhs);
-
-  Haskell::Stmts make_stmts(const std::vector<expression_ref>& stmts);
 
   expression_ref yy_make_string(const std::string&);
 
-#line 122 "parser.hh"
+#line 113 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -258,7 +249,7 @@
 #endif
 
 namespace yy {
-#line 262 "parser.hh"
+#line 253 "parser.hh"
 
 
 
@@ -5896,7 +5887,7 @@ switch (yykind)
 
 
 } // yy
-#line 5900 "parser.hh"
+#line 5891 "parser.hh"
 
 
 
