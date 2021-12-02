@@ -1,5 +1,8 @@
 #include "typecheck.H"
+
 #include <range/v3/all.hpp>
+#include <map>
+
 #include "parser/haskell.H"
 
 #include "immer/map.hpp" // for immer::map
