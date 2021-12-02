@@ -77,26 +77,14 @@
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
 
-  Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
-  Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy&, const Haskell::Type& t);
-  Haskell::FieldDecls make_field_decls(const std::vector<Haskell::FieldDecl>&);
-  Haskell::ForallType make_forall_type(const std::vector<Haskell::TypeVar>& tv_bndrs, const Haskell::Type& t);
-  Haskell::ConstrainedType make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
-
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
 
-  Located<Haskell::Decls> make_decls(const yy::location& loc, std::vector<expression_ref>& decls);
-  Haskell::ValueDecl make_value_decl(const expression_ref& lhs, const expression_ref& rhs);
-  Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
-  Haskell::LetExp make_let(const Located<Haskell::Decls>& binds, const Located<expression_ref>& body);
-  Haskell::IfExp make_if(const Located<expression_ref>& cond, const Located<expression_ref>& alt_true, const Located<expression_ref>& alt_false);
-
   expression_ref yy_make_string(const std::string&);
 
-#line 100 "parser.hh"
+#line 88 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -236,7 +224,7 @@
 #endif
 
 namespace yy {
-#line 240 "parser.hh"
+#line 228 "parser.hh"
 
 
 
@@ -5874,7 +5862,7 @@ switch (yykind)
 
 
 } // yy
-#line 5878 "parser.hh"
+#line 5866 "parser.hh"
 
 
 

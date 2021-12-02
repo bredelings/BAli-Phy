@@ -39,22 +39,10 @@
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
 
-  Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
-  Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy&, const Haskell::Type& t);
-  Haskell::FieldDecls make_field_decls(const std::vector<Haskell::FieldDecl>&);
-  Haskell::ForallType make_forall_type(const std::vector<Haskell::TypeVar>& tv_bndrs, const Haskell::Type& t);
-  Haskell::ConstrainedType make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
-
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
-
-  Located<Haskell::Decls> make_decls(const yy::location& loc, std::vector<expression_ref>& decls);
-  Haskell::ValueDecl make_value_decl(const expression_ref& lhs, const expression_ref& rhs);
-  Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
-  Haskell::LetExp make_let(const Located<Haskell::Decls>& binds, const Located<expression_ref>& body);
-  Haskell::IfExp make_if(const Located<expression_ref>& cond, const Located<expression_ref>& alt_true, const Located<expression_ref>& alt_false);
 
   expression_ref yy_make_string(const std::string&);
 }
@@ -778,8 +766,8 @@ decls: decls ";" decl   {$$ = $1; $$.push_back($3);}
 |      decl             {$$.push_back($1);}
 |      %empty           {}
 
-decllist: "{" decls "}"          {$$ = make_decls(@2,$2);}  // location here should include { }?
-|         VOCURLY decls close    {$$ = make_decls(@2,$2);}
+decllist: "{" decls "}"          {$$ = Located<Haskell::Decls>(@2,$2);}  // location here should include { }?
+|         VOCURLY decls close    {$$ = Located<Haskell::Decls>(@2,$2);}
 
 binds: decllist                  {$$ = $1;}
 
@@ -839,8 +827,8 @@ unpackedness: "{-# UNPACK" "#-}"
 |             "{-# NOUNPACK" "#-}"
 */
 
-ctype: "forall" tv_bndrs "." ctype {$$ = make_forall_type($2, $4);}
-|      context "=>" ctype          {$$ = make_constrained_type($1,$3);}
+ctype: "forall" tv_bndrs "." ctype {$$ = Haskell::ForallType($2, $4);}
+|      context "=>" ctype          {$$ = Haskell::ConstrainedType($1,$3);}
 /* |      ipvar "::" type             {} */
 |      type                        {$$ = $1;}
 
@@ -997,7 +985,7 @@ decl_no_th: sigdecl           {$$ = $1;}
  * If you try 'let x :: Int = 1 in x' you get 'Type signatures are only allowed in patterns with ScopedTypeVariables'
  * GHC Parser.y suggests that you could have (^^) :: Int->Int = ...  But I don't see it.
  */
-| infixexp_top /*opt_sig*/ rhs    {$$ = make_value_decl(make_infixexp($1),$2);}
+| infixexp_top /*opt_sig*/ rhs    {$$ = Haskell::ValueDecl(make_infixexp($1),$2);}
 
 /* | pattern_synonym_decl        {} */
 /* | docdel */
@@ -1622,7 +1610,7 @@ expression_ref make_tyapps(const std::vector<expression_ref>& tyapps)
     assert(not tyapps.empty());
     expression_ref E = tyapps[0];
     for(int i=1;i<tyapps.size();i++)
-	E = make_type_app(E,tyapps[i]);
+	E = Haskell::TypeApp(E,tyapps[i]);
     return E;
 }
 
@@ -1651,11 +1639,6 @@ Haskell::Type make_kind(const Haskell::Kind& kind)
         throw myexception()<<"Kind '"<<kind<<"' is malformed";
 
     return kind;
-}
-
-Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg)
-{
-    return {head, arg};
 }
 
 optional<pair<string, Haskell::FieldDecls>> is_record_con(const expression_ref& typeish)
@@ -1699,26 +1682,6 @@ Haskell::Constructor make_constructor(const vector<Haskell::TypeVar>& forall, co
         throw myexception()<<"constructor '"<<typeish<<"' does not make sense";
 }
 
-Haskell::FieldDecls make_field_decls(const std::vector<Haskell::FieldDecl>& ds)
-{
-    return {ds};
-}
-
-Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy& sl, const Haskell::Type& t)
-{
-    return {sl, t};
-}
-
-Haskell::ForallType make_forall_type(const std::vector<Haskell::TypeVar>& tv_bndrs, const Haskell::Type& t)
-{
-    return {tv_bndrs, t};
-}
-
-Haskell::ConstrainedType make_constrained_type(const Haskell::Context& context, const Haskell::Type& t)
-{
-    return Haskell::ConstrainedType(context, t);
-}
-
 expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type)
 {
     return new expression(AST_node("typed_exp"),{exp,type});
@@ -1748,16 +1711,6 @@ expression_ref make_fexp(const vector<expression_ref>& args)
 	    f = {f,args[i]};
 	return f;
     }
-}
-
-Located<Haskell::Decls> make_decls(const yy::location& loc, std::vector<expression_ref>& decls)
-{
-    return {loc, Haskell::Decls(decls)};
-}
-
-Haskell::ValueDecl make_value_decl(const expression_ref& lhs,  const expression_ref& rhs)
-{
-    return {lhs, rhs};
 }
 
 expression_ref yy_make_string(const std::string& s)
