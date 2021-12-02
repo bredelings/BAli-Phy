@@ -21,7 +21,7 @@ namespace std
         {
             size_t h = std::hash<std::string>()(unloc(x.name));
             if (x.index)
-                size_t h = std::hash<int>()(*x.index) ^ h;
+                h = std::hash<int>()(*x.index) ^ h;
             return  h ;
         }
     };
@@ -33,7 +33,7 @@ namespace std
         {
             size_t h = std::hash<std::string>()(unloc(x.name));
             if (x.index)
-                size_t h = std::hash<int>()(*x.index) ^ h;
+                h = std::hash<int>()(*x.index) ^ h;
             return  h ;
         }
     };
