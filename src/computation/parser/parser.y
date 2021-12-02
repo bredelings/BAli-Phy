@@ -53,10 +53,6 @@
   Haskell::ForallType make_forall_type(const std::vector<Haskell::TypeVar>& tv_bndrs, const Haskell::Type& t);
   Haskell::ConstrainedType make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
-  Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const std::optional<Located<Haskell::Decls>>& wherebinds);
-  Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const std::optional<Located<Haskell::Decls>>& wherebinds);
-  Haskell::GuardedRHS make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& body);
-
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
@@ -1032,15 +1028,15 @@ decl: decl_no_th              {$$ = $1;}
 /*  | splice_exp */
 
 // rhs is like altrhs but with = instead of ->
-rhs: "=" exp wherebinds       {$$ = make_rhs({@2,$2},$3);}
-|    gdrhs wherebinds         {$$ = make_gdrhs($1,$2);}
+rhs: "=" exp wherebinds       {$$ = Haskell::SimpleRHS{{@2,$2},$3};}
+|    gdrhs wherebinds         {$$ = Haskell::MultiGuardedRHS{$1,$2};}
 
 gdrhs: gdrhs gdrh             {$$ = $1; $$.push_back($2);}
 |      gdrh                   {$$.push_back($1);}
 
 
 // gdrh is like gdpat, but with = instead of ->
-gdrh: "|" guardquals "=" exp  {$$ = make_gdrh($2,$4);}
+gdrh: "|" guardquals "=" exp  {$$ = Haskell::GuardedRHS{$2,$4};}
 
 /* sigdecl : infixexp_top "::" sigtypedoc        { }  | ...
 
@@ -1050,8 +1046,8 @@ gdrh: "|" guardquals "=" exp  {$$ = make_gdrh($2,$4);}
    GHC did this to allow expressions like f :: Int -> Int = ...
    See note [Joint value/type declarations]. */
 
-sigdecl: sig_vars "::" sigtypedoc { $$ = make_type_decl($1,$3); }
-|        infix prec ops  { $$ = make_fixity_decl($1,$2,$3); }
+sigdecl: sig_vars "::" sigtypedoc { $$ = Haskell::TypeDecl{$1,$3}; }
+|        infix prec ops  { $$ = Haskell::FixityDecl{$1,$2,$3}; }
 /* |        pattern_synonym_sig {}  */
 |        "{-# COMPLETE" con_list opt_tyconsig "#-}" {}
 |        "{-# INLINE" activation qvar "#-}" {}
@@ -1211,8 +1207,8 @@ alts1: alts1 ";" alt             {$$ = $1; $$.push_back($3);}
 
 alt:   pat alt_rhs               {$$ = yy_make_alt(@1+@2,$1,$2);}
 
-alt_rhs: "->" exp wherebinds     {$$ = make_rhs({@2,$2},$3);}
-|        gdpats   wherebinds     {$$ = make_gdrhs($1,$2);}
+alt_rhs: "->" exp wherebinds     {$$ = Haskell::SimpleRHS{{@2,$2},$3};}
+|        gdpats   wherebinds     {$$ = Haskell::MultiGuardedRHS{$1,$2};}
 
 gdpats: gdpats gdpat             {$$ = $1; $$.push_back($2);}
 |       gdpat                    {$$.push_back($1);}
@@ -1224,7 +1220,7 @@ ifgdpats : "{" gdpats "}"        {}
 |          gdpats close          {}
 */
 
-gdpat: "|" guardquals "->" exp   {$$=make_gdrh($2,$4);}
+gdpat: "|" guardquals "->" exp   {$$=Haskell::GuardedRHS{$2,$4};}
 
 pat: exp      {$$ = $1;}
 |   "!" aexp  {$$ = make_strict_pattern($2);}
@@ -1239,8 +1235,8 @@ apats1: apats1 apat {$$ = $1; $$.push_back($2);}
 |       apat        {$$.push_back($1);}
 
 /* ------------- Statement sequences ----------------------------- */
-stmtlist: "{" stmts "}"        {$$ = make_stmts($2);}
-|         VOCURLY stmts close  {$$ = make_stmts($2);}
+stmtlist: "{" stmts "}"        {$$ = Haskell::Stmts{$2};}
+|         VOCURLY stmts close  {$$ = Haskell::Stmts{$2};}
 
 stmts: stmts ";" stmt  {$$ = $1; $$.push_back($3);}
 |      stmts ";"       {$$ = $1;}
@@ -1785,11 +1781,6 @@ expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& t
     return new expression(AST_node("typed_exp"),{exp,type});
 }
 
-Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const optional<Located<Haskell::Decls>>& wherebinds)
-{
-    return {exp, wherebinds};
-}
-
 expression_ref make_infixexp(const vector<expression_ref>& args)
 {
     if (args.size() == 1)
@@ -1889,31 +1880,6 @@ Haskell::Alts make_alts(const vector<Located<Haskell::Alt>>& alts)
 Located<Haskell::Alt> yy_make_alt(const yy::location& loc, const expression_ref& pat, const expression_ref& alt_rhs)
 {
     return {loc, {pat, alt_rhs}};
-}
-
-Haskell::MultiGuardedRHS make_gdrhs(const vector<Haskell::GuardedRHS>& guards, const optional<Located<Haskell::Decls>>& wherebinds)
-{
-    return {guards, wherebinds};
-}
-
-Haskell::GuardedRHS make_gdrh(const vector<expression_ref>& guardquals, const expression_ref& exp)
-{
-    return {guardquals, exp};
-}
-
-Haskell::Stmts make_stmts(const vector<expression_ref>& stmts)
-{
-    return {stmts};
-}
-
-Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, optional<int>& prec, const vector<string>& op_names)
-{
-    return {fixity, prec, op_names};
-}
-
-Haskell::TypeDecl make_type_decl(const std::vector<Haskell::Var>& vars, Haskell::Type& type)
-{
-    return {vars, type};
 }
 
 expression_ref yy_make_string(const std::string& s)

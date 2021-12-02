@@ -91,10 +91,6 @@
   Haskell::ForallType make_forall_type(const std::vector<Haskell::TypeVar>& tv_bndrs, const Haskell::Type& t);
   Haskell::ConstrainedType make_constrained_type(const Haskell::Context& tv_bndrs, const Haskell::Type& t);
 
-  Haskell::SimpleRHS make_rhs(const Located<expression_ref>& exp, const std::optional<Located<Haskell::Decls>>& wherebinds);
-  Haskell::MultiGuardedRHS make_gdrhs(const std::vector<Haskell::GuardedRHS>& gdrhs, const std::optional<Located<Haskell::Decls>>& wherebinds);
-  Haskell::GuardedRHS make_gdrh(const std::vector<expression_ref>& gdpats, const expression_ref& body);
-
   expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
@@ -122,7 +118,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 126 "parser.hh"
+#line 122 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -262,7 +258,7 @@
 #endif
 
 namespace yy {
-#line 266 "parser.hh"
+#line 262 "parser.hh"
 
 
 
@@ -5900,7 +5896,7 @@ switch (yykind)
 
 
 } // yy
-#line 5904 "parser.hh"
+#line 5900 "parser.hh"
 
 
 
