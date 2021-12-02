@@ -245,6 +245,26 @@ void Module::import_type(const type_info& T, const string& modid, bool qualified
         add_type_alias(get_unqualified_name(T.name), T.name);
 }
 
+bool contains_import(const Haskell::Export& e, const string& name)
+{
+    if (auto em = std::get_if<Haskell::ExportModule>(&e))
+        throw myexception()<<"found "<<em->print()<<" in import list!";
+
+    auto es = std::get_if<Haskell::ExportSymbol>(&e);
+    auto s_name = es->symbol.as_<AST_node>().value;
+
+    return s_name == name;
+}
+
+bool contains_import(const vector<Haskell::Export>& es, const string& name)
+{
+    for(auto& e: es)
+        if (contains_import(e, name))
+            return true;
+    return false;
+}
+
+
 void Module::import_module(const Program& P, const module_import& I)
 {
     auto& M2 = P.get_module(I.name);
@@ -259,8 +279,13 @@ void Module::import_module(const Program& P, const module_import& I)
 
     if (I.only)
     {
-        for(const auto& s_name: I.symbols)
+        for(const auto& s: I.symbols)
         {
+            if (auto e = std::get_if<Haskell::ExportModule>(&s))
+                throw myexception()<<"module "<<I.name<<": found "<<e->print()<<" in import list!";
+            auto e = std::get_if<Haskell::ExportSymbol>(&s);
+            auto s_name = e->symbol.as_<AST_node>().value;
+
             if (m2_exports.count(s_name))
             {
                 const symbol_info& S = m2_exports.at(s_name);
@@ -271,9 +296,6 @@ void Module::import_module(const Program& P, const module_import& I)
                 auto& T = m2_exported_types.at(s_name);
                 import_type(T, modid, qualified);
             }
-            else
-                throw myexception()<<"Module '"<<I.name<<"' has no symbol '"<<s_name<<"'";
-
         }
     }
     else
@@ -282,7 +304,7 @@ void Module::import_module(const Program& P, const module_import& I)
         {
             auto unqualified_name = get_unqualified_name(S.name);
 
-            if (I.hiding and I.symbols.count(unqualified_name)) continue;
+            if (I.hiding and contains_import(I.symbols, unqualified_name)) continue;
 
             import_symbol(S, modid, qualified);
         }
@@ -290,7 +312,7 @@ void Module::import_module(const Program& P, const module_import& I)
         {
             auto unqualified_name = get_unqualified_name(T.name);
 
-            if (I.hiding and I.symbols.count(unqualified_name)) continue;
+            if (I.hiding and contains_import(I.symbols, unqualified_name)) continue;
 
             import_type(T, modid, qualified);
         }
@@ -316,7 +338,7 @@ module_import parse_import(const Haskell::ImpDecl& impdecl)
         mi.only = not mi.hiding;
 
         for(auto& x: impspec->imports)
-            mi.symbols.insert(x.as_<AST_node>().value);
+            mi.symbols.push_back(x);
     }
 
     return mi;
@@ -517,9 +539,9 @@ void Module::perform_exports()
     {
         for(auto& ex: *module.exports)
         {
-            if (is_AST(ex,"qvar"))
+            if (auto e = std::get_if<Haskell::ExportSymbol>(&ex))
             {
-                string qvarid = ex.as_<AST_node>().value; // This ignores export subspec - see grammar.
+                string qvarid = e->symbol.as_<AST_node>().value; // This ignores export subspec - see grammar.
                 if (aliases.count(qvarid))
                     export_symbol(lookup_symbol(qvarid));
                 else if (type_aliases.count(qvarid))
@@ -527,13 +549,11 @@ void Module::perform_exports()
                 else
                     throw myexception()<<"trying to export variable '"<<qvarid<<"', which is not in scope.";
             }
-            else if (is_AST(ex,"module"))
+            else if (auto e = std::get_if<Haskell::ExportModule>(&ex))
             {
-                string modid = ex.as_<AST_node>().value;
+                string modid = unloc(e->modid);
                 export_module(modid);
             }
-            else
-                throw myexception()<<"I don't understand export '"<<ex<<"'";
         }
     }
 }

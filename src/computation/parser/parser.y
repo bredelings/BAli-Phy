@@ -23,7 +23,6 @@
 
   class driver;
 
-  Haskell::Module make_module(const std::string& name, const std::optional<std::vector<expression_ref>>& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls);
   std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
   Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, const std::vector<std::string>& ops);
@@ -262,11 +261,11 @@
 %type <std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>> top
 %type <std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>> top1
 
-%type <std::optional<std::vector<expression_ref>>> maybeexports
-%type <std::vector<expression_ref>> exportlist
-%type <std::vector<expression_ref>> exportlist1
-%type <expression_ref> export
- /*%type <expression_ref> export_subspec */
+%type <std::optional<std::vector<Haskell::Export>>> maybeexports
+%type <std::vector<Haskell::Export>> exportlist
+%type <std::vector<Haskell::Export>> exportlist1
+%type <Haskell::Export> export
+%type <std::optional<std::vector<expression_ref>>> export_subspec
 %type <std::vector<expression_ref>> qcnames
 %type <std::vector<expression_ref>> qcnames1
 %type <expression_ref> qcname_ext_w_wildcard
@@ -536,8 +535,8 @@ identifier: qvar
 
 /* signature: backpack stuff */
 
-module: "module" modid maybemodwarning maybeexports "where" body {$$ = make_module($2,$4,$6.first, $6.second);}
-| body2                                                          {$$ = make_module("Main",{},$1.first, $1.second);}
+module: "module" modid maybemodwarning maybeexports "where" body {$$ = Haskell::Module{$2,$4,$6.first, $6.second};}
+| body2                                                          {$$ = Haskell::Module{"Main",{},$1.first, $1.second};}
 
 missing_module_keyword: %empty                                   {drv.push_module_context();}
 
@@ -574,12 +573,12 @@ exportlist: exportlist1               {$$ = $1;}
 exportlist1: exportlist1 "," export   {$$ = $1; $$.push_back($3);}
 |            export                   {$$.push_back($1);}
 
-export: qcname_ext export_subspec     {$$ = $1;} /* This ignores subspec */
-|       "module" modid                {$$ = AST_node("module",$2);}
+export: qcname_ext export_subspec     {$$ = Haskell::ExportSymbol{$1, $2}; }
+|       "module" modid                {$$ = Haskell::ExportModule{{@2,$2}}; }
 /* |       "pattern" qcon                {} */
 
-export_subspec: %empty
-|              "(" qcnames ")"
+export_subspec: %empty                {}
+|              "(" qcnames ")"        { $$ = $2; }
 
 qcnames: %empty    {}
 |        qcnames1  {$$ = $1;}
@@ -1519,11 +1518,6 @@ void
 yy::parser::error (const location_type& l, const std::string& m)
 {
     drv.push_error_message({l,m});
-}
-
-Haskell::Module make_module(const std::string& name, const std::optional<std::vector<expression_ref>>& exports, const std::vector<Haskell::ImpDecl>& impdecls, const std::optional<Haskell::Decls>& topdecls)
-{
-    return {name, exports, impdecls, topdecls};
 }
 
 pair<vector<Haskell::ImpDecl>, optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls)

@@ -90,7 +90,7 @@ struct module_import
     std::string as;
     bool only = false;
     bool hiding = false;
-    std::set<std::string> symbols;
+    std::vector<Haskell::Export> symbols;
     module_import() = default;
     module_import(const std::string& s):name(s),as(s) {}
 };

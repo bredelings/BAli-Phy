@@ -37,6 +37,32 @@ string show_instance_header(const Context& context, const string& name, const ve
     return join(ss, " ");
 }
 
+string ExportSymbol::print() const
+{
+    auto result = symbol.print();
+    if (subspec)
+    {
+        vector<string> ss;
+        for(auto& s: *subspec)
+            ss.push_back(s.print());
+        result += " (" + join(ss, ", ") + ")";
+    }
+    return result;
+};
+
+string ExportModule::print() const
+{
+    return "module " + unloc(modid);
+};
+
+string Export::print() const
+{
+    // FIXME - Cast required to work around bug in GCC 11 libstdc++, supposedly fixed for GCC 12.
+    // See https://gitlab.com/jonathan-wakely/gcc/-/commit/486d89e403a18ef78f05f2efb1bc86bbd396899c
+    // See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90943
+    return std::visit([](auto&& x) {return x.print();}, (const std::variant<ExportSymbol,ExportModule>&)(*this));
+};
+
 string ImpSpec::print() const
 {
     vector<string> is;

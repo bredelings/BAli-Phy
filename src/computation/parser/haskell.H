@@ -781,10 +781,30 @@ struct IfExp: public Object
         { }
 };
 
+struct ExportSymbol
+{
+    expression_ref symbol;
+    std::optional<std::vector<expression_ref>> subspec;
+    std::string print() const;
+};
+
+struct ExportModule
+{
+    Located<std::string> modid;
+    std::string print() const;
+};
+
+struct Export: public std::variant<ExportSymbol,ExportModule>
+{
+    std::string print() const;
+
+    using variant::variant;
+};
+
 struct ImpSpec
 {
     bool hiding;
-    std::vector<expression_ref> imports;
+    std::vector<Export> imports;
     std::string print() const;
 };
 
@@ -809,7 +829,7 @@ struct ImpDecl
 struct Module
 {
     std::string modid;
-    std::optional<std::vector<expression_ref>> exports;
+    std::optional<std::vector<Export>> exports;
     std::vector<ImpDecl> impdecls;
     std::optional<Decls> topdecls;
 
@@ -817,7 +837,7 @@ struct Module
 
     Module() = default;
     Module(const std::string&s,
-           const std::optional<std::vector<expression_ref>>& e,
+           const std::optional<std::vector<Export>>& e,
            const std::vector<ImpDecl>& i,
            const std::optional<Decls>& t)
         :modid(s),
