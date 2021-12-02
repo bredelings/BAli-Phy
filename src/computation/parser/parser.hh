@@ -77,10 +77,6 @@
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
 
-  Haskell::TypeCon make_type_con(const Located<std::string>& id);
-  Haskell::TypeVar make_type_var(const Located<std::string>& id);
-  Haskell::TypeVar make_type_var_of_kind(const Located<std::string>& id, const Haskell::Type& kind);
-  Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& id, const Haskell::Type& kind);
   Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
   Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy&, const Haskell::Type& t);
   Haskell::FieldDecls make_field_decls(const std::vector<Haskell::FieldDecl>&);
@@ -100,7 +96,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 104 "parser.hh"
+#line 100 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -240,7 +236,7 @@
 #endif
 
 namespace yy {
-#line 244 "parser.hh"
+#line 240 "parser.hh"
 
 
 
@@ -5878,7 +5874,7 @@ switch (yykind)
 
 
 } // yy
-#line 5882 "parser.hh"
+#line 5878 "parser.hh"
 
 
 

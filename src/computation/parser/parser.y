@@ -39,10 +39,6 @@
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
 
-  Haskell::TypeCon make_type_con(const Located<std::string>& id);
-  Haskell::TypeVar make_type_var(const Located<std::string>& id);
-  Haskell::TypeVar make_type_var_of_kind(const Located<std::string>& id, const Haskell::Type& kind);
-  Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& id, const Haskell::Type& kind);
   Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg);
   Haskell::StrictLazyType make_strict_lazy_type(const Haskell::StrictLazy&, const Haskell::Type& t);
   Haskell::FieldDecls make_field_decls(const std::vector<Haskell::FieldDecl>&);
@@ -815,7 +811,7 @@ opt_sig: %empty  {}
 */
 
 opt_tyconsig: %empty {}
-| "::" gtycon        {$$ = make_type_con({@2,$2});}
+| "::" gtycon        {$$ = Haskell::TypeCon({@2,$2});}
 
 sigtype: ctype   {$$ = $1;}
 
@@ -862,7 +858,7 @@ context: btype                     {$$ = make_context($1);}
 context_no_ops: btype_no_ops       {$$ = make_context(make_tyapps($1));}
 
 type: btype                        {$$ = $1;}
-|     btype "->" ctype             {$$ = make_tyapps({make_type_con({@2,"->"}),$1,$3});}
+|     btype "->" ctype             {$$ = make_tyapps({Haskell::TypeCon({@2,"->"}),$1,$3});}
 
 typedoc: type                      {$$ = $1;}
 /* typedoc: .... */
@@ -876,8 +872,8 @@ tyapps: tyapp                      {$$.push_back($1);}
 |       tyapps tyapp               {$$ = $1; $$.push_back($2);}
 
 tyapp: atype                       {$$ = $1;}
-|      qtyconop                    {$$ = make_type_con({@1,$1});}
-|      tyvarop                     {$$ = make_type_var({@1,$1});}
+|      qtyconop                    {$$ = Haskell::TypeCon({@1,$1});}
+|      tyvarop                     {$$ = Haskell::TypeVar({@1,$1});}
 /* Template Haskell
 |      SIMPLEQUOTE qconop
 |      SIMPLEQUOTE varop
@@ -890,12 +886,12 @@ atype_docs: atype /* FIX */        {$$ = $1;}
  * Do I need a separate rule for it if I'm not using StarIsType?
  */
 
-atype: ntgtycon                        {$$ = make_type_con({@1,$1});}
-|      tyvar                           {$$ = make_type_var({@1,$1});}
-|      "*"                             {$$ = make_type_con({@1,"*"});}
-|      strict_mark atype               {$$ = make_strict_lazy_type($1,$2);}
-|      "{" fielddecls "}"              {$$ = make_field_decls($2);}
-|      "(" ")"                         {$$ = make_type_con({@1,"()"});}
+atype: ntgtycon                        {$$ = Haskell::TypeCon({@1,$1});}
+|      tyvar                           {$$ = Haskell::TypeVar({@1,$1});}
+|      "*"                             {$$ = Haskell::TypeCon({@1,"*"});}
+|      strict_mark atype               {$$ = Haskell::StrictLazyType($1,$2);}
+|      "{" fielddecls "}"              {$$ = Haskell::FieldDecls($2);}
+|      "(" ")"                         {$$ = Haskell::TypeCon({@1,"()"});}
 |      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = Haskell::TupleType(ts);}
 /*
 |      "(#" "#)"                       {}
@@ -904,7 +900,7 @@ atype: ntgtycon                        {$$ = make_type_con({@1,$1});}
 */
 |      "[" ctype "]"                   {$$ = Haskell::ListType{$2}; }
 |      "(" ctype ")"                   {$$ = $2;}
-|      "(" ctype "::" kind ")"         {$$ = make_type_of_kind($2,$4); }
+|      "(" ctype "::" kind ")"         {$$ = Haskell::TypeOfKind($2,$4); }
 /* Template Haskell */
 
 inst_type: sigtype                     {$$ = $1;}
@@ -927,8 +923,8 @@ tv_bndrs:   tv_bndrs tv_bndr   {$$ = $1; $$.push_back($2);}
 |           %empty             { /* default construction OK */}
 
 /* If we put the kind into the type var (maybe as an optional) we could unify these two */
-tv_bndr:    tyvar                   {$$ = make_type_var({@1,$1});}
-|           "(" tyvar "::" kind ")" {$$ = make_type_var_of_kind({@2,$2},$4);}
+tv_bndr:    tyvar                   {$$ = Haskell::TypeVar({@1,$1});}
+|           "(" tyvar "::" kind ")" {$$ = Haskell::TypeVar({@2,$2},$4);}
 
 
 /* fds are functional dependencies = FunDeps 
@@ -964,7 +960,7 @@ forall: "forall" tv_bndrs "."   {$$ = $2;}
 |       %empty                  {}
 
 constr_stuff: btype_no_ops                      {$$ = make_tyapps($1);}
-|             btype_no_ops conop btype_no_ops   {$$ = make_tyapps({make_type_var({@2,$2}),make_tyapps($1),make_tyapps($3)});}
+|             btype_no_ops conop btype_no_ops   {$$ = make_tyapps({Haskell::TypeVar({@2,$2}),make_tyapps($1),make_tyapps($3)});}
 
 fielddecls: %empty              {}
 |           fielddecls1         {$$ = $1;}
@@ -1655,31 +1651,6 @@ Haskell::Type make_kind(const Haskell::Kind& kind)
         throw myexception()<<"Kind '"<<kind<<"' is malformed";
 
     return kind;
-}
-
-Haskell::TypeVar make_type_var(const Located<string>& id)
-{
-    return {id};
-}
-
-Haskell::TypeCon make_type_con(const Located<string>& id)
-{
-    return {id};
-}
-
-Haskell::TypeVar make_type_var_of_kind(const Located<string>& id, const Haskell::Kind& kind)
-{
-    return {id, kind};
-}
-
-Haskell::TypeOfKind make_type_of_kind(const Haskell::Type& type, const Haskell::Kind& kind)
-{
-    return {type, kind};
-}
-
-Haskell::ListType make_list_type(const Haskell::Type& type)
-{
-    return {type};
 }
 
 Haskell::TypeApp make_type_app(const Haskell::Type& head, const Haskell::Type& arg)
