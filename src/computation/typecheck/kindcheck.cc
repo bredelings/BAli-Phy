@@ -684,6 +684,8 @@ std::map<string,std::pair<int,kind>> kindchecker_state::infer_kinds(const vector
             arity = T.type_vars.size();
             k = make_kind_star();
         }
+        else
+            std::abort();
 
         // Create an initial kind here...
         for(int i=0;i<arity;i++)
