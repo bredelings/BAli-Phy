@@ -25,12 +25,8 @@
 
   std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
-  Haskell::BuiltinDecl make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
-  Haskell::BuiltinDecl make_builtin_expr(const std::string& name, int args, const std::string& s);
-
   Haskell::Type make_kind(const Haskell::Type& kind);
   Haskell::Constructor make_constructor(const std::vector<Haskell::TypeVar>& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish);
-  Haskell::FieldDecl make_field_decl(const std::vector<Haskell::Var>& field_names, const Haskell::Type& type);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
@@ -630,10 +626,10 @@ topdecl: cl_decl                               {$$ = $1;}
 |        decl_no_th                            {$$ = $1;}
 /* What is this for? How is this a decl ? */
 |        infixexp_top                          {$$ = make_infixexp($1);}
-|        "builtin" var INTEGER STRING STRING   {$$ = make_builtin_expr($2,$3,$4,$5);}
-|        "builtin" var INTEGER STRING          {$$ = make_builtin_expr($2,$3,$4);}
-|        "builtin" varop INTEGER STRING STRING {$$ = make_builtin_expr($2,$3,$4,$5);}
-|        "builtin" varop INTEGER STRING        {$$ = make_builtin_expr($2,$3,$4);}
+|        "builtin" var INTEGER STRING STRING   {$$ = Haskell::BuiltinDecl($2,$3,$4,$5);}
+|        "builtin" var INTEGER STRING          {$$ = Haskell::BuiltinDecl($2,$3,$4);}
+|        "builtin" varop INTEGER STRING STRING {$$ = Haskell::BuiltinDecl($2,$3,$4,$5);}
+|        "builtin" varop INTEGER STRING        {$$ = Haskell::BuiltinDecl($2,$3,$4);}
 
 cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2.first,$2.second,$3);}
 
@@ -956,7 +952,7 @@ fielddecls: %empty              {}
 fielddecls1: fielddecls1 "," fielddecl  {$$ = $1; $$.push_back($3);}
 |            fielddecl                  {$$.push_back($1);}
 
-fielddecl: sig_vars "::" ctype          {$$ = make_field_decl($1,$3);}
+fielddecl: sig_vars "::" ctype          {$$ = Haskell::FieldDecl($1,$3);}
 
 maybe_derivings: %empty
 |                derivings
@@ -1493,24 +1489,6 @@ pair<vector<Haskell::ImpDecl>, optional<Haskell::Decls>> make_body(const std::ve
         return {imports, {}};
 }
 
-Haskell::BuiltinDecl make_builtin_expr(const string& name, int args, const string& s1, const string& s2)
-{
-    return {name, args, s1, s2};
-}
-
-Haskell::BuiltinDecl make_builtin_expr(const string& name, int args, const string& s1)
-{
-    return {name, args, s1};
-}
-
-vector<expression_ref> make_String_vec(const vector<string>& strings)
-{
-    vector<expression_ref> Strings;
-    for(auto& string: strings)
-        Strings.push_back(String(string));
-    return Strings;
-}
-
 // See PostProcess.hs:checkTyClHdr
 std::tuple<string, vector<expression_ref>>
 check_type_or_class_header(expression_ref type)
@@ -1540,11 +1518,6 @@ vector<Haskell::TypeVar> check_all_type_vars(const vector<Haskell::Type>& types)
         }
     }
     return type_vars;
-}
-
-Haskell::FieldDecl make_field_decl(const std::vector<Haskell::Var>& field_names, const Haskell::Type& type)
-{
-    return {field_names, type};
 }
 
 Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type)

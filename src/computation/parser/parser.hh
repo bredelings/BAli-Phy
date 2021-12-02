@@ -63,12 +63,8 @@
 
   std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
-  Haskell::BuiltinDecl make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
-  Haskell::BuiltinDecl make_builtin_expr(const std::string& name, int args, const std::string& s);
-
   Haskell::Type make_kind(const Haskell::Type& kind);
   Haskell::Constructor make_constructor(const std::vector<Haskell::TypeVar>& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish);
-  Haskell::FieldDecl make_field_decl(const std::vector<Haskell::Var>& field_names, const Haskell::Type& type);
   Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
@@ -84,7 +80,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 88 "parser.hh"
+#line 84 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -224,7 +220,7 @@
 #endif
 
 namespace yy {
-#line 228 "parser.hh"
+#line 224 "parser.hh"
 
 
 
@@ -5862,7 +5858,7 @@ switch (yykind)
 
 
 } // yy
-#line 5866 "parser.hh"
+#line 5862 "parser.hh"
 
 
 
