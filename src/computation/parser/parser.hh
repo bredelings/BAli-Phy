@@ -63,8 +63,6 @@
 
   std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
-  Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, const std::vector<std::string>& ops);
-  Haskell::TypeDecl make_type_decl(const std::vector<Haskell::Var>& vars, Haskell::Type& type);
   Haskell::BuiltinDecl make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   Haskell::BuiltinDecl make_builtin_expr(const std::string& name, int args, const std::string& s);
 
@@ -78,7 +76,7 @@
   Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
-  Haskell::Var make_var(const Located<std::string>& id);
+
   Haskell::TypeCon make_type_con(const Located<std::string>& id);
   Haskell::TypeVar make_type_var(const Located<std::string>& id);
   Haskell::TypeVar make_type_var_of_kind(const Located<std::string>& id, const Haskell::Type& kind);
@@ -94,22 +92,15 @@
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
 
-  Haskell::AsPattern make_as_pattern(const Haskell::Var& x, const expression_ref& body);
-  Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat);
-  Haskell::StrictPattern make_strict_pattern(const expression_ref& pat);
-
   Located<Haskell::Decls> make_decls(const yy::location& loc, std::vector<expression_ref>& decls);
   Haskell::ValueDecl make_value_decl(const expression_ref& lhs, const expression_ref& rhs);
   Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
   Haskell::LetExp make_let(const Located<Haskell::Decls>& binds, const Located<expression_ref>& body);
   Haskell::IfExp make_if(const Located<expression_ref>& cond, const Located<expression_ref>& alt_true, const Located<expression_ref>& alt_false);
-  Haskell::CaseExp make_case(const expression_ref& obj, const Haskell::Alts& alts);
-  Haskell::Do make_do(const Haskell::Stmts& stmts);
-  Haskell::MDo make_mdo(const Haskell::Stmts& stmts);
 
   expression_ref yy_make_string(const std::string&);
 
-#line 113 "parser.hh"
+#line 104 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -249,7 +240,7 @@
 #endif
 
 namespace yy {
-#line 253 "parser.hh"
+#line 244 "parser.hh"
 
 
 
@@ -5887,7 +5878,7 @@ switch (yykind)
 
 
 } // yy
-#line 5891 "parser.hh"
+#line 5882 "parser.hh"
 
 
 

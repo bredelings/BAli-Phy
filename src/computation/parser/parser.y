@@ -25,8 +25,6 @@
 
   std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
-  Haskell::FixityDecl make_fixity_decl(const Haskell::Fixity& fixity, std::optional<int>& prec, const std::vector<std::string>& ops);
-  Haskell::TypeDecl make_type_decl(const std::vector<Haskell::Var>& vars, Haskell::Type& type);
   Haskell::BuiltinDecl make_builtin_expr(const std::string& name, int args, const std::string& s1, const std::string& s2);
   Haskell::BuiltinDecl make_builtin_expr(const std::string& name, int args, const std::string& s);
 
@@ -40,7 +38,7 @@
   Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Decls>>& decls);
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
-  Haskell::Var make_var(const Located<std::string>& id);
+
   Haskell::TypeCon make_type_con(const Located<std::string>& id);
   Haskell::TypeVar make_type_var(const Located<std::string>& id);
   Haskell::TypeVar make_type_var_of_kind(const Located<std::string>& id, const Haskell::Type& kind);
@@ -56,18 +54,11 @@
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
 
-  Haskell::AsPattern make_as_pattern(const Haskell::Var& x, const expression_ref& body);
-  Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat);
-  Haskell::StrictPattern make_strict_pattern(const expression_ref& pat);
-
   Located<Haskell::Decls> make_decls(const yy::location& loc, std::vector<expression_ref>& decls);
   Haskell::ValueDecl make_value_decl(const expression_ref& lhs, const expression_ref& rhs);
   Haskell::LambdaExp make_lambdaexp(const std::vector<expression_ref>& pats, const expression_ref& body);
   Haskell::LetExp make_let(const Located<Haskell::Decls>& binds, const Located<expression_ref>& body);
   Haskell::IfExp make_if(const Located<expression_ref>& cond, const Located<expression_ref>& alt_true, const Located<expression_ref>& alt_false);
-  Haskell::CaseExp make_case(const expression_ref& obj, const Haskell::Alts& alts);
-  Haskell::Do make_do(const Haskell::Stmts& stmts);
-  Haskell::MDo make_mdo(const Haskell::Stmts& stmts);
 
   expression_ref yy_make_string(const std::string&);
 }
@@ -1061,10 +1052,10 @@ exp: infixexp "::" sigtype { $$ = make_typed_exp(make_infixexp($1),$3); }
 |    infixexp              { $$ = make_infixexp($1); }
 
 infixexp: exp10                 {$$.push_back($1);}
-|         infixexp qop exp10    {$$ = $1; $$.push_back(make_var({@2,$2})); $$.push_back($3);}
+|         infixexp qop exp10    {$$ = $1; $$.push_back(Haskell::Var({@2,$2})); $$.push_back($3);}
 
 infixexp_top: exp10_top         {$$.push_back($1);}
-|             infixexp_top qop exp10_top  {$$ = $1; $$.push_back(make_var({@2,$2})); $$.push_back($3);}
+|             infixexp_top qop exp10_top  {$$ = $1; $$.push_back(Haskell::Var({@2,$2})); $$.push_back($3);}
 
 exp10_top: "-" fexp                {$$ = make_minus(make_fexp($2));}
 |          "{-# CORE" STRING "#-}" {}
@@ -1087,24 +1078,24 @@ fexp: fexp aexp                  {$$ = $1; $$.push_back($2);}
 |     "static" aexp              {}
 |     aexp                       {$$.push_back($1);}
 
-aexp: qvar "@" aexp              {$$ = make_as_pattern(make_var({@1,$1}),$3);}
-|     "~" aexp                   {$$ = make_lazy_pattern($2);}
-|     "\\" apats1 "->" exp       {$$ = make_lambdaexp($2,$4);}
-|     "let" binds "in" exp       {$$ = make_let($2,{@4,$4});}
+aexp: qvar "@" aexp              {$$ = Haskell::AsPattern(Haskell::Var({@1,$1}),$3);}
+|     "~" aexp                   {$$ = Haskell::LazyPattern($2);}
+|     "\\" apats1 "->" exp       {$$ = Haskell::LambdaExp($2,$4);}
+|     "let" binds "in" exp       {$$ = Haskell::LetExp($2,{@4,$4});}
 /* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
-|     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = make_if({@2,$2},{@5,$5},{@8,$8});}
+|     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = Haskell::IfExp({@2,$2},{@5,$5},{@8,$8});}
 /* |     "if" ifgdpats              {} MultiWayIf extension not currently handled */
-|     "case" exp "of" altslist   {$$ = make_case($2,$4);}
-|     "do" stmtlist              {$$ = make_do($2);}
-|     "mdo" stmtlist             {$$ = make_mdo($2);}
+|     "case" exp "of" altslist   {$$ = Haskell::CaseExp($2,$4);}
+|     "do" stmtlist              {$$ = Haskell::Do($2);}
+|     "mdo" stmtlist             {$$ = Haskell::MDo($2);}
 /* |     "proc" aexp "->" exp       {} -XArrows not currently handled */
 |     aexp1                      {$$ = $1;}
 
 aexp1: aexp1 "{" fbinds "}"   {}
 |      aexp2                  {$$ = $1;}
 
-aexp2: qvar                   {$$ = make_var({@1,$1});}
-|      qcon                   {$$ = make_var({@1,$1});}
+aexp2: qvar                   {$$ = Haskell::Var({@1,$1});}
+|      qcon                   {$$ = Haskell::Var({@1,$1});}
 |      literal                {$$ = $1;}
 |      "(" texp ")"           {$$ = $2;}
 |      "(" tup_exprs ")"      {$$ = Haskell::Tuple($2);}
@@ -1119,8 +1110,8 @@ aexp2: qvar                   {$$ = make_var({@1,$1});}
 /* ------------- Tuple expressions ------------------------------- */
 
 texp: exp             {$$ = $1;}
-|     infixexp qop    {$$ = Haskell::LeftSection ( make_infixexp($1), make_var({@2,$2}) ); }
-|     qopm infixexp   {$$ = Haskell::RightSection( make_var({@1,$1}), make_infixexp($2) ); }
+|     infixexp qop    {$$ = Haskell::LeftSection ( make_infixexp($1), Haskell::Var({@2,$2}) ); }
+|     qopm infixexp   {$$ = Haskell::RightSection( Haskell::Var({@1,$1}), make_infixexp($2) ); }
 /* view patterns 
 |     exp "->" texp
 */
@@ -1214,13 +1205,13 @@ ifgdpats : "{" gdpats "}"        {}
 gdpat: "|" guardquals "->" exp   {$$=Haskell::GuardedRHS{$2,$4};}
 
 pat: exp      {$$ = $1;}
-|   "!" aexp  {$$ = make_strict_pattern($2);}
+|   "!" aexp  {$$ = Haskell::StrictPattern($2);}
 
 bindpat: exp  {$$ = $1;}
-|   "!" aexp  {$$ = make_strict_pattern($2);}
+|   "!" aexp  {$$ = Haskell::StrictPattern($2);}
 
 apat: aexp    {$$ = $1;}
-|    "!" aexp {$$ = make_strict_pattern($2);}
+|    "!" aexp {$$ = Haskell::StrictPattern($2);}
 
 apats1: apats1 apat {$$ = $1; $$.push_back($2);}
 |       apat        {$$.push_back($1);}
@@ -1639,11 +1630,6 @@ expression_ref make_tyapps(const std::vector<expression_ref>& tyapps)
     return E;
 }
 
-Haskell::Var make_var(const Located<string>& v)
-{
-    return {v};
-}
-
 bool check_kind(const Haskell::Kind& kind)
 {
     auto [kind_head, kind_args] = Haskell::decompose_type_apps(kind);
@@ -1793,21 +1779,6 @@ expression_ref make_fexp(const vector<expression_ref>& args)
     }
 }
 
-Haskell::AsPattern make_as_pattern(const Haskell::Var& x, const expression_ref& pat)
-{
-    return Haskell::AsPattern(x,pat);
-}
-
-Haskell::LazyPattern make_lazy_pattern(const expression_ref& pat)
-{
-    return { pat };
-}
-
-Haskell::StrictPattern make_strict_pattern(const expression_ref& pat)
-{
-    return { pat };
-}
-
 Located<Haskell::Decls> make_decls(const yy::location& loc, std::vector<expression_ref>& decls)
 {
     return {loc, Haskell::Decls(decls)};
@@ -1816,36 +1787,6 @@ Located<Haskell::Decls> make_decls(const yy::location& loc, std::vector<expressi
 Haskell::ValueDecl make_value_decl(const expression_ref& lhs,  const expression_ref& rhs)
 {
     return {lhs, rhs};
-}
-
-Haskell::LambdaExp make_lambdaexp(const vector<expression_ref>& pats, const expression_ref& body)
-{
-    return { pats, body };
-}
-
-Haskell::LetExp make_let(const Located<Haskell::Decls>& binds, const Located<expression_ref>& body)
-{
-    return { binds, body };
-}
-
-Haskell::IfExp make_if(const Located<expression_ref>& cond, const Located<expression_ref>& alt_true, const Located<expression_ref>& alt_false)
-{
-    return {cond, alt_true, alt_false};
-}
-
-Haskell::CaseExp make_case(const expression_ref& obj, const Haskell::Alts& alts)
-{
-    return {obj, alts};
-}
-
-Haskell::Do make_do(const Haskell::Stmts& stmts)
-{
-    return {stmts};
-}
-
-Haskell::MDo make_mdo(const Haskell::Stmts& stmts)
-{
-    return {stmts};
 }
 
 expression_ref yy_make_string(const std::string& s)
