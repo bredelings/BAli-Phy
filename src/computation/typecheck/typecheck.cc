@@ -6,6 +6,10 @@
 
 namespace views = ranges::views;
 
+using std::vector;
+using std::string;
+using std::map;
+
 typedef immer::map<Haskell::TypeVar,expression_ref> substitution_t;
 
 namespace std
@@ -182,6 +186,105 @@ env_var_to_type_t apply_subst(const substitution_t& s, const env_var_to_type_t& 
     return env2;
 }
 
+string alphabetized_type_var_name(int i)
+{
+    string s;
+    while (true)
+    {
+        s.push_back( char('a'+(i%26)) );
+        if (i < 26) break;
+        i /= 26;
+    }
+    return s;
+}
+
+Haskell::TypeVar alphabetized_type_var(int i)
+{
+    auto s = alphabetized_type_var_name(i);
+    auto v = Haskell::TypeVar({noloc,s});
+    v.index = i;
+    return v;
+}
+
+
+expression_ref alphabetize_type(const expression_ref& type, map<Haskell::TypeVar,Haskell::TypeVar>& s, int& index)
+{
+    // Lets just assume that there is no shadowing.
+
+    if (auto tv = type.to<Haskell::TypeVar>())
+    {
+        auto rec = s.find(*tv);
+        if (rec == s.end())
+        {
+            rec = s.insert({*tv, alphabetized_type_var(index++)}).first;
+        }
+        return expression_ref(rec->second);
+    }
+    else if (type.is_a<Haskell::TypeCon>())
+        return type;
+    else if (type.is_a<Haskell::ForallType>())
+    {
+        auto forall = type.as_<Haskell::ForallType>();
+
+        // 2a. Ensure that we see each of the type var binders in the order they are used.
+        for(auto& tv: forall.type_var_binders)
+        {
+            alphabetize_type(tv, s, index);
+            tv = s.at(tv);
+        }
+
+        // 2b. Alphabetize the type body.
+        forall.type = alphabetize_type(forall.type, s, index);
+
+        // 2c. Return the type
+        return forall;
+    }
+    else if (type.is_a<Haskell::TypeApp>())
+    {
+        auto app = type.as_<Haskell::TypeApp>();
+        app.head = alphabetize_type(app.head, s, index);
+        app.arg  = alphabetize_type(app.arg , s, index);
+        return app;
+    }
+    std::abort();
+}
+
+expression_ref alphabetize_type(const expression_ref& type)
+{
+    map<Haskell::TypeVar, Haskell::TypeVar> s;
+    int index = 0;
+    return alphabetize_type(type, s, index);
+}
 
 // What is the output of the kind checker?
 // 
+
+struct TIModule
+{
+    // module name?
+    // exports?
+    // imports?
+
+    std::vector<Haskell::ClassDecl> class_decls;
+    std::vector<Haskell::TypeSynonymDecl> type_decls;
+    std::vector<Haskell::DataOrNewtypeDecl> data_decls;
+    std::vector<Haskell::InstanceDecl> instance_decls;
+    std::optional<Haskell::DefaultDecl> default_decl;
+
+    // fixity declarations
+    // type signatures
+    // value declarations, sorted into binding groups.
+    // uh.... pattern declarations?
+};
+
+// Wait, actually don't we assume that the value decls are divided into self-referencing binding groups, along with explicit signatures?
+// We would also need: infix declarations, default declarations, ???
+// I guess this is AFTER rename, so declarations have been un-infixed, and we could (theoretically) represent each function as something like [([pat],grhs)]
+// SHOULD we actually translate each function to (say) a list of ([pat],ghrs)?  How do we store 
+//
+// typecheck_module(vector<ClassDecl>, vector<DataDecl>, vector<TypeSyonymDecl>, vector<InstanceDecl>, vector<ValueDecl>)
+// {
+//    Kindcheck(classdecls, data_decls, type_decls);
+//
+//
+// }
