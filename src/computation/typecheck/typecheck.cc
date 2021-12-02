@@ -259,6 +259,38 @@ expression_ref alphabetize_type(const expression_ref& type)
 // What is the output of the kind checker?
 // 
 
+struct MRule
+{
+    std::vector<Haskell::Pattern> pats;
+    Haskell::MultiGuardedRHS rhs;
+};
+
+struct Match
+{
+    std::vector<MRule> rules;
+};
+
+struct FunctionDecl
+{
+    std::string name;
+    // See desugar-case.cc for translating matches
+    Match match;
+};
+
+struct PatDecl
+{
+    Haskell::Pattern pat;
+    Haskell::MultiGuardedRHS rhs;
+};
+
+struct BindingGroup
+{
+    std::vector<FunctionDecl> function_decls;
+    std::vector<PatDecl> pat_decls;
+    // Can these apply to variables in pattern decls?
+    std::map<std::string, Haskell::Type> signatures;
+};
+
 struct TIModule
 {
     // module name?
@@ -269,12 +301,14 @@ struct TIModule
     std::vector<Haskell::TypeSynonymDecl> type_decls;
     std::vector<Haskell::DataOrNewtypeDecl> data_decls;
     std::vector<Haskell::InstanceDecl> instance_decls;
+
     std::optional<Haskell::DefaultDecl> default_decl;
 
-    // fixity declarations
-    // type signatures
-    // value declarations, sorted into binding groups.
-    // uh.... pattern declarations?
+    // The typechecker doesn't care about fixities...
+    std::vector<Haskell::FixityDecl> fixities;
+
+    // I guess the renamer is in charge of turning things into binding groups?
+    std::vector<BindingGroup> binds;
 };
 
 // Wait, actually don't we assume that the value decls are divided into self-referencing binding groups, along with explicit signatures?
