@@ -512,43 +512,44 @@ namespace yy {
       // importdecl
       char dummy9[sizeof (Haskell::ImpDecl)];
 
+      // impspec
+      char dummy10[sizeof (Haskell::ImpSpec)];
+
       // module
-      char dummy10[sizeof (Haskell::Module)];
+      char dummy11[sizeof (Haskell::Module)];
 
       // stmtlist
-      char dummy11[sizeof (Haskell::Stmts)];
+      char dummy12[sizeof (Haskell::Stmts)];
 
       // strict_mark
       // strictness
-      char dummy12[sizeof (Haskell::StrictLazy)];
+      char dummy13[sizeof (Haskell::StrictLazy)];
 
       // tv_bndr
-      char dummy13[sizeof (Haskell::TypeVar)];
+      char dummy14[sizeof (Haskell::TypeVar)];
 
       // alt
-      char dummy14[sizeof (Located<Haskell::Alt>)];
+      char dummy15[sizeof (Located<Haskell::Alt>)];
 
       // decllist
       // binds
-      char dummy15[sizeof (Located<Haskell::Decls>)];
+      char dummy16[sizeof (Located<Haskell::Decls>)];
 
       // optqualified
-      char dummy16[sizeof (bool)];
+      char dummy17[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy17[sizeof (char)];
+      char dummy18[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy18[sizeof (double)];
+      char dummy19[sizeof (double)];
 
       // export
       // qcname_ext_w_wildcard
       // qcname_ext
       // qcname
-      // maybeimpspec
-      // impspec
       // topdecl
       // cl_decl
       // ty_decl
@@ -586,37 +587,40 @@ namespace yy {
       // stmt
       // qual
       // literal
-      char dummy19[sizeof (expression_ref)];
+      char dummy20[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy20[sizeof (float)];
+      char dummy21[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy21[sizeof (int)];
+      char dummy22[sizeof (int)];
+
+      // maybeimpspec
+      char dummy23[sizeof (std::optional<Haskell::ImpSpec>)];
 
       // wherebinds
-      char dummy22[sizeof (std::optional<Located<Haskell::Decls>>)];
+      char dummy24[sizeof (std::optional<Located<Haskell::Decls>>)];
 
       // prec
-      char dummy23[sizeof (std::optional<int>)];
+      char dummy25[sizeof (std::optional<int>)];
 
       // maybeas
-      char dummy24[sizeof (std::optional<std::string>)];
+      char dummy26[sizeof (std::optional<std::string>)];
 
       // maybeexports
-      char dummy25[sizeof (std::optional<std::vector<expression_ref>>)];
+      char dummy27[sizeof (std::optional<std::vector<expression_ref>>)];
 
       // tycl_hdr
-      char dummy26[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy28[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // body
       // body2
       // top
       // top1
-      char dummy27[sizeof (std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>)];
+      char dummy29[sizeof (std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>)];
 
       // "VARID"
       // "CONID"
@@ -673,34 +677,34 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy28[sizeof (std::string)];
+      char dummy30[sizeof (std::string)];
 
       // constrs
       // constrs1
-      char dummy29[sizeof (std::vector<Haskell::Constructor>)];
+      char dummy31[sizeof (std::vector<Haskell::Constructor>)];
 
       // fielddecls
       // fielddecls1
-      char dummy30[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy32[sizeof (std::vector<Haskell::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy31[sizeof (std::vector<Haskell::GuardedRHS>)];
+      char dummy33[sizeof (std::vector<Haskell::GuardedRHS>)];
 
       // importdecls
       // importdecls_semi
-      char dummy32[sizeof (std::vector<Haskell::ImpDecl>)];
+      char dummy34[sizeof (std::vector<Haskell::ImpDecl>)];
 
       // tv_bndrs
       // forall
-      char dummy33[sizeof (std::vector<Haskell::TypeVar>)];
+      char dummy35[sizeof (std::vector<Haskell::TypeVar>)];
 
       // sig_vars
-      char dummy34[sizeof (std::vector<Haskell::Var>)];
+      char dummy36[sizeof (std::vector<Haskell::Var>)];
 
       // alts
       // alts1
-      char dummy35[sizeof (std::vector<Located<Haskell::Alt>>)];
+      char dummy37[sizeof (std::vector<Located<Haskell::Alt>>)];
 
       // exportlist
       // exportlist1
@@ -722,10 +726,10 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy36[sizeof (std::vector<expression_ref>)];
+      char dummy38[sizeof (std::vector<expression_ref>)];
 
       // ops
-      char dummy37[sizeof (std::vector<std::string>)];
+      char dummy39[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1323,6 +1327,10 @@ namespace yy {
         value.move< Haskell::ImpDecl > (std::move (that.value));
         break;
 
+      case symbol_kind::S_impspec: // impspec
+        value.move< Haskell::ImpSpec > (std::move (that.value));
+        break;
+
       case symbol_kind::S_module: // module
         value.move< Haskell::Module > (std::move (that.value));
         break;
@@ -1367,8 +1375,6 @@ namespace yy {
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
       case symbol_kind::S_qcname_ext: // qcname_ext
       case symbol_kind::S_qcname: // qcname
-      case symbol_kind::S_maybeimpspec: // maybeimpspec
-      case symbol_kind::S_impspec: // impspec
       case symbol_kind::S_topdecl: // topdecl
       case symbol_kind::S_cl_decl: // cl_decl
       case symbol_kind::S_ty_decl: // ty_decl
@@ -1418,6 +1424,10 @@ namespace yy {
       case symbol_kind::S_PRINTWORD: // "PRIMWORD"
       case symbol_kind::S_commas: // commas
         value.move< int > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_maybeimpspec: // maybeimpspec
+        value.move< std::optional<Haskell::ImpSpec> > (std::move (that.value));
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
@@ -1716,6 +1726,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Haskell::ImpSpec&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Haskell::ImpSpec& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, Haskell::Module&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -1877,6 +1901,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const int& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::optional<Haskell::ImpSpec>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::optional<Haskell::ImpSpec>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2170,6 +2208,10 @@ switch (yykind)
         value.template destroy< Haskell::ImpDecl > ();
         break;
 
+      case symbol_kind::S_impspec: // impspec
+        value.template destroy< Haskell::ImpSpec > ();
+        break;
+
       case symbol_kind::S_module: // module
         value.template destroy< Haskell::Module > ();
         break;
@@ -2214,8 +2256,6 @@ switch (yykind)
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
       case symbol_kind::S_qcname_ext: // qcname_ext
       case symbol_kind::S_qcname: // qcname
-      case symbol_kind::S_maybeimpspec: // maybeimpspec
-      case symbol_kind::S_impspec: // impspec
       case symbol_kind::S_topdecl: // topdecl
       case symbol_kind::S_cl_decl: // cl_decl
       case symbol_kind::S_ty_decl: // ty_decl
@@ -2265,6 +2305,10 @@ switch (yykind)
       case symbol_kind::S_PRINTWORD: // "PRIMWORD"
       case symbol_kind::S_commas: // commas
         value.template destroy< int > ();
+        break;
+
+      case symbol_kind::S_maybeimpspec: // maybeimpspec
+        value.template destroy< std::optional<Haskell::ImpSpec> > ();
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
@@ -5134,6 +5178,10 @@ switch (yykind)
         value.copy< Haskell::ImpDecl > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_impspec: // impspec
+        value.copy< Haskell::ImpSpec > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_module: // module
         value.copy< Haskell::Module > (YY_MOVE (that.value));
         break;
@@ -5178,8 +5226,6 @@ switch (yykind)
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
       case symbol_kind::S_qcname_ext: // qcname_ext
       case symbol_kind::S_qcname: // qcname
-      case symbol_kind::S_maybeimpspec: // maybeimpspec
-      case symbol_kind::S_impspec: // impspec
       case symbol_kind::S_topdecl: // topdecl
       case symbol_kind::S_cl_decl: // cl_decl
       case symbol_kind::S_ty_decl: // ty_decl
@@ -5229,6 +5275,10 @@ switch (yykind)
       case symbol_kind::S_PRINTWORD: // "PRIMWORD"
       case symbol_kind::S_commas: // commas
         value.copy< int > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_maybeimpspec: // maybeimpspec
+        value.copy< std::optional<Haskell::ImpSpec> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
@@ -5447,6 +5497,10 @@ switch (yykind)
         value.move< Haskell::ImpDecl > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_impspec: // impspec
+        value.move< Haskell::ImpSpec > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_module: // module
         value.move< Haskell::Module > (YY_MOVE (s.value));
         break;
@@ -5491,8 +5545,6 @@ switch (yykind)
       case symbol_kind::S_qcname_ext_w_wildcard: // qcname_ext_w_wildcard
       case symbol_kind::S_qcname_ext: // qcname_ext
       case symbol_kind::S_qcname: // qcname
-      case symbol_kind::S_maybeimpspec: // maybeimpspec
-      case symbol_kind::S_impspec: // impspec
       case symbol_kind::S_topdecl: // topdecl
       case symbol_kind::S_cl_decl: // cl_decl
       case symbol_kind::S_ty_decl: // ty_decl
@@ -5542,6 +5594,10 @@ switch (yykind)
       case symbol_kind::S_PRINTWORD: // "PRIMWORD"
       case symbol_kind::S_commas: // commas
         value.move< int > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_maybeimpspec: // maybeimpspec
+        value.move< std::optional<Haskell::ImpSpec> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
@@ -5756,7 +5812,7 @@ switch (yykind)
 
 
 } // yy
-#line 5760 "parser.hh"
+#line 5816 "parser.hh"
 
 
 

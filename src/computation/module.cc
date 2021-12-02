@@ -312,17 +312,12 @@ module_import parse_import(const Haskell::ImpDecl& impdecl)
 
     if (auto impspec = impdecl.impspec)
     {
-        mi.hiding = is_AST(impspec,"hiding");
-        mi.only = is_AST(impspec,"only");
-        assert(mi.hiding or mi.only);
+        mi.hiding = impspec->hiding;
+        mi.only = not mi.hiding;
 
-
-        for(auto& x: impspec.sub())
+        for(auto& x: impspec->imports)
             mi.symbols.insert(x.as_<AST_node>().value);
     }
-
-    // only:   handle import qualified A as B (x, y)
-    // hiding:  handle import qualified A as B hiding (x, y)
 
     return mi;
 }

@@ -37,6 +37,31 @@ string show_instance_header(const Context& context, const string& name, const ve
     return join(ss, " ");
 }
 
+string ImpSpec::print() const
+{
+    vector<string> is;
+    for(auto& import: imports)
+        is.push_back( import.print() );
+    string result = "(" + join(is, ", ") + ")";
+    if (hiding)
+        result = "hiding " + result;
+    return result;
+}
+
+string ImpDecl::print() const
+{
+    vector<string> v;
+    v.push_back("import");
+    if (qualified)
+        v.push_back("qualified");
+    v.push_back(modid);
+    if (as)
+        v.push_back(*as);
+    if (impspec)
+        v.push_back(impspec->print());
+    return join(v, " ");
+}
+
 string Module::print() const
 {
     string result = "module " + modid;
@@ -61,20 +86,6 @@ string Module::print() const
     result += "}";
 
     return result;
-}
-
-string ImpDecl::print() const
-{
-    vector<string> v;
-    v.push_back("import");
-    if (qualified)
-        v.push_back("qualified");
-    v.push_back(modid);
-    if (as)
-        v.push_back(*as);
-    if (impspec)
-        v.push_back(impspec.print());
-    return join(v, " ");
 }
 
 string TypedExp::print() const

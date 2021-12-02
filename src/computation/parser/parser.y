@@ -281,8 +281,8 @@
  // %type <std::optional<std::string>> maybe_pkg
 %type <bool> optqualified
 %type <std::optional<std::string>> maybeas
-%type <expression_ref> maybeimpspec
-%type <expression_ref> impspec
+%type <std::optional<Haskell::ImpSpec>> maybeimpspec
+%type <Haskell::ImpSpec> impspec
 
 %type <std::optional<int>> prec
 %type <Haskell::Fixity> infix
@@ -631,8 +631,8 @@ maybeas:  "as" modid           { $$ = $2; }
 maybeimpspec: impspec          { $$ = $1; }
 |             %empty           { }
 
-impspec: "(" exportlist ")"           { $$ = expression_ref{AST_node("only"),$2}; }
-|        "hiding" "(" exportlist ")"  { $$ = expression_ref{AST_node("hiding"),$3}; }
+impspec: "(" exportlist ")"           { $$ = Haskell::ImpSpec{false, $2}; }
+|        "hiding" "(" exportlist ")"  { $$ = Haskell::ImpSpec{true,  $3}; }
 
 
 /* ------------- Fixity Declarations ----------------------------- */

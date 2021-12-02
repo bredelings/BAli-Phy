@@ -23,8 +23,6 @@
 namespace Haskell
 {
 
-typedef expression_ref ImpSpec;
-
 typedef expression_ref Kind;
 typedef expression_ref Type;
 typedef expression_ref Pattern;
@@ -85,24 +83,6 @@ struct TypeCon: public Object
     TypeCon() = default;
     TypeCon(const Located<std::string>& s):name(s) {}
     TypeCon(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
-};
-
-struct ImpDecl
-{
-    bool qualified;
-    std::string modid;
-    std::optional<std::string> as;
-    expression_ref impspec;
-
-    std::string print() const;
-
-    ImpDecl() = default;
-    ImpDecl(bool b, const std::string& s, const std::optional<std::string>& a, const ImpSpec& is)
-        :qualified(b),
-         modid(s),
-         as(a),
-         impspec(is)
-    {}
 };
 
 // HsDecl = type or class declaration
@@ -799,6 +779,31 @@ struct IfExp: public Object
           true_branch(t),
           false_branch(f)
         { }
+};
+
+struct ImpSpec
+{
+    bool hiding;
+    std::vector<expression_ref> imports;
+    std::string print() const;
+};
+
+struct ImpDecl
+{
+    bool qualified;
+    std::string modid;
+    std::optional<std::string> as;
+    std::optional<ImpSpec> impspec;
+
+    std::string print() const;
+
+    ImpDecl() = default;
+    ImpDecl(bool b, const std::string& s, const std::optional<std::string>& a, const std::optional<ImpSpec>& is)
+        :qualified(b),
+         modid(s),
+         as(a),
+         impspec(is)
+    {}
 };
 
 struct Module
