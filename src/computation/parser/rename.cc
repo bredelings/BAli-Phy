@@ -67,13 +67,17 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
 	return infix_parse(m, op1, E1, T);
 }
 
+// FIXME: just return the fixity
 symbol_info get_op_sym(const Module& m, const expression_ref& O)
 {
-    if (not O.is_a<Hs::Var>())
-	throw myexception()<<"Can't use expression '"<<O.print()<<"' as infix operator.";
-
     symbol_info op_sym;
-    auto name = unloc(O.as_<Hs::Var>().name);
+    string name;
+    if (auto v = O.to<Haskell::Var>())
+        name = unloc(v->name);
+    else if (auto c = O.to<Haskell::Con>())
+        name = unloc(c->name);
+    else
+        std::abort();
 
     if (m.is_declared( name ) )
 	op_sym = m.get_operator( name );
@@ -157,10 +161,11 @@ set<string> find_bound_vars(const expression_ref& E)
     else if (E.is_a<Hs::Var>())
     {
         auto& value = unloc(E.as_<Hs::Var>().name);
-	if (not is_haskell_con_name(value))
-	    return {value};
+	assert(not is_haskell_con_name(value));
+        return {value};
     }
-    return {};
+    else
+        return {};
 }
 
 string get_func_name(const Haskell::ValueDecl& decl)
@@ -192,9 +197,12 @@ bool is_pattern_binding(const Haskell::ValueDecl& decl)
         return true;
     if (decl.lhs.is_a<Haskell::StrictPattern>())
         return true;
+    // FIXME: we should make a ConPattern
+    if (decl.lhs.head().is_a<Haskell::Con>())
+        return true;
     if (decl.lhs.head().is_a<constructor>()) // this happens when called from desugar.cc
         return true;
-    return is_haskell_con_name(get_func_name(decl));
+    return false;
 }
 
 bool is_function_binding(const Haskell::ValueDecl& decl)
@@ -604,7 +612,7 @@ Haskell::Decls rename_infix_top(const Module& m, const Haskell::Decls& decls)
                         else
                             f.push_back(Haskell::WildcardPattern());
 
-                    expression_ref pattern = expression_ref{Hs::Var({noloc,ConName}),f};
+                    expression_ref pattern = expression_ref{Hs::Con({noloc,ConName}),f};
                     expression_ref body = Haskell::SimpleRHS({noloc, name});
                     alts.push_back({noloc,{pattern,body}});
                 }
@@ -932,40 +940,39 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         auto& T = pat.as_<Haskell::Tuple>();
         return find_vars_in_patterns(T.elements);
     }
-
-    // 4. Handle literal values
-    if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double()) return {};
-
-    // 5. Get the identifier name for head
-    expression_ref head = pat.head();
-    if (not head.is_a<Hs::Var>())
-	throw myexception()<<"Pattern '"<<pat<<"' doesn't start with an identifier!";
-    auto id = unloc(head.as_<Hs::Var>().name);
-
-    // 6. Handle if identifier is a variable
-    if (not is_haskell_con_name(id))
+    else if (auto v = pat.to<Haskell::Var>())
     {
-	if (pat.size()) throw myexception()<<"Pattern "<<pat<<" has arguments, but doesn't start with a constructor!";
+        auto id = unloc(v->name);
+
 	if (is_qualified_symbol(id)) throw myexception()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<pat<<"'!";
+
 	// Qualify the id if this is part of a top-level decl
 	if (top)
 	    id = m.name + "." + id;
 	return {id};
     }
+    // If its a constructor pattern!
+    else if (auto c = pat.head().to<Haskell::Con>())
+    {
+        auto id = unloc(c->name);
 
-    // 7. Resolve constructor name if identifier is a constructor
-    if (not m.is_declared(id))
-	throw myexception()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!";
+        if (not m.is_declared(id))
+            throw myexception()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!";
 
-    const symbol_info& S = m.lookup_symbol(id);
-    if (S.symbol_type != constructor_symbol)
-	throw myexception()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!";
+        const symbol_info& S = m.lookup_symbol(id);
+        if (S.symbol_type != constructor_symbol)
+            throw myexception()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!";
 
-    if (S.arity != pat.size())
-	throw myexception()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!";
+        if (S.arity != pat.size())
+            throw myexception()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!";
 
-    // 11. Return the variables bound
-    return find_vars_in_patterns(pat.copy_sub());
+        // 11. Return the variables bound
+        return find_vars_in_patterns(pat.copy_sub());
+    }
+    else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
+        return {};
+    else
+        throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
 bound_var_info renamer_state::rename_patterns(vector<expression_ref>& patterns, bool top)
@@ -1049,65 +1056,77 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         pat = T;
         return bound;
     }
-
-    // 4. Handle literal values
-    if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double()) return {};
-
-    // 5. Get the identifier name for head
-    expression_ref head = pat.head();
-    if (not head.is_a<Hs::Var>())
-	throw myexception()<<"Pattern '"<<pat<<"' doesn't start with an identifier!";
-    auto id = unloc(head.as_<Hs::Var>().name);
-
-    // 6. Handle if identifier is a variable
-    if (not is_haskell_con_name(id))
+    else if (pat.is_a<Haskell::Var>())
     {
-	if (pat.size()) throw myexception()<<"Pattern "<<pat<<" has arguments, but doesn't start with a constructor!";
+        auto V = pat.as_<Haskell::Var>();
+        auto id = unloc(V.name);
+
 	if (is_qualified_symbol(id)) throw myexception()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<pat<<"'!";
 	// Qualify the id if this is part of a top-level decl
 	if (top)
 	    id = m.name + "." + id;
-	// FIXME - since we are creating an ID here, we should give it a unique id!
-	pat = var(id);
+        else
+            // FIXME - since we are creating an ID here, we should give it a unique id!
+            ;
+	unloc(V.name) = id;
+
+        // We translate to a var( ) here!
+        // Maybe we should do this during desugaring instead?
+        pat = var(id);
+
 	return {id};
     }
-    
-    // 7. Resolve constructor name if identifier is a constructor
-    if (not m.is_declared(id))
-	throw myexception()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!";
-
-    const symbol_info& S = m.lookup_symbol(id);
-    if (S.symbol_type != constructor_symbol)
-	throw myexception()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!";
-
-    if (S.arity != pat.size())
-	throw myexception()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!";
-
-    head = constructor(S.name, S.arity);
-
-    // 8. Rename arguments and accumulate bound variables
-    vector<expression_ref> args = pat.copy_sub();
-
-    bound_var_info bound;
-    // Rename the arguments
-    bool overlap = false;
-    for(auto& e: args)
+    else if (pat.head().is_a<Haskell::Con>())
     {
-	auto bound_here =  rename_pattern(e, top);
-	overlap = overlap or not disjoint_add(bound, bound_here);
+        auto C = pat.head().as_<Haskell::Con>();
+        auto id = unloc(C.name);
+
+        // 7. Resolve constructor name if identifier is a constructor
+        if (not m.is_declared(id))
+            throw myexception()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!";
+
+        const symbol_info& S = m.lookup_symbol(id);
+        if (S.symbol_type != constructor_symbol)
+            throw myexception()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!";
+
+        if (S.arity != pat.size())
+            throw myexception()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!";
+
+        unloc(C.name) = S.name;
+
+        // We translate to a constructor( ) here!
+        // Maybe we should do this during desugaring instead?
+        auto head = constructor(S.name, S.arity);
+
+        // 8. Rename arguments and accumulate bound variables
+        vector<expression_ref> args = pat.copy_sub();
+
+        bound_var_info bound;
+        // Rename the arguments
+        bool overlap = false;
+        for(auto& e: args)
+        {
+            auto bound_here =  rename_pattern(e, top);
+            overlap = overlap or not disjoint_add(bound, bound_here);
+        }
+
+        if (overlap)
+            throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
+
+        // 10. Construct the renamed pattern
+        if (args.size())
+            pat = expression_ref{head,args};
+        else
+            pat = head;
+
+        // 11. Return the variables bound
+        return bound;
     }
-
-    if (overlap)
-	throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
-
-    // 10. Construct the renamed pattern
-    if (args.size())
-	pat = expression_ref{head,args};
+    // 4. Handle literal values
+    else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
+        return {};
     else
-	pat = head;
-
-    // 11. Return the variables bound
-    return bound;
+        throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
 // FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
@@ -1424,7 +1443,7 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
         rec_tuple = vars[0];
     else
     {
-        rec_tuple = Hs::Var({noloc, tuple_head(vars.size()).name()});
+        rec_tuple = Hs::Con({noloc, tuple_head(vars.size()).name()});
         for(auto var: vars)
             rec_tuple = {rec_tuple, var};
     }
@@ -1564,6 +1583,29 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
             const symbol_info& S = m.lookup_symbol(name);
             string qualified_name = S.name;
             return var(qualified_name);
+        }
+        else
+        {
+            if (loc)
+                throw myexception()<<"Can't find id '"<<name<<"' at "<<*loc;
+            else
+                throw myexception()<<"Can't find id '"<<name<<"'";
+        }
+    }
+    else if (E.is_a<Hs::Con>())
+    {
+        auto C = E.as_<Haskell::Con>();
+        auto& name = unloc(C.name);
+        auto& loc = C.name.loc;
+
+        // FIXME: we should look the constructor up in a constructor environment
+        // Does that mean that we look up constructors in a different table?
+        if (m.is_declared(name))
+        {
+            const symbol_info& S = m.lookup_symbol(name);
+            name = S.name; // use the qualified name
+            // We return a reference to a lambda function, in case the constructor isn't fully applied.
+            return var(S.name);
         }
         else
         {

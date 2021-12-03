@@ -545,6 +545,8 @@ namespace yy {
       // apat
       // stmt
       // qual
+      // qop
+      // qopm
       // literal
       char dummy22[sizeof (expression_ref)];
 
@@ -615,9 +617,6 @@ namespace yy {
       // tyconsym
       // op
       // varop
-      // qop
-      // qopm
-      // hole_op
       // qvarop
       // qvaropm
       // tyvar
@@ -1191,31 +1190,30 @@ namespace yy {
         S_varop = 288,                           // varop
         S_qop = 289,                             // qop
         S_qopm = 290,                            // qopm
-        S_hole_op = 291,                         // hole_op
-        S_qvarop = 292,                          // qvarop
-        S_qvaropm = 293,                         // qvaropm
-        S_tyvar = 294,                           // tyvar
-        S_tyvarop = 295,                         // tyvarop
-        S_tyvarid = 296,                         // tyvarid
-        S_var = 297,                             // var
-        S_qvar = 298,                            // qvar
-        S_qvarid = 299,                          // qvarid
-        S_varid = 300,                           // varid
-        S_qvarsym = 301,                         // qvarsym
-        S_qvarsym_no_minus = 302,                // qvarsym_no_minus
-        S_qvarsym1 = 303,                        // qvarsym1
-        S_varsym = 304,                          // varsym
-        S_varsym_no_minus = 305,                 // varsym_no_minus
-        S_special_id = 306,                      // special_id
-        S_special_sym = 307,                     // special_sym
-        S_qconid = 308,                          // qconid
-        S_conid = 309,                           // conid
-        S_qconsym = 310,                         // qconsym
-        S_consym = 311,                          // consym
-        S_literal = 312,                         // literal
-        S_close = 313,                           // close
-        S_modid = 314,                           // modid
-        S_commas = 315                           // commas
+        S_qvarop = 291,                          // qvarop
+        S_qvaropm = 292,                         // qvaropm
+        S_tyvar = 293,                           // tyvar
+        S_tyvarop = 294,                         // tyvarop
+        S_tyvarid = 295,                         // tyvarid
+        S_var = 296,                             // var
+        S_qvar = 297,                            // qvar
+        S_qvarid = 298,                          // qvarid
+        S_varid = 299,                           // varid
+        S_qvarsym = 300,                         // qvarsym
+        S_qvarsym_no_minus = 301,                // qvarsym_no_minus
+        S_qvarsym1 = 302,                        // qvarsym1
+        S_varsym = 303,                          // varsym
+        S_varsym_no_minus = 304,                 // varsym_no_minus
+        S_special_id = 305,                      // special_id
+        S_special_sym = 306,                     // special_sym
+        S_qconid = 307,                          // qconid
+        S_conid = 308,                           // conid
+        S_qconsym = 309,                         // qconsym
+        S_consym = 310,                          // consym
+        S_literal = 311,                         // literal
+        S_close = 312,                           // close
+        S_modid = 313,                           // modid
+        S_commas = 314                           // commas
       };
     };
 
@@ -1379,6 +1377,8 @@ namespace yy {
       case symbol_kind::S_apat: // apat
       case symbol_kind::S_stmt: // stmt
       case symbol_kind::S_qual: // qual
+      case symbol_kind::S_qop: // qop
+      case symbol_kind::S_qopm: // qopm
       case symbol_kind::S_literal: // literal
         value.move< expression_ref > (std::move (that.value));
         break;
@@ -1460,9 +1460,6 @@ namespace yy {
       case symbol_kind::S_tyconsym: // tyconsym
       case symbol_kind::S_op: // op
       case symbol_kind::S_varop: // varop
-      case symbol_kind::S_qop: // qop
-      case symbol_kind::S_qopm: // qopm
-      case symbol_kind::S_hole_op: // hole_op
       case symbol_kind::S_qvarop: // qvarop
       case symbol_kind::S_qvaropm: // qvaropm
       case symbol_kind::S_tyvar: // tyvar
@@ -2344,6 +2341,8 @@ switch (yykind)
       case symbol_kind::S_apat: // apat
       case symbol_kind::S_stmt: // stmt
       case symbol_kind::S_qual: // qual
+      case symbol_kind::S_qop: // qop
+      case symbol_kind::S_qopm: // qopm
       case symbol_kind::S_literal: // literal
         value.template destroy< expression_ref > ();
         break;
@@ -2425,9 +2424,6 @@ switch (yykind)
       case symbol_kind::S_tyconsym: // tyconsym
       case symbol_kind::S_op: // op
       case symbol_kind::S_varop: // varop
-      case symbol_kind::S_qop: // qop
-      case symbol_kind::S_qopm: // qopm
-      case symbol_kind::S_hole_op: // hole_op
       case symbol_kind::S_qvarop: // qvarop
       case symbol_kind::S_qvaropm: // qvaropm
       case symbol_kind::S_tyvar: // tyvar
@@ -5119,8 +5115,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 4311,     ///< Last index in yytable_.
-      yynnts_ = 177,  ///< Number of nonterminal symbols.
+      yylast_ = 4330,     ///< Last index in yytable_.
+      yynnts_ = 176,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
 
@@ -5328,6 +5324,8 @@ switch (yykind)
       case symbol_kind::S_apat: // apat
       case symbol_kind::S_stmt: // stmt
       case symbol_kind::S_qual: // qual
+      case symbol_kind::S_qop: // qop
+      case symbol_kind::S_qopm: // qopm
       case symbol_kind::S_literal: // literal
         value.copy< expression_ref > (YY_MOVE (that.value));
         break;
@@ -5409,9 +5407,6 @@ switch (yykind)
       case symbol_kind::S_tyconsym: // tyconsym
       case symbol_kind::S_op: // op
       case symbol_kind::S_varop: // varop
-      case symbol_kind::S_qop: // qop
-      case symbol_kind::S_qopm: // qopm
-      case symbol_kind::S_hole_op: // hole_op
       case symbol_kind::S_qvarop: // qvarop
       case symbol_kind::S_qvaropm: // qvaropm
       case symbol_kind::S_tyvar: // tyvar
@@ -5661,6 +5656,8 @@ switch (yykind)
       case symbol_kind::S_apat: // apat
       case symbol_kind::S_stmt: // stmt
       case symbol_kind::S_qual: // qual
+      case symbol_kind::S_qop: // qop
+      case symbol_kind::S_qopm: // qopm
       case symbol_kind::S_literal: // literal
         value.move< expression_ref > (YY_MOVE (s.value));
         break;
@@ -5742,9 +5739,6 @@ switch (yykind)
       case symbol_kind::S_tyconsym: // tyconsym
       case symbol_kind::S_op: // op
       case symbol_kind::S_varop: // varop
-      case symbol_kind::S_qop: // qop
-      case symbol_kind::S_qopm: // qopm
-      case symbol_kind::S_hole_op: // hole_op
       case symbol_kind::S_qvarop: // qvarop
       case symbol_kind::S_qvaropm: // qvaropm
       case symbol_kind::S_tyvar: // tyvar
@@ -5902,7 +5896,7 @@ switch (yykind)
 
 
 } // yy
-#line 5906 "parser.hh"
+#line 5900 "parser.hh"
 
 
 

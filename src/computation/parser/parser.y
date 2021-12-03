@@ -432,9 +432,9 @@
 
 %type <std::string> op
 %type <std::string> varop
-%type <std::string> qop
-%type <std::string> qopm
-%type <std::string> hole_op
+%type <expression_ref> qop
+%type <expression_ref> qopm
+ //%type <std::string> hole_op
 %type <std::string> qvarop
 %type <std::string> qvaropm
 
@@ -1016,10 +1016,10 @@ exp: infixexp "::" sigtype { $$ = make_typed_exp(make_infixexp($1),$3); }
 |    infixexp              { $$ = make_infixexp($1); }
 
 infixexp: exp10                 {$$.push_back($1);}
-|         infixexp qop exp10    {$$ = $1; $$.push_back(Haskell::Var({@2,$2})); $$.push_back($3);}
+|         infixexp qop exp10    {$$ = $1; $$.push_back($2); $$.push_back($3);}
 
 infixexp_top: exp10_top         {$$.push_back($1);}
-|             infixexp_top qop exp10_top  {$$ = $1; $$.push_back(Haskell::Var({@2,$2})); $$.push_back($3);}
+|             infixexp_top qop exp10_top  {$$ = $1; $$.push_back($2); $$.push_back($3);}
 
 exp10_top: "-" fexp                {$$ = make_minus(make_fexp($2));}
 |          "{-# CORE" STRING "#-}" {}
@@ -1059,7 +1059,7 @@ aexp1: aexp1 "{" fbinds "}"   {}
 |      aexp2                  {$$ = $1;}
 
 aexp2: qvar                   {$$ = Haskell::Var({@1,$1});}
-|      qcon                   {$$ = Haskell::Var({@1,$1});}
+|      qcon                   {$$ = Haskell::Con({@1,$1});}
 |      literal                {$$ = $1;}
 |      "(" texp ")"           {$$ = $2;}
 |      "(" tup_exprs ")"      {$$ = Haskell::Tuple($2);}
@@ -1074,8 +1074,8 @@ aexp2: qvar                   {$$ = Haskell::Var({@1,$1});}
 /* ------------- Tuple expressions ------------------------------- */
 
 texp: exp             {$$ = $1;}
-|     infixexp qop    {$$ = Haskell::LeftSection ( make_infixexp($1), Haskell::Var({@2,$2}) ); }
-|     qopm infixexp   {$$ = Haskell::RightSection( Haskell::Var({@1,$1}), make_infixexp($2) ); }
+|     infixexp qop    {$$ = Haskell::LeftSection ( make_infixexp($1), $2 ); }
+|     qopm infixexp   {$$ = Haskell::RightSection( $1, make_infixexp($2) ); }
 /* view patterns 
 |     exp "->" texp
 */
@@ -1321,15 +1321,15 @@ op : varop { $$ = $1; }
 varop: varsym   { $$ = $1; }
 | "`" varid "`" { $$ = $2; }
 
-qop:  qvarop    { $$ = $1; }
-|     qconop    { $$ = $1; }
-|     hole_op   { $$ = $1; }
+qop:  qvarop    { $$ = Haskell::Var({@1,$1}); }
+|     qconop    { $$ = Haskell::Con({@1,$1}); }
+/* |     hole_op   { $$ = $1; } */
 
-qopm: qvaropm   { $$ = $1; }
-|     qconop    { $$ = $1; }
-|     hole_op   { $$ = $1; }
+qopm: qvaropm   { $$ = Haskell::Var({@1,$1}); }
+|     qconop    { $$ = Haskell::Con({@1,$1}); }
+/* |     hole_op   { $$ = $1; } */
 
-hole_op: "`" "_" "`"  { $$ = "_"; }
+/* hole_op: "`" "_" "`"  { $$ = "_"; } */
 
 qvarop: qvarsym  { $$ = $1; }
 |       "`" qvarid "`" { $$ = $2; }
