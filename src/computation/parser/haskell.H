@@ -211,6 +211,18 @@ struct BuiltinDecl: public Object
     {};
 };
 
+struct StrictValueDecl: public Object
+{
+    expression_ref lhs;
+    expression_ref rhs;
+
+    StrictValueDecl* clone() const { return new StrictValueDecl(*this);}
+    std::string print() const;
+
+    StrictValueDecl() = default;
+    StrictValueDecl(const expression_ref& l, const expression_ref& r): lhs(l), rhs(r) {}
+};
+
 struct ValueDecl: public Object
 {
     expression_ref lhs;

@@ -162,6 +162,15 @@ string TypeDecl::print() const
     return join(var_strings,", ") + " :: " + type.print();
 }
 
+string StrictValueDecl::print() const
+{
+    string result = "! " + lhs.print() + " ";
+    if (not (rhs.is_a<SimpleRHS>() or rhs.is_a<MultiGuardedRHS>()))
+        result += "= ";
+    result += rhs.print();
+    return result;
+}
+
 string ValueDecl::print() const
 {
     string result = lhs.print() + " ";

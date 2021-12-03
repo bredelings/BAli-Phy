@@ -967,18 +967,8 @@ deriv_clause_types: qtycondoc
 
 decl_no_th: sigdecl           {$$ = $1;}
 /* I guess this is a strict let. Code as DeclStrict, rather than StrictPattern, since docs say this is part of the binding, not part of the patter */
-| "!" aexp rhs                {$$ = new expression(AST_node("Decl:Strict"),{($2),$3});}
-
-/* [Joint value/type declarations?] 
- * What is the opt_sig doing here?
- * I'm not seeing these in the 2010 report.
- * If you try 'let x :: Int = 1 in x' you get 'Type signatures are only allowed in patterns with ScopedTypeVariables'
- * GHC Parser.y suggests that you could have (^^) :: Int->Int = ...  But I don't see it.
- */
-| infixexp_top /*opt_sig*/ rhs    {$$ = Haskell::ValueDecl(make_infixexp($1),$2);}
-
-/* | pattern_synonym_decl        {} */
-/* | docdel */
+| "!" aexp rhs                {$$ = Haskell::StrictValueDecl{$2,$3}; }
+| infixexp_top rhs            {$$ = Haskell::ValueDecl(make_infixexp($1),$2);}
 
 decl: decl_no_th              {$$ = $1;}
 /*  | splice_exp */
