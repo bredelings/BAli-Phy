@@ -440,11 +440,6 @@ bool TypeCon::operator<(const TypeCon& tv) const
     return (cmp < 0);
 }
 
-string TypeOfKind::print() const
-{
-    return type.print() + "::" + kind.print();
-}
-
 string TypeApp::print() const
 {
     if (head.is_a<TypeApp>())

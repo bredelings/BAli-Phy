@@ -609,16 +609,6 @@ struct ListType: public Object
     ListType(const Type& t):element_type(t) {};
 };
 
-struct TypeOfKind: public Object
-{
-    Type type;
-    Type kind;
-
-    TypeOfKind* clone() const { return new TypeOfKind(*this);}
-    std::string print() const;
-    TypeOfKind(const Type& t,const Type& k):type(t),kind(k) {}
-};
-
 struct TypeApp: public Object
 {
     Type head;

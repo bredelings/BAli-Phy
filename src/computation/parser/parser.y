@@ -878,7 +878,7 @@ atype: ntgtycon                        {$$ = Haskell::TypeCon({@1,$1});}
 */
 |      "[" ctype "]"                   {$$ = Haskell::ListType{$2}; }
 |      "(" ctype ")"                   {$$ = $2;}
-|      "(" ctype "::" kind ")"         {$$ = Haskell::TypeOfKind($2,$4); }
+/* |      "(" ctype "::" kind ")"         {$$ = Haskell::TypeOfKind($2,$4); } */
 /* Template Haskell */
 
 inst_type: sigtype                     {$$ = $1;}
