@@ -223,12 +223,10 @@
 %type <std::vector<Haskell::Export>> exportlist
 %type <std::vector<Haskell::Export>> exportlist1
 %type <Haskell::Export> export
-%type <std::optional<std::vector<expression_ref>>> export_subspec
-%type <std::vector<expression_ref>> qcnames
-%type <std::vector<expression_ref>> qcnames1
-%type <expression_ref> qcname_ext_w_wildcard
-%type <expression_ref> qcname_ext
-%type <expression_ref> qcname
+%type <std::optional<Haskell::ExportSubSpec>> export_subspec
+%type <std::vector<Located<std::string>>> qcnames
+%type <std::vector<Located<std::string>>> qcnames1
+%type <Located<std::string>> qcname
 
 %type <std::vector<Haskell::ImpDecl>> importdecls
 %type <std::vector<Haskell::ImpDecl>> importdecls_semi
@@ -531,27 +529,21 @@ exportlist: exportlist1               {$$ = $1;}
 exportlist1: exportlist1 "," export   {$$ = $1; $$.push_back($3);}
 |            export                   {$$.push_back($1);}
 
-export: qcname_ext export_subspec     {$$ = Haskell::ExportSymbol{$1, $2}; }
+export: qcname export_subspec         {$$ = Haskell::ExportSymbol{$1, $2}; }
 |       "module" modid                {$$ = Haskell::ExportModule{{@2,$2}}; }
-/* |       "pattern" qcon                {} */
 
 export_subspec: %empty                {}
-|              "(" qcnames ")"        { $$ = $2; }
+|              "(" qcnames ")"        { $$ = Haskell::ExportSubSpecSome{$2}; }
+|              "(" ".." ")"           { $$ = Haskell::ExportSubSpecAll(); }
 
 qcnames: %empty    {}
 |        qcnames1  {$$ = $1;}
 
-qcnames1 : qcnames1 "," qcname_ext_w_wildcard "," {$$ = $1; $$.push_back($3);}
-|          qcname_ext_w_wildcard              {$$.push_back($1);}
+qcnames1 : qcnames1 "," qcname        {$$ = $1; $$.push_back($3);}
+|          qcname                     {$$.push_back($1);}
 
-qcname_ext_w_wildcard: qcname_ext    {$$ = $1;}
-| ".."                               {}
-
-qcname_ext: qcname                   {$$ = $1;}
-|           "type" oqtycon           {}
-
-qcname: qvar                         {$$ = AST_node("qvar",$1); }
-|       oqtycon_no_varcon            {$$ = AST_node("qvar",$1); }
+qcname: qvar                          { $$ = {@1,$1}; }
+|       oqtycon_no_varcon             { $$ = {@1,$1}; }
 
 /* ------------- Import Declarations ----------------------------- */
 
@@ -587,6 +579,8 @@ maybeas:  "as" modid           { $$ = $2; }
 
 maybeimpspec: impspec          { $$ = $1; }
 |             %empty           { }
+
+/* Since we can't have `module name` in an IMPORT list, maybe we should a different type here...*/
 
 impspec: "(" exportlist ")"           { $$ = Haskell::ImpSpec{false, $2}; }
 |        "hiding" "(" exportlist ")"  { $$ = Haskell::ImpSpec{true,  $3}; }

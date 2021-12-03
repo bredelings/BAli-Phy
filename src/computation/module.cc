@@ -251,7 +251,7 @@ bool contains_import(const Haskell::Export& e, const string& name)
         throw myexception()<<"found "<<em->print()<<" in import list!";
 
     auto es = std::get_if<Haskell::ExportSymbol>(&e);
-    auto s_name = es->symbol.as_<AST_node>().value;
+    auto s_name = unloc(es->symbol);
 
     return s_name == name;
 }
@@ -284,7 +284,7 @@ void Module::import_module(const Program& P, const module_import& I)
             if (auto e = std::get_if<Haskell::ExportModule>(&s))
                 throw myexception()<<"module "<<I.name<<": found "<<e->print()<<" in import list!";
             auto e = std::get_if<Haskell::ExportSymbol>(&s);
-            auto s_name = e->symbol.as_<AST_node>().value;
+            auto s_name = unloc(e->symbol);
 
             if (m2_exports.count(s_name))
             {
@@ -541,7 +541,7 @@ void Module::perform_exports()
         {
             if (auto e = std::get_if<Haskell::ExportSymbol>(&ex))
             {
-                string qvarid = e->symbol.as_<AST_node>().value; // This ignores export subspec - see grammar.
+                string qvarid = unloc(e->symbol); // This ignores export subspec - see grammar.
                 if (aliases.count(qvarid))
                     export_symbol(lookup_symbol(qvarid));
                 else if (type_aliases.count(qvarid))

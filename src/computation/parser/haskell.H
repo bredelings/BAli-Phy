@@ -781,10 +781,28 @@ struct IfExp: public Object
         { }
 };
 
+struct ExportSubSpecSome
+{
+    std::vector<Located<std::string>> names;
+    std::string print() const;
+};
+
+struct ExportSubSpecAll
+{
+    std::string print() const;
+};
+
+struct ExportSubSpec: public std::variant<ExportSubSpecSome, ExportSubSpecAll>
+{
+    std::string print() const;
+
+    using variant::variant;
+};
+
 struct ExportSymbol
 {
-    expression_ref symbol;
-    std::optional<std::vector<expression_ref>> subspec;
+    Located<std::string> symbol;
+    std::optional<ExportSubSpec> subspec;
     std::string print() const;
 };
 

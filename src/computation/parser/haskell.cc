@@ -37,15 +37,30 @@ string show_instance_header(const Context& context, const string& name, const ve
     return join(ss, " ");
 }
 
+string ExportSubSpecSome::print() const
+{
+    vector<string> ns;
+    for(auto& name: names)
+        ns.push_back( unloc(name) ) ;
+    return " (" + join(ns, ", ") + ")";
+}
+
+string ExportSubSpecAll::print() const
+{
+    return "(..)";
+}
+
+string ExportSubSpec::print() const
+{
+    return std::visit([](auto&& x) {return x.print();}, (const std::variant<ExportSubSpecSome,ExportSubSpecAll>&)(*this));
+}
+
 string ExportSymbol::print() const
 {
     auto result = symbol.print();
     if (subspec)
     {
-        vector<string> ss;
-        for(auto& s: *subspec)
-            ss.push_back(s.print());
-        result += " (" + join(ss, ", ") + ")";
+        result += " " + subspec->print();
     }
     return result;
 };
