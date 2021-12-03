@@ -38,7 +38,6 @@ typedef expression_ref Type;
 typedef expression_ref Pattern;
 typedef expression_ref Expression;
 
-
 struct Var: public Object
 {
     Located<std::string> name;
@@ -55,6 +54,16 @@ struct Var: public Object
 
     Var(const Located<std::string>& s):name(s) {}
     Var(const Located<std::string>& s, const Type& t):name(s),type(t) {}
+};
+
+struct Con: public Object
+{
+    Located<std::string> name;
+
+    Con* clone() const { return new Con(*this);}
+    std::string print() const;
+
+    Con(const Located<std::string>& s):name(s) {}
 };
 
 struct TypeVar: public Object

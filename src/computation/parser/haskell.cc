@@ -329,6 +329,11 @@ string ListType::print() const
     return "[" + element_type.print() + "]";
 }
 
+string Con::print() const
+{
+    return unloc(name);
+}
+
 string Var::print() const
 {
     return unloc(name);
