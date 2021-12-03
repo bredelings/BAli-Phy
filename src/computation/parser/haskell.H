@@ -9,23 +9,31 @@
 #include "located.H"
 
 /*
-  - redo infix handling... maybe an infix node is either an (SimpleInfixExp Exp) or an (InfixOpExp (InfixExp) Located<string> Exp)?
+  - stop using Var for constructors
+    + issue: if a constructor isn't fully applied, we need to translate it to a var( )!
+  - make a local fixity environment for use in infix handling.
+  - rewrite infix handling (and add an Infix object)
     + there's a problem handling infix expressions of size 1?
-  - convert function declarations into something that uses Match, like in the static-semantics.pdf
-  - just use Located<string> where we are using Haskell::Var now?
-    + then convert to Haskell::Var and Haskell::Con in rename?
-  - make an expression type.
-  - make a Type type.
+    + fixities wouldn't be used after rename.
+    + is fixity a property of objects, again?
+  - convert patterns expression into pattern AST nodes, like TuplePattern
+  - make a ConstructorPattern ast node.
+  - have rename convert function decls to Matchs
+  - make PatLHS and FunLHS nodes for the AST (?)
+  - combine rename_infix( ) with rename( )
+  - divide value declarations into binding groups inside rename.
+    + maybe rename should return the free vars in each expression, partly for this reason?
+  - stop translating Var to var and Con to constructor in the renamer -> do this in desugar instead.
+    + convert patterns to use Haskell::Var
+    + use WildcardPattern instead of var(-1)
+  - figure out how to make recursive variant types for e.g. Exp, Type, Pattern
     + pvariant<TypeVar, TypeCon, TypeApp, TupleType, ListType, StrictLazyType, ConstrainedType, ForallType>
-    + we need a recursive wrapper that is implemented as a wrapper over shared_ptr<T>
-    + then we can declara the pvariant type BEFORE the types that it contains.
-    + alternative, we use a variant that stores objects on the heap.
-  - convert patterns to use Haskell::Var
-  - use WildcardPattern instead of var(-1)
-  - stop using Haskell::Var for constructors -- make a Haskell::Con
-    + but... infixexp can have both a Var or a Con as an operator.
-    + maybe we need to just read Names, and then convert them to Var or Con in rename?
-    + look at Parser.y
+  - eliminate final AST_node objects
+  - put module content into a structure (with matches for function declarations).
+  - split the symbol table into a symbol (variable) table, a constructor table, and a type table
+    + then maybe split the type table into a class table?
+    + but maybe we need a tycon table see whether a tycon is a type, newtype, data, or class?
+
   - make sections use Name for the op?
   - make infix use Name for the op?
 */
