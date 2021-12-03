@@ -9,6 +9,17 @@
 #include "located.H"
 
 /*
+  - redo infix handling... maybe an infix node is either an (SimpleInfixExp Exp) or an (InfixOpExp (InfixExp) Located<string> Exp)?
+    + there's a problem handling infix expressions of size 1?
+  - convert function declarations into something that uses Match, like in the static-semantics.pdf
+  - just use Located<string> where we are using Haskell::Var now?
+    + then convert to Haskell::Var and Haskell::Con in rename?
+  - make an expression type.
+  - make a Type type.
+    + pvariant<TypeVar, TypeCon, TypeApp, TupleType, ListType, StrictLazyType, ConstrainedType, ForallType>
+    + we need a recursive wrapper that is implemented as a wrapper over shared_ptr<T>
+    + then we can declara the pvariant type BEFORE the types that it contains.
+    + alternative, we use a variant that stores objects on the heap.
   - convert patterns to use Haskell::Var
   - use WildcardPattern instead of var(-1)
   - stop using Haskell::Var for constructors -- make a Haskell::Con
@@ -17,7 +28,6 @@
     + look at Parser.y
   - make sections use Name for the op?
   - make infix use Name for the op?
-  - remove make_foo( ) functions from parser.y in honor of Haskell::Foo( ).
 */
 
 namespace Haskell
