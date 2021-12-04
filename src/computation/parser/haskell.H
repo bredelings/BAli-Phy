@@ -18,6 +18,9 @@
     + there's a problem handling infix expressions of size 1?
     + fixities wouldn't be used after rename.
     + is fixity a property of objects, again?
+  - instead of fetching a symbol for each op, just get its fixity
+    + this should make introducing a fixity environment easier
+    + however, we need the symbol name to complain if we have (.. op -e) and op has precedence >= 6
 
   - convert patterns expression into pattern AST nodes, like TuplePattern
     + qual: bindpat "<-" exp
