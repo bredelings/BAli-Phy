@@ -35,6 +35,9 @@
   - have rename convert pat decls to a PatDecl
 
   - combine rename_infix( ) with rename( )
+    + currently we create symbol info between the two.
+    + is this equivalent to creating some name  environments, like tc_envs, and tc_bndrs
+    + currently many of our rename_foo functions return a bound_var_info, which is much like a name environment.
 
   - divide value declarations into binding groups inside rename.
     + renaming expressions needs to return free variables, so we can compute the dependence structure
