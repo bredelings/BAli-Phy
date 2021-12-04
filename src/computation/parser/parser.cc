@@ -2902,7 +2902,7 @@ namespace yy {
 
   case 184: // rhs: "=" exp wherebinds
 #line 977 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Haskell::SimpleRHS{{yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ()};}
+                              {yylhs.value.as < expression_ref > () = Haskell::SimpleRHS({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ());}
 #line 2907 "parser.cc"
     break;
 
@@ -3358,7 +3358,7 @@ namespace yy {
 
   case 268: // alt_rhs: "->" exp wherebinds
 #line 1156 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = Haskell::SimpleRHS{{yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ()};}
+                                 {yylhs.value.as < expression_ref > () = Haskell::SimpleRHS({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ());}
 #line 3363 "parser.cc"
     break;
 

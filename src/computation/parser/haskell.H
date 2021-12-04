@@ -17,6 +17,10 @@
     + fixities wouldn't be used after rename.
     + is fixity a property of objects, again?
   - convert patterns expression into pattern AST nodes, like TuplePattern
+    + qual: bindpat "<-" exp
+    + alt:  pat alt_rhs
+    + decl_no_th: infixexp_top rhs <| we'd have to fix this up after we figure out if infixexp_top is a pattern
+    + decl_no_th: ! aexp rhs       <| ditto, I think?
   - make a ConstructorPattern ast node.
   - have rename convert function decls to Matchs
   - make PatLHS and FunLHS nodes for the AST (?)
@@ -749,27 +753,17 @@ struct GuardedRHS
 struct MultiGuardedRHS: public Object
 {
     std::vector<GuardedRHS> guarded_rhss;
-    std::optional<Located<Haskell::Decls>> decls;
+    // We might need to make this into a shared_ptr< > to avoid an infinite structure.
+    std::optional<Located<Decls>> decls;
 
     MultiGuardedRHS* clone() const { return new MultiGuardedRHS(*this);}
     std::string print() const;
 
     MultiGuardedRHS(const std::vector<GuardedRHS>& v):guarded_rhss(v) {}
-    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const std::optional<Located<Haskell::Decls>>& ds):guarded_rhss(v), decls(ds) {}
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const std::optional<Located<Decls>>& ds):guarded_rhss(v), decls(ds) {}
 };
 
-
-struct SimpleRHS: public Object
-{
-    Located<expression_ref> body;
-    std::optional<Located<Haskell::Decls>> decls;
-
-    SimpleRHS* clone() const { return new SimpleRHS(*this);}
-    std::string print() const;
-
-    SimpleRHS(const Located<expression_ref>& b): body(b) {}
-    SimpleRHS(const Located<expression_ref>& b, const std::optional<Located<Haskell::Decls>>& ds): body(b), decls(ds) {}
-};
+MultiGuardedRHS SimpleRHS(const Located<expression_ref>&, const std::optional<Located<Decls>>& ds = {});
 
 struct LambdaExp: public Object
 {

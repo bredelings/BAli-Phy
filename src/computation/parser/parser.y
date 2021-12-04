@@ -974,7 +974,7 @@ decl: decl_no_th              {$$ = $1;}
 /*  | splice_exp */
 
 // rhs is like altrhs but with = instead of ->
-rhs: "=" exp wherebinds       {$$ = Haskell::SimpleRHS{{@2,$2},$3};}
+rhs: "=" exp wherebinds       {$$ = Haskell::SimpleRHS({@2,$2},$3);}
 |    gdrhs wherebinds         {$$ = Haskell::MultiGuardedRHS{$1,$2};}
 
 gdrhs: gdrhs gdrh             {$$ = $1; $$.push_back($2);}
@@ -1153,7 +1153,7 @@ alts1: alts1 ";" alt             {$$ = $1; $$.push_back($3);}
 
 alt:   pat alt_rhs               {$$ = Located<Haskell::Alt>{@1+@2,{$1,$2}};}
 
-alt_rhs: "->" exp wherebinds     {$$ = Haskell::SimpleRHS{{@2,$2},$3};}
+alt_rhs: "->" exp wherebinds     {$$ = Haskell::SimpleRHS({@2,$2},$3);}
 |        gdpats   wherebinds     {$$ = Haskell::MultiGuardedRHS{$1,$2};}
 
 gdpats: gdpats gdpat             {$$ = $1; $$.push_back($2);}

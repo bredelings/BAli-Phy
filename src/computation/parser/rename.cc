@@ -445,14 +445,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         std::abort();
     }
-    else if (E.is_a<Haskell::SimpleRHS>())
-    {
-        auto R = E.as_<Haskell::SimpleRHS>();
-        unloc(R.body) = rename_infix(m, unloc(R.body));
-        if (R.decls)
-            unloc(*R.decls) = rename_infix(m, unloc(*R.decls));
-        return R;
-    }
     else if (E.is_a<Haskell::MultiGuardedRHS>())
     {
         auto R = E.as_<Haskell::MultiGuardedRHS>();
@@ -1688,17 +1680,6 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     }
     else if (E.is_a<Haskell::WildcardPattern>())
         return var(-1);
-    else if (E.is_a<Haskell::SimpleRHS>())
-    {
-        auto bound2 = bound;
-
-        auto R = E.as_<Haskell::SimpleRHS>();
-        if (R.decls)
-            add(bound2, rename_decls(unloc(*R.decls), bound));
-        unloc(R.body) = rename(unloc(R.body), bound2);
-
-        return R;
-    }
     else if (E.is_a<Haskell::MultiGuardedRHS>())
     {
         auto bound2 = bound;

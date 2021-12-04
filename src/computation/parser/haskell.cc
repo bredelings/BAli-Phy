@@ -3,6 +3,7 @@
 
 using std::string;
 using std::vector;
+using std::optional;
 
 namespace Haskell
 {
@@ -165,7 +166,8 @@ string TypeDecl::print() const
 string StrictValueDecl::print() const
 {
     string result = "! " + lhs.print() + " ";
-    if (not (rhs.is_a<SimpleRHS>() or rhs.is_a<MultiGuardedRHS>()))
+    // This happens for desugared decls which are just var = body
+    if (not rhs.is_a<MultiGuardedRHS>())
         result += "= ";
     result += rhs.print();
     return result;
@@ -174,7 +176,8 @@ string StrictValueDecl::print() const
 string ValueDecl::print() const
 {
     string result = lhs.print() + " ";
-    if (not (rhs.is_a<SimpleRHS>() or rhs.is_a<MultiGuardedRHS>()))
+    // This happens for desugared decls which are just var = body
+    if (not rhs.is_a<MultiGuardedRHS>())
         result += "= ";
     result += rhs.print();
     return result;
@@ -534,7 +537,10 @@ std::string GuardedRHS::print() const
     vector<string> guard_string;
     for(auto& guard: guards)
         guard_string.push_back(guard.print());
-    return "| " + join(guard_string,", ") + " = " + body.print();
+    string result = " = " + body.print();
+    if (not guard_string.empty())
+        result = "| " + join(guard_string,", ") + result;
+    return result;
 }
 
 std::string FieldDecl::print() const
@@ -650,13 +656,9 @@ std::string MultiGuardedRHS::print() const
     return result;
 }
 
-std::string SimpleRHS::print() const
+MultiGuardedRHS SimpleRHS(const Located<expression_ref>& body, const optional<Located<Decls>>& decls)
 {
-    string result = "= " + unloc(body).print();
-
-    if (decls)
-        result = result + "where " + unloc(*decls).print();
-    return result;
+    return MultiGuardedRHS( {{{},unloc(body)}}   ,decls);
 }
 
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t)

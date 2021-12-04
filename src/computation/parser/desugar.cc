@@ -214,18 +214,7 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
     //       - if we do this we would put back the ralt rule in the parser
     //         and extract the (ralt: -> exp| gdpats) rule from alt_rhs again.
 
-    if (E.is_a<Haskell::SimpleRHS>())
-    {
-        auto& R = E.as_<Haskell::SimpleRHS>();
-
-	auto rhs = failable_expression(desugar(unloc(R.body)));
-
-	if (R.decls)
-	    rhs.add_binding(desugar_decls_to_cdecls(unloc(*R.decls)));
-
-	return rhs;
-    }
-    else if (E.is_a<Haskell::MultiGuardedRHS>())
+    if (E.is_a<Haskell::MultiGuardedRHS>())
     {
         auto& R = E.as_<Haskell::MultiGuardedRHS>();
 	vector<failable_expression> gdrhs;
