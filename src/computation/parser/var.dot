@@ -1,0 +1,121 @@
+digraph "token0" {
+graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];
+node [fontname=Arial, style=filled, height=0, width=0, shape=box];
+edge [style="setlinewidth(2)"];
+
+opt_tyconsig -> gtycon [color=purple]
+
+tyapp -> tyvarop [color=blue]
+tyapp -> qtyconop [color=purple]
+
+atype -> ntgtycon [color=purple]
+atype -> tyvar [color=blue]
+
+sig_vars -> var [color=green]
+
+aexp -> qvar [color=green]
+
+aexp2 -> qvar [color=green]
+aexp2 -> qcon [color=red]
+
+qop -> qvarop [color=green]
+
+qopm -> qvaropm [color=green]
+
+qcon -> gen_qcon
+qcon -> sysdcon
+
+gen_qcon -> qconid
+gen_qcon -> qconsym
+
+con -> conid
+con -> consym
+con -> sysdcon
+
+sysdcon -> sysdcon_no_list
+
+conop -> consym
+conop -> conid
+
+qconop -> qconsym [color=red]
+qconop -> qconid  [color=red]
+
+gtycon -> ntgtycon
+ntgtycon -> oqtycon
+oqtycon -> qtycon
+oqtycon_no_varcon -> qtycon
+oqtycon_no_varcon -> QCONSYM
+oqtycon_no_varcon -> CONSYM
+
+qtyconop -> qtyconsym
+qtyconop -> qtycon
+
+qtycon -> QCONID
+qtycon -> tycon
+
+tycon -> CONID
+
+qtyconsym -> QCONSYM
+qtyconsym -> QVARSYM
+qtyconsym -> tyconsym
+
+tyconsym -> CONSYM
+tyconsym -> VARSYM
+
+op -> varop
+op -> conop
+
+varop -> varsym
+varop -> varid
+
+qvarop -> qvarsym
+qvarop -> qvarid
+
+qvaropm -> qvarsym_no_minus
+qvaropm -> qvarid
+
+tv_bndr -> tyvar
+
+tyvar -> tyvarid
+tyvarop -> tyvarid
+
+tyvarid -> VARID
+tyvarid -> special_id
+
+var -> varid
+var -> varsym
+
+qcname -> qvar
+qcname -> oqtycon_no_varcon
+
+qvar -> qvarid
+qvar -> varsym
+qvar -> qvarsym1
+
+qvarid -> varid
+
+varid -> VARID
+
+qvarsym -> varsym
+qvarsym -> qvarsym1
+
+qvarsym_no_minus -> varsym_no_minus
+
+qvarsym1 -> QVARSYM
+
+varsym -> varsym_no_minus
+
+varsym_no_minus -> VARSYM
+varsym_no_minus -> special_sym
+
+qconid -> conid
+qconid -> QCONID
+
+conid -> CONID
+
+qconsym -> consym
+qconsym -> QCONSYM
+
+consym -> CONSYM
+
+}
