@@ -1066,8 +1066,9 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 	if (top)
 	    id = m.name + "." + id;
         else
+        {
             // FIXME - since we are creating an ID here, we should give it a unique id!
-            ;
+        }
 	unloc(V.name) = id;
 
         // We translate to a var( ) here!
