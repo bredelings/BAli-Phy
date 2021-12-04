@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <map>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
 #include "located.H"
@@ -11,29 +12,39 @@
 /*
   - stop using Var for constructors
     + issue: if a constructor isn't fully applied, we need to translate it to a var( )!
+
   - make a local fixity environment for use in infix handling.
   - rewrite infix handling (and add an Infix object)
     + there's a problem handling infix expressions of size 1?
     + fixities wouldn't be used after rename.
     + is fixity a property of objects, again?
+
   - convert patterns expression into pattern AST nodes, like TuplePattern
     + qual: bindpat "<-" exp
     + alt:  pat alt_rhs
     + decl_no_th: infixexp_top rhs <| we'd have to fix this up after we figure out if infixexp_top is a pattern
     + decl_no_th: ! aexp rhs       <| ditto, I think?
   - make a ConstructorPattern ast node.
-  - have rename convert function decls to Matchs
-  - make PatLHS and FunLHS nodes for the AST (?)
+
+  - put module content into a structure (with matches for function declarations).
+  - separate value decls from type and class decls before rename... I think?
+  - have rename convert function decls to Matches in a FunDecl
+  - have rename convert pat decls to a PatDecl
+
   - combine rename_infix( ) with rename( )
+
   - divide value declarations into binding groups inside rename.
-    + maybe rename should return the free vars in each expression, partly for this reason?
+    + renaming expressions needs to return free variables, so we can compute the dependence structure
+    + in some cases, we currently return the BOUND variables -- for example when we analyze decls.
+      how does ghc handle this?
+
   - stop translating Var to var and Con to constructor in the renamer -> do this in desugar instead.
     + convert patterns to use Haskell::Var
     + use WildcardPattern instead of var(-1)
   - figure out how to make recursive variant types for e.g. Exp, Type, Pattern
-    + pvariant<TypeVar, TypeCon, TypeApp, TupleType, ListType, StrictLazyType, ConstrainedType, ForallType>
+    + rvariant<TypeVar, TypeCon, TypeApp, TupleType, ListType, StrictLazyType, ConstrainedType, ForallType>
+    + we could also do (i) shared_ptr<variant< >>, (ii) variant<shared_ptr<Args>...>, or (ii) shared_ptr<Type>
   - eliminate final AST_node objects
-  - put module content into a structure (with matches for function declarations).
   - split the symbol table into a symbol (variable) table, a constructor table, and a type table
     + then maybe split the type table into a class table?
     + but maybe we need a tycon table see whether a tycon is a type, newtype, data, or class?
@@ -253,6 +264,9 @@ struct StrictValueDecl: public Object
     StrictValueDecl() = default;
     StrictValueDecl(const expression_ref& l, const expression_ref& r): lhs(l), rhs(r) {}
 };
+
+// Where do we make ValueDecl's with an rhs that is a plain expression?
+// Can we just make a SimpleValueDecl from the plain expression using a SimpleRHS?
 
 struct ValueDecl: public Object
 {
@@ -889,6 +903,63 @@ struct Module
 };
 
 Type make_arrow_type(const Type& t1, const Type& t2);
+
+// which one of these handles variables?
+// probably FunDecl
+
+struct PatDecl
+{
+    Pattern lhs;
+    MultiGuardedRHS rhs;
+};
+
+struct MRule
+{
+    std::vector<Pattern> pats;
+    MultiGuardedRHS rhs;
+};
+
+struct Match
+{
+    std::vector<MRule> rules;
+};
+
+struct FunDecl
+{
+    Var v;
+    Match match;
+};
+
+struct BindingGroup
+{
+    std::vector<expression_ref> decls;
+    // Can these apply to variables in pattern decls?
+    std::map<std::string, Type> signatures;
+};
+
+struct TypeOrClassGroup
+{
+    std::vector<expression_ref> decls;
+};
+
+// We can initially put all the type or class decls into a single group.
+// We can initially put all value decls into a single group.
+
+struct ModuleDecls
+{
+    std::vector<TypeOrClassGroup> type_decls;
+
+    std::optional<DefaultDecl> default_decl;
+
+    std::vector<FixityDecl> fixity_decls;
+
+    std::vector<BindingGroup> value_binds;
+
+    std::vector<BuiltinDecl> builtin_decls;
+
+    ModuleDecls() = default;
+    ModuleDecls(const Decls& topdecls);
+};
 
 }
 

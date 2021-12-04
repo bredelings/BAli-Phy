@@ -698,6 +698,54 @@ string IfExp::print() const
     return "if " + condition.print() + " then " + true_branch.print() + " else " + false_branch.print();
 }
 
+ModuleDecls::ModuleDecls(const Decls& topdecls)
+{
+    type_decls.push_back( {} );
+    value_binds.push_back( {} );
+
+    // If instance functions (and presumably default methods) are mutually recursive with value decls,
+    // where do we put them?  And how do we handle them?
+
+    // Do we just append different uniques to them and dump them all in the valuedecl pool?
+    // I suppose we can separate the instance objects (which contain methods) from the method function definitions.
+
+    for(auto& decl: topdecls)
+    {
+	if (decl.is_a<ValueDecl>())
+            value_binds[0].decls.push_back(decl);
+	if (auto b = decl.to<BuiltinDecl>())
+            builtin_decls.push_back(*b);
+        else if (auto ts = decl.to<TypeDecl>())
+        {
+            for(auto& var: ts->vars)
+            {
+                auto& name = unloc(var.name);
+                if (value_binds[0].signatures.count(name))
+                    throw myexception()<<"Second signature for var '"<<name<<"' at location "<<*var.name.loc;
+                else
+                    value_binds[0].signatures.insert({name, ts->type});
+            }
+        }
+        else if (decl.is_a<ClassDecl>())
+            type_decls[0].decls.push_back(decl);
+        else if (decl.is_a<TypeSynonymDecl>())
+            type_decls[0].decls.push_back(decl);
+        else if (decl.is_a<DataOrNewtypeDecl>())
+            type_decls[0].decls.push_back(decl);
+        else if (decl.is_a<InstanceDecl>())
+            type_decls[0].decls.push_back(decl);
+        else if (auto f = decl.to<FixityDecl>())
+            fixity_decls.push_back(*f);
+        else if (auto d = decl.to<DefaultDecl>())
+        {
+            if (default_decl)
+                throw myexception()<<"Found more than 1 default declaration in module!";
+            else
+                default_decl = *d;
+        }
+    }
+}
+
 
 Type make_arrow_type(const Type& t1, const Type& t2)
 {
