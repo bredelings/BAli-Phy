@@ -938,14 +938,14 @@ struct FunDecl
 
 struct BindingGroup
 {
-    std::vector<expression_ref> decls;
+    Decls decls;
     // Can these apply to variables in pattern decls?
     std::map<std::string, Type> signatures;
 };
 
 struct TypeOrClassGroup
 {
-    std::vector<expression_ref> decls;
+    Decls decls;
 };
 
 // We can initially put all the type or class decls into a single group.
