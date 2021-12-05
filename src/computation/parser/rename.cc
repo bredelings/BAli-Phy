@@ -866,6 +866,17 @@ Haskell::Decls rename(const Module& m, Haskell::Decls decls)
     return decls;
 }
 
+Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls decls)
+{
+    renamer_state Rn(m);
+
+    decls.type_decls[0].decls = Rn.rename_type_decls(decls.type_decls[0].decls);
+
+    return decls;
+}
+
+
+
 bound_var_info renamer_state::find_vars_in_patterns(const vector<expression_ref>& pats, bool top)
 {
     bound_var_info bound;
