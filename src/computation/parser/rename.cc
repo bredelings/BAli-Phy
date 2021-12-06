@@ -690,6 +690,7 @@ struct renamer_state
     Haskell::ValueDecl rename_decl_(Haskell::ValueDecl decl, const bound_var_info& bound);
     Haskell::ValueDecl rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound);
+    bound_var_info rename_value_decls_lhs(Haskell::Decls& decls, bool top);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound);
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound);
 
@@ -1276,14 +1277,9 @@ bound_var_info renamer_state::rename_decl_head(Haskell::FixityDecl& decl, bool i
     return bound_names;
 }
 
-bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_var_info& bound)
+bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool top)
 {
     if (not decls.size()) return {};
-
-    auto bound2 = bound;
-    bool top = decls.is_top_level();
-
-    // Find all the names bound HERE, versus in individual decls.
 
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
@@ -1309,51 +1305,38 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
             add(bound_names, rename_decl_head(F, top));
             decl = F;
         }
-        else if (decl.is_a<Haskell::ClassDecl>())
+    }
+
+    return bound_names;
+}
+
+bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_var_info& bound)
+{
+    if (not decls.size()) return {};
+
+    auto bound2 = bound;
+    bool top = decls.is_top_level();
+
+    // Find all the names bound HERE, versus in individual decls.
+
+    // The idea is that we only add unqualified names here, and they shadow
+    // qualified names.
+    bound_var_info bound_names;
+    add(bound_names, rename_value_decls_lhs(decls, top));
+    for(auto& decl: decls)
+    {
+        if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
             if (C.decls)
-            {
-                for(auto& cdecl: unloc(*C.decls))
-                {
-                    // This is like a rename_decl_head on decls...
-                    // Unlike the full rename_decls, this only updates the lhs names.
-                    if (cdecl.is_a<Haskell::ValueDecl>())
-                    {
-                        auto D = cdecl.as_<Haskell::ValueDecl>(); 
-                        add(bound_names,rename_decl_head(D, true));
-                        cdecl = D;
-                    }
-                    else if (cdecl.is_a<Haskell::TypeDecl>())
-                    {
-                        auto T = cdecl.as_<Haskell::TypeDecl>();
-                        add(bound_names,rename_decl_head(T, true));
-                        T.type = rename_type(T.type);
-                        cdecl = T;
-                    }
-                    else if (cdecl.is_a<Haskell::FixityDecl>())
-                    {
-                        auto F = cdecl.as_<Haskell::FixityDecl>();
-                        add(bound_names, rename_decl_head(F, top));
-                        cdecl = F;
-                    }
-                }
-            }
+                add(bound_names, rename_value_decls_lhs(unloc(*C.decls), top));
             decl = C;
         }
         else if (decl.is_a<Haskell::InstanceDecl>())
         {
             auto I = decl.as_<Haskell::InstanceDecl>();
             if (I.decls)
-            {
-                for(auto& idecl: unloc(*I.decls))
-                    if (idecl.is_a<Haskell::ValueDecl>())
-                    {
-                        auto D = idecl.as_<Haskell::ValueDecl>();
-                        rename_decl_head(D, false);
-                        idecl = D;
-                    }
-            }
+                add(bound_names, rename_value_decls_lhs(unloc(*I.decls), top));
             decl = I;
         }
     }
