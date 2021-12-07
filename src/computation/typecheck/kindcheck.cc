@@ -489,9 +489,9 @@ void kindchecker_state::kind_check_type_class(const Haskell::ClassDecl& class_de
     {
         for(auto& decl: unloc(*class_decl.decls))
         {
-            if (decl.is_a<Haskell::TypeDecl>())
+            if (decl.is_a<Haskell::SignatureDecl>())
             {
-                auto& TD = decl.as_<Haskell::TypeDecl>();
+                auto& TD = decl.as_<Haskell::SignatureDecl>();
                 kind_check_class_method_type(TD.type);
             }
         }
@@ -601,9 +601,9 @@ map<string, Haskell::Type> kindchecker_state::type_check_type_class(const Haskel
     {
         for(auto& decl: unloc(*class_decl.decls))
         {
-            if (decl.is_a<Haskell::TypeDecl>())
+            if (decl.is_a<Haskell::SignatureDecl>())
             {
-                auto& TD = decl.as_<Haskell::TypeDecl>();
+                auto& TD = decl.as_<Haskell::SignatureDecl>();
                 Haskell::Type method_type = type_check_class_method_type(TD.type, constraint);
                 if (class_typevars.size())
                     method_type = add_forall_vars(class_typevars, method_type);

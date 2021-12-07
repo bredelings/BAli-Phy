@@ -229,16 +229,16 @@ struct TypedExp: public Object
     TypedExp(const Expression& e, const Type& t): exp(e), type(t) {}
 };
 
-struct TypeDecl: public Object
+struct SignatureDecl: public Object
 {
     std::vector<Haskell::Var> vars;
     Type type;
 
-    TypeDecl* clone() const { return new TypeDecl(*this);}
+    SignatureDecl* clone() const { return new SignatureDecl(*this);}
     std::string print() const;
 
-    TypeDecl() = default;
-    TypeDecl(const std::vector<Haskell::Var>& vs, const Type& t): vars(vs), type(t) {}
+    SignatureDecl() = default;
+    SignatureDecl(const std::vector<Haskell::Var>& vs, const Type& t): vars(vs), type(t) {}
 };
 
 struct BuiltinDecl: public Object

@@ -685,7 +685,7 @@ struct renamer_state
     bound_var_info rename_patterns(vector<expression_ref>& pat, bool top = false);
     bound_var_info rename_pattern(expression_ref& pat, bool top = false);
     bound_var_info rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level);
-    bound_var_info rename_decl_head(Haskell::TypeDecl& decl, bool is_top_level);
+    bound_var_info rename_decl_head(Haskell::SignatureDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level);
     Haskell::ValueDecl rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
     Haskell::ValueDecl rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
@@ -1243,7 +1243,7 @@ bound_var_info renamer_state::rename_decl_head(Haskell::ValueDecl& decl, bool is
     return bound_names;
 }
 
-bound_var_info renamer_state::rename_decl_head(Haskell::TypeDecl& decl, bool is_top_level)
+bound_var_info renamer_state::rename_decl_head(Haskell::SignatureDecl& decl, bool is_top_level)
 {
     bound_var_info bound_names;
 
@@ -1292,12 +1292,12 @@ bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool
             add(bound_names, rename_decl_head(D, top));
             decl = D;
         }
-        else if (decl.is_a<Haskell::TypeDecl>())
+        else if (decl.is_a<Haskell::SignatureDecl>())
         {
-            auto T = decl.as_<Haskell::TypeDecl>();
-            add(bound_names, rename_decl_head(T, top));
-            T.type = rename_type(T.type);
-            decl = T;
+            auto S = decl.as_<Haskell::SignatureDecl>();
+            add(bound_names, rename_decl_head(S, top));
+            S.type = rename_type(S.type);
+            decl = S;
         }
         else if (decl.is_a<Haskell::FixityDecl>())
         {

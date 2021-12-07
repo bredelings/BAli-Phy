@@ -992,7 +992,7 @@ gdrh: "|" guardquals "=" exp  {$$ = Haskell::GuardedRHS{$2,$4};}
    GHC did this to allow expressions like f :: Int -> Int = ...
    See note [Joint value/type declarations]. */
 
-sigdecl: sig_vars "::" sigtypedoc { $$ = Haskell::TypeDecl{$1,$3}; }
+sigdecl: sig_vars "::" sigtypedoc { $$ = Haskell::SignatureDecl{$1,$3}; }
 |        infix prec ops  { $$ = Haskell::FixityDecl{$1,$2,$3}; }
 /* |        pattern_synonym_sig {}  */
 |        "{-# COMPLETE" con_list opt_tyconsig "#-}" {}

@@ -695,9 +695,9 @@ set<string> free_type_names(const Haskell::ClassDecl& class_decl)
     {
         for(auto& decl: unloc(*class_decl.decls))
         {
-            if (decl.is_a<Haskell::TypeDecl>())
+            if (decl.is_a<Haskell::SignatureDecl>())
             {
-                auto& T = decl.as_<Haskell::TypeDecl>();
+                auto& T = decl.as_<Haskell::SignatureDecl>();
                 add(tvars, free_type_names_from_type(T.type));
             }
         }
@@ -1834,9 +1834,9 @@ void Module::add_local_symbols()
             {
                 for(auto& decl: unloc(*Class.decls))
                 {
-                    if (decl.is_a<Haskell::TypeDecl>())
+                    if (decl.is_a<Haskell::SignatureDecl>())
                     {
-                        auto& T = decl.as_<Haskell::TypeDecl>();
+                        auto& T = decl.as_<Haskell::SignatureDecl>();
                         for(auto& var: T.vars)
                         {
                             def_type_class_method(unloc(var.name), Class.name);

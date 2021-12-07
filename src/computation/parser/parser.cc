@@ -2932,7 +2932,7 @@ namespace yy {
 
   case 189: // sigdecl: sig_vars "::" sigtypedoc
 #line 995 "parser.y"
-                                  { yylhs.value.as < expression_ref > () = Haskell::TypeDecl{yystack_[2].value.as < std::vector<Haskell::Var> > (),yystack_[0].value.as < expression_ref > ()}; }
+                                  { yylhs.value.as < expression_ref > () = Haskell::SignatureDecl{yystack_[2].value.as < std::vector<Haskell::Var> > (),yystack_[0].value.as < expression_ref > ()}; }
 #line 2937 "parser.cc"
     break;
 

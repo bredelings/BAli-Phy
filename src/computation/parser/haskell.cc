@@ -154,7 +154,7 @@ string FixityDecl::print() const
     return result;
 }
 
-string TypeDecl::print() const
+string SignatureDecl::print() const
 {
     vector<string> var_strings;
     for(auto& var: vars)
@@ -715,7 +715,7 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
             value_binds[0].decls.push_back(decl);
 	if (auto b = decl.to<BuiltinDecl>())
             builtin_decls.push_back(*b);
-        else if (auto ts = decl.to<TypeDecl>())
+        else if (auto ts = decl.to<SignatureDecl>())
         {
             for(auto& var: ts->vars)
             {
