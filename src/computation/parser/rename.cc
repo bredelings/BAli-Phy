@@ -687,7 +687,7 @@ struct renamer_state
     bound_var_info rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::TypeDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level);
-    Haskell::ValueDecl rename_decl_(Haskell::ValueDecl decl, const bound_var_info& bound);
+    Haskell::ValueDecl rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
     Haskell::ValueDecl rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound);
     bound_var_info rename_value_decls_lhs(Haskell::Decls& decls, bool top);
@@ -1135,7 +1135,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 }
 
 // FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
-Haskell::ValueDecl renamer_state::rename_decl_(Haskell::ValueDecl decl, const bound_var_info& bound)
+Haskell::ValueDecl renamer_state::rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound)
 {
     assert(not is_apply(decl.lhs.head()));
 
@@ -1190,7 +1190,7 @@ Haskell::ValueDecl renamer_state::rename_decl(Haskell::ValueDecl decl, const bou
     if (not is_pattern_binding(decl))
     {
 	assert(bound.count(f.as_<var>().name));
-        return rename_decl_(decl, bound);
+        return rename_fun_decl(decl, bound);
     }
     else
     {
@@ -1334,9 +1334,10 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
         }
         else if (decl.is_a<Haskell::InstanceDecl>())
         {
+            // Actually, only class decls should put method name into scope...
             auto I = decl.as_<Haskell::InstanceDecl>();
             if (I.decls)
-                add(bound_names, rename_value_decls_lhs(unloc(*I.decls), top));
+                rename_value_decls_lhs(unloc(*I.decls), false);
             decl = I;
         }
     }
@@ -1354,7 +1355,7 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
             {
                 for(auto& cdecl: unloc(*C.decls))
                     if (cdecl.is_a<Haskell::ValueDecl>())
-                        cdecl = rename_decl(cdecl.as_<Haskell::ValueDecl>(), bound2);
+                        cdecl = rename_fun_decl(cdecl.as_<Haskell::ValueDecl>(), bound2);
             }
             decl = C;
         }
@@ -1368,7 +1369,7 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
                 // What SHOULD they resolve to?
                 for(auto& idecl: unloc(*I.decls))
                     if (idecl.is_a<Haskell::ValueDecl>())
-                        idecl = rename_decl_(idecl.as_<Haskell::ValueDecl>(), bound2);
+                        idecl = rename_fun_decl(idecl.as_<Haskell::ValueDecl>(), bound2);
             }
             decl = I;
         }
