@@ -862,7 +862,67 @@ Haskell::Decls rename(const Module& m, Haskell::Decls decls)
 
     decls = Rn.rename_type_decls(decls);
 
-    Rn.rename_decls(decls,{});
+
+    // Find all the names bound HERE, versus in individual decls.
+
+    // The idea is that we only add unqualified names here, and they shadow
+    // qualified names.
+    bound_var_info bound_names;
+    add(bound_names, Rn.rename_value_decls_lhs(decls, true));
+    for(auto& decl: decls)
+    {
+        if (decl.is_a<Haskell::ClassDecl>())
+        {
+            auto C = decl.as_<Haskell::ClassDecl>();
+            if (C.decls)
+                add(bound_names, Rn.rename_value_decls_lhs(unloc(*C.decls), true));
+            decl = C;
+        }
+        else if (decl.is_a<Haskell::InstanceDecl>())
+        {
+            // Actually, only class decls should put method name into scope...
+            auto I = decl.as_<Haskell::InstanceDecl>();
+            if (I.decls)
+                Rn.rename_value_decls_lhs(unloc(*I.decls), false);
+            decl = I;
+        }
+    }
+
+    // Replace ids with dummies
+    for(auto& decl: decls)
+    {
+        if (decl.is_a<Haskell::ClassDecl>())
+        {
+            auto C = decl.as_<Haskell::ClassDecl>();
+            if (C.decls)
+            {
+                for(auto& cdecl: unloc(*C.decls))
+                    if (cdecl.is_a<Haskell::ValueDecl>())
+                        cdecl = Rn.rename_fun_decl(cdecl.as_<Haskell::ValueDecl>(), bound_names);
+            }
+            decl = C;
+        }
+        if (decl.is_a<Haskell::InstanceDecl>())
+        {
+            auto I = decl.as_<Haskell::InstanceDecl>();
+            if (I.decls)
+            {
+                // Names for method instances are for defining dictionary entries,
+                //   so they don't resolve to `Module.name`.
+                // What SHOULD they resolve to?
+                for(auto& idecl: unloc(*I.decls))
+                    if (idecl.is_a<Haskell::ValueDecl>())
+                        idecl = Rn.rename_fun_decl(idecl.as_<Haskell::ValueDecl>(), bound_names);
+            }
+            decl = I;
+        }
+    }
+
+    for(auto& decl: decls)
+    {
+	if (decl.is_a<Haskell::ValueDecl>())
+	    decl = Rn.rename_decl(decl.as_<Haskell::ValueDecl>(), bound_names);
+    }
 
     return decls;
 }
@@ -1323,24 +1383,6 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
     // qualified names.
     bound_var_info bound_names;
     add(bound_names, rename_value_decls_lhs(decls, top));
-    for(auto& decl: decls)
-    {
-        if (decl.is_a<Haskell::ClassDecl>())
-        {
-            auto C = decl.as_<Haskell::ClassDecl>();
-            if (C.decls)
-                add(bound_names, rename_value_decls_lhs(unloc(*C.decls), top));
-            decl = C;
-        }
-        else if (decl.is_a<Haskell::InstanceDecl>())
-        {
-            // Actually, only class decls should put method name into scope...
-            auto I = decl.as_<Haskell::InstanceDecl>();
-            if (I.decls)
-                rename_value_decls_lhs(unloc(*I.decls), false);
-            decl = I;
-        }
-    }
 
     // Replace ids with dummies
     add(bound2, bound_names);
@@ -1348,31 +1390,6 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
     {
 	if (decl.is_a<Haskell::ValueDecl>())
 	    decl = rename_decl(decl.as_<Haskell::ValueDecl>(), bound2);
-        if (decl.is_a<Haskell::ClassDecl>())
-        {
-            auto C = decl.as_<Haskell::ClassDecl>();
-            if (C.decls)
-            {
-                for(auto& cdecl: unloc(*C.decls))
-                    if (cdecl.is_a<Haskell::ValueDecl>())
-                        cdecl = rename_fun_decl(cdecl.as_<Haskell::ValueDecl>(), bound2);
-            }
-            decl = C;
-        }
-        if (decl.is_a<Haskell::InstanceDecl>())
-        {
-            auto I = decl.as_<Haskell::InstanceDecl>();
-            if (I.decls)
-            {
-                // Names for method instances are for defining dictionary entries,
-                //   so they don't resolve to `Module.name`.
-                // What SHOULD they resolve to?
-                for(auto& idecl: unloc(*I.decls))
-                    if (idecl.is_a<Haskell::ValueDecl>())
-                        idecl = rename_fun_decl(idecl.as_<Haskell::ValueDecl>(), bound2);
-            }
-            decl = I;
-        }
     }
 
    return bound_names;
