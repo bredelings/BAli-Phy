@@ -83,7 +83,7 @@ failable_expression desugar_state::desugar_gdrh(const Haskell::GuardedRHS& grhs)
         else if (guard.is_a<Haskell::PatQual>())
         {
             auto &PQ = guard.as_<Haskell::PatQual>();
-            auto &pat = PQ.bindpat;
+            auto pat = desugar_pattern(PQ.bindpat);
             auto E = desugar(PQ.exp);
 
             F = case_expression(E,{pat},{F});
@@ -231,6 +231,59 @@ failable_expression desugar_state::desugar_rhs(const expression_ref& E)
     else
 	std::abort();
 }
+
+expression_ref desugar_state::desugar_pattern(const expression_ref & E)
+{
+    if (E.is_a<Haskell::List>())
+    {
+        auto L = E.as_<Haskell::List>();
+        for(auto& element: L.elements)
+            element = desugar_pattern(element);
+        return get_list(L.elements);
+    }
+    else if (E.is_a<Haskell::Tuple>())
+    {
+        auto T = E.as_<Haskell::Tuple>();
+        for(auto& element: T.elements)
+            element = desugar_pattern(element);
+        return get_tuple(T.elements);
+    }
+    else if (auto v = E.to<Haskell::Var>())
+        return var(unloc(v->name));
+    else if (auto c = E.to<Haskell::Con>())
+        return constructor(unloc(c->name), *c->arity);
+    else if (auto c = E.head().to<Haskell::Con>())
+    {
+        auto C = constructor(unloc(c->name), *c->arity);
+        auto pats = E.sub();
+        for(auto& pat: pats)
+            pat = desugar_pattern(pat);
+        return expression_ref(C,pats);
+    }
+    else if (E.is_a<Haskell::WildcardPattern>())
+        return var(-1);
+    else if (E.is_a<Haskell::AsPattern>())
+    {
+        auto& AP = E.as_<Haskell::AsPattern>();
+        return Haskell::AsPattern(desugar_pattern(AP.var), desugar_pattern(AP.pattern));
+    }
+    else if (E.is_a<Haskell::LazyPattern>())
+    {
+        auto LP = E.as_<Haskell::LazyPattern>();
+        return Haskell::LazyPattern(desugar_pattern(LP.pattern));
+    }
+    else if (E.is_a<Haskell::StrictPattern>())
+    {
+        auto SP = E.as_<Haskell::StrictPattern>();
+        SP.pattern = desugar_pattern(SP.pattern);
+        return SP;
+    }
+    else if (E.is_int() or E.is_double() or E.is_char() or E.is_log_double())
+        return E;
+
+    throw myexception()<<"I don't understand pattern '"<<E<<"'";
+}
+
 //TODO: make functions that do e.g.
 //      * desugar_decls -> CDecls
 //      * desugar_decl  -> CDecl
@@ -324,7 +377,8 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
             else if (auto PQ = B.to<Haskell::PatQual>())
             {
-                if (is_irrefutable_pat(PQ->bindpat))
+                auto bindpat = desugar_pattern(PQ->bindpat);
+                if (is_irrefutable_pat(bindpat))
                 {
                     expression_ref f = Haskell::LambdaExp({PQ->bindpat}, L);
                     return desugar( {var("Data.List.concatMap"), f, PQ->exp} );
@@ -337,7 +391,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                     expression_ref rhs1 = Haskell::SimpleRHS({noloc, L});
                     auto decl1 = Haskell::ValueDecl(lhs1, rhs1);
 
-                    expression_ref lhs2 = ok + var(-1);
+                    expression_ref lhs2 = ok + Haskell::WildcardPattern();
                     expression_ref rhs2 = Haskell::SimpleRHS({noloc, Haskell::List({})});
                     auto decl2 = Haskell::ValueDecl(lhs2, rhs2);
 
@@ -366,28 +420,10 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             element = desugar(element);
         return get_tuple(T.elements);
     }
-    else if (E.is_a<Haskell::Var>())
-        std::abort();
-    else if (E.is_a<Haskell::Con>())
-        std::abort();
-    else if (E.is_a<Haskell::WildcardPattern>())
-        return var(-1);
-    else if (E.is_a<Haskell::AsPattern>())
-    {
-        auto& AP = E.as_<Haskell::AsPattern>();
-        return Haskell::AsPattern(AP.var, desugar(AP.pattern));
-    }
-    else if (E.is_a<Haskell::LazyPattern>())
-    {
-        auto LP = E.as_<Haskell::LazyPattern>();
-        return Haskell::LazyPattern(desugar(LP.pattern));
-    }
-    else if (E.is_a<Haskell::StrictPattern>())
-    {
-        auto SP = E.as_<Haskell::StrictPattern>();
-        SP.pattern = desugar(SP.pattern);
-        return SP;
-    }
+    else if (auto v = E.to<Haskell::Var>())
+        return var(unloc(v->name));
+    else if (auto c = E.to<Haskell::Con>())
+        return var(unloc(c->name));
     else if (E.is_a<Haskell::Do>())
     {
         auto stmts = E.as_<Haskell::Do>().stmts.stmts;
@@ -422,24 +458,24 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         else if (first.is_a<Haskell::PatQual>())
         {
             auto& PQ = first.as_<Haskell::PatQual>();
-            expression_ref p = PQ.bindpat;
+            expression_ref p = desugar_pattern(PQ.bindpat);
             expression_ref e = PQ.exp;
             expression_ref qop = var("Compiler.Base.>>=");
 
             if (is_irrefutable_pat(p))
             {
-                expression_ref lambda = Haskell::LambdaExp({p}, do_stmts);
+                expression_ref lambda = Haskell::LambdaExp({PQ.bindpat}, do_stmts);
                 result = {qop,e,lambda};
             }
             else
             {
                 expression_ref ok = get_fresh_var("ok");
-                expression_ref lhs1 = ok + p;
+                expression_ref lhs1 = ok + PQ.bindpat;
                 expression_ref rhs1 = Haskell::SimpleRHS({noloc,do_stmts});
                 auto decl1 = Haskell::ValueDecl(lhs1,rhs1);
 
                 expression_ref fail = {var("Compiler.Base.fail"),"Fail!"};
-                expression_ref lhs2 = ok + var(-1);
+                expression_ref lhs2 = ok + Hs::WildcardPattern();
                 expression_ref rhs2 = Haskell::SimpleRHS({noloc,fail});
                 auto decl2 = Haskell::ValueDecl(lhs2, rhs2);
 
@@ -466,7 +502,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         auto L = E.as_<Haskell::LambdaExp>();
 
         for(auto& arg: L.args)
-            arg = desugar(arg);
+            arg = desugar_pattern(arg);
 
         // 2. Desugar the body, binding vars mentioned in the lambda patterns.
         L.body = desugar(L.body);
@@ -503,7 +539,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         vector<failable_expression> bodies;
         for(const auto& alt: C.alts)
         {
-            patterns.push_back( desugar( unloc(alt).pattern) );
+            patterns.push_back( desugar_pattern( unloc(alt).pattern) );
             bodies.push_back( desugar_rhs(unloc(alt).rhs) );
         }
         return case_expression(obj, patterns, bodies).result(error("case: failed pattern match"));
@@ -512,7 +548,23 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         auto D = E.as_<Haskell::ValueDecl>();
 
-        D.lhs = desugar( D.lhs );      // Desugar list and tuple patterns to constructors.
+        // Desugar list and tuple patterns to constructors.
+        if (is_pattern_binding(D))
+            D.lhs = desugar_pattern( D.lhs );
+        else
+        {
+            auto f = desugar(D.lhs.head());
+            if (D.lhs.size() > 0)
+            {
+                auto args = D.lhs.sub();
+                for(auto& arg: args)
+                    arg = desugar_pattern(arg);
+                D.lhs = expression_ref(f, args);
+            }
+            else
+                D.lhs = f;
+        }
+
         D.rhs = desugar_rhs( D.rhs );
 
         // FIXME: don't desugar a Decl except from Decls
@@ -524,9 +576,10 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         return D;
     }
 
+    auto head = E.head();
     vector<expression_ref> v = E.copy_sub();
 
-    if (E.head().is_a<AST_node>())
+    if (head.is_a<AST_node>())
     {
 	auto& n = E.head().as_<AST_node>();
 	if (n.type == "infixexp")
@@ -538,28 +591,19 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	else if (n.type == "ListComprehension")
             std::abort();
 	else if (n.type == "LeftSection")
-	{
-	    for(auto& e: v)
-		e = desugar(e);
-
-	    return apply_expression(v[1],v[0]);
-	}
+            std::abort();
 	else if (n.type == "RightSection")
-	{
-	    for(auto& e: v)
-		e = desugar(e);
-
-	    auto x = get_fresh_var();
-	    return lambda_quantify(x,apply_expression(apply_expression(v[0],x),v[1]));
-	}
+            std::abort();
     }
-
+    if (auto c = head.to<Hs::Con>())
+        head = constructor(unloc(c->name), *c->arity);
+    
     for(auto& e: v)
 	e = desugar(e);
     if (E.size())
-	return expression_ref{E.head(),v};
+	return expression_ref{head,v};
     else
-	return E;
+	return head;
 }
 
 expression_ref desugar(const Module& m, const expression_ref& E)

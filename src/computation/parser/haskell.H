@@ -89,10 +89,13 @@ struct Con: public Object
 {
     Located<std::string> name;
 
+    std::optional<int> arity;
+
     Con* clone() const { return new Con(*this);}
     std::string print() const;
 
     Con(const Located<std::string>& s):name(s) {}
+    Con(const Located<std::string>& s, int a):name(s),arity(a) {}
 };
 
 struct TypeVar: public Object

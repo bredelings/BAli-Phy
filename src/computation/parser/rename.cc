@@ -604,7 +604,7 @@ Haskell::Decls rename_infix_top(const Module& m, const Haskell::Decls& decls)
                         else
                             f.push_back(Haskell::WildcardPattern());
 
-                    expression_ref pattern = expression_ref{Hs::Con({noloc,ConName}),f};
+                    expression_ref pattern = expression_ref{Hs::Con({noloc,ConName},a),f};
                     expression_ref body = Haskell::SimpleRHS({noloc, name});
                     alts.push_back({noloc,{pattern,body}});
                 }
@@ -1067,11 +1067,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 
     // 1. Handle _
     if (pat.is_a<Haskell::WildcardPattern>())
-    {
-        // FIXME
-	pat = var(-1);
 	return {};
-    }
 
     // 2. Handle ~pat
     if (pat.is_a<Haskell::LazyPattern>())
@@ -1137,7 +1133,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 
         // We translate to a var( ) here!
         // Maybe we should do this during desugaring instead?
-        pat = var(id);
+        pat = V;
 
 	return {id};
     }
@@ -1158,10 +1154,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
             throw myexception()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!";
 
         unloc(C.name) = S.name;
-
-        // We translate to a constructor( ) here!
-        // Maybe we should do this during desugaring instead?
-        auto head = constructor(S.name, S.arity);
+        C.arity = S.arity;
 
         // 8. Rename arguments and accumulate bound variables
         vector<expression_ref> args = pat.copy_sub();
@@ -1180,9 +1173,9 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 
         // 10. Construct the renamed pattern
         if (args.size())
-            pat = expression_ref{head,args};
+            pat = expression_ref{C,args};
         else
-            pat = head;
+            pat = C;
 
         // 11. Return the variables bound
         return bound;
@@ -1200,7 +1193,7 @@ Haskell::ValueDecl renamer_state::rename_fun_decl(Haskell::ValueDecl decl, const
     assert(not is_apply(decl.lhs.head()));
 
     auto f = decl.lhs.head();
-    assert(f.is_a<var>());
+    assert(f.is_a<Hs::Var>());
 
     // 1. Discover variables bound in the LHS function arguments.
     // We discover variables bound by the decls group in rename_decls( ), before we call this.
@@ -1224,7 +1217,7 @@ Haskell::ValueDecl renamer_state::rename_fun_decl(Haskell::ValueDecl decl, const
     else
         decl.lhs = f;
 
-    assert(decl.lhs.head().is_a<var>());
+    assert(decl.lhs.head().is_a<Hs::Var>());
 
     // 3. Rename the body given variables bound in the lhs
     decl.rhs = rename(decl.rhs, bound2);
@@ -1249,7 +1242,7 @@ Haskell::ValueDecl renamer_state::rename_decl(Haskell::ValueDecl decl, const bou
     //      for all decls in the decls group.
     if (not is_pattern_binding(decl))
     {
-	assert(bound.count(f.as_<var>().name));
+	assert(bound.count( unloc(f.as_<Hs::Var>().name) ) );
         return rename_fun_decl(decl, bound);
     }
     else
@@ -1448,7 +1441,7 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
         rec_tuple = vars[0];
     else
     {
-        rec_tuple = Hs::Con({noloc, tuple_head(vars.size()).name()});
+        rec_tuple = Hs::Con({noloc, tuple_head(vars.size()).name()},vars.size());
         for(auto var: vars)
             rec_tuple = {rec_tuple, var};
     }
@@ -1581,13 +1574,14 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 
         // Local vars bind id's tighter than global vars.
         if (includes(bound,name))
-            return var(name);
+            return E;
         // If the variable is free, then try top-level names.
         else if (m.is_declared(name))
         {
             const symbol_info& S = m.lookup_symbol(name);
             string qualified_name = S.name;
-            return var(qualified_name);
+            name = qualified_name;
+            return V;
         }
         else
         {
@@ -1610,7 +1604,8 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
             const symbol_info& S = m.lookup_symbol(name);
             name = S.name; // use the qualified name
             // We return a reference to a lambda function, in case the constructor isn't fully applied.
-            return var(S.name);
+            C.arity = S.arity;
+            return C;
         }
         else
         {
@@ -1691,7 +1686,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         std::abort();
     }
     else if (E.is_a<Haskell::WildcardPattern>())
-        return var(-1);
+        return E;
     else if (E.is_a<Haskell::MultiGuardedRHS>())
     {
         auto bound2 = bound;
@@ -1780,18 +1775,20 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     //
     // We don't do this for single-argument constructors. By leaving them as vars, we avoid
     //   getting many let-allocated copies of (), [], True, False, Nothing, etc.
-    if (is_apply(E.head()) and v[0].is_a<var>() and is_haskell_con_name(v[0].as_<var>().name))
+    if (is_apply(E.head()) and v[0].is_a<Hs::Con>())
     {
-	auto& id = v[0].as_<var>().name;
-	const symbol_info& S = m.lookup_resolved_symbol(id);
-	assert(S.symbol_type == constructor_symbol);
-	// If the constructor is fully applied, then do the apply now -- this might avoid some rounds of simplification?
+        auto C = v[0].as_<Hs::Con>();
+        auto& id = unloc(C.name);
+        const symbol_info& S = m.lookup_resolved_symbol(id);
+        assert(S.symbol_type == constructor_symbol);
+        // If the constructor is fully applied, then do the apply now -- this might avoid some rounds of simplification?
 	if (v.size() == 1 + S.arity)
 	{
-	    shift_list(v);
-	    assert(v.size());
-	    auto head  = constructor(S.name, S.arity);
-	    return expression_ref{head,v};
+            shift_list(v);
+            assert(v.size());
+            id = S.name;
+            C.arity = S.arity;
+            return expression_ref{C,v};
 	}
     }
 
