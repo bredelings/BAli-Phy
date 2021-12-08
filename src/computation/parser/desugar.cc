@@ -206,30 +206,18 @@ CDecls desugar_state::desugar_decls_to_cdecls(const Haskell::Decls& D)
     return translate_decls_to_cdecls(desugar_decls(D));
 }
 
-failable_expression desugar_state::desugar_rhs(const expression_ref& E)
+failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
 {
-    // FIXME - the fact that we are duplicating the add_binding( )
-    //         suggests that the binding should be on another level of the AST
-    //         with an optional Decls
-    //       - if we do this we would put back the ralt rule in the parser
-    //         and extract the (ralt: -> exp| gdpats) rule from alt_rhs again.
+    vector<failable_expression> gdrhs;
+    for(auto& guarded_rhs: R.guarded_rhss)
+        gdrhs.push_back(desugar_gdrh(guarded_rhs));
 
-    if (E.is_a<Haskell::MultiGuardedRHS>())
-    {
-        auto& R = E.as_<Haskell::MultiGuardedRHS>();
-	vector<failable_expression> gdrhs;
-	for(auto& guarded_rhs: R.guarded_rhss)
-	    gdrhs.push_back(desugar_gdrh(guarded_rhs));
+    auto rhs = fold(gdrhs);
 
-	auto rhs = fold(gdrhs);
+    if (R.decls)
+        rhs.add_binding(desugar_decls_to_cdecls(unloc(*R.decls)));
 
-	if (R.decls)
-	    rhs.add_binding(desugar_decls_to_cdecls(unloc(*R.decls)));
-
-	return rhs;
-    }
-    else
-	std::abort();
+    return rhs;
 }
 
 expression_ref desugar_state::desugar_pattern(const expression_ref & E)
@@ -505,9 +493,9 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             arg = desugar_pattern(arg);
 
         // 2. Desugar the body, binding vars mentioned in the lambda patterns.
-        L.body = desugar(L.body);
+        auto rhs = desugar_rhs(L.body);
 
-        return def_function({{L.args, failable_expression(L.body)}}, error("lambda: pattern match failure"));
+        return def_function({{L.args, rhs}}, error("lambda: pattern match failure"));
     }
     else if (E.is_a<Haskell::LetExp>())
     {
@@ -565,7 +553,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                 D.lhs = f;
         }
 
-        D.rhs = desugar_rhs( D.rhs );
+        D.rhs = desugar_rhs( D.rhs.as_<Hs::MultiGuardedRHS>() );
 
         // FIXME: don't desugar a Decl except from Decls
         // Pattern bindings should be processed before we get here!

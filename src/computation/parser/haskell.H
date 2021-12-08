@@ -792,12 +792,12 @@ struct CaseExp: public Object
 struct LambdaExp: public Object
 {
     std::vector<Pattern> args;
-    expression_ref body;
+    MultiGuardedRHS body;
 
     LambdaExp* clone() const {return new LambdaExp(*this);}
     std::string print() const;
 
-    LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b): args(ps), body(b) {};
+    LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b): args(ps), body(SimpleRHS({noloc,b})) {};
 };
 
 
