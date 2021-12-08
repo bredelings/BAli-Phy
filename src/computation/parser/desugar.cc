@@ -118,7 +118,7 @@ CDecls desugar_state::parse_fundecls(Haskell::Decls v)
 	// Skip pattern bindings
 	if (is_pattern_binding(D))
 	{
-            expression_ref pat = lhs;
+            expression_ref pat = desugar_pattern(lhs);
             var z = get_fresh_var();
             if (pat.is_a<Haskell::AsPattern>())
             {
@@ -506,9 +506,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         auto D = E.as_<Haskell::ValueDecl>();
 
         // Desugar list and tuple patterns to constructors.
-        if (is_pattern_binding(D))
-            D.lhs = desugar_pattern( D.lhs );
-        else
+        if (not is_pattern_binding(D))
         {
             auto f = desugar(D.lhs.head());
             if (D.lhs.size() > 0)
