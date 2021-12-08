@@ -104,7 +104,7 @@ CDecls desugar_state::parse_fundecls(Haskell::Decls v)
 	    continue;
 
         auto D = decl.as_<Haskell::ValueDecl>();
-	auto lhs = desugar(D.lhs);
+	auto lhs = D.lhs;
 	auto rhs_fail = desugar_rhs(D.rhs);
 
         // If its just a variable with no args, don't call def_function because ... its complicated?
