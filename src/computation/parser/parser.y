@@ -385,7 +385,7 @@
 %type <std::vector<Located<Haskell::Alt>>> alts
 %type <std::vector<Located<Haskell::Alt>>> alts1
 %type <Located<Haskell::Alt>> alt
-%type <expression_ref> alt_rhs
+%type <Hs::MultiGuardedRHS> alt_rhs
 %type <std::vector<Haskell::GuardedRHS>> gdpats
  /* %type <expression_ref> ifgdpats */
 %type <Haskell::GuardedRHS> gdpat
@@ -1154,7 +1154,7 @@ alts1: alts1 ";" alt             {$$ = $1; $$.push_back($3);}
 alt:   pat alt_rhs               {$$ = Located<Haskell::Alt>{@1+@2,{$1,$2}};}
 
 alt_rhs: "->" exp wherebinds     {$$ = Haskell::SimpleRHS({@2,$2},$3);}
-|        gdpats   wherebinds     {$$ = Haskell::MultiGuardedRHS{$1,$2};}
+|        gdpats   wherebinds     {$$ = Haskell::MultiGuardedRHS($1,$2);}
 
 gdpats: gdpats gdpat             {$$ = $1; $$.push_back($2);}
 |       gdpat                    {$$.push_back($1);}

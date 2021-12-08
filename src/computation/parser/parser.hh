@@ -488,26 +488,29 @@ namespace yy {
       // tv_bndr
       char dummy15[sizeof (Haskell::TypeVar)];
 
+      // alt_rhs
+      char dummy16[sizeof (Hs::MultiGuardedRHS)];
+
       // alt
-      char dummy16[sizeof (Located<Haskell::Alt>)];
+      char dummy17[sizeof (Located<Haskell::Alt>)];
 
       // decllist
       // binds
-      char dummy17[sizeof (Located<Haskell::Decls>)];
+      char dummy18[sizeof (Located<Haskell::Decls>)];
 
       // qcname
-      char dummy18[sizeof (Located<std::string>)];
+      char dummy19[sizeof (Located<std::string>)];
 
       // optqualified
-      char dummy19[sizeof (bool)];
+      char dummy20[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy20[sizeof (char)];
+      char dummy21[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy21[sizeof (double)];
+      char dummy22[sizeof (double)];
 
       // topdecl
       // cl_decl
@@ -539,7 +542,6 @@ namespace yy {
       // aexp2
       // texp
       // list
-      // alt_rhs
       // pat
       // bindpat
       // apat
@@ -548,43 +550,43 @@ namespace yy {
       // qop
       // qopm
       // literal
-      char dummy22[sizeof (expression_ref)];
+      char dummy23[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy23[sizeof (float)];
+      char dummy24[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy24[sizeof (int)];
+      char dummy25[sizeof (int)];
 
       // export_subspec
-      char dummy25[sizeof (std::optional<Haskell::ExportSubSpec>)];
+      char dummy26[sizeof (std::optional<Haskell::ExportSubSpec>)];
 
       // maybeimpspec
-      char dummy26[sizeof (std::optional<Haskell::ImpSpec>)];
+      char dummy27[sizeof (std::optional<Haskell::ImpSpec>)];
 
       // wherebinds
-      char dummy27[sizeof (std::optional<Located<Haskell::Decls>>)];
+      char dummy28[sizeof (std::optional<Located<Haskell::Decls>>)];
 
       // prec
-      char dummy28[sizeof (std::optional<int>)];
+      char dummy29[sizeof (std::optional<int>)];
 
       // maybeas
-      char dummy29[sizeof (std::optional<std::string>)];
+      char dummy30[sizeof (std::optional<std::string>)];
 
       // maybeexports
-      char dummy30[sizeof (std::optional<std::vector<Haskell::Export>>)];
+      char dummy31[sizeof (std::optional<std::vector<Haskell::Export>>)];
 
       // tycl_hdr
-      char dummy31[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy32[sizeof (std::pair<Haskell::Context,expression_ref>)];
 
       // body
       // body2
       // top
       // top1
-      char dummy32[sizeof (std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>)];
+      char dummy33[sizeof (std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>)];
 
       // "VARID"
       // "CONID"
@@ -638,42 +640,42 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy33[sizeof (std::string)];
+      char dummy34[sizeof (std::string)];
 
       // constrs
       // constrs1
-      char dummy34[sizeof (std::vector<Haskell::Constructor>)];
+      char dummy35[sizeof (std::vector<Haskell::Constructor>)];
 
       // exportlist
       // exportlist1
-      char dummy35[sizeof (std::vector<Haskell::Export>)];
+      char dummy36[sizeof (std::vector<Haskell::Export>)];
 
       // fielddecls
       // fielddecls1
-      char dummy36[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy37[sizeof (std::vector<Haskell::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy37[sizeof (std::vector<Haskell::GuardedRHS>)];
+      char dummy38[sizeof (std::vector<Haskell::GuardedRHS>)];
 
       // importdecls
       // importdecls_semi
-      char dummy38[sizeof (std::vector<Haskell::ImpDecl>)];
+      char dummy39[sizeof (std::vector<Haskell::ImpDecl>)];
 
       // tv_bndrs
       // forall
-      char dummy39[sizeof (std::vector<Haskell::TypeVar>)];
+      char dummy40[sizeof (std::vector<Haskell::TypeVar>)];
 
       // sig_vars
-      char dummy40[sizeof (std::vector<Haskell::Var>)];
+      char dummy41[sizeof (std::vector<Haskell::Var>)];
 
       // alts
       // alts1
-      char dummy41[sizeof (std::vector<Located<Haskell::Alt>>)];
+      char dummy42[sizeof (std::vector<Located<Haskell::Alt>>)];
 
       // qcnames
       // qcnames1
-      char dummy42[sizeof (std::vector<Located<std::string>>)];
+      char dummy43[sizeof (std::vector<Located<std::string>>)];
 
       // decls
       // sigtypes1
@@ -691,10 +693,10 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy43[sizeof (std::vector<expression_ref>)];
+      char dummy44[sizeof (std::vector<expression_ref>)];
 
       // ops
-      char dummy44[sizeof (std::vector<std::string>)];
+      char dummy45[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1314,6 +1316,10 @@ namespace yy {
         value.move< Haskell::TypeVar > (std::move (that.value));
         break;
 
+      case symbol_kind::S_alt_rhs: // alt_rhs
+        value.move< Hs::MultiGuardedRHS > (std::move (that.value));
+        break;
+
       case symbol_kind::S_alt: // alt
         value.move< Located<Haskell::Alt> > (std::move (that.value));
         break;
@@ -1371,7 +1377,6 @@ namespace yy {
       case symbol_kind::S_aexp2: // aexp2
       case symbol_kind::S_texp: // texp
       case symbol_kind::S_list: // list
-      case symbol_kind::S_alt_rhs: // alt_rhs
       case symbol_kind::S_pat: // pat
       case symbol_kind::S_bindpat: // bindpat
       case symbol_kind::S_apat: // apat
@@ -1778,6 +1783,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Haskell::TypeVar& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Hs::MultiGuardedRHS&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Hs::MultiGuardedRHS& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2278,6 +2297,10 @@ switch (yykind)
         value.template destroy< Haskell::TypeVar > ();
         break;
 
+      case symbol_kind::S_alt_rhs: // alt_rhs
+        value.template destroy< Hs::MultiGuardedRHS > ();
+        break;
+
       case symbol_kind::S_alt: // alt
         value.template destroy< Located<Haskell::Alt> > ();
         break;
@@ -2335,7 +2358,6 @@ switch (yykind)
       case symbol_kind::S_aexp2: // aexp2
       case symbol_kind::S_texp: // texp
       case symbol_kind::S_list: // list
-      case symbol_kind::S_alt_rhs: // alt_rhs
       case symbol_kind::S_pat: // pat
       case symbol_kind::S_bindpat: // bindpat
       case symbol_kind::S_apat: // apat
@@ -5261,6 +5283,10 @@ switch (yykind)
         value.copy< Haskell::TypeVar > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_alt_rhs: // alt_rhs
+        value.copy< Hs::MultiGuardedRHS > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_alt: // alt
         value.copy< Located<Haskell::Alt> > (YY_MOVE (that.value));
         break;
@@ -5318,7 +5344,6 @@ switch (yykind)
       case symbol_kind::S_aexp2: // aexp2
       case symbol_kind::S_texp: // texp
       case symbol_kind::S_list: // list
-      case symbol_kind::S_alt_rhs: // alt_rhs
       case symbol_kind::S_pat: // pat
       case symbol_kind::S_bindpat: // bindpat
       case symbol_kind::S_apat: // apat
@@ -5593,6 +5618,10 @@ switch (yykind)
         value.move< Haskell::TypeVar > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_alt_rhs: // alt_rhs
+        value.move< Hs::MultiGuardedRHS > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_alt: // alt
         value.move< Located<Haskell::Alt> > (YY_MOVE (s.value));
         break;
@@ -5650,7 +5679,6 @@ switch (yykind)
       case symbol_kind::S_aexp2: // aexp2
       case symbol_kind::S_texp: // texp
       case symbol_kind::S_list: // list
-      case symbol_kind::S_alt_rhs: // alt_rhs
       case symbol_kind::S_pat: // pat
       case symbol_kind::S_bindpat: // bindpat
       case symbol_kind::S_apat: // apat
@@ -5896,7 +5924,7 @@ switch (yykind)
 
 
 } // yy
-#line 5900 "parser.hh"
+#line 5928 "parser.hh"
 
 
 

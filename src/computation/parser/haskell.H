@@ -565,6 +565,36 @@ struct Tuple: public Object
     Tuple(const std::vector<expression_ref>& es): elements(es) {}
 };
 
+struct GuardedRHS
+{
+    std::vector<expression_ref> guards;
+    expression_ref body;
+
+    std::string print() const;
+
+    GuardedRHS() = default;
+    GuardedRHS(const std::vector<expression_ref> v, const expression_ref& e)
+        :guards(v),
+         body(e)
+    { }
+};
+
+struct MultiGuardedRHS: public Object
+{
+    std::vector<GuardedRHS> guarded_rhss;
+    // We might need to make this into a shared_ptr< > to avoid an infinite structure.
+    std::optional<Located<Decls>> decls;
+
+    MultiGuardedRHS* clone() const { return new MultiGuardedRHS(*this);}
+    std::string print() const;
+
+    MultiGuardedRHS() = default;
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v):guarded_rhss(v) {}
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const std::optional<Located<Decls>>& ds):guarded_rhss(v), decls(ds) {}
+};
+
+MultiGuardedRHS SimpleRHS(const Located<expression_ref>&, const std::optional<Located<Decls>>& ds = {});
+
 struct Stmts: public Object
 {
     std::vector<expression_ref> stmts;
@@ -732,12 +762,12 @@ struct MDo: public Object
 struct Alt
 {
     Pattern pattern;
-    expression_ref rhs;
+    MultiGuardedRHS rhs;
 
     std::string print() const;
 
     Alt() = default;
-    Alt(const Pattern& p, const expression_ref& r):pattern(p), rhs(r) {};
+    Alt(const Pattern& p, const MultiGuardedRHS& r):pattern(p), rhs(r) {};
 };
 
 struct Alts: public std::vector<Located<Alt>>
@@ -758,35 +788,6 @@ struct CaseExp: public Object
 
     CaseExp(const Expression& o, Alts as): object(o), alts(as) {}
 };
-
-struct GuardedRHS
-{
-    std::vector<expression_ref> guards;
-    expression_ref body;
-
-    std::string print() const;
-
-    GuardedRHS() = default;
-    GuardedRHS(const std::vector<expression_ref> v, const expression_ref& e)
-        :guards(v),
-         body(e)
-    { }
-};
-
-struct MultiGuardedRHS: public Object
-{
-    std::vector<GuardedRHS> guarded_rhss;
-    // We might need to make this into a shared_ptr< > to avoid an infinite structure.
-    std::optional<Located<Decls>> decls;
-
-    MultiGuardedRHS* clone() const { return new MultiGuardedRHS(*this);}
-    std::string print() const;
-
-    MultiGuardedRHS(const std::vector<GuardedRHS>& v):guarded_rhss(v) {}
-    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const std::optional<Located<Decls>>& ds):guarded_rhss(v), decls(ds) {}
-};
-
-MultiGuardedRHS SimpleRHS(const Located<expression_ref>&, const std::optional<Located<Decls>>& ds = {});
 
 struct LambdaExp: public Object
 {

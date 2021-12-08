@@ -294,12 +294,30 @@ expression_ref unapply(expression_ref E)
 // What are the rules for well-formed patterns?
 // Only one op can be a non-constructor (in decl patterns), and that op needs to end up at the top level.
 
+expression_ref rename_infix(const Module& m, const expression_ref& E);
+
 Haskell::Decls rename_infix(const Module& m, Haskell::Decls decls)
 {
     for(auto& e: decls)
         e = rename_infix(m, e);
 
     return decls;
+}
+
+Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R)
+{
+    for(auto& guarded_rhs: R.guarded_rhss)
+    {
+        for(auto& guard: guarded_rhs.guards)
+            guard = rename_infix(m, guard);
+
+        guarded_rhs.body = rename_infix(m, guarded_rhs.body);
+    }
+
+    if (R.decls)
+        unloc(*R.decls) = rename_infix(m, unloc(*R.decls));
+
+    return R;
 }
 
 expression_ref rename_infix(const Module& m, const expression_ref& E)
@@ -445,22 +463,9 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         std::abort();
     }
-    else if (E.is_a<Haskell::MultiGuardedRHS>())
+    else if (auto R = E.to<Haskell::MultiGuardedRHS>())
     {
-        auto R = E.as_<Haskell::MultiGuardedRHS>();
-
-        for(auto& guarded_rhs: R.guarded_rhss)
-        {
-            for(auto& guard: guarded_rhs.guards)
-                guard = rename_infix(m, guard);
-
-            guarded_rhs.body = rename_infix(m, guarded_rhs.body);
-        }
-
-        if (R.decls)
-            unloc(*R.decls) = rename_infix(m, unloc(*R.decls));
-
-        return R;
+        return rename_infix(m, *R);
     }
     else if (E.is_a<Haskell::LambdaExp>())
     {
@@ -605,22 +610,22 @@ Haskell::Decls rename_infix_top(const Module& m, const Haskell::Decls& decls)
                             f.push_back(Haskell::WildcardPattern());
 
                     expression_ref pattern = expression_ref{Hs::Con({noloc,ConName},a),f};
-                    expression_ref body = Haskell::SimpleRHS({noloc, name});
-                    alts.push_back({noloc,{pattern,body}});
+                    auto rhs = Haskell::SimpleRHS({noloc, name});
+                    alts.push_back({noloc,{pattern,rhs}});
                 }
                 {
                     expression_ref pattern = Haskell::WildcardPattern();
                     expression_ref body = error(field_name+": pattern match failure");
-                    body = Haskell::SimpleRHS({noloc,body});
-                    alts.push_back({noloc,{pattern,body}});
+                    auto rhs = Haskell::SimpleRHS({noloc,body});
+                    alts.push_back({noloc,{pattern,rhs}});
                 }
 
                 Hs::Var x({noloc,"#0"}); // FIXME??
                 expression_ref body = Haskell::CaseExp(x,Haskell::Alts(alts));
                 body = Haskell::LambdaExp({x},body);
-                body = Haskell::SimpleRHS({noloc,body});
+                auto rhs = Haskell::SimpleRHS({noloc,body});
 
-                v.push_back(Haskell::ValueDecl(name,body));
+                v.push_back(Haskell::ValueDecl(name,rhs));
             }
         }
     }
@@ -693,6 +698,7 @@ struct renamer_state
     bound_var_info rename_value_decls_lhs(Haskell::Decls& decls, bool top);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound);
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound);
+    Hs::MultiGuardedRHS rename(Hs::MultiGuardedRHS R, const bound_var_info& bound);
 
     Haskell::Decls rename_type_decls(Haskell::Decls decls);
     Haskell::InstanceDecl rename(Haskell::InstanceDecl);
@@ -1497,6 +1503,25 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
 	std::abort();
 }
 
+Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var_info& bound)
+{
+    auto bound2 = bound;
+
+    if (R.decls)
+        add(bound2, rename_decls(unloc(*R.decls), bound));
+
+    for(auto& guarded_rhs: R.guarded_rhss)
+    {
+        auto bound3 = bound2;
+        for(auto& guard: guarded_rhs.guards)
+            add(bound3, rename_stmt(guard, bound3));
+
+        guarded_rhs.body = rename(guarded_rhs.body, bound3);
+    }
+
+    return R;
+}
+
 expression_ref renamer_state::rename(const expression_ref& E, const bound_var_info& bound)
 {
     if (E.is_a<Haskell::List>())
@@ -1688,24 +1713,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     else if (E.is_a<Haskell::WildcardPattern>())
         return E;
     else if (E.is_a<Haskell::MultiGuardedRHS>())
-    {
-        auto bound2 = bound;
-
-        auto R = E.as_<Haskell::MultiGuardedRHS>();
-        if (R.decls)
-            add(bound2, rename_decls(unloc(*R.decls), bound));
-
-        for(auto& guarded_rhs: R.guarded_rhss)
-        {
-            auto bound3 = bound2;
-            for(auto& guard: guarded_rhs.guards)
-                add(bound3, rename_stmt(guard, bound3));
-
-            guarded_rhs.body = rename(guarded_rhs.body, bound3);
-        }
-
-        return R;
-    }
+        return rename(E.as_<Hs::MultiGuardedRHS>(), bound);
     else if (E.is_a<Haskell::LambdaExp>())
     {
         auto L = E.as_<Haskell::LambdaExp>();
