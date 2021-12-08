@@ -630,13 +630,13 @@ std::string DataOrNewtypeDecl::print() const
 
 std::string MultiGuardedRHS::print() const
 {
-    string result = "= ";
+    vector<string> ss;
     for(auto& guarded_rhs: guarded_rhss)
-        result += guarded_rhs.print() + "\n";
-
+        ss.push_back(guarded_rhs.print());
     if (decls)
-        result = result + "where " + unloc(*decls).print();
-    return result;
+        ss.push_back("where " + unloc(*decls).print());
+
+    return join(ss, "\n");
 }
 
 MultiGuardedRHS SimpleRHS(const Located<expression_ref>& body, const optional<Located<Decls>>& decls)
