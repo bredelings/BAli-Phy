@@ -626,7 +626,7 @@ struct SimpleQual: public Object
 
 struct PatQual: public Object
 {
-    expression_ref bindpat;
+    Pattern bindpat;
     expression_ref exp;
     PatQual* clone() const { return new PatQual(*this);}
     std::string print() const;
@@ -651,7 +651,7 @@ struct WildcardPattern: public Object
 
 struct LazyPattern: public Object
 {
-    expression_ref pattern;
+    Pattern pattern;
     LazyPattern* clone() const { return new LazyPattern(*this);}
     std::string print() const;
     LazyPattern(const expression_ref& p):pattern(p) {}
@@ -659,7 +659,7 @@ struct LazyPattern: public Object
 
 struct StrictPattern: public Object
 {
-    expression_ref pattern;
+    Pattern pattern;
     StrictPattern* clone() const { return new StrictPattern(*this);}
     std::string print() const;
     StrictPattern(const expression_ref& p):pattern(p) {}
@@ -668,7 +668,7 @@ struct StrictPattern: public Object
 struct AsPattern: public Object
 {
     expression_ref var;      // FIXME: change to a located ID after we stop changing the type from ID to var.
-    expression_ref pattern;
+    Pattern pattern;
 
     AsPattern* clone() const { return new AsPattern(*this);}
     std::string print() const;

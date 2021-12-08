@@ -18,7 +18,7 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/bool.H"
 #include "desugar.H"
-#include "rename.H" // for is_pattern_binding
+#include "rename.H" // for group_decls
 #include "util/assert.hh"
 #include "util/range.H"
 #include "computation/parser/haskell.H"
@@ -91,13 +91,8 @@ failable_expression desugar_state::desugar_gdrh(const Haskell::GuardedRHS& grhs)
     return F;
 }
 
-Haskell::Decls group_decls(const Haskell::Decls& decls);
-
-
 CDecls desugar_state::desugar_decls(Haskell::Decls v)
 {
-    v = group_decls(v);
-
     // Now we go through and translate groups of FunDecls.
     CDecls decls;
     for(int i=0;i<v.size();i++)
@@ -327,7 +322,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                     auto rhs2 = Haskell::SimpleRHS({noloc, Haskell::List({})});
                     auto decl2 = Haskell::ValueDecl(lhs2, rhs2);
 
-                    auto decls = Haskell::Decls({decl1, decl2});
+                    auto decls = group_decls(Haskell::Decls({decl1, decl2}));
                     expression_ref body = {var("Data.List.concatMap"), ok, PQ->exp};
 
                     return desugar( Haskell::LetExp( {noloc, decls}, {noloc, body} ) );
@@ -411,7 +406,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                 auto rhs2 = Haskell::SimpleRHS({noloc,fail});
                 auto decl2 = Haskell::ValueDecl(lhs2, rhs2);
 
-                auto decls = Haskell::Decls({decl1,decl2});
+                auto decls = group_decls(Haskell::Decls({decl1,decl2}));
 
                 expression_ref body = {qop,e,ok};
 

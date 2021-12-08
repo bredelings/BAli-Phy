@@ -981,7 +981,7 @@ Haskell::Decls rename(const Module& m, Haskell::Decls decls)
 	    decl = Rn.rename_decl(decl.as_<Haskell::ValueDecl>(), bound_names);
     }
 
-    return decls;
+    return group_decls(decls);
 }
 
 Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls decls)
@@ -1442,7 +1442,9 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
 	    decl = rename_decl(decl.as_<Haskell::ValueDecl>(), bound2);
     }
 
-   return bound_names;
+    decls = group_decls(decls);
+
+    return bound_names;
 }
 
 bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt)
