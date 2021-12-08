@@ -107,14 +107,6 @@ CDecls desugar_state::parse_fundecls(Haskell::Decls v)
 	auto lhs = D.lhs;
 	auto rhs_fail = desugar_rhs(D.rhs);
 
-        // If its just a variable with no args, don't call def_function because ... its complicated?
-	if (lhs.is_a<var>())
-	{
-	    assert(not rhs_fail.can_fail);
-	    decls.push_back({lhs.as_<var>(), rhs_fail.result(0)});
-	    continue;
-	}
-
 	// Skip pattern bindings
 	if (is_pattern_binding(D))
 	{
@@ -131,6 +123,14 @@ CDecls desugar_state::parse_fundecls(Haskell::Decls v)
 	    // Probably we shouldn't have desugared the RHS yet. (?)
 	    for(auto& x: get_free_indices(pat))
 		decls.push_back( {x ,case_expression(z, {pat}, {failable_expression(x)}).result(error("pattern binding: failed pattern match"))});
+	    continue;
+	}
+
+        // If its just a variable with no args, don't call def_function because ... its complicated?
+	if (lhs.is_a<var>())
+	{
+	    assert(not rhs_fail.can_fail);
+	    decls.push_back({lhs.as_<var>(), rhs_fail.result(0)});
 	    continue;
 	}
 
