@@ -91,27 +91,23 @@ failable_expression desugar_state::desugar_gdrh(const Haskell::GuardedRHS& grhs)
     return F;
 }
 
+Haskell::Decls group_decls(const Haskell::Decls& decls);
+
 
 CDecls desugar_state::desugar_decls(Haskell::Decls v)
 {
+    v = group_decls(v);
+
     // Now we go through and translate groups of FunDecls.
     CDecls decls;
     for(int i=0;i<v.size();i++)
     {
 	auto& decl = v[i];
 
-	// This is a declaration, but not a type we're handling here.
-	if (not decl.is_a<Haskell::ValueDecl>())
-	    continue;
-
-        auto D = decl.as_<Haskell::ValueDecl>();
-	auto lhs = D.lhs;
-	auto rhs_fail = desugar_rhs(D.rhs);
-
-	// Skip pattern bindings
-	if (is_pattern_binding(D))
-	{
-            expression_ref pat = desugar_pattern(lhs);
+        if (auto pd = decl.to<Hs::PatDecl>())
+        {
+            auto pat = desugar_pattern(pd->lhs);
+            auto rhs = desugar_rhs(pd->rhs);
             var z = get_fresh_var();
             if (pat.is_a<Haskell::AsPattern>())
             {
@@ -119,54 +115,36 @@ CDecls desugar_state::desugar_decls(Haskell::Decls v)
                 pat = pat.as_<Haskell::AsPattern>().pattern;
             }
 
-	    assert(not rhs_fail.can_fail);
-	    decls.push_back( {z,rhs_fail.result(0)});
-	    // Probably we shouldn't have desugared the RHS yet. (?)
+            // z = pat
+	    decls.push_back( {z,rhs.result(0)});
+	    assert(not rhs.can_fail);
+
+	    // x = case z of pat -> x
 	    for(auto& x: get_free_indices(pat))
 		decls.push_back( {x ,case_expression(z, {pat}, {failable_expression(x)}).result(error("pattern binding: failed pattern match"))});
 	    continue;
-	}
+        }
+        else if (auto fd = decl.to<Hs::FunDecl>())
+        {
+            auto fvar = make_var(fd->v);
 
-        // If its just a variable with no args, don't call def_function because ... its complicated?
-	if (auto v = lhs.to<Hs::Var>())
-	{
-            var x = make_var(*v);
-	    assert(not rhs_fail.can_fail);
-	    decls.push_back({x, rhs_fail.result(0)});
-	    continue;
-	}
+            vector<equation_info_t> equations;
 
-	auto f = desugar(lhs.head());
-	auto fvar = f.as_<var>();
+            for(auto& rule: fd->match.rules)
+            {
+                auto rhs = desugar_rhs(rule.rhs);
 
-	vector<equation_info_t> equations;
+                auto patterns = rule.patterns;
+                for(auto& pattern: patterns)
+                    pattern = desugar_pattern(pattern);
 
-	for(int j=i;j<v.size();j++)
-	{
-	    if (not v[j].is_a<Haskell::ValueDecl>()) break;
-
-            auto& Dj = v[j].as_<Haskell::ValueDecl>();
-	    auto& j_f   = Dj.lhs.head();
-	    if (not j_f.is_a<Hs::Var>()) break;
-
-	    if (desugar(j_f).as_<var>() != fvar) break;
-
-            auto rhs = desugar_rhs(Dj.rhs);
-
-            auto patterns = Dj.lhs.sub();
-            for(auto& pattern: patterns)
-                pattern = desugar_pattern(pattern);
-
-            equations.push_back({ patterns, rhs});
-
-	    if (equations.back().patterns.size() != equations.front().patterns.size())
-		throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
-	}
-	auto otherwise = error(fvar.name+": pattern match failure");
-	decls.push_back( {fvar , def_function(equations, otherwise) } );
-
-	// skip the other bindings for this function
-	i += (equations.size()-1);
+                equations.push_back({ patterns, rhs});
+            }
+            auto otherwise = error(fvar.name+": pattern match failure");
+            decls.push_back( {fvar , def_function(equations, otherwise) } );
+        }
+        else
+            continue; // std::abort();
     }
     return decls;
 }

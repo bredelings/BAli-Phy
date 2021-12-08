@@ -667,6 +667,62 @@ void add(bound_var_info& bv1, const bound_var_info& bv2)
 
 typedef set<string> bound_type_var_info;
 
+Haskell::Decls group_decls(const Haskell::Decls& decls)
+{
+    vector<expression_ref> decls2;
+    for(int i=0;i<decls.size();i++)
+    {
+        auto& decl = decls[i];
+        if (not decl.is_a<Haskell::ValueDecl>())
+        {
+            decls2.push_back(decl);
+            continue;
+        }
+
+        auto D = decl.as_<Haskell::ValueDecl>();
+        auto rhs = D.rhs;
+        if (is_pattern_binding(D))
+        {
+            decls2.push_back(Haskell::PatDecl{D.lhs, rhs});
+            continue;
+        }
+
+       auto& f = D.lhs.head();
+       auto fvar = f.as_<Hs::Var>();
+
+        if (D.lhs.is_a<Hs::Var>())
+        {
+            decls2.push_back( Hs::FunDecl( fvar, Hs::Match{ { Hs::MRule{{}, D.rhs } } } ) );
+            continue;
+        }
+
+        Hs::Match m;
+
+        for(int j=i;j<decls.size();j++)
+       {
+           if (not decls[j].is_a<Haskell::ValueDecl>()) break;
+
+            auto& Dj = decls[j].as_<Haskell::ValueDecl>();
+           auto& j_f   = Dj.lhs.head();
+           if (j_f.is_a<Hs::Con>()) break;
+
+           if (j_f.as_<Hs::Var>() != fvar) break;
+
+           m.rules.push_back( Hs::MRule{ Dj.lhs.sub(), Dj.rhs } );
+
+           if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
+               throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
+       }
+
+        decls2.push_back( Hs::FunDecl( fvar, m ) );
+
+       // skip the other bindings for this function
+       i += (m.rules.size()-1);
+    }
+
+    return decls2;
+}
+
 struct renamer_state
 {
     const Module& m;

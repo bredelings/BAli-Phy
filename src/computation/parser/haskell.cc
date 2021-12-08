@@ -173,12 +173,12 @@ string ValueDecl::print() const
     return lhs.print() + rhs.print();
 }
 
-bool ValueDecl::operator==(const Object& O) const
+bool ValueDecl::operator==(const Object&) const
 {
     std::abort();
 }
 
-bool ValueDecl::operator==(const ValueDecl& V) const
+bool ValueDecl::operator==(const ValueDecl&) const
 {
     std::abort();
 }
@@ -734,6 +734,30 @@ Type make_arrow_type(const Type& t1, const Type& t2)
 {
     static Haskell::TypeCon type_arrow(Located<string>({},"->"));
     return Haskell::TypeApp(Haskell::TypeApp(type_arrow,t1),t2);
+}
+
+string PatDecl::print() const
+{
+    return lhs.print() + " " + rhs.print();
+}
+
+string MRule::print() const
+{
+    vector<string> ss;
+    for(auto& pat: patterns)
+        ss.push_back(pat.print());
+    ss.push_back(rhs.print());
+
+    return join( ss, " ");
+}
+
+string FunDecl::print() const
+{
+    vector<string> lines;
+    for(auto& rule: match.rules)
+        lines.push_back( v.print() + " " + rule.print());
+
+    return join( lines, "\n" );
 }
 
 }

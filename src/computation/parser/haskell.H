@@ -919,15 +919,21 @@ Type make_arrow_type(const Type& t1, const Type& t2);
 // which one of these handles variables?
 // probably FunDecl
 
-struct PatDecl
+struct PatDecl: public Object
 {
+    PatDecl* clone() const {return new PatDecl(*this);}
+    std::string print() const;
+
     Pattern lhs;
     MultiGuardedRHS rhs;
+    PatDecl(const Pattern& p, const MultiGuardedRHS& r):lhs(p), rhs(r) {}
 };
 
 struct MRule
 {
-    std::vector<Pattern> pats;
+    std::string print() const;
+
+    std::vector<Pattern> patterns;
     MultiGuardedRHS rhs;
 };
 
@@ -936,10 +942,15 @@ struct Match
     std::vector<MRule> rules;
 };
 
-struct FunDecl
+struct FunDecl: public Object
 {
+    FunDecl* clone() const {return new FunDecl(*this);}
+    std::string print() const;
+
     Var v;
     Match match;
+
+    FunDecl(const Var& vv, const Match& m): v(vv), match(m) {}
 };
 
 struct BindingGroup
