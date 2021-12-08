@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/let.H"
 #include "computation/expression/var.H"
 #include <utility>                                  // for pair
 #include <iostream>
@@ -124,6 +125,8 @@ public:
     bool do_optimize = true;
     
     Haskell::Module module;
+
+    CDecls value_decls;
 
     std::vector<std::vector<expression_ref>> class_and_type_decls;
 

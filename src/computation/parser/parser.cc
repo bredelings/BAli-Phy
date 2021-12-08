@@ -270,6 +270,7 @@ namespace yy {
         value.YY_MOVE_OR_COPY< Haskell::TypeVar > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_alt_rhs: // alt_rhs
         value.YY_MOVE_OR_COPY< Hs::MultiGuardedRHS > (YY_MOVE (that.value));
         break;
@@ -321,7 +322,6 @@ namespace yy {
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
-      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
@@ -589,6 +589,7 @@ namespace yy {
         value.move< Haskell::TypeVar > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_alt_rhs: // alt_rhs
         value.move< Hs::MultiGuardedRHS > (YY_MOVE (that.value));
         break;
@@ -640,7 +641,6 @@ namespace yy {
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
-      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
@@ -908,6 +908,7 @@ namespace yy {
         value.copy< Haskell::TypeVar > (that.value);
         break;
 
+      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_alt_rhs: // alt_rhs
         value.copy< Hs::MultiGuardedRHS > (that.value);
         break;
@@ -959,7 +960,6 @@ namespace yy {
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
-      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
@@ -1226,6 +1226,7 @@ namespace yy {
         value.move< Haskell::TypeVar > (that.value);
         break;
 
+      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_alt_rhs: // alt_rhs
         value.move< Hs::MultiGuardedRHS > (that.value);
         break;
@@ -1277,7 +1278,6 @@ namespace yy {
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
-      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
@@ -1789,6 +1789,7 @@ namespace yy {
         yylhs.value.emplace< Haskell::TypeVar > ();
         break;
 
+      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_alt_rhs: // alt_rhs
         yylhs.value.emplace< Hs::MultiGuardedRHS > ();
         break;
@@ -1840,7 +1841,6 @@ namespace yy {
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
-      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
@@ -2899,13 +2899,13 @@ namespace yy {
 
   case 181: // decl_no_th: "!" aexp rhs
 #line 970 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Haskell::StrictValueDecl{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()}; }
+                              {yylhs.value.as < expression_ref > () = Haskell::StrictValueDecl{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < Hs::MultiGuardedRHS > ()}; }
 #line 2904 "parser.cc"
     break;
 
   case 182: // decl_no_th: infixexp_top rhs
 #line 971 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Haskell::ValueDecl(make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ()),yystack_[0].value.as < expression_ref > ());}
+                              {yylhs.value.as < expression_ref > () = Haskell::ValueDecl(make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ()),yystack_[0].value.as < Hs::MultiGuardedRHS > ());}
 #line 2910 "parser.cc"
     break;
 
@@ -2917,13 +2917,13 @@ namespace yy {
 
   case 184: // rhs: "=" exp wherebinds
 #line 977 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Haskell::SimpleRHS({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ());}
+                              {yylhs.value.as < Hs::MultiGuardedRHS > () = Haskell::SimpleRHS({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ());}
 #line 2922 "parser.cc"
     break;
 
   case 185: // rhs: gdrhs wherebinds
 #line 978 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Haskell::MultiGuardedRHS{yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (),yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ()};}
+                              {yylhs.value.as < Hs::MultiGuardedRHS > () = Haskell::MultiGuardedRHS{yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (),yystack_[0].value.as < std::optional<Located<Haskell::Decls>> > ()};}
 #line 2928 "parser.cc"
     break;
 

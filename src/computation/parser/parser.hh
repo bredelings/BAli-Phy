@@ -488,6 +488,7 @@ namespace yy {
       // tv_bndr
       char dummy15[sizeof (Haskell::TypeVar)];
 
+      // rhs
       // alt_rhs
       char dummy16[sizeof (Hs::MultiGuardedRHS)];
 
@@ -532,7 +533,6 @@ namespace yy {
       // constr_stuff
       // decl_no_th
       // decl
-      // rhs
       // sigdecl
       // exp
       // exp10_top
@@ -1316,6 +1316,7 @@ namespace yy {
         value.move< Haskell::TypeVar > (std::move (that.value));
         break;
 
+      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_alt_rhs: // alt_rhs
         value.move< Hs::MultiGuardedRHS > (std::move (that.value));
         break;
@@ -1367,7 +1368,6 @@ namespace yy {
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
-      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
@@ -2297,6 +2297,7 @@ switch (yykind)
         value.template destroy< Haskell::TypeVar > ();
         break;
 
+      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_alt_rhs: // alt_rhs
         value.template destroy< Hs::MultiGuardedRHS > ();
         break;
@@ -2348,7 +2349,6 @@ switch (yykind)
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
-      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
@@ -5283,6 +5283,7 @@ switch (yykind)
         value.copy< Haskell::TypeVar > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_alt_rhs: // alt_rhs
         value.copy< Hs::MultiGuardedRHS > (YY_MOVE (that.value));
         break;
@@ -5334,7 +5335,6 @@ switch (yykind)
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
-      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
@@ -5618,6 +5618,7 @@ switch (yykind)
         value.move< Haskell::TypeVar > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_alt_rhs: // alt_rhs
         value.move< Hs::MultiGuardedRHS > (YY_MOVE (s.value));
         break;
@@ -5669,7 +5670,6 @@ switch (yykind)
       case symbol_kind::S_constr_stuff: // constr_stuff
       case symbol_kind::S_decl_no_th: // decl_no_th
       case symbol_kind::S_decl: // decl
-      case symbol_kind::S_rhs: // rhs
       case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top

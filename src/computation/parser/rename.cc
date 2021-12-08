@@ -460,13 +460,9 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         return D;
     }
     else if (E.is_a<Haskell::Alt>())
-    {
         std::abort();
-    }
-    else if (auto R = E.to<Haskell::MultiGuardedRHS>())
-    {
-        return rename_infix(m, *R);
-    }
+    else if (E.is_a<Haskell::MultiGuardedRHS>())
+        std::abort();
     else if (E.is_a<Haskell::LambdaExp>())
     {
         auto L = E.as_<Haskell::LambdaExp>();
@@ -623,9 +619,8 @@ Haskell::Decls rename_infix_top(const Module& m, const Haskell::Decls& decls)
                 Hs::Var x({noloc,"#0"}); // FIXME??
                 expression_ref body = Haskell::CaseExp(x,Haskell::Alts(alts));
                 body = Haskell::LambdaExp({x},body);
-                auto rhs = Haskell::SimpleRHS({noloc,body});
 
-                v.push_back(Haskell::ValueDecl(name,rhs));
+                v.push_back(Haskell::ValueDecl(name, body));
             }
         }
     }
@@ -1711,9 +1706,9 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         std::abort();
     }
     else if (E.is_a<Haskell::WildcardPattern>())
-        return E;
+        std::abort();
     else if (E.is_a<Haskell::MultiGuardedRHS>())
-        return rename(E.as_<Hs::MultiGuardedRHS>(), bound);
+        std::abort();
     else if (E.is_a<Haskell::LambdaExp>())
     {
         auto L = E.as_<Haskell::LambdaExp>();

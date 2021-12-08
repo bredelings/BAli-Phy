@@ -410,6 +410,7 @@ void Module::compile(const Program& P)
 
     perform_exports();
 
+    // look only in value_decls now
     desugar(P);
 
     load_builtins(*P.get_module_loader());
@@ -418,19 +419,8 @@ void Module::compile(const Program& P)
 
     get_types(P);
 
-    // Get rid of declarations that are not Decl
-    if (module.topdecls)
-    {
-        vector<expression_ref> decls;
-        for(auto& decl: *module.topdecls)
-            if (decl.is_a<Haskell::ValueDecl>())
-                decls.push_back(decl);
-        module.topdecls = Haskell::Decls(decls, true);
-    }
-
     // Check for duplicate top-level names.
-    if (module.topdecls)
-        check_duplicate_var(translate_decls_to_cdecls(*module.topdecls));
+    check_duplicate_var(value_decls);
 
     import_small_decls(P);
 
@@ -560,24 +550,18 @@ void Module::perform_exports()
 
 map<string,expression_ref> Module::code_defs() const
 {
-    if (not module.topdecls) return map<string,expression_ref>();
-
     map<string, expression_ref> code;
 
-    for(const auto& decl: *module.topdecls)
+    for(const auto& [x,rhs]: value_decls)
     {
-        assert(decl.is_a<Haskell::ValueDecl>());
-        auto& D = decl.as_<Haskell::ValueDecl>();
-
-        auto& x = D.lhs.as_<var>();
         assert(is_qualified_symbol(x.name));
 
         if (this->name == get_module_name(x.name))
         {
             // get the body for the  decl
-            assert(D.rhs);
+            assert(rhs);
 
-            code[x.name] = D.rhs;
+            code[x.name] = rhs;
         }
     }
 
@@ -896,7 +880,7 @@ void Module::desugar(const Program& P)
 {
     if (module.topdecls)
     {
-        module.topdecls = ::desugar(*this,*module.topdecls);
+        value_decls = ::desugar(*this,*module.topdecls);
     }
     if (P.get_module_loader()->dump_desugared and module.topdecls)
         std::cout<<name<<"[desugared]:\n"<<module.topdecls->print()<<"\n\n";
@@ -940,21 +924,17 @@ void Module::import_small_decls(const Program& P)
 
 void Module::export_small_decls()
 {
-    if (not module.topdecls) return;
-
     assert(small_decls_out.empty());
 
     // Modules that we imported should have their small_decls transitively inherited
     small_decls_out = small_decls_in;
 
-    for(auto& decl: *module.topdecls)
+    for(auto& [x,rhs]: value_decls)
     {
-        auto& D = decl.as_<Haskell::ValueDecl>();
-        auto& x = D.lhs.as_<var>();
         assert(not x.name.empty());
 
-        if (simple_size(D.rhs) <= 5)
-            small_decls_out.insert({x, D.rhs});
+        if (simple_size(rhs) <= 5)
+            small_decls_out.insert({x, rhs});
     }
 
     // Find free vars in the decls that are not bound by *other* decls.
@@ -1087,10 +1067,8 @@ std::optional<string> get_new_name(const var& x, const string& module_name)
     return module_name + "." + x.name + "#" + convertToString(x.index);
 }
 
-Haskell::Decls rename_top_level(const Haskell::Decls& decls, const string& module_name)
+CDecls rename_top_level(const CDecls& decls, const string& module_name)
 {
-    assert(decls.is_top_level());
-
     map<var, var> substitution;
 
     set<var> top_level_vars;
@@ -1098,13 +1076,12 @@ Haskell::Decls rename_top_level(const Haskell::Decls& decls, const string& modul
     CDecls decls2;
 
 #ifndef NDEBUG
-    check_duplicate_var(translate_decls_to_cdecls(decls));
+    check_duplicate_var(decls);
 #endif
 
     for(int i = 0; i< decls.size(); i++)
     {
-        auto& D = decls[i].as_<Haskell::ValueDecl>();
-        auto x = D.lhs.as_<var>();
+        auto& [x,rhs] = decls[i];
         var x2 = x;
         assert(not substitution.count(x));
 
@@ -1115,7 +1092,7 @@ Haskell::Decls rename_top_level(const Haskell::Decls& decls, const string& modul
             substitution.insert({x,x2});
         }
 
-        decls2.push_back({x2,D.rhs});
+        decls2.push_back({x2,rhs});
 
         // None of the renamed vars should have the same name;
         assert(not top_level_vars.count(x2));
@@ -1123,10 +1100,10 @@ Haskell::Decls rename_top_level(const Haskell::Decls& decls, const string& modul
     }
 
     multiset<var> bound;
-    for(auto& [_,e]: decls2)
+    for(auto& [_,rhs]: decls2)
     {
         assert(bound.empty());
-        e = rename(e, substitution, bound);
+        rhs = rename(rhs, substitution, bound);
         assert(bound.empty());
     }
 
@@ -1134,7 +1111,7 @@ Haskell::Decls rename_top_level(const Haskell::Decls& decls, const string& modul
     check_duplicate_var(decls2);
 #endif
 
-    return make_topdecls(decls2);
+    return decls2;
 }
 
 expression_ref func_type(const expression_ref& a, const expression_ref& b)
@@ -1195,54 +1172,37 @@ void mark_exported_decls(CDecls& decls, const map<string,symbol_info>& exports, 
 
 void Module::optimize(const Program& P)
 {
-    // why do we keep on re-optimizing the same module?
+    // 1. why do we keep on re-optimizing the same module?
     if (optimized) return;
     optimized = true;
 
-    if (module.topdecls)
+    // 2. Graph-normalize the bodies
+    for(auto& [x,rhs]: value_decls)
     {
-        vector<expression_ref> new_decls;
-        for(auto& decl: *module.topdecls)
-        {
-            if (not decl.is_a<Haskell::ValueDecl>())
-                ; //new_decls.push_back(decl);
-            else
-            {
-                auto D = decl.as_<Haskell::ValueDecl>();
-                // This won't float things to the top level!
-                auto name = D.lhs.as_<var>().name;
-                auto body = D.rhs;
-                D.rhs = graph_normalize(D.rhs);
-
-                new_decls.push_back( D );
-            }
-        }
-        module.topdecls = Haskell::Decls(new_decls,true);
-
-        if (do_optimize)
-        {
-            auto decls = translate_decls_to_cdecls(*module.topdecls);
-            mark_exported_decls(decls, exported_symbols(), name);
-
-            vector<CDecls> decl_groups = {decls};
-
-            decl_groups = simplify_module_gently(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
-
-            if (P.get_module_loader()->fully_lazy)
-                float_out_from_module(decl_groups);
-
-            decl_groups = simplify_module(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
-
-            if (P.get_module_loader()->fully_lazy)
-                float_out_from_module(decl_groups);
-
-            decls = flatten(std::move(decl_groups));
-            module.topdecls = make_topdecls(decls);
-        }
+        // This won't float things to the top level!
+        rhs = graph_normalize(rhs);
     }
 
-    if (module.topdecls)
-        module.topdecls = rename_top_level(*module.topdecls, name);
+    if (do_optimize)
+    {
+        mark_exported_decls(value_decls, exported_symbols(), name);
+
+        vector<CDecls> decl_groups = {value_decls};
+
+        decl_groups = simplify_module_gently(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
+
+        if (P.get_module_loader()->fully_lazy)
+            float_out_from_module(decl_groups);
+
+        decl_groups = simplify_module(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
+
+        if (P.get_module_loader()->fully_lazy)
+            float_out_from_module(decl_groups);
+
+        value_decls = flatten(std::move(decl_groups));
+    }
+
+    value_decls = rename_top_level(value_decls, name);
 }
 
 pair<string,expression_ref> parse_builtin(const Haskell::BuiltinDecl& B, const module_loader& L)
@@ -1260,7 +1220,6 @@ void Module::load_builtins(const module_loader& L)
 {
     if (not module.topdecls) return;
 
-    vector<expression_ref> new_decls;
     for(const auto& decl: *module.topdecls)
         if (decl.is_a<Haskell::BuiltinDecl>())
         {
@@ -1268,11 +1227,8 @@ void Module::load_builtins(const module_loader& L)
 
             function_name = lookup_symbol(function_name).name;
 
-            new_decls.push_back( Haskell::ValueDecl{ var(function_name), body} );
+            value_decls.push_back( { var(function_name), body} );
         }
-        else
-            new_decls.push_back(decl);
-    module.topdecls = Haskell::Decls(new_decls, true);
 }
 
 string get_constructor_name(const expression_ref& constr)
@@ -1285,8 +1241,6 @@ string get_constructor_name(const expression_ref& constr)
 void Module::load_constructors()
 {
     if (not module.topdecls) return;
-
-    vector<expression_ref> new_decls;
 
     for(const auto& decl: *module.topdecls)
         if (decl.is_a<Haskell::DataOrNewtypeDecl>())
@@ -1301,14 +1255,10 @@ void Module::load_constructors()
 
                 string qualified_name = name+"."+cname;
                 expression_ref body = lambda_expression( constructor(qualified_name, arity) );
-                new_decls.push_back( Haskell::ValueDecl{ var(qualified_name) , body} );
+                value_decls.push_back( { var(qualified_name) , body} );
             }
             // Strip out the constructor definition here new_decls.push_back(decl);
         }
-        else
-            new_decls.push_back(decl);
-
-    module.topdecls = Haskell::Decls(new_decls, true);
 }
 
 bool Module::is_declared(const std::string& name) const

@@ -165,39 +165,22 @@ string SignatureDecl::print() const
 
 string StrictValueDecl::print() const
 {
-    string result = "! " + lhs.print() + " ";
-    // This happens for desugared decls which are just var = body
-    if (not rhs.is_a<MultiGuardedRHS>())
-        result += "= ";
-    result += rhs.print();
-    return result;
+    return "! " + lhs.print() + rhs.print();
 }
 
 string ValueDecl::print() const
 {
-    string result = lhs.print() + " ";
-    // This happens for desugared decls which are just var = body
-    if (not rhs.is_a<MultiGuardedRHS>())
-        result += "= ";
-    result += rhs.print();
-    return result;
+    return lhs.print() + rhs.print();
 }
 
 bool ValueDecl::operator==(const Object& O) const
 {
-    if (this == &O) return true;
-
-    auto vd = dynamic_cast<const ValueDecl*>(&O);
-
-    if (vd)
-        return operator==(*vd);
-    else
-        return false;
+    std::abort();
 }
 
 bool ValueDecl::operator==(const ValueDecl& V) const
 {
-    return (lhs == V.lhs) and (rhs == V.rhs);
+    std::abort();
 }
 
 string Decls::print() const

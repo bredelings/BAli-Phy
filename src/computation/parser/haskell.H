@@ -262,35 +262,6 @@ struct BuiltinDecl: public Object
     {};
 };
 
-struct StrictValueDecl: public Object
-{
-    expression_ref lhs;
-    expression_ref rhs;
-
-    StrictValueDecl* clone() const { return new StrictValueDecl(*this);}
-    std::string print() const;
-
-    StrictValueDecl() = default;
-    StrictValueDecl(const expression_ref& l, const expression_ref& r): lhs(l), rhs(r) {}
-};
-
-// Where do we make ValueDecl's with an rhs that is a plain expression?
-// Can we just make a SimpleValueDecl from the plain expression using a SimpleRHS?
-
-struct ValueDecl: public Object
-{
-    expression_ref lhs;
-    expression_ref rhs;
-
-    bool operator==(const Object& O) const;
-    bool operator==(const ValueDecl& V) const;
-    ValueDecl* clone() const { return new ValueDecl(*this);}
-    std::string print() const;
-
-    ValueDecl() = default;
-    ValueDecl(const expression_ref& l, const expression_ref& r): lhs(l), rhs(r) {}
-};
-
 struct Decls: public std::vector<expression_ref>
 {
 protected:
@@ -579,13 +550,12 @@ struct GuardedRHS
     { }
 };
 
-struct MultiGuardedRHS: public Object
+struct MultiGuardedRHS
 {
     std::vector<GuardedRHS> guarded_rhss;
     // We might need to make this into a shared_ptr< > to avoid an infinite structure.
     std::optional<Located<Decls>> decls;
 
-    MultiGuardedRHS* clone() const { return new MultiGuardedRHS(*this);}
     std::string print() const;
 
     MultiGuardedRHS() = default;
@@ -594,6 +564,37 @@ struct MultiGuardedRHS: public Object
 };
 
 MultiGuardedRHS SimpleRHS(const Located<expression_ref>&, const std::optional<Located<Decls>>& ds = {});
+
+struct StrictValueDecl: public Object
+{
+    expression_ref lhs;
+    MultiGuardedRHS rhs;
+
+    StrictValueDecl* clone() const { return new StrictValueDecl(*this);}
+    std::string print() const;
+
+    StrictValueDecl() = default;
+    StrictValueDecl(const expression_ref& l, const expression_ref& r): lhs(l), rhs(SimpleRHS({noloc,r})) {}
+    StrictValueDecl(const expression_ref& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
+};
+
+// Where do we make ValueDecl's with an rhs that is a plain expression?
+// Can we just make a SimpleValueDecl from the plain expression using a SimpleRHS?
+
+struct ValueDecl: public Object
+{
+    expression_ref lhs;
+    MultiGuardedRHS rhs;
+
+    bool operator==(const Object& O) const;
+    bool operator==(const ValueDecl& V) const;
+    ValueDecl* clone() const { return new ValueDecl(*this);}
+    std::string print() const;
+
+    ValueDecl() = default;
+    ValueDecl(const expression_ref& l, const expression_ref& r): lhs(l), rhs(SimpleRHS({noloc,r})) {}
+    ValueDecl(const expression_ref& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
+};
 
 struct Stmts: public Object
 {

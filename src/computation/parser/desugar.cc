@@ -50,11 +50,6 @@ vector<expression_ref> get_patterns(const Haskell::ValueDecl& decl)
     return decl.lhs.sub();
 }
 
-failable_expression get_body(const Haskell::ValueDecl& decl)
-{
-    return decl.rhs.as_<failable_expression>();
-}
-
 
 failable_expression desugar_state::desugar_gdrh(const Haskell::GuardedRHS& grhs)
 {
@@ -76,7 +71,7 @@ failable_expression desugar_state::desugar_gdrh(const Haskell::GuardedRHS& grhs)
 	else if (guard.is_a<Haskell::LetQual>())
 	{
             auto& LQ = guard.as_<Haskell::LetQual>();
-	    auto binds = desugar_decls_to_cdecls(unloc(LQ.binds));
+	    auto binds = desugar_decls(unloc(LQ.binds));
 
 	    F.add_binding(binds);
 	}
@@ -96,30 +91,27 @@ failable_expression desugar_state::desugar_gdrh(const Haskell::GuardedRHS& grhs)
 }
 
 
-Haskell::Decls desugar_state::parse_fundecls(Haskell::Decls v)
+CDecls desugar_state::parse_fundecls(Haskell::Decls v)
 {
     // Now we go through and translate groups of FunDecls.
-    vector<expression_ref> decls;
+    CDecls decls;
     for(int i=0;i<v.size();i++)
     {
 	auto& decl = v[i];
 
 	// This is a declaration, but not a type we're handling here.
 	if (not decl.is_a<Haskell::ValueDecl>())
-	{
-	    decls.push_back( decl );
 	    continue;
-	}
 
         auto D = decl.as_<Haskell::ValueDecl>();
 	auto lhs = desugar(D.lhs);
-	auto& rhs_fail = D.rhs.as_<failable_expression>();
+	auto rhs_fail = desugar_rhs(D.rhs);
 
         // If its just a variable with no args, don't call def_function because ... its complicated?
 	if (lhs.is_a<var>())
 	{
 	    assert(not rhs_fail.can_fail);
-	    decls.push_back(Haskell::ValueDecl(lhs, rhs_fail.result(0)));
+	    decls.push_back({lhs.as_<var>(), rhs_fail.result(0)});
 	    continue;
 	}
 
@@ -129,11 +121,11 @@ Haskell::Decls desugar_state::parse_fundecls(Haskell::Decls v)
 	if (is_pattern_binding(D))
 	{
             expression_ref pat;
-            expression_ref z;
+            var z("tmp");
             if (f.is_a<Haskell::AsPattern>())
             {
                 pat = f.as_<Haskell::AsPattern>().pattern;
-                z = f.as_<Haskell::AsPattern>().var;
+                z = f.as_<Haskell::AsPattern>().var.as_<var>();
             }
             else
             {
@@ -142,10 +134,10 @@ Haskell::Decls desugar_state::parse_fundecls(Haskell::Decls v)
             }
 
 	    assert(not rhs_fail.can_fail);
-	    decls.push_back( Haskell::ValueDecl(z,rhs_fail.result(0)));
+	    decls.push_back( {z,rhs_fail.result(0)});
 	    // Probably we shouldn't have desugared the RHS yet. (?)
 	    for(auto& x: get_free_indices(pat))
-		decls.push_back( Haskell::ValueDecl(x ,case_expression(z, {pat}, {failable_expression(x)}).result(error("pattern binding: failed pattern match"))));
+		decls.push_back( {x ,case_expression(z, {pat}, {failable_expression(x)}).result(error("pattern binding: failed pattern match"))});
 	    continue;
 	}
 
@@ -163,35 +155,23 @@ Haskell::Decls desugar_state::parse_fundecls(Haskell::Decls v)
 
 	    if (j_f.as_<var>() != fvar) break;
 
-	    equations.push_back({ get_patterns(Dj), get_body(Dj)});
+            auto rhs = desugar_rhs(Dj.rhs);
+
+            equations.push_back({ get_patterns(Dj), rhs});
 
 	    if (equations.back().patterns.size() != equations.front().patterns.size())
 		throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
 	}
 	auto otherwise = error(fvar.name+": pattern match failure");
-	decls.push_back( Haskell::ValueDecl( fvar , def_function(equations, otherwise) ) );
+	decls.push_back( {fvar , def_function(equations, otherwise) } );
 
 	// skip the other bindings for this function
 	i += (equations.size()-1);
     }
-    return {decls, v.is_top_level()};
+    return decls;
 }
 
-CDecls translate_decls_to_cdecls(const Haskell::Decls& hdecls)
-{
-    CDecls cdecls;
-    for(const auto& decl: hdecls)
-    {
-	assert(decl.is_a<Haskell::ValueDecl>());
-        auto& D = decl.as_<Haskell::ValueDecl>();
-
-	cdecls.push_back({D.lhs.as_<var>(), D.rhs});
-    }
-
-    return cdecls;
-}
-
-Haskell::Decls desugar_state::desugar_decls(Haskell::Decls decls)
+CDecls desugar_state::desugar_decls(Haskell::Decls decls)
 {
     // translate each individual decl
     for(auto& e: decls)
@@ -199,11 +179,6 @@ Haskell::Decls desugar_state::desugar_decls(Haskell::Decls decls)
 
     // Convert fundecls to normal decls
     return parse_fundecls(decls);
-}
-
-CDecls desugar_state::desugar_decls_to_cdecls(const Haskell::Decls& D)
-{
-    return translate_decls_to_cdecls(desugar_decls(D));
 }
 
 failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
@@ -215,7 +190,7 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
     auto rhs = fold(gdrhs);
 
     if (R.decls)
-        rhs.add_binding(desugar_decls_to_cdecls(unloc(*R.decls)));
+        rhs.add_binding(desugar_decls(unloc(*R.decls)));
 
     return rhs;
 }
@@ -284,15 +259,15 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     if (E.is_a<Haskell::ClassDecl>())
     {
         auto C = E.as_<Haskell::ClassDecl>();
-        if (C.decls)
-            unloc(*C.decls) = desugar_decls(unloc(*C.decls));
+//        if (C.decls)
+//            unloc(*C.decls) = desugar_decls(unloc(*C.decls));
         return C;
     }
     else if (E.is_a<Haskell::InstanceDecl>())
     {
         auto I = E.as_<Haskell::InstanceDecl>();
-        if (I.decls)
-            unloc(*I.decls) = desugar_decls(unloc(*I.decls));
+//        if (I.decls)
+//            unloc(*I.decls) = desugar_decls(unloc(*I.decls));
         return I;
     }
     else if (E.is_a<Haskell::List>())
@@ -376,11 +351,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                     // Problem: "ok" needs to be a fresh variable.
                     expression_ref ok = get_fresh_var("ok");
                     expression_ref lhs1 = ok + PQ->bindpat;
-                    expression_ref rhs1 = Haskell::SimpleRHS({noloc, L});
+                    auto rhs1 = Haskell::SimpleRHS({noloc, L});
                     auto decl1 = Haskell::ValueDecl(lhs1, rhs1);
 
                     expression_ref lhs2 = ok + Haskell::WildcardPattern();
-                    expression_ref rhs2 = Haskell::SimpleRHS({noloc, Haskell::List({})});
+                    auto rhs2 = Haskell::SimpleRHS({noloc, Haskell::List({})});
                     auto decl2 = Haskell::ValueDecl(lhs2, rhs2);
 
                     auto decls = Haskell::Decls({decl1, decl2});
@@ -459,12 +434,12 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             {
                 expression_ref ok = get_fresh_var("ok");
                 expression_ref lhs1 = ok + PQ.bindpat;
-                expression_ref rhs1 = Haskell::SimpleRHS({noloc,do_stmts});
+                auto rhs1 = Haskell::SimpleRHS({noloc,do_stmts});
                 auto decl1 = Haskell::ValueDecl(lhs1,rhs1);
 
                 expression_ref fail = {var("Compiler.Base.fail"),"Fail!"};
                 expression_ref lhs2 = ok + Hs::WildcardPattern();
-                expression_ref rhs2 = Haskell::SimpleRHS({noloc,fail});
+                auto rhs2 = Haskell::SimpleRHS({noloc,fail});
                 auto decl2 = Haskell::ValueDecl(lhs2, rhs2);
 
                 auto decls = Haskell::Decls({decl1,decl2});
@@ -501,7 +476,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         auto& L = E.as_<Haskell::LetExp>();
 
-        CDecls decls = desugar_decls_to_cdecls(unloc(L.decls));
+        CDecls decls = desugar_decls(unloc(L.decls));
         auto body = desugar(unloc(L.body));
 
         // construct the new let expression.
@@ -553,14 +528,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                 D.lhs = f;
         }
 
-        D.rhs = desugar_rhs( D.rhs.as_<Hs::MultiGuardedRHS>() );
-
-        // FIXME: don't desugar a Decl except from Decls
-        // Pattern bindings should be processed before we get here!
-        //
-        // auto& lhs = E.sub()[0];
-        // assert(not lhs.head().is_a<constructor>());
-
         return D;
     }
 
@@ -600,7 +567,7 @@ expression_ref desugar(const Module& m, const expression_ref& E)
     return ds.desugar(E);
 }
 
-Haskell::Decls desugar(const Module& m, Haskell::Decls D)
+CDecls desugar(const Module& m, Haskell::Decls D)
 {
     desugar_state ds(m);
     return ds.desugar_decls(D);

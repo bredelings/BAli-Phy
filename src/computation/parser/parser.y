@@ -344,7 +344,7 @@
 
 %type <expression_ref> decl_no_th
 %type <expression_ref> decl
-%type <expression_ref> rhs
+%type <Hs::MultiGuardedRHS> rhs
 %type <std::vector<Haskell::GuardedRHS>> gdrhs
 %type <Haskell::GuardedRHS> gdrh
 %type <expression_ref> sigdecl
