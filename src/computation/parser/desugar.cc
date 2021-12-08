@@ -115,22 +115,15 @@ CDecls desugar_state::parse_fundecls(Haskell::Decls v)
 	    continue;
 	}
 
-	auto& f = lhs.head();
-
 	// Skip pattern bindings
 	if (is_pattern_binding(D))
 	{
-            expression_ref pat;
-            var z("tmp");
-            if (f.is_a<Haskell::AsPattern>())
+            expression_ref pat = lhs;
+            var z = get_fresh_var();
+            if (pat.is_a<Haskell::AsPattern>())
             {
-                pat = f.as_<Haskell::AsPattern>().pattern;
-                z = f.as_<Haskell::AsPattern>().var.as_<var>();
-            }
-            else
-            {
-                pat = lhs;
-                z = get_fresh_var();
+                z = pat.as_<Haskell::AsPattern>().var.as_<var>();
+                pat = pat.as_<Haskell::AsPattern>().pattern;
             }
 
 	    assert(not rhs_fail.can_fail);
@@ -141,6 +134,7 @@ CDecls desugar_state::parse_fundecls(Haskell::Decls v)
 	    continue;
 	}
 
+	auto& f = lhs.head();
 	auto fvar = f.as_<var>();
 
 	vector<equation_info_t> equations;
