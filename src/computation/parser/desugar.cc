@@ -122,7 +122,6 @@ CDecls desugar_state::desugar_decls(Haskell::Decls v)
 	    // x = case z of pat -> x
 	    for(auto& x: get_free_indices(pat))
 		decls.push_back( {x ,case_expression(z, {pat}, {failable_expression(x)}).result(error("pattern binding: failed pattern match"))});
-	    continue;
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
         {
@@ -143,6 +142,8 @@ CDecls desugar_state::desugar_decls(Haskell::Decls v)
             auto otherwise = error(fvar.name+": pattern match failure");
             decls.push_back( {fvar , def_function(equations, otherwise) } );
         }
+        else if (decl.is_a<Hs::ValueDecl>())
+            std::abort();
         else
             continue; // std::abort();
     }
