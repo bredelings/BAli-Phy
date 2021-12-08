@@ -56,17 +56,18 @@ public:
     var get_fresh_wildcard() { return var(-var_index++);}
     var get_fresh_var() { return var(var_index++);}
     var get_fresh_var(const std::string& name) {return var(name,var_index++);}
+    Hs::Var get_fresh_Var(const std::string& name) {return Hs::Var({noloc,name}, var_index++);}
 
     fresh_vars(int start):var_index(start) {}
 };
+
+var make_var(const Hs::Var&);
 
 CDecls translate_decls_to_cdecls(const Haskell::Decls&);
 
 struct desugar_state: public fresh_vars
 {
     const Module& m;
-
-    CDecls parse_fundecls(Haskell::Decls);
 
     expression_ref def_function(const std::vector< equation_info_t >&, const expression_ref& otherwise);
 
