@@ -382,14 +382,14 @@ struct TypeSynonymDecl: public Object
     std::string name;
     std::vector<TypeVar> type_vars;
 
-    Located<expression_ref> rhs_type;
+    Located<Type> rhs_type;
 
     TypeSynonymDecl* clone() const { return new TypeSynonymDecl(*this);}
     std::string print() const;
 
     TypeSynonymDecl(const std::string& s,
                     const std::vector<TypeVar>& tvs,
-                    const Located<expression_ref>& rhs)
+                    const Located<Type>& rhs)
         :name(s),
          type_vars(tvs),
          rhs_type(rhs)
