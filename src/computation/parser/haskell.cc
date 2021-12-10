@@ -732,8 +732,8 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
 
 Type make_arrow_type(const Type& t1, const Type& t2)
 {
-    static Haskell::TypeCon type_arrow(Located<string>({},"->"));
-    return Haskell::TypeApp(Haskell::TypeApp(type_arrow,t1),t2);
+    static TypeCon type_arrow(Located<string>({},"->"));
+    return TypeApp(TypeApp(type_arrow,t1),t2);
 }
 
 string PatDecl::print() const
