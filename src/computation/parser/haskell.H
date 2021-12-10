@@ -211,13 +211,13 @@ LPat = WildPat          -- wildcard pattern
 
 struct Context
 {
-    std::vector<Haskell::Type> constraints;
+    std::vector<Type> constraints;
     Context* clone() const { return new Context(*this);}
 
     std::string print() const;
     Context() = default;
     Context(const Context&) = default;
-    Context(const std::vector<Haskell::Type>& cs): constraints(cs) {}
+    Context(const std::vector<Type>& cs): constraints(cs) {}
 };
 
 
@@ -235,14 +235,14 @@ struct TypedExp: public Object
 
 struct SignatureDecl: public Object
 {
-    std::vector<Haskell::Var> vars;
+    std::vector<Var> vars;
     Type type;
 
     SignatureDecl* clone() const { return new SignatureDecl(*this);}
     std::string print() const;
 
     SignatureDecl() = default;
-    SignatureDecl(const std::vector<Haskell::Var>& vs, const Type& t): vars(vs), type(t) {}
+    SignatureDecl(const std::vector<Var>& vs, const Type& t): vars(vs), type(t) {}
 };
 
 struct BuiltinDecl: public Object
@@ -294,12 +294,12 @@ struct FixityDecl: public Object
 
 struct FieldDecl
 {
-    std::vector<Haskell::Var> field_names;
+    std::vector<Var> field_names;
     Type type;
     std::string print()  const;
 
     FieldDecl() = default;       // so this can be a token value.
-    FieldDecl(const std::vector<Haskell::Var>& vs, const Type& t):field_names(vs),type(t) {}
+    FieldDecl(const std::vector<Var>& vs, const Type& t):field_names(vs),type(t) {}
 };
 
 
@@ -404,7 +404,7 @@ struct ClassDecl: public Object
     std::vector<TypeVar> type_vars;
     Context context;
 
-    std::optional<Located<Haskell::Decls>> decls;
+    std::optional<Located<Decls>> decls;
     // std::vector<Located<expression_ref>> signatures;
     // std::vector<Located<expression_ref>> default_decls;
 
@@ -414,7 +414,7 @@ struct ClassDecl: public Object
     ClassDecl(const std::string& s,
               const std::vector<TypeVar>& tvs,
               const Context& ct,
-              const std::optional<Located<Haskell::Decls>>& ds)
+              const std::optional<Located<Decls>>& ds)
         :name(s),
          type_vars(tvs),
          context(ct),
@@ -428,19 +428,19 @@ struct InstanceDecl: public Object
 
     // This should be something like Eq a => Eq [a]
     // Right now it could be either ForallType or ConstrainedType
-    Haskell::Context context;
+    Context context;
     std::string name;
-    std::vector<Haskell::Type> type_args;
+    std::vector<Type> type_args;
 
-    std::optional<Located<Haskell::Decls>> decls;
+    std::optional<Located<Decls>> decls;
 
     InstanceDecl* clone() const { return new InstanceDecl(*this);}
     std::string print() const;
 
-    InstanceDecl(const Haskell::Context& c,
+    InstanceDecl(const Context& c,
                  const std::string& n,
-                 const std::vector<Haskell::Type> ta,
-                 const std::optional<Located<Haskell::Decls>>& d)
+                 const std::vector<Type> ta,
+                 const std::optional<Located<Decls>>& d)
         :context(c),
          name(n),
          type_args(ta),
@@ -450,11 +450,11 @@ struct InstanceDecl: public Object
 
 struct DefaultDecl: public Object
 {
-    std::vector<Haskell::Type> types;
+    std::vector<Type> types;
     DefaultDecl() {}
     DefaultDecl* clone() const { return new DefaultDecl(*this);}
     std::string print() const;
-    DefaultDecl(const std::vector<Haskell::Type>& ts):types(ts) {}
+    DefaultDecl(const std::vector<Type>& ts):types(ts) {}
 };
 
 
@@ -610,10 +610,10 @@ struct Stmts: public Object
 
 struct LetQual: public Object
 {
-    Located<Haskell::Decls> binds;
+    Located<Decls> binds;
     LetQual* clone() const { return new LetQual(*this);}
     std::string print()  const;
-    LetQual(const Located<Haskell::Decls>& b): binds(b) {}
+    LetQual(const Located<Decls>& b): binds(b) {}
 };
 
 struct SimpleQual: public Object
@@ -805,13 +805,13 @@ struct LambdaExp: public Object
 
 struct LetExp: public Object
 {
-    Located<Haskell::Decls> decls;
+    Located<Decls> decls;
     Located<expression_ref> body;
 
     LetExp* clone() const {return new LetExp(*this);}
     std::string print() const;
 
-    LetExp(const Located<Haskell::Decls>& d, const Located<expression_ref>& b): decls(d), body(b) {};
+    LetExp(const Located<Decls>& d, const Located<expression_ref>& b): decls(d), body(b) {};
 };
 
 struct IfExp: public Object

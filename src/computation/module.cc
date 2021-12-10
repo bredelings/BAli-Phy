@@ -1231,7 +1231,7 @@ void Module::load_builtins(const module_loader& L)
         }
 }
 
-string get_constructor_name(const expression_ref& constr)
+string get_constructor_name(const Hs::Type& constr)
 {
     auto [con,_] = Haskell::decompose_type_apps(constr);
     assert(con.is_a<Haskell::TypeCon>());
