@@ -938,7 +938,7 @@ forall: "forall" tv_bndrs "."   {$$ = $2;}
 |       %empty                  {}
 
 constr_stuff: btype_no_ops                      {$$ = make_tyapps($1);}
-|             btype_no_ops conop btype_no_ops   {$$ = make_tyapps({Haskell::TypeVar({@2,$2}),make_tyapps($1),make_tyapps($3)});}
+|             btype_no_ops conop btype_no_ops   {$$ = make_tyapps({Haskell::TypeCon({@2,$2}),make_tyapps($1),make_tyapps($3)});}
 
 fielddecls: %empty              {}
 |           fielddecls1         {$$ = $1;}

@@ -2857,7 +2857,7 @@ namespace yy {
 
   case 164: // constr_stuff: btype_no_ops conop btype_no_ops
 #line 941 "parser.y"
-                                                {yylhs.value.as < expression_ref > () = make_tyapps({Haskell::TypeVar({yystack_[1].location,yystack_[1].value.as < std::string > ()}),make_tyapps(yystack_[2].value.as < std::vector<expression_ref> > ()),make_tyapps(yystack_[0].value.as < std::vector<expression_ref> > ())});}
+                                                {yylhs.value.as < expression_ref > () = make_tyapps({Haskell::TypeCon({yystack_[1].location,yystack_[1].value.as < std::string > ()}),make_tyapps(yystack_[2].value.as < std::vector<expression_ref> > ()),make_tyapps(yystack_[0].value.as < std::vector<expression_ref> > ())});}
 #line 2862 "parser.cc"
     break;
 
