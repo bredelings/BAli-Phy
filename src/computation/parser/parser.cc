@@ -6036,7 +6036,7 @@ pair<vector<Haskell::ImpDecl>, optional<Haskell::Decls>> make_body(const std::ve
 {
     if (topdecls)
     {
-        auto topdecls2 = Haskell::Decls(*topdecls, true);
+        auto topdecls2 = Haskell::Decls(*topdecls);
         return {imports, topdecls2};
     }
     else

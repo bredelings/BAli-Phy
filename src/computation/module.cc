@@ -76,13 +76,13 @@ symbol_info lookup_symbol(const string& name, const Program& P);
 
 Haskell::Decls make_topdecls(const CDecls& cdecls)
 {
-    if (cdecls.empty()) return {true};
+    if (cdecls.empty()) return {};
 
     vector<expression_ref> decls;
     for(auto& [x,e]: cdecls)
 	decls.push_back( Haskell::ValueDecl(x,e) );
 
-    return {decls, true};
+    return {decls};
 }
 
 void Module::add_type(const type_info& T)

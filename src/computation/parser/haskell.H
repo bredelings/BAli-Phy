@@ -263,18 +263,22 @@ struct BuiltinDecl: public Object
     {};
 };
 
+// I think that these can originally be only
+// * FixityDecl
+// * SignatureDecl
+// * ValueDecl
+
+// Eventually we replace ValueDecl with PatDecl and FunDecl,
+// move SignatureDecls to a map, and remove FixityDecls.
+
 struct Decls: public std::vector<expression_ref>
 {
-protected:
-    bool is_top = false;
 public:
-    bool is_top_level() const {return is_top;}
-
     Decls* clone() const { return new Decls(*this);}
     std::string print() const;
 
-    Decls(bool b=false): is_top(b) {}
-    Decls(const vector<expression_ref>& ds,bool b=false): std::vector<expression_ref>(ds),is_top(b) {}
+    Decls() = default;
+    Decls(const vector<expression_ref>& ds): std::vector<expression_ref>(ds) {}
 };
 
 enum class Fixity {infixl, infix, infixr, unknown};
