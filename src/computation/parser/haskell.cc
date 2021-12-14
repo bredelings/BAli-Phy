@@ -693,21 +693,13 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
 
     for(auto& decl: topdecls)
     {
-	if (decl.is_a<ValueDecl>())
-            value_decls.push_back(decl);
-        else if (decl.is_a<SignatureDecl>())
+	if (decl.is_a<ValueDecl>() or decl.is_a<SignatureDecl>() or decl.is_a<FunDecl>() or decl.is_a<PatDecl>())
             value_decls.push_back(decl);
         else if (auto f = decl.to<FixityDecl>())
             fixity_decls.push_back(*f);
 	else if (auto b = decl.to<BuiltinDecl>())
             builtin_decls.push_back(*b);
-        else if (decl.is_a<ClassDecl>())
-            type_decls.push_back(decl);
-        else if (decl.is_a<TypeSynonymDecl>())
-            type_decls.push_back(decl);
-        else if (decl.is_a<DataOrNewtypeDecl>())
-            type_decls.push_back(decl);
-        else if (decl.is_a<InstanceDecl>())
+        else if (decl.is_a<ClassDecl>() or decl.is_a<TypeSynonymDecl>() or decl.is_a<DataOrNewtypeDecl>() or decl.is_a<InstanceDecl>())
             type_decls.push_back(decl);
         else if (auto d = decl.to<DefaultDecl>())
         {
