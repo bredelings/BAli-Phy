@@ -199,7 +199,7 @@ public:
 
     void compile(const Program&);
 
-    void declare_fixities();
+    void declare_fixities_(const Hs::Decls&);
 
     void declare_fixities(const Hs::Decls&);
 
@@ -217,13 +217,13 @@ public:
 
     CDecls desugar(const simplifier_options&, const Hs::Decls&);
 
-    std::map<var,expression_ref> import_small_decls(const Program&);
+    std::pair< std::map<var,expression_ref>, std::set<var> > import_small_decls(const Program&);
 
     std::pair< std::map<var,expression_ref>, std::set<var> > export_small_decls(const CDecls&, const std::map< var, expression_ref>& );
 
     std::map<std::string,expression_ref> code_defs() const;
 
-    CDecls optimize(const Program&, CDecls);
+    CDecls optimize(const Program&, CDecls, const std::map<var, expression_ref>&, const std::set<var>&);
 
     CDecls load_builtins(const module_loader&, const Hs::Decls& topdecls, CDecls);
 

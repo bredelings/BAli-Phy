@@ -378,9 +378,11 @@ void Module::compile(const Program& P)
     resolved = true;
     simplifier_options& opts = *P.get_module_loader();
 
+    // Scans imported modules and modifies symbol table and type table
     perform_imports(P);
 
-    declare_fixities();
+    if (module.topdecls)
+        declare_fixities(*module.topdecls);
 
     // FIXME - merge with rename() below.
     // Currently this (1) translates field-decls into function declarations
@@ -430,9 +432,9 @@ void Module::compile(const Program& P)
     check_duplicate_var(value_decls);
 
     if (module.topdecls)
-        small_decls_in = import_small_decls(P);
+        std::tie(small_decls_in, small_decls_in_free_vars) = import_small_decls(P);
 
-    value_decls = optimize(P, value_decls);
+    value_decls = optimize(P, value_decls, small_decls_in, small_decls_in_free_vars);
 
     // result returned in this->small_decls_out, this->small_decls_out_free_vars
     std::tie(small_decls_out, small_decls_out_free_vars) = export_small_decls(value_decls, small_decls_in);
@@ -901,32 +903,34 @@ void add_constructor(map<var,expression_ref>& decls, const constructor& con)
     decls.insert({x,res.first});
 }
 
-map<var, expression_ref> Module::import_small_decls(const Program& P)
+pair< map<var, expression_ref>, set<var> > Module::import_small_decls(const Program& P)
 {
-    map<var, expression_ref> small_decls;
+    map<var, expression_ref> small_decls_in;
+
+    set<var> small_decls_in_free_vars;
 
     // Collect small decls from imported modules;
     for(auto& imp_mod_name: dependencies())
     {
         auto& M = P.get_module(imp_mod_name);
-        small_decls.insert(M.small_decls_out.begin(), M.small_decls_out.end());
+        small_decls_in.insert(M.small_decls_out.begin(), M.small_decls_out.end());
         small_decls_in_free_vars.insert(M.small_decls_out_free_vars.begin(), M.small_decls_out_free_vars.end());
     }
 
-    add_constructor(small_decls, constructor(":",2));
-    add_constructor(small_decls, constructor("[]",0));
-    add_constructor(small_decls, constructor("()",0));
-    add_constructor(small_decls, constructor("(,)",2));
-    add_constructor(small_decls, constructor("(,,)",3));
-    add_constructor(small_decls, constructor("(,,,)",4));
-    add_constructor(small_decls, constructor("(,,,,)",5));
-    add_constructor(small_decls, constructor("(,,,,,)",6));
-    add_constructor(small_decls, constructor("(,,,,,,)",7));
-    add_constructor(small_decls, constructor("(,,,,,,,)",8));
-    add_constructor(small_decls, constructor("(,,,,,,,,)",9));
-    add_constructor(small_decls, constructor("(,,,,,,,,,)",10));
+    add_constructor(small_decls_in, constructor(":",2));
+    add_constructor(small_decls_in, constructor("[]",0));
+    add_constructor(small_decls_in, constructor("()",0));
+    add_constructor(small_decls_in, constructor("(,)",2));
+    add_constructor(small_decls_in, constructor("(,,)",3));
+    add_constructor(small_decls_in, constructor("(,,,)",4));
+    add_constructor(small_decls_in, constructor("(,,,,)",5));
+    add_constructor(small_decls_in, constructor("(,,,,,)",6));
+    add_constructor(small_decls_in, constructor("(,,,,,,)",7));
+    add_constructor(small_decls_in, constructor("(,,,,,,,)",8));
+    add_constructor(small_decls_in, constructor("(,,,,,,,,)",9));
+    add_constructor(small_decls_in, constructor("(,,,,,,,,,)",10));
 
-    return small_decls;
+    return {small_decls_in, small_decls_in_free_vars};
 }
 
 pair<map<var,expression_ref>, set<var>> Module::export_small_decls(const CDecls& cdecls, const map<var,expression_ref>& small_decls_in)
@@ -1172,7 +1176,7 @@ void mark_exported_decls(CDecls& decls, const map<string,symbol_info>& exports, 
     }
 }
 
-CDecls Module::optimize(const Program& P, CDecls cdecls)
+CDecls Module::optimize(const Program& P, CDecls cdecls, const map<var, expression_ref>& small_decls_in, const set<var>& small_decls_in_free_vars)
 {
     // 1. why do we keep on re-optimizing the same module?
     if (optimized) return cdecls;
@@ -1692,7 +1696,7 @@ void Module::def_type_class_method(const string& method_name, const string& clas
     declare_symbol( {method_name, class_method_symbol, class_name, {}, {unknown_fix, -1}} );
 }
 
-void Module::declare_fixities(const Haskell::Decls& decls)
+void Module::declare_fixities_(const Haskell::Decls& decls)
 {
     // 0. Get names that are being declared.
     for(const auto& decl: decls)
@@ -1709,19 +1713,17 @@ void Module::declare_fixities(const Haskell::Decls& decls)
         }
 }
 
-void Module::declare_fixities()
+void Module::declare_fixities(const Hs::Decls& topdecls)
 {
-    if (not module.topdecls) return;
-
     // 0. Get names that are being declared.
-    declare_fixities(*module.topdecls);
+    declare_fixities_(topdecls);
 
-    for(const auto& topdecl: *module.topdecls)
+    for(const auto& topdecl: topdecls)
         if (topdecl.is_a<Haskell::ClassDecl>())
         {
             auto& C = topdecl.as_<Haskell::ClassDecl>();
             if (C.decls)
-                declare_fixities(unloc(*C.decls));
+                declare_fixities_(unloc(*C.decls));
         }
 }
 
