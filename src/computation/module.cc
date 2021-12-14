@@ -416,8 +416,8 @@ void Module::compile(const Program& P)
     perform_exports();
 
     // look only in value_decls now
-    if (module.topdecls)
-        value_decls = desugar(opts, *module.topdecls);
+    // FIXME: how to handle functions defined in instances and classes?
+    value_decls = desugar(opts, M.value_decls);
 
     if (module.topdecls)
         value_decls = load_builtins(loader, *module.topdecls, value_decls);
