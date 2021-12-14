@@ -1012,7 +1012,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls decls)
     for(auto& f: decls.fixity_decls)
         Rn.rename_decl_head(f, true);
 
-    Rn.rename_decls(decls.value_binds[0].decls, {});
+    Rn.rename_decls(decls.value_binds[0].decls, {}, true);
 
     // how about builtin decls?
     // I think they should contribute (only) signatures.
