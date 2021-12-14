@@ -683,7 +683,11 @@ Haskell::Decls group_decls(const Haskell::Decls& decls)
                     throw myexception()<<"signature for "<<name<<" given twice!";
                 decls2.signatures.insert({name, sd->type});
             }
+            continue;
         }
+        else if (decl.is_a<Haskell::FixityDecl>())
+            continue;
+
         if (not decl.is_a<Haskell::ValueDecl>())
         {
             decls2.push_back(decl);
