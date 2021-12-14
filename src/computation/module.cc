@@ -417,7 +417,8 @@ void Module::compile(const Program& P)
     if (module.topdecls)
         value_decls = desugar(opts, *module.topdecls);
 
-    load_builtins(*P.get_module_loader());
+    if (module.topdecls)
+        value_decls = load_builtins(*P.get_module_loader(), *module.topdecls, value_decls);
 
     load_constructors();
 
@@ -428,7 +429,7 @@ void Module::compile(const Program& P)
 
     import_small_decls(P);
 
-    optimize(P);
+    value_decls = optimize(P, value_decls);
 
     export_small_decls();
 }
@@ -1172,14 +1173,14 @@ void mark_exported_decls(CDecls& decls, const map<string,symbol_info>& exports, 
     }
 }
 
-void Module::optimize(const Program& P)
+CDecls Module::optimize(const Program& P, CDecls cdecls)
 {
     // 1. why do we keep on re-optimizing the same module?
-    if (optimized) return;
+    if (optimized) return cdecls;
     optimized = true;
 
     // 2. Graph-normalize the bodies
-    for(auto& [x,rhs]: value_decls)
+    for(auto& [x,rhs]: cdecls)
     {
         // This won't float things to the top level!
         rhs = graph_normalize(rhs);
@@ -1187,9 +1188,9 @@ void Module::optimize(const Program& P)
 
     if (do_optimize)
     {
-        mark_exported_decls(value_decls, exported_symbols(), name);
+        mark_exported_decls(cdecls, exported_symbols(), name);
 
-        vector<CDecls> decl_groups = {value_decls};
+        vector<CDecls> decl_groups = {cdecls};
 
         decl_groups = simplify_module_gently(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
 
@@ -1201,10 +1202,10 @@ void Module::optimize(const Program& P)
         if (P.get_module_loader()->fully_lazy)
             float_out_from_module(decl_groups);
 
-        value_decls = flatten(decl_groups);
+        cdecls = flatten(decl_groups);
     }
 
-    value_decls = rename_top_level(value_decls, name);
+    return rename_top_level(cdecls, name);
 }
 
 pair<string,expression_ref> parse_builtin(const Haskell::BuiltinDecl& B, const module_loader& L)
@@ -1218,19 +1219,19 @@ pair<string,expression_ref> parse_builtin(const Haskell::BuiltinDecl& B, const m
     return {B.function_name, body};
 }
 
-void Module::load_builtins(const module_loader& L)
+CDecls Module::load_builtins(const module_loader& L, const Hs::Decls& topdecls, CDecls cdecls)
 {
-    if (not module.topdecls) return;
-
-    for(const auto& decl: *module.topdecls)
+    for(const auto& decl: topdecls)
         if (decl.is_a<Haskell::BuiltinDecl>())
         {
             auto [function_name, body] = parse_builtin(decl.as_<Haskell::BuiltinDecl>(), L);
 
             function_name = lookup_symbol(function_name).name;
 
-            value_decls.push_back( { var(function_name), body} );
+            cdecls.push_back( { var(function_name), body} );
         }
+
+    return cdecls;
 }
 
 string get_constructor_name(const Hs::Type& constr)

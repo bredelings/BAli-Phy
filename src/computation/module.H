@@ -225,9 +225,9 @@ public:
 
     void get_types(const Program&);
 
-    void optimize(const Program&);
+    CDecls optimize(const Program&, CDecls);
 
-    void load_builtins(const module_loader&);
+    CDecls load_builtins(const module_loader&, const Hs::Decls& topdecls, CDecls);
 
     void load_constructors();
 
