@@ -419,8 +419,7 @@ void Module::compile(const Program& P)
     // FIXME: how to handle functions defined in instances and classes?
     value_decls = desugar(opts, M.value_decls);
 
-    if (module.topdecls)
-        value_decls = load_builtins(loader, *module.topdecls, value_decls);
+    value_decls = load_builtins(loader, M.builtin_decls, value_decls);
 
     if (module.topdecls)
         value_decls = load_constructors(*module.topdecls, value_decls);
@@ -1219,17 +1218,16 @@ pair<string,expression_ref> parse_builtin(const Haskell::BuiltinDecl& B, const m
     return {B.function_name, body};
 }
 
-CDecls Module::load_builtins(const module_loader& L, const Hs::Decls& topdecls, CDecls cdecls)
+CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::BuiltinDecl>& builtin_decls, CDecls cdecls)
 {
-    for(const auto& decl: topdecls)
-        if (decl.is_a<Haskell::BuiltinDecl>())
-        {
-            auto [function_name, body] = parse_builtin(decl.as_<Haskell::BuiltinDecl>(), L);
+    for(const auto& decl: builtin_decls)
+    {
+        auto [function_name, body] = parse_builtin(decl, L);
 
-            function_name = lookup_symbol(function_name).name;
+        function_name = lookup_symbol(function_name).name;
 
-            cdecls.push_back( { var(function_name), body} );
-        }
+        cdecls.push_back( { var(function_name), body} );
+    }
 
     return cdecls;
 }
