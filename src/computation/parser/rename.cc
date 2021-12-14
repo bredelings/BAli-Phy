@@ -680,7 +680,7 @@ Haskell::Decls group_decls(const Haskell::Decls& decls)
             {
                 auto& name = unloc(var.name);
                 if (decls2.signatures.count(name))
-                    throw myexception()<<"signature for "<<name<<" given twice!";
+                    throw myexception()<<"Second signature for var '"<<name<<"' at location "<<*var.name.loc;
                 decls2.signatures.insert({name, sd->type});
             }
             continue;
@@ -1003,7 +1003,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls decls)
 {
     renamer_state Rn(m);
 
-    decls.type_decls[0].decls = Rn.rename_type_decls(decls.type_decls[0].decls);
+    decls.type_decls = Rn.rename_type_decls(decls.type_decls);
 
     if (decls.default_decl)
         for(auto& type: decls.default_decl->types)
@@ -1012,7 +1012,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls decls)
     for(auto& f: decls.fixity_decls)
         Rn.rename_decl_head(f, true);
 
-    Rn.rename_decls(decls.value_binds[0].decls, {}, true);
+    Rn.rename_decls(decls.value_decls, {}, true);
 
     // how about builtin decls?
     // I think they should contribute (only) signatures.

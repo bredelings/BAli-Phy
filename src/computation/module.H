@@ -199,9 +199,11 @@ public:
 
     void compile(const Program&);
 
+    void declare_fixities_(const Hs::FixityDecl&);
+
     void declare_fixities_(const Hs::Decls&);
 
-    void declare_fixities(const Hs::Decls&);
+    void declare_fixities(const Hs::ModuleDecls&);
 
     void add_local_symbols(const Hs::Decls&);
 

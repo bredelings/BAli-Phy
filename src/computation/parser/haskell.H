@@ -976,13 +976,13 @@ struct TypeOrClassGroup
 
 struct ModuleDecls
 {
-    std::vector<TypeOrClassGroup> type_decls;
+    Decls type_decls;
 
     std::optional<DefaultDecl> default_decl;
 
     std::vector<FixityDecl> fixity_decls;
 
-    std::vector<BindingGroup> value_binds;
+    Decls value_decls;
 
     std::vector<BuiltinDecl> builtin_decls;
 

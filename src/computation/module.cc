@@ -383,8 +383,11 @@ void Module::compile(const Program& P)
     // Scans imported modules and modifies symbol table and type table
     perform_imports(P);
 
+    Hs::ModuleDecls M;
     if (module.topdecls)
-        declare_fixities(*module.topdecls);
+        M = Hs::ModuleDecls(*module.topdecls);
+
+    declare_fixities(M);
 
     // FIXME - merge with rename() below.
     // Currently this (1) translates field-decls into function declarations
@@ -1698,35 +1701,34 @@ void Module::def_type_class_method(const string& method_name, const string& clas
     declare_symbol( {method_name, class_method_symbol, class_name, {}, {unknown_fix, -1}} );
 }
 
+void Module::declare_fixities_(const Haskell::FixityDecl& FD)
+{
+    // Determine precedence.
+    int precedence = (FD.precedence)?*FD.precedence:9;
+
+    // Find op names and declare fixity and precedence.
+    for(const auto& name: FD.names)
+        declare_fixity(name, precedence, FD.fixity);
+}
+
 void Module::declare_fixities_(const Haskell::Decls& decls)
 {
     // 0. Get names that are being declared.
     for(const auto& decl: decls)
-        if (decl.is_a<Haskell::FixityDecl>())
-        {
-            auto FD = decl.as_<Haskell::FixityDecl>();
-
-            // Determine precedence.
-            int precedence = (FD.precedence)?*FD.precedence:9;
-
-            // Find op names and declare fixity and precedence.
-            for(const auto& name: FD.names)
-                declare_fixity(name, precedence, FD.fixity);
-        }
+        if (auto FD = decl.to<Haskell::FixityDecl>())
+            declare_fixities_(*FD);
 }
 
-void Module::declare_fixities(const Hs::Decls& topdecls)
+void Module::declare_fixities(const Hs::ModuleDecls& M)
 {
-    // 0. Get names that are being declared.
-    declare_fixities_(topdecls);
+    // At the top level, we have removed fixities from value_decls.
+    for(auto& FD: M.fixity_decls)
+        declare_fixities_(FD);
 
-    for(const auto& topdecl: topdecls)
-        if (topdecl.is_a<Haskell::ClassDecl>())
-        {
-            auto& C = topdecl.as_<Haskell::ClassDecl>();
-            if (C.decls)
-                declare_fixities_(unloc(*C.decls));
-        }
+    for(const auto& type_decl: M.type_decls)
+        if (auto C = type_decl.to<Haskell::ClassDecl>())
+            if (C->decls)
+                declare_fixities_(unloc(*C->decls));
 }
 
 void Module::add_local_symbols(const Hs::Decls& topdecls)
