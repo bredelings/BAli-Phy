@@ -550,11 +550,9 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 }
 
 
-Haskell::Decls rename_infix_top(const Module& m, const Haskell::Decls& decls)
+Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
 {
-    if (not decls.size()) return decls;
-
-    auto v = decls;
+    Hs::Decls decls2;
 
     for(auto& decl: decls)
     {
@@ -620,12 +618,16 @@ Haskell::Decls rename_infix_top(const Module& m, const Haskell::Decls& decls)
                 expression_ref body = Haskell::CaseExp(x,Haskell::Alts(alts));
                 body = Haskell::LambdaExp({x},body);
 
-                v.push_back(Haskell::ValueDecl(name, body));
+                decls2.push_back(Haskell::ValueDecl(name, body));
             }
         }
     }
+    return decls2;
+}
 
-    return rename_infix(m, Haskell::Decls(v));
+Haskell::Decls rename_infix_top(const Module& m, const Haskell::Decls& decls)
+{
+    return rename_infix(m, decls);
 }
 
 // 1. The primary purpose of the rename pass is to convert identifiers to (possibly qualified) vars.

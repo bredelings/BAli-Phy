@@ -394,7 +394,11 @@ void Module::compile(const Program& P)
     //                (2) rewrites @ f x y -> f x y (where f is the head) using unapply( ).
     //                (3) rewrites infix expressions through desugar_infix( )
     if (module.topdecls)
+    {
+        auto field_accessors = synthesize_field_accessors(*module.topdecls);
+        module.topdecls->insert(module.topdecls->end(), field_accessors.begin(), field_accessors.end());
         module.topdecls = rename_infix(*module.topdecls);
+    }
 
     // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym
     if (module.topdecls)
@@ -403,14 +407,12 @@ void Module::compile(const Program& P)
     // Currently we do "renaming" here.
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     if (module.topdecls)
-        module.topdecls = rename(opts, *module.topdecls);
-
-    if (module.topdecls)
     {
+        module.topdecls = rename(opts, *module.topdecls);
         M = Hs::ModuleDecls(*module.topdecls);
-
-        class_and_type_decls = find_type_groups(M.type_decls);
     }
+
+    class_and_type_decls = find_type_groups(M.type_decls);
 
     // Uses this->module to update symbols + aliases, types + type_aliases
     perform_exports();

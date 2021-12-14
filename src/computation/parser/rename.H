@@ -14,6 +14,8 @@ bool is_pattern_binding(const Haskell::ValueDecl& decl);
 bool is_function_binding(const Haskell::ValueDecl& decl);
 Haskell::Decls group_decls(const Haskell::Decls& decls);
 
+Hs::Decls synthesize_field_accessors(const Hs::Decls& decls);
+
 Haskell::Decls rename_infix_top(const Module& p, const Haskell::Decls&);
 expression_ref rename_infix(const Module& p, const expression_ref&);
 Haskell::Decls rename(const Module& p, Haskell::Decls);
