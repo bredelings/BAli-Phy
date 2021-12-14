@@ -17,6 +17,16 @@ using std::set;
 using std::string;
 using std::pair;
 
+string print_cdecls(const CDecls& cdecls)
+{
+    vector<string> ds;
+    for(auto& [x,E]: cdecls)
+        ds.push_back(x.print() + " = " + E.print());
+
+    return "{ " + join(ds, "; ") +  " }";
+}
+
+
 bool let_exp::operator==(const Object& o) const 
 {
     if (this == &o) return true;
@@ -34,10 +44,7 @@ bool let_exp::operator==(const Object& o) const
 
 string let_exp::print() const 
 {
-    vector<string> bind_strings;
-    for(auto& [x,e]: binds)
-        bind_strings.push_back(x.print() + " = " + e.print());
-    return "let {" + join(bind_strings,"; ") + "} in " + body.print();
+    return "let " + print_cdecls(binds) + " in " + body.print();
 }
 
 Let indexed_let_expression(const vector<expression_ref>& bodies, const expression_ref& T)

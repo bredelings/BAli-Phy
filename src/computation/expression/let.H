@@ -11,6 +11,8 @@
 typedef std::pair<var, expression_ref> CDecl;
 typedef std::vector<CDecl> CDecls;
 
+std::string print_cdecls(const CDecls&);
+
 struct let_exp: public Object
 {
     CDecls binds;
