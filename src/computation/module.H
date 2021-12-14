@@ -12,6 +12,7 @@
 #include <iostream>
 #include "computation/parser/haskell.H"
 #include "computation/typecheck/kind.H"
+#include "computation/optimization/simplifier.H"       // for simplifier options
 
 constexpr auto unknown_fix = Haskell::Fixity::unknown;
 constexpr auto left_fix = Haskell::Fixity::infixl;
@@ -208,9 +209,9 @@ public:
 
     void perform_exports();
 
-    void rename_infix(const Program&);
+    void rename_infix();
 
-    void rename(const Program&);
+    void rename(const simplifier_options&);
 
     std::vector< std::vector< expression_ref > > find_type_groups(const std::vector<expression_ref>&);
 

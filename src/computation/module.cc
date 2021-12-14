@@ -376,6 +376,7 @@ void Module::compile(const Program& P)
 {
     assert(not resolved);
     resolved = true;
+    simplifier_options& opts = *P.get_module_loader();
 
     perform_imports(P);
 
@@ -385,13 +386,13 @@ void Module::compile(const Program& P)
     // Currently this (1) translates field-decls into function declarations
     //                (2) rewrites @ f x y -> f x y (where f is the head) using unapply( ).
     //                (3) rewrites infix expressions through desugar_infix( )
-    rename_infix(P);
+    rename_infix();
 
     add_local_symbols();
 
     // Currently we do "renaming" here.
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
-    rename(P);
+    rename(opts);
 
     if (module.topdecls)
     {
@@ -568,7 +569,7 @@ map<string,expression_ref> Module::code_defs() const
     return code;
 }
 
-void Module::rename_infix(const Program&)
+void Module::rename_infix()
 {
     if (module.topdecls)
     {
@@ -576,12 +577,12 @@ void Module::rename_infix(const Program&)
     }
 }
 
-void Module::rename(const Program& P)
+void Module::rename(const simplifier_options& opts)
 {
     if (module.topdecls)
         module.topdecls = ::rename(*this,*module.topdecls);
 
-    if (P.get_module_loader()->dump_renamed)
+    if (opts.dump_renamed)
         std::cout<<name<<"[renamed]:\n"<<module.topdecls->print()<<"\n\n";
 }
 
