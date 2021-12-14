@@ -669,10 +669,21 @@ typedef set<string> bound_type_var_info;
 
 Haskell::Decls group_decls(const Haskell::Decls& decls)
 {
-    vector<expression_ref> decls2;
+    Haskell::Decls decls2;
     for(int i=0;i<decls.size();i++)
     {
         auto& decl = decls[i];
+        // Remove signature and fixity decls after recording signatures.
+        if (auto sd = decl.to<Haskell::SignatureDecl>())
+        {
+            for(auto& var: sd->vars)
+            {
+                auto& name = unloc(var.name);
+                if (decls2.signatures.count(name))
+                    throw myexception()<<"signature for "<<name<<" given twice!";
+                decls2.signatures.insert({name, sd->type});
+            }
+        }
         if (not decl.is_a<Haskell::ValueDecl>())
         {
             decls2.push_back(decl);

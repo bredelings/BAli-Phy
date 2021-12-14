@@ -274,6 +274,8 @@ struct BuiltinDecl: public Object
 struct Decls: public std::vector<expression_ref>
 {
 public:
+    std::map<std::string, Type> signatures;
+
     Decls* clone() const { return new Decls(*this);}
     std::string print() const;
 

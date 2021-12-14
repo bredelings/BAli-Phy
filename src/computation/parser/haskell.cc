@@ -188,6 +188,8 @@ string Decls::print() const
     vector<string> decl_string;
     for(auto& decl: *this)
         decl_string.push_back( decl.print() );
+    for(auto& [name, type]: signatures)
+        decl_string.push_back( name + " :: " + type.print() );
 
     return "{"+join( decl_string, "\n;" ) + "\n}";
 }
