@@ -201,9 +201,9 @@ public:
 
     void declare_fixities();
 
-    void declare_fixities(const Haskell::Decls& decls);
+    void declare_fixities(const Hs::Decls&);
 
-    void add_local_symbols();
+    void add_local_symbols(const Hs::Decls&);
 
     void perform_imports(const Program&);
 
@@ -217,19 +217,17 @@ public:
 
     CDecls desugar(const simplifier_options&, const Hs::Decls&);
 
-    void import_small_decls(const Program&);
+    std::map<var,expression_ref> import_small_decls(const Program&);
 
     void export_small_decls();
 
     std::map<std::string,expression_ref> code_defs() const;
 
-    void get_types(const Program&);
-
     CDecls optimize(const Program&, CDecls);
 
     CDecls load_builtins(const module_loader&, const Hs::Decls& topdecls, CDecls);
 
-    void load_constructors();
+    CDecls load_constructors(const Hs::Decls&, CDecls);
 
     bool is_declared(const std::string&) const;
 

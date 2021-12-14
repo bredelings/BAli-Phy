@@ -389,7 +389,9 @@ void Module::compile(const Program& P)
     if (module.topdecls)
         module.topdecls = rename_infix(*module.topdecls);
 
-    add_local_symbols();
+    // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym
+    if (module.topdecls)
+        add_local_symbols(*module.topdecls);
 
     // Currently we do "renaming" here.
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
@@ -411,6 +413,7 @@ void Module::compile(const Program& P)
         class_and_type_decls = find_type_groups(tmp);
     }
 
+    // Uses this->module, symbols + aliases, types + type_aliases
     perform_exports();
 
     // look only in value_decls now
@@ -420,14 +423,14 @@ void Module::compile(const Program& P)
     if (module.topdecls)
         value_decls = load_builtins(*P.get_module_loader(), *module.topdecls, value_decls);
 
-    load_constructors();
-
-    get_types(P);
+    if (module.topdecls)
+        value_decls = load_constructors(*module.topdecls, value_decls);
 
     // Check for duplicate top-level names.
     check_duplicate_var(value_decls);
 
-    import_small_decls(P);
+    if (module.topdecls)
+        small_decls_in = import_small_decls(P);
 
     value_decls = optimize(P, value_decls);
 
@@ -897,32 +900,32 @@ void add_constructor(map<var,expression_ref>& decls, const constructor& con)
     decls.insert({x,res.first});
 }
 
-void Module::import_small_decls(const Program& P)
+map<var, expression_ref> Module::import_small_decls(const Program& P)
 {
-    if (not module.topdecls) return;
-
-    assert(small_decls_in.empty());
+    map<var, expression_ref> small_decls;
 
     // Collect small decls from imported modules;
     for(auto& imp_mod_name: dependencies())
     {
         auto& M = P.get_module(imp_mod_name);
-        small_decls_in.insert(M.small_decls_out.begin(), M.small_decls_out.end());
+        small_decls.insert(M.small_decls_out.begin(), M.small_decls_out.end());
         small_decls_in_free_vars.insert(M.small_decls_out_free_vars.begin(), M.small_decls_out_free_vars.end());
     }
 
-    add_constructor(small_decls_in, constructor(":",2));
-    add_constructor(small_decls_in, constructor("[]",0));
-    add_constructor(small_decls_in, constructor("()",0));
-    add_constructor(small_decls_in, constructor("(,)",2));
-    add_constructor(small_decls_in, constructor("(,,)",3));
-    add_constructor(small_decls_in, constructor("(,,,)",4));
-    add_constructor(small_decls_in, constructor("(,,,,)",5));
-    add_constructor(small_decls_in, constructor("(,,,,,)",6));
-    add_constructor(small_decls_in, constructor("(,,,,,,)",7));
-    add_constructor(small_decls_in, constructor("(,,,,,,,)",8));
-    add_constructor(small_decls_in, constructor("(,,,,,,,,)",9));
-    add_constructor(small_decls_in, constructor("(,,,,,,,,,)",10));
+    add_constructor(small_decls, constructor(":",2));
+    add_constructor(small_decls, constructor("[]",0));
+    add_constructor(small_decls, constructor("()",0));
+    add_constructor(small_decls, constructor("(,)",2));
+    add_constructor(small_decls, constructor("(,,)",3));
+    add_constructor(small_decls, constructor("(,,,)",4));
+    add_constructor(small_decls, constructor("(,,,,)",5));
+    add_constructor(small_decls, constructor("(,,,,,)",6));
+    add_constructor(small_decls, constructor("(,,,,,,)",7));
+    add_constructor(small_decls, constructor("(,,,,,,,)",8));
+    add_constructor(small_decls, constructor("(,,,,,,,,)",9));
+    add_constructor(small_decls, constructor("(,,,,,,,,,)",10));
+
+    return small_decls;
 }
 
 void Module::export_small_decls()
@@ -1123,13 +1126,6 @@ expression_ref func_type(const expression_ref& a, const expression_ref& b)
     return Arrow+a+b;
 }
 
-void Module::get_types(const Program&)
-{
-    expression_ref Star = constructor("*",0);
-    //  std::cerr<<func_type(func_type(Star,Star),Star)<<"\n";
-    //  std::cerr<<func_type(Star,func_type(Star,Star))<<"\n";
-}
-
 vector<expression_ref> peel_lambdas(expression_ref& E)
 {
     vector<expression_ref> args;
@@ -1241,11 +1237,9 @@ string get_constructor_name(const Hs::Type& constr)
     return unloc(con.as_<Haskell::TypeCon>().name);
 }
 
-void Module::load_constructors()
+CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
 {
-    if (not module.topdecls) return;
-
-    for(const auto& decl: *module.topdecls)
+    for(const auto& decl: topdecls)
         if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
             auto constrs = decl.as_<Haskell::DataOrNewtypeDecl>().constructors;
@@ -1258,10 +1252,11 @@ void Module::load_constructors()
 
                 string qualified_name = name+"."+cname;
                 expression_ref body = lambda_expression( constructor(qualified_name, arity) );
-                value_decls.push_back( { var(qualified_name) , body} );
+                cdecls.push_back( { var(qualified_name) , body} );
             }
             // Strip out the constructor definition here new_decls.push_back(decl);
         }
+    return cdecls;
 }
 
 bool Module::is_declared(const std::string& name) const
@@ -1727,12 +1722,10 @@ void Module::declare_fixities()
         }
 }
 
-void Module::add_local_symbols()
+void Module::add_local_symbols(const Hs::Decls& topdecls)
 {
-    if (not module.topdecls) return;
-
     // 0. Get names that are being declared.
-    for(const auto& decl: *module.topdecls)
+    for(const auto& decl: topdecls)
         if (decl.is_a<Haskell::ValueDecl>())
         {
             auto& D = decl.as_<Haskell::ValueDecl>();
