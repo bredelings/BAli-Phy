@@ -421,14 +421,12 @@ void Module::compile(const Program& P)
 
     value_decls = load_builtins(loader, M.builtin_decls, value_decls);
 
-    if (module.topdecls)
-        value_decls = load_constructors(*module.topdecls, value_decls);
+    value_decls = load_constructors(M.type_decls, value_decls);
 
     // Check for duplicate top-level names.
     check_duplicate_var(value_decls);
 
-    if (module.topdecls)
-        std::tie(small_decls_in, small_decls_in_free_vars) = import_small_decls(P);
+    std::tie(small_decls_in, small_decls_in_free_vars) = import_small_decls(P);
 
     value_decls = optimize(opts, value_decls, small_decls_in, small_decls_in_free_vars);
 
