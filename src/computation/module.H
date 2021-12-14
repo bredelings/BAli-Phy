@@ -223,7 +223,7 @@ public:
 
     std::map<std::string,expression_ref> code_defs() const;
 
-    CDecls optimize(const Program&, CDecls, const std::map<var, expression_ref>&, const std::set<var>&);
+    CDecls optimize(const simplifier_options&, CDecls, const std::map<var, expression_ref>&, const std::set<var>&);
 
     CDecls load_builtins(const module_loader&, const Hs::Decls& topdecls, CDecls);
 

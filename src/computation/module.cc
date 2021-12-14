@@ -376,6 +376,8 @@ void Module::compile(const Program& P)
 {
     assert(not resolved);
     resolved = true;
+
+    auto& loader = *P.get_module_loader();
     simplifier_options& opts = *P.get_module_loader();
 
     // Scans imported modules and modifies symbol table and type table
@@ -423,7 +425,7 @@ void Module::compile(const Program& P)
         value_decls = desugar(opts, *module.topdecls);
 
     if (module.topdecls)
-        value_decls = load_builtins(*P.get_module_loader(), *module.topdecls, value_decls);
+        value_decls = load_builtins(loader, *module.topdecls, value_decls);
 
     if (module.topdecls)
         value_decls = load_constructors(*module.topdecls, value_decls);
@@ -434,7 +436,7 @@ void Module::compile(const Program& P)
     if (module.topdecls)
         std::tie(small_decls_in, small_decls_in_free_vars) = import_small_decls(P);
 
-    value_decls = optimize(P, value_decls, small_decls_in, small_decls_in_free_vars);
+    value_decls = optimize(opts, value_decls, small_decls_in, small_decls_in_free_vars);
 
     // result returned in this->small_decls_out, this->small_decls_out_free_vars
     std::tie(small_decls_out, small_decls_out_free_vars) = export_small_decls(value_decls, small_decls_in);
@@ -1176,7 +1178,7 @@ void mark_exported_decls(CDecls& decls, const map<string,symbol_info>& exports, 
     }
 }
 
-CDecls Module::optimize(const Program& P, CDecls cdecls, const map<var, expression_ref>& small_decls_in, const set<var>& small_decls_in_free_vars)
+CDecls Module::optimize(const simplifier_options& opts, CDecls cdecls, const map<var, expression_ref>& small_decls_in, const set<var>& small_decls_in_free_vars)
 {
     // 1. why do we keep on re-optimizing the same module?
     if (optimized) return cdecls;
@@ -1195,14 +1197,14 @@ CDecls Module::optimize(const Program& P, CDecls cdecls, const map<var, expressi
 
         vector<CDecls> decl_groups = {cdecls};
 
-        decl_groups = simplify_module_gently(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
+        decl_groups = simplify_module_gently(opts, small_decls_in, small_decls_in_free_vars, decl_groups);
 
-        if (P.get_module_loader()->fully_lazy)
+        if (opts.fully_lazy)
             float_out_from_module(decl_groups);
 
-        decl_groups = simplify_module(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decl_groups);
+        decl_groups = simplify_module(opts, small_decls_in, small_decls_in_free_vars, decl_groups);
 
-        if (P.get_module_loader()->fully_lazy)
+        if (opts.fully_lazy)
             float_out_from_module(decl_groups);
 
         cdecls = flatten(decl_groups);
