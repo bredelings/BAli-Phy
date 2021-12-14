@@ -386,13 +386,15 @@ void Module::compile(const Program& P)
     // Currently this (1) translates field-decls into function declarations
     //                (2) rewrites @ f x y -> f x y (where f is the head) using unapply( ).
     //                (3) rewrites infix expressions through desugar_infix( )
-    rename_infix();
+    if (module.topdecls)
+        module.topdecls = rename_infix(*module.topdecls);
 
     add_local_symbols();
 
     // Currently we do "renaming" here.
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
-    rename(opts);
+    if (module.topdecls)
+        module.topdecls = rename(opts, *module.topdecls);
 
     if (module.topdecls)
     {
@@ -412,7 +414,8 @@ void Module::compile(const Program& P)
     perform_exports();
 
     // look only in value_decls now
-    desugar(P);
+    if (module.topdecls)
+        value_decls = desugar(opts, *module.topdecls);
 
     load_builtins(*P.get_module_loader());
 
@@ -569,21 +572,19 @@ map<string,expression_ref> Module::code_defs() const
     return code;
 }
 
-void Module::rename_infix()
+Hs::Decls Module::rename_infix(const Hs::Decls& topdecls)
 {
-    if (module.topdecls)
-    {
-        module.topdecls = ::rename_infix_top(*this,*module.topdecls);
-    }
+    return ::rename_infix_top(*this, topdecls);
 }
 
-void Module::rename(const simplifier_options& opts)
+Hs::Decls Module::rename(const simplifier_options& opts, Hs::Decls topdecls)
 {
-    if (module.topdecls)
-        module.topdecls = ::rename(*this,*module.topdecls);
+    topdecls = ::rename(*this, topdecls);
 
     if (opts.dump_renamed)
-        std::cout<<name<<"[renamed]:\n"<<module.topdecls->print()<<"\n\n";
+        std::cout<<name<<"[renamed]:\n"<<topdecls.print()<<"\n\n";
+
+    return topdecls;
 }
 
 set<string> free_type_names_from_type(const Haskell::Type& type)
@@ -877,14 +878,14 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
     return type_decl_groups;
 }
 
-void Module::desugar(const Program& P)
+CDecls Module::desugar(const simplifier_options& opts, const Hs::Decls& topdecls)
 {
-    if (module.topdecls)
-    {
-        value_decls = ::desugar(*this,*module.topdecls);
-    }
-    if (P.get_module_loader()->dump_desugared and module.topdecls)
-        std::cout<<name<<"[desugared]:\n"<<module.topdecls->print()<<"\n\n";
+    auto cdecls = ::desugar(*this, topdecls);
+
+    if (opts.dump_desugared and module.topdecls)
+        std::cout<<name<<"[desugared]:\n"<<print_cdecls(cdecls)<<"\n\n";
+
+    return cdecls;
 }
 
 void add_constructor(map<var,expression_ref>& decls, const constructor& con)
@@ -1200,7 +1201,7 @@ void Module::optimize(const Program& P)
         if (P.get_module_loader()->fully_lazy)
             float_out_from_module(decl_groups);
 
-        value_decls = flatten(std::move(decl_groups));
+        value_decls = flatten(decl_groups);
     }
 
     value_decls = rename_top_level(value_decls, name);

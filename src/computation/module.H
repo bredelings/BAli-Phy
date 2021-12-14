@@ -209,13 +209,13 @@ public:
 
     void perform_exports();
 
-    void rename_infix();
+    Hs::Decls rename_infix(const Hs::Decls&);
 
-    void rename(const simplifier_options&);
+    Hs::Decls rename(const simplifier_options&, Hs::Decls);
 
     std::vector< std::vector< expression_ref > > find_type_groups(const std::vector<expression_ref>&);
 
-    void desugar(const Program&);
+    CDecls desugar(const simplifier_options&, const Hs::Decls&);
 
     void import_small_decls(const Program&);
 
