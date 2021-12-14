@@ -407,17 +407,9 @@ void Module::compile(const Program& P)
 
     if (module.topdecls)
     {
-        // It should be possible to replace each of these (i) an object (ii) that is located.
-        vector<expression_ref> tmp;
-        for(auto& decl: *module.topdecls)
-            if (decl.is_a<Haskell::ClassDecl>() or
-                decl.is_a<Haskell::InstanceDecl>() or
-                decl.is_a<Haskell::DataOrNewtypeDecl>() or
-                decl.is_a<Haskell::TypeSynonymDecl>()
-                )
-                tmp.push_back(decl);
+        M = Hs::ModuleDecls(*module.topdecls);
 
-        class_and_type_decls = find_type_groups(tmp);
+        class_and_type_decls = find_type_groups(M.type_decls);
     }
 
     // Uses this->module to update symbols + aliases, types + type_aliases
