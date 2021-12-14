@@ -219,7 +219,7 @@ public:
 
     std::map<var,expression_ref> import_small_decls(const Program&);
 
-    void export_small_decls();
+    std::pair< std::map<var,expression_ref>, std::set<var> > export_small_decls(const CDecls&, const std::map< var, expression_ref>& );
 
     std::map<std::string,expression_ref> code_defs() const;
 

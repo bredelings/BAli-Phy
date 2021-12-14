@@ -413,7 +413,7 @@ void Module::compile(const Program& P)
         class_and_type_decls = find_type_groups(tmp);
     }
 
-    // Uses this->module, symbols + aliases, types + type_aliases
+    // Uses this->module to update symbols + aliases, types + type_aliases
     perform_exports();
 
     // look only in value_decls now
@@ -434,7 +434,8 @@ void Module::compile(const Program& P)
 
     value_decls = optimize(P, value_decls);
 
-    export_small_decls();
+    // result returned in this->small_decls_out, this->small_decls_out_free_vars
+    std::tie(small_decls_out, small_decls_out_free_vars) = export_small_decls(value_decls, small_decls_in);
 }
 
 void Module::perform_imports(const Program& P)
@@ -928,14 +929,14 @@ map<var, expression_ref> Module::import_small_decls(const Program& P)
     return small_decls;
 }
 
-void Module::export_small_decls()
+pair<map<var,expression_ref>, set<var>> Module::export_small_decls(const CDecls& cdecls, const map<var,expression_ref>& small_decls_in)
 {
-    assert(small_decls_out.empty());
-
     // Modules that we imported should have their small_decls transitively inherited
-    small_decls_out = small_decls_in;
+    map<var, expression_ref> small_decls_out = small_decls_in;
 
-    for(auto& [x,rhs]: value_decls)
+    set<var> small_decls_out_free_vars;
+
+    for(auto& [x,rhs]: cdecls)
     {
         assert(not x.name.empty());
 
@@ -944,15 +945,17 @@ void Module::export_small_decls()
     }
 
     // Find free vars in the decls that are not bound by *other* decls.
-    for(auto& decl: small_decls_out)
+    for(auto& [_,F]: small_decls_out)
     {
-        auto [E, free_vars] = occurrence_analyzer(decl.second);
-        decl.second = E;
+        auto [E, free_vars] = occurrence_analyzer(F);
+        F = E;
 
         for(auto& x: free_vars)
             if (not small_decls_out.count(x))
                 small_decls_out_free_vars.insert(x);
     }
+
+    return {small_decls_out, small_decls_out_free_vars};
 }
 
 template <typename T>
