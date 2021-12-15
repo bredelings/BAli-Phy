@@ -396,13 +396,23 @@ void Module::compile(const Program& P)
     if (module.topdecls)
     {
         auto field_accessors = synthesize_field_accessors(M.type_decls);
+
+        M.value_decls.insert(M.value_decls.end(), field_accessors.begin(), field_accessors.end());
+        M.value_decls = ::rename_infix(*this, M.value_decls);
+        M.type_decls = ::rename_infix(*this, M.type_decls);
+
         module.topdecls->insert(module.topdecls->end(), field_accessors.begin(), field_accessors.end());
         module.topdecls = rename_infix(*module.topdecls);
     }
 
     // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym
     if (module.topdecls)
-        add_local_symbols(*module.topdecls);
+    {
+        add_local_symbols(M.value_decls);
+        add_local_symbols(M.type_decls);
+        for(auto& d: M.builtin_decls)
+            def_function(d.function_name);
+    }
 
     // Currently we do "renaming" here.
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
