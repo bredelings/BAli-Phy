@@ -16,7 +16,7 @@ Haskell::Decls group_decls(const Haskell::Decls& decls);
 
 Hs::Decls synthesize_field_accessors(const Hs::Decls& decls);
 
-Haskell::Decls rename_infix_top(const Module& p, const Haskell::Decls&);
+Haskell::Decls rename_infix(const Module& p, Haskell::Decls);
 expression_ref rename_infix(const Module& p, const expression_ref&);
 Haskell::Decls rename(const Module& p, Haskell::Decls);
 // I think ghc returns a moduledecls AND a... class environment?

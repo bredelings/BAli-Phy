@@ -625,11 +625,6 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
     return decls2;
 }
 
-Haskell::Decls rename_infix_top(const Module& m, const Haskell::Decls& decls)
-{
-    return rename_infix(m, decls);
-}
-
 // 1. The primary purpose of the rename pass is to convert identifiers to (possibly qualified) vars.
 
 // 2. Additionally, we also try and translate rec expressions to mfix expressions here.

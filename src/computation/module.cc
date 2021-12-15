@@ -577,7 +577,7 @@ map<string,expression_ref> Module::code_defs() const
 
 Hs::Decls Module::rename_infix(const Hs::Decls& topdecls)
 {
-    return ::rename_infix_top(*this, topdecls);
+    return ::rename_infix(*this, topdecls);
 }
 
 Hs::Decls Module::rename(const simplifier_options& opts, Hs::Decls topdecls)
