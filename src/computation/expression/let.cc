@@ -23,7 +23,7 @@ string print_cdecls(const CDecls& cdecls)
     for(auto& [x,E]: cdecls)
         ds.push_back(x.print() + " = " + E.print());
 
-    return "{ " + join(ds, "; ") +  " }";
+    return "{" + join(ds, "; ") +  "}";
 }
 
 
