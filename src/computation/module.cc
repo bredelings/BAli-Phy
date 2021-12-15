@@ -395,7 +395,7 @@ void Module::compile(const Program& P)
     //                (3) rewrites infix expressions through desugar_infix( )
     if (module.topdecls)
     {
-        auto field_accessors = synthesize_field_accessors(*module.topdecls);
+        auto field_accessors = synthesize_field_accessors(M.type_decls);
         module.topdecls->insert(module.topdecls->end(), field_accessors.begin(), field_accessors.end());
         module.topdecls = rename_infix(*module.topdecls);
     }
