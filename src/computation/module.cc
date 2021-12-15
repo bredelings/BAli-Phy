@@ -74,17 +74,6 @@ bool operator!=(const type_info& T1, const type_info& T2)
 
 symbol_info lookup_symbol(const string& name, const Program& P);
 
-Haskell::Decls make_topdecls(const CDecls& cdecls)
-{
-    if (cdecls.empty()) return {};
-
-    vector<expression_ref> decls;
-    for(auto& [x,e]: cdecls)
-	decls.push_back( Haskell::ValueDecl(x,e) );
-
-    return {decls};
-}
-
 void Module::add_type(const type_info& T)
 {
     if (is_haskell_builtin_type_name(T.name))
@@ -393,34 +382,21 @@ void Module::compile(const Program& P)
     // Currently this (1) translates field-decls into function declarations
     //                (2) rewrites @ f x y -> f x y (where f is the head) using unapply( ).
     //                (3) rewrites infix expressions through desugar_infix( )
-    if (module.topdecls)
-    {
-        auto field_accessors = synthesize_field_accessors(M.type_decls);
+    auto field_accessors = synthesize_field_accessors(M.type_decls);
 
-        M.value_decls.insert(M.value_decls.end(), field_accessors.begin(), field_accessors.end());
-        M.value_decls = ::rename_infix(*this, M.value_decls);
-        M.type_decls = ::rename_infix(*this, M.type_decls);
-
-        module.topdecls->insert(module.topdecls->end(), field_accessors.begin(), field_accessors.end());
-        module.topdecls = rename_infix(*module.topdecls);
-    }
+    M.value_decls.insert(M.value_decls.end(), field_accessors.begin(), field_accessors.end());
+    M.value_decls = ::rename_infix(*this, M.value_decls);
+    M.type_decls = ::rename_infix(*this, M.type_decls);
 
     // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym
-    if (module.topdecls)
-    {
-        add_local_symbols(M.value_decls);
-        add_local_symbols(M.type_decls);
-        for(auto& d: M.builtin_decls)
-            def_function(d.function_name);
-    }
+    add_local_symbols(M.value_decls);
+    add_local_symbols(M.type_decls);
+    for(auto& d: M.builtin_decls)
+        def_function(d.function_name);
 
     // Currently we do "renaming" here.
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
-    if (module.topdecls)
-    {
-        module.topdecls = rename(opts, *module.topdecls);
-        M = Hs::ModuleDecls(*module.topdecls);
-    }
+    M = rename(opts, M);
 
     class_and_type_decls = find_type_groups(M.type_decls);
 
@@ -588,6 +564,16 @@ map<string,expression_ref> Module::code_defs() const
 Hs::Decls Module::rename_infix(const Hs::Decls& topdecls)
 {
     return ::rename_infix(*this, topdecls);
+}
+
+Hs::ModuleDecls Module::rename(const simplifier_options& opts, Hs::ModuleDecls M)
+{
+    M = ::rename(*this, M);
+
+    if (opts.dump_renamed)
+        std::cout<<name<<"[renamed]:\n"<<M.value_decls.print()<<"\n\n";
+
+    return M;
 }
 
 Hs::Decls Module::rename(const simplifier_options& opts, Hs::Decls topdecls)
