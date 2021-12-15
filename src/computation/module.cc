@@ -576,16 +576,6 @@ Hs::ModuleDecls Module::rename(const simplifier_options& opts, Hs::ModuleDecls M
     return M;
 }
 
-Hs::Decls Module::rename(const simplifier_options& opts, Hs::Decls topdecls)
-{
-    topdecls = ::rename(*this, topdecls);
-
-    if (opts.dump_renamed)
-        std::cout<<name<<"[renamed]:\n"<<topdecls.print()<<"\n\n";
-
-    return topdecls;
-}
-
 set<string> free_type_names_from_type(const Haskell::Type& type)
 {
     set<string> tvars;

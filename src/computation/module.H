@@ -213,8 +213,6 @@ public:
 
     Hs::Decls rename_infix(const Hs::Decls&);
 
-    Hs::Decls rename(const simplifier_options&, Hs::Decls);
-
     Hs::ModuleDecls rename(const simplifier_options&, Hs::ModuleDecls);
 
     std::vector< std::vector< expression_ref > > find_type_groups(const std::vector<expression_ref>&);
