@@ -367,7 +367,7 @@ void Module::compile(const Program& P)
     resolved = true;
 
     auto& loader = *P.get_module_loader();
-    simplifier_options& opts = *P.get_module_loader();
+    simplifier_options& opts = loader;
 
     // Scans imported modules and modifies symbol table and type table
     perform_imports(P);
@@ -378,18 +378,18 @@ void Module::compile(const Program& P)
 
     declare_fixities(M);
 
+    auto field_accessors = synthesize_field_accessors(M.type_decls);
+    M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
+
     // FIXME - merge with rename() below.
     // Currently this (1) translates field-decls into function declarations
     //                (2) rewrites @ f x y -> f x y (where f is the head) using unapply( ).
     //                (3) rewrites infix expressions through desugar_infix( )
-    auto field_accessors = synthesize_field_accessors(M.type_decls);
-
-    M.value_decls.insert(M.value_decls.end(), field_accessors.begin(), field_accessors.end());
     M.value_decls = ::rename_infix(*this, M.value_decls);
     M.type_decls = ::rename_infix(*this, M.type_decls);
 
     // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym
-    add_local_symbols(M.value_decls);
+    add_local_symbols(M.value_decls[0]);
     add_local_symbols(M.type_decls);
     for(auto& d: M.builtin_decls)
         def_function(d.function_name);
@@ -867,7 +867,7 @@ vector<vector<expression_ref>> Module::find_type_groups(const vector<expression_
     return type_decl_groups;
 }
 
-CDecls Module::desugar(const simplifier_options& opts, const Hs::Decls& topdecls)
+CDecls Module::desugar(const simplifier_options& opts, const Hs::Binds& topdecls)
 {
     auto cdecls = ::desugar(*this, topdecls);
 
@@ -1806,11 +1806,9 @@ Module::Module(const Haskell::Module& M, const set<string>& lo)
 std::ostream& operator<<(std::ostream& o, const Module& M)
 {
     if (M.module.topdecls)
-        for(const auto& decl: *M.module.topdecls)
-        {
-            auto& D = decl.as_<Haskell::ValueDecl>();
-            o<<D.print()<<"\n";
-        }
+        for(const auto& decls: *M.module.topdecls)
+            o<<decls.print()<<"\n";
+
     return o;
 }
 

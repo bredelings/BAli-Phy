@@ -276,11 +276,17 @@ struct Decls: public std::vector<expression_ref>
 public:
     std::map<std::string, Type> signatures;
 
-    Decls* clone() const { return new Decls(*this);}
     std::string print() const;
 
     Decls() = default;
     Decls(const vector<expression_ref>& ds): std::vector<expression_ref>(ds) {}
+};
+
+struct Binds: public std::vector<Decls>
+{
+    std::string print() const;
+
+    using std::vector<Decls>::vector;
 };
 
 enum class Fixity {infixl, infix, infixr, unknown};
@@ -561,16 +567,16 @@ struct MultiGuardedRHS
 {
     std::vector<GuardedRHS> guarded_rhss;
     // We might need to make this into a shared_ptr< > to avoid an infinite structure.
-    std::optional<Located<Decls>> decls;
+    std::optional<Located<Binds>> decls;
 
     std::string print() const;
 
     MultiGuardedRHS() = default;
     MultiGuardedRHS(const std::vector<GuardedRHS>& v):guarded_rhss(v) {}
-    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const std::optional<Located<Decls>>& ds):guarded_rhss(v), decls(ds) {}
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const std::optional<Located<Binds>>& ds):guarded_rhss(v), decls(ds) {}
 };
 
-MultiGuardedRHS SimpleRHS(const Located<expression_ref>&, const std::optional<Located<Decls>>& ds = {});
+MultiGuardedRHS SimpleRHS(const Located<expression_ref>&, const std::optional<Located<Binds>>& ds = {});
 
 struct StrictValueDecl: public Object
 {
@@ -616,10 +622,10 @@ struct Stmts: public Object
 
 struct LetQual: public Object
 {
-    Located<Decls> binds;
+    Located<Binds> binds;
     LetQual* clone() const { return new LetQual(*this);}
     std::string print()  const;
-    LetQual(const Located<Decls>& b): binds(b) {}
+    LetQual(const Located<Binds>& b): binds(b) {}
 };
 
 struct SimpleQual: public Object
@@ -811,13 +817,13 @@ struct LambdaExp: public Object
 
 struct LetExp: public Object
 {
-    Located<Decls> decls;
+    Located<Binds> decls;
     Located<expression_ref> body;
 
     LetExp* clone() const {return new LetExp(*this);}
     std::string print() const;
 
-    LetExp(const Located<Decls>& d, const Located<expression_ref>& b): decls(d), body(b) {};
+    LetExp(const Located<Binds>& d, const Located<expression_ref>& b): decls(d), body(b) {};
 };
 
 struct IfExp: public Object
@@ -959,18 +965,6 @@ struct FunDecl: public Object
     FunDecl(const Var& vv, const Match& m): v(vv), match(m) {}
 };
 
-struct BindingGroup
-{
-    Decls decls;
-    // Can these apply to variables in pattern decls?
-    std::map<std::string, Type> signatures;
-};
-
-struct TypeOrClassGroup
-{
-    Decls decls;
-};
-
 // We can initially put all the type or class decls into a single group.
 // We can initially put all value decls into a single group.
 
@@ -982,11 +976,11 @@ struct ModuleDecls
 
     std::vector<FixityDecl> fixity_decls;
 
-    Decls value_decls;
+    Binds value_decls;
 
     std::vector<BuiltinDecl> builtin_decls;
 
-    ModuleDecls() = default;
+    ModuleDecls();
     ModuleDecls(const Decls& topdecls);
 };
 

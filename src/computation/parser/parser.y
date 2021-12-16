@@ -23,15 +23,17 @@
 
   class driver;
 
+  std::optional<Located<Hs::Decls>> make_opt_decls(const std::optional<Located<Hs::Binds>>& binds);
+
   std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
   Haskell::Type make_kind(const Haskell::Type& kind);
   Haskell::Constructor make_constructor(const std::vector<Haskell::TypeVar>& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish);
-  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Decls>>& decls);
+  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Binds>>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
                                                   const expression_ref& header, const std::vector<Haskell::Constructor>& constrs);
-  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Decls>>& decls);
+  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Binds>>& decls);
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
 
@@ -280,9 +282,9 @@
 */
 
 %type <std::vector<expression_ref>> decls
-%type <Located<Haskell::Decls>> decllist
-%type <Located<Haskell::Decls>> binds
-%type <std::optional<Located<Haskell::Decls>>> wherebinds
+%type <Haskell::Decls> decllist
+%type <Located<Haskell::Binds>> binds
+%type <std::optional<Located<Haskell::Binds>>> wherebinds
  /*
 
 %type <void> strings
@@ -756,10 +758,10 @@ decls: decls ";" decl   {$$ = $1; $$.push_back($3);}
 |      decl             {$$.push_back($1);}
 |      %empty           {}
 
-decllist: "{" decls "}"          {$$ = Located<Haskell::Decls>(@2,$2);}  // location here should include { }?
-|         VOCURLY decls close    {$$ = Located<Haskell::Decls>(@2,$2);}
+decllist: "{" decls "}"          {$$ = $2;}  // location here should include { }?
+|         VOCURLY decls close    {$$ = $2;}
 
-binds: decllist                  {$$ = $1;}
+binds: decllist                  {$$ = {@1,{$1}};}
 
 wherebinds: "where" binds        {$$ = $2;}                   // location here should include "where"?
 |           %empty               {}
@@ -1519,7 +1521,7 @@ Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_
     return {d_or_n, name, check_all_type_vars(type_args), context, constrs};
 }
 
-Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, const optional<Located<Haskell::Decls>>& decls)
+Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, const optional<Located<Haskell::Binds>>& binds)
 {
     // GHC stores the instance as a polytype?
     // This would seem to allow (instance forall a.Eq a => forall a.Eq [a] x y ....)
@@ -1536,13 +1538,13 @@ Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, c
     }
 
     auto [name, type_args] = check_type_or_class_header(type);
-    return {context, name, type_args, decls};
+    return {context, name, type_args, make_opt_decls(binds)};
 }
 
-Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const optional<Located<Haskell::Decls>>& decls)
+Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const optional<Located<Haskell::Binds>>& binds)
 {
     auto [name, type_args] = check_type_or_class_header(header);
-    return {name, check_all_type_vars(type_args), context, decls};
+    return {name, check_all_type_vars(type_args), context, make_opt_decls(binds)};
 }
 
 // Can we change the context parsing rule to expect:
@@ -1676,5 +1678,13 @@ expression_ref yy_make_string(const std::string& s)
     for(char c: s)
 	chars.push_back(c);
     return Haskell::List(chars);
+}
+
+std::optional<Located<Hs::Decls>> make_opt_decls(const std::optional<Located<Hs::Binds>>& binds)
+{
+    std::optional<Located<Hs::Decls>> decls;
+    if (binds)
+        decls = {binds->loc, unloc(*binds)[0]};
+    return decls;
 }
 

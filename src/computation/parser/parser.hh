@@ -61,15 +61,17 @@
 
   class driver;
 
+  std::optional<Located<Hs::Decls>> make_opt_decls(const std::optional<Located<Hs::Binds>>& binds);
+
   std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
 
   Haskell::Type make_kind(const Haskell::Type& kind);
   Haskell::Constructor make_constructor(const std::vector<Haskell::TypeVar>& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish);
-  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Decls>>& decls);
+  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Binds>>& decls);
   Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
   Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
                                                   const expression_ref& header, const std::vector<Haskell::Constructor>& constrs);
-  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Decls>>& decls);
+  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Binds>>& decls);
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
 
@@ -80,7 +82,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 84 "parser.hh"
+#line 86 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -220,7 +222,7 @@
 #endif
 
 namespace yy {
-#line 224 "parser.hh"
+#line 226 "parser.hh"
 
 
 
@@ -454,6 +456,7 @@ namespace yy {
 
       // topdecls
       // topdecls_semi
+      // decllist
       char dummy5[sizeof (Haskell::Decls)];
 
       // export
@@ -495,9 +498,8 @@ namespace yy {
       // alt
       char dummy17[sizeof (Located<Haskell::Alt>)];
 
-      // decllist
       // binds
-      char dummy18[sizeof (Located<Haskell::Decls>)];
+      char dummy18[sizeof (Located<Haskell::Binds>)];
 
       // qcname
       char dummy19[sizeof (Located<std::string>)];
@@ -568,7 +570,7 @@ namespace yy {
       char dummy27[sizeof (std::optional<Haskell::ImpSpec>)];
 
       // wherebinds
-      char dummy28[sizeof (std::optional<Located<Haskell::Decls>>)];
+      char dummy28[sizeof (std::optional<Located<Haskell::Binds>>)];
 
       // prec
       char dummy29[sizeof (std::optional<int>)];
@@ -1271,6 +1273,7 @@ namespace yy {
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
+      case symbol_kind::S_decllist: // decllist
         value.move< Haskell::Decls > (std::move (that.value));
         break;
 
@@ -1325,9 +1328,8 @@ namespace yy {
         value.move< Located<Haskell::Alt> > (std::move (that.value));
         break;
 
-      case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        value.move< Located<Haskell::Decls> > (std::move (that.value));
+        value.move< Located<Haskell::Binds> > (std::move (that.value));
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -1408,7 +1410,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.move< std::optional<Located<Haskell::Decls>> > (std::move (that.value));
+        value.move< std::optional<Located<Haskell::Binds>> > (std::move (that.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -1818,13 +1820,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Located<Haskell::Decls>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Located<Haskell::Binds>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Located<Haskell::Decls>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Located<Haskell::Binds>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1958,13 +1960,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::optional<Located<Haskell::Decls>>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::optional<Located<Haskell::Binds>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::optional<Located<Haskell::Decls>>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::optional<Located<Haskell::Binds>>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2252,6 +2254,7 @@ switch (yykind)
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
+      case symbol_kind::S_decllist: // decllist
         value.template destroy< Haskell::Decls > ();
         break;
 
@@ -2306,9 +2309,8 @@ switch (yykind)
         value.template destroy< Located<Haskell::Alt> > ();
         break;
 
-      case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        value.template destroy< Located<Haskell::Decls> > ();
+        value.template destroy< Located<Haskell::Binds> > ();
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -2389,7 +2391,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.template destroy< std::optional<Located<Haskell::Decls>> > ();
+        value.template destroy< std::optional<Located<Haskell::Binds>> > ();
         break;
 
       case symbol_kind::S_prec: // prec
@@ -5238,6 +5240,7 @@ switch (yykind)
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
+      case symbol_kind::S_decllist: // decllist
         value.copy< Haskell::Decls > (YY_MOVE (that.value));
         break;
 
@@ -5292,9 +5295,8 @@ switch (yykind)
         value.copy< Located<Haskell::Alt> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        value.copy< Located<Haskell::Decls> > (YY_MOVE (that.value));
+        value.copy< Located<Haskell::Binds> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -5375,7 +5377,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.copy< std::optional<Located<Haskell::Decls>> > (YY_MOVE (that.value));
+        value.copy< std::optional<Located<Haskell::Binds>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -5573,6 +5575,7 @@ switch (yykind)
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
+      case symbol_kind::S_decllist: // decllist
         value.move< Haskell::Decls > (YY_MOVE (s.value));
         break;
 
@@ -5627,9 +5630,8 @@ switch (yykind)
         value.move< Located<Haskell::Alt> > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_decllist: // decllist
       case symbol_kind::S_binds: // binds
-        value.move< Located<Haskell::Decls> > (YY_MOVE (s.value));
+        value.move< Located<Haskell::Binds> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -5710,7 +5712,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.move< std::optional<Located<Haskell::Decls>> > (YY_MOVE (s.value));
+        value.move< std::optional<Located<Haskell::Binds>> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -5924,7 +5926,7 @@ switch (yykind)
 
 
 } // yy
-#line 5928 "parser.hh"
+#line 5930 "parser.hh"
 
 
 

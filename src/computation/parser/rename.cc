@@ -296,6 +296,15 @@ expression_ref unapply(expression_ref E)
 
 expression_ref rename_infix(const Module& m, const expression_ref& E);
 
+
+Haskell::Binds rename_infix(const Module& m, Haskell::Binds binds)
+{
+    for(auto& bind: binds)
+        bind = rename_infix(m, bind);
+
+    return binds;
+}
+
 Haskell::Decls rename_infix(const Module& m, Haskell::Decls decls)
 {
     for(auto& e: decls)
@@ -750,6 +759,7 @@ struct renamer_state
     bound_var_info find_vars_in_pattern(const expression_ref& pat, bool top = false);
     bound_var_info find_bound_vars_in_stmt(const expression_ref& stmt);
     bound_var_info find_bound_vars_in_decls(const Haskell::Decls& decls);
+    bound_var_info find_bound_vars_in_decls(const Haskell::Binds& decls);
     bound_var_info rename_patterns(vector<expression_ref>& pat, bool top = false);
     bound_var_info rename_pattern(expression_ref& pat, bool top = false);
     bound_var_info rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level);
@@ -757,6 +767,7 @@ struct renamer_state
     bound_var_info rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level);
     Haskell::ValueDecl rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
     Haskell::ValueDecl rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
+    bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, bool top = false);
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, bool top = false);
     bound_var_info rename_value_decls_lhs(Haskell::Decls& decls, bool top);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound);
@@ -936,7 +947,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
     bound_var_info bound_names;
-    add(bound_names, Rn.rename_value_decls_lhs(M.value_decls, true));
+    add(bound_names, Rn.rename_value_decls_lhs(M.value_decls[0], true));
     for(auto& decl: M.type_decls)
     {
         if (decl.is_a<Haskell::ClassDecl>())
@@ -986,13 +997,13 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
         }
     }
 
-    for(auto& decl: M.value_decls)
+    for(auto& decl: M.value_decls[0])
     {
 	if (decl.is_a<Haskell::ValueDecl>())
 	    decl = Rn.rename_decl(decl.as_<Haskell::ValueDecl>(), bound_names);
     }
 
-    M.value_decls = group_decls(M.value_decls);
+    M.value_decls[0] = group_decls(M.value_decls[0]);
 
     return M;
 }
@@ -1317,8 +1328,6 @@ Haskell::ValueDecl renamer_state::rename_decl(Haskell::ValueDecl decl, const bou
 
 bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& decls)
 {
-    if (not decls.size()) return {};
-
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
     bound_var_info bound_names;
@@ -1328,6 +1337,21 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& dec
             auto D = decl.as_<Haskell::ValueDecl>();
             add(bound_names, rename_decl_head(D, false));
         }
+    return bound_names;
+}
+
+bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Binds& binds)
+{
+    bound_var_info bound_names;
+    for(auto& decls: binds)
+    {
+        for(auto& decl: decls)
+            if (decl.is_a<Haskell::ValueDecl>())
+            {
+                auto D = decl.as_<Haskell::ValueDecl>();
+                add(bound_names, rename_decl_head(D, false));
+            }
+    }
     return bound_names;
 }
 
@@ -1448,6 +1472,13 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
     decls = group_decls(decls);
 
     return bound_names;
+}
+
+bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, bool top)
+{
+    assert(binds.size() == 1);
+
+    return rename_decls(binds[0], bound, top);
 }
 
 bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt)

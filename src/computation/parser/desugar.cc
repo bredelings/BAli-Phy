@@ -1,3 +1,4 @@
+#include <range/v3/all.hpp>
 #include "computation/module.H"
 #include <deque>
 #include <set>
@@ -91,7 +92,7 @@ failable_expression desugar_state::desugar_gdrh(const Haskell::GuardedRHS& grhs)
     return F;
 }
 
-CDecls desugar_state::desugar_decls(Haskell::Decls v)
+CDecls desugar_state::desugar_decls(const Haskell::Decls& v)
 {
     // Now we go through and translate groups of FunDecls.
     CDecls decls;
@@ -143,6 +144,14 @@ CDecls desugar_state::desugar_decls(Haskell::Decls v)
             continue; // std::abort();
     }
     return decls;
+}
+
+CDecls desugar_state::desugar_decls(const Haskell::Binds& binds)
+{
+    CDecls all_decls;
+    for(auto& decls: binds)
+        ranges::insert(all_decls, all_decls.end(), desugar_decls(decls));
+    return all_decls;
 }
 
 failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
@@ -325,7 +334,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                     auto decls = group_decls(Haskell::Decls({decl1, decl2}));
                     expression_ref body = {var("Data.List.concatMap"), ok, PQ->exp};
 
-                    return desugar( Haskell::LetExp( {noloc, decls}, {noloc, body} ) );
+                    return desugar( Haskell::LetExp( {noloc, {decls}}, {noloc, body} ) );
                 }
             }
         }
@@ -410,7 +419,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
                 expression_ref body = {qop,e,ok};
 
-                result = Haskell::LetExp({noloc,decls}, {noloc,body});
+                result = Haskell::LetExp({noloc,{decls}}, {noloc,body});
             }
         }
         // do {let decls ; rest} = let decls in do {stmts}
@@ -510,8 +519,14 @@ expression_ref desugar(const Module& m, const expression_ref& E)
     return ds.desugar(E);
 }
 
-CDecls desugar(const Module& m, Haskell::Decls D)
+CDecls desugar(const Module& m, const Haskell::Decls& decls)
 {
     desugar_state ds(m);
-    return ds.desugar_decls(D);
+    return ds.desugar_decls(decls);
+}
+
+CDecls desugar(const Module& m, const Haskell::Binds& binds)
+{
+    desugar_state ds(m);
+    return ds.desugar_decls(binds);
 }

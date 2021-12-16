@@ -194,6 +194,14 @@ string Decls::print() const
     return "{"+join( decl_string, "\n;" ) + "\n}";
 }
 
+string Binds::print() const
+{
+    vector<string> ds;
+    for(auto& decls: *this)
+        ds.push_back(decls.print());
+    return join( ds, " ");
+}
+
 string BuiltinDecl::print() const
 {
     vector<string> v{"builtin", function_name, std::to_string(n_args), symbol_name, plugin_name};
@@ -641,7 +649,7 @@ std::string MultiGuardedRHS::print() const
     return join(ss, "\n");
 }
 
-MultiGuardedRHS SimpleRHS(const Located<expression_ref>& body, const optional<Located<Decls>>& decls)
+MultiGuardedRHS SimpleRHS(const Located<expression_ref>& body, const optional<Located<Binds>>& decls)
 {
     return MultiGuardedRHS( {{{},unloc(body)}}   ,decls);
 }
@@ -683,8 +691,14 @@ string IfExp::print() const
     return "if " + condition.print() + " then " + true_branch.print() + " else " + false_branch.print();
 }
 
+ModuleDecls::ModuleDecls()
+{
+    value_decls.push_back({});
+}
+
 ModuleDecls::ModuleDecls(const Decls& topdecls)
 {
+    value_decls.push_back({});
     // If instance functions (and presumably default methods) are mutually recursive with value decls,
     // where do we put them?  And how do we handle them?
 
@@ -694,7 +708,7 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
     for(auto& decl: topdecls)
     {
 	if (decl.is_a<ValueDecl>() or decl.is_a<SignatureDecl>() or decl.is_a<FunDecl>() or decl.is_a<PatDecl>())
-            value_decls.push_back(decl);
+            value_decls.front().push_back(decl);
         else if (auto f = decl.to<FixityDecl>())
             fixity_decls.push_back(*f);
 	else if (auto b = decl.to<BuiltinDecl>())
