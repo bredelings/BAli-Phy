@@ -10,9 +10,6 @@
 #include "located.H"
 
 /*
-  - stop using Var for constructors
-    + issue: if a constructor isn't fully applied, we need to translate it to a var( )!
-
   - make a local fixity environment for use in infix handling.
   - rewrite infix handling (and add an Infix object)
     + there's a problem handling infix expressions of size 1?
@@ -29,11 +26,6 @@
     + decl_no_th: ! aexp rhs       <| ditto, I think?
   - make a ConstructorPattern ast node.
 
-  - put module content into a structure (with matches for function declarations).
-  - separate value decls from type and class decls before rename... I think?
-  - have rename convert function decls to Matches in a FunDecl
-  - have rename convert pat decls to a PatDecl
-
   - combine rename_infix( ) with rename( )
     + currently we create symbol info between the two.
     + is this equivalent to creating some name  environments, like tc_envs, and tc_bndrs
@@ -44,9 +36,6 @@
     + in some cases, we currently return the BOUND variables -- for example when we analyze decls.
       how does ghc handle this?
 
-  - stop translating Var to var and Con to constructor in the renamer -> do this in desugar instead.
-    + convert patterns to use Haskell::Var
-    + use WildcardPattern instead of var(-1)
   - figure out how to make recursive variant types for e.g. Exp, Type, Pattern
     + rvariant<TypeVar, TypeCon, TypeApp, TupleType, ListType, StrictLazyType, ConstrainedType, ForallType>
     + we could also do (i) shared_ptr<variant< >>, (ii) variant<shared_ptr<Args>...>, or (ii) shared_ptr<Type>
