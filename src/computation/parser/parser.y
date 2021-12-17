@@ -37,7 +37,6 @@
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
 
-  expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
@@ -1014,7 +1013,7 @@ explicit_activation: "[" INTEGER "]"
 
 /* ------------- Expressions ------------------------------------- */
 
-exp: infixexp "::" sigtype { $$ = make_typed_exp(make_infixexp($1),$3); }
+exp: infixexp "::" sigtype { $$ = Hs::TypedExp(make_infixexp($1),$3); }
 |    infixexp              { $$ = make_infixexp($1); }
 
 infixexp: exp10                 {$$.push_back($1);}
@@ -1639,11 +1638,6 @@ Haskell::Constructor make_constructor(const vector<Haskell::TypeVar>& forall, co
     }
     else
         throw myexception()<<"constructor '"<<typeish<<"' does not make sense";
-}
-
-expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type)
-{
-    return new expression(AST_node("typed_exp"),{exp,type});
 }
 
 expression_ref make_infixexp(const vector<expression_ref>& args)

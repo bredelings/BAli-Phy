@@ -75,14 +75,13 @@
   Haskell::Context make_context(const expression_ref& context);
   expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
 
-  expression_ref make_typed_exp(const expression_ref& exp, const expression_ref& type);
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
   expression_ref make_fexp(const std::vector<expression_ref>& args);
 
   expression_ref yy_make_string(const std::string&);
 
-#line 86 "parser.hh"
+#line 85 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -222,7 +221,7 @@
 #endif
 
 namespace yy {
-#line 226 "parser.hh"
+#line 225 "parser.hh"
 
 
 
@@ -5926,7 +5925,7 @@ switch (yykind)
 
 
 } // yy
-#line 5930 "parser.hh"
+#line 5929 "parser.hh"
 
 
 
