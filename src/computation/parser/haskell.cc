@@ -723,7 +723,10 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
 	if (decl.is_a<ValueDecl>() or decl.is_a<SignatureDecl>() or decl.is_a<FunDecl>() or decl.is_a<PatDecl>())
             value_decls.front().push_back(decl);
         else if (auto f = decl.to<FixityDecl>())
+        {
+            value_decls.front().push_back(decl); // Fixity decls and split up a collection of value decls for the same function, I think.
             fixity_decls.push_back(*f);
+        }
 	else if (auto b = decl.to<BuiltinDecl>())
             builtin_decls.push_back(*b);
         else if (decl.is_a<ClassDecl>() or decl.is_a<TypeSynonymDecl>() or decl.is_a<DataOrNewtypeDecl>() or decl.is_a<InstanceDecl>())
