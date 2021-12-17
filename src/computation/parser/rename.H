@@ -12,7 +12,6 @@ std::string get_func_name(const Haskell::ValueDecl& decl);
 std::set<std::string> find_bound_vars(const expression_ref& E);
 bool is_pattern_binding(const Haskell::ValueDecl& decl);
 bool is_function_binding(const Haskell::ValueDecl& decl);
-Haskell::Decls group_decls(const Haskell::Decls& decls);
 
 Hs::Decls synthesize_field_accessors(const Hs::Decls& decls);
 
