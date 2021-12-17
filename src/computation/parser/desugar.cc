@@ -7,7 +7,6 @@
 #include "util/io.H"
 #include "models/parameters.H"
 #include "computation/loader.H"
-#include "computation/expression/AST_node.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
@@ -475,22 +474,6 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     auto head = E.head();
     vector<expression_ref> v = E.copy_sub();
 
-    if (head.is_a<AST_node>())
-    {
-	auto& n = E.head().as_<AST_node>();
-	if (n.type == "infixexp")
-	    std::abort();
-	else if (n.type == "Decls" or n.type == "TopDecls")
-            std::abort();
-	else if (n.type == "Decl")
-            std::abort();
-	else if (n.type == "ListComprehension")
-            std::abort();
-	else if (n.type == "LeftSection")
-            std::abort();
-	else if (n.type == "RightSection")
-            std::abort();
-    }
     if (auto c = head.to<Hs::Con>())
         head = constructor(unloc(c->name), *c->arity);
     

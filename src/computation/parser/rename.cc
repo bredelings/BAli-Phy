@@ -10,7 +10,6 @@
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
 #include "computation/expression/constructor.H"
-#include "computation/expression/AST_node.H"
 #include "util/set.H"
 
 using std::string;
@@ -1838,21 +1837,6 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     }
 
     vector<expression_ref> v = E.copy_sub();
-
-    if (E.head().is_a<AST_node>())
-    {
-	auto& n = E.head().as_<AST_node>();
-	if (n.type == "infixexp")
-	    std::abort();
-	else if (n.type == "Decls" or n.type == "TopDecls")
-            std::abort();
-	else if (n.type == "rhs")
-            std::abort();
-	else if (n.type == "gdrhs")
-            std::abort();
-	else if (n.type == "ListComprehension")
-            std::abort();
-    }
 
     for(auto& e: v)
 	e = rename(e, bound);

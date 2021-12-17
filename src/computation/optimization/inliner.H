@@ -64,10 +64,10 @@ struct apply_context
 
 struct case_context
 {
-    expression_ref alts;
+    Run::Alts alts;
     const simplifier::substitution& subst;
     inline_context next;
-    case_context(const expression_ref& e, const simplifier::substitution& s, const inline_context& i):alts(e), subst(s), next(i) {}
+    case_context(const Run::Alts& as, const simplifier::substitution& s, const inline_context& i):alts(as), subst(s), next(i) {}
 };
 
 // It is allowed to inline here.

@@ -2,17 +2,39 @@
 #define EXPRESSION_CASE_H
 
 #include <vector>
+#include <string>
 #include "expression_ref.H"
 
-expression_ref make_alts(const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
+namespace Run
+{
+
+struct Alt
+{
+    std::string print() const;
+
+    expression_ref pattern;
+    expression_ref body;
+};
+
+struct Alts: public Object, public std::vector<Alt>
+{
+    std::string print() const;
+    Alts* clone() const {return new Alts(*this);}
+
+    using std::vector<Alt>::vector;
+};
+
+}
+
+Run::Alts make_alts(const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
 
 expression_ref make_case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
 
-expression_ref make_case_expression(const expression_ref& object, const expression_ref& alts);
+expression_ref make_case_expression(const expression_ref& object, const Run::Alts& alts);
 
 expression_ref make_if_expression(const expression_ref& condition, const expression_ref& true_branch, const expression_ref& false_branch);
 
-void parse_alts(const expression_ref& alts, std::vector<expression_ref>& patterns, std::vector<expression_ref>& bodies);
+void parse_alts(const Run::Alts& alts, std::vector<expression_ref>& patterns, std::vector<expression_ref>& bodies);
 
 bool parse_case_expression(const expression_ref& E, expression_ref& T, std::vector<expression_ref>& patterns, std::vector<expression_ref>& bodies);
 

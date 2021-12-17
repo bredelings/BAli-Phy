@@ -215,7 +215,15 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
         L.body = translate_refs(L. body, Env);
         return L;
     }
-
+    else if (is_case(E))
+    {
+        auto object = translate_refs(E.sub()[0], Env);
+        auto alts = E.sub()[1].as_<Run::Alts>();
+        for(auto& alt: alts)
+            alt.body = translate_refs(alt.body, Env);
+        return make_case_expression(object, alts);
+    }
+    
     // Other constants have no parts, and don't need to be translated
     else if (not E.size()) return E;
     else

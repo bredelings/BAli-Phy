@@ -153,7 +153,7 @@ closure case_op(OperationArgs& Args)
     // *invalid* after the call above!
     const closure& C = Args.current_closure();
 
-    auto& alts = Args.reference(1).sub();
+    auto& alts = Args.reference(1).as_<Run::Alts>();
     int L = alts.size();
 
 #ifndef NDEBUG
@@ -161,8 +161,8 @@ closure case_op(OperationArgs& Args)
     vector<expression_ref> bodies(L);
     for(int i=0;i<L;i++)
     {
-	cases[i] = alts[i].sub()[0];
-	bodies[i] = alts[i].sub()[1];
+	cases[i]  = alts[i].pattern;
+	bodies[i] = alts[i].body;
     }
 
     if (object.exp.head().is_a<lambda2>())
@@ -174,8 +174,8 @@ closure case_op(OperationArgs& Args)
 
     for(int i=0;i<L and not result;i++)
     {
-	const expression_ref& this_case = alts[i].sub()[0];
-	const expression_ref& this_body = alts[i].sub()[1];
+	const expression_ref& this_case = alts[i].pattern;
+	const expression_ref& this_body = alts[i].body;
 
 	// If its _, then match it.
 	if (this_case.head().type() == var_type)

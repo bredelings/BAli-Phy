@@ -328,7 +328,7 @@ bool is_constant_case(const vector<expression_ref>& patterns, const vector<expre
 }
 
 // case E of alts.  Here E has been simplified, but the alts have not.
-expression_ref rebuild_case(const simplifier_options& options, expression_ref object, const expression_ref& alts, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+expression_ref rebuild_case(const simplifier_options& options, expression_ref object, const Run::Alts& alts, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
     vector<expression_ref> patterns;
     vector<expression_ref> bodies;
