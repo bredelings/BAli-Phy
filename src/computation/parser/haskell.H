@@ -221,6 +221,14 @@ struct Context
 };
 
 
+struct Neg: public Object
+{
+    Neg* clone() const { return new Neg(*this);}
+    std::string print() const;
+
+    Neg() = default;
+};
+
 struct TypedExp: public Object
 {
     Expression exp;

@@ -1651,7 +1651,7 @@ expression_ref make_infixexp(const vector<expression_ref>& args)
 
 expression_ref make_minus(const expression_ref& exp)
 {
-    return new expression(AST_node("infixexp"),{AST_node("neg"),exp});
+    return new expression(AST_node("infixexp"),{Hs::Neg(),exp});
 }
 
 expression_ref make_fexp(const vector<expression_ref>& args)

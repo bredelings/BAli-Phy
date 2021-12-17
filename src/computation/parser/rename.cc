@@ -54,7 +54,7 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
     T.pop_front();
 
     // We are starting with a Neg
-    if (E1.head() == AST_node("neg"))
+    if (E1.head().is_a<Hs::Neg>())
     {
 	if (op1.fixity.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 

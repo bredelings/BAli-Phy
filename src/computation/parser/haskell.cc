@@ -130,6 +130,11 @@ string Module::print() const
     return result;
 }
 
+string Neg::print() const
+{
+    return "-";
+}
+
 string TypedExp::print() const
 {
     return exp.print() + " :: " + type.print();
