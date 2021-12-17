@@ -375,6 +375,9 @@ void Module::compile(const Program& P)
     if (module.topdecls)
         M = Hs::ModuleDecls(*module.topdecls);
 
+    // We should create a "local fixity environment" mapping from var and Module.var -> fixity info.
+    // This can supplement the symbols that we imported from other modules.
+    // Then we can AUGMENT this local fixity environment when we encounter fixities at lower levels.
     declare_fixities(M);
 
     auto field_accessors = synthesize_field_accessors(M.type_decls);
