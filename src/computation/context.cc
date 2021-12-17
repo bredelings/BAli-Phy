@@ -9,7 +9,6 @@
 #include "module.H"
 #include "parser/desugar.H"
 #include "expression/lambda.H"
-#include "expression/AST_node.H"
 #include "expression/var.H"
 #include "expression/modifiable.H"
 #include "expression/reg_var.H"

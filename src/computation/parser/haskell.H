@@ -50,7 +50,7 @@
   - figure out how to make recursive variant types for e.g. Exp, Type, Pattern
     + rvariant<TypeVar, TypeCon, TypeApp, TupleType, ListType, StrictLazyType, ConstrainedType, ForallType>
     + we could also do (i) shared_ptr<variant< >>, (ii) variant<shared_ptr<Args>...>, or (ii) shared_ptr<Type>
-  - eliminate final AST_node objects
+
   - split the symbol table into a symbol (variable) table, a constructor table, and a type table
     + then maybe split the type table into a class table?
     + but maybe we need a tycon table see whether a tycon is a type, newtype, data, or class?

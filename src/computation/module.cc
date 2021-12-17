@@ -16,7 +16,6 @@
 #include "parser/desugar.H"
 #include "typecheck/kindcheck.H"
 #include "computation/loader.H"
-#include "expression/AST_node.H"
 #include "expression/var.H"
 #include "expression/lambda.H"
 #include "expression/let.H"

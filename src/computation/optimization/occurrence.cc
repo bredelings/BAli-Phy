@@ -9,7 +9,6 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/indexify.H"
-#include "computation/expression/AST_node.H"
 #include "computation/expression/constructor.H"
 #include "computation/expression/expression.H" // for is_reglike( )
 #include "occurrence.H"

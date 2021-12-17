@@ -11,7 +11,6 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/indexify.H"
-#include "computation/expression/AST_node.H"
 #include "computation/expression/constructor.H"
 #include "occurrence.H"
 #include "inliner.H"

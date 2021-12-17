@@ -15,7 +15,7 @@ computation_sources = [
   'parser/haskell.cc',
 
   'expression/operator.cc', 'expression/expression.cc','expression/constructor.cc',
-  'expression/expression_ref.cc','expression/AST_node.cc',
+  'expression/expression_ref.cc',
   'expression/apply.cc','expression/substitute.cc',
   'expression/indexify.cc','expression/let.cc',
   'expression/case.cc','expression/trim.cc',

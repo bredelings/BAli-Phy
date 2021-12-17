@@ -5,7 +5,6 @@
 #include <string>
 #include <variant>
 #include <memory>
-#include "expression/AST_node.H"
 #include "computation/expression/expression_ref.H"
 #include "simplifier.H"
 

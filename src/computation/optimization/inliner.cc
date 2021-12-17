@@ -10,7 +10,6 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/indexify.H"
-#include "computation/expression/AST_node.H"
 #include "computation/expression/expression.H" // for is_WHNF( )
 #include "occurrence.H"
 #include "inliner.H"

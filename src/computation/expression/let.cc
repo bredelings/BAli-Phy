@@ -6,7 +6,6 @@
 #include "apply.H"
 #include "substitute.H"
 #include "modifiable.H"
-#include "AST_node.H"
 #include "constructor.H"
 #include "computation/operations.H"
 #include "util/range.H" // for reverse( )

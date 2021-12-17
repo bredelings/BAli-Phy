@@ -6,7 +6,6 @@
 #include "util/io.H"
 #include "models/parameters.H"
 #include "computation/loader.H"
-#include "computation/expression/AST_node.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
