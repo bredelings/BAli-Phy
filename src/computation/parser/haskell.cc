@@ -135,6 +135,14 @@ string Neg::print() const
     return "-";
 }
 
+string InfixExp::print() const
+{
+    vector<string> ts;
+    for(auto& term: terms)
+        ts.push_back(term.print());
+    return join(ts, " ");
+}
+
 string TypedExp::print() const
 {
     return exp.print() + " :: " + type.print();

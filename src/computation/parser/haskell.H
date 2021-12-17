@@ -229,6 +229,18 @@ struct Neg: public Object
     Neg() = default;
 };
 
+struct InfixExp: public Object
+{
+    std::vector<expression_ref> terms;
+
+    InfixExp* clone() const { return new InfixExp(*this);}
+    std::string print() const;
+
+    InfixExp() = default;
+    InfixExp(const std::vector<expression_ref>& ts): terms(ts) {}
+};
+
+
 struct TypedExp: public Object
 {
     Expression exp;

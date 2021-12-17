@@ -527,6 +527,13 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
         return D;
     }
+    else if (auto I = E.to<Hs::InfixExp>())
+    {
+        auto terms = I->terms;
+        for(auto& term: terms)
+            term = rename_infix(m, term);
+	return desugar_infix(m, terms);
+    }
 
     if (not E.is_expression()) return E;
 
@@ -552,8 +559,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 	assert(not is_apply(E2.sub()[0].head()));
 	return E2;
     }
-    else if (is_AST(E,"infixexp"))
-	return desugar_infix(m, v);
 
     return expression_ref{E.head(),v};
 }
