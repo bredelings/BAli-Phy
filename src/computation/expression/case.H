@@ -8,6 +8,13 @@
 namespace Run
 {
 
+// This isn't really the form that is run, because its not indexified yet!
+// It also isn't the form that is type-checked, because the body is simple, not a MultiGuardedRHS.
+
+// See let.H, which defines both
+// * a desugared form (let_exp)
+// * an indexified and runnable form (Let, which is an Operation)
+
 struct Alt
 {
     std::string print() const;
