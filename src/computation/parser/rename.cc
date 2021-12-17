@@ -673,77 +673,6 @@ void add(bound_var_info& bv1, const bound_var_info& bv2)
 
 typedef set<string> bound_type_var_info;
 
-Haskell::Decls group_decls(const Haskell::Decls& decls)
-{
-    Haskell::Decls decls2;
-    for(int i=0;i<decls.size();i++)
-    {
-        auto& decl = decls[i];
-        // Remove signature and fixity decls after recording signatures.
-        if (auto sd = decl.to<Haskell::SignatureDecl>())
-        {
-            for(auto& var: sd->vars)
-            {
-                auto& name = unloc(var.name);
-                if (decls2.signatures.count(name))
-                    throw myexception()<<"Second signature for var '"<<name<<"' at location "<<*var.name.loc;
-                decls2.signatures.insert({name, sd->type});
-            }
-            continue;
-        }
-        else if (decl.is_a<Haskell::FixityDecl>())
-            continue;
-
-        if (not decl.is_a<Haskell::ValueDecl>())
-        {
-            decls2.push_back(decl);
-            continue;
-        }
-
-        auto D = decl.as_<Haskell::ValueDecl>();
-        auto rhs = D.rhs;
-        if (is_pattern_binding(D))
-        {
-            decls2.push_back(Haskell::PatDecl{D.lhs, rhs});
-            continue;
-        }
-
-        auto& f = D.lhs.head();
-        auto fvar = f.as_<Hs::Var>();
-
-        if (D.lhs.is_a<Hs::Var>())
-        {
-            decls2.push_back( Hs::FunDecl( fvar, Hs::Match{ { Hs::MRule{{}, D.rhs } } } ) );
-            continue;
-        }
-
-        Hs::Match m;
-
-        for(int j=i;j<decls.size();j++)
-        {
-            if (not decls[j].is_a<Haskell::ValueDecl>()) break;
-
-            auto& Dj = decls[j].as_<Haskell::ValueDecl>();
-            auto& j_f   = Dj.lhs.head();
-            if (j_f.is_a<Hs::Con>()) break;
-
-            if (j_f.as_<Hs::Var>() != fvar) break;
-
-            m.rules.push_back( Hs::MRule{ Dj.lhs.sub(), Dj.rhs } );
-
-            if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
-                throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
-        }
-
-        decls2.push_back( Hs::FunDecl( fvar, m ) );
-
-        // skip the other bindings for this function
-        i += (m.rules.size()-1);
-    }
-
-    return decls2;
-}
-
 struct renamer_state
 {
     const Module& m;
@@ -767,6 +696,7 @@ struct renamer_state
     bound_var_info rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level);
     Haskell::ValueDecl rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
     Haskell::ValueDecl rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
+    Haskell::Decls group_decls(const Haskell::Decls& decls);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, bool top = false);
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, bool top = false);
     bound_var_info rename_value_decls_lhs(Haskell::Decls& decls, bool top);
@@ -1003,7 +933,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
 	    decl = Rn.rename_decl(decl.as_<Haskell::ValueDecl>(), bound_names);
     }
 
-    M.value_decls[0] = group_decls(M.value_decls[0]);
+    M.value_decls[0] = Rn.group_decls(M.value_decls[0]);
 
     return M;
 }
@@ -1446,6 +1376,77 @@ bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool
     }
 
     return bound_names;
+}
+
+Haskell::Decls renamer_state::group_decls(const Haskell::Decls& decls)
+{
+    Haskell::Decls decls2;
+    for(int i=0;i<decls.size();i++)
+    {
+        auto& decl = decls[i];
+        // Remove signature and fixity decls after recording signatures.
+        if (auto sd = decl.to<Haskell::SignatureDecl>())
+        {
+            for(auto& var: sd->vars)
+            {
+                auto& name = unloc(var.name);
+                if (decls2.signatures.count(name))
+                    throw myexception()<<"Second signature for var '"<<name<<"' at location "<<*var.name.loc;
+                decls2.signatures.insert({name, sd->type});
+            }
+            continue;
+        }
+        else if (decl.is_a<Haskell::FixityDecl>())
+            continue;
+
+        if (not decl.is_a<Haskell::ValueDecl>())
+        {
+            decls2.push_back(decl);
+            continue;
+        }
+
+        auto D = decl.as_<Haskell::ValueDecl>();
+        auto rhs = D.rhs;
+        if (is_pattern_binding(D))
+        {
+            decls2.push_back(Haskell::PatDecl{D.lhs, rhs});
+            continue;
+        }
+
+        auto& f = D.lhs.head();
+        auto fvar = f.as_<Hs::Var>();
+
+        if (D.lhs.is_a<Hs::Var>())
+        {
+            decls2.push_back( Hs::FunDecl( fvar, Hs::Match{ { Hs::MRule{{}, D.rhs } } } ) );
+            continue;
+        }
+
+        Hs::Match m;
+
+        for(int j=i;j<decls.size();j++)
+        {
+            if (not decls[j].is_a<Haskell::ValueDecl>()) break;
+
+            auto& Dj = decls[j].as_<Haskell::ValueDecl>();
+            auto& j_f   = Dj.lhs.head();
+            if (j_f.is_a<Hs::Con>()) break;
+
+            if (j_f.as_<Hs::Var>() != fvar) break;
+
+            m.rules.push_back( Hs::MRule{ Dj.lhs.sub(), Dj.rhs } );
+
+            if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
+                throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
+        }
+
+        decls2.push_back( Hs::FunDecl( fvar, m ) );
+
+        // skip the other bindings for this function
+        i += (m.rules.size()-1);
+    }
+
+    return decls2;
 }
 
 bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_var_info& bound, bool top)
