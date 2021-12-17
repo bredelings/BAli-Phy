@@ -321,20 +321,15 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                 }
                 else
                 {
-                    // Problem: "ok" needs to be a fresh variable.
-                    expression_ref ok = get_fresh_Var("ok");
-                    expression_ref lhs1 = ok + PQ->bindpat;
-                    auto rhs1 = Haskell::SimpleRHS({noloc, L});
-                    auto decl1 = Haskell::ValueDecl(lhs1, rhs1);
+                    // let {ok bindpat = L; ok _ = []} in concatMap ok PQ->exp
+                    auto ok = get_fresh_Var("ok");
+                    expression_ref fail = Hs::List({});
+                    auto rule1 = Hs::MRule{ {PQ->bindpat},           Hs::SimpleRHS({noloc, L})        };
+                    auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc, fail})     };
+                    auto decl  = Hs::FunDecl(ok, Hs::Match{{rule1, rule2}});
 
-                    expression_ref lhs2 = ok + Haskell::WildcardPattern();
-                    auto rhs2 = Haskell::SimpleRHS({noloc, Haskell::List({})});
-                    auto decl2 = Haskell::ValueDecl(lhs2, rhs2);
-
-                    auto decls = group_decls(Haskell::Decls({decl1, decl2}));
                     expression_ref body = {var("Data.List.concatMap"), ok, PQ->exp};
-
-                    return desugar( Haskell::LetExp( {noloc, {decls}}, {noloc, body} ) );
+                    return desugar( Haskell::LetExp({noloc,{{{decl}}}}, {noloc,body}) );
                 }
             }
         }
@@ -405,21 +400,15 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             }
             else
             {
-                expression_ref ok = get_fresh_Var("ok");
-                expression_ref lhs1 = ok + PQ.bindpat;
-                auto rhs1 = Haskell::SimpleRHS({noloc,do_stmts});
-                auto decl1 = Haskell::ValueDecl(lhs1,rhs1);
-
+                // let {ok bindpat = do_stmts; ok _ = fail} in e >>= ok
+                auto ok = get_fresh_Var("ok");
                 expression_ref fail = {var("Compiler.Base.fail"),"Fail!"};
-                expression_ref lhs2 = ok + Hs::WildcardPattern();
-                auto rhs2 = Haskell::SimpleRHS({noloc,fail});
-                auto decl2 = Haskell::ValueDecl(lhs2, rhs2);
-
-                auto decls = group_decls(Haskell::Decls({decl1,decl2}));
+                auto rule1 = Hs::MRule{ {PQ.bindpat},            Hs::SimpleRHS({noloc,do_stmts}) };
+                auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc,fail})     };
+                auto decl  = Hs::FunDecl(ok, Hs::Match{{rule1, rule2}});
 
                 expression_ref body = {qop,e,ok};
-
-                result = Haskell::LetExp({noloc,{decls}}, {noloc,body});
+                result = Haskell::LetExp({noloc,{{{decl}}}}, {noloc,body});
             }
         }
         // do {let decls ; rest} = let decls in do {stmts}
