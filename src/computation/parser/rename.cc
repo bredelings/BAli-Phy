@@ -696,7 +696,7 @@ struct renamer_state
     bound_var_info rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level);
     Haskell::ValueDecl rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
     Haskell::ValueDecl rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
-    Haskell::Decls group_decls(const Haskell::Decls& decls);
+    Haskell::Decls group_decls(Haskell::Decls decls, const bound_var_info& bound);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, bool top = false);
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, bool top = false);
     bound_var_info rename_value_decls_lhs(Haskell::Decls& decls, bool top);
@@ -927,13 +927,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
         }
     }
 
-    for(auto& decl: M.value_decls[0])
-    {
-	if (decl.is_a<Haskell::ValueDecl>())
-	    decl = Rn.rename_decl(decl.as_<Haskell::ValueDecl>(), bound_names);
-    }
-
-    M.value_decls[0] = Rn.group_decls(M.value_decls[0]);
+    M.value_decls[0] = Rn.group_decls(M.value_decls[0], bound_names);
 
     return M;
 }
@@ -1378,8 +1372,14 @@ bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool
     return bound_names;
 }
 
-Haskell::Decls renamer_state::group_decls(const Haskell::Decls& decls)
+Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_info& bound)
 {
+    for(auto& decl: decls)
+    {
+	if (decl.is_a<Haskell::ValueDecl>())
+	    decl = rename_decl(decl.as_<Haskell::ValueDecl>(), bound);
+    }
+
     Haskell::Decls decls2;
     for(int i=0;i<decls.size();i++)
     {
@@ -1464,13 +1464,8 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
 
     // Replace ids with dummies
     add(bound2, bound_names);
-    for(auto& decl: decls)
-    {
-	if (decl.is_a<Haskell::ValueDecl>())
-	    decl = rename_decl(decl.as_<Haskell::ValueDecl>(), bound2);
-    }
 
-    decls = group_decls(decls);
+    decls = group_decls(decls, bound2);
 
     return bound_names;
 }
