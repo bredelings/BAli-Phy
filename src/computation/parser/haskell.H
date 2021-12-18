@@ -10,6 +10,9 @@
 #include "located.H"
 
 /*
+  - For renaming class decls, can we first run group_decls on them?
+    + We need to know the set of bound names for the whole module in order to rename the RHSs, right?
+
   - To collect free_vars, maybe we can add a set<string>& free_vars argument to rename.
     + When we analyze a term, we can automatically add free vars into it.
     + When we exit (say) a lambda expression, we could remove the binders from the free_vars.
