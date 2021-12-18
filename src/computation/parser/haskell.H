@@ -10,6 +10,26 @@
 #include "located.H"
 
 /*
+  - To collect free_vars, maybe we can add a set<string>& free_vars argument to rename.
+    + When we analyze a term, we can automatically add free vars into it.
+    + When we exit (say) a lambda expression, we could remove the binders from the free_vars.
+    + Should this be part of a monad, or should we pass the free_vars around?
+
+  - handle top-level names using bound_var_info, instead of putting them in the symbol table?
+    + top-level value names include: constructors, field names, class methods, builtins
+    + we look up constructor names in a different table than variable names.  Should we split the tables?
+    + are top-level names different than let/lambda/case bound names, because they don't shadow things
+         from other modules?
+    + when computing free variables, we should probably only return local variables (in `bound`)
+         and top-level vars from the same module.
+
+  - handle top-level fixities using a fixity env that we can modify as we go, similar to lower-level fixity info?
+    + Maybe implement lower-level fixity info FIRST, then make it handle the top level, kind of?
+    + Although fixities ultimately correspond to objects, don't locally declared fixities just correspond to names?
+      Thus, for example, a type and a constructor with the same name will get the same fixity?
+      Isn't this what allows us to parse infix expression in fundecls before we know what which term is the
+         function being declared?
+
   - make a local fixity environment for use in infix handling.
   - rewrite infix handling (and add an Infix object)
     + there's a problem handling infix expressions of size 1?
