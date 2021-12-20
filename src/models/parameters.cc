@@ -1382,7 +1382,8 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0;i<SMs.size();i++)
     {
         string prefix = "S" + convertToString(i+1);
-        string suffix = (SMs.size()>1)?"_"+convertToString(i+1):"";
+        string _suffix = (SMs.size()>1)?"_"+convertToString(i+1):"";
+        string suffix = (SMs.size()>1)?convertToString(i+1):"";
 
         optional<int> first_partition;
         for(int j=0;j<s_mapping.size();j++)
@@ -1391,7 +1392,7 @@ std::string generate_atmodel_program(int n_sequences,
 
         auto code = SMs[i].code;
 
-        expression_ref smodel = var("sample_smodel"+suffix);
+        expression_ref smodel = var("sample_smodel"+_suffix);
         for(auto& state_name: code.used_states)
         {
             if (state_name == "alphabet")
@@ -1417,11 +1418,12 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0;i<IMs.size();i++)
     {
         string prefix = "I" + convertToString(i+1);
-        string suffix = (IMs.size()>1)?"_"+convertToString(i+1):"";
+        string _suffix = (IMs.size()>1)?"_"+convertToString(i+1):"";
+        string suffix = (IMs.size()>1)?convertToString(i+1):"";
 
         auto code = IMs[i].code;
 
-        expression_ref imodel = var("sample_imodel" + suffix);
+        expression_ref imodel = var("sample_imodel" + _suffix);
         for(auto& state_name: code.used_states)
         {
             if (state_name == "topology")
@@ -1516,46 +1518,54 @@ std::string generate_atmodel_program(int n_sequences,
     {
         // Main.1: Emit let filenames = ...
         var filenames_var("filenames");
+        bool any_ranges = false;
         map<string,int> index_for_filename;
         {
             vector<expression_ref> filenames_;
-            for(auto& [filename,_]: filename_ranges)
+            for(auto& [filename,range]: filename_ranges)
             {
                 if (not index_for_filename.count(filename))
                 {
                     index_for_filename.insert({filename,filenames_.size()});
                     filenames_.push_back(String(filename));
                 }
+                if (not range.empty())
+                    any_ranges = true;
             }
             main.let(filenames_var,get_list(filenames_));
         }
 
-        // Main.2: Emit let filenames_to_seqs = ...
-        var filename_to_seqs("seqs");
+        if (index_for_filename.size() == n_partitions and not any_ranges)
+            main.perform(sequence_data_var,{var("mapM"), var("load_sequences"), filenames_var});
+        else
         {
-            main.perform(filename_to_seqs,{var("mapM"), var("load_sequences"), filenames_var});
-        }
-        main.empty_stmt();
+            // Main.2: Emit let filenames_to_seqs = ...
+            var filename_to_seqs("seqs");
+            {
+                main.perform(filename_to_seqs,{var("mapM"), var("load_sequences"), filenames_var});
+            }
+            main.empty_stmt();
 
-        // Main.3. Emit let sequence_data<n> = 
-        vector<expression_ref> sequence_data;
-        for(int i=0;i<n_partitions;i++)
-        {
-            string part = std::to_string(i+1);
-            var sequence_data_var("sequence_data"+part);
-            int index = index_for_filename.at( filename_ranges[i].first );
-            expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
-            if (not filename_ranges[i].second.empty())
-                loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
-            main.let(sequence_data_var, loaded_sequences);
-            sequence_data.push_back(sequence_data_var);
+            // Main.3. Emit let sequence_data<n> = 
+            vector<expression_ref> sequence_data;
+            for(int i=0;i<n_partitions;i++)
+            {
+                string part = std::to_string(i+1);
+                var sequence_data_var("sequence_data"+part);
+                int index = index_for_filename.at( filename_ranges[i].first );
+                expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
+                if (not filename_ranges[i].second.empty())
+                    loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
+                main.let(sequence_data_var, loaded_sequences);
+                sequence_data.push_back(sequence_data_var);
+                main.empty_stmt();
+            }
+
+            // Main.4. Emit let sequence_data = ...
+            var sequence_data_var("sequence_data");
+            main.let(sequence_data_var, get_list(sequence_data));
             main.empty_stmt();
         }
-
-        // Main.4. Emit let sequence_data = ...
-        var sequence_data_var("sequence_data");
-        main.let(sequence_data_var, get_list(sequence_data));
-        main.empty_stmt();
     }
 
     // Main.5. Emit mcmc $ model sequence_data
