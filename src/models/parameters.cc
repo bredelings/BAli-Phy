@@ -1317,7 +1317,9 @@ std::string generate_atmodel_program(int n_sequences,
 
     if (n_partitions > 0)
     {
-        expression_ref sequence_data1 = {var("!!"),var("sequence_data"),0};
+        expression_ref sequence_data1 = var("sequence_data");
+        if (n_partitions > 1)
+            sequence_data1 = {var("!!"),sequence_data1,0};
         program.let(taxon_names_var, {var("map"),var("sequence_name"),sequence_data1});
         program.empty_stmt();
     }
@@ -1437,12 +1439,15 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0; i < n_partitions; i++)
     {
         string part = std::to_string(i+1);
-        string part_suffix = (n_partitions>1)?"part_"+part:"";
+        string part_suffix = (n_partitions>1) ? "part_"+part : "";
         int scale_index = *scale_mapping[i];
         int smodel_index = *s_mapping[i];
         auto imodel_index = i_mapping[i];
         expression_ref scale = scales[scale_index];
         expression_ref smodel = smodels[smodel_index];
+        expression_ref sequence_data_var = var("sequence_data");
+        if (n_partitions > 1)
+            sequence_data_var = {var("!!"),sequence_data_var,i};
 
         // Model.Partition.1. tree_part<i> = scale_branch_lengths scale tree
         var branch_dist_tree("tree" + part_suffix);
@@ -1457,12 +1462,11 @@ std::string generate_atmodel_program(int n_sequences,
 
             var leaf_sequence_lengths("sequence_lengths" + part_suffix);
             expression_ref alphabet = {var("getAlphabet"),smodel};
-            program.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  {var("!!"),var("sequence_data"),i}});
+            program.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
             program.perform(alignment_on_tree, {var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths});
         }
 
         // Model.Partition.3. Observe the sequence data from the distribution
-        expression_ref sequence_data_var = {var("!!"),var("sequence_data"),i};
         expression_ref distribution;
         if (like_calcs[i] == 0)
             distribution = {var("ctmc_on_tree"), branch_dist_tree, alignment_on_tree, smodel};
@@ -1481,11 +1485,14 @@ std::string generate_atmodel_program(int n_sequences,
     program.let(atmodel_var, {var("ATModel"), tree_var, get_list(scales), maybe_branch_categories});
     program.empty_stmt();
 
+    expression_ref sequence_data_list = var("sequence_data");
+    if (n_partitions == 1)
+        sequence_data_list = List(sequence_data_list);
     program.finish_return(
         Tuple(
             Tuple(
                 var("atmodel"),
-                var("sequence_data")
+                sequence_data_list
                 ),
             var("loggers")
             )
@@ -1532,11 +1539,16 @@ std::string generate_atmodel_program(int n_sequences,
 
     // Main.4. Emit let sequence_data = ...
     var sequence_data_var("sequence_data");
-    main.let(sequence_data_var, get_list(sequence_data));
-    main.empty_stmt();
+    if (n_partitions == 1)
+        sequence_data_var = var("sequence_data1");
+    else
+    {
+        main.let(sequence_data_var, get_list(sequence_data));
+        main.empty_stmt();
+    }
 
     // Main.5. Emit mcmc $ model sequence_data
-    main.perform({var("$"),var("mcmc"),{var("model"),var("sequence_data")}});
+    main.perform({var("$"),var("mcmc"),{var("model"),sequence_data_var}});
 
     program_file<<"\nmain = "<<main.get_expression().print()<<"\n";
 
