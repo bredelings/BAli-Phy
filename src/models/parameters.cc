@@ -1430,6 +1430,7 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0; i < n_partitions; i++)
     {
         string part = std::to_string(i+1);
+        string part_suffix = (n_partitions>1)?"part_"+part:"";
         int scale_index = *scale_mapping[i];
         int smodel_index = *s_mapping[i];
         auto imodel_index = i_mapping[i];
@@ -1437,17 +1438,17 @@ std::string generate_atmodel_program(int n_sequences,
         expression_ref smodel = smodels[smodel_index];
 
         // Model.Partition.1. tree_part<i> = scale_branch_lengths scale tree
-        var branch_dist_tree("tree_part"+part);
+        var branch_dist_tree("tree" + part_suffix);
         program.let(branch_dist_tree, {var("scale_branch_lengths"), scale, tree_var});
 
         // Model.Partition.2. Sample the alignment
-        var alignment_on_tree("alignment_on_tree_part"+part);
+        var alignment_on_tree("alignment" + part_suffix);
         if (imodel_index)
         {
             assert(like_calcs[i] == 0);
             expression_ref imodel = imodels[*imodel_index];
 
-            var leaf_sequence_lengths("sequence_lengths_part"+part);
+            var leaf_sequence_lengths("sequence_lengths" + part_suffix);
             expression_ref alphabet = {var("getAlphabet"),smodel};
             program.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  {var("!!"),var("sequence_data"),i}});
             program.perform(alignment_on_tree, {var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths});
