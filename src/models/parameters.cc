@@ -1271,7 +1271,8 @@ std::string generate_atmodel_program(int n_sequences,
     program_file<<"\n\n";
     for(int i=0;i<SMs.size();i++)
     {
-        auto name = "sample_smodel_"+std::to_string(i+1);
+        string name = "sample_smodel";
+        if (SMs.size() > 1) name += "_"+std::to_string(i+1);
         auto code = SMs[i].code.generate();
         program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
     }
@@ -1279,7 +1280,8 @@ std::string generate_atmodel_program(int n_sequences,
     // F2. Indel models
     for(int i=0;i<IMs.size();i++)
     {
-        auto name = "sample_imodel_"+std::to_string(i+1);
+        string name = "sample_imodel";
+        if (IMs.size() > 1) name += "_"+std::to_string(i+1);
         auto code = IMs[i].code.generate();
         program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
     }
@@ -1287,7 +1289,8 @@ std::string generate_atmodel_program(int n_sequences,
     // F3. Scale models
     for(int i=0; i<scaleMs.size(); i++)
     {
-        auto name = "sample_scale_"+std::to_string(i+1);
+        string name = "sample_scale";
+        if (scaleMs.size() > 1) name += "_"+std::to_string(i+1);
         auto code = scaleMs[i].code.generate();
         program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
     }
@@ -1296,7 +1299,7 @@ std::string generate_atmodel_program(int n_sequences,
     program_file<<"sample_branch_lengths"<<print_equals_function(branch_length_model.code.generate())<<"\n";
 
     // F5. Topology
-    program_file<<"\nsample_topology_1 taxa = uniform_labelled_topology taxa\n";
+    program_file<<"\nsample_topology taxa = uniform_labelled_topology taxa\n";
 
     /* --------------------------------------------------------------- */
     do_block program;
@@ -1320,8 +1323,8 @@ std::string generate_atmodel_program(int n_sequences,
     }
 
     // M2. Topology
-    auto topology_var = var("topology1");
-    program.perform(topology_var, {var("SamplingRate"),0.0,{var("sample_topology_1"),taxon_names_var}});
+    auto topology_var = var("topology");
+    program.perform(topology_var, {var("SamplingRate"),0.0,{var("sample_topology"),taxon_names_var}});
 
     // M3. Branch lengths
     expression_ref branch_lengths = List();
@@ -1359,10 +1362,12 @@ std::string generate_atmodel_program(int n_sequences,
     {
         // FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
         //        This would obviate the need to create a Scale1 (etc) prefix here.
-        string var_name = "scale"+convertToString(i+1);
+        string indexsuffix = (scaleMs.size()>1)?convertToString(i+1):"";
+        string index_suffix = (scaleMs.size()>1)?"_"+convertToString(i+1):"";
+        string var_name = "scale"+indexsuffix;
 
         auto code = scaleMs[i].code;
-        expression_ref E = var("sample_scale_"+convertToString(i+1));
+        expression_ref E = var("sample_scale"+index_suffix);
 
         auto scale_var = bind_and_log(true, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
 
@@ -1376,6 +1381,7 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0;i<SMs.size();i++)
     {
         string prefix = "S" + convertToString(i+1);
+        string suffix = (SMs.size()>1)?"_"+convertToString(i+1):"";
 
         optional<int> first_partition;
         for(int j=0;j<s_mapping.size();j++)
@@ -1384,7 +1390,7 @@ std::string generate_atmodel_program(int n_sequences,
 
         auto code = SMs[i].code;
 
-        expression_ref smodel = var("sample_smodel_"+std::to_string(i+1));
+        expression_ref smodel = var("sample_smodel"+suffix);
         for(auto& state_name: code.used_states)
         {
             if (state_name == "alphabet")
@@ -1398,7 +1404,7 @@ std::string generate_atmodel_program(int n_sequences,
                 throw myexception()<<"Don't know how to supply variable for state '"<<state_name<<"'";
         }
 
-        auto smodel_var = var("smodel_"+std::to_string(i+1));
+        auto smodel_var = var("smodel" + suffix);
         auto log_smodel = var("log_"+smodel_var.name);
         bind_and_log(false, smodel_var, log_smodel, prefix, smodel, code.is_action(), code.has_loggers(), program, program_loggers);
         smodels.push_back(smodel_var);
@@ -1410,17 +1416,18 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0;i<IMs.size();i++)
     {
         string prefix = "I" + convertToString(i+1);
+        string suffix = (IMs.size()>1)?"_"+convertToString(i+1):"";
 
         auto code = IMs[i].code;
 
-        expression_ref imodel = var("sample_imodel_"+std::to_string(i+1));
+        expression_ref imodel = var("sample_imodel" + suffix);
         for(auto& state_name: code.used_states)
         {
             if (state_name == "topology")
                 imodel = {imodel, tree_var};
         }
 
-        auto imodel_var = var("imodel_"+std::to_string(i+1));
+        auto imodel_var = var("imodel" + suffix);
         auto log_imodel = var("log_"+imodel_var.name);
         bind_and_log(false, imodel_var, log_imodel, prefix, imodel, code.is_action(), code.has_loggers(), program, program_loggers);
         imodels.push_back(imodel_var);
