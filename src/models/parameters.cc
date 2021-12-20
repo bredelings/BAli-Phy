@@ -1240,7 +1240,6 @@ vector<string> print_models(const string& tag, const vector<model_t>& models, st
         auto code = print_equals_function(models[i].code.generate());
         if (not functions.count(code))
             functions.insert({code,functions.size()});
-        std::cerr<<code<<"\n";
     }
     int printed = 0;
     for(int i=0;i<models.size();i++)
