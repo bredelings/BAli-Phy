@@ -1228,6 +1228,37 @@ var bind_and_log(bool do_log, const string& name, const expression_ref& E, bool 
     return bind_and_log(do_log, x, log_x, name, E, is_action, has_loggers, block, loggers, is_referenced);
 }
 
+
+// Given a collection of different functions, check if the code is the same to avoid printing the same code twice.
+// Only subscript the functions if there is more than one unique code fragment.
+vector<string> print_models(const string& tag, const vector<model_t>& models, std::ostringstream& file)
+{
+    map<string,int> functions;
+    vector<string> function_for_index;
+    for(int i=0;i<models.size();i++)
+    {
+        auto code = print_equals_function(models[i].code.generate());
+        if (not functions.count(code))
+            functions.insert({code,functions.size()});
+        std::cerr<<code<<"\n";
+    }
+    int printed = 0;
+    for(int i=0;i<models.size();i++)
+    {
+        auto code = print_equals_function(models[i].code.generate());
+        int index = functions.at(code);
+        string name = tag;
+        if (functions.size() > 1) name += "_"+std::to_string(index+1);
+        function_for_index.push_back(name);
+        if (index >= printed)
+        {
+            file<<name<<" "<<code<<"\n\n";
+            printed++;
+        }
+    }
+    return function_for_index;
+}
+
 std::string generate_atmodel_program(int n_sequences,
                                      const vector<expression_ref>& alphabet_exps,
                                      const vector<pair<string,string>>& filename_ranges,
@@ -1268,31 +1299,10 @@ std::string generate_atmodel_program(int n_sequences,
     map<string,string> code_to_name;
 
     program_file<<"\n\n";
-    for(int i=0;i<SMs.size();i++)
-    {
-        string name = "sample_smodel";
-        if (SMs.size() > 1) name += "_"+std::to_string(i+1);
-        auto code = SMs[i].code.generate();
-        program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
-    }
 
-    // F2. Indel models
-    for(int i=0;i<IMs.size();i++)
-    {
-        string name = "sample_imodel";
-        if (IMs.size() > 1) name += "_"+std::to_string(i+1);
-        auto code = IMs[i].code.generate();
-        program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
-    }
-
-    // F3. Scale models
-    for(int i=0; i<scaleMs.size(); i++)
-    {
-        string name = "sample_scale";
-        if (scaleMs.size() > 1) name += "_"+std::to_string(i+1);
-        auto code = scaleMs[i].code.generate();
-        program_file<<maybe_emit_code(code_to_name, name, code)<<"\n";
-    }
+    auto SM_function_for_index = print_models("sample_smodel", SMs, program_file);
+    auto IM_function_for_index = print_models("sample_imodel", IMs, program_file);
+    auto scaleM_function_for_index = print_models("sample_scale", scaleMs, program_file);
 
     // F4. Branch lengths
     program_file<<"sample_branch_lengths"<<print_equals_function(branch_length_model.code.generate())<<"\n";
@@ -1368,7 +1378,7 @@ std::string generate_atmodel_program(int n_sequences,
         string var_name = "scale"+indexsuffix;
 
         auto code = scaleMs[i].code;
-        expression_ref E = var("sample_scale"+index_suffix);
+        expression_ref E = var(scaleM_function_for_index[i]);
 
         auto scale_var = bind_and_log(true, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
 
@@ -1392,7 +1402,7 @@ std::string generate_atmodel_program(int n_sequences,
 
         auto code = SMs[i].code;
 
-        expression_ref smodel = var("sample_smodel"+_suffix);
+        expression_ref smodel = var(SM_function_for_index[i]);
         for(auto& state_name: code.used_states)
         {
             if (state_name == "alphabet")
@@ -1423,7 +1433,7 @@ std::string generate_atmodel_program(int n_sequences,
 
         auto code = IMs[i].code;
 
-        expression_ref imodel = var("sample_imodel" + _suffix);
+        expression_ref imodel = var(IM_function_for_index[i]);
         for(auto& state_name: code.used_states)
         {
             if (state_name == "topology")
