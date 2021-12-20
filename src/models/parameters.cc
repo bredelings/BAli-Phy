@@ -1520,7 +1520,7 @@ std::string generate_atmodel_program(int n_sequences,
     // Main.2: Emit let filenames_to_seqs = ...
     var filename_to_seqs("seqs");
     {
-        main.let(filename_to_seqs,{var("map"), var("load_sequences"), filenames_var});
+        main.perform(filename_to_seqs,{var("mapM"), var("load_sequences"), filenames_var});
     }
     main.empty_stmt();
 

@@ -52,6 +52,6 @@ model seq_data = do
 main = do
     [filename] <- getArgs
 
-    let seq_data = load_sequences filename
+    seq_data <- load_sequences filename
 
     mcmc $ model seq_data
