@@ -1501,50 +1501,59 @@ std::string generate_atmodel_program(int n_sequences,
 
     do_block main;
 
-    // Main.1: Emit let filenames = ...
-    var filenames_var("filenames");
-    map<string,int> index_for_filename;
-    {
-        vector<expression_ref> filenames_;
-        for(auto& [filename,_]: filename_ranges)
-        {
-            if (not index_for_filename.count(filename))
-            {
-                index_for_filename.insert({filename,filenames_.size()});
-                filenames_.push_back(String(filename));
-            }
-        }
-        main.let(filenames_var,get_list(filenames_));
-    }
-
-    // Main.2: Emit let filenames_to_seqs = ...
-    var filename_to_seqs("seqs");
-    {
-        main.perform(filename_to_seqs,{var("mapM"), var("load_sequences"), filenames_var});
-    }
-    main.empty_stmt();
-
-    // Main.3. Emit let sequence_data<n> = 
-    vector<expression_ref> sequence_data;
-    for(int i=0;i<n_partitions;i++)
-    {
-        string part = std::to_string(i+1);
-        var sequence_data_var("sequence_data"+part);
-        int index = index_for_filename.at( filename_ranges[i].first );
-        expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
-        if (not filename_ranges[i].second.empty())
-            loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
-        main.let(sequence_data_var, loaded_sequences);
-        sequence_data.push_back(sequence_data_var);
-        main.empty_stmt();
-    }
-
-    // Main.4. Emit let sequence_data = ...
     var sequence_data_var("sequence_data");
     if (n_partitions == 1)
-        sequence_data_var = var("sequence_data1");
+    {
+        auto [filename, range] = filename_ranges[0];
+        expression_ref E = {var("load_sequences"),String(filename)};
+        if (not range.empty())
+            E = {var("<$>"), {var("select_range"),String(range)}, E};
+        main.empty_stmt();
+
+        main.perform(sequence_data_var, E);
+    }
     else
     {
+        // Main.1: Emit let filenames = ...
+        var filenames_var("filenames");
+        map<string,int> index_for_filename;
+        {
+            vector<expression_ref> filenames_;
+            for(auto& [filename,_]: filename_ranges)
+            {
+                if (not index_for_filename.count(filename))
+                {
+                    index_for_filename.insert({filename,filenames_.size()});
+                    filenames_.push_back(String(filename));
+                }
+            }
+            main.let(filenames_var,get_list(filenames_));
+        }
+
+        // Main.2: Emit let filenames_to_seqs = ...
+        var filename_to_seqs("seqs");
+        {
+            main.perform(filename_to_seqs,{var("mapM"), var("load_sequences"), filenames_var});
+        }
+        main.empty_stmt();
+
+        // Main.3. Emit let sequence_data<n> = 
+        vector<expression_ref> sequence_data;
+        for(int i=0;i<n_partitions;i++)
+        {
+            string part = std::to_string(i+1);
+            var sequence_data_var("sequence_data"+part);
+            int index = index_for_filename.at( filename_ranges[i].first );
+            expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
+            if (not filename_ranges[i].second.empty())
+                loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
+            main.let(sequence_data_var, loaded_sequences);
+            sequence_data.push_back(sequence_data_var);
+            main.empty_stmt();
+        }
+
+        // Main.4. Emit let sequence_data = ...
+        var sequence_data_var("sequence_data");
         main.let(sequence_data_var, get_list(sequence_data));
         main.empty_stmt();
     }
