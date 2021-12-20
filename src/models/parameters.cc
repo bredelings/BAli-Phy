@@ -1263,7 +1263,6 @@ std::string generate_atmodel_program(int n_sequences,
     program_file<<"module Main where";
     for(auto& mod: imports)
         program_file<<"\nimport "<<mod;
-    program_file <<"\nimport qualified Data.Map as Map"; // for Map.fromList
 
     // F1. Substitution models
     map<string,string> code_to_name;
@@ -1504,22 +1503,24 @@ std::string generate_atmodel_program(int n_sequences,
 
     // Main.1: Emit let filenames = ...
     var filenames_var("filenames");
+    map<string,int> index_for_filename;
     {
-        set<string> filenames;
-        for(auto& [filename,_]: filename_ranges)
-            filenames.insert(filename);
         vector<expression_ref> filenames_;
-        for(auto& filename: filenames)
-            filenames_.push_back(String(filename));
+        for(auto& [filename,_]: filename_ranges)
+        {
+            if (not index_for_filename.count(filename))
+            {
+                index_for_filename.insert({filename,filenames_.size()});
+                filenames_.push_back(String(filename));
+            }
+        }
         main.let(filenames_var,get_list(filenames_));
     }
 
     // Main.2: Emit let filenames_to_seqs = ...
-    var filename_to_seqs("filename_to_seqs");
+    var filename_to_seqs("seqs");
     {
-        expression_ref body = Tuple(var("filename"),{var("load_sequences"),var("filename")});
-        vector<expression_ref> quals = { PatQual(var("filename"),filenames_var) };
-        main.let(filename_to_seqs,{var("Map.fromList"), list_comprehension( body, quals)});
+        main.let(filename_to_seqs,{var("map"), var("load_sequences"), filenames_var});
     }
     main.empty_stmt();
 
@@ -1529,7 +1530,8 @@ std::string generate_atmodel_program(int n_sequences,
     {
         string part = std::to_string(i+1);
         var sequence_data_var("sequence_data"+part);
-        expression_ref loaded_sequences = {var("Map.!"),filename_to_seqs,String(filename_ranges[i].first)};
+        int index = index_for_filename.at( filename_ranges[i].first );
+        expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
         if (not filename_ranges[i].second.empty())
             loaded_sequences = {var("select_range"), String(filename_ranges[i].second), loaded_sequences};
         main.let(sequence_data_var, loaded_sequences);
