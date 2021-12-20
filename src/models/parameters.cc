@@ -1440,7 +1440,7 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0; i < n_partitions; i++)
     {
         string part = std::to_string(i+1);
-        string part_suffix = (n_partitions>1) ? "_part_"+part : "";
+        string part_suffix = (n_partitions>1) ? "_part"+part : "";
         int scale_index = *scale_mapping[i];
         int smodel_index = *s_mapping[i];
         auto imodel_index = i_mapping[i];
