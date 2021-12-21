@@ -34,7 +34,7 @@ jobs:
 
         include:
           - name: ubuntu-gcc-9
-            os: ubuntu-16.04
+            os: ubuntu-latest,
             compiler: gcc
             version: "9"
             arch: "linux64"
@@ -46,7 +46,7 @@ jobs:
             arch: "mac64"
 
           - name: windows
-            os: ubuntu-20.04
+            os: ubuntu-latest,
             compiler: mingw
             version: "N/A"
             arch: "win64"
