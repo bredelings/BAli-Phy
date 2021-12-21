@@ -1505,38 +1505,36 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
         }
 
         auto D = decl.as_<Haskell::ValueDecl>();
-        auto rhs = D.rhs;
+
         if (is_pattern_binding(D))
         {
-            decls2.push_back(Haskell::PatDecl{D.lhs, rhs});
+            decls2.push_back(Haskell::PatDecl{D.lhs, D.rhs});
             continue;
         }
 
         auto& f = D.lhs.head();
         auto fvar = f.as_<Hs::Var>();
 
-        if (D.lhs.is_a<Hs::Var>())
-        {
-            decls2.push_back( Hs::FunDecl( fvar, Hs::Match{ { Hs::MRule{{}, D.rhs } } } ) );
-            continue;
-        }
-
         Hs::Match m;
-
-        for(int j=i;j<decls.size();j++)
+        if (D.lhs.is_a<Hs::Var>())
+            m.rules.push_back( Hs::MRule{{}, D.rhs } );
+        else
         {
-            if (not decls[j].is_a<Haskell::ValueDecl>()) break;
+            for(int j=i;j<decls.size();j++)
+            {
+                if (not decls[j].is_a<Haskell::ValueDecl>()) break;
 
-            auto Dj = decls[j].as_<Haskell::ValueDecl>();
-            auto& j_f   = Dj.lhs.head();
-            if (j_f.is_a<Hs::Con>()) break;
+                auto Dj = decls[j].as_<Haskell::ValueDecl>();
+                auto& j_f   = Dj.lhs.head();
+                if (j_f.is_a<Hs::Con>()) break;
 
-            if (j_f.as_<Hs::Var>() != fvar) break;
+                if (j_f.as_<Hs::Var>() != fvar) break;
 
-            m.rules.push_back( Hs::MRule{ Dj.lhs.sub(), Dj.rhs } );
+                m.rules.push_back( Hs::MRule{ Dj.lhs.sub(), Dj.rhs } );
 
-            if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
-                throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
+                if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
+                    throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
+            }
         }
 
         decls2.push_back( Hs::FunDecl( fvar, m ) );
