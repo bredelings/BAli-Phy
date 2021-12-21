@@ -698,8 +698,8 @@ struct renamer_state
     bound_var_info rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::SignatureDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level);
+    bound_var_info rename_fun_decl_lhs(expression_ref& lhs);
     Haskell::ValueDecl rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars);
-    Haskell::ValueDecl rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars);
     Haskell::Decls group_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
@@ -1198,68 +1198,47 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 // FIXME - maybe move the renaming AFTER we construct the Match objects?
 
 // FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
-Haskell::ValueDecl renamer_state::rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars)
+bound_var_info renamer_state::rename_fun_decl_lhs(expression_ref& lhs)
 {
-    assert(not is_apply(decl.lhs.head()));
+    assert(not is_apply(lhs.head()));
 
-    auto f = decl.lhs.head();
+    auto f = lhs.head();
     assert(f.is_a<Hs::Var>());
 
     // 1. Discover variables bound in the LHS function arguments.
     // We discover variables bound by the decls group in rename_decls( ), before we call this.
     bound_var_info binders;
-    if (decl.lhs.size())
+    if (lhs.size())
     {
-        auto args = decl.lhs.sub();
+        auto args = lhs.sub();
         assert(args.size());
 
         bool overlap = false;
         for(auto& arg: args)
             overlap = overlap or not disjoint_add(binders, rename_pattern(arg));
-        decl.lhs = expression_ref{f, args};
+        lhs = expression_ref{f, args};
         if (overlap)
-            throw myexception()<<"Function declaration '"<<decl.lhs<<"' uses a variable twice!";
+            throw myexception()<<"Function declaration '"<<lhs<<"' uses a variable twice!";
 
         // The lhs args should be in scope when we process the rhs
     }
     else
-        decl.lhs = f;
+        lhs = f;
 
-    assert(decl.lhs.head().is_a<Hs::Var>());
+    assert(lhs.head().is_a<Hs::Var>());
+
+    return binders;
+}
+
+// FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
+Haskell::ValueDecl renamer_state::rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars)
+{
+    auto binders = rename_fun_decl_lhs(decl.lhs);
 
     // 3. Rename the body given variables bound in the lhs
     decl.rhs = rename(decl.rhs, bound, binders, free_vars);
 
     return decl;
-}
-
-// FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
-Haskell::ValueDecl renamer_state::rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars)
-{
-    assert(not is_apply(decl.lhs.head()));
-
-    auto f = decl.lhs.head();
-
-    // 1. We discover bound variables for the whole decls group in rename_decls( ), before we call this.
-    //    This probably includes pattern-bound variables like (x,y) = ....
-    //    Since they are in scope for all decls in the group.
-
-    // 2. If this is not a pattern binding, then rename the argument patterns x y z in `f x y z = ... `.
-    //
-    //    We deal with these here, since they are only in scope for this decl, whereas e.g. f is in scope
-    //      for all decls in the decls group.
-    if (not is_pattern_binding(decl))
-    {
-	assert(bound.count( unloc(f.as_<Hs::Var>().name) ) );
-        return rename_fun_decl(decl, bound, free_vars);
-    }
-    else
-    {
-        // 3. Rename the body given variables bound in the lhs
-        decl.rhs = rename(decl.rhs, bound, free_vars);
-
-        return decl;
-    }
 }
 
 bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& decls)
@@ -1390,7 +1369,34 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
     for(auto& decl: decls)
     {
 	if (decl.is_a<Haskell::ValueDecl>())
-	    decl = rename_decl(decl.as_<Haskell::ValueDecl>(), bound, free_vars);
+        {
+            auto D = decl.as_<Hs::ValueDecl>();
+
+            assert(not is_apply(D.lhs.head()));
+
+            auto f = D.lhs.head();
+
+            // 1. We discover bound variables for the whole decls group in rename_decls( ), before we call this.
+            //    This probably includes pattern-bound variables like (x,y) = ....
+            //    Since they are in scope for all decls in the group.
+
+            // 2. If this is not a pattern binding, then rename the argument patterns x y z in `f x y z = ... `.
+            //
+            //    We deal with these here, since they are only in scope for this decl, whereas e.g. f is in scope
+            //      for all decls in the decls group.
+            if (not is_pattern_binding(D))
+            {
+                assert(bound.count( unloc(f.as_<Hs::Var>().name) ) );
+                auto binders = rename_fun_decl_lhs(D.lhs);
+                D.rhs = rename(D.rhs, bound, binders, free_vars);
+            }
+            else
+            {
+                // 3. Rename the body given variables bound in the lhs
+                D.rhs = rename(D.rhs, bound, free_vars);
+            }
+            decl = D;
+        }
     }
 
     Haskell::Decls decls2;
