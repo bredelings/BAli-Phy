@@ -1222,8 +1222,6 @@ bound_var_info renamer_state::rename_fun_decl_lhs(expression_ref& lhs)
 
         // The lhs args should be in scope when we process the rhs
     }
-    else
-        lhs = f;
 
     assert(lhs.head().is_a<Hs::Var>());
 
