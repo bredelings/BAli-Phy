@@ -1537,7 +1537,6 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
 
             auto binders = find_vars_in_patterns2(Dj.lhs.sub());
             Dj.rhs = rename(Dj.rhs, bound, binders, free_vars);
-            decls[j] = Dj;
 
             m.rules.push_back( Hs::MRule{ Dj.lhs.sub(), Dj.rhs } );
 
