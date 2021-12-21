@@ -698,15 +698,19 @@ struct renamer_state
     bound_var_info rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::SignatureDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level);
-    Haskell::ValueDecl rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
-    Haskell::ValueDecl rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound);
-    Haskell::Decls group_decls(Haskell::Decls decls, const bound_var_info& bound);
-    bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, bool top = false);
-    bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, bool top = false);
+    Haskell::ValueDecl rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars);
+    Haskell::ValueDecl rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars);
+    Haskell::Decls group_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars);
+    bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
+    bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
+    bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
+    bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_value_decls_lhs(Haskell::Decls& decls, bool top);
-    bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound);
-    bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound);
-    Hs::MultiGuardedRHS rename(Hs::MultiGuardedRHS R, const bound_var_info& bound);
+    bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars);
+    bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars);
+    bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars);
+    Hs::MultiGuardedRHS rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars);
+    Hs::MultiGuardedRHS rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, set<string>& free_vars);
 
     Haskell::Decls rename_type_decls(Haskell::Decls decls);
     Haskell::InstanceDecl rename(Haskell::InstanceDecl);
@@ -716,7 +720,9 @@ struct renamer_state
     Haskell::Type rename_type(const Haskell::Type&);
     Haskell::Context rename(Haskell::Context);
 
-    expression_ref rename(const expression_ref& E, const bound_var_info& bound);
+    pair<expression_ref,set<string>> rename(const expression_ref& E, const bound_var_info& bound);
+    expression_ref rename(const expression_ref& E, const bound_var_info& bound, set<string>& free_vars);
+    expression_ref rename(const expression_ref& E, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars);
 
     renamer_state(const Module& m_):m(m_) {}
 };
@@ -904,6 +910,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
     // Replace ids with dummies
     for(auto& decl: M.type_decls)
     {
+        set<string> free_vars;
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
@@ -911,7 +918,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
             {
                 for(auto& cdecl: unloc(*C.decls))
                     if (cdecl.is_a<Haskell::ValueDecl>())
-                        cdecl = Rn.rename_fun_decl(cdecl.as_<Haskell::ValueDecl>(), bound_names);
+                        cdecl = Rn.rename_fun_decl(cdecl.as_<Haskell::ValueDecl>(), bound_names, free_vars);
             }
             decl = C;
         }
@@ -925,13 +932,14 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
                 // What SHOULD they resolve to?
                 for(auto& idecl: unloc(*I.decls))
                     if (idecl.is_a<Haskell::ValueDecl>())
-                        idecl = Rn.rename_fun_decl(idecl.as_<Haskell::ValueDecl>(), bound_names);
+                        idecl = Rn.rename_fun_decl(idecl.as_<Haskell::ValueDecl>(), bound_names, free_vars);
             }
             decl = I;
         }
     }
 
-    M.value_decls[0] = Rn.group_decls(M.value_decls[0], bound_names);
+    set<string> free_vars;
+    M.value_decls[0] = Rn.group_decls(M.value_decls[0], bound_names, free_vars);
 
     return M;
 }
@@ -1187,8 +1195,10 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
+// FIXME - maybe move the renaming AFTER we construct the Match objects?
+
 // FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
-Haskell::ValueDecl renamer_state::rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound)
+Haskell::ValueDecl renamer_state::rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars)
 {
     assert(not is_apply(decl.lhs.head()));
 
@@ -1197,22 +1207,20 @@ Haskell::ValueDecl renamer_state::rename_fun_decl(Haskell::ValueDecl decl, const
 
     // 1. Discover variables bound in the LHS function arguments.
     // We discover variables bound by the decls group in rename_decls( ), before we call this.
-    auto bound2 = bound;
+    bound_var_info binders;
     if (decl.lhs.size())
     {
         auto args = decl.lhs.sub();
         assert(args.size());
 
         bool overlap = false;
-        bound_var_info arg_vars;
         for(auto& arg: args)
-            overlap = overlap or not disjoint_add(arg_vars, rename_pattern(arg));
+            overlap = overlap or not disjoint_add(binders, rename_pattern(arg));
         decl.lhs = expression_ref{f, args};
         if (overlap)
             throw myexception()<<"Function declaration '"<<decl.lhs<<"' uses a variable twice!";
 
         // The lhs args should be in scope when we process the rhs
-        add(bound2,arg_vars);
     }
     else
         decl.lhs = f;
@@ -1220,13 +1228,13 @@ Haskell::ValueDecl renamer_state::rename_fun_decl(Haskell::ValueDecl decl, const
     assert(decl.lhs.head().is_a<Hs::Var>());
 
     // 3. Rename the body given variables bound in the lhs
-    decl.rhs = rename(decl.rhs, bound2);
+    decl.rhs = rename(decl.rhs, bound, binders, free_vars);
 
     return decl;
 }
 
 // FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
-Haskell::ValueDecl renamer_state::rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound)
+Haskell::ValueDecl renamer_state::rename_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars)
 {
     assert(not is_apply(decl.lhs.head()));
 
@@ -1243,12 +1251,12 @@ Haskell::ValueDecl renamer_state::rename_decl(Haskell::ValueDecl decl, const bou
     if (not is_pattern_binding(decl))
     {
 	assert(bound.count( unloc(f.as_<Hs::Var>().name) ) );
-        return rename_fun_decl(decl, bound);
+        return rename_fun_decl(decl, bound, free_vars);
     }
     else
     {
         // 3. Rename the body given variables bound in the lhs
-        decl.rhs = rename(decl.rhs, bound);
+        decl.rhs = rename(decl.rhs, bound, free_vars);
 
         return decl;
     }
@@ -1376,12 +1384,13 @@ bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool
     return bound_names;
 }
 
-Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_info& bound)
+Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars)
 {
+    // Can we rename these AFTER we construct the match groups?
     for(auto& decl: decls)
     {
 	if (decl.is_a<Haskell::ValueDecl>())
-	    decl = rename_decl(decl.as_<Haskell::ValueDecl>(), bound);
+	    decl = rename_decl(decl.as_<Haskell::ValueDecl>(), bound, free_vars);
     }
 
     Haskell::Decls decls2;
@@ -1453,32 +1462,38 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
     return decls2;
 }
 
-bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_var_info& bound, bool top)
+bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top)
 {
-    if (not decls.size()) return {};
-
-    auto bound2 = bound;
-
-    // Find all the names bound HERE, versus in individual decls.
-
-    // The idea is that we only add unqualified names here, and they shadow
-    // qualified names.
-    bound_var_info bound_names;
-    add(bound_names, rename_value_decls_lhs(decls, top));
-
-    // Replace ids with dummies
-    add(bound2, bound_names);
-
-    decls = group_decls(decls, bound2);
-
-    return bound_names;
+    set<string> decls_free_vars;
+    auto new_binders = rename_decls(decls, plus(bound, binders), decls_free_vars, top);
+    add(free_vars, minus(decls_free_vars, binders));
+    return new_binders;
 }
 
-bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, bool top)
+bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top)
+{
+    auto binders = rename_value_decls_lhs(decls, top);
+
+    set<string> decls_free_vars;
+    decls = group_decls(decls, plus(bound, binders), decls_free_vars);
+
+    add(free_vars, minus(decls_free_vars,binders));
+
+    return binders;
+}
+
+bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top)
 {
     assert(binds.size() == 1);
 
-    return rename_decls(binds[0], bound, top);
+    return rename_decls(binds[0], bound, binders, free_vars, top);
+}
+
+bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, set<string>& free_vars, bool top)
+{
+    assert(binds.size() == 1);
+
+    return rename_decls(binds[0], bound, free_vars, top);
 }
 
 bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt)
@@ -1516,7 +1531,7 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt
 
 // Here we want to find all the variables bound by the list of stmts, and make sure that they don't overlap.
 // Getting the list of variables bound by a "rec" should return all the variables bound by the statements inside the rec.
-bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bound_var_info& bound)
+bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bound_var_info& bound, set<string>& free_vars)
 {
     bound_var_info rec_bound;
     for(auto& stmt: rec_stmt.as_<Haskell::RecStmt>().stmts.stmts)
@@ -1555,22 +1570,31 @@ bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bo
     rec_stmt = Haskell::PatQual(rec_tuple_pattern, expression_ref{mfix, rec_lambda});
 
     // Combine the set of bound variables and rename our rewritten statement;
-    return rename_stmt(rec_stmt, bound);
+    return rename_stmt(rec_stmt, bound, rec_bound, free_vars);
 }
 
-bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_info& bound)
+bound_var_info
+renamer_state::rename_stmt(expression_ref& stmt, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
+{
+    set<string> stmt_free_vars;
+    auto new_binders = rename_stmt(stmt, plus(bound, binders), stmt_free_vars);
+    add(free_vars, minus(stmt_free_vars, binders));
+    return new_binders;
+}
+
+bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars)
 {
     if (stmt.is_a<Hs::SimpleQual>())
     {
         auto SQ = stmt.as_<Hs::SimpleQual>();
-	SQ.exp = rename(SQ.exp,bound);
+	SQ.exp = rename(SQ.exp, bound, free_vars);
         stmt = SQ;
 	return {};
     }
     else if (stmt.is_a<Haskell::PatQual>())
     {
         auto PQ = stmt.as_<Haskell::PatQual>();
-	PQ.exp = rename(PQ.exp, bound);
+	PQ.exp = rename(PQ.exp, bound, free_vars);
 	auto bound_vars = rename_pattern(PQ.bindpat);
         stmt = PQ;
 	return bound_vars;
@@ -1578,104 +1602,129 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
     else if (stmt.is_a<Haskell::LetQual>())
     {
         auto LQ = stmt.as_<Haskell::LetQual>();
-	auto bound_vars = rename_decls(unloc(LQ.binds), bound);
+	auto bound_vars = rename_decls(unloc(LQ.binds), bound, {}, free_vars);
 	stmt = LQ;
 	return bound_vars;
     }
     else if (stmt.is_a<Haskell::RecStmt>())
     {
-        return rename_rec_stmt(stmt, bound);
+        return rename_rec_stmt(stmt, bound, free_vars);
     }
     else
 	std::abort();
 }
 
-Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var_info& bound)
+Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, set<string>& free_vars)
 {
-    auto bound2 = bound;
+    return rename(R, bound, {}, free_vars);
+}
+
+Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
+{
+    auto binders2 = binders;
 
     if (R.decls)
-        add(bound2, rename_decls(unloc(*R.decls), bound));
+        add(binders2, rename_decls(unloc(*R.decls), bound, binders2, free_vars));
 
     for(auto& guarded_rhs: R.guarded_rhss)
     {
-        auto bound3 = bound2;
         for(auto& guard: guarded_rhs.guards)
-            add(bound3, rename_stmt(guard, bound3));
+            add(binders2, rename_stmt(guard, bound, binders2, free_vars));
 
-        guarded_rhs.body = rename(guarded_rhs.body, bound3);
+        guarded_rhs.body = rename(guarded_rhs.body, bound, binders2, free_vars);
     }
 
     return R;
 }
 
-expression_ref renamer_state::rename(const expression_ref& E, const bound_var_info& bound)
+pair<expression_ref,set<string>> renamer_state::rename(const expression_ref& E, const bound_var_info& bound)
+{
+    set<string> free_vars;
+    auto E2 = rename(E, bound, free_vars);
+    return {E2,free_vars};
+}
+
+expression_ref
+renamer_state::rename(const expression_ref& E, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
+{
+    if (binders.empty())
+        return rename(E, bound, free_vars);
+    else
+    {
+        set<string> exp_free_vars;
+        auto E2 = rename(E, plus(bound, binders), exp_free_vars);
+        add(free_vars, minus(exp_free_vars,binders));
+        return E2;
+    }
+}
+
+expression_ref renamer_state::rename(const expression_ref& E, const bound_var_info& bound, set<string>& free_vars)
 {
     if (E.is_a<Haskell::List>())
     {
         auto L = E.as_<Haskell::List>();
         for(auto& element: L.elements)
-            element = rename(element, bound);
+            element = rename(element, bound, free_vars);
         return L;
     }
     else if (E.is_a<Haskell::ListFrom>())
     {
         auto L = E.as_<Haskell::ListFrom>();
-        L.from = rename(L.from, bound);
+        L.from = rename(L.from, bound, free_vars);
         return L;
     }
     else if (E.is_a<Haskell::ListFromThen>())
     {
         auto L = E.as_<Haskell::ListFromThen>();
-        L.from = rename(L.from, bound);
-        L.then = rename(L.then, bound);
+        L.from = rename(L.from, bound, free_vars);
+        L.then = rename(L.then, bound, free_vars);
         return L;
     }
     else if (E.is_a<Haskell::ListFromTo>())
     {
         auto L = E.as_<Haskell::ListFromTo>();
-        L.from = rename(L.from, bound);
-        L.to   = rename(L.to  , bound);
+        L.from = rename(L.from, bound, free_vars);
+        L.to   = rename(L.to  , bound, free_vars);
         return L;
     }
     else if (E.is_a<Haskell::ListFromThenTo>())
     {
         auto L = E.as_<Haskell::ListFromThenTo>();
-        L.from = rename(L.from, bound);
-        L.then = rename(L.then, bound);
-        L.to   = rename(L.to  , bound);
+        L.from = rename(L.from, bound, free_vars);
+        L.then = rename(L.then, bound, free_vars);
+        L.to   = rename(L.to  , bound, free_vars);
         return L;
     }
     else if (E.is_a<Haskell::ListComprehension>())
     {
         auto L = E.as_<Haskell::ListComprehension>();
 
-        auto bound2 = bound;
+        bound_var_info binders;
         for(auto& qual: L.quals)
-            add(bound2, rename_stmt(qual, bound2));
+            add(binders, rename_stmt(qual, bound, binders, free_vars));
 
-        L.body = rename(L.body, bound2);
+        L.body = rename(L.body, bound, binders, free_vars);
         return L;
     }
     else if (E.is_a<Haskell::LeftSection>())
     {
         auto S = E.as_<Haskell::LeftSection>();
-        S.l_arg = rename(S.l_arg, bound);
-        S.op = rename(S.op, bound);
+        S.l_arg = rename(S.l_arg, bound, free_vars);
+        S.op = rename(S.op, bound, free_vars);
         return S;
     }
     else if (E.is_a<Haskell::RightSection>())
     {
         auto S = E.as_<Haskell::RightSection>();
-        S.op = rename(S.op, bound);
-        S.r_arg = rename(S.r_arg, bound);
+        S.op = rename(S.op, bound, free_vars);
+        S.r_arg = rename(S.r_arg, bound, free_vars);
         return S;
     }
     else if (E.is_a<Haskell::Tuple>())
     {
         auto T = E.as_<Haskell::Tuple>();
         for(auto& element: T.elements)
-            element = rename(element, bound);
+            element = rename(element, bound, free_vars);
         return T;
     }
     else if (E.is_a<Hs::Var>())
@@ -1686,13 +1735,18 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 
         // Local vars bind id's tighter than global vars.
         if (includes(bound,name))
+        {
+            free_vars.insert(name);
             return E;
+        }
         // If the variable is free, then try top-level names.
         else if (m.is_declared(name))
         {
             const symbol_info& S = m.lookup_symbol(name);
             string qualified_name = S.name;
             name = qualified_name;
+            if (get_module_name(qualified_name) == m.name)
+                free_vars.insert(qualified_name);
             return V;
         }
         else
@@ -1729,23 +1783,23 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     }
     else if (E.is_a<Haskell::RecStmt>())
     {
-        auto bound2 = bound;
+        bound_var_info binders;
         auto R = E.as_<Haskell::RecStmt>();
         for(auto& stmt: R.stmts.stmts)
-            add(bound2, rename_stmt(stmt, bound2));
+            add(binders, rename_stmt(stmt, bound, binders, free_vars));
         return R;
     }
     else if (E.is_a<Haskell::Do>())
     {
-        auto bound2 = bound;
+        bound_var_info binders;
         auto D = E.as_<Haskell::Do>();
         for(auto& stmt: D.stmts.stmts)
-            add(bound2, rename_stmt(stmt, bound2));
+            add(binders, rename_stmt(stmt, bound, binders, free_vars));
         return D;
     }
     else if (E.is_a<Haskell::MDo>())
     {
-        /*
+            /*
          * See "The mdo notation" in https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html
          *
          * "Like let and where bindings, name shadowing is not allowed within an mdo-expression or a rec-block"
@@ -1771,24 +1825,25 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         // Hmm... as a dumb segmentation, we could take all the stmts except the last one and put them in a giant rec...
         // FIXME: implement segmentation, and insert recs.
 
-        auto bound2 = bound;
+        bound_var_info binders;
         auto MD = E.as_<Haskell::MDo>();
         for(auto& stmt: MD.stmts.stmts)
-            add(bound2, rename_stmt(stmt, bound2));
+            add(binders, rename_stmt(stmt, bound, binders, free_vars));
         return MD;
     }
     else if (E.is_a<Haskell::CaseExp>())
     {
         auto C = E.as_<Haskell::CaseExp>();
 
-        C.object = rename(C.object, bound);
+        C.object = rename(C.object, bound, free_vars);
 
         for(auto& alt: C.alts)
         {
-            auto bound2 = bound;
+            // Rename pattern and get binders
+            auto binders = rename_pattern(unloc(alt).pattern);
 
-            add(bound2, rename_pattern(unloc(alt).pattern));
-            unloc(alt).rhs = rename(unloc(alt).rhs, bound2);
+            // Rename rhs
+            unloc(alt).rhs = rename(unloc(alt).rhs, bound, binders, free_vars);
         }
 
         return C;
@@ -1806,12 +1861,12 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         auto L = E.as_<Haskell::LambdaExp>();
 
         // 1. Rename patterns for lambda arguments
-        auto bound2 = bound;
+        bound_var_info binders;
         for(auto& arg: L.args)
-            add(bound2, rename_pattern(arg));
+            add(binders, rename_pattern(arg));
 
         // 2. Rename the body
-        L.body = rename(L. body, bound2);
+        L.body = rename(L. body, bound, binders, free_vars);
 
         return L;
     }
@@ -1819,9 +1874,8 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     {
         auto L = E.as_<Haskell::LetExp>();
 
-        auto bound2 = bound;
-        add(bound2, rename_decls(unloc(L.decls), bound));
-        unloc(L.body) = rename(unloc(L.body), bound2);
+        auto binders = rename_decls(unloc(L.decls), bound, free_vars);
+        unloc(L.body) = rename(unloc(L.body), bound, binders, free_vars);
 
         return L;
     }
@@ -1829,9 +1883,9 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     {
         auto I = E.as_<Haskell::IfExp>();
 
-        unloc(I.condition)    = rename(unloc(I.condition), bound);
-        unloc(I.true_branch)  = rename(unloc(I.true_branch), bound);
-        unloc(I.false_branch) = rename(unloc(I.false_branch), bound);
+        unloc(I.condition)    = rename(unloc(I.condition), bound, free_vars);
+        unloc(I.true_branch)  = rename(unloc(I.true_branch), bound, free_vars);
+        unloc(I.false_branch) = rename(unloc(I.false_branch), bound, free_vars);
 
         return I;
     }
@@ -1839,7 +1893,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     vector<expression_ref> v = E.copy_sub();
 
     for(auto& e: v)
-	e = rename(e, bound);
+	e = rename(e, bound, free_vars);
 
     // Apply fully-applied multi-argument constructors during rename.
     //
