@@ -1388,11 +1388,6 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
                 auto binders = rename_fun_decl_lhs(D.lhs);
                 D.rhs = rename(D.rhs, bound, binders, free_vars);
             }
-            else
-            {
-                // 3. Rename the body given variables bound in the lhs
-                D.rhs = rename(D.rhs, bound, free_vars);
-            }
             decl = D;
         }
     }
@@ -1461,6 +1456,16 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
 
         // skip the other bindings for this function
         i += (m.rules.size()-1);
+    }
+
+    for(auto& decl: decls2)
+    {
+        if (decl.is_a<Hs::PatDecl>())
+        {
+            auto PD = decl.as_<Hs::PatDecl>();
+            PD.rhs = rename(PD.rhs, bound, free_vars);
+            decl = PD;
+        }
     }
 
     return decls2;
