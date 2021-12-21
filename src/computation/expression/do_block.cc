@@ -18,7 +18,7 @@ std::string Binds::print() const
     vector<string> bind_string;
     for(auto& decl: *this)
         bind_string.push_back(decl.print());
-    return "{"+join(bind_string,"\n;")+"\n}";
+    return "{"+join(bind_string,"\n;")+"}";
 }
 
 Binds::Binds(const std::initializer_list<Decl>& decls)
