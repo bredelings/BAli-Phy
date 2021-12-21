@@ -1517,8 +1517,6 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
 
         if (D.lhs.is_a<Hs::Var>())
         {
-            D.rhs = rename(D.rhs, bound, free_vars);
-
             decls2.push_back( Hs::FunDecl( fvar, Hs::Match{ { Hs::MRule{{}, D.rhs } } } ) );
             continue;
         }
@@ -1534,9 +1532,6 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
             if (j_f.is_a<Hs::Con>()) break;
 
             if (j_f.as_<Hs::Var>() != fvar) break;
-
-            auto binders = find_vars_in_patterns2(Dj.lhs.sub());
-            Dj.rhs = rename(Dj.rhs, bound, binders, free_vars);
 
             m.rules.push_back( Hs::MRule{ Dj.lhs.sub(), Dj.rhs } );
 
@@ -1561,12 +1556,13 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
         else if (decl.is_a<Hs::FunDecl>())
         {
             auto FD = decl.as_<Hs::FunDecl>();
-            for(auto mrule: FD.match.rules)
+
+            for(auto& mrule: FD.match.rules)
             {
                 auto binders = find_vars_in_patterns2(mrule.patterns);
-                // mrule.rhs = rename(mrule.rhs, bound, binders, free_vars);
+                mrule.rhs = rename(mrule.rhs, bound, binders, free_vars);
             }
-//            decl = FD;
+            decl = FD;
         }
     }
 
