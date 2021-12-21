@@ -690,8 +690,6 @@ struct renamer_state
 
     bound_var_info find_vars_in_patterns(const vector<expression_ref>& pats, bool top = false);
     bound_var_info find_vars_in_pattern(const expression_ref& pat, bool top = false);
-    bound_var_info find_vars_in_patterns2(const vector<expression_ref>& pats, bool top = false);
-    bound_var_info find_vars_in_pattern2(const expression_ref& pat, bool top = false);
     bound_var_info find_bound_vars_in_stmt(const expression_ref& stmt);
     bound_var_info find_bound_vars_in_decls(const Haskell::Decls& decls);
     bound_var_info find_bound_vars_in_decls(const Haskell::Binds& decls);
@@ -1049,92 +1047,6 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
-bound_var_info renamer_state::find_vars_in_patterns2(const vector<expression_ref>& pats, bool top)
-{
-    bound_var_info bound;
-
-    for(auto& pat: pats)
-    {
-        auto bound_here = find_vars_in_pattern2(pat, top);
-        auto overlap = intersection(bound, bound_here);
-        if (not overlap.empty())
-        {
-            auto name = *overlap.begin();
-            throw myexception()<<"Pattern uses a variable '"<<name<<"' twice!";
-        }
-        add(bound, bound_here);
-    }
-
-    return bound;
-}
-
-// FIXME - can we just call rename_pattern on this directly???
-// Convert ids to vars in pattern, and return a set of all names for vars (excluding wildcards, of course)
-// A single variable is a valid "pattern" for the purposes of this function.
-bound_var_info renamer_state::find_vars_in_pattern2(const expression_ref& pat, bool top)
-{
-    assert(not is_apply_exp(pat));
-
-    // 1. Handle _
-    if (pat.is_a<Haskell::WildcardPattern>())
-	return {};
-
-    // 2. Handle ~pat or !pat
-    if (pat.is_a<Haskell::LazyPattern>())
-    {
-        auto LP = pat.as_<Haskell::LazyPattern>();
-        return find_vars_in_pattern2(LP.pattern, top);
-    }
-    if (pat.is_a<Haskell::StrictPattern>())
-    {
-        auto SP = pat.as_<Haskell::StrictPattern>();
-        return find_vars_in_pattern2(SP.pattern, top);
-    }
-
-    // 3. Handle x@pat
-    if (pat.is_a<Haskell::AsPattern>())
-    {
-        auto& AP = pat.as_<Haskell::AsPattern>();
-	assert(not top);
-
-	auto bound = find_vars_in_pattern2(AP.var, false);
-	bool overlap = not disjoint_add(bound, find_vars_in_pattern2(AP.pattern, false));
-
-	if (overlap)
-	    throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
-	return bound;
-    }
-
-    if (pat.is_a<Haskell::List>())
-    {
-        auto& L = pat.as_<Haskell::List>();
-        return find_vars_in_patterns2(L.elements);
-    }
-    else if (pat.is_a<Haskell::Tuple>())
-    {
-        auto& T = pat.as_<Haskell::Tuple>();
-        return find_vars_in_patterns2(T.elements);
-    }
-    else if (auto v = pat.to<Haskell::Var>())
-    {
-        auto id = unloc(v->name);
-
-	if (is_qualified_symbol(id)) throw myexception()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<pat<<"'!";
-
-	// Qualify the id if this is part of a top-level decl
-	if (top)
-	    id = m.name + "." + id;
-	return {id};
-    }
-    // If its a constructor pattern!
-    else if (pat.head().is_a<Haskell::Con>())
-        return find_vars_in_patterns2(pat.copy_sub());
-    else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
-        return {};
-    else
-        throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
-}
-
 bound_var_info renamer_state::rename_patterns(vector<expression_ref>& patterns, bool top)
 {
     bound_var_info bound;
@@ -1451,34 +1363,6 @@ bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool
 
 Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars)
 {
-    // Can we rename these AFTER we construct the match groups?
-    for(auto& decl: decls)
-    {
-	if (decl.is_a<Haskell::ValueDecl>())
-        {
-            auto D = decl.as_<Hs::ValueDecl>();
-
-            assert(not is_apply(D.lhs.head()));
-
-            auto f = D.lhs.head();
-
-            // 1. We discover bound variables for the whole decls group in rename_decls( ), before we call this.
-            //    This probably includes pattern-bound variables like (x,y) = ....
-            //    Since they are in scope for all decls in the group.
-
-            // 2. If this is not a pattern binding, then rename the argument patterns x y z in `f x y z = ... `.
-            //
-            //    We deal with these here, since they are only in scope for this decl, whereas e.g. f is in scope
-            //      for all decls in the decls group.
-            if (not is_pattern_binding(D))
-            {
-                assert(bound.count( unloc(f.as_<Hs::Var>().name) ) );
-                rename_fun_decl_lhs(D.lhs);
-            }
-            decl = D;
-        }
-    }
-
     Haskell::Decls decls2;
     for(int i=0;i<decls.size();i++)
     {
@@ -1556,7 +1440,20 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
 
             for(auto& mrule: FD.match.rules)
             {
-                auto binders = find_vars_in_patterns2(mrule.patterns);
+                bound_var_info binders;
+
+                for(auto& arg: mrule.patterns)
+                {
+                    auto new_binders = rename_pattern(arg);
+                    auto overlap = intersection(binders, new_binders);
+                    if (not overlap.empty())
+                    {
+                        string bad = *overlap.begin();
+                        throw myexception()<<"Function declaration uses variable '"<<bad<<"' twice:\n"<<FD.v<<" "<<mrule.print();
+                    }
+                    add(binders, new_binders);
+                }
+
                 mrule.rhs = rename(mrule.rhs, bound, binders, free_vars);
             }
             decl = FD;
