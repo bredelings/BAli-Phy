@@ -118,8 +118,6 @@ using std::valarray;
 using std::shared_ptr;
 using boost::program_options::variables_map;
 
-expression_ref do_return = var("return");
-
 string model_t::show(bool top) const
 {
     if (top)
@@ -404,7 +402,14 @@ expression_ref generated_code_t::generate() const
     if (not perform_function)
     {
         if (has_loggers())
-            R = Tuple(R,L);
+        {
+            // FIXME: technically, we should make sure that "result" and "loggers" are unique names
+            // FIXME: it would be nice to use e.g. tn93_model = ... instead of just result = ....
+            //        see:  var_name = (*func_name)+"_model";  for naming "submodel" arguments.
+            code.let(var("result"),R);
+            code.let(var("loggers"),L);
+            R = Tuple(var("result"),var("loggers"));
+        }
         // If there are let stmts, we could return let{decls} in R
         if (not code.empty())
             R = code.finish_return(R);
@@ -1401,7 +1406,7 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
         auto x = names_in_scope.get_var(name);
         names_in_scope.identifiers.insert({name, var_info_t(x)});
     }
-    
+
     for(auto& [state_name,p]: state)
     {
         auto& [var_name, _] = p;
