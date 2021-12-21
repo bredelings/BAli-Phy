@@ -1516,26 +1516,25 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
         auto fvar = f.as_<Hs::Var>();
 
         Hs::Match m;
-        if (D.lhs.is_a<Hs::Var>())
-            m.rules.push_back( Hs::MRule{{}, D.rhs } );
-        else
+        for(int j=i;j<decls.size();j++)
         {
-            for(int j=i;j<decls.size();j++)
-            {
-                if (not decls[j].is_a<Haskell::ValueDecl>()) break;
+            if (not decls[j].is_a<Haskell::ValueDecl>()) break;
 
-                auto Dj = decls[j].as_<Haskell::ValueDecl>();
-                auto& j_f   = Dj.lhs.head();
-                if (j_f.is_a<Hs::Con>()) break;
+            auto Dj = decls[j].as_<Haskell::ValueDecl>();
 
-                if (j_f.as_<Hs::Var>() != fvar) break;
+            if (is_pattern_binding(Dj)) break;
 
-                m.rules.push_back( Hs::MRule{ Dj.lhs.sub(), Dj.rhs } );
+            auto& j_f   = Dj.lhs.head();
+            assert(j_f.is_a<Hs::Var>());
+            if (j_f.as_<Hs::Var>() != fvar) break;
 
-                if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
-                    throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
-            }
+            m.rules.push_back( Hs::MRule{ Dj.lhs.copy_sub(), Dj.rhs } );
+
+            if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
+                throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
         }
+
+        assert(not m.rules[0].patterns.empty() or m.rules.size() == 1);
 
         decls2.push_back( Hs::FunDecl( fvar, m ) );
 
