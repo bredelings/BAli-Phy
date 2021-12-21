@@ -1,4 +1,21 @@
-* 4.0-alpha3 (unreleased)
+* 4.0 (unreleaed)
+
+* 4.0-alpha4 (Dec 20, 2021)
+ - Fix alignment_slice_sample_branch_length
+ - Type system
+   + Implement kind inference
+   + Create Haskell AST structs
+   + Remove struct AST_node
+   + Clean up the renamer pass.
+   + Refactor Module::compile( )
+ - Refactor log_double_t
+ - Add builtins for expm1 and logp1
+ - Fix mixture distribution
+ - Make test take input file as a command line argument.
+ - Refactor the simplier to work better.
+ - Make generated Haskell code less verbose.
+
+* 4.0-alpha3 (Aug 21, 2021)
  - Create a dynamic factor graph
  - Annotate random variables in the factor graph with "properties".
  - Allow constructing data_partition objects from factor graph properties.
