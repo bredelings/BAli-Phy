@@ -1727,25 +1727,28 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
 
 Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, set<string>& free_vars)
 {
-    return rename(R, bound, {}, free_vars);
-}
-
-Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
-{
-    auto binders2 = binders;
+    bound_var_info binders;
 
     if (R.decls)
-        add(binders2, rename_decls(unloc(*R.decls), bound, binders2, free_vars));
+        binders = rename_decls(unloc(*R.decls), bound, binders, free_vars);
 
     for(auto& guarded_rhs: R.guarded_rhss)
     {
         for(auto& guard: guarded_rhs.guards)
-            add(binders2, rename_stmt(guard, bound, binders2, free_vars));
+            add(binders, rename_stmt(guard, bound, binders, free_vars));
 
-        guarded_rhs.body = rename(guarded_rhs.body, bound, binders2, free_vars);
+        guarded_rhs.body = rename(guarded_rhs.body, bound, binders, free_vars);
     }
 
     return R;
+}
+
+Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
+{
+    set<string> rhs_free_vars;
+    auto R2 = rename(R, plus(bound, binders), rhs_free_vars);
+    add(free_vars, minus(rhs_free_vars, binders));
+    return R2;
 }
 
 pair<expression_ref,set<string>> renamer_state::rename(const expression_ref& E, const bound_var_info& bound)
