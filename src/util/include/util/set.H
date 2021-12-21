@@ -41,19 +41,39 @@ bool includes(const std::map<T,U>& s1, const T& t)
 template <typename T>
 void add(std::set<T>& S1, const std::set<T>& S2)
 {
-    for(const auto& s:S2)
-	S1.insert(s);
+    if (S1.empty())
+        S1 = S2;
+    else
+    {
+        for(const auto& s:S2)
+            S1.insert(s);
+    }
 }
 
 template <typename T>
-void add(std::set<T>& S1, const std::multiset<T>& S2)
+std::set<T> plus(const std::set<T>& S1, const std::set<T>& S2)
+{
+    std::set<T> S3(S1);
+    add(S3, S2);
+    return S3;
+}
+
+template <typename T>
+std::set<T> plus(const std::set<T>& S1, const std::multiset<T>& S2)
 {
     std::set<T> result;
     std::merge(S1.begin(), S1.end(),
 	       S2.begin(), S2.end(),
 	       std::inserter(result, result.begin())
 	);
-    S1.swap(result);
+    return result;
+}
+
+template <typename T>
+void add(std::set<T>& S1, const std::multiset<T>& S2)
+{
+    auto result = plus(S1,S2);
+    std::swap(S1, result);
 }
 
 template <typename T>
@@ -65,6 +85,14 @@ void remove(std::set<T>& S1, const std::set<T>& S2)
 			std::inserter(result, result.begin())
 	);
     S1.swap(result);
+}
+
+template <typename T>
+std::set<T> minus(const std::set<T>& S1, const std::set<T>& S2)
+{
+    std::set<T> S3(S1);
+    remove(S3, S2);
+    return S3;
 }
 
 template <typename T>
