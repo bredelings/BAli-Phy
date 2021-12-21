@@ -1348,7 +1348,7 @@ std::string generate_atmodel_program(int n_sequences,
         branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
     }
     // M4. Branch-length tree
-    auto tree_var = var("tree1");
+    auto tree_var = var("tree'");
     program.let(tree_var, {var("branch_length_tree"),topology_var,branch_lengths});
 
     set<string> used_states;
@@ -1449,7 +1449,7 @@ std::string generate_atmodel_program(int n_sequences,
     for(int i=0; i < n_partitions; i++)
     {
         string part = std::to_string(i+1);
-        string part_suffix = (n_partitions>1) ? "_part"+part : "";
+        string part_suffix = (n_partitions>1) ? part : "";
         int scale_index = *scale_mapping[i];
         int smodel_index = *s_mapping[i];
         auto imodel_index = i_mapping[i];
