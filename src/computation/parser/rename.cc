@@ -710,7 +710,7 @@ struct renamer_state
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
-    bound_var_info rename_value_decls_lhs(Haskell::Decls& decls, bool top);
+    void rename_value_decls_lhs(Haskell::Decls& decls, bool top);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars);
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars);
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars);
@@ -1285,31 +1285,23 @@ bound_var_info renamer_state::rename_decl_head(Haskell::ValueDecl& decl, bool is
     return bound_names;
 }
 
-bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool top)
+void renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool top)
 {
-    if (not decls.size()) return {};
-
-    // The idea is that we only add unqualified names here, and they shadow
-    // qualified names.
-    bound_var_info bound_names;
     for(auto& decl: decls)
     {
 	if (decl.is_a<Haskell::ValueDecl>())
         {
             auto D = decl.as_<Haskell::ValueDecl>();
-            add(bound_names, rename_decl_head(D, top));
+            rename_decl_head(D, top);
             decl = D;
         }
-        else if (auto s = decl.to<Haskell::SignatureDecl>())
-            add(bound_names, find_bound_vars_in_decl(*s, top));
+        else if (decl.is_a<Haskell::SignatureDecl>())
+        { }
         else if (decl.is_a<Haskell::FixityDecl>())
-        {
-        }
+        { }
         else
             std::abort();
     }
-
-    return bound_names;
 }
 
 
@@ -1446,7 +1438,8 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
 {
     // We need to handle infix expressions before this.
 
-    auto binders = rename_value_decls_lhs(decls, top);
+    auto binders = find_bound_vars_in_decls(decls, top);
+    rename_value_decls_lhs(decls, top);
     set<string> decls_free_vars;
     decls = group_decls(decls);
     decls = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars);
