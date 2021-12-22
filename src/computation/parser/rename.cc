@@ -701,6 +701,7 @@ struct renamer_state
     bound_var_info rename_fun_decl_lhs(expression_ref& lhs);
     Haskell::ValueDecl rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars);
     Haskell::Decls group_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars);
+    Haskell::Decls rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
@@ -1361,6 +1362,47 @@ bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool
     return bound_names;
 }
 
+Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars)
+{
+    for(auto& decl: decls)
+    {
+        if (decl.is_a<Hs::PatDecl>())
+        {
+            auto PD = decl.as_<Hs::PatDecl>();
+            PD.rhs = rename(PD.rhs, bound, free_vars);
+            decl = PD;
+        }
+        else if (decl.is_a<Hs::FunDecl>())
+        {
+            auto FD = decl.as_<Hs::FunDecl>();
+
+            for(auto& mrule: FD.match.rules)
+            {
+                bound_var_info binders;
+
+                for(auto& arg: mrule.patterns)
+                {
+                    auto new_binders = rename_pattern(arg);
+                    auto overlap = intersection(binders, new_binders);
+                    if (not overlap.empty())
+                    {
+                        string bad = *overlap.begin();
+                        throw myexception()<<"Function declaration uses variable '"<<bad<<"' twice:\n"<<FD.v<<" "<<mrule.print();
+                    }
+                    add(binders, new_binders);
+                }
+
+                mrule.rhs = rename(mrule.rhs, bound, binders, free_vars);
+            }
+            decl = FD;
+        }
+        else
+            std::abort();
+    }
+
+    return decls;
+}
+
 Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars)
 {
     Haskell::Decls decls2;
@@ -1426,41 +1468,7 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
         i += (m.rules.size()-1);
     }
 
-    for(auto& decl: decls2)
-    {
-        if (decl.is_a<Hs::PatDecl>())
-        {
-            auto PD = decl.as_<Hs::PatDecl>();
-            PD.rhs = rename(PD.rhs, bound, free_vars);
-            decl = PD;
-        }
-        else if (decl.is_a<Hs::FunDecl>())
-        {
-            auto FD = decl.as_<Hs::FunDecl>();
-
-            for(auto& mrule: FD.match.rules)
-            {
-                bound_var_info binders;
-
-                for(auto& arg: mrule.patterns)
-                {
-                    auto new_binders = rename_pattern(arg);
-                    auto overlap = intersection(binders, new_binders);
-                    if (not overlap.empty())
-                    {
-                        string bad = *overlap.begin();
-                        throw myexception()<<"Function declaration uses variable '"<<bad<<"' twice:\n"<<FD.v<<" "<<mrule.print();
-                    }
-                    add(binders, new_binders);
-                }
-
-                mrule.rhs = rename(mrule.rhs, bound, binders, free_vars);
-            }
-            decl = FD;
-        }
-    }
-
-    return decls2;
+    return rename_grouped_decls(decls2, bound, free_vars);
 }
 
 bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top)
