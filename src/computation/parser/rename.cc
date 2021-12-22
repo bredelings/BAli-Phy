@@ -908,28 +908,6 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
         // Wait.. don't we need to discover constructors, too?
     }
 
-    // The idea is that we only add unqualified names here, and they shadow
-    // qualified names.
-    Rn.rename_value_decls_lhs(M.value_decls[0], true);
-    for(auto& decl: M.type_decls)
-    {
-        if (decl.is_a<Haskell::ClassDecl>())
-        {
-            auto C = decl.as_<Haskell::ClassDecl>();
-            if (C.decls)
-                Rn.rename_value_decls_lhs(unloc(*C.decls), true);
-            decl = C;
-        }
-        else if (decl.is_a<Haskell::InstanceDecl>())
-        {
-            // Actually, only class decls should put method name into scope...
-            auto I = decl.as_<Haskell::InstanceDecl>();
-            if (I.decls)
-                Rn.rename_value_decls_lhs(unloc(*I.decls), false);
-            decl = I;
-        }
-    }
-
     // Replace ids with dummies
     for(auto& decl: M.type_decls)
     {
@@ -940,6 +918,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
             if (C.decls)
             {
                 auto& vdecls = unloc(*C.decls);
+                Rn.rename_value_decls_lhs(vdecls, true);
                 vdecls = Rn.group_decls(vdecls);
                 vdecls = Rn.rename_grouped_decls(vdecls, bound_names, free_vars, true);
             }
@@ -954,6 +933,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
                 //   so they don't resolve to `Module.name`.
                 // What SHOULD they resolve to?
                 auto& vdecls = unloc(*I.decls);
+                Rn.rename_value_decls_lhs(vdecls, true);
                 vdecls = Rn.group_decls(vdecls);
                 vdecls = Rn.rename_grouped_decls(vdecls, bound_names, free_vars, true);
             }
@@ -962,6 +942,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
     }
 
     set<string> free_vars;
+    Rn.rename_value_decls_lhs(M.value_decls[0], true);
     M.value_decls[0] = Rn.group_decls(M.value_decls[0]);
     M.value_decls[0] = Rn.rename_grouped_decls(M.value_decls[0], bound_names, free_vars, true);
 
