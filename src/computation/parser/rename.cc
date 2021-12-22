@@ -11,6 +11,7 @@
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
 #include "computation/expression/constructor.H"
+#include "util/graph.H"
 #include "util/set.H"
 
 using std::string;
@@ -1266,18 +1267,33 @@ Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const b
     }
     decls.signatures = signatures;
 
-    for(auto& decl: decls)
+    vector<set<string>> referenced_names;
+    vector<set<string>> bound_names;
+    for(int i=0;i<decls.size();i++)
     {
+        auto& decl = decls[i];
+
+        set<string> decl_free_vars;
+        set<string> decl_binders;
+
         if (decl.is_a<Hs::PatDecl>())
         {
             auto PD = decl.as_<Hs::PatDecl>();
+            decl_binders = find_vars_in_pattern(PD.lhs, top);
+
             rename_pattern(PD.lhs, top);
-            PD.rhs = rename(PD.rhs, bound, free_vars);
+            PD.rhs = rename(PD.rhs, bound, decl_free_vars);
             decl = PD;
         }
         else if (decl.is_a<Hs::FunDecl>())
         {
             auto FD = decl.as_<Hs::FunDecl>();
+            auto& name = unloc(FD.v.name);
+            assert(not is_qualified_symbol(name));
+            if (top)
+                name = m.name + "." + name;
+
+            decl_binders = {name};
 
             for(auto& mrule: FD.match.rules)
             {
@@ -1295,19 +1311,50 @@ Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const b
                     add(binders, new_binders);
                 }
 
-                mrule.rhs = rename(mrule.rhs, bound, binders, free_vars);
+                mrule.rhs = rename(mrule.rhs, bound, binders, decl_free_vars);
             }
-            if (top)
-            {
-                auto& name = unloc(FD.v.name);
-                assert(not is_qualified_symbol(name));
-                name = m.name + "." + name;
-            }
+
             decl = FD;
         }
         else
             std::abort();
+
+        assert(not decl_binders.empty());
+        referenced_names.push_back(decl_free_vars);
+        bound_names.push_back(decl_binders);
+
+        add(free_vars, decl_free_vars);
     }
+
+    // Map the names to indices
+    map<string,int> index_for_name;
+    for(int i=0;i<decls.size();i++)
+        for(auto& name: bound_names[i])
+        {
+            if (index_for_name.count(name)) throw myexception()<<"name '"<<name<<"' is bound twice: "<<decls.print();
+
+            index_for_name.insert({name, i});
+        }
+
+    vector<vector<int>> referenced_decls;
+    for(int i=0;i<decls.size();i++)
+    {
+        vector<int> refs;
+        for(auto& name: referenced_names[i])
+        {
+            if (auto it = index_for_name.find(name); it == index_for_name.end())
+                continue;
+            else
+                refs.push_back(it->second);
+        }
+        referenced_decls.push_back( std::move(refs) );
+    }
+
+    auto components = get_ordered_strong_components( make_graph(referenced_decls) );
+    
+    auto groups = map_groups(components, decls);
+
+    Hs::Binds binds;
 
     return decls;
 }
