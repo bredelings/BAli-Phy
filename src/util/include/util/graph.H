@@ -14,6 +14,17 @@ typedef boost::graph_traits<Graph>::edge_descriptor Edge_t;
 
 Graph make_graph(int N, std::function<bool(int,int)> edge_from_to);
 
+template <typename C>
+Graph make_graph(const std::vector< C >& edge_from_to)
+{
+    Graph graph(edge_from_to.size());
+    for(int from=0; from<edge_from_to.size(); from++)
+        for(auto& to: edge_from_to[from])
+            boost::add_edge(from, to, graph);
+    return graph;
+}
+
+
 Graph get_subgraph(const std::vector<int>& vertices, const Graph& graph);
 
 std::vector<std::vector<int>> get_ordered_strong_components(const Graph& graph);
@@ -31,6 +42,20 @@ std::vector< std::vector<V> > map_groups(const std::vector< std::vector<U>>& uss
         std::vector<V> vs;
         for(auto& u: us)
             vs.push_back(f.at(u));
+        vss.push_back( std::move( vs ) );
+    }
+    return vss;
+}
+
+template <typename V>
+std::vector< std::vector<V> > map_groups(const std::vector< std::vector<int>>& uss, const std::vector<V>& f)
+{
+    std::vector< std::vector<V> > vss;
+    for(int i=0; i<uss.size(); i++)
+    {
+        std::vector<V> vs;
+        for(auto& u: uss[i])
+            vs.push_back(f[u]);
         vss.push_back( std::move( vs ) );
     }
     return vss;
