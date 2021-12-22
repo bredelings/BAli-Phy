@@ -693,14 +693,18 @@ struct renamer_state
 
     bound_var_info find_vars_in_patterns(const vector<expression_ref>& pats, bool top = false);
     bound_var_info find_vars_in_pattern(const expression_ref& pat, bool top = false);
-    bound_var_info find_bound_vars_in_stmt(const expression_ref& stmt);
-    bound_var_info find_bound_vars_in_decls(const Haskell::Decls& decls);
-    bound_var_info find_bound_vars_in_decls(const Haskell::Binds& decls);
     bound_var_info rename_patterns(vector<expression_ref>& pat, bool top = false);
     bound_var_info rename_pattern(expression_ref& pat, bool top = false);
+
+    bound_var_info find_bound_vars_in_stmt(const expression_ref& stmt);
+    bound_var_info find_bound_vars_in_decls(const Haskell::Decls& decls, bool top = false);
+    bound_var_info find_bound_vars_in_decls(const Haskell::Binds& decls, bool top = false);
+    bound_var_info find_bound_vars_in_decl(const Haskell::ValueDecl& decl, bool top = false);
+
     bound_var_info rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::SignatureDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level);
+
     Haskell::Decls group_decls(const Haskell::Decls& decls);
     Haskell::Decls rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
@@ -1198,7 +1202,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
-bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& decls)
+bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& decls, bool top)
 {
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
@@ -1207,24 +1211,33 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& dec
 	if (decl.is_a<Haskell::ValueDecl>())
         {
             auto D = decl.as_<Haskell::ValueDecl>();
-            add(bound_names, rename_decl_head(D, false));
+            add(bound_names, find_bound_vars_in_decl(D, top));
         }
     return bound_names;
 }
 
-bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Binds& binds)
+bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Binds& binds, bool top)
 {
     bound_var_info bound_names;
     for(auto& decls: binds)
-    {
-        for(auto& decl: decls)
-            if (decl.is_a<Haskell::ValueDecl>())
-            {
-                auto D = decl.as_<Haskell::ValueDecl>();
-                add(bound_names, rename_decl_head(D, false));
-            }
-    }
+        add(bound_names, find_bound_vars_in_decls(decls, top));
+
     return bound_names;
+}
+
+bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::ValueDecl& decl, bool top)
+{
+    // For a constructor pattern, rename the whole lhs.
+    if (is_pattern_binding(decl))
+    {
+        return find_vars_in_pattern(decl.lhs, top);
+    }
+    // For a function pattern, just rename the variable being defined
+    else
+    {
+        auto head = decl.lhs.head();
+        return find_vars_in_pattern(head, top);
+    }
 }
 
 bound_var_info renamer_state::rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level)
@@ -1249,7 +1262,6 @@ bound_var_info renamer_state::rename_decl_head(Haskell::ValueDecl& decl, bool is
     {
         add(bound_names,rename_pattern(decl.lhs, is_top_level));
     }
-
     return bound_names;
 }
 
@@ -1397,6 +1409,8 @@ Haskell::Decls renamer_state::group_decls(const Haskell::Decls& decls)
         }
         else if (decl.is_a<Haskell::FixityDecl>())
         {
+            // FixityDecls should survive up to this point so that we can properly segment decls.
+            // But remove them here -> the type-checker shouldn't see them.
         }
         else if (auto d = decl.to<Haskell::ValueDecl>(); d and is_pattern_binding(*d))
         {
