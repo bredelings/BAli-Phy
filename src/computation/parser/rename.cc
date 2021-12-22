@@ -23,6 +23,11 @@ using std::deque;
 
 // So... let_exp is like Core, and Let is like STG.
 
+// -1. Can we group decls BEFORE we rename_lhs?
+//     * 
+
+// 0. Do we rename signature decls before we group, or do we reame signatures after we group?
+
 // 1. Go through and explicitly handle different expression types
 //    instead of using E.size() == 0.
 
@@ -43,6 +48,7 @@ using std::deque;
 // A. pop size changes -- how to implement?
 
 // B. try some different data sets from skyline papers -- hcv2, bison, etc.
+
 
 expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
@@ -700,8 +706,6 @@ struct renamer_state
     bound_var_info rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::SignatureDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level);
-    bound_var_info rename_fun_decl_lhs(expression_ref& lhs);
-    Haskell::ValueDecl rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars);
     Haskell::Decls group_decls(const Haskell::Decls& decls);
     Haskell::Decls rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
@@ -919,9 +923,9 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
             auto C = decl.as_<Haskell::ClassDecl>();
             if (C.decls)
             {
-                for(auto& cdecl: unloc(*C.decls))
-                    if (cdecl.is_a<Haskell::ValueDecl>())
-                        cdecl = Rn.rename_fun_decl(cdecl.as_<Haskell::ValueDecl>(), bound_names, free_vars);
+                auto& vdecls = unloc(*C.decls);
+                vdecls = Rn.group_decls(vdecls);
+                vdecls = Rn.rename_grouped_decls(vdecls, bound_names, free_vars);
             }
             decl = C;
         }
@@ -933,9 +937,9 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
                 // Names for method instances are for defining dictionary entries,
                 //   so they don't resolve to `Module.name`.
                 // What SHOULD they resolve to?
-                for(auto& idecl: unloc(*I.decls))
-                    if (idecl.is_a<Haskell::ValueDecl>())
-                        idecl = Rn.rename_fun_decl(idecl.as_<Haskell::ValueDecl>(), bound_names, free_vars);
+                auto& vdecls = unloc(*I.decls);
+                vdecls = Rn.group_decls(vdecls);
+                vdecls = Rn.rename_grouped_decls(vdecls, bound_names, free_vars);
             }
             decl = I;
         }
@@ -1199,50 +1203,6 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
-// FIXME - maybe move the renaming AFTER we construct the Match objects?
-
-// FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
-bound_var_info renamer_state::rename_fun_decl_lhs(expression_ref& lhs)
-{
-    assert(not is_apply(lhs.head()));
-
-    auto f = lhs.head();
-    assert(f.is_a<Hs::Var>());
-
-    // 1. Discover variables bound in the LHS function arguments.
-    // We discover variables bound by the decls group in rename_decls( ), before we call this.
-    bound_var_info binders;
-    if (lhs.size())
-    {
-        auto args = lhs.sub();
-        assert(args.size());
-
-        bool overlap = false;
-        for(auto& arg: args)
-            overlap = overlap or not disjoint_add(binders, rename_pattern(arg));
-        lhs = expression_ref{f, args};
-        if (overlap)
-            throw myexception()<<"Function declaration '"<<lhs<<"' uses a variable twice!";
-
-        // The lhs args should be in scope when we process the rhs
-    }
-
-    assert(lhs.head().is_a<Hs::Var>());
-
-    return binders;
-}
-
-// FIXME make a RnM (or Renamer) object for renaming that can store the module, the set of bound vars, etc.
-Haskell::ValueDecl renamer_state::rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars)
-{
-    auto binders = rename_fun_decl_lhs(decl.lhs);
-
-    // 3. Rename the body given variables bound in the lhs
-    decl.rhs = rename(decl.rhs, bound, binders, free_vars);
-
-    return decl;
-}
-
 bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& decls)
 {
     // The idea is that we only add unqualified names here, and they shadow
@@ -1366,6 +1326,7 @@ bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool
 
     return bound_names;
 }
+
 
 Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars)
 {
