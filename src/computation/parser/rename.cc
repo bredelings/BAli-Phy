@@ -709,8 +709,6 @@ struct renamer_state
     Haskell::Decls rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
-    bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
-    bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars);
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars);
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars);
@@ -1497,16 +1495,19 @@ Haskell::Decls renamer_state::group_decls(const Haskell::Decls& decls)
     return decls2;
 }
 
-bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top)
+bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top)
 {
     set<string> decls_free_vars;
-    auto new_binders = rename_decls(decls, plus(bound, binders), decls_free_vars, top);
+    auto new_binders = rename_decls(binds, plus(bound, binders), decls_free_vars, top);
     add(free_vars, minus(decls_free_vars, binders));
     return new_binders;
 }
 
-bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top)
+bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, set<string>& free_vars, bool top)
 {
+    assert(binds.size() == 1);
+    auto& decls = binds[0];
+
     // We need to handle infix expressions before this.
 
     auto binders = find_bound_vars_in_decls(decls, top);
@@ -1517,20 +1518,6 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
     add(free_vars, minus(decls_free_vars,binders));
 
     return binders;
-}
-
-bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top)
-{
-    assert(binds.size() == 1);
-
-    return rename_decls(binds[0], bound, binders, free_vars, top);
-}
-
-bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, set<string>& free_vars, bool top)
-{
-    assert(binds.size() == 1);
-
-    return rename_decls(binds[0], bound, free_vars, top);
 }
 
 bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt)
