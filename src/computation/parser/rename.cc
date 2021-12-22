@@ -1357,7 +1357,7 @@ bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool
         else if (decl.is_a<Haskell::FixityDecl>())
         {
             auto F = decl.as_<Haskell::FixityDecl>();
-            add(bound_names, rename_decl_head(F, top));
+            rename_decl_head(F, top);
             decl = F;
         }
         else
