@@ -1290,11 +1290,7 @@ void renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool top)
     for(auto& decl: decls)
     {
 	if (decl.is_a<Haskell::ValueDecl>())
-        {
-            auto D = decl.as_<Haskell::ValueDecl>();
-            rename_decl_head(D, top);
-            decl = D;
-        }
+        { }
         else if (decl.is_a<Haskell::SignatureDecl>())
         { }
         else if (decl.is_a<Haskell::FixityDecl>())
@@ -1323,6 +1319,7 @@ Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const b
         if (decl.is_a<Hs::PatDecl>())
         {
             auto PD = decl.as_<Hs::PatDecl>();
+            rename_pattern(PD.lhs, top);
             PD.rhs = rename(PD.rhs, bound, free_vars);
             decl = PD;
         }
@@ -1347,6 +1344,12 @@ Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const b
                 }
 
                 mrule.rhs = rename(mrule.rhs, bound, binders, free_vars);
+            }
+            if (top)
+            {
+                auto& name = unloc(FD.v.name);
+                assert(not is_qualified_symbol(name));
+                name = m.name + "." + name;
             }
             decl = FD;
         }
