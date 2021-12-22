@@ -1301,7 +1301,6 @@ bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool
         {
             auto S = decl.as_<Haskell::SignatureDecl>();
             add(bound_names, rename_decl_head(S, top));
-            S.type = rename_type(S.type);
             decl = S;
         }
         else if (decl.is_a<Haskell::FixityDecl>())
@@ -1317,6 +1316,11 @@ bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool
 
 Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars)
 {
+    for(auto& [name, type]: decls.signatures)
+    {
+        type = rename_type(type);
+    }
+
     for(auto& decl: decls)
     {
         if (decl.is_a<Hs::PatDecl>())
