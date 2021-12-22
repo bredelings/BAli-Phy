@@ -2,6 +2,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <optional>
 #include <deque>
 
 #include "rename.H"
@@ -16,6 +17,7 @@ using std::string;
 using std::vector;
 using std::pair;
 using std::set;
+using std::optional;
 using std::map;
 using std::deque;
 
@@ -1403,6 +1405,18 @@ Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const b
     return decls;
 }
 
+optional<Hs::Var> fundecl_head(const expression_ref& decl)
+{
+    assert(decl.is_a<Hs::SignatureDecl>() or decl.is_a<Hs::FixityDecl>() or decl.is_a<Hs::ValueDecl>());
+
+    if (auto d = decl.to<Hs::ValueDecl>(); d and is_function_binding(*d))
+    {
+        auto fvar = d->lhs.head();
+        assert(fvar.is_a<Hs::Var>());
+        return fvar.as_<Hs::Var>();
+    }
+    return {};
+}
 
 // Probably we should first partition by (same x y = x and y are both function decls for the same variable)
 Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars)
@@ -1429,32 +1443,24 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
         {
             decls2.push_back(Haskell::PatDecl{d->lhs, d->rhs});
         }
-        else if (auto d = decl.to<Haskell::ValueDecl>(); d and is_function_binding(*d))
+        else if (auto fvar = fundecl_head(decl))
         {
-            auto fvar = d->lhs.head().as_<Hs::Var>();
-
             Hs::Match m;
             for(int j=i;j<decls.size();j++)
             {
-                if (not decls[j].is_a<Haskell::ValueDecl>()) break;
+                if (fundecl_head(decls[j]) != fvar) break;
 
-                auto Dj = decls[j].as_<Haskell::ValueDecl>();
+                auto& D = decls[j].as_<Haskell::ValueDecl>();
 
-                if (is_pattern_binding(Dj)) break;
-
-                auto& j_f   = Dj.lhs.head();
-                assert(j_f.is_a<Hs::Var>());
-                if (j_f.as_<Hs::Var>() != fvar) break;
-
-                m.rules.push_back( Hs::MRule{ Dj.lhs.copy_sub(), Dj.rhs } );
+                m.rules.push_back( Hs::MRule{ D.lhs.copy_sub(), D.rhs } );
 
                 if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
-                    throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
+                    throw myexception()<<"Function '"<<*fvar<<"' has different numbers of arguments!";
             }
 
             assert(not m.rules[0].patterns.empty() or m.rules.size() == 1);
 
-            decls2.push_back( Hs::FunDecl( fvar, m ) );
+            decls2.push_back( Hs::FunDecl( *fvar, m ) );
 
             // skip the other bindings for this function
             i += (m.rules.size()-1);
