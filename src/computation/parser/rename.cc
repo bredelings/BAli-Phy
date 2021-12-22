@@ -702,7 +702,7 @@ struct renamer_state
     bound_var_info rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level);
     bound_var_info rename_fun_decl_lhs(expression_ref& lhs);
     Haskell::ValueDecl rename_fun_decl(Haskell::ValueDecl decl, const bound_var_info& bound, set<string>& free_vars);
-    Haskell::Decls group_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars);
+    Haskell::Decls group_decls(const Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars);
     Haskell::Decls rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
@@ -1419,7 +1419,7 @@ optional<Hs::Var> fundecl_head(const expression_ref& decl)
 }
 
 // Probably we should first partition by (same x y = x and y are both function decls for the same variable)
-Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars)
+Haskell::Decls renamer_state::group_decls(const Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars)
 {
     Haskell::Decls decls2;
     for(int i=0;i<decls.size();i++)
