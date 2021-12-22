@@ -892,14 +892,32 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
     bound_var_info bound_names;
-    add(bound_names, Rn.rename_value_decls_lhs(M.value_decls[0], true));
+    add(bound_names, Rn.find_bound_vars_in_decls(M.value_decls[0], true));
     for(auto& decl: M.type_decls)
     {
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
             if (C.decls)
-                add(bound_names, Rn.rename_value_decls_lhs(unloc(*C.decls), true));
+                add(bound_names, Rn.find_bound_vars_in_decls(unloc(*C.decls), true));
+            decl = C;
+        }
+        else if (decl.is_a<Haskell::InstanceDecl>())
+        {
+        }
+        // Wait.. don't we need to discover constructors, too?
+    }
+
+    // The idea is that we only add unqualified names here, and they shadow
+    // qualified names.
+    Rn.rename_value_decls_lhs(M.value_decls[0], true);
+    for(auto& decl: M.type_decls)
+    {
+        if (decl.is_a<Haskell::ClassDecl>())
+        {
+            auto C = decl.as_<Haskell::ClassDecl>();
+            if (C.decls)
+                Rn.rename_value_decls_lhs(unloc(*C.decls), true);
             decl = C;
         }
         else if (decl.is_a<Haskell::InstanceDecl>())
