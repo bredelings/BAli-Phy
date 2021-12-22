@@ -702,15 +702,12 @@ struct renamer_state
     bound_var_info find_bound_vars_in_decl(const Haskell::ValueDecl& decl, bool top = false);
     bound_var_info find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool top = false);
 
-    bound_var_info rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level);
-
     Haskell::Decls group_decls(const Haskell::Decls& decls);
     Haskell::Decls rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
-    void rename_value_decls_lhs(Haskell::Decls& decls, bool top);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars);
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars);
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars);
@@ -918,7 +915,6 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
             if (C.decls)
             {
                 auto& vdecls = unloc(*C.decls);
-                Rn.rename_value_decls_lhs(vdecls, true);
                 vdecls = Rn.group_decls(vdecls);
                 vdecls = Rn.rename_grouped_decls(vdecls, bound_names, free_vars, true);
             }
@@ -933,7 +929,6 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
                 //   so they don't resolve to `Module.name`.
                 // What SHOULD they resolve to?
                 auto& vdecls = unloc(*I.decls);
-                Rn.rename_value_decls_lhs(vdecls, true);
                 vdecls = Rn.group_decls(vdecls);
                 vdecls = Rn.rename_grouped_decls(vdecls, bound_names, free_vars, true);
             }
@@ -942,7 +937,6 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
     }
 
     set<string> free_vars;
-    Rn.rename_value_decls_lhs(M.value_decls[0], true);
     M.value_decls[0] = Rn.group_decls(M.value_decls[0]);
     M.value_decls[0] = Rn.rename_grouped_decls(M.value_decls[0], bound_names, free_vars, true);
 
@@ -1259,48 +1253,6 @@ bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::SignatureDe
     return bound_names;
 }
 
-bound_var_info renamer_state::rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level)
-{
-    bound_var_info bound_names;
-
-    auto head = decl.lhs.head();
-    assert(head.is_a<Hs::Var>() or is_pattern_binding(decl));
-
-    // For a constructor pattern, rename the whole lhs.
-    if (is_pattern_binding(decl))
-    {
-        add(bound_names, rename_pattern(decl.lhs, is_top_level));
-    }
-    // For a function pattern, just rename the variable being defined
-    else if (decl.lhs.size())
-    {
-        add(bound_names, rename_pattern(head, is_top_level));
-        decl.lhs = expression_ref{head, decl.lhs.sub()};
-    }
-    // For a variable pattern, the variable being defined is the whole lhs
-    else
-    {
-        add(bound_names,rename_pattern(decl.lhs, is_top_level));
-    }
-    return bound_names;
-}
-
-void renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool top)
-{
-    for(auto& decl: decls)
-    {
-	if (decl.is_a<Haskell::ValueDecl>())
-        { }
-        else if (decl.is_a<Haskell::SignatureDecl>())
-        { }
-        else if (decl.is_a<Haskell::FixityDecl>())
-        { }
-        else
-            std::abort();
-    }
-}
-
-
 Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars, bool top)
 {
     map<string, Hs::Type> signatures;
@@ -1442,7 +1394,6 @@ bound_var_info renamer_state::rename_decls(Haskell::Decls& decls, const bound_va
     // We need to handle infix expressions before this.
 
     auto binders = find_bound_vars_in_decls(decls, top);
-    rename_value_decls_lhs(decls, top);
     set<string> decls_free_vars;
     decls = group_decls(decls);
     decls = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars);
