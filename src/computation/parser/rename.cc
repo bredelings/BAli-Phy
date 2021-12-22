@@ -1403,6 +1403,8 @@ Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const b
     return decls;
 }
 
+
+// Probably we should first partition by (same x y = x and y are both function decls for the same variable)
 Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars)
 {
     Haskell::Decls decls2;
@@ -1419,53 +1421,46 @@ Haskell::Decls renamer_state::group_decls(Haskell::Decls decls, const bound_var_
                     throw myexception()<<"Second signature for var '"<<name<<"' at location "<<*var.name.loc;
                 decls2.signatures.insert({name, sd->type});
             }
-            continue;
         }
         else if (decl.is_a<Haskell::FixityDecl>())
-            continue;
-
-        if (not decl.is_a<Haskell::ValueDecl>())
         {
-            decls2.push_back(decl);
-            continue;
         }
-
-        auto D = decl.as_<Haskell::ValueDecl>();
-
-        if (is_pattern_binding(D))
+        else if (auto d = decl.to<Haskell::ValueDecl>(); d and is_pattern_binding(*d))
         {
-            decls2.push_back(Haskell::PatDecl{D.lhs, D.rhs});
-            continue;
+            decls2.push_back(Haskell::PatDecl{d->lhs, d->rhs});
         }
-
-        auto& f = D.lhs.head();
-        auto fvar = f.as_<Hs::Var>();
-
-        Hs::Match m;
-        for(int j=i;j<decls.size();j++)
+        else if (auto d = decl.to<Haskell::ValueDecl>(); d and is_function_binding(*d))
         {
-            if (not decls[j].is_a<Haskell::ValueDecl>()) break;
+            auto fvar = d->lhs.head().as_<Hs::Var>();
 
-            auto Dj = decls[j].as_<Haskell::ValueDecl>();
+            Hs::Match m;
+            for(int j=i;j<decls.size();j++)
+            {
+                if (not decls[j].is_a<Haskell::ValueDecl>()) break;
 
-            if (is_pattern_binding(Dj)) break;
+                auto Dj = decls[j].as_<Haskell::ValueDecl>();
 
-            auto& j_f   = Dj.lhs.head();
-            assert(j_f.is_a<Hs::Var>());
-            if (j_f.as_<Hs::Var>() != fvar) break;
+                if (is_pattern_binding(Dj)) break;
 
-            m.rules.push_back( Hs::MRule{ Dj.lhs.copy_sub(), Dj.rhs } );
+                auto& j_f   = Dj.lhs.head();
+                assert(j_f.is_a<Hs::Var>());
+                if (j_f.as_<Hs::Var>() != fvar) break;
 
-            if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
-                throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
+                m.rules.push_back( Hs::MRule{ Dj.lhs.copy_sub(), Dj.rhs } );
+
+                if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
+                    throw myexception()<<"Function '"<<fvar<<"' has different numbers of arguments!";
+            }
+
+            assert(not m.rules[0].patterns.empty() or m.rules.size() == 1);
+
+            decls2.push_back( Hs::FunDecl( fvar, m ) );
+
+            // skip the other bindings for this function
+            i += (m.rules.size()-1);
         }
-
-        assert(not m.rules[0].patterns.empty() or m.rules.size() == 1);
-
-        decls2.push_back( Hs::FunDecl( fvar, m ) );
-
-        // skip the other bindings for this function
-        i += (m.rules.size()-1);
+        else
+            std::abort();
     }
 
     return rename_grouped_decls(decls2, bound, free_vars);
