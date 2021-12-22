@@ -306,6 +306,7 @@ struct BuiltinDecl: public Object
 struct Decls: public std::vector<expression_ref>
 {
 public:
+    // FIXME: I should keep the SignatureDecl around for error messages.
     std::map<std::string, Type> signatures;
 
     std::string print() const;
