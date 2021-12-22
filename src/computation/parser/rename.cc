@@ -703,7 +703,6 @@ struct renamer_state
 
     bound_var_info rename_decl_head(Haskell::ValueDecl& decl, bool is_top_level);
     bound_var_info rename_decl_head(Haskell::SignatureDecl& decl, bool is_top_level);
-    bound_var_info rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level);
 
     Haskell::Decls group_decls(const Haskell::Decls& decls);
     Haskell::Decls rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars);
@@ -1246,6 +1245,7 @@ bound_var_info renamer_state::rename_decl_head(Haskell::ValueDecl& decl, bool is
 
     auto head = decl.lhs.head();
     assert(head.is_a<Hs::Var>() or is_pattern_binding(decl));
+
     // For a constructor pattern, rename the whole lhs.
     if (is_pattern_binding(decl))
     {
@@ -1282,23 +1282,6 @@ bound_var_info renamer_state::rename_decl_head(Haskell::SignatureDecl& decl, boo
     return bound_names;
 }
 
-bound_var_info renamer_state::rename_decl_head(Haskell::FixityDecl& decl, bool is_top_level)
-{
-    bound_var_info bound_names;
-
-    for(auto& name: decl.names)
-    {
-        if (is_top_level)
-        {
-            assert(not is_qualified_symbol(name));
-            name = m.name + "." + name;
-        }
-        bound_names.insert(name);
-    }
-
-    return bound_names;
-}
-
 bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool top)
 {
     if (not decls.size()) return {};
@@ -1323,9 +1306,6 @@ bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool
         }
         else if (decl.is_a<Haskell::FixityDecl>())
         {
-            auto F = decl.as_<Haskell::FixityDecl>();
-            rename_decl_head(F, top);
-            decl = F;
         }
         else
             std::abort();
