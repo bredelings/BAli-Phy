@@ -1360,6 +1360,8 @@ bound_var_info renamer_state::rename_value_decls_lhs(Haskell::Decls& decls, bool
             add(bound_names, rename_decl_head(F, top));
             decl = F;
         }
+        else
+            std::abort();
     }
 
     return bound_names;
