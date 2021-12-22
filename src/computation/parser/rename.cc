@@ -692,11 +692,13 @@ struct renamer_state
 //    var get_fresh_var(const string& name) {return var(name,var_index++);}
 
 
-    bound_var_info find_vars_in_patterns(const vector<expression_ref>& pats, bool top = false);
-    bound_var_info find_vars_in_pattern(const expression_ref& pat, bool top = false);
+
     bound_var_info rename_patterns(vector<expression_ref>& pat, bool top = false);
     bound_var_info rename_pattern(expression_ref& pat, bool top = false);
 
+    bound_var_info find_vars_in_patterns(const vector<expression_ref>& pats, bool top = false);
+    bound_var_info find_vars_in_pattern(const expression_ref& pat, bool top = false);
+    // the pattern*2 versions are for AFTER rename, and don't check things.  They just report what they find.
     bound_var_info find_bound_vars_in_stmt(const expression_ref& stmt);
     bound_var_info find_bound_vars_in_decls(const Haskell::Decls& decls, bool top = false);
     bound_var_info find_bound_vars_in_decls(const Haskell::Binds& decls, bool top = false);
@@ -1047,6 +1049,43 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
+bound_var_info find_vars_in_pattern2(const expression_ref& pat);
+bound_var_info find_vars_in_patterns2(const vector<expression_ref>& pats)
+{
+    bound_var_info bound;
+
+    for(auto& pat: pats)
+        add(bound, find_vars_in_pattern2(pat));
+
+    return bound;
+}
+
+bound_var_info find_vars_in_pattern2(const expression_ref& pat)
+{
+    assert(not is_apply_exp(pat));
+
+    if (pat.is_a<Haskell::WildcardPattern>())
+	return {};
+    else if (auto lp = pat.to<Haskell::LazyPattern>())
+        return find_vars_in_pattern2(lp->pattern);
+    else if (auto sp = pat.to<Haskell::StrictPattern>())
+        return find_vars_in_pattern2(sp->pattern);
+    else if (auto ap = pat.to<Haskell::AsPattern>())
+	return plus( find_vars_in_pattern2(ap->var), find_vars_in_pattern2(ap->pattern) );
+    else if (auto l = pat.to<Haskell::List>())
+        return find_vars_in_patterns2(l->elements);
+    else if (auto t = pat.to<Haskell::Tuple>())
+        return find_vars_in_patterns2(t->elements);
+    else if (auto v = pat.to<Haskell::Var>())
+	return { unloc(v->name) };
+    else if (pat.head().is_a<Haskell::Con>())
+        return find_vars_in_patterns2(pat.copy_sub());
+    else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
+        return {};
+    else
+        throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
+}
+
 bound_var_info renamer_state::rename_patterns(vector<expression_ref>& patterns, bool top)
 {
     bound_var_info bound;
@@ -1239,6 +1278,18 @@ bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::ValueDecl& 
     }
 }
 
+bound_var_info binders_for_renamed_decl(const expression_ref& decl)
+{
+    set<string> binders;
+    if (auto pd = decl.to<Hs::PatDecl>())
+        binders = find_vars_in_pattern2(pd->lhs);
+    else if (auto fd = decl.to<Hs::FunDecl>())
+        binders = { unloc(fd->v.name) };
+    else
+        std::abort();
+    return binders;
+}
+
 bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool is_top_level)
 {
     bound_var_info bound_names;
@@ -1352,9 +1403,27 @@ Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const b
 
     auto components = get_ordered_strong_components( make_graph(referenced_decls) );
     
-    auto groups = map_groups(components, decls);
-
     Hs::Binds binds;
+    for(auto& component: components)
+    {
+        Hs::Decls bdecls;
+        for(int i : component)
+        {
+            auto& decl = decls[i];
+
+            // Collect the value decl
+            bdecls.push_back(decl);
+
+            // Collect any associated signatures
+            for(auto& name: binders_for_renamed_decl(decl))
+            {
+                auto it = signatures.find(name);
+                if (it != signatures.end())
+                    bdecls.signatures.insert(*it);
+            }
+        }
+        binds.push_back(bdecls);
+    }
 
     return decls;
 }
