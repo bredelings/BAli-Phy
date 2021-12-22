@@ -570,6 +570,9 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     return expression_ref{E.head(),v};
 }
 
+// A data declaration MAY use the same field label in multiple constructors as long as the typing of the field is the same in all cases after type synonym expansion.
+// A label CANNOT be shared by more than one type in scope.
+// Field names share the top level namespace with ordinary variables and class methods and must not conflict with other top level names in scope.
 
 Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
 {
@@ -617,25 +620,17 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
                 for(auto& [ConName,pos]: constrs)
                 {
                     int a = arity[ConName];
-                    vector<expression_ref> f;
-                    for(int i=0;i<a;i++)
-                        if (i == pos)
-                            f.push_back(name);
-                        else
-                            f.push_back(Haskell::WildcardPattern());
+                    vector<expression_ref> f(a, Hs::WildcardPattern());
+                    f[pos] = name;
 
-                    expression_ref pattern = expression_ref{Hs::Con({noloc,ConName},a),f};
+                    auto pattern = expression_ref{Hs::Con({noloc,ConName},a),f};
                     auto rhs = Haskell::SimpleRHS({noloc, name});
                     alts.push_back({noloc,{pattern,rhs}});
                 }
-                {
-                    expression_ref pattern = Haskell::WildcardPattern();
-                    expression_ref body = error(field_name+": pattern match failure");
-                    auto rhs = Haskell::SimpleRHS({noloc,body});
-                    alts.push_back({noloc,{pattern,rhs}});
-                }
+                // I removed the {_ -> error("{name}: no match")} alternative, since error( ) generates a var( ).
+                // This could lead to worse error messages.
 
-                Hs::Var x({noloc,"#0"}); // FIXME??
+                Hs::Var x({noloc,"v$0"}); // FIXME??
                 expression_ref body = Haskell::CaseExp(x,Haskell::Alts(alts));
                 body = Haskell::LambdaExp({x},body);
 
@@ -1868,46 +1863,54 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 
         return I;
     }
-
-    vector<expression_ref> v = E.copy_sub();
-
-    for(auto& e: v)
-	e = rename(e, bound, free_vars);
-
-    // Apply fully-applied multi-argument constructors during rename.
-    //
-    // If we don't we get the following problem in simplification, so it takes too many rounds:
-    // (:) x y => (\a b -> a:b) x y => let a=x;b=y in a:b => let a=3 in a:y (if a=3 in a containing let).
-    //
-    // We would really just like (:) x y to resolve to x:y.  But since it doesn't, lets do that here.
-    // Could we make a special case for lambdas that are (say) fully apply only to variables?
-    // Perhaps we should handle this in the simplifier instead, in the place where we do application of functions.
-    //
-    // For the meantime, we have this.  And it at least leads to more readable output from rename.
-    // It could conceivably help the type-checker also...
-    //
-    // We don't do this for single-argument constructors. By leaving them as vars, we avoid
-    //   getting many let-allocated copies of (), [], True, False, Nothing, etc.
-    if (is_apply(E.head()) and v[0].is_a<Hs::Con>())
+    else if (E.is_int() or E.is_log_double() or E.is_double() or E.is_char())
     {
-        auto C = v[0].as_<Hs::Con>();
-        auto& id = unloc(C.name);
-        const symbol_info& S = m.lookup_resolved_symbol(id);
-        assert(S.symbol_type == constructor_symbol);
-        // If the constructor is fully applied, then do the apply now -- this might avoid some rounds of simplification?
-	if (v.size() == 1 + S.arity)
-	{
-            shift_list(v);
-            assert(v.size());
-            id = S.name;
-            C.arity = S.arity;
-            return expression_ref{C,v};
-	}
+        return E;
+    }
+    else if (is_apply(E.head()))
+    {
+        vector<expression_ref> v = E.copy_sub();
+
+        for(auto& e: v)
+            e = rename(e, bound, free_vars);
+
+        // Apply fully-applied multi-argument constructors during rename.
+        //
+        // If we don't we get the following problem in simplification, so it takes too many rounds:
+        // (:) x y => (\a b -> a:b) x y => let a=x;b=y in a:b => let a=3 in a:y (if a=3 in a containing let).
+        //
+        // We would really just like (:) x y to resolve to x:y.  But since it doesn't, lets do that here.
+        // Could we make a special case for lambdas that are (say) fully apply only to variables?
+        // Perhaps we should handle this in the simplifier instead, in the place where we do application of functions.
+        //
+        // For the meantime, we have this.  And it at least leads to more readable output from rename.
+        // It could conceivably help the type-checker also...
+        //
+
+        // We don't do this for single-argument constructors. By leaving them as vars, we avoid
+        //   getting many let-allocated copies of (), [], True, False, Nothing, etc.
+        if (v[0].is_a<Hs::Con>())
+        {
+            auto C = v[0].as_<Hs::Con>();
+            auto& id = unloc(C.name);
+            const symbol_info& S = m.lookup_resolved_symbol(id);
+            assert(S.symbol_type == constructor_symbol);
+            // If the constructor is fully applied, then do the apply now -- this might avoid some rounds of simplification?
+            if (v.size() == 1 + S.arity)
+            {
+                shift_list(v);
+                assert(v.size());
+                id = S.name;
+                C.arity = S.arity;
+                return expression_ref{C,v};
+            }
+        }
+        if (E.size())
+            return expression_ref{E.head(),v};
+        else
+            return E;
     }
 
-    if (E.size())
-	return expression_ref{E.head(),v};
-    else
-	return E;
+    std::abort();
 }
 
