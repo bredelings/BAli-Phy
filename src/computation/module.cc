@@ -1739,23 +1739,6 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
             for(const auto& var_name: find_bound_vars( fd->v ))
                 maybe_def_function( var_name );
         }
-        else if (decl.is_a<Haskell::ValueDecl>())
-        {
-            auto& D = decl.as_<Haskell::ValueDecl>();
-            set<string> vars;
-            if (is_function_binding(D))
-                vars.insert( get_func_name(D) );
-            else
-                vars = find_bound_vars(D.lhs);
-
-            for(const auto& var_name: vars)
-                maybe_def_function(var_name);
-        }
-        else if (decl.is_a<Haskell::BuiltinDecl>())
-        {
-            string bname = decl.as_<Haskell::BuiltinDecl>().function_name;
-            def_function(bname);
-        }
         else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
             auto& ADT = decl.as_<Haskell::DataOrNewtypeDecl>();

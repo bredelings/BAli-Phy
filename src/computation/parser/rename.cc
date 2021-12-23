@@ -1284,16 +1284,12 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& dec
     bound_var_info bound_names;
     for(auto& decl: decls)
     {
-	if (auto d = decl.to<Haskell::ValueDecl>())
-            add(bound_names, find_bound_vars_in_decl(*d, top));
-        else if (auto s = decl.to<Haskell::SignatureDecl>())
-            add(bound_names, find_bound_vars_in_decl(*s, top));
-        else if (decl.is_a<Haskell::FixityDecl>())
-        { }
-	else if (auto d = decl.to<Haskell::PatDecl>())
+	if (auto d = decl.to<Haskell::PatDecl>())
             add(bound_names, find_vars_in_pattern(d->lhs, top));
 	else if (auto d = decl.to<Haskell::FunDecl>())
             add(bound_names, find_vars_in_pattern(d->v, top));
+        else
+            std::abort();
     }
 
     for(auto& [name,_]: decls.signatures)
