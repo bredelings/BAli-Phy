@@ -303,7 +303,38 @@ expression_ref unapply(expression_ref E)
 // Only one op can be a non-constructor (in decl patterns), and that op needs to end up at the top level.
 
 expression_ref rename_infix(const Module& m, const expression_ref& E);
+Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R);
 
+
+expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
+{
+    if (E.is_a<Haskell::ValueDecl>())
+    {
+        auto D = E.as_<Haskell::ValueDecl>();
+
+        D.lhs = rename_infix(m, D.lhs);
+	D.lhs = unapply(D.lhs);
+        D.rhs = rename_infix(m, D.rhs);
+
+	assert(D.lhs.head().is_a<Hs::Var>() or is_pattern_binding(D));
+
+        return D;
+    }
+    else if (E.is_a<Hs::SignatureDecl>())
+        return E;
+    else if (E.is_a<Hs::FixityDecl>())
+        return E;
+    else
+        std::abort();
+}
+
+Haskell::Decls rename_infix(const Module& m, Haskell::Decls decls)
+{
+    for(auto& e: decls)
+        e = rename_infix_decl(m, e);
+
+    return decls;
+}
 
 Haskell::Binds rename_infix(const Module& m, Haskell::Binds binds)
 {
@@ -311,14 +342,6 @@ Haskell::Binds rename_infix(const Module& m, Haskell::Binds binds)
         bind = rename_infix(m, bind);
 
     return binds;
-}
-
-Haskell::Decls rename_infix(const Module& m, Haskell::Decls decls)
-{
-    for(auto& e: decls)
-        e = rename_infix(m, e);
-
-    return decls;
 }
 
 Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R)
@@ -339,21 +362,7 @@ Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R)
 
 expression_ref rename_infix(const Module& m, const expression_ref& E)
 {
-    if (E.is_a<Haskell::ClassDecl>())
-    {
-        auto C = E.as_<Haskell::ClassDecl>();
-        if (C.decls)
-            unloc(*C.decls) = rename_infix(m, unloc(*C.decls));
-        return C;
-    }
-    else if (E.is_a<Haskell::InstanceDecl>())
-    {
-        auto I = E.as_<Haskell::InstanceDecl>();
-        if (I.decls)
-            unloc(*I.decls) = rename_infix(m, unloc(*I.decls));
-        return I;
-    }
-    else if (E.is_a<Haskell::List>())
+    if (E.is_a<Haskell::List>())
     {
         auto L = E.as_<Haskell::List>();
         for(auto& element: L.elements)
@@ -523,18 +532,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     }
     else if (E.is_a<Haskell::Decls>())
         std::abort();
-    else if (E.is_a<Haskell::ValueDecl>())
-    {
-        auto D = E.as_<Haskell::ValueDecl>();
-
-        D.lhs = rename_infix(m, D.lhs);
-	D.lhs = unapply(D.lhs);
-        D.rhs = rename_infix(m, D.rhs);
-
-	assert(D.lhs.head().is_a<Hs::Var>() or is_pattern_binding(D));
-
-        return D;
-    }
     else if (auto I = E.to<Hs::InfixExp>())
     {
         auto terms = I->terms;
@@ -574,7 +571,24 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls M)
 {
     M.value_decls = rename_infix(m, M.value_decls);
-    M.type_decls = rename_infix(m, M.type_decls);
+
+    for(auto& type_decl: M.type_decls)
+    {
+        if (type_decl.is_a<Haskell::ClassDecl>())
+        {
+            auto C = type_decl.as_<Haskell::ClassDecl>();
+            if (C.decls)
+                unloc(*C.decls) = rename_infix(m, unloc(*C.decls));
+            type_decl = C;
+        }
+        else if (type_decl.is_a<Haskell::InstanceDecl>())
+        {
+            auto I = type_decl.as_<Haskell::InstanceDecl>();
+            if (I.decls)
+                unloc(*I.decls) = rename_infix(m, unloc(*I.decls));
+            type_decl = I;
+        }
+    }
     return M;
 }
 
