@@ -1708,37 +1708,48 @@ void Module::declare_fixities(const Hs::ModuleDecls& M)
                 declare_fixities_(unloc(*C->decls));
 }
 
+void Module::maybe_def_function(const string& var_name)
+{
+    // We don't know the type yet, probably, because we don't know the body.
+    string qualified_name = name+"."+var_name;
+    auto loc = symbols.find(qualified_name);
+
+    if (loc != symbols.end())
+    {
+        symbol_info& S = loc->second;
+        // Only the fixity has been declared!
+        if (S.symbol_type == unknown_symbol)
+            S.symbol_type = variable_symbol;
+    }
+    else
+        def_function(var_name);
+}
+
 void Module::add_local_symbols(const Hs::Decls& topdecls)
 {
     // 0. Get names that are being declared.
     for(const auto& decl: topdecls)
-        if (decl.is_a<Haskell::ValueDecl>())
+        if (auto pd = decl.to<Hs::PatDecl>())
+        {
+            for(const auto& var_name: find_bound_vars(pd->lhs))
+                maybe_def_function( var_name );
+        }
+        else if (auto fd = decl.to<Hs::FunDecl>())
+        {
+            for(const auto& var_name: find_bound_vars( fd->v ))
+                maybe_def_function( var_name );
+        }
+        else if (decl.is_a<Haskell::ValueDecl>())
         {
             auto& D = decl.as_<Haskell::ValueDecl>();
             set<string> vars;
             if (is_function_binding(D))
                 vars.insert( get_func_name(D) );
             else
-            {
                 vars = find_bound_vars(D.lhs);
-            }
 
             for(const auto& var_name: vars)
-            {
-                // We don't know the type yet, probably, because we don't know the body.
-                string qualified_name = name+"."+var_name;
-                auto loc = symbols.find(qualified_name);
-
-                if (loc != symbols.end())
-                {
-                    symbol_info& S = loc->second;
-                    // Only the fixity has been declared!
-                    if (S.symbol_type == unknown_symbol)
-                        S.symbol_type = variable_symbol;
-                }
-                else
-                    def_function(var_name);
-            }
+                maybe_def_function(var_name);
         }
         else if (decl.is_a<Haskell::BuiltinDecl>())
         {
@@ -1764,6 +1775,9 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 
             if (Class.decls)
             {
+                for(auto& [name, type]: unloc(*Class.decls).signatures)
+                    def_type_class_method(name, Class.name);
+
                 for(auto& decl: unloc(*Class.decls))
                 {
                     if (decl.is_a<Haskell::SignatureDecl>())

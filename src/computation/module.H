@@ -163,6 +163,8 @@ public:
 
     /// Add a function
     void def_function(const std::string& name);
+    /// Add a function
+    void maybe_def_function(const std::string& name);
 
     /// Add a constructor
     void def_constructor(const std::string& name, int arity, const std::string& type_name);

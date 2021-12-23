@@ -334,7 +334,7 @@ Haskell::Decls rename_infix(const Module& m, Haskell::Decls decls)
     for(auto& e: decls)
         e = rename_infix_decl(m, e);
 
-    return decls;
+    return group_decls(decls);
 }
 
 Haskell::Binds rename_infix(const Module& m, Haskell::Binds binds)
@@ -928,7 +928,6 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
     bound_var_info bound_names;
-    M.value_decls[0] = group_decls(M.value_decls[0]);
     add(bound_names, Rn.find_bound_vars_in_decls(M.value_decls[0], true));
     for(auto& decl: M.type_decls)
     {
@@ -938,7 +937,6 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
             if (C.decls)
             {
                 auto& vdecls = unloc(*C.decls);
-                vdecls = group_decls(vdecls);
                 add(bound_names, Rn.find_bound_vars_in_decls(vdecls, true));
             }
             decl = C;
@@ -949,7 +947,6 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
             if (I.decls)
             {
                 auto& vdecls = unloc(*I.decls);
-                vdecls = group_decls(vdecls);
             }
             decl = I;
         }
@@ -1573,7 +1570,6 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
 
     // We need to handle infix expressions before this.
 
-    decls = group_decls(decls);
     auto binders = find_bound_vars_in_decls(decls, top);
     set<string> decls_free_vars;
     auto [_decls, refs] = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars);
