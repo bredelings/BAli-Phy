@@ -706,7 +706,7 @@ struct renamer_state
     bound_var_info find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool top = false);
 
     Haskell::Decls group_decls(const Haskell::Decls& decls);
-    Haskell::Decls rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
+    pair<Haskell::Decls, vector<vector<int>>> rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars);
@@ -729,6 +729,11 @@ struct renamer_state
 
     renamer_state(const Module& m_):m(m_) {}
 };
+
+bound_var_info find_vars_in_pattern2(const expression_ref& pat);
+bound_var_info find_vars_in_patterns2(const vector<expression_ref>& pats);
+bound_var_info binders_for_renamed_decl(const expression_ref& decl);
+Hs::Binds make_binds(const Hs::Decls& decls, const vector< vector<int> >& referenced_decls);
 
 Haskell::Type renamer_state::rename_type(const Haskell::Type& type)
 {
@@ -917,7 +922,8 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
             {
                 auto& vdecls = unloc(*C.decls);
                 vdecls = Rn.group_decls(vdecls);
-                vdecls = Rn.rename_grouped_decls(vdecls, bound_names, free_vars, true);
+                auto [_vdecls,_] = Rn.rename_grouped_decls(vdecls, bound_names, free_vars, true);
+                vdecls = _vdecls;
             }
             decl = C;
         }
@@ -931,7 +937,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
                 // What SHOULD they resolve to?
                 auto& vdecls = unloc(*I.decls);
                 vdecls = Rn.group_decls(vdecls);
-                vdecls = Rn.rename_grouped_decls(vdecls, bound_names, free_vars, true);
+                auto [_vdecls,_] = Rn.rename_grouped_decls(vdecls, bound_names, free_vars, true);
             }
             decl = I;
         }
@@ -939,7 +945,8 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
 
     set<string> free_vars;
     M.value_decls[0] = Rn.group_decls(M.value_decls[0]);
-    M.value_decls[0] = Rn.rename_grouped_decls(M.value_decls[0], bound_names, free_vars, true);
+    auto [decls, refs] = Rn.rename_grouped_decls(M.value_decls[0], bound_names, free_vars, true);
+    M.value_decls = make_binds(decls, refs);
 
     return M;
 }
@@ -1047,7 +1054,6 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
-bound_var_info find_vars_in_pattern2(const expression_ref& pat);
 bound_var_info find_vars_in_patterns2(const vector<expression_ref>& pats)
 {
     bound_var_info bound;
@@ -1303,7 +1309,10 @@ bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::SignatureDe
     return bound_names;
 }
 
-Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars, bool top)
+// So... factor out rename_grouped_decl( ), and then make a version that splits into components, and a version that does not?
+// Splitting the decls for classes and instances into  components really doesn't make sense...
+
+pair<Haskell::Decls, vector<vector<int>>> renamer_state::rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars, bool top)
 {
     map<string, Hs::Type> signatures;
     for(auto& [name, type]: decls.signatures)
@@ -1399,6 +1408,13 @@ Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const b
         referenced_decls.push_back( std::move(refs) );
     }
 
+    return {decls, referenced_decls};
+}
+
+Hs::Binds make_binds(const Hs::Decls& decls, const vector< vector<int> >& referenced_decls)
+{
+    assert(referenced_decls.size() == decls.size());
+
     auto components = get_ordered_strong_components( make_graph(referenced_decls) );
     
     Hs::Binds binds;
@@ -1415,15 +1431,15 @@ Haskell::Decls renamer_state::rename_grouped_decls(Haskell::Decls decls, const b
             // Collect any associated signatures
             for(auto& name: binders_for_renamed_decl(decl))
             {
-                auto it = signatures.find(name);
-                if (it != signatures.end())
+                auto it = decls.signatures.find(name);
+                if (it != decls.signatures.end())
                     bdecls.signatures.insert(*it);
             }
         }
         binds.push_back(bdecls);
     }
 
-    return decls;
+    return binds;
 }
 
 optional<Hs::Var> fundecl_head(const expression_ref& decl)
@@ -1513,7 +1529,8 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
     auto binders = find_bound_vars_in_decls(decls, top);
     set<string> decls_free_vars;
     decls = group_decls(decls);
-    decls = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars);
+    auto [_decls, refs] = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars);
+    binds = make_binds(_decls, refs);
 
     add(free_vars, minus(decls_free_vars,binders));
 
