@@ -754,7 +754,7 @@ def construct_runs(mcmc_outputs):
 
     for mcmc_output in mcmc_outputs:
         if not glob.glob(str(mcmc_output)+('*')):
-            print(f"No file or directory '{mcmc_output+'*'}'")
+            print(f"No file or directory '{str(mcmc_output)+'*'}'")
             exit(1)
 
     run_groups = []
