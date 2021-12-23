@@ -571,6 +571,13 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     return expression_ref{E.head(),v};
 }
 
+Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls M)
+{
+    M.value_decls = rename_infix(m, M.value_decls);
+    M.type_decls = rename_infix(m, M.type_decls);
+    return M;
+}
+
 // A data declaration MAY use the same field label in multiple constructors as long as the typing of the field is the same in all cases after type synonym expansion.
 // A label CANNOT be shared by more than one type in scope.
 // Field names share the top level namespace with ordinary variables and class methods and must not conflict with other top level names in scope.

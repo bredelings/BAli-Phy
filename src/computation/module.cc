@@ -387,8 +387,7 @@ void Module::compile(const Program& P)
     // Currently this (1) translates field-decls into function declarations
     //                (2) rewrites @ f x y -> f x y (where f is the head) using unapply( ).
     //                (3) rewrites infix expressions through desugar_infix( )
-    M.value_decls = ::rename_infix(*this, M.value_decls);
-    M.type_decls = ::rename_infix(*this, M.type_decls);
+    M = ::rename_infix(*this, M);
 
     // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym
     add_local_symbols(M.value_decls[0]);
