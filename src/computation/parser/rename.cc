@@ -485,10 +485,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             stmt = rename_infix(m, stmt);
         return D;
     }
-    else if (E.is_a<Haskell::Alt>())
-        std::abort();
-    else if (E.is_a<Haskell::MultiGuardedRHS>())
-        std::abort();
     else if (E.is_a<Haskell::LambdaExp>())
     {
         auto L = E.as_<Haskell::LambdaExp>();
@@ -530,8 +526,10 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
         return C;
     }
-    else if (E.is_a<Haskell::Decls>())
-        std::abort();
+    else if (E.is_int() or E.is_log_double() or E.is_double() or E.is_char())
+    {
+        return E;
+    }
     else if (auto I = E.to<Hs::InfixExp>())
     {
         auto terms = I->terms;
@@ -539,16 +537,13 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             term = rename_infix(m, term);
 	return desugar_infix(m, terms);
     }
-
-    if (not E.is_expression()) return E;
-
-    auto v = E.sub();
-
-    for(auto& e: v)
-	e = rename_infix(m, e);
-
-    if (is_apply(E.head()))
+    else if (is_apply(E.head()))
     {
+        auto v = E.sub();
+
+        for(auto& e: v)
+            e = rename_infix(m, e);
+
 	expression_ref E2;
 	if (is_apply(v[0].head()))
 	{
@@ -564,8 +559,25 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 	assert(not is_apply(E2.sub()[0].head()));
 	return E2;
     }
+    else if (E.is_a<Hs::WildcardPattern>())
+        return E;
+    else if (E.is_a<Hs::Var>())
+        return E;
+    else if (E.is_a<Hs::Con>())
+        return E;
+    else if (E.head().is_a<Hs::Con>())
+    {
+        auto v = E.sub();
 
-    return expression_ref{E.head(),v};
+        for(auto& e: v)
+            e = rename_infix(m, e);
+
+        return expression_ref{E.head(),v};
+    }
+    else if (E.head().is_a<Hs::Neg>())
+        return E;
+    else
+        std::abort();
 }
 
 Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls M)
@@ -1913,14 +1925,6 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
 
         return C;
     }
-    else if (E.is_a<Haskell::Alt>())
-    {
-        std::abort();
-    }
-    else if (E.is_a<Haskell::WildcardPattern>())
-        std::abort();
-    else if (E.is_a<Haskell::MultiGuardedRHS>())
-        std::abort();
     else if (E.is_a<Haskell::LambdaExp>())
     {
         auto L = E.as_<Haskell::LambdaExp>();
