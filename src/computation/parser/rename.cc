@@ -302,6 +302,7 @@ expression_ref unapply(expression_ref E)
 // What are the rules for well-formed patterns?
 // Only one op can be a non-constructor (in decl patterns), and that op needs to end up at the top level.
 
+Haskell::Decls group_decls(const Haskell::Decls& decls);
 expression_ref rename_infix(const Module& m, const expression_ref& E);
 Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R);
 
@@ -738,7 +739,6 @@ struct renamer_state
     bound_var_info find_bound_vars_in_decl(const Haskell::ValueDecl& decl, bool top = false);
     bound_var_info find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool top = false);
 
-    Haskell::Decls group_decls(const Haskell::Decls& decls);
     pair<Haskell::Decls, vector<vector<int>>> rename_grouped_decls(Haskell::Decls decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
@@ -928,6 +928,7 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
     bound_var_info bound_names;
+    M.value_decls[0] = group_decls(M.value_decls[0]);
     add(bound_names, Rn.find_bound_vars_in_decls(M.value_decls[0], true));
     for(auto& decl: M.type_decls)
     {
@@ -935,11 +936,22 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
         {
             auto C = decl.as_<Haskell::ClassDecl>();
             if (C.decls)
-                add(bound_names, Rn.find_bound_vars_in_decls(unloc(*C.decls), true));
+            {
+                auto& vdecls = unloc(*C.decls);
+                vdecls = group_decls(vdecls);
+                add(bound_names, Rn.find_bound_vars_in_decls(vdecls, true));
+            }
             decl = C;
         }
         else if (decl.is_a<Haskell::InstanceDecl>())
         {
+            auto I = decl.as_<Haskell::InstanceDecl>();
+            if (I.decls)
+            {
+                auto& vdecls = unloc(*I.decls);
+                vdecls = group_decls(vdecls);
+            }
+            decl = I;
         }
         // Wait.. don't we need to discover constructors, too?
     }
@@ -954,7 +966,6 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
             if (C.decls)
             {
                 auto& vdecls = unloc(*C.decls);
-                vdecls = Rn.group_decls(vdecls);
                 auto [_vdecls,_] = Rn.rename_grouped_decls(vdecls, bound_names, free_vars, true);
                 vdecls = _vdecls;
             }
@@ -969,7 +980,6 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
                 //   so they don't resolve to `Module.name`.
                 // What SHOULD they resolve to?
                 auto& vdecls = unloc(*I.decls);
-                vdecls = Rn.group_decls(vdecls);
                 auto [_vdecls,_] = Rn.rename_grouped_decls(vdecls, bound_names, free_vars, true);
             }
             decl = I;
@@ -977,7 +987,6 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
     }
 
     set<string> free_vars;
-    M.value_decls[0] = Rn.group_decls(M.value_decls[0]);
     auto [decls, refs] = Rn.rename_grouped_decls(M.value_decls[0], bound_names, free_vars, true);
     M.value_decls = make_binds(decls, refs);
 
@@ -1284,9 +1293,14 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& dec
             add(bound_names, find_bound_vars_in_decl(*s, top));
         else if (decl.is_a<Haskell::FixityDecl>())
         { }
-        else
-            std::abort();
+	else if (auto d = decl.to<Haskell::PatDecl>())
+            add(bound_names, find_vars_in_pattern(d->lhs, top));
+	else if (auto d = decl.to<Haskell::FunDecl>())
+            add(bound_names, find_vars_in_pattern(d->v, top));
     }
+
+    for(auto& [name,_]: decls.signatures)
+        add(bound_names, find_vars_in_pattern(Hs::Var({noloc,name}), top));
 
     return bound_names;
 }
@@ -1489,7 +1503,7 @@ optional<Hs::Var> fundecl_head(const expression_ref& decl)
 }
 
 // Probably we should first partition by (same x y = x and y are both function decls for the same variable)
-Haskell::Decls renamer_state::group_decls(const Haskell::Decls& decls)
+Haskell::Decls group_decls(const Haskell::Decls& decls)
 {
     Haskell::Decls decls2;
     for(int i=0;i<decls.size();i++)
@@ -1559,9 +1573,9 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
 
     // We need to handle infix expressions before this.
 
+    decls = group_decls(decls);
     auto binders = find_bound_vars_in_decls(decls, top);
     set<string> decls_free_vars;
-    decls = group_decls(decls);
     auto [_decls, refs] = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars);
     binds = make_binds(_decls, refs);
 
