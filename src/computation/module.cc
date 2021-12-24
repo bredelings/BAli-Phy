@@ -360,6 +360,18 @@ set<string> Module::dependencies() const
     return modules;
 }
 
+/* 
+infixr 6 >>
+
+x >> y : z = x
+
+main = putStrLn (show ("a" Main.>> 'b':[]))
+
+-- This compiles, which proves that infix expressions are NOT handled exactly the same way
+-- in declaration LHSs as they are in expressions.
+-- Or, at least, in the definition, we look up and rename >> to Main.>> before we do the infix handling...
+*/
+
 void Module::compile(const Program& P)
 {
     assert(not resolved);
@@ -401,7 +413,7 @@ void Module::compile(const Program& P)
 
     class_and_type_decls = find_type_groups(M.type_decls);
 
-    // Uses this->module to update symbols + aliases, types + type_aliases
+    // Updates exported_symols_ + exported_types_
     perform_exports();
 
     // look only in value_decls now
