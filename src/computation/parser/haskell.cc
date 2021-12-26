@@ -470,6 +470,23 @@ string TypeApp::print() const
     return head.print() + " " + parenthesize_type(arg);
 }
 
+Hs::Type make_tyapps(const std::vector<Hs::Type>& tyapps)
+{
+    assert(not tyapps.empty());
+    Hs::Type T = tyapps[0];
+    for(int i=1;i<tyapps.size();i++)
+	T = Haskell::TypeApp(T,tyapps[i]);
+    return T;
+}
+
+Hs::Type make_tyapps(const Hs::Type& T0, const std::vector<Hs::Type>& args)
+{
+    Hs::Type T = T0;
+    for(auto& arg: args)
+	T = Haskell::TypeApp(T, arg);
+    return T;
+}
+
 string ForallType::print() const
 {
     vector<string> binders;

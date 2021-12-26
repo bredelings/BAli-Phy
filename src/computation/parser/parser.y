@@ -34,7 +34,6 @@
                                                   const expression_ref& header, const std::vector<Haskell::Constructor>& constrs);
   Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Binds>>& decls);
   Haskell::Context make_context(const expression_ref& context);
-  expression_ref make_tyapps(const std::vector<expression_ref>& tyapps);
 
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
@@ -833,15 +832,15 @@ ctypedoc:  "forall" tv_bnrds "." ctypedoc
 
 context: btype                     {$$ = make_context($1);}
 
-context_no_ops: btype_no_ops       {$$ = make_context(make_tyapps($1));}
+context_no_ops: btype_no_ops       {$$ = make_context(Hs::make_tyapps($1));}
 
 type: btype                        {$$ = $1;}
-|     btype "->" ctype             {$$ = make_tyapps({Haskell::TypeCon({@2,"->"}),$1,$3});}
+|     btype "->" ctype             {$$ = Hs::make_tyapps({Haskell::TypeCon({@2,"->"}),$1,$3});}
 
 typedoc: type                      {$$ = $1;}
 /* typedoc: .... */
 
-btype: tyapps                      {$$ = make_tyapps($1);}
+btype: tyapps                      {$$ = Hs::make_tyapps($1);}
 
 btype_no_ops: atype_docs               {$$.push_back($1);}
 |             btype_no_ops atype_docs  {$$ = $1; $$.push_back($2);}
@@ -937,8 +936,8 @@ constr: forall context_no_ops "=>" constr_stuff {$$ = make_constructor($1,$2, $4
 forall: "forall" tv_bndrs "."   {$$ = $2;}
 |       %empty                  {}
 
-constr_stuff: btype_no_ops                      {$$ = make_tyapps($1);}
-|             btype_no_ops conop btype_no_ops   {$$ = make_tyapps({Haskell::TypeCon({@2,$2}),make_tyapps($1),make_tyapps($3)});}
+constr_stuff: btype_no_ops                      {$$ = Hs::make_tyapps($1);}
+|             btype_no_ops conop btype_no_ops   {$$ = Hs::make_tyapps({Haskell::TypeCon({@2,$2}),Hs::make_tyapps($1),Hs::make_tyapps($3)});}
 
 fielddecls: %empty              {}
 |           fielddecls1         {$$ = $1;}
@@ -1560,15 +1559,6 @@ Haskell::Context make_context(const expression_ref& context)
         constraints.push_back(context);
 
     return {constraints};
-}
-
-expression_ref make_tyapps(const std::vector<expression_ref>& tyapps)
-{
-    assert(not tyapps.empty());
-    expression_ref E = tyapps[0];
-    for(int i=1;i<tyapps.size();i++)
-	E = Haskell::TypeApp(E,tyapps[i]);
-    return E;
 }
 
 bool check_kind(const Haskell::Kind& kind)

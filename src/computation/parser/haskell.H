@@ -750,6 +750,9 @@ struct TypeApp: public Object
     TypeApp(const Type& t1, const Type& t2):head(t1), arg(t2) {}
 };
 
+Haskell::Type make_tyapps(const std::vector<Haskell::Type>& tyapps);
+Haskell::Type make_tyapps(const Haskell::Type& T0, const std::vector<Haskell::Type>& args);
+
 struct ForallType: public Object
 {
     std::vector<TypeVar> type_var_binders;
