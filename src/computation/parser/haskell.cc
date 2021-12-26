@@ -583,6 +583,20 @@ std::string FieldDecls::print() const
     return "{ " + join(field_decl_strings,"; ") + " }";
 }
 
+std::vector<Hs::Type> Constructor::get_field_types() const
+{
+    if (fields.index() == 0)
+        return std::get<0>(fields);
+    else
+    {
+        vector<Hs::Type> types;
+        for(auto& fields: std::get<1>(fields).field_decls)
+            for(int i=0;i<fields.field_names.size();i++)
+                types.push_back(fields.type);
+        return types;
+    }
+}
+
 std::string Constructor::print() const
 {
     string result;
@@ -666,6 +680,14 @@ std::string DataOrNewtypeDecl::print() const
         cons.push_back(con.print());
     result += join(cons, " | ");
     return result;
+}
+
+std::optional<Constructor> DataOrNewtypeDecl::find_constructor_by_name(const string& s) const
+{
+    for(auto& constructor: constructors)
+        if (constructor.name == s)
+            return constructor;
+    return {};
 }
 
 std::string MultiGuardedRHS::print() const

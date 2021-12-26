@@ -1,5 +1,7 @@
 #include "typecheck.H"
 
+#include <set>
+
 #include <range/v3/all.hpp>
 
 #include "parser/haskell.H"
@@ -11,6 +13,9 @@ namespace views = ranges::views;
 using std::vector;
 using std::string;
 using std::map;
+using std::set;
+using std::pair;
+using std::shared_ptr;
 
 typedef immer::map<Hs::TypeVar, Hs::Type> substitution_t;
 
@@ -177,12 +182,15 @@ typedef Hs::Type constraint;
 // LIE = dvar -> K T
 
 // VE = (CVE, GVE, LVE)
-// CVE = con -> polytype
-// GVE = var -> polytype
-// LVE = var -> monotype
+// CVE = constructor value environment = con -> polytype
+// GVE = global value environment      = var -> polytype
+// LVE = local  value environment      = var -> monotype
 
 struct type_con_info
 {
+    // We want the kind info for the typecon.
+    int arity;
+    Hs::Type operator() (const vector<Hs::Type>& args) const;
 // -- for type synonmys, we need the means to apply the constructor to (exactly) k arguments, for arity k.
 // -- for data / newtypes, we need to means to apply up to k arguments.
 // -- perhaps we need to store the KIND, and not just the arity?
@@ -201,7 +209,7 @@ struct class_info
     vector<Hs::TypeVar> type_vars;
 
     // Maybe change this to vector<pair<Type,string>>, 
-    // in order to associate each constraint with the name of the function to extract the corresponding dictionary.
+    // FIXME: Should we record here the names of functions to extract 
     Hs::Context context;
 
     global_value_env methods;
@@ -228,9 +236,16 @@ struct instance_info
     }
 };
 
+// The GIE maps classes to a list of instances for them.
+// Each instance corresponds to a dictionary function (dfun) with NO free type variables.
+// For example:
+//   instance Eq a => Eq [a] where
+// leads to
+//   dEqList :: forall a. Eq a => Eq [a]
 typedef map<string, vector<instance_info>> global_instance_env;
 
-// The LIE DOES allow free type variables.
+// The LIE maps local dictionary variables to the constraint for which they are a dictionary.
+// It DOES allow free type variables.
 typedef map<Hs::Var, Hs::Type> local_instance_env;
 
 global_value_env apply_subst(const substitution_t& s, const global_value_env& env1)
@@ -323,7 +338,218 @@ expression_ref alphabetize_type(const expression_ref& type)
 //
 // }
 
+Hs::Context apply_subst(const substitution_t& s, Hs::Context context)
+{
+    for(auto& constraint: context.constraints)
+        constraint = apply_subst(s, constraint);
+    return context;
+}
+
+Hs::Constructor apply_subst(const substitution_t& s, Hs::Constructor con)
+{
+    if (con.context)
+        con.context = apply_subst(s, *con.context);
+
+    if (con.fields.index() == 0)
+    {
+        for(auto& t: std::get<0>(con.fields))
+                t = apply_subst(s, t);
+    }
+    else
+    {
+        for(auto& f: std::get<1>(con.fields).field_decls)
+            f.type = apply_subst(s, f.type);
+    }
+    return con;
+}
+
+Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl d)
+{
+    d.context = apply_subst(s, d.context);
+    for(auto& con: d.constructors)
+        con = apply_subst(s, con);
+
+    return d;
+}
+
+
+struct typechecker_state
+{
+    map<string,shared_ptr<Hs::DataOrNewtypeDecl>> con_to_data;
+
+    Hs::DataOrNewtypeDecl instantiate(const Hs::DataOrNewtypeDecl& d);
+
+    pair<Hs::Type, vector<Hs::Type>> lookup_data_from_con_pattern(const expression_ref& pattern);
+
+    int next_var_index = 1;
+
+    Hs::TypeVar fresh_type_var() {
+        Hs::TypeVar tv({noloc, "t"+std::to_string(next_var_index)});
+        tv.index = next_var_index;
+        next_var_index++;
+        return tv;
+    }
+
+    Hs::TypeVar named_type_var(const string& name)
+    {
+        Hs::TypeVar tv({noloc, name+"_"+std::to_string(next_var_index)});
+        tv.index = next_var_index;
+        next_var_index++;
+        return tv;
+    }
+
+    void add_data_type(const shared_ptr<Hs::DataOrNewtypeDecl>& d)
+    {
+        for(auto& con: d->constructors)
+            con_to_data[con.name] = d;
+    }
+
+    Hs::Type instantiate(const Hs::Type& t);
+
+    pair<substitution_t, expression_ref>
+    infer_type(const global_value_env& env, const Hs::Type& E);
+
+    pair<substitution_t, global_value_env>
+    infer_type_for_decls(const global_value_env& env, const Hs::Binds& E);
+};
+
+Hs::DataOrNewtypeDecl typechecker_state::instantiate(const Hs::DataOrNewtypeDecl& d)
+{
+    substitution_t s;
+    for(auto ftv: d.type_vars)
+        s = s.insert({ftv,fresh_type_var()});
+
+    return apply_subst(s,d);
+}
+
+set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
+
+pair<Hs::Type, vector<Hs::Type>> typechecker_state::lookup_data_from_con_pattern(const expression_ref& pattern)
+{
+    // 1. Find the data type
+    auto& con = pattern.head().as_<Hs::Con>();
+    auto& con_name = unloc(con.name);
+    if (not con_to_data.count(con_name))
+        throw myexception()<<"Unrecognized constructor: "<<con;
+    auto d = con_to_data.at(con_name);
+    d = std::make_shared<Hs::DataOrNewtypeDecl>(instantiate(*d));
+
+    // 2. Construct the data type for the pattern
+    Hs::Type object_type = Hs::TypeCon({noloc,d->name});
+    for(auto type_var: d->type_vars)
+        object_type = Hs::TypeApp(object_type, type_var);
+
+    // 3a. Get types for the pattern fields
+    // 3b. Check that pattern has the correct arity
+    auto con_info = *d->find_constructor_by_name(con_name);
+    auto pattern_types = con_info.get_field_types();
+    if (pattern.size() != pattern_types.size())
+        throw myexception()<<"pattern '"<<pattern<<"' has "<<pattern.size()<<" arguments, but constructor has arity '"<<pattern_types.size()<<"'";
+
+    return {object_type, pattern_types};
+}
+
+void get_free_type_variables(const Hs::Type& T, std::multiset<Hs::TypeVar>& bound, set<Hs::TypeVar>& free)
+{
+    // 1. fv x = { x }
+    // However, if there are any binders called "x", then it won't be bound at the top level.
+    if (auto tv = T.to<Hs::TypeVar>())
+    {
+	if (bound.find(*tv) == bound.end())
+	    free.insert(*tv);
+	return;
+    }
+    // 2. fv (t1 t2) = fv(t1) + fv(t2);
+    else if (auto a = T.to<Hs::TypeApp>())
+    {
+        get_free_type_variables(a->head, bound, free);
+        get_free_type_variables(a->arg, bound, free);
+    }
+    // 3. fv (k) = {}
+    else if (T.is_a<Hs::TypeCon>())
+    {
+    }
+    // 3. fv (k) = {}
+    else if (auto l = T.to<Hs::ListType>())
+    {
+        get_free_type_variables(l->element_type, bound, free);
+    }
+    // 3. fv (k) = {}
+    else if (auto l = T.to<Hs::TupleType>())
+    {
+        for(auto& element_type: l->element_types)
+            get_free_type_variables(element_type, bound, free);
+    }
+    // 3. fv (k) = {}
+    else if (auto c = T.to<Hs::ConstrainedType>())
+    {
+        // The constraints should only mention variables that are mentioned in the main type
+        get_free_type_variables(c->type, bound, free);
+    }
+    // 3. fv (k) = {}
+    else if (auto sl = T.to<Hs::StrictLazyType>())
+    {
+        get_free_type_variables(sl->type, bound, free);
+    }
+    // 4. fv (forall a.tau) = fv(tau) - a
+    else if (auto f = T.to<Hs::ForallType>())
+    {
+        for(auto& tv: f->type_var_binders)
+            bound.insert(tv);
+
+        get_free_type_variables(f->type, bound, free);
+
+        for(auto& tv: f->type_var_binders)
+            bound.erase(tv);
+    }
+    else
+        std::abort();
+}
+
+void get_free_type_variables(const expression_ref& E, set<Hs::TypeVar>& free)
+{
+    std::multiset<Hs::TypeVar> bound;
+    get_free_type_variables(E,bound,free);
+}
+
+void get_free_type_variables(const global_value_env& env, std::set<Hs::TypeVar>& free)
+{
+    for(auto& [x,type]: env)
+        get_free_type_variables(type, free);
+}
+
+std::set<Hs::TypeVar> free_type_variables(const global_value_env& env)
+{
+    std::set<Hs::TypeVar> free;
+    get_free_type_variables(env, free);
+    return free;
+}
+
 
 void typecheck(const Hs::ModuleDecls& M)
 {
+    // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
+    //    OK, so datatypes produce a
+    //    * Type Constructor Environment (TCE) = tycon 439-> arity, method of applying the tycon
+    //    * Constructor Value Environment (CVE)
+    //
+    // 2. Check the module's class declarations, produce some translated bindings -> binds_C ( GVE_C, CE_C, GIE_C )
+    //
+    // 3. E' = (TCE_T, (CVE_T, GVE_C, {}), CE_C, (GIE_C,{}))
+    //
+    // 4. Check the module's instance declarations -> monobinds : GIE_I
+    //    These are mutually recursive with the value declarations. ?!?
+    //
+    // 5. Check the module's value declarations.
+
+
+    // OK, so it looks like the kind-checking pass actually handles the first two steps!
+    // It needs to return
+    // TCE_T = type con info, part1
+    // CVE_T = constructor types
+    // GVE_C = method -> type map
+    // CE_C  = class name -> class info
+    // GIE_C = functions to extract sub-dictionaries from containing dictionaries?
+
+    //
 }

@@ -366,6 +366,8 @@ struct Constructor
     std::string name;                // the name of the constructor
     std::variant< std::vector<Type>, FieldDecls> fields;
 
+    std::vector<Type> get_field_types() const;
+
     std::string print() const;
 
     bool is_record_constructor() const;
@@ -401,6 +403,8 @@ struct DataOrNewtypeDecl: public Object
     Context context;
 
     std::vector<Constructor> constructors;
+
+    std::optional<Constructor> find_constructor_by_name(const std::string& s) const;
 
     // std::optional<derivings> derivings;
 
