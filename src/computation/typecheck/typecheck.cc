@@ -12,7 +12,10 @@ using std::vector;
 using std::string;
 using std::map;
 
-typedef immer::map<Haskell::TypeVar,expression_ref> substitution_t;
+typedef immer::map<Hs::TypeVar, Hs::Type> substitution_t;
+
+// TODO
+// 1. Merge unification / substitution code for types & kinds?
 
 namespace std
 {
@@ -86,7 +89,7 @@ substitution_t compose(substitution_t s2, substitution_t s1)
     return s3;
 }
 
-bool occurs_check(const Haskell::TypeVar& tv, const expression_ref& t)
+bool occurs_check(const Haskell::TypeVar& tv, const Hs::Type& t)
 {
     if (auto x = t.to<Haskell::TypeVar>())
         return tv == *x;
@@ -108,7 +111,7 @@ bool occurs_check(const Haskell::TypeVar& tv, const expression_ref& t)
 }
 
 // Is there a better way to implement this?
-substitution_t unify(const expression_ref& t1, const expression_ref& t2)
+substitution_t unify(const Hs::Type& t1, const Hs::Type& t2)
 {
     if (t1.is_a<Haskell::TypeApp>() and t2.is_a<Haskell::TypeApp>())
     {
@@ -150,9 +153,10 @@ substitution_t unify(const expression_ref& t1, const expression_ref& t2)
 }
 
 
-typedef Haskell::Type monotype;
-typedef Haskell::Type overtype;
-typedef Haskell::Type polytype;
+typedef Hs::Type monotype;
+typedef Hs::Type overtype;
+typedef Hs::Type polytype;
+typedef Hs::Type constraint;
 
 // A = out typevar
 // T = out monotype
@@ -177,12 +181,61 @@ typedef Haskell::Type polytype;
 // GVE = var -> polytype
 // LVE = var -> monotype
 
-
-typedef immer::map<Haskell::Var, Haskell::Type> env_var_to_type_t;
-
-env_var_to_type_t apply_subst(const substitution_t& s, const env_var_to_type_t& env1)
+struct type_con_info
 {
-    env_var_to_type_t env2;
+// -- for type synonmys, we need the means to apply the constructor to (exactly) k arguments, for arity k.
+// -- for data / newtypes, we need to means to apply up to k arguments.
+// -- perhaps we need to store the KIND, and not just the arity?
+};
+
+typedef immer::map<Hs::Var, Hs::Type> env_var_to_type_t;
+
+typedef env_var_to_type_t global_value_env;
+
+typedef map<string, type_con_info> type_con_env;
+
+struct class_info
+{
+    string name;
+    string emitted_name;
+    vector<Hs::TypeVar> type_vars;
+
+    // Maybe change this to vector<pair<Type,string>>, 
+    // in order to associate each constraint with the name of the function to extract the corresponding dictionary.
+    Hs::Context context;
+
+    global_value_env methods;
+};
+
+typedef map<string, class_info> class_env;
+
+// The GIE does NOT allow free type variables.
+struct instance_info
+{
+    // How do we get the kind into the type vars?
+    vector<Hs::TypeVar> type_vars;
+    Hs::Context context;
+    string class_name;
+    std::vector<Hs::Type> argument_types;
+
+    string dfun_name;
+
+    // forall <type_vars> . context => class_name argument_types[0] arguments[1] .. argument_types[n01]
+    Hs::Type dfun_type() const
+    {
+        Hs::TypeCon class_con({noloc, class_name}); // whats the kind?
+        return Hs::ForallType(type_vars, Hs::ConstrainedType(context, make_tyapps(class_con, argument_types)));
+    }
+};
+
+typedef map<string, vector<instance_info>> global_instance_env;
+
+// The LIE DOES allow free type variables.
+typedef map<Hs::Var, Hs::Type> local_instance_env;
+
+global_value_env apply_subst(const substitution_t& s, const global_value_env& env1)
+{
+    global_value_env env2;
     for(auto& [x,type]: env1)
         env2 = env2.insert({x, apply_subst(s,type)});
     return env2;
@@ -269,3 +322,8 @@ expression_ref alphabetize_type(const expression_ref& type)
 //
 //
 // }
+
+
+void typecheck(const Hs::ModuleDecls& M)
+{
+}
