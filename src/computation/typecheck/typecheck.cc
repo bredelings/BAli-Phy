@@ -542,6 +542,18 @@ expression_ref generalize(const global_value_env& env, const expression_ref& mon
     return Hs::ForallType(ftv1 | ranges::to<vector>, monotype);
 }
 
+expression_ref typechecker_state::instantiate(const expression_ref& t)
+{
+    substitution_t s;
+    auto t2 = t;
+    while(auto fa = t2.to<Hs::ForallType>())
+    {
+        for(auto& tv: fa->type_var_binders)
+            s = s.insert({tv,fresh_type_var()});
+        t2 = fa->type;
+    }
+    return apply_subst(s,t2);
+}
 
 void typecheck(const Hs::ModuleDecls& M)
 {
