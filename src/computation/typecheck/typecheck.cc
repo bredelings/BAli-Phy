@@ -8,6 +8,10 @@
 
 #include "immer/map.hpp" // for immer::map
 
+#include "util/set.H"
+
+#include "computation/expression/apply.H"
+
 namespace views = ranges::views;
 
 using std::vector;
@@ -196,9 +200,27 @@ struct type_con_info
 // -- perhaps we need to store the KIND, and not just the arity?
 };
 
-typedef immer::map<Hs::Var, Hs::Type> env_var_to_type_t;
+typedef immer::map<Hs::Var, Hs::Type> value_env;
 
-typedef env_var_to_type_t global_value_env;
+typedef value_env global_value_env;
+
+typedef value_env local_value_env;
+
+void add_no_overlap(value_env& e1, const value_env& e2)
+{
+    if (e1.empty())
+        e1 = e2;
+    else
+        for(auto& [x,t]: e2)
+            e1 = e1.insert({x,t});
+}
+
+value_env plus_no_overlap(const value_env& e1, const value_env& e2)
+{
+    auto e3 = e1;
+    add_no_overlap(e3,e2);
+    return e3;
+}
 
 typedef map<string, type_con_info> type_con_env;
 
@@ -248,7 +270,7 @@ typedef map<string, vector<instance_info>> global_instance_env;
 // It DOES allow free type variables.
 typedef map<Hs::Var, Hs::Type> local_instance_env;
 
-global_value_env apply_subst(const substitution_t& s, const global_value_env& env1)
+global_value_env apply_subst(const substitution_t& s, const value_env& env1)
 {
     global_value_env env2;
     for(auto& [x,type]: env1)
@@ -372,14 +394,13 @@ Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl
     return d;
 }
 
-
 struct typechecker_state
 {
     map<string,shared_ptr<Hs::DataOrNewtypeDecl>> con_to_data;
 
     Hs::DataOrNewtypeDecl instantiate(const Hs::DataOrNewtypeDecl& d);
 
-    pair<Hs::Type, vector<Hs::Type>> lookup_data_from_con_pattern(const expression_ref& pattern);
+    pair<Hs::Type, vector<Hs::Type>> constr_types(const Hs::Con&);
 
     int next_var_index = 1;
 
@@ -406,11 +427,26 @@ struct typechecker_state
 
     Hs::Type instantiate(const Hs::Type& t);
 
-    pair<substitution_t, expression_ref>
-    infer_type(const global_value_env& env, const Hs::Type& E);
+    pair<Hs::Type, local_value_env>
+    infer_pattern_type(const Hs::Pattern& E);
+
+    pair<substitution_t, Hs::Type>
+    infer_type(const global_value_env& env, const expression_ref& E);
+
+    pair<substitution_t, Hs::Type>
+    infer_type(const global_value_env& env, const Hs::GuardedRHS&);
+
+    pair<substitution_t, Hs::Type>
+    infer_type(const global_value_env& env, const Hs::MultiGuardedRHS&);
+
+    pair<substitution_t, Hs::Type>
+    infer_type(const global_value_env& env, const Hs::MRule&);
+
+    pair<substitution_t, Hs::Type>
+    infer_type(const global_value_env& env, const Hs::Match&);
 
     pair<substitution_t, global_value_env>
-    infer_type_for_decls(const global_value_env& env, const Hs::Binds& E);
+    infer_type_for_decls(const global_value_env& env, const Hs::Decls& E);
 };
 
 Hs::DataOrNewtypeDecl typechecker_state::instantiate(const Hs::DataOrNewtypeDecl& d)
@@ -424,29 +460,25 @@ Hs::DataOrNewtypeDecl typechecker_state::instantiate(const Hs::DataOrNewtypeDecl
 
 set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
 
-pair<Hs::Type, vector<Hs::Type>> typechecker_state::lookup_data_from_con_pattern(const expression_ref& pattern)
+pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& con)
 {
     // 1. Find the data type
-    auto& con = pattern.head().as_<Hs::Con>();
     auto& con_name = unloc(con.name);
     if (not con_to_data.count(con_name))
         throw myexception()<<"Unrecognized constructor: "<<con;
-    auto d = con_to_data.at(con_name);
-    d = std::make_shared<Hs::DataOrNewtypeDecl>(instantiate(*d));
+    auto d = instantiate(*con_to_data.at(con_name));
 
     // 2. Construct the data type for the pattern
-    Hs::Type object_type = Hs::TypeCon({noloc,d->name});
-    for(auto type_var: d->type_vars)
+    Hs::Type object_type = Hs::TypeCon({noloc,d.name});
+    for(auto type_var: d.type_vars)
         object_type = Hs::TypeApp(object_type, type_var);
 
     // 3a. Get types for the pattern fields
     // 3b. Check that pattern has the correct arity
-    auto con_info = *d->find_constructor_by_name(con_name);
-    auto pattern_types = con_info.get_field_types();
-    if (pattern.size() != pattern_types.size())
-        throw myexception()<<"pattern '"<<pattern<<"' has "<<pattern.size()<<" arguments, but constructor has arity '"<<pattern_types.size()<<"'";
+    auto con_info = *d.find_constructor_by_name(con_name);
+    auto field_types = con_info.get_field_types();
 
-    return {object_type, pattern_types};
+    return {object_type, field_types};
 }
 
 void get_free_type_variables(const Hs::Type& T, std::multiset<Hs::TypeVar>& bound, set<Hs::TypeVar>& free)
@@ -554,6 +586,444 @@ expression_ref typechecker_state::instantiate(const expression_ref& t)
     }
     return apply_subst(s,t2);
 }
+
+set<Hs::Var> find_vars_in_pattern3(const expression_ref& pat);
+set<Hs::Var> find_vars_in_patterns3(const vector<expression_ref>& pats)
+{
+    set<Hs::Var> bound;
+
+    for(auto& pat: pats)
+        add(bound, find_vars_in_pattern3(pat));
+
+    return bound;
+}
+
+set<Hs::Var> find_vars_in_pattern3(const expression_ref& pat)
+{
+    if (pat.is_a<Haskell::WildcardPattern>())
+	return {};
+    else if (auto lp = pat.to<Haskell::LazyPattern>())
+        return find_vars_in_pattern3(lp->pattern);
+    else if (auto sp = pat.to<Haskell::StrictPattern>())
+        return find_vars_in_pattern3(sp->pattern);
+    else if (auto ap = pat.to<Haskell::AsPattern>())
+	return plus( find_vars_in_pattern3(ap->var), find_vars_in_pattern3(ap->pattern) );
+    else if (auto l = pat.to<Haskell::List>())
+        return find_vars_in_patterns3(l->elements);
+    else if (auto t = pat.to<Haskell::Tuple>())
+        return find_vars_in_patterns3(t->elements);
+    else if (auto v = pat.to<Haskell::Var>())
+	return { *v };
+    else if (pat.head().is_a<Haskell::Con>())
+        return find_vars_in_patterns3(pat.copy_sub());
+    else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
+        return {};
+    else
+        throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
+}
+
+set<Hs::Var> binders_for_renamed_decl3(const expression_ref& decl)
+{
+    set<Hs::Var> binders;
+    if (auto pd = decl.to<Hs::PatDecl>())
+        binders = find_vars_in_pattern3(pd->lhs);
+    else if (auto fd = decl.to<Hs::FunDecl>())
+        binders = { fd->v };
+    else
+        std::abort();
+    return binders;
+}
+
+pair<substitution_t,global_value_env>
+typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::Decls& decls)
+{
+    // 1. Add each let-binder to the environment with a fresh type variable
+    auto env2 = env;
+    for(auto& decl: decls)
+    {
+        // FIXME! Remove this in favor of infer_pattern_type(decls[i])
+
+        for(auto& x: binders_for_renamed_decl3(decl))
+        {
+            auto t = fresh_type_var();
+            env2 = env2.insert({x,t});
+        }
+    }
+
+    // 2. Infer the types of each of the x[i]
+    substitution_t s;
+    for(auto& decl: decls)
+    {
+        if (auto fd = decl.to<Hs::FunDecl>())
+        {
+            auto lhs_type = env2.at(fd->v);
+            auto [s2, rhs_type] = infer_type(env2, fd->match);
+
+            s = compose(s2, compose(unify(lhs_type, rhs_type), s));
+
+        }
+        else if (auto pd = decl.to<Hs::PatDecl>())
+        {
+            auto [lhs_type, lve] = infer_pattern_type(pd->lhs);
+            auto [s2, rhs_type] = infer_type(env2, pd->rhs);
+
+            s = compose(s2, compose(unify(lhs_type, rhs_type), s));
+        }
+
+        env2 = apply_subst(s, env2);
+    }
+
+    // 3. Generalize each type over variables not in the *original* environment
+    for(auto& decl: decls)
+    {
+        for(auto& x: binders_for_renamed_decl3(decl))
+        {
+            auto monotype = env2.at(x);
+            auto polytype = generalize(env, monotype);
+            env2 = env2.insert({x,polytype});
+        }
+    }
+
+    return {s, env2};
+}
+
+// Figure 24. Rules for patterns
+pair<Hs::Type, local_value_env>
+typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
+{
+    // TAUT-PAT
+    if (auto x = pat.to<Haskell::Var>())
+    {
+        Hs::Type type = fresh_type_var();
+        local_value_env lve;
+        lve = lve.insert({*x, type});
+	return { *x , lve };
+    }
+    // CONSTR-PAT
+    else if (auto con = pat.head().to<Haskell::Con>())
+    {
+        local_value_env lve;
+        vector<Hs::Type> types;
+        for(auto& pat: pat.sub())
+        {
+            auto [t1,lve1] = infer_pattern_type(pat);
+            types.push_back(t1);
+            lve = plus_no_overlap(lve, lve1);
+        }
+        substitution_t s;
+        auto [type,field_types] = constr_types(*con);
+
+        assert(field_types.size() == pat.size());
+
+        // Unify constructor field types with discovered types.
+        for(int i=0;i<types.size();i++)
+        {
+            auto s1 = unify(types[i], field_types[i]);
+            s = compose(s1, s);
+        }
+
+        lve = apply_subst(s, lve);
+        type = apply_subst(s, type);
+        return {type, lve};
+    }
+    // AS-PAT
+    else if (auto ap = pat.to<Haskell::AsPattern>())
+    {
+        auto [t,lve] = infer_pattern_type(ap->pattern);
+        lve = lve.insert({ap->var.as_<Hs::Var>(), t});
+        return {t,lve};
+    }
+    // LAZY-PAT
+    else if (auto lp = pat.to<Haskell::LazyPattern>())
+        return infer_pattern_type(lp->pattern);
+    // not in paper (STRICT-PAT)
+    else if (auto sp = pat.to<Haskell::StrictPattern>())
+        return infer_pattern_type(sp->pattern);
+    // WILD-PAT
+    else if (pat.is_a<Haskell::WildcardPattern>())
+    {
+        auto tv = fresh_type_var();
+        return {tv,{}};
+    }
+    // LIST-PAT
+    else if (auto l = pat.to<Haskell::List>())
+    {
+        local_value_env lve;
+        Hs::Type t = fresh_type_var();
+        substitution_t s;
+        for(auto& element: l->elements)
+        {
+            auto [t1,lve1] = infer_pattern_type(element);
+            auto s1 = unify(t, t1);
+            s = compose(s1,s);
+            lve = plus_no_overlap(lve, lve1);
+        }
+        t = apply_subst(s, t);
+        lve = apply_subst(s, lve);
+        return {t, lve};
+    }
+    // TUPLE-PAT
+    else if (auto t = pat.to<Haskell::Tuple>())
+    {
+        vector<Hs::Type> types;
+        local_value_env lve;
+        for(auto& element: t->elements)
+        {
+            auto [t1, lve1] = infer_pattern_type(element);
+        }
+        return {Hs::Tuple(types), lve};
+    }
+    // ???
+    else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
+        return {};
+    else
+        throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
+    
+}
+
+
+// Figure 25. Rules for match, mrule, and grhs
+pair<substitution_t, Hs::Type>
+typechecker_state::infer_type(const global_value_env& env, const Hs::GuardedRHS& rhs)
+{
+    // Fig 25. GUARD-DEFAULT
+    if (rhs.guards.empty()) return infer_type(env, rhs.body);
+
+    // Fig. 25 GUARD
+    auto guard = rhs.guards[0];
+    auto rhs2 = rhs;
+    rhs2.guards.erase(rhs2.guards.begin());
+}
+
+// Fig 25. GUARD-OR
+pair<substitution_t, Hs::Type>
+typechecker_state::infer_type(const global_value_env& env, const Hs::MultiGuardedRHS& rhs)
+{
+    substitution_t s;
+    Hs::Type type = fresh_type_var();
+
+    auto env2 = env;
+    if (rhs.decls)
+    {
+//        auto [s,gve] = infer_type_for_decls(env, *rhs.decls);
+    }
+
+    for(auto& guarded_rhs: rhs.guarded_rhss)
+    {
+        auto [s1,t1] = infer_type(env2, guarded_rhs);
+        auto s2 = unify(t1,type);
+        s = compose(s2,compose(s1,s));
+    }
+    return {s, type};
+};
+
+pair<substitution_t, Hs::Type>
+typechecker_state::infer_type(const global_value_env& env, const Hs::MRule& rule)
+{
+
+    if (rule.patterns.empty())
+        return infer_type(env, rule.rhs);
+    else
+    {
+        auto [t1, lve1] = infer_pattern_type(rule.patterns.front());
+        auto env2 = plus_no_overlap(env, lve1);
+
+        // Remove the first pattern in the rule
+        auto rule2 = rule;
+        rule2.patterns.erase(rule2.patterns.begin());
+
+        auto [s, t2] = infer_type(env2, rule2);
+        t1 = apply_subst(s, t1);
+
+        Hs::Type type = Hs::make_arrow_type(t1,t2);
+
+        return {s, type};
+    }
+}
+
+pair<substitution_t, Hs::Type>
+typechecker_state::infer_type(const global_value_env& env, const Hs::Match& m)
+{
+    substitution_t s;
+    Hs::Type result_type = fresh_type_var();
+
+    for(auto& rule: m.rules)
+    {
+        auto [s1,t1] = infer_type(env, rule);
+        auto s2 = unify(result_type, t1);
+        s = compose(s2,compose(s1,s));
+    }
+    result_type = apply_subst(s, result_type);
+
+    return {s,result_type};
+}
+
+pair<substitution_t,Hs::Type>
+typechecker_state::infer_type(const global_value_env& env, const expression_ref& E)
+{
+    if (auto x = E.to<Hs::Var>())
+    {
+        auto sigma = env.find(*x);
+
+        // x should be in the type environment
+        if (not sigma)
+            throw myexception()<<"infer_type: can't find type of variable '"<<x->print()<<"'";
+
+        auto tau = instantiate(*sigma);
+
+        return {{},tau};
+    }
+    else if (E.is_int() or E.is_double() or E.is_log_double())
+        return {{},Hs::Con({noloc,"Num"})};
+    else if (E.is_char())
+        return {{},Hs::Con({noloc,"Char#"})};
+    else if (not E.size() and not E.head().is_a<Hs::Con>())
+    {
+        // We can't handle constants correctly, so always given them a new type.
+        auto tau = fresh_type_var();
+        return {{},tau};
+    }
+    else if (is_apply_exp(E))
+    {
+        assert(E.size() >= 2);
+
+        auto e1 = E.sub()[0];
+        substitution_t s;
+
+        auto [s1,t1] = infer_type(env,e1);
+
+        for(int i=1;i<E.size();i++)
+        {
+            auto e2 = E.sub()[i];
+
+            // tv <- fresh
+            auto tv = fresh_type_var();
+
+            // This is now done by the previous iteration of the loop!
+            // (s1, t1) <- infer env e1
+            // auto [s1,t1] = infer_type(env, e1);
+
+            // (s2, t2) <- infer (apply s1 env) e2
+            auto [s2,t2] = infer_type(apply_subst(s1,env), e2);
+
+            // s3       <- unify (apply s2 t1) (TArr t2 tv)
+            auto s3 = unify (apply_subst(s2,t1), make_arrow_type(t2,tv));
+
+            s1 = compose(s3,compose(s2,s1));
+            t1 = apply_subst(s3,tv);
+        }
+
+        // This is now done by the setup for the next loop iteration.
+        // return {compose(s3,compose(s2,s1)), apply_subst(s3,tv)};
+        return {s1,t1};
+    }
+    else if (auto lam = E.to<Hs::LambdaExp>())
+    {
+        auto rule = Hs::MRule{lam->args, lam->body};
+
+        return infer_type(env, rule);
+    }
+/*
+    else if (auto let = E.to<Hs::LetExp>())
+    {
+        // let x[i] = e[i] in e
+        auto decls = let_decls(E);
+
+        // 1. Extend environment with types for decls, get any substitutions
+        auto [s_decls, env_decls] = infer_type_for_decls(env, decls);
+
+        // 2. Compute type of let body
+        auto& e_body = E.sub()[1];
+        auto [s_body, t_body] = infer_type(env_decls, e_body);
+
+        // return (s1 `compose` s2, t2)
+        return {compose(s_body, s_decls), t_body};
+    }
+    else if (E.head().is_a<Hs::Con>())
+    {
+        auto [object_type, pattern_types] = lookup_data_from_con_pattern(E);
+
+        substitution_t s;
+        type_environment_t env2 = env;
+        vector<expression_ref> arg_types;
+        for(int i=0; i<E.size(); i++)
+        {
+            auto [s_i, t_i] = infer_type(env2, E.sub()[i]);
+            arg_types.push_back(t_i);
+
+            // REQUIRE that i-th argument matches the type for the i-th field.
+            auto s2_i = unify(pattern_types[i], t_i);
+
+            s = compose(compose(s2_i,s_i), s);
+            env2 = apply_subst(s_i, env2);
+        }
+
+        return {s, apply_subst(s, object_type)};
+    }
+    else if (is_non_apply_op_exp(E))
+    {
+        std::abort();
+        // this includes builtins like Prelude::add
+    }
+    else if (auto case_exp = parse_case_expression(E))
+    {
+        // 1. Determine object type
+        auto [s, object_type] = infer_type(env, case_exp->object);
+        auto env2 = apply_subst(s, env);
+        expression_ref case_type;
+
+        // 2. Determine data type for object from patterns.
+        for(auto& [pattern,body]: case_exp->alts)
+        {
+            global_value_env env3;
+            if (is_wildcard(pattern))
+            {
+                env3 = env2;
+            }
+            else
+            {
+                // 2a. Lookup the object type and pattern types.
+                auto [object_type_i, pattern_types_i] = lookup_data_from_pattern(pattern);
+
+                // 2b. REQUIRE that object types are the same
+                auto s_same_object = unify(object_type_i, object_type);
+                s = compose(s_same_object, s);
+                env2 = apply_subst(s, env2);
+                object_type = apply_subst(s, object_type);
+                for(auto& type: pattern_types_i)
+                    type = apply_subst(s, type);
+
+                // 2c. Bind constructor fields to their type in the type environment
+                env3 = env2;
+                for(int i=0;i<pattern_types_i.size();i++)
+                {
+                    if (is_wildcard(pattern.sub()[i])) continue;
+                    auto& x = pattern.sub()[i].as_<var>();
+                    env3 = env3.insert({x, pattern_types_i[i]});
+                }
+            }
+
+            // 2e. Infer the body type.
+            auto [body_subst, body_type] = infer_type(env3, body);
+            if (case_type)
+            {
+                // REQUIRE that body types are the same.
+                auto s2 = unify(body_type, case_type);
+                body_subst = compose(s2,body_subst);
+            }
+            else
+                case_type = body_type;
+
+            s = compose(body_subst, s);
+            env2 = apply_subst(s, env2);
+            object_type = apply_subst(s, object_type);
+        }
+        return {s,case_type};
+    }
+*/
+    std::abort();
+}
+
 
 void typecheck(const Hs::ModuleDecls& M)
 {
