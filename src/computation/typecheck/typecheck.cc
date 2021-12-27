@@ -206,13 +206,33 @@ typedef value_env global_value_env;
 
 typedef value_env local_value_env;
 
-void add_no_overlap(value_env& e1, const value_env& e2)
+void add_prefer_right(value_env& e1, const value_env& e2)
 {
     if (e1.empty())
         e1 = e2;
     else
         for(auto& [x,t]: e2)
             e1 = e1.insert({x,t});
+}
+
+value_env plus_prefer_right(const value_env& e1, const value_env& e2)
+{
+    auto e3 = e1;
+    add_prefer_right(e3,e2);
+    return e3;
+}
+
+void add_no_overlap(value_env& e1, const value_env& e2)
+{
+    if (e1.empty())
+        e1 = e2;
+    else
+        for(auto& [x,t]: e2)
+        {
+            if (e1.count(x))
+                throw myexception()<<"Both environments contain variable "<<x<<"!";
+            e1 = e1.insert({x,t});
+        }
 }
 
 value_env plus_no_overlap(const value_env& e1, const value_env& e2)
@@ -396,6 +416,8 @@ Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl
 
 struct typechecker_state
 {
+    Hs::Type bool_type() const { return Hs::TypeCon({noloc,"Data.Bool.True"}); }
+
     map<string,shared_ptr<Hs::DataOrNewtypeDecl>> con_to_data;
 
     Hs::DataOrNewtypeDecl instantiate(const Hs::DataOrNewtypeDecl& d);
@@ -427,11 +449,17 @@ struct typechecker_state
 
     Hs::Type instantiate(const Hs::Type& t);
 
+    pair<substitution_t, local_value_env>
+    infer_qual_type(const global_value_env& env, const Hs::Qual& qual);
+
+    pair<substitution_t, local_value_env>
+    infer_guard_type(const global_value_env& env, const Hs::Qual& guard);
+
     pair<Hs::Type, local_value_env>
-    infer_pattern_type(const Hs::Pattern& E);
+    infer_pattern_type(const Hs::Pattern& pat);
 
     pair<substitution_t, Hs::Type>
-    infer_type(const global_value_env& env, const expression_ref& E);
+    infer_type(const global_value_env& env, const expression_ref& exp);
 
     pair<substitution_t, Hs::Type>
     infer_type(const global_value_env& env, const Hs::GuardedRHS&);
@@ -447,6 +475,9 @@ struct typechecker_state
 
     pair<substitution_t, global_value_env>
     infer_type_for_decls(const global_value_env& env, const Hs::Decls& E);
+
+    pair<substitution_t, global_value_env>
+    infer_type_for_decls(const global_value_env& env, const Hs::Binds& binds);
 };
 
 Hs::DataOrNewtypeDecl typechecker_state::instantiate(const Hs::DataOrNewtypeDecl& d)
@@ -634,6 +665,21 @@ set<Hs::Var> binders_for_renamed_decl3(const expression_ref& decl)
     return binders;
 }
 
+pair<substitution_t, global_value_env>
+typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::Binds& binds)
+{
+    substitution_t s;
+    auto env2 = env;
+    for(auto& decls: binds)
+    {
+        auto [s1, gve1] = infer_type_for_decls(env2, decls);
+        env2 = plus_no_overlap(env2, gve1);
+        s = compose(s1, s);
+    }
+    env2 = apply_subst(s, env2);
+    return {s, env2};
+}
+
 pair<substitution_t,global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::Decls& decls)
 {
@@ -782,6 +828,74 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
 }
 
 
+// Figure 22. Rules for quals
+//
+// The implementation is rather... different?
+// * the original figure doesn't have let quals.
+// * the original figure seems to assume that quals only occur in list comprehensions?
+
+pair<substitution_t,value_env>
+typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& qual)
+{
+    // FILTER
+    if (auto sq = qual.to<Hs::SimpleQual>())
+    {
+        auto [cond_s, cond_type] = infer_type(env, sq->exp);
+        auto s2 = unify( cond_type, bool_type() );
+        auto s = compose(s2, cond_s);
+        return {s, {}};
+    }
+    // GENERATOR.
+    else if (auto pq = qual.to<Hs::PatQual>())
+    {
+        // pat <- exp
+        auto [pat_type,lve] = infer_pattern_type(pq->bindpat);
+        auto [exp_s,exp_type] = infer_type(env, pq->exp);
+        // type(pat) = type(exp)
+        auto s3 = unify(Hs::ListType(pat_type), exp_type);
+        auto s = compose(s3, exp_s);
+        lve = apply_subst(s, lve);
+        return {s, lve};
+    }
+    else if (auto lq = qual.to<Hs::LetQual>())
+    {
+        return infer_type_for_decls(env, unloc(lq->binds));
+    }
+    else
+        std::abort();
+}
+
+
+pair<substitution_t,value_env>
+typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual& guard)
+{
+    if (auto sq = guard.to<Hs::SimpleQual>())
+    {
+        auto [cond_s, cond_type] = infer_type(env, sq->exp);
+        auto s2 = unify( cond_type, bool_type() );
+        auto s = compose(s2, cond_s);
+        return {s, {}};
+    }
+    else if (auto pq = guard.to<Hs::PatQual>())
+    {
+        // pat <- exp
+        auto [pat_type,lve] = infer_pattern_type(pq->bindpat);
+        auto [exp_s,exp_type] = infer_type(env, pq->exp);
+        // type(pat) = type(exp)
+        auto s3 = unify(pat_type,exp_type);
+        auto s = compose(s3, exp_s);
+        lve = apply_subst(s, lve);
+        return {s, lve};
+    }
+    else if (auto lq = guard.to<Hs::LetQual>())
+    {
+        return infer_type_for_decls(env, unloc(lq->binds));
+    }
+    else
+        std::abort();
+}
+
+
 // Figure 25. Rules for match, mrule, and grhs
 pair<substitution_t, Hs::Type>
 typechecker_state::infer_type(const global_value_env& env, const Hs::GuardedRHS& rhs)
@@ -791,8 +905,16 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::GuardedRHS&
 
     // Fig. 25 GUARD
     auto guard = rhs.guards[0];
+    auto [s1, env1] = infer_guard_type(env, guard);
+    auto env2 = plus_prefer_right(env, env1);
+
     auto rhs2 = rhs;
     rhs2.guards.erase(rhs2.guards.begin());
+    auto [s2,t2] = infer_type(env2, rhs2);
+    auto s = compose(s2, s1);
+
+    Hs::Type type = apply_subst(s, t2);
+    return {s, type};
 }
 
 // Fig 25. GUARD-OR
@@ -923,22 +1045,19 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
 
         return infer_type(env, rule);
     }
-/*
     else if (auto let = E.to<Hs::LetExp>())
     {
-        // let x[i] = e[i] in e
-        auto decls = let_decls(E);
-
         // 1. Extend environment with types for decls, get any substitutions
-        auto [s_decls, env_decls] = infer_type_for_decls(env, decls);
+        auto [s_decls, env_decls] = infer_type_for_decls(env, unloc(let->binds));
+        auto env2 = plus_no_overlap(env_decls, env);
 
         // 2. Compute type of let body
-        auto& e_body = E.sub()[1];
-        auto [s_body, t_body] = infer_type(env_decls, e_body);
+        auto [s_body, t_body] = infer_type(env_decls, unloc(let->body));
 
         // return (s1 `compose` s2, t2)
         return {compose(s_body, s_decls), t_body};
     }
+/*
     else if (E.head().is_a<Hs::Con>())
     {
         auto [object_type, pattern_types] = lookup_data_from_con_pattern(E);
