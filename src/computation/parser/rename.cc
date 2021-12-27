@@ -499,7 +499,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         auto L = E.as_<Haskell::LetExp>();
 
-        unloc(L.decls) = rename_infix(m, unloc(L.decls));
+        unloc(L.binds) = rename_infix(m, unloc(L.binds));
         unloc(L.body)  = rename_infix(m, unloc(L.body));
 
         return L;
@@ -1949,7 +1949,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     {
         auto L = E.as_<Haskell::LetExp>();
 
-        auto binders = rename_decls(unloc(L.decls), bound, free_vars);
+        auto binders = rename_decls(unloc(L.binds), bound, free_vars);
         unloc(L.body) = rename(unloc(L.body), bound, binders, free_vars);
 
         return L;

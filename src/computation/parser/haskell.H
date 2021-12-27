@@ -78,6 +78,7 @@ typedef expression_ref Kind;
 typedef expression_ref Type;
 typedef expression_ref Pattern;
 typedef expression_ref Expression;
+typedef expression_ref Qual;
 
 struct Var: public Object
 {
@@ -858,13 +859,13 @@ struct LambdaExp: public Object
 
 struct LetExp: public Object
 {
-    Located<Binds> decls;
+    Located<Binds> binds;
     Located<expression_ref> body;
 
     LetExp* clone() const {return new LetExp(*this);}
     std::string print() const;
 
-    LetExp(const Located<Binds>& d, const Located<expression_ref>& b): decls(d), body(b) {};
+    LetExp(const Located<Binds>& bs, const Located<expression_ref>& b): binds(bs), body(b) {};
 };
 
 struct IfExp: public Object

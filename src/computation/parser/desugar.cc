@@ -437,7 +437,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         auto& L = E.as_<Haskell::LetExp>();
 
-        CDecls decls = desugar_decls(unloc(L.decls));
+        CDecls decls = desugar_decls(unloc(L.binds));
         auto body = desugar(unloc(L.body));
 
         // construct the new let expression.

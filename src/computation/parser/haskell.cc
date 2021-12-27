@@ -731,11 +731,7 @@ string LambdaExp::print() const
 
 string LetExp::print() const
 {
-    vector<expression_ref> decl_string;
-    for(auto& decl: unloc(decls))
-        decl_string.push_back( decl.print() );
-
-    return "let { " + join( decl_string, "; " ) + " } in " + body.print();
+    return "let " + binds.print() + " in " + body.print();
 }
 
 string IfExp::print() const
