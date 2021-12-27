@@ -506,10 +506,17 @@ void get_free_type_variables(const Hs::Type& T, std::multiset<Hs::TypeVar>& boun
         std::abort();
 }
 
-void get_free_type_variables(const expression_ref& E, set<Hs::TypeVar>& free)
+void get_free_type_variables(const Hs::Type t, set<Hs::TypeVar>& free)
 {
     std::multiset<Hs::TypeVar> bound;
-    get_free_type_variables(E,bound,free);
+    get_free_type_variables(t, bound, free);
+}
+
+std::set<Hs::TypeVar> free_type_variables(const Hs::Type& t)
+{
+    std::set<Hs::TypeVar> free;
+    get_free_type_variables(t, free);
+    return free;
 }
 
 void get_free_type_variables(const global_value_env& env, std::set<Hs::TypeVar>& free)
@@ -523,6 +530,16 @@ std::set<Hs::TypeVar> free_type_variables(const global_value_env& env)
     std::set<Hs::TypeVar> free;
     get_free_type_variables(env, free);
     return free;
+}
+
+expression_ref generalize(const global_value_env& env, const expression_ref& monotype)
+{
+    auto ftv1 = free_type_variables(monotype);
+    auto ftv2 = free_type_variables(env);
+    for(auto tv: ftv2)
+        ftv1.erase(tv);
+
+    return Hs::ForallType(ftv1 | ranges::to<vector>, monotype);
 }
 
 
