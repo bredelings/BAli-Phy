@@ -716,7 +716,8 @@ struct StrictPattern: public Object
 
 struct AsPattern: public Object
 {
-    expression_ref var;      // FIXME: change to a located ID after we stop changing the type from ID to var.
+    // We need this to be Hs::Var until desugaring, at which point it becomes var.
+    expression_ref var;
     Pattern pattern;
 
     AsPattern* clone() const { return new AsPattern(*this);}
