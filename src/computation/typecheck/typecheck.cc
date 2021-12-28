@@ -859,7 +859,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
     {
         local_value_env lve;
         vector<Hs::Type> types;
-        for(auto& pat: pat.sub())
+        for(auto& pat: pat.copy_sub())
         {
             auto [t1,lve1] = infer_pattern_type(pat);
             types.push_back(t1);
