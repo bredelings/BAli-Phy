@@ -291,6 +291,16 @@ string print(const value_env& env)
     return oss.str();
 }
 
+string print(const substitution_t& s)
+{
+    std::ostringstream oss;
+    for(auto& [var,type]: s)
+    {
+        oss<<var.print()<<" :: "<<type.print()<<"\n";
+    }
+    return oss.str();
+}
+
 typedef value_env global_value_env;
 
 typedef value_env local_value_env;
