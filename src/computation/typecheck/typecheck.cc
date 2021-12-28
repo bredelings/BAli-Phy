@@ -765,7 +765,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
         Hs::Type type = fresh_type_var();
         local_value_env lve;
         lve = lve.insert({*x, type});
-	return { *x , lve };
+	return { type , lve };
     }
     // CONSTR-PAT
     else if (auto con = pat.head().to<Haskell::Con>())
