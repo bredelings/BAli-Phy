@@ -500,6 +500,10 @@ struct typechecker_state
 {
     Hs::Type bool_type() const { return Hs::TypeCon({noloc,"Data.Bool.True"}); }
 
+    Hs::Type num_type() const { return Hs::TypeCon({noloc,"Num#"}); }
+
+    Hs::Type char_type() const { return Hs::TypeCon({noloc,"Char#"}); }
+
     map<string,shared_ptr<Hs::DataOrNewtypeDecl>> con_to_data;
 
     Hs::DataOrNewtypeDecl instantiate(const Hs::DataOrNewtypeDecl& d);
@@ -925,7 +929,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
     }
     // ???
     else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
-        return {Hs::TypeCon({noloc,"Num"}),{}};
+        return {num_type(),{}};
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
     
@@ -1100,9 +1104,9 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         return {{},tau};
     }
     else if (E.is_int() or E.is_double() or E.is_log_double())
-        return {{},Hs::Con({noloc,"Num"})};
+        return {{},num_type()};
     else if (E.is_char())
-        return {{},Hs::Con({noloc,"Char#"})};
+        return {{},char_type()};
     else if (not E.size() and not E.head().is_a<Hs::Con>())
     {
         // We can't handle constants correctly, so always given them a new type.
