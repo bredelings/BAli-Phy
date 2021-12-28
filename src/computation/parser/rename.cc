@@ -1040,8 +1040,8 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         auto& AP = pat.as_<Haskell::AsPattern>();
 	assert(not top);
 
-	auto bound = find_vars_in_pattern(AP.var, false);
-	bool overlap = not disjoint_add(bound, find_vars_in_pattern(AP.pattern, false));
+	auto bound = find_vars_in_pattern(AP.var, top);
+	bool overlap = not disjoint_add(bound, find_vars_in_pattern(AP.pattern, top));
 
 	if (overlap)
 	    throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
@@ -1051,12 +1051,12 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
     if (pat.is_a<Haskell::List>())
     {
         auto& L = pat.as_<Haskell::List>();
-        return find_vars_in_patterns(L.elements);
+        return find_vars_in_patterns(L.elements, top);
     }
     else if (pat.is_a<Haskell::Tuple>())
     {
         auto& T = pat.as_<Haskell::Tuple>();
-        return find_vars_in_patterns(T.elements);
+        return find_vars_in_patterns(T.elements, top);
     }
     else if (auto v = pat.to<Haskell::Var>())
     {
@@ -1085,7 +1085,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
             throw myexception()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!";
 
         // 11. Return the variables bound
-        return find_vars_in_patterns(pat.copy_sub());
+        return find_vars_in_patterns(pat.copy_sub(), top);
     }
     else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
         return {};
