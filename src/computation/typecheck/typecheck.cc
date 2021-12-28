@@ -1126,6 +1126,22 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         element_type = apply_subst(s, element_type);
         return {s, Hs::ListType(element_type)};
     }
+    else if (auto tup = E.to<Hs::Tuple>())
+    {
+        auto T = *tup;
+
+        substitution_t s;
+        vector<Hs::Type> element_types;
+        for(auto& element: T.elements)
+        {
+            auto [s1, element_type] = infer_type(env, element);
+            s = compose(s1, s);
+            element_types.push_back( element_type );
+        }
+        Hs::Type result_type = Hs::TupleType(element_types);
+        result_type = apply_subst(s, result_type);
+        return {s, result_type};
+    }
     else if (is_apply_exp(E))
     {
         assert(E.size() >= 2);
