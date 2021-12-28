@@ -214,7 +214,20 @@ set<string> from_this_module(const string& mod_name, set<string> names)
     return ok_names;
 }
 
-vector<vector<expression_ref>> find_type_groups(const Module& m, const vector<expression_ref>& initial_class_and_type_decls)
+struct type_con_info
+{
+    kind k;
+    int arity;
+//    Hs::Type operator() (const vector<Hs::Type>& args) const;
+// -- for type synonmys, we need the means to apply the constructor to (exactly) k arguments, for arity k.
+// -- for data / newtypes, we need to means to apply up to k arguments.
+// -- perhaps we need to store the KIND, and not just the arity?
+};
+
+typedef map<string, type_con_info> type_con_env;
+
+
+type_con_env find_type_groups(const Module& m, const vector<expression_ref>& initial_class_and_type_decls)
 {
     // 1. Collection type and instance declarations
 
@@ -266,6 +279,7 @@ vector<vector<expression_ref>> find_type_groups(const Module& m, const vector<ex
 
     auto type_decl_groups = map_groups( ordered_name_groups, decl_for_type );
 
+    type_con_env tce;
     // 3. Compute kinds for type/class constructors.
     for(auto& type_decl_group: type_decl_groups)
     {
@@ -276,11 +290,11 @@ vector<vector<expression_ref>> find_type_groups(const Module& m, const vector<ex
             auto tinfo = m.lookup_resolved_type(name);
             tinfo.arity = arity;
             tinfo.k     = k;
+            tce.insert({name,{k,arity}});
         }
     }
 
-
-    return type_decl_groups;
+    return tce;
 }
 
 expression_ref apply_subst(const substitution_t& s, const Hs::Type& t);
@@ -497,16 +511,6 @@ typedef Hs::Type constraint;
 // GVE = global value environment      = var -> polytype
 // LVE = local  value environment      = var -> monotype
 
-struct type_con_info
-{
-    // We want the kind info for the typecon.
-    int arity;
-    Hs::Type operator() (const vector<Hs::Type>& args) const;
-// -- for type synonmys, we need the means to apply the constructor to (exactly) k arguments, for arity k.
-// -- for data / newtypes, we need to means to apply up to k arguments.
-// -- perhaps we need to store the KIND, and not just the arity?
-};
-
 typedef immer::map<Hs::Var, Hs::Type> value_env;
 
 string print(const value_env& env)
@@ -568,8 +572,6 @@ value_env plus_no_overlap(const value_env& e1, const value_env& e2)
     add_no_overlap(e3,e2);
     return e3;
 }
-
-typedef map<string, type_con_info> type_con_env;
 
 struct class_info
 {
@@ -1562,18 +1564,16 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
 
     //
 
-    auto class_and_type_decls = find_type_groups(m, M.type_decls);
+    auto tce = find_type_groups(m, M.type_decls);
     // 4. Compute types and kinds for data constructors and class methods?
-    for(auto& type_decl_group: class_and_type_decls)
+
+    kindchecker_state K(m);
+    for(auto& _: K.infer_child_types(M.type_decls))
     {
-        kindchecker_state K(m);
-        for(auto& _: K.infer_child_types(type_decl_group))
-        {
 //            auto& [arity,k] = ka;
 //            auto& tinfo = types.at(name);
 //            tinfo.arity = arity;
 //            tinfo.k     = k;
-        }
     }
 
     // FIXME: Handle instances.
