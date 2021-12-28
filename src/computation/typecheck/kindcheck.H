@@ -1,9 +1,26 @@
 #ifndef KINDCHECK_H
 #define KINDCHECK_H
 
+#include <map>
+#include <string>
+
 #include "parser/haskell.H"
 #include "module.H"
 #include "kind.H"
+
+struct type_con_info
+{
+    kind k;
+    int arity;
+//    Hs::Type operator() (const vector<Hs::Type>& args) const;
+// -- for type synonmys, we need the means to apply the constructor to (exactly) k arguments, for arity k.
+// -- for data / newtypes, we need to means to apply up to k arguments.
+// -- perhaps we need to store the KIND, and not just the arity?
+};
+
+typedef std::map<std::string, type_con_info> type_con_env;
+
+type_con_env find_type_groups(const Module& m, const std::vector<expression_ref>& class_and_type_decls);
 
 struct kindchecker_state
 {
