@@ -1301,17 +1301,8 @@ void typecheck(const Hs::ModuleDecls& M)
     typechecker_state state;
     global_value_env env0;
 
-/*    // make error type
-    auto a = state.named_type_var("a");
-    auto b = state.named_type_var("b");
-    auto error_type = Hs::ForallType({a,b},Hs::make_arrow_type(a,b));
-
-    //
-    global_value_env env0;
-    env0 = env0.insert({var("Compiler.Base.error"),error_type});
-    env0 = env0.insert({var("Foreign.String.unpack_cpp_string"),Hs::make_arrow_type(type_con("String#"),list_type(type_con("Char")))});
-*/
     auto [s,env] = state.infer_type_for_decls(env0, M.value_decls);
+
     for(auto& [x,t]: env)
     {
         std::cerr<<x<<" :: "<<remove_top_level_foralls(alphabetize_type(t))<<"\n";
