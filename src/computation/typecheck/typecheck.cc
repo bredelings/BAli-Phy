@@ -1327,7 +1327,7 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
 
     //
 
-    auto tce = find_type_groups(m, M.type_decls);
+    auto tce = get_tycon_info(m, M.type_decls);
     // 4. Compute types and kinds for data constructors and class methods?
 
     kindchecker_state K(m);

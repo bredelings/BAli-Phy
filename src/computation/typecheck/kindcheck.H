@@ -20,7 +20,7 @@ struct type_con_info
 
 typedef std::map<std::string, type_con_info> type_con_env;
 
-type_con_env find_type_groups(const Module& m, const std::vector<expression_ref>& class_and_type_decls);
+type_con_env get_tycon_info(const Module& m, const Hs::Decls& type_decls);
 
 struct kindchecker_state
 {

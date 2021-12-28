@@ -169,7 +169,7 @@ set<string> from_this_module(const string& mod_name, set<string> names)
     return ok_names;
 }
 
-type_con_env find_type_groups(const Module& m, const vector<expression_ref>& initial_class_and_type_decls)
+vector<vector<expression_ref>> find_type_groups(const Module& m, const Hs::Decls& type_decls)
 {
     // 1. Collection type and instance declarations
 
@@ -180,7 +180,7 @@ type_con_env find_type_groups(const Module& m, const vector<expression_ref>& ini
 
     vector<tuple<Haskell::InstanceDecl,set<string>>> instance_decls;
 
-    for(auto& decl: initial_class_and_type_decls)
+    for(auto& decl: type_decls)
     {
         if (decl.is_a<Haskell::ClassDecl>())
         {
@@ -220,19 +220,29 @@ type_con_env find_type_groups(const Module& m, const vector<expression_ref>& ini
     auto ordered_name_groups = get_ordered_strong_components(referenced_types);
 
     auto type_decl_groups = map_groups( ordered_name_groups, decl_for_type );
+    return type_decl_groups;
+}
 
+type_con_env get_tycon_info(const Module& m, const Hs::Decls& type_decls)
+{
     type_con_env tce;
+
+    auto type_decl_groups = find_type_groups(m, type_decls);
+
     // 3. Compute kinds for type/class constructors.
     for(auto& type_decl_group: type_decl_groups)
     {
         kindchecker_state K(m);
         for(auto& [name,ka]: K.infer_kinds(type_decl_group))
         {
+            // Compute arity and kind for return value.
             auto& [arity,k] = ka;
+            tce.insert({name,{k,arity}});
+
+            // Record arity and kind in type_symbols.
             auto tinfo = m.lookup_resolved_type(name);
             tinfo.arity = arity;
             tinfo.k     = k;
-            tce.insert({name,{k,arity}});
         }
     }
 
