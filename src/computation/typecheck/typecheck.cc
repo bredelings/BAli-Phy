@@ -1014,7 +1014,7 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::GuardedRHS&
     // Fig 25. GUARD-DEFAULT
     if (rhs.guards.empty()) return infer_type(env, rhs.body);
 
-    // Fig. 25 GUARD
+    // Fig 25. GUARD
     auto guard = rhs.guards[0];
     auto [s1, env1] = infer_guard_type(env, guard);
     auto env2 = plus_prefer_right(env, env1);
@@ -1038,7 +1038,9 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::MultiGuarde
     auto env2 = env;
     if (rhs.decls)
     {
-//        auto [s,gve] = infer_type_for_decls(env, *rhs.decls);
+        auto [s1, binders] = infer_type_for_decls(env, unloc(*rhs.decls));
+        env2 = plus_prefer_right(env, binders);
+        s = compose(s1, s);
     }
 
     for(auto& guarded_rhs: rhs.guarded_rhss)
