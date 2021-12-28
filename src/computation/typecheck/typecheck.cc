@@ -1005,14 +1005,16 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::B
 {
     substitution_t s;
     auto env2 = env;
+    global_value_env binders;
     for(auto& decls: binds)
     {
-        auto [s1, gve1] = infer_type_for_decls(env2, decls);
-        env2 = plus_no_overlap(env2, gve1);
+        auto [s1, binders1] = infer_type_for_decls(env2, decls);
+        env2 = plus_prefer_right(env2, binders1);
+        binders = plus_no_overlap(binders, binders1);
         s = compose(s1, s);
     }
-    env2 = apply_subst(s, env2);
-    return {s, env2};
+    binders = apply_subst(s, binders);
+    return {s, binders};
 }
 
 pair<substitution_t,global_value_env>
@@ -1440,7 +1442,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         auto env2 = plus_no_overlap(env_decls, env);
 
         // 2. Compute type of let body
-        auto [s_body, t_body] = infer_type(env_decls, unloc(let->body));
+        auto [s_body, t_body] = infer_type(env2, unloc(let->body));
 
         // return (s1 `compose` s2, t2)
         return {compose(s_body, s_decls), t_body};
