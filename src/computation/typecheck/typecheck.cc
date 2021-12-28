@@ -11,6 +11,7 @@
 #include "util/set.H"
 
 #include "computation/expression/apply.H"
+#include "computation/operation.H" // for is_non_apply_op( )
 
 namespace views = ranges::views;
 
@@ -1057,21 +1058,20 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         // return (s1 `compose` s2, t2)
         return {compose(s_body, s_decls), t_body};
     }
-/*
-    else if (E.head().is_a<Hs::Con>())
+    else if (auto con = E.head().to<Hs::Con>())
     {
-        auto [object_type, pattern_types] = lookup_data_from_con_pattern(E);
+        auto [object_type, field_types] = constr_types(*con);
 
         substitution_t s;
-        type_environment_t env2 = env;
-        vector<expression_ref> arg_types;
+        auto env2 = env;
+        vector<Hs::Type> arg_types;
         for(int i=0; i<E.size(); i++)
         {
             auto [s_i, t_i] = infer_type(env2, E.sub()[i]);
             arg_types.push_back(t_i);
 
             // REQUIRE that i-th argument matches the type for the i-th field.
-            auto s2_i = unify(pattern_types[i], t_i);
+            auto s2_i = unify( field_types[i], t_i);
 
             s = compose(compose(s2_i,s_i), s);
             env2 = apply_subst(s_i, env2);
@@ -1084,6 +1084,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         std::abort();
         // this includes builtins like Prelude::add
     }
+    /*
     else if (auto case_exp = parse_case_expression(E))
     {
         // 1. Determine object type
