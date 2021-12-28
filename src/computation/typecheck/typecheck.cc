@@ -280,74 +280,6 @@ vector<vector<expression_ref>> find_type_groups(const Module& m, const vector<ex
     }
 
 
-    // 4. Compute types and kinds for data constructors and class methods?
-    for(auto& type_decl_group: type_decl_groups)
-    {
-        kindchecker_state K(m);
-        for(auto& _: K.infer_child_types(type_decl_group))
-        {
-//            auto& [arity,k] = ka;
-//            auto& tinfo = types.at(name);
-//            tinfo.arity = arity;
-//            tinfo.k     = k;
-        }
-    }
-
-    // FIXME: Handle instances.
-
-    // Instances: an instance is a function from dictionaries a dictionaries.
-    //    instance (A a, B b) => A (b a) is a function of the form \dict_A_a dict_B_b -> dict_A_(b_a)
-
-    // Q: How are instances grouped?
-    // A: Each instance needs to be at-or-after all the types/classes referenced,
-    //    Do instances depend on other instances?  Maybe this is check in the context...
-    //    e.g. instance Eq a => Eq [a] where
-
-    // See equivalents in GHC Rename/Module.hs
-    // We are trying to find strongly connected components of
-    //  types, type classes, and instances.
-
-    // Shouldn't instances be AFTER everything?
-    // * We only have type class instances (ClsInstDecl), but GHC
-    //   also has data family instances and type family instances.
-
-    // GHC looks at types and classes first, then adds instances to the SCCs later.
-
-
-    // 5. Compute types for functions.
-
-    //   Does the type-checker need to augment all bound variables with their type?
-
-    //   Does the type-checker need to add type lambdas?
-
-    //   Does the type-checker need to specify type arguments to type lambdas?
-
-    //   So, let, lambda, and case would need to specify the type
-
-    // 6. Compute types for class default methods?
-
-    // Q: How are default method declarations handled here?
-    //    Do they affect type class resolution?
-    //    Do we need to do more work on them when handling value decls?
-    // A: I think default methods do not affect the type.
-
-    // See function `rnTyClDecls`, which calls `depAnalTyClDecls`.
-    // * Dependency analysis on values can be done by name, since instances are not included.
-    // * Code is in GHC.Data.Graph.Directed.
-
-    // I don't think we need to look up "parents" during typechecking unless we are promoting data constructors
-    // to types or kinds.
-
-    // For values, each value can have a body decl, a fixity decl, and a signature decl.
-    // So we can't use the decl itself as the key -- we have to use something like the name.
-
-    // It looks like GHC rename extracts the "free variables" from everything.
-    // For example: rnSrcInstDecl operates on ClsInstD, which wraps ClsInstDecl from Hs/Decl.hs
-
-    // FreeVars = OccEnv ID.  See Core/Opt/OccurAnal.hs.
-
-    // Looks like code for determining inlining
-
     return type_decl_groups;
 }
 
@@ -1629,6 +1561,74 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
     //
 
     auto class_and_type_decls = find_type_groups(m, M.type_decls);
+    // 4. Compute types and kinds for data constructors and class methods?
+    for(auto& type_decl_group: class_and_type_decls)
+    {
+        kindchecker_state K(m);
+        for(auto& _: K.infer_child_types(type_decl_group))
+        {
+//            auto& [arity,k] = ka;
+//            auto& tinfo = types.at(name);
+//            tinfo.arity = arity;
+//            tinfo.k     = k;
+        }
+    }
+
+    // FIXME: Handle instances.
+
+    // Instances: an instance is a function from dictionaries a dictionaries.
+    //    instance (A a, B b) => A (b a) is a function of the form \dict_A_a dict_B_b -> dict_A_(b_a)
+
+    // Q: How are instances grouped?
+    // A: Each instance needs to be at-or-after all the types/classes referenced,
+    //    Do instances depend on other instances?  Maybe this is check in the context...
+    //    e.g. instance Eq a => Eq [a] where
+
+    // See equivalents in GHC Rename/Module.hs
+    // We are trying to find strongly connected components of
+    //  types, type classes, and instances.
+
+    // Shouldn't instances be AFTER everything?
+    // * We only have type class instances (ClsInstDecl), but GHC
+    //   also has data family instances and type family instances.
+
+    // GHC looks at types and classes first, then adds instances to the SCCs later.
+
+
+    // 5. Compute types for functions.
+
+    //   Does the type-checker need to augment all bound variables with their type?
+
+    //   Does the type-checker need to add type lambdas?
+
+    //   Does the type-checker need to specify type arguments to type lambdas?
+
+    //   So, let, lambda, and case would need to specify the type
+
+    // 6. Compute types for class default methods?
+
+    // Q: How are default method declarations handled here?
+    //    Do they affect type class resolution?
+    //    Do we need to do more work on them when handling value decls?
+    // A: I think default methods do not affect the type.
+
+    // See function `rnTyClDecls`, which calls `depAnalTyClDecls`.
+    // * Dependency analysis on values can be done by name, since instances are not included.
+    // * Code is in GHC.Data.Graph.Directed.
+
+    // I don't think we need to look up "parents" during typechecking unless we are promoting data constructors
+    // to types or kinds.
+
+    // For values, each value can have a body decl, a fixity decl, and a signature decl.
+    // So we can't use the decl itself as the key -- we have to use something like the name.
+
+    // It looks like GHC rename extracts the "free variables" from everything.
+    // For example: rnSrcInstDecl operates on ClsInstD, which wraps ClsInstDecl from Hs/Decl.hs
+
+    // FreeVars = OccEnv ID.  See Core/Opt/OccurAnal.hs.
+
+    // Looks like code for determining inlining
+
     
     typechecker_state state;
     global_value_env env0;
