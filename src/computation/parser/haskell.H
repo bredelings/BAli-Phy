@@ -555,7 +555,7 @@ struct ListFromThenTo: public Object
 struct ListComprehension: public Object
 {
     expression_ref body;
-    std::vector<expression_ref> quals;
+    std::vector<Qual> quals;
     ListComprehension* clone() const { return new ListComprehension(*this);}
     std::string print() const;
     ListComprehension(const expression_ref& e, const std::vector<expression_ref>& es): body(e), quals(es) {}
