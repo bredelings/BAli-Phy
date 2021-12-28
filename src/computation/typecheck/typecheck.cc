@@ -1300,6 +1300,16 @@ Hs::Type remove_top_level_foralls(Hs::Type t)
     return t;
 }
 
+global_value_env get_constructor_info(const Hs::Decls&, const type_con_env tce)
+{
+    return {};
+}
+
+class_env get_class_info(const Hs::Decls&, const type_con_env tce)
+{
+    return {};
+}
+
 void typecheck(const Module& m, const Hs::ModuleDecls& M)
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
@@ -1308,36 +1318,26 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
     //    * Constructor Value Environment (CVE)
     //
     // 2. Check the module's class declarations, produce some translated bindings -> binds_C ( GVE_C, CE_C, GIE_C )
-    //
+
+    // TCE_T = type con info, part1
+    auto tce = get_tycon_info(m, M.type_decls);
+    // CVE_T = constructor types :: map<string, polytype> = global_value_env
+    global_value_env constructor_info = get_constructor_info(M.type_decls, tce);
+    //   CE_C  = class name -> class info
+    class_env class_info = get_class_info(M.type_decls, tce);
+    // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
+    global_value_env class_method_info;
+    for(auto& [name,class_info]: class_info)
+        class_method_info = plus_no_overlap(class_method_info, class_info.methods);
+    // GIE_C = functions to extract sub-dictionaries from containing dictionaries?
+    // NOT IMPLEMENTED YET.
+
     // 3. E' = (TCE_T, (CVE_T, GVE_C, {}), CE_C, (GIE_C,{}))
     //
     // 4. Check the module's instance declarations -> monobinds : GIE_I
     //    These are mutually recursive with the value declarations. ?!?
     //
     // 5. Check the module's value declarations.
-
-
-    // OK, so it looks like the kind-checking pass actually handles the first two steps!
-    // It needs to return
-    // TCE_T = type con info, part1
-    // CVE_T = constructor types
-    // GVE_C = method -> type map
-    // CE_C  = class name -> class info
-    // GIE_C = functions to extract sub-dictionaries from containing dictionaries?
-
-    //
-
-    auto tce = get_tycon_info(m, M.type_decls);
-    // 4. Compute types and kinds for data constructors and class methods?
-
-    kindchecker_state K(m);
-    for(auto& _: K.infer_child_types(M.type_decls))
-    {
-//            auto& [arity,k] = ka;
-//            auto& tinfo = types.at(name);
-//            tinfo.arity = arity;
-//            tinfo.k     = k;
-    }
 
     // FIXME: Handle instances.
 
