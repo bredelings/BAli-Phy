@@ -1246,6 +1246,20 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
 
         return {s, result_type};
     }
+    else if (auto if_exp = E.to<Hs::IfExp>())
+    {
+        auto [cond_s, cond_type] = infer_type(env, unloc(if_exp->condition));
+        auto [tbranch_s, tbranch_type] = infer_type(env, unloc(if_exp->true_branch));
+        auto [fbranch_s, fbranch_type] = infer_type(env, unloc(if_exp->false_branch));
+
+        auto s2 = unify(cond_type, bool_type());
+        auto s3 = unify(tbranch_type, fbranch_type);
+
+        auto s = compose(s3, compose(s2, compose(fbranch_s, compose(tbranch_s, cond_s))));
+
+        auto result_type = apply_subst(s, tbranch_type);
+        return {s, result_type};
+    }
     else
         throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
 }
