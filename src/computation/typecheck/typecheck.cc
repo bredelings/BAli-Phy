@@ -724,53 +724,6 @@ expression_ref typechecker_state::instantiate(const expression_ref& t)
     return apply_subst(s,t2);
 }
 
-set<Hs::Var> find_vars_in_pattern3(const expression_ref& pat);
-set<Hs::Var> find_vars_in_patterns3(const vector<expression_ref>& pats)
-{
-    set<Hs::Var> bound;
-
-    for(auto& pat: pats)
-        add(bound, find_vars_in_pattern3(pat));
-
-    return bound;
-}
-
-set<Hs::Var> find_vars_in_pattern3(const expression_ref& pat)
-{
-    if (pat.is_a<Haskell::WildcardPattern>())
-	return {};
-    else if (auto lp = pat.to<Haskell::LazyPattern>())
-        return find_vars_in_pattern3(lp->pattern);
-    else if (auto sp = pat.to<Haskell::StrictPattern>())
-        return find_vars_in_pattern3(sp->pattern);
-    else if (auto ap = pat.to<Haskell::AsPattern>())
-	return plus( find_vars_in_pattern3(ap->var), find_vars_in_pattern3(ap->pattern) );
-    else if (auto l = pat.to<Haskell::List>())
-        return find_vars_in_patterns3(l->elements);
-    else if (auto t = pat.to<Haskell::Tuple>())
-        return find_vars_in_patterns3(t->elements);
-    else if (auto v = pat.to<Haskell::Var>())
-	return { *v };
-    else if (pat.head().is_a<Haskell::Con>())
-        return find_vars_in_patterns3(pat.copy_sub());
-    else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
-        return {};
-    else
-        throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
-}
-
-set<Hs::Var> binders_for_renamed_decl3(const expression_ref& decl)
-{
-    set<Hs::Var> binders;
-    if (auto pd = decl.to<Hs::PatDecl>())
-        binders = find_vars_in_pattern3(pd->lhs);
-    else if (auto fd = decl.to<Hs::FunDecl>())
-        binders = { fd->v };
-    else
-        std::abort();
-    return binders;
-}
-
 pair<substitution_t, global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::Binds& binds)
 {
@@ -790,29 +743,39 @@ pair<substitution_t,global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::Decls& decls)
 {
     // 1. Add each let-binder to the environment with a fresh type variable
-    auto env2 = env;
-    for(auto& decl: decls)
-    {
-        // FIXME! Remove this in favor of infer_pattern_type(decls[i])
+    value_env binder_env;
 
-        for(auto& x: binders_for_renamed_decl3(decl))
+    vector<pair<Hs::Type,global_value_env>> decl_types;
+    for(int i=0;i<decls.size();i++)
+    {
+        auto& decl = decls[i];
+        if (auto fd = decl.to<Hs::FunDecl>())
         {
-            auto t = fresh_type_var();
-            env2 = env2.insert({x,t});
+            Hs::Type type = fresh_type_var();
+            local_value_env lve;
+            lve = lve.insert({fd->v,type});
+            decl_types.push_back({type, lve});
         }
+        else if (auto pd = decl.to<Hs::PatDecl>())
+        {
+            auto [type, lve] = infer_pattern_type(pd->lhs);
+            decl_types.push_back({type,lve});
+        }
+        auto& [type,lve] = decl_types.back();
+        binder_env = plus_no_overlap(binder_env, lve);
     }
+    auto env2 = plus_prefer_right(env, binder_env);
 
     // 2. Infer the types of each of the x[i]
     substitution_t s;
-    for(auto& decl: decls)
+    for(int i=0;i<decls.size();i++)
     {
+        auto& decl = decls[i];
         if (auto fd = decl.to<Hs::FunDecl>())
         {
             auto lhs_type = env2.at(fd->v);
             auto [s2, rhs_type] = infer_type(env2, fd->match);
-
             s = compose(s2, compose(unify(lhs_type, rhs_type), s));
-
         }
         else if (auto pd = decl.to<Hs::PatDecl>())
         {
@@ -822,21 +785,16 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::D
             s = compose(s2, compose(unify(lhs_type, rhs_type), s));
         }
 
+        binder_env = apply_subst(s, binder_env);
         env2 = apply_subst(s, env2);
     }
 
     // 3. Generalize each type over variables not in the *original* environment
-    for(auto& decl: decls)
-    {
-        for(auto& x: binders_for_renamed_decl3(decl))
-        {
-            auto monotype = env2.at(x);
-            auto polytype = generalize(env, monotype);
-            env2 = env2.insert({x,polytype});
-        }
-    }
+    value_env generalized_binder_env;
+    for(auto& [var,type]: binder_env)
+        generalized_binder_env = generalized_binder_env.insert({var,generalize(env, type)});
 
-    return {s, env2};
+    return {s, generalized_binder_env};
 }
 
 // Figure 24. Rules for patterns
