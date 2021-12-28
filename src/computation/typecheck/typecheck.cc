@@ -407,6 +407,14 @@ Haskell::TypeVar alphabetized_type_var(int i)
     return v;
 }
 
+expression_ref alphabetize_type(const expression_ref& type, map<Haskell::TypeVar,Haskell::TypeVar>& s, int& index);
+
+Hs::Context alphabetize(Hs::Context context, map<Haskell::TypeVar,Haskell::TypeVar>& s, int& index)
+{
+    for(auto& constraint: context.constraints)
+        constraint = alphabetize_type(constraint, s, index);
+    return context;
+}
 
 expression_ref alphabetize_type(const expression_ref& type, map<Haskell::TypeVar,Haskell::TypeVar>& s, int& index)
 {
@@ -447,7 +455,34 @@ expression_ref alphabetize_type(const expression_ref& type, map<Haskell::TypeVar
         app.arg  = alphabetize_type(app.arg , s, index);
         return app;
     }
-    std::abort();
+    else if (auto l = type.to<Hs::ListType>())
+    {
+        auto L = *l;
+        L.element_type = alphabetize_type(L.element_type, s, index);
+        return L;
+    }
+    else if (auto tup = type.to<Hs::TupleType>())
+    {
+        auto T = *tup;
+        for(auto& type: T.element_types)
+            type = alphabetize_type(type, s, index);
+        return T;;
+    }
+    else if (auto c = type.to<Hs::ConstrainedType>())
+    {
+        auto C = *c;
+        C.type = alphabetize_type(C.type, s, index);
+        C.context = alphabetize(C.context, s, index);
+        return C;
+    }
+    else if (auto sl = type.to<Hs::StrictLazyType>())
+    {
+        auto SL = *sl;
+        SL.type = alphabetize_type(SL.type, s, index);
+        return SL;
+    }
+    else
+        std::abort();
 }
 
 expression_ref alphabetize_type(const expression_ref& type)
