@@ -1112,11 +1112,19 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         return {{},num_type()};
     else if (E.is_char())
         return {{},char_type()};
-    else if (not E.size() and not E.head().is_a<Hs::Con>())
+    else if (auto l = E.to<Hs::List>())
     {
-        // We can't handle constants correctly, so always given them a new type.
-        auto tau = fresh_type_var();
-        return {{},tau};
+        Hs::Type element_type = fresh_type_var();
+        auto L = *l;
+        substitution_t s;
+        for(auto& element: L.elements)
+        {
+            auto [s1, t1] = infer_type(env, element);
+            auto s2 = unify(t1, element_type);
+            s = compose(s2, compose(s1, s));
+        }
+        element_type = apply_subst(s, element_type);
+        return {s, Hs::ListType(element_type)};
     }
     else if (is_apply_exp(E))
     {
