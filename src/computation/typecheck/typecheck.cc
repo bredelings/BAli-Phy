@@ -581,6 +581,9 @@ struct typechecker_state
     Hs::Type instantiate(const Hs::Type& t);
 
     pair<substitution_t, local_value_env>
+    infer_quals_type(const global_value_env& env, const vector<Hs::Qual>& quals);
+
+    pair<substitution_t, local_value_env>
     infer_qual_type(const global_value_env& env, const Hs::Qual& qual);
 
     pair<substitution_t, local_value_env>
@@ -946,6 +949,23 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
 // * the original figure seems to assume that quals only occur in list comprehensions?
 
 pair<substitution_t,value_env>
+typechecker_state::infer_quals_type(const global_value_env& env, const vector<Hs::Qual>& quals)
+{
+    substitution_t s;
+    auto env2 = env;
+    local_value_env binders;
+    for(auto& qual: quals)
+    {
+        auto [qual_s, qual_binders] = infer_qual_type(env2, qual);
+        s = compose(qual_s, s);
+        env2 = plus_prefer_right(env2, qual_binders);
+        binders = plus_prefer_right(binders, qual_binders);
+    }
+    binders = apply_subst(s, binders);
+    return {s, binders};
+}
+
+pair<substitution_t,value_env>
 typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& qual)
 {
     // FILTER
@@ -1142,6 +1162,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         result_type = apply_subst(s, result_type);
         return {s, result_type};
     }
+    // COMB
     else if (is_apply_exp(E))
     {
         assert(E.size() >= 2);
@@ -1176,12 +1197,14 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         // return {compose(s3,compose(s2,s1)), apply_subst(s3,tv)};
         return {s1,t1};
     }
+    // LAMBDA
     else if (auto lam = E.to<Hs::LambdaExp>())
     {
         auto rule = Hs::MRule{lam->args, lam->body};
 
         return infer_type(env, rule);
     }
+    // LET
     else if (auto let = E.to<Hs::LetExp>())
     {
         // 1. Extend environment with types for decls, get any substitutions
@@ -1220,6 +1243,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         std::abort();
         // this includes builtins like Prelude::add
     }
+    // CASE
     else if (auto case_exp = E.to<Hs::CaseExp>())
     {
         // 1. Determine object type
@@ -1246,6 +1270,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
 
         return {s, result_type};
     }
+    // IF
     else if (auto if_exp = E.to<Hs::IfExp>())
     {
         auto [cond_s, cond_type] = infer_type(env, unloc(if_exp->condition));
@@ -1258,6 +1283,15 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         auto s = compose(s3, compose(s2, compose(fbranch_s, compose(tbranch_s, cond_s))));
 
         auto result_type = apply_subst(s, tbranch_type);
+        return {s, result_type};
+    }
+    // LISTCOMP
+    else if (auto lcomp = E.to<Hs::ListComprehension>())
+    {
+        auto [quals_s, quals_binders] = infer_quals_type(env, lcomp->quals);
+        auto [exp_s, exp_type] = infer_type(plus_prefer_right(env, quals_binders), lcomp->body);
+        auto s = compose(exp_s, quals_s);
+        Hs::Type result_type = apply_subst(s, Hs::ListType(exp_type));
         return {s, result_type};
     }
     else
