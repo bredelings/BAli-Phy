@@ -11,6 +11,7 @@
 #include "util/set.H"
 
 #include "computation/expression/apply.H"
+#include "computation/expression/tuple.H" // for is_tuple_name( )
 #include "computation/operation.H" // for is_non_apply_op( )
 
 namespace views = ranges::views;
@@ -494,8 +495,28 @@ set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
 
 pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& con)
 {
-    // 1. Find the data type
     auto& con_name = unloc(con.name);
+
+    if (con_name == ":")
+    {
+        Hs::Type a = fresh_type_var();
+        return {Hs::ListType(a),{a,Hs::ListType(a)}};
+    }
+    else if (con_name == "[]")
+    {
+        Hs::Type a = fresh_type_var();
+        return {Hs::ListType(a),{a,Hs::ListType(a)}};
+    }
+    else if (is_tuple_name(con_name))
+    {
+        int n = con_name.size()-1;
+        vector<Hs::Type> types;
+        for(int i=0;i<n;i++)
+            types.push_back(fresh_type_var());
+        return {Hs::TupleType(types),types};
+    }
+
+    // 1. Find the data type
     if (not con_to_data.count(con_name))
         throw myexception()<<"Unrecognized constructor: "<<con;
     auto d = instantiate(*con_to_data.at(con_name));
@@ -1084,66 +1105,42 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         std::abort();
         // this includes builtins like Prelude::add
     }
-    /*
-    else if (auto case_exp = parse_case_expression(E))
+    else if (auto case_exp = E.to<Hs::CaseExp>())
     {
         // 1. Determine object type
-        auto [s, object_type] = infer_type(env, case_exp->object);
-        auto env2 = apply_subst(s, env);
-        expression_ref case_type;
+        auto [s1, object_type] = infer_type(env, case_exp->object);
+        auto env2 = apply_subst(s1, env);
 
         // 2. Determine data type for object from patterns.
-        for(auto& [pattern,body]: case_exp->alts)
+        Hs::Match match;
+        for(auto& alt: case_exp->alts)
         {
-            global_value_env env3;
-            if (is_wildcard(pattern))
-            {
-                env3 = env2;
-            }
-            else
-            {
-                // 2a. Lookup the object type and pattern types.
-                auto [object_type_i, pattern_types_i] = lookup_data_from_pattern(pattern);
-
-                // 2b. REQUIRE that object types are the same
-                auto s_same_object = unify(object_type_i, object_type);
-                s = compose(s_same_object, s);
-                env2 = apply_subst(s, env2);
-                object_type = apply_subst(s, object_type);
-                for(auto& type: pattern_types_i)
-                    type = apply_subst(s, type);
-
-                // 2c. Bind constructor fields to their type in the type environment
-                env3 = env2;
-                for(int i=0;i<pattern_types_i.size();i++)
-                {
-                    if (is_wildcard(pattern.sub()[i])) continue;
-                    auto& x = pattern.sub()[i].as_<var>();
-                    env3 = env3.insert({x, pattern_types_i[i]});
-                }
-            }
-
-            // 2e. Infer the body type.
-            auto [body_subst, body_type] = infer_type(env3, body);
-            if (case_type)
-            {
-                // REQUIRE that body types are the same.
-                auto s2 = unify(body_type, case_type);
-                body_subst = compose(s2,body_subst);
-            }
-            else
-                case_type = body_type;
-
-            s = compose(body_subst, s);
-            env2 = apply_subst(s, env2);
-            object_type = apply_subst(s, object_type);
+            auto& [pattern, body] = unloc(alt);
+            match.rules.push_back(Hs::MRule{{pattern},body});
         }
-        return {s,case_type};
+
+        auto [s2, match_type] = infer_type(env2, match);
+
+        Hs::Type result_type = fresh_type_var();
+
+        auto s3 = unify( Hs::make_arrow_type(object_type,result_type), match_type );
+
+        auto s = compose(s3, compose(s2, s1));
+
+        result_type = apply_subst(s, result_type);
+
+        return {s, result_type};
     }
-*/
-    std::abort();
+    else
+        throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
 }
 
+Hs::Type remove_top_level_foralls(Hs::Type t)
+{
+    while(auto fa = t.to<Hs::ForallType>())
+        t = fa->type;
+    return t;
+}
 
 void typecheck(const Hs::ModuleDecls& M)
 {
@@ -1171,4 +1168,24 @@ void typecheck(const Hs::ModuleDecls& M)
     // GIE_C = functions to extract sub-dictionaries from containing dictionaries?
 
     //
+
+    typechecker_state state;
+    global_value_env env0;
+
+/*    // make error type
+    auto a = state.named_type_var("a");
+    auto b = state.named_type_var("b");
+    auto error_type = Hs::ForallType({a,b},Hs::make_arrow_type(a,b));
+
+    //
+    global_value_env env0;
+    env0 = env0.insert({var("Compiler.Base.error"),error_type});
+    env0 = env0.insert({var("Foreign.String.unpack_cpp_string"),Hs::make_arrow_type(type_con("String#"),list_type(type_con("Char")))});
+*/
+    auto [s,env] = state.infer_type_for_decls(env0, M.value_decls);
+    for(auto& [x,t]: env)
+    {
+        std::cerr<<x<<" :: "<<remove_top_level_foralls(alphabetize_type(t))<<"\n";
+//        std::cerr<<x<<" = "<<e<<"\n\n\n";
+    }
 }

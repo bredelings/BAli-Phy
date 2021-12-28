@@ -15,6 +15,7 @@
 #include "parser/rename.H"
 #include "parser/desugar.H"
 #include "typecheck/kindcheck.H"
+#include "typecheck/typecheck.H"
 #include "computation/loader.H"
 #include "expression/var.H"
 #include "expression/lambda.H"
