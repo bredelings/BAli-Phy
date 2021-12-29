@@ -949,21 +949,16 @@ string get_constructor_name(const Hs::Type& constr)
 CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
 {
     for(const auto& decl: topdecls)
-        if (decl.is_a<Haskell::DataOrNewtypeDecl>())
+        if (auto d = decl.to<Haskell::DataOrNewtypeDecl>())
         {
-            auto constrs = decl.as_<Haskell::DataOrNewtypeDecl>().constructors;
-            if (constrs.size() == 0) continue;
-
-            for(const auto& constr: constrs)
+            for(const auto& constr: d->constructors)
             {
                 auto arity = constr.arity();
                 auto cname = constr.name;
 
-                string qualified_name = name+"."+cname;
-                expression_ref body = lambda_expression( constructor(qualified_name, arity) );
-                cdecls.push_back( { var(qualified_name) , body} );
+                expression_ref body = lambda_expression( constructor(cname, arity) );
+                cdecls.push_back( { var(cname) , body} );
             }
-            // Strip out the constructor definition here new_decls.push_back(decl);
         }
     return cdecls;
 }

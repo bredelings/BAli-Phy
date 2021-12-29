@@ -843,6 +843,8 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
 
     for(auto& constructor: decl.constructors)
     {
+        constructor.name = m.name + "." + constructor.name;
+
         if (constructor.is_record_constructor())
         {
             for(auto& field: std::get<1>(constructor.fields).field_decls)
