@@ -1062,6 +1062,7 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::MultiGuarde
         auto s2 = unify(t1,type);
         s = compose(s2,compose(s1,s));
     }
+    type = apply_subst(s, type);
     return {s, type};
 };
 
@@ -1100,8 +1101,8 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::Match& m)
         auto [s1,t1] = infer_type(env, rule);
         auto s2 = unify(result_type, t1);
         s = compose(s2,compose(s1,s));
+        result_type = apply_subst(s, result_type);
     }
-    result_type = apply_subst(s, result_type);
 
     return {s,result_type};
 }
