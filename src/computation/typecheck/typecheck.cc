@@ -276,6 +276,8 @@ typedef Hs::Type constraint;
 
 typedef immer::map<Hs::Var, Hs::Type> value_env;
 
+typedef immer::map<std::string, Hs::Type> constr_env;
+
 string print(const value_env& env)
 {
     std::ostringstream oss;
@@ -1300,8 +1302,10 @@ Hs::Type remove_top_level_foralls(Hs::Type t)
     return t;
 }
 
-global_value_env get_constructor_info(const Module& m, const Hs::Decls& decls, const type_con_env tce)
+constr_env get_constructor_info(const Module& m, const Hs::Decls& decls, const type_con_env tce)
 {
+    constr_env cve;
+
     kindchecker_state ks(m);
 
     for(auto& decl: decls)
@@ -1309,8 +1313,12 @@ global_value_env get_constructor_info(const Module& m, const Hs::Decls& decls, c
         auto d = decl.to<Hs::DataOrNewtypeDecl>();
         if (not d) continue;
 
-        auto constr_map = ks.type_check_data_type(*d);
+        auto constr_map = ks.type_check_data_type(*d, tce);
+        for(auto& [name, type]: constr_map)
+            cve = cve.insert({name,type});
     }
+
+    return cve;
 }
 
 class_env get_class_info(const Module& m, const Hs::Decls&, const type_con_env tce)
@@ -1322,15 +1330,29 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
     //    OK, so datatypes produce a
-    //    * Type Constructor Environment (TCE) = tycon 439-> arity, method of applying the tycon
+    //    * Type Constructor Environment (TCE) = tycon -> (kind, arity, method of applying the tycon?)
     //    * Constructor Value Environment (CVE)
     //
     // 2. Check the module's class declarations, produce some translated bindings -> binds_C ( GVE_C, CE_C, GIE_C )
 
     // TCE_T = type con info, part1
     auto tce = get_tycon_info(m, M.type_decls);
+    for(auto& [tycon,ka]: tce)
+    {
+        auto& [k,arity] = ka;
+        std::cerr<<tycon<<" :: "<<k->print()<<"\n";
+    }
+    std::cerr<<"\n";
+
     // CVE_T = constructor types :: map<string, polytype> = global_value_env
-    global_value_env constructor_info = get_constructor_info(m, M.type_decls, tce);
+    auto constructor_info = get_constructor_info(m, M.type_decls, tce);
+
+    for(auto& [con,type]: constructor_info)
+    {
+        std::cerr<<con<<" :: "<<type.print()<<"\n";
+    }
+    std::cerr<<"\n";
+
     //   CE_C  = class name -> class info
     class_env class_info = get_class_info(m, M.type_decls, tce);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
@@ -1413,4 +1435,5 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
         std::cerr<<x<<" :: "<<remove_top_level_foralls(alphabetize_type(t))<<"\n";
 //        std::cerr<<x<<" = "<<e<<"\n\n\n";
     }
+    std::cerr<<"\n";
 }

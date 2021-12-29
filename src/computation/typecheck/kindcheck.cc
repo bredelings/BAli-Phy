@@ -594,12 +594,12 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
     pop_type_var_scope();
 }
 
-map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl)
+map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl, const type_con_env& tce)
 {
     push_type_var_scope();
 
     // a. Look up kind for this data type.
-    kind k = kind_check_type_con(data_decl.name);  // FIXME -- check that this is a data type?
+    kind k = tce.at(data_decl.name).k;  // FIXME -- check that this is a data type?
 
     // b. Bind each type variable.
     vector<Haskell::TypeVar> datatype_typevars;
@@ -974,42 +974,6 @@ std::map<string,std::pair<int,kind>> kindchecker_state::infer_kinds(const vector
     }
 
     return kind_and_arity;
-}
-
-std::map<string,std::pair<int,kind>> kindchecker_state::infer_child_types(const vector<expression_ref>& type_decl_group)
-{
-    // 1. Do kind inference for each declaration
-    for(auto& type_decl: type_decl_group)
-    {
-        try
-        {
-            if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
-            {
-                auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
-                type_check_data_type( D );
-            }
-            else if (type_decl.is_a<Haskell::ClassDecl>())
-            {
-                auto& C = type_decl.as_<Haskell::ClassDecl>();
-                type_check_type_class( C );
-            }
-            else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
-            {
-                // auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
-                // Is there actually anything to do here?
-                // Type synonyms don't have any children.
-            }
-        }
-        catch (myexception& e)
-        {
-            std::ostringstream o;
-            o<<"\n  In declaration: "<<type_decl.print()<<"\n    ";
-            e.prepend(o.str());
-            throw;
-        }
-    }
-
-    return {};
 }
 
 // How can type variables come up?
