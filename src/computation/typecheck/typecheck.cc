@@ -274,26 +274,16 @@ typedef Hs::Type constraint;
 // GVE = global value environment      = var -> polytype
 // LVE = local  value environment      = var -> monotype
 
-typedef immer::map<Hs::Var, Hs::Type> value_env;
+typedef immer::map<std::string, Hs::Type> value_env;
 
-typedef immer::map<std::string, Hs::Type> constr_env;
+typedef value_env constr_env;
 
 string print(const value_env& env)
 {
     std::ostringstream oss;
-    for(auto& [var,type]: env)
+    for(auto& [value,type]: env)
     {
-        oss<<var.print()<<" :: "<<type.print()<<"\n";
-    }
-    return oss.str();
-}
-
-string print(const constr_env& env)
-{
-    std::ostringstream oss;
-    for(auto& [con,type]: env)
-    {
-        oss<<con<<" :: "<<type.print()<<"\n";
+        oss<<value<<" :: "<<type.print()<<"\n";
     }
     return oss.str();
 }
@@ -347,19 +337,6 @@ value_env plus_no_overlap(const value_env& e1, const value_env& e2)
     add_no_overlap(e3,e2);
     return e3;
 }
-
-struct class_info
-{
-    string name;
-    string emitted_name;
-    vector<Hs::TypeVar> type_vars;
-
-    // Maybe change this to vector<pair<Type,string>>, 
-    // FIXME: Should we record here the names of functions to extract 
-    Hs::Context context;
-
-    global_value_env methods;
-};
 
 typedef map<string, class_info> class_env;
 
@@ -794,7 +771,8 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::D
         {
             Hs::Type type = fresh_type_var();
             local_value_env lve;
-            lve = lve.insert({fd->v,type});
+            auto& name = unloc(fd->v.name);
+            lve = lve.insert({name,type});
             decl_types.push_back({type, lve});
         }
         else if (auto pd = decl.to<Hs::PatDecl>())
@@ -814,7 +792,8 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::D
         auto& decl = decls[i];
         if (auto fd = decl.to<Hs::FunDecl>())
         {
-            auto lhs_type = env2.at(fd->v);
+            auto& name = unloc(fd->v.name);
+            auto lhs_type = env2.at(name);
             auto [s2, rhs_type] = infer_type(env2, fd->match);
             s = compose(s2, compose(unify(lhs_type, rhs_type), s));
         }
@@ -847,7 +826,8 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
     {
         Hs::Type type = fresh_type_var();
         local_value_env lve;
-        lve = lve.insert({*x, type});
+        auto& name = unloc(x->name);
+        lve = lve.insert({name, type});
 	return { type , lve };
     }
     // CONSTR-PAT
@@ -881,7 +861,8 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
     else if (auto ap = pat.to<Haskell::AsPattern>())
     {
         auto [t,lve] = infer_pattern_type(ap->pattern);
-        lve = lve.insert({ap->var.as_<Hs::Var>(), t});
+        auto& name = unloc(ap->var.as_<Hs::Var>().name);
+        lve = lve.insert({name, t});
         return {t,lve};
     }
     // LAZY-PAT
@@ -1112,7 +1093,8 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
 {
     if (auto x = E.to<Hs::Var>())
     {
-        auto sigma = env.find(*x);
+        auto& x_name = unloc(x->name);
+        auto sigma = env.find( x_name );
 
         // x should be in the type environment
         if (not sigma)
