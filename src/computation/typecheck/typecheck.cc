@@ -288,6 +288,16 @@ string print(const value_env& env)
     return oss.str();
 }
 
+string print(const constr_env& env)
+{
+    std::ostringstream oss;
+    for(auto& [con,type]: env)
+    {
+        oss<<con<<" :: "<<type.print()<<"\n";
+    }
+    return oss.str();
+}
+
 string print(const substitution_t& s)
 {
     std::ostringstream oss;
