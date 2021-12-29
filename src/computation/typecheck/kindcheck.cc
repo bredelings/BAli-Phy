@@ -107,14 +107,8 @@ set<string> free_type_names(const Haskell::ClassDecl& class_decl)
     add(tvars, free_type_names(class_decl.context));
     if (class_decl.decls)
     {
-        for(auto& decl: unloc(*class_decl.decls))
-        {
-            if (decl.is_a<Haskell::SignatureDecl>())
-            {
-                auto& T = decl.as_<Haskell::SignatureDecl>();
-                add(tvars, free_type_names_from_type(T.type));
-            }
-        }
+        for(auto& [name, type]: unloc(*class_decl.decls).signatures)
+            add(tvars, free_type_names_from_type(type));
     }
     return tvars;
 }
@@ -724,14 +718,8 @@ void kindchecker_state::kind_check_type_class(const Haskell::ClassDecl& class_de
 
     if (class_decl.decls)
     {
-        for(auto& decl: unloc(*class_decl.decls))
-        {
-            if (decl.is_a<Haskell::SignatureDecl>())
-            {
-                auto& TD = decl.as_<Haskell::SignatureDecl>();
-                kind_check_class_method_type(TD.type);
-            }
-        }
+        for(auto& [name,type]: unloc(*class_decl.decls).signatures)
+            kind_check_class_method_type(type);
     }
 
     pop_type_var_scope();
@@ -798,10 +786,10 @@ Haskell::Type kindchecker_state::type_check_class_method_type(Haskell::Type type
 
 map<string, Haskell::Type> kindchecker_state::type_check_type_class(const Haskell::ClassDecl& class_decl)
 {
+    auto& name = class_decl.name;
+
     // Bind type parameters for class
     push_type_var_scope();
-
-    auto& name = class_decl.name;
 
     // a. Look up kind for this data type.
     auto k = kind_check_type_con(name);
@@ -836,17 +824,12 @@ map<string, Haskell::Type> kindchecker_state::type_check_type_class(const Haskel
     map<string,Haskell::Type> types;
     if (class_decl.decls)
     {
-        for(auto& decl: unloc(*class_decl.decls))
+        for(auto& [name, type]: unloc(*class_decl.decls).signatures)
         {
-            if (decl.is_a<Haskell::SignatureDecl>())
-            {
-                auto& TD = decl.as_<Haskell::SignatureDecl>();
-                Haskell::Type method_type = type_check_class_method_type(TD.type, constraint);
-                if (class_typevars.size())
-                    method_type = add_forall_vars(class_typevars, method_type);
-                for(auto& var: TD.vars)
-                    types.insert({unloc(var.name), method_type});
-            }
+            Hs::Type method_type = type_check_class_method_type(type, constraint);
+            if (class_typevars.size())
+                method_type = add_forall_vars(class_typevars, method_type);
+            types.insert({name, method_type});
         }
     }
 
