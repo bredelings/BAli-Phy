@@ -636,7 +636,7 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
     }
     else if (is_tuple_name(con_name))
     {
-        int n = con_name.size()-1;
+        int n = tuple_arity(con_name);
         vector<Hs::Type> types;
         for(int i=0;i<n;i++)
             types.push_back(fresh_type_var());
