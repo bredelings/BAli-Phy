@@ -2,11 +2,31 @@
 #include "util/string/join.H"
 
 using std::string;
+using std::pair;
 using std::vector;
 using std::optional;
 
 namespace Haskell
 {
+
+optional<pair<Type,Type>> is_function_type(const Type& t)
+{
+    if (auto ta = t.to<Hs::TypeApp>())
+    {
+        auto t2 = ta->arg;
+        if (auto tb = ta->head.to<Hs::TypeApp>())
+        {
+            auto t1 = tb->arg;
+            if (auto tc = tb->head.to<Hs::TypeCon>())
+            {
+                if (unloc(tc->name) == "->")
+                    return {{t1,t2}};
+            }
+        }
+    }
+    return {};
+}
+
 
 string parenthesize_type(const expression_ref& t)
 {

@@ -970,6 +970,8 @@ struct Module
 
 Type make_arrow_type(const Type& t1, const Type& t2);
 
+std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
+
 // which one of these handles variables?
 // probably FunDecl
 
