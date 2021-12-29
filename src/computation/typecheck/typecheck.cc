@@ -548,15 +548,17 @@ Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl
 
 struct typechecker_state
 {
+    typechecker_state(const constr_env& ce)
+        :con_info(ce)
+        { }
+
     Hs::Type bool_type() const { return Hs::TypeCon({noloc,"Data.Bool.True"}); }
 
     Hs::Type num_type() const { return Hs::TypeCon({noloc,"Num#"}); }
 
     Hs::Type char_type() const { return Hs::TypeCon({noloc,"Char#"}); }
 
-    map<string,shared_ptr<Hs::DataOrNewtypeDecl>> con_to_data;
-
-    Hs::DataOrNewtypeDecl instantiate(const Hs::DataOrNewtypeDecl& d);
+    constr_env con_info;
 
     pair<Hs::Type, vector<Hs::Type>> constr_types(const Hs::Con&);
 
@@ -575,12 +577,6 @@ struct typechecker_state
         tv.index = next_var_index;
         next_var_index++;
         return tv;
-    }
-
-    void add_data_type(const shared_ptr<Hs::DataOrNewtypeDecl>& d)
-    {
-        for(auto& con: d->constructors)
-            con_to_data[con.name] = d;
     }
 
     Hs::Type instantiate(const Hs::Type& t);
@@ -619,15 +615,6 @@ struct typechecker_state
     infer_type_for_decls(const global_value_env& env, const Hs::Binds& binds);
 };
 
-Hs::DataOrNewtypeDecl typechecker_state::instantiate(const Hs::DataOrNewtypeDecl& d)
-{
-    substitution_t s;
-    for(auto ftv: d.type_vars)
-        s = s.insert({ftv,fresh_type_var()});
-
-    return apply_subst(s,d);
-}
-
 set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
 
 pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& con)
@@ -654,19 +641,18 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
     }
 
     // 1. Find the data type
-    if (not con_to_data.count(con_name))
+    if (not con_info.count(con_name))
         throw myexception()<<"Unrecognized constructor: "<<con;
-    auto d = instantiate(*con_to_data.at(con_name));
+    auto con_type = instantiate(con_info.at(con_name));
+    vector<Hs::Type> field_types;
 
-    // 2. Construct the data type for the pattern
-    Hs::Type object_type = Hs::TypeCon({noloc,d.name});
-    for(auto type_var: d.type_vars)
-        object_type = Hs::TypeApp(object_type, type_var);
-
-    // 3a. Get types for the pattern fields
-    // 3b. Check that pattern has the correct arity
-    auto con_info = *d.find_constructor_by_name(con_name);
-    auto field_types = con_info.get_field_types();
+    while(auto f = Hs::is_function_type(con_type))
+    {
+        auto [t1,t2] = *f;
+        field_types.push_back(t1);
+        con_type = t2;
+    }
+    auto object_type = con_type;
 
     return {object_type, field_types};
 }
@@ -1355,9 +1341,9 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
     std::cerr<<"\n";
 
     // CVE_T = constructor types :: map<string, polytype> = global_value_env
-    auto constructor_info = get_constructor_info(m, M.type_decls, tce);
+    auto constr_info = get_constructor_info(m, M.type_decls, tce);
 
-    for(auto& [con,type]: constructor_info)
+    for(auto& [con,type]: constr_info)
     {
         std::cerr<<con<<" :: "<<type.print()<<"\n";
     }
@@ -1435,7 +1421,7 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
     // Looks like code for determining inlining
 
     
-    typechecker_state state;
+    typechecker_state state(constr_info);
     global_value_env env0;
 
     auto [s,env] = state.infer_type_for_decls(env0, M.value_decls);
