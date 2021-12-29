@@ -1300,12 +1300,20 @@ Hs::Type remove_top_level_foralls(Hs::Type t)
     return t;
 }
 
-global_value_env get_constructor_info(const Hs::Decls&, const type_con_env tce)
+global_value_env get_constructor_info(const Module& m, const Hs::Decls& decls, const type_con_env tce)
 {
-    return {};
+    kindchecker_state ks(m);
+
+    for(auto& decl: decls)
+    {
+        auto d = decl.to<Hs::DataOrNewtypeDecl>();
+        if (not d) continue;
+
+        auto constr_map = ks.type_check_data_type(*d);
+    }
 }
 
-class_env get_class_info(const Hs::Decls&, const type_con_env tce)
+class_env get_class_info(const Module& m, const Hs::Decls&, const type_con_env tce)
 {
     return {};
 }
@@ -1322,9 +1330,9 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
     // TCE_T = type con info, part1
     auto tce = get_tycon_info(m, M.type_decls);
     // CVE_T = constructor types :: map<string, polytype> = global_value_env
-    global_value_env constructor_info = get_constructor_info(M.type_decls, tce);
+    global_value_env constructor_info = get_constructor_info(m, M.type_decls, tce);
     //   CE_C  = class name -> class info
-    class_env class_info = get_class_info(M.type_decls, tce);
+    class_env class_info = get_class_info(m, M.type_decls, tce);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
     global_value_env class_method_info;
     for(auto& [name,class_info]: class_info)
