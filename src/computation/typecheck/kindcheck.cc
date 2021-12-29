@@ -784,15 +784,21 @@ Haskell::Type kindchecker_state::type_check_class_method_type(Haskell::Type type
     return type;
 }
 
-map<string, Haskell::Type> kindchecker_state::type_check_type_class(const Haskell::ClassDecl& class_decl)
+class_info kindchecker_state::type_check_type_class(const Haskell::ClassDecl& class_decl, const type_con_env& tce)
 {
     auto& name = class_decl.name;
+
+    class_info cinfo;
+    cinfo.type_vars = class_decl.type_vars;
+    cinfo.name = name;
+    cinfo.emitted_name = "class$"+name;
+    cinfo.context = class_decl.context;
 
     // Bind type parameters for class
     push_type_var_scope();
 
     // a. Look up kind for this data type.
-    auto k = kind_check_type_con(name);
+    kind k = tce.at(name).k;  // FIXME -- check that this is a class?
 
     // b. Put each type variable into the kind.
     vector<Haskell::TypeVar> class_typevars;
@@ -829,13 +835,13 @@ map<string, Haskell::Type> kindchecker_state::type_check_type_class(const Haskel
             Hs::Type method_type = type_check_class_method_type(type, constraint);
             if (class_typevars.size())
                 method_type = add_forall_vars(class_typevars, method_type);
-            types.insert({name, method_type});
+            cinfo.methods = cinfo.methods.insert({name, method_type});
         }
     }
 
     pop_type_var_scope();
 
-    return types;
+    return cinfo;
 }
 
 /*

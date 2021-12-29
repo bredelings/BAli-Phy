@@ -55,7 +55,7 @@ struct kindchecker_state
     void kind_check_class_method_type(const Haskell::Type& type);
     void kind_check_type_class(const Haskell::ClassDecl& class_decl);
     Haskell::Type type_check_class_method_type(Haskell::Type type, const Haskell::Type& constraint);
-    std::map<std::string, Haskell::Type> type_check_type_class(const Haskell::ClassDecl& class_decl);
+    class_info type_check_type_class(const Haskell::ClassDecl& class_decl, const type_con_env&);
 
     // data or newtype
     std::map<std::string, Haskell::Type> type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl, const type_con_env&);

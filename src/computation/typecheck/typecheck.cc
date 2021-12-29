@@ -1300,9 +1300,24 @@ constr_env get_constructor_info(const Module& m, const Hs::Decls& decls, const t
     return cve;
 }
 
-class_env get_class_info(const Module& m, const Hs::Decls&, const type_con_env tce)
+class_env get_class_info(const Module& m, const Hs::Decls& decls, const type_con_env& tce)
 {
-    return {};
+    class_env ce;
+
+    constr_env cve;
+
+    kindchecker_state ks(m);
+
+    for(auto& decl: decls)
+    {
+        auto c = decl.to<Hs::ClassDecl>();
+        if (not c) continue;
+
+        auto class_info = ks.type_check_type_class(*c, tce);
+        ce.insert({class_info.name, class_info});
+    }
+
+    return ce;
 }
 
 void typecheck(const Module& m, const Hs::ModuleDecls& M)
@@ -1315,6 +1330,7 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
     // 2. Check the module's class declarations, produce some translated bindings -> binds_C ( GVE_C, CE_C, GIE_C )
 
     // TCE_T = type con info, part1
+    std::cerr<<"-------- module "<<m.name<<"--------\n";
     auto tce = get_tycon_info(m, M.type_decls);
     for(auto& [tycon,ka]: tce)
     {
@@ -1338,6 +1354,13 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
     global_value_env class_method_info;
     for(auto& [name,class_info]: class_info)
         class_method_info = plus_no_overlap(class_method_info, class_info.methods);
+
+    for(auto& [method,type]: class_method_info)
+    {
+        std::cerr<<method<<" :: "<<type.print()<<"\n";
+    }
+    std::cerr<<"\n";
+
     // GIE_C = functions to extract sub-dictionaries from containing dictionaries?
     // NOT IMPLEMENTED YET.
 
