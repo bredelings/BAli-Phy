@@ -30,6 +30,18 @@ using std::pair;
 using std::shared_ptr;
 using std::tuple;
 
+/*
+  TODO:
+  1. Check that constraints in classes only mention type vars.
+  2. Check that constraints in instance heads are of the form Class (Tycon a1 a2 a3..)
+  3. Check that constraints in instance contexts satisfy the "paterson conditions"
+  4. Construct the list of class -> [tycon] -> instance to record which instances exist
+     (like in THIH -- no actual code generation yet)
+  5. How are we actually supposed to store the GIE?
+  6. Put class methods into global namespace WITH their type -> how?
+ */
+
+
 typedef Hs::Type monotype;
 typedef Hs::Type overtype;
 typedef Hs::Type polytype;
