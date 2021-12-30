@@ -734,7 +734,11 @@ expression_ref typechecker_state::instantiate(const expression_ref& t)
     while(auto fa = t2.to<Hs::ForallType>())
     {
         for(auto& tv: fa->type_var_binders)
-            s = s.insert({tv,fresh_type_var()});
+        {
+            auto new_tv = fresh_type_var();
+            new_tv.kind = tv.kind;
+            s = s.insert({tv,new_tv});
+        }
         t2 = fa->type;
     }
     return apply_subst(s,t2);

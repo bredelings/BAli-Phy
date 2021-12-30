@@ -15,43 +15,66 @@ using std::vector;
 
 namespace views = ranges::views;
 
-set<string> free_type_names_from_type(const Haskell::Type& type)
+set<string> free_type_cons(const Haskell::Context& context);
+
+set<string> free_type_cons_from_type(const Haskell::Type& type)
 {
-    set<string> tvars;
-    if (auto tc = type.to<Haskell::TypeCon>())
+    set<string> tcons;
+    if (type.is_a<Haskell::TypeVar>())
+    {
+        return {};
+    }
+    else if (auto tc = type.to<Haskell::TypeCon>())
     {
         auto& name = unloc(tc->name);
         if (is_qualified_symbol(name))
-            tvars.insert(name);
+            tcons.insert(name);
     }
     else if (type.is_a<Haskell::TypeApp>())
     {
         auto& app = type.as_<Haskell::TypeApp>();
-        add(tvars, free_type_names_from_type(app.head));
-        add(tvars, free_type_names_from_type(app.arg));
+        add(tcons, free_type_cons_from_type(app.head));
+        add(tcons, free_type_cons_from_type(app.arg));
     }
     else if (type.is_a<Haskell::TupleType>())
     {
         auto& tuple = type.as_<Haskell::TupleType>();
         for(auto element_type: tuple.element_types)
-            add(tvars, free_type_names_from_type(element_type));
+            add(tcons, free_type_cons_from_type(element_type));
     }
     else if (type.is_a<Haskell::ListType>())
     {
         auto& list = type.as_<Haskell::ListType>();
-        return free_type_names_from_type(list.element_type);
+        return free_type_cons_from_type(list.element_type);
     }
     else if (auto forall = type.to<Haskell::ForallType>())
     {
-        return free_type_names_from_type(forall->type);
+        return free_type_cons_from_type(forall->type);
     }
-    return tvars;
+    else if (auto c = type.to<Hs::ConstrainedType>())
+    {
+        add(tcons, free_type_cons(c->context));
+        add(tcons, free_type_cons_from_type(c->type));
+    }
+    else if (auto sl = type.to<Hs::StrictLazyType>())
+    {
+        return free_type_cons_from_type(sl->type);
+    }
+    else
+        std::abort();
+    return tcons;
 }
+
+set<string> free_type_vars(const Haskell::Context&);
 
 set<string> free_type_vars_from_type(const Haskell::Type& type)
 {
     set<string> tvars;
-    if (auto tv = type.to<Haskell::TypeVar>())
+    if (type.is_a<Haskell::TypeCon>())
+    {
+        return {};
+    }
+    else if (auto tv = type.to<Haskell::TypeVar>())
     {
         auto& name = unloc(tv->name);
         tvars.insert(name);
@@ -77,10 +100,20 @@ set<string> free_type_vars_from_type(const Haskell::Type& type)
     {
         tvars = free_type_vars_from_type(forall->type);
         for(auto& type_var: forall->type_var_binders)
-        {
             tvars.erase(unloc(type_var.name));
-        }
     }
+    else if (auto c = type.to<Hs::ConstrainedType>())
+    {
+        add(tvars, free_type_vars(c->context));
+        add(tvars, free_type_vars_from_type(c->type));
+    }
+    else if (auto sl = type.to<Hs::StrictLazyType>())
+    {
+        return free_type_vars_from_type(sl->type);
+    }
+    else
+        std::abort();
+
     return tvars;
 }
 
@@ -92,64 +125,64 @@ set<string> free_type_vars(const Haskell::Context& context)
     return tvars;
 }
 
-set<string> free_type_names(const Haskell::Context& context)
+set<string> free_type_cons(const Haskell::Context& context)
 {
     set<string> tvars;
     for(auto& constraint: context.constraints)
-        add(tvars, free_type_names_from_type(constraint));
+        add(tvars, free_type_cons_from_type(constraint));
     return tvars;
 }
 
-set<string> free_type_names(const Haskell::ClassDecl& class_decl)
+set<string> free_type_cons(const Haskell::ClassDecl& class_decl)
 {
     // QUESTION: We are ignoring default methods here -- should we?
     set<string> tvars;
-    add(tvars, free_type_names(class_decl.context));
+    add(tvars, free_type_cons(class_decl.context));
     if (class_decl.decls)
     {
         for(auto& [name, type]: unloc(*class_decl.decls).signatures)
-            add(tvars, free_type_names_from_type(type));
+            add(tvars, free_type_cons_from_type(type));
     }
     return tvars;
 }
 
-set<string> free_type_names(const Haskell::DataOrNewtypeDecl& type_decl)
+set<string> free_type_cons(const Haskell::DataOrNewtypeDecl& type_decl)
 {
     set<string> tvars;
-    add(tvars, free_type_names(type_decl.context));
+    add(tvars, free_type_cons(type_decl.context));
     for(auto& constr: type_decl.constructors)
     {
         if (constr.context)
-            add(tvars, free_type_names(*constr.context));
+            add(tvars, free_type_cons(*constr.context));
 
         if (constr.is_record_constructor())
         {
             auto& field_decls = std::get<1>(constr.fields).field_decls;
             for(auto& field: field_decls)
-                add(tvars, free_type_names_from_type(field.type));
+                add(tvars, free_type_cons_from_type(field.type));
         }
         else
         {
             auto& types = std::get<0>(constr.fields);
             for(auto& type: types)
-                add(tvars, free_type_names_from_type(type));
+                add(tvars, free_type_cons_from_type(type));
         }
     }
     return tvars;
 }
 
-set<string> free_type_names(const Haskell::TypeSynonymDecl& synonym_decl)
+set<string> free_type_cons(const Haskell::TypeSynonymDecl& synonym_decl)
 {
-    return free_type_names_from_type(unloc(synonym_decl.rhs_type));
+    return free_type_cons_from_type(unloc(synonym_decl.rhs_type));
 }
 
-set<string> free_type_names(const Haskell::InstanceDecl& instance_decl)
+set<string> free_type_cons(const Haskell::InstanceDecl& instance_decl)
 {
     set<string> tvars;
-    add(tvars, free_type_names(instance_decl.context));
+    add(tvars, free_type_cons(instance_decl.context));
     tvars.insert(instance_decl.name);
     for(auto& type_arg: instance_decl.type_args)
-        add(tvars, free_type_names_from_type(type_arg));
+        add(tvars, free_type_cons_from_type(type_arg));
     return tvars;
 
 }
@@ -179,25 +212,25 @@ vector<vector<expression_ref>> find_type_groups(const Module& m, const Hs::Decls
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto& class_decl = decl.as_<Haskell::ClassDecl>();
-            referenced_types[class_decl.name] = free_type_names(class_decl);
+            referenced_types[class_decl.name] = free_type_cons(class_decl);
             decl_for_type[class_decl.name] = decl;
         }
         else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
         {
             auto& type_decl = decl.as_<Haskell::DataOrNewtypeDecl>();
-            referenced_types[type_decl.name] = free_type_names(type_decl);
+            referenced_types[type_decl.name] = free_type_cons(type_decl);
             decl_for_type[type_decl.name] = decl;
         }
         else if (decl.is_a<Haskell::TypeSynonymDecl>())
         {
             auto& type_decl = decl.as_<Haskell::TypeSynonymDecl>();
-            referenced_types[type_decl.name] = free_type_names(type_decl);
+            referenced_types[type_decl.name] = free_type_cons(type_decl);
             decl_for_type[type_decl.name] = decl;
         }
         else if (decl.is_a<Haskell::InstanceDecl>())
         {
             auto& instance_decl = decl.as_<Haskell::InstanceDecl>();
-            instance_decls.push_back({instance_decl, free_type_names(instance_decl)});
+            instance_decls.push_back({instance_decl, free_type_cons(instance_decl)});
         }
         else
             std::abort();
@@ -206,7 +239,7 @@ vector<vector<expression_ref>> find_type_groups(const Module& m, const Hs::Decls
     // 2. Get order list of mutually dependent TYPE declarations
 
     // Input to the dependency analysis is a list of
-    // * (declaration, name, names that this declaration depends on)
+    // * (declaration, name, cons that this declaration depends on)
 
     for(auto& [type, referenced_types]: referenced_types)
         referenced_types = from_this_module(m.name, referenced_types);
@@ -279,7 +312,7 @@ Haskell::Type add_forall_vars(const std::vector<Haskell::TypeVar>& type_vars, co
 
 set<Haskell::TypeVar> free_type_VARS_from_type(const Haskell::Type& type)
 {
-    // This version finds varids -- the other version finds qualified names.
+    // This version finds varids -- the other version finds qualified cons.
     set<Haskell::TypeVar> tvars;
     if (type.is_a<Haskell::TypeCon>())
     {
