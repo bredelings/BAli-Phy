@@ -943,15 +943,6 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
             }
             decl = C;
         }
-        else if (decl.is_a<Haskell::InstanceDecl>())
-        {
-            auto I = decl.as_<Haskell::InstanceDecl>();
-            if (I.decls)
-            {
-                auto& vdecls = unloc(*I.decls);
-            }
-            decl = I;
-        }
         // Wait.. don't we need to discover constructors, too?
     }
 
