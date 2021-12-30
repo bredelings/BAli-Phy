@@ -274,8 +274,6 @@ typedef Hs::Type constraint;
 // GVE = global value environment      = var -> polytype
 // LVE = local  value environment      = var -> monotype
 
-typedef immer::map<std::string, Hs::Type> value_env;
-
 typedef value_env constr_env;
 
 string print(const value_env& env)
@@ -332,6 +330,26 @@ void add_no_overlap(value_env& e1, const value_env& e2)
 }
 
 value_env plus_no_overlap(const value_env& e1, const value_env& e2)
+{
+    auto e3 = e1;
+    add_no_overlap(e3,e2);
+    return e3;
+}
+
+void add_no_overlap(type_con_env& e1, const type_con_env& e2)
+{
+    if (e1.empty())
+        e1 = e2;
+    else
+        for(auto& [x,t]: e2)
+        {
+            if (e1.count(x))
+                throw myexception()<<"Both environments contain variable "<<x<<"!";
+            e1.insert({x,t});
+        }
+}
+
+type_con_env plus_no_overlap(const type_con_env& e1, const type_con_env& e2)
 {
     auto e3 = e1;
     add_no_overlap(e3,e2);
@@ -1285,18 +1303,18 @@ Hs::Type remove_top_level_foralls(Hs::Type t)
     return t;
 }
 
-constr_env get_constructor_info(const Module& m, const Hs::Decls& decls, const type_con_env tce)
+constr_env get_constructor_info(const Module& m, const Hs::Decls& decls, const type_con_env& tce)
 {
     constr_env cve;
 
-    kindchecker_state ks(m);
+    kindchecker_state ks(m, tce);
 
     for(auto& decl: decls)
     {
         auto d = decl.to<Hs::DataOrNewtypeDecl>();
         if (not d) continue;
 
-        auto constr_map = ks.type_check_data_type(*d, tce);
+        auto constr_map = ks.type_check_data_type(*d);
         for(auto& [name, type]: constr_map)
             cve = cve.insert({name,type});
     }
@@ -1310,14 +1328,14 @@ class_env get_class_info(const Module& m, const Hs::Decls& decls, const type_con
 
     constr_env cve;
 
-    kindchecker_state ks(m);
+    kindchecker_state ks(m, tce);
 
     for(auto& decl: decls)
     {
         auto c = decl.to<Hs::ClassDecl>();
         if (not c) continue;
 
-        auto class_info = ks.type_check_type_class(*c, tce);
+        auto class_info = ks.type_check_type_class(*c);
         ce.insert({class_info.name, class_info});
     }
 

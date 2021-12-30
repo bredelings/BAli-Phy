@@ -259,12 +259,15 @@ type_con_env get_tycon_info(const Module& m, const Hs::Decls& type_decls)
     // 3. Compute kinds for type/class constructors.
     for(auto& type_decl_group: type_decl_groups)
     {
-        kindchecker_state K(m);
-        for(auto& [name,ka]: K.infer_kinds(type_decl_group))
+        kindchecker_state K(m, tce);
+        auto new_tycons = K.infer_kinds(type_decl_group);
+        tce = plus_no_overlap(tce, new_tycons);
+
+        // Record tycon info in type table (REMOVE EVENTUALLY?)
+        for(auto& [name,info]: new_tycons)
         {
             // Compute arity and kind for return value.
-            auto& [arity,k] = ka;
-            tce.insert({name,{k,arity}});
+            auto& [k,arity] = info;
 
             // Record arity and kind in type_symbols.
             auto tinfo = m.lookup_resolved_type(name);
@@ -384,10 +387,10 @@ void kindchecker_state::pop_type_var_scope()
     assert(not type_var_to_kind.empty());
 }
 
-void kindchecker_state::add_type_con_of_kind(const string& name, const kind& k)
+void kindchecker_state::add_type_con_of_kind(const string& name, const kind& k, int arity)
 {
     assert(not type_con_to_kind.count(name));
-    type_con_to_kind.insert({name,k});
+    type_con_to_kind.insert({name,{k,arity}});
 }
 
 kind kindchecker_state::apply_substitution(const kind& k) const
@@ -411,7 +414,7 @@ void kindchecker_state::add_substitution(const k_substitution_t& s)
 
 kind kindchecker_state::kind_for_type_con(const std::string& name) const
 {
-    auto k = type_con_to_kind.at(name);
+    auto k = type_con_to_kind.at(name).k;
     return apply_substitution(k);
 }
 
@@ -627,12 +630,12 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
     pop_type_var_scope();
 }
 
-map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl, const type_con_env& tce)
+map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl)
 {
     push_type_var_scope();
 
     // a. Look up kind for this data type.
-    kind k = tce.at(data_decl.name).k;  // FIXME -- check that this is a data type?
+    kind k = kind_for_type_con(data_decl.name);  // FIXME -- check that this is a data type?
 
     // b. Bind each type variable.
     vector<Haskell::TypeVar> datatype_typevars;
@@ -817,7 +820,7 @@ Haskell::Type kindchecker_state::type_check_class_method_type(Haskell::Type type
     return type;
 }
 
-class_info kindchecker_state::type_check_type_class(const Haskell::ClassDecl& class_decl, const type_con_env& tce)
+class_info kindchecker_state::type_check_type_class(const Haskell::ClassDecl& class_decl)
 {
     auto& name = class_decl.name;
 
@@ -831,7 +834,7 @@ class_info kindchecker_state::type_check_type_class(const Haskell::ClassDecl& cl
     push_type_var_scope();
 
     // a. Look up kind for this data type.
-    kind k = tce.at(name).k;  // FIXME -- check that this is a class?
+    kind k = kind_for_type_con(name);  // FIXME -- check that this is a class?
 
     // b. Put each type variable into the kind.
     vector<Haskell::TypeVar> class_typevars;
@@ -914,9 +917,10 @@ void kindchecker_state::kind_check_type_synonym(const Haskell::TypeSynonymDecl& 
     pop_type_var_scope();
 }
 
-std::map<string,std::pair<int,kind>> kindchecker_state::infer_kinds(const vector<expression_ref>& type_decl_group)
+type_con_env kindchecker_state::infer_kinds(const vector<expression_ref>& type_decl_group)
 {
     // 1. Infer initial kinds for types and type classes
+    type_con_env new_tycons;
     for(auto& type_decl: type_decl_group)
     {
         string name;
@@ -950,7 +954,8 @@ std::map<string,std::pair<int,kind>> kindchecker_state::infer_kinds(const vector
         for(int i=0;i<arity;i++)
             k = make_kind_arrow( fresh_kind_var(), k );
 
-        add_type_con_of_kind(name, k);
+        add_type_con_of_kind(name, k, arity);
+        new_tycons.insert({name,{k,arity}});
     }
 
     // 2. Do kind inference for each declaration
@@ -983,36 +988,18 @@ std::map<string,std::pair<int,kind>> kindchecker_state::infer_kinds(const vector
         }
     }
 
-    map<string,pair<int,kind>> kind_and_arity;
-    for(auto& type_decl: type_decl_group)
+    // 3. Construct the mapping from new tycon -> (kind,arity)
+    for(auto& [name,info]: new_tycons)
     {
-        string name;
-        int arity;
-        if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
-        {
-            auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
-            name = D.name;
-            arity = D.type_vars.size();
-        }
-        else if (type_decl.is_a<Haskell::ClassDecl>())
-        {
-            auto& C = type_decl.as_<Haskell::ClassDecl>();
-            name = C.name;
-            arity = C.type_vars.size();
-        }
-        else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
-        {
-            auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
-            name = T.name;
-            arity = T.type_vars.size();
-        }
-
+        // Lookup kind and do substitutions
         auto k = kind_for_type_con(name);
         k = replace_kvar_with_star(k);
-        kind_and_arity.insert({name,{arity,k}});
+
+        auto& [k_out,arity] = info;
+        k_out = k;
     }
 
-    return kind_and_arity;
+    return new_tycons;
 }
 
 // How can type variables come up?

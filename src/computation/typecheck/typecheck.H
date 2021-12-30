@@ -17,6 +17,12 @@ typedef value_env local_value_env;
 
 typedef value_env constr_env;
 
+std::string print(const value_env& env);
+void add_no_overlap(value_env& e1, const value_env& e2);
+value_env plus_no_overlap(const value_env& e1, const value_env& e2);
+void add_prefer_right(value_env& e1, const value_env& e2);
+value_env plus_prefer_right(const value_env& e1, const value_env& e2);
+
 struct type_con_info
 {
     kind k;
@@ -28,6 +34,9 @@ struct type_con_info
 };
 
 typedef std::map<std::string, type_con_info> type_con_env;
+
+void add_no_overlap(type_con_env& e1, const type_con_env& e2);
+type_con_env plus_no_overlap(const type_con_env& e1, const type_con_env& e2);
 
 struct class_info
 {

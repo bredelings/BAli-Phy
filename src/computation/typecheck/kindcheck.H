@@ -21,7 +21,7 @@ struct kindchecker_state
     kind_var fresh_kind_var() {return fresh_named_kind_var("k");}
 
     // These three together form the "type context"
-    std::map<std::string,kind> type_con_to_kind;
+    type_con_env type_con_to_kind;
     std::vector<std::map<Haskell::TypeVar,kind>> type_var_to_kind;
     k_substitution_t kind_var_to_kind;
     // We also need the kinds for type classes and type constructors of previous groups.
@@ -38,7 +38,7 @@ struct kindchecker_state
 
     kind kind_for_type_con(const std::string&) const;
     kind kind_for_type_var(const Haskell::TypeVar&) const;
-    void add_type_con_of_kind(const std::string& name, const kind& k);
+    void add_type_con_of_kind(const std::string& name, const kind& k, int arity);
 
     // Kind check a group.
     // Doesn't GHC first "guess" the kinds, and then "check" them?
@@ -55,10 +55,10 @@ struct kindchecker_state
     void kind_check_class_method_type(const Haskell::Type& type);
     void kind_check_type_class(const Haskell::ClassDecl& class_decl);
     Haskell::Type type_check_class_method_type(Haskell::Type type, const Haskell::Type& constraint);
-    class_info type_check_type_class(const Haskell::ClassDecl& class_decl, const type_con_env&);
+    class_info type_check_type_class(const Haskell::ClassDecl& class_decl);
 
     // data or newtype
-    std::map<std::string, Haskell::Type> type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl, const type_con_env&);
+    std::map<std::string, Haskell::Type> type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
     void kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
     Haskell::Type type_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
     void kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
@@ -66,10 +66,10 @@ struct kindchecker_state
     // type synonym
     void kind_check_type_synonym(const Haskell::TypeSynonymDecl& type_syn_decl);
 
-    std::map<std::string, std::pair<int,kind>> infer_kinds(const std::vector<expression_ref>& type_decl_group);
+    type_con_env infer_kinds(const std::vector<expression_ref>& type_decl_group);
 
-    kindchecker_state(const Module& m)
-        :mod(m)
+    kindchecker_state(const Module& m, const type_con_env& tce)
+        :mod(m), type_con_to_kind(tce)
     {
         type_var_to_kind.push_back({});
     }
