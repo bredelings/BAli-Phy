@@ -298,33 +298,6 @@ expression_ref alphabetize_type(const expression_ref& type)
 //
 // }
 
-Hs::Constructor apply_subst(const substitution_t& s, Hs::Constructor con)
-{
-    if (con.context)
-        con.context = apply_subst(s, *con.context);
-
-    if (con.fields.index() == 0)
-    {
-        for(auto& t: std::get<0>(con.fields))
-                t = apply_subst(s, t);
-    }
-    else
-    {
-        for(auto& f: std::get<1>(con.fields).field_decls)
-            f.type = apply_subst(s, f.type);
-    }
-    return con;
-}
-
-Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl d)
-{
-    d.context = apply_subst(s, d.context);
-    for(auto& con: d.constructors)
-        con = apply_subst(s, con);
-
-    return d;
-}
-
 struct typechecker_state
 {
     typechecker_state(const constr_env& ce)

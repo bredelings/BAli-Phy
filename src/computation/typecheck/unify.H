@@ -39,6 +39,9 @@ namespace std
 
 Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t);
 Hs::Context apply_subst(const substitution_t& s, Hs::Context C);
+Hs::Constructor apply_subst(const substitution_t& s, Hs::Constructor con);
+Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl d);
+
 substitution_t compose(substitution_t s2, substitution_t s1);
 substitution_t unify(const Hs::Type& t1, const Hs::Type& t2);
 
