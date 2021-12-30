@@ -17,7 +17,7 @@ namespace views = ranges::views;
 
 set<string> free_type_cons(const Haskell::Context& context);
 
-set<string> free_type_cons_from_type(const Haskell::Type& type)
+set<string> free_type_cons(const Haskell::Type& type)
 {
     set<string> tcons;
     if (type.is_a<Haskell::TypeVar>())
@@ -33,32 +33,32 @@ set<string> free_type_cons_from_type(const Haskell::Type& type)
     else if (type.is_a<Haskell::TypeApp>())
     {
         auto& app = type.as_<Haskell::TypeApp>();
-        add(tcons, free_type_cons_from_type(app.head));
-        add(tcons, free_type_cons_from_type(app.arg));
+        add(tcons, free_type_cons(app.head));
+        add(tcons, free_type_cons(app.arg));
     }
     else if (type.is_a<Haskell::TupleType>())
     {
         auto& tuple = type.as_<Haskell::TupleType>();
         for(auto element_type: tuple.element_types)
-            add(tcons, free_type_cons_from_type(element_type));
+            add(tcons, free_type_cons(element_type));
     }
     else if (type.is_a<Haskell::ListType>())
     {
         auto& list = type.as_<Haskell::ListType>();
-        return free_type_cons_from_type(list.element_type);
+        return free_type_cons(list.element_type);
     }
     else if (auto forall = type.to<Haskell::ForallType>())
     {
-        return free_type_cons_from_type(forall->type);
+        return free_type_cons(forall->type);
     }
     else if (auto c = type.to<Hs::ConstrainedType>())
     {
         add(tcons, free_type_cons(c->context));
-        add(tcons, free_type_cons_from_type(c->type));
+        add(tcons, free_type_cons(c->type));
     }
     else if (auto sl = type.to<Hs::StrictLazyType>())
     {
-        return free_type_cons_from_type(sl->type);
+        return free_type_cons(sl->type);
     }
     else
         std::abort();
@@ -67,7 +67,7 @@ set<string> free_type_cons_from_type(const Haskell::Type& type)
 
 set<string> free_type_vars(const Haskell::Context&);
 
-set<string> free_type_vars_from_type(const Haskell::Type& type)
+set<string> free_type_vars(const Haskell::Type& type)
 {
     set<string> tvars;
     if (type.is_a<Haskell::TypeCon>())
@@ -82,34 +82,34 @@ set<string> free_type_vars_from_type(const Haskell::Type& type)
     else if (type.is_a<Haskell::TypeApp>())
     {
         auto& app = type.as_<Haskell::TypeApp>();
-        add(tvars, free_type_vars_from_type(app.head));
-        add(tvars, free_type_vars_from_type(app.arg));
+        add(tvars, free_type_vars(app.head));
+        add(tvars, free_type_vars(app.arg));
     }
     else if (type.is_a<Haskell::TupleType>())
     {
         auto& tuple = type.as_<Haskell::TupleType>();
         for(auto element_type: tuple.element_types)
-            add(tvars, free_type_vars_from_type(element_type));
+            add(tvars, free_type_vars(element_type));
     }
     else if (type.is_a<Haskell::ListType>())
     {
         auto& list = type.as_<Haskell::ListType>();
-        return free_type_vars_from_type(list.element_type);
+        return free_type_vars(list.element_type);
     }
     else if (auto forall = type.to<Haskell::ForallType>())
     {
-        tvars = free_type_vars_from_type(forall->type);
+        tvars = free_type_vars(forall->type);
         for(auto& type_var: forall->type_var_binders)
             tvars.erase(unloc(type_var.name));
     }
     else if (auto c = type.to<Hs::ConstrainedType>())
     {
         add(tvars, free_type_vars(c->context));
-        add(tvars, free_type_vars_from_type(c->type));
+        add(tvars, free_type_vars(c->type));
     }
     else if (auto sl = type.to<Hs::StrictLazyType>())
     {
-        return free_type_vars_from_type(sl->type);
+        return free_type_vars(sl->type);
     }
     else
         std::abort();
@@ -121,7 +121,7 @@ set<string> free_type_vars(const Haskell::Context& context)
 {
     set<string> tvars;
     for(auto& constraint: context.constraints)
-        add(tvars, free_type_vars_from_type(constraint));
+        add(tvars, free_type_vars(constraint));
     return tvars;
 }
 
@@ -129,7 +129,7 @@ set<string> free_type_cons(const Haskell::Context& context)
 {
     set<string> tvars;
     for(auto& constraint: context.constraints)
-        add(tvars, free_type_cons_from_type(constraint));
+        add(tvars, free_type_cons(constraint));
     return tvars;
 }
 
@@ -141,7 +141,7 @@ set<string> free_type_cons(const Haskell::ClassDecl& class_decl)
     if (class_decl.decls)
     {
         for(auto& [name, type]: unloc(*class_decl.decls).signatures)
-            add(tvars, free_type_cons_from_type(type));
+            add(tvars, free_type_cons(type));
     }
     return tvars;
 }
@@ -159,13 +159,13 @@ set<string> free_type_cons(const Haskell::DataOrNewtypeDecl& type_decl)
         {
             auto& field_decls = std::get<1>(constr.fields).field_decls;
             for(auto& field: field_decls)
-                add(tvars, free_type_cons_from_type(field.type));
+                add(tvars, free_type_cons(field.type));
         }
         else
         {
             auto& types = std::get<0>(constr.fields);
             for(auto& type: types)
-                add(tvars, free_type_cons_from_type(type));
+                add(tvars, free_type_cons(type));
         }
     }
     return tvars;
@@ -173,7 +173,7 @@ set<string> free_type_cons(const Haskell::DataOrNewtypeDecl& type_decl)
 
 set<string> free_type_cons(const Haskell::TypeSynonymDecl& synonym_decl)
 {
-    return free_type_cons_from_type(unloc(synonym_decl.rhs_type));
+    return free_type_cons(unloc(synonym_decl.rhs_type));
 }
 
 set<string> free_type_cons(const Haskell::InstanceDecl& instance_decl)
@@ -182,7 +182,7 @@ set<string> free_type_cons(const Haskell::InstanceDecl& instance_decl)
     add(tvars, free_type_cons(instance_decl.context));
     tvars.insert(instance_decl.name);
     for(auto& type_arg: instance_decl.type_args)
-        add(tvars, free_type_cons_from_type(type_arg));
+        add(tvars, free_type_cons(type_arg));
     return tvars;
 
 }
@@ -313,7 +313,7 @@ Haskell::Type add_forall_vars(const std::vector<Haskell::TypeVar>& type_vars, co
         return Haskell::ForallType(type_vars, type);
 }
 
-set<Haskell::TypeVar> free_type_VARS_from_type(const Haskell::Type& type)
+set<Haskell::TypeVar> free_type_VARS(const Haskell::Type& type)
 {
     // This version finds varids -- the other version finds qualified cons.
     set<Haskell::TypeVar> tvars;
@@ -331,29 +331,29 @@ set<Haskell::TypeVar> free_type_VARS_from_type(const Haskell::Type& type)
     else if (type.is_a<Haskell::TypeApp>())
     {
         auto& app = type.as_<Haskell::TypeApp>();
-        add(tvars, free_type_VARS_from_type(app.head));
-        add(tvars, free_type_VARS_from_type(app.arg));
+        add(tvars, free_type_VARS(app.head));
+        add(tvars, free_type_VARS(app.arg));
     }
     else if (type.is_a<Haskell::TupleType>())
     {
         auto& tuple = type.as_<Haskell::TupleType>();
         for(auto element_type: tuple.element_types)
-            add(tvars, free_type_VARS_from_type(element_type));
+            add(tvars, free_type_VARS(element_type));
     }
     else if (type.is_a<Haskell::ListType>())
     {
         auto& list = type.as_<Haskell::ListType>();
-        add(tvars, free_type_VARS_from_type(list.element_type));
+        add(tvars, free_type_VARS(list.element_type));
     }
     else if (type.is_a<Haskell::ForallType>())
     {
         auto& forall = type.as_<Haskell::ForallType>();
-        tvars = free_type_VARS_from_type(forall.type);
+        tvars = free_type_VARS(forall.type);
         for(auto& type_var: forall.type_var_binders)
             tvars.erase(type_var);
     }
     else
-        throw myexception()<<"free_type_VARS_from_type: unrecognized type \""<<type.print()<<"\"";
+        throw myexception()<<"free_type_VARS: unrecognized type \""<<type.print()<<"\"";
 
     return tvars;
 }
@@ -705,7 +705,7 @@ void kindchecker_state::kind_check_class_method_type(const Haskell::Type& type)
     }
 
     // 3. Find the free type variables
-    auto ftvs = free_type_VARS_from_type(unconstrained_type);
+    auto ftvs = free_type_VARS(unconstrained_type);
     for(auto& ftv: ftvs)
     {
         if (not type_var_in_scope(ftv))
@@ -778,7 +778,7 @@ Haskell::Type kindchecker_state::type_check_class_method_type(Haskell::Type type
     }
 
     // 3. Find the NEW free type variables
-    auto new_ftvs = free_type_VARS_from_type(unconstrained_type);
+    auto new_ftvs = free_type_VARS(unconstrained_type);
     vector<Haskell::TypeVar> to_erase;
     for(auto& type_var: new_ftvs)
         if (type_var_in_scope(type_var))
