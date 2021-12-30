@@ -1292,6 +1292,77 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         Hs::Type result_type = apply_subst(s, Hs::ListType(exp_type));
         return {s, result_type};
     }
+    // ENUM-FROM
+    else if (auto l = E.to<Hs::ListFrom>())
+    {
+    // PROBLEM: the ENUM rules actually take any type t with an Enum t instance.
+//        Hs::Type t = fresh_type_var();
+        Hs::Type t = Hs::TypeCon({noloc,"Num#"});
+
+        // PROBLEM: Do we need to desugar these here, in order to plug in the dictionary?
+        auto [s_from, t_from] = infer_type(env, l->from);
+        auto s1 = unify(t,t_from);
+        auto s = compose(s1, s_from);
+        t = apply_subst(s,t);
+
+        return {s, Hs::ListType(t)};
+    }
+    // ENUM-FROM-THEN
+    else if (auto l = E.to<Hs::ListFromThen>())
+    {
+//        Hs::Type t = fresh_type_var();
+        Hs::Type t = Hs::TypeCon({noloc,"Num#"});
+        auto [s_from, t_from] = infer_type(env, l->from);
+        auto s1 = unify(t,t_from);
+        auto s = compose(s1, s_from);
+        t = apply_subst(s,t);
+
+        auto [s_then, t_then] = infer_type(env, l->then);
+        auto s2 = unify(t,t_then);
+        s = compose(s2, compose(s_then,s));
+        t = apply_subst(s,t);
+
+        return {s, Hs::ListType(t)};
+    }
+    // ENUM-FROM-TO
+    else if (auto l = E.to<Hs::ListFromTo>())
+    {
+//        Hs::Type t = fresh_type_var();
+        Hs::Type t = Hs::TypeCon({noloc,"Num#"});
+        auto [s_from, t_from] = infer_type(env, l->from);
+        auto s1 = unify(t,t_from);
+        auto s = compose(s1, s_from);
+        t = apply_subst(s,t);
+
+        auto [s_to, t_to] = infer_type(env, l->to);
+        auto s2 = unify(t,t_to);
+        s = compose(s2, compose(s_to,s));
+        t = apply_subst(s,t);
+
+        return {s, Hs::ListType(t)};
+    }
+    // ENUM-FROM-THEN-TO
+    else if (auto l = E.to<Hs::ListFromThenTo>())
+    {
+//        Hs::Type t = fresh_type_var();
+        Hs::Type t = Hs::TypeCon({noloc,"Num#"});
+        auto [s_from, t_from] = infer_type(env, l->from);
+        auto s1 = unify(t,t_from);
+        auto s = compose(s1, s_from);
+        t = apply_subst(s,t);
+
+        auto [s_then, t_then] = infer_type(env, l->then);
+        auto s2 = unify(t,t_then);
+        s = compose(s2, compose(s_then,s));
+        t = apply_subst(s,t);
+
+        auto [s_to, t_to] = infer_type(env, l->to);
+        auto s3 = unify(t,t_to);
+        s = compose(s3, compose(s_to,s));
+        t = apply_subst(s,t);
+
+        return {s, Hs::ListType(t)};
+    }
     else
         throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
 }
