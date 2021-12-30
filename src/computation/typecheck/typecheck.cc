@@ -39,6 +39,12 @@ using std::tuple;
      (like in THIH -- no actual code generation yet)
   5. How are we actually supposed to store the GIE?
   6. Put class methods into global namespace WITH their type -> how?
+
+  Cleanups:
+  1. Implement kinds as Hs::Type
+  2. Use Hs::decompose_type_apps( ) to simplify Hs::is_function_type( ),
+     like in parser.y:check_kind( ).
+
  */
 
 
