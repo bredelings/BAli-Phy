@@ -1355,7 +1355,7 @@ void Module::def_ADT(const std::string& tname)
     if (is_qualified_symbol(tname))
         throw myexception()<<"Locally defined type '"<<tname<<"' should not be qualified.";
 
-    declare_type( {tname, type_name_category::ADT, {}} );
+    declare_type( {tname, type_name_category::ADT, {}, /*arity*/ -1, /*kind*/ {}} );
 }
 
 void Module::def_ADT(const std::string& tname, const fixity_info& fixity)
@@ -1363,7 +1363,7 @@ void Module::def_ADT(const std::string& tname, const fixity_info& fixity)
     if (is_qualified_symbol(tname))
         throw myexception()<<"Locally defined symbol '"<<tname<<"' should not be qualified.";
 
-    declare_type( {tname, type_name_category::ADT, fixity} );
+    declare_type( {tname, type_name_category::ADT, fixity, /*arity*/ -1, /*kind*/ {}} );
 }
 
 void Module::def_type_synonym(const std::string& sname)
@@ -1371,7 +1371,7 @@ void Module::def_type_synonym(const std::string& sname)
     if (is_qualified_symbol(sname))
         throw myexception()<<"Locally defined type '"<<sname<<"' should not be qualified.";
 
-    declare_type( {sname, type_name_category::type_syn, {}} );
+    declare_type( {sname, type_name_category::type_syn, {}, /*arity*/ -1, /*kind*/ {}} );
 }
 
 void Module::def_type_class(const std::string& cname)
@@ -1379,7 +1379,7 @@ void Module::def_type_class(const std::string& cname)
     if (is_qualified_symbol(cname))
         throw myexception()<<"Locally defined type '"<<cname<<"' should not be qualified.";
 
-    declare_type( {cname, type_name_category::type_class, {}} );
+    declare_type( {cname, type_name_category::type_class, {}, /*arity*/ -1, /*kind*/ {}} );
 }
 
 void Module::def_type_class_method(const string& method_name, const string& class_name)
