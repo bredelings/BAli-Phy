@@ -39,6 +39,7 @@ using std::tuple;
      (like in THIH -- no actual code generation yet)
   5. How are we actually supposed to store the GIE?
   6. Put class methods into global namespace WITH their type -> how?
+  7. How do we export stuff?
 
   Cleanups:
   1. Implement kinds as Hs::Type
