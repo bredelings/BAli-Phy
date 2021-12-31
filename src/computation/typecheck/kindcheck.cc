@@ -827,14 +827,21 @@ Haskell::Type kindchecker_state::type_check_class_method_type(Haskell::Type type
     return type;
 }
 
-class_info kindchecker_state::type_check_type_class(const Haskell::ClassDecl& class_decl)
+// OK, so
+// * global_value_env    = name         :: forall a: class var => signature (i.e. a-> b -> a)
+// * global_instance_env = made-up-name :: forall a: class var => superclass var
+// * Hs::Decls           = { name         = \dict -> case dict of (_,_,method,_,_) -> method }
+//                       = { made-up-name = \dict -> case dict of (superdict,_,_,_,_) -> superdict }
+
+tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
+kindchecker_state::type_check_type_class(const Haskell::ClassDecl& class_decl)
 {
     auto& name = class_decl.name;
 
     class_info cinfo;
     cinfo.type_vars = class_decl.type_vars;
     cinfo.name = name;
-    cinfo.emitted_name = "class$"+name;
+    cinfo.emitted_name = "class$"+name; // FIXME: only modify name after qualifier?  Just prefix d?
     cinfo.context = class_decl.context;
 
     // Bind type parameters for class
@@ -884,7 +891,11 @@ class_info kindchecker_state::type_check_type_class(const Haskell::ClassDecl& cl
 
     pop_type_var_scope();
 
-    return cinfo;
+    Hs::Decls decls;
+    global_value_env gve;
+    global_instance_env gie;
+    
+    return {gve,gie,cinfo,decls};
 }
 
 /*

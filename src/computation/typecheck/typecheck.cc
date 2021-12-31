@@ -1155,11 +1155,12 @@ constr_env get_constructor_info(const Module& m, const Hs::Decls& decls, const t
     return cve;
 }
 
-class_env get_class_info(const Module& m, const Hs::Decls& decls, const type_con_env& tce)
+tuple<global_value_env, global_instance_env, class_env, Hs::Binds> get_class_info(const Module& m, const Hs::Decls& decls, const type_con_env& tce)
 {
+    global_value_env gve;
+    global_instance_env gie;
     class_env ce;
-
-    constr_env cve;
+    Hs::Binds binds;
 
     kindchecker_state ks(m, tce);
 
@@ -1168,11 +1169,15 @@ class_env get_class_info(const Module& m, const Hs::Decls& decls, const type_con
         auto c = decl.to<Hs::ClassDecl>();
         if (not c) continue;
 
-        auto class_info = ks.type_check_type_class(*c);
+        auto [gve1, gie1, class_info, class_decls] = ks.type_check_type_class(*c);
+
+        gve = plus_no_overlap(gve, gve1);
+        gie = plus_no_overlap(gve, gie1);
         ce.insert({class_info.name, class_info});
+        binds.push_back(class_decls);
     }
 
-    return ce;
+    return {gve, gie, ce, binds};
 }
 
 void typecheck(const Module& m, const Hs::ModuleDecls& M)
@@ -1204,7 +1209,7 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
     std::cerr<<"\n";
 
     //   CE_C  = class name -> class info
-    class_env class_info = get_class_info(m, M.type_decls, tce);
+    auto [gve, gie, class_info, class_binds] = get_class_info(m, M.type_decls, tce);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
     global_value_env class_method_info;
     for(auto& [name,class_info]: class_info)
