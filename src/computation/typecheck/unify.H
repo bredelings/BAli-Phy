@@ -7,6 +7,7 @@
 
 typedef immer::map<Hs::TypeVar, Hs::Type> substitution_t;
 
+std::string print(const substitution_t& s);
 // TODO
 // 1. Merge unification / substitution code for types & kinds?
 

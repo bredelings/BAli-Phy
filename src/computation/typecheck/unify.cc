@@ -1,5 +1,17 @@
 #include "unify.H"
 
+using std::string;
+
+string print(const substitution_t& s)
+{
+    std::ostringstream oss;
+    for(auto& [var,type]: s)
+    {
+        oss<<var.print()<<" :: "<<type.print()<<"\n";
+    }
+    return oss.str();
+}
+
 Hs::Context apply_subst(const substitution_t& s, Hs::Context C)
 {
     for(auto& constraint: C.constraints)

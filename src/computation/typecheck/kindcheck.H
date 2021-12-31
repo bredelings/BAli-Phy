@@ -7,7 +7,7 @@
 #include "parser/haskell.H"
 #include "module.H"
 #include "kind.H"
-#include "typecheck.H"
+#include "env.H"
 
 type_con_env get_tycon_info(const Module& m, const Hs::Decls& type_decls);
 
@@ -73,10 +73,7 @@ struct kindchecker_state
     }
 };
 
-Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type type, const Haskell::Type& constraint);
-
-std::tuple<global_value_env, global_instance_env,class_info,Hs::Decls>
-type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::ClassDecl& class_decl);
+std::set<Haskell::TypeVar> free_type_VARS(const Haskell::Type& type);
 
 Haskell::Type add_constraints(const std::vector<Haskell::Type>& constraints, const Haskell::Type& type);
 Haskell::Type add_forall_vars(const std::vector<Haskell::TypeVar>& type_vars, const Haskell::Type& type);

@@ -79,86 +79,6 @@ typedef Hs::Type constraint;
 
 typedef value_env constr_env;
 
-string print(const value_env& env)
-{
-    std::ostringstream oss;
-    for(auto& [value,type]: env)
-    {
-        oss<<value<<" :: "<<type.print()<<"\n";
-    }
-    return oss.str();
-}
-
-string print(const substitution_t& s)
-{
-    std::ostringstream oss;
-    for(auto& [var,type]: s)
-    {
-        oss<<var.print()<<" :: "<<type.print()<<"\n";
-    }
-    return oss.str();
-}
-
-typedef value_env global_value_env;
-
-typedef value_env local_value_env;
-
-void add_prefer_right(value_env& e1, const value_env& e2)
-{
-    if (e1.empty())
-        e1 = e2;
-    else
-        for(auto& [x,t]: e2)
-            e1 = e1.insert({x,t});
-}
-
-value_env plus_prefer_right(const value_env& e1, const value_env& e2)
-{
-    auto e3 = e1;
-    add_prefer_right(e3,e2);
-    return e3;
-}
-
-void add_no_overlap(value_env& e1, const value_env& e2)
-{
-    if (e1.empty())
-        e1 = e2;
-    else
-        for(auto& [x,t]: e2)
-        {
-            if (e1.count(x))
-                throw myexception()<<"Both environments contain variable "<<x<<"!";
-            e1 = e1.insert({x,t});
-        }
-}
-
-value_env plus_no_overlap(const value_env& e1, const value_env& e2)
-{
-    auto e3 = e1;
-    add_no_overlap(e3,e2);
-    return e3;
-}
-
-void add_no_overlap(type_con_env& e1, const type_con_env& e2)
-{
-    if (e1.empty())
-        e1 = e2;
-    else
-        for(auto& [x,t]: e2)
-        {
-            if (e1.count(x))
-                throw myexception()<<"Both environments contain variable "<<x<<"!";
-            e1.insert({x,t});
-        }
-}
-
-type_con_env plus_no_overlap(const type_con_env& e1, const type_con_env& e2)
-{
-    auto e3 = e1;
-    add_no_overlap(e3,e2);
-    return e3;
-}
-
 // The GIE does NOT allow free type variables.
 struct instance_info
 {
@@ -1333,3 +1253,135 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
   A1. We can process instances before values, but we output instances in the same recursive block as values.
 
  */
+Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type type, const Haskell::Type& constraint)
+{
+    // 1. Bind type parameters for type declaration
+    K.push_type_var_scope();
+
+    std::optional<Haskell::Context> context;
+
+    // 2. Find the unconstrained type
+    auto unconstrained_type = type;
+    if (unconstrained_type.is_a<Haskell::ConstrainedType>())
+    {
+        auto& ct = unconstrained_type.as_<Haskell::ConstrainedType>();
+        context = ct.context;
+        unconstrained_type = ct.type;
+    }
+
+    // 3. Find the NEW free type variables
+    auto new_ftvs = free_type_VARS(unconstrained_type);
+    vector<Haskell::TypeVar> to_erase;
+    for(auto& type_var: new_ftvs)
+        if (K.type_var_in_scope(type_var))
+            to_erase.push_back(type_var);
+    for(auto& type_var: to_erase)
+        new_ftvs.erase(type_var);
+
+    // 4. Bind fresh kind vars to new type variables
+    for(auto& ftv: new_ftvs)
+    {
+        auto a = K.fresh_kind_var();
+        K.bind_type_var(ftv,a);
+    }
+
+    // 5. Check the context
+    if (context)
+        K.kind_check_context(*context);
+
+    // 6. Check the unconstrained type and infer kinds.
+    K.kind_check_type_of_kind(unconstrained_type, make_kind_star());
+
+    // 7. Bind fresh kind vars to new type variables
+    vector<Haskell::TypeVar> new_type_vars;
+    for(auto& type_var: new_ftvs)
+    {
+        auto type_var_with_kind = type_var;
+        type_var_with_kind.kind = replace_kvar_with_star( K.kind_for_type_var(type_var) );
+        new_type_vars.push_back( type_var_with_kind );
+    }
+
+    // Don't we need to simplify constraints if we do this?
+    type = add_constraints({constraint}, type);
+
+    type = add_forall_vars(new_type_vars, type);
+    
+    // 6. Unbind type parameters
+    K.pop_type_var_scope();
+
+    return type;
+}
+
+// OK, so
+// * global_value_env    = name         :: forall a: class var => signature (i.e. a-> b -> a)
+// * global_instance_env = made-up-name :: forall a: class var => superclass var
+// * Hs::Decls           = { name         = \dict -> case dict of (_,_,method,_,_) -> method }
+//                       = { made-up-name = \dict -> case dict of (superdict,_,_,_,_) -> superdict }
+
+tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
+type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::ClassDecl& class_decl)
+{
+    kindchecker_state K(m, tce);
+
+    auto& name = class_decl.name;
+
+    class_info cinfo;
+    cinfo.type_vars = class_decl.type_vars;
+    cinfo.name = name;
+    cinfo.emitted_name = "class$"+name; // FIXME: only modify name after qualifier?  Just prefix d?
+    cinfo.context = class_decl.context;
+
+    // Bind type parameters for class
+    K. push_type_var_scope();
+
+    // a. Look up kind for this data type.
+    kind k = K. kind_for_type_con(name);  // FIXME -- check that this is a class?
+
+    // b. Put each type variable into the kind.
+    vector<Haskell::TypeVar> class_typevars;
+    for(auto& tv: class_decl.type_vars)
+    {
+        // the kind should be an arrow kind.
+        assert(k->is_karrow());
+        auto& ka = dynamic_cast<const KindArrow&>(*k);
+
+        // map the name to its kind
+        K.bind_type_var(tv, ka.k1);
+
+        // record a version of the var with that contains its kind
+        auto tv2 = tv;
+        tv2.kind = ka.k1;
+        class_typevars.push_back(tv2);
+
+        // set up the next iteration
+        k = ka.k2;
+    }
+    assert(k->is_kconstraint());
+
+    // d. construct the constraint
+    Haskell::Type constraint = Haskell::TypeCon(Unlocated(class_decl.name));
+    for(auto& tv: class_typevars)
+        constraint = Haskell::TypeApp(constraint, tv);
+
+    // e. handle the class methods
+    map<string,Haskell::Type> types;
+    if (class_decl.decls)
+    {
+        for(auto& [name, type]: unloc(*class_decl.decls).signatures)
+        {
+            Hs::Type method_type = type_check_class_method_type(K, type, constraint);
+            if (class_typevars.size())
+                method_type = add_forall_vars(class_typevars, method_type);
+            cinfo.methods = cinfo.methods.insert({name, method_type});
+        }
+    }
+
+    K.pop_type_var_scope();
+
+    Hs::Decls decls;
+    global_value_env gve;
+    global_instance_env gie;
+    
+    return {gve,gie,cinfo,decls};
+}
+
