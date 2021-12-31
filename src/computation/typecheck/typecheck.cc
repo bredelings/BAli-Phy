@@ -1311,29 +1311,36 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
 
 
 /*
+  Points about contexts in instances and classes:
+
+  1. Each class declaration must have the form class (C1,C2) => K a1 a2 a3 where
+  - CLASS ARGUMENTS must be type variables.
+  - CONSTRAINT ARGUMENTS must be type variables, unless FlexibleContexts is enabled.
+
+  2. Each instance declaration must have the form instance (C1,C2) => K (X1 a1 a2) (X2 b1 b2) (X3 c1 c2)
+  - CLASS ARGUMENTS must have a single type constructor applied to type variables.
+  - CONSTAINTS must satisfy the instance termination rules:
+
+    See https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/exts/instances.html#instance-termination
+
+    We can ignore the functional dependencies stuff.  Thus, we just have:
+
+      The Paterson Conditions: for each class constraint (C t1 ... tn) in the context
+
+      1. No type variable has more occurrences in the constraint than in the head
+      2. The constraint has fewer constructors and variables (taken together and counting repetitions) than the head
+      3. The constraint mentions no type functions. A type function application can in principle expand to a type of arbitrary size, and so are rejected out of hand
+
+  3. We can therefore look up an instance by (K,X1,X2,X3).
+  - The more complete form would simply scan ALL instance declarations to find the ONE (or ZERO) matching instances.
+  - The slow implementation can extract the constraint from the type.
+
   Questions about instances:
 
-  Q1. How do we handle mutual recursion between instance methods and value declarations?
-      Can we just put the methods into the list of value declarations?
-      Or do we need to somehow put the instances themselves into the value declarations?
+  Q1. How do we name dictionary extractor & dictionary creator functions?
+  A1. Just make up names and record them at the appropriate place.
 
-
-  https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/exts/instances.html
-
-  1. Restrictions:
-  In instance K t1 t2 t3, each type t must have the form (C a1 a2 ... an) where the a[i] are type variables!
-  In theory this could be relaxed, but that is how it is now.
-  Hmm... this does allow indexing instances by K C1 C2 C3.
-
-  2. There are also "Instance termination rules":
-  See https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/exts/instances.html#instance-termination
-
-  We can ignore the functional dependencies stuff.  Thus, we just have:
-
-  The Paterson Conditions: for each class constraint (C t1 ... tn) in the context
-
-  1. No type variable has more occurrences in the constraint than in the head
-  2. The constraint has fewer constructors and variables (taken together and counting repetitions) than the head
-  3. The constraint mentions no type functions. A type function application can in principle expand to a type of arbitrary size, and so are rejected out of hand
+  Q2. How do we handle mutual recursion between instance methods and value declarations?
+  A1. We can process instances before values, but we output instances in the same recursive block as values.
 
  */
