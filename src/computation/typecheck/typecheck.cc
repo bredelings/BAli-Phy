@@ -159,8 +159,6 @@ type_con_env plus_no_overlap(const type_con_env& e1, const type_con_env& e2)
     return e3;
 }
 
-typedef map<string, class_info> class_env;
-
 // The GIE does NOT allow free type variables.
 struct instance_info
 {
@@ -179,18 +177,6 @@ struct instance_info
         return Hs::ForallType(type_vars, Hs::ConstrainedType(context, make_tyapps(class_con, argument_types)));
     }
 };
-
-// The GIE maps classes to a list of instances for them.
-// Each instance corresponds to a dictionary function (dfun) with NO free type variables.
-// For example:
-//   instance Eq a => Eq [a] where
-// leads to
-//   dEqList :: forall a. Eq a => Eq [a]
-typedef map<string, vector<instance_info>> global_instance_env;
-
-// The LIE maps local dictionary variables to the constraint for which they are a dictionary.
-// It DOES allow free type variables.
-typedef map<Hs::Var, Hs::Type> local_instance_env;
 
 global_value_env apply_subst(const substitution_t& s, const value_env& env1)
 {

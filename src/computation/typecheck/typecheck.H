@@ -15,6 +15,20 @@ typedef value_env global_value_env;
 
 typedef value_env local_value_env;
 
+// The GIE maps classes to a list of instances for them.
+// It DOES NOT allow free type variables.
+// In practice it should be implemented as (k,C) -> info instead of name => type
+// Each instance corresponds to a dictionary function (dfun) with NO free type variables.
+// For example:
+//   instance Eq a => Eq [a] where
+// leads to
+//   dEqList :: forall a. Eq a => Eq [a]
+typedef global_value_env global_instance_env;
+
+// The LIE maps local dictionary variables to the constraint for which they are a dictionary.
+// It DOES allow free type variables.
+typedef local_value_env local_instance_env;
+
 typedef value_env constr_env;
 
 std::string print(const value_env& env);
@@ -50,6 +64,8 @@ struct class_info
 
     global_value_env methods;
 };
+
+typedef std::map<std::string, class_info> class_env;
 
 class Module;
 void typecheck(const Module& m, const Hs::ModuleDecls& M);
