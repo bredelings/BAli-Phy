@@ -768,10 +768,10 @@ void kindchecker_state::kind_check_type_class(const Haskell::ClassDecl& class_de
     pop_type_var_scope();
 }
 
-Haskell::Type kindchecker_state::type_check_class_method_type(Haskell::Type type, const Haskell::Type& constraint)
+Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type type, const Haskell::Type& constraint)
 {
     // 1. Bind type parameters for type declaration
-    push_type_var_scope();
+    K.push_type_var_scope();
 
     std::optional<Haskell::Context> context;
 
@@ -788,7 +788,7 @@ Haskell::Type kindchecker_state::type_check_class_method_type(Haskell::Type type
     auto new_ftvs = free_type_VARS(unconstrained_type);
     vector<Haskell::TypeVar> to_erase;
     for(auto& type_var: new_ftvs)
-        if (type_var_in_scope(type_var))
+        if (K.type_var_in_scope(type_var))
             to_erase.push_back(type_var);
     for(auto& type_var: to_erase)
         new_ftvs.erase(type_var);
@@ -796,23 +796,23 @@ Haskell::Type kindchecker_state::type_check_class_method_type(Haskell::Type type
     // 4. Bind fresh kind vars to new type variables
     for(auto& ftv: new_ftvs)
     {
-        auto a = fresh_kind_var();
-        bind_type_var(ftv,a);
+        auto a = K.fresh_kind_var();
+        K.bind_type_var(ftv,a);
     }
 
     // 5. Check the context
     if (context)
-        kind_check_context(*context);
+        K.kind_check_context(*context);
 
     // 6. Check the unconstrained type and infer kinds.
-    kind_check_type_of_kind(unconstrained_type, make_kind_star());
+    K.kind_check_type_of_kind(unconstrained_type, make_kind_star());
 
     // 7. Bind fresh kind vars to new type variables
     vector<Haskell::TypeVar> new_type_vars;
     for(auto& type_var: new_ftvs)
     {
         auto type_var_with_kind = type_var;
-        type_var_with_kind.kind = replace_kvar_with_star( kind_for_type_var(type_var) );
+        type_var_with_kind.kind = replace_kvar_with_star( K.kind_for_type_var(type_var) );
         new_type_vars.push_back( type_var_with_kind );
     }
 
@@ -822,7 +822,7 @@ Haskell::Type kindchecker_state::type_check_class_method_type(Haskell::Type type
     type = add_forall_vars(new_type_vars, type);
     
     // 6. Unbind type parameters
-    pop_type_var_scope();
+    K.pop_type_var_scope();
 
     return type;
 }
@@ -834,8 +834,10 @@ Haskell::Type kindchecker_state::type_check_class_method_type(Haskell::Type type
 //                       = { made-up-name = \dict -> case dict of (superdict,_,_,_,_) -> superdict }
 
 tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
-kindchecker_state::type_check_type_class(const Haskell::ClassDecl& class_decl)
+type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::ClassDecl& class_decl)
 {
+    kindchecker_state K(m, tce);
+
     auto& name = class_decl.name;
 
     class_info cinfo;
@@ -845,10 +847,10 @@ kindchecker_state::type_check_type_class(const Haskell::ClassDecl& class_decl)
     cinfo.context = class_decl.context;
 
     // Bind type parameters for class
-    push_type_var_scope();
+    K. push_type_var_scope();
 
     // a. Look up kind for this data type.
-    kind k = kind_for_type_con(name);  // FIXME -- check that this is a class?
+    kind k = K. kind_for_type_con(name);  // FIXME -- check that this is a class?
 
     // b. Put each type variable into the kind.
     vector<Haskell::TypeVar> class_typevars;
@@ -859,7 +861,7 @@ kindchecker_state::type_check_type_class(const Haskell::ClassDecl& class_decl)
         auto& ka = dynamic_cast<const KindArrow&>(*k);
 
         // map the name to its kind
-        bind_type_var(tv, ka.k1);
+        K.bind_type_var(tv, ka.k1);
 
         // record a version of the var with that contains its kind
         auto tv2 = tv;
@@ -882,14 +884,14 @@ kindchecker_state::type_check_type_class(const Haskell::ClassDecl& class_decl)
     {
         for(auto& [name, type]: unloc(*class_decl.decls).signatures)
         {
-            Hs::Type method_type = type_check_class_method_type(type, constraint);
+            Hs::Type method_type = type_check_class_method_type(K, type, constraint);
             if (class_typevars.size())
                 method_type = add_forall_vars(class_typevars, method_type);
             cinfo.methods = cinfo.methods.insert({name, method_type});
         }
     }
 
-    pop_type_var_scope();
+    K.pop_type_var_scope();
 
     Hs::Decls decls;
     global_value_env gve;

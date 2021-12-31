@@ -54,8 +54,6 @@ struct kindchecker_state
     // class
     void kind_check_class_method_type(const Haskell::Type& type);
     void kind_check_type_class(const Haskell::ClassDecl& class_decl);
-    Haskell::Type type_check_class_method_type(Haskell::Type type, const Haskell::Type& constraint);
-    std::tuple<global_value_env, global_instance_env,class_info,Hs::Decls> type_check_type_class(const Haskell::ClassDecl& class_decl);
 
     // data or newtype
     std::map<std::string, Haskell::Type> type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
@@ -74,6 +72,11 @@ struct kindchecker_state
         type_var_to_kind.push_back({});
     }
 };
+
+Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type type, const Haskell::Type& constraint);
+
+std::tuple<global_value_env, global_instance_env,class_info,Hs::Decls>
+type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::ClassDecl& class_decl);
 
 Haskell::Type add_constraints(const std::vector<Haskell::Type>& constraints, const Haskell::Type& type);
 Haskell::Type add_forall_vars(const std::vector<Haskell::TypeVar>& type_vars, const Haskell::Type& type);

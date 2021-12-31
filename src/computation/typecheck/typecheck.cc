@@ -1162,14 +1162,12 @@ tuple<global_value_env, global_instance_env, class_env, Hs::Binds> get_class_inf
     class_env ce;
     Hs::Binds binds;
 
-    kindchecker_state ks(m, tce);
-
     for(auto& decl: decls)
     {
         auto c = decl.to<Hs::ClassDecl>();
         if (not c) continue;
 
-        auto [gve1, gie1, class_info, class_decls] = ks.type_check_type_class(*c);
+        auto [gve1, gie1, class_info, class_decls] = type_check_type_class(m, tce, *c);
 
         gve = plus_no_overlap(gve, gve1);
         gie = plus_no_overlap(gve, gie1);
