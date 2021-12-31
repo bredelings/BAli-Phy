@@ -281,7 +281,7 @@ type_con_env get_tycon_info(const Module& m, const Hs::Decls& type_decls)
 
 // Q: how/when do we rename default method definitions?
 
-Haskell::Type add_context(const vector<Haskell::Type>& constraints, const Haskell::Type& type)
+Haskell::Type add_constraints(const vector<Haskell::Type>& constraints, const Haskell::Type& type)
 {
     if (constraints.empty())
         return type;
@@ -590,6 +590,10 @@ Haskell::Type kindchecker_state::type_check_constructor(const Haskell::Construct
 
     }
 
+    // FIXME: we need to check that these constraints constrain fields of the constructor.
+    if (constructor.context)
+        type2 = add_constraints(constructor.context->constraints, type2);
+
     return type2;
 }
 
@@ -675,6 +679,9 @@ map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell:
         // This should have already been checked.
 
         Haskell::Type constructor_type = type_check_constructor(constructor, data_type);
+
+        // Actually we should only add the constraints that use type variables that are used in the constructor.
+        constructor_type = add_constraints(data_decl.context.constraints, constructor_type);
 
         // QUESTION: do we need to replace the original user type vars with the new kind-annotated versions?
         if (datatype_typevars.size())
@@ -810,7 +817,7 @@ Haskell::Type kindchecker_state::type_check_class_method_type(Haskell::Type type
     }
 
     // Don't we need to simplify constraints if we do this?
-    type = add_context({constraint}, type);
+    type = add_constraints({constraint}, type);
 
     type = add_forall_vars(new_type_vars, type);
     
