@@ -297,9 +297,16 @@ Haskell::Type add_forall_vars(const std::vector<Haskell::TypeVar>& type_vars, co
         return Haskell::ForallType(type_vars, type);
 }
 
+set<Haskell::TypeVar> free_type_VARS(const Haskell::Context& context)
+{
+    set<Haskell::TypeVar> tvars;
+    for(auto& constraint: context.constraints)
+        add(tvars, free_type_VARS(constraint));
+    return tvars;
+}
+
 set<Haskell::TypeVar> free_type_VARS(const Haskell::Type& type)
 {
-    // This version finds varids -- the other version finds qualified cons.
     set<Haskell::TypeVar> tvars;
     if (type.is_a<Haskell::TypeCon>())
     {
@@ -338,9 +345,7 @@ set<Haskell::TypeVar> free_type_VARS(const Haskell::Type& type)
     }
     else if (auto c = type.to<Hs::ConstrainedType>())
     {
-        // The constraints should only mention variables that are mentioned in the main type
-        for(auto& constraint : c->context.constraints)
-            add(tvars, free_type_VARS(constraint));
+        add(tvars, free_type_VARS(c->context));
         add(tvars, free_type_VARS(c->type));
     }
     else if (auto sl = type.to<Hs::StrictLazyType>())

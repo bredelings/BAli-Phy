@@ -71,6 +71,7 @@ struct kindchecker_state
     }
 };
 
+std::set<Haskell::TypeVar> free_type_VARS(const Haskell::Context& context);
 std::set<Haskell::TypeVar> free_type_VARS(const Haskell::Type& type);
 
 Haskell::Type add_constraints(const std::vector<Haskell::Type>& constraints, const Haskell::Type& type);
