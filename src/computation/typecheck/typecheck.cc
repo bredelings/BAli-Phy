@@ -1286,7 +1286,7 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Haskell::
         constraint = Haskell::TypeApp(constraint, tv);
 
     // e. handle the class methods
-    map<string,Haskell::Type> types;
+    global_value_env gve;
     if (class_decl.decls)
     {
         for(auto& [name, type]: unloc(*class_decl.decls).signatures)
@@ -1295,15 +1295,20 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Haskell::
 
             method_type = add_forall_vars(class_typevars, method_type);
 
-            cinfo.methods = cinfo.methods.insert({name, method_type});
+            gve = gve.insert({name, method_type});
         }
     }
 
     K.pop_type_var_scope();
 
+    // OK, so now we need to
+    //   (a) determine names for dictionary extractors.
+    //   (b) determine an order for all the fields.
+    //   (c) synthesize field accessors and put them in decls
+
     Hs::Decls decls;
-    global_value_env gve;
     global_instance_env gie;
+    cinfo.methods = gve;
     
     return {gve,gie,cinfo,decls};
 }
