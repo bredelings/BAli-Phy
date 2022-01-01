@@ -42,6 +42,10 @@ using std::tuple;
   5. How are we actually supposed to store the GIE?
   6. Put class methods into global namespace WITH their type -> how?
   7. How do we export stuff?
+  8. Make functions to handle class declarations from Figure 11.
+     - PROBLEM: How do we pipe in fresh variable names for dictionary extractors?
+  9. Make functiosn to handle instance declarations from Figure 12.
+     - PROBLEM: How do we pipe in fresh variable names for dictonary functions?
 
   Cleanups:
   1. Implement kinds as Hs::Type
@@ -50,6 +54,43 @@ using std::tuple;
 
  */
 
+/*
+  Points about contexts in instances and classes:
+
+  1. Each class declaration must have the form class (C1,C2) => K a1 a2 a3 where
+  - CLASS ARGUMENTS must be type variables.
+  - CONSTRAINT ARGUMENTS must be type variables, unless FlexibleContexts is enabled.
+
+  2. Each instance declaration must have the form instance (C1,C2) => K (X1 a1 a2) (X2 b1 b2) (X3 c1 c2)
+  - CLASS ARGUMENTS must have a single type constructor applied to type variables.
+  - CONSTAINTS must satisfy the instance termination rules:
+
+    See https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/exts/instances.html#instance-termination
+
+    We can ignore the functional dependencies stuff.  Thus, we just have:
+
+      The Paterson Conditions: for each class constraint (C t1 ... tn) in the context
+
+      1. No type variable has more occurrences in the constraint than in the head
+      2. The constraint has fewer constructors and variables (taken together and counting repetitions) than the head
+      3. The constraint mentions no type functions. A type function application can in principle expand to a type of arbitrary size, and so are rejected out of hand
+
+  3. We can therefore look up an instance by (K,X1,X2,X3).
+  - The more complete form would simply scan ALL instance declarations to find the ONE (or ZERO) matching instances.
+  - The slow implementation can extract the constraint from the type.
+
+  Questions about instances:
+
+  Q1. How do we name dictionary extractor & dictionary creator functions?
+  A1. Just make up names and record them at the appropriate place.
+
+  Q2. How do we handle mutual recursion between instance methods and value declarations?
+  A1. We can process instances before values, but we output instances in the same recursive block as values.
+
+  Q3: Should we translate => to -> during typechecking, OR do we want to do this during desugaring?
+  A3: Well.. the typechecker IS making up some variable names... so maybe we do this during type checking?
+      Can we tell what GHC is doing?
+ */
 
 typedef Hs::Type monotype;
 typedef Hs::Type overtype;
@@ -1129,40 +1170,6 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
 }
 
 
-/*
-  Points about contexts in instances and classes:
-
-  1. Each class declaration must have the form class (C1,C2) => K a1 a2 a3 where
-  - CLASS ARGUMENTS must be type variables.
-  - CONSTRAINT ARGUMENTS must be type variables, unless FlexibleContexts is enabled.
-
-  2. Each instance declaration must have the form instance (C1,C2) => K (X1 a1 a2) (X2 b1 b2) (X3 c1 c2)
-  - CLASS ARGUMENTS must have a single type constructor applied to type variables.
-  - CONSTAINTS must satisfy the instance termination rules:
-
-    See https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/exts/instances.html#instance-termination
-
-    We can ignore the functional dependencies stuff.  Thus, we just have:
-
-      The Paterson Conditions: for each class constraint (C t1 ... tn) in the context
-
-      1. No type variable has more occurrences in the constraint than in the head
-      2. The constraint has fewer constructors and variables (taken together and counting repetitions) than the head
-      3. The constraint mentions no type functions. A type function application can in principle expand to a type of arbitrary size, and so are rejected out of hand
-
-  3. We can therefore look up an instance by (K,X1,X2,X3).
-  - The more complete form would simply scan ALL instance declarations to find the ONE (or ZERO) matching instances.
-  - The slow implementation can extract the constraint from the type.
-
-  Questions about instances:
-
-  Q1. How do we name dictionary extractor & dictionary creator functions?
-  A1. Just make up names and record them at the appropriate place.
-
-  Q2. How do we handle mutual recursion between instance methods and value declarations?
-  A1. We can process instances before values, but we output instances in the same recursive block as values.
-
- */
 Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type type, const Haskell::Type& constraint)
 {
     // 1. Bind type parameters for type declaration
