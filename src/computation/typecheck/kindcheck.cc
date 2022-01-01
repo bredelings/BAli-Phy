@@ -338,8 +338,19 @@ set<Haskell::TypeVar> free_type_VARS(const Haskell::Type& type)
         for(auto& type_var: forall.type_var_binders)
             tvars.erase(type_var);
     }
+    else if (auto c = type.to<Hs::ConstrainedType>())
+    {
+        // The constraints should only mention variables that are mentioned in the main type
+        for(auto& constraint : c->context.constraints)
+            add(tvars, free_type_VARS(constraint));
+        add(tvars, free_type_VARS(c->type));
+    }
+    else if (auto sl = type.to<Hs::StrictLazyType>())
+    {
+        return free_type_VARS(sl->type);
+    }
     else
-        throw myexception()<<"free_type_VARS: unrecognized type \""<<type.print()<<"\"";
+        std::abort();
 
     return tvars;
 }
