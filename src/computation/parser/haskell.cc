@@ -47,15 +47,12 @@ string show_type_or_class_header(const Context& context, const string& name, con
     return join(ss, " ");
 }
 
-string show_instance_header(const Context& context, const string& name, const vector<Type>& type_args)
+string show_instance_header(const Context& context, const Hs::Type& constraint)
 {
-    vector<string> ss;
+    string result = constraint.print();
     if (context.constraints.size())
-        ss = {context.print(), "=>"};
-    ss.push_back(name);
-    for(auto& type_arg: type_args)
-        ss.push_back(parenthesize_type(type_arg));
-    return join(ss, " ");
+        result = context.print() + " => " + result;
+    return result;
 }
 
 string ExportSubSpecSome::print() const
@@ -670,7 +667,7 @@ string ClassDecl::print() const
 
 string InstanceDecl::print() const
 {
-    string result = "instance " + show_instance_header(context, name, type_args);
+    string result = "instance " + show_instance_header(context, constraint);
     if (decls)
         result += " where " + decls->print();
     return result;

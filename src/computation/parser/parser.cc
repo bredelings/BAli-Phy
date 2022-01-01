@@ -6045,7 +6045,7 @@ pair<vector<Haskell::ImpDecl>, optional<Haskell::Decls>> make_body(const std::ve
 
 // See PostProcess.hs:checkTyClHdr
 std::tuple<string, vector<expression_ref>>
-check_type_or_class_header(expression_ref type)
+check_type_or_class_header(const Hs::Type& type)
 {
     auto [type_head, type_args] = Haskell::decompose_type_apps(type);
 
@@ -6105,8 +6105,7 @@ Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, c
         type = T.type;
     }
 
-    auto [name, type_args] = check_type_or_class_header(type);
-    return {context, name, type_args, make_opt_decls(binds)};
+    return {context, type, make_opt_decls(binds)};
 }
 
 Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const optional<Located<Haskell::Binds>>& binds)

@@ -1333,11 +1333,37 @@ typechecker_state::infer_type_for_instance(const Hs::InstanceDecl& instance_decl
 {
     Hs::Decls decls;
 
-    auto class_info = ce.at(instance_decl.name);
+    auto [c_head,c_args] = Hs::decompose_type_apps(instance_decl.constraint);
+
+    string class_name;
+    if (auto tc = c_head.to<Hs::TypeCon>())
+    {
+        // Check that this is a class, and not a data or type?
+        class_name = unloc(tc->name);
+    }
+    else
+        throw myexception()<<"In instance for '"<<instance_decl.constraint<<"': "<<c_head<<" is not a class!";
+
+    vector<Hs::TypeCon> types;
+    for(auto& c_arg: c_args)
+    {
+        auto [a_head, a_args] = Hs::decompose_type_apps(c_arg);
+        if (auto tc = a_head.to<Hs::TypeCon>())
+            types.push_back(*tc);
+        else
+            throw myexception()<<"In instance for '"<<instance_decl.constraint<<"': "<<a_head<<" is not a type!";
+
+        for(auto& a_arg: a_args)
+        {
+            if (not a_arg.is_a<Hs::TypeVar>())
+                throw myexception()<<"In instance for '"<<instance_decl.constraint<<"' for type '"<<c_arg<<"': "<<a_arg<<" is not a type variable!";
+        }
+    }
+
+    auto class_info = ce.at(class_name);
 
     global_instance_env gie;
 
-    auto monotype = make_tyapps(Hs::TypeCon({noloc, instance_decl.name}),{instance_decl.type_args});
 
     return {decls, gie};
 }

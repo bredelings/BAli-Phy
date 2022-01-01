@@ -479,8 +479,7 @@ struct InstanceDecl: public Object
     // This should be something like Eq a => Eq [a]
     // Right now it could be either ForallType or ConstrainedType
     Context context;
-    std::string name;
-    std::vector<Type> type_args;
+    Type constraint;
 
     std::optional<Located<Decls>> decls;
 
@@ -488,12 +487,10 @@ struct InstanceDecl: public Object
     std::string print() const;
 
     InstanceDecl(const Context& c,
-                 const std::string& n,
-                 const std::vector<Type> ta,
+                 const Type& t,
                  const std::optional<Located<Decls>>& d)
         :context(c),
-         name(n),
-         type_args(ta),
+         constraint(t),
          decls(d)
         {}
 };

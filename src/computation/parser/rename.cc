@@ -867,19 +867,7 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
 Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
 {
     I.context = rename(I.context);
-
-    if (m.type_is_declared(I.name))
-    {
-        auto T = m.lookup_type(I.name);
-        if (T.category != type_name_category::type_class)
-            throw myexception()<<"Instance for type '"<<T.name<<"' that is not a class.";
-        I.name = T.name;
-    }
-    else
-        throw myexception()<<"Instance for non-existant class '"<<I.name<<"'.";
-
-    for(auto& type_arg: I.type_args)
-        type_arg = rename_type(type_arg);
+    I.constraint = rename_type(I.constraint);
 
     // Renaming of the decl group is done in rename_decls
 

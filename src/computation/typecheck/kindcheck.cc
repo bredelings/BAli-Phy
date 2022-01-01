@@ -180,9 +180,7 @@ set<string> free_type_cons(const Haskell::InstanceDecl& instance_decl)
 {
     set<string> tvars;
     add(tvars, free_type_cons(instance_decl.context));
-    tvars.insert(instance_decl.name);
-    for(auto& type_arg: instance_decl.type_args)
-        add(tvars, free_type_cons(type_arg));
+    add(tvars, free_type_cons(instance_decl.constraint));
     return tvars;
 
 }
