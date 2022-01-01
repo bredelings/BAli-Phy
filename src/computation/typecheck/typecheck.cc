@@ -1374,7 +1374,7 @@ typechecker_state::infer_type_for_instance(const Hs::InstanceDecl& instance_decl
                 throw myexception()<<"In instance for '"<<instance_decl.constraint<<"' for type '"<<monotype<<"': "<<a_arg<<" is not a type variable!";
 
             if (type_vars.count(*tv))
-                throw myexception()<<"Type variable '"<<tv->print()<<" occurs twice in constraint '"<<instance_decl.constraint<<"'";
+                throw myexception()<<"Type variable '"<<tv->print()<<"' occurs twice in constraint '"<<instance_decl.constraint<<"'";
 
             type_vars.insert(*tv);
         }
