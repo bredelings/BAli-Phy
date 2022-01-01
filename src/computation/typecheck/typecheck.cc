@@ -183,13 +183,13 @@ struct typechecker_state
 
     Hs::Var fresh_var(const std::string& s)
     {
-        Hs::Var x({noloc,s});
+        Hs::Var x({noloc,"$"+s+std::to_string(next_var_index)});
         x.index = next_var_index++;
         return x;
     }
     Hs::Var fresh_var()
     {
-        return fresh_var("$$v"+std::to_string(next_var_index));
+        return fresh_var("v");
     }
 
     Hs::TypeVar fresh_type_var() {
