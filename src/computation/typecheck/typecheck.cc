@@ -138,18 +138,31 @@ struct typechecker_state
 
     int next_var_index = 1;
 
+    Hs::Var fresh_var(const std::string& s)
+    {
+        Hs::Var x({noloc,s});
+        x.index = next_var_index++;
+        return x;
+    }
+    Hs::Var fresh_var()
+    {
+        return fresh_var("$$v"+std::to_string(next_var_index));
+    }
+
+    int next_tvar_index = 1;
+
     Hs::TypeVar fresh_type_var() {
-        Hs::TypeVar tv({noloc, "t"+std::to_string(next_var_index)});
-        tv.index = next_var_index;
-        next_var_index++;
+        Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
+        tv.index = next_tvar_index;
+        next_tvar_index++;
         return tv;
     }
 
     Hs::TypeVar named_type_var(const string& name)
     {
-        Hs::TypeVar tv({noloc, name+"_"+std::to_string(next_var_index)});
-        tv.index = next_var_index;
-        next_var_index++;
+        Hs::TypeVar tv({noloc, name+"_"+std::to_string(next_tvar_index)});
+        tv.index = next_tvar_index;
+        next_tvar_index++;
         return tv;
     }
 
