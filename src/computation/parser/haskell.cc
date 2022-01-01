@@ -567,7 +567,7 @@ string Alts::print() const
     vector<string> alt_string;
     for(auto& alt: *this)
         alt_string.push_back(alt.print());
-    return "{" + join(alt_string, "\n;") + "\n}";
+    return "{" + join(alt_string, "\n;") + "}";
 }
 
 string CaseExp::print() const
