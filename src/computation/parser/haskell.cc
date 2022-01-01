@@ -1,5 +1,6 @@
 #include "haskell.H"
 #include "util/string/join.H"
+#include "expression/tuple.H" // for tuple_name
 
 using std::string;
 using std::pair;
@@ -725,6 +726,15 @@ MultiGuardedRHS SimpleRHS(const Located<expression_ref>& body, const optional<Lo
 
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t)
 {
+    if (auto L = t.to<ListType>())
+        return {Hs::TypeCon({noloc,"[]"}), {L->element_type}};
+
+    if (auto T = t.to<TupleType>())
+    {
+        int n = T->element_types.size();
+        return {Hs::TypeCon({noloc,tuple_name(n)}), T->element_types};
+    }
+
     std::vector<Type> args;
     while(t.is_a<TypeApp>())
     {
