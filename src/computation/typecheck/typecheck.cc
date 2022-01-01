@@ -241,6 +241,12 @@ struct typechecker_state
 
     pair<substitution_t, global_value_env>
     infer_type_for_decls(const global_value_env& env, const Hs::Binds& binds);
+
+    tuple<global_value_env, global_instance_env, class_env, Hs::Binds>
+    infer_type_for_classes(const Module& m, const Hs::Decls& decls, const type_con_env& tce);
+
+    tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
+    infer_type_for_class(const Module& m, const type_con_env& tce, const Haskell::ClassDecl& class_decl);
 };
 
 set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
@@ -1026,7 +1032,7 @@ constr_env get_constructor_info(const Module& m, const Hs::Decls& decls, const t
     return cve;
 }
 
-tuple<global_value_env, global_instance_env, class_env, Hs::Binds> get_class_info(const Module& m, const Hs::Decls& decls, const type_con_env& tce)
+tuple<global_value_env, global_instance_env, class_env, Hs::Binds> typechecker_state::infer_type_for_classes(const Module& m, const Hs::Decls& decls, const type_con_env& tce)
 {
     global_value_env gve;
     global_instance_env gie;
@@ -1038,7 +1044,7 @@ tuple<global_value_env, global_instance_env, class_env, Hs::Binds> get_class_inf
         auto c = decl.to<Hs::ClassDecl>();
         if (not c) continue;
 
-        auto [gve1, gie1, class_info, class_decls] = type_check_type_class(m, tce, *c);
+        auto [gve1, gie1, class_info, class_decls] = infer_type_for_class(m, tce, *c);
 
         gve = plus_no_overlap(gve, gve1);
         gie = plus_no_overlap(gve, gie1);
@@ -1078,7 +1084,8 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
     std::cerr<<"\n";
 
     //   CE_C  = class name -> class info
-    auto [gve, gie, class_info, class_binds] = get_class_info(m, M.type_decls, tce);
+    typechecker_state state(constr_info);
+    auto [gve, gie, class_info, class_binds] = state.infer_type_for_classes(m, M.type_decls, tce);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
     global_value_env class_method_info;
     for(auto& [name,class_info]: class_info)
@@ -1156,7 +1163,6 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
     // Looks like code for determining inlining
 
     
-    typechecker_state state(constr_info);
     global_value_env env0;
 
     auto [s,env] = state.infer_type_for_decls(env0, M.value_decls);
@@ -1236,7 +1242,7 @@ Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type t
 //                       = { made-up-name = \dict -> case dict of (superdict,_,_,_,_) -> superdict }
 
 tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
-type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::ClassDecl& class_decl)
+typechecker_state::infer_type_for_class(const Module& m, const type_con_env& tce, const Haskell::ClassDecl& class_decl)
 {
     kindchecker_state K(m, tce);
 
