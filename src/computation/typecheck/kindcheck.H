@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 
-#include "parser/haskell.H"
+#include "types.H"
 #include "module.H"
 #include "kind.H"
 #include "env.H"

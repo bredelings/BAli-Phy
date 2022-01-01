@@ -10,25 +10,6 @@ using std::optional;
 namespace Haskell
 {
 
-optional<pair<Type,Type>> is_function_type(const Type& t)
-{
-    if (auto ta = t.to<Hs::TypeApp>())
-    {
-        auto t2 = ta->arg;
-        if (auto tb = ta->head.to<Hs::TypeApp>())
-        {
-            auto t1 = tb->arg;
-            if (auto tc = tb->head.to<Hs::TypeCon>())
-            {
-                if (unloc(tc->name) == "->")
-                    return {{t1,t2}};
-            }
-        }
-    }
-    return {};
-}
-
-
 string parenthesize_type(const expression_ref& t)
 {
     if (t.is_a<TypeCon>() or t.is_a<TypeVar>() or t.is_a<TupleType>() or t.is_a<ListType>())
@@ -724,28 +705,6 @@ MultiGuardedRHS SimpleRHS(const Located<expression_ref>& body, const optional<Lo
     return MultiGuardedRHS( {{{},unloc(body)}}   ,decls);
 }
 
-std::pair<Type,std::vector<Type>> decompose_type_apps(Type t)
-{
-    if (auto L = t.to<ListType>())
-        return {Hs::TypeCon({noloc,"[]"}), {L->element_type}};
-
-    if (auto T = t.to<TupleType>())
-    {
-        int n = T->element_types.size();
-        return {Hs::TypeCon({noloc,tuple_name(n)}), T->element_types};
-    }
-
-    std::vector<Type> args;
-    while(t.is_a<TypeApp>())
-    {
-        auto A = t.as_<TypeApp>();
-        args.push_back(A.arg);
-        t = A.head;
-    }
-    std::reverse(args.begin(), args.end());
-    return {t,args};
-}
-
 string LambdaExp::print() const
 {
     string result = "\\";
@@ -805,12 +764,6 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
     }
 }
 
-
-Type make_arrow_type(const Type& t1, const Type& t2)
-{
-    static TypeCon type_arrow(Located<string>({},"->"));
-    return TypeApp(TypeApp(type_arrow,t1),t2);
-}
 
 string PatDecl::print() const
 {

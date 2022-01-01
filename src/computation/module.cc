@@ -15,6 +15,7 @@
 #include "parser/rename.H"
 #include "parser/desugar.H"
 #include "typecheck/typecheck.H"
+#include "typecheck/types.H" // for decompose_type_apps( )
 #include "computation/loader.H"
 #include "expression/var.H"
 #include "expression/lambda.H"
@@ -941,7 +942,7 @@ CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::Built
 
 string get_constructor_name(const Hs::Type& constr)
 {
-    auto [con,_] = Haskell::decompose_type_apps(constr);
+    auto [con,_] = decompose_type_apps(constr);
     assert(con.is_a<Haskell::TypeCon>());
     return unloc(con.as_<Haskell::TypeCon>().name);
 }

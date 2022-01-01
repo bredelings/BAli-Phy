@@ -19,6 +19,7 @@
   # include "computation/expression/list.H"
   # include "computation/expression/tuple.H"
   # include "computation/parser/haskell.H"
+  # include "computation/typecheck/types.H"
 
   class driver;
 
@@ -1476,12 +1477,12 @@ pair<vector<Haskell::ImpDecl>, optional<Haskell::Decls>> make_body(const std::ve
 std::tuple<string, vector<expression_ref>>
 check_type_or_class_header(const Hs::Type& type)
 {
-    auto [type_head, type_args] = Haskell::decompose_type_apps(type);
+    auto [type_head, type_args] = decompose_type_apps(type);
 
     // FIXME -- add location!
-    if (not type_head.is_a<Haskell::TypeCon>())
+    if (not type_head.is_a<Hs::TypeCon>())
         throw myexception()<<"Malformed type or class header '"<<type<<"'";
-    auto name = unloc(type_head.as_<Haskell::TypeCon>().name);
+    auto name = unloc(type_head.as_<Hs::TypeCon>().name);
 
     return {name, type_args};
 }
@@ -1562,11 +1563,11 @@ Haskell::Context make_context(const expression_ref& context)
 
 bool check_kind(const Haskell::Kind& kind)
 {
-    auto [kind_head, kind_args] = Haskell::decompose_type_apps(kind);
+    auto [kind_head, kind_args] = decompose_type_apps(kind);
 
-    if (not kind_head.is_a<Haskell::TypeCon>()) return false;
+    if (not kind_head.is_a<Hs::TypeCon>()) return false;
 
-    auto V = kind_head.as_<Haskell::TypeCon>();
+    auto V = kind_head.as_<Hs::TypeCon>();
     if (kind_args.empty())
     {
         return (unloc(V.name) == "*");
@@ -1589,27 +1590,27 @@ Haskell::Type make_kind(const Haskell::Kind& kind)
 
 optional<pair<string, Haskell::FieldDecls>> is_record_con(const expression_ref& typeish)
 {
-    auto [head,args] = Haskell::decompose_type_apps(typeish);
+    auto [head,args] = decompose_type_apps(typeish);
 
     if (args.size() != 1) return {};
 
-    if (not head.is_a<Haskell::TypeCon>()) return {};
+    if (not head.is_a<Hs::TypeCon>()) return {};
 
-    if (not args[0].is_a<Haskell::FieldDecls>()) return {};
+    if (not args[0].is_a<Hs::FieldDecls>()) return {};
 
-    return {{unloc(head.as_<Haskell::TypeCon>().name), args[0].as_<Haskell::FieldDecls>()}};
+    return {{unloc(head.as_<Hs::TypeCon>().name), args[0].as_<Hs::FieldDecls>()}};
 }
 
 optional<pair<string, std::vector<expression_ref>>> is_normal_con(const expression_ref& typeish)
 {
     if (is_record_con(typeish)) return {};
 
-    auto [head,args] = Haskell::decompose_type_apps(typeish);
+    auto [head,args] = decompose_type_apps(typeish);
 
-    if (not head.is_a<Haskell::TypeCon>())
+    if (not head.is_a<Hs::TypeCon>())
         return {};
 
-    return {{unloc(head.as_<Haskell::TypeCon>().name), args}};
+    return {{unloc(head.as_<Hs::TypeCon>().name), args}};
 }
 
 Haskell::Constructor make_constructor(const vector<Haskell::TypeVar>& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish)

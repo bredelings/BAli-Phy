@@ -10,6 +10,7 @@
 #include "env.H"
 
 #include "computation/parser/haskell.H"
+#include "types.H"
 
 void typecheck(const std::string& s, const Hs::ModuleDecls& M);
 

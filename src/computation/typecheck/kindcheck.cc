@@ -560,7 +560,7 @@ void kindchecker_state::kind_check_constructor(const Haskell::Constructor& const
         for(auto& field_decl: fields.field_decls | views::reverse)
         {
             for(int i=0;i<field_decl.field_names.size();i++)
-                type2 = Haskell::make_arrow_type(field_decl.type, type2);
+                type2 = make_arrow_type(field_decl.type, type2);
         }
     }
     else
@@ -568,7 +568,7 @@ void kindchecker_state::kind_check_constructor(const Haskell::Constructor& const
         auto& types = std::get<0>(constructor.fields);
 
         for(auto& type: types | views::reverse)
-            type2 = Haskell::make_arrow_type(type, type2);
+            type2 = make_arrow_type(type, type2);
 
     }
 
@@ -592,7 +592,7 @@ Haskell::Type kindchecker_state::type_check_constructor(const Haskell::Construct
         for(auto& field_decl: fields.field_decls | views::reverse)
         {
             for(int i=0;i<field_decl.field_names.size();i++)
-                type2 = Haskell::make_arrow_type(field_decl.type, type2);
+                type2 = make_arrow_type(field_decl.type, type2);
         }
     }
     else
@@ -600,7 +600,7 @@ Haskell::Type kindchecker_state::type_check_constructor(const Haskell::Construct
         auto& types = std::get<0>(constructor.fields);
 
         for(auto& type: types | views::reverse)
-            type2 = Haskell::make_arrow_type(type, type2);
+            type2 = make_arrow_type(type, type2);
 
     }
 

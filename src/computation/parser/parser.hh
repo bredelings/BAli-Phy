@@ -57,6 +57,7 @@
   # include "computation/expression/list.H"
   # include "computation/expression/tuple.H"
   # include "computation/parser/haskell.H"
+  # include "computation/typecheck/types.H"
 
   class driver;
 
@@ -79,7 +80,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 83 "parser.hh"
+#line 84 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -219,7 +220,7 @@
 #endif
 
 namespace yy {
-#line 223 "parser.hh"
+#line 224 "parser.hh"
 
 
 
@@ -5923,7 +5924,7 @@ switch (yykind)
 
 
 } // yy
-#line 5927 "parser.hh"
+#line 5928 "parser.hh"
 
 
 

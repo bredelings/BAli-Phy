@@ -788,8 +788,6 @@ struct StrictLazyType: public Object
     StrictLazyType(const StrictLazy& sl, const Type& t):strict_lazy(sl), type(t) {}
 };
 
-std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
-
 struct Do: public Object
 {
     Stmts stmts;
@@ -964,10 +962,6 @@ struct Module
          topdecls(t)
     {}
 };
-
-Type make_arrow_type(const Type& t1, const Type& t2);
-
-std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
 
 // which one of these handles variables?
 // probably FunDecl
