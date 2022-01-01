@@ -254,6 +254,12 @@ struct typechecker_state
 
     tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
     infer_type_for_class(const type_con_env& tce, const Haskell::ClassDecl& class_decl);
+
+    pair<Hs::Decls,global_instance_env>
+    infer_type_for_instances(const Hs::Decls& decls, const class_env& ce);
+
+    pair<Hs::Decls,global_instance_env>
+    infer_type_for_instance(const Hs::InstanceDecl& instance_del, const class_env& ce);
 };
 
 set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
@@ -1372,3 +1378,36 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Haskell::
     return {gve,gie,cinfo,decls};
 }
 
+pair<Hs::Decls,global_instance_env>
+typechecker_state::infer_type_for_instances(const Hs::Decls& decls, const class_env& ce)
+{
+    Hs::Decls out_decls;
+    global_instance_env out_gie;
+    for(auto& decl: decls)
+    {
+        if (auto I = decl.to<Hs::InstanceDecl>())
+        {
+            auto [decls1, gie1] = infer_type_for_instance(*I, ce);
+
+            for(auto& d: decls1)
+                out_decls.push_back(d);
+
+            out_gie = plus_no_overlap(out_gie, gie1);
+        }
+    }
+    return {out_decls, out_gie};
+}
+
+pair<Hs::Decls,global_instance_env>
+typechecker_state::infer_type_for_instance(const Hs::InstanceDecl& instance_decl, const class_env& ce)
+{
+    Hs::Decls decls;
+
+    auto class_info = ce.at(instance_decl.name);
+
+    global_instance_env gie;
+
+    auto monotype = make_tyapps(Hs::TypeCon({noloc, instance_decl.name}),{instance_decl.type_args});
+
+    return {decls, gie};
+}
