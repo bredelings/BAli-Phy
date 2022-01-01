@@ -232,7 +232,7 @@ string Binds::print() const
     vector<string> ds;
     for(auto& decls: *this)
         ds.push_back(decls.print());
-    return join( ds, " ");
+    return join( ds, "\n");
 }
 
 string BuiltinDecl::print() const
