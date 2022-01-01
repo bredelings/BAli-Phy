@@ -1086,11 +1086,8 @@ void typecheck( const Hs::ModuleDecls& M )
     typechecker_state state(constr_info);
     auto [gve, gie, class_info, class_binds] = state.infer_type_for_classes(M.type_decls, tce);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
-    global_value_env class_method_info;
-    for(auto& [name,class_info]: class_info)
-        class_method_info = plus_no_overlap(class_method_info, class_info.methods);
 
-    for(auto& [method,type]: class_method_info)
+    for(auto& [method,type]: gve)
     {
         std::cerr<<method<<" :: "<<type.print()<<"\n";
     }
