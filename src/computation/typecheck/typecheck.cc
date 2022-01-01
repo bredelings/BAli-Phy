@@ -122,6 +122,12 @@ global_value_env apply_subst(const substitution_t& s, const value_env& env1)
 
 struct typechecker_state
 {
+    int next_var_index = 1;
+
+    int next_tvar_index = 1;
+
+    constr_env con_info;
+
     typechecker_state(const constr_env& ce)
         :con_info(ce)
         { }
@@ -132,11 +138,7 @@ struct typechecker_state
 
     Hs::Type char_type() const { return Hs::TypeCon({noloc,"Char#"}); }
 
-    constr_env con_info;
-
     pair<Hs::Type, vector<Hs::Type>> constr_types(const Hs::Con&);
-
-    int next_var_index = 1;
 
     Hs::Var fresh_var(const std::string& s)
     {
@@ -148,8 +150,6 @@ struct typechecker_state
     {
         return fresh_var("$$v"+std::to_string(next_var_index));
     }
-
-    int next_tvar_index = 1;
 
     Hs::TypeVar fresh_type_var() {
         Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
