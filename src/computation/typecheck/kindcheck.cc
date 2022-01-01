@@ -259,7 +259,7 @@ type_con_env get_tycon_info(const Module& m, const Hs::Decls& type_decls)
     // 3. Compute kinds for type/class constructors.
     for(auto& type_decl_group: type_decl_groups)
     {
-        kindchecker_state K(m, tce);
+        kindchecker_state K(tce);
         auto new_tycons = K.infer_kinds(type_decl_group);
         tce = plus_no_overlap(tce, new_tycons);
 

@@ -13,8 +13,6 @@ type_con_env get_tycon_info(const Module& m, const Hs::Decls& type_decls);
 
 struct kindchecker_state
 {
-    const Module& mod;
-
     int next_kvar_index = 1;
 
     kind_var fresh_named_kind_var(const std::string& s) {return make_kind_var(s,next_kvar_index++);}
@@ -66,8 +64,8 @@ struct kindchecker_state
 
     type_con_env infer_kinds(const std::vector<expression_ref>& type_decl_group);
 
-    kindchecker_state(const Module& m, const type_con_env& tce)
-        :mod(m), type_con_to_kind(tce)
+    kindchecker_state(const type_con_env& tce)
+        :type_con_to_kind(tce)
     {
         type_var_to_kind.push_back({});
     }
