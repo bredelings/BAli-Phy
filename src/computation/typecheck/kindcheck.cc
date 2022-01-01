@@ -298,16 +298,17 @@ Haskell::Type add_constraints(const vector<Haskell::Type>& constraints, const Ha
 
 Haskell::Type add_forall_vars(const std::vector<Haskell::TypeVar>& type_vars, const Haskell::Type& type)
 {
-    if (type.is_a<Haskell::ForallType>())
+    if (type_vars.empty())
+        return type;
+    else if (auto FAT = type.to<Haskell::ForallType>())
     {
-        auto FAT = type.as_<Haskell::ForallType>();
         auto new_type_vars = type_vars;
-        for(auto& type_var: FAT.type_var_binders)
+        for(auto& type_var: FAT->type_var_binders)
         {
             assert(not includes(type_vars, type_var));
             new_type_vars.push_back(type_var);
         }
-        return Haskell::ForallType(new_type_vars, FAT.type);
+        return Haskell::ForallType(new_type_vars, FAT->type);
     }
     else
         return Haskell::ForallType(type_vars, type);

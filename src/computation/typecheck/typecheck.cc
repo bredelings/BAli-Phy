@@ -1280,8 +1280,9 @@ type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::C
         for(auto& [name, type]: unloc(*class_decl.decls).signatures)
         {
             Hs::Type method_type = type_check_class_method_type(K, type, constraint);
-            if (class_typevars.size())
-                method_type = add_forall_vars(class_typevars, method_type);
+
+            method_type = add_forall_vars(class_typevars, method_type);
+
             cinfo.methods = cinfo.methods.insert({name, method_type});
         }
     }
