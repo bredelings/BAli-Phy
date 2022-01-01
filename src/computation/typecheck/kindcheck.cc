@@ -187,16 +187,7 @@ set<string> free_type_cons(const Haskell::InstanceDecl& instance_decl)
 
 }
 
-set<string> from_this_module(const string& mod_name, set<string> names)
-{
-    set<string> ok_names;
-    for(auto& name: names)
-        if (get_module_name(name) == mod_name)
-            ok_names.insert(name);
-    return ok_names;
-}
-
-vector<vector<expression_ref>> find_type_groups(const Module& m, const Hs::Decls& type_decls)
+vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)
 {
     // 1. Collection type and instance declarations
 
@@ -242,7 +233,13 @@ vector<vector<expression_ref>> find_type_groups(const Module& m, const Hs::Decls
     // * (declaration, name, cons that this declaration depends on)
 
     for(auto& [type, referenced_types]: referenced_types)
-        referenced_types = from_this_module(m.name, referenced_types);
+    {
+        set<string> referenced_types_that_matter;
+        for(auto& type: referenced_types)
+            if (decl_for_type.count(type))
+                referenced_types_that_matter.insert(type);
+        referenced_types = referenced_types_that_matter;
+    }
 
     auto ordered_name_groups = get_ordered_strong_components(referenced_types);
 
@@ -250,11 +247,11 @@ vector<vector<expression_ref>> find_type_groups(const Module& m, const Hs::Decls
     return type_decl_groups;
 }
 
-type_con_env get_tycon_info(const Module& m, const Hs::Decls& type_decls)
+type_con_env get_tycon_info(const Hs::Decls& type_decls)
 {
     type_con_env tce;
 
-    auto type_decl_groups = find_type_groups(m, type_decls);
+    auto type_decl_groups = find_type_groups(type_decls);
 
     // 3. Compute kinds for type/class constructors.
     for(auto& type_decl_group: type_decl_groups)
@@ -262,18 +259,6 @@ type_con_env get_tycon_info(const Module& m, const Hs::Decls& type_decls)
         kindchecker_state K(tce);
         auto new_tycons = K.infer_kinds(type_decl_group);
         tce = plus_no_overlap(tce, new_tycons);
-
-        // Record tycon info in type table (REMOVE EVENTUALLY?)
-        for(auto& [name,info]: new_tycons)
-        {
-            // Compute arity and kind for return value.
-            auto& [k,arity] = info;
-
-            // Record arity and kind in type_symbols.
-            auto tinfo = m.lookup_resolved_type(name);
-            tinfo.arity = arity;
-            tinfo.k     = k;
-        }
     }
 
     return tce;

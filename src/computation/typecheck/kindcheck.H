@@ -9,7 +9,7 @@
 #include "kind.H"
 #include "env.H"
 
-type_con_env get_tycon_info(const Module& m, const Hs::Decls& type_decls);
+type_con_env get_tycon_info(const Hs::Decls& type_decls);
 
 struct kindchecker_state
 {

@@ -1055,7 +1055,7 @@ tuple<global_value_env, global_instance_env, class_env, Hs::Binds> typechecker_s
     return {gve, gie, ce, binds};
 }
 
-void typecheck(const Module& m, const Hs::ModuleDecls& M)
+void typecheck( const Hs::ModuleDecls& M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
     //    OK, so datatypes produce a
@@ -1065,7 +1065,7 @@ void typecheck(const Module& m, const Hs::ModuleDecls& M)
     // 2. Check the module's class declarations, produce some translated bindings -> binds_C ( GVE_C, CE_C, GIE_C )
 
     // TCE_T = type con info, part1
-    auto tce = get_tycon_info(m, M.type_decls);
+    auto tce = get_tycon_info( M.type_decls );
     for(auto& [tycon,ka]: tce)
     {
         auto& [k,arity] = ka;
