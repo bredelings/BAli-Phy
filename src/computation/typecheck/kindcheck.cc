@@ -455,14 +455,28 @@ kind kindchecker_state::kind_check_type_var(const Haskell::TypeVar& tv)
 
 kind kindchecker_state::kind_check_type_con(const string& name)
 {
-    if (type_con_to_kind.count(name))
-        return kind_for_type_con(name);
-    else
+    if (name == "Num#")
+        return make_kind_star();
+    else if (name == "Char")
+        return make_kind_star();
+    else if (name == "Double")
+        return make_kind_star();
+    else if (name == "Int")
+        return make_kind_star();
+    else if (name == "()")
+        return make_kind_star();
+    else if (name == "[]")
+        return make_n_args_kind(1);
+    else if (name == "->")
+        return make_n_args_kind(2);
+    else if (is_tuple_name(name))
     {
-        auto tinfo = mod.lookup_resolved_type(name);
-        assert(tinfo.k);
-        return tinfo.k;
+        int n = tuple_arity(name);
+
+        return make_n_args_kind(n);
     }
+    else
+        return kind_for_type_con(name);
 }
 
 kind kindchecker_state::kind_check_type(const Haskell::Type& t)
