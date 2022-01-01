@@ -1093,6 +1093,15 @@ void typecheck( const Hs::ModuleDecls& M )
     }
     std::cerr<<"\n";
 
+    for(auto& [method,type]: gie)
+    {
+        std::cerr<<method<<" :: "<<type.print()<<"\n";
+    }
+    std::cerr<<"\n";
+
+    std::cerr<<class_binds.print()<<"\n";
+    std::cerr<<"\n";
+
     // GIE_C = functions to extract sub-dictionaries from containing dictionaries?
     // NOT IMPLEMENTED YET.
 
@@ -1303,10 +1312,56 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Haskell::
     //   (b) determine an order for all the fields.
     //   (c) synthesize field accessors and put them in decls
 
-    Hs::Decls decls;
     global_instance_env gie;
-    cinfo.methods = gve;
-    
+    for(auto& constraint_: cinfo.context.constraints)
+    {
+        auto get_dict = fresh_var("get_dict");
+        // Should this be a function arrow?
+        Hs::Type type = add_constraints({constraint}, constraint_);
+        // Could we be adding too many forall vars?
+        type = add_forall_vars(class_typevars, type);
+        gie = gie.insert({unloc(get_dict.name), type});
+    }
+    cinfo.fields = plus_no_overlap(gve, gie);
+
+    Hs::Decls decls;
+
+    vector<Hs::Type> types;
+    for(auto& [name,type]: cinfo.fields)
+        types.push_back(type);
+    Hs::Type dict_type = Hs::TupleType(types);
+
+    int i = 0;
+    for(auto& [name,type]: cinfo.fields)
+    {
+        // body = \dict -> case dict of (_,field,_,_) -> field
+
+        // dict
+        Hs::Var dict({noloc,"dict"});
+        // field
+        Hs::Var field({noloc,"field"});
+
+        // (_,field,_,_)
+        vector<Hs::Pattern> pats(cinfo.fields.size(), Hs::WildcardPattern());
+        pats[i] = field;
+
+        // (,field,_,_) -> field
+        Hs::Alt alt{Hs::Tuple(pats),Hs::SimpleRHS({noloc,field})};
+
+        // case dict of (_,field,_,_) -> field
+        Hs::CaseExp case_exp(dict,Hs::Alts({{noloc,alt}}));
+
+        // dict -> case dict of (_,field,_,_) -> field
+        Hs::MRule rule{{dict},Hs::SimpleRHS({noloc,case_exp})};
+        Hs::Match m{{rule}};
+
+        // f = dict -> case dict of (_,field,_,_) -> field
+        Hs::Var f({noloc,name});
+        decls.push_back( Hs::FunDecl(f,m) );
+
+        i++;
+    }
+
     return {gve,gie,cinfo,decls};
 }
 

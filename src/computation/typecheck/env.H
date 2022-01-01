@@ -60,7 +60,7 @@ struct class_info
     // FIXME: Should we record here the names of functions to extract 
     Hs::Context context;
 
-    global_value_env methods;
+    global_value_env fields;
 };
 
 typedef std::map<std::string, class_info> class_env;
