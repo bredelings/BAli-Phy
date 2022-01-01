@@ -1047,7 +1047,7 @@ tuple<global_value_env, global_instance_env, class_env, Hs::Binds> typechecker_s
         auto [gve1, gie1, class_info, class_decls] = infer_type_for_class(tce, *c);
 
         gve = plus_no_overlap(gve, gve1);
-        gie = plus_no_overlap(gve, gie1);
+        gie = plus_no_overlap(gie, gie1);
         ce.insert({class_info.name, class_info});
         binds.push_back(class_decls);
     }
