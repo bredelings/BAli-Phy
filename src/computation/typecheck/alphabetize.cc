@@ -101,7 +101,7 @@ expression_ref alphabetize_type(const expression_ref& type, map<Haskell::TypeVar
         std::abort();
 }
 
-expression_ref alphabetize_type(const expression_ref& type)
+Hs::Type alphabetize_type(const Hs::Type& type)
 {
     map<Haskell::TypeVar, Haskell::TypeVar> s;
     int index = 0;
