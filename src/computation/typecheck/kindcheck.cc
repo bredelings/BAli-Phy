@@ -15,39 +15,39 @@ using std::vector;
 
 namespace views = ranges::views;
 
-set<string> free_type_cons(const Haskell::Context& context);
+set<string> free_type_cons(const Hs::Context& context);
 
-set<string> free_type_cons(const Haskell::Type& type)
+set<string> free_type_cons(const Hs::Type& type)
 {
     set<string> tcons;
-    if (type.is_a<Haskell::TypeVar>())
+    if (type.is_a<Hs::TypeVar>())
     {
         return {};
     }
-    else if (auto tc = type.to<Haskell::TypeCon>())
+    else if (auto tc = type.to<Hs::TypeCon>())
     {
         auto& name = unloc(tc->name);
         if (is_qualified_symbol(name))
             tcons.insert(name);
     }
-    else if (type.is_a<Haskell::TypeApp>())
+    else if (type.is_a<Hs::TypeApp>())
     {
-        auto& app = type.as_<Haskell::TypeApp>();
+        auto& app = type.as_<Hs::TypeApp>();
         add(tcons, free_type_cons(app.head));
         add(tcons, free_type_cons(app.arg));
     }
-    else if (type.is_a<Haskell::TupleType>())
+    else if (type.is_a<Hs::TupleType>())
     {
-        auto& tuple = type.as_<Haskell::TupleType>();
+        auto& tuple = type.as_<Hs::TupleType>();
         for(auto element_type: tuple.element_types)
             add(tcons, free_type_cons(element_type));
     }
-    else if (type.is_a<Haskell::ListType>())
+    else if (type.is_a<Hs::ListType>())
     {
-        auto& list = type.as_<Haskell::ListType>();
+        auto& list = type.as_<Hs::ListType>();
         return free_type_cons(list.element_type);
     }
-    else if (auto forall = type.to<Haskell::ForallType>())
+    else if (auto forall = type.to<Hs::ForallType>())
     {
         return free_type_cons(forall->type);
     }
@@ -65,38 +65,38 @@ set<string> free_type_cons(const Haskell::Type& type)
     return tcons;
 }
 
-set<string> free_type_vars(const Haskell::Context&);
+set<string> free_type_vars(const Hs::Context&);
 
-set<string> free_type_vars(const Haskell::Type& type)
+set<string> free_type_vars(const Hs::Type& type)
 {
     set<string> tvars;
-    if (type.is_a<Haskell::TypeCon>())
+    if (type.is_a<Hs::TypeCon>())
     {
         return {};
     }
-    else if (auto tv = type.to<Haskell::TypeVar>())
+    else if (auto tv = type.to<Hs::TypeVar>())
     {
         auto& name = unloc(tv->name);
         tvars.insert(name);
     }
-    else if (type.is_a<Haskell::TypeApp>())
+    else if (type.is_a<Hs::TypeApp>())
     {
-        auto& app = type.as_<Haskell::TypeApp>();
+        auto& app = type.as_<Hs::TypeApp>();
         add(tvars, free_type_vars(app.head));
         add(tvars, free_type_vars(app.arg));
     }
-    else if (type.is_a<Haskell::TupleType>())
+    else if (type.is_a<Hs::TupleType>())
     {
-        auto& tuple = type.as_<Haskell::TupleType>();
+        auto& tuple = type.as_<Hs::TupleType>();
         for(auto element_type: tuple.element_types)
             add(tvars, free_type_vars(element_type));
     }
-    else if (type.is_a<Haskell::ListType>())
+    else if (type.is_a<Hs::ListType>())
     {
-        auto& list = type.as_<Haskell::ListType>();
+        auto& list = type.as_<Hs::ListType>();
         return free_type_vars(list.element_type);
     }
-    else if (auto forall = type.to<Haskell::ForallType>())
+    else if (auto forall = type.to<Hs::ForallType>())
     {
         tvars = free_type_vars(forall->type);
         for(auto& type_var: forall->type_var_binders)
@@ -117,7 +117,7 @@ set<string> free_type_vars(const Haskell::Type& type)
     return tvars;
 }
 
-set<string> free_type_vars(const Haskell::Context& context)
+set<string> free_type_vars(const Hs::Context& context)
 {
     set<string> tvars;
     for(auto& constraint: context.constraints)
@@ -125,7 +125,7 @@ set<string> free_type_vars(const Haskell::Context& context)
     return tvars;
 }
 
-set<string> free_type_cons(const Haskell::Context& context)
+set<string> free_type_cons(const Hs::Context& context)
 {
     set<string> tvars;
     for(auto& constraint: context.constraints)
@@ -133,7 +133,7 @@ set<string> free_type_cons(const Haskell::Context& context)
     return tvars;
 }
 
-set<string> free_type_cons(const Haskell::ClassDecl& class_decl)
+set<string> free_type_cons(const Hs::ClassDecl& class_decl)
 {
     // QUESTION: We are ignoring default methods here -- should we?
     set<string> tvars;
@@ -146,7 +146,7 @@ set<string> free_type_cons(const Haskell::ClassDecl& class_decl)
     return tvars;
 }
 
-set<string> free_type_cons(const Haskell::DataOrNewtypeDecl& type_decl)
+set<string> free_type_cons(const Hs::DataOrNewtypeDecl& type_decl)
 {
     set<string> tvars;
     add(tvars, free_type_cons(type_decl.context));
@@ -171,12 +171,12 @@ set<string> free_type_cons(const Haskell::DataOrNewtypeDecl& type_decl)
     return tvars;
 }
 
-set<string> free_type_cons(const Haskell::TypeSynonymDecl& synonym_decl)
+set<string> free_type_cons(const Hs::TypeSynonymDecl& synonym_decl)
 {
     return free_type_cons(unloc(synonym_decl.rhs_type));
 }
 
-set<string> free_type_cons(const Haskell::InstanceDecl& instance_decl)
+set<string> free_type_cons(const Hs::InstanceDecl& instance_decl)
 {
     set<string> tvars;
     add(tvars, free_type_cons(instance_decl.context));
@@ -194,31 +194,31 @@ vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)
 
     map<string, expression_ref> decl_for_type;
 
-    vector<tuple<Haskell::InstanceDecl,set<string>>> instance_decls;
+    vector<tuple<Hs::InstanceDecl,set<string>>> instance_decls;
 
     for(auto& decl: type_decls)
     {
-        if (decl.is_a<Haskell::ClassDecl>())
+        if (decl.is_a<Hs::ClassDecl>())
         {
-            auto& class_decl = decl.as_<Haskell::ClassDecl>();
+            auto& class_decl = decl.as_<Hs::ClassDecl>();
             referenced_types[class_decl.name] = free_type_cons(class_decl);
             decl_for_type[class_decl.name] = decl;
         }
-        else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
+        else if (decl.is_a<Hs::DataOrNewtypeDecl>())
         {
-            auto& type_decl = decl.as_<Haskell::DataOrNewtypeDecl>();
+            auto& type_decl = decl.as_<Hs::DataOrNewtypeDecl>();
             referenced_types[type_decl.name] = free_type_cons(type_decl);
             decl_for_type[type_decl.name] = decl;
         }
-        else if (decl.is_a<Haskell::TypeSynonymDecl>())
+        else if (decl.is_a<Hs::TypeSynonymDecl>())
         {
-            auto& type_decl = decl.as_<Haskell::TypeSynonymDecl>();
+            auto& type_decl = decl.as_<Hs::TypeSynonymDecl>();
             referenced_types[type_decl.name] = free_type_cons(type_decl);
             decl_for_type[type_decl.name] = decl;
         }
-        else if (decl.is_a<Haskell::InstanceDecl>())
+        else if (decl.is_a<Hs::InstanceDecl>())
         {
-            auto& instance_decl = decl.as_<Haskell::InstanceDecl>();
+            auto& instance_decl = decl.as_<Hs::InstanceDecl>();
             instance_decls.push_back({instance_decl, free_type_cons(instance_decl)});
         }
         else
@@ -264,26 +264,26 @@ type_con_env get_tycon_info(const Hs::Decls& type_decls)
 
 // Q: how/when do we rename default method definitions?
 
-Haskell::Type add_constraints(const vector<Haskell::Type>& constraints, const Haskell::Type& type)
+Hs::Type add_constraints(const vector<Hs::Type>& constraints, const Hs::Type& type)
 {
     if (constraints.empty())
         return type;
-    else if (type.is_a<Haskell::ConstrainedType>())
+    else if (type.is_a<Hs::ConstrainedType>())
     {
-        auto CT = type.as_<Haskell::ConstrainedType>();
+        auto CT = type.as_<Hs::ConstrainedType>();
         for(auto& constraint: constraints)
             CT.context.constraints.push_back(constraint);
         return CT;
     }
     else
-        return Haskell::ConstrainedType(Haskell::Context(constraints),type);
+        return Hs::ConstrainedType(Hs::Context(constraints),type);
 }
 
-Haskell::Type add_forall_vars(const std::vector<Haskell::TypeVar>& type_vars, const Haskell::Type& type)
+Hs::Type add_forall_vars(const std::vector<Hs::TypeVar>& type_vars, const Hs::Type& type)
 {
     if (type_vars.empty())
         return type;
-    else if (auto FAT = type.to<Haskell::ForallType>())
+    else if (auto FAT = type.to<Hs::ForallType>())
     {
         auto new_type_vars = type_vars;
         for(auto& type_var: FAT->type_var_binders)
@@ -291,54 +291,54 @@ Haskell::Type add_forall_vars(const std::vector<Haskell::TypeVar>& type_vars, co
             assert(not includes(type_vars, type_var));
             new_type_vars.push_back(type_var);
         }
-        return Haskell::ForallType(new_type_vars, FAT->type);
+        return Hs::ForallType(new_type_vars, FAT->type);
     }
     else
-        return Haskell::ForallType(type_vars, type);
+        return Hs::ForallType(type_vars, type);
 }
 
-set<Haskell::TypeVar> free_type_VARS(const Haskell::Context& context)
+set<Hs::TypeVar> free_type_VARS(const Hs::Context& context)
 {
-    set<Haskell::TypeVar> tvars;
+    set<Hs::TypeVar> tvars;
     for(auto& constraint: context.constraints)
         add(tvars, free_type_VARS(constraint));
     return tvars;
 }
 
-set<Haskell::TypeVar> free_type_VARS(const Haskell::Type& type)
+set<Hs::TypeVar> free_type_VARS(const Hs::Type& type)
 {
-    set<Haskell::TypeVar> tvars;
-    if (type.is_a<Haskell::TypeCon>())
+    set<Hs::TypeVar> tvars;
+    if (type.is_a<Hs::TypeCon>())
     {
     }
-    else if (type.is_a<Haskell::TypeVar>())
+    else if (type.is_a<Hs::TypeVar>())
     {
-        auto& tv = type.as_<Haskell::TypeVar>();
+        auto& tv = type.as_<Hs::TypeVar>();
         auto& name = unloc(tv.name);
         assert(name.size());
         assert(is_haskell_varid(name));
         tvars.insert(tv);
     }
-    else if (type.is_a<Haskell::TypeApp>())
+    else if (type.is_a<Hs::TypeApp>())
     {
-        auto& app = type.as_<Haskell::TypeApp>();
+        auto& app = type.as_<Hs::TypeApp>();
         add(tvars, free_type_VARS(app.head));
         add(tvars, free_type_VARS(app.arg));
     }
-    else if (type.is_a<Haskell::TupleType>())
+    else if (type.is_a<Hs::TupleType>())
     {
-        auto& tuple = type.as_<Haskell::TupleType>();
+        auto& tuple = type.as_<Hs::TupleType>();
         for(auto element_type: tuple.element_types)
             add(tvars, free_type_VARS(element_type));
     }
-    else if (type.is_a<Haskell::ListType>())
+    else if (type.is_a<Hs::ListType>())
     {
-        auto& list = type.as_<Haskell::ListType>();
+        auto& list = type.as_<Hs::ListType>();
         add(tvars, free_type_VARS(list.element_type));
     }
-    else if (type.is_a<Haskell::ForallType>())
+    else if (type.is_a<Hs::ForallType>())
     {
-        auto& forall = type.as_<Haskell::ForallType>();
+        auto& forall = type.as_<Hs::ForallType>();
         tvars = free_type_VARS(forall.type);
         for(auto& type_var: forall.type_var_binders)
             tvars.erase(type_var);
@@ -358,12 +358,12 @@ set<Haskell::TypeVar> free_type_VARS(const Haskell::Type& type)
     return tvars;
 }
 
-bool kindchecker_state::type_var_in_scope(const Haskell::TypeVar& tv) const
+bool kindchecker_state::type_var_in_scope(const Hs::TypeVar& tv) const
 {
     return type_var_to_kind.back().count(tv);
 }
 
-void kindchecker_state::bind_type_var(const Haskell::TypeVar& tv, const kind& k)
+void kindchecker_state::bind_type_var(const Hs::TypeVar& tv, const kind& k)
 {
     // We can't modify the initial empty scope.
     assert(type_var_to_kind.size() > 1);
@@ -419,7 +419,7 @@ kind kindchecker_state::kind_for_type_con(const std::string& name) const
 }
 
 
-kind kindchecker_state::kind_for_type_var(const Haskell::TypeVar& tv) const
+kind kindchecker_state::kind_for_type_var(const Hs::TypeVar& tv) const
 {
     auto it = type_var_to_kind.back().find(tv);
     if (it == type_var_to_kind.back().end())
@@ -440,14 +440,14 @@ bool kindchecker_state::unify(const kind& k1, const kind& k2)
         return false;
 }
 
-void kindchecker_state::kind_check_type_of_kind(const Haskell::Type& t, const kind& k)
+void kindchecker_state::kind_check_type_of_kind(const Hs::Type& t, const kind& k)
 {
     auto k2 = kind_check_type(t);
     if (not unify(k,k2))
         throw myexception()<<"Type "<<t<<" has kind "<<apply_substitution(k2)<<", but should have kind "<<apply_substitution(k)<<"\n";
 }
 
-kind kindchecker_state::kind_check_type_var(const Haskell::TypeVar& tv)
+kind kindchecker_state::kind_check_type_var(const Hs::TypeVar& tv)
 {
     return kind_for_type_var(tv);
 }
@@ -478,21 +478,21 @@ kind kindchecker_state::kind_check_type_con(const string& name)
         return kind_for_type_con(name);
 }
 
-kind kindchecker_state::kind_check_type(const Haskell::Type& t)
+kind kindchecker_state::kind_check_type(const Hs::Type& t)
 {
-    if (auto tc = t.to<Haskell::TypeCon>())
+    if (auto tc = t.to<Hs::TypeCon>())
     {
         auto& name = unloc(tc->name);
 
         return kind_check_type_con(name);
     }
-    else if (auto tv = t.to<Haskell::TypeVar>())
+    else if (auto tv = t.to<Hs::TypeVar>())
     {
         return kind_check_type_var(*tv);
     }
-    else if (t.is_a<Haskell::TypeApp>())
+    else if (t.is_a<Hs::TypeApp>())
     {
-        auto& tapp = t.as_<Haskell::TypeApp>();
+        auto& tapp = t.as_<Hs::TypeApp>();
 
         auto k1 = kind_check_type(tapp.head);
         auto k2 = kind_check_type(tapp.arg);
@@ -517,20 +517,20 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
             throw myexception()<<"Can't apply type "<<tapp.head<<" :: "<<k1->print()<<" to type "<<tapp.arg<<".";
 
     }
-    else if (t.is_a<Haskell::ListType>())
+    else if (t.is_a<Hs::ListType>())
     {
-        auto& L = t.as_<Haskell::ListType>();
-        Haskell::Type list_con = Haskell::TypeCon(Unlocated("[]"));
-        Haskell::Type list_type = Haskell::TypeApp(list_con, L.element_type);
+        auto& L = t.as_<Hs::ListType>();
+        Hs::Type list_con = Hs::TypeCon(Unlocated("[]"));
+        Hs::Type list_type = Hs::TypeApp(list_con, L.element_type);
         return kind_check_type(list_type);
     }
-    else if (t.is_a<Haskell::TupleType>())
+    else if (t.is_a<Hs::TupleType>())
     {
-        auto& T = t.as_<Haskell::TupleType>();
+        auto& T = t.as_<Hs::TupleType>();
         auto n = T.element_types.size();
-        Haskell::Type tuple_type = Haskell::TypeCon(Unlocated(tuple_name(n)));
+        Hs::Type tuple_type = Hs::TypeCon(Unlocated(tuple_name(n)));
         for(auto& element_type: T.element_types)
-            tuple_type = Haskell::TypeApp(tuple_type, element_type);
+            tuple_type = Hs::TypeApp(tuple_type, element_type);
         return kind_check_type(tuple_type);
     }
     else
@@ -538,18 +538,18 @@ kind kindchecker_state::kind_check_type(const Haskell::Type& t)
 }
 
 
-void kindchecker_state::kind_check_constraint(const Haskell::Type& constraint)
+void kindchecker_state::kind_check_constraint(const Hs::Type& constraint)
 {
     return kind_check_type_of_kind(constraint, make_kind_constraint());
 }
 
-void kindchecker_state::kind_check_context(const Haskell::Context& context)
+void kindchecker_state::kind_check_context(const Hs::Context& context)
 {
     for(auto& constraint: context.constraints)
         kind_check_constraint(constraint);
 }
 
-void kindchecker_state::kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type)
+void kindchecker_state::kind_check_constructor(const Hs::Constructor& constructor, const Hs::Type& data_type)
 {
     auto type2 = data_type;
 
@@ -578,7 +578,7 @@ void kindchecker_state::kind_check_constructor(const Haskell::Constructor& const
     kind_check_type_of_kind(type2, make_kind_star());
 }
 
-Haskell::Type kindchecker_state::type_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type)
+Hs::Type kindchecker_state::type_check_constructor(const Hs::Constructor& constructor, const Hs::Type& data_type)
 {
     // At the moment, constructors cannot introduce new type variables.
     // So, we just need to construct the type.
@@ -611,7 +611,7 @@ Haskell::Type kindchecker_state::type_check_constructor(const Haskell::Construct
     return type2;
 }
 
-void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl)
+void kindchecker_state::kind_check_data_type(const Hs::DataOrNewtypeDecl& data_decl)
 {
     push_type_var_scope();
 
@@ -637,9 +637,9 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
     kind_check_context(data_decl.context);
 
     // d. construct the data type
-    Haskell::Type data_type = Haskell::TypeCon(Unlocated(data_decl.name));
+    Hs::Type data_type = Hs::TypeCon(Unlocated(data_decl.name));
     for(auto& tv: data_decl.type_vars)
-        data_type = Haskell::TypeApp(data_type, tv);
+        data_type = Hs::TypeApp(data_type, tv);
 
     // e. Handle the constructor terms
     for(auto& constructor: data_decl.constructors)
@@ -648,7 +648,7 @@ void kindchecker_state::kind_check_data_type(const Haskell::DataOrNewtypeDecl& d
     pop_type_var_scope();
 }
 
-map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl)
+map<string,Hs::Type> kindchecker_state::type_check_data_type(const Hs::DataOrNewtypeDecl& data_decl)
 {
     push_type_var_scope();
 
@@ -656,7 +656,7 @@ map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell:
     kind k = kind_for_type_con(data_decl.name);  // FIXME -- check that this is a data type?
 
     // b. Bind each type variable.
-    vector<Haskell::TypeVar> datatype_typevars;
+    vector<Hs::TypeVar> datatype_typevars;
     for(auto& tv: data_decl.type_vars)
     {
         // the kind should be an arrow kind.
@@ -681,25 +681,25 @@ map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell:
     // We should already have checked that it doesn't contain any unbound variables.
 
     // d. construct the data type
-    Haskell::Type data_type = Haskell::TypeCon(Unlocated(data_decl.name));
+    Hs::Type data_type = Hs::TypeCon(Unlocated(data_decl.name));
     for(auto& tv: datatype_typevars)
-        data_type = Haskell::TypeApp(data_type, tv);
+        data_type = Hs::TypeApp(data_type, tv);
 
     // e. Handle the constructor terms
-    map<string,Haskell::Type> types;
+    map<string,Hs::Type> types;
     for(auto& constructor: data_decl.constructors)
     {
         // Constructors are not allowed to introduce new variables w/o GADT form, with a where clause.
         // This should have already been checked.
 
-        Haskell::Type constructor_type = type_check_constructor(constructor, data_type);
+        Hs::Type constructor_type = type_check_constructor(constructor, data_type);
 
         // Actually we should only add the constraints that use type variables that are used in the constructor.
         constructor_type = add_constraints(data_decl.context.constraints, constructor_type);
 
         // QUESTION: do we need to replace the original user type vars with the new kind-annotated versions?
         if (datatype_typevars.size())
-            constructor_type = Haskell::ForallType(datatype_typevars, constructor_type);
+            constructor_type = Hs::ForallType(datatype_typevars, constructor_type);
 
         types.insert({constructor.name, constructor_type});
     }
@@ -709,18 +709,18 @@ map<string,Haskell::Type> kindchecker_state::type_check_data_type(const Haskell:
     return types;
 }
 
-void kindchecker_state::kind_check_class_method_type(const Haskell::Type& type)
+void kindchecker_state::kind_check_class_method_type(const Hs::Type& type)
 {
     // 1. Bind type parameters for type declaration
     push_type_var_scope();
 
-    std::optional<Haskell::Context> context;
+    std::optional<Hs::Context> context;
 
     // 2. Find the unconstrained type
     auto unconstrained_type = type;
-    if (unconstrained_type.is_a<Haskell::ConstrainedType>())
+    if (unconstrained_type.is_a<Hs::ConstrainedType>())
     {
-        auto& ct = unconstrained_type.as_<Haskell::ConstrainedType>();
+        auto& ct = unconstrained_type.as_<Hs::ConstrainedType>();
         context = ct.context;
         unconstrained_type = ct.type;
     }
@@ -747,7 +747,7 @@ void kindchecker_state::kind_check_class_method_type(const Haskell::Type& type)
     pop_type_var_scope();
 }
 
-void kindchecker_state::kind_check_type_class(const Haskell::ClassDecl& class_decl)
+void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
 {
     // Bind type parameters for class
     push_type_var_scope();
@@ -789,7 +789,7 @@ class C a where
    bar :: a -> D a -> Bool
 */
 
-void kindchecker_state::kind_check_type_synonym(const Haskell::TypeSynonymDecl& type_syn_decl)
+void kindchecker_state::kind_check_type_synonym(const Hs::TypeSynonymDecl& type_syn_decl)
 {
     // Bind type parameters for class
     push_type_var_scope();
@@ -828,23 +828,23 @@ type_con_env kindchecker_state::infer_kinds(const vector<expression_ref>& type_d
         string name;
         int arity;
         kind k;
-        if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
+        if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
         {
-            auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
+            auto& D = type_decl.as_<Hs::DataOrNewtypeDecl>();
             name = D.name;
             arity = D.type_vars.size();
             k = make_kind_star();
         }
-        else if (type_decl.is_a<Haskell::ClassDecl>())
+        else if (type_decl.is_a<Hs::ClassDecl>())
         {
-            auto& C = type_decl.as_<Haskell::ClassDecl>();
+            auto& C = type_decl.as_<Hs::ClassDecl>();
             name = C.name;
             arity = C.type_vars.size();
             k = make_kind_constraint();
         }
-        else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
+        else if (type_decl.is_a<Hs::TypeSynonymDecl>())
         {
-            auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
+            auto & T = type_decl.as_<Hs::TypeSynonymDecl>();
             name = T.name;
             arity = T.type_vars.size();
             k = make_kind_star();
@@ -865,19 +865,19 @@ type_con_env kindchecker_state::infer_kinds(const vector<expression_ref>& type_d
     {
         try
         {
-            if (type_decl.is_a<Haskell::DataOrNewtypeDecl>())
+            if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
             {
-                auto& D = type_decl.as_<Haskell::DataOrNewtypeDecl>();
+                auto& D = type_decl.as_<Hs::DataOrNewtypeDecl>();
                 kind_check_data_type( D );
             }
-            else if (type_decl.is_a<Haskell::ClassDecl>())
+            else if (type_decl.is_a<Hs::ClassDecl>())
             {
-                auto& C = type_decl.as_<Haskell::ClassDecl>();
+                auto& C = type_decl.as_<Hs::ClassDecl>();
                 kind_check_type_class( C );
             }
-            else if (type_decl.is_a<Haskell::TypeSynonymDecl>())
+            else if (type_decl.is_a<Hs::TypeSynonymDecl>())
             {
-                auto & T = type_decl.as_<Haskell::TypeSynonymDecl>();
+                auto & T = type_decl.as_<Hs::TypeSynonymDecl>();
                 kind_check_type_synonym( T );
             }
         }

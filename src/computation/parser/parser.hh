@@ -63,16 +63,16 @@
 
   std::optional<Located<Hs::Decls>> make_opt_decls(const std::optional<Located<Hs::Binds>>& binds);
 
-  std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
+  std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
-  Haskell::Type make_kind(const Haskell::Type& kind);
-  Haskell::Constructor make_constructor(const std::vector<Haskell::TypeVar>& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish);
-  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Binds>>& decls);
-  Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
-  Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
-                                                  const expression_ref& header, const std::vector<Haskell::Constructor>& constrs);
-  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Binds>>& decls);
-  Haskell::Context make_context(const expression_ref& context);
+  Hs::Type make_kind(const Hs::Type& kind);
+  Hs::Constructor make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const expression_ref& typeish);
+  Hs::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Hs::Binds>>& decls);
+  Hs::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
+  Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
+                                                  const expression_ref& header, const std::vector<Hs::Constructor>& constrs);
+  Hs::ClassDecl make_class_decl(const Hs::Context& context, const expression_ref& header, const std::optional<Located<Hs::Binds>>& decls);
+  Hs::Context make_context(const expression_ref& context);
 
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
@@ -440,64 +440,64 @@ namespace yy {
     union union_type
     {
       // altslist
-      char dummy1[sizeof (Haskell::Alts)];
+      char dummy1[sizeof (Hs::Alts)];
 
       // constr
-      char dummy2[sizeof (Haskell::Constructor)];
+      char dummy2[sizeof (Hs::Constructor)];
 
       // context
       // context_no_ops
-      char dummy3[sizeof (Haskell::Context)];
+      char dummy3[sizeof (Hs::Context)];
 
       // data_or_newtype
-      char dummy4[sizeof (Haskell::DataOrNewtype)];
+      char dummy4[sizeof (Hs::DataOrNewtype)];
 
       // topdecls
       // topdecls_semi
       // decllist
-      char dummy5[sizeof (Haskell::Decls)];
+      char dummy5[sizeof (Hs::Decls)];
 
       // export
-      char dummy6[sizeof (Haskell::Export)];
+      char dummy6[sizeof (Hs::Export)];
 
       // fielddecl
-      char dummy7[sizeof (Haskell::FieldDecl)];
+      char dummy7[sizeof (Hs::FieldDecl)];
 
       // infix
-      char dummy8[sizeof (Haskell::Fixity)];
+      char dummy8[sizeof (Hs::Fixity)];
 
       // gdrh
       // gdpat
-      char dummy9[sizeof (Haskell::GuardedRHS)];
+      char dummy9[sizeof (Hs::GuardedRHS)];
 
       // importdecl
-      char dummy10[sizeof (Haskell::ImpDecl)];
+      char dummy10[sizeof (Hs::ImpDecl)];
 
       // impspec
-      char dummy11[sizeof (Haskell::ImpSpec)];
+      char dummy11[sizeof (Hs::ImpSpec)];
 
       // module
-      char dummy12[sizeof (Haskell::Module)];
-
-      // stmtlist
-      char dummy13[sizeof (Haskell::Stmts)];
-
-      // strict_mark
-      // strictness
-      char dummy14[sizeof (Haskell::StrictLazy)];
-
-      // tv_bndr
-      char dummy15[sizeof (Haskell::TypeVar)];
+      char dummy12[sizeof (Hs::Module)];
 
       // rhs
       // alt_rhs
-      char dummy16[sizeof (Hs::MultiGuardedRHS)];
+      char dummy13[sizeof (Hs::MultiGuardedRHS)];
+
+      // stmtlist
+      char dummy14[sizeof (Hs::Stmts)];
+
+      // strict_mark
+      // strictness
+      char dummy15[sizeof (Hs::StrictLazy)];
+
+      // tv_bndr
+      char dummy16[sizeof (Hs::TypeVar)];
 
       // alt
-      char dummy17[sizeof (Located<Haskell::Alt>)];
+      char dummy17[sizeof (Located<Hs::Alt>)];
 
       // binds
-      char dummy18[sizeof (Located<Haskell::Binds>)];
+      char dummy18[sizeof (Located<Hs::Binds>)];
 
       // qcname
       char dummy19[sizeof (Located<std::string>)];
@@ -562,13 +562,13 @@ namespace yy {
       char dummy25[sizeof (int)];
 
       // export_subspec
-      char dummy26[sizeof (std::optional<Haskell::ExportSubSpec>)];
+      char dummy26[sizeof (std::optional<Hs::ExportSubSpec>)];
 
       // maybeimpspec
-      char dummy27[sizeof (std::optional<Haskell::ImpSpec>)];
+      char dummy27[sizeof (std::optional<Hs::ImpSpec>)];
 
       // wherebinds
-      char dummy28[sizeof (std::optional<Located<Haskell::Binds>>)];
+      char dummy28[sizeof (std::optional<Located<Hs::Binds>>)];
 
       // prec
       char dummy29[sizeof (std::optional<int>)];
@@ -577,16 +577,16 @@ namespace yy {
       char dummy30[sizeof (std::optional<std::string>)];
 
       // maybeexports
-      char dummy31[sizeof (std::optional<std::vector<Haskell::Export>>)];
+      char dummy31[sizeof (std::optional<std::vector<Hs::Export>>)];
 
       // tycl_hdr
-      char dummy32[sizeof (std::pair<Haskell::Context,expression_ref>)];
+      char dummy32[sizeof (std::pair<Hs::Context,expression_ref>)];
 
       // body
       // body2
       // top
       // top1
-      char dummy33[sizeof (std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>)];
+      char dummy33[sizeof (std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>)];
 
       // "VARID"
       // "CONID"
@@ -644,34 +644,34 @@ namespace yy {
 
       // constrs
       // constrs1
-      char dummy35[sizeof (std::vector<Haskell::Constructor>)];
+      char dummy35[sizeof (std::vector<Hs::Constructor>)];
 
       // exportlist
       // exportlist1
-      char dummy36[sizeof (std::vector<Haskell::Export>)];
+      char dummy36[sizeof (std::vector<Hs::Export>)];
 
       // fielddecls
       // fielddecls1
-      char dummy37[sizeof (std::vector<Haskell::FieldDecl>)];
+      char dummy37[sizeof (std::vector<Hs::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy38[sizeof (std::vector<Haskell::GuardedRHS>)];
+      char dummy38[sizeof (std::vector<Hs::GuardedRHS>)];
 
       // importdecls
       // importdecls_semi
-      char dummy39[sizeof (std::vector<Haskell::ImpDecl>)];
+      char dummy39[sizeof (std::vector<Hs::ImpDecl>)];
 
       // tv_bndrs
       // forall
-      char dummy40[sizeof (std::vector<Haskell::TypeVar>)];
+      char dummy40[sizeof (std::vector<Hs::TypeVar>)];
 
       // sig_vars
-      char dummy41[sizeof (std::vector<Haskell::Var>)];
+      char dummy41[sizeof (std::vector<Hs::Var>)];
 
       // alts
       // alts1
-      char dummy42[sizeof (std::vector<Located<Haskell::Alt>>)];
+      char dummy42[sizeof (std::vector<Located<Hs::Alt>>)];
 
       // qcnames
       // qcnames1
@@ -1253,68 +1253,55 @@ namespace yy {
         switch (this->kind ())
     {
       case symbol_kind::S_altslist: // altslist
-        value.move< Haskell::Alts > (std::move (that.value));
+        value.move< Hs::Alts > (std::move (that.value));
         break;
 
       case symbol_kind::S_constr: // constr
-        value.move< Haskell::Constructor > (std::move (that.value));
+        value.move< Hs::Constructor > (std::move (that.value));
         break;
 
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
-        value.move< Haskell::Context > (std::move (that.value));
+        value.move< Hs::Context > (std::move (that.value));
         break;
 
       case symbol_kind::S_data_or_newtype: // data_or_newtype
-        value.move< Haskell::DataOrNewtype > (std::move (that.value));
+        value.move< Hs::DataOrNewtype > (std::move (that.value));
         break;
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decllist: // decllist
-        value.move< Haskell::Decls > (std::move (that.value));
+        value.move< Hs::Decls > (std::move (that.value));
         break;
 
       case symbol_kind::S_export: // export
-        value.move< Haskell::Export > (std::move (that.value));
+        value.move< Hs::Export > (std::move (that.value));
         break;
 
       case symbol_kind::S_fielddecl: // fielddecl
-        value.move< Haskell::FieldDecl > (std::move (that.value));
+        value.move< Hs::FieldDecl > (std::move (that.value));
         break;
 
       case symbol_kind::S_infix: // infix
-        value.move< Haskell::Fixity > (std::move (that.value));
+        value.move< Hs::Fixity > (std::move (that.value));
         break;
 
       case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_gdpat: // gdpat
-        value.move< Haskell::GuardedRHS > (std::move (that.value));
+        value.move< Hs::GuardedRHS > (std::move (that.value));
         break;
 
       case symbol_kind::S_importdecl: // importdecl
-        value.move< Haskell::ImpDecl > (std::move (that.value));
+        value.move< Hs::ImpDecl > (std::move (that.value));
         break;
 
       case symbol_kind::S_impspec: // impspec
-        value.move< Haskell::ImpSpec > (std::move (that.value));
+        value.move< Hs::ImpSpec > (std::move (that.value));
         break;
 
       case symbol_kind::S_module: // module
-        value.move< Haskell::Module > (std::move (that.value));
-        break;
-
-      case symbol_kind::S_stmtlist: // stmtlist
-        value.move< Haskell::Stmts > (std::move (that.value));
-        break;
-
-      case symbol_kind::S_strict_mark: // strict_mark
-      case symbol_kind::S_strictness: // strictness
-        value.move< Haskell::StrictLazy > (std::move (that.value));
-        break;
-
-      case symbol_kind::S_tv_bndr: // tv_bndr
-        value.move< Haskell::TypeVar > (std::move (that.value));
+        value.move< Hs::Module > (std::move (that.value));
         break;
 
       case symbol_kind::S_rhs: // rhs
@@ -1322,12 +1309,25 @@ namespace yy {
         value.move< Hs::MultiGuardedRHS > (std::move (that.value));
         break;
 
+      case symbol_kind::S_stmtlist: // stmtlist
+        value.move< Hs::Stmts > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+        value.move< Hs::StrictLazy > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_tv_bndr: // tv_bndr
+        value.move< Hs::TypeVar > (std::move (that.value));
+        break;
+
       case symbol_kind::S_alt: // alt
-        value.move< Located<Haskell::Alt> > (std::move (that.value));
+        value.move< Located<Hs::Alt> > (std::move (that.value));
         break;
 
       case symbol_kind::S_binds: // binds
-        value.move< Located<Haskell::Binds> > (std::move (that.value));
+        value.move< Located<Hs::Binds> > (std::move (that.value));
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -1400,15 +1400,15 @@ namespace yy {
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
-        value.move< std::optional<Haskell::ExportSubSpec> > (std::move (that.value));
+        value.move< std::optional<Hs::ExportSubSpec> > (std::move (that.value));
         break;
 
       case symbol_kind::S_maybeimpspec: // maybeimpspec
-        value.move< std::optional<Haskell::ImpSpec> > (std::move (that.value));
+        value.move< std::optional<Hs::ImpSpec> > (std::move (that.value));
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.move< std::optional<Located<Haskell::Binds>> > (std::move (that.value));
+        value.move< std::optional<Located<Hs::Binds>> > (std::move (that.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -1420,18 +1420,18 @@ namespace yy {
         break;
 
       case symbol_kind::S_maybeexports: // maybeexports
-        value.move< std::optional<std::vector<Haskell::Export>> > (std::move (that.value));
+        value.move< std::optional<std::vector<Hs::Export>> > (std::move (that.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        value.move< std::pair<Haskell::Context,expression_ref> > (std::move (that.value));
+        value.move< std::pair<Hs::Context,expression_ref> > (std::move (that.value));
         break;
 
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        value.move< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > (std::move (that.value));
+        value.move< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > (std::move (that.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -1491,41 +1491,41 @@ namespace yy {
 
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-        value.move< std::vector<Haskell::Constructor> > (std::move (that.value));
+        value.move< std::vector<Hs::Constructor> > (std::move (that.value));
         break;
 
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
-        value.move< std::vector<Haskell::Export> > (std::move (that.value));
+        value.move< std::vector<Hs::Export> > (std::move (that.value));
         break;
 
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
-        value.move< std::vector<Haskell::FieldDecl> > (std::move (that.value));
+        value.move< std::vector<Hs::FieldDecl> > (std::move (that.value));
         break;
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
-        value.move< std::vector<Haskell::GuardedRHS> > (std::move (that.value));
+        value.move< std::vector<Hs::GuardedRHS> > (std::move (that.value));
         break;
 
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        value.move< std::vector<Haskell::ImpDecl> > (std::move (that.value));
+        value.move< std::vector<Hs::ImpDecl> > (std::move (that.value));
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
-        value.move< std::vector<Haskell::TypeVar> > (std::move (that.value));
+        value.move< std::vector<Hs::TypeVar> > (std::move (that.value));
         break;
 
       case symbol_kind::S_sig_vars: // sig_vars
-        value.move< std::vector<Haskell::Var> > (std::move (that.value));
+        value.move< std::vector<Hs::Var> > (std::move (that.value));
         break;
 
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
-        value.move< std::vector<Located<Haskell::Alt>> > (std::move (that.value));
+        value.move< std::vector<Located<Hs::Alt>> > (std::move (that.value));
         break;
 
       case symbol_kind::S_qcnames: // qcnames
@@ -1580,13 +1580,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::Alts&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::Alts&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Haskell::Alts& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::Alts& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1594,13 +1594,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::Constructor&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::Constructor&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Haskell::Constructor& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::Constructor& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1608,13 +1608,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::Context&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::Context&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Haskell::Context& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::Context& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1622,13 +1622,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::DataOrNewtype&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::DataOrNewtype&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Haskell::DataOrNewtype& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::DataOrNewtype& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1636,13 +1636,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::Decls&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::Decls&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Haskell::Decls& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::Decls& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1650,13 +1650,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::Export&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::Export&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Haskell::Export& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::Export& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1664,13 +1664,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::FieldDecl&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::FieldDecl&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Haskell::FieldDecl& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::FieldDecl& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1678,13 +1678,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::Fixity&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::Fixity&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Haskell::Fixity& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::Fixity& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1692,13 +1692,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::GuardedRHS&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::GuardedRHS&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Haskell::GuardedRHS& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::GuardedRHS& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1706,13 +1706,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::ImpDecl&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::ImpDecl&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Haskell::ImpDecl& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::ImpDecl& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1720,13 +1720,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::ImpSpec&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::ImpSpec&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Haskell::ImpSpec& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::ImpSpec& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1734,55 +1734,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::Module&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::Module&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Haskell::Module& v, const location_type& l)
-        : Base (t)
-        , value (v)
-        , location (l)
-      {}
-#endif
-
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::Stmts&& v, location_type&& l)
-        : Base (t)
-        , value (std::move (v))
-        , location (std::move (l))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const Haskell::Stmts& v, const location_type& l)
-        : Base (t)
-        , value (v)
-        , location (l)
-      {}
-#endif
-
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::StrictLazy&& v, location_type&& l)
-        : Base (t)
-        , value (std::move (v))
-        , location (std::move (l))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const Haskell::StrictLazy& v, const location_type& l)
-        : Base (t)
-        , value (v)
-        , location (l)
-      {}
-#endif
-
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Haskell::TypeVar&& v, location_type&& l)
-        : Base (t)
-        , value (std::move (v))
-        , location (std::move (l))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const Haskell::TypeVar& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::Module& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1804,13 +1762,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Located<Haskell::Alt>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::Stmts&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Located<Haskell::Alt>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::Stmts& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1818,13 +1776,55 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Located<Haskell::Binds>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, Hs::StrictLazy&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const Located<Haskell::Binds>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const Hs::StrictLazy& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Hs::TypeVar&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Hs::TypeVar& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Located<Hs::Alt>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Located<Hs::Alt>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Located<Hs::Binds>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Located<Hs::Binds>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1930,13 +1930,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::optional<Haskell::ExportSubSpec>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::optional<Hs::ExportSubSpec>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::optional<Haskell::ExportSubSpec>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::optional<Hs::ExportSubSpec>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1944,13 +1944,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::optional<Haskell::ImpSpec>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::optional<Hs::ImpSpec>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::optional<Haskell::ImpSpec>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::optional<Hs::ImpSpec>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1958,13 +1958,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::optional<Located<Haskell::Binds>>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::optional<Located<Hs::Binds>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::optional<Located<Haskell::Binds>>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::optional<Located<Hs::Binds>>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2000,13 +2000,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::optional<std::vector<Haskell::Export>>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::optional<std::vector<Hs::Export>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::optional<std::vector<Haskell::Export>>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::optional<std::vector<Hs::Export>>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2014,13 +2014,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::pair<Haskell::Context,expression_ref>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::pair<Hs::Context,expression_ref>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::pair<Haskell::Context,expression_ref>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::pair<Hs::Context,expression_ref>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2028,13 +2028,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2056,13 +2056,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<Haskell::Constructor>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::vector<Hs::Constructor>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::Constructor>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::vector<Hs::Constructor>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2070,13 +2070,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<Haskell::Export>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::vector<Hs::Export>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::Export>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::vector<Hs::Export>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2084,13 +2084,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<Haskell::FieldDecl>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::vector<Hs::FieldDecl>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::FieldDecl>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::vector<Hs::FieldDecl>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2098,13 +2098,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<Haskell::GuardedRHS>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::vector<Hs::GuardedRHS>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::GuardedRHS>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::vector<Hs::GuardedRHS>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2112,13 +2112,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<Haskell::ImpDecl>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::vector<Hs::ImpDecl>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::ImpDecl>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::vector<Hs::ImpDecl>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2126,13 +2126,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<Haskell::TypeVar>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::vector<Hs::TypeVar>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::TypeVar>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::vector<Hs::TypeVar>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2140,13 +2140,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<Haskell::Var>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::vector<Hs::Var>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::vector<Haskell::Var>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::vector<Hs::Var>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2154,13 +2154,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<Located<Haskell::Alt>>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::vector<Located<Hs::Alt>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::vector<Located<Haskell::Alt>>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::vector<Located<Hs::Alt>>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2234,68 +2234,55 @@ namespace yy {
 switch (yykind)
     {
       case symbol_kind::S_altslist: // altslist
-        value.template destroy< Haskell::Alts > ();
+        value.template destroy< Hs::Alts > ();
         break;
 
       case symbol_kind::S_constr: // constr
-        value.template destroy< Haskell::Constructor > ();
+        value.template destroy< Hs::Constructor > ();
         break;
 
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
-        value.template destroy< Haskell::Context > ();
+        value.template destroy< Hs::Context > ();
         break;
 
       case symbol_kind::S_data_or_newtype: // data_or_newtype
-        value.template destroy< Haskell::DataOrNewtype > ();
+        value.template destroy< Hs::DataOrNewtype > ();
         break;
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decllist: // decllist
-        value.template destroy< Haskell::Decls > ();
+        value.template destroy< Hs::Decls > ();
         break;
 
       case symbol_kind::S_export: // export
-        value.template destroy< Haskell::Export > ();
+        value.template destroy< Hs::Export > ();
         break;
 
       case symbol_kind::S_fielddecl: // fielddecl
-        value.template destroy< Haskell::FieldDecl > ();
+        value.template destroy< Hs::FieldDecl > ();
         break;
 
       case symbol_kind::S_infix: // infix
-        value.template destroy< Haskell::Fixity > ();
+        value.template destroy< Hs::Fixity > ();
         break;
 
       case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_gdpat: // gdpat
-        value.template destroy< Haskell::GuardedRHS > ();
+        value.template destroy< Hs::GuardedRHS > ();
         break;
 
       case symbol_kind::S_importdecl: // importdecl
-        value.template destroy< Haskell::ImpDecl > ();
+        value.template destroy< Hs::ImpDecl > ();
         break;
 
       case symbol_kind::S_impspec: // impspec
-        value.template destroy< Haskell::ImpSpec > ();
+        value.template destroy< Hs::ImpSpec > ();
         break;
 
       case symbol_kind::S_module: // module
-        value.template destroy< Haskell::Module > ();
-        break;
-
-      case symbol_kind::S_stmtlist: // stmtlist
-        value.template destroy< Haskell::Stmts > ();
-        break;
-
-      case symbol_kind::S_strict_mark: // strict_mark
-      case symbol_kind::S_strictness: // strictness
-        value.template destroy< Haskell::StrictLazy > ();
-        break;
-
-      case symbol_kind::S_tv_bndr: // tv_bndr
-        value.template destroy< Haskell::TypeVar > ();
+        value.template destroy< Hs::Module > ();
         break;
 
       case symbol_kind::S_rhs: // rhs
@@ -2303,12 +2290,25 @@ switch (yykind)
         value.template destroy< Hs::MultiGuardedRHS > ();
         break;
 
+      case symbol_kind::S_stmtlist: // stmtlist
+        value.template destroy< Hs::Stmts > ();
+        break;
+
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+        value.template destroy< Hs::StrictLazy > ();
+        break;
+
+      case symbol_kind::S_tv_bndr: // tv_bndr
+        value.template destroy< Hs::TypeVar > ();
+        break;
+
       case symbol_kind::S_alt: // alt
-        value.template destroy< Located<Haskell::Alt> > ();
+        value.template destroy< Located<Hs::Alt> > ();
         break;
 
       case symbol_kind::S_binds: // binds
-        value.template destroy< Located<Haskell::Binds> > ();
+        value.template destroy< Located<Hs::Binds> > ();
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -2381,15 +2381,15 @@ switch (yykind)
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
-        value.template destroy< std::optional<Haskell::ExportSubSpec> > ();
+        value.template destroy< std::optional<Hs::ExportSubSpec> > ();
         break;
 
       case symbol_kind::S_maybeimpspec: // maybeimpspec
-        value.template destroy< std::optional<Haskell::ImpSpec> > ();
+        value.template destroy< std::optional<Hs::ImpSpec> > ();
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.template destroy< std::optional<Located<Haskell::Binds>> > ();
+        value.template destroy< std::optional<Located<Hs::Binds>> > ();
         break;
 
       case symbol_kind::S_prec: // prec
@@ -2401,18 +2401,18 @@ switch (yykind)
         break;
 
       case symbol_kind::S_maybeexports: // maybeexports
-        value.template destroy< std::optional<std::vector<Haskell::Export>> > ();
+        value.template destroy< std::optional<std::vector<Hs::Export>> > ();
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        value.template destroy< std::pair<Haskell::Context,expression_ref> > ();
+        value.template destroy< std::pair<Hs::Context,expression_ref> > ();
         break;
 
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        value.template destroy< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > ();
+        value.template destroy< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -2472,41 +2472,41 @@ switch (yykind)
 
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-        value.template destroy< std::vector<Haskell::Constructor> > ();
+        value.template destroy< std::vector<Hs::Constructor> > ();
         break;
 
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
-        value.template destroy< std::vector<Haskell::Export> > ();
+        value.template destroy< std::vector<Hs::Export> > ();
         break;
 
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
-        value.template destroy< std::vector<Haskell::FieldDecl> > ();
+        value.template destroy< std::vector<Hs::FieldDecl> > ();
         break;
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
-        value.template destroy< std::vector<Haskell::GuardedRHS> > ();
+        value.template destroy< std::vector<Hs::GuardedRHS> > ();
         break;
 
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        value.template destroy< std::vector<Haskell::ImpDecl> > ();
+        value.template destroy< std::vector<Hs::ImpDecl> > ();
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
-        value.template destroy< std::vector<Haskell::TypeVar> > ();
+        value.template destroy< std::vector<Hs::TypeVar> > ();
         break;
 
       case symbol_kind::S_sig_vars: // sig_vars
-        value.template destroy< std::vector<Haskell::Var> > ();
+        value.template destroy< std::vector<Hs::Var> > ();
         break;
 
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
-        value.template destroy< std::vector<Located<Haskell::Alt>> > ();
+        value.template destroy< std::vector<Located<Hs::Alt>> > ();
         break;
 
       case symbol_kind::S_qcnames: // qcnames
@@ -5220,68 +5220,55 @@ switch (yykind)
     switch (this->kind ())
     {
       case symbol_kind::S_altslist: // altslist
-        value.copy< Haskell::Alts > (YY_MOVE (that.value));
+        value.copy< Hs::Alts > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_constr: // constr
-        value.copy< Haskell::Constructor > (YY_MOVE (that.value));
+        value.copy< Hs::Constructor > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
-        value.copy< Haskell::Context > (YY_MOVE (that.value));
+        value.copy< Hs::Context > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_data_or_newtype: // data_or_newtype
-        value.copy< Haskell::DataOrNewtype > (YY_MOVE (that.value));
+        value.copy< Hs::DataOrNewtype > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decllist: // decllist
-        value.copy< Haskell::Decls > (YY_MOVE (that.value));
+        value.copy< Hs::Decls > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_export: // export
-        value.copy< Haskell::Export > (YY_MOVE (that.value));
+        value.copy< Hs::Export > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_fielddecl: // fielddecl
-        value.copy< Haskell::FieldDecl > (YY_MOVE (that.value));
+        value.copy< Hs::FieldDecl > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_infix: // infix
-        value.copy< Haskell::Fixity > (YY_MOVE (that.value));
+        value.copy< Hs::Fixity > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_gdpat: // gdpat
-        value.copy< Haskell::GuardedRHS > (YY_MOVE (that.value));
+        value.copy< Hs::GuardedRHS > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_importdecl: // importdecl
-        value.copy< Haskell::ImpDecl > (YY_MOVE (that.value));
+        value.copy< Hs::ImpDecl > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_impspec: // impspec
-        value.copy< Haskell::ImpSpec > (YY_MOVE (that.value));
+        value.copy< Hs::ImpSpec > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_module: // module
-        value.copy< Haskell::Module > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_stmtlist: // stmtlist
-        value.copy< Haskell::Stmts > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_strict_mark: // strict_mark
-      case symbol_kind::S_strictness: // strictness
-        value.copy< Haskell::StrictLazy > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_tv_bndr: // tv_bndr
-        value.copy< Haskell::TypeVar > (YY_MOVE (that.value));
+        value.copy< Hs::Module > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_rhs: // rhs
@@ -5289,12 +5276,25 @@ switch (yykind)
         value.copy< Hs::MultiGuardedRHS > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_stmtlist: // stmtlist
+        value.copy< Hs::Stmts > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+        value.copy< Hs::StrictLazy > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_tv_bndr: // tv_bndr
+        value.copy< Hs::TypeVar > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_alt: // alt
-        value.copy< Located<Haskell::Alt> > (YY_MOVE (that.value));
+        value.copy< Located<Hs::Alt> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_binds: // binds
-        value.copy< Located<Haskell::Binds> > (YY_MOVE (that.value));
+        value.copy< Located<Hs::Binds> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -5367,15 +5367,15 @@ switch (yykind)
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
-        value.copy< std::optional<Haskell::ExportSubSpec> > (YY_MOVE (that.value));
+        value.copy< std::optional<Hs::ExportSubSpec> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_maybeimpspec: // maybeimpspec
-        value.copy< std::optional<Haskell::ImpSpec> > (YY_MOVE (that.value));
+        value.copy< std::optional<Hs::ImpSpec> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.copy< std::optional<Located<Haskell::Binds>> > (YY_MOVE (that.value));
+        value.copy< std::optional<Located<Hs::Binds>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -5387,18 +5387,18 @@ switch (yykind)
         break;
 
       case symbol_kind::S_maybeexports: // maybeexports
-        value.copy< std::optional<std::vector<Haskell::Export>> > (YY_MOVE (that.value));
+        value.copy< std::optional<std::vector<Hs::Export>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        value.copy< std::pair<Haskell::Context,expression_ref> > (YY_MOVE (that.value));
+        value.copy< std::pair<Hs::Context,expression_ref> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        value.copy< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > (YY_MOVE (that.value));
+        value.copy< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -5458,41 +5458,41 @@ switch (yykind)
 
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-        value.copy< std::vector<Haskell::Constructor> > (YY_MOVE (that.value));
+        value.copy< std::vector<Hs::Constructor> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
-        value.copy< std::vector<Haskell::Export> > (YY_MOVE (that.value));
+        value.copy< std::vector<Hs::Export> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
-        value.copy< std::vector<Haskell::FieldDecl> > (YY_MOVE (that.value));
+        value.copy< std::vector<Hs::FieldDecl> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
-        value.copy< std::vector<Haskell::GuardedRHS> > (YY_MOVE (that.value));
+        value.copy< std::vector<Hs::GuardedRHS> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        value.copy< std::vector<Haskell::ImpDecl> > (YY_MOVE (that.value));
+        value.copy< std::vector<Hs::ImpDecl> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
-        value.copy< std::vector<Haskell::TypeVar> > (YY_MOVE (that.value));
+        value.copy< std::vector<Hs::TypeVar> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_sig_vars: // sig_vars
-        value.copy< std::vector<Haskell::Var> > (YY_MOVE (that.value));
+        value.copy< std::vector<Hs::Var> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
-        value.copy< std::vector<Located<Haskell::Alt>> > (YY_MOVE (that.value));
+        value.copy< std::vector<Located<Hs::Alt>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_qcnames: // qcnames
@@ -5555,68 +5555,55 @@ switch (yykind)
     switch (this->kind ())
     {
       case symbol_kind::S_altslist: // altslist
-        value.move< Haskell::Alts > (YY_MOVE (s.value));
+        value.move< Hs::Alts > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_constr: // constr
-        value.move< Haskell::Constructor > (YY_MOVE (s.value));
+        value.move< Hs::Constructor > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
-        value.move< Haskell::Context > (YY_MOVE (s.value));
+        value.move< Hs::Context > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_data_or_newtype: // data_or_newtype
-        value.move< Haskell::DataOrNewtype > (YY_MOVE (s.value));
+        value.move< Hs::DataOrNewtype > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decllist: // decllist
-        value.move< Haskell::Decls > (YY_MOVE (s.value));
+        value.move< Hs::Decls > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_export: // export
-        value.move< Haskell::Export > (YY_MOVE (s.value));
+        value.move< Hs::Export > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_fielddecl: // fielddecl
-        value.move< Haskell::FieldDecl > (YY_MOVE (s.value));
+        value.move< Hs::FieldDecl > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_infix: // infix
-        value.move< Haskell::Fixity > (YY_MOVE (s.value));
+        value.move< Hs::Fixity > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_gdpat: // gdpat
-        value.move< Haskell::GuardedRHS > (YY_MOVE (s.value));
+        value.move< Hs::GuardedRHS > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_importdecl: // importdecl
-        value.move< Haskell::ImpDecl > (YY_MOVE (s.value));
+        value.move< Hs::ImpDecl > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_impspec: // impspec
-        value.move< Haskell::ImpSpec > (YY_MOVE (s.value));
+        value.move< Hs::ImpSpec > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_module: // module
-        value.move< Haskell::Module > (YY_MOVE (s.value));
-        break;
-
-      case symbol_kind::S_stmtlist: // stmtlist
-        value.move< Haskell::Stmts > (YY_MOVE (s.value));
-        break;
-
-      case symbol_kind::S_strict_mark: // strict_mark
-      case symbol_kind::S_strictness: // strictness
-        value.move< Haskell::StrictLazy > (YY_MOVE (s.value));
-        break;
-
-      case symbol_kind::S_tv_bndr: // tv_bndr
-        value.move< Haskell::TypeVar > (YY_MOVE (s.value));
+        value.move< Hs::Module > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_rhs: // rhs
@@ -5624,12 +5611,25 @@ switch (yykind)
         value.move< Hs::MultiGuardedRHS > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_stmtlist: // stmtlist
+        value.move< Hs::Stmts > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+        value.move< Hs::StrictLazy > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_tv_bndr: // tv_bndr
+        value.move< Hs::TypeVar > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_alt: // alt
-        value.move< Located<Haskell::Alt> > (YY_MOVE (s.value));
+        value.move< Located<Hs::Alt> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_binds: // binds
-        value.move< Located<Haskell::Binds> > (YY_MOVE (s.value));
+        value.move< Located<Hs::Binds> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -5702,15 +5702,15 @@ switch (yykind)
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
-        value.move< std::optional<Haskell::ExportSubSpec> > (YY_MOVE (s.value));
+        value.move< std::optional<Hs::ExportSubSpec> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_maybeimpspec: // maybeimpspec
-        value.move< std::optional<Haskell::ImpSpec> > (YY_MOVE (s.value));
+        value.move< std::optional<Hs::ImpSpec> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.move< std::optional<Located<Haskell::Binds>> > (YY_MOVE (s.value));
+        value.move< std::optional<Located<Hs::Binds>> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -5722,18 +5722,18 @@ switch (yykind)
         break;
 
       case symbol_kind::S_maybeexports: // maybeexports
-        value.move< std::optional<std::vector<Haskell::Export>> > (YY_MOVE (s.value));
+        value.move< std::optional<std::vector<Hs::Export>> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        value.move< std::pair<Haskell::Context,expression_ref> > (YY_MOVE (s.value));
+        value.move< std::pair<Hs::Context,expression_ref> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        value.move< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > (YY_MOVE (s.value));
+        value.move< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -5793,41 +5793,41 @@ switch (yykind)
 
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-        value.move< std::vector<Haskell::Constructor> > (YY_MOVE (s.value));
+        value.move< std::vector<Hs::Constructor> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
-        value.move< std::vector<Haskell::Export> > (YY_MOVE (s.value));
+        value.move< std::vector<Hs::Export> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
-        value.move< std::vector<Haskell::FieldDecl> > (YY_MOVE (s.value));
+        value.move< std::vector<Hs::FieldDecl> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
-        value.move< std::vector<Haskell::GuardedRHS> > (YY_MOVE (s.value));
+        value.move< std::vector<Hs::GuardedRHS> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        value.move< std::vector<Haskell::ImpDecl> > (YY_MOVE (s.value));
+        value.move< std::vector<Hs::ImpDecl> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
-        value.move< std::vector<Haskell::TypeVar> > (YY_MOVE (s.value));
+        value.move< std::vector<Hs::TypeVar> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_sig_vars: // sig_vars
-        value.move< std::vector<Haskell::Var> > (YY_MOVE (s.value));
+        value.move< std::vector<Hs::Var> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
-        value.move< std::vector<Located<Haskell::Alt>> > (YY_MOVE (s.value));
+        value.move< std::vector<Located<Hs::Alt>> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_qcnames: // qcnames

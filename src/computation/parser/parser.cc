@@ -207,68 +207,55 @@ namespace yy {
     switch (that.kind ())
     {
       case symbol_kind::S_altslist: // altslist
-        value.YY_MOVE_OR_COPY< Haskell::Alts > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Hs::Alts > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_constr: // constr
-        value.YY_MOVE_OR_COPY< Haskell::Constructor > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Hs::Constructor > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
-        value.YY_MOVE_OR_COPY< Haskell::Context > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Hs::Context > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_data_or_newtype: // data_or_newtype
-        value.YY_MOVE_OR_COPY< Haskell::DataOrNewtype > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Hs::DataOrNewtype > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decllist: // decllist
-        value.YY_MOVE_OR_COPY< Haskell::Decls > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Hs::Decls > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_export: // export
-        value.YY_MOVE_OR_COPY< Haskell::Export > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Hs::Export > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_fielddecl: // fielddecl
-        value.YY_MOVE_OR_COPY< Haskell::FieldDecl > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Hs::FieldDecl > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_infix: // infix
-        value.YY_MOVE_OR_COPY< Haskell::Fixity > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Hs::Fixity > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_gdpat: // gdpat
-        value.YY_MOVE_OR_COPY< Haskell::GuardedRHS > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Hs::GuardedRHS > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_importdecl: // importdecl
-        value.YY_MOVE_OR_COPY< Haskell::ImpDecl > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Hs::ImpDecl > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_impspec: // impspec
-        value.YY_MOVE_OR_COPY< Haskell::ImpSpec > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Hs::ImpSpec > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_module: // module
-        value.YY_MOVE_OR_COPY< Haskell::Module > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_stmtlist: // stmtlist
-        value.YY_MOVE_OR_COPY< Haskell::Stmts > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_strict_mark: // strict_mark
-      case symbol_kind::S_strictness: // strictness
-        value.YY_MOVE_OR_COPY< Haskell::StrictLazy > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_tv_bndr: // tv_bndr
-        value.YY_MOVE_OR_COPY< Haskell::TypeVar > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Hs::Module > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_rhs: // rhs
@@ -276,12 +263,25 @@ namespace yy {
         value.YY_MOVE_OR_COPY< Hs::MultiGuardedRHS > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_stmtlist: // stmtlist
+        value.YY_MOVE_OR_COPY< Hs::Stmts > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+        value.YY_MOVE_OR_COPY< Hs::StrictLazy > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_tv_bndr: // tv_bndr
+        value.YY_MOVE_OR_COPY< Hs::TypeVar > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_alt: // alt
-        value.YY_MOVE_OR_COPY< Located<Haskell::Alt> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Located<Hs::Alt> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_binds: // binds
-        value.YY_MOVE_OR_COPY< Located<Haskell::Binds> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< Located<Hs::Binds> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -354,15 +354,15 @@ namespace yy {
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
-        value.YY_MOVE_OR_COPY< std::optional<Haskell::ExportSubSpec> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::optional<Hs::ExportSubSpec> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_maybeimpspec: // maybeimpspec
-        value.YY_MOVE_OR_COPY< std::optional<Haskell::ImpSpec> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::optional<Hs::ImpSpec> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.YY_MOVE_OR_COPY< std::optional<Located<Haskell::Binds>> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::optional<Located<Hs::Binds>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -374,18 +374,18 @@ namespace yy {
         break;
 
       case symbol_kind::S_maybeexports: // maybeexports
-        value.YY_MOVE_OR_COPY< std::optional<std::vector<Haskell::Export>> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::optional<std::vector<Hs::Export>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        value.YY_MOVE_OR_COPY< std::pair<Haskell::Context,expression_ref> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::pair<Hs::Context,expression_ref> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        value.YY_MOVE_OR_COPY< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -445,41 +445,41 @@ namespace yy {
 
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-        value.YY_MOVE_OR_COPY< std::vector<Haskell::Constructor> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::vector<Hs::Constructor> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
-        value.YY_MOVE_OR_COPY< std::vector<Haskell::Export> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::vector<Hs::Export> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
-        value.YY_MOVE_OR_COPY< std::vector<Haskell::FieldDecl> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::vector<Hs::FieldDecl> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
-        value.YY_MOVE_OR_COPY< std::vector<Haskell::GuardedRHS> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::vector<Hs::GuardedRHS> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        value.YY_MOVE_OR_COPY< std::vector<Haskell::ImpDecl> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::vector<Hs::ImpDecl> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
-        value.YY_MOVE_OR_COPY< std::vector<Haskell::TypeVar> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::vector<Hs::TypeVar> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_sig_vars: // sig_vars
-        value.YY_MOVE_OR_COPY< std::vector<Haskell::Var> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::vector<Hs::Var> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
-        value.YY_MOVE_OR_COPY< std::vector<Located<Haskell::Alt>> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::vector<Located<Hs::Alt>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_qcnames: // qcnames
@@ -526,68 +526,55 @@ namespace yy {
     switch (that.kind ())
     {
       case symbol_kind::S_altslist: // altslist
-        value.move< Haskell::Alts > (YY_MOVE (that.value));
+        value.move< Hs::Alts > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_constr: // constr
-        value.move< Haskell::Constructor > (YY_MOVE (that.value));
+        value.move< Hs::Constructor > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
-        value.move< Haskell::Context > (YY_MOVE (that.value));
+        value.move< Hs::Context > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_data_or_newtype: // data_or_newtype
-        value.move< Haskell::DataOrNewtype > (YY_MOVE (that.value));
+        value.move< Hs::DataOrNewtype > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decllist: // decllist
-        value.move< Haskell::Decls > (YY_MOVE (that.value));
+        value.move< Hs::Decls > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_export: // export
-        value.move< Haskell::Export > (YY_MOVE (that.value));
+        value.move< Hs::Export > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_fielddecl: // fielddecl
-        value.move< Haskell::FieldDecl > (YY_MOVE (that.value));
+        value.move< Hs::FieldDecl > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_infix: // infix
-        value.move< Haskell::Fixity > (YY_MOVE (that.value));
+        value.move< Hs::Fixity > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_gdpat: // gdpat
-        value.move< Haskell::GuardedRHS > (YY_MOVE (that.value));
+        value.move< Hs::GuardedRHS > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_importdecl: // importdecl
-        value.move< Haskell::ImpDecl > (YY_MOVE (that.value));
+        value.move< Hs::ImpDecl > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_impspec: // impspec
-        value.move< Haskell::ImpSpec > (YY_MOVE (that.value));
+        value.move< Hs::ImpSpec > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_module: // module
-        value.move< Haskell::Module > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_stmtlist: // stmtlist
-        value.move< Haskell::Stmts > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_strict_mark: // strict_mark
-      case symbol_kind::S_strictness: // strictness
-        value.move< Haskell::StrictLazy > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_tv_bndr: // tv_bndr
-        value.move< Haskell::TypeVar > (YY_MOVE (that.value));
+        value.move< Hs::Module > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_rhs: // rhs
@@ -595,12 +582,25 @@ namespace yy {
         value.move< Hs::MultiGuardedRHS > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_stmtlist: // stmtlist
+        value.move< Hs::Stmts > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+        value.move< Hs::StrictLazy > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_tv_bndr: // tv_bndr
+        value.move< Hs::TypeVar > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_alt: // alt
-        value.move< Located<Haskell::Alt> > (YY_MOVE (that.value));
+        value.move< Located<Hs::Alt> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_binds: // binds
-        value.move< Located<Haskell::Binds> > (YY_MOVE (that.value));
+        value.move< Located<Hs::Binds> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -673,15 +673,15 @@ namespace yy {
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
-        value.move< std::optional<Haskell::ExportSubSpec> > (YY_MOVE (that.value));
+        value.move< std::optional<Hs::ExportSubSpec> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_maybeimpspec: // maybeimpspec
-        value.move< std::optional<Haskell::ImpSpec> > (YY_MOVE (that.value));
+        value.move< std::optional<Hs::ImpSpec> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.move< std::optional<Located<Haskell::Binds>> > (YY_MOVE (that.value));
+        value.move< std::optional<Located<Hs::Binds>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_prec: // prec
@@ -693,18 +693,18 @@ namespace yy {
         break;
 
       case symbol_kind::S_maybeexports: // maybeexports
-        value.move< std::optional<std::vector<Haskell::Export>> > (YY_MOVE (that.value));
+        value.move< std::optional<std::vector<Hs::Export>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        value.move< std::pair<Haskell::Context,expression_ref> > (YY_MOVE (that.value));
+        value.move< std::pair<Hs::Context,expression_ref> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        value.move< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > (YY_MOVE (that.value));
+        value.move< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -764,41 +764,41 @@ namespace yy {
 
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-        value.move< std::vector<Haskell::Constructor> > (YY_MOVE (that.value));
+        value.move< std::vector<Hs::Constructor> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
-        value.move< std::vector<Haskell::Export> > (YY_MOVE (that.value));
+        value.move< std::vector<Hs::Export> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
-        value.move< std::vector<Haskell::FieldDecl> > (YY_MOVE (that.value));
+        value.move< std::vector<Hs::FieldDecl> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
-        value.move< std::vector<Haskell::GuardedRHS> > (YY_MOVE (that.value));
+        value.move< std::vector<Hs::GuardedRHS> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        value.move< std::vector<Haskell::ImpDecl> > (YY_MOVE (that.value));
+        value.move< std::vector<Hs::ImpDecl> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
-        value.move< std::vector<Haskell::TypeVar> > (YY_MOVE (that.value));
+        value.move< std::vector<Hs::TypeVar> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_sig_vars: // sig_vars
-        value.move< std::vector<Haskell::Var> > (YY_MOVE (that.value));
+        value.move< std::vector<Hs::Var> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
-        value.move< std::vector<Located<Haskell::Alt>> > (YY_MOVE (that.value));
+        value.move< std::vector<Located<Hs::Alt>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_qcnames: // qcnames
@@ -845,68 +845,55 @@ namespace yy {
     switch (that.kind ())
     {
       case symbol_kind::S_altslist: // altslist
-        value.copy< Haskell::Alts > (that.value);
+        value.copy< Hs::Alts > (that.value);
         break;
 
       case symbol_kind::S_constr: // constr
-        value.copy< Haskell::Constructor > (that.value);
+        value.copy< Hs::Constructor > (that.value);
         break;
 
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
-        value.copy< Haskell::Context > (that.value);
+        value.copy< Hs::Context > (that.value);
         break;
 
       case symbol_kind::S_data_or_newtype: // data_or_newtype
-        value.copy< Haskell::DataOrNewtype > (that.value);
+        value.copy< Hs::DataOrNewtype > (that.value);
         break;
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decllist: // decllist
-        value.copy< Haskell::Decls > (that.value);
+        value.copy< Hs::Decls > (that.value);
         break;
 
       case symbol_kind::S_export: // export
-        value.copy< Haskell::Export > (that.value);
+        value.copy< Hs::Export > (that.value);
         break;
 
       case symbol_kind::S_fielddecl: // fielddecl
-        value.copy< Haskell::FieldDecl > (that.value);
+        value.copy< Hs::FieldDecl > (that.value);
         break;
 
       case symbol_kind::S_infix: // infix
-        value.copy< Haskell::Fixity > (that.value);
+        value.copy< Hs::Fixity > (that.value);
         break;
 
       case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_gdpat: // gdpat
-        value.copy< Haskell::GuardedRHS > (that.value);
+        value.copy< Hs::GuardedRHS > (that.value);
         break;
 
       case symbol_kind::S_importdecl: // importdecl
-        value.copy< Haskell::ImpDecl > (that.value);
+        value.copy< Hs::ImpDecl > (that.value);
         break;
 
       case symbol_kind::S_impspec: // impspec
-        value.copy< Haskell::ImpSpec > (that.value);
+        value.copy< Hs::ImpSpec > (that.value);
         break;
 
       case symbol_kind::S_module: // module
-        value.copy< Haskell::Module > (that.value);
-        break;
-
-      case symbol_kind::S_stmtlist: // stmtlist
-        value.copy< Haskell::Stmts > (that.value);
-        break;
-
-      case symbol_kind::S_strict_mark: // strict_mark
-      case symbol_kind::S_strictness: // strictness
-        value.copy< Haskell::StrictLazy > (that.value);
-        break;
-
-      case symbol_kind::S_tv_bndr: // tv_bndr
-        value.copy< Haskell::TypeVar > (that.value);
+        value.copy< Hs::Module > (that.value);
         break;
 
       case symbol_kind::S_rhs: // rhs
@@ -914,12 +901,25 @@ namespace yy {
         value.copy< Hs::MultiGuardedRHS > (that.value);
         break;
 
+      case symbol_kind::S_stmtlist: // stmtlist
+        value.copy< Hs::Stmts > (that.value);
+        break;
+
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+        value.copy< Hs::StrictLazy > (that.value);
+        break;
+
+      case symbol_kind::S_tv_bndr: // tv_bndr
+        value.copy< Hs::TypeVar > (that.value);
+        break;
+
       case symbol_kind::S_alt: // alt
-        value.copy< Located<Haskell::Alt> > (that.value);
+        value.copy< Located<Hs::Alt> > (that.value);
         break;
 
       case symbol_kind::S_binds: // binds
-        value.copy< Located<Haskell::Binds> > (that.value);
+        value.copy< Located<Hs::Binds> > (that.value);
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -992,15 +992,15 @@ namespace yy {
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
-        value.copy< std::optional<Haskell::ExportSubSpec> > (that.value);
+        value.copy< std::optional<Hs::ExportSubSpec> > (that.value);
         break;
 
       case symbol_kind::S_maybeimpspec: // maybeimpspec
-        value.copy< std::optional<Haskell::ImpSpec> > (that.value);
+        value.copy< std::optional<Hs::ImpSpec> > (that.value);
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.copy< std::optional<Located<Haskell::Binds>> > (that.value);
+        value.copy< std::optional<Located<Hs::Binds>> > (that.value);
         break;
 
       case symbol_kind::S_prec: // prec
@@ -1012,18 +1012,18 @@ namespace yy {
         break;
 
       case symbol_kind::S_maybeexports: // maybeexports
-        value.copy< std::optional<std::vector<Haskell::Export>> > (that.value);
+        value.copy< std::optional<std::vector<Hs::Export>> > (that.value);
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        value.copy< std::pair<Haskell::Context,expression_ref> > (that.value);
+        value.copy< std::pair<Hs::Context,expression_ref> > (that.value);
         break;
 
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        value.copy< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > (that.value);
+        value.copy< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > (that.value);
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -1083,41 +1083,41 @@ namespace yy {
 
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-        value.copy< std::vector<Haskell::Constructor> > (that.value);
+        value.copy< std::vector<Hs::Constructor> > (that.value);
         break;
 
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
-        value.copy< std::vector<Haskell::Export> > (that.value);
+        value.copy< std::vector<Hs::Export> > (that.value);
         break;
 
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
-        value.copy< std::vector<Haskell::FieldDecl> > (that.value);
+        value.copy< std::vector<Hs::FieldDecl> > (that.value);
         break;
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
-        value.copy< std::vector<Haskell::GuardedRHS> > (that.value);
+        value.copy< std::vector<Hs::GuardedRHS> > (that.value);
         break;
 
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        value.copy< std::vector<Haskell::ImpDecl> > (that.value);
+        value.copy< std::vector<Hs::ImpDecl> > (that.value);
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
-        value.copy< std::vector<Haskell::TypeVar> > (that.value);
+        value.copy< std::vector<Hs::TypeVar> > (that.value);
         break;
 
       case symbol_kind::S_sig_vars: // sig_vars
-        value.copy< std::vector<Haskell::Var> > (that.value);
+        value.copy< std::vector<Hs::Var> > (that.value);
         break;
 
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
-        value.copy< std::vector<Located<Haskell::Alt>> > (that.value);
+        value.copy< std::vector<Located<Hs::Alt>> > (that.value);
         break;
 
       case symbol_kind::S_qcnames: // qcnames
@@ -1163,68 +1163,55 @@ namespace yy {
     switch (that.kind ())
     {
       case symbol_kind::S_altslist: // altslist
-        value.move< Haskell::Alts > (that.value);
+        value.move< Hs::Alts > (that.value);
         break;
 
       case symbol_kind::S_constr: // constr
-        value.move< Haskell::Constructor > (that.value);
+        value.move< Hs::Constructor > (that.value);
         break;
 
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
-        value.move< Haskell::Context > (that.value);
+        value.move< Hs::Context > (that.value);
         break;
 
       case symbol_kind::S_data_or_newtype: // data_or_newtype
-        value.move< Haskell::DataOrNewtype > (that.value);
+        value.move< Hs::DataOrNewtype > (that.value);
         break;
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decllist: // decllist
-        value.move< Haskell::Decls > (that.value);
+        value.move< Hs::Decls > (that.value);
         break;
 
       case symbol_kind::S_export: // export
-        value.move< Haskell::Export > (that.value);
+        value.move< Hs::Export > (that.value);
         break;
 
       case symbol_kind::S_fielddecl: // fielddecl
-        value.move< Haskell::FieldDecl > (that.value);
+        value.move< Hs::FieldDecl > (that.value);
         break;
 
       case symbol_kind::S_infix: // infix
-        value.move< Haskell::Fixity > (that.value);
+        value.move< Hs::Fixity > (that.value);
         break;
 
       case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_gdpat: // gdpat
-        value.move< Haskell::GuardedRHS > (that.value);
+        value.move< Hs::GuardedRHS > (that.value);
         break;
 
       case symbol_kind::S_importdecl: // importdecl
-        value.move< Haskell::ImpDecl > (that.value);
+        value.move< Hs::ImpDecl > (that.value);
         break;
 
       case symbol_kind::S_impspec: // impspec
-        value.move< Haskell::ImpSpec > (that.value);
+        value.move< Hs::ImpSpec > (that.value);
         break;
 
       case symbol_kind::S_module: // module
-        value.move< Haskell::Module > (that.value);
-        break;
-
-      case symbol_kind::S_stmtlist: // stmtlist
-        value.move< Haskell::Stmts > (that.value);
-        break;
-
-      case symbol_kind::S_strict_mark: // strict_mark
-      case symbol_kind::S_strictness: // strictness
-        value.move< Haskell::StrictLazy > (that.value);
-        break;
-
-      case symbol_kind::S_tv_bndr: // tv_bndr
-        value.move< Haskell::TypeVar > (that.value);
+        value.move< Hs::Module > (that.value);
         break;
 
       case symbol_kind::S_rhs: // rhs
@@ -1232,12 +1219,25 @@ namespace yy {
         value.move< Hs::MultiGuardedRHS > (that.value);
         break;
 
+      case symbol_kind::S_stmtlist: // stmtlist
+        value.move< Hs::Stmts > (that.value);
+        break;
+
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+        value.move< Hs::StrictLazy > (that.value);
+        break;
+
+      case symbol_kind::S_tv_bndr: // tv_bndr
+        value.move< Hs::TypeVar > (that.value);
+        break;
+
       case symbol_kind::S_alt: // alt
-        value.move< Located<Haskell::Alt> > (that.value);
+        value.move< Located<Hs::Alt> > (that.value);
         break;
 
       case symbol_kind::S_binds: // binds
-        value.move< Located<Haskell::Binds> > (that.value);
+        value.move< Located<Hs::Binds> > (that.value);
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -1310,15 +1310,15 @@ namespace yy {
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
-        value.move< std::optional<Haskell::ExportSubSpec> > (that.value);
+        value.move< std::optional<Hs::ExportSubSpec> > (that.value);
         break;
 
       case symbol_kind::S_maybeimpspec: // maybeimpspec
-        value.move< std::optional<Haskell::ImpSpec> > (that.value);
+        value.move< std::optional<Hs::ImpSpec> > (that.value);
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        value.move< std::optional<Located<Haskell::Binds>> > (that.value);
+        value.move< std::optional<Located<Hs::Binds>> > (that.value);
         break;
 
       case symbol_kind::S_prec: // prec
@@ -1330,18 +1330,18 @@ namespace yy {
         break;
 
       case symbol_kind::S_maybeexports: // maybeexports
-        value.move< std::optional<std::vector<Haskell::Export>> > (that.value);
+        value.move< std::optional<std::vector<Hs::Export>> > (that.value);
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        value.move< std::pair<Haskell::Context,expression_ref> > (that.value);
+        value.move< std::pair<Hs::Context,expression_ref> > (that.value);
         break;
 
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        value.move< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > (that.value);
+        value.move< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > (that.value);
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -1401,41 +1401,41 @@ namespace yy {
 
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-        value.move< std::vector<Haskell::Constructor> > (that.value);
+        value.move< std::vector<Hs::Constructor> > (that.value);
         break;
 
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
-        value.move< std::vector<Haskell::Export> > (that.value);
+        value.move< std::vector<Hs::Export> > (that.value);
         break;
 
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
-        value.move< std::vector<Haskell::FieldDecl> > (that.value);
+        value.move< std::vector<Hs::FieldDecl> > (that.value);
         break;
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
-        value.move< std::vector<Haskell::GuardedRHS> > (that.value);
+        value.move< std::vector<Hs::GuardedRHS> > (that.value);
         break;
 
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        value.move< std::vector<Haskell::ImpDecl> > (that.value);
+        value.move< std::vector<Hs::ImpDecl> > (that.value);
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
-        value.move< std::vector<Haskell::TypeVar> > (that.value);
+        value.move< std::vector<Hs::TypeVar> > (that.value);
         break;
 
       case symbol_kind::S_sig_vars: // sig_vars
-        value.move< std::vector<Haskell::Var> > (that.value);
+        value.move< std::vector<Hs::Var> > (that.value);
         break;
 
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
-        value.move< std::vector<Located<Haskell::Alt>> > (that.value);
+        value.move< std::vector<Located<Hs::Alt>> > (that.value);
         break;
 
       case symbol_kind::S_qcnames: // qcnames
@@ -1726,68 +1726,55 @@ namespace yy {
       switch (yyr1_[yyn])
     {
       case symbol_kind::S_altslist: // altslist
-        yylhs.value.emplace< Haskell::Alts > ();
+        yylhs.value.emplace< Hs::Alts > ();
         break;
 
       case symbol_kind::S_constr: // constr
-        yylhs.value.emplace< Haskell::Constructor > ();
+        yylhs.value.emplace< Hs::Constructor > ();
         break;
 
       case symbol_kind::S_context: // context
       case symbol_kind::S_context_no_ops: // context_no_ops
-        yylhs.value.emplace< Haskell::Context > ();
+        yylhs.value.emplace< Hs::Context > ();
         break;
 
       case symbol_kind::S_data_or_newtype: // data_or_newtype
-        yylhs.value.emplace< Haskell::DataOrNewtype > ();
+        yylhs.value.emplace< Hs::DataOrNewtype > ();
         break;
 
       case symbol_kind::S_topdecls: // topdecls
       case symbol_kind::S_topdecls_semi: // topdecls_semi
       case symbol_kind::S_decllist: // decllist
-        yylhs.value.emplace< Haskell::Decls > ();
+        yylhs.value.emplace< Hs::Decls > ();
         break;
 
       case symbol_kind::S_export: // export
-        yylhs.value.emplace< Haskell::Export > ();
+        yylhs.value.emplace< Hs::Export > ();
         break;
 
       case symbol_kind::S_fielddecl: // fielddecl
-        yylhs.value.emplace< Haskell::FieldDecl > ();
+        yylhs.value.emplace< Hs::FieldDecl > ();
         break;
 
       case symbol_kind::S_infix: // infix
-        yylhs.value.emplace< Haskell::Fixity > ();
+        yylhs.value.emplace< Hs::Fixity > ();
         break;
 
       case symbol_kind::S_gdrh: // gdrh
       case symbol_kind::S_gdpat: // gdpat
-        yylhs.value.emplace< Haskell::GuardedRHS > ();
+        yylhs.value.emplace< Hs::GuardedRHS > ();
         break;
 
       case symbol_kind::S_importdecl: // importdecl
-        yylhs.value.emplace< Haskell::ImpDecl > ();
+        yylhs.value.emplace< Hs::ImpDecl > ();
         break;
 
       case symbol_kind::S_impspec: // impspec
-        yylhs.value.emplace< Haskell::ImpSpec > ();
+        yylhs.value.emplace< Hs::ImpSpec > ();
         break;
 
       case symbol_kind::S_module: // module
-        yylhs.value.emplace< Haskell::Module > ();
-        break;
-
-      case symbol_kind::S_stmtlist: // stmtlist
-        yylhs.value.emplace< Haskell::Stmts > ();
-        break;
-
-      case symbol_kind::S_strict_mark: // strict_mark
-      case symbol_kind::S_strictness: // strictness
-        yylhs.value.emplace< Haskell::StrictLazy > ();
-        break;
-
-      case symbol_kind::S_tv_bndr: // tv_bndr
-        yylhs.value.emplace< Haskell::TypeVar > ();
+        yylhs.value.emplace< Hs::Module > ();
         break;
 
       case symbol_kind::S_rhs: // rhs
@@ -1795,12 +1782,25 @@ namespace yy {
         yylhs.value.emplace< Hs::MultiGuardedRHS > ();
         break;
 
+      case symbol_kind::S_stmtlist: // stmtlist
+        yylhs.value.emplace< Hs::Stmts > ();
+        break;
+
+      case symbol_kind::S_strict_mark: // strict_mark
+      case symbol_kind::S_strictness: // strictness
+        yylhs.value.emplace< Hs::StrictLazy > ();
+        break;
+
+      case symbol_kind::S_tv_bndr: // tv_bndr
+        yylhs.value.emplace< Hs::TypeVar > ();
+        break;
+
       case symbol_kind::S_alt: // alt
-        yylhs.value.emplace< Located<Haskell::Alt> > ();
+        yylhs.value.emplace< Located<Hs::Alt> > ();
         break;
 
       case symbol_kind::S_binds: // binds
-        yylhs.value.emplace< Located<Haskell::Binds> > ();
+        yylhs.value.emplace< Located<Hs::Binds> > ();
         break;
 
       case symbol_kind::S_qcname: // qcname
@@ -1873,15 +1873,15 @@ namespace yy {
         break;
 
       case symbol_kind::S_export_subspec: // export_subspec
-        yylhs.value.emplace< std::optional<Haskell::ExportSubSpec> > ();
+        yylhs.value.emplace< std::optional<Hs::ExportSubSpec> > ();
         break;
 
       case symbol_kind::S_maybeimpspec: // maybeimpspec
-        yylhs.value.emplace< std::optional<Haskell::ImpSpec> > ();
+        yylhs.value.emplace< std::optional<Hs::ImpSpec> > ();
         break;
 
       case symbol_kind::S_wherebinds: // wherebinds
-        yylhs.value.emplace< std::optional<Located<Haskell::Binds>> > ();
+        yylhs.value.emplace< std::optional<Located<Hs::Binds>> > ();
         break;
 
       case symbol_kind::S_prec: // prec
@@ -1893,18 +1893,18 @@ namespace yy {
         break;
 
       case symbol_kind::S_maybeexports: // maybeexports
-        yylhs.value.emplace< std::optional<std::vector<Haskell::Export>> > ();
+        yylhs.value.emplace< std::optional<std::vector<Hs::Export>> > ();
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
-        yylhs.value.emplace< std::pair<Haskell::Context,expression_ref> > ();
+        yylhs.value.emplace< std::pair<Hs::Context,expression_ref> > ();
         break;
 
       case symbol_kind::S_body: // body
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        yylhs.value.emplace< std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > ();
+        yylhs.value.emplace< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -1964,41 +1964,41 @@ namespace yy {
 
       case symbol_kind::S_constrs: // constrs
       case symbol_kind::S_constrs1: // constrs1
-        yylhs.value.emplace< std::vector<Haskell::Constructor> > ();
+        yylhs.value.emplace< std::vector<Hs::Constructor> > ();
         break;
 
       case symbol_kind::S_exportlist: // exportlist
       case symbol_kind::S_exportlist1: // exportlist1
-        yylhs.value.emplace< std::vector<Haskell::Export> > ();
+        yylhs.value.emplace< std::vector<Hs::Export> > ();
         break;
 
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
-        yylhs.value.emplace< std::vector<Haskell::FieldDecl> > ();
+        yylhs.value.emplace< std::vector<Hs::FieldDecl> > ();
         break;
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
-        yylhs.value.emplace< std::vector<Haskell::GuardedRHS> > ();
+        yylhs.value.emplace< std::vector<Hs::GuardedRHS> > ();
         break;
 
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        yylhs.value.emplace< std::vector<Haskell::ImpDecl> > ();
+        yylhs.value.emplace< std::vector<Hs::ImpDecl> > ();
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
-        yylhs.value.emplace< std::vector<Haskell::TypeVar> > ();
+        yylhs.value.emplace< std::vector<Hs::TypeVar> > ();
         break;
 
       case symbol_kind::S_sig_vars: // sig_vars
-        yylhs.value.emplace< std::vector<Haskell::Var> > ();
+        yylhs.value.emplace< std::vector<Hs::Var> > ();
         break;
 
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
-        yylhs.value.emplace< std::vector<Located<Haskell::Alt>> > ();
+        yylhs.value.emplace< std::vector<Located<Hs::Alt>> > ();
         break;
 
       case symbol_kind::S_qcnames: // qcnames
@@ -2051,19 +2051,19 @@ namespace yy {
             {
   case 2: // unit: module
 #line 477 "parser.y"
-             {drv.result = yystack_[0].value.as < Haskell::Module > ();}
+             {drv.result = yystack_[0].value.as < Hs::Module > ();}
 #line 2056 "parser.cc"
     break;
 
   case 3: // module: "module" modid maybemodwarning maybeexports "where" body
 #line 494 "parser.y"
-                                                                 {yylhs.value.as < Haskell::Module > () = Haskell::Module{yystack_[4].value.as < std::string > (),yystack_[2].value.as < std::optional<std::vector<Haskell::Export>> > (),yystack_[0].value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > ().first, yystack_[0].value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > ().second};}
+                                                                 {yylhs.value.as < Hs::Module > () = Hs::Module{yystack_[4].value.as < std::string > (),yystack_[2].value.as < std::optional<std::vector<Hs::Export>> > (),yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().first, yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().second};}
 #line 2062 "parser.cc"
     break;
 
   case 4: // module: body2
 #line 495 "parser.y"
-                                                                 {yylhs.value.as < Haskell::Module > () = Haskell::Module{"Main",{},yystack_[0].value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > ().first, yystack_[0].value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > ().second};}
+                                                                 {yylhs.value.as < Hs::Module > () = Hs::Module{"Main",{},yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().first, yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().second};}
 #line 2068 "parser.cc"
     break;
 
@@ -2075,55 +2075,55 @@ namespace yy {
 
   case 9: // body: "{" top "}"
 #line 505 "parser.y"
-                        {yylhs.value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > ();}
+                        {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();}
 #line 2080 "parser.cc"
     break;
 
   case 10: // body: "vocurly" top close
 #line 506 "parser.y"
-                        {yylhs.value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > ();}
+                        {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();}
 #line 2086 "parser.cc"
     break;
 
   case 11: // body2: "{" top "}"
 #line 508 "parser.y"
-                                           {yylhs.value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > ();}
+                                           {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();}
 #line 2092 "parser.cc"
     break;
 
   case 12: // body2: missing_module_keyword top close
 #line 509 "parser.y"
-                                           {yylhs.value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > ();}
+                                           {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();}
 #line 2098 "parser.cc"
     break;
 
   case 13: // top: semis top1
 #line 512 "parser.y"
-                                           {yylhs.value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > () = yystack_[0].value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > ();}
+                                           {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();}
 #line 2104 "parser.cc"
     break;
 
   case 14: // top1: importdecls_semi topdecls_semi
 #line 514 "parser.y"
-                                           {yylhs.value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > () = make_body(yystack_[1].value.as < std::vector<Haskell::ImpDecl> > (),yystack_[0].value.as < Haskell::Decls > ());}
+                                           {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = make_body(yystack_[1].value.as < std::vector<Hs::ImpDecl> > (),yystack_[0].value.as < Hs::Decls > ());}
 #line 2110 "parser.cc"
     break;
 
   case 15: // top1: importdecls_semi topdecls
 #line 515 "parser.y"
-                                           {yylhs.value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > () = make_body(yystack_[1].value.as < std::vector<Haskell::ImpDecl> > (),yystack_[0].value.as < Haskell::Decls > ());}
+                                           {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = make_body(yystack_[1].value.as < std::vector<Hs::ImpDecl> > (),yystack_[0].value.as < Hs::Decls > ());}
 #line 2116 "parser.cc"
     break;
 
   case 16: // top1: importdecls
 #line 516 "parser.y"
-                                           {yylhs.value.as < std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> > () = make_body(yystack_[0].value.as < std::vector<Haskell::ImpDecl> > (),{});}
+                                           {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = make_body(yystack_[0].value.as < std::vector<Hs::ImpDecl> > (),{});}
 #line 2122 "parser.cc"
     break;
 
   case 17: // maybeexports: "(" exportlist ")"
 #line 524 "parser.y"
-                                      {yylhs.value.as < std::optional<std::vector<Haskell::Export>> > () = yystack_[1].value.as < std::vector<Haskell::Export> > ();}
+                                      {yylhs.value.as < std::optional<std::vector<Hs::Export>> > () = yystack_[1].value.as < std::vector<Hs::Export> > ();}
 #line 2128 "parser.cc"
     break;
 
@@ -2135,31 +2135,31 @@ namespace yy {
 
   case 19: // exportlist: exportlist1
 #line 527 "parser.y"
-                                      {yylhs.value.as < std::vector<Haskell::Export> > () = yystack_[0].value.as < std::vector<Haskell::Export> > ();}
+                                      {yylhs.value.as < std::vector<Hs::Export> > () = yystack_[0].value.as < std::vector<Hs::Export> > ();}
 #line 2140 "parser.cc"
     break;
 
   case 20: // exportlist1: exportlist1 "," export
 #line 529 "parser.y"
-                                      {yylhs.value.as < std::vector<Haskell::Export> > () = yystack_[2].value.as < std::vector<Haskell::Export> > (); yylhs.value.as < std::vector<Haskell::Export> > ().push_back(yystack_[0].value.as < Haskell::Export > ());}
+                                      {yylhs.value.as < std::vector<Hs::Export> > () = yystack_[2].value.as < std::vector<Hs::Export> > (); yylhs.value.as < std::vector<Hs::Export> > ().push_back(yystack_[0].value.as < Hs::Export > ());}
 #line 2146 "parser.cc"
     break;
 
   case 21: // exportlist1: export
 #line 530 "parser.y"
-                                      {yylhs.value.as < std::vector<Haskell::Export> > ().push_back(yystack_[0].value.as < Haskell::Export > ());}
+                                      {yylhs.value.as < std::vector<Hs::Export> > ().push_back(yystack_[0].value.as < Hs::Export > ());}
 #line 2152 "parser.cc"
     break;
 
   case 22: // export: qcname export_subspec
 #line 532 "parser.y"
-                                      {yylhs.value.as < Haskell::Export > () = Haskell::ExportSymbol{yystack_[1].value.as < Located<std::string> > (), yystack_[0].value.as < std::optional<Haskell::ExportSubSpec> > ()}; }
+                                      {yylhs.value.as < Hs::Export > () = Hs::ExportSymbol{yystack_[1].value.as < Located<std::string> > (), yystack_[0].value.as < std::optional<Hs::ExportSubSpec> > ()}; }
 #line 2158 "parser.cc"
     break;
 
   case 23: // export: "module" modid
 #line 533 "parser.y"
-                                      {yylhs.value.as < Haskell::Export > () = Haskell::ExportModule{{yystack_[0].location,yystack_[0].value.as < std::string > ()}}; }
+                                      {yylhs.value.as < Hs::Export > () = Hs::ExportModule{{yystack_[0].location,yystack_[0].value.as < std::string > ()}}; }
 #line 2164 "parser.cc"
     break;
 
@@ -2171,13 +2171,13 @@ namespace yy {
 
   case 25: // export_subspec: "(" qcnames ")"
 #line 536 "parser.y"
-                                      { yylhs.value.as < std::optional<Haskell::ExportSubSpec> > () = Haskell::ExportSubSpecSome{yystack_[1].value.as < std::vector<Located<std::string>> > ()}; }
+                                      { yylhs.value.as < std::optional<Hs::ExportSubSpec> > () = Hs::ExportSubSpecSome{yystack_[1].value.as < std::vector<Located<std::string>> > ()}; }
 #line 2176 "parser.cc"
     break;
 
   case 26: // export_subspec: "(" ".." ")"
 #line 537 "parser.y"
-                                      { yylhs.value.as < std::optional<Haskell::ExportSubSpec> > () = Haskell::ExportSubSpecAll(); }
+                                      { yylhs.value.as < std::optional<Hs::ExportSubSpec> > () = Hs::ExportSubSpecAll(); }
 #line 2182 "parser.cc"
     break;
 
@@ -2219,13 +2219,13 @@ namespace yy {
 
   case 37: // importdecls: importdecls_semi importdecl
 #line 556 "parser.y"
-                                         { yylhs.value.as < std::vector<Haskell::ImpDecl> > () = yystack_[1].value.as < std::vector<Haskell::ImpDecl> > (), yylhs.value.as < std::vector<Haskell::ImpDecl> > ().push_back(yystack_[0].value.as < Haskell::ImpDecl > ()); }
+                                         { yylhs.value.as < std::vector<Hs::ImpDecl> > () = yystack_[1].value.as < std::vector<Hs::ImpDecl> > (), yylhs.value.as < std::vector<Hs::ImpDecl> > ().push_back(yystack_[0].value.as < Hs::ImpDecl > ()); }
 #line 2224 "parser.cc"
     break;
 
   case 38: // importdecls_semi: importdecls_semi importdecl semis1
 #line 558 "parser.y"
-                                                     { yylhs.value.as < std::vector<Haskell::ImpDecl> > () = yystack_[2].value.as < std::vector<Haskell::ImpDecl> > (); yylhs.value.as < std::vector<Haskell::ImpDecl> > ().push_back(yystack_[1].value.as < Haskell::ImpDecl > ()); }
+                                                     { yylhs.value.as < std::vector<Hs::ImpDecl> > () = yystack_[2].value.as < std::vector<Hs::ImpDecl> > (); yylhs.value.as < std::vector<Hs::ImpDecl> > ().push_back(yystack_[1].value.as < Hs::ImpDecl > ()); }
 #line 2230 "parser.cc"
     break;
 
@@ -2238,7 +2238,7 @@ namespace yy {
   case 40: // importdecl: "import" optqualified modid maybeas maybeimpspec
 #line 561 "parser.y"
                                                                                                         {
-    yylhs.value.as < Haskell::ImpDecl > () = Haskell::ImpDecl(yystack_[3].value.as < bool > (),yystack_[2].value.as < std::string > (),yystack_[1].value.as < std::optional<std::string> > (),yystack_[0].value.as < std::optional<Haskell::ImpSpec> > ());
+    yylhs.value.as < Hs::ImpDecl > () = Hs::ImpDecl(yystack_[3].value.as < bool > (),yystack_[2].value.as < std::string > (),yystack_[1].value.as < std::optional<std::string> > (),yystack_[0].value.as < std::optional<Hs::ImpSpec> > ());
 }
 #line 2244 "parser.cc"
     break;
@@ -2269,7 +2269,7 @@ namespace yy {
 
   case 45: // maybeimpspec: impspec
 #line 580 "parser.y"
-                               { yylhs.value.as < std::optional<Haskell::ImpSpec> > () = yystack_[0].value.as < Haskell::ImpSpec > (); }
+                               { yylhs.value.as < std::optional<Hs::ImpSpec> > () = yystack_[0].value.as < Hs::ImpSpec > (); }
 #line 2274 "parser.cc"
     break;
 
@@ -2281,13 +2281,13 @@ namespace yy {
 
   case 47: // impspec: "(" exportlist ")"
 #line 585 "parser.y"
-                                      { yylhs.value.as < Haskell::ImpSpec > () = Haskell::ImpSpec{false, yystack_[1].value.as < std::vector<Haskell::Export> > ()}; }
+                                      { yylhs.value.as < Hs::ImpSpec > () = Hs::ImpSpec{false, yystack_[1].value.as < std::vector<Hs::Export> > ()}; }
 #line 2286 "parser.cc"
     break;
 
   case 48: // impspec: "hiding" "(" exportlist ")"
 #line 586 "parser.y"
-                                      { yylhs.value.as < Haskell::ImpSpec > () = Haskell::ImpSpec{true,  yystack_[1].value.as < std::vector<Haskell::Export> > ()}; }
+                                      { yylhs.value.as < Hs::ImpSpec > () = Hs::ImpSpec{true,  yystack_[1].value.as < std::vector<Hs::Export> > ()}; }
 #line 2292 "parser.cc"
     break;
 
@@ -2305,19 +2305,19 @@ namespace yy {
 
   case 51: // infix: "infix"
 #line 594 "parser.y"
-                   { yylhs.value.as < Haskell::Fixity > () = Haskell::Fixity::infix; }
+                   { yylhs.value.as < Hs::Fixity > () = Hs::Fixity::infix; }
 #line 2310 "parser.cc"
     break;
 
   case 52: // infix: "infixl"
 #line 595 "parser.y"
-                   { yylhs.value.as < Haskell::Fixity > () = Haskell::Fixity::infixl; }
+                   { yylhs.value.as < Hs::Fixity > () = Hs::Fixity::infixl; }
 #line 2316 "parser.cc"
     break;
 
   case 53: // infix: "infixr"
 #line 596 "parser.y"
-                   { yylhs.value.as < Haskell::Fixity > () = Haskell::Fixity::infixr; }
+                   { yylhs.value.as < Hs::Fixity > () = Hs::Fixity::infixr; }
 #line 2322 "parser.cc"
     break;
 
@@ -2335,13 +2335,13 @@ namespace yy {
 
   case 56: // topdecls: topdecls_semi topdecl
 #line 603 "parser.y"
-                                 { yylhs.value.as < Haskell::Decls > () = yystack_[1].value.as < Haskell::Decls > (); yylhs.value.as < Haskell::Decls > ().push_back(yystack_[0].value.as < expression_ref > ()); }
+                                 { yylhs.value.as < Hs::Decls > () = yystack_[1].value.as < Hs::Decls > (); yylhs.value.as < Hs::Decls > ().push_back(yystack_[0].value.as < expression_ref > ()); }
 #line 2340 "parser.cc"
     break;
 
   case 57: // topdecls_semi: topdecls_semi topdecl semis1
 #line 605 "parser.y"
-                                            { yylhs.value.as < Haskell::Decls > () = yystack_[2].value.as < Haskell::Decls > (); yylhs.value.as < Haskell::Decls > ().push_back(yystack_[1].value.as < expression_ref > ()); }
+                                            { yylhs.value.as < Hs::Decls > () = yystack_[2].value.as < Hs::Decls > (); yylhs.value.as < Hs::Decls > ().push_back(yystack_[1].value.as < expression_ref > ()); }
 #line 2346 "parser.cc"
     break;
 
@@ -2371,7 +2371,7 @@ namespace yy {
 
   case 62: // topdecl: "default" "(" comma_types0 ")"
 #line 613 "parser.y"
-                                               {yylhs.value.as < expression_ref > () = Haskell::DefaultDecl(yystack_[1].value.as < std::vector<expression_ref> > ()); }
+                                               {yylhs.value.as < expression_ref > () = Hs::DefaultDecl(yystack_[1].value.as < std::vector<expression_ref> > ()); }
 #line 2376 "parser.cc"
     break;
 
@@ -2389,31 +2389,31 @@ namespace yy {
 
   case 65: // topdecl: "builtin" var "INTEGER" "STRING" "STRING"
 #line 623 "parser.y"
-                                               {yylhs.value.as < expression_ref > () = Haskell::BuiltinDecl(yystack_[3].value.as < std::string > (),yystack_[2].value.as < int > (),yystack_[1].value.as < std::string > (),yystack_[0].value.as < std::string > ());}
+                                               {yylhs.value.as < expression_ref > () = Hs::BuiltinDecl(yystack_[3].value.as < std::string > (),yystack_[2].value.as < int > (),yystack_[1].value.as < std::string > (),yystack_[0].value.as < std::string > ());}
 #line 2394 "parser.cc"
     break;
 
   case 66: // topdecl: "builtin" var "INTEGER" "STRING"
 #line 624 "parser.y"
-                                               {yylhs.value.as < expression_ref > () = Haskell::BuiltinDecl(yystack_[2].value.as < std::string > (),yystack_[1].value.as < int > (),yystack_[0].value.as < std::string > ());}
+                                               {yylhs.value.as < expression_ref > () = Hs::BuiltinDecl(yystack_[2].value.as < std::string > (),yystack_[1].value.as < int > (),yystack_[0].value.as < std::string > ());}
 #line 2400 "parser.cc"
     break;
 
   case 67: // topdecl: "builtin" varop "INTEGER" "STRING" "STRING"
 #line 625 "parser.y"
-                                               {yylhs.value.as < expression_ref > () = Haskell::BuiltinDecl(yystack_[3].value.as < std::string > (),yystack_[2].value.as < int > (),yystack_[1].value.as < std::string > (),yystack_[0].value.as < std::string > ());}
+                                               {yylhs.value.as < expression_ref > () = Hs::BuiltinDecl(yystack_[3].value.as < std::string > (),yystack_[2].value.as < int > (),yystack_[1].value.as < std::string > (),yystack_[0].value.as < std::string > ());}
 #line 2406 "parser.cc"
     break;
 
   case 68: // topdecl: "builtin" varop "INTEGER" "STRING"
 #line 626 "parser.y"
-                                               {yylhs.value.as < expression_ref > () = Haskell::BuiltinDecl(yystack_[2].value.as < std::string > (),yystack_[1].value.as < int > (),yystack_[0].value.as < std::string > ());}
+                                               {yylhs.value.as < expression_ref > () = Hs::BuiltinDecl(yystack_[2].value.as < std::string > (),yystack_[1].value.as < int > (),yystack_[0].value.as < std::string > ());}
 #line 2412 "parser.cc"
     break;
 
   case 69: // cl_decl: "class" tycl_hdr wherebinds
 #line 628 "parser.y"
-                                               {yylhs.value.as < expression_ref > () = make_class_decl(yystack_[1].value.as < std::pair<Haskell::Context,expression_ref> > ().first,yystack_[1].value.as < std::pair<Haskell::Context,expression_ref> > ().second,yystack_[0].value.as < std::optional<Located<Haskell::Binds>> > ());}
+                                               {yylhs.value.as < expression_ref > () = make_class_decl(yystack_[1].value.as < std::pair<Hs::Context,expression_ref> > ().first,yystack_[1].value.as < std::pair<Hs::Context,expression_ref> > ().second,yystack_[0].value.as < std::optional<Located<Hs::Binds>> > ());}
 #line 2418 "parser.cc"
     break;
 
@@ -2425,43 +2425,43 @@ namespace yy {
 
   case 71: // ty_decl: data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings
 #line 631 "parser.y"
-                                                                           {yylhs.value.as < expression_ref > () = make_data_or_newtype(yystack_[4].value.as < Haskell::DataOrNewtype > (),yystack_[2].value.as < std::pair<Haskell::Context,expression_ref> > ().first,yystack_[2].value.as < std::pair<Haskell::Context,expression_ref> > ().second,yystack_[1].value.as < std::vector<Haskell::Constructor> > ());}
+                                                                           {yylhs.value.as < expression_ref > () = make_data_or_newtype(yystack_[4].value.as < Hs::DataOrNewtype > (),yystack_[2].value.as < std::pair<Hs::Context,expression_ref> > ().first,yystack_[2].value.as < std::pair<Hs::Context,expression_ref> > ().second,yystack_[1].value.as < std::vector<Hs::Constructor> > ());}
 #line 2430 "parser.cc"
     break;
 
   case 72: // ty_decl: data_or_newtype capi_ctype tycl_hdr opt_kind_sig
 #line 632 "parser.y"
-                                                                           {yylhs.value.as < expression_ref > () = make_data_or_newtype(yystack_[3].value.as < Haskell::DataOrNewtype > (),yystack_[1].value.as < std::pair<Haskell::Context,expression_ref> > ().first,yystack_[1].value.as < std::pair<Haskell::Context,expression_ref> > ().second,{});}
+                                                                           {yylhs.value.as < expression_ref > () = make_data_or_newtype(yystack_[3].value.as < Hs::DataOrNewtype > (),yystack_[1].value.as < std::pair<Hs::Context,expression_ref> > ().first,yystack_[1].value.as < std::pair<Hs::Context,expression_ref> > ().second,{});}
 #line 2436 "parser.cc"
     break;
 
   case 73: // inst_decl: "instance" overlap_pragma inst_type wherebinds
 #line 637 "parser.y"
-                                                                           {yylhs.value.as < expression_ref > () = make_instance_decl({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Haskell::Binds>> > ());}
+                                                                           {yylhs.value.as < expression_ref > () = make_instance_decl({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Hs::Binds>> > ());}
 #line 2442 "parser.cc"
     break;
 
   case 83: // data_or_newtype: "data"
 #line 692 "parser.y"
-                           {yylhs.value.as < Haskell::DataOrNewtype > ()=Haskell::DataOrNewtype::data;}
+                           {yylhs.value.as < Hs::DataOrNewtype > ()=Hs::DataOrNewtype::data;}
 #line 2448 "parser.cc"
     break;
 
   case 84: // data_or_newtype: "newtype"
 #line 693 "parser.y"
-                           {yylhs.value.as < Haskell::DataOrNewtype > ()=Haskell::DataOrNewtype::newtype;}
+                           {yylhs.value.as < Hs::DataOrNewtype > ()=Hs::DataOrNewtype::newtype;}
 #line 2454 "parser.cc"
     break;
 
   case 87: // tycl_hdr: context "=>" type
 #line 705 "parser.y"
-                             {yylhs.value.as < std::pair<Haskell::Context,expression_ref> > () = {yystack_[2].value.as < Haskell::Context > (),yystack_[0].value.as < expression_ref > ()};}
+                             {yylhs.value.as < std::pair<Hs::Context,expression_ref> > () = {yystack_[2].value.as < Hs::Context > (),yystack_[0].value.as < expression_ref > ()};}
 #line 2460 "parser.cc"
     break;
 
   case 88: // tycl_hdr: type
 #line 706 "parser.y"
-                             {yylhs.value.as < std::pair<Haskell::Context,expression_ref> > () = {{},yystack_[0].value.as < expression_ref > ()};}
+                             {yylhs.value.as < std::pair<Hs::Context,expression_ref> > () = {{},yystack_[0].value.as < expression_ref > ()};}
 #line 2466 "parser.cc"
     break;
 
@@ -2491,25 +2491,25 @@ namespace yy {
 
   case 96: // decllist: "{" decls "}"
 #line 759 "parser.y"
-                                 {yylhs.value.as < Haskell::Decls > () = yystack_[1].value.as < std::vector<expression_ref> > ();}
+                                 {yylhs.value.as < Hs::Decls > () = yystack_[1].value.as < std::vector<expression_ref> > ();}
 #line 2496 "parser.cc"
     break;
 
   case 97: // decllist: "vocurly" decls close
 #line 760 "parser.y"
-                                 {yylhs.value.as < Haskell::Decls > () = yystack_[1].value.as < std::vector<expression_ref> > ();}
+                                 {yylhs.value.as < Hs::Decls > () = yystack_[1].value.as < std::vector<expression_ref> > ();}
 #line 2502 "parser.cc"
     break;
 
   case 98: // binds: decllist
 #line 762 "parser.y"
-                                 {yylhs.value.as < Located<Haskell::Binds> > () = {yystack_[0].location,{yystack_[0].value.as < Haskell::Decls > ()}};}
+                                 {yylhs.value.as < Located<Hs::Binds> > () = {yystack_[0].location,{yystack_[0].value.as < Hs::Decls > ()}};}
 #line 2508 "parser.cc"
     break;
 
   case 99: // wherebinds: "where" binds
 #line 764 "parser.y"
-                                 {yylhs.value.as < std::optional<Located<Haskell::Binds>> > () = yystack_[0].value.as < Located<Haskell::Binds> > ();}
+                                 {yylhs.value.as < std::optional<Located<Hs::Binds>> > () = yystack_[0].value.as < Located<Hs::Binds> > ();}
 #line 2514 "parser.cc"
     break;
 
@@ -2527,7 +2527,7 @@ namespace yy {
 
   case 107: // opt_tyconsig: "::" gtycon
 #line 792 "parser.y"
-                     {yylhs.value.as < expression_ref > () = Haskell::TypeCon({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
+                     {yylhs.value.as < expression_ref > () = Hs::TypeCon({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 2532 "parser.cc"
     break;
 
@@ -2545,13 +2545,13 @@ namespace yy {
 
   case 110: // sig_vars: sig_vars "," var
 #line 798 "parser.y"
-                           {yylhs.value.as < std::vector<Haskell::Var> > () = yystack_[2].value.as < std::vector<Haskell::Var> > (); yylhs.value.as < std::vector<Haskell::Var> > ().push_back(Haskell::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()}));}
+                           {yylhs.value.as < std::vector<Hs::Var> > () = yystack_[2].value.as < std::vector<Hs::Var> > (); yylhs.value.as < std::vector<Hs::Var> > ().push_back(Hs::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()}));}
 #line 2550 "parser.cc"
     break;
 
   case 111: // sig_vars: var
 #line 799 "parser.y"
-                           {yylhs.value.as < std::vector<Haskell::Var> > ().push_back(Haskell::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()}));}
+                           {yylhs.value.as < std::vector<Hs::Var> > ().push_back(Hs::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()}));}
 #line 2556 "parser.cc"
     break;
 
@@ -2569,31 +2569,31 @@ namespace yy {
 
   case 114: // strict_mark: strictness
 #line 806 "parser.y"
-                                            {yylhs.value.as < Haskell::StrictLazy > () = yystack_[0].value.as < Haskell::StrictLazy > ();}
+                                            {yylhs.value.as < Hs::StrictLazy > () = yystack_[0].value.as < Hs::StrictLazy > ();}
 #line 2574 "parser.cc"
     break;
 
   case 115: // strictness: "!"
 #line 812 "parser.y"
-                {yylhs.value.as < Haskell::StrictLazy > () = Haskell::StrictLazy::strict;}
+                {yylhs.value.as < Hs::StrictLazy > () = Hs::StrictLazy::strict;}
 #line 2580 "parser.cc"
     break;
 
   case 116: // strictness: "~"
 #line 813 "parser.y"
-                {yylhs.value.as < Haskell::StrictLazy > () = Haskell::StrictLazy::lazy;}
+                {yylhs.value.as < Hs::StrictLazy > () = Hs::StrictLazy::lazy;}
 #line 2586 "parser.cc"
     break;
 
   case 117: // ctype: "forall" tv_bndrs "." ctype
 #line 820 "parser.y"
-                                   {yylhs.value.as < expression_ref > () = Haskell::ForallType(yystack_[2].value.as < std::vector<Haskell::TypeVar> > (), yystack_[0].value.as < expression_ref > ());}
+                                   {yylhs.value.as < expression_ref > () = Hs::ForallType(yystack_[2].value.as < std::vector<Hs::TypeVar> > (), yystack_[0].value.as < expression_ref > ());}
 #line 2592 "parser.cc"
     break;
 
   case 118: // ctype: context "=>" ctype
 #line 821 "parser.y"
-                                   {yylhs.value.as < expression_ref > () = Haskell::ConstrainedType(yystack_[2].value.as < Haskell::Context > (),yystack_[0].value.as < expression_ref > ());}
+                                   {yylhs.value.as < expression_ref > () = Hs::ConstrainedType(yystack_[2].value.as < Hs::Context > (),yystack_[0].value.as < expression_ref > ());}
 #line 2598 "parser.cc"
     break;
 
@@ -2611,13 +2611,13 @@ namespace yy {
 
   case 121: // context: btype
 #line 834 "parser.y"
-                                   {yylhs.value.as < Haskell::Context > () = make_context(yystack_[0].value.as < expression_ref > ());}
+                                   {yylhs.value.as < Hs::Context > () = make_context(yystack_[0].value.as < expression_ref > ());}
 #line 2616 "parser.cc"
     break;
 
   case 122: // context_no_ops: btype_no_ops
 #line 836 "parser.y"
-                                   {yylhs.value.as < Haskell::Context > () = make_context(Hs::make_tyapps(yystack_[0].value.as < std::vector<expression_ref> > ()));}
+                                   {yylhs.value.as < Hs::Context > () = make_context(Hs::make_tyapps(yystack_[0].value.as < std::vector<expression_ref> > ()));}
 #line 2622 "parser.cc"
     break;
 
@@ -2629,7 +2629,7 @@ namespace yy {
 
   case 124: // type: btype "->" ctype
 #line 839 "parser.y"
-                                   {yylhs.value.as < expression_ref > () = Hs::make_tyapps({Haskell::TypeCon({yystack_[1].location,"->"}),yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
+                                   {yylhs.value.as < expression_ref > () = Hs::make_tyapps({Hs::TypeCon({yystack_[1].location,"->"}),yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()});}
 #line 2634 "parser.cc"
     break;
 
@@ -2677,13 +2677,13 @@ namespace yy {
 
   case 132: // tyapp: qtyconop
 #line 853 "parser.y"
-                                   {yylhs.value.as < expression_ref > () = Haskell::TypeCon({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
+                                   {yylhs.value.as < expression_ref > () = Hs::TypeCon({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 2682 "parser.cc"
     break;
 
   case 133: // tyapp: tyvarop
 #line 854 "parser.y"
-                                   {yylhs.value.as < expression_ref > () = Haskell::TypeVar({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
+                                   {yylhs.value.as < expression_ref > () = Hs::TypeVar({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 2688 "parser.cc"
     break;
 
@@ -2695,49 +2695,49 @@ namespace yy {
 
   case 135: // atype: ntgtycon
 #line 867 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = Haskell::TypeCon({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
+                                       {yylhs.value.as < expression_ref > () = Hs::TypeCon({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 2700 "parser.cc"
     break;
 
   case 136: // atype: tyvar
 #line 868 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = Haskell::TypeVar({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
+                                       {yylhs.value.as < expression_ref > () = Hs::TypeVar({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 2706 "parser.cc"
     break;
 
   case 137: // atype: "*"
 #line 869 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = Haskell::TypeCon({yystack_[0].location,"*"});}
+                                       {yylhs.value.as < expression_ref > () = Hs::TypeCon({yystack_[0].location,"*"});}
 #line 2712 "parser.cc"
     break;
 
   case 138: // atype: strict_mark atype
 #line 870 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = Haskell::StrictLazyType(yystack_[1].value.as < Haskell::StrictLazy > (),yystack_[0].value.as < expression_ref > ());}
+                                       {yylhs.value.as < expression_ref > () = Hs::StrictLazyType(yystack_[1].value.as < Hs::StrictLazy > (),yystack_[0].value.as < expression_ref > ());}
 #line 2718 "parser.cc"
     break;
 
   case 139: // atype: "{" fielddecls "}"
 #line 871 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = Haskell::FieldDecls(yystack_[1].value.as < std::vector<Haskell::FieldDecl> > ());}
+                                       {yylhs.value.as < expression_ref > () = Hs::FieldDecls(yystack_[1].value.as < std::vector<Hs::FieldDecl> > ());}
 #line 2724 "parser.cc"
     break;
 
   case 140: // atype: "(" ")"
 #line 872 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = Haskell::TypeCon({yystack_[1].location,"()"});}
+                                       {yylhs.value.as < expression_ref > () = Hs::TypeCon({yystack_[1].location,"()"});}
 #line 2730 "parser.cc"
     break;
 
   case 141: // atype: "(" comma_types1 "," ctype ")"
 #line 873 "parser.y"
-                                       {auto ts = yystack_[3].value.as < std::vector<expression_ref> > ();ts.push_back(yystack_[1].value.as < expression_ref > ());yylhs.value.as < expression_ref > () = Haskell::TupleType(ts);}
+                                       {auto ts = yystack_[3].value.as < std::vector<expression_ref> > ();ts.push_back(yystack_[1].value.as < expression_ref > ());yylhs.value.as < expression_ref > () = Hs::TupleType(ts);}
 #line 2736 "parser.cc"
     break;
 
   case 142: // atype: "[" ctype "]"
 #line 879 "parser.y"
-                                       {yylhs.value.as < expression_ref > () = Haskell::ListType{yystack_[1].value.as < expression_ref > ()}; }
+                                       {yylhs.value.as < expression_ref > () = Hs::ListType{yystack_[1].value.as < expression_ref > ()}; }
 #line 2742 "parser.cc"
     break;
 
@@ -2779,7 +2779,7 @@ namespace yy {
 
   case 151: // tv_bndrs: tv_bndrs tv_bndr
 #line 900 "parser.y"
-                               {yylhs.value.as < std::vector<Haskell::TypeVar> > () = yystack_[1].value.as < std::vector<Haskell::TypeVar> > (); yylhs.value.as < std::vector<Haskell::TypeVar> > ().push_back(yystack_[0].value.as < Haskell::TypeVar > ());}
+                               {yylhs.value.as < std::vector<Hs::TypeVar> > () = yystack_[1].value.as < std::vector<Hs::TypeVar> > (); yylhs.value.as < std::vector<Hs::TypeVar> > ().push_back(yystack_[0].value.as < Hs::TypeVar > ());}
 #line 2784 "parser.cc"
     break;
 
@@ -2791,13 +2791,13 @@ namespace yy {
 
   case 153: // tv_bndr: tyvar
 #line 904 "parser.y"
-                                    {yylhs.value.as < Haskell::TypeVar > () = Haskell::TypeVar({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
+                                    {yylhs.value.as < Hs::TypeVar > () = Hs::TypeVar({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 2796 "parser.cc"
     break;
 
   case 154: // tv_bndr: "(" tyvar "::" kind ")"
 #line 905 "parser.y"
-                                    {yylhs.value.as < Haskell::TypeVar > () = Haskell::TypeVar({yystack_[3].location,yystack_[3].value.as < std::string > ()},yystack_[1].value.as < expression_ref > ());}
+                                    {yylhs.value.as < Hs::TypeVar > () = Hs::TypeVar({yystack_[3].location,yystack_[3].value.as < std::string > ()},yystack_[1].value.as < expression_ref > ());}
 #line 2802 "parser.cc"
     break;
 
@@ -2809,37 +2809,37 @@ namespace yy {
 
   case 156: // constrs: "=" constrs1
 #line 929 "parser.y"
-                                {yylhs.value.as < std::vector<Haskell::Constructor> > () = yystack_[0].value.as < std::vector<Haskell::Constructor> > ();}
+                                {yylhs.value.as < std::vector<Hs::Constructor> > () = yystack_[0].value.as < std::vector<Hs::Constructor> > ();}
 #line 2814 "parser.cc"
     break;
 
   case 157: // constrs1: constrs1 "|" constr
 #line 931 "parser.y"
-                                {yylhs.value.as < std::vector<Haskell::Constructor> > () = yystack_[2].value.as < std::vector<Haskell::Constructor> > (); yylhs.value.as < std::vector<Haskell::Constructor> > ().push_back(yystack_[0].value.as < Haskell::Constructor > ());}
+                                {yylhs.value.as < std::vector<Hs::Constructor> > () = yystack_[2].value.as < std::vector<Hs::Constructor> > (); yylhs.value.as < std::vector<Hs::Constructor> > ().push_back(yystack_[0].value.as < Hs::Constructor > ());}
 #line 2820 "parser.cc"
     break;
 
   case 158: // constrs1: constr
 #line 932 "parser.y"
-                                {yylhs.value.as < std::vector<Haskell::Constructor> > ().push_back(yystack_[0].value.as < Haskell::Constructor > ());}
+                                {yylhs.value.as < std::vector<Hs::Constructor> > ().push_back(yystack_[0].value.as < Hs::Constructor > ());}
 #line 2826 "parser.cc"
     break;
 
   case 159: // constr: forall context_no_ops "=>" constr_stuff
 #line 934 "parser.y"
-                                                {yylhs.value.as < Haskell::Constructor > () = make_constructor(yystack_[3].value.as < std::vector<Haskell::TypeVar> > (),yystack_[2].value.as < Haskell::Context > (), yystack_[0].value.as < expression_ref > ());}
+                                                {yylhs.value.as < Hs::Constructor > () = make_constructor(yystack_[3].value.as < std::vector<Hs::TypeVar> > (),yystack_[2].value.as < Hs::Context > (), yystack_[0].value.as < expression_ref > ());}
 #line 2832 "parser.cc"
     break;
 
   case 160: // constr: forall constr_stuff
 #line 935 "parser.y"
-                                                {yylhs.value.as < Haskell::Constructor > () = make_constructor(yystack_[1].value.as < std::vector<Haskell::TypeVar> > (),{}, yystack_[0].value.as < expression_ref > ());}
+                                                {yylhs.value.as < Hs::Constructor > () = make_constructor(yystack_[1].value.as < std::vector<Hs::TypeVar> > (),{}, yystack_[0].value.as < expression_ref > ());}
 #line 2838 "parser.cc"
     break;
 
   case 161: // forall: "forall" tv_bndrs "."
 #line 937 "parser.y"
-                                {yylhs.value.as < std::vector<Haskell::TypeVar> > () = yystack_[1].value.as < std::vector<Haskell::TypeVar> > ();}
+                                {yylhs.value.as < std::vector<Hs::TypeVar> > () = yystack_[1].value.as < std::vector<Hs::TypeVar> > ();}
 #line 2844 "parser.cc"
     break;
 
@@ -2857,7 +2857,7 @@ namespace yy {
 
   case 164: // constr_stuff: btype_no_ops conop btype_no_ops
 #line 941 "parser.y"
-                                                {yylhs.value.as < expression_ref > () = Hs::make_tyapps({Haskell::TypeCon({yystack_[1].location,yystack_[1].value.as < std::string > ()}),Hs::make_tyapps(yystack_[2].value.as < std::vector<expression_ref> > ()),Hs::make_tyapps(yystack_[0].value.as < std::vector<expression_ref> > ())});}
+                                                {yylhs.value.as < expression_ref > () = Hs::make_tyapps({Hs::TypeCon({yystack_[1].location,yystack_[1].value.as < std::string > ()}),Hs::make_tyapps(yystack_[2].value.as < std::vector<expression_ref> > ()),Hs::make_tyapps(yystack_[0].value.as < std::vector<expression_ref> > ())});}
 #line 2862 "parser.cc"
     break;
 
@@ -2869,25 +2869,25 @@ namespace yy {
 
   case 166: // fielddecls: fielddecls1
 #line 944 "parser.y"
-                                {yylhs.value.as < std::vector<Haskell::FieldDecl> > () = yystack_[0].value.as < std::vector<Haskell::FieldDecl> > ();}
+                                {yylhs.value.as < std::vector<Hs::FieldDecl> > () = yystack_[0].value.as < std::vector<Hs::FieldDecl> > ();}
 #line 2874 "parser.cc"
     break;
 
   case 167: // fielddecls1: fielddecls1 "," fielddecl
 #line 946 "parser.y"
-                                        {yylhs.value.as < std::vector<Haskell::FieldDecl> > () = yystack_[2].value.as < std::vector<Haskell::FieldDecl> > (); yylhs.value.as < std::vector<Haskell::FieldDecl> > ().push_back(yystack_[0].value.as < Haskell::FieldDecl > ());}
+                                        {yylhs.value.as < std::vector<Hs::FieldDecl> > () = yystack_[2].value.as < std::vector<Hs::FieldDecl> > (); yylhs.value.as < std::vector<Hs::FieldDecl> > ().push_back(yystack_[0].value.as < Hs::FieldDecl > ());}
 #line 2880 "parser.cc"
     break;
 
   case 168: // fielddecls1: fielddecl
 #line 947 "parser.y"
-                                        {yylhs.value.as < std::vector<Haskell::FieldDecl> > ().push_back(yystack_[0].value.as < Haskell::FieldDecl > ());}
+                                        {yylhs.value.as < std::vector<Hs::FieldDecl> > ().push_back(yystack_[0].value.as < Hs::FieldDecl > ());}
 #line 2886 "parser.cc"
     break;
 
   case 169: // fielddecl: sig_vars "::" ctype
 #line 949 "parser.y"
-                                        {yylhs.value.as < Haskell::FieldDecl > () = Haskell::FieldDecl(yystack_[2].value.as < std::vector<Haskell::Var> > (),yystack_[0].value.as < expression_ref > ());}
+                                        {yylhs.value.as < Hs::FieldDecl > () = Hs::FieldDecl(yystack_[2].value.as < std::vector<Hs::Var> > (),yystack_[0].value.as < expression_ref > ());}
 #line 2892 "parser.cc"
     break;
 
@@ -2899,13 +2899,13 @@ namespace yy {
 
   case 181: // decl_no_th: "!" aexp rhs
 #line 970 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Haskell::StrictValueDecl{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < Hs::MultiGuardedRHS > ()}; }
+                              {yylhs.value.as < expression_ref > () = Hs::StrictValueDecl{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < Hs::MultiGuardedRHS > ()}; }
 #line 2904 "parser.cc"
     break;
 
   case 182: // decl_no_th: infixexp_top rhs
 #line 971 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Haskell::ValueDecl(make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ()),yystack_[0].value.as < Hs::MultiGuardedRHS > ());}
+                              {yylhs.value.as < expression_ref > () = Hs::ValueDecl(make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ()),yystack_[0].value.as < Hs::MultiGuardedRHS > ());}
 #line 2910 "parser.cc"
     break;
 
@@ -2917,43 +2917,43 @@ namespace yy {
 
   case 184: // rhs: "=" exp wherebinds
 #line 977 "parser.y"
-                              {yylhs.value.as < Hs::MultiGuardedRHS > () = Haskell::SimpleRHS({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Haskell::Binds>> > ());}
+                              {yylhs.value.as < Hs::MultiGuardedRHS > () = Hs::SimpleRHS({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Hs::Binds>> > ());}
 #line 2922 "parser.cc"
     break;
 
   case 185: // rhs: gdrhs wherebinds
 #line 978 "parser.y"
-                              {yylhs.value.as < Hs::MultiGuardedRHS > () = Haskell::MultiGuardedRHS{yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (),yystack_[0].value.as < std::optional<Located<Haskell::Binds>> > ()};}
+                              {yylhs.value.as < Hs::MultiGuardedRHS > () = Hs::MultiGuardedRHS{yystack_[1].value.as < std::vector<Hs::GuardedRHS> > (),yystack_[0].value.as < std::optional<Located<Hs::Binds>> > ()};}
 #line 2928 "parser.cc"
     break;
 
   case 186: // gdrhs: gdrhs gdrh
 #line 980 "parser.y"
-                              {yylhs.value.as < std::vector<Haskell::GuardedRHS> > () = yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (); yylhs.value.as < std::vector<Haskell::GuardedRHS> > ().push_back(yystack_[0].value.as < Haskell::GuardedRHS > ());}
+                              {yylhs.value.as < std::vector<Hs::GuardedRHS> > () = yystack_[1].value.as < std::vector<Hs::GuardedRHS> > (); yylhs.value.as < std::vector<Hs::GuardedRHS> > ().push_back(yystack_[0].value.as < Hs::GuardedRHS > ());}
 #line 2934 "parser.cc"
     break;
 
   case 187: // gdrhs: gdrh
 #line 981 "parser.y"
-                              {yylhs.value.as < std::vector<Haskell::GuardedRHS> > ().push_back(yystack_[0].value.as < Haskell::GuardedRHS > ());}
+                              {yylhs.value.as < std::vector<Hs::GuardedRHS> > ().push_back(yystack_[0].value.as < Hs::GuardedRHS > ());}
 #line 2940 "parser.cc"
     break;
 
   case 188: // gdrh: "|" guardquals "=" exp
 #line 985 "parser.y"
-                              {yylhs.value.as < Haskell::GuardedRHS > () = Haskell::GuardedRHS{yystack_[2].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ()};}
+                              {yylhs.value.as < Hs::GuardedRHS > () = Hs::GuardedRHS{yystack_[2].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ()};}
 #line 2946 "parser.cc"
     break;
 
   case 189: // sigdecl: sig_vars "::" sigtypedoc
 #line 995 "parser.y"
-                                  { yylhs.value.as < expression_ref > () = Haskell::SignatureDecl{yystack_[2].value.as < std::vector<Haskell::Var> > (),yystack_[0].value.as < expression_ref > ()}; }
+                                  { yylhs.value.as < expression_ref > () = Hs::SignatureDecl{yystack_[2].value.as < std::vector<Hs::Var> > (),yystack_[0].value.as < expression_ref > ()}; }
 #line 2952 "parser.cc"
     break;
 
   case 190: // sigdecl: infix prec ops
 #line 996 "parser.y"
-                         { yylhs.value.as < expression_ref > () = Haskell::FixityDecl{yystack_[2].value.as < Haskell::Fixity > (),yystack_[1].value.as < std::optional<int> > (),yystack_[0].value.as < std::vector<std::string> > ()}; }
+                         { yylhs.value.as < expression_ref > () = Hs::FixityDecl{yystack_[2].value.as < Hs::Fixity > (),yystack_[1].value.as < std::optional<int> > (),yystack_[0].value.as < std::vector<std::string> > ()}; }
 #line 2958 "parser.cc"
     break;
 
@@ -3091,49 +3091,49 @@ namespace yy {
 
   case 221: // aexp: qvar "@" aexp
 #line 1045 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = Haskell::AsPattern(Haskell::Var({yystack_[2].location,yystack_[2].value.as < std::string > ()}),yystack_[0].value.as < expression_ref > ());}
+                                 {yylhs.value.as < expression_ref > () = Hs::AsPattern(Hs::Var({yystack_[2].location,yystack_[2].value.as < std::string > ()}),yystack_[0].value.as < expression_ref > ());}
 #line 3096 "parser.cc"
     break;
 
   case 222: // aexp: "~" aexp
 #line 1046 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = Haskell::LazyPattern(yystack_[0].value.as < expression_ref > ());}
+                                 {yylhs.value.as < expression_ref > () = Hs::LazyPattern(yystack_[0].value.as < expression_ref > ());}
 #line 3102 "parser.cc"
     break;
 
   case 223: // aexp: "\\" apats1 "->" exp
 #line 1047 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = Haskell::LambdaExp(yystack_[2].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ());}
+                                 {yylhs.value.as < expression_ref > () = Hs::LambdaExp(yystack_[2].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ());}
 #line 3108 "parser.cc"
     break;
 
   case 224: // aexp: "let" binds "in" exp
 #line 1048 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = Haskell::LetExp(yystack_[2].value.as < Located<Haskell::Binds> > (),{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
+                                 {yylhs.value.as < expression_ref > () = Hs::LetExp(yystack_[2].value.as < Located<Hs::Binds> > (),{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 3114 "parser.cc"
     break;
 
   case 225: // aexp: "if" exp optSemi "then" exp optSemi "else" exp
 #line 1050 "parser.y"
-                                                       {yylhs.value.as < expression_ref > () = Haskell::IfExp({yystack_[6].location,yystack_[6].value.as < expression_ref > ()},{yystack_[3].location,yystack_[3].value.as < expression_ref > ()},{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
+                                                       {yylhs.value.as < expression_ref > () = Hs::IfExp({yystack_[6].location,yystack_[6].value.as < expression_ref > ()},{yystack_[3].location,yystack_[3].value.as < expression_ref > ()},{yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 3120 "parser.cc"
     break;
 
   case 226: // aexp: "case" exp "of" altslist
 #line 1052 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = Haskell::CaseExp(yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < Haskell::Alts > ());}
+                                 {yylhs.value.as < expression_ref > () = Hs::CaseExp(yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < Hs::Alts > ());}
 #line 3126 "parser.cc"
     break;
 
   case 227: // aexp: "do" stmtlist
 #line 1053 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = Haskell::Do(yystack_[0].value.as < Haskell::Stmts > ());}
+                                 {yylhs.value.as < expression_ref > () = Hs::Do(yystack_[0].value.as < Hs::Stmts > ());}
 #line 3132 "parser.cc"
     break;
 
   case 228: // aexp: "mdo" stmtlist
 #line 1054 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = Haskell::MDo(yystack_[0].value.as < Haskell::Stmts > ());}
+                                 {yylhs.value.as < expression_ref > () = Hs::MDo(yystack_[0].value.as < Hs::Stmts > ());}
 #line 3138 "parser.cc"
     break;
 
@@ -3157,13 +3157,13 @@ namespace yy {
 
   case 232: // aexp2: qvar
 #line 1061 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Haskell::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
+                              {yylhs.value.as < expression_ref > () = Hs::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 3162 "parser.cc"
     break;
 
   case 233: // aexp2: qcon
 #line 1062 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Haskell::Con({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
+                              {yylhs.value.as < expression_ref > () = Hs::Con({yystack_[0].location,yystack_[0].value.as < std::string > ()});}
 #line 3168 "parser.cc"
     break;
 
@@ -3181,7 +3181,7 @@ namespace yy {
 
   case 236: // aexp2: "(" tup_exprs ")"
 #line 1065 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Haskell::Tuple(yystack_[1].value.as < std::vector<expression_ref> > ());}
+                              {yylhs.value.as < expression_ref > () = Hs::Tuple(yystack_[1].value.as < std::vector<expression_ref> > ());}
 #line 3186 "parser.cc"
     break;
 
@@ -3193,7 +3193,7 @@ namespace yy {
 
   case 238: // aexp2: "_"
 #line 1071 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Haskell::WildcardPattern();}
+                              {yylhs.value.as < expression_ref > () = Hs::WildcardPattern();}
 #line 3198 "parser.cc"
     break;
 
@@ -3205,13 +3205,13 @@ namespace yy {
 
   case 240: // texp: infixexp qop
 #line 1077 "parser.y"
-                      {yylhs.value.as < expression_ref > () = Haskell::LeftSection ( make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ()), yystack_[0].value.as < expression_ref > () ); }
+                      {yylhs.value.as < expression_ref > () = Hs::LeftSection ( make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ()), yystack_[0].value.as < expression_ref > () ); }
 #line 3210 "parser.cc"
     break;
 
   case 241: // texp: qopm infixexp
 #line 1078 "parser.y"
-                      {yylhs.value.as < expression_ref > () = Haskell::RightSection( yystack_[1].value.as < expression_ref > (), make_infixexp(yystack_[0].value.as < std::vector<expression_ref> > ()) ); }
+                      {yylhs.value.as < expression_ref > () = Hs::RightSection( yystack_[1].value.as < expression_ref > (), make_infixexp(yystack_[0].value.as < std::vector<expression_ref> > ()) ); }
 #line 3216 "parser.cc"
     break;
 
@@ -3229,43 +3229,43 @@ namespace yy {
 
   case 244: // list: texp
 #line 1102 "parser.y"
-                                 { yylhs.value.as < expression_ref > () = Haskell::List{{yystack_[0].value.as < expression_ref > ()}}; }
+                                 { yylhs.value.as < expression_ref > () = Hs::List{{yystack_[0].value.as < expression_ref > ()}}; }
 #line 3234 "parser.cc"
     break;
 
   case 245: // list: lexps
 #line 1103 "parser.y"
-                                 { yylhs.value.as < expression_ref > () = Haskell::List{yystack_[0].value.as < std::vector<expression_ref> > ()}; }
+                                 { yylhs.value.as < expression_ref > () = Hs::List{yystack_[0].value.as < std::vector<expression_ref> > ()}; }
 #line 3240 "parser.cc"
     break;
 
   case 246: // list: texp ".."
 #line 1104 "parser.y"
-                                 { yylhs.value.as < expression_ref > () = Haskell::ListFrom(yystack_[1].value.as < expression_ref > ()); }
+                                 { yylhs.value.as < expression_ref > () = Hs::ListFrom(yystack_[1].value.as < expression_ref > ()); }
 #line 3246 "parser.cc"
     break;
 
   case 247: // list: texp "," exp ".."
 #line 1105 "parser.y"
-                                 { yylhs.value.as < expression_ref > () = Haskell::ListFromThen(yystack_[3].value.as < expression_ref > (),yystack_[1].value.as < expression_ref > ()); }
+                                 { yylhs.value.as < expression_ref > () = Hs::ListFromThen(yystack_[3].value.as < expression_ref > (),yystack_[1].value.as < expression_ref > ()); }
 #line 3252 "parser.cc"
     break;
 
   case 248: // list: texp ".." exp
 #line 1106 "parser.y"
-                                 { yylhs.value.as < expression_ref > () = Haskell::ListFromTo(yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()); }
+                                 { yylhs.value.as < expression_ref > () = Hs::ListFromTo(yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ()); }
 #line 3258 "parser.cc"
     break;
 
   case 249: // list: texp "," exp ".." exp
 #line 1107 "parser.y"
-                                 { yylhs.value.as < expression_ref > () = Haskell::ListFromThenTo(yystack_[4].value.as < expression_ref > (), yystack_[2].value.as < expression_ref > (), yystack_[0].value.as < expression_ref > ()); }
+                                 { yylhs.value.as < expression_ref > () = Hs::ListFromThenTo(yystack_[4].value.as < expression_ref > (), yystack_[2].value.as < expression_ref > (), yystack_[0].value.as < expression_ref > ()); }
 #line 3264 "parser.cc"
     break;
 
   case 250: // list: texp "|" squals
 #line 1108 "parser.y"
-                                 { yylhs.value.as < expression_ref > () = Haskell::ListComprehension(yystack_[2].value.as < expression_ref > (), yystack_[0].value.as < std::vector<expression_ref> > ()); }
+                                 { yylhs.value.as < expression_ref > () = Hs::ListComprehension(yystack_[2].value.as < expression_ref > (), yystack_[0].value.as < std::vector<expression_ref> > ()); }
 #line 3270 "parser.cc"
     break;
 
@@ -3313,13 +3313,13 @@ namespace yy {
 
   case 258: // altslist: "{" alts "}"
 #line 1142 "parser.y"
-                                 {yylhs.value.as < Haskell::Alts > () = Haskell::Alts{yystack_[1].value.as < std::vector<Located<Haskell::Alt>> > ()};}
+                                 {yylhs.value.as < Hs::Alts > () = Hs::Alts{yystack_[1].value.as < std::vector<Located<Hs::Alt>> > ()};}
 #line 3318 "parser.cc"
     break;
 
   case 259: // altslist: "vocurly" alts close
 #line 1143 "parser.y"
-                                 {yylhs.value.as < Haskell::Alts > () = Haskell::Alts{yystack_[1].value.as < std::vector<Located<Haskell::Alt>> > ()};}
+                                 {yylhs.value.as < Hs::Alts > () = Hs::Alts{yystack_[1].value.as < std::vector<Located<Hs::Alt>> > ()};}
 #line 3324 "parser.cc"
     break;
 
@@ -3337,67 +3337,67 @@ namespace yy {
 
   case 262: // alts: alts1
 #line 1147 "parser.y"
-                                 {yylhs.value.as < std::vector<Located<Haskell::Alt>> > () = yystack_[0].value.as < std::vector<Located<Haskell::Alt>> > ();}
+                                 {yylhs.value.as < std::vector<Located<Hs::Alt>> > () = yystack_[0].value.as < std::vector<Located<Hs::Alt>> > ();}
 #line 3342 "parser.cc"
     break;
 
   case 263: // alts: ";" alts
 #line 1148 "parser.y"
-                                 {yylhs.value.as < std::vector<Located<Haskell::Alt>> > () = yystack_[0].value.as < std::vector<Located<Haskell::Alt>> > ();}
+                                 {yylhs.value.as < std::vector<Located<Hs::Alt>> > () = yystack_[0].value.as < std::vector<Located<Hs::Alt>> > ();}
 #line 3348 "parser.cc"
     break;
 
   case 264: // alts1: alts1 ";" alt
 #line 1150 "parser.y"
-                                 {yylhs.value.as < std::vector<Located<Haskell::Alt>> > () = yystack_[2].value.as < std::vector<Located<Haskell::Alt>> > (); yylhs.value.as < std::vector<Located<Haskell::Alt>> > ().push_back(yystack_[0].value.as < Located<Haskell::Alt> > ());}
+                                 {yylhs.value.as < std::vector<Located<Hs::Alt>> > () = yystack_[2].value.as < std::vector<Located<Hs::Alt>> > (); yylhs.value.as < std::vector<Located<Hs::Alt>> > ().push_back(yystack_[0].value.as < Located<Hs::Alt> > ());}
 #line 3354 "parser.cc"
     break;
 
   case 265: // alts1: alts1 ";"
 #line 1151 "parser.y"
-                                 {yylhs.value.as < std::vector<Located<Haskell::Alt>> > () = yystack_[1].value.as < std::vector<Located<Haskell::Alt>> > ();}
+                                 {yylhs.value.as < std::vector<Located<Hs::Alt>> > () = yystack_[1].value.as < std::vector<Located<Hs::Alt>> > ();}
 #line 3360 "parser.cc"
     break;
 
   case 266: // alts1: alt
 #line 1152 "parser.y"
-                                 {yylhs.value.as < std::vector<Located<Haskell::Alt>> > ().push_back(yystack_[0].value.as < Located<Haskell::Alt> > ());}
+                                 {yylhs.value.as < std::vector<Located<Hs::Alt>> > ().push_back(yystack_[0].value.as < Located<Hs::Alt> > ());}
 #line 3366 "parser.cc"
     break;
 
   case 267: // alt: pat alt_rhs
 #line 1154 "parser.y"
-                                 {yylhs.value.as < Located<Haskell::Alt> > () = Located<Haskell::Alt>{yystack_[1].location+yystack_[0].location,{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < Hs::MultiGuardedRHS > ()}};}
+                                 {yylhs.value.as < Located<Hs::Alt> > () = Located<Hs::Alt>{yystack_[1].location+yystack_[0].location,{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < Hs::MultiGuardedRHS > ()}};}
 #line 3372 "parser.cc"
     break;
 
   case 268: // alt_rhs: "->" exp wherebinds
 #line 1156 "parser.y"
-                                 {yylhs.value.as < Hs::MultiGuardedRHS > () = Haskell::SimpleRHS({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Haskell::Binds>> > ());}
+                                 {yylhs.value.as < Hs::MultiGuardedRHS > () = Hs::SimpleRHS({yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < std::optional<Located<Hs::Binds>> > ());}
 #line 3378 "parser.cc"
     break;
 
   case 269: // alt_rhs: gdpats wherebinds
 #line 1157 "parser.y"
-                                 {yylhs.value.as < Hs::MultiGuardedRHS > () = Haskell::MultiGuardedRHS(yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (),yystack_[0].value.as < std::optional<Located<Haskell::Binds>> > ());}
+                                 {yylhs.value.as < Hs::MultiGuardedRHS > () = Hs::MultiGuardedRHS(yystack_[1].value.as < std::vector<Hs::GuardedRHS> > (),yystack_[0].value.as < std::optional<Located<Hs::Binds>> > ());}
 #line 3384 "parser.cc"
     break;
 
   case 270: // gdpats: gdpats gdpat
 #line 1159 "parser.y"
-                                 {yylhs.value.as < std::vector<Haskell::GuardedRHS> > () = yystack_[1].value.as < std::vector<Haskell::GuardedRHS> > (); yylhs.value.as < std::vector<Haskell::GuardedRHS> > ().push_back(yystack_[0].value.as < Haskell::GuardedRHS > ());}
+                                 {yylhs.value.as < std::vector<Hs::GuardedRHS> > () = yystack_[1].value.as < std::vector<Hs::GuardedRHS> > (); yylhs.value.as < std::vector<Hs::GuardedRHS> > ().push_back(yystack_[0].value.as < Hs::GuardedRHS > ());}
 #line 3390 "parser.cc"
     break;
 
   case 271: // gdpats: gdpat
 #line 1160 "parser.y"
-                                 {yylhs.value.as < std::vector<Haskell::GuardedRHS> > ().push_back(yystack_[0].value.as < Haskell::GuardedRHS > ());}
+                                 {yylhs.value.as < std::vector<Hs::GuardedRHS> > ().push_back(yystack_[0].value.as < Hs::GuardedRHS > ());}
 #line 3396 "parser.cc"
     break;
 
   case 272: // gdpat: "|" guardquals "->" exp
 #line 1169 "parser.y"
-                                 {yylhs.value.as < Haskell::GuardedRHS > ()=Haskell::GuardedRHS{yystack_[2].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ()};}
+                                 {yylhs.value.as < Hs::GuardedRHS > ()=Hs::GuardedRHS{yystack_[2].value.as < std::vector<expression_ref> > (),yystack_[0].value.as < expression_ref > ()};}
 #line 3402 "parser.cc"
     break;
 
@@ -3409,7 +3409,7 @@ namespace yy {
 
   case 274: // pat: "!" aexp
 #line 1172 "parser.y"
-              {yylhs.value.as < expression_ref > () = Haskell::StrictPattern(yystack_[0].value.as < expression_ref > ());}
+              {yylhs.value.as < expression_ref > () = Hs::StrictPattern(yystack_[0].value.as < expression_ref > ());}
 #line 3414 "parser.cc"
     break;
 
@@ -3421,7 +3421,7 @@ namespace yy {
 
   case 276: // bindpat: "!" aexp
 #line 1175 "parser.y"
-              {yylhs.value.as < expression_ref > () = Haskell::StrictPattern(yystack_[0].value.as < expression_ref > ());}
+              {yylhs.value.as < expression_ref > () = Hs::StrictPattern(yystack_[0].value.as < expression_ref > ());}
 #line 3426 "parser.cc"
     break;
 
@@ -3433,7 +3433,7 @@ namespace yy {
 
   case 278: // apat: "!" aexp
 #line 1178 "parser.y"
-              {yylhs.value.as < expression_ref > () = Haskell::StrictPattern(yystack_[0].value.as < expression_ref > ());}
+              {yylhs.value.as < expression_ref > () = Hs::StrictPattern(yystack_[0].value.as < expression_ref > ());}
 #line 3438 "parser.cc"
     break;
 
@@ -3451,13 +3451,13 @@ namespace yy {
 
   case 281: // stmtlist: "{" stmts "}"
 #line 1184 "parser.y"
-                               {yylhs.value.as < Haskell::Stmts > () = Haskell::Stmts{yystack_[1].value.as < std::vector<expression_ref> > ()};}
+                               {yylhs.value.as < Hs::Stmts > () = Hs::Stmts{yystack_[1].value.as < std::vector<expression_ref> > ()};}
 #line 3456 "parser.cc"
     break;
 
   case 282: // stmtlist: "vocurly" stmts close
 #line 1185 "parser.y"
-                               {yylhs.value.as < Haskell::Stmts > () = Haskell::Stmts{yystack_[1].value.as < std::vector<expression_ref> > ()};}
+                               {yylhs.value.as < Hs::Stmts > () = Hs::Stmts{yystack_[1].value.as < std::vector<expression_ref> > ()};}
 #line 3462 "parser.cc"
     break;
 
@@ -3493,25 +3493,25 @@ namespace yy {
 
   case 288: // stmt: "rec" stmtlist
 #line 1196 "parser.y"
-                        {yylhs.value.as < expression_ref > () = Haskell::RecStmt(yystack_[0].value.as < Haskell::Stmts > ());}
+                        {yylhs.value.as < expression_ref > () = Hs::RecStmt(yystack_[0].value.as < Hs::Stmts > ());}
 #line 3498 "parser.cc"
     break;
 
   case 289: // qual: bindpat "<-" exp
 #line 1198 "parser.y"
-                        {yylhs.value.as < expression_ref > () = Haskell::PatQual(yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
+                        {yylhs.value.as < expression_ref > () = Hs::PatQual(yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < expression_ref > ());}
 #line 3504 "parser.cc"
     break;
 
   case 290: // qual: exp
 #line 1199 "parser.y"
-                        {yylhs.value.as < expression_ref > () = Haskell::SimpleQual(yystack_[0].value.as < expression_ref > ());}
+                        {yylhs.value.as < expression_ref > () = Hs::SimpleQual(yystack_[0].value.as < expression_ref > ());}
 #line 3510 "parser.cc"
     break;
 
   case 291: // qual: "let" binds
 #line 1200 "parser.y"
-                        {yylhs.value.as < expression_ref > () = Haskell::LetQual(yystack_[0].value.as < Located<Haskell::Binds> > ());}
+                        {yylhs.value.as < expression_ref > () = Hs::LetQual(yystack_[0].value.as < Located<Hs::Binds> > ());}
 #line 3516 "parser.cc"
     break;
 
@@ -3817,25 +3817,25 @@ namespace yy {
 
   case 351: // qop: qvarop
 #line 1324 "parser.y"
-                { yylhs.value.as < expression_ref > () = Haskell::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()}); }
+                { yylhs.value.as < expression_ref > () = Hs::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()}); }
 #line 3822 "parser.cc"
     break;
 
   case 352: // qop: qconop
 #line 1325 "parser.y"
-                { yylhs.value.as < expression_ref > () = Haskell::Con({yystack_[0].location,yystack_[0].value.as < std::string > ()}); }
+                { yylhs.value.as < expression_ref > () = Hs::Con({yystack_[0].location,yystack_[0].value.as < std::string > ()}); }
 #line 3828 "parser.cc"
     break;
 
   case 353: // qopm: qvaropm
 #line 1328 "parser.y"
-                { yylhs.value.as < expression_ref > () = Haskell::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()}); }
+                { yylhs.value.as < expression_ref > () = Hs::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()}); }
 #line 3834 "parser.cc"
     break;
 
   case 354: // qopm: qconop
 #line 1329 "parser.y"
-                { yylhs.value.as < expression_ref > () = Haskell::Con({yystack_[0].location,yystack_[0].value.as < std::string > ()}); }
+                { yylhs.value.as < expression_ref > () = Hs::Con({yystack_[0].location,yystack_[0].value.as < std::string > ()}); }
 #line 3840 "parser.cc"
     break;
 
@@ -6032,11 +6032,11 @@ yy::parser::error (const location_type& l, const std::string& m)
     drv.push_error_message({l,m});
 }
 
-pair<vector<Haskell::ImpDecl>, optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls)
+pair<vector<Hs::ImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls)
 {
     if (topdecls)
     {
-        auto topdecls2 = Haskell::Decls(*topdecls);
+        auto topdecls2 = Hs::Decls(*topdecls);
         return {imports, topdecls2};
     }
     else
@@ -6057,14 +6057,14 @@ check_type_or_class_header(const Hs::Type& type)
     return {name, type_args};
 }
 
-vector<Haskell::TypeVar> check_all_type_vars(const vector<Haskell::Type>& types)
+vector<Hs::TypeVar> check_all_type_vars(const vector<Hs::Type>& types)
 {
-    vector<Haskell::TypeVar> type_vars;
+    vector<Hs::TypeVar> type_vars;
     for(auto& type: types)
     {
-        if (type.is_a<Haskell::TypeVar>())
+        if (type.is_a<Hs::TypeVar>())
         {
-            type_vars.push_back(type.as_<Haskell::TypeVar>());
+            type_vars.push_back(type.as_<Hs::TypeVar>());
         }
         else
         {
@@ -6074,33 +6074,33 @@ vector<Haskell::TypeVar> check_all_type_vars(const vector<Haskell::Type>& types)
     return type_vars;
 }
 
-Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type)
+Hs::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type)
 {
     auto [name, type_args] = check_type_or_class_header(unloc(lhs_type));
     return {name, check_all_type_vars(type_args), rhs_type};
 }
 
-Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context&  context,
-                                                const expression_ref& header, const vector<Haskell::Constructor>& constrs)
+Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
+                                                const expression_ref& header, const vector<Hs::Constructor>& constrs)
 {
     auto [name, type_args] = check_type_or_class_header(header);
-    if (d_or_n == Haskell::DataOrNewtype::newtype and constrs.size() != 1)
+    if (d_or_n == Hs::DataOrNewtype::newtype and constrs.size() != 1)
         throw myexception()<<"newtype '"<<name<<"' may only have 1 constructors with 1 field";
     return {d_or_n, name, check_all_type_vars(type_args), context, constrs};
 }
 
-Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, const optional<Located<Haskell::Binds>>& binds)
+Hs::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, const optional<Located<Hs::Binds>>& binds)
 {
     // GHC stores the instance as a polytype?
     // This would seem to allow (instance forall a.Eq a => forall a.Eq [a] x y ....)
 
     auto type = unloc(ltype);
-    if (type.is_a<Haskell::ForallType>())
+    if (type.is_a<Hs::ForallType>())
         throw myexception()<<"instance declaration '"<<type<<"' is malformed";
-    Haskell::Context context;
-    if (type.is_a<Haskell::ConstrainedType>())
+    Hs::Context context;
+    if (type.is_a<Hs::ConstrainedType>())
     {
-        auto& T = type.as_<Haskell::ConstrainedType>();
+        auto& T = type.as_<Hs::ConstrainedType>();
         context = T.context;
         type = T.type;
     }
@@ -6108,7 +6108,7 @@ Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, c
     return {context, type, make_opt_decls(binds)};
 }
 
-Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const optional<Located<Haskell::Binds>>& binds)
+Hs::ClassDecl make_class_decl(const Hs::Context& context, const expression_ref& header, const optional<Located<Hs::Binds>>& binds)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     return {name, check_all_type_vars(type_args), context, make_opt_decls(binds)};
@@ -6118,12 +6118,12 @@ Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expres
 // nothing
 // | ctype => header
 // | ( ctypes2 ) => header
-Haskell::Context make_context(const expression_ref& context)
+Hs::Context make_context(const expression_ref& context)
 {
-    vector<Haskell::Type> constraints;
-    if (context.is_a<Haskell::TupleType>())
+    vector<Hs::Type> constraints;
+    if (context.is_a<Hs::TupleType>())
     {
-        constraints = context.as_<Haskell::TupleType>().element_types;
+        constraints = context.as_<Hs::TupleType>().element_types;
     }
     else
         constraints.push_back(context);
@@ -6131,7 +6131,7 @@ Haskell::Context make_context(const expression_ref& context)
     return {constraints};
 }
 
-bool check_kind(const Haskell::Kind& kind)
+bool check_kind(const Hs::Kind& kind)
 {
     auto [kind_head, kind_args] = decompose_type_apps(kind);
 
@@ -6150,7 +6150,7 @@ bool check_kind(const Haskell::Kind& kind)
         return false;
 }
 
-Haskell::Type make_kind(const Haskell::Kind& kind)
+Hs::Type make_kind(const Hs::Kind& kind)
 {
     if (not check_kind(kind))
         throw myexception()<<"Kind '"<<kind<<"' is malformed";
@@ -6158,7 +6158,7 @@ Haskell::Type make_kind(const Haskell::Kind& kind)
     return kind;
 }
 
-optional<pair<string, Haskell::FieldDecls>> is_record_con(const expression_ref& typeish)
+optional<pair<string, Hs::FieldDecls>> is_record_con(const expression_ref& typeish)
 {
     auto [head,args] = decompose_type_apps(typeish);
 
@@ -6183,7 +6183,7 @@ optional<pair<string, std::vector<expression_ref>>> is_normal_con(const expressi
     return {{unloc(head.as_<Hs::TypeCon>().name), args}};
 }
 
-Haskell::Constructor make_constructor(const vector<Haskell::TypeVar>& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish)
+Hs::Constructor make_constructor(const vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const expression_ref& typeish)
 {
     if (auto constr = is_record_con(typeish))
     {
@@ -6230,7 +6230,7 @@ expression_ref yy_make_string(const std::string& s)
     vector<expression_ref> chars;
     for(char c: s)
 	chars.push_back(c);
-    return Haskell::List(chars);
+    return Hs::List(chars);
 }
 
 std::optional<Located<Hs::Decls>> make_opt_decls(const std::optional<Located<Hs::Binds>>& binds)

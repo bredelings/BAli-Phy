@@ -254,7 +254,7 @@ struct typechecker_state
     infer_type_for_classes(const Hs::Decls& decls, const type_con_env& tce);
 
     tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
-    infer_type_for_class(const type_con_env& tce, const Haskell::ClassDecl& class_decl);
+    infer_type_for_class(const type_con_env& tce, const Hs::ClassDecl& class_decl);
 
     pair<Hs::Decls,global_instance_env>
     infer_type_for_instances(const Hs::Decls& decls, const class_env& ce);
@@ -427,7 +427,7 @@ pair<Hs::Type, local_value_env>
 typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
 {
     // TAUT-PAT
-    if (auto x = pat.to<Haskell::Var>())
+    if (auto x = pat.to<Hs::Var>())
     {
         Hs::Type type = fresh_type_var();
         local_value_env lve;
@@ -436,7 +436,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
 	return { type , lve };
     }
     // CONSTR-PAT
-    else if (auto con = pat.head().to<Haskell::Con>())
+    else if (auto con = pat.head().to<Hs::Con>())
     {
         local_value_env lve;
         vector<Hs::Type> types;
@@ -463,7 +463,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
         return {type, lve};
     }
     // AS-PAT
-    else if (auto ap = pat.to<Haskell::AsPattern>())
+    else if (auto ap = pat.to<Hs::AsPattern>())
     {
         auto [t,lve] = infer_pattern_type(ap->pattern);
         auto& name = unloc(ap->var.as_<Hs::Var>().name);
@@ -471,19 +471,19 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
         return {t,lve};
     }
     // LAZY-PAT
-    else if (auto lp = pat.to<Haskell::LazyPattern>())
+    else if (auto lp = pat.to<Hs::LazyPattern>())
         return infer_pattern_type(lp->pattern);
     // not in paper (STRICT-PAT)
-    else if (auto sp = pat.to<Haskell::StrictPattern>())
+    else if (auto sp = pat.to<Hs::StrictPattern>())
         return infer_pattern_type(sp->pattern);
     // WILD-PAT
-    else if (pat.is_a<Haskell::WildcardPattern>())
+    else if (pat.is_a<Hs::WildcardPattern>())
     {
         auto tv = fresh_type_var();
         return {tv,{}};
     }
     // LIST-PAT
-    else if (auto l = pat.to<Haskell::List>())
+    else if (auto l = pat.to<Hs::List>())
     {
         local_value_env lve;
         Hs::Type t = fresh_type_var();
@@ -500,7 +500,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
         return {t, lve};
     }
     // TUPLE-PAT
-    else if (auto t = pat.to<Haskell::Tuple>())
+    else if (auto t = pat.to<Hs::Tuple>())
     {
         vector<Hs::Type> types;
         local_value_env lve;
@@ -1127,25 +1127,25 @@ void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
 }
 
 
-Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type type, const Haskell::Type& constraint)
+Hs::Type type_check_class_method_type(kindchecker_state& K, Hs::Type type, const Hs::Type& constraint)
 {
     // 1. Bind type parameters for type declaration
     K.push_type_var_scope();
 
-    std::optional<Haskell::Context> context;
+    std::optional<Hs::Context> context;
 
     // 2. Find the unconstrained type
     auto unconstrained_type = type;
-    if (unconstrained_type.is_a<Haskell::ConstrainedType>())
+    if (unconstrained_type.is_a<Hs::ConstrainedType>())
     {
-        auto& ct = unconstrained_type.as_<Haskell::ConstrainedType>();
+        auto& ct = unconstrained_type.as_<Hs::ConstrainedType>();
         context = ct.context;
         unconstrained_type = ct.type;
     }
 
     // 3. Find the NEW free type variables
     auto new_ftvs = free_type_VARS(unconstrained_type);
-    vector<Haskell::TypeVar> to_erase;
+    vector<Hs::TypeVar> to_erase;
     for(auto& type_var: new_ftvs)
         if (K.type_var_in_scope(type_var))
             to_erase.push_back(type_var);
@@ -1167,7 +1167,7 @@ Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type t
     K.kind_check_type_of_kind(unconstrained_type, make_kind_star());
 
     // 7. Bind fresh kind vars to new type variables
-    vector<Haskell::TypeVar> new_type_vars;
+    vector<Hs::TypeVar> new_type_vars;
     for(auto& type_var: new_ftvs)
     {
         auto type_var_with_kind = type_var;
@@ -1193,7 +1193,7 @@ Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type t
 //                       = { made-up-name = \dict -> case dict of (superdict,_,_,_,_) -> superdict }
 
 tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
-typechecker_state::infer_type_for_class(const type_con_env& tce, const Haskell::ClassDecl& class_decl)
+typechecker_state::infer_type_for_class(const type_con_env& tce, const Hs::ClassDecl& class_decl)
 {
     kindchecker_state K(tce);
 
@@ -1212,7 +1212,7 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Haskell::
     kind k = K. kind_for_type_con(name);  // FIXME -- check that this is a class?
 
     // b. Put each type variable into the kind.
-    vector<Haskell::TypeVar> class_typevars;
+    vector<Hs::TypeVar> class_typevars;
     for(auto& tv: class_decl.type_vars)
     {
         // the kind should be an arrow kind.
@@ -1233,9 +1233,9 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Haskell::
     assert(k->is_kconstraint());
 
     // d. construct the constraint
-    Haskell::Type constraint = Haskell::TypeCon(Unlocated(class_decl.name));
+    Hs::Type constraint = Hs::TypeCon(Unlocated(class_decl.name));
     for(auto& tv: class_typevars)
-        constraint = Haskell::TypeApp(constraint, tv);
+        constraint = Hs::TypeApp(constraint, tv);
 
     // e. handle the class methods
     global_value_env gve;

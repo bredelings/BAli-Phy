@@ -25,16 +25,16 @@
 
   std::optional<Located<Hs::Decls>> make_opt_decls(const std::optional<Located<Hs::Binds>>& binds);
 
-  std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls);
+  std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
-  Haskell::Type make_kind(const Haskell::Type& kind);
-  Haskell::Constructor make_constructor(const std::vector<Haskell::TypeVar>& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish);
-  Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Haskell::Binds>>& decls);
-  Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
-  Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context& context,
-                                                  const expression_ref& header, const std::vector<Haskell::Constructor>& constrs);
-  Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const std::optional<Located<Haskell::Binds>>& decls);
-  Haskell::Context make_context(const expression_ref& context);
+  Hs::Type make_kind(const Hs::Type& kind);
+  Hs::Constructor make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const expression_ref& typeish);
+  Hs::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Hs::Binds>>& decls);
+  Hs::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
+  Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
+                                                  const expression_ref& header, const std::vector<Hs::Constructor>& constrs);
+  Hs::ClassDecl make_class_decl(const Hs::Context& context, const expression_ref& header, const std::optional<Located<Hs::Binds>>& decls);
+  Hs::Context make_context(const expression_ref& context);
 
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
@@ -211,41 +211,41 @@
  /* Template Haskell: skipped tokens.*/
 
 
-%type <Haskell::Module> module
+%type <Hs::Module> module
  /* %type <void> missing_module_keyword */
  /* %type <expression_ref> maybemodwarning */
-%type <std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>> body2
-%type <std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>> body
-%type <std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>> top
-%type <std::pair<std::vector<Haskell::ImpDecl>, std::optional<Haskell::Decls>>> top1
+%type <std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>> body2
+%type <std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>> body
+%type <std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>> top
+%type <std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>> top1
 
-%type <std::optional<std::vector<Haskell::Export>>> maybeexports
-%type <std::vector<Haskell::Export>> exportlist
-%type <std::vector<Haskell::Export>> exportlist1
-%type <Haskell::Export> export
-%type <std::optional<Haskell::ExportSubSpec>> export_subspec
+%type <std::optional<std::vector<Hs::Export>>> maybeexports
+%type <std::vector<Hs::Export>> exportlist
+%type <std::vector<Hs::Export>> exportlist1
+%type <Hs::Export> export
+%type <std::optional<Hs::ExportSubSpec>> export_subspec
 %type <std::vector<Located<std::string>>> qcnames
 %type <std::vector<Located<std::string>>> qcnames1
 %type <Located<std::string>> qcname
 
-%type <std::vector<Haskell::ImpDecl>> importdecls
-%type <std::vector<Haskell::ImpDecl>> importdecls_semi
-%type <Haskell::ImpDecl> importdecl
+%type <std::vector<Hs::ImpDecl>> importdecls
+%type <std::vector<Hs::ImpDecl>> importdecls_semi
+%type <Hs::ImpDecl> importdecl
  // %type <bool> maybe_src
  // %type <bool> maybe_safe
  // %type <std::optional<std::string>> maybe_pkg
 %type <bool> optqualified
 %type <std::optional<std::string>> maybeas
-%type <std::optional<Haskell::ImpSpec>> maybeimpspec
-%type <Haskell::ImpSpec> impspec
+%type <std::optional<Hs::ImpSpec>> maybeimpspec
+%type <Hs::ImpSpec> impspec
 
 %type <std::optional<int>> prec
-%type <Haskell::Fixity> infix
+%type <Hs::Fixity> infix
 %type <std::vector<std::string>> ops
 
 
-%type <Haskell::Decls> topdecls
-%type <Haskell::Decls> topdecls_semi
+%type <Hs::Decls> topdecls
+%type <Hs::Decls> topdecls_semi
 %type <expression_ref> topdecl
 %type <expression_ref> cl_decl
 %type <expression_ref> ty_decl
@@ -255,9 +255,9 @@
 %type <void> deriv_strategy_no_via
 %type <void> deriv_strategy_via
  */
-%type <Haskell::DataOrNewtype> data_or_newtype
+%type <Hs::DataOrNewtype> data_or_newtype
  /* %type <void> opt_kind_sig */
-%type <std::pair<Haskell::Context,expression_ref>> tycl_hdr
+%type <std::pair<Hs::Context,expression_ref>> tycl_hdr
 /* %type <void> capi_ctype 
 
 
@@ -280,9 +280,9 @@
 */
 
 %type <std::vector<expression_ref>> decls
-%type <Haskell::Decls> decllist
-%type <Located<Haskell::Binds>> binds
-%type <std::optional<Located<Haskell::Binds>>> wherebinds
+%type <Hs::Decls> decllist
+%type <Located<Hs::Binds>> binds
+%type <std::optional<Located<Hs::Binds>>> wherebinds
  /*
 
 %type <void> strings
@@ -292,15 +292,15 @@
 %type <expression_ref> opt_tyconsig
 %type <expression_ref> sigtype
 %type <expression_ref> sigtypedoc
-%type <std::vector<Haskell::Var>> sig_vars
+%type <std::vector<Hs::Var>> sig_vars
 %type <std::vector<expression_ref>> sigtypes1
 
-%type <Haskell::StrictLazy> strict_mark
-%type <Haskell::StrictLazy> strictness
+%type <Hs::StrictLazy> strict_mark
+%type <Hs::StrictLazy> strictness
 %type <expression_ref> ctype
 %type <expression_ref> ctypedoc
-%type <Haskell::Context> context
-%type <Haskell::Context> context_no_ops
+%type <Hs::Context> context
+%type <Hs::Context> context_no_ops
 %type <expression_ref> type
 %type <expression_ref> typedoc
 %type <expression_ref> btype
@@ -318,8 +318,8 @@
  /*
 %type <void> bar_types2
  */
-%type <std::vector<Haskell::TypeVar>> tv_bndrs
-%type <Haskell::TypeVar> tv_bndr
+%type <std::vector<Hs::TypeVar>> tv_bndrs
+%type <Hs::TypeVar> tv_bndr
  /*
 %type <void> fds
 %type <void> fds1
@@ -328,14 +328,14 @@
  */
 %type <expression_ref> kind
 
-%type <std::vector<Haskell::Constructor>> constrs
-%type <std::vector<Haskell::Constructor>> constrs1
-%type <Haskell::Constructor> constr
-%type <std::vector<Haskell::TypeVar>> forall
+%type <std::vector<Hs::Constructor>> constrs
+%type <std::vector<Hs::Constructor>> constrs1
+%type <Hs::Constructor> constr
+%type <std::vector<Hs::TypeVar>> forall
 %type <expression_ref> constr_stuff
-%type <std::vector<Haskell::FieldDecl>> fielddecls
-%type <std::vector<Haskell::FieldDecl>> fielddecls1
-%type <Haskell::FieldDecl> fielddecl
+%type <std::vector<Hs::FieldDecl>> fielddecls
+%type <std::vector<Hs::FieldDecl>> fielddecls1
+%type <Hs::FieldDecl> fielddecl
  /*
 %type <void> maybe_derivings
 %type <void> derivings
@@ -345,8 +345,8 @@
 %type <expression_ref> decl_no_th
 %type <expression_ref> decl
 %type <Hs::MultiGuardedRHS> rhs
-%type <std::vector<Haskell::GuardedRHS>> gdrhs
-%type <Haskell::GuardedRHS> gdrh
+%type <std::vector<Hs::GuardedRHS>> gdrhs
+%type <Hs::GuardedRHS> gdrh
 %type <expression_ref> sigdecl
  /*
 %type <void> activation
@@ -381,20 +381,20 @@
 %type <std::vector<expression_ref>> guardquals
 %type <std::vector<expression_ref>> guardquals1
 
-%type <Haskell::Alts> altslist
-%type <std::vector<Located<Haskell::Alt>>> alts
-%type <std::vector<Located<Haskell::Alt>>> alts1
-%type <Located<Haskell::Alt>> alt
+%type <Hs::Alts> altslist
+%type <std::vector<Located<Hs::Alt>>> alts
+%type <std::vector<Located<Hs::Alt>>> alts1
+%type <Located<Hs::Alt>> alt
 %type <Hs::MultiGuardedRHS> alt_rhs
-%type <std::vector<Haskell::GuardedRHS>> gdpats
+%type <std::vector<Hs::GuardedRHS>> gdpats
  /* %type <expression_ref> ifgdpats */
-%type <Haskell::GuardedRHS> gdpat
+%type <Hs::GuardedRHS> gdpat
 %type <expression_ref> pat
 %type <expression_ref> bindpat
 %type <expression_ref> apat
 %type <std::vector<expression_ref>> apats1
 
-%type <Haskell::Stmts> stmtlist
+%type <Hs::Stmts> stmtlist
 %type <std::vector<expression_ref>> stmts
 %type <expression_ref> stmt
 
@@ -491,8 +491,8 @@ identifier: qvar
 
 /* signature: backpack stuff */
 
-module: "module" modid maybemodwarning maybeexports "where" body {$$ = Haskell::Module{$2,$4,$6.first, $6.second};}
-| body2                                                          {$$ = Haskell::Module{"Main",{},$1.first, $1.second};}
+module: "module" modid maybemodwarning maybeexports "where" body {$$ = Hs::Module{$2,$4,$6.first, $6.second};}
+| body2                                                          {$$ = Hs::Module{"Main",{},$1.first, $1.second};}
 
 missing_module_keyword: %empty                                   {drv.push_module_context();}
 
@@ -529,12 +529,12 @@ exportlist: exportlist1               {$$ = $1;}
 exportlist1: exportlist1 "," export   {$$ = $1; $$.push_back($3);}
 |            export                   {$$.push_back($1);}
 
-export: qcname export_subspec         {$$ = Haskell::ExportSymbol{$1, $2}; }
-|       "module" modid                {$$ = Haskell::ExportModule{{@2,$2}}; }
+export: qcname export_subspec         {$$ = Hs::ExportSymbol{$1, $2}; }
+|       "module" modid                {$$ = Hs::ExportModule{{@2,$2}}; }
 
 export_subspec: %empty                {}
-|              "(" qcnames ")"        { $$ = Haskell::ExportSubSpecSome{$2}; }
-|              "(" ".." ")"           { $$ = Haskell::ExportSubSpecAll(); }
+|              "(" qcnames ")"        { $$ = Hs::ExportSubSpecSome{$2}; }
+|              "(" ".." ")"           { $$ = Hs::ExportSubSpecAll(); }
 
 qcnames: %empty    {}
 |        qcnames1  {$$ = $1;}
@@ -559,7 +559,7 @@ importdecls_semi: importdecls_semi importdecl semis1 { $$ = $1; $$.push_back($2)
 |                 %empty { }
 
 importdecl: "import" /*maybe_src*/ /*maybe_safe*/ optqualified /*maybe_pkg*/ modid maybeas maybeimpspec {
-    $$ = Haskell::ImpDecl($2,$3,$4,$5);
+    $$ = Hs::ImpDecl($2,$3,$4,$5);
 }
 /*
 maybe_src: "{-# SOURCE" "#-}"  { $$ = true; }
@@ -582,8 +582,8 @@ maybeimpspec: impspec          { $$ = $1; }
 
 /* Since we can't have `module name` in an IMPORT list, maybe we should a different type here...*/
 
-impspec: "(" exportlist ")"           { $$ = Haskell::ImpSpec{false, $2}; }
-|        "hiding" "(" exportlist ")"  { $$ = Haskell::ImpSpec{true,  $3}; }
+impspec: "(" exportlist ")"           { $$ = Hs::ImpSpec{false, $2}; }
+|        "hiding" "(" exportlist ")"  { $$ = Hs::ImpSpec{true,  $3}; }
 
 
 /* ------------- Fixity Declarations ----------------------------- */
@@ -591,9 +591,9 @@ impspec: "(" exportlist ")"           { $$ = Haskell::ImpSpec{false, $2}; }
 prec: %empty       { }
 |     INTEGER      { $$ = $1; }
 
-infix: "infix"     { $$ = Haskell::Fixity::infix; }
-|      "infixl"    { $$ = Haskell::Fixity::infixl; }
-|      "infixr"    { $$ = Haskell::Fixity::infixr; }
+infix: "infix"     { $$ = Hs::Fixity::infix; }
+|      "infixl"    { $$ = Hs::Fixity::infixl; }
+|      "infixr"    { $$ = Hs::Fixity::infixr; }
 
 ops:   ops "," op  { $$ = $1; $$.push_back($3); }
 |      op          { $$ = {$1}; }
@@ -610,7 +610,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        inst_decl                             {$$ = $1;}
 /*|        stand_alone_deriving
   |        role_annot*/
-|        "default" "(" comma_types0 ")"        {$$ = Haskell::DefaultDecl($3); }
+|        "default" "(" comma_types0 ")"        {$$ = Hs::DefaultDecl($3); }
 /*
 |        "foreign" fdecl
 |        "{-# DEPRECATED" deprecations "#-}"
@@ -620,10 +620,10 @@ topdecl: cl_decl                               {$$ = $1;}
 |        decl_no_th                            {$$ = $1;}
 /* What is this for? How is this a decl ? */
 |        infixexp_top                          {$$ = make_infixexp($1);}
-|        "builtin" var INTEGER STRING STRING   {$$ = Haskell::BuiltinDecl($2,$3,$4,$5);}
-|        "builtin" var INTEGER STRING          {$$ = Haskell::BuiltinDecl($2,$3,$4);}
-|        "builtin" varop INTEGER STRING STRING {$$ = Haskell::BuiltinDecl($2,$3,$4,$5);}
-|        "builtin" varop INTEGER STRING        {$$ = Haskell::BuiltinDecl($2,$3,$4);}
+|        "builtin" var INTEGER STRING STRING   {$$ = Hs::BuiltinDecl($2,$3,$4,$5);}
+|        "builtin" var INTEGER STRING          {$$ = Hs::BuiltinDecl($2,$3,$4);}
+|        "builtin" varop INTEGER STRING STRING {$$ = Hs::BuiltinDecl($2,$3,$4,$5);}
+|        "builtin" varop INTEGER STRING        {$$ = Hs::BuiltinDecl($2,$3,$4);}
 
 cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2.first,$2.second,$3);}
 
@@ -689,8 +689,8 @@ at_decl_cls: "data" opt_family type opt_datafam_kind_sig
 |            "type" type opt_at_kind_inj_sig
 */
 
-data_or_newtype: "data"    {$$=Haskell::DataOrNewtype::data;}
-|                "newtype" {$$=Haskell::DataOrNewtype::newtype;}
+data_or_newtype: "data"    {$$=Hs::DataOrNewtype::data;}
+|                "newtype" {$$=Hs::DataOrNewtype::newtype;}
 
 opt_kind_sig: %empty
 |             "::" kind
@@ -789,14 +789,14 @@ opt_sig: %empty  {}
 */
 
 opt_tyconsig: %empty {}
-| "::" gtycon        {$$ = Haskell::TypeCon({@2,$2});}
+| "::" gtycon        {$$ = Hs::TypeCon({@2,$2});}
 
 sigtype: ctype   {$$ = $1;}
 
 sigtypedoc: ctypedoc {$$ = $1;}
 
-sig_vars: sig_vars "," var {$$ = $1; $$.push_back(Haskell::Var({@3,$3}));}
-|         var              {$$.push_back(Haskell::Var({@1,$1}));}
+sig_vars: sig_vars "," var {$$ = $1; $$.push_back(Hs::Var({@3,$3}));}
+|         var              {$$.push_back(Hs::Var({@1,$1}));}
 
 sigtypes1: sigtype               {$$.push_back($1);}
 |          sigtypes1 "," sigtype {$$ = $1; $$.push_back($3);}
@@ -809,16 +809,16 @@ strict_mark: strictness                     {$$ = $1;}
 |            unpackedness strictness        {$$ = $2;}
 */
 
-strictness: "!" {$$ = Haskell::StrictLazy::strict;}
-|           "~" {$$ = Haskell::StrictLazy::lazy;}
+strictness: "!" {$$ = Hs::StrictLazy::strict;}
+|           "~" {$$ = Hs::StrictLazy::lazy;}
 
 /*
 unpackedness: "{-# UNPACK" "#-}"
 |             "{-# NOUNPACK" "#-}"
 */
 
-ctype: "forall" tv_bndrs "." ctype {$$ = Haskell::ForallType($2, $4);}
-|      context "=>" ctype          {$$ = Haskell::ConstrainedType($1,$3);}
+ctype: "forall" tv_bndrs "." ctype {$$ = Hs::ForallType($2, $4);}
+|      context "=>" ctype          {$$ = Hs::ConstrainedType($1,$3);}
 /* |      ipvar "::" type             {} */
 |      type                        {$$ = $1;}
 
@@ -836,7 +836,7 @@ context: btype                     {$$ = make_context($1);}
 context_no_ops: btype_no_ops       {$$ = make_context(Hs::make_tyapps($1));}
 
 type: btype                        {$$ = $1;}
-|     btype "->" ctype             {$$ = Hs::make_tyapps({Haskell::TypeCon({@2,"->"}),$1,$3});}
+|     btype "->" ctype             {$$ = Hs::make_tyapps({Hs::TypeCon({@2,"->"}),$1,$3});}
 
 typedoc: type                      {$$ = $1;}
 /* typedoc: .... */
@@ -850,8 +850,8 @@ tyapps: tyapp                      {$$.push_back($1);}
 |       tyapps tyapp               {$$ = $1; $$.push_back($2);}
 
 tyapp: atype                       {$$ = $1;}
-|      qtyconop                    {$$ = Haskell::TypeCon({@1,$1});}
-|      tyvarop                     {$$ = Haskell::TypeVar({@1,$1});}
+|      qtyconop                    {$$ = Hs::TypeCon({@1,$1});}
+|      tyvarop                     {$$ = Hs::TypeVar({@1,$1});}
 /* Template Haskell
 |      SIMPLEQUOTE qconop
 |      SIMPLEQUOTE varop
@@ -864,21 +864,21 @@ atype_docs: atype /* FIX */        {$$ = $1;}
  * Do I need a separate rule for it if I'm not using StarIsType?
  */
 
-atype: ntgtycon                        {$$ = Haskell::TypeCon({@1,$1});}
-|      tyvar                           {$$ = Haskell::TypeVar({@1,$1});}
-|      "*"                             {$$ = Haskell::TypeCon({@1,"*"});}
-|      strict_mark atype               {$$ = Haskell::StrictLazyType($1,$2);}
-|      "{" fielddecls "}"              {$$ = Haskell::FieldDecls($2);}
-|      "(" ")"                         {$$ = Haskell::TypeCon({@1,"()"});}
-|      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = Haskell::TupleType(ts);}
+atype: ntgtycon                        {$$ = Hs::TypeCon({@1,$1});}
+|      tyvar                           {$$ = Hs::TypeVar({@1,$1});}
+|      "*"                             {$$ = Hs::TypeCon({@1,"*"});}
+|      strict_mark atype               {$$ = Hs::StrictLazyType($1,$2);}
+|      "{" fielddecls "}"              {$$ = Hs::FieldDecls($2);}
+|      "(" ")"                         {$$ = Hs::TypeCon({@1,"()"});}
+|      "(" comma_types1 "," ctype")"   {auto ts = $2;ts.push_back($4);$$ = Hs::TupleType(ts);}
 /*
 |      "(#" "#)"                       {}
 |      "(#" comma_types1 "#)"          {}
 |      "(#" bar_types2   "#)"          {}
 */
-|      "[" ctype "]"                   {$$ = Haskell::ListType{$2}; }
+|      "[" ctype "]"                   {$$ = Hs::ListType{$2}; }
 |      "(" ctype ")"                   {$$ = $2;}
-/* |      "(" ctype "::" kind ")"         {$$ = Haskell::TypeOfKind($2,$4); } */
+/* |      "(" ctype "::" kind ")"         {$$ = Hs::TypeOfKind($2,$4); } */
 /* Template Haskell */
 
 inst_type: sigtype                     {$$ = $1;}
@@ -901,8 +901,8 @@ tv_bndrs:   tv_bndrs tv_bndr   {$$ = $1; $$.push_back($2);}
 |           %empty             { /* default construction OK */}
 
 /* If we put the kind into the type var (maybe as an optional) we could unify these two */
-tv_bndr:    tyvar                   {$$ = Haskell::TypeVar({@1,$1});}
-|           "(" tyvar "::" kind ")" {$$ = Haskell::TypeVar({@2,$2},$4);}
+tv_bndr:    tyvar                   {$$ = Hs::TypeVar({@1,$1});}
+|           "(" tyvar "::" kind ")" {$$ = Hs::TypeVar({@2,$2},$4);}
 
 
 /* fds are functional dependencies = FunDeps 
@@ -938,7 +938,7 @@ forall: "forall" tv_bndrs "."   {$$ = $2;}
 |       %empty                  {}
 
 constr_stuff: btype_no_ops                      {$$ = Hs::make_tyapps($1);}
-|             btype_no_ops conop btype_no_ops   {$$ = Hs::make_tyapps({Haskell::TypeCon({@2,$2}),Hs::make_tyapps($1),Hs::make_tyapps($3)});}
+|             btype_no_ops conop btype_no_ops   {$$ = Hs::make_tyapps({Hs::TypeCon({@2,$2}),Hs::make_tyapps($1),Hs::make_tyapps($3)});}
 
 fielddecls: %empty              {}
 |           fielddecls1         {$$ = $1;}
@@ -946,7 +946,7 @@ fielddecls: %empty              {}
 fielddecls1: fielddecls1 "," fielddecl  {$$ = $1; $$.push_back($3);}
 |            fielddecl                  {$$.push_back($1);}
 
-fielddecl: sig_vars "::" ctype          {$$ = Haskell::FieldDecl($1,$3);}
+fielddecl: sig_vars "::" ctype          {$$ = Hs::FieldDecl($1,$3);}
 
 maybe_derivings: %empty
 |                derivings
@@ -967,22 +967,22 @@ deriv_clause_types: qtycondoc
 
 decl_no_th: sigdecl           {$$ = $1;}
 /* I guess this is a strict let. Code as DeclStrict, rather than StrictPattern, since docs say this is part of the binding, not part of the patter */
-| "!" aexp rhs                {$$ = Haskell::StrictValueDecl{$2,$3}; }
-| infixexp_top rhs            {$$ = Haskell::ValueDecl(make_infixexp($1),$2);}
+| "!" aexp rhs                {$$ = Hs::StrictValueDecl{$2,$3}; }
+| infixexp_top rhs            {$$ = Hs::ValueDecl(make_infixexp($1),$2);}
 
 decl: decl_no_th              {$$ = $1;}
 /*  | splice_exp */
 
 // rhs is like altrhs but with = instead of ->
-rhs: "=" exp wherebinds       {$$ = Haskell::SimpleRHS({@2,$2},$3);}
-|    gdrhs wherebinds         {$$ = Haskell::MultiGuardedRHS{$1,$2};}
+rhs: "=" exp wherebinds       {$$ = Hs::SimpleRHS({@2,$2},$3);}
+|    gdrhs wherebinds         {$$ = Hs::MultiGuardedRHS{$1,$2};}
 
 gdrhs: gdrhs gdrh             {$$ = $1; $$.push_back($2);}
 |      gdrh                   {$$.push_back($1);}
 
 
 // gdrh is like gdpat, but with = instead of ->
-gdrh: "|" guardquals "=" exp  {$$ = Haskell::GuardedRHS{$2,$4};}
+gdrh: "|" guardquals "=" exp  {$$ = Hs::GuardedRHS{$2,$4};}
 
 /* sigdecl : infixexp_top "::" sigtypedoc        { }  | ...
 
@@ -992,8 +992,8 @@ gdrh: "|" guardquals "=" exp  {$$ = Haskell::GuardedRHS{$2,$4};}
    GHC did this to allow expressions like f :: Int -> Int = ...
    See note [Joint value/type declarations]. */
 
-sigdecl: sig_vars "::" sigtypedoc { $$ = Haskell::SignatureDecl{$1,$3}; }
-|        infix prec ops  { $$ = Haskell::FixityDecl{$1,$2,$3}; }
+sigdecl: sig_vars "::" sigtypedoc { $$ = Hs::SignatureDecl{$1,$3}; }
+|        infix prec ops  { $$ = Hs::FixityDecl{$1,$2,$3}; }
 /* |        pattern_synonym_sig {}  */
 |        "{-# COMPLETE" con_list opt_tyconsig "#-}" {}
 |        "{-# INLINE" activation qvar "#-}" {}
@@ -1042,40 +1042,40 @@ fexp: fexp aexp                  {$$ = $1; $$.push_back($2);}
 |     "static" aexp              {}
 |     aexp                       {$$.push_back($1);}
 
-aexp: qvar "@" aexp              {$$ = Haskell::AsPattern(Haskell::Var({@1,$1}),$3);}
-|     "~" aexp                   {$$ = Haskell::LazyPattern($2);}
-|     "\\" apats1 "->" exp       {$$ = Haskell::LambdaExp($2,$4);}
-|     "let" binds "in" exp       {$$ = Haskell::LetExp($2,{@4,$4});}
+aexp: qvar "@" aexp              {$$ = Hs::AsPattern(Hs::Var({@1,$1}),$3);}
+|     "~" aexp                   {$$ = Hs::LazyPattern($2);}
+|     "\\" apats1 "->" exp       {$$ = Hs::LambdaExp($2,$4);}
+|     "let" binds "in" exp       {$$ = Hs::LetExp($2,{@4,$4});}
 /* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
-|     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = Haskell::IfExp({@2,$2},{@5,$5},{@8,$8});}
+|     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = Hs::IfExp({@2,$2},{@5,$5},{@8,$8});}
 /* |     "if" ifgdpats              {} MultiWayIf extension not currently handled */
-|     "case" exp "of" altslist   {$$ = Haskell::CaseExp($2,$4);}
-|     "do" stmtlist              {$$ = Haskell::Do($2);}
-|     "mdo" stmtlist             {$$ = Haskell::MDo($2);}
+|     "case" exp "of" altslist   {$$ = Hs::CaseExp($2,$4);}
+|     "do" stmtlist              {$$ = Hs::Do($2);}
+|     "mdo" stmtlist             {$$ = Hs::MDo($2);}
 /* |     "proc" aexp "->" exp       {} -XArrows not currently handled */
 |     aexp1                      {$$ = $1;}
 
 aexp1: aexp1 "{" fbinds "}"   {}
 |      aexp2                  {$$ = $1;}
 
-aexp2: qvar                   {$$ = Haskell::Var({@1,$1});}
-|      qcon                   {$$ = Haskell::Con({@1,$1});}
+aexp2: qvar                   {$$ = Hs::Var({@1,$1});}
+|      qcon                   {$$ = Hs::Con({@1,$1});}
 |      literal                {$$ = $1;}
 |      "(" texp ")"           {$$ = $2;}
-|      "(" tup_exprs ")"      {$$ = Haskell::Tuple($2);}
+|      "(" tup_exprs ")"      {$$ = Hs::Tuple($2);}
 /* 
 |      "(#" texp "#)"         {}
 |      "(#" tup_exprs "#)"    {}
 */
 |      "[" list "]"           {$$ = $2;}
-|      "_"                    {$$ = Haskell::WildcardPattern();}
+|      "_"                    {$$ = Hs::WildcardPattern();}
 /* Skip Template Haskell Extensions */
 
 /* ------------- Tuple expressions ------------------------------- */
 
 texp: exp             {$$ = $1;}
-|     infixexp qop    {$$ = Haskell::LeftSection ( make_infixexp($1), $2 ); }
-|     qopm infixexp   {$$ = Haskell::RightSection( $1, make_infixexp($2) ); }
+|     infixexp qop    {$$ = Hs::LeftSection ( make_infixexp($1), $2 ); }
+|     qopm infixexp   {$$ = Hs::RightSection( $1, make_infixexp($2) ); }
 /* view patterns 
 |     exp "->" texp
 */
@@ -1099,13 +1099,13 @@ tup_tail: texp commas_tup_tail
 */
 /* ------------- List expressions -------------------------------- */
 
-list: texp                       { $$ = Haskell::List{{$1}}; }
-|     lexps                      { $$ = Haskell::List{$1}; }
-|     texp ".."                  { $$ = Haskell::ListFrom($1); }
-|     texp "," exp ".."          { $$ = Haskell::ListFromThen($1,$3); }
-|     texp ".." exp              { $$ = Haskell::ListFromTo($1,$3); }
-|     texp "," exp ".." exp      { $$ = Haskell::ListFromThenTo($1, $3, $5); }
-|     texp "|" squals            { $$ = Haskell::ListComprehension($1, $3); }
+list: texp                       { $$ = Hs::List{{$1}}; }
+|     lexps                      { $$ = Hs::List{$1}; }
+|     texp ".."                  { $$ = Hs::ListFrom($1); }
+|     texp "," exp ".."          { $$ = Hs::ListFromThen($1,$3); }
+|     texp ".." exp              { $$ = Hs::ListFromTo($1,$3); }
+|     texp "," exp ".." exp      { $$ = Hs::ListFromThenTo($1, $3, $5); }
+|     texp "|" squals            { $$ = Hs::ListComprehension($1, $3); }
 
 lexps: lexps "," texp            { $$ = $1; $$.push_back($3);}
 |      texp "," texp             { $$.push_back($1); $$.push_back($3);}
@@ -1139,8 +1139,8 @@ guardquals1: guardquals1 "," qual  {$$ = $1;$$.push_back($3);}
 |            qual                  {$$.push_back($1);}
 
 /* ------------- Case alternatives ------------------------------- */
-altslist: "{" alts "}"           {$$ = Haskell::Alts{$2};}
-|         VOCURLY alts close     {$$ = Haskell::Alts{$2};}
+altslist: "{" alts "}"           {$$ = Hs::Alts{$2};}
+|         VOCURLY alts close     {$$ = Hs::Alts{$2};}
 |         "{" "}"                {}
 |         VOCURLY close          {}
 
@@ -1151,10 +1151,10 @@ alts1: alts1 ";" alt             {$$ = $1; $$.push_back($3);}
 |      alts1 ";"                 {$$ = $1;}
 |      alt                       {$$.push_back($1);}
 
-alt:   pat alt_rhs               {$$ = Located<Haskell::Alt>{@1+@2,{$1,$2}};}
+alt:   pat alt_rhs               {$$ = Located<Hs::Alt>{@1+@2,{$1,$2}};}
 
-alt_rhs: "->" exp wherebinds     {$$ = Haskell::SimpleRHS({@2,$2},$3);}
-|        gdpats   wherebinds     {$$ = Haskell::MultiGuardedRHS($1,$2);}
+alt_rhs: "->" exp wherebinds     {$$ = Hs::SimpleRHS({@2,$2},$3);}
+|        gdpats   wherebinds     {$$ = Hs::MultiGuardedRHS($1,$2);}
 
 gdpats: gdpats gdpat             {$$ = $1; $$.push_back($2);}
 |       gdpat                    {$$.push_back($1);}
@@ -1166,23 +1166,23 @@ ifgdpats : "{" gdpats "}"        {}
 |          gdpats close          {}
 */
 
-gdpat: "|" guardquals "->" exp   {$$=Haskell::GuardedRHS{$2,$4};}
+gdpat: "|" guardquals "->" exp   {$$=Hs::GuardedRHS{$2,$4};}
 
 pat: exp      {$$ = $1;}
-|   "!" aexp  {$$ = Haskell::StrictPattern($2);}
+|   "!" aexp  {$$ = Hs::StrictPattern($2);}
 
 bindpat: exp  {$$ = $1;}
-|   "!" aexp  {$$ = Haskell::StrictPattern($2);}
+|   "!" aexp  {$$ = Hs::StrictPattern($2);}
 
 apat: aexp    {$$ = $1;}
-|    "!" aexp {$$ = Haskell::StrictPattern($2);}
+|    "!" aexp {$$ = Hs::StrictPattern($2);}
 
 apats1: apats1 apat {$$ = $1; $$.push_back($2);}
 |       apat        {$$.push_back($1);}
 
 /* ------------- Statement sequences ----------------------------- */
-stmtlist: "{" stmts "}"        {$$ = Haskell::Stmts{$2};}
-|         VOCURLY stmts close  {$$ = Haskell::Stmts{$2};}
+stmtlist: "{" stmts "}"        {$$ = Hs::Stmts{$2};}
+|         VOCURLY stmts close  {$$ = Hs::Stmts{$2};}
 
 stmts: stmts ";" stmt  {$$ = $1; $$.push_back($3);}
 |      stmts ";"       {$$ = $1;}
@@ -1193,11 +1193,11 @@ stmts: stmts ";" stmt  {$$ = $1; $$.push_back($3);}
 |             %empty */
 
 stmt: qual              {$$ = $1;}
-|     "rec" stmtlist    {$$ = Haskell::RecStmt($2);}
+|     "rec" stmtlist    {$$ = Hs::RecStmt($2);}
 
-qual: bindpat "<-" exp  {$$ = Haskell::PatQual($1,$3);}
-|     exp               {$$ = Haskell::SimpleQual($1);}
-|     "let" binds       {$$ = Haskell::LetQual($2);}
+qual: bindpat "<-" exp  {$$ = Hs::PatQual($1,$3);}
+|     exp               {$$ = Hs::SimpleQual($1);}
+|     "let" binds       {$$ = Hs::LetQual($2);}
 
 
 /* ------------- Record Field Update/Construction ---------------- */
@@ -1321,12 +1321,12 @@ op : varop { $$ = $1; }
 varop: varsym   { $$ = $1; }
 | "`" varid "`" { $$ = $2; }
 
-qop:  qvarop    { $$ = Haskell::Var({@1,$1}); }
-|     qconop    { $$ = Haskell::Con({@1,$1}); }
+qop:  qvarop    { $$ = Hs::Var({@1,$1}); }
+|     qconop    { $$ = Hs::Con({@1,$1}); }
 /* |     hole_op   { $$ = $1; } */
 
-qopm: qvaropm   { $$ = Haskell::Var({@1,$1}); }
-|     qconop    { $$ = Haskell::Con({@1,$1}); }
+qopm: qvaropm   { $$ = Hs::Var({@1,$1}); }
+|     qconop    { $$ = Hs::Con({@1,$1}); }
 /* |     hole_op   { $$ = $1; } */
 
 /* hole_op: "`" "_" "`"  { $$ = "_"; } */
@@ -1462,11 +1462,11 @@ yy::parser::error (const location_type& l, const std::string& m)
     drv.push_error_message({l,m});
 }
 
-pair<vector<Haskell::ImpDecl>, optional<Haskell::Decls>> make_body(const std::vector<Haskell::ImpDecl>& imports, const std::optional<Haskell::Decls>& topdecls)
+pair<vector<Hs::ImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls)
 {
     if (topdecls)
     {
-        auto topdecls2 = Haskell::Decls(*topdecls);
+        auto topdecls2 = Hs::Decls(*topdecls);
         return {imports, topdecls2};
     }
     else
@@ -1487,14 +1487,14 @@ check_type_or_class_header(const Hs::Type& type)
     return {name, type_args};
 }
 
-vector<Haskell::TypeVar> check_all_type_vars(const vector<Haskell::Type>& types)
+vector<Hs::TypeVar> check_all_type_vars(const vector<Hs::Type>& types)
 {
-    vector<Haskell::TypeVar> type_vars;
+    vector<Hs::TypeVar> type_vars;
     for(auto& type: types)
     {
-        if (type.is_a<Haskell::TypeVar>())
+        if (type.is_a<Hs::TypeVar>())
         {
-            type_vars.push_back(type.as_<Haskell::TypeVar>());
+            type_vars.push_back(type.as_<Hs::TypeVar>());
         }
         else
         {
@@ -1504,33 +1504,33 @@ vector<Haskell::TypeVar> check_all_type_vars(const vector<Haskell::Type>& types)
     return type_vars;
 }
 
-Haskell::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type)
+Hs::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type)
 {
     auto [name, type_args] = check_type_or_class_header(unloc(lhs_type));
     return {name, check_all_type_vars(type_args), rhs_type};
 }
 
-Haskell::DataOrNewtypeDecl make_data_or_newtype(const Haskell::DataOrNewtype& d_or_n, const Haskell::Context&  context,
-                                                const expression_ref& header, const vector<Haskell::Constructor>& constrs)
+Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
+                                                const expression_ref& header, const vector<Hs::Constructor>& constrs)
 {
     auto [name, type_args] = check_type_or_class_header(header);
-    if (d_or_n == Haskell::DataOrNewtype::newtype and constrs.size() != 1)
+    if (d_or_n == Hs::DataOrNewtype::newtype and constrs.size() != 1)
         throw myexception()<<"newtype '"<<name<<"' may only have 1 constructors with 1 field";
     return {d_or_n, name, check_all_type_vars(type_args), context, constrs};
 }
 
-Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, const optional<Located<Haskell::Binds>>& binds)
+Hs::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, const optional<Located<Hs::Binds>>& binds)
 {
     // GHC stores the instance as a polytype?
     // This would seem to allow (instance forall a.Eq a => forall a.Eq [a] x y ....)
 
     auto type = unloc(ltype);
-    if (type.is_a<Haskell::ForallType>())
+    if (type.is_a<Hs::ForallType>())
         throw myexception()<<"instance declaration '"<<type<<"' is malformed";
-    Haskell::Context context;
-    if (type.is_a<Haskell::ConstrainedType>())
+    Hs::Context context;
+    if (type.is_a<Hs::ConstrainedType>())
     {
-        auto& T = type.as_<Haskell::ConstrainedType>();
+        auto& T = type.as_<Hs::ConstrainedType>();
         context = T.context;
         type = T.type;
     }
@@ -1538,7 +1538,7 @@ Haskell::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, c
     return {context, type, make_opt_decls(binds)};
 }
 
-Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expression_ref& header, const optional<Located<Haskell::Binds>>& binds)
+Hs::ClassDecl make_class_decl(const Hs::Context& context, const expression_ref& header, const optional<Located<Hs::Binds>>& binds)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     return {name, check_all_type_vars(type_args), context, make_opt_decls(binds)};
@@ -1548,12 +1548,12 @@ Haskell::ClassDecl make_class_decl(const Haskell::Context& context, const expres
 // nothing
 // | ctype => header
 // | ( ctypes2 ) => header
-Haskell::Context make_context(const expression_ref& context)
+Hs::Context make_context(const expression_ref& context)
 {
-    vector<Haskell::Type> constraints;
-    if (context.is_a<Haskell::TupleType>())
+    vector<Hs::Type> constraints;
+    if (context.is_a<Hs::TupleType>())
     {
-        constraints = context.as_<Haskell::TupleType>().element_types;
+        constraints = context.as_<Hs::TupleType>().element_types;
     }
     else
         constraints.push_back(context);
@@ -1561,7 +1561,7 @@ Haskell::Context make_context(const expression_ref& context)
     return {constraints};
 }
 
-bool check_kind(const Haskell::Kind& kind)
+bool check_kind(const Hs::Kind& kind)
 {
     auto [kind_head, kind_args] = decompose_type_apps(kind);
 
@@ -1580,7 +1580,7 @@ bool check_kind(const Haskell::Kind& kind)
         return false;
 }
 
-Haskell::Type make_kind(const Haskell::Kind& kind)
+Hs::Type make_kind(const Hs::Kind& kind)
 {
     if (not check_kind(kind))
         throw myexception()<<"Kind '"<<kind<<"' is malformed";
@@ -1588,7 +1588,7 @@ Haskell::Type make_kind(const Haskell::Kind& kind)
     return kind;
 }
 
-optional<pair<string, Haskell::FieldDecls>> is_record_con(const expression_ref& typeish)
+optional<pair<string, Hs::FieldDecls>> is_record_con(const expression_ref& typeish)
 {
     auto [head,args] = decompose_type_apps(typeish);
 
@@ -1613,7 +1613,7 @@ optional<pair<string, std::vector<expression_ref>>> is_normal_con(const expressi
     return {{unloc(head.as_<Hs::TypeCon>().name), args}};
 }
 
-Haskell::Constructor make_constructor(const vector<Haskell::TypeVar>& forall, const std::optional<Haskell::Context>& c, const expression_ref& typeish)
+Hs::Constructor make_constructor(const vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const expression_ref& typeish)
 {
     if (auto constr = is_record_con(typeish))
     {
@@ -1660,7 +1660,7 @@ expression_ref yy_make_string(const std::string& s)
     vector<expression_ref> chars;
     for(char c: s)
 	chars.push_back(c);
-    return Haskell::List(chars);
+    return Hs::List(chars);
 }
 
 std::optional<Located<Hs::Decls>> make_opt_decls(const std::optional<Located<Hs::Binds>>& binds)
