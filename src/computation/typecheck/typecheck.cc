@@ -304,86 +304,16 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
     return {object_type, field_types};
 }
 
-void get_free_type_variables(const Hs::Type& T, std::multiset<Hs::TypeVar>& bound, set<Hs::TypeVar>& free)
-{
-    // 1. fv x = { x }
-    // However, if there are any binders called "x", then it won't be bound at the top level.
-    if (auto tv = T.to<Hs::TypeVar>())
-    {
-	if (bound.find(*tv) == bound.end())
-	    free.insert(*tv);
-	return;
-    }
-    // 2. fv (t1 t2) = fv(t1) + fv(t2);
-    else if (auto a = T.to<Hs::TypeApp>())
-    {
-        get_free_type_variables(a->head, bound, free);
-        get_free_type_variables(a->arg, bound, free);
-    }
-    // 3. fv (k) = {}
-    else if (T.is_a<Hs::TypeCon>())
-    {
-    }
-    // 3. fv (k) = {}
-    else if (auto l = T.to<Hs::ListType>())
-    {
-        get_free_type_variables(l->element_type, bound, free);
-    }
-    // 3. fv (k) = {}
-    else if (auto l = T.to<Hs::TupleType>())
-    {
-        for(auto& element_type: l->element_types)
-            get_free_type_variables(element_type, bound, free);
-    }
-    // 3. fv (k) = {}
-    else if (auto c = T.to<Hs::ConstrainedType>())
-    {
-        // The constraints should only mention variables that are mentioned in the main type
-        get_free_type_variables(c->type, bound, free);
-    }
-    // 3. fv (k) = {}
-    else if (auto sl = T.to<Hs::StrictLazyType>())
-    {
-        get_free_type_variables(sl->type, bound, free);
-    }
-    // 4. fv (forall a.tau) = fv(tau) - a
-    else if (auto f = T.to<Hs::ForallType>())
-    {
-        for(auto& tv: f->type_var_binders)
-            bound.insert(tv);
-
-        get_free_type_variables(f->type, bound, free);
-
-        for(auto& tv: f->type_var_binders)
-            bound.erase(tv);
-    }
-    else
-        std::abort();
-}
-
-void get_free_type_variables(const Hs::Type t, set<Hs::TypeVar>& free)
-{
-    std::multiset<Hs::TypeVar> bound;
-    get_free_type_variables(t, bound, free);
-}
-
 std::set<Hs::TypeVar> free_type_variables(const Hs::Type& t)
 {
-    std::set<Hs::TypeVar> free;
-    get_free_type_variables(t, free);
-    return free;
-}
-
-void get_free_type_variables(const global_value_env& env, std::set<Hs::TypeVar>& free)
-{
-    for(auto& [x,type]: env)
-        get_free_type_variables(type, free);
+    return free_type_VARS(t);
 }
 
 std::set<Hs::TypeVar> free_type_variables(const global_value_env& env)
 {
     std::set<Hs::TypeVar> free;
-    get_free_type_variables(env, free);
+    for(auto& [x,type]: env)
+        add(free, free_type_variables(type));
     return free;
 }
 
