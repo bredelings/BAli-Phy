@@ -1027,7 +1027,7 @@ void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
 
     //   CE_C  = class name -> class info
     typechecker_state state( mod_name, constr_info );
-    auto [gve, gie, class_info, class_binds] = state.infer_type_for_classes(M.type_decls, tce);
+    auto [gve, gie1, class_info, class_binds] = state.infer_type_for_classes(M.type_decls, tce);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 
     for(auto& [method,type]: gve)
@@ -1036,7 +1036,7 @@ void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
     }
     std::cerr<<"\n";
 
-    for(auto& [method,type]: gie)
+    for(auto& [method,type]: gie1)
     {
         std::cerr<<method<<" :: "<<type.print()<<"\n";
     }
@@ -1045,6 +1045,7 @@ void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
     std::cerr<<class_binds.print()<<"\n";
     std::cerr<<"\n";
 
+    auto [inst_decls, gie2] = state.infer_type_for_instances(M.type_decls, class_info);
     // GIE_C = functions to extract sub-dictionaries from containing dictionaries?
     // NOT IMPLEMENTED YET.
 
