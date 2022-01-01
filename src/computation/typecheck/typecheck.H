@@ -11,7 +11,7 @@
 
 #include "computation/parser/haskell.H"
 
-void typecheck(const Hs::ModuleDecls& M);
+void typecheck(const std::string& s, const Hs::ModuleDecls& M);
 
 Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type type, const Haskell::Type& constraint);
 

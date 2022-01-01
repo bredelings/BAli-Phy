@@ -169,8 +169,11 @@ struct typechecker_state
 
     constr_env con_info;
 
-    typechecker_state(const constr_env& ce)
-        :con_info(ce)
+    std::string mod_name;
+
+    typechecker_state(const string& s, const constr_env& ce)
+        :con_info(ce),
+         mod_name(s)
         { }
 
     Hs::Type bool_type() const { return Hs::TypeCon({noloc,"Data.Bool.True"}); }
@@ -181,15 +184,19 @@ struct typechecker_state
 
     pair<Hs::Type, vector<Hs::Type>> constr_types(const Hs::Con&);
 
-    Hs::Var fresh_var(const std::string& s)
+    Hs::Var fresh_var(const std::string& s, bool qualified)
     {
-        Hs::Var x({noloc,"$"+s+std::to_string(next_var_index)});
+        string name = "$"+s+std::to_string(next_var_index);
+        if (qualified)
+            name = mod_name + "." + name;
+        Hs::Var x({noloc, name});
         x.index = next_var_index++;
         return x;
     }
-    Hs::Var fresh_var()
+
+    Hs::Var fresh_var(bool qualified)
     {
-        return fresh_var("v");
+        return fresh_var("v", qualified);
     }
 
     Hs::TypeVar fresh_type_var() {
@@ -1055,7 +1062,7 @@ tuple<global_value_env, global_instance_env, class_env, Hs::Binds> typechecker_s
     return {gve, gie, ce, binds};
 }
 
-void typecheck( const Hs::ModuleDecls& M )
+void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
     //    OK, so datatypes produce a
@@ -1083,7 +1090,7 @@ void typecheck( const Hs::ModuleDecls& M )
     std::cerr<<"\n";
 
     //   CE_C  = class name -> class info
-    typechecker_state state(constr_info);
+    typechecker_state state( mod_name, constr_info );
     auto [gve, gie, class_info, class_binds] = state.infer_type_for_classes(M.type_decls, tce);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 
@@ -1315,7 +1322,7 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Haskell::
     global_instance_env gie;
     for(auto& constraint_: cinfo.context.constraints)
     {
-        auto get_dict = fresh_var("get_dict");
+        auto get_dict = fresh_var("get_dict", true);
         // Should this be a function arrow?
         Hs::Type type = add_constraints({constraint}, constraint_);
         // Could we be adding too many forall vars?
