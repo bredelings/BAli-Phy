@@ -47,6 +47,11 @@ using std::tuple;
      - PROBLEM: How do we pipe in fresh variable names for dictionary extractors?
   9. Make functiosn to handle instance declarations from Figure 12.
      - PROBLEM: How do we pipe in fresh variable names for dictonary functions?
+  10. Handle instances in two passes:
+     - Can we first the the NAME and TYPE for all the instance variables,
+       and second generate the instance dfun bodies?
+     - Possibly generating the dfun bodies AFTER the value declarations are done?
+     - How do we figure out if the instance contexts can be satisfied in a mutally recursive manner?
 
   Cleanups:
   1. Implement kinds as Hs::Type
@@ -86,11 +91,31 @@ using std::tuple;
   A1. Just make up names and record them at the appropriate place.
 
   Q2. How do we handle mutual recursion between instance methods and value declarations?
-  A1. We can process instances before values, but we output instances in the same recursive block as values.
+  A2. We can process instances before values, but we output instances in the same recursive block as values.
 
   Q3: Should we translate => to -> during typechecking, OR do we want to do this during desugaring?
   A3: Well.. the typechecker IS making up some variable names... so maybe we do this during type checking?
       Can we tell what GHC is doing?
+
+  Q4: How do we process the instances in the correct order?
+  A4: Can we put them into the type groups, and then REVISIT the groups,
+      analyzing the instances last in each group?
+
+  Q5. How do we type-check the method bindings, if their types depend on the VALUE bindings?
+  A5. We know the types of the instance methods BEFORE we know the function bodies, right?
+      So, we should be able to type-check the instance bodies LAST, if we generate the types
+      for the value_decls first.
+
+  Q6. How do we check that there are no super-class -> class cycles.
+
+  Q7. Should we generate a special syntax node for dictionary arguments, dictionary applications, etc,
+      in order to delay converting => to ->, and converting dictionary applications, etc?
+      See Section 4.3:
+      - exp <dict>                                       Dictionary application
+      - \dicts:theta -> exp                              Dictionary abstraction
+      - \\a1..an -> \dicts:theta -> binds in monobinds   Dictionary abstraction (generalized)
+      - <dicts,methods>                                  Dictionary record data type
+      - \<dicts:theta,methods:GVE> -> exp                Selecting entries from a dictionary
  */
 
 typedef Hs::Type monotype;
@@ -256,11 +281,17 @@ struct typechecker_state
     tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
     infer_type_for_class(const type_con_env& tce, const Hs::ClassDecl& class_decl);
 
+    // Figure 12
     pair<Hs::Decls,global_instance_env>
-    infer_type_for_instances(const Hs::Decls& decls, const class_env& ce);
+    infer_type_for_instances(const Hs::Decls& decls, const class_env& ce, const global_instance_env& gie_in);
 
+    // Figure 12
     pair<Hs::Decls,global_instance_env>
-    infer_type_for_instance(const Hs::InstanceDecl& instance_del, const class_env& ce);
+    infer_type_for_instance(const Hs::InstanceDecl& instance_del, const class_env& ce, const global_instance_env& gie_in);
+
+    // Figure 26
+    // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
+    Hs::Binds get_dicts(const global_instance_env& gie, const local_instance_env& lie1, const local_instance_env& lie2);
 };
 
 set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
@@ -1028,7 +1059,7 @@ void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
 
     //   CE_C  = class name -> class info
     typechecker_state state( mod_name, constr_info );
-    auto [gve, gie1, class_info, class_binds] = state.infer_type_for_classes(M.type_decls, tce);
+    auto [gve, class_gie, class_info, class_binds] = state.infer_type_for_classes(M.type_decls, tce);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 
     for(auto& [method,type]: gve)
@@ -1037,7 +1068,7 @@ void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
     }
     std::cerr<<"\n";
 
-    for(auto& [method,type]: gie1)
+    for(auto& [method,type]: class_gie)
     {
         std::cerr<<method<<" :: "<<type.print()<<"\n";
     }
@@ -1046,7 +1077,15 @@ void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
     std::cerr<<class_binds.print()<<"\n";
     std::cerr<<"\n";
 
-    auto [inst_decls, gie2] = state.infer_type_for_instances(M.type_decls, class_info);
+    auto [inst_decls, inst_gie] = state.infer_type_for_instances(M.type_decls, class_info, class_gie);
+
+    auto gie = plus_no_overlap(class_gie, inst_gie);
+
+    for(auto& [method,type]: inst_gie)
+    {
+        std::cerr<<method<<" :: "<<type.print()<<"\n";
+    }
+    std::cerr<<"\n";
 
     // GIE_C = functions to extract sub-dictionaries from containing dictionaries?
     // NOT IMPLEMENTED YET.
@@ -1311,32 +1350,18 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Hs::Class
     return {gve,gie,cinfo,decls};
 }
 
-pair<Hs::Decls,global_instance_env>
-typechecker_state::infer_type_for_instances(const Hs::Decls& decls, const class_env& ce)
+Hs::Binds typechecker_state::get_dicts(const global_instance_env& gie, const local_instance_env& lie1, const local_instance_env& lie2)
 {
-    Hs::Decls out_decls;
-    global_instance_env out_gie;
-    for(auto& decl: decls)
-    {
-        if (auto I = decl.to<Hs::InstanceDecl>())
-        {
-            auto [decls1, gie1] = infer_type_for_instance(*I, ce);
-
-            for(auto& d: decls1)
-                out_decls.push_back(d);
-
-            out_gie = plus_no_overlap(out_gie, gie1);
-        }
-    }
-    return {out_decls, out_gie};
+    Hs::Binds binds;
+    return binds;
 }
 
 pair<Hs::Decls,global_instance_env>
-typechecker_state::infer_type_for_instance(const Hs::InstanceDecl& instance_decl, const class_env& ce)
+typechecker_state::infer_type_for_instance(const Hs::InstanceDecl& inst_decl, const class_env& ce, const global_instance_env& gie_in)
 {
     Hs::Decls decls;
 
-    auto [class_head, monotypes] = decompose_type_apps(instance_decl.constraint);
+    auto [class_head, monotypes] = decompose_type_apps(inst_decl.constraint);
 
     // Premise #1: Look up the info for the class
     optional<class_info> cinfo;
@@ -1345,11 +1370,11 @@ typechecker_state::infer_type_for_instance(const Hs::InstanceDecl& instance_decl
         // Check that this is a class, and not a data or type?
         auto class_name = unloc(tc->name);
         if (not ce.count(class_name))
-            throw myexception()<<"In instance '"<<instance_decl.constraint<<"': no class '"<<class_name<<"'!";
+            throw myexception()<<"In instance '"<<inst_decl.constraint<<"': no class '"<<class_name<<"'!";
         cinfo = ce.at(class_name);
     }
     else
-        throw myexception()<<"In instance for '"<<instance_decl.constraint<<"': "<<class_head<<" is not a class!";
+        throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<class_head<<" is not a class!";
 
 
     // Premise #2: Find the type vars mentioned in the constraint.
@@ -1361,7 +1386,7 @@ typechecker_state::infer_type_for_instance(const Hs::InstanceDecl& instance_decl
         auto [a_head, a_args] = decompose_type_apps(monotype);
         auto tc = a_head.to<Hs::TypeCon>();
         if (not tc)
-            throw myexception()<<"In instance for '"<<instance_decl.constraint<<"': "<<a_head<<" is not a type!";
+            throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<a_head<<" is not a type!";
 
         types.push_back(*tc);
 
@@ -1371,24 +1396,67 @@ typechecker_state::infer_type_for_instance(const Hs::InstanceDecl& instance_decl
             auto tv = a_arg.to<Hs::TypeVar>();
 
             if (not tv)
-                throw myexception()<<"In instance for '"<<instance_decl.constraint<<"' for type '"<<monotype<<"': "<<a_arg<<" is not a type variable!";
+                throw myexception()<<"In instance for '"<<inst_decl.constraint<<"' for type '"<<monotype<<"': "<<a_arg<<" is not a type variable!";
 
             if (type_vars.count(*tv))
-                throw myexception()<<"Type variable '"<<tv->print()<<"' occurs twice in constraint '"<<instance_decl.constraint<<"'";
+                throw myexception()<<"Type variable '"<<tv->print()<<"' occurs twice in constraint '"<<inst_decl.constraint<<"'";
 
             type_vars.insert(*tv);
         }
     }
 
-    // Premise 5: The context contains no variables not mentioned in `monotype`
-    for(auto& tv: free_type_VARS(instance_decl.context))
+    // Premise 5: Check that the context contains no variables not mentioned in `monotype`
+    for(auto& tv: free_type_VARS(inst_decl.context))
     {
         if (not type_vars.count(tv))
-            throw myexception()<<"Constraint context '"<<instance_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in '"<<instance_decl.constraint<<"'";
+            throw myexception()<<"Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in '"<<inst_decl.constraint<<"'";
     }
+
+    // Premise 6: build a local instance environment from the context
+    local_instance_env lie;
+    int i=0;
+    for(auto& constraint: inst_decl.context.constraints)
+    {
+        string dict_name = "dict"+std::to_string(i+1);
+        Hs::Var dict({noloc, dict_name});
+        lie = lie.insert({dict_name,constraint});
+    }
+
+    // Premise 7:
+    local_instance_env lie_super;
+    Hs::Binds binds_super = get_dicts(gie_in, lie, lie_super);
+
+    // Premise 8:
+    Hs::Binds binds_methods;
+    auto dfun = fresh_var("dfun");
     
+
+    Hs::Type inst_type = add_constraints(inst_decl.context.constraints, inst_decl.constraint);
+    inst_type = add_forall_vars( free_type_VARS(inst_type) | ranges::to<vector>, inst_type);
     global_instance_env gie;
-
-
+    gie = gie.insert( { unloc(dfun.name), inst_type } );
     return {decls, gie};
 }
+
+// We need to handle the instance decls in a mutually recursive way.
+// And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
+pair<Hs::Decls,global_instance_env>
+typechecker_state::infer_type_for_instances(const Hs::Decls& decls, const class_env& ce, const global_instance_env& gie_in)
+{
+    Hs::Decls out_decls;
+    global_instance_env gie_inst;
+    for(auto& decl: decls)
+    {
+        if (auto I = decl.to<Hs::InstanceDecl>())
+        {
+            auto [decls1, gie1] = infer_type_for_instance(*I, ce, gie_in);
+
+            for(auto& d: decls1)
+                out_decls.push_back(d);
+
+            gie_inst = plus_no_overlap(gie_inst, gie1);
+        }
+    }
+    return {out_decls, gie_inst};
+}
+
