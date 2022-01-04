@@ -52,6 +52,12 @@ using std::tuple;
        and second generate the instance dfun bodies?
      - Possibly generating the dfun bodies AFTER the value declarations are done?
      - How do we figure out if the instance contexts can be satisfied in a mutally recursive manner?
+  11. Make AST nodes for dictionary abstraction and dictionary application.
+     - \(dicts::theta) -> f(dicts)    LambdaDicts = vector<Hs::Var> -> MultiGuardedRHS
+     - exp <dicts>                    ApplyDicts  = expression_ref vector<Hs::Var>
+     - (superdicts, methods)          Dictionary
+      We can then desugar these expressions to EITHER multiple dictionaries OR a tuple of dictionaries.
+      Can we desugar the dictionary for class K to a data type K?
 
   Cleanups:
   1. Implement kinds as Hs::Type
@@ -282,12 +288,20 @@ struct typechecker_state
     infer_type_for_class(const type_con_env& tce, const Hs::ClassDecl& class_decl);
 
     // Figure 12
-    pair<Hs::Decls,global_instance_env>
-    infer_type_for_instances(const Hs::Decls& decls, const class_env& ce, const global_instance_env& gie_in);
+    global_instance_env
+    infer_type_for_instances1(const Hs::Decls& decls, const class_env& ce, const global_instance_env& gie_in);
 
     // Figure 12
-    pair<Hs::Decls,global_instance_env>
-    infer_type_for_instance(const Hs::InstanceDecl& instance_del, const class_env& ce, const global_instance_env& gie_in);
+    global_instance_env
+    infer_type_for_instance1(const Hs::InstanceDecl& instance_del, const class_env& ce, const global_instance_env& gie_in);
+
+    // Figure 12
+    Hs::Decls
+    infer_type_for_instances2(const Hs::Decls& decls, const class_env& ce, const global_instance_env& gie_in);
+
+    // Figure 12
+    Hs::Decls
+    infer_type_for_instance2(const Hs::InstanceDecl& instance_del, const class_env& ce, const global_instance_env& gie_in);
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
@@ -1030,142 +1044,6 @@ tuple<global_value_env, global_instance_env, class_env, Hs::Binds> typechecker_s
     return {gve, gie, ce, binds};
 }
 
-void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
-{
-    // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
-    //    OK, so datatypes produce a
-    //    * Type Constructor Environment (TCE) = tycon -> (kind, arity, method of applying the tycon?)
-    //    * Constructor Value Environment (CVE)
-    //
-    // 2. Check the module's class declarations, produce some translated bindings -> binds_C ( GVE_C, CE_C, GIE_C )
-
-    // TCE_T = type con info, part1
-    auto tce = get_tycon_info( M.type_decls );
-    for(auto& [tycon,ka]: tce)
-    {
-        auto& [k,arity] = ka;
-        std::cerr<<tycon<<" :: "<<k->print()<<"\n";
-    }
-    std::cerr<<"\n";
-
-    // CVE_T = constructor types :: map<string, polytype> = global_value_env
-    auto constr_info = get_constructor_info(M.type_decls, tce);
-
-    for(auto& [con,type]: constr_info)
-    {
-        std::cerr<<con<<" :: "<<type.print()<<"\n";
-    }
-    std::cerr<<"\n";
-
-    //   CE_C  = class name -> class info
-    typechecker_state state( mod_name, constr_info );
-    auto [gve, class_gie, class_info, class_binds] = state.infer_type_for_classes(M.type_decls, tce);
-    // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
-
-    for(auto& [method,type]: gve)
-    {
-        std::cerr<<method<<" :: "<<type.print()<<"\n";
-    }
-    std::cerr<<"\n";
-
-    for(auto& [method,type]: class_gie)
-    {
-        std::cerr<<method<<" :: "<<type.print()<<"\n";
-    }
-    std::cerr<<"\n";
-
-    std::cerr<<class_binds.print()<<"\n";
-    std::cerr<<"\n";
-
-    auto [inst_decls, inst_gie] = state.infer_type_for_instances(M.type_decls, class_info, class_gie);
-
-    auto gie = plus_no_overlap(class_gie, inst_gie);
-
-    for(auto& [method,type]: inst_gie)
-    {
-        std::cerr<<method<<" :: "<<type.print()<<"\n";
-    }
-    std::cerr<<"\n";
-
-    // GIE_C = functions to extract sub-dictionaries from containing dictionaries?
-    // NOT IMPLEMENTED YET.
-
-    // 3. E' = (TCE_T, (CVE_T, GVE_C, {}), CE_C, (GIE_C,{}))
-    //
-    // 4. Check the module's instance declarations -> monobinds : GIE_I
-    //    These are mutually recursive with the value declarations. ?!?
-    //
-    // 5. Check the module's value declarations.
-
-    // FIXME: Handle instances.
-
-    // Instances: an instance is a function from dictionaries a dictionaries.
-    //    instance (A a, B b) => A (b a) is a function of the form \dict_A_a dict_B_b -> dict_A_(b_a)
-
-    // Q: How are instances grouped?
-    // A: Each instance needs to be at-or-after all the types/classes referenced,
-    //    Do instances depend on other instances?  Maybe this is check in the context...
-    //    e.g. instance Eq a => Eq [a] where
-
-    // See equivalents in GHC Rename/Module.hs
-    // We are trying to find strongly connected components of
-    //  types, type classes, and instances.
-
-    // Shouldn't instances be AFTER everything?
-    // * We only have type class instances (ClsInstDecl), but GHC
-    //   also has data family instances and type family instances.
-
-    // GHC looks at types and classes first, then adds instances to the SCCs later.
-
-
-    // 5. Compute types for functions.
-
-    //   Does the type-checker need to augment all bound variables with their type?
-
-    //   Does the type-checker need to add type lambdas?
-
-    //   Does the type-checker need to specify type arguments to type lambdas?
-
-    //   So, let, lambda, and case would need to specify the type
-
-    // 6. Compute types for class default methods?
-
-    // Q: How are default method declarations handled here?
-    //    Do they affect type class resolution?
-    //    Do we need to do more work on them when handling value decls?
-    // A: I think default methods do not affect the type.
-
-    // See function `rnTyClDecls`, which calls `depAnalTyClDecls`.
-    // * Dependency analysis on values can be done by name, since instances are not included.
-    // * Code is in GHC.Data.Graph.Directed.
-
-    // I don't think we need to look up "parents" during typechecking unless we are promoting data constructors
-    // to types or kinds.
-
-    // For values, each value can have a body decl, a fixity decl, and a signature decl.
-    // So we can't use the decl itself as the key -- we have to use something like the name.
-
-    // It looks like GHC rename extracts the "free variables" from everything.
-    // For example: rnSrcInstDecl operates on ClsInstD, which wraps ClsInstDecl from Hs/Decl.hs
-
-    // FreeVars = OccEnv ID.  See Core/Opt/OccurAnal.hs.
-
-    // Looks like code for determining inlining
-
-    
-    global_value_env env0;
-
-    auto [s,env] = state.infer_type_for_decls(env0, M.value_decls);
-
-    for(auto& [x,t]: env)
-    {
-        std::cerr<<x<<" :: "<<remove_top_level_foralls(alphabetize_type(t))<<"\n";
-//        std::cerr<<x<<" = "<<e<<"\n\n\n";
-    }
-    std::cerr<<"\n";
-}
-
-
 Hs::Type type_check_class_method_type(kindchecker_state& K, Hs::Type type, const Hs::Type& constraint)
 {
     // 1. Bind type parameters for type declaration
@@ -1350,17 +1228,140 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Hs::Class
     return {gve,gie,cinfo,decls};
 }
 
+Hs::Type extract_class_constraint(Hs::Type type)
+{
+    // This should only be called on LIEs
+    assert(not type.is_a<Hs::ForallType>());
+
+    if (auto c = type.to<Hs::ConstrainedType>())
+        return c->type;
+    else
+        return type;
+}
+
+optional<Hs::Var> contains_constraint(const local_instance_env& lie)
+{
+    return {};
+}
+
+// How does this relate to simplifying constraints?
 Hs::Binds typechecker_state::get_dicts(const global_instance_env& gie, const local_instance_env& lie1, const local_instance_env& lie2)
 {
     Hs::Binds binds;
+    for(auto& [name,constraint]: lie2)
+    {
+        auto [class_con, args] = decompose_type_apps(extract_class_constraint(constraint));
+        for(auto& arg: args)
+        {
+            // name = dvar
+            auto [head, type_args] = decompose_type_apps(arg);
+
+            if (auto dvar = contains_constraint(lie1))
+            {
+                auto decl = Hs::simple_decl(Hs::Var({noloc,name}), *dvar);
+                // binds[0].push_back( decl ) ?
+            }
+            else if (auto k = head.to<Hs::TypeCon>())
+            {
+                // Look up instance for K (head a1 a2) in gie -- there should be an instance defined for it.
+            }
+            else if (auto a = constraint.is_a<Hs::TypeVar>())
+            {
+                // There might be another assumption in LIE1 (or LIE2?) of the form dvar' :: k' a
+                // Then we could extract a as a superclass for k' a.
+
+                // Uh.... Is this basically simplifying the context?
+            }
+            else
+                std::abort();
+        }
+    }
     return binds;
 }
 
-pair<Hs::Decls,global_instance_env>
-typechecker_state::infer_type_for_instance(const Hs::InstanceDecl& inst_decl, const class_env& ce, const global_instance_env& gie_in)
+global_instance_env
+typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, const class_env& ce, const global_instance_env& gie_in)
 {
-    Hs::Decls decls;
+    auto [class_head, monotypes] = decompose_type_apps(inst_decl.constraint);
 
+    // Premise #1: Look up the info for the class
+    optional<class_info> cinfo;
+    if (auto tc = class_head.to<Hs::TypeCon>())
+    {
+        // Check that this is a class, and not a data or type?
+        auto class_name = unloc(tc->name);
+        if (not ce.count(class_name))
+            throw myexception()<<"In instance '"<<inst_decl.constraint<<"': no class '"<<class_name<<"'!";
+        cinfo = ce.at(class_name);
+    }
+    else
+        throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<class_head<<" is not a class!";
+
+
+    // Premise #2: Find the type vars mentioned in the constraint.
+    set<Hs::TypeVar> type_vars;
+    // Premise #4: the monotype must be a type constructor applied to simple, distinct type variables.
+    vector<Hs::TypeCon> types;
+    for(auto& monotype: monotypes)
+    {
+        auto [a_head, a_args] = decompose_type_apps(monotype);
+        auto tc = a_head.to<Hs::TypeCon>();
+        if (not tc)
+            throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<a_head<<" is not a type!";
+
+        types.push_back(*tc);
+
+        // Add distinct type variables
+        for(auto& a_arg: a_args)
+        {
+            auto tv = a_arg.to<Hs::TypeVar>();
+
+            if (not tv)
+                throw myexception()<<"In instance for '"<<inst_decl.constraint<<"' for type '"<<monotype<<"': "<<a_arg<<" is not a type variable!";
+
+            if (type_vars.count(*tv))
+                throw myexception()<<"Type variable '"<<tv->print()<<"' occurs twice in constraint '"<<inst_decl.constraint<<"'";
+
+            type_vars.insert(*tv);
+        }
+    }
+
+    // Premise 5: Check that the context contains no variables not mentioned in `monotype`
+    for(auto& tv: free_type_VARS(inst_decl.context))
+    {
+        if (not type_vars.count(tv))
+            throw myexception()<<"Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in '"<<inst_decl.constraint<<"'";
+    }
+
+    auto dfun = fresh_var("dfun");
+    Hs::Type inst_type = add_constraints(inst_decl.context.constraints, inst_decl.constraint);
+    inst_type = add_forall_vars( free_type_VARS(inst_type) | ranges::to<vector>, inst_type);
+    global_instance_env gie;
+    gie = gie.insert( { unloc(dfun.name), inst_type } );
+    return gie;
+}
+
+// We need to handle the instance decls in a mutually recursive way.
+// And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
+global_instance_env
+typechecker_state::infer_type_for_instances1(const Hs::Decls& decls, const class_env& ce, const global_instance_env& gie_in)
+{
+    global_instance_env gie_inst;
+    for(auto& decl: decls)
+    {
+        if (auto I = decl.to<Hs::InstanceDecl>())
+        {
+            auto gie = infer_type_for_instance1(*I, ce, gie_in);
+
+            gie_inst = plus_no_overlap(gie_inst, gie);
+        }
+    }
+    return gie_inst;
+}
+
+Hs::Decls
+typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, const class_env& ce, const global_instance_env& gie_in)
+{
     auto [class_head, monotypes] = decompose_type_apps(inst_decl.constraint);
 
     // Premise #1: Look up the info for the class
@@ -1429,19 +1430,24 @@ typechecker_state::infer_type_for_instance(const Hs::InstanceDecl& inst_decl, co
     // Premise 8:
     Hs::Binds binds_methods;
     auto dfun = fresh_var("dfun");
-    
 
-    Hs::Type inst_type = add_constraints(inst_decl.context.constraints, inst_decl.constraint);
-    inst_type = add_forall_vars( free_type_VARS(inst_type) | ranges::to<vector>, inst_type);
-    global_instance_env gie;
-    gie = gie.insert( { unloc(dfun.name), inst_type } );
-    return {decls, gie};
+    // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdicts,methods>
+    vector<expression_ref> fields;
+    for(auto& [name,type]: cinfo->fields)
+        fields.push_back( Hs::Var({noloc, name}) );
+
+    expression_ref E = Hs::Tuple(fields);
+    E = Hs::LetExp( {noloc,binds_methods}, {noloc,E} );
+    E = Hs::LetExp( {noloc,binds_super}, {noloc,E} );
+
+    Hs::Decls decls ({ simple_decl(dfun,E) });
+    return decls;
 }
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-pair<Hs::Decls,global_instance_env>
-typechecker_state::infer_type_for_instances(const Hs::Decls& decls, const class_env& ce, const global_instance_env& gie_in)
+Hs::Decls
+typechecker_state::infer_type_for_instances2(const Hs::Decls& decls, const class_env& ce, const global_instance_env& gie_in)
 {
     Hs::Decls out_decls;
     global_instance_env gie_inst;
@@ -1449,14 +1455,149 @@ typechecker_state::infer_type_for_instances(const Hs::Decls& decls, const class_
     {
         if (auto I = decl.to<Hs::InstanceDecl>())
         {
-            auto [decls1, gie1] = infer_type_for_instance(*I, ce, gie_in);
+            auto decls_ = infer_type_for_instance2(*I, ce, gie_in);
 
-            for(auto& d: decls1)
+            for(auto& d: decls_)
                 out_decls.push_back(d);
-
-            gie_inst = plus_no_overlap(gie_inst, gie1);
         }
     }
-    return {out_decls, gie_inst};
+    return out_decls;
 }
+
+void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
+{
+    // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
+    //    OK, so datatypes produce a
+    //    * Type Constructor Environment (TCE) = tycon -> (kind, arity, method of applying the tycon?)
+    //    * Constructor Value Environment (CVE)
+    //
+    // 2. Check the module's class declarations, produce some translated bindings -> binds_C ( GVE_C, CE_C, GIE_C )
+
+    // TCE_T = type con info, part1
+    auto tce = get_tycon_info( M.type_decls );
+    for(auto& [tycon,ka]: tce)
+    {
+        auto& [k,arity] = ka;
+        std::cerr<<tycon<<" :: "<<k->print()<<"\n";
+    }
+    std::cerr<<"\n";
+
+    // CVE_T = constructor types :: map<string, polytype> = global_value_env
+    auto constr_info = get_constructor_info(M.type_decls, tce);
+
+    for(auto& [con,type]: constr_info)
+    {
+        std::cerr<<con<<" :: "<<type.print()<<"\n";
+    }
+    std::cerr<<"\n";
+
+    //   CE_C  = class name -> class info
+    typechecker_state state( mod_name, constr_info );
+    auto [gve, class_gie, class_info, class_binds] = state.infer_type_for_classes(M.type_decls, tce);
+    // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
+
+    for(auto& [method,type]: gve)
+    {
+        std::cerr<<method<<" :: "<<type.print()<<"\n";
+    }
+    std::cerr<<"\n";
+
+    for(auto& [method,type]: class_gie)
+    {
+        std::cerr<<method<<" :: "<<type.print()<<"\n";
+    }
+    std::cerr<<"\n";
+
+    std::cerr<<class_binds.print()<<"\n";
+    std::cerr<<"\n";
+
+    auto inst_gie = state.infer_type_for_instances1(M.type_decls, class_info, class_gie);
+
+    auto gie = plus_no_overlap(class_gie, inst_gie);
+
+    for(auto& [method,type]: inst_gie)
+    {
+        std::cerr<<method<<" :: "<<type.print()<<"\n";
+    }
+    std::cerr<<"\n";
+
+    global_value_env env0;
+
+    // 3. E' = (TCE_T, (CVE_T, GVE_C, LVE={}), CE_C, (GIE_C, LIE={}))
+
+    auto [s,env] = state.infer_type_for_decls(env0, M.value_decls);
+
+    for(auto& [x,t]: env)
+    {
+        std::cerr<<x<<" :: "<<remove_top_level_foralls(alphabetize_type(t))<<"\n";
+//        std::cerr<<x<<" = "<<e<<"\n\n\n";
+    }
+    std::cerr<<"\n";
+}
+
+    // GIE_C = functions to extract sub-dictionaries from containing dictionaries?
+    // NOT IMPLEMENTED YET.
+
+    // 3. E' = (TCE_T, (CVE_T, GVE_C, {}), CE_C, (GIE_C,{}))
+    //
+    // 4. Check the module's instance declarations -> monobinds : GIE_I
+    //    These are mutually recursive with the value declarations. ?!?
+    //
+    // 5. Check the module's value declarations.
+
+    // FIXME: Handle instances.
+
+    // Instances: an instance is a function from dictionaries a dictionaries.
+    //    instance (A a, B b) => A (b a) is a function of the form \dict_A_a dict_B_b -> dict_A_(b_a)
+
+    // Q: How are instances grouped?
+    // A: Each instance needs to be at-or-after all the types/classes referenced,
+    //    Do instances depend on other instances?  Maybe this is check in the context...
+    //    e.g. instance Eq a => Eq [a] where
+
+    // See equivalents in GHC Rename/Module.hs
+    // We are trying to find strongly connected components of
+    //  types, type classes, and instances.
+
+    // Shouldn't instances be AFTER everything?
+    // * We only have type class instances (ClsInstDecl), but GHC
+    //   also has data family instances and type family instances.
+
+    // GHC looks at types and classes first, then adds instances to the SCCs later.
+
+
+    // 5. Compute types for functions.
+
+    //   Does the type-checker need to augment all bound variables with their type?
+
+    //   Does the type-checker need to add type lambdas?
+
+    //   Does the type-checker need to specify type arguments to type lambdas?
+
+    //   So, let, lambda, and case would need to specify the type
+
+    // 6. Compute types for class default methods?
+
+    // Q: How are default method declarations handled here?
+    //    Do they affect type class resolution?
+    //    Do we need to do more work on them when handling value decls?
+    // A: I think default methods do not affect the type.
+
+    // See function `rnTyClDecls`, which calls `depAnalTyClDecls`.
+    // * Dependency analysis on values can be done by name, since instances are not included.
+    // * Code is in GHC.Data.Graph.Directed.
+
+    // I don't think we need to look up "parents" during typechecking unless we are promoting data constructors
+    // to types or kinds.
+
+    // For values, each value can have a body decl, a fixity decl, and a signature decl.
+    // So we can't use the decl itself as the key -- we have to use something like the name.
+
+    // It looks like GHC rename extracts the "free variables" from everything.
+    // For example: rnSrcInstDecl operates on ClsInstD, which wraps ClsInstDecl from Hs/Decl.hs
+
+    // FreeVars = OccEnv ID.  See Core/Opt/OccurAnal.hs.
+
+    // Looks like code for determining inlining
+
 
