@@ -68,9 +68,16 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Select lines between certain values of a key. (e.g. iterations)\n\n";
-	cout<<"Usage: cut-range [OPTIONS]\n\n";
-	cout<<all<<"\n";
+	cout<<"Select lines from multiple input files based on lines containing `key = value`.\n\n";
+	cout<<"Usage: cut-range filename1.fastas [filename2.fastas ...] [OPTIONS]\n\n";
+	cout<<visible;
+        cout<<"\n";
+        cout<<"The selection options (e.g. --skip) apply to each input file separately.\n";
+        cout<<"\n";
+	cout<<"Examples:\n";
+	cout<<"\n";
+	cout<<" Select alignments after the first 100 iterations from two different runs:\n";
+        cout<<"   % cut-range --skip=100 run-1/C1.P1.fastas run-2/C1.P1.fastas > P1.fastas\n\n";
 	exit(0);
     }
 
