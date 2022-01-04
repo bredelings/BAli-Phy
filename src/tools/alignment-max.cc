@@ -79,6 +79,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("skip,s",value<unsigned>()->default_value(0),"Number of alignment samples to skip")
 	("max-alignments,m",value<int>()->default_value(1000),"Maximum number of alignments to analyze")
 	("analysis",value<string>()->default_value("wsum"),"sum, wsum, wsum2, multiply")
+        ("sort,S",value<bool>()->default_value(true),"Sort partially ordered columns to group similar gaps")
 	("out,o",value<string>()->default_value("-"),"Output file (defaults to stdout)")
 	("out-probabilities,p",value<string>(),"Output file for column probabilities, if specified")
 	("verbose,V","Output more log messages on stderr.")
@@ -673,7 +674,8 @@ int main(int argc,char* argv[])
 	    mpd.add_alignment( alignments[i] );
 
 	alignment amax = mpd.get_best_alignment( type );
-	amax = get_ordered_alignment(amax);
+        if (args["sort"].as<bool>())
+            amax = get_ordered_alignment(amax);
 
 	//------------------ Write best alignment -------------------//
 	string out = args["out"].as<string>();
