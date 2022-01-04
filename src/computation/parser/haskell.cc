@@ -789,4 +789,15 @@ string FunDecl::print() const
     return join( lines, "\n" );
 }
 
+FunDecl simple_decl(const Var& v, const expression_ref& E)
+{
+    // = E
+    Hs::MRule rule{{}, Hs::SimpleRHS({noloc,E})};
+    Hs::Match m{{rule}};
+
+    // v = E
+    return Hs::FunDecl(v,m);
 }
+
+}
+

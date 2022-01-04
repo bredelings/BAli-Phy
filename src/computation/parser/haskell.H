@@ -1000,6 +1000,8 @@ struct FunDecl: public Object
     FunDecl(const Var& vv, const Match& m): v(vv), match(m) {}
 };
 
+FunDecl simple_decl(const Var& v, const expression_ref&);
+
 // We can initially put all the type or class decls into a single group.
 // We can initially put all value decls into a single group.
 
