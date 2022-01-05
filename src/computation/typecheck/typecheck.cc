@@ -258,10 +258,11 @@ struct typechecker_state
 
     Hs::Type instantiate(const Hs::Type& t);
 
-    // Figure 23.
+    // Figure 22.
     pair<substitution_t, local_value_env>
     infer_quals_type(const global_value_env& env, const vector<Hs::Qual>& quals);
 
+    // Figure 22.
     pair<substitution_t, local_value_env>
     infer_qual_type(const global_value_env& env, const Hs::Qual& qual);
 
