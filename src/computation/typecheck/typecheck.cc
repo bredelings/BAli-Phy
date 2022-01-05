@@ -1359,6 +1359,15 @@ typechecker_state::infer_type_for_instances1(const Hs::Decls& decls, const class
     return gie_inst;
 }
 
+expression_ref tuple_from_value_env(const value_env& venv)
+{
+    vector<expression_ref> elements;
+    for(auto& [name,type]: venv)
+        elements.push_back( Hs::Var({noloc, name}) );
+
+    return Hs::Tuple(elements);
+}
+
 Hs::Decls
 typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, const class_env& ce, const global_instance_env& gie_in)
 {
@@ -1432,13 +1441,12 @@ typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, c
     auto dfun = fresh_var("dfun");
 
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdicts,methods>
-    vector<expression_ref> fields;
-    for(auto& [name,type]: cinfo->fields)
-        fields.push_back( Hs::Var({noloc, name}) );
+    expression_ref dict1 = tuple_from_value_env(cinfo->fields);
+    expression_ref dict2 = tuple_from_value_env(lie);
 
-    expression_ref E = Hs::Tuple(fields);
-    E = Hs::LetExp( {noloc,binds_methods}, {noloc,E} );
+    expression_ref E = Hs::LetExp( {noloc,binds_methods}, {noloc, dict1} );
     E = Hs::LetExp( {noloc,binds_super}, {noloc,E} );
+    E = Hs::LambdaExp({dict2}, E);
 
     Hs::Decls decls ({ simple_decl(dfun,E) });
     return decls;
