@@ -1529,11 +1529,9 @@ void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
     }
     std::cerr<<"\n";
 
-    global_value_env env0;
-
     // 3. E' = (TCE_T, (CVE_T, GVE_C, LVE={}), CE_C, (GIE_C, LIE={}))
 
-    auto [s,env] = state.infer_type_for_decls(env0, M.value_decls);
+    auto [s,env] = state.infer_type_for_decls(gve, M.value_decls);
 
     for(auto& [x,t]: env)
     {
