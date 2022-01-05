@@ -64,6 +64,16 @@ using std::tuple;
   2. Use Hs::decompose_type_apps( ) to simplify Hs::is_function_type( ),
      like in parser.y:check_kind( ).
 
+  Unification:
+  0. Can we avoid explicitly returning a substitution?
+  1. If I somehow defer "zonking" to the end, can I avoid manually applying all these
+     substitutions?
+  2. Unification SHOULD be accumulating a set of constraints that can be solved later.
+     But right now it seems that by failing to substitute into a term before unifying
+     that term with another term, we can lose constraints.
+     How can we avoid this?
+  3. Can we get better error messages by listing an expected type?
+  4. Can we prefix with "heralds" for better error messages?
  */
 
 /*
@@ -248,6 +258,7 @@ struct typechecker_state
 
     Hs::Type instantiate(const Hs::Type& t);
 
+    // Figure 23.
     pair<substitution_t, local_value_env>
     infer_quals_type(const global_value_env& env, const vector<Hs::Qual>& quals);
 
