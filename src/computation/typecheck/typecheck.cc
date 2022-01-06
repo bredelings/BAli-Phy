@@ -271,14 +271,14 @@ struct typechecker_state
     Hs::Type instantiate(const Hs::Type& t);
 
     // Figure 22.
-    pair<substitution_t, local_value_env>
+    tuple<substitution_t, local_instance_env, local_value_env>
     infer_quals_type(const global_value_env& env, const vector<Hs::Qual>& quals);
 
     // Figure 22.
-    pair<substitution_t, local_value_env>
+    tuple<substitution_t, local_instance_env, local_value_env>
     infer_qual_type(const global_value_env& env, const Hs::Qual& qual);
 
-    pair<substitution_t, local_value_env>
+    tuple<substitution_t, local_instance_env, local_value_env>
     infer_guard_type(const global_value_env& env, const Hs::Qual& guard);
 
     // Figure 24.
@@ -618,24 +618,26 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
 // * the original figure doesn't have let quals.
 // * the original figure seems to assume that quals only occur in list comprehensions?
 
-pair<substitution_t,value_env>
+tuple<substitution_t, local_instance_env, value_env>
 typechecker_state::infer_quals_type(const global_value_env& env, const vector<Hs::Qual>& quals)
 {
     substitution_t s;
     auto env2 = env;
+    local_instance_env lie;
     local_value_env binders;
     for(auto& qual: quals)
     {
-        auto [qual_s, qual_binders] = infer_qual_type(env2, qual);
+        auto [qual_s, qual_binders, qual_lie] = infer_qual_type(env2, qual);
+        lie += qual_lie;
         s = compose(qual_s, s);
         env2 = plus_prefer_right(env2, qual_binders);
         binders = plus_prefer_right(binders, qual_binders);
     }
     binders = apply_subst(s, binders);
-    return {s, binders};
+    return {s, lie, binders};
 }
 
-pair<substitution_t,value_env>
+tuple<substitution_t, local_instance_env, value_env>
 typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& qual)
 {
     // FILTER
@@ -644,7 +646,7 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
         auto [cond_s, cond_type, cond_lie] = infer_type(env, sq->exp);
         auto s2 = unify( cond_type, bool_type() );
         auto s = compose(s2, cond_s);
-        return {s, {}};
+        return {s, {}, cond_lie};
     }
     // GENERATOR.
     else if (auto pq = qual.to<Hs::PatQual>())
@@ -656,18 +658,20 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
         auto s3 = unify(Hs::ListType(pat_type), exp_type);
         auto s = compose(s3, exp_s);
         lve = apply_subst(s, lve);
-        return {s, lve};
+        return {s, lve, exp_lie};
     }
     else if (auto lq = qual.to<Hs::LetQual>())
     {
-        return infer_type_for_decls(env, unloc(lq->binds));
+        local_instance_env lie;
+        auto [s,t] = infer_type_for_decls(env, unloc(lq->binds));
+        return {s,t,lie};
     }
     else
         std::abort();
 }
 
 
-pair<substitution_t,value_env>
+tuple<substitution_t, local_instance_env, value_env>
 typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual& guard)
 {
     if (auto sq = guard.to<Hs::SimpleQual>())
@@ -675,7 +679,7 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
         auto [cond_s, cond_type, cond_lie] = infer_type(env, sq->exp);
         auto s2 = unify( cond_type, bool_type() );
         auto s = compose(s2, cond_s);
-        return {s, {}};
+        return {s, cond_lie, {}};
     }
     else if (auto pq = guard.to<Hs::PatQual>())
     {
@@ -686,11 +690,13 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
         auto s3 = unify(pat_type,exp_type);
         auto s = compose(s3, exp_s);
         lve = apply_subst(s, lve);
-        return {s, lve};
+        return {s, exp_lie, lve};
     }
     else if (auto lq = guard.to<Hs::LetQual>())
     {
-        return infer_type_for_decls(env, unloc(lq->binds));
+        local_instance_env lie;
+        auto [s,t] = infer_type_for_decls(env, unloc(lq->binds));
+        return {s, t, lie};
     }
     else
         std::abort();
@@ -706,7 +712,7 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::GuardedRHS&
 
     // Fig 25. GUARD
     auto guard = rhs.guards[0];
-    auto [s1, env1] = infer_guard_type(env, guard);
+    auto [s1, lie1, env1] = infer_guard_type(env, guard);
     auto env2 = plus_prefer_right(env, env1);
 
     auto rhs2 = rhs;
@@ -715,7 +721,7 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::GuardedRHS&
     auto s = compose(s2, s1);
 
     Hs::Type type = apply_subst(s, t2);
-    return {s, type, lie2};
+    return {s, type, lie1 + lie2};
 }
 
 // Fig 25. GUARD-OR
@@ -1019,11 +1025,11 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
     // LISTCOMP
     else if (auto lcomp = E.to<Hs::ListComprehension>())
     {
-        auto [quals_s, quals_binders] = infer_quals_type(env, lcomp->quals);
+        auto [quals_s, quals_lie, quals_binders] = infer_quals_type(env, lcomp->quals);
         auto [exp_s, exp_type, exp_lie] = infer_type(plus_prefer_right(env, quals_binders), lcomp->body);
         auto s = compose(exp_s, quals_s);
         Hs::Type result_type = apply_subst(s, Hs::ListType(exp_type));
-        return {s, result_type, exp_lie};
+        return { s, result_type, quals_lie + exp_lie };
     }
     // ENUM-FROM
     else if (auto l = E.to<Hs::ListFrom>())
