@@ -48,6 +48,17 @@ value_env plus_no_overlap(const value_env& e1, const value_env& e2)
     return e3;
 }
 
+value_env& operator+=(value_env& env1, const value_env& env2)
+{
+    add_no_overlap(env1, env2);
+    return env1;
+}
+
+value_env operator+(const value_env& env1, const value_env& env2)
+{
+    return plus_no_overlap(env1, env2);
+}
+
 void add_no_overlap(type_con_env& e1, const type_con_env& e2)
 {
     if (e1.empty())

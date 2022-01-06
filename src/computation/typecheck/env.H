@@ -35,6 +35,9 @@ value_env plus_no_overlap(const value_env& e1, const value_env& e2);
 void add_prefer_right(value_env& e1, const value_env& e2);
 value_env plus_prefer_right(const value_env& e1, const value_env& e2);
 
+value_env operator+(const value_env&, const value_env&);
+value_env& operator+=(value_env&, const value_env&);
+
 struct type_con_info
 {
     kind k;
