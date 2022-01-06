@@ -273,7 +273,8 @@ struct typechecker_state
     pair<substitution_t, local_value_env>
     infer_guard_type(const global_value_env& env, const Hs::Qual& guard);
 
-    pair<Hs::Type, local_value_env>
+    // Figure 24.
+    tuple<Hs::Pattern, Hs::Type, local_value_env>
     infer_pattern_type(const Hs::Pattern& pat);
 
     pair<substitution_t, Hs::Type>
@@ -443,7 +444,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::D
         }
         else if (auto pd = decl.to<Hs::PatDecl>())
         {
-            auto [type, lve] = infer_pattern_type(pd->lhs);
+            auto [p, type, lve] = infer_pattern_type(pd->lhs);
             decl_types.push_back({type,lve});
         }
         auto& [type,lve] = decl_types.back();
@@ -465,7 +466,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::D
         }
         else if (auto pd = decl.to<Hs::PatDecl>())
         {
-            auto [lhs_type, lve] = infer_pattern_type(pd->lhs);
+            auto [p, lhs_type, lve] = infer_pattern_type(pd->lhs);
             auto [s2, rhs_type] = infer_type(env2, pd->rhs);
 
             s = compose(s2, compose(unify(lhs_type, rhs_type), s));
@@ -484,26 +485,31 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::D
 }
 
 // Figure 24. Rules for patterns
-pair<Hs::Type, local_value_env>
+tuple<Hs::Pattern, Hs::Type, local_value_env>
 typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
 {
     // TAUT-PAT
-    if (auto x = pat.to<Hs::Var>())
+    if (auto v = pat.to<Hs::Var>())
     {
+        auto V = *v;
         Hs::Type type = fresh_type_var();
         local_value_env lve;
-        auto& name = unloc(x->name);
+        auto& name = unloc(V.name);
+        V.type = type;
         lve = lve.insert({name, type});
-	return { type , lve };
+	return { V, type , lve };
     }
     // CONSTR-PAT
     else if (auto con = pat.head().to<Hs::Con>())
     {
         local_value_env lve;
         vector<Hs::Type> types;
-        for(auto& pat: pat.copy_sub())
+        auto pats = pat.copy_sub();
+
+        for(auto& pat: pats)
         {
-            auto [t1,lve1] = infer_pattern_type(pat);
+            auto [p, t1,lve1] = infer_pattern_type(pat);
+            pat = p;
             types.push_back(t1);
             lve = plus_no_overlap(lve, lve1);
         }
@@ -521,61 +527,73 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
 
         lve = apply_subst(s, lve);
         type = apply_subst(s, type);
-        return {type, lve};
+        return { pat, type, lve };
     }
     // AS-PAT
     else if (auto ap = pat.to<Hs::AsPattern>())
     {
-        auto [t,lve] = infer_pattern_type(ap->pattern);
+        auto [pat, t, lve] = infer_pattern_type(ap->pattern);
         auto& name = unloc(ap->var.as_<Hs::Var>().name);
         lve = lve.insert({name, t});
-        return {t,lve};
+        return {pat, t, lve};
     }
     // LAZY-PAT
     else if (auto lp = pat.to<Hs::LazyPattern>())
-        return infer_pattern_type(lp->pattern);
+    {
+        auto [p, t, lve] = infer_pattern_type(lp->pattern);
+        return {Hs::LazyPattern(p), t, lve};
+    }
     // not in paper (STRICT-PAT)
     else if (auto sp = pat.to<Hs::StrictPattern>())
-        return infer_pattern_type(sp->pattern);
+    {
+        auto [p, t, lve] = infer_pattern_type(sp->pattern);
+        return {Hs::StrictPattern(p), t, lve};
+    }
     // WILD-PAT
     else if (pat.is_a<Hs::WildcardPattern>())
     {
         auto tv = fresh_type_var();
-        return {tv,{}};
+        return {pat, tv, {}};
     }
     // LIST-PAT
     else if (auto l = pat.to<Hs::List>())
     {
+        auto L = *l;
+
         local_value_env lve;
         Hs::Type t = fresh_type_var();
         substitution_t s;
-        for(auto& element: l->elements)
+        for(auto& element: L.elements)
         {
-            auto [t1,lve1] = infer_pattern_type(element);
+            auto [p1, t1, lve1] = infer_pattern_type(element);
+            element = p1;
+
             auto s1 = unify(t, t1);
             s = compose(s1,s);
             lve = plus_no_overlap(lve, lve1);
         }
         t = apply_subst(s, t);
         lve = apply_subst(s, lve);
-        return {t, lve};
+        return {L, t, lve};
     }
     // TUPLE-PAT
     else if (auto t = pat.to<Hs::Tuple>())
     {
+        auto T = *t;
         vector<Hs::Type> types;
         local_value_env lve;
-        for(auto& element: t->elements)
+        for(auto& element: T.elements)
         {
-            auto [t1, lve1] = infer_pattern_type(element);
+            auto [p, t1, lve1] = infer_pattern_type(element);
+            element = p;
             types.push_back(t1);
             lve = plus_no_overlap(lve, lve1);
         }
-        return {Hs::TupleType(types), lve};
+        return {T, Hs::TupleType(types), lve};
     }
     // ???
     else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
-        return {num_type(),{}};
+        return {pat, num_type(),{}};
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
     
@@ -620,7 +638,7 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
     else if (auto pq = qual.to<Hs::PatQual>())
     {
         // pat <- exp
-        auto [pat_type,lve] = infer_pattern_type(pq->bindpat);
+        auto [pat, pat_type,lve] = infer_pattern_type(pq->bindpat);
         auto [exp_s,exp_type] = infer_type(env, pq->exp);
         // type(pat) = type(exp)
         auto s3 = unify(Hs::ListType(pat_type), exp_type);
@@ -650,7 +668,7 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
     else if (auto pq = guard.to<Hs::PatQual>())
     {
         // pat <- exp
-        auto [pat_type,lve] = infer_pattern_type(pq->bindpat);
+        auto [pat, pat_type,lve] = infer_pattern_type(pq->bindpat);
         auto [exp_s,exp_type] = infer_type(env, pq->exp);
         // type(pat) = type(exp)
         auto s3 = unify(pat_type,exp_type);
@@ -721,7 +739,7 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::MRule& rule
         return infer_type(env, rule.rhs);
     else
     {
-        auto [t1, lve1] = infer_pattern_type(rule.patterns.front());
+        auto [pat, t1, lve1] = infer_pattern_type(rule.patterns.front());
         auto env2 = plus_no_overlap(env, lve1);
 
         // Remove the first pattern in the rule
