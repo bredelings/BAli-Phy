@@ -78,6 +78,14 @@ using std::tuple;
   5. I'd like to replace substitutions with constraints.
      Hmmm... perhaps the difference is that COMPOSITION of substitutions never fails,
      but COMBINING constraints can fail?
+
+     Example: a ~ Int , a ~ b
+     * for substitutions, later ones have no effect
+     * for constraints, I guess you do a ~ Int, b ~ a, defining each variable only once.
+     * if you later add b ~ Int, then need to unify b ~ Int and b ~ a,
+       which then unifies Int ~ a, which succeeds.
+     * So, perhaps a second definition of a variable must either fail or succeed -- it doesn't
+       get added.
  */
 
 /*
