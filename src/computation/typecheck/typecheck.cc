@@ -74,6 +74,10 @@ using std::tuple;
      How can we avoid this?
   3. Can we get better error messages by listing an expected type?
   4. Can we prefix with "heralds" for better error messages?
+
+  5. I'd like to replace substitutions with constraints.
+     Hmmm... perhaps the difference is that COMPOSITION of substitutions never fails,
+     but COMBINING constraints can fail?
  */
 
 /*
