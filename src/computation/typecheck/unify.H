@@ -1,6 +1,7 @@
 #ifndef UNIFY_H
 #define UNIFY_H
 
+#include <optional>
 #include "computation/parser/haskell.H"
 #include "immer/map.hpp" // for immer::map
 
@@ -44,6 +45,7 @@ Hs::Constructor apply_subst(const substitution_t& s, Hs::Constructor con);
 Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl d);
 
 substitution_t compose(substitution_t s2, substitution_t s1);
+std::optional<substitution_t> combine(substitution_t s1, substitution_t s2);
 substitution_t unify(const Hs::Type& t1, const Hs::Type& t2);
 
 

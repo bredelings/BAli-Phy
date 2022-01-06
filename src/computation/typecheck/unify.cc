@@ -90,6 +90,38 @@ substitution_t compose(substitution_t s2, substitution_t s1)
     return s3;
 }
 
+// This should yield a substitution that is equivalent to apply FIRST s1 and THEN s2,
+// like f . g
+std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
+{
+    if (s2.empty()) return s1;
+
+    auto s3 = s2;
+    for(auto& [tv,e]: s1)
+    {
+        auto it = s3.find(tv);
+        if (not it)
+        {
+            s3 = s3.insert({tv,apply_subst(s2,e)});
+        }
+        else
+        {
+            try {
+                auto s4 = unify(*it, e);
+                auto s5 = combine(s3, s4);
+                if (s5)
+                    s3 = *s5;
+            }
+            catch(...)
+            {
+                return {};
+            }
+        }
+    }
+            
+    return s3;
+}
+
 bool occurs_check(const Haskell::TypeVar& tv, const Hs::Type& t)
 {
     if (auto x = t.to<Haskell::TypeVar>())
