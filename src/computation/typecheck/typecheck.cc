@@ -285,7 +285,7 @@ struct typechecker_state
     tuple<Hs::Pattern, Hs::Type, local_value_env>
     infer_pattern_type(const Hs::Pattern& pat);
 
-    pair<substitution_t, Hs::Type>
+    tuple<substitution_t, Hs::Type, local_instance_env>
     infer_type(const global_value_env& env, const expression_ref& exp);
 
     pair<substitution_t, Hs::Type>
@@ -637,7 +637,7 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
     // FILTER
     if (auto sq = qual.to<Hs::SimpleQual>())
     {
-        auto [cond_s, cond_type] = infer_type(env, sq->exp);
+        auto [cond_s, cond_type, cond_lie] = infer_type(env, sq->exp);
         auto s2 = unify( cond_type, bool_type() );
         auto s = compose(s2, cond_s);
         return {s, {}};
@@ -647,7 +647,7 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
     {
         // pat <- exp
         auto [pat, pat_type,lve] = infer_pattern_type(pq->bindpat);
-        auto [exp_s,exp_type] = infer_type(env, pq->exp);
+        auto [exp_s,exp_type, exp_lie] = infer_type(env, pq->exp);
         // type(pat) = type(exp)
         auto s3 = unify(Hs::ListType(pat_type), exp_type);
         auto s = compose(s3, exp_s);
@@ -668,7 +668,7 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
 {
     if (auto sq = guard.to<Hs::SimpleQual>())
     {
-        auto [cond_s, cond_type] = infer_type(env, sq->exp);
+        auto [cond_s, cond_type, cond_lie] = infer_type(env, sq->exp);
         auto s2 = unify( cond_type, bool_type() );
         auto s = compose(s2, cond_s);
         return {s, {}};
@@ -676,8 +676,8 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
     else if (auto pq = guard.to<Hs::PatQual>())
     {
         // pat <- exp
-        auto [pat, pat_type,lve] = infer_pattern_type(pq->bindpat);
-        auto [exp_s,exp_type] = infer_type(env, pq->exp);
+        auto [pat, pat_type, lve] = infer_pattern_type(pq->bindpat);
+        auto [exp_s, exp_type, exp_lie] = infer_type(env, pq->exp);
         // type(pat) = type(exp)
         auto s3 = unify(pat_type,exp_type);
         auto s = compose(s3, exp_s);
@@ -698,7 +698,11 @@ pair<substitution_t, Hs::Type>
 typechecker_state::infer_type(const global_value_env& env, const Hs::GuardedRHS& rhs)
 {
     // Fig 25. GUARD-DEFAULT
-    if (rhs.guards.empty()) return infer_type(env, rhs.body);
+    if (rhs.guards.empty())
+    {
+        auto [s, t, lie] = infer_type(env, rhs.body);
+        return {s,t};
+    }
 
     // Fig 25. GUARD
     auto guard = rhs.guards[0];
@@ -707,7 +711,7 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::GuardedRHS&
 
     auto rhs2 = rhs;
     rhs2.guards.erase(rhs2.guards.begin());
-    auto [s2,t2] = infer_type(env2, rhs2);
+    auto [s2, t2] = infer_type(env2, rhs2);
     auto s = compose(s2, s1);
 
     Hs::Type type = apply_subst(s, t2);
@@ -780,7 +784,9 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::Match& m)
     return {s,result_type};
 }
 
-pair<substitution_t,Hs::Type>
+
+
+tuple<substitution_t,Hs::Type, local_instance_env>
 typechecker_state::infer_type(const global_value_env& env, const expression_ref& E)
 {
     if (auto x = E.to<Hs::Var>())
@@ -794,41 +800,87 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
 
         auto tau = instantiate(*sigma);
 
-        return {{},tau};
+        local_instance_env lie;
+        if (auto ct = tau.to<Hs::ConstrainedType>())
+        {
+            for(auto& constraint: ct->context.constraints)
+            {
+                auto dvar = fresh_var("dvar", false);
+                lie = lie.insert({unloc(dvar.name), constraint});
+            }
+            tau = ct->type;
+        }
+
+        return {{}, tau, lie};
     }
-    else if (E.is_int() or E.is_double() or E.is_log_double())
-        return {{},num_type()};
+    else if (E.is_int())
+    {
+        local_instance_env lie;
+        Hs::Type a = fresh_type_var();
+        Hs::Type num_a = Hs::TypeApp(Hs::TypeCon({noloc,"Num"}),a);
+        Hs::Type num_a_a = Hs::ConstrainedType(Hs::Context({num_a}),a);
+
+        auto dvar = fresh_var("dvar");
+        lie = lie.insert({unloc(dvar.name), num_a_a});
+        return { {}, a, lie };
+    }
+    else if (E.is_double())
+    {
+        local_instance_env lie;
+        Hs::Type a = fresh_type_var();
+        Hs::Type fractional_a = Hs::TypeApp(Hs::TypeCon({noloc,"Fractional"}),a);
+        Hs::Type fractional_a_a = Hs::ConstrainedType(Hs::Context({fractional_a}),a);
+
+        auto dvar = fresh_var("dvar");
+        lie = lie.insert({unloc(dvar.name), fractional_a_a});
+        return { {}, a, lie };
+    }
     else if (E.is_char())
-        return {{},char_type()};
+    {
+        local_instance_env lie;
+        return {{},char_type(), lie};
+    }
+    else if (E.is_log_double())
+    {
+        local_instance_env lie;
+        return {{}, num_type(), lie};
+    }
     else if (auto l = E.to<Hs::List>())
     {
+        local_instance_env lie;
         Hs::Type element_type = fresh_type_var();
         auto L = *l;
         substitution_t s;
         for(auto& element: L.elements)
         {
-            auto [s1, t1] = infer_type(env, element);
+            auto [s1, t1, lie1] = infer_type(env, element);
             auto s2 = unify(t1, element_type);
             s = compose(s2, compose(s1, s));
+
+            lie += lie1;
         }
         element_type = apply_subst(s, element_type);
-        return {s, Hs::ListType(element_type)};
+        return {s, Hs::ListType(element_type), lie};
     }
     else if (auto tup = E.to<Hs::Tuple>())
     {
         auto T = *tup;
 
+        local_instance_env lie;
+
         substitution_t s;
         vector<Hs::Type> element_types;
         for(auto& element: T.elements)
         {
-            auto [s1, element_type] = infer_type(env, element);
+            auto [s1, element_type, element_lie] = infer_type(env, element);
             s = compose(s1, s);
             element_types.push_back( element_type );
+
+            lie += element_lie;
         }
         Hs::Type result_type = Hs::TupleType(element_types);
         result_type = apply_subst(s, result_type);
-        return {s, result_type};
+        return {s, result_type, lie};
     }
     // COMB
     else if (is_apply_exp(E))
@@ -838,7 +890,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         auto e1 = E.sub()[0];
         substitution_t s;
 
-        auto [s1,t1] = infer_type(env,e1);
+        auto [s1,t1,lie] = infer_type(env,e1);
 
         for(int i=1;i<E.size();i++)
         {
@@ -852,41 +904,47 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
             // auto [s1,t1] = infer_type(env, e1);
 
             // (s2, t2) <- infer (apply s1 env) e2
-            auto [s2,t2] = infer_type(apply_subst(s1,env), e2);
+            auto [s2,t2,lie2] = infer_type(apply_subst(s1,env), e2);
 
             // s3       <- unify (apply s2 t1) (TArr t2 tv)
             auto s3 = unify (apply_subst(s2,t1), make_arrow_type(t2,tv));
 
             s1 = compose(s3,compose(s2,s1));
             t1 = apply_subst(s3,tv);
+            lie += lie2;
         }
 
         // This is now done by the setup for the next loop iteration.
         // return {compose(s3,compose(s2,s1)), apply_subst(s3,tv)};
-        return {s1,t1};
+        return {s1, t1, lie};
     }
     // LAMBDA
     else if (auto lam = E.to<Hs::LambdaExp>())
     {
         auto rule = Hs::MRule{lam->args, lam->body};
 
-        return infer_type(env, rule);
+        auto [s,t] = infer_type(env, rule);
+        return {s,t,local_instance_env()};
     }
     // LET
     else if (auto let = E.to<Hs::LetExp>())
     {
+        local_instance_env lie;
+
         // 1. Extend environment with types for decls, get any substitutions
         auto [s_decls, env_decls] = infer_type_for_decls(env, unloc(let->binds));
         auto env2 = plus_no_overlap(env_decls, env);
 
         // 2. Compute type of let body
-        auto [s_body, t_body] = infer_type(env2, unloc(let->body));
+        auto [s_body, t_body, lie_body] = infer_type(env2, unloc(let->body));
+        lie += lie_body;
 
         // return (s1 `compose` s2, t2)
-        return {compose(s_body, s_decls), t_body};
+        return {compose(s_body, s_decls), t_body, lie};
     }
     else if (auto con = E.head().to<Hs::Con>())
     {
+        local_instance_env lie;
         auto [object_type, field_types] = constr_types(*con);
 
         substitution_t s;
@@ -894,17 +952,18 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         vector<Hs::Type> arg_types;
         for(int i=0; i<E.size(); i++)
         {
-            auto [s_i, t_i] = infer_type(env2, E.sub()[i]);
+            auto [s_i, t_i, lie_i] = infer_type(env2, E.sub()[i]);
             arg_types.push_back(t_i);
 
             // REQUIRE that i-th argument matches the type for the i-th field.
             auto s2_i = unify( field_types[i], t_i);
 
+            lie += lie_i;
             s = compose(compose(s2_i,s_i), s);
             env2 = apply_subst(s_i, env2);
         }
 
-        return {s, apply_subst(s, object_type)};
+        return {s, apply_subst(s, object_type), {}};
     }
     else if (is_non_apply_op_exp(E))
     {
@@ -914,10 +973,13 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
     // CASE
     else if (auto case_exp = E.to<Hs::CaseExp>())
     {
-        // 1. Determine object type
-        auto [s1, object_type] = infer_type(env, case_exp->object);
-        auto env2 = apply_subst(s1, env);
+        local_instance_env lie;
 
+        // 1. Determine object type
+        auto [s1, object_type, lie1] = infer_type(env, case_exp->object);
+        auto env2 = apply_subst(s1, env);
+        lie += lie1;
+        
         // 2. Determine data type for object from patterns.
         Hs::Match match;
         for(auto& alt: case_exp->alts)
@@ -927,7 +989,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         }
 
         auto [s2, match_type] = infer_type(env2, match);
-
+        
         Hs::Type result_type = fresh_type_var();
 
         auto s3 = unify( make_arrow_type(object_type,result_type), match_type );
@@ -936,14 +998,14 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
 
         result_type = apply_subst(s, result_type);
 
-        return {s, result_type};
+        return {s, result_type, lie};
     }
     // IF
     else if (auto if_exp = E.to<Hs::IfExp>())
     {
-        auto [cond_s, cond_type] = infer_type(env, unloc(if_exp->condition));
-        auto [tbranch_s, tbranch_type] = infer_type(env, unloc(if_exp->true_branch));
-        auto [fbranch_s, fbranch_type] = infer_type(env, unloc(if_exp->false_branch));
+        auto [cond_s, cond_type, cond_lie] = infer_type(env, unloc(if_exp->condition));
+        auto [tbranch_s, tbranch_type, tbranch_lie] = infer_type(env, unloc(if_exp->true_branch));
+        auto [fbranch_s, fbranch_type, fbranch_lie] = infer_type(env, unloc(if_exp->false_branch));
 
         auto s2 = unify(cond_type, bool_type());
         auto s3 = unify(tbranch_type, fbranch_type);
@@ -951,87 +1013,87 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         auto s = compose(s3, compose(s2, compose(fbranch_s, compose(tbranch_s, cond_s))));
 
         auto result_type = apply_subst(s, tbranch_type);
-        return {s, result_type};
+        return {s, result_type, cond_lie + tbranch_lie + fbranch_lie};
     }
     // LISTCOMP
     else if (auto lcomp = E.to<Hs::ListComprehension>())
     {
         auto [quals_s, quals_binders] = infer_quals_type(env, lcomp->quals);
-        auto [exp_s, exp_type] = infer_type(plus_prefer_right(env, quals_binders), lcomp->body);
+        auto [exp_s, exp_type, exp_lie] = infer_type(plus_prefer_right(env, quals_binders), lcomp->body);
         auto s = compose(exp_s, quals_s);
         Hs::Type result_type = apply_subst(s, Hs::ListType(exp_type));
-        return {s, result_type};
+        return {s, result_type, exp_lie};
     }
     // ENUM-FROM
     else if (auto l = E.to<Hs::ListFrom>())
     {
-    // PROBLEM: the ENUM rules actually take any type t with an Enum t instance.
+        // PROBLEM: the ENUM rules actually take any type t with an Enum t instance.
 //        Hs::Type t = fresh_type_var();
         Hs::Type t = Hs::TypeCon({noloc,"Num#"});
 
         // PROBLEM: Do we need to desugar these here, in order to plug in the dictionary?
-        auto [s_from, t_from] = infer_type(env, l->from);
+        auto [s_from, t_from, lie_from] = infer_type(env, l->from);
         auto s1 = unify(t,t_from);
         auto s = compose(s1, s_from);
         t = apply_subst(s,t);
 
-        return {s, Hs::ListType(t)};
+        return {s, Hs::ListType(t), lie_from};
     }
     // ENUM-FROM-THEN
     else if (auto l = E.to<Hs::ListFromThen>())
     {
 //        Hs::Type t = fresh_type_var();
         Hs::Type t = Hs::TypeCon({noloc,"Num#"});
-        auto [s_from, t_from] = infer_type(env, l->from);
+        auto [s_from, t_from, lie_from] = infer_type(env, l->from);
         auto s1 = unify(t,t_from);
         auto s = compose(s1, s_from);
         t = apply_subst(s,t);
 
-        auto [s_then, t_then] = infer_type(env, l->then);
+        auto [s_then, t_then, lie_then] = infer_type(env, l->then);
         auto s2 = unify(t,t_then);
         s = compose(s2, compose(s_then,s));
         t = apply_subst(s,t);
 
-        return {s, Hs::ListType(t)};
+        return {s, Hs::ListType(t), lie_from + lie_then };
     }
     // ENUM-FROM-TO
     else if (auto l = E.to<Hs::ListFromTo>())
     {
 //        Hs::Type t = fresh_type_var();
         Hs::Type t = Hs::TypeCon({noloc,"Num#"});
-        auto [s_from, t_from] = infer_type(env, l->from);
+        auto [s_from, t_from, lie_from] = infer_type(env, l->from);
         auto s1 = unify(t,t_from);
         auto s = compose(s1, s_from);
         t = apply_subst(s,t);
 
-        auto [s_to, t_to] = infer_type(env, l->to);
+        auto [s_to, t_to, lie_to] = infer_type(env, l->to);
         auto s2 = unify(t,t_to);
         s = compose(s2, compose(s_to,s));
         t = apply_subst(s,t);
 
-        return {s, Hs::ListType(t)};
+        return {s, Hs::ListType(t), lie_from+lie_to};
     }
     // ENUM-FROM-THEN-TO
     else if (auto l = E.to<Hs::ListFromThenTo>())
     {
 //        Hs::Type t = fresh_type_var();
         Hs::Type t = Hs::TypeCon({noloc,"Num#"});
-        auto [s_from, t_from] = infer_type(env, l->from);
+        auto [s_from, t_from, lie_from] = infer_type(env, l->from);
         auto s1 = unify(t,t_from);
         auto s = compose(s1, s_from);
         t = apply_subst(s,t);
 
-        auto [s_then, t_then] = infer_type(env, l->then);
+        auto [s_then, t_then, lie_then] = infer_type(env, l->then);
         auto s2 = unify(t,t_then);
         s = compose(s2, compose(s_then,s));
         t = apply_subst(s,t);
 
-        auto [s_to, t_to] = infer_type(env, l->to);
+        auto [s_to, t_to, lie_to] = infer_type(env, l->to);
         auto s3 = unify(t,t_to);
         s = compose(s3, compose(s_to,s));
         t = apply_subst(s,t);
 
-        return {s, Hs::ListType(t)};
+        return {s, Hs::ListType(t), lie_from+lie_then+lie_to};
     }
     else
         throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
