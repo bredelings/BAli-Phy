@@ -300,10 +300,12 @@ struct typechecker_state
     tuple<substitution_t, local_instance_env, Hs::Type>
     infer_type(const global_value_env& env, const Hs::Match&);
 
-    pair<substitution_t, global_value_env>
+    // Figures 13, 14, 15?
+    tuple<substitution_t, local_instance_env, global_value_env>
     infer_type_for_decls(const global_value_env& env, const Hs::Decls& E);
 
-    pair<substitution_t, global_value_env>
+    // Figures 13, 14, 15?
+    tuple<substitution_t, local_instance_env, global_value_env>
     infer_type_for_decls(const global_value_env& env, const Hs::Binds& binds);
 
     tuple<global_value_env, global_instance_env, class_env, Hs::Binds>
@@ -415,27 +417,31 @@ expression_ref typechecker_state::instantiate(const expression_ref& t)
     return apply_subst(s,t2);
 }
 
-pair<substitution_t, global_value_env>
+tuple<substitution_t, local_instance_env, global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::Binds& binds)
 {
     substitution_t s;
     auto env2 = env;
+    local_instance_env lie;
     global_value_env binders;
     for(auto& decls: binds)
     {
-        auto [s1, binders1] = infer_type_for_decls(env2, decls);
+        auto [s1, lie1, binders1] = infer_type_for_decls(env2, decls);
+        lie += lie1;
         env2 = plus_prefer_right(env2, binders1);
-        binders = plus_no_overlap(binders, binders1);
+        binders += binders1;
         s = compose(s1, s);
     }
     binders = apply_subst(s, binders);
-    return {s, binders};
+    lie = apply_subst(s, lie);
+    return {s, lie, binders};
 }
 
-pair<substitution_t,global_value_env>
+tuple<substitution_t, local_instance_env, global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::Decls& decls)
 {
     // 1. Add each let-binder to the environment with a fresh type variable
+    local_instance_env lie;
     value_env binder_env;
 
     vector<pair<Hs::Type,global_value_env>> decl_types;
@@ -461,7 +467,6 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::D
     auto env2 = plus_prefer_right(env, binder_env);
 
     // 2. Infer the types of each of the x[i]
-    local_instance_env lie;
     substitution_t s;
     for(int i=0;i<decls.size();i++)
     {
@@ -493,7 +498,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::D
     for(auto& [var,type]: binder_env)
         generalized_binder_env = generalized_binder_env.insert({var,generalize(env, type)});
 
-    return {s, generalized_binder_env};
+    return {s, lie, generalized_binder_env};
 }
 
 // Figure 24. Rules for patterns
@@ -662,8 +667,7 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
     }
     else if (auto lq = qual.to<Hs::LetQual>())
     {
-        local_instance_env lie;
-        auto [s,t] = infer_type_for_decls(env, unloc(lq->binds));
+        auto [s, lie, t] = infer_type_for_decls(env, unloc(lq->binds));
         return {s, lie, t};
     }
     else
@@ -694,8 +698,7 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
     }
     else if (auto lq = guard.to<Hs::LetQual>())
     {
-        local_instance_env lie;
-        auto [s,t] = infer_type_for_decls(env, unloc(lq->binds));
+        auto [s, lie, t] = infer_type_for_decls(env, unloc(lq->binds));
         return {s, lie, t};
     }
     else
@@ -735,7 +738,8 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::MultiGuarde
     auto env2 = env;
     if (rhs.decls)
     {
-        auto [s1, binders] = infer_type_for_decls(env, unloc(*rhs.decls));
+        auto [s1, lie1, binders] = infer_type_for_decls(env, unloc(*rhs.decls));
+        lie += lie1;
         env2 = plus_prefer_right(env, binders);
         s = compose(s1, s);
     }
@@ -939,18 +943,15 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
     // LET
     else if (auto let = E.to<Hs::LetExp>())
     {
-        local_instance_env lie;
-
         // 1. Extend environment with types for decls, get any substitutions
-        auto [s_decls, env_decls] = infer_type_for_decls(env, unloc(let->binds));
+        auto [s_decls, lie_decls, env_decls] = infer_type_for_decls(env, unloc(let->binds));
         auto env2 = plus_no_overlap(env_decls, env);
 
         // 2. Compute type of let body
         auto [s_body, lie_body, t_body] = infer_type(env2, unloc(let->body));
-        lie += lie_body;
 
         // return (s1 `compose` s2, t2)
-        return {compose(s_body, s_decls), lie, t_body};
+        return {compose(s_body, s_decls), lie_decls + lie_body, t_body};
     }
     else if (auto con = E.head().to<Hs::Con>())
     {
@@ -1642,7 +1643,7 @@ void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
 
     // 3. E' = (TCE_T, (CVE_T, GVE_C, LVE={}), CE_C, (GIE_C, LIE={}))
 
-    auto [s,env] = state.infer_type_for_decls(gve, M.value_decls);
+    auto [s,lie,env] = state.infer_type_for_decls(gve, M.value_decls);
 
     for(auto& [x,t]: env)
     {
