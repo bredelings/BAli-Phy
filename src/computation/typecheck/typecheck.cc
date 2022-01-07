@@ -349,7 +349,7 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
     else if (con_name == "[]")
     {
         Hs::Type a = fresh_type_var();
-        return {Hs::ListType(a),{a,Hs::ListType(a)}};
+        return {Hs::ListType(a),{}};
     }
     else if (is_tuple_name(con_name))
     {
