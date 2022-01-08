@@ -223,6 +223,8 @@ struct typechecker_state
 
     constr_env con_info;
 
+    global_instance_env gie;
+
     std::string mod_name;
 
     typechecker_state(const string& s, const constr_env& ce)
@@ -333,6 +335,12 @@ struct typechecker_state
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
     Hs::Binds get_dicts(const global_instance_env& gie, const local_instance_env& lie1, const local_instance_env& lie2);
+
+
+    pair<Hs::Binds,local_instance_env> toHnf(const string& name, const Hs::Type& constraint);
+    pair<Hs::Binds, local_instance_env> toHnfs(const local_instance_env& lie_in);
+    pair<Hs::Binds, local_instance_env> simplify(const local_instance_env& lie_in);
+    pair<Hs::Binds, local_instance_env> reduce(const local_instance_env& lie_in);
 };
 
 set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
@@ -437,11 +445,97 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::B
     return {s, lie, binders};
 }
 
-
-pair<Hs::Decls, local_instance_env> reduce(const local_instance_env& lie)
+bool type_is_hnf(const Hs::Type& type)
 {
-    Hs::Decls decls;
-    return {decls, lie};
+    auto [head,args] = decompose_type_apps(type);
+
+    if (type.is_a<Hs::TypeVar>())
+        return true;
+    else if (type.is_a<Hs::TypeCon>())
+        return false;
+    else if (type.is_a<Hs::ListType>())
+        return false;
+    else if (type.is_a<Hs::TupleType>())
+        return false;
+    else
+        std::abort();
+}
+
+// OK:     K a, K (a b), K (a [b]), etc. OK
+// NOT OK: K [a], K (a,b), etc. NOT OK.
+bool constraint_is_hnf(const Hs::Type& constraint)
+{
+    auto [class_con, args] = decompose_type_apps(constraint);
+    for(auto& arg: args)
+        if (not type_is_hnf(arg))
+            return false;
+    return true;
+}
+
+pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const string& name, const Hs::Type& constraint)
+{
+    Hs::Binds binds;
+    local_instance_env lie;
+    if (constraint_is_hnf(constraint))
+    {
+        lie = lie.insert({name, constraint});
+    }
+    else
+    {
+        lie = lie.insert({name, constraint});
+        // find the (single) matching instance or fail.
+        // The instance will be of the form
+        //     dfun :: forall  a1 a2 a3. (constraint, constraint, constraint) => K (T b1 b2 b3)
+        // We need to substitute into this definition to make K (T b1 b2 b3) == constraint.
+        // We need to make up new dvar names for all the input constraints.
+        // Then we would add to the decls:
+        //     dvar_orig = dfun dvar_new1 dvar_new2 dvar_new3
+        // And we would get a NEW lie:
+        //     dvar_new1 :: constraint1
+        //     dvar_new2 :: constraint2
+        //     dvar_new3 :: constraint3
+        //
+        // [decls2, lie2] = toHnfs(lie);
+        //  decls = decls then decls2
+        // So, maybe decls should actually be binds?
+    }
+    return {binds,lie};
+}
+
+pair<Hs::Binds, local_instance_env>
+typechecker_state::toHnfs(const local_instance_env& lie_in)
+{
+    Hs::Binds binds_out;
+    local_instance_env lie_out;
+    for(auto& [name, constraint]: lie_in)
+    {
+        auto [binds2, lie2] = toHnf(name, constraint);
+        for(auto& bind: binds2)
+            binds_out.push_back(bind);
+        lie_out += lie2;
+    }
+    return {binds_out, lie_out};
+}
+
+pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_instance_env& lie)
+{
+    Hs::Binds binds_out;
+    local_instance_env lie_out;
+
+    return {binds_out, lie_out};
+}
+
+pair<Hs::Binds, local_instance_env> typechecker_state::reduce(const local_instance_env& lie)
+{
+    auto [binds1, lie1] = toHnfs(lie);
+
+    auto [binds2, lie2] = simplify(lie1);
+
+    auto binds = binds1;
+    for(auto& bind: binds2)
+        binds.push_back(bind);
+
+    return {binds, lie};
 }
 
 pair<local_instance_env, local_instance_env>
@@ -533,7 +627,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::D
     // ??? = information to reduce LIEs and also handle defaults.
 
     // A. First, REDUCE the lie
-    auto [decls1, lie1] = reduce(lie);
+    auto [binds1, lie1] = reduce(lie);
 
     // % (decls1,lie') = reduce ??? lie
     // B. Second, remove the "deferred" predicates,
@@ -1720,6 +1814,7 @@ void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
     auto inst_gie = state.infer_type_for_instances1(M.type_decls, class_info, class_gie);
 
     auto gie = plus_no_overlap(class_gie, inst_gie);
+    state.gie = gie;
 
     for(auto& [method,type]: inst_gie)
     {
