@@ -337,6 +337,8 @@ struct typechecker_state
     Hs::Binds get_dicts(const global_instance_env& gie, const local_instance_env& lie1, const local_instance_env& lie2);
 
 
+    optional<pair<Hs::Var,vector<Hs::Type>>> lookup_instance(const Hs::Type& constraint);
+
     pair<Hs::Binds,local_instance_env> toHnf(const string& name, const Hs::Type& constraint);
     pair<Hs::Binds, local_instance_env> toHnfs(const local_instance_env& lie_in);
     pair<Hs::Binds, local_instance_env> simplify(const local_instance_env& lie_in);
@@ -472,6 +474,21 @@ bool constraint_is_hnf(const Hs::Type& constraint)
     return true;
 }
 
+optional<pair<Hs::Var,vector<Hs::Type>>> typechecker_state::lookup_instance(const Hs::Type& constraint)
+{
+    for(auto& [name, type]: gie)
+    {
+        vector<Hs::Type> instance_constraints;
+        Hs::Type instance_head = type;
+        if (auto ct = type.to<Hs::ConstrainedType>())
+        {
+            instance_constraints = ct->context.constraints;
+            instance_head = ct->type;
+        }
+    }
+    return {};
+}
+
 pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const string& name, const Hs::Type& constraint)
 {
     Hs::Binds binds;
@@ -482,22 +499,42 @@ pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const string& name, 
     }
     else
     {
-        lie = lie.insert({name, constraint});
-        // find the (single) matching instance or fail.
+        local_instance_env lie2;
+
+        // 1. find the (single) matching instance or fail.
         // The instance will be of the form
         //     dfun :: forall  a1 a2 a3. (constraint, constraint, constraint) => K (T b1 b2 b3)
         // We need to substitute into this definition to make K (T b1 b2 b3) == constraint.
-        // We need to make up new dvar names for all the input constraints.
+        auto instance = lookup_instance(constraint);
+        if (not instance)
+            throw myexception()<<"No instance for '"<<constraint<<"'";
+
+        auto [dfun,new_constraints] = *instance;
+
+        // 2. We need to make up new dvar names for all the input constraints.
         // Then we would add to the decls:
         //     dvar_orig = dfun dvar_new1 dvar_new2 dvar_new3
         // And we would get a NEW lie:
         //     dvar_new1 :: constraint1
         //     dvar_new2 :: constraint2
         //     dvar_new3 :: constraint3
-        //
-        // [decls2, lie2] = toHnfs(lie);
-        //  decls = decls then decls2
-        // So, maybe decls should actually be binds?
+        expression_ref rhs = dfun;
+        for(auto& new_constraint: new_constraints)
+        {
+            auto dvar = fresh_var("dvar");
+            lie2.insert({unloc(dvar.name), new_constraint});
+            rhs = {rhs,dvar};
+        }
+
+        Hs::Decls decls;
+        decls.push_back(Hs::simple_decl(dfun, rhs));
+
+        // 3. Finally, we may need to further simplify the new LIE
+        auto [binds2, lie3] = toHnfs(lie2);
+
+        lie = lie3;
+        binds = binds2;
+        binds.push_back(decls);
     }
     return {binds,lie};
 }
