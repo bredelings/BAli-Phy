@@ -465,6 +465,7 @@ bool type_is_hnf(const Hs::Type& type)
 
 // OK:     K a, K (a b), K (a [b]), etc. OK
 // NOT OK: K [a], K (a,b), etc. NOT OK.
+// Question: for multiparameter type classes, how about i.e. `K Int a`?
 bool constraint_is_hnf(const Hs::Type& constraint)
 {
     auto [class_con, args] = decompose_type_apps(constraint);
@@ -479,12 +480,28 @@ optional<pair<Hs::Var,vector<Hs::Type>>> typechecker_state::lookup_instance(cons
     for(auto& [name, type]: gie)
     {
         vector<Hs::Type> instance_constraints;
-        Hs::Type instance_head = type;
-        if (auto ct = type.to<Hs::ConstrainedType>())
+        Hs::Type instance_head = instantiate(type);
+
+        // Handle constraints
+        if (auto ct = instance_head.to<Hs::ConstrainedType>())
         {
             instance_constraints = ct->context.constraints;
             instance_head = ct->type;
         }
+
+        // Skip if this is not an instance.
+        if (constraint_is_hnf(instance_head)) continue;
+
+        auto s = match(instance_head, constraint);
+
+        // This instance doesn't match.
+        if (not s) continue;
+
+        for(auto& instance_constraint: instance_constraints)
+            instance_constraint = apply_subst(*s, instance_constraint);
+
+        auto dfun = Hs::Var({noloc, name});
+        return {{dfun, instance_constraints}};
     }
     return {};
 }
@@ -558,6 +575,7 @@ pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_inst
 {
     Hs::Binds binds_out;
     local_instance_env lie_out;
+    lie_out = lie;
 
     return {binds_out, lie_out};
 }
@@ -572,7 +590,7 @@ pair<Hs::Binds, local_instance_env> typechecker_state::reduce(const local_instan
     for(auto& bind: binds2)
         binds.push_back(bind);
 
-    return {binds, lie};
+    return {binds, lie2};
 }
 
 pair<local_instance_env, local_instance_env>
