@@ -1,6 +1,7 @@
 #include "unify.H"
 
 using std::string;
+using std::optional;
 
 string print(const substitution_t& s)
 {
@@ -203,7 +204,7 @@ substitution_t unify(const Hs::Type& t1, const Hs::Type& t2)
         substitution_t s;
         for(int i=0;i<tup1.element_types.size();i++)
         {
-            auto si = unify(tup1.element_types[i], tup2.element_types[i]);
+            auto si = unify(apply_subst(s,tup1.element_types[i]), apply_subst(s,tup2.element_types[i]));
             s = compose(si, s);
         }
         return s;
@@ -225,6 +226,75 @@ substitution_t unify(const Hs::Type& t1, const Hs::Type& t2)
     else
     {
         throw myexception()<<"types do not unify!";
+    }
+}
+
+optional<substitution_t> match(const Hs::Type& t1, const Hs::Type& t2)
+{
+    if (auto tv1 = t1.to<Haskell::TypeVar>())
+    {
+        substitution_t s;
+        if (t1 == t2)
+            return s;
+        if (occurs_check(*tv1, t2))
+            throw myexception()<<"Occurs check: cannot construct infinite type: "<<*tv1<<" ~ "<<t2<<"\n";
+        return s.insert({*tv1, t2});
+    }
+    else if (t1.is_a<Haskell::TypeApp>() and t2.is_a<Haskell::TypeApp>())
+    {
+        auto& app1 = t1.as_<Haskell::TypeApp>();
+        auto& app2 = t2.as_<Haskell::TypeApp>();
+
+        auto s1 = match(app1.head, app2.head);
+        if (not s1) return {};
+        auto s2 = match(apply_subst(*s1, app1.arg), app2.arg);
+        if (not s2) return {};
+        return compose(*s2, *s1);
+    }
+    else if (t1.is_a<Haskell::TypeCon>() and
+             t2.is_a<Haskell::TypeCon>() and
+             t1.as_<Haskell::TypeCon>() == t2.as_<Haskell::TypeCon>())
+    {
+        substitution_t s;
+        return s;
+    }
+    else if (t1.is_a<Hs::TupleType>() and t2.is_a<Hs::TupleType>())
+    {
+        auto& tup1 = t1.as_<Hs::TupleType>();
+        auto& tup2 = t2.as_<Hs::TupleType>();
+        if (tup1.element_types.size() != tup2.element_types.size())
+            throw myexception()<<"types do not match!";
+
+        substitution_t s;
+        for(int i=0;i<tup1.element_types.size();i++)
+        {
+            auto si = match( apply_subst(s, tup1.element_types[i]), tup2.element_types[i]);
+            if (not si) return {};
+            s = compose(*si, s);
+        }
+        return s;
+    }
+    else if (t1.is_a<Hs::ListType>() and t2.is_a<Hs::ListType>())
+    {
+        auto& L1 = t1.as_<Hs::ListType>();
+        auto& L2 = t2.as_<Hs::ListType>();
+        return match(L1.element_type, L2.element_type);
+    }
+    else if (t1.is_a<Hs::ForallType>() or t2.is_a<Hs::ForallType>())
+    {
+        throw myexception()<<"match "<<t1.print()<<" "<<t2.print()<<": How should we handle forall types?";
+    }
+    else if (t1.is_a<Hs::ConstrainedType>() or t2.is_a<Hs::ConstrainedType>())
+    {
+        throw myexception()<<"match "<<t1.print()<<" "<<t2.print()<<": How should we handle unification for constrained types?";
+    }
+    else if (t1.is_a<Hs::StrictLazyType>() or t2.is_a<Hs::StrictLazyType>())
+    {
+        throw myexception()<<"match "<<t1.print()<<" "<<t2.print()<<": How should we handle unification for strict/lazy types?";
+    }
+    else
+    {
+        throw myexception()<<"types do not match!";
     }
 }
 
