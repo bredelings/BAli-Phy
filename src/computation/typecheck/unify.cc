@@ -237,7 +237,7 @@ optional<substitution_t> match(const Hs::Type& t1, const Hs::Type& t2)
         if (t1 == t2)
             return s;
         if (occurs_check(*tv1, t2))
-            throw myexception()<<"Occurs check: cannot construct infinite type: "<<*tv1<<" ~ "<<t2<<"\n";
+            return {}; // throw myexception()<<"Occurs check: cannot construct infinite type: "<<*tv1<<" ~ "<<t2<<"\n";
         return s.insert({*tv1, t2});
     }
     else if (t1.is_a<Haskell::TypeApp>() and t2.is_a<Haskell::TypeApp>())
@@ -260,12 +260,13 @@ optional<substitution_t> match(const Hs::Type& t1, const Hs::Type& t2)
     }
     else if (t1.is_a<Hs::TupleType>() and t2.is_a<Hs::TupleType>())
     {
+        substitution_t s;
+
         auto& tup1 = t1.as_<Hs::TupleType>();
         auto& tup2 = t2.as_<Hs::TupleType>();
         if (tup1.element_types.size() != tup2.element_types.size())
-            throw myexception()<<"types do not match!";
+            return s;
 
-        substitution_t s;
         for(int i=0;i<tup1.element_types.size();i++)
         {
             auto si = match( apply_subst(s, tup1.element_types[i]), tup2.element_types[i]);
@@ -293,9 +294,7 @@ optional<substitution_t> match(const Hs::Type& t1, const Hs::Type& t2)
         throw myexception()<<"match "<<t1.print()<<" "<<t2.print()<<": How should we handle unification for strict/lazy types?";
     }
     else
-    {
-        throw myexception()<<"types do not match!";
-    }
+        return {};
 }
 
 
