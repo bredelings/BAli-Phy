@@ -522,7 +522,7 @@ pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const string& name, 
         for(auto& new_constraint: new_constraints)
         {
             auto dvar = fresh_var("dvar");
-            lie2.insert({unloc(dvar.name), new_constraint});
+            lie2 = lie2.insert({unloc(dvar.name), new_constraint});
             rhs = {rhs,dvar};
         }
 
