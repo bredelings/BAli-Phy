@@ -331,7 +331,12 @@ struct typechecker_state
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
     Hs::Binds get_dicts(const global_instance_env& gie, const local_instance_env& lie1, const local_instance_env& lie2);
 
+    vector<pair<Hs::Decls,pair<string,Hs::Type>>> superclass_constraints(const pair<string,Hs::Type>& class_constraint);
 
+    std::optional<Hs::Binds>
+    is_superclass_of(const pair<string,Hs::Type>&, const pair<string, Hs::Type>&);
+
+    std::optional<Hs::Binds> entails(int i, const vector<pair<string, Hs::Type>>& lie1, vector<pair<string, Hs::Type>>& lie2);
     optional<pair<Hs::Var,vector<Hs::Type>>> lookup_instance(const Hs::Type& constraint);
 
     pair<Hs::Binds,local_instance_env> toHnf(const string& name, const Hs::Type& constraint);
@@ -566,11 +571,84 @@ typechecker_state::toHnfs(const local_instance_env& lie_in)
     return {binds_out, lie_out};
 }
 
+vector<pair<Hs::Decls, pair<string, Hs::Type>>> typechecker_state::superclass_constraints(const pair<string, Hs::Type>& dvar_constraint)
+{
+    vector<pair<Hs::Decls, pair<string, Hs::Type>>> constraints;
+    return constraints;
+}
+
+// We are trying to eliminate the *first* argument.
+optional<Hs::Binds> typechecker_state::is_superclass_of(const pair<string,Hs::Type>& dvar_constraint1, const pair<string, Hs::Type>& dvar_constraint2)
+{
+    auto [dvar1name, constraint1] = dvar_constraint1;
+    Hs::Var dvar1({noloc, dvar1name});
+    auto [dvar2name, constraint2] = dvar_constraint2;
+    Hs::Var dvar2({noloc, dvar2name});
+
+    Hs::Binds binds;
+    if (same_type(constraint1, constraint2))
+    {
+        Hs::Decls decls;
+        decls.push_back( Hs::simple_decl(dvar1, dvar2) );
+        binds.push_back( decls );
+    }
+    else
+    {
+        // dvar1 :: constraint1 => dvar3 :: constraint3 => dvar2 :: constraint2
+        for(auto& [decls3, dvar_constraint3]: superclass_constraints(dvar_constraint2))
+        {
+            if (auto binds2 = is_superclass_of(dvar_constraint1, dvar_constraint3))
+            {
+                binds.push_back(decls3);
+                ranges::insert(binds, binds.end(), *binds2);
+            }
+        }
+    }
+    return binds;
+}
+
+optional<Hs::Binds> typechecker_state::entails(int index, const vector<pair<string, Hs::Type>>& lie1, vector<pair<string, Hs::Type>>& lie2)
+{
+    auto& constraint = lie1[index];
+    // First check if the relevant constraints are superclasses of the current constraint.
+    for(int i=index+1; i<lie1.size(); i++)
+    {
+        auto binds = is_superclass_of(constraint, lie1[i]);
+        if (binds)
+            return *binds;
+    }
+    for(auto& con: lie2)
+    {
+        auto binds = is_superclass_of(constraint, con);
+        if (binds)
+            return *binds;
+    }
+    
+    if (auto inst = lookup_instance(constraint.second))
+    {
+        
+    }
+
+    return {};
+}
+
 pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_instance_env& lie)
 {
     Hs::Binds binds_out;
     local_instance_env lie_out;
-    lie_out = lie;
+    auto lie_vec = lie | ranges::to<vector>;
+    vector<pair<string,Hs::Type>> checked;
+
+    for(int i=0;i<lie_vec.size();i++)
+    {
+        if (auto new_binds = entails(i, lie_vec, checked))
+            ranges::insert(binds_out, binds_out.end(), *new_binds);
+        else
+            checked.push_back(lie_vec[i]);
+    }
+
+    for(auto& var_equals_constraint: checked)
+        lie_out = lie_out.insert(var_equals_constraint);
 
     return {binds_out, lie_out};
 }
