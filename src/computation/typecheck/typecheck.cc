@@ -238,6 +238,11 @@ struct typechecker_state
 
     Hs::Type char_type() const { return Hs::TypeCon({noloc,"Char#"}); }
 
+    Hs::Type num_class(const Hs::Type& arg) const
+    {
+        return Hs::TypeApp(Hs::TypeCon({noloc,"Num"}),arg);
+    }
+
     pair<Hs::Type, vector<Hs::Type>> constr_types(const Hs::Con&);
 
     Hs::Var fresh_var(const std::string& s, bool qualified)
@@ -574,6 +579,9 @@ typechecker_state::toHnfs(const local_instance_env& lie_in)
 vector<pair<Hs::Decls, pair<string, Hs::Type>>> typechecker_state::superclass_constraints(const pair<string, Hs::Type>& dvar_constraint)
 {
     vector<pair<Hs::Decls, pair<string, Hs::Type>>> constraints;
+
+    // TODO
+
     return constraints;
 }
 
@@ -626,7 +634,7 @@ optional<Hs::Binds> typechecker_state::entails(int index, const vector<pair<stri
     
     if (auto inst = lookup_instance(constraint.second))
     {
-        
+        // TODO
     }
 
     return {};
@@ -897,7 +905,6 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
         return {pat, num_type(),{}};
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
-    
 }
 
 
@@ -1117,7 +1124,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
     {
         local_instance_env lie;
         Hs::Type a = fresh_type_var();
-        Hs::Type num_a = Hs::TypeApp(Hs::TypeCon({noloc,"Num"}),a);
+        Hs::Type num_a = num_class(a);
         Hs::Type num_a_a = Hs::ConstrainedType(Hs::Context({num_a}),a);
 
         auto dvar = fresh_var("dvar", false);
@@ -1337,7 +1344,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
     {
         // PROBLEM: the ENUM rules actually take any type t with an Enum t instance.
 //        Hs::Type t = fresh_type_var();
-        Hs::Type t = Hs::TypeCon({noloc,"Num#"});
+        Hs::Type t = num_type();
 
         // PROBLEM: Do we need to desugar these here, in order to plug in the dictionary?
         auto [s_from, lie_from, t_from] = infer_type(env, l->from);
@@ -1353,7 +1360,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
     else if (auto l = E.to<Hs::ListFromThen>())
     {
 //        Hs::Type t = fresh_type_var();
-        Hs::Type t = Hs::TypeCon({noloc,"Num#"});
+        Hs::Type t = num_type();
         auto [s_from, lie_from, t_from] = infer_type(env, l->from);
         auto s1 = unify(t,t_from);
         auto s = compose(s1, s_from);
@@ -1372,7 +1379,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
     else if (auto l = E.to<Hs::ListFromTo>())
     {
 //        Hs::Type t = fresh_type_var();
-        Hs::Type t = Hs::TypeCon({noloc,"Num#"});
+        Hs::Type t = num_type();
         auto [s_from, lie_from, t_from] = infer_type(env, l->from);
         auto s1 = unify(t,t_from);
         auto s = compose(s1, s_from);
@@ -1391,7 +1398,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
     else if (auto l = E.to<Hs::ListFromThenTo>())
     {
 //        Hs::Type t = fresh_type_var();
-        Hs::Type t = Hs::TypeCon({noloc,"Num#"});
+        Hs::Type t = num_type();
         auto [s_from, lie_from, t_from] = infer_type(env, l->from);
         auto s1 = unify(t,t_from);
         auto s = compose(s1, s_from);
