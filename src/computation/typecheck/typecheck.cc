@@ -250,11 +250,6 @@ struct typechecker_state
         return x;
     }
 
-    Hs::Var fresh_var(bool qualified)
-    {
-        return fresh_var("v", qualified);
-    }
-
     Hs::TypeVar fresh_type_var() {
         Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
         tv.index = next_tvar_index;
@@ -538,7 +533,7 @@ pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const string& name, 
         expression_ref rhs = dfun;
         for(auto& new_constraint: new_constraints)
         {
-            auto dvar = fresh_var("dvar");
+            auto dvar = fresh_var("dvar", false);
             lie2 = lie2.insert({unloc(dvar.name), new_constraint});
             rhs = {rhs,dvar};
         }
@@ -1047,7 +1042,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         Hs::Type num_a = Hs::TypeApp(Hs::TypeCon({noloc,"Num"}),a);
         Hs::Type num_a_a = Hs::ConstrainedType(Hs::Context({num_a}),a);
 
-        auto dvar = fresh_var("dvar");
+        auto dvar = fresh_var("dvar", false);
         lie = lie.insert({unloc(dvar.name), num_a_a});
         return { {}, lie, a };
     }
@@ -1058,7 +1053,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         Hs::Type fractional_a = Hs::TypeApp(Hs::TypeCon({noloc,"Fractional"}),a);
         Hs::Type fractional_a_a = Hs::ConstrainedType(Hs::Context({fractional_a}),a);
 
-        auto dvar = fresh_var("dvar");
+        auto dvar = fresh_var("dvar", false);
         lie = lie.insert({unloc(dvar.name), fractional_a_a});
         return { {}, lie, a };
     }
@@ -1680,7 +1675,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, c
             throw myexception()<<"Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in '"<<inst_decl.constraint<<"'";
     }
 
-    auto dfun = fresh_var("dfun");
+    auto dfun = fresh_var("dfun", true);
     Hs::Type inst_type = add_constraints(inst_decl.context.constraints, inst_decl.constraint);
     inst_type = add_forall_vars( free_type_VARS(inst_type) | ranges::to<vector>, inst_type);
     global_instance_env gie;
@@ -1785,7 +1780,7 @@ typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, c
 
     // Premise 8:
     Hs::Binds binds_methods;
-    auto dfun = fresh_var("dfun");
+    auto dfun = fresh_var("dfun", true);
 
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdicts,methods>
     expression_ref dict1 = tuple_from_value_env(cinfo->fields);
