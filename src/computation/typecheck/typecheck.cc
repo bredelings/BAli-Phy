@@ -270,7 +270,7 @@ struct typechecker_state
         return tv;
     }
 
-    Hs::Type instantiate(const Hs::Type& t);
+    pair<vector<Hs::Type>,Hs::Type> instantiate(const Hs::Type& t);
 
     // Figure 22.
     tuple<substitution_t, local_instance_env, local_value_env>
@@ -378,7 +378,7 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
     // 1. Find the data type
     if (not con_info.count(con_name))
         throw myexception()<<"Unrecognized constructor: "<<con;
-    auto con_type = instantiate(con_info.at(con_name));
+    auto [constraints, con_type] = instantiate(con_info.at(con_name));
     vector<Hs::Type> field_types;
 
     while(auto f = is_function_type(con_type))
@@ -415,11 +415,12 @@ expression_ref generalize(const global_value_env& env, const expression_ref& mon
     return Hs::ForallType(ftv1 | ranges::to<vector>, monotype);
 }
 
-expression_ref typechecker_state::instantiate(const expression_ref& t)
+pair<vector<Hs::Type>, Hs::Type> typechecker_state::instantiate(const Hs::Type& t)
 {
+    // 1. Handle foralls
     substitution_t s;
-    auto t2 = t;
-    while(auto fa = t2.to<Hs::ForallType>())
+    auto type = t;
+    while(auto fa = type.to<Hs::ForallType>())
     {
         for(auto& tv: fa->type_var_binders)
         {
@@ -427,9 +428,18 @@ expression_ref typechecker_state::instantiate(const expression_ref& t)
             new_tv.kind = tv.kind;
             s = s.insert({tv,new_tv});
         }
-        t2 = fa->type;
+        type = fa->type;
     }
-    return apply_subst(s,t2);
+    type = apply_subst(s,type);
+
+    // 2. Handle constraints
+    vector<Hs::Type> constraints;
+    if (auto ct = type.to<Hs::ConstrainedType>())
+    {
+        constraints = ct->context.constraints;
+        type = ct->type;
+    }
+    return {constraints,type};
 }
 
 tuple<substitution_t, local_instance_env, global_value_env>
@@ -484,15 +494,7 @@ optional<pair<Hs::Var,vector<Hs::Type>>> typechecker_state::lookup_instance(cons
 {
     for(auto& [name, type]: gie)
     {
-        vector<Hs::Type> instance_constraints;
-        Hs::Type instance_head = instantiate(type);
-
-        // Handle constraints
-        if (auto ct = instance_head.to<Hs::ConstrainedType>())
-        {
-            instance_constraints = ct->context.constraints;
-            instance_head = ct->type;
-        }
+        auto [instance_constraints, instance_head] = instantiate(type);
 
         // Skip if this is not an instance.
         if (constraint_is_hnf(instance_head)) continue;
@@ -1105,20 +1107,16 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         if (not sigma)
             throw myexception()<<"infer_type: can't find type of variable '"<<x->print()<<"'";
 
-        auto tau = instantiate(*sigma);
+        auto [constraints, type] = instantiate(*sigma);
 
         local_instance_env lie;
-        if (auto ct = tau.to<Hs::ConstrainedType>())
+        for(auto& constraint: constraints)
         {
-            for(auto& constraint: ct->context.constraints)
-            {
-                auto dvar = fresh_var("dvar", false);
-                lie = lie.insert({unloc(dvar.name), constraint});
-            }
-            tau = ct->type;
+            auto dvar = fresh_var("dvar", false);
+            lie = lie.insert({unloc(dvar.name), constraint});
         }
 
-        return {{}, lie, tau};
+        return {{}, lie, type};
     }
     else if (E.is_int())
     {
