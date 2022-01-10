@@ -374,10 +374,14 @@ struct typechecker_state
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
     Hs::Binds get_dicts(const global_instance_env& gie, const local_instance_env& lie1, const local_instance_env& lie2);
 
-    vector<pair<Hs::Decls,pair<string,Hs::Type>>> superclass_constraints(const pair<string,Hs::Type>& class_constraint);
+    vector<pair<string, Hs::Type>> superclass_constraints(const Hs::Type& constraint);
+
+    std::optional<vector<string>>
+    is_superclass_of(const Hs::Type&, const Hs::Type&);
 
     std::optional<Hs::Binds>
-    is_superclass_of(const pair<string,Hs::Type>&, const pair<string, Hs::Type>&);
+    entails_by_superclass(const pair<string, Hs::Type>& to_keep,
+                          const pair<string, Hs::Type>& to_remove);
 
     std::optional<Hs::Binds> entails(int i, const vector<pair<string, Hs::Type>>& lie1, vector<pair<string, Hs::Type>>& lie2);
     optional<pair<Hs::Var,vector<Hs::Type>>> lookup_instance(const Hs::Type& constraint);
@@ -616,43 +620,82 @@ typechecker_state::toHnfs(const local_instance_env& lie_in)
     return {binds_out, lie_out};
 }
 
-vector<pair<Hs::Decls, pair<string, Hs::Type>>> typechecker_state::superclass_constraints(const pair<string, Hs::Type>& dvar_constraint)
+vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const Hs::Type& constraint)
 {
-    vector<pair<Hs::Decls, pair<string, Hs::Type>>> constraints;
+    vector<pair<string, Hs::Type>> constraints;
 
-    // TODO
+    for(auto& [name, type]: gie)
+    {
+        // Klass a => Superklass a
+        auto [class_constraints, superclass_constraint] = instantiate(type);
+
+        // Skip if this is not a method of extracting superclass dictionaries
+        if (not constraint_is_hnf(superclass_constraint)) continue;
+
+        assert(class_constraints.size() == 1);
+
+        auto class_constraint = class_constraints[0];
+        auto s = match(class_constraint, constraint);
+
+        // The premise doesn't match the current class;
+        if (not s) continue;
+
+        superclass_constraint = apply_subst(*s, superclass_constraint);
+
+        constraints.push_back( { name, superclass_constraint } );
+    }
 
     return constraints;
 }
 
 // We are trying to eliminate the *first* argument.
-optional<Hs::Binds> typechecker_state::is_superclass_of(const pair<string,Hs::Type>& dvar_constraint1, const pair<string, Hs::Type>& dvar_constraint2)
+optional<vector<string>> typechecker_state::is_superclass_of(const Hs::Type& constraint1, const Hs::Type& constraint2)
 {
-    auto [dvar1name, constraint1] = dvar_constraint1;
-    Hs::Var dvar1({noloc, dvar1name});
-    auto [dvar2name, constraint2] = dvar_constraint2;
-    Hs::Var dvar2({noloc, dvar2name});
-
-    Hs::Binds binds;
+    vector<string> extractors;
     if (same_type(constraint1, constraint2))
-    {
-        Hs::Decls decls;
-        decls.push_back( Hs::simple_decl(dvar1, dvar2) );
-        binds.push_back( decls );
-    }
+        return extractors;
     else
     {
         // dvar1 :: constraint1 => dvar3 :: constraint3 => dvar2 :: constraint2
-        for(auto& [decls3, dvar_constraint3]: superclass_constraints(dvar_constraint2))
+        for(auto& [name, constraint3]: superclass_constraints(constraint2))
         {
-            if (auto binds2 = is_superclass_of(dvar_constraint1, dvar_constraint3))
+            if (auto extractors2 = is_superclass_of(constraint1, constraint3))
             {
-                binds.push_back(decls3);
-                ranges::insert(binds, binds.end(), *binds2);
+                extractors = std::move(*extractors2);
+                extractors.push_back(name);
+                return extractors;
             }
         }
+        return {};
     }
-    return binds;
+}
+
+optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<string, Hs::Type>& to_keep, const pair<string, Hs::Type>& to_remove)
+{
+    auto& [dvar_to_keep_name, constraint_to_keep] = to_keep;
+    auto& [dvar_to_remove_name, constraint_to_remove] = to_remove;
+
+    if (auto extractors = is_superclass_of(constraint_to_remove, constraint_to_keep))
+    {
+        Hs::Var dvar_to_keep({noloc, dvar_to_keep_name});
+        Hs::Var dvar_to_remove({noloc, dvar_to_remove_name});
+
+        Hs::Exp dict_exp = dvar_to_keep;
+        for(auto& extractor: *extractors | views::reverse)
+        {
+            Hs::Var get_dict({noloc, extractor});
+            dict_exp = {get_dict, dict_exp};
+        }
+
+        Hs::Decls decls;
+        // dvar_to_remove = extractor[n] extractor[n-1] ... extractor[0] dvar_to_keep
+        decls.push_back( Hs::simple_decl(dvar_to_remove, dict_exp) );
+        Hs::Binds binds;
+        binds.push_back(decls);
+        return binds;
+    }
+    else
+        return {};
 }
 
 optional<Hs::Binds> typechecker_state::entails(int index, const vector<pair<string, Hs::Type>>& lie1, vector<pair<string, Hs::Type>>& lie2)
@@ -661,14 +704,12 @@ optional<Hs::Binds> typechecker_state::entails(int index, const vector<pair<stri
     // First check if the relevant constraints are superclasses of the current constraint.
     for(int i=index+1; i<lie1.size(); i++)
     {
-        auto binds = is_superclass_of(constraint, lie1[i]);
-        if (binds)
+        if (auto binds = entails_by_superclass(lie1[i], constraint))
             return *binds;
     }
-    for(auto& con: lie2)
+    for(auto& constraint2: lie2)
     {
-        auto binds = is_superclass_of(constraint, con);
-        if (binds)
+        if (auto binds = entails_by_superclass(constraint2, constraint))
             return *binds;
     }
     
@@ -676,7 +717,7 @@ optional<Hs::Binds> typechecker_state::entails(int index, const vector<pair<stri
     {
         // TODO
     }
-
+    
     return {};
 }
 

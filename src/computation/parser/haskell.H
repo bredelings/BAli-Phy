@@ -78,6 +78,7 @@ typedef expression_ref Kind;
 typedef expression_ref Type;
 typedef expression_ref Pattern;
 typedef expression_ref Expression;
+typedef expression_ref Exp;
 typedef expression_ref Qual;
 
 struct Var: public Object
