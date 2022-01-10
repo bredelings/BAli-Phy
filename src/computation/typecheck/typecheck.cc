@@ -913,11 +913,11 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
     }
     else if (pat.is_char())
     {
-        return  char_type();
+        return {pat, char_type(), {}};
     }
     else if (false) // Literal string
     {
-    // what about a STRING type?
+        return {pat, Hs::ListType(char_type()), {}};
     }
     else if (pat.is_log_double())
         throw myexception()<<"log_double literatal should be impossible: '"<<pat<<"'!";
