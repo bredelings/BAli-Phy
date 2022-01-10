@@ -903,8 +903,24 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
         return {T, Hs::TupleType(types), lve};
     }
     // ???
-    else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
+    else if (pat.is_int())
+    {
         return {pat, num_type(),{}};
+    }
+    else if (pat.is_double())
+    {
+        return {pat, num_type(),{}};
+    }
+    else if (pat.is_char())
+    {
+        return  char_type();
+    }
+    else if (false) // Literal string
+    {
+    // what about a STRING type?
+    }
+    else if (pat.is_log_double())
+        throw myexception()<<"log_double literatal should be impossible: '"<<pat<<"'!";
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
