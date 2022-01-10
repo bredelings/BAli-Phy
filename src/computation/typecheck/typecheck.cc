@@ -1123,10 +1123,9 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         local_instance_env lie;
         Hs::Type a = fresh_type_var();
         Hs::Type num_a = num_class(a);
-        Hs::Type num_a_a = Hs::ConstrainedType(Hs::Context({num_a}),a);
 
         auto dvar = fresh_var("dvar", false);
-        lie = lie.insert({unloc(dvar.name), num_a_a});
+        lie = lie.insert({unloc(dvar.name), num_a});
         return { {}, lie, a };
     }
     else if (E.is_double())
@@ -1134,10 +1133,9 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         local_instance_env lie;
         Hs::Type a = fresh_type_var();
         Hs::Type fractional_a = Hs::TypeApp(Hs::TypeCon({noloc,"Fractional"}),a);
-        Hs::Type fractional_a_a = Hs::ConstrainedType(Hs::Context({fractional_a}),a);
 
         auto dvar = fresh_var("dvar", false);
-        lie = lie.insert({unloc(dvar.name), fractional_a_a});
+        lie = lie.insert({unloc(dvar.name), fractional_a});
         return { {}, lie, a };
     }
     else if (E.is_char())
