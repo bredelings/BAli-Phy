@@ -810,26 +810,24 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Decls d
     local_instance_env lie;
     value_env binder_env;
 
-    vector<pair<Hs::Type,global_value_env>> decl_types;
     for(int i=0;i<decls.size();i++)
     {
         auto& decl = decls[i];
         if (auto fd = decl.to<Hs::FunDecl>())
         {
             Hs::Type type = fresh_type_var();
-            local_value_env lve;
             auto& name = unloc(fd->v.name);
+
+            local_value_env lve;
             lve = lve.insert({name,type});
-            decl_types.push_back({type, lve});
+            binder_env += lve;
         }
         else if (auto pd = decl.to<Hs::PatDecl>())
         {
             auto [p, type, lie_p, lve] = infer_pattern_type(pd->lhs);
-            decl_types.push_back({type,lve});
+            binder_env += lve;
             lie += lie_p;
         }
-        auto& [type, lve] = decl_types.back();
-        binder_env += lve;
     }
     auto env2 = plus_prefer_right(env, binder_env);
 
