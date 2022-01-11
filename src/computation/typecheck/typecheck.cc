@@ -383,7 +383,9 @@ struct typechecker_state
     entails_by_superclass(const pair<string, Hs::Type>& to_keep,
                           const pair<string, Hs::Type>& to_remove);
 
-    std::optional<Hs::Binds> entails(int i, const vector<pair<string, Hs::Type>>& lie1, vector<pair<string, Hs::Type>>& lie2);
+    template <typename T>
+    std::optional<Hs::Binds> entails(const T& to_keep, const pair<string, Hs::Type>& to_check);
+
     optional<pair<Hs::Var,vector<Hs::Type>>> lookup_instance(const Hs::Type& constraint);
 
     pair<Hs::Binds,local_instance_env> toHnf(const string& name, const Hs::Type& constraint);
@@ -698,26 +700,45 @@ optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<string, 
         return {};
 }
 
-optional<Hs::Binds> typechecker_state::entails(int index, const vector<pair<string, Hs::Type>>& lie1, vector<pair<string, Hs::Type>>& lie2)
+template <typename T>
+optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const pair<string, Hs::Type>& to_remove)
 {
-    auto& constraint = lie1[index];
-    // First check if the relevant constraints are superclasses of the current constraint.
-    for(int i=index+1; i<lie1.size(); i++)
+    // 1. First check if the relevant constraints are superclasses of the current constraint.
+    for(auto& constraint2: to_keep)
     {
-        if (auto binds = entails_by_superclass(lie1[i], constraint))
-            return *binds;
-    }
-    for(auto& constraint2: lie2)
-    {
-        if (auto binds = entails_by_superclass(constraint2, constraint))
+        if (auto binds = entails_by_superclass(constraint2, to_remove))
             return *binds;
     }
     
-    if (auto inst = lookup_instance(constraint.second))
+    // 2. Then check if there is an instance dfun :: (K1 a, K2 a) => K a
+    if (auto inst = lookup_instance(to_remove.second))
     {
-        // TODO
+        auto [dfun, constraints] = *inst;
+
+        Hs::Binds binds;
+        // If we can get (dvar1 :: K1 a) and (dvar2 :: K2 a) and a dfun so that dvar = dfun dvar1 dvar2
+        vector<Hs::Exp> args;
+        for(auto& constraint: constraints)
+        {
+            Hs::Decls decls;
+            auto dvar = fresh_var("dvar", false);
+            args.push_back(dvar);
+            if (auto cbinds = entails(to_keep, {unloc(dvar.name),constraint}))
+            {
+                ranges::insert(binds, binds.end(), *cbinds);
+            }
+            else
+                return {};
+        }
+
+        Hs::Decls decls;
+        Hs::Var dvar( {noloc, to_remove.first} );
+        decls.push_back( Hs::simple_decl( dvar, apply_expression(dfun, args)) );
+        binds.push_back( decls );
+
+        return binds;
     }
-    
+
     return {};
 }
 
@@ -730,7 +751,9 @@ pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_inst
 
     for(int i=0;i<lie_vec.size();i++)
     {
-        if (auto new_binds = entails(i, lie_vec, checked))
+        auto& pred = lie_vec[i];
+        auto preds = views::concat(lie_vec | views::drop(i+1), checked);
+        if (auto new_binds = entails(preds, pred))
             ranges::insert(binds_out, binds_out.end(), *new_binds);
         else
             checked.push_back(lie_vec[i]);
