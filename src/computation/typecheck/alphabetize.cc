@@ -19,7 +19,6 @@ Haskell::TypeVar alphabetized_type_var(int i)
 {
     auto s = alphabetized_type_var_name(i);
     auto v = Haskell::TypeVar({noloc,s});
-    v.index = i;
     return v;
 }
 

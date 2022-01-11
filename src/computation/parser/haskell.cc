@@ -400,14 +400,11 @@ bool TypeVar::operator==(const Object& o) const
 
 bool TypeVar::operator==(const TypeVar& tv) const
 {
-    return unloc(name) == unloc(tv.name) and index == tv.index;
+    return unloc(name) == unloc(tv.name);
 }
 
 bool TypeVar::operator<(const TypeVar& tv) const
 {
-    if (index < tv.index) return true;
-    if (index > tv.index) return false;
-
     int cmp = unloc(name).compare(unloc(tv.name));
 
     return (cmp < 0);
@@ -437,14 +434,11 @@ bool TypeCon::operator==(const Object& o) const
 
 bool TypeCon::operator==(const TypeCon& tv) const
 {
-    return unloc(name) == unloc(tv.name) and index == tv.index;
+    return unloc(name) == unloc(tv.name);
 }
 
 bool TypeCon::operator<(const TypeCon& tv) const
 {
-    if (index < tv.index) return true;
-    if (index > tv.index) return false;
-
     int cmp = unloc(name).compare(unloc(tv.name));
 
     return (cmp < 0);

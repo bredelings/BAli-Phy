@@ -303,7 +303,6 @@ struct typechecker_state
 
     Hs::TypeVar fresh_type_var() {
         Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
-        tv.index = next_tvar_index;
         next_tvar_index++;
         return tv;
     }
@@ -311,7 +310,6 @@ struct typechecker_state
     Hs::TypeVar named_type_var(const string& name)
     {
         Hs::TypeVar tv({noloc, name+"_"+std::to_string(next_tvar_index)});
-        tv.index = next_tvar_index;
         next_tvar_index++;
         return tv;
     }

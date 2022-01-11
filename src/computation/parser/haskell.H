@@ -115,7 +115,6 @@ struct TypeVar: public Object
 {
     Located<std::string> name;
     std::optional<Kind> kind;
-    std::optional<int> index;
 
     bool operator==(const Object&) const;
     bool operator==(const TypeVar&) const;
@@ -134,7 +133,6 @@ struct TypeCon: public Object
 {
     Located<std::string> name;
     std::optional<Kind> kind;
-    std::optional<int> index;
 
     bool operator==(const Object&) const;
     bool operator==(const TypeCon&) const;
