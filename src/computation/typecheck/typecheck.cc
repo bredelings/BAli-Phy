@@ -311,42 +311,42 @@ struct typechecker_state
     pair<vector<Hs::Type>,Hs::Type> instantiate(const Hs::Type& t);
 
     // Figure 22.
-    tuple<substitution_t, local_instance_env, local_value_env>
-    infer_quals_type(const global_value_env& env, const vector<Hs::Qual>& quals);
+    tuple<substitution_t, vector<Hs::Qual>, local_instance_env, local_value_env>
+    infer_quals_type(const global_value_env& env, vector<Hs::Qual> quals);
 
     // Figure 22.
-    tuple<substitution_t, local_instance_env, local_value_env>
+    tuple<substitution_t, Hs::Qual, local_instance_env, local_value_env>
     infer_qual_type(const global_value_env& env, const Hs::Qual& qual);
 
-    tuple<substitution_t, local_instance_env, local_value_env>
+    tuple<substitution_t, Hs::Qual, local_instance_env, local_value_env>
     infer_guard_type(const global_value_env& env, const Hs::Qual& guard);
 
     // Figure 24.
     tuple<Hs::Pattern, Hs::Type, local_instance_env, local_value_env>
     infer_pattern_type(const Hs::Pattern& pat);
 
-    tuple<substitution_t, local_instance_env, Hs::Type>
-    infer_type(const global_value_env& env, const expression_ref& exp);
+    tuple<substitution_t, expression_ref, local_instance_env, Hs::Type>
+    infer_type(const global_value_env& env, expression_ref exp);
 
-    tuple<substitution_t, local_instance_env, Hs::Type>
-    infer_type(const global_value_env& env, const Hs::GuardedRHS&);
+    tuple<substitution_t, Hs::GuardedRHS, local_instance_env, Hs::Type>
+    infer_type(const global_value_env& env, Hs::GuardedRHS);
 
-    tuple<substitution_t, local_instance_env, Hs::Type>
-    infer_type(const global_value_env& env, const Hs::MultiGuardedRHS&);
+    tuple<substitution_t, Hs::MultiGuardedRHS, local_instance_env, Hs::Type>
+    infer_type(const global_value_env& env, Hs::MultiGuardedRHS);
 
-    tuple<substitution_t, local_instance_env, Hs::Type>
-    infer_type(const global_value_env& env, const Hs::MRule&);
+    tuple<substitution_t, Hs::MRule, local_instance_env, Hs::Type>
+    infer_type(const global_value_env& env, Hs::MRule);
 
-    tuple<substitution_t, local_instance_env, Hs::Type>
-    infer_type(const global_value_env& env, const Hs::Match&);
-
-    // Figures 13, 14, 15?
-    tuple<substitution_t, local_instance_env, global_value_env>
-    infer_type_for_decls(const global_value_env& env, const Hs::Decls& E);
+    tuple<substitution_t, Hs::Match, local_instance_env, Hs::Type>
+    infer_type(const global_value_env& env, Hs::Match);
 
     // Figures 13, 14, 15?
-    tuple<substitution_t, local_instance_env, global_value_env>
-    infer_type_for_decls(const global_value_env& env, const Hs::Binds& binds);
+    tuple<substitution_t, Hs::Decls, local_instance_env, global_value_env>
+    infer_type_for_decls(const global_value_env& env, Hs::Decls E);
+
+    // Figures 13, 14, 15?
+    tuple<substitution_t, Hs::Binds, local_instance_env, global_value_env>
+    infer_type_for_decls(const global_value_env& env, Hs::Binds binds);
 
     tuple<global_value_env, global_instance_env, class_env, Hs::Binds>
     infer_type_for_classes(const Hs::Decls& decls, const type_con_env& tce);
@@ -486,8 +486,8 @@ pair<vector<Hs::Type>, Hs::Type> typechecker_state::instantiate(const Hs::Type& 
     return {constraints,type};
 }
 
-tuple<substitution_t, local_instance_env, global_value_env>
-typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::Binds& binds)
+tuple<substitution_t, Hs::Binds, local_instance_env, global_value_env>
+typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Binds binds)
 {
     substitution_t s;
     auto env2 = env;
@@ -495,7 +495,8 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::B
     global_value_env binders;
     for(auto& decls: binds)
     {
-        auto [s1, lie1, binders1] = infer_type_for_decls(env2, decls);
+        auto [s1, decls1, lie1, binders1] = infer_type_for_decls(env2, decls);
+        decls = decls1;
         lie += lie1;
         env2 = plus_prefer_right(env2, binders1);
         binders += binders1;
@@ -503,7 +504,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::B
     }
     binders = apply_subst(s, binders);
     lie = apply_subst(s, lie);
-    return {s, lie, binders};
+    return {s, binds, lie, binders};
 }
 
 bool type_is_hnf(const Hs::Type& type)
@@ -709,7 +710,7 @@ optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const pair<stri
         if (auto binds = entails_by_superclass(constraint2, to_remove))
             return *binds;
     }
-    
+
     // 2. Then check if there is an instance dfun :: (K1 a, K2 a) => K a
     if (auto inst = lookup_instance(to_remove.second))
     {
@@ -803,8 +804,8 @@ classify_constraints(const local_instance_env& lie,
     return {lie_deferred, lie_retained};
 }
 
-tuple<substitution_t, local_instance_env, global_value_env>
-typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::Decls& decls)
+tuple<substitution_t, Hs::Decls, local_instance_env, global_value_env>
+typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Decls decls)
 {
     // 1. Add each let-binder to the environment with a fresh type variable
     local_instance_env lie;
@@ -840,18 +841,25 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::D
         auto& decl = decls[i];
         if (auto fd = decl.to<Hs::FunDecl>())
         {
-            auto& name = unloc(fd->v.name);
+            auto FD = *fd;
+            auto& name = unloc(FD.v.name);
             auto lhs_type = env2.at(name);
-            auto [s2, rhs_lie, rhs_type] = infer_type(env2, fd->match);
-
+            auto [s2, match, rhs_lie, rhs_type] = infer_type(env2, FD.match);
+            FD.match = match;
+            decl = FD;
+            
             lie += rhs_lie;
             s = compose(s2, compose(unify(lhs_type, rhs_type), s));
         }
         else if (auto pd = decl.to<Hs::PatDecl>())
         {
-            auto [p, lhs_type, lhs_lie, lve] = infer_pattern_type(pd->lhs);
-            auto [s2, rhs_lie, rhs_type] = infer_type(env2, pd->rhs);
-
+            auto PD = *pd;
+            auto [lhs, lhs_type, lhs_lie, lve] = infer_pattern_type(PD.lhs);
+            auto [s2, rhs, rhs_lie, rhs_type] = infer_type(env2, PD.rhs);
+            PD.lhs = lhs;
+            PD.rhs = rhs;
+            decl = PD;
+            
             lie += lhs_lie;
             lie += rhs_lie;
             s = compose(s2, compose(unify(lhs_type, rhs_type), s));
@@ -897,7 +905,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const Hs::D
     for(auto& [var,type]: predicated_binder_env)
         generalized_binder_env = generalized_binder_env.insert({var,generalize(env, type)});
 
-    return {s, lie_deferred, generalized_binder_env};
+    return {s, decls, lie_deferred, generalized_binder_env};
 }
 
 // Figure 24. Rules for patterns
@@ -1050,8 +1058,8 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
 // * the original figure doesn't have let quals.
 // * the original figure seems to assume that quals only occur in list comprehensions?
 
-tuple<substitution_t, local_instance_env, value_env>
-typechecker_state::infer_quals_type(const global_value_env& env, const vector<Hs::Qual>& quals)
+tuple<substitution_t, vector<Hs::Qual>, local_instance_env, value_env>
+typechecker_state::infer_quals_type(const global_value_env& env, vector<Hs::Qual> quals)
 {
     substitution_t s;
     auto env2 = env;
@@ -1059,33 +1067,42 @@ typechecker_state::infer_quals_type(const global_value_env& env, const vector<Hs
     local_value_env binders;
     for(auto& qual: quals)
     {
-        auto [qual_s, qual_lie, qual_binders] = infer_qual_type(env2, qual);
+        auto [qual_s, qual_exp, qual_lie, qual_binders] = infer_qual_type(env2, qual);
+
+        qual = qual_exp;
         lie += qual_lie;
         s = compose(qual_s, s);
         env2 = plus_prefer_right(env2, qual_binders);
         binders = plus_prefer_right(binders, qual_binders);
     }
     binders = apply_subst(s, binders);
-    return {s, lie, binders};
+    return {s, quals, lie, binders};
 }
 
-tuple<substitution_t, local_instance_env, value_env>
+tuple<substitution_t, Hs::Qual, local_instance_env, value_env>
 typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& qual)
 {
     // FILTER
     if (auto sq = qual.to<Hs::SimpleQual>())
     {
-        auto [cond_s, cond_lie, cond_type] = infer_type(env, sq->exp);
+        auto SQ = *sq;
+        auto [cond_s, exp, cond_lie, cond_type] = infer_type(env, SQ.exp);
+        SQ.exp = exp;
         auto s2 = unify( cond_type, bool_type() );
         auto s = compose(s2, cond_s);
-        return {s, cond_lie, {}};
+        return {s, SQ, cond_lie, {}};
     }
     // GENERATOR.
     else if (auto pq = qual.to<Hs::PatQual>())
     {
+        auto PQ = *pq;
         // pat <- exp
-        auto [pat, pat_type, pat_lie, lve] = infer_pattern_type(pq->bindpat);
-        auto [exp_s, exp_lie, exp_type] = infer_type(env, pq->exp);
+        auto [bindpat, pat_type, pat_lie, lve] = infer_pattern_type(PQ.bindpat);
+        auto [exp_s, exp, exp_lie, exp_type] = infer_type(env, PQ.exp);
+
+        PQ.bindpat = bindpat;
+        PQ.exp = exp;
+
         // type(pat) = type(exp)
         auto s3 = unify(Hs::ListType(pat_type), exp_type);
         auto s = compose(s3, exp_s);
@@ -1094,33 +1111,42 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
         lie = apply_subst(s, lie);
         lve = apply_subst(s, lve);
 
-        return {s, lie, lve};
+        return {s, PQ, lie, lve};
     }
     else if (auto lq = qual.to<Hs::LetQual>())
     {
-        auto [s, lie, t] = infer_type_for_decls(env, unloc(lq->binds));
-        return {s, lie, t};
+        auto LQ = *lq;
+        auto [s, binds, lie, t] = infer_type_for_decls(env, unloc(LQ.binds));
+        unloc(LQ.binds) = binds;
+        return {s, LQ, lie, t};
     }
     else
         std::abort();
 }
 
 
-tuple<substitution_t, local_instance_env, value_env>
+tuple<substitution_t, Hs::Qual, local_instance_env, value_env>
 typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual& guard)
 {
     if (auto sq = guard.to<Hs::SimpleQual>())
     {
-        auto [cond_s, cond_lie, cond_type] = infer_type(env, sq->exp);
+        auto SQ = *sq;
+        auto [cond_s, cond_exp, cond_lie, cond_type] = infer_type(env, SQ.exp);
+        SQ.exp = cond_exp;
         auto s2 = unify( cond_type, bool_type() );
         auto s = compose(s2, cond_s);
-        return {s, cond_lie, {}};
+        return {s, SQ, cond_lie, {}};
     }
     else if (auto pq = guard.to<Hs::PatQual>())
     {
+        auto PQ = *pq;
         // pat <- exp
-        auto [pat, pat_type, pat_lie, lve] = infer_pattern_type(pq->bindpat);
-        auto [exp_s, exp_lie, exp_type] = infer_type(env, pq->exp);
+        auto [bindpat, pat_type, pat_lie, lve] = infer_pattern_type(PQ.bindpat);
+        auto [exp_s, exp, exp_lie, exp_type] = infer_type(env, PQ.exp);
+
+        PQ.bindpat = bindpat;
+        PQ.exp = exp;
+        
         // type(pat) = type(exp)
         auto s3 = unify(pat_type,exp_type);
         auto s = compose(s3, exp_s);
@@ -1129,12 +1155,14 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
         lve = apply_subst(s, lve);
         lie = apply_subst(s, lie);
 
-        return {s, exp_lie, lve};
+        return {s, PQ, exp_lie, lve};
     }
     else if (auto lq = guard.to<Hs::LetQual>())
     {
-        auto [s, lie, t] = infer_type_for_decls(env, unloc(lq->binds));
-        return {s, lie, t};
+        auto LQ = *lq;
+        auto [s, binds, lie, t] = infer_type_for_decls(env, unloc(LQ.binds));
+        unloc(LQ.binds) = binds;
+        return {s, LQ, lie, t};
     }
     else
         std::abort();
@@ -1142,29 +1170,38 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
 
 
 // Figure 25. Rules for match, mrule, and grhs
-tuple<substitution_t, local_instance_env, Hs::Type>
-typechecker_state::infer_type(const global_value_env& env, const Hs::GuardedRHS& rhs)
+tuple<substitution_t, Hs::GuardedRHS, local_instance_env, Hs::Type>
+typechecker_state::infer_type(const global_value_env& env, Hs::GuardedRHS rhs)
 {
     // Fig 25. GUARD-DEFAULT
-    if (rhs.guards.empty()) return infer_type(env, rhs.body);
+    if (rhs.guards.empty())
+    {
+        auto [s, body, lie, type] = infer_type(env, rhs.body);
+        rhs.body = body;
+        return {s, rhs, lie, type};
+    }
 
     // Fig 25. GUARD
     auto guard = rhs.guards[0];
-    auto [s1, lie1, env1] = infer_guard_type(env, guard);
+    auto [s1, guard1, lie1, env1] = infer_guard_type(env, guard);
     auto env2 = plus_prefer_right(env, env1);
 
-    auto rhs2 = rhs;
-    rhs2.guards.erase(rhs2.guards.begin());
-    auto [s2, lie2, t2] = infer_type(env2, rhs2);
+    rhs.guards.erase(rhs.guards.begin());
+    auto [s2, rhs2, lie2, t2] = infer_type(env2, rhs);
+    
+    rhs2.guards.insert(rhs2.guards.begin(), guard1);
+    auto lie = lie1 + lie2;
+
     auto s = compose(s2, s1);
 
     Hs::Type type = apply_subst(s, t2);
-    return {s, lie1 + lie2, type};
+    lie = apply_subst(s, lie);
+    return {s, rhs2, lie, type};
 }
 
 // Fig 25. GUARD-OR
-tuple<substitution_t, local_instance_env, Hs::Type>
-typechecker_state::infer_type(const global_value_env& env, const Hs::MultiGuardedRHS& rhs)
+tuple<substitution_t, Hs::MultiGuardedRHS, local_instance_env, Hs::Type>
+typechecker_state::infer_type(const global_value_env& env, Hs::MultiGuardedRHS rhs)
 {
     substitution_t s;
     local_instance_env lie;
@@ -1173,7 +1210,8 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::MultiGuarde
     auto env2 = env;
     if (rhs.decls)
     {
-        auto [s1, lie1, binders] = infer_type_for_decls(env, unloc(*rhs.decls));
+        auto [s1, decls1, lie1, binders] = infer_type_for_decls(env, unloc(*rhs.decls));
+        unloc(*rhs.decls) = decls1;
         lie += lie1;
         env2 = plus_prefer_right(env, binders);
         s = compose(s1, s);
@@ -1181,32 +1219,39 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::MultiGuarde
 
     for(auto& guarded_rhs: rhs.guarded_rhss)
     {
-        auto [s1, lie1, t1] = infer_type(env2, guarded_rhs);
+        auto [s1, guarded_rhs2, lie1, t1] = infer_type(env2, guarded_rhs);
+        guarded_rhs = guarded_rhs2;
         auto s2 = unify(t1,type);
         lie += lie1;
         s = compose(s2,compose(s1,s));
     }
     lie = apply_subst(s, lie);
     type = apply_subst(s, type);
-    return {s, lie, type};
+    return {s, rhs, lie, type};
 };
 
-tuple<substitution_t, local_instance_env, Hs::Type>
-typechecker_state::infer_type(const global_value_env& env, const Hs::MRule& rule)
+tuple<substitution_t, Hs::MRule, local_instance_env, Hs::Type>
+typechecker_state::infer_type(const global_value_env& env, Hs::MRule rule)
 {
 
     if (rule.patterns.empty())
-        return infer_type(env, rule.rhs);
+    {
+        auto [s, rhs, lie, type] = infer_type(env, rule.rhs);
+        rule.rhs = rhs;
+        return {s, rule, lie, type};
+    }
     else
     {
         auto [pat, t1, lie1, lve1] = infer_pattern_type(rule.patterns.front());
         auto env2 = plus_no_overlap(env, lve1);
 
         // Remove the first pattern in the rule
-        auto rule2 = rule;
-        rule2.patterns.erase(rule2.patterns.begin());
+        rule.patterns.erase(rule.patterns.begin());
 
-        auto [s, lie2, t2] = infer_type(env2, rule2);
+        auto [s, rule2, lie2, t2] = infer_type(env2, rule);
+
+        rule2.patterns.insert(rule2.patterns.begin(), pat);
+
         Hs::Type type = make_arrow_type(t1,t2);
 
         local_instance_env lie = lie1 + lie2;
@@ -1214,12 +1259,12 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::MRule& rule
         lie = apply_subst(s, lie);
         type = apply_subst(s, type);
 
-        return {s, lie, type};
+        return {s, rule2, lie, type};
     }
 }
 
-tuple<substitution_t, local_instance_env, Hs::Type>
-typechecker_state::infer_type(const global_value_env& env, const Hs::Match& m)
+tuple<substitution_t, Hs::Match, local_instance_env, Hs::Type>
+typechecker_state::infer_type(const global_value_env& env, Hs::Match m)
 {
     substitution_t s;
     local_instance_env lie;
@@ -1227,7 +1272,8 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::Match& m)
 
     for(auto& rule: m.rules)
     {
-        auto [s1, lie1, t1] = infer_type(env, rule);
+        auto [s1, rule1, lie1, t1] = infer_type(env, rule);
+        rule = rule1;
         auto s2 = unify(result_type, t1);
         lie += lie1;
         s = compose(s2,compose(s1,s));
@@ -1235,13 +1281,13 @@ typechecker_state::infer_type(const global_value_env& env, const Hs::Match& m)
     }
 
     lie = apply_subst(s, lie);
-    return {s, lie, result_type};
+    return {s, m, lie, result_type};
 }
 
 
 
-tuple<substitution_t, local_instance_env, Hs::Type>
-typechecker_state::infer_type(const global_value_env& env, const expression_ref& E)
+tuple<substitution_t, expression_ref, local_instance_env, Hs::Type>
+typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 {
     if (auto x = E.to<Hs::Var>())
     {
@@ -1259,29 +1305,30 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         {
             auto dvar = fresh_var("dvar", false);
             lie = lie.insert({unloc(dvar.name), constraint});
+            E = {E, dvar};
         }
 
-        return {{}, lie, type};
+        return {{}, E, lie, type};
     }
     else if (E.is_int())
     {
         auto [lie, type] = fresh_num_type();
-        return { {}, lie, type };
+        return { {}, E, lie, type };
     }
     else if (E.is_double())
     {
         auto [lie, type] = fresh_fractional_type();
-        return { {}, lie, type };
+        return { {}, E, lie, type };
     }
     else if (E.is_char())
     {
         local_instance_env lie;
-        return { {}, lie, char_type() };
+        return { {}, E, lie, char_type() };
     }
     else if (E.is_log_double())
     {
         auto [lie, type] = fresh_fractional_type();
-        return { {}, lie, type };
+        return { {}, E, lie, type };
     }
     else if (auto l = E.to<Hs::List>())
     {
@@ -1291,7 +1338,8 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         substitution_t s;
         for(auto& element: L.elements)
         {
-            auto [s1, lie1, t1] = infer_type(env, element);
+            auto [s1, element1, lie1, t1] = infer_type(env, element);
+            element = element1;
             auto s2 = unify(t1, element_type);
             s = compose(s2, compose(s1, s));
 
@@ -1299,7 +1347,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         }
         element_type = apply_subst(s, element_type);
         lie = apply_subst(s, lie);
-        return { s, lie, Hs::ListType(element_type) };
+        return { s, L, lie, Hs::ListType(element_type) };
     }
     else if (auto tup = E.to<Hs::Tuple>())
     {
@@ -1311,7 +1359,8 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         vector<Hs::Type> element_types;
         for(auto& element: T.elements)
         {
-            auto [s1, element_lie, element_type] = infer_type(env, element);
+            auto [s1, element1, element_lie, element_type] = infer_type(env, element);
+            element = element1;
             s = compose(s1, s);
             element_types.push_back( element_type );
 
@@ -1320,7 +1369,7 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         Hs::Type result_type = Hs::TupleType(element_types);
         result_type = apply_subst(s, result_type);
         lie = apply_subst(s, lie);
-        return {s, lie, result_type};
+        return {s, T, lie, result_type};
     }
     // COMB
     else if (is_apply_exp(E))
@@ -1329,9 +1378,10 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
 
         auto e1 = E.sub()[0];
 
-        auto [s1,lie,t1] = infer_type(env,e1);
+        auto [s1, f, lie,t1] = infer_type(env,e1);
         substitution_t s = s1;
 
+        vector<expression_ref> args;
         for(int i=1;i<E.size();i++)
         {
             auto e2 = E.sub()[i];
@@ -1344,7 +1394,8 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
             // auto [s1,t1] = infer_type(env, e1);
 
             // (s2, t2) <- infer (apply s1 env) e2
-            auto [s2,lie2,t2] = infer_type(apply_subst(s1,env), e2);
+            auto [s2, arg2, lie2,t2] = infer_type(apply_subst(s1,env), e2);
+            args.push_back(arg2);
 
             // s3       <- unify (apply s2 t1) (TArr t2 tv)
             auto s3 = unify (apply_subst(s2,t1), make_arrow_type(t2,tv));
@@ -1353,35 +1404,42 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
             t1 = apply_subst(s3,tv);
             lie += lie2;
         }
+        E = apply_expression(f, args);
 
         // This is now done by the setup for the next loop iteration.
         // return {compose(s3,compose(s2,s1)), apply_subst(s3,tv)};
         lie = apply_subst(s, lie);
-        return {s, lie, t1};
+        return {s, E, lie, t1};
     }
     // LAMBDA
     else if (auto lam = E.to<Hs::LambdaExp>())
     {
-        auto rule = Hs::MRule{lam->args, lam->body};
-
-        auto [s, lie, t] = infer_type(env, rule);
-        return {s,lie,t};
+        auto Lam = *lam;
+        auto rule = Hs::MRule{Lam.args, Lam.body};
+        auto [s, rule2, lie, t] = infer_type(env, rule);
+        Lam.args = rule.patterns;
+        Lam.body = rule.rhs;
+        return {s, Lam, lie, t};
     }
     // LET
     else if (auto let = E.to<Hs::LetExp>())
     {
+        auto Let = *let;
+
         // 1. Extend environment with types for decls, get any substitutions
-        auto [s_decls, lie_decls, env_decls] = infer_type_for_decls(env, unloc(let->binds));
-        auto env2 = plus_no_overlap(env_decls, env);
+        auto [s_decls, binds, lie_decls, env_decls] = infer_type_for_decls(env, unloc(Let.binds));
+        unloc(Let.binds) = binds;
+        auto env2 = env_decls +  env;
 
         // 2. Compute type of let body
-        auto [s_body, lie_body, t_body] = infer_type(env2, unloc(let->body));
+        auto [s_body, body, lie_body, t_body] = infer_type(env2, unloc(Let.body));
+        unloc(Let.body) = body;
 
         // return (s1 `compose` s2, t2)
         auto s = compose(s_body, s_decls);
         auto lie = lie_decls + lie_body;
         lie = apply_subst(s, lie);
-        return {s, lie, t_body};
+        return {s, Let, lie, t_body};
     }
     else if (auto con = E.head().to<Hs::Con>())
     {
@@ -1391,9 +1449,12 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         substitution_t s;
         auto env2 = env;
         vector<Hs::Type> arg_types;
-        for(int i=0; i<E.size(); i++)
+        vector<Hs::Exp> args = E.copy_sub();
+        for(int i=0; i < args.size(); i++)
         {
-            auto [s_i, lie_i, t_i] = infer_type(env2, E.sub()[i]);
+            auto& arg = args[i];
+            auto [s_i, arg_i, lie_i, t_i] = infer_type(env2, arg);
+            arg = arg_i;
             arg_types.push_back(t_i);
 
             // REQUIRE that i-th argument matches the type for the i-th field.
@@ -1403,9 +1464,10 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
             s = compose(compose(s2_i,s_i), s);
             env2 = apply_subst(s_i, env2);
         }
-
+        E = expression_ref(*con, args);
+        
         lie = apply_subst(s, lie);
-        return { s, lie, apply_subst(s, object_type) };
+        return { s, E, lie, apply_subst(s, object_type) };
     }
     else if (is_non_apply_op_exp(E))
     {
@@ -1415,20 +1477,28 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
     // CASE
     else if (auto case_exp = E.to<Hs::CaseExp>())
     {
+        auto Case = *case_exp;
+
         // 1. Determine object type
-        auto [s1, lie1, object_type] = infer_type(env, case_exp->object);
+        auto [s1, object, lie1, object_type] = infer_type(env, Case.object);
+        Case.object = object;
         auto env2 = apply_subst(s1, env);
         
         // 2. Determine data type for object from patterns.
         Hs::Match match;
-        for(auto& alt: case_exp->alts)
+        for(auto& alt: Case.alts)
         {
             auto& [pattern, body] = unloc(alt);
             match.rules.push_back(Hs::MRule{{pattern},body});
         }
 
-        auto [s2, lie2, match_type] = infer_type(env2, match);
-        
+        auto [s2, match2, lie2, match_type] = infer_type(env2, match);
+
+        for(int i=0;i<Case.alts.size();i++)
+        {
+            unloc(Case.alts[i]) = {match2.rules[i].patterns[0], match2.rules[i].rhs};
+        }
+
         Hs::Type result_type = fresh_type_var();
 
         auto s3 = unify( make_arrow_type(object_type,result_type), match_type );
@@ -1439,14 +1509,18 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
 
         auto lie = lie1 + lie2;
         lie = apply_subst(s, lie);
-        return { s, lie, result_type };
+        return { s, Case, lie, result_type };
     }
     // IF
     else if (auto if_exp = E.to<Hs::IfExp>())
     {
-        auto [cond_s, cond_lie, cond_type ] = infer_type(env, unloc(if_exp->condition));
-        auto [tbranch_s, tbranch_lie, tbranch_type] = infer_type(env, unloc(if_exp->true_branch));
-        auto [fbranch_s, fbranch_lie, fbranch_type] = infer_type(env, unloc(if_exp->false_branch));
+        auto If = *if_exp;
+        auto [cond_s, cond, cond_lie, cond_type ] = infer_type(env, unloc(If.condition));
+        auto [tbranch_s, tbranch, tbranch_lie, tbranch_type] = infer_type(env, unloc(If.true_branch));
+        auto [fbranch_s, fbranch, fbranch_lie, fbranch_type] = infer_type(env, unloc(If.false_branch));
+        unloc(If.condition) = If;
+        unloc(If.true_branch) = tbranch;
+        unloc(If.false_branch) = fbranch;
 
         auto s2 = unify(cond_type, bool_type());
         auto s3 = unify(tbranch_type, fbranch_type);
@@ -1456,93 +1530,108 @@ typechecker_state::infer_type(const global_value_env& env, const expression_ref&
         auto result_type = apply_subst(s, tbranch_type);
         auto lie = cond_lie + tbranch_lie + fbranch_lie;
         lie = apply_subst(s, lie);
-        return {s, lie, result_type};
+        return {s, If, lie, result_type};
     }
     // LISTCOMP
     else if (auto lcomp = E.to<Hs::ListComprehension>())
     {
-        auto [quals_s, quals_lie, quals_binders] = infer_quals_type(env, lcomp->quals);
-        auto [exp_s, exp_lie, exp_type] = infer_type(plus_prefer_right(env, quals_binders), lcomp->body);
+        auto LComp = *lcomp;
+        auto [quals_s, quals, quals_lie, quals_binders] = infer_quals_type(env, LComp.quals);
+        auto [exp_s, body, exp_lie, exp_type] = infer_type(plus_prefer_right(env, quals_binders), LComp.body);
+        LComp.quals = quals;
+        LComp.body = body;
         auto s = compose(exp_s, quals_s);
         Hs::Type result_type = apply_subst(s, Hs::ListType(exp_type));
 
         auto lie = quals_lie + exp_lie;
         lie = apply_subst(s, lie);
-        return { s, lie, result_type };
+        return { s, LComp, lie, result_type };
     }
     // ENUM-FROM
     else if (auto l = E.to<Hs::ListFrom>())
     {
+        auto L = *l;
         auto [lie, t] = fresh_enum_type();
 
         // PROBLEM: Do we need to desugar these here, in order to plug in the dictionary?
-        auto [s_from, lie_from, t_from] = infer_type(env, l->from);
+        auto [s_from, from, lie_from, t_from] = infer_type(env, L.from);
+        L.from = from;
         auto s1 = unify(t,t_from);
         auto s = compose(s1, s_from);
         t = apply_subst(s,t);
 
         lie += lie_from;
         lie = apply_subst(s, lie);
-        return {s, lie, Hs::ListType(t) };
+        return {s, L, lie, Hs::ListType(t) };
     }
     // ENUM-FROM-THEN
     else if (auto l = E.to<Hs::ListFromThen>())
     {
+        auto L = *l;
         auto [lie, t] = fresh_enum_type();
-        auto [s_from, lie_from, t_from] = infer_type(env, l->from);
+        auto [s_from, from, lie_from, t_from] = infer_type(env, L.from);
         auto s1 = unify(t,t_from);
         auto s = compose(s1, s_from);
         t = apply_subst(s,t);
 
-        auto [s_then, lie_then, t_then] = infer_type(env, l->then);
+        auto [s_then, then, lie_then, t_then] = infer_type(env, L.then);
         auto s2 = unify(t,t_then);
         s = compose(s2, compose(s_then,s));
         t = apply_subst(s,t);
-
+        L.from = from;
+        L.then = then;
+        
         lie += lie_from + lie_then;
         lie = apply_subst(s, lie);
-        return {s, lie, Hs::ListType(t)};
+        return {s, L, lie, Hs::ListType(t)};
     }
     // ENUM-FROM-TO
     else if (auto l = E.to<Hs::ListFromTo>())
     {
+        auto L = *l;
         auto [lie, t] = fresh_enum_type();
-        auto [s_from, lie_from, t_from] = infer_type(env, l->from);
+        auto [s_from, from, lie_from, t_from] = infer_type(env, l->from);
         auto s1 = unify(t,t_from);
         auto s = compose(s1, s_from);
         t = apply_subst(s,t);
 
-        auto [s_to, lie_to, t_to] = infer_type(env, l->to);
+        auto [s_to, to, lie_to, t_to] = infer_type(env, l->to);
         auto s2 = unify(t,t_to);
         s = compose(s2, compose(s_to,s));
         t = apply_subst(s,t);
-
+        L.from = from;
+        L.to = to;
+        
         lie += lie_from + lie_to;
         lie = apply_subst(s, lie);
-        return {s, lie, Hs::ListType(t)};
+        return {s, L, lie, Hs::ListType(t)};
     }
     // ENUM-FROM-THEN-TO
     else if (auto l = E.to<Hs::ListFromThenTo>())
     {
+        auto L = *l;
         auto [lie, t] = fresh_enum_type();
-        auto [s_from, lie_from, t_from] = infer_type(env, l->from);
+        auto [s_from, from, lie_from, t_from] = infer_type(env, L.from);
         auto s1 = unify(t,t_from);
         auto s = compose(s1, s_from);
         t = apply_subst(s,t);
 
-        auto [s_then, lie_then, t_then] = infer_type(env, l->then);
+        auto [s_then, then, lie_then, t_then] = infer_type(env, L.then);
         auto s2 = unify(t,t_then);
         s = compose(s2, compose(s_then,s));
         t = apply_subst(s,t);
 
-        auto [s_to, lie_to, t_to] = infer_type(env, l->to);
+        auto [s_to, to, lie_to, t_to] = infer_type(env, l->to);
         auto s3 = unify(t,t_to);
         s = compose(s3, compose(s_to,s));
         t = apply_subst(s,t);
+        L.from = from;
+        L.then = then;
+        L.to = to;
 
         lie += lie_from + lie_then + lie_to;
         lie = apply_subst(s, lie);
-        return {s, lie, Hs::ListType(t)};
+        return {s, L, lie, Hs::ListType(t)};
     }
     else
         throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
@@ -2025,7 +2114,7 @@ typechecker_state::infer_type_for_instances2(const Hs::Decls& decls, const class
     return out_decls;
 }
 
-void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
+Hs::ModuleDecls typecheck( const string& mod_name, Hs::ModuleDecls M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
     //    OK, so datatypes produce a
@@ -2085,7 +2174,8 @@ void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
 
     // 3. E' = (TCE_T, (CVE_T, GVE_C, LVE={}), CE_C, (GIE_C, LIE={}))
 
-    auto [s,lie,env] = state.infer_type_for_decls(gve, M.value_decls);
+    auto [s, value_decls, lie,env] = state.infer_type_for_decls(gve, M.value_decls);
+    M.value_decls = value_decls;
 
     for(auto& [x,t]: env)
     {
@@ -2093,6 +2183,8 @@ void typecheck( const string& mod_name, const Hs::ModuleDecls& M )
 //        std::cerr<<x<<" = "<<e<<"\n\n\n";
     }
     std::cerr<<"\n";
+
+    return M;
 }
 
     // GIE_C = functions to extract sub-dictionaries from containing dictionaries?
