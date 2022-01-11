@@ -85,7 +85,6 @@ struct Var: public Object
 {
     Located<std::string> name;
     std::optional<Type> type;
-    std::optional<int> index;
 
     bool operator==(const Object&) const;
     bool operator==(const Var&) const;
@@ -96,7 +95,6 @@ struct Var: public Object
     std::string print_with_type() const;
 
     Var(const Located<std::string>& s):name(s) {}
-    Var(const Located<std::string>& s, int i):name(s),index(i) {}
     Var(const Located<std::string>& s, const Type& t):name(s),type(t) {}
 };
 

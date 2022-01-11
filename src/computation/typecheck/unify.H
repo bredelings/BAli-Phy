@@ -19,10 +19,7 @@ namespace std
     public :
         size_t operator()(const Hs::Var &x) const
         {
-            size_t h = std::hash<std::string>()(unloc(x.name));
-            if (x.index)
-                h = std::hash<int>()(*x.index) ^ h;
-            return  h ;
+            return std::hash<std::string>()(unloc(x.name));
         }
     };
 

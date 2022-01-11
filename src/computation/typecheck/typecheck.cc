@@ -58,6 +58,14 @@ using std::tuple;
      - (superdicts, methods)          Dictionary
       We can then desugar these expressions to EITHER multiple dictionaries OR a tuple of dictionaries.
       Can we desugar the dictionary for class K to a data type K?
+  12. Implement explicitly typed bindings
+  13. Implement fromInt and fromRational
+  14. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
+      Do I need to handle LiteralString patterns, then?
+  15. Initially retire LIEs and add dictionary args in a simple fashion.
+  16. Monomorphism restriction.
+  17. Defaulting.
+  18. Emit code for instances.
 
   Cleanups:
   1. Implement kinds as Hs::Type
@@ -289,7 +297,7 @@ struct typechecker_state
         if (qualified)
             name = mod_name + "." + name;
         Hs::Var x({noloc, name});
-        x.index = next_var_index++;
+        next_var_index++;
         return x;
     }
 

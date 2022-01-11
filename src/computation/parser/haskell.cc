@@ -366,17 +366,14 @@ bool Var::operator==(const Object& o) const
 
 bool Var::operator==(const Var& v) const
 {
-    return unloc(name) == unloc(v.name) and index == v.index;
+    return unloc(name) == unloc(v.name);
 }
 
 bool Var::operator<(const Var& v) const
 {
-    if (index < v.index) return true;
-    if (index > v.index) return false;
-
     int cmp = unloc(name).compare(unloc(v.name));
 
-    return (cmp < 0);
+    return cmp;
 }
 
 string TypeVar::print() const

@@ -33,10 +33,7 @@ using std::pair;
 
 var make_var(const Hs::Var& v)
 {
-    if (v.index)
-        return var(unloc(v.name), *v.index);
-    else
-        return var(unloc(v.name));
+    return var(unloc(v.name));
 }
 
 
