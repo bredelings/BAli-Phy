@@ -34,43 +34,35 @@ using std::shared_ptr;
 using std::tuple;
 
 /*
+  Done: 
+  * Check that constraints in classes only mention type vars.
+  * Check that constraints in instance heads are of the form Class (Tycon a1 a2 a3..)
+
   TODO:
-  1. Check that constraints in classes only mention type vars.
-  2. Check that constraints in instance heads are of the form Class (Tycon a1 a2 a3..)
-  3. Check that constraints in instance contexts satisfy the "paterson conditions"
-  4. Construct the list of class -> [tycon] -> instance to record which instances exist
-     (like in THIH -- no actual code generation yet)
-  5. How are we actually supposed to store the GIE?
-  6. Put class methods into global namespace WITH their type -> how?
-  7. How do we export stuff?
-  8. Make functions to handle class declarations from Figure 11.
-     - PROBLEM: How do we pipe in fresh variable names for dictionary extractors?
-  9. Make functiosn to handle instance declarations from Figure 12.
-     - PROBLEM: How do we pipe in fresh variable names for dictonary functions?
-  10. Handle instances in two passes:
+  1. Check that constraints in instance contexts satisfy the "paterson conditions"
+  2. How do we export stuff?
+  3. Make functions to handle instance declarations from Figure 12.
+  4. Handle instances in two passes:
      - Can we first the the NAME and TYPE for all the instance variables,
        and second generate the instance dfun bodies?
      - Possibly generating the dfun bodies AFTER the value declarations are done?
      - How do we figure out if the instance contexts can be satisfied in a mutally recursive manner?
-  11. Make AST nodes for dictionary abstraction and dictionary application.
-     - \(dicts::theta) -> f(dicts)    LambdaDicts = vector<Hs::Var> -> MultiGuardedRHS
-     - exp <dicts>                    ApplyDicts  = expression_ref vector<Hs::Var>
-     - (superdicts, methods)          Dictionary
+  5. Make AST nodes for dictionary abstraction and dictionary application.
+     - \(dicts::theta) -> monobinds in binds
+     - exp <dicts>
+     - (superdicts, methods)
       We can then desugar these expressions to EITHER multiple dictionaries OR a tuple of dictionaries.
       Can we desugar the dictionary for class K to a data type K?
-  12. Implement explicitly typed bindings
-  13. Implement fromInt and fromRational
-  14. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
+  6. Implement explicitly typed bindings
+  7. Implement fromInt and fromRational
+  8. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
       Do I need to handle LiteralString patterns, then?
-  15. Initially retire LIEs and add dictionary args in a simple fashion.
-  16. Monomorphism restriction.
-  17. Defaulting.
-  18. Emit code for instances.
+  9. Monomorphism restriction.
+  10. Defaulting.
+  11. Emit code for instances and check if there are instances for the context.
 
   Cleanups:
   1. Implement kinds as Hs::Type
-  2. Use Hs::decompose_type_apps( ) to simplify Hs::is_function_type( ),
-     like in parser.y:check_kind( ).
 
   Unification:
   0. Can we avoid explicitly returning a substitution?
@@ -89,8 +81,9 @@ using std::tuple;
 
      Example: a ~ Int , a ~ b
      * for substitutions, later ones have no effect
-     * for constraints, I guess you do a ~ Int, b ~ a, defining each variable only once.
-     * if you later add b ~ Int, then need to unify b ~ Int and b ~ a,
+     * for constraints, I guess you do a ~ Int, b ~ a, changin a ~ b into b ~ a in order to
+       "define" each variable only once.
+     * if you later add b ~ Int, then you need to unify b ~ Int and b ~ a,
        which then unifies Int ~ a, which succeeds.
      * So, perhaps a second definition of a variable must either fail or succeed -- it doesn't
        get added.
@@ -1955,7 +1948,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, c
         auto [a_head, a_args] = decompose_type_apps(monotype);
         auto tc = a_head.to<Hs::TypeCon>();
         if (not tc)
-            throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<a_head<<" is not a type!";
+            throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<a_head<<" is not a type constructor!";
 
         types.push_back(*tc);
 
