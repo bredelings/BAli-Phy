@@ -996,6 +996,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
 
             auto s1 = unify(t, t1);
             s = compose(s1,s);
+            t = apply_subst(s, t);
             lve += lve1;
             lie += lie1;
         }
@@ -1004,7 +1005,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
         lve = apply_subst(s, lve);
         t = apply_subst(s, t);
 
-        return {L, t, lie, lve};
+        return {L, Hs::ListType(t), lie, lve};
     }
     // TUPLE-PAT
     else if (auto t = pat.to<Hs::Tuple>())
