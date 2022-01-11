@@ -61,6 +61,8 @@ using std::tuple;
   10. Defaulting.
   11. Emit code for instances and check if there are instances for the context.
   12. Handle a :: Num a => Char in (a,b) = ('a',1)
+  13. Handle constraints on constructors.
+  14. Remove the constraint from EmptySet
 
   Cleanups:
   1. Implement kinds as Hs::Type
