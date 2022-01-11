@@ -356,6 +356,15 @@ struct FieldDecls: public Object
     FieldDecls(const std::vector<FieldDecl>& ds):field_decls(ds) {}
 };
 
+struct LiteralString: public Object
+{
+    std::string data;
+    std::string print()  const;
+    LiteralString* clone() const { return new LiteralString(*this);}
+    LiteralString() = default;
+    LiteralString(const std::string& s):data(s) {}
+};
+
 struct Constructor
 {
     std::vector<TypeVar> forall;           // list of type variables we are forall-ing over.

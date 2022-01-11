@@ -573,6 +573,11 @@ std::string FieldDecls::print() const
     return "{ " + join(field_decl_strings,"; ") + " }";
 }
 
+std::string LiteralString::print() const
+{
+    return '"' + data + '"';
+}
+
 std::vector<Hs::Type> Constructor::get_field_types() const
 {
     if (fields.index() == 0)
