@@ -810,23 +810,36 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Decls d
     local_instance_env lie;
     value_env binder_env;
 
+    vector<Hs::Type> lhs_types;
     for(int i=0;i<decls.size();i++)
     {
         auto& decl = decls[i];
         if (auto fd = decl.to<Hs::FunDecl>())
         {
+            auto FD = *fd;
             Hs::Type type = fresh_type_var();
-            auto& name = unloc(fd->v.name);
+            auto& name = unloc(FD.v.name);
+            FD.v.type = type;
+            decl = FD;
 
+            // Check that this is a NEW name.
             local_value_env lve;
             lve = lve.insert({name,type});
             binder_env += lve;
+
+            lhs_types.push_back(type);
         }
         else if (auto pd = decl.to<Hs::PatDecl>())
         {
-            auto [p, type, lie_p, lve] = infer_pattern_type(pd->lhs);
+            auto PD = *pd;
+            auto [lhs, type, lie_p, lve] = infer_pattern_type(PD.lhs);
+            PD.lhs = lhs;
+            decl = PD;
+
             binder_env += lve;
             lie += lie_p;
+
+            lhs_types.push_back(type);
         }
     }
     auto env2 = plus_prefer_right(env, binder_env);
@@ -836,11 +849,10 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Decls d
     for(int i=0;i<decls.size();i++)
     {
         auto& decl = decls[i];
+        auto& lhs_type = lhs_types[i];
         if (auto fd = decl.to<Hs::FunDecl>())
         {
             auto FD = *fd;
-            auto& name = unloc(FD.v.name);
-            auto lhs_type = env2.at(name);
             auto [s2, match, rhs_lie, rhs_type] = infer_type(env2, FD.match);
             FD.match = match;
             decl = FD;
@@ -851,13 +863,10 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Decls d
         else if (auto pd = decl.to<Hs::PatDecl>())
         {
             auto PD = *pd;
-            auto [lhs, lhs_type, lhs_lie, lve] = infer_pattern_type(PD.lhs);
             auto [s2, rhs, rhs_lie, rhs_type] = infer_type(env2, PD.rhs);
-            PD.lhs = lhs;
             PD.rhs = rhs;
             decl = PD;
             
-            lie += lhs_lie;
             lie += rhs_lie;
             s = compose(s2, compose(unify(lhs_type, rhs_type), s));
         }
