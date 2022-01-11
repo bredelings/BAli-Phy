@@ -5,7 +5,7 @@ if pandoc.found()
 
   # -f markdown-smart is necessary to avoid changing -- to a single en-dash
   # But its only present in version 2 or higher.
-  pandoc_version = run_command(pandoc,['--version']).stdout().split('\n')[0].split(' ')[1].split('.')[0]
+  pandoc_version = run_command(pandoc,['--version'], check: true).stdout().split('\n')[0].split(' ')[1].split('.')[0]
   if pandoc_version == '2'
     pandoc_cmd = pandoc_cmd + ['-f', 'markdown-smart']
   endif

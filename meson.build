@@ -6,7 +6,7 @@ project('bali-phy', ['cpp','c'],
           'buildtype=release',
           'b_ndebug=if-release'
         ],
-        meson_version: '>= 0.53',
+        meson_version: '>= 0.56',
         license: 'GPLv2')
 
 cpp = meson.get_compiler('cpp')
@@ -165,20 +165,20 @@ math_dep = cpp.find_library('m', required:false)
 
 small_fasta=files('examples/sequences/5S-rRNA/5d.fasta')
 big_fasta=files('examples/sequences/5S-rRNA/48-muscle.fasta')
-builtins = meson.build_root()/'src/builtins'
-packagepath = '--package-path=@0@:@1@'.format(builtins,meson.source_root())
+builtins = meson.project_build_root()/'src/builtins'
+packagepath = '--package-path=@0@:@1@'.format(builtins,meson.project_source_root())
 
 subdir('src')
 
 subdir('doc')
 
 # Run internal tests
-run_tests = find_program(meson.source_root()/'tests/run-tests.py')
+run_tests = find_program(meson.project_source_root()/'tests/run-tests.py')
 
 test('bali-phy testsuite',
      run_tests,
      timeout: 3000,
-     workdir: meson.source_root()/'tests',
+     workdir: meson.project_source_root()/'tests',
      args:[baliphy.full_path(), packagepath])
 
 # Install non-executable files
