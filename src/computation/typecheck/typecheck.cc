@@ -60,6 +60,7 @@ using std::tuple;
   9. Monomorphism restriction.
   10. Defaulting.
   11. Emit code for instances and check if there are instances for the context.
+  12. Handle a :: Num a => Char in (a,b) = ('a',1)
 
   Cleanups:
   1. Implement kinds as Hs::Type
