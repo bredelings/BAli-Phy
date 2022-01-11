@@ -63,6 +63,8 @@ using std::tuple;
   12. Handle a :: Num a => Char in (a,b) = ('a',1)
   13. Handle constraints on constructors.
   14. Remove the constraint from EmptySet
+  15. Add a substitution to the typechecker_state, as in THIH.
+     - Can we then switch this to using constraints instead of substitutions?
 
   Cleanups:
   1. Implement kinds as Hs::Type
