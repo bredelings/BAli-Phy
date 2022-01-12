@@ -120,32 +120,29 @@ std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::Type
 }
 
 // This should yield a substitution that is equivalent to apply FIRST s1 and THEN s2,
-// like f . g
 std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
 {
     if (s2.empty()) return s1;
 
-    auto s3 = s2;
-    for(auto& [tv,e]: s1)
+    auto s3 = s1;
+    for(auto& [tv,e]: s2)
     {
+        optional<substitution_t> s4;
+
         auto it = s3.find(tv);
+        // 1. If s3 doesn't have anything of the first tv ~ *, then we can add one.
         if (not it)
-        {
-            s3 = s3.insert({tv,apply_subst(s2,e)});
-        }
+            s4 = try_insert(s3, tv, e);
+        // 2. If s3 has tv ~ *, but we have tv ~ tv2, and s3 doesn't have tv2 ~ *.
+        else if (auto tv2 = e.to<Hs::TypeVar>(); tv2 and not s3.count(*tv2))
+            s4 = try_insert(s3, *tv2, tv);
+        // 3. If s3 has tv ~ *it already and we have tv ~ E then we'd better have E ~ *it
         else
-        {
-            try {
-                auto s4 = unify(*it, e);
-                auto s5 = combine(s3, s4);
-                if (s5)
-                    s3 = *s5;
-            }
-            catch(...)
-            {
-                return {};
-            }
-        }
+            s4 = combine(s3, maybe_unify(*it, e));
+        if (not s4)
+            return {};
+        else
+            s3 = *s4;
     }
             
     return s3;
