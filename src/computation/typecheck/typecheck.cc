@@ -69,6 +69,10 @@ using std::tuple;
   17. Replace types with type synonyms.
   18. Reject unification of variables, tycons, etc with different kinds.
   19. Add basic error reporting.
+  20. Make a stack of lies / lves?  Can we then automatically accumulate LIEs to the
+      LIE on the top of the LIE stack?
+  21. Should we consider having infer_type( ) modify expressions in-place instace of 
+      returning a new one?
 
   Cleanups:
   1. Implement kinds as Hs::Type
