@@ -65,6 +65,10 @@ using std::tuple;
   14. Remove the constraint from EmptySet
   15. Add a substitution to the typechecker_state, as in THIH.
      - Can we then switch this to using constraints instead of substitutions?
+  16. Make unification stop throwing.
+  17. Replace types with type synonyms.
+  18. Reject unification of variables, tycons, etc with different kinds.
+  19. Add basic error reporting.
 
   Cleanups:
   1. Implement kinds as Hs::Type
