@@ -25,7 +25,7 @@ expression_ref apply_subst(const substitution_t& s, const Hs::Type& t)
     if (auto tv = t.to<Haskell::TypeVar>())
     {
         if (auto t2 = s.find(*tv))
-            return *t2;
+            return apply_subst(s,*t2);
         else
             return t;
     }
