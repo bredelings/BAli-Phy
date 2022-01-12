@@ -1,5 +1,12 @@
 * 4.0 (unreleaed)
 
+* 4.0-alpha5 (unreleased)
+ - Haskell infrastructure
+   - More parser / AST cleanup.
+   - More renamer cleanup.
+   - Perform dependency analysis on the value declarations.
+   - Preliminary typechecking pass.
+
 * 4.0-alpha4 (Dec 20, 2021)
  - Fix alignment_slice_sample_branch_length
  - Type system
