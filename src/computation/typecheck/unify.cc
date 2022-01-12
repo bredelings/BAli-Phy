@@ -207,12 +207,8 @@ optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
         auto& app1 = t1.as_<Haskell::TypeApp>();
         auto& app2 = t2.as_<Haskell::TypeApp>();
 
-        auto s1 = maybe_unify(app1.head, app2.head);
-        if (not s1) return {};
-        auto s2 = maybe_unify(apply_subst(*s1, app1.arg), apply_subst(*s1, app2.arg));
-        if (not s2) return {};
-
-        return compose(*s2, *s1);
+        return combine( maybe_unify(app1.head, app2.head),
+                        maybe_unify(app1.arg , app2.arg ) );
     }
     else if (t1.is_a<Haskell::TypeCon>() and
              t2.is_a<Haskell::TypeCon>() and
@@ -228,12 +224,12 @@ optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
         if (tup1.element_types.size() != tup2.element_types.size())
             return {};
 
-        substitution_t s;
+        optional<substitution_t> s = substitution_t();
         for(int i=0;i<tup1.element_types.size();i++)
         {
-            auto si = maybe_unify(apply_subst(s,tup1.element_types[i]), apply_subst(s,tup2.element_types[i]));
-            if (not si) return {};
-            s = compose(*si, s);
+            s = combine(s, maybe_unify(tup1.element_types[i], tup2.element_types[i]) );
+            if (not s)
+                return {};
         }
         return s;
     }
