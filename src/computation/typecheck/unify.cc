@@ -91,6 +91,24 @@ substitution_t compose(substitution_t s2, substitution_t s1)
     return s3;
 }
 
+std::optional<substitution_t> combine(const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
+{
+    if (not s1) return {};
+    if (not s2) return {};
+    return combine(*s1, *s2);
+}
+
+std::optional<substitution_t> combine(const std::optional<substitution_t>& s1, const substitution_t& s2)
+{
+    if (not s1) return {};
+    return combine(*s1, s2);
+}
+
+std::optional<substitution_t> combine(const substitution_t& s1, const optional<substitution_t>& s2)
+{
+    if (not s2) return {};
+    return combine(s1, *s2);
+}
 
 std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::TypeVar& tv, Hs::Type type)
 {
