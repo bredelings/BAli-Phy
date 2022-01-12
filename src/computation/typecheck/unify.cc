@@ -150,6 +150,10 @@ bool occurs_check(const Haskell::TypeVar& tv, const Hs::Type& t)
     else if (auto c = t.to<Hs::ConstrainedType>())
     {
         // The context may not contain vars that don't occur in the head;
+        for(auto& constraint: c->context.constraints)
+            if (occurs_check(tv, constraint))
+                return true;
+
         return occurs_check(tv, c->type);
     }
     else if (auto sl = t.to<Hs::StrictLazyType>())
