@@ -228,8 +228,7 @@ optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
         for(int i=0;i<tup1.element_types.size();i++)
         {
             s = combine(s, maybe_unify(tup1.element_types[i], tup2.element_types[i]) );
-            if (not s)
-                return {};
+            if (not s) return {};
         }
         return s;
     }
@@ -264,22 +263,16 @@ optional<substitution_t> match(const Hs::Type& t1, const Hs::Type& t2)
     if (auto tv1 = t1.to<Haskell::TypeVar>())
     {
         substitution_t s;
-        if (t1 == t2)
-            return s;
-        if (occurs_check(*tv1, t2))
-            return {}; // throw myexception()<<"Occurs check: cannot construct infinite type: "<<*tv1<<" ~ "<<t2<<"\n";
-        return s.insert({*tv1, t2});
+        if (t1 == t2) return s;
+        return try_insert(s, *tv1, t2);
     }
     else if (t1.is_a<Haskell::TypeApp>() and t2.is_a<Haskell::TypeApp>())
     {
         auto& app1 = t1.as_<Haskell::TypeApp>();
         auto& app2 = t2.as_<Haskell::TypeApp>();
 
-        auto s1 = match(app1.head, app2.head);
-        if (not s1) return {};
-        auto s2 = match(apply_subst(*s1, app1.arg), app2.arg);
-        if (not s2) return {};
-        return compose(*s2, *s1);
+        return combine( match(app1.head, app2.head),
+                        match(app1.arg , app2.arg ) );
     }
     else if (t1.is_a<Haskell::TypeCon>() and
              t2.is_a<Haskell::TypeCon>() and
@@ -290,18 +283,17 @@ optional<substitution_t> match(const Hs::Type& t1, const Hs::Type& t2)
     }
     else if (t1.is_a<Hs::TupleType>() and t2.is_a<Hs::TupleType>())
     {
-        substitution_t s;
-
         auto& tup1 = t1.as_<Hs::TupleType>();
         auto& tup2 = t2.as_<Hs::TupleType>();
         if (tup1.element_types.size() != tup2.element_types.size())
             return {};
 
+        optional<substitution_t> s = substitution_t();
+
         for(int i=0;i<tup1.element_types.size();i++)
         {
-            auto si = match( apply_subst(s, tup1.element_types[i]), tup2.element_types[i]);
-            if (not si) return {};
-            s = compose(*si, s);
+            s = combine(s, match( tup1.element_types[i], tup2.element_types[i] ));
+            if (not s) return {};
         }
         return s;
     }
