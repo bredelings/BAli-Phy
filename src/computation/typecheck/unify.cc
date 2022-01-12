@@ -91,6 +91,16 @@ substitution_t compose(substitution_t s2, substitution_t s1)
     return s3;
 }
 
+
+std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::TypeVar& tv, Hs::Type type)
+{
+    type = apply_subst(s, type);
+    if (occurs_check(tv, type))
+        return {};
+    else
+        return s.insert({tv,type});
+}
+
 // This should yield a substitution that is equivalent to apply FIRST s1 and THEN s2,
 // like f . g
 std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
@@ -168,20 +178,14 @@ optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
     if (auto tv1 = t1.to<Haskell::TypeVar>())
     {
         substitution_t s;
-        if (t1 == t2)
-            return s;
-        if (occurs_check(*tv1, t2))
-            return {};
-        return s.insert({*tv1, t2});
+        if (t1 == t2) return s;
+        return try_insert(s, *tv1, t2);
     }
     else if (auto tv2 = t2.to<Haskell::TypeVar>())
     {
         substitution_t s;
-        if (t1 == t2)
-            return s;
-        if (occurs_check(*tv2,t1))
-            return {};
-        return s.insert({*tv2, t1});
+        if (t1 == t2) return s;
+        return try_insert(s, *tv2, t1);
     }
     else if (t1.is_a<Haskell::TypeApp>() and t2.is_a<Haskell::TypeApp>())
     {
