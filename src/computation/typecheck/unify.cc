@@ -260,17 +260,17 @@ std::optional<substitution_t> combine_match(substitution_t s1, substitution_t s2
     {
         optional<substitution_t> s4;
 
-        auto it = s3.find(tv);
-        // 1. If s3 doesn't have anything of the first tv ~ *, then we can add one.
-        if (not it)
+        // 1. Find the last type variable in the var chain from tv, and maybe the term term1 that it points.
+        auto [tv1, term1] = follow_var_chain(s3, &tv);
+
+        // 2. If tv is equivalent to other type variables, but not to a term, then
+        //    we can add just a definition for tv1.
+        if (not term1)
         {
-            if (auto s4 = try_insert(s3, tv, e))
-                s3 = *s4;
-            else
-                return {};
+            s4 = try_insert(s3, *tv1, e);
         }
-        // 2. Otherwise, we have tv ~ e and tv ~ *it, so e and *it have to be the same.
-        else if (same_type(e, *it))
+        // 3. Otherwise, we have tv ~ e and tv ~ *it, so e and *it have to be the same.
+        else if (same_type(*term1, e))
             continue;
     }
 
