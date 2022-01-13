@@ -112,6 +112,25 @@ std::optional<substitution_t> combine(const substitution_t& s1, const optional<s
     return combine(s1, *s2);
 }
 
+std::optional<substitution_t> combine_match(const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
+{
+    if (not s1) return {};
+    if (not s2) return {};
+    return combine_match(*s1, *s2);
+}
+
+std::optional<substitution_t> combine_match(const std::optional<substitution_t>& s1, const substitution_t& s2)
+{
+    if (not s1) return {};
+    return combine_match(*s1, s2);
+}
+
+std::optional<substitution_t> combine_match(const substitution_t& s1, const optional<substitution_t>& s2)
+{
+    if (not s2) return {};
+    return combine_match(s1, *s2);
+}
+
 // PROOF: This cannot add substitution loops.
 //  `safe_type` can't reference variables in s, since it has been substituted.
 //  `safe_type` can't reference `tv` because of the occurs check.
@@ -134,11 +153,59 @@ std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::Type
 
     // 5. It is safe to add tv -> safe_type
     return s.insert({tv, safe_type});
-
-
 }
 
-// This should yield a substitution that is equivalent to apply FIRST s1 and THEN s2,
+
+
+// The order of s1 and s2 should not matter.
+std::optional<substitution_t> combine_match(substitution_t s1, substitution_t s2)
+{
+    if (s2.size() > s1.size()) std::swap(s1,s2);
+
+    auto s3 = s1;
+    for(auto& [tv,e]: s2)
+    {
+        optional<substitution_t> s4;
+
+        auto it = s3.find(tv);
+        // 1. If s3 doesn't have anything of the first tv ~ *, then we can add one.
+        if (not it)
+        {
+            if (auto s4 = try_insert(s3, tv, e))
+                s3 = *s4;
+            else
+                return {};
+        }
+        // 2. Otherwise, we have tv ~ e and tv ~ *it, so e and *it have to be the same.
+        else if (same_type(e, *it))
+            continue;
+    }
+
+    return s3;
+}
+
+// QUESTION: is skipping the occurs check for a ~ a sufficient to avoid definition loops?
+// See the kind-inference paper, which treats substitutions as a list of terms of the form
+// * a     (declaration)
+// * b ~ a (definition)
+// I think that you have a sequence like {a, b ~ a} then you can't later define a,
+// since it is already "declared".
+
+// Suppose we have a ~ b, b ~ c, c ~ d.
+// * If we try and combine this with a ~ b,
+//   case (2) cannot change this to b ~ a because there is already a def to b.
+//   Case (3) will then try to unify(b,b) produces an empty substitution.
+//   So there is no effect.
+//
+// * If we try and add a ~ c, the same thing happens.
+//
+// * If we try and add a ~ d, then case (2) can try adding d ~ a.
+//   try_insert( ) then changes this to d ~ d.
+//   This has no effect (in try_insert( )).
+//
+// It therefore LOOKS like all the tautological cases are handled
+// through the single check in try_insert.
+
 // The order of s1 and s2 should not matter.
 std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
 {
@@ -289,8 +356,8 @@ optional<substitution_t> match(const Hs::Type& t1, const Hs::Type& t2)
         auto& app1 = t1.as_<Haskell::TypeApp>();
         auto& app2 = t2.as_<Haskell::TypeApp>();
 
-        return combine( match(app1.head, app2.head),
-                        match(app1.arg , app2.arg ) );
+        return combine_match( match(app1.head, app2.head),
+                              match(app1.arg , app2.arg ) );
     }
     else if (t1.is_a<Haskell::TypeCon>() and
              t2.is_a<Haskell::TypeCon>() and
@@ -310,7 +377,7 @@ optional<substitution_t> match(const Hs::Type& t1, const Hs::Type& t2)
 
         for(int i=0;i<tup1.element_types.size();i++)
         {
-            s = combine(s, match( tup1.element_types[i], tup2.element_types[i] ));
+            s = combine_match(s, match( tup1.element_types[i], tup2.element_types[i] ));
             if (not s) return {};
         }
         return s;
