@@ -1,15 +1,18 @@
 #include "env.H"
+#include "util/string/join.H"
 
 using std::string;
+using std::vector;
 
 string print(const value_env& env)
 {
     std::ostringstream oss;
+    vector<string> ss;
     for(auto& [value,type]: env)
     {
-        oss<<value<<" :: "<<type.print()<<"\n";
+        ss.push_back(value+" :: "+type.print());
     }
-    return oss.str();
+    return "{ " + join(ss, "; ") + " }";
 }
 
 void add_prefer_right(value_env& e1, const value_env& e2)
