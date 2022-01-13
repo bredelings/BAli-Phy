@@ -269,7 +269,7 @@ std::optional<substitution_t> combine_match(substitution_t s1, substitution_t s2
         {
             s4 = try_insert(s3, *tv1, e);
         }
-        // 3. Otherwise, we have tv ~ e and tv ~ *it, so e and *it have to be the same.
+        // 3. Otherwise, we have tv ~ term1 and tv ~ e, so *term1 and e have to be the same.
         else if (same_type(*term1, e))
             continue;
     }
