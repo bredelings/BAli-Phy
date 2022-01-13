@@ -1,4 +1,5 @@
 #include "unify.H"
+#include <utility>
 
 using std::string;
 using std::optional;
@@ -184,31 +185,75 @@ std::optional<substitution_t> combine_match(substitution_t s1, substitution_t s2
     return s3;
 }
 
-// QUESTION: is skipping the occurs check for a ~ a sufficient to avoid definition loops?
-// See the kind-inference paper, which treats substitutions as a list of terms of the form
-// * a     (declaration)
-// * b ~ a (definition)
-// I think that you have a sequence like {a, b ~ a} then you can't later define a,
-// since it is already "declared".
-
+// It SEEMS that the checks in try_insert( ) are sufficient to handle substitution loops.
+// They ensure that unify(a,a) produces an empty substitution.
+//
+// It SEEMS that the exception for a ~ a is sufficient to avoid problems in cases like
+//    combine ( a ~ b + b ~ c + c ~ d, a ~ b )
+//
 // Suppose we have a ~ b, b ~ c, c ~ d.
 // * If we try and combine this with a ~ b,
-//   case (2) cannot change this to b ~ a because there is already a def to b.
+//    case (2) cannot change this to b ~ a because there is already a def for b.
 //   Case (3) will then try to unify(b,b) produces an empty substitution.
 //   So there is no effect.
 //
-// * If we try and add a ~ c, the same thing happens.
+// * If we try and add a ~ c, then case (2) also does not apply.
+//   Case(3) will then try to unify (b,c), producing b ~ c.
+//   We will then try to  combine with b ~ c, which leads to unifying (c,c).
+//   So there is not effect.
 //
-// * If we try and add a ~ d, then case (2) can try adding d ~ a.
+// * If we try and add b ~ a, then we will try (in (3)) to unify(a,c)
+
+// * If we try and add a ~ d, then case (2) CAN try adding d ~ a.
 //   try_insert( ) then changes this to d ~ d.
 //   This has no effect (in try_insert( )).
 //
 // It therefore LOOKS like all the tautological cases are handled
 // through the single check in try_insert.
 
+// The kind-inference paper treats substitutions as a list of terms of the form
+// * a     (declaration)
+// * b ~ a (definition)
+// I think that you have a sequence like {a, b ~ a} then you can't later define a,
+// since it is already "declared".
+
+
+// This finds
+// * a non-variable type that the type variable is equivalent to, if there is one, and
+// * the final variable in the chain of variables -- that points to either that term, or nothing.
+// We can use the final variable to determine if two variables are in the same equivalence set.
+// QUESTION: Can we use compare the variables by POINTER equality?  Not sure...
+std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain(const substitution_t& s, const Hs::TypeVar* tv)
+{
+    const Hs::Type* type;
+    // While there is a substitution for tv...
+    while ( (type = s.find(*tv)) )
+    {
+        // If we have tv -> tv2, then continue
+        if (auto tv_next = type->to<Hs::TypeVar>())
+            tv = tv_next;
+        // Otherwise, return the type variable and the (non-type-variable) thing it points to.
+        else
+            break;
+    }
+
+    assert(tv);
+    assert(not type or not type->is_a<Hs::TypeVar>());
+    return {tv, type};
+}
+
 // The order of s1 and s2 should not matter.
 std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
 {
+    // While we store substitutions as [(TypeVar,Type)], the conceptual model is
+    //   really [([TypeVar], Maybe Type)].
+    // That is, each typevar with a definition is equivalent to a collection of other type
+    //   variables, and possible one "term" that is not a type variable.
+    // Therefore, when we set a type variable equivalent to a new term, we must either
+    // * unify the new term with the old term for the type variable, if there is one.
+    // * set the equivalence class of variables equal to the new term, if there is no existing term.
+
+    // If either substitution is empty, we won't waste any time iterating through the loop below.
     if (s2.size() > s1.size()) std::swap(s1,s2);
 
     auto s3 = s1;
@@ -216,16 +261,41 @@ std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
     {
         optional<substitution_t> s4;
 
-        auto it = s3.find(tv);
-        // 1. If s3 doesn't have anything of the first tv ~ *, then we can add one.
-        if (not it)
-            s4 = try_insert(s3, tv, e);
-        // 2. If s3 has tv ~ *, but we have tv ~ tv2, and s3 doesn't have tv2 ~ *.
-        else if (auto tv2 = e.to<Hs::TypeVar>(); tv2 and not s3.count(*tv2))
-            s4 = try_insert(s3, *tv2, tv);
-        // 3. If s3 has tv ~ *it already and we have tv ~ E then we'd better have E ~ *it
+        // 1. Find the last type variable in the var chain from tv, and maybe the term term1 that it points.
+        auto [tv1, term1] = follow_var_chain(s3, &tv);
+
+        // 2. If tv is equivalent to other type variables, but not to a term, then
+        //    we can add just a definition for tv1.
+        if (not term1)
+        {
+            s4 = try_insert(s3, *tv1, e);
+        }
+        // 3. If e is a type var, then..
+        else if (auto maybe_tv2 = e.to<Hs::TypeVar>())
+        {
+            // 3a. Find the last type variable in the var chain from e, and maybe the term term2 that it points to.
+            auto [tv2, term2] = follow_var_chain(s3, maybe_tv2);
+
+            // 3b. If tv and e both point to the same var (*tv1 == *tv2), then tv ~ e is already satisfied.
+            if (*tv1 == *tv2)
+                s4 = substitution_t();
+            // 3c. If tv2 and tv2 are NOT equivalent, but tv2 has no definition, then
+            //     we can add a definition for tv2.
+            else if (not term2)
+            {
+                s4 = try_insert(s3, *tv2, *tv1);
+            }
+            // 2c. Otherwise, tv1 and tv2 are both equal to different terms that must be equal.
+            else
+            {
+                assert(not term1->is_a<Hs::TypeVar>());
+                assert(not term2->is_a<Hs::TypeVar>());
+                s4 = combine(s3, maybe_unify(*term1, *term2));
+            }
+        }
         else
-            s4 = combine(s3, maybe_unify(*it, e));
+            s4 = combine(s3, maybe_unify(*term1, e));
+
         if (not s4)
             return {};
         else
