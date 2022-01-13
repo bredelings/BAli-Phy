@@ -112,6 +112,9 @@ std::optional<substitution_t> combine(const substitution_t& s1, const optional<s
 
 std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::TypeVar& tv, Hs::Type type)
 {
+    // We can't insert tv ~ type if we already have a substitution for tv.
+    assert(not s.count(tv));
+
     // We are trying to insert tv ~ tv, which is redundant.
     if (auto tv2 = type.to<Hs::TypeVar>(); tv2 and *tv2 == tv)
         return s;
