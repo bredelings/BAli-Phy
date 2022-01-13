@@ -202,13 +202,11 @@ optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
     if (auto tv1 = t1.to<Haskell::TypeVar>())
     {
         substitution_t s;
-        if (t1 == t2) return s;
         return try_insert(s, *tv1, t2);
     }
     else if (auto tv2 = t2.to<Haskell::TypeVar>())
     {
         substitution_t s;
-        if (t1 == t2) return s;
         return try_insert(s, *tv2, t1);
     }
     else if (t1.is_a<Haskell::TypeApp>() and t2.is_a<Haskell::TypeApp>())
