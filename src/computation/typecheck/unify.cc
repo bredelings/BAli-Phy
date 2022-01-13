@@ -141,7 +141,7 @@ std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::Type
     assert(not s.count(tv));
 
     // 2. Eliminate existing variables in type.
-    safe_type = apply_subst(s, type);
+    auto safe_type = apply_subst(s, type);
 
     // 3. Trying insert tv ~ tv is redundant, so return an empty substitution.
     if (auto tv2 = safe_type.to<Hs::TypeVar>(); tv2 and *tv2 == tv)
