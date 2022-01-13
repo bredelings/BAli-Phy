@@ -112,7 +112,16 @@ std::optional<substitution_t> combine(const substitution_t& s1, const optional<s
 
 std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::TypeVar& tv, Hs::Type type)
 {
+    // We are trying to insert tv ~ tv, which is redundant.
+    if (auto tv2 = type.to<Hs::TypeVar>(); tv2 and *tv2 == tv)
+        return s;
+
     type = apply_subst(s, type);
+
+    // We are trying to insert tv ~ tv, which is redundant.
+    if (auto tv2 = type.to<Hs::TypeVar>(); tv2 and *tv2 == tv)
+        return s;
+
     if (occurs_check(tv, type))
         return {};
     else
