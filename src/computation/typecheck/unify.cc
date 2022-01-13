@@ -129,6 +129,7 @@ std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::Type
 }
 
 // This should yield a substitution that is equivalent to apply FIRST s1 and THEN s2,
+// The order of s1 and s2 should not matter.
 std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
 {
     if (s2.size() > s1.size()) std::swap(s1,s2);
