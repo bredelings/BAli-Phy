@@ -94,6 +94,45 @@ substitution_t compose(substitution_t s2, substitution_t s1)
     return s3;
 }
 
+bool occurs_check(const Haskell::TypeVar& tv, const Hs::Type& t)
+{
+    if (auto x = t.to<Haskell::TypeVar>())
+        return tv == *x;
+    else if (t.is_a<Haskell::TypeCon>())
+        return false;
+    else if (auto tup = t.to<Hs::TupleType>())
+    {
+        for(auto& type: tup->element_types)
+            if (occurs_check(tv, type))
+                return true;
+        return false;
+    }
+    else if (auto l = t.to<Hs::ListType>())
+        return occurs_check(tv, l->element_type);
+    else if (auto p_app = t.to<Haskell::TypeApp>())
+        return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
+    else if (auto f = t.to<Haskell::ForallType>())
+    {
+        for(auto& x: f->type_var_binders)
+            if (x == tv)
+                return false;
+        return occurs_check(tv, f->type);
+    }
+    else if (auto c = t.to<Hs::ConstrainedType>())
+    {
+        // The context may not contain vars that don't occur in the head;
+        for(auto& constraint: c->context.constraints)
+            if (occurs_check(tv, constraint))
+                return true;
+
+        return occurs_check(tv, c->type);
+    }
+    else if (auto sl = t.to<Hs::StrictLazyType>())
+        return occurs_check(tv, sl->type);
+    else
+        std::abort();
+}
+
 // PROOF: This cannot add substitution loops.
 //  `safe_type` can't reference variables in s, since it has been substituted.
 //  `safe_type` can't reference `tv` because of the occurs check.
@@ -275,45 +314,6 @@ std::optional<substitution_t> combine_match(substitution_t s1, substitution_t s2
     }
 
     return s3;
-}
-
-bool occurs_check(const Haskell::TypeVar& tv, const Hs::Type& t)
-{
-    if (auto x = t.to<Haskell::TypeVar>())
-        return tv == *x;
-    else if (t.is_a<Haskell::TypeCon>())
-        return false;
-    else if (auto tup = t.to<Hs::TupleType>())
-    {
-        for(auto& type: tup->element_types)
-            if (occurs_check(tv, type))
-                return true;
-        return false;
-    }
-    else if (auto l = t.to<Hs::ListType>())
-        return occurs_check(tv, l->element_type);
-    else if (auto p_app = t.to<Haskell::TypeApp>())
-        return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
-    else if (auto f = t.to<Haskell::ForallType>())
-    {
-        for(auto& x: f->type_var_binders)
-            if (x == tv)
-                return false;
-        return occurs_check(tv, f->type);
-    }
-    else if (auto c = t.to<Hs::ConstrainedType>())
-    {
-        // The context may not contain vars that don't occur in the head;
-        for(auto& constraint: c->context.constraints)
-            if (occurs_check(tv, constraint))
-                return true;
-
-        return occurs_check(tv, c->type);
-    }
-    else if (auto sl = t.to<Hs::StrictLazyType>())
-        return occurs_check(tv, sl->type);
-    else
-        std::abort();
 }
 
 // Is there a better way to implement this?
