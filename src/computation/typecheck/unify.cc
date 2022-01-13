@@ -22,6 +22,8 @@ Hs::Context apply_subst(const substitution_t& s, Hs::Context C)
 
 expression_ref apply_subst(const substitution_t& s, const Hs::Type& t)
 {
+    if (s.empty()) return t;
+
     if (auto tv = t.to<Haskell::TypeVar>())
     {
         if (auto t2 = s.find(*tv))
