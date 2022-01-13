@@ -94,44 +94,6 @@ substitution_t compose(substitution_t s2, substitution_t s1)
     return s3;
 }
 
-std::optional<substitution_t> combine(const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
-{
-    if (not s1) return {};
-    if (not s2) return {};
-    return combine(*s1, *s2);
-}
-
-std::optional<substitution_t> combine(const std::optional<substitution_t>& s1, const substitution_t& s2)
-{
-    if (not s1) return {};
-    return combine(*s1, s2);
-}
-
-std::optional<substitution_t> combine(const substitution_t& s1, const optional<substitution_t>& s2)
-{
-    if (not s2) return {};
-    return combine(s1, *s2);
-}
-
-std::optional<substitution_t> combine_match(const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
-{
-    if (not s1) return {};
-    if (not s2) return {};
-    return combine_match(*s1, *s2);
-}
-
-std::optional<substitution_t> combine_match(const std::optional<substitution_t>& s1, const substitution_t& s2)
-{
-    if (not s1) return {};
-    return combine_match(*s1, s2);
-}
-
-std::optional<substitution_t> combine_match(const substitution_t& s1, const optional<substitution_t>& s2)
-{
-    if (not s2) return {};
-    return combine_match(s1, *s2);
-}
-
 // PROOF: This cannot add substitution loops.
 //  `safe_type` can't reference variables in s, since it has been substituted.
 //  `safe_type` can't reference `tv` because of the occurs check.
@@ -155,61 +117,6 @@ std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::Type
     // 5. It is safe to add tv -> safe_type
     return s.insert({tv, safe_type});
 }
-
-
-
-// The order of s1 and s2 should not matter.
-std::optional<substitution_t> combine_match(substitution_t s1, substitution_t s2)
-{
-    if (s2.size() > s1.size()) std::swap(s1,s2);
-
-    auto s3 = s1;
-    for(auto& [tv,e]: s2)
-    {
-        optional<substitution_t> s4;
-
-        auto it = s3.find(tv);
-        // 1. If s3 doesn't have anything of the first tv ~ *, then we can add one.
-        if (not it)
-        {
-            if (auto s4 = try_insert(s3, tv, e))
-                s3 = *s4;
-            else
-                return {};
-        }
-        // 2. Otherwise, we have tv ~ e and tv ~ *it, so e and *it have to be the same.
-        else if (same_type(e, *it))
-            continue;
-    }
-
-    return s3;
-}
-
-// It SEEMS that the checks in try_insert( ) are sufficient to handle substitution loops.
-// They ensure that unify(a,a) produces an empty substitution.
-//
-// It SEEMS that the exception for a ~ a is sufficient to avoid problems in cases like
-//    combine ( a ~ b + b ~ c + c ~ d, a ~ b )
-//
-// Suppose we have a ~ b, b ~ c, c ~ d.
-// * If we try and combine this with a ~ b,
-//    case (2) cannot change this to b ~ a because there is already a def for b.
-//   Case (3) will then try to unify(b,b) produces an empty substitution.
-//   So there is no effect.
-//
-// * If we try and add a ~ c, then case (2) also does not apply.
-//   Case(3) will then try to unify (b,c), producing b ~ c.
-//   We will then try to  combine with b ~ c, which leads to unifying (c,c).
-//   So there is not effect.
-//
-// * If we try and add b ~ a, then we will try (in (3)) to unify(a,c)
-
-// * If we try and add a ~ d, then case (2) CAN try adding d ~ a.
-//   try_insert( ) then changes this to d ~ d.
-//   This has no effect (in try_insert( )).
-//
-// It therefore LOOKS like all the tautological cases are handled
-// through the single check in try_insert.
 
 // The kind-inference paper treats substitutions as a list of terms of the form
 // * a     (declaration)
@@ -240,6 +147,25 @@ std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain(const substitutio
     assert(tv);
     assert(not type or not type->is_a<Hs::TypeVar>());
     return {tv, type};
+}
+
+std::optional<substitution_t> combine(const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
+{
+    if (not s1) return {};
+    if (not s2) return {};
+    return combine(*s1, *s2);
+}
+
+std::optional<substitution_t> combine(const std::optional<substitution_t>& s1, const substitution_t& s2)
+{
+    if (not s1) return {};
+    return combine(*s1, s2);
+}
+
+std::optional<substitution_t> combine(const substitution_t& s1, const optional<substitution_t>& s2)
+{
+    if (not s2) return {};
+    return combine(s1, *s2);
 }
 
 // The order of s1 and s2 should not matter.
@@ -302,6 +228,52 @@ std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
             s3 = *s4;
     }
             
+    return s3;
+}
+
+std::optional<substitution_t> combine_match(const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
+{
+    if (not s1) return {};
+    if (not s2) return {};
+    return combine_match(*s1, *s2);
+}
+
+std::optional<substitution_t> combine_match(const std::optional<substitution_t>& s1, const substitution_t& s2)
+{
+    if (not s1) return {};
+    return combine_match(*s1, s2);
+}
+
+std::optional<substitution_t> combine_match(const substitution_t& s1, const optional<substitution_t>& s2)
+{
+    if (not s2) return {};
+    return combine_match(s1, *s2);
+}
+
+// The order of s1 and s2 should not matter.
+std::optional<substitution_t> combine_match(substitution_t s1, substitution_t s2)
+{
+    if (s2.size() > s1.size()) std::swap(s1,s2);
+
+    auto s3 = s1;
+    for(auto& [tv,e]: s2)
+    {
+        optional<substitution_t> s4;
+
+        auto it = s3.find(tv);
+        // 1. If s3 doesn't have anything of the first tv ~ *, then we can add one.
+        if (not it)
+        {
+            if (auto s4 = try_insert(s3, tv, e))
+                s3 = *s4;
+            else
+                return {};
+        }
+        // 2. Otherwise, we have tv ~ e and tv ~ *it, so e and *it have to be the same.
+        else if (same_type(e, *it))
+            continue;
+    }
+
     return s3;
 }
 
