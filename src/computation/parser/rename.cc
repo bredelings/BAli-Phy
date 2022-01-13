@@ -531,6 +531,13 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         return E;
     }
+    else if (auto te = E.to<Hs::TypedExp>())
+    {
+        auto TE = *te;
+        TE.exp = rename_infix(m, TE.exp);
+        // How about TE.type??
+        return TE;
+    }
     else if (auto I = E.to<Hs::InfixExp>())
     {
         auto terms = I->terms;
@@ -1894,6 +1901,13 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         for(auto& stmt: MD.stmts.stmts)
             add(binders, rename_stmt(stmt, bound, binders, free_vars));
         return MD;
+    }
+    else if (auto te = E.to<Hs::TypedExp>())
+    {
+        auto TE = *te;
+        TE.exp = rename(TE.exp, bound, free_vars);
+        TE.type = rename_type(TE.type);
+        return TE;
     }
     else if (E.is_a<Haskell::CaseExp>())
     {

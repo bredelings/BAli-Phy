@@ -368,23 +368,25 @@ struct typechecker_state
 
     // Figure 12
     global_instance_env
-    infer_type_for_instances1(const Hs::Decls& decls, const class_env& ce, const global_instance_env& gie_in);
+    infer_type_for_instances1(const Hs::Decls& decls, const class_env& ce);
 
     // Figure 12
     global_instance_env
-    infer_type_for_instance1(const Hs::InstanceDecl& instance_del, const class_env& ce, const global_instance_env& gie_in);
+    infer_type_for_instance1(const Hs::InstanceDecl& instance_del, const class_env& ce);
 
     // Figure 12
     Hs::Decls
-    infer_type_for_instances2(const Hs::Decls& decls, const class_env& ce, const global_instance_env& gie_in);
+    infer_type_for_instances2(const Hs::Decls& decls, const class_env& ce);
 
     // Figure 12
     Hs::Decls
-    infer_type_for_instance2(const Hs::InstanceDecl& instance_del, const class_env& ce, const global_instance_env& gie_in);
+    infer_type_for_instance2(const Hs::InstanceDecl& instance_del, const class_env& ce);
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
-    Hs::Binds get_dicts(const global_instance_env& gie, const local_instance_env& lie1, const local_instance_env& lie2);
+    optional<Hs::Binds> get_dicts(const local_instance_env& lie1, const local_instance_env& lie2);
+
+    local_instance_env constraints_to_lie(const vector<Hs::Type>&);
 
     vector<pair<string, Hs::Type>> superclass_constraints(const Hs::Type& constraint);
 
@@ -869,7 +871,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Decls d
             auto [s2, match, rhs_lie, rhs_type] = infer_type(env2, FD.match);
             FD.match = match;
             decl = FD;
-            
+
             lie += rhs_lie;
             s = compose(s2, compose(unify(lhs_type, rhs_type), s));
         }
@@ -1349,6 +1351,39 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     {
         auto [lie, type] = fresh_fractional_type();
         return { {}, E, lie, type };
+    }
+    else if (auto texp = E.to<Hs::TypedExp>())
+    {
+        // t->exp
+        // t->type
+
+        // 1. Get the most general type
+        auto [s1, exp1, lie_most_general, most_general_type] = infer_type(env, texp->exp);
+        // 2. alpha[i] in most_general_type but not in env
+        auto ftv_mgt = free_type_variables(most_general_type);
+        auto ftv_env = free_type_variables(env);
+        for(auto tv: ftv_env)
+            ftv_mgt.erase(tv);
+        // 3. instantiate the given type...
+        // 4. ... with fresh variables gamma[i].
+        auto [given_constraints, given_type] = instantiate(texp->type);
+        // 5. Find a way to constrain the most general type to the constrained type.
+        auto s2 = match(most_general_type, given_type);
+        if (not s2)
+            throw myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"'";
+        for(auto& [a,type]: *s2)
+            if (not ftv_mgt.count(a))
+                throw myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"' because it tries to constraint type variable '"<<a.print()<<"'";
+        // 6. Convert the given_constraints into a LIE
+        auto s = compose(s1, *s2);
+        lie_most_general = apply_subst(s, lie_most_general);
+        auto lie_given = constraints_to_lie(given_constraints);
+        // 7. Express lie2 in terms of lie1
+        auto binds = get_dicts(lie_given, lie_most_general);
+        if (not binds)
+            throw myexception()<<"Can't derive constraints '"<<print(lie_most_general)<<"' from specified constraints '"<<print(lie_given)<<"'";
+
+        return {s, Hs::LetExp({noloc,*binds},{noloc,exp1}), lie_given, given_type};
     }
     else if (auto l = E.to<Hs::List>())
     {
@@ -1906,43 +1941,33 @@ optional<Hs::Var> contains_constraint(const local_instance_env& lie)
     return {};
 }
 
+local_instance_env typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
+{
+    local_instance_env lie;
+    for(auto& constraint: constraints)
+    {
+        auto dvar = fresh_var("dvar", false);
+        lie = lie.insert({unloc(dvar.name), constraint});
+    }
+    return lie;
+}
+
 // How does this relate to simplifying constraints?
-Hs::Binds typechecker_state::get_dicts(const global_instance_env& gie, const local_instance_env& lie1, const local_instance_env& lie2)
+optional<Hs::Binds> typechecker_state::get_dicts(const local_instance_env& lie1, const local_instance_env& lie2)
 {
     Hs::Binds binds;
-    for(auto& [name,constraint]: lie2)
+    for(auto& constraint: lie2)
     {
-        auto [class_con, args] = decompose_type_apps(extract_class_constraint(constraint));
-        for(auto& arg: args)
-        {
-            // name = dvar
-            auto [head, type_args] = decompose_type_apps(arg);
-
-            if (auto dvar = contains_constraint(lie1))
-            {
-                auto decl = Hs::simple_decl(Hs::Var({noloc,name}), *dvar);
-                // binds[0].push_back( decl ) ?
-            }
-            else if (auto k = head.to<Hs::TypeCon>())
-            {
-                // Look up instance for K (head a1 a2) in gie -- there should be an instance defined for it.
-            }
-            else if (auto a = constraint.is_a<Hs::TypeVar>())
-            {
-                // There might be another assumption in LIE1 (or LIE2?) of the form dvar' :: k' a
-                // Then we could extract a as a superclass for k' a.
-
-                // Uh.... Is this basically simplifying the context?
-            }
-            else
-                std::abort();
-        }
+        auto binds1 = entails(lie1, constraint);
+        if (not binds1)
+            return {};
+        ranges::insert(binds, binds.end(), *binds1);
     }
     return binds;
 }
 
 global_instance_env
-typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, const class_env& ce, const global_instance_env& gie_in)
+typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, const class_env& ce)
 {
     auto [class_head, monotypes] = decompose_type_apps(inst_decl.constraint);
 
@@ -1998,24 +2023,24 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, c
     auto dfun = fresh_var("dfun", true);
     Hs::Type inst_type = add_constraints(inst_decl.context.constraints, inst_decl.constraint);
     inst_type = add_forall_vars( free_type_VARS(inst_type) | ranges::to<vector>, inst_type);
-    global_instance_env gie;
-    gie = gie.insert( { unloc(dfun.name), inst_type } );
-    return gie;
+    global_instance_env gie_out;
+    gie_out = gie_out.insert( { unloc(dfun.name), inst_type } );
+    return gie_out;
 }
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
 global_instance_env
-typechecker_state::infer_type_for_instances1(const Hs::Decls& decls, const class_env& ce, const global_instance_env& gie_in)
+typechecker_state::infer_type_for_instances1(const Hs::Decls& decls, const class_env& ce)
 {
     global_instance_env gie_inst;
     for(auto& decl: decls)
     {
         if (auto I = decl.to<Hs::InstanceDecl>())
         {
-            auto gie = infer_type_for_instance1(*I, ce, gie_in);
+            auto gie1 = infer_type_for_instance1(*I, ce);
 
-            gie_inst = plus_no_overlap(gie_inst, gie);
+            gie_inst += gie1;
         }
     }
     return gie_inst;
@@ -2031,7 +2056,7 @@ expression_ref tuple_from_value_env(const value_env& venv)
 }
 
 Hs::Decls
-typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, const class_env& ce, const global_instance_env& gie_in)
+typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, const class_env& ce)
 {
     auto [class_head, monotypes] = decompose_type_apps(inst_decl.constraint);
 
@@ -2096,7 +2121,9 @@ typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, c
 
     // Premise 7:
     local_instance_env lie_super;
-    Hs::Binds binds_super = get_dicts(gie_in, lie, lie_super);
+    auto binds_super = get_dicts(lie, lie_super);
+    if (not binds_super)
+        throw myexception()<<"Missing instances!";
 
     // Premise 8:
     Hs::Binds binds_methods;
@@ -2107,7 +2134,7 @@ typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, c
     expression_ref dict2 = tuple_from_value_env(lie);
 
     expression_ref E = Hs::LetExp( {noloc,binds_methods}, {noloc, dict1} );
-    E = Hs::LetExp( {noloc,binds_super}, {noloc,E} );
+    E = Hs::LetExp( {noloc,*binds_super}, {noloc,E} );
     E = Hs::LambdaExp({dict2}, E);
 
     Hs::Decls decls ({ simple_decl(dfun,E) });
@@ -2117,7 +2144,7 @@ typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, c
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
 Hs::Decls
-typechecker_state::infer_type_for_instances2(const Hs::Decls& decls, const class_env& ce, const global_instance_env& gie_in)
+typechecker_state::infer_type_for_instances2(const Hs::Decls& decls, const class_env& ce)
 {
     Hs::Decls out_decls;
     global_instance_env gie_inst;
@@ -2125,7 +2152,7 @@ typechecker_state::infer_type_for_instances2(const Hs::Decls& decls, const class
     {
         if (auto I = decl.to<Hs::InstanceDecl>())
         {
-            auto decls_ = infer_type_for_instance2(*I, ce, gie_in);
+            auto decls_ = infer_type_for_instance2(*I, ce);
 
             for(auto& d: decls_)
                 out_decls.push_back(d);
@@ -2181,10 +2208,10 @@ Hs::ModuleDecls typecheck( const string& mod_name, Hs::ModuleDecls M )
     std::cerr<<class_binds.print()<<"\n";
     std::cerr<<"\n";
 
-    auto inst_gie = state.infer_type_for_instances1(M.type_decls, class_info, class_gie);
+    state.gie = class_gie;
+    auto inst_gie = state.infer_type_for_instances1(M.type_decls, class_info);
 
-    auto gie = plus_no_overlap(class_gie, inst_gie);
-    state.gie = gie;
+    state.gie += inst_gie;
 
     for(auto& [method,type]: inst_gie)
     {
