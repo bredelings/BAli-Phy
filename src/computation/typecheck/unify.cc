@@ -112,25 +112,30 @@ std::optional<substitution_t> combine(const substitution_t& s1, const optional<s
     return combine(s1, *s2);
 }
 
+// PROOF: This cannot add substitution loops.
+//  `safe_type` can't reference variables in s, since it has been substituted.
+//  `safe_type` can't reference `tv` because of the occurs check.
+//  Therefore, substituting into any phrase with `tv` will have the same termination properties as before.
 std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::TypeVar& tv, Hs::Type type)
 {
-    // We can't insert tv ~ type if we already have a substitution for tv.
+    // 1. We can't insert tv ~ type if we already have a substitution for tv.
     assert(not s.count(tv));
 
-    // We are trying to insert tv ~ tv, which is redundant.
-    if (auto tv2 = type.to<Hs::TypeVar>(); tv2 and *tv2 == tv)
+    // 2. Eliminate existing variables in type.
+    safe_type = apply_subst(s, type);
+
+    // 3. Trying insert tv ~ tv is redundant, so return an empty substitution.
+    if (auto tv2 = safe_type.to<Hs::TypeVar>(); tv2 and *tv2 == tv)
         return s;
 
-    type = apply_subst(s, type);
+    // 4. If safe_type contains tv, then we have a substitution loop for tv.
+    //    Therefore return failure.  (This rules out infinite types.)
+    if (occurs_check(tv, safe_type)) return {};
 
-    // We are trying to insert tv ~ tv, which is redundant.
-    if (auto tv2 = type.to<Hs::TypeVar>(); tv2 and *tv2 == tv)
-        return s;
+    // 5. It is safe to add tv -> safe_type
+    return s.insert({tv, safe_type});
 
-    if (occurs_check(tv, type))
-        return {};
-    else
-        return s.insert({tv,type});
+
 }
 
 // This should yield a substitution that is equivalent to apply FIRST s1 and THEN s2,
