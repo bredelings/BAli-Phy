@@ -37,6 +37,7 @@ using std::tuple;
   Done: 
   * Check that constraints in classes only mention type vars.
   * Check that constraints in instance heads are of the form Class (Tycon a1 a2 a3..)
+  * Switch from substitutions to constraints (i.e. from compose( ) to combine( ) ).
   * Add a substitution to the typechecker_state, instead of returning substitutions from every call.
   * We no longer need to keep substituting into the type.
 
@@ -65,7 +66,7 @@ using std::tuple;
   12. Handle a :: Num a => Char in (a,b) = ('a',1)
   13. Handle constraints on constructors.
   14. Remove the constraint from EmptySet
-  15. Don't substitution into types / LIEs / LVEs / GVEs until we need to.
+  15. Don't substitution into LIEs / LVEs / GVEs until we need to.
   16. Make unification stop throwing.
   17. Replace types with type synonyms.
   18. Reject unification of variables, tycons, etc with different kinds.
@@ -82,28 +83,10 @@ using std::tuple;
   1. Implement kinds as Hs::Type
 
   Unification:
-  0. Can we avoid explicitly returning a substitution?
   1. If I somehow defer "zonking" to the end, can I avoid manually applying all these
      substitutions?
-  2. Unification SHOULD be accumulating a set of constraints that can be solved later.
-     But right now it seems that by failing to substitute into a term before unifying
-     that term with another term, we can lose constraints.
-     How can we avoid this?
-  3. Can we get better error messages by listing an expected type?
-  4. Can we prefix with "heralds" for better error messages?
-
-  5. I'd like to replace substitutions with constraints.
-     Hmmm... perhaps the difference is that COMPOSITION of substitutions never fails,
-     but COMBINING constraints can fail?
-
-     Example: a ~ Int , a ~ b
-     * for substitutions, later ones have no effect
-     * for constraints, I guess you do a ~ Int, b ~ a, changin a ~ b into b ~ a in order to
-       "define" each variable only once.
-     * if you later add b ~ Int, then you need to unify b ~ Int and b ~ a,
-       which then unifies Int ~ a, which succeeds.
-     * So, perhaps a second definition of a variable must either fail or succeed -- it doesn't
-       get added.
+  2. Can we get better error messages by listing an expected type?
+  3. Can we prefix with "heralds" for better error messages?
  */
 
 /*
