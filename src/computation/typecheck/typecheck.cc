@@ -37,6 +37,7 @@ using std::tuple;
   Done: 
   * Check that constraints in classes only mention type vars.
   * Check that constraints in instance heads are of the form Class (Tycon a1 a2 a3..)
+  * Add a substitution to the typechecker_state, instead of returning substitutions from every call.
 
   TODO:
   1. Check that constraints in instance contexts satisfy the "paterson conditions"
@@ -63,8 +64,7 @@ using std::tuple;
   12. Handle a :: Num a => Char in (a,b) = ('a',1)
   13. Handle constraints on constructors.
   14. Remove the constraint from EmptySet
-  15. Add a substitution to the typechecker_state, as in THIH.
-     - Can we then switch this to using constraints instead of substitutions?
+  15. Don't substitution into types / LIEs / LVEs / GVEs until we need to.
   16. Make unification stop throwing.
   17. Replace types with type synonyms.
   18. Reject unification of variables, tycons, etc with different kinds.
