@@ -40,6 +40,7 @@ using std::tuple;
   * Switch from substitutions to constraints (i.e. from compose( ) to combine( ) ).
   * Add a substitution to the typechecker_state, instead of returning substitutions from every call.
   * We no longer need to keep substituting into the type.
+  * Handle exp :: type expressions.
 
   TODO:
   1. Check that constraints in instance contexts satisfy the "paterson conditions"
