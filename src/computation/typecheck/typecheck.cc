@@ -73,6 +73,9 @@ using std::tuple;
       LIE on the top of the LIE stack?
   21. Should we consider having infer_type( ) modify expressions in-place instace of 
       returning a new one?
+  22. How do we handle things like Prelude.Num, Prelude.Enum, Prelude.fromInt, etc.
+      Right now, maybe we can pick a Num / fromInt from the local scope, instead?
+      This might require passing some information from the renamer into the typechecker...
 
   Cleanups:
   1. Implement kinds as Hs::Type
@@ -241,28 +244,50 @@ struct typechecker_state
 
     std::string mod_name;
 
-    typechecker_state(const string& s, const constr_env& ce)
+    const Module& this_mod; // for name lookups like Bool, Num, etc.
+
+    typechecker_state(const string& s, const Module& m, const constr_env& ce)
         :con_info(ce),
-         mod_name(s)
+         mod_name(s),
+         this_mod(m)
         { }
 
-    Hs::Type bool_type() const { return Hs::TypeCon({noloc,"Data.Bool.True"}); }
+    Hs::Type bool_type() const {
+        string bool_name = "Bool";
+        if (this_mod.type_is_declared(bool_name))
+            bool_name = this_mod.lookup_type(bool_name).name;
+        return Hs::TypeCon({noloc, bool_name});
+    }
 
-    Hs::Type char_type() const { return Hs::TypeCon({noloc,"Char"}); }
+    Hs::Type char_type() const {
+        string char_name = "Char";
+        if (this_mod.type_is_declared(char_name))
+            char_name = this_mod.lookup_type(char_name).name;
+        return Hs::TypeCon({noloc, char_name });
+    }
 
     Hs::Type enum_class(const Hs::Type& arg) const
     {
-        return Hs::TypeApp(Hs::TypeCon({noloc,"Enum"}),arg);
+        string enum_name = "Enum";
+        if (this_mod.type_is_declared(enum_name))
+            enum_name = this_mod.lookup_type(enum_name).name;
+        return Hs::TypeApp(Hs::TypeCon({noloc, enum_name}),arg);
     }
 
     Hs::Type num_class(const Hs::Type& arg) const
     {
-        return Hs::TypeApp(Hs::TypeCon({noloc,"Num"}),arg);
+        string num_name = "Num";
+        if (this_mod.type_is_declared(num_name))
+            num_name = this_mod.lookup_type(num_name).name;
+        return Hs::TypeApp(Hs::TypeCon({noloc,num_name}),arg);
     }
 
     Hs::Type fractional_class(const Hs::Type& arg) const
     {
-        return Hs::TypeApp(Hs::TypeCon({noloc,"Fractional"}),arg);
+        string fractional_name = "Fractional";
+        if (this_mod.type_is_declared(fractional_name))
+            fractional_name = this_mod.lookup_type(fractional_name).name;
+        return Hs::TypeApp(Hs::TypeCon({noloc, fractional_name}),arg);
     }
 
     pair<local_instance_env, Hs::Type> fresh_enum_type()
@@ -2161,7 +2186,7 @@ typechecker_state::infer_type_for_instances2(const Hs::Decls& decls, const class
     return out_decls;
 }
 
-Hs::ModuleDecls typecheck( const string& mod_name, Hs::ModuleDecls M )
+Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDecls M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
     //    OK, so datatypes produce a
@@ -2189,7 +2214,7 @@ Hs::ModuleDecls typecheck( const string& mod_name, Hs::ModuleDecls M )
     std::cerr<<"\n";
 
     //   CE_C  = class name -> class info
-    typechecker_state state( mod_name, constr_info );
+    typechecker_state state( mod_name, m, constr_info );
     auto [gve, class_gie, class_info, class_binds] = state.infer_type_for_classes(M.type_decls, tce);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 

@@ -12,7 +12,7 @@
 #include "computation/parser/haskell.H"
 #include "types.H"
 
-Hs::ModuleDecls typecheck(const std::string& s, Hs::ModuleDecls M);
+Hs::ModuleDecls typecheck(const std::string& s, const Module& m, Hs::ModuleDecls M);
 
 Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type type, const Haskell::Type& constraint);
 
