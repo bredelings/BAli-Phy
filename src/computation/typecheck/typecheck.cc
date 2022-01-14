@@ -246,6 +246,8 @@ struct typechecker_state
 
     const Module& this_mod; // for name lookups like Bool, Num, etc.
 
+    substitution_t type_var_to_type;
+
     typechecker_state(const string& s, const Module& m, const constr_env& ce)
         :con_info(ce),
          mod_name(s),
@@ -318,6 +320,44 @@ struct typechecker_state
         auto dvar = fresh_var("dvar", false);
         lie = lie.insert({unloc(dvar.name), fractional_a});
         return {lie, a};
+    }
+
+    Hs::Type apply_substitution(const Hs::Type& type) const
+    {
+        return apply_subst(type_var_to_type, type);
+    }
+
+    bool add_substitution(const substitution_t& s)
+    {
+        if (auto s2 = combine(type_var_to_type, s))
+        {
+            type_var_to_type = *s2;
+            return true;
+        }
+        else
+            return false;
+    }
+
+    bool add_substitution(const Hs::TypeVar& a, const Hs::Type& type)
+    {
+        if (auto s = try_insert({}, a, type))
+            return add_substitution(*s);
+        else
+            return false;
+    }
+
+    bool maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
+    {
+        if (auto s = ::maybe_unify(t1,t2))
+            return add_substitution(*s);
+        else
+            return false;
+    }
+
+    void unify_(const Hs::Type& t1, const Hs::Type& t2)
+    {
+        if (not maybe_unify(t1,t2))
+            throw myexception()<<"Unification failed: "<<t1<<" !~ "<<t2;
     }
 
     pair<Hs::Type, vector<Hs::Type>> constr_types(const Hs::Con&);
