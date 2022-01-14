@@ -424,7 +424,7 @@ MPD::add_emitted_column(const emitted_column& C)
     int x_current = -1;
 
     // Look up the column, creating a new index if necessary
-    emitted_column_map::iterator x_record = emitted_columns.find(C);
+    auto x_record = emitted_columns.find(C);
 
     // if this emitted column has not been seen before
     if (x_record == emitted_columns.end()) 
