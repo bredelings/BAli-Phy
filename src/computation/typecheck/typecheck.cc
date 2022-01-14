@@ -38,6 +38,7 @@ using std::tuple;
   * Check that constraints in classes only mention type vars.
   * Check that constraints in instance heads are of the form Class (Tycon a1 a2 a3..)
   * Add a substitution to the typechecker_state, instead of returning substitutions from every call.
+  * We no longer need to keep substituting into the type.
 
   TODO:
   1. Check that constraints in instance contexts satisfy the "paterson conditions"
@@ -1047,7 +1048,6 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
 
         lie = apply_current_subst(lie);
         lve = apply_current_subst(lve);
-        type = apply_current_subst(type);
 
         return { pat, type, lie, lve };
     }
@@ -1091,14 +1091,12 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
             element = p1;
 
             unify(t, t1);
-            t = apply_current_subst(t);
             lve += lve1;
             lie += lie1;
         }
 
         lie = apply_current_subst(lie);
         lve = apply_current_subst(lve);
-        t = apply_current_subst(t);
 
         return {L, Hs::ListType(t), lie, lve};
     }
@@ -1279,7 +1277,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::GuardedRHS rhs)
     rhs2.guards.insert(rhs2.guards.begin(), guard1);
     auto lie = lie1 + lie2;
 
-    Hs::Type type = apply_current_subst(t2);
+    Hs::Type type = t2;
     lie = apply_current_subst(lie);
     return {rhs2, lie, type};
 }
@@ -1309,7 +1307,6 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MultiGuardedRHS r
         lie += lie1;
     }
     lie = apply_current_subst(lie);
-    type = apply_current_subst(type);
     return {rhs, lie, type};
 };
 
@@ -1340,7 +1337,6 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MRule rule)
         local_instance_env lie = lie1 + lie2;
 
         lie = apply_current_subst(lie);
-        type = apply_current_subst(type);
 
         return {rule2, lie, type};
     }
@@ -1359,7 +1355,6 @@ typechecker_state::infer_type(const global_value_env& env, Hs::Match m)
         rule = rule1;
         unify(result_type, t1);
         lie += lie1;
-        result_type = apply_current_subst(result_type);
     }
 
     lie = apply_current_subst(lie);
@@ -1460,7 +1455,6 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
             lie += lie1;
         }
-        element_type = apply_current_subst(element_type);
         lie = apply_current_subst(lie);
         return { L, lie, Hs::ListType(element_type) };
     }
@@ -1480,7 +1474,6 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
             lie += element_lie;
         }
         Hs::Type result_type = Hs::TupleType(element_types);
-        result_type = apply_current_subst(result_type);
         lie = apply_current_subst(lie);
         return {T, lie, result_type};
     }
@@ -1504,9 +1497,9 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
             auto [arg2, lie2, t2] = infer_type(apply_current_subst(env), e2);
             args.push_back(arg2);
 
-            unify (apply_current_subst(t1), make_arrow_type(t2,tv));
+            unify (t1, make_arrow_type(t2,tv));
 
-            t1 = apply_current_subst(Hs::Type(tv));
+            t1 = tv;
             lie += lie2;
         }
         E = apply_expression(f, args);
@@ -1567,7 +1560,6 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         E = expression_ref(*con, args);
         
         lie = apply_current_subst(lie);
-        type = apply_current_subst(type);
         return { E, lie, type };
     }
     else if (is_non_apply_op_exp(E))
@@ -1604,8 +1596,6 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         unify( make_arrow_type(object_type,result_type), match_type );
 
-        result_type = apply_current_subst(result_type);
-
         auto lie = lie1 + lie2;
         lie = apply_current_subst(lie);
         return { Case, lie, result_type };
@@ -1624,10 +1614,9 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         unify(cond_type, bool_type());
         unify(tbranch_type, fbranch_type);
 
-        auto result_type = apply_current_subst(tbranch_type);
         auto lie = cond_lie + tbranch_lie + fbranch_lie;
         lie = apply_current_subst(lie);
-        return {If, lie, result_type};
+        return {If, lie, tbranch_type};
     }
     // LISTCOMP
     else if (auto lcomp = E.to<Hs::ListComprehension>())
@@ -1638,7 +1627,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         LComp.quals = quals;
         LComp.body = body;
 
-        Hs::Type result_type = apply_current_subst(Hs::ListType(exp_type));
+        Hs::Type result_type = Hs::ListType(exp_type);
 
         auto lie = quals_lie + exp_lie;
         lie = apply_current_subst(lie);
@@ -1655,8 +1644,6 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         L.from = from;
         unify(t,t_from);
 
-        t = apply_current_subst(t);
-
         lie += lie_from;
         lie = apply_current_subst(lie);
         return {L, lie, Hs::ListType(t) };
@@ -1668,10 +1655,8 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto [lie, t] = fresh_enum_type();
         auto [from, lie_from, t_from] = infer_type(env, L.from);
         unify(t,t_from);
-        t = apply_current_subst(t);
 
         auto [then, lie_then, t_then] = infer_type(env, L.then);
-        t = apply_current_subst(t);
         L.from = from;
         L.then = then;
         
@@ -1686,10 +1671,8 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto [lie, t] = fresh_enum_type();
         auto [from, lie_from, t_from] = infer_type(env, l->from);
         unify(t,t_from);
-        t = apply_current_subst(t);
 
         auto [to, lie_to, t_to] = infer_type(env, l->to);
-        t = apply_current_subst(t);
         L.from = from;
         L.to = to;
         
@@ -1704,15 +1687,12 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto [lie, t] = fresh_enum_type();
         auto [from, lie_from, t_from] = infer_type(env, L.from);
         unify(t,t_from);
-        t = apply_current_subst(t);
 
         auto [then, lie_then, t_then] = infer_type(env, L.then);
         unify(t,t_then);
-        t = apply_current_subst(t);
 
         auto [to, lie_to, t_to] = infer_type(env, l->to);
         unify(t,t_to);
-        t = apply_current_subst(t);
 
         L.from = from;
         L.then = then;
