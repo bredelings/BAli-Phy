@@ -1320,7 +1320,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MRule rule)
     else
     {
         auto [pat, t1, lie1, lve1] = infer_pattern_type(rule.patterns.front());
-        auto env2 = plus_no_overlap(env, lve1);
+        auto env2 = env + lve1;
 
         // Remove the first pattern in the rule
         rule.patterns.erase(rule.patterns.begin());
@@ -1746,8 +1746,8 @@ tuple<global_value_env, global_instance_env, class_env, Hs::Binds> typechecker_s
 
         auto [gve1, gie1, class_info, class_decls] = infer_type_for_class(tce, *c);
 
-        gve = plus_no_overlap(gve, gve1);
-        gie = plus_no_overlap(gie, gie1);
+        gve += gve1;
+        gie += gie1;
         ce.insert({class_info.name, class_info});
         binds.push_back(class_decls);
     }
@@ -1896,7 +1896,7 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Hs::Class
         type = add_forall_vars(class_typevars, type);
         gie = gie.insert({unloc(get_dict.name), type});
     }
-    cinfo.fields = plus_no_overlap(gve, gie);
+    cinfo.fields = gve + gie;
 
     Hs::Decls decls;
 
