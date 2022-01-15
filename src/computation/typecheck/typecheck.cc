@@ -79,6 +79,9 @@ using std::tuple;
   22. How do we handle things like Prelude.Num, Prelude.Enum, Prelude.fromInt, etc.
       Right now, maybe we can pick a Num / fromInt from the local scope, instead?
       This might require passing some information from the renamer into the typechecker...
+  23. Handle literal constant patterns.  We need a Num or Fractional dictionary for
+      Int or Double constants.  I guess we need an Eq Char, or Eq [Char] dictionary for
+      characters or strings?
 
   Cleanups:
   1. Implement kinds as Hs::Type
