@@ -239,72 +239,79 @@ struct typechecker_state
          this_mod(m)
         { }
 
-    Hs::Type bool_type() const {
-        string bool_name = "Bool";
-        if (this_mod.type_is_declared(bool_name))
-            bool_name = this_mod.lookup_type(bool_name).name;
-        return Hs::TypeCon({noloc, bool_name});
+    Hs::Var find_prelude_var(string name) const
+    {
+        if (this_mod.is_declared(name))
+            name = this_mod.lookup_symbol(name).name;
+        return Hs::Var({noloc, name});
     }
 
-    Hs::Type char_type() const {
-        string char_name = "Char";
-        if (this_mod.type_is_declared(char_name))
-            char_name = this_mod.lookup_type(char_name).name;
-        return Hs::TypeCon({noloc, char_name });
+    Hs::TypeCon find_prelude_tycon(string name) const
+    {
+        if (this_mod.type_is_declared(name))
+            name = this_mod.lookup_type(name).name;
+        return Hs::TypeCon({noloc, name });
+    }
+
+    Hs::Type bool_type() const
+    {
+        return find_prelude_tycon("Bool");
+    }
+
+    Hs::Type char_type() const
+    {
+        return find_prelude_tycon("Char");
     }
 
     Hs::Type enum_class(const Hs::Type& arg) const
     {
-        string enum_name = "Enum";
-        if (this_mod.type_is_declared(enum_name))
-            enum_name = this_mod.lookup_type(enum_name).name;
-        return Hs::TypeApp(Hs::TypeCon({noloc, enum_name}),arg);
+        auto Enum = find_prelude_tycon("Enum");
+
+        return Hs::TypeApp( Enum, arg);
     }
 
     Hs::Type num_class(const Hs::Type& arg) const
     {
-        string num_name = "Num";
-        if (this_mod.type_is_declared(num_name))
-            num_name = this_mod.lookup_type(num_name).name;
-        return Hs::TypeApp(Hs::TypeCon({noloc,num_name}),arg);
+        auto Num = find_prelude_tycon("Num");
+
+        return Hs::TypeApp( Num, arg);
     }
 
     Hs::Type fractional_class(const Hs::Type& arg) const
     {
-        string fractional_name = "Fractional";
-        if (this_mod.type_is_declared(fractional_name))
-            fractional_name = this_mod.lookup_type(fractional_name).name;
-        return Hs::TypeApp(Hs::TypeCon({noloc, fractional_name}),arg);
+        auto Fractional = find_prelude_tycon("Fractional");
+
+        return Hs::TypeApp( Fractional, arg);
     }
 
-    pair<local_instance_env, Hs::Type> fresh_enum_type()
+    tuple<Hs::Var, local_instance_env, Hs::Type> fresh_enum_type()
     {
         local_instance_env lie;
         Hs::Type a = fresh_type_var();
         Hs::Type num_a = enum_class(a);
         auto dvar = fresh_var("dvar", false);
         lie = lie.insert({unloc(dvar.name), num_a});
-        return {lie, a};
+        return {dvar, lie, a};
     }
 
-    pair<local_instance_env, Hs::Type> fresh_num_type()
+    tuple<Hs::Var, local_instance_env, Hs::Type> fresh_num_type()
     {
         local_instance_env lie;
         Hs::Type a = fresh_type_var();
         Hs::Type num_a = num_class(a);
         auto dvar = fresh_var("dvar", false);
         lie = lie.insert({unloc(dvar.name), num_a});
-        return {lie, a};
+        return {dvar, lie, a};
     }
 
-    pair<local_instance_env, Hs::Type> fresh_fractional_type()
+    tuple<Hs::Var, local_instance_env, Hs::Type> fresh_fractional_type()
     {
         local_instance_env lie;
         Hs::Type a = fresh_type_var();
         Hs::Type fractional_a = fractional_class(a);
         auto dvar = fresh_var("dvar", false);
         lie = lie.insert({unloc(dvar.name), fractional_a});
-        return {lie, a};
+        return {dvar, lie, a};
     }
 
     template <typename T>
@@ -854,6 +861,9 @@ pair<Hs::Binds, local_instance_env> typechecker_state::reduce(const local_instan
     return {binds, lie2};
 }
 
+
+// Why aren't we using `fixed_type_vars`?
+// I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
 pair<local_instance_env, local_instance_env>
 classify_constraints(const local_instance_env& lie,
                      const set<Hs::TypeVar>& fixed_type_vars,
@@ -1104,12 +1114,12 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
     // ???
     else if (pat.is_int())
     {
-        auto [lie, type] = fresh_num_type();
+        auto [dvar, lie, type] = fresh_num_type();
         return {pat, type, lie, {}};
     }
     else if (pat.is_double())
     {
-        auto [lie, type] = fresh_fractional_type();
+        auto [dvar, lie, type] = fresh_fractional_type();
         return {pat, type, lie, {}};
     }
     else if (pat.is_char())
@@ -1373,12 +1383,14 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     }
     else if (E.is_int())
     {
-        auto [lie, type] = fresh_num_type();
+        auto [dvar, lie, type] = fresh_num_type();
+        E = { find_prelude_var("fromInt"), dvar, E };
         return { E, lie, type };
     }
     else if (E.is_double())
     {
-        auto [lie, type] = fresh_fractional_type();
+        auto [dvar, lie, type] = fresh_fractional_type();
+        E = { find_prelude_var("fromRational"), dvar, E };
         return { E, lie, type };
     }
     else if (E.is_char())
@@ -1388,7 +1400,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     }
     else if (E.is_log_double())
     {
-        auto [lie, type] = fresh_fractional_type();
+        auto [dvar, lie, type] = fresh_fractional_type();
         return { E, lie, type };
     }
     else if (auto texp = E.to<Hs::TypedExp>())
@@ -1621,7 +1633,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     else if (auto l = E.to<Hs::ListFrom>())
     {
         auto L = *l;
-        auto [lie, t] = fresh_enum_type();
+        auto [dvar, lie, t] = fresh_enum_type();
 
         // PROBLEM: Do we need to desugar these here, in order to plug in the dictionary?
         auto [from, lie_from, t_from] = infer_type(env, L.from);
@@ -1636,7 +1648,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     else if (auto l = E.to<Hs::ListFromThen>())
     {
         auto L = *l;
-        auto [lie, t] = fresh_enum_type();
+        auto [dvar, lie, t] = fresh_enum_type();
         auto [from, lie_from, t_from] = infer_type(env, L.from);
         unify(t,t_from);
 
@@ -1652,7 +1664,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     else if (auto l = E.to<Hs::ListFromTo>())
     {
         auto L = *l;
-        auto [lie, t] = fresh_enum_type();
+        auto [dvar, lie, t] = fresh_enum_type();
         auto [from, lie_from, t_from] = infer_type(env, l->from);
         unify(t,t_from);
 
@@ -1668,7 +1680,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     else if (auto l = E.to<Hs::ListFromThenTo>())
     {
         auto L = *l;
-        auto [lie, t] = fresh_enum_type();
+        auto [dvar, lie, t] = fresh_enum_type();
         auto [from, lie_from, t_from] = infer_type(env, L.from);
         unify(t,t_from);
 
@@ -1933,11 +1945,6 @@ Hs::Type extract_class_constraint(Hs::Type type)
         return c->type;
     else
         return type;
-}
-
-optional<Hs::Var> contains_constraint(const local_instance_env& lie)
-{
-    return {};
 }
 
 local_instance_env typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
