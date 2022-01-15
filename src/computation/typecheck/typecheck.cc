@@ -1387,7 +1387,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     else if (E.is_int())
     {
         auto [dvar, lie, type] = fresh_num_type();
-        E = { find_prelude_var("fromInt"), dvar, E };
+        E = { find_prelude_var("fromInteger"), dvar, E };
         return { E, lie, type };
     }
     else if (E.is_double())
