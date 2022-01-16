@@ -1417,7 +1417,7 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
             if (it == index_for_name.end()) continue;
 
             // Skip if this name has an explicit def
-//            if (signatures.count(name)) continue;
+            if (signatures.count(name)) continue;
 
             refs.push_back(it->second);
         }
