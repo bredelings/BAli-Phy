@@ -544,7 +544,7 @@ std::set<Hs::TypeVar> free_type_vars(const value_env& env)
     return tvs;
 }
 
-std::set<Hs::TypeVar> free_type_variables(const global_value_env& env)
+std::set<Hs::TypeVar> free_type_variables(const value_env& env)
 {
     std::set<Hs::TypeVar> free;
     for(auto& [x,type]: env)
@@ -575,7 +575,7 @@ value_env quantify(const T& tvs, const value_env& env1)
     return env2;
 }
 
-expression_ref generalize(const global_value_env& env, const expression_ref& monotype)
+Hs::Type generalize(const global_value_env& env, const Hs::Type& monotype)
 {
     auto ftv1 = free_type_variables(monotype);
     auto ftv2 = free_type_variables(env);
