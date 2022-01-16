@@ -980,8 +980,9 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
         if (auto fd = decl.to<Hs::FunDecl>())
         {
             auto FD = *fd;
-            Hs::Type type = fresh_type_var();
             auto& name = unloc(FD.v.name);
+
+            Hs::Type type = fresh_type_var();
             FD.v.type = type;
             decl = FD;
 
