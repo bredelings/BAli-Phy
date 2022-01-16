@@ -41,6 +41,7 @@ using std::tuple;
   * Add a substitution to the typechecker_state, instead of returning substitutions from every call.
   * We no longer need to keep substituting into the type.
   * Handle exp :: type expressions.
+  *. Monomorphism restriction.
 
   TODO:
   1. Check that constraints in instance contexts satisfy the "paterson conditions"
@@ -61,7 +62,6 @@ using std::tuple;
   7. Implement fromInt and fromRational
   8. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
       Do I need to handle LiteralString patterns, then?
-  9. Monomorphism restriction.
   10. Defaulting.
   11. Emit code for instances and check if there are instances for the context.
   12. Handle a :: Num a => Char in (a,b) = ('a',1)
@@ -82,6 +82,14 @@ using std::tuple;
   23. Handle literal constant patterns.  We need a Num or Fractional dictionary for
       Int or Double constants.  I guess we need an Eq Char, or Eq [Char] dictionary for
       characters or strings?
+
+  Questions:
+  1. How do we handle predicates that make it to the top level?
+  2. Is THIH correct about binding groups in Haskell 2010?
+     - It seems that basically all the explicitly-typed things should be at the END.
+     - In that case, every explicitly-typed thing would be in its OWN group.
+     - We need the explicit types BEFORE we type the thing.
+     - So they should be attached to Hs::Binds, not Hs::Decls.
 
   Cleanups:
   1. Implement kinds as Hs::Type
@@ -528,12 +536,43 @@ std::set<Hs::TypeVar> free_type_variables(const Hs::Type& t)
     return free_type_VARS(t);
 }
 
+std::set<Hs::TypeVar> free_type_vars(const value_env& env)
+{
+    set<Hs::TypeVar> tvs;
+    for(auto [_,type]: env)
+        add(tvs, free_type_VARS(type));
+    return tvs;
+}
+
 std::set<Hs::TypeVar> free_type_variables(const global_value_env& env)
 {
     std::set<Hs::TypeVar> free;
     for(auto& [x,type]: env)
         add(free, free_type_variables(type));
     return free;
+}
+
+value_env add_constraints(const std::vector<Haskell::Type>& constraints, const value_env& env1)
+{
+    value_env env2;
+    for(auto& [name, monotype]: env1)
+        env2 = env2.insert( {name, add_constraints(constraints, monotype)} );
+    return env2;
+}
+
+template <typename T>
+Hs::Type quantify(const T& tvs, const Hs::Type& monotype)
+{
+    return Hs::ForallType(tvs | ranges::to<vector>, monotype);
+}
+
+template <typename T>
+value_env quantify(const T& tvs, const value_env& env1)
+{
+    value_env env2;
+    for(auto& [name, monotype]: env1)
+        env2 = env2.insert( {name, quantify(tvs, monotype)} );
+    return env2;
 }
 
 expression_ref generalize(const global_value_env& env, const expression_ref& monotype)
@@ -571,6 +610,14 @@ pair<vector<Hs::Type>, Hs::Type> typechecker_state::instantiate(const Hs::Type& 
         type = ct->type;
     }
     return {constraints,type};
+}
+
+vector<Hs::Type> constraints_from_lie(const local_instance_env& lie)
+{
+    vector<Hs::Type> constraints;
+    for(auto& [_, constraint]: lie)
+        constraints.push_back(constraint);
+    return constraints;
 }
 
 tuple<Hs::Binds, local_instance_env, global_value_env>
@@ -878,12 +925,20 @@ classify_constraints(const local_instance_env& lie,
     for(auto& [name, constraint]: lie)
     {
         auto constraint_type_vars = free_type_VARS(constraint);
-        bool keep = false;
-        for(auto& target_var: target_type_vars)
-            if (constraint_type_vars.count(target_var))
-                keep = true;
 
-        if (keep)
+        // Does the constraint contain any ambiguous vars?
+        bool any_ambiguous = false;
+        // Does the constraint reference any variables from the target set?
+        bool any_referenced = false;
+        for(auto& type_var: constraint_type_vars)
+        {
+            if (not target_type_vars.count(type_var) or not fixed_type_vars.count(type_var))
+                any_ambiguous = true;
+            if (target_type_vars.count(type_var))
+                any_referenced = true;
+        }
+
+        if (any_referenced and not any_ambiguous)
             lie_retained = lie_retained.insert({name,constraint});
         else
             lie_deferred = lie_deferred.insert({name,constraint});
@@ -891,6 +946,25 @@ classify_constraints(const local_instance_env& lie,
 
     return {lie_deferred, lie_retained};
 }
+
+bool is_restricted(const Hs::Decls& decls)
+{
+    for(auto& decl: decls)
+    {
+        if (decl.is_a<Hs::PatDecl>())
+            return true;
+        else if (auto fd = decl.to<Hs::FunDecl>())
+        {
+            // Simple pattern declaration
+            if (fd->match.rules[0].patterns.size() == 0)
+            {
+                auto& name = unloc(fd->v.name);
+                if (not decls.signatures.count(name)) return true;
+            }
+        }
+    }
+    return false;
+};
 
 tuple<Hs::Decls, local_instance_env, global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Decls decls)
@@ -955,7 +1029,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Decls d
             auto [rhs, rhs_lie, rhs_type] = infer_type(env2, PD.rhs);
             PD.rhs = rhs;
             decl = PD;
-            
+
             lie += rhs_lie;
             unify(lhs_type, rhs_type);
         }
@@ -964,43 +1038,53 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Decls d
         env2 = apply_current_subst(env2);
         lie = apply_current_subst(lie);
     }
-    
-    // FIXME: Deal with constraints in the LIE here...
-    auto fs = free_type_variables(env);
-    auto gs = free_type_variables(binder_env);
-    // fs = free_type_variables(env);
-    // gs = free_type_variables(type) - fs;
-    // ??? = information to reduce LIEs and also handle defaults.
 
-    // A. First, REDUCE the lie
+    auto fs = free_type_variables(env);
+    set<Hs::TypeVar> any_tvs;  // type variables in ANY of the definitions
+    set<Hs::TypeVar> all_tvs;  // type variables in ALL of the definitions
+    {
+        // FIXME - should we be looping over binder vars, or over definitions?
+        optional<set<Hs::TypeVar>> all_tvs_;
+        for(auto& [_, type]: binder_env)
+        {
+            auto tvs = free_type_variables(type);
+            add(any_tvs, tvs);
+            if (all_tvs_)
+                all_tvs_ = intersection(*all_tvs_, tvs);
+            else
+                all_tvs_ = tvs;
+        }
+        assert(all_tvs_);
+        all_tvs = *all_tvs_;
+    }
+
+    // A. First, REDUCE the lie by
+    //    (i)  converting to Hnf
+    //    (ii) representing some constraints in terms of others.
     auto [binds1, lie1] = reduce(lie);
 
-    // % (decls1,lie') = reduce ??? lie
-    // B. Second, remove the "deferred" predicates,
-    auto [lie_deferred, lie_retained] = classify_constraints(lie1, fs, gs);
-    //     where all the variables are fixed / constrained => they are a subset of `fs`.
-    // % (lie_deferred, lie_retained) = partition lie'
-    // C. Find retained predicates that are defaulted.
+    // B. Second, extract the "retained" predicates can be added without causing abiguity.
+    auto [lie_deferred, lie_retained] = classify_constraints(lie1, fs, all_tvs);
+
+    // C. Find retained predicates that are defaulted.  Wait... aren't these handled at the top level?
     //    (decls2, lie_retained') = resolveDefaultedPreds ??? (fs++gs) lie_retained
     //    Example: show (read x + 1)
 
-    vector<Hs::Type> constraints;
-    for(auto& [name, constraint]: lie_retained)
-        constraints.push_back(constraint);
-
-    value_env predicated_binder_env;
-    for(auto& [var,type]: binder_env)
+    set<Hs::TypeVar> qtvs = minus(any_tvs, fs);
+    if (is_restricted(decls))
     {
-        auto predicated_type = add_constraints(constraints,type);
-        predicated_binder_env = predicated_binder_env.insert({var, predicated_type});
+        lie = lie1; // == lie_deferred + lie_retained;
+        qtvs = minus(qtvs, free_type_vars(lie));
+        binder_env = quantify( qtvs, binder_env );
+    }
+    else
+    {
+        binder_env = add_constraints( constraints_from_lie(lie_retained), binder_env );
+        binder_env = quantify( qtvs, binder_env );
+        lie = lie_deferred;
     }
 
-    // 3. Generalize each type over variables not in the *original* environment
-    value_env generalized_binder_env;
-    for(auto& [var,type]: predicated_binder_env)
-        generalized_binder_env = generalized_binder_env.insert({var,generalize(env, type)});
-
-    return {decls, lie_deferred, generalized_binder_env};
+    return {decls, lie, binder_env};
 }
 
 // Figure 24. Rules for patterns
