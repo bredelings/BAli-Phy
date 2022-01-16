@@ -737,8 +737,10 @@ pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const string& name, 
             rhs = {rhs,dvar};
         }
 
+        Hs::Var dvar({noloc, name});
+
         Hs::Decls decls;
-        decls.push_back(Hs::simple_decl(dfun, rhs));
+        decls.push_back(Hs::simple_decl(dvar, rhs));
 
         // 3. Finally, we may need to further simplify the new LIE
         auto [binds2, lie3] = toHnfs(lie2);
