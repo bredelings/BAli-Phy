@@ -44,6 +44,7 @@ using std::tuple;
   *. Monomorphism restriction.
 
   TODO:
+  0. Create DictionaryLambda, or whatever we need to show the dictionary bindings.
   1. Check that constraints in instance contexts satisfy the "paterson conditions"
   2. How do we export stuff?
   3. Make functions to handle instance declarations from Figure 12.
@@ -620,6 +621,18 @@ vector<Hs::Type> constraints_from_lie(const local_instance_env& lie)
     return constraints;
 }
 
+vector<Hs::Var> vars_from_lie(const local_instance_env& lie)
+{
+    vector<Hs::Var> dict_vars;
+    for(auto& [name, constraint]: lie)
+    {
+        Hs::Var dict_var({noloc,name});
+        dict_var.type = constraint;
+        dict_vars.push_back( dict_var );
+    }
+    return dict_vars;
+}
+
 tuple<Hs::Binds, local_instance_env, global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Binds binds)
 {
@@ -1088,16 +1101,24 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     {
         lie = lie1; // == lie_deferred + lie_retained;
         qtvs = minus(qtvs, free_type_vars(lie));
-        binder_env = quantify( qtvs, binder_env );
     }
     else
     {
         binder_env = add_constraints( constraints_from_lie(lie_retained), binder_env );
-        binder_env = quantify( qtvs, binder_env );
         lie = lie_deferred;
     }
+    binder_env = quantify( qtvs, binder_env );
 
-    return {decls, lie, binder_env};
+    Hs::Decls decls2 = decls;
+    if (binds1.size() or lie_retained.size())
+    {
+        auto dict_vars = vars_from_lie( lie_retained );
+
+        decls2 = {};
+        decls2.push_back( Hs::DictionaryLambda( qtvs | ranges::to<vector>, dict_vars, binds1, decls ) );
+    }
+
+    return {decls2, lie, binder_env};
 }
 
 // Figure 24. Rules for patterns
@@ -2337,6 +2358,7 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
     }
     std::cerr<<"\n";
 
+    std::cerr<<M.value_decls.print();
     return M;
 }
 
