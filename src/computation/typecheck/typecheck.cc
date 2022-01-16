@@ -623,7 +623,12 @@ vector<Hs::Type> constraints_from_lie(const local_instance_env& lie)
 tuple<Hs::Binds, local_instance_env, global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Binds binds)
 {
-    auto env2 = env;
+    global_value_env sig_env;
+    for(auto& [name, type]: binds.signatures)
+        sig_env = sig_env.insert({name,type});
+
+    auto env2 = plus_prefer_right(env, sig_env);
+
     local_instance_env lie;
     global_value_env binders;
     for(auto& decls: binds)
