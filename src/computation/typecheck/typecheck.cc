@@ -44,7 +44,9 @@ using std::tuple;
   *. Monomorphism restriction.
 
   TODO:
-  0. Create DictionaryLambda, or whatever we need to show the dictionary bindings.
+  9. Create DictionaryLambda, or whatever we need to show the dictionary bindings.
+  10. Defaulting.
+    - Can we solve the problem with (a,b) = ('a,1) via defaulting?
   1. Check that constraints in instance contexts satisfy the "paterson conditions"
   2. How do we export stuff?
   3. Make functions to handle instance declarations from Figure 12.
@@ -63,7 +65,6 @@ using std::tuple;
   7. Implement fromInt and fromRational
   8. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
       Do I need to handle LiteralString patterns, then?
-  10. Defaulting.
   11. Emit code for instances and check if there are instances for the context.
   12. Handle a :: Num a => Char in (a,b) = ('a',1)
   13. Handle constraints on constructors.
