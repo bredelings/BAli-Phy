@@ -1008,6 +1008,33 @@ struct FunDecl: public Object
 
 FunDecl simple_decl(const Var& v, const expression_ref&);
 
+struct DictionaryLambda: public Object
+{
+    std::vector<TypeVar> tv_args;
+
+    // These variables MUST be type-annotated!
+    std::vector<Var> dict_args;
+
+    DictionaryLambda* clone() const {return new DictionaryLambda(*this);}
+    std::string print() const;
+
+    // Express dictionaries used in the body in terms of dictionary arguments.
+    Binds dict_binds;
+
+    // These are the actual declarations.
+    Decls body;
+
+    DictionaryLambda(const std::vector<TypeVar>& v1,
+                     const std::vector<Var>& v2,
+                     const Binds& b,
+                     const Decls& d)
+        :tv_args(v1),
+         dict_args(v2),
+         dict_binds(b),
+         body(d)
+    { }
+};
+
 // We can initially put all the type or class decls into a single group.
 // We can initially put all value decls into a single group.
 

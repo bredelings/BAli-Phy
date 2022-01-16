@@ -777,6 +777,22 @@ string MRule::print() const
     return join( ss, " ");
 }
 
+string DictionaryLambda::print() const
+{
+    vector<string> as;
+    for(auto& tv: tv_args)
+        as.push_back(tv.print());
+
+    vector<string> ds;
+    for(auto& darg: dict_args)
+        ds.push_back( darg.print_with_type() );
+
+    string s = "["+join(as," ")+"]  ["+join(ds,"; ")+"]\n";
+    s += dict_binds.print()+"\n";
+    s += body.print();
+    return s;
+}
+
 string FunDecl::print() const
 {
     vector<string> lines;
