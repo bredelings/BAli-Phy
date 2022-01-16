@@ -937,10 +937,10 @@ classify_constraints(const local_instance_env& lie,
         bool any_referenced = false;
         for(auto& type_var: constraint_type_vars)
         {
-            if (not target_type_vars.count(type_var) or not fixed_type_vars.count(type_var))
-                any_ambiguous = true;
             if (target_type_vars.count(type_var))
                 any_referenced = true;
+            else if (not fixed_type_vars.count(type_var))
+                any_ambiguous = true;
         }
 
         if (any_referenced and not any_ambiguous)
