@@ -625,7 +625,12 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Binds b
 {
     global_value_env sig_env;
     for(auto& [name, type]: binds.signatures)
-        sig_env = sig_env.insert({name,type});
+    {
+        // FIXME!
+        // We need to translate type synonyms and add foralls.
+        auto type2 = add_forall_vars(free_type_variables(type) | ranges::to<vector>, type);
+        sig_env = sig_env.insert({name, type2});
+    }
 
     auto env2 = plus_prefer_right(env, sig_env);
 
