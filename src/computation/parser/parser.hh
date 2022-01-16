@@ -61,8 +61,6 @@
 
   class driver;
 
-  std::optional<Located<Hs::Decls>> make_opt_decls(const std::optional<Located<Hs::Binds>>& binds);
-
   std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
   Hs::Type make_kind(const Hs::Type& kind);
@@ -80,7 +78,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 84 "parser.hh"
+#line 82 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -220,7 +218,7 @@
 #endif
 
 namespace yy {
-#line 224 "parser.hh"
+#line 222 "parser.hh"
 
 
 
@@ -5924,7 +5922,7 @@ switch (yykind)
 
 
 } // yy
-#line 5928 "parser.hh"
+#line 5926 "parser.hh"
 
 
 

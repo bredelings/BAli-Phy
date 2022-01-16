@@ -198,8 +198,7 @@ bool ValueDecl::operator==(const ValueDecl&) const
 string Decls::print() const
 {
     vector<string> decl_string;
-    for(auto& [name, type]: signatures)
-        decl_string.push_back( name + " :: " + type.print() );
+
     for(auto& decl: *this)
         decl_string.push_back( decl.print() );
 
@@ -209,6 +208,8 @@ string Decls::print() const
 string Binds::print() const
 {
     vector<string> ds;
+    for(auto& [name, type]: signatures)
+        ds.push_back( name + " :: " + type.print() );
     for(auto& decls: *this)
         ds.push_back(decls.print());
     return join( ds, "\n");
@@ -638,16 +639,16 @@ int Constructor::arity() const
 string ClassDecl::print() const
 {
     string result = "class " + show_type_or_class_header(context, name, type_vars);
-    if (decls)
-        result += " where " + decls->print();
+    if (binds)
+        result += " where " + binds->print();
     return result;
 }
 
 string InstanceDecl::print() const
 {
     string result = "instance " + show_instance_header(context, constraint);
-    if (decls)
-        result += " where " + decls->print();
+    if (binds)
+        result += " where " + binds->print();
     return result;
 }
 

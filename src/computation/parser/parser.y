@@ -23,8 +23,6 @@
 
   class driver;
 
-  std::optional<Located<Hs::Decls>> make_opt_decls(const std::optional<Located<Hs::Binds>>& binds);
-
   std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
   Hs::Type make_kind(const Hs::Type& kind);
@@ -1535,13 +1533,13 @@ Hs::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, const 
         type = T.type;
     }
 
-    return {context, type, make_opt_decls(binds)};
+    return {context, type, binds};
 }
 
 Hs::ClassDecl make_class_decl(const Hs::Context& context, const expression_ref& header, const optional<Located<Hs::Binds>>& binds)
 {
     auto [name, type_args] = check_type_or_class_header(header);
-    return {name, check_all_type_vars(type_args), context, make_opt_decls(binds)};
+    return {name, check_all_type_vars(type_args), context, binds};
 }
 
 // Can we change the context parsing rule to expect:
@@ -1662,12 +1660,3 @@ expression_ref yy_make_string(const std::string& s)
 	chars.push_back(c);
     return Hs::List(chars);
 }
-
-std::optional<Located<Hs::Decls>> make_opt_decls(const std::optional<Located<Hs::Binds>>& binds)
-{
-    std::optional<Located<Hs::Decls>> decls;
-    if (binds)
-        decls = {binds->loc, unloc(*binds)[0]};
-    return decls;
-}
-

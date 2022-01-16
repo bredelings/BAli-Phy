@@ -213,8 +213,6 @@ public:
 
     void perform_exports();
 
-    Hs::Decls rename_infix(const Hs::Decls&);
-
     Hs::ModuleDecls rename(const simplifier_options&, Hs::ModuleDecls);
 
     CDecls desugar(const simplifier_options&, const Hs::Binds&);

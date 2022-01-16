@@ -304,9 +304,6 @@ struct BuiltinDecl: public Object
 struct Decls: public std::vector<expression_ref>
 {
 public:
-    // FIXME: I should keep the SignatureDecl around for error messages.
-    std::map<std::string, Type> signatures;
-
     std::string print() const;
 
     Decls() = default;
@@ -315,6 +312,9 @@ public:
 
 struct Binds: public std::vector<Decls>
 {
+    // FIXME: I should keep the SignatureDecl around for error messages.
+    std::map<std::string, Type> signatures;
+
     std::string print() const;
 
     using std::vector<Decls>::vector;
@@ -460,7 +460,7 @@ struct ClassDecl: public Object
     std::vector<TypeVar> type_vars;
     Context context;
 
-    std::optional<Located<Decls>> decls;
+    std::optional<Located<Binds>> binds;
     // std::vector<Located<expression_ref>> signatures;
     // std::vector<Located<expression_ref>> default_decls;
 
@@ -470,11 +470,11 @@ struct ClassDecl: public Object
     ClassDecl(const std::string& s,
               const std::vector<TypeVar>& tvs,
               const Context& ct,
-              const std::optional<Located<Decls>>& ds)
+              const std::optional<Located<Binds>>& bs)
         :name(s),
          type_vars(tvs),
          context(ct),
-         decls(ds)
+         binds(bs)
         {}
 };
 
@@ -487,17 +487,17 @@ struct InstanceDecl: public Object
     Context context;
     Type constraint;
 
-    std::optional<Located<Decls>> decls;
+    std::optional<Located<Binds>> binds;
 
     InstanceDecl* clone() const { return new InstanceDecl(*this);}
     std::string print() const;
 
     InstanceDecl(const Context& c,
                  const Type& t,
-                 const std::optional<Located<Decls>>& d)
+                 const std::optional<Located<Binds>>& bs)
         :context(c),
          constraint(t),
-         decls(d)
+         binds(bs)
         {}
 };
 

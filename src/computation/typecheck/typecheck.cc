@@ -435,7 +435,7 @@ struct typechecker_state
 
     // Figures 13, 14, 15?
     tuple<Hs::Decls, local_instance_env, global_value_env>
-    infer_type_for_decls(const global_value_env& env, Hs::Decls E);
+    infer_type_for_decls(const global_value_env& env, const map<string, Hs::Type>&, Hs::Decls E);
 
     // Figures 13, 14, 15?
     tuple<Hs::Binds, local_instance_env, global_value_env>
@@ -628,7 +628,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Binds b
     global_value_env binders;
     for(auto& decls: binds)
     {
-        auto [decls1, lie1, binders1] = infer_type_for_decls(env2, decls);
+        auto [decls1, lie1, binders1] = infer_type_for_decls(env2, binds.signatures, decls);
         decls = decls1;
         lie += lie1;
         env2 = plus_prefer_right(env2, binders1);
@@ -947,7 +947,7 @@ classify_constraints(const local_instance_env& lie,
     return {lie_deferred, lie_retained};
 }
 
-bool is_restricted(const Hs::Decls& decls)
+bool is_restricted(const map<string, Hs::Type>& signatures, const Hs::Decls& decls)
 {
     for(auto& decl: decls)
     {
@@ -959,7 +959,7 @@ bool is_restricted(const Hs::Decls& decls)
             if (fd->match.rules[0].patterns.size() == 0)
             {
                 auto& name = unloc(fd->v.name);
-                if (not decls.signatures.count(name)) return true;
+                if (not signatures.count(name)) return true;
             }
         }
     }
@@ -967,7 +967,7 @@ bool is_restricted(const Hs::Decls& decls)
 };
 
 tuple<Hs::Decls, local_instance_env, global_value_env>
-typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Decls decls)
+typechecker_state::infer_type_for_decls(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls)
 {
     // 1. Add each let-binder to the environment with a fresh type variable
     local_instance_env lie;
@@ -1071,7 +1071,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Decls d
     //    Example: show (read x + 1)
 
     set<Hs::TypeVar> qtvs = minus(any_tvs, fs);
-    if (is_restricted(decls))
+    if (is_restricted(signatures, decls))
     {
         lie = lie1; // == lie_deferred + lie_retained;
         qtvs = minus(qtvs, free_type_vars(lie));
@@ -1951,9 +1951,9 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Hs::Class
 
     // e. handle the class methods
     global_value_env gve;
-    if (class_decl.decls)
+    if (class_decl.binds)
     {
-        for(auto& [name, type]: unloc(*class_decl.decls).signatures)
+        for(auto& [name, type]: unloc(*class_decl.binds).signatures)
         {
             Hs::Type method_type = type_check_class_method_type(K, type, constraint);
 

@@ -411,8 +411,8 @@ void Module::compile(const Program& P)
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = rename(opts, M);
 
-    // std::cerr<<"-------- module "<<name<<"--------\n";
-    // M = typecheck(name, *this, M);
+    std::cerr<<"-------- module "<<name<<"--------\n";
+    M = typecheck(name, *this, M);
 
     // Updates exported_symols_ + exported_types_
     perform_exports();
@@ -573,11 +573,6 @@ map<string,expression_ref> Module::code_defs() const
     }
 
     return code;
-}
-
-Hs::Decls Module::rename_infix(const Hs::Decls& topdecls)
-{
-    return ::rename_infix(*this, topdecls);
 }
 
 Hs::ModuleDecls Module::rename(const simplifier_options& opts, Hs::ModuleDecls M)
@@ -1421,8 +1416,8 @@ void Module::declare_fixities(const Hs::ModuleDecls& M)
 
     for(const auto& type_decl: M.type_decls)
         if (auto C = type_decl.to<Haskell::ClassDecl>())
-            if (C->decls)
-                declare_fixities_(unloc(*C->decls));
+            if (C->binds)
+                declare_fixities_(unloc(*C->binds)[0]);
 }
 
 void Module::maybe_def_function(const string& var_name)
@@ -1473,19 +1468,22 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 
             def_type_class(Class.name);
 
-            if (Class.decls)
+            if (Class.binds)
             {
-                for(auto& [name, type]: unloc(*Class.decls).signatures)
+                for(auto& [name, type]: unloc(*Class.binds).signatures)
                     def_type_class_method(name, Class.name);
 
-                for(auto& decl: unloc(*Class.decls))
+                for(auto& decls: unloc(*Class.binds))
                 {
-                    if (decl.is_a<Haskell::SignatureDecl>())
+                    for(auto& decl: decls)
                     {
-                        auto& T = decl.as_<Haskell::SignatureDecl>();
-                        for(auto& var: T.vars)
+                        if (decl.is_a<Haskell::SignatureDecl>())
                         {
-                            def_type_class_method(unloc(var.name), Class.name);
+                            auto& T = decl.as_<Haskell::SignatureDecl>();
+                            for(auto& var: T.vars)
+                            {
+                                def_type_class_method(unloc(var.name), Class.name);
+                            }
                         }
                     }
                 }

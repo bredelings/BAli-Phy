@@ -138,9 +138,9 @@ set<string> free_type_cons(const Hs::ClassDecl& class_decl)
     // QUESTION: We are ignoring default methods here -- should we?
     set<string> tvars;
     add(tvars, free_type_cons(class_decl.context));
-    if (class_decl.decls)
+    if (class_decl.binds)
     {
-        for(auto& [name, type]: unloc(*class_decl.decls).signatures)
+        for(auto& [name, type]: unloc(*class_decl.binds).signatures)
             add(tvars, free_type_cons(type));
     }
     return tvars;
@@ -773,9 +773,9 @@ void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
     }
     assert(k->is_kconstraint());
 
-    if (class_decl.decls)
+    if (class_decl.binds)
     {
-        for(auto& [name,type]: unloc(*class_decl.decls).signatures)
+        for(auto& [name,type]: unloc(*class_decl.binds).signatures)
             kind_check_class_method_type(type);
     }
 
