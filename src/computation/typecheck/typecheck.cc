@@ -1084,38 +1084,38 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
         all_tvs = *all_tvs_;
     }
 
-    // A. First, REDUCE the lie by
-    //    (i)  converting to Hnf
-    //    (ii) representing some constraints in terms of others.
-    auto [binds1, lie1] = reduce(lie);
-
-    // B. Second, extract the "retained" predicates can be added without causing abiguity.
-    auto [lie_deferred, lie_retained] = classify_constraints(lie1, fs, all_tvs);
-
-    // C. Find retained predicates that are defaulted.  Wait... aren't these handled at the top level?
-    //    (decls2, lie_retained') = resolveDefaultedPreds ??? (fs++gs) lie_retained
-    //    Example: show (read x + 1)
-
     set<Hs::TypeVar> qtvs = minus(any_tvs, fs);
+    vector< Hs::Var > dict_vars;
+    Hs::Binds binds;
     if (is_restricted(signatures, decls))
     {
-        lie = lie1; // == lie_deferred + lie_retained;
+        // lie == lie_deferred + lie_retained;
         qtvs = minus(qtvs, free_type_vars(lie));
     }
     else
     {
-        binder_env = add_constraints( constraints_from_lie(lie_retained), binder_env );
+        // A. First, REDUCE the lie by
+        //    (i)  converting to Hnf
+        //    (ii) representing some constraints in terms of others.
+        auto [binds1, lie1] = reduce(lie);
+        lie = lie1;
+        binds = binds1;
+
+        // B. Second, extract the "retained" predicates can be added without causing abiguity.
+        auto [lie_deferred, lie_retained] = classify_constraints(lie1, fs, all_tvs);
         lie = lie_deferred;
+
+        auto dict_vars = vars_from_lie( lie_retained );
+
+        binder_env = add_constraints( constraints_from_lie(lie_retained), binder_env );
     }
     binder_env = quantify( qtvs, binder_env );
 
     Hs::Decls decls2 = decls;
-    if (binds1.size() or lie_retained.size())
+    if (qtvs.size() or binds.size() or dict_vars.size())
     {
-        auto dict_vars = vars_from_lie( lie_retained );
-
         decls2 = {};
-        decls2.push_back( Hs::DictionaryLambda( qtvs | ranges::to<vector>, dict_vars, binds1, decls ) );
+        decls2.push_back( Hs::DictionaryLambda( qtvs | ranges::to<vector>, dict_vars, binds, decls ) );
     }
 
     return {decls2, lie, binder_env};
