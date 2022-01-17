@@ -441,7 +441,7 @@ struct typechecker_state
 
     // Figures 13, 14, 15?
     tuple<Hs::Binds, local_instance_env, global_value_env>
-    infer_type_for_decls(const global_value_env& env, Hs::Binds binds);
+    infer_type_for_binds(const global_value_env& env, Hs::Binds binds);
 
     tuple<global_value_env, global_instance_env, class_env, Hs::Binds>
     infer_type_for_classes(const Hs::Decls& decls, const type_con_env& tce);
@@ -635,7 +635,7 @@ vector<Hs::Var> vars_from_lie(const local_instance_env& lie)
 }
 
 tuple<Hs::Binds, local_instance_env, global_value_env>
-typechecker_state::infer_type_for_decls(const global_value_env& env, Hs::Binds binds)
+typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds binds)
 {
     global_value_env sig_env;
     for(auto& [name, type]: binds.signatures)
@@ -1318,7 +1318,7 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
     else if (auto lq = qual.to<Hs::LetQual>())
     {
         auto LQ = *lq;
-        auto [binds, lie, t] = infer_type_for_decls(env, unloc(LQ.binds));
+        auto [binds, lie, t] = infer_type_for_binds(env, unloc(LQ.binds));
         unloc(LQ.binds) = binds;
         return {LQ, lie, t};
     }
@@ -1360,7 +1360,7 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
     else if (auto lq = guard.to<Hs::LetQual>())
     {
         auto LQ = *lq;
-        auto [binds, lie, t] = infer_type_for_decls(env, unloc(LQ.binds));
+        auto [binds, lie, t] = infer_type_for_binds(env, unloc(LQ.binds));
         unloc(LQ.binds) = binds;
         return {LQ, lie, t};
     }
@@ -1408,7 +1408,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MultiGuardedRHS r
     auto env2 = env;
     if (rhs.decls)
     {
-        auto [decls1, lie1, binders] = infer_type_for_decls(env, unloc(*rhs.decls));
+        auto [decls1, lie1, binders] = infer_type_for_binds(env, unloc(*rhs.decls));
         unloc(*rhs.decls) = decls1;
         lie += lie1;
         env2 = plus_prefer_right(env, binders);
@@ -1640,7 +1640,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto Let = *let;
 
         // 1. Extend environment with types for decls, get any substitutions
-        auto [binds, lie_decls, env_decls] = infer_type_for_decls(env, unloc(Let.binds));
+        auto [binds, lie_decls, env_decls] = infer_type_for_binds(env, unloc(Let.binds));
         unloc(Let.binds) = binds;
         auto env2 = env_decls +  env;
 
@@ -2348,7 +2348,7 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
 
     // 3. E' = (TCE_T, (CVE_T, GVE_C, LVE={}), CE_C, (GIE_C, LIE={}))
 
-    auto [value_decls, lie,env] = state.infer_type_for_decls(gve, M.value_decls);
+    auto [value_decls, lie,env] = state.infer_type_for_binds(gve, M.value_decls);
     M.value_decls = value_decls;
 
     for(auto& [x,t]: env)
