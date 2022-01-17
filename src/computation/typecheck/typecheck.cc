@@ -1035,7 +1035,6 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     auto env2 = plus_prefer_right(env, binder_env);
 
     // 2. Infer the types of each of the x[i]
-    substitution_t s;
     for(int i=0;i<decls.size();i++)
     {
         auto& decl = decls[i];
