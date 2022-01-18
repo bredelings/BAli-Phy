@@ -2378,6 +2378,10 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
         }
         throw myexception()<<"Ambiguous constraint '"<<constraint<<"'";
     }
+    // The defaulting criteria for an ambiguous type variable v are:
+    // 1. v appears only in constraints of the form C v , where C is a class
+    // 2. at least one of these classes is a numeric class, (that is, Num or a subclass of Num)
+    // 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
 
     set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
     set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
