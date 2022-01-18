@@ -41,11 +41,11 @@ using std::tuple;
   * Add a substitution to the typechecker_state, instead of returning substitutions from every call.
   * We no longer need to keep substituting into the type.
   * Handle exp :: type expressions.
-  *. Monomorphism restriction.
+  * Monomorphism restriction.
+  * Defaulting.
 
   TODO:
   9. Create DictionaryLambda, or whatever we need to show the dictionary bindings.
-  10. Defaulting.
     - Can we solve the problem with (a,b) = ('a,1) via defaulting?
   1. Check that constraints in instance contexts satisfy the "paterson conditions"
   2. How do we export stuff?
@@ -1023,8 +1023,8 @@ pair<Hs::Binds, local_instance_env> typechecker_state::reduce(const local_instan
 
     auto [binds2, lie2] = simplify(lie1);
 
-    auto binds = binds1;
-    for(auto& bind: binds2)
+    auto binds = binds2;
+    for(auto& bind: binds1)
         binds.push_back(bind);
 
     return {binds, lie2};
@@ -2351,13 +2351,13 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
     M.value_decls = value_decls;
 
     state.current_lie() = state.apply_current_subst( state.current_lie() );
-    auto [simpl_binds, simple_lie] = state.reduce( state.current_lie() );
+    auto [simpl_binds, simpl_lie] = state.reduce( state.current_lie() );
     ranges::insert(simpl_binds, simpl_binds.end(), M.value_decls);
     M.value_decls = simpl_binds;
 
     // Now determine substitutions for DEFAULTS here?
     map<string,vector<pair<string,Hs::TypeCon>>> ambiguities;
-    for(auto& [var_name, constraint]: simple_lie)
+    for(auto& [var_name, constraint]: simpl_lie)
     {
         auto [tycon, args] = decompose_type_apps(constraint);
         if (args.size() == 1)
@@ -2391,10 +2391,19 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
     for(auto& cls: std_classes_)
         std_classes.insert( state.find_prelude_tycon_name(cls) );
 
+    vector<Hs::Type> defaults;
+    if (M.default_decl)
+        defaults = M.default_decl->types;
+    else
+        defaults = { Hs::TypeCon({noloc,"Int"}), Hs::TypeCon({noloc,"Double"}) };
+
+    substitution_t subst_defaults;
     for(auto& [tv,constraints]: ambiguities)
     {
         bool any_num = false;
         bool all_std = true;
+        local_instance_env lie;
+        Hs::TypeVar a({noloc, tv});
         for(auto& [dvar,tycon]: constraints)
         {
             auto& name = unloc(tycon.name);
@@ -2402,18 +2411,41 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
                 any_num = true;
             if (not std_classes.count(name))
                 all_std = false;
+            lie = lie.insert({name, Hs::TypeApp(tycon,a)});
         }
         if (any_num and all_std)
         {
+            optional<substitution_t> s;
+            for(auto& type: defaults)
+            {
+                substitution_t s_for_type;
+                s_for_type = s_for_type.insert({a,type});
+                if (auto binds = state.entails({}, apply_subst(s_for_type, lie)))
+                {
+                    s = s_for_type;
+                    break;
+                }
+            }
+            if (s)
+            {
+                auto s2 = combine(subst_defaults, *s);
+                assert(s2);
+                subst_defaults = *s2;
+                continue;
+            }
         }
-        else
-        {
-            auto e = myexception()<<"Ambiguous type variable '"<<tv<<"' in classes: ";
-            for(auto& [dvar,tycon]: constraints)
-                e<<unloc(tycon.name)<<" ";
-            throw e;
-        }
+
+        auto e = myexception()<<"Ambiguous type variable '"<<tv<<"' in classes: ";
+        for(auto& [dvar,tycon]: constraints)
+            e<<unloc(tycon.name)<<" ";
+        throw e;
     }
+
+    env = apply_subst(subst_defaults, env);
+    simpl_lie = apply_subst(subst_defaults, simpl_lie);
+    auto default_binds = state.entails({}, simpl_lie);
+    assert(default_binds);
+    ranges::insert(M.value_decls, M.value_decls.begin(), *default_binds);
 
     for(auto& [x,t]: env)
     {
