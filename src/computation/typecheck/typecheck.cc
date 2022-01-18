@@ -1626,7 +1626,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MRule rule)
     else
     {
         auto [pat, t1, lve1] = infer_pattern_type(rule.patterns.front());
-        auto env2 = env + lve1;
+        auto env2 = plus_prefer_right(env, lve1);
 
         // Remove the first pattern in the rule
         rule.patterns.erase(rule.patterns.begin());
