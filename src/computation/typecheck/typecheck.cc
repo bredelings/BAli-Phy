@@ -473,6 +473,8 @@ struct typechecker_state
         return tv;
     }
 
+    Hs::Binds default_subst(const Hs::ModuleDecls& M);
+
     pair<vector<Hs::Type>,Hs::Type> instantiate(const Hs::Type& t);
 
     // Figure 22.
@@ -539,11 +541,14 @@ struct typechecker_state
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
     local_instance_env constraints_to_lie(const vector<Hs::Type>&);
 
+    // FIXME: this should be  const
     vector<pair<string, Hs::Type>> superclass_constraints(const Hs::Type& constraint);
 
+    // FIXME: this should be  const
     std::optional<vector<string>>
     is_superclass_of(const Hs::Type&, const Hs::Type&);
 
+    // FIXME: this should be  const
     std::optional<Hs::Binds>
     entails_by_superclass(const pair<string, Hs::Type>& to_keep,
                           const pair<string, Hs::Type>& to_remove);
@@ -560,6 +565,103 @@ struct typechecker_state
     pair<Hs::Binds, local_instance_env> simplify(const local_instance_env& lie_in);
     pair<Hs::Binds, local_instance_env> reduce(const local_instance_env& lie_in);
 };
+
+Hs::Binds typechecker_state::default_subst(const Hs::ModuleDecls& M)
+{
+    // Now determine substitutions for DEFAULTS here?
+    map<string,vector<pair<string,Hs::TypeCon>>> ambiguities;
+    for(auto& [var_name, constraint]: current_lie())
+    {
+        auto [tycon, args] = decompose_type_apps(constraint);
+        if (args.size() == 1)
+        {
+            if (auto tv = args[0].to<Hs::TypeVar>())
+            {
+                auto& name = unloc(tv->name);
+                auto it = ambiguities.find(name);
+                if (it == ambiguities.end())
+                {
+                    ambiguities.insert({name,{}});
+                    it = ambiguities.find(name);
+                }
+                auto tc = tycon.to<Hs::TypeCon>();
+                it->second.push_back({var_name,*tc});
+                continue;
+            }
+        }
+        throw myexception()<<"Ambiguous constraint '"<<constraint<<"'";
+    }
+    // The defaulting criteria for an ambiguous type variable v are:
+    // 1. v appears only in constraints of the form C v , where C is a class
+    // 2. at least one of these classes is a numeric class, (that is, Num or a subclass of Num)
+    // 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
+
+    set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
+    set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
+    add(std_classes_, num_classes_);
+
+    set<string> num_classes;
+    set<string> std_classes;
+    for(auto& cls: num_classes_)
+        num_classes.insert( find_prelude_tycon_name(cls) );
+
+    for(auto& cls: std_classes_)
+        std_classes.insert( find_prelude_tycon_name(cls) );
+
+    vector<Hs::Type> defaults;
+    if (M.default_decl)
+        defaults = M.default_decl->types;
+    else
+        defaults = { Hs::TypeCon({noloc,"Int"}), Hs::TypeCon({noloc,"Double"}) };
+
+    for(auto& [tv,constraints]: ambiguities)
+    {
+        bool any_num = false;
+        bool all_std = true;
+        local_instance_env lie;
+        Hs::TypeVar a({noloc, tv});
+        for(auto& [dvar,tycon]: constraints)
+        {
+            auto& name = unloc(tycon.name);
+            if (num_classes.count(name))
+                any_num = true;
+            if (not std_classes.count(name))
+                all_std = false;
+            lie = lie.insert({name, Hs::TypeApp(tycon,a)});
+        }
+        if (any_num and all_std)
+        {
+            optional<substitution_t> s;
+            for(auto& type: defaults)
+            {
+                substitution_t s_for_type;
+                s_for_type = s_for_type.insert({a,type});
+                if (auto binds = entails({}, apply_subst(s_for_type, lie)))
+                {
+                    s = s_for_type;
+                    break;
+                }
+            }
+            if (s)
+            {
+                bool ok = add_substitution(*s);
+                assert(ok);
+                continue;
+            }
+        }
+
+        auto e = myexception()<<"Ambiguous type variable '"<<tv<<"' in classes: ";
+        for(auto& [dvar,tycon]: constraints)
+            e<<unloc(tycon.name)<<" ";
+        throw e;
+    }
+
+    current_lie() = apply_current_subst( current_lie() );
+
+    auto default_binds = entails({}, current_lie() );
+    assert(default_binds);
+    return *default_binds;
+}
 
 set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
 
@@ -849,6 +951,9 @@ typechecker_state::toHnfs(const local_instance_env& lie_in)
     return {binds_out, lie_out};
 }
 
+// FIXME: there should be a `const` way of getting these.
+// FIXME: instantiate is not constant though.
+// FIXME: we shouldn't need fresh type vars if the type is unambiguous though.
 vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const Hs::Type& constraint)
 {
     vector<pair<string, Hs::Type>> constraints;
@@ -2352,104 +2457,14 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
 
     state.current_lie() = state.apply_current_subst( state.current_lie() );
     auto [simpl_binds, simpl_lie] = state.reduce( state.current_lie() );
+    state.current_lie() = simpl_lie;
+
     ranges::insert(simpl_binds, simpl_binds.end(), M.value_decls);
     M.value_decls = simpl_binds;
 
-    // Now determine substitutions for DEFAULTS here?
-    map<string,vector<pair<string,Hs::TypeCon>>> ambiguities;
-    for(auto& [var_name, constraint]: simpl_lie)
-    {
-        auto [tycon, args] = decompose_type_apps(constraint);
-        if (args.size() == 1)
-        {
-            if (auto tv = args[0].to<Hs::TypeVar>())
-            {
-                auto& name = unloc(tv->name);
-                auto it = ambiguities.find(name);
-                if (it == ambiguities.end())
-                {
-                    ambiguities.insert({name,{}});
-                    it = ambiguities.find(name);
-                }
-                auto tc = tycon.to<Hs::TypeCon>();
-                it->second.push_back({var_name,*tc});
-                continue;
-            }
-        }
-        throw myexception()<<"Ambiguous constraint '"<<constraint<<"'";
-    }
-    // The defaulting criteria for an ambiguous type variable v are:
-    // 1. v appears only in constraints of the form C v , where C is a class
-    // 2. at least one of these classes is a numeric class, (that is, Num or a subclass of Num)
-    // 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
-
-    set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
-    set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
-    add(std_classes_, num_classes_);
-
-    set<string> num_classes;
-    set<string> std_classes;
-    for(auto& cls: num_classes_)
-        num_classes.insert( state.find_prelude_tycon_name(cls) );
-
-    for(auto& cls: std_classes_)
-        std_classes.insert( state.find_prelude_tycon_name(cls) );
-
-    vector<Hs::Type> defaults;
-    if (M.default_decl)
-        defaults = M.default_decl->types;
-    else
-        defaults = { Hs::TypeCon({noloc,"Int"}), Hs::TypeCon({noloc,"Double"}) };
-
-    substitution_t subst_defaults;
-    for(auto& [tv,constraints]: ambiguities)
-    {
-        bool any_num = false;
-        bool all_std = true;
-        local_instance_env lie;
-        Hs::TypeVar a({noloc, tv});
-        for(auto& [dvar,tycon]: constraints)
-        {
-            auto& name = unloc(tycon.name);
-            if (num_classes.count(name))
-                any_num = true;
-            if (not std_classes.count(name))
-                all_std = false;
-            lie = lie.insert({name, Hs::TypeApp(tycon,a)});
-        }
-        if (any_num and all_std)
-        {
-            optional<substitution_t> s;
-            for(auto& type: defaults)
-            {
-                substitution_t s_for_type;
-                s_for_type = s_for_type.insert({a,type});
-                if (auto binds = state.entails({}, apply_subst(s_for_type, lie)))
-                {
-                    s = s_for_type;
-                    break;
-                }
-            }
-            if (s)
-            {
-                auto s2 = combine(subst_defaults, *s);
-                assert(s2);
-                subst_defaults = *s2;
-                continue;
-            }
-        }
-
-        auto e = myexception()<<"Ambiguous type variable '"<<tv<<"' in classes: ";
-        for(auto& [dvar,tycon]: constraints)
-            e<<unloc(tycon.name)<<" ";
-        throw e;
-    }
-
-    env = apply_subst(subst_defaults, env);
-    simpl_lie = apply_subst(subst_defaults, simpl_lie);
-    auto default_binds = state.entails({}, simpl_lie);
-    assert(default_binds);
-    ranges::insert(M.value_decls, M.value_decls.begin(), *default_binds);
+    auto default_binds = state.default_subst(M);
+    env = state.apply_current_subst(env);
+    ranges::insert(M.value_decls, M.value_decls.begin(), default_binds);
 
     for(auto& [x,t]: env)
     {
