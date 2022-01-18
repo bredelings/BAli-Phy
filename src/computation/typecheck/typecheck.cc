@@ -218,6 +218,23 @@ global_value_env apply_subst(const substitution_t& s, const value_env& env1)
     return env2;
 }
 
+optional<string> maybe_get_class_name_from_constraint(const Hs::Type& constraint)
+{
+    auto [tycon, args] = decompose_type_apps(constraint);
+    if (auto tc = tycon.to<Hs::TypeCon>())
+        return get_unqualified_name(unloc(tc->name));
+    else
+        return {};
+}
+
+string get_class_name_from_constraint(const Hs::Type& constraint)
+{
+    if (auto name = maybe_get_class_name_from_constraint(constraint))
+        return *name;
+    else
+        return "Constraint";
+}
+
 // Wait, actually don't we assume that the value decls are divided into self-referencing binding groups, along with explicit signatures?
 // We would also need: infix declarations, default declarations, ???
 // I guess this is AFTER rename, so declarations have been un-infixed, and we could (theoretically) represent each function as something like [([pat],grhs)]
@@ -262,13 +279,17 @@ struct typechecker_state
         add_dvar(unloc(dvar.name), constraint);
     }
 
+    Hs::Var fresh_dvar(const Hs::Type& constraint)
+    {
+        string name = "dvar";
+        if (auto cname = maybe_get_class_name_from_constraint(constraint))
+            name = "d" + *cname;
+        return fresh_var(name, false);
+    }
+
     Hs::Var add_dvar(const Hs::Type& constraint)
     {
-        auto [tycon, args] = decompose_type_apps(constraint);
-        string namebase = "dvar";
-        if (auto tc = tycon.to<Hs::TypeCon>())
-            namebase = "d" + get_unqualified_name(unloc(tc->name));
-        Hs::Var dvar = fresh_var(namebase, false);
+        auto dvar = fresh_dvar(constraint);
 
         add_dvar(dvar, constraint);
 
@@ -927,7 +948,7 @@ optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const pair<stri
         for(auto& constraint: constraints)
         {
             Hs::Decls decls;
-            auto dvar = fresh_var("dvar", false);
+            auto dvar = fresh_dvar(constraint);
             args.push_back(dvar);
             if (auto cbinds = entails(to_keep, {unloc(dvar.name),constraint}))
             {
@@ -2017,7 +2038,9 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Hs::Class
     global_instance_env gie;
     for(auto& constraint_: cinfo.context.constraints)
     {
-        auto get_dict = fresh_var("get_dict", true);
+        string cname1 = get_class_name_from_constraint(constraint_);
+        string cname2 = get_class_name_from_constraint(constraint);
+        auto get_dict = fresh_var(cname1+"From"+cname2, true);
         // Should this be a function arrow?
         Hs::Type type = add_constraints({constraint}, constraint_);
         // Could we be adding too many forall vars?
