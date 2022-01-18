@@ -307,11 +307,18 @@ struct typechecker_state
         return Hs::Var({noloc, name});
     }
 
-    Hs::TypeCon find_prelude_tycon(string name) const
+    string find_prelude_tycon_name(const string& name) const
     {
         if (this_mod.type_is_declared(name))
-            name = this_mod.lookup_type(name).name;
-        return Hs::TypeCon({noloc, name });
+            return this_mod.lookup_type(name).name;
+        else
+            return name;
+    }
+
+    Hs::TypeCon find_prelude_tycon(const string& name) const
+    {
+        auto prelude_name = find_prelude_tycon_name(name);
+        return Hs::TypeCon({noloc, prelude_name });
     }
 
     Hs::Type bool_type() const
@@ -2330,6 +2337,71 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
 
     auto [value_decls, env] = state.infer_type_for_binds(gve, M.value_decls);
     M.value_decls = value_decls;
+
+    state.current_lie() = state.apply_current_subst( state.current_lie() );
+    auto [simpl_binds, simple_lie] = state.reduce( state.current_lie() );
+    ranges::insert(simpl_binds, simpl_binds.end(), M.value_decls);
+    M.value_decls = simpl_binds;
+
+    // Now determine substitutions for DEFAULTS here?
+    map<string,vector<pair<string,Hs::TypeCon>>> ambiguities;
+    for(auto& [var_name, constraint]: simple_lie)
+    {
+        auto [tycon, args] = decompose_type_apps(constraint);
+        if (args.size() == 1)
+        {
+            if (auto tv = args[0].to<Hs::TypeVar>())
+            {
+                auto& name = unloc(tv->name);
+                auto it = ambiguities.find(name);
+                if (it == ambiguities.end())
+                {
+                    ambiguities.insert({name,{}});
+                    it = ambiguities.find(name);
+                }
+                auto tc = tycon.to<Hs::TypeCon>();
+                it->second.push_back({var_name,*tc});
+                continue;
+            }
+        }
+        throw myexception()<<"Ambiguous constraint '"<<constraint<<"'";
+    }
+
+    set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
+    set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
+    add(std_classes_, num_classes_);
+
+    set<string> num_classes;
+    set<string> std_classes;
+    for(auto& cls: num_classes_)
+        num_classes.insert( state.find_prelude_tycon_name(cls) );
+
+    for(auto& cls: std_classes_)
+        std_classes.insert( state.find_prelude_tycon_name(cls) );
+
+    for(auto& [tv,constraints]: ambiguities)
+    {
+        bool any_num = false;
+        bool all_std = true;
+        for(auto& [dvar,tycon]: constraints)
+        {
+            auto& name = unloc(tycon.name);
+            if (num_classes.count(name))
+                any_num = true;
+            if (not std_classes.count(name))
+                all_std = false;
+        }
+        if (any_num and all_std)
+        {
+        }
+        else
+        {
+            auto e = myexception()<<"Ambiguous type variable '"<<tv<<"' in classes: ";
+            for(auto& [dvar,tycon]: constraints)
+                e<<unloc(tycon.name)<<" ";
+            throw e;
+        }
+    }
 
     for(auto& [x,t]: env)
     {
