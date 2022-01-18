@@ -952,7 +952,7 @@ optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const pair<stri
             args.push_back(dvar);
             if (auto cbinds = entails(to_keep, {unloc(dvar.name),constraint}))
             {
-                ranges::insert(binds, binds.end(), *cbinds);
+                ranges::insert(binds, binds.begin(), *cbinds);
             }
             else
                 return {};
@@ -989,7 +989,7 @@ optional<Hs::Binds> typechecker_state::entails(const local_instance_env& lie1, c
         auto binds1 = entails(lie1, constraint);
         if (not binds1)
             return {};
-        ranges::insert(binds, binds.end(), *binds1);
+        ranges::insert(binds, binds.begin(), *binds1);
     }
     return binds;
 }
@@ -1006,7 +1006,7 @@ pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_inst
         auto& pred = lie_vec[i];
         auto preds = views::concat(lie_vec | views::drop(i+1), checked);
         if (auto new_binds = entails(preds, pred))
-            ranges::insert(binds_out, binds_out.end(), *new_binds);
+            ranges::insert(binds_out, binds_out.begin(), *new_binds);
         else
             checked.push_back(lie_vec[i]);
     }
