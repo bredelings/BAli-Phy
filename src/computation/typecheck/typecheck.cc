@@ -45,6 +45,7 @@ using std::tuple;
   * Defaulting.
 
   TODO:
+  0. Make defaulting happen at every binding.
   9. Create DictionaryLambda, or whatever we need to show the dictionary bindings.
     - Can we solve the problem with (a,b) = ('a,1) via defaulting?
   1. Check that constraints in instance contexts satisfy the "paterson conditions"
