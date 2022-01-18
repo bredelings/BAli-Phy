@@ -564,6 +564,7 @@ struct typechecker_state
     pair<Hs::Binds, local_instance_env> toHnfs(const local_instance_env& lie_in);
     pair<Hs::Binds, local_instance_env> simplify(const local_instance_env& lie_in);
     pair<Hs::Binds, local_instance_env> reduce(const local_instance_env& lie_in);
+    Hs::Binds reduce_current_lie();
 };
 
 Hs::Binds typechecker_state::default_subst(const Hs::ModuleDecls& M)
@@ -1135,6 +1136,18 @@ pair<Hs::Binds, local_instance_env> typechecker_state::reduce(const local_instan
     return {binds, lie2};
 }
 
+Hs::Binds typechecker_state::reduce_current_lie()
+{
+    auto& lie = current_lie();
+
+    lie = apply_current_subst( lie );
+
+    auto [binds, new_lie] = reduce( lie );
+
+    lie = new_lie;
+
+    return binds;
+}
 
 // Why aren't we using `fixed_type_vars`?
 // I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
@@ -1260,8 +1273,6 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     // We need to substitute before looking for free type variables!
     // We also need to substitute before we quantify below.
     binder_env = apply_current_subst(binder_env);
-    // We need to substitute before we try and reduce the LIE.
-    current_lie() = apply_current_subst( current_lie() );
 
     auto fs = free_type_variables(env);
     set<Hs::TypeVar> any_tvs;  // type variables in ANY of the definitions
@@ -1287,6 +1298,9 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     Hs::Binds binds;
     if (is_restricted(signatures, decls))
     {
+        // We need to do this before finding free type vars in the LIE below.
+        current_lie() = apply_current_subst( current_lie() );
+
         // lie == lie_deferred + lie_retained;
         qtvs = minus(qtvs, free_type_vars(current_lie()));
     }
@@ -1295,13 +1309,11 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
         // A. First, REDUCE the lie by
         //    (i)  converting to Hnf
         //    (ii) representing some constraints in terms of others.
-
-        auto [binds1, lie1] = reduce( current_lie() );
-        current_lie() = lie1;
-        binds = binds1;
+        //    This also substitutes into the current LIE.
+        binds = reduce_current_lie();
 
         // B. Second, extract the "retained" predicates can be added without causing abiguity.
-        auto [lie_deferred, lie_retained] = classify_constraints(lie1, fs, all_tvs);
+        auto [lie_deferred, lie_retained] = classify_constraints( current_lie(), fs, all_tvs);
         current_lie() = lie_deferred;
 
         dict_vars = vars_from_lie( lie_retained );
@@ -2455,9 +2467,7 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
     auto [value_decls, env] = state.infer_type_for_binds(gve, M.value_decls);
     M.value_decls = value_decls;
 
-    state.current_lie() = state.apply_current_subst( state.current_lie() );
-    auto [simpl_binds, simpl_lie] = state.reduce( state.current_lie() );
-    state.current_lie() = simpl_lie;
+    auto simpl_binds = state.reduce_current_lie();
 
     ranges::insert(simpl_binds, simpl_binds.end(), M.value_decls);
     M.value_decls = simpl_binds;
