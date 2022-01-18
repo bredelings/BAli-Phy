@@ -1199,7 +1199,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
         auto [lie_deferred, lie_retained] = classify_constraints(lie1, fs, all_tvs);
         current_lie() = lie_deferred;
 
-        auto dict_vars = vars_from_lie( lie_retained );
+        dict_vars = vars_from_lie( lie_retained );
 
         binder_env = add_constraints( constraints_from_lie(lie_retained), binder_env );
     }
