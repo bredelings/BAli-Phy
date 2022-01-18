@@ -684,7 +684,8 @@ typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds b
     {
         // FIXME!
         // We need to translate type synonyms and add foralls.
-        auto type2 = add_forall_vars(free_type_variables(type) | ranges::to<vector>, type);
+        Hs::Type type2 = apply_current_subst(type);
+        type2 = add_forall_vars(free_type_variables(type) | ranges::to<vector>, type);
         sig_env = sig_env.insert({name, type2});
     }
 
@@ -698,7 +699,7 @@ typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds b
         env2 = plus_prefer_right(env2, binders1);
         binders += binders1;
     }
-    binders = apply_current_subst(binders);
+
     return {binds, binders};
 }
 
@@ -1096,10 +1097,13 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
 
             unify(lhs_type, rhs_type);
         }
-
-        binder_env = apply_current_subst(binder_env);
-        env2 = apply_current_subst(env2);
     }
+
+    // We need to substitute before looking for free type variables!
+    // We also need to substitute before we quantify below.
+    binder_env = apply_current_subst(binder_env);
+    // We need to substitute before we try and reduce the LIE.
+    current_lie() = apply_current_subst( current_lie() );
 
     auto fs = free_type_variables(env);
     set<Hs::TypeVar> any_tvs;  // type variables in ANY of the definitions
@@ -1119,8 +1123,6 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
         assert(all_tvs_);
         all_tvs = *all_tvs_;
     }
-
-    current_lie() = apply_current_subst( current_lie() );
 
     set<Hs::TypeVar> qtvs = minus(any_tvs, fs);
     vector< Hs::Var > dict_vars;
@@ -1148,6 +1150,8 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
 
         binder_env = add_constraints( constraints_from_lie(lie_retained), binder_env );
     }
+
+    // We have already substituted for types above.
     binder_env = quantify( qtvs, binder_env );
 
     Hs::Decls decls2 = decls;
@@ -1201,8 +1205,6 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
         for(int i=0;i<types.size();i++)
             unify(types[i], field_types[i]);
 
-        lve = apply_current_subst(lve);
-
         return { pat, type, lve };
     }
     // AS-PAT
@@ -1246,8 +1248,6 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
             unify(t, t1);
             lve += lve1;
         }
-
-        lve = apply_current_subst(lve);
 
         return {L, Hs::ListType(t), lve};
     }
@@ -1311,7 +1311,6 @@ typechecker_state::infer_quals_type(const global_value_env& env, vector<Hs::Qual
         env2 = plus_prefer_right(env2, qual_binders);
         binders = plus_prefer_right(binders, qual_binders);
     }
-    binders = apply_current_subst(binders);
     return {quals, binders};
 }
 
@@ -1340,8 +1339,6 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
 
         // type(pat) = type(exp)
         unify(Hs::ListType(pat_type), exp_type);
-
-        lve = apply_current_subst(lve);
 
         return {PQ, lve};
     }
@@ -1380,8 +1377,6 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
         
         // type(pat) = type(exp)
         unify(pat_type,exp_type);
-
-        lve = apply_current_subst(lve);
 
         return {PQ, lve};
     }
@@ -1566,6 +1561,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         // 6. Convert the given_constraints into a LIE
 
         lie_most_general = apply_current_subst(lie_most_general);
+
         auto lie_given = constraints_to_lie(given_constraints);
         // 7. Express lie2 in terms of lie1
         auto binds = get_dicts(lie_given, lie_most_general);
@@ -1618,7 +1614,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
             // tv <- fresh
             auto tv = fresh_type_var();
 
-            auto [arg2, t2] = infer_type(apply_current_subst(env), e2);
+            auto [arg2, t2] = infer_type(env, e2);
             args.push_back(arg2);
 
             unify (t1, make_arrow_type(t2,tv));
@@ -1672,8 +1668,6 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
             // REQUIRE that i-th argument matches the type for the i-th field.
             unify( field_types[i], t_i);
-
-            env2 = apply_current_subst(env2);
         }
         E = expression_ref(*con, args);
         
@@ -1692,7 +1686,6 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         // 1. Determine object type
         auto [object, object_type] = infer_type(env, Case.object);
         Case.object = object;
-        auto env2 = apply_current_subst(env);
         
         // 2. Determine data type for object from patterns.
         Hs::Match match;
@@ -1702,7 +1695,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
             match.rules.push_back(Hs::MRule{{pattern},body});
         }
 
-        auto [match2, match_type] = infer_type(env2, match);
+        auto [match2, match_type] = infer_type(env, match);
 
         for(int i=0;i<Case.alts.size();i++)
         {
@@ -1976,6 +1969,7 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Hs::Class
         {
             Hs::Type method_type = type_check_class_method_type(K, type, constraint);
 
+            method_type = apply_current_subst(method_type);
             method_type = add_forall_vars(class_typevars, method_type);
 
             gve = gve.insert({name, method_type});
@@ -1996,6 +1990,7 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Hs::Class
         // Should this be a function arrow?
         Hs::Type type = add_constraints({constraint}, constraint_);
         // Could we be adding too many forall vars?
+        type = apply_current_subst(type);
         type = add_forall_vars(class_typevars, type);
         gie = gie.insert({unloc(get_dict.name), type});
     }
@@ -2134,6 +2129,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, c
 
     auto dfun = fresh_var("dfun", true);
     Hs::Type inst_type = add_constraints(inst_decl.context.constraints, inst_decl.constraint);
+    inst_type = apply_current_subst(inst_type);
     inst_type = add_forall_vars( free_type_VARS(inst_type) | ranges::to<vector>, inst_type);
     global_instance_env gie_out;
     gie_out = gie_out.insert( { unloc(dfun.name), inst_type } );
