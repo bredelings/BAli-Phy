@@ -516,8 +516,6 @@ struct typechecker_state
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
-    optional<Hs::Binds> get_dicts(const local_instance_env& lie1, const local_instance_env& lie2);
-
     local_instance_env constraints_to_lie(const vector<Hs::Type>&);
 
     vector<pair<string, Hs::Type>> superclass_constraints(const Hs::Type& constraint);
@@ -530,7 +528,9 @@ struct typechecker_state
                           const pair<string, Hs::Type>& to_remove);
 
     template <typename T>
-    std::optional<Hs::Binds> entails(const T& to_keep, const pair<string, Hs::Type>& to_check);
+    optional<Hs::Binds> entails(const T& to_keep, const pair<string, Hs::Type>& to_check);
+
+    optional<Hs::Binds> entails(const local_instance_env& lie1, const local_instance_env& lie2);
 
     optional<pair<Hs::Var,vector<Hs::Type>>> lookup_instance(const Hs::Type& constraint);
 
@@ -946,6 +946,31 @@ optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const pair<stri
     }
 
     return {};
+}
+
+local_instance_env typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
+{
+    local_instance_env lie;
+    for(auto& constraint: constraints)
+    {
+        auto dvar = fresh_var("dvar", false);
+        lie = lie.insert({unloc(dvar.name), constraint});
+    }
+    return lie;
+}
+
+// How does this relate to simplifying constraints?
+optional<Hs::Binds> typechecker_state::entails(const local_instance_env& lie1, const local_instance_env& lie2)
+{
+    Hs::Binds binds;
+    for(auto& constraint: lie2)
+    {
+        auto binds1 = entails(lie1, constraint);
+        if (not binds1)
+            return {};
+        ranges::insert(binds, binds.end(), *binds1);
+    }
+    return binds;
 }
 
 pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_instance_env& lie)
@@ -1571,7 +1596,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         auto lie_given = constraints_to_lie(given_constraints);
         // 7. Express lie2 in terms of lie1
-        auto binds = get_dicts(lie_given, lie_most_general);
+        auto binds = entails(lie_given, lie_most_general);
         if (not binds)
             throw myexception()<<"Can't derive constraints '"<<print(lie_most_general)<<"' from specified constraints '"<<print(lie_given)<<"'";
 
@@ -2043,42 +2068,6 @@ typechecker_state::infer_type_for_class(const type_con_env& tce, const Hs::Class
     return {gve,gie,cinfo,decls};
 }
 
-Hs::Type extract_class_constraint(Hs::Type type)
-{
-    // This should only be called on LIEs
-    assert(not type.is_a<Hs::ForallType>());
-
-    if (auto c = type.to<Hs::ConstrainedType>())
-        return c->type;
-    else
-        return type;
-}
-
-local_instance_env typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
-{
-    local_instance_env lie;
-    for(auto& constraint: constraints)
-    {
-        auto dvar = fresh_var("dvar", false);
-        lie = lie.insert({unloc(dvar.name), constraint});
-    }
-    return lie;
-}
-
-// How does this relate to simplifying constraints?
-optional<Hs::Binds> typechecker_state::get_dicts(const local_instance_env& lie1, const local_instance_env& lie2)
-{
-    Hs::Binds binds;
-    for(auto& constraint: lie2)
-    {
-        auto binds1 = entails(lie1, constraint);
-        if (not binds1)
-            return {};
-        ranges::insert(binds, binds.end(), *binds1);
-    }
-    return binds;
-}
-
 global_instance_env
 typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, const class_env& ce)
 {
@@ -2235,7 +2224,7 @@ typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, c
 
     // Premise 7:
     local_instance_env lie_super;
-    auto binds_super = get_dicts(lie, lie_super);
+    auto binds_super = entails(lie, lie_super);
     if (not binds_super)
         throw myexception()<<"Missing instances!";
 
