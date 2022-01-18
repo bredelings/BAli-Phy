@@ -787,7 +787,7 @@ string DictionaryLambda::print() const
     for(auto& darg: dict_args)
         ds.push_back( darg.print_with_type() );
 
-    string s = "["+join(as," ")+"]  ["+join(ds,"; ")+"]\n";
+    string s = "[ "+join(as," ")+" ]  [ "+join(ds," ")+" ]";
     s += dict_binds.print()+"\n";
     s += body.print();
     return s;
