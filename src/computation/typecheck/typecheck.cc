@@ -219,6 +219,19 @@ global_value_env apply_subst(const substitution_t& s, const value_env& env1)
     return env2;
 }
 
+std::set<Hs::TypeVar> free_type_variables(const Hs::Type& t)
+{
+    return free_type_VARS(t);
+}
+
+std::set<Hs::TypeVar> free_type_variables(const value_env& env)
+{
+    std::set<Hs::TypeVar> free;
+    for(auto& [x,type]: env)
+        add(free, free_type_variables(type));
+    return free;
+}
+
 optional<string> maybe_get_class_name_from_constraint(const Hs::Type& constraint)
 {
     auto [tycon, args] = decompose_type_apps(constraint);
@@ -705,27 +718,6 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
     auto object_type = con_type;
 
     return {object_type, field_types};
-}
-
-std::set<Hs::TypeVar> free_type_variables(const Hs::Type& t)
-{
-    return free_type_VARS(t);
-}
-
-std::set<Hs::TypeVar> free_type_vars(const value_env& env)
-{
-    set<Hs::TypeVar> tvs;
-    for(auto [_,type]: env)
-        add(tvs, free_type_VARS(type));
-    return tvs;
-}
-
-std::set<Hs::TypeVar> free_type_variables(const value_env& env)
-{
-    std::set<Hs::TypeVar> free;
-    for(auto& [x,type]: env)
-        add(free, free_type_variables(type));
-    return free;
 }
 
 value_env add_constraints(const std::vector<Haskell::Type>& constraints, const value_env& env1)
@@ -1275,7 +1267,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     // We also need to substitute before we quantify below.
     binder_env = apply_current_subst(binder_env);
 
-    auto fs = free_type_variables(env);
+    auto fixed_tvs = free_type_variables(env);
     set<Hs::TypeVar> any_tvs;  // type variables in ANY of the definitions
     set<Hs::TypeVar> all_tvs;  // type variables in ALL of the definitions
     {
