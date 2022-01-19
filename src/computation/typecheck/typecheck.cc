@@ -494,7 +494,7 @@ struct typechecker_state
         return tv;
     }
 
-    Hs::Binds default_subst(const Hs::ModuleDecls& M);
+    Hs::Binds default_subst();
 
     pair<vector<Hs::Type>,Hs::Type> instantiate(const Hs::Type& t);
 
