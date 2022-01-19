@@ -271,6 +271,8 @@ struct typechecker_state
 
     global_instance_env gie;
 
+    vector<Hs::Type> defaults;
+
     std::string mod_name;
 
     const Module& this_mod; // for name lookups like Bool, Num, etc.
@@ -327,12 +329,17 @@ struct typechecker_state
         current_lie() += lie;
     }
 
-    typechecker_state(const string& s, const Module& m, const constr_env& ce)
+    typechecker_state(const string& s, const Module& m, const Hs::ModuleDecls& M, const constr_env& ce)
         :con_info(ce),
          mod_name(s),
          this_mod(m)
         {
             push_lie();
+
+            if (M.default_decl)
+                defaults = M.default_decl->types;
+            else
+                defaults = { Hs::TypeCon({noloc,"Int"}), Hs::TypeCon({noloc,"Double"}) };
         }
 
     Hs::Var find_prelude_var(string name) const
@@ -581,7 +588,7 @@ struct typechecker_state
     Hs::Binds reduce_current_lie();
 };
 
-Hs::Binds typechecker_state::default_subst(const Hs::ModuleDecls& M)
+Hs::Binds typechecker_state::default_subst()
 {
     // Now determine substitutions for DEFAULTS here?
     map<string,vector<pair<string,Hs::TypeCon>>> ambiguities;
@@ -622,12 +629,6 @@ Hs::Binds typechecker_state::default_subst(const Hs::ModuleDecls& M)
 
     for(auto& cls: std_classes_)
         std_classes.insert( find_prelude_tycon_name(cls) );
-
-    vector<Hs::Type> defaults;
-    if (M.default_decl)
-        defaults = M.default_decl->types;
-    else
-        defaults = { Hs::TypeCon({noloc,"Int"}), Hs::TypeCon({noloc,"Double"}) };
 
     for(auto& [tv,constraints]: ambiguities)
     {
