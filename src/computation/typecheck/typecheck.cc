@@ -519,6 +519,12 @@ struct typechecker_state
     tuple<Hs::Pattern, Hs::Type, local_value_env>
     infer_pattern_type(const Hs::Pattern& pat);
 
+    tuple<Hs::Var, Hs::Type, local_value_env>
+    infer_lhs_var_type(Hs::Var v);
+
+    tuple<expression_ref, Hs::Type, local_value_env>
+    infer_lhs_type(const expression_ref& E);
+
     tuple<expression_ref, Hs::Type>
     infer_type(const global_value_env& env, expression_ref exp);
 
@@ -1319,6 +1325,41 @@ bool is_restricted(const map<string, Hs::Type>& signatures, const Hs::Decls& dec
     return false;
 };
 
+tuple<Hs::Var, Hs::Type, local_value_env>
+typechecker_state::infer_lhs_var_type(Hs::Var v)
+{
+    auto& name = unloc(v.name);
+
+    Hs::Type type = fresh_type_var();
+    v.type = type;
+
+    // Check that this is a NEW name.
+    local_value_env lve;
+    lve = lve.insert({name,type});
+    return {v, type, lve};
+}
+
+tuple<expression_ref, Hs::Type, local_value_env>
+typechecker_state::infer_lhs_type(const expression_ref& decl)
+{
+    if (auto fd = decl.to<Hs::FunDecl>())
+    {
+        auto FD = *fd;
+        auto [v2, type, lve] = infer_lhs_var_type(FD.v);
+        FD.v.type = type;
+        return {FD, type, lve};
+    }
+    else if (auto pd = decl.to<Hs::PatDecl>())
+    {
+        auto PD = *pd;
+        auto [lhs, type, lve] = infer_pattern_type(PD.lhs);
+        PD.lhs = lhs;
+        return {PD, type, lve};
+    }
+    else
+        std::abort();
+}
+
 tuple<Hs::Decls, global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls)
 {
@@ -1330,34 +1371,11 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     vector<Hs::Type> lhs_types;
     for(int i=0;i<decls.size();i++)
     {
-        auto& decl = decls[i];
-        if (auto fd = decl.to<Hs::FunDecl>())
-        {
-            auto FD = *fd;
-            auto& name = unloc(FD.v.name);
+        auto [decl, type, lve] = infer_lhs_type( decls[i] );
+        decls[i] = decl;
 
-            Hs::Type type = fresh_type_var();
-            FD.v.type = type;
-            decl = FD;
-
-            // Check that this is a NEW name.
-            local_value_env lve;
-            lve = lve.insert({name,type});
-            binder_env += lve;
-
-            lhs_types.push_back(type);
-        }
-        else if (auto pd = decl.to<Hs::PatDecl>())
-        {
-            auto PD = *pd;
-            auto [lhs, type, lve] = infer_pattern_type(PD.lhs);
-            PD.lhs = lhs;
-            decl = PD;
-
-            binder_env += lve;
-
-            lhs_types.push_back(type);
-        }
+        binder_env += lve;
+        lhs_types.push_back(type);
     }
     auto env2 = plus_prefer_right(env, binder_env);
 
