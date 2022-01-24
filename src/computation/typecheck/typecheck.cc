@@ -523,7 +523,10 @@ struct typechecker_state
     infer_lhs_var_type(Hs::Var v);
 
     tuple<expression_ref, Hs::Type, local_value_env>
-    infer_lhs_type(const expression_ref& E);
+    infer_lhs_type(const expression_ref& decl);
+
+    tuple<expression_ref, Hs::Type>
+    infer_rhs_type(const global_value_env& env, const expression_ref& decl);
 
     tuple<expression_ref, Hs::Type>
     infer_type(const global_value_env& env, expression_ref exp);
@@ -1360,6 +1363,29 @@ typechecker_state::infer_lhs_type(const expression_ref& decl)
         std::abort();
 }
 
+tuple<expression_ref, Hs::Type>
+typechecker_state::infer_rhs_type(const global_value_env& env, const expression_ref& decl)
+{
+    if (auto fd = decl.to<Hs::FunDecl>())
+    {
+        auto FD = *fd;
+        auto [match, rhs_type] = infer_type(env, FD.match);
+        FD.match = match;
+
+        return {FD, rhs_type};
+    }
+    else if (auto pd = decl.to<Hs::PatDecl>())
+    {
+        auto PD = *pd;
+        auto [rhs, rhs_type] = infer_type(env, PD.rhs);
+        PD.rhs = rhs;
+
+        return {PD, rhs_type};
+    }
+    else
+        std::abort();
+}
+
 tuple<Hs::Decls, global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls)
 {
@@ -1382,26 +1408,10 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)
     {
-        auto& decl = decls[i];
-        auto& lhs_type = lhs_types[i];
-        if (auto fd = decl.to<Hs::FunDecl>())
-        {
-            auto FD = *fd;
-            auto [match, rhs_type] = infer_type(env2, FD.match);
-            FD.match = match;
-            decl = FD;
+        auto [decl, rhs_type] = infer_rhs_type(env2, decls[i]);
+        decls[i] = decl;
 
-            unify(lhs_type, rhs_type);
-        }
-        else if (auto pd = decl.to<Hs::PatDecl>())
-        {
-            auto PD = *pd;
-            auto [rhs, rhs_type] = infer_type(env2, PD.rhs);
-            PD.rhs = rhs;
-            decl = PD;
-
-            unify(lhs_type, rhs_type);
-        }
+        unify(lhs_types[i], rhs_type);
     }
 
     // We need to substitute before looking for free type variables!
