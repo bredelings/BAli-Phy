@@ -106,6 +106,12 @@ std::set<T> intersection(const std::set<T>& S1, const std::set<T>& S2)
     return result;
 }
 
+template <typename T>
+bool intersects(const std::set<T>& S1, const std::set<T>& S2)
+{
+    return not intersection(S1, S2).empty();
+}
+
 template <typename X>
 std::vector<X> remove_duplicates(const std::vector<X>& xs1)
 {
