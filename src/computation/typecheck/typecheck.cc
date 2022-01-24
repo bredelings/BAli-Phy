@@ -494,6 +494,12 @@ struct typechecker_state
         return tv;
     }
 
+    optional<tuple<substitution_t, Hs::Binds>>
+    candidates(const Hs::TypeVar& tv, const local_instance_env& tv_lie);
+
+    tuple<Hs::Binds, local_instance_env >
+    default_preds( const set<Hs::TypeVar>& type_vars, const local_instance_env& lie);
+
     Hs::Binds default_subst();
 
     pair<vector<Hs::Type>,Hs::Type> instantiate(const Hs::Type& t);
@@ -587,6 +593,103 @@ struct typechecker_state
     pair<Hs::Binds, local_instance_env> reduce(const local_instance_env& lie_in);
     Hs::Binds reduce_current_lie();
 };
+
+pair<local_instance_env, map<Hs::TypeVar, local_instance_env>>
+ambiguities(const set<Hs::TypeVar>& tvs, local_instance_env lie)
+{
+    // The input lie MUST be substituted to find its free type vars!
+    // lie = apply_current_subst(lie);
+    auto ambiguous_tvs = minus (free_type_variables(lie), tvs );
+
+    // 1. Record the constraints WITH ambiguous type vars, by type var
+    map<Hs::TypeVar,local_instance_env> ambiguities;
+    for(auto& ambiguous_tv: ambiguous_tvs)
+    {
+        local_instance_env lie_for_tv;
+        for(auto& [dvar,constraint]: lie)
+        {
+            if (free_type_variables(constraint).count(ambiguous_tv))
+                lie_for_tv = lie_for_tv.insert({dvar,constraint});
+        }
+        if (not lie_for_tv.empty())
+            ambiguities.insert({ambiguous_tv, lie_for_tv});
+    }
+
+    // 2. Find the constraints WITHOUT ambiguous type vars
+    local_instance_env unambiguous_preds;
+
+    for(auto& [dvar, constraint]: lie)
+    {
+        auto ftvs = free_type_variables(constraint);
+        if (not intersects(ftvs, ambiguous_tvs))
+            unambiguous_preds = unambiguous_preds.insert({dvar, constraint});
+    }
+
+    return {unambiguous_preds, ambiguities};
+}
+
+
+// Constraints for defaulting must be of the form K a (e.g. Num a)
+optional<Hs::TypeCon> simple_constraint_class(const Hs::Type& constraint)
+{
+    auto [tycon, args] = decompose_type_apps(constraint);
+
+    // Only one constrained type.
+    if (args.size() != 1) return {};
+
+    // The type is a typevar
+    if (not args[0].is_a<Hs::TypeVar>()) return {};
+
+    // The constraint should be a TyCon, not (say) a variable.
+    auto tc = tycon.to<Hs::TypeCon>();
+    if (not tc) return {};
+
+    return *tc;
+}
+
+optional<tuple<substitution_t, Hs::Binds>>
+typechecker_state::candidates(const Hs::TypeVar& tv, const local_instance_env& tv_lie)
+{
+    set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
+    set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
+    add(std_classes_, num_classes_);
+
+    set<string> num_classes;
+    set<string> std_classes;
+    for(auto& cls: num_classes_)
+        num_classes.insert( find_prelude_tycon_name(cls) );
+
+    for(auto& cls: std_classes_)
+        std_classes.insert( find_prelude_tycon_name(cls) );
+
+    bool any_num = false;
+    for(auto& [dvar,constraint]: tv_lie)
+    {
+        // Fail if any of the predicates is not a simple constraint.
+        auto tycon = simple_constraint_class(constraint);
+        if (not tycon) return {};
+
+        auto& name = unloc(tycon->name);
+        if (num_classes.count(name))
+            any_num = true;
+
+        // Fail if any of the predicates are not in the standard prelude.
+        if (not std_classes.count(name)) return {};
+    }
+
+    // Fail if none of the predicates is a numerical constraint
+    if (not any_num) return {};
+
+    for(auto& type: defaults)
+    {
+        substitution_t s;
+        s = s.insert({tv, type});
+        if (auto binds = entails({}, apply_subst(s, tv_lie)))
+            return pair(s, *binds);
+    }
+
+    return {};
+}
 
 Hs::Binds typechecker_state::default_subst()
 {
@@ -1143,12 +1246,38 @@ Hs::Binds typechecker_state::reduce_current_lie()
     return binds;
 }
 
+
+tuple<Hs::Binds, local_instance_env>
+typechecker_state::default_preds( const set<Hs::TypeVar>& type_vars, const local_instance_env& lie)
+{
+    Hs::Binds binds;
+    auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities(type_vars, lie);
+
+    for(auto& [tv, preds]: ambiguous_preds_by_var)
+    {
+        auto result = candidates(tv, preds);
+
+        if (not result)
+        {
+            auto e = myexception()<<"Ambiguous type variable '"<<tv<<"' in classes: ";
+            for(auto& [dvar,constraint]: preds)
+                e<<constraint<<" ";
+            throw e;
+        }
+        auto& [s, binds1] = *result;
+
+        // Each binds should be independent of the others, so order should not matter.
+        ranges::insert(binds, binds.end(), binds1);
+    }
+
+    return {binds, unambiguous_preds};
+}
+
 // Why aren't we using `fixed_type_vars`?
 // I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
 pair<local_instance_env, local_instance_env>
 classify_constraints(const local_instance_env& lie,
-                     const set<Hs::TypeVar>& fixed_type_vars,
-                     const set<Hs::TypeVar>& target_type_vars)
+                     const set<Hs::TypeVar>& fixed_type_vars)
 {
     local_instance_env lie_deferred;
     local_instance_env lie_retained;
@@ -1158,23 +1287,16 @@ classify_constraints(const local_instance_env& lie,
         auto constraint_type_vars = free_type_VARS(constraint);
 
         // Does the constraint contain any ambiguous vars?
-        bool any_ambiguous = false;
-        // Does the constraint reference any variables from the target set?
-        bool any_referenced = false;
+        bool all_fixed = true;
         for(auto& type_var: constraint_type_vars)
-        {
-            if (target_type_vars.count(type_var))
-                any_referenced = true;
-            else if (not fixed_type_vars.count(type_var))
-                any_ambiguous = true;
-        }
+            if (not fixed_type_vars.count(type_var))
+                all_fixed = false;
 
-        if (any_referenced and not any_ambiguous)
-            lie_retained = lie_retained.insert({name,constraint});
-        else
+        if (all_fixed)
             lie_deferred = lie_deferred.insert({name,constraint});
+        else
+            lie_retained = lie_retained.insert({name,constraint});
     }
-
     return {lie_deferred, lie_retained};
 }
 
@@ -1287,16 +1409,12 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
         all_tvs = *all_tvs_;
     }
 
-    set<Hs::TypeVar> qtvs = minus(any_tvs, fs);
     vector< Hs::Var > dict_vars;
     Hs::Binds binds;
     if (is_restricted(signatures, decls))
     {
         // We need to do this before finding free type vars in the LIE below.
         current_lie() = apply_current_subst( current_lie() );
-
-        // lie == lie_deferred + lie_retained;
-        qtvs = minus(qtvs, free_type_vars(current_lie()));
     }
     else
     {
@@ -1307,14 +1425,19 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
         binds = reduce_current_lie();
 
         // B. Second, extract the "retained" predicates can be added without causing abiguity.
-        auto [lie_deferred, lie_retained] = classify_constraints( current_lie(), fs, all_tvs);
+        auto [lie_deferred, lie_retained] = classify_constraints( current_lie(), fixed_tvs );
         current_lie() = lie_deferred;
+
+        auto [binds, lie_retained2] = default_preds( views::concat(fixed_tvs, all_tvs) | ranges::to<set>, lie_retained );
+        lie_retained = lie_retained2;
 
         dict_vars = vars_from_lie( lie_retained );
 
         binder_env = add_constraints( constraints_from_lie(lie_retained), binder_env );
     }
 
+    set<Hs::TypeVar> qtvs = minus(any_tvs, fixed_tvs);
+    qtvs = minus(qtvs, free_type_variables(current_lie()));
     // We have already substituted for types above.
     binder_env = quantify( qtvs, binder_env );
 
@@ -2426,7 +2549,7 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
     std::cerr<<"\n";
 
     //   CE_C  = class name -> class info
-    typechecker_state state( mod_name, m, constr_info );
+    typechecker_state state( mod_name, m, M, constr_info );
     auto [gve, class_gie, class_info, class_binds] = state.infer_type_for_classes(M.type_decls, tce);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 
@@ -2466,7 +2589,7 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
     ranges::insert(simpl_binds, simpl_binds.end(), M.value_decls);
     M.value_decls = simpl_binds;
 
-    auto default_binds = state.default_subst(M);
+    auto default_binds = state.default_subst();
     env = state.apply_current_subst(env);
     ranges::insert(M.value_decls, M.value_decls.begin(), default_binds);
 
