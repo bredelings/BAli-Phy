@@ -46,8 +46,6 @@ using std::tuple;
 
   TODO:
   0. Make defaulting happen at every binding.
-  9. Create DictionaryLambda, or whatever we need to show the dictionary bindings.
-    - Can we solve the problem with (a,b) = ('a,1) via defaulting?
   1. Check that constraints in instance contexts satisfy the "paterson conditions"
   2. How do we export stuff?
   3. Make functions to handle instance declarations from Figure 12.
@@ -66,6 +64,8 @@ using std::tuple;
   7. Implement fromInt and fromRational
   8. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
       Do I need to handle LiteralString patterns, then?
+  9. Check that there are no cycles in the class hierarchy.
+  10. Do less context reduction -- choice 2d in "Type classes - an exploration of the design space".
   11. Emit code for instances and check if there are instances for the context.
   12. Handle a :: Num a => Char in (a,b) = ('a',1)
   13. Handle constraints on constructors.
