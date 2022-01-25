@@ -205,6 +205,15 @@ string Decls::print() const
     return "{"+join( decl_string, "\n;" ) + "}";
 }
 
+Binds operator+(const Binds& b1, const Binds& b2)
+{
+    Binds b3 = b1;
+    for(auto& x: b2.signatures)
+        b3.signatures.insert(x);
+    b3.insert(b3.end(), b2.begin(), b2.end());
+    return b3;
+}
+
 string Binds::print() const
 {
     vector<string> ds;

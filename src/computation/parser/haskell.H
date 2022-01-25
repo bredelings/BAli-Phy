@@ -320,6 +320,8 @@ struct Binds: public std::vector<Decls>
     using std::vector<Decls>::vector;
 };
 
+Binds operator+(const Binds& b1, const Binds& b2);
+
 enum class Fixity {infixl, infix, infixr, unknown};
 
 struct FixityDecl: public Object
