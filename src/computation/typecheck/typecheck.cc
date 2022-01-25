@@ -885,7 +885,7 @@ global_value_env typechecker_state::sig_env(const map<string, Hs::Type>& signatu
 tuple<Hs::Binds, global_value_env>
 typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds binds)
 {
-    auto env2 = plus_prefer_right(env, sig_env(binds.signatures));
+    auto env2 = env;
 
     global_value_env binders;
     for(auto& decls: binds)
@@ -895,6 +895,8 @@ typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds b
         env2 = plus_prefer_right(env2, binders1);
         binders += binders1;
     }
+
+    env2 = plus_prefer_right(env2, sig_env(binds.signatures));
 
     return {binds, binders};
 }
@@ -1365,6 +1367,8 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
         lhs_types.push_back(type);
     }
     auto env2 = plus_prefer_right(env, binder_env);
+    // For polymorphic recursion, use signatures in checking the RHS.
+    env2 = plus_prefer_right(env2, sig_env(signatures));
 
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)
