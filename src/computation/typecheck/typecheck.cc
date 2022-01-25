@@ -895,13 +895,13 @@ bool type_is_hnf(const Hs::Type& type)
 {
     auto [head,args] = decompose_type_apps(type);
 
-    if (type.is_a<Hs::TypeVar>())
+    if (head.is_a<Hs::TypeVar>())
         return true;
-    else if (type.is_a<Hs::TypeCon>())
+    else if (head.is_a<Hs::TypeCon>())
         return false;
-    else if (type.is_a<Hs::ListType>())
+    else if (head.is_a<Hs::ListType>())
         return false;
-    else if (type.is_a<Hs::TupleType>())
+    else if (head.is_a<Hs::TupleType>())
         return false;
     else
         std::abort();
