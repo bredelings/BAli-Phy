@@ -48,8 +48,13 @@ using std::tuple;
   * Make a stack of LIEs.
   * Don't substitute into LIEs / LVEs / GVEs until we need to.
   * Handle a :: Num a => Char in (a,b) = ('a',1)
+  * Partially handle polymorphic recursion.
 
   TODO:
+  -2. Implement explicit types in terms of TypedExp -- match + entails to check predicates
+  -1. Record impedance-matching info in DictionaryLambda (and perhaps rename it).
+  0. Write more-general impedance-matching code.
+
   1. Check that constraints in instance contexts satisfy the "paterson conditions"
   2. How do we export stuff?
   3. Make functions to handle instance declarations from Figure 12.
