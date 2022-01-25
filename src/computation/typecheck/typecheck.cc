@@ -556,6 +556,8 @@ struct typechecker_state
     tuple<Hs::Match, Hs::Type>
     infer_type(const global_value_env& env, Hs::Match);
 
+    global_value_env sig_env(const map<string, Hs::Type>& signatures);
+
     // Figures 13, 14, 15?
     tuple<Hs::Decls, global_value_env>
     infer_type_for_decls(const global_value_env& env, const map<string, Hs::Type>&, Hs::Decls E);
@@ -868,20 +870,22 @@ vector<Hs::Var> vars_from_lie(const local_instance_env& lie)
     return dict_vars;
 }
 
+global_value_env typechecker_state::sig_env(const map<string, Hs::Type>& signatures)
+{
+    global_value_env sig_env;
+    for(auto& [name, type]: signatures)
+    {
+        // FIXME! We need to translate type synonyms
+        Hs::Type qualified_type = add_forall_vars(free_type_variables(type) | ranges::to<vector>, type);
+        sig_env = sig_env.insert({name, qualified_type});
+    }
+    return sig_env;
+}
+
 tuple<Hs::Binds, global_value_env>
 typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds binds)
 {
-    global_value_env sig_env;
-    for(auto& [name, type]: binds.signatures)
-    {
-        // FIXME!
-        // We need to translate type synonyms and add foralls.
-        Hs::Type type2 = apply_current_subst(type);
-        type2 = add_forall_vars(free_type_variables(type) | ranges::to<vector>, type);
-        sig_env = sig_env.insert({name, type2});
-    }
-
-    auto env2 = plus_prefer_right(env, sig_env);
+    auto env2 = plus_prefer_right(env, sig_env(binds.signatures));
 
     global_value_env binders;
     for(auto& decls: binds)
