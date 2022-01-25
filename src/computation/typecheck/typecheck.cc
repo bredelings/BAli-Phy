@@ -69,7 +69,6 @@ using std::tuple;
   8. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
       Do I need to handle LiteralString patterns, then?
   9. Check that there are no cycles in the class hierarchy.
-  10. Do less context reduction -- choice 2d in "Type classes - an exploration of the design space".
   11. Emit code for instances and check if there are instances for the context.
   13. Handle constraints on constructors.
   14. Remove the constraint from EmptySet
@@ -94,6 +93,11 @@ using std::tuple;
      - In that case, every explicitly-typed thing would be in its OWN group.
      - We need the explicit types BEFORE we type the thing.
      - So they should be attached to Hs::Binds, not Hs::Decls.
+  3. Does normal Haskell avoid context reduction before generalization?
+     - choice 2d in "Type classes - an exploration of the design space" suggests
+       we should avoid using instances to simplify constraints.
+     - but then wouldn't we end up with constraints like Eq [a]?
+     - maybe this describes a non-standard extension.
 
   Cleanups:
   1. Implement kinds as Hs::Type
