@@ -190,6 +190,12 @@ typedef Hs::Type constraint;
 // GVE = global value environment      = var -> polytype
 // LVE = local  value environment      = var -> monotype
 
+template <typename T>
+std::set<T> operator-(const std::set<T>& s1, const std::set<T>& s2)
+{
+    return minus(s1,s2);
+}
+
 typedef value_env constr_env;
 
 // The GIE does NOT allow free type variables.
@@ -498,7 +504,9 @@ struct typechecker_state
     candidates(const Hs::TypeVar& tv, const local_instance_env& tv_lie);
 
     tuple<Hs::Binds, local_instance_env >
-    default_preds( const set<Hs::TypeVar>& type_vars, const local_instance_env& lie);
+    default_preds( const set<Hs::TypeVar>& fixed_tvs,
+                   const set<Hs::TypeVar>& referenced_tvs,
+                   const local_instance_env& lie);
 
     Hs::Binds default_subst();
 
@@ -604,11 +612,11 @@ struct typechecker_state
 };
 
 pair<local_instance_env, map<Hs::TypeVar, local_instance_env>>
-ambiguities(const set<Hs::TypeVar>& tvs, local_instance_env lie)
+ambiguities(const set<Hs::TypeVar>& tvs1, const set<Hs::TypeVar>& tvs2, local_instance_env lie)
 {
     // The input lie MUST be substituted to find its free type vars!
     // lie = apply_current_subst(lie);
-    auto ambiguous_tvs = minus (free_type_variables(lie), tvs );
+    auto ambiguous_tvs = free_type_variables(lie) - tvs1 - tvs2;
 
     // 1. Record the constraints WITH ambiguous type vars, by type var
     map<Hs::TypeVar,local_instance_env> ambiguities;
@@ -656,6 +664,11 @@ optional<Hs::TypeCon> simple_constraint_class(const Hs::Type& constraint)
     return *tc;
 }
 
+// The defaulting criteria for an ambiguous type variable v are:
+// 1. v appears only in constraints of the form C v , where C is a class
+// 2. at least one of these classes is a numeric class, (that is, Num or a subclass of Num)
+// 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
+
 optional<tuple<substitution_t, Hs::Binds>>
 typechecker_state::candidates(const Hs::TypeVar& tv, const local_instance_env& tv_lie)
 {
@@ -702,86 +715,20 @@ typechecker_state::candidates(const Hs::TypeVar& tv, const local_instance_env& t
 
 Hs::Binds typechecker_state::default_subst()
 {
-    // Now determine substitutions for DEFAULTS here?
-    map<string,vector<pair<string,Hs::TypeCon>>> ambiguities;
-    for(auto& [var_name, constraint]: current_lie())
+    auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities({}, {}, current_lie());
+
+    for(auto& [tv,preds]: ambiguous_preds_by_var)
     {
-        auto [tycon, args] = decompose_type_apps(constraint);
-        if (args.size() == 1)
+        auto result = candidates(tv, preds);
+        if (not result)
         {
-            if (auto tv = args[0].to<Hs::TypeVar>())
-            {
-                auto& name = unloc(tv->name);
-                auto it = ambiguities.find(name);
-                if (it == ambiguities.end())
-                {
-                    ambiguities.insert({name,{}});
-                    it = ambiguities.find(name);
-                }
-                auto tc = tycon.to<Hs::TypeCon>();
-                it->second.push_back({var_name,*tc});
-                continue;
-            }
+            auto e = myexception()<<"Ambiguous type variable '"<<tv<<"' in classes: ";
+            for(auto& [dvar,constraint]: preds)
+                e<<constraint<<" ";
+            throw e;
         }
-        throw myexception()<<"Ambiguous constraint '"<<constraint<<"'";
-    }
-    // The defaulting criteria for an ambiguous type variable v are:
-    // 1. v appears only in constraints of the form C v , where C is a class
-    // 2. at least one of these classes is a numeric class, (that is, Num or a subclass of Num)
-    // 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
-
-    set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
-    set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
-    add(std_classes_, num_classes_);
-
-    set<string> num_classes;
-    set<string> std_classes;
-    for(auto& cls: num_classes_)
-        num_classes.insert( find_prelude_tycon_name(cls) );
-
-    for(auto& cls: std_classes_)
-        std_classes.insert( find_prelude_tycon_name(cls) );
-
-    for(auto& [tv,constraints]: ambiguities)
-    {
-        bool any_num = false;
-        bool all_std = true;
-        local_instance_env lie;
-        Hs::TypeVar a({noloc, tv});
-        for(auto& [dvar,tycon]: constraints)
-        {
-            auto& name = unloc(tycon.name);
-            if (num_classes.count(name))
-                any_num = true;
-            if (not std_classes.count(name))
-                all_std = false;
-            lie = lie.insert({name, Hs::TypeApp(tycon,a)});
-        }
-        if (any_num and all_std)
-        {
-            optional<substitution_t> s;
-            for(auto& type: defaults)
-            {
-                substitution_t s_for_type;
-                s_for_type = s_for_type.insert({a,type});
-                if (auto binds = entails({}, apply_subst(s_for_type, lie)))
-                {
-                    s = s_for_type;
-                    break;
-                }
-            }
-            if (s)
-            {
-                bool ok = add_substitution(*s);
-                assert(ok);
-                continue;
-            }
-        }
-
-        auto e = myexception()<<"Ambiguous type variable '"<<tv<<"' in classes: ";
-        for(auto& [dvar,tycon]: constraints)
-            e<<unloc(tycon.name)<<" ";
-        throw e;
+        auto& [s, binds1] = *result;
+        add_substitution(s);
     }
 
     current_lie() = apply_current_subst( current_lie() );
@@ -1257,10 +1204,12 @@ Hs::Binds typechecker_state::reduce_current_lie()
 
 
 tuple<Hs::Binds, local_instance_env>
-typechecker_state::default_preds( const set<Hs::TypeVar>& type_vars, const local_instance_env& lie)
+typechecker_state::default_preds( const set<Hs::TypeVar>& fixed_tvs,
+                                  const set<Hs::TypeVar>& referenced_tvs,
+                                  const local_instance_env& lie)
 {
     Hs::Binds binds;
-    auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities(type_vars, lie);
+    auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities(fixed_tvs, referenced_tvs, lie);
 
     for(auto& [tv, preds]: ambiguous_preds_by_var)
     {
@@ -1419,55 +1368,101 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     binder_env = apply_current_subst(binder_env);
 
     auto fixed_tvs = free_type_variables(env);
-    set<Hs::TypeVar> any_tvs;  // type variables in ANY of the definitions
-    set<Hs::TypeVar> all_tvs;  // type variables in ALL of the definitions
+    set<Hs::TypeVar> tvs_in_any_type;  // type variables in ANY of the definitions
+    set<Hs::TypeVar> tvs_in_all_types;  // type variables in ALL of the definitions
     {
         // FIXME - should we be looping over binder vars, or over definitions?
-        optional<set<Hs::TypeVar>> all_tvs_;
+        optional<set<Hs::TypeVar>> tvs_in_all_types_;
         for(auto& [_, type]: binder_env)
         {
             auto tvs = free_type_variables(type);
-            add(any_tvs, tvs);
-            if (all_tvs_)
-                all_tvs_ = intersection(*all_tvs_, tvs);
+            add(tvs_in_any_type, tvs);
+            if (tvs_in_all_types_)
+                tvs_in_all_types_ = intersection(*tvs_in_all_types_, tvs);
             else
-                all_tvs_ = tvs;
+                tvs_in_all_types_ = tvs;
         }
-        assert(all_tvs_);
-        all_tvs = *all_tvs_;
+        assert(tvs_in_all_types_);
+        tvs_in_all_types = *tvs_in_all_types_;
     }
 
+    // OK, we've got to do defaulting before we consider what variables to quantify over.
+
     vector< Hs::Var > dict_vars;
-    Hs::Binds binds;
+
+    // A. First, REDUCE the lie by
+    //    (i)  converting to Hnf
+    //     -- when do we do this?  Always?
+    //    (ii) representing some constraints in terms of others.
+    // This also substitutes into the current LIE, which we need to do 
+    //    before finding free type vars in the LIE below.
+    Hs::Binds binds = reduce_current_lie();
+
+    // B. Second, extract the "retained" predicates can be added without causing abiguity.
+    auto [lie_deferred, lie_retained] = classify_constraints( current_lie(), fixed_tvs );
+
+    /* NOTE: Constraints can reference variables that are in
+     *        (i) ALL types in a recursive group
+     *       (ii) SOME-BUT-NOT-ALL types
+     *      (iii) NO types.
+     *
+     * For unrestricted bindings, classes (ii) and (iii) need defaults.
+     * For restricted bindings, only class (iii) (I think) needs defaults.
+     */
+
+    // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
+    //   after generating definitions of their 
+    auto [binds1, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
+    binds = binds1 + binds;
+
+    set<Hs::TypeVar> qtvs = tvs_in_any_type - fixed_tvs;
+
     if (is_restricted(signatures, decls))
     {
-        // We need to do this before finding free type vars in the LIE below.
-        current_lie() = apply_current_subst( current_lie() );
+        // 1. Remove defaulted constraints from LIE?
+        current_lie() = lie_deferred + lie_not_completely_ambiguous;
+
+        // 2. Quantify only over variables that are "unconstrained" (not part of the LIE)
+        // -- after defaulting!
+
+        // NOTE: in theory, we should be able to subtract just ftvs(lie_retained_not_defaulted),
+        //       since lie_deferred should contain only fixed type variables that have already been
+        //       removed from qtvs.
+        qtvs = qtvs - free_type_variables(current_lie());
+
+        // 3. We have already substituted for types above.
+        binder_env = quantify( qtvs, binder_env );
     }
     else
     {
-        // A. First, REDUCE the lie by
-        //    (i)  converting to Hnf
-        //    (ii) representing some constraints in terms of others.
-        //    This also substitutes into the current LIE.
-        binds = reduce_current_lie();
+        // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group
+        // just the definitions of individual symbols.
 
-        // B. Second, extract the "retained" predicates can be added without causing abiguity.
-        auto [lie_deferred, lie_retained] = classify_constraints( current_lie(), fixed_tvs );
+        // 1. Quantify over variables in ANY type that are not fixed -- doesn't depend on defaulting.
+        // Never quantify over variables that are only in a LIE -- those must be defaulted.
+
+        // 2. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
         current_lie() = lie_deferred;
 
-        auto [binds, lie_retained2] = default_preds( views::concat(fixed_tvs, all_tvs) | ranges::to<set>, lie_retained );
-        lie_retained = lie_retained2;
+        dict_vars = vars_from_lie( lie_not_completely_ambiguous );
 
-        dict_vars = vars_from_lie( lie_retained );
+        global_value_env binder_env2;
+        for(auto& [name,type]: binder_env)
+        {
+            auto tvs_in_this_type = free_type_variables(type);
 
-        binder_env = add_constraints( constraints_from_lie(lie_retained), binder_env );
+            // Default any constraints that do not occur in THIS type.
+            auto [binds1, lie_for_this_type] = default_preds( fixed_tvs, tvs_in_this_type, lie_not_completely_ambiguous );
+
+            Hs::Type constrained_type = add_constraints( constraints_from_lie(lie_for_this_type), type );
+
+            // Only quantify over type variables that occur in THIS type.
+            Hs::Type qualified_type = quantify( tvs_in_this_type, constrained_type );
+
+            binder_env2 = binder_env2.insert( {name, qualified_type} );
+        }
+        binder_env = binder_env2;
     }
-
-    set<Hs::TypeVar> qtvs = minus(any_tvs, fixed_tvs);
-    qtvs = minus(qtvs, free_type_variables(current_lie()));
-    // We have already substituted for types above.
-    binder_env = quantify( qtvs, binder_env );
 
     Hs::Decls decls2 = decls;
     if (qtvs.size() or binds.size() or dict_vars.size())
