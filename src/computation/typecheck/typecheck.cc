@@ -508,7 +508,7 @@ struct typechecker_state
     optional<tuple<substitution_t, Hs::Binds>>
     candidates(const Hs::TypeVar& tv, const local_instance_env& tv_lie);
 
-    tuple<Hs::Binds, local_instance_env >
+    tuple<substitution_t, Hs::Binds, local_instance_env >
     default_preds( const set<Hs::TypeVar>& fixed_tvs,
                    const set<Hs::TypeVar>& referenced_tvs,
                    const local_instance_env& lie);
@@ -722,27 +722,17 @@ typechecker_state::candidates(const Hs::TypeVar& tv, const local_instance_env& t
 
 Hs::Binds typechecker_state::default_subst()
 {
-    auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities({}, {}, current_lie());
+    auto [s, binds, unambiguous_preds] = default_preds({}, {}, current_lie());
+    assert(unambiguous_preds.empty());
 
-    for(auto& [tv,preds]: ambiguous_preds_by_var)
-    {
-        auto result = candidates(tv, preds);
-        if (not result)
-        {
-            auto e = myexception()<<"Ambiguous type variable '"<<tv<<"' in classes: ";
-            for(auto& [dvar,constraint]: preds)
-                e<<constraint<<" ";
-            throw e;
-        }
-        auto& [s, binds1] = *result;
-        add_substitution(s);
-    }
+    // Record the substitution, since it can affect types.
+    bool ok = add_substitution(s);
+    assert(ok);
 
-    current_lie() = apply_current_subst( current_lie() );
+    // Clear the LIE, which should now be empty.
+    current_lie() = {};
 
-    auto default_binds = entails({}, current_lie() );
-    assert(default_binds);
-    return *default_binds;
+    return binds;
 }
 
 set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
@@ -1217,11 +1207,12 @@ Hs::Binds typechecker_state::reduce_current_lie()
 }
 
 
-tuple<Hs::Binds, local_instance_env>
+tuple<substitution_t, Hs::Binds, local_instance_env>
 typechecker_state::default_preds( const set<Hs::TypeVar>& fixed_tvs,
                                   const set<Hs::TypeVar>& referenced_tvs,
                                   const local_instance_env& lie)
 {
+    substitution_t s;
     Hs::Binds binds;
     auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities(fixed_tvs, referenced_tvs, lie);
 
@@ -1236,13 +1227,17 @@ typechecker_state::default_preds( const set<Hs::TypeVar>& fixed_tvs,
                 e<<constraint<<" ";
             throw e;
         }
-        auto& [s, binds1] = *result;
+        auto& [s1, binds1] = *result;
+
+        auto tmp = combine(s,s1);
+        assert(tmp);
+        s = *tmp; // These constraints should be on separate variables, and should not interact.
 
         // Each binds should be independent of the others, so order should not matter.
         ranges::insert(binds, binds.end(), binds1);
     }
 
-    return {binds, unambiguous_preds};
+    return {s, binds, unambiguous_preds};
 }
 
 // Why aren't we using `fixed_type_vars`?
@@ -1428,7 +1423,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
 
     // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
     //   after generating definitions of their 
-    auto [binds1, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
+    auto [s1, binds1, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
     binds = binds1 + binds;
 
     set<Hs::TypeVar> qtvs = tvs_in_any_type - fixed_tvs;
@@ -1451,8 +1446,8 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     }
     else
     {
-        // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group
-        // just the definitions of individual symbols.
+        // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group,
+        // but we do need the defaults to define individual symbols.
 
         // 1. Quantify over variables in ANY type that are not fixed -- doesn't depend on defaulting.
         // Never quantify over variables that are only in a LIE -- those must be defaulted.
@@ -1468,7 +1463,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
             auto tvs_in_this_type = free_type_variables(type);
 
             // Default any constraints that do not occur in THIS type.
-            auto [binds1, lie_for_this_type] = default_preds( fixed_tvs, tvs_in_this_type, lie_not_completely_ambiguous );
+            auto [s2, binds2, lie_for_this_type] = default_preds( fixed_tvs, tvs_in_this_type, lie_not_completely_ambiguous );
 
             Hs::Type constrained_type = add_constraints( constraints_from_lie(lie_for_this_type), type );
 
