@@ -2618,7 +2618,7 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
 
     for(auto& [x,t]: env)
     {
-        std::cerr<<x<<" :: "<<remove_top_level_foralls(alphabetize_type(t))<<"\n";
+        std::cerr<<x<<" :: "<<alphabetize_type(t)<<"\n";
 //        std::cerr<<x<<" = "<<e<<"\n\n\n";
     }
     std::cerr<<"\n";
