@@ -43,9 +43,13 @@ using std::tuple;
   * Handle exp :: type expressions.
   * Monomorphism restriction.
   * Defaulting.
+  * Make defaulting happen at every binding.
+  * Make a version of unification that returns optional instead of throwing.
+  * Make a stack of LIEs.
+  * Don't substitute into LIEs / LVEs / GVEs until we need to.
+  * Handle a :: Num a => Char in (a,b) = ('a',1)
 
   TODO:
-  0. Make defaulting happen at every binding.
   1. Check that constraints in instance contexts satisfy the "paterson conditions"
   2. How do we export stuff?
   3. Make functions to handle instance declarations from Figure 12.
@@ -67,16 +71,11 @@ using std::tuple;
   9. Check that there are no cycles in the class hierarchy.
   10. Do less context reduction -- choice 2d in "Type classes - an exploration of the design space".
   11. Emit code for instances and check if there are instances for the context.
-  12. Handle a :: Num a => Char in (a,b) = ('a',1)
   13. Handle constraints on constructors.
   14. Remove the constraint from EmptySet
-  15. Don't substitution into LIEs / LVEs / GVEs until we need to.
-  16. Make unification stop throwing.
   17. Replace types with type synonyms.
   18. Reject unification of variables, tycons, etc with different kinds.
   19. Add basic error reporting.
-  20. Make a stack of lies / lves?  Can we then automatically accumulate LIEs to the
-      LIE on the top of the LIE stack?
   21. Should we consider having infer_type( ) modify expressions in-place instace of 
       returning a new one?
   22. How do we handle things like Prelude.Num, Prelude.Enum, Prelude.fromInt, etc.
@@ -88,6 +87,8 @@ using std::tuple;
 
   Questions:
   1. How do we handle predicates that make it to the top level?
+    - If they are tautological, we can remove them and infer the dictionary.
+    - Otherwise we try to default them, if they have a type variable.
   2. Is THIH correct about binding groups in Haskell 2010?
      - It seems that basically all the explicitly-typed things should be at the END.
      - In that case, every explicitly-typed thing would be in its OWN group.
