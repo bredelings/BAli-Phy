@@ -792,7 +792,10 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
 template <typename T>
 Hs::Type quantify(const T& tvs, const Hs::Type& monotype)
 {
-    return Hs::ForallType(tvs | ranges::to<vector>, monotype);
+    if (tvs.empty())
+        return monotype;
+    else
+        return Hs::ForallType(tvs | ranges::to<vector>, monotype);
 }
 
 template <typename T>
