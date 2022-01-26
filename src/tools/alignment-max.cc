@@ -525,21 +525,25 @@ void MPD::add_alignment(const alignment& A)
 
 vector<double> MPD::get_score(int type) const
 {
-    // FIXME!  Put the scores on the EMITTED columns.
+    vector<double> score(emitted_column_counts.size(), 0.0);
 
-    vector<double> score(bare_column_counts.size());
-
-    for(const auto& [column,i]: columns)
+    for(const auto& [emitted_column, i]: emitted_columns)
     {
-	int n = n_letters(column);
+	int n = n_letters(emitted_column.column);
 	assert(n > 0);
-    
+
+        int j = emitted_to_bare[i];
+
         if (column_pr_type == column_pr_type_t::bare)
-            score[i] = double(bare_column_counts[i])/n_samples;
+            score[i] = double(bare_column_counts[j])/n_samples;
         else
             score[i] = double(emitted_column_counts[i])/n_samples;
 
-	if (type == 1)
+        if (type == 0)
+        {
+            // do nothing
+        }
+	else if (type == 1)
 	    score[i] *= n;
 	else if (type == 2)
 	    score[i] = log(score[i]);
@@ -557,7 +561,7 @@ MPD::get_best_path(const vector<double>& score)
     ec_from_x = vector<emitted_column_map::iterator>(n_vertices(), emitted_columns.end());
     for(auto ec = emitted_columns.begin(); ec != emitted_columns.end(); ec++)
 	ec_from_x[ec->second] = ec;
-  
+
     if (log_verbose) {
 	cerr<<"\nalignment-max: checking edges...\n";
 	check_edges_go_forwards_only();
@@ -588,32 +592,26 @@ MPD::get_best_path(const vector<double>& score)
 
 	int v2 = vertex(v2i, g);
 
-	double best = 0;
-	int argmax = -1;
-	graph_traits<Graph>::in_edge_iterator e, end;
+	optional<double> best;
+	optional<int> argmax;
+        graph_traits<Graph>::in_edge_iterator e, end;
 	for(tie(e,end) = in_edges(v2,g); e != end; ++e)
 	{ 
 	    Vertex v1 = source(*e,g);
 	    int v1i = get(vertex_index,g,v1);
 	    assert(visited[v1i]);
 
-	    if (argmax == -1) {
+	    if (not best or forward[v1i] > *best)
+            {
 		best = forward[v1i];
 		argmax = v1i;
 	    }
-	    else {
-		if (forward[v1i] > best) {
-		    argmax = v1i;
-		    best = forward[v1i];
-		}
-	    }
 	}
-	assert(argmax != -1);
-	from[v2i] = argmax;
+	assert(argmax);
+	assert(best);
+	from[v2i] = *argmax;
       
-	forward[v2i] = best;
-	if (emitted_to_bare[v2i] != -1)
-	    forward[v2i] += score[emitted_to_bare[v2i]];
+	forward[v2i] = *best + score[v2i];
       
 	visited[v2i] = 1;
     }
