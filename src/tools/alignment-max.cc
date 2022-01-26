@@ -38,7 +38,13 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/topological_sort.hpp>
 
-using namespace boost;
+using boost::add_edge;
+using boost::vertex_index;
+using boost::graph_traits;
+using boost::adjacency_list;
+using boost::vecS;
+using boost::bidirectionalS;
+using boost::vertices;
 
 typedef adjacency_list< vecS, vecS, bidirectionalS> Graph; 
 typedef graph_traits<Graph>::vertex_descriptor Vertex;
@@ -49,7 +55,18 @@ typedef graph_traits<Graph>::edge_descriptor Edge_t;
 namespace po = boost::program_options;
 using po::variables_map;
 
-using namespace std;
+using std::vector;
+using std::string;
+using std::list;
+using std::map;
+using std::optional;
+
+using std::tie;
+
+using std::ofstream;
+using std::cout;
+using std::cerr;
+using std::endl;
 
 void do_setup(const variables_map& args,vector<alignment>& alignments) 
 {
