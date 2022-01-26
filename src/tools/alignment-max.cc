@@ -512,12 +512,10 @@ vector<double> MPD::get_score(int type) const
 
     vector<double> score(bare_column_counts.size());
 
-    for(const auto& c: columns)
+    for(const auto& [column,i]: columns)
     {
-	int n = n_letters(c.first);
+	int n = n_letters(column);
 	assert(n > 0);
-    
-	int i = c.second;
     
         if (column_pr_type == column_pr_type_t::bare)
             score[i] = double(bare_column_counts[i])/n_samples;
