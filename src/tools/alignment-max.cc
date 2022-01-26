@@ -391,7 +391,7 @@ MPD::create_new_emitted_column(const emitted_column& C)
     assert(vi == emitted_columns.size()+2);
 
     // Add the mapping from C -> vi to the emitted_column map
-    emitted_columns.insert(emitted_column_map::value_type(C,vi));
+    emitted_columns.insert( {C, vi} );
     auto x_record = emitted_columns.find(C);
     assert(x_record != emitted_columns.end());
 
@@ -400,7 +400,7 @@ MPD::create_new_emitted_column(const emitted_column& C)
     if (y_record == columns.end()) 
     {
 	// Add the mapping from C.column -> columns.size() to the bare column map
-	columns.insert(column_map::value_type(C.column, columns.size()));
+	columns.insert( {C.column, columns.size()} );
 	y_record = columns.find(C.column);
 	assert(y_record != columns.end());
     
