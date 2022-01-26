@@ -33,6 +33,8 @@
 #include "util/rng.H"
 #include "statistics.H"
 #include "util/log-level.H"
+#include "util/string/split.H"
+#include "util/string/convert.H"
 
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -100,6 +102,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("sort,S",value<bool>()->default_value(true),"Sort partially ordered columns to group similar gaps")
 	("out,o",value<string>()->default_value("-"),"Output file (defaults to stdout)")
 	("out-probabilities,p",value<string>(),"Output file for column probabilities, if specified")
+        ("debug-graph",value<string>(),"Filename for debug graph")
 	("verbose,V","Output more log messages on stderr.")
 	;
 
@@ -320,6 +323,10 @@ struct MPD
 
     vector<double> get_score(int) const;
 
+    void write_debug_graph(const vector<double>& score, const string& filename, int max_states);
+
+    vector<double> get_forward_scores(const vector<double>& score);
+
     vector<int> get_best_path(const vector<double>& score);
   
     alignment get_best_alignment(int);
@@ -362,12 +369,11 @@ void MPD::check_edges_go_forwards_only() const
 {
     emitted_column_order eco;
 
-    graph_traits<Graph>::vertex_iterator vi, vi_end;
-    for (tie(vi, vi_end) = ::vertices(g); vi != vi_end; ++vi) 
+    for (auto [vi, vi_end] = ::vertices(g); vi != vi_end; ++vi)
     {
 	int index1 = get(vertex_index,g,*vi);
-	graph_traits<Graph>::out_edge_iterator ei, eend;
-	for(tie(ei,eend) = out_edges(*vi,g); ei != eend; ++ei)
+
+	for(auto [ei,eend] = out_edges(*vi,g); ei != eend; ++ei)
 	{ 
 	    int index2 = get(vertex_index,g,target(*ei,g));
       
@@ -554,6 +560,63 @@ vector<double> MPD::get_score(int type) const
     return score;
 }
 
+vector<double> MPD::get_forward_scores(const vector<double>& score)
+{
+    //----------------- construct a map from index -> &(EC,index) ---------------//
+    ec_from_x = vector<emitted_column_map::iterator>(n_vertices(), emitted_columns.end());
+    for(auto ec = emitted_columns.begin(); ec != emitted_columns.end(); ec++)
+	ec_from_x[ec->second] = ec;
+
+    if (log_verbose) {
+	cerr<<"\nalignment-max: checking edges...\n";
+	check_edges_go_forwards_only();
+	cerr<<"alignment-max: done."<<endl;
+    }
+
+    //----------------- Forward Sums -------------------//
+    vector<Vertex> sorted_vertices;
+    topological_sort(g, std::back_inserter(sorted_vertices));
+    std::reverse(sorted_vertices.begin(), sorted_vertices.end());
+
+    vector<int> sorted_indices(sorted_vertices.size());
+    for(int i=0;i<sorted_indices.size();i++)
+	sorted_indices[i] = get(vertex_index,g,sorted_vertices[i]);
+    assert(sorted_indices[0] == 0);
+    assert(sorted_indices.back() == 1);
+
+    vector<double> forward(n_vertices(), -1);
+    vector<int> visited(n_vertices(), 0);
+    forward[0] = 0;
+    visited[0] = 1;
+
+    for(int i=1;i<n_vertices();i++)
+    {
+	int v2i = sorted_indices[i];
+	assert(not visited[v2i]);
+
+	int v2 = vertex(v2i, g);
+
+	optional<double> best;
+	for(auto [e,end] = in_edges(v2,g); e != end; ++e)
+	{
+	    Vertex v1 = source(*e,g);
+	    int v1i = get(vertex_index,g,v1);
+	    assert(visited[v1i]);
+
+	    if (not best or forward[v1i] > *best)
+		best = forward[v1i];
+	}
+
+	forward[v2i] = *best + score[v2i];
+	visited[v2i] = 1;
+    }
+
+    assert(visited[1]);
+
+    return forward;
+}
+
+
 vector<int>
 MPD::get_best_path(const vector<double>& score)
 {
@@ -594,8 +657,7 @@ MPD::get_best_path(const vector<double>& score)
 
 	optional<double> best;
 	optional<int> argmax;
-        graph_traits<Graph>::in_edge_iterator e, end;
-	for(tie(e,end) = in_edges(v2,g); e != end; ++e)
+	for(auto [e,end] = in_edges(v2,g); e != end; ++e)
 	{ 
 	    Vertex v1 = source(*e,g);
 	    int v1i = get(vertex_index,g,v1);
@@ -630,6 +692,101 @@ MPD::get_best_path(const vector<double>& score)
     std::reverse(path.begin(),path.end());
 
     return path;
+}
+
+void
+MPD::write_debug_graph(const vector<double>& score, const string& filename, int max_states)
+{
+    vector<int> in_best_path(n_vertices(), 0);
+    auto best_path = get_best_path(score);
+    for(int state: best_path)
+        in_best_path[state] = 1;
+
+    auto forward = get_forward_scores(score);
+
+    //----------------- construct a map from index -> &(EC,index) ---------------//
+    ec_from_x = vector<emitted_column_map::iterator>(n_vertices(), emitted_columns.end());
+    for(auto ec = emitted_columns.begin(); ec != emitted_columns.end(); ec++)
+	ec_from_x[ec->second] = ec;
+
+    if (log_verbose) {
+	cerr<<"\nalignment-max: checking edges...\n";
+	check_edges_go_forwards_only();
+	cerr<<"alignment-max: done."<<endl;
+    }
+
+    //----------------- Forward Sums -------------------//
+    vector<Vertex> sorted_vertices;
+    topological_sort(g, std::back_inserter(sorted_vertices));
+    std::reverse(sorted_vertices.begin(), sorted_vertices.end());
+
+    vector<int> sorted_indices(sorted_vertices.size());
+    for(int i=0;i<sorted_indices.size();i++)
+	sorted_indices[i] = get(vertex_index,g,sorted_vertices[i]);
+    assert(sorted_indices[0] == 0);
+    assert(sorted_indices.back() == 1);
+
+
+    std::ofstream debugfile(filename);
+    debugfile<<"digraph \"token0\" {\n";
+    debugfile<<"graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];\n";
+    debugfile<<"node [fontname=Arial, style=\"rounded,filled\", height=0, width=0, shape=box];\n";
+    debugfile<<"edge [style=\"setlinewidth(2)\"];\n\n";
+
+    for(int i=1;i< std::min(n_vertices(), max_states);i++)
+    {
+	int v2i = sorted_indices[i];
+
+	int v2 = vertex(v2i, g);
+
+        auto ec2 = ec_from_x[v2i];
+
+        double score_i = score[v2i];
+        double total_i = forward[v2i];
+
+        string label = std::to_string(v2i) + ": ";
+        for(int index: ec2->first.column)
+        {
+            if (index == -1)
+                label += "- ";
+            else
+                label += std::to_string(index) + " ";
+        }
+
+        label += "\\n" + std::to_string(score_i);
+        label += "\\n" + std::to_string(total_i);
+        string fillcolor="blue";
+        if (score_i > 0.25)
+            fillcolor="green";
+        else if (score_i > 0.1)
+            fillcolor="cyan";
+
+        string color = fillcolor;
+        string penwidth = "1";
+        if (in_best_path[v2i])
+        {
+            color="red";
+            penwidth="3";
+        }
+
+        debugfile<<"node"<<v2i<<" [label=\""<<label<<"\",color=\""<<color<<"\",fillcolor=\""<<fillcolor<<"\",penwidth=\""<<penwidth<<"\"]\n";
+
+        // FIXME - do backwards algorithm to compute penalty for node, and eliminate nodes with sufficient penalty?
+
+	for(auto [e,end] = in_edges(v2,g); e != end; ++e)
+	{
+	    Vertex v1 = source(*e,g);
+	    int v1i = get(vertex_index,g,v1);
+
+            if (in_best_path[v2i] and in_best_path[v1])
+                debugfile<<"node"<<v1i<<" -> node"<<v2i<<" [color=\"red\"]\n";
+            else
+                debugfile<<"node"<<v1i<<" -> node"<<v2i<<"\n";
+	}
+    }
+    debugfile<<"}\n";
+
+    debugfile.close();
 }
 
 alignment MPD::get_best_alignment(int type)
@@ -758,6 +915,19 @@ int main(int argc,char* argv[])
 
 	    outfile.close();
 	}
+
+        if (args.count("debug-graph"))
+        {
+            string unsplit_args = args["debug-graph"].as<string>();
+            vector<string> args = split(unsplit_args,':');
+            if (args.size() != 2)
+                throw myexception()<<"Need --debug-graph=filename:n_states but got "<<unsplit_args;
+            string filename = args[0];
+            int n_states = convertTo<int>(args[1]);
+
+            auto score = mpd.get_score( type );
+            mpd.write_debug_graph( score, filename, n_states);
+        }
     }
     catch (std::exception& e) {
 	std::cerr<<"alignment-max: Error! "<<e.what()<<endl;
