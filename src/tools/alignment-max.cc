@@ -79,6 +79,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("skip,s",value<unsigned>()->default_value(0),"Number of alignment samples to skip")
 	("max-alignments,m",value<int>()->default_value(1000),"Maximum number of alignments to analyze")
 	("analysis",value<string>()->default_value("wsum"),"sum, wsum, wsum2, multiply")
+	("column-pr",value<string>()->default_value("homology"),"homology, alignment")
         ("sort,S",value<bool>()->default_value(true),"Sort partially ordered columns to group similar gaps")
 	("out,o",value<string>()->default_value("-"),"Output file (defaults to stdout)")
 	("out-probabilities,p",value<string>(),"Output file for column probabilities, if specified")
@@ -245,6 +246,12 @@ typedef map<emitted_column,int, emitted_column_order> emitted_column_map;
 typedef map< vector<int>, int, column_order> column_map;
 typedef map< vector<int>, vector<int>, column_order> emitted_map;
 
+enum class column_pr_type_t
+{
+    emitted,
+    bare
+};
+
 struct MPD
 {
     const int N;
@@ -265,11 +272,17 @@ struct MPD
     /// map bare columns    -> y
     column_map columns;
 
+    // How do we think of column counts?
+    column_pr_type_t column_pr_type;
+
     /// map x -> y
     vector<int> emitted_to_bare;
 
     /// how many times did we see each bare column?
     vector<int> bare_column_counts;
+
+    /// how many times did we see each bare column?
+    vector<int> emitted_column_counts;
 
     /// emitted before column -> {x1...xn}
     emitted_map before;
@@ -311,6 +324,7 @@ MPD::MPD(const alignment& A)
     
     vertex_start = add_vertex(g); // add the start node
     emitted_to_bare.push_back(-1); // the start node doesn't correspond to a column
+    emitted_column_counts.push_back(0); // the start node has no observations
     int x_start = get(vertex_index, g, vertex_start);
 
     vector<int> nothing_emitted(N,0);
@@ -318,7 +332,8 @@ MPD::MPD(const alignment& A)
     after[nothing_emitted].push_back(x_start);
 
     vertex_end = add_vertex(g); // add the end node
-    emitted_to_bare.push_back(-1); // the start node doesn't correspond to a column
+    emitted_to_bare.push_back(-1); // the end node doesn't correspond to a column
+    emitted_column_counts.push_back(0); // the end node has no observations
     int x_end = get(vertex_index, g, vertex_end);
 
     vector<int> everything_emitted = L;
@@ -410,6 +425,9 @@ MPD::create_new_emitted_column(const emitted_column& C)
     }
   
     // map the emitted_column index (emitted.size()) to the bare column index (y_record->second)
+    emitted_column_counts.push_back(0);
+    assert(emitted_column_counts.size()-1 == vi);
+
     emitted_to_bare.push_back(y_record->second);
     assert(emitted_to_bare.size()-1 == vi);
   
@@ -466,6 +484,7 @@ MPD::add_emitted_column(const emitted_column& C)
   
     // Increment column count
     ++bare_column_counts[emitted_to_bare[x_current]];
+    ++emitted_column_counts[x_current];
 }
 
 void MPD::add_alignment(const alignment& A)
@@ -489,6 +508,8 @@ void MPD::add_alignment(const alignment& A)
 
 vector<double> MPD::get_score(int type) const
 {
+    // FIXME!  Put the scores on the EMITTED columns.
+
     vector<double> score(bare_column_counts.size());
 
     for(const auto& c: columns)
@@ -498,7 +519,11 @@ vector<double> MPD::get_score(int type) const
     
 	int i = c.second;
     
-	score[i] = double(bare_column_counts[i])/n_samples;
+        if (column_pr_type == column_pr_type_t::bare)
+            score[i] = double(bare_column_counts[i])/n_samples;
+        else
+            score[i] = double(emitted_column_counts[i])/n_samples;
+
 	if (type == 1)
 	    score[i] *= n;
 	else if (type == 2)
@@ -670,6 +695,19 @@ int main(int argc,char* argv[])
 	//--------- Construct alignment indexes ---------//
 	MPD mpd( alignments[0] );
 
+        if (args["column-pr"].as<string>() == "alignment")
+        {
+            std::cerr<<"emitted!\n";
+            mpd.column_pr_type = column_pr_type_t::emitted;
+        }
+        else if (args["column-pr"].as<string>() == "homology")
+        {
+            std::cerr<<"bare!\n";
+            mpd.column_pr_type = column_pr_type_t::bare;
+        }
+        else
+            throw myexception()<<"--column-pr should be either 'alignment' or 'homology'";
+        
 	for(int i=0;i<alignments.size();i++)
 	    mpd.add_alignment( alignments[i] );
 
