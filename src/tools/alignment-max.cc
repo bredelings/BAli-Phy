@@ -343,8 +343,8 @@ void MPD::check_edges_go_forwards_only() const
 		throw myexception()<<"Out of bounds...";
 	    if (index2 >= ec_from_x.size() or index2 < 0)
 		throw myexception()<<"Out of bounds...";
-	    emitted_column_map::iterator ec1 = ec_from_x[index1];
-	    emitted_column_map::iterator ec2 = ec_from_x[index2];
+	    auto ec1 = ec_from_x[index1];
+	    auto ec2 = ec_from_x[index2];
       
 	    // skip the Start and End states
 	    if (index1 == 0 or index2 == 1) continue;
@@ -392,11 +392,11 @@ MPD::create_new_emitted_column(const emitted_column& C)
 
     // Add the mapping from C -> vi to the emitted_column map
     emitted_columns.insert(emitted_column_map::value_type(C,vi));
-    emitted_column_map::iterator x_record = emitted_columns.find(C);
+    auto x_record = emitted_columns.find(C);
     assert(x_record != emitted_columns.end());
 
     // if this bare column has not been seen before
-    column_map::iterator y_record = columns.find(C.column);
+    auto y_record = columns.find(C.column);
     if (y_record == columns.end()) 
     {
 	// Add the mapping from C.column -> columns.size() to the bare column map
@@ -607,7 +607,7 @@ alignment MPD::get_best_alignment(int type)
   
     for(int i=0;i<M.size1();i++) {
 	int S = path[i+1];
-	emitted_column_map::iterator ec = ec_from_x[S];
+	auto ec = ec_from_x[S];
 	for(int j=0;j<L.size();j++)
 	    M(i,j) = (ec->first).column[j];
     }
@@ -625,7 +625,7 @@ vector<double> MPD::get_column_probabilities(const alignment& A) const
     for(int c=0; c<A.length(); c++)
     {
 	vector<int> column = get_column(m, c);
-	column_map::const_iterator y_record = columns.find(column);
+	auto y_record = columns.find(column);
 
 	if (y_record != columns.end())
 	{
