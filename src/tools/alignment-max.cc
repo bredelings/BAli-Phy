@@ -228,10 +228,10 @@ struct emitted_column_order
 };
 
 /*
- * An emitted column specifies the character index (-1 for a gap) and the total number
+ * An emitted column specifies the character index (-1 for a gap) AND the total number
    of emitted characters for each sequence.
 
-   A "bare" column includes only the character indices, so it is possible for multiple
+   A "bare" column includes ONLY the character indices, so it is possible for multiple
    emitted columns to map to each "bare" column.
 
    This probably makes sense for columns that consist only of leaf sequences, since those
@@ -269,7 +269,7 @@ struct MPD
     vector<int> emitted_to_bare;
 
     /// how many times did we see each bare column?
-    vector<int> counts;
+    vector<int> bare_column_counts;
 
     /// emitted before column -> {x1...xn}
     emitted_map before;
@@ -405,8 +405,8 @@ MPD::create_new_emitted_column(const emitted_column& C)
 	assert(y_record != columns.end());
     
 	// This new bare column has no counts
-	counts.push_back(0);
-	assert(counts.size() == columns.size());
+	bare_column_counts.push_back(0);
+	assert(bare_column_counts.size() == columns.size());
     }
   
     // map the emitted_column index (emitted.size()) to the bare column index (y_record->second)
@@ -465,7 +465,7 @@ MPD::add_emitted_column(const emitted_column& C)
     x_current = x_record->second;
   
     // Increment column count
-    ++counts[emitted_to_bare[x_current]];
+    ++bare_column_counts[emitted_to_bare[x_current]];
 }
 
 void MPD::add_alignment(const alignment& A)
@@ -489,7 +489,7 @@ void MPD::add_alignment(const alignment& A)
 
 vector<double> MPD::get_score(int type) const
 {
-    vector<double> score(counts.size());
+    vector<double> score(bare_column_counts.size());
 
     for(const auto& c: columns)
     {
@@ -498,7 +498,7 @@ vector<double> MPD::get_score(int type) const
     
 	int i = c.second;
     
-	score[i] = double(counts[i])/n_samples;
+	score[i] = double(bare_column_counts[i])/n_samples;
 	if (type == 1)
 	    score[i] *= n;
 	else if (type == 2)
@@ -630,7 +630,7 @@ vector<double> MPD::get_column_probabilities(const alignment& A) const
 	if (y_record != columns.end())
 	{
 	    int y_index = y_record->second;
-	    int count = counts[y_index];
+	    int count = bare_column_counts[y_index];
 	    column_pr[c] = double(count)/n_samples;
 	}
     }
