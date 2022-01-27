@@ -1868,10 +1868,8 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto lie_most_general = pop_lie();
 
         // 2. alpha[i] in most_general_type but not in env
-        auto ftv_mgt = free_type_variables(most_general_type);
-        auto ftv_env = free_type_variables(env);
-        for(auto tv: ftv_env)
-            ftv_mgt.erase(tv);
+        auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
+
         // 3. instantiate the given type...
         // 4. ... with fresh variables gamma[i].
         auto [given_constraints, given_type] = instantiate(texp->type);
