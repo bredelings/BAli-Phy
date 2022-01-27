@@ -1859,8 +1859,8 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
-        // t->exp
-        // t->type
+        // texp->exp;
+        // texp->type
 
         // 1. Get the most general type
         push_lie();
@@ -1873,17 +1873,17 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         // 3. instantiate the given type...
         // 4. ... with fresh variables gamma[i].
         auto [given_constraints, given_type] = instantiate(texp->type);
-        // 5. Find a way to constrain the most general type to the constrained type.
 
+        // 5. Constrain the most general type to the given type with MATCH
         auto s2 = ::match(most_general_type, given_type);
         if (not s2 or not add_substitution(*s2))
             throw myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"'";
 
+        // I think this is looking for variants in most_general_type that are not in ftv_mgt, and therefore are in the environment
         for(auto& [a,type]: *s2)
             if (not ftv_mgt.count(a))
                 throw myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"' because it tries to constraint type variable '"<<a.print()<<"'";
         // 6. Convert the given_constraints into a LIE
-
         lie_most_general = apply_current_subst(lie_most_general);
 
         auto lie_given = constraints_to_lie(given_constraints);
