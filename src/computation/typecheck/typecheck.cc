@@ -1882,7 +1882,8 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         // I think this is looking for variants in most_general_type that are not in ftv_mgt, and therefore are in the environment
         for(auto& [a,type]: *s2)
             if (not ftv_mgt.count(a))
-                throw myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"' because it tries to constraint type variable '"<<a.print()<<"'";
+                throw myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"' because it tries to constrain fixed type variable '"<<a.print()<<"'";
+
         // 6. Convert the given_constraints into a LIE
         lie_most_general = apply_current_subst(lie_most_general);
 
