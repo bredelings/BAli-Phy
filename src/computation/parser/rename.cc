@@ -1416,9 +1416,6 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
             // Skip if this name isn't one of the ids being defined.
             if (it == index_for_name.end()) continue;
 
-            // Skip if this name has an explicit def
-            if (signatures.count(name)) continue;
-
             refs.push_back(it->second);
         }
         referenced_decls.push_back( std::move(refs) );
