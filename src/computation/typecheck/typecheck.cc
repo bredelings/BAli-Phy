@@ -1864,7 +1864,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         // 1. Get the most general type
         push_lie();
-        auto [exp1, most_general_type] = infer_type(env, texp->exp);
+        auto [exp, most_general_type] = infer_type(env, texp->exp);
         auto lie_most_general = pop_lie();
 
         // 2. alpha[i] in most_general_type but not in env
@@ -1894,7 +1894,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
             throw myexception()<<"Can't derive constraints '"<<print(lie_most_general)<<"' from specified constraints '"<<print(lie_given)<<"'";
 
         current_lie() += lie_given;
-        return {Hs::LetExp({noloc,*binds}, {noloc,exp1}), given_type};
+        return {Hs::LetExp({noloc,*binds}, {noloc,exp}), given_type};
     }
     else if (auto l = E.to<Hs::List>())
     {
