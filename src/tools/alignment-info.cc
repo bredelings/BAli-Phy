@@ -245,18 +245,18 @@ map<gap,unsigned> guess_indels(const alignment& A)
     }
 
     // flip deletions in many taxa to insertions in few taxa
-    for(map<gap,unsigned>::iterator i=gaps.begin();i!=gaps.end();) 
+    for(auto i=gaps.begin();i!=gaps.end();) 
     {
-	const gap& g = i->first;
+	auto& [g, count] = *i;
 	unsigned ins_count = n_insertions(A,g.start,g.length);
-	if (ins_count < i->second) {
+	if (ins_count < count) {
 	    g.type = 2;
-	    i->second = ins_count;
+	    count = ins_count;
 	}
 
 	// increment counter and remove current element if count==0.
 	{
-	    map<gap,unsigned>::iterator j = i;
+	    auto j = i;
 	    i++;
 	    if (not j->second)
 		gaps.erase(j);
@@ -415,17 +415,17 @@ int main(int argc,char* argv[])
 	int unique = 0;
 	int n_ins=0;
 	int n_del=0;
-	for(const auto& i: gaps)
+	for(const auto& [gap,count]: gaps)
 	{
-	    total_gaps += i.second;
-	    gap_lengths.push_back(i.first.length);
-	    if (i.first.type == 1)
+	    total_gaps += count;
+	    gap_lengths.push_back(gap.length);
+	    if (gap.type == 1)
 		n_del++;
-	    if (i.first.type == 2)
+	    if (gap.type == 2)
 		n_ins++;
-	    if (i.second == 1)
+	    if (count == 1)
 		unique++;
-	    if (i.second > 1 and (A.n_sequences() - i.second > 1))
+	    if (count > 1 and (A.n_sequences() - count > 1))
 		inf_gaps++;
 	}
 	valarray<double> gap_lengths2(gap_lengths.size());
