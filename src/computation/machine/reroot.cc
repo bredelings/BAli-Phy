@@ -131,17 +131,26 @@ void reg_heap::reroot_at(int t)
     // 5. Pivot effects
     for(auto& [r,s1]: tokens[parent].delta_step())
     {
-        if (s1 > 0 and steps.access(s1).has_effect())
+        if (s1 > 0)
         {
-            if (steps[s1].has_pending_effect_registration())
-                unmark_effect_to_register_at_step(s1);
-            else
-                mark_effect_to_unregister_at_step(s1);
+            mark_step_in_root(s1, false);
+
+            if (steps.access(s1).has_effect())
+            {
+                if (steps[s1].has_pending_effect_registration())
+                    unmark_effect_to_register_at_step(s1);
+                else
+                    mark_effect_to_unregister_at_step(s1);
+            }
         }
 
         int s2 = step_index_for_reg(r);
-        if (s2 > 0 and steps.access(s2).has_effect())
-            mark_effect_to_register_at_step(s2);
+        if (s2 > 0)
+        {
+            mark_step_in_root(s2, true);
+            if (s2 > 0 and steps.access(s2).has_effect())
+                mark_effect_to_register_at_step(s2);
+        }
     }
 
     total_reroot_one++;
