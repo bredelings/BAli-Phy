@@ -495,6 +495,18 @@ class RegOperationArgs2Changeable final: public OperationArgs
             return M[r3];
         }
 
+    bool has_previous_value() const
+        {
+            return M.has_result1(r);
+        }
+
+    const closure& previous_value() const
+        {
+            int r2 = M.result_for_reg(r);
+            return M.closure_at(r2);
+        }
+
+
 public:
 
     void make_changeable() {}

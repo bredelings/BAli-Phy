@@ -72,6 +72,10 @@ public:
 
     const expression_ref& evaluate_(int);
 
+    virtual bool has_previous_value() const;
+
+    virtual const closure& previous_value() const;
+
     void stack_push(int);
 
     void stack_pop(int);

@@ -90,6 +90,16 @@ int OperationArgs::evaluate_slot_unchangeable(int slot)
     return evaluate_reg_unchangeable(reg_for_slot(slot));
 }
 
+bool OperationArgs::has_previous_value() const
+{
+    return false;
+}
+
+const closure& OperationArgs::previous_value() const
+{
+    std::abort();
+}
+
 void OperationArgs::stack_push(int r)
 {
     M.stack_push(r);
