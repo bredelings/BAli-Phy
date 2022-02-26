@@ -52,9 +52,14 @@ using std::tuple;
 
   TODO:
   -2. Implement explicit types in terms of TypedExp -- match + entails to check predicates
+    + GHC/Hs/Binds.hs
+    + GHC/Tc/Gen/Binds.hs
+    + Basically, I need to read all of Gen/Bind.hs :-(
+      - See note [Impedance matching]
   -1. Record impedance-matching info in DictionaryLambda (and perhaps rename it).
   0. Write more-general impedance-matching code.
-
+  0. Avoid a space leak with polymorphic recursion in cases like factorial.
+     Do not create new dictionaries for each call at the same type.
   1. Check that constraints in instance contexts satisfy the "paterson conditions"
   2. How do we export stuff?
   3. Make functions to handle instance declarations from Figure 12.
@@ -103,6 +108,17 @@ using std::tuple;
        we should avoid using instances to simplify constraints.
      - but then wouldn't we end up with constraints like Eq [a]?
      - maybe this describes a non-standard extension.
+
+  4. What does entails(x,y) return inside GHC?  If not Binds, then what?  It seems like we
+     actually want a formula for all the dvars in y in terms of x.
+
+  5. If the LHS type for a var is more general than its explicit type, how to we do the
+     impedance matching?
+
+  6. When a var has an explicit type, on the right hand side, but not on the LHS, how
+     do we define the actual exported var?  And how do we ensure that the resulting definition
+     is visible on the RHS?  Maybe define the tmp-tuple and the exported var in the same let-rec 
+     block?
 
   Cleanups:
   1. Implement kinds as Hs::Type
@@ -465,6 +481,25 @@ struct typechecker_state
             return add_substitution(*s);
         else
             return false;
+    }
+
+    optional<substitution_t>
+    maybe_match(const Hs::Type& t1, const Hs::Type& t2, const optional<set<Hs::TypeVar>>& allowed_tvs)
+    {
+        auto T1 = apply_current_subst(t1);
+        auto T2 = apply_current_subst(t2);
+        auto s = ::match(T1, T2);
+        if (not s or not add_substitution(*s))
+            return {};
+
+        if (allowed_tvs)
+        {
+            for(auto& [a,type]: *s)
+                if (not allowed_tvs->count(a))
+                    return {};
+        }
+
+        return s;
     }
 
     void unify(const Hs::Type& t1, const Hs::Type& t2)
@@ -1379,6 +1414,31 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
         unify(lhs_types[i], rhs_type);
     }
 
+    // 3. Handle explicit type signatures
+    for(auto& [name, most_general_type]: binder_env)
+    {
+        if (auto it = signatures.find(name); it != signatures.end())
+        {
+            auto [given_constraints, given_type] = instantiate(it->second);
+            auto s = maybe_match(most_general_type, given_type, {});
+            if (not s)
+                throw myexception()<<"Given type '"<<it->second<<"' does not match inferred type '"<<most_general_type<<"'";
+
+            // FIXME - can we just increase the tc-level to exclude tvs in the environment?
+            // auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
+
+            current_lie() = apply_current_subst( current_lie() );
+
+            auto lie_given = constraints_to_lie(given_constraints);
+            // 7. Express lie2 in terms of lie1
+            auto binds = entails(lie_given, current_lie());
+            if (not binds)
+                throw myexception()<<"Can't derive constraints '"<<print(current_lie())<<"' from specified constraints '"<<print(lie_given)<<"'";
+
+            // We have to know how to call the LHS 
+        }
+    }
+
     // We need to substitute before looking for free type variables!
     // We also need to substitute before we quantify below.
     binder_env = apply_current_subst(binder_env);
@@ -1426,6 +1486,10 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
      * For restricted bindings, only class (iii) (I think) needs defaults.
      */
 
+
+    // FIXME: return {dvar = expression} as a mapping, instead of a sequence of binds?
+    // If we want to substitute an expression for an argument in the wrapper,
+    
     // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
     //   after generating definitions of their 
     auto [s1, binds1, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
@@ -1859,6 +1923,13 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
+        // Example: (\x -> x) :: Num a => a -> a
+        // Should be equivalent to
+        // let tmp :: Num a => a -> a
+        //     tmp = (\x -> x)
+        // in tmp
+        // Do we create a Num a dictionary for it here?
+
         // texp->exp;
         // texp->type
 
@@ -2708,3 +2779,47 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
     // Looks like code for determining inlining
 
 
+/*
+ Examples #1:
+(i,j) = (\x ->x, \y -> y)
+
+i_mono :: a -> a
+j_mono :: b -> b 
+
+i = /\a. i' (@a) Any
+j = /\b. j' Any (@b)
+
+
+AbsBinds [p_a2MR, p_a2MW] []
+  {Exports: [i <= i_a2ML
+               wrap: /\(@ p_a2N4). <> @ p_a2N4 @ GHC.Types.Any,
+             j <= j_a2MN
+               wrap: /\(@ p_a2Nd). <> @ GHC.Types.Any @ p_a2Nd]
+   Exported types: i :: forall p. p -> p
+                   [LclId]
+                   j :: forall p. p -> p
+                   [LclId]
+   Binds: (i_a2ML, j_a2MN) = (\ x_a1Zd -> x_a1Zd, \ y_a1Ze -> y_a1Ze)
+   Evidence: [EvBinds{}]}
+
+ Example #2:
+
+i :: Int -> Int
+(i,j) = (\x ->x, \y -> y)
+
+i = case tup Any of (i,j) -> i
+j = /\a.case tup a of (i,j) -> j
+
+AbsBinds [p_a2MV] []
+  {Exports: [i <= i_a2MK
+               wrap: <> @ GHC.Types.Any,
+             j <= j_a2MR
+               wrap: <>]
+   Exported types: i :: Int -> Int
+                   [LclId]
+                   j :: forall p. p -> p
+                   [LclId]
+   Binds: (i_a2MK, j_a2MR) = (\ x_a1Z9 -> x_a1Z9, \ y_a1Za -> y_a1Za)
+   Evidence: [EvBinds{}]}
+
+ */
