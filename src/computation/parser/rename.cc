@@ -744,7 +744,7 @@ struct renamer_state
     bound_var_info find_bound_vars_in_decl(const Haskell::ValueDecl& decl, bool top = false);
     bound_var_info find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool top = false);
 
-    vector<vector<int>> rename_grouped_decls(Haskell::Decls& decls, const map<string, Hs::Type>&, const bound_var_info& bound, set<string>& free_vars, bool top = false);
+    vector<vector<int>> rename_grouped_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars);
@@ -1344,7 +1344,7 @@ const set<string>& get_free_vars(const expression_ref& decl)
 // So... factor out rename_grouped_decl( ), and then make a version that splits into components, and a version that does not?
 // Splitting the decls for classes and instances into  components really doesn't make sense...
 
-vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, const map<string, Hs::Type>& signatures, const bound_var_info& bound, set<string>& free_vars, bool top)
+vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top)
 {
     vector<set<string>> bound_names;
     for(int i=0;i<decls.size();i++)
@@ -1558,7 +1558,7 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
 
     auto binders = find_bound_vars_in_decls(decls, top);
     set<string> decls_free_vars;
-    auto refs = rename_grouped_decls(decls, binds.signatures, plus(bound, binders), decls_free_vars, top);
+    auto refs = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars, top);
     group_binds(binds, refs);
 
     add(free_vars, minus(decls_free_vars,binders));
