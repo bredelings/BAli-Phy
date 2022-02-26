@@ -98,6 +98,16 @@ long total_tokens = 0;
  *    loop until no more regs (and thus computations) are being freed.
  */
 
+void Step::mark_in_root(bool in_root)
+{
+    flags.set(7, in_root);
+}
+
+bool Step::is_in_root() const
+{
+    return flags.test(7);
+}
+
 bool Step::has_effect() const
 {
     return flags.test(6);

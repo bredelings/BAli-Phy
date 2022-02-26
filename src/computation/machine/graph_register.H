@@ -50,6 +50,10 @@ struct Step
 
     void mark_with_effect();
 
+    void mark_in_root(bool );
+
+    bool is_in_root() const;
+
     // Bit 5 for being on the pending-registration list.
 
     bool has_pending_effect_registration() const;
@@ -294,6 +298,10 @@ private:
     void do_pending_effect_registrations();
 
     void do_pending_effect_unregistrations();
+
+    void mark_step_in_root(int s, bool);
+
+    bool step_is_in_root(int s) const;
 
     void mark_effect_to_register_at_step(int s);
 
@@ -872,6 +880,18 @@ inline bool reg_heap::reg_is_forced(int r) const
 {
     assert(reg_is_changeable_or_forcing(r) or reg_is_unevaluated(r));
     return prog_force_counts[r] > 0;
+}
+
+inline void reg_heap::mark_step_in_root(int s, bool in_root)
+{
+    assert(s > 0);
+    steps[s].mark_in_root(in_root);
+}
+
+inline bool reg_heap::step_is_in_root(int s) const
+{
+    assert(s > 0);
+    return steps[s].is_in_root();
 }
 
 #endif
