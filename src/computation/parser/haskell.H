@@ -5,6 +5,7 @@
 #include <utility>
 #include <variant>
 #include <map>
+#include <set>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
 #include "located.H"
@@ -981,6 +982,10 @@ struct PatDecl: public Object
 
     Pattern lhs;
     MultiGuardedRHS rhs;
+
+    // This holds vars discovered during renaming
+    std::set<std::string> rhs_free_vars;
+
     PatDecl(const Pattern& p, const MultiGuardedRHS& r):lhs(p), rhs(r) {}
 };
 
@@ -1004,6 +1009,9 @@ struct FunDecl: public Object
 
     Var v;
     Match match;
+
+    // This holds vars discovered during renaming
+    std::set<std::string> rhs_free_vars;
 
     FunDecl(const Var& vv, const Match& m): v(vv), match(m) {}
 };

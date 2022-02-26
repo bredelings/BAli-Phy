@@ -1331,18 +1331,26 @@ bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::SignatureDe
     return bound_names;
 }
 
+const set<string>& get_free_vars(const expression_ref& decl)
+{
+    if (decl.is_a<Hs::PatDecl>())
+        return decl.as_<Hs::PatDecl>().rhs_free_vars;
+    else if (decl.is_a<Hs::FunDecl>())
+        return decl.as_<Hs::FunDecl>().rhs_free_vars;
+    else
+        std::abort();
+};
+
 // So... factor out rename_grouped_decl( ), and then make a version that splits into components, and a version that does not?
 // Splitting the decls for classes and instances into  components really doesn't make sense...
 
 vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, const map<string, Hs::Type>& signatures, const bound_var_info& bound, set<string>& free_vars, bool top)
 {
-    vector<set<string>> referenced_names;
     vector<set<string>> bound_names;
     for(int i=0;i<decls.size();i++)
     {
         auto& decl = decls[i];
 
-        set<string> decl_free_vars;
         set<string> decl_binders;
 
         if (decl.is_a<Hs::PatDecl>())
@@ -1351,7 +1359,7 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
             decl_binders = find_vars_in_pattern(PD.lhs, top);
 
             rename_pattern(PD.lhs, top);
-            PD.rhs = rename(PD.rhs, bound, decl_free_vars);
+            PD.rhs = rename(PD.rhs, bound, PD.rhs_free_vars);
             decl = PD;
         }
         else if (decl.is_a<Hs::FunDecl>())
@@ -1380,7 +1388,7 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
                     add(binders, new_binders);
                 }
 
-                mrule.rhs = rename(mrule.rhs, bound, binders, decl_free_vars);
+                mrule.rhs = rename(mrule.rhs, bound, binders, FD.rhs_free_vars);
             }
 
             decl = FD;
@@ -1389,10 +1397,7 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
             std::abort();
 
         assert(not decl_binders.empty());
-        referenced_names.push_back(decl_free_vars);
         bound_names.push_back(decl_binders);
-
-        add(free_vars, decl_free_vars);
     }
 
     // Map the names to indices
@@ -1409,7 +1414,8 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
     for(int i=0;i<decls.size();i++)
     {
         vector<int> refs;
-        for(auto& name: referenced_names[i])
+        auto& decl_free_vars = get_free_vars(decls[i]);
+        for(auto& name: decl_free_vars)
         {
             auto it = index_for_name.find(name);
 
@@ -1419,6 +1425,8 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
             refs.push_back(it->second);
         }
         referenced_decls.push_back( std::move(refs) );
+
+        add(free_vars, decl_free_vars);
     }
 
     return referenced_decls;
