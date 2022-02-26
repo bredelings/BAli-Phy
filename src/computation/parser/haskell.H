@@ -305,6 +305,8 @@ struct BuiltinDecl: public Object
 struct Decls: public std::vector<expression_ref>
 {
 public:
+    std::optional<bool> recursive;
+
     std::string print() const;
 
     Decls() = default;

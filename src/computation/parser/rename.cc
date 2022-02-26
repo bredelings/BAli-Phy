@@ -1451,6 +1451,16 @@ void group_binds(Hs::Binds& binds, const vector< vector<int> >& referenced_decls
             // Collect the value decl
             bdecls.push_back(decl);
         }
+
+        // Check if the decls group is recursive
+        if (bdecls.size() >1)
+            bdecls.recursive = true;
+        else
+        {
+            int i = component[0];
+            bdecls.recursive = includes(referenced_decls[i], i);
+        }
+
         new_binds.push_back(bdecls);
     }
 
