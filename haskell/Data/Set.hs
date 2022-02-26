@@ -72,7 +72,7 @@ unions = List.foldl union empty
 difference (Set xs) (Set ys) = Set $ List.filter (`notElem` ys) xs
 
 infixl 9 \\
-s1 \\ s2 = s1 difference s2
+s1 \\ s2 = s1 `difference` s2
 
 intersection (Set xs) (Set ys) = Set $ List.filter (`elem` ys) xs
 
