@@ -1514,7 +1514,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
             auto [given_constraints, given_type] = instantiate(it->second);
             auto s = maybe_match(most_general_type, given_type, {});
             if (not s)
-                throw myexception()<<"Given type '"<<it->second<<"' does not match inferred type '"<<most_general_type<<"'";
+                throw myexception()<<"Given type '"<<it->second<<"' does not match inferred type '"<<apply_current_subst(most_general_type)<<"'";
 
             // FIXME - can we just increase the tc-level to exclude tvs in the environment?
             // auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
