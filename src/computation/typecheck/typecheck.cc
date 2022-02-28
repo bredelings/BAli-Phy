@@ -1448,7 +1448,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     auto no_sig_binder_env = binder_env;
     for(auto& [name,_]: binder_env)
         if (signatures.count(name))
-            no_sig_binder_env.erase(name);
+            no_sig_binder_env = no_sig_binder_env.erase(name);
     auto env2 = plus_prefer_right(env, no_sig_binder_env);
 
     // 2. Infer the types of each of the x[i]
