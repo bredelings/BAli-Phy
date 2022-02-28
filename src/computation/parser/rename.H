@@ -1,6 +1,7 @@
 #ifndef RENAME_H
 #define RENAME_H
 
+#include <map>
 #include <set>
 #include <string>
 #include "computation/expression/expression_ref.H"
@@ -29,5 +30,6 @@ typedef std::set<std::string> bound_var_info;
 bound_var_info find_vars_in_pattern2(const expression_ref& pat);
 const bound_var_info& get_rhs_free_vars(const expression_ref& decl);
 std::vector<Hs::Decls> split_decls(const Hs::Decls& decls, const std::vector< std::vector<int> >& referenced_decls);
+std::map<std::string,int> get_indices_for_names(const Hs::Decls& decls);
 
 #endif

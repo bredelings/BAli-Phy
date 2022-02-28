@@ -730,8 +730,6 @@ struct renamer_state
 //    var get_fresh_var() { return var(var_index++);}
 //    var get_fresh_var(const string& name) {return var(name,var_index++);}
 
-
-
     bound_var_info rename_patterns(vector<expression_ref>& pat, bool top = false);
     bound_var_info rename_pattern(expression_ref& pat, bool top = false);
 
@@ -739,8 +737,12 @@ struct renamer_state
     bound_var_info find_vars_in_pattern(const expression_ref& pat, bool top = false);
     // the pattern*2 versions are for AFTER rename, and don't check things.  They just report what they find.
     bound_var_info find_bound_vars_in_stmt(const expression_ref& stmt);
+
+    // these all assume decls have been translated to FunDecl or PatDecl
+    bound_var_info find_bound_vars_in_funpatdecl(const expression_ref& decl, bool top = false);
     bound_var_info find_bound_vars_in_decls(const Haskell::Decls& decls, bool top = false);
     bound_var_info find_bound_vars_in_decls(const Haskell::Binds& decls, bool top = false);
+
     bound_var_info find_bound_vars_in_decl(const Haskell::ValueDecl& decl, bool top = false);
     bound_var_info find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool top = false);
 
@@ -1254,20 +1256,23 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
+bound_var_info renamer_state::find_bound_vars_in_funpatdecl(const expression_ref& decl, bool top)
+{
+    if (auto d = decl.to<Haskell::PatDecl>())
+        return find_vars_in_pattern(d->lhs, top);
+    else if (auto d = decl.to<Haskell::FunDecl>())
+        return find_vars_in_pattern(d->v, top);
+    else
+        std::abort();
+}
+
 bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& decls, bool top)
 {
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
     bound_var_info bound_names;
     for(auto& decl: decls)
-    {
-	if (auto d = decl.to<Haskell::PatDecl>())
-            add(bound_names, find_vars_in_pattern(d->lhs, top));
-	else if (auto d = decl.to<Haskell::FunDecl>())
-            add(bound_names, find_vars_in_pattern(d->v, top));
-        else
-            std::abort();
-    }
+        add(bound_names, find_bound_vars_in_funpatdecl(decl, top));
 
     return bound_names;
 }
@@ -1336,22 +1341,53 @@ const set<string>& get_rhs_free_vars(const expression_ref& decl)
         std::abort();
 };
 
+map<string,int> get_indices_for_names(const Hs::Decls& decls)
+{
+    map<string,int> index_for_name;
+
+    for(int i=0;i<decls.size();i++)
+    {
+        auto& decl = decls[i];
+        if (decl.is_a<Hs::FunDecl>())
+        {
+            auto& FD = decl.as_<Hs::FunDecl>();
+            const string& name = unloc(FD.v.name);
+
+            if (index_for_name.count(name)) throw myexception()<<"name '"<<name<<"' is bound twice: "<<decls.print();
+
+            index_for_name.insert({name, i});
+        }
+        else if (decl.is_a<Hs::PatDecl>())
+        {
+            auto& PD = decl.as_<Hs::PatDecl>();
+            for(const string& name: find_vars_in_pattern2(PD.lhs))
+            {
+                if (index_for_name.count(name)) throw myexception()<<"name '"<<name<<"' is bound twice: "<<decls.print();
+
+                index_for_name.insert({name, i});
+            }
+        }
+        else
+            std::abort();
+    }
+
+    return index_for_name;
+}
+
 // So... factor out rename_grouped_decl( ), and then make a version that splits into components, and a version that does not?
 // Splitting the decls for classes and instances into  components really doesn't make sense...
 
 vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top)
 {
-    vector<set<string>> bound_names;
+    // NOTE: bound already includes the binder names.
+
     for(int i=0;i<decls.size();i++)
     {
         auto& decl = decls[i];
 
-        set<string> decl_binders;
-
         if (decl.is_a<Hs::PatDecl>())
         {
             auto PD = decl.as_<Hs::PatDecl>();
-            decl_binders = find_vars_in_pattern(PD.lhs, top); // If we do this after rename_pattern, can we always pass 'false'?
 
             rename_pattern(PD.lhs, top);
             PD.rhs = rename(PD.rhs, bound, PD.rhs_free_vars);
@@ -1364,8 +1400,6 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
             assert(not is_qualified_symbol(name));
             if (top)
                 name = m.name + "." + name;
-
-            decl_binders = {name};
 
             for(auto& mrule: FD.match.rules)
             {
@@ -1390,23 +1424,13 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
         }
         else
             std::abort();
-
-        assert(not decl_binders.empty());
-        bound_names.push_back(decl_binders);
     }
 
     // Map the names to indices
-    map<string,int> index_for_name;
-    for(int i=0;i<decls.size();i++)
-        for(auto& name: bound_names[i])
-        {
-            if (index_for_name.count(name)) throw myexception()<<"name '"<<name<<"' is bound twice: "<<decls.print();
+    map<string,int> index_for_name = get_indices_for_names(decls);
 
-            index_for_name.insert({name, i});
-        }
-
+    // Construct referenced decls
     vector<vector<int>> referenced_decls;
-    set<string> binders;
     for(int i=0;i<decls.size();i++)
     {
         vector<int> refs;
@@ -1423,11 +1447,9 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
         referenced_decls.push_back( std::move(refs) );
 
         add(free_vars, rhs_free_vars);
-        add(binders, bound_names[i]);
     }
 
-    // Remove the bound names from the free_vars set.
-    remove(free_vars, binders);
+    // NOTE: binder names are removed in the called - rename_decls( ).
 
     return referenced_decls;
 }
