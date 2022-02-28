@@ -611,6 +611,9 @@ struct typechecker_state
     tuple<Hs::Decls, global_value_env>
     infer_type_for_decls(const global_value_env& env, const map<string, Hs::Type>&, Hs::Decls E);
 
+    tuple<Hs::Decls, global_value_env>
+    infer_type_for_decls_groups(const global_value_env& env, const map<string, Hs::Type>&, Hs::Decls E);
+
     // Figures 13, 14, 15?
     tuple<Hs::Binds, global_value_env>
     infer_type_for_binds(const global_value_env& env, Hs::Binds binds);
@@ -1425,10 +1428,24 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
 {
     auto bind_groups = split_decls_by_signatures(decls, signatures);
 
-    for(auto& bind_group: bind_groups)
+    auto env2 = env;
+    Hs::Decls decls2;
+    for(auto& group: bind_groups)
     {
+        auto [group_decls, new_env] = infer_type_for_decls_groups(env2, signatures, group);
 
+        for(auto& decl: group_decls)
+            decls2.push_back(decl);
+
+        env2 = new_env;
     }
+    return {decls, env2};
+}
+
+tuple<Hs::Decls, global_value_env>
+typechecker_state::infer_type_for_decls_groups(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls)
+{
+    // How & when do we complain if there are predicates on signatures with the monomorphism restriction?
 
     push_lie();
 
