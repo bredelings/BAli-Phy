@@ -768,11 +768,6 @@ struct renamer_state
     renamer_state(const Module& m_):m(m_) {}
 };
 
-bound_var_info find_vars_in_pattern2(const expression_ref& pat);
-bound_var_info find_vars_in_patterns2(const vector<expression_ref>& pats);
-bound_var_info binders_for_renamed_decl(const expression_ref& decl);
-void group_binds(Hs::Binds& binds, const vector< vector<int> >& referenced_decls);
-
 Haskell::Type renamer_state::rename_type(const Haskell::Type& type)
 {
     if (auto tc = type.to<Haskell::TypeCon>())
@@ -1331,7 +1326,7 @@ bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::SignatureDe
     return bound_names;
 }
 
-const set<string>& get_free_vars(const expression_ref& decl)
+const set<string>& get_rhs_free_vars(const expression_ref& decl)
 {
     if (decl.is_a<Hs::PatDecl>())
         return decl.as_<Hs::PatDecl>().rhs_free_vars;
@@ -1356,7 +1351,7 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
         if (decl.is_a<Hs::PatDecl>())
         {
             auto PD = decl.as_<Hs::PatDecl>();
-            decl_binders = find_vars_in_pattern(PD.lhs, top);
+            decl_binders = find_vars_in_pattern(PD.lhs, top); // If we do this after rename_pattern, can we always pass 'false'?
 
             rename_pattern(PD.lhs, top);
             PD.rhs = rename(PD.rhs, bound, PD.rhs_free_vars);
@@ -1411,11 +1406,12 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
         }
 
     vector<vector<int>> referenced_decls;
+    set<string> binders;
     for(int i=0;i<decls.size();i++)
     {
         vector<int> refs;
-        auto& decl_free_vars = get_free_vars(decls[i]);
-        for(auto& name: decl_free_vars)
+        auto& rhs_free_vars = get_rhs_free_vars(decls[i]);
+        for(auto& name: rhs_free_vars)
         {
             auto it = index_for_name.find(name);
 
@@ -1426,21 +1422,23 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
         }
         referenced_decls.push_back( std::move(refs) );
 
-        add(free_vars, decl_free_vars);
+        add(free_vars, rhs_free_vars);
+        add(binders, bound_names[i]);
     }
+
+    // Remove the bound names from the free_vars set.
+    remove(free_vars, binders);
 
     return referenced_decls;
 }
 
-void group_binds(Hs::Binds& binds, const vector< vector<int> >& referenced_decls)
+vector<Hs::Decls> split_decls(const Hs::Decls& decls, const vector< vector<int> >& referenced_decls)
 {
-    auto& decls = binds[0];
-    assert(referenced_decls.size() == decls.size());
-
+    // 1. Compute strongly-connected components
     auto components = get_ordered_strong_components( make_graph(referenced_decls) );
-    
-    vector<Hs::Decls> new_binds;
 
+    // 2. Divide the decls into groups
+    vector<Hs::Decls> bind_groups;
     for(auto& component: components)
     {
         Hs::Decls bdecls;
@@ -1461,9 +1459,19 @@ void group_binds(Hs::Binds& binds, const vector< vector<int> >& referenced_decls
             bdecls.recursive = includes(referenced_decls[i], i);
         }
 
-        new_binds.push_back(bdecls);
+        bind_groups.push_back(bdecls);
     }
+    return bind_groups;
+}
 
+void group_binds(Hs::Binds& binds, const vector< vector<int> >& referenced_decls)
+{
+    auto& decls = binds[0];
+    assert(referenced_decls.size() == decls.size());
+
+    vector<Hs::Decls> new_binds = split_decls(decls, referenced_decls);
+
+    // Split the bindings, but keep the signatures
     (vector<Hs::Decls>&)binds = new_binds;
 }
 
