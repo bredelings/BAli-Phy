@@ -514,13 +514,13 @@ struct typechecker_state
     void unify(const Hs::Type& t1, const Hs::Type& t2)
     {
         if (not maybe_unify(t1,t2))
-            throw myexception()<<"Unification failed: "<<t1<<" !~ "<<t2;
+            throw myexception()<<"Unification failed: "<<apply_current_subst(t1)<<" !~ "<<apply_current_subst(t2);
     }
 
     void match(const Hs::Type& t1, const Hs::Type& t2)
     {
         if (not ::match(t1,t2))
-            throw myexception()<<"Matching failed: "<<t1<<" !~ "<<t2;
+            throw myexception()<<"Matching failed: "<<apply_current_subst(t1)<<" !~ "<<apply_current_subst(t2);
     }
 
     void match(const Hs::Type& t1, const Hs::Type& t2, const myexception& e)
