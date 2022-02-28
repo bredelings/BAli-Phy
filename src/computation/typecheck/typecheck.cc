@@ -1,5 +1,6 @@
 #include "typecheck.H"
 #include "kindcheck.H"
+#include "parser/rename.H"
 
 #include <set>
 
@@ -34,6 +35,11 @@ using std::shared_ptr;
 using std::tuple;
 
 /*
+  NOTE:
+  - Type signatures with constraints are forbidden for variables declared in PatBind's!!!
+    This might mean that we can simply instantiate the signatures inside the pattern -- and we 
+       can issue an error message if there are any constraints.
+
   Done: 
   * Check that constraints in classes only mention type vars.
   * Check that constraints in instance heads are of the form Class (Tycon a1 a2 a3..)
@@ -51,6 +57,9 @@ using std::tuple;
   * Partially handle polymorphic recursion.
 
   TODO:
+  - Split decls into pieces!
+  - Modify infer_lhs_type to use signatures to instantiate types for lhs variables with signatures.
+   + How do we avoid instantiating types with LIEs in situations where the monomorphism restriction applies?
   -2. Implement explicit types in terms of TypedExp -- match + entails to check predicates
     + GHC/Hs/Binds.hs
     + GHC/Tc/Gen/Binds.hs
@@ -1384,9 +1393,45 @@ typechecker_state::infer_rhs_type(const global_value_env& env, const expression_
         std::abort();
 }
 
+vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const map<string, Hs::Type>& signatures)
+{
+    // 1. Map names to indices
+    map<string,int> index_for_name = get_indices_for_names(decls);
+
+    // 2. Figure out which indices reference each other
+    vector<vector<int>> referenced_decls;
+    for(int i=0;i<decls.size();i++)
+    {
+        vector<int> refs;
+        for(auto& name: get_rhs_free_vars(decls[i]))
+        {
+            auto it = index_for_name.find(name);
+
+            // Skip if this name isn't one of the ids being defined.
+            if (it == index_for_name.end()) continue;
+
+            // Skip if this name has a signature
+            if (signatures.count(name)) continue;
+
+            refs.push_back(it->second);
+        }
+        referenced_decls.push_back( std::move(refs) );
+    }
+
+    // 3. Compute strongly-connected components and split
+    return split_decls(decls, referenced_decls);
+}
+
 tuple<Hs::Decls, global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls)
 {
+    auto bind_groups = split_decls_by_signatures(decls, signatures);
+
+    for(auto& bind_group: bind_groups)
+    {
+
+    }
+
     push_lie();
 
     // 1. Add each let-binder to the environment with a fresh type variable
