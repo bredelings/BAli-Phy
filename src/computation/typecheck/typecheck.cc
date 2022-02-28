@@ -34,6 +34,8 @@ using std::pair;
 using std::shared_ptr;
 using std::tuple;
 
+typedef map<string, Hs::Type> signature_env;
+
 /*
   NOTE:
   - Type signatures with constraints are forbidden for variables declared in PatBind's!!!
@@ -1423,6 +1425,21 @@ vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const map<st
     return split_decls(decls, referenced_decls);
 }
 
+bool single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signatures)
+{
+    if (decls.size() != 1) return false;
+
+    auto& decl = decls[0];
+
+    if (not decl.is_a<Hs::FunDecl>()) return false;
+
+    auto& FD = decl.as_<Hs::FunDecl>();
+
+    auto& name = unloc(FD.v.name);
+
+    return signatures.count(name) > 0;
+}
+
 tuple<Hs::Decls, global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls)
 {
@@ -1432,12 +1449,24 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     Hs::Decls decls2;
     for(auto& group: bind_groups)
     {
-        auto [group_decls, new_env] = infer_type_for_decls_groups(env2, signatures, group);
+        if (single_fundecl_with_sig(decls, signatures))
+        {
+            auto [group_decls, new_env] = infer_type_for_decls_groups(env2, signatures, group);
 
-        for(auto& decl: group_decls)
-            decls2.push_back(decl);
+            for(auto& decl: group_decls)
+                decls2.push_back(decl);
 
-        env2 = new_env;
+            env2 = new_env;
+        }
+        else
+        {
+            auto [group_decls, new_env] = infer_type_for_decls_groups(env2, signatures, group);
+
+            for(auto& decl: group_decls)
+                decls2.push_back(decl);
+
+            env2 = new_env;
+        }
     }
     return {decls, env2};
 }
