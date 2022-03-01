@@ -614,7 +614,7 @@ struct typechecker_state
     infer_type_for_decls(const global_value_env& env, const signature_env&, Hs::Decls E);
 
     tuple<Hs::Decls, global_value_env>
-    infer_type_for_single_fundecl_with_sig(const global_value_env& env, const signature_env& signatures, const Hs::FunDecl& FD);
+    infer_type_for_single_fundecl_with_sig(const global_value_env& env, const signature_env& signatures, Hs::FunDecl FD);
 
     tuple<Hs::Decls, global_value_env>
     infer_type_for_decls_groups(const global_value_env& env, const signature_env&, Hs::Decls E);
@@ -1477,9 +1477,13 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
 }
 
 tuple<Hs::Decls, global_value_env>
-typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env& env, const signature_env& signatures, const Hs::FunDecl& FD)
+typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env& env, const signature_env& signatures, Hs::FunDecl FD)
 {
     // How & when do we complain if there are predicates on signatures with the monomorphism restriction?
+
+    auto& name = unloc(FD.v.name);
+
+    auto sig = signatures.at(name);
 
     Hs::Decls decls;
     decls.push_back(FD);
