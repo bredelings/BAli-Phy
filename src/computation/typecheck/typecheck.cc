@@ -613,7 +613,7 @@ struct typechecker_state
     tuple<Hs::Decls, global_value_env>
     infer_type_for_decls(const global_value_env& env, const signature_env&, Hs::Decls E);
 
-    tuple<Hs::Decls, global_value_env>
+    Hs::Decls
     infer_type_for_single_fundecl_with_sig(const global_value_env& env, const signature_env& signatures, Hs::FunDecl FD);
 
     tuple<Hs::Decls, global_value_env>
@@ -1446,6 +1446,8 @@ bool single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signat
 tuple<Hs::Decls, global_value_env>
 typechecker_state::infer_type_for_decls(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls)
 {
+    // The signatures for the binders should already be in the environment.
+
     auto bind_groups = split_decls_by_signatures(decls, signatures);
 
     auto env2 = env;
@@ -1456,12 +1458,12 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
         {
             auto& FD = decls[0].as_<Hs::FunDecl>();
 
-            auto [group_decls, new_env] = infer_type_for_single_fundecl_with_sig(env2, signatures, FD);
+            auto group_decls = infer_type_for_single_fundecl_with_sig(env2, signatures, FD);
 
             for(auto& decl: group_decls)
                 decls2.push_back(decl);
 
-            env2 = new_env;
+            // The type for the name should already be in the environment.
         }
         else
         {
@@ -1476,7 +1478,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     return {decls, env2};
 }
 
-tuple<Hs::Decls, global_value_env>
+Hs::Decls
 typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env& env, const signature_env& signatures, Hs::FunDecl FD)
 {
     // How & when do we complain if there are predicates on signatures with the monomorphism restriction?
@@ -1494,15 +1496,15 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
     value_env binder_env;
 
     vector<Hs::Type> lhs_types;
+    lhs_types.push_back(sig);
+
     for(int i=0;i<decls.size();i++)
     {
         auto [decl, type, lve] = infer_lhs_type( decls[i] );
         decls[i] = decl;
 
         binder_env += lve;
-        lhs_types.push_back(type);
     }
-
 
     auto env2 = env;
 
@@ -1654,7 +1656,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
 
     pop_and_add_lie();
 
-    return {decls2, binder_env};
+    return decls2;
 }
 
 tuple<Hs::Decls, global_value_env>
