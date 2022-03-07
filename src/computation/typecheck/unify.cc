@@ -163,6 +163,29 @@ std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::Type
 // I think that you have a sequence like {a, b ~ a} then you can't later define a,
 // since it is already "declared".
 
+const Hs::TypeVar* is_meta_type_var_on_level(const Hs::TypeVar& tv, int level)
+{
+    if (not tv.level) return nullptr;
+
+    int tv_level = *(tv.level);
+    if (tv_level >= level)
+    {
+        assert(tv_level == level);
+        return &tv;
+    }
+    else
+        return nullptr;
+}
+
+const Hs::TypeVar* is_meta_type_var_on_level(const Hs::Type& type, int level)
+{
+    auto tv = type.to<Hs::TypeVar>();
+
+    if (not tv) return nullptr;
+
+    return is_meta_type_var_on_level(*tv, level);
+}
+
 
 // This finds
 // * a non-variable type that the type variable is equivalent to, if there is one, and
