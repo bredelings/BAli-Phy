@@ -165,6 +165,24 @@ std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::Type
 // I think that you have a sequence like {a, b ~ a} then you can't later define a,
 // since it is already "declared".
 
+const Hs::TypeVar* is_skolem_type_var(const Hs::TypeVar& tv)
+{
+    if (tv.level)
+        return nullptr;
+    else
+        return &tv;
+}
+
+const Hs::TypeVar* is_skolem_type_var(const Hs::Type& type)
+{
+    auto tv = type.to<Hs::TypeVar>();
+
+    if (not tv) return nullptr;
+
+    return is_skolem_type_var(*tv);
+}
+
+
 const Hs::TypeVar* is_meta_type_var_on_level(const Hs::TypeVar& tv, int level)
 {
     if (not tv.level) return nullptr;
@@ -383,6 +401,14 @@ optional<substitution_t> maybe_unify(int level, const Hs::Type& t1, const Hs::Ty
         substitution_t s;
         return try_insert(s, *tv2, t1);
     }
+    else if (auto tv1 = is_skolem_type_var(t1))
+    {
+        substitution_t empty;
+        if (auto tv2 = is_skolem_type_var(t2); tv2 and *tv1 == *tv2)
+            return empty;
+        else
+            return {};
+    }
     else if (t1.is_a<Haskell::TypeApp>() and t2.is_a<Haskell::TypeApp>())
     {
         auto& app1 = t1.as_<Haskell::TypeApp>();
@@ -395,8 +421,8 @@ optional<substitution_t> maybe_unify(int level, const Hs::Type& t1, const Hs::Ty
              t2.is_a<Haskell::TypeCon>() and
              t1.as_<Haskell::TypeCon>() == t2.as_<Haskell::TypeCon>())
     {
-        substitution_t s;
-        return s;
+        substitution_t empty;
+        return empty;
     }
     else if (t1.is_a<Hs::TupleType>() and t2.is_a<Hs::TupleType>())
     {

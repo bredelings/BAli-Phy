@@ -131,6 +131,20 @@ typedef map<string, Hs::Type> signature_env;
      is visible on the RHS?  Maybe define the tmp-tuple and the exported var in the same let-rec 
      block?
 
+  7. If we increment the level, then we can create vars that have a deeper level.
+     It seems like those should not stay around after we pop the level again.
+     So how do we avoid this problem?
+
+     It seems like we should use the same technique that we use in the general case to
+     figure out which constraints to deal with at this level.
+
+  8. If we are checking the RHS of a FunDecl with a signature, it seems that we could
+     create constraints that refer to type variables from higher scopes, or perhaps
+     variables from this scope that do not occur in the type.
+
+     When we check to see that the "wanted" constraints are implied by the "given"
+     constraints, we shouldn't need to check these constraints should we?
+
   Cleanups:
   1. Implement kinds as Hs::Type
 
@@ -631,7 +645,7 @@ struct typechecker_state
     tuple<Hs::Decls, global_value_env>
     infer_type_for_decls(const global_value_env& env, const signature_env&, Hs::Decls E);
 
-    Hs::Decls
+    expression_ref
     infer_type_for_single_fundecl_with_sig(const global_value_env& env, const signature_env& signatures, Hs::FunDecl FD);
 
     tuple<Hs::Decls, global_value_env>
@@ -1475,14 +1489,13 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     Hs::Decls decls2;
     for(auto& group: bind_groups)
     {
-        if (single_fundecl_with_sig(decls, signatures))
+        if (single_fundecl_with_sig(group, signatures))
         {
-            auto& FD = decls[0].as_<Hs::FunDecl>();
+            auto& FD = group[0].as_<Hs::FunDecl>();
 
-            auto group_decls = infer_type_for_single_fundecl_with_sig(env2, signatures, FD);
+            auto decl = infer_type_for_single_fundecl_with_sig(env2, signatures, FD);
 
-            for(auto& decl: group_decls)
-                decls2.push_back(decl);
+            decls2.push_back(decl);
 
             // The type for the name should already be in the environment.
         }
@@ -1499,194 +1512,47 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
     return {decls, env2};
 }
 
-Hs::Decls
+expression_ref
 typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env& env, const signature_env& signatures, Hs::FunDecl FD)
 {
-    // 0. Add a Level for typevars.
-
-    // OK, so what we want to do is:
-    // 1. instantiate the type -> (tvs, givens, rho-type)
-    // 2. typecheck the rhs -> (rhs_type, wanted, body)
-    // 3. match(rho_type <= rhs_type)
-    // 4. check if the given => wanted ~ EvBinds
-    // 5. return DictionaryLambda with tvs, givens, body
-
-    // How & when do we complain if there are predicates on signatures with the monomorphism restriction?
-
     auto& name = unloc(FD.v.name);
 
     auto sig = signatures.at(name);
 
-    Hs::Decls decls;
-    decls.push_back(FD);
-    
+    // OK, so what we want to do is:
+
+    // 1. instantiate the type -> (tvs, givens, rho-type)
+    auto [tvs, given_constraints, rho_type] = instantiate(sig, false);
+    auto lie_given = constraints_to_lie(given_constraints);
+
+    // 2. typecheck the rhs -> (rhs_type, wanted, body)
+    level++;
     push_lie();
+    auto [decl2, rhs_type] = infer_rhs_type(env, FD);
 
-    // 1. Add each let-binder to the environment with a fresh type variable
-    value_env binder_env;
+    // 3. match(rho_type <= rhs_type)
+    unify(rhs_type, rho_type);
 
-    vector<Hs::Type> lhs_types;
-    lhs_types.push_back(sig);
+    // 4. check if the given => wanted ~ EvBinds
+    auto lie_wanted = current_lie();
+    pop_lie();
+    level--;
 
-    for(int i=0;i<decls.size();i++)
-    {
-        auto [decl, type, lve] = infer_lhs_type( decls[i] );
-        decls[i] = decl;
+    lie_wanted = apply_current_subst( lie_wanted );
 
-        binder_env += lve;
-    }
+    // FIXME: shouldn't some of the wanted's float out here?
+    auto evbinds = entails(lie_given, lie_wanted);
 
-    auto env2 = env;
+    if (not evbinds)
+        throw myexception()<<"Can't derive constraints '"<<print(lie_wanted)<<"' from specified constraints '"<<print(lie_given)<<"'";
 
-    // 2. Infer the types of each of the x[i]
-    for(int i=0;i<decls.size();i++)
-    {
-        auto [decl, rhs_type] = infer_rhs_type(env2, decls[i]);
-        decls[i] = decl;
+    // 5. return DictionaryLambda with tvs, givens, body
+    auto dict_vars = vars_from_lie( lie_given );
 
-        unify(lhs_types[i], rhs_type);
-    }
+    Hs::Decls decls;
+    decls.push_back(decl2);
 
-    // 3. Handle explicit type signatures
-    for(auto& [name, most_general_type]: binder_env)
-    {
-        if (auto it = signatures.find(name); it != signatures.end())
-        {
-            auto [_, given_constraints, given_type] = instantiate(it->second);
-            auto s = maybe_match(most_general_type, given_type, {});
-            if (not s)
-                throw myexception()<<"Given type '"<<it->second<<"' does not match inferred type '"<<apply_current_subst(most_general_type)<<"'";
-
-            // FIXME - can we just increase the tc-level to exclude tvs in the environment?
-            // auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
-
-            current_lie() = apply_current_subst( current_lie() );
-
-            auto lie_given = constraints_to_lie(given_constraints);
-            // 7. Express lie2 in terms of lie1
-            auto binds = entails(lie_given, current_lie());
-            if (not binds)
-                throw myexception()<<"Can't derive constraints '"<<print(current_lie())<<"' from specified constraints '"<<print(lie_given)<<"'";
-
-            // We have to know how to call the LHS 
-        }
-    }
-
-    // We need to substitute before looking for free type variables!
-    // We also need to substitute before we quantify below.
-    binder_env = apply_current_subst(binder_env);
-
-    auto fixed_tvs = free_type_variables(env);
-    set<Hs::TypeVar> tvs_in_any_type;  // type variables in ANY of the definitions
-    set<Hs::TypeVar> tvs_in_all_types;  // type variables in ALL of the definitions
-    {
-        // FIXME - should we be looping over binder vars, or over definitions?
-        optional<set<Hs::TypeVar>> tvs_in_all_types_;
-        for(auto& [_, type]: binder_env)
-        {
-            auto tvs = free_type_variables(type);
-            add(tvs_in_any_type, tvs);
-            if (tvs_in_all_types_)
-                tvs_in_all_types_ = intersection(*tvs_in_all_types_, tvs);
-            else
-                tvs_in_all_types_ = tvs;
-        }
-        assert(tvs_in_all_types_);
-        tvs_in_all_types = *tvs_in_all_types_;
-    }
-
-    // OK, we've got to do defaulting before we consider what variables to quantify over.
-
-    vector< Hs::Var > dict_vars;
-
-    // A. First, REDUCE the lie by
-    //    (i)  converting to Hnf
-    //     -- when do we do this?  Always?
-    //    (ii) representing some constraints in terms of others.
-    // This also substitutes into the current LIE, which we need to do 
-    //    before finding free type vars in the LIE below.
-    Hs::Binds binds = reduce_current_lie();
-
-    // B. Second, extract the "retained" predicates can be added without causing abiguity.
-    auto [lie_deferred, lie_retained] = classify_constraints( current_lie(), fixed_tvs );
-
-    /* NOTE: Constraints can reference variables that are in
-     *        (i) ALL types in a recursive group
-     *       (ii) SOME-BUT-NOT-ALL types
-     *      (iii) NO types.
-     *
-     * For unrestricted bindings, classes (ii) and (iii) need defaults.
-     * For restricted bindings, only class (iii) (I think) needs defaults.
-     */
-
-
-    // FIXME: return {dvar = expression} as a mapping, instead of a sequence of binds?
-    // If we want to substitute an expression for an argument in the wrapper,
-    
-    // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
-    //   after generating definitions of their 
-    auto [s1, binds1, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
-    binds = binds1 + binds;
-
-    set<Hs::TypeVar> qtvs = tvs_in_any_type - fixed_tvs;
-
-    if (is_restricted(signatures, decls))
-    {
-        // 1. Remove defaulted constraints from LIE?
-        current_lie() = lie_deferred + lie_not_completely_ambiguous;
-
-        // 2. Quantify only over variables that are "unconstrained" (not part of the LIE)
-        // -- after defaulting!
-
-        // NOTE: in theory, we should be able to subtract just ftvs(lie_retained_not_defaulted),
-        //       since lie_deferred should contain only fixed type variables that have already been
-        //       removed from qtvs.
-        qtvs = qtvs - free_type_variables(current_lie());
-
-        // 3. We have already substituted for types above.
-        binder_env = quantify( qtvs, binder_env );
-    }
-    else
-    {
-        // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group,
-        // but we do need the defaults to define individual symbols.
-
-        // 1. Quantify over variables in ANY type that are not fixed -- doesn't depend on defaulting.
-        // Never quantify over variables that are only in a LIE -- those must be defaulted.
-
-        // 2. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
-        current_lie() = lie_deferred;
-
-        dict_vars = vars_from_lie( lie_not_completely_ambiguous );
-
-        global_value_env binder_env2;
-        for(auto& [name,type]: binder_env)
-        {
-            auto tvs_in_this_type = free_type_variables(type);
-
-            // Default any constraints that do not occur in THIS type.
-            auto [s2, binds2, lie_for_this_type] = default_preds( fixed_tvs, tvs_in_this_type, lie_not_completely_ambiguous );
-
-            Hs::Type constrained_type = add_constraints( constraints_from_lie(lie_for_this_type), type );
-
-            // Only quantify over type variables that occur in THIS type.
-            Hs::Type qualified_type = quantify( tvs_in_this_type, constrained_type );
-
-            binder_env2 = binder_env2.insert( {name, qualified_type} );
-        }
-        binder_env = binder_env2;
-    }
-
-    Hs::Decls decls2 = decls;
-    if (qtvs.size() or binds.size() or dict_vars.size())
-    {
-        decls2 = {};
-        decls2.push_back( Hs::DictionaryLambda( qtvs | ranges::to<vector>, dict_vars, binds, decls ) );
-    }
-
-    pop_and_add_lie();
-
-    return decls2;
+    return Hs::DictionaryLambda( tvs, vars_from_lie(lie_given), *evbinds, decls );
 }
 
 tuple<Hs::Decls, global_value_env>
