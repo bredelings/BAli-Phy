@@ -149,6 +149,8 @@ std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::Type
     if (auto tv2 = safe_type.to<Hs::TypeVar>(); tv2 and *tv2 == tv)
         return s;
 
+    // FIXME: Check that if we insert x -> y, the y->level >= x->level
+
     // 4. If safe_type contains tv, then we have a substitution loop for tv.
     //    Therefore return failure.  (This rules out infinite types.)
     if (occurs_check(tv, safe_type)) return {};
@@ -186,13 +188,40 @@ const Hs::TypeVar* is_meta_type_var_on_level(const Hs::Type& type, int level)
     return is_meta_type_var_on_level(*tv, level);
 }
 
+// This finds
+// * a non-<level>-variable type that the type variable is equivalent to, if there is one, and
+// * the final variable in the chain of variables -- that points to either that term, or nothing.
+// We can use the final variable to determine if two variables are in the same equivalence set.
+// QUESTION: Can we use compare the variables by POINTER equality?  Not sure...
+std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain(int level, const substitution_t& s, const Hs::TypeVar* tv)
+{
+    assert(is_meta_type_var_on_level(*tv, level));
+
+    const Hs::Type* type;
+    // While there is a substitution for tv...
+    while ( (type = s.find(*tv)) )
+    {
+        // If we have tv -> tv2, then continue
+        if (auto tv_next = is_meta_type_var_on_level(type, level))
+        {
+            tv = tv_next;
+        }
+        // Otherwise, return the type variable and the (non-type-variable) thing it points to.
+        else
+            break;
+    }
+
+    assert(tv);
+    assert(not type or not is_meta_type_var_on_level(type, level));
+    return {tv, type};
+}
 
 // This finds
 // * a non-variable type that the type variable is equivalent to, if there is one, and
 // * the final variable in the chain of variables -- that points to either that term, or nothing.
 // We can use the final variable to determine if two variables are in the same equivalence set.
 // QUESTION: Can we use compare the variables by POINTER equality?  Not sure...
-std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain(const substitution_t& s, const Hs::TypeVar* tv)
+std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain_match(const substitution_t& s, const Hs::TypeVar* tv)
 {
     const Hs::Type* type;
     // While there is a substitution for tv...
@@ -211,27 +240,34 @@ std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain(const substitutio
     return {tv, type};
 }
 
-std::optional<substitution_t> combine(const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
+std::optional<substitution_t> combine(int level, const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
 {
     if (not s1) return {};
     if (not s2) return {};
-    return combine(*s1, *s2);
+    return combine(level, *s1, *s2);
 }
 
-std::optional<substitution_t> combine(const std::optional<substitution_t>& s1, const substitution_t& s2)
+std::optional<substitution_t> combine(int level, const std::optional<substitution_t>& s1, const substitution_t& s2)
 {
     if (not s1) return {};
-    return combine(*s1, s2);
+    return combine(level, *s1, s2);
 }
 
-std::optional<substitution_t> combine(const substitution_t& s1, const optional<substitution_t>& s2)
+std::optional<substitution_t> combine(int level, const substitution_t& s1, const optional<substitution_t>& s2)
 {
     if (not s2) return {};
-    return combine(s1, *s2);
+    return combine(level, s1, *s2);
 }
+
+// What does it mean to combine substitutions when their are multiple levels?
+// If we have x_3 -> y_3 -> z_2, then this means that {x_3 = y_3} -> z_2
+// Also, we can't add new definitions except on the given level.  So, we can only call unify(level, ...)
+// However, we can reverse equalities like x_3 -> y_3 to y_3 -> x_3 on other levels.
+// And we can add transitive equalities on other levels: if x_3 -> y3 and x_3 -> z3, then we can add y3 -> z3.
+
 
 // The order of s1 and s2 should not matter.
-std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
+std::optional<substitution_t> combine(int level, substitution_t s1, substitution_t s2)
 {
     // While we store substitutions as [(TypeVar,Type)], the conceptual model is
     //   really [([TypeVar], Maybe Type)].
@@ -244,53 +280,48 @@ std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
     // If either substitution is empty, we won't waste any time iterating through the loop below.
     if (s2.size() > s1.size()) std::swap(s1,s2);
 
-    auto s3 = s1;
-    for(auto& [tv,e]: s2)
+    // For each substitution x ~> e in s2:
+    for(auto& [x,e]: s2)
     {
-        optional<substitution_t> s4;
+        optional<substitution_t> s3;
 
-        // 1. Find the last type variable in the var chain from tv, and maybe the term term1 that it points.
-        auto [tv1, term1] = follow_var_chain(s3, &tv);
+        assert(x.level);
+        int x_level = *x.level;
+        assert(x_level >= level);
 
-        // 2. If tv is equivalent to other type variables, but not to a term, then
-        //    we can add just a definition for tv1.
-        if (not term1)
+        // 1. Find the last type variable in the var chain from tv, and maybe the term x_value that it points.
+        auto [x_exemplar, x_value] = follow_var_chain(x_level, s1, &x);
+
+        // 2. If (x isn't in s1) OR (x has no value in s1), then we can just add a definition for x_exemplar.
+        if (not x_value)
+            s3 = try_insert(s1, *x_exemplar, e);
+
+        // 3. If e is a type var on the same level as tv, then..
+        else if (auto y = is_meta_type_var_on_level(e, x_level))
         {
-            s4 = try_insert(s3, *tv1, e);
-        }
-        // 3. If e is a type var, then..
-        else if (auto maybe_tv2 = e.to<Hs::TypeVar>())
-        {
-            // 3a. Find the last type variable in the var chain from e, and maybe the term term2 that it points to.
-            auto [tv2, term2] = follow_var_chain(s3, maybe_tv2);
+            // 3a. Find the last type variable in the var chain from e, and maybe the term y_value that it points to.
+            auto [y_exemplar, y_value] = follow_var_chain(x_level, s1, y);
 
-            // 3b. If tv and e both point to the same var (*tv1 == *tv2), then tv ~ e is already satisfied.
-            if (*tv1 == *tv2)
-                s4 = substitution_t();
-            // 3c. If tv2 and tv2 are NOT equivalent, but tv2 has no definition, then
-            //     we can add a definition for tv2.
-            else if (not term2)
-            {
-                s4 = try_insert(s3, *tv2, *tv1);
-            }
-            // 2c. Otherwise, tv1 and tv2 are both equal to different terms that must be equal.
+            // 3b. If x and y both point to the same exemplar, then x ~ y is already satisfied.
+            if (*x_exemplar == *y_exemplar)
+                s3 = substitution_t();
+            // 3c. If y has no value in s1, then we can add y_exemplar ~> x_exemplar
+            else if (not y_value)
+                s3 = try_insert(s1, *y_exemplar, *x_exemplar);
+            // 3d. Otherwise, x_exemplar and tv2 are both equal to different terms that must be equal.
             else
-            {
-                assert(not term1->is_a<Hs::TypeVar>());
-                assert(not term2->is_a<Hs::TypeVar>());
-                s4 = combine(s3, maybe_unify(*term1, *term2));
-            }
+                s3 = combine(level, s1, maybe_unify(level, *x_value, *y_value));
         }
         else
-            s4 = combine(s3, maybe_unify(*term1, e));
+            s3 = combine(level, s1, maybe_unify(level, *x_value, e));
 
-        if (not s4)
+        if (not s3)
             return {};
         else
-            s3 = *s4;
+            s1 = *s3;
     }
-            
-    return s3;
+
+    return s1;
 }
 
 std::optional<substitution_t> combine_match(const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
@@ -323,7 +354,7 @@ std::optional<substitution_t> combine_match(substitution_t s1, substitution_t s2
         optional<substitution_t> s4;
 
         // 1. Find the last type variable in the var chain from tv, and maybe the term term1 that it points.
-        auto [tv1, term1] = follow_var_chain(s3, &tv);
+        auto [tv1, term1] = follow_var_chain_match(s3, &tv);
 
         // 2. If tv is equivalent to other type variables, but not to a term, then
         //    we can add just a definition for tv1.
@@ -340,14 +371,14 @@ std::optional<substitution_t> combine_match(substitution_t s1, substitution_t s2
 }
 
 // Is there a better way to implement this?
-optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
+optional<substitution_t> maybe_unify(int level, const Hs::Type& t1, const Hs::Type& t2)
 {
-    if (auto tv1 = t1.to<Haskell::TypeVar>())
+    if (auto tv1 = is_meta_type_var_on_level(t1, level))
     {
         substitution_t s;
         return try_insert(s, *tv1, t2);
     }
-    else if (auto tv2 = t2.to<Haskell::TypeVar>())
+    else if (auto tv2 = is_meta_type_var_on_level(t2, level))
     {
         substitution_t s;
         return try_insert(s, *tv2, t1);
@@ -357,8 +388,8 @@ optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
         auto& app1 = t1.as_<Haskell::TypeApp>();
         auto& app2 = t2.as_<Haskell::TypeApp>();
 
-        return combine( maybe_unify(app1.head, app2.head),
-                        maybe_unify(app1.arg , app2.arg ) );
+        return combine( level, maybe_unify(level, app1.head, app2.head),
+                               maybe_unify(level, app1.arg , app2.arg ) );
     }
     else if (t1.is_a<Haskell::TypeCon>() and
              t2.is_a<Haskell::TypeCon>() and
@@ -377,7 +408,7 @@ optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
         optional<substitution_t> s = substitution_t();
         for(int i=0;i<tup1.element_types.size();i++)
         {
-            s = combine(s, maybe_unify(tup1.element_types[i], tup2.element_types[i]) );
+            s = combine(level, s, maybe_unify(level, tup1.element_types[i], tup2.element_types[i]) );
             if (not s) return {};
         }
         return s;
@@ -386,7 +417,7 @@ optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
     {
         auto& L1 = t1.as_<Hs::ListType>();
         auto& L2 = t2.as_<Hs::ListType>();
-        return maybe_unify(L1.element_type, L2.element_type);
+        return maybe_unify(level, L1.element_type, L2.element_type);
     }
     else if (t1.is_a<Hs::ConstrainedType>() or t2.is_a<Hs::ConstrainedType>())
     {
@@ -400,9 +431,9 @@ optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
         return {};
 }
 
-substitution_t unify(const Hs::Type& t1, const Hs::Type& t2)
+substitution_t unify(int level, const Hs::Type& t1, const Hs::Type& t2)
 {
-    auto s = maybe_unify(t1,t2);
+    auto s = maybe_unify(level, t1, t2);
     if (not s)
         throw myexception()<<"Unification failed: "<<t1<<" !~ "<<t2;
     return *s;

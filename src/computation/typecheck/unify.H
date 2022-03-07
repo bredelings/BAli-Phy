@@ -33,6 +33,8 @@ namespace std
     };
 }
 
+const Hs::TypeVar* is_meta_type_var(const Hs::Type& type, int level);
+
 Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t);
 Hs::Context apply_subst(const substitution_t& s, Hs::Context C);
 Hs::Constructor apply_subst(const substitution_t& s, Hs::Constructor con);
@@ -41,12 +43,12 @@ Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl
 std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::TypeVar& tv, Hs::Type type);
 bool occurs_check(const Haskell::TypeVar& tv, const Hs::Type& t);
 
-std::optional<substitution_t> combine(substitution_t s1, substitution_t s2);
+std::optional<substitution_t> combine(int, substitution_t s1, substitution_t s2);
 std::optional<substitution_t> combine_match(substitution_t s1, substitution_t s2);
 substitution_t compose(substitution_t s2, substitution_t s1);
 
-std::optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2);
-substitution_t unify(const Hs::Type& t1, const Hs::Type& t2);
+std::optional<substitution_t> maybe_unify(int level, const Hs::Type& t1, const Hs::Type& t2);
+substitution_t unify(int level, const Hs::Type& t1, const Hs::Type& t2);
 
 std::optional<substitution_t> match(const Hs::Type& t1, const Hs::Type& t2);
 bool same_type(const Hs::Type& t1, const Hs::Type& t2);

@@ -324,6 +324,8 @@ struct typechecker_state
 
     vector<local_instance_env> lie_stack;
 
+    int level = 0;
+
     local_instance_env& current_lie() {return lie_stack.back();}
 
     void add_dvar(const string& name, const Hs::Type& constraint)
@@ -437,25 +439,25 @@ struct typechecker_state
         return Hs::TypeApp( Fractional, arg);
     }
 
-    tuple<Hs::Var, Hs::Type> fresh_enum_type()
+    tuple<Hs::Var, Hs::Type> fresh_enum_type(bool meta = true)
     {
-        Hs::Type a = fresh_type_var();
+        Hs::Type a = fresh_type_var(meta);
         Hs::Type enum_a = enum_class(a);
         auto dvar = add_dvar(enum_a);
         return {dvar, a};
     }
 
-    tuple<Hs::Var, Hs::Type> fresh_num_type()
+    tuple<Hs::Var, Hs::Type> fresh_num_type(bool meta = true)
     {
-        Hs::Type a = fresh_type_var();
+        Hs::Type a = fresh_type_var(meta);
         Hs::Type num_a = num_class(a);
         auto dvar = add_dvar(num_a);
         return {dvar, a};
     }
 
-    tuple<Hs::Var, Hs::Type> fresh_fractional_type()
+    tuple<Hs::Var, Hs::Type> fresh_fractional_type(bool meta = true)
     {
-        Hs::Type a = fresh_type_var();
+        Hs::Type a = fresh_type_var(meta);
         Hs::Type fractional_a = fractional_class(a);
         auto dvar = add_dvar(fractional_a);
         return {dvar, a};
@@ -469,7 +471,7 @@ struct typechecker_state
 
     bool add_substitution(const substitution_t& s)
     {
-        if (auto s2 = combine(type_var_to_type, s))
+        if (auto s2 = combine(level, type_var_to_type, s))
         {
             type_var_to_type = *s2;
             return true;
@@ -488,7 +490,7 @@ struct typechecker_state
 
     bool maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
     {
-        if (auto s = ::maybe_unify(t1,t2))
+        if (auto s = ::maybe_unify(level, t1, t2))
             return add_substitution(*s);
         else
             return false;
@@ -543,10 +545,26 @@ struct typechecker_state
         return x;
     }
 
-    Hs::TypeVar fresh_type_var() {
+    // "Rigid" type vars come from forall-quantified variables.
+    // "Wobbly" type vars come from existentially-quantified variables (I think).  We don't have any.
+    // "Meta" type vars are unification type vars.
+    Hs::TypeVar fresh_rigid_type_var() {
         Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
         next_tvar_index++;
         return tv;
+    }
+
+    Hs::TypeVar fresh_meta_type_var() {
+        auto tv = fresh_rigid_type_var();
+        tv.level = level;
+        return tv;
+    }
+
+    Hs::TypeVar fresh_type_var(bool meta) {
+        if (meta)
+            return fresh_meta_type_var();
+        else
+            return fresh_rigid_type_var();
     }
 
     Hs::TypeVar named_type_var(const string& name)
@@ -566,7 +584,7 @@ struct typechecker_state
 
     Hs::Binds default_subst();
 
-    pair<vector<Hs::Type>,Hs::Type> instantiate(const Hs::Type& t);
+    std::tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> instantiate(const Hs::Type& t, bool meta=true);
 
     // Figure 22.
     tuple<vector<Hs::Qual>, local_value_env>
@@ -800,12 +818,12 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
 
     if (con_name == ":")
     {
-        Hs::Type a = fresh_type_var();
+        Hs::Type a = fresh_meta_type_var();
         return {Hs::ListType(a),{a,Hs::ListType(a)}};
     }
     else if (con_name == "[]")
     {
-        Hs::Type a = fresh_type_var();
+        Hs::Type a = fresh_meta_type_var();
         return {Hs::ListType(a),{}};
     }
     else if (is_tuple_name(con_name))
@@ -813,14 +831,14 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
         int n = tuple_arity(con_name);
         vector<Hs::Type> types;
         for(int i=0;i<n;i++)
-            types.push_back(fresh_type_var());
+            types.push_back(fresh_meta_type_var());
         return {Hs::TupleType(types),types};
     }
 
     // 1. Find the data type
     if (not con_info.count(con_name))
         throw myexception()<<"Unrecognized constructor: "<<con;
-    auto [constraints, con_type] = instantiate(con_info.at(con_name));
+    auto [_, constraints, con_type] = instantiate(con_info.at(con_name));
     vector<Hs::Type> field_types;
 
     while(auto f = is_function_type(con_type))
@@ -870,18 +888,21 @@ Hs::Type generalize(const global_value_env& env, const Hs::Type& monotype)
     return Hs::ForallType(ftv1 | ranges::to<vector>, monotype);
 }
 
-pair<vector<Hs::Type>, Hs::Type> typechecker_state::instantiate(const Hs::Type& t)
+tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instantiate(const Hs::Type& t, bool meta)
 {
     // 1. Handle foralls
+    vector<Hs::TypeVar> tvs;
     substitution_t s;
     auto type = t;
     while(auto fa = type.to<Hs::ForallType>())
     {
         for(auto& tv: fa->type_var_binders)
         {
-            auto new_tv = fresh_type_var();
+            auto new_tv = fresh_type_var(meta);
             new_tv.kind = tv.kind;
             s = s.insert({tv,new_tv});
+
+            tvs.push_back(new_tv);
         }
         type = fa->type;
     }
@@ -894,7 +915,7 @@ pair<vector<Hs::Type>, Hs::Type> typechecker_state::instantiate(const Hs::Type& 
         constraints = ct->context.constraints;
         type = ct->type;
     }
-    return {constraints,type};
+    return {tvs, constraints,type};
 }
 
 vector<Hs::Type> constraints_from_lie(const local_instance_env& lie)
@@ -978,7 +999,7 @@ optional<pair<Hs::Var,vector<Hs::Type>>> typechecker_state::lookup_instance(cons
 {
     for(auto& [name, type]: gie)
     {
-        auto [instance_constraints, instance_head] = instantiate(type);
+        auto [_, instance_constraints, instance_head] = instantiate(type);
 
         // Skip if this is not an instance.
         if (constraint_is_hnf(instance_head)) continue;
@@ -1074,7 +1095,7 @@ vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const H
     for(auto& [name, type]: gie)
     {
         // Klass a => Superklass a
-        auto [class_constraints, superclass_constraint] = instantiate(type);
+        auto [_, class_constraints, superclass_constraint] = instantiate(type, false);
 
         // Skip if this is not a method of extracting superclass dictionaries
         if (not constraint_is_hnf(superclass_constraint)) continue;
@@ -1284,7 +1305,7 @@ typechecker_state::default_preds( const set<Hs::TypeVar>& fixed_tvs,
         }
         auto& [s1, binds1] = *result;
 
-        auto tmp = combine(s,s1);
+        auto tmp = combine(level, s, s1);
         assert(tmp);
         s = *tmp; // These constraints should be on separate variables, and should not interact.
 
@@ -1346,7 +1367,7 @@ typechecker_state::infer_lhs_var_type(Hs::Var v)
 {
     auto& name = unloc(v.name);
 
-    Hs::Type type = fresh_type_var();
+    Hs::Type type = fresh_meta_type_var();
     v.type = type;
 
     // Check that this is a NEW name.
@@ -1481,6 +1502,15 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
 Hs::Decls
 typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env& env, const signature_env& signatures, Hs::FunDecl FD)
 {
+    // 0. Add a Level for typevars.
+
+    // OK, so what we want to do is:
+    // 1. instantiate the type -> (tvs, givens, rho-type)
+    // 2. typecheck the rhs -> (rhs_type, wanted, body)
+    // 3. match(rho_type <= rhs_type)
+    // 4. check if the given => wanted ~ EvBinds
+    // 5. return DictionaryLambda with tvs, givens, body
+
     // How & when do we complain if there are predicates on signatures with the monomorphism restriction?
 
     auto& name = unloc(FD.v.name);
@@ -1522,7 +1552,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
     {
         if (auto it = signatures.find(name); it != signatures.end())
         {
-            auto [given_constraints, given_type] = instantiate(it->second);
+            auto [_, given_constraints, given_type] = instantiate(it->second);
             auto s = maybe_match(most_general_type, given_type, {});
             if (not s)
                 throw myexception()<<"Given type '"<<it->second<<"' does not match inferred type '"<<apply_current_subst(most_general_type)<<"'";
@@ -1699,7 +1729,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     {
         if (auto it = signatures.find(name); it != signatures.end())
         {
-            auto [given_constraints, given_type] = instantiate(it->second);
+            auto [_, given_constraints, given_type] = instantiate(it->second);
             auto s = maybe_match(most_general_type, given_type, {});
             if (not s)
                 throw myexception()<<"Given type '"<<it->second<<"' does not match inferred type '"<<apply_current_subst(most_general_type)<<"'";
@@ -1844,7 +1874,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
     if (auto v = pat.to<Hs::Var>())
     {
         auto V = *v;
-        Hs::Type type = fresh_type_var();
+        Hs::Type type = fresh_meta_type_var();
         local_value_env lve;
         auto& name = unloc(V.name);
         V.type = type;
@@ -1900,7 +1930,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
     // WILD-PAT
     else if (pat.is_a<Hs::WildcardPattern>())
     {
-        auto tv = fresh_type_var();
+        auto tv = fresh_meta_type_var();
         return {pat, tv, {}};
     }
     // LIST-PAT
@@ -1909,7 +1939,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
         auto L = *l;
 
         local_value_env lve;
-        Hs::Type t = fresh_type_var();
+        Hs::Type t = fresh_meta_type_var();
         for(auto& element: L.elements)
         {
             auto [p1, t1, lve1] = infer_pattern_type(element);
@@ -2093,7 +2123,7 @@ tuple<Hs::MultiGuardedRHS, Hs::Type>
 typechecker_state::infer_type(const global_value_env& env, Hs::MultiGuardedRHS rhs)
 {
     substitution_t s;
-    Hs::Type type = fresh_type_var();
+    Hs::Type type = fresh_meta_type_var();
 
     auto env2 = env;
     if (rhs.decls)
@@ -2144,7 +2174,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MRule rule)
 tuple<Hs::Match, Hs::Type>
 typechecker_state::infer_type(const global_value_env& env, Hs::Match m)
 {
-    Hs::Type result_type = fresh_type_var();
+    Hs::Type result_type = fresh_meta_type_var();
 
     for(auto& rule: m.rules)
     {
@@ -2170,7 +2200,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         if (not sigma)
             throw myexception()<<"infer_type: can't find type of variable '"<<x->print()<<"'";
 
-        auto [constraints, type] = instantiate(*sigma);
+        auto [_, constraints, type] = instantiate(*sigma);
 
         for(auto& constraint: constraints)
         {
@@ -2223,7 +2253,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         // 3. instantiate the given type...
         // 4. ... with fresh variables gamma[i].
-        auto [given_constraints, given_type] = instantiate(texp->type);
+        auto [_, given_constraints, given_type] = instantiate(texp->type);
 
         // 5. Constrain the most general type to the given type with MATCH
         auto s2 = ::match(most_general_type, given_type);
@@ -2249,7 +2279,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     }
     else if (auto l = E.to<Hs::List>())
     {
-        Hs::Type element_type = fresh_type_var();
+        Hs::Type element_type = fresh_meta_type_var();
         auto L = *l;
         for(auto& element: L.elements)
         {
@@ -2288,7 +2318,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
             auto e2 = E.sub()[i];
 
             // tv <- fresh
-            auto tv = fresh_type_var();
+            auto tv = fresh_meta_type_var();
 
             auto [arg2, t2] = infer_type(env, e2);
             args.push_back(arg2);
@@ -2377,7 +2407,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
             unloc(Case.alts[i]) = {match2.rules[i].patterns[0], match2.rules[i].rhs};
         }
 
-        Hs::Type result_type = fresh_type_var();
+        Hs::Type result_type = fresh_meta_type_var();
 
         unify( make_arrow_type(object_type,result_type), match_type );
 
