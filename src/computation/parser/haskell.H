@@ -116,6 +116,7 @@ struct TypeVar: public Object
 {
     Located<std::string> name;
     std::optional<Kind> kind;
+    std::optional<int> level; // level in typechecking
 
     bool operator==(const Object&) const;
     bool operator==(const TypeVar&) const;
