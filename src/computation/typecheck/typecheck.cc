@@ -645,8 +645,8 @@ struct typechecker_state
     tuple<Hs::Decls, global_value_env>
     infer_type_for_decls(const global_value_env& env, const signature_env&, Hs::Decls E);
 
-    expression_ref
-    infer_type_for_single_fundecl_with_sig(const global_value_env& env, const signature_env& signatures, Hs::FunDecl FD);
+    tuple<expression_ref, string, Hs::Type>
+    infer_type_for_single_fundecl_with_sig(const global_value_env& env, Hs::FunDecl FD);
 
     tuple<Hs::Decls, global_value_env>
     infer_type_for_decls_groups(const global_value_env& env, const signature_env&, Hs::Decls E);
@@ -974,6 +974,7 @@ typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds b
     {
         auto [decls1, binders1] = infer_type_for_decls(env2, binds.signatures, decls);
         decls = decls1;
+        // We could remove the binders with sigs
         env2 = plus_prefer_right(env2, binders1);
         binders += binders1;
     }
@@ -1487,42 +1488,44 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
 
     auto env2 = env;
     Hs::Decls decls2;
+    local_value_env binders;
     for(auto& group: bind_groups)
     {
         if (single_fundecl_with_sig(group, signatures))
         {
             auto& FD = group[0].as_<Hs::FunDecl>();
 
-            auto decl = infer_type_for_single_fundecl_with_sig(env2, signatures, FD);
+            auto [decl,name,sig_type] = infer_type_for_single_fundecl_with_sig(env2, FD);
 
             decls2.push_back(decl);
 
+            binders = binders.insert({name,sig_type});
             // The type for the name should already be in the environment.
         }
         else
         {
-            auto [group_decls, new_env] = infer_type_for_decls_groups(env2, signatures, group);
+            auto [group_decls, group_binders] = infer_type_for_decls_groups(env2, signatures, group);
 
             for(auto& decl: group_decls)
                 decls2.push_back(decl);
 
-            env2 = new_env;
+            binders += group_binders;
         }
     }
-    return {decls, env2};
+    return {decls, binders};
 }
 
-expression_ref
-typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env& env, const signature_env& signatures, Hs::FunDecl FD)
+tuple<expression_ref, string, Hs::Type>
+typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env& env, Hs::FunDecl FD)
 {
     auto& name = unloc(FD.v.name);
 
-    auto sig = signatures.at(name);
+    auto sig_type = env.at(name);
 
     // OK, so what we want to do is:
 
     // 1. instantiate the type -> (tvs, givens, rho-type)
-    auto [tvs, given_constraints, rho_type] = instantiate(sig, false);
+    auto [tvs, given_constraints, rho_type] = instantiate(sig_type, false);
     auto lie_given = constraints_to_lie(given_constraints);
 
     // 2. typecheck the rhs -> (rhs_type, wanted, body)
@@ -1552,7 +1555,8 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
     Hs::Decls decls;
     decls.push_back(decl2);
 
-    return Hs::DictionaryLambda( tvs, vars_from_lie(lie_given), *evbinds, decls );
+    auto decl = Hs::DictionaryLambda( tvs, vars_from_lie(lie_given), *evbinds, decls );
+    return {decl, name, sig_type};
 }
 
 tuple<Hs::Decls, global_value_env>
