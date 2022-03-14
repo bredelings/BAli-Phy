@@ -56,7 +56,7 @@ using std::tuple;
   * Handle a :: Num a => Char in (a,b) = ('a',1)
   * Partially handle polymorphic recursion.
   * Split decls into pieces.
-  *. Add levels for skolem variables also.
+  * Add levels for skolem variables also.
 
   TODO:
   0. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
