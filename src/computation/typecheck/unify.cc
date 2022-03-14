@@ -1,6 +1,8 @@
 #include "unify.H"
 #include <utility>
+#include "immer/set.hpp"
 
+using std::vector;
 using std::string;
 using std::optional;
 
@@ -25,14 +27,14 @@ expression_ref apply_subst(const substitution_t& s, const Hs::Type& t)
 {
     if (s.empty()) return t;
 
-    if (auto tv = t.to<Haskell::TypeVar>())
+    if (auto tv = t.to<Hs::TypeVar>())
     {
         if (auto t2 = s.find(*tv))
             return apply_subst(s,*t2);
         else
             return t;
     }
-    else if (t.is_a<Haskell::TypeCon>())
+    else if (t.is_a<Hs::TypeCon>())
         return t;
     else if (auto tup = t.to<Hs::TupleType>())
     {
@@ -47,14 +49,14 @@ expression_ref apply_subst(const substitution_t& s, const Hs::Type& t)
         L.element_type = apply_subst(s, L.element_type);
         return L;
     }
-    else if (auto p_app = t.to<Haskell::TypeApp>())
+    else if (auto p_app = t.to<Hs::TypeApp>())
     {
         auto app = *p_app;
         app.head = apply_subst(s, app.head);
         app.arg  = apply_subst(s, app.arg);
         return app;
     }
-    else if (auto p_forall = t.to<Haskell::ForallType>())
+    else if (auto p_forall = t.to<Hs::ForallType>())
     {
         auto forall = *p_forall;
 
@@ -94,11 +96,11 @@ substitution_t compose(substitution_t s2, substitution_t s1)
     return s3;
 }
 
-bool occurs_check(const Haskell::TypeVar& tv, const Hs::Type& t)
+bool occurs_check(const Hs::TypeVar& tv, const Hs::Type& t)
 {
-    if (auto x = t.to<Haskell::TypeVar>())
+    if (auto x = t.to<Hs::TypeVar>())
         return tv == *x;
-    else if (t.is_a<Haskell::TypeCon>())
+    else if (t.is_a<Hs::TypeCon>())
         return false;
     else if (auto tup = t.to<Hs::TupleType>())
     {
@@ -109,9 +111,9 @@ bool occurs_check(const Haskell::TypeVar& tv, const Hs::Type& t)
     }
     else if (auto l = t.to<Hs::ListType>())
         return occurs_check(tv, l->element_type);
-    else if (auto p_app = t.to<Haskell::TypeApp>())
+    else if (auto p_app = t.to<Hs::TypeApp>())
         return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
-    else if (auto f = t.to<Haskell::ForallType>())
+    else if (auto f = t.to<Hs::ForallType>())
     {
         for(auto& x: f->type_var_binders)
             if (x == tv)
@@ -133,29 +135,84 @@ bool occurs_check(const Haskell::TypeVar& tv, const Hs::Type& t)
         std::abort();
 }
 
+int max_level(const Hs::Type& t, immer::set<Hs::TypeVar> in_scope);
+
+int max_level(const vector<Hs::Type>& ts, immer::set<Hs::TypeVar> in_scope)
+{
+    int l = 0;
+    for(auto& t: ts)
+        l = std::max( l, max_level(t, in_scope) );
+    return l;
+}
+
+int max_level(const Hs::Type& t, immer::set<Hs::TypeVar> in_scope)
+{
+    if (auto x = t.to<Hs::TypeVar>())
+    {
+        if (in_scope.count(*x))
+            return 0;
+        else if (false)
+            // FIXME: we probably need to look through vars with substitutions~
+            ;
+        else
+            return x->get_level();
+    }
+    else if (t.is_a<Hs::TypeCon>())
+        return 0;
+    else if (auto tup = t.to<Hs::TupleType>())
+        return max_level(tup->element_types, in_scope);
+    else if (auto l = t.to<Hs::ListType>())
+        return max_level(l->element_type, in_scope);
+    else if (auto p_app = t.to<Hs::TypeApp>())
+        return std::max( max_level(p_app->head, in_scope) , max_level(p_app->arg, in_scope) );
+    else if (auto f = t.to<Hs::ForallType>())
+    {
+        auto in_scope2 = in_scope;
+        for(auto& x: f->type_var_binders)
+            in_scope2 = in_scope.insert(x);
+
+        return max_level(f->type, in_scope2);
+    }
+    else if (auto c = t.to<Hs::ConstrainedType>())
+        return std::max( max_level(c->context.constraints, in_scope), max_level( c->type, in_scope ) );
+    else if (auto sl = t.to<Hs::StrictLazyType>())
+        return max_level(sl->type, in_scope);
+    else
+        std::abort();
+}
+
+int max_level(const Hs::Type& t)
+{
+    return max_level(t, {});
+}
+
 // PROOF: This cannot add substitution loops.
 //  `safe_type` can't reference variables in s, since it has been substituted.
 //  `safe_type` can't reference `tv` because of the occurs check.
 //  Therefore, substituting into any phrase with `tv` will have the same termination properties as before.
 std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::TypeVar& tv, Hs::Type type)
 {
+    assert(is_meta_type_var(tv));
+
     // 1. We can't insert tv ~ type if we already have a substitution for tv.
     assert(not s.count(tv));
 
     // 2. Eliminate existing variables in type.
+    //    FIXME: This is expensive - GHC might try to avoid this by delaying 'zonking'.
     auto safe_type = apply_subst(s, type);
 
     // 3. Trying insert tv ~ tv is redundant, so return an empty substitution.
     if (auto tv2 = safe_type.to<Hs::TypeVar>(); tv2 and *tv2 == tv)
         return s;
 
-    // FIXME: Check that if we insert x -> y, the y->level >= x->level
+    // 4. Fail if the level invariant is not met.
+    if (tv.get_level() < max_level(type)) return {};
 
-    // 4. If safe_type contains tv, then we have a substitution loop for tv.
+    // 5. If safe_type contains tv, then we have a substitution loop for tv.
     //    Therefore return failure.  (This rules out infinite types.)
     if (occurs_check(tv, safe_type)) return {};
 
-    // 5. It is safe to add tv -> safe_type
+    // 6. It is safe to add tv -> safe_type
     return s.insert({tv, safe_type});
 }
 
@@ -167,10 +224,10 @@ std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::Type
 
 const Hs::TypeVar* is_skolem_type_var(const Hs::TypeVar& tv)
 {
-    if (tv.level)
-        return nullptr;
-    else
+    if (tv.info == Hs::typevar_info::rigid)
         return &tv;
+    else
+        return nullptr;
 }
 
 const Hs::TypeVar* is_skolem_type_var(const Hs::Type& type)
@@ -183,18 +240,37 @@ const Hs::TypeVar* is_skolem_type_var(const Hs::Type& type)
 }
 
 
+const Hs::TypeVar* is_meta_type_var(const Hs::TypeVar& tv)
+{
+    if (tv.info == Hs::typevar_info::meta)
+        return &tv;
+    else
+        return nullptr;
+}
+
+const Hs::TypeVar* is_meta_type_var(const Hs::Type& type)
+{
+    auto tv = type.to<Hs::TypeVar>();
+
+    if (not tv) return nullptr;
+
+    return is_meta_type_var(*tv);
+}
+
+
 const Hs::TypeVar* is_meta_type_var_on_level(const Hs::TypeVar& tv, int level)
 {
-    if (not tv.level) return nullptr;
-
-    int tv_level = *(tv.level);
-    if (tv_level >= level)
+    auto result = is_meta_type_var(tv);
+    if (result)
     {
-        assert(tv_level == level);
-        return &tv;
+        assert(tv.level);
+        if (*tv.level != level) return nullptr;
+        return result;
     }
     else
         return nullptr;
+
+    if (not tv.level) return nullptr;
 }
 
 const Hs::TypeVar* is_meta_type_var_on_level(const Hs::Type& type, int level)
@@ -231,30 +307,6 @@ std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain(int level, const 
 
     assert(tv);
     assert(not type or not is_meta_type_var_on_level(type, level));
-    return {tv, type};
-}
-
-// This finds
-// * a non-variable type that the type variable is equivalent to, if there is one, and
-// * the final variable in the chain of variables -- that points to either that term, or nothing.
-// We can use the final variable to determine if two variables are in the same equivalence set.
-// QUESTION: Can we use compare the variables by POINTER equality?  Not sure...
-std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain_match(const substitution_t& s, const Hs::TypeVar* tv)
-{
-    const Hs::Type* type;
-    // While there is a substitution for tv...
-    while ( (type = s.find(*tv)) )
-    {
-        // If we have tv -> tv2, then continue
-        if (auto tv_next = type->to<Hs::TypeVar>())
-            tv = tv_next;
-        // Otherwise, return the type variable and the (non-type-variable) thing it points to.
-        else
-            break;
-    }
-
-    assert(tv);
-    assert(not type or not type->is_a<Hs::TypeVar>());
     return {tv, type};
 }
 
@@ -342,52 +394,6 @@ std::optional<substitution_t> combine(int level, substitution_t s1, substitution
     return s1;
 }
 
-std::optional<substitution_t> combine_match(const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
-{
-    if (not s1) return {};
-    if (not s2) return {};
-    return combine_match(*s1, *s2);
-}
-
-std::optional<substitution_t> combine_match(const std::optional<substitution_t>& s1, const substitution_t& s2)
-{
-    if (not s1) return {};
-    return combine_match(*s1, s2);
-}
-
-std::optional<substitution_t> combine_match(const substitution_t& s1, const optional<substitution_t>& s2)
-{
-    if (not s2) return {};
-    return combine_match(s1, *s2);
-}
-
-// The order of s1 and s2 should not matter.
-std::optional<substitution_t> combine_match(substitution_t s1, substitution_t s2)
-{
-    if (s2.size() > s1.size()) std::swap(s1,s2);
-
-    auto s3 = s1;
-    for(auto& [tv,e]: s2)
-    {
-        optional<substitution_t> s4;
-
-        // 1. Find the last type variable in the var chain from tv, and maybe the term term1 that it points.
-        auto [tv1, term1] = follow_var_chain_match(s3, &tv);
-
-        // 2. If tv is equivalent to other type variables, but not to a term, then
-        //    we can add just a definition for tv1.
-        if (not term1)
-        {
-            s4 = try_insert(s3, *tv1, e);
-        }
-        // 3. Otherwise, we have tv ~ term1 and tv ~ e, so *term1 and e have to be the same.
-        else if (same_type(*term1, e))
-            continue;
-    }
-
-    return s3;
-}
-
 // Is there a better way to implement this?
 optional<substitution_t> maybe_unify(int level, const Hs::Type& t1, const Hs::Type& t2)
 {
@@ -409,17 +415,17 @@ optional<substitution_t> maybe_unify(int level, const Hs::Type& t1, const Hs::Ty
         else
             return {};
     }
-    else if (t1.is_a<Haskell::TypeApp>() and t2.is_a<Haskell::TypeApp>())
+    else if (t1.is_a<Hs::TypeApp>() and t2.is_a<Hs::TypeApp>())
     {
-        auto& app1 = t1.as_<Haskell::TypeApp>();
-        auto& app2 = t2.as_<Haskell::TypeApp>();
+        auto& app1 = t1.as_<Hs::TypeApp>();
+        auto& app2 = t2.as_<Hs::TypeApp>();
 
         return combine( level, maybe_unify(level, app1.head, app2.head),
                                maybe_unify(level, app1.arg , app2.arg ) );
     }
-    else if (t1.is_a<Haskell::TypeCon>() and
-             t2.is_a<Haskell::TypeCon>() and
-             t1.as_<Haskell::TypeCon>() == t2.as_<Haskell::TypeCon>())
+    else if (t1.is_a<Hs::TypeCon>() and
+             t2.is_a<Hs::TypeCon>() and
+             t1.as_<Hs::TypeCon>() == t2.as_<Hs::TypeCon>())
     {
         substitution_t empty;
         return empty;
@@ -465,78 +471,16 @@ substitution_t unify(int level, const Hs::Type& t1, const Hs::Type& t2)
     return *s;
 }
 
-optional<substitution_t> match(const Hs::Type& t1, const Hs::Type& t2)
-{
-    if (auto tv1 = t1.to<Haskell::TypeVar>())
-    {
-        substitution_t s;
-        if (t1 == t2) return s;
-        return try_insert(s, *tv1, t2);
-    }
-    else if (t1.is_a<Haskell::TypeApp>() and t2.is_a<Haskell::TypeApp>())
-    {
-        auto& app1 = t1.as_<Haskell::TypeApp>();
-        auto& app2 = t2.as_<Haskell::TypeApp>();
-
-        return combine_match( match(app1.head, app2.head),
-                              match(app1.arg , app2.arg ) );
-    }
-    else if (t1.is_a<Haskell::TypeCon>() and
-             t2.is_a<Haskell::TypeCon>() and
-             t1.as_<Haskell::TypeCon>() == t2.as_<Haskell::TypeCon>())
-    {
-        substitution_t s;
-        return s;
-    }
-    else if (t1.is_a<Hs::TupleType>() and t2.is_a<Hs::TupleType>())
-    {
-        auto& tup1 = t1.as_<Hs::TupleType>();
-        auto& tup2 = t2.as_<Hs::TupleType>();
-        if (tup1.element_types.size() != tup2.element_types.size())
-            return {};
-
-        optional<substitution_t> s = substitution_t();
-
-        for(int i=0;i<tup1.element_types.size();i++)
-        {
-            s = combine_match(s, match( tup1.element_types[i], tup2.element_types[i] ));
-            if (not s) return {};
-        }
-        return s;
-    }
-    else if (t1.is_a<Hs::ListType>() and t2.is_a<Hs::ListType>())
-    {
-        auto& L1 = t1.as_<Hs::ListType>();
-        auto& L2 = t2.as_<Hs::ListType>();
-        return match(L1.element_type, L2.element_type);
-    }
-    else if (t1.is_a<Hs::ForallType>() or t2.is_a<Hs::ForallType>())
-    {
-        throw myexception()<<"match "<<t1.print()<<" ~ "<<t2.print()<<": How should we handle forall types?";
-    }
-    else if (t1.is_a<Hs::ConstrainedType>() or t2.is_a<Hs::ConstrainedType>())
-    {
-        throw myexception()<<"match "<<t1.print()<<" ~ "<<t2.print()<<": How should we handle unification for constrained types?";
-    }
-    else if (t1.is_a<Hs::StrictLazyType>() or t2.is_a<Hs::StrictLazyType>())
-    {
-        throw myexception()<<"match "<<t1.print()<<" ~ "<<t2.print()<<": How should we handle unification for strict/lazy types?";
-    }
-    else
-        return {};
-}
-
-
 bool same_type(const Hs::Type& t1, const Hs::Type& t2)
 {
-    if (t1.is_a<Haskell::TypeVar>())
+    if (t1.is_a<Hs::TypeVar>())
         return (t1 == t2);
-    else if (t1.is_a<Haskell::TypeCon>())
+    else if (t1.is_a<Hs::TypeCon>())
         return (t1 == t2);
-    else if (t1.is_a<Haskell::TypeApp>() and t2.is_a<Haskell::TypeApp>())
+    else if (t1.is_a<Hs::TypeApp>() and t2.is_a<Hs::TypeApp>())
     {
-        auto& app1 = t1.as_<Haskell::TypeApp>();
-        auto& app2 = t2.as_<Haskell::TypeApp>();
+        auto& app1 = t1.as_<Hs::TypeApp>();
+        auto& app2 = t2.as_<Hs::TypeApp>();
 
         return same_type(app1.head, app2.head) and same_type(app1.arg, app2.arg);
     }

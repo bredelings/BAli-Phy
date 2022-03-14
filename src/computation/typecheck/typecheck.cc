@@ -57,11 +57,17 @@ typedef map<string, Hs::Type> signature_env;
   * Don't substitute into LIEs / LVEs / GVEs until we need to.
   * Handle a :: Num a => Char in (a,b) = ('a',1)
   * Partially handle polymorphic recursion.
+  * Split decls into pieces.
 
   TODO:
-  - Split decls into pieces!
+  0. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
+  0. Add levels for skolem variables also.
+  0. Type-check / kind-check user-written signatures.
+  0. Handle user-written signatures in monomorphic-restricted blocks.
+  0. Use the level machinery to handle constraints on unification.
+  0. Promote type variables that are not generalized...
   - Modify infer_lhs_type to use signatures to instantiate types for lhs variables with signatures.
-   + How do we avoid instantiating types with LIEs in situations where the monomorphism restriction applies?
+    + How do we avoid instantiating types with LIEs in situations where the monomorphism restriction applies?
   -2. Implement explicit types in terms of TypedExp -- match + entails to check predicates
     + GHC/Hs/Binds.hs
     + GHC/Tc/Gen/Binds.hs
@@ -510,41 +516,10 @@ struct typechecker_state
             return false;
     }
 
-    optional<substitution_t>
-    maybe_match(const Hs::Type& t1, const Hs::Type& t2, const optional<set<Hs::TypeVar>>& allowed_tvs)
-    {
-        auto T1 = apply_current_subst(t1);
-        auto T2 = apply_current_subst(t2);
-        auto s = ::match(T1, T2);
-        if (not s or not add_substitution(*s))
-            return {};
-
-        if (allowed_tvs)
-        {
-            for(auto& [a,type]: *s)
-                if (not allowed_tvs->count(a))
-                    return {};
-        }
-
-        return s;
-    }
-
     void unify(const Hs::Type& t1, const Hs::Type& t2)
     {
         if (not maybe_unify(t1,t2))
             throw myexception()<<"Unification failed: "<<apply_current_subst(t1)<<" !~ "<<apply_current_subst(t2);
-    }
-
-    void match(const Hs::Type& t1, const Hs::Type& t2)
-    {
-        if (not ::match(t1,t2))
-            throw myexception()<<"Matching failed: "<<apply_current_subst(t1)<<" !~ "<<apply_current_subst(t2);
-    }
-
-    void match(const Hs::Type& t1, const Hs::Type& t2, const myexception& e)
-    {
-        if (not ::match(t1,t2))
-            throw e;
     }
 
     pair<Hs::Type, vector<Hs::Type>> constr_types(const Hs::Con&);
@@ -565,11 +540,15 @@ struct typechecker_state
     Hs::TypeVar fresh_rigid_type_var() {
         Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
         next_tvar_index++;
+        tv.info = Hs::typevar_info::rigid;
+        tv.level = level;
         return tv;
     }
 
     Hs::TypeVar fresh_meta_type_var() {
-        auto tv = fresh_rigid_type_var();
+        Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
+        next_tvar_index++;
+        tv.info = Hs::typevar_info::meta;
         tv.level = level;
         return tv;
     }
@@ -579,13 +558,6 @@ struct typechecker_state
             return fresh_meta_type_var();
         else
             return fresh_rigid_type_var();
-    }
-
-    Hs::TypeVar named_type_var(const string& name)
-    {
-        Hs::TypeVar tv({noloc, name+"_"+std::to_string(next_tvar_index)});
-        next_tvar_index++;
-        return tv;
     }
 
     optional<tuple<substitution_t, Hs::Binds>>
@@ -1014,12 +986,18 @@ optional<pair<Hs::Var,vector<Hs::Type>>> typechecker_state::lookup_instance(cons
 {
     for(auto& [name, type]: gie)
     {
+        level++;
         auto [_, instance_constraints, instance_head] = instantiate(type);
 
         // Skip if this is not an instance.
-        if (constraint_is_hnf(instance_head)) continue;
+        if (constraint_is_hnf(instance_head))
+        {
+            level--;
+            continue;
+        }
 
-        auto s = ::match(instance_head, constraint);
+        auto s = ::maybe_unify(level, instance_head, constraint);
+        level--;
 
         // This instance doesn't match.
         if (not s) continue;
@@ -1028,6 +1006,7 @@ optional<pair<Hs::Var,vector<Hs::Type>>> typechecker_state::lookup_instance(cons
             instance_constraint = apply_subst(*s, instance_constraint);
 
         auto dfun = Hs::Var({noloc, name});
+
         return {{dfun, instance_constraints}};
     }
     return {};
@@ -1110,15 +1089,21 @@ vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const H
     for(auto& [name, type]: gie)
     {
         // Klass a => Superklass a
+        level++;
         auto [_, class_constraints, superclass_constraint] = instantiate(type, false);
 
         // Skip if this is not a method of extracting superclass dictionaries
-        if (not constraint_is_hnf(superclass_constraint)) continue;
+        if (not constraint_is_hnf(superclass_constraint))
+        {
+            level--;
+            continue;
+        }
 
         assert(class_constraints.size() == 1);
 
         auto class_constraint = class_constraints[0];
-        auto s = ::match(class_constraint, constraint);
+        auto s = ::maybe_unify(level, class_constraint, constraint);
+        level--;
 
         // The premise doesn't match the current class;
         if (not s) continue;
@@ -1592,31 +1577,6 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
         decls[i] = decl;
 
         unify(lhs_types[i], rhs_type);
-    }
-
-    // 3. Handle explicit type signatures
-    for(auto& [name, most_general_type]: binder_env)
-    {
-        if (auto it = signatures.find(name); it != signatures.end())
-        {
-            auto [_, given_constraints, given_type] = instantiate(it->second);
-            auto s = maybe_match(most_general_type, given_type, {});
-            if (not s)
-                throw myexception()<<"Given type '"<<it->second<<"' does not match inferred type '"<<apply_current_subst(most_general_type)<<"'";
-
-            // FIXME - can we just increase the tc-level to exclude tvs in the environment?
-            // auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
-
-            current_lie() = apply_current_subst( current_lie() );
-
-            auto lie_given = constraints_to_lie(given_constraints);
-            // 7. Express lie2 in terms of lie1
-            auto binds = entails(lie_given, current_lie());
-            if (not binds)
-                throw myexception()<<"Can't derive constraints '"<<print(current_lie())<<"' from specified constraints '"<<print(lie_given)<<"'";
-
-            // We have to know how to call the LHS 
-        }
     }
 
     // We need to substitute before looking for free type variables!
@@ -2114,6 +2074,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         // texp->type
 
         // 1. Get the most general type
+        level++;
         push_lie();
         auto [exp, most_general_type] = infer_type(env, texp->exp);
         auto lie_most_general = pop_lie();
@@ -2126,14 +2087,11 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto [_, given_constraints, given_type] = instantiate(texp->type);
 
         // 5. Constrain the most general type to the given type with MATCH
-        auto s2 = ::match(most_general_type, given_type);
-        if (not s2 or not add_substitution(*s2))
-            throw myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"'";
+        auto s2 = maybe_unify(most_general_type, given_type);
+        level--;
 
-        // I think this is looking for variants in most_general_type that are not in ftv_mgt, and therefore are in the environment
-        for(auto& [a,type]: *s2)
-            if (not ftv_mgt.count(a))
-                throw myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"' because it tries to constrain fixed type variable '"<<a.print()<<"'";
+        if (not s2)
+            throw myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"'";
 
         // 6. Convert the given_constraints into a LIE
         lie_most_general = apply_current_subst(lie_most_general);
