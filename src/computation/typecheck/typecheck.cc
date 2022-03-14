@@ -34,8 +34,6 @@ using std::pair;
 using std::shared_ptr;
 using std::tuple;
 
-typedef map<string, Hs::Type> signature_env;
-
 /*
   NOTE:
   - Type signatures with constraints are forbidden for variables declared in PatBind's!!!
@@ -253,8 +251,6 @@ std::set<T> operator-(const std::set<T>& s1, const std::set<T>& s2)
     return minus(s1,s2);
 }
 
-typedef value_env constr_env;
-
 // The GIE does NOT allow free type variables.
 struct instance_info
 {
@@ -324,360 +320,213 @@ string get_class_name_from_constraint(const Hs::Type& constraint)
 //
 // }
 
-struct typechecker_state
+local_instance_env& typechecker_state::current_lie() {
+    return lie_stack.back();
+}
+
+void typechecker_state::add_dvar(const string& name, const Hs::Type& constraint)
 {
-    int next_var_index = 1;
+    auto& lie = current_lie();
+    assert(not lie.count(name));
+    lie = lie.insert( {name, constraint} );
+}
 
-    int next_tvar_index = 1;
+void typechecker_state::add_dvar(const Hs::Var& dvar, const Hs::Type& constraint)
+{
+    add_dvar(unloc(dvar.name), constraint);
+}
 
-    constr_env con_info;
+Hs::Var typechecker_state::fresh_dvar(const Hs::Type& constraint)
+{
+    string name = "dvar";
+    if (auto cname = maybe_get_class_name_from_constraint(constraint))
+        name = "d" + *cname;
+    return fresh_var(name, false);
+}
 
-    global_instance_env gie;
+Hs::Var typechecker_state::add_dvar(const Hs::Type& constraint)
+{
+    auto dvar = fresh_dvar(constraint);
 
-    vector<Hs::Type> defaults;
+    add_dvar(dvar, constraint);
 
-    std::string mod_name;
+    return dvar;
+}
 
-    const Module& this_mod; // for name lookups like Bool, Num, etc.
+void typechecker_state::push_lie() {
+    lie_stack.push_back( {} );
+}
 
-    substitution_t type_var_to_type;
+local_instance_env typechecker_state::pop_lie()
+{
+    auto lie = current_lie();
+    lie_stack.pop_back();
+    return lie;
+}
 
-    vector<local_instance_env> lie_stack;
+void typechecker_state::pop_and_add_lie()
+{
+    auto lie = pop_lie();
+    current_lie() += lie;
+}
 
-    int level = 0;
+typechecker_state::typechecker_state(const string& s, const Module& m, const Hs::ModuleDecls& M, const constr_env& ce)
+    :con_info(ce),
+     mod_name(s),
+     this_mod(m)
+{
+    push_lie();
 
-    local_instance_env& current_lie() {return lie_stack.back();}
+    if (M.default_decl)
+        defaults = M.default_decl->types;
+    else
+        defaults = { Hs::TypeCon({noloc,"Int"}), Hs::TypeCon({noloc,"Double"}) };
+}
 
-    void add_dvar(const string& name, const Hs::Type& constraint)
+Hs::Var typechecker_state::find_prelude_var(string name) const
+{
+    if (this_mod.is_declared(name))
+        name = this_mod.lookup_symbol(name).name;
+    return Hs::Var({noloc, name});
+}
+
+string typechecker_state::find_prelude_tycon_name(const string& name) const
+{
+    if (this_mod.type_is_declared(name))
+        return this_mod.lookup_type(name).name;
+    else
+        return name;
+}
+
+Hs::TypeCon typechecker_state::find_prelude_tycon(const string& name) const
+{
+    auto prelude_name = find_prelude_tycon_name(name);
+    return Hs::TypeCon({noloc, prelude_name });
+}
+
+Hs::Type typechecker_state::bool_type() const
+{
+    return find_prelude_tycon("Bool");
+}
+
+Hs::Type typechecker_state::char_type() const
+{
+    return find_prelude_tycon("Char");
+}
+
+Hs::Type typechecker_state::enum_class(const Hs::Type& arg) const
+{
+    auto Enum = find_prelude_tycon("Enum");
+
+    return Hs::TypeApp( Enum, arg);
+}
+
+Hs::Type typechecker_state::num_class(const Hs::Type& arg) const
+{
+    auto Num = find_prelude_tycon("Num");
+
+    return Hs::TypeApp( Num, arg);
+}
+
+Hs::Type typechecker_state::fractional_class(const Hs::Type& arg) const
+{
+    auto Fractional = find_prelude_tycon("Fractional");
+
+    return Hs::TypeApp( Fractional, arg);
+}
+
+tuple<Hs::Var, Hs::Type> typechecker_state::fresh_enum_type(bool meta)
+{
+    Hs::Type a = fresh_type_var(meta);
+    Hs::Type enum_a = enum_class(a);
+    auto dvar = add_dvar(enum_a);
+    return {dvar, a};
+}
+
+tuple<Hs::Var, Hs::Type> typechecker_state::fresh_num_type(bool meta)
+{
+    Hs::Type a = fresh_type_var(meta);
+    Hs::Type num_a = num_class(a);
+    auto dvar = add_dvar(num_a);
+    return {dvar, a};
+}
+
+tuple<Hs::Var, Hs::Type> typechecker_state::fresh_fractional_type(bool meta)
+{
+    Hs::Type a = fresh_type_var(meta);
+    Hs::Type fractional_a = fractional_class(a);
+    auto dvar = add_dvar(fractional_a);
+    return {dvar, a};
+}
+
+bool typechecker_state::add_substitution(const substitution_t& s)
+{
+    if (auto s2 = combine(level, type_var_to_type, s))
     {
-        auto& lie = current_lie();
-        assert(not lie.count(name));
-        lie = lie.insert( {name, constraint} );
+        type_var_to_type = *s2;
+        return true;
     }
-
-    void add_dvar(const Hs::Var& dvar, const Hs::Type& constraint)
-    {
-        add_dvar(unloc(dvar.name), constraint);
-    }
-
-    Hs::Var fresh_dvar(const Hs::Type& constraint)
-    {
-        string name = "dvar";
-        if (auto cname = maybe_get_class_name_from_constraint(constraint))
-            name = "d" + *cname;
-        return fresh_var(name, false);
-    }
-
-    Hs::Var add_dvar(const Hs::Type& constraint)
-    {
-        auto dvar = fresh_dvar(constraint);
-
-        add_dvar(dvar, constraint);
-
-        return dvar;
-    }
-
-    void push_lie() {
-        lie_stack.push_back( {} );
-    }
-
-    local_instance_env pop_lie()
-    {
-        auto lie = current_lie();
-        lie_stack.pop_back();
-        return lie;
-    }
-
-    void pop_and_add_lie()
-    {
-        auto lie = pop_lie();
-        current_lie() += lie;
-    }
-
-    typechecker_state(const string& s, const Module& m, const Hs::ModuleDecls& M, const constr_env& ce)
-        :con_info(ce),
-         mod_name(s),
-         this_mod(m)
-        {
-            push_lie();
-
-            if (M.default_decl)
-                defaults = M.default_decl->types;
-            else
-                defaults = { Hs::TypeCon({noloc,"Int"}), Hs::TypeCon({noloc,"Double"}) };
-        }
-
-    Hs::Var find_prelude_var(string name) const
-    {
-        if (this_mod.is_declared(name))
-            name = this_mod.lookup_symbol(name).name;
-        return Hs::Var({noloc, name});
-    }
-
-    string find_prelude_tycon_name(const string& name) const
-    {
-        if (this_mod.type_is_declared(name))
-            return this_mod.lookup_type(name).name;
-        else
-            return name;
-    }
-
-    Hs::TypeCon find_prelude_tycon(const string& name) const
-    {
-        auto prelude_name = find_prelude_tycon_name(name);
-        return Hs::TypeCon({noloc, prelude_name });
-    }
-
-    Hs::Type bool_type() const
-    {
-        return find_prelude_tycon("Bool");
-    }
-
-    Hs::Type char_type() const
-    {
-        return find_prelude_tycon("Char");
-    }
-
-    Hs::Type enum_class(const Hs::Type& arg) const
-    {
-        auto Enum = find_prelude_tycon("Enum");
-
-        return Hs::TypeApp( Enum, arg);
-    }
-
-    Hs::Type num_class(const Hs::Type& arg) const
-    {
-        auto Num = find_prelude_tycon("Num");
-
-        return Hs::TypeApp( Num, arg);
-    }
-
-    Hs::Type fractional_class(const Hs::Type& arg) const
-    {
-        auto Fractional = find_prelude_tycon("Fractional");
-
-        return Hs::TypeApp( Fractional, arg);
-    }
-
-    tuple<Hs::Var, Hs::Type> fresh_enum_type(bool meta = true)
-    {
-        Hs::Type a = fresh_type_var(meta);
-        Hs::Type enum_a = enum_class(a);
-        auto dvar = add_dvar(enum_a);
-        return {dvar, a};
-    }
-
-    tuple<Hs::Var, Hs::Type> fresh_num_type(bool meta = true)
-    {
-        Hs::Type a = fresh_type_var(meta);
-        Hs::Type num_a = num_class(a);
-        auto dvar = add_dvar(num_a);
-        return {dvar, a};
-    }
-
-    tuple<Hs::Var, Hs::Type> fresh_fractional_type(bool meta = true)
-    {
-        Hs::Type a = fresh_type_var(meta);
-        Hs::Type fractional_a = fractional_class(a);
-        auto dvar = add_dvar(fractional_a);
-        return {dvar, a};
-    }
-
-    template <typename T>
-    T apply_current_subst(const T& thing) const
-    {
-        return apply_subst(type_var_to_type, thing);
-    }
-
-    bool add_substitution(const substitution_t& s)
-    {
-        if (auto s2 = combine(level, type_var_to_type, s))
-        {
-            type_var_to_type = *s2;
-            return true;
-        }
-        else
-            return false;
-    }
-
-    bool add_substitution(const Hs::TypeVar& a, const Hs::Type& type)
-    {
-        if (auto s = try_insert({}, a, type))
-            return add_substitution(*s);
-        else
-            return false;
-    }
-
-    bool maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
-    {
-        if (auto s = ::maybe_unify(level, t1, t2))
-            return add_substitution(*s);
-        else
-            return false;
-    }
-
-    void unify(const Hs::Type& t1, const Hs::Type& t2)
-    {
-        if (not maybe_unify(t1,t2))
-            throw myexception()<<"Unification failed: "<<apply_current_subst(t1)<<" !~ "<<apply_current_subst(t2);
-    }
-
-    pair<Hs::Type, vector<Hs::Type>> constr_types(const Hs::Con&);
-
-    Hs::Var fresh_var(const std::string& s, bool qualified)
-    {
-        string name = "$"+s+std::to_string(next_var_index);
-        if (qualified)
-            name = mod_name + "." + name;
-        Hs::Var x({noloc, name});
-        next_var_index++;
-        return x;
-    }
-
-    // "Rigid" type vars come from forall-quantified variables.
-    // "Wobbly" type vars come from existentially-quantified variables (I think).  We don't have any.
-    // "Meta" type vars are unification type vars.
-    Hs::TypeVar fresh_rigid_type_var() {
-        Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
-        next_tvar_index++;
-        tv.info = Hs::typevar_info::rigid;
-        tv.level = level;
-        return tv;
-    }
-
-    Hs::TypeVar fresh_meta_type_var() {
-        Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
-        next_tvar_index++;
-        tv.info = Hs::typevar_info::meta;
-        tv.level = level;
-        return tv;
-    }
-
-    Hs::TypeVar fresh_type_var(bool meta) {
-        if (meta)
-            return fresh_meta_type_var();
-        else
-            return fresh_rigid_type_var();
-    }
-
-    optional<tuple<substitution_t, Hs::Binds>>
-    candidates(const Hs::TypeVar& tv, const local_instance_env& tv_lie);
-
-    tuple<substitution_t, Hs::Binds, local_instance_env >
-    default_preds( const set<Hs::TypeVar>& fixed_tvs,
-                   const set<Hs::TypeVar>& referenced_tvs,
-                   const local_instance_env& lie);
-
-    Hs::Binds default_subst();
-
-    std::tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> instantiate(const Hs::Type& t, bool meta=true);
-
-    // Figure 22.
-    tuple<vector<Hs::Qual>, local_value_env>
-    infer_quals_type(const global_value_env& env, vector<Hs::Qual> quals);
-
-    // Figure 22.
-    tuple<Hs::Qual, local_value_env>
-    infer_qual_type(const global_value_env& env, const Hs::Qual& qual);
-
-    tuple<Hs::Qual, local_value_env>
-    infer_guard_type(const global_value_env& env, const Hs::Qual& guard);
-
-    // Figure 24.
-    tuple<Hs::Pattern, Hs::Type, local_value_env>
-    infer_pattern_type(const Hs::Pattern& pat);
-
-    tuple<Hs::Var, Hs::Type, local_value_env>
-    infer_lhs_var_type(Hs::Var v);
-
-    tuple<expression_ref, Hs::Type, local_value_env>
-    infer_lhs_type(const expression_ref& decl);
-
-    tuple<expression_ref, Hs::Type>
-    infer_rhs_type(const global_value_env& env, const expression_ref& decl);
-
-    tuple<expression_ref, Hs::Type>
-    infer_type(const global_value_env& env, expression_ref exp);
-
-    tuple<Hs::GuardedRHS, Hs::Type>
-    infer_type(const global_value_env& env, Hs::GuardedRHS);
-
-    tuple<Hs::MultiGuardedRHS, Hs::Type>
-    infer_type(const global_value_env& env, Hs::MultiGuardedRHS);
-
-    tuple<Hs::MRule, Hs::Type>
-    infer_type(const global_value_env& env, Hs::MRule);
-
-    tuple<Hs::Match, Hs::Type>
-    infer_type(const global_value_env& env, Hs::Match);
-
-    global_value_env sig_env(const map<string, Hs::Type>& signatures);
-
-    // Figures 13, 14, 15?
-    tuple<Hs::Decls, global_value_env>
-    infer_type_for_decls(const global_value_env& env, const signature_env&, Hs::Decls E);
-
-    tuple<expression_ref, string, Hs::Type>
-    infer_type_for_single_fundecl_with_sig(const global_value_env& env, Hs::FunDecl FD);
-
-    tuple<Hs::Decls, global_value_env>
-    infer_type_for_decls_groups(const global_value_env& env, const signature_env&, Hs::Decls E);
-
-    // Figures 13, 14, 15?
-    tuple<Hs::Binds, global_value_env>
-    infer_type_for_binds(const global_value_env& env, Hs::Binds binds);
-
-    tuple<global_value_env, global_instance_env, class_env, Hs::Binds>
-    infer_type_for_classes(const Hs::Decls& decls, const type_con_env& tce);
-
-    tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
-    infer_type_for_class(const type_con_env& tce, const Hs::ClassDecl& class_decl);
-
-    // Figure 12
-    global_instance_env
-    infer_type_for_instances1(const Hs::Decls& decls, const class_env& ce);
-
-    // Figure 12
-    global_instance_env
-    infer_type_for_instance1(const Hs::InstanceDecl& instance_del, const class_env& ce);
-
-    // Figure 12
-    Hs::Decls
-    infer_type_for_instances2(const Hs::Decls& decls, const class_env& ce);
-
-    // Figure 12
-    Hs::Decls
-    infer_type_for_instance2(const Hs::InstanceDecl& instance_del, const class_env& ce);
-
-    // Figure 26
-    // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
-    local_instance_env constraints_to_lie(const vector<Hs::Type>&);
-
-    // FIXME: this should be  const
-    vector<pair<string, Hs::Type>> superclass_constraints(const Hs::Type& constraint);
-
-    // FIXME: this should be  const
-    std::optional<vector<string>>
-    is_superclass_of(const Hs::Type&, const Hs::Type&);
-
-    // FIXME: this should be  const
-    std::optional<Hs::Binds>
-    entails_by_superclass(const pair<string, Hs::Type>& to_keep,
-                          const pair<string, Hs::Type>& to_remove);
-
-    template <typename T>
-    optional<Hs::Binds> entails(const T& to_keep, const pair<string, Hs::Type>& to_check);
-
-    optional<Hs::Binds> entails(const local_instance_env& lie1, const local_instance_env& lie2);
-
-    optional<pair<Hs::Var,vector<Hs::Type>>> lookup_instance(const Hs::Type& constraint);
-
-    pair<Hs::Binds,local_instance_env> toHnf(const string& name, const Hs::Type& constraint);
-    pair<Hs::Binds, local_instance_env> toHnfs(const local_instance_env& lie_in);
-    pair<Hs::Binds, local_instance_env> simplify(const local_instance_env& lie_in);
-    pair<Hs::Binds, local_instance_env> reduce(const local_instance_env& lie_in);
-    Hs::Binds reduce_current_lie();
-};
+    else
+        return false;
+}
+
+bool typechecker_state::add_substitution(const Hs::TypeVar& a, const Hs::Type& type)
+{
+    if (auto s = try_insert({}, a, type))
+        return add_substitution(*s);
+    else
+        return false;
+}
+
+bool typechecker_state::maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
+{
+    if (auto s = ::maybe_unify(level, t1, t2))
+        return add_substitution(*s);
+    else
+        return false;
+}
+
+void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2)
+{
+    if (not maybe_unify(t1,t2))
+        throw myexception()<<"Unification failed: "<<apply_current_subst(t1)<<" !~ "<<apply_current_subst(t2);
+}
+
+Hs::Var typechecker_state::fresh_var(const std::string& s, bool qualified)
+{
+    string name = "$"+s+std::to_string(next_var_index);
+    if (qualified)
+        name = mod_name + "." + name;
+    Hs::Var x({noloc, name});
+    next_var_index++;
+    return x;
+}
+
+// "Rigid" type vars come from forall-quantified variables.
+// "Wobbly" type vars come from existentially-quantified variables (I think).  We don't have any.
+// "Meta" type vars are unification type vars.
+Hs::TypeVar typechecker_state::fresh_rigid_type_var() {
+    Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
+    next_tvar_index++;
+    tv.info = Hs::typevar_info::rigid;
+    tv.level = level;
+    return tv;
+}
+
+Hs::TypeVar typechecker_state::fresh_meta_type_var() {
+    Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
+    next_tvar_index++;
+    tv.info = Hs::typevar_info::meta;
+    tv.level = level;
+    return tv;
+}
+
+Hs::TypeVar typechecker_state::fresh_type_var(bool meta) {
+    if (meta)
+        return fresh_meta_type_var();
+    else
+        return fresh_rigid_type_var();
+}
 
 pair<local_instance_env, map<Hs::TypeVar, local_instance_env>>
 ambiguities(const set<Hs::TypeVar>& tvs1, const set<Hs::TypeVar>& tvs2, local_instance_env lie)
@@ -1164,48 +1013,6 @@ optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<string, 
     }
     else
         return {};
-}
-
-template <typename T>
-optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const pair<string, Hs::Type>& to_remove)
-{
-    // 1. First check if the relevant constraints are superclasses of the current constraint.
-    for(auto& constraint2: to_keep)
-    {
-        if (auto binds = entails_by_superclass(constraint2, to_remove))
-            return *binds;
-    }
-
-    // 2. Then check if there is an instance dfun :: (K1 a, K2 a) => K a
-    if (auto inst = lookup_instance(to_remove.second))
-    {
-        auto [dfun, constraints] = *inst;
-
-        Hs::Binds binds;
-        // If we can get (dvar1 :: K1 a) and (dvar2 :: K2 a) and a dfun so that dvar = dfun dvar1 dvar2
-        vector<Hs::Exp> args;
-        for(auto& constraint: constraints)
-        {
-            Hs::Decls decls;
-            auto dvar = fresh_dvar(constraint);
-            args.push_back(dvar);
-            if (auto cbinds = entails(to_keep, {unloc(dvar.name),constraint}))
-            {
-                ranges::insert(binds, binds.begin(), *cbinds);
-            }
-            else
-                return {};
-        }
-
-        Hs::Decls decls;
-        Hs::Var dvar( {noloc, to_remove.first} );
-        decls.push_back( Hs::simple_decl( dvar, apply_expression(dfun, args)) );
-        binds.push_back( decls );
-
-        return binds;
-    }
-
-    return {};
 }
 
 local_instance_env typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
