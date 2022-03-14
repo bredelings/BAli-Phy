@@ -1889,6 +1889,10 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         // texp->exp;
         // texp->type
 
+        // 3. instantiate the given type...
+        // 4. ... with fresh variables gamma[i].
+        auto [_, given_constraints, given_type] = instantiate(texp->type);
+
         // 1. Get the most general type
         level++;
         push_lie();
@@ -1897,10 +1901,6 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         // 2. alpha[i] in most_general_type but not in env
         auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
-
-        // 3. instantiate the given type...
-        // 4. ... with fresh variables gamma[i].
-        auto [_, given_constraints, given_type] = instantiate(texp->type);
 
         // 5. Constrain the most general type to the given type with MATCH
         auto s2 = maybe_unify(most_general_type, given_type);
