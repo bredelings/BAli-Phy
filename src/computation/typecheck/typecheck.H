@@ -164,7 +164,7 @@ struct typechecker_state
     std::tuple<Hs::Match, Hs::Type>
     infer_type(const global_value_env& env, Hs::Match);
 
-    global_value_env sig_env(const std::map<std::string, Hs::Type>& signatures);
+    global_value_env sig_env(const signature_env& signatures);
 
     // Figures 13, 14, 15?
     std::tuple<Hs::Decls, global_value_env>

@@ -1273,8 +1273,17 @@ bool single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signat
     return signatures.count(name) > 0;
 }
 
+value_env remove_sig_binders(value_env binder_env, const signature_env& signatures)
+{
+    auto no_sig_binder_env = binder_env;
+    for(auto& [name,_]: binder_env)
+        if (signatures.count(name))
+            no_sig_binder_env = no_sig_binder_env.erase(name);
+    return no_sig_binder_env;
+}
+
 tuple<Hs::Decls, global_value_env>
-typechecker_state::infer_type_for_decls(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls)
+typechecker_state::infer_type_for_decls(const global_value_env& env, const signature_env& signatures, Hs::Decls decls)
 {
     // The signatures for the binders should already be in the environment.
 
@@ -1304,6 +1313,8 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const map<s
                 decls2.push_back(decl);
 
             binders += group_binders;
+
+            env2 += remove_sig_binders(group_binders, signatures);
         }
     }
     return {decls, binders};
@@ -1373,11 +1384,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
         lhs_types.push_back(type);
     }
 
-    auto no_sig_binder_env = binder_env;
-    for(auto& [name,_]: binder_env)
-        if (signatures.count(name))
-            no_sig_binder_env = no_sig_binder_env.erase(name);
-    auto env2 = plus_prefer_right(env, no_sig_binder_env);
+    auto env2 = env + remove_sig_binders(binder_env, signatures);
 
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)
