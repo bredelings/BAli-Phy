@@ -56,22 +56,24 @@ using std::tuple;
   * Handle a :: Num a => Char in (a,b) = ('a',1)
   * Partially handle polymorphic recursion.
   * Split decls into pieces.
+  *. Add levels for skolem variables also.
 
   TODO:
   0. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
-  0. Add levels for skolem variables also.
   0. Type-check / kind-check user-written signatures.
   0. Handle user-written signatures in monomorphic-restricted blocks.
   0. Use the level machinery to handle constraints on unification.
   0. Promote type variables that are not generalized...
-  - Modify infer_lhs_type to use signatures to instantiate types for lhs variables with signatures.
-    + How do we avoid instantiating types with LIEs in situations where the monomorphism restriction applies?
-  -2. Implement explicit types in terms of TypedExp -- match + entails to check predicates
+  0. Don't count the level of unification variables with a value.
+  0. Modify infer_lhs_type to use signatures to instantiate types for lhs variables with signatures.
+    + Q: How do we avoid instantiating types with LIEs in situations where the monomorphism restriction applies?
+    + A: Signatures can't have LIE's when the monomorphism restriction applies.
+  0. Implement explicit types in terms of TypedExp -- match + entails to check predicates
     + GHC/Hs/Binds.hs
     + GHC/Tc/Gen/Binds.hs
     + Basically, I need to read all of Gen/Bind.hs :-(
       - See note [Impedance matching]
-  -1. Record impedance-matching info in DictionaryLambda (and perhaps rename it).
+  0. Record impedance-matching info in DictionaryLambda (and perhaps rename it).
   0. Write more-general impedance-matching code.
   0. Avoid a space leak with polymorphic recursion in cases like factorial.
      Do not create new dictionaries for each call at the same type.
