@@ -310,23 +310,23 @@ std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain(int level, const 
     return {tv, type};
 }
 
-std::optional<substitution_t> combine(int level, const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
+std::optional<substitution_t> combine(const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
 {
     if (not s1) return {};
     if (not s2) return {};
-    return combine(level, *s1, *s2);
+    return combine(*s1, *s2);
 }
 
-std::optional<substitution_t> combine(int level, const std::optional<substitution_t>& s1, const substitution_t& s2)
+std::optional<substitution_t> combine(const std::optional<substitution_t>& s1, const substitution_t& s2)
 {
     if (not s1) return {};
-    return combine(level, *s1, s2);
+    return combine(*s1, s2);
 }
 
-std::optional<substitution_t> combine(int level, const substitution_t& s1, const optional<substitution_t>& s2)
+std::optional<substitution_t> combine(const substitution_t& s1, const optional<substitution_t>& s2)
 {
     if (not s2) return {};
-    return combine(level, s1, *s2);
+    return combine(s1, *s2);
 }
 
 // What does it mean to combine substitutions when their are multiple levels?
@@ -337,7 +337,7 @@ std::optional<substitution_t> combine(int level, const substitution_t& s1, const
 
 
 // The order of s1 and s2 should not matter.
-std::optional<substitution_t> combine(int level, substitution_t s1, substitution_t s2)
+std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
 {
     // While we store substitutions as [(TypeVar,Type)], the conceptual model is
     //   really [([TypeVar], Maybe Type)].
@@ -357,7 +357,6 @@ std::optional<substitution_t> combine(int level, substitution_t s1, substitution
 
         assert(x.level);
         int x_level = *x.level;
-        assert(x_level >= level);
 
         // 1. Find the last type variable in the var chain from tv, and maybe the term x_value that it points.
         auto [x_exemplar, x_value] = follow_var_chain(x_level, s1, &x);
@@ -380,10 +379,10 @@ std::optional<substitution_t> combine(int level, substitution_t s1, substitution
                 s3 = try_insert(s1, *y_exemplar, *x_exemplar);
             // 3d. Otherwise, x_exemplar and tv2 are both equal to different terms that must be equal.
             else
-                s3 = combine(level, s1, maybe_unify(level, *x_value, *y_value));
+                s3 = combine(s1, maybe_unify(*x_value, *y_value));
         }
         else
-            s3 = combine(level, s1, maybe_unify(level, *x_value, e));
+            s3 = combine(s1, maybe_unify(*x_value, e));
 
         if (not s3)
             return {};
@@ -395,22 +394,27 @@ std::optional<substitution_t> combine(int level, substitution_t s1, substitution
 }
 
 // Is there a better way to implement this?
-optional<substitution_t> maybe_unify(int level, const Hs::Type& t1, const Hs::Type& t2)
+optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
 {
-    if (auto tv1 = is_meta_type_var_on_level(t1, level))
+    if (auto tv1 = is_meta_type_var(t1))
     {
+        // Check if t2 has an allowable level.
         substitution_t s;
-        return try_insert(s, *tv1, t2);
+        auto s2 = try_insert(s, *tv1, t2);
+        if (s2) return s2;
+
+        // Handle the case where t2 is ALSO a meta-typevar, but with a deeper level, by falling through.
     }
-    else if (auto tv2 = is_meta_type_var_on_level(t2, level))
+
+    if (auto tv2 = is_meta_type_var(t2))
     {
         substitution_t s;
         return try_insert(s, *tv2, t1);
     }
-    else if (auto tv1 = is_skolem_type_var(t1))
+    else if (auto tv1 = t1.to<Hs::TypeVar>())
     {
         substitution_t empty;
-        if (auto tv2 = is_skolem_type_var(t2); tv2 and *tv1 == *tv2)
+        if (auto tv2 = t2.to<Hs::TypeVar>(); tv2 and *tv1 == *tv2)
             return empty;
         else
             return {};
@@ -420,8 +424,8 @@ optional<substitution_t> maybe_unify(int level, const Hs::Type& t1, const Hs::Ty
         auto& app1 = t1.as_<Hs::TypeApp>();
         auto& app2 = t2.as_<Hs::TypeApp>();
 
-        return combine( level, maybe_unify(level, app1.head, app2.head),
-                               maybe_unify(level, app1.arg , app2.arg ) );
+        return combine( maybe_unify(app1.head, app2.head),
+                        maybe_unify(app1.arg , app2.arg ) );
     }
     else if (t1.is_a<Hs::TypeCon>() and
              t2.is_a<Hs::TypeCon>() and
@@ -440,7 +444,7 @@ optional<substitution_t> maybe_unify(int level, const Hs::Type& t1, const Hs::Ty
         optional<substitution_t> s = substitution_t();
         for(int i=0;i<tup1.element_types.size();i++)
         {
-            s = combine(level, s, maybe_unify(level, tup1.element_types[i], tup2.element_types[i]) );
+            s = combine(s, maybe_unify(tup1.element_types[i], tup2.element_types[i]) );
             if (not s) return {};
         }
         return s;
@@ -449,7 +453,7 @@ optional<substitution_t> maybe_unify(int level, const Hs::Type& t1, const Hs::Ty
     {
         auto& L1 = t1.as_<Hs::ListType>();
         auto& L2 = t2.as_<Hs::ListType>();
-        return maybe_unify(level, L1.element_type, L2.element_type);
+        return maybe_unify(L1.element_type, L2.element_type);
     }
     else if (t1.is_a<Hs::ConstrainedType>() or t2.is_a<Hs::ConstrainedType>())
     {
@@ -463,9 +467,9 @@ optional<substitution_t> maybe_unify(int level, const Hs::Type& t1, const Hs::Ty
         return {};
 }
 
-substitution_t unify(int level, const Hs::Type& t1, const Hs::Type& t2)
+substitution_t unify(const Hs::Type& t1, const Hs::Type& t2)
 {
-    auto s = maybe_unify(level, t1, t2);
+    auto s = maybe_unify(t1, t2);
     if (not s)
         throw myexception()<<"Unification failed: "<<t1<<" !~ "<<t2;
     return *s;

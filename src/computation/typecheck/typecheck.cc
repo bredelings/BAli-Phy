@@ -463,7 +463,7 @@ tuple<Hs::Var, Hs::Type> typechecker_state::fresh_fractional_type(bool meta)
 
 bool typechecker_state::add_substitution(const substitution_t& s)
 {
-    if (auto s2 = combine(level, type_var_to_type, s))
+    if (auto s2 = combine(type_var_to_type, s))
     {
         type_var_to_type = *s2;
         return true;
@@ -482,7 +482,7 @@ bool typechecker_state::add_substitution(const Hs::TypeVar& a, const Hs::Type& t
 
 bool typechecker_state::maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
 {
-    if (auto s = ::maybe_unify(level, t1, t2))
+    if (auto s = ::maybe_unify(t1, t2))
         return add_substitution(*s);
     else
         return false;
@@ -839,16 +839,12 @@ optional<pair<Hs::Var,vector<Hs::Type>>> typechecker_state::lookup_instance(cons
     {
         level++;
         auto [_, instance_constraints, instance_head] = instantiate(type);
+        level--;
 
         // Skip if this is not an instance.
-        if (constraint_is_hnf(instance_head))
-        {
-            level--;
-            continue;
-        }
+        if (constraint_is_hnf(instance_head)) continue;
 
-        auto s = ::maybe_unify(level, instance_head, constraint);
-        level--;
+        auto s = ::maybe_unify(instance_head, constraint);
 
         // This instance doesn't match.
         if (not s) continue;
@@ -942,19 +938,15 @@ vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const H
         // Klass a => Superklass a
         level++;
         auto [_, class_constraints, superclass_constraint] = instantiate(type, false);
+        level--;
 
         // Skip if this is not a method of extracting superclass dictionaries
-        if (not constraint_is_hnf(superclass_constraint))
-        {
-            level--;
-            continue;
-        }
+        if (not constraint_is_hnf(superclass_constraint)) continue;
 
         assert(class_constraints.size() == 1);
 
         auto class_constraint = class_constraints[0];
-        auto s = ::maybe_unify(level, class_constraint, constraint);
-        level--;
+        auto s = ::maybe_unify(class_constraint, constraint);
 
         // The premise doesn't match the current class;
         if (not s) continue;
@@ -1114,7 +1106,7 @@ typechecker_state::default_preds( const set<Hs::TypeVar>& fixed_tvs,
         }
         auto& [s1, binds1] = *result;
 
-        auto tmp = combine(level, s, s1);
+        auto tmp = combine(s, s1);
         assert(tmp);
         s = *tmp; // These constraints should be on separate variables, and should not interact.
 
@@ -1898,13 +1890,13 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         push_lie();
         auto [exp, most_general_type] = infer_type(env, texp->exp);
         auto lie_most_general = pop_lie();
+        level--;
 
         // 2. alpha[i] in most_general_type but not in env
         auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
 
         // 5. Constrain the most general type to the given type with MATCH
         auto s2 = maybe_unify(most_general_type, given_type);
-        level--;
 
         if (not s2)
             throw myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"'";
