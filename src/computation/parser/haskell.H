@@ -112,15 +112,20 @@ struct Con: public Object
     Con(const Located<std::string>& s, int a):name(s),arity(a) {}
 };
 
+enum class typevar_info {meta, rigid, other};
+
 struct TypeVar: public Object
 {
     Located<std::string> name;
     std::optional<Kind> kind;
-    std::optional<int> level; // level in typechecking
+    typevar_info info = typevar_info::other;
+    std::optional<int> level;              // typechecking scope depth
 
     bool operator==(const Object&) const;
     bool operator==(const TypeVar&) const;
     bool operator<(const TypeVar&) const;
+
+    int get_level() const;
 
     TypeVar* clone() const { return new TypeVar(*this);}
     std::string print() const;
