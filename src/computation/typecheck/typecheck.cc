@@ -59,12 +59,16 @@ using std::tuple;
   * Add levels for skolem variables also.
 
   TODO:
+  0. Don't count the level of unification variables with a value.
+    - We want to allow combining two substitution where we having things like {x3 -> F y5, y5 -> G z2}
+    - We don't want to pass in the global substitution.
+    - Do we really want to check levels in try_insert? If s2 has {x3 -> F y5}, then we should be able to
+      add it to s1 without checking the level.
   0. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
   0. Type-check / kind-check user-written signatures.
   0. Handle user-written signatures in monomorphic-restricted blocks.
   0. Use the level machinery to handle constraints on unification.
   0. Promote type variables that are not generalized...
-  0. Don't count the level of unification variables with a value.
   0. Modify infer_lhs_type to use signatures to instantiate types for lhs variables with signatures.
     + Q: How do we avoid instantiating types with LIEs in situations where the monomorphism restriction applies?
     + A: Signatures can't have LIE's when the monomorphism restriction applies.

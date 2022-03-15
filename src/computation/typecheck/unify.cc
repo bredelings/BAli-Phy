@@ -205,14 +205,11 @@ std::optional<substitution_t> try_insert(const substitution_t& s, const Hs::Type
     if (auto tv2 = safe_type.to<Hs::TypeVar>(); tv2 and *tv2 == tv)
         return s;
 
-    // 4. Fail if the level invariant is not met.
-    if (tv.get_level() < max_level(type)) return {};
-
-    // 5. If safe_type contains tv, then we have a substitution loop for tv.
+    // 4. If safe_type contains tv, then we have a substitution loop for tv.
     //    Therefore return failure.  (This rules out infinite types.)
     if (occurs_check(tv, safe_type)) return {};
 
-    // 6. It is safe to add tv -> safe_type
+    // 5. It is safe to add tv -> safe_type
     return s.insert({tv, safe_type});
 }
 
@@ -396,17 +393,13 @@ std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
 // Is there a better way to implement this?
 optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
 {
-    if (auto tv1 = is_meta_type_var(t1))
+    if (auto tv1 = is_meta_type_var(t1); tv1 and tv1->get_level() >= max_level(t2))
     {
         // Check if t2 has an allowable level.
         substitution_t s;
-        auto s2 = try_insert(s, *tv1, t2);
-        if (s2) return s2;
-
-        // Handle the case where t2 is ALSO a meta-typevar, but with a deeper level, by falling through.
+        return try_insert(s, *tv1, t2);
     }
-
-    if (auto tv2 = is_meta_type_var(t2))
+    else if (auto tv2 = is_meta_type_var(t2); tv2 and tv2->get_level() >= max_level(t1))
     {
         substitution_t s;
         return try_insert(s, *tv2, t1);
