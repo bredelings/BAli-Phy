@@ -2358,6 +2358,31 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
         </para>
       </section>
 
+    <section>
+      <info><title>Generating a summary alignment with ancestral sequences</title></info>
+
+    <para>BAli-Phy can now reconstruct ancestral sequences for a given tree topology and (leaf sequence) alignment.
+    This is similar to the ancestor-reconstruction that is usually done for fixed-alignment analyses.
+    However, it is not quite the same, because of uncertainty in the tree and the alignment.
+    When computing the probability of an ancestral residue, this summary averages over uncertainty in the topology,
+    the alignment, and the ancestral state itself. 
+
+    <screen># Construct the leaf sequence alignment to annotate using posterior decoding
+<prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P1.fastas <replaceable>dir</replaceable>-2/C1.P1.fastas --skip=<replaceable>burn-in</replaceable> | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput>
+# Construct the tree topology to annotate
+<prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
+# Reconstruct ancestral sequences on the given tree and alignment
+<prompt>%</prompt> <userinput>summarize-ancestors P1.max.fasta -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree > P1.ancestors.fasta</userinput></screen>
+    
+BAli-Phy uses an alignment estimate (here, P1-max.fasta) as a template to construct a summary alignment with ancestral sequences.  BAli-Phy doesn&apos;t condition on the alignment columns, because (i) many columns occur only once in a posterior sample and (ii) conditioning on the column gives too much weight to the template alignment.
+</para>
+
+<para>Because the alignment is uncertain, residues in the same column of the template alignment may end up in different columns in an MCMC sample.  Therefore, in a given MCMC sample, different leaf residues in the same column may have different ancestors at the same internal node!  However, in our ancestral reconstruction, a given column may only display a single ancestral residue.</para>
+
+<para>BAli-Phy addresses this problem by averaging across the different ancestral residues in each column of the template alignment.  When identifying the ancestral character to column C from a sampled alignment A, we random select a residue in C and use it to select a column from A.  This procedure has the nice property that it will yield the traditional ancestral residue prediction if the alignment column is fixed.
+    </para>
+    </section>
+
       <section>
         <info><title>Sampled alignments contain ancestral sequences</title></info>
         <para>
@@ -2506,29 +2531,6 @@ When this
     </para>
     <para>Analyzing the samples and pooling the results also allows each sampled alignment to be
     analyzed in combination with the corresponding sampled tree.</para>
-    </section>
-
-    <section>
-      <info><title>Generating a summary alignment with ancestral sequences</title></info>
-
-    <para>It is also possible to display the most probable ancestral residue (or gap) in each site of 
-    a single representative alignment, as opposed to a randomly sampled ancestral state.  This
-    summary alignment is most similar to the output of fixed-alignment ancestral sequence reconstruction programs.
-    When computing the probability of an ancestral residue, this summary averages over uncertainty in the topology,
-    the alignment, and the ancestral state itself. However, the choice of a single representative alignment
-    to define the "columns" means that variation in ancestral sequence length cannot be displayed by this summary.
-
-    <screen><prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P<replaceable>p</replaceable>.fastas <replaceable>dir</replaceable>-2/C1.P<replaceable>p</replaceable>.fastas --skip=<replaceable>burn-in</replaceable> | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput>
-<prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
-<prompt>%</prompt> <userinput>summarize-ancestors P1.max.fasta -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree > P1.ancestors.fasta</userinput></screen>
-    
-BAli-Phy uses the maximum-posterior-decoding alignment as a template to construct a summary alignment with ancestral sequences.  However, BAli-Phy doesn&apos;t condition on the alignment columns, because (i) many columns occur only once in a posterior sample and (ii) conditioning on the column gives too much weight to the template alignment.
-</para>
-
-<para>For each residue in column C of the template alignment, we can ask what the ancestral residue is in row R of a sampled alignment.  Thus we can ask what the ancestor of the human residue is, and we can ask what the ancestor of the E. coli residue is, etc.  The problem is that these questions can have different answers!  This is because these different residues can be in different columns of a sampled alignment, even though they are in the same column of the template alignment.  As a result, asking what the ancestral character in row R is for a column C of the template alignment is not well defined.</para>
-
-<para>BAli-Phy&apos;s solution to this problem is to average across the different residues in each column C of the template alignment.  When identifying the ancestral character to column C from a sampled alignment A, we random select a residue in C and use it to select a column from A.  Thus the ill-defined question is handled by averaging over a collection of well-defined questions.  This procedure has the nice property that it will yield the standard ancestral residue prediction if the alignment column is fixed.
-    </para>
     </section>
 
 
