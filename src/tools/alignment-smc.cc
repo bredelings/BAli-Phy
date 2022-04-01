@@ -116,27 +116,33 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "produce help message")
 	("align", value<string>(),"file with sequences and initial alignment")
 	("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
-	("strip-gaps,S","Remove columns within <arg> columns of a gap")
-	("mask-gaps,G",value<int>(),"Remove columns within <arg> columns of a gap")
-	("mask-file,M",value<vector<string>>()->composing(),"Apply mask-file")
-	("minor-allele",value<int>(),"Keep columns with given minor-allele count")
+
+	("minor-allele",value<int>(),"Keep columns with inor-allele count >= <arg>")
 	("one-every",value<int>(),"Keep only 1 column in each interval of size <arg>")
-	("write-bed",value<string>(),"Write selected columns in BED format with chromosome name <arg>")
-        ("show-freq", "Show allele frequencies")
-	("translate-mask",value<string>(),"Masks (CSV or @file)")
-	("translate-vcf",value<string>(),"Masks (CSV or @file)")
-	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?")
+
+	("mask-gaps,G",value<int>(),"Remove columns within <arg> columns of a gap")
+	("strip-gaps,S","Remove columns within <arg> columns of a gap")
+	("mask-file,M",value<vector<string>>()->composing(),"Apply mask-file")
+	("autoclean","Mask blocks with too many SNPs")
+
 	("dical2","Output file for DiCal2")
-	("clean-to-ref",value<string>(),"Remove columns not in reference sequence <arg>")
 	("msmc","Output file for MSMC")
 	("psmc","Output file for PSMC")
+	("write-bed",value<string>(),"Output BED file with chromosome name <arg>")
+
+        // parameters
+	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?") // statistic
+        ("consensus-seqs",value<string>(), "sequences to use in consensus") // For find-alleles
+
+	("translate-mask",value<string>(),"Masks (CSV or @file)")
+	("translate-vcf",value<string>(),"Masks (CSV or @file)")
+        ("show-freq", "Show allele frequencies")
+	("clean-to-ref",value<string>(),"Remove columns not in reference sequence <arg>")
 	("pi-matrix","Calculate pi for each pair of sequences")
-	("autoclean","Mask blocks with too many SNPs")
 	("histogram",value<int>(),"Output SNP counts for blocks of arg bases")
         ("snp-snp-lengths",value<int>(),"Output counts of snp-snp\nlengths up to arg snps")
         ("sfs2d",value<string>(),"pop1:pop2:anc:window")
         ("find-alleles",value<string>(), "Find alleles with S snps in L bases and count >= N")
-        ("consensus-seqs",value<string>(), "sequences to use in consensus")
 	;
 
     // positional options
@@ -1336,7 +1342,6 @@ void show_alleles(const vector<pair<allele_t,int>>& alleles, const alphabet& a, 
     }
 }
 
-
 int main(int argc,char* argv[]) 
 { 
     try {
@@ -1680,6 +1685,9 @@ int main(int argc,char* argv[])
 	    write_psmc(std::cout,A,0,1);
 	else if (args.count("dical2"))
 	    write_dical2(std::cout,A);
+        else if (args.count("ldhat"))
+        {
+        }
 	else if (args.count("pi-matrix"))
 	{
 	    print_matrix(std::cout, pi_matrix(A),'\t');
