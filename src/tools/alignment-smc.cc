@@ -80,7 +80,7 @@ template<typename T>
 void add(vector<T>& v1,const vector<T>& v2) 
 {
     for(int i=0;i<v1.size();i++)
-	v1[i] += v2[i];
+        v1[i] += v2[i];
 }
 
 
@@ -93,7 +93,7 @@ vector<int> find_triplet(const sequence& s,const string& triplet)
 
     int pos=-1;
     while(pos=s.find(triplet,pos+1),pos != -1)
-	found[pos%3]++;
+        found[pos%3]++;
 
     return found;
 }
@@ -102,7 +102,7 @@ vector<int> find_triplet(const vector<sequence>& sequences,const string& triplet
 {
     vector<int> found(3,0);
     for(int i=0;i<sequences.size();i++)
-	add(found, find_triplet(sequences[i],triplet) );
+        add(found, find_triplet(sequences[i],triplet) );
     return found;
 }
 
@@ -113,37 +113,37 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description all("Allowed options");
     all.add_options()
-	("help,h", "produce help message")
-	("align", value<string>(),"file with sequences and initial alignment")
-	("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
+        ("help,h", "produce help message")
+        ("align", value<string>(),"file with sequences and initial alignment")
+        ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
 
-	("minor-allele",value<int>(),"Keep columns with inor-allele count >= <arg>")
-	("one-every",value<int>(),"Keep only 1 column in each interval of size <arg>")
+        ("minor-allele",value<int>(),"Keep columns with inor-allele count >= <arg>")
+        ("one-every",value<int>(),"Keep only 1 column in each interval of size <arg>")
 
-	("mask-gaps,G",value<int>(),"Remove columns within <arg> columns of a gap")
-	("strip-gaps,S","Remove columns within <arg> columns of a gap")
-	("mask-file,M",value<vector<string>>()->composing(),"Apply mask-file")
-	("autoclean","Mask blocks with too many SNPs")
+        ("mask-gaps,G",value<int>(),"Remove columns within <arg> columns of a gap")
+        ("strip-gaps,S","Remove columns within <arg> columns of a gap")
+        ("mask-file,M",value<vector<string>>()->composing(),"Apply mask-file")
+        ("autoclean","Mask blocks with too many SNPs")
 
-	("dical2","Output file for DiCal2")
-	("msmc","Output file for MSMC")
-	("psmc","Output file for PSMC")
-	("write-bed",value<string>(),"Output BED file with chromosome name <arg>")
+        ("dical2","Output file for DiCal2")
+        ("msmc","Output file for MSMC")
+        ("psmc","Output file for PSMC")
+        ("write-bed",value<string>(),"Output BED file with chromosome name <arg>")
 
         // parameters
-	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?") // statistic
+        ("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?") // statistic
         ("consensus-seqs",value<string>(), "sequences to use in consensus") // For find-alleles
 
-	("translate-mask",value<string>(),"Masks (CSV or @file)")
-	("translate-vcf",value<string>(),"Masks (CSV or @file)")
+        ("translate-mask",value<string>(),"Masks (CSV or @file)")
+        ("translate-vcf",value<string>(),"Masks (CSV or @file)")
         ("show-freq", "Show allele frequencies")
-	("clean-to-ref",value<string>(),"Remove columns not in reference sequence <arg>")
-	("pi-matrix","Calculate pi for each pair of sequences")
-	("histogram",value<int>(),"Output SNP counts for blocks of arg bases")
+        ("clean-to-ref",value<string>(),"Remove columns not in reference sequence <arg>")
+        ("pi-matrix","Calculate pi for each pair of sequences")
+        ("histogram",value<int>(),"Output SNP counts for blocks of arg bases")
         ("snp-snp-lengths",value<int>(),"Output counts of snp-snp\nlengths up to arg snps")
         ("sfs2d",value<string>(),"pop1:pop2:anc:window")
         ("find-alleles",value<string>(), "Find alleles with S snps in L bases and count >= N")
-	;
+        ;
 
     // positional options
     positional_options_description p;
@@ -151,21 +151,21 @@ variables_map parse_cmd_line(int argc,char* argv[])
   
     variables_map args;     
     store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
+          options(all).positional(p).run(), args);
     // store(parse_command_line(argc, argv, desc), args);
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Generate input for SMC programs.\n\n";
-	cout<<"Usage: alignment-smc <alignment-file> [OPTIONS]\n\n";
-	cout<<all<<"\n";
+        cout<<"Generate input for SMC programs.\n\n";
+        cout<<"Usage: alignment-smc <alignment-file> [OPTIONS]\n\n";
+        cout<<all<<"\n";
         cout<<"Examples:\n\n";
         cout<<"  To calculate some statistics:\n";
         cout<<"    % alignment-smc sequence.fasta > /dev/null\n";
         cout<<"\n";
         cout<<"  To write out SNPS with minor-allele count >=2 in BED format:\n";
         cout<<"    % alignment-smc sequences.fasta --minor-allele=2 --write-bed=chrom > snps.bed\n";
-	exit(0);
+        exit(0);
     }
 
     return args;
@@ -176,7 +176,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 int n_letters(const valarray<int>& count,int level) {
     int n = 0;
     for(int l=0;l<count.size();l++)
-	if (count[l] > level) n++;
+        if (count[l] > level) n++;
     return n;
 
 }
@@ -193,8 +193,8 @@ double min_identity(const alignment& A,bool gaps_count)
 {
     double identity = 1.0;
     for(int i=0;i<A.n_sequences();i++)
-	for(int j=0;j<i;j++)
-	    identity = std::min(identity,fraction_identical(A,i,j,gaps_count));
+        for(int j=0;j<i;j++)
+            identity = std::min(identity,fraction_identical(A,i,j,gaps_count));
 
     return identity;
 }
@@ -206,10 +206,10 @@ unsigned letter_classes(const alignment& A)
     // Count the occurrence of the different letters
     unsigned count=0;
     for(int i=0;i<A.length();i++) {
-	for(int j=0;j<A.n_sequences();j++) {
-	    if (alphabet::is_letter_class(A(i,j)) and not a.is_letter(A(i,j)))
-		count++;
-	}
+        for(int j=0;j<A.n_sequences();j++) {
+            if (alphabet::is_letter_class(A(i,j)) and not a.is_letter(A(i,j)))
+                count++;
+        }
     }
 
     return count;
@@ -229,9 +229,9 @@ bool operator==(const gap& i1,const gap& i2)
 bool operator<(const gap& i1,const gap& i2)
 {
     if (i1.start < i2.start)
-	return true;
+        return true;
     if (i1.start > i2.start)
-	return false;
+        return false;
     return (i1.length < i2.length);
 }
 
@@ -241,15 +241,15 @@ vector<gap> find_gaps(const alignment& A,int t)
     bool prev_gap=false;
     for(int i=0;i<A.length();i++)
     {
-	if (A.gap(i,t)) {
-	    if (prev_gap)
-		gaps.back().length++;
-	    else
-		gaps.push_back(gap(i,1,1));
-	    prev_gap = true;
-	}
-	else
-	    prev_gap=false;
+        if (A.gap(i,t)) {
+            if (prev_gap)
+                gaps.back().length++;
+            else
+                gaps.push_back(gap(i,1,1));
+            prev_gap = true;
+        }
+        else
+            prev_gap=false;
     }
     return gaps;
 }
@@ -258,12 +258,12 @@ unsigned n_insertions(const alignment& A,int start,int length)
 {
     unsigned count=0;
     for(int j=0;j<A.n_sequences();j++) {
-	bool found = false;
-	for(int k=0;k<length and not found;k++)
-	    if (A.gap(start+k,j))
-		found=true;
-	if (not found)
-	    count++;
+        bool found = false;
+        for(int k=0;k<length and not found;k++)
+            if (A.gap(start+k,j))
+                found=true;
+        if (not found)
+            count++;
     }
     return count;
 }
@@ -273,28 +273,28 @@ map<gap,unsigned> guess_indels(const alignment& A)
     map<gap,unsigned> gaps;
     for(int i=0;i<A.n_sequences();i++)
     {
-	vector<gap> row = find_gaps(A,i);
-	for(int j=0;j<row.size();j++)
-	    gaps[row[j]]++;
+        vector<gap> row = find_gaps(A,i);
+        for(int j=0;j<row.size();j++)
+            gaps[row[j]]++;
     }
 
     // flip deletions in many taxa to insertions in few taxa
     for(map<gap,unsigned>::iterator i=gaps.begin();i!=gaps.end();) 
     {
-	const gap& g = i->first;
-	unsigned ins_count = n_insertions(A,g.start,g.length);
-	if (ins_count < i->second) {
-	    g.type = 2;
-	    i->second = ins_count;
-	}
+        const gap& g = i->first;
+        unsigned ins_count = n_insertions(A,g.start,g.length);
+        if (ins_count < i->second) {
+            g.type = 2;
+            i->second = ins_count;
+        }
 
-	// increment counter and remove current element if count==0.
-	{
-	    map<gap,unsigned>::iterator j = i;
-	    i++;
-	    if (not j->second)
-		gaps.erase(j);
-	}
+        // increment counter and remove current element if count==0.
+        {
+            map<gap,unsigned>::iterator j = i;
+            i++;
+            if (not j->second)
+                gaps.erase(j);
+        }
     }
     return gaps;
 }
@@ -308,10 +308,10 @@ vector<pair<int,int>> columns_to_regions(const vector<int>& columns)
     regions.push_back({columns[0],columns[0]+1});
     for(int i=1; i<columns.size();i++)
     {
-	if (regions.back().second == columns[i])
-	    regions.back().second++;
-	else
-	    regions.push_back({columns[i],columns[i]+1});
+        if (regions.back().second == columns[i])
+            regions.back().second++;
+        else
+            regions.push_back({columns[i],columns[i]+1});
     }
 
     return regions;
@@ -323,15 +323,15 @@ dynamic_bitset<> diffuse(const dynamic_bitset<>& v, int d)
 
     for(int i=0;i<w.size();i++)
     {
-	if (w[i]) continue;
+        if (w[i]) continue;
 
-	for(int j=1;j<=d and not w[i];j++)
-	{
-	    if (i+j >=0 and i+j < v.size() and v[i+j])
-		w[i] = true;
-	    else if (i-j >=0 and i-j < v.size() and v[i-j])
-		w[i] = true;
-	}
+        for(int j=1;j<=d and not w[i];j++)
+        {
+            if (i+j >=0 and i+j < v.size() and v[i+j])
+                w[i] = true;
+            else if (i-j >=0 and i-j < v.size() and v[i-j])
+                w[i] = true;
+        }
     }
     return w;
 }
@@ -342,15 +342,15 @@ vector<int> diffuse(const vector<int>& v, int d, int /*label*/)
 
     for(int i=0;i<w.size();i++)
     {
-	if (w[i]) continue;
+        if (w[i]) continue;
 
-	for(int j=1;j<=d and not w[i];j++)
-	{
-	    if (i+j >=0 and i+j < v.size() and v[i+j])
-		w[i] = true;
-	    else if (i-j >=0 and i-j < v.size() and v[i-j])
-		w[i] = true;
-	}
+        for(int j=1;j<=d and not w[i];j++)
+        {
+            if (i+j >=0 and i+j < v.size() and v[i+j])
+                w[i] = true;
+            else if (i-j >=0 and i-j < v.size() and v[i-j])
+                w[i] = true;
+        }
     }
     return w;
 }
@@ -378,14 +378,14 @@ void write_dical2(std::ostream& o, const alignment& A)
     vector<int> segregating_sites;
     for(int column=0;column<A.length();column++)
     {
-	if (is_masked_column(A,column)) continue;
+        if (is_masked_column(A,column)) continue;
 
-	if (not is_variant_column(A,column)) continue;
-	
-	segregating_sites.push_back(column+1);
+        if (not is_variant_column(A,column)) continue;
+        
+        segregating_sites.push_back(column+1);
 
-	for(int h=0;h<A.n_sequences();h++)
-	    haplotypes[h].push_back( A(column,h) == A(column,0)?0:1 );
+        for(int h=0;h<A.n_sequences();h++)
+            haplotypes[h].push_back( A(column,h) == A(column,0)?0:1 );
     }
     // Write number of loci
     o<<"NUM LOCI\n"<<A.length()<<"\n\n";
@@ -394,13 +394,13 @@ void write_dical2(std::ostream& o, const alignment& A)
     o<<"SEGREGATING SITES\n";
     join(o, segregating_sites, '\t');
     o<<"\n\n";
-	
+        
     // write haplotypes
     o<<"HAPLOTYPES\n";
     for(auto& haplotype: haplotypes)
     {
-	join(o,haplotype,"");
-	o<<"\n";
+        join(o,haplotype,"");
+        o<<"\n";
     }
     o.flush();
 }
@@ -426,20 +426,20 @@ void write_msmc(std::ostream& o, const alignment& A)
     int last_snp = -1;
     for(int i=0;i<A.length();i++)
     {
-	if (is_masked_column(A,i))
-	{
-	    last_snp = i;
-	    continue;
-	}
+        if (is_masked_column(A,i))
+        {
+            last_snp = i;
+            continue;
+        }
 
-	if (not is_variant_column(A,i)) continue;
-	
-	o<<"1\t"<<i<<"\t"<<(i-last_snp)<<"\t";
-	for(int j=0;j<A.n_sequences();j++)
-	    o<<a.lookup(A(i,j));
-	o<<"\n";
+        if (not is_variant_column(A,i)) continue;
+        
+        o<<"1\t"<<i<<"\t"<<(i-last_snp)<<"\t";
+        for(int j=0;j<A.n_sequences();j++)
+            o<<a.lookup(A(i,j));
+        o<<"\n";
 
-	last_snp = i;
+        last_snp = i;
     }
 }
 
@@ -450,24 +450,24 @@ void write_psmc(std::ostream& o, const alignment& A, int x1, int x2)
     o<<">1\n";
     for(int i=0;i<A.length()/blocksize;i++)
     {
-	bool diff = false;
-	for(int j=0;not diff and j<blocksize;j++)
-	{
-	    int c = blocksize * i + j;
+        bool diff = false;
+        for(int j=0;not diff and j<blocksize;j++)
+        {
+            int c = blocksize * i + j;
 
-	    int l1 = A(c,x1);
-	    int l2 = A(c,x2);
+            int l1 = A(c,x1);
+            int l2 = A(c,x2);
 
-	    if (not a.is_letter(l1) or not a.is_letter(l2)) continue;
+            if (not a.is_letter(l1) or not a.is_letter(l2)) continue;
 
-	    diff = (l1 != l2);
-	}
-	if (diff)
-	    o<<"K";
-	else
-	    o<<"T";
-	if (i%60 == 59)
-	    o<<"\n";
+            diff = (l1 != l2);
+        }
+        if (diff)
+            o<<"K";
+        else
+            o<<"T";
+        if (i%60 == 59)
+            o<<"\n";
     }
     o<<std::endl;
 }
@@ -477,8 +477,8 @@ int n_snps(const alignment& A)
 {
     int count = 0;
     for(int i=0;i<A.length();i++)
-	if (is_variant_column(A,i))
-	    count++;
+        if (is_variant_column(A,i))
+            count++;
     return count;
 }
 
@@ -487,12 +487,12 @@ vector<int> snps_in_blocks(const alignment& A, int blocksize)
     vector<int> counts;
     for(int i=0;i<A.length();)
     {
-	int count=0;
-	int end = i+blocksize;
-	for(;i<A.length() and i<end;i++)
-	    if (is_variant_column(A,i))
-		count++;
-	counts.push_back(count);
+        int count=0;
+        int end = i+blocksize;
+        for(;i<A.length() and i<end;i++)
+            if (is_variant_column(A,i))
+                count++;
+        counts.push_back(count);
     }
     return counts;
 }
@@ -500,7 +500,7 @@ vector<int> snps_in_blocks(const alignment& A, int blocksize)
 void write_histogram(std::ostream& o, int blocksize, const alignment& A)
 {
     for(int count: snps_in_blocks(A,blocksize))
-	o<<count<<"\n";
+        o<<count<<"\n";
 }
 
 
@@ -512,8 +512,8 @@ dynamic_bitset<> block_mask(dynamic_bitset<> mask, int blocksize)
     auto mask2 = mask;
     for(int i=1; i<=blocksize; i++)
     {
-	mask2 >>= 1;
-	mask |= mask2;
+        mask2 >>= 1;
+        mask |= mask2;
     }
     return mask;
 }
@@ -523,12 +523,12 @@ alignment clean_to_ref(alignment& A, const string& ref_name)
     auto index = find_index(sequence_names(A), ref_name);
 
     if (not index)
-	throw myexception()<<"Can't find reference name '"<<ref_name<<"' in alignment!";
+        throw myexception()<<"Can't find reference name '"<<ref_name<<"' in alignment!";
 
     vector<int> cols;
     for(int c=0;c<A.length();c++)
-	if (A.character(c,*index))
-	    cols.push_back(c);
+        if (A.character(c,*index))
+            cols.push_back(c);
 
     return select_columns(A,cols);
 }
@@ -548,27 +548,27 @@ int autoclean(alignment& A)
     int count = 0;
     for(int c2=0; c2<n_sites; c2++)
     {
-	int c1 = c2 - blocksize;
+        int c1 = c2 - blocksize;
 
-	if (            is_variant_column(A,c2)) count++;
-	if (c1 >= 0 and is_variant_column(A,c1)) count--;
+        if (            is_variant_column(A,c2)) count++;
+        if (c1 >= 0 and is_variant_column(A,c1)) count--;
 
-	assert(count == count_variant_columns(A, std::max(c1+1,0), c2));
+        assert(count == count_variant_columns(A, std::max(c1+1,0), c2));
 
-	if (count >= mean_snps_per_block*factor)
-	{
-	    mask.set(c2);
-	    masked++;
-	}
+        if (count >= mean_snps_per_block*factor)
+        {
+            mask.set(c2);
+            masked++;
+        }
     }
 
     auto mask2 = block_mask(mask, blocksize);
     for(int i=0;i<n_sites;i++)
     {
-	if (mask2[i])
-	{
-	    mask_column(A, i);
-	}
+        if (mask2[i])
+        {
+            mask_column(A, i);
+        }
     }
 
 //    std::cerr<<"Masked "<<masked<<" sites\n";
@@ -583,21 +583,21 @@ vector<int> expand_intervals(const vector<pair<int,int>>& intervals)
 {
     vector<int> seq;
     for(auto& I: intervals)
-	for(int i=I.first;i<=I.second;i++)
-	    seq.push_back(i);
+        for(int i=I.first;i<=I.second;i++)
+            seq.push_back(i);
     return seq;
 }
 
 void mask_columns(alignment& A, const vector<int>& columns)
 {
     for(int c: columns)
-	mask_column(A,c);
+        mask_column(A,c);
 }
 
 void mask_interval(alignment& A, int c1, int c2)
 {
     for(int c = c1; c <= c2; c++)
-	mask_column(A,c);
+        mask_column(A,c);
 }
 
 optional<int> find_mask_target(const vector<string>& seq_names, string mask_name)
@@ -615,22 +615,22 @@ void apply_mask(const sequence_mask& mask, alignment& A)
 {
     auto index = find_mask_target(sequence_names(A), mask.region_name);
     if (not index)
-	throw myexception()<<"Can't apply mask for region '"<<mask.region_name<<"': no such sequence!";
+        throw myexception()<<"Can't apply mask for region '"<<mask.region_name<<"': no such sequence!";
 
     vector<int> map;
     for(int c=0;c<A.length();c++)
-	if (A.character(c,*index))
-	    map.push_back(c);
+        if (A.character(c,*index))
+            map.push_back(c);
     map.push_back(map.back());
 
     for(auto& [beg,end]: mask.intervals)
-	mask_interval(A, map[beg], map[end]);
+        mask_interval(A, map[beg], map[end]);
 }
 
 void apply_masks(const vector<sequence_mask>& masks, alignment& A)
 {
     for(auto& mask: masks)
-	apply_mask(mask, A);
+        apply_mask(mask, A);
 }
 
 matrix<double> pi_matrix(const alignment& A)
@@ -641,24 +641,24 @@ matrix<double> pi_matrix(const alignment& A)
     matrix<int> diff(n,n,0);
 
     for(int col=0;col<A.length();col++)
-	for(int i=0;i<n;i++)
-	    for(int j=0;j<i;j++)
-	    {
-		auto l_i = A(col, i);
-		auto l_j = A(col, j);
-		if (a.is_letter(l_i) and a.is_letter(l_j))
-		{
-		    total(i,j)++;
-		    if (l_i != l_j)
-			diff(i,j)++;
-		}
-	    }
+        for(int i=0;i<n;i++)
+            for(int j=0;j<i;j++)
+            {
+                auto l_i = A(col, i);
+                auto l_j = A(col, j);
+                if (a.is_letter(l_i) and a.is_letter(l_j))
+                {
+                    total(i,j)++;
+                    if (l_i != l_j)
+                        diff(i,j)++;
+                }
+            }
     matrix<double> pi(n,n);
     for(int i=0;i<n;i++)
     {
-	pi(i,i) = 0;
-	for(int j=0;j<i;j++)
-	    pi(i,j) = pi(j,i) = double(diff(i,j))/total(i,j);
+        pi(i,i) = 0;
+        for(int j=0;j<i;j++)
+            pi(i,j) = pi(j,i) = double(diff(i,j))/total(i,j);
     }
     return pi;
 }
@@ -742,31 +742,31 @@ vector<sequence_mask> read_masks(const string& filename)
     static std::regex rgx ( R"(\s*([0-9]+)\s*-\s*([0-9]+)\s*)" );
     for(auto& line: lines)
     {
-	if (line.size() > 0 and line[0] == '>')
-	{
-	    masks.push_back({});
-	    masks.back().region_name = rstrip(line.substr(1), " \t");
-	    continue;
-	}
-	else if (masks.empty())
-	    throw myexception()<<"Read line '"<<line<<"' before first header!";
-	
-	try {
-	    std::smatch m;
-	    if (std::regex_match(line, m, rgx))
-	    {
-		int beg = convertTo<int>(m[1]);
-		int end = convertTo<int>(m[2]);
-		masks.back().intervals.push_back({beg,end});
-	    }
-	    else
-		throw myexception()<<"malformed interval!";
-	}
-	catch (myexception& e)
-	{
-	    e.prepend("Interval '"+line+"': ");
-	    throw;
-	}
+        if (line.size() > 0 and line[0] == '>')
+        {
+            masks.push_back({});
+            masks.back().region_name = rstrip(line.substr(1), " \t");
+            continue;
+        }
+        else if (masks.empty())
+            throw myexception()<<"Read line '"<<line<<"' before first header!";
+        
+        try {
+            std::smatch m;
+            if (std::regex_match(line, m, rgx))
+            {
+                int beg = convertTo<int>(m[1]);
+                int end = convertTo<int>(m[2]);
+                masks.back().intervals.push_back({beg,end});
+            }
+            else
+                throw myexception()<<"malformed interval!";
+        }
+        catch (myexception& e)
+        {
+            e.prepend("Interval '"+line+"': ");
+            throw;
+        }
     }
 
     return masks;
@@ -778,9 +778,9 @@ vector<int> allele_counts(const alignment& A, int col)
     vector<int> counts(a.size(), 0);
     for(int i=0;i<A.n_sequences();i++)
     {
-	auto c = A(col,i);
-	if (a.is_letter(c))
-	    counts[c]++;
+        auto c = A(col,i);
+        if (a.is_letter(c))
+            counts[c]++;
     }
     return counts;
 }
@@ -792,9 +792,9 @@ vector<int> allele_counts_with_gap(const alignment& A, int col)
     const int gap = a.size();
     for(int i=0;i<A.n_sequences();i++)
     {
-	auto c = A(col,i);
-	if (a.is_letter(c))
-	    counts[c]++;
+        auto c = A(col,i);
+        if (a.is_letter(c))
+            counts[c]++;
         else if (c == alphabet::gap)
             counts[gap]++;
         // Could be N!
@@ -808,9 +808,9 @@ vector<int> allele_counts(const alignment& A, int col, const vector<int>& seqs)
     vector<int> counts(a.size(), 0);
     for(int i:seqs)
     {
-	auto c = A(col,i);
-	if (a.is_letter(c))
-	    counts[c]++;
+        auto c = A(col,i);
+        if (a.is_letter(c))
+            counts[c]++;
     }
     return counts;
 }
@@ -822,9 +822,9 @@ vector<int> allele_counts_with_gap(const alignment& A, int col, const vector<int
     int gap = a.size();
     for(int i:seqs)
     {
-	auto c = A(col,i);
-	if (a.is_letter(c))
-	    counts[c]++;
+        auto c = A(col,i);
+        if (a.is_letter(c))
+            counts[c]++;
         else
             counts[gap]++;
     }
@@ -839,12 +839,12 @@ vector<vector<int>> make_bins(const vector<int>& columns, int width)
     int end = -1;
     for(int column: columns)
     {
-	while (column >= end)
-	{
-	    end += width;
-	    bins.push_back({});
-	}
-	bins.back().push_back(column);
+        while (column >= end)
+        {
+            end += width;
+            bins.push_back({});
+        }
+        bins.back().push_back(column);
     }
 
     return bins;
@@ -858,15 +858,15 @@ int largest_minor_allele_count(const alignment& A, int col)
     int m2 = std::min(counts[0],counts[1]);
     for(int i=2;i<counts.size();i++)
     {
-	int count = counts[i];
-	if (count > m1)
-	{
-	    m2 = m1;
-	    m1 = count;
-	    continue;
-	}
-	else if (count > m2)
-	    m2 = count;
+        int count = counts[i];
+        if (count > m1)
+        {
+            m2 = m1;
+            m1 = count;
+            continue;
+        }
+        else if (count > m2)
+            m2 = count;
     }
     return m2;
 }
@@ -949,7 +949,7 @@ pair<string,string> get_ref_alt(const alignment& A, int col)
 ostream& write_bed(ostream& o, const string& chromosome, const vector<pair<int,int>>& columns)
 {
     for(auto& [start,end]: columns)
-	o<<chromosome<<'\t'<<start<<'\t'<<end<<'\n';
+        o<<chromosome<<'\t'<<start<<'\t'<<end<<'\n';
     return o;
 }
 
@@ -959,7 +959,7 @@ ostream& write_snp_bed(ostream& o, const string& chromosome, const vector<int>& 
     for(int column: columns)
     {
         auto [ref,alt] = get_ref_alt(A, column);
-	o<<chromosome<<'\t'<<column<<'\t'<<column+1<<'\t'<<ref<<'\t'<<alt<<'\n';
+        o<<chromosome<<'\t'<<column<<'\t'<<column+1<<'\t'<<ref<<'\t'<<alt<<'\n';
     }
     return o;
 }
@@ -1026,7 +1026,7 @@ ostream& write_snp_bed_with_frequencies(ostream& o, const string& chromosome, co
     {
         auto [ref,alt] = get_ref_alt_index(A, column);
         auto& a = A.get_alphabet();
-	o<<chromosome<<'\t'<<column<<'\t'<<column+1<<'\t'<<a.lookup(ref)<<'\t'<<a.lookup(alt);
+        o<<chromosome<<'\t'<<column<<'\t'<<column+1<<'\t'<<a.lookup(ref)<<'\t'<<a.lookup(alt);
         for(auto& v: indices)
         {
             o<<'\t';
@@ -1345,11 +1345,11 @@ void show_alleles(const vector<pair<allele_t,int>>& alleles, const alphabet& a, 
 int main(int argc,char* argv[]) 
 { 
     try {
-	cerr.precision(10);
-	cout.precision(10);
+        cerr.precision(10);
+        cout.precision(10);
     
-	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        //---------- Parse command line  -------//
+        variables_map args = parse_cmd_line(argc,argv);
 
         if (auto vcf_filename = get_arg<string>(args, "translate-vcf"))
         {
@@ -1418,100 +1418,100 @@ int main(int argc,char* argv[])
                     std::cout<<line<<'\n';
             }
 
-	    exit(0);
+            exit(0);
         }
 
-	if (auto filename = get_arg<string>(args, "translate-mask"))
-	{
+        if (auto filename = get_arg<string>(args, "translate-mask"))
+        {
             //----------- Load alignment ---------//
             alignment A = load_A(args,false);
 
-	    if (A.n_sequences() != 2)
-		throw myexception()<<"translate-mask: expected exactly 2 sequences, but got "<<A.n_sequences()<<"!";
+            if (A.n_sequences() != 2)
+                throw myexception()<<"translate-mask: expected exactly 2 sequences, but got "<<A.n_sequences()<<"!";
 
-	    vector<pair<int,int>> map;
-	    int loc2 = -1;
-	    for(int c=0;c<A.length();c++)
-	    {
-		if (A.character(c,1)) loc2++;
+            vector<pair<int,int>> map;
+            int loc2 = -1;
+            for(int c=0;c<A.length();c++)
+            {
+                if (A.character(c,1)) loc2++;
 
-		if (A.character(c,0))
-		{
-		    if (A.character(c,1))
-			map.push_back({loc2,loc2});
-		    else
-			map.push_back({loc2,loc2+1});
-		}
-	    }
-	    // Map beginning to beginng
-	    map[0] = {0,0};
-	    // Map end to end
-	    map.back() = {loc2,loc2};
-	    map.push_back({loc2,loc2}); // Handle end that is 1 too large?
+                if (A.character(c,0))
+                {
+                    if (A.character(c,1))
+                        map.push_back({loc2,loc2});
+                    else
+                        map.push_back({loc2,loc2+1});
+                }
+            }
+            // Map beginning to beginng
+            map[0] = {0,0};
+            // Map end to end
+            map.back() = {loc2,loc2};
+            map.push_back({loc2,loc2}); // Handle end that is 1 too large?
 
-	    auto masks = read_masks(*filename);
-	    if (masks.size() == 0)
-		throw myexception()<<"mask file is empty!";
-	    if (masks.size() > 1)
-		throw myexception()<<"translate-mask: can only take 1 mask!";
-		
-	    auto& mask = masks[0];
-	    std::cout<<">"<<A.seq(1).name<<"\n";
-	    for(auto& [beg,end]: mask.intervals)
-	    {
-		if (beg < 0)
-		    throw myexception()<<"0-indexed interval should not have negative start offset!";
-		if (end > map.size())
-		    throw myexception()<<"0-indexed interval should end before the length of the source chromosome! ("<<map.size()<<")";
-		if (beg > end)
-		    throw myexception()<<"interval should not begin before it ends!";
+            auto masks = read_masks(*filename);
+            if (masks.size() == 0)
+                throw myexception()<<"mask file is empty!";
+            if (masks.size() > 1)
+                throw myexception()<<"translate-mask: can only take 1 mask!";
+                
+            auto& mask = masks[0];
+            std::cout<<">"<<A.seq(1).name<<"\n";
+            for(auto& [beg,end]: mask.intervals)
+            {
+                if (beg < 0)
+                    throw myexception()<<"0-indexed interval should not have negative start offset!";
+                if (end > map.size())
+                    throw myexception()<<"0-indexed interval should end before the length of the source chromosome! ("<<map.size()<<")";
+                if (beg > end)
+                    throw myexception()<<"interval should not begin before it ends!";
 
-		beg = map[beg].first;
-		end = map[end].second;
-		std::cout<<beg<<" - "<<end<<"\n";
-	    }
+                beg = map[beg].first;
+                end = map[end].second;
+                std::cout<<beg<<" - "<<end<<"\n";
+            }
 
-	    exit(0);
-	}
+            exit(0);
+        }
 
-	//----------- Load alignment ---------//
-	alignment A0 = load_A(args,false);
+        //----------- Load alignment ---------//
+        alignment A0 = load_A(args,false);
 
-	auto A = A0;
-	const alphabet& a = A.get_alphabet();
+        auto A = A0;
+        const alphabet& a = A.get_alphabet();
 
-	if (auto ref_name = get_arg<string>(args, "clean-to-ref"))
-	    A = clean_to_ref(A, *ref_name);
+        if (auto ref_name = get_arg<string>(args, "clean-to-ref"))
+            A = clean_to_ref(A, *ref_name);
 
-	if (args.count("autoclean"))
-	    autoclean(A);
+        if (args.count("autoclean"))
+            autoclean(A);
 
-	if (args.count("mask-file"))
-	{
-	    for(auto& filename: args["mask-file"].as<vector<string>>())
-	    {
-		auto masks = read_masks(filename);
-		apply_masks(masks, A);
-	    }
-	}
+        if (args.count("mask-file"))
+        {
+            for(auto& filename: args["mask-file"].as<vector<string>>())
+            {
+                auto masks = read_masks(filename);
+                apply_masks(masks, A);
+            }
+        }
 
-	if (args.count("mask-gaps"))
-	{
-	    // 1. label gap columns with 2 to remove them.
-	    int gap_label = 1;
-	    if (args.count("strip-gaps"))
-		gap_label = 2;
-	    auto gaps = gap_columns(A,gap_label);
+        if (args.count("mask-gaps"))
+        {
+            // 1. label gap columns with 2 to remove them.
+            int gap_label = 1;
+            if (args.count("strip-gaps"))
+                gap_label = 2;
+            auto gaps = gap_columns(A,gap_label);
 
-	    // 2. label nearby columns with '1' to mask them
-	    int mask_gap_dist = args["mask-gaps"].as<int>();
-	    gaps = diffuse(gaps, mask_gap_dist, 1);
+            // 2. label nearby columns with '1' to mask them
+            int mask_gap_dist = args["mask-gaps"].as<int>();
+            gaps = diffuse(gaps, mask_gap_dist, 1);
 
-	    // 3. Alter the alignment
-	    remove_and_mask_columns(A, [&gaps](int c){return gaps[c];});
-	}
+            // 3. Alter the alignment
+            remove_and_mask_columns(A, [&gaps](int c){return gaps[c];});
+        }
 
-	if (args.count("find-alleles"))
+        if (args.count("find-alleles"))
         {
             string range = args.count("consensus-seqs") ? args["consensus-seqs"].as<string>() : "-";
 
@@ -1556,11 +1556,11 @@ int main(int argc,char* argv[])
             exit(0);
         }
 
-	if (args.count("histogram"))
-	{
-	    write_histogram(std::cout, args["histogram"].as<int>(), A);
-	    exit(0);
-	}
+        if (args.count("histogram"))
+        {
+            write_histogram(std::cout, args["histogram"].as<int>(), A);
+            exit(0);
+        }
 
         if (args.count("sfs2d"))
         {
@@ -1584,70 +1584,70 @@ int main(int argc,char* argv[])
             exit(0);
         }
 
-	if (args.count("minor-allele"))
-	{
-	    int count = args["minor-allele"].as<int>();
+        if (args.count("minor-allele"))
+        {
+            int count = args["minor-allele"].as<int>();
 
-	    auto columns = find_columns(A, [&](int col) {return largest_minor_allele_count(A,col) >= count;});
+            auto columns = find_columns(A, [&](int col) {return largest_minor_allele_count(A,col) >= count;});
 
-	    // Space out the kept columns - keep only 1 every width bases
-	    if (args.count("one-every"))
-	    {
-		int width = args["one-every"].as<int>();
-		auto bins = make_bins(columns, width);
-		columns.clear();
-		for(auto& bin: bins)
-		    if (bin.size())
-			columns.push_back(bin[0]);
-	    }
+            // Space out the kept columns - keep only 1 every width bases
+            if (args.count("one-every"))
+            {
+                int width = args["one-every"].as<int>();
+                auto bins = make_bins(columns, width);
+                columns.clear();
+                for(auto& bin: bins)
+                    if (bin.size())
+                        columns.push_back(bin[0]);
+            }
 
-	    if (args.count("write-bed"))
-	    {
-		auto chromosome = args["write-bed"].as<string>();
+            if (args.count("write-bed"))
+            {
+                auto chromosome = args["write-bed"].as<string>();
                 if (args.count("show-freq"))
                     write_snp_bed_with_frequencies(std::cout, chromosome, columns, A);
                 else
                     write_snp_bed(std::cout, chromosome, columns, A);
-	    }
-	    else
-	    {
-		select_columns_inplace(A, columns);
-		std::cout<<A<<std::endl;
-	    }
-	    exit(0);
-	}
+            }
+            else
+            {
+                select_columns_inplace(A, columns);
+                std::cout<<A<<std::endl;
+            }
+            exit(0);
+        }
 
-	//----- Count informative/non-constant sites ----//
-	dynamic_bitset<> informative(A.length());
-	dynamic_bitset<> informative2(A.length());
-	dynamic_bitset<> different(A.length());
-	dynamic_bitset<> different2(A.length());
+        //----- Count informative/non-constant sites ----//
+        dynamic_bitset<> informative(A.length());
+        dynamic_bitset<> informative2(A.length());
+        dynamic_bitset<> different(A.length());
+        dynamic_bitset<> different2(A.length());
         dynamic_bitset<> could_be_different(A.length());
-	dynamic_bitset<> contains_a_gap(A.length());
+        dynamic_bitset<> contains_a_gap(A.length());
 
-	dynamic_bitset<> alleles2(A.length());
-	dynamic_bitset<> alleles3(A.length());
-	dynamic_bitset<> is_masked(A.length());
-	
-	valarray<int> count(a.size());
-	valarray<int> count2(2);
+        dynamic_bitset<> alleles2(A.length());
+        dynamic_bitset<> alleles3(A.length());
+        dynamic_bitset<> is_masked(A.length());
+        
+        valarray<int> count(a.size());
+        valarray<int> count2(2);
 
         int pi_count = 0;
         int pi_total = 0;
 
-	for(int c=0;c<A.length();c++) {
-	    count = 0;
-	    count2 = 0;
-	    for(int i=0;i<A.n_sequences();i++) {
-		int l = A(c,i);
-		if (a.is_letter(l))
-		    count[l]++;
+        for(int c=0;c<A.length();c++) {
+            count = 0;
+            count2 = 0;
+            for(int i=0;i<A.n_sequences();i++) {
+                int l = A(c,i);
+                if (a.is_letter(l))
+                    count[l]++;
 
-		if (a.is_feature(l))
-		    count2[0]++;
-		else if (l == alphabet::gap)
-		    count2[1]++;
-	    }
+                if (a.is_feature(l))
+                    count2[0]++;
+                else if (l == alphabet::gap)
+                    count2[1]++;
+            }
 
             int total_letters = count.sum();
             pi_total += total_letters*(total_letters-1)/2;
@@ -1656,69 +1656,69 @@ int main(int argc,char* argv[])
                 for(int l2=0;l2<l1;l2++)
                     pi_count += count[l1]*count[l2];
 
-	    different[c]  =   is_informative(count ,0);
-	    informative[c]  = is_informative(count ,1);
+            different[c]  =   is_informative(count ,0);
+            informative[c]  = is_informative(count ,1);
 
-	    contains_a_gap[c] = (count2[1]>0);
-	    different2[c] =   different[c] or contains_a_gap[c];
-	    informative2[c] = informative[c] or is_informative(count2,1);
+            contains_a_gap[c] = (count2[1]>0);
+            different2[c] =   different[c] or contains_a_gap[c];
+            informative2[c] = informative[c] or is_informative(count2,1);
 
-	    alleles2[c] = n_letters(count,0) == 2;
-	    alleles3[c] = n_letters(count,0) == 3;
-	    is_masked[c] = is_masked_column(A,c);
-	}
+            alleles2[c] = n_letters(count,0) == 2;
+            alleles3[c] = n_letters(count,0) == 3;
+            is_masked[c] = is_masked_column(A,c);
+        }
 
-	int n_different  = different.count();
-//	int n_same = A.length() - n_different;
-	int n_informative  = informative.count();
+        int n_different  = different.count();
+//      int n_same = A.length() - n_different;
+        int n_informative  = informative.count();
 
-//	int n_different2 = different2.count();
-//	int n_same2 = A.length() - n_different2;
-//	int n_informative2 = informative2.count();
-//	int n_with_gaps = contains_a_gap.count();
+//      int n_different2 = different2.count();
+//      int n_same2 = A.length() - n_different2;
+//      int n_informative2 = informative2.count();
+//      int n_with_gaps = contains_a_gap.count();
 
-	int non_masked_columns = A.length() - is_masked.count();
+        int non_masked_columns = A.length() - is_masked.count();
 
-	if (args.count("msmc"))
-	    write_msmc(std::cout, A);
-	else if (args.count("psmc"))
-	    write_psmc(std::cout,A,0,1);
-	else if (args.count("dical2"))
-	    write_dical2(std::cout,A);
+        if (args.count("msmc"))
+            write_msmc(std::cout, A);
+        else if (args.count("psmc"))
+            write_psmc(std::cout,A,0,1);
+        else if (args.count("dical2"))
+            write_dical2(std::cout,A);
         else if (args.count("ldhat"))
         {
         }
-	else if (args.count("pi-matrix"))
-	{
-	    print_matrix(std::cout, pi_matrix(A),'\t');
-	    exit(0);
-	}
-	else
-	    std::cout<<A;
-	std::cout.flush();
+        else if (args.count("pi-matrix"))
+        {
+            print_matrix(std::cout, pi_matrix(A),'\t');
+            exit(0);
+        }
+        else
+            std::cout<<A;
+        std::cout.flush();
 
-	if (A.length() != A0.length())
-	    std::cerr<<"Length changed from "<<A0.length()<<" to "<<A.length()<<"\n";
-	int variant_dist = args["variant"].as<int>();
-	std::cerr<<"Masked "<<is_masked.count()<<" sites.  "<<A.length()-is_masked.count()<<" sites remain.\n";
-	std::cerr<<"Sites with 2 alleles: "<<alleles2.count()<<" ("<<double(alleles2.count())/non_masked_columns<<")  ";
-	std::cerr<<"Sites with 3 alleles: "<<alleles3.count()<<" ("<<double(alleles3.count())/non_masked_columns<<")  \n";
+        if (A.length() != A0.length())
+            std::cerr<<"Length changed from "<<A0.length()<<" to "<<A.length()<<"\n";
+        int variant_dist = args["variant"].as<int>();
+        std::cerr<<"Masked "<<is_masked.count()<<" sites.  "<<A.length()-is_masked.count()<<" sites remain.\n";
+        std::cerr<<"Sites with 2 alleles: "<<alleles2.count()<<" ("<<double(alleles2.count())/non_masked_columns<<")  ";
+        std::cerr<<"Sites with 3 alleles: "<<alleles3.count()<<" ("<<double(alleles3.count())/non_masked_columns<<")  \n";
         {
             double pi_stat = pi(A);
             double theta = pi_stat/(1.0-pi_stat);
             std::cerr<<"pi = "<<pi_stat<<"    theta = "<<theta<<"\n";
         }
-	std::cerr<<"Variant sites: "<<n_different<<" ("<<double(n_different)/non_masked_columns<<")  ";
-	std::cerr<<"Variant sites at distance "<<variant_dist<<" before variant: "<<variant_column_at_distance(A,variant_dist).count()<<"\n";
-	std::cerr<<"Informative sites: "<<n_informative<<" ("<<double(n_informative)/non_masked_columns<<")  \n";
+        std::cerr<<"Variant sites: "<<n_different<<" ("<<double(n_different)/non_masked_columns<<")  ";
+        std::cerr<<"Variant sites at distance "<<variant_dist<<" before variant: "<<variant_column_at_distance(A,variant_dist).count()<<"\n";
+        std::cerr<<"Informative sites: "<<n_informative<<" ("<<double(n_informative)/non_masked_columns<<")  \n";
 
-	// Look at LD, look at whether adjacent SNPs are correlated, and over what distance.
-	// Look at blocks with more than
-	// MASK columns instead of REMOVING them if they are w/in some distance of gap;
+        // Look at LD, look at whether adjacent SNPs are correlated, and over what distance.
+        // Look at blocks with more than
+        // MASK columns instead of REMOVING them if they are w/in some distance of gap;
     }
     catch (std::exception& e) {
-	cerr<<"alignment-smc: Error! "<<e.what()<<endl;
-	exit(1);
+        cerr<<"alignment-smc: Error! "<<e.what()<<endl;
+        exit(1);
     }
     return 0;
 }
