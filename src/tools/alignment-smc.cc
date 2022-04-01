@@ -123,7 +123,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("mask-gaps,G",value<int>(),"Remove columns within <arg> columns of a gap")
         ("strip-gaps,S","Remove columns within <arg> columns of a gap")
         ("mask-file,M",value<vector<string>>()->composing(),"Apply mask-file")
-        ("autoclean","Mask blocks with too many SNPs")
+        ("autoclean,A","Mask blocks with too many SNPs")
 
         ("dical2","Output file for DiCal2")
         ("msmc","Output file for MSMC")
@@ -1342,7 +1342,127 @@ void show_alleles(const vector<pair<allele_t,int>>& alleles, const alphabet& a, 
     }
 }
 
-int main(int argc,char* argv[]) 
+void translate_vcf(const string& vcf_filename, const variables_map& args)
+{
+    auto alignments_filename = get_arg<string>(args,"align");
+    if (not alignments_filename)
+        throw myexception()<<"No filename specified for alignments to translate coordinates";
+
+    auto tables = get_translation_tables(*alignments_filename);
+
+    istream_or_ifstream vcf_file(std::cin, "-", vcf_filename);
+    string line;
+    while(portable_getline(vcf_file,line) and line.size() and line[0] == '#')
+        std::cout<<line<<"\n";
+
+    set<string> unknown;
+    string chrom;
+    const translation_table* table;
+
+    while(portable_getline(vcf_file,line))
+    {
+        auto fields = split(line,'\t');
+        assert(fields.size());
+        if (fields[0] != chrom or chrom.empty())
+        {
+            chrom = fields[0];
+            auto it = tables.find(chrom);
+
+            if (it == tables.end())
+            {
+                if(not unknown.count(chrom))
+                {
+                    unknown.insert(chrom);
+                    std::cerr<<"No translation table for '"<<chrom<<"'\n";
+                }
+                table = nullptr;
+            }
+            else
+                table = &(it->second);
+        }
+
+        if (table)
+        {
+            // Get zero-based coordinate from vcf 1-based coordinate
+            int pos = convertTo<int>(fields[1])-1;
+            if (pos < 0)
+                throw myexception()<<chrom<<'\t'<<pos<<": should not be negative!";
+            if (pos > table->lookup.size())
+                throw myexception()<<chrom<<'\t'<<pos<<": after end of chromosome of length "<<table->lookup.size();
+
+            auto& [p1,p2]  = table->lookup[pos];
+            if (p1 != p2)
+            {
+                std::cerr<<chrom<<'\t'<<pos<<": discarding record because it is missing in '"<<table->target_chrom<<"'\n";
+                continue;
+            }
+            else if (log_verbose)
+                std::cerr<<chrom<<'\t'<<pos<<": translating to "<<table->target_chrom<<"\t"<<p1<<"\n";
+
+            fields[0] = table->target_chrom;
+            // Get 1-based coordinate from 0-based coordinate
+            fields[1] = std::to_string(p1+1);
+            join(std::cout, fields, '\t');
+            std::cout<<'\n';
+        }
+        else
+            std::cout<<line<<'\n';
+    }
+}
+
+void translate_mask(const string& mask_filename, const variables_map& args)
+{
+    //----------- Load alignment ---------//
+    alignment A = load_A(args,false);
+
+    if (A.n_sequences() != 2)
+        throw myexception()<<"translate-mask: expected exactly 2 sequences, but got "<<A.n_sequences()<<"!";
+
+    vector<pair<int,int>> map;
+    int loc2 = -1;
+    for(int c=0;c<A.length();c++)
+    {
+        if (A.character(c,1)) loc2++;
+
+        if (A.character(c,0))
+        {
+            if (A.character(c,1))
+                map.push_back({loc2,loc2});
+            else
+                map.push_back({loc2,loc2+1});
+        }
+    }
+    // Map beginning to beginng
+    map[0] = {0,0};
+    // Map end to end
+    map.back() = {loc2,loc2};
+    map.push_back({loc2,loc2}); // Handle end that is 1 too large?
+
+    auto masks = read_masks(mask_filename);
+    if (masks.size() == 0)
+        throw myexception()<<"mask file is empty!";
+    if (masks.size() > 1)
+        throw myexception()<<"translate-mask: can only take 1 mask!";
+                
+    auto& mask = masks[0];
+    std::cout<<">"<<A.seq(1).name<<"\n";
+    for(auto& [beg,end]: mask.intervals)
+    {
+        if (beg < 0)
+            throw myexception()<<"0-indexed interval should not have negative start offset!";
+        if (end > map.size())
+            throw myexception()<<"0-indexed interval should end before the length of the source chromosome! ("<<map.size()<<")";
+        if (beg > end)
+            throw myexception()<<"interval should not begin before it ends!";
+
+        beg = map[beg].first;
+        end = map[end].second;
+        std::cout<<beg<<" - "<<end<<"\n";
+    }
+}
+
+
+int main(int argc,char* argv[])
 { 
     try {
         cerr.precision(10);
@@ -1353,124 +1473,13 @@ int main(int argc,char* argv[])
 
         if (auto vcf_filename = get_arg<string>(args, "translate-vcf"))
         {
-            auto alignments_filename = get_arg<string>(args,"align");
-            if (not alignments_filename)
-                throw myexception()<<"No filename specified for alignments to translate coordinates";
-
-            auto tables = get_translation_tables(*alignments_filename);
-
-            istream_or_ifstream vcf_file(std::cin, "-", *vcf_filename);
-            string line;
-            while(portable_getline(vcf_file,line) and line.size() and line[0] == '#')
-                std::cout<<line<<"\n";
-
-            set<string> unknown;
-            string chrom;
-            const translation_table* table;
-
-            while(portable_getline(vcf_file,line))
-            {
-                auto fields = split(line,'\t');
-                assert(fields.size());
-                if (fields[0] != chrom or chrom.empty())
-                {
-                    chrom = fields[0];
-                    auto it = tables.find(chrom);
-
-                    if (it == tables.end())
-                    {
-                        if(not unknown.count(chrom))
-                        {
-                            unknown.insert(chrom);
-                            std::cerr<<"No translation table for '"<<chrom<<"'\n";
-                        }
-                        table = nullptr;
-                    }
-                    else
-                        table = &(it->second);
-                }
-
-                if (table)
-                {
-                    // Get zero-based coordinate from vcf 1-based coordinate
-                    int pos = convertTo<int>(fields[1])-1;
-                    if (pos < 0)
-                        throw myexception()<<chrom<<'\t'<<pos<<": should not be negative!";
-                    if (pos > table->lookup.size())
-                        throw myexception()<<chrom<<'\t'<<pos<<": after end of chromosome of length "<<table->lookup.size();
-
-                    auto& [p1,p2]  = table->lookup[pos];
-                    if (p1 != p2)
-                    {
-                        std::cerr<<chrom<<'\t'<<pos<<": discarding record because it is missing in '"<<table->target_chrom<<"'\n";
-                        continue;
-                    }
-                    else if (log_verbose)
-                        std::cerr<<chrom<<'\t'<<pos<<": translating to "<<table->target_chrom<<"\t"<<p1<<"\n";
-
-                    fields[0] = table->target_chrom;
-                    // Get 1-based coordinate from 0-based coordinate
-                    fields[1] = std::to_string(p1+1);
-                    join(std::cout, fields, '\t');
-                    std::cout<<'\n';
-                }
-                else
-                    std::cout<<line<<'\n';
-            }
-
+            translate_vcf(*vcf_filename, args);
             exit(0);
         }
 
         if (auto filename = get_arg<string>(args, "translate-mask"))
         {
-            //----------- Load alignment ---------//
-            alignment A = load_A(args,false);
-
-            if (A.n_sequences() != 2)
-                throw myexception()<<"translate-mask: expected exactly 2 sequences, but got "<<A.n_sequences()<<"!";
-
-            vector<pair<int,int>> map;
-            int loc2 = -1;
-            for(int c=0;c<A.length();c++)
-            {
-                if (A.character(c,1)) loc2++;
-
-                if (A.character(c,0))
-                {
-                    if (A.character(c,1))
-                        map.push_back({loc2,loc2});
-                    else
-                        map.push_back({loc2,loc2+1});
-                }
-            }
-            // Map beginning to beginng
-            map[0] = {0,0};
-            // Map end to end
-            map.back() = {loc2,loc2};
-            map.push_back({loc2,loc2}); // Handle end that is 1 too large?
-
-            auto masks = read_masks(*filename);
-            if (masks.size() == 0)
-                throw myexception()<<"mask file is empty!";
-            if (masks.size() > 1)
-                throw myexception()<<"translate-mask: can only take 1 mask!";
-                
-            auto& mask = masks[0];
-            std::cout<<">"<<A.seq(1).name<<"\n";
-            for(auto& [beg,end]: mask.intervals)
-            {
-                if (beg < 0)
-                    throw myexception()<<"0-indexed interval should not have negative start offset!";
-                if (end > map.size())
-                    throw myexception()<<"0-indexed interval should end before the length of the source chromosome! ("<<map.size()<<")";
-                if (beg > end)
-                    throw myexception()<<"interval should not begin before it ends!";
-
-                beg = map[beg].first;
-                end = map[end].second;
-                std::cout<<beg<<" - "<<end<<"\n";
-            }
-
+            translate_mask(*filename);
             exit(0);
         }
 
