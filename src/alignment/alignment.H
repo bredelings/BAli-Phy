@@ -128,6 +128,8 @@ public:
     bool unknown(int i,int j) const {return array(i,j)==alphabet::unknown;}
     /// Does sequence i have an character at position j ?
     bool character(int i,int j) const {return not gap(i,j) and not unknown(i,j);}
+    /// Does sequence i have missing data at position j?
+    bool missing(int i,int j) const {return array(i,j) < 0;}
 
     /// Number of columns
     int length() const {return array.size1();}
