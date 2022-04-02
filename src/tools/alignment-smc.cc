@@ -117,7 +117,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("align", value<string>(),"file with sequences and initial alignment")
         ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
 
-        ("minor-allele",value<int>(),"Keep columns with inor-allele count >= <arg>")
+        ("minor-allele",value<int>(),"Keep columns with minor-allele count >= <arg>")
+        ("missing-freq",value<double>()->default_value(1.0),"Keep columns with missing frequency >= <arg>")
         ("one-every",value<int>(),"Keep only 1 column in each interval of size <arg>")
 
         ("mask-gaps,G",value<int>(),"Remove columns within <arg> columns of a gap")
@@ -128,7 +129,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("dical2","Output file for DiCal2")
         ("msmc","Output file for MSMC")
         ("psmc","Output file for PSMC")
-        ("write-bed",value<string>(),"Output BED file with chromosome name <arg>")
+        ("write-bed",value<string>(),"Output BED file with chromosome name <arg>") // BED only works for --minor-allele!
 
         // parameters
         ("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?") // statistic
@@ -850,6 +851,17 @@ vector<vector<int>> make_bins(const vector<int>& columns, int width)
     return bins;
 }
 
+double missing_freq(const alignment& A, int col)
+{
+    int n_missing = 0;
+    for(int i=0;i<A.n_sequences();i++)
+    {
+        if (A.missing(col,i))
+            n_missing++;
+    }
+    return double(n_missing)/A.n_sequences();
+}
+
 int largest_minor_allele_count(const alignment& A, int col)
 {
     auto counts = allele_counts(A, col);
@@ -1479,7 +1491,7 @@ int main(int argc,char* argv[])
 
         if (auto filename = get_arg<string>(args, "translate-mask"))
         {
-            translate_mask(*filename);
+            translate_mask(*filename, args);
             exit(0);
         }
 
@@ -1597,7 +1609,11 @@ int main(int argc,char* argv[])
         {
             int count = args["minor-allele"].as<int>();
 
-            auto columns = find_columns(A, [&](int col) {return largest_minor_allele_count(A,col) >= count;});
+            double max_missing_freq = args["missing-freq"].as<double>();
+
+            auto columns = find_columns(A, [&](int col) {
+                return largest_minor_allele_count(A,col) >= count and missing_freq(A,col) <= max_missing_freq;
+            });
 
             // Space out the kept columns - keep only 1 every width bases
             if (args.count("one-every"))
