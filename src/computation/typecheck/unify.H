@@ -51,6 +51,7 @@ std::optional<substitution_t> combine(substitution_t s1, substitution_t s2);
 substitution_t compose(substitution_t s2, substitution_t s1);
 
 std::optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2);
+std::optional<substitution_t> maybe_match(const Hs::Type& t1, const Hs::Type& t2);
 substitution_t unify(const Hs::Type& t1, const Hs::Type& t2);
 
 bool same_type(const Hs::Type& t1, const Hs::Type& t2);

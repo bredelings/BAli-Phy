@@ -46,8 +46,6 @@ struct typechecker_state
 
     std::vector<local_instance_env> lie_stack;
 
-    int level = 0;
-
     local_instance_env& current_lie();
 
     void add_dvar(const std::string& name, const Hs::Type& constraint);
@@ -99,6 +97,8 @@ struct typechecker_state
     bool maybe_unify(const Hs::Type& t1, const Hs::Type& t2);
 
     void unify(const Hs::Type& t1, const Hs::Type& t2);
+
+    void unify(const Hs::Type& t1, const Hs::Type& t2, const myexception& e);
 
     std::pair<Hs::Type, std::vector<Hs::Type>> constr_types(const Hs::Con&);
 
@@ -204,7 +204,7 @@ struct typechecker_state
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
-    local_instance_env constraints_to_lie(const std::vector<Hs::Type>&);
+    std::vector<std::pair<Hs::Var,Hs::Type>> constraints_to_lie(const std::vector<Hs::Type>&);
 
     // FIXME: this should be  const
     std::vector<std::pair<std::string, Hs::Type>> superclass_constraints(const Hs::Type& constraint);

@@ -56,18 +56,11 @@ using std::tuple;
   * Handle a :: Num a => Char in (a,b) = ('a',1)
   * Partially handle polymorphic recursion.
   * Split decls into pieces.
-  * Add levels for skolem variables also.
 
   TODO:
-  0. Don't count the level of unification variables with a value.
-    - We want to allow combining two substitution where we having things like {x3 -> F y5, y5 -> G z2}
-    - We don't want to pass in the global substitution.
-    - Do we really want to check levels in try_insert? If s2 has {x3 -> F y5}, then we should be able to
-      add it to s1 without checking the level.
   0. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
   0. Type-check / kind-check user-written signatures.
   0. Handle user-written signatures in monomorphic-restricted blocks.
-  0. Use the level machinery to handle constraints on unification.
   0. Promote type variables that are not generalized...
   0. Modify infer_lhs_type to use signatures to instantiate types for lhs variables with signatures.
     + Q: How do we avoid instantiating types with LIEs in situations where the monomorphism restriction applies?
@@ -141,14 +134,7 @@ using std::tuple;
      is visible on the RHS?  Maybe define the tmp-tuple and the exported var in the same let-rec 
      block?
 
-  7. If we increment the level, then we can create vars that have a deeper level.
-     It seems like those should not stay around after we pop the level again.
-     So how do we avoid this problem?
-
-     It seems like we should use the same technique that we use in the general case to
-     figure out which constraints to deal with at this level.
-
-  8. If we are checking the RHS of a FunDecl with a signature, it seems that we could
+  7. If we are checking the RHS of a FunDecl with a signature, it seems that we could
      create constraints that refer to type variables from higher scopes, or perhaps
      variables from this scope that do not occur in the type.
 
@@ -498,6 +484,12 @@ void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2)
         throw myexception()<<"Unification failed: "<<apply_current_subst(t1)<<" !~ "<<apply_current_subst(t2);
 }
 
+void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2, const myexception& e)
+{
+    if (not maybe_unify(t1,t2))
+        throw e;
+}
+
 Hs::Var typechecker_state::fresh_var(const std::string& s, bool qualified)
 {
     string name = "$"+s+std::to_string(next_var_index);
@@ -515,7 +507,6 @@ Hs::TypeVar typechecker_state::fresh_rigid_type_var() {
     Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
     next_tvar_index++;
     tv.info = Hs::typevar_info::rigid;
-    tv.level = level;
     return tv;
 }
 
@@ -523,7 +514,6 @@ Hs::TypeVar typechecker_state::fresh_meta_type_var() {
     Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
     next_tvar_index++;
     tv.info = Hs::typevar_info::meta;
-    tv.level = level;
     return tv;
 }
 
@@ -779,6 +769,14 @@ vector<Hs::Var> vars_from_lie(const local_instance_env& lie)
     return dict_vars;
 }
 
+vector<Hs::Var> vars_from_lie(const vector<pair<Hs::Var, Hs::Type>>& lie)
+{
+    vector<Hs::Var> vars;
+    for(auto& [var, constraint]: lie)
+        vars.push_back( var );
+    return vars;
+}
+
 global_value_env typechecker_state::sig_env(const map<string, Hs::Type>& signatures)
 {
     global_value_env sig_env;
@@ -841,14 +839,12 @@ optional<pair<Hs::Var,vector<Hs::Type>>> typechecker_state::lookup_instance(cons
 {
     for(auto& [name, type]: gie)
     {
-        level++;
         auto [_, instance_constraints, instance_head] = instantiate(type);
-        level--;
 
         // Skip if this is not an instance.
         if (constraint_is_hnf(instance_head)) continue;
 
-        auto s = ::maybe_unify(instance_head, constraint);
+        auto s = ::maybe_match(instance_head, constraint);
 
         // This instance doesn't match.
         if (not s) continue;
@@ -940,9 +936,7 @@ vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const H
     for(auto& [name, type]: gie)
     {
         // Klass a => Superklass a
-        level++;
         auto [_, class_constraints, superclass_constraint] = instantiate(type, false);
-        level--;
 
         // Skip if this is not a method of extracting superclass dictionaries
         if (not constraint_is_hnf(superclass_constraint)) continue;
@@ -950,7 +944,7 @@ vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const H
         assert(class_constraints.size() == 1);
 
         auto class_constraint = class_constraints[0];
-        auto s = ::maybe_unify(class_constraint, constraint);
+        auto s = ::maybe_match(class_constraint, constraint);
 
         // The premise doesn't match the current class;
         if (not s) continue;
@@ -1013,15 +1007,24 @@ optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<string, 
         return {};
 }
 
-local_instance_env typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
+vector<pair<Hs::Var,Hs::Type>> typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
 {
-    local_instance_env lie;
-    for(auto& constraint: constraints)
+    vector<pair<Hs::Var, Hs::Type>> ordered_lie;
+    for(auto& constraint:constraints)
     {
         auto dvar = fresh_var("dvar", false);
-        lie = lie.insert({unloc(dvar.name), constraint});
+        dvar.type = constraint;
+        ordered_lie.push_back({dvar, constraint});
     }
-    return lie;
+    return ordered_lie;
+}
+
+local_instance_env unordered_lie(const vector<pair<Hs::Var, Hs::Type>>& lie1)
+{
+    local_instance_env lie2;
+    for(auto& [var,constraint]: lie1)
+        lie2 = lie2.insert({unloc(var.name), constraint});
+    return lie2;
 }
 
 // How does this relate to simplifying constraints?
@@ -1326,37 +1329,35 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
     // OK, so what we want to do is:
 
     // 1. instantiate the type -> (tvs, givens, rho-type)
-    auto [tvs, given_constraints, rho_type] = instantiate(sig_type, false);
-    auto lie_given = constraints_to_lie(given_constraints);
-
+    auto [tvs, given_constraints, given_type] = instantiate(sig_type, false);
+    auto ordered_lie_given = constraints_to_lie(given_constraints);
+    auto lie_given = unordered_lie(ordered_lie_given);
+    
     // 2. typecheck the rhs -> (rhs_type, wanted, body)
-    level++;
     push_lie();
-    auto [decl2, rhs_type] = infer_rhs_type(env, FD);
+    auto [decl2, most_general_type] = infer_rhs_type(env, FD);
+    auto lie_wanted = pop_lie();
 
-    // 3. match(rho_type <= rhs_type)
-    unify(rhs_type, rho_type);
+    // 3. alpha[i] in most_general_type but not in env
+    auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
+    // FIXME -- what if the instantiated type contains variables that are free in the environment?
 
-    // 4. check if the given => wanted ~ EvBinds
-    auto lie_wanted = current_lie();
-    pop_lie();
-    level--;
+    // 4. match(given_type <= most_general_type)
+    unify(most_general_type, given_type);
 
+    // 5. check if the given => wanted ~ EvBinds
     lie_wanted = apply_current_subst( lie_wanted );
-
-    // FIXME: shouldn't some of the wanted's float out here?
     auto evbinds = entails(lie_given, lie_wanted);
-
     if (not evbinds)
         throw myexception()<<"Can't derive constraints '"<<print(lie_wanted)<<"' from specified constraints '"<<print(lie_given)<<"'";
 
     // 5. return DictionaryLambda with tvs, givens, body
-    auto dict_vars = vars_from_lie( lie_given );
+    auto dict_vars = vars_from_lie( ordered_lie_given );
 
     Hs::Decls decls;
     decls.push_back(decl2);
 
-    auto decl = Hs::DictionaryLambda( tvs, vars_from_lie(lie_given), *evbinds, decls );
+    auto decl = Hs::DictionaryLambda( tvs, dict_vars, *evbinds, decls );
     return {decl, name, sig_type};
 }
 
@@ -1885,37 +1886,38 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         // texp->exp;
         // texp->type
 
-        // 1. Get the most general type
-        level++;
+        // 1. instantiate the type -> (tvs, givens, rho-type)
+        auto [tvs, given_constraints, given_type] = instantiate(texp->type, false);
+        auto ordered_lie_given = constraints_to_lie(given_constraints);
+        auto lie_given = unordered_lie(ordered_lie_given);
+
+        // 2. Get the most general type
         push_lie();
         auto [exp, most_general_type] = infer_type(env, texp->exp);
-        auto lie_most_general = pop_lie();
-        level--;
+        auto lie_wanted = pop_lie();
 
-        // 2. alpha[i] in most_general_type but not in env
+        // 3. alpha[i] in most_general_type but not in env
         auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
+        // FIXME -- what if the instantiated type contains variables that are free in the environment?
+        
+        // 4. Constrain the most general type to the given type with MATCH
+        auto e = myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"'";
+        unify(most_general_type, given_type, e);
 
-        // 3. instantiate the given type...
-        // 4. ... with fresh variables gamma[i].
-        auto [_, given_constraints, given_type] = instantiate(texp->type, false);
+        // 5. check if the given => wanted ~ EvBinds
+        lie_wanted = apply_current_subst(lie_wanted);
+        auto evbinds = entails(lie_given, lie_wanted);
+        if (not evbinds)
+            throw myexception()<<"Can't derive constraints '"<<print(lie_wanted)<<"' from specified constraints '"<<print(lie_given)<<"'";
 
-        // 5. Constrain the most general type to the given type with MATCH
-        auto s2 = maybe_unify(most_general_type, given_type);
-
-        if (not s2)
-            throw myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"'";
-
-        // 6. Convert the given_constraints into a LIE
-        lie_most_general = apply_current_subst(lie_most_general);
-
-        auto lie_given = constraints_to_lie(given_constraints);
-        // 7. Express lie2 in terms of lie1
-        auto binds = entails(lie_given, lie_most_general);
-        if (not binds)
-            throw myexception()<<"Can't derive constraints '"<<print(lie_most_general)<<"' from specified constraints '"<<print(lie_given)<<"'";
+        // 6. create lambda arguments from the list of constraint vars, in order
+        vector<expression_ref> dvars;
+        for(auto& [dvar, constraint]: ordered_lie_given)
+            dvars.push_back(dvar);
 
         current_lie() += lie_given;
-        return {Hs::LetExp({noloc,*binds}, {noloc,exp}), given_type};
+
+        return { Hs::LambdaExp(dvars, Hs::LetExp({noloc,*evbinds}, {noloc,exp})), given_type };
     }
     else if (auto l = E.to<Hs::List>())
     {

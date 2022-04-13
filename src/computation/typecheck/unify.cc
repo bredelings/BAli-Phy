@@ -135,57 +135,6 @@ bool occurs_check(const Hs::TypeVar& tv, const Hs::Type& t)
         std::abort();
 }
 
-int max_level(const Hs::Type& t, immer::set<Hs::TypeVar> in_scope);
-
-int max_level(const vector<Hs::Type>& ts, immer::set<Hs::TypeVar> in_scope)
-{
-    int l = 0;
-    for(auto& t: ts)
-        l = std::max( l, max_level(t, in_scope) );
-    return l;
-}
-
-int max_level(const Hs::Type& t, immer::set<Hs::TypeVar> in_scope)
-{
-    if (auto x = t.to<Hs::TypeVar>())
-    {
-        if (in_scope.count(*x))
-            return 0;
-        else if (false)
-            // FIXME: we probably need to look through vars with substitutions~
-            ;
-        else
-            return x->get_level();
-    }
-    else if (t.is_a<Hs::TypeCon>())
-        return 0;
-    else if (auto tup = t.to<Hs::TupleType>())
-        return max_level(tup->element_types, in_scope);
-    else if (auto l = t.to<Hs::ListType>())
-        return max_level(l->element_type, in_scope);
-    else if (auto p_app = t.to<Hs::TypeApp>())
-        return std::max( max_level(p_app->head, in_scope) , max_level(p_app->arg, in_scope) );
-    else if (auto f = t.to<Hs::ForallType>())
-    {
-        auto in_scope2 = in_scope;
-        for(auto& x: f->type_var_binders)
-            in_scope2 = in_scope.insert(x);
-
-        return max_level(f->type, in_scope2);
-    }
-    else if (auto c = t.to<Hs::ConstrainedType>())
-        return std::max( max_level(c->context.constraints, in_scope), max_level( c->type, in_scope ) );
-    else if (auto sl = t.to<Hs::StrictLazyType>())
-        return max_level(sl->type, in_scope);
-    else
-        std::abort();
-}
-
-int max_level(const Hs::Type& t)
-{
-    return max_level(t, {});
-}
-
 // PROOF: This cannot add substitution loops.
 //  `safe_type` can't reference variables in s, since it has been substituted.
 //  `safe_type` can't reference `tv` because of the occurs check.
@@ -255,45 +204,21 @@ const Hs::TypeVar* is_meta_type_var(const Hs::Type& type)
 }
 
 
-const Hs::TypeVar* is_meta_type_var_on_level(const Hs::TypeVar& tv, int level)
-{
-    auto result = is_meta_type_var(tv);
-    if (result)
-    {
-        assert(tv.level);
-        if (*tv.level != level) return nullptr;
-        return result;
-    }
-    else
-        return nullptr;
-
-    if (not tv.level) return nullptr;
-}
-
-const Hs::TypeVar* is_meta_type_var_on_level(const Hs::Type& type, int level)
-{
-    auto tv = type.to<Hs::TypeVar>();
-
-    if (not tv) return nullptr;
-
-    return is_meta_type_var_on_level(*tv, level);
-}
-
+// QUESTION: How should we handle levels, if we reintroduce them?
 // This finds
-// * a non-<level>-variable type that the type variable is equivalent to, if there is one, and
 // * the final variable in the chain of variables -- that points to either that term, or nothing.
 // We can use the final variable to determine if two variables are in the same equivalence set.
 // QUESTION: Can we use compare the variables by POINTER equality?  Not sure...
-std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain(int level, const substitution_t& s, const Hs::TypeVar* tv)
+std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain(const substitution_t& s, const Hs::TypeVar* tv)
 {
-    assert(is_meta_type_var_on_level(*tv, level));
+    assert(is_meta_type_var(*tv));
 
     const Hs::Type* type;
     // While there is a substitution for tv...
     while ( (type = s.find(*tv)) )
     {
         // If we have tv -> tv2, then continue
-        if (auto tv_next = is_meta_type_var_on_level(type, level))
+        if (auto tv_next = is_meta_type_var(type))
         {
             tv = tv_next;
         }
@@ -303,38 +228,35 @@ std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain(int level, const 
     }
 
     assert(tv);
-    assert(not type or not is_meta_type_var_on_level(type, level));
+    assert(not type or not is_meta_type_var(type));
     return {tv, type};
 }
 
-std::optional<substitution_t> combine(const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
+std::optional<substitution_t> combine_(bool both_ways, substitution_t s1, substitution_t s2);
+
+std::optional<substitution_t> combine_(bool both_ways, const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
 {
     if (not s1) return {};
     if (not s2) return {};
-    return combine(*s1, *s2);
+    return combine_(both_ways, *s1, *s2);
 }
 
-std::optional<substitution_t> combine(const std::optional<substitution_t>& s1, const substitution_t& s2)
+std::optional<substitution_t> combine_(bool both_ways, const std::optional<substitution_t>& s1, const substitution_t& s2)
 {
     if (not s1) return {};
-    return combine(*s1, s2);
+    return combine_(both_ways, *s1, s2);
 }
 
-std::optional<substitution_t> combine(const substitution_t& s1, const optional<substitution_t>& s2)
+std::optional<substitution_t> combine_(bool both_ways, const substitution_t& s1, const optional<substitution_t>& s2)
 {
     if (not s2) return {};
-    return combine(s1, *s2);
+    return combine_(both_ways, s1, *s2);
 }
 
-// What does it mean to combine substitutions when their are multiple levels?
-// If we have x_3 -> y_3 -> z_2, then this means that {x_3 = y_3} -> z_2
-// Also, we can't add new definitions except on the given level.  So, we can only call unify(level, ...)
-// However, we can reverse equalities like x_3 -> y_3 to y_3 -> x_3 on other levels.
-// And we can add transitive equalities on other levels: if x_3 -> y3 and x_3 -> z3, then we can add y3 -> z3.
-
+optional<substitution_t> maybe_unify_(bool both_ways, const Hs::Type& t1, const Hs::Type& t2);
 
 // The order of s1 and s2 should not matter.
-std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
+std::optional<substitution_t> combine_(bool both_ways, substitution_t s1, substitution_t s2)
 {
     // While we store substitutions as [(TypeVar,Type)], the conceptual model is
     //   really [([TypeVar], Maybe Type)].
@@ -352,23 +274,20 @@ std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
     {
         optional<substitution_t> s3;
 
-        assert(x.level);
-        int x_level = *x.level;
-
         // 1. Find the last type variable in the var chain from tv, and maybe the term x_value that it points.
-        auto [x_exemplar, x_value] = follow_var_chain(x_level, s1, &x);
+        auto [x_exemplar, x_value] = follow_var_chain(s1, &x);
 
         // 2. If (x isn't in s1) OR (x has no value in s1), then we can just add a definition for x_exemplar.
         if (not x_value)
             s3 = try_insert(s1, *x_exemplar, e);
 
-        // 3. If e is a type var on the same level as tv, then..
-        else if (auto y = is_meta_type_var_on_level(e, x_level))
+        // 3. If e is a type var, then..
+        else if (auto y = is_meta_type_var(e))
         {
             // 3a. Find the last type variable in the var chain from e, and maybe the term y_value that it points to.
-            auto [y_exemplar, y_value] = follow_var_chain(x_level, s1, y);
+            auto [y_exemplar, y_value] = follow_var_chain(s1, y);
 
-            // 3b. If x and y both point to the same exemplar, then x ~ y is already satisfied.
+            // 3b. If x and y both_ways point to the same exemplar, then x ~ y is already satisfied.
             if (*x_exemplar == *y_exemplar)
                 s3 = substitution_t();
             // 3c. If y has no value in s1, then we can add y_exemplar ~> x_exemplar
@@ -376,10 +295,10 @@ std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
                 s3 = try_insert(s1, *y_exemplar, *x_exemplar);
             // 3d. Otherwise, x_exemplar and tv2 are both equal to different terms that must be equal.
             else
-                s3 = combine(s1, maybe_unify(*x_value, *y_value));
+                s3 = combine_(both_ways, s1, maybe_unify_(both_ways, *x_value, *y_value));
         }
         else
-            s3 = combine(s1, maybe_unify(*x_value, e));
+            s3 = combine_(both_ways, s1, maybe_unify_(both_ways, *x_value, e));
 
         if (not s3)
             return {};
@@ -391,15 +310,14 @@ std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
 }
 
 // Is there a better way to implement this?
-optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
+optional<substitution_t> maybe_unify_(bool both_ways, const Hs::Type& t1, const Hs::Type& t2)
 {
-    if (auto tv1 = is_meta_type_var(t1); tv1 and tv1->get_level() >= max_level(t2))
+    if (auto tv1 = is_meta_type_var(t1))
     {
-        // Check if t2 has an allowable level.
         substitution_t s;
         return try_insert(s, *tv1, t2);
     }
-    else if (auto tv2 = is_meta_type_var(t2); tv2 and tv2->get_level() >= max_level(t1))
+    else if (auto tv2 = is_meta_type_var(t2); tv2 and both_ways)
     {
         substitution_t s;
         return try_insert(s, *tv2, t1);
@@ -417,8 +335,9 @@ optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
         auto& app1 = t1.as_<Hs::TypeApp>();
         auto& app2 = t2.as_<Hs::TypeApp>();
 
-        return combine( maybe_unify(app1.head, app2.head),
-                        maybe_unify(app1.arg , app2.arg ) );
+        return combine_( both_ways,
+                         maybe_unify(app1.head, app2.head),
+                         maybe_unify(app1.arg , app2.arg ) );
     }
     else if (t1.is_a<Hs::TypeCon>() and
              t2.is_a<Hs::TypeCon>() and
@@ -437,7 +356,9 @@ optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
         optional<substitution_t> s = substitution_t();
         for(int i=0;i<tup1.element_types.size();i++)
         {
-            s = combine(s, maybe_unify(tup1.element_types[i], tup2.element_types[i]) );
+            s = combine_(both_ways,
+                         s,
+                         maybe_unify(tup1.element_types[i], tup2.element_types[i]) );
             if (not s) return {};
         }
         return s;
@@ -460,12 +381,35 @@ optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
         return {};
 }
 
+optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
+{
+    return maybe_unify_(true, t1, t2);
+}
+
 substitution_t unify(const Hs::Type& t1, const Hs::Type& t2)
 {
     auto s = maybe_unify(t1, t2);
     if (not s)
         throw myexception()<<"Unification failed: "<<t1<<" !~ "<<t2;
     return *s;
+}
+
+optional<substitution_t> maybe_match(const Hs::Type& t1, const Hs::Type& t2)
+{
+    return maybe_unify_(false, t1, t2);
+}
+
+substitution_t match(const Hs::Type& t1, const Hs::Type& t2)
+{
+    auto s = maybe_match(t1, t2);
+    if (not s)
+        throw myexception()<<"Match failed: "<<t1<<" !~ "<<t2;
+    return *s;
+}
+
+std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
+{
+    return combine_(true, s1, s2);
 }
 
 bool same_type(const Hs::Type& t1, const Hs::Type& t2)

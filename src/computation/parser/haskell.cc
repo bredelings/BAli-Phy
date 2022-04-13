@@ -391,6 +391,7 @@ string TypeVar::print() const
     return unloc(name);
 }
 
+/*
 int TypeVar::get_level() const
 {
     if (info == typevar_info::other)
@@ -398,6 +399,7 @@ int TypeVar::get_level() const
     else
         return *level;
 }
+*/
 
 string TypeVar::print_with_kind() const
 {

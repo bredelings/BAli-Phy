@@ -119,13 +119,13 @@ struct TypeVar: public Object
     Located<std::string> name;
     std::optional<Kind> kind;
     typevar_info info = typevar_info::other;
-    std::optional<int> level;              // typechecking scope depth
+//    std::optional<int> level;              // typechecking scope depth
 
     bool operator==(const Object&) const;
     bool operator==(const TypeVar&) const;
     bool operator<(const TypeVar&) const;
 
-    int get_level() const;
+//    int get_level() const;
 
     TypeVar* clone() const { return new TypeVar(*this);}
     std::string print() const;
