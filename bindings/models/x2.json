@@ -16,7 +16,7 @@
             "arg_name": "a",
             "arg_type": "Doublets[a]",
             "default_value": "get_state[alphabet]",
-	    "description": "The Triplets alphabet"
+	    "description": "The Doublets alphabet"
         }
     ],
     "description":"Rate matrix on doublets, constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up doublet models incrementally.",
