@@ -1876,15 +1876,16 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
+        // So, ( e :: tau ) should be equivalent to ( let x :: tau ; x = e in x )
+        // according to the 2010 report.
+
         // Example: (\x -> x) :: Num a => a -> a
-        // Should be equivalent to
-        // let tmp :: Num a => a -> a
-        //     tmp = (\x -> x)
-        // in tmp
-        // Do we create a Num a dictionary for it here?
+        // In this example, we should rewrite this to \dNum -> \x -> x
 
         // texp->exp;
         // texp->type
+
+        // FIXME: We should actually reuse the code from infer_type_for_single_fundecl_with_sig
 
         // 1. instantiate the type -> (tvs, givens, rho-type)
         auto [tvs, given_constraints, given_type] = instantiate(texp->type, false);
