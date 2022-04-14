@@ -30,6 +30,22 @@ extern "C" closure builtin_function_alphabet_letters(OperationArgs& Args)
     return v;
 }
 
+extern "C" closure builtin_function_find_letter(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    if (not arg0.is_a<Alphabet>())
+	throw myexception()<<"alphabetSize: object "<<arg0.print()<<" is not an alphabet.";
+
+    const alphabet& a = *arg0.as_<Alphabet>();
+
+    auto arg1 = Args.evaluate(1);
+    auto& letter = arg1.as_<String>();
+
+    int index = a.find_letter(letter);
+
+    return {index};
+}
+
 extern "C" closure builtin_function_getNucleotides(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);

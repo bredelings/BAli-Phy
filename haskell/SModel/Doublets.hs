@@ -20,3 +20,12 @@ builtin rna_stem_16a_exchange 6 "rna_16a_exchange" "SModel"
 
 rna_stem_16a a aS aD b g e pi = gtr a (rna_stem_16a_exchange a aS aD b g e) pi
 
+builtin rna_editting_rates 3 "rna_editting_rates" "SModel"
+builtin rna_editting_pi 3 "rna_editting_pi" "SModel"
+
+rna_editting a (ReversibleMarkov _ _ q_nuc pi_nuc _ _ _) edits = reversible_markov a smap q pi 
+    where smap = simple_smap a
+          nuc_a = getNucleotides a
+          q = rna_editting_rates a q_nuc edits'
+          pi = rna_editting_pi a pi_nuc edits'
+          edits' = list_to_vector [ c_pair (find_letter nuc_a i) (find_letter nuc_a j) | (i,j) <- edits]

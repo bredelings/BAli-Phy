@@ -342,6 +342,119 @@ extern "C" closure builtin_function_singlet_to_triplet_rates(OperationArgs& Args
 }
 
 
+vector<int> make_edit_map(const EVector& edit_pairs, int n)
+{
+    // 1. For each (i,j) in edits, we edit i -> j
+    vector<int> edit(n, -1);
+    for(auto& edit_pair: edit_pairs)
+    {
+        auto P = edit_pair.as_<EPair>();
+        int i = P.first.as_int();
+        int j = P.second.as_int();
+
+        if (i < 0 or i >= n)
+            throw myexception()<<"rna_editting_rates: nucleotide "<<i<<" not in range [0,"<<n<<")!";
+        if (j < 0 or j >= n)
+            throw myexception()<<"rna_editting_rates: nucleotide "<<j<<" not in range [0,"<<n<<")!";
+        if (edit[i] != -1)
+            throw myexception()<<"rna_editting_rates: nucleotide "<<i<<" mentioned twice!";
+
+        edit[i] = j;
+    }
+
+    // 2. If i is not in edits_map, we edit i -> i.
+    for(int i=0;i<n;i++)
+    {
+        if (edit[i] == -1)
+            edit[i] = i;
+    }
+
+    return edit;
+}
+
+extern "C" closure builtin_function_rna_editting_rates(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& D = *arg0.poly_as_<alphabet,Doublets>();
+    const int n = D.size();
+    assert(D.getNucleotides().size() == 4);
+
+    auto arg1 = Args.evaluate(1);
+    const Matrix& Q_nuc = arg1.as_<Box<Matrix>>();
+    // The way alphabet is currently implemented, doublets must be doublets of nucleotides.
+    assert(Q_nuc.size1() == 4);
+    assert(Q_nuc.size2() == 4);
+
+    auto arg2 = Args.evaluate(2);
+    const EVector& edit_pairs = arg2.as_<EVector>();
+    vector<int> edit = make_edit_map(edit_pairs, 4);
+
+    object_ptr<Box<Matrix>> Q( new Box<Matrix>(n,n) );
+
+    for(int i=0;i<n;i++)
+    {
+        int i1 = D.sub_nuc(i,0);
+        int i2 = D.sub_nuc(i,1);
+        bool i_ok = (i2 == edit[i1]);
+
+        double sum = 0;
+	for(int j=0;j<n;j++)
+	{
+	    if (i==j) continue;
+
+            int j1 = D.sub_nuc(j,0);
+            int j2 = D.sub_nuc(j,1);
+
+            bool j_ok = (j2 == edit[j1]);
+
+	    double r = 0;
+
+            if (i_ok and j_ok)
+                r = Q_nuc(i1, j1);
+                
+	    (*Q)(i,j) = r;
+	    sum += r;
+	}
+	(*Q)(i,i) = -sum;
+    }
+
+    return Q;
+}
+
+
+extern "C" closure builtin_function_rna_editting_pi(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& D = *arg0.poly_as_<alphabet,Doublets>();
+    const int n = D.size();
+
+    auto arg1 = Args.evaluate(1);
+    const auto& nuc_pi = arg1.as_<EVector>();
+    // The way alphabet is currently implemented, doublets must be doublets of nucleotides.
+    assert(nuc_pi.size() == 4);
+
+    auto arg2 = Args.evaluate(2);
+    const EVector& edit_pairs = arg2.as_<EVector>();
+    vector<int> edit = make_edit_map(edit_pairs, 4);
+
+    vector<double> pi( n );
+    for(int i = 0; i < n; i++)
+    {
+        int i1 = D.sub_nuc(i,0);
+        int i2 = D.sub_nuc(i,1);
+        bool i_ok = (i2 == edit[i1]);
+
+        if (i_ok)
+            pi[i] = nuc_pi[i1].as_double();
+        else
+            pi[i] = 0;
+    }
+
+    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
+    return EVector(pi);
+}
+
+
 object_ptr<Object> SimpleExchangeFunction(double rho, int n)
 {
     object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));

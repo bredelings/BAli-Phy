@@ -11,6 +11,9 @@ builtin alphabetSize 1 "alphabetSize" "Alphabet"
 builtin builtin_letters 1 "alphabet_letters" "Alphabet"
 letters a = map listFromString (list_from_vector (builtin_letters a) )
 
+builtin builtin_find_letter 2 "find_letter" "Alphabet"
+find_letter a letter = builtin_find_letter a (list_to_string letter)
+
 builtin translate 2 "translate" "Alphabet"
 
 builtin doublets 1 "doublets" "Alphabet"
