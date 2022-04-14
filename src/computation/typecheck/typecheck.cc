@@ -40,6 +40,8 @@ using std::tuple;
     This might mean that we can simply instantiate the signatures inside the pattern -- and we 
        can issue an error message if there are any constraints.
 
+  NOTE: It also looks like GHC DOES use 1-way matching -- but it implements it as a bool flag.
+
   Done: 
   * Check that constraints in classes only mention type vars.
   * Check that constraints in instance heads are of the form Class (Tycon a1 a2 a3..)
@@ -834,6 +836,18 @@ bool constraint_is_hnf(const Hs::Type& constraint)
             return false;
     return true;
 }
+
+
+// 1. An instance looks like (forall as.Q1(as) => Q2(as))
+// 2. We have some constraints Q3.
+// 3. We instantiate the instance with substitutions [as->gs].
+// 4. We'd like to check if Q3 ~ [as->gs]Q2, where only the variables gs are allowed to be unified.
+// 5. If we give the unification variables gs a higher level, can we guarantee that only
+//    gs will be constrained?
+// 6. Actually, I don't think so... Suppose that the instance is (Eq Int) and the constraint is
+//    Eq a.
+// 7. Unless we actually FORBID unification of variables at any higher level, then this won't work.
+// 8. Simply forbidding substitution to a deeper depth won't cut it.
 
 optional<pair<Hs::Var,vector<Hs::Type>>> typechecker_state::lookup_instance(const Hs::Type& constraint)
 {
