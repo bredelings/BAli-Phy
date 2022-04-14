@@ -411,8 +411,11 @@ void Module::compile(const Program& P)
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = rename(opts, M);
 
-    // std::cerr<<"-------- module "<<name<<"--------\n";
-    // M = typecheck(name, *this, M);
+    if (opts.typecheck)
+    {
+        std::cerr<<"-------- module "<<name<<"--------\n";
+        M = typecheck(name, *this, M);
+    }
 
     // Updates exported_symols_ + exported_types_
     perform_exports();

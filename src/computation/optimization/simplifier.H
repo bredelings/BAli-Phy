@@ -10,6 +10,7 @@
 
 struct simplifier_options
 {
+    bool typecheck = false;
     bool pre_inline_unconditionally = true;
     bool post_inline_unconditionally = true;
     bool let_float_from_case = true;
