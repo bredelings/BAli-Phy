@@ -31,5 +31,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 class EigenValues;
 Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);
+void positivize_and_renormalize_matrix(Matrix& E);
 
 #endif

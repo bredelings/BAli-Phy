@@ -47,6 +47,8 @@ extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
         for(int j=0;j<n;j++)
             (*E)(i,j) = EE(i,j);
 
+    positivize_and_renormalize_matrix(*E);
+
     return E;
 }
 

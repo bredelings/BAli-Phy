@@ -171,15 +171,8 @@ Matrix exp_large(const EigenValues& eigensystem, const vector<double>& pi, const
     return E;
 }
 
-Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const double t)
+void positivize_and_renormalize_matrix(Matrix& E)
 {
-    bool small = true;
-    for(double eigenvalue: eigensystem.Diagonal())
-        if (eigenvalue * t < -1)
-            small = false;
-
-    auto E = small?exp_small(eigensystem, pi, t):exp_large(eigensystem, pi, t);
-
     // Force positive, and renormalize rows.
     for(int i=0;i<E.size1();i++)
     {
@@ -199,5 +192,18 @@ Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const doubl
 	for(int j=0;j<E.size2();j++)
             E(i,j) *= factor;
     }
+}
+
+Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const double t)
+{
+    bool small = true;
+    for(double eigenvalue: eigensystem.Diagonal())
+        if (eigenvalue * t < -1)
+            small = false;
+
+    auto E = small?exp_small(eigensystem, pi, t):exp_large(eigensystem, pi, t);
+
+    positivize_and_renormalize_matrix(E);
+
     return E;
 }
