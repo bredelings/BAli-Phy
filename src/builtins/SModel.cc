@@ -8,7 +8,7 @@
 #include <valarray>
 #include "dp/2way.H"
 #include "util/range.H"
-#include <eigen3/unsupported/Eigen/MatrixFunctions>
+#include <unsupported/Eigen/MatrixFunctions>
 
 using std::vector;
 using std::pair;
