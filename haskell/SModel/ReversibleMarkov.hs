@@ -7,6 +7,7 @@ import Data.Matrix
 builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel"
 builtin get_eigensystem 2 "get_eigensystem" "SModel"
 builtin lExp 3 "lExp" "SModel"
+builtin mexp 2 "MatrixExp" "SModel"
 builtin builtin_gtr_sym 2 "gtr_sym" "SModel"
 builtin fixup_diagonal_rates 1 "fixup_diagonal_rates" "SModel"
 builtin %*% 2 "elementwise_multiply" "SModel"
@@ -16,6 +17,8 @@ data EigenSystem
 data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) (Matrix Double) (EVector Double) EigenSystem Double Double
 
 qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t
+
+-- qExp (ReversibleMarkov a s q pi l t r) = mexp q t
 
 get_q (ReversibleMarkov _ _ q _ _ t _) = scaleMatrix t q
 

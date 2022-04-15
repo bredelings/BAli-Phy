@@ -8,6 +8,7 @@
 #include <valarray>
 #include "dp/2way.H"
 #include "util/range.H"
+#include <eigen3/unsupported/Eigen/MatrixFunctions>
 
 using std::vector;
 using std::pair;
@@ -21,6 +22,36 @@ using std::abs;
 
 using Alphabet = PtrBox<alphabet>;
 
+extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& Q = arg0.as_<Box<Matrix>>();
+    int n = Q.size1();
+    assert(Q.size2() == n);
+
+    double t = Args.evaluate(1).as_double();
+
+    // 1. Copy to Eigen matrix
+    Eigen::MatrixXd QQ(n,n);
+    for(int i=0;i<n;i++)
+        for(int j=0;j<n;j++)
+            QQ(i,j) = Q(i,j)*t;
+
+    // 2. Take the matrix exponential
+    Eigen::MatrixXd EE = QQ.exp();
+
+    // 3. Copy back from Eigen matrix
+    auto E = new Box<Matrix>(n,n);
+
+    for(int i=0;i<n;i++)
+        for(int j=0;j<n;j++)
+            (*E)(i,j) = EE(i,j);
+
+    return E;
+}
+
+
+
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
     auto L = Args.evaluate(0);
@@ -31,6 +62,8 @@ extern "C" closure builtin_function_lExp(OperationArgs& Args)
     *M = exp(L.as_<EigenValues>(), pi, t);
     return M;
 }
+
+
 
 /*
  * 1. pi[i]*Q(i,j) = pi[j]*Q(j,i)         - Because Q is reversible
@@ -61,11 +94,14 @@ extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
 #endif
 
     //--------- Compute pi[i]**0.5 and pi[i]**-0.5 ----------//
-    vector<double> sqrt_pi(n);
-    vector<double> inverse_sqrt_pi(n);
+    vector<double> sqrt_pi(n, 1.0);
+    vector<double> inverse_sqrt_pi(n, 1.0);
     for(int i=0;i<n;i++) {
-	sqrt_pi[i] = sqrt(pi[i]);
-	inverse_sqrt_pi[i] = 1.0/sqrt_pi[i];
+        if (pi[i] > 1.0e-13)
+        {
+            sqrt_pi[i] = sqrt(pi[i]);
+            inverse_sqrt_pi[i] = 1.0/sqrt_pi[i];
+        }
     }
 
     //--------------- Calculate eigensystem -----------------//
