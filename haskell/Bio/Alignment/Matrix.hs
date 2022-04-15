@@ -13,7 +13,7 @@ builtin_load_alignment :: Alphabet -> CPPString -> AlignmentMatrix
 builtin builtin_load_alignment 2 "load_alignment" "Alignment"
 
 load_alignment :: Alphabet -> String -> AlignmentMatrix
-load_alignment alphabet filename = builtin_load_alignment alphabet (list_to_string filename)
+load_alignment alphabet filename = IOAction (\s -> (s, builtin_load_alignment alphabet (list_to_string filename)))
 
 builtin_alignment_from_sequences :: Alphabet -> EVector Sequence -> AlignmentMatrix
 builtin builtin_alignment_from_sequences 2 "alignment_from_sequences" "Alignment"
