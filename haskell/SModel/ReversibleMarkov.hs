@@ -16,9 +16,7 @@ data EigenSystem
 
 data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) (Matrix Double) (EVector Double) EigenSystem Double Double
 
-qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t
-
--- qExp (ReversibleMarkov a s q pi l t r) = mexp q t
+qExp (ReversibleMarkov a s q pi l t r) = mexp q t
 
 get_q (ReversibleMarkov _ _ q _ _ t _) = scaleMatrix t q
 
