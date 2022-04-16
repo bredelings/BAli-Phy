@@ -1077,25 +1077,33 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
     return { Pr };
 }
 
-extern "C" closure builtin_function_li_stephens_2003_composite_likelihood(OperationArgs& Args)
+log_double_t li_stephens_2003_composite_likelihood(const alignment& A, const vector<int>& d, double rho)
 {
-    double rho = Args.evaluate(0).as_double();
-
-    auto arg1 = Args.evaluate(1);
-    auto& A = arg1.as_<Box<alignment>>().value();
+    assert(A.length() == d.size());
 
     int n = A.n_sequences();
-
-    auto variant_columns = find_columns(A, [&](int c){return is_variant_column(A,c) and not is_column_with_gap(A,c);});
-    alignment A2 = select_columns(A, variant_columns);
 
     double theta_ish = li_stephens_2003_theta(n);
 
     log_double_t Pr = 1.0;
-
     for(int i=1;i<n;i++)
-        Pr *= li_stephens_2003_conditional_sampling_distribution(A2, variant_columns, i, rho, theta_ish);
+        Pr *= li_stephens_2003_conditional_sampling_distribution(A, d, i, rho, theta_ish);
 
+    return Pr;
+}
+
+
+extern "C" closure builtin_function_li_stephens_2003_composite_likelihood(OperationArgs& Args)
+{
+    auto locs = (vector<int>)Args.evaluate(0).as_<EVector>();
+
+    double rho = Args.evaluate(1).as_double();
+
+    auto arg2= Args.evaluate(2);
+    auto& A = arg2.as_<Box<alignment>>().value();
+
+    log_double_t Pr = li_stephens_2003_composite_likelihood(A, locs, rho);
+    
     return { Pr };
 }
 
