@@ -510,7 +510,7 @@ int main(int argc,char* argv[])
         {
             string filename = args["test-module"].as<string>();
             auto M = L->load_module_from_file(filename);
-            if (args.count("typecheck"))
+            if (args.count("type-check"))
                 L->typecheck = true;
 
             Program P(L);
