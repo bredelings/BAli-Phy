@@ -336,8 +336,8 @@ optional<substitution_t> maybe_unify_(bool both_ways, const Hs::Type& t1, const 
         auto& app2 = t2.as_<Hs::TypeApp>();
 
         return combine_( both_ways,
-                         maybe_unify(app1.head, app2.head),
-                         maybe_unify(app1.arg , app2.arg ) );
+                         maybe_unify_(both_ways, app1.head, app2.head),
+                         maybe_unify_(both_ways, app1.arg , app2.arg ) );
     }
     else if (t1.is_a<Hs::TypeCon>() and
              t2.is_a<Hs::TypeCon>() and
@@ -358,7 +358,7 @@ optional<substitution_t> maybe_unify_(bool both_ways, const Hs::Type& t1, const 
         {
             s = combine_(both_ways,
                          s,
-                         maybe_unify(tup1.element_types[i], tup2.element_types[i]) );
+                         maybe_unify_(both_ways, tup1.element_types[i], tup2.element_types[i]) );
             if (not s) return {};
         }
         return s;
@@ -367,7 +367,7 @@ optional<substitution_t> maybe_unify_(bool both_ways, const Hs::Type& t1, const 
     {
         auto& L1 = t1.as_<Hs::ListType>();
         auto& L2 = t2.as_<Hs::ListType>();
-        return maybe_unify(L1.element_type, L2.element_type);
+        return maybe_unify_(both_ways, L1.element_type, L2.element_type);
     }
     else if (t1.is_a<Hs::ConstrainedType>() or t2.is_a<Hs::ConstrainedType>())
     {
