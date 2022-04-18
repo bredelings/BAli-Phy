@@ -1901,6 +1901,18 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         // FIXME: We should actually reuse the code from infer_type_for_single_fundecl_with_sig
 
+        auto x = fresh_var("tmp", false);
+        Hs::Decls decls;
+        decls.push_back(simple_decl(x,texp->exp));
+        Hs::Binds binds;
+        binds.signatures.insert({unloc(x.name), texp->type});
+        binds.push_back(decls);
+        expression_ref E2 = Hs::LetExp({noloc,binds},{noloc,x});
+
+        return infer_type(env, E2);
+
+        /* 
+
         // 1. instantiate the type -> (tvs, givens, rho-type)
         auto [tvs, given_constraints, given_type] = instantiate(texp->type, false);
         auto ordered_lie_given = constraints_to_lie(given_constraints);
@@ -1933,6 +1945,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         current_lie() += lie_given;
 
         return { Hs::LambdaExp(dvars, Hs::LetExp({noloc,*evbinds}, {noloc,exp})), given_type };
+        */
     }
     else if (auto l = E.to<Hs::List>())
     {
