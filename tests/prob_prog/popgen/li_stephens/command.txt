@@ -1,1 +1,1 @@
---test -m LiStephens2003_1.hs --- chr1.22Eth-100000-101000.fasta
+--test -m LiStephens2003_1.hs --- A-sites.fasta A-locs.csv

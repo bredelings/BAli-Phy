@@ -1,20 +1,28 @@
 module LiStephens2003 where
 
-import           Bio.Alignment
-import           Bio.Alphabet
-import           Probability
-import           PopGen
-import           System.Environment
+import           Probability         -- for the model framework
 
-model sequence_data = do
+import           System.Environment  -- for getArgs
+import           Data.Frame          -- for readTable & friends
+import           Bio.Alignment       -- for load_alignment
+import           Bio.Alphabet        -- for dna
+import           PopGen              -- for li_stephens_2003
 
-    rho <- log_laplace 0.01 1.0
+model locs sequence_data = do
 
-    sequence_data ~> li_stephens_2003 rho
+  rho <- log_laplace 0.01 2.0
 
-    return ["rho" %=% rho ]
+  sequence_data ~> li_stephens_2003 locs rho
+
+  return ["rho" %=% rho ]
 
 main = do
-  [filename] <- getArgs
-  let sequence_data = load_alignment dna filename
-  mcmc $ model sequence_data
+
+  (seq_filename:locs_filename:_) <- getArgs
+
+  sequence_data <- load_alignment dna seq_filename
+
+  locs_table <- readTable locs_filename
+  let locs = locs_table $$ ("locs", AsInt)
+
+  mcmc $ model locs sequence_data
