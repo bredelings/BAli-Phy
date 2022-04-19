@@ -1061,7 +1061,9 @@ pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_inst
 {
     Hs::Binds binds_out;
     local_instance_env lie_out;
-    auto lie_vec = lie | ranges::to<vector>;
+    vector<pair<string,Hs::Type>> lie_vec;
+    for(auto& entry: lie)
+       lie_vec.push_back(entry);
     vector<pair<string,Hs::Type>> checked;
 
     for(int i=0;i<lie_vec.size();i++)

@@ -8,17 +8,18 @@
 
 #pragma once
 
-#include <immer/heap/with_data.hpp>
-
 namespace immer {
 
-struct free_list_node
+struct no_lock_policy
 {
-    free_list_node* next;
-};
+    bool try_lock() { return true; }
+    void lock() {}
+    void unlock() {}
 
-template <typename Base>
-struct with_free_list_node : with_data<free_list_node, Base>
-{};
+    struct scoped_lock
+    {
+        scoped_lock(no_lock_policy&) {}
+    };
+};
 
 } // namespace immer

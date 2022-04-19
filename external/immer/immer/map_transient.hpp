@@ -8,21 +8,33 @@
 
 #pragma once
 
-#include <immer/memory_policy.hpp>
 #include <immer/detail/hamts/champ.hpp>
+#include <immer/memory_policy.hpp>
 
 #include <functional>
 
 namespace immer {
 
 /*!
- * **WORK IN PROGRESS**
+ * @rst
+ *
+ * .. admonition:: Become a sponsor!
+ *    :class: danger
+ *
+ *    This component is planned but it has **not been implemented yet**.
+ *
+ *    Transiens can critically improve the performance of applications
+ *    intensively using ``set`` and ``map``. If you are working for an
+ *    organization using the library in a commercial project, please consider
+ *    **sponsoring this work**: juanpe@sinusoid.al
+ *
+ * @endrst
  */
 template <typename K,
           typename T,
-          typename Hash          = std::hash<K>,
-          typename Equal         = std::equal_to<K>,
-          typename MemoryPolicy  = default_memory_policy,
+          typename Hash           = std::hash<K>,
+          typename Equal          = std::equal_to<K>,
+          typename MemoryPolicy   = default_memory_policy,
           detail::hamts::bits_t B = default_bits>
 class map_transient;
 
