@@ -58,12 +58,15 @@ using std::tuple;
   * Handle a :: Num a => Char in (a,b) = ('a',1)
   * Partially handle polymorphic recursion.
   * Split decls into pieces.
+  * Handle expression :: type
+  * Handle explicit signatures in fundecls / simple-pattern bindings.
+  * Handle explicit signatures in pattern bindings.
 
   TODO:
+  0. Double-check logic in Gen/Binds.hs for explicit type signatures...
   0. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
   0. Type-check / kind-check user-written signatures.
   0. Handle user-written signatures in monomorphic-restricted blocks.
-  0. Promote type variables that are not generalized...
   0. Modify infer_lhs_type to use signatures to instantiate types for lhs variables with signatures.
     + Q: How do we avoid instantiating types with LIEs in situations where the monomorphism restriction applies?
     + A: Signatures can't have LIE's when the monomorphism restriction applies.
@@ -90,7 +93,6 @@ using std::tuple;
      - (superdicts, methods)
       We can then desugar these expressions to EITHER multiple dictionaries OR a tuple of dictionaries.
       Can we desugar the dictionary for class K to a data type K?
-  6. Implement explicitly typed bindings
   7. Implement fromInt and fromRational
   8. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
       Do I need to handle LiteralString patterns, then?
@@ -1199,11 +1201,14 @@ typechecker_state::infer_lhs_var_type(Hs::Var v)
 }
 
 tuple<expression_ref, Hs::Type, local_value_env>
-typechecker_state::infer_lhs_type(const expression_ref& decl)
+typechecker_state::infer_lhs_type(const expression_ref& decl, const map<string, Hs::Type>& signatures)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
+        // If there was a signature, we would have called infer_type_for_single_fundecl_with_sig
+        assert(not signatures.count(unloc(FD.v.name)));
+
         auto [v2, type, lve] = infer_lhs_var_type(FD.v);
         FD.v.type = type;
         return {FD, type, lve};
@@ -1211,7 +1216,7 @@ typechecker_state::infer_lhs_type(const expression_ref& decl)
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
-        auto [lhs, type, lve] = infer_pattern_type(PD.lhs);
+        auto [lhs, type, lve] = infer_pattern_type(PD.lhs, signatures);
         PD.lhs = lhs;
         return {PD, type, lve};
     }
@@ -1296,7 +1301,7 @@ value_env remove_sig_binders(value_env binder_env, const signature_env& signatur
 }
 
 tuple<Hs::Decls, global_value_env>
-typechecker_state::infer_type_for_decls(const global_value_env& env, const signature_env& signatures, Hs::Decls decls)
+typechecker_state::infer_type_for_decls(const global_value_env& env, const signature_env& signatures, const Hs::Decls& decls)
 {
     // The signatures for the binders should already be in the environment.
 
@@ -1307,30 +1312,16 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const signa
     local_value_env binders;
     for(auto& group: bind_groups)
     {
-        if (single_fundecl_with_sig(group, signatures))
-        {
-            auto& FD = group[0].as_<Hs::FunDecl>();
+        auto [group_decls, group_binders] = infer_type_for_decls_groups(env2, signatures, group);
 
-            auto [decl,name,sig_type] = infer_type_for_single_fundecl_with_sig(env2, FD);
-
+        for(auto& decl: group_decls)
             decls2.push_back(decl);
 
-            binders = binders.insert({name,sig_type});
-            // The type for the name should already be in the environment.
-        }
-        else
-        {
-            auto [group_decls, group_binders] = infer_type_for_decls_groups(env2, signatures, group);
+        binders += group_binders;
 
-            for(auto& decl: group_decls)
-                decls2.push_back(decl);
-
-            binders += group_binders;
-
-            env2 += remove_sig_binders(group_binders, signatures);
-        }
+        env2 += remove_sig_binders(group_binders, signatures);
     }
-    return {decls, binders};
+    return {decls2, binders};
 }
 
 tuple<expression_ref, string, Hs::Type>
@@ -1378,7 +1369,20 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
 tuple<Hs::Decls, global_value_env>
 typechecker_state::infer_type_for_decls_groups(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls)
 {
-    // How & when do we complain if there are predicates on signatures with the monomorphism restriction?
+    if (single_fundecl_with_sig(decls, signatures))
+    {
+        auto& FD = decls[0].as_<Hs::FunDecl>();
+
+        auto [decl, name, sig_type] = infer_type_for_single_fundecl_with_sig(env, FD);
+
+        Hs::Decls decls({decl});
+
+        global_value_env binders;;
+        binders = binders.insert({name, sig_type});
+        return {decls, binders};
+    }
+
+// How & when do we complain if there are predicates on signatures with the monomorphism restriction?
 
     push_lie();
 
@@ -1388,7 +1392,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     vector<Hs::Type> lhs_types;
     for(int i=0;i<decls.size();i++)
     {
-        auto [decl, type, lve] = infer_lhs_type( decls[i] );
+        auto [decl, type, lve] = infer_lhs_type( decls[i], signatures );
         decls[i] = decl;
 
         binder_env += lve;
@@ -1525,15 +1529,27 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
 // Figure 24. Rules for patterns
 tuple<Hs::Pattern, Hs::Type, local_value_env>
-typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
+typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
 {
     // TAUT-PAT
     if (auto v = pat.to<Hs::Var>())
     {
         auto V = *v;
-        Hs::Type type = fresh_meta_type_var();
-        local_value_env lve;
         auto& name = unloc(V.name);
+        local_value_env lve;
+        Hs::Type type;
+        if (sigs.count(name))
+        {
+            auto sig_type = sigs.at(name);
+            auto [tvs, constraints, monotype] = instantiate(sig_type);
+            if (constraints.size())
+                throw myexception()<<"variable '"<<name<<"' cannot have constrained type '"<<sig_type<<"' due to monomorphism restriction";
+            type = monotype;
+        }
+        else
+        {
+            type = fresh_meta_type_var();
+        }
         V.type = type;
         lve = lve.insert({name, type});
 	return { V, type , lve };
@@ -1548,7 +1564,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
 
         for(auto& pat: pats)
         {
-            auto [p, t1, lve1] = infer_pattern_type(pat);
+            auto [p, t1, lve1] = infer_pattern_type(pat, sigs);
             pat = p;
             types.push_back(t1);
             lve += lve1;
@@ -1567,7 +1583,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
     // AS-PAT
     else if (auto ap = pat.to<Hs::AsPattern>())
     {
-        auto [pat, t, lve] = infer_pattern_type(ap->pattern);
+        auto [pat, t, lve] = infer_pattern_type(ap->pattern, sigs);
         auto& name = unloc(ap->var.as_<Hs::Var>().name);
         lve = lve.insert({name, t});
         return {pat, t, lve};
@@ -1575,13 +1591,13 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
     // LAZY-PAT
     else if (auto lp = pat.to<Hs::LazyPattern>())
     {
-        auto [p, t, lve] = infer_pattern_type(lp->pattern);
+        auto [p, t, lve] = infer_pattern_type(lp->pattern, sigs);
         return {Hs::LazyPattern(p), t, lve};
     }
     // not in paper (STRICT-PAT)
     else if (auto sp = pat.to<Hs::StrictPattern>())
     {
-        auto [p, t, lve] = infer_pattern_type(sp->pattern);
+        auto [p, t, lve] = infer_pattern_type(sp->pattern, sigs);
         return {Hs::StrictPattern(p), t, lve};
     }
     // WILD-PAT
@@ -1599,7 +1615,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
         Hs::Type t = fresh_meta_type_var();
         for(auto& element: L.elements)
         {
-            auto [p1, t1, lve1] = infer_pattern_type(element);
+            auto [p1, t1, lve1] = infer_pattern_type(element, sigs);
             element = p1;
 
             unify(t, t1);
@@ -1616,7 +1632,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat)
         local_value_env lve;
         for(auto& element: T.elements)
         {
-            auto [p, t1, lve1] = infer_pattern_type(element);
+            auto [p, t1, lve1] = infer_pattern_type(element, sigs);
             element = p;
             types.push_back(t1);
             lve += lve1;
@@ -2690,6 +2706,7 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
     std::cerr<<"\n";
 
     std::cerr<<M.value_decls.print();
+    std::cerr<<"\n\n";
     return M;
 }
 
