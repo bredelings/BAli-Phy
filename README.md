@@ -25,13 +25,13 @@ On Mac (or Linux, actually) you can use homebrew:
 brew install cairo meson
 ```
 
-If the version of meson is not at least 0.53, then you need to install
-meson through the python package manager "pip":
-```bash
-python3 -m venv meson
-source meson/bin/activate
-pip3 install meson
-```
+If the version of meson is not at least 0.56, then you need to install
+meson through the python package manager "pip" or "pip3":
+
+    pip -V
+    PATH=~/.local/bin:$PATH
+    pip install --user meson ninja
+
 
 Build BAli-Phy
 --------------
