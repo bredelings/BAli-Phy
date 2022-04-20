@@ -28,9 +28,9 @@ brew install cairo meson
 If the version of meson is not at least 0.56, then you need to install
 meson through the python package manager "pip" or "pip3":
 
-    pip -V
-    PATH=~/.local/bin:$PATH
-    pip install --user meson ninja
+    pip3 -V
+    PATH=$HOME/.local/bin:$PATH
+    pip3 install --user meson ninja
 
 
 Build BAli-Phy
