@@ -66,16 +66,12 @@ using std::tuple;
   0. Double-check logic in Gen/Binds.hs for explicit type signatures...
   0. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
   0. Type-check / kind-check user-written signatures.
-  0. Handle user-written signatures in monomorphic-restricted blocks.
-  0. Modify infer_lhs_type to use signatures to instantiate types for lhs variables with signatures.
-    + Q: How do we avoid instantiating types with LIEs in situations where the monomorphism restriction applies?
-    + A: Signatures can't have LIE's when the monomorphism restriction applies.
   0. Implement explicit types in terms of TypedExp -- match + entails to check predicates
     + GHC/Hs/Binds.hs
     + GHC/Tc/Gen/Binds.hs
     + Basically, I need to read all of Gen/Bind.hs :-(
       - See note [Impedance matching]
-  0. Record impedance-matching info in DictionaryLambda (and perhaps rename it).
+  0. Record impedance-matching info in GenBind (and perhaps rename it).
   0. Write more-general impedance-matching code.
   0. Avoid a space leak with polymorphic recursion in cases like factorial.
      Do not create new dictionaries for each call at the same type.
@@ -1358,13 +1354,13 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
     if (not evbinds)
         throw myexception()<<"Can't derive constraints '"<<print(lie_wanted)<<"' from specified constraints '"<<print(lie_given)<<"'";
 
-    // 5. return DictionaryLambda with tvs, givens, body
+    // 5. return GenBind with tvs, givens, body
     auto dict_vars = vars_from_lie( ordered_lie_given );
 
     Hs::Decls decls;
     decls.push_back(decl2);
 
-    auto decl = Hs::DictionaryLambda( tvs, dict_vars, *evbinds, decls );
+    auto decl = Hs::GenBind( tvs, dict_vars, *evbinds, decls );
     return {decl, name, sig_type};
 }
 
@@ -1521,7 +1517,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     if (qtvs.size() or binds.size() or dict_vars.size())
     {
         decls2 = {};
-        decls2.push_back( Hs::DictionaryLambda( qtvs | ranges::to<vector>, dict_vars, binds, decls ) );
+        decls2.push_back( Hs::GenBind( qtvs | ranges::to<vector>, dict_vars, binds, decls ) );
     }
 
     pop_and_add_lie();

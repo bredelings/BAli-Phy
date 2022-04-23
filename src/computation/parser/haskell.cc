@@ -796,7 +796,7 @@ string MRule::print() const
     return join( ss, " ");
 }
 
-string DictionaryLambda::print() const
+string GenBind::print() const
 {
     vector<string> as;
     for(auto& tv: tv_args)
