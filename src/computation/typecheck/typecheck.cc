@@ -2360,7 +2360,8 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
 global_instance_env
 typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, const class_env& ce)
 {
-    auto [class_head, monotypes] = decompose_type_apps(inst_decl.constraint);
+    // -- old -- //
+    auto [class_head, class_args] = decompose_type_apps(inst_decl.constraint);
 
     // Premise #1: Look up the info for the class
     optional<class_info> cinfo;
@@ -2378,11 +2379,11 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, c
 
     // Premise #2: Find the type vars mentioned in the constraint.
     set<Hs::TypeVar> type_vars;
-    // Premise #4: the monotype must be a type constructor applied to simple, distinct type variables.
+    // Premise #4: the class_arg must be a type constructor applied to simple, distinct type variables.
     vector<Hs::TypeCon> types;
-    for(auto& monotype: monotypes)
+    for(auto& class_arg: class_args)
     {
-        auto [a_head, a_args] = decompose_type_apps(monotype);
+        auto [a_head, a_args] = decompose_type_apps(class_arg);
         auto tc = a_head.to<Hs::TypeCon>();
         if (not tc)
             throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<a_head<<" is not a type constructor!";
@@ -2395,7 +2396,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, c
             auto tv = a_arg.to<Hs::TypeVar>();
 
             if (not tv)
-                throw myexception()<<"In instance for '"<<inst_decl.constraint<<"' for type '"<<monotype<<"': "<<a_arg<<" is not a type variable!";
+                throw myexception()<<"In instance for '"<<inst_decl.constraint<<"' for type '"<<class_arg<<"': "<<a_arg<<" is not a type variable!";
 
             if (type_vars.count(*tv))
                 throw myexception()<<"Type variable '"<<tv->print()<<"' occurs twice in constraint '"<<inst_decl.constraint<<"'";
@@ -2404,7 +2405,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, c
         }
     }
 
-    // Premise 5: Check that the context contains no variables not mentioned in `monotype`
+    // Premise 5: Check that the context contains no variables not mentioned in `class_arg`
     for(auto& tv: free_type_VARS(inst_decl.context))
     {
         if (not type_vars.count(tv))
@@ -2412,9 +2413,11 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, c
     }
 
     auto dfun = fresh_var("dfun", true);
-    Hs::Type inst_type = add_constraints(inst_decl.context.constraints, inst_decl.constraint);
-    inst_type = apply_current_subst(inst_type);
-    inst_type = add_forall_vars( free_type_VARS(inst_type) | ranges::to<vector>, inst_type);
+
+    //  -- new -- //
+    kindchecker_state K(tce);
+    Hs::Type inst_type = Hs::ConstrainedType(inst_decl.context, inst_decl.constraint);
+    inst_type = K.kind_and_type_check_constraint(inst_type);
     global_instance_env gie_out;
     gie_out = gie_out.insert( { unloc(dfun.name), inst_type } );
     return gie_out;
