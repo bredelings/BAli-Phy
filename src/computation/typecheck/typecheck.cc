@@ -698,7 +698,11 @@ Hs::Type quantify(const T& tvs, const Hs::Type& monotype)
     if (tvs.empty())
         return monotype;
     else
+    {
+//        for(auto& tv: tvs)
+//            assert(tv.kind);
         return Hs::ForallType(tvs | ranges::to<vector>, monotype);
+    }
 }
 
 template <typename T>
@@ -717,6 +721,8 @@ Hs::Type generalize(const global_value_env& env, const Hs::Type& monotype)
     for(auto tv: ftv2)
         ftv1.erase(tv);
 
+//    for(auto& tv: ftv1)
+//        assert(tv.kind);
     return Hs::ForallType(ftv1 | ranges::to<vector>, monotype);
 }
 
@@ -732,6 +738,7 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instan
         {
             auto new_tv = fresh_type_var(meta);
             new_tv.kind = tv.kind;
+//            assert(tv.kind);
             s = s.insert({tv,new_tv});
 
             tvs.push_back(new_tv);
