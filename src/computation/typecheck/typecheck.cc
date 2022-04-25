@@ -369,8 +369,9 @@ void typechecker_state::pop_and_add_lie()
     current_lie() += lie;
 }
 
-typechecker_state::typechecker_state(const string& s, const Module& m, const Hs::ModuleDecls& M, const constr_env& ce)
-    :con_info(ce),
+typechecker_state::typechecker_state(const string& s, const Module& m, const Hs::ModuleDecls& M, const type_con_env& tce_, const constr_env& ce)
+    :tce(tce_),
+     con_info(ce),
      mod_name(s),
      this_mod(m)
 {
@@ -2224,7 +2225,7 @@ constr_env get_constructor_info(const Hs::Decls& decls, const type_con_env& tce)
     return cve;
 }
 
-tuple<global_value_env, global_instance_env, class_env, Hs::Binds> typechecker_state::infer_type_for_classes(const Hs::Decls& decls, const type_con_env& tce)
+tuple<global_value_env, global_instance_env, class_env, Hs::Binds> typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
 {
     global_value_env gve;
     global_instance_env gie;
@@ -2236,7 +2237,7 @@ tuple<global_value_env, global_instance_env, class_env, Hs::Binds> typechecker_s
         auto c = decl.to<Hs::ClassDecl>();
         if (not c) continue;
 
-        auto [gve1, gie1, class_info, class_decls] = infer_type_for_class(tce, *c);
+        auto [gve1, gie1, class_info, class_decls] = infer_type_for_class(*c);
 
         gve += gve1;
         gie += gie1;
@@ -2313,7 +2314,7 @@ Hs::Type type_check_class_method_type(kindchecker_state& K, Hs::Type type, const
 //                       = { made-up-name = \dict -> case dict of (superdict,_,_,_,_) -> superdict }
 
 tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
-typechecker_state::infer_type_for_class(const type_con_env& tce, const Hs::ClassDecl& class_decl)
+typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     kindchecker_state K(tce);
 
@@ -2674,8 +2675,8 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
     std::cerr<<"\n";
 
     //   CE_C  = class name -> class info
-    typechecker_state state( mod_name, m, M, constr_info );
-    auto [gve, class_gie, class_info, class_binds] = state.infer_type_for_classes(M.type_decls, tce);
+    typechecker_state state( mod_name, m, M, tce, constr_info );
+    auto [gve, class_gie, class_info, class_binds] = state.infer_type_for_classes(M.type_decls);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 
     for(auto& [method,type]: gve)

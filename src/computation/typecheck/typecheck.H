@@ -32,6 +32,8 @@ struct typechecker_state
 
     int next_tvar_index = 1;
 
+    type_con_env tce;
+
     constr_env con_info;
 
     global_instance_env gie;
@@ -181,10 +183,10 @@ struct typechecker_state
     infer_type_for_binds(const global_value_env& env, Hs::Binds binds);
 
     std::tuple<global_value_env, global_instance_env, class_env, Hs::Binds>
-    infer_type_for_classes(const Hs::Decls& decls, const type_con_env& tce);
+    infer_type_for_classes(const Hs::Decls& decls);
 
     std::tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
-    infer_type_for_class(const type_con_env& tce, const Hs::ClassDecl& class_decl);
+    infer_type_for_class(const Hs::ClassDecl& class_decl);
 
     // Figure 12
     global_instance_env
@@ -231,7 +233,7 @@ struct typechecker_state
     std::pair<Hs::Binds, local_instance_env> reduce(const local_instance_env& lie_in);
     Hs::Binds reduce_current_lie();
 
-    typechecker_state(const std::string& s, const Module& m, const Hs::ModuleDecls& M, const constr_env& ce);
+    typechecker_state(const std::string& s, const Module& m, const Hs::ModuleDecls& M, const type_con_env& tce_, const constr_env& ce);
 };
 
 template <typename T>
