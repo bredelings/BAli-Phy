@@ -61,14 +61,14 @@ using std::tuple;
   * Handle expression :: type
   * Handle explicit signatures in fundecls / simple-pattern bindings.
   * Handle explicit signatures in pattern bindings.
+  * Kind-check explicit type signatures.
 
   TODO:
-  0. Type-check / kind-check (a) user-written signatures and (b) e::t expressions.
-     - How are these divided into groups?
+  0. Process type signatures for ambiguity and type synonyms.
+  0. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
   0. Record on GenBind any types that are (a) unused or (b) defaulted for a specific definition in
      a recursive group.
   0. Double-check logic in Gen/Binds.hs for explicit type signatures...
-  0. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
   0. Implement explicit types in terms of TypedExp -- match + entails to check predicates
     + GHC/Hs/Binds.hs
     + GHC/Tc/Gen/Binds.hs
@@ -2270,8 +2270,12 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     {
         for(auto& [name, type]: unloc(*class_decl.binds).signatures)
         {
+
             Hs::Type method_type = Hs::ConstrainedType(Hs::Context({constraint}), type);
             method_type = K.kind_and_type_check_type(method_type);
+
+            // FIXME: Move the constraint out of other foralls, so that we have
+            //            forall a.C(a) => (forall b.C2(b) => ...)
 
             method_type = add_forall_vars(class_typevars, method_type);
 
