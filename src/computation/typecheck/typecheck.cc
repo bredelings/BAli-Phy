@@ -2218,58 +2218,9 @@ Hs::Type type_check_class_method_type(kindchecker_state& K, Hs::Type type, const
     // 1. Bind type parameters for type declaration
     K.push_type_var_scope();
 
-    std::optional<Hs::Context> context;
+    Hs::Type constrained_type = Hs::ConstrainedType(Hs::Context({constraint}), type);
 
-    // 2. Find the unconstrained type
-    auto unconstrained_type = type;
-    if (unconstrained_type.is_a<Hs::ConstrainedType>())
-    {
-        auto& ct = unconstrained_type.as_<Hs::ConstrainedType>();
-        context = ct.context;
-        unconstrained_type = ct.type;
-    }
-
-    // 3. Find the NEW free type variables
-    auto new_ftvs = free_type_VARS(unconstrained_type);
-    vector<Hs::TypeVar> to_erase;
-    for(auto& type_var: new_ftvs)
-        if (K.type_var_in_scope(type_var))
-            to_erase.push_back(type_var);
-    for(auto& type_var: to_erase)
-        new_ftvs.erase(type_var);
-
-    // 4. Bind fresh kind vars to new type variables
-    for(auto& ftv: new_ftvs)
-    {
-        auto a = K.fresh_kind_var();
-        K.bind_type_var(ftv,a);
-    }
-
-    // 5. Check the context
-    if (context)
-        K.kind_check_context(*context);
-
-    // 6. Check the unconstrained type and infer kinds.
-    K.kind_check_type_of_kind(unconstrained_type, make_kind_star());
-
-    // 7. Bind fresh kind vars to new type variables
-    vector<Hs::TypeVar> new_type_vars;
-    for(auto& type_var: new_ftvs)
-    {
-        auto type_var_with_kind = type_var;
-        type_var_with_kind.kind = replace_kvar_with_star( K.kind_for_type_var(type_var) );
-        new_type_vars.push_back( type_var_with_kind );
-    }
-
-    // Don't we need to simplify constraints if we do this?
-    type = add_constraints({constraint}, type);
-
-    type = add_forall_vars(new_type_vars, type);
-    
-    // 6. Unbind type parameters
-    K.pop_type_var_scope();
-
-    return type;
+    return K.kind_and_type_check_type(constrained_type);
 }
 
 // OK, so
