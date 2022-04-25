@@ -64,50 +64,43 @@ using std::tuple;
   * Kind-check explicit type signatures.
 
   TODO:
-  0. Process type signatures for ambiguity and type synonyms.
-  0. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
-  0. Record on GenBind any types that are (a) unused or (b) defaulted for a specific definition in
-     a recursive group.
-  0. Double-check logic in Gen/Binds.hs for explicit type signatures...
-  0. Implement explicit types in terms of TypedExp -- match + entails to check predicates
-    + GHC/Hs/Binds.hs
-    + GHC/Tc/Gen/Binds.hs
-    + Basically, I need to read all of Gen/Bind.hs :-(
-      - See note [Impedance matching]
-  0. Record impedance-matching info in GenBind (and perhaps rename it).
-  0. Write more-general impedance-matching code.
-  0. Avoid a space leak with polymorphic recursion in cases like factorial.
+  1. Reject unification of variables, tycons, etc with different kinds.
+     - Ensure that all ForallType binders have kinds.
+  2. Process type signatures for ambiguity and type synonyms.
+  3. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
+  4. Record impedance-matching info on GenBind
+     - unused types
+     - defaulted types
+     - defaulted dictionaries.
+  5. Write more-general impedance-matching code.
+  6. Avoid a space leak with polymorphic recursion in cases like factorial.
      Do not create new dictionaries for each call at the same type.
-  1. Check that constraints in instance contexts satisfy the "paterson conditions"
-  2. How do we export stuff?
-  3. Make functions to handle instance declarations from Figure 12.
-  4. Handle instances in two passes:
+  7. Check that constraints in instance contexts satisfy the "paterson conditions"
+  8. How do we export stuff?
+  9. Make functions to handle instance declarations from Figure 12.
+  10. Handle instances in two passes:
      - Can we first the the NAME and TYPE for all the instance variables,
        and second generate the instance dfun bodies?
      - Possibly generating the dfun bodies AFTER the value declarations are done?
      - How do we figure out if the instance contexts can be satisfied in a mutally recursive manner?
-  5. Make AST nodes for dictionary abstraction and dictionary application.
+  11. Make AST nodes for dictionary abstraction and dictionary application.
      - \(dicts::theta) -> monobinds in binds
      - exp <dicts>
      - (superdicts, methods)
       We can then desugar these expressions to EITHER multiple dictionaries OR a tuple of dictionaries.
       Can we desugar the dictionary for class K to a data type K?
-  7. Implement fromInt and fromRational
-  8. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
+  12. Implement fromInt and fromRational
+  13. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
       Do I need to handle LiteralString patterns, then?
-  9. Check that there are no cycles in the class hierarchy.
-  11. Emit code for instances and check if there are instances for the context.
-  13. Handle constraints on constructors.
-  14. Remove the constraint from EmptySet
-  17. Replace types with type synonyms.
-  18. Reject unification of variables, tycons, etc with different kinds.
-  19. Add basic error reporting.
-  21. Should we consider having infer_type( ) modify expressions in-place instace of 
-      returning a new one?
-  22. How do we handle things like Prelude.Num, Prelude.Enum, Prelude.fromInt, etc.
+  14. Check that there are no cycles in the class hierarchy.
+  15. Emit code for instances and check if there are instances for the context.
+  16. Handle constraints on constructors.
+  17. Remove the constraint from EmptySet
+  18. Add basic error reporting.
+  19. How do we handle things like Prelude.Num, Prelude.Enum, Prelude.fromInt, etc.
       Right now, maybe we can pick a Num / fromInt from the local scope, instead?
       This might require passing some information from the renamer into the typechecker...
-  23. Handle literal constant patterns.  We need a Num or Fractional dictionary for
+  20. Handle literal constant patterns.  We need a Num or Fractional dictionary for
       Int or Double constants.  I guess we need an Eq Char, or Eq [Char] dictionary for
       characters or strings?
 
