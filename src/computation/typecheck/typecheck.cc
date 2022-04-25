@@ -1932,42 +1932,6 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         expression_ref E2 = Hs::LetExp({noloc,binds},{noloc,x});
 
         return infer_type(env, E2);
-
-        /* 
-
-        // 1. instantiate the type -> (tvs, givens, rho-type)
-        auto [tvs, given_constraints, given_type] = instantiate(texp->type, false);
-        auto ordered_lie_given = constraints_to_lie(given_constraints);
-        auto lie_given = unordered_lie(ordered_lie_given);
-
-        // 2. Get the most general type
-        push_lie();
-        auto [exp, most_general_type] = infer_type(env, texp->exp);
-        auto lie_wanted = pop_lie();
-
-        // 3. alpha[i] in most_general_type but not in env
-        auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
-        // FIXME -- what if the instantiated type contains variables that are free in the environment?
-        
-        // 4. Constrain the most general type to the given type with MATCH
-        auto e = myexception()<<"Type '"<<texp->type<<"' does not match type '"<<most_general_type<<"' of expression '"<<texp->exp<<"'";
-        unify(most_general_type, given_type, e);
-
-        // 5. check if the given => wanted ~ EvBinds
-        lie_wanted = apply_current_subst(lie_wanted);
-        auto evbinds = entails(lie_given, lie_wanted);
-        if (not evbinds)
-            throw myexception()<<"Can't derive constraints '"<<print(lie_wanted)<<"' from specified constraints '"<<print(lie_given)<<"'";
-
-        // 6. create lambda arguments from the list of constraint vars, in order
-        vector<expression_ref> dvars;
-        for(auto& [dvar, constraint]: ordered_lie_given)
-            dvars.push_back(dvar);
-
-        current_lie() += lie_given;
-
-        return { Hs::LambdaExp(dvars, Hs::LetExp({noloc,*evbinds}, {noloc,exp})), given_type };
-        */
     }
     else if (auto l = E.to<Hs::List>())
     {
