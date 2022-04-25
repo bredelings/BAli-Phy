@@ -1026,12 +1026,22 @@ struct FunDecl: public Object
 
 FunDecl simple_decl(const Var& v, const expression_ref&);
 
+struct BindInfo
+{
+    Type monotype;
+    std::map<std::string, Type> defaulted_tvs;
+    std::set<std::string> any_tvs;
+    Binds binds;
+};
+
 struct GenBind: public Object
 {
     std::vector<TypeVar> tv_args;
 
     // These variables MUST be type-annotated!
     std::vector<Var> dict_args;
+
+    std::map<std::string, BindInfo> bind_infos;
 
     GenBind* clone() const {return new GenBind(*this);}
     std::string print() const;

@@ -1473,6 +1473,8 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
     set<Hs::TypeVar> qtvs = tvs_in_any_type - fixed_tvs;
 
+    map<string, Hs::BindInfo> bind_infos;
+
     if (is_restricted(signatures, decls))
     {
         // 1. Remove defaulted constraints from LIE?
@@ -1505,6 +1507,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
         global_value_env binder_env2;
         for(auto& [name,type]: binder_env)
         {
+            Hs::BindInfo info;
             auto tvs_in_this_type = free_type_variables(type);
 
             // Default any constraints that do not occur in THIS type.
@@ -1515,7 +1518,13 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
             // Only quantify over type variables that occur in THIS type.
             Hs::Type qualified_type = quantify( tvs_in_this_type, constrained_type );
 
+            // How can we generate a wrapper between qualified_type and lie_deferred => (type1, unrestricted_type, type3)?
+
             binder_env2 = binder_env2.insert( {name, qualified_type} );
+
+            info.monotype = type;
+            info.binds = binds2;
+            bind_infos.insert({name, info});
         }
         binder_env = binder_env2;
     }
@@ -1524,7 +1533,9 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     if (qtvs.size() or binds.size() or dict_vars.size())
     {
         decls2 = {};
-        decls2.push_back( Hs::GenBind( qtvs | ranges::to<vector>, dict_vars, binds, decls ) );
+        Hs::GenBind gen_bind( qtvs | ranges::to<vector>, dict_vars, binds, decls );
+        gen_bind.bind_infos = bind_infos;
+        decls2.push_back( gen_bind );
     }
 
     pop_and_add_lie();
