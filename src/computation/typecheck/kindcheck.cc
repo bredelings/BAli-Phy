@@ -719,6 +719,16 @@ map<string,Hs::Type> kindchecker_state::type_check_data_type(const Hs::DataOrNew
 
 Hs::Type kindchecker_state::kind_and_type_check_type(const Hs::Type& type)
 {
+    return kind_and_type_check_type_(type, make_kind_star() );
+}
+
+Hs::Type kindchecker_state::kind_and_type_check_constraint(const Hs::Type& type)
+{
+    return kind_and_type_check_type_(type, make_kind_constraint() );
+}
+
+Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, const kind& k)
+{
     // 1. Bind type parameters for type declaration
     push_type_var_scope();
 
@@ -741,7 +751,7 @@ Hs::Type kindchecker_state::kind_and_type_check_type(const Hs::Type& type)
     }
 
     // 4. Check the unconstrained type and infer kinds.
-    kind_check_type_of_kind(type, make_kind_star());
+    kind_check_type_of_kind(type, k);
 
     // 5. Bind fresh kind vars to new type variables
     vector<Hs::TypeVar> new_type_vars;
