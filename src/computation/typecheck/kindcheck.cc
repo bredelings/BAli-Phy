@@ -533,6 +533,11 @@ kind kindchecker_state::kind_check_type(const Hs::Type& t)
             tuple_type = Hs::TypeApp(tuple_type, element_type);
         return kind_check_type(tuple_type);
     }
+    else if (auto c = t.to<Hs::ConstrainedType>())
+    {
+        kind_check_context(c->context);
+        return kind_check_type(c->type);
+    }
     else
         throw myexception()<<"I don't recognize type '"<<t.print()<<"'";
 }
@@ -716,17 +721,8 @@ Hs::Type kindchecker_state::kind_and_type_check_type(const Hs::Type& type)
 
     std::optional<Hs::Context> context;
 
-    // 2. Find the unconstrained type
-    auto unconstrained_type = type;
-    if (unconstrained_type.is_a<Hs::ConstrainedType>())
-    {
-        auto& ct = unconstrained_type.as_<Hs::ConstrainedType>();
-        context = ct.context;
-        unconstrained_type = ct.type;
-    }
-
-    // 3. Find the NEW free type variables
-    auto new_ftvs = free_type_VARS(unconstrained_type);
+    // 2. Find the NEW free type variables
+    auto new_ftvs = free_type_VARS(type);
     vector<Hs::TypeVar> to_erase;
     for(auto& type_var: new_ftvs)
         if (type_var_in_scope(type_var))
@@ -734,21 +730,17 @@ Hs::Type kindchecker_state::kind_and_type_check_type(const Hs::Type& type)
     for(auto& type_var: to_erase)
         new_ftvs.erase(type_var);
 
-    // 4. Bind fresh kind vars to new type variables
+    // 3. Bind fresh kind vars to new type variables
     for(auto& ftv: new_ftvs)
     {
         auto a = fresh_kind_var();
         bind_type_var(ftv,a);
     }
 
-    // 5. Check the context
-    if (context)
-        kind_check_context(*context);
+    // 4. Check the unconstrained type and infer kinds.
+    kind_check_type_of_kind(type, make_kind_star());
 
-    // 6. Check the unconstrained type and infer kinds.
-    kind_check_type_of_kind(unconstrained_type, make_kind_star());
-
-    // 7. Bind fresh kind vars to new type variables
+    // 5. Bind fresh kind vars to new type variables
     vector<Hs::TypeVar> new_type_vars;
     for(auto& type_var: new_ftvs)
     {
@@ -757,12 +749,12 @@ Hs::Type kindchecker_state::kind_and_type_check_type(const Hs::Type& type)
         new_type_vars.push_back( type_var_with_kind );
     }
 
-    auto type2 = add_forall_vars(new_type_vars, type);
     
     // 6. Unbind type parameters
     pop_type_var_scope();
 
-    return type2;
+    // 7. Add foralls with the appropriate kinds.
+    return add_forall_vars(new_type_vars, type);
 }
 
 void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
