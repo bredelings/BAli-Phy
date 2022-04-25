@@ -26,6 +26,8 @@ typedef value_env constr_env;
 
 typedef std::map<std::string, Hs::Type> signature_env;
 
+global_value_env sig_env(const signature_env& signatures);
+
 struct typechecker_state
 {
     int next_var_index = 1;
@@ -165,8 +167,6 @@ struct typechecker_state
 
     std::tuple<Hs::Match, Hs::Type>
     infer_type(const global_value_env& env, Hs::Match);
-
-    global_value_env sig_env(const signature_env& signatures);
 
     // Figures 13, 14, 15?
     std::tuple<Hs::Decls, global_value_env>

@@ -709,7 +709,7 @@ map<string,Hs::Type> kindchecker_state::type_check_data_type(const Hs::DataOrNew
     return types;
 }
 
-void kindchecker_state::kind_check_class_method_type(const Hs::Type& type)
+Hs::Type kindchecker_state::kind_and_type_check_type(const Hs::Type& type)
 {
     // 1. Bind type parameters for type declaration
     push_type_var_scope();
@@ -725,26 +725,44 @@ void kindchecker_state::kind_check_class_method_type(const Hs::Type& type)
         unconstrained_type = ct.type;
     }
 
-    // 3. Find the free type variables
-    auto ftvs = free_type_VARS(unconstrained_type);
-    for(auto& ftv: ftvs)
+    // 3. Find the NEW free type variables
+    auto new_ftvs = free_type_VARS(unconstrained_type);
+    vector<Hs::TypeVar> to_erase;
+    for(auto& type_var: new_ftvs)
+        if (type_var_in_scope(type_var))
+            to_erase.push_back(type_var);
+    for(auto& type_var: to_erase)
+        new_ftvs.erase(type_var);
+
+    // 4. Bind fresh kind vars to new type variables
+    for(auto& ftv: new_ftvs)
     {
-        if (not type_var_in_scope(ftv))
-        {
-            auto a = fresh_kind_var();
-            bind_type_var(ftv,a);
-        }
+        auto a = fresh_kind_var();
+        bind_type_var(ftv,a);
     }
 
-    // 4. Check the context
+    // 5. Check the context
     if (context)
         kind_check_context(*context);
 
-    // 5. Check the unconstrained type
+    // 6. Check the unconstrained type and infer kinds.
     kind_check_type_of_kind(unconstrained_type, make_kind_star());
 
+    // 7. Bind fresh kind vars to new type variables
+    vector<Hs::TypeVar> new_type_vars;
+    for(auto& type_var: new_ftvs)
+    {
+        auto type_var_with_kind = type_var;
+        type_var_with_kind.kind = replace_kvar_with_star( kind_for_type_var(type_var) );
+        new_type_vars.push_back( type_var_with_kind );
+    }
+
+    auto type2 = add_forall_vars(new_type_vars, type);
+    
     // 6. Unbind type parameters
     pop_type_var_scope();
+
+    return type2;
 }
 
 void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
@@ -776,7 +794,7 @@ void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
     if (class_decl.binds)
     {
         for(auto& [name,type]: unloc(*class_decl.binds).signatures)
-            kind_check_class_method_type(type);
+            kind_and_type_check_type(type);
     }
 
     pop_type_var_scope();

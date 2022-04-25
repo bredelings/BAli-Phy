@@ -785,21 +785,20 @@ vector<Hs::Var> vars_from_lie(const vector<pair<Hs::Var, Hs::Type>>& lie)
     return vars;
 }
 
-global_value_env typechecker_state::sig_env(const map<string, Hs::Type>& signatures)
+global_value_env sig_env(const map<string, Hs::Type>& signatures)
 {
     global_value_env sig_env;
     for(auto& [name, type]: signatures)
-    {
-        // FIXME! We need to translate type synonyms
-        Hs::Type qualified_type = add_forall_vars(free_type_variables(type) | ranges::to<vector>, type);
-        sig_env = sig_env.insert({name, qualified_type});
-    }
+        sig_env = sig_env.insert({name, type});
     return sig_env;
 }
 
 tuple<Hs::Binds, global_value_env>
 typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds binds)
 {
+    kindchecker_state K(tce);
+    for(auto& [name,type]: binds.signatures)
+        type = K.kind_and_type_check_type(type);
     auto env2 = plus_prefer_right(env, sig_env(binds.signatures));
 
     global_value_env binders;
@@ -1927,6 +1926,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         Hs::Decls decls;
         decls.push_back(simple_decl(x,texp->exp));
         Hs::Binds binds;
+        // By making a LetExp, we rely on the Let code to handle the type here.
         binds.signatures.insert({unloc(x.name), texp->type});
         binds.push_back(decls);
         expression_ref E2 = Hs::LetExp({noloc,binds},{noloc,x});

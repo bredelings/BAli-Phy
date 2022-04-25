@@ -50,7 +50,7 @@ struct kindchecker_state
     void kind_check_context(const Haskell::Context& context);
 
     // class
-    void kind_check_class_method_type(const Haskell::Type& type);
+    Hs::Type kind_and_type_check_type(const Haskell::Type& type);
     void kind_check_type_class(const Haskell::ClassDecl& class_decl);
 
     // data or newtype
