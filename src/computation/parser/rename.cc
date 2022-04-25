@@ -533,7 +533,7 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         auto TE = *te;
         TE.exp = rename_infix(m, TE.exp);
-        // How about TE.type??
+        // Nothing to do for TE.type, since there are no type operators unless extensions are enabled.
         return TE;
     }
     else if (auto I = E.to<Hs::InfixExp>())
