@@ -63,9 +63,12 @@ using std::tuple;
   * Handle explicit signatures in pattern bindings.
 
   TODO:
+  0. Type-check / kind-check (a) user-written signatures and (b) e::t expressions.
+     - How are these divided into groups?
+  0. Record on GenBind any types that are (a) unused or (b) defaulted for a specific definition in
+     a recursive group.
   0. Double-check logic in Gen/Binds.hs for explicit type signatures...
   0. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
-  0. Type-check / kind-check user-written signatures.
   0. Implement explicit types in terms of TypedExp -- match + entails to check predicates
     + GHC/Hs/Binds.hs
     + GHC/Tc/Gen/Binds.hs
@@ -187,6 +190,7 @@ using std::tuple;
   Q3: Should we translate => to -> during typechecking, OR do we want to do this during desugaring?
   A3: Well.. the typechecker IS making up some variable names... so maybe we do this during type checking?
       Can we tell what GHC is doing?
+  A3: We should do it during translation to "Core".
 
   Q4: How do we process the instances in the correct order?
   A4: Can we put them into the type groups, and then REVISIT the groups,
@@ -196,8 +200,11 @@ using std::tuple;
   A5. We know the types of the instance methods BEFORE we know the function bodies, right?
       So, we should be able to type-check the instance bodies LAST, if we generate the types
       for the value_decls first.
+  A5. First record the method types, then type-check values -- including values for the method bindings!
+      Then create values for the instances.
 
   Q6. How do we check that there are no super-class -> class cycles.
+  A5. Just record all classes that occur in the constraints of each class as a directed edge, and look for cycles.
 
   Q7. Should we generate a special syntax node for dictionary arguments, dictionary applications, etc,
       in order to delay converting => to ->, and converting dictionary applications, etc?
@@ -2632,6 +2639,21 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
     //    * Constructor Value Environment (CVE)
     //
     // 2. Check the module's class declarations, produce some translated bindings -> binds_C ( GVE_C, CE_C, GIE_C )
+    //
+    // 3. We need to import/export:
+    //    - TCE_T: type_con_env& tce                type -> kind
+    //    - CVE_T: constr_env& state.con_info       constructor id -> type
+    //    - GIE_C: global_instance_env state.gie    ??
+    //      * superclass extractors?
+    //      * instance functions to create dictionaries...
+    //      * 
+    //    - GVE_C: global_value_environment gve     id -> type (for class methods)
+    //    - CE_C: class_info                        id -> class_info
+
+    //    - GVE:   global_value_environment env     id -> type (for other values)
+    //    - class_binds                             id -> body        = unused?
+    //
+    // 4. Should imports/export only affect what NAMES are in scope, or also things like the instance environment?
 
     // TCE_T = type con info, part1
     auto tce = get_tycon_info( M.type_decls );
