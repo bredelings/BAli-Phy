@@ -2213,16 +2213,6 @@ tuple<global_value_env, global_instance_env, class_env, Hs::Binds> typechecker_s
     return {gve, gie, ce, binds};
 }
 
-Hs::Type type_check_class_method_type(kindchecker_state& K, Hs::Type type, const Hs::Type& constraint)
-{
-    // 1. Bind type parameters for type declaration
-    K.push_type_var_scope();
-
-    Hs::Type constrained_type = Hs::ConstrainedType(Hs::Context({constraint}), type);
-
-    return K.kind_and_type_check_type(constrained_type);
-}
-
 // OK, so
 // * global_value_env    = name         :: forall a: class var => signature (i.e. a-> b -> a)
 // * global_instance_env = made-up-name :: forall a: class var => superclass var
@@ -2280,9 +2270,9 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     {
         for(auto& [name, type]: unloc(*class_decl.binds).signatures)
         {
-            Hs::Type method_type = type_check_class_method_type(K, type, constraint);
+            Hs::Type method_type = Hs::ConstrainedType(Hs::Context({constraint}), type);
+            method_type = K.kind_and_type_check_type(method_type);
 
-            method_type = apply_current_subst(method_type);
             method_type = add_forall_vars(class_typevars, method_type);
 
             gve = gve.insert({name, method_type});
