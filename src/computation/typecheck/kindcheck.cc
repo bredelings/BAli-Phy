@@ -281,8 +281,8 @@ Hs::Type add_constraints(const vector<Hs::Type>& constraints, const Hs::Type& ty
 
 Hs::Type add_forall_vars(const std::vector<Hs::TypeVar>& type_vars, const Hs::Type& type)
 {
-//    for(auto& tv: type_vars)
-//        assert(tv.kind);
+    for(auto& tv: type_vars)
+        assert(tv.kind);
 
     if (type_vars.empty())
         return type;

@@ -15,6 +15,7 @@ struct Kind: public Object
 };
 
 typedef object_ptr<Kind> kind;
+typedef object_ptr<const Kind> const_kind;
 
 struct KindStar: public Kind
 {

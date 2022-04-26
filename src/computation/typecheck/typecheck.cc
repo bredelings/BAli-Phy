@@ -430,7 +430,7 @@ Hs::Type typechecker_state::fractional_class(const Hs::Type& arg) const
 
 tuple<Hs::Var, Hs::Type> typechecker_state::fresh_enum_type(bool meta)
 {
-    Hs::Type a = fresh_type_var(meta);
+    Hs::Type a = fresh_type_var(meta, make_kind_star());
     Hs::Type enum_a = enum_class(a);
     auto dvar = add_dvar(enum_a);
     return {dvar, a};
@@ -438,7 +438,7 @@ tuple<Hs::Var, Hs::Type> typechecker_state::fresh_enum_type(bool meta)
 
 tuple<Hs::Var, Hs::Type> typechecker_state::fresh_num_type(bool meta)
 {
-    Hs::Type a = fresh_type_var(meta);
+    Hs::Type a = fresh_type_var(meta, make_kind_star());
     Hs::Type num_a = num_class(a);
     auto dvar = add_dvar(num_a);
     return {dvar, a};
@@ -446,7 +446,7 @@ tuple<Hs::Var, Hs::Type> typechecker_state::fresh_num_type(bool meta)
 
 tuple<Hs::Var, Hs::Type> typechecker_state::fresh_fractional_type(bool meta)
 {
-    Hs::Type a = fresh_type_var(meta);
+    Hs::Type a = fresh_type_var(meta, make_kind_star());
     Hs::Type fractional_a = fractional_class(a);
     auto dvar = add_dvar(fractional_a);
     return {dvar, a};
@@ -504,25 +504,28 @@ Hs::Var typechecker_state::fresh_var(const std::string& s, bool qualified)
 // "Rigid" type vars come from forall-quantified variables.
 // "Wobbly" type vars come from existentially-quantified variables (I think).  We don't have any.
 // "Meta" type vars are unification type vars.
-Hs::TypeVar typechecker_state::fresh_rigid_type_var() {
+Hs::TypeVar typechecker_state::fresh_rigid_type_var(const const_kind& k) {
     Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
     next_tvar_index++;
     tv.info = Hs::typevar_info::rigid;
+    tv.kind = k;
     return tv;
 }
 
-Hs::TypeVar typechecker_state::fresh_meta_type_var() {
+Hs::TypeVar typechecker_state::fresh_meta_type_var(const const_kind& k) {
     Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
     next_tvar_index++;
     tv.info = Hs::typevar_info::meta;
+    tv.kind = k;
     return tv;
 }
 
-Hs::TypeVar typechecker_state::fresh_type_var(bool meta) {
+Hs::TypeVar typechecker_state::fresh_type_var(bool meta, const const_kind& k)
+{
     if (meta)
-        return fresh_meta_type_var();
+        return fresh_meta_type_var(k);
     else
-        return fresh_rigid_type_var();
+        return fresh_rigid_type_var(k);
 }
 
 pair<local_instance_env, map<Hs::TypeVar, local_instance_env>>
@@ -650,12 +653,12 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
 
     if (con_name == ":")
     {
-        Hs::Type a = fresh_meta_type_var();
+        Hs::Type a = fresh_meta_type_var( make_kind_star() );
         return {Hs::ListType(a),{a,Hs::ListType(a)}};
     }
     else if (con_name == "[]")
     {
-        Hs::Type a = fresh_meta_type_var();
+        Hs::Type a = fresh_meta_type_var( make_kind_star() );
         return {Hs::ListType(a),{}};
     }
     else if (is_tuple_name(con_name))
@@ -663,7 +666,7 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
         int n = tuple_arity(con_name);
         vector<Hs::Type> types;
         for(int i=0;i<n;i++)
-            types.push_back(fresh_meta_type_var());
+            types.push_back(fresh_meta_type_var( make_kind_star() ));
         return {Hs::TupleType(types),types};
     }
 
@@ -699,8 +702,8 @@ Hs::Type quantify(const T& tvs, const Hs::Type& monotype)
         return monotype;
     else
     {
-//        for(auto& tv: tvs)
-//            assert(tv.kind);
+        for(auto& tv: tvs)
+            assert(tv.kind);
         return Hs::ForallType(tvs | ranges::to<vector>, monotype);
     }
 }
@@ -721,8 +724,8 @@ Hs::Type generalize(const global_value_env& env, const Hs::Type& monotype)
     for(auto tv: ftv2)
         ftv1.erase(tv);
 
-//    for(auto& tv: ftv1)
-//        assert(tv.kind);
+    for(auto& tv: ftv1)
+        assert(tv.kind);
     return Hs::ForallType(ftv1 | ranges::to<vector>, monotype);
 }
 
@@ -736,9 +739,9 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instan
     {
         for(auto& tv: fa->type_var_binders)
         {
-            auto new_tv = fresh_type_var(meta);
-            new_tv.kind = tv.kind;
-//            assert(tv.kind);
+            assert(tv.kind);
+            auto k = (*tv.kind).as_ptr_to<Kind>();
+            auto new_tv = fresh_type_var(meta, k);
             s = s.insert({tv,new_tv});
 
             tvs.push_back(new_tv);
@@ -1196,7 +1199,7 @@ typechecker_state::infer_lhs_var_type(Hs::Var v)
 {
     auto& name = unloc(v.name);
 
-    Hs::Type type = fresh_meta_type_var();
+    Hs::Type type = fresh_meta_type_var( make_kind_star() );
     v.type = type;
 
     // Check that this is a NEW name.
@@ -1564,7 +1567,8 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         }
         else
         {
-            type = fresh_meta_type_var();
+            auto tv = fresh_meta_type_var( make_kind_star() );
+            type = tv;
         }
         V.type = type;
         lve = lve.insert({name, type});
@@ -1619,7 +1623,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
     // WILD-PAT
     else if (pat.is_a<Hs::WildcardPattern>())
     {
-        auto tv = fresh_meta_type_var();
+        auto tv = fresh_meta_type_var( make_kind_star() );
         return {pat, tv, {}};
     }
     // LIST-PAT
@@ -1628,7 +1632,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         auto L = *l;
 
         local_value_env lve;
-        Hs::Type t = fresh_meta_type_var();
+        Hs::Type t = fresh_meta_type_var( make_kind_star() );
         for(auto& element: L.elements)
         {
             auto [p1, t1, lve1] = infer_pattern_type(element, sigs);
@@ -1812,7 +1816,7 @@ tuple<Hs::MultiGuardedRHS, Hs::Type>
 typechecker_state::infer_type(const global_value_env& env, Hs::MultiGuardedRHS rhs)
 {
     substitution_t s;
-    Hs::Type type = fresh_meta_type_var();
+    Hs::Type type = fresh_meta_type_var( make_kind_star() );
 
     auto env2 = env;
     if (rhs.decls)
@@ -1863,7 +1867,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MRule rule)
 tuple<Hs::Match, Hs::Type>
 typechecker_state::infer_type(const global_value_env& env, Hs::Match m)
 {
-    Hs::Type result_type = fresh_meta_type_var();
+    Hs::Type result_type = fresh_meta_type_var( make_kind_star() );
 
     for(auto& rule: m.rules)
     {
@@ -1947,7 +1951,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     }
     else if (auto l = E.to<Hs::List>())
     {
-        Hs::Type element_type = fresh_meta_type_var();
+        Hs::Type element_type = fresh_meta_type_var( make_kind_star() );
         auto L = *l;
         for(auto& element: L.elements)
         {
@@ -1986,7 +1990,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
             auto e2 = E.sub()[i];
 
             // tv <- fresh
-            auto tv = fresh_meta_type_var();
+            auto tv = fresh_meta_type_var( make_kind_star() );
 
             auto [arg2, t2] = infer_type(env, e2);
             args.push_back(arg2);
@@ -2075,7 +2079,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
             unloc(Case.alts[i]) = {match2.rules[i].patterns[0], match2.rules[i].rhs};
         }
 
-        Hs::Type result_type = fresh_meta_type_var();
+        Hs::Type result_type = fresh_meta_type_var( make_kind_star() );
 
         unify( make_arrow_type(object_type,result_type), match_type );
 
