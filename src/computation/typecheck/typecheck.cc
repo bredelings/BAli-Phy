@@ -66,6 +66,7 @@ using std::tuple;
   TODO:
   1. Reject unification of variables, tycons, etc with different kinds.
      - Ensure that all ForallType binders have kinds.
+     - Assign kinds to all TypeCons.... OR look it up in the symbol table when we need to!
   2. Process type signatures for ambiguity and type synonyms.
   3. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
   4. Record impedance-matching info on GenBind
@@ -76,13 +77,18 @@ using std::tuple;
   6. Avoid a space leak with polymorphic recursion in cases like factorial.
      Do not create new dictionaries for each call at the same type.
   7. Check that constraints in instance contexts satisfy the "paterson conditions"
-  8. How do we export stuff?
+  8. How do we EXPORT stuff?
+     - We already handle exporting of names and stuff in add_local_symbols( ).  We need it for renaming.
+     - This includes classes, methods, data types, constructors, type synonyms, etc.
+     - Can we just paste on the type info for the variables, and the kind info for the classes?
+     - How do you export instances, though?
   9. Make functions to handle instance declarations from Figure 12.
-  10. Handle instances in two passes:
-     - Can we first the the NAME and TYPE for all the instance variables,
-       and second generate the instance dfun bodies?
-     - Possibly generating the dfun bodies AFTER the value declarations are done?
-     - How do we figure out if the instance contexts can be satisfied in a mutally recursive manner?
+     - infer_type_for_instance1 creates a dfun with the type: forall a.Constaints(a) => Class a
+     - the dfun definition would look like:
+       + dfun dict1 .. dictn = ClassConstructor dict1 ... dictn method1 method2 ... methodn
+                where method[1] = body[1]; method[2] = body[2]; ... method[n] = body[n]
+       + how do we efficiently implement recursive class methods?
+  10. Handle export subspecs Datatype(constructor...) and Class(method...)
   11. Make AST nodes for dictionary abstraction and dictionary application.
      - \(dicts::theta) -> monobinds in binds
      - exp <dicts>
@@ -2560,7 +2566,7 @@ typechecker_state::infer_type_for_instances2(const Hs::Decls& decls, const class
     return out_decls;
 }
 
-Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDecls M )
+Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
     //    OK, so datatypes produce a
@@ -2603,7 +2609,7 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
     std::cerr<<"\n";
 
     //   CE_C  = class name -> class info
-    typechecker_state state( mod_name, m, M, tce, constr_info );
+    typechecker_state state( name, *this, M, tce, constr_info );
     auto [gve, class_gie, class_info, class_binds] = state.infer_type_for_classes(M.type_decls);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 
@@ -2656,6 +2662,33 @@ Hs::ModuleDecls typecheck( const string& mod_name, const Module& m, Hs::ModuleDe
 
     std::cerr<<M.value_decls.print();
     std::cerr<<"\n\n";
+
+    // Record kinds on the type symbol table
+    for(auto& [typecon,info]: state.tce)
+    {
+        if (get_module_name(typecon) == name)
+        {
+            auto& T = types.at(typecon);
+            assert(not T.k);
+            T.k = info.k;
+        }
+    }
+
+    // Record types on the value symbol table
+    for(auto& [value,type]: env)
+    {
+        if (get_module_name(value) == name)
+        {
+            auto& V = symbols.at(value);
+            V.type = type;
+        }
+    }
+
+    // how about instances?
+    // how about type synonyms?
+    // how about class -> methods?
+    // how about datatype -> constructors?
+
     return M;
 }
 

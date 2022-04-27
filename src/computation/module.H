@@ -38,6 +38,7 @@ struct symbol_info
     std::optional<std::string> parent;
     int arity = -1;
     fixity_info fixity;
+    Hs::Type type;
 
     symbol_info() {};
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int);
@@ -210,6 +211,8 @@ public:
     void add_local_symbols(const Hs::Decls&);
 
     void perform_imports(const Program&);
+
+    Hs::ModuleDecls typecheck(Hs::ModuleDecls);
 
     void perform_exports();
 
