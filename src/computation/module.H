@@ -50,7 +50,7 @@ struct type_info
 {
     std::string name;
     type_name_category category;
-    std::optional<fixity_info> fixity;
+    std::optional<fixity_info> fixity; // for the function arrow (->)
     std::optional<int> arity;
     kind k;
 };
