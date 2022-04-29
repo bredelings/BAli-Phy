@@ -1,11 +1,29 @@
-* 4.0 (unreleaed)
-
-* 4.0-alpha5 (unreleased)
+* 4.0-alpha5 (Apr 29, 2022)
+ - Models
+   - RNA editting model: new
+   - Li & Stephens model: specify snp columsn and locations instead of the whole alignment matrix.
+ - Math
+   - Switch to slower-but-more-accurate matrix exponential code that handles
+     the case when equilibrium frequencies are 0.
  - Haskell infrastructure
    - More parser / AST cleanup.
    - More renamer cleanup.
    - Perform dependency analysis on the value declarations.
    - Preliminary typechecking pass.
+     - handle let, case, lambda, etc.
+     - accumulate constraints
+     - simplify constraints
+     - handle fromInteger, fromRational
+     - implement monomorphism restriction
+     - implement defaulting
+     - kind-check and quantify explicit signatures
+     - handle exp :: type
+     - split recursive groups by signature
+ - Tools
+   - alignment-max
+     - Allow columns to be distinguished based on the number of letters emitted before a gap.
+   - alignment-smc
+     - Allow selectings sites by fraction of sequences missing at that site.
 
 * 4.0-alpha4 (Dec 20, 2021)
  - Fix alignment_slice_sample_branch_length
