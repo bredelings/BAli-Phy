@@ -510,7 +510,7 @@ Hs::Var typechecker_state::fresh_var(const std::string& s, bool qualified)
 // "Rigid" type vars come from forall-quantified variables.
 // "Wobbly" type vars come from existentially-quantified variables (I think).  We don't have any.
 // "Meta" type vars are unification type vars.
-Hs::TypeVar typechecker_state::fresh_rigid_type_var(const const_kind& k) {
+Hs::TypeVar typechecker_state::fresh_rigid_type_var(const Hs::Kind& k) {
     Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
     next_tvar_index++;
     tv.info = Hs::typevar_info::rigid;
@@ -518,7 +518,7 @@ Hs::TypeVar typechecker_state::fresh_rigid_type_var(const const_kind& k) {
     return tv;
 }
 
-Hs::TypeVar typechecker_state::fresh_meta_type_var(const const_kind& k) {
+Hs::TypeVar typechecker_state::fresh_meta_type_var(const Hs::Kind& k) {
     Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
     next_tvar_index++;
     tv.info = Hs::typevar_info::meta;
@@ -526,7 +526,7 @@ Hs::TypeVar typechecker_state::fresh_meta_type_var(const const_kind& k) {
     return tv;
 }
 
-Hs::TypeVar typechecker_state::fresh_type_var(bool meta, const const_kind& k)
+Hs::TypeVar typechecker_state::fresh_type_var(bool meta, const Hs::Kind& k)
 {
     if (meta)
         return fresh_meta_type_var(k);
@@ -746,8 +746,7 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instan
         for(auto& tv: fa->type_var_binders)
         {
             assert(tv.kind);
-            auto k = (*tv.kind).as_ptr_to<Kind>();
-            auto new_tv = fresh_type_var(meta, k);
+            auto new_tv = fresh_type_var(meta, *tv.kind);
             s = s.insert({tv,new_tv});
 
             tvs.push_back(new_tv);
@@ -2253,39 +2252,22 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     cinfo.emitted_name = "class$"+name; // FIXME: only modify name after qualifier?  Just prefix d?
     cinfo.context = class_decl.context;
 
-    // Bind type parameters for class
+    // 1. Bind type parameters for class
     K. push_type_var_scope();
 
-    // a. Look up kind for this data type.
-    kind k = K. kind_for_type_con(name);  // FIXME -- check that this is a class?
+    // 1a. Look up kind for this data type.
+    auto class_kind = K.kind_for_type_con(name);
 
-    // b. Put each type variable into the kind.
-    vector<Hs::TypeVar> class_typevars;
+    // 1b. Record the kind for each type variable.
     for(auto& tv: class_decl.type_vars)
-    {
-        // the kind should be an arrow kind.
-        assert(k->is_karrow());
-        auto& ka = dynamic_cast<const KindArrow&>(*k);
+        K.bind_type_var(tv, *tv.kind);
 
-        // map the name to its kind
-        K.bind_type_var(tv, ka.k1);
-
-        // record a version of the var with that contains its kind
-        auto tv2 = tv;
-        tv2.kind = ka.k1;
-        class_typevars.push_back(tv2);
-
-        // set up the next iteration
-        k = ka.k2;
-    }
-    assert(k->is_kconstraint());
-
-    // d. construct the constraint
-    Hs::Type constraint = Hs::TypeCon(Unlocated(class_decl.name));
-    for(auto& tv: class_typevars)
+    // 2. construct the constraint that represent the class
+    Hs::Type constraint = Hs::TypeCon(Unlocated(class_decl.name)); // put class_kind into TypeCon?
+    for(auto& tv: class_decl.type_vars)
         constraint = Hs::TypeApp(constraint, tv);
 
-    // e. handle the class methods
+    // 3. make global types for class methods
     global_value_env gve;
     if (class_decl.binds)
     {
@@ -2298,7 +2280,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
             // FIXME: Move the constraint out of other foralls, so that we have
             //            forall a.C(a) => (forall b.C2(b) => ...)
 
-            method_type = add_forall_vars(class_typevars, method_type);
+            method_type = add_forall_vars(class_decl.type_vars, method_type);
 
             gve = gve.insert({name, method_type});
         }
@@ -2321,7 +2303,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         Hs::Type type = add_constraints({constraint}, constraint_);
         // Could we be adding too many forall vars?
         type = apply_current_subst(type);
-        type = add_forall_vars(class_typevars, type);
+        type = add_forall_vars(class_decl.type_vars, type);
         gie = gie.insert({unloc(get_dict.name), type});
     }
     cinfo.fields = gve + gie;
@@ -2566,6 +2548,54 @@ typechecker_state::infer_type_for_instances2(const Hs::Decls& decls, const class
     return out_decls;
 }
 
+Hs::Kind result_kind_for_type_vars(vector<Hs::TypeVar>& type_vars, Hs::Kind k)
+{
+    for(auto& tv: type_vars)
+    {
+        // the kind should be an arrow kind.
+        auto ka = k.to<KindArrow>();
+        assert(ka);
+
+        // record a version of the var with that contains its kind
+        tv.kind = ka->k1;
+
+        // set up the next iteration
+        k = ka->k2;
+    }
+    // This is the result kind.
+    return k;
+}
+
+Hs::Decls add_type_var_kinds(Hs::Decls type_decls, const type_con_env& tce)
+{
+    for(auto& type_decl: type_decls)
+    {
+        if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
+        {
+            auto D = type_decl.as_<Hs::DataOrNewtypeDecl>();
+            auto k = tce.at(D.name).k;
+            result_kind_for_type_vars(D.type_vars, k);
+            type_decl = D;
+        }
+        else if (type_decl.is_a<Hs::ClassDecl>())
+        {
+            auto C = type_decl.as_<Hs::ClassDecl>();
+            auto k = tce.at(C.name).k;
+            result_kind_for_type_vars(C.type_vars, k);
+            type_decl = C;
+        }
+        else if (type_decl.is_a<Hs::TypeSynonymDecl>())
+        {
+            auto T = type_decl.as_<Hs::TypeSynonymDecl>();
+            auto k = tce.at(T.name).k;
+            result_kind_for_type_vars(T.type_vars, k);
+            type_decl = T;
+        }
+    }
+
+    return type_decls;
+}
+
 Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
@@ -2595,8 +2625,9 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     for(auto& [tycon,ka]: tce)
     {
         auto& [k,arity] = ka;
-        std::cerr<<tycon<<" :: "<<k->print()<<"\n";
+        std::cerr<<tycon<<" :: "<<k.print()<<"\n";
     }
+    M.type_decls = add_type_var_kinds(M.type_decls, tce);
     std::cerr<<"\n";
 
     // CVE_T = constructor types :: map<string, polytype> = global_value_env

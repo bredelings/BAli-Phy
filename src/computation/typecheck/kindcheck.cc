@@ -366,7 +366,7 @@ bool kindchecker_state::type_var_in_scope(const Hs::TypeVar& tv) const
     return type_var_to_kind.back().count(tv);
 }
 
-void kindchecker_state::bind_type_var(const Hs::TypeVar& tv, const kind& k)
+void kindchecker_state::bind_type_var(const Hs::TypeVar& tv, const Hs::Kind& k)
 {
     // We can't modify the initial empty scope.
     assert(type_var_to_kind.size() > 1);
@@ -390,18 +390,18 @@ void kindchecker_state::pop_type_var_scope()
     assert(not type_var_to_kind.empty());
 }
 
-void kindchecker_state::add_type_con_of_kind(const string& name, const kind& k, int arity)
+void kindchecker_state::add_type_con_of_kind(const string& name, const Hs::Kind& k, int arity)
 {
     assert(not type_con_to_kind.count(name));
     type_con_to_kind.insert({name,{k,arity}});
 }
 
-kind kindchecker_state::apply_substitution(const kind& k) const
+Hs::Kind kindchecker_state::apply_substitution(const Hs::Kind& k) const
 {
     return apply_subst(kind_var_to_kind, k);
 }
 
-void kindchecker_state::add_substitution(const KindVar& kv, const kind& k)
+void kindchecker_state::add_substitution(const KindVar& kv, const Hs::Kind& k)
 {
     assert(not kind_var_to_kind.count(kv));
 
@@ -415,14 +415,14 @@ void kindchecker_state::add_substitution(const k_substitution_t& s)
     kind_var_to_kind = compose(s,kind_var_to_kind);
 }
 
-kind kindchecker_state::kind_for_type_con(const std::string& name) const
+Hs::Kind kindchecker_state::kind_for_type_con(const std::string& name) const
 {
     auto k = type_con_to_kind.at(name).k;
     return apply_substitution(k);
 }
 
 
-kind kindchecker_state::kind_for_type_var(const Hs::TypeVar& tv) const
+Hs::Kind kindchecker_state::kind_for_type_var(const Hs::TypeVar& tv) const
 {
     auto it = type_var_to_kind.back().find(tv);
     if (it == type_var_to_kind.back().end())
@@ -431,9 +431,9 @@ kind kindchecker_state::kind_for_type_var(const Hs::TypeVar& tv) const
     return apply_subst(kind_var_to_kind, k);
 }
 
-bool kindchecker_state::unify(const kind& k1, const kind& k2)
+bool kindchecker_state::unify(const Hs::Kind& k1, const Hs::Kind& k2)
 {
-    auto s = ::unify(k1,k2);
+    auto s = ::kunify(k1,k2);
     if (s)
     {
         add_substitution(*s);
@@ -443,19 +443,19 @@ bool kindchecker_state::unify(const kind& k1, const kind& k2)
         return false;
 }
 
-void kindchecker_state::kind_check_type_of_kind(const Hs::Type& t, const kind& k)
+void kindchecker_state::kind_check_type_of_kind(const Hs::Type& t, const Hs::Kind& k)
 {
     auto k2 = kind_check_type(t);
     if (not unify(k,k2))
         throw myexception()<<"Type "<<t<<" has kind "<<apply_substitution(k2)<<", but should have kind "<<apply_substitution(k)<<"\n";
 }
 
-kind kindchecker_state::kind_check_type_var(const Hs::TypeVar& tv)
+Hs::Kind kindchecker_state::kind_check_type_var(const Hs::TypeVar& tv)
 {
     return kind_for_type_var(tv);
 }
 
-kind kindchecker_state::kind_check_type_con(const string& name)
+Hs::Kind kindchecker_state::kind_check_type_con(const string& name)
 {
     if (name == "Num#")
         return make_kind_star();
@@ -481,7 +481,7 @@ kind kindchecker_state::kind_check_type_con(const string& name)
         return kind_for_type_con(name);
 }
 
-kind kindchecker_state::kind_check_type(const Hs::Type& t)
+Hs::Kind kindchecker_state::kind_check_type(const Hs::Type& t)
 {
     if (auto tc = t.to<Hs::TypeCon>())
     {
@@ -500,24 +500,22 @@ kind kindchecker_state::kind_check_type(const Hs::Type& t)
         auto k1 = kind_check_type(tapp.head);
         auto k2 = kind_check_type(tapp.arg);
 
-        if (k1->is_kvar())
+        if (auto kv1 = k1.to<KindVar>())
         {
-            auto& a = dynamic_cast<const KindVar&>(*k1);
             auto a1 = fresh_kind_var();
             auto a2 = fresh_kind_var();
-            add_substitution(a, make_kind_arrow(a1,a2));
+            add_substitution(*kv1, make_kind_arrow(a1,a2));
             unify(a1, k2); /// can't fail.
             return a2;
         }
-        else if (k1->is_karrow())
+        else if (auto a = k1.to<KindArrow>())
         {
-            auto& a = dynamic_cast<const KindArrow&>(*k1);
-            if (not unify(a.k1, k2))
+            if (not unify(a->k1, k2))
                 throw myexception()<<"In type '"<<t<<"', can't apply type ("<<tapp.head<<" :: "<<apply_substitution(k1)<<") to type ("<<tapp.arg<<" :: "<<apply_substitution(k2)<<")";
-            return a.k2;
+            return a->k2;
         }
         else
-            throw myexception()<<"Can't apply type "<<tapp.head<<" :: "<<k1->print()<<" to type "<<tapp.arg<<".";
+            throw myexception()<<"Can't apply type "<<tapp.head<<" :: "<<k1.print()<<" to type "<<tapp.arg<<".";
 
     }
     else if (t.is_a<Hs::ListType>())
@@ -541,8 +539,8 @@ kind kindchecker_state::kind_check_type(const Hs::Type& t)
         kind_check_context(c->context);
         return kind_check_type(c->type);
     }
-    else
-        throw myexception()<<"I don't recognize type '"<<t.print()<<"'";
+
+    throw myexception()<<"I don't recognize type '"<<t.print()<<"'";
 }
 
 
@@ -624,22 +622,22 @@ void kindchecker_state::kind_check_data_type(const Hs::DataOrNewtypeDecl& data_d
     push_type_var_scope();
 
     // a. Look up kind for this data type.
-    kind k = kind_for_type_con(data_decl.name);  // FIXME -- check that this is a data type?
+    auto k = kind_for_type_con(data_decl.name);  // FIXME -- check that this is a data type?
 
     // b. Put each type variable into the kind.
     for(auto& tv: data_decl.type_vars)
     {
         // the kind should be an arrow kind.
-        assert(k->is_karrow());
-        auto& ka = dynamic_cast<const KindArrow&>(*k);
+        auto ka = k.to<KindArrow>();
+        assert(ka);
 
         // map the name to its kind
-        bind_type_var(tv, ka.k1);
+        bind_type_var(tv, ka->k1);
 
         // set up the next iteration
-        k = ka.k2;
+        k = ka->k2;
     }
-    assert(k->is_kstar());
+    assert(k.is_a<KindStar>());
 
     // c. Handle the context
     kind_check_context(data_decl.context);
@@ -661,28 +659,28 @@ map<string,Hs::Type> kindchecker_state::type_check_data_type(const Hs::DataOrNew
     push_type_var_scope();
 
     // a. Look up kind for this data type.
-    kind k = kind_for_type_con(data_decl.name);  // FIXME -- check that this is a data type?
+    auto k = kind_for_type_con(data_decl.name);  // FIXME -- check that this is a data type?
 
     // b. Bind each type variable.
     vector<Hs::TypeVar> datatype_typevars;
     for(auto& tv: data_decl.type_vars)
     {
         // the kind should be an arrow kind.
-        assert(k->is_karrow());
-        auto& ka = dynamic_cast<const KindArrow&>(*k);
+        auto ka = k.to<KindArrow>();
+        assert(ka);
 
         // map the name to its kind
-        bind_type_var(tv, ka.k1);
+        bind_type_var(tv, ka->k1);
 
         // record a version of the var with that contains its kind
         auto tv2 = tv;
-        tv2.kind = ka.k1;
+        tv2.kind = ka->k1;
         datatype_typevars.push_back(tv2);
 
         // set up the next iteration
-        k = ka.k2;
+        k = ka->k2;
     }
-    assert(k->is_kstar());
+    assert(k.is_a<KindStar>());
 
     // c. handle the context
     // The context should already be type-checked.
@@ -727,7 +725,7 @@ Hs::Type kindchecker_state::kind_and_type_check_constraint(const Hs::Type& type)
     return kind_and_type_check_type_(type, make_kind_constraint() );
 }
 
-Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, const kind& k)
+Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, const Hs::Kind& k)
 {
     // 1. Bind type parameters for type declaration
     push_type_var_scope();
@@ -781,20 +779,20 @@ void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
     auto k = kind_for_type_con(name); // FIXME -- check that this is a type class?
 
     // b. Put each type variable into the kind.
-    kind k2 = make_kind_star();
+    Hs::Kind k2 = make_kind_star();
     for(auto& tv: class_decl.type_vars)
     {
         // the kind should be an arrow kind.
-        assert(k->is_karrow());
-        auto& ka = dynamic_cast<const KindArrow&>(*k);
+        auto ka = k.to<KindArrow>();
+        assert(ka);
 
         // map the name to its kind
-        bind_type_var(tv, ka.k1);
+        bind_type_var(tv, ka->k1);
 
         // set up the next iteration
-        k = ka.k2;
+        k = ka->k2;
     }
-    assert(k->is_kconstraint());
+    assert(k.is_a<KindConstraint>());
 
     if (class_decl.binds)
     {
@@ -826,16 +824,16 @@ void kindchecker_state::kind_check_type_synonym(const Hs::TypeSynonymDecl& type_
     for(auto& tv: type_syn_decl.type_vars)
     {
         // the kind should be an arrow kind.
-        assert(k->is_karrow());
-        auto& ka = dynamic_cast<const KindArrow&>(*k);
+        auto ka = k.to<KindArrow>();
+        assert(ka);
 
         // map the name to its kind
-        bind_type_var(tv, ka.k1);
+        bind_type_var(tv, ka->k1);
 
         // set up the next iteration
-        k = ka.k2;
+        k = ka->k2;
     }
-    assert(k->is_kstar());
+    assert(k.is_a<KindStar>());
 
     kind_check_type_of_kind( unloc(type_syn_decl.rhs_type), make_kind_star() );
 
@@ -850,7 +848,7 @@ type_con_env kindchecker_state::infer_kinds(const vector<expression_ref>& type_d
     {
         string name;
         int arity;
-        kind k;
+        Hs::Kind k;
         if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
         {
             auto& D = type_decl.as_<Hs::DataOrNewtypeDecl>();

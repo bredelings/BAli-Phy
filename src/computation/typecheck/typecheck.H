@@ -111,11 +111,11 @@ struct typechecker_state
     // "Rigid" type vars come from forall-quantified variables.
     // "Wobbly" type vars come from existentially-quantified variables (I think).  We don't have any.
     // "Meta" type vars are unification type vars.
-    Hs::TypeVar fresh_rigid_type_var(const const_kind& k);
+    Hs::TypeVar fresh_rigid_type_var(const Hs::Kind& k);
 
-    Hs::TypeVar fresh_meta_type_var(const const_kind& k);
+    Hs::TypeVar fresh_meta_type_var(const Hs::Kind& k);
 
-    Hs::TypeVar fresh_type_var(bool meta, const const_kind& k);
+    Hs::TypeVar fresh_type_var(bool meta, const Hs::Kind& k);
 
     std::optional<std::tuple<substitution_t, Hs::Binds>>
     candidates(const Hs::TypeVar& tv, const local_instance_env& tv_lie);

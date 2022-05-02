@@ -2,19 +2,20 @@
 
 using std::string;
 
-kind_star make_kind_star() {return new KindStar();}
+object_ptr<KindStar> make_kind_star() {return new KindStar();}
 
-kind_constraint make_kind_constraint() {return new KindConstraint();}
+object_ptr<KindConstraint> make_kind_constraint() {return new KindConstraint();}
 
-string KindArrow::print() const {
-    string s1 = k1->print();
-    string s2 = k2->print();
-    if (k1->is_karrow())
+string KindArrow::print() const
+{
+    string s1 = k1.print();
+    string s2 = k2.print();
+    if (k1.is_a<KindArrow>())
         s1 = "("+s1+")";
     return s1+" -> "+s2;
 }
 
-kind_arrow make_kind_arrow(const kind& k1, const kind& k2) {return new KindArrow{k1,k2};}
+object_ptr<KindArrow> make_kind_arrow(const Hs::Kind& k1, const Hs::Kind& k2) {return new KindArrow{k1,k2};}
 
 std::string KindVar::print() const {
     string s = name;
@@ -23,7 +24,7 @@ std::string KindVar::print() const {
     return s;
 }
 
-kind_var make_kind_var(const std::string& s, int i) {return new KindVar(s,i);}
+object_ptr<KindVar> make_kind_var(const std::string& s, int i) {return new KindVar(s,i);}
 
 bool KindVar::operator==(const Object& o) const
 {
@@ -50,26 +51,21 @@ bool KindVar::operator<(const KindVar& k) const
 }
 
 
-kind apply_subst(const k_substitution_t& s, const kind& k)
+Hs::Kind apply_subst(const k_substitution_t& s, const Hs::Kind& k)
 {
-    if (k->is_kvar())
+    if (auto kv = k.to<KindVar>())
     {
-        auto& kv = dynamic_cast<KindVar&>(*k);
-        auto k2 = s.find(kv);
+        auto k2 = s.find( *kv );
         if (k2 != s.end())
             return apply_subst(s, k2->second);
         else
             return k;
     }
-    else if (k->is_karrow())
+    else if (auto a = k.to<KindArrow>())
     {
-        auto& a = dynamic_cast<KindArrow&>(*k);
-        auto k1 = apply_subst(s,a.k1);
-        auto k2 = apply_subst(s,a.k2);
-        if (k1 != a.k1 or k2 != a.k2)
-            return make_kind_arrow(k1,k2);
-        else
-            return k;
+        auto k1 = apply_subst(s, a->k1);
+        auto k2 = apply_subst(s, a->k2);
+        return make_kind_arrow(k1,k2);
     }
     else
         return k;
@@ -91,89 +87,79 @@ k_substitution_t compose(const k_substitution_t& s1, const k_substitution_t s2)
     return s3;
 }
 
-bool occurs_check(const KindVar& kv, const kind& k)
+bool occurs_check(const KindVar& kv, const Hs::Kind& k)
 {
-    if (k->is_kvar())
-        return kv == dynamic_cast<const KindVar&>(*k);
-    else if (k->is_karrow())
+    if (auto kv2 = k.to<KindVar>())
+        return kv == *kv2;
+    else if (auto a = k.to<KindArrow>())
     {
-        auto& a = dynamic_cast<const KindArrow&>(*k);
-        return occurs_check(kv, a.k1) or occurs_check(kv, a.k2);
+        return occurs_check(kv, a->k1) or occurs_check(kv, a->k2);
     }
     else
         return false;
 }
 
-std::optional<k_substitution_t> unify(const kind& k1, const kind& k2)
+std::optional<k_substitution_t> kunify(const Hs::Kind& k1, const Hs::Kind& k2)
 {
-    if (k1->is_karrow() and k2->is_karrow())
+    if (k1.is_a<KindArrow>() and k2.is_a<KindArrow>())
     {
-        auto& A = dynamic_cast<const KindArrow&>(*k1);
-        auto& B = dynamic_cast<const KindArrow&>(*k2);
-        auto s1 = unify(A.k1, B.k1);
+        auto A = k1.to<KindArrow>();
+        auto B = k2.to<KindArrow>();
+        auto s1 = kunify(A->k1, B->k1);
         if (not s1) return {};
 
-        auto s2 = unify(apply_subst(*s1, A.k2), apply_subst(*s1, A.k2));
+        auto s2 = kunify(apply_subst(*s1, A->k2), apply_subst(*s1, B->k2));
         if (not s2) return {};
 
         return compose(*s1,*s2);
     }
-    else if (k1->is_kvar())
+    else if (auto kv1 = k1.to<KindVar>())
     {
-        auto& kv1 = dynamic_cast<const KindVar&>(*k1);
-
-        if (k2->is_kvar() and kv1 == dynamic_cast<const KindVar&>(*k2))
+        if (auto kv2 = k2.to<KindVar>(); kv2 and *kv1 == *kv2)
             return {{}};
-        if (occurs_check(kv1,k2)) return {};
+        if (occurs_check(*kv1, k2)) return {};
 
         k_substitution_t s;
-        s.insert({kv1,k2});
+        s.insert({*kv1,k2});
         return s;
     }
-    else if (k2->is_kvar())
+    else if (auto kv2 = k2.to<KindVar>())
     {
-        auto& kv2 = dynamic_cast<const KindVar&>(*k2);
-
-        if (k1->is_kvar() and kv2 == dynamic_cast<const KindVar&>(*k1))
-            return {{}};
-        if (occurs_check(kv2,k1)) return {};
+        // k1 can't be a KindVar on this branch.
+        if (occurs_check(*kv2, k1)) return {};
 
         k_substitution_t s;
-        s.insert({kv2,k1});
+        s.insert({*kv2,k1});
         return s;
     }
-    else if (k1->is_kstar() and k2->is_kstar())
+    else if (k1.is_a<KindStar>() and k2.is_a<KindStar>())
         return {{}};
-    else if (k1->is_kconstraint() and k2->is_kconstraint())
+    else if (k1.is_a<KindConstraint>() and k2.is_a<KindConstraint>())
         return {{}};
     else
         return {};
 }
 
-kind make_n_args_kind(int n)
+Hs::Kind make_n_args_kind(int n)
 {
-    auto star = make_kind_star();
-    kind k = star;
+    Hs::Kind star = make_kind_star();
+    Hs::Kind k = star;
     for(int i=0;i<n;i++)
         k = make_kind_arrow(star,k);
     return k;
 }
 
-kind replace_kvar_with_star(const kind& k)
+Hs::Kind replace_kvar_with_star(const Hs::Kind& k)
 {
-    if (k->is_kvar())
+    if (k.is_a<KindVar>())
     {
         return make_kind_star();
     }
-    else if (k->is_karrow())
+    else if (auto a = k.to<KindArrow>())
     {
-        auto& a = dynamic_cast<KindArrow&>(*k);
-        auto k1 = replace_kvar_with_star( a.k1 );
-        auto k2 = replace_kvar_with_star( a.k2 );
-        if (k1 != a.k1 or k2 != a.k2)
-            return make_kind_arrow(k1,k2);
-        else
-            return k;
+        auto k1 = replace_kvar_with_star( a->k1 );
+        auto k2 = replace_kvar_with_star( a->k2 );
+        return make_kind_arrow(k1,k2);
     }
     else
         return k;

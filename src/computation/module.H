@@ -53,7 +53,7 @@ struct type_info
     type_name_category category;
     std::optional<fixity_info> fixity; // for the function arrow (->) only
     std::optional<int> arity;
-    kind k;
+    Hs::Kind k;
 };
 
 bool operator==(const symbol_info&S1, const symbol_info& S2);

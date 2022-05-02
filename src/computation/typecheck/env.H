@@ -40,7 +40,7 @@ value_env& operator+=(value_env&, const value_env&);
 
 struct type_con_info
 {
-    kind k;
+    Hs::Kind k;
     int arity;
 //    Hs::Type operator() (const vector<Hs::Type>& args) const;
 // -- for type synonmys, we need the means to apply the constructor to (exactly) k arguments, for arity k.
