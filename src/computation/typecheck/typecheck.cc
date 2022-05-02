@@ -2331,7 +2331,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     vector<Hs::Type> types;
     for(auto& [name,type]: cinfo.fields)
         types.push_back(type);
-    Hs::Type dict_type = Hs::TupleType(types);
+    Hs::Type dict_type = Hs::tuple_type(types);
 
     int i = 0;
     for(auto& [name,type]: cinfo.fields)
@@ -2348,7 +2348,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         pats[i] = field;
 
         // (,field,_,_) -> field
-        Hs::Alt alt{Hs::Tuple(pats),Hs::SimpleRHS({noloc,field})};
+        Hs::Alt alt{Hs::tuple(pats),Hs::SimpleRHS({noloc,field})};
 
         // case dict of (_,field,_,_) -> field
         Hs::CaseExp case_exp(dict,Hs::Alts({{noloc,alt}}));
@@ -2451,13 +2451,13 @@ typechecker_state::infer_type_for_instances1(const Hs::Decls& decls, const class
     return gie_inst;
 }
 
-expression_ref tuple_from_value_env(const value_env& venv)
+Hs::Expression tuple_from_value_env(const value_env& venv)
 {
     vector<expression_ref> elements;
     for(auto& [name,type]: venv)
         elements.push_back( Hs::Var({noloc, name}) );
 
-    return Hs::Tuple(elements);
+    return Hs::tuple(elements);
 }
 
 Hs::Decls

@@ -598,8 +598,13 @@ struct Tuple: public Object
     std::vector<expression_ref> elements;
     Tuple* clone() const { return new Tuple(*this);}
     std::string print() const;
-    Tuple(const std::vector<expression_ref>& es): elements(es) {}
+    Tuple(const std::vector<expression_ref>& es): elements(es)
+        {
+            assert(es.size() != 1);
+        }
 };
+
+Expression tuple(const std::vector<Expression>& es);
 
 struct GuardedRHS
 {
@@ -748,8 +753,12 @@ struct TupleType: public Object
 
     TupleType* clone() const { return new TupleType(*this);}
     std::string print() const;
-    TupleType(const std::vector<Type>& v):element_types(v) {}
+    TupleType(const std::vector<Type>& v):element_types(v) {
+        assert(v.size() != 1);
+    }
 };
+
+Type tuple_type(const std::vector<Type>& v);
 
 struct ListType: public Object
 {

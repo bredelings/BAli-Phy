@@ -29,7 +29,7 @@ string show_type_or_class_header(const Context& context, const string& name, con
     return join(ss, " ");
 }
 
-string show_instance_header(const Context& context, const Hs::Type& constraint)
+string show_instance_header(const Context& context, const Type& constraint)
 {
     string result = constraint.print();
     if (context.constraints.size())
@@ -284,6 +284,15 @@ string Tuple::print() const
     return "(" + join(parts,", ") +")";
 }
 
+Expression tuple(const std::vector<Expression>& es)
+{
+    if (es.size() == 1)
+        return es[0];
+    else
+        return Tuple(es);
+}
+
+
 string LetQual::print() const
 {
     return "let " + binds.print();
@@ -340,6 +349,14 @@ string TupleType::print() const
     for(auto& element_type: element_types)
         parts.push_back(element_type.print());
     return "(" + join(parts,", ") +")";
+}
+
+Type tuple_type(const std::vector<Type>& ts)
+{
+    if (ts.size() == 1)
+        return ts[0];
+    else
+        return TupleType(ts);
 }
 
 string ListType::print() const
