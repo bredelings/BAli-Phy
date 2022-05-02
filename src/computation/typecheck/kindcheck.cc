@@ -366,7 +366,7 @@ bool kindchecker_state::type_var_in_scope(const Hs::TypeVar& tv) const
     return type_var_to_kind.back().count(tv);
 }
 
-void kindchecker_state::bind_type_var(const Hs::TypeVar& tv, const Hs::Kind& k)
+void kindchecker_state::bind_type_var(const Hs::TypeVar& tv, const Hs::Kind& kind)
 {
     // We can't modify the initial empty scope.
     assert(type_var_to_kind.size() > 1);
@@ -374,7 +374,7 @@ void kindchecker_state::bind_type_var(const Hs::TypeVar& tv, const Hs::Kind& k)
     auto& tvk = type_var_to_kind.back();
     if (tvk.count(tv))
         tvk.erase(tv);
-    tvk.insert({tv,k});
+    tvk.insert({tv,kind});
 }
 
 void kindchecker_state::push_type_var_scope()
@@ -390,22 +390,22 @@ void kindchecker_state::pop_type_var_scope()
     assert(not type_var_to_kind.empty());
 }
 
-void kindchecker_state::add_type_con_of_kind(const string& name, const Hs::Kind& k, int arity)
+void kindchecker_state::add_type_con_of_kind(const string& name, const Hs::Kind& kind, int arity)
 {
     assert(not type_con_to_kind.count(name));
-    type_con_to_kind.insert({name,{k,arity}});
+    type_con_to_kind.insert({name,{kind,arity}});
 }
 
-Hs::Kind kindchecker_state::apply_substitution(const Hs::Kind& k) const
+Hs::Kind kindchecker_state::apply_substitution(const Hs::Kind& kind) const
 {
-    return apply_subst(kind_var_to_kind, k);
+    return apply_subst(kind_var_to_kind, kind);
 }
 
-void kindchecker_state::add_substitution(const KindVar& kv, const Hs::Kind& k)
+void kindchecker_state::add_substitution(const KindVar& kv, const Hs::Kind& kind)
 {
     assert(not kind_var_to_kind.count(kv));
 
-    kind_var_to_kind.insert({kv,k});
+    kind_var_to_kind.insert({kv,kind});
 }
 
 
@@ -417,8 +417,8 @@ void kindchecker_state::add_substitution(const k_substitution_t& s)
 
 Hs::Kind kindchecker_state::kind_for_type_con(const std::string& name) const
 {
-    auto k = type_con_to_kind.at(name).k;
-    return apply_substitution(k);
+    auto kind = type_con_to_kind.at(name).kind;
+    return apply_substitution(kind);
 }
 
 
@@ -427,13 +427,13 @@ Hs::Kind kindchecker_state::kind_for_type_var(const Hs::TypeVar& tv) const
     auto it = type_var_to_kind.back().find(tv);
     if (it == type_var_to_kind.back().end())
         throw myexception()<<"Can't find type variable '"<<tv.print()<<"'";
-    auto k = it->second;
-    return apply_subst(kind_var_to_kind, k);
+    auto kind = it->second;
+    return apply_subst(kind_var_to_kind, kind);
 }
 
-bool kindchecker_state::unify(const Hs::Kind& k1, const Hs::Kind& k2)
+bool kindchecker_state::unify(const Hs::Kind& kind1, const Hs::Kind& kind2)
 {
-    auto s = ::kunify(k1,k2);
+    auto s = ::kunify(kind1,kind2);
     if (s)
     {
         add_substitution(*s);
@@ -443,11 +443,11 @@ bool kindchecker_state::unify(const Hs::Kind& k1, const Hs::Kind& k2)
         return false;
 }
 
-void kindchecker_state::kind_check_type_of_kind(const Hs::Type& t, const Hs::Kind& k)
+void kindchecker_state::kind_check_type_of_kind(const Hs::Type& t, const Hs::Kind& kind)
 {
-    auto k2 = kind_check_type(t);
-    if (not unify(k,k2))
-        throw myexception()<<"Type "<<t<<" has kind "<<apply_substitution(k2)<<", but should have kind "<<apply_substitution(k)<<"\n";
+    auto kind2 = kind_check_type(t);
+    if (not unify(kind, kind2))
+        throw myexception()<<"Type "<<t<<" has kind "<<apply_substitution(kind2)<<", but should have kind "<<apply_substitution(kind)<<"\n";
 }
 
 Hs::Kind kindchecker_state::kind_check_type_var(const Hs::TypeVar& tv)
@@ -497,25 +497,25 @@ Hs::Kind kindchecker_state::kind_check_type(const Hs::Type& t)
     {
         auto& tapp = t.as_<Hs::TypeApp>();
 
-        auto k1 = kind_check_type(tapp.head);
-        auto k2 = kind_check_type(tapp.arg);
+        auto kind1 = kind_check_type(tapp.head);
+        auto kind2 = kind_check_type(tapp.arg);
 
-        if (auto kv1 = k1.to<KindVar>())
+        if (auto kv1 = kind1.to<KindVar>())
         {
             auto a1 = fresh_kind_var();
             auto a2 = fresh_kind_var();
             add_substitution(*kv1, make_kind_arrow(a1,a2));
-            unify(a1, k2); /// can't fail.
+            unify(a1, kind2); /// can't fail.
             return a2;
         }
-        else if (auto a = k1.to<KindArrow>())
+        else if (auto a = kind1.to<KindArrow>())
         {
-            if (not unify(a->k1, k2))
-                throw myexception()<<"In type '"<<t<<"', can't apply type ("<<tapp.head<<" :: "<<apply_substitution(k1)<<") to type ("<<tapp.arg<<" :: "<<apply_substitution(k2)<<")";
+            if (not unify(a->k1, kind2))
+                throw myexception()<<"In type '"<<t<<"', can't apply type ("<<tapp.head<<" :: "<<apply_substitution(kind1)<<") to type ("<<tapp.arg<<" :: "<<apply_substitution(kind2)<<")";
             return a->k2;
         }
         else
-            throw myexception()<<"Can't apply type "<<tapp.head<<" :: "<<k1.print()<<" to type "<<tapp.arg<<".";
+            throw myexception()<<"Can't apply type "<<tapp.head<<" :: "<<kind1.print()<<" to type "<<tapp.arg<<".";
 
     }
     else if (t.is_a<Hs::ListType>())
@@ -622,22 +622,22 @@ void kindchecker_state::kind_check_data_type(const Hs::DataOrNewtypeDecl& data_d
     push_type_var_scope();
 
     // a. Look up kind for this data type.
-    auto k = kind_for_type_con(data_decl.name);  // FIXME -- check that this is a data type?
+    auto kind = kind_for_type_con(data_decl.name);  // FIXME -- check that this is a data type?
 
     // b. Put each type variable into the kind.
     for(auto& tv: data_decl.type_vars)
     {
         // the kind should be an arrow kind.
-        auto ka = k.to<KindArrow>();
+        auto ka = kind.to<KindArrow>();
         assert(ka);
 
         // map the name to its kind
         bind_type_var(tv, ka->k1);
 
         // set up the next iteration
-        k = ka->k2;
+        kind = ka->k2;
     }
-    assert(k.is_a<KindStar>());
+    assert(kind.is_a<KindStar>());
 
     // c. Handle the context
     kind_check_context(data_decl.context);
@@ -725,7 +725,7 @@ Hs::Type kindchecker_state::kind_and_type_check_constraint(const Hs::Type& type)
     return kind_and_type_check_type_(type, make_kind_constraint() );
 }
 
-Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, const Hs::Kind& k)
+Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, const Hs::Kind& kind)
 {
     // 1. Bind type parameters for type declaration
     push_type_var_scope();
@@ -749,7 +749,7 @@ Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, cons
     }
 
     // 4. Check the unconstrained type and infer kinds.
-    kind_check_type_of_kind(type, k);
+    kind_check_type_of_kind(type, kind);
 
     // 5. Bind fresh kind vars to new type variables
     vector<Hs::TypeVar> new_type_vars;
@@ -848,37 +848,37 @@ type_con_env kindchecker_state::infer_kinds(const vector<expression_ref>& type_d
     {
         string name;
         int arity;
-        Hs::Kind k;
+        Hs::Kind kind;
         if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
         {
             auto& D = type_decl.as_<Hs::DataOrNewtypeDecl>();
             name = D.name;
             arity = D.type_vars.size();
-            k = make_kind_star();
+            kind = make_kind_star();
         }
         else if (type_decl.is_a<Hs::ClassDecl>())
         {
             auto& C = type_decl.as_<Hs::ClassDecl>();
             name = C.name;
             arity = C.type_vars.size();
-            k = make_kind_constraint();
+            kind = make_kind_constraint();
         }
         else if (type_decl.is_a<Hs::TypeSynonymDecl>())
         {
             auto & T = type_decl.as_<Hs::TypeSynonymDecl>();
             name = T.name;
             arity = T.type_vars.size();
-            k = make_kind_star();
+            kind = make_kind_star();
         }
         else
             std::abort();
 
         // Create an initial kind here...
         for(int i=0;i<arity;i++)
-            k = make_kind_arrow( fresh_kind_var(), k );
+            kind = make_kind_arrow( fresh_kind_var(), kind );
 
-        add_type_con_of_kind(name, k, arity);
-        new_tycons.insert({name,{k,arity}});
+        add_type_con_of_kind(name, kind, arity);
+        new_tycons.insert({name,{kind,arity}});
     }
 
     // 2. Do kind inference for each declaration
@@ -915,11 +915,11 @@ type_con_env kindchecker_state::infer_kinds(const vector<expression_ref>& type_d
     for(auto& [name,info]: new_tycons)
     {
         // Lookup kind and do substitutions
-        auto k = kind_for_type_con(name);
-        k = replace_kvar_with_star(k);
+        auto kind = kind_for_type_con(name);
+        kind = replace_kvar_with_star(kind);
 
-        auto& [k_out,arity] = info;
-        k_out = k;
+        auto& [kind_out,arity] = info;
+        kind_out = kind;
     }
 
     return new_tycons;

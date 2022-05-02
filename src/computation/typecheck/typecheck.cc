@@ -2573,22 +2573,22 @@ Hs::Decls add_type_var_kinds(Hs::Decls type_decls, const type_con_env& tce)
         if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
         {
             auto D = type_decl.as_<Hs::DataOrNewtypeDecl>();
-            auto k = tce.at(D.name).k;
-            result_kind_for_type_vars(D.type_vars, k);
+            auto kind = tce.at(D.name).kind;
+            result_kind_for_type_vars(D.type_vars, kind);
             type_decl = D;
         }
         else if (type_decl.is_a<Hs::ClassDecl>())
         {
             auto C = type_decl.as_<Hs::ClassDecl>();
-            auto k = tce.at(C.name).k;
-            result_kind_for_type_vars(C.type_vars, k);
+            auto kind = tce.at(C.name).kind;
+            result_kind_for_type_vars(C.type_vars, kind);
             type_decl = C;
         }
         else if (type_decl.is_a<Hs::TypeSynonymDecl>())
         {
             auto T = type_decl.as_<Hs::TypeSynonymDecl>();
-            auto k = tce.at(T.name).k;
-            result_kind_for_type_vars(T.type_vars, k);
+            auto kind = tce.at(T.name).kind;
+            result_kind_for_type_vars(T.type_vars, kind);
             type_decl = T;
         }
     }
@@ -2700,8 +2700,8 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
         if (get_module_name(typecon) == name)
         {
             auto& T = types.at(typecon);
-            assert(not T.k);
-            T.k = info.k;
+            assert(not T.kind);
+            T.kind = info.kind;
         }
     }
 

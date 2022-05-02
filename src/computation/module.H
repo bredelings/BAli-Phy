@@ -53,14 +53,14 @@ struct type_info
     type_name_category category;
     std::optional<fixity_info> fixity; // for the function arrow (->) only
     std::optional<int> arity;
-    Hs::Kind k;
+    Hs::Kind kind;
 };
 
-bool operator==(const symbol_info&S1, const symbol_info& S2);
-bool operator!=(const symbol_info&S1, const symbol_info& S2);
+bool operator==(const symbol_info& S1, const symbol_info& S2);
+bool operator!=(const symbol_info& S1, const symbol_info& S2);
 
-bool operator==(const type_info&S1, const type_info& S2);
-bool operator!=(const type_info&S1, const type_info& S2);
+bool operator==(const type_info& S1, const type_info& S2);
+bool operator!=(const type_info& S1, const type_info& S2);
 
 bool is_haskell_varid(const std::string& s);
 bool is_haskell_conid(const std::string& s);
