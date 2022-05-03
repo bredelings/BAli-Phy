@@ -989,9 +989,6 @@ struct Module
     {}
 };
 
-// which one of these handles variables?
-// probably FunDecl
-
 struct PatDecl: public Object
 {
     PatDecl* clone() const {return new PatDecl(*this);}
