@@ -2467,84 +2467,67 @@ Hs::Expression tuple_from_value_env(const T& venv)
 Hs::Decls
 typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, const class_env& ce)
 {
+
+    // PROBLEM: we need to typecheck the method bodies after the rest of the module.
+    // PROBLEM: we also need to know all the instance types to check the entails.
+    // FIXME: What stuff do we want to know from infer_type_for_instance1( )?
+    //        * the dvar name
+    
+    // Construct superclass dictionary entries from instance constraints
+
+    // Construct member function entries.
+
+    /* dfun idvar1:instance_constraint1 ... idvar[N]:instance_constraint[N] =
+              let dvar1 = <construct superdict1>
+                  dvar2 = <construct superdictN>
+
+              in let var1 = <body1>
+                     varM = <bodyM>
+                 in <dvar1, ..., dvarN, var1, ..., varM>
+    */
+
     auto [class_head, monotypes] = decompose_type_apps(inst_decl.constraint);
 
-    // Premise #1: Look up the info for the class
-    optional<class_info> cinfo;
-    if (auto tc = class_head.to<Hs::TypeCon>())
-    {
-        // Check that this is a class, and not a data or type?
-        auto class_name = unloc(tc->name);
-        if (not ce.count(class_name))
-            throw myexception()<<"In instance '"<<inst_decl.constraint<<"': no class '"<<class_name<<"'!";
-        cinfo = ce.at(class_name);
-    }
-    else
-        throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<class_head<<" is not a class!";
+    // 1. Look up the info for the main class
+    auto tc = class_head.to<Hs::TypeCon>();
+    assert(tc); // already checked.
+    string class_name = unloc(tc->name);
+    class_info cinfo = ce.at(class_name);
 
+    // 2. build a local instance environment from the instance constraints
+    auto ordered_lie_instance = constraints_to_lie(inst_decl.context.constraints);
+    vector<Hs::Pattern> instance_constraint_dvars;
+    for(auto dv: vars_from_lie(ordered_lie_instance))
+        instance_constraint_dvars.push_back(dv);
+    auto lie_instance = unordered_lie(ordered_lie_instance);
 
-    // Premise #2: Find the type vars mentioned in the constraint.
-    set<Hs::TypeVar> type_vars;
-    // Premise #4: the monotype must be a type constructor applied to simple, distinct type variables.
-    vector<Hs::TypeCon> types;
-    for(auto& monotype: monotypes)
-    {
-        auto [a_head, a_args] = decompose_type_apps(monotype);
-        auto tc = a_head.to<Hs::TypeCon>();
-        if (not tc)
-            throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<a_head<<" is not a type!";
-
-        types.push_back(*tc);
-
-        // Add distinct type variables
-        for(auto& a_arg: a_args)
-        {
-            auto tv = a_arg.to<Hs::TypeVar>();
-
-            if (not tv)
-                throw myexception()<<"In instance for '"<<inst_decl.constraint<<"' for type '"<<monotype<<"': "<<a_arg<<" is not a type variable!";
-
-            if (type_vars.count(*tv))
-                throw myexception()<<"Type variable '"<<tv->print()<<"' occurs twice in constraint '"<<inst_decl.constraint<<"'";
-
-            type_vars.insert(*tv);
-        }
-    }
-
-    // Premise 5: Check that the context contains no variables not mentioned in `monotype`
-    for(auto& tv: free_type_VARS(inst_decl.context))
-    {
-        if (not type_vars.count(tv))
-            throw myexception()<<"Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in '"<<inst_decl.constraint<<"'";
-    }
-
-    // Premise 6: build a local instance environment from the context
-    local_instance_env lie;
-    int i=0;
-    for(auto& constraint: inst_decl.context.constraints)
-    {
-        string dict_name = "dict"+std::to_string(i+1);
-        Hs::Var dict({noloc, dict_name});
-        lie = lie.insert({dict_name,constraint});
-    }
-
-    // Premise 7:
-    local_instance_env lie_super;
-    auto binds_super = entails(lie, lie_super);
+    // 3. Construct binds_super
+    auto ordered_lie_super = constraints_to_lie(cinfo.context.constraints);
+    auto lie_super = unordered_lie(ordered_lie_super);
+    auto binds_super = entails(lie_instance, lie_super);
     if (not binds_super)
         throw myexception()<<"Missing instances!";
 
-    // Premise 8:
+    // 4. Construct binds_methods
     Hs::Binds binds_methods;
+    for(auto& decl: unloc(*inst_decl.binds)[0])
+    {
+        auto& fd = decl.as_<Hs::FunDecl>();
+        string name = unloc(fd.v.name);
+    }
+
+    // Actually, we need to LOOK UP the dfun for this this inst_type.
     auto dfun = fresh_var("dfun", true);
 
-    // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdicts,methods>
-    expression_ref dict1 = tuple_from_value_env(cinfo->fields);
-    expression_ref dict2 = tuple_from_value_env(lie);
+    // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>
+    vector<Hs::Expression> dict_vars;
+    // dict_vars = <superdict_vars, method_vars>
+    expression_ref dict = Hs::tuple(dict_vars);
 
-    expression_ref E = Hs::LetExp( {noloc,binds_methods}, {noloc, dict1} );
+    expression_ref E = Hs::LetExp( {noloc, binds_methods}, {noloc, dict} );
     E = Hs::LetExp( {noloc,*binds_super}, {noloc,E} );
-    E = Hs::LambdaExp({dict2}, E);
+
+    E = Hs::LambdaExp( instance_constraint_dvars, E);
 
     Hs::Decls decls ({ simple_decl(dfun,E) });
     return decls;
