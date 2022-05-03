@@ -2,9 +2,9 @@
 
 using std::string;
 
-object_ptr<KindStar> make_kind_star() {return new KindStar();}
+object_ptr<KindStar> kind_star() {return new KindStar();}
 
-object_ptr<KindConstraint> make_kind_constraint() {return new KindConstraint();}
+object_ptr<KindConstraint> kind_constraint() {return new KindConstraint();}
 
 string KindArrow::print() const
 {
@@ -15,7 +15,7 @@ string KindArrow::print() const
     return s1+" -> "+s2;
 }
 
-object_ptr<KindArrow> make_kind_arrow(const Hs::Kind& k1, const Hs::Kind& k2) {return new KindArrow{k1,k2};}
+object_ptr<KindArrow> kind_arrow(const Hs::Kind& k1, const Hs::Kind& k2) {return new KindArrow{k1,k2};}
 
 std::string KindVar::print() const {
     string s = name;
@@ -24,7 +24,7 @@ std::string KindVar::print() const {
     return s;
 }
 
-object_ptr<KindVar> make_kind_var(const std::string& s, int i) {return new KindVar(s,i);}
+object_ptr<KindVar> kind_var(const std::string& s, int i) {return new KindVar(s,i);}
 
 bool KindVar::operator==(const Object& o) const
 {
@@ -65,7 +65,7 @@ Hs::Kind apply_subst(const k_substitution_t& s, const Hs::Kind& k)
     {
         auto k1 = apply_subst(s, a->k1);
         auto k2 = apply_subst(s, a->k2);
-        return make_kind_arrow(k1,k2);
+        return kind_arrow(k1,k2);
     }
     else
         return k;
@@ -142,10 +142,10 @@ std::optional<k_substitution_t> kunify(const Hs::Kind& k1, const Hs::Kind& k2)
 
 Hs::Kind make_n_args_kind(int n)
 {
-    Hs::Kind star = make_kind_star();
+    Hs::Kind star = kind_star();
     Hs::Kind k = star;
     for(int i=0;i<n;i++)
-        k = make_kind_arrow(star,k);
+        k = kind_arrow(star,k);
     return k;
 }
 
@@ -153,13 +153,13 @@ Hs::Kind replace_kvar_with_star(const Hs::Kind& k)
 {
     if (k.is_a<KindVar>())
     {
-        return make_kind_star();
+        return kind_star();
     }
     else if (auto a = k.to<KindArrow>())
     {
         auto k1 = replace_kvar_with_star( a->k1 );
         auto k2 = replace_kvar_with_star( a->k2 );
-        return make_kind_arrow(k1,k2);
+        return kind_arrow(k1,k2);
     }
     else
         return k;

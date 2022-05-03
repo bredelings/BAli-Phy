@@ -458,15 +458,15 @@ Hs::Kind kindchecker_state::kind_check_type_var(const Hs::TypeVar& tv)
 Hs::Kind kindchecker_state::kind_check_type_con(const string& name)
 {
     if (name == "Num#")
-        return make_kind_star();
+        return kind_star();
     else if (name == "Char")
-        return make_kind_star();
+        return kind_star();
     else if (name == "Double")
-        return make_kind_star();
+        return kind_star();
     else if (name == "Int")
-        return make_kind_star();
+        return kind_star();
     else if (name == "()")
-        return make_kind_star();
+        return kind_star();
     else if (name == "[]")
         return make_n_args_kind(1);
     else if (name == "->")
@@ -504,7 +504,7 @@ Hs::Kind kindchecker_state::kind_check_type(const Hs::Type& t)
         {
             auto a1 = fresh_kind_var();
             auto a2 = fresh_kind_var();
-            add_substitution(*kv1, make_kind_arrow(a1,a2));
+            add_substitution(*kv1, kind_arrow(a1,a2));
             unify(a1, kind2); /// can't fail.
             return a2;
         }
@@ -546,7 +546,7 @@ Hs::Kind kindchecker_state::kind_check_type(const Hs::Type& t)
 
 void kindchecker_state::kind_check_constraint(const Hs::Type& constraint)
 {
-    return kind_check_type_of_kind(constraint, make_kind_constraint());
+    return kind_check_type_of_kind(constraint, kind_constraint());
 }
 
 void kindchecker_state::kind_check_context(const Hs::Context& context)
@@ -581,7 +581,7 @@ void kindchecker_state::kind_check_constructor(const Hs::Constructor& constructo
     // FIXME: how about constraints?
     // Perhaps constraints on constructors lead to records that contain pointers to dictionaries??
 
-    kind_check_type_of_kind(type2, make_kind_star());
+    kind_check_type_of_kind(type2, kind_star());
 }
 
 Hs::Type kindchecker_state::type_check_constructor(const Hs::Constructor& constructor, const Hs::Type& data_type)
@@ -717,12 +717,12 @@ map<string,Hs::Type> kindchecker_state::type_check_data_type(const Hs::DataOrNew
 
 Hs::Type kindchecker_state::kind_and_type_check_type(const Hs::Type& type)
 {
-    return kind_and_type_check_type_(type, make_kind_star() );
+    return kind_and_type_check_type_(type, kind_star() );
 }
 
 Hs::Type kindchecker_state::kind_and_type_check_constraint(const Hs::Type& type)
 {
-    return kind_and_type_check_type_(type, make_kind_constraint() );
+    return kind_and_type_check_type_(type, kind_constraint() );
 }
 
 Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, const Hs::Kind& kind)
@@ -779,7 +779,7 @@ void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
     auto k = kind_for_type_con(name); // FIXME -- check that this is a type class?
 
     // b. Put each type variable into the kind.
-    Hs::Kind k2 = make_kind_star();
+    Hs::Kind k2 = kind_star();
     for(auto& tv: class_decl.type_vars)
     {
         // the kind should be an arrow kind.
@@ -835,7 +835,7 @@ void kindchecker_state::kind_check_type_synonym(const Hs::TypeSynonymDecl& type_
     }
     assert(k.is_a<KindStar>());
 
-    kind_check_type_of_kind( unloc(type_syn_decl.rhs_type), make_kind_star() );
+    kind_check_type_of_kind( unloc(type_syn_decl.rhs_type), kind_star() );
 
     pop_type_var_scope();
 }
@@ -854,28 +854,28 @@ type_con_env kindchecker_state::infer_kinds(const vector<expression_ref>& type_d
             auto& D = type_decl.as_<Hs::DataOrNewtypeDecl>();
             name = D.name;
             arity = D.type_vars.size();
-            kind = make_kind_star();
+            kind = kind_star();
         }
         else if (type_decl.is_a<Hs::ClassDecl>())
         {
             auto& C = type_decl.as_<Hs::ClassDecl>();
             name = C.name;
             arity = C.type_vars.size();
-            kind = make_kind_constraint();
+            kind = kind_constraint();
         }
         else if (type_decl.is_a<Hs::TypeSynonymDecl>())
         {
             auto & T = type_decl.as_<Hs::TypeSynonymDecl>();
             name = T.name;
             arity = T.type_vars.size();
-            kind = make_kind_star();
+            kind = kind_star();
         }
         else
             std::abort();
 
         // Create an initial kind here...
         for(int i=0;i<arity;i++)
-            kind = make_kind_arrow( fresh_kind_var(), kind );
+            kind = kind_arrow( fresh_kind_var(), kind );
 
         add_type_con_of_kind(name, kind, arity);
         new_tycons.insert({name,{kind,arity}});

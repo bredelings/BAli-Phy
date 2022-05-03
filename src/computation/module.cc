@@ -993,13 +993,13 @@ pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string
 type_info Module::lookup_builtin_type(const std::string& name)
 {
     if (name == "Char")
-        return {"Char", type_name_category::ADT, {}, 0, make_kind_star()};
+        return {"Char", type_name_category::ADT, {}, 0, kind_star()};
     else if (name == "Double")
-        return {"Double", type_name_category::ADT, {}, 0, make_kind_star()};
+        return {"Double", type_name_category::ADT, {}, 0, kind_star()};
     else if (name == "Int")
-        return {"Int", type_name_category::ADT, {}, 0, make_kind_star()};
+        return {"Int", type_name_category::ADT, {}, 0, kind_star()};
     else if (name == "()")
-        return {"()", type_name_category::ADT, {}, 0, make_kind_star()};
+        return {"()", type_name_category::ADT, {}, 0, kind_star()};
     else if (name == "[]")
         return {"[]", type_name_category::ADT, {}, 1, make_n_args_kind(1)};
     else if (name == "->")

@@ -14,7 +14,7 @@ struct KindStar: public Object
     std::string print() const { return "*"; }
 };
 
-object_ptr<KindStar> make_kind_star();
+object_ptr<KindStar> kind_star();
 
 struct KindConstraint: public Object
 {
@@ -23,7 +23,7 @@ struct KindConstraint: public Object
     std::string print() const { return "Constraint"; }
 };
 
-object_ptr<KindConstraint> make_kind_constraint();
+object_ptr<KindConstraint> kind_constraint();
 
 struct KindArrow: public Object
 {
@@ -34,7 +34,7 @@ struct KindArrow: public Object
     std::string print() const;
 };
 
-object_ptr<KindArrow> make_kind_arrow(const Hs::Kind& k1, const Hs::Kind& k2);
+object_ptr<KindArrow> kind_arrow(const Hs::Kind& k1, const Hs::Kind& k2);
 
 struct KindVar: public Object
 {
@@ -49,7 +49,7 @@ struct KindVar: public Object
     KindVar(const std::string& s, int i): name(s), index(i) {}
 };
 
-object_ptr<KindVar> make_kind_var(const std::string& s, int i);
+object_ptr<KindVar> kind_var(const std::string& s, int i);
 
 typedef std::map<KindVar,Hs::Kind> k_substitution_t;
 
