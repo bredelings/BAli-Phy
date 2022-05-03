@@ -739,10 +739,12 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instan
 {
     // 1. Handle foralls
     vector<Hs::TypeVar> tvs;
-    substitution_t s;
-    auto type = t;
-    while(auto fa = type.to<Hs::ForallType>())
+    vector<Hs::Type> constraints;
+    Hs::Type type = t;
+
+    if (auto fa = type.to<Hs::ForallType>())
     {
+        substitution_t s;
         for(auto& tv: fa->type_var_binders)
         {
             assert(tv.kind);
@@ -752,17 +754,31 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instan
             tvs.push_back(new_tv);
         }
         type = fa->type;
+        type = apply_subst(s,type);
     }
-    type = apply_subst(s,type);
 
     // 2. Handle constraints
-    vector<Hs::Type> constraints;
     if (auto ct = type.to<Hs::ConstrainedType>())
     {
         constraints = ct->context.constraints;
         type = ct->type;
     }
-    return {tvs, constraints,type};
+
+    // 3. Handle the exposed type being a polytype
+    if (not tvs.empty() or not constraints.empty())
+    {
+        auto [tvs2, constraints2, type2] = instantiate(type, meta);
+
+        for(auto& tv2: tvs2)
+            tvs.push_back(tv2);
+
+        for(auto& constraint2:  constraints2)
+            constraints.push_back(constraint2);
+
+        type = type2;
+    }
+
+    return {tvs, constraints, type};
 }
 
 vector<Hs::Type> constraints_from_lie(const local_instance_env& lie)
@@ -2273,13 +2289,9 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     {
         for(auto& [name, type]: unloc(*class_decl.binds).signatures)
         {
+            auto method_type = K.kind_and_type_check_type(type);
 
-            Hs::Type method_type = Hs::ConstrainedType(Hs::Context({constraint}), type);
-            method_type = K.kind_and_type_check_type(method_type);
-
-            // FIXME: Move the constraint out of other foralls, so that we have
-            //            forall a.C(a) => (forall b.C2(b) => ...)
-
+            method_type = Hs::ConstrainedType(Hs::Context({constraint}), method_type);
             method_type = add_forall_vars(class_decl.type_vars, method_type);
 
             gve = gve.insert({name, method_type});
