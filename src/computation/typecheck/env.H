@@ -63,7 +63,10 @@ struct class_info
     // FIXME: Should we record here the names of functions to extract 
     Hs::Context context;
 
-    global_value_env fields;
+    local_value_env plain_members;
+    local_value_env members;
+
+    std::vector<std::pair<std::string,Hs::Type>> fields;
 };
 
 typedef std::map<std::string, class_info> class_env;

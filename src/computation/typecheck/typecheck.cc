@@ -2279,9 +2279,9 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         K.bind_type_var(tv, *tv.kind);
 
     // 2. construct the constraint that represent the class
-    Hs::Type constraint = Hs::TypeCon(Unlocated(class_decl.name)); // put class_kind into TypeCon?
+    Hs::Type class_constraint = Hs::TypeCon(Unlocated(class_decl.name)); // put class_kind into TypeCon?
     for(auto& tv: class_decl.type_vars)
-        constraint = Hs::TypeApp(constraint, tv);
+        class_constraint = Hs::TypeApp(class_constraint, tv);
 
     // 3. make global types for class methods
     global_value_env gve;
@@ -2291,10 +2291,16 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         {
             auto method_type = K.kind_and_type_check_type(type);
 
-            method_type = Hs::ConstrainedType(Hs::Context({constraint}), method_type);
-            method_type = add_forall_vars(class_decl.type_vars, method_type);
+            Hs::Type method_value_type = add_forall_vars(class_decl.type_vars,
+                                                         Hs::ConstrainedType(Hs::Context({class_constraint}), method_type));
+            gve = gve.insert({name, method_value_type});
 
-            gve = gve.insert({name, method_type});
+            Hs::Type plain_method_body_type = add_forall_vars(class_decl.type_vars, method_type);
+            cinfo.plain_members = cinfo.plain_members.insert({name, plain_method_body_type});
+
+            Hs::Type method_body_type = add_forall_vars(class_decl.type_vars,
+                                                        Hs::ConstrainedType(cinfo.context, method_type));
+            cinfo.members = cinfo.members.insert({name, method_body_type});
         }
     }
 
@@ -2306,19 +2312,22 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     //   (c) synthesize field accessors and put them in decls
 
     global_instance_env gie;
-    for(auto& constraint_: cinfo.context.constraints)
+    for(auto& superclass_constraint: cinfo.context.constraints)
     {
-        string cname1 = get_class_name_from_constraint(constraint_);
-        string cname2 = get_class_name_from_constraint(constraint);
-        auto get_dict = fresh_var(cname1+"From"+cname2, true);
+        string cname1 = get_class_name_from_constraint(superclass_constraint);
+        string cname2 = get_class_name_from_constraint(class_constraint);
+        string extractor_name = cname1+"From"+cname2;
+
+        auto get_dict = fresh_var(extractor_name, true);
         // Should this be a function arrow?
-        Hs::Type type = add_constraints({constraint}, constraint_);
+        Hs::Type type = add_constraints({class_constraint}, superclass_constraint);
         // Could we be adding too many forall vars?
         type = apply_current_subst(type);
         type = add_forall_vars(class_decl.type_vars, type);
         gie = gie.insert({unloc(get_dict.name), type});
     }
-    cinfo.fields = gve + gie;
+    for(auto& [name,type]: gie + gve)
+        cinfo.fields.push_back({name,type});
 
     Hs::Decls decls;
 
@@ -2445,7 +2454,8 @@ typechecker_state::infer_type_for_instances1(const Hs::Decls& decls, const class
     return gie_inst;
 }
 
-Hs::Expression tuple_from_value_env(const value_env& venv)
+template <typename T>
+Hs::Expression tuple_from_value_env(const T& venv)
 {
     vector<expression_ref> elements;
     for(auto& [name,type]: venv)
