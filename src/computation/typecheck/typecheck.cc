@@ -2287,13 +2287,15 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     global_value_env gve;
     if (class_decl.binds)
     {
-        for(auto& [name, type]: unloc(*class_decl.binds).signatures)
+        for(auto& [qname, type]: unloc(*class_decl.binds).signatures)
         {
             auto method_type = K.kind_and_type_check_type(type);
 
             Hs::Type method_value_type = add_forall_vars(class_decl.type_vars,
                                                          Hs::ConstrainedType(Hs::Context({class_constraint}), method_type));
-            gve = gve.insert({name, method_value_type});
+            gve = gve.insert({qname, method_value_type});
+
+            auto name = get_unqualified_name(qname);
 
             Hs::Type plain_method_body_type = add_forall_vars(class_decl.type_vars, method_type);
             cinfo.plain_members = cinfo.plain_members.insert({name, plain_method_body_type});
@@ -2327,7 +2329,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         gie = gie.insert({unloc(get_dict.name), type});
     }
     for(auto& [name,type]: gie + gve)
-        cinfo.fields.push_back({name,type});
+        cinfo.fields.push_back({get_unqualified_name(name),type});
 
     Hs::Decls decls;
 
@@ -2496,9 +2498,6 @@ typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, c
 
     // 2. build a local instance environment from the instance constraints
     auto ordered_lie_instance = constraints_to_lie(inst_decl.context.constraints);
-    vector<Hs::Pattern> instance_constraint_dvars;
-    for(auto dv: vars_from_lie(ordered_lie_instance))
-        instance_constraint_dvars.push_back(dv);
     auto lie_instance = unordered_lie(ordered_lie_instance);
 
     // 3. Construct binds_super
@@ -2508,26 +2507,57 @@ typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, c
     if (not binds_super)
         throw myexception()<<"Missing instances!";
 
+    // 5. make some intermediates
+    auto instance_constraint_dvars = vars_from_lie(ordered_lie_instance);
+    vector<Hs::Pattern> lambda_vars;
+    vector<Hs::Expression> dict_entries;
+    for(auto dv: instance_constraint_dvars)
+    {
+        lambda_vars.push_back(dv);
+        dict_entries.push_back(dv);
+    }
+
+
     // 4. Construct binds_methods
     Hs::Binds binds_methods;
+    std::map<string,Hs::Match> method_matches;
     for(auto& decl: unloc(*inst_decl.binds)[0])
     {
         auto& fd = decl.as_<Hs::FunDecl>();
         string name = unloc(fd.v.name);
+        if (not cinfo.members.count(name))
+            throw myexception()<<"'"<<name<<"' is not a member of class '"<<class_name<<"'";
+        if (method_matches.count(name))
+            throw myexception()<<"method '"<<name<<"' defined twice!";
+        method_matches.insert({name,fd.match});
     }
 
+    for(int i=(int)cinfo.fields.size()-(int)cinfo.members.size();i<cinfo.fields.size();i++)
+    {
+        auto& [name,type] = cinfo.fields[i];
+
+        auto it = method_matches.find(name);
+        if (it == method_matches.end())
+            throw myexception()<<"instance "<<inst_decl.constraint<<" is missing method '"<<name<<"'";
+
+        auto method = fresh_var(name,false);
+        dict_entries.push_back(method);
+        
+        Hs::Decls decls;
+        decls.push_back(Hs::FunDecl(method,it->second));
+        binds_methods.push_back(decls);
+    }
+    
     // Actually, we need to LOOK UP the dfun for this this inst_type.
     auto dfun = fresh_var("dfun", true);
 
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>
-    vector<Hs::Expression> dict_vars;
-    // dict_vars = <superdict_vars, method_vars>
-    expression_ref dict = Hs::tuple(dict_vars);
+    expression_ref dict = Hs::tuple(dict_entries);
 
     expression_ref E = Hs::LetExp( {noloc, binds_methods}, {noloc, dict} );
     E = Hs::LetExp( {noloc,*binds_super}, {noloc,E} );
 
-    E = Hs::LambdaExp( instance_constraint_dvars, E);
+    E = Hs::LambdaExp( lambda_vars, E);
 
     Hs::Decls decls ({ simple_decl(dfun,E) });
     return decls;
@@ -2680,8 +2710,12 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     auto [value_decls, env] = state.infer_type_for_binds(gve, M.value_decls);
     M.value_decls = value_decls;
 
+//    auto inst_decls = state.infer_type_for_instances2(M.type_decls, class_info);
+//    std::cerr<<inst_decls.print();
+//    std::cerr<<"\n\n";
+    
     auto simpl_binds = state.reduce_current_lie();
-
+    
     ranges::insert(simpl_binds, simpl_binds.end(), M.value_decls);
     M.value_decls = simpl_binds;
 

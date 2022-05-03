@@ -754,6 +754,7 @@ struct renamer_state
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars);
     Hs::MultiGuardedRHS rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars);
     Hs::MultiGuardedRHS rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, set<string>& free_vars);
+    Hs::Match rename(Hs::Match match, const bound_var_info& bound, set<string>& free_vars);
 
     Haskell::Decls rename_type_decls(Haskell::Decls decls);
     Haskell::InstanceDecl rename(Haskell::InstanceDecl);
@@ -953,18 +954,36 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
                 Rn.rename_decls( unloc(*C.binds), bound_names, free_vars, true);
             decl = C;
         }
-        if (decl.is_a<Haskell::InstanceDecl>())
-        {
-            auto I = decl.as_<Haskell::InstanceDecl>();
-            if (I.binds)
-                Rn.rename_decls( unloc(*I.binds), bound_names, free_vars, true);
-            decl = I;
-        }
     }
 
     set<string> free_vars;
 
     Rn.rename_decls(M.value_decls, bound_names, free_vars, true);
+
+    // Replace ids with dummies
+    for(auto& decl: M.type_decls)
+    {
+        set<string> free_vars;
+        if (decl.is_a<Haskell::InstanceDecl>())
+        {
+            auto I = decl.as_<Haskell::InstanceDecl>();
+            if (I.binds)
+            {
+                assert(unloc(*I.binds).size() == 1);
+                auto& decls = unloc(*I.binds)[0];
+
+                for(auto& decl: decls)
+                {
+                    if (decl.is_a<Hs::PatDecl>())
+                        throw myexception()<<"Illegal pattern binding in instance "<<I.constraint.print();
+                    auto FD = decl.as_<Hs::FunDecl>();
+                    FD.match = Rn.rename( FD.match, bound_names, FD.rhs_free_vars);
+                    decl = FD;
+                }
+            }
+            decl = I;
+        }
+    }
 
     return M;
 }
@@ -1374,6 +1393,31 @@ map<string,int> get_indices_for_names(const Hs::Decls& decls)
     return index_for_name;
 }
 
+Hs::Match renamer_state::rename(Hs::Match match, const bound_var_info& bound, set<string>& free_vars)
+{
+    for(auto& mrule: match.rules)
+    {
+        bound_var_info binders;
+
+        for(auto& arg: mrule.patterns)
+        {
+            auto new_binders = rename_pattern(arg);
+            auto overlap = intersection(binders, new_binders);
+            if (not overlap.empty())
+            {
+                string bad = *overlap.begin();
+                throw myexception()<<"Function declaration uses variable '"<<bad<<"' twice:\n"<<" "<<mrule.print();
+            }
+            add(binders, new_binders);
+        }
+
+        mrule.rhs = rename(mrule.rhs, bound, binders, free_vars);
+    }
+
+    return match;
+}
+
+
 // So... factor out rename_grouped_decl( ), and then make a version that splits into components, and a version that does not?
 // Splitting the decls for classes and instances into  components really doesn't make sense...
 
@@ -1401,24 +1445,7 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
             if (top)
                 name = m.name + "." + name;
 
-            for(auto& mrule: FD.match.rules)
-            {
-                bound_var_info binders;
-
-                for(auto& arg: mrule.patterns)
-                {
-                    auto new_binders = rename_pattern(arg);
-                    auto overlap = intersection(binders, new_binders);
-                    if (not overlap.empty())
-                    {
-                        string bad = *overlap.begin();
-                        throw myexception()<<"Function declaration uses variable '"<<bad<<"' twice:\n"<<FD.v<<" "<<mrule.print();
-                    }
-                    add(binders, new_binders);
-                }
-
-                mrule.rhs = rename(mrule.rhs, bound, binders, FD.rhs_free_vars);
-            }
+            FD.match = rename(FD.match, bound, FD.rhs_free_vars);
 
             decl = FD;
         }
