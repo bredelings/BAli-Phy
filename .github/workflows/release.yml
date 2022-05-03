@@ -165,6 +165,8 @@ jobs:
         cp /usr/lib/gcc/x86_64-w64-mingw32/*-posix/libgcc_s_seh-1.dll ${OUTPUT}/bin
         cp /usr/lib/gcc/x86_64-w64-mingw32/*-posix/libstdc++-6.dll    ${OUTPUT}/bin
         cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll            ${OUTPUT}/bin
+        # We don't need this because we're building our own boost.
+        # cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${PREFIX}/bin
 
     - name: Create tarball
       id: create_tarball
