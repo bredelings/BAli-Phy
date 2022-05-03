@@ -2321,8 +2321,8 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         auto get_dict = fresh_var(extractor_name, true);
         // Should this be a function arrow?
         Hs::Type type = add_constraints({class_constraint}, superclass_constraint);
-        // Could we be adding too many forall vars?
         type = apply_current_subst(type);
+        // Maybe intersect the forall_vars with USED vars?
         type = add_forall_vars(class_decl.type_vars, type);
         gie = gie.insert({unloc(get_dict.name), type});
     }
