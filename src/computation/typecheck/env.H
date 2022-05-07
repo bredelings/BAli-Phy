@@ -64,8 +64,12 @@ struct class_info
     Hs::Context context;
 
     local_value_env plain_members;
+    // Do we need the non-plain members anymore?
     local_value_env members;
 
+    std::map<std::string, Hs::Var> default_methods;
+
+    // FIXME - we need the order of the constraints, and the order of the members
     std::vector<std::pair<std::string,Hs::Type>> fields;
 };
 

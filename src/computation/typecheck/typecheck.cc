@@ -62,13 +62,59 @@ using std::tuple;
   * Handle explicit signatures in fundecls / simple-pattern bindings.
   * Handle explicit signatures in pattern bindings.
   * Kind-check explicit type signatures.
+  *. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
 
   TODO:
   1. Reject unification of variables, tycons, etc with different kinds.
      - Ensure that all ForallType binders have kinds.
      - Assign kinds to all TypeCons.... OR look it up in the symbol table when we need to!
   2. Process type signatures for ambiguity and type synonyms.
-  3. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
+  3. Emit code for instances and check if there are instances for the context.
+     - 3a. Emit code for default methods
+           + Out of line, $dm<op>#
+           + Take (C a) argument.
+           + Typecheck with C a + method constraints in scope...
+             - Do we use the single_fundecl case?
+             - Or do we steal code from that to set up a series of givens?
+     - 3b. Emit code for instance methods
+          + Out of line, $i<op>$
+          + Take instance constraint dictionaries as arguments
+          + Construct the dfun for the instance
+          + Typecheck with C a + method constraints in scope...
+     - 3c. Emit code for the dfun
+          + Take instance constraint dictionaries as arguments
+          + Construct superclass dictionaries in a simpler way?
+          + Construct a record that references the superclass dictionary variables bound in binds_super?
+          + The record should then call methodA d1 d2 d3, methodB d1 d2 d3, etc.
+     - 3d. There is still the question of how to optimize recursion between the method ops and the dfun.
+          + For example, if we have $i==# = \ (x:xs) (y:ys) -> (x == y) && (xs == ys) then
+
+(==) (x,y) = x
+
+dfun da = (i$== da, i$\= da)
+
+i$== = \ da -> let dLista = dfun da 
+                   f (x:xs) (y:ys) -> ((==) da x y) && ((==) dLista xs ys) 
+               in f
+
+i$== = \ da -> let dLista = ($i== da, $i\= da)
+                   f (x:xs) (y:ys) -> ((==) da x y) && ((\(x,y)->x) dLista xs ys) 
+               in f
+
+i$== = \ da -> let 
+                   f (x:xs) (y:ys) -> ((==) da x y) && ($== da xs ys) 
+               in f
+
+i$== = \ da -> let tmp1 = (==) da
+                   tmp2 = $i== da
+                   f (x:xs) (y:ys) -> (tmp1 x y) && (tmp2 xs ys) 
+               in f
+
+So... whenever we have a method selector applied to a dfun, then if we inline BOTH, we
+will get a direct reference to the method operation?
+
+And we want to do this regardless of how many times method selector and the dfun appear?
+
   4. Record impedance-matching info on GenBind
      - unused types
      - defaulted types
@@ -99,7 +145,6 @@ using std::tuple;
   13. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
       Do I need to handle LiteralString patterns, then?
   14. Check that there are no cycles in the class hierarchy.
-  15. Emit code for instances and check if there are instances for the context.
   16. Handle constraints on constructors.
   17. Remove the constraint from EmptySet
   18. Add basic error reporting.
@@ -2287,6 +2332,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     global_value_env gve;
     if (class_decl.binds)
     {
+        // Add class methods to GVE
         for(auto& [qname, type]: unloc(*class_decl.binds).signatures)
         {
             auto method_type = K.kind_and_type_check_type(type);
@@ -2304,6 +2350,16 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
                                                         Hs::ConstrainedType(cinfo.context, method_type));
             cinfo.members = cinfo.members.insert({name, method_body_type});
         }
+
+        // Get names and types for default methods
+        for(auto& decls: unloc(*class_decl.binds))
+            for(auto& decl: decls)
+            {
+                auto& FD = decl.as_<Hs::FunDecl>();
+                auto& name = unloc(FD.v.name);
+                auto dm = fresh_var("dm"+name, true);
+                cinfo.default_methods.insert({name, dm});
+            }
     }
 
     K.pop_type_var_scope();
@@ -2544,14 +2600,23 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
         auto it = method_matches.find(name);
         if (it == method_matches.end())
-            throw myexception()<<"instance "<<inst_decl.constraint<<" is missing method '"<<name<<"'";
-
-        auto method = fresh_var(name,false);
-        dict_entries.push_back(method);
+        {
+            if (cinfo.default_methods.count(name))
+            {
+                // handle default method.
+            }
+            else
+                throw myexception()<<"instance "<<inst_decl.constraint<<" is missing method '"<<name<<"'";
+        }
+        else
+        {
+            auto method = fresh_var(name,false);
+            dict_entries.push_back(method);
         
-        Hs::Decls decls;
-        decls.push_back(Hs::FunDecl(method,it->second));
-        binds_methods.push_back(decls);
+            Hs::Decls decls;
+            decls.push_back(Hs::FunDecl(method,it->second));
+            binds_methods.push_back(decls);
+        }
     }
     
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>
@@ -2694,6 +2759,7 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     std::cerr<<class_binds.print()<<"\n";
     std::cerr<<"\n";
 
+    // Instances, pass1
     state.gie = class_gie;
     auto [inst_gie, named_instances] = state.infer_type_for_instances1(M.type_decls, class_info);
 
@@ -2707,13 +2773,18 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
 
     // 3. E' = (TCE_T, (CVE_T, GVE_C, LVE={}), CE_C, (GIE_C, LIE={}))
 
+    // Value decls
     auto [value_decls, env] = state.infer_type_for_binds(gve, M.value_decls);
     M.value_decls = value_decls;
 
-//    auto inst_decls = state.infer_type_for_instances2(M.type_decls, class_info);
-//    std::cerr<<inst_decls.print();
-//    std::cerr<<"\n\n";
-    
+    // Default methods
+    // auto default_method_decls = state.infer_type_for_default_methods(gve, class_info);
+
+    // Instances, pass2
+    auto inst_decls = state.infer_type_for_instances2(named_instances, class_info);
+    std::cerr<<inst_decls.print();
+    std::cerr<<"\n\n";
+
     auto simpl_binds = state.reduce_current_lie();
     
     ranges::insert(simpl_binds, simpl_binds.end(), M.value_decls);
