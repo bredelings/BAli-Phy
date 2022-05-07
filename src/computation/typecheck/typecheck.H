@@ -286,4 +286,7 @@ std::vector<Hs::Var> vars_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type
 
 std::optional<std::string> maybe_get_class_name_from_constraint(const Hs::Type& constraint);
 std::string get_class_name_from_constraint(const Hs::Type& constraint);
+
+global_value_env apply_subst(const substitution_t& s, const value_env& env1);
+
 #endif

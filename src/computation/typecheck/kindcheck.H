@@ -73,7 +73,4 @@ struct kindchecker_state
     }
 };
 
-std::set<Haskell::TypeVar> free_type_VARS(const Haskell::Context& context);
-std::set<Haskell::TypeVar> free_type_VARS(const Haskell::Type& type);
-
 #endif

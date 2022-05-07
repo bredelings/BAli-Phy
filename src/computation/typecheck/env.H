@@ -75,5 +75,13 @@ struct class_info
 
 typedef std::map<std::string, class_info> class_env;
 
+std::set<Hs::TypeVar> free_type_variables(const value_env& env);
+
+template <typename T>
+std::set<T> operator-(const std::set<T>& s1, const std::set<T>& s2)
+{
+    return minus(s1,s2);
+}
+
 
 #endif

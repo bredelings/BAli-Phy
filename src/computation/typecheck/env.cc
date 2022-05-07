@@ -1,5 +1,7 @@
 #include "env.H"
 #include "util/string/join.H"
+#include "util/set.H"                 // for add( , )
+#include "types.H"
 
 using std::string;
 using std::vector;
@@ -80,5 +82,13 @@ type_con_env plus_no_overlap(const type_con_env& e1, const type_con_env& e2)
     auto e3 = e1;
     add_no_overlap(e3,e2);
     return e3;
+}
+
+std::set<Hs::TypeVar> free_type_variables(const value_env& env)
+{
+    std::set<Hs::TypeVar> free;
+    for(auto& [x,type]: env)
+        add(free, free_type_variables(type));
+    return free;
 }
 

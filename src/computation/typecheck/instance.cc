@@ -57,7 +57,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, c
     }
 
     // Premise 5: Check that the context contains no variables not mentioned in `class_arg`
-    for(auto& tv: free_type_VARS(inst_decl.context))
+    for(auto& tv: free_type_variables(inst_decl.context))
     {
         if (not type_vars.count(tv))
             throw myexception()<<"Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in '"<<inst_decl.constraint<<"'";
