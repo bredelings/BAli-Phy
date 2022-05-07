@@ -2372,7 +2372,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     return {gve,gie,cinfo,decls};
 }
 
-global_instance_env
+pair<Hs::Var, Hs::Type>
 typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, const class_env& ce)
 {
     // -- old -- //
@@ -2431,29 +2431,33 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, c
 
     //  -- new -- //
     kindchecker_state K(tce);
-    Hs::Type inst_type = Hs::ConstrainedType(inst_decl.context, inst_decl.constraint);
+    Hs::Type inst_type = Hs::add_constraints(inst_decl.context, inst_decl.constraint);
     inst_type = K.kind_and_type_check_constraint(inst_type);
-    global_instance_env gie_out;
-    gie_out = gie_out.insert( { unloc(dfun.name), inst_type } );
-    return gie_out;
+    return {dfun, inst_type};
 }
 
+
+// See Tc/TyCl/Instance.hs
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-global_instance_env
+pair<global_instance_env,vector<pair<Hs::Var,Hs::InstanceDecl>>>
 typechecker_state::infer_type_for_instances1(const Hs::Decls& decls, const class_env& ce)
 {
     global_instance_env gie_inst;
+
+    vector<pair<Hs::Var, Hs::InstanceDecl>> named_instances;
+
     for(auto& decl: decls)
     {
         if (auto I = decl.to<Hs::InstanceDecl>())
         {
-            auto gie1 = infer_type_for_instance1(*I, ce);
+            auto [dfun, inst_type] = infer_type_for_instance1(*I, ce);
 
-            gie_inst += gie1;
+            named_instances.push_back({dfun, *I});
+            gie_inst = gie_inst.insert({unloc(dfun.name), inst_type});
         }
     }
-    return gie_inst;
+    return {gie_inst, named_instances};
 }
 
 template <typename T>
@@ -2467,11 +2471,13 @@ Hs::Expression tuple_from_value_env(const T& venv)
 }
 
 Hs::Decls
-typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, const class_env& ce)
+typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& inst_decl, const class_env& ce)
 {
 
-    // PROBLEM: we need to typecheck the method bodies after the rest of the module.
     // PROBLEM: we also need to know all the instance types to check the entails.
+    //          so, that part needs to come after a first pass over all instances...
+    // PROBLEM: we need to types for functions defined in the module...
+    //          so, typechecking the method bodies needs to come after typechecking the rest of the module.
     // FIXME: What stuff do we want to know from infer_type_for_instance1( )?
     //        * the dvar name
     
@@ -2548,9 +2554,6 @@ typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, c
         binds_methods.push_back(decls);
     }
     
-    // Actually, we need to LOOK UP the dfun for this this inst_type.
-    auto dfun = fresh_var("dfun", true);
-
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>
     expression_ref dict = Hs::tuple(dict_entries);
 
@@ -2566,19 +2569,16 @@ typechecker_state::infer_type_for_instance2(const Hs::InstanceDecl& inst_decl, c
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
 Hs::Decls
-typechecker_state::infer_type_for_instances2(const Hs::Decls& decls, const class_env& ce)
+typechecker_state::infer_type_for_instances2(const vector<pair<Hs::Var, Hs::InstanceDecl>>& named_instances, const class_env& ce)
 {
     Hs::Decls out_decls;
     global_instance_env gie_inst;
-    for(auto& decl: decls)
+    for(auto& [dfun, instance_decl]: named_instances)
     {
-        if (auto I = decl.to<Hs::InstanceDecl>())
-        {
-            auto decls_ = infer_type_for_instance2(*I, ce);
+        auto decls_ = infer_type_for_instance2(dfun, instance_decl, ce);
 
-            for(auto& d: decls_)
-                out_decls.push_back(d);
-        }
+        for(auto& d: decls_)
+            out_decls.push_back(d);
     }
     return out_decls;
 }
@@ -2695,7 +2695,7 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     std::cerr<<"\n";
 
     state.gie = class_gie;
-    auto inst_gie = state.infer_type_for_instances1(M.type_decls, class_info);
+    auto [inst_gie, named_instances] = state.infer_type_for_instances1(M.type_decls, class_info);
 
     state.gie += inst_gie;
 
@@ -2703,7 +2703,7 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     {
         std::cerr<<method<<" :: "<<type.print()<<"\n";
     }
-    std::cerr<<"\n";
+    std::cerr<<"\n\n";
 
     // 3. E' = (TCE_T, (CVE_T, GVE_C, LVE={}), CE_C, (GIE_C, LIE={}))
 

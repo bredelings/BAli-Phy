@@ -189,20 +189,22 @@ struct typechecker_state
     infer_type_for_class(const Hs::ClassDecl& class_decl);
 
     // Figure 12
-    global_instance_env
-    infer_type_for_instances1(const Hs::Decls& decls, const class_env& ce);
-
-    // Figure 12
-    global_instance_env
+    std::pair<Hs::Var, Hs::Type>
     infer_type_for_instance1(const Hs::InstanceDecl& instance_del, const class_env& ce);
 
     // Figure 12
-    Hs::Decls
-    infer_type_for_instances2(const Hs::Decls& decls, const class_env& ce);
+    std::pair<global_instance_env,
+              std::vector< std::pair<Hs::Var,
+                                     Hs::InstanceDecl>>>
+    infer_type_for_instances1(const Hs::Decls& decls, const class_env& ce);
 
     // Figure 12
     Hs::Decls
-    infer_type_for_instance2(const Hs::InstanceDecl& instance_del, const class_env& ce);
+    infer_type_for_instances2(const std::vector<std::pair<Hs::Var, Hs::InstanceDecl>>& named_instances, const class_env& ce);
+
+    // Figure 12
+    Hs::Decls
+    infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& instance_del, const class_env& ce);
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
