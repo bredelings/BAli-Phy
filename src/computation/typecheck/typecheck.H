@@ -280,4 +280,7 @@ std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std:
     return {};
 }
 
+local_instance_env unordered_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie1);
+std::vector<Hs::Var> vars_from_lie(const local_instance_env& lie);
+std::vector<Hs::Var> vars_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie);
 #endif
