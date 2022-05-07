@@ -156,7 +156,7 @@ vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const H
     for(auto& [name, type]: gie)
     {
         // Klass a => Superklass a
-        auto [_, class_constraints, superclass_constraint] = instantiate(type, false);
+        auto [_, class_constraints, superclass_constraint] = instantiate(type, true);
 
         // Skip if this is not a method of extracting superclass dictionaries
         if (not constraint_is_hnf(superclass_constraint)) continue;
