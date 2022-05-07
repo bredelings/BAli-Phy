@@ -2,6 +2,9 @@
 
 data Bool = True | False
 
+not True = False
+not False = True
+
 data Maybe a = Nothing | Just a
 
 class Show a where
@@ -38,6 +41,7 @@ class Applicative m => Monad m where
 class Eq a where
     (==) :: a -> a -> Bool
     (/=) :: a -> a -> Bool
+    x /= y = not (x == y)
 
 instance Eq Bool where
     True == True = True

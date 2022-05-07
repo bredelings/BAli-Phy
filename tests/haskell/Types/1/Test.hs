@@ -2,6 +2,9 @@
 
 data Bool = True | False
 
+not True = False
+not False = True
+
 data Maybe a = Nothing | Just a
 
 class Show a where
@@ -56,6 +59,7 @@ class Num a => Fractional a where
 class Eq a where
     (==) :: a -> a -> Bool
     (/=) :: a -> a -> Bool
+    x /= y = not (x == y)
 
 class Eq a => Ord a where
     (>) :: a -> a -> Bool
