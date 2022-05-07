@@ -747,6 +747,7 @@ struct renamer_state
     bound_var_info find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool top = false);
 
     vector<vector<int>> rename_grouped_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
+    bound_var_info rename_signatures(std::map<std::string, Hs::Type>& signatures, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, set<string>& free_vars, bool top = false);
     bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars);
@@ -946,12 +947,14 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
     // Replace ids with dummies
     for(auto& decl: M.type_decls)
     {
-        set<string> free_vars;
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
             if (C.binds)
-                Rn.rename_decls( unloc(*C.binds), bound_names, free_vars, true);
+            {
+                auto method_binders = Rn.rename_signatures( unloc(*C.binds).signatures, true);
+                add( bound_names, method_binders );
+            }
             decl = C;
         }
     }
@@ -963,8 +966,26 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
     // Replace ids with dummies
     for(auto& decl: M.type_decls)
     {
-        set<string> free_vars;
-        if (decl.is_a<Haskell::InstanceDecl>())
+        if (decl.is_a<Haskell::ClassDecl>())
+        {
+            auto C = decl.as_<Haskell::ClassDecl>();
+            if (C.binds)
+            {
+                assert(unloc(*C.binds).size() == 1);
+                auto& decls = unloc(*C.binds)[0];
+
+                for(auto& mdecl: decls)
+                {
+                    if (mdecl.is_a<Hs::PatDecl>())
+                        throw myexception()<<"Illegal pattern binding in class "<<C.name;
+                    auto FD = mdecl.as_<Hs::FunDecl>();
+                    FD.match = Rn.rename( FD.match, bound_names, FD.rhs_free_vars);
+                    mdecl = FD;
+                }
+            }
+            decl = C;
+        }
+        else if (decl.is_a<Haskell::InstanceDecl>())
         {
             auto I = decl.as_<Haskell::InstanceDecl>();
             if (I.binds)
@@ -972,13 +993,13 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
                 assert(unloc(*I.binds).size() == 1);
                 auto& decls = unloc(*I.binds)[0];
 
-                for(auto& decl: decls)
+                for(auto& mdecl: decls)
                 {
-                    if (decl.is_a<Hs::PatDecl>())
+                    if (mdecl.is_a<Hs::PatDecl>())
                         throw myexception()<<"Illegal pattern binding in instance "<<I.constraint.print();
-                    auto FD = decl.as_<Hs::FunDecl>();
+                    auto FD = mdecl.as_<Hs::FunDecl>();
                     FD.match = Rn.rename( FD.match, bound_names, FD.rhs_free_vars);
-                    decl = FD;
+                    mdecl = FD;
                 }
             }
             decl = I;
@@ -1604,26 +1625,39 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
     return new_binders;
 }
 
+bound_var_info renamer_state::rename_signatures(map<string, Hs::Type>& signatures, bool top)
+{
+    bound_var_info bound;
+    map<string, Hs::Type> signatures2;
+    for(auto& [name, type]: signatures)
+    {
+        assert(not is_qualified_symbol(name));
+        type = rename_type(type);
+
+        auto name2 = name;
+        if (top)
+            name2 = m.name + "." + name;
+        signatures2.insert( {name2, type} );
+
+        bound.insert(name2);
+    }
+
+    signatures = std::move(signatures2);
+    return bound;
+}
+
 bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, set<string>& free_vars, bool top)
 {
     assert(binds.size() == 1);
     auto& decls = binds[0];
 
-    // We need to handle infix expressions before this.
-
-    // FIXME -- we need to do this for rename_infix as well.
-    map<string, Hs::Type> signatures;
-    for(auto& [name, type]: binds.signatures)
-    {
-        assert(not is_qualified_symbol(name));
-        auto name2 = name;
-        if (top)
-            name2 = m.name + "." + name;
-        signatures.insert( {name2, rename_type(type)} );
-    }
-    binds.signatures = signatures;
-
     auto binders = find_bound_vars_in_decls(decls, top);
+
+    auto sig_binders = rename_signatures(binds.signatures, top);
+    for(auto& sig_binder: sig_binders)
+        if (not binders.count(sig_binder))
+            throw myexception()<<"Signature but no definition for '"<<sig_binder<<"'";
+    
     set<string> decls_free_vars;
     auto refs = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars, top);
     group_binds(binds, refs);
