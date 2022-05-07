@@ -62,7 +62,7 @@ using std::tuple;
   * Handle explicit signatures in fundecls / simple-pattern bindings.
   * Handle explicit signatures in pattern bindings.
   * Kind-check explicit type signatures.
-  *. Change the type of class methods to forall a.C a => (forall b. ctxt => body)
+  * Change the type of class methods to forall a.C a => (forall b. ctxt => body)
 
   TODO:
   1. Reject unification of variables, tycons, etc with different kinds.
@@ -260,11 +260,6 @@ And we want to do this regardless of how many times method selector and the dfun
       - <dicts,methods>                                  Dictionary record data type
       - \<dicts:theta,methods:GVE> -> exp                Selecting entries from a dictionary
  */
-
-typedef Hs::Type monotype;
-typedef Hs::Type overtype;
-typedef Hs::Type polytype;
-typedef Hs::Type constraint;
 
 // A = out typevar
 // T = out monotype
