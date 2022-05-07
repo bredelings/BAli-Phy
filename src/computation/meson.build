@@ -36,6 +36,7 @@ computation_sources = [
 
   'typecheck/kind.cc', 'typecheck/kindcheck.cc', 'typecheck/typecheck.cc', 'typecheck/unify.cc',
   'typecheck/env.cc', 'typecheck/alphabetize.cc', 'typecheck/types.cc', 'typecheck/instance.cc',
+  'typecheck/class.cc',
 
   'optimization/free-vars.cc', 'optimization/set-levels.cc', 'optimization/float-out.cc',
 
