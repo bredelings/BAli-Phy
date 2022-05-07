@@ -612,6 +612,7 @@ struct GuardedRHS
     expression_ref body;
 
     std::string print() const;
+    std::string print_no_equals() const;
 
     GuardedRHS() = default;
     GuardedRHS(const std::vector<expression_ref> v, const expression_ref& e)
@@ -627,6 +628,7 @@ struct MultiGuardedRHS
     std::optional<Located<Binds>> decls;
 
     std::string print() const;
+    std::string print_no_equals() const;
 
     MultiGuardedRHS() = default;
     MultiGuardedRHS(const std::vector<GuardedRHS>& v):guarded_rhss(v) {}

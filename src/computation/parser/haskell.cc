@@ -608,7 +608,7 @@ string MDo::print() const
 
 string Alt::print() const
 {
-    return pattern.print() + " -> " + rhs.print();
+    return pattern.print() + " -> " + rhs.print_no_equals();
 }
 
 string Alts::print() const
@@ -622,17 +622,6 @@ string Alts::print() const
 string CaseExp::print() const
 {
     return "case " + object.print() + " of " + alts.print();
-}
-
-std::string GuardedRHS::print() const
-{
-    vector<string> guard_string;
-    for(auto& guard: guards)
-        guard_string.push_back(guard.print());
-    string result = " = " + body.print();
-    if (not guard_string.empty())
-        result = "| " + join(guard_string,", ") + result;
-    return result;
 }
 
 std::string FieldDecl::print() const
@@ -764,11 +753,39 @@ std::optional<Constructor> DataOrNewtypeDecl::find_constructor_by_name(const str
     return {};
 }
 
+std::string GuardedRHS::print() const
+{
+    vector<string> guard_string;
+    for(auto& guard: guards)
+        guard_string.push_back(guard.print());
+    string result = " = " + body.print();
+    if (not guard_string.empty())
+        result = "| " + join(guard_string,", ") + result;
+    return result;
+}
+
+std::string GuardedRHS::print_no_equals() const
+{
+    assert(guards.empty());
+    return body.print();
+}
+
 std::string MultiGuardedRHS::print() const
 {
     vector<string> ss;
     for(auto& guarded_rhs: guarded_rhss)
         ss.push_back(guarded_rhs.print());
+    if (decls)
+        ss.push_back("where " + unloc(*decls).print());
+
+    return join(ss, "\n");
+}
+
+std::string MultiGuardedRHS::print_no_equals() const
+{
+    assert(guarded_rhss.size() == 1);
+    vector<string> ss;
+    ss.push_back(guarded_rhss[0].print_no_equals());
     if (decls)
         ss.push_back("where " + unloc(*decls).print());
 
@@ -786,7 +803,7 @@ string LambdaExp::print() const
     for(auto& arg: args)
         result += parenthesize_pattern(arg) + " ";
     result += "-> ";
-    result += body.print();
+    result += body.print_no_equals();
     return result;
 }
 
