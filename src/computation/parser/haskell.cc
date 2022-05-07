@@ -790,6 +790,12 @@ string LambdaExp::print() const
     return result;
 }
 
+LambdaExp::LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b)
+    : args(ps), body(SimpleRHS({noloc,b}))
+{
+    assert(not ps.empty());
+}
+
 string LetExp::print() const
 {
     return "let " + binds.print() + " in " + body.print();

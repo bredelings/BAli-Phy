@@ -195,7 +195,8 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     expression_ref E = Hs::LetExp( {noloc, binds_methods}, {noloc, dict} );
     E = Hs::LetExp( {noloc,*binds_super}, {noloc,E} );
 
-    E = Hs::LambdaExp( lambda_vars, E);
+    if (not lambda_vars.empty())
+        E = Hs::LambdaExp( lambda_vars, E);
 
     Hs::Decls decls ({ simple_decl(dfun,E) });
     return decls;

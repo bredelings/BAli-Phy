@@ -879,7 +879,7 @@ struct LambdaExp: public Object
     LambdaExp* clone() const {return new LambdaExp(*this);}
     std::string print() const;
 
-    LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b): args(ps), body(SimpleRHS({noloc,b})) {};
+    LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b);
 };
 
 
