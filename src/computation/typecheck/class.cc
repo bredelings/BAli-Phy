@@ -98,8 +98,11 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         // Maybe intersect the forall_vars with USED vars?
         type = add_forall_vars(class_decl.type_vars, type);
         gie = gie.insert({unloc(get_dict.name), type});
+
+        // Is this right???
+        cinfo.fields.push_back({get_unqualified_name(name),type});
     }
-    for(auto& [name,type]: gie + gve)
+    for(auto& [name,type]: gve)
         cinfo.fields.push_back({get_unqualified_name(name),type});
 
     Hs::Decls decls;
