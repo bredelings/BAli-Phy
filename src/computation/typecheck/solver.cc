@@ -15,41 +15,6 @@ using std::tuple;
 
 namespace views = ranges::views;
 
-pair<local_instance_env, map<Hs::TypeVar, local_instance_env>>
-ambiguities(const set<Hs::TypeVar>& tvs1, const set<Hs::TypeVar>& tvs2, local_instance_env lie)
-{
-    // The input lie MUST be substituted to find its free type vars!
-    // lie = apply_current_subst(lie);
-    auto ambiguous_tvs = free_type_variables(lie) - tvs1 - tvs2;
-
-    // 1. Record the constraints WITH ambiguous type vars, by type var
-    map<Hs::TypeVar,local_instance_env> ambiguities;
-    for(auto& ambiguous_tv: ambiguous_tvs)
-    {
-        local_instance_env lie_for_tv;
-        for(auto& [dvar,constraint]: lie)
-        {
-            if (free_type_variables(constraint).count(ambiguous_tv))
-                lie_for_tv = lie_for_tv.insert({dvar,constraint});
-        }
-        if (not lie_for_tv.empty())
-            ambiguities.insert({ambiguous_tv, lie_for_tv});
-    }
-
-    // 2. Find the constraints WITHOUT ambiguous type vars
-    local_instance_env unambiguous_preds;
-
-    for(auto& [dvar, constraint]: lie)
-    {
-        auto ftvs = free_type_variables(constraint);
-        if (not intersects(ftvs, ambiguous_tvs))
-            unambiguous_preds = unambiguous_preds.insert({dvar, constraint});
-    }
-
-    return {unambiguous_preds, ambiguities};
-}
-
-
 bool type_is_hnf(const Hs::Type& type)
 {
     auto [head,args] = decompose_type_apps(type);
@@ -327,37 +292,4 @@ Hs::Binds typechecker_state::reduce_current_lie()
     return binds;
 }
 
-
-tuple<substitution_t, Hs::Binds, local_instance_env>
-typechecker_state::default_preds( const set<Hs::TypeVar>& fixed_tvs,
-                                  const set<Hs::TypeVar>& referenced_tvs,
-                                  const local_instance_env& lie)
-{
-    substitution_t s;
-    Hs::Binds binds;
-    auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities(fixed_tvs, referenced_tvs, lie);
-
-    for(auto& [tv, preds]: ambiguous_preds_by_var)
-    {
-        auto result = candidates(tv, preds);
-
-        if (not result)
-        {
-            auto e = myexception()<<"Ambiguous type variable '"<<tv<<"' in classes: ";
-            for(auto& [dvar,constraint]: preds)
-                e<<constraint<<" ";
-            throw e;
-        }
-        auto& [s1, binds1] = *result;
-
-        auto tmp = combine(s, s1);
-        assert(tmp);
-        s = *tmp; // These constraints should be on separate variables, and should not interact.
-
-        // Each binds should be independent of the others, so order should not matter.
-        ranges::insert(binds, binds.end(), binds1);
-    }
-
-    return {s, binds, unambiguous_preds};
-}
 
