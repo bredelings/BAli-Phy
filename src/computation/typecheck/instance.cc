@@ -137,7 +137,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     auto lie_super = unordered_lie(ordered_lie_super);
     auto binds_super = entails(lie_instance, lie_super);
     if (not binds_super)
-        throw myexception()<<"Missing instances!";
+        throw myexception()<<"Can't derive "<<print(lie_super)<<" from "<<print(lie_instance)<<"!";
 
     // 5. make some intermediates
     auto instance_constraint_dvars = vars_from_lie(ordered_lie_instance);
