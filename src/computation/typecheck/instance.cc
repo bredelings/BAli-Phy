@@ -193,7 +193,9 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     expression_ref dict = Hs::tuple(dict_entries);
 
     expression_ref E = Hs::LetExp( {noloc, binds_methods}, {noloc, dict} );
-    E = Hs::LetExp( {noloc,*binds_super}, {noloc,E} );
+
+    if (binds_super->size())
+        E = Hs::LetExp( {noloc,*binds_super}, {noloc,E} );
 
     if (not lambda_vars.empty())
         E = Hs::LambdaExp( lambda_vars, E);
