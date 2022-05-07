@@ -736,7 +736,7 @@ struct StrictPattern: public Object
 
 struct AsPattern: public Object
 {
-    // We need this to be Hs::Var until desugaring, at which point it becomes var.
+    // We need this to be Var until desugaring, at which point it becomes var.
     expression_ref var;
     Pattern pattern;
 
@@ -779,8 +779,8 @@ struct TypeApp: public Object
     TypeApp(const Type& t1, const Type& t2):head(t1), arg(t2) {}
 };
 
-Haskell::Type make_tyapps(const std::vector<Haskell::Type>& tyapps);
-Haskell::Type make_tyapps(const Haskell::Type& T0, const std::vector<Haskell::Type>& args);
+Type make_tyapps(const std::vector<Type>& tyapps);
+Type make_tyapps(const Type& T0, const std::vector<Type>& args);
 
 struct ForallType: public Object
 {
@@ -792,6 +792,8 @@ struct ForallType: public Object
     ForallType(const std::vector<TypeVar>& tvb, const Type& t):type_var_binders(tvb), type(t) {}
 };
 
+Type add_forall_vars(const std::vector<TypeVar>& type_vars, const Type& type);
+
 struct ConstrainedType: public Object
 {
     Context context;
@@ -801,6 +803,9 @@ struct ConstrainedType: public Object
     std::string print() const;
     ConstrainedType(const Context& c, const Type& t):context(c), type(t) {}
 };
+
+Type add_constraints(const std::vector<Type>& constraints, const Type& type);
+Type add_constraints(const Context& constraints, const Type& type);
 
 enum class StrictLazy {strict,lazy};
 

@@ -264,42 +264,6 @@ type_con_env get_tycon_info(const Hs::Decls& type_decls)
 
 // Q: how/when do we rename default method definitions?
 
-Hs::Type add_constraints(const vector<Hs::Type>& constraints, const Hs::Type& type)
-{
-    if (constraints.empty())
-        return type;
-    else if (type.is_a<Hs::ConstrainedType>())
-    {
-        auto CT = type.as_<Hs::ConstrainedType>();
-        for(auto& constraint: constraints)
-            CT.context.constraints.push_back(constraint);
-        return CT;
-    }
-    else
-        return Hs::ConstrainedType(Hs::Context(constraints),type);
-}
-
-Hs::Type add_forall_vars(const std::vector<Hs::TypeVar>& type_vars, const Hs::Type& type)
-{
-    for(auto& tv: type_vars)
-        assert(tv.kind);
-
-    if (type_vars.empty())
-        return type;
-    else if (auto FAT = type.to<Hs::ForallType>())
-    {
-        auto new_type_vars = type_vars;
-        for(auto& type_var: FAT->type_var_binders)
-        {
-            assert(not includes(type_vars, type_var));
-            new_type_vars.push_back(type_var);
-        }
-        return Hs::ForallType(new_type_vars, FAT->type);
-    }
-    else
-        return Hs::ForallType(type_vars, type);
-}
-
 set<Hs::TypeVar> free_type_VARS(const Hs::Context& context)
 {
     set<Hs::TypeVar> tvars;
@@ -612,7 +576,7 @@ Hs::Type kindchecker_state::type_check_constructor(const Hs::Constructor& constr
 
     // FIXME: we need to check that these constraints constrain fields of the constructor.
     if (constructor.context)
-        type2 = add_constraints(constructor.context->constraints, type2);
+        type2 = Hs::add_constraints(constructor.context->constraints, type2);
 
     return type2;
 }
@@ -701,7 +665,7 @@ map<string,Hs::Type> kindchecker_state::type_check_data_type(const Hs::DataOrNew
         Hs::Type constructor_type = type_check_constructor(constructor, data_type);
 
         // Actually we should only add the constraints that use type variables that are used in the constructor.
-        constructor_type = add_constraints(data_decl.context.constraints, constructor_type);
+        constructor_type = Hs::add_constraints(data_decl.context.constraints, constructor_type);
 
         // QUESTION: do we need to replace the original user type vars with the new kind-annotated versions?
         if (datatype_typevars.size())

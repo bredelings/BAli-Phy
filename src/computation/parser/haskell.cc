@@ -1,6 +1,7 @@
 #include "haskell.H"
 #include "util/string/join.H"
 #include "expression/tuple.H" // for tuple_name
+#include "util/set.H"   // for includes( , )
 
 using std::string;
 using std::pair;
@@ -497,18 +498,18 @@ string TypeApp::print() const
     return head.print() + " " + parenthesize_type(arg);
 }
 
-Hs::Type make_tyapps(const std::vector<Hs::Type>& tyapps)
+Type make_tyapps(const std::vector<Type>& tyapps)
 {
     assert(not tyapps.empty());
-    Hs::Type T = tyapps[0];
+    Type T = tyapps[0];
     for(int i=1;i<tyapps.size();i++)
 	T = Haskell::TypeApp(T,tyapps[i]);
     return T;
 }
 
-Hs::Type make_tyapps(const Hs::Type& T0, const std::vector<Hs::Type>& args)
+Type make_tyapps(const Type& T0, const std::vector<Type>& args)
 {
-    Hs::Type T = T0;
+    Type T = T0;
     for(auto& arg: args)
 	T = Haskell::TypeApp(T, arg);
     return T;
@@ -522,9 +523,50 @@ string ForallType::print() const
     return "forall "+join(binders," ")+". "+type.print();
 }
 
+Type add_forall_vars(const std::vector<TypeVar>& type_vars, const Type& type)
+{
+    for(auto& tv: type_vars)
+        assert(tv.kind);
+
+    if (type_vars.empty())
+        return type;
+    else if (auto FAT = type.to<ForallType>())
+    {
+        auto new_type_vars = type_vars;
+        for(auto& type_var: FAT->type_var_binders)
+        {
+            assert(not includes(type_vars, type_var));
+            new_type_vars.push_back(type_var);
+        }
+        return ForallType(new_type_vars, FAT->type);
+    }
+    else
+        return ForallType(type_vars, type);
+}
+
 string ConstrainedType::print() const
 {
     return context.print() + " => " + type.print();
+}
+
+Type add_constraints(const vector<Type>& constraints, const Type& type)
+{
+    if (constraints.empty())
+        return type;
+    else if (type.is_a<ConstrainedType>())
+    {
+        auto CT = type.as_<ConstrainedType>();
+        for(auto& constraint: constraints)
+            CT.context.constraints.push_back(constraint);
+        return CT;
+    }
+    else
+        return ConstrainedType(Context(constraints),type);
+}
+
+Type add_constraints(const Context& context, const Type& type)
+{
+    return add_constraints(context.constraints, type);
 }
 
 std::string Context::print() const
@@ -615,13 +657,13 @@ std::string LiteralString::print() const
     return '"' + data + '"';
 }
 
-std::vector<Hs::Type> Constructor::get_field_types() const
+std::vector<Type> Constructor::get_field_types() const
 {
     if (fields.index() == 0)
         return std::get<0>(fields);
     else
     {
-        vector<Hs::Type> types;
+        vector<Type> types;
         for(auto& fields: std::get<1>(fields).field_decls)
             for(int i=0;i<fields.field_names.size();i++)
                 types.push_back(fields.type);
@@ -841,11 +883,11 @@ string FunDecl::print() const
 FunDecl simple_decl(const Var& v, const expression_ref& E)
 {
     // = E
-    Hs::MRule rule{{}, Hs::SimpleRHS({noloc,E})};
-    Hs::Match m{{rule}};
+    MRule rule{{}, SimpleRHS({noloc,E})};
+    Match m{{rule}};
 
     // v = E
-    return Hs::FunDecl(v,m);
+    return FunDecl(v,m);
 }
 
 }

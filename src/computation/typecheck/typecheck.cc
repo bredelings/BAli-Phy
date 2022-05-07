@@ -697,7 +697,7 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
 {
     value_env env2;
     for(auto& [name, monotype]: env1)
-        env2 = env2.insert( {name, add_constraints(constraints, monotype)} );
+        env2 = env2.insert( {name, Hs::add_constraints(constraints, monotype)} );
     return env2;
 }
 
@@ -1537,7 +1537,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
             // Default any constraints that do not occur in THIS type.
             auto [s2, binds2, lie_for_this_type] = default_preds( fixed_tvs, tvs_in_this_type, lie_not_completely_ambiguous );
 
-            Hs::Type constrained_type = add_constraints( constraints_from_lie(lie_for_this_type), type );
+            Hs::Type constrained_type = Hs::add_constraints( constraints_from_lie(lie_for_this_type), type );
 
             // Only quantify over type variables that occur in THIS type.
             Hs::Type qualified_type = quantify( tvs_in_this_type, constrained_type );
@@ -2322,7 +2322,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
         auto get_dict = fresh_var(extractor_name, true);
         // Should this be a function arrow?
-        Hs::Type type = add_constraints({class_constraint}, superclass_constraint);
+        Hs::Type type = Hs::add_constraints({class_constraint}, superclass_constraint);
         type = apply_current_subst(type);
         // Maybe intersect the forall_vars with USED vars?
         type = add_forall_vars(class_decl.type_vars, type);
