@@ -149,6 +149,9 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
         dict_entries.push_back(dv);
     }
 
+    if (not inst_decl.binds)
+        std::cerr<<"Instance for "<<inst_decl.constraint<<" has no methods!";
+    return {};
 
     // 4. Construct binds_methods
     Hs::Binds binds_methods;
