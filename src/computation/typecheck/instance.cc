@@ -96,9 +96,13 @@ typechecker_state::infer_type_for_instances1(const Hs::Decls& decls, const class
     return {gie_inst, named_instances};
 }
 
-Hs::Decls
-typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& inst_decl, const class_env& ce)
+string get_class_for_constraint(const Hs::Type& constraint)
 {
+    auto [class_head, args] = decompose_type_apps(constraint);
+    auto tc = class_head.to<Hs::TypeCon>();
+    assert(tc);
+    return unloc(tc->name);
+}
 
     // PROBLEM: we also need to know all the instance types to check the entails.
     //          so, that part needs to come after a first pass over all instances...
@@ -120,26 +124,43 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
                  in <dvar1, ..., dvarN, var1, ..., varM>
     */
 
-    auto [class_head, monotypes] = decompose_type_apps(inst_decl.constraint);
+Hs::Decls
+typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& inst_decl, const class_env& ce)
+{
+    // 1. Get instance head and constraints 
 
-    // 1. Look up the info for the main class
-    auto tc = class_head.to<Hs::TypeCon>();
-    assert(tc); // already checked.
-    string class_name = unloc(tc->name);
+    // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
+    auto inst_type = gie.at(unloc(dfun.name));
+    // Instantiate it with rigid type variables.
+    auto [instance_tvs, instance_constraints, instance_head] = instantiate(inst_type, false);
+
+    // 2. Get the class info
+    auto class_name = get_class_for_constraint(instance_head);
     class_info cinfo = ce.at(class_name);
+    Hs::Type class_type = Hs::TypeCon(Unlocated(class_name));
+    for(auto& tv: cinfo.type_vars)
+        class_type = Hs::TypeApp(class_type, tv);
+    class_type = Hs::add_forall_vars(cinfo.type_vars,Hs::add_constraints(cinfo.context, class_type));
+    auto [class_tvs, superclass_constraints, class_head] = instantiate(class_type, true);
 
-    // 2. build a local instance environment from the instance constraints
-    auto ordered_lie_instance = constraints_to_lie(inst_decl.context.constraints);
+    // 3. Match the class head, and substitute into the superclass constraints
+    auto s = ::maybe_match(class_head, instance_head);
+    assert(s);
+    for(auto& superclass_constraint: superclass_constraints)
+        superclass_constraint = apply_subst(*s, superclass_constraint);
+
+    // 4. build a local instance environment from the instance constraints
+    auto ordered_lie_instance = constraints_to_lie(instance_constraints);
     auto lie_instance = unordered_lie(ordered_lie_instance);
 
-    // 3. Construct binds_super
-    auto ordered_lie_super = constraints_to_lie(cinfo.context.constraints);
+    // 5. Construct binds_super
+    auto ordered_lie_super = constraints_to_lie(superclass_constraints);
     auto lie_super = unordered_lie(ordered_lie_super);
     auto binds_super = entails(lie_instance, lie_super);
     if (not binds_super)
         throw myexception()<<"Can't derive "<<print(lie_super)<<" from "<<print(lie_instance)<<"!";
 
-    // 5. make some intermediates
+    // 6. make some intermediates
     auto instance_constraint_dvars = vars_from_lie(ordered_lie_instance);
     vector<Hs::Pattern> lambda_vars;
     vector<Hs::Expression> dict_entries;
@@ -153,7 +174,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
         std::cerr<<"Instance for "<<inst_decl.constraint<<" has no methods!";
     return {};
 
-    // 4. Construct binds_methods
+    // 7. Construct binds_methods
     Hs::Binds binds_methods;
     std::map<string,Hs::Match> method_matches;
     for(auto& decl: unloc(*inst_decl.binds)[0])
