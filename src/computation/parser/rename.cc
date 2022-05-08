@@ -1654,9 +1654,12 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
     auto binders = find_bound_vars_in_decls(decls, top);
 
     auto sig_binders = rename_signatures(binds.signatures, top);
+    /*
+      This doesn't work yet because BuiltinDecls are not found.
     for(auto& sig_binder: sig_binders)
         if (not binders.count(sig_binder))
             throw myexception()<<"Signature but no definition for '"<<sig_binder<<"'";
+    */
     
     set<string> decls_free_vars;
     auto refs = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars, top);
