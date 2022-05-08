@@ -54,7 +54,12 @@ instance Eq a => Eq [a] where
     []     == []     = True
     _      == _      = False
 
+instance Eq Int
+instance Show Int
 instance Num Int
+
+instance Eq Double
+instance Show Double
 instance Num Double
 
 plus x y = x + y

@@ -1,1 +1,1 @@
---run-module Main.hs
+--type-check --test-module  Main.hs

@@ -64,6 +64,8 @@ instance Eq a => Eq [a] where
     []     == []     = True
     _      == _      = False
 
+instance Eq Int
+instance Show Int
 instance Num Int
 
 instance Enum Int

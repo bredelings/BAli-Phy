@@ -73,21 +73,21 @@ instance Eq Bool where
     True == False = False
     False == True = False
 
+instance Eq Int
 instance Ord Int
-
+instance Show Int
+instance Read Int
 instance Num Int
 
 instance Enum Int
 
+instance Eq Double
 instance Ord Double
-
+instance Show Double
+instance Read Double
 instance Num Double
 
 instance Fractional Double
-
-instance Read Int
-
-instance Show Int
 
 True && True = True
 _    && _    = False

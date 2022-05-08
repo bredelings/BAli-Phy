@@ -58,6 +58,8 @@ instance Eq Bool where
 f x y = case x == y of True  -> x + y
                        False -> x - y
 
+instance Eq Int
+instance Show Int
 instance Num Int
 
 (a,b) = ('a',2)       
