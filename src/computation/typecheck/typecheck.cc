@@ -284,6 +284,13 @@ And we want to do this regardless of how many times method selector and the dfun
 // GVE = global value environment      = var -> polytype
 // LVE = local  value environment      = var -> monotype
 
+
+string typechecker_state::qualified_name(const string& uname) const
+{
+    assert(not is_qualified_symbol(uname));
+    return mod_name + "." + uname;
+}
+
 // The GIE does NOT allow free type variables.
 struct instance_info
 {
@@ -523,7 +530,7 @@ Hs::Var typechecker_state::fresh_var(const std::string& s, bool qualified)
 {
     string name = "$"+s+std::to_string(next_var_index);
     if (qualified)
-        name = mod_name + "." + name;
+        name = qualified_name(name);
     Hs::Var x({noloc, name});
     next_var_index++;
     return x;

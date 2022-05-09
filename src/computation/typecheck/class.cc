@@ -121,10 +121,10 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         gie = gie.insert({unloc(get_dict.name), type});
 
         // Is this right???
-        cinfo.fields.push_back({unloc(get_dict.name),type});
+        cinfo.fields.push_back({unloc(get_dict.name), type});
     }
     for(auto& [name,type]: cinfo.members)
-        cinfo.fields.push_back({mod_name+"."+name,type});
+        cinfo.fields.push_back({qualified_name(name), type});
 
     // 5. Define superclass extractors and member function extractors
     Hs::Decls decls;

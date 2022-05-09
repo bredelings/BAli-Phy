@@ -52,6 +52,8 @@ struct typechecker_state
 
     local_instance_env& current_lie();
 
+    std::string qualified_name(const std::string& name) const;
+
     void add_dvar(const std::string& name, const Hs::Type& constraint);
 
     void add_dvar(const Hs::Var& dvar, const Hs::Type& constraint);
