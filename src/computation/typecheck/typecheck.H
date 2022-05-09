@@ -19,7 +19,7 @@ Hs::ModuleDecls typecheck(const std::string& s, const Module& m, Hs::ModuleDecls
 
 Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type type, const Haskell::Type& constraint);
 
-std::tuple<global_value_env, global_instance_env,class_info,Hs::Decls>
+std::tuple<global_value_env, global_instance_env, ClassInfo, Hs::Decls>
 type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::ClassDecl& class_decl);
 
 typedef value_env constr_env;
@@ -39,6 +39,8 @@ struct typechecker_state
     constr_env con_info;
 
     global_instance_env gie;
+
+    ClassEnv class_env;
 
     std::vector<Hs::Type> defaults;
 
@@ -184,33 +186,33 @@ struct typechecker_state
     std::tuple<Hs::Binds, global_value_env>
     infer_type_for_binds(const global_value_env& env, Hs::Binds binds);
 
-    std::tuple<global_value_env, global_instance_env, class_env, Hs::Binds>
+    std::tuple<global_value_env, global_instance_env, Hs::Binds>
     infer_type_for_classes(const Hs::Decls& decls);
 
-    std::tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
+    std::tuple<global_value_env,global_instance_env, ClassInfo,Hs::Decls>
     infer_type_for_class(const Hs::ClassDecl& class_decl);
 
-    Hs::Decls infer_type_for_default_methods(const global_value_env& env, const class_env&, const Hs::ClassDecl&);
+    Hs::Decls infer_type_for_default_methods(const global_value_env& env, const Hs::ClassDecl&);
 
-    Hs::Binds infer_type_for_default_methods(const global_value_env& env, const class_env&, const Hs::Decls&);
+    Hs::Binds infer_type_for_default_methods(const global_value_env& env, const Hs::Decls&);
 
     // Figure 12
     std::pair<Hs::Var, Hs::Type>
-    infer_type_for_instance1(const Hs::InstanceDecl& instance_del, const class_env& ce);
+    infer_type_for_instance1(const Hs::InstanceDecl& instance_decl);
 
     // Figure 12
     std::pair<global_instance_env,
               std::vector< std::pair<Hs::Var,
                                      Hs::InstanceDecl>>>
-    infer_type_for_instances1(const Hs::Decls& decls, const class_env& ce);
+    infer_type_for_instances1(const Hs::Decls& decls);
 
     // Figure 12
     Hs::Decls
-    infer_type_for_instances2(const std::vector<std::pair<Hs::Var, Hs::InstanceDecl>>& named_instances, const class_env& ce);
+    infer_type_for_instances2(const std::vector<std::pair<Hs::Var, Hs::InstanceDecl>>& named_instances);
 
     // Figure 12
     Hs::Decls
-    infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& instance_del, const class_env& ce);
+    infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& instance_decl);
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).

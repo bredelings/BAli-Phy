@@ -38,21 +38,21 @@ Hs::FunDecl dictionary_extractor(const string& name, int i, int N)
 // * Hs::Decls           = { name         = \dict -> case dict of (_,_,method,_,_) -> method }
 //                       = { made-up-name = \dict -> case dict of (superdict,_,_,_,_) -> superdict }
 
-tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
+tuple<global_value_env,global_instance_env, ClassInfo, Hs::Decls>
 typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     kindchecker_state K(tce);
 
-    class_info cinfo;
-    cinfo.type_vars = class_decl.type_vars;
-    cinfo.name = class_decl.name;
-    cinfo.context = class_decl.context;
+    ClassInfo class_info;
+    class_info.type_vars = class_decl.type_vars;
+    class_info.name = class_decl.name;
+    class_info.context = class_decl.context;
 
     // 1. Bind type parameters for class
     K. push_type_var_scope();
 
     // 1a. Look up kind for this data type.
-    auto class_kind = K.kind_for_type_con(cinfo.name);
+    auto class_kind = K.kind_for_type_con(class_info.name);
 
     // 1b. Record the kind for each type variable.
     for(auto& tv: class_decl.type_vars)
@@ -77,18 +77,18 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
             method_type = Hs::add_forall_vars(class_decl.type_vars, method_type);
 
             gve = gve.insert({qname, method_type});
-            cinfo.members = cinfo.members.insert({get_unqualified_name(qname), method_type});
+            class_info.members = class_info.members.insert({get_unqualified_name(qname), method_type});
         }
 
-        auto method_matches = get_instance_methods( unloc( *class_decl.binds )[0], cinfo.members, cinfo.name );
+        auto method_matches = get_instance_methods( unloc( *class_decl.binds )[0], class_info.members, class_info.name );
 
         for(auto& [name, match]: method_matches)
         {
             auto dm = fresh_var("dm"+name, true);
             Hs::FunDecl FD(dm, match);
-            cinfo.default_methods.insert({name, dm});
+            class_info.default_methods.insert({name, dm});
 
-            auto type = cinfo.members.at(name);
+            auto type = class_info.members.at(name);
 
             gve = gve.insert({unloc(dm.name), type});
         }
@@ -103,7 +103,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
     // 4. Make global types for superclass extractors
     global_instance_env gie;
-    for(auto& superclass_constraint: cinfo.context.constraints)
+    for(auto& superclass_constraint: class_info.context.constraints)
     {
         string cname1 = get_class_name_from_constraint(superclass_constraint);
         string cname2 = get_class_name_from_constraint(class_constraint);
@@ -118,36 +118,35 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         gie = gie.insert({unloc(get_dict.name), type});
 
         // Is this right???
-        cinfo.fields.push_back({unloc(get_dict.name), type});
+        class_info.fields.push_back({unloc(get_dict.name), type});
     }
-    for(auto& [name,type]: cinfo.members)
-        cinfo.fields.push_back({qualified_name(name), type});
+    for(auto& [name,type]: class_info.members)
+        class_info.fields.push_back({qualified_name(name), type});
 
     // 5. Define superclass extractors and member function extractors
     Hs::Decls decls;
 
     vector<Hs::Type> types;
-    for(auto& [name,type]: cinfo.fields)
+    for(auto& [name,type]: class_info.fields)
         types.push_back(type);
     Hs::Type dict_type = Hs::tuple_type(types);
 
     int i = 0;
-    int N = cinfo.fields.size();
-    for(auto& [name,type]: cinfo.fields)
+    int N = class_info.fields.size();
+    for(auto& [name,type]: class_info.fields)
     {
         decls.push_back( dictionary_extractor(name, i, N) );
 
         i++;
     }
 
-    return {gve,gie,cinfo,decls};
+    return {gve,gie,class_info,decls};
 }
 
-tuple<global_value_env, global_instance_env, class_env, Hs::Binds> typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
+tuple<global_value_env, global_instance_env, Hs::Binds> typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
 {
     global_value_env gve;
     global_instance_env gie;
-    class_env ce;
     Hs::Binds binds;
 
     for(auto& decl: decls)
@@ -159,10 +158,11 @@ tuple<global_value_env, global_instance_env, class_env, Hs::Binds> typechecker_s
 
         gve += gve1;
         gie += gie1;
-        ce.insert({class_info.name, class_info});
         binds.push_back(class_decls);
+
+        class_env.insert({class_info.name, class_info});
     }
 
-    return {gve, gie, ce, binds};
+    return {gve, gie, binds};
 }
 

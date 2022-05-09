@@ -894,7 +894,7 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
 
     //   CE_C  = class name -> class info
     typechecker_state state( name, *this, M, tce, constr_info );
-    auto [gve, class_gie, class_info, class_binds] = state.infer_type_for_classes(M.type_decls);
+    auto [gve, class_gie, class_binds] = state.infer_type_for_classes(M.type_decls);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 
     for(auto& [method,type]: gve)
@@ -914,7 +914,7 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
 
     // Instances, pass1
     state.gie = class_gie;
-    auto [inst_gie, named_instances] = state.infer_type_for_instances1(M.type_decls, class_info);
+    auto [inst_gie, named_instances] = state.infer_type_for_instances1(M.type_decls);
 
     state.gie += inst_gie;
 
@@ -928,13 +928,16 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
 
     // Value decls
     auto [value_decls, env] = state.infer_type_for_binds(gve, M.value_decls);
+    env += gve;
     M.value_decls = value_decls;
 
     // Default methods
-    auto default_method_decls = state.infer_type_for_default_methods(gve, class_info, M.type_decls);
+    auto default_method_decls = state.infer_type_for_default_methods(env, M.type_decls);
+    for(auto& dm_decl: default_method_decls)
+        M.value_decls.push_back(dm_decl);
 
     // Instances, pass2
-    auto inst_decls = state.infer_type_for_instances2(named_instances, class_info);
+    auto inst_decls = state.infer_type_for_instances2(named_instances);
     std::cerr<<inst_decls.print();
     std::cerr<<"\n\n";
 

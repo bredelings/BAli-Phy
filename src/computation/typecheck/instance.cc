@@ -8,17 +8,17 @@ using std::set;
 using std::pair;
 using std::optional;
 
-Hs::Decls typechecker_state::infer_type_for_default_methods(const global_value_env& env, const class_env& class_info, const Hs::ClassDecl& C)
+Hs::Decls typechecker_state::infer_type_for_default_methods(const global_value_env& env, const Hs::ClassDecl& C)
 {
     Hs::Decls decls_out;
 
-    auto cinfo = class_info.at(C.name);
+    auto class_info = class_env.at(C.name);
     for(auto& decls: unloc(*C.binds))
         for(auto& decl: decls)
         {
             auto FD = decl.as_<Hs::FunDecl>();
             auto method_name = unloc(FD.v.name);
-            auto dm = cinfo.default_methods.at(method_name);
+            auto dm = class_info.default_methods.at(method_name);
             FD.v = dm;
 
             auto [decl2, name, sig_type] = infer_type_for_single_fundecl_with_sig(env, FD);
@@ -27,7 +27,7 @@ Hs::Decls typechecker_state::infer_type_for_default_methods(const global_value_e
     return decls_out;
 }
 
-Hs::Binds typechecker_state::infer_type_for_default_methods(const global_value_env& gve, const class_env& class_info, const Hs::Decls& decls)
+Hs::Binds typechecker_state::infer_type_for_default_methods(const global_value_env& gve, const Hs::Decls& decls)
 {
     Hs::Binds binds;
 
@@ -36,26 +36,26 @@ Hs::Binds typechecker_state::infer_type_for_default_methods(const global_value_e
         auto c = decl.to<Hs::ClassDecl>();
         if (not c) continue;
 
-        binds.push_back( infer_type_for_default_methods(gve, class_info, *c) );
+        binds.push_back( infer_type_for_default_methods(gve, *c) );
     }
     return binds;
 }
 
 pair<Hs::Var, Hs::Type>
-typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, const class_env& ce)
+typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     // -- old -- //
     auto [class_head, class_args] = decompose_type_apps(inst_decl.constraint);
 
     // Premise #1: Look up the info for the class
-    optional<class_info> cinfo;
+    optional<ClassInfo> class_info;
     if (auto tc = class_head.to<Hs::TypeCon>())
     {
         // Check that this is a class, and not a data or type?
         auto class_name = unloc(tc->name);
-        if (not ce.count(class_name))
+        if (not class_env.count(class_name))
             throw myexception()<<"In instance '"<<inst_decl.constraint<<"': no class '"<<class_name<<"'!";
-        cinfo = ce.at(class_name);
+        class_info = class_env.at(class_name);
     }
     else
         throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<class_head<<" is not a class!";
@@ -110,7 +110,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, c
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
 pair<global_instance_env,vector<pair<Hs::Var,Hs::InstanceDecl>>>
-typechecker_state::infer_type_for_instances1(const Hs::Decls& decls, const class_env& ce)
+typechecker_state::infer_type_for_instances1(const Hs::Decls& decls)
 {
     global_instance_env gie_inst;
 
@@ -120,7 +120,7 @@ typechecker_state::infer_type_for_instances1(const Hs::Decls& decls, const class
     {
         if (auto I = decl.to<Hs::InstanceDecl>())
         {
-            auto [dfun, inst_type] = infer_type_for_instance1(*I, ce);
+            auto [dfun, inst_type] = infer_type_for_instance1(*I);
 
             named_instances.push_back({dfun, *I});
             gie_inst = gie_inst.insert({unloc(dfun.name), inst_type});
@@ -179,7 +179,7 @@ map<string, Hs::Match> get_instance_methods(const Hs::Decls& decls, const global
 
 
 Hs::Decls
-typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& inst_decl, const class_env& ce)
+typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& inst_decl)
 {
     // 1. Get instance head and constraints 
 
@@ -190,11 +190,11 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
     // 2. Get the class info
     auto class_name = get_class_for_constraint(instance_head);
-    class_info cinfo = ce.at(class_name);
+    ClassInfo class_info = class_env.at(class_name);
     Hs::Type class_type = Hs::TypeCon(Unlocated(class_name));
-    for(auto& tv: cinfo.type_vars)
+    for(auto& tv: class_info.type_vars)
         class_type = Hs::TypeApp(class_type, tv);
-    class_type = Hs::add_forall_vars(cinfo.type_vars,Hs::add_constraints(cinfo.context, class_type));
+    class_type = Hs::add_forall_vars(class_info.type_vars,Hs::add_constraints(class_info.context, class_type));
     auto [class_tvs, superclass_constraints, class_head] = instantiate(class_type, true);
 
     // 3. Match the class head, and substitute into the superclass constraints
@@ -229,16 +229,18 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     return {};
 
     // 7. Construct binds_methods
+    Hs::Decls decls;
+
     Hs::Binds binds_methods;
-    auto method_matches = get_instance_methods( unloc( *inst_decl.binds )[0], cinfo.members, class_name );
+    auto method_matches = get_instance_methods( unloc( *inst_decl.binds )[0], class_info.members, class_name );
 
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
-    for(auto& [name,type]: cinfo.members)
+    for(auto& [name,type]: class_info.members)
     {
         auto it = method_matches.find(name);
         if (it == method_matches.end())
         {
-            if (cinfo.default_methods.count(name))
+            if (class_info.default_methods.count(name))
             {
                 // handle default method.
             }
@@ -267,20 +269,20 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     if (not lambda_vars.empty())
         E = Hs::LambdaExp( lambda_vars, E);
 
-    Hs::Decls decls ({ simple_decl(dfun,E) });
+    decls.push_back ({ simple_decl(dfun,E) });
     return decls;
 }
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
 Hs::Decls
-typechecker_state::infer_type_for_instances2(const vector<pair<Hs::Var, Hs::InstanceDecl>>& named_instances, const class_env& ce)
+typechecker_state::infer_type_for_instances2(const vector<pair<Hs::Var, Hs::InstanceDecl>>& named_instances)
 {
     Hs::Decls out_decls;
     global_instance_env gie_inst;
     for(auto& [dfun, instance_decl]: named_instances)
     {
-        auto decls_ = infer_type_for_instance2(dfun, instance_decl, ce);
+        auto decls_ = infer_type_for_instance2(dfun, instance_decl);
 
         for(auto& d: decls_)
             out_decls.push_back(d);

@@ -54,7 +54,7 @@ typedef std::map<std::string, type_con_info> type_con_env;
 void add_no_overlap(type_con_env& e1, const type_con_env& e2);
 type_con_env plus_no_overlap(const type_con_env& e1, const type_con_env& e2);
 
-struct class_info
+struct ClassInfo
 {
     std::string name;
     std::vector<Hs::TypeVar> type_vars;
@@ -71,7 +71,7 @@ struct class_info
     std::vector<std::pair<std::string,Hs::Type>> fields;
 };
 
-typedef std::map<std::string, class_info> class_env;
+typedef std::map<std::string, ClassInfo> ClassEnv;
 
 std::set<Hs::TypeVar> free_type_variables(const value_env& env);
 
