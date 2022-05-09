@@ -143,9 +143,8 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     return {gve,gie,class_info,decls};
 }
 
-tuple<global_value_env, Hs::Binds> typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
+Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
 {
-    global_value_env gve;
     Hs::Binds binds;
 
     for(auto& decl: decls)
@@ -157,11 +156,11 @@ tuple<global_value_env, Hs::Binds> typechecker_state::infer_type_for_classes(con
 
         gve += gve1;
         gie += gie1;
-        binds.push_back(class_decls);
-
         class_env.insert({class_info.name, class_info});
+
+        binds.push_back(class_decls);
     }
 
-    return {gve, binds};
+    return binds;
 }
 

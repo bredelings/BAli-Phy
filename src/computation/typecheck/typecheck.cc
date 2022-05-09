@@ -894,11 +894,12 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
 
     //   CE_C  = class name -> class info
     typechecker_state state( name, *this, M, tce, constr_info );
-    auto [gve, class_binds] = state.infer_type_for_classes(M.type_decls);
+
+    auto class_binds = state.infer_type_for_classes(M.type_decls);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 
     std::cerr<<"GVE (classes):\n";
-    for(auto& [method,type]: gve)
+    for(auto& [method,type]: state.gve)
     {
         std::cerr<<method<<" :: "<<type.print()<<"\n";
     }
@@ -920,12 +921,12 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     // 3. E' = (TCE_T, (CVE_T, GVE_C, LVE={}), CE_C, (GIE_C, LIE={}))
 
     // Value decls
-    auto [value_decls, env] = state.infer_type_for_binds(gve, M.value_decls);
-    env += gve;
+    auto [value_decls, env] = state.infer_type_for_binds(state.gve, M.value_decls);
+    state.gve += env;
     M.value_decls = value_decls;
 
     // Default methods
-    auto default_method_decls = state.infer_type_for_default_methods(env, M.type_decls);
+    auto default_method_decls = state.infer_type_for_default_methods(M.type_decls);
     for(auto& dm_decl: default_method_decls)
         M.value_decls.push_back(dm_decl);
 
@@ -940,10 +941,10 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     M.value_decls = simpl_binds;
 
     auto default_binds = state.default_subst();
-    env = state.apply_current_subst(env);
+    state.gve = state.apply_current_subst(state.gve);
     ranges::insert(M.value_decls, M.value_decls.begin(), default_binds);
 
-    for(auto& [x,t]: env)
+    for(auto& [x,t]: state.gve)
     {
         std::cerr<<x<<" :: "<<alphabetize_type(t)<<"\n";
 //        std::cerr<<x<<" = "<<e<<"\n\n\n";
@@ -965,7 +966,7 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     }
 
     // Record types on the value symbol table
-    for(auto& [value,type]: env)
+    for(auto& [value,type]: state.gve)
     {
         if (get_module_name(value) == name)
         {

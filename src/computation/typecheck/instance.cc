@@ -8,7 +8,7 @@ using std::set;
 using std::pair;
 using std::optional;
 
-Hs::Decls typechecker_state::infer_type_for_default_methods(const global_value_env& env, const Hs::ClassDecl& C)
+Hs::Decls typechecker_state::infer_type_for_default_methods(const Hs::ClassDecl& C)
 {
     Hs::Decls decls_out;
 
@@ -21,13 +21,13 @@ Hs::Decls typechecker_state::infer_type_for_default_methods(const global_value_e
             auto dm = class_info.default_methods.at(method_name);
             FD.v = dm;
 
-            auto [decl2, name, sig_type] = infer_type_for_single_fundecl_with_sig(env, FD);
+            auto [decl2, name, sig_type] = infer_type_for_single_fundecl_with_sig(gve, FD);
             decls_out.push_back(decl2);
         }
     return decls_out;
 }
 
-Hs::Binds typechecker_state::infer_type_for_default_methods(const global_value_env& gve, const Hs::Decls& decls)
+Hs::Binds typechecker_state::infer_type_for_default_methods(const Hs::Decls& decls)
 {
     Hs::Binds binds;
 
@@ -36,7 +36,7 @@ Hs::Binds typechecker_state::infer_type_for_default_methods(const global_value_e
         auto c = decl.to<Hs::ClassDecl>();
         if (not c) continue;
 
-        binds.push_back( infer_type_for_default_methods(gve, *c) );
+        binds.push_back( infer_type_for_default_methods(*c) );
     }
     return binds;
 }

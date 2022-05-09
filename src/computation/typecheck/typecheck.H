@@ -38,9 +38,11 @@ struct typechecker_state
 
     constr_env con_info;
 
+    ClassEnv class_env;
+
     global_instance_env gie;
 
-    ClassEnv class_env;
+    global_value_env gve;
 
     std::vector<Hs::Type> defaults;
 
@@ -186,15 +188,15 @@ struct typechecker_state
     std::tuple<Hs::Binds, global_value_env>
     infer_type_for_binds(const global_value_env& env, Hs::Binds binds);
 
-    std::tuple<global_value_env, Hs::Binds>
+    Hs::Binds
     infer_type_for_classes(const Hs::Decls& decls);
 
     std::tuple<global_value_env,global_instance_env, ClassInfo,Hs::Decls>
     infer_type_for_class(const Hs::ClassDecl& class_decl);
 
-    Hs::Decls infer_type_for_default_methods(const global_value_env& env, const Hs::ClassDecl&);
+    Hs::Decls infer_type_for_default_methods(const Hs::ClassDecl&);
 
-    Hs::Binds infer_type_for_default_methods(const global_value_env& env, const Hs::Decls&);
+    Hs::Binds infer_type_for_default_methods(const Hs::Decls&);
 
     // Figure 12
     std::pair<Hs::Var, Hs::Type>
