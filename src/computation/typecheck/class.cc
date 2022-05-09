@@ -52,18 +52,12 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         {
             auto method_type = K.kind_and_type_check_type(type);
 
-            Hs::Type method_value_type = add_forall_vars(class_decl.type_vars,
-                                                         Hs::ConstrainedType(Hs::Context({class_constraint}), method_type));
-            gve = gve.insert({qname, method_value_type});
+            // forall a. C a => method_type
+            method_type = Hs::add_constraints({class_constraint}, method_type);
+            method_type = Hs::add_forall_vars(class_decl.type_vars, method_type);
 
-            auto name = get_unqualified_name(qname);
-
-            Hs::Type plain_method_body_type = add_forall_vars(class_decl.type_vars, method_type);
-            cinfo.plain_members = cinfo.plain_members.insert({name, plain_method_body_type});
-
-            Hs::Type method_body_type = add_forall_vars(class_decl.type_vars,
-                                                        Hs::ConstrainedType(cinfo.context, method_type));
-            cinfo.members = cinfo.members.insert({name, method_body_type});
+            gve = gve.insert({qname, method_type});
+            cinfo.members = cinfo.members.insert({get_unqualified_name(qname), method_type});
         }
 
         // Get names and types for default methods
@@ -84,6 +78,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     //   (b) determine an order for all the fields.
     //   (c) synthesize field accessors and put them in decls
 
+    // 4. Make global types for superclass extractors
     global_instance_env gie;
     for(auto& superclass_constraint: cinfo.context.constraints)
     {
@@ -102,7 +97,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         // Is this right???
         cinfo.fields.push_back({get_unqualified_name(name),type});
     }
-    for(auto& [name,type]: gve)
+    for(auto& [name,type]: cinfo.members)
         cinfo.fields.push_back({get_unqualified_name(name),type});
 
     Hs::Decls decls;

@@ -63,8 +63,6 @@ struct class_info
     // FIXME: Should we record here the names of functions to extract 
     Hs::Context context;
 
-    local_value_env plain_members;
-    // Do we need the non-plain members anymore?
     local_value_env members;
 
     std::map<std::string, Hs::Var> default_methods;

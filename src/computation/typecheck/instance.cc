@@ -188,10 +188,8 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
         method_matches.insert({name,fd.match});
     }
 
-    for(int i=(int)cinfo.fields.size()-(int)cinfo.members.size();i<cinfo.fields.size();i++)
+    for(auto& [name,type]: cinfo.members)
     {
-        auto& [name,type] = cinfo.fields[i];
-
         auto it = method_matches.find(name);
         if (it == method_matches.end())
         {
