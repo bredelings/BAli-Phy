@@ -2,6 +2,7 @@
 #include "kindcheck.H"
 
 #include "computation/expression/apply.H"
+#include "computation/expression/tuple.H"
 
 using std::string;
 using std::vector;
@@ -43,6 +44,23 @@ Hs::Binds typechecker_state::infer_type_for_default_methods(const Hs::Decls& dec
     return binds;
 }
 
+string get_name_for_typecon(const Hs::TypeCon& tycon)
+{
+    auto n = unloc(tycon.name);
+
+    if (n == "[]")
+        return "List";
+    else if (n == "->")
+        return "Func";
+    else if (is_tuple_name(n))
+    {
+        int m = tuple_arity(n);
+        return std::to_string(m)+"Tuple";
+    }
+    else
+        return get_unqualified_name(n);
+}
+
 pair<Hs::Var, Hs::Type>
 typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
@@ -64,6 +82,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 
 
     // Premise #2: Find the type vars mentioned in the constraint.
+    string tycon_names;
     set<Hs::TypeVar> type_vars;
     // Premise #4: the class_arg must be a type constructor applied to simple, distinct type variables.
     vector<Hs::TypeCon> types;
@@ -73,6 +92,8 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
         auto tc = a_head.to<Hs::TypeCon>();
         if (not tc)
             throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<a_head<<" is not a type constructor!";
+
+        tycon_names += get_name_for_typecon(*tc);
 
         types.push_back(*tc);
 
@@ -98,7 +119,9 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
             throw myexception()<<"Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in '"<<inst_decl.constraint<<"'";
     }
 
-    auto dfun = fresh_var("dfun", true);
+    string dfun_name = "d"+get_unqualified_name(class_info->name)+tycon_names;
+    
+    auto dfun = fresh_var(dfun_name, true);
 
     //  -- new -- //
     kindchecker_state K(tce);
