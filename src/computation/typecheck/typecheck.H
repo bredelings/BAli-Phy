@@ -186,7 +186,7 @@ struct typechecker_state
     std::tuple<Hs::Binds, global_value_env>
     infer_type_for_binds(const global_value_env& env, Hs::Binds binds);
 
-    std::tuple<global_value_env, global_instance_env, Hs::Binds>
+    std::tuple<global_value_env, Hs::Binds>
     infer_type_for_classes(const Hs::Decls& decls);
 
     std::tuple<global_value_env,global_instance_env, ClassInfo,Hs::Decls>
@@ -201,9 +201,7 @@ struct typechecker_state
     infer_type_for_instance1(const Hs::InstanceDecl& instance_decl);
 
     // Figure 12
-    std::pair<global_instance_env,
-              std::vector< std::pair<Hs::Var,
-                                     Hs::InstanceDecl>>>
+    std::vector< std::pair<Hs::Var, Hs::InstanceDecl> >
     infer_type_for_instances1(const Hs::Decls& decls);
 
     // Figure 12

@@ -109,7 +109,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 // See Tc/TyCl/Instance.hs
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-pair<global_instance_env,vector<pair<Hs::Var,Hs::InstanceDecl>>>
+vector<pair<Hs::Var,Hs::InstanceDecl>>
 typechecker_state::infer_type_for_instances1(const Hs::Decls& decls)
 {
     global_instance_env gie_inst;
@@ -126,7 +126,10 @@ typechecker_state::infer_type_for_instances1(const Hs::Decls& decls)
             gie_inst = gie_inst.insert({unloc(dfun.name), inst_type});
         }
     }
-    return {gie_inst, named_instances};
+
+    gie += gie_inst;
+
+    return named_instances;
 }
 
 string get_class_for_constraint(const Hs::Type& constraint)
@@ -225,7 +228,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     }
 
     if (not inst_decl.binds)
-        std::cerr<<"Instance for "<<inst_decl.constraint<<" has no methods!";
+        std::cerr<<"Instance for "<<inst_decl.constraint<<" has no methods!\n";
     return {};
 
     // 7. Construct binds_methods

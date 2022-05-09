@@ -894,16 +894,11 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
 
     //   CE_C  = class name -> class info
     typechecker_state state( name, *this, M, tce, constr_info );
-    auto [gve, class_gie, class_binds] = state.infer_type_for_classes(M.type_decls);
+    auto [gve, class_binds] = state.infer_type_for_classes(M.type_decls);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 
+    std::cerr<<"GVE (classes):\n";
     for(auto& [method,type]: gve)
-    {
-        std::cerr<<method<<" :: "<<type.print()<<"\n";
-    }
-    std::cerr<<"\n";
-
-    for(auto& [method,type]: class_gie)
     {
         std::cerr<<method<<" :: "<<type.print()<<"\n";
     }
@@ -913,16 +908,14 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     std::cerr<<"\n";
 
     // Instances, pass1
-    state.gie = class_gie;
-    auto [inst_gie, named_instances] = state.infer_type_for_instances1(M.type_decls);
+    auto named_instances = state.infer_type_for_instances1(M.type_decls);
 
-    state.gie += inst_gie;
-
-    for(auto& [method,type]: inst_gie)
+    std::cerr<<"GIE:\n";
+    for(auto& [method,type]: state.gie)
     {
         std::cerr<<method<<" :: "<<type.print()<<"\n";
     }
-    std::cerr<<"\n\n";
+    std::cerr<<"\n";
 
     // 3. E' = (TCE_T, (CVE_T, GVE_C, LVE={}), CE_C, (GIE_C, LIE={}))
 
