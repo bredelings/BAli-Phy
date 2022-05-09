@@ -264,8 +264,6 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     // 7. Construct binds_methods
     Hs::Decls decls;
 
-    Hs::Binds binds_methods;
-
     map<string, Hs::Match> method_matches;
     if (inst_decl.binds)
         method_matches = get_instance_methods( unloc( *inst_decl.binds ), class_info.members, class_name );
@@ -303,24 +301,18 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
         }
         else
         {
-            auto method = fresh_var(method_name,false);
-            dict_entries.push_back(method);
-        
-            Hs::Decls decls;
-            decls.push_back(Hs::FunDecl(method,it->second));
-            binds_methods.push_back(decls);
+            auto [decl2, _, __] = infer_type_for_single_fundecl_with_sig(gve, Hs::FunDecl(op, it->second));
+            decls.push_back(decl2);
         }
     }
 
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>
     expression_ref dict = Hs::tuple(dict_entries);
 
-    expression_ref E = Hs::LetExp( {noloc, binds_methods}, {noloc, dict} );
-
     if (binds_super->size())
-        E = Hs::LetExp( {noloc,*binds_super}, {noloc,E} );
+        dict = Hs::LetExp( {noloc,*binds_super}, {noloc, dict} );
 
-    decls.push_back ({ simple_fun_decl(dfun, lambda_vars, E) });
+    decls.push_back ({ simple_fun_decl(dfun, lambda_vars, dict) });
     return decls;
 }
 
