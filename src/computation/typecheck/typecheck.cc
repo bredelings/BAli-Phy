@@ -625,6 +625,29 @@ Hs::Type generalize(const global_value_env& env, const Hs::Type& monotype)
     return Hs::ForallType(ftv1 | ranges::to<vector>, monotype);
 }
 
+
+// FIXME:: Wrappers:
+//
+// Note that instantiate collapses any structure in leading foralls/contexts.
+//
+//    forall a. Eq a => forall b. Ord b => a -> b -> a --> [a,b]  + [Eq a, Ord b] + (a -> b -> a)
+//
+// So we may need a wrapper to create a
+//
+//    forall a. Eq a => forall b. Ord b => type
+//
+// from
+//
+//    forall a b. (Eq a, Ord b) => type
+//
+// Maybe something like:
+//
+//    /\(a::*).\dict (d1::Eq a) -> /\(b::*).\dict (d2::Ord b) -> <RESULT> a b d1 d2
+//
+// This would take the code for <RESULT> and add the other code around it.
+//
+// Now, actually, we may NOT need this until add type /\s, because the dictionary arguments should be in the right order.
+
 tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instantiate(const Hs::Type& t, bool meta)
 {
     // 1. Handle foralls
