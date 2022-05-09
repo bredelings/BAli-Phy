@@ -80,7 +80,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
             class_info.members = class_info.members.insert({get_unqualified_name(qname), method_type});
         }
 
-        auto method_matches = get_instance_methods( unloc( *class_decl.binds )[0], class_info.members, class_info.name );
+        auto method_matches = get_instance_methods( unloc( *class_decl.binds ), class_info.members, class_info.name );
 
         for(auto& [name, match]: method_matches)
         {

@@ -297,5 +297,5 @@ std::string get_class_name_from_constraint(const Hs::Type& constraint);
 
 global_value_env apply_subst(const substitution_t& s, const value_env& env1);
 
-std::map<std::string, Hs::Match> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
+std::map<std::string, Hs::Match> get_instance_methods(const Hs::Binds& decls, const global_value_env& members, const std::string& class_name);
 #endif

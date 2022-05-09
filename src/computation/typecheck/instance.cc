@@ -185,21 +185,24 @@ string get_class_for_constraint(const Hs::Type& constraint)
                  in <dvar1, ..., dvarN, var1, ..., varM>
     */
 
-map<string, Hs::Match> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const string& class_name)
+map<string, Hs::Match> get_instance_methods(const Hs::Binds& binds, const global_value_env& members, const string& class_name)
 {
     std::map<string,Hs::Match> method_matches;
-    for(auto& decl: decls)
+    for(auto& decls: binds)
     {
-        auto& fd = decl.as_<Hs::FunDecl>();
-        string method_name = unloc(fd.v.name);
+        for(auto& decl: decls)
+        {
+            auto& fd = decl.as_<Hs::FunDecl>();
+            string method_name = unloc(fd.v.name);
 
-        if (not members.count(method_name))
-            throw myexception()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'";
+            if (not members.count(method_name))
+                throw myexception()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'";
 
-        if (method_matches.count(method_name))
-            throw myexception()<<"method '"<<method_name<<"' defined twice!";
+            if (method_matches.count(method_name))
+                throw myexception()<<"method '"<<method_name<<"' defined twice!";
 
-        method_matches.insert({method_name, fd.match});
+            method_matches.insert({method_name, fd.match});
+        }
     }
 
     return method_matches;
