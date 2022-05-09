@@ -9,6 +9,29 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
+Hs::FunDecl dictionary_extractor(const string& name, int i, int N)
+{
+    // Maybe we should emit the case directly, instead of relying on desugaring?
+
+    // FIXME: We might need to put types on "extractor" and "field".
+
+    Hs::Var field({noloc,"field"});
+
+    // extractor (_,field,_,_) = field;
+    Hs::Var extractor({noloc, name});
+
+    // (_,field,_,_)
+    vector<Hs::Pattern> pats(N, Hs::WildcardPattern());
+    pats[i] = field;
+    Hs::Pattern pattern = Hs::tuple(pats);
+
+    // (_,field,_,_) -> field
+    Hs::MRule rule{{pattern}, Hs::SimpleRHS({noloc, field})};
+    Hs::Match match{{rule}};
+
+    return Hs::FunDecl(extractor, match);
+}
+
 // OK, so
 // * global_value_env    = name         :: forall a: class var => signature (i.e. a-> b -> a)
 // * global_instance_env = made-up-name :: forall a: class var => superclass var
