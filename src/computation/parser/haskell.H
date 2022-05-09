@@ -784,6 +784,16 @@ struct TypeApp: public Object
 Type make_tyapps(const std::vector<Type>& tyapps);
 Type make_tyapps(const Type& T0, const std::vector<Type>& args);
 
+template <typename T>
+Type make_tyapps(const Type& T0, const std::vector<T>& args)
+{
+    std::vector<Type> type_args;
+    for(auto& arg: args)
+        type_args.push_back(arg);
+
+    return make_tyapps(T0, type_args);
+}
+
 struct ForallType: public Object
 {
     std::vector<TypeVar> type_var_binders;
