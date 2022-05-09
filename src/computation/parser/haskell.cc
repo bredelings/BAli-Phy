@@ -903,14 +903,18 @@ string FunDecl::print() const
     return join( lines, "\n" );
 }
 
-FunDecl simple_decl(const Var& v, const expression_ref& E)
+FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const expression_ref& body)
 {
-    // = E
-    MRule rule{{}, SimpleRHS({noloc,E})};
+    MRule rule{pats, SimpleRHS({noloc,body})};
     Match m{{rule}};
 
     // v = E
     return FunDecl(v,m);
+}
+
+FunDecl simple_decl(const Var& v, const expression_ref& E)
+{
+    return simple_fun_decl(v,{},E);
 }
 
 }

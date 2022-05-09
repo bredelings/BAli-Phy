@@ -1048,6 +1048,7 @@ struct FunDecl: public Object
 };
 
 FunDecl simple_decl(const Var& v, const expression_ref&);
+FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const expression_ref&);
 
 struct BindInfo
 {
