@@ -5,6 +5,7 @@
 #include <map>
 #include "immer/map.hpp" // for immer::map
 #include "parser/haskell.H"
+#include "util/set.H"
 #include "kind.H"
 
 typedef immer::map<std::string, Hs::Type> value_env;
