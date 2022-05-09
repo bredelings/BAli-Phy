@@ -68,6 +68,12 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
                 auto& name = unloc(FD.v.name);
                 auto dm = fresh_var("dm"+name, true);
                 cinfo.default_methods.insert({name, dm});
+
+                if (not cinfo.members.count(name))
+                    throw myexception()<<"In class '"<<cinfo.name<<"', default value for undefined method '"<<name<<"'";
+                auto type = cinfo.members.at(name);
+
+                gve = gve.insert({unloc(dm.name), type});
             }
     }
 
@@ -100,6 +106,8 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     for(auto& [name,type]: cinfo.members)
         cinfo.fields.push_back({get_unqualified_name(name),type});
 
+
+    // 5. Define superclass extractors and member function extractors
     Hs::Decls decls;
 
     vector<Hs::Type> types;
