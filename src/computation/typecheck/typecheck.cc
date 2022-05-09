@@ -932,15 +932,15 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
 
     std::cerr<<"Default method ops:\n";
     std::cerr<<default_method_decls.print();
-    std::cerr<<"\n";
+    std::cerr<<"\n\n";
 
     // Instances, pass2
     auto inst_decls = state.infer_type_for_instances2(named_instances);
     M.value_decls.push_back(inst_decls);
 
-    std::cerr<<"Instance ops and dfuns:\n";
+    std::cerr<<"\nInstance ops and dfuns:\n";
     std::cerr<<inst_decls.print();
-    std::cerr<<"\n";
+    std::cerr<<"\n\n";
 
     auto simpl_binds = state.reduce_current_lie();
     
