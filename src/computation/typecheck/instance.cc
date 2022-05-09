@@ -295,8 +295,9 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
             auto dm_var = class_info.default_methods.at(method_name);
 
             // op = \ instance_dicts -> let dict = dfun instance_dicts in dm_var dict
-
-            decls.push_back( simple_decl(op, Hs::LambdaExp(lambda_vars, apply_expression(dm_var, lambda_vars))) );
+            auto dict = fresh_var("dict",false);
+            auto body = simple_let(dict, apply_expression(dfun, lambda_vars), {dm_var, dict});;
+            decls.push_back( simple_fun_decl(op, lambda_vars, body) );
         }
         else
         {
@@ -317,10 +318,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     if (binds_super->size())
         E = Hs::LetExp( {noloc,*binds_super}, {noloc,E} );
 
-    if (not lambda_vars.empty())
-        E = Hs::LambdaExp( lambda_vars, E);
-
-    decls.push_back ({ simple_decl(dfun,E) });
+    decls.push_back ({ simple_fun_decl(dfun, lambda_vars, E) });
     return decls;
 }
 
