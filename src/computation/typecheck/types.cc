@@ -178,3 +178,14 @@ set<string> free_type_vars(const Hs::Context& context)
     return tvars;
 }
 
+Hs::Type remove_top_gen(Hs::Type type)
+{
+    if (auto f = type.to<Hs::ForallType>())
+        type = f->type;
+
+    if (auto c = type.to<Hs::ConstrainedType>())
+        type = c->type;
+
+    return type;
+}
+

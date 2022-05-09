@@ -18,4 +18,5 @@ std::set<Hs::TypeVar> free_type_variables(const Hs::Type& type);
 std::set<std::string> free_type_vars(const Hs::Type& type);
 std::set<std::string> free_type_vars(const Hs::Context& context);
 
+Hs::Type remove_top_gen(Hs::Type type);
 #endif
