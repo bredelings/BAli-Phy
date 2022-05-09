@@ -944,6 +944,7 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     state.gve = state.apply_current_subst(state.gve);
     ranges::insert(M.value_decls, M.value_decls.begin(), default_binds);
 
+    std::cerr<<"GVE (classes + user defs):\n";
     for(auto& [x,t]: state.gve)
     {
         std::cerr<<x<<" :: "<<alphabetize_type(t)<<"\n";
@@ -970,8 +971,13 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     {
         if (get_module_name(value) == name)
         {
-            auto& V = symbols.at(value);
-            V.type = type;
+            if (not symbols.count(value))
+                std::cerr<<"'"<<value<<"' is not a symbol!\n";
+            else
+            {
+                auto& V = symbols.at(value);
+                V.type = type;
+            }
         }
     }
 
