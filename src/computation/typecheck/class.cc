@@ -20,18 +20,16 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     kindchecker_state K(tce);
 
-    auto& name = class_decl.name;
-
     class_info cinfo;
     cinfo.type_vars = class_decl.type_vars;
-    cinfo.name = name;
+    cinfo.name = class_decl.name;
     cinfo.context = class_decl.context;
 
     // 1. Bind type parameters for class
     K. push_type_var_scope();
 
     // 1a. Look up kind for this data type.
-    auto class_kind = K.kind_for_type_con(name);
+    auto class_kind = K.kind_for_type_con(cinfo.name);
 
     // 1b. Record the kind for each type variable.
     for(auto& tv: class_decl.type_vars)
