@@ -1,6 +1,8 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 
+#include "computation/expression/apply.H"
+
 using std::string;
 using std::vector;
 using std::map;
@@ -219,13 +221,14 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
     // 6. make some intermediates
     auto instance_constraint_dvars = vars_from_lie(ordered_lie_instance);
+
     vector<Hs::Pattern> lambda_vars;
-    vector<Hs::Expression> dict_entries;
     for(auto dv: instance_constraint_dvars)
-    {
         lambda_vars.push_back(dv);
-        dict_entries.push_back(dv);
-    }
+
+    vector<Hs::Expression> dict_entries;
+    for(auto& [var,constraint]: ordered_lie_super)
+        dict_entries.push_back(var);
 
     if (not inst_decl.binds)
         std::cerr<<"Instance for "<<inst_decl.constraint<<" has no methods!\n";
@@ -238,21 +241,28 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     auto method_matches = get_instance_methods( unloc( *inst_decl.binds )[0], class_info.members, class_name );
 
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
-    for(auto& [name,type]: class_info.members)
+    for(auto& [method_name,type]: class_info.members)
     {
-        auto it = method_matches.find(name);
+        // Could we make an instance name?
+        auto op = fresh_var(method_name, true);
+
+        dict_entries.push_back( apply_expression(op, lambda_vars) );
+
+        auto it = method_matches.find(method_name);
         if (it == method_matches.end())
         {
-            if (class_info.default_methods.count(name))
-            {
-                // handle default method.
-            }
-            else
-                throw myexception()<<"instance "<<inst_decl.constraint<<" is missing method '"<<name<<"'";
+            if (not class_info.default_methods.count(method_name))
+                throw myexception()<<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'";
+
+            auto dm_var = class_info.default_methods.at(method_name);
+
+            // op = \ instance_dicts -> let dict = dfun instance_dicts in dm_var dict
+
+            decls.push_back( simple_decl(op, Hs::LambdaExp(lambda_vars, apply_expression(op, lambda_vars))) );
         }
         else
         {
-            auto method = fresh_var(name,false);
+            auto method = fresh_var(method_name,false);
             dict_entries.push_back(method);
         
             Hs::Decls decls;
