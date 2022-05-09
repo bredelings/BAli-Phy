@@ -8,19 +8,23 @@ using std::set;
 using std::pair;
 using std::optional;
 
-Hs::Decls typechecker_state::infer_type_for_default_methods(const global_value_env& gve, const class_env& class_info, const Hs::ClassDecl& C)
+Hs::Decls typechecker_state::infer_type_for_default_methods(const global_value_env& env, const class_env& class_info, const Hs::ClassDecl& C)
 {
+    Hs::Decls decls_out;
+
     auto cinfo = class_info.at(C.name);
     for(auto& decls: unloc(*C.binds))
         for(auto& decl: decls)
         {
-            auto& FD = decl.as_<Hs::FunDecl>();
-            auto& method_name = unloc(FD.v.name);
+            auto FD = decl.as_<Hs::FunDecl>();
+            auto method_name = unloc(FD.v.name);
             auto dm = cinfo.default_methods.at(method_name);
+            FD.v = dm;
 
-            ;
+            auto [decl2, name, sig_type] = infer_type_for_single_fundecl_with_sig(env, FD);
+            decls_out.push_back(decl2);
         }
-    return {};
+    return decls_out;
 }
 
 Hs::Binds typechecker_state::infer_type_for_default_methods(const global_value_env& gve, const class_env& class_info, const Hs::Decls& decls)
@@ -153,6 +157,27 @@ string get_class_for_constraint(const Hs::Type& constraint)
                  in <dvar1, ..., dvarN, var1, ..., varM>
     */
 
+map<string, Hs::Match> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const string& class_name)
+{
+    std::map<string,Hs::Match> method_matches;
+    for(auto& decl: decls)
+    {
+        auto& fd = decl.as_<Hs::FunDecl>();
+        string method_name = unloc(fd.v.name);
+
+        if (not members.count(method_name))
+            throw myexception()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'";
+
+        if (method_matches.count(method_name))
+            throw myexception()<<"method '"<<method_name<<"' defined twice!";
+
+        method_matches.insert({method_name, fd.match});
+    }
+
+    return method_matches;
+}
+
+
 Hs::Decls
 typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& inst_decl, const class_env& ce)
 {
@@ -205,18 +230,9 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
     // 7. Construct binds_methods
     Hs::Binds binds_methods;
-    std::map<string,Hs::Match> method_matches;
-    for(auto& decl: unloc(*inst_decl.binds)[0])
-    {
-        auto& fd = decl.as_<Hs::FunDecl>();
-        string name = unloc(fd.v.name);
-        if (not cinfo.members.count(name))
-            throw myexception()<<"'"<<name<<"' is not a member of class '"<<class_name<<"'";
-        if (method_matches.count(name))
-            throw myexception()<<"method '"<<name<<"' defined twice!";
-        method_matches.insert({name,fd.match});
-    }
+    auto method_matches = get_instance_methods( unloc( *inst_decl.binds )[0], cinfo.members, class_name );
 
+    // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(auto& [name,type]: cinfo.members)
     {
         auto it = method_matches.find(name);
@@ -239,7 +255,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
             binds_methods.push_back(decls);
         }
     }
-    
+
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>
     expression_ref dict = Hs::tuple(dict_entries);
 

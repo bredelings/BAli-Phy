@@ -80,21 +80,18 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
             cinfo.members = cinfo.members.insert({get_unqualified_name(qname), method_type});
         }
 
-        // Get names and types for default methods
-        for(auto& decls: unloc(*class_decl.binds))
-            for(auto& decl: decls)
-            {
-                auto& FD = decl.as_<Hs::FunDecl>();
-                auto& name = unloc(FD.v.name);
-                auto dm = fresh_var("dm"+name, true);
-                cinfo.default_methods.insert({name, dm});
+        auto method_matches = get_instance_methods( unloc( *class_decl.binds )[0], cinfo.members, cinfo.name );
 
-                if (not cinfo.members.count(name))
-                    throw myexception()<<"In class '"<<cinfo.name<<"', default value for undefined method '"<<name<<"'";
-                auto type = cinfo.members.at(name);
+        for(auto& [name, match]: method_matches)
+        {
+            auto dm = fresh_var("dm"+name, true);
+            Hs::FunDecl FD(dm, match);
+            cinfo.default_methods.insert({name, dm});
 
-                gve = gve.insert({unloc(dm.name), type});
-            }
+            auto type = cinfo.members.at(name);
+
+            gve = gve.insert({unloc(dm.name), type});
+        }
     }
 
     K.pop_type_var_scope();
