@@ -93,12 +93,12 @@ True && True = True
 _    && _    = False
 
 instance Eq a => Eq [a] where
-    (x:xs) == (y:ys) = y == x && xs == ys
+    (x:xs) == (y:ys) = (y == x) && (xs == ys)
     []     == []     = True
     _      == _      = False
 
 instance (Eq a,Eq b) => Eq (a,b) where
-    (x1,y1) == (x2,y2) = x1 == x2 && y1 == y2
+    (x1,y1) == (x2,y2) = (x1 == x2) && (y1 == y2)
 
 class Container c where
     empty :: c a
