@@ -818,6 +818,15 @@ string LetExp::print() const
     return "let " + binds.print() + " in " + body.print();
 }
 
+LetExp simple_let(const Var& x, const Expression& E, const Expression& body)
+{
+    auto decl = simple_decl(x, E);
+    Hs::Decls decls({decl});
+    Hs::Binds binds({decls});
+
+    return LetExp({noloc, binds}, {noloc,body});
+}
+
 string IfExp::print() const
 {
     return "if " + condition.print() + " then " + true_branch.print() + " else " + false_branch.print();

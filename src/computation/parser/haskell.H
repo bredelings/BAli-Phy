@@ -906,6 +906,8 @@ struct LetExp: public Object
     LetExp(const Located<Binds>& bs, const Located<expression_ref>& b): binds(bs), body(b) {};
 };
 
+LetExp simple_let(const Var&, const Expression&, const Expression&);
+
 struct IfExp: public Object
 {
     Located<expression_ref> condition;
