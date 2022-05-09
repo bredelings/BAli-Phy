@@ -270,6 +270,8 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     if (inst_decl.binds)
         method_matches = get_instance_methods( unloc( *inst_decl.binds ), class_info.members, class_name );
 
+    string classdict_name = "d" + get_class_name_from_constraint(instance_head);
+
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method_name, method_type]: class_info.members)
     {
@@ -295,7 +297,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
             auto dm_var = class_info.default_methods.at(method_name);
 
             // op = \ instance_dicts -> let dict = dfun instance_dicts in dm_var dict
-            auto dict = fresh_var("dict",false);
+            auto dict = fresh_var(classdict_name,false);
             auto body = simple_let(dict, apply_expression(dfun, lambda_vars), {dm_var, dict});;
             decls.push_back( simple_fun_decl(op, lambda_vars, body) );
         }
