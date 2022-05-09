@@ -135,32 +135,10 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     Hs::Type dict_type = Hs::tuple_type(types);
 
     int i = 0;
+    int N = cinfo.fields.size();
     for(auto& [name,type]: cinfo.fields)
     {
-        // body = \dict -> case dict of (_,field,_,_) -> field
-
-        // dict
-        Hs::Var dict({noloc,"dict"});
-        // field
-        Hs::Var field({noloc,"field"});
-
-        // (_,field,_,_)
-        vector<Hs::Pattern> pats(cinfo.fields.size(), Hs::WildcardPattern());
-        pats[i] = field;
-
-        // (,field,_,_) -> field
-        Hs::Alt alt{Hs::tuple(pats),Hs::SimpleRHS({noloc,field})};
-
-        // case dict of (_,field,_,_) -> field
-        Hs::CaseExp case_exp(dict,Hs::Alts({{noloc,alt}}));
-
-        // dict -> case dict of (_,field,_,_) -> field
-        Hs::MRule rule{{dict},Hs::SimpleRHS({noloc,case_exp})};
-        Hs::Match m{{rule}};
-
-        // f = dict -> case dict of (_,field,_,_) -> field
-        Hs::Var f({noloc,name});
-        decls.push_back( Hs::FunDecl(f,m) );
+        decls.push_back( dictionary_extractor(name, i, N) );
 
         i++;
     }
