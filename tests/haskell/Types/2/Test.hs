@@ -50,7 +50,7 @@ instance Eq Bool where
     False == True = False
 
 instance Eq a => Eq [a] where
-    (x:xs) == (y:ys) = y == x && xs == ys
+    (x:xs) == (y:ys) = (y == x) && (xs == ys)
     []     == []     = True
     _      == _      = False
 
