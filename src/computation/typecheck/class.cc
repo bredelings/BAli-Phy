@@ -25,7 +25,6 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     class_info cinfo;
     cinfo.type_vars = class_decl.type_vars;
     cinfo.name = name;
-    cinfo.emitted_name = "class$"+name; // FIXME: only modify name after qualifier?  Just prefix d?
     cinfo.context = class_decl.context;
 
     // 1. Bind type parameters for class

@@ -56,7 +56,6 @@ type_con_env plus_no_overlap(const type_con_env& e1, const type_con_env& e2);
 struct class_info
 {
     std::string name;
-    std::string emitted_name;
     std::vector<Hs::TypeVar> type_vars;
 
     // Maybe change this to vector<pair<Type,string>>, 
