@@ -528,7 +528,7 @@ void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2, const myex
 
 Hs::Var typechecker_state::fresh_var(const std::string& s, bool qualified)
 {
-    string name = "$"+s+std::to_string(next_var_index);
+    string name = s+"@"+std::to_string(next_var_index);
     if (qualified)
         name = qualified_name(name);
     Hs::Var x({noloc, name});
