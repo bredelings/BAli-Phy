@@ -265,7 +265,10 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     Hs::Decls decls;
 
     Hs::Binds binds_methods;
-    auto method_matches = get_instance_methods( unloc( *inst_decl.binds )[0], class_info.members, class_name );
+
+    map<string, Hs::Match> method_matches;
+    if (inst_decl.binds)
+        method_matches = get_instance_methods( unloc( *inst_decl.binds ), class_info.members, class_name );
 
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method_name, method_type]: class_info.members)
