@@ -202,7 +202,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
     if (not evbinds)
         throw myexception()<<"Can't derive constraints '"<<print(lie_wanted)<<"' from specified constraints '"<<print(lie_given)<<"'";
 
-    // 5. return GenBind with tvs, givens, body
+    // 6. return GenBind with tvs, givens, body
     auto dict_vars = vars_from_lie( ordered_lie_given );
 
     Hs::Decls decls;
