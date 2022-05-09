@@ -205,7 +205,6 @@ map<string, Hs::Match> get_instance_methods(const Hs::Decls& decls, const global
     return method_matches;
 }
 
-
 Hs::Decls
 typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& inst_decl)
 {
@@ -215,34 +214,34 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     auto inst_type = gie.at(unloc(dfun.name));
     // Instantiate it with rigid type variables.
     auto [instance_tvs, instance_constraints, instance_head] = instantiate(inst_type, false);
+    auto [instance_class, instance_args] = decompose_type_apps(instance_head);
 
     // 2. Get the class info
     auto class_name = get_class_for_constraint(instance_head);
     ClassInfo class_info = class_env.at(class_name);
-    Hs::Type class_type = Hs::TypeCon(Unlocated(class_name));
-    for(auto& tv: class_info.type_vars)
-        class_type = Hs::TypeApp(class_type, tv);
-    class_type = Hs::add_forall_vars(class_info.type_vars,Hs::add_constraints(class_info.context, class_type));
-    auto [class_tvs, superclass_constraints, class_head] = instantiate(class_type, true);
 
-    // 3. Match the class head, and substitute into the superclass constraints
-    auto s = ::maybe_match(class_head, instance_head);
-    assert(s);
+    // 3. Get constrained version of the class
+    substitution_t subst;
+    for(int i=0; i<class_info.type_vars.size(); i++)
+        subst = subst.insert({class_info.type_vars[i], instance_args[i]});
+
+    // 4. Get (constrained) superclass constraints
+    auto superclass_constraints = class_info.context.constraints;
     for(auto& superclass_constraint: superclass_constraints)
-        superclass_constraint = apply_subst(*s, superclass_constraint);
+        superclass_constraint = apply_subst(subst, superclass_constraint);
 
-    // 4. build a local instance environment from the instance constraints
+    // 5. build a local instance environment from the instance constraints
     auto ordered_lie_instance = constraints_to_lie(instance_constraints);
     auto lie_instance = unordered_lie(ordered_lie_instance);
 
-    // 5. Construct binds_super
+    // 6. Construct binds_super
     auto ordered_lie_super = constraints_to_lie(superclass_constraints);
     auto lie_super = unordered_lie(ordered_lie_super);
     auto binds_super = entails(lie_instance, lie_super);
     if (not binds_super)
         throw myexception()<<"Can't derive "<<print(lie_super)<<" from "<<print(lie_instance)<<"!";
 
-    // 6. make some intermediates
+    // 7. make some intermediates
     auto instance_constraint_dvars = vars_from_lie(ordered_lie_instance);
 
     vector<Hs::Pattern> lambda_vars;
@@ -255,7 +254,6 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
     if (not inst_decl.binds)
         std::cerr<<"Instance for "<<inst_decl.constraint<<" has no methods!\n";
-    return {};
 
     // 7. Construct binds_methods
     Hs::Decls decls;
@@ -264,12 +262,20 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     auto method_matches = get_instance_methods( unloc( *inst_decl.binds )[0], class_info.members, class_name );
 
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
-    for(auto& [method_name,type]: class_info.members)
+    for(const auto& [method_name, method_type]: class_info.members)
     {
-        // Could we make an instance name?
         auto op = fresh_var(method_name, true);
 
         dict_entries.push_back( apply_expression(op, lambda_vars) );
+
+        // forall b. Ix b => a -> b -> b
+        Hs::Type op_type = remove_top_gen(method_type);
+        // forall b. Ix b => [x] -> b -> b
+        op_type = apply_subst(subst, op_type);
+        // forall x. (C1 x, C2 x) => forall b. Ix b => [x] -> b -> b
+        op_type = Hs::add_forall_vars(instance_tvs,Hs::add_constraints(instance_constraints, op_type));
+
+        gve = gve.insert( {unloc(op.name), op_type} );
 
         auto it = method_matches.find(method_name);
         if (it == method_matches.end())
@@ -281,7 +287,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
             // op = \ instance_dicts -> let dict = dfun instance_dicts in dm_var dict
 
-            decls.push_back( simple_decl(op, Hs::LambdaExp(lambda_vars, apply_expression(op, lambda_vars))) );
+            decls.push_back( simple_decl(op, Hs::LambdaExp(lambda_vars, apply_expression(dm_var, lambda_vars))) );
         }
         else
         {
