@@ -901,7 +901,7 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     M.value_decls = value_decls;
 
     // Default methods
-    // auto default_method_decls = state.infer_type_for_default_methods(gve, class_info);
+    auto default_method_decls = state.infer_type_for_default_methods(gve, class_info, M.type_decls);
 
     // Instances, pass2
     auto inst_decls = state.infer_type_for_instances2(named_instances, class_info);

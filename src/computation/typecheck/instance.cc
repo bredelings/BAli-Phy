@@ -8,6 +8,35 @@ using std::set;
 using std::pair;
 using std::optional;
 
+Hs::Decls typechecker_state::infer_type_for_default_methods(const global_value_env& gve, const class_env& class_info, const Hs::ClassDecl& C)
+{
+    auto cinfo = class_info.at(C.name);
+    for(auto& decls: unloc(*C.binds))
+        for(auto& decl: decls)
+        {
+            auto& FD = decl.as_<Hs::FunDecl>();
+            auto& method_name = unloc(FD.v.name);
+            auto dm = cinfo.default_methods.at(method_name);
+
+            ;
+        }
+    return {};
+}
+
+Hs::Binds typechecker_state::infer_type_for_default_methods(const global_value_env& gve, const class_env& class_info, const Hs::Decls& decls)
+{
+    Hs::Binds binds;
+
+    for(auto& decl: decls)
+    {
+        auto c = decl.to<Hs::ClassDecl>();
+        if (not c) continue;
+
+        binds.push_back( infer_type_for_default_methods(gve, class_info, *c) );
+    }
+    return binds;
+}
+
 pair<Hs::Var, Hs::Type>
 typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl, const class_env& ce)
 {

@@ -188,6 +188,10 @@ struct typechecker_state
     std::tuple<global_value_env,global_instance_env,class_info,Hs::Decls>
     infer_type_for_class(const Hs::ClassDecl& class_decl);
 
+    Hs::Decls infer_type_for_default_methods(const global_value_env& env, const class_env&, const Hs::ClassDecl&);
+
+    Hs::Binds infer_type_for_default_methods(const global_value_env& env, const class_env&, const Hs::Decls&);
+
     // Figure 12
     std::pair<Hs::Var, Hs::Type>
     infer_type_for_instance1(const Hs::InstanceDecl& instance_del, const class_env& ce);
