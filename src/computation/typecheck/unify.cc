@@ -2,6 +2,9 @@
 #include <utility>
 #include "immer/set.hpp"
 
+#include "computation/expression/tuple.H"
+#include "kind.H"
+
 using std::vector;
 using std::string;
 using std::optional;
@@ -309,6 +312,31 @@ std::optional<substitution_t> combine_(bool both_ways, substitution_t s1, substi
     return s1;
 }
 
+Hs::TypeCon tuple_tycon(int n)
+{
+    auto kind = make_n_args_kind(n);
+    return Hs::TypeCon( {noloc, tuple_name(n)}, kind );
+}
+
+Hs::TypeCon list_tycon()
+{
+    auto kind = make_n_args_kind(1);
+    return Hs::TypeCon( {noloc,"[]"}, kind );
+}
+
+Hs::Type canonicalize_type(const Hs::TupleType& type1)
+{
+    int n = type1.element_types.size();
+    Hs::Type type2 = tuple_tycon(n);
+    return Hs::make_tyapps(type2, type1.element_types);
+}
+
+Hs::Type canonicalize_type(const Hs::ListType& type1)
+{
+    Hs::Type type2 = list_tycon();
+    return Hs::TypeApp(type2, type1.element_type);
+}
+
 // Is there a better way to implement this?
 optional<substitution_t> maybe_unify_(bool both_ways, const Hs::Type& t1, const Hs::Type& t2)
 {
@@ -346,28 +374,21 @@ optional<substitution_t> maybe_unify_(bool both_ways, const Hs::Type& t1, const 
         substitution_t empty;
         return empty;
     }
-    else if (t1.is_a<Hs::TupleType>() and t2.is_a<Hs::TupleType>())
+    else if (auto tup1 = t1.to<Hs::TupleType>())
     {
-        auto& tup1 = t1.as_<Hs::TupleType>();
-        auto& tup2 = t2.as_<Hs::TupleType>();
-        if (tup1.element_types.size() != tup2.element_types.size())
-            return {};
-
-        optional<substitution_t> s = substitution_t();
-        for(int i=0;i<tup1.element_types.size();i++)
-        {
-            s = combine_(both_ways,
-                         s,
-                         maybe_unify_(both_ways, tup1.element_types[i], tup2.element_types[i]) );
-            if (not s) return {};
-        }
-        return s;
+        return maybe_unify_(both_ways, canonicalize_type(*tup1), t2);
     }
-    else if (t1.is_a<Hs::ListType>() and t2.is_a<Hs::ListType>())
+    else if (auto tup2 = t2.to<Hs::TupleType>())
     {
-        auto& L1 = t1.as_<Hs::ListType>();
-        auto& L2 = t2.as_<Hs::ListType>();
-        return maybe_unify_(both_ways, L1.element_type, L2.element_type);
+        return maybe_unify_(both_ways, t1, canonicalize_type(*tup2));
+    }
+    else if (auto l1 = t1.to<Hs::ListType>())
+    {
+        return maybe_unify_(both_ways, canonicalize_type(*l1), t2);
+    }
+    else if (auto l2 = t2.to<Hs::ListType>())
+    {
+        return maybe_unify_(both_ways, t1, canonicalize_type(*l2));
     }
     else if (t1.is_a<Hs::ConstrainedType>() or t2.is_a<Hs::ConstrainedType>())
     {
