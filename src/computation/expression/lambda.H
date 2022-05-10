@@ -3,6 +3,7 @@
 
 #include "computation/object.H"
 #include "expression_ref.H"
+#include "var.H"
 
 struct Operator;
 
@@ -26,6 +27,8 @@ struct lambda2: public Object
 expression_ref lambda_expression(const Operator& O);
 expression_ref lambda_quantify(int var_index, const expression_ref& E);
 expression_ref lambda_quantify(const expression_ref& var, const expression_ref& E);
+expression_ref lambda_quantify(const std::vector<expression_ref>& var, const expression_ref& E);
+expression_ref lambda_quantify(const std::vector<var>& var, const expression_ref& E);
 
 inline bool is_lambda(const expression_ref& E)
 {

@@ -2,6 +2,9 @@
 #include "var.H"
 #include "operator.H"
 
+#include "range/v3/all.hpp"
+namespace views = ranges::views;
+
 using std::string;
 using std::vector;
 
@@ -31,6 +34,22 @@ expression_ref lambda_quantify(const expression_ref& var, const expression_ref& 
 expression_ref lambda_quantify(int var_index, const expression_ref& R)
 {
     return lambda_quantify(var(var_index), R);
+}
+
+expression_ref lambda_quantify(const vector<expression_ref>& vars, expression_ref& body)
+{
+    auto L = body;
+    for(auto& v: vars | views::reverse)
+        L = lambda_quantify(v, L);
+    return L;
+}
+
+expression_ref lambda_quantify(const vector<var>& vars, expression_ref& body)
+{
+    auto L = body;
+    for(auto& v: vars | views::reverse)
+        L = lambda_quantify(v, L);
+    return L;
 }
 
 expression_ref lambda_expression(const Operator& O)
