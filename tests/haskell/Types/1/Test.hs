@@ -5,6 +5,12 @@ data Bool = True | False
 not True = False
 not False = True
 
+True && True = True
+_    && _    = False
+
+True  || _  = True
+False || x  = x
+
 data Maybe a = Nothing | Just a
 
 class Show a where
@@ -66,6 +72,9 @@ class Eq a => Ord a where
     (<) :: a -> a -> Bool
     (>=) :: a -> a -> Bool
     (<=) :: a -> a -> Bool
+    x > y  = not ( x <= y )
+    x >= y = not (x < y)
+    x <= y = (x < y) || (x == y)
 
 instance Eq Bool where
     True == True = True
@@ -88,9 +97,6 @@ instance Read Double
 instance Num Double
 
 instance Fractional Double
-
-True && True = True
-_    && _    = False
 
 instance Eq a => Eq [a] where
     (x:xs) == (y:ys) = (y == x) && (xs == ys)
@@ -193,3 +199,12 @@ genericLength (x:xs) = 1 + genericLength xs
 len1 = genericLength "Hello"
 -- this second definition then resolves the a from len1 - weird!
 len2 = (2 * len1) :: Double
+
+instance (Eq a, Eq b) => Eq (a,b) where
+    (x1,y1) == (x2,y2) = (x1 == x2) && (y1 == y2)
+
+instance (Ord a, Ord b) => Ord (a,b) where
+   (x1,y1) < (x2,y2) = (x1 < x2) || ((x1 == x2) && (y1 < y2))
+
+gyon = if (1,4) < (2,3) then "yes" else "no"
+
