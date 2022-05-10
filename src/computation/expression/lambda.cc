@@ -44,7 +44,7 @@ expression_ref lambda_quantify(const vector<expression_ref>& vars, expression_re
     return L;
 }
 
-expression_ref lambda_quantify(const vector<var>& vars, expression_ref& body)
+expression_ref lambda_quantify(const std::vector<var>& vars, const expression_ref& body)
 {
     auto L = body;
     for(auto& v: vars | views::reverse)
