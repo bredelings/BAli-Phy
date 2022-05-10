@@ -1054,8 +1054,13 @@ FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const ex
 
 struct BindInfo
 {
+    // The pre-generalized type
     Type monotype;
+
+    // Non-defaulted dictionaries -- still passed.
     std::vector<Var> dict_args;
+
+    // This defines construct the defaulted dictionaries from dict_args;
     Binds binds;
 };
 
@@ -1066,26 +1071,31 @@ struct GenBind: public Object
     // These variables MUST be type-annotated!
     std::vector<Var> dict_args;
 
-    std::map<std::string, BindInfo> bind_infos;
-
-    GenBind* clone() const {return new GenBind(*this);}
-    std::string print() const;
-
-    // Express dictionaries used in the body in terms of dictionary arguments.
+    // Information for calling each of the binders in the group.
     Binds dict_binds;
 
     // These are the actual declarations.
     Decls body;
 
+    // Defaulting info for each binder
+    std::map<std::string, BindInfo> bind_infos;
+
+    GenBind* clone() const {return new GenBind(*this);}
+    std::string print() const;
+
     GenBind(const std::vector<TypeVar>& v1,
             const std::vector<Var>& v2,
             const Binds& b,
-            const Decls& d)
+            const Decls& d,
+            const std::map<std::string, BindInfo>& bi)
         :tv_args(v1),
          dict_args(v2),
          dict_binds(b),
-         body(d)
-    { }
+         body(d),
+         bind_infos(bi)
+    {
+        assert(not bind_infos.empty());
+    }
 };
 
 // We can initially put all the type or class decls into a single group.

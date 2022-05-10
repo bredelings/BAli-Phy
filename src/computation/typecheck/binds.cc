@@ -208,7 +208,13 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
     Hs::Decls decls;
     decls.push_back(decl2);
 
-    auto decl = Hs::GenBind( tvs, dict_vars, *evbinds, decls );
+    map<string,Hs::BindInfo> bind_infos;
+    Hs::BindInfo bind_info;
+    bind_info.dict_args = dict_vars;
+    bind_info.monotype = given_type;
+    bind_infos.insert({name,bind_info});
+
+    auto decl = Hs::GenBind( tvs, dict_vars, *evbinds, decls, bind_infos );
     return {decl, name, sig_type};
 }
 
@@ -375,8 +381,16 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
         //       removed from qtvs.
         qtvs = qtvs - free_type_variables(current_lie());
 
+        for(auto& [name,type]: binder_env)
+        {
+            Hs::BindInfo info;
+            info.monotype = type;
+            bind_infos.insert({name,info});
+        }
+
         // 3. We have already substituted for types above.
         binder_env = quantify( qtvs, binder_env );
+
     }
     else
     {
@@ -394,7 +408,6 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
         global_value_env binder_env2;
         for(auto& [name,type]: binder_env)
         {
-            Hs::BindInfo info;
             auto tvs_in_this_type = free_type_variables(type);
 
             // Default any constraints that do not occur in THIS type.
@@ -409,6 +422,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
             binder_env2 = binder_env2.insert( {name, qualified_type} );
 
+            Hs::BindInfo info;
             info.monotype = type;
             info.binds = binds2;
             for(auto& [name, constraint]: lie_for_this_type)
@@ -417,14 +431,14 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
             bind_infos.insert({name, info});
         }
         binder_env = binder_env2;
+        assert(bind_infos.size() >= 1);
     }
 
     Hs::Decls decls2 = decls;
     if (qtvs.size() or binds.size() or dict_vars.size())
     {
         decls2 = {};
-        Hs::GenBind gen_bind( qtvs | ranges::to<vector>, dict_vars, binds, decls );
-        gen_bind.bind_infos = bind_infos;
+        Hs::GenBind gen_bind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
         decls2.push_back( gen_bind );
     }
 
