@@ -411,6 +411,9 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
             info.monotype = type;
             info.binds = binds2;
+            for(auto& [name, constraint]: lie_for_this_type)
+                info.dict_args.push_back( Hs::Var({noloc,name}) );
+
             bind_infos.insert({name, info});
         }
         binder_env = binder_env2;

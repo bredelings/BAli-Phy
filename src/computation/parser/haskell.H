@@ -1055,6 +1055,7 @@ FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const ex
 struct BindInfo
 {
     Type monotype;
+    std::vector<Var> dict_args;
     Binds binds;
 };
 
