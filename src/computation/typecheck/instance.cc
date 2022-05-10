@@ -286,24 +286,22 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
         gve = gve.insert( {unloc(op.name), op_type} );
 
-        auto it = method_matches.find(method_name);
-        if (it == method_matches.end())
+        optional<Hs::FunDecl> FD;
+        if (auto it = method_matches.find(method_name); it != method_matches.end())
+        {
+            FD = Hs::FunDecl(op, it->second);
+        }
+        else
         {
             if (not class_info.default_methods.count(method_name))
                 throw myexception()<<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'";
 
             auto dm_var = class_info.default_methods.at(method_name);
 
-            // op = \ instance_dicts -> let dict = dfun instance_dicts in dm_var dict
-            auto dict = fresh_var(classdict_name,false);
-            auto body = simple_let(dict, apply_expression(dfun, lambda_vars), {dm_var, dict});;
-            decls.push_back( simple_fun_decl(op, lambda_vars, body) );
+            FD = simple_decl(op, dm_var);
         }
-        else
-        {
-            auto [decl2, _, __] = infer_type_for_single_fundecl_with_sig(gve, Hs::FunDecl(op, it->second));
-            decls.push_back(decl2);
-        }
+        auto [decl2, _, __] = infer_type_for_single_fundecl_with_sig(gve, *FD);
+        decls.push_back(decl2);
     }
 
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>
