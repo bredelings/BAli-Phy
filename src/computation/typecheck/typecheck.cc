@@ -63,81 +63,49 @@ using std::tuple;
   * Handle explicit signatures in pattern bindings.
   * Kind-check explicit type signatures.
   * Change the type of class methods to forall a.C a => (forall b. ctxt => body)
+  * Typecheck default instance methods in class declarations.
+    + Out of line, take a (C a) argument.
+    + Typecheck as FunDecl with signature forall a. C a => method_type
+  * Typecheck instance methods instance declarations.
+    + Out of line, take instance constraint dictionaries as arguments.
+    + Substitute into class variables to get method type.
+    + Typecheck as FunDecl with signature forall tvs.(instance constraints) => method_type
+  * Handle different defaults for each entry of a GenBind by recording impedance matching info on BindInfo
 
   TODO:
   1. Reject unification of variables, tycons, etc with different kinds.
      - Ensure that all ForallType binders have kinds.
      - Assign kinds to all TypeCons.... OR look it up in the symbol table when we need to!
   2. Process type signatures for ambiguity and type synonyms.
-  3. Emit code for instances and check if there are instances for the context.
-     - 3a. Emit code for default methods
-           + Out of line, $dm<op>#
-           + Take (C a) argument.
-           + Typecheck with C a + method constraints in scope...
-             - Do we use the single_fundecl case?
-             - Or do we steal code from that to set up a series of givens?
-     - 3b. Emit code for instance methods
-          + Out of line, $i<op>$
-          + Take instance constraint dictionaries as arguments
-          + Construct the dfun for the instance
-          + Typecheck with C a + method constraints in scope...
-     - 3c. Emit code for the dfun
-          + Take instance constraint dictionaries as arguments
-          + Construct superclass dictionaries in a simpler way?
-          + Construct a record that references the superclass dictionary variables bound in binds_super?
-          + The record should then call methodA d1 d2 d3, methodB d1 d2 d3, etc.
-     - 3d. There is still the question of how to optimize recursion between the method ops and the dfun.
-          + For example, if we have $i==# = \ (x:xs) (y:ys) -> (x == y) && (xs == ys) then
-
-(==) (x,y) = x
-
-dfun da = (i$== da, i$\= da)
-
-i$== = \ da -> let dLista = dfun da 
-                   f (x:xs) (y:ys) -> ((==) da x y) && ((==) dLista xs ys) 
-               in f
-
-i$== = \ da -> let dLista = ($i== da, $i\= da)
-                   f (x:xs) (y:ys) -> ((==) da x y) && ((\(x,y)->x) dLista xs ys) 
-               in f
-
-i$== = \ da -> let 
-                   f (x:xs) (y:ys) -> ((==) da x y) && ($== da xs ys) 
-               in f
-
-i$== = \ da -> let tmp1 = (==) da
-                   tmp2 = $i== da
-                   f (x:xs) (y:ys) -> (tmp1 x y) && (tmp2 xs ys) 
-               in f
-
-So... whenever we have a method selector applied to a dfun, then if we inline BOTH, we
-will get a direct reference to the method operation?
-
-And we want to do this regardless of how many times method selector and the dfun appear?
-
-  4. Record impedance-matching info on GenBind
-     - unused types
-     - defaulted types
-     - defaulted dictionaries.
-  5. Write more-general impedance-matching code.
-  5. Record types on let, lambda, and case binders.
-  6. Avoid a space leak with polymorphic recursion in cases like factorial.
-     Do not create new dictionaries for each call at the same type.
+  3. Efficient handling of recursion between instance method and dictionaries.
+       + For example, if we have i==@1 = \(x:xs) (y:ys) -> (x == y) && (xs == ys) then
+         it would be nice to make the call for (xs == ys) call i==@1 directly, instead of
+         allocating an Eq [a] dictionary and extracting its (==) element.
+       + We should end up with something like (==) (dEqList dEqa) xs ys where
+         dEqList dEqa = (i==@1 dEqa, i=\@2 dEq a).
+       + If we could inline BOTH (==) and dEqList, then I think we'd get the result that we want.
+       + Maybe we could inform the inliner that i==@1 is an method selector, and dEqList is a dfun?
+       + And we want to do this regardless of how many times the method selector and the dfun appear?
+       + GHC does something else...  see DFunUnfolding?
+  4. Avoid a space leak with polymorphic recursion in cases like factorial.
+  5. Record impedance-matching info for types on GenBind
+     - Need to pass type/dict arguments in correct order for (forall a. C1 a => forall b. C2 b => a -> b -> a)
+     - Instantiated type would otherwise be treated as (forall a b. (C1 a, C2 b) => a -> b -> a)
+     - For defaulted defaulted types and defaulted dictionaries.
   7. Check that constraints in instance contexts satisfy the "paterson conditions"
-  8. How do we EXPORT stuff?
-     - We already handle exporting of names and stuff in add_local_symbols( ).  We need it for renaming.
+  8. Handle export subspecs Datatype(constructor...) and Class(method...)
+  9. AST nodes for type and evidence bindings?
+  10. Exporting and importing types and instances between modules:
+     - Some things have symbols -- we can add the type or kind to the symbol in the symbol table.
      - This includes classes, methods, data types, constructors, type synonyms, etc.
-     - Can we just paste on the type info for the variables, and the kind info for the classes?
-     - How do you export instances, though?
-  9. Make functions to handle instance declarations from Figure 12.
-     - infer_type_for_instance1 creates a dfun with the type: forall a.Constaints(a) => Class a
-     - the dfun definition would look like:
-       + dfun dict1 .. dictn = ClassConstructor dict1 ... dictn method1 method2 ... methodn
-                where method[1] = body[1]; method[2] = body[2]; ... method[n] = body[n]
-       + how do we efficiently implement recursive class methods?
-  10. Handle export subspecs Datatype(constructor...) and Class(method...)
-  11. Make AST nodes for dictionary abstraction and dictionary application.
-     - \(dicts::theta) -> monobinds in binds
+     - The small_decls won't have symbols though...  maybe we need annotated type info for that?
+     - How do you export instances?
+  11. Factor generalization code out of typecheck/binds.cc
+  12. Check that there are no cycles in the class hierarchy.
+
+  11. Annotate let, lambda, and case binders with variable's type.
+  12. Should we make AST for: 
+     - \(dicts::theta) -> monobinds in binds    -> This is GenBinds
      - exp <dicts>
      - (superdicts, methods)
       We can then desugar these expressions to EITHER multiple dictionaries OR a tuple of dictionaries.
@@ -145,7 +113,6 @@ And we want to do this regardless of how many times method selector and the dfun
   12. Implement fromInt and fromRational
   13. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
       Do I need to handle LiteralString patterns, then?
-  14. Check that there are no cycles in the class hierarchy.
   16. Handle constraints on constructors.
   17. Remove the constraint from EmptySet
   18. Add basic error reporting.
