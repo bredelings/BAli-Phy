@@ -1,6 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Char where
 
+-- Current Char is just a char, but it probably should be a unicode code point (32-bits).
+
 import Compiler.Base
 import Compiler.Num
 import Data.Eq
