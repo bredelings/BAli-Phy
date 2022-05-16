@@ -431,27 +431,32 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
     if (is_restricted(signatures, decls))
     {
-        // 1. Remove defaulted constraints from LIE?
+        // 1. This removes defaulted constraints from the LIE.  (not_completely_ambiguous = retained but not defaulted)
         current_lie() = lie_deferred + lie_not_completely_ambiguous;
+
+        // NOTE: in theory, we should be able to subtract just ftvs(lie_completely_ambiguous)
+        //       since lie_deferred should contain only fixed type variables that have already been
+        //       removed from qtvs.
 
         // 2. Quantify only over variables that are "unconstrained" (not part of the LIE)
         // -- after defaulting!
-
-        // NOTE: in theory, we should be able to subtract just ftvs(lie_retained_not_defaulted),
-        //       since lie_deferred should contain only fixed type variables that have already been
-        //       removed from qtvs.
         qtvs = qtvs - free_type_variables(current_lie());
 
+        global_value_env binder_env2;
         for(auto& [name,type]: binder_env)
         {
             Hs::BindInfo info;
             info.monotype = type;
             bind_infos.insert({name,info});
+
+            auto qtvs_in_this_type = intersection(qtvs, free_type_variables(type));
+
+            // 3. Quantify type
+            // FIXME: We also need to add type lambdas for the tuple, and wrappers for each binder...
+            auto type2 = quantify(qtvs_in_this_type, type);
+            binder_env2 = binder_env2.insert({name, type2});
         }
-
-        // 3. We have already substituted for types above.
-        binder_env = quantify( qtvs, binder_env );
-
+        binder_env = binder_env2;
     }
     else
     {
@@ -474,10 +479,12 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
             // Default any constraints that do not occur in THIS type.
             auto [s2, binds2, lie_for_this_type] = default_preds( fixed_tvs, tvs_in_this_type, lie_not_completely_ambiguous );
 
-            Hs::Type constrained_type = Hs::add_constraints( constraints_from_lie(lie_for_this_type), type );
+            auto constraints_for_this_type = constraints_from_lie(lie_for_this_type);
 
             // Only quantify over type variables that occur in THIS type.
-            Hs::Type qualified_type = quantify( tvs_in_this_type, constrained_type );
+            Hs::Type qualified_type = quantify( tvs_in_this_type,
+                                                Hs::add_constraints( constraints_for_this_type,
+                                                                     type ) );
 
             // How can we generate a wrapper between qualified_type and lie_deferred => (type1, unrestricted_type, type3)?
 
