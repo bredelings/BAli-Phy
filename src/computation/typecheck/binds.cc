@@ -264,6 +264,67 @@ classify_constraints(const local_instance_env& lie,
     return {lie_deferred, lie_retained};
 }
 
+tuple<Hs::Var, Hs::Type, local_value_env>
+typechecker_state::infer_lhs_var_type(Hs::Var v)
+{
+    auto& name = unloc(v.name);
+
+    Hs::Type type = fresh_meta_type_var( kind_star() );
+    v.type = type;
+
+    // Check that this is a NEW name.
+    local_value_env lve;
+    lve = lve.insert({name,type});
+    return {v, type, lve};
+}
+
+tuple<expression_ref, Hs::Type, local_value_env>
+typechecker_state::infer_lhs_type(const expression_ref& decl, const map<string, Hs::Type>& signatures)
+{
+    if (auto fd = decl.to<Hs::FunDecl>())
+    {
+        auto FD = *fd;
+        // If there was a signature, we would have called infer_type_for_single_fundecl_with_sig
+        assert(not signatures.count(unloc(FD.v.name)));
+
+        auto [v2, type, lve] = infer_lhs_var_type(FD.v);
+        FD.v.type = type;
+        return {FD, type, lve};
+    }
+    else if (auto pd = decl.to<Hs::PatDecl>())
+    {
+        auto PD = *pd;
+        auto [lhs, type, lve] = infer_pattern_type(PD.lhs, signatures);
+        PD.lhs = lhs;
+        return {PD, type, lve};
+    }
+    else
+        std::abort();
+}
+
+tuple<expression_ref, Hs::Type>
+typechecker_state::infer_rhs_type(const global_value_env& env, const expression_ref& decl)
+{
+    if (auto fd = decl.to<Hs::FunDecl>())
+    {
+        auto FD = *fd;
+        auto [match, rhs_type] = infer_type(env, FD.match);
+        FD.match = match;
+
+        return {FD, rhs_type};
+    }
+    else if (auto pd = decl.to<Hs::PatDecl>())
+    {
+        auto PD = *pd;
+        auto [rhs, rhs_type] = infer_type(env, PD.rhs);
+        PD.rhs = rhs;
+
+        return {PD, rhs_type};
+    }
+    else
+        std::abort();
+}
+
 tuple<Hs::Decls, global_value_env>
 typechecker_state::infer_type_for_decls_groups(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls)
 {
