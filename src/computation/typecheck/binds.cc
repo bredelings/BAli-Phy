@@ -255,20 +255,6 @@ classify_constraints(const local_instance_env& lie,
     return {lie_deferred, lie_retained};
 }
 
-tuple<Hs::Var, Hs::Type, local_value_env>
-typechecker_state::infer_lhs_var_type(Hs::Var v)
-{
-    auto& name = unloc(v.name);
-
-    Hs::Type type = fresh_meta_type_var( kind_star() );
-    v.type = type;
-
-    // Check that this is a NEW name.
-    local_value_env lve;
-    lve = lve.insert({name,type});
-    return {v, type, lve};
-}
-
 tuple<expression_ref, Hs::Type, local_value_env>
 typechecker_state::infer_lhs_type(const expression_ref& decl, const map<string, Hs::Type>& signatures)
 {
@@ -278,8 +264,8 @@ typechecker_state::infer_lhs_type(const expression_ref& decl, const map<string, 
         // If there was a signature, we would have called infer_type_for_single_fundecl_with_sig
         assert(not signatures.count(unloc(FD.v.name)));
 
-        auto [v2, type, lve] = infer_lhs_var_type(FD.v);
-        FD.v.type = type;
+        auto [v2, type, lve] = infer_var_pattern_type(FD.v);
+        FD.v = v2;
         return {FD, type, lve};
     }
     else if (auto pd = decl.to<Hs::PatDecl>())

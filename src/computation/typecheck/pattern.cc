@@ -9,6 +9,31 @@ using std::set;
 using std::pair;
 using std::optional;
 
+tuple<Hs::Var, Hs::Type, local_value_env>
+typechecker_state::infer_var_pattern_type(Hs::Var V, const map<string, Hs::Type>& sigs)
+{
+    auto& name = unloc(V.name);
+    local_value_env lve;
+    Hs::Type type;
+
+    if (sigs.count(name))
+    {
+        auto sig_type = sigs.at(name);
+        auto [tvs, constraints, monotype] = instantiate(sig_type);
+        if (constraints.size())
+            throw myexception()<<"variable '"<<name<<"' cannot have constrained type '"<<sig_type<<"' due to monomorphism restriction";
+        type = monotype;
+    }
+    else
+    {
+        auto tv = fresh_meta_type_var( kind_star() );
+        type = tv;
+    }
+    V.type = type;
+    lve = lve.insert({name,type});
+    return {V, type, lve};
+}
+
 // Figure 24. Rules for patterns
 tuple<Hs::Pattern, Hs::Type, local_value_env>
 typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
@@ -16,26 +41,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
     // TAUT-PAT
     if (auto v = pat.to<Hs::Var>())
     {
-        auto V = *v;
-        auto& name = unloc(V.name);
-        local_value_env lve;
-        Hs::Type type;
-        if (sigs.count(name))
-        {
-            auto sig_type = sigs.at(name);
-            auto [tvs, constraints, monotype] = instantiate(sig_type);
-            if (constraints.size())
-                throw myexception()<<"variable '"<<name<<"' cannot have constrained type '"<<sig_type<<"' due to monomorphism restriction";
-            type = monotype;
-        }
-        else
-        {
-            auto tv = fresh_meta_type_var( kind_star() );
-            type = tv;
-        }
-        V.type = type;
-        lve = lve.insert({name, type});
-	return { V, type , lve };
+        return infer_var_pattern_type(*v, sigs);
     }
     // CONSTR-PAT
     else if (auto con = pat.head().to<Hs::Con>())

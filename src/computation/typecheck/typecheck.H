@@ -148,13 +148,13 @@ struct typechecker_state
 
     // Figure 24.
     std::tuple<Hs::Pattern, Hs::Type, local_value_env>
-    infer_pattern_type(const Hs::Pattern& pat, const std::map<std::string, Hs::Type>& sigs = {});
+    infer_pattern_type(const Hs::Pattern& pat, const signature_env& sigs = {});
 
     std::tuple<Hs::Var, Hs::Type, local_value_env>
-    infer_lhs_var_type(Hs::Var v);
+    infer_var_pattern_type(Hs::Var v, const signature_env& sigs = {});
 
     std::tuple<expression_ref, Hs::Type, local_value_env>
-    infer_lhs_type(const expression_ref& decl, const std::map<std::string, Hs::Type>& sigs);
+    infer_lhs_type(const expression_ref& decl, const signature_env& sigs);
 
     std::tuple<expression_ref, Hs::Type>
     infer_rhs_type(const global_value_env& env, const expression_ref& decl);
