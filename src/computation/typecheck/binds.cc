@@ -161,23 +161,61 @@ vector<Hs::Var> vars_from_lie(const vector<pair<Hs::Var, Hs::Type>>& lie)
     return vars;
 }
 
+expression_ref
+rename_from_bindinfo(expression_ref decl, const map<string, Hs::BindInfo>& bind_infos)
+{
+    if (auto fd = decl.to<Hs::FunDecl>())
+    {
+        auto FD = *fd;
+        FD.v = rename_var_pattern_from_bindinfo(FD.v, bind_infos);
+        return FD;
+    }
+    else if (auto pd = decl.to<Hs::PatDecl>())
+    {
+        auto PD = *pd;
+        PD.lhs = rename_pattern_from_bindinfo(PD.lhs, bind_infos);
+        return PD;
+    }
+    else
+        std::abort();
+}
+
+Hs::Decls rename_from_bindinfo(Hs::Decls decls,const map<string, Hs::BindInfo>& bind_infos)
+{
+    for(auto& decl: decls)
+        decl = rename_from_bindinfo(decl, bind_infos);
+    return decls;
+}
+
+Hs::GenBind mkGenBind(const vector<Hs::TypeVar>& tvs,
+                      const vector<Hs::Var>& dict_vars,
+                      const Hs::Binds& binds,
+                      Hs::Decls decls,
+                      const map<string, Hs::BindInfo>& bind_infos)
+{
+    decls = rename_from_bindinfo(decls, bind_infos);
+    return Hs::GenBind(tvs, dict_vars, binds, decls, bind_infos);
+}
+
 tuple<expression_ref, string, Hs::Type>
 typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env& env, Hs::FunDecl FD)
 {
     auto& name = unloc(FD.v.name);
 
-    auto sig_type = env.at(name);
+    auto polytype = env.at(name);
 
     // OK, so what we want to do is:
 
     // 1. instantiate the type -> (tvs, givens, rho-type)
-    auto [tvs, given_constraints, given_type] = instantiate(sig_type, false);
+    auto [tvs, given_constraints, given_type] = instantiate(polytype, false);
     auto ordered_lie_given = constraints_to_lie(given_constraints);
+    auto dict_vars = vars_from_lie( ordered_lie_given );
     auto lie_given = unordered_lie(ordered_lie_given);
-    
+
     // 2. typecheck the rhs -> (rhs_type, wanted, body)
     push_lie();
-    auto [decl2, most_general_type] = infer_rhs_type(env, FD);
+    auto [match2, most_general_type] = infer_type(env, FD.match);
+    FD.match = match2;
     auto lie_wanted = pop_lie();
 
     // 3. alpha[i] in most_general_type but not in env
@@ -194,19 +232,19 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
         throw myexception()<<"Can't derive constraints '"<<print(lie_wanted)<<"' from specified constraints '"<<print(lie_given)<<"'";
 
     // 6. return GenBind with tvs, givens, body
-    auto dict_vars = vars_from_lie( ordered_lie_given );
+    Hs::Var inner_id = fresh_var(unloc(FD.v.name),false);
 
-    Hs::Decls decls;
-    decls.push_back(decl2);
+    Hs::Type monotype = apply_current_subst(most_general_type);
+    Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
 
     map<string,Hs::BindInfo> bind_infos;
-    Hs::BindInfo bind_info;
-    bind_info.dict_args = dict_vars;
-    bind_info.monotype = given_type;
     bind_infos.insert({name,bind_info});
 
-    auto decl = Hs::GenBind( tvs, dict_vars, *evbinds, decls, bind_infos );
-    return {decl, name, sig_type};
+    Hs::Decls decls;
+    decls.push_back(FD);
+
+    auto decl = mkGenBind( tvs, dict_vars, *evbinds, decls, bind_infos );
+    return {decl, name, polytype};
 }
 
 bool is_restricted(const map<string, Hs::Type>& signatures, const Hs::Decls& decls)
@@ -420,18 +458,21 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
         // -- after defaulting!
         qtvs = qtvs - free_type_variables(current_lie());
 
-        for(auto& [name,type]: mono_binder_env)
+        for(auto& [name,monotype]: mono_binder_env)
         {
-            Hs::BindInfo info;
-            info.monotype = type;
-            bind_infos.insert({name,info});
-
-            auto qtvs_in_this_type = intersection(qtvs, free_type_variables(type));
+            auto qtvs_in_this_type = intersection(qtvs, free_type_variables(monotype));
 
             // 3. Quantify type
             // FIXME: We also need to add type lambdas for the tuple, and wrappers for each binder...
-            Hs::Type polytype = quantify(qtvs_in_this_type, type);
+            Hs::Type polytype = quantify(qtvs_in_this_type, monotype);
+
+            Hs::Var x_outer({noloc,name});
+            Hs::Var x_inner = fresh_var(name, false);
+
             poly_binder_env = poly_binder_env.insert({name, polytype});
+
+            Hs::BindInfo info(x_outer, x_inner, monotype, polytype, {}, {});
+            bind_infos.insert({name,info});
         }
     }
     else
@@ -465,20 +506,21 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
             poly_binder_env = poly_binder_env.insert( {name, polytype} );
 
-            Hs::BindInfo info;
-            info.monotype = monotype;
-            info.binds = binds2;
-            for(auto& [name, constraint]: lie_for_this_type)
-                info.dict_args.push_back( Hs::Var({noloc,name}) );
+            Hs::Var x_outer({noloc,name});
+            Hs::Var x_inner = fresh_var(name, false);
 
+            vector<Hs::Var> dict_args;
+            for(auto& [name, constraint]: lie_for_this_type)
+                dict_args.push_back( Hs::Var({noloc,name}) );
+
+            Hs::BindInfo info(x_outer, x_inner, monotype, polytype, dict_args, binds2);
             bind_infos.insert({name, info});
         }
         assert(bind_infos.size() >= 1);
     }
 
-    Hs::Decls decls2 = decls;
-    Hs::GenBind gen_bind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
-    decls2.push_back( gen_bind );
+    auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
+    Hs::Decls decls2({ gen_bind });
 
     pop_and_add_lie();
 

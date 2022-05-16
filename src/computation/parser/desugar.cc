@@ -23,6 +23,9 @@
 #include "util/range.H"
 #include "computation/parser/haskell.H"
 
+#include "range/v3/all.hpp"
+namespace views = ranges::views;
+
 using std::string;
 using std::vector;
 using std::set;
@@ -34,6 +37,14 @@ using std::pair;
 var make_var(const Hs::Var& v)
 {
     return var(unloc(v.name));
+}
+
+vector<var> make_vars(const vector<Hs::Var>& vs)
+{
+    vector<var> vs2;
+    for(auto& v: vs)
+        vs2.push_back(make_var(v));
+    return vs2;
 }
 
 
@@ -133,6 +144,52 @@ CDecls desugar_state::desugar_decls(const Haskell::Decls& v)
             }
             auto otherwise = error(fvar.name+": pattern match failure");
             decls.push_back( {fvar , def_function(equations, otherwise) } );
+        }
+        else if (auto gb = decl.to<Hs::GenBind>())
+        {
+            vector<var> tup_dict_vars = make_vars(gb->dict_args);
+
+            vector<var> binders;
+            const int N = gb->bind_infos.size();
+            assert(N >= 1);
+
+            auto tup = get_fresh_var("tup");
+
+            // x_outer[i] = \info.dict_args => let info.binds in case (tup dict1 .. dictn) of (_,_,x_inner[i],_,_) -> x_inner[i]
+            int i=0;
+            for(auto& [name, info]: gb->bind_infos)
+            {
+                var x_outer = make_var(info.outer_id);
+                var x_inner = make_var(info.inner_id);
+
+                binders.push_back( x_inner );
+
+                vector<expression_ref> fields(N, wildcard());
+                fields[i] = x_inner;
+                expression_ref pattern = get_tuple(fields);
+
+                expression_ref extractor = tup;
+                for(auto& dict_var: tup_dict_vars)
+                    extractor = {extractor, dict_var};
+
+                if (N > 1)
+                    extractor = make_case_expression(extractor,{{pattern}},{x_inner});
+
+                vector<var> dict_vars = make_vars(info.dict_args);
+
+                extractor = lambda_quantify( dict_vars, let_expression( desugar_decls( info.binds ),
+                                                                        extractor ) );
+
+                decls.push_back({x_outer, extractor});
+
+                i++;
+            }
+
+            // tup = \dict1 dict2 ... dictn -> let dict_binds in let {x_inner[1]=..;...;x_inner[n]=..} in (x_inner[1],x_inner[2],...x_inner[n])
+            expression_ref E = lambda_quantify( tup_dict_vars, let_expression ( desugar_decls(gb->dict_binds),
+                                                               let_expression ( desugar_decls(gb->body),
+                                                               maybe_tuple(binders) ) ) );
+            decls.push_back({tup, E});
         }
         else if (decl.is_a<Hs::ValueDecl>())
             std::abort();
