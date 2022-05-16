@@ -72,10 +72,13 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
     // AS-PAT
     else if (auto ap = pat.to<Hs::AsPattern>())
     {
-        auto [pat, t, lve] = infer_pattern_type(ap->pattern, sigs);
-        auto& name = unloc(ap->var.as_<Hs::Var>().name);
-        lve = lve.insert({name, t});
-        return {pat, t, lve};
+        auto [p1, t1, lve1] = infer_pattern_type(ap->pattern, sigs);
+
+        auto [v2, t2, lve2] = infer_var_pattern_type(ap->var.as_<Hs::Var>(), sigs);
+
+        unify(t1, t2);
+
+        return {Hs::AsPattern(v2, p1), t1, lve1 + lve2};
     }
     // LAZY-PAT
     else if (auto lp = pat.to<Hs::LazyPattern>())
@@ -148,7 +151,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         return {pat, Hs::ListType(char_type()), {}};
     }
     else if (pat.is_log_double())
-        throw myexception()<<"log_double literatal should be impossible: '"<<pat<<"'!";
+        throw myexception()<<"log_double literal should be impossible: '"<<pat<<"'!";
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
