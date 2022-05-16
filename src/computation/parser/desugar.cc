@@ -168,20 +168,16 @@ CDecls desugar_state::desugar_decls(const Haskell::Decls& v)
             if (N == 1)
             {
                 // x_outer[i] = \info.dict_args => let info.binds in case (tup dict1 .. dictn) of (_,_,x_inner[i],_,_) -> x_inner[i]
-                for(auto& [name, info]: gb->bind_infos)
-                {
-                    var x_outer = make_var(info.outer_id);
-                    var x_inner = make_var(info.inner_id);
+                auto& info = gb->bind_infos.begin()->second;
 
-                    expression_ref extractor = tup_body;
+                var x_outer = make_var(info.outer_id);
 
-                    vector<var> dict_vars = make_vars(info.dict_args);
+                vector<var> dict_vars = make_vars(info.dict_args);
 
-                    extractor = lambda_quantify( dict_vars, let_expression( desugar_decls( info.binds ),
-                                                                            extractor ) );
+                expression_ref extractor = lambda_quantify( dict_vars, let_expression( desugar_decls( info.binds ),
+                                                                                       tup_body ) );
 
-                    decls.push_back({x_outer, extractor});
-                }
+                decls.push_back({x_outer, extractor});
             }
             else
             {
