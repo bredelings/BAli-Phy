@@ -337,7 +337,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     push_lie();
 
     // 1. Add each let-binder to the environment with a fresh type variable
-    value_env binder_env;
+    local_value_env mono_binder_env;
 
     vector<Hs::Type> lhs_types;
     for(int i=0;i<decls.size();i++)
@@ -345,11 +345,11 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
         auto [decl, type, lve] = infer_lhs_type( decls[i], signatures );
         decls[i] = decl;
 
-        binder_env += lve;
+        mono_binder_env += lve;
         lhs_types.push_back(type);
     }
 
-    auto env2 = env + remove_sig_binders(binder_env, signatures);
+    auto env2 = env + remove_sig_binders(mono_binder_env, signatures);
 
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)
@@ -362,7 +362,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
     // We need to substitute before looking for free type variables!
     // We also need to substitute before we quantify below.
-    binder_env = apply_current_subst(binder_env);
+    mono_binder_env = apply_current_subst(mono_binder_env);
 
     auto fixed_tvs = free_type_variables(env);
     set<Hs::TypeVar> tvs_in_any_type;  // type variables in ANY of the definitions
@@ -370,7 +370,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     {
         // FIXME - should we be looping over binder vars, or over definitions?
         optional<set<Hs::TypeVar>> tvs_in_all_types_;
-        for(auto& [_, type]: binder_env)
+        for(auto& [_, type]: mono_binder_env)
         {
             auto tvs = free_type_variables(type);
             add(tvs_in_any_type, tvs);
@@ -420,6 +420,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
     map<string, Hs::BindInfo> bind_infos;
 
+    global_value_env poly_binder_env;
     if (is_restricted(signatures, decls))
     {
         // 1. This removes defaulted constraints from the LIE.  (not_completely_ambiguous = retained but not defaulted)
@@ -433,8 +434,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
         // -- after defaulting!
         qtvs = qtvs - free_type_variables(current_lie());
 
-        global_value_env binder_env2;
-        for(auto& [name,type]: binder_env)
+        for(auto& [name,type]: mono_binder_env)
         {
             Hs::BindInfo info;
             info.monotype = type;
@@ -444,10 +444,9 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
             // 3. Quantify type
             // FIXME: We also need to add type lambdas for the tuple, and wrappers for each binder...
-            auto type2 = quantify(qtvs_in_this_type, type);
-            binder_env2 = binder_env2.insert({name, type2});
+            Hs::Type polytype = quantify(qtvs_in_this_type, type);
+            poly_binder_env = poly_binder_env.insert({name, polytype});
         }
-        binder_env = binder_env2;
     }
     else
     {
@@ -462,10 +461,9 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
         dict_vars = vars_from_lie( lie_not_completely_ambiguous );
 
-        global_value_env binder_env2;
-        for(auto& [name,type]: binder_env)
+        for(auto& [name, monotype]: mono_binder_env)
         {
-            auto tvs_in_this_type = free_type_variables(type);
+            auto tvs_in_this_type = free_type_variables(monotype);
 
             // Default any constraints that do not occur in THIS type.
             auto [s2, binds2, lie_for_this_type] = default_preds( fixed_tvs, tvs_in_this_type, lie_not_completely_ambiguous );
@@ -473,23 +471,22 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
             auto constraints_for_this_type = constraints_from_lie(lie_for_this_type);
 
             // Only quantify over type variables that occur in THIS type.
-            Hs::Type qualified_type = quantify( tvs_in_this_type,
-                                                Hs::add_constraints( constraints_for_this_type,
-                                                                     type ) );
+            Hs::Type polytype = quantify( tvs_in_this_type,
+                                          Hs::add_constraints( constraints_for_this_type,
+                                                               monotype ) );
 
             // How can we generate a wrapper between qualified_type and lie_deferred => (type1, unrestricted_type, type3)?
 
-            binder_env2 = binder_env2.insert( {name, qualified_type} );
+            poly_binder_env = poly_binder_env.insert( {name, polytype} );
 
             Hs::BindInfo info;
-            info.monotype = type;
+            info.monotype = monotype;
             info.binds = binds2;
             for(auto& [name, constraint]: lie_for_this_type)
                 info.dict_args.push_back( Hs::Var({noloc,name}) );
 
             bind_infos.insert({name, info});
         }
-        binder_env = binder_env2;
         assert(bind_infos.size() >= 1);
     }
 
@@ -499,6 +496,6 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
     pop_and_add_lie();
 
-    return {decls2, binder_env};
+    return {decls2, poly_binder_env};
 }
 
