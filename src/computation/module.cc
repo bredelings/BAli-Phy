@@ -892,7 +892,7 @@ CDecls Module::optimize(const simplifier_options& opts, CDecls cdecls, const map
         rhs = graph_normalize(rhs);
     }
 
-    if (do_optimize)
+    if (opts.optimize)
     {
         mark_exported_decls(cdecls, exported_symbols(), name);
 

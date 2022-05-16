@@ -513,6 +513,8 @@ int main(int argc,char* argv[])
             if (args.count("type-check"))
                 L->typecheck = true;
 
+            L->optimize = args["optimize"].as<bool>();
+
             Program P(L);
             P.add(M);
             auto& M2 = P.get_module(M.name);
