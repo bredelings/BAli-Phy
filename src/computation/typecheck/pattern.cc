@@ -47,7 +47,6 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
     else if (auto con = pat.head().to<Hs::Con>())
     {
         local_value_env lve;
-        local_instance_env lie;
         vector<Hs::Type> types;
         auto sub_pats = pat.copy_sub();
 
@@ -71,7 +70,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         if (pat.size())
             pat2 = expression_ref(pat.head(), sub_pats);
 
-        return { pat, type, lve };
+        return { pat2, type, lve };
     }
     // AS-PAT
     else if (auto ap = pat.to<Hs::AsPattern>())
