@@ -27,15 +27,6 @@ Hs::Type quantify(const T& tvs, const Hs::Type& monotype)
     }
 }
 
-template <typename T>
-value_env quantify(const T& tvs, const value_env& env1)
-{
-    value_env env2;
-    for(auto& [name, monotype]: env1)
-        env2 = env2.insert( {name, quantify(tvs, monotype)} );
-    return env2;
-}
-
 global_value_env sig_env(const map<string, Hs::Type>& signatures)
 {
     global_value_env sig_env;
