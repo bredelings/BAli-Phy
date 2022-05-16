@@ -45,4 +45,14 @@ expression_ref get_tuple(const std::vector<T>& v)
 template<> expression_ref get_tuple<>(const std::vector<expression_ref>& v);
 
 
+template <typename T>
+expression_ref maybe_tuple(const std::vector<T>& v)
+{
+    if (v.size() == 1)
+        return v[0];
+    else
+        return get_tuple(v);
+}
+
+
 #endif
