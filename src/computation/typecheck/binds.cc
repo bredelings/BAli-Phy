@@ -503,12 +503,8 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     }
 
     Hs::Decls decls2 = decls;
-    if (qtvs.size() or binds.size() or dict_vars.size())
-    {
-        decls2 = {};
-        Hs::GenBind gen_bind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
-        decls2.push_back( gen_bind );
-    }
+    Hs::GenBind gen_bind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
+    decls2.push_back( gen_bind );
 
     pop_and_add_lie();
 
