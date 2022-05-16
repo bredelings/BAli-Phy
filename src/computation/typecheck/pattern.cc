@@ -49,12 +49,12 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         local_value_env lve;
         local_instance_env lie;
         vector<Hs::Type> types;
-        auto pats = pat.copy_sub();
+        auto sub_pats = pat.copy_sub();
 
-        for(auto& pat: pats)
+        for(auto& sub_pat: sub_pats)
         {
-            auto [p, t1, lve1] = infer_pattern_type(pat, sigs);
-            pat = p;
+            auto [p1, t1, lve1] = infer_pattern_type(sub_pat, sigs);
+            sub_pat = p1;
             types.push_back(t1);
             lve += lve1;
         }
@@ -66,6 +66,10 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         // Unify constructor field types with discovered types.
         for(int i=0;i<types.size();i++)
             unify(types[i], field_types[i]);
+
+        Hs::Pattern pat2 = pat.head();
+        if (pat.size())
+            pat2 = expression_ref(pat.head(), sub_pats);
 
         return { pat, type, lve };
     }
