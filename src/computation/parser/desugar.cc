@@ -34,23 +34,8 @@ using std::pair;
 
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 
-var make_var(const Hs::Var& v)
-{
-    return var(unloc(v.name));
-}
-
-vector<var> make_vars(const vector<Hs::Var>& vs)
-{
-    vector<var> vs2;
-    for(auto& v: vs)
-        vs2.push_back(make_var(v));
-    return vs2;
-}
-
-
 desugar_state::desugar_state(const Module& m_)
-    :fresh_vars(1),  // We shouldn't be making any numerical vars in rename.cc, only var(-1) and var(string).
-     m(m_)
+    : m(m_)
 {}
 
 bool is_irrefutable_pat(const expression_ref& E)

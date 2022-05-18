@@ -6,6 +6,7 @@
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/let.H"
 #include "computation/expression/var.H"
+#include "computation/fresh_vars.H"
 
 class Module;
 
@@ -48,18 +49,6 @@ struct equation_info_t
 {
     std::vector<expression_ref> patterns;
     failable_expression rhs;
-};
-
-class fresh_vars
-{
-    int var_index;
-public:
-    var get_fresh_wildcard() { return var(-var_index++);}
-    var get_fresh_var() { return var(var_index++);}
-    var get_fresh_var(const std::string& name) {return var(name,var_index++);}
-    Hs::Var get_fresh_Var(const std::string& name) {return Hs::Var({noloc,name}, var_index++);}
-
-    fresh_vars(int start):var_index(start) {}
 };
 
 var make_var(const Hs::Var&);
