@@ -1,6 +1,5 @@
 #include "typecheck.H"
 #include "kindcheck.H"
-#include "parser/rename.H"
 
 #include <set>
 

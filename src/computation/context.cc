@@ -7,7 +7,6 @@
 #include "computation/program.H"
 #include "loader.H"
 #include "module.H"
-#include "parser/desugar.H"
 #include "expression/lambda.H"
 #include "expression/var.H"
 #include "expression/modifiable.H"

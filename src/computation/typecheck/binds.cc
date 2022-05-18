@@ -1,7 +1,7 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 
-#include "parser/rename.H" // for get_indices_for_names( )
+#include "rename/rename.H" // for get_indices_for_names( )
 
 #include "util/set.H"
 

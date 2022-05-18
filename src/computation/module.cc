@@ -12,8 +12,8 @@
 #include "operations.H"
 #include "computation/machine/graph_register.H" // for graph_normalize( )
 #include "computation/operations.H"
-#include "parser/rename.H"
-#include "parser/desugar.H"
+#include "rename/rename.H"
+#include "desugar/desugar.H"
 #include "typecheck/typecheck.H"
 #include "typecheck/types.H" // for decompose_type_apps( )
 #include "computation/loader.H"

@@ -30,7 +30,6 @@
 #include "computation/program.H"
 #include "computation/module.H"
 #include "computation/loader.H"
-#include "computation/parser/desugar.H"
 
 #include "tools/stats-table.H"
 
