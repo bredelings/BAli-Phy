@@ -874,6 +874,9 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     state.gve = state.apply_current_subst(state.gve);
     ranges::insert(M.value_decls, M.value_decls.begin(), default_binds);
 
+    // Insert class_defs
+    ranges::insert(M.value_decls, M.value_decls.begin(), class_binds);
+
     std::cerr<<"GVE (all after defaulting):\n";
     for(auto& [x,t]: state.gve)
     {
