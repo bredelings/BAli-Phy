@@ -123,8 +123,6 @@ class Module
 
     bool optimized = false;
 
-    mutable FreshVarState fresh_var_state_;
-
 public:
 
     bool do_optimize = true;
@@ -154,8 +152,6 @@ public:
     std::set<std::string> dependencies() const;
 
     std::vector<module_import> imports() const;
-
-    FreshVarState& fresh_var_state() const {return fresh_var_state_;}
 
     const std::map<std::string, symbol_info>& exported_symbols() const {return exported_symbols_;}
 
@@ -223,7 +219,7 @@ public:
 
     Hs::ModuleDecls rename(const simplifier_options&, Hs::ModuleDecls);
 
-    CDecls desugar(const simplifier_options&, const Hs::Binds&);
+    CDecls desugar(const simplifier_options&, FreshVarState&, const Hs::Binds&);
 
     std::pair< std::map<var,expression_ref>, std::set<var> > import_small_decls(const Program&);
 
@@ -231,7 +227,7 @@ public:
 
     std::map<std::string,expression_ref> code_defs() const;
 
-    CDecls optimize(const simplifier_options&, CDecls, const std::map<var, expression_ref>&, const std::set<var>&);
+    CDecls optimize(const simplifier_options&, FreshVarState&, CDecls, const std::map<var, expression_ref>&, const std::set<var>&);
 
     CDecls load_builtins(const module_loader&, const std::vector<Hs::BuiltinDecl>&, CDecls);
 

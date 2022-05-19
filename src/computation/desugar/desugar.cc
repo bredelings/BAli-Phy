@@ -34,8 +34,8 @@ using std::pair;
 
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 
-desugar_state::desugar_state(const Module& m_)
-    : FreshVarSource(m_.fresh_var_state()),
+desugar_state::desugar_state(const Module& m_, FreshVarState& state)
+    : FreshVarSource(state),
       m(m_)
 {}
 
@@ -547,20 +547,20 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 	return head;
 }
 
-expression_ref desugar(const Module& m, const expression_ref& E)
+expression_ref desugar(const Module& m, FreshVarState& state, const expression_ref& E)
 {
-    desugar_state ds(m);
+    desugar_state ds(m, state);
     return ds.desugar(E);
 }
 
-CDecls desugar(const Module& m, const Haskell::Decls& decls)
+CDecls desugar(const Module& m, FreshVarState& state, const Haskell::Decls& decls)
 {
-    desugar_state ds(m);
+    desugar_state ds(m, state);
     return ds.desugar_decls(decls);
 }
 
-CDecls desugar(const Module& m, const Haskell::Binds& binds)
+CDecls desugar(const Module& m, FreshVarState& state, const Haskell::Binds& binds)
 {
-    desugar_state ds(m);
+    desugar_state ds(m, state);
     return ds.desugar_decls(binds);
 }

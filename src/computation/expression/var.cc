@@ -182,15 +182,6 @@ std::set<var> get_free_indices(const expression_ref& E)
     return free;
 }
 
-int get_safe_binder_index(const expression_ref& E)
-{
-    std::set<var> free = get_free_indices(E);
-    if (free.empty()) 
-	return 0;
-    else
-	return max_index(free)+1;
-}
-
 bool is_var(const expression_ref& E)
 {
     return (E.head().type() == var_type);

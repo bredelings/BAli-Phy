@@ -422,7 +422,7 @@ void Module::compile(const Program& P)
 
     // look only in value_decls now
     // FIXME: how to handle functions defined in instances and classes?
-    value_decls = desugar(opts, M.value_decls);
+    value_decls = desugar(opts, P.fresh_var_state(), M.value_decls);
 
     value_decls = load_builtins(loader, M.builtin_decls, value_decls);
 
@@ -433,7 +433,7 @@ void Module::compile(const Program& P)
 
     std::tie(small_decls_in, small_decls_in_free_vars) = import_small_decls(P);
 
-    value_decls = optimize(opts, value_decls, small_decls_in, small_decls_in_free_vars);
+    value_decls = optimize(opts, P.fresh_var_state(), value_decls, small_decls_in, small_decls_in_free_vars);
 
     // result returned in this->small_decls_out, this->small_decls_out_free_vars
     std::tie(small_decls_out, small_decls_out_free_vars) = export_small_decls(value_decls, small_decls_in);
@@ -588,9 +588,9 @@ Hs::ModuleDecls Module::rename(const simplifier_options& opts, Hs::ModuleDecls M
     return M;
 }
 
-CDecls Module::desugar(const simplifier_options& opts, const Hs::Binds& topdecls)
+CDecls Module::desugar(const simplifier_options& opts, FreshVarState& state, const Hs::Binds& topdecls)
 {
-    auto cdecls = ::desugar(*this, topdecls);
+    auto cdecls = ::desugar(*this, state, topdecls);
 
     if (opts.dump_desugared)
         std::cout<<name<<"[desugared]:\n"<<print_cdecls(cdecls)<<"\n\n";
@@ -879,7 +879,7 @@ void mark_exported_decls(CDecls& decls, const map<string,symbol_info>& exports, 
     }
 }
 
-CDecls Module::optimize(const simplifier_options& opts, CDecls cdecls, const map<var, expression_ref>& small_decls_in, const set<var>& small_decls_in_free_vars)
+CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, CDecls cdecls, const map<var, expression_ref>& small_decls_in, const set<var>& small_decls_in_free_vars)
 {
     // 1. why do we keep on re-optimizing the same module?
     if (optimized) return cdecls;
@@ -889,7 +889,7 @@ CDecls Module::optimize(const simplifier_options& opts, CDecls cdecls, const map
     for(auto& [x,rhs]: cdecls)
     {
         // This won't float things to the top level!
-        rhs = graph_normalize(rhs);
+        rhs = graph_normalize( fvstate, rhs);
     }
 
     if (opts.optimize)
@@ -898,15 +898,15 @@ CDecls Module::optimize(const simplifier_options& opts, CDecls cdecls, const map
 
         vector<CDecls> decl_groups = {cdecls};
 
-        decl_groups = simplify_module_gently(opts, fresh_var_state(), small_decls_in, small_decls_in_free_vars, decl_groups);
+        decl_groups = simplify_module_gently(opts, fvstate, small_decls_in, small_decls_in_free_vars, decl_groups);
 
         if (opts.fully_lazy)
-            float_out_from_module(fresh_var_state(), decl_groups);
+            float_out_from_module(fvstate, decl_groups);
 
-        decl_groups = simplify_module(opts, fresh_var_state(), small_decls_in, small_decls_in_free_vars, decl_groups);
+        decl_groups = simplify_module(opts, fvstate, small_decls_in, small_decls_in_free_vars, decl_groups);
 
         if (opts.fully_lazy)
-            float_out_from_module(fresh_var_state(), decl_groups);
+            float_out_from_module(fvstate, decl_groups);
 
         cdecls = flatten(decl_groups);
     }

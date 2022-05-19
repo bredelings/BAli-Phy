@@ -13,7 +13,7 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/expression.H" // for is_reglike( )
-
+#include "computation/fresh_vars.H"
 
 using std::optional;
 using std::string;
@@ -26,7 +26,8 @@ using std::cerr;
 using std::endl;
 
 
-expression_ref graph_normalize(const expression_ref& E)
+// This version is used in module.cc
+expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
 {
     if (not E) return E;
 
@@ -35,7 +36,7 @@ expression_ref graph_normalize(const expression_ref& E)
     {
 	assert(E.size() == 2);
 	object_ptr<expression> V = E.as_expression().clone();
-	V->sub[1] = graph_normalize(E.sub()[1]);
+	V->sub[1] = graph_normalize(source, E.sub()[1]);
 
 	return V;
     }
@@ -47,35 +48,34 @@ expression_ref graph_normalize(const expression_ref& E)
     if (parse_case_expression(E, object, patterns, bodies))
     {
 	// Normalize the object
-	object = graph_normalize(object);
+	object = graph_normalize(source, object);
 
 	const int L = patterns.size();
 	// Just normalize the bodies
 	for(int i=0;i<L;i++)
-	    bodies[i] = graph_normalize(bodies[i]);
-    
+	    bodies[i] = graph_normalize(source, bodies[i]);
+
 	if (is_reglike(object))
 	    return make_case_expression(object, patterns, bodies);
 	else
 	{
-	    int var_index = get_safe_binder_index(E);
-	    auto x = var(var_index);
+	    auto x = source.get_fresh_var();
 
 	    return let_expression({{x,object}},make_case_expression(x, patterns, bodies));
 	}
     }
 
-    // 5. Let 
+    // 5. Let
     if (is_let_expression(E))
     {
         auto L = E.as_<let_exp>();
 
 	// Normalize the body
-	L.body = graph_normalize(L.body);
+	L.body = graph_normalize(source, L.body);
 
 	// Just normalize the bound statements
 	for(auto& [x,e]: L.binds)
-	    e = graph_normalize(e);
+	    e = graph_normalize(source, e);
 
 	return L;
     }
@@ -83,23 +83,21 @@ expression_ref graph_normalize(const expression_ref& E)
     // 1. Var
     // 5. (partial) Literal constant.  Treat as 0-arg constructor.
     else if (not E.size()) return E;
-  
+
     // 4. Constructor
     if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
     {
-	int var_index = get_safe_binder_index(E);
-
 	object_ptr<expression> E2 = E.as_expression().clone();
 
 	// Actually we probably just need x[i] not to be free in E.sub()[i]
 	vector<pair<var, expression_ref>> decls;
 	for(int i=0;i<E2->size();i++)
 	{
-	    E2->sub[i] = graph_normalize(E.sub()[i]);
+	    E2->sub[i] = graph_normalize(source, E.sub()[i]);
 
 	    if (not is_reglike(E2->sub[i]))
 	    {
-		auto x = var( var_index++ );
+		auto x = source.get_fresh_var();
 
 		// 1. Let-bind the argument expression
 		decls.push_back( {x, E2->sub[i]} );
@@ -115,6 +113,11 @@ expression_ref graph_normalize(const expression_ref& E)
     throw myexception()<<"graph_normalize: I don't recognize expression '"+ E.print() + "'";
 }
 
+expression_ref graph_normalize(FreshVarState& state, const expression_ref& E)
+{
+    FreshVarSource source(state);
+    return graph_normalize(source, E);
+}
 
 // Deleted: Fun_normalize( ).  Perhaps reintroduce later.
 // Translate from language Basic to language Fun by introducing letrec expressions.  (arguments are already vars)
@@ -123,9 +126,9 @@ expression_ref graph_normalize(const expression_ref& E)
 
 
 
-closure graph_normalize(closure&& C)
+closure graph_normalize(FreshVarState& state, closure&& C)
 {
-    C.exp = graph_normalize(expression_ref(C.exp));
+    C.exp = graph_normalize(state, expression_ref(C.exp));
     return std::move(C);
 }
 
@@ -145,7 +148,7 @@ closure reg_heap::preprocess(const closure& C)
 {
     assert(C.exp);
     //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
-    return trim_normalize( indexify( graph_normalize( translate_refs( closure(C) ) ) ) );
+    return trim_normalize( indexify( graph_normalize( program->fresh_var_state(), translate_refs( closure(C) ) ) ) );
 }
 
 int reg_heap::reg_for_id(const string& name)

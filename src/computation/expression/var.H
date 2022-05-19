@@ -73,8 +73,6 @@ std::set<var> get_free_indices(const expression_ref& E);
 
 std::set<var> get_bound_indices(const expression_ref& E);
 
-int get_safe_binder_index(const expression_ref& E);
-
 namespace std
 {
     template <>

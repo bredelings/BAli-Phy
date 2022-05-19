@@ -726,7 +726,7 @@ public:
     reg_heap(const Program& P);
 };
 
-expression_ref graph_normalize(const expression_ref& R);
+expression_ref graph_normalize(FreshVarState&, const expression_ref& R);
 
 void write_dot_graph(const reg_heap& C, std::ostream& o);
 

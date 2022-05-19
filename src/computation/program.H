@@ -7,6 +7,7 @@
 #include <map>
 #include <memory>
 #include "computation/expression/expression_ref.H"
+#include "computation/fresh_vars.H"
 
 class module_loader;
 
@@ -24,6 +25,8 @@ class Program: public std::vector<Module>
 
     int count_module(const std::string& module_name) const;
 
+    mutable FreshVarState fresh_var_state_;
+
 public:
 
     enum class exe_type {standard, log_list, log_pair};
@@ -35,6 +38,8 @@ public:
           std::vector<Module>& modules();
 
     const std::vector<Module>& modules() const;
+
+    FreshVarState& fresh_var_state() const {return fresh_var_state_;}
 
     void add(const Module& M);
 

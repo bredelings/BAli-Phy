@@ -10,9 +10,9 @@
 
 class Module;
 
-expression_ref desugar(const Module& p, const expression_ref&);
-CDecls desugar(const Module& p, const Haskell::Decls&);
-CDecls desugar(const Module& p, const Haskell::Binds&);
+expression_ref desugar(const Module& p, FreshVarState&, const expression_ref&);
+CDecls desugar(const Module& p, FreshVarState&, const Haskell::Decls&);
+CDecls desugar(const Module& p, FreshVarState&, const Haskell::Binds&);
 
 struct failable_expression: public Object
 {
@@ -81,7 +81,7 @@ struct desugar_state: public FreshVarSource
     CDecls desugar_decls(const Haskell::Decls&);
     CDecls desugar_decls(const Haskell::Binds&);
 
-    desugar_state(const Module&);
+    desugar_state(const Module&, FreshVarState&);
 };
 
 #endif
