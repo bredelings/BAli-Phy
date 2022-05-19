@@ -2752,6 +2752,7 @@ reg_heap::reg_heap(const Program& P)
     :regs(1,[this](int s){resize(s);}, [this](){collect_garbage();} ),
      steps(1),
      program(new Program(P)),
+     fresh_var_state(program->fresh_var_state()),
      args(program->get_module_loader()->args),
      prog_steps(1,non_existant_index),
      prog_results(1, non_existant_index),

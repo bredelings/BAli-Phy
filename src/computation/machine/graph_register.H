@@ -396,6 +396,8 @@ public:
   
     std::shared_ptr<Program> program;
 
+    FreshVarState fresh_var_state;
+
     std::vector<std::string> args;
 
     /// Get the memory location (reg) for a given identifier (string)
