@@ -3,9 +3,10 @@
 
 #include "simplifier.H"
 #include "inliner.H"
+#include "computation/fresh_vars.H"
 
 
-class SimplifierState
+class SimplifierState: FreshVarSource
 {
     simplifier_options options;
 public:
@@ -37,7 +38,7 @@ public:
     std::vector<CDecls>
     simplify_module_one(const std::map<var, expression_ref>&, const std::set<var>&, const std::vector<CDecls>& decl_groups);
 
-    SimplifierState(const simplifier_options& opts);
+    SimplifierState(const simplifier_options& opts, FreshVarState& s);
 };
 
 #endif

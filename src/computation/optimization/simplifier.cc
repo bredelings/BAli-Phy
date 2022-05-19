@@ -889,7 +889,8 @@ SimplifierState::simplify_module_one(const map<var,expression_ref>& small_decls_
 }
 
 
-vector<CDecls> simplify_module_gently(const simplifier_options& options, const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
+vector<CDecls> simplify_module_gently(const simplifier_options& options, FreshVarState& fresh_var_state,
+                                      const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
                                       const vector<CDecls>& decl_groups_in)
 {
     simplifier_options options_gentle = options;
@@ -897,14 +898,15 @@ vector<CDecls> simplify_module_gently(const simplifier_options& options, const m
     options_gentle.inline_threshhold = -100;
 //    options_gentle.beta_reduction = false;  This breaks the inliner.  Should probably fix!
 
-    SimplifierState state(options_gentle);
+    SimplifierState state(options_gentle, fresh_var_state);
     return state.simplify_module_one(small_decls_in, small_decls_in_free_vars, decl_groups_in);
 }
 
-vector<CDecls> simplify_module(const simplifier_options& options, const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
+vector<CDecls> simplify_module(const simplifier_options& options, FreshVarState& fresh_var_state,
+                               const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
                                const vector<CDecls>& decl_groups_in)
 {
-    SimplifierState state(options);
+    SimplifierState state(options, fresh_var_state);
     auto decl_groups = decl_groups_in;
 
     for(int i = 0; i < options.max_iterations; i++)
@@ -916,7 +918,7 @@ vector<CDecls> simplify_module(const simplifier_options& options, const map<var,
 }
 
 
-SimplifierState::SimplifierState(const simplifier_options& opts)
-    :options(opts)
+SimplifierState::SimplifierState(const simplifier_options& opts, FreshVarState& state)
+    :FreshVarSource(state), options(opts)
 {
 }

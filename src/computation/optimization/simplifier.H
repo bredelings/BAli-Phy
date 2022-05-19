@@ -8,6 +8,8 @@
 #include "computation/expression/let.H"
 #include "computation/expression/var.H"
 
+#include "computation/fresh_vars.H"
+
 struct simplifier_options
 {
     bool typecheck = false;
@@ -62,7 +64,7 @@ expression_ref peel_n_lambdas1(const expression_ref& E, int n);
 
 bool is_trivial(const expression_ref& E);
 
-std::vector<CDecls> simplify_module_gently(const simplifier_options&, const std::map<var, expression_ref>&, const std::set<var>&, const std::vector<CDecls>& decl_groups);
-std::vector<CDecls> simplify_module(const simplifier_options&, const std::map<var, expression_ref>&, const std::set<var>&, const std::vector<CDecls>& decl_groups);
+std::vector<CDecls> simplify_module_gently(const simplifier_options&, FreshVarState&, const std::map<var, expression_ref>&, const std::set<var>&, const std::vector<CDecls>& decl_groups);
+std::vector<CDecls> simplify_module(const simplifier_options&, FreshVarState&, const std::map<var, expression_ref>&, const std::set<var>&, const std::vector<CDecls>& decl_groups);
 
 #endif
