@@ -49,9 +49,6 @@ int max_level(const level_env_t& env, const FreeVarSet& free_vars)
 
 struct let_floater_state: public FreshVarSource
 {
-//    const Module& m;
-    std::map<string,int> used_index_for_name;
-
     var new_unique_var(const var& x, int level);
     var new_unique_var(const string& name, int level);
 
