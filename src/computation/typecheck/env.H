@@ -54,6 +54,9 @@ typedef std::map<std::string, type_con_info> type_con_env;
 void add_no_overlap(type_con_env& e1, const type_con_env& e2);
 type_con_env plus_no_overlap(const type_con_env& e1, const type_con_env& e2);
 
+type_con_env& operator+=(type_con_env&, const type_con_env);
+type_con_env operator+(const type_con_env&, const type_con_env&);
+
 struct ClassInfo
 {
     std::string name;

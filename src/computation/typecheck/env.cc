@@ -84,6 +84,19 @@ type_con_env plus_no_overlap(const type_con_env& e1, const type_con_env& e2)
     return e3;
 }
 
+type_con_env& operator+=(type_con_env& tycons1, const type_con_env tycons2)
+{
+    add_no_overlap(tycons1, tycons2);
+    return tycons1;
+}
+
+type_con_env operator+(const type_con_env& tycons1, const type_con_env& tycons2)
+{
+    auto tycons3 = tycons1;
+    tycons3 += tycons2;
+    return tycons3;
+}
+
 std::set<Hs::TypeVar> free_type_variables(const value_env& env)
 {
     std::set<Hs::TypeVar> free;
