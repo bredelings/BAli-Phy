@@ -55,7 +55,7 @@ var make_var(const Hs::Var&);
 
 CDecls translate_decls_to_cdecls(const Haskell::Decls&);
 
-struct desugar_state: public fresh_vars
+struct desugar_state: public FreshVarSource
 {
     const Module& m;
 

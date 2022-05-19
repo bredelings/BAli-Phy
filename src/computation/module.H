@@ -13,6 +13,7 @@
 #include "computation/parser/haskell.H"
 #include "computation/typecheck/kind.H"
 #include "computation/optimization/simplifier.H"       // for simplifier options
+#include "computation/fresh_vars.H"
 
 constexpr auto unknown_fix = Haskell::Fixity::unknown;
 constexpr auto left_fix = Haskell::Fixity::infixl;
@@ -122,6 +123,8 @@ class Module
 
     bool optimized = false;
 
+    mutable FreshVarState fresh_var_state_;
+
 public:
 
     bool do_optimize = true;
@@ -151,6 +154,8 @@ public:
     std::set<std::string> dependencies() const;
 
     std::vector<module_import> imports() const;
+
+    FreshVarState& fresh_var_state() const {return fresh_var_state_;}
 
     const std::map<std::string, symbol_info>& exported_symbols() const {return exported_symbols_;}
 

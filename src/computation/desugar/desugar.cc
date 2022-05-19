@@ -35,7 +35,8 @@ using std::pair;
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 
 desugar_state::desugar_state(const Module& m_)
-    : m(m_)
+    : FreshVarSource(m_.fresh_var_state()),
+      m(m_)
 {}
 
 bool is_irrefutable_pat(const expression_ref& E)
