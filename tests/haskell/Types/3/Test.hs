@@ -64,11 +64,30 @@ instance Eq a => Eq [a] where
     []     == []     = True
     _      == _      = False
 
-instance Eq Int
-instance Show Int
-instance Num Int
+instance Eq Int where
+    x == y = True
 
-instance Enum Int
+instance Show Int where
+    show x = ""
+
+instance Num Int where
+    x + y = x
+    x - y = x
+    x * y = x
+    fromInteger x = x
+    abs x = x
+    negate x = x
+    signum x = 1
+
+instance Enum Int where
+    succ x = 0
+    pred x = 0
+    toEnum x = x
+    fromEnum x = x
+    enumFrom x = [x]
+    enumFromThen x y = [x]
+    enumFromTo x y = [x]
+    enumFromThenTo x y z = [x]
 
 plus x y = x + y
 

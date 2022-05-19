@@ -57,6 +57,8 @@ class Functor f => Applicative f where
 
 class Applicative m => Monad m where
     return :: a -> m a
+    return x = pure x
+
     (>>=) :: m a -> (a -> m b) -> m b
 
 class Num a => Fractional a where
@@ -72,8 +74,9 @@ class Eq a => Ord a where
     (<) :: a -> a -> Bool
     (>=) :: a -> a -> Bool
     (<=) :: a -> a -> Bool
+--    x < y  = not ( x >= y )
     x > y  = not ( x <= y )
-    x >= y = not (x < y)
+    x >= y = (x > y) || (x == y)
     x <= y = (x < y) || (x == y)
 
 instance Eq Bool where
@@ -82,21 +85,63 @@ instance Eq Bool where
     True == False = False
     False == True = False
 
-instance Eq Int
-instance Ord Int
-instance Show Int
-instance Read Int
-instance Num Int
+instance Eq Int where
+    x == y = True
 
-instance Enum Int
+instance Ord Int where
+    x < y = True
 
-instance Eq Double
-instance Ord Double
-instance Show Double
-instance Read Double
-instance Num Double
+instance Show Int where
+    show x = ""
 
-instance Fractional Double
+instance Read Int where
+    read x = 0
+
+instance Num Int where
+    x + y = x
+    x - y = x
+    x * y = x
+    fromInteger x = x
+    abs x = x
+    negate x = x
+    signum x = 1
+
+instance Enum Int where
+    succ x = 0
+    pred x = 0
+    toEnum x = x
+    fromEnum x = x
+    enumFrom x = [x]
+    enumFromThen x y = [x]
+    enumFromTo x y = [x]
+    enumFromThenTo x y z = [x]
+
+instance Eq Double where
+    x == y = True
+
+instance Ord Double where
+    x < y = True
+
+instance Show Double where
+    show x = ""
+
+instance Read Double where 
+    read x = 0
+
+instance Num Double where
+    x + y = x
+    x - y = x
+    x * y = x
+    fromInteger x = 0
+    abs x = x
+    negate x = x
+    signum x = 1
+
+instance Fractional Double where
+    x / y = 0
+
+--instance Fractional Double where
+--    x / y = 0
 
 instance Eq a => Eq [a] where
     (x:xs) == (y:ys) = (y == x) && (xs == ys)

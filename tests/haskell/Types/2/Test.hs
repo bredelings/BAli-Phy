@@ -54,13 +54,35 @@ instance Eq a => Eq [a] where
     []     == []     = True
     _      == _      = False
 
-instance Eq Int
-instance Show Int
-instance Num Int
+instance Eq Int where
+    x == y = True
 
-instance Eq Double
-instance Show Double
-instance Num Double
+instance Show Int where
+    show x = ""
+
+instance Num Int where
+    x + y = x
+    x - y = x
+    x * y = x
+    fromInteger x = x
+    abs x = x
+    negate x = x
+    signum x = 1
+
+instance Eq Double where
+    x == y = True
+
+instance Show Double where
+    show x = ""
+
+instance Num Double where
+    x + y = x
+    x - y = x
+    x * y = x
+    fromInteger x = 0
+    abs x = x
+    negate x = x
+    signum x = 1
 
 plus x y = x + y
 

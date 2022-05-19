@@ -58,9 +58,20 @@ instance Eq Bool where
 f x y = case x == y of True  -> x + y
                        False -> x - y
 
-instance Eq Int
-instance Show Int
-instance Num Int
+instance Eq Int where
+    x == y = True
+
+instance Show Int where
+    show x = ""
+
+instance Num Int where
+    x + y = x
+    x - y = x
+    x * y = x
+    fromInteger x = x
+    abs x = x
+    negate x = x
+    signum x = 1
 
 (a,b) = ('a',2)       
 [x,y] = [1,2]
