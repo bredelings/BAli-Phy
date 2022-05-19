@@ -1,6 +1,7 @@
 #ifndef SIMPLIFIER_STATE_H
 #define SIMPLIFIER_STATE_H
 
+#include <vector>
 #include "simplifier.H"
 #include "inliner.H"
 #include "computation/fresh_vars.H"
@@ -10,6 +11,12 @@ class SimplifierState: FreshVarSource
 {
     simplifier_options options;
 public:
+
+    var get_new_name(var x, const in_scope_set& bound_vars);
+
+    var rename_var(const expression_ref& Evar, simplifier::substitution& S, const in_scope_set& bound_vars);
+
+    var rename_and_bind_var(const expression_ref& Evar, simplifier::substitution& S, in_scope_set& bound_vars);
 
     bool small_enough(const expression_ref& rhs, const inline_context& context);
 
@@ -28,6 +35,8 @@ public:
 
     expression_ref
     rebuild_case(expression_ref object, const Run::Alts& alts, const simplifier::substitution& S, in_scope_set& bound_vars, const inline_context& context);
+
+    std::vector<var> get_body_function_names(in_scope_set& bound_vars, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& patterns2);
 
     expression_ref
     rebuild_let(const CDecls& decls, expression_ref E, const simplifier::substitution& S, in_scope_set& bound_vars, const inline_context& context);

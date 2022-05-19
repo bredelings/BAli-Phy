@@ -142,25 +142,19 @@ expression_ref SimplifierState::consider_inline(const expression_ref& E, in_scop
 	return rebuild(E, bound_vars, context);
 }
 
-var get_new_name(var x, const in_scope_set& bound_vars)
+var SimplifierState::get_new_name(var x, const in_scope_set& bound_vars)
 {
-    auto it = bound_vars.find(x);
+    if (bound_vars.count(x))
+    {
+        x = get_fresh_var_copy(x);
 
-    // If bound_vars doesn't contain x, then no need to change anything.
-    if (it == bound_vars.end()) return x;
+        assert(not bound_vars.count(x));
+    }
 
-    assert(not x.is_exported);
-
-    x.index = bound_vars.size();
-    while(bound_vars.count(x) and x.index > 0)
-	x.index++;
-    
-    if (x.index <= 0) abort();
-    
     return x;
 }
 
-var rename_var(const expression_ref& Evar, substitution& S, const in_scope_set& bound_vars)
+var SimplifierState::rename_var(const expression_ref& Evar, substitution& S, const in_scope_set& bound_vars)
 {
     var x = Evar.as_<var>();
     assert(x.code_dup != amount_t::Unknown);
@@ -182,7 +176,7 @@ var rename_var(const expression_ref& Evar, substitution& S, const in_scope_set& 
     return x2;
 }
 
-var rename_and_bind_var(const expression_ref& Evar, substitution& S, in_scope_set& bound_vars)
+var SimplifierState::rename_and_bind_var(const expression_ref& Evar, substitution& S, in_scope_set& bound_vars)
 {
     var x2 = rename_var(Evar, S, bound_vars);
 
@@ -227,7 +221,7 @@ void get_pattern_dummies(const expression_ref& pattern, set<var>& vars)
 
 
 // Get a list of patterns.size() names for let-bound variables that don't alias any bound vars  in patterns or patterns2
-vector<var> get_body_function_names(in_scope_set& bound_vars, const vector<expression_ref>& patterns, const vector<expression_ref>& patterns2)
+vector<var> SimplifierState::get_body_function_names(in_scope_set& bound_vars, const vector<expression_ref>& patterns, const vector<expression_ref>& patterns2)
 {
     vector<var> lifted_names;
 

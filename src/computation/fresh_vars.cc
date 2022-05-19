@@ -24,6 +24,17 @@ var FreshVarSource::get_fresh_var(const var& x)
     return get_fresh_var( x.name );
 }
 
+var FreshVarSource::get_fresh_var_copy(var x)
+{
+//    assert(x.index >= 0);
+    assert(not x.is_exported);
+    assert(x.index <= current_index());
+
+    x.index = get_index();
+
+    return x;
+}
+
 Hs::Var FreshVarSource::get_fresh_Var(const std::string& name) {
     string name2 = name + "@" + std::to_string( get_index() );
     return Hs::Var({noloc,name2});

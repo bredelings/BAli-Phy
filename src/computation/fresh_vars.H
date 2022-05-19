@@ -26,6 +26,7 @@ public:
 
     var get_fresh_var(const std::string& name);
     var get_fresh_var(const var& x);
+    var get_fresh_var_copy(var x);
     var get_fresh_var(const Hs::Var& x);
 
     Hs::Var get_fresh_Var(const std::string& name);
