@@ -901,12 +901,12 @@ CDecls Module::optimize(const simplifier_options& opts, CDecls cdecls, const map
         decl_groups = simplify_module_gently(opts, small_decls_in, small_decls_in_free_vars, decl_groups);
 
         if (opts.fully_lazy)
-            float_out_from_module(decl_groups);
+            float_out_from_module(fresh_var_state(), decl_groups);
 
         decl_groups = simplify_module(opts, small_decls_in, small_decls_in_free_vars, decl_groups);
 
         if (opts.fully_lazy)
-            float_out_from_module(decl_groups);
+            float_out_from_module(fresh_var_state(), decl_groups);
 
         cdecls = flatten(decl_groups);
     }

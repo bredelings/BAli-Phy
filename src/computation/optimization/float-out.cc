@@ -301,9 +301,9 @@ float_lets(expression_ref& E, int level)
     std::abort();
 }
 
-void float_out_from_module(vector<CDecls>& module)
+void float_out_from_module(FreshVarState& fresh_var_state, vector<CDecls>& module)
 {
-    set_level_for_module(module);
+    set_level_for_module(fresh_var_state, module);
 
     for(auto& decl_group: module)
     {

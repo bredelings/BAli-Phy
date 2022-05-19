@@ -47,7 +47,7 @@ int max_level(const level_env_t& env, const FreeVarSet& free_vars)
     return level;
 }
 
-struct let_floater_state
+struct let_floater_state: public FreshVarSource
 {
 //    const Module& m;
     std::map<string,int> used_index_for_name;
@@ -60,33 +60,22 @@ struct let_floater_state
 
     level_env_t set_level_decl_group(CDecls& decls, const level_env_t& env);
 
-//    let_floater_state(const Module& m_):m(m_) {}
+    let_floater_state(FreshVarState& s):FreshVarSource(s) {}
 };
 
 var let_floater_state::new_unique_var(const var& x, int level)
 {
-    assert(not x.is_exported);
-    return new_unique_var(x.name, level);
+    auto x2 = get_fresh_var(x);
+    x2.level = level;
+    return x2;
 }
 
 
 var let_floater_state::new_unique_var(const string& name, int level)
 {
-    assert(not is_haskell_builtin_con_name(name));
-    // qualified names are actually allowed here, as long as they are not exported.
-
-    int index = 1;
-    auto iter = used_index_for_name.find(name);
-    if (iter == used_index_for_name.end())
-        used_index_for_name.insert({name,index});
-    else
-    {
-        iter->second++;
-        index = iter->second;
-    }
-    auto x2 = var(name,index);
-    x2.level = level;
-    return x2;
+    auto x = get_fresh_var(name);
+    x.level = level;
+    return x;
 }
 
 var strip_level(var x)
@@ -311,11 +300,11 @@ expression_ref let_floater_state::set_level_maybe_MFE(const expression_ref& AE, 
         return set_level(AE, level, env);
 }
 
-void set_level_for_module(vector<CDecls>& module)
+void set_level_for_module(FreshVarState& fresh_var_state, vector<CDecls>& module)
 {
     vector<CDecls> module_out;
 
-    let_floater_state state;
+    let_floater_state state(fresh_var_state);
     level_env_t env;
     for(auto& decls: module)
     {
