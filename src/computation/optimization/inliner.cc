@@ -16,6 +16,8 @@
 #include "simplifier.H"
 #include "util/assert.hh"
 
+#include "simplifier_state.H"
+
 using std::string;
 using std::vector;
 using std::pair;
@@ -214,7 +216,7 @@ bool boring(const expression_ref& rhs, const inline_context& context)
     return true;
 }
 
-bool small_enough(const simplifier_options& options,const expression_ref& rhs, const inline_context& context)
+bool SimplifierState::small_enough(const expression_ref& rhs, const inline_context& context)
 {
     double body_size = simple_size(rhs);
 
@@ -225,13 +227,13 @@ bool small_enough(const simplifier_options& options,const expression_ref& rhs, c
     return (body_size - size_of_call - options.keenness*discounts <= options.inline_threshhold);
 }
 
-bool do_inline_multi(const simplifier_options& options, const expression_ref& rhs, const inline_context& context)
+bool SimplifierState::do_inline_multi(const expression_ref& rhs, const inline_context& context)
 {
     if (no_size_increase(rhs,context)) return true;
 
     if (boring(rhs,context)) return false;
 
-    return small_enough(options, rhs,context);
+    return small_enough(rhs, context);
 }
 
 bool evaluates_to_bottom(const expression_ref& /* rhs */)
@@ -244,7 +246,7 @@ bool whnf_or_bottom(const expression_ref& rhs)
     return is_WHNF(rhs) or evaluates_to_bottom(rhs);
 }
 
-bool do_inline(const simplifier_options& options, const expression_ref& rhs, const occurrence_info& occur, const inline_context& context)
+bool SimplifierState::do_inline(const expression_ref& rhs, const occurrence_info& occur, const inline_context& context)
 {
     // LoopBreaker
     if (occur.is_loop_breaker)
@@ -269,7 +271,7 @@ bool do_inline(const simplifier_options& options, const expression_ref& rhs, con
 
     // MultiSafe
     else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Many)
-	return do_inline_multi(options, rhs, context);
+	return do_inline_multi(rhs, context);
 
     // OnceUnsafe
     else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Once)
@@ -281,7 +283,7 @@ bool do_inline(const simplifier_options& options, const expression_ref& rhs, con
 
     // MultiUnsafe
     else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Many)
-	return whnf_or_bottom(rhs) and do_inline_multi(options, rhs, context);
+	return whnf_or_bottom(rhs) and do_inline_multi(rhs, context);
 
     std::abort();
 }

@@ -13,9 +13,11 @@
 #include "computation/expression/indexify.H"
 #include "computation/expression/constructor.H"
 #include "occurrence.H"
-#include "inliner.H"
 
 #include "simplifier.H"
+#include "inliner.H"
+#include "simplifier_state.H"
+
 #include "util/assert.hh"
 
 using namespace simplifier;
@@ -39,7 +41,6 @@ using std::map;
 
 using std::cerr;
 using std::endl;
-
 
 int get_n_lambdas1(const expression_ref& E)
 {
@@ -125,11 +126,8 @@ void unbind_decls(in_scope_set& bound_vars, const vector<CDecls>& decl_groups)
 	unbind_decls(bound_vars, decls);
 }
 
-expression_ref simplify(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context);
-expression_ref rebuild(const simplifier_options& options, const expression_ref& E, in_scope_set& bound_vars, const inline_context& context);
-
 // Do we have to explicitly skip loop breakers here?
-expression_ref consider_inline(const simplifier_options& options, const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::consider_inline(const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
 {
     var x = E.as_<var>();
 
@@ -138,10 +136,10 @@ expression_ref consider_inline(const simplifier_options& options, const expressi
 //    std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
     
     // 1. If there's a binding x = E, and E = y for some variable y
-    if (binding.first and do_inline(options, binding.first, binding.second, context))
-	return simplify(options, binding.first, {}, bound_vars, context);
+    if (binding.first and do_inline(binding.first, binding.second, context))
+	return simplify(binding.first, {}, bound_vars, context);
     else
-	return rebuild(options, E, bound_vars, context);
+	return rebuild(E, bound_vars, context);
 }
 
 var get_new_name(var x, const in_scope_set& bound_vars)
@@ -327,7 +325,7 @@ bool is_constant_case(const vector<expression_ref>& patterns, const vector<expre
 }
 
 // case E of alts.  Here E has been simplified, but the alts have not.
-expression_ref rebuild_case(const simplifier_options& options, expression_ref object, const Run::Alts& alts, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::Alts& alts, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
     vector<expression_ref> patterns;
     vector<expression_ref> bodies;
@@ -343,7 +341,7 @@ expression_ref rebuild_case(const simplifier_options& options, expression_ref ob
     if (is_constant_case(patterns,bodies))
     {
         // We can ignore any let bindings inside the object, since we don't depend on the object.
-	return simplify(options, bodies[0], S, bound_vars, context);
+	return simplify(bodies[0], S, bound_vars, context);
     }
 
     auto decls = strip_multi_let(object);
@@ -358,7 +356,7 @@ expression_ref rebuild_case(const simplifier_options& options, expression_ref ob
 	    if (is_var(patterns[i]))
 	    {
 		assert(is_wildcard(patterns[i]));
-		E2 = simplify(options, bodies[i], S, bound_vars, context);
+		E2 = simplify(bodies[i], S, bound_vars, context);
 	    }
 	    else if (patterns[i].head() == object.head())
 	    {
@@ -385,7 +383,7 @@ expression_ref rebuild_case(const simplifier_options& options, expression_ref ob
 			S2.insert({x,obj_var});
 		    }
 		}
-		E2 = simplify(options, bodies[i], S2, bound_vars, context);
+		E2 = simplify(bodies[i], S2, bound_vars, context);
 	    }
 	}
 	if (not E2)
@@ -441,7 +439,7 @@ expression_ref rebuild_case(const simplifier_options& options, expression_ref ob
 	}
 
 	// 4. Simplify the alternative body
-	bodies[i] = simplify(options, bodies[i], S2, bound_vars, make_ok_context());
+	bodies[i] = simplify(bodies[i], S2, bound_vars, make_ok_context());
 
 	// 5. Restore informatation about an object variable to information outside this case branch.
 	if (is_var(object))
@@ -508,18 +506,18 @@ expression_ref rebuild_case(const simplifier_options& options, expression_ref ob
 
     unbind_decls(bound_vars, decls);
 
-    E2 = rebuild(options, E2, bound_vars, context);
+    E2 = rebuild(E2, bound_vars, context);
 
     return let_expression(decls, E2);
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
-expression_ref rebuild_let(const simplifier_options& options, const CDecls& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::rebuild_let(const CDecls& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
     // If the decl is empty, then we don't have to do anythign special here.
     bind_decls(bound_vars, decls);
 
-    E = simplify(options, E, S, bound_vars, context);
+    E = simplify(E, S, bound_vars, context);
 
     unbind_decls(bound_vars, decls);
 
@@ -529,7 +527,7 @@ expression_ref rebuild_let(const simplifier_options& options, const CDecls& decl
 // FIXME - Until we can know that decls are non-recursive, we can't simplify an Decls into more than one Decls - we have to merge them.
 
 substitution
-simplify_decls(const simplifier_options& options, CDecls& orig_decls, const substitution& S, in_scope_set& bound_vars, bool is_top_level)
+SimplifierState::simplify_decls(CDecls& orig_decls, const substitution& S, in_scope_set& bound_vars, bool is_top_level)
 {
     auto S2 = S;
 
@@ -599,7 +597,7 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
 	    */
 
 	    // 5.1.2 Simplify F.
-	    F = simplify(options, F, S2, bound_vars, make_ok_context());
+	    F = simplify(F, S2, bound_vars, make_ok_context());
 
 	    // Should we also float lambdas in addition to constructors?  We could apply them if so...
 
@@ -681,18 +679,18 @@ expression_ref maybe_eta_reduce2(const expression_ref& E)
     }
 }
 
-expression_ref rebuild(const simplifier_options& options, const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::rebuild(const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
 {
     if (auto cc = context.is_case_context())
     {
-        return rebuild_case(options, E, cc->alts, cc->subst, bound_vars, cc->next);
+        return rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next);
     }
     else if (auto ac = context.is_apply_context())
     {
         // FIXME: Should we lift let's out of E here?
 
-        auto x = simplify(options, ac->arg, ac->subst, bound_vars, make_stop_context());
-        return rebuild(options, {E,x}, bound_vars, ac->next);
+        auto x = simplify(ac->arg, ac->subst, bound_vars, make_stop_context());
+        return rebuild({E,x}, bound_vars, ac->next);
     }
     else
         return E;
@@ -701,7 +699,7 @@ expression_ref rebuild(const simplifier_options& options, const expression_ref& 
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
-expression_ref simplify(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
     assert(E);
 
@@ -715,10 +713,10 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	    auto it = S.find(x);
 	    // 1.1.1 If x -> SuspEx E S, then call the simplifier on E with its substitution S
 	    if (it->second.S)
-		return simplify(options, it->second.E, *(it->second.S), bound_vars, context);
+		return simplify(it->second.E, *(it->second.S), bound_vars, context);
 	    // 1.1.2 If x -> DoneEx E, then call the simplifier on E but with no substitution.
 	    else
-		return simplify(options, it->second.E, {}, bound_vars, context);
+		return simplify(it->second.E, {}, bound_vars, context);
 	}
 	// 1.2 If there's no substitution determine whether to inline at call site.
 	else
@@ -726,7 +724,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	    if (not bound_vars.count(x))
 		throw myexception()<<"Variable '"<<x.print()<<"' not bound!";
 
-	    return consider_inline(options, E, bound_vars, context);
+	    return consider_inline(E, bound_vars, context);
 	}
     }
 
@@ -743,7 +741,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	// {
 	    // Simplifying the body in (\x -> let {y=x} in f y y) can result in f x x even if x is originally only used once.
 	    // Since maybe_eta_reduce( ) uses occurrence info to check that x is only used once, we have to do this *before* we simplify E (below).
-            // return simplify(options, E2, S, bound_vars, context);
+            // return simplify(E2, S, bound_vars, context);
         // }
 
 	auto Evar = E.sub()[0];
@@ -754,17 +752,17 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
         if (auto ac = context.is_apply_context())
         {
             auto x = Evar.as_<var>();
-            auto arg = simplify(options, ac->arg, ac->subst, bound_vars, make_stop_context());
+            auto arg = simplify(ac->arg, ac->subst, bound_vars, make_stop_context());
             if (x.pre_inline() and options.pre_inline_unconditionally)
             {
                 S2.erase(x);
                 S2.insert({x,arg});
-                return simplify(options, Ebody, S2, bound_vars, ac->next);
+                return simplify(Ebody, S2, bound_vars, ac->next);
             }
             else
             {
                 auto x2 = rename_var(Evar, S2, bound_vars);
-                return rebuild_let(options,{{x2,arg}}, Ebody, S2, bound_vars, ac->next);
+                return rebuild_let({{x2,arg}}, Ebody, S2, bound_vars, ac->next);
             }
         }
 
@@ -772,7 +770,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	var x2 = rename_and_bind_var(Evar, S2, bound_vars);
 
 	// 2.3 Simplify the body with x added to the bound set.
-	auto new_body = simplify(options, Ebody, S2, bound_vars, make_ok_context());
+	auto new_body = simplify(Ebody, S2, bound_vars, make_ok_context());
 
 	// 2.4 Remove x2 from the bound set.
 	unbind_var(bound_vars,x2);
@@ -785,7 +783,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
         //     depend on x here, so this SHOULD be safe...
         E2 = maybe_eta_reduce2( E2 );
 
-        return rebuild(options, E2, bound_vars, context);
+        return rebuild(E2, bound_vars, context);
     }
 
     // 6. Case
@@ -794,7 +792,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	// Simplfy the object
         auto object = E.sub()[0];
 
-	return simplify(options, object, S, bound_vars, make_case_context(E, S, context));
+	return simplify(object, S, bound_vars, make_case_context(E, S, context));
     }
 
     // ?. Apply
@@ -803,7 +801,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
         // Simplify the function
         auto f = E.sub()[0];
 
-	return simplify(options, f, S, bound_vars, make_apply_context(E, S, context));
+	return simplify(f, S, bound_vars, make_apply_context(E, S, context));
     }
 
     // 5. Let (let {x[i] = F[i]} in body)
@@ -814,17 +812,17 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     {
         auto L = E.as_<let_exp>();
 
-	auto S2 = simplify_decls(options, L.binds, S, bound_vars, false);
+	auto S2 = simplify_decls(L.binds, S, bound_vars, false);
 
         // 5.2 Simplify the let-body
-	return rebuild_let(options, L.binds, L.body, S2, bound_vars, context);
+	return rebuild_let(L.binds, L.body, S2, bound_vars, context);
     }
 
      // Do we need something to handle WHNF variables?
 
     // 5. (partial) Literal constant.  Treat as 0-arg constructor.
     else if (not E.size())
-        return rebuild(options, E, bound_vars, context);
+        return rebuild(E, bound_vars, context);
 
     // 4. Constructor or Operation
     else if (is_constructor_exp(E) or is_non_apply_op_exp(E))
@@ -833,9 +831,9 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	for(int i=0;i<E.size();i++)
 	{
 	    assert(is_trivial(E2->sub[i]));
-	    E2->sub[i] = simplify(options, E2->sub[i], S, bound_vars, make_stop_context());
+	    E2->sub[i] = simplify(E2->sub[i], S, bound_vars, make_stop_context());
 	}
-	return rebuild(options, E2, bound_vars, context);
+	return rebuild(E2, bound_vars, context);
     }
 
     std::abort();
@@ -854,8 +852,9 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
  */
 
 
-vector<CDecls> simplify_module_one(const simplifier_options& options, const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
-                                   const vector<CDecls>& decl_groups_in)
+vector<CDecls>
+SimplifierState::simplify_module_one(const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
+                                     const vector<CDecls>& decl_groups_in)
 {
     set<var> free_vars;
 
@@ -881,7 +880,7 @@ vector<CDecls> simplify_module_one(const simplifier_options& options, const map<
     vector<substitution> S(1);
     for(auto& decls: decl_groups)
     {
-	auto s = simplify_decls(options, decls, S.back(), bound_vars, true);
+	auto s = simplify_decls(decls, S.back(), bound_vars, true);
 	S.push_back( s );
 	bind_decls(bound_vars, decls);
     }
@@ -895,21 +894,29 @@ vector<CDecls> simplify_module_gently(const simplifier_options& options, const m
 {
     simplifier_options options_gentle = options;
     options_gentle.case_of_case = false;
-//    options_gentle.beta_reduction = false;  This breaks the inliner.  Should probably fix!
-    options_gentle.max_iterations = 1;
     options_gentle.inline_threshhold = -100;
-    return simplify_module(options_gentle, small_decls_in, small_decls_in_free_vars, decl_groups_in);
+//    options_gentle.beta_reduction = false;  This breaks the inliner.  Should probably fix!
+
+    SimplifierState state(options_gentle);
+    return state.simplify_module_one(small_decls_in, small_decls_in_free_vars, decl_groups_in);
 }
 
 vector<CDecls> simplify_module(const simplifier_options& options, const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
                                const vector<CDecls>& decl_groups_in)
 {
+    SimplifierState state(options);
     auto decl_groups = decl_groups_in;
 
     for(int i = 0; i < options.max_iterations; i++)
     {
-        decl_groups = simplify_module_one(options, small_decls_in, small_decls_in_free_vars, decl_groups);
+        decl_groups = state.simplify_module_one(small_decls_in, small_decls_in_free_vars, decl_groups);
     }
 
     return decl_groups;
+}
+
+
+SimplifierState::SimplifierState(const simplifier_options& opts)
+    :options(opts)
+{
 }

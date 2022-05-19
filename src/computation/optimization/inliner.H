@@ -86,8 +86,6 @@ std::shared_ptr<const apply_context> make_apply_context_one_arg(const inline_con
 std::shared_ptr<const apply_context> make_apply_context(const expression_ref E, const simplifier::substitution& S, inline_context context);
 std::shared_ptr<const case_context> make_case_context(const expression_ref E, const simplifier::substitution& S, const inline_context& context);
 
-bool do_inline(const simplifier_options& options, const expression_ref& rhs, const occurrence_info& occur, const inline_context& context);
-
 int simple_size(const expression_ref& E);
 
 #endif
