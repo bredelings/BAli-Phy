@@ -72,6 +72,11 @@ using std::tuple;
   * Handle different defaults for each entry of a GenBind by recording impedance matching info on BindInfo
 
   TODO:
+  0. Exporting and importing types and instances between modules:
+     - Some things have symbols -- we can add the type or kind to the symbol in the symbol table.
+     - This includes classes, methods, data types, constructors, type synonyms, etc.
+     - The small_decls won't have symbols though...  maybe we need annotated type info for that?
+     - How do you export instances?
   1. Reject unification of variables, tycons, etc with different kinds.
      - Ensure that all ForallType binders have kinds.
      - Assign kinds to all TypeCons.... OR look it up in the symbol table when we need to!
@@ -91,16 +96,11 @@ using std::tuple;
      - Need to pass type/dict arguments in correct order for (forall a. C1 a => forall b. C2 b => a -> b -> a)
      - Instantiated type would otherwise be treated as (forall a b. (C1 a, C2 b) => a -> b -> a)
      - For defaulted defaulted types and defaulted dictionaries.
-  7. Check that constraints in instance contexts satisfy the "paterson conditions"
-  8. Handle export subspecs Datatype(constructor...) and Class(method...)
-  9. AST nodes for type and evidence bindings?
-  10. Exporting and importing types and instances between modules:
-     - Some things have symbols -- we can add the type or kind to the symbol in the symbol table.
-     - This includes classes, methods, data types, constructors, type synonyms, etc.
-     - The small_decls won't have symbols though...  maybe we need annotated type info for that?
-     - How do you export instances?
-  11. Factor generalization code out of typecheck/binds.cc
-  12. Check that there are no cycles in the class hierarchy.
+  6. Check that constraints in instance contexts satisfy the "paterson conditions"
+  7. Handle export subspecs Datatype(constructor...) and Class(method...)
+  8. AST nodes for type and evidence bindings?
+  9. Factor generalization code out of typecheck/binds.cc
+  10. Check that there are no cycles in the class hierarchy.
 
   11. Annotate let, lambda, and case binders with variable's type.
   12. Should we make AST for: 
