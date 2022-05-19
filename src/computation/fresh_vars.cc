@@ -17,8 +17,10 @@ var FreshVarSource::get_fresh_var(const std::string& name)
 
 var FreshVarSource::get_fresh_var(const var& x)
 {
+//    assert(x.index >= 0);
     assert(not x.is_exported);
     assert(x.index <= current_index());
+
     return get_fresh_var( x.name );
 }
 
@@ -29,6 +31,7 @@ Hs::Var FreshVarSource::get_fresh_Var(const std::string& name) {
 
 Hs::Var FreshVarSource::get_fresh_Var(const var& x)
 {
+//    assert(x.index >= 0);
     assert(not x.is_exported);
     assert(x.index <= current_index());
 
