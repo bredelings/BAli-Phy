@@ -122,6 +122,24 @@ using std::tuple;
       Int or Double constants.  I guess we need an Eq Char, or Eq [Char] dictionary for
       characters or strings?
 
+  Optimization:
+  - If we have ((case x of alts) y z), should we sink the arguments?
+    This could expose a case-of-case, for example.
+
+  - If we have ((case x of alts) y z), can we float out the case?
+    It seems that we are not doing so...
+
+  - See note [ClassOp/DFun selection] in Tc/TyCl/Instance.hs
+    + We often see op2 (df d1 d2)
+    + dfuns (df) and class ops (op2) NEVER inline
+    + always define dfuns in stylized form: df d1 d2 = MkD ($cop d1 d2) ($cop2 d1 d2) ...
+    + df inlines to the magical form DFunUnfolding [$cop1, $cop2, ...]
+    + Use GHC.Core.Unfold.exprIsConApp_maybe inlines DFunUnfoldings? ... how?
+    + Each class op has a BuiltinRule that extracts the right piece whenever the argument is a ConApp..
+    + Make 'df' "CONLIKE" so that shared uses still match:
+      let d = df d1 d2
+      in ...(op2 d) ... (op1 d) ...
+
   Questions:
   1. How do we handle predicates that make it to the top level?
     - If they are tautological, we can remove them and infer the dictionary.
