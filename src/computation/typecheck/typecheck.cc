@@ -796,9 +796,13 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     //
     // 4. Should imports/export only affect what NAMES are in scope, or also things like the instance environment?
 
-    // TCE_T = type con info, part1
-    auto tce = get_tycon_info( M.type_decls );
-    for(auto& [tycon,ka]: tce)
+
+    // 1. Find the kind and arity of type constructors declared in this module ( TCE_T = type con info, part1 )
+    type_con_env tce;
+    auto new_tycons = get_tycon_info( tce, M.type_decls );
+    tce += new_tycons;
+
+    for(auto& [tycon,ka]: new_tycons)
     {
         auto& [k,arity] = ka;
         std::cerr<<tycon<<" :: "<<k.print()<<"\n";
@@ -806,7 +810,8 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     M.type_decls = add_type_var_kinds(M.type_decls, tce);
     std::cerr<<"\n";
 
-    // CVE_T = constructor types :: map<string, polytype> = global_value_env
+
+    // 2. Get types for value constructors  (CVE_T = constructor types)
     auto constr_info = get_constructor_info(M.type_decls, tce);
 
     for(auto& [con,type]: constr_info)
@@ -815,7 +820,7 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     }
     std::cerr<<"\n";
 
-    //   CE_C  = class name -> class info
+    // 3. Get types/values for class method selectors and superclass selectors (CE_C  = class name -> class info)
     typechecker_state state( name, *this, M, tce, constr_info );
 
     auto class_binds = state.infer_type_for_classes(M.type_decls);
