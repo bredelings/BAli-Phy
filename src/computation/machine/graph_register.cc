@@ -2700,15 +2700,15 @@ int reg_heap::get_modifiable_value_in_context(int R, int c)
     return call_for_reg(R);
 }
 
-int reg_heap::add_identifier(const string& name)
+int reg_heap::add_identifier(const var& x)
 {
     // if there's already an 's', then complain
-    if (identifiers.count(name))
-        throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
+    if (identifiers.count(x))
+        throw myexception()<<"Cannot add identifier '"<<x<<"': there is already an identifier with that name.";
 
     int R = allocate();
 
-    identifiers[name] = R;
+    identifiers[x] = R;
     return R;
 }
 
@@ -2722,18 +2722,18 @@ void reg_heap::allocate_identifiers_for_program()
 {
     // 1. Give each identifier a pointer to an unused location; define parameter bodies.
     for(auto& M: *program)
-        for(const auto& [name, _]: M.code_defs())
-            add_identifier(name);
+        for(const auto& [x, _]: M.code_defs())
+            add_identifier(x);
 
     // Since the body for any identifier could reference the body for any other, we have to
     // allocate locations for all identifiers before we preprocess the bodies for any.
 
     // 2. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
     for(auto& M: *program)
-        for(const auto& [name, body]: M.code_defs())
+        for(const auto& [x, body]: M.code_defs())
         {
             // get the root for each identifier
-            auto loc = identifiers.find(name);
+            auto loc = identifiers.find(x);
             assert(loc != identifiers.end());
             int R = loc->second;
 

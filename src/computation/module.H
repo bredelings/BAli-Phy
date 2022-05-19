@@ -225,7 +225,7 @@ public:
 
     std::pair< std::map<var,expression_ref>, std::set<var> > export_small_decls(const CDecls&, const std::map< var, expression_ref>& );
 
-    std::map<std::string,expression_ref> code_defs() const;
+    std::map<var,expression_ref> code_defs() const;
 
     CDecls optimize(const simplifier_options&, FreshVarState&, CDecls, const std::map<var, expression_ref>&, const std::set<var>&);
 

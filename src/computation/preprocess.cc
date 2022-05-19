@@ -150,19 +150,22 @@ closure reg_heap::preprocess(const closure& C)
     return trim_normalize( indexify( graph_normalize( fresh_var_state, translate_refs( closure(C) ) ) ) );
 }
 
-int reg_heap::reg_for_id(const string& name)
+int reg_heap::reg_for_id(const var& x)
 {
+    auto& name = x.name;
     assert(is_qualified_symbol(name) or is_haskell_builtin_con_name(name));
-    auto loc = identifiers.find( name );
+    auto loc = identifiers.find( x );
     if (loc == identifiers.end())
     {
 	if (is_haskell_builtin_con_name(name))
 	{
+            assert(x.index == 0);
+
 	    auto [sym,code] = Module::lookup_builtin_symbol(name);
-	    add_identifier(sym.name);
+	    add_identifier(x);
 
 	    // get the root for each identifier
-	    loc = identifiers.find(sym.name);
+	    loc = identifiers.find(x);
 	    assert(loc != identifiers.end());
 
 	    int R = loc->second;
@@ -171,7 +174,7 @@ int reg_heap::reg_for_id(const string& name)
 	    set_C(R, preprocess(code) );
 	}
 	else
-	    throw myexception()<<"Can't translate undefined identifier '"<<name<<"' in expression!";
+	    throw myexception()<<"Can't translate undefined identifier '"<<x<<"' in expression!";
     }
 
     return loc->second;
@@ -184,13 +187,11 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
     // Replace dummies that are either qualified ids, or builtin constructor names
     if (is_qualified_var(E))
     {
-	auto& name = E.as_<var>().name;
-	reg = reg_for_id(name);
+	reg = reg_for_id( E.as_<var>() );
     }
     else if (E.is_a<var>() and is_haskell_builtin_con_name(E.as_<var>().name))
     {
-	auto& name = E.as_<var>().name;
-	reg = reg_for_id(name);
+	reg = reg_for_id( E.as_<var>() );
     }
 
     // Replace parameters with the appropriate reg_var: of value whatever

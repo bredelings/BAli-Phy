@@ -558,9 +558,9 @@ void Module::perform_exports()
     }
 }
 
-map<string,expression_ref> Module::code_defs() const
+map<var,expression_ref> Module::code_defs() const
 {
-    map<string, expression_ref> code;
+    map<var, expression_ref> code;
 
     for(const auto& [x,rhs]: value_decls)
     {
@@ -571,7 +571,7 @@ map<string,expression_ref> Module::code_defs() const
             // get the body for the  decl
             assert(rhs);
 
-            code[x.name] = rhs;
+            code[x] = rhs;
         }
     }
 

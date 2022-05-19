@@ -336,27 +336,27 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
     return launchbury_unnormalize(names[R]);
 }
 
-map<int,string> get_register_names(const map<string, int>& ids, bool allow_compiler_vars=true)
+map<int,string> get_register_names(const map<var, int>& ids, bool allow_compiler_vars=true)
 {
     map<int,string> ids2;
-    for(const auto& [name, r]:ids)
+    for(const auto& [x, r]:ids)
     {
         if (not allow_compiler_vars)
         {
-            auto uname = get_unqualified_name(name);
+            auto uname = get_unqualified_name(x.name);
             if (uname.size() > 1 and (uname[0] == '$' or uname[0] == '#'))
                 continue;
         }
-	ids2[r] = name;
+	ids2[r] = x.print();
     }
     return ids2;
 }
 
-set<string> get_names(const map<string, int>& ids)
+set<string> get_names(const map<var, int>& ids)
 {
     set<string> names;
-    for(const auto& i:ids)
-	names.insert(i.first);
+    for(const auto& [x,_]:ids)
+	names.insert( x.print() );
     return names;
 }
 
@@ -401,7 +401,7 @@ map<int,string> get_constants(const reg_heap& C, int t)
     return constants;
 }
 
-expression_ref untranslate_vars(const expression_ref& E, const map<string, int>& ids)
+expression_ref untranslate_vars(const expression_ref& E, const map<var, int>& ids)
 {
     return untranslate_vars(E, get_register_names(ids));
 }
