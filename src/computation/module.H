@@ -117,6 +117,9 @@ class Module
 
     std::map<std::string, type_info> exported_types_;
 
+    // Doesn't this kind of duplicate the types table?
+    // type_con_env tycons;
+
     std::set<std::string> language_options;
 
     bool resolved = false;
@@ -135,10 +138,12 @@ public:
 
     std::map<var,expression_ref> small_decls_in;
 
+    // When the simplifier becomes type-aware, then change to global_value_env
     std::set<var> small_decls_in_free_vars;
 
     std::map<var,expression_ref> small_decls_out;
 
+    // When the simplifier becomes type-aware, then change to global_value_env
     std::set<var> small_decls_out_free_vars;
 
     std::string name;
