@@ -18,6 +18,15 @@ string Alt::print() const
     return pattern.print() + " -> " + body.print();
 }
 
+bool Alt::operator==(const Alt& a) const
+{
+    return pattern == a.pattern and body == a.body;
+}
+
+bool Alt::operator!=(const Alt& a) const
+{
+    return not operator==(a);
+}
 
 string Alts::print() const
 {
@@ -28,7 +37,34 @@ string Alts::print() const
     return "{" + join(as,"; ") + "}";
 }
 
+bool Alts::operator==(const Object& o) const
+{
+    const Alts* As = dynamic_cast<const Alts*>(&o);
+
+    if (not As)
+        return false;
+
+    return (*this) == *As;
 }
+
+bool Alts::operator==(const Alts& as) const
+{
+    if (size() != as.size()) return false;
+
+    for(int i=0;i<size();i++)
+        if ((*this)[i] != as[i])
+            return false;
+
+    return true;
+}
+
+bool Alts::operator!=(const Alts& as) const
+{
+    return not operator==(as);
+}
+
+
+} // end namespace Run
 
 void parse_alts(const Run::Alts& alts, vector<expression_ref>& patterns, vector<expression_ref>& bodies)
 {
