@@ -1,2 +1,2 @@
-size = 1   Test.$v#1 = 10
-size = 0   Test.f = \#1 -> Test.$v#1
+size = 1   Test.$v#8093 = 10
+size = 0   Test.f = \#8092 -> Test.$v#8093

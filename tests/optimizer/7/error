@@ -1,2 +1,2 @@
-size = 0   Test.f = Test.g#1
-size = 0   Test.g#1 = Test.g#1
+size = 0   Test.f = Test.g#8104
+size = 0   Test.g#8104 = Test.g#8104
