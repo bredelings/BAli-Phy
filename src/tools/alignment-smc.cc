@@ -116,6 +116,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("help,h", "produce help message")
         ("align", value<string>(),"file with sequences and initial alignment")
         ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
+        ("erase-empty-columns,e","Remove columns with no characters (all gaps).")
 
         ("minor-allele",value<int>(),"Keep columns with minor-allele count >= <arg>")
         ("missing-freq",value<double>()->default_value(1.0),"Keep columns with missing frequency >= <arg>")
@@ -1496,7 +1497,10 @@ int main(int argc,char* argv[])
         }
 
         //----------- Load alignment ---------//
-        alignment A0 = load_A(args,false);
+        bool erase_empty = false;
+        if (args.count("erase-empty-columns"))
+            erase_empty = true;
+        alignment A0 = load_A(args, false, erase_empty);
 
         auto A = A0;
         const alphabet& a = A.get_alphabet();
