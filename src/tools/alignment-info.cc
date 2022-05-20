@@ -113,6 +113,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("align", value<string>(),"file with sequences and initial alignment")
 	("tree",value<string>(),"file with initial tree")
 	("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
+        ("erase-empty-columns,e","Remove columns with no characters (all gaps).")
 	("show-names,N","Print the sequence-names and exit")
 	("show-lengths,L","Print the sequence-lengths and exit")
 	;
@@ -327,7 +328,10 @@ int main(int argc,char* argv[])
 	    exit(0);
 	}
 
-	alignment A = load_alignment(sequences, a_name);
+        bool erase_empty = false;
+        if (args.count("erase-empty-columns"))
+            erase_empty = true;
+	alignment A = load_alignment(sequences, a_name, erase_empty);
 	SequenceTree T;
 	if (args.count("tree"))
 	{
