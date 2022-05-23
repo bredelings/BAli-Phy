@@ -700,7 +700,7 @@ Hs::Kind result_kind_for_type_vars(vector<Hs::TypeVar>& type_vars, Hs::Kind k)
     return k;
 }
 
-Hs::Decls add_type_var_kinds(Hs::Decls type_decls, const type_con_env& tce)
+Hs::Decls typechecker_state::add_type_var_kinds(Hs::Decls type_decls)
 {
     for(auto& type_decl: type_decls)
     {
@@ -765,12 +765,12 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
         auto& [k,arity] = ka;
         std::cerr<<tycon<<" :: "<<k.print()<<"\n";
     }
-    M.type_decls = add_type_var_kinds(M.type_decls, tce);
     std::cerr<<"\n";
 
+    typechecker_state state( fvs, name, *this, M, tce);
+    M.type_decls = state.add_type_var_kinds( M.type_decls );
 
     // 2. Get types for value constructors  (CVE_T = constructor types)
-    typechecker_state state( fvs, name, *this, M, tce);
     state.get_constructor_info(M.type_decls);
 
     // 3. Get types/values for class method selectors and superclass selectors (CE_C  = class name -> class info)
