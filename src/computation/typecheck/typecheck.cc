@@ -375,10 +375,9 @@ void typechecker_state::pop_and_add_lie()
     current_lie() += lie;
 }
 
-typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const Module& m, const Hs::ModuleDecls& M, const type_con_env& tce_, const constr_env& ce)
+typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const Module& m, const Hs::ModuleDecls& M, const type_con_env& tce_)
     :FreshVarSource(fvs, s),
      tce(tce_),
-     con_info(ce),
      this_mod(m)
 {
     push_lie();
@@ -662,10 +661,8 @@ Hs::Type remove_top_level_foralls(Hs::Type t)
     return t;
 }
 
-constr_env get_constructor_info(const Hs::Decls& decls, const type_con_env& tce)
+void typechecker_state::get_constructor_info(const Hs::Decls& decls, const type_con_env& tce)
 {
-    constr_env cve;
-
     kindchecker_state ks(tce);
 
     for(auto& decl: decls)
@@ -675,10 +672,8 @@ constr_env get_constructor_info(const Hs::Decls& decls, const type_con_env& tce)
 
         auto constr_map = ks.type_check_data_type(*d);
         for(auto& [name, type]: constr_map)
-            cve = cve.insert({name,type});
+            con_info = con_info.insert({name,type});
     }
-
-    return cve;
 }
 
 Hs::Kind result_kind_for_type_vars(vector<Hs::TypeVar>& type_vars, Hs::Kind k)
@@ -769,16 +764,16 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
 
 
     // 2. Get types for value constructors  (CVE_T = constructor types)
-    auto constr_info = get_constructor_info(M.type_decls, tce);
+    typechecker_state state( fvs, name, *this, M, tce);
+    state.get_constructor_info(M.type_decls, tce);
 
-    for(auto& [con,type]: constr_info)
+    for(auto& [con,type]: state.con_info)
     {
         std::cerr<<con<<" :: "<<type.print()<<"\n";
     }
     std::cerr<<"\n";
 
     // 3. Get types/values for class method selectors and superclass selectors (CE_C  = class name -> class info)
-    typechecker_state state( fvs, name, *this, M, tce, constr_info );
 
     auto class_binds = state.infer_type_for_classes(M.type_decls);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env

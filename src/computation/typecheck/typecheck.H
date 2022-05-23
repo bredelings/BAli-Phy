@@ -48,6 +48,7 @@ struct typechecker_state: FreshVarSource
 
     std::vector<local_instance_env> lie_stack;
 
+    //------- Functions handling the LIE ---------
     local_instance_env& current_lie();
 
     void add_dvar(const std::string& name, const Hs::Type& constraint);
@@ -63,6 +64,9 @@ struct typechecker_state: FreshVarSource
     local_instance_env pop_lie();
 
     void pop_and_add_lie();
+    // ------ End: Functions handling the LIE ---
+
+    void get_constructor_info(const Hs::Decls& decls, const type_con_env& tce);
 
     Hs::Var find_prelude_var(std::string name) const;
 
@@ -224,7 +228,7 @@ struct typechecker_state: FreshVarSource
     std::pair<Hs::Binds, local_instance_env> reduce(const local_instance_env& lie_in);
     Hs::Binds reduce_current_lie();
 
-    typechecker_state(FreshVarState& fvs, const std::string& s, const Module& m, const Hs::ModuleDecls& M, const type_con_env& tce_, const constr_env& ce);
+    typechecker_state(FreshVarState& fvs, const std::string& s, const Module& m, const Hs::ModuleDecls& M, const type_con_env& tce_);
 };
 
 template <typename T>
