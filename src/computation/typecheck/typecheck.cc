@@ -72,6 +72,11 @@ using std::tuple;
   * Handle different defaults for each entry of a GenBind by recording impedance matching info on BindInfo
 
   TODO:
+  0. We need to export some synthesized vars:
+     - default_methods.  Their names are in class_env[class].default_methods.at(method_name)
+     - superclass extractors. Their names are in class_env[class].fields[i].first
+     - dictionary functions.  Their names are in... gie?
+     - (maybe) instance methods.  Their names are in ...?
   0. Exporting and importing types and instances between modules:
      - Some things have symbols -- we can add the type or kind to the symbol in the symbol table.
      - This includes classes, methods, data types, constructors, type synonyms, etc.
@@ -284,6 +289,7 @@ void typechecker_state::get_tycon_info(const Hs::Decls& type_decls)
 
         new_tycons += new_tycons_for_group;
 
+        // Later groups could refer to tycons from this group
         tce += new_tycons_for_group;
     }
 
