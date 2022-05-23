@@ -39,6 +39,7 @@ using std::multiset;
 using std::string;
 using std::vector;
 using std::tuple;
+using std::shared_ptr;
 
 symbol_info::symbol_info(const std::string& s, symbol_type_t st, const optional<string>& p, int a)
     :name(s), symbol_type(st), parent(p), arity(a)
@@ -847,13 +848,39 @@ vector<expression_ref> peel_lambdas(expression_ref& E)
     return args;
 }
 
-void mark_exported_decls(CDecls& decls, const map<string,symbol_info>& exports, const string& module_name)
+void mark_exported_decls(CDecls& decls,
+                         const shared_ptr<typechecker_state>& tc_state,
+                         const map<string,symbol_info>& exports,
+                         const string& module_name)
 {
     // Record exports
     set<string> exported;
-    for(auto& ex: exports)
-        if (get_module_name(ex.second.name) == module_name)
-            exported.insert(ex.second.name);
+    for(auto& [name,symbol]: exports)
+        if (get_module_name(symbol.name) == module_name)
+            exported.insert(symbol.name);
+
+    // Mark some generated functions as exported
+    if (tc_state)
+    {
+        // Instances are exported
+        for(auto& [name,_]: tc_state->instance_env)
+            exported.insert(name);
+
+        for(auto& [cname,cinfo]: tc_state->class_env)
+        {
+            // Superclass extractors are exported
+            int N = cinfo.fields.size() - cinfo.members.size();
+            for(int i=0;i<N;i++)
+            {
+                auto& [e_name, type] = cinfo.fields[i];
+                exported.insert(e_name);
+            }
+
+            // Default methods are exported
+            for(auto& [method, dm]: cinfo.default_methods)
+                exported.insert(unloc(dm.name));
+        }
+    }
 
     // Mark exported vars as exported
     for(auto& [x,_]: decls)
@@ -894,7 +921,7 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
 
     if (opts.optimize)
     {
-        mark_exported_decls(cdecls, exported_symbols(), name);
+        mark_exported_decls(cdecls, tc_state, exported_symbols(), name);
 
         vector<CDecls> decl_groups = {cdecls};
 
