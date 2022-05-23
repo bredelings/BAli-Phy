@@ -161,6 +161,18 @@ Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
         binds.push_back(class_decls);
     }
 
+    // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
+
+//     std::cerr<<"GVE (classes):\n";
+//    for(auto& [method,type]: gve)
+//    {
+//        std::cerr<<method<<" :: "<<type.print()<<"\n";
+//    }
+//    std::cerr<<"\n";
+
+//    std::cerr<<binds.print()<<"\n";
+//    std::cerr<<"\n";
+
     return binds;
 }
 

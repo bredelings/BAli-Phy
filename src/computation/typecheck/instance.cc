@@ -27,6 +27,11 @@ Hs::Decls typechecker_state::infer_type_for_default_methods(const Hs::ClassDecl&
             auto [decl2, name, sig_type] = infer_type_for_single_fundecl_with_sig(gve, FD);
             decls_out.push_back(decl2);
         }
+
+//    std::cerr<<"Default method ops:\n";
+//    std::cerr<<decls_out.print();
+//    std::cerr<<"\n\n";
+
     return decls_out;
 }
 
@@ -151,6 +156,13 @@ typechecker_state::infer_type_for_instances1(const Hs::Decls& decls)
             gie_inst = gie_inst.insert({unloc(dfun.name), inst_type});
         }
     }
+
+//    std::cerr<<"GIE:\n";
+//    for(auto& [method,type]: gie_inst)
+//    {
+//        std::cerr<<method<<" :: "<<type.print()<<"\n";
+//    }
+//    std::cerr<<"\n";
 
     gie += gie_inst;
 
@@ -322,6 +334,10 @@ typechecker_state::infer_type_for_instances2(const vector<pair<Hs::Var, Hs::Inst
         for(auto& d: decls_)
             out_decls.push_back(d);
     }
+//    std::cerr<<"\nInstance ops and dfuns:\n";
+//    std::cerr<<out_decls.print();
+//    std::cerr<<"\n\n";
+
     return out_decls;
 }
 

@@ -785,52 +785,29 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     // 1. Find the kind and arity of type constructors declared in this module ( TCE_T = type con info, part1 )
     state.get_tycon_info( M.type_decls );
 
+    // 2. Annotate tyvars in types with their kind.
     M.type_decls = state.add_type_var_kinds( M.type_decls );
 
-    // 2. Get types for value constructors  (CVE_T = constructor types)
+    // 3. Get types for value constructors  (CVE_T = constructor types)
     state.get_constructor_info(M.type_decls);
 
-    // 3. Get types/values for class method selectors and superclass selectors (CE_C  = class name -> class info)
+    // 4. Get types and values for class method selectors and superclass selectors (CE_C  = class name -> class info)
     auto class_binds = state.infer_type_for_classes(M.type_decls);
-    // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 
-    std::cerr<<"GVE (classes):\n";
-    for(auto& [method,type]: state.gve)
-    {
-        std::cerr<<method<<" :: "<<type.print()<<"\n";
-    }
-    std::cerr<<"\n";
-
-    std::cerr<<class_binds.print()<<"\n";
-    std::cerr<<"\n";
-
-    // Instances, pass1
+    // 5. Get types and names for instances (pass 1)
     auto named_instances = state.infer_type_for_instances1(M.type_decls);
 
-    std::cerr<<"GIE:\n";
-    for(auto& [method,type]: state.gie)
-    {
-        std::cerr<<method<<" :: "<<type.print()<<"\n";
-    }
-    std::cerr<<"\n";
-
-    // 3. E' = (TCE_T, (CVE_T, GVE_C, LVE={}), CE_C, (GIE_C, LIE={}))
-
-    // Value decls
+    // 6. Typecheck value decls
     auto [value_decls, env] = state.infer_type_for_binds(state.gve, M.value_decls);
     state.gve += env;
     M.value_decls = value_decls;
 
-    // Default methods
+    // 7. Typecheck default methods
     auto default_method_decls = state.infer_type_for_default_methods(M.type_decls);
     for(auto& dm_decl: default_method_decls)
         M.value_decls.push_back(dm_decl);
 
-    std::cerr<<"Default method ops:\n";
-    std::cerr<<default_method_decls.print();
-    std::cerr<<"\n\n";
-
-    // Instances, pass2
+    // 8. Typecheck instance methods and generate dfuns (pass 2)
     auto inst_decls = state.infer_type_for_instances2(named_instances);
     M.value_decls.push_back(inst_decls);
 
