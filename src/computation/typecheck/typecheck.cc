@@ -804,14 +804,13 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     state.get_constructor_info(M.type_decls);
 
     // 4. Get types and values for class method selectors and superclass selectors (CE_C  = class name -> class info)
-    auto class_binds = state.infer_type_for_classes(M.type_decls);
+    state.infer_type_for_classes(M.type_decls);
 
     // 5. Get types and names for instances (pass 1)
     auto named_instances = state.infer_type_for_instances1(M.type_decls);
 
     // 6. Typecheck value decls
-    auto [typechecked_value_decls, env] = state.infer_type_for_binds(state.gve, M.value_decls);
-    state.gve += env;
+    state.infer_type_for_binds_top(M.value_decls);
 
     // 7. Typecheck default methods
     auto default_method_decls = state.infer_type_for_default_methods(M.type_decls);
@@ -822,11 +821,11 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     // 9. Default top-level ambiguous type vars.
     auto default_binds = state.simplify_and_default_top_level();
 
-    M.value_decls = typechecked_value_decls;
+    M.value_decls = state.value_decls;
     ranges::insert(M.value_decls, M.value_decls.end(), default_method_decls);
     ranges::insert(M.value_decls, M.value_decls.end(), inst_decls);
     ranges::insert(M.value_decls, M.value_decls.begin(), default_binds);
-    ranges::insert(M.value_decls, M.value_decls.begin(), class_binds);
+    ranges::insert(M.value_decls, M.value_decls.begin(), state.class_binds);
 
     std::cerr<<"All decls:\n";
     std::cerr<<M.value_decls.print();

@@ -30,6 +30,8 @@ global_value_env sig_env(const signature_env& signatures);
 
 struct typechecker_state: FreshVarSource
 {
+    const Module& this_mod; // for name lookups like Bool, Num, etc.
+
     type_con_env tce;
 
     constr_env con_info;
@@ -42,11 +44,21 @@ struct typechecker_state: FreshVarSource
 
     std::vector<Hs::Type> defaults;
 
-    const Module& this_mod; // for name lookups like Bool, Num, etc.
-
     substitution_t type_var_to_type;
 
     std::vector<local_instance_env> lie_stack;
+
+    // separate gie into superclass-selector and dfuns?
+
+    Hs::Binds class_binds;
+
+    Hs::Binds value_decls;
+
+    Hs::Binds default_method_decls;
+
+    Hs::Binds instance_decls;
+
+    Hs::Binds default_binds;
 
     //------- Functions handling the LIE ---------
     local_instance_env& current_lie();
@@ -177,8 +189,9 @@ struct typechecker_state: FreshVarSource
     std::tuple<Hs::Binds, global_value_env>
     infer_type_for_binds(const global_value_env& env, Hs::Binds binds);
 
-    Hs::Binds
-    infer_type_for_classes(const Hs::Decls& decls);
+    void infer_type_for_binds_top(const Hs::Binds& binds);
+
+    void infer_type_for_classes(const Hs::Decls& decls);
 
     std::tuple<global_value_env,global_instance_env, ClassInfo,Hs::Decls>
     infer_type_for_class(const Hs::ClassDecl& class_decl);

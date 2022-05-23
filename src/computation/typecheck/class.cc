@@ -143,10 +143,8 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     return {gve,gie,class_info,decls};
 }
 
-Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
+void typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
 {
-    Hs::Binds binds;
-
     for(auto& decl: decls)
     {
         auto c = decl.to<Hs::ClassDecl>();
@@ -158,7 +156,7 @@ Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
         gie += gie1;
         class_env.insert({class_info.name, class_info});
 
-        binds.push_back(class_decls);
+        class_binds.push_back(class_decls);
     }
 
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
@@ -170,9 +168,7 @@ Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
 //    }
 //    std::cerr<<"\n";
 
-//    std::cerr<<binds.print()<<"\n";
+//    std::cerr<<class_binds.print()<<"\n";
 //    std::cerr<<"\n";
-
-    return binds;
 }
 
