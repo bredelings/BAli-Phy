@@ -162,6 +162,14 @@ Hs::Binds typechecker_state::simplify_and_default_top_level()
 
     gve = apply_current_subst(gve);
 
+//    std::cerr<<"GVE (all after defaulting):\n";
+//    for(auto& [x,t]: state.gve)
+//    {
+//        std::cerr<<x<<" :: "<<alphabetize_type(t)<<"\n";
+//        std::cerr<<x<<" = "<<e<<"\n\n\n";
+//    }
+//    std::cerr<<"\n";
+
     ranges::insert(binds, binds.begin(), simpl_binds);
     return binds;
 }

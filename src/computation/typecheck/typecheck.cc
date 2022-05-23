@@ -828,14 +828,6 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     ranges::insert(M.value_decls, M.value_decls.begin(), default_binds);
     ranges::insert(M.value_decls, M.value_decls.begin(), class_binds);
 
-    std::cerr<<"GVE (all after defaulting):\n";
-    for(auto& [x,t]: state.gve)
-    {
-        std::cerr<<x<<" :: "<<alphabetize_type(t)<<"\n";
-//        std::cerr<<x<<" = "<<e<<"\n\n\n";
-    }
-    std::cerr<<"\n";
-
     std::cerr<<"All decls:\n";
     std::cerr<<M.value_decls.print();
     std::cerr<<"\n\n";
