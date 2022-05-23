@@ -856,15 +856,15 @@ void mark_exported_decls(CDecls& decls, const map<string,symbol_info>& exports, 
             exported.insert(ex.second.name);
 
     // Mark exported vars as exported
-    for(auto& decl: decls)
+    for(auto& [x,_]: decls)
     {
-        if (exported.count(decl.first.name))
+        if (exported.count(x.name))
         {
-            decl.first.is_exported = true;
-            exported.erase(decl.first.name);
+            x.is_exported = true;
+            exported.erase(x.name);
         }
         else
-            decl.first.is_exported = false;
+            x.is_exported = false;
     }
 
     // Check that we don't export things that don't exist
