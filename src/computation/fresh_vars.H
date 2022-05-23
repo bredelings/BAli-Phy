@@ -3,9 +3,10 @@
 
 #include <vector>
 #include <string>
+#include <optional>
 
 #include "computation/expression/var.H" // for var
-#include "computation/parser/haskell.H" // for Hs::Var
+#include "computation/parser/haskell.H" // for Hs::Var, Hs::TypeVar
 
 class FreshVarState
 {
@@ -20,6 +21,7 @@ public:
 class FreshVarSource
 {
     FreshVarState& state;
+    std::optional<std::string> mod_name;
 
 public:
     var get_fresh_var();
@@ -29,13 +31,26 @@ public:
     var get_fresh_var_copy(var x);
     var get_fresh_var(const Hs::Var& x);
 
-    Hs::Var get_fresh_Var(const std::string& name);
-    Hs::Var get_fresh_Var(const var& x);
+    std::string qualified_name(const std::string&) const;
+    Hs::Var get_fresh_Var(const std::string& name, bool qualified);
+    Hs::Var get_fresh_Var(const var& x, bool qualified);
+
+    Hs::TypeVar get_fresh_type_var(const std::string&, bool meta, const Hs::Kind&);
+
+    // "Rigid" type vars come from forall-quantified variables.
+    // "Wobbly" type vars come from existentially-quantified variables (I think).  We don't have any.
+    // "Meta" type vars are unification type vars.
+    Hs::TypeVar fresh_rigid_type_var(const Hs::Kind& k);
+
+    Hs::TypeVar fresh_meta_type_var(const Hs::Kind& k);
+
+    Hs::TypeVar fresh_type_var(bool meta, const Hs::Kind& k);
 
     int current_index() const;
     int get_index();
 
     FreshVarSource(FreshVarState& s);
+    FreshVarSource(FreshVarState& s, const std::string& mn);
 };
 
 var make_var(const Hs::Var& v);

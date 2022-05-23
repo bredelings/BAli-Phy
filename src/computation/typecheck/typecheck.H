@@ -28,12 +28,8 @@ typedef std::map<std::string, Hs::Type> signature_env;
 
 global_value_env sig_env(const signature_env& signatures);
 
-struct typechecker_state
+struct typechecker_state: FreshVarSource
 {
-    int next_var_index = 1;
-
-    int next_tvar_index = 1;
-
     type_con_env tce;
 
     constr_env con_info;
@@ -55,8 +51,6 @@ struct typechecker_state
     std::vector<local_instance_env> lie_stack;
 
     local_instance_env& current_lie();
-
-    std::string qualified_name(const std::string& name) const;
 
     void add_dvar(const std::string& name, const Hs::Type& constraint);
 
@@ -113,15 +107,6 @@ struct typechecker_state
     std::pair<Hs::Type, std::vector<Hs::Type>> constr_types(const Hs::Con&);
 
     Hs::Var fresh_var(const std::string& s, bool qualified);
-
-    // "Rigid" type vars come from forall-quantified variables.
-    // "Wobbly" type vars come from existentially-quantified variables (I think).  We don't have any.
-    // "Meta" type vars are unification type vars.
-    Hs::TypeVar fresh_rigid_type_var(const Hs::Kind& k);
-
-    Hs::TypeVar fresh_meta_type_var(const Hs::Kind& k);
-
-    Hs::TypeVar fresh_type_var(bool meta, const Hs::Kind& k);
 
     std::optional<std::tuple<substitution_t, Hs::Binds>>
     candidates(const Hs::TypeVar& tv, const local_instance_env& tv_lie);
@@ -243,7 +228,7 @@ struct typechecker_state
     std::pair<Hs::Binds, local_instance_env> reduce(const local_instance_env& lie_in);
     Hs::Binds reduce_current_lie();
 
-    typechecker_state(const std::string& s, const Module& m, const Hs::ModuleDecls& M, const type_con_env& tce_, const constr_env& ce);
+    typechecker_state(FreshVarState& fvs, const std::string& s, const Module& m, const Hs::ModuleDecls& M, const type_con_env& tce_, const constr_env& ce);
 };
 
 template <typename T>

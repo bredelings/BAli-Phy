@@ -383,7 +383,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                 else
                 {
                     // let {ok bindpat = L; ok _ = []} in concatMap ok PQ->exp
-                    auto ok = get_fresh_Var("ok");
+                    auto ok = get_fresh_Var("ok", false);
                     expression_ref fail = Hs::List({});
                     auto rule1 = Hs::MRule{ {PQ->bindpat},           Hs::SimpleRHS({noloc, L})        };
                     auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc, fail})     };
@@ -462,7 +462,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             else
             {
                 // let {ok bindpat = do_stmts; ok _ = fail} in e >>= ok
-                auto ok = get_fresh_Var("ok");
+                auto ok = get_fresh_Var("ok", false);
                 expression_ref fail = {var("Compiler.Base.fail"),"Fail!"};
                 auto rule1 = Hs::MRule{ {PQ.bindpat},            Hs::SimpleRHS({noloc,do_stmts}) };
                 auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc,fail})     };

@@ -414,7 +414,7 @@ void Module::compile(const Program& P)
     if (opts.typecheck)
     {
         std::cerr<<"-------- module "<<name<<"--------\n";
-        M = typecheck(M);
+        M = typecheck(P.fresh_var_state(), M);
     }
 
     // Updates exported_symols_ + exported_types_

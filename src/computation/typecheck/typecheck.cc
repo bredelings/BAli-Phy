@@ -269,12 +269,6 @@ using std::tuple;
 // LVE = local  value environment      = var -> monotype
 
 
-string typechecker_state::qualified_name(const string& uname) const
-{
-    assert(not is_qualified_symbol(uname));
-    return mod_name + "." + uname;
-}
-
 // The GIE does NOT allow free type variables.
 struct instance_info
 {
@@ -381,8 +375,9 @@ void typechecker_state::pop_and_add_lie()
     current_lie() += lie;
 }
 
-typechecker_state::typechecker_state(const string& s, const Module& m, const Hs::ModuleDecls& M, const type_con_env& tce_, const constr_env& ce)
-    :tce(tce_),
+typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const Module& m, const Hs::ModuleDecls& M, const type_con_env& tce_, const constr_env& ce)
+    :FreshVarSource(fvs, s),
+     tce(tce_),
      con_info(ce),
      mod_name(s),
      this_mod(m)
@@ -512,39 +507,7 @@ void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2, const myex
 
 Hs::Var typechecker_state::fresh_var(const std::string& s, bool qualified)
 {
-    string name = get_unqualified_name(s) + "@"+std::to_string(next_var_index);
-    if (qualified)
-        name = qualified_name(name);
-    Hs::Var x({noloc, name});
-    next_var_index++;
-    return x;
-}
-
-// "Rigid" type vars come from forall-quantified variables.
-// "Wobbly" type vars come from existentially-quantified variables (I think).  We don't have any.
-// "Meta" type vars are unification type vars.
-Hs::TypeVar typechecker_state::fresh_rigid_type_var(const Hs::Kind& k) {
-    Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
-    next_tvar_index++;
-    tv.info = Hs::typevar_info::rigid;
-    tv.kind = k;
-    return tv;
-}
-
-Hs::TypeVar typechecker_state::fresh_meta_type_var(const Hs::Kind& k) {
-    Hs::TypeVar tv({noloc, "t"+std::to_string(next_tvar_index)});
-    next_tvar_index++;
-    tv.info = Hs::typevar_info::meta;
-    tv.kind = k;
-    return tv;
-}
-
-Hs::TypeVar typechecker_state::fresh_type_var(bool meta, const Hs::Kind& k)
-{
-    if (meta)
-        return fresh_meta_type_var(k);
-    else
-        return fresh_rigid_type_var(k);
+    return get_fresh_Var(s, qualified);
 }
 
 set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
@@ -772,7 +735,7 @@ Hs::Decls add_type_var_kinds(Hs::Decls type_decls, const type_con_env& tce)
     return type_decls;
 }
 
-Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
+Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
     //    OK, so datatypes produce a
@@ -821,7 +784,7 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     std::cerr<<"\n";
 
     // 3. Get types/values for class method selectors and superclass selectors (CE_C  = class name -> class info)
-    typechecker_state state( name, *this, M, tce, constr_info );
+    typechecker_state state( fvs, name, *this, M, tce, constr_info );
 
     auto class_binds = state.infer_type_for_classes(M.type_decls);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
