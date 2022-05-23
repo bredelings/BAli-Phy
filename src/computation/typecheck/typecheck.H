@@ -120,7 +120,7 @@ struct typechecker_state: FreshVarSource
                    const std::set<Hs::TypeVar>& referenced_tvs,
                    const local_instance_env& lie);
 
-    Hs::Binds default_subst();
+    Hs::Binds simplify_and_default_top_level();
 
     std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> instantiate(const Hs::Type& t, bool meta=true);
 

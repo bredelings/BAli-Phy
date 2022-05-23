@@ -146,8 +146,10 @@ typechecker_state::default_preds( const set<Hs::TypeVar>& fixed_tvs,
     return {s, binds, unambiguous_preds};
 }
 
-Hs::Binds typechecker_state::default_subst()
+Hs::Binds typechecker_state::simplify_and_default_top_level()
 {
+    auto simpl_binds = reduce_current_lie();
+
     auto [s, binds, unambiguous_preds] = default_preds({}, {}, current_lie());
     assert(unambiguous_preds.empty());
 
@@ -158,6 +160,9 @@ Hs::Binds typechecker_state::default_subst()
     // Clear the LIE, which should now be empty.
     current_lie() = {};
 
+    gve = apply_current_subst(gve);
+
+    ranges::insert(binds, binds.begin(), simpl_binds);
     return binds;
 }
 

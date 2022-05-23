@@ -819,18 +819,13 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     // 8. Typecheck instance methods and generate dfuns (pass 2)
     auto inst_decls = state.infer_type_for_instances2(named_instances);
 
-    // 9. Simplify top-level constraints.
-    auto simpl_binds = state.reduce_current_lie();
-
     // 10. Default top-level ambiguous type vars.
-    auto default_binds = state.default_subst();
-    state.gve = state.apply_current_subst(state.gve);
+    auto default_binds = state.simplify_and_default_top_level();
 
     M.value_decls = typechecked_value_decls;
     for(auto& dm_decl: default_method_decls)
         M.value_decls.push_back(dm_decl);
     M.value_decls.push_back(inst_decls);
-    ranges::insert(M.value_decls, M.value_decls.begin(), simpl_binds);
     ranges::insert(M.value_decls, M.value_decls.begin(), default_binds);
     ranges::insert(M.value_decls, M.value_decls.begin(), class_binds);
 
