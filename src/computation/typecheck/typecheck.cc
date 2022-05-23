@@ -379,7 +379,6 @@ typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const 
     :FreshVarSource(fvs, s),
      tce(tce_),
      con_info(ce),
-     mod_name(s),
      this_mod(m)
 {
     push_lie();

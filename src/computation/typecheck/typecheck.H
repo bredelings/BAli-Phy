@@ -42,8 +42,6 @@ struct typechecker_state: FreshVarSource
 
     std::vector<Hs::Type> defaults;
 
-    std::string mod_name;
-
     const Module& this_mod; // for name lookups like Bool, Num, etc.
 
     substitution_t type_var_to_type;
