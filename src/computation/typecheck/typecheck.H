@@ -66,7 +66,7 @@ struct typechecker_state: FreshVarSource
     void pop_and_add_lie();
     // ------ End: Functions handling the LIE ---
 
-    void get_constructor_info(const Hs::Decls& decls, const type_con_env& tce);
+    void get_constructor_info(const Hs::Decls& decls);
 
     Hs::Var find_prelude_var(std::string name) const;
 

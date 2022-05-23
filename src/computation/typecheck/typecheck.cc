@@ -661,7 +661,7 @@ Hs::Type remove_top_level_foralls(Hs::Type t)
     return t;
 }
 
-void typechecker_state::get_constructor_info(const Hs::Decls& decls, const type_con_env& tce)
+void typechecker_state::get_constructor_info(const Hs::Decls& decls)
 {
     kindchecker_state ks(tce);
 
@@ -674,6 +674,12 @@ void typechecker_state::get_constructor_info(const Hs::Decls& decls, const type_
         for(auto& [name, type]: constr_map)
             con_info = con_info.insert({name,type});
     }
+
+//     for(auto& [con,type]: con_info)
+//     {
+//         std::cerr<<con<<" :: "<<type.print()<<"\n";
+//     }
+//     std::cerr<<"\n";
 }
 
 Hs::Kind result_kind_for_type_vars(vector<Hs::TypeVar>& type_vars, Hs::Kind k)
@@ -765,16 +771,9 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
 
     // 2. Get types for value constructors  (CVE_T = constructor types)
     typechecker_state state( fvs, name, *this, M, tce);
-    state.get_constructor_info(M.type_decls, tce);
-
-    for(auto& [con,type]: state.con_info)
-    {
-        std::cerr<<con<<" :: "<<type.print()<<"\n";
-    }
-    std::cerr<<"\n";
+    state.get_constructor_info(M.type_decls);
 
     // 3. Get types/values for class method selectors and superclass selectors (CE_C  = class name -> class info)
-
     auto class_binds = state.infer_type_for_classes(M.type_decls);
     // GVE_C = {method -> type map} :: map<string, polytype> = global_value_env
 
