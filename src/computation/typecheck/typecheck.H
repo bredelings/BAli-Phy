@@ -58,7 +58,7 @@ struct typechecker_state: FreshVarSource
 
     Hs::Binds instance_decls;
 
-    Hs::Binds default_binds;
+    Hs::Binds top_simplify_binds;
 
     //------- Functions handling the LIE ---------
     local_instance_env& current_lie();
@@ -132,7 +132,7 @@ struct typechecker_state: FreshVarSource
                    const std::set<Hs::TypeVar>& referenced_tvs,
                    const local_instance_env& lie);
 
-    Hs::Binds simplify_and_default_top_level();
+    void simplify_and_default_top_level();
 
     std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> instantiate(const Hs::Type& t, bool meta=true);
 

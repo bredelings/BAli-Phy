@@ -819,12 +819,12 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     state.infer_type_for_instances2(named_instances);
 
     // 9. Default top-level ambiguous type vars.
-    auto default_binds = state.simplify_and_default_top_level();
+    state.simplify_and_default_top_level();
 
     M.value_decls = state.value_decls;
     ranges::insert(M.value_decls, M.value_decls.end(), state.default_method_decls);
     ranges::insert(M.value_decls, M.value_decls.end(), state.instance_decls);
-    ranges::insert(M.value_decls, M.value_decls.begin(), default_binds);
+    ranges::insert(M.value_decls, M.value_decls.begin(), state.top_simplify_binds);
     ranges::insert(M.value_decls, M.value_decls.begin(), state.class_binds);
 
     std::cerr<<"All decls:\n";
