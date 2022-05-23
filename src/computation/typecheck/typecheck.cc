@@ -810,27 +810,28 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     auto named_instances = state.infer_type_for_instances1(M.type_decls);
 
     // 6. Typecheck value decls
-    auto [value_decls, env] = state.infer_type_for_binds(state.gve, M.value_decls);
+    auto [typechecked_value_decls, env] = state.infer_type_for_binds(state.gve, M.value_decls);
     state.gve += env;
-    M.value_decls = value_decls;
 
     // 7. Typecheck default methods
     auto default_method_decls = state.infer_type_for_default_methods(M.type_decls);
-    for(auto& dm_decl: default_method_decls)
-        M.value_decls.push_back(dm_decl);
 
     // 8. Typecheck instance methods and generate dfuns (pass 2)
     auto inst_decls = state.infer_type_for_instances2(named_instances);
-    M.value_decls.push_back(inst_decls);
 
+    // 9. Simplify top-level constraints.
     auto simpl_binds = state.reduce_current_lie();
-    ranges::insert(M.value_decls, M.value_decls.begin(), simpl_binds);
 
+    // 10. Default top-level ambiguous type vars.
     auto default_binds = state.default_subst();
     state.gve = state.apply_current_subst(state.gve);
-    ranges::insert(M.value_decls, M.value_decls.begin(), default_binds);
 
-    // Insert class_defs
+    M.value_decls = typechecked_value_decls;
+    for(auto& dm_decl: default_method_decls)
+        M.value_decls.push_back(dm_decl);
+    M.value_decls.push_back(inst_decls);
+    ranges::insert(M.value_decls, M.value_decls.begin(), simpl_binds);
+    ranges::insert(M.value_decls, M.value_decls.begin(), default_binds);
     ranges::insert(M.value_decls, M.value_decls.begin(), class_binds);
 
     std::cerr<<"GVE (all after defaulting):\n";
