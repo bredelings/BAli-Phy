@@ -38,7 +38,8 @@ struct typechecker_state: FreshVarSource
 
     ClassEnv class_env;
 
-    global_instance_env gie;
+    global_instance_env instance_env;
+    global_instance_env superclass_extractor_env;
 
     global_value_env gve;
 

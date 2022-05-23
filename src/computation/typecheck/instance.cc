@@ -161,7 +161,7 @@ typechecker_state::infer_type_for_instances1(const Hs::Decls& decls)
 //    }
 //    std::cerr<<"\n";
 
-    gie += gie_inst;
+    instance_env += gie_inst;
 
     return named_instances;
 }
@@ -223,7 +223,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     // 1. Get instance head and constraints 
 
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
-    auto inst_type = gie.at(unloc(dfun.name));
+    auto inst_type = instance_env.at(unloc(dfun.name));
     // Instantiate it with rigid type variables.
     auto [instance_tvs, instance_constraints, instance_head] = instantiate(inst_type, false);
     auto [instance_class, instance_args] = decompose_type_apps(instance_head);

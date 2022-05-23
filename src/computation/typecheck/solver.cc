@@ -57,12 +57,11 @@ bool constraint_is_hnf(const Hs::Type& constraint)
 
 optional<pair<Hs::Var,vector<Hs::Type>>> typechecker_state::lookup_instance(const Hs::Type& constraint)
 {
-    for(auto& [name, type]: gie)
+    for(auto& [name, type]: instance_env)
     {
         auto [_, instance_constraints, instance_head] = instantiate(type);
 
-        // Skip if this is not an instance.
-        if (constraint_is_hnf(instance_head)) continue;
+        assert(not constraint_is_hnf(instance_head));
 
         auto s = ::maybe_match(instance_head, constraint);
 
@@ -153,13 +152,12 @@ vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const H
 {
     vector<pair<string, Hs::Type>> constraints;
 
-    for(auto& [name, type]: gie)
+    for(auto& [name, type]: superclass_extractor_env)
     {
         // Klass a => Superklass a
         auto [_, class_constraints, superclass_constraint] = instantiate(type, true);
 
-        // Skip if this is not a method of extracting superclass dictionaries
-        if (not constraint_is_hnf(superclass_constraint)) continue;
+        assert(constraint_is_hnf(superclass_constraint));
 
         assert(class_constraints.size() == 1);
 
