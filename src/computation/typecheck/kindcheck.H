@@ -9,8 +9,6 @@
 #include "kind.H"
 #include "env.H"
 
-std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls);
-
 struct kindchecker_state
 {
     int next_kvar_index = 1;

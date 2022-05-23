@@ -294,4 +294,6 @@ rename_var_pattern_from_bindinfo(Hs::Var V, const std::map<std::string, Hs::Bind
 Hs::Pattern
 rename_pattern_from_bindinfo(const Hs::Pattern& pat, const std::map<std::string, Hs::BindInfo>& bind_info);
 
+std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls);
+
 #endif
