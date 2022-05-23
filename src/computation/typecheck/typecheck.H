@@ -198,7 +198,7 @@ struct typechecker_state: FreshVarSource
 
     Hs::Decls infer_type_for_default_methods(const Hs::ClassDecl&);
 
-    Hs::Binds infer_type_for_default_methods(const Hs::Decls&);
+    void infer_type_for_default_methods(const Hs::Decls&);
 
     // Figure 12
     std::pair<Hs::Var, Hs::Type>
@@ -209,7 +209,7 @@ struct typechecker_state: FreshVarSource
     infer_type_for_instances1(const Hs::Decls& decls);
 
     // Figure 12
-    Hs::Binds
+    void
     infer_type_for_instances2(const std::vector<std::pair<Hs::Var, Hs::InstanceDecl>>& named_instances);
 
     // Figure 12
