@@ -284,7 +284,7 @@ void typechecker_state::get_tycon_info(const Hs::Decls& type_decls)
 
         new_tycons += new_tycons_for_group;
 
-        tce += new_tycons;
+        tce += new_tycons_for_group;
     }
 
 //    for(auto& [tycon,ka]: new_tycons)
