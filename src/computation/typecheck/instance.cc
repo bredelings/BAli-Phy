@@ -322,17 +322,16 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-Hs::Decls
+Hs::Binds
 typechecker_state::infer_type_for_instances2(const vector<pair<Hs::Var, Hs::InstanceDecl>>& named_instances)
 {
-    Hs::Decls out_decls;
+    Hs::Binds out_decls;
     global_instance_env gie_inst;
     for(auto& [dfun, instance_decl]: named_instances)
     {
-        auto decls_ = infer_type_for_instance2(dfun, instance_decl);
+        auto decls = infer_type_for_instance2(dfun, instance_decl);
 
-        for(auto& d: decls_)
-            out_decls.push_back(d);
+        out_decls.push_back(decls);
     }
 //    std::cerr<<"\nInstance ops and dfuns:\n";
 //    std::cerr<<out_decls.print();

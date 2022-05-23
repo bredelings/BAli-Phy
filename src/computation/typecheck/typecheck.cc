@@ -824,7 +824,7 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
 
     M.value_decls = typechecked_value_decls;
     ranges::insert(M.value_decls, M.value_decls.end(), default_method_decls);
-    M.value_decls.push_back(inst_decls);
+    ranges::insert(M.value_decls, M.value_decls.end(), inst_decls);
     ranges::insert(M.value_decls, M.value_decls.begin(), default_binds);
     ranges::insert(M.value_decls, M.value_decls.begin(), class_binds);
 
