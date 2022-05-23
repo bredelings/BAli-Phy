@@ -232,7 +232,9 @@ struct typechecker_state: FreshVarSource
     std::pair<Hs::Binds, local_instance_env> reduce(const local_instance_env& lie_in);
     Hs::Binds reduce_current_lie();
 
-    typechecker_state(FreshVarState& fvs, const std::string& s, const Module& m, const Hs::ModuleDecls& M);
+    void get_defaults(const Hs::ModuleDecls& M);
+
+    typechecker_state(FreshVarState& fvs, const std::string& s, const Module& m);
 };
 
 template <typename T>

@@ -407,16 +407,19 @@ void typechecker_state::pop_and_add_lie()
     current_lie() += lie;
 }
 
-typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const Module& m, const Hs::ModuleDecls& M)
-    :FreshVarSource(fvs, s),
-     this_mod(m)
+void typechecker_state::get_defaults(const Hs::ModuleDecls& M)
 {
-    push_lie();
-
     if (M.default_decl)
         defaults = M.default_decl->types;
     else
         defaults = { Hs::TypeCon({noloc,"Int"}), Hs::TypeCon({noloc,"Double"}) };
+}
+
+typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const Module& m)
+    :FreshVarSource(fvs, s),
+     this_mod(m)
+{
+    push_lie();
 }
 
 Hs::Var typechecker_state::find_prelude_var(string name) const
@@ -786,7 +789,10 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     // 4. Should imports/export only affect what NAMES are in scope, or also things like the instance environment?
 
 
-    typechecker_state state( fvs, name, *this, M);
+    typechecker_state state( fvs, name, *this);
+
+    // 0. Get the types for defaulting.
+    state.get_defaults( M );
 
     // 1. Find the kind and arity of type constructors declared in this module ( TCE_T = type con info, part1 )
     state.get_tycon_info( M.type_decls );
