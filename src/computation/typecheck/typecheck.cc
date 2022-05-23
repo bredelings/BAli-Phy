@@ -816,9 +816,7 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     std::cerr<<"\n\n";
 
     auto simpl_binds = state.reduce_current_lie();
-    
-    ranges::insert(simpl_binds, simpl_binds.end(), M.value_decls);
-    M.value_decls = simpl_binds;
+    ranges::insert(M.value_decls, M.value_decls.begin(), simpl_binds);
 
     auto default_binds = state.default_subst();
     state.gve = state.apply_current_subst(state.gve);
