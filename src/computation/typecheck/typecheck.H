@@ -39,6 +39,7 @@ struct typechecker_state: FreshVarSource
     ClassEnv class_env;
 
     global_instance_env instance_env;
+
     global_instance_env superclass_extractor_env;
 
     global_value_env gve;
@@ -49,7 +50,7 @@ struct typechecker_state: FreshVarSource
 
     std::vector<local_instance_env> lie_stack;
 
-    // separate gie into superclass-selector and dfuns?
+    //------- Some of the results of typechecking
 
     Hs::Binds class_binds;
 

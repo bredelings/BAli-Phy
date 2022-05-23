@@ -806,42 +806,42 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     // 4. Should imports/export only affect what NAMES are in scope, or also things like the instance environment?
 
 
-    typechecker_state state( fvs, name, *this);
+    tc_state = std::make_shared<typechecker_state>( fvs, name, *this);
 
     // 0. Get the types for defaulting.
-    state.get_defaults( M );
+    tc_state->get_defaults( M );
 
     // 1. Find the kind and arity of type constructors declared in this module ( TCE_T = type con info, part1 )
-    state.get_tycon_info( M.type_decls );
+    tc_state->get_tycon_info( M.type_decls );
 
     // 2. Annotate tyvars in types with their kind.
-    M.type_decls = state.add_type_var_kinds( M.type_decls );
+    M.type_decls = tc_state->add_type_var_kinds( M.type_decls );
 
     // 3. Get types for value constructors  (CVE_T = constructor types)
-    state.get_constructor_info(M.type_decls);
+    tc_state->get_constructor_info(M.type_decls);
 
     // 4. Get types and values for class method selectors and superclass selectors (CE_C  = class name -> class info)
-    state.infer_type_for_classes(M.type_decls);
+    tc_state->infer_type_for_classes(M.type_decls);
 
     // 5. Get types and names for instances (pass 1)
-    auto named_instances = state.infer_type_for_instances1(M.type_decls);
+    auto named_instances = tc_state->infer_type_for_instances1(M.type_decls);
 
     // 6. Typecheck value decls
-    state.infer_type_for_binds_top(M.value_decls);
+    tc_state->infer_type_for_binds_top(M.value_decls);
 
     // 7. Typecheck default methods
-    state.infer_type_for_default_methods(M.type_decls);
+    tc_state->infer_type_for_default_methods(M.type_decls);
 
     // 8. Typecheck instance methods and generate dfuns (pass 2)
-    state.infer_type_for_instances2(named_instances);
+    tc_state->infer_type_for_instances2(named_instances);
 
     // 9. Default top-level ambiguous type vars.
-    state.simplify_and_default_top_level();
+    tc_state->simplify_and_default_top_level();
 
-    M.value_decls = state.all_binds();
+    M.value_decls = tc_state->all_binds();
 
     // Record kinds on the type symbol table
-    for(auto& [typecon,info]: state.tce)
+    for(auto& [typecon,info]: tc_state->tce)
     {
         if (get_module_name(typecon) == name)
         {
@@ -852,7 +852,7 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     }
 
     // Record types on the value symbol table
-    for(auto& [value,type]: state.gve)
+    for(auto& [value,type]: tc_state->gve)
     {
         if (get_module_name(value) == name)
         {

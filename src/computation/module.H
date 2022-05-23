@@ -103,6 +103,8 @@ class module_loader;
 
 class Program;
 
+class typechecker_state;
+
 class Module
 {
     std::map<std::string, symbol_info> symbols;
@@ -131,6 +133,8 @@ public:
     bool do_optimize = true;
     
     Haskell::Module module;
+
+    std::shared_ptr<typechecker_state> tc_state;
 
     CDecls value_decls;
 
