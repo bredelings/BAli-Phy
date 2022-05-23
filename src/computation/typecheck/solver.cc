@@ -111,7 +111,7 @@ pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const string& name, 
         expression_ref rhs = dfun;
         for(auto& new_constraint: new_constraints)
         {
-            auto dvar = fresh_var("dvar", false);
+            auto dvar = get_fresh_Var("dvar", false);
             lie2 = lie2.insert({unloc(dvar.name), new_constraint});
             rhs = {rhs,dvar};
         }

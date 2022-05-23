@@ -121,7 +121,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 
     string dfun_name = "d"+get_unqualified_name(class_info->name)+tycon_names;
     
-    auto dfun = fresh_var(dfun_name, true);
+    auto dfun = get_fresh_Var(dfun_name, true);
 
     //  -- new -- //
     kindchecker_state K(tce);
@@ -267,7 +267,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method_name, method_type]: class_info.members)
     {
-        auto op = fresh_var("i"+method_name, true);
+        auto op = get_fresh_Var("i"+method_name, true);
 
         dict_entries.push_back( apply_expression(op, lambda_vars) );
 

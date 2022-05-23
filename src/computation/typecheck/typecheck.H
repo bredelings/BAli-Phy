@@ -104,8 +104,6 @@ struct typechecker_state: FreshVarSource
 
     std::pair<Hs::Type, std::vector<Hs::Type>> constr_types(const Hs::Con&);
 
-    Hs::Var fresh_var(const std::string& s, bool qualified);
-
     std::optional<std::tuple<substitution_t, Hs::Binds>>
     candidates(const Hs::TypeVar& tv, const local_instance_env& tv_lie);
 

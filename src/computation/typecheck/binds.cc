@@ -232,7 +232,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
         throw myexception()<<"Can't derive constraints '"<<print(lie_wanted)<<"' from specified constraints '"<<print(lie_given)<<"'";
 
     // 6. return GenBind with tvs, givens, body
-    Hs::Var inner_id = fresh_var(unloc(FD.v.name),false);
+    Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
 
     Hs::Type monotype = apply_current_subst(most_general_type);
     Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
@@ -467,7 +467,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
             Hs::Type polytype = quantify(qtvs_in_this_type, monotype);
 
             Hs::Var x_outer({noloc,name});
-            Hs::Var x_inner = fresh_var(name, false);
+            Hs::Var x_inner = get_fresh_Var(name, false);
 
             poly_binder_env = poly_binder_env.insert({name, polytype});
 
@@ -507,7 +507,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
             poly_binder_env = poly_binder_env.insert( {name, polytype} );
 
             Hs::Var x_outer({noloc,name});
-            Hs::Var x_inner = fresh_var(name, false);
+            Hs::Var x_inner = get_fresh_Var(name, false);
 
             vector<Hs::Var> dict_args;
             for(auto& [name, constraint]: lie_for_this_type)

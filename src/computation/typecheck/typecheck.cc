@@ -346,7 +346,7 @@ Hs::Var typechecker_state::fresh_dvar(const Hs::Type& constraint)
     string name = "dvar";
     if (auto cname = maybe_get_class_name_from_constraint(constraint))
         name = "d" + *cname;
-    return fresh_var(name, false);
+    return get_fresh_Var(name, false);
 }
 
 Hs::Var typechecker_state::add_dvar(const Hs::Type& constraint)
@@ -504,11 +504,6 @@ void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2, const myex
         throw e;
 }
 
-Hs::Var typechecker_state::fresh_var(const std::string& s, bool qualified)
-{
-    return get_fresh_Var(s, qualified);
-}
-
 set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
 
 pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& con)
@@ -645,7 +640,7 @@ vector<pair<Hs::Var,Hs::Type>> typechecker_state::constraints_to_lie(const vecto
     vector<pair<Hs::Var, Hs::Type>> ordered_lie;
     for(auto& constraint:constraints)
     {
-        auto dvar = fresh_var("dvar", false);
+        auto dvar = get_fresh_Var("dvar", false);
         dvar.type = constraint;
         ordered_lie.push_back({dvar, constraint});
     }

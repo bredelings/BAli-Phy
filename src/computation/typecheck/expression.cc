@@ -66,7 +66,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         // FIXME: For better error messages, we should inline the code for inferring types of LetExp.
         //        We will know we will call infer_type_for_single_fundecl_with_sig
 
-        auto x = fresh_var("tmp", false);
+        auto x = get_fresh_Var("tmp", false);
         Hs::Decls decls;
         decls.push_back(simple_decl(x,texp->exp));
         Hs::Binds binds;

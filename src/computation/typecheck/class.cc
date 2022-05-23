@@ -84,7 +84,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
         for(auto& [name, match]: method_matches)
         {
-            auto dm = fresh_var("dm"+name, true);
+            auto dm = get_fresh_Var("dm"+name, true);
             Hs::FunDecl FD(dm, match);
             class_info.default_methods.insert({name, dm});
 
@@ -109,7 +109,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         string cname2 = get_class_name_from_constraint(class_constraint);
         string extractor_name = cname1+"From"+cname2;
 
-        auto get_dict = fresh_var(extractor_name, true);
+        auto get_dict = get_fresh_Var(extractor_name, true);
         // Should this be a function arrow?
         Hs::Type type = Hs::add_constraints({class_constraint}, superclass_constraint);
         type = apply_current_subst(type);
