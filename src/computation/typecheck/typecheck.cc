@@ -764,6 +764,23 @@ Hs::Decls typechecker_state::add_type_var_kinds(Hs::Decls type_decls)
     return type_decls;
 }
 
+Hs::Binds typechecker_state::all_binds() const
+{
+    Hs::Binds all = value_decls;
+
+    ranges::insert(all, all.end(), default_method_decls);
+    ranges::insert(all, all.end(), instance_decls);
+    ranges::insert(all, all.end(), top_simplify_binds);
+    ranges::insert(all, all.end(), class_binds);
+
+    std::cerr<<"All decls:\n";
+    std::cerr<<all.print();
+    std::cerr<<"\n\n";
+
+    return all;
+}
+
+
 Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
@@ -821,15 +838,7 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     // 9. Default top-level ambiguous type vars.
     state.simplify_and_default_top_level();
 
-    M.value_decls = state.value_decls;
-    ranges::insert(M.value_decls, M.value_decls.end(), state.default_method_decls);
-    ranges::insert(M.value_decls, M.value_decls.end(), state.instance_decls);
-    ranges::insert(M.value_decls, M.value_decls.begin(), state.top_simplify_binds);
-    ranges::insert(M.value_decls, M.value_decls.begin(), state.class_binds);
-
-    std::cerr<<"All decls:\n";
-    std::cerr<<M.value_decls.print();
-    std::cerr<<"\n\n";
+    M.value_decls = state.all_binds();
 
     // Record kinds on the type symbol table
     for(auto& [typecon,info]: state.tce)

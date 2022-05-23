@@ -60,6 +60,8 @@ struct typechecker_state: FreshVarSource
 
     Hs::Binds top_simplify_binds;
 
+    Hs::Binds all_binds() const;
+
     //------- Functions handling the LIE ---------
     local_instance_env& current_lie();
 
