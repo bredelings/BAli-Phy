@@ -185,26 +185,6 @@ vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)
     return type_decl_groups;
 }
 
-type_con_env get_tycon_info(type_con_env tycons, const Hs::Decls& type_decls)
-{
-    type_con_env new_tycons;
-
-    auto type_decl_groups = find_type_groups(type_decls);
-
-    // Compute kinds for type/class constructors.
-    for(auto& type_decl_group: type_decl_groups)
-    {
-        kindchecker_state K(tycons);
-
-        auto new_tycons_for_group = K.infer_kinds(type_decl_group);
-
-        tycons += new_tycons_for_group;
-        new_tycons += new_tycons_for_group;
-    }
-
-    return new_tycons;
-}
-
 bool kindchecker_state::type_var_in_scope(const Hs::TypeVar& tv) const
 {
     return type_var_to_kind.back().count(tv);

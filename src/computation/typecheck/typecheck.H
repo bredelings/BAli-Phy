@@ -66,6 +66,8 @@ struct typechecker_state: FreshVarSource
     void pop_and_add_lie();
     // ------ End: Functions handling the LIE ---
 
+    void get_tycon_info(const Hs::Decls& type_decls);
+
     Hs::Decls add_type_var_kinds(Hs::Decls type_decls);
 
     void get_constructor_info(const Hs::Decls& decls);
@@ -230,7 +232,7 @@ struct typechecker_state: FreshVarSource
     std::pair<Hs::Binds, local_instance_env> reduce(const local_instance_env& lie_in);
     Hs::Binds reduce_current_lie();
 
-    typechecker_state(FreshVarState& fvs, const std::string& s, const Module& m, const Hs::ModuleDecls& M, const type_con_env& tce_);
+    typechecker_state(FreshVarState& fvs, const std::string& s, const Module& m, const Hs::ModuleDecls& M);
 };
 
 template <typename T>

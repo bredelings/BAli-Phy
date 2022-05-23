@@ -9,7 +9,7 @@
 #include "kind.H"
 #include "env.H"
 
-type_con_env get_tycon_info(type_con_env, const Hs::Decls& type_decls);
+std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls);
 
 struct kindchecker_state
 {

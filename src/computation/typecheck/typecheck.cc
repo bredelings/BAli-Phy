@@ -269,6 +269,32 @@ using std::tuple;
 // LVE = local  value environment      = var -> monotype
 
 
+void typechecker_state::get_tycon_info(const Hs::Decls& type_decls)
+{
+    type_con_env new_tycons;
+
+    auto type_decl_groups = find_type_groups(type_decls);
+
+    // Compute kinds for type/class constructors.
+    for(auto& type_decl_group: type_decl_groups)
+    {
+        kindchecker_state K(tce);
+
+        auto new_tycons_for_group = K.infer_kinds(type_decl_group);
+
+        new_tycons += new_tycons_for_group;
+
+        tce += new_tycons;
+    }
+
+//    for(auto& [tycon,ka]: new_tycons)
+//    {
+//        auto& [k,arity] = ka;
+//        std::cerr<<tycon<<" :: "<<k.print()<<"\n";
+//    }
+//    std::cerr<<"\n";
+}
+
 // The GIE does NOT allow free type variables.
 struct instance_info
 {
@@ -375,9 +401,8 @@ void typechecker_state::pop_and_add_lie()
     current_lie() += lie;
 }
 
-typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const Module& m, const Hs::ModuleDecls& M, const type_con_env& tce_)
+typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const Module& m, const Hs::ModuleDecls& M)
     :FreshVarSource(fvs, s),
-     tce(tce_),
      this_mod(m)
 {
     push_lie();
@@ -755,19 +780,11 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     // 4. Should imports/export only affect what NAMES are in scope, or also things like the instance environment?
 
 
+    typechecker_state state( fvs, name, *this, M);
+
     // 1. Find the kind and arity of type constructors declared in this module ( TCE_T = type con info, part1 )
-    type_con_env tce;
-    auto new_tycons = get_tycon_info( tce, M.type_decls );
-    tce += new_tycons;
+    state.get_tycon_info( M.type_decls );
 
-    for(auto& [tycon,ka]: new_tycons)
-    {
-        auto& [k,arity] = ka;
-        std::cerr<<tycon<<" :: "<<k.print()<<"\n";
-    }
-    std::cerr<<"\n";
-
-    typechecker_state state( fvs, name, *this, M, tce);
     M.type_decls = state.add_type_var_kinds( M.type_decls );
 
     // 2. Get types for value constructors  (CVE_T = constructor types)
