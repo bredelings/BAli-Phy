@@ -811,10 +811,6 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     auto inst_decls = state.infer_type_for_instances2(named_instances);
     M.value_decls.push_back(inst_decls);
 
-    std::cerr<<"\nInstance ops and dfuns:\n";
-    std::cerr<<inst_decls.print();
-    std::cerr<<"\n\n";
-
     auto simpl_binds = state.reduce_current_lie();
     ranges::insert(M.value_decls, M.value_decls.begin(), simpl_binds);
 
