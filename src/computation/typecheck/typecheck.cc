@@ -70,13 +70,9 @@ using std::tuple;
     + Substitute into class variables to get method type.
     + Typecheck as FunDecl with signature forall tvs.(instance constraints) => method_type
   * Handle different defaults for each entry of a GenBind by recording impedance matching info on BindInfo
+  * Mark instances, default methods, and superclass extractors as exported.
 
   TODO:
-  0. We need to export some synthesized vars:
-     - default_methods.  Their names are in class_env[class].default_methods.at(method_name)
-     - superclass extractors. Their names are in class_env[class].fields[i].first
-     - dictionary functions.  Their names are in... gie?
-     - (maybe) instance methods.  Their names are in ...?
   0. Exporting and importing types and instances between modules:
      - Some things have symbols -- we can add the type or kind to the symbol in the symbol table.
      - This includes classes, methods, data types, constructors, type synonyms, etc.
