@@ -381,6 +381,8 @@ void Module::compile(const Program& P)
     auto& loader = *P.get_module_loader();
     simplifier_options& opts = loader;
 
+    tc_state = std::make_shared<typechecker_state>( P.fresh_var_state(), name, *this);
+
     // Scans imported modules and modifies symbol table and type table
     perform_imports(P);
 
@@ -415,7 +417,7 @@ void Module::compile(const Program& P)
     if (opts.typecheck)
     {
         std::cerr<<"-------- module "<<name<<"--------\n";
-        M = typecheck(P.fresh_var_state(), M);
+        M = typecheck(M);
     }
 
     // Updates exported_symols_ + exported_types_

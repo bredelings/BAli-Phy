@@ -777,7 +777,7 @@ Hs::Binds typechecker_state::all_binds() const
 }
 
 
-Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
+Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
     //    OK, so datatypes produce a
@@ -802,8 +802,6 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     // 4. Should imports/export only affect what NAMES are in scope, or also things like the instance environment?
 
 
-    tc_state = std::make_shared<typechecker_state>( fvs, name, *this);
-
     // 0. Get the types for defaulting.
     tc_state->get_defaults( M );
 
@@ -811,6 +809,7 @@ Hs::ModuleDecls Module::typecheck( FreshVarState& fvs, Hs::ModuleDecls M )
     tc_state->get_tycon_info( M.type_decls );
 
     // 2. Annotate tyvars in types with their kind.
+    // Do we need this, could we do it in infer_type_for_classes/synonyms/data?
     M.type_decls = tc_state->add_type_var_kinds( M.type_decls );
 
     // 3. Get types for value constructors  (CVE_T = constructor types)

@@ -222,7 +222,7 @@ public:
 
     void perform_imports(const Program&);
 
-    Hs::ModuleDecls typecheck(FreshVarState&, Hs::ModuleDecls);
+    Hs::ModuleDecls typecheck(Hs::ModuleDecls);
 
     void perform_exports();
 
