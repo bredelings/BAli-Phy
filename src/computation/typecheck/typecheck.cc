@@ -71,13 +71,25 @@ using std::tuple;
     + Typecheck as FunDecl with signature forall tvs.(instance constraints) => method_type
   * Handle different defaults for each entry of a GenBind by recording impedance matching info on BindInfo
   * Mark instances, default methods, and superclass extractors as exported.
+  * Export ALL typechecker state between modules.
 
   TODO:
+  0. Cleanup: eliminate dependencies on expression_ref:
+     - Make Pattern into a Type that doesn't depend on expression_ref.
+       - Make a LitPattern that compares Int, Double, String, Char by equality.
+  0. Cleanup: move generalization code out of binds.cc to generalize.cc?
+  0. Check that all builtins have an explicit type signature.
+     - Check that all explicit type signatures correspond to a declaration.
+     - At the top level, this could be a builtin.
+     - Should we check this in rename?
+  0. Should/Can we get default_method_decls and superclass extractor decls from a class decl?
   0. Exporting and importing types and instances between modules:
-     - Some things have symbols -- we can add the type or kind to the symbol in the symbol table.
-     - This includes classes, methods, data types, constructors, type synonyms, etc.
+     - Should we have separate maps for variables and constructors?
+       - This includes classes, methods, data types, constructors, type synonyms, etc.
      - The small_decls won't have symbols though...  maybe we need annotated type info for that?
      - How do you export instances?
+  0. Update importing/exporting of constructors and class methods -- in rename???
+  0. Can we thin out the number of exported objects using some kind of reachability analysis?
   1. Reject unification of variables, tycons, etc with different kinds.
      - Ensure that all ForallType binders have kinds.
      - Assign kinds to all TypeCons.... OR look it up in the symbol table when we need to!
@@ -102,6 +114,12 @@ using std::tuple;
   8. AST nodes for type and evidence bindings?
   9. Factor generalization code out of typecheck/binds.cc
   10. Check that there are no cycles in the class hierarchy.
+  11. Allow dictionaries as constructor entries.
+     - How do we treat such entries as givens when we handle case alternatives?
+     - Handle constraints on constructors and data types.
+     - Remove the constraint from EmptySet
+        - I guess we remove type-level constraints if they would be ambiguous.
+        - I guess we COMPLAIN about user-specified constructor-level constraints if they would be ambiguous.
 
   11. Annotate let, lambda, and case binders with variable's type.
   12. Should we make AST for: 
@@ -113,8 +131,6 @@ using std::tuple;
   12. Implement fromInt and fromRational
   13. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
       Do I need to handle LiteralString patterns, then?
-  16. Handle constraints on constructors.
-  17. Remove the constraint from EmptySet
   18. Add basic error reporting.
   19. How do we handle things like Prelude.Num, Prelude.Enum, Prelude.fromInt, etc.
       Right now, maybe we can pick a Num / fromInt from the local scope, instead?
