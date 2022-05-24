@@ -4,7 +4,7 @@ import Data.BitVector
 
 data PairwiseAlignment = PairwiseAlignment
 
-numInsertions :: PairwiseAlignment -> Int
+numInsert :: PairwiseAlignment -> Int
 builtin numInsert 1 "numInsert" "Alignment"
 
 numMatch :: PairwiseAlignment -> Int

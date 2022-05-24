@@ -56,7 +56,7 @@ builtin builtin_isDigit 1 "isDigit" "Char"
 isDigit :: Char -> Bool
 isDigit c = if builtin_isDigit c == 1 then True else False
 
-isOctDigit :: Char -> Bool
+-- isOctDigit :: Char -> Bool
 -- not implemented
 
 builtin_isHexDigit :: Char -> Int
@@ -68,10 +68,10 @@ isHexDigit c = if builtin_isHexDigit c == 1 then True else False
 isLetter :: Char -> Bool
 isLetter = isAlpha
 
-isMark :: Char -> Bool
+-- isMark :: Char -> Bool
 -- not implemented
 
-isNumber :: Char -> Bool
+-- isNumber :: Char -> Bool
 -- not implemented
 
 builtin_isPunctuation :: Char -> Int
@@ -80,10 +80,10 @@ builtin builtin_isPunctuation 1 "isPunctuation" "Char"
 isPunctuation :: Char -> Bool
 isPunctuation c = if builtin_isPunctuation c == 1 then True else False
 
-isSymbol :: Char -> Bool
+-- isSymbol :: Char -> Bool
 -- not implemented
 
-isSeparator :: Char -> Bool
+-- isSeparator :: Char -> Bool
 -- not implemented
 
 -- subranges
@@ -109,7 +109,7 @@ builtin toUpper 1 "toUpper" "Char"
 toLower :: Char -> Char
 builtin toLower 1 "toLower" "Char"
 
-toTitle :: Char -> Char
+-- toTitle :: Char -> Char
 -- not implemented
 
 -- single digit characters
