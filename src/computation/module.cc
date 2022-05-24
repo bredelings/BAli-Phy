@@ -306,6 +306,55 @@ void Module::import_module(const Program& P, const module_import& I)
             import_type(T, modid, qualified);
         }
     }
+
+    if (M2.tc_state)
+    {
+        // So.. if we import a data type declaration, do we ALSO have to import any types that its constructors reference?
+
+        // 1. Import info about arity and kind of type constructors..
+        for(auto& [tycon,info]: M2.tc_state->tce)
+        {
+            if (not tc_state->tce.count(tycon))
+                tc_state->tce.insert({tycon,info});
+        }
+
+        // 2. Import information about the type of constructors
+        for(auto& [cname,ctype]: M2.tc_state->con_info)
+        {
+            if (not tc_state->con_info.count(cname))
+                tc_state->con_info = tc_state->con_info.insert({cname,ctype});
+        }
+
+        // 3. Import information about class ops
+        for(auto& [cname,cinfo]: M2.tc_state->class_env)
+        {
+            if (not tc_state->class_env.count(cname))
+                tc_state->class_env.insert({cname,cinfo});
+        }
+
+        // 4. Import information about instances
+        for(auto& [dfun_name, dfun_type]: M2.tc_state->instance_env)
+        {
+            if (not M2.tc_state->instance_env.count(dfun_name))
+                tc_state->instance_env = tc_state->instance_env.insert({dfun_name, dfun_type});
+        }
+
+        // Maybe we should get this from the class_env???
+
+        // 5. Import information about superclass extractors
+        for(auto& [dfun_name, dfun_type]: M2.tc_state->superclass_extractor_env)
+        {
+            if (not M2.tc_state->superclass_extractor_env.count(dfun_name))
+                tc_state->superclass_extractor_env = tc_state->superclass_extractor_env.insert({dfun_name, dfun_type});
+        }
+
+        // 6. Import types for values.
+        for(auto& [name, type]: M2.tc_state->gve)
+        {
+            if (not tc_state->gve.count(name))
+                tc_state->gve = tc_state->gve.insert({name,type});
+        }
+    }
 }
 
 module_import parse_import(const Haskell::ImpDecl& impdecl)
