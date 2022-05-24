@@ -1,3 +1,3 @@
-size = 1   Test.#8094 = 10
-size = 1   Test.$v#8095 = Prelude:negate Test.#8094
-size = 0   Test.f = \#8096 -> Test.$v#8095
+size = 1   Test.#8098 = 10
+size = 1   Test.$v#8099 = Prelude:negate Test.#8098
+size = 0   Test.f = \#8100 -> Test.$v#8099
