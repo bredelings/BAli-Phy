@@ -79,11 +79,43 @@ extern "C" closure builtin_function_doubleToInt(OperationArgs& Args)
     return {xi};
 }
 
+extern "C" closure builtin_function_add_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_int() + y.as_int()};
+}
+
+extern "C" closure builtin_function_add_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_double() + y.as_double()};
+}
+
+extern "C" closure builtin_function_add_logdouble(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_log_double() + y.as_log_double()};
+}
+
+extern "C" closure builtin_function_add_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_log_double() + y.as_log_double()};
+}
+
 extern "C" closure builtin_function_add(OperationArgs& Args)
 {
     auto x = Args.evaluate(0);
     auto y = Args.evaluate(1);
-  
+
     if (x.is_double())
 	return {x.as_double() + y.as_double()};
     else if (x.is_int())
@@ -96,11 +128,43 @@ extern "C" closure builtin_function_add(OperationArgs& Args)
 	throw myexception()<<"Add: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
+extern "C" closure builtin_function_multiply_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_int() * y.as_int()};
+}
+
+extern "C" closure builtin_function_multiply_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_double() * y.as_double()};
+}
+
+extern "C" closure builtin_function_multiply_logdouble(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_log_double() * y.as_log_double()};
+}
+
+extern "C" closure builtin_function_multiply_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_log_double() * y.as_log_double()};
+}
+
 extern "C" closure builtin_function_multiply(OperationArgs& Args)
 {
     auto x = Args.evaluate(0);
     auto y = Args.evaluate(1);
-  
+
     if (x.is_double())
 	return {x.as_double() * y.as_double()};
     else if (x.is_int())
@@ -111,6 +175,22 @@ extern "C" closure builtin_function_multiply(OperationArgs& Args)
 	return {x.as_char() * y.as_char()};
     else
 	throw myexception()<<"Multiply: object '"<<x.print()<<"' is not double, int, log_double, or char'";
+}
+
+extern "C" closure builtin_function_divide_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_double() / y.as_double()};
+}
+
+extern "C" closure builtin_function_divide_logdouble(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_log_double() / y.as_log_double()};
 }
 
 extern "C" closure builtin_function_divide(OperationArgs& Args)
@@ -214,11 +294,43 @@ extern "C" closure builtin_function_rem(OperationArgs& Args)
 	throw myexception()<<"rem: object '"<<x.print()<<"' is not int, or char'";
 }
 
+extern "C" closure builtin_function_subtract_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_int() - y.as_int()};
+}
+
+extern "C" closure builtin_function_subtract_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_double() - y.as_double()};
+}
+
+extern "C" closure builtin_function_subtract_logdouble(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_log_double() - y.as_log_double()};
+}
+
+extern "C" closure builtin_function_subtract_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    auto y = Args.evaluate(1);
+
+    return {x.as_log_double() - y.as_log_double()};
+}
+
 extern "C" closure builtin_function_subtract(OperationArgs& Args)
 {
     auto x = Args.evaluate(0);
     auto y = Args.evaluate(1);
-  
+
     if (x.is_double())
 	return {x.as_double() - y.as_double()};
     else if (x.is_int())
@@ -229,6 +341,27 @@ extern "C" closure builtin_function_subtract(OperationArgs& Args)
 	return {x.as_char() - y.as_char()};
     else
 	throw myexception()<<"Minus: object '"<<x.print()<<"' is not double, int, log_double, or char'";
+}
+
+extern "C" closure builtin_function_negate_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+
+    return {-x.as_int()};
+}
+
+extern "C" closure builtin_function_negate_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+
+    return {-x.as_double()};
+}
+
+extern "C" closure builtin_function_negate_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+
+    return {-x.as_char()};
 }
 
 extern "C" closure builtin_function_negate(OperationArgs& Args)
