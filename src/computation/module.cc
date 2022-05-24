@@ -453,9 +453,12 @@ void Module::compile(const Program& P)
     //                (3) rewrites infix expressions through desugar_infix( )
     M = ::rename_infix(*this, M);
 
-    // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym
-    add_local_symbols(M.value_decls[0]);
+    // We should be able to build these as we go, in rename!
+    // We can merge them into a global symbol table (if we want) afterwards.
+
     add_local_symbols(M.type_decls);
+
+    add_local_symbols(M.value_decls[0]); // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym
     for(auto& d: M.builtin_decls)
         def_function(d.function_name);
 
