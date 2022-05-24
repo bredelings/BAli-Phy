@@ -418,6 +418,7 @@ void Module::compile(const Program& P)
     {
         std::cerr<<"-------- module "<<name<<"--------\n";
         M = typecheck(M);
+        M.value_decls = tc_state->all_binds();
     }
 
     // Updates exported_symols_ + exported_types_

@@ -833,8 +833,6 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     // 9. Default top-level ambiguous type vars.
     tc_state->simplify_and_default_top_level();
 
-    M.value_decls = tc_state->all_binds();
-
     // Record kinds on the type symbol table
     for(auto& [typecon,info]: tc_state->tce)
     {
