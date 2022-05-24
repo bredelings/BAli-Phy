@@ -833,37 +833,6 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     // 9. Default top-level ambiguous type vars.
     tc_state->simplify_and_default_top_level();
 
-    // Record kinds on the type symbol table
-    for(auto& [typecon,info]: tc_state->tce)
-    {
-        if (get_module_name(typecon) == name)
-        {
-            auto& T = types.at(typecon);
-            assert(not T.kind);
-            T.kind = info.kind;
-        }
-    }
-
-    // Record types on the value symbol table
-    for(auto& [value,type]: tc_state->gve)
-    {
-        if (get_module_name(value) == name)
-        {
-            if (not symbols.count(value))
-                std::cerr<<"'"<<value<<"' is not a symbol!\n";
-            else
-            {
-                auto& V = symbols.at(value);
-                V.type = type;
-            }
-        }
-    }
-
-    // how about instances?
-    // how about type synonyms?
-    // how about class -> methods?
-    // how about datatype -> constructors?
-
     return M;
 }
 

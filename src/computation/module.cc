@@ -536,6 +536,35 @@ void Module::export_module(const string& modid)
 
 void Module::perform_exports()
 {
+    if (tc_state)
+    {
+        // Record kinds on the type symbol table
+        for(auto& [typecon,info]: tc_state->tce)
+        {
+            if (get_module_name(typecon) == name)
+            {
+                auto& T = types.at(typecon);
+                assert(not T.kind);
+                T.kind = info.kind;
+            }
+        }
+
+        // Record types on the value symbol table
+        for(auto& [value,type]: tc_state->gve)
+        {
+            if (get_module_name(value) == name)
+            {
+                if (not symbols.count(value))
+                    std::cerr<<"'"<<value<<"' is not a symbol!\n";
+                else
+                {
+                    auto& V = symbols.at(value);
+                    V.type = type;
+                }
+            }
+        }
+    }
+
     // Currently we just export the local symbols
     if (not module.exports or module.exports->size() == 0)
         export_module(name);
