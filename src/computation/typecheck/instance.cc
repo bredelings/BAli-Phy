@@ -16,17 +16,20 @@ Hs::Decls typechecker_state::infer_type_for_default_methods(const Hs::ClassDecl&
     Hs::Decls decls_out;
 
     auto class_info = class_env.at(C.name);
-    for(auto& decls: unloc(*C.binds))
-        for(auto& decl: decls)
-        {
-            auto FD = decl.as_<Hs::FunDecl>();
-            auto method_name = unloc(FD.v.name);
-            auto dm = class_info.default_methods.at(method_name);
-            FD.v = dm;
+    if (C.binds)
+    {
+        for(auto& decls: unloc(*C.binds))
+            for(auto& decl: decls)
+            {
+                auto FD = decl.as_<Hs::FunDecl>();
+                auto method_name = unloc(FD.v.name);
+                auto dm = class_info.default_methods.at(method_name);
+                FD.v = dm;
 
-            auto [decl2, name, sig_type] = infer_type_for_single_fundecl_with_sig(gve, FD);
-            decls_out.push_back(decl2);
-        }
+                auto [decl2, name, sig_type] = infer_type_for_single_fundecl_with_sig(gve, FD);
+                decls_out.push_back(decl2);
+            }
+    }
 
 //    std::cerr<<"Default method ops:\n";
 //    std::cerr<<decls_out.print();
