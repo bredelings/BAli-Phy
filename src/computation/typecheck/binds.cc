@@ -43,13 +43,20 @@ void typechecker_state::infer_type_for_binds_top(const Hs::Binds& binds)
     value_decls = type_checked_binds;
 }
 
+global_value_env typechecker_state::infer_type_for_sigs(signature_env& signatures) const
+{
+    kindchecker_state K(tce);
+    for(auto& [name,type]: signatures)
+        type = K.kind_and_type_check_type(type);
+
+    return sig_env(signatures);
+}
+
+
 tuple<Hs::Binds, global_value_env>
 typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds binds)
 {
-    kindchecker_state K(tce);
-    for(auto& [name,type]: binds.signatures)
-        type = K.kind_and_type_check_type(type);
-    auto env2 = plus_prefer_right(env, sig_env(binds.signatures));
+    auto env2 = plus_prefer_right(env, infer_type_for_sigs(binds.signatures));
 
     global_value_env binders;
     for(auto& decls: binds)

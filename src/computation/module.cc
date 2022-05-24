@@ -665,7 +665,7 @@ map<var,expression_ref> Module::code_defs() const
 
 Hs::ModuleDecls Module::rename(const simplifier_options& opts, Hs::ModuleDecls M)
 {
-    M = ::rename(*this, M);
+    M = ::rename(opts, *this, M);
 
     if (opts.dump_renamed)
         std::cout<<name<<"[renamed]:\n"<<M.value_decls.print()<<"\n\n";

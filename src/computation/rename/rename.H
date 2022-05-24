@@ -6,6 +6,7 @@
 #include <string>
 #include "computation/expression/expression_ref.H"
 #include "computation/parser/haskell.H"
+#include "computation/optimization/simplifier.H"       // for simplifier options
 
 class Module;
 
@@ -22,7 +23,7 @@ Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls);
 
 
 // I think ghc returns a moduledecls AND a... class environment?
-Haskell::ModuleDecls rename(const Module& p, Haskell::ModuleDecls);
+Haskell::ModuleDecls rename(const simplifier_options&, const Module& p, Haskell::ModuleDecls);
 expression_ref rename(const Module& p, const expression_ref&);
 expression_ref rename(const Module& p, const expression_ref&,const std::set<std::string>&);
 

@@ -917,7 +917,7 @@ Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
     return decls;
 }
 
-Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
+Haskell::ModuleDecls rename(const simplifier_options& opts, const Module& m, Haskell::ModuleDecls M)
 {
     renamer_state Rn(m);
 
@@ -961,6 +961,25 @@ Haskell::ModuleDecls rename(const Module& m, Haskell::ModuleDecls M)
 
     set<string> free_vars;
 
+    // Extract sigs for builtins
+    for(auto& builtin_decl: M.builtin_decls)
+    {
+        auto& builtin_name = builtin_decl.function_name;
+        auto iter = M.value_decls.signatures.find(builtin_name);
+        if (iter == M.value_decls.signatures.end())
+        {
+            if (opts.typecheck)
+                throw myexception()<<"no signature for builtin '"<<builtin_name<<"'";
+            continue;
+        }
+        auto builtin_type = iter->second;
+
+        M.builtin_signatures.insert({builtin_name, builtin_type});
+
+        M.value_decls.signatures.erase(iter);
+    }
+    add(bound_names, Rn.rename_signatures(M.builtin_signatures, true));
+    
     Rn.rename_decls(M.value_decls, bound_names, free_vars, true);
 
     // Replace ids with dummies
@@ -1654,13 +1673,11 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
     auto binders = find_bound_vars_in_decls(decls, top);
 
     auto sig_binders = rename_signatures(binds.signatures, top);
-    /*
-      This doesn't work yet because BuiltinDecls are not found.
+
     for(auto& sig_binder: sig_binders)
         if (not binders.count(sig_binder))
             throw myexception()<<"Signature but no definition for '"<<sig_binder<<"'";
-    */
-    
+
     set<string> decls_free_vars;
     auto refs = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars, top);
     group_binds(binds, refs);

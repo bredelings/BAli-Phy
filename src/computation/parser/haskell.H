@@ -1127,6 +1127,7 @@ struct ModuleDecls
 
     Binds value_decls;
 
+    std::map<std::string, Type> builtin_signatures;
     std::vector<BuiltinDecl> builtin_decls;
 
     ModuleDecls();
