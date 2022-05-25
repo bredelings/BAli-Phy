@@ -258,27 +258,33 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
 
         // 2. typecheck the rhs -> (rhs_type, wanted, body)
         push_lie();
-        auto [match2, most_general_type] = infer_type(env, FD.match);
+        auto [match2, rhs_type] = infer_type(env, FD.match);
         FD.match = match2;
-        auto lie_wanted = pop_lie();
 
-        // 3. alpha[i] in most_general_type but not in env
-        auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
-        // FIXME -- what if the instantiated type contains variables that are free in the environment?
+        // 3. match(given_type <= rhs_type)
+        unify(rhs_type, given_type);
+        Hs::Type monotype = apply_current_subst(rhs_type);
 
-        // 4. match(given_type <= most_general_type)
-        unify(most_general_type, given_type);
+        // 4. Find free type variables in the most general type
+        auto fixed_tvs = free_type_variables(env);
+        auto free_tvs = free_type_variables(monotype) - free_type_variables(env);
 
-        // 5. check if the given => wanted ~ EvBinds
-        lie_wanted = apply_current_subst( lie_wanted );
-        auto [evbinds, lie_failed] = entails(lie_given, lie_wanted);
-        if (not evbinds)
+        // 5. simplify constraints and figure out which ones are relevant here
+        Hs::Binds ev_binds = reduce_current_lie();
+        auto [lie_deferred, lie_retained] = classify_constraints( current_lie(), fixed_tvs );
+        auto [s1, binds1, lie_unambiguous_retained] = default_preds( fixed_tvs, free_tvs, lie_retained );
+        ev_binds = binds1 + ev_binds;
+        current_lie() = lie_deferred;
+
+        // 6. check that the remaining constraints are satisfied by the constraints in the type signature
+        auto [ev_binds2, lie_failed] = entails(lie_given, lie_unambiguous_retained);
+        if (not ev_binds2)
             throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(lie_given)<<"'";
+        ev_binds = *ev_binds2 + ev_binds;
 
-        // 6. return GenBind with tvs, givens, body
+        // 7. return GenBind with tvs, givens, body
         Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
 
-        Hs::Type monotype = apply_current_subst(most_general_type);
         Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
 
         map<string,Hs::BindInfo> bind_infos;
@@ -287,7 +293,10 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
         Hs::Decls decls;
         decls.push_back(FD);
 
-        auto decl = mkGenBind( tvs, dict_vars, *evbinds, decls, bind_infos );
+        auto decl = mkGenBind( tvs, dict_vars, ev_binds, decls, bind_infos );
+
+        pop_and_add_lie();
+
         return {decl, name, polytype};
     }
     catch (myexception& e)
