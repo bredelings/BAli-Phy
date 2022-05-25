@@ -16,3 +16,4 @@ not False        =  True
 
 otherwise = True
 
+bool x y p = if p then x else y
