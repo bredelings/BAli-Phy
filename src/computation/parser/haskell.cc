@@ -770,6 +770,46 @@ string Literal::print() const
         std::abort();
 }
 
+std::optional<char> Literal::is_Char() const
+{
+    if (literal.index() == 0)
+        return std::get<0>(literal).value;
+    else
+        return {};
+}
+
+std::optional<int> Literal::is_Integer() const
+{
+    if (literal.index() == 1)
+        return std::get<1>(literal).value;
+    else
+        return {};
+}
+
+std::optional<string> Literal::is_String() const
+{
+    if (literal.index() == 2)
+        return std::get<2>(literal).value;
+    else
+        return {};
+}
+
+std::optional<double> Literal::is_Double() const
+{
+    if (literal.index() == 3)
+        return std::get<3>(literal).value;
+    else
+        return {};
+}
+
+std::optional<int> Literal::is_BoxedInteger() const
+{
+    if (literal.index() == 4)
+        return std::get<4>(literal).value;
+    else
+        return {};
+}
+
 
 std::string GuardedRHS::print() const
 {

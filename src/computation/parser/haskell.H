@@ -636,6 +636,12 @@ struct Literal: public Object
     Literal* clone() const {return new Literal(*this);}
     std::string print() const;
 
+    std::optional<char> is_Char() const;
+    std::optional<int> is_Integer() const;
+    std::optional<std::string> is_String() const;
+    std::optional<double> is_Double() const;
+    std::optional<int> is_BoxedInteger() const;
+
     template <typename T>
     Literal(const T& t): literal(t) {}
 };
