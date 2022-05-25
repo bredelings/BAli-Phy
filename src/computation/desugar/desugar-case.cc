@@ -148,6 +148,8 @@ pattern_type classify_equation(const equation_info_t& equation)
 	return pattern_type::constructor;
     else if (pat.is_log_double())
 	return pattern_type::constructor;
+    else if (pat.is_a<Hs::Literal>())
+	return pattern_type::constructor;
     else if (pat.is_a<Haskell::StrictPattern>())
     {
 	throw myexception()<<"The BangPattern extension is not implemented!";

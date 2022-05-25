@@ -529,6 +529,10 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         return E;
     }
+    else if (E.is_a<Hs::Literal>())
+    {
+        return E;
+    }
     else if (auto te = E.to<Hs::TypedExp>())
     {
         auto TE = *te;
@@ -1127,6 +1131,8 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
     }
     else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
         return {};
+    else if (pat.is_a<Hs::Literal>())
+        return {};
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
@@ -1162,6 +1168,8 @@ bound_var_info find_vars_in_pattern2(const expression_ref& pat)
     else if (pat.head().is_a<Haskell::Con>())
         return find_vars_in_patterns2(pat.copy_sub());
     else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
+        return {};
+    else if (pat.is_a<Hs::Literal>())
         return {};
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
@@ -1311,6 +1319,10 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     // 4. Handle literal values
     else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
         return {};
+    else if (pat.is_a<Hs::Literal>())
+    {
+        return {};
+    }
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
@@ -2083,6 +2095,10 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         return I;
     }
     else if (E.is_int() or E.is_log_double() or E.is_double() or E.is_char())
+    {
+        return E;
+    }
+    else if (E.is_a<Hs::Literal>())
     {
         return E;
     }

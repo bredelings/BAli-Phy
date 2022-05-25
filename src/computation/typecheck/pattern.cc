@@ -134,6 +134,34 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         }
         return {T, Hs::TupleType(types), lve};
     }
+    else if (auto L = pat.to<Hs::Literal>())
+    {
+        if (L->is_Char())
+        {
+            return {pat, char_type(), {}};
+        }
+        else if (L->is_Integer())
+        {
+            auto [dvar, type] = fresh_num_type();
+            return {pat, type, {}};
+        }
+        else if (L->is_String())
+        {
+            std::abort();
+            return {pat, Hs::ListType(char_type()), {}};
+        }
+        else if (L->is_Double())
+        {
+            auto [dvar, type] = fresh_fractional_type();
+            return {pat, type, {}};
+        }
+        else if (L->is_BoxedInteger())
+        {
+            return {pat, int_type(), {}};
+        }
+        else
+            std::abort();
+    }
     // ???
     else if (pat.is_int())
     {
@@ -248,6 +276,10 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<string, Hs::BindI
         return pat;
     }
     else if (false) // Literal string
+    {
+        return pat;
+    }
+    else if (pat.is_a<Hs::Literal>())
     {
         return pat;
     }

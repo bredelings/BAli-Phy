@@ -52,6 +52,33 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto [dvar, type] = fresh_fractional_type();
         return { E, type };
     }
+    else if (auto L = E.to<Hs::Literal>())
+    {
+        if (auto c = L->is_Char())
+        {
+            return { *c, char_type() };
+        }
+        else if (auto i = L->is_Integer())
+        {
+            auto [dvar, type] = fresh_num_type();
+            expression_ref E = { find_prelude_var("fromInteger"), dvar, *i };
+            return { E, type };
+        }
+        else if (auto s = L->is_String())
+        {
+            std::abort();
+        }
+        else if (auto d = L->is_Double())
+        {
+            auto [dvar, type] = fresh_fractional_type();
+            expression_ref E = { find_prelude_var("fromRational"), dvar, *d };
+            return { E, type };
+        }
+        else if (auto i = L->is_BoxedInteger())
+        {
+            return { *i, int_type() };
+        }
+    }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
         // So, ( e :: tau ) should be equivalent to ( let x :: tau ; x = e in x )

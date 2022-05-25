@@ -275,8 +275,38 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
         SP.pattern = desugar_pattern(SP.pattern);
         return SP;
     }
-    else if (E.is_int() or E.is_double() or E.is_char() or E.is_log_double())
+    else if (E.is_log_double())
+        std::abort();
+    else if (E.is_int() or E.is_double() or E.is_char())
         return E;
+    else if (auto L = E.to<Hs::Literal>())
+    {
+        if (auto c = L->is_Char())
+        {
+            return *c;
+        }
+        else if (auto i = L->is_Integer())
+        {
+            // FIXME: we want to actually compare with fromInteger(E)
+            return *i;
+        }
+        else if (auto d = L->is_Double())
+        {
+            // FIXME: we want to actually compare with fromFractional(E)
+            return *d;
+        }
+        else if (auto s = L->is_String())
+        {
+            // FIXME: we want to .... do what?
+            std::abort();
+        }
+        else if (auto i = L->is_BoxedInteger())
+        {
+            return *i;
+        }
+        else
+            std::abort();
+    }
 
     throw myexception()<<"I don't understand pattern '"<<E<<"'";
 }
