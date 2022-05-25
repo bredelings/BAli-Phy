@@ -212,6 +212,33 @@ Hs::GenBind mkGenBind(const vector<Hs::TypeVar>& tvs,
     return Hs::GenBind(tvs, dict_vars, binds, decls, bind_infos);
 }
 
+// Why aren't we using `fixed_type_vars`?
+// I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
+pair<local_instance_env, local_instance_env>
+classify_constraints(const local_instance_env& lie,
+                     const set<Hs::TypeVar>& fixed_type_vars)
+{
+    local_instance_env lie_deferred;
+    local_instance_env lie_retained;
+
+    for(auto& [name, constraint]: lie)
+    {
+        auto constraint_type_vars = free_type_variables(constraint);
+
+        // Does the constraint contain any ambiguous vars?
+        bool all_fixed = true;
+        for(auto& type_var: constraint_type_vars)
+            if (not fixed_type_vars.count(type_var))
+                all_fixed = false;
+
+        if (all_fixed)
+            lie_deferred = lie_deferred.insert({name,constraint});
+        else
+            lie_retained = lie_retained.insert({name,constraint});
+    }
+    return {lie_deferred, lie_retained};
+}
+
 tuple<expression_ref, string, Hs::Type>
 typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env& env, Hs::FunDecl FD)
 {
@@ -292,33 +319,6 @@ bool is_restricted(const map<string, Hs::Type>& signatures, const Hs::Decls& dec
     }
     return false;
 };
-
-// Why aren't we using `fixed_type_vars`?
-// I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
-pair<local_instance_env, local_instance_env>
-classify_constraints(const local_instance_env& lie,
-                     const set<Hs::TypeVar>& fixed_type_vars)
-{
-    local_instance_env lie_deferred;
-    local_instance_env lie_retained;
-
-    for(auto& [name, constraint]: lie)
-    {
-        auto constraint_type_vars = free_type_variables(constraint);
-
-        // Does the constraint contain any ambiguous vars?
-        bool all_fixed = true;
-        for(auto& type_var: constraint_type_vars)
-            if (not fixed_type_vars.count(type_var))
-                all_fixed = false;
-
-        if (all_fixed)
-            lie_deferred = lie_deferred.insert({name,constraint});
-        else
-            lie_retained = lie_retained.insert({name,constraint});
-    }
-    return {lie_deferred, lie_retained};
-}
 
 tuple<expression_ref, Hs::Type, local_value_env>
 typechecker_state::infer_lhs_type(const expression_ref& decl, const map<string, Hs::Type>& signatures)
