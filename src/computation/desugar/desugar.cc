@@ -562,6 +562,34 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     }
     else if (E.is_a<Haskell::ValueDecl>())
         std::abort();
+    else if (auto L = E.to<Hs::Literal>())
+    {
+        if (auto c = L->is_Char())
+        {
+            return *c;
+        }
+        else if (auto i = L->is_Integer())
+        {
+            // FIXME: we want to actually compare with fromInteger(E)
+            return *i;
+        }
+        else if (auto d = L->is_Double())
+        {
+            // FIXME: we want to actually compare with fromFractional(E)
+            return *d;
+        }
+        else if (auto s = L->is_String())
+        {
+            // FIXME: we want to .... do what?
+            std::abort();
+        }
+        else if (auto i = L->is_BoxedInteger())
+        {
+            return *i;
+        }
+        else
+            std::abort();
+    }
 
     auto head = E.head();
     vector<expression_ref> v = E.copy_sub();
