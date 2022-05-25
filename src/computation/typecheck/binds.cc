@@ -215,51 +215,63 @@ Hs::GenBind mkGenBind(const vector<Hs::TypeVar>& tvs,
 tuple<expression_ref, string, Hs::Type>
 typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env& env, Hs::FunDecl FD)
 {
-    auto& name = unloc(FD.v.name);
+    try
+    {
+        auto& name = unloc(FD.v.name);
 
-    auto polytype = env.at(name);
+        auto polytype = env.at(name);
 
-    // OK, so what we want to do is:
+        // OK, so what we want to do is:
 
-    // 1. instantiate the type -> (tvs, givens, rho-type)
-    auto [tvs, given_constraints, given_type] = instantiate(polytype, false);
-    auto ordered_lie_given = constraints_to_lie(given_constraints);
-    auto dict_vars = vars_from_lie( ordered_lie_given );
-    auto lie_given = unordered_lie(ordered_lie_given);
+        // 1. instantiate the type -> (tvs, givens, rho-type)
+        auto [tvs, given_constraints, given_type] = instantiate(polytype, false);
+        auto ordered_lie_given = constraints_to_lie(given_constraints);
+        auto dict_vars = vars_from_lie( ordered_lie_given );
+        auto lie_given = unordered_lie(ordered_lie_given);
 
-    // 2. typecheck the rhs -> (rhs_type, wanted, body)
-    push_lie();
-    auto [match2, most_general_type] = infer_type(env, FD.match);
-    FD.match = match2;
-    auto lie_wanted = pop_lie();
+        // 2. typecheck the rhs -> (rhs_type, wanted, body)
+        push_lie();
+        auto [match2, most_general_type] = infer_type(env, FD.match);
+        FD.match = match2;
+        auto lie_wanted = pop_lie();
 
-    // 3. alpha[i] in most_general_type but not in env
-    auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
-    // FIXME -- what if the instantiated type contains variables that are free in the environment?
+        // 3. alpha[i] in most_general_type but not in env
+        auto ftv_mgt = free_type_variables(most_general_type) - free_type_variables(env);
+        // FIXME -- what if the instantiated type contains variables that are free in the environment?
 
-    // 4. match(given_type <= most_general_type)
-    unify(most_general_type, given_type);
+        // 4. match(given_type <= most_general_type)
+        unify(most_general_type, given_type);
 
-    // 5. check if the given => wanted ~ EvBinds
-    lie_wanted = apply_current_subst( lie_wanted );
-    auto evbinds = entails(lie_given, lie_wanted);
-    if (not evbinds)
-        throw myexception()<<"Can't derive constraints '"<<print(lie_wanted)<<"' from specified constraints '"<<print(lie_given)<<"'";
+        // 5. check if the given => wanted ~ EvBinds
+        lie_wanted = apply_current_subst( lie_wanted );
+        auto [evbinds, lie_failed] = entails(lie_given, lie_wanted);
+        if (not evbinds)
+            throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(lie_given)<<"'";
 
-    // 6. return GenBind with tvs, givens, body
-    Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
+        // 6. return GenBind with tvs, givens, body
+        Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
 
-    Hs::Type monotype = apply_current_subst(most_general_type);
-    Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
+        Hs::Type monotype = apply_current_subst(most_general_type);
+        Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
 
-    map<string,Hs::BindInfo> bind_infos;
-    bind_infos.insert({name,bind_info});
+        map<string,Hs::BindInfo> bind_infos;
+        bind_infos.insert({name,bind_info});
 
-    Hs::Decls decls;
-    decls.push_back(FD);
+        Hs::Decls decls;
+        decls.push_back(FD);
 
-    auto decl = mkGenBind( tvs, dict_vars, *evbinds, decls, bind_infos );
-    return {decl, name, polytype};
+        auto decl = mkGenBind( tvs, dict_vars, *evbinds, decls, bind_infos );
+        return {decl, name, polytype};
+    }
+    catch (myexception& e)
+    {
+        string header = "In function '" + FD.v.print()+"'";
+        if (FD.v.name.loc)
+            header += " at " + convertToString(*FD.v.name.loc);
+        header += ":\n";
+        e.prepend(header);
+        throw;
+    }
 }
 
 bool is_restricted(const map<string, Hs::Type>& signatures, const Hs::Decls& decls)
