@@ -101,6 +101,8 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type char_type() const;
 
+    Hs::Type int_type() const;
+
     Hs::Type enum_class(const Hs::Type& arg) const;
 
     Hs::Type num_class(const Hs::Type& arg) const;
