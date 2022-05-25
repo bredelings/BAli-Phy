@@ -965,8 +965,8 @@ deriv_clause_types: qtycondoc
 
 decl_no_th: sigdecl           {$$ = $1;}
 /* I guess this is a strict let. Code as DeclStrict, rather than StrictPattern, since docs say this is part of the binding, not part of the patter */
-| "!" aexp rhs                {$$ = Hs::StrictValueDecl{$2,$3}; }
-| infixexp_top rhs            {$$ = Hs::ValueDecl(make_infixexp($1),$2);}
+| "!" aexp rhs                {$$ = Hs::StrictValueDecl{{@2,$2},$3}; }
+| infixexp_top rhs            {$$ = Hs::ValueDecl({@1,make_infixexp($1)},$2);}
 
 decl: decl_no_th              {$$ = $1;}
 /*  | splice_exp */

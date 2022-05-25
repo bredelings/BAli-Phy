@@ -1557,7 +1557,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
     for(const auto& decl: topdecls)
         if (auto pd = decl.to<Hs::PatDecl>())
         {
-            for(const auto& var_name: find_bound_vars(pd->lhs))
+            for(const auto& var_name: find_bound_vars( unloc(pd->lhs) ))
                 maybe_def_function( var_name );
         }
         else if (auto fd = decl.to<Hs::FunDecl>())

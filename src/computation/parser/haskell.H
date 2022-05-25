@@ -681,15 +681,15 @@ MultiGuardedRHS SimpleRHS(const Located<expression_ref>&, const std::optional<Lo
 
 struct StrictValueDecl: public Object
 {
-    expression_ref lhs;
+    Located<expression_ref> lhs;
     MultiGuardedRHS rhs;
 
     StrictValueDecl* clone() const { return new StrictValueDecl(*this);}
     std::string print() const;
 
     StrictValueDecl() = default;
-    StrictValueDecl(const expression_ref& l, const expression_ref& r): lhs(l), rhs(SimpleRHS({noloc,r})) {}
-    StrictValueDecl(const expression_ref& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
+    StrictValueDecl(const Located<expression_ref>& l, const expression_ref& r): lhs(l), rhs(SimpleRHS({noloc,r})) {}
+    StrictValueDecl(const Located<expression_ref>& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
 };
 
 // Where do we make ValueDecl's with an rhs that is a plain expression?
@@ -697,7 +697,7 @@ struct StrictValueDecl: public Object
 
 struct ValueDecl: public Object
 {
-    expression_ref lhs;
+    Located<expression_ref> lhs;
     MultiGuardedRHS rhs;
 
     bool operator==(const Object& O) const;
@@ -706,8 +706,8 @@ struct ValueDecl: public Object
     std::string print() const;
 
     ValueDecl() = default;
-    ValueDecl(const expression_ref& l, const expression_ref& r): lhs(l), rhs(SimpleRHS({noloc,r})) {}
-    ValueDecl(const expression_ref& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
+    ValueDecl(const Located<expression_ref>& l, const expression_ref& r): lhs(l), rhs(SimpleRHS({noloc,r})) {}
+    ValueDecl(const Located<expression_ref>& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
 };
 
 struct Stmts: public Object
@@ -1055,13 +1055,13 @@ struct PatDecl: public Object
     PatDecl* clone() const {return new PatDecl(*this);}
     std::string print() const;
 
-    Pattern lhs;
+    Located<Pattern> lhs;
     MultiGuardedRHS rhs;
 
     // This holds vars discovered during renaming
     std::set<std::string> rhs_free_vars;
 
-    PatDecl(const Pattern& p, const MultiGuardedRHS& r):lhs(p), rhs(r) {}
+    PatDecl(const Located<Pattern>& p, const MultiGuardedRHS& r):lhs(p), rhs(r) {}
 };
 
 struct MRule

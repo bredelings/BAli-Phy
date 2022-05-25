@@ -571,7 +571,7 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
         Hs::Type a = fresh_meta_type_var( kind_star() );
         return {Hs::ListType(a),{}};
     }
-    else if (is_tuple_name(con_name))
+    else if (is_tuple_name(con_name) or con_name == "()")
     {
         int n = tuple_arity(con_name);
         vector<Hs::Type> types;
@@ -583,6 +583,7 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
     // 1. Find the data type
     if (not con_info.count(con_name))
         throw myexception()<<"Unrecognized constructor: "<<con;
+
     auto [_, constraints, con_type] = instantiate(con_info.at(con_name));
     vector<Hs::Type> field_types;
 

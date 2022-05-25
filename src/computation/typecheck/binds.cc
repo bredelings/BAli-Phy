@@ -188,7 +188,7 @@ rename_from_bindinfo(expression_ref decl, const map<string, Hs::BindInfo>& bind_
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
-        PD.lhs = rename_pattern_from_bindinfo(PD.lhs, bind_infos);
+        unloc(PD.lhs) = rename_pattern_from_bindinfo(unloc(PD.lhs), bind_infos);
         return PD;
     }
     else
@@ -345,8 +345,8 @@ typechecker_state::infer_lhs_type(const expression_ref& decl, const map<string, 
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
-        auto [lhs, type, lve] = infer_pattern_type(PD.lhs, signatures);
-        PD.lhs = lhs;
+        auto [lhs, type, lve] = infer_pattern_type( unloc(PD.lhs), signatures);
+        unloc(PD.lhs) = lhs;
         return {PD, type, lve};
     }
     else
@@ -414,10 +414,33 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)
     {
-        auto [decl, rhs_type] = infer_rhs_type(env2, decls[i]);
-        decls[i] = decl;
+        try{
+            auto [decl, rhs_type] = infer_rhs_type(env2, decls[i]);
+            decls[i] = decl;
 
-        unify(lhs_types[i], rhs_type);
+            unify(lhs_types[i], rhs_type);
+        }
+        catch (myexception& e)
+        {
+            string header;
+            if (auto FD = decls[i].to<Hs::FunDecl>())
+            {
+                header = "In function '" + FD->v.print()+"'";
+                if (FD->v.name.loc)
+                    header += " at " + convertToString(*FD->v.name.loc);
+            }
+            else if (auto PD = decls[i].to<Hs::PatDecl>())
+            {
+                header = "In definition of '" + unloc(PD->lhs).print() + "'";
+                if (PD->lhs.loc)
+                    header += " at " + convertToString(*PD->lhs.loc);
+            }
+            else
+                std::abort();
+            header += ":\n";
+            e.prepend(header);
+            throw;
+        }
     }
 
     // We need to substitute before looking for free type variables!

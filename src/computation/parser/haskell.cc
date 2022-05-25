@@ -178,12 +178,12 @@ string SignatureDecl::print() const
 
 string StrictValueDecl::print() const
 {
-    return "! " + lhs.print() + rhs.print();
+    return "! " + unloc(lhs).print() + rhs.print();
 }
 
 string ValueDecl::print() const
 {
-    return lhs.print() + rhs.print();
+    return unloc(lhs).print() + rhs.print();
 }
 
 bool ValueDecl::operator==(const Object&) const

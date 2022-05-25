@@ -2899,13 +2899,13 @@ namespace yy {
 
   case 181: // decl_no_th: "!" aexp rhs
 #line 968 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Hs::StrictValueDecl{yystack_[1].value.as < expression_ref > (),yystack_[0].value.as < Hs::MultiGuardedRHS > ()}; }
+                              {yylhs.value.as < expression_ref > () = Hs::StrictValueDecl{{yystack_[1].location,yystack_[1].value.as < expression_ref > ()},yystack_[0].value.as < Hs::MultiGuardedRHS > ()}; }
 #line 2904 "parser.cc"
     break;
 
   case 182: // decl_no_th: infixexp_top rhs
 #line 969 "parser.y"
-                              {yylhs.value.as < expression_ref > () = Hs::ValueDecl(make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ()),yystack_[0].value.as < Hs::MultiGuardedRHS > ());}
+                              {yylhs.value.as < expression_ref > () = Hs::ValueDecl({yystack_[1].location,make_infixexp(yystack_[1].value.as < std::vector<expression_ref> > ())},yystack_[0].value.as < Hs::MultiGuardedRHS > ());}
 #line 2910 "parser.cc"
     break;
 

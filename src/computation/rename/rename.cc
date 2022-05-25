@@ -178,7 +178,7 @@ set<string> find_bound_vars(const expression_ref& E)
 
 string get_func_name(const Haskell::ValueDecl& decl)
 {
-    auto& head = decl.lhs.head();
+    auto& head = unloc(decl.lhs).head();
     assert(head.is_a<Hs::Var>() or head.is_a<var>());
     if (head.is_a<Hs::Var>())
         return unloc(head.as_<Hs::Var>().name);
@@ -190,25 +190,26 @@ string get_func_name(const Haskell::ValueDecl& decl)
 
 string desugar_get_func_name(const Haskell::ValueDecl& decl)
 {
-    return decl.lhs.head().as_<var>().name;
+    return unloc(decl.lhs).head().as_<var>().name;
 }
 
 bool is_pattern_binding(const Haskell::ValueDecl& decl)
 {
-    if (decl.lhs.is_a<Haskell::List>())
+    auto& lhs = unloc(decl.lhs);
+    if (lhs.is_a<Haskell::List>())
         return true;
-    if (decl.lhs.is_a<Haskell::Tuple>())
+    if (lhs.is_a<Haskell::Tuple>())
         return true;
-    if (decl.lhs.is_a<Haskell::AsPattern>())
+    if (lhs.is_a<Haskell::AsPattern>())
         return true;
-    if (decl.lhs.is_a<Haskell::LazyPattern>())
+    if (lhs.is_a<Haskell::LazyPattern>())
         return true;
-    if (decl.lhs.is_a<Haskell::StrictPattern>())
+    if (lhs.is_a<Haskell::StrictPattern>())
         return true;
     // FIXME: we should make a ConPattern
-    if (decl.lhs.head().is_a<Haskell::Con>())
+    if (lhs.head().is_a<Haskell::Con>())
         return true;
-    if (decl.lhs.head().is_a<constructor>()) // this happens when called from desugar.cc
+    if (lhs.head().is_a<constructor>()) // this happens when called from desugar.cc
         return true;
     return false;
 }
@@ -313,11 +314,11 @@ expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
     {
         auto D = E.as_<Haskell::ValueDecl>();
 
-        D.lhs = rename_infix(m, D.lhs);
-	D.lhs = unapply(D.lhs);
+        unloc(D.lhs) = rename_infix(m, unloc(D.lhs));
+	unloc(D.lhs) = unapply( unloc(D.lhs) );
         D.rhs = rename_infix(m, D.rhs);
 
-	assert(D.lhs.head().is_a<Hs::Var>() or is_pattern_binding(D));
+	assert( unloc(D.lhs).head().is_a<Hs::Var>() or is_pattern_binding(D));
 
         return D;
     }
@@ -678,7 +679,7 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
                 expression_ref body = Haskell::CaseExp(x,Haskell::Alts(alts));
                 body = Haskell::LambdaExp({x},body);
 
-                decls2.push_back(Haskell::ValueDecl(name, body));
+                decls2.push_back(Haskell::ValueDecl({noloc,name}, body));
             }
         }
     }
@@ -1330,7 +1331,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 bound_var_info renamer_state::find_bound_vars_in_funpatdecl(const expression_ref& decl, bool top)
 {
     if (auto d = decl.to<Haskell::PatDecl>())
-        return find_vars_in_pattern(d->lhs, top);
+        return find_vars_in_pattern( unloc(d->lhs), top);
     else if (auto d = decl.to<Haskell::FunDecl>())
         return find_vars_in_pattern(d->v, top);
     else
@@ -1365,12 +1366,12 @@ bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::ValueDecl& 
     // For a constructor pattern, rename the whole lhs.
     if (is_pattern_binding(decl))
     {
-        return find_vars_in_pattern(decl.lhs, top);
+        return find_vars_in_pattern( unloc(decl.lhs), top);
     }
     // For a function pattern, just rename the variable being defined
     else
     {
-        auto head = decl.lhs.head();
+        auto head = unloc(decl.lhs).head();
         return find_vars_in_pattern(head, top);
     }
 }
@@ -1379,7 +1380,7 @@ bound_var_info binders_for_renamed_decl(const expression_ref& decl)
 {
     set<string> binders;
     if (auto pd = decl.to<Hs::PatDecl>())
-        binders = find_vars_in_pattern2(pd->lhs);
+        binders = find_vars_in_pattern2( unloc(pd->lhs) );
     else if (auto fd = decl.to<Hs::FunDecl>())
         binders = { unloc(fd->v.name) };
     else
@@ -1431,7 +1432,7 @@ map<string,int> get_indices_for_names(const Hs::Decls& decls)
         else if (decl.is_a<Hs::PatDecl>())
         {
             auto& PD = decl.as_<Hs::PatDecl>();
-            for(const string& name: find_vars_in_pattern2(PD.lhs))
+            for(const string& name: find_vars_in_pattern2( unloc(PD.lhs) ))
             {
                 if (index_for_name.count(name)) throw myexception()<<"name '"<<name<<"' is bound twice: "<<decls.print();
 
@@ -1485,7 +1486,7 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
         {
             auto PD = decl.as_<Hs::PatDecl>();
 
-            rename_pattern(PD.lhs, top);
+            rename_pattern( unloc(PD.lhs), top);
             PD.rhs = rename(PD.rhs, bound, PD.rhs_free_vars);
             decl = PD;
         }
@@ -1582,7 +1583,7 @@ optional<Hs::Var> fundecl_head(const expression_ref& decl)
 
     if (auto d = decl.to<Hs::ValueDecl>(); d and is_function_binding(*d))
     {
-        auto fvar = d->lhs.head();
+        auto fvar = unloc(d->lhs).head();
         assert(fvar.is_a<Hs::Var>());
         return fvar.as_<Hs::Var>();
     }
@@ -1617,7 +1618,7 @@ pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
         }
         else if (auto d = decl.to<Haskell::ValueDecl>(); d and is_pattern_binding(*d))
         {
-            decls2.push_back(Haskell::PatDecl{d->lhs, d->rhs});
+            decls2.push_back(Haskell::PatDecl{ d->lhs, d->rhs});
         }
         else if (auto fvar = fundecl_head(decl))
         {
@@ -1628,7 +1629,7 @@ pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
 
                 auto& D = decls[j].as_<Haskell::ValueDecl>();
 
-                m.rules.push_back( Hs::MRule{ D.lhs.copy_sub(), D.rhs } );
+                m.rules.push_back( Hs::MRule{ unloc(D.lhs).copy_sub(), D.rhs } );
 
                 if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
                     throw myexception()<<"Function '"<<*fvar<<"' has different numbers of arguments!";

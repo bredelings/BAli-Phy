@@ -95,7 +95,7 @@ CDecls desugar_state::desugar_decls(const Haskell::Decls& v)
 
         if (auto pd = decl.to<Hs::PatDecl>())
         {
-            auto pat = desugar_pattern(pd->lhs);
+            auto pat = desugar_pattern( unloc(pd->lhs) );
             auto rhs = desugar_rhs(pd->rhs);
             var z = get_fresh_var();
             if (pat.is_a<Haskell::AsPattern>())
