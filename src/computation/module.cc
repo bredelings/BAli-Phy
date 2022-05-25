@@ -335,7 +335,7 @@ void Module::import_module(const Program& P, const module_import& I)
         // 4. Import information about instances
         for(auto& [dfun_name, dfun_type]: M2.tc_state->instance_env)
         {
-            if (not M2.tc_state->instance_env.count(dfun_name))
+            if (not tc_state->instance_env.count(dfun_name))
                 tc_state->instance_env = tc_state->instance_env.insert({dfun_name, dfun_type});
         }
 
@@ -344,7 +344,7 @@ void Module::import_module(const Program& P, const module_import& I)
         // 5. Import information about superclass extractors
         for(auto& [dfun_name, dfun_type]: M2.tc_state->superclass_extractor_env)
         {
-            if (not M2.tc_state->superclass_extractor_env.count(dfun_name))
+            if (not tc_state->superclass_extractor_env.count(dfun_name))
                 tc_state->superclass_extractor_env = tc_state->superclass_extractor_env.insert({dfun_name, dfun_type});
         }
 
