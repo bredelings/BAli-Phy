@@ -753,6 +753,24 @@ std::optional<Constructor> DataOrNewtypeDecl::find_constructor_by_name(const str
     return {};
 }
 
+
+string Literal::print() const
+{
+    if (literal.index() == 0)
+        return "'" + std::to_string(std::get<0>(literal).value) + "'";
+    else if (literal.index() == 1)
+        return std::to_string(std::get<1>(literal).value);
+    else if (literal.index() == 2)
+        return '"' + std::get<2>(literal).value + '"';
+    else if (literal.index() == 3)
+        return std::to_string(std::get<3>(literal).value);
+    else if (literal.index() == 4)
+        return std::to_string(std::get<4>(literal).value) + "#";
+    else
+        std::abort();
+}
+
+
 std::string GuardedRHS::print() const
 {
     vector<string> guard_string;

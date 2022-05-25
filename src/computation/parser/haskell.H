@@ -604,6 +604,42 @@ struct Tuple: public Object
         }
 };
 
+struct Char
+{
+    char value;
+};
+
+struct Integer
+{
+    int value;
+};
+
+struct String
+{
+    std::string value;
+};
+
+struct Double
+{
+    double value;
+};
+
+struct BoxedInteger
+{
+    int value;
+};
+
+struct Literal: public Object
+{
+    std::variant<Char, Integer, String, Double, BoxedInteger> literal;
+
+    Literal* clone() const {return new Literal(*this);}
+    std::string print() const;
+
+    template <typename T>
+    Literal(const T& t): literal(t) {}
+};
+
 Expression tuple(const std::vector<Expression>& es);
 
 struct GuardedRHS
