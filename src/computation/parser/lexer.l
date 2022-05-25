@@ -27,6 +27,9 @@ yy::parser::symbol_type consym(const yy::parser::location_type&);
 yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
 				     const yy::parser::location_type& loc);
 
+yy::parser::symbol_type make_boxed_integer(int radix, bool positive, int shift,
+				           const yy::parser::location_type& loc);
+
 yy::parser::symbol_type make_rational(const yy::parser::location_type& loc);
 
 yy::parser::symbol_type make_char(const yy::parser::location_type& loc);
@@ -198,6 +201,8 @@ signed       {negative}?
 <INITIAL>{varsym}       return varsym(loc);
 <INITIAL>{consym}       return consym(loc);
 
+<INITIAL>"-"{decimal}"#"                        return make_boxed_integer(10,false,0,loc);
+<INITIAL>{decimal}"#"                           return make_boxed_integer(10,true,0,loc);
 <INITIAL>{decimal}                              return make_integer(10,true,0,loc);
   /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
 <INITIAL>0[oO]{numspc}{octal}                   return make_integer( 8,true,2,loc);
@@ -399,6 +404,18 @@ yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
     if (not positive)
 	n = -n;
     return yy::parser::make_INTEGER(n, loc);
+}
+
+yy::parser::symbol_type make_boxed_integer(int radix, bool positive, int shift,
+                                           const yy::parser::location_type& loc)
+{
+    errno = 0;
+    auto n = std::stoi(yytext+shift, NULL, radix);
+    if ( not (INT_MIN <= n and n <= INT_MAX and errno != ERANGE))
+	throw yy::parser::syntax_error(loc, "integer is out of range: " + std::string(yytext));
+    if (not positive)
+	n = -n;
+    return yy::parser::make_PRIMINTEGER(n, loc);
 }
 
 yy::parser::symbol_type make_rational(const yy::parser::location_type& loc)

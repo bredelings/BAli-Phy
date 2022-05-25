@@ -465,7 +465,7 @@
 %type  <int> bars
 */
 
-%expect 138
+%expect 140
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -1419,10 +1419,11 @@ consym:  CONSYM  { $$ = $1; }
 
 /* ------------- Literal ----------------------------------------- */
 
-literal: CHAR     {$$ = $1;}
-|        STRING   {$$ = yy_make_string($1);}
-|        INTEGER  {$$ = $1;}
-|        RATIONAL {$$ = $1;}
+literal: CHAR        {$$ = $1;}
+|        STRING      {$$ = yy_make_string($1);}
+|        INTEGER     {$$ = $1;}
+|        RATIONAL    {$$ = $1;}
+|        PRIMINTEGER {$$ = Hs::Literal(Hs::BoxedInteger{$1});}
 
 
 /* ------------- Layout ------------------------------------------ */
