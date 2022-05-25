@@ -11,6 +11,109 @@ using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
 
+//********** Builtins for Num Int ****************//
+
+extern "C" closure builtin_function_add_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+    auto y = Args.evaluate(1).as_int();
+
+    return { x + y };
+}
+
+extern "C" closure builtin_function_subtract_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+    auto y = Args.evaluate(1).as_int();
+
+    return { x - y };
+}
+
+extern "C" closure builtin_function_multiply_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+    auto y = Args.evaluate(1).as_int();
+
+    return { x * y };
+}
+
+extern "C" closure builtin_function_abs_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+
+    return { std::abs(x) };
+}
+
+
+extern "C" closure builtin_function_negate_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+
+    return { -x };
+}
+
+extern "C" closure builtin_function_signum_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+
+    auto result = (x > 0 ? 1 : 0) - (x < 0 ? -1 : 0);
+
+    return { result };
+}
+
+
+//********** Builtins for Num Double ****************//
+
+extern "C" closure builtin_function_add_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_double();
+    auto y = Args.evaluate(1).as_double();
+
+    return { x + y };
+}
+
+extern "C" closure builtin_function_subtract_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_double();
+    auto y = Args.evaluate(1).as_double();
+
+    return { x - y };
+}
+
+extern "C" closure builtin_function_multiply_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_double();
+    auto y = Args.evaluate(1).as_double();
+
+    return { x * y };
+}
+
+extern "C" closure builtin_function_abs_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_double();
+
+    return { std::abs(x) };
+}
+
+
+extern "C" closure builtin_function_negate_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_double();
+
+    return { -x };
+}
+
+extern "C" closure builtin_function_signum_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_double();
+
+    double result = (x > 0.0 ? 1.0 : 0.0) - (x < 0.0 ? -1.0 : 0.0);
+
+    return {result};
+}
+
+//*****************************************************//
+
 extern "C" closure builtin_function_is_int(OperationArgs& Args)
 {
     auto arg = Args.evaluate(0);
@@ -79,22 +182,6 @@ extern "C" closure builtin_function_doubleToInt(OperationArgs& Args)
     return {xi};
 }
 
-extern "C" closure builtin_function_add_int(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-
-    return {x.as_int() + y.as_int()};
-}
-
-extern "C" closure builtin_function_add_double(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-
-    return {x.as_double() + y.as_double()};
-}
-
 extern "C" closure builtin_function_add_logdouble(OperationArgs& Args)
 {
     auto x = Args.evaluate(0);
@@ -126,22 +213,6 @@ extern "C" closure builtin_function_add(OperationArgs& Args)
 	return {x.as_char() + y.as_char()};
     else
 	throw myexception()<<"Add: object '"<<x.print()<<"' is not double, int, log_double, or char'";
-}
-
-extern "C" closure builtin_function_multiply_int(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-
-    return {x.as_int() * y.as_int()};
-}
-
-extern "C" closure builtin_function_multiply_double(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-
-    return {x.as_double() * y.as_double()};
 }
 
 extern "C" closure builtin_function_multiply_logdouble(OperationArgs& Args)
@@ -294,22 +365,6 @@ extern "C" closure builtin_function_rem(OperationArgs& Args)
 	throw myexception()<<"rem: object '"<<x.print()<<"' is not int, or char'";
 }
 
-extern "C" closure builtin_function_subtract_int(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-
-    return {x.as_int() - y.as_int()};
-}
-
-extern "C" closure builtin_function_subtract_double(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-
-    return {x.as_double() - y.as_double()};
-}
-
 extern "C" closure builtin_function_subtract_logdouble(OperationArgs& Args)
 {
     auto x = Args.evaluate(0);
@@ -343,25 +398,11 @@ extern "C" closure builtin_function_subtract(OperationArgs& Args)
 	throw myexception()<<"Minus: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
-extern "C" closure builtin_function_negate_int(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-
-    return {-x.as_int()};
-}
-
-extern "C" closure builtin_function_negate_double(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-
-    return {-x.as_double()};
-}
-
 extern "C" closure builtin_function_negate_char(OperationArgs& Args)
 {
-    auto x = Args.evaluate(0);
+    char x = Args.evaluate(0).as_char();
 
-    return {-x.as_char()};
+    return { -x };
 }
 
 extern "C" closure builtin_function_negate(OperationArgs& Args)
@@ -414,6 +455,39 @@ extern "C" closure builtin_function_get_arg(OperationArgs& Args)
     return closure{index_var(0),{r}};
 }
 
+
+extern "C" closure builtin_function_increment_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+
+    return { x + 1 };
+}
+
+
+extern "C" closure builtin_function_equals_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+    auto y = Args.evaluate(1).as_int();
+
+    return { (x == y) ? bool_true : bool_false };
+}
+
+extern "C" closure builtin_function_equals_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_double();
+    auto y = Args.evaluate(1).as_double();
+
+    return { (x == y) ? bool_true : bool_false };
+}
+
+extern "C" closure builtin_function_equals_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_char();
+    auto y = Args.evaluate(1).as_char();
+
+    return { (x == y) ? bool_true : bool_false };
+}
+
 extern "C" closure builtin_function_equals_top(OperationArgs& Args)
 {
     constexpr int False = 1;
@@ -444,6 +518,51 @@ Ordering compare(const T& x, const T& y)
     if (x < y) return Ordering::LT;
     if (x > y) return Ordering::GT;
     return Ordering::EQ;
+}
+
+extern "C" closure builtin_function_compare_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+    auto y = Args.evaluate(1).as_int();
+
+    if (x < y)
+        return {0};
+    else if (x == y)
+        return {1};
+    else if (x > y)
+        return {2};
+    else
+        std::abort();
+}
+
+extern "C" closure builtin_function_compare_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_double();
+    auto y = Args.evaluate(1).as_double();
+
+    if (x < y)
+        return {0};
+    else if (x == y)
+        return {1};
+    else if (x > y)
+        return {2};
+    else
+        std::abort();
+}
+
+extern "C" closure builtin_function_compare_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_char();
+    auto y = Args.evaluate(1).as_char();
+
+    if (x < y)
+        return {0};
+    else if (x == y)
+        return {1};
+    else if (x > y)
+        return {2};
+    else
+        std::abort();
 }
 
 extern "C" closure builtin_function_compare_top(OperationArgs& Args)
