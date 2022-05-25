@@ -71,7 +71,8 @@ typechecker_state::candidates(const Hs::TypeVar& tv, const local_instance_env& t
     {
         substitution_t s;
         s = s.insert({tv, type});
-        if (auto binds = entails({}, apply_subst(s, tv_lie)))
+        auto [binds, failed_constraints] = entails({}, apply_subst(s, tv_lie));
+        if (binds)
             return pair(s, *binds);
     }
 

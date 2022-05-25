@@ -252,9 +252,9 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     // 6. Construct binds_super
     auto ordered_lie_super = constraints_to_lie(superclass_constraints);
     auto lie_super = unordered_lie(ordered_lie_super);
-    auto binds_super = entails(lie_instance, lie_super);
+    auto [binds_super, failed_constraints] = entails(lie_instance, lie_super);
     if (not binds_super)
-        throw myexception()<<"Can't derive "<<print(lie_super)<<" from "<<print(lie_instance)<<"!";
+        throw myexception()<<"Can't derive "<<print(failed_constraints)<<" from "<<print(lie_instance)<<"!";
 
     // 7. make some intermediates
     auto instance_constraint_dvars = vars_from_lie(ordered_lie_instance);

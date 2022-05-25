@@ -226,17 +226,23 @@ optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<string, 
 }
 
 // How does this relate to simplifying constraints?
-optional<Hs::Binds> typechecker_state::entails(const local_instance_env& lie1, const local_instance_env& lie2)
+pair<optional<Hs::Binds>, local_instance_env> typechecker_state::entails(const local_instance_env& lie1, const local_instance_env& lie2)
 {
     Hs::Binds binds;
+    local_instance_env failed_constraints;
+
     for(auto& constraint: lie2)
     {
         auto binds1 = entails(lie1, constraint);
         if (not binds1)
-            return {};
-        ranges::insert(binds, binds.begin(), *binds1);
+            failed_constraints = failed_constraints.insert(constraint);
+        else
+            ranges::insert(binds, binds.begin(), *binds1);
     }
-    return binds;
+    if (failed_constraints.size())
+        return {{} , failed_constraints};
+    else
+        return {binds, {}};
 }
 
 pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_instance_env& lie)

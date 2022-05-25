@@ -242,9 +242,11 @@ struct typechecker_state: FreshVarSource
                           const std::pair<std::string, Hs::Type>& to_remove);
 
     template <typename T>
-    std::optional<Hs::Binds> entails(const T& to_keep, const std::pair<std::string, Hs::Type>& to_check);
+    std::optional<Hs::Binds>
+    entails(const T& to_keep, const std::pair<std::string, Hs::Type>& to_check);
 
-    std::optional<Hs::Binds> entails(const local_instance_env& lie1, const local_instance_env& lie2);
+    std::pair<std::optional<Hs::Binds>, local_instance_env>
+    entails(const local_instance_env& lie1, const local_instance_env& lie2);
 
     std::optional<std::pair<Hs::Var,std::vector<Hs::Type>>> lookup_instance(const Hs::Type& constraint);
 
