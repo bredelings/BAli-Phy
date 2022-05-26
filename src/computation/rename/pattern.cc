@@ -13,6 +13,69 @@ using std::pair;
 using std::set;
 
 
+expression_ref shift_list(vector<expression_ref>& v)
+{
+    if (not v.size()) return {};
+
+    auto head = v[0];
+    for(int i=0;i<v.size()-1;i++)
+	v[i] = v[i+1];
+    v.pop_back();
+    return head;
+}
+
+// The issue here is to rewrite @ f x y -> f x y
+// so that f is actually the head.
+expression_ref unapply(expression_ref E)
+{
+    if (E.is_a<Haskell::List>())
+    {
+        auto L = E.as_<Haskell::List>();
+        for(auto& pattern: L.elements)
+            pattern = unapply(pattern);
+        return L;
+    }
+    else if (E.is_a<Haskell::Tuple>())
+    {
+        auto T = E.as_<Haskell::Tuple>();
+        for(auto& pattern: T.elements)
+            pattern = unapply(pattern);
+        return T;
+    }
+    else if (E.is_a<Haskell::AsPattern>())
+    {
+        auto& AP = E.as_<Haskell::AsPattern>();
+        return Haskell::AsPattern(AP.var, unapply(AP.pattern));
+    }
+    else if (E.is_a<Haskell::LazyPattern>())
+    {
+        auto LP = E.as_<Haskell::LazyPattern>();
+        return Haskell::LazyPattern(unapply(LP.pattern));
+    }
+    else if (E.is_a<Haskell::StrictPattern>())
+    {
+        auto SP = E.as_<Haskell::StrictPattern>();
+        SP.pattern = unapply(SP.pattern);
+        return SP;
+    }
+
+    if (not E.size()) return E;
+
+    auto head = E.head();
+    auto args = E.sub();
+    if (is_apply_exp(E))
+	head = shift_list(args);
+
+    // We shouldn't have e.g. (@ (@ f x) y) -- this should already be dealt with by rename_infix
+    assert(not is_apply_exp(head));
+    assert(not head.size());
+
+    for(auto& arg: args)
+	arg = unapply(arg);
+
+    return expression_ref{head,std::move(args)};
+}
+
 bound_var_info renamer_state::rename_patterns(vector<expression_ref>& patterns, bool top)
 {
     bound_var_info bound;

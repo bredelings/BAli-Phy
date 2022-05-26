@@ -15,7 +15,7 @@ computation_sources = [
 
   'rename/rename.cc', 'rename/expression.cc', 'rename/pattern.cc',
   'rename/decls.cc', 'rename/stmt.cc', 'rename/match.cc',
-  'rename/infix.cc',
+  'rename/infix.cc', 'rename/types.cc',
 
   'desugar/desugar.cc','desugar/desugar-case.cc',
 
