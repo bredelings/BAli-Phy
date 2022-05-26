@@ -6,8 +6,7 @@
 
 #include "rename.H"
 #include "computation/module.H"
-#include "computation/expression/apply.H"
-#include "computation/expression/tuple.H"
+#include "computation/expression/tuple.H" // for tuple_head( )
 #include "util/set.H"
 
 using std::string;
