@@ -12,7 +12,7 @@ computation_sources = [
   'fresh_vars.cc',
 
   'desugar/desugar.cc','desugar/desugar-case.cc',
-  'rename/rename.cc', 'rename/expression.cc',
+  'rename/rename.cc', 'rename/expression.cc', 'rename/pattern.cc',
   'parser/driver.cc', 'parser/lexer.cc', 'parser/parser.cc',
   'parser/haskell.cc',
 

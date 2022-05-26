@@ -14,6 +14,237 @@ using std::vector;
 using std::pair;
 using std::set;
 
+expression_ref rename_infix(const Module& m, const expression_ref& E)
+{
+    if (E.is_a<Haskell::List>())
+    {
+        auto L = E.as_<Haskell::List>();
+        for(auto& element: L.elements)
+            element = rename_infix(m, element);
+        return L;
+    }
+    else if (E.is_a<Haskell::ListFrom>())
+    {
+        auto L = E.as_<Haskell::ListFrom>();
+        L.from = rename_infix(m, L.from);
+        return L;
+    }
+    else if (E.is_a<Haskell::ListFromThen>())
+    {
+        auto L = E.as_<Haskell::ListFromThen>();
+        L.from = rename_infix(m, L.from);
+        L.then = rename_infix(m, L.then);
+        return L;
+    }
+    else if (E.is_a<Haskell::ListFromTo>())
+    {
+        auto L = E.as_<Haskell::ListFromTo>();
+        L.from = rename_infix(m, L.from);
+        L.to   = rename_infix(m, L.to);
+        return L;
+    }
+    else if (E.is_a<Haskell::ListFromThenTo>())
+    {
+        auto L = E.as_<Haskell::ListFromThenTo>();
+        L.from = rename_infix(m, L.from);
+        L.then = rename_infix(m, L.then);
+        L.to   = rename_infix(m, L.to);
+        return L;
+    }
+    else if (E.is_a<Haskell::ListComprehension>())
+    {
+        auto L = E.as_<Haskell::ListComprehension>();
+        L.body = rename_infix(m, L.body);
+        for(auto& qual: L.quals)
+            qual = rename_infix(m, qual);
+        return L;
+    }
+    else if (E.is_a<Haskell::LeftSection>())
+    {
+        auto S = E.as_<Haskell::LeftSection>();
+        S.l_arg = rename_infix(m, S.l_arg);
+        return S;
+    }
+    else if (E.is_a<Haskell::RightSection>())
+    {
+        auto S = E.as_<Haskell::RightSection>();
+        S.r_arg = rename_infix(m, S.r_arg);
+        return S;
+    }
+    else if (E.is_a<Haskell::Tuple>())
+    {
+        auto T = E.as_<Haskell::Tuple>();
+        for(auto& element: T.elements)
+            element = rename_infix(m, element);
+        return T;
+    }
+    else if (E.is_a<Haskell::PatQual>())
+    {
+        auto PQ = E.as_<Haskell::PatQual>();
+
+        PQ.bindpat = rename_infix(m, PQ.bindpat);
+        PQ.bindpat = unapply(PQ.bindpat);
+
+        PQ.exp = rename_infix(m, PQ.exp);
+
+        return PQ;
+    }
+    else if (E.is_a<Haskell::SimpleQual>())
+    {
+        auto SQ = E.as_<Haskell::SimpleQual>();
+        SQ.exp = rename_infix(m, SQ.exp);
+        return SQ;
+    }
+    else if (E.is_a<Haskell::LetQual>())
+    {
+        auto LQ = E.as_<Haskell::LetQual>();
+        unloc(LQ.binds) = rename_infix(m, unloc(LQ.binds));
+        return LQ;
+    }
+    else if (E.is_a<Haskell::AsPattern>())
+    {
+        auto& AP = E.as_<Haskell::AsPattern>();
+        return Haskell::AsPattern(AP.var, rename_infix(m,AP.pattern));
+    }
+    else if (E.is_a<Haskell::LazyPattern>())
+    {
+        auto LP = E.as_<Haskell::LazyPattern>();
+        return Haskell::LazyPattern(rename_infix(m,LP.pattern));
+    }
+    else if (E.is_a<Haskell::StrictPattern>())
+    {
+        auto SP = E.as_<Haskell::StrictPattern>();
+        SP.pattern = rename_infix(m, SP.pattern);
+        return SP;
+    }
+    else if (E.is_a<Haskell::RecStmt>())
+    {
+        auto R = E.as_<Haskell::RecStmt>();
+        for(auto& stmt: R.stmts.stmts)
+            stmt = rename_infix(m, stmt);
+        return R;
+    }
+    else if (E.is_a<Haskell::Do>())
+    {
+        auto D = E.as_<Haskell::Do>();
+        for(auto& stmt: D.stmts.stmts)
+            stmt = rename_infix(m, stmt);
+        return D;
+    }
+    else if (E.is_a<Haskell::MDo>())
+    {
+        throw myexception()<<"mdo is not handled yet!";
+        auto D = E.as_<Haskell::MDo>();
+        for(auto& stmt: D.stmts.stmts)
+            stmt = rename_infix(m, stmt);
+        return D;
+    }
+    else if (E.is_a<Haskell::LambdaExp>())
+    {
+        auto L = E.as_<Haskell::LambdaExp>();
+        for(auto& arg: L.args)
+            arg = unapply(rename_infix(m, arg));
+        L.body = rename_infix(m, L.body);
+
+        return L;
+    }
+    else if (E.is_a<Haskell::LetExp>())
+    {
+        auto L = E.as_<Haskell::LetExp>();
+
+        unloc(L.binds) = rename_infix(m, unloc(L.binds));
+        unloc(L.body)  = rename_infix(m, unloc(L.body));
+
+        return L;
+    }
+    else if (E.is_a<Haskell::IfExp>())
+    {
+        auto I = E.as_<Haskell::IfExp>();
+        unloc(I.condition) = rename_infix(m, unloc(I.condition));
+        unloc(I.true_branch) = rename_infix(m, unloc(I.true_branch));
+        unloc(I.false_branch) = rename_infix(m, unloc(I.false_branch));
+        return I;
+    }
+    else if (E.is_a<Haskell::CaseExp>())
+    {
+        auto C = E.as_<Haskell::CaseExp>();
+
+        C.object = rename_infix(m, C.object);
+
+        for(auto& alt: C.alts)
+        {
+            unloc(alt).pattern = rename_infix(m, unloc(alt).pattern);
+            unloc(alt).pattern = unapply(unloc(alt).pattern);
+            unloc(alt).rhs = rename_infix(m, unloc(alt).rhs);
+        }
+
+        return C;
+    }
+    else if (E.is_int() or E.is_log_double() or E.is_double() or E.is_char())
+    {
+        return E;
+    }
+    else if (E.is_a<Hs::Literal>())
+    {
+        return E;
+    }
+    else if (auto te = E.to<Hs::TypedExp>())
+    {
+        auto TE = *te;
+        TE.exp = rename_infix(m, TE.exp);
+        // Nothing to do for TE.type, since there are no type operators unless extensions are enabled.
+        return TE;
+    }
+    else if (auto I = E.to<Hs::InfixExp>())
+    {
+        auto terms = I->terms;
+        for(auto& term: terms)
+            term = rename_infix(m, term);
+	return desugar_infix(m, terms);
+    }
+    else if (is_apply(E.head()))
+    {
+        auto v = E.sub();
+
+        for(auto& e: v)
+            e = rename_infix(m, e);
+
+	expression_ref E2;
+	if (is_apply(v[0].head()))
+	{
+	    E2 = v[0];
+	    for(int i=1;i<v.size();i++)
+		E2 = E2 + v[i];
+	}
+	else
+	{
+	    E2 = expression_ref{E.head(),v};
+	}
+	assert(is_apply(E2.head()));
+	assert(not is_apply(E2.sub()[0].head()));
+	return E2;
+    }
+    else if (E.is_a<Hs::WildcardPattern>())
+        return E;
+    else if (E.is_a<Hs::Var>())
+        return E;
+    else if (E.is_a<Hs::Con>())
+        return E;
+    else if (E.head().is_a<Hs::Con>())
+    {
+        auto v = E.sub();
+
+        for(auto& e: v)
+            e = rename_infix(m, e);
+
+        return expression_ref{E.head(),v};
+    }
+    else if (E.head().is_a<Hs::Neg>())
+        return E;
+    else
+        std::abort();
+}
+
 expression_ref renamer_state::rename(const expression_ref& E, const bound_var_info& bound, set<string>& free_vars)
 {
     if (E.is_a<Haskell::List>())
