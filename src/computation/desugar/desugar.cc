@@ -18,7 +18,6 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/bool.H"
 #include "desugar.H"
-#include "rename/rename.H" // for group_decls
 #include "util/assert.hh"
 #include "util/range.H"
 #include "computation/haskell/haskell.H"
