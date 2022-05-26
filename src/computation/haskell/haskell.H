@@ -12,6 +12,7 @@
 
 #include "pattern.H"
 #include "type.H"
+#include "var.H"
 
 /*
   - For renaming class decls, can we first run group_decls on them?
@@ -78,27 +79,9 @@
 namespace Haskell
 {
 
-typedef expression_ref Pattern;
 typedef expression_ref Expression;
 typedef expression_ref Exp;
 typedef expression_ref Qual;
-
-struct Var: public Object
-{
-    Located<std::string> name;
-    std::optional<Type> type;
-
-    bool operator==(const Object&) const;
-    bool operator==(const Var&) const;
-    bool operator<(const Var&) const;
-
-    Var* clone() const { return new Var(*this);}
-    std::string print() const;
-    std::string print_with_type() const;
-
-    Var(const Located<std::string>& s):name(s) {}
-    Var(const Located<std::string>& s, const Type& t):name(s),type(t) {}
-};
 
 struct Con: public Object
 {
