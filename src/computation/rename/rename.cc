@@ -788,18 +788,6 @@ bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::ValueDecl& 
     }
 }
 
-bound_var_info binders_for_renamed_decl(const expression_ref& decl)
-{
-    set<string> binders;
-    if (auto pd = decl.to<Hs::PatDecl>())
-        binders = find_vars_in_pattern2( unloc(pd->lhs) );
-    else if (auto fd = decl.to<Hs::FunDecl>())
-        binders = { unloc(fd->v.name) };
-    else
-        std::abort();
-    return binders;
-}
-
 bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool is_top_level)
 {
     bound_var_info bound_names;
