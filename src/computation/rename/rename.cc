@@ -81,18 +81,6 @@ set<string> find_bound_vars(const expression_ref& E)
         return {};
 }
 
-string get_func_name(const Haskell::ValueDecl& decl)
-{
-    auto& head = unloc(decl.lhs).head();
-    assert(head.is_a<Hs::Var>() or head.is_a<var>());
-    if (head.is_a<Hs::Var>())
-        return unloc(head.as_<Hs::Var>().name);
-    else if (head.is_a<var>())
-        return head.as_<var>().name;
-    else
-        std::abort();
-}
-
 bool is_pattern_binding(const Haskell::ValueDecl& decl)
 {
     auto& lhs = unloc(decl.lhs);

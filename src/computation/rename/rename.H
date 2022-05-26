@@ -69,7 +69,6 @@ struct renamer_state
     renamer_state(const Module& m_):m(m_) {}
 };
 
-std::string get_func_name(const Haskell::ValueDecl& decl);
 std::set<std::string> find_bound_vars(const expression_ref& E);
 bool is_pattern_binding(const Haskell::ValueDecl& decl);
 bool is_function_binding(const Haskell::ValueDecl& decl);
