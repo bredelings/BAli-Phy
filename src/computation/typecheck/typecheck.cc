@@ -74,13 +74,16 @@ using std::tuple;
   * Export ALL typechecker state between modules.
 
   TODO:
-  0. Rewrite builtin decls to look like `foreign import mycall "name:lib" name :: type`
   0. Typecheck Do, MDo, Stmts, RecStmt, LetQual, SimpleQual, PatQual.
+  - Related to typechecking list comprehensions...
+  0. Rewrite builtin decls to look like `foreign import mycall "name:lib" name :: type`
   0. Make a version of the string-to-[Char] routine that makes sense type-wise.
+  0. Always generalize top-level bindings???
   0. Cleanup: eliminate dependencies on expression_ref:
      - Make Pattern into a Type that doesn't depend on expression_ref.
        - Make a LitPattern that compares Int, Double, String, Char by equality.
   0. Cleanup: move generalization code out of binds.cc to generalize.cc?
+  0. Punt all defaulting to top level?
   0. Check that all builtins have an explicit type signature.
      - Check that all explicit type signatures correspond to a declaration.
      - At the top level, this could be a builtin.
