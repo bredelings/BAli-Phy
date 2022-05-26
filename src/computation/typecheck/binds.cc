@@ -248,8 +248,6 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
 
         auto polytype = env.at(name);
 
-        // OK, so what we want to do is:
-
         // 1. instantiate the type -> (tvs, givens, rho-type)
         auto [tvs, given_constraints, given_type] = instantiate(polytype, false);
         auto ordered_lie_given = constraints_to_lie(given_constraints);
@@ -287,13 +285,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
 
         Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
 
-        map<string,Hs::BindInfo> bind_infos;
-        bind_infos.insert({name,bind_info});
-
-        Hs::Decls decls;
-        decls.push_back(FD);
-
-        auto decl = mkGenBind( tvs, dict_vars, ev_binds, decls, bind_infos );
+        auto decl = mkGenBind( tvs, dict_vars, ev_binds, Hs::Decls({FD}), {{name, bind_info}} );
 
         pop_and_add_lie();
 
