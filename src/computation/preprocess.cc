@@ -13,6 +13,7 @@
 #include "computation/expression/reg_var.H"
 #include "computation/expression/expression.H" // for is_reglike( )
 #include "computation/fresh_vars.H"
+#include "haskell/ids.H"
 
 using std::optional;
 using std::string;

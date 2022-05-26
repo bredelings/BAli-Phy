@@ -1,4 +1,5 @@
 #include "computation/program.H"
+#include "computation/haskell/ids.H"
 #include "computation/module.H"
 #include "computation/loader.H"
 #include "models/model.H"

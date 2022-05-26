@@ -7,6 +7,7 @@
 #include "expression/lambda.H"
 #include "util/file-paths.H"
 #include "parser/driver.hh"
+#include "haskell/ids.H"
 
 #include "util/io.H"
 

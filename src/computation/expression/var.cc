@@ -1,7 +1,7 @@
 #include "var.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
-#include "computation/module.H"
+#include "haskell/ids.H"
 
 using std::set;
 using std::vector;

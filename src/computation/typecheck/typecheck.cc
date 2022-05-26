@@ -16,7 +16,7 @@
 #include "computation/expression/apply.H"
 #include "computation/expression/tuple.H" // for is_tuple_name( )
 #include "computation/operation.H" // for is_non_apply_op( )
-#include "computation/module.H"    // for is_qualified_symbol( ), get_module_name( )
+#include "haskell/ids.H"
 
 #include "unify.H"
 

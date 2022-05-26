@@ -1,5 +1,5 @@
 #include "constructor.H"
-#include "computation/module.H" // for is_haskell_con_name( )
+#include "haskell/ids.H"
 
 using std::string;
 

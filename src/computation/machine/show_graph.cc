@@ -10,6 +10,7 @@
 #include "computation/expression/expression.H" // for launchbury_unnormalize( )
 #include "util/set.H"
 #include "computation/context.H"
+#include "haskell/ids.H"
 
 using std::string;
 using std::vector;

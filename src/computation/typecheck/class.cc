@@ -1,5 +1,6 @@
 #include "typecheck.H"
 #include "kindcheck.H"
+#include "haskell/ids.H"
 
 using std::string;
 using std::vector;

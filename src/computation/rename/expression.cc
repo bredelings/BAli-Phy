@@ -3,6 +3,7 @@
 #include <set>
 
 #include "rename.H"
+#include "haskell/ids.H"
 #include "computation/module.H"
 #include "util/set.H"
 

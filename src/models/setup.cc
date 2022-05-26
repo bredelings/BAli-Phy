@@ -103,7 +103,7 @@
 #include "computation/expression/list.H"
 #include "computation/expression/do_block.H"
 #include "computation/operations.H"
-#include "model.H"
+#include "computation/haskell/ids.H"
 
 extern int log_verbose;
 

@@ -1,5 +1,6 @@
 // #define DEBUG_OPTIMIZE
 
+#include "haskell/ids.H"
 #include "util/string/join.H"
 #include "expression_ref.H"
 #include "lambda.H"

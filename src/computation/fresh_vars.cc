@@ -1,5 +1,5 @@
 #include "computation/fresh_vars.H"
-#include "computation/module.H"
+#include "computation/haskell/ids.H"
 #include "util/myexception.H"
 
 using std::vector;

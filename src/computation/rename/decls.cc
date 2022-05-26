@@ -6,6 +6,7 @@
 #include <deque>
 
 #include "rename.H"
+#include "haskell/ids.H"
 #include "computation/module.H"
 #include "computation/expression/apply.H"
 #include "util/graph.H"

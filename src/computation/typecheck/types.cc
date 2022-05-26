@@ -1,6 +1,6 @@
 #include "types.H"
 #include "util/set.H"   // for add( , )
-#include "module.H"     // for is_haskell_varid( )
+#include "haskell/ids.H"
 
 #include "computation/expression/tuple.H"
 

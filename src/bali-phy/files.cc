@@ -8,8 +8,8 @@
 #include "util/string/split.H"
 #include "util/myexception.H"
 #include "version.H"
-#include "computation/module.H"
 #include "computation/loader.H"
+#include "computation/haskell/ids.H"
 
 using std::cerr;
 using std::endl;
