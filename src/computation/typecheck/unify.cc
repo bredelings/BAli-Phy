@@ -2,7 +2,7 @@
 #include <utility>
 #include "immer/set.hpp"
 
-#include "computation/expression/tuple.H"
+#include "computation/haskell/ids.H"
 #include "kind.H"
 
 using std::vector;

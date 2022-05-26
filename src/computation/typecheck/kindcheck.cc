@@ -1,6 +1,6 @@
 #include "kindcheck.H"
 #include "range/v3/all.hpp"
-#include "expression/tuple.H"
+#include "haskell/ids.H"
 #include "util/set.H"   // for add( , )
 #include "util/graph.H"
 
