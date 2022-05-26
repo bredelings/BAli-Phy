@@ -330,7 +330,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         return {L, Hs::ListType(t)};
     }
-    else
-        throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
+
+    throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
 }
 
