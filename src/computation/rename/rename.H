@@ -10,6 +10,57 @@
 
 class Module;
 
+expression_ref shift_list(std::vector<expression_ref>& v);
+
+typedef std::set<std::string> bound_var_info;
+typedef std::set<std::string> bound_type_var_info;
+
+struct renamer_state
+{
+    const Module& m;
+
+    bound_var_info rename_patterns(std::vector<expression_ref>& pat, bool top = false);
+    bound_var_info rename_pattern(expression_ref& pat, bool top = false);
+
+    bound_var_info find_vars_in_patterns(const std::vector<expression_ref>& pats, bool top = false);
+    bound_var_info find_vars_in_pattern(const expression_ref& pat, bool top = false);
+    // the pattern*2 versions are for AFTER rename, and don't check things.  They just report what they find.
+    bound_var_info find_bound_vars_in_stmt(const expression_ref& stmt);
+
+    // these all assume decls have been translated to FunDecl or PatDecl
+    bound_var_info find_bound_vars_in_funpatdecl(const expression_ref& decl, bool top = false);
+    bound_var_info find_bound_vars_in_decls(const Haskell::Decls& decls, bool top = false);
+    bound_var_info find_bound_vars_in_decls(const Haskell::Binds& decls, bool top = false);
+
+    bound_var_info find_bound_vars_in_decl(const Haskell::ValueDecl& decl, bool top = false);
+    bound_var_info find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool top = false);
+
+    std::vector<std::vector<int>> rename_grouped_decls(Haskell::Decls& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
+    bound_var_info rename_signatures(std::map<std::string, Hs::Type>& signatures, bool top = false);
+    bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars, bool top = false);
+    bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
+    bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
+    bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
+    bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
+    Hs::MultiGuardedRHS rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
+    Hs::MultiGuardedRHS rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, std::set<std::string>& free_vars);
+    Hs::Match rename(Hs::Match match, const bound_var_info& bound, std::set<std::string>& free_vars);
+
+    Haskell::Decls rename_type_decls(Haskell::Decls decls);
+    Haskell::InstanceDecl rename(Haskell::InstanceDecl);
+    Haskell::ClassDecl rename(Haskell::ClassDecl);
+    Haskell::TypeSynonymDecl rename(Haskell::TypeSynonymDecl);
+    Haskell::DataOrNewtypeDecl rename(Haskell::DataOrNewtypeDecl);
+    Haskell::Type rename_type(const Haskell::Type&);
+    Haskell::Context rename(Haskell::Context);
+
+    std::pair<expression_ref,std::set<std::string>> rename(const expression_ref& E, const bound_var_info& bound);
+    expression_ref rename(const expression_ref& E, const bound_var_info& bound, std::set<std::string>& free_vars);
+    expression_ref rename(const expression_ref& E, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
+
+    renamer_state(const Module& m_):m(m_) {}
+};
+
 std::string get_func_name(const Haskell::ValueDecl& decl);
 std::set<std::string> find_bound_vars(const expression_ref& E);
 bool is_pattern_binding(const Haskell::ValueDecl& decl);

@@ -75,6 +75,8 @@ using std::tuple;
 
   TODO:
   0. Rewrite builtin decls to look like `foreign import mycall "name:lib" name :: type`
+  0. Typecheck Do, MDo, Stmts, RecStmt, LetQual, SimpleQual, PatQual.
+  0. Make a version of the string routine that makes sense type-wise.
   0. Cleanup: eliminate dependencies on expression_ref:
      - Make Pattern into a Type that doesn't depend on expression_ref.
        - Make a LitPattern that compares Int, Double, String, Char by equality.
