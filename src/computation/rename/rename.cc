@@ -858,30 +858,6 @@ map<string,int> get_indices_for_names(const Hs::Decls& decls)
     return index_for_name;
 }
 
-Hs::Match renamer_state::rename(Hs::Match match, const bound_var_info& bound, set<string>& free_vars)
-{
-    for(auto& mrule: match.rules)
-    {
-        bound_var_info binders;
-
-        for(auto& arg: mrule.patterns)
-        {
-            auto new_binders = rename_pattern(arg);
-            auto overlap = intersection(binders, new_binders);
-            if (not overlap.empty())
-            {
-                string bad = *overlap.begin();
-                throw myexception()<<"Function declaration uses variable '"<<bad<<"' twice:\n"<<" "<<mrule.print();
-            }
-            add(binders, new_binders);
-        }
-
-        mrule.rhs = rename(mrule.rhs, bound, binders, free_vars);
-    }
-
-    return match;
-}
-
 bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt)
 {
     if (stmt.is_a<Hs::SimpleQual>())
@@ -900,24 +876,6 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt
         throw myexception()<<"find_bound_vars_in_stmt: should not have a rec stmt inside a rec stmt!";
     else
 	std::abort();
-}
-
-Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, set<string>& free_vars)
-{
-    bound_var_info binders;
-
-    if (R.decls)
-        binders = rename_decls(unloc(*R.decls), bound, binders, free_vars);
-
-    for(auto& guarded_rhs: R.guarded_rhss)
-    {
-        for(auto& guard: guarded_rhs.guards)
-            add(binders, rename_stmt(guard, bound, binders, free_vars));
-
-        guarded_rhs.body = rename(guarded_rhs.body, bound, binders, free_vars);
-    }
-
-    return R;
 }
 
 Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
