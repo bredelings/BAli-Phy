@@ -11,10 +11,13 @@ computation_sources = [
   'param.cc',
   'fresh_vars.cc',
 
-  'desugar/desugar.cc','desugar/desugar-case.cc',
+  'parser/driver.cc', 'parser/lexer.cc', 'parser/parser.cc',
+
   'rename/rename.cc', 'rename/expression.cc', 'rename/pattern.cc',
   'rename/decls.cc', 'rename/stmt.cc', 'rename/match.cc',
-  'parser/driver.cc', 'parser/lexer.cc', 'parser/parser.cc',
+  'rename/infix.cc',
+
+  'desugar/desugar.cc','desugar/desugar-case.cc',
 
   'haskell/haskell.cc',
 
