@@ -1,26 +1,18 @@
 #include <string>
 #include <vector>
 #include <set>
-#include <map>
-#include <optional>
-#include <deque>
 
 #include "rename.H"
 #include "computation/module.H"
-#include "computation/expression/apply.H"
-#include "computation/expression/tuple.H"
-#include "computation/expression/list.H"
-#include "computation/expression/constructor.H"
-#include "util/graph.H"
 #include "util/set.H"
+
+// We really should move apply expressions into the haskell ast.
+#include "computation/expression/apply.H"
 
 using std::string;
 using std::vector;
 using std::pair;
 using std::set;
-using std::optional;
-using std::map;
-using std::deque;
 
 expression_ref renamer_state::rename(const expression_ref& E, const bound_var_info& bound, set<string>& free_vars)
 {
