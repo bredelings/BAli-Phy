@@ -74,6 +74,7 @@ using std::tuple;
   * Export ALL typechecker state between modules.
 
   TODO:
+  0. Make a directory for the haskell ast
   0. Rewrite builtin decls to look like `foreign import mycall "name:lib" name :: type`
   0. Typecheck Do, MDo, Stmts, RecStmt, LetQual, SimpleQual, PatQual.
   0. Make a version of the string routine that makes sense type-wise.

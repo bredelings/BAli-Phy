@@ -224,6 +224,70 @@ void group_binds(Hs::Binds& binds, const vector< vector<int> >& referenced_decls
     (vector<Hs::Decls>&)binds = new_binds;
 }
 
+
+// So... factor out rename_grouped_decl( ), and then make a version that splits into components, and a version that does not?
+// Splitting the decls for classes and instances into  components really doesn't make sense...
+
+vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top)
+{
+    // NOTE: bound already includes the binder names.
+
+    for(int i=0;i<decls.size();i++)
+    {
+        auto& decl = decls[i];
+
+        if (decl.is_a<Hs::PatDecl>())
+        {
+            auto PD = decl.as_<Hs::PatDecl>();
+
+            rename_pattern( unloc(PD.lhs), top);
+            PD.rhs = rename(PD.rhs, bound, PD.rhs_free_vars);
+            decl = PD;
+        }
+        else if (decl.is_a<Hs::FunDecl>())
+        {
+            auto FD = decl.as_<Hs::FunDecl>();
+            auto& name = unloc(FD.v.name);
+            assert(not is_qualified_symbol(name));
+            if (top)
+                name = m.name + "." + name;
+
+            FD.match = rename(FD.match, bound, FD.rhs_free_vars);
+
+            decl = FD;
+        }
+        else
+            std::abort();
+    }
+
+    // Map the names to indices
+    map<string,int> index_for_name = get_indices_for_names(decls);
+
+    // Construct referenced decls
+    vector<vector<int>> referenced_decls;
+    for(int i=0;i<decls.size();i++)
+    {
+        vector<int> refs;
+        auto& rhs_free_vars = get_rhs_free_vars(decls[i]);
+        for(auto& name: rhs_free_vars)
+        {
+            auto it = index_for_name.find(name);
+
+            // Skip if this name isn't one of the ids being defined.
+            if (it == index_for_name.end()) continue;
+
+            refs.push_back(it->second);
+        }
+        referenced_decls.push_back( std::move(refs) );
+
+        add(free_vars, rhs_free_vars);
+    }
+
+    // NOTE: binder names are removed in the called - rename_decls( ).
+
+    return referenced_decls;
+}
+
 bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, set<string>& free_vars, bool top)
 {
     assert(binds.size() == 1);
