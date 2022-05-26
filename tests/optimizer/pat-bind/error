@@ -1,17 +1,17 @@
-size = 1   Test.#8148 = 1
-size = 1   Test.#8149 = 2
-size = 1   Test.#8150 = (Test.#8148, Test.#8149)
-size = 1   Test.#8151 = 3
-size = 1   Test.#8152 = 4
-size = 1   Test.#8153 = (Test.#8151, Test.#8152)
-size = 1   Test.#8154 = []
-size = 1   Test.#8155 = Test.#8153:Test.#8154
-size = 1   Test.#8156 = []
-size = 3   Test.#8157 = \#8158 -> case #8158 of {(#8159, #8160) -> let {#8161 = Prelude:multiply #8159 #8159} in #8161:Test.#8156; _ -> Test.$v#8163}
-size = 1   Test.#8164 = Test.#8150:Test.#8155
-size = 2   Test.#8165 = Data.List.map Test.#8157 Test.#8164
-size = 1   Test.$v#8163 = []
+size = 1   Test.#8179 = 1
+size = 1   Test.#8180 = 2
+size = 1   Test.#8181 = (Test.#8179, Test.#8180)
+size = 1   Test.#8182 = 3
+size = 1   Test.#8183 = 4
+size = 1   Test.#8184 = (Test.#8182, Test.#8183)
+size = 1   Test.#8185 = []
+size = 1   Test.#8186 = Test.#8184:Test.#8185
+size = 1   Test.#8187 = []
+size = 3   Test.#8188 = \#8189 -> case #8189 of {(#8190, #8191) -> let {#8192 = Prelude:multiply #8190 #8190} in #8192:Test.#8187; _ -> Test.$v#8194}
+size = 1   Test.#8195 = Test.#8181:Test.#8186
+size = 2   Test.#8196 = Data.List.map Test.#8188 Test.#8195
+size = 1   Test.$v#8194 = []
 size = 1   Test.x = 1
-size = 1   Test.xxs = Data.List.concat Test.#8165
-size = 1   Test.xys = Test.#8150:Test.#8155
+size = 1   Test.xxs = Data.List.concat Test.#8196
+size = 1   Test.xys = Test.#8181:Test.#8186
 size = 1   Test.y = 2

@@ -1,4 +1,4 @@
-size = 1   Test.#8103 = 10
-size = 1   Test.#8104 = 3
-size = 1   Test.$v#8105 = Prelude:add Test.#8103 Test.#8104
-size = 0   Test.f = \#8106 -> Test.$v#8105
+size = 1   Test.#8134 = 10
+size = 1   Test.#8135 = 3
+size = 1   Test.$v#8136 = Prelude:add Test.#8134 Test.#8135
+size = 0   Test.f = \#8137 -> Test.$v#8136

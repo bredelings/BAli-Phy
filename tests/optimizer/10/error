@@ -1,28 +1,28 @@
-size = 1   Test.#8155 = 'y'
-size = 1   Test.#8156 = 'o'
-size = 1   Test.#8157 = '!'
-size = 1   Test.#8158 = []
-size = 1   Test.#8159 = Test.#8157:Test.#8158
-size = 1   Test.#8160 = Test.#8156:Test.#8159
-size = 1   Test.#8161 = Test.#8155:Test.#8160
-size = 1   Test.#8163 = "case: failed pattern match"
-size = 1   Test.#8164 = Foreign.String.unpack_cpp_string Test.#8163
-size = 1   Test.#8170 = 'y'
-size = 1   Test.#8171 = 'o'
-size = 1   Test.#8172 = '!'
-size = 1   Test.#8173 = []
-size = 1   Test.#8174 = Test.#8172:Test.#8173
-size = 1   Test.#8175 = Test.#8171:Test.#8174
-size = 1   Test.#8176 = Test.#8170:Test.#8175
-size = 1   Test.#8178 = "case: failed pattern match"
-size = 1   Test.#8179 = Foreign.String.unpack_cpp_string Test.#8178
-size = 1   Test.#8181 = 10
-size = 1   Test.#8187 = 10
-size = 1   Test.#8188 = 2
-size = 1   Test.$v#8162 = Compiler.Base.error Test.#8161
-size = 1   Test.$v#8165 = Compiler.Base.error Test.#8164
-size = 1   Test.$v#8177 = Compiler.Base.error Test.#8176
-size = 1   Test.$v#8180 = Compiler.Base.error Test.#8179
-size = 1   Test.f = \#8166 -> case #8166 of {#8167:#8168 -> #8167; [] -> Test.$v#8162; _ -> Test.$v#8165}
-size = 2   Test.g = \#8182 -> let {#8183 = case #8182 of {#8184:#8185 -> #8184; [] -> Test.$v#8177; _ -> Test.$v#8180}} in Prelude:add Test.#8181 #8183
-size = 1   Test.h = Prelude:add Test.#8187 Test.#8188
+size = 1   Test.#8186 = 'y'
+size = 1   Test.#8187 = 'o'
+size = 1   Test.#8188 = '!'
+size = 1   Test.#8189 = []
+size = 1   Test.#8190 = Test.#8188:Test.#8189
+size = 1   Test.#8191 = Test.#8187:Test.#8190
+size = 1   Test.#8192 = Test.#8186:Test.#8191
+size = 1   Test.#8194 = "case: failed pattern match"
+size = 1   Test.#8195 = Foreign.String.unpack_cpp_string Test.#8194
+size = 1   Test.#8201 = 'y'
+size = 1   Test.#8202 = 'o'
+size = 1   Test.#8203 = '!'
+size = 1   Test.#8204 = []
+size = 1   Test.#8205 = Test.#8203:Test.#8204
+size = 1   Test.#8206 = Test.#8202:Test.#8205
+size = 1   Test.#8207 = Test.#8201:Test.#8206
+size = 1   Test.#8209 = "case: failed pattern match"
+size = 1   Test.#8210 = Foreign.String.unpack_cpp_string Test.#8209
+size = 1   Test.#8212 = 10
+size = 1   Test.#8218 = 10
+size = 1   Test.#8219 = 2
+size = 1   Test.$v#8193 = Compiler.Base.error Test.#8192
+size = 1   Test.$v#8196 = Compiler.Base.error Test.#8195
+size = 1   Test.$v#8208 = Compiler.Base.error Test.#8207
+size = 1   Test.$v#8211 = Compiler.Base.error Test.#8210
+size = 1   Test.f = \#8197 -> case #8197 of {#8198:#8199 -> #8198; [] -> Test.$v#8193; _ -> Test.$v#8196}
+size = 2   Test.g = \#8213 -> let {#8214 = case #8213 of {#8215:#8216 -> #8215; [] -> Test.$v#8208; _ -> Test.$v#8211}} in Prelude:add Test.#8212 #8214
+size = 1   Test.h = Prelude:add Test.#8218 Test.#8219

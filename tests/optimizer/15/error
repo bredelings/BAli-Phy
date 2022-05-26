@@ -1,5 +1,5 @@
-size = 1   Test.#8109 = "case: failed pattern match"
-size = 1   Test.#8110 = Foreign.String.unpack_cpp_string Test.#8109
-size = 1   Test.$v#8111 = Compiler.Base.error Test.#8110
-size = 1   Test.$v#8115 = 2
-size = 1   Test.f = \#8112 -> case #8112 of {(#8113, #8114) -> Test.$v#8115; _ -> Test.$v#8111}
+size = 1   Test.#8140 = "case: failed pattern match"
+size = 1   Test.#8141 = Foreign.String.unpack_cpp_string Test.#8140
+size = 1   Test.$v#8142 = Compiler.Base.error Test.#8141
+size = 1   Test.$v#8146 = 2
+size = 1   Test.f = \#8143 -> case #8143 of {(#8144, #8145) -> Test.$v#8146; _ -> Test.$v#8142}
