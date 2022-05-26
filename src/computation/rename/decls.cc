@@ -9,7 +9,6 @@
 #include "computation/module.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/tuple.H"
-#include "computation/expression/constructor.H"
 #include "util/graph.H"
 #include "util/set.H"
 

@@ -9,7 +9,6 @@
 #include "computation/module.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/tuple.H"
-#include "computation/expression/constructor.H"
 #include "util/set.H"
 
 using std::string;
@@ -206,8 +205,6 @@ bool is_pattern_binding(const Haskell::ValueDecl& decl)
         return true;
     // FIXME: we should make a ConPattern
     if (lhs.head().is_a<Haskell::Con>())
-        return true;
-    if (lhs.head().is_a<constructor>()) // this happens when called from desugar.cc
         return true;
     return false;
 }
