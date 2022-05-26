@@ -306,27 +306,6 @@ string RecStmt::print() const
     return "rec " + stmts.print();
 }
 
-string TupleType::print() const
-{
-    vector<string> parts;
-    for(auto& element_type: element_types)
-        parts.push_back(element_type.print());
-    return "(" + join(parts,", ") +")";
-}
-
-Type tuple_type(const std::vector<Type>& ts)
-{
-    if (ts.size() == 1)
-        return ts[0];
-    else
-        return TupleType(ts);
-}
-
-string ListType::print() const
-{
-    return "[" + element_type.print() + "]";
-}
-
 string Con::print() const
 {
     return unloc(name);
