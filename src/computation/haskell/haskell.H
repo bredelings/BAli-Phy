@@ -10,6 +10,8 @@
 #include "computation/expression/expression_ref.H"
 #include "computation/parser/located.H"
 
+#include "pattern.H"
+
 /*
   - For renaming class decls, can we first run group_decls on them?
     + We need to know the set of bound names for the whole module in order to rename the RHSs, right?
@@ -754,39 +756,6 @@ struct RecStmt: public Object
     std::string print() const;
 
     RecStmt(const Stmts& s):stmts(s) {}
-};
-
-struct WildcardPattern: public Object
-{
-    WildcardPattern* clone() const { return new WildcardPattern(*this);}
-    std::string print() const;
-};
-
-struct LazyPattern: public Object
-{
-    Pattern pattern;
-    LazyPattern* clone() const { return new LazyPattern(*this);}
-    std::string print() const;
-    LazyPattern(const expression_ref& p):pattern(p) {}
-};
-
-struct StrictPattern: public Object
-{
-    Pattern pattern;
-    StrictPattern* clone() const { return new StrictPattern(*this);}
-    std::string print() const;
-    StrictPattern(const expression_ref& p):pattern(p) {}
-};
-
-struct AsPattern: public Object
-{
-    // We need this to be Var until desugaring, at which point it becomes var.
-    expression_ref var;
-    Pattern pattern;
-
-    AsPattern* clone() const { return new AsPattern(*this);}
-    std::string print() const;
-    AsPattern(const expression_ref& v, const expression_ref& p):var(v),pattern(p) {}
 };
 
 // at some point, we need to distinguish between TuplePattern and TupleExpression...    

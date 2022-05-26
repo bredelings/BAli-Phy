@@ -19,7 +19,7 @@ computation_sources = [
 
   'desugar/desugar.cc','desugar/desugar-case.cc',
 
-  'haskell/haskell.cc',
+  'haskell/haskell.cc', 'haskell/pattern.cc',
 
   'expression/operator.cc', 'expression/expression.cc','expression/constructor.cc',
   'expression/expression_ref.cc',

@@ -314,36 +314,6 @@ string RecStmt::print() const
     return "rec " + stmts.print();
 }
 
-string WildcardPattern::print() const
-{
-    return "_";
-}
-
-string parenthesize_pattern(const Pattern& p)
-{
-    string result = p.print();
-    if (p.is_a<Located<Var>>() or p.is_a<Tuple>() or p.is_a<WildcardPattern>() or p.is_a<LazyPattern>() or p.is_a<AsPattern>() or p.is_a<List>())
-        ;
-    else
-        result = "(" + result + ")";
-    return result;
-}
-
-string LazyPattern::print() const
-{
-    return "~"+parenthesize_pattern(pattern);
-}
-
-string StrictPattern::print() const
-{
-    return "!"+parenthesize_pattern(pattern);
-}
-
-string AsPattern::print() const
-{
-    return var.print()+"@"+parenthesize_pattern(pattern);
-}
-
 string TupleType::print() const
 {
     vector<string> parts;
