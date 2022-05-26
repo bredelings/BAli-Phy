@@ -496,39 +496,6 @@ const set<string>& get_rhs_free_vars(const expression_ref& decl)
         std::abort();
 };
 
-map<string,int> get_indices_for_names(const Hs::Decls& decls)
-{
-    map<string,int> index_for_name;
-
-    for(int i=0;i<decls.size();i++)
-    {
-        auto& decl = decls[i];
-        if (decl.is_a<Hs::FunDecl>())
-        {
-            auto& FD = decl.as_<Hs::FunDecl>();
-            const string& name = unloc(FD.v.name);
-
-            if (index_for_name.count(name)) throw myexception()<<"name '"<<name<<"' is bound twice: "<<decls.print();
-
-            index_for_name.insert({name, i});
-        }
-        else if (decl.is_a<Hs::PatDecl>())
-        {
-            auto& PD = decl.as_<Hs::PatDecl>();
-            for(const string& name: find_vars_in_pattern2( unloc(PD.lhs) ))
-            {
-                if (index_for_name.count(name)) throw myexception()<<"name '"<<name<<"' is bound twice: "<<decls.print();
-
-                index_for_name.insert({name, i});
-            }
-        }
-        else
-            std::abort();
-    }
-
-    return index_for_name;
-}
-
 bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt)
 {
     if (stmt.is_a<Hs::SimpleQual>())

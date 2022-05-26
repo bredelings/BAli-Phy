@@ -227,6 +227,40 @@ void group_binds(Hs::Binds& binds, const vector< vector<int> >& referenced_decls
 // So... factor out rename_grouped_decl( ), and then make a version that splits into components, and a version that does not?
 // Splitting the decls for classes and instances into  components really doesn't make sense...
 
+// maps names in a declaration group to a declaration in the group.
+map<string,int> get_indices_for_names(const Hs::Decls& decls)
+{
+    map<string,int> index_for_name;
+
+    for(int i=0;i<decls.size();i++)
+    {
+        auto& decl = decls[i];
+        if (decl.is_a<Hs::FunDecl>())
+        {
+            auto& FD = decl.as_<Hs::FunDecl>();
+            const string& name = unloc(FD.v.name);
+
+            if (index_for_name.count(name)) throw myexception()<<"name '"<<name<<"' is bound twice: "<<decls.print();
+
+            index_for_name.insert({name, i});
+        }
+        else if (decl.is_a<Hs::PatDecl>())
+        {
+            auto& PD = decl.as_<Hs::PatDecl>();
+            for(const string& name: find_vars_in_pattern2( unloc(PD.lhs) ))
+            {
+                if (index_for_name.count(name)) throw myexception()<<"name '"<<name<<"' is bound twice: "<<decls.print();
+
+                index_for_name.insert({name, i});
+            }
+        }
+        else
+            std::abort();
+    }
+
+    return index_for_name;
+}
+
 vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top)
 {
     // NOTE: bound already includes the binder names.
