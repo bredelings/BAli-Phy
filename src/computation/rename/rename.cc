@@ -93,11 +93,6 @@ string get_func_name(const Haskell::ValueDecl& decl)
         std::abort();
 }
 
-string desugar_get_func_name(const Haskell::ValueDecl& decl)
-{
-    return unloc(decl.lhs).head().as_<var>().name;
-}
-
 bool is_pattern_binding(const Haskell::ValueDecl& decl)
 {
     auto& lhs = unloc(decl.lhs);
