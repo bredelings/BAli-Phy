@@ -1,7 +1,9 @@
-#include "haskell.H"
+#include "pattern.H"
 #include "util/string/join.H"
 #include "expression/tuple.H" // for tuple_name
 #include "util/set.H"   // for includes( , )
+
+#include "haskell.H" // for Var, Tuple, List
 
 using std::string;
 using std::pair;

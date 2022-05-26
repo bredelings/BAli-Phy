@@ -1,7 +1,10 @@
 #ifndef LOCATED_H
+#define LOCATED_H
 #include <iostream>
 #include <optional>
 #include "location.hh"
+
+#include "computation/expression/expression_ref.H"
 
 template <typename T>
 struct Unlocated
