@@ -15,7 +15,8 @@ computation_sources = [
   'rename/rename.cc', 'rename/expression.cc', 'rename/pattern.cc',
   'rename/decls.cc', 'rename/stmt.cc', 'rename/match.cc',
   'parser/driver.cc', 'parser/lexer.cc', 'parser/parser.cc',
-  'parser/haskell.cc',
+
+  'haskell/haskell.cc',
 
   'expression/operator.cc', 'expression/expression.cc','expression/constructor.cc',
   'expression/expression_ref.cc',

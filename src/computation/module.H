@@ -10,7 +10,7 @@
 #include "computation/expression/var.H"
 #include <utility>                                  // for pair
 #include <iostream>
-#include "computation/parser/haskell.H"
+#include "computation/haskell/haskell.H"
 #include "computation/typecheck/kind.H"
 #include "computation/optimization/simplifier.H"       // for simplifier options
 #include "computation/fresh_vars.H"

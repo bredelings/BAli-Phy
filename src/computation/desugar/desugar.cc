@@ -21,7 +21,7 @@
 #include "rename/rename.H" // for group_decls
 #include "util/assert.hh"
 #include "util/range.H"
-#include "computation/parser/haskell.H"
+#include "computation/haskell/haskell.H"
 
 #include "range/v3/all.hpp"
 namespace views = ranges::views;

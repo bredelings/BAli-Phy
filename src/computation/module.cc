@@ -27,7 +27,7 @@
 #include "computation/optimization/occurrence.H"
 #include "computation/optimization/float-out.H"
 #include "computation/optimization/inliner.H"
-#include "computation/parser/haskell.H"
+#include "computation/haskell/haskell.H"
 
 namespace views = ranges::views;
 

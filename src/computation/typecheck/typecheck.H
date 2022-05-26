@@ -12,7 +12,7 @@
 #include <range/v3/all.hpp>
 #include "computation/expression/apply.H"
 
-#include "computation/parser/haskell.H"
+#include "computation/haskell/haskell.H"
 #include "types.H"
 
 Hs::ModuleDecls typecheck(const std::string& s, const Module& m, Hs::ModuleDecls M);

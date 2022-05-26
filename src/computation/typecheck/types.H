@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "parser/haskell.H"
+#include "haskell/haskell.H"
 
 Hs::Type make_arrow_type(const Hs::Type& t1, const Hs::Type& t2);
 

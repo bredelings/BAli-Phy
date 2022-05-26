@@ -15,7 +15,7 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/var.H"
 #include "computation/expression/constructor.H"
-#include "computation/parser/haskell.H"
+#include "computation/haskell/haskell.H"
 #include "desugar.H"
 #include "util/assert.hh"
 #include "util/range.H"

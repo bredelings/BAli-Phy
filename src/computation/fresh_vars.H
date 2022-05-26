@@ -6,7 +6,7 @@
 #include <optional>
 
 #include "computation/expression/var.H" // for var
-#include "computation/parser/haskell.H" // for Hs::Var, Hs::TypeVar
+#include "computation/haskell/haskell.H" // for Hs::Var, Hs::TypeVar
 
 class FreshVarState
 {

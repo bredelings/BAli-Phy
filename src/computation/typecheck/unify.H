@@ -2,7 +2,7 @@
 #define UNIFY_H
 
 #include <optional>
-#include "computation/parser/haskell.H"
+#include "computation/haskell/haskell.H"
 #include "immer/map.hpp" // for immer::map
 
 

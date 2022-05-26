@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include "immer/map.hpp" // for immer::map
-#include "parser/haskell.H"
+#include "haskell/haskell.H"
 #include "util/set.H"
 #include "kind.H"
 

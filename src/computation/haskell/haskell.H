@@ -8,7 +8,7 @@
 #include <set>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
-#include "located.H"
+#include "computation/parser/located.H"
 
 /*
   - For renaming class decls, can we first run group_decls on them?

@@ -5,7 +5,7 @@
 #include <set>
 #include <string>
 #include "computation/expression/expression_ref.H"
-#include "computation/parser/haskell.H"
+#include "computation/haskell/haskell.H"
 #include "computation/optimization/simplifier.H"       // for simplifier options
 
 class Module;

@@ -18,7 +18,7 @@
   # include "computation/operations.H"
   # include "computation/expression/list.H"
   # include "computation/expression/tuple.H"
-  # include "computation/parser/haskell.H"
+  # include "computation/haskell/haskell.H"
   # include "computation/typecheck/types.H"
 
   class driver;

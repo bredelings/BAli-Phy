@@ -5,7 +5,7 @@
 #include <string>
 #include <optional>
 #include <map>
-#include "computation/parser/haskell.H"
+#include "computation/haskell/haskell.H"
 
 struct KindStar: public Object
 {
