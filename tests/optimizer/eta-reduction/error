@@ -1,2 +1,2 @@
 size = 0   Test.f = Test.g
-size = 2   Test.g = \#8129 -> let {#8130 = Test.g #8129} in Test.f #8130
+size = 2   Test.g = \#8079 -> let {#8080 = Test.g #8079} in Test.f #8080

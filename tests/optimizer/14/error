@@ -1,23 +1,23 @@
-size = 1   Main.#8239 = 'f'
-size = 1   Main.#8240 = []
-size = 1   Main.#8241 = Main.#8239:Main.#8240
-size = 1   Main.#8243 = []
-size = 1   Main.#8244 = "case: failed pattern match"
-size = 1   Main.#8245 = Foreign.String.unpack_cpp_string Main.#8244
-size = 1   Main.#8247 = "case: failed pattern match"
-size = 1   Main.#8248 = Foreign.String.unpack_cpp_string Main.#8247
-size = 1   Main.#8266 = 'f'
-size = 1   Main.#8267 = []
-size = 1   Main.#8268 = Main.#8266:Main.#8267
-size = 1   Main.#8269 = Compiler.Base.error Main.#8268
-size = 1   Main.#8270 = []
-size = 1   Main.#8280 = "Main.f3: pattern match failure"
-size = 1   Main.#8281 = Foreign.String.unpack_cpp_string Main.#8280
-size = 1   Main.#8282 = Compiler.Base.error Main.#8281
-size = 1   Main.#8283 = []
-size = 1   Main.$v#8246 = Compiler.Base.error Main.#8245
-size = 1   Main.$v#8249 = Compiler.Base.error Main.#8248
-size = 7   Main.f = \#8250 #8251 -> let {fail1#8252 = case #8250 of {[] -> Main.fail2#8242; #8253:#8254 -> let {$v#8255 = #8253:Main.#8243} in case #8251 of {[] -> $v#8255; #8256:#8257 -> Main.fail2#8242; _ -> Main.$v#8246}; _ -> Main.$v#8249}} in case #8250 of {#8260:#8261 -> case #8251 of {#8262:#8263 -> #8261 Data.List.++ #8263; _ -> fail1#8252}; _ -> fail1#8252}
-size = 5   Main.f2 = \#8271 #8272 -> case #8271 of {#8273:#8274 -> let {$v#8277 = #8273:Main.#8270} in case #8272 of {#8275:#8276 -> #8274 Data.List.++ #8276; [] -> $v#8277; _ -> Main.#8269}; _ -> Main.#8269}
-size = 5   Main.f3 = \#8284 #8285 -> case #8284 of {#8286:#8287 -> let {$v#8290 = #8286:Main.#8283} in case #8285 of {#8288:#8289 -> #8287 Data.List.++ #8289; [] -> $v#8290; _ -> Main.#8282}; _ -> Main.#8282}
-size = 1   Main.fail2#8242 = Compiler.Base.error Main.#8241
+size = 1   Main.#8189 = 'f'
+size = 1   Main.#8190 = []
+size = 1   Main.#8191 = Main.#8189:Main.#8190
+size = 1   Main.#8193 = []
+size = 1   Main.#8194 = "case: failed pattern match"
+size = 1   Main.#8195 = Foreign.String.unpack_cpp_string Main.#8194
+size = 1   Main.#8197 = "case: failed pattern match"
+size = 1   Main.#8198 = Foreign.String.unpack_cpp_string Main.#8197
+size = 1   Main.#8216 = 'f'
+size = 1   Main.#8217 = []
+size = 1   Main.#8218 = Main.#8216:Main.#8217
+size = 1   Main.#8219 = Compiler.Base.error Main.#8218
+size = 1   Main.#8220 = []
+size = 1   Main.#8230 = "Main.f3: pattern match failure"
+size = 1   Main.#8231 = Foreign.String.unpack_cpp_string Main.#8230
+size = 1   Main.#8232 = Compiler.Base.error Main.#8231
+size = 1   Main.#8233 = []
+size = 1   Main.$v#8196 = Compiler.Base.error Main.#8195
+size = 1   Main.$v#8199 = Compiler.Base.error Main.#8198
+size = 7   Main.f = \#8200 #8201 -> let {fail1#8202 = case #8200 of {[] -> Main.fail2#8192; #8203:#8204 -> let {$v#8205 = #8203:Main.#8193} in case #8201 of {[] -> $v#8205; #8206:#8207 -> Main.fail2#8192; _ -> Main.$v#8196}; _ -> Main.$v#8199}} in case #8200 of {#8210:#8211 -> case #8201 of {#8212:#8213 -> #8211 Data.List.++ #8213; _ -> fail1#8202}; _ -> fail1#8202}
+size = 5   Main.f2 = \#8221 #8222 -> case #8221 of {#8223:#8224 -> let {$v#8227 = #8223:Main.#8220} in case #8222 of {#8225:#8226 -> #8224 Data.List.++ #8226; [] -> $v#8227; _ -> Main.#8219}; _ -> Main.#8219}
+size = 5   Main.f3 = \#8234 #8235 -> case #8234 of {#8236:#8237 -> let {$v#8240 = #8236:Main.#8233} in case #8235 of {#8238:#8239 -> #8237 Data.List.++ #8239; [] -> $v#8240; _ -> Main.#8232}; _ -> Main.#8232}
+size = 1   Main.fail2#8192 = Compiler.Base.error Main.#8191
