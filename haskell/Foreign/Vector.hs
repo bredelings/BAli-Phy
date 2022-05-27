@@ -1,7 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Foreign.Vector where
 
-import Foreign.String
+import Foreign.CList
+import Foreign.String -- for subtract_int' and increment_int
 
 data EVector a
 
