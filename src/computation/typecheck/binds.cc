@@ -54,14 +54,14 @@ global_value_env typechecker_state::infer_type_for_sigs(signature_env& signature
 
 
 tuple<Hs::Binds, global_value_env>
-typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds binds)
+typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds binds, bool is_top_level)
 {
     auto env2 = plus_prefer_right(env, infer_type_for_sigs(binds.signatures));
 
     global_value_env binders;
     for(auto& decls: binds)
     {
-        auto [decls1, binders1] = infer_type_for_decls(env2, binds.signatures, decls);
+        auto [decls1, binders1] = infer_type_for_decls(env2, binds.signatures, decls, is_top_level);
         decls = decls1;
         // We could remove the binders with sigs
         env2 = plus_prefer_right(env2, binders1);
@@ -110,7 +110,7 @@ vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const map<st
 }
 
 tuple<Hs::Decls, global_value_env>
-typechecker_state::infer_type_for_decls(const global_value_env& env, const signature_env& signatures, const Hs::Decls& decls)
+typechecker_state::infer_type_for_decls(const global_value_env& env, const signature_env& signatures, const Hs::Decls& decls, bool is_top_level)
 {
     // The signatures for the binders should already be in the environment.
 
@@ -121,7 +121,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const signa
     local_value_env binders;
     for(auto& group: bind_groups)
     {
-        auto [group_decls, group_binders] = infer_type_for_decls_groups(env2, signatures, group);
+        auto [group_decls, group_binders] = infer_type_for_decls_groups(env2, signatures, group, is_top_level);
 
         for(auto& decl: group_decls)
             decls2.push_back(decl);
@@ -369,7 +369,7 @@ typechecker_state::infer_rhs_type(const global_value_env& env, const expression_
 }
 
 tuple<Hs::Decls, global_value_env>
-typechecker_state::infer_type_for_decls_groups(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls)
+typechecker_state::infer_type_for_decls_groups(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
 {
     if (single_fundecl_with_sig(decls, signatures))
     {
@@ -496,7 +496,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     map<string, Hs::BindInfo> bind_infos;
 
     global_value_env poly_binder_env;
-    if (is_restricted(signatures, decls))
+    if (is_restricted(signatures, decls) and not is_top_level)
     {
         // 1. This removes defaulted constraints from the LIE.  (not_completely_ambiguous = retained but not defaulted)
         current_lie() = lie_deferred + lie_not_completely_ambiguous;
