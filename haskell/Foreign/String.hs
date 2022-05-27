@@ -6,10 +6,10 @@ import Foreign.CList
 data CPPString
 
 getStringElement :: CPPString -> Int -> Char
-builtin getStringElement 2 "getStringElement" "Vector"
+builtin getStringElement 2 "Vector:getStringElement"
 
 sizeOfString :: CPPString -> Int
-builtin sizeOfString 1 "sizeOfString" "Vector"
+builtin sizeOfString 1 "Vector:sizeOfString"
 
 listFromString s = unpack_cpp_string s
 
@@ -17,7 +17,7 @@ unpack_cpp_string :: CPPString -> [Char]
 unpack_cpp_string string = map_from 0# (sizeOfString string) (\i -> getStringElement string i)
 
 clist_to_string :: CList Char -> CPPString
-builtin clist_to_string 1 "clist_to_string" "Vector"
+builtin clist_to_string 1 "Vector:clist_to_string"
 
 list_to_string :: [Char] -> CPPString
 list_to_string x  = clist_to_string (list_to_CList x)

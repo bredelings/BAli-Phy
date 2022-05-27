@@ -214,20 +214,15 @@ struct SignatureDecl: public Object
 
 struct BuiltinDecl: public Object
 {
+    std::string plugin_name;
+    std::string symbol_name;
     std::string function_name;
     int n_args;
-    std::string symbol_name;
-    std::string plugin_name;
 
     BuiltinDecl* clone() const {return new BuiltinDecl(*this);}
     std::string print() const;
 
-    BuiltinDecl(const std::string& n, int a, const std::string& o)
-        :function_name(n), n_args(a), symbol_name(n), plugin_name(o)
-    {};
-    BuiltinDecl(const std::string& n, int a, const std::string& l, const std::string& o)
-        :function_name(n), n_args(a), symbol_name(l), plugin_name(o)
-    {};
+    BuiltinDecl(const std::string& n, int a, const std::string& o);
 };
 
 // I think that these can originally be only

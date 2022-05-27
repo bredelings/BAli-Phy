@@ -2,10 +2,10 @@
 module Foreign.Introspection where
 
 get_arg :: a -> Int -> b
-builtin get_arg    2 "get_arg"    "Prelude"
+builtin get_arg    2 "Prelude:get_arg"
 
 get_n_args :: a -> Int
-builtin get_n_args 1 "get_n_args"  "Prelude"
+builtin get_n_args 1 "Prelude:get_n_args"
 
 -- foreign import bpcall1 "Prelude:get_arg" get_arg :: a -> Int -> b
 

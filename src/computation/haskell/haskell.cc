@@ -1,7 +1,7 @@
 #include "haskell.H"
 #include "util/string/join.H"
-#include "expression/tuple.H" // for tuple_name
-#include "util/set.H"   // for includes( , )
+#include "util/set.H"           // for includes( , )
+#include "util/string/split.H"  // for split( , )
 
 using std::string;
 using std::pair;
@@ -221,6 +221,20 @@ string BuiltinDecl::print() const
 {
     vector<string> v{"builtin", function_name, std::to_string(n_args), symbol_name, plugin_name};
     return join(v," ");
+}
+
+BuiltinDecl::BuiltinDecl(const std::string& n, int a, const std::string& o)
+    : function_name(o), n_args(a)
+{
+    vector<string> ns = split(n,":");
+    if (ns.size() != 2)
+        throw myexception()<<"builtin declaration for "<<o<<": '"<<n<<"' should have exactly one colon";
+
+    plugin_name = ns[0];
+    symbol_name = ns[1];
+
+    if (symbol_name.empty())
+        symbol_name = function_name;
 }
 
 string List::print() const

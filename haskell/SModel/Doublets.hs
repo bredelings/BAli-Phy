@@ -4,8 +4,8 @@ import Bio.Alphabet
 import SModel.ReversibleMarkov
 import SModel.Nucleotides
 
-builtin f2x4_frequencies_builtin 3 "f2x4_frequencies" "SModel"
-builtin singlet_to_doublet_rates 3 "singlet_to_doublet_rates" "SModel"
+builtin f2x4_frequencies_builtin 3 "SModel:f2x4_frequencies"
+builtin singlet_to_doublet_rates 3 "SModel:singlet_to_doublet_rates"
 
 x2x2 a (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ _) =
     let smap = simple_smap a
@@ -16,12 +16,12 @@ x2x2 a (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ 
 x2_sym a s = singlet_to_doublet_rates a s s
 x2 a q = x2x2 a q q
 
-builtin rna_stem_16a_exchange 6 "rna_16a_exchange" "SModel"
+builtin rna_stem_16a_exchange 6 "SModel:rna_16a_exchange"
 
 rna_stem_16a a aS aD b g e pi = gtr a (rna_stem_16a_exchange a aS aD b g e) pi
 
-builtin rna_editting_rates 3 "rna_editting_rates" "SModel"
-builtin rna_editting_pi 3 "rna_editting_pi" "SModel"
+builtin rna_editting_rates 3 "SModel:rna_editting_rates"
+builtin rna_editting_pi 3 "SModel:rna_editting_pi"
 
 rna_editting a (ReversibleMarkov _ _ q_nuc pi_nuc _ _ _) edits = reversible_markov a smap q pi 
     where smap = simple_smap a

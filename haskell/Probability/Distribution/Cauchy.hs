@@ -5,9 +5,9 @@ import MCMC
 
 ---- cauchy
 
-builtin cauchy_density 3 "cauchy_density" "Distribution"
-builtin cauchy_quantile 3 "cauchy_quantile" "Distribution"
-builtin builtin_sample_cauchy 3 "sample_cauchy" "Distribution"
+builtin cauchy_density 3 "Distribution:cauchy_density"
+builtin cauchy_quantile 3 "Distribution:cauchy_quantile"
+builtin builtin_sample_cauchy 3 "Distribution:sample_cauchy"
 
 cauchy_bounds = realLine
 cauchy_effect x = add_move $ slice_sample_real_random_variable x cauchy_bounds

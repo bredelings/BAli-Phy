@@ -19,21 +19,21 @@ import SModel.Likelihood
 
 import Data.Matrix
 
-builtin builtin_average_frequency 1 "average_frequency" "SModel"
-builtin builtin_empirical 2 "empirical" "SModel"
-builtin pam 1 "pam" "SModel"
-builtin jtt 1 "jtt" "SModel"
-builtin wag 1 "wag" "SModel"
-builtin builtin_wag_frequencies 1 "wag_frequencies" "SModel"
-builtin builtin_lg_frequencies 1 "lg_frequencies" "SModel"
-builtin lg 1 "lg" "SModel"
-builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel"
-builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel"
-builtin mut_sel_q 2 "mut_sel_q" "SModel"
-builtin mut_sel_pi 2 "mut_sel_pi" "SModel"
-builtin builtin_modulated_markov_rates 2 "modulated_markov_rates" "SModel"
-builtin builtin_modulated_markov_pi 2 "modulated_markov_pi" "SModel"
-builtin builtin_modulated_markov_smap 1 "modulated_markov_smap" "SModel"
+builtin builtin_average_frequency 1 "SModel:average_frequency"
+builtin builtin_empirical 2 "SModel:empirical"
+builtin pam 1 "SModel:pam"
+builtin jtt 1 "SModel:jtt"
+builtin wag 1 "SModel:wag"
+builtin builtin_wag_frequencies 1 "SModel:wag_frequencies"
+builtin builtin_lg_frequencies 1 "SModel:lg_frequencies"
+builtin lg 1 "SModel:lg"
+builtin builtin_weighted_frequency_matrix 2 "SModel:weighted_frequency_matrix"
+builtin builtin_frequency_matrix 1 "SModel:frequency_matrix"
+builtin mut_sel_q 2 "SModel:mut_sel_q"
+builtin mut_sel_pi 2 "SModel:mut_sel_pi"
+builtin builtin_modulated_markov_rates 2 "SModel:modulated_markov_rates"
+builtin builtin_modulated_markov_pi 2 "SModel:modulated_markov_pi"
+builtin builtin_modulated_markov_smap 1 "SModel:modulated_markov_smap"
 
 data F81 = F81 Alphabet (EVector Int) () (EVector Double)
 data MixtureModel a = MixtureModel [(Double,a)]

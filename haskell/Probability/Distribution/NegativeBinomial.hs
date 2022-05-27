@@ -3,8 +3,8 @@ module Probability.Distribution.NegativeBinomial where
 import Probability.Random
 import MCMC
 
-builtin negative_binomial_density 3 "negative_binomial_density" "Distribution"
-builtin builtin_sample_negative_binomial 3 "sample_negative_binomial" "Distribution"
+builtin negative_binomial_density 3 "Distribution:negative_binomial_density"
+builtin builtin_sample_negative_binomial 3 "Distribution:sample_negative_binomial"
 
 negative_binomial_bounds = integer_above 0
 

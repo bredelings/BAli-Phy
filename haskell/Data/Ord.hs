@@ -18,7 +18,7 @@ data Ordering = EQ | LT | GT
 
 class Eq a => Ord a
 
-builtin compare_top 2 "compare_top" "Prelude"
+builtin compare_top 2 "Prelude:compare_top"
 
 infix 4 <, <=, >, >=
 

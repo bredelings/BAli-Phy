@@ -3,35 +3,35 @@ module SModel.Likelihood  where
 import Tree
 
 -- peeling for connected-CLVs
-builtin peel_leaf_branch 4 "peel_leaf_branch" "SModel"
-builtin alignment_index2 2 "alignment_index2" "SModel"
-builtin alignment_index3 3 "alignment_index3" "SModel"
-builtin peel_internal_branch 6 "peel_internal_branch" "SModel"
-builtin calc_root_probability 7 "calc_root_probability" "SModel"
-builtin peel_likelihood_2 6 "peel_likelihood_2" "SModel"
-builtin peel_likelihood_1 3 "peel_likelihood_1" "SModel"
+builtin peel_leaf_branch 4 "SModel:peel_leaf_branch"
+builtin alignment_index2 2 "SModel:alignment_index2"
+builtin alignment_index3 3 "SModel:alignment_index3"
+builtin peel_internal_branch 6 "SModel:peel_internal_branch"
+builtin calc_root_probability 7 "SModel:calc_root_probability"
+builtin peel_likelihood_2 6 "SModel:peel_likelihood_2"
+builtin peel_likelihood_1 3 "SModel:peel_likelihood_1"
 
 -- ancestral sequence sampling for connected-CLVs
-builtin sample_root_sequence 7 "sample_root_sequence" "SModel"
-builtin sample_internal_sequence 8 "sample_internal_node_sequence" "SModel"
-builtin sample_leaf_sequence 7 "sample_leaf_node_sequence" "SModel"
+builtin sample_root_sequence 7 "SModel:sample_root_sequence"
+builtin sample_internal_sequence 8 "SModel:sample_internal_node_sequence"
+builtin sample_leaf_sequence 7 "SModel:sample_leaf_node_sequence"
 
 -- peeling for SEV
-builtin bitmask_from_alignment 2 "bitmask_from_alignment" "Alignment"
-builtin peel_leaf_branch_SEV 5 "peel_leaf_branch_SEV" "SModel"
-builtin peel_internal_branch_SEV 4 "peel_internal_branch_SEV" "SModel"
-builtin peel_deg2_branch_SEV 3 "peel_deg2_branch_SEV" "SModel"
-builtin calc_root_probability_SEV 5 "calc_root_probability_SEV" "SModel"
-builtin calc_root_deg2_probability_SEV 4 "calc_root_deg2_probability_SEV" "SModel"
-builtin peel_likelihood_2_SEV 5 "peel_likelihood_2_SEV" "SModel"
-builtin peel_likelihood_1_SEV 4 "peel_likelihood_1_SEV" "SModel"
+builtin bitmask_from_alignment 2 "Alignment:bitmask_from_alignment"
+builtin peel_leaf_branch_SEV 5 "SModel:peel_leaf_branch_SEV"
+builtin peel_internal_branch_SEV 4 "SModel:peel_internal_branch_SEV"
+builtin peel_deg2_branch_SEV 3 "SModel:peel_deg2_branch_SEV"
+builtin calc_root_probability_SEV 5 "SModel:calc_root_probability_SEV"
+builtin calc_root_deg2_probability_SEV 4 "SModel:calc_root_deg2_probability_SEV"
+builtin peel_likelihood_2_SEV 5 "SModel:peel_likelihood_2_SEV"
+builtin peel_likelihood_1_SEV 4 "SModel:peel_likelihood_1_SEV"
 
 -- ancestral sequence sampling for SEV
-builtin sample_root_sequence_SEV 5 "sample_root_sequence_SEV" "SModel"
-builtin sample_root_deg2_sequence_SEV 4 "sample_root_deg2_sequence_SEV" "SModel"
-builtin sample_internal_sequence_SEV 5 "sample_internal_node_sequence_SEV" "SModel"
-builtin sample_deg2_sequence_SEV 4 "sample_deg2_node_sequence_SEV" "SModel"
-builtin sample_leaf_sequence_SEV 7 "sample_leaf_node_sequence_SEV" "SModel"
+builtin sample_root_sequence_SEV 5 "SModel:sample_root_sequence_SEV"
+builtin sample_root_deg2_sequence_SEV 4 "SModel:sample_root_deg2_sequence_SEV"
+builtin sample_internal_sequence_SEV 5 "SModel:sample_internal_node_sequence_SEV"
+builtin sample_deg2_sequence_SEV 4 "SModel:sample_deg2_node_sequence_SEV"
+builtin sample_leaf_sequence_SEV 7 "SModel:sample_leaf_node_sequence_SEV"
 
 
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = mkArray (2*numBranches t) lcf

@@ -6,13 +6,13 @@ infixl 6 +, -
 
 (+),(-),(*) :: a -> a -> a
 
-builtin + 2 "add" "Prelude"
-builtin - 2 "subtract" "Prelude"
-builtin * 2 "multiply" "Prelude"
+builtin + 2 "Prelude:add"
+builtin - 2 "Prelude:subtract"
+builtin * 2 "Prelude:multiply"
 
 negate, abs :: a -> a
-builtin negate 1 "negate" "Prelude"
-builtin abs    1 "abs"    "Prelude"
+builtin negate 1 "Prelude:negate"
+builtin abs    1 "Prelude:abs"
 
 class Num a
 

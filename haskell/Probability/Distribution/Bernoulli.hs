@@ -3,7 +3,7 @@ module Probability.Distribution.Bernoulli where
 import Probability.Random
 import MCMC
 
-builtin builtin_sample_bernoulli 2 "sample_bernoulli" "Distribution"
+builtin builtin_sample_bernoulli 2 "Distribution:sample_bernoulli"
 
 bernoulli_effect x = add_move (\c -> discrete_uniform_avoid_mh x 0 1 c)
 

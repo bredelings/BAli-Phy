@@ -3,9 +3,9 @@ module SMC where
 import Data.Text
 
 import Probability
-builtin builtin_smc_density 5 "smc_density"    "SMC"
-builtin builtin_smc_trace   5 "smc_trace"      "SMC"
-builtin builtin_trace_to_trees      1 "trace_to_trees" "SMC"
+builtin builtin_smc_density 5 "SMC:smc_density"
+builtin builtin_smc_trace   5 "SMC:smc_trace"
+builtin builtin_trace_to_trees      1 "SMC:trace_to_trees"
 
 trace_to_trees = Text . builtin_trace_to_trees
 
