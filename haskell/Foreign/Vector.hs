@@ -4,7 +4,6 @@ module Foreign.Vector where
 import Compiler.Base
 import Compiler.Num
 import Data.Ord
-import Data.Array
 import Foreign.String
 
 data EVector a
@@ -25,6 +24,5 @@ list_from_vector v = list_from_vector_of_size v (vector_size v)
 vector_to_list = list_from_vector
 
 list_to_vector x = clist_to_vector (list_to_CList x)
-array_to_vector x = list_to_vector (elems x)
 
 pack_cpp_string = list_to_string

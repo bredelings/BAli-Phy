@@ -16,6 +16,7 @@ import Data.Ix
 import Data.List
 import Data.Function
 import Compiler.Num
+import Foreign.Vector
 
 data Array a b
 
@@ -44,3 +45,5 @@ elems   arr = [ arr!ix | ix <- indices arr ]
 assocs  arr = [ (ix, arr!ix) | ix <- indices arr ]
 
 arrayMap f arr = mkArray (numElements arr) (\i -> f (arr!i))
+
+array_to_vector x = list_to_vector (elems x)
