@@ -6,18 +6,10 @@ import Foreign.String
 
 type String = [Char]
 
-
-deep_eval_list [] = []
-deep_eval_list (x:xs) = c_pair x (deep_eval_list xs)
-
-builtin_list_to_string :: [Char] -> Int
-builtin builtin_list_to_string 1 "list_to_string" "Vector"
-
-list_to_string x = builtin_list_to_string (deep_eval_list x)
-
-builtin_error :: [Char] -> a
+builtin_error :: CPPString -> a
 builtin builtin_error 1 "error" "Prelude"
 
+error :: [Char] -> a
 error x = builtin_error (list_to_string x)
 
 data IO a = IOAction  (Int->(Int,a)) |

@@ -73,34 +73,40 @@ extern "C" closure builtin_function_get_vector_index(OperationArgs& Args)
     return v[i];
 }
 
-extern "C" closure builtin_function_list_to_vector(OperationArgs& Args)
+extern "C" closure builtin_function_clist_to_vector(OperationArgs& Args)
 {
-    auto xs = Args.evaluate(0);
+    expression_ref xs = Args.evaluate(0);
 
     object_ptr<EVector> v (new EVector);
 
-    auto E2 = xs;
-    while(E2.is_a<EPair>())
+    for(auto E2 = xs; not E2.is_int(); E2 = E2.as_<EPair>().second)
     {
+        assert(E2.is_a<EPair>());
         v->push_back(E2.as_<EPair>().first);
-        E2 = E2.as_<EPair>().second;
     }
+
     return v;
 }
 
-extern "C" closure builtin_function_list_to_string(OperationArgs& Args)
+extern "C" closure builtin_function_clist_to_string(OperationArgs& Args)
 {
-    auto xs = Args.evaluate(0);
+    expression_ref xs = Args.evaluate(0);
 
     object_ptr<String> s (new String);
 
-    auto E2 = xs;
-    while(E2.is_a<EPair>())
+    for(auto E2 = xs; not E2.is_int(); E2 = E2.as_<EPair>().second)
     {
-        int c = E2.as_<EPair>().first.as_char();
-        (*s) += c;
-        E2 = E2.as_<EPair>().second;
+        assert(E2.is_a<EPair>());
+        (*s) += E2.as_<EPair>().first.as_char();
     }
+
+    return s;
+}
+
+extern "C" closure builtin_function_emptyString(OperationArgs& Args)
+{
+    object_ptr<String> s (new String);
+
     return s;
 }
 

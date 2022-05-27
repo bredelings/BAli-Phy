@@ -22,3 +22,11 @@ extern "C" closure builtin_function_c_pair(OperationArgs& Args)
 
   return EPair(fst,snd);
 }
+
+extern "C" closure builtin_function_c_nil(OperationArgs& Args)
+{
+    expression_ref nil;
+    nil = 42;
+    return nil;
+}
+
