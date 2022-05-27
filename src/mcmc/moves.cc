@@ -74,7 +74,7 @@ void sample_tri_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 
     MCMC::Result result(2);
 
-    assert(PP->variable_alignment()); 
+//    assert(PP->variable_alignment()); 
 
     auto t = PP->t();
   
@@ -123,7 +123,7 @@ void sample_cube_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 
     MCMC::Result result(2);
 
-    assert(PP->variable_alignment()); 
+//    assert(PP->variable_alignment()); 
 
     auto t = PP->t();
   
@@ -156,7 +156,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& St
 
     MCMC::Result result(1);
 
-    assert(PP->variable_alignment()); 
+//    assert(PP->variable_alignment()); 
 
     auto t = PP->t();
 
@@ -186,7 +186,7 @@ void sample_tri_branch_type_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 
     MCMC::Result result(1);
 
-    assert(PP->variable_alignment()); 
+//    assert(PP->variable_alignment()); 
 
     auto t = PP->t();
 
@@ -211,7 +211,7 @@ void sample_alignments_one(owned_ptr<Model>& P, MoveStats& Stats, int b)
 {
     double alignment_plus_branch_length_fraction = P->load_value("alignment_plus_branch_length_fraction",0.01);
     Parameters* PP = P.as<Parameters>();
-    assert(PP->variable_alignment()); 
+//    assert(PP->variable_alignment()); 
 
     if (uniform() < alignment_plus_branch_length_fraction)
         alignment_slice_sample_branch_length(P, Stats, b);
@@ -222,7 +222,7 @@ void sample_alignments_one(owned_ptr<Model>& P, MoveStats& Stats, int b)
 void sample_node_move(owned_ptr<Model>& P, MoveStats&,int node) 
 {
     Parameters* PP = P.as<Parameters>();
-    assert(PP->variable_alignment()); 
+//    assert(PP->variable_alignment()); 
 
     sample_node(*PP,node);
 }
@@ -230,7 +230,7 @@ void sample_node_move(owned_ptr<Model>& P, MoveStats&,int node)
 void sample_two_nodes_move(owned_ptr<Model>& P, MoveStats&,int n0) 
 {
     Parameters* PP = P.as<Parameters>();
-    assert(PP->variable_alignment()); 
+//    assert(PP->variable_alignment()); 
 
     vector<int> nodes = A3::get_nodes_random(PP->t(),n0);
     int n1 = -1;
