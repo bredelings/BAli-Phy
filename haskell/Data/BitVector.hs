@@ -1,20 +1,20 @@
 module Data.BitVector where
 
-data BitVector = BitVector ()
 data CBitVector = CBitVector
+data BitVector = BitVector CBitVector
 
-foreign import bpcall "Bits:empty_bitvector" builtin_zeros :: () -> ()
-foreign import bpcall "Bits:complement" builtin_complement :: () -> ()
-foreign import bpcall "Bits:bitwise_or" builtin_bitwise_or :: () -> () -> ()
-foreign import bpcall "Bits:bitwise_and" builtin_bitwise_and :: () -> () -> ()
-foreign import bpcall "Bits:bitwise_xor" builtin_bitwise_xor :: () -> () -> ()
-foreign import bpcall "Bits:eq" builtin_eq :: () -> () -> ()
-foreign import bpcall "Bits:neq" builtin_neq :: () -> () -> ()
-foreign import bpcall "Bits:test_bit" builtin_test_bit :: () -> () -> ()
-foreign import bpcall "Bits:set_bit" builtin_set_bit :: () -> () -> ()
-foreign import bpcall "Bits:clear_bit" builtin_clear_bit :: () -> () -> ()
-foreign import bpcall "Bits:size" builtin_size :: () -> ()
-foreign import bpcall "Bits:popcount" builtin_popcount :: () -> ()
+foreign import bpcall "Bits:empty_bitvector" builtin_zeros :: Int -> CBitVector
+foreign import bpcall "Bits:complement" builtin_complement :: CBitVector -> CBitVector
+foreign import bpcall "Bits:bitwise_or" builtin_bitwise_or :: CBitVector -> CBitVector -> CBitVector
+foreign import bpcall "Bits:bitwise_and" builtin_bitwise_and :: CBitVector -> CBitVector -> CBitVector
+foreign import bpcall "Bits:bitwise_xor" builtin_bitwise_xor :: CBitVector -> CBitVector -> CBitVector
+foreign import bpcall "Bits:eq" builtin_eq :: CBitVector -> CBitVector -> Bool
+foreign import bpcall "Bits:neq" builtin_neq :: CBitVector -> CBitVector -> Bool
+foreign import bpcall "Bits:test_bit" builtin_test_bit :: CBitVector -> Int -> Bool
+foreign import bpcall "Bits:set_bit" builtin_set_bit :: CBitVector -> Int -> CBitVector
+foreign import bpcall "Bits:clear_bit" builtin_clear_bit :: CBitVector -> Int -> CBitVector
+foreign import bpcall "Bits:size" builtin_size :: CBitVector -> Int
+foreign import bpcall "Bits:popcount" builtin_popcount :: CBitVector -> Int
 
 -- see Boost.Multiprecision
 
