@@ -3,8 +3,8 @@ module Probability.Distribution.Binomial where
 import Probability.Random
 import MCMC
 
-builtin binomial_density 3 "Distribution:binomial_density"
-builtin builtin_sample_binomial 3 "Distribution:sample_binomial"
+builtin "Distribution:binomial_density" binomial_density 3
+builtin "Distribution:sample_binomial" builtin_sample_binomial 3
 
 binomial_bounds n = integer_between 0 n
 

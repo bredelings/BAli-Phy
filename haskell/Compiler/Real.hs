@@ -27,11 +27,11 @@ class (Real a, Enum a) => Integral a  where { }
 -- divMod  :: a -> a -> (a,a)
 -- toInteger :: a -> Integer
 
-builtin (/) 2 "Prelude:divide"
-builtin div 2 "Prelude:div"
-builtin mod 2 "Prelude:mod"
-builtin quot 2 "Prelude:quot"
-builtin rem 2 "Prelude:rem"
+builtin "Prelude:divide" (/) 2
+builtin "Prelude:div" div 2
+builtin "Prelude:mod" mod 2
+builtin "Prelude:quot" quot 2
+builtin "Prelude:rem" rem 2
 
 class Fractional a => Floating a where { }
 -- pi :: a
@@ -43,39 +43,39 @@ class Fractional a => Floating a where { }
 -- asinh, atanh, acosh :: a -> a
 
 pi = 3.14159265358979323846
-builtin exp 1 "Real:exp"
-builtin sqrt 1 "Real:sqrt"
-builtin log 1 "Real:log"
-builtin (**) 2 "Real:pow"
-builtin logBase 2 "Real:logBase"
-builtin sin 1 "Real:sin"
-builtin tan 1 "Real:tan"
-builtin cos 1 "Real:cos"
-builtin asin 1 "Real:asin"
-builtin atan 1 "Real:atan"
-builtin acos 1 "Real:acos"
-builtin sinh 1 "Real:sinh"
-builtin tanh 1 "Real:tanh"
-builtin cosh 1 "Real:cosh"
-builtin asinh 1 "Real:asinh"
-builtin atanh 1 "Real:atanh"
-builtin acosh 1 "Real:acosh"
+builtin "Real:exp" exp 1
+builtin "Real:sqrt" sqrt 1
+builtin "Real:log" log 1
+builtin "Real:pow" (**) 2
+builtin "Real:logBase" logBase 2
+builtin "Real:sin" sin 1
+builtin "Real:tan" tan 1
+builtin "Real:cos" cos 1
+builtin "Real:asin" asin 1
+builtin "Real:atan" atan 1
+builtin "Real:acos" acos 1
+builtin "Real:sinh" sinh 1
+builtin "Real:tanh" tanh 1
+builtin "Real:cosh" cosh 1
+builtin "Real:asinh" asinh 1
+builtin "Real:atanh" atanh 1
+builtin "Real:acosh" acosh 1
 
 class (Real a, Fractional a) => RealFrac a where
     properFraction :: (Integral b) => a -> (b,a)
 --    truncate, round  :: (Integral b) => a -> b
 --    ceiling, floor   :: (Integral b) => a -> b
 
-builtin truncate 1 "Prelude:truncate"
-builtin ceiling 1 "Prelude:ceiling"
-builtin floor 1 "Prelude:floor"
-builtin round 1 "Prelude:round"
+builtin "Prelude:truncate" truncate 1
+builtin "Prelude:ceiling" ceiling 1
+builtin "Prelude:floor" floor 1
+builtin "Prelude:round" round 1
 
-builtin doubleToInt 1 "Prelude:doubleToInt"
+builtin "Prelude:doubleToInt" doubleToInt 1
 
-builtin expToLogDouble 1 "Prelude:expToLogDouble"
-builtin doubleToLogDouble 1 "Prelude:doubleToLogDouble"
-builtin intToDouble 1 "Prelude:intToDouble"
+builtin "Prelude:expToLogDouble" expToLogDouble 1
+builtin "Prelude:doubleToLogDouble" doubleToLogDouble 1
+builtin "Prelude:intToDouble" intToDouble 1
 
 -- We need == to use GHC's code directly
 x0 ^ y0 | y0 < 0 = error("Negative exponent")

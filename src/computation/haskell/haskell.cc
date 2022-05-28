@@ -223,7 +223,7 @@ string BuiltinDecl::print() const
     return join(v," ");
 }
 
-BuiltinDecl::BuiltinDecl(const std::string& n, int a, const std::string& o)
+BuiltinDecl::BuiltinDecl(const std::string& n, const std::string& o, int a)
     : function_name(o), n_args(a)
 {
     vector<string> ns = split(n,":");

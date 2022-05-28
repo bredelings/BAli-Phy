@@ -618,7 +618,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        decl_no_th                            {$$ = $1;}
 /* What is this for? How is this a decl ? */
 |        infixexp_top                          {$$ = make_infixexp($1);}
-|        "builtin" var INTEGER STRING          {$$ = Hs::BuiltinDecl($4,$3,$2);}
+|        "builtin" STRING var INTEGER          {$$ = Hs::BuiltinDecl($2,$3,$4);}
 
 cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2.first,$2.second,$3);}
 

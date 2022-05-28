@@ -12,7 +12,7 @@ import Bio.Alignment.Matrix
 import Bio.Alignment.Pairwise
 
 -- Alignment -> Int -> EVector Int-> EVector (EVector Int)
-builtin builtin_leaf_sequence_counts 3 "Alignment:leaf_sequence_counts"
+builtin "Alignment:leaf_sequence_counts" builtin_leaf_sequence_counts 3
 
 branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) [0..n_branches-1]
   
@@ -48,7 +48,7 @@ compute_sequence_lengths seqs tree as = [ if node < n_leaves then vector_size (s
     where n_leaves = numElements seqs
 
 -- Current a' is an alignment, but counts and mapping are EVector
-builtin builtin_compress_alignment 1 "Alignment:compress_alignment"
+builtin "Alignment:compress_alignment" builtin_compress_alignment 1
 compress_alignment a = (compressed, counts, mapping) where ca = builtin_compress_alignment a
                                                            compressed = get_vector_index ca 0
                                                            counts = get_vector_index ca 1
@@ -56,19 +56,19 @@ compress_alignment a = (compressed, counts, mapping) where ca = builtin_compress
 
 alignment_on_tree_length (AlignmentOnTree t _ ls as) = (ls!0) + sumi [numInsert (as!b) | b <- allEdgesFromNode t 0]
 
-builtin builtin_uncompress_alignment 2 "Alignment:uncompress_alignment"
+builtin "Alignment:uncompress_alignment" builtin_uncompress_alignment 2
 
 uncompress_alignment (a, counts, mapping) = builtin_uncompress_alignment a mapping
 
 -- Alignment -> Int -> EVector Int -> [EVector Int]
 leaf_sequence_counts a n counts = list_from_vector $ builtin_leaf_sequence_counts a n counts
 
-builtin builtin_ancestral_sequence_alignment 3 "Alignment:ancestral_sequence_alignment"
+builtin "Alignment:ancestral_sequence_alignment" builtin_ancestral_sequence_alignment 3
 ancestral_sequence_alignment a0 states smap = builtin_ancestral_sequence_alignment a0 states smap
 
-builtin builtin_select_alignment_columns 2 "Alignment:select_alignment_columns"
+builtin "Alignment:select_alignment_columns" builtin_select_alignment_columns 2
 select_alignment_columns alignment sites = builtin_select_alignment_columns alignment (list_to_vector sites)
 
-builtin builtin_select_alignment_pairs 3 "Alignment:select_alignment_pairs"
+builtin "Alignment:select_alignment_pairs" builtin_select_alignment_pairs 3
 select_alignment_pairs alignment sites doublets = builtin_select_alignment_pairs alignment sites' doublets
     where sites' = list_to_vector $ map (\(x,y) -> c_pair x y) sites

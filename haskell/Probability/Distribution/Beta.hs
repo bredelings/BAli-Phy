@@ -3,9 +3,9 @@ module Probability.Distribution.Beta where
 import Probability.Random
 import MCMC
 
-builtin beta_density 3 "Distribution:beta_density"
-builtin beta_quantile 3 "Distribution:beta_quantile"
-builtin builtin_sample_beta 3 "Distribution:sample_beta"
+builtin "Distribution:beta_density" beta_density 3
+builtin "Distribution:beta_quantile" beta_quantile 3
+builtin "Distribution:sample_beta" builtin_sample_beta 3
 
 beta_bounds = between 0.0 1.0
 beta_effect x = add_move $ slice_sample_real_random_variable x beta_bounds

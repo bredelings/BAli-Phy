@@ -2,8 +2,8 @@ module Range where
 
 data Range = OpenInterval Double Double | IntegerInterval Int Int | TrueFalseRange | Simplex Int Double | ListRange [Range] | LabelledSimplex [Int] Double | TreeRange Int
  
-builtin builtinGetBounds 2 "Range:get_bounds"
-builtin builtinGetIntegerBounds 2 "Range:get_integer_bounds"
+builtin "Range:get_bounds" builtinGetBounds 2
+builtin "Range:get_integer_bounds" builtinGetIntegerBounds 2
   
 realLine = OpenInterval Nothing Nothing
 

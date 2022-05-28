@@ -2,40 +2,40 @@ module Bio.Alphabet where
 
 data Alphabet
 
-builtin getNucleotides 1 "Alphabet:getNucleotides"
+builtin "Alphabet:getNucleotides" getNucleotides 1
 
-builtin getAminoAcids 1 "Alphabet:getAminoAcids"
+builtin "Alphabet:getAminoAcids" getAminoAcids 1
 
-builtin alphabetSize 1 "Alphabet:alphabetSize"
+builtin "Alphabet:alphabetSize" alphabetSize 1
 
-builtin builtin_letters 1 "Alphabet:alphabet_letters"
+builtin "Alphabet:alphabet_letters" builtin_letters 1
 letters a = map listFromString (list_from_vector (builtin_letters a) )
 
-builtin builtin_find_letter 2 "Alphabet:find_letter"
+builtin "Alphabet:find_letter" builtin_find_letter 2
 find_letter a letter = builtin_find_letter a (list_to_string letter)
 
-builtin translate 2 "Alphabet:translate"
+builtin "Alphabet:translate" translate 2
 
-builtin doublets 1 "Alphabet:doublets"
+builtin "Alphabet:doublets" doublets 1
 
-builtin triplets 1 "Alphabet:triplets"
+builtin "Alphabet:triplets" triplets 1
 
-builtin codons 2 "Alphabet:codons"
+builtin "Alphabet:codons" codons 2
 
-builtin builtin_dna 1 "Alphabet:dna"
+builtin "Alphabet:dna" builtin_dna 1
 dna = builtin_dna ()
 
-builtin builtin_rna 1 "Alphabet:rna"
+builtin "Alphabet:rna" builtin_rna 1
 rna = builtin_rna ()
 
-builtin builtin_aa  1 "Alphabet:aa"
+builtin "Alphabet:aa" builtin_aa  1
 aa  = builtin_aa  ()
 amino_acids = builtin_aa
 
-builtin builtin_aaWithStop 1 "Alphabet:aaWithStop"
+builtin "Alphabet:aaWithStop" builtin_aaWithStop 1
 aaWithStop = builtin_aaWithStop ()
 amino_acids_with_stop = builtin_aaWithStop ()
 
-builtin builtin_standard_code 1 "Alphabet:genetic_code_standard"
+builtin "Alphabet:genetic_code_standard" builtin_standard_code 1
 standard_code = builtin_standard_code ()
 

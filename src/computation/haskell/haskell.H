@@ -222,7 +222,7 @@ struct BuiltinDecl: public Object
     BuiltinDecl* clone() const {return new BuiltinDecl(*this);}
     std::string print() const;
 
-    BuiltinDecl(const std::string& n, int a, const std::string& o);
+    BuiltinDecl(const std::string& n, const std::string& o, int a);
 };
 
 // I think that these can originally be only

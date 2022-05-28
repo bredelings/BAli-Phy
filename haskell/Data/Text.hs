@@ -13,7 +13,7 @@ import Foreign.String
 
 data Text = Text CPPString
 
-builtin builtin_pack 1 "Text:pack"
+builtin "Text:pack" builtin_pack 1
 
 --
 

@@ -7,7 +7,7 @@ import Foreign.String
 type String = [Char]
 
 builtin_error :: CPPString -> a
-builtin builtin_error 1 "Prelude:error"
+builtin "Prelude:error" builtin_error 1
 
 error :: [Char] -> a
 error x = builtin_error (list_to_string x)
@@ -34,8 +34,8 @@ infixr 0 $!, `seq`
 f $! x = x `seq` f x
 
 seq :: a -> b -> b
-builtin seq 2 "Prelude:seq"
+builtin "Prelude:seq" seq 2
 
 struct_seq :: a -> b -> b
-builtin struct_seq 2 "Prelude:struct_seq"
+builtin "Prelude:struct_seq" struct_seq 2
 

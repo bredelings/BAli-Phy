@@ -4,5 +4,5 @@ data Log a = Log {ln :: a}
 
 class Floating a => Precise a where { }
 
-builtin expm1 1 "Real:expm1"
-builtin log1p 1 "Real:log1p"
+builtin "Real:expm1" expm1 1
+builtin "Real:log1p" log1p 1

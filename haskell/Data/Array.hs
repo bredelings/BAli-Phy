@@ -22,13 +22,13 @@ data Array a b
 
 -- hack, until we have a type system
 is_array :: a -> Bool
-builtin is_array 1 "Array:is_array"
+builtin "Array:is_array" is_array 1
 
 infixl 9 !
-builtin (!) 2 "Array:getIndex"
+builtin "Array:getIndex" (!) 2
 
-builtin numElements 1 "Array:arraySize"
-builtin mkArray 2 "Array:mkArray"
+builtin "Array:arraySize" numElements 1
+builtin "Array:mkArray" mkArray 2
 
 listArray n l = mkArray n (\i -> l !! i)
 

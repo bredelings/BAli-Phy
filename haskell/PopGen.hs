@@ -3,15 +3,15 @@ module PopGen where
 import Probability
 import Range
 
-builtin builtin_read_phase_file 1 "PopGen:read_phase_file"
-builtin builtin_read_phase2_file 1 "PopGen:read_phase2_file"
-builtin remove_2nd_allele 1 "PopGen:remove_2nd_allele"
-builtin allele_frequency_spectrum 1 "PopGen:allele_frequency_spectrum"
-builtin ewens_sampling_group_probability 2 "PopGen:ewens_sampling_group_probability"
-builtin ewens_sampling_probability 2 "PopGen:ewens_sampling_probability"
-builtin builtin_ewens_sampling_mixture_probability 3 "PopGen:ewens_sampling_mixture_probability"
-builtin builtin_selfing_coalescence_probability 3 "PopGen:selfing_coalescence_probability"
-builtin li_stephens_2003_composite_likelihood 3 "SMC:li_stephens_2003_composite_likelihood"
+builtin "PopGen:read_phase_file" builtin_read_phase_file 1
+builtin "PopGen:read_phase2_file" builtin_read_phase2_file 1
+builtin "PopGen:remove_2nd_allele" remove_2nd_allele 1
+builtin "PopGen:allele_frequency_spectrum" allele_frequency_spectrum 1
+builtin "PopGen:ewens_sampling_group_probability" ewens_sampling_group_probability 2
+builtin "PopGen:ewens_sampling_probability" ewens_sampling_probability 2
+builtin "PopGen:ewens_sampling_mixture_probability" builtin_ewens_sampling_mixture_probability 3
+builtin "PopGen:selfing_coalescence_probability" builtin_selfing_coalescence_probability 3
+builtin "SMC:li_stephens_2003_composite_likelihood" li_stephens_2003_composite_likelihood 3
 
 read_phase_file filename = map list_from_vector $ list_from_vector $ builtin_read_phase_file $ list_to_string filename
 

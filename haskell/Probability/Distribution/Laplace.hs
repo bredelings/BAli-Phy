@@ -3,8 +3,8 @@ module Probability.Distribution.Laplace where
 import Probability.Random
 import MCMC
 
-builtin laplace_density 3 "Distribution:laplace_density"
-builtin builtin_sample_laplace 3 "Distribution:sample_laplace"
+builtin "Distribution:laplace_density" laplace_density 3
+builtin "Distribution:sample_laplace" builtin_sample_laplace 3
 
 laplace_bounds = realLine
 laplace_effect x = add_move $ slice_sample_real_random_variable x laplace_bounds

@@ -9,49 +9,49 @@ import Data.Eq
 import Data.Ord
 
 builtin_isControl :: Char -> Int
-builtin builtin_isControl 1 "Char:isControl"
+builtin "Char:isControl" builtin_isControl 1
 
 isControl :: Char -> Bool
 isControl c = if builtin_isControl c == 1 then True else False
 
 builtin_isSpace :: Char -> Int
-builtin builtin_isSpace 1 "Char:isSpace"
+builtin "Char:isSpace" builtin_isSpace 1
 
 isSpace :: Char -> Bool
 isSpace c = if builtin_isSpace c == 1 then True else False
 
 builtin_isLower :: Char -> Int
-builtin builtin_isLower 1 "Char:isLower"
+builtin "Char:isLower" builtin_isLower 1
 
 isLower :: Char -> Bool
 isLower c = if builtin_isLower c == 1 then True else False
 
 builtin_isUpper :: Char -> Int
-builtin builtin_isUpper 1 "Char:isUpper"
+builtin "Char:isUpper" builtin_isUpper 1
 
 isUpper :: Char -> Bool
 isUpper c = if builtin_isUpper c == 1 then True else False
 
 builtin_isAlpha :: Char -> Int
-builtin builtin_isAlpha 1 "Char:isAlpha"
+builtin "Char:isAlpha" builtin_isAlpha 1
 
 isAlpha :: Char -> Bool
 isAlpha c = if builtin_isAlpha c == 1 then True else False
 
 builtin_isAlphaNum :: Char -> Int
-builtin builtin_isAlphaNum 1 "Char:isAlphaNum"
+builtin "Char:isAlphaNum" builtin_isAlphaNum 1
 
 isAlphaNum :: Char -> Bool
 isAlphaNum c = if builtin_isAlphaNum c == 1 then True else False
 
 builtin_isPrint :: Char -> Int
-builtin builtin_isPrint 1 "Char:isPrint"
+builtin "Char:isPrint" builtin_isPrint 1
 
 isPrint :: Char -> Bool
 isPrint c = if builtin_isPrint c == 1 then True else False
 
 builtin_isDigit :: Char -> Int
-builtin builtin_isDigit 1 "Char:isDigit"
+builtin "Char:isDigit" builtin_isDigit 1
 
 isDigit :: Char -> Bool
 isDigit c = if builtin_isDigit c == 1 then True else False
@@ -60,7 +60,7 @@ isDigit c = if builtin_isDigit c == 1 then True else False
 -- not implemented
 
 builtin_isHexDigit :: Char -> Int
-builtin builtin_isHexDigit 1 "Char:isHexDigit"
+builtin "Char:isHexDigit" builtin_isHexDigit 1
 
 isHexDigit :: Char -> Bool
 isHexDigit c = if builtin_isHexDigit c == 1 then True else False
@@ -75,7 +75,7 @@ isLetter = isAlpha
 -- not implemented
 
 builtin_isPunctuation :: Char -> Int
-builtin builtin_isPunctuation 1 "Char:isPunctuation"
+builtin "Char:isPunctuation" builtin_isPunctuation 1
 
 isPunctuation :: Char -> Bool
 isPunctuation c = if builtin_isPunctuation c == 1 then True else False
@@ -104,10 +104,10 @@ isAsciiLower = isLower
 
 -- case conversion
 toUpper :: Char -> Char
-builtin toUpper 1 "Char:toUpper"
+builtin "Char:toUpper" toUpper 1
 
 toLower :: Char -> Char
-builtin toLower 1 "Char:toLower"
+builtin "Char:toLower" toLower 1
 
 -- toTitle :: Char -> Char
 -- not implemented
@@ -124,14 +124,14 @@ digitToInt c | dec <= 9  = dec
     hexu = ord c - ord 'A'
 
 intToDigit :: Int -> Char
-builtin intToDigit 1 "Char:intToDigit"
+builtin "Char:intToDigit" intToDigit 1
 
 -- numeric representations
 ord :: Char -> Int
-builtin ord 1 "Char:ord"
+builtin "Char:ord" ord 1
 
 chr :: Int -> Char
-builtin chr 1 "Char:chr"
+builtin "Char:chr" chr 1
 
 -- string representations
 -- showLitChar :: Char -> ShowS

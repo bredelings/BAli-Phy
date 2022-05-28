@@ -5,8 +5,8 @@ import MCMC
 import Probability.Distribution.List
 import Probability.Distribution.Uniform
 
-builtin poisson_density 2 "Distribution:poisson_density"
-builtin builtin_sample_poisson 2 "Distribution:sample_poisson"
+builtin "Distribution:poisson_density" poisson_density 2
+builtin "Distribution:sample_poisson" builtin_sample_poisson 2
 
 poisson_bounds = integer_above 0
 

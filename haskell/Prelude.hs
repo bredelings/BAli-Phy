@@ -45,15 +45,15 @@ import Foreign.Pair
 import Foreign.Vector
 import Foreign.String
 
-builtin builtin_putStrLn 2 "Prelude:putStrLn"
+builtin "Prelude:putStrLn" builtin_putStrLn 2
 
-builtin is_char 1 "Prelude:is_char"
-builtin is_double 1 "Prelude:is_double"
-builtin is_int 1 "Prelude:is_int"
+builtin "Prelude:is_char" is_char 1
+builtin "Prelude:is_double" is_double 1
+builtin "Prelude:is_int" is_int 1
 
-builtin builtin_show 1 "Prelude:show"
-builtin builtin_read_int 1 "Prelude:read_int"
-builtin builtin_read_double 1 "Prelude:read_double"
+builtin "Prelude:show" builtin_show 1
+builtin "Prelude:read_int" builtin_read_int 1
+builtin "Prelude:read_double" builtin_read_double 1
 
 undefined = error "Prelude.undefined"
 
@@ -86,5 +86,5 @@ read_double [] = error "Can't convert empty string to double."
 read_double (h:t) = builtin_read_double (list_to_string (h:t))
 read_double s = builtin_read_double s
 
-builtin builtin_readFile 1 "Data:readFile"
+builtin "Data:readFile" builtin_readFile 1
 readFile filename = IOAction (\s -> (s,listFromString $ builtin_readFile $ list_to_string $ filename))

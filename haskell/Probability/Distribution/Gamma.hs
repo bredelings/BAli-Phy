@@ -3,9 +3,9 @@ module Probability.Distribution.Gamma where
 import Probability.Random
 import MCMC
 
-builtin shifted_gamma_density 4 "Distribution:shifted_gamma_density"
-builtin shifted_gamma_quantile 4 "Distribution:shifted_gamma_quantile"
-builtin builtin_sample_shifted_gamma 4 "Distribution:sample_shifted_gamma"
+builtin "Distribution:shifted_gamma_density" shifted_gamma_density 4
+builtin "Distribution:shifted_gamma_quantile" shifted_gamma_quantile 4
+builtin "Distribution:sample_shifted_gamma" builtin_sample_shifted_gamma 4
 
 gamma_bounds shift = above shift
 gamma_effect shift x = add_move $ slice_sample_real_random_variable x (gamma_bounds shift)

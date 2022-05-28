@@ -2,9 +2,9 @@ module Data.ReadFile where
 
 import Foreign.String
 
-builtin builtin_read_file_lines 1 "Data:read_file_lines"
-builtin cpp_string_to_double 1 "Data:string_to_double"
-builtin cpp_string_to_int 1 "Data:string_to_int"
+builtin "Data:read_file_lines" builtin_read_file_lines 1
+builtin "Data:string_to_double" cpp_string_to_double 1
+builtin "Data:string_to_int" cpp_string_to_int 1
 
 read_file_lines filename = list_from_vector $ builtin_read_file_lines (list_to_string filename)
 

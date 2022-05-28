@@ -4,7 +4,7 @@ import Probability.Random
 import MCMC
 import Probability.Distribution.Binomial
 
-builtin builtin_multinomial_density 3 "Distribution:multinomial_density"
+builtin "Distribution:multinomial_density" builtin_multinomial_density 3
 
 multinomial_density n ps ks = builtin_multinomial_density n ps' ks'
     where ps' = list_to_vector ps
