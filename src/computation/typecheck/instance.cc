@@ -71,7 +71,7 @@ pair<Hs::Var, Hs::Type>
 typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     // -- old -- //
-    auto [class_head, class_args] = decompose_type_apps(inst_decl.constraint);
+    auto [class_head, class_args] = Hs::decompose_type_apps(inst_decl.constraint);
 
     // Premise #1: Look up the info for the class
     optional<ClassInfo> class_info;
@@ -94,7 +94,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     vector<Hs::TypeCon> types;
     for(auto& class_arg: class_args)
     {
-        auto [a_head, a_args] = decompose_type_apps(class_arg);
+        auto [a_head, a_args] = Hs::decompose_type_apps(class_arg);
         auto tc = a_head.to<Hs::TypeCon>();
         if (not tc)
             throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<a_head<<" is not a type constructor!";
@@ -172,7 +172,7 @@ typechecker_state::infer_type_for_instances1(const Hs::Decls& decls)
 
 string get_class_for_constraint(const Hs::Type& constraint)
 {
-    auto [class_head, args] = decompose_type_apps(constraint);
+    auto [class_head, args] = Hs::decompose_type_apps(constraint);
     auto tc = class_head.to<Hs::TypeCon>();
     assert(tc);
     return unloc(tc->name);
@@ -230,7 +230,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     auto inst_type = instance_env.at(unloc(dfun.name));
     // Instantiate it with rigid type variables.
     auto [instance_tvs, instance_constraints, instance_head] = instantiate(inst_type, false);
-    auto [instance_class, instance_args] = decompose_type_apps(instance_head);
+    auto [instance_class, instance_args] = Hs::decompose_type_apps(instance_head);
 
     // 2. Get the class info
     auto class_name = get_class_for_constraint(instance_head);
@@ -285,7 +285,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
         dict_entries.push_back( apply_expression(op, lambda_vars) );
 
         // forall b. Ix b => a -> b -> b
-        Hs::Type op_type = remove_top_gen(method_type);
+        Hs::Type op_type = Hs::remove_top_gen(method_type);
         // forall b. Ix b => [x] -> b -> b
         op_type = apply_subst(subst, op_type);
         // forall x. (C1 x, C2 x) => forall b. Ix b => [x] -> b -> b

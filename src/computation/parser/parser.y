@@ -1471,7 +1471,7 @@ pair<vector<Hs::ImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::I
 std::tuple<string, vector<expression_ref>>
 check_type_or_class_header(const Hs::Type& type)
 {
-    auto [type_head, type_args] = decompose_type_apps(type);
+    auto [type_head, type_args] = Hs::decompose_type_apps(type);
 
     // FIXME -- add location!
     if (not type_head.is_a<Hs::TypeCon>())
@@ -1557,7 +1557,7 @@ Hs::Context make_context(const expression_ref& context)
 
 bool check_kind(const Hs::Kind& kind)
 {
-    auto [kind_head, kind_args] = decompose_type_apps(kind);
+    auto [kind_head, kind_args] = Hs::decompose_type_apps(kind);
 
     if (not kind_head.is_a<Hs::TypeCon>()) return false;
 
@@ -1584,7 +1584,7 @@ Hs::Type make_kind(const Hs::Kind& kind)
 
 optional<pair<string, Hs::FieldDecls>> is_record_con(const expression_ref& typeish)
 {
-    auto [head,args] = decompose_type_apps(typeish);
+    auto [head,args] = Hs::decompose_type_apps(typeish);
 
     if (args.size() != 1) return {};
 
@@ -1599,7 +1599,7 @@ optional<pair<string, std::vector<expression_ref>>> is_normal_con(const expressi
 {
     if (is_record_con(typeish)) return {};
 
-    auto [head,args] = decompose_type_apps(typeish);
+    auto [head,args] = Hs::decompose_type_apps(typeish);
 
     if (not head.is_a<Hs::TypeCon>())
         return {};

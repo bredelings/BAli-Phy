@@ -17,7 +17,7 @@ namespace views = ranges::views;
 
 bool type_is_hnf(const Hs::Type& type)
 {
-    auto [head,args] = decompose_type_apps(type);
+    auto [head,args] = Hs::decompose_type_apps(type);
 
     if (head.is_a<Hs::TypeVar>())
         return true;
@@ -36,7 +36,7 @@ bool type_is_hnf(const Hs::Type& type)
 // Question: for multiparameter type classes, how about i.e. `K Int a`?
 bool constraint_is_hnf(const Hs::Type& constraint)
 {
-    auto [class_con, args] = decompose_type_apps(constraint);
+    auto [class_con, args] = Hs::decompose_type_apps(constraint);
     for(auto& arg: args)
         if (not type_is_hnf(arg))
             return false;

@@ -82,7 +82,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MRule rule)
 
         rule2.patterns.insert(rule2.patterns.begin(), pat);
 
-        Hs::Type type = make_arrow_type(t1,t2);
+        Hs::Type type = Hs::make_arrow_type(t1,t2);
 
         return {rule2, type};
     }

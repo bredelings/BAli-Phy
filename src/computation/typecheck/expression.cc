@@ -150,7 +150,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
             auto [arg2, t2] = infer_type(env, e2);
             args.push_back(arg2);
 
-            unify (t1, make_arrow_type(t2,tv));
+            unify (t1, Hs::make_arrow_type(t2,tv));
 
             t1 = tv;
         }
@@ -236,7 +236,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         Hs::Type result_type = fresh_meta_type_var( kind_star() );
 
-        unify( make_arrow_type(object_type,result_type), match_type );
+        unify( Hs::make_arrow_type(object_type,result_type), match_type );
 
         return { Case, result_type };
     }

@@ -349,7 +349,7 @@ global_value_env apply_subst(const substitution_t& s, const value_env& env1)
 
 optional<string> maybe_get_class_name_from_constraint(const Hs::Type& constraint)
 {
-    auto [tycon, args] = decompose_type_apps(constraint);
+    auto [tycon, args] = Hs::decompose_type_apps(constraint);
     if (auto tc = tycon.to<Hs::TypeCon>())
         return get_unqualified_name(unloc(tc->name));
     else
@@ -593,7 +593,7 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& 
     auto [_, constraints, con_type] = instantiate(con_info.at(con_name));
     vector<Hs::Type> field_types;
 
-    while(auto f = is_function_type(con_type))
+    while(auto f = Hs::is_function_type(con_type))
     {
         auto [t1,t2] = *f;
         field_types.push_back(t1);

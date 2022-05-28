@@ -152,6 +152,14 @@ struct StrictLazyType: public Object
     StrictLazyType(const StrictLazy& sl, const Type& t):strict_lazy(sl), type(t) {}
 };
 
+
+    Type make_arrow_type(const Type& t1, const Type& t2);
+
+    std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
+
+    std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
+
+    Type remove_top_gen(Type type);
 }
 
 #endif 

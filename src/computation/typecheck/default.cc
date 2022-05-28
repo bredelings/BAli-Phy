@@ -14,7 +14,7 @@ using std::tuple;
 // Constraints for defaulting must be of the form K a (e.g. Num a)
 optional<Hs::TypeCon> simple_constraint_class(const Hs::Type& constraint)
 {
-    auto [tycon, args] = decompose_type_apps(constraint);
+    auto [tycon, args] = Hs::decompose_type_apps(constraint);
 
     // Only one constrained type.
     if (args.size() != 1) return {};
