@@ -577,7 +577,7 @@ extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     auto d = arg2.poly_cast<alphabet,Doublets>();
     if (not d)
-        throw myexception()<<"select_alignment_pairs: no a doublet alphabet!";
+        throw myexception()<<"select_alignment_pairs: not a doublet alphabet!";
     const Doublets& doublets = *d;
 
     int N = A0.n_sequences();
