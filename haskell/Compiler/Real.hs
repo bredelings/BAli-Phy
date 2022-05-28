@@ -15,6 +15,8 @@ class Num a => Fractional a where { }
 -- recip :: a -> a
 -- fromRational :: Rational -> a
 
+foreign import bpcall "Prelude:divide" (/) :: a -> a -> a
+
 class (Num a, Ord a) => Real a where { }
 --    toRational :: a -> Rational
 
@@ -27,11 +29,10 @@ class (Real a, Enum a) => Integral a  where { }
 -- divMod  :: a -> a -> (a,a)
 -- toInteger :: a -> Integer
 
-foreign import bpcall "Prelude:divide" (/) :: () -> () -> ()
-foreign import bpcall "Prelude:div" div :: () -> () -> ()
-foreign import bpcall "Prelude:mod" mod :: () -> () -> ()
-foreign import bpcall "Prelude:quot" quot :: () -> () -> ()
-foreign import bpcall "Prelude:rem" rem :: () -> () -> ()
+foreign import bpcall "Prelude:div" div :: a -> a -> a
+foreign import bpcall "Prelude:mod" mod :: a -> a -> a
+foreign import bpcall "Prelude:quot" quot :: a -> a -> a
+foreign import bpcall "Prelude:rem" rem :: a -> a -> a
 
 class Fractional a => Floating a where { }
 -- pi :: a
@@ -43,38 +44,40 @@ class Fractional a => Floating a where { }
 -- asinh, atanh, acosh :: a -> a
 
 pi = 3.14159265358979323846
-foreign import bpcall "Real:exp" exp :: () -> ()
-foreign import bpcall "Real:sqrt" sqrt :: () -> ()
-foreign import bpcall "Real:log" log :: () -> ()
-foreign import bpcall "Real:pow" (**) :: () -> () -> ()
-foreign import bpcall "Real:logBase" logBase :: () -> () -> ()
-foreign import bpcall "Real:sin" sin :: () -> ()
-foreign import bpcall "Real:tan" tan :: () -> ()
-foreign import bpcall "Real:cos" cos :: () -> ()
-foreign import bpcall "Real:asin" asin :: () -> ()
-foreign import bpcall "Real:atan" atan :: () -> ()
-foreign import bpcall "Real:acos" acos :: () -> ()
-foreign import bpcall "Real:sinh" sinh :: () -> ()
-foreign import bpcall "Real:tanh" tanh :: () -> ()
-foreign import bpcall "Real:cosh" cosh :: () -> ()
-foreign import bpcall "Real:asinh" asinh :: () -> ()
-foreign import bpcall "Real:atanh" atanh :: () -> ()
-foreign import bpcall "Real:acosh" acosh :: () -> ()
+foreign import bpcall "Real:exp" exp :: Double -> Double
+foreign import bpcall "Real:sqrt" sqrt :: Double -> Double
+foreign import bpcall "Real:log" log :: Double -> Double
+foreign import bpcall "Real:pow" (**) :: a -> a -> a
+foreign import bpcall "Real:logBase" logBase :: Double -> Double -> Double
+foreign import bpcall "Real:sin" sin :: Double -> Double
+foreign import bpcall "Real:tan" tan :: Double -> Double
+foreign import bpcall "Real:cos" cos :: Double -> Double
+foreign import bpcall "Real:asin" asin :: Double -> Double
+foreign import bpcall "Real:atan" atan :: Double -> Double
+foreign import bpcall "Real:acos" acos :: Double -> Double
+foreign import bpcall "Real:sinh" sinh :: Double -> Double
+foreign import bpcall "Real:tanh" tanh :: Double -> Double
+foreign import bpcall "Real:cosh" cosh :: Double -> Double
+foreign import bpcall "Real:asinh" asinh :: Double -> Double
+foreign import bpcall "Real:atanh" atanh :: Double -> Double
+foreign import bpcall "Real:acosh" acosh :: Double -> Double
 
 class (Real a, Fractional a) => RealFrac a where
     properFraction :: (Integral b) => a -> (b,a)
 --    truncate, round  :: (Integral b) => a -> b
 --    ceiling, floor   :: (Integral b) => a -> b
 
-foreign import bpcall "Prelude:truncate" truncate :: () -> ()
-foreign import bpcall "Prelude:ceiling" ceiling :: () -> ()
-foreign import bpcall "Prelude:floor" floor :: () -> ()
-foreign import bpcall "Prelude:round" round :: () -> ()
+foreign import bpcall "Prelude:truncate" truncate :: Double -> Int
+foreign import bpcall "Prelude:ceiling" ceiling :: Double -> Int
+foreign import bpcall "Prelude:floor" floor :: Double -> Int
+foreign import bpcall "Prelude:round" round :: Double -> Int
 
-foreign import bpcall "Prelude:doubleToInt" doubleToInt :: () -> ()
+foreign import bpcall "Prelude:doubleToInt" doubleToInt :: Double -> Int
 
-foreign import bpcall "Prelude:expToLogDouble" expToLogDouble :: () -> ()
-foreign import bpcall "Prelude:doubleToLogDouble" doubleToLogDouble :: () -> ()
+data LogDouble
+
+foreign import bpcall "Prelude:expToLogDouble" expToLogDouble :: Double -> LogDouble
+foreign import bpcall "Prelude:doubleToLogDouble" doubleToLogDouble :: Double -> LogDouble
 
 -- We need == to use GHC's code directly
 x0 ^ y0 | y0 < 0 = error("Negative exponent")

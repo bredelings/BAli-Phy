@@ -8,8 +8,6 @@ import Parameters
 import MCMC
 import Data.JSON as J
 
-data LogDouble
-
 data SamplingEvent
 -- Here Int should be `a`
 data ProbEventMonad = InEdge String Int | PropertyEdge String Int | ProbFactor Double
