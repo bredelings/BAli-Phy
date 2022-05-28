@@ -27,7 +27,7 @@ class (Real a, Enum a) => Integral a  where { }
 -- divMod  :: a -> a -> (a,a)
 -- toInteger :: a -> Integer
 
-builtin / 2 "Prelude:divide"
+builtin (/) 2 "Prelude:divide"
 builtin div 2 "Prelude:div"
 builtin mod 2 "Prelude:mod"
 builtin quot 2 "Prelude:quot"
@@ -46,7 +46,7 @@ pi = 3.14159265358979323846
 builtin exp 1 "Real:exp"
 builtin sqrt 1 "Real:sqrt"
 builtin log 1 "Real:log"
-builtin ** 2 "Real:pow"
+builtin (**) 2 "Real:pow"
 builtin logBase 2 "Real:logBase"
 builtin sin 1 "Real:sin"
 builtin tan 1 "Real:tan"

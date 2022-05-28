@@ -25,7 +25,7 @@ is_array :: a -> Bool
 builtin is_array 1 "Array:is_array"
 
 infixl 9 !
-builtin ! 2 "Array:getIndex"
+builtin (!) 2 "Array:getIndex"
 
 builtin numElements 1 "Array:arraySize"
 builtin mkArray 2 "Array:mkArray"

@@ -6,9 +6,9 @@ infixl 6 +, -
 
 (+),(-),(*) :: a -> a -> a
 
-builtin + 2 "Prelude:add"
-builtin - 2 "Prelude:subtract"
-builtin * 2 "Prelude:multiply"
+builtin (+) 2 "Prelude:add"
+builtin (-) 2 "Prelude:subtract"
+builtin (*) 2 "Prelude:multiply"
 
 negate, abs :: a -> a
 builtin negate 1 "Prelude:negate"

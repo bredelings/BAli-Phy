@@ -10,7 +10,7 @@ builtin lExp 3 "SModel:lExp"
 builtin mexp 2 "SModel:MatrixExp"
 builtin builtin_gtr_sym 2 "SModel:gtr_sym"
 builtin fixup_diagonal_rates 1 "SModel:fixup_diagonal_rates"
-builtin %*% 2 "SModel:elementwise_multiply"
+builtin (%*%) 2 "SModel:elementwise_multiply"
 
 data EigenSystem
 
