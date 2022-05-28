@@ -1026,7 +1026,7 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
     return rename_top_level(cdecls, name);
 }
 
-pair<string,expression_ref> parse_builtin(const Haskell::BuiltinDecl& B, const module_loader& L)
+pair<string,expression_ref> parse_builtin(const Haskell::ForeignDecl& B, const module_loader& L)
 {
     const string builtin_prefix = "builtin_function_";
 
@@ -1037,7 +1037,7 @@ pair<string,expression_ref> parse_builtin(const Haskell::BuiltinDecl& B, const m
     return {B.function_name, body};
 }
 
-CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::BuiltinDecl>& builtin_decls, CDecls cdecls)
+CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& builtin_decls, CDecls cdecls)
 {
     for(const auto& decl: builtin_decls)
     {

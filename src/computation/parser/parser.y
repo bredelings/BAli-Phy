@@ -607,7 +607,7 @@ topdecl: cl_decl                               {$$ = $1;}
 /*|        stand_alone_deriving
   |        role_annot*/
 |        "default" "(" comma_types0 ")"        {$$ = Hs::DefaultDecl($3); }
-|        "foreign" "import" "bpcall" STRING var INTEGER          {$$ = Hs::BuiltinDecl($4,$5,$6);}
+|        "foreign" "import" "bpcall" STRING var INTEGER          {$$ = Hs::ForeignDecl($4,$5,$6);}
 /*
 |        "foreign" fdecl
 |        "{-# DEPRECATED" deprecations "#-}"

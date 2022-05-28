@@ -212,17 +212,17 @@ struct SignatureDecl: public Object
     SignatureDecl(const std::vector<Var>& vs, const Type& t): vars(vs), type(t) {}
 };
 
-struct BuiltinDecl: public Object
+struct ForeignDecl: public Object
 {
     std::string plugin_name;
     std::string symbol_name;
     std::string function_name;
     int n_args;
 
-    BuiltinDecl* clone() const {return new BuiltinDecl(*this);}
+    ForeignDecl* clone() const {return new ForeignDecl(*this);}
     std::string print() const;
 
-    BuiltinDecl(const std::string& n, const std::string& o, int a);
+    ForeignDecl(const std::string& n, const std::string& o, int a);
 };
 
 // I think that these can originally be only
@@ -971,7 +971,7 @@ struct ModuleDecls
     Binds value_decls;
 
     std::map<std::string, Type> builtin_signatures;
-    std::vector<BuiltinDecl> builtin_decls;
+    std::vector<ForeignDecl> builtin_decls;
 
     ModuleDecls();
     ModuleDecls(const Decls& topdecls);

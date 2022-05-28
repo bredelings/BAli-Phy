@@ -217,13 +217,13 @@ string Binds::print() const
     return join( ds, "\n");
 }
 
-string BuiltinDecl::print() const
+string ForeignDecl::print() const
 {
     vector<string> v{"builtin", function_name, std::to_string(n_args), symbol_name, plugin_name};
     return join(v," ");
 }
 
-BuiltinDecl::BuiltinDecl(const std::string& n, const std::string& o, int a)
+ForeignDecl::ForeignDecl(const std::string& n, const std::string& o, int a)
     : function_name(o), n_args(a)
 {
     vector<string> ns = split(n,":");
@@ -645,7 +645,7 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
             value_decls.front().push_back(decl); // Fixity decls and split up a collection of value decls for the same function, I think.
             fixity_decls.push_back(*f);
         }
-	else if (auto b = decl.to<BuiltinDecl>())
+	else if (auto b = decl.to<ForeignDecl>())
             builtin_decls.push_back(*b);
         else if (decl.is_a<ClassDecl>() or decl.is_a<TypeSynonymDecl>() or decl.is_a<DataOrNewtypeDecl>() or decl.is_a<InstanceDecl>())
             type_decls.push_back(decl);

@@ -214,7 +214,7 @@ public:
 
     CDecls optimize(const simplifier_options&, FreshVarState&, CDecls, const std::map<var, expression_ref>&, const std::set<var>&);
 
-    CDecls load_builtins(const module_loader&, const std::vector<Hs::BuiltinDecl>&, CDecls);
+    CDecls load_builtins(const module_loader&, const std::vector<Hs::ForeignDecl>&, CDecls);
 
     CDecls load_constructors(const Hs::Decls&, CDecls);
 
