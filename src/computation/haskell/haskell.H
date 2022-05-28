@@ -217,12 +217,14 @@ struct ForeignDecl: public Object
     std::string plugin_name;
     std::string symbol_name;
     std::string function_name;
-    int n_args;
+    Type type;
+
+    int n_args() const;
 
     ForeignDecl* clone() const {return new ForeignDecl(*this);}
     std::string print() const;
 
-    ForeignDecl(const std::string& n, const std::string& o, int a);
+    ForeignDecl(const std::string& n, const std::string& o, const Type& t);
 };
 
 // I think that these can originally be only

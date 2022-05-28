@@ -1031,7 +1031,7 @@ pair<string,expression_ref> parse_builtin(const Haskell::ForeignDecl& B, const m
 
     string operation_name = B.plugin_name+":"+B.symbol_name;
 
-    auto body = load_builtin(L, builtin_prefix + B.symbol_name, B.plugin_name, B.n_args, operation_name);
+    auto body = load_builtin(L, builtin_prefix + B.symbol_name, B.plugin_name, B.n_args(), operation_name);
 
     return {B.function_name, body};
 }

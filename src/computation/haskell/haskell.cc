@@ -219,16 +219,30 @@ string Binds::print() const
 
 string ForeignDecl::print() const
 {
-    vector<string> v{"builtin", function_name, std::to_string(n_args), symbol_name, plugin_name};
+    vector<string> v{"foreign", "import", "bpcall", '"'+string(plugin_name)+':'+string(symbol_name)+'"', function_name, "::", type.print()};
     return join(v," ");
 }
 
-ForeignDecl::ForeignDecl(const std::string& n, const std::string& o, int a)
-    : function_name(o), n_args(a)
+int ForeignDecl::n_args() const
+{
+    auto t = type;
+    int n = 0;
+    while(auto p = is_function_type(t))
+    {
+        n++;
+        auto& [from,to] = *p;
+        t = to;
+    }
+
+    return n;
+}
+
+ForeignDecl::ForeignDecl(const std::string& n, const std::string& o, const Type& t)
+    : function_name(o), type(t)
 {
     vector<string> ns = split(n,":");
     if (ns.size() != 2)
-        throw myexception()<<"builtin declaration for "<<o<<": '"<<n<<"' should have exactly one colon";
+        throw myexception()<<"foreign declaration for "<<o<<": '"<<n<<"' should have exactly one colon";
 
     plugin_name = ns[0];
     symbol_name = ns[1];

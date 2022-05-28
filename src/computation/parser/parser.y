@@ -25,6 +25,8 @@
 
   std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
+  Hs::Type make_type_from_napps(int n);
+
   Hs::Type make_kind(const Hs::Type& kind);
   Hs::Constructor make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const expression_ref& typeish);
   Hs::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Hs::Binds>>& decls);
@@ -607,7 +609,7 @@ topdecl: cl_decl                               {$$ = $1;}
 /*|        stand_alone_deriving
   |        role_annot*/
 |        "default" "(" comma_types0 ")"        {$$ = Hs::DefaultDecl($3); }
-|        "foreign" "import" "bpcall" STRING var INTEGER          {$$ = Hs::ForeignDecl($4,$5,$6);}
+|        "foreign" "import" "bpcall" STRING var INTEGER          {$$ = Hs::ForeignDecl($4,$5, make_type_from_napps($6));}
 /*
 |        "foreign" fdecl
 |        "{-# DEPRECATED" deprecations "#-}"
@@ -1572,6 +1574,17 @@ bool check_kind(const Hs::Kind& kind)
     }
     else
         return false;
+}
+
+Hs::Type make_type_from_napps(int n)
+{
+    Hs::Type unit = Hs::Tuple({});
+
+    Hs::Type type = unit;
+    for(int i=0;i<n;i++)
+        type = Hs::make_arrow_type( unit, type );
+
+    return type;
 }
 
 Hs::Type make_kind(const Hs::Kind& kind)
