@@ -73,10 +73,10 @@ using std::tuple;
   * Mark instances, default methods, and superclass extractors as exported.
   * Export ALL typechecker state between modules.
   * Make a version of the string-to-[Char] routine that makes sense type-wise.
-  *. Always generalize at top level.
+  * Always generalize at top level.
+  * Rewrite builtin decls to look like `foreign import mycall "lib:fname" name :: type`
 
   TODO:
-  0. Rewrite builtin decls to look like `foreign import mycall "lib:fname" name :: type`
   0. Typecheck Do, MDo, Stmts, RecStmt, LetQual, SimpleQual, PatQual.
   - Related to typechecking list comprehensions...
   0. Handle type-synonyms.
