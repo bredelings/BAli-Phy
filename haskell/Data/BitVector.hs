@@ -3,18 +3,18 @@ module Data.BitVector where
 data BitVector = BitVector ()
 data CBitVector = CBitVector
 
-builtin "Bits:empty_bitvector" builtin_zeros 1
-builtin "Bits:complement" builtin_complement 1
-builtin "Bits:bitwise_or" builtin_bitwise_or 2
-builtin "Bits:bitwise_and" builtin_bitwise_and 2
-builtin "Bits:bitwise_xor" builtin_bitwise_xor 2
-builtin "Bits:eq" builtin_eq 2
-builtin "Bits:neq" builtin_neq 2
-builtin "Bits:test_bit" builtin_test_bit 2
-builtin "Bits:set_bit" builtin_set_bit 2
-builtin "Bits:clear_bit" builtin_clear_bit 2
-builtin "Bits:size" builtin_size 1
-builtin "Bits:popcount" builtin_popcount 1
+foreign import bpcall "Bits:empty_bitvector" builtin_zeros 1
+foreign import bpcall "Bits:complement" builtin_complement 1
+foreign import bpcall "Bits:bitwise_or" builtin_bitwise_or 2
+foreign import bpcall "Bits:bitwise_and" builtin_bitwise_and 2
+foreign import bpcall "Bits:bitwise_xor" builtin_bitwise_xor 2
+foreign import bpcall "Bits:eq" builtin_eq 2
+foreign import bpcall "Bits:neq" builtin_neq 2
+foreign import bpcall "Bits:test_bit" builtin_test_bit 2
+foreign import bpcall "Bits:set_bit" builtin_set_bit 2
+foreign import bpcall "Bits:clear_bit" builtin_clear_bit 2
+foreign import bpcall "Bits:size" builtin_size 1
+foreign import bpcall "Bits:popcount" builtin_popcount 1
 
 -- see Boost.Multiprecision
 

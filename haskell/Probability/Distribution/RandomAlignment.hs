@@ -57,8 +57,8 @@ sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree
 
 product' = foldl' (*) (doubleToLogDouble 1.0)
 
-builtin "Alignment:transition_counts" transition_counts 1
-builtin "Alignment:pairwise_alignment_probability_from_counts" pairwise_alignment_probability_from_counts 2
+foreign import bpcall "Alignment:transition_counts" transition_counts 1
+foreign import bpcall "Alignment:pairwise_alignment_probability_from_counts" pairwise_alignment_probability_from_counts 2
 alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a ! b)) (hmms ! b)
 
 alignment_pr_top as tree hmms = product' $ map (alignment_branch_pr as hmms) [0 .. numBranches tree - 1]

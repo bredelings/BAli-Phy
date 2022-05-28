@@ -4,8 +4,8 @@ import Probability.Random
 import MCMC
 import Range
 
-builtin "Distribution:geometric_density" geometric_density 3
-builtin "Distribution:sample_geometric" builtin_sample_geometric 2
+foreign import bpcall "Distribution:geometric_density" geometric_density 3
+foreign import bpcall "Distribution:sample_geometric" builtin_sample_geometric 2
 
 geometric_bounds = integer_above 0
 

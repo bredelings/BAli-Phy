@@ -1,7 +1,7 @@
 module SModel.Frequency where
 
 import Bio.Alphabet
-builtin "SModel:plus_gwf_matrix" plus_gwf_matrix 2
+foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix 2
 
 -- pi is a vector double here
 plus_f_matrix pi = plus_gwf_matrix pi 1.0

@@ -244,6 +244,7 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words =
 {
     {"_",{parser::token::TOK_UNDERSCORE,0}},
     {"as",{parser::token::TOK_AS,0}},
+    {"bpcall",{parser::token::TOK_BPCALL,0}},
     {"case",{parser::token::TOK_CASE,0}},
     {"class",{parser::token::TOK_CLASS,0}},
     {"data",{parser::token::TOK_DATA,0}},
@@ -251,6 +252,7 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words =
     {"deriving",{parser::token::TOK_DERIVING,0}},
     {"do",{parser::token::TOK_DO,0}},
     {"else",{parser::token::TOK_ELSE,0}},
+    {"foreign",{parser::token::TOK_FOREIGN,0}},
     {"hiding",{parser::token::TOK_HIDING,0}},
     {"if",{parser::token::TOK_IF,0}},
     {"import",{parser::token::TOK_IMPORT,0}},
@@ -267,7 +269,6 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words =
     {"then",{parser::token::TOK_THEN,0}},
     {"type",{parser::token::TOK_TYPE,0}},
     {"where",{parser::token::TOK_WHERE,0}},
-    {"builtin",{parser::token::TOK_BUILTIN,0}},
     {"mdo", {parser::token::TOK_MDO,0}},
     {"rec", {parser::token::TOK_REC,0}}
 };

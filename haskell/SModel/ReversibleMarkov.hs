@@ -4,13 +4,13 @@ import SModel.Frequency
 import Bio.Alphabet
 import Data.Matrix
 
-builtin "SModel:get_equilibrium_rate" get_equilibrium_rate 4
-builtin "SModel:get_eigensystem" get_eigensystem 2
-builtin "SModel:lExp" lExp 3
-builtin "SModel:MatrixExp" mexp 2
-builtin "SModel:gtr_sym" builtin_gtr_sym 2
-builtin "SModel:fixup_diagonal_rates" fixup_diagonal_rates 1
-builtin "SModel:elementwise_multiply" (%*%) 2
+foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate 4
+foreign import bpcall "SModel:get_eigensystem" get_eigensystem 2
+foreign import bpcall "SModel:lExp" lExp 3
+foreign import bpcall "SModel:MatrixExp" mexp 2
+foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym 2
+foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates 1
+foreign import bpcall "SModel:elementwise_multiply" (%*%) 2
 
 data EigenSystem
 

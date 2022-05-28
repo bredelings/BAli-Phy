@@ -82,9 +82,6 @@
   TYPE          "type"
   WHERE         "where"
 
- /* BAli-Phy extension keyword */
-  BUILTIN       "builtin"
-
  /* GHC extension keywords */
   FORALL        "forall"
   FOREIGN       "foreign"
@@ -99,6 +96,7 @@
   ROLE          "role"
   STDCALL       "stdcall"
   CCALL         "ccall"
+  BPCALL        "bpcall"
   CAPI          "capi"
   PRIM          "prim"
   JAVASCRIPT    "javascript"
@@ -609,6 +607,7 @@ topdecl: cl_decl                               {$$ = $1;}
 /*|        stand_alone_deriving
   |        role_annot*/
 |        "default" "(" comma_types0 ")"        {$$ = Hs::DefaultDecl($3); }
+|        "foreign" "import" "bpcall" STRING var INTEGER          {$$ = Hs::BuiltinDecl($4,$5,$6);}
 /*
 |        "foreign" fdecl
 |        "{-# DEPRECATED" deprecations "#-}"
@@ -618,7 +617,6 @@ topdecl: cl_decl                               {$$ = $1;}
 |        decl_no_th                            {$$ = $1;}
 /* What is this for? How is this a decl ? */
 |        infixexp_top                          {$$ = make_infixexp($1);}
-|        "builtin" STRING var INTEGER          {$$ = Hs::BuiltinDecl($2,$3,$4);}
 
 cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2.first,$2.second,$3);}
 

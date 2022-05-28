@@ -772,20 +772,20 @@ namespace yy {
     TOK_THEN = 280,                // "then"
     TOK_TYPE = 281,                // "type"
     TOK_WHERE = 282,               // "where"
-    TOK_BUILTIN = 283,             // "builtin"
-    TOK_FORALL = 284,              // "forall"
-    TOK_FOREIGN = 285,             // "foreign"
-    TOK_EXPORT = 286,              // "export"
-    TOK_LABEL = 287,               // "label"
-    TOK_DYNAMIC = 288,             // "dynamic"
-    TOK_SAFE = 289,                // "safe"
-    TOK_INTERRUPTIBLE = 290,       // "interruptible"
-    TOK_UNSAFE = 291,              // "unsafe"
-    TOK_MDO = 292,                 // "mdo"
-    TOK_FAMILY = 293,              // "family"
-    TOK_ROLE = 294,                // "role"
-    TOK_STDCALL = 295,             // "stdcall"
-    TOK_CCALL = 296,               // "ccall"
+    TOK_FORALL = 283,              // "forall"
+    TOK_FOREIGN = 284,             // "foreign"
+    TOK_EXPORT = 285,              // "export"
+    TOK_LABEL = 286,               // "label"
+    TOK_DYNAMIC = 287,             // "dynamic"
+    TOK_SAFE = 288,                // "safe"
+    TOK_INTERRUPTIBLE = 289,       // "interruptible"
+    TOK_UNSAFE = 290,              // "unsafe"
+    TOK_MDO = 291,                 // "mdo"
+    TOK_FAMILY = 292,              // "family"
+    TOK_ROLE = 293,                // "role"
+    TOK_STDCALL = 294,             // "stdcall"
+    TOK_CCALL = 295,               // "ccall"
+    TOK_BPCALL = 296,              // "bpcall"
     TOK_CAPI = 297,                // "capi"
     TOK_PRIM = 298,                // "prim"
     TOK_JAVASCRIPT = 299,          // "javascript"
@@ -927,20 +927,20 @@ namespace yy {
         S_THEN = 25,                             // "then"
         S_TYPE = 26,                             // "type"
         S_WHERE = 27,                            // "where"
-        S_BUILTIN = 28,                          // "builtin"
-        S_FORALL = 29,                           // "forall"
-        S_FOREIGN = 30,                          // "foreign"
-        S_EXPORT = 31,                           // "export"
-        S_LABEL = 32,                            // "label"
-        S_DYNAMIC = 33,                          // "dynamic"
-        S_SAFE = 34,                             // "safe"
-        S_INTERRUPTIBLE = 35,                    // "interruptible"
-        S_UNSAFE = 36,                           // "unsafe"
-        S_MDO = 37,                              // "mdo"
-        S_FAMILY = 38,                           // "family"
-        S_ROLE = 39,                             // "role"
-        S_STDCALL = 40,                          // "stdcall"
-        S_CCALL = 41,                            // "ccall"
+        S_FORALL = 28,                           // "forall"
+        S_FOREIGN = 29,                          // "foreign"
+        S_EXPORT = 30,                           // "export"
+        S_LABEL = 31,                            // "label"
+        S_DYNAMIC = 32,                          // "dynamic"
+        S_SAFE = 33,                             // "safe"
+        S_INTERRUPTIBLE = 34,                    // "interruptible"
+        S_UNSAFE = 35,                           // "unsafe"
+        S_MDO = 36,                              // "mdo"
+        S_FAMILY = 37,                           // "family"
+        S_ROLE = 38,                             // "role"
+        S_STDCALL = 39,                          // "stdcall"
+        S_CCALL = 40,                            // "ccall"
+        S_BPCALL = 41,                           // "bpcall"
         S_CAPI = 42,                             // "capi"
         S_PRIM = 43,                             // "prim"
         S_JAVASCRIPT = 44,                       // "javascript"
@@ -3173,21 +3173,6 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_BUILTIN (location_type l)
-      {
-        return symbol_type (token::TOK_BUILTIN, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_BUILTIN (const location_type& l)
-      {
-        return symbol_type (token::TOK_BUILTIN, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
       make_FORALL (location_type l)
       {
         return symbol_type (token::TOK_FORALL, std::move (l));
@@ -3378,6 +3363,21 @@ switch (yykind)
       make_CCALL (const location_type& l)
       {
         return symbol_type (token::TOK_CCALL, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_BPCALL (location_type l)
+      {
+        return symbol_type (token::TOK_BPCALL, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_BPCALL (const location_type& l)
+      {
+        return symbol_type (token::TOK_BPCALL, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -5135,7 +5135,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 4361,     ///< Last index in yytable_.
+      yylast_ = 4344,     ///< Last index in yytable_.
       yynnts_ = 176,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };

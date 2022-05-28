@@ -5,11 +5,11 @@ import Range
 import Data.CSV
 import Data.Matrix
 
-builtin "SMC:sample_haplotype01_from_plaf" builtin_sample_haplotype01_from_plaf 1
+foreign import bpcall "SMC:sample_haplotype01_from_plaf" builtin_sample_haplotype01_from_plaf 1
 sample_haplotype01_from_plaf plafs = let raw_action = builtin_sample_haplotype01_from_plaf $ list_to_vector plafs
                                      in RandomStructure do_nothing modifiable_structure $ liftIO $ IOAction (\s->(s,raw_action))
 
-builtin "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability 2
+foreign import bpcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability 2
 haplotype01_from_plaf_probability plaf hap = builtin_haplotype01_from_plaf_probability (list_to_vector plaf) hap
 
 
@@ -27,7 +27,7 @@ haplotype01_from_plaf plafs = Distribution
 -- This version does not use the builtins above, and also produces a list, not a vector.
 --haplotype01_from_plaf plafs = independent [ bernoulli f | f <- plafs ]
 
-builtin "SMC:sample_reads01" builtin_sample_reads01 6
+foreign import bpcall "SMC:sample_reads01" builtin_sample_reads01 6
 sample_reads01 counts weights haplotypes error_rate c outlier_frac =
     IOAction (\s->(s, f $ builtin_sample_reads01 counts' weights' haplotypes' error_rate c outlier_frac))
     where counts'     = list_to_vector counts
@@ -38,7 +38,7 @@ sample_reads01 counts weights haplotypes error_rate c outlier_frac =
 random_structure_reads01 counts weights haplotypes error_rate c outlier_frac =
     RandomStructure do_nothing modifiable_structure $ liftIO $ sample_reads01 counts weights haplotypes error_rate c outlier_frac
 
-builtin "SMC:probability_of_reads01" builtin_probability_of_reads01 7
+foreign import bpcall "SMC:probability_of_reads01" builtin_probability_of_reads01 7
 probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads = builtin_probability_of_reads01 counts' weights' haplotypes' error_rate c outlier_frac reads'
     where counts'     = list_to_vector counts
           weights'    = list_to_vector weights
@@ -47,7 +47,7 @@ probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads
 
 
 data Reads01Properties = Reads01Properties { emission_prs :: EVector Int -> Matrix LogDouble}
-builtin "SMC:emission_pr_for_reads01" builtin_emission_pr_for_reads01 8
+foreign import bpcall "SMC:emission_pr_for_reads01" builtin_emission_pr_for_reads01 8
 emission_pr_for_reads01 ks reads haplotypes weights error_rate concentration outlier_frac context =
     builtin_emission_pr_for_reads01 context (list_to_vector ks) haplotypes weights error_rate concentration outlier_frac
 
@@ -71,7 +71,7 @@ reads01_from_haps counts weights haplotypes error_rate c outlier_frac = Distribu
                                                                  ()
 
 ---
-builtin "SMC:propose_haplotypes_from_plaf" propose_haplotypes_from_plaf'' 10
+foreign import bpcall "SMC:propose_haplotypes_from_plaf" propose_haplotypes_from_plaf'' 10
 
 propose_haplotypes_from_plaf' indices haps freqs w reads e c outlier_frac context io_state =
     propose_haplotypes_from_plaf'' context io_state indices haps freqs' w' reads' e c outlier_frac
@@ -86,7 +86,7 @@ propose_haplotypes_from_plaf indices freqs weights reads haplotypes error_rate c
 
 ---
 
-builtin "SMC:propose_weights_and_haplotypes_from_plaf" propose_weights_and_haplotypes_from_plaf'' 11
+foreign import bpcall "SMC:propose_weights_and_haplotypes_from_plaf" propose_weights_and_haplotypes_from_plaf'' 11
 
 propose_weights_and_haplotypes_from_plaf' indices titres haps freqs w reads e c outlier_frac context io_state =
     propose_weights_and_haplotypes_from_plaf'' context io_state indices titres haps freqs' w' reads' e c outlier_frac
@@ -124,13 +124,13 @@ load_reads filename = do
   return (sites, reads)
 
 
-builtin "SMC:sample_haplotype01_from_panel" builtin_sample_haplotype01_from_panel 5
+foreign import bpcall "SMC:sample_haplotype01_from_panel" builtin_sample_haplotype01_from_panel 5
 sample_haplotype01_from_panel (p_sites,p_haps) switch_rate flip_prob = let raw_action s = builtin_sample_haplotype01_from_panel p_haps' p_sites' switch_rate flip_prob s
                                                                            p_haps' = list_to_vector p_haps
                                                                            p_sites' = list_to_vector p_sites
                                                                        in RandomStructure do_nothing modifiable_structure $ liftIO $ IOAction (\s->(s,raw_action s))
 
-builtin "SMC:haplotype01_from_panel_probability" builtin_haplotype01_from_panel_probability 5
+foreign import bpcall "SMC:haplotype01_from_panel_probability" builtin_haplotype01_from_panel_probability 5
 haplotype01_from_panel_probability (p_sites,p_haps) switch_rate flip_prob hap = builtin_haplotype01_from_panel_probability p_haps' p_sites' switch_rate flip_prob hap
     where p_haps' = list_to_vector p_haps
           p_sites' = list_to_vector p_sites
@@ -148,7 +148,7 @@ haplotype01_from_panel panel switch_rate flip_prob  = Distribution
                                                       (sample_haplotype01_from_panel panel switch_rate flip_prob)
                                                       ()
 
-builtin "SMC:resample_haplotypes_from_panel" resample_haplotypes_from_panel'' 13
+foreign import bpcall "SMC:resample_haplotypes_from_panel" resample_haplotypes_from_panel'' 13
 
 resample_haplotypes_from_panel' indices (p_sites, p_haps) switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context io_state =
     resample_haplotypes_from_panel'' context io_state indices haplotypes p_haps p_sites' switch_rate flip_prob weights' reads' error_rate c outlier_frac
@@ -160,7 +160,7 @@ resample_haplotypes_from_panel' indices (p_sites, p_haps) switch_rate flip_prob 
 resample_haplotypes_from_panel indices panel switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context =
     IOAction $ pair_from_c . resample_haplotypes_from_panel' indices panel switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context
 
-builtin "SMC:resample_weights_and_haplotypes_from_panel" resample_weights_and_haplotypes_from_panel'' 14
+foreign import bpcall "SMC:resample_weights_and_haplotypes_from_panel" resample_weights_and_haplotypes_from_panel'' 14
 
 resample_weights_and_haplotypes_from_panel' indices titres haps (p_sites, p_haps) switching_rate miscopy_prob w reads e c outlier_frac context io_state =
     resample_weights_and_haplotypes_from_panel'' context io_state indices titres haps p_haps p_sites switching_rate miscopy_prob w' reads' e c outlier_frac

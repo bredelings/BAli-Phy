@@ -3,10 +3,10 @@ module IModel where
 import Probability
 import Tree
   
-builtin "Alignment:rs05_branch_HMM" rs05_branch_HMM 5
-builtin "Alignment:rs05_lengthp" builtin_rs05_lengthp 2
-builtin "Alignment:rs07_branch_HMM" rs07_branch_HMM 4
-builtin "Alignment:rs07_lengthp" builtin_rs07_lengthp 2
+foreign import bpcall "Alignment:rs05_branch_HMM" rs05_branch_HMM 5
+foreign import bpcall "Alignment:rs05_lengthp" builtin_rs05_lengthp 2
+foreign import bpcall "Alignment:rs07_branch_HMM" rs07_branch_HMM 4
+foreign import bpcall "Alignment:rs07_lengthp" builtin_rs07_lengthp 2
 
 rs05_lengthp m l = doubleToLogDouble (builtin_rs05_lengthp m l)
 

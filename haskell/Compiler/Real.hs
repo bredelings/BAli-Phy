@@ -27,11 +27,11 @@ class (Real a, Enum a) => Integral a  where { }
 -- divMod  :: a -> a -> (a,a)
 -- toInteger :: a -> Integer
 
-builtin "Prelude:divide" (/) 2
-builtin "Prelude:div" div 2
-builtin "Prelude:mod" mod 2
-builtin "Prelude:quot" quot 2
-builtin "Prelude:rem" rem 2
+foreign import bpcall "Prelude:divide" (/) 2
+foreign import bpcall "Prelude:div" div 2
+foreign import bpcall "Prelude:mod" mod 2
+foreign import bpcall "Prelude:quot" quot 2
+foreign import bpcall "Prelude:rem" rem 2
 
 class Fractional a => Floating a where { }
 -- pi :: a
@@ -43,39 +43,39 @@ class Fractional a => Floating a where { }
 -- asinh, atanh, acosh :: a -> a
 
 pi = 3.14159265358979323846
-builtin "Real:exp" exp 1
-builtin "Real:sqrt" sqrt 1
-builtin "Real:log" log 1
-builtin "Real:pow" (**) 2
-builtin "Real:logBase" logBase 2
-builtin "Real:sin" sin 1
-builtin "Real:tan" tan 1
-builtin "Real:cos" cos 1
-builtin "Real:asin" asin 1
-builtin "Real:atan" atan 1
-builtin "Real:acos" acos 1
-builtin "Real:sinh" sinh 1
-builtin "Real:tanh" tanh 1
-builtin "Real:cosh" cosh 1
-builtin "Real:asinh" asinh 1
-builtin "Real:atanh" atanh 1
-builtin "Real:acosh" acosh 1
+foreign import bpcall "Real:exp" exp 1
+foreign import bpcall "Real:sqrt" sqrt 1
+foreign import bpcall "Real:log" log 1
+foreign import bpcall "Real:pow" (**) 2
+foreign import bpcall "Real:logBase" logBase 2
+foreign import bpcall "Real:sin" sin 1
+foreign import bpcall "Real:tan" tan 1
+foreign import bpcall "Real:cos" cos 1
+foreign import bpcall "Real:asin" asin 1
+foreign import bpcall "Real:atan" atan 1
+foreign import bpcall "Real:acos" acos 1
+foreign import bpcall "Real:sinh" sinh 1
+foreign import bpcall "Real:tanh" tanh 1
+foreign import bpcall "Real:cosh" cosh 1
+foreign import bpcall "Real:asinh" asinh 1
+foreign import bpcall "Real:atanh" atanh 1
+foreign import bpcall "Real:acosh" acosh 1
 
 class (Real a, Fractional a) => RealFrac a where
     properFraction :: (Integral b) => a -> (b,a)
 --    truncate, round  :: (Integral b) => a -> b
 --    ceiling, floor   :: (Integral b) => a -> b
 
-builtin "Prelude:truncate" truncate 1
-builtin "Prelude:ceiling" ceiling 1
-builtin "Prelude:floor" floor 1
-builtin "Prelude:round" round 1
+foreign import bpcall "Prelude:truncate" truncate 1
+foreign import bpcall "Prelude:ceiling" ceiling 1
+foreign import bpcall "Prelude:floor" floor 1
+foreign import bpcall "Prelude:round" round 1
 
-builtin "Prelude:doubleToInt" doubleToInt 1
+foreign import bpcall "Prelude:doubleToInt" doubleToInt 1
 
-builtin "Prelude:expToLogDouble" expToLogDouble 1
-builtin "Prelude:doubleToLogDouble" doubleToLogDouble 1
-builtin "Prelude:intToDouble" intToDouble 1
+foreign import bpcall "Prelude:expToLogDouble" expToLogDouble 1
+foreign import bpcall "Prelude:doubleToLogDouble" doubleToLogDouble 1
+foreign import bpcall "Prelude:intToDouble" intToDouble 1
 
 -- We need == to use GHC's code directly
 x0 ^ y0 | y0 < 0 = error("Negative exponent")

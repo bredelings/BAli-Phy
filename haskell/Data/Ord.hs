@@ -18,7 +18,7 @@ data Ordering = EQ | LT | GT
 
 class Eq a => Ord a
 
-builtin "Prelude:compare_top" compare_top 2
+foreign import bpcall "Prelude:compare_top" compare_top 2
 
 infix 4 <, <=, >, >=
 

@@ -3,9 +3,9 @@ module Probability.Distribution.Normal where
 import Probability.Random
 import MCMC
 
-builtin "Distribution:normal_density" normal_density 3
-builtin "Distribution:normal_quantile" normal_quantile 3
-builtin "Distribution:sample_normal" builtin_sample_normal 3
+foreign import bpcall "Distribution:normal_density" normal_density 3
+foreign import bpcall "Distribution:normal_quantile" normal_quantile 3
+foreign import bpcall "Distribution:sample_normal" builtin_sample_normal 3
 
 normal_bounds = realLine
 normal_effect x = add_move $ slice_sample_real_random_variable x normal_bounds

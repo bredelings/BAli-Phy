@@ -6,22 +6,22 @@ import Data.Map as Map
 data Sequence = Sequence
 
 builtin_sequence_name :: Sequence -> CPPString
-builtin "Alignment:sequence_name" builtin_sequence_name 1
+foreign import bpcall "Alignment:sequence_name" builtin_sequence_name 1
 sequence_name :: Sequence -> String
 sequence_name = unpack_cpp_string . builtin_sequence_name
 
 sequence_to_indices :: Sequence -> EVector Int
-builtin "Alignment:sequence_to_indices" sequence_to_indices 2
+foreign import bpcall "Alignment:sequence_to_indices" sequence_to_indices 2
 -- sequence_to_indices :: Sequence -> [Int]
 -- maybe add this later
 
 builtin_load_sequences :: CPPString -> EVector Sequence
-builtin "Alignment:load_sequences" builtin_load_sequences 1
+foreign import bpcall "Alignment:load_sequences" builtin_load_sequences 1
 load_sequences :: String -> [Sequence]
 load_sequences filename = IOAction (\s -> (s,list_from_vector $ builtin_load_sequences $ list_to_string filename))
 
 builtin_select_range :: CPPString -> EVector Sequence -> EVector Sequence
-builtin "Alignment:select_range" builtin_select_range 2
+foreign import bpcall "Alignment:select_range" builtin_select_range 2
 select_range :: String -> [Sequence] -> [Sequence]
 select_range range sequences = list_from_vector $ builtin_select_range (list_to_string range) (list_to_vector sequences)
 

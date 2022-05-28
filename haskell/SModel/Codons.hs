@@ -4,10 +4,10 @@ import Bio.Alphabet
 import SModel.ReversibleMarkov
 import SModel.Nucleotides
 
-builtin "SModel:m0" m0 3
-builtin "SModel:f3x4_frequencies" f3x4_frequencies_builtin 4
-builtin "SModel:singlet_to_triplet_rates" singlet_to_triplet_rates 4
-builtin "SModel:dNdS_matrix" dNdS_matrix 2
+foreign import bpcall "SModel:m0" m0 3
+foreign import bpcall "SModel:f3x4_frequencies" f3x4_frequencies_builtin 4
+foreign import bpcall "SModel:singlet_to_triplet_rates" singlet_to_triplet_rates 4
+foreign import bpcall "SModel:dNdS_matrix" dNdS_matrix 2
 
 f3x4_frequencies a pi1 pi2 pi3 = let pi1' = list_to_vector pi1
                                      pi2' = list_to_vector pi2
