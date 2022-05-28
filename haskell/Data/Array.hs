@@ -22,13 +22,13 @@ data Array a b
 
 -- hack, until we have a type system
 is_array :: a -> Bool
-foreign import bpcall "Array:is_array" is_array 1
+foreign import bpcall "Array:is_array" is_array :: () -> ()
 
 infixl 9 !
-foreign import bpcall "Array:getIndex" (!) 2
+foreign import bpcall "Array:getIndex" (!) :: () -> () -> ()
 
-foreign import bpcall "Array:arraySize" numElements 1
-foreign import bpcall "Array:mkArray" mkArray 2
+foreign import bpcall "Array:arraySize" numElements :: () -> ()
+foreign import bpcall "Array:mkArray" mkArray :: () -> () -> ()
 
 listArray n l = mkArray n (\i -> l !! i)
 

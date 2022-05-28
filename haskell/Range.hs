@@ -2,8 +2,8 @@ module Range where
 
 data Range = OpenInterval Double Double | IntegerInterval Int Int | TrueFalseRange | Simplex Int Double | ListRange [Range] | LabelledSimplex [Int] Double | TreeRange Int
  
-foreign import bpcall "Range:get_bounds" builtinGetBounds 2
-foreign import bpcall "Range:get_integer_bounds" builtinGetIntegerBounds 2
+foreign import bpcall "Range:get_bounds" builtinGetBounds :: () -> () -> ()
+foreign import bpcall "Range:get_integer_bounds" builtinGetIntegerBounds :: () -> () -> ()
   
 realLine = OpenInterval Nothing Nothing
 

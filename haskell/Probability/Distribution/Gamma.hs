@@ -3,9 +3,9 @@ module Probability.Distribution.Gamma where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:shifted_gamma_density" shifted_gamma_density 4
-foreign import bpcall "Distribution:shifted_gamma_quantile" shifted_gamma_quantile 4
-foreign import bpcall "Distribution:sample_shifted_gamma" builtin_sample_shifted_gamma 4
+foreign import bpcall "Distribution:shifted_gamma_density" shifted_gamma_density :: () -> () -> () -> () -> ()
+foreign import bpcall "Distribution:shifted_gamma_quantile" shifted_gamma_quantile :: () -> () -> () -> () -> ()
+foreign import bpcall "Distribution:sample_shifted_gamma" builtin_sample_shifted_gamma :: () -> () -> () -> () -> ()
 
 gamma_bounds shift = above shift
 gamma_effect shift x = add_move $ slice_sample_real_random_variable x (gamma_bounds shift)

@@ -3,8 +3,8 @@ module Probability.Distribution.NegativeBinomial where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:negative_binomial_density" negative_binomial_density 3
-foreign import bpcall "Distribution:sample_negative_binomial" builtin_sample_negative_binomial 3
+foreign import bpcall "Distribution:negative_binomial_density" negative_binomial_density :: () -> () -> () -> ()
+foreign import bpcall "Distribution:sample_negative_binomial" builtin_sample_negative_binomial :: () -> () -> () -> ()
 
 negative_binomial_bounds = integer_above 0
 

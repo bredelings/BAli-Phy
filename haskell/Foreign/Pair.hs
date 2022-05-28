@@ -4,13 +4,13 @@ module Foreign.Pair where
 data EPair a b = EPair a b
 
 c_fst :: EPair a b -> a
-foreign import bpcall "Pair:c_fst" c_fst 1
+foreign import bpcall "Pair:c_fst" c_fst :: () -> ()
 
 c_snd :: EPair a b -> b
-foreign import bpcall "Pair:c_snd" c_snd 1
+foreign import bpcall "Pair:c_snd" c_snd :: () -> ()
 
 c_pair :: a -> b -> EPair a b
-foreign import bpcall "Pair:c_pair" c_pair 2
+foreign import bpcall "Pair:c_pair" c_pair :: () -> () -> ()
 
 pair_from_c :: EPair a b -> (a,b)
 pair_from_c p = (c_fst p, c_snd p)

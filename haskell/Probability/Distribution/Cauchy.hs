@@ -5,9 +5,9 @@ import MCMC
 
 ---- cauchy
 
-foreign import bpcall "Distribution:cauchy_density" cauchy_density 3
-foreign import bpcall "Distribution:cauchy_quantile" cauchy_quantile 3
-foreign import bpcall "Distribution:sample_cauchy" builtin_sample_cauchy 3
+foreign import bpcall "Distribution:cauchy_density" cauchy_density :: () -> () -> () -> ()
+foreign import bpcall "Distribution:cauchy_quantile" cauchy_quantile :: () -> () -> () -> ()
+foreign import bpcall "Distribution:sample_cauchy" builtin_sample_cauchy :: () -> () -> () -> ()
 
 cauchy_bounds = realLine
 cauchy_effect x = add_move $ slice_sample_real_random_variable x cauchy_bounds

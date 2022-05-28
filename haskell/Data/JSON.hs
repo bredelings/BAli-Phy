@@ -3,7 +3,7 @@ module Data.JSON where
 import Data.Text as T
 import Foreign.String
 
-foreign import bpcall "Foreign:c_json" builtin_c_json 1
+foreign import bpcall "Foreign:c_json" builtin_c_json :: () -> ()
 
 -- Hmm... it doesn't look like we can have a JSON object, just JSON representation, because a JSON object would have to have existential type fields.
 data JSON = Array [JSON] | Object [(String,JSON)] | Number Double | Bool Bool | String CPPString | Null

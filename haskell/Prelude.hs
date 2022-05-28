@@ -45,15 +45,15 @@ import Foreign.Pair
 import Foreign.Vector
 import Foreign.String
 
-foreign import bpcall "Prelude:putStrLn" builtin_putStrLn 2
+foreign import bpcall "Prelude:putStrLn" builtin_putStrLn :: () -> () -> ()
 
-foreign import bpcall "Prelude:is_char" is_char 1
-foreign import bpcall "Prelude:is_double" is_double 1
-foreign import bpcall "Prelude:is_int" is_int 1
+foreign import bpcall "Prelude:is_char" is_char :: () -> ()
+foreign import bpcall "Prelude:is_double" is_double :: () -> ()
+foreign import bpcall "Prelude:is_int" is_int :: () -> ()
 
-foreign import bpcall "Prelude:show" builtin_show 1
-foreign import bpcall "Prelude:read_int" builtin_read_int 1
-foreign import bpcall "Prelude:read_double" builtin_read_double 1
+foreign import bpcall "Prelude:show" builtin_show :: () -> ()
+foreign import bpcall "Prelude:read_int" builtin_read_int :: () -> ()
+foreign import bpcall "Prelude:read_double" builtin_read_double :: () -> ()
 
 undefined = error "Prelude.undefined"
 
@@ -86,5 +86,5 @@ read_double [] = error "Can't convert empty string to double."
 read_double (h:t) = builtin_read_double (list_to_string (h:t))
 read_double s = builtin_read_double s
 
-foreign import bpcall "Data:readFile" builtin_readFile 1
+foreign import bpcall "Data:readFile" builtin_readFile :: () -> ()
 readFile filename = IOAction (\s -> (s,listFromString $ builtin_readFile $ list_to_string $ filename))

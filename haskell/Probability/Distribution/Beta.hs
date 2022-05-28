@@ -3,9 +3,9 @@ module Probability.Distribution.Beta where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:beta_density" beta_density 3
-foreign import bpcall "Distribution:beta_quantile" beta_quantile 3
-foreign import bpcall "Distribution:sample_beta" builtin_sample_beta 3
+foreign import bpcall "Distribution:beta_density" beta_density :: () -> () -> () -> ()
+foreign import bpcall "Distribution:beta_quantile" beta_quantile :: () -> () -> () -> ()
+foreign import bpcall "Distribution:sample_beta" builtin_sample_beta :: () -> () -> () -> ()
 
 beta_bounds = between 0.0 1.0
 beta_effect x = add_move $ slice_sample_real_random_variable x beta_bounds

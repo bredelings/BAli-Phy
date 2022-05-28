@@ -10,7 +10,7 @@ import Data.Bool
 import Compiler.Num          -- for (-)
 import Foreign.Introspection -- for get_arg, get_n_args
 
-foreign import bpcall "Prelude:equals_top" equals_top 2
+foreign import bpcall "Prelude:equals_top" equals_top :: () -> () -> ()
 
 class Eq a where {}
 --    (==) :: a -> a -> Bool

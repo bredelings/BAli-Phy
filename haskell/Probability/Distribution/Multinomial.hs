@@ -4,7 +4,7 @@ import Probability.Random
 import MCMC
 import Probability.Distribution.Binomial
 
-foreign import bpcall "Distribution:multinomial_density" builtin_multinomial_density 3
+foreign import bpcall "Distribution:multinomial_density" builtin_multinomial_density :: () -> () -> () -> ()
 
 multinomial_density n ps ks = builtin_multinomial_density n ps' ks'
     where ps' = list_to_vector ps

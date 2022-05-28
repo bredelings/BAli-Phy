@@ -63,8 +63,6 @@
 
   std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
-  Hs::Type make_type_from_napps(int n);
-  
   Hs::Type make_kind(const Hs::Type& kind);
   Hs::Constructor make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const expression_ref& typeish);
   Hs::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Hs::Binds>>& decls);
@@ -80,7 +78,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 84 "parser.hh"
+#line 82 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -220,7 +218,7 @@
 #endif
 
 namespace yy {
-#line 224 "parser.hh"
+#line 222 "parser.hh"
 
 
 
@@ -5137,7 +5135,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 4344,     ///< Last index in yytable_.
+      yylast_ = 4349,     ///< Last index in yytable_.
       yynnts_ = 176,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
@@ -5924,7 +5922,7 @@ switch (yykind)
 
 
 } // yy
-#line 5928 "parser.hh"
+#line 5926 "parser.hh"
 
 
 

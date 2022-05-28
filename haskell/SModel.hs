@@ -19,21 +19,21 @@ import SModel.Likelihood
 
 import Data.Matrix
 
-foreign import bpcall "SModel:average_frequency" builtin_average_frequency 1
-foreign import bpcall "SModel:empirical" builtin_empirical 2
-foreign import bpcall "SModel:pam" pam 1
-foreign import bpcall "SModel:jtt" jtt 1
-foreign import bpcall "SModel:wag" wag 1
-foreign import bpcall "SModel:wag_frequencies" builtin_wag_frequencies 1
-foreign import bpcall "SModel:lg_frequencies" builtin_lg_frequencies 1
-foreign import bpcall "SModel:lg" lg 1
-foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix 2
-foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix 1
-foreign import bpcall "SModel:mut_sel_q" mut_sel_q 2
-foreign import bpcall "SModel:mut_sel_pi" mut_sel_pi 2
-foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates 2
-foreign import bpcall "SModel:modulated_markov_pi" builtin_modulated_markov_pi 2
-foreign import bpcall "SModel:modulated_markov_smap" builtin_modulated_markov_smap 1
+foreign import bpcall "SModel:average_frequency" builtin_average_frequency :: () -> ()
+foreign import bpcall "SModel:empirical" builtin_empirical :: () -> () -> ()
+foreign import bpcall "SModel:pam" pam :: () -> ()
+foreign import bpcall "SModel:jtt" jtt :: () -> ()
+foreign import bpcall "SModel:wag" wag :: () -> ()
+foreign import bpcall "SModel:wag_frequencies" builtin_wag_frequencies :: () -> ()
+foreign import bpcall "SModel:lg_frequencies" builtin_lg_frequencies :: () -> ()
+foreign import bpcall "SModel:lg" lg :: () -> ()
+foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: () -> () -> ()
+foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: () -> ()
+foreign import bpcall "SModel:mut_sel_q" mut_sel_q :: () -> () -> ()
+foreign import bpcall "SModel:mut_sel_pi" mut_sel_pi :: () -> () -> ()
+foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: () -> () -> ()
+foreign import bpcall "SModel:modulated_markov_pi" builtin_modulated_markov_pi :: () -> () -> ()
+foreign import bpcall "SModel:modulated_markov_smap" builtin_modulated_markov_smap :: () -> ()
 
 data F81 = F81 Alphabet (EVector Int) () (EVector Double)
 data MixtureModel a = MixtureModel [(Double,a)]

@@ -4,7 +4,7 @@ import Probability.Random
 import Probability.Distribution.Gamma
 import Probability.Distribution.List
 
-foreign import bpcall "Distribution:dirichlet_density" builtin_dirichlet_density 2
+foreign import bpcall "Distribution:dirichlet_density" builtin_dirichlet_density :: () -> () -> ()
 dirichlet_density as ps = builtin_dirichlet_density (list_to_vector as) (list_to_vector ps)
 
 -- The `dirichlet` does not handle cases where the number of as changes in a ungraceful way: all entries are resampled!

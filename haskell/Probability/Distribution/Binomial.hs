@@ -3,8 +3,8 @@ module Probability.Distribution.Binomial where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:binomial_density" binomial_density 3
-foreign import bpcall "Distribution:sample_binomial" builtin_sample_binomial 3
+foreign import bpcall "Distribution:binomial_density" binomial_density :: () -> () -> () -> ()
+foreign import bpcall "Distribution:sample_binomial" builtin_sample_binomial :: () -> () -> () -> ()
 
 binomial_bounds n = integer_between 0 n
 
