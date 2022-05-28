@@ -157,6 +157,8 @@ struct StrictLazyType: public Object
 
     std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
 
+    std::optional<std::pair<Type,Type>> is_gen_function_type(const Type& t);
+
     std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
 
     Type remove_top_gen(Type type);

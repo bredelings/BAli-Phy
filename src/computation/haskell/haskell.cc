@@ -227,7 +227,8 @@ int ForeignDecl::n_args() const
 {
     auto t = type;
     int n = 0;
-    while(auto p = is_function_type(t))
+
+    while(auto p = is_gen_function_type(t))
     {
         n++;
         auto& [from,to] = *p;
@@ -660,7 +661,7 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
             fixity_decls.push_back(*f);
         }
 	else if (auto b = decl.to<ForeignDecl>())
-            builtin_decls.push_back(*b);
+            foreign_decls.push_back(*b);
         else if (decl.is_a<ClassDecl>() or decl.is_a<TypeSynonymDecl>() or decl.is_a<DataOrNewtypeDecl>() or decl.is_a<InstanceDecl>())
             type_decls.push_back(decl);
         else if (auto d = decl.to<DefaultDecl>())

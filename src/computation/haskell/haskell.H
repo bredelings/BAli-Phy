@@ -972,8 +972,7 @@ struct ModuleDecls
 
     Binds value_decls;
 
-    std::map<std::string, Type> builtin_signatures;
-    std::vector<ForeignDecl> builtin_decls;
+    std::vector<ForeignDecl> foreign_decls;
 
     ModuleDecls();
     ModuleDecls(const Decls& topdecls);

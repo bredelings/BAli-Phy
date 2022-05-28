@@ -6,8 +6,7 @@ import Foreign.String
 
 type String = [Char]
 
-builtin_error :: CPPString -> a
-foreign import bpcall "Prelude:error" builtin_error :: () -> ()
+foreign import bpcall "Prelude:error" builtin_error :: CPPString -> a
 
 error :: [Char] -> a
 error x = builtin_error (list_to_string x)
@@ -33,9 +32,7 @@ join x = do y <- x
 infixr 0 $!, `seq`
 f $! x = x `seq` f x
 
-seq :: a -> b -> b
-foreign import bpcall "Prelude:seq" seq :: () -> () -> ()
+foreign import bpcall "Prelude:seq" seq :: a -> b -> b
 
-struct_seq :: a -> b -> b
-foreign import bpcall "Prelude:struct_seq" struct_seq :: () -> () -> ()
+foreign import bpcall "Prelude:struct_seq" struct_seq :: a -> b -> b
 

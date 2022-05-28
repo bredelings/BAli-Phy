@@ -4,15 +4,12 @@ module Compiler.Num where
 infixl 7 *
 infixl 6 +, -
 
-(+),(-),(*) :: a -> a -> a
+foreign import bpcall "Prelude:add"      (+) :: a -> a -> a
+foreign import bpcall "Prelude:subtract" (-) :: a -> a -> a
+foreign import bpcall "Prelude:multiply" (*) :: a -> a -> a
 
-foreign import bpcall "Prelude:add" (+) :: () -> () -> ()
-foreign import bpcall "Prelude:subtract" (-) :: () -> () -> ()
-foreign import bpcall "Prelude:multiply" (*) :: () -> () -> ()
-
-negate, abs :: a -> a
-foreign import bpcall "Prelude:negate" negate :: () -> ()
-foreign import bpcall "Prelude:abs" abs    :: () -> ()
+foreign import bpcall "Prelude:negate" negate :: a -> a
+foreign import bpcall "Prelude:abs"    abs    :: a -> a
 
 class Num a
 

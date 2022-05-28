@@ -194,6 +194,8 @@ struct typechecker_state: FreshVarSource
     std::tuple<Hs::Decls, global_value_env>
     infer_type_for_decls_groups(const global_value_env& env, const signature_env&, Hs::Decls E, bool is_top_level);
 
+    void infer_type_for_foreign_imports(std::vector<Hs::ForeignDecl>& foreign_decls);
+
     global_value_env infer_type_for_sigs(signature_env& signatures) const;
 
     // Figures 13, 14, 15?

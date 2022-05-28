@@ -5,19 +5,16 @@ import Foreign.CList
 
 data CPPString
 
-getStringElement :: CPPString -> Int -> Char
-foreign import bpcall "Vector:getStringElement" getStringElement :: () -> () -> ()
+foreign import bpcall "Vector:getStringElement" getStringElement :: CPPString -> Int -> Char
 
-sizeOfString :: CPPString -> Int
-foreign import bpcall "Vector:sizeOfString" sizeOfString :: () -> ()
+foreign import bpcall "Vector:sizeOfString" sizeOfString :: CPPString -> Int
 
 listFromString s = unpack_cpp_string s
 
 unpack_cpp_string :: CPPString -> [Char]
 unpack_cpp_string string = map_from 0# (sizeOfString string) (\i -> getStringElement string i)
 
-clist_to_string :: CList Char -> CPPString
-foreign import bpcall "Vector:clist_to_string" clist_to_string :: () -> ()
+foreign import bpcall "Vector:clist_to_string" clist_to_string :: CList Char -> CPPString
 
 list_to_string :: [Char] -> CPPString
 list_to_string x  = clist_to_string (list_to_CList x)

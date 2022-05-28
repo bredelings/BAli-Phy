@@ -5,18 +5,15 @@ import Foreign.CList
 
 data EVector a
 
-get_vector_index :: EVector a -> Int -> a
-foreign import bpcall "Vector:get_vector_index" get_vector_index :: () -> () -> ()
+foreign import bpcall "Vector:get_vector_index" get_vector_index :: EVector a -> Int -> a
 
-vector_size :: EVector a -> Int
-foreign import bpcall "Vector:vector_size" vector_size :: () -> ()
+foreign import bpcall "Vector:vector_size" vector_size :: EVector a -> Int
 
-clist_to_vector :: CList a -> EVector a
-foreign import bpcall "Vector:clist_to_vector" clist_to_vector :: () -> ()
+foreign import bpcall "Vector:clist_to_vector" clist_to_vector :: CList a -> EVector a
 
-data EMatrix a
-fromVectors :: EVector (EVector a) -> EMatrix a
-foreign import bpcall "Vector:fromVectors" fromVectors :: () -> ()
+data Matrix a
+
+foreign import bpcall "Vector:fromVectors" fromVectors :: EVector (EVector a) -> Matrix a
 
 list_from_vector_of_size :: EVector a -> Int -> [a]
 list_from_vector_of_size vec size = map_from 0# size (\i -> get_vector_index vec i)

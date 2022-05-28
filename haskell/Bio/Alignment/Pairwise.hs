@@ -4,33 +4,24 @@ import Data.BitVector
 
 data PairwiseAlignment = PairwiseAlignment
 
-numInsert :: PairwiseAlignment -> Int
-foreign import bpcall "Alignment:numInsert" numInsert :: () -> ()
+foreign import bpcall "Alignment:numInsert" numInsert :: PairwiseAlignment -> Int
 
-numMatch :: PairwiseAlignment -> Int
-foreign import bpcall "Alignment:numMatch" numMatch :: () -> ()
+foreign import bpcall "Alignment:numMatch" numMatch :: PairwiseAlignment -> Int
 
-numDelete :: PairwiseAlignment -> Int
-foreign import bpcall "Alignment:numDelete" numDelete :: () -> ()
+foreign import bpcall "Alignment:numDelete" numDelete :: PairwiseAlignment -> Int
 
-pairwise_alignment_length1 :: PairwiseAlignment -> Int
-foreign import bpcall "Alignment:pairwise_alignment_length1" pairwise_alignment_length1 :: () -> ()
+foreign import bpcall "Alignment:pairwise_alignment_length1" pairwise_alignment_length1 :: PairwiseAlignment -> Int
 
-pairwise_alignment_length2 :: PairwiseAlignment -> Int
-foreign import bpcall "Alignment:pairwise_alignment_length2" pairwise_alignment_length2 :: () -> ()
+foreign import bpcall "Alignment:pairwise_alignment_length2" pairwise_alignment_length2 :: PairwiseAlignment -> Int
 
-builtin_pairwise_alignment_from_bits :: CBitVector -> CBitVector -> PairwiseAlignment
-foreign import bpcall "Bits:pairwise_alignment_from_bits" builtin_pairwise_alignment_from_bits :: () -> () -> ()
+foreign import bpcall "Bits:pairwise_alignment_from_bits" builtin_pairwise_alignment_from_bits :: CBitVector -> CBitVector -> PairwiseAlignment
 
 pairwise_alignment_from_bits :: BitVector -> BitVector -> PairwiseAlignment
 pairwise_alignment_from_bits (BitVector x) (BitVector y) = builtin_pairwise_alignment_from_bits x y
 
-unaligned_pairwise_alignment :: Int -> Int -> PairwiseAlignment
-foreign import bpcall "Alignment:unaligned_pairwise_alignment" unaligned_pairwise_alignment :: () -> () -> ()
+foreign import bpcall "Alignment:unaligned_pairwise_alignment" unaligned_pairwise_alignment :: Int -> Int -> PairwiseAlignment
 
-left_aligned_pairwise_alignment :: Int -> Int -> PairwiseAlignment
-foreign import bpcall "Alignment:left_aligned_pairwise_alignment" left_aligned_pairwise_alignment :: () -> () -> ()
+foreign import bpcall "Alignment:left_aligned_pairwise_alignment" left_aligned_pairwise_alignment :: Int -> Int -> PairwiseAlignment
 
-flip_alignment :: PairwiseAlignment -> PairwiseAlignment
-foreign import bpcall "Alignment:flip_alignment" flip_alignment :: () -> ()
+foreign import bpcall "Alignment:flip_alignment" flip_alignment :: PairwiseAlignment -> PairwiseAlignment
 

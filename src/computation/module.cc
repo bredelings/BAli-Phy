@@ -459,8 +459,9 @@ void Module::compile(const Program& P)
     add_local_symbols(M.type_decls);
 
     add_local_symbols(M.value_decls[0]); // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym
-    for(auto& d: M.builtin_decls)
-        def_function(d.function_name);
+
+    for(auto& f: M.foreign_decls)
+        def_function(f.function_name);
 
     // Currently we do "renaming" here.
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
@@ -480,7 +481,7 @@ void Module::compile(const Program& P)
     // FIXME: how to handle functions defined in instances and classes?
     value_decls = desugar(opts, P.fresh_var_state(), M.value_decls);
 
-    value_decls = load_builtins(loader, M.builtin_decls, value_decls);
+    value_decls = load_builtins(loader, M.foreign_decls, value_decls);
 
     value_decls = load_constructors(M.type_decls, value_decls);
 
@@ -1036,9 +1037,9 @@ pair<string,expression_ref> parse_builtin(const Haskell::ForeignDecl& B, const m
     return {B.function_name, body};
 }
 
-CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& builtin_decls, CDecls cdecls)
+CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls, CDecls cdecls)
 {
-    for(const auto& decl: builtin_decls)
+    for(const auto& decl: foreign_decls)
     {
         auto [function_name, body] = parse_builtin(decl, L);
 

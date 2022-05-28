@@ -298,25 +298,17 @@ Haskell::ModuleDecls rename(const simplifier_options& opts, const Module& m, Has
 
     set<string> free_vars;
 
-    // Extract sigs for builtins
-    for(auto& builtin_decl: M.builtin_decls)
+    // Extract sigs for foreign imports
+    for(auto& foreign_decl: M.foreign_decls)
     {
-        auto& builtin_name = builtin_decl.function_name;
-        auto iter = M.value_decls.signatures.find(builtin_name);
-        if (iter == M.value_decls.signatures.end())
-        {
-            if (opts.typecheck)
-                throw myexception()<<"no signature for builtin '"<<builtin_name<<"'";
-            continue;
-        }
-        auto builtin_type = iter->second;
+        assert(not is_qualified_symbol( foreign_decl.function_name ) );
+        foreign_decl.function_name = m.name + "." + foreign_decl.function_name;
 
-        M.builtin_signatures.insert({builtin_name, builtin_type});
+        foreign_decl.type = Rn.rename_type( foreign_decl.type );
 
-        M.value_decls.signatures.erase(iter);
+        bound_names.insert( {foreign_decl.function_name} );
     }
-    add(bound_names, Rn.rename_signatures(M.builtin_signatures, true));
-    
+
     Rn.rename_decls(M.value_decls, bound_names, free_vars, true);
 
     // Replace ids with dummies

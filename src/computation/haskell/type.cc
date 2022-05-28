@@ -40,6 +40,11 @@ pair<Type,vector<Type>> decompose_type_apps(Type t)
 }
 
 
+optional<pair<Type,Type>> is_gen_function_type(const Type& t)
+{
+    return is_function_type( remove_top_gen(t) );
+}
+
 optional<pair<Type,Type>> is_function_type(const Type& t)
 {
     auto [head,args] = decompose_type_apps(t);

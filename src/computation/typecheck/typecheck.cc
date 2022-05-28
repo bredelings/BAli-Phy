@@ -854,7 +854,7 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     // 5. Get types and names for instances (pass 1)
     auto named_instances = tc_state->infer_type_for_instances1(M.type_decls);
 
-    tc_state->gve += tc_state->infer_type_for_sigs(M.builtin_signatures);
+    tc_state->infer_type_for_foreign_imports(M.foreign_decls);
 
     // 6. Typecheck value decls
     tc_state->infer_type_for_binds_top(M.value_decls);

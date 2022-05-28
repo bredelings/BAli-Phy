@@ -21,13 +21,12 @@ import Foreign.Vector
 data Array a b
 
 -- hack, until we have a type system
-is_array :: a -> Bool
-foreign import bpcall "Array:is_array" is_array :: () -> ()
+foreign import bpcall "Array:is_array" is_array :: a -> Bool
 
 infixl 9 !
-foreign import bpcall "Array:getIndex" (!) :: () -> () -> ()
+foreign import bpcall "Array:getIndex" (!) :: Array a b -> a -> b
 
-foreign import bpcall "Array:arraySize" numElements :: () -> ()
+foreign import bpcall "Array:arraySize" numElements :: Array a b -> Int
 foreign import bpcall "Array:mkArray" mkArray :: () -> () -> ()
 
 listArray n l = mkArray n (\i -> l !! i)
