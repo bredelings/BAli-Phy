@@ -19,21 +19,21 @@ import SModel.Likelihood
 
 import Data.Matrix
 
-foreign import bpcall "SModel:average_frequency" builtin_average_frequency :: () -> ()
-foreign import bpcall "SModel:empirical" builtin_empirical :: () -> () -> ()
-foreign import bpcall "SModel:pam" pam :: () -> ()
-foreign import bpcall "SModel:jtt" jtt :: () -> ()
-foreign import bpcall "SModel:wag" wag :: () -> ()
-foreign import bpcall "SModel:wag_frequencies" builtin_wag_frequencies :: () -> ()
-foreign import bpcall "SModel:lg_frequencies" builtin_lg_frequencies :: () -> ()
-foreign import bpcall "SModel:lg" lg :: () -> ()
-foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: () -> () -> ()
-foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: () -> ()
-foreign import bpcall "SModel:mut_sel_q" mut_sel_q :: () -> () -> ()
-foreign import bpcall "SModel:mut_sel_pi" mut_sel_pi :: () -> () -> ()
-foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: () -> () -> ()
-foreign import bpcall "SModel:modulated_markov_pi" builtin_modulated_markov_pi :: () -> () -> ()
-foreign import bpcall "SModel:modulated_markov_smap" builtin_modulated_markov_smap :: () -> ()
+foreign import bpcall "SModel:average_frequency" builtin_average_frequency :: Matrix Double -> EVector Double
+foreign import bpcall "SModel:empirical" builtin_empirical :: Alphabet -> CPPString -> Matrix Double
+foreign import bpcall "SModel:pam" pam :: () -> Matrix Double
+foreign import bpcall "SModel:jtt" jtt :: () -> Matrix Double
+foreign import bpcall "SModel:wag" wag :: () -> Matrix Double
+foreign import bpcall "SModel:wag_frequencies" builtin_wag_frequencies :: () -> EVector Double
+foreign import bpcall "SModel:lg_frequencies" builtin_lg_frequencies :: () -> EVector Double
+foreign import bpcall "SModel:lg" lg :: () -> Matrix Double
+foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: EVector Double -> EVector (EVector Double) -> Matrix Double
+foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: EVector (EVector Double) -> Matrix Double
+foreign import bpcall "SModel:mut_sel_q" mut_sel_q :: Matrix Double -> EVector Double -> Matrix Double
+foreign import bpcall "SModel:mut_sel_pi" mut_sel_pi :: EVector Double -> EVector Double -> EVector Double
+foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double
+foreign import bpcall "SModel:modulated_markov_pi" builtin_modulated_markov_pi :: EVector (EVector Double) -> EVector Double -> EVector Double
+foreign import bpcall "SModel:modulated_markov_smap" builtin_modulated_markov_smap :: EVector (EVector Int) -> EVector Int
 
 data F81 = F81 Alphabet (EVector Int) () (EVector Double)
 data MixtureModel a = MixtureModel [(Double,a)]
