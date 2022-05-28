@@ -75,7 +75,6 @@ foreign import bpcall "Prelude:doubleToInt" doubleToInt :: () -> ()
 
 foreign import bpcall "Prelude:expToLogDouble" expToLogDouble :: () -> ()
 foreign import bpcall "Prelude:doubleToLogDouble" doubleToLogDouble :: () -> ()
-foreign import bpcall "Prelude:intToDouble" intToDouble :: () -> ()
 
 -- We need == to use GHC's code directly
 x0 ^ y0 | y0 < 0 = error("Negative exponent")
