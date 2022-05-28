@@ -6,8 +6,7 @@ import Foreign.Vector
 
 map_vector_to_list f = map f . vector_to_list
 
-builtin_read_csv :: CPPString -> EVector (EVector CPPString)
-foreign import bpcall "Data:read_csv" builtin_read_csv :: () -> () -> ()
+foreign import bpcall "Data:read_csv" builtin_read_csv :: CPPString -> Char -> EVector (EVector CPPString)
 
 -- This gives the csv file as a list of rows
 read_csv :: String -> IO [ [ String ] ]
