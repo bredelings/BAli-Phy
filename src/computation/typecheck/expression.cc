@@ -144,12 +144,11 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         {
             auto e2 = E.sub()[i];
 
-            // tv <- fresh
-            auto tv = fresh_meta_type_var( kind_star() );
-
             auto [arg2, t2] = infer_type(env, e2);
             args.push_back(arg2);
 
+            // tv <- fresh
+            auto tv = fresh_meta_type_var( kind_star() );
             unify (t1, Hs::make_arrow_type(t2,tv));
 
             t1 = tv;
