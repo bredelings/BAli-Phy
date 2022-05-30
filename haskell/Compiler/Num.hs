@@ -10,6 +10,7 @@ foreign import bpcall "Prelude:multiply" (*) :: a -> a -> a
 
 foreign import bpcall "Prelude:negate" negate :: a -> a
 foreign import bpcall "Prelude:abs"    abs    :: a -> a
+-- foreign import bpcall "Prelude:signum"    signum    :: a -> a
 
 fromInteger :: Int -> Int
 fromInteger x = x
