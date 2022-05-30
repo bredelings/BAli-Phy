@@ -2,14 +2,9 @@
 module Compiler.Base where
 
 import Foreign.Pair
-import Foreign.String
 
 type String = [Char]
 
-foreign import bpcall "Prelude:error" builtin_error :: CPPString -> a
-
-error :: [Char] -> a
-error x = builtin_error (list_to_string x)
 
 data IO a = IOAction  (Int->(Int,a)) |
             LazyIO a |
