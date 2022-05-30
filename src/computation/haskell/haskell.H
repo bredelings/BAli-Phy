@@ -1001,6 +1001,7 @@ struct ModuleDecls
     ModuleDecls(const Decls& topdecls);
 };
 
+Expression error(const std::string& s);
 }
 
 namespace Hs = Haskell;

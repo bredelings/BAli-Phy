@@ -4207,13 +4207,13 @@ namespace yy {
 
   case 416: // literal: "STRING"
 #line 1418 "parser.y"
-                     {yylhs.value.as < expression_ref > () = yy_make_string(yystack_[0].value.as < std::string > ());}
+                     {yylhs.value.as < expression_ref > () = Hs::Literal(Hs::String{yystack_[0].value.as < std::string > ()});}
 #line 4212 "parser.cc"
     break;
 
   case 417: // literal: "INTEGER"
 #line 1419 "parser.y"
-                     {yylhs.value.as < expression_ref > () = Hs::Literal(Hs::Integer(yystack_[0].value.as < int > ()));}
+                     {yylhs.value.as < expression_ref > () = Hs::Literal(Hs::Integer{yystack_[0].value.as < int > ()});}
 #line 4218 "parser.cc"
     break;
 
@@ -6213,12 +6213,4 @@ expression_ref make_fexp(const vector<expression_ref>& args)
 	    f = {f,args[i]};
 	return f;
     }
-}
-
-expression_ref yy_make_string(const std::string& s)
-{
-    vector<expression_ref> chars;
-    for(char c: s)
-	chars.push_back(Hs::Literal(Hs::Char{c}));
-    return Hs::List(chars);
 }

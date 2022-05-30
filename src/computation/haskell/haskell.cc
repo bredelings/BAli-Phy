@@ -731,5 +731,12 @@ FunDecl simple_decl(const Var& v, const expression_ref& E)
     return simple_fun_decl(v,{},E);
 }
 
+expression_ref error(const std::string& s)
+{
+    expression_ref error = Hs::Var({noloc,"Compiler.Error.error"});
+    expression_ref msg = Hs::Literal(Hs::String{s});
+    return {error,msg};
+}
+
 }
 

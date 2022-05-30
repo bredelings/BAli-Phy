@@ -299,8 +299,8 @@ public:
     expression_ref(const log_double_t& ld2):ld(ld2),type_(log_double_type) {}
     expression_ref(const bool& b);
     expression_ref(const index_var& iv);
-    expression_ref(const std::string& s);
-    expression_ref(const char* s);
+    expression_ref(const std::string& s) = delete;
+    expression_ref(const char* s) = delete;
     expression_ref(const char& c2):c(c2),type_(char_type) {}
     expression_ref(const String& s):expression_ref(s.clone()) { }
     expression_ref(const std::initializer_list<expression_ref>&);
@@ -519,5 +519,5 @@ inline std::unique_ptr<expression> operator+(std::unique_ptr<expression> E1, con
     return E1;
 }
 
-expression_ref error(const std::string&);
+expression_ref core_error(const std::string&);
 #endif

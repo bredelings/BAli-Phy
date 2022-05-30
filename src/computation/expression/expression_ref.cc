@@ -344,14 +344,6 @@ expression_ref::expression_ref(const bool& b)
     :expression_ref(b?bool_true:bool_false)
 {}
 
-expression_ref::expression_ref(const char* s)
-    :expression_ref(char_list(s))
-{}
-
-expression_ref::expression_ref(const std::string& s)
-    :expression_ref(expression_ref{var("Foreign.String.unpack_cpp_string"),String(s)})
-{}
-
 expression_ref::expression_ref(const index_var& iv):i(iv.index),type_(index_var_type) {}
 
 expression_ref::expression_ref(const std::initializer_list<expression_ref>& es)
@@ -381,10 +373,10 @@ unique_ptr<expression> operator+(const expression& E1, const expression_ref& E2)
     return unique_ptr<expression>(E3);
 }
 
-expression_ref error(const std::string& s)
+expression_ref core_error(const std::string& s)
 {
     expression_ref error = var("Compiler.Error.error");
-    expression_ref msg = s;
+    expression_ref msg = {var("Foreign.String.unpack_cpp_string"),String(s)};
     return {error,msg};
 }
 

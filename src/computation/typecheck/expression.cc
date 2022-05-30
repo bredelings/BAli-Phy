@@ -35,7 +35,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     {
         if (auto c = L->is_Char())
         {
-            return { *c, char_type() };
+            return { E, char_type() };
         }
         else if (auto i = L->is_Integer())
         {
@@ -50,7 +50,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         }
         else if (auto s = L->is_String())
         {
-            return { *s, Hs::ListType( char_type() ) };
+            return { E, Hs::ListType( char_type() ) };
         }
         else if (auto d = L->is_Double())
         {
@@ -65,7 +65,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         }
         else if (auto i = L->is_BoxedInteger())
         {
-            return { *i, int_type() };
+            return { E, int_type() };
         }
     }
     else if (auto texp = E.to<Hs::TypedExp>())
