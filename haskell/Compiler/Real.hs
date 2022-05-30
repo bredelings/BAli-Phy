@@ -2,6 +2,7 @@
 module Compiler.Real where
 
 import Compiler.Base
+import Compiler.Error
 import Compiler.Num
 import Compiler.Enum -- for class Enum
 import Data.Ord      -- for <
@@ -80,7 +81,7 @@ foreign import bpcall "Prelude:expToLogDouble" expToLogDouble :: Double -> LogDo
 foreign import bpcall "Prelude:doubleToLogDouble" doubleToLogDouble :: Double -> LogDouble
 
 -- We need == to use GHC's code directly
-x0 ^ y0 | y0 < 0 = error("Negative exponent")
+x0 ^ y0 | y0 < 0 = error "Negative exponent"
 x ^ 1 = x
 x ^ n = x*(x^(n-1))
 

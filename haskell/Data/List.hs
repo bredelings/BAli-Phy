@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.List where
 
+import Compiler.Error
 import Compiler.Base
 import Compiler.Num
 import Data.Bool

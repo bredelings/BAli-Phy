@@ -2,6 +2,7 @@
 module Compiler.Base where
 
 import Foreign.Pair
+import Compiler.Error
 
 type String = [Char]
 

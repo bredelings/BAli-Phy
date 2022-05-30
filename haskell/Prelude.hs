@@ -14,7 +14,7 @@ module Prelude (module Prelude,
                 module Foreign.String,
                 module Control.Applicative,
                 module Control.Monad,
-                module Compiler.Base,
+                module Compiler.Error,
                 module Compiler.Base,
                 module Compiler.IO,
                 module Compiler.ST,
@@ -23,6 +23,7 @@ module Prelude (module Prelude,
                 module Compiler.Enum)
     where
 
+import Compiler.Error
 import Compiler.Base
 import Compiler.IO
 import Compiler.ST
