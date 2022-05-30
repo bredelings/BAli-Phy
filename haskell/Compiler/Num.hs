@@ -11,9 +11,16 @@ foreign import bpcall "Prelude:multiply" (*) :: a -> a -> a
 foreign import bpcall "Prelude:negate" negate :: a -> a
 foreign import bpcall "Prelude:abs"    abs    :: a -> a
 
--- fromInteger x :: Double
+fromInteger :: Int -> Int
+fromInteger x = x
+
+fromRational :: Double -> Double
+fromRational x = x
+
+-- for fromInteger x :: Double
 foreign import bpcall "Prelude:intToDouble" intToDouble :: Int -> Double
 
 class Num a
 
 data Integer
+
