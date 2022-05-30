@@ -482,51 +482,6 @@ Hs::Type typechecker_state::double_type() const
     return find_prelude_tycon("Double");
 }
 
-Hs::Type typechecker_state::enum_class(const Hs::Type& arg) const
-{
-    auto Enum = find_prelude_tycon("Enum");
-
-    return Hs::TypeApp( Enum, arg);
-}
-
-Hs::Type typechecker_state::num_class(const Hs::Type& arg) const
-{
-    auto Num = find_prelude_tycon("Num");
-
-    return Hs::TypeApp( Num, arg);
-}
-
-Hs::Type typechecker_state::fractional_class(const Hs::Type& arg) const
-{
-    auto Fractional = find_prelude_tycon("Fractional");
-
-    return Hs::TypeApp( Fractional, arg);
-}
-
-tuple<Hs::Var, Hs::Type> typechecker_state::fresh_enum_type(bool meta)
-{
-    Hs::Type a = fresh_type_var(meta, kind_star());
-    Hs::Type enum_a = enum_class(a);
-    auto dvar = add_dvar(enum_a);
-    return {dvar, a};
-}
-
-tuple<Hs::Var, Hs::Type> typechecker_state::fresh_num_type(bool meta)
-{
-    Hs::Type a = fresh_type_var(meta, kind_star());
-    Hs::Type num_a = num_class(a);
-    auto dvar = add_dvar(num_a);
-    return {dvar, a};
-}
-
-tuple<Hs::Var, Hs::Type> typechecker_state::fresh_fractional_type(bool meta)
-{
-    Hs::Type a = fresh_type_var(meta, kind_star());
-    Hs::Type fractional_a = fractional_class(a);
-    auto dvar = add_dvar(fractional_a);
-    return {dvar, a};
-}
-
 bool typechecker_state::add_substitution(const substitution_t& s)
 {
     if (auto s2 = combine(type_var_to_type, s))

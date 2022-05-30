@@ -342,21 +342,36 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     else if (auto l = E.to<Hs::ListFromThenTo>())
     {
         auto L = *l;
-        auto [dvar, t] = fresh_enum_type();
-        auto [from, t_from] = infer_type(env, L.from);
-        unify(t,t_from);
 
-        auto [then, t_then] = infer_type(env, L.then);
-        unify(t,t_then);
+        // 1. Typecheck enumFromThenTo
+        auto [enumFromThenTo, enumFromThenTo_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Enum.enumFromThenTo"}));
+        L.enumFromThenToOp = enumFromThenTo;
 
-        auto [to, t_to] = infer_type(env, l->to);
-        unify(t,t_to);
-
+        // 2. Typecheck from argument
+        auto [from, from_type] = infer_type(env, L.from);
         L.from = from;
+
+        // 3. enumFromThenTo_type ~ from_type -> a
+        auto a = fresh_meta_type_var( kind_star() );
+        unify(enumFromThenTo_type, Hs::make_arrow_type(enumFromThenTo_type, a));
+
+        // 4. Typecheck then argument
+        auto [then, then_type] = infer_type(env, L.then);
         L.then = then;
+
+        // 5. a ~ then_type -> b
+        auto b = fresh_meta_type_var( kind_star() );
+        unify(a, Hs::make_arrow_type(then_type, b));
+
+        // 6. Typecheck to argument
+        auto [to, to_type] = infer_type(env, L.to);
         L.to = to;
 
-        return {L, Hs::ListType(t)};
+        // 7. b ~ to_type -> result_type
+        auto result_type = fresh_meta_type_var( kind_star() );
+        unify(b, Hs::make_arrow_type(to_type, result_type));
+
+        return { L, result_type };
     }
 
     throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";

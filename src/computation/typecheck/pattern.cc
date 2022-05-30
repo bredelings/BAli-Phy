@@ -134,52 +134,55 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         }
         return {T, Hs::TupleType(types), lve};
     }
-    else if (auto L = pat.to<Hs::Literal>())
+    else if (auto l = pat.to<Hs::Literal>())
     {
-        if (L->is_Char())
+        auto L = *l;
+
+        if (L.is_BoxedInteger())
         {
-            return {pat, char_type(), {}};
+            return {L, int_type(), {}};
         }
-        else if (L->is_Integer())
+
+        // 1. Typecheck (==)
+        auto [equals, equals_type] = infer_type(gve, Hs::Var({noloc,"Data.Eq.=="}));
+        L.equalsOp = equals;
+
+        if (L.is_Char())
         {
-            auto [dvar, type] = fresh_num_type();
-            return {pat, type, {}};
+            return {L, char_type(), {}};
         }
-        else if (L->is_String())
+        else if (auto i = L.is_Integer())
         {
-            std::abort();
-            return {pat, Hs::ListType(char_type()), {}};
+            // 1. Typecheck fromInteger
+            auto [fromInteger, fromInteger_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Num.fromInteger"}));
+
+            // 2. Determine result type
+            auto result_type = fresh_meta_type_var( kind_star() );
+            unify(fromInteger_type, Hs::make_arrow_type(int_type(), result_type));
+
+            L.literal = Hs::Integer(*i, fromInteger);
+
+            return {L, result_type, {}};
         }
-        else if (L->is_Double())
+        else if (L.is_String())
         {
-            auto [dvar, type] = fresh_fractional_type();
-            return {pat, type, {}};
+            return {L, Hs::ListType(char_type()), {}};
         }
-        else if (L->is_BoxedInteger())
+        else if (auto d = L.is_Double())
         {
-            return {pat, int_type(), {}};
+            // 1. Typecheck fromRational
+            auto [fromRational, fromRational_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Num.fromRational"}));
+
+            // 2. Determine result type
+            auto result_type = fresh_meta_type_var( kind_star() );
+            unify(fromRational_type, Hs::make_arrow_type(double_type(), result_type));
+
+            L.literal = Hs::Double(*d, fromRational);
+
+            return {L, result_type, {}};
         }
         else
             std::abort();
-    }
-    // ???
-    else if (pat.is_int())
-    {
-        auto [dvar, type] = fresh_num_type();
-        return {pat, type, {}};
-    }
-    else if (pat.is_double())
-    {
-        auto [dvar, type] = fresh_fractional_type();
-        return {pat, type, {}};
-    }
-    else if (pat.is_char())
-    {
-        return {pat, char_type(), {}};
-    }
-    else if (false) // Literal string
-    {
-        return {pat, Hs::ListType(char_type()), {}};
     }
     else if (pat.is_log_double())
         throw myexception()<<"log_double literal should be impossible: '"<<pat<<"'!";

@@ -105,18 +105,6 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type double_type() const;
 
-    Hs::Type enum_class(const Hs::Type& arg) const;
-
-    Hs::Type num_class(const Hs::Type& arg) const;
-
-    Hs::Type fractional_class(const Hs::Type& arg) const;
-
-    std::tuple<Hs::Var, Hs::Type> fresh_enum_type(bool meta = true);
-
-    std::tuple<Hs::Var, Hs::Type> fresh_num_type(bool meta = true);
-
-    std::tuple<Hs::Var, Hs::Type> fresh_fractional_type(bool meta = true);
-
     template <typename T>
     T apply_current_subst(const T& thing) const
     {
