@@ -469,7 +469,7 @@ extern "C" closure builtin_function_equals_int(OperationArgs& Args)
     auto x = Args.evaluate(0).as_int();
     auto y = Args.evaluate(1).as_int();
 
-    return { (x == y) ? bool_true : bool_false };
+    return { x == y };
 }
 
 extern "C" closure builtin_function_equals_double(OperationArgs& Args)
@@ -477,7 +477,7 @@ extern "C" closure builtin_function_equals_double(OperationArgs& Args)
     auto x = Args.evaluate(0).as_double();
     auto y = Args.evaluate(1).as_double();
 
-    return { (x == y) ? bool_true : bool_false };
+    return { x == y };
 }
 
 extern "C" closure builtin_function_equals_char(OperationArgs& Args)
@@ -485,7 +485,7 @@ extern "C" closure builtin_function_equals_char(OperationArgs& Args)
     auto x = Args.evaluate(0).as_char();
     auto y = Args.evaluate(1).as_char();
 
-    return { (x == y) ? bool_true : bool_false };
+    return { x == y };
 }
 
 extern "C" closure builtin_function_equals_top(OperationArgs& Args)
@@ -641,6 +641,38 @@ extern "C" closure builtin_function_greaterthanorequal(OperationArgs& Args)
 	return {x.as_char() >= y.as_char()};
     else
 	throw myexception()<<">=: object '"<<x.print()<<"' is not double, int, log_double, or char'";
+}
+
+extern "C" closure builtin_function_lessthan_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_char();
+    auto y = Args.evaluate(1).as_char();
+
+    return {x < y};
+}
+
+extern "C" closure builtin_function_lessthan_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+    auto y = Args.evaluate(1).as_int();
+
+    return {x < y};
+}
+
+extern "C" closure builtin_function_lessthan_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_double();
+    auto y = Args.evaluate(1).as_double();
+
+    return {x < y};
+}
+
+extern "C" closure builtin_function_lessthan_log_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_log_double();
+    auto y = Args.evaluate(1).as_log_double();
+
+    return {x < y};
 }
 
 extern "C" closure builtin_function_lessthan(OperationArgs& Args)
