@@ -160,15 +160,10 @@ bool TypeCon::operator<(const TypeCon& tv) const
 
 string TypeApp::print() const
 {
-    if (head.is_a<TypeApp>())
+    if (auto ftype = is_function_type(*this))
     {
-        auto& H = head.as_<TypeApp>();
-        if (H.head.is_a<TypeCon>())
-        {
-            auto& A = H.head.as_<TypeCon>();
-            if (unloc(A.name) == "->")
-                return H.arg.print() + " -> " + arg.print();
-        }
+        auto& [source,dest] = *ftype;
+        return parenthesize_type(source) + " -> " + arg.print();
     }
 
     return head.print() + " " + parenthesize_type(arg);
