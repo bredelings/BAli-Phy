@@ -31,25 +31,6 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         return {E, type};
     }
-    else if (E.is_int())
-    {
-        std::abort();
-    }
-    else if (E.is_double())
-    {
-        auto [dvar, type] = fresh_fractional_type();
-        E = { find_prelude_var("fromRational"), dvar, E };
-        return { E, type };
-    }
-    else if (E.is_char())
-    {
-        return { E, char_type() };
-    }
-    else if (E.is_log_double())
-    {
-        auto [dvar, type] = fresh_fractional_type();
-        return { E, type };
-    }
     else if (auto L = E.to<Hs::Literal>())
     {
         if (auto c = L->is_Char())
@@ -73,9 +54,14 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         }
         else if (auto d = L->is_Double())
         {
-            auto [dvar, type] = fresh_fractional_type();
-            expression_ref E = { find_prelude_var("fromRational"), dvar, *d };
-            return { E, type };
+            // 1. Typecheck fromRational
+            auto [fromRational, fromRational_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Num.fromRational"}));
+
+            // 2. Determine result type
+            auto result_type = fresh_meta_type_var( kind_star() );
+            unify(fromRational_type, Hs::make_arrow_type(double_type(), result_type));
+
+            return { Hs::Literal(Hs::Double{*d, fromRational}), result_type };
         }
         else if (auto i = L->is_BoxedInteger())
         {

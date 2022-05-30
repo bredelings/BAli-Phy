@@ -4201,7 +4201,7 @@ namespace yy {
 
   case 415: // literal: "CHAR"
 #line 1417 "parser.y"
-                     {yylhs.value.as < expression_ref > () = yystack_[0].value.as < char > ();}
+                     {yylhs.value.as < expression_ref > () = Hs::Literal(Hs::Char{yystack_[0].value.as < char > ()});}
 #line 4206 "parser.cc"
     break;
 
@@ -4219,7 +4219,7 @@ namespace yy {
 
   case 418: // literal: "RATIONAL"
 #line 1420 "parser.y"
-                     {yylhs.value.as < expression_ref > () = yystack_[0].value.as < double > ();}
+                     {yylhs.value.as < expression_ref > () = Hs::Literal(Hs::Double{yystack_[0].value.as < double > ()});}
 #line 4224 "parser.cc"
     break;
 
@@ -6219,6 +6219,6 @@ expression_ref yy_make_string(const std::string& s)
 {
     vector<expression_ref> chars;
     for(char c: s)
-	chars.push_back(c);
+	chars.push_back(Hs::Literal(Hs::Char{c}));
     return Hs::List(chars);
 }

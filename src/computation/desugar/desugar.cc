@@ -276,8 +276,6 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
     }
     else if (E.is_log_double())
         std::abort();
-    else if (E.is_int() or E.is_double() or E.is_char())
-        return E;
     else if (auto L = E.to<Hs::Literal>())
     {
         if (auto c = L->is_Char())

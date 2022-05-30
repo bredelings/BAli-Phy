@@ -181,10 +181,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
         return C;
     }
-    else if (E.is_int() or E.is_log_double() or E.is_double() or E.is_char())
-    {
-        return E;
-    }
     else if (E.is_a<Hs::Literal>())
     {
         return E;

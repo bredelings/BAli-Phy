@@ -477,6 +477,11 @@ Hs::Type typechecker_state::int_type() const
     return find_prelude_tycon("Int");
 }
 
+Hs::Type typechecker_state::double_type() const
+{
+    return find_prelude_tycon("Double");
+}
+
 Hs::Type typechecker_state::enum_class(const Hs::Type& arg) const
 {
     auto Enum = find_prelude_tycon("Enum");

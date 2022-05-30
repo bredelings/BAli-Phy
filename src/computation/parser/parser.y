@@ -1414,10 +1414,10 @@ consym:  CONSYM  { $$ = $1; }
 
 /* ------------- Literal ----------------------------------------- */
 
-literal: CHAR        {$$ = $1;}
+literal: CHAR        {$$ = Hs::Literal(Hs::Char{$1});}
 |        STRING      {$$ = yy_make_string($1);}
 |        INTEGER     {$$ = Hs::Literal(Hs::Integer($1));}
-|        RATIONAL    {$$ = $1;}
+|        RATIONAL    {$$ = Hs::Literal(Hs::Double{$1});}
 |        PRIMINTEGER {$$ = Hs::Literal(Hs::BoxedInteger{$1});}
 
 
@@ -1653,6 +1653,6 @@ expression_ref yy_make_string(const std::string& s)
 {
     vector<expression_ref> chars;
     for(char c: s)
-	chars.push_back(c);
+	chars.push_back(Hs::Literal(Hs::Char{c}));
     return Hs::List(chars);
 }
