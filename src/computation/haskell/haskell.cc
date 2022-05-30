@@ -504,7 +504,7 @@ std::optional<Constructor> DataOrNewtypeDecl::find_constructor_by_name(const str
 string Literal::print() const
 {
     if (literal.index() == 0)
-        return "'" + std::to_string(std::get<0>(literal).value) + "'";
+        return "'" + std::string(1, std::get<0>(literal).value) + "'";
     else if (literal.index() == 1)
         return std::to_string(std::get<1>(literal).value);
     else if (literal.index() == 2)
