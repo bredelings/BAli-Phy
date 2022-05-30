@@ -144,8 +144,8 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         }
 
         // 1. Typecheck (==)
-        auto [equals, equals_type] = infer_type(gve, Hs::Var({noloc,"Data.Eq.=="}));
-        L.equalsOp = equals;
+//        auto [equals, equals_type] = infer_type(gve, Hs::Var({noloc,"Data.Eq.=="}));
+//        L.equalsOp = equals;
 
         if (L.is_Char())
         {
