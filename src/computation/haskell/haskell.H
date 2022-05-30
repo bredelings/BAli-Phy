@@ -170,6 +170,8 @@ LPat = WildPat          -- wildcard pattern
 
 struct Neg: public Object
 {
+    expression_ref negate_op;
+
     Neg* clone() const { return new Neg(*this);}
     std::string print() const;
 
@@ -451,6 +453,7 @@ struct List: public Object
 struct ListFrom: public Object
 {
     expression_ref from;
+    expression_ref enumFromOp;
     ListFrom* clone() const { return new ListFrom(*this);}
     std::string print() const;
     ListFrom(const expression_ref& e): from(e) {}
@@ -460,6 +463,7 @@ struct ListFromThen: public Object
 {
     expression_ref from;
     expression_ref then;
+    expression_ref enumFromThenOp;
     ListFromThen* clone() const { return new ListFromThen(*this);}
     std::string print() const;
     ListFromThen(const expression_ref& e1, const expression_ref& e2): from(e1), then(e2) {}
@@ -469,6 +473,7 @@ struct ListFromTo: public Object
 {
     expression_ref from;
     expression_ref to;
+    expression_ref enumFromToOp;
     ListFromTo* clone() const { return new ListFromTo(*this);}
     std::string print() const;
     ListFromTo(const expression_ref& e1, const expression_ref& e2): from(e1), to(e2) {}
@@ -479,6 +484,7 @@ struct ListFromThenTo: public Object
     expression_ref from;
     expression_ref then;
     expression_ref to;
+    expression_ref enumFromThenToOp;
     ListFromThenTo* clone() const { return new ListFromThenTo(*this);}
     std::string print() const;
     ListFromThenTo(const expression_ref& e1, const expression_ref& e2, const expression_ref& e3): from(e1), then(e2), to(e3) {}
@@ -530,6 +536,7 @@ struct Char
 struct Integer
 {
     int value;
+    expression_ref fromIntegerOp;
 };
 
 struct String
@@ -540,6 +547,7 @@ struct String
 struct Double
 {
     double value;
+    expression_ref fromRationalOp;
 };
 
 struct BoxedInteger
@@ -550,6 +558,11 @@ struct BoxedInteger
 struct Literal: public Object
 {
     std::variant<Char, Integer, String, Double, BoxedInteger> literal;
+
+    // In a pattern, we need an equals op to compare with.
+    // Can we get away with a expression like (\x -> x == (fromInteger lit)) ??
+    // Or do we need a Wrapper, that takes a var, and generates (var == (fromInteger lit))?
+    expression_ref equalsOp; // ??
 
     Literal* clone() const {return new Literal(*this);}
     std::string print() const;
@@ -650,6 +663,8 @@ struct LetQual: public Object
 struct SimpleQual: public Object
 {
     expression_ref exp;
+    expression_ref andThenOp;
+
     SimpleQual* clone() const { return new SimpleQual(*this);}
     std::string print() const;
     SimpleQual(const expression_ref &e): exp(e) {};
@@ -658,6 +673,9 @@ struct SimpleQual: public Object
 struct PatQual: public Object
 {
     Pattern bindpat;
+    expression_ref bindOp;
+    expression_ref failOp;
+
     expression_ref exp;
     PatQual* clone() const { return new PatQual(*this);}
     std::string print() const;
@@ -667,6 +685,7 @@ struct PatQual: public Object
 struct RecStmt: public Object
 {
     Stmts stmts;
+    expression_ref mfixOp;
 
     RecStmt* clone() const {return new RecStmt(*this);}
     std::string print() const;
