@@ -33,9 +33,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     }
     else if (E.is_int())
     {
-        auto [dvar, type] = fresh_num_type();
-        E = { find_prelude_var("fromInteger"), dvar, E };
-        return { E, type };
+        std::abort();
     }
     else if (E.is_double())
     {
@@ -60,9 +58,14 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         }
         else if (auto i = L->is_Integer())
         {
-            auto [dvar, type] = fresh_num_type();
-            expression_ref E = { find_prelude_var("fromInteger"), dvar, *i };
-            return { E, type };
+            // 1. Typecheck fromInteger
+            auto [fromInteger, fromInteger_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Num.fromInteger"}));
+
+            // 2. Determine result type
+            auto result_type = fresh_meta_type_var( kind_star() );
+            unify(fromInteger_type, Hs::make_arrow_type(int_type(), result_type));
+
+            return { Hs::Literal(Hs::Integer{*i, fromInteger}), result_type };
         }
         else if (auto s = L->is_String())
         {

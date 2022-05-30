@@ -286,8 +286,8 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
         }
         else if (auto i = L->is_Integer())
         {
-            // FIXME: we want to actually compare with fromInteger(E)
-            return *i;
+            Hs::Integer I = std::get<Hs::Integer>(L->literal);
+            return {I.fromIntegerOp, I.value};
         }
         else if (auto d = L->is_Double())
         {
