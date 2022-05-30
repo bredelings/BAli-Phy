@@ -1415,8 +1415,8 @@ consym:  CONSYM  { $$ = $1; }
 /* ------------- Literal ----------------------------------------- */
 
 literal: CHAR        {$$ = Hs::Literal(Hs::Char{$1});}
-|        STRING      {$$ = yy_make_string($1);}
-|        INTEGER     {$$ = Hs::Literal(Hs::Integer($1));}
+|        STRING      {$$ = Hs::Literal(Hs::String{$1});}
+|        INTEGER     {$$ = Hs::Literal(Hs::Integer{$1});}
 |        RATIONAL    {$$ = Hs::Literal(Hs::Double{$1});}
 |        PRIMINTEGER {$$ = Hs::Literal(Hs::BoxedInteger{$1});}
 
@@ -1647,12 +1647,4 @@ expression_ref make_fexp(const vector<expression_ref>& args)
 	    f = {f,args[i]};
 	return f;
     }
-}
-
-expression_ref yy_make_string(const std::string& s)
-{
-    vector<expression_ref> chars;
-    for(char c: s)
-	chars.push_back(Hs::Literal(Hs::Char{c}));
-    return Hs::List(chars);
 }

@@ -38,6 +38,15 @@ desugar_state::desugar_state(const Module& m_, FreshVarState& state)
       m(m_)
 {}
 
+
+expression_ref desugar_string(const std::string& s)
+{
+    vector<expression_ref> chars;
+    for(char c: s)
+	chars.push_back(c);
+    return Hs::List(chars);
+}
+
 bool is_irrefutable_pat(const expression_ref& E)
 {
     assert(not E.is_a<Hs::WildcardPattern>());
@@ -293,8 +302,7 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
         }
         else if (auto s = L->is_String())
         {
-            // FIXME: we want to .... do what?
-            std::abort();
+            return desugar_string(*s);
         }
         else if (auto i = L->is_BoxedInteger())
         {
@@ -593,8 +601,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         }
         else if (auto s = L->is_String())
         {
-            // FIXME: we want to .... do what?
-            std::abort();
+            return desugar_string(*s);
         }
         else if (auto i = L->is_BoxedInteger())
         {
