@@ -342,27 +342,34 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     }
     else if (auto L = E.to<Hs::ListFrom>())
     {
-        expression_ref E2 = var("Compiler.Enum.enumFrom");
-        E2 = {E2, L->from};
-        return desugar(E2);
+        expression_ref enumFrom = var("Compiler.Enum.enumFrom");
+        if (L->enumFromOp)
+            enumFrom = L->enumFromOp;
+
+        return {enumFrom, desugar(L->from)};
     }
     else if (auto L = E.to<Hs::ListFromTo>())
     {
-        expression_ref E2 = var("Compiler.Enum.enumFromTo");
-        E2 = {E2, L->from, L->to};
-        return desugar(E2);
+        expression_ref enumFromTo = var("Compiler.Enum.enumFromTo");
+        if (L->enumFromToOp)
+            enumFromTo = L->enumFromToOp;
+
+        return {enumFromTo, desugar(L->from), desugar(L->to)};
     }
     else if (auto L = E.to<Hs::ListFromThen>())
     {
-        expression_ref E2 = var("Compiler.Enum.enumFromThen");
-        E2 = {E2, L->from, L->then};
-        return desugar(E2);
+        expression_ref enumFromThen = var("Compiler.Enum.enumFromThen");
+        if (L->enumFromThenOp)
+            enumFromThen = L->enumFromThenOp;
+        return {enumFromThen, desugar(L->from), desugar(L->then)};
     }
     else if (auto L = E.to<Hs::ListFromThenTo>())
     {
-        expression_ref E2 = var("Compiler.Enum.enumFromThenTo");
-        E2 = {E2, L->from, L->then, L->to};
-        return desugar(E2);
+        expression_ref enumFromThenTo = var("Compiler.Enum.enumFromThenTo");
+        if (L->enumFromThenToOp)
+            enumFromThenTo = L->enumFromThenToOp;
+
+        return {enumFromThenTo, desugar(L->from), desugar(L->then), desugar(L->to)};
     }
     else if (E.is_a<Hs::ListComprehension>())
     {
@@ -468,10 +475,13 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         expression_ref result;
 
         // do {e ; stmts }  =>  e >> do { stmts }
-        if (first.is_a<Hs::SimpleQual>())
+        if (auto sq = first.to<Hs::SimpleQual>())
         {
             expression_ref e = first.as_<Hs::SimpleQual>().exp;
-            result = {var("Compiler.Base.>>"), e, do_stmts};
+            expression_ref and_then = var("Compiler.Base.>>");
+            if (sq->andThenOp)
+                and_then = sq->andThenOp;
+            result = {and_then, e, do_stmts};
         }
 
         // do { p <- e ; stmts} => let {ok p = do {stmts}; ok _ = fail "..."} in e >>= ok
@@ -481,23 +491,27 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             auto& PQ = first.as_<Hs::PatQual>();
             expression_ref p = desugar_pattern(PQ.bindpat);
             expression_ref e = PQ.exp;
-            expression_ref qop = var("Compiler.Base.>>=");
+            expression_ref bind = var("Compiler.Base.>>=");
+            if (PQ.bindOp)
+                bind = PQ.bindOp;
 
             if (is_irrefutable_pat(p))
             {
                 expression_ref lambda = Hs::LambdaExp({PQ.bindpat}, do_stmts);
-                result = {qop,e,lambda};
+                result = {bind,e,lambda};
             }
             else
             {
                 // let {ok bindpat = do_stmts; ok _ = fail} in e >>= ok
                 auto ok = get_fresh_Var("ok", false);
                 expression_ref fail = {var("Compiler.Base.fail"),"Fail!"};
+                if (PQ.failOp)
+                    fail = PQ.failOp;
                 auto rule1 = Hs::MRule{ {PQ.bindpat},            Hs::SimpleRHS({noloc,do_stmts}) };
                 auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc,fail})     };
                 auto decl  = Hs::FunDecl(ok, Hs::Match{{rule1, rule2}});
 
-                expression_ref body = {qop,e,ok};
+                expression_ref body = {bind,e,ok};
                 result = Hs::LetExp({noloc,{{{decl}}}}, {noloc,body});
             }
         }
