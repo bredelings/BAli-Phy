@@ -537,6 +537,8 @@ struct Integer
 {
     int value;
     expression_ref fromIntegerOp;
+    Integer(int i): value(i) {}
+    Integer(int i, const expression_ref& op): value(i), fromIntegerOp(op) {}
 };
 
 struct String

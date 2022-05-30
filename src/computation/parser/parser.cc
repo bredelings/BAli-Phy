@@ -2377,7 +2377,7 @@ namespace yy {
 
   case 63: // topdecl: "foreign" "import" "bpcall" "STRING" var "::" sigtypedoc
 #line 610 "parser.y"
-                                                                 {yylhs.value.as < expression_ref > () = Hs::ForeignDecl(yystack_[3].value.as < std::string > (),yystack_[2].value.as < std::string > (), yystack_[0].value.as < expression_ref > ());}
+                                                                 {yylhs.value.as < expression_ref > () = Hs::ForeignDecl(yystack_[3].value.as < std::string > (), yystack_[2].value.as < std::string > (), yystack_[0].value.as < expression_ref > ());}
 #line 2382 "parser.cc"
     break;
 
@@ -4213,7 +4213,7 @@ namespace yy {
 
   case 417: // literal: "INTEGER"
 #line 1419 "parser.y"
-                     {yylhs.value.as < expression_ref > () = yystack_[0].value.as < int > ();}
+                     {yylhs.value.as < expression_ref > () = Hs::Literal(Hs::Integer(yystack_[0].value.as < int > ()));}
 #line 4218 "parser.cc"
     break;
 

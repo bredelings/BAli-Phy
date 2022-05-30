@@ -1416,7 +1416,7 @@ consym:  CONSYM  { $$ = $1; }
 
 literal: CHAR        {$$ = $1;}
 |        STRING      {$$ = yy_make_string($1);}
-|        INTEGER     {$$ = $1;}
+|        INTEGER     {$$ = Hs::Literal(Hs::Integer($1));}
 |        RATIONAL    {$$ = $1;}
 |        PRIMINTEGER {$$ = Hs::Literal(Hs::BoxedInteger{$1});}
 
