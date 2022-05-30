@@ -1,6 +1,10 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 
+#include "range/v3/all.hpp"
+
+namespace views = ranges::views;
+
 using std::string;
 using std::vector;
 using std::map;
@@ -109,3 +113,108 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
 }
 
 
+Hs::Type
+typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<Hs::Qual>& stmts)
+{
+    auto& stmt = stmts[i];
+    // Last statement -- an expression.
+    if (i == stmts.size() - 1)
+    {
+        auto last = stmt.to<Hs::SimpleQual>();
+        if (not last)
+            throw myexception()<<"stmts list does not end in an expression";
+
+        auto Last = *last;
+        auto [exp, type] = infer_type(env, Last.exp);
+        Last.exp = exp;
+
+        stmt = Last;
+        return type;
+    }
+    // Bind stmt
+    else if (auto pq = stmt.to<Hs::PatQual>())
+    {
+        // pat <- exp ; stmts  =>  exp >>= (\pat -> stmts)
+        auto PQ = *pq;
+
+        // 1. Typecheck (>>=)
+        auto [bind_op, bind_op_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Base.>>="}));
+        PQ.bindOp = bind_op;
+
+        // 2. Typecheck exp
+        auto [exp, exp_type] = infer_type(env, PQ.exp);
+        PQ.exp = exp;
+
+        // 3. bind_op_type ~ (exp_type -> a)
+        auto a = fresh_meta_type_var( kind_star() );
+        unify(bind_op_type, Hs::make_arrow_type(exp_type, a));
+
+        // 4. Typecheck pat
+        auto [bindpat, pat_type, pat_binders] = infer_pattern_type(PQ.bindpat);
+        auto env2 = plus_prefer_right( env, pat_binders );
+        PQ.bindpat = bindpat;
+
+        // 5. Typecheck stmts
+        auto stmts_type = infer_stmts_type(env2, i+1, stmts);
+
+        // 6. a ~ (pat_type -> stmts_type) -> b
+        auto b = fresh_meta_type_var( kind_star() );
+        unify(a, Hs::make_arrow_type(Hs::make_arrow_type(pat_type, stmts_type), b));
+
+        // 7. if pat is failable, also typecheck "fail"
+        if (true) // desugaring always emits fail right now, I think...
+        {
+            auto [fail_op, fail_op_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Base.fail"}));
+            PQ.failOp = fail_op;
+        }
+
+        stmt = PQ;
+        return b;
+    }
+    else if (auto sq = stmt.to<Hs::SimpleQual>())
+    {
+        // exp ; stmts  =>  exp >> stmts
+        auto SQ = *sq;
+
+        // 1. Typecheck (>>)
+        auto [and_then_op, and_then_op_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Base.>>"}));
+        SQ.andThenOp = and_then_op;
+
+        // 2. Typecheck exp
+        auto [exp, exp_type] = infer_type(env, SQ.exp);
+        SQ.exp = exp;
+
+        // 3. and_then_op_type ~ (exp_type -> a)
+        auto a = fresh_meta_type_var( kind_star() );
+        unify(and_then_op_type, Hs::make_arrow_type(exp_type, a));
+
+        // 4. Typecheck stmts
+        auto stmts_type = infer_stmts_type(env, i+1, stmts);
+
+        // 5. a ~ stmts_type -> b
+        auto b = fresh_meta_type_var( kind_star() );
+        unify(a, Hs::make_arrow_type(stmts_type, b));
+
+        stmt = SQ;
+        return b;
+    }
+    else if (auto lq = stmt.to<Hs::LetQual>())
+    {
+        // let binds ; stmts  =>  let binds in stmts
+
+        // 1. Typecheck binds.
+        auto LQ = *lq;
+        auto [binds, binders] = infer_type_for_binds(env, unloc(LQ.binds));
+        unloc(LQ.binds) = binds;
+
+        auto env2 = plus_prefer_right(env, binders);
+
+        // 2. Typecheck stmts
+        auto stmts_type = infer_stmts_type(env2, i+1, stmts);
+
+        stmt = LQ;
+        return stmts_type;
+    }
+    else
+        std::abort();
+}

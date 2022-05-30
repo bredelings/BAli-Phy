@@ -255,6 +255,14 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         return {If, tbranch_type};
     }
+    // DO expression
+    else if (auto do_exp = E.to<Hs::Do>())
+    {
+        auto DoExp = *do_exp;
+        auto do_type = infer_stmts_type(env, 0, DoExp.stmts.stmts);
+        return {DoExp, do_type};
+    }
+
     // LISTCOMP
     else if (auto lcomp = E.to<Hs::ListComprehension>())
     {

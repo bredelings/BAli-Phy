@@ -145,6 +145,9 @@ struct typechecker_state: FreshVarSource
 
     std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> instantiate(const Hs::Type& t, bool meta=true);
 
+    Hs::Type
+    infer_stmts_type(const global_value_env& env, int i, std::vector<Hs::Qual>& stmts);
+
     // Figure 22.
     std::tuple<std::vector<Hs::Qual>, local_value_env>
     infer_quals_type(const global_value_env& env, std::vector<Hs::Qual> quals);
