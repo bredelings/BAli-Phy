@@ -550,6 +550,8 @@ struct Double
 {
     double value;
     expression_ref fromRationalOp;
+    Double(double d): value(d) {}
+    Double(double d, const expression_ref& op): value(d), fromRationalOp(op) {}
 };
 
 struct BoxedInteger
