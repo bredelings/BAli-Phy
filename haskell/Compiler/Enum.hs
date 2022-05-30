@@ -27,16 +27,22 @@ enumByFrom by from = from:enumByFrom by (from+by)
 enumByToFrom by to from | from <= to    = from:enumByToFrom by to (from+by)
                         | otherwise     = []
 
+succ :: Int -> Int
 succ n = n + 1
 
+pred :: Int -> Int
 pred n = n - 1
 
+enumFrom :: Int -> [Int]
 enumFrom n = n:enumFrom (succ n)
 
+enumFromThen :: Int -> Int -> [Int]
 enumFromThen from next = enumByFrom (next-from) from
 
+enumFromThenTo :: Int -> Int -> Int -> [Int]
 enumFromThenTo from next to = enumByToFrom (next - from) to from
 
+enumFromTo :: Int -> Int -> [Int]
 enumFromTo n m | n <= m    = n:enumFromTo (succ n) m
                | otherwise = []
 
