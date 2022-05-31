@@ -11,40 +11,44 @@ module Data.Ord (module Data.Eq,
 where
 
 import Data.Eq
-import Compiler.Num          -- for (-)
-import Foreign.Introspection -- for get_arg, get_n_args
 
 data Ordering = EQ | LT | GT
 
-class Eq a => Ord a
-
-foreign import bpcall "Prelude:compare_top" compare_top :: () -> () -> ()
+instance Eq Ordering where
+    EQ == EQ = True
+    LT == LT = True
+    GT == GT = True
+    _  == _  = False
 
 infix 4 <, <=, >, >=
 
-EQ <&> y = y
-x  <&> _ = x
+class Eq a => Ord a where
+    compare :: a -> a -> Ordering
+    (<), (>), (>=), (<=) :: a -> a -> Bool
+    min, max :: a -> a -> a
 
-compare_all []     = EQ
-compare_all (x:xs) = x <&> (compare_all xs)
+    min x y = if (x <= y) then x else y
+    max x y = if (x >= y) then x else y
 
-compare x y      = case compare_top x y of 4 -> LT
-                                           5 -> GT
-                                           6 -> EQ
-                                           _ -> compare_all [get_arg x i `compare` get_arg y i | i <- [0..get_n_args x - 1]]
+    compare x y | x <  y    = LT
+                | x == y    = EQ
+                | otherwise = GT
 
-x < y  = case compare x y of LT -> True
-                             _  -> False
+    x <  y = not (x >= y)
+    x >  y = not (x <= y)
+    x >= y = x > y || x == y
+    x <= y = x < y || x == y
 
-x <= y = case compare x y of GT -> False
-                             _  -> True
+foreign import bpcall "Prelude:" lessthan_char :: Char -> Char -> Bool
+foreign import bpcall "Prelude:" lessthan_int :: Int -> Int -> Bool
+foreign import bpcall "Prelude:" lessthan_double :: Double -> Double -> Bool
 
-x > y  = case compare x y of GT -> True
-                             _  -> False
+instance Ord Char where
+    (<) = lessthan_char
 
-x >= y = case compare x y of LT -> False
-                             _  -> True
+instance Ord Int where
+    (<) = lessthan_int 
 
-min x y = if (x <= y) then x else y
-max x y = if (x >= y) then x else y
+instance Ord Double where
+    (<) = lessthan_double
 

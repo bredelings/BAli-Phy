@@ -1,18 +1,16 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Compiler.ST (unsafeInterleaveST,
-                    runST)
+module Compiler.ST (ST, runST)
     where
 
 import Compiler.Base -- for seq, IO = IOActionX, LazyIO, IOAndPass, MFIX, IOReturn
 import Data.Tuple    -- for snd
+import Data.Function -- for $
 
-unsafeInterleaveST x = LazyIO x
+data ST s a = ST { runST :: s -> (s, a) }
 
-runST (IOAction f) = snd (f 0)
-runST (LazyIO f) = runST f
-runST (IOAndPass (LazyIO f) g) = let x = runST f in runST (g x)
--- probably we can get this effect by rerunning the whole computation if either the state or result changes. using join.
-runST (IOAndPass f g) = let x = runST f in x `join` runST (g x)
-runST (MFix f) = let x = runST (f x) in x
-runST (IOReturn x) = x
+instance Monad (ST s) where
+    f >>= g  = ST (\state1 -> let (state2,x) = runST f state1 in x `seq` runST (g x) state2)
+    return x = ST (\s -> (s, x))
+    mfix f   = ST (\state1 -> let result@(state2, x) = runST (f x) state1 in result)
+    unsafeInterleaveIO f = ST (\state -> (state, snd $ runST f state))

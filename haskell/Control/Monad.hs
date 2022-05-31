@@ -7,9 +7,9 @@ import Data.Function
 import Data.Ord
 import Compiler.Num
 
-import Control.Applicative
+-- import Control.Applicative
 
-class Applicative m => Monad m
+-- class Applicative m => Monad m
 
 mapM f = sequence . map f
 
@@ -19,7 +19,7 @@ forM = flip mapM
 
 forM_ = flip mapM_
 
-sequence [] = return []
+sequence []     = return []
 sequence (a:as) = do x <- a
                      xs <- sequence as
                      return (x:xs)

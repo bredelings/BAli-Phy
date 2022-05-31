@@ -1,25 +1,22 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Functor where
 
-import Compiler.Base
 import Data.Function
 
-class Functor f
+class Functor f where
+    fmap :: (a -> b) -> f a -> f b
+    (<$) :: a -> f b -> f a
 
--- This should move to Control.Applicative
-pure = return
-
--- fmap should be a method of `Functor`.
--- fmap should stop mentioning `pure`.
-fmap f x = do x' <- x
-              pure (f x')
-
-(<$) = fmap . const
+    (<$) = fmap . const
 
 ($>) = flip (<$)
 
-(<$>) = fmap
+f <$> x = fmap f x
 
 (<&>) = flip fmap
 
 void x = () <$ x
+
+instance Functor [] where
+    fmap f [] = []
+    fmap f (x:xs) = (f x):(fmap f xs)

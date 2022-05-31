@@ -2,26 +2,33 @@
 module Control.Applicative where
 
 import Data.Functor
+import Data.Function
 
-class Functor f => Applicative f
+infixl 4 <*>, <*, *>
 
-f <*> x = do fresult <- f
-             xresult <- x
-             pure (fresult xresult)
+class Functor f => Applicative f where
+    pure :: a -> f a
+    (<*>) :: f (a -> b) -> f a -> f b 
+    liftA2 :: (a -> b -> c) -> f a -> f b -> f c 
+    (*>) :: f a -> f b -> f b
+    (<*) :: f a -> f b -> f a
 
-liftA2 f as bs = do a <- as
-                    b <- bs
-                    pure (f a b)
+    (<*>) = liftA2 id
+    liftA2 f x y = f <$> x <*> y
+    as *> bs = (\x y -> y) <$> as <*> bs
+    as <* bs = (\x y -> x) <$> as <*> bs
 
-as *> bs = do as
-              b <- bs
-              pure b
 
-as <* bs = do a <- as
-              bs
-              pure a
+infixl 3 <|>
 
--- empty
+class Applicative f => Alternative f where
+    empty :: f a
+    (<|>) :: f a -> f a -> f a
+    some :: f a -> f [a]
+    many :: f a -> f [a]
+
+    many v = some v <|> pure []
+--  Not working! some v = (:) <$> v <*> many v
 
 -- These are defined by Parse.hs
 -- <|>
