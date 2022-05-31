@@ -27,7 +27,7 @@ infixl 9 !
 foreign import bpcall "Array:getIndex" (!) :: Array a b -> a -> b
 
 foreign import bpcall "Array:arraySize" numElements :: Array a b -> Int
-foreign import bpcall "Array:mkArray" mkArray :: () -> () -> ()
+foreign import bpcall "Array:mkArray" mkArray :: a -> (a -> b) -> Array a b
 
 listArray n l = mkArray n (\i -> l !! i)
 
