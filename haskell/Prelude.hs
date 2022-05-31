@@ -48,12 +48,12 @@ import Foreign.String
 
 foreign import bpcall "Prelude:putStrLn" builtin_putStrLn :: CPPString -> Int -> EPair Int ()
 
-foreign import bpcall "Prelude:is_char" is_char :: a -> Bool
-foreign import bpcall "Prelude:is_double" is_double :: a -> Bool
-foreign import bpcall "Prelude:is_int" is_int :: a -> Bool
+foreign import bpcall "Prelude:" is_char :: a -> Bool
+foreign import bpcall "Prelude:" is_double :: a -> Bool
+foreign import bpcall "Prelude:" is_int :: a -> Bool
 
-foreign import bpcall "Prelude:read_int" builtin_read_int :: CPPString -> Int
-foreign import bpcall "Prelude:read_double" builtin_read_double :: CPPString -> Double
+foreign import bpcall "Prelude:" read_int :: CPPString -> Int
+foreign import bpcall "Prelude:" read_double :: CPPString -> Double
 
 undefined = error "Prelude.undefined"
 
@@ -114,11 +114,11 @@ class Read a where
 
 instance Read Int where
     read [] = error "Can't convert empty string to int."
-    read s = builtin_read_int (list_to_string s)
+    read s = read_int (list_to_string s)
 
 instance Read Double where
     read [] = error "Can't convert empty string to double."
-    read s = builtin_read_double (list_to_string s)
+    read s = read_double (list_to_string s)
 
 foreign import bpcall "Data:readFile" builtin_readFile :: CPPString -> CPPString
 readFile filename = IOAction (\s -> (s,listFromString $ builtin_readFile $ list_to_string $ filename))
