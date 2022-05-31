@@ -77,11 +77,11 @@ foreign import bpcall "Prelude:" show_int :: Int -> CPPString
 foreign import bpcall "Prelude:" show_double :: Double -> CPPString
 
 instance Show Char where
-    show  c = ['"',c,'"']
+    show  c = ['\'',c,'\'']
     showList s = "\"" ++ s ++ "\""
 
 instance Show Int where
-    show  i = unpack_cpp_string $ show_int i
+    show i = unpack_cpp_string $ show_int i
 
 instance Show Double where
     show  d = unpack_cpp_string $ show_double d
