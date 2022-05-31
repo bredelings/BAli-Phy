@@ -451,7 +451,8 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     // We also need to substitute before we quantify below.
     mono_binder_env = apply_current_subst(mono_binder_env);
 
-    auto fixed_tvs = free_type_variables(env);
+    auto fixed_tvs = free_type_variables( apply_current_subst(env) );
+
     set<Hs::TypeVar> tvs_in_any_type;  // type variables in ANY of the definitions
     set<Hs::TypeVar> tvs_in_all_types;  // type variables in ALL of the definitions
     {
