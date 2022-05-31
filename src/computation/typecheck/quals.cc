@@ -162,7 +162,9 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
         unify(a, Hs::make_arrow_type(Hs::make_arrow_type(pat_type, stmts_type), b));
 
         // 7. if pat is failable, also typecheck "fail"
-        if (true) // desugaring always emits fail right now, I think...
+        // desugaring always emits fail right now, I think...
+        // but if we typecheck this without unifying it with anything, it will create an ambiguous constraint.
+        if (false) 
         {
             auto [fail_op, fail_op_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Base.fail"}));
             PQ.failOp = fail_op;
