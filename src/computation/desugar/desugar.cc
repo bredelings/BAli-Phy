@@ -7,6 +7,7 @@
 #include "util/io.H"
 #include "models/parameters.H"
 #include "computation/loader.H"
+#include "computation/expression/core.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
@@ -118,7 +119,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 
 	    // x = case z of pat -> x
 	    for(auto& x: get_free_indices(pat))
-		decls.push_back( {x ,case_expression(z, {pat}, {failable_expression(x)}).result(core_error("pattern binding: failed pattern match"))});
+		decls.push_back( {x ,case_expression(z, {pat}, {failable_expression(x)}).result(Core::error("pattern binding: failed pattern match"))});
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
         {
@@ -136,7 +137,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 
                 equations.push_back({ patterns, rhs});
             }
-            auto otherwise = core_error(fvar.name+": pattern match failure");
+            auto otherwise = Core::error(fvar.name+": pattern match failure");
             decls.push_back( {fvar , def_function(equations, otherwise) } );
         }
         else if (auto gb = decl.to<Hs::GenBind>())
@@ -541,7 +542,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         // 2. Desugar the body, binding vars mentioned in the lambda patterns.
         auto rhs = desugar_rhs(L.body);
 
-        return def_function({{L.args, rhs}}, core_error("lambda: pattern match failure"));
+        return def_function({{L.args, rhs}}, Core::error("lambda: pattern match failure"));
     }
     else if (E.is_a<Hs::LetExp>())
     {
@@ -576,7 +577,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             patterns.push_back( desugar_pattern( unloc(alt).pattern) );
             bodies.push_back( desugar_rhs(unloc(alt).rhs) );
         }
-        return case_expression(obj, patterns, bodies).result(core_error("case: failed pattern match"));
+        return case_expression(obj, patterns, bodies).result(Core::error("case: failed pattern match"));
     }
     else if (E.is_a<Hs::ValueDecl>())
         std::abort();

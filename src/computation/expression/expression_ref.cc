@@ -373,13 +373,6 @@ unique_ptr<expression> operator+(const expression& E1, const expression_ref& E2)
     return unique_ptr<expression>(E3);
 }
 
-expression_ref core_error(const std::string& s)
-{
-    expression_ref error = var("Compiler.Error.error");
-    expression_ref msg = {var("Foreign.String.unpack_cpp_string"),String(s)};
-    return {error,msg};
-}
-
 EVector::operator vector<double>() const
 {
     vector<double> v2(size());

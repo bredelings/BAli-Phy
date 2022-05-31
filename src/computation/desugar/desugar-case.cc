@@ -6,6 +6,7 @@
 #include "util/io.H"
 #include "models/parameters.H"
 #include "computation/loader.H"
+#include "computation/expression/core.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
@@ -350,7 +351,7 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
         auto& LP = pat1.as_<Haskell::LazyPattern>();
 	CDecls binds = {};
 	for(auto& y: get_free_indices(LP.pattern))
-	    binds.push_back({y,case_expression(x, {LP.pattern}, {failable_expression(y)}).result(core_error("lazy pattern: failed pattern match"))});
+	    binds.push_back({y,case_expression(x, {LP.pattern}, {failable_expression(y)}).result(Core::error("lazy pattern: failed pattern match"))});
 	rhs.add_binding(binds);
 	pat1 = var(-1);
     }

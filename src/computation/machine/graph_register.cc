@@ -6,6 +6,7 @@
 #include "util/string/join.H"
 #include "util/io/vector.H"
 #include "graph_register.H"
+#include "computation/expression/core.H"
 #include "computation/expression/var.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/tuple.H"
@@ -1909,7 +1910,7 @@ optional<int> reg_heap::lookup_named_head(const string& name)
 
 int reg_heap::add_perform_io_head()
 {
-    perform_io_head = add_compute_expression(var("Compiler.IO.unsafePerformIO"));
+    perform_io_head = add_compute_expression( Core::unsafePerformIO() );
     return *perform_io_head;
 }
 
@@ -1928,7 +1929,7 @@ int reg_heap::add_program(const expression_ref& E)
 
     if (program->type == Program::exe_type::standard)
     {
-        P = {var("Compiler.IO.unsafePerformIO"), P};
+        P = Core::unsafePerformIO(P);
         int program_head = add_compute_expression(P);
         program_result_head = program_head;
         return *program_result_head;
@@ -1939,7 +1940,7 @@ int reg_heap::add_program(const expression_ref& E)
         // 2. If the program doesn't return a pair, make it a pair
         P = {var("Probability.Random.add_null_program_result"), P};
     }
-    P = {var("Compiler.IO.unsafePerformIO"), P};
+    P = Core::unsafePerformIO(P);
 
     int program_head = add_compute_expression(P);
     P = reg_var(heads[program_head]);

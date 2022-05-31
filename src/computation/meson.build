@@ -23,7 +23,7 @@ computation_sources = [
   'haskell/ids.cc', 'haskell/type.cc',
 
   'expression/operator.cc', 'expression/expression.cc','expression/constructor.cc',
-  'expression/expression_ref.cc',
+  'expression/expression_ref.cc', 'expression/core.cc',
   'expression/apply.cc','expression/substitute.cc',
   'expression/indexify.cc','expression/let.cc',
   'expression/case.cc','expression/trim.cc',
