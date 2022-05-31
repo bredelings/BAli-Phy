@@ -4,6 +4,7 @@ module Data.List where
 import Compiler.Error
 import Compiler.Base
 import Compiler.Num
+import Compiler.Enum
 import Data.Bool
 import Data.Eq
 import Data.Maybe
@@ -57,7 +58,7 @@ intercalate xs xss = concat (intersperse xs xss)
 --transpose
 
 subsequences [] = [[]]
-subsequences (x:xs) = let ys = subsequences xs in xs ++ (map (x:) xs)
+subsequences (x:xs) = let ys = subsequences xs in ys ++ (map (x:) ys)
 
 permutations [] = [[]]
 permutations (x:xs) = let ys = permutations xs in map (x:) ys ++ map (++[x]) ys
@@ -229,6 +230,7 @@ elemIndices key = findIndices (key==)
 findIndex p = listToMaybe . findIndices p
 
 -- findIndices
+findIndices :: (a -> Bool) -> [a] -> [Int]
 findIndices p xs = [i | (i,x) <- zip [0..] xs, p x]
 --
 
@@ -259,9 +261,8 @@ unzip (h:t) = (x:xs,y:ys) where (x,y) = h
 
 lines "" = []
 lines s  = case break (== '\n') s of
-             (l, s') -> (l, case s' of
-                              [] -> []
-                              _:s'' -> lines s'')
+             (l, s') -> [l] ++ case s' of []    -> []
+                                          _:s'' -> lines s''
 
 words s = case dropWhile isSpace s of
             "" -> []
@@ -288,10 +289,11 @@ nub = nubBy (==)
 sort  = sortOn id
 
 -- sortOn
+sortOn :: Ord b => (a -> b) -> [a] -> [a]
 sortOn f [] = []
 sortOn f (x:xs) = sortOn f small ++ (x : sortOn f large)
-   where small = [y | y <- xs, (f y) <= (f x)]
-         large = [y | y <- xs, (f y)  > (f x)]
+   where small = [x' | x' <- xs, (f x') <= (f x)]
+         large = [x' | x' <- xs, (f x')  > (f x)]
 
 -- insert
 
