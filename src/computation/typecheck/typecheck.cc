@@ -523,34 +523,47 @@ void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2, const myex
 
 set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
 
-pair<Hs::Type, vector<Hs::Type>> typechecker_state::constr_types(const Hs::Con& con)
+Hs::Type typechecker_state::constructor_type(const Hs::Con& con)
 {
     auto& con_name = unloc(con.name);
 
     if (con_name == ":")
     {
-        Hs::Type a = fresh_meta_type_var( kind_star() );
-        return {Hs::ListType(a),{a,Hs::ListType(a)}};
+        auto a = fresh_meta_type_var( kind_star() );
+        return Hs::add_forall_vars({a},Hs::function_type({a, Hs::ListType(a)}, Hs::ListType(a)));
     }
     else if (con_name == "[]")
     {
-        Hs::Type a = fresh_meta_type_var( kind_star() );
-        return {Hs::ListType(a),{}};
+        auto a = fresh_meta_type_var( kind_star() );
+        return Hs::add_forall_vars({a},Hs::function_type({}, Hs::ListType(a)));
     }
     else if (is_tuple_name(con_name) or con_name == "()")
     {
         int n = tuple_arity(con_name);
         vector<Hs::Type> types;
+        vector<Hs::TypeVar> tvs;
         for(int i=0;i<n;i++)
-            types.push_back(fresh_meta_type_var( kind_star() ));
-        return {Hs::TupleType(types),types};
+        {
+            auto tv = fresh_meta_type_var( kind_star() );
+            types.push_back( tv );
+            tvs.push_back( tv );
+        }
+
+        return Hs::add_forall_vars(tvs, Hs::function_type(types, Hs::TupleType(types)));
     }
 
-    // 1. Find the data type
     if (not con_info.count(con_name))
         throw myexception()<<"Unrecognized constructor: "<<con;
 
-    auto [_, constraints, con_type] = instantiate(con_info.at(con_name));
+    return con_info.at(con_name);
+}
+
+
+pair<Hs::Type, vector<Hs::Type>> typechecker_state::constructor_pattern_types(const Hs::Con& con)
+{
+    // Question: is this how we should handle constraint arguments?
+
+    auto [_, constraints, con_type] = instantiate( constructor_type(con) );
     vector<Hs::Type> field_types;
 
     while(auto f = Hs::is_function_type(con_type))

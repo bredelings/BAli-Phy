@@ -153,6 +153,8 @@ struct StrictLazyType: public Object
 };
 
 
+    Type function_type(const std::vector<Type>& arg_types, const Type& result_type);
+
     Type make_arrow_type(const Type& t1, const Type& t2);
 
     std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);

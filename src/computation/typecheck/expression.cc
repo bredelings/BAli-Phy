@@ -173,12 +173,20 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         // return (s1 `compose` s2, t2)
         return {Let, t_body};
     }
+    else if (auto con = E.to<Hs::Con>())
+    {
+        auto [tvs, constraints, result_type] = instantiate( constructor_type(*con) );
+        return { E, result_type };
+    }
     else if (auto con = E.head().to<Hs::Con>())
     {
-        auto [type, field_types] = constr_types(*con);
+        vector<Hs::Exp> args = E.copy_sub();
+
+        auto [type, field_types] = constructor_pattern_types(*con);
+        if (args.size() < field_types.size())
+            return infer_type(env, apply_expression(*con, args));
 
         vector<Hs::Type> arg_types;
-        vector<Hs::Exp> args = E.copy_sub();
         for(int i=0; i < args.size(); i++)
         {
             auto& arg = args[i];

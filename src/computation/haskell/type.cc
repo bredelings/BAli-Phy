@@ -2,11 +2,14 @@
 #include "util/string/join.H"
 #include "haskell/ids.H"       // for tuple_name
 #include "util/set.H"          // for includes( , )
+#include <range/v3/all.hpp>
 
 using std::string;
 using std::pair;
 using std::vector;
 using std::optional;
+
+namespace views = ranges::views;
 
 namespace Haskell
 {
@@ -15,6 +18,14 @@ Type make_arrow_type(const Type& t1, const Type& t2)
 {
     static TypeCon type_arrow(Located<string>({},"->"));
     return TypeApp(TypeApp(type_arrow,t1),t2);
+}
+
+Type function_type(const vector<Type>& arg_types, const Type& result_type)
+{
+    Type ftype = result_type;
+    for(auto& arg_type: arg_types | views::reverse)
+        ftype = make_arrow_type(arg_type, ftype);
+    return ftype;
 }
 
 pair<Type,vector<Type>> decompose_type_apps(Type t)

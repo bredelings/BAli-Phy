@@ -121,7 +121,9 @@ struct typechecker_state: FreshVarSource
 
     void unify(const Hs::Type& t1, const Hs::Type& t2, const myexception& e);
 
-    std::pair<Hs::Type, std::vector<Hs::Type>> constr_types(const Hs::Con&);
+    Hs::Type constructor_type(const Hs::Con&);
+
+    std::pair<Hs::Type, std::vector<Hs::Type>> constructor_pattern_types(const Hs::Con&);
 
     std::optional<std::tuple<substitution_t, Hs::Binds>>
     candidates(const Hs::TypeVar& tv, const local_instance_env& tv_lie);

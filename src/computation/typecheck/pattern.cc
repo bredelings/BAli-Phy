@@ -58,7 +58,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
             lve += lve1;
         }
         substitution_t s;
-        auto [type,field_types] = constr_types(*con);
+        auto [type,field_types] = constructor_pattern_types(*con);
 
         assert(field_types.size() == pat.size());
 
