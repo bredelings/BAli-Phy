@@ -332,7 +332,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         // 3. enumFrom_type ~ from_type -> result_type
         auto result_type = fresh_meta_type_var( kind_star() );
-        unify(enumFrom_type, Hs::make_arrow_type(enumFrom_type, result_type));
+        unify(enumFrom_type, Hs::make_arrow_type(from_type, result_type));
 
         return { L, result_type };
     }
@@ -351,7 +351,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         // 3. enumFromThen_type ~ from_type -> a
         auto a = fresh_meta_type_var( kind_star() );
-        unify(enumFromThen_type, Hs::make_arrow_type(enumFromThen_type, a));
+        unify(enumFromThen_type, Hs::make_arrow_type(from_type, a));
 
         // 4. Typecheck then argument
         auto [then, then_type] = infer_type(env, L.then);
@@ -359,7 +359,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         // 5. a ~ then_type -> result_type
         auto result_type = fresh_meta_type_var( kind_star() );
-        unify(a, Hs::make_arrow_type(enumFromThen_type, result_type));
+        unify(a, Hs::make_arrow_type(then_type, result_type));
         
         return { L, result_type };
     }
@@ -378,7 +378,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         // 3. enumFromTo_type ~ from_type -> a
         auto a = fresh_meta_type_var( kind_star() );
-        unify(enumFromTo_type, Hs::make_arrow_type(enumFromTo_type, a));
+        unify(enumFromTo_type, Hs::make_arrow_type(from_type, a));
 
         // 4. Typecheck to argument
         auto [to, to_type] = infer_type(env, L.to);
@@ -386,7 +386,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         // 5. a ~ to_type -> result_type
         auto result_type = fresh_meta_type_var( kind_star() );
-        unify(a, Hs::make_arrow_type(enumFromTo_type, result_type));
+        unify(a, Hs::make_arrow_type(to_type, result_type));
         
         return { L, result_type };
     }
@@ -405,7 +405,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         // 3. enumFromThenTo_type ~ from_type -> a
         auto a = fresh_meta_type_var( kind_star() );
-        unify(enumFromThenTo_type, Hs::make_arrow_type(enumFromThenTo_type, a));
+        unify(enumFromThenTo_type, Hs::make_arrow_type(from_type, a));
 
         // 4. Typecheck then argument
         auto [then, then_type] = infer_type(env, L.then);
