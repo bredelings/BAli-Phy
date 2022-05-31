@@ -47,7 +47,7 @@ var FreshVarSource::get_fresh_var_copy(var x)
 
 Hs::Var FreshVarSource::get_fresh_Var(const std::string& name, bool qualified)
 {
-    string name2 = name + "@" + std::to_string( get_index() );
+    string name2 = get_unqualified_name(name) + "@" + std::to_string( get_index() );
 
     if (qualified)
         name2 = qualified_name(name2);
