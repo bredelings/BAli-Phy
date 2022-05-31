@@ -180,6 +180,8 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     }
     else if (auto con = E.head().to<Hs::Con>())
     {
+        // See note in rename/expressio.cc about rewriting (@ con args) to (con args)
+
         vector<Hs::Exp> args = E.copy_sub();
 
         auto [type, field_types] = constructor_pattern_types(*con);
@@ -251,6 +253,48 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         unify(tbranch_type, fbranch_type);
 
         return {If, tbranch_type};
+    }
+    // LEFT section
+    else if (auto lsec = E.to<Hs::LeftSection>())
+    {
+        auto LSec = *lsec;
+
+        // 1. Typecheck the op
+        auto [op, op_type] = infer_type(env, LSec.op);
+        LSec.op = op;
+
+        // 2. Typecheck the left argument
+        auto [left_arg, left_arg_type] = infer_type(env, LSec.l_arg);
+        LSec.l_arg = left_arg;
+
+        // 3. Typecheck the function application
+        auto result_type = fresh_meta_type_var( kind_star() );
+        unify(op_type, Hs::make_arrow_type(left_arg_type, result_type));
+
+        return {LSec, result_type};
+    }
+    // Right section
+    else if (auto rsec = E.to<Hs::RightSection>())
+    {
+        auto RSec = *rsec;
+
+        // 1. Typecheck the op
+        auto [op, op_type] = infer_type(env, RSec.op);
+        RSec.op = op;
+
+        // 2. Typecheck the right argument
+        auto [right_arg, right_arg_type] = infer_type(env, RSec.r_arg);
+        RSec.r_arg = right_arg;
+
+        // 3. Typecheck the function application:  op left_arg right_arg
+        auto left_arg_type = fresh_meta_type_var( kind_star() );
+        auto result_type = fresh_meta_type_var( kind_star() );
+        unify(op_type, Hs::function_type({left_arg_type, right_arg_type}, result_type));
+
+        // 4. Compute the section type;
+        Hs::Type section_type = Hs::function_type({left_arg_type}, result_type);
+
+        return {RSec, section_type};
     }
     // DO expression
     else if (auto do_exp = E.to<Hs::Do>())
