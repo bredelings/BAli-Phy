@@ -526,6 +526,12 @@ int main(int argc,char* argv[])
         else if (args.count("run-module"))
         {
             string filename = args["run-module"].as<string>();
+
+            if (args.count("type-check"))
+                L->typecheck = true;
+
+            L->optimize = args["optimize"].as<bool>();
+
             execute_file(L, filename);
             exit(0);
         }
