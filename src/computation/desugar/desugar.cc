@@ -40,12 +40,17 @@ desugar_state::desugar_state(const Module& m_, FreshVarState& state)
 {}
 
 
-expression_ref desugar_string(const std::string& s)
+expression_ref desugar_string_pattern(const std::string& s)
 {
     vector<expression_ref> chars;
     for(char c: s)
 	chars.push_back(c);
     return get_list(chars);
+}
+
+expression_ref desugar_string_expression(const std::string& s)
+{
+    return Core::unpack_cpp_string(s);
 }
 
 bool is_irrefutable_pat(const expression_ref& E)
@@ -303,7 +308,7 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
         }
         else if (auto s = L->is_String())
         {
-            return desugar_string(*s);
+            return desugar_string_pattern(*s);
         }
         else if (auto i = L->is_BoxedInteger())
         {
@@ -350,7 +355,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         expression_ref enumFrom = var("Compiler.Enum.enumFrom");
         if (L->enumFromOp)
-            enumFrom = L->enumFromOp;
+            enumFrom = desugar(L->enumFromOp);
 
         return {enumFrom, desugar(L->from)};
     }
@@ -358,7 +363,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         expression_ref enumFromTo = var("Compiler.Enum.enumFromTo");
         if (L->enumFromToOp)
-            enumFromTo = L->enumFromToOp;
+            enumFromTo = desugar(L->enumFromToOp);
 
         return {enumFromTo, desugar(L->from), desugar(L->to)};
     }
@@ -366,14 +371,14 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         expression_ref enumFromThen = var("Compiler.Enum.enumFromThen");
         if (L->enumFromThenOp)
-            enumFromThen = L->enumFromThenOp;
+            enumFromThen = desugar(L->enumFromThenOp);
         return {enumFromThen, desugar(L->from), desugar(L->then)};
     }
     else if (auto L = E.to<Hs::ListFromThenTo>())
     {
         expression_ref enumFromThenTo = var("Compiler.Enum.enumFromThenTo");
         if (L->enumFromThenToOp)
-            enumFromThenTo = L->enumFromThenToOp;
+            enumFromThenTo = desugar(L->enumFromThenToOp);
 
         return {enumFromThenTo, desugar(L->from), desugar(L->then), desugar(L->to)};
     }
@@ -486,7 +491,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             expression_ref e = first.as_<Hs::SimpleQual>().exp;
             expression_ref and_then = var("Compiler.Base.>>");
             if (sq->andThenOp)
-                and_then = sq->andThenOp;
+                and_then = desugar(sq->andThenOp);
             result = {and_then, e, do_stmts};
         }
 
@@ -499,7 +504,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             expression_ref e = PQ.exp;
             expression_ref bind = var("Compiler.Base.>>=");
             if (PQ.bindOp)
-                bind = PQ.bindOp;
+                bind = desugar(PQ.bindOp);
 
             if (is_irrefutable_pat(p))
             {
@@ -510,9 +515,9 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             {
                 // let {ok bindpat = do_stmts; ok _ = fail} in e >>= ok
                 auto ok = get_fresh_Var("ok", false);
-                expression_ref fail = {var("Compiler.Base.fail"), desugar_string("Fail!")};
+                expression_ref fail = {var("Compiler.Base.fail"), desugar_string_expression("Fail!")};
                 if (PQ.failOp)
-                    fail = PQ.failOp;
+                    fail = desugar(PQ.failOp);
                 auto rule1 = Hs::MRule{ {PQ.bindpat},            Hs::SimpleRHS({noloc,do_stmts}) };
                 auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc,fail})     };
                 auto decl  = Hs::FunDecl(ok, Hs::Match{{rule1, rule2}});
@@ -591,18 +596,23 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         {
             Hs::Integer I = std::get<Hs::Integer>(L->literal);
             if (I.fromIntegerOp)
-                return {I.fromIntegerOp, I.value};
+                return {desugar(I.fromIntegerOp), I.value};
             else
                 return I.value;
         }
         else if (auto d = L->is_Double())
         {
-            // FIXME: we want to actually compare with fromFractional(E)
+            Hs::Double D = std::get<Hs::Double>(L->literal);
+            if (D.fromRationalOp)
+                return {desugar(D.fromRationalOp), D.value};
+            else
+                return D.value;
+
             return *d;
         }
         else if (auto s = L->is_String())
         {
-            return desugar_string(*s);
+            return desugar_string_expression(*s);
         }
         else if (auto i = L->is_BoxedInteger())
         {
