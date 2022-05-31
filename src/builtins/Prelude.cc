@@ -747,6 +747,24 @@ extern "C" closure builtin_function_join(OperationArgs& Args)
     return closure{E,{x,y}};
 }
 
+extern "C" closure builtin_function_show_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+
+    object_ptr<String> v (new String);
+    *v = std::to_string(x);
+    return v;
+}
+
+extern "C" closure builtin_function_show_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_double();
+
+    object_ptr<String> v (new String);
+    *v = std::to_string(x);
+    return v;
+}
+
 extern "C" closure builtin_function_show(OperationArgs& Args)
 {
     auto x = Args.evaluate(0);

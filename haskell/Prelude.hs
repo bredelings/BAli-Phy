@@ -52,7 +52,6 @@ foreign import bpcall "Prelude:is_char" is_char :: a -> Bool
 foreign import bpcall "Prelude:is_double" is_double :: a -> Bool
 foreign import bpcall "Prelude:is_int" is_int :: a -> Bool
 
-foreign import bpcall "Prelude:show" builtin_show :: a -> CPPString
 foreign import bpcall "Prelude:read_int" builtin_read_int :: CPPString -> Int
 foreign import bpcall "Prelude:read_double" builtin_read_double :: CPPString -> Double
 
@@ -68,6 +67,24 @@ putStrLn line = IOAction (pair_from_c . builtin_putStrLn (list_to_string line))
 
 class Show a where
     show :: a -> [Char]
+    showList :: [a] -> [Char]
+
+    showList [] = "[]"
+    showList (x:y) = "["++show x++show' y++"]" where show' [] = ""
+                                                     show' (x:y) = ", "++show x++show' y
+
+foreign import bpcall "Prelude:" show_int :: Int -> CPPString
+foreign import bpcall "Prelude:" show_double :: Double -> CPPString
+
+instance Show Char where
+    show  c = ['"',c,'"']
+    showList s = "\"" ++ s ++ "\""
+
+instance Show Int where
+    show  i = unpack_cpp_string $ show_int i
+
+instance Show Double where
+    show  d = unpack_cpp_string $ show_double d
 
 instance Show () where
     show _ = "()"
@@ -81,10 +98,9 @@ instance (Show a, Show b, Show c) => Show (a,b,c) where
 instance (Show a, Show b, Show c, Show d) => Show (a,b,c,d) where 
     show (x,y,z,w) = "(" ++ show x ++ "," ++ show y ++ "," ++ show z ++ "," ++ show w ++ ")"
 
-instance Show a => Show [a]where
-    show [] = "[]"
-    show (x:y) = "["++show x++show' y++"]" where show' [] = ""
-                                                 show' (x:y) = ","++show x++show' y
+instance Show a => Show [a] where
+    show s = showList s
+
 instance Show a => Show (Maybe a) where
     show (Just x) = "Just "++show x
     show Nothing = "Nothing"
