@@ -39,7 +39,7 @@ Hs::FunDecl dictionary_extractor(const string& name, int i, int N)
 // * Hs::Decls           = { name         = \dict -> case dict of (_,_,method,_,_) -> method }
 //                       = { made-up-name = \dict -> case dict of (superdict,_,_,_,_) -> superdict }
 
-tuple<global_value_env,global_instance_env, ClassInfo, Hs::Decls>
+tuple<global_value_env, ClassInfo, Hs::Decls>
 typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     kindchecker_state K(tce);
@@ -141,7 +141,9 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         i++;
     }
 
-    return {gve,gie,class_info,decls};
+    superclass_extractor_env += gie;
+
+    return {gve,class_info,decls};
 }
 
 Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
@@ -153,10 +155,9 @@ Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
         auto c = decl.to<Hs::ClassDecl>();
         if (not c) continue;
 
-        auto [gve1, gie1, class_info, class_decls] = infer_type_for_class(*c);
+        auto [gve1, class_info, class_decls] = infer_type_for_class(*c);
 
         gve += gve1;
-        superclass_extractor_env += gie1;
         class_env.insert({class_info.name, class_info});
 
         class_binds.push_back(class_decls);

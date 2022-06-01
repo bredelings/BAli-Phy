@@ -195,7 +195,7 @@ struct typechecker_state: FreshVarSource
 
     Hs::Binds infer_type_for_classes(const Hs::Decls& decls);
 
-    std::tuple<global_value_env,global_instance_env, ClassInfo,Hs::Decls>
+    std::tuple<global_value_env, ClassInfo,Hs::Decls>
     infer_type_for_class(const Hs::ClassDecl& class_decl);
 
     Hs::Decls infer_type_for_default_methods(const Hs::ClassDecl&);
