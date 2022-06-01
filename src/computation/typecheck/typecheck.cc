@@ -75,15 +75,17 @@ using std::tuple;
   * Make a version of the string-to-[Char] routine that makes sense type-wise.
   * Always generalize at top level.
   * Rewrite builtin decls to look like `foreign import mycall "lib:fname" name :: type`
+  * Typecheck do-expression, left-sections, and right sections.
+  * Typecheck syntax operations directly: fromInteger, fromRational, (>>=), (>>), enumFrom, etc...
+  * Record impedance-matching info in GenBind, but only for passing dictionaries.
+  * Implement literals, including literal strings.
 
   TODO:
-  0. Typecheck Do, MDo, Stmts, RecStmt, LetQual, SimpleQual, PatQual.
-  - Related to typechecking list comprehensions...
+  0. Handling monomorphic and polymorphic calls:
+    * When a binder is only defined in a LOCAL environment (i) use a different name and (ii) don't generate polymorhpic calls
+    * However, if there is also an explicit type signature, then we can generate a polymorphic call.
+  0. Typecheck Rec, MDo, etc.
   0. Handle type-synonyms.
-  0. How to enable type-checking for CURRENT code:
-  - No fromInteger / fromRational
-  - All the Enum stuff assumes Int, no Enum a => a
-  - ??
   0. Cleanup: eliminate dependencies on expression_ref:
      - Make Pattern into a Type that doesn't depend on expression_ref.
        - Make a LitPattern that compares Int, Double, String, Char by equality.
@@ -112,6 +114,8 @@ using std::tuple;
        + And we want to do this regardless of how many times the method selector and the dfun appear?
        + GHC does something else...  see DFunUnfolding?
   4. Avoid a space leak with polymorphic recursion in cases like factorial.
+    + When we generate a polymorphic call, sometimes the call is at the same type as the monomorphic call.
+    + In those cases, we want to replace the polymorphic call with a monomorphic call... how?
   5. Record impedance-matching info for types on GenBind
      - Need to pass type/dict arguments in correct order for (forall a. C1 a => forall b. C2 b => a -> b -> a)
      - Instantiated type would otherwise be treated as (forall a b. (C1 a, C2 b) => a -> b -> a)
@@ -127,7 +131,6 @@ using std::tuple;
      - Remove the constraint from EmptySet
         - I guess we remove type-level constraints if they would be ambiguous.
         - I guess we COMPLAIN about user-specified constructor-level constraints if they would be ambiguous.
-
   11. Annotate let, lambda, and case binders with variable's type.
   12. Should we make AST for: 
      - \(dicts::theta) -> monobinds in binds    -> This is GenBinds
@@ -135,16 +138,18 @@ using std::tuple;
      - (superdicts, methods)
       We can then desugar these expressions to EITHER multiple dictionaries OR a tuple of dictionaries.
       Can we desugar the dictionary for class K to a data type K?
-  12. Implement fromInt and fromRational
-  13. Implement literal strings.  Given them type [Char] and turn them into lists during desugaring.
-      Do I need to handle LiteralString patterns, then?
   18. Add basic error reporting.
-  19. How do we handle things like Prelude.Num, Prelude.Enum, Prelude.fromInt, etc.
-      Right now, maybe we can pick a Num / fromInt from the local scope, instead?
-      This might require passing some information from the renamer into the typechecker...
-  20. Handle literal constant patterns.  We need a Num or Fractional dictionary for
-      Int or Double constants.  I guess we need an Eq Char, or Eq [Char] dictionary for
-      characters or strings?
+  20. Handle literal constant patterns.  
+      - we need to typecheck something like (==) (fromInteger x :: a) (case_object :: b)
+      - then we would report the type b
+      - this requires an Eq dictionary for the (==) and a Num dictionary (eventually) for the integer
+      - we don't create an actual case_object expression, just unify the type of (==) with (a -> b -> c)
+        and extract the b.
+      - should we use an operator == for strings as well?
+      - I guess (case x of 1 -> y; _ -> rest) changes to (case (x == 1) of True -> y; _ -> rest)
+        + this is NOT a very efficient switch statement!
+      - what if I add a switch x of {1 -> x, 2 -> y, etc.} operation for cases where x :: Int#?
+      - we know that you can do (<) comparison on Int#...
 
   Optimization:
   - If we have ((case x of alts) y z), should we sink the arguments?
