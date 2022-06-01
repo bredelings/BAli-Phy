@@ -33,7 +33,9 @@ struct typechecker_state: FreshVarSource
     //------- global state ------------//
     const Module& this_mod; // for name lookups like Bool, Num, etc.
 
-    type_con_env tycon_info;
+    type_con_env tycon_info_;
+          type_con_env& tycon_info()       {return tycon_info_;}
+    const type_con_env& tycon_info() const {return tycon_info_;}
 
     // maybe merge with gve by mapping name -> type,con-or-var
     constr_env con_info_;

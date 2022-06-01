@@ -317,14 +317,14 @@ void typechecker_state::get_tycon_info(const Hs::Decls& type_decls)
     // Compute kinds for type/class constructors.
     for(auto& type_decl_group: type_decl_groups)
     {
-        kindchecker_state K(tycon_info);
+        kindchecker_state K( tycon_info() );
 
         auto new_tycons_for_group = K.infer_kinds(type_decl_group);
 
         new_tycons += new_tycons_for_group;
 
         // Later groups could refer to tycons from this group
-        tycon_info += new_tycons_for_group;
+        tycon_info() += new_tycons_for_group;
     }
 
 //    for(auto& [tycon,ka]: new_tycons)
@@ -720,7 +720,7 @@ Hs::Type remove_top_level_foralls(Hs::Type t)
 
 void typechecker_state::get_constructor_info(const Hs::Decls& decls)
 {
-    kindchecker_state ks(tycon_info);
+    kindchecker_state ks( tycon_info() );
 
     for(auto& decl: decls)
     {
@@ -764,21 +764,21 @@ Hs::Decls typechecker_state::add_type_var_kinds(Hs::Decls type_decls)
         if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
         {
             auto D = type_decl.as_<Hs::DataOrNewtypeDecl>();
-            auto kind = tycon_info.at(D.name).kind;
+            auto kind = tycon_info().at(D.name).kind;
             result_kind_for_type_vars(D.type_vars, kind);
             type_decl = D;
         }
         else if (type_decl.is_a<Hs::ClassDecl>())
         {
             auto C = type_decl.as_<Hs::ClassDecl>();
-            auto kind = tycon_info.at(C.name).kind;
+            auto kind = tycon_info().at(C.name).kind;
             result_kind_for_type_vars(C.type_vars, kind);
             type_decl = C;
         }
         else if (type_decl.is_a<Hs::TypeSynonymDecl>())
         {
             auto T = type_decl.as_<Hs::TypeSynonymDecl>();
-            auto kind = tycon_info.at(T.name).kind;
+            auto kind = tycon_info().at(T.name).kind;
             result_kind_for_type_vars(T.type_vars, kind);
             type_decl = T;
         }
