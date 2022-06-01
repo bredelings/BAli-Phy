@@ -460,23 +460,22 @@ void typechecker_state::get_defaults(const Hs::ModuleDecls& M)
 
 typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const Module& m)
     :FreshVarSource(fvs, s),
-     this_mod(m)
+     this_mod_(m)
 {
-    type_var_to_type = std::make_shared<substitution_t>();
     push_lie();
 }
 
 Hs::Var typechecker_state::find_prelude_var(string name) const
 {
-    if (this_mod.is_declared(name))
-        name = this_mod.lookup_symbol(name).name;
+    if (this_mod().is_declared(name))
+        name = this_mod().lookup_symbol(name).name;
     return Hs::Var({noloc, name});
 }
 
 ID typechecker_state::find_prelude_tycon_name(const string& name) const
 {
-    if (this_mod.type_is_declared(name))
-        return this_mod.lookup_type(name).name;
+    if (this_mod().type_is_declared(name))
+        return this_mod().lookup_type(name).name;
     else
         return name;
 }
@@ -509,9 +508,9 @@ Hs::Type typechecker_state::double_type() const
 
 bool typechecker_state::add_substitution(const substitution_t& s)
 {
-    if (auto s2 = combine(*type_var_to_type, s))
+    if (auto s2 = combine(type_var_to_type(), s))
     {
-        *type_var_to_type = *s2;
+        type_var_to_type() = *s2;
         return true;
     }
     else

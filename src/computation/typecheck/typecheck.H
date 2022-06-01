@@ -31,9 +31,11 @@ global_value_env sig_env(const signature_env& signatures);
 struct typechecker_state: FreshVarSource
 {
     //------- global state ------------//
-    const Module& this_mod; // for name lookups like Bool, Num, etc.
+    const Module& this_mod_; // for name lookups like Bool, Num, etc.
 
-    type_con_env tycon_info_;
+    const Module& this_mod() const {return this_mod_;}
+
+          type_con_env tycon_info_;
           type_con_env& tycon_info()       {return tycon_info_;}
     const type_con_env& tycon_info() const {return tycon_info_;}
 
@@ -60,7 +62,10 @@ struct typechecker_state: FreshVarSource
 
     //------- shared state -----------//
 
-    std::shared_ptr<substitution_t> type_var_to_type;
+    substitution_t type_var_to_type_;
+
+    substitution_t& type_var_to_type() {return type_var_to_type_;}
+    const substitution_t& type_var_to_type() const {return type_var_to_type_;}
 
     //------- local state ------------//
 
@@ -109,7 +114,7 @@ struct typechecker_state: FreshVarSource
     template <typename T>
     T apply_current_subst(const T& thing) const
     {
-        return apply_subst(*type_var_to_type, thing);
+        return apply_subst(type_var_to_type(), thing);
     }
 
     bool add_substitution(const substitution_t& s);
