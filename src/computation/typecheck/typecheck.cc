@@ -444,9 +444,9 @@ void typechecker_state::pop_and_add_lie()
 void typechecker_state::get_defaults(const Hs::ModuleDecls& M)
 {
     if (M.default_decl)
-        defaults = M.default_decl->types;
+        defaults() = M.default_decl->types;
     else
-        defaults = { Hs::TypeCon({noloc,"Int"}), Hs::TypeCon({noloc,"Double"}) };
+        defaults() = { Hs::TypeCon({noloc,"Int"}), Hs::TypeCon({noloc,"Double"}) };
 }
 
 typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const Module& m)

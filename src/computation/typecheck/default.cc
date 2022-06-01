@@ -67,7 +67,7 @@ typechecker_state::candidates(const Hs::TypeVar& tv, const local_instance_env& t
     // Fail if none of the predicates is a numerical constraint
     if (not any_num) return {};
 
-    for(auto& type: defaults)
+    for(auto& type: defaults() )
     {
         substitution_t s;
         s = s.insert({tv, type});
