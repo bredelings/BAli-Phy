@@ -8,7 +8,9 @@
 #include "util/set.H"
 #include "kind.H"
 
-typedef immer::map<std::string, Hs::Type> value_env;
+typedef std::string ID;
+
+typedef immer::map<ID, Hs::Type> value_env;
 
 typedef value_env global_value_env;
 
@@ -49,7 +51,7 @@ struct type_con_info
 // -- perhaps we need to store the KIND, and not just the arity?
 };
 
-typedef std::map<std::string, type_con_info> type_con_env;
+typedef std::map<ID, type_con_info> type_con_env;
 
 void add_no_overlap(type_con_env& e1, const type_con_env& e2);
 type_con_env plus_no_overlap(const type_con_env& e1, const type_con_env& e2);
@@ -59,7 +61,7 @@ type_con_env operator+(const type_con_env&, const type_con_env&);
 
 struct ClassInfo
 {
-    std::string name;
+    ID name;
     std::vector<Hs::TypeVar> type_vars;
 
     // Maybe change this to vector<pair<Type,string>>, 
@@ -68,13 +70,13 @@ struct ClassInfo
 
     local_value_env members;
 
-    std::map<std::string, Hs::Var> default_methods;
+    std::map<ID, Hs::Var> default_methods;
 
     // FIXME - we need the order of the constraints, and the order of the members
-    std::vector<std::pair<std::string,Hs::Type>> fields;
+    std::vector<std::pair<ID,Hs::Type>> fields;
 };
 
-typedef std::map<std::string, ClassInfo> ClassEnv;
+typedef std::map<ID, ClassInfo> ClassEnv;
 
 std::set<Hs::TypeVar> free_type_variables(const value_env& env);
 

@@ -251,7 +251,7 @@ classify_constraints(const local_instance_env& lie,
     return {lie_deferred, lie_retained};
 }
 
-tuple<expression_ref, string, Hs::Type>
+tuple<expression_ref, ID, Hs::Type>
 typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env& env, Hs::FunDecl FD)
 {
     try
@@ -314,7 +314,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
     }
 }
 
-bool is_restricted(const map<string, Hs::Type>& signatures, const Hs::Decls& decls)
+bool is_restricted(const map<ID, Hs::Type>& signatures, const Hs::Decls& decls)
 {
     for(auto& decl: decls)
     {

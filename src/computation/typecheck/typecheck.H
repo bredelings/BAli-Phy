@@ -24,12 +24,13 @@ type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::C
 
 typedef value_env constr_env;
 
-typedef std::map<std::string, Hs::Type> signature_env;
+typedef std::map<ID, Hs::Type> signature_env;
 
 global_value_env sig_env(const signature_env& signatures);
 
 struct typechecker_state: FreshVarSource
 {
+    //------- global state ------------//
     const Module& this_mod; // for name lookups like Bool, Num, etc.
 
     type_con_env tce;
@@ -45,11 +46,15 @@ struct typechecker_state: FreshVarSource
 
     global_instance_env superclass_extractor_env;
 
-    global_value_env gve;
-
     std::vector<Hs::Type> defaults;
 
+    //------- shared state -----------//
+
     substitution_t type_var_to_type;
+
+    //------- local state ------------//
+
+    global_value_env gve;
 
     std::vector<local_instance_env> lie_stack;
 
@@ -70,7 +75,7 @@ struct typechecker_state: FreshVarSource
     //------- Functions handling the LIE ---------
     local_instance_env& current_lie();
 
-    void add_dvar(const std::string& name, const Hs::Type& constraint);
+    void add_dvar(const ID& name, const Hs::Type& constraint);
 
     void add_dvar(const Hs::Var& dvar, const Hs::Type& constraint);
 
@@ -93,7 +98,7 @@ struct typechecker_state: FreshVarSource
 
     Hs::Var find_prelude_var(std::string name) const;
 
-    std::string find_prelude_tycon_name(const std::string& name) const;
+    ID find_prelude_tycon_name(const std::string& name) const;
 
     Hs::TypeCon find_prelude_tycon(const std::string& name) const;
 
@@ -183,7 +188,7 @@ struct typechecker_state: FreshVarSource
     std::tuple<Hs::Decls, global_value_env>
     infer_type_for_decls(const global_value_env& env, const signature_env&, const Hs::Decls&, bool is_top_level);
 
-    std::tuple<expression_ref, std::string, Hs::Type>
+    std::tuple<expression_ref, ID, Hs::Type>
     infer_type_for_single_fundecl_with_sig(const global_value_env& env, Hs::FunDecl FD);
 
     std::tuple<Hs::Decls, global_value_env>
@@ -237,19 +242,19 @@ struct typechecker_state: FreshVarSource
 
     // FIXME: this should be  const
     std::optional<Hs::Binds>
-    entails_by_superclass(const std::pair<std::string, Hs::Type>& to_keep,
-                          const std::pair<std::string, Hs::Type>& to_remove);
+    entails_by_superclass(const std::pair<ID, Hs::Type>& to_keep,
+                          const std::pair<ID, Hs::Type>& to_remove);
 
     template <typename T>
     std::optional<Hs::Binds>
-    entails(const T& to_keep, const std::pair<std::string, Hs::Type>& to_check);
+    entails(const T& to_keep, const std::pair<ID, Hs::Type>& to_check);
 
     std::pair<std::optional<Hs::Binds>, local_instance_env>
     entails(const local_instance_env& lie1, const local_instance_env& lie2);
 
     std::optional<std::pair<Hs::Var,std::vector<Hs::Type>>> lookup_instance(const Hs::Type& constraint);
 
-    std::pair<Hs::Binds,local_instance_env> toHnf(const std::string& name, const Hs::Type& constraint);
+    std::pair<Hs::Binds,local_instance_env> toHnf(const ID& name, const Hs::Type& constraint);
     std::pair<Hs::Binds, local_instance_env> toHnfs(const local_instance_env& lie_in);
     std::pair<Hs::Binds, local_instance_env> simplify(const local_instance_env& lie_in);
     std::pair<Hs::Binds, local_instance_env> reduce(const local_instance_env& lie_in);
@@ -261,7 +266,7 @@ struct typechecker_state: FreshVarSource
 };
 
 template <typename T>
-std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std::pair<std::string, Hs::Type>& to_remove)
+std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std::pair<ID, Hs::Type>& to_remove)
 {
     // 1. First check if the relevant constraints are superclasses of the current constraint.
     for(auto& constraint2: to_keep)
@@ -306,18 +311,18 @@ local_instance_env unordered_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>
 std::vector<Hs::Var> vars_from_lie(const local_instance_env& lie);
 std::vector<Hs::Var> vars_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie);
 
-std::optional<std::string> maybe_get_class_name_from_constraint(const Hs::Type& constraint);
-std::string get_class_name_from_constraint(const Hs::Type& constraint);
+std::optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint);
+ID get_class_name_from_constraint(const Hs::Type& constraint);
 
 global_value_env apply_subst(const substitution_t& s, const value_env& env1);
 
-std::map<std::string, Hs::Match> get_instance_methods(const Hs::Binds& decls, const global_value_env& members, const std::string& class_name);
+std::map<ID, Hs::Match> get_instance_methods(const Hs::Binds& decls, const global_value_env& members, const std::string& class_name);
 
 Hs::Var
-rename_var_pattern_from_bindinfo(Hs::Var V, const std::map<std::string, Hs::BindInfo>& bind_info);
+rename_var_pattern_from_bindinfo(Hs::Var V, const std::map<ID, Hs::BindInfo>& bind_info);
 
 Hs::Pattern
-rename_pattern_from_bindinfo(const Hs::Pattern& pat, const std::map<std::string, Hs::BindInfo>& bind_info);
+rename_pattern_from_bindinfo(const Hs::Pattern& pat, const std::map<ID, Hs::BindInfo>& bind_info);
 
 std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls);
 

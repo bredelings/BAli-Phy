@@ -78,7 +78,7 @@ optional<pair<Hs::Var,vector<Hs::Type>>> typechecker_state::lookup_instance(cons
     return {};
 }
 
-pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const string& name, const Hs::Type& constraint)
+pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const ID& name, const Hs::Type& constraint)
 {
     Hs::Binds binds;
     local_instance_env lie;

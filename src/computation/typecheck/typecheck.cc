@@ -81,16 +81,23 @@ using std::tuple;
   * Implement literals, including literal strings.
 
   TODO:
+  0. Use UniqueString = {string,optional<int>} ids after rename.
+    * Ideally, allow comparing just the integers.
+    * If the integers are the same, the strings had better be the same too!
+    * Should we record original names during rename?  What does GHC do?
+    * Currently, I guess the ids must be globally unique within an entire program.
+    * Later, if we allow separate compilation, we could allow ids to be unique within a module.
   0. Handling monomorphic and polymorphic calls:
     * When a binder is only defined in a LOCAL environment (i) use a different name and (ii) don't generate polymorhpic calls
     * However, if there is also an explicit type signature, then we can generate a polymorphic call.
-  0. Typecheck Rec, MDo, etc.
+    * How do we translate an id do a polymorphic id / monomorphic id ?  Do we pass down the monobinds info through typechecking?
   0. Handle type-synonyms.
   0. Cleanup: eliminate dependencies on expression_ref:
      - Make Pattern into a Type that doesn't depend on expression_ref.
        - Make a LitPattern that compares Int, Double, String, Char by equality.
+  0. Make a constructor expression that must be fully applied, instead of just
+     making the constructor a head?
   0. Cleanup: move generalization code out of binds.cc to generalize.cc?
-  0. Punt all defaulting to top level?
   0. Should/Can we get default_method_decls and superclass extractor decls from a class decl?
   0. Exporting and importing types and instances between modules:
      - Should we have separate maps for variables and constructors?
@@ -98,7 +105,9 @@ using std::tuple;
      - The small_decls won't have symbols though...  maybe we need annotated type info for that?
      - How do you export instances?
   0. Update importing/exporting of constructors and class methods -- in rename???
-  0. Can we thin out the number of exported objects using some kind of reachability analysis?
+  0. Typecheck Rec, MDo, etc.
+    * Rec is currently desugared in rename.
+    * MDo is ignored.
   1. Reject unification of variables, tycons, etc with different kinds.
      - Ensure that all ForallType binders have kinds.
      - Assign kinds to all TypeCons.... OR look it up in the symbol table when we need to!
@@ -120,6 +129,7 @@ using std::tuple;
      - Need to pass type/dict arguments in correct order for (forall a. C1 a => forall b. C2 b => a -> b -> a)
      - Instantiated type would otherwise be treated as (forall a b. (C1 a, C2 b) => a -> b -> a)
      - For defaulted defaulted types and defaulted dictionaries.
+  0. Punt all defaulting to top level?
   6. Check that constraints in instance contexts satisfy the "paterson conditions"
   7. Handle export subspecs Datatype(constructor...) and Class(method...)
   8. AST nodes for type and evidence bindings?
@@ -331,10 +341,10 @@ struct instance_info
     // How do we get the kind into the type vars?
     vector<Hs::TypeVar> type_vars;
     Hs::Context context;
-    string class_name;
+    ID class_name;
     std::vector<Hs::Type> argument_types;
 
-    string dfun_name;
+    ID dfun_name;
 
     // forall <type_vars> . context => class_name argument_types[0] arguments[1] .. argument_types[n01]
     Hs::Type dfun_type() const
@@ -352,7 +362,7 @@ global_value_env apply_subst(const substitution_t& s, const value_env& env1)
     return env2;
 }
 
-optional<string> maybe_get_class_name_from_constraint(const Hs::Type& constraint)
+optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint)
 {
     auto [tycon, args] = Hs::decompose_type_apps(constraint);
     if (auto tc = tycon.to<Hs::TypeCon>())
@@ -361,7 +371,7 @@ optional<string> maybe_get_class_name_from_constraint(const Hs::Type& constraint
         return {};
 }
 
-string get_class_name_from_constraint(const Hs::Type& constraint)
+ID get_class_name_from_constraint(const Hs::Type& constraint)
 {
     if (auto name = maybe_get_class_name_from_constraint(constraint))
         return *name;
@@ -385,7 +395,7 @@ local_instance_env& typechecker_state::current_lie() {
     return lie_stack.back();
 }
 
-void typechecker_state::add_dvar(const string& name, const Hs::Type& constraint)
+void typechecker_state::add_dvar(const ID& name, const Hs::Type& constraint)
 {
     auto& lie = current_lie();
     assert(not lie.count(name));
@@ -399,7 +409,7 @@ void typechecker_state::add_dvar(const Hs::Var& dvar, const Hs::Type& constraint
 
 Hs::Var typechecker_state::fresh_dvar(const Hs::Type& constraint)
 {
-    string name = "dvar";
+    ID name = "dvar";
     if (auto cname = maybe_get_class_name_from_constraint(constraint))
         name = "d" + *cname;
     return get_fresh_Var(name, false);
@@ -453,7 +463,7 @@ Hs::Var typechecker_state::find_prelude_var(string name) const
     return Hs::Var({noloc, name});
 }
 
-string typechecker_state::find_prelude_tycon_name(const string& name) const
+ID typechecker_state::find_prelude_tycon_name(const string& name) const
 {
     if (this_mod.type_is_declared(name))
         return this_mod.lookup_type(name).name;
