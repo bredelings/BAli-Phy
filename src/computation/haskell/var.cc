@@ -7,15 +7,21 @@ namespace Haskell
 
 string Var::print() const
 {
-    return unloc(name);
+    string uname = unloc(name);
+    if (index)
+        uname = uname +"#"+std::to_string(*index);
+
+    return uname;
 }
 
 string Var::print_with_type() const
 {
+    string uname = print();
+
     if (type)
-        return "("+unloc(name) + " :: " + (*type).print()+")";
-    else
-        return unloc(name);
+        uname = "("+uname + " :: " + (*type).print()+")";
+
+    return uname;
 }
 
 bool Var::operator==(const Object& o) const
@@ -29,14 +35,26 @@ bool Var::operator==(const Object& o) const
 
 bool Var::operator==(const Var& v) const
 {
-    return unloc(name) == unloc(v.name);
+    return index == v.index and unloc(name) == unloc(v.name);
 }
 
 bool Var::operator<(const Var& v) const
 {
-    int cmp = unloc(name).compare(unloc(v.name));
+    if (not index and v.index)
+        return true;
 
-    return cmp;
+    if (index and not v.index)
+        return false;
+
+    if (*index < *v.index)
+        return true;
+
+    if (*index > *v.index)
+        return false;
+
+    int cmp = unloc(name).compare(unloc(v.name));
+    
+    return (cmp < 0);;
 }
 
 }

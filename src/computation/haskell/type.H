@@ -20,8 +20,12 @@ enum class typevar_info {meta, rigid, other};
 struct TypeVar: public Object
 {
     Located<std::string> name;
+    std::optional<int> index;
+
     std::optional<Kind> kind;
+
     typevar_info info = typevar_info::other;
+
 //    std::optional<int> level;              // typechecking scope depth
 
     bool operator==(const Object&) const;

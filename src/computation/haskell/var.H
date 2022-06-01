@@ -12,6 +12,8 @@ namespace Haskell
 struct Var: public Object
 {
     Located<std::string> name;
+    std::optional<int> index;
+
     std::optional<Type> type;
 
     bool operator==(const Object&) const;

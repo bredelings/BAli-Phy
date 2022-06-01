@@ -93,7 +93,11 @@ string parenthesize_type(const expression_ref& t)
 
 string TypeVar::print() const
 {
-    return unloc(name);
+    string uname = unloc(name);
+    if (index)
+        uname = uname +"#"+std::to_string(*index);
+
+    return uname;
 }
 
 /*
@@ -108,10 +112,12 @@ int TypeVar::get_level() const
 
 string TypeVar::print_with_kind() const
 {
+    string uname = print();
+
     if (kind)
-        return "("+unloc(name) + " :: " + (*kind).print()+")";
-    else
-        return unloc(name);
+        uname = "("+uname + " :: " + (*kind).print()+")";
+
+    return uname;
 }
 
 bool TypeVar::operator==(const Object& o) const
@@ -125,11 +131,23 @@ bool TypeVar::operator==(const Object& o) const
 
 bool TypeVar::operator==(const TypeVar& tv) const
 {
-    return unloc(name) == unloc(tv.name);
+    return index == tv.index and unloc(name) == unloc(tv.name);
 }
 
 bool TypeVar::operator<(const TypeVar& tv) const
 {
+    if (not index and tv.index)
+        return true;
+
+    if (index and not tv.index)
+        return false;
+
+    if (*index < *tv.index)
+        return true;
+
+    if (*index > *tv.index)
+        return false;
+
     int cmp = unloc(name).compare(unloc(tv.name));
 
     return (cmp < 0);
@@ -157,14 +175,14 @@ bool TypeCon::operator==(const Object& o) const
     return (*this) == *T;
 }
 
-bool TypeCon::operator==(const TypeCon& tv) const
+bool TypeCon::operator==(const TypeCon& tc) const
 {
-    return unloc(name) == unloc(tv.name);
+    return unloc(name) == unloc(tc.name);
 }
 
-bool TypeCon::operator<(const TypeCon& tv) const
+bool TypeCon::operator<(const TypeCon& tc) const
 {
-    int cmp = unloc(name).compare(unloc(tv.name));
+    int cmp = unloc(name).compare(unloc(tc.name));
 
     return (cmp < 0);
 }
