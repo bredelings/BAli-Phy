@@ -16,7 +16,7 @@ Hs::Decls typechecker_state::infer_type_for_default_methods(const Hs::ClassDecl&
 {
     Hs::Decls decls_out;
 
-    auto class_info = class_env.at(C.name);
+    auto class_info = class_env().at(C.name);
     if (C.binds)
     {
         for(auto& decls: unloc(*C.binds))
@@ -81,9 +81,9 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     {
         // Check that this is a class, and not a data or type?
         auto class_name = unloc(tc->name);
-        if (not class_env.count(class_name))
+        if (not class_env().count(class_name))
             throw myexception()<<"In instance '"<<inst_decl.constraint<<"': no class '"<<class_name<<"'!";
-        class_info = class_env.at(class_name);
+        class_info = class_env().at(class_name);
     }
     else
         throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<class_head<<" is not a class!";
@@ -236,7 +236,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
     // 2. Get the class info
     auto class_name = get_class_for_constraint(instance_head);
-    ClassInfo class_info = class_env.at(class_name);
+    auto class_info = class_env().at(class_name);
 
     // 3. Get constrained version of the class
     substitution_t subst;

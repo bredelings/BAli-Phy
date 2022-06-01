@@ -326,10 +326,10 @@ void Module::import_module(const Program& P, const module_import& I)
         }
 
         // 3. Import information about class ops
-        for(auto& [cname,cinfo]: M2.tc_state->class_env)
+        for(auto& [cname,cinfo]: M2.tc_state->class_env())
         {
-            if (not tc_state->class_env.count(cname))
-                tc_state->class_env.insert({cname,cinfo});
+            if (not tc_state->class_env().count(cname))
+                tc_state->class_env().insert({cname,cinfo});
         }
 
         // 4. Import information about instances
@@ -947,15 +947,10 @@ void mark_exported_decls(CDecls& decls,
         for(auto& [name,_]: tc_state->instance_env())
             exported.insert(name);
 
-        for(auto& [cname,cinfo]: tc_state->class_env)
+        for(auto& [cname,cinfo]: tc_state->class_env())
         {
-            // Superclass extractors are exported
-            int N = cinfo.fields.size() - cinfo.members.size();
-            for(int i=0;i<N;i++)
-            {
-                auto& [e_name, type] = cinfo.fields[i];
+            for(auto& [e_name, type]: cinfo.superclass_extractors)
                 exported.insert(e_name);
-            }
 
             // Default methods are exported
             for(auto& [method, dm]: cinfo.default_methods)

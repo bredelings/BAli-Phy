@@ -37,7 +37,10 @@ struct typechecker_state: FreshVarSource
 
     constr_env con_info;
 
-    ClassEnv class_env;
+    ClassEnv class_env_;
+
+          ClassEnv& class_env()       {return class_env_;}
+    const ClassEnv& class_env() const {return class_env_;}
 
     global_instance_env instance_env_;
 
