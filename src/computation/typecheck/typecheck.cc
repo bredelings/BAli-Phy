@@ -453,6 +453,7 @@ typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const 
     :FreshVarSource(fvs, s),
      this_mod(m)
 {
+    type_var_to_type = std::make_shared<substitution_t>();
     push_lie();
 }
 
