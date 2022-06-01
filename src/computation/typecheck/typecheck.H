@@ -28,7 +28,22 @@ typedef std::map<ID, Hs::Type> signature_env;
 
 global_value_env sig_env(const signature_env& signatures);
 
-struct typechecker_state: FreshVarSource
+struct typechecker_result
+{
+    Hs::Binds class_binds;
+
+    Hs::Binds value_decls;
+
+    Hs::Binds default_method_decls;
+
+    Hs::Binds instance_decls;
+
+    Hs::Binds top_simplify_binds;
+
+    Hs::Binds all_binds() const;
+};
+
+struct typechecker_state: FreshVarSource, public typechecker_result
 {
     //------- global state ------------//
     const Module& this_mod; // for name lookups like Bool, Num, etc.
@@ -57,20 +72,6 @@ struct typechecker_state: FreshVarSource
     global_value_env gve;
 
     std::vector<local_instance_env> lie_stack;
-
-    //------- Some of the results of typechecking
-
-    Hs::Binds class_binds;
-
-    Hs::Binds value_decls;
-
-    Hs::Binds default_method_decls;
-
-    Hs::Binds instance_decls;
-
-    Hs::Binds top_simplify_binds;
-
-    Hs::Binds all_binds() const;
 
     //------- Functions handling the LIE ---------
     local_instance_env& current_lie();

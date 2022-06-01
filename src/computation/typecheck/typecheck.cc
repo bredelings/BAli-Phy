@@ -777,7 +777,7 @@ Hs::Decls typechecker_state::add_type_var_kinds(Hs::Decls type_decls)
     return type_decls;
 }
 
-Hs::Binds typechecker_state::all_binds() const
+Hs::Binds typechecker_result::all_binds() const
 {
     Hs::Binds all = value_decls;
     all.signatures = {};
@@ -787,12 +787,12 @@ Hs::Binds typechecker_state::all_binds() const
     ranges::insert(all, all.end(), top_simplify_binds);
     ranges::insert(all, all.end(), class_binds);
 
-    std::cerr<<"All decls:\n";
-    for(auto& [name,type]: gve)
-        std::cerr<<name<<" :: "<<type<<"\n";
+//    std::cerr<<"All decls:\n";
+//    for(auto& [name,type]: gve)
+//        std::cerr<<name<<" :: "<<type<<"\n";
 
-    std::cerr<<all.print();
-    std::cerr<<"\n\n";
+//    std::cerr<<all.print();
+//    std::cerr<<"\n\n";
 
     return all;
 }
