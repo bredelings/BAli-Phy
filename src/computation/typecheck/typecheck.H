@@ -35,14 +35,14 @@ struct typechecker_state: FreshVarSource
 
     type_con_env tycon_info;
 
-    // This is used in exactly 1 place: constr_types( ).
-    // We could put this into gve if we mapped from name -> (type, is_a_constructor_or_not).
-    // How do we handle terms like (:)?  Is their type not in gve?
     constr_env con_info;
 
     ClassEnv class_env;
 
-    global_instance_env instance_env;
+    global_instance_env instance_env_;
+
+          global_instance_env& instance_env()       {return instance_env_;}
+    const global_instance_env& instance_env() const {return instance_env_;}
 
     std::vector<Hs::Type> defaults_;
 

@@ -333,10 +333,10 @@ void Module::import_module(const Program& P, const module_import& I)
         }
 
         // 4. Import information about instances
-        for(auto& [dfun_name, dfun_type]: M2.tc_state->instance_env)
+        for(auto& [dfun_name, dfun_type]: M2.tc_state->instance_env())
         {
-            if (not tc_state->instance_env.count(dfun_name))
-                tc_state->instance_env = tc_state->instance_env.insert({dfun_name, dfun_type});
+            if (not tc_state->instance_env().count(dfun_name))
+                tc_state->instance_env() = tc_state->instance_env().insert({dfun_name, dfun_type});
         }
 
         // 5. Import types for values.
@@ -944,7 +944,7 @@ void mark_exported_decls(CDecls& decls,
     if (tc_state)
     {
         // Instances are exported
-        for(auto& [name,_]: tc_state->instance_env)
+        for(auto& [name,_]: tc_state->instance_env())
             exported.insert(name);
 
         for(auto& [cname,cinfo]: tc_state->class_env)

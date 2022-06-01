@@ -57,7 +57,7 @@ bool constraint_is_hnf(const Hs::Type& constraint)
 
 optional<pair<Hs::Var,vector<Hs::Type>>> typechecker_state::lookup_instance(const Hs::Type& constraint)
 {
-    for(auto& [name, type]: instance_env)
+    for(auto& [name, type]: instance_env() )
     {
         auto [_, instance_constraints, instance_head] = instantiate(type);
 
