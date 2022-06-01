@@ -308,6 +308,10 @@ using std::tuple;
 // LVE = local  value environment      = var -> monotype
 
 
+global_tc_state::global_tc_state(const Module& m)
+    :this_mod(m)
+{ }
+
 void typechecker_state::get_tycon_info(const Hs::Decls& type_decls)
 {
     type_con_env new_tycons;
@@ -459,9 +463,10 @@ void typechecker_state::get_defaults(const Hs::ModuleDecls& M)
 }
 
 typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const Module& m)
-    :FreshVarSource(fvs, s),
-     this_mod_(m)
+    :FreshVarSource(fvs, s)
 {
+    global_state = std::make_shared<global_tc_state>(m);
+
     push_lie();
 }
 

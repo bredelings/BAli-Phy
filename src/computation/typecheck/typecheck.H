@@ -28,44 +28,51 @@ typedef std::map<ID, Hs::Type> signature_env;
 
 global_value_env sig_env(const signature_env& signatures);
 
+struct global_tc_state
+{
+    const Module& this_mod; // for name lookups like Bool, Num, etc.
+
+    type_con_env tycon_info;
+
+    ClassEnv class_env;
+
+    global_instance_env instance_env;
+
+    std::vector<Hs::Type> defaults;
+
+    substitution_t type_var_to_type;
+
+    // maybe merge with gve by mapping name -> type,con-or-var
+    constr_env con_info;
+
+    global_tc_state(const Module& m);
+};
+
+
 struct typechecker_state: FreshVarSource
 {
     //------- global state ------------//
-    const Module& this_mod_; // for name lookups like Bool, Num, etc.
+    std::shared_ptr<global_tc_state> global_state;
 
-    const Module& this_mod() const {return this_mod_;}
+    const Module& this_mod() const {return global_state->this_mod;}
 
-          type_con_env tycon_info_;
-          type_con_env& tycon_info()       {return tycon_info_;}
-    const type_con_env& tycon_info() const {return tycon_info_;}
+          type_con_env& tycon_info()       {return global_state->tycon_info;}
+    const type_con_env& tycon_info() const {return global_state->tycon_info;}
 
-    // maybe merge with gve by mapping name -> type,con-or-var
-    constr_env con_info_;
+          constr_env& con_info()       {return global_state->con_info;}
+    const constr_env& con_info() const {return global_state->con_info;}
 
-          constr_env& con_info()       {return con_info_;}
-    const constr_env& con_info() const {return con_info_;}
+          ClassEnv& class_env()       {return global_state->class_env;}
+    const ClassEnv& class_env() const {return global_state->class_env;}
 
-    ClassEnv class_env_;
+          global_instance_env& instance_env()       {return global_state->instance_env;}
+    const global_instance_env& instance_env() const {return global_state->instance_env;}
 
-          ClassEnv& class_env()       {return class_env_;}
-    const ClassEnv& class_env() const {return class_env_;}
+          std::vector<Hs::Type>& defaults()       {return global_state->defaults;}
+    const std::vector<Hs::Type>& defaults() const {return global_state->defaults;}
 
-    global_instance_env instance_env_;
-
-          global_instance_env& instance_env()       {return instance_env_;}
-    const global_instance_env& instance_env() const {return instance_env_;}
-
-    std::vector<Hs::Type> defaults_;
-
-          std::vector<Hs::Type>& defaults()       {return defaults_;}
-    const std::vector<Hs::Type>& defaults() const {return defaults_;}
-
-    //------- shared state -----------//
-
-    substitution_t type_var_to_type_;
-
-    substitution_t& type_var_to_type() {return type_var_to_type_;}
-    const substitution_t& type_var_to_type() const {return type_var_to_type_;}
+          substitution_t& type_var_to_type()       {return global_state->type_var_to_type;}
+    const substitution_t& type_var_to_type() const {return global_state->type_var_to_type;}
 
     //------- local state ------------//
 
