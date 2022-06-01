@@ -319,10 +319,10 @@ void Module::import_module(const Program& P, const module_import& I)
         }
 
         // 2. Import information about the type of constructors
-        for(auto& [cname,ctype]: M2.tc_state->con_info)
+        for(auto& [cname,ctype]: M2.tc_state->con_info())
         {
-            if (not tc_state->con_info.count(cname))
-                tc_state->con_info = tc_state->con_info.insert({cname,ctype});
+            if (not tc_state->con_info().count(cname))
+                tc_state->con_info() = tc_state->con_info().insert({cname,ctype});
         }
 
         // 3. Import information about class ops

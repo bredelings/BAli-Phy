@@ -577,10 +577,10 @@ Hs::Type typechecker_state::constructor_type(const Hs::Con& con)
         return Hs::add_forall_vars(tvs, Hs::function_type(types, Hs::TupleType(types)));
     }
 
-    if (not con_info.count(con_name))
+    if (not con_info().count(con_name))
         throw myexception()<<"Unrecognized constructor: "<<con;
 
-    return con_info.at(con_name);
+    return con_info().at(con_name);
 }
 
 
@@ -729,10 +729,10 @@ void typechecker_state::get_constructor_info(const Hs::Decls& decls)
 
         auto constr_map = ks.type_check_data_type(*d);
         for(auto& [name, type]: constr_map)
-            con_info = con_info.insert({name,type});
+            con_info() = con_info().insert({name,type});
     }
 
-//     for(auto& [con,type]: con_info)
+//     for(auto& [con,type]: con_info())
 //     {
 //         std::cerr<<con<<" :: "<<type.print()<<"\n";
 //     }

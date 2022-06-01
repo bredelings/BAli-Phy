@@ -35,7 +35,11 @@ struct typechecker_state: FreshVarSource
 
     type_con_env tycon_info;
 
-    constr_env con_info;
+    // maybe merge with gve by mapping name -> type,con-or-var
+    constr_env con_info_;
+
+          constr_env& con_info()       {return con_info_;}
+    const constr_env& con_info() const {return con_info_;}
 
     ClassEnv class_env_;
 
