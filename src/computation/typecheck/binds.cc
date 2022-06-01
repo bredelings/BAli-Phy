@@ -276,7 +276,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
         Hs::Type monotype = apply_current_subst(rhs_type);
 
         // 4. Find free type variables in the most general type
-        auto fixed_tvs = free_type_variables(env);
+        auto fixed_tvs = free_type_variables( apply_current_subst(env) );
         auto free_tvs = free_type_variables(monotype) - free_type_variables(env);
 
         // 5. simplify constraints and figure out which ones are relevant here
