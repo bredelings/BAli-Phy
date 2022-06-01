@@ -397,6 +397,18 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
          *     ; putChar c }               ; putChar c }
          */
 
+        /* So... you start the the last statement (e <- g a z) and then find the first statement that has an "e" in the
+           free vars of the rhs.  Thats a rec block, regardless of what anything else does, since you can reorder the stmts.
+           Then, presumably, you start with the last ungrouped statement, and continue the algorithm.
+
+           The statement itself could have an "e" in the rhs: e <- g a e.
+
+           If NO statement has a e in the rhs, then we move to the second-to-last stmt and continue the algorithm.
+
+           If a statement has e in the lhs, then no other stmts can have e in the lhs, because of the "name shadowing
+           not allowed" rule.
+         */
+
         /*
          * See ghc/compiler/rename/RnExpr.hs: Note [Segmenting mdo]
          * What does rec {a;c  mean here?
