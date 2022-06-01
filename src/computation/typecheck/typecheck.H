@@ -33,7 +33,7 @@ struct typechecker_state: FreshVarSource
     //------- global state ------------//
     const Module& this_mod; // for name lookups like Bool, Num, etc.
 
-    type_con_env tce;
+    type_con_env tycon_info;
 
     // This is used in exactly 1 place: constr_types( ).
     // We could put this into gve if we mapped from name -> (type, is_a_constructor_or_not).

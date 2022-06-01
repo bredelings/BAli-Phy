@@ -42,7 +42,7 @@ Hs::FunDecl dictionary_extractor(const string& name, int i, int N)
 tuple<global_value_env, ClassInfo, Hs::Decls>
 typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
-    kindchecker_state K(tce);
+    kindchecker_state K(tycon_info);
 
     ClassInfo class_info;
     class_info.type_vars = class_decl.type_vars;

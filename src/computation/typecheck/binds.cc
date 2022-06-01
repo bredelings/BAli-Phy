@@ -46,7 +46,7 @@ Hs::Binds typechecker_state::infer_type_for_binds_top(const Hs::Binds& binds)
 void typechecker_state::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreign_decls)
 {
     global_value_env fte;
-    kindchecker_state K(tce);
+    kindchecker_state K(tycon_info);
     for(auto& f: foreign_decls)
     {
         f.type = K.kind_and_type_check_type( f.type );
@@ -57,7 +57,7 @@ void typechecker_state::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& 
 
 global_value_env typechecker_state::infer_type_for_sigs(signature_env& signatures) const
 {
-    kindchecker_state K(tce);
+    kindchecker_state K(tycon_info);
     for(auto& [name,type]: signatures)
         type = K.kind_and_type_check_type(type);
 

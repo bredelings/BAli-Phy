@@ -312,10 +312,10 @@ void Module::import_module(const Program& P, const module_import& I)
         // So.. if we import a data type declaration, do we ALSO have to import any types that its constructors reference?
 
         // 1. Import info about arity and kind of type constructors..
-        for(auto& [tycon,info]: M2.tc_state->tce)
+        for(auto& [tycon,info]: M2.tc_state->tycon_info)
         {
-            if (not tc_state->tce.count(tycon))
-                tc_state->tce.insert({tycon,info});
+            if (not tc_state->tycon_info.count(tycon))
+                tc_state->tycon_info.insert({tycon,info});
         }
 
         // 2. Import information about the type of constructors
@@ -588,7 +588,7 @@ void Module::perform_exports()
     if (tc_state)
     {
         // Record kinds on the type symbol table
-        for(auto& [typecon,info]: tc_state->tce)
+        for(auto& [typecon,info]: tc_state->tycon_info)
         {
             if (get_module_name(typecon) == name)
             {
