@@ -217,6 +217,24 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
         stmt = LQ;
         return stmts_type;
     }
+    else if (rq = stmt.to<Hs::RecStmt>())
+    {
+        /*
+         * See "Recursive binding groups" in https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html
+         *
+         * "Like let and where bindings, name shadowing is not allowed within an mdo-expression or a rec-block"
+         *
+         * As an example:           ===>
+         *   rec { b <- f a c              (b,c) <- mfix (\ ~(b,c) -> do { b <- f a c
+         *       ; c <- f b a }                                          ; c <- f b a
+         *                                                               ; return (b,c) } )
+         *
+         * See ghc/compiler/rename/RnExpr.hs
+         */
+
+        // currently we desugar rec stmts in rename.
+        std::abort();
+    }
     else
         std::abort();
 }
