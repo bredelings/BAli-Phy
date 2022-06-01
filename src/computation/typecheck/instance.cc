@@ -41,6 +41,7 @@ Hs::Decls typechecker_state::infer_type_for_default_methods(const Hs::ClassDecl&
 
 Hs::Binds typechecker_state::infer_type_for_default_methods(const Hs::Decls& decls)
 {
+    Hs::Binds default_method_decls;
     for(auto& decl: decls)
     {
         auto c = decl.to<Hs::ClassDecl>();
@@ -326,6 +327,8 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
 Hs::Binds typechecker_state::infer_type_for_instances2(const vector<pair<Hs::Var, Hs::InstanceDecl>>& named_instances)
 {
+    Hs::Binds instance_decls;
+
     for(auto& [dfun, instance_decl]: named_instances)
     {
         auto decls = infer_type_for_instance2(dfun, instance_decl);

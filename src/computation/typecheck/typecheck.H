@@ -28,7 +28,7 @@ typedef std::map<ID, Hs::Type> signature_env;
 
 global_value_env sig_env(const signature_env& signatures);
 
-struct typechecker_state: FreshVarSource, public typechecker_result
+struct typechecker_state: FreshVarSource
 {
     //------- global state ------------//
     const Module& this_mod; // for name lookups like Bool, Num, etc.

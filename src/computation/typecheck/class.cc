@@ -146,6 +146,8 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
 Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
 {
+    Hs::Binds class_binds;
+
     for(auto& decl: decls)
     {
         auto c = decl.to<Hs::ClassDecl>();

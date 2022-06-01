@@ -149,7 +149,7 @@ typechecker_state::default_preds( const set<Hs::TypeVar>& fixed_tvs,
 
 Hs::Binds typechecker_state::simplify_and_default_top_level()
 {
-    auto simpl_binds = reduce_current_lie();
+    auto top_simplify_binds = reduce_current_lie();
 
     auto [s, default_binds, unambiguous_preds] = default_preds({}, {}, current_lie());
     assert(unambiguous_preds.empty());
@@ -171,7 +171,6 @@ Hs::Binds typechecker_state::simplify_and_default_top_level()
 //    }
 //    std::cerr<<"\n";
 
-    top_simplify_binds = simpl_binds;
     ranges::insert(top_simplify_binds, top_simplify_binds.end(), default_binds);
     return top_simplify_binds;
 }

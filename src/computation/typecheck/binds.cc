@@ -40,7 +40,6 @@ Hs::Binds typechecker_state::infer_type_for_binds_top(const Hs::Binds& binds)
     auto [type_checked_binds,env] = infer_type_for_binds(gve, binds, true);
     gve += env;
 
-    value_decls = type_checked_binds;
     return type_checked_binds;
 }
 
