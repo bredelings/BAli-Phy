@@ -50,7 +50,7 @@ struct typechecker_state: FreshVarSource
 
     //------- shared state -----------//
 
-    substitution_t type_var_to_type;
+    std::shared_ptr<substitution_t> type_var_to_type;
 
     //------- local state ------------//
 
@@ -99,7 +99,7 @@ struct typechecker_state: FreshVarSource
     template <typename T>
     T apply_current_subst(const T& thing) const
     {
-        return apply_subst(type_var_to_type, thing);
+        return apply_subst(*type_var_to_type, thing);
     }
 
     bool add_substitution(const substitution_t& s);

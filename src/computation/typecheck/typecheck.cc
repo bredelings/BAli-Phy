@@ -499,9 +499,9 @@ Hs::Type typechecker_state::double_type() const
 
 bool typechecker_state::add_substitution(const substitution_t& s)
 {
-    if (auto s2 = combine(type_var_to_type, s))
+    if (auto s2 = combine(*type_var_to_type, s))
     {
-        type_var_to_type = *s2;
+        *type_var_to_type = *s2;
         return true;
     }
     else
