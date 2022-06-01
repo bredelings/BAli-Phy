@@ -233,6 +233,13 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
          */
 
         // currently we desugar rec stmts in rename.
+
+        // So... we would need to typecheck "return" and "mfix", in order to collect the dictionaries for them.
+        // We would need to typecheck the individual stmts, but with "return ((b,i,n,d,e,r,s)" as the magic last statement.
+
+        // Then we'd have to typecheck mfix (\ ~(b,c) -> that)
+        // and all without actually constructing the expressions, I think, like how we decompose the application
+        // of (>>=) above...
         std::abort();
     }
     else
