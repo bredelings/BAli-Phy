@@ -81,6 +81,21 @@ class Program;
 
 class typechecker_state;
 
+struct typechecker_result
+{
+    Hs::Binds class_binds;
+
+    Hs::Binds value_decls;
+
+    Hs::Binds default_method_decls;
+
+    Hs::Binds instance_decls;
+
+    Hs::Binds top_simplify_binds;
+
+    Hs::Binds all_binds() const;
+};
+
 class Module
 {
     std::map<std::string, symbol_info> symbols;
@@ -198,7 +213,7 @@ public:
 
     void perform_imports(const Program&);
 
-    Hs::ModuleDecls typecheck(Hs::ModuleDecls);
+    typechecker_result typecheck(Hs::ModuleDecls);
 
     void perform_exports();
 

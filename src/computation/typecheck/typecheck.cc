@@ -787,18 +787,14 @@ Hs::Binds typechecker_result::all_binds() const
     ranges::insert(all, all.end(), top_simplify_binds);
     ranges::insert(all, all.end(), class_binds);
 
-//    std::cerr<<"All decls:\n";
-//    for(auto& [name,type]: gve)
-//        std::cerr<<name<<" :: "<<type<<"\n";
-
-//    std::cerr<<all.print();
-//    std::cerr<<"\n\n";
+    std::cerr<<all.print();
+    std::cerr<<"\n\n";
 
     return all;
 }
 
 
-Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
+typechecker_result Module::typecheck( Hs::ModuleDecls M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
     //    OK, so datatypes produce a
@@ -856,7 +852,7 @@ Hs::ModuleDecls Module::typecheck( Hs::ModuleDecls M )
     // 9. Default top-level ambiguous type vars.
     tc_state->simplify_and_default_top_level();
 
-    return M;
+    return *tc_state;
 }
 
     // GIE_C = functions to extract sub-dictionaries from containing dictionaries?

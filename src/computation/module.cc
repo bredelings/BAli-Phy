@@ -470,8 +470,13 @@ void Module::compile(const Program& P)
     if (opts.typecheck)
     {
         std::cerr<<"-------- module "<<name<<"--------\n";
-        M = typecheck(M);
-        M.value_decls = tc_state->all_binds();
+        auto tc_result = typecheck(M);
+
+        std::cerr<<"All decls:\n";
+        for(auto& [name,type]: tc_state->gve)
+            std::cerr<<name<<" :: "<<type<<"\n";
+
+        M.value_decls = tc_result.all_binds();
     }
 
     // Updates exported_symols_ + exported_types_
