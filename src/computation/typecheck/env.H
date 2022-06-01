@@ -70,6 +70,8 @@ struct ClassInfo
 
     local_value_env members;
 
+    global_instance_env superclass_extractors;
+
     std::map<ID, Hs::Var> default_methods;
 
     // FIXME - we need the order of the constraints, and the order of the members

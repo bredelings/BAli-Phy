@@ -44,8 +44,6 @@ struct typechecker_state: FreshVarSource
 
     global_instance_env instance_env;
 
-    global_instance_env superclass_extractor_env;
-
     std::vector<Hs::Type> defaults_;
 
           std::vector<Hs::Type>& defaults()       {return defaults_;}
@@ -314,5 +312,7 @@ Hs::Pattern
 rename_pattern_from_bindinfo(const Hs::Pattern& pat, const std::map<ID, Hs::BindInfo>& bind_info);
 
 std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls);
+
+ID get_full_class_name_from_constraint(const Hs::Type& constraint);
 
 #endif

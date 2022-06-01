@@ -339,16 +339,7 @@ void Module::import_module(const Program& P, const module_import& I)
                 tc_state->instance_env = tc_state->instance_env.insert({dfun_name, dfun_type});
         }
 
-        // Maybe we should get this from the class_env???
-
-        // 5. Import information about superclass extractors
-        for(auto& [dfun_name, dfun_type]: M2.tc_state->superclass_extractor_env)
-        {
-            if (not tc_state->superclass_extractor_env.count(dfun_name))
-                tc_state->superclass_extractor_env = tc_state->superclass_extractor_env.insert({dfun_name, dfun_type});
-        }
-
-        // 6. Import types for values.
+        // 5. Import types for values.
         for(auto& [name, type]: M2.tc_state->gve)
         {
             if (not tc_state->gve.count(name))

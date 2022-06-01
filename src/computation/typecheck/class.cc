@@ -103,7 +103,6 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     //   (c) synthesize field accessors and put them in decls
 
     // 4. Make global types for superclass extractors
-    global_instance_env gie;
     for(auto& superclass_constraint: class_info.context.constraints)
     {
         string cname1 = get_class_name_from_constraint(superclass_constraint);
@@ -116,7 +115,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         type = apply_current_subst(type);
         // Maybe intersect the forall_vars with USED vars?
         type = add_forall_vars(class_decl.type_vars, type);
-        gie = gie.insert({unloc(get_dict.name), type});
+        class_info.superclass_extractors = class_info.superclass_extractors.insert({unloc(get_dict.name), type});
 
         // Is this right???
         class_info.fields.push_back({unloc(get_dict.name), type});
@@ -140,8 +139,6 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
         i++;
     }
-
-    superclass_extractor_env += gie;
 
     return {gve,class_info,decls};
 }

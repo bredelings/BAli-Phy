@@ -152,9 +152,12 @@ vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const H
 {
     vector<pair<string, Hs::Type>> constraints;
 
-    for(auto& [name, type]: superclass_extractor_env)
+    auto class_name = get_full_class_name_from_constraint(constraint);
+
+    // Fixme... since we know the class name, can we simplify superclass_extractors???
+    for(auto& [name, type]: class_env.at(class_name).superclass_extractors)
     {
-        // Klass a => Superklass a
+        // forall a.Klass a => Superklass a
         auto [_, class_constraints, superclass_constraint] = instantiate(type, true);
 
         assert(constraint_is_hnf(superclass_constraint));

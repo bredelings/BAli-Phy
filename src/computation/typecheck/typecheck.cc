@@ -371,6 +371,15 @@ optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint)
         return {};
 }
 
+ID get_full_class_name_from_constraint(const Hs::Type& constraint)
+{
+    auto [tycon, args] = Hs::decompose_type_apps(constraint);
+    if (auto tc = tycon.to<Hs::TypeCon>())
+        return unloc(tc->name);
+    else
+        throw myexception()<<"Can't get class name for constraint '"<<constraint<<"'";
+}
+
 ID get_class_name_from_constraint(const Hs::Type& constraint)
 {
     if (auto name = maybe_get_class_name_from_constraint(constraint))
