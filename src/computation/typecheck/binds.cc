@@ -35,12 +35,13 @@ global_value_env sig_env(const map<string, Hs::Type>& signatures)
     return sig_env;
 }
 
-void typechecker_state::infer_type_for_binds_top(const Hs::Binds& binds)
+Hs::Binds typechecker_state::infer_type_for_binds_top(const Hs::Binds& binds)
 {
     auto [type_checked_binds,env] = infer_type_for_binds(gve, binds, true);
     gve += env;
 
     value_decls = type_checked_binds;
+    return type_checked_binds;
 }
 
 void typechecker_state::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreign_decls)

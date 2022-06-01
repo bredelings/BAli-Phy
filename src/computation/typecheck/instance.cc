@@ -39,7 +39,7 @@ Hs::Decls typechecker_state::infer_type_for_default_methods(const Hs::ClassDecl&
     return decls_out;
 }
 
-void typechecker_state::infer_type_for_default_methods(const Hs::Decls& decls)
+Hs::Binds typechecker_state::infer_type_for_default_methods(const Hs::Decls& decls)
 {
     for(auto& decl: decls)
     {
@@ -48,6 +48,7 @@ void typechecker_state::infer_type_for_default_methods(const Hs::Decls& decls)
 
         default_method_decls.push_back( infer_type_for_default_methods(*c) );
     }
+    return default_method_decls;
 }
 
 string get_name_for_typecon(const Hs::TypeCon& tycon)
@@ -323,7 +324,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-void typechecker_state::infer_type_for_instances2(const vector<pair<Hs::Var, Hs::InstanceDecl>>& named_instances)
+Hs::Binds typechecker_state::infer_type_for_instances2(const vector<pair<Hs::Var, Hs::InstanceDecl>>& named_instances)
 {
     for(auto& [dfun, instance_decl]: named_instances)
     {
@@ -334,5 +335,7 @@ void typechecker_state::infer_type_for_instances2(const vector<pair<Hs::Var, Hs:
 //    std::cerr<<"\nInstance ops and dfuns:\n";
 //    std::cerr<<instance_decls.print();
 //    std::cerr<<"\n\n";
+
+    return instance_decls;
 }
 

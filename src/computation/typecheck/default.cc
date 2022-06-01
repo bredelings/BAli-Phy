@@ -147,7 +147,7 @@ typechecker_state::default_preds( const set<Hs::TypeVar>& fixed_tvs,
     return {s, binds, unambiguous_preds};
 }
 
-void typechecker_state::simplify_and_default_top_level()
+Hs::Binds typechecker_state::simplify_and_default_top_level()
 {
     auto simpl_binds = reduce_current_lie();
 
@@ -173,5 +173,6 @@ void typechecker_state::simplify_and_default_top_level()
 
     top_simplify_binds = simpl_binds;
     ranges::insert(top_simplify_binds, top_simplify_binds.end(), default_binds);
+    return top_simplify_binds;
 }
 

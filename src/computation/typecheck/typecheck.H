@@ -124,7 +124,7 @@ struct typechecker_state: FreshVarSource, public typechecker_result
                    const std::set<Hs::TypeVar>& referenced_tvs,
                    const local_instance_env& lie);
 
-    void simplify_and_default_top_level();
+    Hs::Binds simplify_and_default_top_level();
 
     std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> instantiate(const Hs::Type& t, bool meta=true);
 
@@ -185,19 +185,19 @@ struct typechecker_state: FreshVarSource, public typechecker_result
     global_value_env infer_type_for_sigs(signature_env& signatures) const;
 
     // Figures 13, 14, 15?
-    void infer_type_for_binds_top(const Hs::Binds& binds);
+    Hs::Binds infer_type_for_binds_top(const Hs::Binds& binds);
 
     std::tuple<Hs::Binds, global_value_env>
     infer_type_for_binds(const global_value_env& env, Hs::Binds binds, bool is_top_level = false);
 
-    void infer_type_for_classes(const Hs::Decls& decls);
+    Hs::Binds infer_type_for_classes(const Hs::Decls& decls);
 
     std::tuple<global_value_env,global_instance_env, ClassInfo,Hs::Decls>
     infer_type_for_class(const Hs::ClassDecl& class_decl);
 
     Hs::Decls infer_type_for_default_methods(const Hs::ClassDecl&);
 
-    void infer_type_for_default_methods(const Hs::Decls&);
+    Hs::Binds infer_type_for_default_methods(const Hs::Decls&);
 
     // Figure 12
     std::pair<Hs::Var, Hs::Type>
@@ -208,7 +208,7 @@ struct typechecker_state: FreshVarSource, public typechecker_result
     infer_type_for_instances1(const Hs::Decls& decls);
 
     // Figure 12
-    void
+    Hs::Binds
     infer_type_for_instances2(const std::vector<std::pair<Hs::Var, Hs::InstanceDecl>>& named_instances);
 
     // Figure 12

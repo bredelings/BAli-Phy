@@ -833,7 +833,7 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     tc_state->get_constructor_info(M.type_decls);
 
     // 4. Get types and values for class method selectors and superclass selectors (CE_C  = class name -> class info)
-    tc_state->infer_type_for_classes(M.type_decls);
+    auto class_binds = tc_state->infer_type_for_classes(M.type_decls);
 
     // 5. Get types and names for instances (pass 1)
     auto named_instances = tc_state->infer_type_for_instances1(M.type_decls);
@@ -841,18 +841,18 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     tc_state->infer_type_for_foreign_imports(M.foreign_decls);
 
     // 6. Typecheck value decls
-    tc_state->infer_type_for_binds_top(M.value_decls);
+    auto value_decls = tc_state->infer_type_for_binds_top(M.value_decls);
 
     // 7. Typecheck default methods
-    tc_state->infer_type_for_default_methods(M.type_decls);
+    auto dm_decls = tc_state->infer_type_for_default_methods(M.type_decls);
 
     // 8. Typecheck instance methods and generate dfuns (pass 2)
-    tc_state->infer_type_for_instances2(named_instances);
+    auto instance_binds = tc_state->infer_type_for_instances2(named_instances);
 
     // 9. Default top-level ambiguous type vars.
-    tc_state->simplify_and_default_top_level();
+    auto top_simplify_binds = tc_state->simplify_and_default_top_level();
 
-    return *tc_state;
+    return {class_binds, value_decls, dm_decls, instance_binds, top_simplify_binds};
 }
 
     // GIE_C = functions to extract sub-dictionaries from containing dictionaries?
