@@ -19,23 +19,17 @@ using std::tuple;
 // * the original figure doesn't have let quals.
 // * the original figure seems to assume that quals only occur in list comprehensions?
 
-tuple<vector<Hs::Qual>, value_env>
-typechecker_state::infer_quals_type(const global_value_env& env, vector<Hs::Qual> quals)
+vector<Hs::Qual>
+typechecker_state::infer_quals_type(global_value_env& env, vector<Hs::Qual> quals)
 {
-    auto env2 = env;
     local_value_env binders;
     for(auto& qual: quals)
-    {
-        auto [qual_exp, env3] = infer_qual_type(env2, qual);
-
-        qual = qual_exp;
-        env2 = env3;
-    }
-    return {quals, env2};
+        qual = infer_qual_type(env, qual);
+    return quals;
 }
 
-tuple<Hs::Qual, value_env>
-typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& qual)
+Hs::Qual
+typechecker_state::infer_qual_type(global_value_env& env, const Hs::Qual& qual)
 {
     // FILTER
     if (auto sq = qual.to<Hs::SimpleQual>())
@@ -44,7 +38,7 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
         auto [exp, cond_type] = infer_type(env, SQ.exp);
         SQ.exp = exp;
         unify( cond_type, bool_type() );
-        return {SQ, env};
+        return SQ;
     }
     // GENERATOR.
     else if (auto pq = qual.to<Hs::PatQual>())
@@ -60,14 +54,15 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
         // type(pat) = type(exp)
         unify(Hs::ListType(pat_type), exp_type);
 
-        return {PQ, plus_prefer_right(env,lve)};
+        env = plus_prefer_right(env,lve);
+
+        return PQ;
     }
     else if (auto lq = qual.to<Hs::LetQual>())
     {
         auto LQ = *lq;
-        auto env2 = env;
-        unloc(LQ.binds) = infer_type_for_binds(env2, unloc(LQ.binds));
-        return {LQ, env2};
+        unloc(LQ.binds) = infer_type_for_binds(env, unloc(LQ.binds));
+        return LQ;
     }
     else
         std::abort();
