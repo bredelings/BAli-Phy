@@ -419,9 +419,7 @@ typechecker_state::infer_type_for_decls_groups(global_value_env& env, const map<
         lhs_types.push_back(type);
     }
 
-    auto env2 = env + remove_sig_binders(mono_binder_env, signatures);
-
-    auto tcs2 = copy_clear_lie();
+    auto [tcs2,env2] = copy_add_binders(env, remove_sig_binders(mono_binder_env, signatures));
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)
     {

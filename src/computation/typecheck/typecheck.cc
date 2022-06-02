@@ -411,6 +411,23 @@ typechecker_state typechecker_state::copy_clear_lie() const
     return tc2;
 }
 
+
+pair<typechecker_state,global_value_env> typechecker_state::copy_clear_lie(const global_value_env& env) const
+{
+    auto tc2 = copy_clear_lie();
+    return {tc2, env};
+}
+
+
+pair<typechecker_state,global_value_env>
+typechecker_state::copy_add_binders(const global_value_env& env, const local_value_env& local_env) const
+{
+    auto [new_state, env2] = copy_clear_lie(env);
+    //   new_state.gve = plus_prefer_right( new_state.gve, local_env );
+    env2 = plus_prefer_right( env, local_env );
+    return {new_state, env2};
+}
+
 local_instance_env& typechecker_state::current_lie() {
     return lie;
 }

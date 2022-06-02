@@ -68,12 +68,14 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MRule rule)
     else
     {
         auto [pat, t1, lve1] = infer_pattern_type(rule.patterns.front());
-        auto env2 = plus_prefer_right(env, lve1);
+
+        auto [new_state,env2] = copy_add_binders(env, lve1);
 
         // Remove the first pattern in the rule
         rule.patterns.erase(rule.patterns.begin());
 
-        auto [rule2, t2] = infer_type(env2, rule);
+        auto [rule2, t2] = new_state.infer_type(env2, rule);
+        current_lie() += new_state.current_lie();
 
         rule2.patterns.insert(rule2.patterns.begin(), pat);
 

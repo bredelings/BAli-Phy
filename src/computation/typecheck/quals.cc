@@ -146,11 +146,13 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
 
         // 4. Typecheck pat
         auto [bindpat, pat_type, pat_binders] = infer_pattern_type(PQ.bindpat);
-        auto env2 = plus_prefer_right( env, pat_binders );
+
+        auto [new_state, env2] = copy_add_binders(env, pat_binders);
+
         PQ.bindpat = bindpat;
 
         // 5. Typecheck stmts
-        auto stmts_type = infer_stmts_type(env2, i+1, stmts);
+        auto stmts_type = new_state.infer_stmts_type(env2, i+1, stmts);
 
         // 6. a ~ (pat_type -> stmts_type) -> b
         auto b = fresh_meta_type_var( kind_star() );
@@ -161,9 +163,10 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
         // but if we typecheck this without unifying it with anything, it will create an ambiguous constraint.
         if (false) 
         {
-            auto [fail_op, fail_op_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Base.fail"}));
+            auto [fail_op, fail_op_type] = new_state.infer_type(gve, Hs::Var({noloc,"Compiler.Base.fail"}));
             PQ.failOp = fail_op;
         }
+        current_lie() += new_state.current_lie();
 
         stmt = PQ;
         return b;
@@ -198,14 +201,16 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
     else if (auto lq = stmt.to<Hs::LetQual>())
     {
         // let binds ; stmts  =>  let binds in stmts
-
-        // 1. Typecheck binds.
         auto LQ = *lq;
-        auto env2 = env;
-        unloc(LQ.binds) = infer_type_for_binds(env2, unloc(LQ.binds));
+
+        // 1. Typecheck binds and add values to global env
+        auto [state2,env2] = copy_clear_lie(env);
+        unloc(LQ.binds) = state2.infer_type_for_binds(env2, unloc(LQ.binds));
 
         // 2. Typecheck stmts
-        auto stmts_type = infer_stmts_type(env2, i+1, stmts);
+        auto stmts_type = state2.infer_stmts_type(env2, i+1, stmts);
+
+        current_lie() += state2.current_lie();
 
         stmt = LQ;
         return stmts_type;
