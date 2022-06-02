@@ -275,25 +275,28 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
         unify(rhs_type, given_type);
         Hs::Type monotype = apply_current_subst(rhs_type);
 
-        // 4. Find free type variables in the most general type
-        auto fixed_tvs = free_type_variables( apply_current_subst(env) );
-        auto free_tvs = free_type_variables(monotype) - free_type_variables(env);
+        // 4. simplify constraints
+        auto [ev_binds, collected_lie] = reduce( apply_current_subst( current_lie() ) );
+        pop_lie();
 
-        // 5. simplify constraints and figure out which ones are relevant here
-        Hs::Binds ev_binds = reduce_current_lie();
-        auto [lie_deferred, lie_retained] = classify_constraints( current_lie(), fixed_tvs );
+        // 5. find free type variables in the most general type
+        auto fixed_tvs = free_type_variables( apply_current_subst(env) );
+        auto free_tvs = free_type_variables(monotype) - fixed_tvs;
+
+        // 6. figure out which constraints are relevant here
+        auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
         auto [s1, binds1, lie_unambiguous_retained] = default_preds( fixed_tvs, free_tvs, lie_retained );
         ev_binds = binds1 + ev_binds;
-        pop_lie();
+
         current_lie() += lie_deferred;
 
-        // 6. check that the remaining constraints are satisfied by the constraints in the type signature
+        // 7. check that the remaining constraints are satisfied by the constraints in the type signature
         auto [ev_binds2, lie_failed] = entails(lie_given, lie_unambiguous_retained);
         if (not ev_binds2)
             throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(lie_given)<<"'";
         ev_binds = *ev_binds2 + ev_binds;
 
-        // 7. return GenBind with tvs, givens, body
+        // 8. return GenBind with tvs, givens, body
         Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
 
         Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
@@ -488,12 +491,13 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     //    (ii) representing some constraints in terms of others.
     // This also substitutes into the current LIE, which we need to do 
     //    before finding free type vars in the LIE below.
-    Hs::Binds binds = reduce_current_lie();
-
-    // B. Second, extract the "retained" predicates can be added without causing abiguity.
-    auto [lie_deferred, lie_retained] = classify_constraints( current_lie(), fixed_tvs );
+    auto [binds, collected_lie] = reduce( apply_current_subst( current_lie() ) );
 
     pop_lie();
+
+    // B. Second, extract the "retained" predicates can be added without causing abiguity.
+    auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
+
 
     /* NOTE: Constraints can reference variables that are in
      *        (i) ALL types in a recursive group
