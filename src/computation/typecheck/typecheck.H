@@ -208,7 +208,7 @@ struct typechecker_state: FreshVarSource
     // Figures 13, 14, 15?
     Hs::Binds infer_type_for_binds_top(const Hs::Binds& binds);
 
-    std::tuple<Hs::Binds, global_value_env, global_value_env>
+    std::tuple<Hs::Binds, global_value_env>
     infer_type_for_binds(const global_value_env& env, Hs::Binds binds, bool is_top_level = false);
 
     Hs::Binds infer_type_for_classes(const Hs::Decls& decls);

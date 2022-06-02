@@ -37,7 +37,7 @@ global_value_env sig_env(const map<string, Hs::Type>& signatures)
 
 Hs::Binds typechecker_state::infer_type_for_binds_top(const Hs::Binds& binds)
 {
-    auto [type_checked_binds, _, env2] = infer_type_for_binds(gve, binds, true);
+    auto [type_checked_binds, env2] = infer_type_for_binds(gve, binds, true);
     gve = env2;
 
     return type_checked_binds;
@@ -65,22 +65,20 @@ global_value_env typechecker_state::infer_type_for_sigs(signature_env& signature
 }
 
 
-tuple<Hs::Binds, global_value_env, global_value_env>
+tuple<Hs::Binds, global_value_env>
 typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds binds, bool is_top_level)
 {
     auto env2 = plus_prefer_right(env, infer_type_for_sigs(binds.signatures));
 
-    global_value_env binders;
     for(auto& decls: binds)
     {
         auto [decls1, binders1] = infer_type_for_decls(env2, binds.signatures, decls, is_top_level);
         decls = decls1;
-        // We could remove the binders with sigs
         env2 = plus_prefer_right(env2, binders1);
-        binders += binders1;
+        // We should have already checked in rename different Decls in the same Binds don't have overlapping names.
     }
 
-    return {binds, binders, env2};
+    return {binds, env2};
 }
 
 value_env remove_sig_binders(value_env binder_env, const signature_env& signatures)
