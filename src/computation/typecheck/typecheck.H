@@ -165,7 +165,7 @@ struct typechecker_state: FreshVarSource
     infer_qual_type(global_value_env& env, const Hs::Qual& qual);
 
     Hs::Qual
-    infer_guard_type(global_value_env& env, const Hs::Qual& guard);
+    infer_guard_type(const Hs::Qual& guard);
 
     // Figure 24.
     std::tuple<Hs::Pattern, Hs::Type, local_value_env>

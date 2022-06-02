@@ -13,8 +13,6 @@ using std::tuple;
 tuple<Hs::GuardedRHS, Hs::Type>
 typechecker_state::infer_type(Hs::GuardedRHS rhs)
 {
-    auto env = gve;
-
     // Fig 25. GUARD-DEFAULT
     if (rhs.guards.empty())
     {
@@ -24,8 +22,8 @@ typechecker_state::infer_type(Hs::GuardedRHS rhs)
     }
 
     // Fig 25. GUARD
-    auto [state2, env2] = copy_clear_lie(env);
-    auto guard1 = state2.infer_guard_type(env2, rhs.guards[0]);
+    auto state2 = copy_clear_lie();
+    auto guard1 = state2.infer_guard_type(rhs.guards[0]);
 
     rhs.guards.erase(rhs.guards.begin());
     auto [rhs2, t2] = state2.infer_type(rhs);

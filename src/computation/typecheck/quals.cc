@@ -70,7 +70,7 @@ typechecker_state::infer_qual_type(global_value_env& env, const Hs::Qual& qual)
 
 
 Hs::Qual
-typechecker_state::infer_guard_type(global_value_env& env, const Hs::Qual& guard)
+typechecker_state::infer_guard_type(const Hs::Qual& guard)
 {
     if (auto sq = guard.to<Hs::SimpleQual>())
     {
@@ -93,7 +93,7 @@ typechecker_state::infer_guard_type(global_value_env& env, const Hs::Qual& guard
         // type(pat) = type(exp)
         unify(pat_type,exp_type);
 
-        env = add_binders(env, lve);
+        add_binders({}, lve);
 
         return PQ;
     }
