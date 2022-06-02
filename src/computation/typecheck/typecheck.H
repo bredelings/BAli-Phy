@@ -160,8 +160,8 @@ struct typechecker_state: FreshVarSource
     Hs::Qual
     infer_qual_type(global_value_env& env, const Hs::Qual& qual);
 
-    std::tuple<Hs::Qual, local_value_env>
-    infer_guard_type(const global_value_env& env, const Hs::Qual& guard);
+    Hs::Qual
+    infer_guard_type(global_value_env& env, const Hs::Qual& guard);
 
     // Figure 24.
     std::tuple<Hs::Pattern, Hs::Type, local_value_env>
@@ -192,8 +192,8 @@ struct typechecker_state: FreshVarSource
     infer_type(const global_value_env& env, Hs::Match);
 
     // Figures 13, 14, 15?
-    std::tuple<Hs::Decls, global_value_env>
-    infer_type_for_decls(const global_value_env& env, const signature_env&, const Hs::Decls&, bool is_top_level);
+    Hs::Decls
+    infer_type_for_decls(global_value_env& env, const signature_env&, const Hs::Decls&, bool is_top_level);
 
     std::tuple<expression_ref, ID, Hs::Type>
     infer_type_for_single_fundecl_with_sig(const global_value_env& env, Hs::FunDecl FD);

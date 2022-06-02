@@ -69,8 +69,8 @@ typechecker_state::infer_qual_type(global_value_env& env, const Hs::Qual& qual)
 }
 
 
-tuple<Hs::Qual, value_env>
-typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual& guard)
+Hs::Qual
+typechecker_state::infer_guard_type(global_value_env& env, const Hs::Qual& guard)
 {
     if (auto sq = guard.to<Hs::SimpleQual>())
     {
@@ -78,7 +78,7 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
         auto [cond_exp, cond_type] = infer_type(env, SQ.exp);
         SQ.exp = cond_exp;
         unify( cond_type, bool_type() );
-        return {SQ, env};
+        return SQ;
     }
     else if (auto pq = guard.to<Hs::PatQual>())
     {
@@ -89,18 +89,19 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
 
         PQ.bindpat = bindpat;
         PQ.exp = exp;
-        
+
         // type(pat) = type(exp)
         unify(pat_type,exp_type);
 
-        return {PQ, plus_prefer_right(env,lve)};
+        env = plus_prefer_right(env, lve);
+
+        return PQ;
     }
     else if (auto lq = guard.to<Hs::LetQual>())
     {
         auto LQ = *lq;
-        auto env2 = env;
-        unloc(LQ.binds) = infer_type_for_binds(env2, unloc(LQ.binds));
-        return {LQ, env2};
+        unloc(LQ.binds) = infer_type_for_binds(env, unloc(LQ.binds));
+        return LQ;
     }
     else
         std::abort();

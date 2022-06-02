@@ -22,8 +22,8 @@ typechecker_state::infer_type(const global_value_env& env, Hs::GuardedRHS rhs)
     }
 
     // Fig 25. GUARD
-    auto guard = rhs.guards[0];
-    auto [guard1, env2] = infer_guard_type(env, guard);
+    auto env2 = env;
+    auto guard1 = infer_guard_type(env2, rhs.guards[0]);
 
     rhs.guards.erase(rhs.guards.begin());
     auto [rhs2, t2] = infer_type(env2, rhs);

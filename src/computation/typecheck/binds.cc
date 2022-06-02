@@ -65,16 +65,10 @@ global_value_env typechecker_state::infer_type_for_sigs(signature_env& signature
 Hs::Binds
 typechecker_state::infer_type_for_binds(global_value_env& env, Hs::Binds binds, bool is_top_level)
 {
-    auto env2 = plus_prefer_right(env, infer_type_for_sigs(binds.signatures));
+    env = plus_prefer_right(env, infer_type_for_sigs(binds.signatures));
 
     for(auto& decls: binds)
-    {
-        auto [decls1, env3] = infer_type_for_decls(env2, binds.signatures, decls, is_top_level);
-        decls = decls1;
-        env2 = env3;
-    }
-
-    env = env2;
+        decls = infer_type_for_decls(env, binds.signatures, decls, is_top_level);
 
     return binds;
 }
@@ -117,25 +111,24 @@ vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const map<st
     return split_decls(decls, referenced_decls);
 }
 
-tuple<Hs::Decls, global_value_env>
-typechecker_state::infer_type_for_decls(const global_value_env& env, const signature_env& signatures, const Hs::Decls& decls, bool is_top_level)
+Hs::Decls
+typechecker_state::infer_type_for_decls(global_value_env& env, const signature_env& signatures, const Hs::Decls& decls, bool is_top_level)
 {
     // The signatures for the binders should already be in the environment.
 
     auto bind_groups = split_decls_by_signatures(decls, signatures);
 
-    auto env2 = env;
     Hs::Decls decls2;
     for(auto& group: bind_groups)
     {
-        auto [group_decls, env3] = infer_type_for_decls_groups(env2, signatures, group, is_top_level);
+        auto [group_decls, env2] = infer_type_for_decls_groups(env, signatures, group, is_top_level);
 
         for(auto& decl: group_decls)
             decls2.push_back(decl);
 
-        env2 = env3;
+        env = env2;
     }
-    return {decls2, env2};
+    return decls2;
 }
 
 bool single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signatures)
