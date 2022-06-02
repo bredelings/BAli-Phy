@@ -421,13 +421,19 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
         lhs_types.push_back(type);
     }
 
-    for(auto& [name, _]: mono_binder_env)
-    {
-        Hs::Var x_mono = get_fresh_Var(name, false);
-        mono_ids.insert({name, x_mono});
-    }
+    auto tcs2 = copy_clear_lie();
 
-    auto tcs2 = copy_add_binders( remove_sig_binders(mono_binder_env, signatures) );
+    for(auto& [name, type]: mono_binder_env)
+    {
+        Hs::Var mono_id = get_fresh_Var(name, false);
+        mono_ids.insert({name, mono_id});
+
+        if (not signatures.count(name))
+        {
+            tcs2.mono_local_env = tcs2.mono_local_env.erase(name);
+            tcs2.mono_local_env = tcs2.mono_local_env.insert({name,{mono_id, type}});
+        }
+    }
 
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)

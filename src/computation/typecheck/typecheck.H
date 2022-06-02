@@ -76,6 +76,8 @@ struct typechecker_state: FreshVarSource
 
     //------- local state ------------//
 
+    immer::map<std::string, std::pair<Hs::Var, Hs::Type>> mono_local_env;
+
     global_value_env gve;
 
     local_instance_env lie;

@@ -15,6 +15,12 @@ typechecker_state::infer_type(expression_ref E)
     if (auto x = E.to<Hs::Var>())
     {
         auto& x_name = unloc(x->name);
+        if (auto it = mono_local_env.find(x_name))
+        {
+            auto& [v,type] = *it;
+            return {v, type};
+        }
+
         auto sigma = gve.find( x_name );
 
         // x should be in the type environment
