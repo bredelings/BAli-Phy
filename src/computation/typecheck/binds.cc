@@ -549,12 +549,14 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
                                       Hs::add_constraints( constraints_for_this_type,
                                                            monotype ) );
 
-        // How can we generate a wrapper between qualified_type and lie_deferred => (type1, unrestricted_type, type3)?
         if (not signatures.count(name))
+        {
             poly_env = poly_env.insert( {name, polytype} );
+        }
         else
         {
-            // FIXME: how do we check signatures and generate wrappers?
+            // How to generate a wrapper here?
+            std::abort();
         }
 
         Hs::Var x_outer({noloc,name});
