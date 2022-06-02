@@ -37,8 +37,8 @@ global_value_env sig_env(const map<string, Hs::Type>& signatures)
 
 Hs::Binds typechecker_state::infer_type_for_binds_top(const Hs::Binds& binds)
 {
-    auto [type_checked_binds,env,_] = infer_type_for_binds(gve, binds, true);
-    gve += env;
+    auto [type_checked_binds, _, env2] = infer_type_for_binds(gve, binds, true);
+    gve = env2;
 
     return type_checked_binds;
 }

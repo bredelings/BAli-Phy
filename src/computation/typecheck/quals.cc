@@ -206,10 +206,8 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
 
         // 1. Typecheck binds.
         auto LQ = *lq;
-        auto [binds, binders, _] = infer_type_for_binds(env, unloc(LQ.binds));
+        auto [binds, _, env2] = infer_type_for_binds(env, unloc(LQ.binds));
         unloc(LQ.binds) = binds;
-
-        auto env2 = plus_prefer_right(env, binders);
 
         // 2. Typecheck stmts
         auto stmts_type = infer_stmts_type(env2, i+1, stmts);

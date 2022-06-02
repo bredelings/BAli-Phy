@@ -45,9 +45,9 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MultiGuardedRHS r
     auto env2 = env;
     if (rhs.decls)
     {
-        auto [decls1, binders, _] = infer_type_for_binds(env, unloc(*rhs.decls));
+        auto [decls1, _, env2_] = infer_type_for_binds(env, unloc(*rhs.decls));
         unloc(*rhs.decls) = decls1;
-        env2 = plus_prefer_right(env, binders);
+        env2 = env2_;
     }
 
     for(auto& guarded_rhs: rhs.guarded_rhss)
