@@ -121,12 +121,10 @@ typechecker_state::infer_type_for_decls(global_value_env& env, const signature_e
     Hs::Decls decls2;
     for(auto& group: bind_groups)
     {
-        auto [group_decls, env2] = infer_type_for_decls_groups(env, signatures, group, is_top_level);
+        auto group_decls = infer_type_for_decls_groups(env, signatures, group, is_top_level);
 
         for(auto& decl: group_decls)
             decls2.push_back(decl);
-
-        env = env2;
     }
     return decls2;
 }
@@ -392,8 +390,8 @@ pair<set<Hs::TypeVar>, set<Hs::TypeVar>> tvs_in_any_all_types(const local_value_
 
 
 
-tuple<Hs::Decls, global_value_env>
-typechecker_state::infer_type_for_decls_groups(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
+Hs::Decls
+typechecker_state::infer_type_for_decls_groups(global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
 {
     if (single_fundecl_with_sig(decls, signatures))
     {
@@ -403,7 +401,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
         Hs::Decls decls({decl});
 
-        return {decls, env};
+        return decls;
     }
 
 // How & when do we complain if there are predicates on signatures with the monomorphism restriction?
@@ -526,7 +524,6 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
     vector< Hs::Var > dict_vars = vars_from_lie( lie_retained );
 
-    global_value_env poly_env = env;
     for(auto& [name, monotype]: mono_binder_env)
     {
         auto qtvs_in_this_type = free_type_variables(monotype);
@@ -543,7 +540,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
         if (not signatures.count(name))
         {
-            poly_env = poly_env.insert( {name, polytype} );
+            env = env.insert( {name, polytype} );
         }
         else
         {
@@ -572,6 +569,6 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
-    return {decls2, poly_env};
+    return decls2;
 }
 
