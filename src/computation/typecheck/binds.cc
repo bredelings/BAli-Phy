@@ -270,14 +270,14 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
         push_lie();
         auto [match2, rhs_type] = infer_type(env, FD.match);
         FD.match = match2;
+        auto unreduced_collected_lie = pop_lie();
 
         // 3. match(given_type <= rhs_type)
         unify(rhs_type, given_type);
         Hs::Type monotype = apply_current_subst(rhs_type);
 
         // 4. simplify constraints
-        auto [ev_binds, collected_lie] = reduce( apply_current_subst( current_lie() ) );
-        pop_lie();
+        auto [ev_binds, collected_lie] = reduce( apply_current_subst( unreduced_collected_lie) );
 
         // 5. find free type variables in the most general type
         auto fixed_tvs = free_type_variables( apply_current_subst(env) );
