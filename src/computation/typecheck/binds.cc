@@ -127,17 +127,14 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const signa
 
     auto env2 = env;
     Hs::Decls decls2;
-    local_value_env binders;
     for(auto& group: bind_groups)
     {
-        auto [group_decls, group_binders] = infer_type_for_decls_groups(env2, signatures, group, is_top_level);
+        auto [group_decls, env3] = infer_type_for_decls_groups(env2, signatures, group, is_top_level);
 
         for(auto& decl: group_decls)
             decls2.push_back(decl);
 
-        binders += group_binders;
-
-        env2 += remove_sig_binders(group_binders, signatures);
+        env2 = env3;
     }
     return {decls2, env2};
 }
@@ -415,9 +412,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
         Hs::Decls decls({decl});
 
-        global_value_env binders;;
-        binders = binders.insert({name, sig_type});
-        return {decls, binders};
+        return {decls, env};
     }
 
 // How & when do we complain if there are predicates on signatures with the monomorphism restriction?
@@ -517,7 +512,6 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
     map<string, Hs::BindInfo> bind_infos;
 
-    global_value_env poly_binder_env;
     bool restricted = is_restricted(signatures, decls) and not is_top_level;
     if (restricted)
     {
@@ -541,6 +535,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
     vector< Hs::Var > dict_vars = vars_from_lie( lie_retained );
 
+    global_value_env poly_env = env;
     for(auto& [name, monotype]: mono_binder_env)
     {
         auto qtvs_in_this_type = free_type_variables(monotype);
@@ -556,8 +551,12 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
                                                            monotype ) );
 
         // How can we generate a wrapper between qualified_type and lie_deferred => (type1, unrestricted_type, type3)?
-
-        poly_binder_env = poly_binder_env.insert( {name, polytype} );
+        if (not signatures.count(name))
+            poly_env = poly_env.insert( {name, polytype} );
+        else
+        {
+            // FIXME: how do we check signatures and generate wrappers?
+        }
 
         Hs::Var x_outer({noloc,name});
         Hs::Var x_inner = get_fresh_Var(name, false);
@@ -580,6 +579,6 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
-    return {decls2, poly_binder_env};
+    return {decls2, poly_env};
 }
 
