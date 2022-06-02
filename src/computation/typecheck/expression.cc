@@ -15,7 +15,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     if (auto x = E.to<Hs::Var>())
     {
         auto& x_name = unloc(x->name);
-        auto sigma = env.find( x_name );
+        auto sigma = gve.find( x_name );
 
         // x should be in the type environment
         if (not sigma)
