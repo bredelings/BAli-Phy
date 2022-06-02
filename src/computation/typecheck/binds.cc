@@ -284,7 +284,8 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
         auto [lie_deferred, lie_retained] = classify_constraints( current_lie(), fixed_tvs );
         auto [s1, binds1, lie_unambiguous_retained] = default_preds( fixed_tvs, free_tvs, lie_retained );
         ev_binds = binds1 + ev_binds;
-        current_lie() = lie_deferred;
+        pop_lie();
+        current_lie() += lie_deferred;
 
         // 6. check that the remaining constraints are satisfied by the constraints in the type signature
         auto [ev_binds2, lie_failed] = entails(lie_given, lie_unambiguous_retained);
@@ -298,9 +299,6 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
         Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
 
         auto decl = mkGenBind( tvs, dict_vars, ev_binds, Hs::Decls({FD}), {{name, bind_info}} );
-
-        auto lie = pop_lie();
-        current_lie() += lie;
 
         return {decl, name, polytype};
     }
@@ -399,8 +397,6 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
 // How & when do we complain if there are predicates on signatures with the monomorphism restriction?
 
-    push_lie();
-
     // 1. Add each let-binder to the environment with a fresh type variable
     local_value_env mono_binder_env;
 
@@ -415,6 +411,8 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     }
 
     auto env2 = env + remove_sig_binders(mono_binder_env, signatures);
+
+    push_lie();
 
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)
