@@ -37,10 +37,7 @@ global_value_env sig_env(const map<string, Hs::Type>& signatures)
 
 Hs::Binds typechecker_state::infer_type_for_binds_top(const Hs::Binds& binds)
 {
-    auto [type_checked_binds, env2] = infer_type_for_binds(gve, binds, true);
-    gve = env2;
-
-    return type_checked_binds;
+    return infer_type_for_binds(gve, binds, true);
 }
 
 void typechecker_state::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreign_decls)
@@ -65,8 +62,8 @@ global_value_env typechecker_state::infer_type_for_sigs(signature_env& signature
 }
 
 
-tuple<Hs::Binds, global_value_env>
-typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds binds, bool is_top_level)
+Hs::Binds
+typechecker_state::infer_type_for_binds(global_value_env& env, Hs::Binds binds, bool is_top_level)
 {
     auto env2 = plus_prefer_right(env, infer_type_for_sigs(binds.signatures));
 
@@ -77,7 +74,9 @@ typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds b
         env2 = env3;
     }
 
-    return {binds, env2};
+    env = env2;
+
+    return binds;
 }
 
 value_env remove_sig_binders(value_env binder_env, const signature_env& signatures)
