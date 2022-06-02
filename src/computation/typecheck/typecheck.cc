@@ -450,17 +450,6 @@ Hs::Var typechecker_state::add_dvar(const Hs::Type& constraint)
     return dvar;
 }
 
-void typechecker_state::push_lie() {
-    lie_stack.push_back( {} );
-}
-
-local_instance_env typechecker_state::pop_lie()
-{
-    auto lie = current_lie();
-    lie_stack.pop_back();
-    return lie;
-}
-
 void typechecker_state::get_defaults(const Hs::ModuleDecls& M)
 {
     if (M.default_decl)
@@ -474,7 +463,7 @@ typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const 
 {
     global_state = std::make_shared<global_tc_state>(m);
 
-    push_lie();
+    lie_stack.push_back( {} );
 }
 
 Hs::Var typechecker_state::find_prelude_var(string name) const
