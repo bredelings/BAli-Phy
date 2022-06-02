@@ -215,7 +215,7 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
         stmt = LQ;
         return stmts_type;
     }
-    else if (auto rq = stmt.to<Hs::RecStmt>())
+    else if (stmt.to<Hs::RecStmt>())
     {
         /*
          * See "Recursive binding groups" in https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html
