@@ -22,13 +22,16 @@ typechecker_state::infer_type(const global_value_env& env, Hs::GuardedRHS rhs)
     }
 
     // Fig 25. GUARD
+    auto state2 = copy_clear_lie();
     auto env2 = env;
-    auto guard1 = infer_guard_type(env2, rhs.guards[0]);
+    auto guard1 = state2.infer_guard_type(env2, rhs.guards[0]);
 
     rhs.guards.erase(rhs.guards.begin());
-    auto [rhs2, t2] = infer_type(env2, rhs);
+    auto [rhs2, t2] = state2.infer_type(env2, rhs);
 
     rhs2.guards.insert(rhs2.guards.begin(), guard1);
+
+    current_lie() += state2.current_lie();
 
     Hs::Type type = t2;
     return {rhs2, type};
@@ -42,16 +45,18 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MultiGuardedRHS r
     Hs::Type type = fresh_meta_type_var( kind_star() );
 
     auto env2 = env;
+    auto state2 = copy_clear_lie();
     if (rhs.decls)
-        unloc(*rhs.decls) = infer_type_for_binds(env2, unloc(*rhs.decls)); 
+        unloc(*rhs.decls) = state2.infer_type_for_binds(env2, unloc(*rhs.decls)); 
 
     for(auto& guarded_rhs: rhs.guarded_rhss)
     {
-        auto [guarded_rhs2, t1] = infer_type(env2, guarded_rhs);
+        auto [guarded_rhs2, t1] = state2.infer_type(env2, guarded_rhs);
         guarded_rhs = guarded_rhs2;
         unify(t1,type);
     }
-
+    current_lie() += state2.current_lie();
+    
     return {rhs, type};
 };
 
