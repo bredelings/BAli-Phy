@@ -570,7 +570,6 @@ typechecker_state::infer_type_for_decls_groups(global_value_env& env, const map<
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
-    assert(env.size() == gve.size());
     return decls2;
 }
 
