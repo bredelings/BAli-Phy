@@ -197,7 +197,7 @@ struct typechecker_state: FreshVarSource
 
     // Figures 13, 14, 15?
     Hs::Decls
-    infer_type_for_decls(global_value_env& env, const signature_env&, const Hs::Decls&, bool is_top_level);
+    infer_type_for_decls(const signature_env&, const Hs::Decls&, bool is_top_level);
 
     std::tuple<expression_ref, ID, Hs::Type>
     infer_type_for_single_fundecl_with_sig(const global_value_env& env, Hs::FunDecl FD);
@@ -213,7 +213,7 @@ struct typechecker_state: FreshVarSource
     Hs::Binds infer_type_for_binds_top(const Hs::Binds& binds);
 
     Hs::Binds
-    infer_type_for_binds(global_value_env& env, Hs::Binds binds, bool is_top_level = false);
+    infer_type_for_binds(Hs::Binds binds, bool is_top_level = false);
 
     Hs::Binds infer_type_for_classes(const Hs::Decls& decls);
 

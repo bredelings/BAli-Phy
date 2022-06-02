@@ -61,7 +61,7 @@ typechecker_state::infer_qual_type(global_value_env& env, const Hs::Qual& qual)
     else if (auto lq = qual.to<Hs::LetQual>())
     {
         auto LQ = *lq;
-        unloc(LQ.binds) = infer_type_for_binds(env, unloc(LQ.binds));
+        unloc(LQ.binds) = infer_type_for_binds(unloc(LQ.binds));
         return LQ;
     }
     else
@@ -100,7 +100,7 @@ typechecker_state::infer_guard_type(global_value_env& env, const Hs::Qual& guard
     else if (auto lq = guard.to<Hs::LetQual>())
     {
         auto LQ = *lq;
-        unloc(LQ.binds) = infer_type_for_binds(env, unloc(LQ.binds));
+        unloc(LQ.binds) = infer_type_for_binds(unloc(LQ.binds));
         return LQ;
     }
     else
@@ -205,7 +205,7 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
 
         // 1. Typecheck binds and add values to global env
         auto [state2,env2] = copy_clear_lie(env);
-        unloc(LQ.binds) = state2.infer_type_for_binds(env2, unloc(LQ.binds));
+        unloc(LQ.binds) = state2.infer_type_for_binds(unloc(LQ.binds));
 
         // 2. Typecheck stmts
         auto stmts_type = state2.infer_stmts_type(env2, i+1, stmts);
