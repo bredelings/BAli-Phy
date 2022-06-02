@@ -421,8 +421,9 @@ pair<typechecker_state,global_value_env> typechecker_state::copy_clear_lie(const
 
 global_value_env typechecker_state::add_binders(const global_value_env& env, const local_value_env& binders)
 {
+    assert(env.size() == gve.size());
     auto env2 = plus_prefer_right(env, binders);
-    //   gve = plus_prefer_right( gve, binders );
+    gve = plus_prefer_right( gve, binders );
     return env2;
 }
 
