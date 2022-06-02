@@ -22,8 +22,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::GuardedRHS rhs)
     }
 
     // Fig 25. GUARD
-    auto state2 = copy_clear_lie();
-    auto env2 = env;
+    auto [state2, env2] = copy_clear_lie(env);
     auto guard1 = state2.infer_guard_type(env2, rhs.guards[0]);
 
     rhs.guards.erase(rhs.guards.begin());
@@ -44,8 +43,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MultiGuardedRHS r
     substitution_t s;
     Hs::Type type = fresh_meta_type_var( kind_star() );
 
-    auto env2 = env;
-    auto state2 = copy_clear_lie();
+    auto [state2,env2] = copy_clear_lie(env);
     if (rhs.decls)
         unloc(*rhs.decls) = state2.infer_type_for_binds(env2, unloc(*rhs.decls)); 
 
