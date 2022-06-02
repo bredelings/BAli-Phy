@@ -307,8 +307,8 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     else if (auto lcomp = E.to<Hs::ListComprehension>())
     {
         auto LComp = *lcomp;
-        auto [quals, quals_binders] = infer_quals_type(env, LComp.quals);
-        auto [body, exp_type] = infer_type(plus_prefer_right(env, quals_binders), LComp.body);
+        auto [quals, env2] = infer_quals_type(env, LComp.quals);
+        auto [body, exp_type] = infer_type(env2, LComp.body);
         LComp.quals = quals;
         LComp.body = body;
 

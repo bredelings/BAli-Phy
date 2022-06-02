@@ -30,9 +30,8 @@ typechecker_state::infer_quals_type(const global_value_env& env, vector<Hs::Qual
 
         qual = qual_exp;
         env2 = plus_prefer_right(env2, qual_binders);
-        binders = plus_prefer_right(binders, qual_binders);
     }
-    return {quals, binders};
+    return {quals, env2};
 }
 
 tuple<Hs::Qual, value_env>
