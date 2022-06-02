@@ -26,10 +26,10 @@ typechecker_state::infer_quals_type(const global_value_env& env, vector<Hs::Qual
     local_value_env binders;
     for(auto& qual: quals)
     {
-        auto [qual_exp, qual_binders] = infer_qual_type(env2, qual);
+        auto [qual_exp, env3] = infer_qual_type(env2, qual);
 
         qual = qual_exp;
-        env2 = plus_prefer_right(env2, qual_binders);
+        env2 = env3;
     }
     return {quals, env2};
 }
@@ -44,15 +44,15 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
         auto [exp, cond_type] = infer_type(env, SQ.exp);
         SQ.exp = exp;
         unify( cond_type, bool_type() );
-        return {SQ, {}};
+        return {SQ, env};
     }
     // GENERATOR.
     else if (auto pq = qual.to<Hs::PatQual>())
     {
         auto PQ = *pq;
         // pat <- exp
-        auto [bindpat, pat_type, lve] = infer_pattern_type(PQ.bindpat);
         auto [exp, exp_type] = infer_type(env, PQ.exp);
+        auto [bindpat, pat_type, lve] = infer_pattern_type(PQ.bindpat);
 
         PQ.bindpat = bindpat;
         PQ.exp = exp;
@@ -60,14 +60,14 @@ typechecker_state::infer_qual_type(const global_value_env& env, const Hs::Qual& 
         // type(pat) = type(exp)
         unify(Hs::ListType(pat_type), exp_type);
 
-        return {PQ, lve};
+        return {PQ, plus_prefer_right(env,lve)};
     }
     else if (auto lq = qual.to<Hs::LetQual>())
     {
         auto LQ = *lq;
-        auto [binds, t, _] = infer_type_for_binds(env, unloc(LQ.binds));
+        auto [binds, _, env2] = infer_type_for_binds(env, unloc(LQ.binds));
         unloc(LQ.binds) = binds;
-        return {LQ, t};
+        return {LQ, env2};
     }
     else
         std::abort();
@@ -83,7 +83,7 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
         auto [cond_exp, cond_type] = infer_type(env, SQ.exp);
         SQ.exp = cond_exp;
         unify( cond_type, bool_type() );
-        return {SQ, {}};
+        return {SQ, env};
     }
     else if (auto pq = guard.to<Hs::PatQual>())
     {
@@ -98,14 +98,14 @@ typechecker_state::infer_guard_type(const global_value_env& env, const Hs::Qual&
         // type(pat) = type(exp)
         unify(pat_type,exp_type);
 
-        return {PQ, lve};
+        return {PQ, plus_prefer_right(env,lve)};
     }
     else if (auto lq = guard.to<Hs::LetQual>())
     {
         auto LQ = *lq;
-        auto [binds, t, _] = infer_type_for_binds(env, unloc(LQ.binds));
+        auto [binds, _, env2] = infer_type_for_binds(env, unloc(LQ.binds));
         unloc(LQ.binds) = binds;
-        return {LQ, t};
+        return {LQ, env2};
     }
     else
         std::abort();
