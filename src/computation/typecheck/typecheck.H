@@ -200,10 +200,10 @@ struct typechecker_state: FreshVarSource
     infer_type_for_decls(const signature_env&, const Hs::Decls&, bool is_top_level);
 
     std::tuple<expression_ref, ID, Hs::Type>
-    infer_type_for_single_fundecl_with_sig(const global_value_env& env, Hs::FunDecl FD);
+    infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD);
 
     Hs::Decls
-    infer_type_for_decls_groups(global_value_env& env, const signature_env&, Hs::Decls E, bool is_top_level);
+    infer_type_for_decls_groups(const signature_env&, Hs::Decls E, bool is_top_level);
 
     void infer_type_for_foreign_imports(std::vector<Hs::ForeignDecl>& foreign_decls);
 

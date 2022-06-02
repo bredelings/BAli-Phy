@@ -121,8 +121,7 @@ typechecker_state::infer_type_for_decls(const signature_env& signatures, const H
     Hs::Decls decls2;
     for(auto& group: bind_groups)
     {
-        auto env = gve;
-        auto group_decls = infer_type_for_decls_groups(env, signatures, group, is_top_level);
+        auto group_decls = infer_type_for_decls_groups(signatures, group, is_top_level);
 
         for(auto& decl: group_decls)
             decls2.push_back(decl);
@@ -237,8 +236,10 @@ classify_constraints(const local_instance_env& lie,
 }
 
 tuple<expression_ref, ID, Hs::Type>
-typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env& env, Hs::FunDecl FD)
+typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
+    auto env = gve;
+
     try
     {
         auto& name = unloc(FD.v.name);
@@ -392,13 +393,13 @@ pair<set<Hs::TypeVar>, set<Hs::TypeVar>> tvs_in_any_all_types(const local_value_
 
 
 Hs::Decls
-typechecker_state::infer_type_for_decls_groups(global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
+typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
 {
     if (single_fundecl_with_sig(decls, signatures))
     {
         auto& FD = decls[0].as_<Hs::FunDecl>();
 
-        auto [decl, name, sig_type] = infer_type_for_single_fundecl_with_sig(env, FD);
+        auto [decl, name, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
 
         Hs::Decls decls({decl});
 
@@ -420,6 +421,7 @@ typechecker_state::infer_type_for_decls_groups(global_value_env& env, const map<
         lhs_types.push_back(type);
     }
 
+    auto env = gve;
     auto [tcs2,env2] = copy_add_binders(env, remove_sig_binders(mono_binder_env, signatures));
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)

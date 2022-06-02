@@ -27,7 +27,7 @@ Hs::Decls typechecker_state::infer_type_for_default_methods(const Hs::ClassDecl&
                 auto dm = class_info.default_methods.at(method_name);
                 FD.v = dm;
 
-                auto [decl2, name, sig_type] = infer_type_for_single_fundecl_with_sig(gve, FD);
+                auto [decl2, name, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
                 decls_out.push_back(decl2);
             }
     }
@@ -309,7 +309,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
             FD = simple_decl(op, dm_var);
         }
-        auto [decl2, _, __] = infer_type_for_single_fundecl_with_sig(gve, *FD);
+        auto [decl2, _, __] = infer_type_for_single_fundecl_with_sig(*FD);
         decls.push_back(decl2);
     }
 
