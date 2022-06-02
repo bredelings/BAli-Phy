@@ -249,7 +249,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
         auto unreduced_collected_lie = tcs2.current_lie();
 
         // 2. instantiate the type -> (tvs, givens, rho-type)
-        auto polytype = env.at(name);
+        auto polytype = gve.at(name);
         auto [tvs, given_constraints, given_type] = instantiate(polytype, false);
         auto ordered_lie_given = constraints_to_lie(given_constraints);
         auto dict_vars = vars_from_lie( ordered_lie_given );
