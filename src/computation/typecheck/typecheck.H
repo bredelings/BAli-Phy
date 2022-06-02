@@ -85,6 +85,8 @@ struct typechecker_state: FreshVarSource
 
     std::pair<typechecker_state,global_value_env> copy_clear_lie(const global_value_env& env) const;
 
+    global_value_env add_binders(const global_value_env& env, const local_value_env& binders);
+
     std::pair<typechecker_state,global_value_env> copy_add_binders(const global_value_env& env, const local_value_env& local_env) const;
 
     local_instance_env& current_lie();

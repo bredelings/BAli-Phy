@@ -65,7 +65,7 @@ global_value_env typechecker_state::infer_type_for_sigs(signature_env& signature
 Hs::Binds
 typechecker_state::infer_type_for_binds(global_value_env& env, Hs::Binds binds, bool is_top_level)
 {
-    env = plus_prefer_right(env, infer_type_for_sigs(binds.signatures));
+    env = add_binders(env, infer_type_for_sigs(binds.signatures));
 
     for(auto& decls: binds)
         decls = infer_type_for_decls(env, binds.signatures, decls, is_top_level);

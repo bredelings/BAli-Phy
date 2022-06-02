@@ -419,12 +419,18 @@ pair<typechecker_state,global_value_env> typechecker_state::copy_clear_lie(const
 }
 
 
+global_value_env typechecker_state::add_binders(const global_value_env& env, const local_value_env& binders)
+{
+    auto env2 = plus_prefer_right(env, binders);
+    //   gve = plus_prefer_right( gve, binders );
+    return env2;
+}
+
 pair<typechecker_state,global_value_env>
 typechecker_state::copy_add_binders(const global_value_env& env, const local_value_env& local_env) const
 {
     auto [new_state, env2] = copy_clear_lie(env);
-    //   new_state.gve = plus_prefer_right( new_state.gve, local_env );
-    env2 = plus_prefer_right( env, local_env );
+    env2 = new_state.add_binders(env, local_env );
     return {new_state, env2};
 }
 

@@ -54,7 +54,7 @@ typechecker_state::infer_qual_type(global_value_env& env, const Hs::Qual& qual)
         // type(pat) = type(exp)
         unify(Hs::ListType(pat_type), exp_type);
 
-        env = plus_prefer_right(env,lve);
+        env = add_binders(env,lve);
 
         return PQ;
     }
@@ -93,7 +93,7 @@ typechecker_state::infer_guard_type(global_value_env& env, const Hs::Qual& guard
         // type(pat) = type(exp)
         unify(pat_type,exp_type);
 
-        env = plus_prefer_right(env, lve);
+        env = add_binders(env, lve);
 
         return PQ;
     }
