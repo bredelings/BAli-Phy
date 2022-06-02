@@ -11,8 +11,10 @@ using std::tuple;
 
 // Figure 25. Rules for match, mrule, and grhs
 tuple<Hs::GuardedRHS, Hs::Type>
-typechecker_state::infer_type(const global_value_env& env, Hs::GuardedRHS rhs)
+typechecker_state::infer_type(Hs::GuardedRHS rhs)
 {
+    auto env = gve;
+
     // Fig 25. GUARD-DEFAULT
     if (rhs.guards.empty())
     {
@@ -26,7 +28,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::GuardedRHS rhs)
     auto guard1 = state2.infer_guard_type(env2, rhs.guards[0]);
 
     rhs.guards.erase(rhs.guards.begin());
-    auto [rhs2, t2] = state2.infer_type(env2, rhs);
+    auto [rhs2, t2] = state2.infer_type(rhs);
 
     rhs2.guards.insert(rhs2.guards.begin(), guard1);
 
@@ -49,7 +51,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MultiGuardedRHS r
 
     for(auto& guarded_rhs: rhs.guarded_rhss)
     {
-        auto [guarded_rhs2, t1] = state2.infer_type(env2, guarded_rhs);
+        auto [guarded_rhs2, t1] = state2.infer_type(guarded_rhs);
         guarded_rhs = guarded_rhs2;
         unify(t1,type);
     }

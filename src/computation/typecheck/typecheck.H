@@ -184,7 +184,7 @@ struct typechecker_state: FreshVarSource
     infer_type(expression_ref exp);
 
     std::tuple<Hs::GuardedRHS, Hs::Type>
-    infer_type(const global_value_env& env, Hs::GuardedRHS);
+    infer_type(Hs::GuardedRHS);
 
     std::tuple<Hs::MultiGuardedRHS, Hs::Type>
     infer_type(const global_value_env& env, Hs::MultiGuardedRHS);
