@@ -12,8 +12,6 @@ using std::tuple;
 tuple<expression_ref, Hs::Type>
 typechecker_state::infer_type(expression_ref E)
 {
-    auto env = gve;
-
     if (auto x = E.to<Hs::Var>())
     {
         auto& x_name = unloc(x->name);
@@ -302,7 +300,7 @@ typechecker_state::infer_type(expression_ref E)
     else if (auto do_exp = E.to<Hs::Do>())
     {
         auto DoExp = *do_exp;
-        auto do_type = infer_stmts_type(env, 0, DoExp.stmts.stmts);
+        auto do_type = infer_stmts_type(0, DoExp.stmts.stmts);
         return {DoExp, do_type};
     }
 

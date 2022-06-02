@@ -61,7 +61,6 @@ typechecker_state::infer_type(Hs::MultiGuardedRHS rhs)
 tuple<Hs::MRule, Hs::Type>
 typechecker_state::infer_type(Hs::MRule rule)
 {
-    auto env = gve;
     if (rule.patterns.empty())
     {
         auto [rhs, type] = infer_type(rule.rhs);
@@ -72,7 +71,8 @@ typechecker_state::infer_type(Hs::MRule rule)
     {
         auto [pat, t1, lve1] = infer_pattern_type(rule.patterns.front());
 
-        auto [new_state,env2] = copy_add_binders(env, lve1);
+        auto new_state = copy_clear_lie();
+        new_state.add_binders({}, lve1);
 
         // Remove the first pattern in the rule
         rule.patterns.erase(rule.patterns.begin());
@@ -91,7 +91,6 @@ typechecker_state::infer_type(Hs::MRule rule)
 tuple<Hs::Match, Hs::Type>
 typechecker_state::infer_type(Hs::Match m)
 {
-    auto env = gve;
     Hs::Type result_type = fresh_meta_type_var( kind_star() );
 
     for(auto& rule: m.rules)

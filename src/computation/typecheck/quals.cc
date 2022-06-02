@@ -109,7 +109,7 @@ typechecker_state::infer_guard_type(const Hs::Qual& guard)
 
 
 Hs::Type
-typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<Hs::Qual>& stmts)
+typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
 {
     auto& stmt = stmts[i];
     // Last statement -- an expression.
@@ -147,12 +147,13 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
         // 4. Typecheck pat
         auto [bindpat, pat_type, pat_binders] = infer_pattern_type(PQ.bindpat);
 
-        auto [new_state, env2] = copy_add_binders(env, pat_binders);
+        auto new_state = copy_clear_lie();
+        new_state.add_binders({}, pat_binders);
 
         PQ.bindpat = bindpat;
 
         // 5. Typecheck stmts
-        auto stmts_type = new_state.infer_stmts_type(env2, i+1, stmts);
+        auto stmts_type = new_state.infer_stmts_type(i+1, stmts);
 
         // 6. a ~ (pat_type -> stmts_type) -> b
         auto b = fresh_meta_type_var( kind_star() );
@@ -189,7 +190,7 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
         unify(and_then_op_type, Hs::make_arrow_type(exp_type, a));
 
         // 4. Typecheck stmts
-        auto stmts_type = infer_stmts_type(env, i+1, stmts);
+        auto stmts_type = infer_stmts_type(i+1, stmts);
 
         // 5. a ~ stmts_type -> b
         auto b = fresh_meta_type_var( kind_star() );
@@ -204,11 +205,11 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
         auto LQ = *lq;
 
         // 1. Typecheck binds and add values to global env
-        auto [state2,env2] = copy_clear_lie(env);
+        auto state2 = copy_clear_lie();
         unloc(LQ.binds) = state2.infer_type_for_binds(unloc(LQ.binds));
 
         // 2. Typecheck stmts
-        auto stmts_type = state2.infer_stmts_type(env2, i+1, stmts);
+        auto stmts_type = state2.infer_stmts_type(i+1, stmts);
 
         current_lie() += state2.current_lie();
 
