@@ -154,7 +154,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         else if (auto i = L.is_Integer())
         {
             // 1. Typecheck fromInteger
-            auto [fromInteger, fromInteger_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Num.fromInteger"}));
+            auto [fromInteger, fromInteger_type] = infer_type(Hs::Var({noloc,"Compiler.Num.fromInteger"}));
 
             // 2. Determine result type
             auto result_type = fresh_meta_type_var( kind_star() );
@@ -171,7 +171,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         else if (auto d = L.is_Double())
         {
             // 1. Typecheck fromRational
-            auto [fromRational, fromRational_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Num.fromRational"}));
+            auto [fromRational, fromRational_type] = infer_type(Hs::Var({noloc,"Compiler.Num.fromRational"}));
 
             // 2. Determine result type
             auto result_type = fresh_meta_type_var( kind_star() );

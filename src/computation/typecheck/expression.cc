@@ -10,8 +10,10 @@ using std::optional;
 using std::tuple;
 
 tuple<expression_ref, Hs::Type>
-typechecker_state::infer_type(const global_value_env& env, expression_ref E)
+typechecker_state::infer_type(expression_ref E)
 {
+    auto env = gve;
+
     if (auto x = E.to<Hs::Var>())
     {
         auto& x_name = unloc(x->name);
@@ -40,7 +42,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         else if (auto i = L->is_Integer())
         {
             // 1. Typecheck fromInteger
-            auto [fromInteger, fromInteger_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Num.fromInteger"}));
+            auto [fromInteger, fromInteger_type] = infer_type(Hs::Var({noloc,"Compiler.Num.fromInteger"}));
 
             // 2. Determine result type
             auto result_type = fresh_meta_type_var( kind_star() );
@@ -55,7 +57,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         else if (auto d = L->is_Double())
         {
             // 1. Typecheck fromRational
-            auto [fromRational, fromRational_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Num.fromRational"}));
+            auto [fromRational, fromRational_type] = infer_type(Hs::Var({noloc,"Compiler.Num.fromRational"}));
 
             // 2. Determine result type
             auto result_type = fresh_meta_type_var( kind_star() );
@@ -91,7 +93,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         binds.push_back(decls);
         expression_ref E2 = Hs::LetExp({noloc,binds},{noloc,x});
 
-        return infer_type(env, E2);
+        return infer_type(E2);
     }
     else if (auto l = E.to<Hs::List>())
     {
@@ -99,7 +101,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto L = *l;
         for(auto& element: L.elements)
         {
-            auto [element1, t1] = infer_type(env, element);
+            auto [element1, t1] = infer_type(element);
             element = element1;
             unify(t1, element_type);
         }
@@ -112,7 +114,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         vector<Hs::Type> element_types;
         for(auto& element: T.elements)
         {
-            auto [element1, element_type] = infer_type(env, element);
+            auto [element1, element_type] = infer_type(element);
             element = element1;
             element_types.push_back( element_type );
         }
@@ -126,14 +128,14 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         auto e1 = E.sub()[0];
 
-        auto [f, t1] = infer_type(env,e1);
+        auto [f, t1] = infer_type(e1);
 
         vector<expression_ref> args;
         for(int i=1;i<E.size();i++)
         {
             auto e2 = E.sub()[i];
 
-            auto [arg2, t2] = infer_type(env, e2);
+            auto [arg2, t2] = infer_type(e2);
             args.push_back(arg2);
 
             // tv <- fresh
@@ -166,7 +168,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         unloc(Let.binds) = state2.infer_type_for_binds(unloc(Let.binds));
 
         // 2. Compute type of let body
-        auto [body, t_body] = state2.infer_type(env2, unloc(Let.body));
+        auto [body, t_body] = state2.infer_type(unloc(Let.body));
         unloc(Let.body) = body;
 
         current_lie() += state2.current_lie();
@@ -186,13 +188,13 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
 
         auto [type, field_types] = constructor_pattern_types(*con);
         if (args.size() < field_types.size())
-            return infer_type(env, apply_expression(*con, args));
+            return infer_type(apply_expression(*con, args));
 
         vector<Hs::Type> arg_types;
         for(int i=0; i < args.size(); i++)
         {
             auto& arg = args[i];
-            auto [arg_i, t_i] = infer_type(env, arg);
+            auto [arg_i, t_i] = infer_type(arg);
             arg = arg_i;
             arg_types.push_back(t_i);
 
@@ -214,7 +216,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto Case = *case_exp;
 
         // 1. Determine object type
-        auto [object, object_type] = infer_type(env, Case.object);
+        auto [object, object_type] = infer_type(Case.object);
         Case.object = object;
         
         // 2. Determine data type for object from patterns.
@@ -242,9 +244,9 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     else if (auto if_exp = E.to<Hs::IfExp>())
     {
         auto If = *if_exp;
-        auto [cond, cond_type ] = infer_type(env, unloc(If.condition));
-        auto [tbranch, tbranch_type] = infer_type(env, unloc(If.true_branch));
-        auto [fbranch, fbranch_type] = infer_type(env, unloc(If.false_branch));
+        auto [cond, cond_type ] = infer_type(unloc(If.condition));
+        auto [tbranch, tbranch_type] = infer_type(unloc(If.true_branch));
+        auto [fbranch, fbranch_type] = infer_type(unloc(If.false_branch));
         unloc(If.condition) = If;
         unloc(If.true_branch) = tbranch;
         unloc(If.false_branch) = fbranch;
@@ -260,11 +262,11 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto LSec = *lsec;
 
         // 1. Typecheck the op
-        auto [op, op_type] = infer_type(env, LSec.op);
+        auto [op, op_type] = infer_type(LSec.op);
         LSec.op = op;
 
         // 2. Typecheck the left argument
-        auto [left_arg, left_arg_type] = infer_type(env, LSec.l_arg);
+        auto [left_arg, left_arg_type] = infer_type(LSec.l_arg);
         LSec.l_arg = left_arg;
 
         // 3. Typecheck the function application
@@ -279,11 +281,11 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto RSec = *rsec;
 
         // 1. Typecheck the op
-        auto [op, op_type] = infer_type(env, RSec.op);
+        auto [op, op_type] = infer_type(RSec.op);
         RSec.op = op;
 
         // 2. Typecheck the right argument
-        auto [right_arg, right_arg_type] = infer_type(env, RSec.r_arg);
+        auto [right_arg, right_arg_type] = infer_type(RSec.r_arg);
         RSec.r_arg = right_arg;
 
         // 3. Typecheck the function application:  op left_arg right_arg
@@ -310,7 +312,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto LComp = *lcomp;
         auto [state2,env2] = copy_clear_lie(env);
         LComp.quals = state2.infer_quals_type(env2, LComp.quals);
-        auto [body, exp_type] = state2.infer_type(env2, LComp.body);
+        auto [body, exp_type] = state2.infer_type(LComp.body);
         LComp.body = body;
 
         Hs::Type result_type = Hs::ListType(exp_type);
@@ -325,11 +327,11 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto L = *l;
 
         // 1. Typecheck enumFrom
-        auto [enumFrom, enumFrom_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Enum.enumFrom"}));
+        auto [enumFrom, enumFrom_type] = infer_type(Hs::Var({noloc,"Compiler.Enum.enumFrom"}));
         L.enumFromOp = enumFrom;
 
         // 2. Typecheck from argument
-        auto [from, from_type] = infer_type(env, L.from);
+        auto [from, from_type] = infer_type(L.from);
         L.from = from;
 
         // 3. enumFrom_type ~ from_type -> result_type
@@ -344,11 +346,11 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto L = *l;
 
         // 1. Typecheck enumFrom
-        auto [enumFromThen, enumFromThen_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Enum.enumFromThen"}));
+        auto [enumFromThen, enumFromThen_type] = infer_type(Hs::Var({noloc,"Compiler.Enum.enumFromThen"}));
         L.enumFromThenOp = enumFromThen;
 
         // 2. Typecheck from argument
-        auto [from, from_type] = infer_type(env, L.from);
+        auto [from, from_type] = infer_type(L.from);
         L.from = from;
 
         // 3. enumFromThen_type ~ from_type -> a
@@ -356,7 +358,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         unify(enumFromThen_type, Hs::make_arrow_type(from_type, a));
 
         // 4. Typecheck then argument
-        auto [then, then_type] = infer_type(env, L.then);
+        auto [then, then_type] = infer_type(L.then);
         L.then = then;
 
         // 5. a ~ then_type -> result_type
@@ -371,11 +373,11 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto L = *l;
 
         // 1. Typecheck enumFrom
-        auto [enumFromTo, enumFromTo_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Enum.enumFromTo"}));
+        auto [enumFromTo, enumFromTo_type] = infer_type(Hs::Var({noloc,"Compiler.Enum.enumFromTo"}));
         L.enumFromToOp = enumFromTo;
 
         // 2. Typecheck from argument
-        auto [from, from_type] = infer_type(env, L.from);
+        auto [from, from_type] = infer_type(L.from);
         L.from = from;
 
         // 3. enumFromTo_type ~ from_type -> a
@@ -383,7 +385,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         unify(enumFromTo_type, Hs::make_arrow_type(from_type, a));
 
         // 4. Typecheck to argument
-        auto [to, to_type] = infer_type(env, L.to);
+        auto [to, to_type] = infer_type(L.to);
         L.to = to;
 
         // 5. a ~ to_type -> result_type
@@ -398,11 +400,11 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto L = *l;
 
         // 1. Typecheck enumFromThenTo
-        auto [enumFromThenTo, enumFromThenTo_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Enum.enumFromThenTo"}));
+        auto [enumFromThenTo, enumFromThenTo_type] = infer_type(Hs::Var({noloc,"Compiler.Enum.enumFromThenTo"}));
         L.enumFromThenToOp = enumFromThenTo;
 
         // 2. Typecheck from argument
-        auto [from, from_type] = infer_type(env, L.from);
+        auto [from, from_type] = infer_type(L.from);
         L.from = from;
 
         // 3. enumFromThenTo_type ~ from_type -> a
@@ -410,7 +412,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         unify(enumFromThenTo_type, Hs::make_arrow_type(from_type, a));
 
         // 4. Typecheck then argument
-        auto [then, then_type] = infer_type(env, L.then);
+        auto [then, then_type] = infer_type(L.then);
         L.then = then;
 
         // 5. a ~ then_type -> b
@@ -418,7 +420,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         unify(a, Hs::make_arrow_type(then_type, b));
 
         // 6. Typecheck to argument
-        auto [to, to_type] = infer_type(env, L.to);
+        auto [to, to_type] = infer_type(L.to);
         L.to = to;
 
         // 7. b ~ to_type -> result_type

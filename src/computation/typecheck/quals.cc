@@ -35,7 +35,7 @@ typechecker_state::infer_qual_type(global_value_env& env, const Hs::Qual& qual)
     if (auto sq = qual.to<Hs::SimpleQual>())
     {
         auto SQ = *sq;
-        auto [exp, cond_type] = infer_type(env, SQ.exp);
+        auto [exp, cond_type] = infer_type(SQ.exp);
         SQ.exp = exp;
         unify( cond_type, bool_type() );
         return SQ;
@@ -45,7 +45,7 @@ typechecker_state::infer_qual_type(global_value_env& env, const Hs::Qual& qual)
     {
         auto PQ = *pq;
         // pat <- exp
-        auto [exp, exp_type] = infer_type(env, PQ.exp);
+        auto [exp, exp_type] = infer_type(PQ.exp);
         auto [bindpat, pat_type, lve] = infer_pattern_type(PQ.bindpat);
 
         PQ.bindpat = bindpat;
@@ -75,7 +75,7 @@ typechecker_state::infer_guard_type(global_value_env& env, const Hs::Qual& guard
     if (auto sq = guard.to<Hs::SimpleQual>())
     {
         auto SQ = *sq;
-        auto [cond_exp, cond_type] = infer_type(env, SQ.exp);
+        auto [cond_exp, cond_type] = infer_type(SQ.exp);
         SQ.exp = cond_exp;
         unify( cond_type, bool_type() );
         return SQ;
@@ -85,7 +85,7 @@ typechecker_state::infer_guard_type(global_value_env& env, const Hs::Qual& guard
         auto PQ = *pq;
         // pat <- exp
         auto [bindpat, pat_type, lve] = infer_pattern_type(PQ.bindpat);
-        auto [exp, exp_type] = infer_type(env, PQ.exp);
+        auto [exp, exp_type] = infer_type(PQ.exp);
 
         PQ.bindpat = bindpat;
         PQ.exp = exp;
@@ -120,7 +120,7 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
             throw myexception()<<"stmts list does not end in an expression";
 
         auto Last = *last;
-        auto [exp, type] = infer_type(env, Last.exp);
+        auto [exp, type] = infer_type(Last.exp);
         Last.exp = exp;
 
         stmt = Last;
@@ -133,11 +133,11 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
         auto PQ = *pq;
 
         // 1. Typecheck (>>=)
-        auto [bind_op, bind_op_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Base.>>="}));
+        auto [bind_op, bind_op_type] = infer_type(Hs::Var({noloc,"Compiler.Base.>>="}));
         PQ.bindOp = bind_op;
 
         // 2. Typecheck exp
-        auto [exp, exp_type] = infer_type(env, PQ.exp);
+        auto [exp, exp_type] = infer_type(PQ.exp);
         PQ.exp = exp;
 
         // 3. bind_op_type ~ (exp_type -> a)
@@ -163,7 +163,7 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
         // but if we typecheck this without unifying it with anything, it will create an ambiguous constraint.
         if (false) 
         {
-            auto [fail_op, fail_op_type] = new_state.infer_type(gve, Hs::Var({noloc,"Compiler.Base.fail"}));
+            auto [fail_op, fail_op_type] = new_state.infer_type(Hs::Var({noloc,"Compiler.Base.fail"}));
             PQ.failOp = fail_op;
         }
         current_lie() += new_state.current_lie();
@@ -177,11 +177,11 @@ typechecker_state::infer_stmts_type(const global_value_env& env, int i, vector<H
         auto SQ = *sq;
 
         // 1. Typecheck (>>)
-        auto [and_then_op, and_then_op_type] = infer_type(gve, Hs::Var({noloc,"Compiler.Base.>>"}));
+        auto [and_then_op, and_then_op_type] = infer_type(Hs::Var({noloc,"Compiler.Base.>>"}));
         SQ.andThenOp = and_then_op;
 
         // 2. Typecheck exp
-        auto [exp, exp_type] = infer_type(env, SQ.exp);
+        auto [exp, exp_type] = infer_type(SQ.exp);
         SQ.exp = exp;
 
         // 3. and_then_op_type ~ (exp_type -> a)

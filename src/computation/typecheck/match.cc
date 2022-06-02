@@ -16,7 +16,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::GuardedRHS rhs)
     // Fig 25. GUARD-DEFAULT
     if (rhs.guards.empty())
     {
-        auto [body, type] = infer_type(env, rhs.body);
+        auto [body, type] = infer_type(rhs.body);
         rhs.body = body;
         return {rhs, type};
     }
