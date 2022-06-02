@@ -65,7 +65,7 @@ global_value_env typechecker_state::infer_type_for_sigs(signature_env& signature
 Hs::Binds
 typechecker_state::infer_type_for_binds(Hs::Binds binds, bool is_top_level)
 {
-    add_binders({}, infer_type_for_sigs(binds.signatures));
+    add_binders(infer_type_for_sigs(binds.signatures));
 
     for(auto& decls: binds)
         decls = infer_type_for_decls(binds.signatures, decls, is_top_level);
@@ -419,8 +419,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
         lhs_types.push_back(type);
     }
 
-    auto tcs2 = copy_clear_lie();
-    tcs2.add_binders({}, remove_sig_binders(mono_binder_env, signatures));
+    auto tcs2 = copy_add_binders( remove_sig_binders(mono_binder_env, signatures) );
 
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)
@@ -565,7 +564,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
             assert(constraints_for_this_type.empty());
         }
     }
-    add_binders({}, poly_binder_env);
+    add_binders(poly_binder_env);
 
     assert(bind_infos.size() >= 1);
 

@@ -71,8 +71,7 @@ typechecker_state::infer_type(Hs::MRule rule)
     {
         auto [pat, t1, lve1] = infer_pattern_type(rule.patterns.front());
 
-        auto new_state = copy_clear_lie();
-        new_state.add_binders({}, lve1);
+        auto new_state = copy_add_binders( lve1 );
 
         // Remove the first pattern in the rule
         rule.patterns.erase(rule.patterns.begin());

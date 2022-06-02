@@ -54,7 +54,7 @@ typechecker_state::infer_qual_type(const Hs::Qual& qual)
         // type(pat) = type(exp)
         unify(Hs::ListType(pat_type), exp_type);
 
-        add_binders({},lve);
+        add_binders(lve);
 
         return PQ;
     }
@@ -93,7 +93,7 @@ typechecker_state::infer_guard_type(const Hs::Qual& guard)
         // type(pat) = type(exp)
         unify(pat_type,exp_type);
 
-        add_binders({}, lve);
+        add_binders(lve);
 
         return PQ;
     }
@@ -148,7 +148,7 @@ typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
         auto [bindpat, pat_type, pat_binders] = infer_pattern_type(PQ.bindpat);
 
         auto new_state = copy_clear_lie();
-        new_state.add_binders({}, pat_binders);
+        new_state.add_binders(pat_binders);
 
         PQ.bindpat = bindpat;
 

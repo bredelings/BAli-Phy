@@ -83,11 +83,9 @@ struct typechecker_state: FreshVarSource
     //------- Functions handling the LIE ---------
     typechecker_state copy_clear_lie() const;
 
-    std::pair<typechecker_state,global_value_env> copy_clear_lie(const global_value_env& env) const;
+    void add_binders(const local_value_env& binders);
 
-    global_value_env add_binders(const global_value_env& env, const local_value_env& binders);
-
-    std::pair<typechecker_state,global_value_env> copy_add_binders(const global_value_env& env, const local_value_env& local_env) const;
+    typechecker_state copy_add_binders(const global_value_env& env) const;
 
     local_instance_env& current_lie();
 
