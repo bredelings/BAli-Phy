@@ -81,8 +81,6 @@ struct typechecker_state: FreshVarSource
     local_instance_env lie;
 
     //------- Functions handling the LIE ---------
-    typechecker_state copy() const;
-
     typechecker_state copy_clear_lie() const;
 
     local_instance_env& current_lie();
