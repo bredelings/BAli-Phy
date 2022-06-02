@@ -522,6 +522,7 @@ typechecker_state::infer_type_for_decls_groups(global_value_env& env, const map<
 
     vector< Hs::Var > dict_vars = vars_from_lie( lie_retained );
 
+    global_value_env poly_binder_env;
     for(auto& [name, monotype]: mono_binder_env)
     {
         auto qtvs_in_this_type = free_type_variables(monotype);
@@ -538,7 +539,7 @@ typechecker_state::infer_type_for_decls_groups(global_value_env& env, const map<
 
         if (not signatures.count(name))
         {
-            env = env.insert( {name, polytype} );
+            poly_binder_env = poly_binder_env.insert( {name, polytype} );
         }
         else
         {
@@ -562,11 +563,14 @@ typechecker_state::infer_type_for_decls_groups(global_value_env& env, const map<
             assert(constraints_for_this_type.empty());
         }
     }
+    env = add_binders(env, poly_binder_env);
+
     assert(bind_infos.size() >= 1);
 
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
+    assert(env.size() == gve.size());
     return decls2;
 }
 
