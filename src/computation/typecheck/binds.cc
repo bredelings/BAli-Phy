@@ -511,7 +511,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     if (is_restricted(signatures, decls) and not is_top_level)
     {
         // 1. This removes defaulted constraints from the LIE.  (not_completely_ambiguous = retained but not defaulted)
-        current_lie() = lie_deferred + lie_not_completely_ambiguous;
+        lie_deferred += lie_not_completely_ambiguous;
 
         // NOTE: in theory, we should be able to subtract just ftvs(lie_completely_ambiguous)
         //       since lie_deferred should contain only fixed type variables that have already been
@@ -547,7 +547,6 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
         // Never quantify over variables that are only in a LIE -- those must be defaulted.
 
         // 2. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
-        current_lie() = lie_deferred;
 
         dict_vars = vars_from_lie( lie_not_completely_ambiguous );
 
@@ -585,8 +584,8 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
-    auto lie = pop_lie();
-    current_lie() += lie;
+    pop_lie();
+    current_lie() += lie_deferred;
 
     return {decls2, poly_binder_env};
 }
