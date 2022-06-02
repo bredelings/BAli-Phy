@@ -78,7 +78,7 @@ struct typechecker_state: FreshVarSource
 
     global_value_env gve;
 
-    std::vector<local_instance_env> lie_stack;
+    local_instance_env lie;
 
     //------- Functions handling the LIE ---------
     typechecker_state copy() const;

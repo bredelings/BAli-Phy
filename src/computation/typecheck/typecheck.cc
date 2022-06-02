@@ -418,7 +418,7 @@ typechecker_state typechecker_state::copy_clear_lie() const
 }
 
 local_instance_env& typechecker_state::current_lie() {
-    return lie_stack.back();
+    return lie;
 }
 
 void typechecker_state::add_dvar(const ID& name, const Hs::Type& constraint)
@@ -462,8 +462,6 @@ typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const 
     :FreshVarSource(fvs, s)
 {
     global_state = std::make_shared<global_tc_state>(m);
-
-    lie_stack.push_back( {} );
 }
 
 Hs::Var typechecker_state::find_prelude_var(string name) const
