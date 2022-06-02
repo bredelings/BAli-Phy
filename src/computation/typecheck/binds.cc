@@ -379,6 +379,31 @@ typechecker_state::infer_rhs_type(const global_value_env& env, const expression_
         std::abort();
 }
 
+pair<set<Hs::TypeVar>, set<Hs::TypeVar>> tvs_in_any_all_types(const local_value_env& mono_binder_env)
+{
+    set<Hs::TypeVar> tvs_in_any_type;  // type variables in ANY of the definitions
+    set<Hs::TypeVar> tvs_in_all_types;  // type variables in ALL of the definitions
+    {
+        // FIXME - should we be looping over binder vars, or over definitions?
+        optional<set<Hs::TypeVar>> tvs_in_all_types_;
+        for(auto& [_, type]: mono_binder_env)
+        {
+            auto tvs = free_type_variables(type);
+            add(tvs_in_any_type, tvs);
+            if (tvs_in_all_types_)
+                tvs_in_all_types_ = intersection(*tvs_in_all_types_, tvs);
+            else
+                tvs_in_all_types_ = tvs;
+        }
+        assert(tvs_in_all_types_);
+        tvs_in_all_types = *tvs_in_all_types_;
+    }
+
+    return {tvs_in_any_type, tvs_in_all_types};
+}
+
+
+
 tuple<Hs::Decls, global_value_env>
 typechecker_state::infer_type_for_decls_groups(const global_value_env& env, const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
 {
@@ -452,27 +477,10 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
     auto fixed_tvs = free_type_variables( apply_current_subst(env) );
 
-    set<Hs::TypeVar> tvs_in_any_type;  // type variables in ANY of the definitions
-    set<Hs::TypeVar> tvs_in_all_types;  // type variables in ALL of the definitions
-    {
-        // FIXME - should we be looping over binder vars, or over definitions?
-        optional<set<Hs::TypeVar>> tvs_in_all_types_;
-        for(auto& [_, type]: mono_binder_env)
-        {
-            auto tvs = free_type_variables(type);
-            add(tvs_in_any_type, tvs);
-            if (tvs_in_all_types_)
-                tvs_in_all_types_ = intersection(*tvs_in_all_types_, tvs);
-            else
-                tvs_in_all_types_ = tvs;
-        }
-        assert(tvs_in_all_types_);
-        tvs_in_all_types = *tvs_in_all_types_;
-    }
+    auto [tvs_in_any_type, tvs_in_all_types] = tvs_in_any_all_types(mono_binder_env);
 
     // OK, we've got to do defaulting before we consider what variables to quantify over.
 
-    vector< Hs::Var > dict_vars;
 
     // A. First, REDUCE the lie by
     //    (i)  converting to Hnf
@@ -532,7 +540,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
     // 2. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
 
-    dict_vars = vars_from_lie( lie_retained );
+    vector< Hs::Var > dict_vars = vars_from_lie( lie_retained );
 
     for(auto& [name, monotype]: mono_binder_env)
     {
