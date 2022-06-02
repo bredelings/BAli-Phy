@@ -448,12 +448,6 @@ local_instance_env typechecker_state::pop_lie()
     return lie;
 }
 
-void typechecker_state::pop_and_add_lie()
-{
-    auto lie = pop_lie();
-    current_lie() += lie;
-}
-
 void typechecker_state::get_defaults(const Hs::ModuleDecls& M)
 {
     if (M.default_decl)

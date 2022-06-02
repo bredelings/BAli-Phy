@@ -299,7 +299,8 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
 
         auto decl = mkGenBind( tvs, dict_vars, ev_binds, Hs::Decls({FD}), {{name, bind_info}} );
 
-        pop_and_add_lie();
+        auto lie = pop_lie();
+        current_lie() += lie;
 
         return {decl, name, polytype};
     }
@@ -586,7 +587,8 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
-    pop_and_add_lie();
+    auto lie = pop_lie();
+    current_lie() += lie;
 
     return {decls2, poly_binder_env};
 }

@@ -95,7 +95,6 @@ struct typechecker_state: FreshVarSource
 
     local_instance_env pop_lie();
 
-    void pop_and_add_lie();
     // ------ End: Functions handling the LIE ---
 
     void get_tycon_info(const Hs::Decls& type_decls);
