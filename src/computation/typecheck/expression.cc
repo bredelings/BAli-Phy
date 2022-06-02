@@ -309,12 +309,14 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
     else if (auto lcomp = E.to<Hs::ListComprehension>())
     {
         auto LComp = *lcomp;
-        auto env2 = env;
-        LComp.quals = infer_quals_type(env2, LComp.quals);
-        auto [body, exp_type] = infer_type(env2, LComp.body);
+        auto [state2,env2] = copy_clear_lie(env);
+        LComp.quals = state2.infer_quals_type(env2, LComp.quals);
+        auto [body, exp_type] = state2.infer_type(env2, LComp.body);
         LComp.body = body;
 
         Hs::Type result_type = Hs::ListType(exp_type);
+
+        current_lie() += state2.current_lie();
 
         return { LComp, result_type };
     }
