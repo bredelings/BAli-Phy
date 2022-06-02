@@ -485,6 +485,8 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     // B. Second, extract the "retained" predicates can be added without causing abiguity.
     auto [lie_deferred, lie_retained] = classify_constraints( current_lie(), fixed_tvs );
 
+    pop_lie();
+
     /* NOTE: Constraints can reference variables that are in
      *        (i) ALL types in a recursive group
      *       (ii) SOME-BUT-NOT-ALL types
@@ -502,90 +504,74 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     //   after generating definitions of their 
     auto [s1, binds1, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
     binds = binds1 + binds;
+    lie_retained = lie_not_completely_ambiguous;
 
     set<Hs::TypeVar> qtvs = tvs_in_any_type - fixed_tvs;
 
     map<string, Hs::BindInfo> bind_infos;
 
     global_value_env poly_binder_env;
-    if (is_restricted(signatures, decls) and not is_top_level)
+    bool restricted = is_restricted(signatures, decls) and not is_top_level;
+    if (restricted)
     {
         // 1. This removes defaulted constraints from the LIE.  (not_completely_ambiguous = retained but not defaulted)
-        lie_deferred += lie_not_completely_ambiguous;
+        lie_deferred += lie_retained;
 
-        // NOTE: in theory, we should be able to subtract just ftvs(lie_completely_ambiguous)
-        //       since lie_deferred should contain only fixed type variables that have already been
-        //       removed from qtvs.
+        lie_retained = {};
 
-        // 2. Quantify only over variables that are "unconstrained" (not part of the LIE)
-        // -- after defaulting!
-        qtvs = qtvs - free_type_variables(current_lie());
-
-        for(auto& [name,monotype]: mono_binder_env)
-        {
-            auto qtvs_in_this_type = intersection(qtvs, free_type_variables(monotype));
-
-            // 3. Quantify type
-            // FIXME: We also need to add type lambdas for the tuple, and wrappers for each binder...
-            Hs::Type polytype = quantify(qtvs_in_this_type, monotype);
-
-            Hs::Var x_outer({noloc,name});
-            Hs::Var x_inner = get_fresh_Var(name, false);
-
-            poly_binder_env = poly_binder_env.insert({name, polytype});
-
-            Hs::BindInfo info(x_outer, x_inner, monotype, polytype, {}, {});
-            bind_infos.insert({name,info});
-        }
+        add(fixed_tvs, free_type_variables(lie_deferred));
     }
-    else
+
+    current_lie() += lie_deferred;
+
+    // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group,
+    // but we do need the defaults to define individual symbols.
+
+    // 1. Quantify over variables in ANY type that are not fixed -- doesn't depend on defaulting.
+    // Never quantify over variables that are only in a LIE -- those must be defaulted.
+
+    // 2. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
+
+    dict_vars = vars_from_lie( lie_retained );
+
+    for(auto& [name, monotype]: mono_binder_env)
     {
-        // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group,
-        // but we do need the defaults to define individual symbols.
+        auto qtvs_in_this_type = free_type_variables(monotype);
 
-        // 1. Quantify over variables in ANY type that are not fixed -- doesn't depend on defaulting.
-        // Never quantify over variables that are only in a LIE -- those must be defaulted.
+        // Default any constraints that do not occur in THIS type.
+        auto [s2, binds2, lie_for_this_type] = default_preds( fixed_tvs, qtvs_in_this_type, lie_retained );
 
-        // 2. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
+        auto constraints_for_this_type = constraints_from_lie(lie_for_this_type);
 
-        dict_vars = vars_from_lie( lie_not_completely_ambiguous );
+        // Only quantify over type variables that occur in THIS type.
+        Hs::Type polytype = quantify( qtvs_in_this_type,
+                                      Hs::add_constraints( constraints_for_this_type,
+                                                           monotype ) );
 
-        for(auto& [name, monotype]: mono_binder_env)
+        // How can we generate a wrapper between qualified_type and lie_deferred => (type1, unrestricted_type, type3)?
+
+        poly_binder_env = poly_binder_env.insert( {name, polytype} );
+
+        Hs::Var x_outer({noloc,name});
+        Hs::Var x_inner = get_fresh_Var(name, false);
+
+        vector<Hs::Var> dict_args;
+        for(auto& [name, constraint]: lie_for_this_type)
+            dict_args.push_back( Hs::Var({noloc,name}) );
+
+        Hs::BindInfo info(x_outer, x_inner, monotype, polytype, dict_args, binds2);
+        bind_infos.insert({name, info});
+
+        if (restricted)
         {
-            auto tvs_in_this_type = free_type_variables(monotype);
-
-            // Default any constraints that do not occur in THIS type.
-            auto [s2, binds2, lie_for_this_type] = default_preds( fixed_tvs, tvs_in_this_type, lie_not_completely_ambiguous );
-
-            auto constraints_for_this_type = constraints_from_lie(lie_for_this_type);
-
-            // Only quantify over type variables that occur in THIS type.
-            Hs::Type polytype = quantify( tvs_in_this_type,
-                                          Hs::add_constraints( constraints_for_this_type,
-                                                               monotype ) );
-
-            // How can we generate a wrapper between qualified_type and lie_deferred => (type1, unrestricted_type, type3)?
-
-            poly_binder_env = poly_binder_env.insert( {name, polytype} );
-
-            Hs::Var x_outer({noloc,name});
-            Hs::Var x_inner = get_fresh_Var(name, false);
-
-            vector<Hs::Var> dict_args;
-            for(auto& [name, constraint]: lie_for_this_type)
-                dict_args.push_back( Hs::Var({noloc,name}) );
-
-            Hs::BindInfo info(x_outer, x_inner, monotype, polytype, dict_args, binds2);
-            bind_infos.insert({name, info});
+            assert(dict_args.empty());
+            assert(constraints_for_this_type.empty());
         }
-        assert(bind_infos.size() >= 1);
     }
+    assert(bind_infos.size() >= 1);
 
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
-
-    pop_lie();
-    current_lie() += lie_deferred;
 
     return {decls2, poly_binder_env};
 }
