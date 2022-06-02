@@ -162,7 +162,7 @@ typechecker_state::infer_type(const global_value_env& env, expression_ref E)
         auto Let = *let;
 
         // 1. Extend environment with types for decls, get any substitutions
-        auto [binds, binders] = infer_type_for_binds(env, unloc(Let.binds));
+        auto [binds, binders, _] = infer_type_for_binds(env, unloc(Let.binds));
         unloc(Let.binds) = binds;
         auto env2 = plus_prefer_right(env, binders);
 
