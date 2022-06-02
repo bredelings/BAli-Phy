@@ -72,10 +72,9 @@ typechecker_state::infer_type_for_binds(const global_value_env& env, Hs::Binds b
 
     for(auto& decls: binds)
     {
-        auto [decls1, binders1] = infer_type_for_decls(env2, binds.signatures, decls, is_top_level);
+        auto [decls1, env3] = infer_type_for_decls(env2, binds.signatures, decls, is_top_level);
         decls = decls1;
-        env2 = plus_prefer_right(env2, binders1);
-        // We should have already checked in rename different Decls in the same Binds don't have overlapping names.
+        env2 = env3;
     }
 
     return {binds, env2};
@@ -140,7 +139,7 @@ typechecker_state::infer_type_for_decls(const global_value_env& env, const signa
 
         env2 += remove_sig_binders(group_binders, signatures);
     }
-    return {decls2, binders};
+    return {decls2, env2};
 }
 
 bool single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signatures)
