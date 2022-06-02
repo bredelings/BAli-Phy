@@ -422,8 +422,9 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
         lhs_types.push_back(type);
     }
 
-    auto env = gve;
-    auto [tcs2,env2] = copy_add_binders(env, remove_sig_binders(mono_binder_env, signatures));
+    auto tcs2 = copy_clear_lie();
+    tcs2.add_binders({}, remove_sig_binders(mono_binder_env, signatures));
+
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)
     {
@@ -567,7 +568,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
             assert(constraints_for_this_type.empty());
         }
     }
-    env = add_binders(env, poly_binder_env);
+    add_binders({}, poly_binder_env);
 
     assert(bind_infos.size() >= 1);
 
