@@ -509,8 +509,8 @@ int main(int argc,char* argv[])
         {
             string filename = args["test-module"].as<string>();
             auto M = L->load_module_from_file(filename);
-            if (args.count("type-check"))
-                L->typecheck = true;
+            if (args.count("no-type-check"))
+                L->typecheck = false;
 
             L->optimize = args["optimize"].as<bool>();
 
@@ -527,8 +527,8 @@ int main(int argc,char* argv[])
         {
             string filename = args["run-module"].as<string>();
 
-            if (args.count("type-check"))
-                L->typecheck = true;
+            if (args.count("no-type-check"))
+                L->typecheck = false;
 
             L->optimize = args["optimize"].as<bool>();
 

@@ -12,7 +12,7 @@
 
 struct simplifier_options
 {
-    bool typecheck = false;
+    bool typecheck = true;
     bool optimize = true;
     bool pre_inline_unconditionally = true;
     bool post_inline_unconditionally = true;
