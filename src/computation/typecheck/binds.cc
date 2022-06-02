@@ -460,7 +460,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     // We also need to substitute before we quantify below.
     mono_binder_env = apply_current_subst(mono_binder_env);
 
-    auto fixed_tvs = free_type_variables( apply_current_subst(env) );
+    auto fixed_tvs = free_type_variables( apply_current_subst(gve) );
 
     auto [tvs_in_any_type, tvs_in_all_types] = tvs_in_any_all_types(mono_binder_env);
 
