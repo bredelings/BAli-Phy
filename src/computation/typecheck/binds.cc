@@ -473,6 +473,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
             throw;
         }
     }
+    auto unreduced_collected_lie = pop_lie();
 
     // We need to substitute before looking for free type variables!
     // We also need to substitute before we quantify below.
@@ -491,9 +492,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
     //    (ii) representing some constraints in terms of others.
     // This also substitutes into the current LIE, which we need to do 
     //    before finding free type vars in the LIE below.
-    auto [binds, collected_lie] = reduce( apply_current_subst( current_lie() ) );
-
-    pop_lie();
+    auto [binds, collected_lie] = reduce( apply_current_subst( unreduced_collected_lie ) );
 
     // B. Second, extract the "retained" predicates can be added without causing abiguity.
     auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
