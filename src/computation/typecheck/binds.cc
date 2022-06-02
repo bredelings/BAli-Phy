@@ -238,15 +238,13 @@ classify_constraints(const local_instance_env& lie,
 tuple<expression_ref, ID, Hs::Type>
 typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
-    auto env = gve;
-
     try
     {
         auto& name = unloc(FD.v.name);
 
         // 1. typecheck the rhs -> (rhs_type, wanted, body)
         auto tcs2 = copy_clear_lie();
-        auto [match2, rhs_type] = tcs2.infer_type(env, FD.match);
+        auto [match2, rhs_type] = tcs2.infer_type(FD.match);
         FD.match = match2;
         auto unreduced_collected_lie = tcs2.current_lie();
 
@@ -265,7 +263,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         auto [ev_binds, collected_lie] = reduce( apply_current_subst( unreduced_collected_lie) );
 
         // 5. find free type variables in the most general type
-        auto fixed_tvs = free_type_variables( apply_current_subst(env) );
+        auto fixed_tvs = free_type_variables( apply_current_subst(gve) );
         auto free_tvs = free_type_variables(monotype) - fixed_tvs;
 
         // 6. figure out which constraints are relevant here
@@ -347,11 +345,10 @@ typechecker_state::infer_lhs_type(const expression_ref& decl, const map<string, 
 tuple<expression_ref, Hs::Type>
 typechecker_state::infer_rhs_type(const expression_ref& decl)
 {
-    auto env = gve;
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
-        auto [match, rhs_type] = infer_type(env, FD.match);
+        auto [match, rhs_type] = infer_type(FD.match);
         FD.match = match;
 
         return {FD, rhs_type};
@@ -359,7 +356,7 @@ typechecker_state::infer_rhs_type(const expression_ref& decl)
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
-        auto [rhs, rhs_type] = infer_type(env, PD.rhs);
+        auto [rhs, rhs_type] = infer_type(PD.rhs);
         PD.rhs = rhs;
 
         return {PD, rhs_type};

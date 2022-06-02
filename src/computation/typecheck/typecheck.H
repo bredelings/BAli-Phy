@@ -187,13 +187,13 @@ struct typechecker_state: FreshVarSource
     infer_type(Hs::GuardedRHS);
 
     std::tuple<Hs::MultiGuardedRHS, Hs::Type>
-    infer_type(const global_value_env& env, Hs::MultiGuardedRHS);
+    infer_type(Hs::MultiGuardedRHS);
 
     std::tuple<Hs::MRule, Hs::Type>
-    infer_type(const global_value_env& env, Hs::MRule);
+    infer_type(Hs::MRule);
 
     std::tuple<Hs::Match, Hs::Type>
-    infer_type(const global_value_env& env, Hs::Match);
+    infer_type(Hs::Match);
 
     // Figures 13, 14, 15?
     Hs::Decls

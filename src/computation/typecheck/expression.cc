@@ -153,7 +153,7 @@ typechecker_state::infer_type(expression_ref E)
     {
         auto Lam = *lam;
         auto rule = Hs::MRule{Lam.args, Lam.body};
-        auto [rule2, t] = infer_type(env, rule);
+        auto [rule2, t] = infer_type(rule);
         Lam.args = rule2.patterns;
         Lam.body = rule2.rhs;
         return {Lam, t};
@@ -227,7 +227,7 @@ typechecker_state::infer_type(expression_ref E)
             match.rules.push_back(Hs::MRule{{pattern},body});
         }
 
-        auto [match2, match_type] = infer_type(env, match);
+        auto [match2, match_type] = infer_type(match);
 
         for(int i=0;i<Case.alts.size();i++)
         {

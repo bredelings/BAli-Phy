@@ -38,12 +38,12 @@ typechecker_state::infer_type(Hs::GuardedRHS rhs)
 
 // Fig 25. GUARD-OR
 tuple<Hs::MultiGuardedRHS, Hs::Type>
-typechecker_state::infer_type(const global_value_env& env, Hs::MultiGuardedRHS rhs)
+typechecker_state::infer_type(Hs::MultiGuardedRHS rhs)
 {
     substitution_t s;
     Hs::Type type = fresh_meta_type_var( kind_star() );
 
-    auto [state2,env2] = copy_clear_lie(env);
+    auto state2 = copy_clear_lie();
     if (rhs.decls)
         unloc(*rhs.decls) = state2.infer_type_for_binds(unloc(*rhs.decls)); 
 
@@ -59,12 +59,12 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MultiGuardedRHS r
 };
 
 tuple<Hs::MRule, Hs::Type>
-typechecker_state::infer_type(const global_value_env& env, Hs::MRule rule)
+typechecker_state::infer_type(Hs::MRule rule)
 {
-
+    auto env = gve;
     if (rule.patterns.empty())
     {
-        auto [rhs, type] = infer_type(env, rule.rhs);
+        auto [rhs, type] = infer_type(rule.rhs);
         rule.rhs = rhs;
         return {rule, type};
     }
@@ -77,7 +77,7 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MRule rule)
         // Remove the first pattern in the rule
         rule.patterns.erase(rule.patterns.begin());
 
-        auto [rule2, t2] = new_state.infer_type(env2, rule);
+        auto [rule2, t2] = new_state.infer_type(rule);
         current_lie() += new_state.current_lie();
 
         rule2.patterns.insert(rule2.patterns.begin(), pat);
@@ -89,13 +89,14 @@ typechecker_state::infer_type(const global_value_env& env, Hs::MRule rule)
 }
 
 tuple<Hs::Match, Hs::Type>
-typechecker_state::infer_type(const global_value_env& env, Hs::Match m)
+typechecker_state::infer_type(Hs::Match m)
 {
+    auto env = gve;
     Hs::Type result_type = fresh_meta_type_var( kind_star() );
 
     for(auto& rule: m.rules)
     {
-        auto [rule1, t1] = infer_type(env, rule);
+        auto [rule1, t1] = infer_type(rule);
         rule = rule1;
         unify(result_type, t1);
     }
