@@ -252,19 +252,18 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
     {
         auto& name = unloc(FD.v.name);
 
-        auto polytype = env.at(name);
-
-        // 1. instantiate the type -> (tvs, givens, rho-type)
-        auto [tvs, given_constraints, given_type] = instantiate(polytype, false);
-        auto ordered_lie_given = constraints_to_lie(given_constraints);
-        auto dict_vars = vars_from_lie( ordered_lie_given );
-        auto lie_given = unordered_lie(ordered_lie_given);
-
-        // 2. typecheck the rhs -> (rhs_type, wanted, body)
+        // 1. typecheck the rhs -> (rhs_type, wanted, body)
         auto tcs2 = copy_clear_lie();
         auto [match2, rhs_type] = tcs2.infer_type(env, FD.match);
         FD.match = match2;
         auto unreduced_collected_lie = tcs2.current_lie();
+
+        // 2. instantiate the type -> (tvs, givens, rho-type)
+        auto polytype = env.at(name);
+        auto [tvs, given_constraints, given_type] = instantiate(polytype, false);
+        auto ordered_lie_given = constraints_to_lie(given_constraints);
+        auto dict_vars = vars_from_lie( ordered_lie_given );
+        auto lie_given = unordered_lie(ordered_lie_given);
 
         // 3. match(given_type <= rhs_type)
         unify(rhs_type, given_type);
