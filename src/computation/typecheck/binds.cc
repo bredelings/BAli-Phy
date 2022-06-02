@@ -345,8 +345,9 @@ typechecker_state::infer_lhs_type(const expression_ref& decl, const map<string, 
 }
 
 tuple<expression_ref, Hs::Type>
-typechecker_state::infer_rhs_type(const global_value_env& env, const expression_ref& decl)
+typechecker_state::infer_rhs_type(const expression_ref& decl)
 {
+    auto env = gve;
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
@@ -427,7 +428,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     for(int i=0;i<decls.size();i++)
     {
         try{
-            auto [decl, rhs_type] = tcs2.infer_rhs_type(env2, decls[i]);
+            auto [decl, rhs_type] = tcs2.infer_rhs_type(decls[i]);
             decls[i] = decl;
 
             tcs2.unify(lhs_types[i], rhs_type);

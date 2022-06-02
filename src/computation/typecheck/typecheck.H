@@ -178,7 +178,7 @@ struct typechecker_state: FreshVarSource
     infer_lhs_type(const expression_ref& decl, const signature_env& sigs);
 
     std::tuple<expression_ref, Hs::Type>
-    infer_rhs_type(const global_value_env& env, const expression_ref& decl);
+    infer_rhs_type(const expression_ref& decl);
 
     std::tuple<expression_ref, Hs::Type>
     infer_type(const global_value_env& env, expression_ref exp);
