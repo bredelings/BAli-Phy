@@ -81,6 +81,10 @@ struct typechecker_state: FreshVarSource
     std::vector<local_instance_env> lie_stack;
 
     //------- Functions handling the LIE ---------
+    typechecker_state copy() const;
+
+    typechecker_state copy_clear_lie() const;
+
     local_instance_env& current_lie();
 
     void add_dvar(const ID& name, const Hs::Type& constraint);

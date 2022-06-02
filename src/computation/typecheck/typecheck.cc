@@ -404,6 +404,19 @@ ID get_class_name_from_constraint(const Hs::Type& constraint)
 //
 // }
 
+
+typechecker_state typechecker_state::copy() const
+{
+    return *this;
+}
+
+typechecker_state typechecker_state::copy_clear_lie() const
+{
+    auto tc2 = *this;
+    tc2.current_lie() = {};
+    return tc2;
+}
+
 local_instance_env& typechecker_state::current_lie() {
     return lie_stack.back();
 }

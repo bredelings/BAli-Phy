@@ -267,10 +267,10 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(const global_value_env
         auto lie_given = unordered_lie(ordered_lie_given);
 
         // 2. typecheck the rhs -> (rhs_type, wanted, body)
-        push_lie();
-        auto [match2, rhs_type] = infer_type(env, FD.match);
+        auto tcs2 = copy_clear_lie();
+        auto [match2, rhs_type] = tcs2.infer_type(env, FD.match);
         FD.match = match2;
-        auto unreduced_collected_lie = pop_lie();
+        auto unreduced_collected_lie = tcs2.current_lie();
 
         // 3. match(given_type <= rhs_type)
         unify(rhs_type, given_type);
@@ -440,16 +440,15 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
 
     auto env2 = env + remove_sig_binders(mono_binder_env, signatures);
 
-    push_lie();
-
+    auto tcs2 = copy_clear_lie();
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)
     {
         try{
-            auto [decl, rhs_type] = infer_rhs_type(env2, decls[i]);
+            auto [decl, rhs_type] = tcs2.infer_rhs_type(env2, decls[i]);
             decls[i] = decl;
 
-            unify(lhs_types[i], rhs_type);
+            tcs2.unify(lhs_types[i], rhs_type);
         }
         catch (myexception& e)
         {
@@ -473,7 +472,7 @@ typechecker_state::infer_type_for_decls_groups(const global_value_env& env, cons
             throw;
         }
     }
-    auto unreduced_collected_lie = pop_lie();
+    auto unreduced_collected_lie = tcs2.current_lie();
 
     // We need to substitute before looking for free type variables!
     // We also need to substitute before we quantify below.
