@@ -409,6 +409,8 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     // 1. Add each let-binder to the environment with a fresh type variable
     local_value_env mono_binder_env;
 
+    std::map<std::string, Hs::Var> mono_ids;
+
     vector<Hs::Type> lhs_types;
     for(int i=0;i<decls.size();i++)
     {
@@ -417,6 +419,12 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
         mono_binder_env += lve;
         lhs_types.push_back(type);
+    }
+
+    for(auto& [name, _]: mono_binder_env)
+    {
+        Hs::Var x_mono = get_fresh_Var(name, false);
+        mono_ids.insert({name, x_mono});
     }
 
     auto tcs2 = copy_add_binders( remove_sig_binders(mono_binder_env, signatures) );
@@ -548,14 +556,14 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
             std::abort();
         }
 
-        Hs::Var x_outer({noloc,name});
-        Hs::Var x_inner = get_fresh_Var(name, false);
+        Hs::Var poly_id({noloc,name});
+        Hs::Var mono_id = mono_ids.at(name);
 
         vector<Hs::Var> dict_args;
         for(auto& [name, constraint]: lie_for_this_type)
             dict_args.push_back( Hs::Var({noloc,name}) );
 
-        Hs::BindInfo info(x_outer, x_inner, monotype, polytype, dict_args, binds2);
+        Hs::BindInfo info(poly_id, mono_id, monotype, polytype, dict_args, binds2);
         bind_infos.insert({name, info});
 
         if (restricted)
