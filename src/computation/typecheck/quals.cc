@@ -20,16 +20,16 @@ using std::tuple;
 // * the original figure seems to assume that quals only occur in list comprehensions?
 
 vector<Hs::Qual>
-typechecker_state::infer_quals_type(global_value_env& env, vector<Hs::Qual> quals)
+typechecker_state::infer_quals_type(vector<Hs::Qual> quals)
 {
     local_value_env binders;
     for(auto& qual: quals)
-        qual = infer_qual_type(env, qual);
+        qual = infer_qual_type(qual);
     return quals;
 }
 
 Hs::Qual
-typechecker_state::infer_qual_type(global_value_env& env, const Hs::Qual& qual)
+typechecker_state::infer_qual_type(const Hs::Qual& qual)
 {
     // FILTER
     if (auto sq = qual.to<Hs::SimpleQual>())
@@ -54,7 +54,7 @@ typechecker_state::infer_qual_type(global_value_env& env, const Hs::Qual& qual)
         // type(pat) = type(exp)
         unify(Hs::ListType(pat_type), exp_type);
 
-        env = add_binders(env,lve);
+        add_binders({},lve);
 
         return PQ;
     }

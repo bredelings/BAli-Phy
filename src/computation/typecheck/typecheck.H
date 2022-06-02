@@ -158,11 +158,11 @@ struct typechecker_state: FreshVarSource
 
     // Figure 22.
     std::vector<Hs::Qual>
-    infer_quals_type(global_value_env& env, std::vector<Hs::Qual> quals);
+    infer_quals_type(std::vector<Hs::Qual> quals);
 
     // Figure 22.
     Hs::Qual
-    infer_qual_type(global_value_env& env, const Hs::Qual& qual);
+    infer_qual_type(const Hs::Qual& qual);
 
     Hs::Qual
     infer_guard_type(const Hs::Qual& guard);

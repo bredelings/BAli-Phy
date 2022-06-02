@@ -164,7 +164,7 @@ typechecker_state::infer_type(expression_ref E)
         auto Let = *let;
 
         // 1. Extend environment with types for decls, get any substitutions
-        auto [state2,env2] = copy_clear_lie(env);
+        auto state2 = copy_clear_lie();
         unloc(Let.binds) = state2.infer_type_for_binds(unloc(Let.binds));
 
         // 2. Compute type of let body
@@ -310,8 +310,8 @@ typechecker_state::infer_type(expression_ref E)
     else if (auto lcomp = E.to<Hs::ListComprehension>())
     {
         auto LComp = *lcomp;
-        auto [state2,env2] = copy_clear_lie(env);
-        LComp.quals = state2.infer_quals_type(env2, LComp.quals);
+        auto state2 = copy_clear_lie();
+        LComp.quals = state2.infer_quals_type(LComp.quals);
         auto [body, exp_type] = state2.infer_type(LComp.body);
         LComp.body = body;
 
