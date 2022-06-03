@@ -382,12 +382,7 @@ Hs::Type kindchecker_state::kind_and_type_check_constraint(const Hs::Type& type)
 
 Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, const Hs::Kind& kind)
 {
-    // 1. Bind type parameters for type declaration
-    push_type_var_scope();
-
-    std::optional<Hs::Context> context;
-
-    // 2. Find the NEW free type variables
+    // 1. Find the NEW free type variables
     auto new_ftvs = free_type_variables(type);
     vector<Hs::TypeVar> to_erase;
     for(auto& type_var: new_ftvs)
@@ -395,6 +390,9 @@ Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, cons
             to_erase.push_back(type_var);
     for(auto& type_var: to_erase)
         new_ftvs.erase(type_var);
+
+    // 2. Push scope to bind new variables
+    push_type_var_scope();
 
     // 3. Bind fresh kind vars to new type variables
     for(auto& ftv: new_ftvs)
@@ -407,20 +405,24 @@ Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, cons
     kind_check_type_of_kind(type, kind);
 
     // 5. Bind fresh kind vars to new type variables
-    vector<Hs::TypeVar> new_type_vars;
+    std::set<Hs::TypeVar> new_type_vars_with_kind;
     for(auto& type_var: new_ftvs)
     {
+        auto kind = replace_kvar_with_star( kind_for_type_var(type_var) );
+
         auto type_var_with_kind = type_var;
-        type_var_with_kind.kind = replace_kvar_with_star( kind_for_type_var(type_var) );
-        new_type_vars.push_back( type_var_with_kind );
+        type_var_with_kind.kind = kind;
+
+        new_type_vars_with_kind.insert(type_var_with_kind);
     }
 
-    
     // 6. Unbind type parameters
     pop_type_var_scope();
 
     // 7. Add foralls with the appropriate kinds.
-    return add_forall_vars(new_type_vars, type);
+    vector<Hs::TypeVar> new_type_vars_vec = new_type_vars_with_kind | ranges::to<vector>;
+
+    return add_forall_vars(new_type_vars_vec, type);
 }
 
 void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
