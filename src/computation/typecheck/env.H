@@ -59,6 +59,15 @@ type_con_env plus_no_overlap(const type_con_env& e1, const type_con_env& e2);
 type_con_env& operator+=(type_con_env&, const type_con_env);
 type_con_env operator+(const type_con_env&, const type_con_env&);
 
+struct TypeSynonymInfo
+{
+    ID name;
+    std::vector<Hs::TypeVar> type_vars;
+    Hs::Type result;
+
+    Hs::Type translate(const std::vector<Hs::Type>&) const;
+};
+
 struct ClassInfo
 {
     ID name;

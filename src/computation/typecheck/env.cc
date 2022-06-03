@@ -2,9 +2,22 @@
 #include "util/string/join.H"
 #include "util/set.H"                 // for add( , )
 #include "types.H"
+#include "unify.H"
 
 using std::string;
 using std::vector;
+
+Hs::Type TypeSynonymInfo::translate(const std::vector<Hs::Type>& args) const
+{
+    if (args.size() != type_vars.size())
+        throw myexception()<<name<<" should have "<<type_vars.size()<<" arguments, but got "<<args.size()<<"!";
+
+    substitution_t s;
+    for(int i=0;i<type_vars.size();i++)
+        s.insert({type_vars[i], args[i]});
+
+    return apply_subst(s, result);
+}
 
 string print(const value_env& env)
 {
