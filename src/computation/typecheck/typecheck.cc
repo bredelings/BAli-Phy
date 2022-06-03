@@ -79,6 +79,7 @@ using std::tuple;
   * Typecheck syntax operations directly: fromInteger, fromRational, (>>=), (>>), enumFrom, etc...
   * Record impedance-matching info in GenBind, but only for passing dictionaries.
   * Implement literals, including literal strings.
+  * Replace let-bound vars w/o signatures with local monomorphic ids.
 
   TODO:
   0. Use UniqueString = {string,optional<int>} ids after rename.
@@ -87,11 +88,14 @@ using std::tuple;
     * Should we record original names during rename?  What does GHC do?
     * Currently, I guess the ids must be globally unique within an entire program.
     * Later, if we allow separate compilation, we could allow ids to be unique within a module.
-  0. Handling monomorphic and polymorphic calls:
-    * When a binder is only defined in a LOCAL environment (i) use a different name and (ii) don't generate polymorhpic calls
-    * However, if there is also an explicit type signature, then we can generate a polymorphic call.
-    * How do we translate an id do a polymorphic id / monomorphic id ?  Do we pass down the monobinds info through typechecking?
   0. Handle type-synonyms.
+    * ghc kind-checks types before synonym expansion.
+    * suppose we make kind-checking annotate the kind of the vars, but not add foralls.
+      - or it could return a map of free type vars to kinds.
+    * then we could expand type synonyms before locating free vars.
+    * we could put all of this inside a routine called check_type( ).
+    * then the kind checker wouldn't need to know about synonym expansion.
+    * we should add foralls AFTER synonym expansion, or we could end of with forall a.Int
   0. Cleanup: eliminate dependencies on expression_ref:
      - Make Pattern into a Type that doesn't depend on expression_ref.
        - Make a LitPattern that compares Int, Double, String, Char by equality.
