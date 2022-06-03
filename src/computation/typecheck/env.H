@@ -65,8 +65,11 @@ struct TypeSynonymInfo
     std::vector<Hs::TypeVar> type_vars;
     Hs::Type result;
 
+    int arity() const;
     Hs::Type translate(const std::vector<Hs::Type>&) const;
 };
+
+typedef std::map<std::string, TypeSynonymInfo> TypeSynonymEnv;
 
 struct ClassInfo
 {

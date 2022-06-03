@@ -326,20 +326,27 @@ void Module::import_module(const Program& P, const module_import& I)
         }
 
         // 3. Import information about class ops
+        for(auto& [tname,tinfo]: M2.tc_state->type_syn_info())
+        {
+            if (not tc_state->type_syn_info().count(tname))
+                tc_state->type_syn_info().insert({tname,tinfo});
+        }
+
+        // 4. Import information about class ops
         for(auto& [cname,cinfo]: M2.tc_state->class_env())
         {
             if (not tc_state->class_env().count(cname))
                 tc_state->class_env().insert({cname,cinfo});
         }
 
-        // 4. Import information about instances
+        // 5. Import information about instances
         for(auto& [dfun_name, dfun_type]: M2.tc_state->instance_env())
         {
             if (not tc_state->instance_env().count(dfun_name))
                 tc_state->instance_env() = tc_state->instance_env().insert({dfun_name, dfun_type});
         }
 
-        // 5. Import types for values.
+        // 6. Import types for values.
         for(auto& [name, type]: M2.tc_state->gve)
         {
             if (not tc_state->gve.count(name))

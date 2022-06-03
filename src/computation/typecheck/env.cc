@@ -7,13 +7,18 @@
 using std::string;
 using std::vector;
 
+int TypeSynonymInfo::arity() const
+{
+    return type_vars.size();
+}
+
 Hs::Type TypeSynonymInfo::translate(const std::vector<Hs::Type>& args) const
 {
-    if (args.size() != type_vars.size())
+    if (args.size() != arity())
         throw myexception()<<name<<" should have "<<type_vars.size()<<" arguments, but got "<<args.size()<<"!";
 
     substitution_t s;
-    for(int i=0;i<type_vars.size();i++)
+    for(int i=0; i < arity(); i++)
         s.insert({type_vars[i], args[i]});
 
     return apply_subst(s, result);

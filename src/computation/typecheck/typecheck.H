@@ -34,6 +34,8 @@ struct global_tc_state
 
     type_con_env tycon_info;
 
+    TypeSynonymEnv type_syn_info;
+
     ClassEnv class_env;
 
     global_instance_env instance_env;
@@ -61,6 +63,9 @@ struct typechecker_state: FreshVarSource
 
           constr_env& con_info()       {return global_state->con_info;}
     const constr_env& con_info() const {return global_state->con_info;}
+
+          TypeSynonymEnv& type_syn_info()       {return global_state->type_syn_info;}
+    const TypeSynonymEnv& type_syn_info() const {return global_state->type_syn_info;}
 
           ClassEnv& class_env()       {return global_state->class_env;}
     const ClassEnv& class_env() const {return global_state->class_env;}
