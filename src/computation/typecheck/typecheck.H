@@ -112,6 +112,12 @@ struct typechecker_state: FreshVarSource
 
     void get_constructor_info(const Hs::Decls& decls);
 
+    Hs::Type check_type(const Hs::Type&) const;
+
+    Hs::Type check_type(const Hs::Type&, kindchecker_state& K) const;
+
+    Hs::Type check_constraint(const Hs::Type&) const;
+
     Hs::Var find_prelude_var(std::string name) const;
 
     ID find_prelude_tycon_name(const std::string& name) const;

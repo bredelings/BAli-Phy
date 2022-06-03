@@ -89,6 +89,7 @@ using std::tuple;
     * Currently, I guess the ids must be globally unique within an entire program.
     * Later, if we allow separate compilation, we could allow ids to be unique within a module.
   0. Handle type-synonyms.
+    * We need to typecheck class method with some extra type vars in scope!
     * ghc kind-checks types before synonym expansion.
     * suppose we make kind-checking annotate the kind of the vars, but not add foralls.
       - or it could return a map of free type vars to kinds.
@@ -407,6 +408,33 @@ ID get_class_name_from_constraint(const Hs::Type& constraint)
 //
 //
 // }
+
+Hs::Type typechecker_state::check_type(const Hs::Type& type, kindchecker_state& K) const
+{
+    // So, currently, we
+    // (1) infer kinds for all the variables.
+    // (2) then we all foralls.
+    // Should we be doing synonym substitution FIRST?
+
+    return K.kind_and_type_check_type( type );
+}
+
+Hs::Type typechecker_state::check_type(const Hs::Type& type) const
+{
+    // This should be rather wasteful... can we use a reference?
+    kindchecker_state K( tycon_info() );
+
+    return check_type(type, K);
+}
+
+Hs::Type typechecker_state::check_constraint(const Hs::Type& type) const
+{
+    // This should be rather wasteful... can we use a reference?
+    kindchecker_state K( tycon_info() );
+
+    return K.kind_and_type_check_constraint( type );
+
+}
 
 typechecker_state typechecker_state::copy_clear_lie() const
 {

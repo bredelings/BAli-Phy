@@ -71,7 +71,8 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         // Add class methods to GVE
         for(auto& [qname, type]: unloc(*class_decl.binds).signatures)
         {
-            auto method_type = K.kind_and_type_check_type(type);
+            // We need the class variables in scope here.
+            auto method_type = check_type(type, K);
 
             // forall a. C a => method_type
             method_type = Hs::add_constraints({class_constraint}, method_type);

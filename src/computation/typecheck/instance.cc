@@ -132,9 +132,8 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     auto dfun = get_fresh_Var(dfun_name, true);
 
     //  -- new -- //
-    kindchecker_state K( tycon_info() );
     Hs::Type inst_type = Hs::add_constraints(inst_decl.context, inst_decl.constraint);
-    inst_type = K.kind_and_type_check_constraint(inst_type);
+    inst_type = check_constraint( inst_type );
     return {dfun, inst_type};
 }
 
