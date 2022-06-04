@@ -49,6 +49,7 @@ struct kindchecker_state
 
     Hs::Type zonk_kind_for_type(const Hs::Type& t);
     Hs::Kind kind_for_type(const Hs::Type& t);
+    std::vector<Hs::TypeVar> unbound_free_type_variables(const Hs::Type& t);
 
     // class
     Hs::Type kind_and_type_check_type_(const Haskell::Type& type, const Hs::Kind& k);

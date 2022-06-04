@@ -102,6 +102,7 @@ void kindchecker_state::kind_check_type_of_kind(const Hs::Type& t, const Hs::Kin
 {
     auto t2 = t;
     auto kind2 = kind_check_type(t2);
+    t2 = zonk_kind_for_type(t2);
     if (not unify(kind, kind2))
         throw myexception()<<"Type "<<t<<" has kind "<<apply_substitution(kind2)<<", but should have kind "<<apply_substitution(kind)<<"\n";
 }
@@ -551,16 +552,19 @@ Hs::Type kindchecker_state::kind_and_type_check_constraint(const Hs::Type& type)
     their final substituted type.
  */
 
+vector<Hs::TypeVar> kindchecker_state::unbound_free_type_variables(const Hs::Type& type)
+{
+    vector<Hs::TypeVar> ftvs;
+    for(auto& type_var: free_type_variables(type))
+        if (not type_var_in_scope(type_var))
+            ftvs.push_back(type_var);
+    return ftvs;
+}
+
 Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, const Hs::Kind& kind)
 {
     // 1. Find the NEW free type variables
-    auto new_ftvs = free_type_variables(type);
-    vector<Hs::TypeVar> to_erase;
-    for(auto& type_var: new_ftvs)
-        if (type_var_in_scope(type_var))
-            to_erase.push_back(type_var);
-    for(auto& type_var: to_erase)
-        new_ftvs.erase(type_var);
+    auto new_ftvs = unbound_free_type_variables(type);
 
     // 2. Push scope to bind new variables
     push_type_var_scope();
@@ -576,24 +580,14 @@ Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, cons
     kind_check_type_of_kind(type, kind);
 
     // 5. Bind fresh kind vars to new type variables
-    std::set<Hs::TypeVar> new_type_vars_with_kind;
     for(auto& type_var: new_ftvs)
-    {
-        auto kind = replace_kvar_with_star( kind_for_type_var(type_var) );
-
-        auto type_var_with_kind = type_var;
-        type_var_with_kind.kind = kind;
-
-        new_type_vars_with_kind.insert(type_var_with_kind);
-    }
+        type_var.kind = replace_kvar_with_star( kind_for_type_var(type_var) );
 
     // 6. Unbind type parameters
     pop_type_var_scope();
 
     // 7. Add foralls with the appropriate kinds.
-    vector<Hs::TypeVar> new_type_vars_vec = new_type_vars_with_kind | ranges::to<vector>;
-
-    return add_forall_vars(new_type_vars_vec, type);
+    return add_forall_vars(new_ftvs, type);
 }
 
 void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
