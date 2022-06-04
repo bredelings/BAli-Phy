@@ -40,12 +40,12 @@ struct kindchecker_state
     // Doesn't GHC first "guess" the kinds, and then "check" them?
     bool unify(const Hs::Kind& k1, const Hs::Kind& k2);
 
-    void kind_check_type_of_kind(const Haskell::Type& t, const Hs::Kind& k);
+    void kind_check_type_of_kind(Haskell::Type& t, const Hs::Kind& k);
     Hs::Kind kind_check_type_var(const Haskell::TypeVar& tv);
     Hs::Kind kind_check_type_con(const std::string&);
     Hs::Kind kind_check_type(Haskell::Type& t);
-    void kind_check_constraint(const Haskell::Type& constraint);
-    void kind_check_context(const Haskell::Context& context);
+    void kind_check_constraint(Haskell::Type& constraint);
+    void kind_check_context(Haskell::Context& context);
 
     Hs::Type zonk_kind_for_type(const Hs::Type& t);
     Hs::Kind kind_for_type(const Hs::Type& t);
@@ -59,12 +59,12 @@ struct kindchecker_state
 
     // data or newtype
     std::map<std::string, Haskell::Type> type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
-    void kind_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
+    void kind_check_data_type(Haskell::DataOrNewtypeDecl& data_decl);
     Haskell::Type type_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
     void kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
 
     // type synonym
-    void kind_check_type_synonym(const Haskell::TypeSynonymDecl& type_syn_decl);
+    void kind_check_type_synonym(Haskell::TypeSynonymDecl& type_syn_decl);
 
     type_con_env infer_kinds(const std::vector<expression_ref>& type_decl_group);
 

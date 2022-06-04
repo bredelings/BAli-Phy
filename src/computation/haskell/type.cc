@@ -225,9 +225,6 @@ string ForallType::print() const
 
 Type add_forall_vars(const std::vector<TypeVar>& type_vars, const Type& type)
 {
-    for(auto& tv: type_vars)
-        assert(tv.kind);
-
     if (type_vars.empty())
         return type;
     else if (auto FAT = type.to<ForallType>())

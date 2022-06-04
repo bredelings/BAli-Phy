@@ -98,11 +98,10 @@ bool kindchecker_state::unify(const Hs::Kind& kind1, const Hs::Kind& kind2)
         return false;
 }
 
-void kindchecker_state::kind_check_type_of_kind(const Hs::Type& t, const Hs::Kind& kind)
+void kindchecker_state::kind_check_type_of_kind(Hs::Type& t, const Hs::Kind& kind)
 {
-    auto t2 = t;
-    auto kind2 = kind_check_type(t2);
-    t2 = zonk_kind_for_type(t2);
+    auto kind2 = kind_check_type(t);
+    t = zonk_kind_for_type(t);
     if (not unify(kind, kind2))
         throw myexception()<<"Type "<<t<<" has kind "<<apply_substitution(kind2)<<", but should have kind "<<apply_substitution(kind)<<"\n";
 }
@@ -363,12 +362,12 @@ Hs::Type kindchecker_state::zonk_kind_for_type(const Hs::Type& t)
 }
 
 
-void kindchecker_state::kind_check_constraint(const Hs::Type& constraint)
+void kindchecker_state::kind_check_constraint(Hs::Type& constraint)
 {
     return kind_check_type_of_kind(constraint, kind_constraint());
 }
 
-void kindchecker_state::kind_check_context(const Hs::Context& context)
+void kindchecker_state::kind_check_context(Hs::Context& context)
 {
     for(auto& constraint: context.constraints)
         kind_check_constraint(constraint);
@@ -436,7 +435,7 @@ Hs::Type kindchecker_state::type_check_constructor(const Hs::Constructor& constr
     return type2;
 }
 
-void kindchecker_state::kind_check_data_type(const Hs::DataOrNewtypeDecl& data_decl)
+void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
 {
     push_type_var_scope();
 
@@ -565,29 +564,11 @@ Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, cons
 {
     // 1. Find the NEW free type variables
     auto new_ftvs = unbound_free_type_variables(type);
+    Hs::Type type2 = add_forall_vars(new_ftvs, type);
 
-    // 2. Push scope to bind new variables
-    push_type_var_scope();
+    kind_check_type_of_kind(type2, kind);
 
-    // 3. Bind fresh kind vars to new type variables
-    for(auto& ftv: new_ftvs)
-    {
-        auto a = fresh_kind_var();
-        bind_type_var(ftv,a);
-    }
-
-    // 4. Check the unconstrained type and infer kinds.
-    kind_check_type_of_kind(type, kind);
-
-    // 5. Bind fresh kind vars to new type variables
-    for(auto& type_var: new_ftvs)
-        type_var.kind = replace_kvar_with_star( kind_for_type_var(type_var) );
-
-    // 6. Unbind type parameters
-    pop_type_var_scope();
-
-    // 7. Add foralls with the appropriate kinds.
-    return add_forall_vars(new_ftvs, type);
+    return type2;
 }
 
 void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
@@ -632,7 +613,7 @@ class C a where
    bar :: a -> D a -> Bool
 */
 
-void kindchecker_state::kind_check_type_synonym(const Hs::TypeSynonymDecl& type_syn_decl)
+void kindchecker_state::kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_decl)
 {
     // Bind type parameters for class
     push_type_var_scope();
@@ -710,7 +691,7 @@ type_con_env kindchecker_state::infer_kinds(const vector<expression_ref>& type_d
         {
             if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
             {
-                auto& D = type_decl.as_<Hs::DataOrNewtypeDecl>();
+                auto D = type_decl.as_<Hs::DataOrNewtypeDecl>();
                 kind_check_data_type( D );
             }
             else if (type_decl.is_a<Hs::ClassDecl>())
@@ -720,7 +701,7 @@ type_con_env kindchecker_state::infer_kinds(const vector<expression_ref>& type_d
             }
             else if (type_decl.is_a<Hs::TypeSynonymDecl>())
             {
-                auto & T = type_decl.as_<Hs::TypeSynonymDecl>();
+                auto T = type_decl.as_<Hs::TypeSynonymDecl>();
                 kind_check_type_synonym( T );
             }
         }
