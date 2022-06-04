@@ -47,6 +47,8 @@ struct kindchecker_state
     void kind_check_constraint(const Haskell::Type& constraint);
     void kind_check_context(const Haskell::Context& context);
 
+    Hs::Type zonk_kind_for_type(const Hs::Type& t);
+
     // class
     Hs::Type kind_and_type_check_type_(const Haskell::Type& type, const Hs::Kind& k);
     Hs::Type kind_and_type_check_type(const Haskell::Type& type);

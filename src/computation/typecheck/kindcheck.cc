@@ -194,8 +194,100 @@ Hs::Kind kindchecker_state::kind_check_type(const Hs::Type& t)
         kind_check_context(c->context);
         return kind_check_type(c->type);
     }
+    else if (auto fa = t.to<Hs::ForallType>())
+    {
+        push_type_var_scope();
+
+        vector<Hs::TypeVar> binders2;
+        for(auto& tv: fa->type_var_binders)
+        {
+            auto k = fresh_kind_var();
+            bind_type_var(tv, k);
+            auto tv2 = tv;
+            tv2.kind = k;
+        }
+
+        auto kind = kind_check_type(fa->type);
+
+        // to construct a new type, perhaps we should create an Hs::ForallType, with the kind of each variable set to the fresh kind.
+        // however, afterwards, we have to zonk the final TYPE to fill in KIND variables.
+
+        pop_type_var_scope();
+
+        return kind;
+    }
 
     throw myexception()<<"I don't recognize type '"<<t.print()<<"'";
+}
+
+Hs::Type kindchecker_state::zonk_kind_for_type(const Hs::Type& t)
+{
+    if (auto tc = t.to<Hs::TypeCon>())
+    {
+        auto& name = unloc(tc->name);
+
+        auto Tc = *tc;
+        Tc.kind = kind_check_type_con(name);
+        return Tc;
+    }
+    else if (auto tv = t.to<Hs::TypeVar>())
+    {
+        auto kind = replace_kvar_with_star(kind_for_type_var(*tv));
+
+        auto Tv = *tv;
+        Tv.kind = kind;
+        return Tv;
+    }
+    else if (auto tapp = t.to<Hs::TypeApp>())
+    {
+        auto Tapp = *tapp;
+        Tapp.head = zonk_kind_for_type(Tapp.head);
+        Tapp.arg  = zonk_kind_for_type(Tapp.arg);
+        return Tapp;
+    }
+    else if (auto l = t.to<Hs::ListType>())
+    {
+        auto L = *l;
+        L.element_type = zonk_kind_for_type( L.element_type );
+        return L;
+    }
+    else if (auto tup = t.to<Hs::TupleType>())
+    {
+        auto T = *tup;
+        for(auto& element_type: T.element_types)
+            element_type = zonk_kind_for_type( element_type );
+        return T;
+    }
+    else if (auto c = t.to<Hs::ConstrainedType>())
+    {
+        auto C = *c;
+        for(auto& constraint: C.context.constraints)
+            constraint = zonk_kind_for_type( constraint );
+
+        C.type = zonk_kind_for_type( C.type );
+        return C;
+    }
+    else if (auto fa = t.to<Hs::ForallType>())
+    {
+        auto Fa = *fa;
+
+        push_type_var_scope();
+
+        for(auto& tv: Fa.type_var_binders)
+        {
+            assert(tv.kind);
+            tv.kind = replace_kvar_with_star(*tv.kind);
+            bind_type_var(tv, *tv.kind);
+        }
+
+        Fa.type = zonk_kind_for_type( Fa.type );
+
+        pop_type_var_scope();
+
+        return Fa;
+    }
+
+    throw myexception()<<"zonk_kind_for_type: I don't recognize type '"<<t.print()<<"'";
 }
 
 
@@ -379,6 +471,14 @@ Hs::Type kindchecker_state::kind_and_type_check_constraint(const Hs::Type& type)
 {
     return kind_and_type_check_type_(type, kind_constraint() );
 }
+
+/*
+  So.... how would we kind check a forall-type? 
+  - If it was top-level, we'd bind the forall variables to fresh kind vars, and estimate the kind...
+  - I guess we could record the kind on the forall variables themselves.
+  - Then after we decide what all the kind variables are, we could go replace all the kind variables with
+    their final substituted type.
+ */
 
 Hs::Type kindchecker_state::kind_and_type_check_type_(const Hs::Type& type, const Hs::Kind& kind)
 {
