@@ -136,7 +136,7 @@ Hs::Kind kindchecker_state::kind_check_type_con(const string& name)
         return kind_for_type_con(name);
 }
 
-Hs::Kind kindchecker_state::kind_check_type(const Hs::Type& t)
+Hs::Type kindchecker_state::kind_check_type(const Hs::Type& t)
 {
     if (auto tc = t.to<Hs::TypeCon>())
     {
@@ -217,7 +217,56 @@ Hs::Kind kindchecker_state::kind_check_type(const Hs::Type& t)
         return kind;
     }
 
-    throw myexception()<<"I don't recognize type '"<<t.print()<<"'";
+    throw myexception()<<"kind_check_type: I don't recognize type '"<<t.print()<<"'";
+}
+
+Hs::Kind kindchecker_state::kind_for_type(const Hs::Type& t)
+{
+    if (auto tc = t.to<Hs::TypeCon>())
+        return *(tc->kind);
+    else if (auto tv = t.to<Hs::TypeVar>())
+        return apply_substitution(*tv->kind);
+    else if (auto tapp = t.to<Hs::TypeApp>())
+    {
+        // Get the kind of the type being applied
+        auto hkind = kind_for_type(tapp->head);
+
+        // The kind should be k1 -> k2
+        if (auto ka = hkind.to<KindArrow>())
+            return ka->k2;
+        else
+            throw myexception()<<"Kind of applied tycon is not an arrow kind!";
+    }
+    else if (t.is_a<Hs::ListType>())
+    {
+        return kind_star();
+    }
+    else if (t.is_a<Hs::TupleType>())
+    {
+        return kind_star();
+    }
+    else if (auto c = t.to<Hs::ConstrainedType>())
+    {
+        return kind_for_type(c->type);
+    }
+    else if (auto fa = t.to<Hs::ForallType>())
+    {
+        push_type_var_scope();
+
+        for(auto& tv: fa->type_var_binders)
+        {
+            assert(tv.kind);
+            bind_type_var(tv, apply_substitution(*tv.kind));
+        }
+
+        auto kind = kind_for_type( fa->type );
+
+        pop_type_var_scope();
+
+        return kind;
+    }
+
+    throw myexception()<<"kind_for_type: I don't recognize type '"<<t.print()<<"'";
 }
 
 Hs::Type kindchecker_state::zonk_kind_for_type(const Hs::Type& t)
