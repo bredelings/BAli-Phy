@@ -100,7 +100,8 @@ bool kindchecker_state::unify(const Hs::Kind& kind1, const Hs::Kind& kind2)
 
 void kindchecker_state::kind_check_type_of_kind(const Hs::Type& t, const Hs::Kind& kind)
 {
-    auto kind2 = kind_check_type(t);
+    auto t2 = t;
+    auto kind2 = kind_check_type(t2);
     if (not unify(kind, kind2))
         throw myexception()<<"Type "<<t<<" has kind "<<apply_substitution(kind2)<<", but should have kind "<<apply_substitution(kind)<<"\n";
 }
@@ -136,24 +137,37 @@ Hs::Kind kindchecker_state::kind_check_type_con(const string& name)
         return kind_for_type_con(name);
 }
 
-Hs::Type kindchecker_state::kind_check_type(const Hs::Type& t)
+Hs::Kind kindchecker_state::kind_check_type(Hs::Type& t)
 {
     if (auto tc = t.to<Hs::TypeCon>())
     {
         auto& name = unloc(tc->name);
 
-        return kind_check_type_con(name);
+        auto k = kind_check_type_con(name);
+        auto Tc = *tc;
+        Tc.kind = k;
+
+        t = Tc;
+        return k;
     }
     else if (auto tv = t.to<Hs::TypeVar>())
     {
-        return kind_check_type_var(*tv);
-    }
-    else if (t.is_a<Hs::TypeApp>())
-    {
-        auto& tapp = t.as_<Hs::TypeApp>();
+        auto k = kind_for_type_var(*tv);
 
-        auto kind1 = kind_check_type(tapp.head);
-        auto kind2 = kind_check_type(tapp.arg);
+        auto Tv = *tv;
+        Tv.kind = k;
+
+        t = Tv;
+        return k;
+    }
+    else if (auto tapp = t.to<Hs::TypeApp>())
+    {
+        auto Tapp = *tapp;
+
+        auto kind1 = kind_check_type(Tapp.head);
+        auto kind2 = kind_check_type(Tapp.arg);
+
+        t = Tapp;
 
         if (auto kv1 = kind1.to<KindVar>())
         {
@@ -166,54 +180,62 @@ Hs::Type kindchecker_state::kind_check_type(const Hs::Type& t)
         else if (auto a = kind1.to<KindArrow>())
         {
             if (not unify(a->k1, kind2))
-                throw myexception()<<"In type '"<<t<<"', can't apply type ("<<tapp.head<<" :: "<<apply_substitution(kind1)<<") to type ("<<tapp.arg<<" :: "<<apply_substitution(kind2)<<")";
+                throw myexception()<<"In type '"<<t<<"', can't apply type ("<<Tapp.head<<" :: "<<apply_substitution(kind1)<<") to type ("<<Tapp.arg<<" :: "<<apply_substitution(kind2)<<")";
             return a->k2;
         }
         else
-            throw myexception()<<"Can't apply type "<<tapp.head<<" :: "<<kind1.print()<<" to type "<<tapp.arg<<".";
+            throw myexception()<<"Can't apply type "<<Tapp.head<<" :: "<<kind1.print()<<" to type "<<Tapp.arg<<".";
+    }
+    else if (auto l = t.to<Hs::ListType>())
+    {
+        auto L = *l;
 
+        unify(kind_star(), kind_check_type(L.element_type));
+
+        t = l;
+        return kind_star();
     }
-    else if (t.is_a<Hs::ListType>())
+    else if (auto tup = t.to<Hs::TupleType>())
     {
-        auto& L = t.as_<Hs::ListType>();
-        Hs::Type list_con = Hs::TypeCon(Unlocated("[]"));
-        Hs::Type list_type = Hs::TypeApp(list_con, L.element_type);
-        return kind_check_type(list_type);
-    }
-    else if (t.is_a<Hs::TupleType>())
-    {
-        auto& T = t.as_<Hs::TupleType>();
-        auto n = T.element_types.size();
-        Hs::Type tuple_type = Hs::TypeCon(Unlocated(tuple_name(n)));
+        auto T = *tup;
         for(auto& element_type: T.element_types)
-            tuple_type = Hs::TypeApp(tuple_type, element_type);
-        return kind_check_type(tuple_type);
+            unify(kind_star(), kind_check_type(element_type));
+
+        t = T;
+        return kind_star();
     }
     else if (auto c = t.to<Hs::ConstrainedType>())
     {
-        kind_check_context(c->context);
-        return kind_check_type(c->type);
+        auto C = *c;
+
+        for(auto& constraint: C.context.constraints)
+            unify(kind_constraint(), kind_check_type(constraint));
+        auto k = kind_check_type(C.type);
+
+        t = C;
+        return k;
     }
     else if (auto fa = t.to<Hs::ForallType>())
     {
+        auto Fa = *fa;
         push_type_var_scope();
 
         vector<Hs::TypeVar> binders2;
-        for(auto& tv: fa->type_var_binders)
+        for(auto& tv: Fa.type_var_binders)
         {
             auto k = fresh_kind_var();
-            bind_type_var(tv, k);
-            auto tv2 = tv;
-            tv2.kind = k;
+            tv.kind = k;
+            bind_type_var(tv, *tv.kind);
         }
 
-        auto kind = kind_check_type(fa->type);
+        auto kind = kind_check_type(Fa.type);
 
         // to construct a new type, perhaps we should create an Hs::ForallType, with the kind of each variable set to the fresh kind.
         // however, afterwards, we have to zonk the final TYPE to fill in KIND variables.
 
         pop_type_var_scope();
 
+        t = Fa;
         return kind;
     }
 

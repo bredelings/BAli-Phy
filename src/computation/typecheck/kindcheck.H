@@ -43,7 +43,7 @@ struct kindchecker_state
     void kind_check_type_of_kind(const Haskell::Type& t, const Hs::Kind& k);
     Hs::Kind kind_check_type_var(const Haskell::TypeVar& tv);
     Hs::Kind kind_check_type_con(const std::string&);
-    Hs::Kind kind_check_type(const Haskell::Type& t);
+    Hs::Kind kind_check_type(Haskell::Type& t);
     void kind_check_constraint(const Haskell::Type& constraint);
     void kind_check_context(const Haskell::Context& context);
 
