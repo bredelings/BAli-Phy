@@ -14,14 +14,19 @@ int TypeSynonymInfo::arity() const
 
 Hs::Type TypeSynonymInfo::translate(const std::vector<Hs::Type>& args) const
 {
-    if (args.size() != arity())
-        throw myexception()<<name<<" should have "<<type_vars.size()<<" arguments, but got "<<args.size()<<"!";
+    if (args.size() < arity())
+        throw myexception()<<name<<" takes "<<arity()<<" arguments, but got "<<args.size()<<"!";
 
     substitution_t s;
     for(int i=0; i < arity(); i++)
         s = s.insert({type_vars[i], args[i]});
 
-    return apply_subst(s, result);
+    auto type2 = apply_subst(s, result);
+
+    for(int i=arity(); i< args.size(); i++)
+        type2 = Hs::TypeApp(type2, args[i]);
+
+    return type2;
 }
 
 string print(const value_env& env)
