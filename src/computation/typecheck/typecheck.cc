@@ -82,13 +82,8 @@ using std::tuple;
   * Replace let-bound vars w/o signatures with local monomorphic ids.
 
   TODO:
-  0. Use UniqueString = {string,optional<int>} ids after rename.
-    * Ideally, allow comparing just the integers.
-    * If the integers are the same, the strings had better be the same too!
-    * Should we record original names during rename?  What does GHC do?
-    * Currently, I guess the ids must be globally unique within an entire program.
-    * Later, if we allow separate compilation, we could allow ids to be unique within a module.
   0. Handle type-synonyms.
+    * Record kinds on type-applications?
     * We need to typecheck class method with some extra type vars in scope!
     * ghc kind-checks types before synonym expansion.
     * suppose we make kind-checking annotate the kind of the vars, but not add foralls.
@@ -146,6 +141,12 @@ using std::tuple;
      - Remove the constraint from EmptySet
         - I guess we remove type-level constraints if they would be ambiguous.
         - I guess we COMPLAIN about user-specified constructor-level constraints if they would be ambiguous.
+  0. Use UniqueString = {string,optional<int>} ids after rename.
+    * Ideally, allow comparing just the integers.
+    * If the integers are the same, the strings had better be the same too!
+    * Should we record original names during rename?  What does GHC do?
+    * Currently, I guess the ids must be globally unique within an entire program.
+    * Later, if we allow separate compilation, we could allow ids to be unique within a module.
   11. Annotate let, lambda, and case binders with variable's type.
   12. Should we make AST for: 
      - \(dicts::theta) -> monobinds in binds    -> This is GenBinds
