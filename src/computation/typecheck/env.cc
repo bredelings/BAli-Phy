@@ -19,7 +19,7 @@ Hs::Type TypeSynonymInfo::translate(const std::vector<Hs::Type>& args) const
 
     substitution_t s;
     for(int i=0; i < arity(); i++)
-        s.insert({type_vars[i], args[i]});
+        s = s.insert({type_vars[i], args[i]});
 
     return apply_subst(s, result);
 }
