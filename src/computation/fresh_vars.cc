@@ -88,6 +88,13 @@ Hs::TypeVar FreshVarSource::fresh_meta_type_var(const Hs::Kind& k)
     return get_fresh_type_var("t", true, k);
 }
 
+Hs::TypeVar FreshVarSource::fresh_other_type_var()
+{
+    Hs::TypeVar tv({noloc, "t"+std::to_string( get_index() )});
+    tv.info = Hs::typevar_info::other;
+    return tv;
+}
+
 Hs::TypeVar FreshVarSource::fresh_type_var(bool meta, const Hs::Kind& k)
 {
     return get_fresh_type_var("t", meta, k);

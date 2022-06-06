@@ -44,6 +44,8 @@ public:
 
     Hs::TypeVar fresh_meta_type_var(const Hs::Kind& k);
 
+    Hs::TypeVar fresh_other_type_var();
+
     Hs::TypeVar fresh_type_var(bool meta, const Hs::Kind& k);
 
     int current_index() const;
