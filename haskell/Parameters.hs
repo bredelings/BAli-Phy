@@ -3,9 +3,9 @@ module Parameters where
 import Range
 import Foreign.Pair       -- for pair_from_c
 import Foreign.String     -- for list_to_string
+import Effect             -- for Effect
 
 -- An Effect may be a node in a graph??
-data Effect
 
 foreign import bpcall "Modifiables:maybe_modifiable_structure" maybe_modifiable_structure :: a -> a
 
