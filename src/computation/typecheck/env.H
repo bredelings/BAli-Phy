@@ -66,7 +66,7 @@ struct TypeSynonymInfo
     Hs::Type result;
 
     int arity() const;
-    Hs::Type translate(const std::vector<Hs::Type>&) const;
+    Hs::Type expand(const std::vector<Hs::Type>&) const;
 };
 
 typedef std::map<std::string, TypeSynonymInfo> TypeSynonymEnv;

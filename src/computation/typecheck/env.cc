@@ -12,7 +12,7 @@ int TypeSynonymInfo::arity() const
     return type_vars.size();
 }
 
-Hs::Type TypeSynonymInfo::translate(const std::vector<Hs::Type>& args) const
+Hs::Type TypeSynonymInfo::expand(const std::vector<Hs::Type>& args) const
 {
     if (args.size() < arity())
         throw myexception()<<name<<" takes "<<arity()<<" arguments, but got "<<args.size()<<"!";
