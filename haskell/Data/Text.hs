@@ -15,7 +15,9 @@ data Text = Text CPPString
 
 foreign import bpcall "Text:pack" builtin_pack :: EVector Char -> CPPString
 
---
+instance Show Text where
+--    show s = show $ unpack s
+    show s = "\"" ++ unpack s ++ "\""
 
 pack = Text . builtin_pack . list_to_vector
 
