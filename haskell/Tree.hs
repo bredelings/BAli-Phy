@@ -1,67 +1,100 @@
 module Tree where
 
-data Tree = Tree (Array Int [Int]) (Array Int (Int,Int,Int,Int)) Int
--- Polymorphism here really should be handled with a class that has the members below
--- If we allow adding branches to functions later, we could move polymorphic definitions into files. e.g. for show.
-data RootedTree = RootedTree Tree Int (Array Int Bool)
 
-data LabelledTree = LabelledTree Tree [String]
+class Tree t where
+    edgesOutOfNode :: t -> Int -> [Int]
+    nodesForEdge :: t -> Int -> (Int, Int, Int, Int)
+    numNodes :: t -> Int
 
--- Here the Tree/RootedTree are _classes_ not objects...
--- Should we make LabelledTree,LabelledBranchLengthTree,LabelledNodeHeighTree
---  and have them implement get_labels?
--- It looks like add_labels would be a bit more complicated...
-data BranchLengthTree = BranchLengthTree Tree (Array Int Double)
+class Tree t => BranchLengthTree t where
+    branch_length :: t -> Int -> Double
+
+class Tree t => RootedTree t where
+    root :: t -> Int
+    away_from_root :: t -> Int -> Bool
+
+class RootedTree t => TimeTree t where
+    node_time :: t -> Int -> Double
+
+class TimeTree t => RateTimeTree t where
+    branch_rate :: t -> Int -> Double
+
+class Tree t => LabelledTree t where
+    get_label :: t -> Int -> String
+
+
+data TreeImp = Tree (Array Int [Int]) (Array Int (Int,Int,Int,Int)) Int
+
+data RootedTreeImp t = RootedTree t Int (Array Int Bool)
+
+data BranchLengthTreeImp t = BranchLengthTree t (Array Int Double)
+
+data LabelledTreeImp t = LabelledTree t [String]
 
 -- The array stores the node times
-data TimeTree   = TimeTree RootedTree (Array Int Double)
+data RootedTree t => TimeTreeImp t  = TimeTree t (Array Int Double)
 
 -- The array stores the branch rates
-data RateTimeTree = RateTimeTree TimeTree (Array Int Double)
+data TimeTree t => RateTimeTreeImp t = RateTimeTree t (Array Int Double)
 
-edgesOutOfNode (Tree nodesArray _ _) node = nodesArray ! node
-edgesOutOfNode (RootedTree t _ _) node      = edgesOutOfNode t node
-edgesOutOfNode (LabelledTree t _) node      = edgesOutOfNode t node
-edgesOutOfNode (BranchLengthTree t _) node  = edgesOutOfNode t node
-edgesOutOfNode (TimeTree t _) node          = edgesOutOfNode t node
-edgesOutOfNode (RateTimeTree t _) node      = edgesOutOfNode t node
+instance Tree TreeImp where
+    edgesOutOfNode (Tree nodesArray _ _) node = nodesArray ! node
+    nodesForEdge (Tree _ branchesArray _) edgeIndex   = branchesArray ! edgeIndex
+    numNodes (Tree _ _ n)           = n
 
-nodesForEdge (Tree _ branchesArray _) edgeIndex   = branchesArray ! edgeIndex
-nodesForEdge (RootedTree t _ _) edgeIndex         = nodesForEdge t edgeIndex
-nodesForEdge (LabelledTree t _) edgeIndex         = nodesForEdge t edgeIndex
-nodesForEdge (BranchLengthTree t _) edgeIndex     = nodesForEdge t edgeIndex
-nodesForEdge (TimeTree t _) edgeIndex             = nodesForEdge t edgeIndex
-nodesForEdge (RateTimeTree t _) edgeIndex         = nodesForEdge t edgeIndex
+instance Tree t => Tree (RootedTreeImp t) where
+    edgesOutOfNode (RootedTree t _ _) node      = edgesOutOfNode t node
+    nodesForEdge (RootedTree t _ _) edgeIndex         = nodesForEdge t edgeIndex
+    numNodes (RootedTree t _ _)     = numNodes t
 
-numNodes (Tree _ _ n)           = n
-numNodes (RootedTree t _ _)     = numNodes t
-numNodes (LabelledTree t _)     = numNodes t
-numNodes (BranchLengthTree t _) = numNodes t
-numNodes (TimeTree t _)         = numNodes t
-numNodes (RateTimeTree t _)     = numNodes t
+instance Tree t => Tree (LabelledTreeImp t) where
+    edgesOutOfNode (LabelledTree t _) node      = edgesOutOfNode t node
+    nodesForEdge (LabelledTree t _) edgeIndex         = nodesForEdge t edgeIndex
+    numNodes (LabelledTree t _)     = numNodes t
+
+instance Tree t => Tree (BranchLengthTreeImp t) where
+    edgesOutOfNode (BranchLengthTree t _) node  = edgesOutOfNode t node
+    nodesForEdge (BranchLengthTree t _) edgeIndex     = nodesForEdge t edgeIndex
+    numNodes (BranchLengthTree t _) = numNodes t
+
+instance Tree t => Tree (TimeTreeImp t) where
+    edgesOutOfNode (TimeTree t _) node          = edgesOutOfNode t node
+    nodesForEdge (TimeTree t _) edgeIndex             = nodesForEdge t edgeIndex
+    numNodes (TimeTree t _)         = numNodes t
+
+instance Tree t => Tree (RateTimeTreeImp t) where
+    edgesOutOfNode (RateTimeTree t _) node      = edgesOutOfNode t node
+    nodesForEdge (RateTimeTree t _) edgeIndex         = nodesForEdge t edgeIndex
+    numNodes (RateTimeTree t _)     = numNodes t
+
+instance RootedTree t => TimeTree (TimeTreeImp t) where
+    node_time (TimeTree t hs) node = hs!node
+
+instance TimeTree t => TimeTree (RateTimeTreeImp t) where
+    node_time (RateTimeTree tt _) node = node_time tt node
+
+instance TimeTree t => RateTimeTree (RateTimeTreeImp t) where
+    branch_rate (RateTimeTree _ rs) node = rs!node
 
 numBranches t = numNodes t - 1
 
 branch_length_tree topology lengths = BranchLengthTree topology (listArray' lengths)
 
-branch_lengths   (BranchLengthTree _ ds) = ds
+branch_lengths (BranchLengthTree _ ds) = ds
 
 time_tree topology times = TimeTree topology (listArray n times) where n = numNodes topology
-node_times (TimeTree t hs) = hs
-node_times (RateTimeTree tt _) = node_times tt
-node_time t n = (node_times t)!n
 
 rate_time_tree time_tree rates = RateTimeTree time_tree (listArray nb rates) where nb = numBranches time_tree
-branch_rates (RateTimeTree _ rs) = rs
-branch_rate t b = (branch_rates t)!b
 
 branch_duration t b = abs (node_time t source - node_time t target)
     where source = sourceNode t b
           target = targetNode t b
 
-branch_length (BranchLengthTree _ ds) b = ds!b
-branch_length t@(TimeTree _  _) b = branch_duration t b
-branch_length t@(RateTimeTree _  _) b = branch_duration t b * branch_rate t b
+instance Tree t => BranchLengthTree (BranchLengthTreeImp t) where
+    branch_length (BranchLengthTree _ ds) b = ds!b
+
+instance TimeTree t => BranchLengthTree (RateTimeTreeImp t) where
+    branch_length tree b = branch_duration tree b * branch_rate tree b
 
 scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
     where ds' = arrayMap (factor*) ds
@@ -69,45 +102,50 @@ scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
 -- Given that this is a tree, would numNodes t - numBranches t + 2 work for n_leaves >=3?
 numLeaves t = length $ leaf_nodes t
 
-root (RootedTree _ r _) = r
-root (LabelledTree t _) = root t
-root (TimeTree t _)     = root t
-root (RateTimeTree t _) = root t
+
+instance Tree t => RootedTree (RootedTreeImp t) where
+    root (RootedTree _ r _) = r
+    away_from_root (RootedTree t r arr    ) b = arr!b
+
+instance RootedTree t => RootedTree (LabelledTreeImp t) where
+    root (LabelledTree t _) = root t
+    away_from_root (LabelledTree t _      ) b = away_from_root t b
+
+instance RootedTree t => RootedTree (TimeTreeImp t) where
+    root (TimeTree t _)     = root t
+    away_from_root (TimeTree   t _        ) b = away_from_root t b
+
+instance RootedTree t => RootedTree (RateTimeTreeImp t) where
+    root (RateTimeTree t _) = root t
+    away_from_root (RateTimeTree tree _  ) b = away_from_root tree b
+
+instance RootedTree t => RootedTree (BranchLengthTreeImp t) where
+    root (BranchLengthTree tree _) = root tree
+    away_from_root (BranchLengthTree tree _  ) b = away_from_root tree b
+
+instance RootedTree t => RootedTree (RateTimeTreeImp t) where
+    root (RateTimeTree t _ ) = root t
+    away_from_root (RateTimeTree t _      ) b = away_from_root t b
+
 
 remove_root (RootedTree t _ _) = t
-remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
+-- remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
 
-get_labels (Tree _ _ _)            = error "get_labels: trying to get labels from an unlabelled tree!"
-get_labels (RootedTree _ _ _)      = error "get_labels: trying to get labels from an unlabelled tree!"
-get_labels (LabelledTree _ labels) = labels
-get_labels (BranchLengthTree t _)  = get_labels t
-get_labels (TimeTree t _)          = get_labels t
-get_labels (RateTimeTree t _)      = get_labels t
+instance Tree t => LabelledTree (LabelledTreeImp t) where
+    get_label (LabelledTree _ labels) node = labels!!node
 
-add_labels labels t@(Tree _ _ _)          = LabelledTree t labels
-add_labels labels rt@(RootedTree _ _ _)   = LabelledTree rt labels
-add_labels labels (LabelledTree _ _)      = error "add_labels: trying to add labels to an already-labelled tree!"
-add_labels labels (BranchLengthTree t ds) = BranchLengthTree (add_labels labels t) ds
-add_labels labels (TimeTree t hs)         = TimeTree (add_labels labels t) hs
-add_labels labels (RateTimeTree t hs)     = RateTimeTree (add_labels labels t) hs
 
-add_root r (LabelledTree t labels) = LabelledTree (add_root r t) labels
-add_root r (BranchLengthTree t ds) = BranchLengthTree (add_root r t) ds
-add_root r t = rt
-    where check_away_from_root b = (sourceNode rt b == root rt) || (or $ map (away_from_root rt) (edgesBeforeEdge rt b))
-          nb = numBranches t * 2
-          rt = RootedTree t r (mkArray nb check_away_from_root)
+instance LabelledTree t => LabelledTree (BranchLengthTreeImp t) where
+    get_label (BranchLengthTree t _) node = get_label t node
 
-make_rooted tree = add_root (numNodes tree - 1) tree
+instance LabelledTree t => LabelledTree (TimeTreeImp t) where
+    get_label (TimeTree t _) node          = get_label t node
 
-away_from_root (RootedTree t r arr    ) b = arr!b
-away_from_root (LabelledTree t _      ) b = away_from_root t b
-away_from_root (BranchLengthTree t _  ) b = away_from_root t b
-away_from_root (TimeTree   t _        ) b = away_from_root t b
-away_from_root (RateTimeTree t _      ) b = away_from_root t b
-away_from_root (Tree _ _ _            ) b = error "away_from_root: unrooted tree!"
+instance LabelledTree t => LabelledTree (RateTimeTreeImp t) where
+    get_label (RateTimeTree t _) node      = get_label t node
 
-toward_root    rt b = not $ away_from_root rt b
+
+toward_root rt b = not $ away_from_root rt b
 
 parentBranch rooted_tree n = listToMaybe [b | b <- edgesOutOfNode rooted_tree n, toward_root rooted_tree b]
 
@@ -164,3 +202,21 @@ tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
 
 allEdgesAfterEdge tree b = b:concat [allEdgesAfterEdge tree b' | b' <- edgesAfterEdge tree b]
 allEdgesFromNode tree n = concat [allEdgesAfterEdge tree b | b <- edgesOutOfNode tree n]
+
+add_labels labels t@(Tree _ _ _)          = LabelledTree t labels
+-- add_labels labels rt@(RootedTree _ _ _)   = LabelledTree rt labels
+-- add_labels labels (LabelledTree _ _)      = error "add_labels: trying to add labels to an already-labelled tree!"
+-- add_labels labels (BranchLengthTree t ds) = BranchLengthTree (add_labels labels t) ds
+-- add_labels labels (TimeTree t hs)         = TimeTree (add_labels labels t) hs
+-- add_labels labels (RateTimeTree t hs)     = RateTimeTree (add_labels labels t) hs
+
+-- add_root r (LabelledTree t labels) = LabelledTree (add_root r t) labels
+-- add_root r (BranchLengthTree t ds) = BranchLengthTree (add_root r t) ds
+
+add_root r t = rt
+     where check_away_from_root b = (sourceNode rt b == root rt) || (or $ map (away_from_root rt) (edgesBeforeEdge rt b))
+           nb = numBranches t * 2
+           rt = RootedTree t r (mkArray nb check_away_from_root)
+
+make_rooted tree = add_root (numNodes tree - 1) tree
+
