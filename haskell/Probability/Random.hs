@@ -9,26 +9,38 @@ import MCMC
 import Data.JSON as J
 
 data SamplingEvent
+
 -- Here Int should be `a`
-data ProbEventMonad = InEdge String Int | PropertyEdge String Int | ProbFactor Double
-in_edge node name = InEdge node name
-property node name = PropertyEdge node name
+data AnnotatedDensity a = InEdge String a
+                        | PropertyEdge String a
+                        | forall b.ADBind (AnnotatedDensity b) (b -> AnnotatedDensity a)
+                        | ADReturn a -- | ProbFactor Double
+
+in_edge name node = InEdge name node
+property name node = PropertyEdge name node
+
+instance Monad AnnotatedDensity where
+    return x = ADReturn x
+    f >>= g = ADBind f g
 
 -- Just get the densities out
 -- No ProbFactor events yet.
-get_densities (IOReturn x) = x
-get_densities (IOAndPass f g) = let x = get_densities f in get_densities (g x)
+get_densities :: AnnotatedDensity a -> a
+get_densities (ADReturn x) = x
+get_densities (ADBind f g) = let x = get_densities f in get_densities (g x)
 get_densities (InEdge _ x) = x
-get_densities (PropertyEdge _ _) = ()
+-- Probably this should return ()?  But that forces a to ().
+-- But -- when we put a signature on this, it should be able to be limited!
+get_densities (PropertyEdge _ x) = x
 
-make_edges event (IOReturn x) = return x
-make_edges event (IOAndPass f g) = do x <- make_edges event f
-                                      make_edges event (g x)
+make_edges event (ADReturn x) = return x
+make_edges event (ADBind f g) = do x <- make_edges event f
+                                   make_edges event (g x)
 make_edges event (InEdge name node) = register_in_edge node event name
 make_edges event (PropertyEdge name node) = register_dist_property event node name
 
 -- Define the Distribution type
-data Distribution a = Distribution String (a->Double) (Double->a) (IO a) Range
+data Distribution a = Distribution String (a -> AnnotatedDensity [LogDouble]) (Double->a) (Random a) Range
 dist_name (Distribution n _ _ _ _) = n
 annotated_densities (Distribution _ ds _ _ _) = ds
 densities dist x = get_densities $ annotated_densities dist x
@@ -46,19 +58,24 @@ distRange (Distribution _ _ _ _ r) = r
 --        presumably this indicates that its an IO action versus a Random a
 --        but its only used inside Distribution...
 
-data TKEffects a = SamplingRate Double (Random a) | AddMove (Int->a)
+data TKEffects a = SamplingRate Double (Random a)
+                 | AddMove (Int->a)
+                 | TKReturn a
+                 | forall b . TKBind (TKEffects b) (b -> TKEffects a)
 
 -- This implements the Random monad by transforming it into the IO monad.
 data Random a = RandomStructure (a->TKEffects a) (a->TKEffects a->a) (Random a)
               | Observe (Distribution Int) Int
-              | Print Int
+              | Print a
               | Lazy (Random a)
-              | WithTKEffect (Random a) (TKEffects Int)
+              | forall b.WithTKEffect (Random a) (TKEffects b)
               | PerformTKEffect (TKEffects a)
               | LiftIO (IO a)
+              | RanReturn a
+              | forall b. RanBind (Random b) (b -> Random a)
+              | RanMFix (a -> Random a)
+              | RanDistribution (Distribution a)
 
--- I feel sample_with_initial_value actually needs to run the sampler... and make the result come out of that.
--- Maybe this needs to be equivalent to running the regular sample and then setting the value... 
 observe = Observe
 x ~> dist = observe dist x
 infix 0 ~>
@@ -78,10 +95,10 @@ x %=>% (y,z) = (x,(Just y,z))
 infixr 1 %>%
 x %>% y      = (x,(Nothing,y))
 
-run_strict (IOAndPass f g) = do
+run_strict (RanBind f g) = do
   x <- run_strict f
   run_strict $ g x
-run_strict (IOReturn v) = return v
+run_strict (RanReturn v) = return v
 run_strict (LiftIO a) = a
 run_strict (Print s) = putStrLn (show s)
 run_strict (PerformTKEffect _) = return ()
@@ -90,12 +107,12 @@ run_strict (SamplingRate _ a) = run_strict a
 -- These are the lazily executed parts of the strict monad.
 run_strict dist@(Distribution _ _ _ _ _) = run_lazy dist
 run_strict e@(WithTKEffect _ _) = run_lazy e
-run_strict (MFix f) = mfix (run_lazy . f)
+run_strict (RanMFix f) = mfix (run_lazy . f)
 run_strict (Lazy r) = unsafeInterleaveIO $ run_lazy r
 
 
-run_tk_effects rate (IOAndPass f g) = (run_tk_effects rate f) >>= (\x -> run_tk_effects rate $ g x)
-run_tk_effects rate (IOReturn v) = return v
+run_tk_effects rate (TKBind f g) = (run_tk_effects rate f) >>= (\x -> run_tk_effects rate $ g x)
+run_tk_effects rate (TKReturn v) = return v
 run_tk_effects rate (AddMove m) = register_transition_kernel rate m
 run_tk_effects rate (SamplingRate rate2 a) = run_tk_effects (rate*rate2) a
 -- LiftIO and Print are only here for debugging purposes:
@@ -104,22 +121,24 @@ run_tk_effects rate (SamplingRate rate2 a) = run_tk_effects (rate*rate2) a
 
 
 run_lazy (RandomStructure _ _ a) = run_lazy a
-run_lazy (IOAndPass f g) = do
+run_lazy (RanBind f g) = do
   x <- unsafeInterleaveIO $ run_lazy f
   run_lazy $ g x
-run_lazy (IOReturn v) = return v
+run_lazy (RanReturn v) = return v
 run_lazy (LiftIO a) = a
-run_lazy (Distribution _ _ _ a _) = unsafeInterleaveIO $ run_lazy a
-run_lazy (SamplingRate _ model) = run_lazy model
-run_lazy (MFix f) = MFix (run_lazy.f)
+run_lazy (RanMFix f) = mfix (run_lazy.f)
+-- Problem: distributions aren't part of the Random monad!
+run_lazy (RanDistribution (Distribution _ _ _ a _)) = unsafeInterleaveIO $ run_lazy a
+-- Problem: TKEffects aren't part of the Random monad!
+run_lazy (PerformTKEffect (SamplingRate _ model)) = run_lazy model
 run_lazy (WithTKEffect action _) = run_lazy action
 
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
 
-run_strict' rate (IOAndPass f g) = do
+run_strict' rate (RanBind f g) = do
   x <- run_strict' rate f
   run_strict' rate $ g x
-run_strict' rate (IOReturn v) = return v
+run_strict' rate (RanReturn v) = return v
 run_strict' rate (LiftIO a) = a
 run_strict' rate (Observe dist datum) = do
   s <- register_dist_observe (dist_name dist)
@@ -133,7 +152,7 @@ run_strict' rate (SamplingRate rate2 a) = run_strict' (rate*rate2) a
 -- These are the lazily executed parts of the strict monad.
 run_strict' rate dist@(Distribution _ _ _ _ _) = run_lazy' rate dist
 run_strict' rate e@(WithTKEffect _ _) = run_lazy' rate e
-run_strict' rate (MFix f) = mfix (run_lazy' rate . f)
+run_strict' rate (RanMFix f) = mfix (run_lazy' rate . f)
 run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
 
 -- 1. Could we somehow implement slice sampling windows for non-contingent variables?
@@ -166,10 +185,10 @@ modifiable_structure = triggered_modifiable_structure ($) id
 --         unsafeInterleaveIO $ run_lazy', so we get an unsafeInterleaveIO from there.
 --
 run_lazy' rate (LiftIO a) = a
-run_lazy' rate (IOAndPass f g) = do
+run_lazy' rate (RanBind f g) = do
   x <- unsafeInterleaveIO $ run_lazy' rate f
   run_lazy' rate $ g x
-run_lazy' rate (IOReturn v) = return v
+run_lazy' rate (RanReturn v) = return v
 run_lazy' rate dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_sample) range) = do 
  -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy do_sample
@@ -183,7 +202,7 @@ run_lazy' rate dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_
       do_effects = unsafePerformIO effect
   return triggered_x
 run_lazy' rate (Distribution _ _ _ s _) = run_lazy' rate s
-run_lazy' rate (MFix f) = MFix ((run_lazy' rate).f)
+run_lazy' rate (RanMFix f) = mfix ((run_lazy' rate).f)
 run_lazy' rate (SamplingRate rate2 a) = run_lazy' (rate*rate2) a
 run_lazy' rate (Lazy r) = run_lazy' rate r
 run_lazy' rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
