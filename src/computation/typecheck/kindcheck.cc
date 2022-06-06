@@ -393,11 +393,13 @@ void kindchecker_state::kind_check_constructor(const Hs::Constructor& constructo
 
         for(auto& type: types | views::reverse)
             type2 = Hs::make_arrow_type(type, type2);
-
     }
 
     // FIXME: how about constraints?
     // Perhaps constraints on constructors lead to records that contain pointers to dictionaries??
+
+    // This requires {-# LANGUAGE ExistentialQuantification #-} ?
+    type2 = add_forall_vars( constructor.forall, type2 );
 
     kind_check_type_of_kind(type2, kind_star());
 }
