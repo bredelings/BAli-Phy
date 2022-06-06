@@ -252,6 +252,7 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words =
     {"deriving",{parser::token::TOK_DERIVING,0}},
     {"do",{parser::token::TOK_DO,0}},
     {"else",{parser::token::TOK_ELSE,0}},
+    {"forall",{parser::token::TOK_FORALL,0}},
     {"foreign",{parser::token::TOK_FOREIGN,0}},
     {"hiding",{parser::token::TOK_HIDING,0}},
     {"if",{parser::token::TOK_IF,0}},
@@ -323,6 +324,7 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_symbols =
     {"=>",{parser::token::TOK_DARROW,0}},
     {"-",{parser::token::TOK_MINUS,0}},
     {"!",{parser::token::TOK_BANG,0}},
+    {".",{parser::token::TOK_DOT,0}},
     {"*",{parser::token::TOK_STAR,0}}
 };
 
