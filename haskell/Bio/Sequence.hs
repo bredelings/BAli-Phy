@@ -15,7 +15,7 @@ foreign import bpcall "Alignment:sequence_to_indices" sequence_to_indices :: Alp
 -- maybe add this later
 
 foreign import bpcall "Alignment:load_sequences" builtin_load_sequences :: CPPString -> EVector Sequence
-load_sequences :: String -> [Sequence]
+load_sequences :: String -> IO [Sequence]
 load_sequences filename = IOAction (\s -> (s,list_from_vector $ builtin_load_sequences $ list_to_string filename))
 
 foreign import bpcall "Alignment:select_range" builtin_select_range :: CPPString -> EVector Sequence -> EVector Sequence
