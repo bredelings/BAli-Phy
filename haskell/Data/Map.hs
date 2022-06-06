@@ -8,7 +8,7 @@ data Map k a = Map [(k,a)]
 
 empty = Map []
 
-singleton k x = Map [(k,x)]
+singleton k x = fromList [(k,x)]
 
 fromList kxs = Map $ nubBy (\kx1 kx2 -> fst kx1 == fst kx2) kxs
 
@@ -22,7 +22,7 @@ fromDistinctDescList kxs = fromList kxs
 
 
 
-insert k x m = (k,x):(delete k m)
+insert k x m = Map $ (k,x):kxs where Map kxs = delete k m
 
 delete k m@(Map xs) = Map $ List.filter (\kx -> fst kx /= k) xs
 
@@ -91,15 +91,15 @@ filter pred xs = Set.Set $ List.filter (\(_,x) -> pred x) xs
 
 -- splitAt
 
-map f (Map xs) = Map $ map (\(k,x) -> (k,f x)) xs
+map f (Map xs) = Map $ List.map (\(k,x) -> (k,f x)) xs
 
-mapWithKey f (Map xs) = Map $ map (\(k,x) -> (k,f k x)) xs
+mapWithKey f (Map xs) = Map $ List.map (\(k,x) -> (k,f k x)) xs
 
 -- mapMonotonic
 
-foldr f z = foldr f z . elems
+foldr f z = List.foldr f z . elems
 
-foldl f z = foldl f z . elems
+foldl f z = List.foldl f z . elems
 
 --foldr'
 
