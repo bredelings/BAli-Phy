@@ -13,7 +13,7 @@ import Foreign.String
 
 data Text = Text CPPString
 
-foreign import bpcall "Text:pack" builtin_pack :: () -> ()
+foreign import bpcall "Text:pack" builtin_pack :: EVector Char -> CPPString
 
 --
 
