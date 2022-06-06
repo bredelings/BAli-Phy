@@ -3,6 +3,7 @@ module Data.Either where
 
 import Data.Bool
 import Data.List  -- for foldr
+import Data.Eq
 
 data Either a b = Left a | Right b
 
@@ -27,3 +28,8 @@ fromRight r _         = r
 partitionEithers = foldr (either left right) ([], [])
     where left  a ~(l, r) = (a:l, r)
           right a ~(l, r) = (l, a:r)
+
+instance (Eq a, Eq b) => Eq (Either a b) where
+    Left  x == Left  y  =  x == y
+    Right x == Right y  =  x == y
+    _       == _        =  False
