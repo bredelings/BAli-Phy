@@ -36,8 +36,9 @@ unsafePerformIO :: IO a -> a
 unsafePerformIO f = snd $ runIO f 0#
 
 instance Monad IO where
--- unsafePerformIO (IOAndPass f g) = let x = unsafePerformIO f in x `seq` unsafePerformIO (g x)
-    f >>= g = IOAction (\state1 -> let (state2,x) = runIO f state1 in x `seq` runIO (g x) state2)
+    -- Here we weirdly start (g x) from `state1` again, not using `state2`.
+    -- We use `seq` to sequence things.
+    f >>= g = IOAction (\state1 -> let (state2,x) = runIO f state1 in x `seq` runIO (g x) state1)
     return x = IOAction (\s -> (s, x))
 --unsafePerformIO (MFix f) = let x = unsafePerformIO (f x) in x
     mfix f = IOAction (\state1 -> let result@(state2, x) = runIO (f x) state1 in result)
