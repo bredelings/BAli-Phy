@@ -40,16 +40,10 @@ bool Var::operator==(const Var& v) const
 
 bool Var::operator<(const Var& v) const
 {
-    if (not index and v.index)
+    if (index < v.index)
         return true;
 
-    if (index and not v.index)
-        return false;
-
-    if (*index < *v.index)
-        return true;
-
-    if (*index > *v.index)
+    if (index > v.index)
         return false;
 
     int cmp = unloc(name).compare(unloc(v.name));

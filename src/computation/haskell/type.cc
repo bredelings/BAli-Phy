@@ -136,16 +136,10 @@ bool TypeVar::operator==(const TypeVar& tv) const
 
 bool TypeVar::operator<(const TypeVar& tv) const
 {
-    if (not index and tv.index)
+    if (index < tv.index)
         return true;
 
-    if (index and not tv.index)
-        return false;
-
-    if (*index < *tv.index)
-        return true;
-
-    if (*index > *tv.index)
+    if (index > tv.index)
         return false;
 
     int cmp = unloc(name).compare(unloc(tv.name));
