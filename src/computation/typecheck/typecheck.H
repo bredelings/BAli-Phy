@@ -112,6 +112,8 @@ struct typechecker_state: FreshVarSource
 
     void get_constructor_info(const Hs::Decls& decls);
 
+    Hs::Type expand_type_synonyms(const Hs::Type& type) const;
+
     Hs::Type check_type(const Hs::Type&) const;
 
     Hs::Type check_type(const Hs::Type&, kindchecker_state& K) const;

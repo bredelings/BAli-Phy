@@ -410,6 +410,11 @@ ID get_class_name_from_constraint(const Hs::Type& constraint)
 //
 // }
 
+Hs::Type typechecker_state::expand_type_synonyms(const Hs::Type& type) const
+{
+    return type;
+}
+
 Hs::Type typechecker_state::check_type(const Hs::Type& type, kindchecker_state& K) const
 {
     // So, currently, we
@@ -417,7 +422,9 @@ Hs::Type typechecker_state::check_type(const Hs::Type& type, kindchecker_state& 
     // (2) then we all foralls.
     // Should we be doing synonym substitution FIRST?
 
-    return K.kind_and_type_check_type( type );
+    auto type2 = K.kind_and_type_check_type( type );
+    type2 = expand_type_synonyms(type2);
+    return type2;
 }
 
 Hs::Type typechecker_state::check_type(const Hs::Type& type) const
