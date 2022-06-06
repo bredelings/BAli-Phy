@@ -1,6 +1,6 @@
 module Data.Set where
 
-import Prelude hiding (filter,foldl,foldr,null,map,take,drop,splitAt)
+import Prelude hiding (filter,foldl,foldr,null,map,take,drop,splitAt,empty)
 import qualified Data.List as List
     
 -- This should at the minimum allow adding and removing elements, and
@@ -27,7 +27,7 @@ fromDistinctAscList xs = fromList xs
 fromDistinctDescList xs = fromList xs
 
 powerSet (Set [])  = Set [[]]
-powerSet (Set (x:xs)) = let Set ys = powerSet xs
+powerSet (Set (x:xs)) = let Set ys = powerSet (Set xs)
                         in Set (ys++(List.map (x:) ys))
 
 insert x s@(Set xs) | member x s  = s
@@ -114,7 +114,7 @@ filter pred xs = Set $ List.filter pred xs
 
 -- splitAt
 
-map f (Set xs) = Set $ map f xs
+map f (Set xs) = Set $ List.map f xs
 
 -- mapMonotonic
 
