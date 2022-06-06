@@ -832,7 +832,7 @@ extern "C" closure builtin_function_struct_seq(OperationArgs& Args)
     return {index_var(0),{r1}};
 }
 
-extern "C" closure builtin_function_cNothing(OperationArgs& Args)
+extern "C" closure builtin_function_cNothing(OperationArgs&)
 {
     return { EMaybe() };
 }
