@@ -81,3 +81,39 @@ extern "C" closure builtin_function_c_json(OperationArgs& Args)
 
     return (const Object&)J;
 }
+
+extern "C" closure builtin_function_ejson_array(OperationArgs& Args)
+{
+    auto j = Args.evaluate(0).as_<EVector>();
+    return { EPair(0, j) };
+}
+
+extern "C" closure builtin_function_ejson_object(OperationArgs& Args)
+{
+    auto j = Args.evaluate(0).as_<EVector>();
+    return { EPair(1, j) };
+}
+
+extern "C" closure builtin_function_ejson_number(OperationArgs& Args)
+{
+    auto j = Args.evaluate(0).as_double();
+    return { EPair(2, j) };
+}
+
+extern "C" closure builtin_function_ejson_bool(OperationArgs& Args)
+{
+    auto j = Args.evaluate(0).as_double();
+    return { EPair(3, j) };
+}
+
+extern "C" closure builtin_function_ejson_string(OperationArgs& Args)
+{
+    auto j = Args.evaluate(0).as_<String>();
+    return { EPair(4, j) };
+}
+
+extern "C" closure builtin_function_ejson_null(OperationArgs& Args)
+{
+    auto j = Args.evaluate(0);
+    return { EPair(5, 0) };
+}
