@@ -127,18 +127,19 @@ foldl f z = List.foldl f z . elems
 
 -- minView
 
+lookup :: Eq k => k -> Map k v -> Maybe v
 lookup k' (Map kxs) = go kxs where
     go [] = Nothing
     go ((k,x):kxs) | k' == k   = Just x
                    | otherwise = go kxs
 
 infixl 9 !
+(!) :: Eq a => Map a b -> a -> b
+m ! k = case lookup k m of Just x -> x
+                           Nothing -> error "Error: element not in the map"
 
 m ! k = case lookup k m of Just x -> x
-                           Nothing -> "Error: element not in the map"
-
-m ! k = case lookup k m of Just x -> x
-                           Nothing -> "Error: element not in the map"
+                           Nothing -> error "Error: element not in the map"
 
 elems m = List.map snd $ toAscList m
 
