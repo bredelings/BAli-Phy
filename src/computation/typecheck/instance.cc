@@ -256,7 +256,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     auto lie_super = unordered_lie(ordered_lie_super);
     auto [binds_super, failed_constraints] = entails(lie_instance, lie_super);
     if (not binds_super)
-        throw myexception()<<"Can't derive "<<print(failed_constraints)<<" from "<<print(lie_instance)<<"!";
+        throw myexception()<<"Can't derive superclass constraints "<<print(failed_constraints)<<" from instance constraints "<<print(lie_instance)<<"!";
 
     // 7. make some intermediates
     auto instance_constraint_dvars = vars_from_lie(ordered_lie_instance);
@@ -330,9 +330,21 @@ Hs::Binds typechecker_state::infer_type_for_instances2(const vector<pair<Hs::Var
 
     for(auto& [dfun, instance_decl]: named_instances)
     {
-        auto decls = infer_type_for_instance2(dfun, instance_decl);
+        try
+        {
+            auto decls = infer_type_for_instance2(dfun, instance_decl);
 
-        instance_decls.push_back(decls);
+            instance_decls.push_back(decls);
+        }
+        catch (myexception& e)
+        {
+            string header = "In instance '" + instance_decl.constraint.print() + "' ";
+            if (instance_decl.binds and instance_decl.binds->loc)
+                header += " at " + convertToString(*instance_decl.binds->loc);
+            header += ":\n";
+            e.prepend(header);
+            throw;
+        }
     }
 //    std::cerr<<"\nInstance ops and dfuns:\n";
 //    std::cerr<<instance_decls.print();
