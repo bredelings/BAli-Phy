@@ -1,9 +1,19 @@
 module Range where
 
-data Range = OpenInterval Double Double | IntegerInterval Int Int | TrueFalseRange | Simplex Int Double | ListRange [Range] | LabelledSimplex [Int] Double | TreeRange Int
+import Foreign.Maybe
+
+data Range = OpenInterval (Maybe Double) (Maybe Double)
+           | IntegerInterval (Maybe Int) (Maybe Int)
+           | TrueFalseRange
+           | Simplex Int Double
+           | ListRange [Range]
+           | LabelledSimplex [Int] Double
+           | TreeRange Int
  
-foreign import bpcall "Range:get_bounds" builtinGetBounds :: () -> () -> ()
-foreign import bpcall "Range:get_integer_bounds" builtinGetIntegerBounds :: () -> () -> ()
+data BuiltinBounds = BuiltinBounds
+
+foreign import bpcall "Range:get_bounds" builtinGetBounds :: CMaybe Double -> CMaybe Double -> BuiltinBounds
+foreign import bpcall "Range:get_integer_bounds" builtinGetIntegerBounds :: CMaybe Int -> CMaybe Int -> BuiltinBounds
   
 realLine = OpenInterval Nothing Nothing
 
@@ -25,19 +35,19 @@ expTransformRange (OpenInterval Nothing (Just u)) = between 0.0 (exp u)
 expTransformRange (OpenInterval (Just l) Nothing) = above (exp l)
 expTransformRange (OpenInterval (Just l) (Just u)) = between (exp l) (exp u)
 
-getBounds (OpenInterval Nothing Nothing)   = builtinGetBounds () ()
-getBounds (OpenInterval Nothing (Just u))  = builtinGetBounds () u
-getBounds (OpenInterval (Just l) Nothing)  = builtinGetBounds l ()
-getBounds (OpenInterval (Just l) (Just u)) = builtinGetBounds l u
+getBounds (OpenInterval Nothing Nothing)   = builtinGetBounds cNothing cNothing
+getBounds (OpenInterval Nothing (Just u))  = builtinGetBounds cNothing (cJust u)
+getBounds (OpenInterval (Just l) Nothing)  = builtinGetBounds (cJust l) cNothing
+getBounds (OpenInterval (Just l) (Just u)) = builtinGetBounds (cJust l) (cJust u)
 getBounds _                                = error "getBounds is undefined if argument is not an OpenInterval!"
 
-getIntegerBounds (IntegerInterval Nothing Nothing)   = builtinGetIntegerBounds () ()
-getIntegerBounds (IntegerInterval Nothing (Just u))  = builtinGetIntegerBounds () u
-getIntegerBounds (IntegerInterval (Just l) Nothing)  = builtinGetIntegerBounds l ()
-getIntegerBounds (IntegerInterval (Just l) (Just u)) = builtinGetIntegerBounds l u
+getIntegerBounds (IntegerInterval Nothing Nothing)   = builtinGetIntegerBounds cNothing cNothing
+getIntegerBounds (IntegerInterval Nothing (Just u))  = builtinGetIntegerBounds cNothing (cJust u)
+getIntegerBounds (IntegerInterval (Just l) Nothing)  = builtinGetIntegerBounds (cJust l) cNothing
+getIntegerBounds (IntegerInterval (Just l) (Just u)) = builtinGetIntegerBounds (cJust l) (cJust u)
 getIntegerBounds _                                = error "getIntegerBounds is undefined if argument is not an IntegerInterval!"
 
 c_range (OpenInterval a b) = getBounds (OpenInterval a b)
 c_range (IntegerInterval a b) = getIntegerBounds (IntegerInterval a b)
-c_range r = r
+c_range _ = error "No c range for other interval types"
 

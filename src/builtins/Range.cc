@@ -4,36 +4,30 @@
 
 extern "C" closure builtin_function_get_bounds(OperationArgs& Args)
 {
-    auto L = Args.evaluate(0);
-    auto U = Args.evaluate(1);
-
-    auto has_lower = L.is_double();
-    auto has_upper = U.is_double();
+    auto L = Args.evaluate(0).as_<EMaybe>();
+    auto U = Args.evaluate(1).as_<EMaybe>();
 
     Box<bounds<double>> b;
 
-    if (has_lower)
-        b.lower_bound = L.as_double();
-    if (has_upper)
-        b.upper_bound = U.as_double();
+    if (L)
+        b.lower_bound = L->as_double();
+    if (U)
+        b.upper_bound = U->as_double();
   
     return b;
 }
 
 extern "C" closure builtin_function_get_integer_bounds(OperationArgs& Args)
 {
-    auto L = Args.evaluate(0);
-    auto U = Args.evaluate(1);
-
-    auto has_lower = L.is_int();
-    auto has_upper = U.is_int();
+    auto L = Args.evaluate(0).as_<EMaybe>();
+    auto U = Args.evaluate(1).as_<EMaybe>();
 
     Box<bounds<int>> b;
 
-    if (has_lower)
-        b.lower_bound = L.as_int();
-    if (has_upper)
-        b.upper_bound = U.as_int();
+    if (L)
+        b.lower_bound = L->as_int();
+    if (U)
+        b.upper_bound = U->as_int();
   
     return b;
 }
