@@ -176,3 +176,29 @@ Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
 //    std::cerr<<"\n";
 }
 
+void
+typechecker_state::check_type_synonyms(const Hs::Decls& decls)
+{
+    for(auto& decl: decls)
+    {
+        auto t = decl.to<Hs::TypeSynonymDecl>();
+        if (not t) continue;
+
+        auto name = t->name;
+        auto type_vars = t->type_vars;
+        auto rhs_type = unloc(t->rhs_type);
+
+        // ensure that these type variables will never occur in the arguments
+        substitution_t s;
+        for(auto& type_var: type_vars)
+        {
+            auto new_type_var = fresh_other_type_var();
+            s = s.insert({type_var, new_type_var});
+            type_var = new_type_var;
+        }
+
+        rhs_type = apply_subst(s, rhs_type);
+
+        type_syn_info().insert({name, {name, type_vars, rhs_type}});
+    }
+}

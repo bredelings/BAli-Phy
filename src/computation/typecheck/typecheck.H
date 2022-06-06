@@ -226,6 +226,9 @@ struct typechecker_state: FreshVarSource
     Hs::Binds
     infer_type_for_binds(Hs::Binds binds, bool is_top_level = false);
 
+    void
+    check_type_synonyms(const Hs::Decls& decls);
+
     Hs::Binds infer_type_for_classes(const Hs::Decls& decls);
 
     std::tuple<global_value_env, ClassInfo,Hs::Decls>
