@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <memory>
+#include <optional>
 #include <string>
 #include <initializer_list>
 #include "computation/object.H"
@@ -453,6 +454,8 @@ struct EPair: public Pair<expression_ref,expression_ref>
 
 
 typedef std::pair<expression_ref,expression_ref> Epair;
+
+typedef Box<std::optional<expression_ref>> EMaybe;
 
 struct EPtree: public Vector<std::pair<std::string,expression_ref>>
 {

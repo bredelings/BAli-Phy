@@ -832,3 +832,26 @@ extern "C" closure builtin_function_struct_seq(OperationArgs& Args)
     return {index_var(0),{r1}};
 }
 
+extern "C" closure builtin_function_cNothing(OperationArgs& Args)
+{
+    return { EMaybe() };
+}
+
+extern "C" closure builtin_function_cJust(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+    return { EMaybe(x) };
+}
+
+extern "C" closure builtin_function_cIsJust(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_<EMaybe>();
+    return { bool(x) };
+}
+
+extern "C" closure builtin_function_cFromJust(OperationArgs& Args)
+{
+    auto maybe = Args.evaluate(0).as_<EMaybe>();
+    return { *maybe };
+}
+
