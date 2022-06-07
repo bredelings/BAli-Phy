@@ -3,7 +3,7 @@ module Probability.Distribution.Bernoulli where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:sample_bernoulli" builtin_sample_bernoulli :: () -> () -> ()
+foreign import bpcall "Distribution:sample_bernoulli" builtin_sample_bernoulli :: Double -> RealWorld -> Int
 
 bernoulli_effect x = add_move (\c -> discrete_uniform_avoid_mh x 0 1 c)
 
