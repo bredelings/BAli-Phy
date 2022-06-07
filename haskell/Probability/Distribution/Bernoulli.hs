@@ -16,7 +16,15 @@ annotated_bernoulli_density2 p q x = do
   in_edge "p" p
   return [bernoulli_density2 p q x]
 
-bernoulli2 p q = Distribution "bernoulli" (annotated_bernoulli_density2 p q) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1)
-
 bernoulli p = bernoulli2 p (1.0-p)
 rbernoulli q = bernoulli2 (1.0-q) q
+
+
+class HasBernoulli d where
+    bernoulli2 :: Double -> Double -> d Int
+
+instance HasBernoulli Distribution where
+    bernoulli2 p q = Distribution "bernoulli" (annotated_bernoulli_density2 p q) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1)
+
+instance HasBernoulli Random where
+    bernoulli2 p q = RanDistribution (bernoulli2 p q)
