@@ -37,4 +37,4 @@ annotated_categorical_on_density pairs x = do
   in_edge "pairs" pairs
   return [categorical_on_density pairs x]
 
-categorical_on pairs = Distribution "categorical_on" (annotated_categorical_on_density pairs) (no_quantile "categorical_on") (sample_categorical_on pairs) Nothing
+categorical_on pairs = Distribution "categorical_on" (annotated_categorical_on_density pairs) (no_quantile "categorical_on") (sample_categorical_on pairs) NoRange
