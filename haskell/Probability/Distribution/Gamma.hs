@@ -17,9 +17,6 @@ annotated_shifted_gamma_density a b shift x = do
   in_edge "shift" shift
   return [shifted_gamma_density a b shift x]
 
-shifted_gamma a b shift = Distribution "shifted_gamma" (annotated_shifted_gamma_density a b shift) (shifted_gamma_quantile a b shift) (sample_shifted_gamma a b shift) (gamma_bounds shift)
-
-
 ---------------------
 
 gamma_density a b = shifted_gamma_density a b 0.0
@@ -31,5 +28,15 @@ annotated_gamma_density a b x = do
   in_edge "b" b
   return [gamma_density a b x]
 
-gamma a b = Distribution "gamma" (annotated_gamma_density a b) (gamma_quantile a b) (sample_gamma a b) (gamma_bounds 0.0)
 
+class HasGamma d where
+    gamma :: Double -> Double -> d Double
+    shifted_gamma :: Double -> Double -> Double -> d Double
+
+instance HasGamma Distribution where
+    gamma a b = Distribution "gamma" (annotated_gamma_density a b) (gamma_quantile a b) (sample_gamma a b) (gamma_bounds 0.0)
+    shifted_gamma a b shift = Distribution "shifted_gamma" (annotated_shifted_gamma_density a b shift) (shifted_gamma_quantile a b shift) (sample_shifted_gamma a b shift) (gamma_bounds shift)
+
+instance HasGamma Random where
+    gamma a b = RanDistribution (gamma a b)
+    shifted_gamma a b shift = RanDistribution (shifted_gamma a b shift)
