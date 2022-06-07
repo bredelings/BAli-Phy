@@ -49,7 +49,7 @@ make_edges event (PropertyEdge name node) = do register_dist_property event node
                                                return node
 
 -- Define the Distribution type
-data Distribution a = Distribution String (a -> AnnotatedDensity [LogDouble]) (Double->a) (Random a) Range
+data Distribution a = Distribution String (a -> AnnotatedDensity [LogDouble]) (a->Double) (Random a) Range
 dist_name (Distribution n _ _ _ _) = n
 annotated_densities (Distribution _ ds _ _ _) = ds
 densities dist x = get_densities $ annotated_densities dist x
