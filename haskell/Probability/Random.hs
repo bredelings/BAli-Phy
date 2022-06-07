@@ -100,12 +100,6 @@ with_tk_effect = WithTKEffect
 
 do_nothing _ = return ()
 
-infix 1 %=%, %=>%
-x %=% y      = (x,(Just y,[]))
-x %=>% (y,z) = (x,(Just y,z))
-infixr 1 %>%
-x %>% y      = (x,(Nothing,y))
-
 run_strict (RanBind f g) = do
   x <- run_strict f
   run_strict $ g x
@@ -219,16 +213,12 @@ mcmc = gen_model_no_alphabet
 add_null_program_result p = do result <- p
                                return (Nothing,result)
 
-add_logger old name (value,[]) False = old
-add_logger old name (value,loggers) do_log = (name,(if do_log then Just value else Nothing, loggers)):old
+-- Loggers: we can only log things with the ToJSON property
+infix 1 %=%, %>%
+name %=% value = (toJSONKey name, toJSON value)
+prefix %>% subvalue = (toJSONKey $ prefix ++ "/", log_to_json subvalue)
 
--- Add function to create JSON from logger
-log_to_json_one (name,(Nothing,[])) = []
-log_to_json_one (name,(Just x,[])) = [(name, to_json x)]
-log_to_json_one (name,(Just x,sub_loggers)) = [(name, to_json x), (name++"/", log_to_json sub_loggers)]
-log_to_json_one (name,(Nothing,sub_loggers)) = [(name++"/", log_to_json sub_loggers)]
-
-log_to_json loggers = J.Object $ concatMap log_to_json_one loggers
+log_to_json loggers = J.Object $ loggers
 
 -- Define some helper functions
 no_quantile name = error ("Distribution '"++name++"' has no quantile function")

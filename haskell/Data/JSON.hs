@@ -33,10 +33,17 @@ instance Show JSON where
 class ToJSONKey a where
     toJSONKey :: a -> Key
     toJSONKeyList :: [a] -> Key
+    toJSONKeyList s = error "toJSONKeyList: not implemented for this type"
 
 instance ToJSONKey Text where
     toJSONKey s = Key s
-    toJSONKeyList s = error "bad"
+
+instance ToJSONKey Char where
+    toJSONKey c = Key $ pack [c]
+    toJSONKeyList s = Key $ pack s
+
+instance ToJSONKey a => ToJSONKey [a] where
+    toJSONKey l = toJSONKeyList l
 
 class ToJSON a where
     toJSON :: a -> JSON
