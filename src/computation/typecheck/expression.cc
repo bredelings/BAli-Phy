@@ -107,7 +107,16 @@ typechecker_state::infer_type(expression_ref E)
         {
             auto [element1, t1] = infer_type(element);
             element = element1;
-            unify(t1, element_type);
+            try {
+                unify(t1, element_type);
+            }
+            catch (myexception& e)
+            {
+                std::ostringstream header;
+                header<<"List element "<<element<<" has type "<<apply_current_subst(t1)<<" but expected type "<<apply_current_subst(element_type)<<"\n ";
+                e.prepend(header.str());
+                throw;
+            }
         }
         return { L, Hs::ListType(element_type) };
     }
@@ -144,7 +153,16 @@ typechecker_state::infer_type(expression_ref E)
 
             // tv <- fresh
             auto tv = fresh_meta_type_var( kind_star() );
-            unify (t1, Hs::make_arrow_type(t2,tv));
+            try {
+                unify (t1, Hs::make_arrow_type(t2,tv));
+            }
+            catch (myexception& e)
+            {
+                std::ostringstream header;
+                header<<"Argument "<<i<<" // "<<e2<<" of function "<<e1<<" has type "<<apply_current_subst(t2)<<" but function is of type "<<apply_current_subst(t1)<<"\n ";
+                e.prepend(header.str());
+                throw;
+            }
 
             t1 = tv;
         }
@@ -203,7 +221,16 @@ typechecker_state::infer_type(expression_ref E)
             arg_types.push_back(t_i);
 
             // REQUIRE that i-th argument matches the type for the i-th field.
-            unify( field_types[i], t_i);
+            try{
+                unify( field_types[i], t_i);
+            }
+            catch (myexception& e)
+            {
+                std::ostringstream header;
+                header<<"Argument "<<i+1<<" // "<<arg<<" of constructor "<<con->print()<<" has type "<<apply_current_subst(t_i)<<" but expected type "<<apply_current_subst(field_types[i])<<"\n ";
+                e.prepend(header.str());
+                throw;
+            }
         }
         E = expression_ref(*con, args);
         
