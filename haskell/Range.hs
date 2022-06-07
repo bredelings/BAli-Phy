@@ -9,6 +9,7 @@ data Range = OpenInterval (Maybe Double) (Maybe Double)
            | ListRange [Range]
            | LabelledSimplex [Int] Double
            | TreeRange Int
+           | NoRange
  
 data BuiltinBounds = BuiltinBounds
 
