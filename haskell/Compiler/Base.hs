@@ -7,6 +7,8 @@ import Data.Tuple      -- for snd
 
 type String = [Char]
 
+type RealWorld = Int
+
 class Monad m where
     return :: a -> m a
     (>>=)  :: m a -> (a -> m b) -> m b
@@ -31,7 +33,7 @@ foreign import bpcall "Prelude:seq" seq :: a -> b -> b
 
 foreign import bpcall "Prelude:struct_seq" struct_seq :: a -> b -> b
 
-data IO a = IOAction { runIO :: Int -> (Int, a) }
+data IO a = IOAction { runIO :: RealWorld -> (RealWorld, a) }
 
 -- unsafePerformIO (IOAction f) = snd (f 0)
 unsafePerformIO :: IO a -> a
