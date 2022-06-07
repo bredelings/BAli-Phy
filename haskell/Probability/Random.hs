@@ -7,6 +7,7 @@ import Range
 import Parameters
 import MCMC
 import Data.JSON as J
+import Effect
 
 data SamplingEvent
 
@@ -23,6 +24,10 @@ instance Monad AnnotatedDensity where
     return x = ADReturn x
     f >>= g = ADBind f g
 
+
+--- OK, so basically, want to allow some of the right-hand-sides to be IO () and some to be IO a, without assuming that
+--- a always equals ().  This is probably basically what GADTs allow.
+
 -- Just get the densities out
 -- No ProbFactor events yet.
 get_densities :: AnnotatedDensity a -> a
@@ -33,11 +38,15 @@ get_densities (InEdge _ x) = x
 -- But -- when we put a signature on this, it should be able to be limited!
 get_densities (PropertyEdge _ x) = x
 
+
+make_edges :: Effect -> AnnotatedDensity a -> IO a
 make_edges event (ADReturn x) = return x
 make_edges event (ADBind f g) = do x <- make_edges event f
                                    make_edges event (g x)
-make_edges event (InEdge name node) = register_in_edge node event name
-make_edges event (PropertyEdge name node) = register_dist_property event node name
+make_edges event (InEdge name node) = do register_in_edge node event name
+                                         return node
+make_edges event (PropertyEdge name node) = do register_dist_property event node name
+                                               return node
 
 -- Define the Distribution type
 data Distribution a = Distribution String (a -> AnnotatedDensity [LogDouble]) (Double->a) (Random a) Range
@@ -58,32 +67,34 @@ distRange (Distribution _ _ _ _ r) = r
 --        presumably this indicates that its an IO action versus a Random a
 --        but its only used inside Distribution...
 
-data TKEffects a = SamplingRate Double (Random a)
-                 | AddMove (Int->a)
+data TKEffects a = SamplingRate Double (TKEffects a)
+                 | TKLiftIO (Double -> IO a)
                  | TKReturn a
                  | forall b . TKBind (TKEffects b) (b -> TKEffects a)
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = RandomStructure (a->TKEffects a) (a->TKEffects a->a) (Random a)
+data Random a = RandomStructure (a->TKEffects ()) (a->()->(a,a)) (Random a)
               | Observe (Distribution Int) Int
-              | Print a
               | Lazy (Random a)
-              | forall b.WithTKEffect (Random a) (TKEffects b)
+              | forall b.WithTKEffect (Random a) (a -> TKEffects b)
               | PerformTKEffect (TKEffects a)
               | LiftIO (IO a)
               | RanReturn a
               | forall b. RanBind (Random b) (b -> Random a)
               | RanMFix (a -> Random a)
               | RanDistribution (Distribution a)
+              | RanSamplingRate Double (Random a)
 
-observe = Observe
+observe dist datum = LiftIO $ do
+                       s <- register_dist_observe (dist_name dist)
+                       register_out_edge s datum
+                       density_terms <- make_edges s $ annotated_densities dist datum
+                       sequence_ [register_likelihood s term | term <- density_terms]
 x ~> dist = observe dist x
 infix 0 ~>
 
 liftIO = LiftIO
 lazy = Lazy
-add_move = AddMove
-perform_tk_effect = PerformTKEffect
 infixl 2 `with_tk_effect`
 with_tk_effect = WithTKEffect
 
@@ -100,26 +111,25 @@ run_strict (RanBind f g) = do
   run_strict $ g x
 run_strict (RanReturn v) = return v
 run_strict (LiftIO a) = a
-run_strict (Print s) = putStrLn (show s)
-run_strict (PerformTKEffect _) = return ()
-run_strict (AddMove _) = return ()
-run_strict (SamplingRate _ a) = run_strict a
+run_strict (RanSamplingRate _ a) = run_strict a
 -- These are the lazily executed parts of the strict monad.
-run_strict dist@(Distribution _ _ _ _ _) = run_lazy dist
+run_strict dist@(RanDistribution _) = run_lazy dist
 run_strict e@(WithTKEffect _ _) = run_lazy e
 run_strict (RanMFix f) = mfix (run_lazy . f)
 run_strict (Lazy r) = unsafeInterleaveIO $ run_lazy r
 
 
-run_tk_effects rate (TKBind f g) = (run_tk_effects rate f) >>= (\x -> run_tk_effects rate $ g x)
+add_move m = TKLiftIO $ (\rate -> register_transition_kernel rate m)
+run_tk_effects rate (TKBind f g) = do x <- run_tk_effects rate f
+                                      run_tk_effects rate $ g x
 run_tk_effects rate (TKReturn v) = return v
-run_tk_effects rate (AddMove m) = register_transition_kernel rate m
+run_tk_effects rate (TKLiftIO action) = action rate
 run_tk_effects rate (SamplingRate rate2 a) = run_tk_effects (rate*rate2) a
 -- LiftIO and Print are only here for debugging purposes:
 --  run_tk_effects alpha rate (LiftIO a) = a
 --  run_tk_effects alpha rate (Print s) = putStrLn (show s)
 
-
+run_lazy :: Random a -> IO a
 run_lazy (RandomStructure _ _ a) = run_lazy a
 run_lazy (RanBind f g) = do
   x <- unsafeInterleaveIO $ run_lazy f
@@ -127,10 +137,10 @@ run_lazy (RanBind f g) = do
 run_lazy (RanReturn v) = return v
 run_lazy (LiftIO a) = a
 run_lazy (RanMFix f) = mfix (run_lazy.f)
+run_lazy (RanSamplingRate _ a) = run_lazy a
 -- Problem: distributions aren't part of the Random monad!
 run_lazy (RanDistribution (Distribution _ _ _ a _)) = unsafeInterleaveIO $ run_lazy a
--- Problem: TKEffects aren't part of the Random monad!
-run_lazy (PerformTKEffect (SamplingRate _ model)) = run_lazy model
+run_lazy (PerformTKEffect e) = run_tk_effects 1.0 e
 run_lazy (WithTKEffect action _) = run_lazy action
 
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
@@ -139,18 +149,11 @@ run_strict' rate (RanBind f g) = do
   x <- run_strict' rate f
   run_strict' rate $ g x
 run_strict' rate (RanReturn v) = return v
-run_strict' rate (LiftIO a) = a
-run_strict' rate (Observe dist datum) = do
-  s <- register_dist_observe (dist_name dist)
-  register_out_edge s datum
-  density_terms <- make_edges s $ annotated_densities dist datum
-  sequence_ [register_likelihood s term | term <- density_terms]
-run_strict' rate (Print s) = putStrLn (show s)
+run_strict' rate (LiftIO io) = io
 run_strict' rate (PerformTKEffect e) = run_tk_effects rate e
-run_strict' rate (AddMove m) = register_transition_kernel rate m
-run_strict' rate (SamplingRate rate2 a) = run_strict' (rate*rate2) a
+run_strict' rate (RanSamplingRate rate2 a) = run_strict' (rate*rate2) a
 -- These are the lazily executed parts of the strict monad.
-run_strict' rate dist@(Distribution _ _ _ _ _) = run_lazy' rate dist
+run_strict' rate dist@(RanDistribution _) = run_lazy' rate dist
 run_strict' rate e@(WithTKEffect _ _) = run_lazy' rate e
 run_strict' rate (RanMFix f) = mfix (run_lazy' rate . f)
 run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
@@ -189,7 +192,7 @@ run_lazy' rate (RanBind f g) = do
   x <- unsafeInterleaveIO $ run_lazy' rate f
   run_lazy' rate $ g x
 run_lazy' rate (RanReturn v) = return v
-run_lazy' rate dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_sample) range) = do 
+run_lazy' rate (RanDistribution dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_sample) range)) = do
  -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy do_sample
   let (raw_x,triggered_x) = structure value do_effects
@@ -199,11 +202,12 @@ run_lazy' rate dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_
         density_terms <- make_edges s $ annotated_densities dist raw_x
         sequence_ [register_prior s term | term <- density_terms]
         register_out_edge s raw_x
+        return ()
       do_effects = unsafePerformIO effect
   return triggered_x
-run_lazy' rate (Distribution _ _ _ s _) = run_lazy' rate s
+run_lazy' rate (RanDistribution (Distribution _ _ _ s _)) = run_lazy' rate s
 run_lazy' rate (RanMFix f) = mfix ((run_lazy' rate).f)
-run_lazy' rate (SamplingRate rate2 a) = run_lazy' (rate*rate2) a
+run_lazy' rate (RanSamplingRate rate2 a) = run_lazy' (rate*rate2) a
 run_lazy' rate (Lazy r) = run_lazy' rate r
 run_lazy' rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
   result <- unsafeInterleaveIO $ run_lazy' rate action
