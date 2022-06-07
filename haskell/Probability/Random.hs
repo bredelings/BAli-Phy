@@ -72,6 +72,10 @@ data TKEffects a = SamplingRate Double (TKEffects a)
                  | TKReturn a
                  | forall b . TKBind (TKEffects b) (b -> TKEffects a)
 
+instance Monad TKEffects where
+    return x = TKReturn x
+    f >>= g  = TKBind f g
+
 -- This implements the Random monad by transforming it into the IO monad.
 data Random a = forall b c.RandomStructure (a->TKEffects b) (a->c->(a,a)) (Random a)
               | Observe (Distribution Int) Int
@@ -84,6 +88,10 @@ data Random a = forall b c.RandomStructure (a->TKEffects b) (a->c->(a,a)) (Rando
               | RanMFix (a -> Random a)
               | RanDistribution (Distribution a)
               | RanSamplingRate Double (Random a)
+
+instance Monad Random where
+    return x = RanReturn x
+    f >>= g  = RanBind f g
 
 observe dist datum = LiftIO $ do
                        s <- register_dist_observe (dist_name dist)
