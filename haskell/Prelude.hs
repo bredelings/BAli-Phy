@@ -46,7 +46,8 @@ import Foreign.Pair
 import Foreign.Vector
 import Foreign.String
 
-foreign import bpcall "Prelude:putStrLn" builtin_putStrLn :: CPPString -> Int -> EPair Int ()
+foreign import bpcall "Prelude:putStrLn" builtin_putStrLn :: CPPString -> RealWorld -> EPair RealWorld ()
+putStrLn line = IOAction (pair_from_c . builtin_putStrLn (list_to_string line))
 
 foreign import bpcall "Prelude:" is_char :: a -> Bool
 foreign import bpcall "Prelude:" is_double :: a -> Bool
@@ -63,7 +64,6 @@ zipWith' _ [] []         =  []
 
 zip' = zipWith' (,)
 
-putStrLn line = IOAction (pair_from_c . builtin_putStrLn (list_to_string line))
 
 class Show a where
     show :: a -> [Char]
