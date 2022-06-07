@@ -25,7 +25,7 @@ discrete_uniform_avoid_mh x low high c = IOAction (pair_from_c . builtin_discret
 -- It would be nice if we could (i) seq x and bounds HERE, and (ii) convert range to bounds HERE.
 -- But the seq needs to be done during changeable execution, and we execute the IO unchangeably.
 foreign import bpcall "MCMC:inc_dec_mh" builtin_inc_dec_mh :: Int -> BuiltinBounds -> Int -> Int -> EPair Int ()
-inc_dec_mh x bnds c = IOAction (pair_from_c . builtin_inc_dec_mh x bnds c)
+inc_dec_mh x bnds c = IOAction (pair_from_c . builtin_inc_dec_mh x (c_range bnds) c)
 
 foreign import bpcall "MCMC:slice_sample_real_random_variable" builtin_slice_sample_real_random_variable :: Double -> BuiltinBounds -> ContextIndex -> Int -> EPair Int ()
 slice_sample_real_random_variable x bnds c = IOAction (pair_from_c . builtin_slice_sample_real_random_variable x (c_range bnds) c)
