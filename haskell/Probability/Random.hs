@@ -73,7 +73,7 @@ data TKEffects a = SamplingRate Double (TKEffects a)
                  | forall b . TKBind (TKEffects b) (b -> TKEffects a)
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = RandomStructure (a->TKEffects ()) (a->()->(a,a)) (Random a)
+data Random a = forall b c.RandomStructure (a->TKEffects b) (a->c->(a,a)) (Random a)
               | Observe (Distribution Int) Int
               | Lazy (Random a)
               | forall b.WithTKEffect (Random a) (a -> TKEffects b)
@@ -196,7 +196,6 @@ run_lazy' rate (RanDistribution dist@(Distribution _ _ _ (RandomStructure tk_eff
         density_terms <- make_edges s $ annotated_densities dist raw_x
         sequence_ [register_prior s term | term <- density_terms]
         register_out_edge s raw_x
-        return ()
       do_effects = unsafePerformIO effect
   return triggered_x
 run_lazy' rate (RanDistribution (Distribution _ _ _ s _)) = run_lazy' rate s
