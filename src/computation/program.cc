@@ -171,7 +171,7 @@ void Program::compile(int i)
     catch (myexception& e)
     {
 	std::ostringstream o;
-	o<<"In module '"<<M.name<<"': ";
+	o<<"In module '"<<M.name<<"':\n";
 	e.prepend(o.str());
 	throw;
     }
