@@ -17,6 +17,8 @@ class Monad m where
 
     f >> g = f >>= (\x -> g)
     fail s = error s
+    mfix = error "no mfix for this class"
+    unsafeInterleaveIO = error "no unsafeInterleaveIO for this class"
 
 infixl 1 >>, >>=
 
