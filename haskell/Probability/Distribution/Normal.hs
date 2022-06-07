@@ -3,9 +3,9 @@ module Probability.Distribution.Normal where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:normal_density" normal_density :: () -> () -> () -> ()
-foreign import bpcall "Distribution:normal_quantile" normal_quantile :: () -> () -> () -> ()
-foreign import bpcall "Distribution:sample_normal" builtin_sample_normal :: () -> () -> () -> ()
+foreign import bpcall "Distribution:" normal_density :: Double -> Double -> Double -> LogDouble
+foreign import bpcall "Distribution:" normal_quantile :: Double -> Double -> Double -> Double
+foreign import bpcall "Distribution:" builtin_sample_normal :: Double -> Double -> RealWorld -> Double
 
 normal_bounds = realLine
 normal_effect x = add_move $ slice_sample_real_random_variable x normal_bounds
@@ -16,5 +16,11 @@ annotated_normal_density mu sigma x = do
   in_edge "sigma" sigma
   return [normal_density mu sigma x]
 
-normal m s = Distribution "normal" (annotated_normal_density m s) (normal_quantile m s) (sample_normal m s) normal_bounds
+class HasNormal d where
+    normal :: Double -> Double -> d Double
 
+instance HasNormal Distribution where
+    normal m s = Distribution "normal" (annotated_normal_density m s) (normal_quantile m s) (sample_normal m s) normal_bounds
+
+instance HasNormal Random where
+    normal m s = RanDistribution (normal m s)
