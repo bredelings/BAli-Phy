@@ -5,7 +5,7 @@ import MCMC
 
 foreign import bpcall "Distribution:" normal_density :: Double -> Double -> Double -> LogDouble
 foreign import bpcall "Distribution:" normal_quantile :: Double -> Double -> Double -> Double
-foreign import bpcall "Distribution:" builtin_sample_normal :: Double -> Double -> RealWorld -> Double
+foreign import bpcall "Distribution:sample_normal" builtin_sample_normal :: Double -> Double -> RealWorld -> Double
 
 normal_bounds = realLine
 normal_effect x = add_move $ slice_sample_real_random_variable x normal_bounds
