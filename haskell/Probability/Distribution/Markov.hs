@@ -10,7 +10,7 @@ sample_markov x0 next = do
 sample_markov_n 0 x0 next = return []
 sample_markov_n n x0 next = do
   x1 <- next x0
-  xs <- sample_markov (n-1) x1 next
+  xs <- sample_markov_n (n-1) x1 next
   return (x0:xs)
 
 
