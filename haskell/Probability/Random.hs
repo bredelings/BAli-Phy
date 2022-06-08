@@ -89,6 +89,9 @@ data Random a = forall b c.RandomStructure (a->TKEffects b) (a->c->(a,a)) (Rando
               | RanDistribution (Distribution a)
               | RanSamplingRate Double (Random a)
 
+instance Functor Random where
+    fmap f r = RanBind r (return . f)
+
 instance Monad Random where
     return x = RanReturn x
     f >>= g  = RanBind f g
