@@ -33,48 +33,48 @@ slice_sample_real_random_variable x bnds c = IOAction (pair_from_c . builtin_sli
 foreign import bpcall "MCMC:slice_sample_integer_random_variable" builtin_slice_sample_integer_random_variable :: Int -> BuiltinBounds -> ContextIndex -> RealWorld -> EPair RealWorld ()
 slice_sample_integer_random_variable x bnds c = IOAction (pair_from_c . builtin_slice_sample_integer_random_variable x (c_range bnds) c)
 
-foreign import bpcall "MCMC:walk_tree_path" builtin_walk_tree_path :: TreeImp -> ContextIndex -> EVector Int
+foreign import bpcall "MCMC:walk_tree_path" builtin_walk_tree_path :: t -> ContextIndex -> EVector Int
 walk_tree_path tree c = vector_to_list $ builtin_walk_tree_path tree c
 
 -- This is "unsafe" because it doesn't update alignments
-foreign import bpcall "MCMC:NNI_on_branch_unsafe" builtin_nni_on_branch_unsafe :: TreeImp -> Int -> ContextIndex -> ()
+foreign import bpcall "MCMC:NNI_on_branch_unsafe" builtin_nni_on_branch_unsafe :: t -> Int -> ContextIndex -> ()
 nni_on_branch_unsafe tree branch c = IOAction (\s->(s,builtin_nni_on_branch_unsafe tree branch c))
 
 -- This is "unsafe" because it doesn't update alignments
-foreign import bpcall "MCMC:TT_NNI_on_branch_unsafe" builtin_tnni_on_branch_unsafe :: TreeImp -> Int -> ContextIndex -> ()
+foreign import bpcall "MCMC:TT_NNI_on_branch_unsafe" builtin_tnni_on_branch_unsafe :: t -> Int -> ContextIndex -> ()
 tnni_on_branch_unsafe tree branch c = IOAction (\s->(s,builtin_tnni_on_branch_unsafe tree branch c))
 
 -- This is "unsafe" because it doesn't update alignments
-foreign import bpcall "MCMC:FNPR_unsafe" builtin_fnpr_unsafe_proposal :: TreeImp -> Int -> ContextIndex -> RealWorld -> EPair RealWorld LogDouble
+foreign import bpcall "MCMC:FNPR_unsafe" builtin_fnpr_unsafe_proposal :: t -> Int -> ContextIndex -> RealWorld -> EPair RealWorld LogDouble
 fnpr_unsafe_proposal tree node c = IOAction (pair_from_c . builtin_fnpr_unsafe_proposal tree node c)
 
 walk_tree_sample_nni_unsafe tree c = sequence_ [ nni_on_branch_unsafe tree branch c | branch <- walk_tree_path tree c]
 
-foreign import bpcall "MCMC:walk_tree_sample_alignments" builtin_walk_tree_sample_alignments :: TreeImp -> ContextIndex -> RealWorld -> EPair RealWorld ()
+foreign import bpcall "MCMC:walk_tree_sample_alignments" builtin_walk_tree_sample_alignments :: t -> ContextIndex -> RealWorld -> EPair RealWorld ()
 walk_tree_sample_alignments tree c = IOAction (pair_from_c . builtin_walk_tree_sample_alignments tree c)
 
-foreign import bpcall "MCMC:realign_from_tips" builtin_realign_from_tips :: TreeImp -> ContextIndex -> RealWorld -> EPair RealWorld ()
+foreign import bpcall "MCMC:realign_from_tips" builtin_realign_from_tips :: t -> ContextIndex -> RealWorld -> EPair RealWorld ()
 realign_from_tips tree c = IOAction (pair_from_c . builtin_realign_from_tips tree c)
 
-foreign import bpcall "MCMC:walk_tree_sample_NNI" builtin_walk_tree_sample_NNI :: TreeImp -> ContextIndex -> RealWorld -> EPair RealWorld ()
+foreign import bpcall "MCMC:walk_tree_sample_NNI" builtin_walk_tree_sample_NNI :: t -> ContextIndex -> RealWorld -> EPair RealWorld ()
 walk_tree_sample_NNI tree c = IOAction (pair_from_c . builtin_walk_tree_sample_NNI tree c)
 
-foreign import bpcall "MCMC:walk_tree_sample_NNI_and_A" builtin_walk_tree_sample_NNI_and_A :: TreeImp -> ContextIndex -> RealWorld -> EPair RealWorld ()
+foreign import bpcall "MCMC:walk_tree_sample_NNI_and_A" builtin_walk_tree_sample_NNI_and_A :: t -> ContextIndex -> RealWorld -> EPair RealWorld ()
 walk_tree_sample_NNI_and_A tree c = IOAction (pair_from_c . builtin_walk_tree_sample_NNI_and_A tree c)
 
-foreign import bpcall "MCMC:walk_tree_sample_NNI_and_branch_lengths" builtin_walk_tree_sample_NNI_and_branch_lengths :: TreeImp -> ContextIndex -> RealWorld -> EPair RealWorld ()
+foreign import bpcall "MCMC:walk_tree_sample_NNI_and_branch_lengths" builtin_walk_tree_sample_NNI_and_branch_lengths :: t -> ContextIndex -> RealWorld -> EPair RealWorld ()
 walk_tree_sample_NNI_and_branch_lengths tree c = IOAction (pair_from_c . builtin_walk_tree_sample_NNI_and_branch_lengths tree c)
 
-foreign import bpcall "MCMC:walk_tree_sample_branch_lengths" builtin_walk_tree_sample_branch_lengths :: TreeImp -> ContextIndex -> RealWorld -> EPair RealWorld ()
+foreign import bpcall "MCMC:walk_tree_sample_branch_lengths" builtin_walk_tree_sample_branch_lengths :: t -> ContextIndex -> RealWorld -> EPair RealWorld ()
 walk_tree_sample_branch_lengths tree c = IOAction (pair_from_c . builtin_walk_tree_sample_branch_lengths tree c)
 
-foreign import bpcall "MCMC:sample_SPR_all" builtin_sample_SPR_all :: TreeImp -> ContextIndex -> RealWorld -> EPair RealWorld ()
+foreign import bpcall "MCMC:sample_SPR_all" builtin_sample_SPR_all :: t -> ContextIndex -> RealWorld -> EPair RealWorld ()
 sample_SPR_all tree c = IOAction (pair_from_c . builtin_sample_SPR_all tree c)
 
-foreign import bpcall "MCMC:sample_SPR_nodes" builtin_sample_SPR_nodes :: TreeImp -> ContextIndex -> RealWorld -> EPair RealWorld ()
+foreign import bpcall "MCMC:sample_SPR_nodes" builtin_sample_SPR_nodes :: t -> ContextIndex -> RealWorld -> EPair RealWorld ()
 sample_SPR_nodes tree c = IOAction (pair_from_c . builtin_sample_SPR_nodes tree c)
 
-foreign import bpcall "MCMC:sample_SPR_flat" builtin_sample_SPR_flat :: TreeImp -> ContextIndex -> RealWorld -> EPair RealWorld ()
+foreign import bpcall "MCMC:sample_SPR_flat" builtin_sample_SPR_flat :: t -> ContextIndex -> RealWorld -> EPair RealWorld ()
 sample_SPR_flat tree c = IOAction (pair_from_c . builtin_sample_SPR_flat tree c)
 
 foreign import bpcall "MCMC:copy_context" builtin_copy_context :: ContextIndex -> RealWorld -> EPair RealWorld ContextIndex
