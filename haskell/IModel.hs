@@ -2,11 +2,12 @@ module IModel where
 
 import Probability
 import Tree
-  
-foreign import bpcall "Alignment:rs05_branch_HMM" rs05_branch_HMM :: () -> () -> () -> () -> () -> ()
-foreign import bpcall "Alignment:rs05_lengthp" builtin_rs05_lengthp :: () -> () -> ()
-foreign import bpcall "Alignment:rs07_branch_HMM" rs07_branch_HMM :: () -> () -> () -> () -> ()
-foreign import bpcall "Alignment:rs07_lengthp" builtin_rs07_lengthp :: () -> () -> ()
+import Bio.Alignment.Pairwise -- for PairHMM
+
+foreign import bpcall "Alignment:rs05_branch_HMM" rs05_branch_HMM :: Double -> Double -> Double -> Double -> Bool -> PairHMM
+foreign import bpcall "Alignment:rs05_lengthp" builtin_rs05_lengthp :: PairHMM -> Int -> Double
+foreign import bpcall "Alignment:rs07_branch_HMM" rs07_branch_HMM :: Double -> Double -> Double -> Bool -> PairHMM
+foreign import bpcall "Alignment:rs07_lengthp" builtin_rs07_lengthp :: Double -> Double -> Double
 
 rs05_lengthp m l = doubleToLogDouble (builtin_rs05_lengthp m l)
 
@@ -32,7 +33,6 @@ rs07_relaxed_rates_model tree = do
    sigma <- iid (n_branches + delta) (gamma 1.05 0.05)
   
    alpha <- gamma 2.0 (1.0/6.0)
---   Log "alpha" alpha
 
    category <- crp alpha n_branches delta
 
