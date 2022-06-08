@@ -16,4 +16,11 @@ annotated_beta_density a b x = do
   in_edge "b" b
   return [beta_density a b x]
 
-beta a b = Distribution "beta" (annotated_beta_density a b) (beta_quantile a b) (sample_beta a b) beta_bounds
+class HasBeta d where
+    beta :: Double -> Double -> d Double
+
+instance HasBeta Distribution where
+    beta a b = Distribution "beta" (annotated_beta_density a b) (beta_quantile a b) (sample_beta a b) beta_bounds
+
+instance HasBeta Random where
+    beta a b = RanDistribution (beta a b)
