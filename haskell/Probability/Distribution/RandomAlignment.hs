@@ -65,13 +65,13 @@ alignment_pr1 length (_, lengthp) = lengthp length
 
 -- FIXME: Maybe the alignment argument should be last?
 -- QUESTION: Should I be passing the tree in here separately?
-alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model | numNodes tree < 1 = error "Tree only has " ++ numNodes ++ " nodes."
+alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model | numNodes tree < 1 = error $ "Tree only has " ++ show (numNodes tree) ++ " nodes."
                                                             | numNodes tree == 1 = alignment_pr1 (ls ! 0) model
                                                             | otherwise = (alignment_pr_top as tree hmms) / (alignment_pr_bot as tree model)
 
 alignment_prs_bot as tree (_, lengthp) = map ((\x -> x*x) . (doubleToLogDouble 1.0/) . lengthp . seqlength as tree) (internal_nodes tree)
 alignment_prs_top as tree hmms = map (alignment_branch_pr as hmms) [0 .. numBranches tree - 1]
-alignment_prs hmms model (AlignmentOnTree tree n_seqs ls as) | numNodes tree < 1  = error "Tree only has " ++ numNodes ++ " nodes."
+alignment_prs hmms model (AlignmentOnTree tree n_seqs ls as) | numNodes tree < 1  = error $ "Tree only has " ++ show (numNodes tree) ++ " nodes."
                                                              | numNodes tree == 1 = [alignment_pr1 (ls ! 0) model]
                                                              | otherwise = alignment_prs_top as tree hmms ++ alignment_prs_bot as tree model -- [ doubleToLogDouble 1.0 / alignment_pr_bot as tree model]
 
@@ -90,7 +90,7 @@ triggered_modifiable_alignment value effect = (raw_a, triggered_a) where
 data RandomAlignmentProperties = RandomAlignmentProperties 
     {
       probability :: LogDouble,
-      hmms :: Array Int (),
+      hmms :: Array Int PairHMM,
       lengthp :: Int -> LogDouble,
       as :: Array Int PairwiseAlignment,
       get_lengths :: Array Int Int,
@@ -112,9 +112,9 @@ annotated_alignment_prs tree hmms model alignment = do
   property "properties" (RandomAlignmentProperties pr hmms lengthp as ls length_prs)
   return $ prs
 
-random_alignment tree model tip_lengths = Distribution "random_alignment" (annotated_alignment_prs tree hmms model)
+random_alignment tree model tip_lengths = Distribution "random_alignment"
+                                                       (annotated_alignment_prs tree hmms model)
                                                        (no_quantile "random_alignment")
-                                                       (RandomStructure do_nothing triggered_modifiable_alignment do_sample)
-                                                       ()
-    where do_sample = sample_alignment tree hmms tip_lengths
-          hmms = branch_hmms model (Tree.branch_lengths tree) (numBranches tree)
+                                                       (RandomStructure do_nothing triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths))
+                                                       NoRange
+    where hmms = branch_hmms model (branch_lengths tree) (numBranches tree)
