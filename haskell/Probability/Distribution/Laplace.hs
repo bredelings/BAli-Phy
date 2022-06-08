@@ -3,8 +3,8 @@ module Probability.Distribution.Laplace where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:laplace_density" laplace_density :: () -> () -> () -> ()
-foreign import bpcall "Distribution:sample_laplace" builtin_sample_laplace :: () -> () -> () -> ()
+foreign import bpcall "Distribution:laplace_density" laplace_density :: Double -> Double -> Double -> LogDouble
+foreign import bpcall "Distribution:sample_laplace" builtin_sample_laplace :: Double -> Double -> RealWorld -> Double
 
 laplace_bounds = realLine
 laplace_effect x = add_move $ slice_sample_real_random_variable x laplace_bounds
@@ -15,4 +15,6 @@ annotated_laplace_density m s x = do
   in_edge "s" s
   return [laplace_density m s x]
 
-laplace m s = Distribution "laplace" (annotated_laplace_density m s) () (sample_laplace m s) laplace_bounds
+data Laplace = Laplace Double Double
+
+laplace m s = Distribution "laplace" (annotated_laplace_density m s) (error "no quantile") (sample_laplace m s) laplace_bounds
