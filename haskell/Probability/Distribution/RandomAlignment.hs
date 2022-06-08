@@ -49,7 +49,7 @@ left_aligned_alignments_on_tree tree ls = [ make_A b | b <- [0 .. 2 * numBranche
 -- Here we want to (i) force the tree, (ii) force the hmms, and (iii) match parameters.cc:unaligned_alignments_on_tree 
 sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree tree n_nodes ls as))
   where
-    n_leaves = numElements tip_lengths
+    n_leaves = Map.size tip_lengths
     taxa     = listArray' $ get_labels tree
     ls       = listArray' $ [ if node < n_leaves then tip_lengths Map.! (taxa ! node) else seqlength as tree node | node <- [0 .. n_nodes - 1] ]
     as       = listArray' $ unaligned_alignments_on_tree tree tip_lengths
