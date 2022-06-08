@@ -2,6 +2,12 @@ module Bio.Alignment.Pairwise where
 
 import Data.BitVector
 
+data PairHMM
+
+foreign import bpcall "Alignment:" transition_counts :: PairwiseAlignment -> Matrix Int
+
+foreign import bpcall "Alignment:" pairwise_alignment_probability_from_counts :: Matrix Int -> PairHMM -> LogDouble
+
 data PairwiseAlignment = PairwiseAlignment
 
 foreign import bpcall "Alignment:numInsert" numInsert :: PairwiseAlignment -> Int
