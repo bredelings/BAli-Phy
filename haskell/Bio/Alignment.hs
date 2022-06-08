@@ -37,7 +37,7 @@ pairwise_alignments_from_matrix a tree = [ pairwise_alignment_from_bits bits1 bi
     where bits = minimally_connect_characters a tree
 
 -- We can't just do forall t.AlignmentOnTree t, because then any constraints on t will be on existential variables, resulting in ambiguity.
-data AlignmentOnTree = AlignmentOnTree TreeImp Int (Array Int Int) (Array Int PairwiseAlignment)
+data AlignmentOnTree t = AlignmentOnTree t Int (Array Int Int) (Array Int PairwiseAlignment)
 n_sequences         (AlignmentOnTree _ n _  _) = n
 sequence_lengths    (AlignmentOnTree _ _ ls _) = ls
 pairwise_alignments (AlignmentOnTree _ _ _ as) = as
