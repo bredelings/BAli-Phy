@@ -21,6 +21,7 @@ class TimeTree t => RateTimeTree t where
 
 class Tree t => LabelledTree t where
     get_label :: t -> Int -> String
+    get_labels :: t -> [String]
 
 
 data TreeImp = Tree (Array Int [Int]) (Array Int (Int,Int,Int,Int)) Int
@@ -132,17 +133,20 @@ remove_root (RootedTree t _ _) = t
 -- remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
 
 instance Tree t => LabelledTree (LabelledTreeImp t) where
-    get_label (LabelledTree _ labels) node = labels!!node
-
+    get_label  (LabelledTree _ labels) node = labels!!node
+    get_labels (LabelledTree _ labels) = labels
 
 instance LabelledTree t => LabelledTree (BranchLengthTreeImp t) where
-    get_label (BranchLengthTree t _) node = get_label t node
+    get_label  (BranchLengthTree t _) node = get_label t node
+    get_labels (BranchLengthTree t _) = get_labels t
 
 instance LabelledTree t => LabelledTree (TimeTreeImp t) where
     get_label (TimeTree t _) node          = get_label t node
+    get_labels (TimeTree t _) = get_labels t
 
 instance LabelledTree t => LabelledTree (RateTimeTreeImp t) where
     get_label (RateTimeTree t _) node      = get_label t node
+    get_labels (RateTimeTree t _) = get_labels t
 
 
 toward_root rt b = not $ away_from_root rt b
