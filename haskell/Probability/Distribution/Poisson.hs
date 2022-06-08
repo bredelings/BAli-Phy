@@ -5,15 +5,14 @@ import MCMC
 import Probability.Distribution.List
 import Probability.Distribution.Uniform
 
-foreign import bpcall "Distribution:poisson_density" poisson_density :: () -> () -> ()
-foreign import bpcall "Distribution:sample_poisson" builtin_sample_poisson :: () -> () -> ()
+foreign import bpcall "Distribution:poisson_density" poisson_density :: Double -> Int -> LogDouble
+foreign import bpcall "Distribution:sample_poisson" builtin_sample_poisson :: Double -> RealWorld -> Int
 
 poisson_bounds = integer_above 0
 
 poisson_effect x = do
-   let bnds = getIntegerBounds poisson_bounds
-   add_move $ slice_sample_integer_random_variable x bnds
-   add_move $ inc_dec_mh x bnds
+   add_move $ slice_sample_integer_random_variable x poisson_bounds
+   add_move $ inc_dec_mh x poisson_bounds
 
 sample_poisson mu = RandomStructure poisson_effect modifiable_structure $ liftIO (IOAction (\s -> (s, builtin_sample_poisson mu s)))
 
@@ -23,11 +22,11 @@ poisson mu = Distribution "poisson" (make_densities $ poisson_density mu) (no_qu
 poisson_process_density' rate t1 t2 n = expToLogDouble $ (-rate*(t2-t1)) + ((intToDouble n)*log rate)
 poisson_process_density  rate t1 t2 points = poisson_process_density' rate t1 t2 n where n = length points
 sample_poisson_process rate t1 t2 = do
-  n <- poisson (rate * (t2-t1))
+  n <- RanDistribution $ poisson (rate * (t2-t1))
   xs <- iid n (uniform t1 t2)
   return $ sort xs
 
-poisson_process rate t1 t2 = Distribution "poisson_process" (make_densities $ poisson_process_density rate t1 t2) (no_quantile "poisson_process") (sample_poisson_process rate t1 t2) Nothing
+poisson_process rate t1 t2 = Distribution "poisson_process" (make_densities $ poisson_process_density rate t1 t2) (no_quantile "poisson_process") (sample_poisson_process rate t1 t2) NoRange
 
 --- Poisson process, piecewise constant
 
@@ -48,5 +47,5 @@ sample_poisson_processes ((rate,t1,t2):intervals) = do
   -- FIXME - this doesn't seem very efficient!
   return $ points1 ++ points2
 
-poisson_processes intervals = Distribution "poisson_processes" (make_densities' $ poisson_processes_densities intervals) (no_quantile "poisson_processes") (sample_poisson_processes intervals) Nothing
+poisson_processes intervals = Distribution "poisson_processes" (make_densities' $ poisson_processes_densities intervals) (no_quantile "poisson_processes") (sample_poisson_processes intervals) NoRange
 
