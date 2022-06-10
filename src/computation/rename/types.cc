@@ -73,6 +73,12 @@ Haskell::Type renamer_state::rename_type(const Haskell::Type& type)
         ctype.type = rename_type(ctype.type);
         return ctype;
     }
+    else if (auto fa = type.to<Hs::ForallType>())
+    {
+        auto Fa = *fa;
+        Fa.type = rename_type(Fa.type);
+        return Fa;
+    }
     else
         throw myexception()<<"rename_type: unrecognized type \""<<type.print()<<"\"";
 }
