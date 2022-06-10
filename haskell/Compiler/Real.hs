@@ -89,3 +89,6 @@ x ^ n = x*(x^(n-1))
 recip y = 1.0/y -- should be 1/y
 
 x ^^ n = if n >= 0 then x^n else recip (x^(negate n))
+
+infixr 8 `pow`
+foreign import bpcall "Real:pow" pow :: LogDouble -> Double -> LogDouble
