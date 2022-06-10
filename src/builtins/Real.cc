@@ -71,8 +71,10 @@ extern "C" closure builtin_function_pow(OperationArgs& Args)
 	yy = y.as_double();
     else if (y.is_int())
 	yy = y.as_int();
+    else if (y.is_log_double())
+        yy = double(y.as_log_double());
     else
-	throw myexception()<<"pow: exponent '"<<x.print()<<"' is not double or int";
+	throw myexception()<<"pow: exponent '"<<x.print()<<"' is not double, int, or log_double";
     
     if (x.is_double())
     {
