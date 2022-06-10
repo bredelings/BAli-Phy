@@ -166,7 +166,7 @@ parent_before_child_prs n_leaves tree = [factor n | n <- [0 .. 2*n_leaves-2] ]
                                                Just p  -> require $ time n <= time p
 
 uniform_time_tree_pr age n_leaves tree = factor0 : parent_before_child_prs n_leaves tree
-    where factor0 = doubleToLogDouble age ** intToDouble (2-n_leaves)
+    where factor0 = doubleToLogDouble age `pow` intToDouble (2-n_leaves)
 
 -- rooted_tree: force / modifiable / triggered_modifiable
 force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq` force_tree unrooted_tree
