@@ -642,8 +642,6 @@ void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2, const myex
         throw e;
 }
 
-set<Hs::TypeVar> free_type_variables(const Hs::Type& t);
-
 Hs::Type typechecker_state::constructor_type(const Hs::Con& con)
 {
     auto& con_name = unloc(con.name);
@@ -705,19 +703,6 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
         env2 = env2.insert( {name, Hs::add_constraints(constraints, monotype)} );
     return env2;
 }
-
-Hs::Type generalize(const global_value_env& env, const Hs::Type& monotype)
-{
-    auto ftv1 = free_type_variables(monotype);
-    auto ftv2 = free_type_variables(env);
-    for(auto tv: ftv2)
-        ftv1.erase(tv);
-
-    for(auto& tv: ftv1)
-        assert(tv.kind);
-    return Hs::ForallType(ftv1 | ranges::to<vector>, monotype);
-}
-
 
 // FIXME:: Wrappers:
 //
