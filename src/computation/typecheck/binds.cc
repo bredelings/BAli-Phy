@@ -237,7 +237,7 @@ classify_constraints(const local_instance_env& lie,
 
     for(auto& [name, constraint]: lie)
     {
-        auto constraint_type_vars = free_type_variables(constraint);
+        auto constraint_type_vars = free_meta_type_variables(constraint);
 
         // Does the constraint contain any ambiguous vars?
         bool all_fixed = true;
@@ -392,7 +392,7 @@ pair<set<Hs::TypeVar>, set<Hs::TypeVar>> tvs_in_any_all_types(const local_value_
         optional<set<Hs::TypeVar>> tvs_in_all_types_;
         for(auto& [_, type]: mono_binder_env)
         {
-            auto tvs = free_type_variables(type);
+            auto tvs = free_meta_type_variables(type);
             add(tvs_in_any_type, tvs);
             if (tvs_in_all_types_)
                 tvs_in_all_types_ = intersection(*tvs_in_all_types_, tvs);
@@ -490,7 +490,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     // We also need to substitute before we quantify below.
     mono_binder_env = apply_current_subst(mono_binder_env);
 
-    auto fixed_tvs = free_type_variables( apply_current_subst(gve) );
+    auto fixed_tvs = free_meta_type_variables( apply_current_subst(gve) );
 
     auto [tvs_in_any_type, tvs_in_all_types] = tvs_in_any_all_types(mono_binder_env);
 
@@ -540,7 +540,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
         lie_retained = {};
 
-        add(fixed_tvs, free_type_variables(lie_deferred));
+        add(fixed_tvs, free_meta_type_variables(lie_deferred));
     }
 
     current_lie() += lie_deferred;
@@ -558,7 +558,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     global_value_env poly_binder_env;
     for(auto& [name, monotype]: mono_binder_env)
     {
-        auto qtvs_in_this_type = free_type_variables(monotype);
+        auto qtvs_in_this_type = free_meta_type_variables(monotype);
 
         // Default any constraints that do not occur in THIS type.
         auto [s2, binds2, lie_for_this_type] = default_preds( fixed_tvs, qtvs_in_this_type, lie_retained );

@@ -84,7 +84,7 @@ ambiguities(const set<Hs::TypeVar>& tvs1, const set<Hs::TypeVar>& tvs2, local_in
 {
     // The input lie MUST be substituted to find its free type vars!
     // lie = apply_current_subst(lie);
-    auto ambiguous_tvs = free_type_variables(lie) - tvs1 - tvs2;
+    auto ambiguous_tvs = free_meta_type_variables(lie) - tvs1 - tvs2;
 
     // 1. Record the constraints WITH ambiguous type vars, by type var
     map<Hs::TypeVar,local_instance_env> ambiguities;
@@ -93,7 +93,7 @@ ambiguities(const set<Hs::TypeVar>& tvs1, const set<Hs::TypeVar>& tvs2, local_in
         local_instance_env lie_for_tv;
         for(auto& [dvar,constraint]: lie)
         {
-            if (free_type_variables(constraint).count(ambiguous_tv))
+            if (free_meta_type_variables(constraint).count(ambiguous_tv))
                 lie_for_tv = lie_for_tv.insert({dvar,constraint});
         }
         if (not lie_for_tv.empty())
@@ -105,7 +105,7 @@ ambiguities(const set<Hs::TypeVar>& tvs1, const set<Hs::TypeVar>& tvs2, local_in
 
     for(auto& [dvar, constraint]: lie)
     {
-        auto ftvs = free_type_variables(constraint);
+        auto ftvs = free_meta_type_variables(constraint);
         if (not intersects(ftvs, ambiguous_tvs))
             unambiguous_preds = unambiguous_preds.insert({dvar, constraint});
     }
