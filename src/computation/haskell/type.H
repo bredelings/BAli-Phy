@@ -15,7 +15,27 @@ namespace Haskell
 
     std::string parenthesize_type(const expression_ref& t);
 
-enum class typevar_info {meta, rigid, other};
+struct MetaTypeVar: public Object
+{
+    Located<std::string> name;
+    std::optional<int> index;
+
+    std::optional<Kind> kind;
+
+    bool operator==(const Object&) const;
+    bool operator==(const MetaTypeVar&) const;
+    bool operator<(const MetaTypeVar&) const;
+
+    MetaTypeVar* clone() const { return new MetaTypeVar(*this);}
+    std::string print() const;
+    std::string print_with_kind() const;
+
+    MetaTypeVar() = default;
+    MetaTypeVar(const Located<std::string>& s):name(s) {}
+    MetaTypeVar(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
+};
+
+enum class typevar_info {other, rigid, meta};
 
 struct TypeVar: public Object
 {

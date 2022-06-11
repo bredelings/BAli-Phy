@@ -85,10 +85,56 @@ Type remove_top_gen(Type type)
 
 string parenthesize_type(const expression_ref& t)
 {
-    if (t.is_a<TypeCon>() or t.is_a<TypeVar>() or t.is_a<TupleType>() or t.is_a<ListType>())
+    if (t.is_a<TypeCon>() or t.is_a<MetaTypeVar>() or t.is_a<TypeVar>() or t.is_a<TupleType>() or t.is_a<ListType>())
         return t.print();
     else
         return "(" + t.print() + ")";
+}
+
+string MetaTypeVar::print() const
+{
+    string uname = unloc(name);
+    if (index)
+        uname = uname +"#"+std::to_string(*index);
+
+    return uname;
+}
+
+string MetaTypeVar::print_with_kind() const
+{
+    string uname = print();
+
+    if (kind)
+        uname = "("+uname + " :: " + (*kind).print()+")";
+
+    return uname;
+}
+
+bool MetaTypeVar::operator==(const Object& o) const
+{
+    auto T = dynamic_cast<const MetaTypeVar*>(&o);
+    if (not T)
+        return false;
+
+    return (*this) == *T;
+}
+
+bool MetaTypeVar::operator==(const MetaTypeVar& tv) const
+{
+    return index == tv.index and unloc(name) == unloc(tv.name);
+}
+
+bool MetaTypeVar::operator<(const MetaTypeVar& tv) const
+{
+    if (index < tv.index)
+        return true;
+
+    if (index > tv.index)
+        return false;
+
+    int cmp = unloc(name).compare(unloc(tv.name));
+
+    return (cmp < 0);
 }
 
 string TypeVar::print() const
