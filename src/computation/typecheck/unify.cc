@@ -235,31 +235,39 @@ std::pair<const Hs::TypeVar*,const Hs::Type*> follow_var_chain(const substitutio
     return {tv, type};
 }
 
-std::optional<substitution_t> combine_(bool both_ways, substitution_t s1, substitution_t s2);
+struct unification_env
+{
+    immer::map<Hs::TypeVar, Hs::TypeVar> mapping1;
+    immer::map<Hs::TypeVar, Hs::TypeVar> mapping2;
+    Hs::TypeVar fresh_tyvar() const;
+    Hs::TypeVar not_in_scope_tyvar(const Hs::TypeVar& tv1, const Hs::TypeVar& tv2);
+};
 
-std::optional<substitution_t> combine_(bool both_ways, const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
+std::optional<substitution_t> combine_(bool both_ways, const unification_env&, substitution_t s1, substitution_t s2);
+
+std::optional<substitution_t> combine_(bool both_ways, const unification_env& env, const std::optional<substitution_t>& s1, const std::optional<substitution_t>& s2)
 {
     if (not s1) return {};
     if (not s2) return {};
-    return combine_(both_ways, *s1, *s2);
+    return combine_(both_ways, env, *s1, *s2);
 }
 
-std::optional<substitution_t> combine_(bool both_ways, const std::optional<substitution_t>& s1, const substitution_t& s2)
+std::optional<substitution_t> combine_(bool both_ways, const unification_env& env, const std::optional<substitution_t>& s1, const substitution_t& s2)
 {
     if (not s1) return {};
-    return combine_(both_ways, *s1, s2);
+    return combine_(both_ways, env, *s1, s2);
 }
 
-std::optional<substitution_t> combine_(bool both_ways, const substitution_t& s1, const optional<substitution_t>& s2)
+std::optional<substitution_t> combine_(bool both_ways, const unification_env& env, const substitution_t& s1, const optional<substitution_t>& s2)
 {
     if (not s2) return {};
-    return combine_(both_ways, s1, *s2);
+    return combine_(both_ways, env, s1, *s2);
 }
 
-optional<substitution_t> maybe_unify_(bool both_ways, const Hs::Type& t1, const Hs::Type& t2);
+optional<substitution_t> maybe_unify_(bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2);
 
 // The order of s1 and s2 should not matter.
-std::optional<substitution_t> combine_(bool both_ways, substitution_t s1, substitution_t s2)
+std::optional<substitution_t> combine_(bool both_ways, const unification_env& env, substitution_t s1, substitution_t s2)
 {
     // While we store substitutions as [(TypeVar,Type)], the conceptual model is
     //   really [([TypeVar], Maybe Type)].
@@ -298,10 +306,10 @@ std::optional<substitution_t> combine_(bool both_ways, substitution_t s1, substi
                 s3 = try_insert(s1, *y_exemplar, *x_exemplar);
             // 3d. Otherwise, x_exemplar and tv2 are both equal to different terms that must be equal.
             else
-                s3 = combine_(both_ways, s1, maybe_unify_(both_ways, *x_value, *y_value));
+                s3 = combine_(both_ways, env, s1, maybe_unify_(both_ways, env, *x_value, *y_value));
         }
         else
-            s3 = combine_(both_ways, s1, maybe_unify_(both_ways, *x_value, e));
+            s3 = combine_(both_ways, env, s1, maybe_unify_(both_ways, env, *x_value, e));
 
         if (not s3)
             return {};
@@ -337,10 +345,53 @@ Hs::Type canonicalize_type(const Hs::ListType& type1)
     return Hs::TypeApp(type2, type1.element_type);
 }
 
-// Is there a better way to implement this?
-optional<substitution_t> maybe_unify_(bool both_ways, const Hs::Type& t1, const Hs::Type& t2)
+Hs::TypeVar unification_env::fresh_tyvar() const
 {
-    if (auto tv1 = is_meta_type_var(t1))
+    Hs::TypeVar ftv({noloc,"utv"});
+
+    int index = 0;
+    for(auto& [name,tv]: mapping1)
+    {
+        if (tv.index)
+            index = std::max(index, *tv.index);
+    }
+    for(auto& [name,tv]: mapping2)
+    {
+        if (tv.index)
+            index = std::max(index, *tv.index);
+    }
+    ftv.index = index + 1;
+    ftv.info = Hs::typevar_info::rigid;
+    return ftv;
+}
+
+// We need a typevar that isn't in scope in either term
+Hs::TypeVar unification_env::not_in_scope_tyvar(const Hs::TypeVar& tv1, const Hs::TypeVar& tv2)
+{
+    if (not mapping1.count(tv1) and not mapping2.count(tv1))
+        return tv1;
+    if (not mapping1.count(tv2) and not mapping2.count(tv2))
+        return tv2;
+    auto ftv = fresh_tyvar();
+    ftv.kind = tv1.kind;
+    return ftv;
+}
+
+
+// Is there a better way to implement this?
+optional<substitution_t> maybe_unify_(bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2)
+{
+    if (auto tv1 = t1.to<Hs::TypeVar>(); tv1 and (tv1->info == Hs::typevar_info::rigid) and env.mapping1.count(*tv1))
+    {
+        auto tv1_ = env.mapping1.at(*tv1);
+        return maybe_unify_(both_ways, env, tv1_, t2);
+    }
+    else if (auto tv2 = t2.to<Hs::TypeVar>(); tv2 and (tv2->info == Hs::typevar_info::rigid) and env.mapping2.count(*tv2))
+    {
+        auto tv2_ = env.mapping2.at(*tv2);
+        return maybe_unify_(both_ways, env, t1, tv2_);
+    }
+    else if (auto tv1 = is_meta_type_var(t1))
     {
         substitution_t s;
         return try_insert(s, *tv1, t2);
@@ -363,9 +414,9 @@ optional<substitution_t> maybe_unify_(bool both_ways, const Hs::Type& t1, const 
         auto& app1 = t1.as_<Hs::TypeApp>();
         auto& app2 = t2.as_<Hs::TypeApp>();
 
-        return combine_( both_ways,
-                         maybe_unify_(both_ways, app1.head, app2.head),
-                         maybe_unify_(both_ways, app1.arg , app2.arg ) );
+        return combine_( both_ways, env,
+                         maybe_unify_(both_ways, env, app1.head, app2.head),
+                         maybe_unify_(both_ways, env, app1.arg , app2.arg ) );
     }
     else if (t1.is_a<Hs::TypeCon>() and
              t2.is_a<Hs::TypeCon>() and
@@ -376,23 +427,51 @@ optional<substitution_t> maybe_unify_(bool both_ways, const Hs::Type& t1, const 
     }
     else if (auto tup1 = t1.to<Hs::TupleType>())
     {
-        return maybe_unify_(both_ways, canonicalize_type(*tup1), t2);
+        return maybe_unify_(both_ways, env, canonicalize_type(*tup1), t2);
     }
     else if (auto tup2 = t2.to<Hs::TupleType>())
     {
-        return maybe_unify_(both_ways, t1, canonicalize_type(*tup2));
+        return maybe_unify_(both_ways, env, t1, canonicalize_type(*tup2));
     }
     else if (auto l1 = t1.to<Hs::ListType>())
     {
-        return maybe_unify_(both_ways, canonicalize_type(*l1), t2);
+        return maybe_unify_(both_ways, env, canonicalize_type(*l1), t2);
     }
     else if (auto l2 = t2.to<Hs::ListType>())
     {
-        return maybe_unify_(both_ways, t1, canonicalize_type(*l2));
+        return maybe_unify_(both_ways, env, t1, canonicalize_type(*l2));
     }
-    else if (t1.is_a<Hs::ConstrainedType>() or t2.is_a<Hs::ConstrainedType>())
+    else if (t1.is_a<Hs::ConstrainedType>() and t2.is_a<Hs::ConstrainedType>())
     {
-        throw myexception()<<"maybe_unify "<<t1.print()<<" ~ "<<t2.print()<<": How should we handle unification for constrained types?";
+        auto c1 = t1.to<Hs::ConstrainedType>();
+        auto c2 = t2.to<Hs::ConstrainedType>();
+        if (c1->context.constraints.size() != c2->context.constraints.size())
+            return {};
+        for(int i=0;i< c1->context.constraints.size();i++)
+            if (not maybe_unify_(both_ways, env, c1->context.constraints[i], c2->context.constraints[i]))
+                return {};
+        return maybe_unify_(both_ways, env, c1->type, c2->type);
+    }
+    else if (t1.is_a<Hs::ForallType>() and t2.is_a<Hs::ForallType>())
+    {
+        auto fa1 = t1.to<Hs::ForallType>();
+        auto fa2 = t2.to<Hs::ForallType>();
+
+        if (fa1->type_var_binders.size() != fa2->type_var_binders.size())
+            return {};
+
+        auto env2 = env;
+        for(int i=0;i < fa1->type_var_binders.size(); i++)
+        {
+            auto tv1 = fa1->type_var_binders[i];
+            auto tv2 = fa2->type_var_binders[i];
+
+            auto v = env2.not_in_scope_tyvar(tv1, tv2);
+            env2.mapping1 = env2.mapping1.insert({tv1,v});
+            env2.mapping2 = env2.mapping2.insert({tv2,v});
+        }
+
+        return maybe_unify_(both_ways, env2, fa1->type, fa2->type);
     }
     else if (t1.is_a<Hs::StrictLazyType>() or t2.is_a<Hs::StrictLazyType>())
     {
@@ -404,7 +483,8 @@ optional<substitution_t> maybe_unify_(bool both_ways, const Hs::Type& t1, const 
 
 optional<substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
 {
-    return maybe_unify_(true, t1, t2);
+    unification_env env;
+    return maybe_unify_(true, env, t1, t2);
 }
 
 substitution_t unify(const Hs::Type& t1, const Hs::Type& t2)
@@ -417,7 +497,8 @@ substitution_t unify(const Hs::Type& t1, const Hs::Type& t2)
 
 optional<substitution_t> maybe_match(const Hs::Type& t1, const Hs::Type& t2)
 {
-    return maybe_unify_(false, t1, t2);
+    unification_env env;
+    return maybe_unify_(false, env, t1, t2);
 }
 
 substitution_t match(const Hs::Type& t1, const Hs::Type& t2)
@@ -430,7 +511,8 @@ substitution_t match(const Hs::Type& t1, const Hs::Type& t2)
 
 std::optional<substitution_t> combine(substitution_t s1, substitution_t s2)
 {
-    return combine_(true, s1, s2);
+    unification_env env;
+    return combine_(true, env, s1, s2);
 }
 
 bool same_type(const Hs::Type& t1, const Hs::Type& t2)
