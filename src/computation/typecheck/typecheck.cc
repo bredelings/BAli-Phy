@@ -726,7 +726,7 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
 //
 // Now, actually, we may NOT need this until add type /\s, because the dictionary arguments should be in the right order.
 
-tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instantiate(const Hs::Type& t, bool meta)
+tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instantiate(const Hs::Type& t)
 {
     // 1. Handle foralls
     vector<Hs::TypeVar> tvs;
@@ -739,7 +739,7 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instan
         for(auto& tv: fa->type_var_binders)
         {
             assert(tv.kind);
-            auto new_tv = fresh_type_var(meta, *tv.kind);
+            auto new_tv = fresh_type_var(true, *tv.kind);
             s = s.insert({tv,new_tv});
 
             tvs.push_back(new_tv);
@@ -758,7 +758,53 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instan
     // 3. Handle the exposed type being a polytype
     if (not tvs.empty() or not constraints.empty())
     {
-        auto [tvs2, constraints2, type2] = instantiate(type, meta);
+        auto [tvs2, constraints2, type2] = instantiate(type);
+
+        for(auto& tv2: tvs2)
+            tvs.push_back(tv2);
+
+        for(auto& constraint2:  constraints2)
+            constraints.push_back(constraint2);
+
+        type = type2;
+    }
+
+    return {tvs, constraints, type};
+}
+
+tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::skolemize(const Hs::Type& t)
+{
+    // 1. Handle foralls
+    vector<Hs::TypeVar> tvs;
+    vector<Hs::Type> constraints;
+    Hs::Type type = t;
+
+    if (auto fa = type.to<Hs::ForallType>())
+    {
+        substitution_t s;
+        for(auto& tv: fa->type_var_binders)
+        {
+            assert(tv.kind);
+            auto new_tv = fresh_type_var(false, *tv.kind);
+            s = s.insert({tv,new_tv});
+
+            tvs.push_back(new_tv);
+        }
+        type = fa->type;
+        type = apply_subst(s,type);
+    }
+
+    // 2. Handle constraints
+    if (auto ct = type.to<Hs::ConstrainedType>())
+    {
+        constraints = ct->context.constraints;
+        type = ct->type;
+    }
+
+    // 3. Handle the exposed type being a polytype
+    if (not tvs.empty() or not constraints.empty())
+    {
+        auto [tvs2, constraints2, type2] = skolemize(type);
 
         for(auto& tv2: tvs2)
             tvs.push_back(tv2);

@@ -158,7 +158,7 @@ vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const H
     for(auto& [name, type]: class_env().at(class_name).superclass_extractors)
     {
         // forall a.Klass a => Superklass a
-        auto [_, class_constraints, superclass_constraint] = instantiate(type, true);
+        auto [_, class_constraints, superclass_constraint] = instantiate(type);
 
         assert(constraint_is_hnf(superclass_constraint));
 

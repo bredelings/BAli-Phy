@@ -166,7 +166,9 @@ struct typechecker_state: FreshVarSource
 
     Hs::Binds simplify_and_default_top_level();
 
-    std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> instantiate(const Hs::Type& t, bool meta=true);
+    std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> instantiate(const Hs::Type& t);
+
+    std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> skolemize(const Hs::Type& t);
 
     Hs::Type
     infer_stmts_type(int i, std::vector<Hs::Qual>& stmts);

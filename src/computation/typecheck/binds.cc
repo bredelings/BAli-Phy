@@ -268,7 +268,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 2. instantiate the type -> (tvs, givens, rho-type)
         auto polytype = gve.at(name);
-        auto [tvs, given_constraints, given_type] = instantiate(polytype, false);
+        auto [tvs, given_constraints, given_type] = skolemize(polytype);
         auto ordered_lie_given = constraints_to_lie(given_constraints);
         auto dict_vars = vars_from_lie( ordered_lie_given );
         auto lie_given = unordered_lie(ordered_lie_given);
