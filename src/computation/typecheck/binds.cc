@@ -1,5 +1,6 @@
 #include "typecheck.H"
 #include "kindcheck.H"
+#include "types.H"
 
 #include "rename/rename.H" // for get_indices_for_names( )
 
@@ -280,8 +281,8 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         auto [ev_binds, collected_lie] = reduce( apply_current_subst( unreduced_collected_lie) );
 
         // 5. find free type variables in the most general type
-        auto fixed_tvs = free_type_variables( apply_current_subst(gve) );
-        auto free_tvs = free_type_variables(monotype) - fixed_tvs;
+        auto fixed_tvs = free_meta_type_variables( apply_current_subst(gve) );
+        auto free_tvs = free_meta_type_variables(monotype) - fixed_tvs;
 
         // 6. figure out which constraints are relevant here
         auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
