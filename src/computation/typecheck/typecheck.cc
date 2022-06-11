@@ -739,7 +739,7 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instan
         for(auto& tv: fa->type_var_binders)
         {
             assert(tv.kind);
-            auto new_tv = fresh_type_var(true, *tv.kind);
+            auto new_tv = fresh_meta_type_var(*tv.kind);
             s = s.insert({tv,new_tv});
 
             tvs.push_back(new_tv);
@@ -785,7 +785,7 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::skolem
         for(auto& tv: fa->type_var_binders)
         {
             assert(tv.kind);
-            auto new_tv = fresh_type_var(false, *tv.kind);
+            auto new_tv = fresh_rigid_type_var(*tv.kind);
             s = s.insert({tv,new_tv});
 
             tvs.push_back(new_tv);

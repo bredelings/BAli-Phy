@@ -23,6 +23,8 @@ class FreshVarSource
     FreshVarState& state;
     std::optional<std::string> mod_name;
 
+    Hs::TypeVar get_fresh_type_var(const std::string&, bool meta, const Hs::Kind&);
+
 public:
     var get_fresh_var();
 
@@ -35,8 +37,6 @@ public:
     Hs::Var get_fresh_Var(const std::string& name, bool qualified);
     Hs::Var get_fresh_Var(const var& x, bool qualified);
 
-    Hs::TypeVar get_fresh_type_var(const std::string&, bool meta, const Hs::Kind&);
-
     // "Rigid" type vars come from forall-quantified variables.
     // "Wobbly" type vars come from existentially-quantified variables (I think).  We don't have any.
     // "Meta" type vars are unification type vars.
@@ -45,8 +45,6 @@ public:
     Hs::TypeVar fresh_meta_type_var(const Hs::Kind& k);
 
     Hs::TypeVar fresh_other_type_var();
-
-    Hs::TypeVar fresh_type_var(bool meta, const Hs::Kind& k);
 
     int current_index() const;
     int get_index();

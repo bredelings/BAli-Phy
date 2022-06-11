@@ -95,11 +95,6 @@ Hs::TypeVar FreshVarSource::fresh_other_type_var()
     return tv;
 }
 
-Hs::TypeVar FreshVarSource::fresh_type_var(bool meta, const Hs::Kind& k)
-{
-    return get_fresh_type_var("t", meta, k);
-}
-
 int FreshVarSource::current_index() const
 {
     return state.current_index();
