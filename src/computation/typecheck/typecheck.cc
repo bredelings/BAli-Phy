@@ -80,18 +80,13 @@ using std::tuple;
   * Record impedance-matching info in GenBind, but only for passing dictionaries.
   * Implement literals, including literal strings.
   * Replace let-bound vars w/o signatures with local monomorphic ids.
+  * Handle type synonyms.
 
   TODO:
-  0. Handle type-synonyms.
-    * Record kinds on type-applications?
-    * We need to typecheck class method with some extra type vars in scope!
-    * ghc kind-checks types before synonym expansion.
-    * suppose we make kind-checking annotate the kind of the vars, but not add foralls.
-      - or it could return a map of free type vars to kinds.
-    * then we could expand type synonyms before locating free vars.
-    * we could put all of this inside a routine called check_type( ).
-    * then the kind checker wouldn't need to know about synonym expansion.
-    * we should add foralls AFTER synonym expansion, or we could end of with forall a.Int
+  0. Cleanup: convert ListType, TupleType, to applied TypeCon earlier.
+     - We need to alter TypeApp printing, then!
+     - How about StrictLazyType?  Is this part of the type, or part of the declaration?
+  0. Make a different struct type for MetaTypeVar.
   0. Cleanup: eliminate dependencies on expression_ref:
      - Make Pattern into a Type that doesn't depend on expression_ref.
        - Make a LitPattern that compares Int, Double, String, Char by equality.
