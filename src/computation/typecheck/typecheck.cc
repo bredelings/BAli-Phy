@@ -772,7 +772,7 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instan
     return {tvs, constraints, type};
 }
 
-tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::skolemize(const Hs::Type& t)
+tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::skolemize(const Hs::Type& t, bool skolem)
 {
     // 1. Handle foralls
     vector<Hs::TypeVar> tvs;
@@ -785,7 +785,11 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::skolem
         for(auto& tv: fa->type_var_binders)
         {
             assert(tv.kind);
-            auto new_tv = fresh_rigid_type_var(*tv.kind);
+            Hs::TypeVar new_tv;
+            if (skolem)
+                new_tv = fresh_rigid_type_var(*tv.kind);
+            else
+                new_tv = fresh_other_type_var(*tv.kind);
             s = s.insert({tv,new_tv});
 
             tvs.push_back(new_tv);
@@ -804,7 +808,7 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::skolem
     // 3. Handle the exposed type being a polytype
     if (not tvs.empty() or not constraints.empty())
     {
-        auto [tvs2, constraints2, type2] = skolemize(type);
+        auto [tvs2, constraints2, type2] = skolemize(type, skolem);
 
         for(auto& tv2: tvs2)
             tvs.push_back(tv2);
