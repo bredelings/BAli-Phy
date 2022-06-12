@@ -40,35 +40,33 @@ set<Hs::TypeVar> free_meta_type_variables(const Hs::Type& type)
     else if (type.is_a<Hs::TypeApp>())
     {
         auto& app = type.as_<Hs::TypeApp>();
-        add(tvars, free_type_variables(app.head));
-        add(tvars, free_type_variables(app.arg));
+        add(tvars, free_meta_type_variables(app.head));
+        add(tvars, free_meta_type_variables(app.arg));
     }
     else if (type.is_a<Hs::TupleType>())
     {
         auto& tuple = type.as_<Hs::TupleType>();
         for(auto element_type: tuple.element_types)
-            add(tvars, free_type_variables(element_type));
+            add(tvars, free_meta_type_variables(element_type));
     }
     else if (type.is_a<Hs::ListType>())
     {
         auto& list = type.as_<Hs::ListType>();
-        add(tvars, free_type_variables(list.element_type));
+        add(tvars, free_meta_type_variables(list.element_type));
     }
     else if (type.is_a<Hs::ForallType>())
     {
         auto& forall = type.as_<Hs::ForallType>();
-        tvars = free_type_variables(forall.type);
-        for(auto& type_var: forall.type_var_binders)
-            tvars.erase(type_var);
+        tvars = free_meta_type_variables(forall.type);
     }
     else if (auto c = type.to<Hs::ConstrainedType>())
     {
-        add(tvars, free_type_variables(c->context));
-        add(tvars, free_type_variables(c->type));
+        add(tvars, free_meta_type_variables(c->context));
+        add(tvars, free_meta_type_variables(c->type));
     }
     else if (auto sl = type.to<Hs::StrictLazyType>())
     {
-        return free_type_variables(sl->type);
+        return free_meta_type_variables(sl->type);
     }
     else
         std::abort();
