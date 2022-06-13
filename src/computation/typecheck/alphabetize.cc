@@ -22,7 +22,7 @@ Haskell::TypeVar alphabetized_type_var(int i)
     return v;
 }
 
-expression_ref alphabetize_type(const expression_ref& type, map<Haskell::TypeVar,Haskell::TypeVar>& s, int& index);
+Hs::Type alphabetize_type(const Hs::Type& type, map<Haskell::TypeVar,Haskell::TypeVar>& s, int& index);
 
 Hs::Context alphabetize(Hs::Context context, map<Haskell::TypeVar,Haskell::TypeVar>& s, int& index)
 {
@@ -31,7 +31,7 @@ Hs::Context alphabetize(Hs::Context context, map<Haskell::TypeVar,Haskell::TypeV
     return context;
 }
 
-expression_ref alphabetize_type(const expression_ref& type, map<Haskell::TypeVar,Haskell::TypeVar>& s, int& index)
+Hs::Type alphabetize_type(const Hs::Type& type, map<Haskell::TypeVar,Haskell::TypeVar>& s, int& index)
 {
     // Lets just assume that there is no shadowing.
 
