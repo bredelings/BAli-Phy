@@ -78,7 +78,7 @@ instance Monad TKEffects where
 
 -- This implements the Random monad by transforming it into the IO monad.
 data Random a = forall b c.RandomStructure (a->TKEffects b) (a->c->(a,a)) (Random a)
-              | Observe (Distribution Int) Int
+              | forall b.Observe (Distribution b) b
               | Lazy (Random a)
               | forall b.WithTKEffect (Random a) (a -> TKEffects b)
               | PerformTKEffect (TKEffects a)
