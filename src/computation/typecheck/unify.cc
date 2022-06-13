@@ -353,7 +353,7 @@ std::optional<u_substitution_t> combine_(bool both_ways, const unification_env& 
 
             // 3b. If x and y both_ways point to the same exemplar, then x ~ y is already satisfied.
             if (*x_exemplar == *y_exemplar)
-                s3 = u_substitution_t();
+                s3 = s1;
             // 3c. If y has no value in s1, then we can add y_exemplar ~> x_exemplar
             else if (not y_value)
                 s3 = try_insert(s1, *y_exemplar, *x_exemplar);
