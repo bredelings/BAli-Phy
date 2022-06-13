@@ -21,6 +21,8 @@ bool type_is_hnf(const Hs::Type& type)
 
     if (head.is_a<Hs::TypeVar>())
         return true;
+    else if (head.is_a<Hs::MetaTypeVar>())
+        return true;
     else if (head.is_a<Hs::TypeCon>())
         return false;
     else if (head.is_a<Hs::ListType>())

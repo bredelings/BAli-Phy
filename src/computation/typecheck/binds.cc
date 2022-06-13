@@ -230,7 +230,7 @@ Hs::GenBind mkGenBind(const vector<Hs::TypeVar>& tvs,
 // I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
 pair<local_instance_env, local_instance_env>
 classify_constraints(const local_instance_env& lie,
-                     const set<Hs::TypeVar>& fixed_type_vars)
+                     const set<Hs::MetaTypeVar>& fixed_type_vars)
 {
     local_instance_env lie_deferred;
     local_instance_env lie_retained;
@@ -268,13 +268,13 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 2. instantiate the type -> (tvs, givens, rho-type)
         auto polytype = gve.at(name);
-        auto [tvs, given_constraints, given_type] = skolemize(polytype, false);
+        auto [mtvs, given_constraints, given_type] = instantiate(polytype);
         auto ordered_lie_given = constraints_to_lie(given_constraints);
         auto dict_vars = vars_from_lie( ordered_lie_given );
         auto lie_given = unordered_lie(ordered_lie_given);
 
-        // 3. match(given_type <= rhs_type)
-        unify(rhs_type, given_type);
+        // 3. match(rhs_type => given_type)
+        match(rhs_type, given_type);
         Hs::Type monotype = apply_current_subst(rhs_type);
 
         // 4. simplify constraints
@@ -286,18 +286,31 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 6. figure out which constraints are relevant here
         auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
+        current_lie() += lie_deferred;
+
+        // 7. default ambiguous constraints.
         auto [s1, binds1, lie_unambiguous_retained] = default_preds( fixed_tvs, free_tvs, lie_retained );
         ev_binds = binds1 + ev_binds;
 
-        current_lie() += lie_deferred;
-
-        // 7. check that the remaining constraints are satisfied by the constraints in the type signature
+        // 8. check that the remaining constraints are satisfied by the constraints in the type signature
         auto [ev_binds2, lie_failed] = entails(lie_given, lie_unambiguous_retained);
         if (not ev_binds2)
             throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(lie_given)<<"'";
         ev_binds = *ev_binds2 + ev_binds;
 
-        // 8. return GenBind with tvs, givens, body
+        // 9. replace MetaTypeVars with TypeVars.
+        // FIXME -- this seems ugly -- if we instantiate the polytype with real type vars, could we avoid this?
+        vector<Hs::TypeVar> tvs;
+        u_substitution_t mtv_subst;
+        for(auto& mtv: mtvs)
+        {
+            auto tv = fresh_other_type_var(unloc(mtv.name), *mtv.kind);
+            mtv_subst = mtv_subst.insert({mtv, tv});
+            tvs.push_back(tv);
+        }
+        monotype = apply_subst(mtv_subst, monotype);
+
+        // 10. return GenBind with tvs, givens, body
         Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
 
         Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
@@ -383,13 +396,13 @@ typechecker_state::infer_rhs_type(const expression_ref& decl)
         std::abort();
 }
 
-pair<set<Hs::TypeVar>, set<Hs::TypeVar>> tvs_in_any_all_types(const local_value_env& mono_binder_env)
+pair<set<Hs::MetaTypeVar>, set<Hs::MetaTypeVar>> tvs_in_any_all_types(const local_value_env& mono_binder_env)
 {
-    set<Hs::TypeVar> tvs_in_any_type;  // type variables in ANY of the definitions
-    set<Hs::TypeVar> tvs_in_all_types;  // type variables in ALL of the definitions
+    set<Hs::MetaTypeVar> tvs_in_any_type;  // type variables in ANY of the definitions
+    set<Hs::MetaTypeVar> tvs_in_all_types;  // type variables in ALL of the definitions
     {
         // FIXME - should we be looping over binder vars, or over definitions?
-        optional<set<Hs::TypeVar>> tvs_in_all_types_;
+        optional<set<Hs::MetaTypeVar>> tvs_in_all_types_;
         for(auto& [_, type]: mono_binder_env)
         {
             auto tvs = free_meta_type_variables(type);
@@ -492,10 +505,18 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
     auto fixed_tvs = free_meta_type_variables( apply_current_subst(gve) );
 
+    /* NOTE: Constraints can reference variables that are in
+     *        (i) ALL types in a recursive group
+     *       (ii) SOME-BUT-NOT-ALL types
+     *      (iii) NO types.
+     *
+     * For unrestricted bindings, classes (ii) and (iii) need defaults.
+     * For restricted bindings, only class (iii) (I think) needs defaults.
+     */
+
     auto [tvs_in_any_type, tvs_in_all_types] = tvs_in_any_all_types(mono_binder_env);
 
     // OK, we've got to do defaulting before we consider what variables to quantify over.
-
 
     // A. First, REDUCE the lie by
     //    (i)  converting to Hnf
@@ -509,26 +530,14 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
 
 
-    /* NOTE: Constraints can reference variables that are in
-     *        (i) ALL types in a recursive group
-     *       (ii) SOME-BUT-NOT-ALL types
-     *      (iii) NO types.
-     *
-     * For unrestricted bindings, classes (ii) and (iii) need defaults.
-     * For restricted bindings, only class (iii) (I think) needs defaults.
-     */
-
-
     // FIXME: return {dvar = expression} as a mapping, instead of a sequence of binds?
     // If we want to substitute an expression for an argument in the wrapper,
     
     // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
-    //   after generating definitions of their 
+    //   after generating definitions of their dictionaries.
     auto [s1, binds1, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
     binds = binds1 + binds;
     lie_retained = lie_not_completely_ambiguous;
-
-    set<Hs::TypeVar> qtvs = tvs_in_any_type - fixed_tvs;
 
     map<string, Hs::BindInfo> bind_infos;
 
@@ -545,6 +554,23 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
     current_lie() += lie_deferred;
 
+    // 10. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
+
+    // meta type vars to quantify over
+    set<Hs::MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
+
+    // non-meta type vars to replace them with
+    set<Hs::TypeVar> qtvs;
+    immer::map<Hs::MetaTypeVar, Hs::TypeVar> qmtvs_to_qtvs;
+    u_substitution_t qmtv_subst;
+    for(auto& qmtv: qmtvs)
+    {
+        Hs::TypeVar qtv = fresh_other_type_var(unloc(qmtv.name), *qmtv.kind);
+        qmtvs_to_qtvs = qmtvs_to_qtvs.insert({qmtv, qtv});
+        qmtv_subst = qmtv_subst.insert({qmtv, qtv});
+        qtvs.insert(qtv);
+    }
+    
     // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group,
     // but we do need the defaults to define individual symbols.
 
@@ -558,17 +584,24 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     global_value_env poly_binder_env;
     for(auto& [name, monotype]: mono_binder_env)
     {
-        auto qtvs_in_this_type = free_meta_type_variables(monotype);
+        auto mtvs_in_this_type = free_meta_type_variables(monotype);
+
+        // Get real type variables for the intersection of map meta type variables to real type variables
+        vector<Hs::TypeVar> qtvs_in_this_type;
+        for(auto& mtv: mtvs_in_this_type)
+            if (auto qtv = qmtvs_to_qtvs.find(mtv))
+                qtvs_in_this_type.push_back(*qtv);
 
         // Default any constraints that do not occur in THIS type.
-        auto [s2, binds2, lie_for_this_type] = default_preds( fixed_tvs, qtvs_in_this_type, lie_retained );
+        auto [s2, binds2, lie_for_this_type] = default_preds( fixed_tvs, mtvs_in_this_type, lie_retained );
 
         auto constraints_for_this_type = constraints_from_lie(lie_for_this_type);
 
+        Hs::Type polytype = Hs::add_constraints( constraints_for_this_type, monotype );
+        // Eliminate all meta type variales
+        polytype = apply_subst(qmtv_subst, polytype);
         // Only quantify over type variables that occur in THIS type.
-        Hs::Type polytype = quantify( qtvs_in_this_type,
-                                      Hs::add_constraints( constraints_for_this_type,
-                                                           monotype ) );
+        polytype = quantify( qtvs_in_this_type, polytype );
 
         if (not signatures.count(name))
         {

@@ -42,7 +42,7 @@ struct global_tc_state
 
     std::vector<Hs::Type> defaults;
 
-    substitution_t type_var_to_type;
+    u_substitution_t type_var_to_type;
 
     // maybe merge with gve by mapping name -> type,con-or-var
     constr_env con_info;
@@ -76,8 +76,8 @@ struct typechecker_state: FreshVarSource
           std::vector<Hs::Type>& defaults()       {return global_state->defaults;}
     const std::vector<Hs::Type>& defaults() const {return global_state->defaults;}
 
-          substitution_t& type_var_to_type()       {return global_state->type_var_to_type;}
-    const substitution_t& type_var_to_type() const {return global_state->type_var_to_type;}
+          u_substitution_t& type_var_to_type()       {return global_state->type_var_to_type;}
+    const u_substitution_t& type_var_to_type() const {return global_state->type_var_to_type;}
 
     //------- local state ------------//
 
@@ -142,9 +142,9 @@ struct typechecker_state: FreshVarSource
         return apply_subst(type_var_to_type(), thing);
     }
 
-    bool add_substitution(const substitution_t& s);
+    bool add_substitution(const u_substitution_t& s);
 
-    bool add_substitution(const Hs::TypeVar& a, const Hs::Type& type);
+    bool add_substitution(const Hs::MetaTypeVar& a, const Hs::Type& type);
 
     bool maybe_unify(const Hs::Type& t1, const Hs::Type& t2);
 
@@ -152,21 +152,27 @@ struct typechecker_state: FreshVarSource
 
     void unify(const Hs::Type& t1, const Hs::Type& t2, const myexception& e);
 
+    bool maybe_match(const Hs::Type& t1, const Hs::Type& t2);
+
+    void match(const Hs::Type& t1, const Hs::Type& t2, const myexception& e);
+
+    void match(const Hs::Type& t1, const Hs::Type& t2);
+
     Hs::Type constructor_type(const Hs::Con&);
 
     std::pair<Hs::Type, std::vector<Hs::Type>> constructor_pattern_types(const Hs::Con&);
 
-    std::optional<std::tuple<substitution_t, Hs::Binds>>
-    candidates(const Hs::TypeVar& tv, const local_instance_env& tv_lie);
+    std::optional<std::tuple<u_substitution_t, Hs::Binds>>
+    candidates(const Hs::MetaTypeVar& tv, const local_instance_env& tv_lie);
 
-    std::tuple<substitution_t, Hs::Binds, local_instance_env >
-    default_preds( const std::set<Hs::TypeVar>& fixed_tvs,
-                   const std::set<Hs::TypeVar>& referenced_tvs,
+    std::tuple<u_substitution_t, Hs::Binds, local_instance_env >
+    default_preds( const std::set<Hs::MetaTypeVar>& fixed_tvs,
+                   const std::set<Hs::MetaTypeVar>& referenced_tvs,
                    const local_instance_env& lie);
 
     Hs::Binds simplify_and_default_top_level();
 
-    std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> instantiate(const Hs::Type& t);
+    std::tuple<std::vector<Hs::MetaTypeVar>, std::vector<Hs::Type>, Hs::Type> instantiate(const Hs::Type& t);
 
     std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
 
@@ -345,7 +351,7 @@ std::vector<Hs::Var> vars_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type
 std::optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint);
 ID get_class_name_from_constraint(const Hs::Type& constraint);
 
-global_value_env apply_subst(const substitution_t& s, const value_env& env1);
+global_value_env apply_subst(const u_substitution_t& s, const value_env& env1);
 
 std::map<ID, Hs::Match> get_instance_methods(const Hs::Binds& decls, const global_value_env& members, const std::string& class_name);
 

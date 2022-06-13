@@ -128,9 +128,9 @@ std::set<Hs::TypeVar> free_type_variables(const value_env& env)
     return free;
 }
 
-std::set<Hs::TypeVar> free_meta_type_variables(const value_env& env)
+std::set<Hs::MetaTypeVar> free_meta_type_variables(const value_env& env)
 {
-    std::set<Hs::TypeVar> free;
+    std::set<Hs::MetaTypeVar> free;
     for(auto& [x,type]: env)
         add(free, free_meta_type_variables(type));
     return free;

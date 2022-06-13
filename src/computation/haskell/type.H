@@ -35,7 +35,7 @@ struct MetaTypeVar: public Object
     MetaTypeVar(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
 };
 
-enum class typevar_info {other, rigid, meta};
+enum class typevar_info {other, rigid};
 
 struct TypeVar: public Object
 {
@@ -177,17 +177,24 @@ struct StrictLazyType: public Object
 };
 
 
-    Type function_type(const std::vector<Type>& arg_types, const Type& result_type);
+Type function_type(const std::vector<Type>& arg_types, const Type& result_type);
 
-    Type make_arrow_type(const Type& t1, const Type& t2);
+Type make_arrow_type(const Type& t1, const Type& t2);
 
-    std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
+std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
 
-    std::optional<std::pair<Type,Type>> is_gen_function_type(const Type& t);
+std::optional<std::pair<Type,Type>> is_gen_function_type(const Type& t);
 
-    std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
+std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
 
-    Type remove_top_gen(Type type);
+Type remove_top_gen(Type type);
+
+// no foralls
+bool is_tau_type(const Type& type);
+
+// no foralls at top level
+bool is_rho_type(const Type& type);
 }
+
 
 #endif 

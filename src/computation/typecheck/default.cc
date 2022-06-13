@@ -34,8 +34,8 @@ optional<Hs::TypeCon> simple_constraint_class(const Hs::Type& constraint)
 // 2. at least one of these classes is a numeric class, (that is, Num or a subclass of Num)
 // 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
 
-optional<tuple<substitution_t, Hs::Binds>>
-typechecker_state::candidates(const Hs::TypeVar& tv, const local_instance_env& tv_lie)
+optional<tuple<u_substitution_t, Hs::Binds>>
+typechecker_state::candidates(const Hs::MetaTypeVar& tv, const local_instance_env& tv_lie)
 {
     set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
     set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
@@ -69,7 +69,7 @@ typechecker_state::candidates(const Hs::TypeVar& tv, const local_instance_env& t
 
     for(auto& type: defaults() )
     {
-        substitution_t s;
+        u_substitution_t s;
         s = s.insert({tv, type});
         auto [binds, failed_constraints] = entails({}, apply_subst(s, tv_lie));
         if (binds)
@@ -79,15 +79,15 @@ typechecker_state::candidates(const Hs::TypeVar& tv, const local_instance_env& t
     return {};
 }
 
-pair<local_instance_env, map<Hs::TypeVar, local_instance_env>>
-ambiguities(const set<Hs::TypeVar>& tvs1, const set<Hs::TypeVar>& tvs2, local_instance_env lie)
+pair<local_instance_env, map<Hs::MetaTypeVar, local_instance_env>>
+ambiguities(const set<Hs::MetaTypeVar>& tvs1, const set<Hs::MetaTypeVar>& tvs2, local_instance_env lie)
 {
     // The input lie MUST be substituted to find its free type vars!
     // lie = apply_current_subst(lie);
     auto ambiguous_tvs = free_meta_type_variables(lie) - tvs1 - tvs2;
 
     // 1. Record the constraints WITH ambiguous type vars, by type var
-    map<Hs::TypeVar,local_instance_env> ambiguities;
+    map<Hs::MetaTypeVar,local_instance_env> ambiguities;
     for(auto& ambiguous_tv: ambiguous_tvs)
     {
         local_instance_env lie_for_tv;
@@ -114,12 +114,12 @@ ambiguities(const set<Hs::TypeVar>& tvs1, const set<Hs::TypeVar>& tvs2, local_in
 }
 
 
-tuple<substitution_t, Hs::Binds, local_instance_env>
-typechecker_state::default_preds( const set<Hs::TypeVar>& fixed_tvs,
-                                  const set<Hs::TypeVar>& referenced_tvs,
+tuple<u_substitution_t, Hs::Binds, local_instance_env>
+typechecker_state::default_preds( const set<Hs::MetaTypeVar>& fixed_tvs,
+                                  const set<Hs::MetaTypeVar>& referenced_tvs,
                                   const local_instance_env& lie)
 {
-    substitution_t s;
+    u_substitution_t s;
     Hs::Binds binds;
     auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities(fixed_tvs, referenced_tvs, lie);
 

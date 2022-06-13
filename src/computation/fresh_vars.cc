@@ -64,42 +64,56 @@ Hs::Var FreshVarSource::get_fresh_Var(const var& x, bool qualified)
     return get_fresh_Var(x.name, qualified);
 }
 
-Hs::TypeVar FreshVarSource::get_fresh_type_var(const std::string& name, bool meta, const Hs::Kind& k)
-{
-    Hs::TypeVar tv({noloc, name+std::to_string( get_index() )});
-    tv.kind = k;
-    if (meta)
-        tv.info = Hs::typevar_info::meta;
-    else
-        tv.info = Hs::typevar_info::rigid;
-    return tv;
-}
-
 // "Rigid" type vars come from forall-quantified variables.
 // "Wobbly" type vars come from existentially-quantified variables (I think).  We don't have any.
 // "Meta" type vars are unification type vars.
-Hs::TypeVar FreshVarSource::fresh_rigid_type_var(const Hs::Kind& k)
+
+Hs::MetaTypeVar FreshVarSource::fresh_meta_type_var(const string& name, const Hs::Kind& k)
 {
-    return get_fresh_type_var("t", false, k);
+    Hs::MetaTypeVar tv({noloc, name+std::to_string( get_index() )});
+    tv.kind = k;
+    return tv;
 }
 
-Hs::TypeVar FreshVarSource::fresh_meta_type_var(const Hs::Kind& k)
+Hs::MetaTypeVar FreshVarSource::fresh_meta_type_var(const Hs::Kind& k)
 {
-    return get_fresh_type_var("t", true, k);
+    return fresh_meta_type_var("t", k);
+}
+
+Hs::TypeVar FreshVarSource::fresh_rigid_type_var(const string& name, const Hs::Kind& k)
+{
+    Hs::TypeVar tv({noloc, name+std::to_string( get_index() )});
+    tv.kind = k;
+    tv.info = Hs::typevar_info::rigid;
+    return tv;
+}
+
+Hs::TypeVar FreshVarSource::fresh_rigid_type_var(const Hs::Kind& k)
+{
+    return fresh_rigid_type_var("t", k);
+}
+
+Hs::TypeVar FreshVarSource::fresh_other_type_var(const string& name, const Hs::Kind& k)
+{
+    Hs::TypeVar tv({noloc, name+std::to_string( get_index() )});
+    tv.kind = k;
+    return tv;
 }
 
 Hs::TypeVar FreshVarSource::fresh_other_type_var(const Hs::Kind& k)
 {
-    auto tv = get_fresh_type_var("t", true, k);
-    tv.info = Hs::typevar_info::other;
+    return fresh_other_type_var("t", k);
+}
+
+Hs::TypeVar FreshVarSource::fresh_other_type_var(const string& name)
+{
+    Hs::TypeVar tv({noloc, name+std::to_string( get_index() )});
     return tv;
 }
 
 Hs::TypeVar FreshVarSource::fresh_other_type_var()
 {
-    Hs::TypeVar tv({noloc, "t"+std::to_string( get_index() )});
-    tv.info = Hs::typevar_info::other;
-    return tv;
+    return fresh_other_type_var(std::string("t"));
 }
 
 int FreshVarSource::current_index() const

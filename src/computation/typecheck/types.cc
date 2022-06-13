@@ -14,28 +14,27 @@ using namespace Haskell;
 
 // Q: how/when do we rename default method definitions?
 
-set<Hs::TypeVar> free_meta_type_variables(const Hs::Context& context)
+set<Hs::MetaTypeVar> free_meta_type_variables(const Hs::Context& context)
 {
-    set<Hs::TypeVar> tvars;
+    set<Hs::MetaTypeVar> tvars;
     for(auto& constraint: context.constraints)
-        add(tvars, free_type_variables(constraint));
+        add(tvars, free_meta_type_variables(constraint));
     return tvars;
 }
 
-set<Hs::TypeVar> free_meta_type_variables(const Hs::Type& type)
+set<Hs::MetaTypeVar> free_meta_type_variables(const Hs::Type& type)
 {
-    set<Hs::TypeVar> tvars;
+    set<Hs::MetaTypeVar> tvars;
     if (type.is_a<Hs::TypeCon>())
-    {
-    }
+    { }
     else if (type.is_a<Hs::TypeVar>())
+    { }
+    else if (type.is_a<Hs::MetaTypeVar>())
     {
-        auto& tv = type.as_<Hs::TypeVar>();
+        auto& tv = type.as_<Hs::MetaTypeVar>();
         auto& name = unloc(tv.name);
         assert(name.size());
-        assert(is_haskell_varid(name));
-        if (tv.info == Hs::typevar_info::meta)
-            tvars.insert(tv);
+        tvars.insert(tv);
     }
     else if (type.is_a<Hs::TypeApp>())
     {

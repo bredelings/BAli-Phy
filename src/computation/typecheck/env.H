@@ -94,7 +94,7 @@ typedef std::map<ID, ClassInfo> ClassEnv;
 
 std::set<Hs::TypeVar> free_type_variables(const value_env& env);
 
-std::set<Hs::TypeVar> free_meta_type_variables(const value_env& env);
+std::set<Hs::MetaTypeVar> free_meta_type_variables(const value_env& env);
 
 template <typename T>
 std::set<T> operator-(const std::set<T>& s1, const std::set<T>& s2)

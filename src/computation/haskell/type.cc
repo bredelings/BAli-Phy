@@ -51,6 +51,58 @@ pair<Type,vector<Type>> decompose_type_apps(Type t)
 }
 
 
+bool is_tau_type(const Type& type)
+{
+    if (type.is_a<MetaTypeVar>())
+        return true;
+    else if (type.is_a<TypeVar>())
+        return true;
+    else if (auto l = type.to<ListType>())
+        return is_tau_type(l->element_type);
+    else if (auto tup = type.to<TupleType>())
+    {
+        for(auto& element_type: tup->element_types)
+            if (not is_tau_type(element_type))
+                return false;
+        return true;
+    }
+    else if (type.is_a<ConstrainedType>())
+        return false;
+    else if (type.is_a<ForallType>())
+        return false;
+    else if (type.is_a<TypeCon>() or type.is_a<TypeApp>())
+    {
+        auto [head, args] = decompose_type_apps(type);
+
+        for(auto& arg: args)
+            if (not is_tau_type(arg))
+                return false;
+
+        return true;
+    }
+    throw myexception()<<"is_tau_type: I don't recognize type '"<<type<<"'";
+}
+
+bool is_rho_type(const Type& type)
+{
+    if (type.is_a<MetaTypeVar>())
+        return true;
+    else if (type.is_a<TypeVar>())
+        return true;
+    else if (type.is_a<ListType>())
+        return true;
+    else if (type.is_a<TupleType>())
+        return true;
+    else if (type.is_a<ConstrainedType>())
+        return false;
+    else if (type.is_a<ForallType>())
+        return false;
+    else if (type.is_a<TypeCon>() or type.is_a<TypeApp>())
+        return true;
+    throw myexception()<<"is_rho_type: I don't recognize type '"<<type<<"'";
+}
+
+
 optional<pair<Type,Type>> is_gen_function_type(const Type& t)
 {
     return is_function_type( remove_top_gen(t) );

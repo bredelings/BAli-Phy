@@ -83,10 +83,11 @@ using std::tuple;
   * Handle type synonyms.
 
   TODO:
+  0. assert in try_insert that we are inserting a tau type with no foralls.
+  0. Make a different struct type for MetaTypeVar.
   0. Cleanup: convert ListType, TupleType, to applied TypeCon earlier.
      - We need to alter TypeApp printing, then!
      - How about StrictLazyType?  Is this part of the type, or part of the declaration?
-  0. Make a different struct type for MetaTypeVar.
   0. Cleanup: eliminate dependencies on expression_ref:
      - Make Pattern into a Type that doesn't depend on expression_ref.
        - Make a LitPattern that compares Int, Double, String, Char by equality.
@@ -359,7 +360,7 @@ struct instance_info
     }
 };
 
-global_value_env apply_subst(const substitution_t& s, const value_env& env1)
+global_value_env apply_subst(const u_substitution_t& s, const value_env& env1)
 {
     global_value_env env2;
     for(auto& [x,type]: env1)
@@ -603,7 +604,7 @@ Hs::Type typechecker_state::double_type() const
     return find_prelude_tycon("Double");
 }
 
-bool typechecker_state::add_substitution(const substitution_t& s)
+bool typechecker_state::add_substitution(const u_substitution_t& s)
 {
     if (auto s2 = combine(type_var_to_type(), s))
     {
@@ -614,7 +615,7 @@ bool typechecker_state::add_substitution(const substitution_t& s)
         return false;
 }
 
-bool typechecker_state::add_substitution(const Hs::TypeVar& a, const Hs::Type& type)
+bool typechecker_state::add_substitution(const Hs::MetaTypeVar& a, const Hs::Type& type)
 {
     if (auto s = try_insert({}, a, type))
         return add_substitution(*s);
@@ -642,18 +643,38 @@ void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2, const myex
         throw e;
 }
 
+bool typechecker_state::maybe_match(const Hs::Type& t1, const Hs::Type& t2)
+{
+    if (auto s = ::maybe_match(t1, t2))
+        return add_substitution(*s);
+    else
+        return false;
+}
+
+void typechecker_state::match(const Hs::Type& t1, const Hs::Type& t2, const myexception& e)
+{
+    if (not maybe_match(t1,t2))
+        throw e;
+}
+
+void typechecker_state::match(const Hs::Type& t1, const Hs::Type& t2)
+{
+    auto e = myexception()<<"match failed: "<<apply_current_subst(t1)<<" !~ "<<apply_current_subst(t2);
+    match(t1,t2,e);
+}
+
 Hs::Type typechecker_state::constructor_type(const Hs::Con& con)
 {
     auto& con_name = unloc(con.name);
 
     if (con_name == ":")
     {
-        auto a = fresh_meta_type_var( kind_star() );
+        auto a = fresh_other_type_var( kind_star() );
         return Hs::add_forall_vars({a},Hs::function_type({a, Hs::ListType(a)}, Hs::ListType(a)));
     }
     else if (con_name == "[]")
     {
-        auto a = fresh_meta_type_var( kind_star() );
+        auto a = fresh_other_type_var( kind_star() );
         return Hs::add_forall_vars({a},Hs::function_type({}, Hs::ListType(a)));
     }
     else if (is_tuple_name(con_name) or con_name == "()")
@@ -663,7 +684,7 @@ Hs::Type typechecker_state::constructor_type(const Hs::Con& con)
         vector<Hs::TypeVar> tvs;
         for(int i=0;i<n;i++)
         {
-            auto tv = fresh_meta_type_var( kind_star() );
+            auto tv = fresh_other_type_var( kind_star() );
             types.push_back( tv );
             tvs.push_back( tv );
         }
@@ -726,10 +747,10 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
 //
 // Now, actually, we may NOT need this until add type /\s, because the dictionary arguments should be in the right order.
 
-tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instantiate(const Hs::Type& t)
+tuple<vector<Hs::MetaTypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instantiate(const Hs::Type& t)
 {
     // 1. Handle foralls
-    vector<Hs::TypeVar> tvs;
+    vector<Hs::MetaTypeVar> tvs;
     vector<Hs::Type> constraints;
     Hs::Type type = t;
 
