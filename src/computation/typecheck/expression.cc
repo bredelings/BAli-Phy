@@ -146,25 +146,34 @@ typechecker_state::infer_type(expression_ref E)
         vector<expression_ref> args;
         for(int i=1;i<E.size();i++)
         {
+            auto arg_result_types = unify_function(t1);
+            if (not arg_result_types)
+                throw myexception()<<"Applying "<<E.size()<<" arguments to function "<<e1.print()<<", but it only takes "<<i-1<<"!";
+
+            auto [expected_arg_type, result_type] = *arg_result_types;
+
             auto e2 = E.sub()[i];
+            auto [arg, arg_type] = infer_type(e2);
+            args.push_back(arg);
 
-            auto [arg2, t2] = infer_type(e2);
-            args.push_back(arg2);
-
-            // tv <- fresh
-            auto tv = fresh_meta_type_var( kind_star() );
             try {
-                unify (t1, Hs::make_arrow_type(t2,tv));
+                unify (arg_type, expected_arg_type);
             }
-            catch (myexception& e)
+            catch (myexception& ex)
             {
                 std::ostringstream header;
-                header<<"Argument "<<i<<" // "<<e2<<" of function "<<e1<<" has type "<<apply_current_subst(t2)<<" but function is of type "<<apply_current_subst(t1)<<"\n ";
-                e.prepend(header.str());
+                header<<"Argument "<<i<<" of function "<<e1<<" expected type\n\n";
+                header<<"   "<<apply_current_subst(expected_arg_type)<<"\n\n";
+                header<<"but got type\n\n";
+                header<<"   "<<apply_current_subst(arg_type)<<"\n\n";
+                header<<"with argument\n\n";
+                header<<"   "<<e2<<"\n\n";
+
+                ex.prepend(header.str());
                 throw;
             }
 
-            t1 = tv;
+            t1 = result_type;
         }
         E = apply_expression(f, args);
 
