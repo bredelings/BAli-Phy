@@ -36,7 +36,7 @@ Hs::Context apply_subst(const u_substitution_t& s, Hs::Context C)
     return C;
 }
 
-expression_ref apply_subst(const u_substitution_t& s, const Hs::Type& t)
+Hs::Type apply_subst(const u_substitution_t& s, const Hs::Type& t)
 {
     if (s.empty()) return t;
 
@@ -101,7 +101,7 @@ Hs::Context apply_subst(const substitution_t& s, Hs::Context C)
     return C;
 }
 
-expression_ref apply_subst(const substitution_t& s, const Hs::Type& t)
+Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t)
 {
     if (s.empty()) return t;
 
