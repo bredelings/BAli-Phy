@@ -309,8 +309,8 @@
  /*
 %type <void> deriv_types
  */
-%type <std::vector<expression_ref>> comma_types0
-%type <std::vector<expression_ref>> comma_types1
+%type <std::vector<Hs::Type>> comma_types0
+%type <std::vector<Hs::Type>> comma_types1
  /*
 %type <void> bar_types2
  */

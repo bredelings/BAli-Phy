@@ -63,7 +63,7 @@
 
   std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
-  Hs::Type make_kind(const Hs::Type& kind);
+  Hs::Kind make_kind(const Hs::Type& kind);
   Hs::Constructor make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const expression_ref& typeish);
   Hs::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Hs::Binds>>& decls);
   Hs::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
@@ -660,27 +660,29 @@ namespace yy {
       // importdecls_semi
       char dummy39[sizeof (std::vector<Hs::ImpDecl>)];
 
+      // comma_types0
+      // comma_types1
+      char dummy40[sizeof (std::vector<Hs::Type>)];
+
       // tv_bndrs
       // forall
-      char dummy40[sizeof (std::vector<Hs::TypeVar>)];
+      char dummy41[sizeof (std::vector<Hs::TypeVar>)];
 
       // sig_vars
-      char dummy41[sizeof (std::vector<Hs::Var>)];
+      char dummy42[sizeof (std::vector<Hs::Var>)];
 
       // alts
       // alts1
-      char dummy42[sizeof (std::vector<Located<Hs::Alt>>)];
+      char dummy43[sizeof (std::vector<Located<Hs::Alt>>)];
 
       // qcnames
       // qcnames1
-      char dummy43[sizeof (std::vector<Located<std::string>>)];
+      char dummy44[sizeof (std::vector<Located<std::string>>)];
 
       // decls
       // sigtypes1
       // btype_no_ops
       // tyapps
-      // comma_types0
-      // comma_types1
       // infixexp
       // infixexp_top
       // fexp
@@ -691,10 +693,10 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy44[sizeof (std::vector<expression_ref>)];
+      char dummy45[sizeof (std::vector<expression_ref>)];
 
       // ops
-      char dummy45[sizeof (std::vector<std::string>)];
+      char dummy46[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1512,6 +1514,11 @@ namespace yy {
         value.move< std::vector<Hs::ImpDecl> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_comma_types0: // comma_types0
+      case symbol_kind::S_comma_types1: // comma_types1
+        value.move< std::vector<Hs::Type> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
         value.move< std::vector<Hs::TypeVar> > (std::move (that.value));
@@ -1535,8 +1542,6 @@ namespace yy {
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
       case symbol_kind::S_tyapps: // tyapps
-      case symbol_kind::S_comma_types0: // comma_types0
-      case symbol_kind::S_comma_types1: // comma_types1
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_fexp: // fexp
@@ -2124,6 +2129,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<Hs::Type>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<Hs::Type>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<Hs::TypeVar>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -2493,6 +2512,11 @@ switch (yykind)
         value.template destroy< std::vector<Hs::ImpDecl> > ();
         break;
 
+      case symbol_kind::S_comma_types0: // comma_types0
+      case symbol_kind::S_comma_types1: // comma_types1
+        value.template destroy< std::vector<Hs::Type> > ();
+        break;
+
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
         value.template destroy< std::vector<Hs::TypeVar> > ();
@@ -2516,8 +2540,6 @@ switch (yykind)
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
       case symbol_kind::S_tyapps: // tyapps
-      case symbol_kind::S_comma_types0: // comma_types0
-      case symbol_kind::S_comma_types1: // comma_types1
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_fexp: // fexp
@@ -5479,6 +5501,11 @@ switch (yykind)
         value.copy< std::vector<Hs::ImpDecl> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_comma_types0: // comma_types0
+      case symbol_kind::S_comma_types1: // comma_types1
+        value.copy< std::vector<Hs::Type> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
         value.copy< std::vector<Hs::TypeVar> > (YY_MOVE (that.value));
@@ -5502,8 +5529,6 @@ switch (yykind)
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
       case symbol_kind::S_tyapps: // tyapps
-      case symbol_kind::S_comma_types0: // comma_types0
-      case symbol_kind::S_comma_types1: // comma_types1
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_fexp: // fexp
@@ -5814,6 +5839,11 @@ switch (yykind)
         value.move< std::vector<Hs::ImpDecl> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_comma_types0: // comma_types0
+      case symbol_kind::S_comma_types1: // comma_types1
+        value.move< std::vector<Hs::Type> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
         value.move< std::vector<Hs::TypeVar> > (YY_MOVE (s.value));
@@ -5837,8 +5867,6 @@ switch (yykind)
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
       case symbol_kind::S_tyapps: // tyapps
-      case symbol_kind::S_comma_types0: // comma_types0
-      case symbol_kind::S_comma_types1: // comma_types1
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_fexp: // fexp
@@ -5922,7 +5950,7 @@ switch (yykind)
 
 
 } // yy
-#line 5926 "parser.hh"
+#line 5954 "parser.hh"
 
 
 
