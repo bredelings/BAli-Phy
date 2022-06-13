@@ -663,6 +663,26 @@ void typechecker_state::match(const Hs::Type& t1, const Hs::Type& t2)
     match(t1,t2,e);
 }
 
+std::optional<std::pair<Hs::Type, Hs::Type>> typechecker_state::unify_function(const Hs::Type& t)
+{
+    if (auto arg_and_result = Hs::is_function_type(t))
+    {
+        auto [arg, result] = *arg_and_result;
+        assert(Hs::is_tau_type(arg));
+        assert(Hs::is_tau_type(result));
+        return arg_and_result;
+    }
+    else
+    {
+        auto a = fresh_meta_type_var( kind_star() );
+        auto b = fresh_meta_type_var( kind_star() );
+        if (maybe_unify(t, make_arrow_type(a,b)))
+            return {{a,b}};
+        else
+            return {};
+    }
+}
+
 Hs::Type typechecker_state::constructor_type(const Hs::Con& con)
 {
     auto& con_name = unloc(con.name);
