@@ -25,7 +25,7 @@
 
   std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
-  Hs::Type make_kind(const Hs::Type& kind);
+  Hs::Kind make_kind(const Hs::Type& kind);
   Hs::Constructor make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const expression_ref& typeish);
   Hs::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Hs::Binds>>& decls);
   Hs::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
@@ -1574,7 +1574,7 @@ bool check_kind(const Hs::Kind& kind)
         return false;
 }
 
-Hs::Type make_kind(const Hs::Kind& kind)
+Hs::Kind make_kind(const Hs::Kind& kind)
 {
     if (not check_kind(kind))
         throw myexception()<<"Kind '"<<kind<<"' is malformed";
