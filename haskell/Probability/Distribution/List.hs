@@ -20,7 +20,7 @@ instance HasIndependent Distribution where
 
     iid n dist = Distribution iid_name (make_densities' $ independent_densities (replicate n dist)) (no_quantile "iid") iid_sample (ListRange $ take n $ repeat $ distRange dist) where
                              iid_name = "iid "++(dist_name dist)
-                             iid_sample = do xs <- RanSamplingRate (1.0/sqrt (intToDouble n)) $ sequence (repeat dist)
+                             iid_sample = do xs <- RanSamplingRate (1.0/sqrt (intToDouble n)) $ sequence (repeat $ RanDistribution dist)
                                              return $ take n xs
 
 
