@@ -124,7 +124,8 @@ pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
                     throw myexception()<<"Function '"<<*fvar<<"' has different numbers of arguments!";
             }
 
-            assert(not m.rules[0].patterns.empty() or m.rules.size() == 1);
+            if (m.rules[0].patterns.empty() and m.rules.size() != 1)
+                throw myexception()<<"Multiple definitions for variable "<<fvar->print()<<"!";
 
             decls2.push_back( Hs::FunDecl( *fvar, m ) );
 
