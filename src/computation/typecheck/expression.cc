@@ -218,8 +218,8 @@ typechecker_state::infer_type(expression_ref& E)
     else if (auto texp = E.to<Hs::TypedExp>())
     {
         auto TExp = *texp;
-        auto type = infer_type(TExp);
-        E = TExp;
+        auto [E2,type] = infer_type(TExp);
+        E = E2;
         return type;
     }
     else if (auto l = E.to<Hs::List>())
