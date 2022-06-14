@@ -50,6 +50,30 @@ struct global_tc_state
     global_tc_state(const Module& m);
 };
 
+struct Check
+{
+    Hs::Type type;
+};
+
+struct Infer
+{
+    Hs::Type& type;
+    Infer(Hs::Type& t):type(t) {}
+};
+
+class Expected
+{
+    std::variant<Check,Infer> value;
+public:
+    bool check() const {return std::holds_alternative<Check>(value);}
+    bool infer() const {return std::holds_alternative<Infer>(value);}
+
+    const Hs::Type& check_type() const {return std::get<Check>(value).type;}
+          Hs::Type& infer_type()       {return std::get<Infer>(value).type;}
+
+    Expected(const Check& c):value(c) {}
+    Expected(const Infer& i):value(i) {}
+};
 
 struct typechecker_state: FreshVarSource
 {
