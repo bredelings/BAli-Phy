@@ -10,8 +10,8 @@ using std::optional;
 using std::tuple;
 
 // Figure 25. Rules for match, mrule, and grhs
-tuple<Hs::GuardedRHS, Hs::Type>
-typechecker_state::infer_type(Hs::GuardedRHS rhs)
+Hs::Type
+typechecker_state::infer_type(Hs::GuardedRHS& rhs)
 {
     // Fig 25. GUARD-DEFAULT
     if (rhs.guards.empty())
@@ -26,14 +26,12 @@ typechecker_state::infer_type(Hs::GuardedRHS rhs)
     auto guard1 = state2.infer_guard_type(rhs.guards[0]);
 
     rhs.guards.erase(rhs.guards.begin());
-    auto [rhs2, t2] = state2.infer_type(rhs);
-
-    rhs2.guards.insert(rhs2.guards.begin(), guard1);
+    auto result_type = state2.infer_type(rhs);
+    rhs.guards.insert(rhs.guards.begin(), guard1);
 
     current_lie() += state2.current_lie();
 
-    Hs::Type type = t2;
-    return {rhs2, type};
+    return result_type;
 }
 
 // Fig 25. GUARD-OR
@@ -49,8 +47,7 @@ typechecker_state::infer_type(Hs::MultiGuardedRHS& rhs)
 
     for(auto& guarded_rhs: rhs.guarded_rhss)
     {
-        auto [guarded_rhs2, t1] = state2.infer_type(guarded_rhs);
-        guarded_rhs = guarded_rhs2;
+        auto t1 = state2.infer_type(guarded_rhs);
         unify(t1,type);
     }
     current_lie() += state2.current_lie();
