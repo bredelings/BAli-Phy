@@ -9,6 +9,32 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
+std::pair<Hs::Expression,Hs::Type> typechecker_state::infer_type(const Hs::Var& x)
+{
+    auto& x_name = unloc(x.name);
+    if (auto it = mono_local_env.find(x_name))
+    {
+        auto& [v,type] = *it;
+        return {v,type};
+    }
+
+    auto sigma = gve.find( x_name );
+
+    // x should be in the type environment
+    if (not sigma)
+        throw myexception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
+
+    auto [_, constraints, type] = instantiate(*sigma);
+
+    expression_ref E = x;
+    for(auto& constraint: constraints)
+    {
+        auto dvar = add_dvar(constraint);
+        E = {E, dvar};
+    }
+
+    return {E,type};
+}
 
 Hs::Type typechecker_state::infer_type(Hs::LetExp& Let)
 {
@@ -39,28 +65,8 @@ typechecker_state::infer_type(expression_ref& E)
 {
     if (auto x = E.to<Hs::Var>())
     {
-        auto& x_name = unloc(x->name);
-        if (auto it = mono_local_env.find(x_name))
-        {
-            auto& [v,type] = *it;
-            E = v;
-            return type;
-        }
-
-        auto sigma = gve.find( x_name );
-
-        // x should be in the type environment
-        if (not sigma)
-            throw myexception()<<"infer_type: can't find type of variable '"<<x->print()<<"'";
-
-        auto [_, constraints, type] = instantiate(*sigma);
-
-        for(auto& constraint: constraints)
-        {
-            auto dvar = add_dvar(constraint);
-            E = {E, dvar};
-        }
-
+        auto [E2, type] = infer_type(*x);
+        E = E2;
         return type;
     }
     else if (auto L = E.to<Hs::Literal>())
