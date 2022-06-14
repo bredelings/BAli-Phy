@@ -160,6 +160,41 @@ Hs::Type typechecker_state::infer_type(Hs::CaseExp& Case)
     return result_type;
 }
 
+Hs::Type typechecker_state::infer_type(Hs::List& L)
+{
+    Hs::Type element_type = fresh_meta_type_var( kind_star() );
+
+    for(auto& element: L.elements)
+    {
+        auto t1 = infer_type(element);
+
+        try {
+            unify(t1, element_type);
+        }
+        catch (myexception& e)
+        {
+            std::ostringstream header;
+            header<<"List element "<<element<<" has type "<<apply_current_subst(t1)<<" but expected type "<<apply_current_subst(element_type)<<"\n ";
+            e.prepend(header.str());
+            throw;
+        }
+    }
+
+    return Hs::ListType(element_type);
+}
+
+Hs::Type typechecker_state::infer_type(Hs::Tuple& T)
+{
+    vector<Hs::Type> element_types;
+    for(auto& element: T.elements)
+    {
+        auto element_type = infer_type(element);
+        element_types.push_back( element_type );
+    }
+    Hs::Type result_type = Hs::TupleType(element_types);
+    return result_type;
+}
+
 Hs::Type typechecker_state::infer_type(Hs::Literal& Lit)
 {
     if (Lit.is_Char())
@@ -202,61 +237,12 @@ Hs::Type typechecker_state::infer_type(Hs::Literal& Lit)
 Hs::Type
 typechecker_state::infer_type(expression_ref& E)
 {
+    // VAR
     if (auto x = E.to<Hs::Var>())
     {
         auto [E2, type] = infer_type(*x);
         E = E2;
         return type;
-    }
-    else if (auto L = E.to<Hs::Literal>())
-    {
-        auto Lit = *L;
-        auto type = infer_type(Lit);
-        E = Lit;
-        return type;
-    }
-    else if (auto texp = E.to<Hs::TypedExp>())
-    {
-        auto TExp = *texp;
-        auto [E2,type] = infer_type(TExp);
-        E = E2;
-        return type;
-    }
-    else if (auto l = E.to<Hs::List>())
-    {
-        Hs::Type element_type = fresh_meta_type_var( kind_star() );
-        auto L = *l;
-        for(auto& element: L.elements)
-        {
-            auto t1 = infer_type(element);
-
-            try {
-                unify(t1, element_type);
-            }
-            catch (myexception& e)
-            {
-                std::ostringstream header;
-                header<<"List element "<<element<<" has type "<<apply_current_subst(t1)<<" but expected type "<<apply_current_subst(element_type)<<"\n ";
-                e.prepend(header.str());
-                throw;
-            }
-        }
-        E = L;
-        return Hs::ListType(element_type);
-    }
-    else if (auto tup = E.to<Hs::Tuple>())
-    {
-        auto T = *tup;
-
-        vector<Hs::Type> element_types;
-        for(auto& element: T.elements)
-        {
-            auto element_type = infer_type(element);
-            element_types.push_back( element_type );
-        }
-        E = T;
-        Hs::Type result_type = Hs::TupleType(element_types);
-        return result_type;
     }
     // APP
     else if (is_apply_exp(E))
@@ -281,6 +267,46 @@ typechecker_state::infer_type(expression_ref& E)
         E = Let;
         return t;
     }
+    // CASE
+    else if (auto case_exp = E.to<Hs::CaseExp>())
+    {
+        auto Case = *case_exp;
+        auto type = infer_type(Case);
+        E = Case;
+        return type;
+    }
+    // EXP :: sigma
+    else if (auto texp = E.to<Hs::TypedExp>())
+    {
+        auto TExp = *texp;
+        auto [E2,type] = infer_type(TExp);
+        E = E2;
+        return type;
+    }
+    // LITERAL
+    else if (auto L = E.to<Hs::Literal>())
+    {
+        auto Lit = *L;
+        auto type = infer_type(Lit);
+        E = Lit;
+        return type;
+    }
+    // LIST
+    else if (auto l = E.to<Hs::List>())
+    {
+        auto L = *l;
+        auto type = infer_type(L);
+        E = L;
+        return type;
+    }
+    // TUPLE
+    else if (auto tup = E.to<Hs::Tuple>())
+    {
+        auto T = *tup;
+        auto type = infer_type(T);
+        E = T;
+        return type;
+    }
     else if (auto con = E.to<Hs::Con>())
     {
         auto [tvs, constraints, result_type] = instantiate( constructor_type(*con) );
@@ -290,17 +316,6 @@ typechecker_state::infer_type(expression_ref& E)
     {
         std::abort();
         // this includes builtins like Prelude::add
-    }
-    // CASE
-    else if (auto case_exp = E.to<Hs::CaseExp>())
-    {
-        auto Case = *case_exp;
-
-        auto type = infer_type(Case);
-
-        E = Case;
-
-        return type;
     }
     // IF
     else if (auto if_exp = E.to<Hs::IfExp>())
