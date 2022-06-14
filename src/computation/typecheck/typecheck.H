@@ -194,11 +194,11 @@ struct typechecker_state: FreshVarSource
     std::tuple<Hs::Type, local_value_env>
     infer_var_pattern_type(Hs::Var& v, const signature_env& sigs = {});
 
-    std::tuple<expression_ref, Hs::Type, local_value_env>
-    infer_lhs_type(const expression_ref& decl, const signature_env& sigs);
+    std::tuple<Hs::Type, local_value_env>
+    infer_lhs_type(expression_ref& decl, const signature_env& sigs);
 
-    std::tuple<expression_ref, Hs::Type>
-    infer_rhs_type(const expression_ref& decl);
+    Hs::Type
+    infer_rhs_type(expression_ref& decl);
 
     Hs::Type
     infer_type(expression_ref& exp);

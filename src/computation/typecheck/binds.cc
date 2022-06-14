@@ -348,8 +348,8 @@ bool is_restricted(const map<ID, Hs::Type>& signatures, const Hs::Decls& decls)
     return false;
 };
 
-tuple<expression_ref, Hs::Type, local_value_env>
-typechecker_state::infer_lhs_type(const expression_ref& decl, const map<string, Hs::Type>& signatures)
+tuple<Hs::Type, local_value_env>
+typechecker_state::infer_lhs_type(expression_ref& decl, const map<string, Hs::Type>& signatures)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
     {
@@ -358,34 +358,37 @@ typechecker_state::infer_lhs_type(const expression_ref& decl, const map<string, 
         assert(not signatures.count(unloc(FD.v.name)));
 
         auto [type, lve] = infer_var_pattern_type(FD.v);
-        return {FD, type, lve};
+        decl = FD;
+        return {type, lve};
     }
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
         auto [type, lve] = infer_pattern_type( unloc(PD.lhs), signatures);
-        return {PD, type, lve};
+        decl = PD;
+        return {type, lve};
     }
     else
         std::abort();
 }
 
-tuple<expression_ref, Hs::Type>
-typechecker_state::infer_rhs_type(const expression_ref& decl)
+Hs::Type
+typechecker_state::infer_rhs_type(expression_ref& decl)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
         auto rhs_type = infer_type(FD.match);
 
-        return {FD, rhs_type};
+        decl = FD;
+        return rhs_type;
     }
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
         auto rhs_type = infer_type(PD.rhs);
-
-        return {PD, rhs_type};
+        decl = PD;
+        return rhs_type;
     }
     else
         std::abort();
@@ -440,11 +443,10 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     vector<Hs::Type> lhs_types;
     for(int i=0;i<decls.size();i++)
     {
-        auto [decl, type, lve] = infer_lhs_type( decls[i], signatures );
-        decls[i] = decl;
+        auto [type, lve] = infer_lhs_type( decls[i], signatures );
 
-        mono_binder_env += lve;
         lhs_types.push_back(type);
+        mono_binder_env += lve;
     }
 
     auto tcs2 = copy_clear_lie();
@@ -465,8 +467,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     for(int i=0;i<decls.size();i++)
     {
         try{
-            auto [decl, rhs_type] = tcs2.infer_rhs_type(decls[i]);
-            decls[i] = decl;
+            auto rhs_type = tcs2.infer_rhs_type(decls[i]);
 
             tcs2.unify(lhs_types[i], rhs_type);
         }
