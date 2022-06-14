@@ -9,6 +9,33 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
+std::pair<Hs::Expression,Hs::Type> typechecker_state::infer_type(const Hs::Var& x)
+{
+    auto& x_name = unloc(x.name);
+    if (auto it = mono_local_env.find(x_name))
+    {
+        auto& [v,type] = *it;
+        return {v,type};
+    }
+
+    auto sigma = gve.find( x_name );
+
+    // x should be in the type environment
+    if (not sigma)
+        throw myexception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
+
+    auto [_, constraints, type] = instantiate(*sigma);
+
+    expression_ref E = x;
+    for(auto& constraint: constraints)
+    {
+        auto dvar = add_dvar(constraint);
+        E = {E, dvar};
+    }
+
+    return {E,type};
+}
+
 Hs::Type typechecker_state::infer_type_apply(expression_ref& E)
 {
     assert(E.size() >= 2);
@@ -53,33 +80,6 @@ Hs::Type typechecker_state::infer_type_apply(expression_ref& E)
     return t1;
 }
 
-std::pair<Hs::Expression,Hs::Type> typechecker_state::infer_type(const Hs::Var& x)
-{
-    auto& x_name = unloc(x.name);
-    if (auto it = mono_local_env.find(x_name))
-    {
-        auto& [v,type] = *it;
-        return {v,type};
-    }
-
-    auto sigma = gve.find( x_name );
-
-    // x should be in the type environment
-    if (not sigma)
-        throw myexception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
-
-    auto [_, constraints, type] = instantiate(*sigma);
-
-    expression_ref E = x;
-    for(auto& constraint: constraints)
-    {
-        auto dvar = add_dvar(constraint);
-        E = {E, dvar};
-    }
-
-    return {E,type};
-}
-
 Hs::Type typechecker_state::infer_type(Hs::LetExp& Let)
 {
     auto state2 = copy_clear_lie();
@@ -103,6 +103,71 @@ Hs::Type typechecker_state::infer_type(Hs::LambdaExp& Lam)
     return t;
 }
 
+Hs::Type typechecker_state::infer_type(Hs::CaseExp& Case)
+{
+    // 1. Determine object type
+    auto object_type = infer_type(Case.object);
+
+    // 2. Determine data type for object from patterns.
+    Hs::Match match;
+    for(auto& alt: Case.alts)
+    {
+        auto& [pattern, body] = unloc(alt);
+        match.rules.push_back(Hs::MRule{{pattern},body});
+    }
+
+    auto match_type = infer_type(match);
+
+    for(int i=0;i<Case.alts.size();i++)
+    {
+        unloc(Case.alts[i]) = {match.rules[i].patterns[0], match.rules[i].rhs};
+    }
+
+    Hs::Type result_type = fresh_meta_type_var( kind_star() );
+
+    unify( Hs::make_arrow_type(object_type,result_type), match_type );
+
+    return result_type;
+}
+
+Hs::Type typechecker_state::infer_type(Hs::Literal& Lit)
+{
+    if (Lit.is_Char())
+        return char_type();
+    else if (Lit.is_String())
+        return Hs::ListType( char_type() );
+    else if (Lit.is_BoxedInteger())
+        return int_type();
+    else if (auto i = Lit.is_Integer())
+    {
+        // 1. Typecheck fromInteger
+        expression_ref fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
+        auto fromInteger_type = infer_type(fromInteger);
+
+        // 2. Determine result type
+        auto result_type = fresh_meta_type_var( kind_star() );
+        unify(fromInteger_type, Hs::make_arrow_type(int_type(), result_type));
+
+        Lit = Hs::Literal(Hs::Integer{*i, fromInteger});
+
+        return result_type;
+    }
+    else if (auto d = Lit.is_Double())
+    {
+        // 1. Typecheck fromRational
+        expression_ref fromRational = Hs::Var({noloc,"Compiler.Num.fromRational"});
+        auto fromRational_type = infer_type(fromRational);
+
+        // 2. Determine result type
+        Hs::Type result_type = fresh_meta_type_var( kind_star() );
+        unify(fromRational_type, Hs::make_arrow_type(double_type(), result_type));
+
+        Lit = Hs::Literal(Hs::Double{*d, fromRational});
+        return result_type;
+    }
+    else
+        std::abort();
+}
 
 Hs::Type
 typechecker_state::infer_type(expression_ref& E)
@@ -115,45 +180,10 @@ typechecker_state::infer_type(expression_ref& E)
     }
     else if (auto L = E.to<Hs::Literal>())
     {
-        if (auto c = L->is_Char())
-        {
-            return char_type();
-        }
-        else if (auto i = L->is_Integer())
-        {
-            // 1. Typecheck fromInteger
-            expression_ref fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
-            auto fromInteger_type = infer_type(fromInteger);
-
-            // 2. Determine result type
-            auto result_type = fresh_meta_type_var( kind_star() );
-            unify(fromInteger_type, Hs::make_arrow_type(int_type(), result_type));
-
-            E = Hs::Literal(Hs::Integer{*i, fromInteger});
-
-            return result_type;
-        }
-        else if (auto s = L->is_String())
-        {
-            return Hs::ListType( char_type() );
-        }
-        else if (auto d = L->is_Double())
-        {
-            // 1. Typecheck fromRational
-            expression_ref fromRational = Hs::Var({noloc,"Compiler.Num.fromRational"});
-            auto fromRational_type = infer_type(fromRational);
-
-            // 2. Determine result type
-            Hs::Type result_type = fresh_meta_type_var( kind_star() );
-            unify(fromRational_type, Hs::make_arrow_type(double_type(), result_type));
-
-            E = Hs::Literal(Hs::Double{*d, fromRational});
-            return result_type;
-        }
-        else if (auto i = L->is_BoxedInteger())
-        {
-            return int_type();
-        }
+        auto Lit = *L;
+        auto type = infer_type(Lit);
+        E = Lit;
+        return type;
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
@@ -290,31 +320,11 @@ typechecker_state::infer_type(expression_ref& E)
     {
         auto Case = *case_exp;
 
-        // 1. Determine object type
-        auto object_type = infer_type(Case.object);
-        
-        // 2. Determine data type for object from patterns.
-        Hs::Match match;
-        for(auto& alt: Case.alts)
-        {
-            auto& [pattern, body] = unloc(alt);
-            match.rules.push_back(Hs::MRule{{pattern},body});
-        }
-
-        auto match_type = infer_type(match);
-
-        for(int i=0;i<Case.alts.size();i++)
-        {
-            unloc(Case.alts[i]) = {match.rules[i].patterns[0], match.rules[i].rhs};
-        }
-
-        Hs::Type result_type = fresh_meta_type_var( kind_star() );
-
-        unify( Hs::make_arrow_type(object_type,result_type), match_type );
+        auto type = infer_type(Case);
 
         E = Case;
 
-        return result_type;
+        return type;
     }
     // IF
     else if (auto if_exp = E.to<Hs::IfExp>())
