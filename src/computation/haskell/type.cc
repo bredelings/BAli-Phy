@@ -1,4 +1,5 @@
 #include "type.H"
+#include "haskell.H"
 #include "util/string/join.H"
 #include "haskell/ids.H"       // for tuple_name
 #include "util/set.H"          // for includes( , )
@@ -13,6 +14,63 @@ namespace views = ranges::views;
 
 namespace Haskell
 {
+
+bool Type::operator==(const Type& t) const
+{
+    if (type_ptr.index() != t.type_ptr.index()) return false;
+
+    if (type_ptr.index() == 0) return true;
+
+    if (is_a<MetaTypeVar>())
+        return as_<MetaTypeVar>() == t.as_<MetaTypeVar>();
+    else if (is_a<TypeVar>())
+        return as_<TypeVar>() == t.as_<TypeVar>();
+    else if (is_a<TypeCon>())
+        return as_<TypeCon>() == t.as_<TypeCon>();
+    else if (is_a<TupleType>())
+        return as_<TupleType>() == t.as_<TupleType>();
+    else if (is_a<ListType>())
+        return as_<ListType>() == t.as_<ListType>();
+    else if (is_a<TypeApp>())
+        return as_<TypeApp>() == t.as_<TypeApp>();
+    else if (is_a<ConstrainedType>())
+        return as_<ConstrainedType>() == t.as_<ConstrainedType>();
+    else if (is_a<ForallType>())
+        return as_<ForallType>() == t.as_<ForallType>();
+    else if (is_a<StrictLazyType>())
+        return as_<StrictLazyType>() == t.as_<StrictLazyType>();
+
+    std::abort();
+}
+
+
+std::string Type::print() const
+{
+    if (type_ptr.index() == 0) return "NOTYPE";
+
+    if (is_a<MetaTypeVar>())
+        return as_<MetaTypeVar>().print();
+    else if (is_a<TypeVar>())
+        return as_<TypeVar>().print();
+    else if (is_a<TypeCon>())
+        return as_<TypeCon>().print();
+    else if (is_a<TupleType>())
+        return as_<TupleType>().print();
+    else if (is_a<ListType>())
+        return as_<ListType>().print();
+    else if (is_a<TypeApp>())
+        return as_<TypeApp>().print();
+    else if (is_a<ConstrainedType>())
+        return as_<ConstrainedType>().print();
+    else if (is_a<ForallType>())
+        return as_<ForallType>().print();
+    else if (is_a<StrictLazyType>())
+        return as_<StrictLazyType>().print();
+    else if (is_a<FieldDecls>())
+        return as_<FieldDecls>().print();
+
+    std::abort();
+}
 
 Type make_arrow_type(const Type& t1, const Type& t2)
 {
@@ -135,7 +193,7 @@ Type remove_top_gen(Type type)
     return type;
 }
 
-string parenthesize_type(const expression_ref& t)
+string parenthesize_type(const Hs::Type& t)
 {
     if (t.is_a<TypeCon>() or t.is_a<MetaTypeVar>() or t.is_a<TypeVar>() or t.is_a<TupleType>() or t.is_a<ListType>())
         return t.print();
@@ -160,15 +218,6 @@ string MetaTypeVar::print_with_kind() const
         uname = "("+uname + " :: " + (*kind).print()+")";
 
     return uname;
-}
-
-bool MetaTypeVar::operator==(const Object& o) const
-{
-    auto T = dynamic_cast<const MetaTypeVar*>(&o);
-    if (not T)
-        return false;
-
-    return (*this) == *T;
 }
 
 bool MetaTypeVar::operator==(const MetaTypeVar& tv) const
@@ -218,15 +267,6 @@ string TypeVar::print_with_kind() const
     return uname;
 }
 
-bool TypeVar::operator==(const Object& o) const
-{
-    auto T = dynamic_cast<const TypeVar*>(&o);
-    if (not T)
-        return false;
-
-    return (*this) == *T;
-}
-
 bool TypeVar::operator==(const TypeVar& tv) const
 {
     return index == tv.index and unloc(name) == unloc(tv.name);
@@ -258,15 +298,6 @@ string TypeCon::print_with_kind() const
         return unloc(name);
 }
 
-bool TypeCon::operator==(const Object& o) const
-{
-    auto T = dynamic_cast<const TypeCon*>(&o);
-    if (not T)
-        return false;
-
-    return (*this) == *T;
-}
-
 bool TypeCon::operator==(const TypeCon& tc) const
 {
     return unloc(name) == unloc(tc.name);
@@ -277,6 +308,11 @@ bool TypeCon::operator<(const TypeCon& tc) const
     int cmp = unloc(name).compare(unloc(tc.name));
 
     return (cmp < 0);
+}
+
+bool TypeApp::operator==(const TypeApp& t) const
+{
+    return (head == t.head) and (arg == t.arg);
 }
 
 string TypeApp::print() const
@@ -307,6 +343,11 @@ Type make_tyapps(const Type& T0, const std::vector<Type>& args)
     return T;
 }
 
+bool ForallType::operator==(const ForallType& t) const
+{
+    std::abort();
+}
+
 string ForallType::print() const
 {
     vector<string> binders;
@@ -331,6 +372,11 @@ Type add_forall_vars(const std::vector<TypeVar>& type_vars, const Type& type)
     }
     else
         return ForallType(type_vars, type);
+}
+
+bool ConstrainedType::operator==(const ConstrainedType& t) const
+{
+    return context == t.context and type == t.type;
 }
 
 string ConstrainedType::print() const
@@ -358,6 +404,16 @@ Type add_constraints(const Context& context, const Type& type)
     return add_constraints(context.constraints, type);
 }
 
+bool Context::operator==(const Context& c) const
+{
+    if (constraints.size() != c.constraints.size()) return false;
+
+    for(int i=0; i<constraints.size();i++)
+        if (constraints[i] != c.constraints[i]) return false;
+
+    return true;
+}
+
 std::string Context::print() const
 {
     vector<string> cs;
@@ -371,10 +427,25 @@ std::string Context::print() const
         return "(" + result + ")";
 }
 
+bool StrictLazyType::operator==(const StrictLazyType& t) const
+{
+    return strict_lazy == t.strict_lazy and type == t.type;
+}
+
 string StrictLazyType::print() const
 {
     string mark = (strict_lazy == StrictLazy::strict)?"!":"~";
     return mark + type.print();
+}
+
+bool TupleType::operator==(const TupleType& t) const
+{
+    if (element_types.size() != t.element_types.size()) return false;
+
+    for(int i=0; i<element_types.size(); i++)
+        if (element_types[i] != t.element_types[i]) return false;
+
+    return true;
 }
 
 string TupleType::print() const
@@ -391,6 +462,11 @@ Type tuple_type(const std::vector<Type>& ts)
         return ts[0];
     else
         return TupleType(ts);
+}
+
+bool ListType::operator==(const ListType& t) const
+{
+    return element_type == t.element_type;
 }
 
 string ListType::print() const

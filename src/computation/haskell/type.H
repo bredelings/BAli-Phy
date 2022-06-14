@@ -1,6 +1,9 @@
 #ifndef HASKELL_TYPE
 #define HASKELL_TYPE
 
+#include <variant>
+#include <iostream>
+
 #include "computation/object.H"
 #include "computation/parser/located.H"
 
@@ -9,24 +12,100 @@
 
 namespace Haskell
 {
+    struct MetaTypeVar;
+    struct TypeVar;
+    struct TypeCon;
+    struct TupleType;
+    struct ListType;
+    struct TypeApp;
+    struct ConstrainedType;
+    struct ForallType;
+    struct StrictLazyType;
+    struct FieldDecls;
+
+    struct Type
+    {
+        std::variant
+        <
+            std::monostate,
+            std::shared_ptr<const MetaTypeVar>,
+            std::shared_ptr<const TypeVar>,
+            std::shared_ptr<const TypeCon>,
+            std::shared_ptr<const TupleType>,
+            std::shared_ptr<const ListType>,
+            std::shared_ptr<const TypeApp>,
+            std::shared_ptr<const ConstrainedType>,
+            std::shared_ptr<const ForallType>,
+            std::shared_ptr<const StrictLazyType>,
+            std::shared_ptr<const FieldDecls>
+        >
+        type_ptr;
+
+        std::string print() const;
+
+        bool empty() const
+        {
+            return std::holds_alternative<std::monostate>(type_ptr);
+        }
+
+        template <typename T>
+        const T* to() const
+        {
+            if (std::holds_alternative<std::shared_ptr<const T>>(type_ptr))
+                return std::get<std::shared_ptr<const T>>(type_ptr).get();
+            else
+                return nullptr;
+        }
+
+
+        bool operator==(const Type& t) const;
+        bool operator!=(const Type& t) const {return not (*this == t);}
+
+        template <typename T>
+        bool is_a() const {return to<T>();}
+
+        template <typename T>
+        const T& as_() const {return *std::get<std::shared_ptr<const T>>(type_ptr);}
+
+        Type& operator=(const Type& t)
+        {
+            auto tmp = type_ptr;
+            type_ptr = t.type_ptr;
+
+            return *this;
+        }
+
+        template <typename T>
+        Type& operator=(const T& t)
+        {
+            auto tmp = type_ptr;
+            type_ptr = std::make_shared<const T>(t);
+            return *this;
+        }
+
+        Type() = default;
+        Type(const Type& t) = default;
+
+        template <typename T>
+        Type(const T& t):type_ptr( std::make_shared<const T>(t) ) {}
+
+        ~Type() = default;
+    };
 
     typedef expression_ref Kind;
-    typedef expression_ref Type;
 
-    std::string parenthesize_type(const expression_ref& t);
+    std::string parenthesize_type(const Type& t);
 
-struct MetaTypeVar: public Object
+struct MetaTypeVar
 {
     Located<std::string> name;
     std::optional<int> index;
 
     std::optional<Kind> kind;
 
-    bool operator==(const Object&) const;
     bool operator==(const MetaTypeVar&) const;
     bool operator<(const MetaTypeVar&) const;
 
-    MetaTypeVar* clone() const { return new MetaTypeVar(*this);}
     std::string print() const;
     std::string print_with_kind() const;
 
@@ -35,9 +114,14 @@ struct MetaTypeVar: public Object
     MetaTypeVar(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
 };
 
+inline std::ostream& operator<<(std::ostream& o,const Type& t)
+{
+    return o<<t.print();
+}
+
 enum class typevar_info {other, rigid};
 
-struct TypeVar: public Object
+struct TypeVar
 {
     Located<std::string> name;
     std::optional<int> index;
@@ -46,15 +130,9 @@ struct TypeVar: public Object
 
     typevar_info info = typevar_info::other;
 
-//    std::optional<int> level;              // typechecking scope depth
-
-    bool operator==(const Object&) const;
     bool operator==(const TypeVar&) const;
     bool operator<(const TypeVar&) const;
 
-//    int get_level() const;
-
-    TypeVar* clone() const { return new TypeVar(*this);}
     std::string print() const;
     std::string print_with_kind() const;
 
@@ -64,16 +142,14 @@ struct TypeVar: public Object
 };
 
     
-struct TypeCon: public Object
+struct TypeCon
 {
     Located<std::string> name;
     std::optional<Kind> kind;
 
-    bool operator==(const Object&) const;
     bool operator==(const TypeCon&) const;
     bool operator<(const TypeCon&) const;
 
-    TypeCon* clone() const { return new TypeCon(*this);}
     std::string print() const;
     std::string print_with_kind() const;
 
@@ -85,7 +161,8 @@ struct TypeCon: public Object
 struct Context
 {
     std::vector<Type> constraints;
-    Context* clone() const { return new Context(*this);}
+
+    bool operator==(const Context& t) const;
 
     std::string print() const;
     Context() = default;
@@ -94,11 +171,12 @@ struct Context
 };
 
 
-struct TupleType: public Object
+struct TupleType
 {
     std::vector<Type> element_types;
 
-    TupleType* clone() const { return new TupleType(*this);}
+    bool operator==(const TupleType& t) const;
+
     std::string print() const;
     TupleType(const std::vector<Type>& v):element_types(v) {
         assert(v.size() != 1);
@@ -107,21 +185,23 @@ struct TupleType: public Object
 
 Type tuple_type(const std::vector<Type>& v);
 
-struct ListType: public Object
+struct ListType
 {
     Type element_type;
 
-    ListType* clone() const { return new ListType(*this);}
+    bool operator==(const ListType& t) const;
+
     std::string print() const;
     ListType(const Type& t):element_type(t) {};
 };
 
-struct TypeApp: public Object
+struct TypeApp
 {
     Type head;
     Type arg;
 
-    TypeApp* clone() const { return new TypeApp(*this);}
+    bool operator==(const TypeApp& t) const;
+
     std::string print() const;
     TypeApp(const Type& t1, const Type& t2):head(t1), arg(t2) {}
 };
@@ -139,24 +219,24 @@ Type make_tyapps(const Type& T0, const std::vector<T>& args)
     return make_tyapps(T0, type_args);
 }
 
-struct ForallType: public Object
+struct ForallType
 {
     std::vector<TypeVar> type_var_binders;
     Type type;
 
-    ForallType* clone() const { return new ForallType(*this);}
+    bool operator==(const ForallType& t) const;
     std::string print() const;
     ForallType(const std::vector<TypeVar>& tvb, const Type& t):type_var_binders(tvb), type(t) {}
 };
 
 Type add_forall_vars(const std::vector<TypeVar>& type_vars, const Type& type);
 
-struct ConstrainedType: public Object
+struct ConstrainedType
 {
     Context context;
     Type type;
 
-    ConstrainedType* clone() const { return new ConstrainedType(*this);}
+    bool operator==(const ConstrainedType& t) const;
     std::string print() const;
     ConstrainedType(const Context& c, const Type& t):context(c), type(t) {}
 };
@@ -166,12 +246,12 @@ Type add_constraints(const Context& constraints, const Type& type);
 
 enum class StrictLazy {strict,lazy};
 
-struct StrictLazyType: public Object
+struct StrictLazyType
 {
     StrictLazy strict_lazy;
     Type type;
 
-    StrictLazyType* clone() const { return new StrictLazyType(*this);}
+    bool operator==(const StrictLazyType& t) const;
     std::string print() const;
     StrictLazyType(const StrictLazy& sl, const Type& t):strict_lazy(sl), type(t) {}
 };

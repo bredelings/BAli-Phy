@@ -20,19 +20,20 @@
   # include "computation/expression/tuple.H"
   # include "computation/haskell/haskell.H"
   # include "computation/typecheck/types.H"
+  # include "computation/typecheck/kind.H"
 
   class driver;
 
   std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
-  Hs::Kind make_kind(const Hs::Type& kind);
-  Hs::Constructor make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const expression_ref& typeish);
-  Hs::InstanceDecl make_instance_decl(const Located<expression_ref>& type, const std::optional<Located<Hs::Binds>>& decls);
-  Hs::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type);
+  Hs::Kind type_to_kind(const Hs::Type& kind);
+  Hs::Constructor make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::Type& typeish);
+  Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& type, const std::optional<Located<Hs::Binds>>& decls);
+  Hs::TypeSynonymDecl make_type_synonym(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
-                                                  const expression_ref& header, const std::vector<Hs::Constructor>& constrs);
-  Hs::ClassDecl make_class_decl(const Hs::Context& context, const expression_ref& header, const std::optional<Located<Hs::Binds>>& decls);
-  Hs::Context make_context(const expression_ref& context);
+                                             const Hs::Type& header, const std::vector<Hs::Constructor>& constrs);
+  Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const std::optional<Located<Hs::Binds>>& decls);
+  Hs::Context make_context(const Hs::Type& context);
 
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
@@ -253,7 +254,7 @@
  */
 %type <Hs::DataOrNewtype> data_or_newtype
  /* %type <void> opt_kind_sig */
-%type <std::pair<Hs::Context,expression_ref>> tycl_hdr
+%type <std::pair<Hs::Context,Hs::Type>> tycl_hdr
 /* %type <void> capi_ctype 
 
 
@@ -285,27 +286,27 @@
 %type <void> stringlist
 %type <expression_ref> opt_sig
  */
-%type <expression_ref> opt_tyconsig
-%type <expression_ref> sigtype
-%type <expression_ref> sigtypedoc
+%type <Hs::Type> opt_tyconsig
+%type <Hs::Type> sigtype
+%type <Hs::Type> sigtypedoc
 %type <std::vector<Hs::Var>> sig_vars
-%type <std::vector<expression_ref>> sigtypes1
+%type <std::vector<Hs::Type>> sigtypes1
 
 %type <Hs::StrictLazy> strict_mark
 %type <Hs::StrictLazy> strictness
-%type <expression_ref> ctype
-%type <expression_ref> ctypedoc
+%type <Hs::Type> ctype
+%type <Hs::Type> ctypedoc
 %type <Hs::Context> context
 %type <Hs::Context> context_no_ops
-%type <expression_ref> type
-%type <expression_ref> typedoc
-%type <expression_ref> btype
-%type <std::vector<expression_ref>> btype_no_ops
-%type <std::vector<expression_ref>> tyapps
-%type <expression_ref> tyapp
-%type <expression_ref> atype_docs
-%type <expression_ref> atype
-%type <expression_ref> inst_type
+%type <Hs::Type> type
+%type <Hs::Type> typedoc
+%type <Hs::Type> btype
+%type <std::vector<Hs::Type>> btype_no_ops
+%type <std::vector<Hs::Type>> tyapps
+%type <Hs::Type> tyapp
+%type <Hs::Type> atype_docs
+%type <Hs::Type> atype
+%type <Hs::Type> inst_type
  /*
 %type <void> deriv_types
  */
@@ -322,13 +323,14 @@
 %type <void> fd
 %type <void> varids0
  */
+ //%type <Hs::Kind> kind
 %type <expression_ref> kind
 
 %type <std::vector<Hs::Constructor>> constrs
 %type <std::vector<Hs::Constructor>> constrs1
 %type <Hs::Constructor> constr
 %type <std::vector<Hs::TypeVar>> forall
-%type <expression_ref> constr_stuff
+%type <Hs::Type> constr_stuff
 %type <std::vector<Hs::FieldDecl>> fielddecls
 %type <std::vector<Hs::FieldDecl>> fielddecls1
 %type <Hs::FieldDecl> fielddecl
@@ -913,7 +915,7 @@ varids0:    %empty
 
 /* ------------- Kinds ------------------------------------------- */
 
-kind: ctype  {$$ = make_kind($1);}
+kind: ctype  {$$ = type_to_kind($1);}
 
 
 
@@ -1468,7 +1470,7 @@ pair<vector<Hs::ImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::I
 }
 
 // See PostProcess.hs:checkTyClHdr
-std::tuple<string, vector<expression_ref>>
+std::tuple<string, vector<Hs::Type>>
 check_type_or_class_header(const Hs::Type& type)
 {
     auto [type_head, type_args] = Hs::decompose_type_apps(type);
@@ -1498,14 +1500,14 @@ vector<Hs::TypeVar> check_all_type_vars(const vector<Hs::Type>& types)
     return type_vars;
 }
 
-Hs::TypeSynonymDecl make_type_synonym(const Located<expression_ref>& lhs_type, const Located<expression_ref>& rhs_type)
+Hs::TypeSynonymDecl make_type_synonym(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type)
 {
     auto [name, type_args] = check_type_or_class_header(unloc(lhs_type));
     return {name, check_all_type_vars(type_args), rhs_type};
 }
 
 Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
-                                                const expression_ref& header, const vector<Hs::Constructor>& constrs)
+                                           const Hs::Type& header, const vector<Hs::Constructor>& constrs)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     if (d_or_n == Hs::DataOrNewtype::newtype and constrs.size() != 1)
@@ -1513,7 +1515,7 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
     return {d_or_n, name, check_all_type_vars(type_args), context, constrs};
 }
 
-Hs::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, const optional<Located<Hs::Binds>>& binds)
+Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& ltype, const optional<Located<Hs::Binds>>& binds)
 {
     // GHC stores the instance as a polytype?
     // This would seem to allow (instance forall a.Eq a => forall a.Eq [a] x y ....)
@@ -1532,7 +1534,7 @@ Hs::InstanceDecl make_instance_decl(const Located<expression_ref>& ltype, const 
     return {context, type, binds};
 }
 
-Hs::ClassDecl make_class_decl(const Hs::Context& context, const expression_ref& header, const optional<Located<Hs::Binds>>& binds)
+Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const optional<Located<Hs::Binds>>& binds)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     return {name, check_all_type_vars(type_args), context, binds};
@@ -1542,7 +1544,7 @@ Hs::ClassDecl make_class_decl(const Hs::Context& context, const expression_ref& 
 // nothing
 // | ctype => header
 // | ( ctypes2 ) => header
-Hs::Context make_context(const expression_ref& context)
+Hs::Context make_context(const Hs::Type& context)
 {
     vector<Hs::Type> constraints;
     if (context.is_a<Hs::TupleType>())
@@ -1555,34 +1557,45 @@ Hs::Context make_context(const expression_ref& context)
     return {constraints};
 }
 
-bool check_kind(const Hs::Kind& kind)
+std::optional<Hs::Kind> type_to_kind_(const Hs::Type& kind)
 {
     auto [kind_head, kind_args] = Hs::decompose_type_apps(kind);
 
-    if (not kind_head.is_a<Hs::TypeCon>()) return false;
-
+    if (not kind_head.is_a<Hs::TypeCon>()) return {};
     auto V = kind_head.as_<Hs::TypeCon>();
+    auto head_name = unloc(V.name);
+
     if (kind_args.empty())
     {
-        return (unloc(V.name) == "*");
+        if (head_name == "*")
+            return kind_star();
+        else
+            return {};
     }
     else if (kind_args.size() == 2)
     {
-        return (unloc(V.name) == "->") and check_kind(kind_args[0]) and check_kind(kind_args[1]);
+        auto k1 = type_to_kind_(kind_args[0]);
+        auto k2 = type_to_kind_(kind_args[1]);
+        if (k1 and k2 and head_name == "->")
+            return kind_arrow(*k1, *k2);
+        else
+            return {};
     }
     else
-        return false;
+        return {};
 }
 
-Hs::Kind make_kind(const Hs::Kind& kind)
+Hs::Kind type_to_kind(const Hs::Type& kind)
 {
-    if (not check_kind(kind))
+    auto maybe_kind = type_to_kind_(kind);
+
+    if (not maybe_kind)
         throw myexception()<<"Kind '"<<kind<<"' is malformed";
 
-    return kind;
+    return *maybe_kind;
 }
 
-optional<pair<string, Hs::FieldDecls>> is_record_con(const expression_ref& typeish)
+optional<pair<string, Hs::FieldDecls>> is_record_con(const Hs::Type& typeish)
 {
     auto [head,args] = Hs::decompose_type_apps(typeish);
 
@@ -1595,7 +1608,7 @@ optional<pair<string, Hs::FieldDecls>> is_record_con(const expression_ref& typei
     return {{unloc(head.as_<Hs::TypeCon>().name), args[0].as_<Hs::FieldDecls>()}};
 }
 
-optional<pair<string, std::vector<expression_ref>>> is_normal_con(const expression_ref& typeish)
+optional<pair<string, std::vector<Hs::Type>>> is_normal_con(const Hs::Type& typeish)
 {
     if (is_record_con(typeish)) return {};
 
@@ -1607,7 +1620,7 @@ optional<pair<string, std::vector<expression_ref>>> is_normal_con(const expressi
     return {{unloc(head.as_<Hs::TypeCon>().name), args}};
 }
 
-Hs::Constructor make_constructor(const vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const expression_ref& typeish)
+Hs::Constructor make_constructor(const vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::Type& typeish)
 {
     if (auto constr = is_record_con(typeish))
     {
