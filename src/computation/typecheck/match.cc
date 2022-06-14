@@ -18,7 +18,7 @@ typechecker_state::infer_type(Hs::GuardedRHS& rhs)
     {
         auto [body, type] = infer_type(rhs.body);
         rhs.body = body;
-        return {rhs, type};
+        return type;
     }
 
     // Fig 25. GUARD
