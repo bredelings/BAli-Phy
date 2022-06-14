@@ -234,7 +234,8 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type infer_type(const Hs::Con& con);
 
-    Hs::Type infer_type_apply(expression_ref& E);
+    void tc_apply(expression_ref& app_exp, Expected& E);
+    Hs::Type infer_type_apply(expression_ref& app_exp);
 
     Hs::Type
     infer_type(Hs::LambdaExp&);

@@ -45,23 +45,23 @@ Hs::Type typechecker_state::infer_type(const Hs::Con& con)
     return result_type;
 }
 
-Hs::Type typechecker_state::infer_type_apply(expression_ref& E)
+void typechecker_state::tc_apply(expression_ref& app_exp, Expected& exp_type)
 {
-    assert(E.size() >= 2);
+    assert(app_exp.size() >= 2);
 
-    expression_ref f = E.sub()[0];
+    expression_ref f = app_exp.sub()[0];
     auto t1 = infer_type(f);
 
     vector<expression_ref> args;
-    for(int i=1;i<E.size();i++)
+    for(int i=1;i<app_exp.size();i++)
     {
         auto arg_result_types = unify_function(t1);
         if (not arg_result_types)
-            throw myexception()<<"Applying "<<E.size()<<" arguments to function "<<f.print()<<", but it only takes "<<i-1<<"!";
+            throw myexception()<<"Applying "<<(app_exp.size()-1)<<" arguments to function "<<f.print()<<", but it only takes "<<i-1<<"!";
 
         auto [expected_arg_type, result_type] = *arg_result_types;
 
-        expression_ref arg = E.sub()[i];
+        expression_ref arg = app_exp.sub()[i];
         auto arg_type = infer_type(arg);
         args.push_back(arg);
 
@@ -76,7 +76,7 @@ Hs::Type typechecker_state::infer_type_apply(expression_ref& E)
             header<<"but got type\n\n";
             header<<"   "<<apply_current_subst(arg_type)<<"\n\n";
             header<<"with argument\n\n";
-            header<<"   "<<E.sub()[i]<<"\n\n";
+            header<<"   "<<app_exp.sub()[i]<<"\n\n";
 
             ex.prepend(header.str());
             throw;
@@ -84,9 +84,20 @@ Hs::Type typechecker_state::infer_type_apply(expression_ref& E)
 
         t1 = result_type;
     }
-    E = apply_expression(f, args);
+    app_exp = apply_expression(f, args);
 
-    return t1;
+    if (exp_type.infer())
+        exp_type.infer_type() = t1;
+    else
+        unify(t1, exp_type.check_type());
+}
+
+Hs::Type typechecker_state::infer_type_apply(expression_ref& app_exp)
+{
+    Hs::Type result_type;
+    Expected exp_type{Infer(result_type)};
+    tc_apply(app_exp, exp_type);
+    return result_type;
 }
 
 Hs::Type typechecker_state::infer_type(Hs::LetExp& Let)
