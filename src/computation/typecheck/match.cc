@@ -58,14 +58,14 @@ typechecker_state::infer_type(Hs::MultiGuardedRHS rhs)
     return {rhs, type};
 };
 
-tuple<Hs::MRule, Hs::Type>
-typechecker_state::infer_type(Hs::MRule rule)
+Hs::Type
+typechecker_state::infer_type(Hs::MRule& rule)
 {
     if (rule.patterns.empty())
     {
         auto [rhs, type] = infer_type(rule.rhs);
         rule.rhs = rhs;
-        return {rule, type};
+        return type;
     }
     else
     {
@@ -73,17 +73,16 @@ typechecker_state::infer_type(Hs::MRule rule)
 
         auto new_state = copy_add_binders( lve1 );
 
-        // Remove the first pattern in the rule
+        // REMOVE the first pattern in the rule
         rule.patterns.erase(rule.patterns.begin());
 
-        auto [rule2, t2] = new_state.infer_type(rule);
+        auto t2 = new_state.infer_type(rule);
         current_lie() += new_state.current_lie();
 
-        rule2.patterns.insert(rule2.patterns.begin(), pat);
+        // PUT BACK the first pattern in the rule (but the typechecked version)
+        rule.patterns.insert(rule.patterns.begin(), pat);
 
-        Hs::Type type = Hs::make_arrow_type(t1,t2);
-
-        return {rule2, type};
+        return Hs::make_arrow_type(t1,t2);
     }
 }
 
@@ -94,8 +93,7 @@ typechecker_state::infer_type(Hs::Match& m)
 
     for(auto& rule: m.rules)
     {
-        auto [rule1, t1] = infer_type(rule);
-        rule = rule1;
+        auto t1 = infer_type(rule);
         unify(result_type, t1);
     }
 

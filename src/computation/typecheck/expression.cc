@@ -184,9 +184,9 @@ typechecker_state::infer_type(expression_ref E)
     {
         auto Lam = *lam;
         auto rule = Hs::MRule{Lam.args, Lam.body};
-        auto [rule2, t] = infer_type(rule);
-        Lam.args = rule2.patterns;
-        Lam.body = rule2.rhs;
+        auto t = infer_type(rule);
+        Lam.args = rule.patterns;
+        Lam.body = rule.rhs;
         return {Lam, t};
     }
     // LET
