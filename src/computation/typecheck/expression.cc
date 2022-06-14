@@ -103,6 +103,36 @@ Hs::Type typechecker_state::infer_type(Hs::LambdaExp& Lam)
     return t;
 }
 
+std::pair<Hs::Expression,Hs::Type> typechecker_state::infer_type(const Hs::TypedExp& TExp)
+{
+    // 1. So, ( e :: tau ) should be equivalent to ( let x :: tau ; x = e in x )
+    // according to the 2010 report.
+
+    // Example: (\x -> x) :: Num a => a -> a
+    // In this example, we should rewrite this to \dNum -> \x -> x
+
+    // TExp.exp;
+    // TExp.type
+
+    // FIXME: For better error messages, we should inline the code for inferring types of LetExp.
+    //        We will know we will call infer_type_for_single_fundecl_with_sig
+
+    // 2. I think that we end up typechecking TExp.exp the condition that it has type sigma.
+    //    When then in the let body when we see the x, we would need to instantiate the type.
+
+    auto x = get_fresh_Var("tmp", false);
+    Hs::Decls decls;
+    decls.push_back(simple_decl(x,TExp.exp));
+    Hs::Binds binds;
+    // By making a LetExp, we rely on the Let code to handle the type here.
+    binds.signatures.insert({unloc(x.name), TExp.type});
+    binds.push_back(decls);
+    expression_ref E2 = Hs::LetExp({noloc,binds},{noloc,x});
+
+    Hs::Type t = infer_type(E2);
+    return {E2, t};
+}
+
 Hs::Type typechecker_state::infer_type(Hs::CaseExp& Case)
 {
     // 1. Determine object type
@@ -187,28 +217,10 @@ typechecker_state::infer_type(expression_ref& E)
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
-        // So, ( e :: tau ) should be equivalent to ( let x :: tau ; x = e in x )
-        // according to the 2010 report.
-
-        // Example: (\x -> x) :: Num a => a -> a
-        // In this example, we should rewrite this to \dNum -> \x -> x
-
-        // texp->exp;
-        // texp->type
-
-        // FIXME: For better error messages, we should inline the code for inferring types of LetExp.
-        //        We will know we will call infer_type_for_single_fundecl_with_sig
-
-        auto x = get_fresh_Var("tmp", false);
-        Hs::Decls decls;
-        decls.push_back(simple_decl(x,texp->exp));
-        Hs::Binds binds;
-        // By making a LetExp, we rely on the Let code to handle the type here.
-        binds.signatures.insert({unloc(x.name), texp->type});
-        binds.push_back(decls);
-        E = Hs::LetExp({noloc,binds},{noloc,x});
-
-        return infer_type(E);
+        auto TExp = *texp;
+        auto type = infer_type(TExp);
+        E = TExp;
+        return type;
     }
     else if (auto l = E.to<Hs::List>())
     {
