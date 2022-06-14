@@ -42,7 +42,7 @@ Hs::Type alphabetize_type(const Hs::Type& type, map<Haskell::TypeVar,Haskell::Ty
         {
             rec = s.insert({*tv, alphabetized_type_var(index++)}).first;
         }
-        return expression_ref(rec->second);
+        return rec->second;
     }
     else if (type.is_a<Haskell::TypeCon>())
         return type;
