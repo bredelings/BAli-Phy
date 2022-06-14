@@ -610,7 +610,7 @@ bool same_type(const Hs::Type& t1, const Hs::Type& t2)
         throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle unification for strict/lazy types?";
     }
     else
-        return {};
+        return false;
 }
 
 
