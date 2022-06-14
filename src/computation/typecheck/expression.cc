@@ -54,7 +54,7 @@ Hs::Type typechecker_state::infer_type(const Hs::Con& con)
     return result_type;
 }
 
-void typechecker_state::tc_apply(expression_ref& app_exp, Expected& exp_type)
+void typechecker_state::tcRho_apply(expression_ref& app_exp, const Expected& exp_type)
 {
     assert(app_exp.size() >= 2);
 
@@ -101,12 +101,16 @@ void typechecker_state::tc_apply(expression_ref& app_exp, Expected& exp_type)
         unify(t1, exp_type.check_type());
 }
 
-Hs::Type typechecker_state::infer_type_apply(expression_ref& app_exp)
+Hs::Type typechecker_state::inferRho_apply(expression_ref& app_exp)
 {
     Hs::Type result_type;
-    Expected exp_type{Infer(result_type)};
-    tc_apply(app_exp, exp_type);
+    tcRho_apply(app_exp, Infer(result_type));
     return result_type;
+}
+
+void typechecker_state::checkRho_apply(expression_ref& app_exp, const Hs::Type& exp_type)
+{
+    tcRho_apply(app_exp, Check(exp_type));
 }
 
 Hs::Type typechecker_state::infer_type(Hs::LetExp& Let)
@@ -282,7 +286,7 @@ typechecker_state::infer_type(expression_ref& E)
     else if (is_apply_exp(E))
     {
         assert(E.size() >= 2);
-        auto t = infer_type_apply(E);
+        auto t = inferRho_apply(E);
         return t;
     }
     // LAMBDA

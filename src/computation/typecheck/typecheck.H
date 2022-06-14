@@ -53,6 +53,7 @@ struct global_tc_state
 struct Check
 {
     Hs::Type type;
+    Check(const Hs::Type& t):type(t) {}
 };
 
 struct Infer
@@ -69,7 +70,7 @@ public:
     bool infer() const {return std::holds_alternative<Infer>(value);}
 
     const Hs::Type& check_type() const {return std::get<Check>(value).type;}
-          Hs::Type& infer_type()       {return std::get<Infer>(value).type;}
+          Hs::Type& infer_type() const {return std::get<Infer>(value).type;}
 
     Expected(const Check& c):value(c) {}
     Expected(const Infer& i):value(i) {}
@@ -234,8 +235,9 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type infer_type(const Hs::Con& con);
 
-    void tc_apply(expression_ref& app_exp, Expected& E);
-    Hs::Type infer_type_apply(expression_ref& app_exp);
+    void tcRho_apply(expression_ref& app_exp, const Expected& E);
+    Hs::Type inferRho_apply(expression_ref& app_exp);
+    void checkRho_apply(expression_ref& app_exp, const Hs::Type& exp_type);
 
     Hs::Type
     infer_type(Hs::LambdaExp&);
