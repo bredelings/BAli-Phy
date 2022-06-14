@@ -16,8 +16,7 @@ typechecker_state::infer_type(Hs::GuardedRHS& rhs)
     // Fig 25. GUARD-DEFAULT
     if (rhs.guards.empty())
     {
-        auto [body, type] = infer_type(rhs.body);
-        rhs.body = body;
+        auto type = infer_type(rhs.body);
         return type;
     }
 
