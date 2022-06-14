@@ -19,17 +19,16 @@ using std::tuple;
 // * the original figure doesn't have let quals.
 // * the original figure seems to assume that quals only occur in list comprehensions?
 
-vector<Hs::Qual>
-typechecker_state::infer_quals_type(vector<Hs::Qual> quals)
+void
+typechecker_state::infer_quals_type(vector<Hs::Qual>& quals)
 {
     local_value_env binders;
     for(auto& qual: quals)
-        qual = infer_qual_type(qual);
-    return quals;
+        infer_qual_type(qual);
 }
 
-Hs::Qual
-typechecker_state::infer_qual_type(const Hs::Qual& qual)
+void
+typechecker_state::infer_qual_type(Hs::Qual& qual)
 {
     // FILTER
     if (auto sq = qual.to<Hs::SimpleQual>())
@@ -37,7 +36,7 @@ typechecker_state::infer_qual_type(const Hs::Qual& qual)
         auto SQ = *sq;
         auto cond_type = infer_type(SQ.exp);
         unify( cond_type, bool_type() );
-        return SQ;
+        qual = SQ;
     }
     // GENERATOR.
     else if (auto pq = qual.to<Hs::PatQual>())
@@ -52,28 +51,28 @@ typechecker_state::infer_qual_type(const Hs::Qual& qual)
 
         add_binders(lve);
 
-        return PQ;
+        qual = PQ;
     }
     else if (auto lq = qual.to<Hs::LetQual>())
     {
         auto LQ = *lq;
         unloc(LQ.binds) = infer_type_for_binds(unloc(LQ.binds));
-        return LQ;
+        qual = LQ;
     }
     else
         std::abort();
 }
 
 
-Hs::Qual
-typechecker_state::infer_guard_type(const Hs::Qual& guard)
+void
+typechecker_state::infer_guard_type(Hs::Qual& guard)
 {
     if (auto sq = guard.to<Hs::SimpleQual>())
     {
         auto SQ = *sq;
         auto cond_type = infer_type(SQ.exp);
         unify( cond_type, bool_type() );
-        return SQ;
+        guard = SQ;
     }
     else if (auto pq = guard.to<Hs::PatQual>())
     {
@@ -87,13 +86,13 @@ typechecker_state::infer_guard_type(const Hs::Qual& guard)
 
         add_binders(lve);
 
-        return PQ;
+        guard = PQ;
     }
     else if (auto lq = guard.to<Hs::LetQual>())
     {
         auto LQ = *lq;
         unloc(LQ.binds) = infer_type_for_binds(unloc(LQ.binds));
-        return LQ;
+        guard = LQ;
     }
     else
         std::abort();

@@ -358,7 +358,7 @@ typechecker_state::infer_type(expression_ref& E)
     {
         auto LComp = *lcomp;
         auto state2 = copy_clear_lie();
-        LComp.quals = state2.infer_quals_type(LComp.quals);
+        state2.infer_quals_type(LComp.quals);
         auto exp_type = state2.infer_type(LComp.body);
 
         Hs::Type result_type = Hs::ListType(exp_type);

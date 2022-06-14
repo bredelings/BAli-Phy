@@ -17,8 +17,7 @@ typechecker_state::infer_type(Hs::GuardedRHS& rhs, int i)
     {
         // Fig 25. GUARD
         auto state2 = copy_clear_lie();
-        auto guard1 = state2.infer_guard_type(rhs.guards[i]);
-        rhs.guards[i] = guard1;
+        state2.infer_guard_type(rhs.guards[i]);
 
         auto result_type = state2.infer_type(rhs, i+1);
 

@@ -180,15 +180,12 @@ struct typechecker_state: FreshVarSource
     infer_stmts_type(int i, std::vector<Hs::Qual>& stmts);
 
     // Figure 22.
-    std::vector<Hs::Qual>
-    infer_quals_type(std::vector<Hs::Qual> quals);
+    void infer_quals_type(std::vector<Hs::Qual>& quals);
 
     // Figure 22.
-    Hs::Qual
-    infer_qual_type(const Hs::Qual& qual);
+    void infer_qual_type(Hs::Qual& qual);
 
-    Hs::Qual
-    infer_guard_type(const Hs::Qual& guard);
+    void infer_guard_type(Hs::Qual& guard);
 
     // Figure 24.
     std::tuple<Hs::Type, local_value_env>
