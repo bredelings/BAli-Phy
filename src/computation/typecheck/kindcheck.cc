@@ -192,7 +192,7 @@ Hs::Kind kindchecker_state::kind_check_type(Hs::Type& t)
 
         unify(kind_star(), kind_check_type(L.element_type));
 
-        t = l;
+        t = L;
         return kind_star();
     }
     else if (auto tup = t.to<Hs::TupleType>())
