@@ -207,13 +207,13 @@ struct typechecker_state: FreshVarSource
     infer_type(expression_ref& exp);
 
     Hs::Type
-    infer_type(Hs::GuardedRHS&);
+    infer_type(Hs::GuardedRHS&, int i=0);
 
     Hs::Type
     infer_type(Hs::MultiGuardedRHS&);
 
     Hs::Type
-    infer_type(Hs::MRule&);
+    infer_type(Hs::MRule&, int i=0);
 
     Hs::Type
     infer_type(Hs::Match&);

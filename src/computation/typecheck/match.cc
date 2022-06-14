@@ -11,26 +11,23 @@ using std::tuple;
 
 // Figure 25. Rules for match, mrule, and grhs
 Hs::Type
-typechecker_state::infer_type(Hs::GuardedRHS& rhs)
+typechecker_state::infer_type(Hs::GuardedRHS& rhs, int i)
 {
-    // Fig 25. GUARD-DEFAULT
-    if (rhs.guards.empty())
+    if (i < rhs.guards.size())
     {
-        auto type = infer_type(rhs.body);
-        return type;
+        // Fig 25. GUARD
+        auto state2 = copy_clear_lie();
+        auto guard1 = state2.infer_guard_type(rhs.guards[i]);
+        rhs.guards[i] = guard1;
+
+        auto result_type = state2.infer_type(rhs, i+1);
+
+        current_lie() += state2.current_lie();
+
+        return result_type;
     }
-
-    // Fig 25. GUARD
-    auto state2 = copy_clear_lie();
-    auto guard1 = state2.infer_guard_type(rhs.guards[0]);
-
-    rhs.guards.erase(rhs.guards.begin());
-    auto result_type = state2.infer_type(rhs);
-    rhs.guards.insert(rhs.guards.begin(), guard1);
-
-    current_lie() += state2.current_lie();
-
-    return result_type;
+    else
+        return infer_type(rhs.body);
 }
 
 // Fig 25. GUARD-OR
@@ -55,28 +52,21 @@ typechecker_state::infer_type(Hs::MultiGuardedRHS& rhs)
 };
 
 Hs::Type
-typechecker_state::infer_type(Hs::MRule& rule)
+typechecker_state::infer_type(Hs::MRule& rule, int i)
 {
-    if (rule.patterns.empty())
-        return infer_type(rule.rhs);
-    else
+    if (i < rule.patterns.size())
     {
-        auto [t1, lve1] = infer_pattern_type(rule.patterns.front());
-        auto pat = rule.patterns.front();
+        auto [t1, lve1] = infer_pattern_type(rule.patterns[i]);
 
         auto new_state = copy_add_binders( lve1 );
 
-        // REMOVE the first pattern in the rule
-        rule.patterns.erase(rule.patterns.begin());
-
-        auto t2 = new_state.infer_type(rule);
+        auto t2 = new_state.infer_type(rule, i+1);
         current_lie() += new_state.current_lie();
-
-        // PUT BACK the first pattern in the rule (but the typechecked version)
-        rule.patterns.insert(rule.patterns.begin(), pat);
 
         return Hs::make_arrow_type(t1,t2);
     }
+    else
+        return infer_type(rule.rhs);
 }
 
 Hs::Type
