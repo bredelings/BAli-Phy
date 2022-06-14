@@ -14,7 +14,7 @@ Hs::Type typechecker_state::infer_type(Hs::LetExp& Let)
 {
     auto state2 = copy_clear_lie();
 
-    unloc(Let.binds) = state2.infer_type_for_binds(unloc(Let.binds));
+    state2.infer_type_for_binds(unloc(Let.binds));
 
     // 2. Compute type of let body
     auto t_body = state2.infer_type(unloc(Let.body));

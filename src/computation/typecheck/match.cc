@@ -38,7 +38,7 @@ typechecker_state::infer_type(Hs::MultiGuardedRHS& rhs)
 
     auto state2 = copy_clear_lie();
     if (rhs.decls)
-        unloc(*rhs.decls) = state2.infer_type_for_binds(unloc(*rhs.decls)); 
+        state2.infer_type_for_binds(unloc(*rhs.decls)); 
 
     for(auto& guarded_rhs: rhs.guarded_rhss)
     {

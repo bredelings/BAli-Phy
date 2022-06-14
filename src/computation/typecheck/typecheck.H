@@ -236,10 +236,9 @@ struct typechecker_state: FreshVarSource
     global_value_env infer_type_for_sigs(signature_env& signatures) const;
 
     // Figures 13, 14, 15?
-    Hs::Binds infer_type_for_binds_top(const Hs::Binds& binds);
+    void infer_type_for_binds_top(Hs::Binds& binds);
 
-    Hs::Binds
-    infer_type_for_binds(Hs::Binds binds, bool is_top_level = false);
+    Hs::Binds infer_type_for_binds(Hs::Binds binds, bool is_top_level = false);
 
     void
     check_type_synonyms(const Hs::Decls& decls);
