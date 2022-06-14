@@ -69,8 +69,6 @@ typechecker_state::infer_type_for_binds(Hs::Binds& binds, bool is_top_level)
 
     for(auto& decls: binds)
         decls = infer_type_for_decls(binds.signatures, decls, is_top_level);
-
-    return binds;
 }
 
 value_env remove_sig_binders(value_env binder_env, const signature_env& signatures)
