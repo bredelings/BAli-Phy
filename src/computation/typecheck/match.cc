@@ -87,8 +87,8 @@ typechecker_state::infer_type(Hs::MRule rule)
     }
 }
 
-tuple<Hs::Match, Hs::Type>
-typechecker_state::infer_type(Hs::Match m)
+Hs::Type
+typechecker_state::infer_type(Hs::Match& m)
 {
     Hs::Type result_type = fresh_meta_type_var( kind_star() );
 
@@ -99,7 +99,7 @@ typechecker_state::infer_type(Hs::Match m)
         unify(result_type, t1);
     }
 
-    return {m, result_type};
+    return result_type;
 }
 
 

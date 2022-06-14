@@ -262,8 +262,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 1. typecheck the rhs -> (rhs_type, wanted, body)
         auto tcs2 = copy_clear_lie();
-        auto [match2, rhs_type] = tcs2.infer_type(FD.match);
-        FD.match = match2;
+        auto rhs_type = tcs2.infer_type(FD.match);
         auto unreduced_collected_lie = tcs2.current_lie();
 
         // 2. instantiate the type -> (tvs, givens, rho-type)
@@ -379,8 +378,7 @@ typechecker_state::infer_rhs_type(const expression_ref& decl)
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
-        auto [match, rhs_type] = infer_type(FD.match);
-        FD.match = match;
+        auto rhs_type = infer_type(FD.match);
 
         return {FD, rhs_type};
     }

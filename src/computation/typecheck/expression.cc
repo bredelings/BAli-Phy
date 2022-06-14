@@ -267,11 +267,11 @@ typechecker_state::infer_type(expression_ref E)
             match.rules.push_back(Hs::MRule{{pattern},body});
         }
 
-        auto [match2, match_type] = infer_type(match);
+        auto match_type = infer_type(match);
 
         for(int i=0;i<Case.alts.size();i++)
         {
-            unloc(Case.alts[i]) = {match2.rules[i].patterns[0], match2.rules[i].rhs};
+            unloc(Case.alts[i]) = {match.rules[i].patterns[0], match.rules[i].rhs};
         }
 
         Hs::Type result_type = fresh_meta_type_var( kind_star() );
