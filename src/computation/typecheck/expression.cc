@@ -9,6 +9,50 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
+Hs::Type typechecker_state::infer_type_apply(expression_ref& E)
+{
+    assert(E.size() >= 2);
+
+    expression_ref f = E.sub()[0];
+    auto t1 = infer_type(f);
+
+    vector<expression_ref> args;
+    for(int i=1;i<E.size();i++)
+    {
+        auto arg_result_types = unify_function(t1);
+        if (not arg_result_types)
+            throw myexception()<<"Applying "<<E.size()<<" arguments to function "<<f.print()<<", but it only takes "<<i-1<<"!";
+
+        auto [expected_arg_type, result_type] = *arg_result_types;
+
+        expression_ref arg = E.sub()[i];
+        auto arg_type = infer_type(arg);
+        args.push_back(arg);
+
+        try {
+            unify (arg_type, expected_arg_type);
+        }
+        catch (myexception& ex)
+        {
+            std::ostringstream header;
+            header<<"Argument "<<i<<" of function "<<f<<" expected type\n\n";
+            header<<"   "<<apply_current_subst(expected_arg_type)<<"\n\n";
+            header<<"but got type\n\n";
+            header<<"   "<<apply_current_subst(arg_type)<<"\n\n";
+            header<<"with argument\n\n";
+            header<<"   "<<E.sub()[i]<<"\n\n";
+
+            ex.prepend(header.str());
+            throw;
+        }
+
+        t1 = result_type;
+    }
+    E = apply_expression(f, args);
+
+    return t1;
+}
+
 std::pair<Hs::Expression,Hs::Type> typechecker_state::infer_type(const Hs::Var& x)
 {
     auto& x_name = unloc(x.name);
@@ -172,49 +216,12 @@ typechecker_state::infer_type(expression_ref& E)
         Hs::Type result_type = Hs::TupleType(element_types);
         return result_type;
     }
-    // COMB
+    // APP
     else if (is_apply_exp(E))
     {
         assert(E.size() >= 2);
-
-        expression_ref f = E.sub()[0];
-        auto t1 = infer_type(f);
-
-        vector<expression_ref> args;
-        for(int i=1;i<E.size();i++)
-        {
-            auto arg_result_types = unify_function(t1);
-            if (not arg_result_types)
-                throw myexception()<<"Applying "<<E.size()<<" arguments to function "<<f.print()<<", but it only takes "<<i-1<<"!";
-
-            auto [expected_arg_type, result_type] = *arg_result_types;
-
-            expression_ref arg = E.sub()[i];
-            auto arg_type = infer_type(arg);
-            args.push_back(arg);
-
-            try {
-                unify (arg_type, expected_arg_type);
-            }
-            catch (myexception& ex)
-            {
-                std::ostringstream header;
-                header<<"Argument "<<i<<" of function "<<f<<" expected type\n\n";
-                header<<"   "<<apply_current_subst(expected_arg_type)<<"\n\n";
-                header<<"but got type\n\n";
-                header<<"   "<<apply_current_subst(arg_type)<<"\n\n";
-                header<<"with argument\n\n";
-                header<<"   "<<E.sub()[i]<<"\n\n";
-
-                ex.prepend(header.str());
-                throw;
-            }
-
-            t1 = result_type;
-        }
-        E = apply_expression(f, args);
-
-        return t1;
+        auto t = infer_type_apply(E);
+        return t;
     }
     // LAMBDA
     else if (auto lam = E.to<Hs::LambdaExp>())
@@ -228,11 +235,8 @@ typechecker_state::infer_type(expression_ref& E)
     else if (auto let = E.to<Hs::LetExp>())
     {
         auto Let = *let;
-
         auto t = infer_type(Let);
-
         E = Let;
-
         return t;
     }
     else if (auto con = E.to<Hs::Con>())
