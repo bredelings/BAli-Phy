@@ -38,9 +38,18 @@ std::pair<Hs::Expression,Hs::Type> typechecker_state::infer_type(const Hs::Var& 
 
 Hs::Type typechecker_state::infer_type(const Hs::Con& con)
 {
-    auto [tvs, constraints, result_type] = instantiate( constructor_type(con) );
+    auto sigma = constructor_type(con);
+    auto [tvs, constraints, result_type] = instantiate( sigma );
 
-    assert(constraints.empty());
+    if (not constraints.empty())
+    {
+        myexception e;
+        e<<"Constructor "<<unloc(con.name)<<" has constraints!  Type is:\n\n";
+        e<<"    "<<sigma<<"\n\n";
+        e<<"Constructor constraints are not implemented yet.\n\n";
+
+        throw e;
+    }
 
     return result_type;
 }
