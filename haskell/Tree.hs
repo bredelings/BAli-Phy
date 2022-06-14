@@ -33,10 +33,10 @@ data BranchLengthTreeImp t = BranchLengthTree t (Array Int Double)
 data LabelledTreeImp t = LabelledTree t [String]
 
 -- The array stores the node times
-data RootedTree t => TimeTreeImp t  = TimeTree t (Array Int Double)
+data TimeTreeImp t  = TimeTree t (Array Int Double)
 
 -- The array stores the branch rates
-data TimeTree t => RateTimeTreeImp t = RateTimeTree t (Array Int Double)
+data RateTimeTreeImp t = RateTimeTree t (Array Int Double)
 
 instance Tree TreeImp where
     edgesOutOfNode (Tree nodesArray _ _) node = nodesArray ! node
