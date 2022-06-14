@@ -61,7 +61,8 @@ typechecker_state::infer_type(Hs::MRule& rule)
         return infer_type(rule.rhs);
     else
     {
-        auto [pat, t1, lve1] = infer_pattern_type(rule.patterns.front());
+        auto [t1, lve1] = infer_pattern_type(rule.patterns.front());
+        auto pat = rule.patterns.front();
 
         auto new_state = copy_add_binders( lve1 );
 

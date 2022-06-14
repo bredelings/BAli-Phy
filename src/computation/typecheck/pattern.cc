@@ -9,8 +9,8 @@ using std::set;
 using std::pair;
 using std::optional;
 
-tuple<Hs::Var, Hs::Type, local_value_env>
-typechecker_state::infer_var_pattern_type(Hs::Var V, const map<string, Hs::Type>& sigs)
+tuple<Hs::Type, local_value_env>
+typechecker_state::infer_var_pattern_type(Hs::Var& V, const map<string, Hs::Type>& sigs)
 {
     auto& name = unloc(V.name);
     local_value_env lve;
@@ -31,17 +31,20 @@ typechecker_state::infer_var_pattern_type(Hs::Var V, const map<string, Hs::Type>
     }
     V.type = type;
     lve = lve.insert({name,type});
-    return {V, type, lve};
+    return {type, lve};
 }
 
 // Figure 24. Rules for patterns
-tuple<Hs::Pattern, Hs::Type, local_value_env>
-typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
+tuple<Hs::Type, local_value_env>
+typechecker_state::infer_pattern_type(Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
 {
     // TAUT-PAT
     if (auto v = pat.to<Hs::Var>())
     {
-        return infer_var_pattern_type(*v, sigs);
+        auto V = *v;
+        auto [type,lve] = infer_var_pattern_type(V, sigs);
+        pat = V;
+        return {type, lve};
     }
     // CONSTR-PAT
     else if (auto con = pat.head().to<Hs::Con>())
@@ -52,8 +55,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
 
         for(auto& sub_pat: sub_pats)
         {
-            auto [p1, t1, lve1] = infer_pattern_type(sub_pat, sigs);
-            sub_pat = p1;
+            auto [t1, lve1] = infer_pattern_type(sub_pat, sigs);
             types.push_back(t1);
             lve += lve1;
         }
@@ -69,36 +71,45 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         if (pat.size())
             pat2 = expression_ref(pat.head(), sub_pats);
 
-        return { pat2, type, lve };
+        pat = pat2;
+        return { type, lve };
     }
     // AS-PAT
     else if (auto ap = pat.to<Hs::AsPattern>())
     {
-        auto [p1, t1, lve1] = infer_pattern_type(ap->pattern, sigs);
+        auto Ap = *ap;
 
-        auto [v2, t2, lve2] = infer_var_pattern_type(ap->var.as_<Hs::Var>(), sigs);
+        auto [t1, lve1] = infer_pattern_type(Ap.pattern, sigs);
+
+        auto v2 = Ap.var.as_<Hs::Var>();
+        auto [t2, lve2] = infer_var_pattern_type(v2, sigs);
+        Ap.var = v2;
 
         unify(t1, t2);
-
-        return {Hs::AsPattern(v2, p1), t1, lve1 + lve2};
+        pat = Ap;
+        return { t1, lve1 + lve2};
     }
     // LAZY-PAT
     else if (auto lp = pat.to<Hs::LazyPattern>())
     {
-        auto [p, t, lve] = infer_pattern_type(lp->pattern, sigs);
-        return {Hs::LazyPattern(p), t, lve};
+        auto Lp = *lp;
+        auto [t, lve] = infer_pattern_type(Lp.pattern, sigs);
+        pat = Lp;
+        return {t, lve};
     }
     // not in paper (STRICT-PAT)
     else if (auto sp = pat.to<Hs::StrictPattern>())
     {
-        auto [p, t, lve] = infer_pattern_type(sp->pattern, sigs);
-        return {Hs::StrictPattern(p), t, lve};
+        auto Sp = *sp;
+        auto [t, lve] = infer_pattern_type(Sp.pattern, sigs);
+        pat = Sp;
+        return {t, lve};
     }
     // WILD-PAT
     else if (pat.is_a<Hs::WildcardPattern>())
     {
         auto tv = fresh_meta_type_var( kind_star() );
-        return {pat, tv, {}};
+        return {tv, {}};
     }
     // LIST-PAT
     else if (auto l = pat.to<Hs::List>())
@@ -109,14 +120,14 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         Hs::Type t = fresh_meta_type_var( kind_star() );
         for(auto& element: L.elements)
         {
-            auto [p1, t1, lve1] = infer_pattern_type(element, sigs);
-            element = p1;
+            auto [t1, lve1] = infer_pattern_type(element, sigs);
 
             unify(t, t1);
             lve += lve1;
         }
 
-        return {L, Hs::ListType(t), lve};
+        pat = L;
+        return {Hs::ListType(t), lve};
     }
     // TUPLE-PAT
     else if (auto t = pat.to<Hs::Tuple>())
@@ -126,12 +137,12 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
         local_value_env lve;
         for(auto& element: T.elements)
         {
-            auto [p, t1, lve1] = infer_pattern_type(element, sigs);
-            element = p;
+            auto [t1, lve1] = infer_pattern_type(element, sigs);
             types.push_back(t1);
             lve += lve1;
         }
-        return {T, Hs::TupleType(types), lve};
+        pat = T;
+        return { Hs::TupleType(types), lve};
     }
     else if (auto l = pat.to<Hs::Literal>())
     {
@@ -139,7 +150,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
 
         if (L.is_BoxedInteger())
         {
-            return {L, int_type(), {}};
+            return {int_type(), {}};
         }
 
         // 1. Typecheck (==)
@@ -148,7 +159,7 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
 
         if (L.is_Char())
         {
-            return {L, char_type(), {}};
+            return {char_type(), {}};
         }
         else if (auto i = L.is_Integer())
         {
@@ -162,11 +173,12 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
 
             L.literal = Hs::Integer(*i, fromInteger);
 
-            return {L, result_type, {}};
+            pat = L;
+            return {result_type, {}};
         }
         else if (L.is_String())
         {
-            return {L, Hs::ListType(char_type()), {}};
+            return {Hs::ListType(char_type()), {}};
         }
         else if (auto d = L.is_Double())
         {
@@ -179,8 +191,8 @@ typechecker_state::infer_pattern_type(const Hs::Pattern& pat, const map<string, 
             unify(fromRational_type, Hs::make_arrow_type(double_type(), result_type));
 
             L.literal = Hs::Double(*d, fromRational);
-
-            return {L, result_type, {}};
+            pat = L;
+            return {result_type, {}};
         }
         else
             std::abort();

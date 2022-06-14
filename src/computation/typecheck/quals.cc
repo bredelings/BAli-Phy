@@ -45,9 +45,7 @@ typechecker_state::infer_qual_type(const Hs::Qual& qual)
         auto PQ = *pq;
         // pat <- exp
         auto exp_type = infer_type(PQ.exp);
-        auto [bindpat, pat_type, lve] = infer_pattern_type(PQ.bindpat);
-
-        PQ.bindpat = bindpat;
+        auto [pat_type, lve] = infer_pattern_type(PQ.bindpat);
 
         // type(pat) = type(exp)
         unify(Hs::ListType(pat_type), exp_type);
@@ -81,10 +79,8 @@ typechecker_state::infer_guard_type(const Hs::Qual& guard)
     {
         auto PQ = *pq;
         // pat <- exp
-        auto [bindpat, pat_type, lve] = infer_pattern_type(PQ.bindpat);
+        auto [pat_type, lve] = infer_pattern_type(PQ.bindpat);
         auto exp_type = infer_type(PQ.exp);
-
-        PQ.bindpat = bindpat;
 
         // type(pat) = type(exp)
         unify(pat_type,exp_type);
@@ -139,12 +135,10 @@ typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
         unify(bind_op_type, Hs::make_arrow_type(exp_type, a));
 
         // 4. Typecheck pat
-        auto [bindpat, pat_type, pat_binders] = infer_pattern_type(PQ.bindpat);
+        auto [pat_type, pat_binders] = infer_pattern_type(PQ.bindpat);
 
         auto new_state = copy_clear_lie();
         new_state.add_binders(pat_binders);
-
-        PQ.bindpat = bindpat;
 
         // 5. Typecheck stmts
         auto stmts_type = new_state.infer_stmts_type(i+1, stmts);

@@ -357,15 +357,13 @@ typechecker_state::infer_lhs_type(const expression_ref& decl, const map<string, 
         // If there was a signature, we would have called infer_type_for_single_fundecl_with_sig
         assert(not signatures.count(unloc(FD.v.name)));
 
-        auto [v2, type, lve] = infer_var_pattern_type(FD.v);
-        FD.v = v2;
+        auto [type, lve] = infer_var_pattern_type(FD.v);
         return {FD, type, lve};
     }
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
-        auto [lhs, type, lve] = infer_pattern_type( unloc(PD.lhs), signatures);
-        unloc(PD.lhs) = lhs;
+        auto [type, lve] = infer_pattern_type( unloc(PD.lhs), signatures);
         return {PD, type, lve};
     }
     else
