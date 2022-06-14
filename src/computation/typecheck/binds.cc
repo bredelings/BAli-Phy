@@ -385,8 +385,7 @@ typechecker_state::infer_rhs_type(const expression_ref& decl)
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
-        auto [rhs, rhs_type] = infer_type(PD.rhs);
-        PD.rhs = rhs;
+        auto rhs_type = infer_type(PD.rhs);
 
         return {PD, rhs_type};
     }

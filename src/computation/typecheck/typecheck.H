@@ -209,8 +209,8 @@ struct typechecker_state: FreshVarSource
     std::tuple<Hs::GuardedRHS, Hs::Type>
     infer_type(Hs::GuardedRHS);
 
-    std::tuple<Hs::MultiGuardedRHS, Hs::Type>
-    infer_type(Hs::MultiGuardedRHS);
+    Hs::Type
+    infer_type(Hs::MultiGuardedRHS&);
 
     Hs::Type
     infer_type(Hs::MRule&);

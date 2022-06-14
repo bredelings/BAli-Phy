@@ -37,8 +37,8 @@ typechecker_state::infer_type(Hs::GuardedRHS rhs)
 }
 
 // Fig 25. GUARD-OR
-tuple<Hs::MultiGuardedRHS, Hs::Type>
-typechecker_state::infer_type(Hs::MultiGuardedRHS rhs)
+Hs::Type
+typechecker_state::infer_type(Hs::MultiGuardedRHS& rhs)
 {
     substitution_t s;
     Hs::Type type = fresh_meta_type_var( kind_star() );
@@ -55,18 +55,14 @@ typechecker_state::infer_type(Hs::MultiGuardedRHS rhs)
     }
     current_lie() += state2.current_lie();
     
-    return {rhs, type};
+    return type;
 };
 
 Hs::Type
 typechecker_state::infer_type(Hs::MRule& rule)
 {
     if (rule.patterns.empty())
-    {
-        auto [rhs, type] = infer_type(rule.rhs);
-        rule.rhs = rhs;
-        return type;
-    }
+        return infer_type(rule.rhs);
     else
     {
         auto [pat, t1, lve1] = infer_pattern_type(rule.patterns.front());
