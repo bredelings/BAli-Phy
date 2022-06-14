@@ -503,6 +503,16 @@ typechecker_state typechecker_state::copy_clear_lie() const
 }
 
 
+Hs::Type typechecker_state::apply_current_subst(const Hs::Type& t) const
+{
+    return apply_subst(type_var_to_type(), t);
+}
+
+value_env typechecker_state::apply_current_subst(const value_env& env) const
+{
+    return apply_subst(type_var_to_type(), env);
+}
+
 void typechecker_state::add_binders(const local_value_env& binders)
 {
     gve = plus_prefer_right( gve, binders );

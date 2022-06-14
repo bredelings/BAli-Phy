@@ -136,11 +136,9 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type double_type() const;
 
-    template <typename T>
-    T apply_current_subst(const T& thing) const
-    {
-        return apply_subst(type_var_to_type(), thing);
-    }
+    Hs::Type apply_current_subst(const Hs::Type& t) const;
+
+    value_env apply_current_subst(const value_env& env) const;
 
     bool add_substitution(const u_substitution_t& s);
 
@@ -353,7 +351,7 @@ std::vector<Hs::Var> vars_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type
 std::optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint);
 ID get_class_name_from_constraint(const Hs::Type& constraint);
 
-global_value_env apply_subst(const u_substitution_t& s, const value_env& env1);
+value_env apply_subst(const u_substitution_t& s, const value_env& env1);
 
 std::map<ID, Hs::Match> get_instance_methods(const Hs::Binds& decls, const global_value_env& members, const std::string& class_name);
 
