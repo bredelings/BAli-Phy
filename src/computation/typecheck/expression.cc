@@ -286,42 +286,6 @@ typechecker_state::infer_type(expression_ref& E)
         auto [tvs, constraints, result_type] = instantiate( constructor_type(*con) );
         return result_type;
     }
-    else if (auto con = E.head().to<Hs::Con>())
-    {
-        // See note in rename/expressio.cc about rewriting (@ con args) to (con args)
-
-        vector<Hs::Exp> args = E.copy_sub();
-
-        auto [type, field_types] = constructor_pattern_types(*con);
-        if (args.size() < field_types.size())
-        {
-            E = apply_expression(*con, args);
-            return infer_type(E);
-        }
-
-        vector<Hs::Type> arg_types;
-        for(int i=0; i < args.size(); i++)
-        {
-            auto& arg = args[i];
-            auto t_i = infer_type(arg);
-            arg_types.push_back(t_i);
-
-            // REQUIRE that i-th argument matches the type for the i-th field.
-            try{
-                unify( field_types[i], t_i);
-            }
-            catch (myexception& e)
-            {
-                std::ostringstream header;
-                header<<"Argument "<<i+1<<" // "<<arg<<" of constructor "<<con->print()<<" has type "<<apply_current_subst(t_i)<<" but expected type "<<apply_current_subst(field_types[i])<<"\n ";
-                e.prepend(header.str());
-                throw;
-            }
-        }
-        E = expression_ref(*con, args);
-        
-        return type;
-    }
     else if (is_non_apply_op_exp(E))
     {
         std::abort();
