@@ -9,6 +9,31 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
+
+Hs::Type typechecker_state::infer_type(Hs::LetExp& Let)
+{
+    auto state2 = copy_clear_lie();
+
+    unloc(Let.binds) = state2.infer_type_for_binds(unloc(Let.binds));
+
+    // 2. Compute type of let body
+    auto t_body = state2.infer_type(unloc(Let.body));
+
+    current_lie() += state2.current_lie();
+
+    return t_body;
+}
+
+Hs::Type typechecker_state::infer_type(Hs::LambdaExp& Lam)
+{
+    auto rule = Hs::MRule{Lam.args, Lam.body};
+    auto t = infer_type(rule);
+    Lam.args = rule.patterns;
+    Lam.body = rule.rhs;
+    return t;
+}
+
+
 Hs::Type
 typechecker_state::infer_type(expression_ref& E)
 {
@@ -189,10 +214,7 @@ typechecker_state::infer_type(expression_ref& E)
     else if (auto lam = E.to<Hs::LambdaExp>())
     {
         auto Lam = *lam;
-        auto rule = Hs::MRule{Lam.args, Lam.body};
-        auto t = infer_type(rule);
-        Lam.args = rule.patterns;
-        Lam.body = rule.rhs;
+        auto t = infer_type(Lam);
         E = Lam;
         return t;
     }
@@ -201,17 +223,11 @@ typechecker_state::infer_type(expression_ref& E)
     {
         auto Let = *let;
 
-        // 1. Extend environment with types for decls, get any substitutions
-        auto state2 = copy_clear_lie();
-        unloc(Let.binds) = state2.infer_type_for_binds(unloc(Let.binds));
-
-        // 2. Compute type of let body
-        auto t_body = state2.infer_type(unloc(Let.body));
-
-        current_lie() += state2.current_lie();
+        auto t = infer_type(Let);
 
         E = Let;
-        return t_body;
+
+        return t;
     }
     else if (auto con = E.to<Hs::Con>())
     {
