@@ -36,6 +36,15 @@ std::pair<Hs::Expression,Hs::Type> typechecker_state::infer_type(const Hs::Var& 
     return {E,type};
 }
 
+Hs::Type typechecker_state::infer_type(const Hs::Con& con)
+{
+    auto [tvs, constraints, result_type] = instantiate( constructor_type(con) );
+
+    assert(constraints.empty());
+
+    return result_type;
+}
+
 Hs::Type typechecker_state::infer_type_apply(expression_ref& E)
 {
     assert(E.size() >= 2);
@@ -244,6 +253,11 @@ typechecker_state::infer_type(expression_ref& E)
         E = E2;
         return type;
     }
+    // CON
+    else if (auto con = E.to<Hs::Con>())
+    {
+        return infer_type(*con);
+    }
     // APP
     else if (is_apply_exp(E))
     {
@@ -306,11 +320,6 @@ typechecker_state::infer_type(expression_ref& E)
         auto type = infer_type(T);
         E = T;
         return type;
-    }
-    else if (auto con = E.to<Hs::Con>())
-    {
-        auto [tvs, constraints, result_type] = instantiate( constructor_type(*con) );
-        return result_type;
     }
     else if (is_non_apply_op_exp(E))
     {

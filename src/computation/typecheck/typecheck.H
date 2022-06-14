@@ -208,6 +208,8 @@ struct typechecker_state: FreshVarSource
     std::pair<Hs::Expression,Hs::Type>
     infer_type(const Hs::Var&);
 
+    Hs::Type infer_type(const Hs::Con& con);
+
     Hs::Type infer_type_apply(expression_ref& E);
 
     Hs::Type
