@@ -208,12 +208,7 @@ bool occurs_check(const Hs::MetaTypeVar& tv, const Hs::Type& t)
     else if (auto p_app = t.to<Hs::TypeApp>())
         return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
     else if (auto f = t.to<Hs::ForallType>())
-    {
-        for(auto& x: f->type_var_binders)
-            if (x == tv)
-                return false;
         return occurs_check(tv, f->type);
-    }
     else if (auto c = t.to<Hs::ConstrainedType>())
     {
         // The context may not contain vars that don't occur in the head;
