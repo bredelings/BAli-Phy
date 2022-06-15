@@ -73,13 +73,12 @@
   Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const std::optional<Located<Hs::Binds>>& decls);
   Hs::Context make_context(const Hs::Type& context);
 
-  expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
   Hs::ApplyExp make_apply(const Hs::Expression& head, const Hs::Expression& arg);
 
   expression_ref yy_make_string(const std::string&);
 
-#line 83 "parser.hh"
+#line 82 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -219,7 +218,7 @@
 #endif
 
 namespace yy {
-#line 223 "parser.hh"
+#line 222 "parser.hh"
 
 
 
@@ -475,19 +474,23 @@ namespace yy {
       // impspec
       char dummy11[sizeof (Hs::ImpSpec)];
 
+      // infixexp
+      // infixexp_top
+      char dummy12[sizeof (Hs::InfixExp)];
+
       // module
-      char dummy12[sizeof (Hs::Module)];
+      char dummy13[sizeof (Hs::Module)];
 
       // rhs
       // alt_rhs
-      char dummy13[sizeof (Hs::MultiGuardedRHS)];
+      char dummy14[sizeof (Hs::MultiGuardedRHS)];
 
       // stmtlist
-      char dummy14[sizeof (Hs::Stmts)];
+      char dummy15[sizeof (Hs::Stmts)];
 
       // strict_mark
       // strictness
-      char dummy15[sizeof (Hs::StrictLazy)];
+      char dummy16[sizeof (Hs::StrictLazy)];
 
       // opt_tyconsig
       // sigtype
@@ -502,30 +505,30 @@ namespace yy {
       // atype
       // inst_type
       // constr_stuff
-      char dummy16[sizeof (Hs::Type)];
+      char dummy17[sizeof (Hs::Type)];
 
       // tv_bndr
-      char dummy17[sizeof (Hs::TypeVar)];
+      char dummy18[sizeof (Hs::TypeVar)];
 
       // alt
-      char dummy18[sizeof (Located<Hs::Alt>)];
+      char dummy19[sizeof (Located<Hs::Alt>)];
 
       // binds
-      char dummy19[sizeof (Located<Hs::Binds>)];
+      char dummy20[sizeof (Located<Hs::Binds>)];
 
       // qcname
-      char dummy20[sizeof (Located<std::string>)];
+      char dummy21[sizeof (Located<std::string>)];
 
       // optqualified
-      char dummy21[sizeof (bool)];
+      char dummy22[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy22[sizeof (char)];
+      char dummy23[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy23[sizeof (double)];
+      char dummy24[sizeof (double)];
 
       // topdecl
       // cl_decl
@@ -552,43 +555,43 @@ namespace yy {
       // qop
       // qopm
       // literal
-      char dummy24[sizeof (expression_ref)];
+      char dummy25[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy25[sizeof (float)];
+      char dummy26[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy26[sizeof (int)];
+      char dummy27[sizeof (int)];
 
       // export_subspec
-      char dummy27[sizeof (std::optional<Hs::ExportSubSpec>)];
+      char dummy28[sizeof (std::optional<Hs::ExportSubSpec>)];
 
       // maybeimpspec
-      char dummy28[sizeof (std::optional<Hs::ImpSpec>)];
+      char dummy29[sizeof (std::optional<Hs::ImpSpec>)];
 
       // wherebinds
-      char dummy29[sizeof (std::optional<Located<Hs::Binds>>)];
+      char dummy30[sizeof (std::optional<Located<Hs::Binds>>)];
 
       // prec
-      char dummy30[sizeof (std::optional<int>)];
+      char dummy31[sizeof (std::optional<int>)];
 
       // maybeas
-      char dummy31[sizeof (std::optional<std::string>)];
+      char dummy32[sizeof (std::optional<std::string>)];
 
       // maybeexports
-      char dummy32[sizeof (std::optional<std::vector<Hs::Export>>)];
+      char dummy33[sizeof (std::optional<std::vector<Hs::Export>>)];
 
       // tycl_hdr
-      char dummy33[sizeof (std::pair<Hs::Context,Hs::Type>)];
+      char dummy34[sizeof (std::pair<Hs::Context,Hs::Type>)];
 
       // body
       // body2
       // top
       // top1
-      char dummy34[sizeof (std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>)];
+      char dummy35[sizeof (std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>)];
 
       // "VARID"
       // "CONID"
@@ -642,53 +645,51 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy35[sizeof (std::string)];
+      char dummy36[sizeof (std::string)];
 
       // constrs
       // constrs1
-      char dummy36[sizeof (std::vector<Hs::Constructor>)];
+      char dummy37[sizeof (std::vector<Hs::Constructor>)];
 
       // exportlist
       // exportlist1
-      char dummy37[sizeof (std::vector<Hs::Export>)];
+      char dummy38[sizeof (std::vector<Hs::Export>)];
 
       // fielddecls
       // fielddecls1
-      char dummy38[sizeof (std::vector<Hs::FieldDecl>)];
+      char dummy39[sizeof (std::vector<Hs::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy39[sizeof (std::vector<Hs::GuardedRHS>)];
+      char dummy40[sizeof (std::vector<Hs::GuardedRHS>)];
 
       // importdecls
       // importdecls_semi
-      char dummy40[sizeof (std::vector<Hs::ImpDecl>)];
+      char dummy41[sizeof (std::vector<Hs::ImpDecl>)];
 
       // sigtypes1
       // btype_no_ops
       // tyapps
       // comma_types0
       // comma_types1
-      char dummy41[sizeof (std::vector<Hs::Type>)];
+      char dummy42[sizeof (std::vector<Hs::Type>)];
 
       // tv_bndrs
       // forall
-      char dummy42[sizeof (std::vector<Hs::TypeVar>)];
+      char dummy43[sizeof (std::vector<Hs::TypeVar>)];
 
       // sig_vars
-      char dummy43[sizeof (std::vector<Hs::Var>)];
+      char dummy44[sizeof (std::vector<Hs::Var>)];
 
       // alts
       // alts1
-      char dummy44[sizeof (std::vector<Located<Hs::Alt>>)];
+      char dummy45[sizeof (std::vector<Located<Hs::Alt>>)];
 
       // qcnames
       // qcnames1
-      char dummy45[sizeof (std::vector<Located<std::string>>)];
+      char dummy46[sizeof (std::vector<Located<std::string>>)];
 
       // decls
-      // infixexp
-      // infixexp_top
       // tup_exprs
       // lexps
       // squals
@@ -696,10 +697,10 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy46[sizeof (std::vector<expression_ref>)];
+      char dummy47[sizeof (std::vector<expression_ref>)];
 
       // ops
-      char dummy47[sizeof (std::vector<std::string>)];
+      char dummy48[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1303,6 +1304,11 @@ namespace yy {
         value.move< Hs::ImpSpec > (std::move (that.value));
         break;
 
+      case symbol_kind::S_infixexp: // infixexp
+      case symbol_kind::S_infixexp_top: // infixexp_top
+        value.move< Hs::InfixExp > (std::move (that.value));
+        break;
+
       case symbol_kind::S_module: // module
         value.move< Hs::Module > (std::move (that.value));
         break;
@@ -1549,8 +1555,6 @@ namespace yy {
         break;
 
       case symbol_kind::S_decls: // decls
-      case symbol_kind::S_infixexp: // infixexp
-      case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -1736,6 +1740,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Hs::ImpSpec& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Hs::InfixExp&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Hs::InfixExp& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2318,6 +2336,11 @@ switch (yykind)
         value.template destroy< Hs::ImpSpec > ();
         break;
 
+      case symbol_kind::S_infixexp: // infixexp
+      case symbol_kind::S_infixexp_top: // infixexp_top
+        value.template destroy< Hs::InfixExp > ();
+        break;
+
       case symbol_kind::S_module: // module
         value.template destroy< Hs::Module > ();
         break;
@@ -2564,8 +2587,6 @@ switch (yykind)
         break;
 
       case symbol_kind::S_decls: // decls
-      case symbol_kind::S_infixexp: // infixexp
-      case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -5310,6 +5331,11 @@ switch (yykind)
         value.copy< Hs::ImpSpec > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_infixexp: // infixexp
+      case symbol_kind::S_infixexp_top: // infixexp_top
+        value.copy< Hs::InfixExp > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_module: // module
         value.copy< Hs::Module > (YY_MOVE (that.value));
         break;
@@ -5556,8 +5582,6 @@ switch (yykind)
         break;
 
       case symbol_kind::S_decls: // decls
-      case symbol_kind::S_infixexp: // infixexp
-      case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -5649,6 +5673,11 @@ switch (yykind)
 
       case symbol_kind::S_impspec: // impspec
         value.move< Hs::ImpSpec > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_infixexp: // infixexp
+      case symbol_kind::S_infixexp_top: // infixexp_top
+        value.move< Hs::InfixExp > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_module: // module
@@ -5897,8 +5926,6 @@ switch (yykind)
         break;
 
       case symbol_kind::S_decls: // decls
-      case symbol_kind::S_infixexp: // infixexp
-      case symbol_kind::S_infixexp_top: // infixexp_top
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -5979,7 +6006,7 @@ switch (yykind)
 
 
 } // yy
-#line 5983 "parser.hh"
+#line 6010 "parser.hh"
 
 
 

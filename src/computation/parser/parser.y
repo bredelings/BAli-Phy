@@ -35,7 +35,6 @@
   Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const std::optional<Located<Hs::Binds>>& decls);
   Hs::Context make_context(const Hs::Type& context);
 
-  expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
   Hs::ApplyExp make_apply(const Hs::Expression& head, const Hs::Expression& arg);
 
@@ -352,8 +351,8 @@
  */
 
 %type <expression_ref> exp
-%type <std::vector<expression_ref>> infixexp
-%type <std::vector<expression_ref>> infixexp_top
+%type <Hs::InfixExp> infixexp
+%type <Hs::InfixExp> infixexp_top
 %type <expression_ref> exp10_top
 %type <expression_ref> exp10
 
@@ -618,7 +617,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        annotation*/
 |        decl_no_th                            {$$ = $1;}
 /* What is this for? How is this a decl ? */
-|        infixexp_top                          {$$ = make_infixexp($1);}
+|        infixexp_top                          {$$ = $1;}
 
 cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2.first,$2.second,$3);}
 
@@ -963,7 +962,7 @@ deriv_clause_types: qtycondoc
 decl_no_th: sigdecl           {$$ = $1;}
 /* I guess this is a strict let. Code as DeclStrict, rather than StrictPattern, since docs say this is part of the binding, not part of the patter */
 | "!" aexp rhs                {$$ = Hs::StrictValueDecl{{@2,$2},$3}; }
-| infixexp_top rhs            {$$ = Hs::ValueDecl({@1,make_infixexp($1)},$2);}
+| infixexp_top rhs            {$$ = Hs::ValueDecl({@1,$1},$2);}
 
 decl: decl_no_th              {$$ = $1;}
 /*  | splice_exp */
@@ -1007,14 +1006,14 @@ explicit_activation: "[" INTEGER "]"
 
 /* ------------- Expressions ------------------------------------- */
 
-exp: infixexp "::" sigtype { $$ = Hs::TypedExp(make_infixexp($1),$3); }
-|    infixexp              { $$ = make_infixexp($1); }
+exp: infixexp "::" sigtype { $$ = Hs::TypedExp($1,$3); }
+|    infixexp              { $$ = $1; }
 
-infixexp: exp10                 {$$.push_back($1);}
-|         infixexp qop exp10    {$$ = $1; $$.push_back($2); $$.push_back($3);}
+infixexp: exp10                 {$$ = Hs::InfixExp({$1});}
+|         infixexp qop exp10    {$$ = $1; $$.terms.push_back($2); $$.terms.push_back($3);}
 
-infixexp_top: exp10_top         {$$.push_back($1);}
-|             infixexp_top qop exp10_top  {$$ = $1; $$.push_back($2); $$.push_back($3);}
+infixexp_top: exp10_top         {$$ = Hs::InfixExp({$1});}
+|             infixexp_top qop exp10_top  {$$ = $1; $$.terms.push_back($2); $$.terms.push_back($3);}
 
 exp10_top: "-" fexp                {$$ = make_minus($2);}
 |          "{-# CORE" STRING "#-}" {}
@@ -1069,8 +1068,8 @@ aexp2: qvar                   {$$ = Hs::Var({@1,$1});}
 /* ------------- Tuple expressions ------------------------------- */
 
 texp: exp             {$$ = $1;}
-|     infixexp qop    {$$ = Hs::LeftSection ( make_infixexp($1), $2 ); }
-|     qopm infixexp   {$$ = Hs::RightSection( $1, make_infixexp($2) ); }
+|     infixexp qop    {$$ = Hs::LeftSection ( $1, $2 ); }
+|     qopm infixexp   {$$ = Hs::RightSection( $1, $2 ); }
 /* view patterns 
 |     exp "->" texp
 */
@@ -1635,15 +1634,6 @@ Hs::Constructor make_constructor(const vector<Hs::TypeVar>& forall, const std::o
     else
         throw myexception()<<"constructor '"<<typeish<<"' does not make sense";
 }
-
-expression_ref make_infixexp(const vector<expression_ref>& args)
-{
-    if (args.size() == 1)
-	return args[0];
-    else
-	return Hs::InfixExp(args);
-}
-
 
 expression_ref make_minus(const expression_ref& exp)
 {
