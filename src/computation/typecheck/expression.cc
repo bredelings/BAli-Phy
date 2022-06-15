@@ -313,8 +313,23 @@ Hs::Type typechecker_state::infer_type(Hs::RightSection& RSec)
     return section_type;
 }
 
-Hs::Type
-typechecker_state::infer_type(expression_ref& E)
+Hs::Type typechecker_state::infer_type(Hs::Do& DoExp)
+{
+    return infer_stmts_type(0, DoExp.stmts.stmts);
+}
+
+Hs::Type typechecker_state::infer_type(Hs::ListComprehension& LComp)
+{
+    auto state2 = copy_clear_lie();
+    state2.infer_quals_type(LComp.quals);
+    auto exp_type = state2.infer_type(LComp.body);
+
+    current_lie() += state2.current_lie();
+
+    return Hs::ListType(exp_type);
+}
+
+Hs::Type typechecker_state::infer_type(expression_ref& E)
 {
     // VAR
     if (auto x = E.to<Hs::Var>())
@@ -424,25 +439,17 @@ typechecker_state::infer_type(expression_ref& E)
     else if (auto do_exp = E.to<Hs::Do>())
     {
         auto DoExp = *do_exp;
-        auto do_type = infer_stmts_type(0, DoExp.stmts.stmts);
+        auto do_type = infer_type(DoExp);
         E = DoExp;
         return do_type;
     }
-
     // LISTCOMP
     else if (auto lcomp = E.to<Hs::ListComprehension>())
     {
         auto LComp = *lcomp;
-        auto state2 = copy_clear_lie();
-        state2.infer_quals_type(LComp.quals);
-        auto exp_type = state2.infer_type(LComp.body);
-
-        Hs::Type result_type = Hs::ListType(exp_type);
-
-        current_lie() += state2.current_lie();
-
+        auto type = infer_type(LComp);
         E = LComp;
-        return result_type;
+        return type;
     }
     // ENUM-FROM
     else if (auto l = E.to<Hs::ListFrom>())
