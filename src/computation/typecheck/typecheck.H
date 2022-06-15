@@ -225,19 +225,21 @@ struct typechecker_state: FreshVarSource
     Hs::Type
     infer_rhs_type(expression_ref& decl);
 
+    // inferRho
+
     Hs::Type
     inferRho(expression_ref& exp);
 
-
+    void checkRho(expression_ref& exp, const Hs::Type& exp_type);
 
     std::pair<Hs::Expression,Hs::Type> inferRho(const Hs::Var&);
     Hs::Expression tcRho(const Hs::Var&, const Expected& E);
 
     Hs::Type inferRho(const Hs::Con& con);
 
-    void tcRho_apply(expression_ref& app_exp, const Expected& E);
-    Hs::Type inferRho_apply(expression_ref& app_exp);
-    void checkRho_apply(expression_ref& app_exp, const Hs::Type& exp_type);
+    void tcRho(Hs::ApplyExp& app_exp, const Expected& E);
+    Hs::Type inferRho(Hs::ApplyExp& app_exp);
+    void checkRho(Hs::ApplyExp& app_exp, const Hs::Type& exp_type);
 
     Hs::Type inferRho(Hs::LambdaExp&);
 
@@ -271,18 +273,13 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type inferRho(Hs::ListFromThenTo&);
 
+    Hs::Type inferRho(Hs::GuardedRHS&, int i=0);
 
-    Hs::Type
-    inferRho(Hs::GuardedRHS&, int i=0);
+    Hs::Type inferRho(Hs::MultiGuardedRHS&);
 
-    Hs::Type
-    inferRho(Hs::MultiGuardedRHS&);
+    Hs::Type inferRho(Hs::MRule&, int i=0);
 
-    Hs::Type
-    inferRho(Hs::MRule&, int i=0);
-
-    Hs::Type
-    inferRho(Hs::Match&);
+    Hs::Type inferRho(Hs::Match&);
 
     // Figures 13, 14, 15?
     Hs::Decls

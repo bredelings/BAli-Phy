@@ -37,7 +37,7 @@
 
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
-  expression_ref make_fexp(const std::vector<expression_ref>& args);
+  Hs::ApplyExp make_apply(const Hs::Expression& head, const Hs::Expression& arg);
 
   expression_ref yy_make_string(const std::string&);
 }
@@ -357,7 +357,7 @@
 %type <expression_ref> exp10_top
 %type <expression_ref> exp10
 
-%type <std::vector<expression_ref>> fexp
+%type <expression_ref> fexp
 %type <expression_ref> aexp
 %type <expression_ref> aexp1
 %type <expression_ref> aexp2
@@ -1016,9 +1016,9 @@ infixexp: exp10                 {$$.push_back($1);}
 infixexp_top: exp10_top         {$$.push_back($1);}
 |             infixexp_top qop exp10_top  {$$ = $1; $$.push_back($2); $$.push_back($3);}
 
-exp10_top: "-" fexp                {$$ = make_minus(make_fexp($2));}
+exp10_top: "-" fexp                {$$ = make_minus($2);}
 |          "{-# CORE" STRING "#-}" {}
-|          fexp                    {$$ = make_fexp($1);}
+|          fexp                    {$$ = $1;}
 
 exp10: exp10_top                 {$$ = $1;}
 |      scc_annot exp             {}
@@ -1032,10 +1032,10 @@ scc_annot: "{-# SCC" STRING "#-}"
 
 /* hpc_annot */
 
-fexp: fexp aexp                  {$$ = $1; $$.push_back($2);}
+fexp: fexp aexp                  {$$ = make_apply($1, $2);}
 |     fexp TYPEAPP atype         {}
 |     "static" aexp              {}
-|     aexp                       {$$.push_back($1);}
+|     aexp                       {$$ = $1;}
 
 aexp: qvar "@" aexp              {$$ = Hs::AsPattern(Hs::Var({@1,$1}),$3);}
 |     "~" aexp                   {$$ = Hs::LazyPattern($2);}
@@ -1650,14 +1650,14 @@ expression_ref make_minus(const expression_ref& exp)
     return Hs::InfixExp({Hs::Neg(),exp});
 }
 
-expression_ref make_fexp(const vector<expression_ref>& args)
+Hs::ApplyExp make_apply(const Hs::Exp& head, const Hs::Exp& arg)
 {
-    if (args.size() == 1)
-	return args[0];
-    else {
-	expression_ref f = args[0];
-	for(int i=1;i<args.size();i++)
-	    f = {f,args[i]};
-	return f;
+    if (auto app = head.to<Hs::ApplyExp>())
+    {
+        auto App = *app;
+        App.args.push_back(arg);
+        return App;
     }
+    else
+        return Hs::ApplyExp(head, {arg});
 }

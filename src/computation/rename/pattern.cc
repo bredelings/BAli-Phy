@@ -59,22 +59,52 @@ expression_ref unapply(expression_ref E)
         SP.pattern = unapply(SP.pattern);
         return SP;
     }
+    else if (auto app = E.to<Hs::ApplyExp>())
+    {
+        auto head = app->head;
+        auto args = app->args;
 
-    if (not E.size()) return E;
+        // We shouldn't have e.g. (@ (@ f x) y) -- this should already be dealt with by rename_infix
+        assert(not is_apply_exp(head));
+        assert(not head.size());
 
-    auto head = E.head();
-    auto args = E.sub();
-    if (is_apply_exp(E))
-	head = shift_list(args);
+        for(auto& arg: args)
+            arg = unapply(arg);
 
-    // We shouldn't have e.g. (@ (@ f x) y) -- this should already be dealt with by rename_infix
-    assert(not is_apply_exp(head));
-    assert(not head.size());
+        // Flatten, in case we have an apply of an apply
+        if (auto app2 = head.to<Hs::ApplyExp>())
+        {
+            auto App2 = *app2;
+            head = App2.head;
 
-    for(auto& arg: args)
-	arg = unapply(arg);
+            for(auto& arg: args)
+                App2.args.push_back(arg);
 
-    return expression_ref{head,std::move(args)};
+            args = App2.args;
+        }
+        assert(not head.is_a<Hs::ApplyExp>());
+
+        return expression_ref{head, std::move(args)};
+    }
+    else if (E.is_a<Hs::Literal>())
+        return E;
+    else if (E.is_a<Hs::Var>())
+        return E;
+    else if (E.is_a<Hs::WildcardPattern>())
+        return E;
+    else if (E.is_a<Hs::Con>())
+        return E;
+    else if (E.head().is_a<Hs::Con>())
+    {
+        auto args = E.sub();
+
+        for(auto& arg: args)
+            arg = unapply(arg);
+
+        return expression_ref{E.head(), args};
+    }
+    else
+        std::abort();
 }
 
 bound_var_info renamer_state::rename_patterns(vector<expression_ref>& patterns, bool top)
@@ -103,6 +133,7 @@ bound_var_info renamer_state::rename_patterns(vector<expression_ref>& patterns, 
 bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bool top)
 {
     assert(not is_apply_exp(pat));
+    assert(not pat.is_a<Hs::ApplyExp>());
 
     // 1. Handle _
     if (pat.is_a<Haskell::WildcardPattern>())
@@ -186,6 +217,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
 bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 {
     assert(not is_apply_exp(pat));
+    assert(not pat.is_a<Hs::ApplyExp>());
 
     // 1. Handle _
     if (pat.is_a<Haskell::WildcardPattern>())

@@ -618,6 +618,35 @@ LambdaExp::LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b)
     assert(not ps.empty());
 }
 
+std::string parenthesize_exp(const Expression& E)
+{
+    string s = E.print();
+    if (E.is_a<Var>() or E.is_a<Con>() or E.is_a<List>() or E.is_a<Tuple>() or E.is_a<ListComprehension>() or E.is_a<Literal>())
+        ;
+    else if (E.is_a<WildcardPattern>())
+        ;
+    else
+        s = "(" + s + ")";
+    return s;
+}
+
+std::string ApplyExp::print() const
+{
+    vector<string> ss;
+
+    ss.push_back(head.print());
+
+    for(auto& arg: args)
+        ss.push_back( parenthesize_exp( arg ) );
+
+    return join(ss, " ");
+}
+
+ApplyExp::ApplyExp(const Expression& h, const std::vector<Expression>& as)
+    :head(h), args(as)
+{
+}
+
 string LetExp::print() const
 {
     return "let " + binds.print() + " in " + body.print();
@@ -626,8 +655,8 @@ string LetExp::print() const
 LetExp simple_let(const Var& x, const Expression& E, const Expression& body)
 {
     auto decl = simple_decl(x, E);
-    Hs::Decls decls({decl});
-    Hs::Binds binds({decls});
+    Decls decls({decl});
+    Binds binds({decls});
 
     return LetExp({noloc, binds}, {noloc,body});
 }
@@ -733,8 +762,8 @@ FunDecl simple_decl(const Var& v, const expression_ref& E)
 
 expression_ref error(const std::string& s)
 {
-    expression_ref error = Hs::Var({noloc,"Compiler.Error.error"});
-    expression_ref msg = Hs::Literal(Hs::String{s});
+    expression_ref error = Var({noloc,"Compiler.Error.error"});
+    expression_ref msg = Literal(String{s});
     return {error,msg};
 }
 

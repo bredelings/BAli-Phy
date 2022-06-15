@@ -329,6 +329,7 @@ namespace yy {
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
       case symbol_kind::S_aexp1: // aexp1
       case symbol_kind::S_aexp2: // aexp2
@@ -501,7 +502,6 @@ namespace yy {
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
-      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -654,6 +654,7 @@ namespace yy {
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
       case symbol_kind::S_aexp1: // aexp1
       case symbol_kind::S_aexp2: // aexp2
@@ -826,7 +827,6 @@ namespace yy {
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
-      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -979,6 +979,7 @@ namespace yy {
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
       case symbol_kind::S_aexp1: // aexp1
       case symbol_kind::S_aexp2: // aexp2
@@ -1151,7 +1152,6 @@ namespace yy {
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
-      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -1303,6 +1303,7 @@ namespace yy {
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
       case symbol_kind::S_aexp1: // aexp1
       case symbol_kind::S_aexp2: // aexp2
@@ -1475,7 +1476,6 @@ namespace yy {
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
-      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -1872,6 +1872,7 @@ namespace yy {
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
       case symbol_kind::S_aexp1: // aexp1
       case symbol_kind::S_aexp2: // aexp2
@@ -2044,7 +2045,6 @@ namespace yy {
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
-      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -3049,7 +3049,7 @@ namespace yy {
 
   case 205: // exp10_top: "-" fexp
 #line 1019 "parser.y"
-                                   {yylhs.value.as < expression_ref > () = make_minus(make_fexp(yystack_[0].value.as < std::vector<expression_ref> > ()));}
+                                   {yylhs.value.as < expression_ref > () = make_minus(yystack_[0].value.as < expression_ref > ());}
 #line 3054 "parser.cc"
     break;
 
@@ -3061,7 +3061,7 @@ namespace yy {
 
   case 207: // exp10_top: fexp
 #line 1021 "parser.y"
-                                   {yylhs.value.as < expression_ref > () = make_fexp(yystack_[0].value.as < std::vector<expression_ref> > ());}
+                                   {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 3066 "parser.cc"
     break;
 
@@ -3079,7 +3079,7 @@ namespace yy {
 
   case 214: // fexp: fexp aexp
 #line 1035 "parser.y"
-                                 {yylhs.value.as < std::vector<expression_ref> > () = yystack_[1].value.as < std::vector<expression_ref> > (); yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
+                                 {yylhs.value.as < expression_ref > () = make_apply(yystack_[1].value.as < expression_ref > (), yystack_[0].value.as < expression_ref > ());}
 #line 3084 "parser.cc"
     break;
 
@@ -3097,7 +3097,7 @@ namespace yy {
 
   case 217: // fexp: aexp
 #line 1038 "parser.y"
-                                 {yylhs.value.as < std::vector<expression_ref> > ().push_back(yystack_[0].value.as < expression_ref > ());}
+                                 {yylhs.value.as < expression_ref > () = yystack_[0].value.as < expression_ref > ();}
 #line 3102 "parser.cc"
     break;
 
@@ -6244,14 +6244,14 @@ expression_ref make_minus(const expression_ref& exp)
     return Hs::InfixExp({Hs::Neg(),exp});
 }
 
-expression_ref make_fexp(const vector<expression_ref>& args)
+Hs::ApplyExp make_apply(const Hs::Exp& head, const Hs::Exp& arg)
 {
-    if (args.size() == 1)
-	return args[0];
-    else {
-	expression_ref f = args[0];
-	for(int i=1;i<args.size();i++)
-	    f = {f,args[i]};
-	return f;
+    if (auto app = head.to<Hs::ApplyExp>())
+    {
+        auto App = *app;
+        App.args.push_back(arg);
+        return App;
     }
+    else
+        return Hs::ApplyExp(head, {arg});
 }

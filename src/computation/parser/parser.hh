@@ -75,7 +75,7 @@
 
   expression_ref make_infixexp(const std::vector<expression_ref>& args);
   expression_ref make_minus(const expression_ref& exp);
-  expression_ref make_fexp(const std::vector<expression_ref>& args);
+  Hs::ApplyExp make_apply(const Hs::Expression& head, const Hs::Expression& arg);
 
   expression_ref yy_make_string(const std::string&);
 
@@ -538,6 +538,7 @@ namespace yy {
       // exp
       // exp10_top
       // exp10
+      // fexp
       // aexp
       // aexp1
       // aexp2
@@ -688,7 +689,6 @@ namespace yy {
       // decls
       // infixexp
       // infixexp_top
-      // fexp
       // tup_exprs
       // lexps
       // squals
@@ -1378,6 +1378,7 @@ namespace yy {
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
       case symbol_kind::S_aexp1: // aexp1
       case symbol_kind::S_aexp2: // aexp2
@@ -1550,7 +1551,6 @@ namespace yy {
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
-      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -2393,6 +2393,7 @@ switch (yykind)
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
       case symbol_kind::S_aexp1: // aexp1
       case symbol_kind::S_aexp2: // aexp2
@@ -2565,7 +2566,6 @@ switch (yykind)
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
-      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -5385,6 +5385,7 @@ switch (yykind)
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
       case symbol_kind::S_aexp1: // aexp1
       case symbol_kind::S_aexp2: // aexp2
@@ -5557,7 +5558,6 @@ switch (yykind)
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
-      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -5726,6 +5726,7 @@ switch (yykind)
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
+      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
       case symbol_kind::S_aexp1: // aexp1
       case symbol_kind::S_aexp2: // aexp2
@@ -5898,7 +5899,6 @@ switch (yykind)
       case symbol_kind::S_decls: // decls
       case symbol_kind::S_infixexp: // infixexp
       case symbol_kind::S_infixexp_top: // infixexp_top
-      case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals

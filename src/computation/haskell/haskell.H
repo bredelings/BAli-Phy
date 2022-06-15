@@ -83,6 +83,18 @@ typedef expression_ref Expression;
 typedef expression_ref Exp;
 typedef expression_ref Qual;
 
+
+struct ApplyExp: public Object
+{
+    Exp head;
+    std::vector<Exp> args;
+
+    ApplyExp* clone() const { return new ApplyExp(*this);}
+    std::string print() const;
+
+    ApplyExp(const Exp& h, const std::vector<Exp>& as);
+};
+
 struct Con: public Object
 {
     Located<std::string> name;
@@ -167,6 +179,8 @@ LPat = WildPat          -- wildcard pattern
      | NPlusKPat        -- n+k patterns
      | SigPat LPat (HsPatSigType NoGhcTc) -- pattern with a type signature?
 */
+
+std::string parenthesize_exp(const Expression& E);
 
 struct Neg: public Object
 {

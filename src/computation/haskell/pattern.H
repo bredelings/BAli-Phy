@@ -11,6 +11,7 @@ namespace Haskell
 {
 
 typedef expression_ref Pattern;
+typedef expression_ref Pat;
 
 std::string parenthesize_pattern(const Pattern& p);
 

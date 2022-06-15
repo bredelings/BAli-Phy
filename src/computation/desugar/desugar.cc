@@ -586,6 +586,16 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     }
     else if (E.is_a<Hs::ValueDecl>())
         std::abort();
+    else if (auto app = E.to<Hs::ApplyExp>())
+    {
+        auto head = desugar(app->head);
+
+        vector<expression_ref> args;
+        for(auto& arg: app->args)
+            args.push_back( desugar(arg) );
+
+        return apply_expression( head, args );
+    }
     else if (auto L = E.to<Hs::Literal>())
     {
         if (auto c = L->is_Char())

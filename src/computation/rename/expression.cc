@@ -199,27 +199,15 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             term = rename_infix(m, term);
 	return desugar_infix(m, terms);
     }
-    else if (is_apply(E.head()))
+    else if (auto app = E.to<Hs::ApplyExp>())
     {
-        auto v = E.sub();
+        auto App = *app;
 
-        for(auto& e: v)
-            e = rename_infix(m, e);
+        App.head = rename_infix(m, App.head);
+        for(auto& arg: App.args)
+            arg = rename_infix(m, arg);
 
-	expression_ref E2;
-	if (is_apply(v[0].head()))
-	{
-	    E2 = v[0];
-	    for(int i=1;i<v.size();i++)
-		E2 = E2 + v[i];
-	}
-	else
-	{
-	    E2 = expression_ref{E.head(),v};
-	}
-	assert(is_apply(E2.head()));
-	assert(not is_apply(E2.sub()[0].head()));
-	return E2;
+	return App;
     }
     else if (E.is_a<Hs::WildcardPattern>())
         return E;
@@ -492,17 +480,13 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     {
         return E;
     }
-    else if (is_apply(E.head()))
+    else if (auto app = E.to<Hs::ApplyExp>())
     {
-        vector<expression_ref> v = E.copy_sub();
-
-        for(auto& e: v)
-            e = rename(e, bound, free_vars);
-
-        if (E.size())
-            return expression_ref{E.head(),v};
-        else
-            return E;
+        auto App = *app;
+        App.head = rename(App.head, bound, free_vars);
+        for(auto& arg: App.args)
+            arg = rename(arg, bound, free_vars);
+        return App;
     }
 
     std::abort();

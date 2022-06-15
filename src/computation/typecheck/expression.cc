@@ -39,11 +39,16 @@ Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_rh
 
     auto [_, constraints, type] = instantiate(*sigma);
 
-    expression_ref E = x;
-    for(auto& constraint: constraints)
+    Hs::Expression E = x;
+    if (constraints.size())
     {
-        auto dvar = add_dvar(constraint);
-        E = {E, dvar};
+        vector<Hs::Expression> d_args;
+        for(auto& constraint: constraints)
+        {
+            auto dvar = add_dvar(constraint);
+            d_args.push_back( dvar );
+        }
+        E = Hs::ApplyExp(x, d_args);
     }
 
     if (exp_rho.infer())
@@ -72,46 +77,23 @@ Hs::Type typechecker_state::inferRho(const Hs::Con& con)
     return result_type;
 }
 
-void typechecker_state::tcRho_apply(expression_ref& app_exp, const Expected& exp_type)
+void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
 {
-    assert(app_exp.size() >= 2);
+    auto t1 = inferRho(App.head);
 
-    expression_ref f = app_exp.sub()[0];
-    auto t1 = inferRho(f);
-
-    vector<expression_ref> args;
-    for(int i=1;i<app_exp.size();i++)
+    for(int i=0;i<App.args.size();i++)
     {
+        // Fixme -- throwing an error from inside unify_function( ) would simply this a lot.
+        // The paper calls unify_function on an EXPRESSION, not a type.
         auto arg_result_types = unify_function(t1);
         if (not arg_result_types)
-            throw myexception()<<"Applying "<<(app_exp.size()-1)<<" arguments to function "<<f.print()<<", but it only takes "<<i-1<<"!";
+            throw myexception()<<"Applying "<<App.args.size()<<" arguments to function "<<App.head.print()<<", but it only takes "<<i<<"!";
 
         auto [expected_arg_type, result_type] = *arg_result_types;
 
-        expression_ref arg = app_exp.sub()[i];
-        auto arg_type = inferRho(arg);
-        args.push_back(arg);
-
-        try {
-            unify (arg_type, expected_arg_type);
-        }
-        catch (myexception& ex)
-        {
-            std::ostringstream header;
-            header<<"Argument "<<i<<" of function "<<f<<" expected type\n\n";
-            header<<"   "<<apply_current_subst(expected_arg_type)<<"\n\n";
-            header<<"but got type\n\n";
-            header<<"   "<<apply_current_subst(arg_type)<<"\n\n";
-            header<<"with argument\n\n";
-            header<<"   "<<app_exp.sub()[i]<<"\n\n";
-
-            ex.prepend(header.str());
-            throw;
-        }
-
+        checkRho(App.args[i], expected_arg_type);
         t1 = result_type;
     }
-    app_exp = apply_expression(f, args);
 
     if (exp_type.infer())
         exp_type.infer_type() = t1;
@@ -119,16 +101,16 @@ void typechecker_state::tcRho_apply(expression_ref& app_exp, const Expected& exp
         unify(t1, exp_type.check_type());
 }
 
-Hs::Type typechecker_state::inferRho_apply(expression_ref& app_exp)
+Hs::Type typechecker_state::inferRho(Hs::ApplyExp& App)
 {
     Hs::Type result_type;
-    tcRho_apply(app_exp, Infer(result_type));
+    tcRho(App, Infer(result_type));
     return result_type;
 }
 
-void typechecker_state::checkRho_apply(expression_ref& app_exp, const Hs::Type& exp_type)
+void typechecker_state::checkRho(Hs::ApplyExp& App, const Hs::Type& exp_type)
 {
-    tcRho_apply(app_exp, Check(exp_type));
+    tcRho(App, Check(exp_type));
 }
 
 Hs::Type typechecker_state::inferRho(Hs::LetExp& Let)
@@ -454,11 +436,12 @@ Hs::Type typechecker_state::inferRho(expression_ref& E)
         return inferRho(*con);
     }
     // APP
-    else if (is_apply_exp(E))
+    else if (auto app = E.to<Hs::ApplyExp>())
     {
-        assert(E.size() >= 2);
-        auto t = inferRho_apply(E);
-        return t;
+        auto App = *app;
+        auto type = inferRho(App);
+        E = App;
+        return type;
     }
     // LAMBDA
     else if (auto lam = E.to<Hs::LambdaExp>())
@@ -597,3 +580,26 @@ Hs::Type typechecker_state::inferRho(expression_ref& E)
     throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
 }
 
+// FIXME -- we need the location!
+void typechecker_state::checkRho(Hs::Expression& e, const Hs::Type& exp_rho)
+{
+    auto orig_e = e;
+    auto type = inferRho(e);
+    try
+    {
+        unify(type, exp_rho);
+    }
+    catch (myexception& ex)
+    {
+        std::ostringstream header;
+        header<<"Expected type\n\n";
+        header<<"   "<<apply_current_subst(exp_rho)<<"\n\n";
+        header<<"but got type\n\n";
+        header<<"   "<<apply_current_subst(type)<<"\n\n";
+        header<<"for expression\n\n";
+        header<<"   "<<orig_e<<"\n";
+        
+        ex.prepend(header.str());
+        throw;
+    }
+}
