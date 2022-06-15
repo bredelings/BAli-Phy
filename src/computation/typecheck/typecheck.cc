@@ -423,37 +423,21 @@ const TypeSynonymInfo* typechecker_state::maybe_find_type_synonym(const Hs::Type
     return nullptr;
 }
 
-Hs::Type typechecker_state::expand_type_synonyms(const Hs::Type& type) const
+void typechecker_state::expand_type_synonyms(Hs::Type& type) const
 {
     if (type.is_a<Hs::TypeVar>())
+        ;
+    else if (auto l = type.to_modifiable<Hs::ListType>())
+        expand_type_synonyms(l->element_type);
+    else if (auto tup = type.to_modifiable<Hs::TupleType>())
     {
-        return type;
+        for(auto& element_type: tup->element_types)
+            expand_type_synonyms(element_type);
     }
-    else if (auto l = type.to<Hs::ListType>())
-    {
-        auto L = *l;
-        L.element_type = expand_type_synonyms(L.element_type);
-        return L;
-    }
-    else if (auto tup = type.to<Hs::TupleType>())
-    {
-        auto T = *tup;
-        for(auto& element_type: T.element_types)
-            element_type = expand_type_synonyms(element_type);
-        return T;
-    }
-    else if (auto c = type.to<Hs::ConstrainedType>())
-    {
-        auto C = *c;
-        C.type = expand_type_synonyms(C.type);
-        return C;
-    }
-    else if (auto fa = type.to<Hs::ForallType>())
-    {
-        auto Fa = *fa;
-        Fa.type = expand_type_synonyms(Fa.type);
-        return Fa;
-    }
+    else if (auto c = type.to_modifiable<Hs::ConstrainedType>())
+        expand_type_synonyms(c->type);
+    else if (auto fa = type.to_modifiable<Hs::ForallType>())
+        expand_type_synonyms(fa->type);
     else if (type.is_a<Hs::TypeCon>() or type.is_a<Hs::TypeApp>())
     {
         auto [head, args] = Hs::decompose_type_apps(type);
@@ -465,11 +449,12 @@ Hs::Type typechecker_state::expand_type_synonyms(const Hs::Type& type) const
         }
 
         for(auto& arg: args)
-            arg = expand_type_synonyms(arg);
+            expand_type_synonyms(arg);
 
-        return Hs::make_tyapps(head,args);
+        type = Hs::make_tyapps(head,args);
     }
-    throw myexception()<<"expand_type_synonyms: I don't recognize type '"<<type<<"'";
+    else
+        throw myexception()<<"expand_type_synonyms: I don't recognize type '"<<type<<"'";
 }
 
 Hs::Type typechecker_state::check_type(const Hs::Type& type, kindchecker_state& K) const
@@ -480,7 +465,7 @@ Hs::Type typechecker_state::check_type(const Hs::Type& type, kindchecker_state& 
     // Should we be doing synonym substitution FIRST?
 
     auto type2 = K.kind_and_type_check_type( type );
-    type2 = expand_type_synonyms(type2);
+    expand_type_synonyms(type2);
     return type2;
 }
 
