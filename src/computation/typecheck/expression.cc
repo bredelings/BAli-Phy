@@ -11,11 +11,24 @@ using std::tuple;
 
 std::pair<Hs::Expression,Hs::Type> typechecker_state::infer_type(const Hs::Var& x)
 {
+    Hs::Type result_type;
+    auto E = tcRho(x, Infer(result_type));
+    return {E, result_type};
+}
+
+Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_rho)
+{
     auto& x_name = unloc(x.name);
     if (auto it = mono_local_env.find(x_name))
     {
         auto& [v,type] = *it;
-        return {v,type};
+
+        if (exp_rho.infer())
+            exp_rho.infer_type() = type;
+        else
+            unify(type, exp_rho.check_type());
+
+        return v;
     }
 
     auto sigma = gve.find( x_name );
@@ -33,7 +46,12 @@ std::pair<Hs::Expression,Hs::Type> typechecker_state::infer_type(const Hs::Var& 
         E = {E, dvar};
     }
 
-    return {E,type};
+    if (exp_rho.infer())
+        exp_rho.infer_type() = type;
+    else
+        unify(type, exp_rho.check_type());
+
+    return E;
 }
 
 Hs::Type typechecker_state::infer_type(const Hs::Con& con)

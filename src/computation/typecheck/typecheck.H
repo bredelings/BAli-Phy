@@ -231,6 +231,7 @@ struct typechecker_state: FreshVarSource
 
 
     std::pair<Hs::Expression,Hs::Type> infer_type(const Hs::Var&);
+    Hs::Expression tcRho(const Hs::Var&, const Expected& E);
 
     Hs::Type infer_type(const Hs::Con& con);
 
