@@ -4,7 +4,7 @@
 #include <variant>
 #include <iostream>
 
-#include "computation/object.H"
+#include "util/cow-ptr.H"
 #include "computation/parser/located.H"
 
 // Can we eliminate this?
@@ -28,16 +28,16 @@ namespace Haskell
         std::variant
         <
             std::monostate,
-            std::shared_ptr<const MetaTypeVar>,
-            std::shared_ptr<const TypeVar>,
-            std::shared_ptr<const TypeCon>,
-            std::shared_ptr<const TupleType>,
-            std::shared_ptr<const ListType>,
-            std::shared_ptr<const TypeApp>,
-            std::shared_ptr<const ConstrainedType>,
-            std::shared_ptr<const ForallType>,
-            std::shared_ptr<const StrictLazyType>,
-            std::shared_ptr<const FieldDecls>
+            cow_ptr<MetaTypeVar>,
+            cow_ptr<TypeVar>,
+            cow_ptr<TypeCon>,
+            cow_ptr<TupleType>,
+            cow_ptr<ListType>,
+            cow_ptr<TypeApp>,
+            cow_ptr<ConstrainedType>,
+            cow_ptr<ForallType>,
+            cow_ptr<StrictLazyType>,
+            cow_ptr<FieldDecls>
         >
         type_ptr;
 
@@ -51,8 +51,18 @@ namespace Haskell
         template <typename T>
         const T* to() const
         {
-            if (std::holds_alternative<std::shared_ptr<const T>>(type_ptr))
-                return std::get<std::shared_ptr<const T>>(type_ptr).get();
+            if (std::holds_alternative<cow_ptr<T>>(type_ptr))
+                return std::get<cow_ptr<T>>(type_ptr).get();
+            else
+                return nullptr;
+        }
+
+
+        template <typename T>
+        T* to_modifiable() const
+        {
+            if (std::holds_alternative<cow_ptr<T>>(type_ptr))
+                return std::get<cow_ptr<T>>(type_ptr).modify_ptr().get();
             else
                 return nullptr;
         }
@@ -65,7 +75,10 @@ namespace Haskell
         bool is_a() const {return to<T>();}
 
         template <typename T>
-        const T& as_() const {return *std::get<std::shared_ptr<const T>>(type_ptr);}
+        const T& as_() const {return *std::get<cow_ptr<T>>(type_ptr).get_ptr();}
+
+        template <typename T>
+        T& as_modifiable() const {return *std::get<cow_ptr<T>>(type_ptr).modify_ptr();}
 
         Type& operator=(const Type& t)
         {
@@ -87,7 +100,7 @@ namespace Haskell
         Type(const Type& t) = default;
 
         template <typename T>
-        Type(const T& t):type_ptr( std::make_shared<const T>(t) ) {}
+        Type(const T& t):type_ptr( cow_ptr<T>(t) ) {}
 
         ~Type() = default;
     };
