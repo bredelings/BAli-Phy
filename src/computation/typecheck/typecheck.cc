@@ -83,6 +83,10 @@ using std::tuple;
   * Handle type synonyms.
 
   TODO:
+  0. Make an Expression class, similar to the Type class, that allows the object to be modified.
+     - It can hold things in a cow_ptr
+     - We probably need to also make a Pattern class
+     - We probably need to make an ExpressionOrPattern class that we parse to, and then fix up.
   0. assert in try_insert that we are inserting a tau type with no foralls.
   0. Make a different struct type for MetaTypeVar.
   0. Cleanup: convert ListType, TupleType, to applied TypeCon earlier.
