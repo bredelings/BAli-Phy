@@ -230,8 +230,7 @@ struct typechecker_state: FreshVarSource
 
 
 
-    std::pair<Hs::Expression,Hs::Type>
-    infer_type(const Hs::Var&);
+    std::pair<Hs::Expression,Hs::Type> infer_type(const Hs::Var&);
 
     Hs::Type infer_type(const Hs::Con& con);
 
@@ -239,42 +238,37 @@ struct typechecker_state: FreshVarSource
     Hs::Type inferRho_apply(expression_ref& app_exp);
     void checkRho_apply(expression_ref& app_exp, const Hs::Type& exp_type);
 
-    Hs::Type
-    infer_type(Hs::LambdaExp&);
+    Hs::Type infer_type(Hs::LambdaExp&);
 
-    Hs::Type
-    infer_type(Hs::LetExp&);
+    Hs::Type infer_type(Hs::LetExp&);
 
-    std::pair<Hs::Expression,Hs::Type>
-    infer_type(const Hs::TypedExp& TExp);
+    std::pair<Hs::Expression,Hs::Type> infer_type(const Hs::TypedExp& TExp);
 
-    Hs::Type
-    infer_type(Hs::CaseExp& Case);
+    Hs::Type infer_type(Hs::CaseExp& Case);
 
-    Hs::Type
-    infer_type(Hs::List& L);
+    Hs::Type infer_type(Hs::List& L);
 
-    Hs::Type
-    infer_type(Hs::Tuple& T);
+    Hs::Type infer_type(Hs::Tuple& T);
 
-    Hs::Type
-    infer_type(Hs::Literal& Lit);
+    Hs::Type infer_type(Hs::Literal& Lit);
 
-    Hs::Type
-    infer_type(Hs::IfExp&);
+    Hs::Type infer_type(Hs::IfExp&);
 
-    Hs::Type
-    infer_type(Hs::LeftSection&);
+    Hs::Type infer_type(Hs::LeftSection&);
 
-    Hs::Type
-    infer_type(Hs::RightSection&);
+    Hs::Type infer_type(Hs::RightSection&);
 
-    Hs::Type
-    infer_type(Hs::Do&);
+    Hs::Type infer_type(Hs::Do&);
 
-    Hs::Type
-    infer_type(Hs::ListComprehension&);
+    Hs::Type infer_type(Hs::ListComprehension&);
 
+    Hs::Type infer_type(Hs::ListFrom&);
+
+    Hs::Type infer_type(Hs::ListFromThen&);
+
+    Hs::Type infer_type(Hs::ListFromTo&);
+
+    Hs::Type infer_type(Hs::ListFromThenTo&);
 
 
     Hs::Type

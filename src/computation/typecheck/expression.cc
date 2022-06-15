@@ -329,6 +329,98 @@ Hs::Type typechecker_state::infer_type(Hs::ListComprehension& LComp)
     return Hs::ListType(exp_type);
 }
 
+Hs::Type typechecker_state::infer_type(Hs::ListFrom& L)
+{
+    // 1. Typecheck enumFrom
+    L.enumFromOp = Hs::Var({noloc,"Compiler.Enum.enumFrom"});
+    auto enumFrom_type = infer_type(L.enumFromOp);
+
+    // 2. Typecheck from argument
+    auto from_type = infer_type(L.from);
+
+    // 3. enumFrom_type ~ from_type -> result_type
+    auto result_type = fresh_meta_type_var( kind_star() );
+    unify(enumFrom_type, Hs::make_arrow_type(from_type, result_type));
+
+    return result_type;
+}
+
+Hs::Type typechecker_state::infer_type(Hs::ListFromThen& L)
+{
+    // 1. Typecheck enumFrom
+    L.enumFromThenOp = Hs::Var({noloc,"Compiler.Enum.enumFromThen"});
+    auto enumFromThen_type = infer_type(L.enumFromThenOp);
+
+    // 2. Typecheck from argument
+    auto from_type = infer_type(L.from);
+
+    // 3. enumFromThen_type ~ from_type -> a
+    auto a = fresh_meta_type_var( kind_star() );
+    unify(enumFromThen_type, Hs::make_arrow_type(from_type, a));
+
+    // 4. Typecheck then argument
+    auto then_type = infer_type(L.then);
+
+    // 5. a ~ then_type -> result_type
+    auto result_type = fresh_meta_type_var( kind_star() );
+    unify(a, Hs::make_arrow_type(then_type, result_type));
+        
+    return result_type;
+}
+
+Hs::Type typechecker_state::infer_type(Hs::ListFromTo& L)
+{
+    // 1. Typecheck enumFrom
+    L.enumFromToOp = Hs::Var({noloc,"Compiler.Enum.enumFromTo"});
+    auto enumFromTo_type = infer_type(L.enumFromToOp);
+
+    // 2. Typecheck from argument
+    auto from_type = infer_type(L.from);
+
+    // 3. enumFromTo_type ~ from_type -> a
+    auto a = fresh_meta_type_var( kind_star() );
+    unify(enumFromTo_type, Hs::make_arrow_type(from_type, a));
+
+    // 4. Typecheck to argument
+    auto to_type = infer_type(L.to);
+
+    // 5. a ~ to_type -> result_type
+    auto result_type = fresh_meta_type_var( kind_star() );
+    unify(a, Hs::make_arrow_type(to_type, result_type));
+        
+    return result_type;
+}
+
+Hs::Type typechecker_state::infer_type(Hs::ListFromThenTo& L)
+{
+    // 1. Typecheck enumFromThenTo
+    L.enumFromThenToOp = Hs::Var({noloc,"Compiler.Enum.enumFromThenTo"});
+    auto enumFromThenTo_type = infer_type(L.enumFromThenToOp);
+
+    // 2. Typecheck from argument
+    auto from_type = infer_type(L.from);
+
+    // 3. enumFromThenTo_type ~ from_type -> a
+    auto a = fresh_meta_type_var( kind_star() );
+    unify(enumFromThenTo_type, Hs::make_arrow_type(from_type, a));
+
+    // 4. Typecheck then argument
+    auto then_type = infer_type(L.then);
+
+    // 5. a ~ then_type -> b
+    auto b = fresh_meta_type_var( kind_star() );
+    unify(a, Hs::make_arrow_type(then_type, b));
+
+    // 6. Typecheck to argument
+    auto to_type = infer_type(L.to);
+
+    // 7. b ~ to_type -> result_type
+    auto result_type = fresh_meta_type_var( kind_star() );
+    unify(b, Hs::make_arrow_type(to_type, result_type));
+
+    return result_type;
+}
+
 Hs::Type typechecker_state::infer_type(expression_ref& E)
 {
     // VAR
@@ -455,105 +547,33 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto l = E.to<Hs::ListFrom>())
     {
         auto L = *l;
-
-        // 1. Typecheck enumFrom
-        L.enumFromOp = Hs::Var({noloc,"Compiler.Enum.enumFrom"});
-        auto enumFrom_type = infer_type(L.enumFromOp);
-
-        // 2. Typecheck from argument
-        auto from_type = infer_type(L.from);
-
-        // 3. enumFrom_type ~ from_type -> result_type
-        auto result_type = fresh_meta_type_var( kind_star() );
-        unify(enumFrom_type, Hs::make_arrow_type(from_type, result_type));
-
+        auto type = infer_type(L);
         E = L;
-        return result_type;
+        return type;
     }
     // ENUM-FROM-THEN
     else if (auto l = E.to<Hs::ListFromThen>())
     {
         auto L = *l;
-
-        // 1. Typecheck enumFrom
-        L.enumFromThenOp = Hs::Var({noloc,"Compiler.Enum.enumFromThen"});
-        auto enumFromThen_type = infer_type(L.enumFromThenOp);
-
-        // 2. Typecheck from argument
-        auto from_type = infer_type(L.from);
-
-        // 3. enumFromThen_type ~ from_type -> a
-        auto a = fresh_meta_type_var( kind_star() );
-        unify(enumFromThen_type, Hs::make_arrow_type(from_type, a));
-
-        // 4. Typecheck then argument
-        auto then_type = infer_type(L.then);
-
-        // 5. a ~ then_type -> result_type
-        auto result_type = fresh_meta_type_var( kind_star() );
-        unify(a, Hs::make_arrow_type(then_type, result_type));
-        
+        auto type = infer_type(L);
         E = L;
-        return result_type;
+        return type;
     }
     // ENUM-FROM-TO
     else if (auto l = E.to<Hs::ListFromTo>())
     {
         auto L = *l;
-
-        // 1. Typecheck enumFrom
-        L.enumFromToOp = Hs::Var({noloc,"Compiler.Enum.enumFromTo"});
-        auto enumFromTo_type = infer_type(L.enumFromToOp);
-
-        // 2. Typecheck from argument
-        auto from_type = infer_type(L.from);
-
-        // 3. enumFromTo_type ~ from_type -> a
-        auto a = fresh_meta_type_var( kind_star() );
-        unify(enumFromTo_type, Hs::make_arrow_type(from_type, a));
-
-        // 4. Typecheck to argument
-        auto to_type = infer_type(L.to);
-
-        // 5. a ~ to_type -> result_type
-        auto result_type = fresh_meta_type_var( kind_star() );
-        unify(a, Hs::make_arrow_type(to_type, result_type));
-        
+        auto type = infer_type(L);
         E = L;
-        return result_type;
+        return type;
     }
     // ENUM-FROM-THEN-TO
     else if (auto l = E.to<Hs::ListFromThenTo>())
     {
         auto L = *l;
-
-        // 1. Typecheck enumFromThenTo
-        L.enumFromThenToOp = Hs::Var({noloc,"Compiler.Enum.enumFromThenTo"});
-        auto enumFromThenTo_type = infer_type(L.enumFromThenToOp);
-
-        // 2. Typecheck from argument
-        auto from_type = infer_type(L.from);
-
-        // 3. enumFromThenTo_type ~ from_type -> a
-        auto a = fresh_meta_type_var( kind_star() );
-        unify(enumFromThenTo_type, Hs::make_arrow_type(from_type, a));
-
-        // 4. Typecheck then argument
-        auto then_type = infer_type(L.then);
-
-        // 5. a ~ then_type -> b
-        auto b = fresh_meta_type_var( kind_star() );
-        unify(a, Hs::make_arrow_type(then_type, b));
-
-        // 6. Typecheck to argument
-        auto to_type = infer_type(L.to);
-
-        // 7. b ~ to_type -> result_type
-        auto result_type = fresh_meta_type_var( kind_star() );
-        unify(b, Hs::make_arrow_type(to_type, result_type));
-
+        auto type = infer_type(L);
         E = L;
-        return result_type;
+        return type;
     }
 
     throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
