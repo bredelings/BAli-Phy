@@ -267,6 +267,52 @@ Hs::Type typechecker_state::infer_type(Hs::Literal& Lit)
         std::abort();
 }
 
+Hs::Type typechecker_state::infer_type(Hs::IfExp& If)
+{
+    auto cond_type = infer_type(unloc(If.condition));
+    auto tbranch_type = infer_type(unloc(If.true_branch));
+    auto fbranch_type = infer_type(unloc(If.false_branch));
+
+    unify(cond_type, bool_type());
+    unify(tbranch_type, fbranch_type);
+    return tbranch_type;
+}
+
+
+Hs::Type typechecker_state::infer_type(Hs::LeftSection& LSec)
+{
+    // 1. Typecheck the op
+    auto op_type = infer_type(LSec.op);
+
+    // 2. Typecheck the left argument
+    auto left_arg_type = infer_type(LSec.l_arg);
+
+    // 3. Typecheck the function application
+    auto result_type = fresh_meta_type_var( kind_star() );
+    unify(op_type, Hs::make_arrow_type(left_arg_type, result_type));
+
+    return result_type;
+}
+
+Hs::Type typechecker_state::infer_type(Hs::RightSection& RSec)
+{
+    // 1. Typecheck the op
+    auto op_type = infer_type(RSec.op);
+
+    // 2. Typecheck the right argument
+    auto right_arg_type = infer_type(RSec.r_arg);
+
+    // 3. Typecheck the function application:  op left_arg right_arg
+    auto left_arg_type = fresh_meta_type_var( kind_star() );
+    auto result_type = fresh_meta_type_var( kind_star() );
+    unify(op_type, Hs::function_type({left_arg_type, right_arg_type}, result_type));
+
+    // 4. Compute the section type;
+    Hs::Type section_type = Hs::function_type({left_arg_type}, result_type);
+
+    return section_type;
+}
+
 Hs::Type
 typechecker_state::infer_type(expression_ref& E)
 {
@@ -354,55 +400,25 @@ typechecker_state::infer_type(expression_ref& E)
     else if (auto if_exp = E.to<Hs::IfExp>())
     {
         auto If = *if_exp;
-        auto cond_type = infer_type(unloc(If.condition));
-        auto tbranch_type = infer_type(unloc(If.true_branch));
-        auto fbranch_type = infer_type(unloc(If.false_branch));
-
-        unify(cond_type, bool_type());
-        unify(tbranch_type, fbranch_type);
-
+        auto type = infer_type(If);
         E = If;
-        return tbranch_type;
+        return type;
     }
     // LEFT section
     else if (auto lsec = E.to<Hs::LeftSection>())
     {
         auto LSec = *lsec;
-
-        // 1. Typecheck the op
-        auto op_type = infer_type(LSec.op);
-
-        // 2. Typecheck the left argument
-        auto left_arg_type = infer_type(LSec.l_arg);
-
-        // 3. Typecheck the function application
-        auto result_type = fresh_meta_type_var( kind_star() );
-        unify(op_type, Hs::make_arrow_type(left_arg_type, result_type));
-
+        auto type = infer_type(LSec);
         E = LSec;
-        return result_type;
+        return type;
     }
     // Right section
     else if (auto rsec = E.to<Hs::RightSection>())
     {
         auto RSec = *rsec;
-
-        // 1. Typecheck the op
-        auto op_type = infer_type(RSec.op);
-
-        // 2. Typecheck the right argument
-        auto right_arg_type = infer_type(RSec.r_arg);
-
-        // 3. Typecheck the function application:  op left_arg right_arg
-        auto left_arg_type = fresh_meta_type_var( kind_star() );
-        auto result_type = fresh_meta_type_var( kind_star() );
-        unify(op_type, Hs::function_type({left_arg_type, right_arg_type}, result_type));
-
-        // 4. Compute the section type;
-        Hs::Type section_type = Hs::function_type({left_arg_type}, result_type);
-
+        auto type = infer_type(RSec);
         E = RSec;
-        return section_type;
+        return type;
     }
     // DO expression
     else if (auto do_exp = E.to<Hs::Do>())

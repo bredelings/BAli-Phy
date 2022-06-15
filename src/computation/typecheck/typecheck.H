@@ -260,6 +260,15 @@ struct typechecker_state: FreshVarSource
     Hs::Type
     infer_type(Hs::Literal& Lit);
 
+    Hs::Type
+    infer_type(Hs::IfExp&);
+
+    Hs::Type
+    infer_type(Hs::LeftSection&);
+
+    Hs::Type
+    infer_type(Hs::RightSection&);
+
 
 
     Hs::Type
