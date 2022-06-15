@@ -16,7 +16,7 @@ pick_index i (h : t) = let (x, t2) = pick_index (i - 1) t in (x, h : t2)
 
 remove_one []   = error "Cannot remove one from empty list"
 remove_one list = do
-    i <- uniform_int 0 (length list - 1)
+    i <- RanDistribution $ uniform_int 0 (length list - 1)
     return $ pick_index i list
 
 remove_n 0 list = return ([], list)
@@ -89,7 +89,7 @@ uniform_topology n = Distribution "uniform_topology"
                                   (TreeRange n)
 
 uniform_labelled_topology taxa = do
-  topology <- uniform_topology (length taxa)
+  topology <- RanDistribution $ uniform_topology (length taxa)
   return $ add_labels taxa topology
 
 add_alignment_moves tree = do
@@ -120,7 +120,7 @@ add_tree_alignment_moves tree = do
 
 uniform_labelled_tree taxa branch_lengths_dist = do
   -- These lines should be under SamplingRate 0.0 -- but then the polytomy trees won't work
-  topology <- SamplingRate 0.0 $ uniform_labelled_topology taxa
+  topology <- RanSamplingRate 0.0 $ uniform_labelled_topology taxa
   -- Q. How can we do walk_tree and then run the MCMC kernels that affect a given branch?
   branch_lengths <- independent [branch_lengths_dist topology b | b <- [0..numBranches topology-1]]
   let tree = branch_length_tree topology branch_lengths
@@ -176,6 +176,7 @@ force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq`
 -- 2        3      2
 -- 3        5      4
 -- 4        7      6
+modifiable_rooted_tree :: (forall a.a -> a) -> RootedTreeImp t -> RootedTreeImp t
 modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $ Tree (listArray' nodes) (listArray' branches) n_nodes where
     n_nodes = numNodes tree
     n_leaves = (n_nodes + 1) `div` 2
@@ -203,8 +204,12 @@ triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_roo
 -- time_tree: force / modifiable / triggered_modifiable
 force_time_tree (TimeTree rooted_tree times) = force_rooted_tree rooted_tree `seq` force_struct times
 
+-- maybe modf has type (forall a . a -> a)?
+-- we should be able to apply it to both Int and Double...
+modifiable_time_tree :: (forall a.a -> a) -> TimeTreeImp t -> TimeTreeImp t
 modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree times where
     rooted_tree = modifiable_rooted_tree modf rooted_tree'
+    maybe_modf :: Int -> a -> a
     maybe_modf node x | node < numLeaves rooted_tree'   = x
                       | otherwise                       = modf x
     times     = mkArray (numElements times') (\node -> maybe_modf node (times'!node))
