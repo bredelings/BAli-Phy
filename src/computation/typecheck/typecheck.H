@@ -226,63 +226,63 @@ struct typechecker_state: FreshVarSource
     infer_rhs_type(expression_ref& decl);
 
     Hs::Type
-    infer_type(expression_ref& exp);
+    inferRho(expression_ref& exp);
 
 
 
-    std::pair<Hs::Expression,Hs::Type> infer_type(const Hs::Var&);
+    std::pair<Hs::Expression,Hs::Type> inferRho(const Hs::Var&);
     Hs::Expression tcRho(const Hs::Var&, const Expected& E);
 
-    Hs::Type infer_type(const Hs::Con& con);
+    Hs::Type inferRho(const Hs::Con& con);
 
     void tcRho_apply(expression_ref& app_exp, const Expected& E);
     Hs::Type inferRho_apply(expression_ref& app_exp);
     void checkRho_apply(expression_ref& app_exp, const Hs::Type& exp_type);
 
-    Hs::Type infer_type(Hs::LambdaExp&);
+    Hs::Type inferRho(Hs::LambdaExp&);
 
-    Hs::Type infer_type(Hs::LetExp&);
+    Hs::Type inferRho(Hs::LetExp&);
 
-    std::pair<Hs::Expression,Hs::Type> infer_type(const Hs::TypedExp& TExp);
+    std::pair<Hs::Expression,Hs::Type> inferRho(const Hs::TypedExp& TExp);
 
-    Hs::Type infer_type(Hs::CaseExp& Case);
+    Hs::Type inferRho(Hs::CaseExp& Case);
 
-    Hs::Type infer_type(Hs::List& L);
+    Hs::Type inferRho(Hs::List& L);
 
-    Hs::Type infer_type(Hs::Tuple& T);
+    Hs::Type inferRho(Hs::Tuple& T);
 
-    Hs::Type infer_type(Hs::Literal& Lit);
+    Hs::Type inferRho(Hs::Literal& Lit);
 
-    Hs::Type infer_type(Hs::IfExp&);
+    Hs::Type inferRho(Hs::IfExp&);
 
-    Hs::Type infer_type(Hs::LeftSection&);
+    Hs::Type inferRho(Hs::LeftSection&);
 
-    Hs::Type infer_type(Hs::RightSection&);
+    Hs::Type inferRho(Hs::RightSection&);
 
-    Hs::Type infer_type(Hs::Do&);
+    Hs::Type inferRho(Hs::Do&);
 
-    Hs::Type infer_type(Hs::ListComprehension&);
+    Hs::Type inferRho(Hs::ListComprehension&);
 
-    Hs::Type infer_type(Hs::ListFrom&);
+    Hs::Type inferRho(Hs::ListFrom&);
 
-    Hs::Type infer_type(Hs::ListFromThen&);
+    Hs::Type inferRho(Hs::ListFromThen&);
 
-    Hs::Type infer_type(Hs::ListFromTo&);
+    Hs::Type inferRho(Hs::ListFromTo&);
 
-    Hs::Type infer_type(Hs::ListFromThenTo&);
+    Hs::Type inferRho(Hs::ListFromThenTo&);
 
-
-    Hs::Type
-    infer_type(Hs::GuardedRHS&, int i=0);
 
     Hs::Type
-    infer_type(Hs::MultiGuardedRHS&);
+    inferRho(Hs::GuardedRHS&, int i=0);
 
     Hs::Type
-    infer_type(Hs::MRule&, int i=0);
+    inferRho(Hs::MultiGuardedRHS&);
 
     Hs::Type
-    infer_type(Hs::Match&);
+    inferRho(Hs::MRule&, int i=0);
+
+    Hs::Type
+    inferRho(Hs::Match&);
 
     // Figures 13, 14, 15?
     Hs::Decls

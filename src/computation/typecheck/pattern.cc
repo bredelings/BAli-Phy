@@ -154,7 +154,7 @@ typechecker_state::infer_pattern_type(Hs::Pattern& pat, const map<string, Hs::Ty
         }
 
         // 1. Typecheck (==)
-//        auto [equals, equals_type] = infer_type(gve, Hs::Var({noloc,"Data.Eq.=="}));
+//        auto [equals, equals_type] = inferRho(gve, Hs::Var({noloc,"Data.Eq.=="}));
 //        L.equalsOp = equals;
 
         if (L.is_Char())
@@ -165,7 +165,7 @@ typechecker_state::infer_pattern_type(Hs::Pattern& pat, const map<string, Hs::Ty
         {
             // 1. Typecheck fromInteger
             expression_ref fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
-            auto fromInteger_type = infer_type(fromInteger);
+            auto fromInteger_type = inferRho(fromInteger);
 
             // 2. Determine result type
             auto result_type = fresh_meta_type_var( kind_star() );
@@ -184,7 +184,7 @@ typechecker_state::infer_pattern_type(Hs::Pattern& pat, const map<string, Hs::Ty
         {
             // 1. Typecheck fromRational
             expression_ref fromRational = Hs::Var({noloc,"Compiler.Num.fromRational"});
-            auto fromRational_type = infer_type(fromRational);
+            auto fromRational_type = inferRho(fromRational);
 
             // 2. Determine result type
             auto result_type = fresh_meta_type_var( kind_star() );

@@ -9,7 +9,7 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
-std::pair<Hs::Expression,Hs::Type> typechecker_state::infer_type(const Hs::Var& x)
+std::pair<Hs::Expression,Hs::Type> typechecker_state::inferRho(const Hs::Var& x)
 {
     Hs::Type result_type;
     auto E = tcRho(x, Infer(result_type));
@@ -54,7 +54,7 @@ Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_rh
     return E;
 }
 
-Hs::Type typechecker_state::infer_type(const Hs::Con& con)
+Hs::Type typechecker_state::inferRho(const Hs::Con& con)
 {
     auto sigma = constructor_type(con);
     auto [tvs, constraints, result_type] = instantiate( sigma );
@@ -77,7 +77,7 @@ void typechecker_state::tcRho_apply(expression_ref& app_exp, const Expected& exp
     assert(app_exp.size() >= 2);
 
     expression_ref f = app_exp.sub()[0];
-    auto t1 = infer_type(f);
+    auto t1 = inferRho(f);
 
     vector<expression_ref> args;
     for(int i=1;i<app_exp.size();i++)
@@ -89,7 +89,7 @@ void typechecker_state::tcRho_apply(expression_ref& app_exp, const Expected& exp
         auto [expected_arg_type, result_type] = *arg_result_types;
 
         expression_ref arg = app_exp.sub()[i];
-        auto arg_type = infer_type(arg);
+        auto arg_type = inferRho(arg);
         args.push_back(arg);
 
         try {
@@ -131,30 +131,30 @@ void typechecker_state::checkRho_apply(expression_ref& app_exp, const Hs::Type& 
     tcRho_apply(app_exp, Check(exp_type));
 }
 
-Hs::Type typechecker_state::infer_type(Hs::LetExp& Let)
+Hs::Type typechecker_state::inferRho(Hs::LetExp& Let)
 {
     auto state2 = copy_clear_lie();
 
     state2.infer_type_for_binds(unloc(Let.binds));
 
     // 2. Compute type of let body
-    auto t_body = state2.infer_type(unloc(Let.body));
+    auto t_body = state2.inferRho(unloc(Let.body));
 
     current_lie() += state2.current_lie();
 
     return t_body;
 }
 
-Hs::Type typechecker_state::infer_type(Hs::LambdaExp& Lam)
+Hs::Type typechecker_state::inferRho(Hs::LambdaExp& Lam)
 {
     auto rule = Hs::MRule{Lam.args, Lam.body};
-    auto t = infer_type(rule);
+    auto t = inferRho(rule);
     Lam.args = rule.patterns;
     Lam.body = rule.rhs;
     return t;
 }
 
-std::pair<Hs::Expression,Hs::Type> typechecker_state::infer_type(const Hs::TypedExp& TExp)
+std::pair<Hs::Expression,Hs::Type> typechecker_state::inferRho(const Hs::TypedExp& TExp)
 {
     // 1. So, ( e :: tau ) should be equivalent to ( let x :: tau ; x = e in x )
     // according to the 2010 report.
@@ -180,14 +180,14 @@ std::pair<Hs::Expression,Hs::Type> typechecker_state::infer_type(const Hs::Typed
     binds.push_back(decls);
     expression_ref E2 = Hs::LetExp({noloc,binds},{noloc,x});
 
-    Hs::Type t = infer_type(E2);
+    Hs::Type t = inferRho(E2);
     return {E2, t};
 }
 
-Hs::Type typechecker_state::infer_type(Hs::CaseExp& Case)
+Hs::Type typechecker_state::inferRho(Hs::CaseExp& Case)
 {
     // 1. Determine object type
-    auto object_type = infer_type(Case.object);
+    auto object_type = inferRho(Case.object);
 
     // 2. Determine data type for object from patterns.
     Hs::Match match;
@@ -197,7 +197,7 @@ Hs::Type typechecker_state::infer_type(Hs::CaseExp& Case)
         match.rules.push_back(Hs::MRule{{pattern},body});
     }
 
-    auto match_type = infer_type(match);
+    auto match_type = inferRho(match);
 
     for(int i=0;i<Case.alts.size();i++)
     {
@@ -211,13 +211,13 @@ Hs::Type typechecker_state::infer_type(Hs::CaseExp& Case)
     return result_type;
 }
 
-Hs::Type typechecker_state::infer_type(Hs::List& L)
+Hs::Type typechecker_state::inferRho(Hs::List& L)
 {
     Hs::Type element_type = fresh_meta_type_var( kind_star() );
 
     for(auto& element: L.elements)
     {
-        auto t1 = infer_type(element);
+        auto t1 = inferRho(element);
 
         try {
             unify(t1, element_type);
@@ -234,19 +234,19 @@ Hs::Type typechecker_state::infer_type(Hs::List& L)
     return Hs::ListType(element_type);
 }
 
-Hs::Type typechecker_state::infer_type(Hs::Tuple& T)
+Hs::Type typechecker_state::inferRho(Hs::Tuple& T)
 {
     vector<Hs::Type> element_types;
     for(auto& element: T.elements)
     {
-        auto element_type = infer_type(element);
+        auto element_type = inferRho(element);
         element_types.push_back( element_type );
     }
     Hs::Type result_type = Hs::TupleType(element_types);
     return result_type;
 }
 
-Hs::Type typechecker_state::infer_type(Hs::Literal& Lit)
+Hs::Type typechecker_state::inferRho(Hs::Literal& Lit)
 {
     if (Lit.is_Char())
         return char_type();
@@ -258,7 +258,7 @@ Hs::Type typechecker_state::infer_type(Hs::Literal& Lit)
     {
         // 1. Typecheck fromInteger
         expression_ref fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
-        auto fromInteger_type = infer_type(fromInteger);
+        auto fromInteger_type = inferRho(fromInteger);
 
         // 2. Determine result type
         auto result_type = fresh_meta_type_var( kind_star() );
@@ -272,7 +272,7 @@ Hs::Type typechecker_state::infer_type(Hs::Literal& Lit)
     {
         // 1. Typecheck fromRational
         expression_ref fromRational = Hs::Var({noloc,"Compiler.Num.fromRational"});
-        auto fromRational_type = infer_type(fromRational);
+        auto fromRational_type = inferRho(fromRational);
 
         // 2. Determine result type
         Hs::Type result_type = fresh_meta_type_var( kind_star() );
@@ -285,11 +285,11 @@ Hs::Type typechecker_state::infer_type(Hs::Literal& Lit)
         std::abort();
 }
 
-Hs::Type typechecker_state::infer_type(Hs::IfExp& If)
+Hs::Type typechecker_state::inferRho(Hs::IfExp& If)
 {
-    auto cond_type = infer_type(unloc(If.condition));
-    auto tbranch_type = infer_type(unloc(If.true_branch));
-    auto fbranch_type = infer_type(unloc(If.false_branch));
+    auto cond_type = inferRho(unloc(If.condition));
+    auto tbranch_type = inferRho(unloc(If.true_branch));
+    auto fbranch_type = inferRho(unloc(If.false_branch));
 
     unify(cond_type, bool_type());
     unify(tbranch_type, fbranch_type);
@@ -297,13 +297,13 @@ Hs::Type typechecker_state::infer_type(Hs::IfExp& If)
 }
 
 
-Hs::Type typechecker_state::infer_type(Hs::LeftSection& LSec)
+Hs::Type typechecker_state::inferRho(Hs::LeftSection& LSec)
 {
     // 1. Typecheck the op
-    auto op_type = infer_type(LSec.op);
+    auto op_type = inferRho(LSec.op);
 
     // 2. Typecheck the left argument
-    auto left_arg_type = infer_type(LSec.l_arg);
+    auto left_arg_type = inferRho(LSec.l_arg);
 
     // 3. Typecheck the function application
     auto result_type = fresh_meta_type_var( kind_star() );
@@ -312,13 +312,13 @@ Hs::Type typechecker_state::infer_type(Hs::LeftSection& LSec)
     return result_type;
 }
 
-Hs::Type typechecker_state::infer_type(Hs::RightSection& RSec)
+Hs::Type typechecker_state::inferRho(Hs::RightSection& RSec)
 {
     // 1. Typecheck the op
-    auto op_type = infer_type(RSec.op);
+    auto op_type = inferRho(RSec.op);
 
     // 2. Typecheck the right argument
-    auto right_arg_type = infer_type(RSec.r_arg);
+    auto right_arg_type = inferRho(RSec.r_arg);
 
     // 3. Typecheck the function application:  op left_arg right_arg
     auto left_arg_type = fresh_meta_type_var( kind_star() );
@@ -331,30 +331,30 @@ Hs::Type typechecker_state::infer_type(Hs::RightSection& RSec)
     return section_type;
 }
 
-Hs::Type typechecker_state::infer_type(Hs::Do& DoExp)
+Hs::Type typechecker_state::inferRho(Hs::Do& DoExp)
 {
     return infer_stmts_type(0, DoExp.stmts.stmts);
 }
 
-Hs::Type typechecker_state::infer_type(Hs::ListComprehension& LComp)
+Hs::Type typechecker_state::inferRho(Hs::ListComprehension& LComp)
 {
     auto state2 = copy_clear_lie();
     state2.infer_quals_type(LComp.quals);
-    auto exp_type = state2.infer_type(LComp.body);
+    auto exp_type = state2.inferRho(LComp.body);
 
     current_lie() += state2.current_lie();
 
     return Hs::ListType(exp_type);
 }
 
-Hs::Type typechecker_state::infer_type(Hs::ListFrom& L)
+Hs::Type typechecker_state::inferRho(Hs::ListFrom& L)
 {
     // 1. Typecheck enumFrom
     L.enumFromOp = Hs::Var({noloc,"Compiler.Enum.enumFrom"});
-    auto enumFrom_type = infer_type(L.enumFromOp);
+    auto enumFrom_type = inferRho(L.enumFromOp);
 
     // 2. Typecheck from argument
-    auto from_type = infer_type(L.from);
+    auto from_type = inferRho(L.from);
 
     // 3. enumFrom_type ~ from_type -> result_type
     auto result_type = fresh_meta_type_var( kind_star() );
@@ -363,21 +363,21 @@ Hs::Type typechecker_state::infer_type(Hs::ListFrom& L)
     return result_type;
 }
 
-Hs::Type typechecker_state::infer_type(Hs::ListFromThen& L)
+Hs::Type typechecker_state::inferRho(Hs::ListFromThen& L)
 {
     // 1. Typecheck enumFrom
     L.enumFromThenOp = Hs::Var({noloc,"Compiler.Enum.enumFromThen"});
-    auto enumFromThen_type = infer_type(L.enumFromThenOp);
+    auto enumFromThen_type = inferRho(L.enumFromThenOp);
 
     // 2. Typecheck from argument
-    auto from_type = infer_type(L.from);
+    auto from_type = inferRho(L.from);
 
     // 3. enumFromThen_type ~ from_type -> a
     auto a = fresh_meta_type_var( kind_star() );
     unify(enumFromThen_type, Hs::make_arrow_type(from_type, a));
 
     // 4. Typecheck then argument
-    auto then_type = infer_type(L.then);
+    auto then_type = inferRho(L.then);
 
     // 5. a ~ then_type -> result_type
     auto result_type = fresh_meta_type_var( kind_star() );
@@ -386,21 +386,21 @@ Hs::Type typechecker_state::infer_type(Hs::ListFromThen& L)
     return result_type;
 }
 
-Hs::Type typechecker_state::infer_type(Hs::ListFromTo& L)
+Hs::Type typechecker_state::inferRho(Hs::ListFromTo& L)
 {
     // 1. Typecheck enumFrom
     L.enumFromToOp = Hs::Var({noloc,"Compiler.Enum.enumFromTo"});
-    auto enumFromTo_type = infer_type(L.enumFromToOp);
+    auto enumFromTo_type = inferRho(L.enumFromToOp);
 
     // 2. Typecheck from argument
-    auto from_type = infer_type(L.from);
+    auto from_type = inferRho(L.from);
 
     // 3. enumFromTo_type ~ from_type -> a
     auto a = fresh_meta_type_var( kind_star() );
     unify(enumFromTo_type, Hs::make_arrow_type(from_type, a));
 
     // 4. Typecheck to argument
-    auto to_type = infer_type(L.to);
+    auto to_type = inferRho(L.to);
 
     // 5. a ~ to_type -> result_type
     auto result_type = fresh_meta_type_var( kind_star() );
@@ -409,28 +409,28 @@ Hs::Type typechecker_state::infer_type(Hs::ListFromTo& L)
     return result_type;
 }
 
-Hs::Type typechecker_state::infer_type(Hs::ListFromThenTo& L)
+Hs::Type typechecker_state::inferRho(Hs::ListFromThenTo& L)
 {
     // 1. Typecheck enumFromThenTo
     L.enumFromThenToOp = Hs::Var({noloc,"Compiler.Enum.enumFromThenTo"});
-    auto enumFromThenTo_type = infer_type(L.enumFromThenToOp);
+    auto enumFromThenTo_type = inferRho(L.enumFromThenToOp);
 
     // 2. Typecheck from argument
-    auto from_type = infer_type(L.from);
+    auto from_type = inferRho(L.from);
 
     // 3. enumFromThenTo_type ~ from_type -> a
     auto a = fresh_meta_type_var( kind_star() );
     unify(enumFromThenTo_type, Hs::make_arrow_type(from_type, a));
 
     // 4. Typecheck then argument
-    auto then_type = infer_type(L.then);
+    auto then_type = inferRho(L.then);
 
     // 5. a ~ then_type -> b
     auto b = fresh_meta_type_var( kind_star() );
     unify(a, Hs::make_arrow_type(then_type, b));
 
     // 6. Typecheck to argument
-    auto to_type = infer_type(L.to);
+    auto to_type = inferRho(L.to);
 
     // 7. b ~ to_type -> result_type
     auto result_type = fresh_meta_type_var( kind_star() );
@@ -439,19 +439,19 @@ Hs::Type typechecker_state::infer_type(Hs::ListFromThenTo& L)
     return result_type;
 }
 
-Hs::Type typechecker_state::infer_type(expression_ref& E)
+Hs::Type typechecker_state::inferRho(expression_ref& E)
 {
     // VAR
     if (auto x = E.to<Hs::Var>())
     {
-        auto [E2, type] = infer_type(*x);
+        auto [E2, type] = inferRho(*x);
         E = E2;
         return type;
     }
     // CON
     else if (auto con = E.to<Hs::Con>())
     {
-        return infer_type(*con);
+        return inferRho(*con);
     }
     // APP
     else if (is_apply_exp(E))
@@ -464,7 +464,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto lam = E.to<Hs::LambdaExp>())
     {
         auto Lam = *lam;
-        auto t = infer_type(Lam);
+        auto t = inferRho(Lam);
         E = Lam;
         return t;
     }
@@ -472,7 +472,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto let = E.to<Hs::LetExp>())
     {
         auto Let = *let;
-        auto t = infer_type(Let);
+        auto t = inferRho(Let);
         E = Let;
         return t;
     }
@@ -480,7 +480,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto case_exp = E.to<Hs::CaseExp>())
     {
         auto Case = *case_exp;
-        auto type = infer_type(Case);
+        auto type = inferRho(Case);
         E = Case;
         return type;
     }
@@ -488,7 +488,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto texp = E.to<Hs::TypedExp>())
     {
         auto TExp = *texp;
-        auto [E2,type] = infer_type(TExp);
+        auto [E2,type] = inferRho(TExp);
         E = E2;
         return type;
     }
@@ -496,7 +496,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto L = E.to<Hs::Literal>())
     {
         auto Lit = *L;
-        auto type = infer_type(Lit);
+        auto type = inferRho(Lit);
         E = Lit;
         return type;
     }
@@ -504,7 +504,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto l = E.to<Hs::List>())
     {
         auto L = *l;
-        auto type = infer_type(L);
+        auto type = inferRho(L);
         E = L;
         return type;
     }
@@ -512,7 +512,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto tup = E.to<Hs::Tuple>())
     {
         auto T = *tup;
-        auto type = infer_type(T);
+        auto type = inferRho(T);
         E = T;
         return type;
     }
@@ -525,7 +525,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto if_exp = E.to<Hs::IfExp>())
     {
         auto If = *if_exp;
-        auto type = infer_type(If);
+        auto type = inferRho(If);
         E = If;
         return type;
     }
@@ -533,7 +533,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto lsec = E.to<Hs::LeftSection>())
     {
         auto LSec = *lsec;
-        auto type = infer_type(LSec);
+        auto type = inferRho(LSec);
         E = LSec;
         return type;
     }
@@ -541,7 +541,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto rsec = E.to<Hs::RightSection>())
     {
         auto RSec = *rsec;
-        auto type = infer_type(RSec);
+        auto type = inferRho(RSec);
         E = RSec;
         return type;
     }
@@ -549,7 +549,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto do_exp = E.to<Hs::Do>())
     {
         auto DoExp = *do_exp;
-        auto do_type = infer_type(DoExp);
+        auto do_type = inferRho(DoExp);
         E = DoExp;
         return do_type;
     }
@@ -557,7 +557,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto lcomp = E.to<Hs::ListComprehension>())
     {
         auto LComp = *lcomp;
-        auto type = infer_type(LComp);
+        auto type = inferRho(LComp);
         E = LComp;
         return type;
     }
@@ -565,7 +565,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto l = E.to<Hs::ListFrom>())
     {
         auto L = *l;
-        auto type = infer_type(L);
+        auto type = inferRho(L);
         E = L;
         return type;
     }
@@ -573,7 +573,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto l = E.to<Hs::ListFromThen>())
     {
         auto L = *l;
-        auto type = infer_type(L);
+        auto type = inferRho(L);
         E = L;
         return type;
     }
@@ -581,7 +581,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto l = E.to<Hs::ListFromTo>())
     {
         auto L = *l;
-        auto type = infer_type(L);
+        auto type = inferRho(L);
         E = L;
         return type;
     }
@@ -589,7 +589,7 @@ Hs::Type typechecker_state::infer_type(expression_ref& E)
     else if (auto l = E.to<Hs::ListFromThenTo>())
     {
         auto L = *l;
-        auto type = infer_type(L);
+        auto type = inferRho(L);
         E = L;
         return type;
     }

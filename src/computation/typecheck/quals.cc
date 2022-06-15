@@ -34,7 +34,7 @@ typechecker_state::infer_qual_type(Hs::Qual& qual)
     if (auto sq = qual.to<Hs::SimpleQual>())
     {
         auto SQ = *sq;
-        auto cond_type = infer_type(SQ.exp);
+        auto cond_type = inferRho(SQ.exp);
         unify( cond_type, bool_type() );
         qual = SQ;
     }
@@ -43,7 +43,7 @@ typechecker_state::infer_qual_type(Hs::Qual& qual)
     {
         auto PQ = *pq;
         // pat <- exp
-        auto exp_type = infer_type(PQ.exp);
+        auto exp_type = inferRho(PQ.exp);
         auto [pat_type, lve] = infer_pattern_type(PQ.bindpat);
 
         // type(pat) = type(exp)
@@ -70,7 +70,7 @@ typechecker_state::infer_guard_type(Hs::Qual& guard)
     if (auto sq = guard.to<Hs::SimpleQual>())
     {
         auto SQ = *sq;
-        auto cond_type = infer_type(SQ.exp);
+        auto cond_type = inferRho(SQ.exp);
         unify( cond_type, bool_type() );
         guard = SQ;
     }
@@ -79,7 +79,7 @@ typechecker_state::infer_guard_type(Hs::Qual& guard)
         auto PQ = *pq;
         // pat <- exp
         auto [pat_type, lve] = infer_pattern_type(PQ.bindpat);
-        auto exp_type = infer_type(PQ.exp);
+        auto exp_type = inferRho(PQ.exp);
 
         // type(pat) = type(exp)
         unify(pat_type,exp_type);
@@ -111,7 +111,7 @@ typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
             throw myexception()<<"stmts list does not end in an expression";
 
         auto Last = *last;
-        auto type = infer_type(Last.exp);
+        auto type = inferRho(Last.exp);
 
         stmt = Last;
         return type;
@@ -124,10 +124,10 @@ typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
 
         // 1. Typecheck (>>=)
         PQ.bindOp = Hs::Var({noloc,"Compiler.Base.>>="});
-        auto bind_op_type = infer_type(PQ.bindOp);
+        auto bind_op_type = inferRho(PQ.bindOp);
 
         // 2. Typecheck exp
-        auto exp_type = infer_type(PQ.exp);
+        auto exp_type = inferRho(PQ.exp);
 
         // 3. bind_op_type ~ (exp_type -> a)
         auto a = fresh_meta_type_var( kind_star() );
@@ -152,7 +152,7 @@ typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
         if (false) 
         {
             PQ.failOp = Hs::Var({noloc,"Compiler.Base.fail"});
-            auto fail_op_type = new_state.infer_type(PQ.failOp);
+            auto fail_op_type = new_state.inferRho(PQ.failOp);
         }
         current_lie() += new_state.current_lie();
 
@@ -166,10 +166,10 @@ typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
 
         // 1. Typecheck (>>)
         SQ.andThenOp = Hs::Var({noloc,"Compiler.Base.>>"});
-        auto and_then_op_type = infer_type(SQ.andThenOp);
+        auto and_then_op_type = inferRho(SQ.andThenOp);
 
         // 2. Typecheck exp
-        auto exp_type = infer_type(SQ.exp);
+        auto exp_type = inferRho(SQ.exp);
 
         // 3. and_then_op_type ~ (exp_type -> a)
         auto a = fresh_meta_type_var( kind_star() );

@@ -11,7 +11,7 @@ using std::tuple;
 
 // Figure 25. Rules for match, mrule, and grhs
 Hs::Type
-typechecker_state::infer_type(Hs::GuardedRHS& rhs, int i)
+typechecker_state::inferRho(Hs::GuardedRHS& rhs, int i)
 {
     if (i < rhs.guards.size())
     {
@@ -19,19 +19,19 @@ typechecker_state::infer_type(Hs::GuardedRHS& rhs, int i)
         auto state2 = copy_clear_lie();
         state2.infer_guard_type(rhs.guards[i]);
 
-        auto result_type = state2.infer_type(rhs, i+1);
+        auto result_type = state2.inferRho(rhs, i+1);
 
         current_lie() += state2.current_lie();
 
         return result_type;
     }
     else
-        return infer_type(rhs.body);
+        return inferRho(rhs.body);
 }
 
 // Fig 25. GUARD-OR
 Hs::Type
-typechecker_state::infer_type(Hs::MultiGuardedRHS& rhs)
+typechecker_state::inferRho(Hs::MultiGuardedRHS& rhs)
 {
     substitution_t s;
     Hs::Type type = fresh_meta_type_var( kind_star() );
@@ -42,7 +42,7 @@ typechecker_state::infer_type(Hs::MultiGuardedRHS& rhs)
 
     for(auto& guarded_rhs: rhs.guarded_rhss)
     {
-        auto t1 = state2.infer_type(guarded_rhs);
+        auto t1 = state2.inferRho(guarded_rhs);
         unify(t1,type);
     }
     current_lie() += state2.current_lie();
@@ -51,7 +51,7 @@ typechecker_state::infer_type(Hs::MultiGuardedRHS& rhs)
 };
 
 Hs::Type
-typechecker_state::infer_type(Hs::MRule& rule, int i)
+typechecker_state::inferRho(Hs::MRule& rule, int i)
 {
     if (i < rule.patterns.size())
     {
@@ -59,23 +59,23 @@ typechecker_state::infer_type(Hs::MRule& rule, int i)
 
         auto new_state = copy_add_binders( lve1 );
 
-        auto t2 = new_state.infer_type(rule, i+1);
+        auto t2 = new_state.inferRho(rule, i+1);
         current_lie() += new_state.current_lie();
 
         return Hs::make_arrow_type(t1,t2);
     }
     else
-        return infer_type(rule.rhs);
+        return inferRho(rule.rhs);
 }
 
 Hs::Type
-typechecker_state::infer_type(Hs::Match& m)
+typechecker_state::inferRho(Hs::Match& m)
 {
     Hs::Type result_type = fresh_meta_type_var( kind_star() );
 
     for(auto& rule: m.rules)
     {
-        auto t1 = infer_type(rule);
+        auto t1 = inferRho(rule);
         unify(result_type, t1);
     }
 
