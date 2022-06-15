@@ -59,7 +59,7 @@ namespace Haskell
 
 
         template <typename T>
-        T* to_modifiable() const
+        T* to_modifiable()
         {
             if (std::holds_alternative<cow_ptr<T>>(type_ptr))
                 return std::get<cow_ptr<T>>(type_ptr).modify_ptr().get();
@@ -78,7 +78,7 @@ namespace Haskell
         const T& as_() const {return *std::get<cow_ptr<T>>(type_ptr).get_ptr();}
 
         template <typename T>
-        T& as_modifiable() const {return *std::get<cow_ptr<T>>(type_ptr).modify_ptr();}
+        T& as_modifiable() {return *std::get<cow_ptr<T>>(type_ptr).modify_ptr();}
 
         Type& operator=(const Type& t)
         {
