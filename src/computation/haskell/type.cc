@@ -343,7 +343,7 @@ Type make_tyapps(const Type& T0, const std::vector<Type>& args)
     return T;
 }
 
-bool ForallType::operator==(const ForallType& t) const
+bool ForallType::operator==(const ForallType&) const
 {
     std::abort();
 }
