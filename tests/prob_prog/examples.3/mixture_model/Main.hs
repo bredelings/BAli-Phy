@@ -31,6 +31,6 @@ main = do
 
   frame <- readTable "x.csv"
 
-  let xs = frame $$ ("x",AsDouble)
+  let xs = frame $$ "x" :: [Double]
 
   mcmc $ model xs 

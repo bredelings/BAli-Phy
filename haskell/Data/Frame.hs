@@ -1,4 +1,4 @@
-module Data.Frame ( csv_to_frame, readTable, ($$), AsDouble, AsInt, AsString )
+module Data.Frame ( csv_to_frame, readTable, ($$) )
     where
 
 import qualified Data.Map as Map
@@ -11,11 +11,5 @@ csv_to_frame (header:rows) = Map.fromList [(field_name, map (!!i) rows) | (i,fie
 
 readTable filename = csv_to_frame `liftM` read_csv filename
 
-data FieldType = AsDouble | AsInt | AsString
+frame $$ field = map read (frame Map.! field)
 
--- This does NOT fit the typesystem, but we can fix it when we get the type system
--- ($$) :: Frame -> String -> [a]
--- frame ($$) fname = map read (frame Map.! fname) :: [a]
-frame $$ (field,AsDouble) = map read_double $ (frame Map.! field)
-frame $$ (field,AsInt)    = map read_int    $ (frame Map.! field)
-frame $$ (field,AsString) = (frame Map.! field)

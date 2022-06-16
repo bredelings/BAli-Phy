@@ -34,9 +34,9 @@ main = do
 
   radon <- readTable "radon.csv"
 
-  let floor_values       = radon $$ ("floor",       AsDouble)
-      county_code_values = radon $$ ("county_code", AsInt)
-      log_radon_data     = radon $$ ("log_radon",   AsDouble)
+  let floor_values       = radon $$ "floor",      :: [Double]
+      county_code_values = radon $$ "county_code" :: [Int]
+      log_radon_data     = radon $$ "log_radon"   :: [Double]
 
   mcmc $ model floor_values county_code_values log_radon_data
 

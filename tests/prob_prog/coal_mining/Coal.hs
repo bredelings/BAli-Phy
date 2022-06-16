@@ -36,6 +36,6 @@ main = do
 
   frame <- readTable "coal-times.csv"
 
-  let times = frame $$ ("time", AsDouble)
+  let times = frame $$ "time" :: [Double]
 
   mcmc $ model (1851.0,1963.0) times

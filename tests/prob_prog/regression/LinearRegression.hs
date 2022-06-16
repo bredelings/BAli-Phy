@@ -20,8 +20,8 @@ model xs ys = do
 main = do
   xy_data <- readTable "xy.csv"
 
-  let xs = xy_data $$ ("x", AsDouble)
-      ys = xy_data $$ ("y", AsDouble)
+  let xs = xy_data $$ "x" :: [Double]
+      ys = xy_data $$ "y" :: [Double]
 
   mcmc $ model xs ys
 

@@ -23,6 +23,6 @@ main = do
   sequence_data <- load_alignment dna seq_filename
 
   locs_table <- readTable locs_filename
-  let locs = locs_table $$ ("locs", AsInt)
+  let locs = locs_table $$ "locs" :: [Int]
 
   mcmc $ model locs sequence_data

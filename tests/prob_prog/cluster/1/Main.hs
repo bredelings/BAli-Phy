@@ -32,7 +32,7 @@ main = do
 
   xtable <- readTable filename
 
-  let xs = xtable $$ ("x", AsDouble)
+  let xs = xtable $$ "x" :: [Double]
 
   mcmc $ model xs
 

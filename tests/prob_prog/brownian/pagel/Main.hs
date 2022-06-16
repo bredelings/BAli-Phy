@@ -69,6 +69,6 @@ main = do
 
   xtable <- readTable xs_file
 
-  let xs = xtable $$ ("x", AsDouble)
+  let xs = xtable $$ "x" :: [Double]
 
   mcmc $ model topology lengths xs
