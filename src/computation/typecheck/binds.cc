@@ -259,17 +259,17 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
     {
         auto& name = unloc(FD.v.name);
 
-        // 1. typecheck the rhs -> (rhs_type, wanted, body)
-        auto tcs2 = copy_clear_lie();
-        auto rhs_type = tcs2.inferRho(FD.match);
-        auto unreduced_collected_lie = tcs2.current_lie();
-
-        // 2. instantiate the type -> (tvs, givens, rho-type)
+        // 1. instantiate the type -> (tvs, givens, rho-type)
         auto polytype = gve.at(name);
         auto [mtvs, given_constraints, given_type] = instantiate(polytype);
         auto ordered_lie_given = constraints_to_lie(given_constraints);
         auto dict_vars = vars_from_lie( ordered_lie_given );
         auto lie_given = unordered_lie(ordered_lie_given);
+
+        // 2. typecheck the rhs -> (rhs_type, wanted, body)
+        auto tcs2 = copy_clear_lie();
+        auto rhs_type = tcs2.inferRho(FD.match);
+        auto unreduced_collected_lie = tcs2.current_lie();
 
         // 3. match(rhs_type => given_type)
         match(rhs_type, given_type);
