@@ -220,6 +220,8 @@ run_lazy' rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
 
 gen_model_no_alphabet m = run_strict' 1.0 m
 mcmc = gen_model_no_alphabet
+
+add_null_program_result :: IO a -> IO (Maybe b,a)
 add_null_program_result p = do result <- p
                                return (Nothing,result)
 
