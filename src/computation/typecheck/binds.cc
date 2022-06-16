@@ -255,6 +255,14 @@ classify_constraints(const local_instance_env& lie,
 tuple<expression_ref, ID, Hs::Type>
 typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
+    // We need to
+    // 1. skolemize the polytype
+    // 2. do checkRho on the body
+    //   - this requires checkRho on Match, MRule, etc.
+    // 3. checkrho on MRule is basically doing \(x::sigma)
+    // 4. when we do checkSigma(var x, sigma), we basically avoid instantiating x
+    //    -- or avoid COMPLETELY instantiating it.
+    // 5. How do we handle classify_constraint and default_preds with skolemized variables?
     try
     {
         auto& name = unloc(FD.v.name);
