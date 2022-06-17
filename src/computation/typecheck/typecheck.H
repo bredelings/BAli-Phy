@@ -225,6 +225,10 @@ struct typechecker_state: FreshVarSource
     Hs::Type
     infer_rhs_type(expression_ref& decl);
 
+    // checkRho
+
+    void checkRho(expression_ref& exp, const Hs::Type& exp_type);
+
     // inferRho
 
     template <typename T>
@@ -235,10 +239,7 @@ struct typechecker_state: FreshVarSource
         return result_type;
     }
 
-    Hs::Type
-    inferRho(expression_ref& exp);
-
-    void checkRho(expression_ref& exp, const Hs::Type& exp_type);
+    void tcRho(expression_ref& exp, const Expected& E);
 
     Hs::Expression tcRho(const Hs::Var&, const Expected& E);
 

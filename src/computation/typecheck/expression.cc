@@ -397,83 +397,73 @@ void typechecker_state::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
     exp_type.infer_type() = result_type;
 }
 
-Hs::Type typechecker_state::inferRho(expression_ref& E)
+void typechecker_state::tcRho(expression_ref& E, const Expected& exp_type)
 {
     // VAR
     if (auto x = E.to<Hs::Var>())
     {
         Hs::Type type;
-        E = tcRho(*x, Infer(type));
-        return type;
+        E = tcRho(*x, exp_type);
     }
     // CON
     else if (auto con = E.to<Hs::Con>())
     {
-        return inferRho(*con);
+        tcRho(*con, exp_type);
     }
     // APP
     else if (auto app = E.to<Hs::ApplyExp>())
     {
         auto App = *app;
-        auto type = inferRho(App);
+        tcRho(App, exp_type);
         E = App;
-        return type;
     }
     // LAMBDA
     else if (auto lam = E.to<Hs::LambdaExp>())
     {
         auto Lam = *lam;
-        auto t = inferRho(Lam);
+        tcRho(Lam, exp_type);
         E = Lam;
-        return t;
     }
     // LET
     else if (auto let = E.to<Hs::LetExp>())
     {
         auto Let = *let;
-        auto t = inferRho(Let);
+        tcRho(Let, exp_type);
         E = Let;
-        return t;
     }
     // CASE
     else if (auto case_exp = E.to<Hs::CaseExp>())
     {
         auto Case = *case_exp;
-        auto type = inferRho(Case);
+        tcRho(Case, exp_type);
         E = Case;
-        return type;
     }
     // EXP :: sigma
     else if (auto texp = E.to<Hs::TypedExp>())
     {
         auto TExp = *texp;
-        Hs::Type type;
-        E  = tcRho(TExp, Infer(type));
-        return type;
+        E = tcRho(TExp, exp_type);
     }
     // LITERAL
     else if (auto L = E.to<Hs::Literal>())
     {
         auto Lit = *L;
-        auto type = inferRho(Lit);
+        tcRho(Lit, exp_type);
         E = Lit;
-        return type;
     }
     // LIST
     else if (auto l = E.to<Hs::List>())
     {
         auto L = *l;
-        auto type = inferRho(L);
+        tcRho(L, exp_type);
         E = L;
-        return type;
     }
     // TUPLE
     else if (auto tup = E.to<Hs::Tuple>())
     {
         auto T = *tup;
-        auto type = inferRho(T);
+        tcRho(T, exp_type);
         E = T;
-        return type;
     }
     else if (is_non_apply_op_exp(E))
     {
@@ -484,76 +474,67 @@ Hs::Type typechecker_state::inferRho(expression_ref& E)
     else if (auto if_exp = E.to<Hs::IfExp>())
     {
         auto If = *if_exp;
-        auto type = inferRho(If);
+        tcRho(If, exp_type);
         E = If;
-        return type;
     }
     // LEFT section
     else if (auto lsec = E.to<Hs::LeftSection>())
     {
         auto LSec = *lsec;
-        auto type = inferRho(LSec);
+        tcRho(LSec, exp_type);
         E = LSec;
-        return type;
     }
     // Right section
     else if (auto rsec = E.to<Hs::RightSection>())
     {
         auto RSec = *rsec;
-        auto type = inferRho(RSec);
+        tcRho(RSec, exp_type);
         E = RSec;
-        return type;
     }
     // DO expression
     else if (auto do_exp = E.to<Hs::Do>())
     {
         auto DoExp = *do_exp;
-        auto do_type = inferRho(DoExp);
+        tcRho(DoExp, exp_type);
         E = DoExp;
-        return do_type;
     }
     // LISTCOMP
     else if (auto lcomp = E.to<Hs::ListComprehension>())
     {
         auto LComp = *lcomp;
-        auto type = inferRho(LComp);
+        tcRho(LComp, exp_type);
         E = LComp;
-        return type;
     }
     // ENUM-FROM
     else if (auto l = E.to<Hs::ListFrom>())
     {
         auto L = *l;
-        auto type = inferRho(L);
+        tcRho(L, exp_type);
         E = L;
-        return type;
     }
     // ENUM-FROM-THEN
     else if (auto l = E.to<Hs::ListFromThen>())
     {
         auto L = *l;
-        auto type = inferRho(L);
+        tcRho(L, exp_type);
         E = L;
-        return type;
     }
     // ENUM-FROM-TO
     else if (auto l = E.to<Hs::ListFromTo>())
     {
         auto L = *l;
-        auto type = inferRho(L);
+        tcRho(L, exp_type);
         E = L;
-        return type;
     }
     // ENUM-FROM-THEN-TO
     else if (auto l = E.to<Hs::ListFromThenTo>())
     {
         auto L = *l;
-        auto type = inferRho(L);
+        tcRho(L, exp_type);
         E = L;
-        return type;
     }
-
-    throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
+    else
+        throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
 }
 
 // FIXME -- we need the location!
