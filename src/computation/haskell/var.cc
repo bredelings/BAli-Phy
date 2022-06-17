@@ -51,4 +51,9 @@ bool Var::operator<(const Var& v) const
     return (cmp < 0);;
 }
 
+string Con::print() const
+{
+    return unloc(name);
+}
+
 }

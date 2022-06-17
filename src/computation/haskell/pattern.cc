@@ -13,6 +13,46 @@ using std::optional;
 namespace Haskell
 {
 
+string VarPattern::print() const
+{
+    return v.print();
+}
+
+string ConPattern::print() const
+{
+    vector<string> ss;
+    ss.push_back(head.print());
+    for(auto& arg: args)
+        ss.push_back(parenthesize_pattern(arg));
+    return join(ss, " ");
+}
+
+string TypedPattern::print() const
+{
+    return pat.print() + " :: " + type.print();
+}
+
+string LiteralPattern::print() const
+{
+    return lit.print();
+}
+
+string ListPattern::print() const
+{
+    vector<string> parts;
+    for(auto& pat: pats)
+        parts.push_back( pat.print() );
+    return "[" + join(parts,",") +"]";
+}
+
+string TuplePattern::print() const
+{
+    vector<string> parts;
+    for(auto& pat: pats)
+        parts.push_back( pat.print() );
+    return "(" + join(parts,",") +")";
+}
+
 string WildcardPattern::print() const
 {
     return "_";

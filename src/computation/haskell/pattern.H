@@ -7,6 +7,9 @@
 // Can we eliminate this?
 #include "computation/expression/expression_ref.H"
 
+#include "var.H"
+#include "literal.H"
+
 namespace Haskell
 {
 
@@ -15,9 +18,57 @@ typedef expression_ref Pat;
 
 std::string parenthesize_pattern(const Pattern& p);
 
+struct VarPattern: public Object
+{
+    Var v;
+
+    VarPattern* clone() const { return new VarPattern(*this);}
+    std::string print() const;
+};
+
+struct ConPattern: public Object
+{
+    Con head;
+    std::vector<Pattern> args;
+
+    ConPattern* clone() const { return new ConPattern(*this);}
+    std::string print() const;
+};
+
+struct TypedPattern: public Object
+{
+    Pattern pat;
+    Type type;
+
+    TypedPattern* clone() const { return new TypedPattern(*this);}
+    std::string print() const;
+};
+
+struct LiteralPattern: public Object
+{
+    Literal lit;
+
+    LiteralPattern* clone() const { return new LiteralPattern(*this);}
+    std::string print() const;
+};
+
 struct WildcardPattern: public Object
 {
     WildcardPattern* clone() const { return new WildcardPattern(*this);}
+    std::string print() const;
+};
+
+struct ListPattern: public Object
+{
+    std::vector<Pattern> pats;
+    ListPattern* clone() const { return new ListPattern(*this);}
+    std::string print() const;
+};
+
+struct TuplePattern: public Object
+{
+    std::vector<Pattern> pats;
+    TuplePattern* clone() const { return new TuplePattern(*this);}
     std::string print() const;
 };
 
