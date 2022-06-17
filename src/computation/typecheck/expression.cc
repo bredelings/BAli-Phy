@@ -96,11 +96,9 @@ void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
     state2.infer_type_for_binds(unloc(Let.binds));
 
     // 2. Compute type of let body
-    auto t_body = state2.inferRho(unloc(Let.body));
+    state2.tcRho(unloc(Let.body), exp_type);
 
     current_lie() += state2.current_lie();
-
-    exp_type.infer_type() = t_body;
 }
 
 void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
@@ -138,7 +136,7 @@ Hs::Expression typechecker_state::tcRho(const Hs::TypedExp& TExp, const Expected
     binds.push_back(decls);
     expression_ref E2 = Hs::LetExp({noloc,binds},{noloc,x});
 
-    exp_type.infer_type() = inferRho(E2);
+    tcRho(E2, exp_type);
     return E2;
 }
 
