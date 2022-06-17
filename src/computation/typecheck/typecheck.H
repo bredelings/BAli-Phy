@@ -242,7 +242,7 @@ struct typechecker_state: FreshVarSource
 
     Hs::Expression tcRho(const Hs::Var&, const Expected& E);
 
-    Hs::Type inferRho(const Hs::Con& con);
+    void tcRho(const Hs::Con& con, const Expected& E);
 
     void tcRho(Hs::ApplyExp& app_exp, const Expected& E);
     Hs::Type inferRho(Hs::ApplyExp& app_exp);
@@ -253,7 +253,7 @@ struct typechecker_state: FreshVarSource
 
     Hs::Expression tcRho(const Hs::TypedExp& TExp, const Expected&);
 
-    Hs::Type inferRho(Hs::CaseExp& Case);
+    void  tcRho(Hs::CaseExp& Case, const Expected&);
 
     Hs::Type inferRho(Hs::List& L);
 

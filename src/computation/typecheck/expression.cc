@@ -46,7 +46,7 @@ Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_rh
     return E;
 }
 
-Hs::Type typechecker_state::inferRho(const Hs::Con& con)
+void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
 {
     auto sigma = constructor_type(con);
     auto [tvs, constraints, result_type] = instantiate( sigma );
@@ -61,7 +61,7 @@ Hs::Type typechecker_state::inferRho(const Hs::Con& con)
         throw e;
     }
 
-    return result_type;
+    exp_type.infer_type() = result_type;
 }
 
 void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
@@ -149,7 +149,7 @@ Hs::Expression typechecker_state::tcRho(const Hs::TypedExp& TExp, const Expected
     return E2;
 }
 
-Hs::Type typechecker_state::inferRho(Hs::CaseExp& Case)
+void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 {
     // 1. Determine object type
     auto object_type = inferRho(Case.object);
@@ -173,7 +173,7 @@ Hs::Type typechecker_state::inferRho(Hs::CaseExp& Case)
 
     unify( Hs::make_arrow_type(object_type,result_type), match_type );
 
-    return result_type;
+    exp_type.infer_type() = result_type;
 }
 
 Hs::Type typechecker_state::inferRho(Hs::List& L)
