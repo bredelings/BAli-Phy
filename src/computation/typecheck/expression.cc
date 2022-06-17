@@ -230,13 +230,13 @@ void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::IfExp& If, const Expected& exp_type)
 {
-    auto cond_type = inferRho(unloc(If.condition));
-    auto tbranch_type = inferRho(unloc(If.true_branch));
-    auto fbranch_type = inferRho(unloc(If.false_branch));
+    checkRho(unloc(If.condition), bool_type());
 
-    unify(cond_type, bool_type());
-    unify(tbranch_type, fbranch_type);
-    exp_type.infer_type() = tbranch_type;
+    // FIXME -- could we just do tcRho(...., exp_type)?
+    Hs::Type result_type = fresh_meta_type_var( kind_star() );
+    checkRho(unloc(If.true_branch), result_type);
+    checkRho(unloc(If.false_branch), result_type);
+    exp_type.infer_type() = result_type;
 }
 
 

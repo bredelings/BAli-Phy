@@ -10,8 +10,7 @@ using std::optional;
 using std::tuple;
 
 // Figure 25. Rules for match, mrule, and grhs
-Hs::Type
-typechecker_state::inferRho(Hs::GuardedRHS& rhs, int i)
+void typechecker_state::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int i)
 {
     if (i < rhs.guards.size())
     {
@@ -19,14 +18,12 @@ typechecker_state::inferRho(Hs::GuardedRHS& rhs, int i)
         auto state2 = copy_clear_lie();
         state2.infer_guard_type(rhs.guards[i]);
 
-        auto result_type = state2.inferRho(rhs, i+1);
+        state2.tcRho(rhs, exp_type, i+1);
 
         current_lie() += state2.current_lie();
-
-        return result_type;
     }
     else
-        return inferRho(rhs.body);
+        tcRho(rhs.body, exp_type);
 }
 
 // Fig 25. GUARD-OR
