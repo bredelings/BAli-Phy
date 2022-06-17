@@ -227,12 +227,19 @@ struct typechecker_state: FreshVarSource
 
     // inferRho
 
+    template <typename T>
+    Hs::Type inferRho(T& t)
+    {
+        Hs::Type result_type;
+        tcRho(t, Infer(result_type));
+        return result_type;
+    }
+
     Hs::Type
     inferRho(expression_ref& exp);
 
     void checkRho(expression_ref& exp, const Hs::Type& exp_type);
 
-    std::pair<Hs::Expression,Hs::Type> inferRho(const Hs::Var&);
     Hs::Expression tcRho(const Hs::Var&, const Expected& E);
 
     Hs::Type inferRho(const Hs::Con& con);
@@ -242,9 +249,9 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type inferRho(Hs::LambdaExp&);
 
-    Hs::Type inferRho(Hs::LetExp&);
+    void tcRho(Hs::LetExp&, const Expected&);
 
-    std::pair<Hs::Expression,Hs::Type> inferRho(const Hs::TypedExp& TExp);
+    Hs::Expression tcRho(const Hs::TypedExp& TExp, const Expected&);
 
     Hs::Type inferRho(Hs::CaseExp& Case);
 

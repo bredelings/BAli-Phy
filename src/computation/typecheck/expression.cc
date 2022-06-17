@@ -9,13 +9,6 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
-std::pair<Hs::Expression,Hs::Type> typechecker_state::inferRho(const Hs::Var& x)
-{
-    Hs::Type result_type;
-    auto E = tcRho(x, Infer(result_type));
-    return {E, result_type};
-}
-
 Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_rho)
 {
     auto& x_name = unloc(x.name);
@@ -103,7 +96,7 @@ Hs::Type typechecker_state::inferRho(Hs::ApplyExp& App)
     return result_type;
 }
 
-Hs::Type typechecker_state::inferRho(Hs::LetExp& Let)
+void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 {
     auto state2 = copy_clear_lie();
 
@@ -114,7 +107,7 @@ Hs::Type typechecker_state::inferRho(Hs::LetExp& Let)
 
     current_lie() += state2.current_lie();
 
-    return t_body;
+    exp_type.infer_type() = t_body;
 }
 
 Hs::Type typechecker_state::inferRho(Hs::LambdaExp& Lam)
@@ -126,7 +119,7 @@ Hs::Type typechecker_state::inferRho(Hs::LambdaExp& Lam)
     return t;
 }
 
-std::pair<Hs::Expression,Hs::Type> typechecker_state::inferRho(const Hs::TypedExp& TExp)
+Hs::Expression typechecker_state::tcRho(const Hs::TypedExp& TExp, const Expected& exp_type)
 {
     // 1. So, ( e :: tau ) should be equivalent to ( let x :: tau ; x = e in x )
     // according to the 2010 report.
@@ -152,8 +145,8 @@ std::pair<Hs::Expression,Hs::Type> typechecker_state::inferRho(const Hs::TypedEx
     binds.push_back(decls);
     expression_ref E2 = Hs::LetExp({noloc,binds},{noloc,x});
 
-    Hs::Type t = inferRho(E2);
-    return {E2, t};
+    exp_type.infer_type() = inferRho(E2);
+    return E2;
 }
 
 Hs::Type typechecker_state::inferRho(Hs::CaseExp& Case)
@@ -416,8 +409,8 @@ Hs::Type typechecker_state::inferRho(expression_ref& E)
     // VAR
     if (auto x = E.to<Hs::Var>())
     {
-        auto [E2, type] = inferRho(*x);
-        E = E2;
+        Hs::Type type;
+        E = tcRho(*x, Infer(type));
         return type;
     }
     // CON
@@ -461,8 +454,8 @@ Hs::Type typechecker_state::inferRho(expression_ref& E)
     else if (auto texp = E.to<Hs::TypedExp>())
     {
         auto TExp = *texp;
-        auto [E2,type] = inferRho(TExp);
-        E = E2;
+        Hs::Type type;
+        E  = tcRho(TExp, Infer(type));
         return type;
     }
     // LITERAL
