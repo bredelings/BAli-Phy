@@ -172,20 +172,7 @@ void typechecker_state::tcRho(Hs::List& L, const Expected& exp_type)
     Hs::Type element_type = fresh_meta_type_var( kind_star() );
 
     for(auto& element: L.elements)
-    {
-        auto t1 = inferRho(element);
-
-        try {
-            unify(t1, element_type);
-        }
-        catch (myexception& e)
-        {
-            std::ostringstream header;
-            header<<"List element "<<element<<" has type "<<apply_current_subst(t1)<<" but expected type "<<apply_current_subst(element_type)<<"\n ";
-            e.prepend(header.str());
-            throw;
-        }
-    }
+        checkRho(element, element_type);
 
     exp_type.infer_type() = Hs::ListType(element_type);
 }
