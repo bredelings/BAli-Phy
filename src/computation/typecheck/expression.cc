@@ -104,10 +104,9 @@ void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 {
     auto rule = Hs::MRule{Lam.args, Lam.body};
-    auto t = inferRho(rule);
+    tcRho(rule, exp_type);
     Lam.args = rule.patterns;
     Lam.body = rule.rhs;
-    exp_type.infer_type() = t;
 }
 
 Hs::Expression typechecker_state::tcRho(const Hs::TypedExp& TExp, const Expected& exp_type)
@@ -245,12 +244,14 @@ void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
     // 1. Typecheck the op
     auto op_type = inferRho(LSec.op);
 
-    // 2. Typecheck the left argument
-    auto left_arg_type = inferRho(LSec.l_arg);
+    // 2. Check that the op is a function
+    auto ftype = unify_function(op_type);
+    if (not ftype)
+        throw myexception()<<"In left section, "<<LSec.op<<" is not a function!";
+    auto [left_arg_type, result_type] = *ftype;
 
-    // 3. Typecheck the function application
-    auto result_type = fresh_meta_type_var( kind_star() );
-    unify(op_type, Hs::make_arrow_type(left_arg_type, result_type));
+    // 3. Typecheck the left argument
+    checkRho(LSec.l_arg, left_arg_type);
 
     exp_type.infer_type() = result_type;
 }
