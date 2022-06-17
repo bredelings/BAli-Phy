@@ -83,8 +83,8 @@ using std::tuple;
   * Handle type synonyms.
 
   TODO:
-  0. Make an InfixExp
-  0. Make an ApplyExp -- what does GHC do?
+  0. OK, so to switch over to using some kind of tcRho(T&, const Expected& exp_type)
+  0. Make a Pattern class...
   0. Make an Expression class, similar to the Type class, that allows the object to be modified.
      - It can hold things in a cow_ptr
      - We probably need to also make a Pattern class
