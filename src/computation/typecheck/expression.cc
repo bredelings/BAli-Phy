@@ -534,27 +534,3 @@ void typechecker_state::tcRho(expression_ref& E, const Expected& exp_type)
     else
         throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
 }
-
-// FIXME -- we need the location!
-void typechecker_state::checkRho(Hs::Expression& e, const Hs::Type& exp_rho)
-{
-    auto orig_e = e;
-    auto type = inferRho(e);
-    try
-    {
-        unify(type, exp_rho);
-    }
-    catch (myexception& ex)
-    {
-        std::ostringstream header;
-        header<<"Expected type\n\n";
-        header<<"   "<<apply_current_subst(exp_rho)<<"\n\n";
-        header<<"but got type\n\n";
-        header<<"   "<<apply_current_subst(type)<<"\n\n";
-        header<<"for expression\n\n";
-        header<<"   "<<orig_e<<"\n";
-        
-        ex.prepend(header.str());
-        throw;
-    }
-}

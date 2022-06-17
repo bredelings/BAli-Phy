@@ -226,8 +226,30 @@ struct typechecker_state: FreshVarSource
     infer_rhs_type(expression_ref& decl);
 
     // checkRho
+    template <typename T>
+    void checkRho(T& t, const Hs::Type& exp_rho)
+    {
+        // FIXME -- we need the location!
+        auto orig_t = t;
+        auto type = inferRho(t);
+        try
+        {
+            unify(type, exp_rho);
+        }
+        catch (myexception& ex)
+        {
+            std::ostringstream header;
+            header<<"Expected type\n\n";
+            header<<"   "<<apply_current_subst(exp_rho)<<"\n\n";
+            header<<"but got type\n\n";
+            header<<"   "<<apply_current_subst(type)<<"\n\n";
+            header<<"for expression\n\n";
+            header<<"   "<<orig_t<<"\n";
 
-    void checkRho(expression_ref& exp, const Hs::Type& exp_type);
+            ex.prepend(header.str());
+            throw;
+        }
+    }
 
     // inferRho
 
