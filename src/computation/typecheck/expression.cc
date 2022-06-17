@@ -211,14 +211,14 @@ void typechecker_state::tcRho(Hs::Tuple& T, const Expected& exp_type)
     exp_type.infer_type() = result_type;
 }
 
-Hs::Type typechecker_state::inferRho(Hs::Literal& Lit)
+void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
 {
     if (Lit.is_Char())
-        return char_type();
+        exp_type.infer_type() = char_type();
     else if (Lit.is_String())
-        return Hs::ListType( char_type() );
+        exp_type.infer_type() = Hs::ListType( char_type() );
     else if (Lit.is_BoxedInteger())
-        return int_type();
+        exp_type.infer_type() = int_type();
     else if (auto i = Lit.is_Integer())
     {
         // 1. Typecheck fromInteger
@@ -231,7 +231,7 @@ Hs::Type typechecker_state::inferRho(Hs::Literal& Lit)
 
         Lit = Hs::Literal(Hs::Integer{*i, fromInteger});
 
-        return result_type;
+        exp_type.infer_type() = result_type;
     }
     else if (auto d = Lit.is_Double())
     {
@@ -244,13 +244,13 @@ Hs::Type typechecker_state::inferRho(Hs::Literal& Lit)
         unify(fromRational_type, Hs::make_arrow_type(double_type(), result_type));
 
         Lit = Hs::Literal(Hs::Double{*d, fromRational});
-        return result_type;
+        exp_type.infer_type() = result_type;
     }
     else
         std::abort();
 }
 
-Hs::Type typechecker_state::inferRho(Hs::IfExp& If)
+void typechecker_state::tcRho(Hs::IfExp& If, const Expected& exp_type)
 {
     auto cond_type = inferRho(unloc(If.condition));
     auto tbranch_type = inferRho(unloc(If.true_branch));
@@ -258,11 +258,11 @@ Hs::Type typechecker_state::inferRho(Hs::IfExp& If)
 
     unify(cond_type, bool_type());
     unify(tbranch_type, fbranch_type);
-    return tbranch_type;
+    exp_type.infer_type() = tbranch_type;
 }
 
 
-Hs::Type typechecker_state::inferRho(Hs::LeftSection& LSec)
+void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
 {
     // 1. Typecheck the op
     auto op_type = inferRho(LSec.op);
@@ -274,7 +274,7 @@ Hs::Type typechecker_state::inferRho(Hs::LeftSection& LSec)
     auto result_type = fresh_meta_type_var( kind_star() );
     unify(op_type, Hs::make_arrow_type(left_arg_type, result_type));
 
-    return result_type;
+    exp_type.infer_type() = result_type;
 }
 
 Hs::Type typechecker_state::inferRho(Hs::RightSection& RSec)

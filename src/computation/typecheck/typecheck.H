@@ -259,11 +259,11 @@ struct typechecker_state: FreshVarSource
 
     void tcRho(Hs::Tuple& T, const Expected&);
 
-    Hs::Type inferRho(Hs::Literal& Lit);
+    void tcRho(Hs::Literal& Lit, const Expected&);
 
-    Hs::Type inferRho(Hs::IfExp&);
+    void tcRho(Hs::IfExp&, const Expected&);
 
-    Hs::Type inferRho(Hs::LeftSection&);
+    void tcRho(Hs::LeftSection&, const Expected&);
 
     Hs::Type inferRho(Hs::RightSection&);
 
