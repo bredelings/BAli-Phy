@@ -79,6 +79,10 @@ Hs::Type typechecker_state::inferRho(const Hs::Con& con)
 
 void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
 {
+    // If we're checking, the expected type maybe be a rho type sigma_arg -> sigma_result
+    // If so, then we can do checkSigma(arg, sigma_arg)
+    // Eventually this may lead to checkSigma(var, sigma), which affects how much instantiation we do.
+
     auto t1 = inferRho(App.head);
 
     for(int i=0;i<App.args.size();i++)
