@@ -277,7 +277,7 @@ void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
     exp_type.infer_type() = result_type;
 }
 
-Hs::Type typechecker_state::inferRho(Hs::RightSection& RSec)
+void typechecker_state::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
 {
     // 1. Typecheck the op
     auto op_type = inferRho(RSec.op);
@@ -293,26 +293,26 @@ Hs::Type typechecker_state::inferRho(Hs::RightSection& RSec)
     // 4. Compute the section type;
     Hs::Type section_type = Hs::function_type({left_arg_type}, result_type);
 
-    return section_type;
+    exp_type.infer_type() = section_type;
 }
 
-Hs::Type typechecker_state::inferRho(Hs::Do& DoExp)
+void typechecker_state::tcRho(Hs::Do& DoExp, const Expected& exp_type)
 {
-    return infer_stmts_type(0, DoExp.stmts.stmts);
+    exp_type.infer_type() = infer_stmts_type(0, DoExp.stmts.stmts);
 }
 
-Hs::Type typechecker_state::inferRho(Hs::ListComprehension& LComp)
+void typechecker_state::tcRho(Hs::ListComprehension& LComp, const Expected& exp_type)
 {
     auto state2 = copy_clear_lie();
     state2.infer_quals_type(LComp.quals);
-    auto exp_type = state2.inferRho(LComp.body);
+    auto body_type = state2.inferRho(LComp.body);
 
     current_lie() += state2.current_lie();
 
-    return Hs::ListType(exp_type);
+    exp_type.infer_type() = Hs::ListType(body_type);
 }
 
-Hs::Type typechecker_state::inferRho(Hs::ListFrom& L)
+void typechecker_state::tcRho(Hs::ListFrom& L, const Expected& exp_type)
 {
     // 1. Typecheck enumFrom
     L.enumFromOp = Hs::Var({noloc,"Compiler.Enum.enumFrom"});
@@ -325,7 +325,7 @@ Hs::Type typechecker_state::inferRho(Hs::ListFrom& L)
     auto result_type = fresh_meta_type_var( kind_star() );
     unify(enumFrom_type, Hs::make_arrow_type(from_type, result_type));
 
-    return result_type;
+    exp_type.infer_type() = result_type;
 }
 
 Hs::Type typechecker_state::inferRho(Hs::ListFromThen& L)

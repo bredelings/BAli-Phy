@@ -265,13 +265,13 @@ struct typechecker_state: FreshVarSource
 
     void tcRho(Hs::LeftSection&, const Expected&);
 
-    Hs::Type inferRho(Hs::RightSection&);
+    void tcRho(Hs::RightSection&, const Expected&);
 
-    Hs::Type inferRho(Hs::Do&);
+    void tcRho(Hs::Do&, const Expected&);
 
-    Hs::Type inferRho(Hs::ListComprehension&);
+    void tcRho(Hs::ListComprehension&, const Expected&);
 
-    Hs::Type inferRho(Hs::ListFrom&);
+    void tcRho(Hs::ListFrom&, const Expected&);
 
     Hs::Type inferRho(Hs::ListFromThen&);
 
