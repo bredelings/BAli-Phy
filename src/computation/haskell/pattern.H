@@ -78,7 +78,7 @@ struct LazyPattern: public Object
 
     LazyPattern* clone() const { return new LazyPattern(*this);}
     std::string print() const;
-    LazyPattern(const expression_ref& p):pattern(p) {}
+    LazyPattern(const Pattern& p):pattern(p) {}
 };
 
 struct StrictPattern: public Object
@@ -86,7 +86,7 @@ struct StrictPattern: public Object
     Pattern pattern;
     StrictPattern* clone() const { return new StrictPattern(*this);}
     std::string print() const;
-    StrictPattern(const expression_ref& p):pattern(p) {}
+    StrictPattern(const Pattern& p):pattern(p) {}
 };
 
 struct AsPattern: public Object
@@ -97,7 +97,7 @@ struct AsPattern: public Object
 
     AsPattern* clone() const { return new AsPattern(*this);}
     std::string print() const;
-    AsPattern(const expression_ref& v, const expression_ref& p):var(v),pattern(p) {}
+    AsPattern(const expression_ref& v, const Pattern& p):var(v),pattern(p) {}
 };
 
 // var pattern
