@@ -89,13 +89,6 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
     exp_type.infer_type() = t1;
 }
 
-Hs::Type typechecker_state::inferRho(Hs::ApplyExp& App)
-{
-    Hs::Type result_type;
-    tcRho(App, Infer(result_type));
-    return result_type;
-}
-
 void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 {
     auto state2 = copy_clear_lie();
@@ -110,13 +103,13 @@ void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
     exp_type.infer_type() = t_body;
 }
 
-Hs::Type typechecker_state::inferRho(Hs::LambdaExp& Lam)
+void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 {
     auto rule = Hs::MRule{Lam.args, Lam.body};
     auto t = inferRho(rule);
     Lam.args = rule.patterns;
     Lam.body = rule.rhs;
-    return t;
+    exp_type.infer_type() = t;
 }
 
 Hs::Expression typechecker_state::tcRho(const Hs::TypedExp& TExp, const Expected& exp_type)
