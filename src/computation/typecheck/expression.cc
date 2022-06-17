@@ -176,7 +176,7 @@ void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
     exp_type.infer_type() = result_type;
 }
 
-Hs::Type typechecker_state::inferRho(Hs::List& L)
+void typechecker_state::tcRho(Hs::List& L, const Expected& exp_type)
 {
     Hs::Type element_type = fresh_meta_type_var( kind_star() );
 
@@ -196,10 +196,10 @@ Hs::Type typechecker_state::inferRho(Hs::List& L)
         }
     }
 
-    return Hs::ListType(element_type);
+    exp_type.infer_type() = Hs::ListType(element_type);
 }
 
-Hs::Type typechecker_state::inferRho(Hs::Tuple& T)
+void typechecker_state::tcRho(Hs::Tuple& T, const Expected& exp_type)
 {
     vector<Hs::Type> element_types;
     for(auto& element: T.elements)
@@ -208,7 +208,7 @@ Hs::Type typechecker_state::inferRho(Hs::Tuple& T)
         element_types.push_back( element_type );
     }
     Hs::Type result_type = Hs::TupleType(element_types);
-    return result_type;
+    exp_type.infer_type() = result_type;
 }
 
 Hs::Type typechecker_state::inferRho(Hs::Literal& Lit)
