@@ -27,8 +27,7 @@ void typechecker_state::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int
 }
 
 // Fig 25. GUARD-OR
-Hs::Type
-typechecker_state::inferRho(Hs::MultiGuardedRHS& rhs)
+void typechecker_state::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type)
 {
     substitution_t s;
     Hs::Type type = fresh_meta_type_var( kind_star() );
@@ -44,11 +43,10 @@ typechecker_state::inferRho(Hs::MultiGuardedRHS& rhs)
     }
     current_lie() += state2.current_lie();
     
-    return type;
+    exp_type.infer_type() = type;
 };
 
-Hs::Type
-typechecker_state::inferRho(Hs::MRule& rule, int i)
+void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type, int i)
 {
     if (i < rule.patterns.size())
     {
@@ -56,17 +54,17 @@ typechecker_state::inferRho(Hs::MRule& rule, int i)
 
         auto new_state = copy_add_binders( lve1 );
 
-        auto t2 = new_state.inferRho(rule, i+1);
+        Hs::Type t2;
+        new_state.tcRho(rule, Infer(t2), i+1);
         current_lie() += new_state.current_lie();
 
-        return Hs::make_arrow_type(t1,t2);
+        exp_type.infer_type() = Hs::make_arrow_type(t1,t2);
     }
     else
-        return inferRho(rule.rhs);
+        tcRho(rule.rhs, exp_type);
 }
 
-Hs::Type
-typechecker_state::inferRho(Hs::Match& m)
+void typechecker_state::tcRho(Hs::Match& m, const Expected& exp_type)
 {
     Hs::Type result_type = fresh_meta_type_var( kind_star() );
 
@@ -76,7 +74,7 @@ typechecker_state::inferRho(Hs::Match& m)
         unify(result_type, t1);
     }
 
-    return result_type;
+    exp_type.infer_type() = result_type;
 }
 
 

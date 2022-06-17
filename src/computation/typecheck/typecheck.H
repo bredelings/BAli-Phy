@@ -303,11 +303,11 @@ struct typechecker_state: FreshVarSource
 
     void tcRho(Hs::GuardedRHS&, const Expected&, int i=0);
 
-    Hs::Type inferRho(Hs::MultiGuardedRHS&);
+    void tcRho(Hs::MultiGuardedRHS&, const Expected&);
 
-    Hs::Type inferRho(Hs::MRule&, int i=0);
+    void tcRho(Hs::MRule&, const Expected&, int i=0);
 
-    Hs::Type inferRho(Hs::Match&);
+    void tcRho(Hs::Match&, const Expected&);
 
     // Figures 13, 14, 15?
     Hs::Decls
