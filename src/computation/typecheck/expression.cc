@@ -328,7 +328,7 @@ void typechecker_state::tcRho(Hs::ListFrom& L, const Expected& exp_type)
     exp_type.infer_type() = result_type;
 }
 
-Hs::Type typechecker_state::inferRho(Hs::ListFromThen& L)
+void typechecker_state::tcRho(Hs::ListFromThen& L, const Expected& exp_type)
 {
     // 1. Typecheck enumFrom
     L.enumFromThenOp = Hs::Var({noloc,"Compiler.Enum.enumFromThen"});
@@ -348,10 +348,10 @@ Hs::Type typechecker_state::inferRho(Hs::ListFromThen& L)
     auto result_type = fresh_meta_type_var( kind_star() );
     unify(a, Hs::make_arrow_type(then_type, result_type));
         
-    return result_type;
+    exp_type.infer_type() = result_type;
 }
 
-Hs::Type typechecker_state::inferRho(Hs::ListFromTo& L)
+void typechecker_state::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
 {
     // 1. Typecheck enumFrom
     L.enumFromToOp = Hs::Var({noloc,"Compiler.Enum.enumFromTo"});
@@ -371,10 +371,10 @@ Hs::Type typechecker_state::inferRho(Hs::ListFromTo& L)
     auto result_type = fresh_meta_type_var( kind_star() );
     unify(a, Hs::make_arrow_type(to_type, result_type));
         
-    return result_type;
+    exp_type.infer_type() = result_type;
 }
 
-Hs::Type typechecker_state::inferRho(Hs::ListFromThenTo& L)
+void typechecker_state::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
 {
     // 1. Typecheck enumFromThenTo
     L.enumFromThenToOp = Hs::Var({noloc,"Compiler.Enum.enumFromThenTo"});
@@ -401,7 +401,7 @@ Hs::Type typechecker_state::inferRho(Hs::ListFromThenTo& L)
     auto result_type = fresh_meta_type_var( kind_star() );
     unify(b, Hs::make_arrow_type(to_type, result_type));
 
-    return result_type;
+    exp_type.infer_type() = result_type;
 }
 
 Hs::Type typechecker_state::inferRho(expression_ref& E)
