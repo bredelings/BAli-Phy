@@ -23,10 +23,7 @@ Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_rh
     {
         auto& [v,type] = *it;
 
-        if (exp_rho.infer())
-            exp_rho.infer_type() = type;
-        else
-            unify(type, exp_rho.check_type());
+        exp_rho.infer_type() = type;
 
         return v;
     }
@@ -51,10 +48,7 @@ Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_rh
         E = Hs::ApplyExp(x, d_args);
     }
 
-    if (exp_rho.infer())
-        exp_rho.infer_type() = type;
-    else
-        unify(type, exp_rho.check_type());
+    exp_rho.infer_type() = type;
 
     return E;
 }
@@ -99,10 +93,7 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
         t1 = result_type;
     }
 
-    if (exp_type.infer())
-        exp_type.infer_type() = t1;
-    else
-        unify(t1, exp_type.check_type());
+    exp_type.infer_type() = t1;
 }
 
 Hs::Type typechecker_state::inferRho(Hs::ApplyExp& App)
@@ -110,11 +101,6 @@ Hs::Type typechecker_state::inferRho(Hs::ApplyExp& App)
     Hs::Type result_type;
     tcRho(App, Infer(result_type));
     return result_type;
-}
-
-void typechecker_state::checkRho(Hs::ApplyExp& App, const Hs::Type& exp_type)
-{
-    tcRho(App, Check(exp_type));
 }
 
 Hs::Type typechecker_state::inferRho(Hs::LetExp& Let)
