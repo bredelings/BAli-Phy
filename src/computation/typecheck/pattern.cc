@@ -68,24 +68,15 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     else if (auto con = pat.to<Hs::ConPattern>())
     {
         auto Con = *con;
-        auto [type,field_types] = constructor_pattern_types(Con.head);
 
-        local_value_env lve;
-        vector<Hs::Type> types;
+        auto [type,field_types] = constructor_pattern_types(Con.head);
 
         assert(field_types.size() == Con.args.size());
 
-        for(auto& sub_pat: Con.args)
-        {
-            auto [t1, lve1] = infer_pattern_type(sub_pat, sigs);
-            types.push_back(t1);
-            lve += lve1;
-        }
+        local_value_env lve;
+        for(int i=0; i < field_types.size(); i++)
+            lve += checkPat(Con.args[i], field_types[i]);
         pat = Con;
-
-        // Unify constructor field types with discovered types.
-        for(int i=0;i<types.size();i++)
-            unify(types[i], field_types[i]);
 
         exp_type.infer_type() = type;
         return lve;
