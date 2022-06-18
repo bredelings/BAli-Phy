@@ -287,6 +287,10 @@ bool is_tau_type(const Type& type);
 
 // no foralls at top level
 bool is_rho_type(const Type& type);
+
+typedef Type TauType;
+typedef Type RhoType;
+typedef Type SigmaType;
 }
 
 
