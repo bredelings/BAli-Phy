@@ -261,12 +261,10 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
     }
     else if (auto v = E.to<Hs::Var>())
         return make_var(*v);
-    else if (auto c = E.to<Hs::Con>())
-        return constructor(unloc(c->name), *c->arity);
-    else if (auto c = E.head().to<Hs::Con>())
+    else if (auto c = E.to<Hs::ConPattern>())
     {
-        auto C = constructor(unloc(c->name), *c->arity);
-        auto pats = E.sub();
+        auto C = constructor(unloc(c->head.name), *c->head.arity);
+        auto pats = c->args;
         for(auto& pat: pats)
             pat = desugar_pattern(pat);
         return expression_ref(C,pats);

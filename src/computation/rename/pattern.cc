@@ -14,17 +14,6 @@ using std::pair;
 using std::set;
 
 
-expression_ref shift_list(vector<expression_ref>& v)
-{
-    if (not v.size()) return {};
-
-    auto head = v[0];
-    for(int i=0;i<v.size()-1;i++)
-	v[i] = v[i+1];
-    v.pop_back();
-    return head;
-}
-
 // The issue here is to rewrite @ f x y -> f x y
 // so that f is actually the head.
 expression_ref unapply(expression_ref E)
@@ -61,30 +50,17 @@ expression_ref unapply(expression_ref E)
     }
     else if (auto app = E.to<Hs::ApplyExp>())
     {
-        auto head = app->head;
-        auto args = app->args;
+        auto App = *app;
+
+        flatten(App);
 
         // We shouldn't have e.g. (@ (@ f x) y) -- this should already be dealt with by rename_infix
-        assert(not is_apply_exp(head));
-        assert(not head.size());
+        assert(App.head.is_a<Hs::Con>());
 
-        for(auto& arg: args)
+        for(auto& arg: App.args)
             arg = unapply(arg);
 
-        // Flatten, in case we have an apply of an apply
-        if (auto app2 = head.to<Hs::ApplyExp>())
-        {
-            auto App2 = *app2;
-            head = App2.head;
-
-            for(auto& arg: args)
-                App2.args.push_back(arg);
-
-            args = App2.args;
-        }
-        assert(not head.is_a<Hs::ApplyExp>());
-
-        return expression_ref{head, std::move(args)};
+        return Hs::ConPattern(App.head.as_<Hs::Con>(), std::move(App.args));
     }
     else if (E.is_a<Hs::Literal>())
         return E;
@@ -93,16 +69,7 @@ expression_ref unapply(expression_ref E)
     else if (E.is_a<Hs::WildcardPattern>())
         return E;
     else if (E.is_a<Hs::Con>())
-        return E;
-    else if (E.head().is_a<Hs::Con>())
-    {
-        auto args = E.sub();
-
-        for(auto& arg: args)
-            arg = unapply(arg);
-
-        return expression_ref{E.head(), args};
-    }
+        return Hs::ConPattern(E.as_<Hs::Con>(),{});
     else
         std::abort();
 }
@@ -140,19 +107,19 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
 	return {};
 
     // 2. Handle ~pat or !pat
-    if (pat.is_a<Hs::LazyPattern>())
+    else if (pat.is_a<Hs::LazyPattern>())
     {
         auto LP = pat.as_<Hs::LazyPattern>();
         return find_vars_in_pattern(LP.pattern, top);
     }
-    if (pat.is_a<Hs::StrictPattern>())
+    else if (pat.is_a<Hs::StrictPattern>())
     {
         auto SP = pat.as_<Hs::StrictPattern>();
         return find_vars_in_pattern(SP.pattern, top);
     }
 
     // 3. Handle x@pat
-    if (pat.is_a<Hs::AsPattern>())
+    else if (pat.is_a<Hs::AsPattern>())
     {
         auto& AP = pat.as_<Hs::AsPattern>();
 	assert(not top);
@@ -165,7 +132,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
 	return bound;
     }
 
-    if (pat.is_a<Hs::List>())
+    else if (pat.is_a<Hs::List>())
     {
         auto& L = pat.as_<Hs::List>();
         return find_vars_in_patterns(L.elements, top);
@@ -187,9 +154,9 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
 	return {id};
     }
     // If its a constructor pattern!
-    else if (auto c = pat.head().to<Hs::Con>())
+    else if (auto c = pat.to<Hs::ConPattern>())
     {
-        auto id = unloc(c->name);
+        auto id = unloc(c->head.name);
 
         if (not m.is_declared(id))
             throw myexception()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!";
@@ -198,14 +165,12 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         if (S.symbol_type != constructor_symbol)
             throw myexception()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!";
 
-        if (S.arity != pat.size())
+        if (S.arity != c->args.size())
             throw myexception()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!";
 
         // 11. Return the variables bound
-        return find_vars_in_patterns(pat.copy_sub(), top);
+        return find_vars_in_patterns(c->args, top);
     }
-    else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
-        return {};
     else if (pat.is_a<Hs::Literal>())
         return {};
     else
@@ -294,10 +259,11 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         pat = V;
 	return bound;
     }
-    else if (pat.head().is_a<Hs::Con>())
+    else if (auto c = pat.to<Hs::ConPattern>())
     {
-        auto C = pat.head().as_<Hs::Con>();
-        auto id = unloc(C.name);
+        auto C = *c;
+
+        auto id = unloc(C.head.name);
 
         // 7. Resolve constructor name if identifier is a constructor
         if (not m.is_declared(id))
@@ -307,11 +273,11 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         if (S.symbol_type != constructor_symbol)
             throw myexception()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!";
 
-        if (S.arity != pat.size())
+        if (S.arity != c->args.size())
             throw myexception()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!";
 
-        unloc(C.name) = S.name;
-        C.arity = S.arity;
+        unloc(C.head.name) = S.name;
+        C.head.arity = S.arity;
 
         // 8. Rename arguments and accumulate bound variables
         vector<expression_ref> args = pat.copy_sub();
@@ -319,7 +285,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         bound_var_info bound;
         // Rename the arguments
         bool overlap = false;
-        for(auto& e: args)
+        for(auto& e: C.args)
         {
             auto bound_here =  rename_pattern(e, top);
             overlap = overlap or not disjoint_add(bound, bound_here);
@@ -329,21 +295,14 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
             throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
 
         // 10. Construct the renamed pattern
-        if (args.size())
-            pat = expression_ref{C,args};
-        else
-            pat = C;
+        pat = C;
 
         // 11. Return the variables bound
         return bound;
     }
     // 4. Handle literal values
-    else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
-        return {};
     else if (pat.is_a<Hs::Literal>())
-    {
         return {};
-    }
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }

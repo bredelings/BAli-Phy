@@ -11,6 +11,22 @@ using std::optional;
 namespace Haskell
 {
 
+void flatten(ApplyExp& App)
+{
+    // Flatten, in case we have an apply of an apply
+    if (auto app2 = App.head.to<Hs::ApplyExp>())
+    {
+        auto App2 = *app2;
+
+        flatten(App2);
+
+        for(auto& arg: App.args)
+            App2.args.push_back( std::move(arg) );
+
+        std::swap(App, App2);
+    }
+}
+
 string show_type_or_class_header(const Context& context, const string& name, const vector<TypeVar>& tvs)
 {
     vector<string> ss;
@@ -686,7 +702,12 @@ string FunDecl::print() const
 
 FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const expression_ref& body)
 {
-    MRule rule{pats, SimpleRHS({noloc,body})};
+    return simple_fun_decl(v, pats, SimpleRHS({noloc,body}));
+}
+
+FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const MultiGuardedRHS& body)
+{
+    MRule rule{pats, body};
     Match m{{rule}};
 
     // v = E
@@ -694,6 +715,11 @@ FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const ex
 }
 
 FunDecl simple_decl(const Var& v, const expression_ref& E)
+{
+    return simple_fun_decl(v,{},E);
+}
+
+FunDecl simple_decl(const Var& v, const MultiGuardedRHS& E)
 {
     return simple_fun_decl(v,{},E);
 }

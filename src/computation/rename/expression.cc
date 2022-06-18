@@ -215,15 +215,6 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         return E;
     else if (E.is_a<Hs::Con>())
         return E;
-    else if (E.head().is_a<Hs::Con>())
-    {
-        auto v = E.sub();
-
-        for(auto& e: v)
-            e = rename_infix(m, e);
-
-        return expression_ref{E.head(),v};
-    }
     else if (E.head().is_a<Hs::Neg>())
         return E;
     else

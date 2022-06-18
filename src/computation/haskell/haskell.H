@@ -96,6 +96,8 @@ struct ApplyExp: public Object
     ApplyExp(const Exp& h, const std::vector<Exp>& as);
 };
 
+void flatten(ApplyExp& app);
+
 // HsDecl = type or class declaration
 //          instance declaration
 //          deriving declaration
@@ -867,7 +869,9 @@ struct FunDecl: public Object
 };
 
 FunDecl simple_decl(const Var& v, const expression_ref&);
+FunDecl simple_decl(const Var& v, const MultiGuardedRHS&);
 FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const expression_ref&);
+FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const MultiGuardedRHS&);
 
 struct BindInfo
 {

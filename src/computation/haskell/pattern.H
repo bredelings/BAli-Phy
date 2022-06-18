@@ -37,6 +37,7 @@ struct ConPattern: public Object
 
     ConPattern* clone() const { return new ConPattern(*this);}
     std::string print() const;
+    ConPattern(const Con& h, const std::vector<Pattern>& as):head(h),args(as) {}
 };
 
 struct TypedPattern: public Object

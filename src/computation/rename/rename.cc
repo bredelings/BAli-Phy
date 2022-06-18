@@ -82,30 +82,6 @@ set<string> find_bound_vars(const expression_ref& E)
         return {};
 }
 
-bool is_pattern_binding(const Haskell::ValueDecl& decl)
-{
-    auto& lhs = unloc(decl.lhs);
-    if (lhs.is_a<Haskell::List>())
-        return true;
-    if (lhs.is_a<Haskell::Tuple>())
-        return true;
-    if (lhs.is_a<Haskell::AsPattern>())
-        return true;
-    if (lhs.is_a<Haskell::LazyPattern>())
-        return true;
-    if (lhs.is_a<Haskell::StrictPattern>())
-        return true;
-    // FIXME: we should make a ConPattern
-    if (lhs.head().is_a<Haskell::Con>())
-        return true;
-    return false;
-}
-
-bool is_function_binding(const Haskell::ValueDecl& decl)
-{
-    return not is_pattern_binding(decl);
-}
-
 Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R)
 {
     for(auto& guarded_rhs: R.guarded_rhss)
@@ -199,7 +175,7 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
                     vector<expression_ref> f(a, Hs::WildcardPattern());
                     f[pos] = name;
 
-                    auto pattern = expression_ref{Hs::Con({noloc,ConName},a),f};
+                    auto pattern = Hs::ApplyExp(Hs::Con({noloc,ConName},a),f);
                     auto rhs = Haskell::SimpleRHS({noloc, name});
                     alts.push_back({noloc,{pattern,rhs}});
                 }
@@ -254,7 +230,7 @@ void add(bound_var_info& bv1, const bound_var_info& bv2)
     bv1.insert(bv2.begin(), bv2.end());
 }
 
-Haskell::ModuleDecls rename(const simplifier_options& opts, const Module& m, Haskell::ModuleDecls M)
+Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell::ModuleDecls M)
 {
     renamer_state Rn(m);
 
@@ -406,10 +382,8 @@ bound_var_info find_vars_in_pattern2(const expression_ref& pat)
         return find_vars_in_patterns2(t->elements);
     else if (auto v = pat.to<Haskell::Var>())
 	return { unloc(v->name) };
-    else if (pat.head().is_a<Haskell::Con>())
-        return find_vars_in_patterns2(pat.copy_sub());
-    else if (pat.is_int() or pat.is_double() or pat.is_char() or pat.is_log_double())
-        return {};
+    else if (auto c = pat.to<Hs::ConPattern>())
+        return find_vars_in_patterns2(c->args);
     else if (pat.is_a<Hs::Literal>())
         return {};
     else
@@ -447,21 +421,6 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Binds& bin
         add(bound_names, find_vars_in_pattern(Hs::Var({noloc,name}), top));
 
     return bound_names;
-}
-
-bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::ValueDecl& decl, bool top)
-{
-    // For a constructor pattern, rename the whole lhs.
-    if (is_pattern_binding(decl))
-    {
-        return find_vars_in_pattern( unloc(decl.lhs), top);
-    }
-    // For a function pattern, just rename the variable being defined
-    else
-    {
-        auto head = unloc(decl.lhs).head();
-        return find_vars_in_pattern(head, top);
-    }
 }
 
 bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool is_top_level)

@@ -44,19 +44,56 @@ using std::deque;
 pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls);
 
 
+bool is_definitely_pattern(const Haskell::Expression& lhs)
+{
+    if (lhs.is_a<Haskell::List>())
+        return true;
+    if (lhs.is_a<Haskell::Tuple>())
+        return true;
+    if (lhs.is_a<Haskell::AsPattern>())
+        return true;
+    if (lhs.is_a<Haskell::LazyPattern>())
+        return true;
+    if (lhs.is_a<Haskell::StrictPattern>())
+        return true;
+    // FIXME: we should make a ConPattern
+    if (lhs.is_a<Haskell::ConPattern>())
+        return true;
+
+    return false;
+}
+
 expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
 {
     if (E.is_a<Haskell::ValueDecl>())
     {
         auto D = E.as_<Haskell::ValueDecl>();
 
-        unloc(D.lhs) = rename_infix(m, unloc(D.lhs));
-	unloc(D.lhs) = unapply( unloc(D.lhs) );
-        D.rhs = rename_infix(m, D.rhs);
+        auto lhs = rename_infix(m, unloc(D.lhs));
+        auto rhs = rename_infix(m, D.rhs);
 
-	assert( unloc(D.lhs).head().is_a<Hs::Var>() or is_pattern_binding(D));
+        if (auto v = lhs.to<Hs::Var>())
+            return Hs::simple_decl(*v, rhs);
+        else if (is_definitely_pattern(lhs))
+            return Hs::PatDecl( {D.lhs.loc, unapply(lhs)}, rhs);
+        else if (auto app = lhs.to<Hs::ApplyExp>())
+        {
+            auto App = *app;
+            flatten(App);
 
-        return D;
+            if (App.head.is_a<Hs::Con>())
+                return Hs::PatDecl( {D.lhs.loc, unapply(lhs)}, rhs);
+
+            else if (auto v = App.head.to<Hs::Var>())
+            {
+                vector<Hs::Pattern> pats;
+                for(auto& arg: App.args)
+                    pats.push_back( unapply(arg) );
+
+                return Hs::simple_fun_decl(*v, pats, rhs);
+            }
+        }
+        throw myexception()<<"I don't recognize this declaration:\n    "<<E.print();
     }
     else if (E.is_a<Hs::SignatureDecl>())
         return E;
@@ -68,15 +105,10 @@ expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
 
 optional<Hs::Var> fundecl_head(const expression_ref& decl)
 {
-    assert(decl.is_a<Hs::SignatureDecl>() or decl.is_a<Hs::FixityDecl>() or decl.is_a<Hs::ValueDecl>());
-
-    if (auto d = decl.to<Hs::ValueDecl>(); d and is_function_binding(*d))
-    {
-        auto fvar = unloc(d->lhs).head();
-        assert(fvar.is_a<Hs::Var>());
-        return fvar.as_<Hs::Var>();
-    }
-    return {};
+    if (auto fd = decl.to<Hs::FunDecl>())
+        return fd->v;
+    else
+        return {};
 }
 
 // Probably we should first partition by (same x y = x and y are both function decls for the same variable)
@@ -105,9 +137,9 @@ pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
             // FixityDecls should survive up to this point so that we can properly segment decls.
             // But remove them here -> the type-checker shouldn't see them.
         }
-        else if (auto d = decl.to<Haskell::ValueDecl>(); d and is_pattern_binding(*d))
+        else if (auto d = decl.to<Haskell::PatDecl>())
         {
-            decls2.push_back(Haskell::PatDecl{ d->lhs, d->rhs});
+            decls2.push_back(*d);
         }
         else if (auto fvar = fundecl_head(decl))
         {
@@ -116,9 +148,10 @@ pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
             {
                 if (fundecl_head(decls[j]) != fvar) break;
 
-                auto& D = decls[j].as_<Haskell::ValueDecl>();
+                auto& FD = decls[j].as_<Hs::FunDecl>();
 
-                m.rules.push_back( Hs::MRule{ unloc(D.lhs).copy_sub(), D.rhs } );
+                assert(FD.match.rules.size() == 1);
+                m.rules.push_back( FD.match.rules[0] );
 
                 if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
                     throw myexception()<<"Function '"<<*fvar<<"' has different numbers of arguments!";

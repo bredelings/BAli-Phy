@@ -10,8 +10,6 @@
 
 class Module;
 
-expression_ref shift_list(std::vector<expression_ref>& v);
-
 expression_ref unapply(expression_ref E);
 
 typedef std::set<std::string> bound_var_info;
@@ -41,7 +39,6 @@ struct renamer_state
     bound_var_info find_bound_vars_in_decls(const Haskell::Decls& decls, bool top = false);
     bound_var_info find_bound_vars_in_decls(const Haskell::Binds& decls, bool top = false);
 
-    bound_var_info find_bound_vars_in_decl(const Haskell::ValueDecl& decl, bool top = false);
     bound_var_info find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool top = false);
 
     std::vector<std::vector<int>> rename_grouped_decls(Haskell::Decls& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
@@ -71,8 +68,6 @@ struct renamer_state
 };
 
 std::set<std::string> find_bound_vars(const expression_ref& E);
-bool is_pattern_binding(const Haskell::ValueDecl& decl);
-bool is_function_binding(const Haskell::ValueDecl& decl);
 
 Hs::Decls synthesize_field_accessors(const Hs::Decls& decls);
 

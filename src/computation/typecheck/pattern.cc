@@ -47,31 +47,28 @@ typechecker_state::infer_pattern_type(Hs::Pattern& pat, const map<string, Hs::Ty
         return {type, lve};
     }
     // CONSTR-PAT
-    else if (auto con = pat.head().to<Hs::Con>())
+    else if (auto con = pat.to<Hs::ConPattern>())
     {
+        auto Con = *con;
+        auto [type,field_types] = constructor_pattern_types(Con.head);
+
         local_value_env lve;
         vector<Hs::Type> types;
-        auto sub_pats = pat.copy_sub();
 
-        for(auto& sub_pat: sub_pats)
+        assert(field_types.size() == Con.args.size());
+
+        for(auto& sub_pat: Con.args)
         {
             auto [t1, lve1] = infer_pattern_type(sub_pat, sigs);
             types.push_back(t1);
             lve += lve1;
         }
-        auto [type,field_types] = constructor_pattern_types(*con);
-
-        assert(field_types.size() == pat.size());
+        pat = Con;
 
         // Unify constructor field types with discovered types.
         for(int i=0;i<types.size();i++)
             unify(types[i], field_types[i]);
 
-        Hs::Pattern pat2 = pat.head();
-        if (pat.size())
-            pat2 = expression_ref(pat.head(), sub_pats);
-
-        pat = pat2;
         return { type, lve };
     }
     // AS-PAT
@@ -220,18 +217,14 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<string, Hs::BindI
         return rename_var_pattern_from_bindinfo(*v, bind_info);
     }
     // CONSTR-PAT
-    else if (pat.head().to<Hs::Con>())
+    else if (auto con = pat.to<Hs::ConPattern>())
     {
-        auto sub_pats = pat.copy_sub();
+        auto Con = *con;
 
-        for(auto& sub_pat: sub_pats)
+        for(auto& sub_pat: Con.args)
             sub_pat = rename_pattern_from_bindinfo(sub_pat, bind_info);
 
-        Hs::Pattern pat2 = pat.head();
-        if (pat.size())
-            pat2 = expression_ref(pat.head(), sub_pats);
-
-        return pat2;
+        return Con;
     }
     // AS-PAT
     else if (auto ap = pat.to<Hs::AsPattern>())
@@ -276,29 +269,8 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<string, Hs::BindI
 
         return T;
     }
-    // ???
-    else if (pat.is_int())
-    {
-        return pat;
-    }
-    else if (pat.is_double())
-    {
-        return pat;
-    }
-    else if (pat.is_char())
-    {
-        return pat;
-    }
-    else if (false) // Literal string
-    {
-        return pat;
-    }
     else if (pat.is_a<Hs::Literal>())
-    {
         return pat;
-    }
-    else if (pat.is_log_double())
-        throw myexception()<<"log_double literal should be impossible: '"<<pat<<"'!";
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
