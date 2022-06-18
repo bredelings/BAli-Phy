@@ -277,7 +277,7 @@ void typechecker_state::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::Do& DoExp, const Expected& exp_type)
 {
-    exp_type.infer_type() = infer_stmts_type(0, DoExp.stmts.stmts);
+    tcRhoStmts(0, DoExp.stmts.stmts, exp_type);
 }
 
 void typechecker_state::tcRho(Hs::ListComprehension& LComp, const Expected& exp_type)

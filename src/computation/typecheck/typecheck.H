@@ -201,8 +201,7 @@ struct typechecker_state: FreshVarSource
 
     std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
 
-    Hs::Type
-    infer_stmts_type(int i, std::vector<Hs::Qual>& stmts);
+    void tcRhoStmts(int i, std::vector<Hs::Qual>& stmts, const Expected& exp_type);
 
     // Figure 22.
     void infer_quals_type(std::vector<Hs::Qual>& quals);

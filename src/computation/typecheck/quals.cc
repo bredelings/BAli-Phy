@@ -99,8 +99,7 @@ typechecker_state::infer_guard_type(Hs::Qual& guard)
 }
 
 
-Hs::Type
-typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
+void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expected& expected_type)
 {
     auto& stmt = stmts[i];
     // Last statement -- an expression.
@@ -111,10 +110,8 @@ typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
             throw myexception()<<"stmts list does not end in an expression";
 
         auto Last = *last;
-        auto type = inferRho(Last.exp);
-
+        tcRho(Last.exp, expected_type);
         stmt = Last;
-        return type;
     }
     // Bind stmt
     else if (auto pq = stmt.to<Hs::PatQual>())
@@ -140,7 +137,8 @@ typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
         new_state.add_binders(pat_binders);
 
         // 5. Typecheck stmts
-        auto stmts_type = new_state.infer_stmts_type(i+1, stmts);
+        Hs::Type stmts_type;
+        new_state.tcRhoStmts(i+1, stmts, Infer(stmts_type));
 
         // 6. a ~ (pat_type -> stmts_type) -> b
         auto b = fresh_meta_type_var( kind_star() );
@@ -157,7 +155,7 @@ typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
         current_lie() += new_state.current_lie();
 
         stmt = PQ;
-        return b;
+        expected_type.infer_type() = b;
     }
     else if (auto sq = stmt.to<Hs::SimpleQual>())
     {
@@ -176,14 +174,15 @@ typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
         unify(and_then_op_type, Hs::make_arrow_type(exp_type, a));
 
         // 4. Typecheck stmts
-        auto stmts_type = infer_stmts_type(i+1, stmts);
+        Hs::Type stmts_type;
+        tcRhoStmts(i+1, stmts, Infer(stmts_type));
 
         // 5. a ~ stmts_type -> b
         auto b = fresh_meta_type_var( kind_star() );
         unify(a, Hs::make_arrow_type(stmts_type, b));
 
         stmt = SQ;
-        return b;
+        expected_type.infer_type() = b;
     }
     else if (auto lq = stmt.to<Hs::LetQual>())
     {
@@ -195,12 +194,11 @@ typechecker_state::infer_stmts_type(int i, vector<Hs::Qual>& stmts)
         state2.infer_type_for_binds(unloc(LQ.binds));
 
         // 2. Typecheck stmts
-        auto stmts_type = state2.infer_stmts_type(i+1, stmts);
+        state2.tcRhoStmts(i+1, stmts, expected_type);
 
         current_lie() += state2.current_lie();
 
         stmt = LQ;
-        return stmts_type;
     }
     else if (stmt.to<Hs::RecStmt>())
     {
