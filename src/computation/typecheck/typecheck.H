@@ -218,6 +218,9 @@ struct typechecker_state: FreshVarSource
     // takes and returns sigma types
     global_value_env tcPat(Hs::Pattern& pat, const Expected&, const signature_env& sigs = {});
 
+    // takes and returns sigma types
+    global_value_env checkPat(Hs::Pattern& pat, const Hs::SigmaType&, const signature_env& sigs = {});
+
     std::tuple<Hs::Type, local_value_env>
     infer_var_pattern_type(Hs::Var& v, const signature_env& sigs = {});
 

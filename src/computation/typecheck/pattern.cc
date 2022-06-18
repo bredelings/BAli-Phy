@@ -133,17 +133,12 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
         auto L = *l;
 
         local_value_env lve;
-        Hs::Type t = fresh_meta_type_var( kind_star() );
+        Hs::Type element_type = fresh_meta_type_var( kind_star() );
         for(auto& element: L.elements)
-        {
-            auto [t1, lve1] = infer_pattern_type(element, sigs);
-
-            unify(t, t1);
-            lve += lve1;
-        }
+            lve += checkPat(element, element_type, sigs);
 
         pat = L;
-        exp_type.infer_type() = Hs::ListType(t);
+        exp_type.infer_type() = Hs::ListType(element_type);
         return lve;
     }
     // TUPLE-PAT
