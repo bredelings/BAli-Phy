@@ -114,7 +114,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
             var z = get_fresh_var();
             if (pat.is_a<Hs::AsPattern>())
             {
-                z = pat.as_<Hs::AsPattern>().var.as_<var>();
+                z = make_var(pat.as_<Hs::AsPattern>().var);
                 pat = pat.as_<Hs::AsPattern>().pattern;
             }
 
@@ -276,7 +276,7 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
     else if (E.is_a<Hs::AsPattern>())
     {
         auto& AP = E.as_<Hs::AsPattern>();
-        return Hs::AsPattern(desugar_pattern(AP.var), desugar_pattern(AP.pattern));
+        return Hs::AsPattern(AP.var, desugar_pattern(AP.pattern));
     }
     else if (E.is_a<Hs::LazyPattern>())
     {

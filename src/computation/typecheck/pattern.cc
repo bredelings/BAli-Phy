@@ -81,9 +81,7 @@ typechecker_state::infer_pattern_type(Hs::Pattern& pat, const map<string, Hs::Ty
 
         auto [t1, lve1] = infer_pattern_type(Ap.pattern, sigs);
 
-        auto v2 = Ap.var.as_<Hs::Var>();
-        auto [t2, lve2] = infer_var_pattern_type(v2, sigs);
-        Ap.var = v2;
+        auto [t2, lve2] = infer_var_pattern_type(Ap.var, sigs);
 
         unify(t1, t2);
         pat = Ap;
@@ -240,7 +238,7 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<string, Hs::BindI
     {
         auto p1 = rename_pattern_from_bindinfo(ap->pattern, bind_info);
 
-        auto v2 = rename_var_pattern_from_bindinfo(ap->var.as_<Hs::Var>(), bind_info);
+        auto v2 = rename_var_pattern_from_bindinfo(ap->var, bind_info);
 
         return Hs::AsPattern(v2, p1);
     }

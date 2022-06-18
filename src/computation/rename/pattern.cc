@@ -212,6 +212,23 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
+bound_var_info renamer_state::rename_var_pattern(Hs::Var& V, bool top)
+{
+    auto id = unloc(V.name);
+
+    if (is_qualified_symbol(id)) throw myexception()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<V.print()<<"'!";
+    // Qualify the id if this is part of a top-level decl
+    if (top)
+        id = m.name + "." + id;
+    else
+    {
+        // FIXME - since we are creating an ID here, we should give it a unique id!
+    }
+    unloc(V.name) = id;
+
+    return {id};
+}
+
 // Convert ids to vars in pattern, and return a set of all names for vars (excluding wildcards, of course)
 // A single variable is a valid "pattern" for the purposes of this function.
 bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
@@ -245,7 +262,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         auto AP = pat.as_<Haskell::AsPattern>();
 	assert(not top);
 
-	auto bound = rename_pattern(AP.var, false);
+	auto bound = rename_var_pattern(AP.var, false);
 	bool overlap = not disjoint_add(bound, rename_pattern(AP.pattern, false));
 	pat = AP;
 
@@ -270,26 +287,12 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         pat = T;
         return bound;
     }
-    else if (pat.is_a<Haskell::Var>())
+    else if (auto v = pat.to<Haskell::Var>())
     {
-        auto V = pat.as_<Haskell::Var>();
-        auto id = unloc(V.name);
-
-	if (is_qualified_symbol(id)) throw myexception()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<pat<<"'!";
-	// Qualify the id if this is part of a top-level decl
-	if (top)
-	    id = m.name + "." + id;
-        else
-        {
-            // FIXME - since we are creating an ID here, we should give it a unique id!
-        }
-	unloc(V.name) = id;
-
-        // We translate to a var( ) here!
-        // Maybe we should do this during desugaring instead?
+        auto V = *v;
+        auto bound = rename_var_pattern(V);
         pat = V;
-
-	return {id};
+	return bound;
     }
     else if (pat.head().is_a<Haskell::Con>())
     {

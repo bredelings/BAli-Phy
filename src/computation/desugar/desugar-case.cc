@@ -382,7 +382,7 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
     else if (pat1.is_a<Haskell::AsPattern>())
     {
         auto& AP = pat1.as_<Haskell::AsPattern>();
-	auto y = AP.var.as_<var>();
+	auto y = make_var(AP.var);
 	rhs.add_binding({{y, x}});
 	pat1 = AP.pattern;
     }

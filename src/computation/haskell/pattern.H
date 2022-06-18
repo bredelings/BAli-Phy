@@ -92,12 +92,12 @@ struct StrictPattern: public Object
 struct AsPattern: public Object
 {
     // We need this to be Var until desugaring, at which point it becomes var.
-    expression_ref var;
+    Var var;
     Pattern pattern;
 
     AsPattern* clone() const { return new AsPattern(*this);}
     std::string print() const;
-    AsPattern(const expression_ref& v, const Pattern& p):var(v),pattern(p) {}
+    AsPattern(const Var& v, const Pattern& p):var(v),pattern(p) {}
 };
 
 // var pattern

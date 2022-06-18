@@ -28,6 +28,7 @@ struct renamer_state
     const Module& m;
 
     bound_var_info rename_patterns(std::vector<expression_ref>& pat, bool top = false);
+    bound_var_info rename_var_pattern(Hs::Var&, bool top = false);
     bound_var_info rename_pattern(expression_ref& pat, bool top = false);
 
     bound_var_info find_vars_in_patterns(const std::vector<expression_ref>& pats, bool top = false);
