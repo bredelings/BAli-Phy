@@ -76,16 +76,13 @@ typechecker_state::infer_guard_type(Hs::Qual& guard)
     else if (auto pq = guard.to<Hs::PatQual>())
     {
         auto PQ = *pq;
-        // pat <- exp
-        auto [pat_type, lve] = infer_pattern_type(PQ.bindpat);
-        auto exp_type = inferRho(PQ.exp);
 
-        // type(pat) = type(exp)
-        unify(pat_type,exp_type);
+        // pat <- body
+        auto body_type = inferRho(PQ.exp);
+        auto lve = checkPat(PQ.bindpat, body_type);
+        guard = PQ;
 
         add_binders(lve);
-
-        guard = PQ;
     }
     else if (auto lq = guard.to<Hs::LetQual>())
     {
