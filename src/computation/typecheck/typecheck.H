@@ -108,6 +108,8 @@ public:
     Expected(const Infer& i):value(i) {}
 };
 
+typedef std::function<Hs::Expression(const Hs::Expression&)> wrapper;
+
 struct typechecker_state: FreshVarSource
 {
     //------- global state ------------//
@@ -234,6 +236,10 @@ struct typechecker_state: FreshVarSource
     Hs::Binds simplify_and_default_top_level();
 
     std::tuple<std::vector<Hs::MetaTypeVar>, std::vector<Hs::Type>, Hs::Type> instantiate(const Hs::Type& t);
+
+    wrapper subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2);
+
+    wrapper instantiateSigma(const Hs::Type& t, const Expected& exp_rho);
 
     std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
 

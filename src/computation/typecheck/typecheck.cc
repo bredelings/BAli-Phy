@@ -773,6 +773,79 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
     return env2;
 }
 
+wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2)
+{
+    /*
+      How do we handle dictionary constraints?
+
+      If we can make y :: t2 out of x :: t1 then it is OK.  (without doing eta reduction, according to QL).  
+
+      Example 1. If t1 = (forall a b . a -> b) and t2 = (forall c. c -> c) then
+           y = x @c @c
+
+      Example 2. If t1 = (forall a. Eq a => a)  and t2 = (forall b. Ord b => b), then
+           y = /\b.\dictOrd -> x b (eqFromOrd dictOrd)
+
+      Example 3. If t1 = (forall a. Eq a => a) and t2 = Int then
+           y = x Int dictEqInt
+      where entails checks that there is actually an instance for (Eq Int)?
+
+      I think there should not be any un-substituted meta-type vars in constraints -- otherwise the type would be ambiguous!
+
+      How about something like forall a.Int?  I think that is not a problem right now, because we don't have type lambdas.
+    */
+
+    /* So... it seems that we need to be able to make the dictionaries for type2 from the dictionaries of type1!
+
+       Constraints don't enter the environment here -- then enter when the t2 type is instantiated.
+    */
+
+    auto [tvs1, constraints1, type1] = instantiate(t1);
+
+    auto [tvs2, constraints2, type2] = skolemize(t2, true);
+
+    unify(type1, type2);
+
+    auto lie1 = constraints_to_lie(constraints1);
+    
+    auto lie2 = constraints_to_lie(constraints2);
+
+    auto [binds, failed_constraints] = entails(unordered_lie(lie2), unordered_lie(lie1));
+
+    if (not binds)
+        throw myexception()<<"Type\n\n  "<<t1<<"\n\n  does not subsume\n\n  "<<t2;
+
+    vector<Hs::Pattern> dict2_pats;
+    for(auto& [dvar, _]: lie2)
+        dict2_pats.push_back(dvar);
+
+    vector<Hs::Expression> dict1_args;
+    for(auto& [dvar, _]: lie1)
+        dict1_args.push_back(dvar);
+    
+    auto w = [=](const Hs::Expression& x) -> Hs::Expression
+    {
+        // y = \dictY1 dictY2 dictY3 -> let binds in x dictX1 dictX2 dictX3        
+        return Hs::LambdaExp(dict2_pats, Hs::LetExp({noloc,*binds}, {noloc,Hs::ApplyExp(x, dict1_args)}));
+    };
+
+    return w;
+}
+
+wrapper typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
+{
+    if (exp_type.infer())
+    {
+        auto [tvs, constraints, type] = instantiate(t);
+        exp_type.infer_type(type);
+        std::abort();
+    }
+    else
+    {
+        assert(is_rho_type(exp_type.check_type()));
+        return subsumptionCheck(t, exp_type.check_type());
+    }
+}
 // FIXME:: Wrappers:
 //
 // Note that instantiate collapses any structure in leading foralls/contexts.
@@ -898,7 +971,7 @@ vector<pair<Hs::Var,Hs::Type>> typechecker_state::constraints_to_lie(const vecto
     {
         auto dvar = get_fresh_Var("dvar", false);
         dvar.type = constraint;
-        ordered_lie.push_back({dvar, constraint});
+        ordered_lie.push_back({dvar, apply_current_subst(constraint)});
     }
     return ordered_lie;
 }
