@@ -29,33 +29,33 @@ expression_ref shift_list(vector<expression_ref>& v)
 // so that f is actually the head.
 expression_ref unapply(expression_ref E)
 {
-    if (E.is_a<Haskell::List>())
+    if (E.is_a<Hs::List>())
     {
-        auto L = E.as_<Haskell::List>();
+        auto L = E.as_<Hs::List>();
         for(auto& pattern: L.elements)
             pattern = unapply(pattern);
         return L;
     }
-    else if (E.is_a<Haskell::Tuple>())
+    else if (E.is_a<Hs::Tuple>())
     {
-        auto T = E.as_<Haskell::Tuple>();
+        auto T = E.as_<Hs::Tuple>();
         for(auto& pattern: T.elements)
             pattern = unapply(pattern);
         return T;
     }
-    else if (E.is_a<Haskell::AsPattern>())
+    else if (E.is_a<Hs::AsPattern>())
     {
-        auto& AP = E.as_<Haskell::AsPattern>();
-        return Haskell::AsPattern(AP.var, unapply(AP.pattern));
+        auto& AP = E.as_<Hs::AsPattern>();
+        return Hs::AsPattern(AP.var, unapply(AP.pattern));
     }
-    else if (E.is_a<Haskell::LazyPattern>())
+    else if (E.is_a<Hs::LazyPattern>())
     {
-        auto LP = E.as_<Haskell::LazyPattern>();
-        return Haskell::LazyPattern(unapply(LP.pattern));
+        auto LP = E.as_<Hs::LazyPattern>();
+        return Hs::LazyPattern(unapply(LP.pattern));
     }
-    else if (E.is_a<Haskell::StrictPattern>())
+    else if (E.is_a<Hs::StrictPattern>())
     {
-        auto SP = E.as_<Haskell::StrictPattern>();
+        auto SP = E.as_<Hs::StrictPattern>();
         SP.pattern = unapply(SP.pattern);
         return SP;
     }
@@ -136,25 +136,25 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
     assert(not pat.is_a<Hs::ApplyExp>());
 
     // 1. Handle _
-    if (pat.is_a<Haskell::WildcardPattern>())
+    if (pat.is_a<Hs::WildcardPattern>())
 	return {};
 
     // 2. Handle ~pat or !pat
-    if (pat.is_a<Haskell::LazyPattern>())
+    if (pat.is_a<Hs::LazyPattern>())
     {
-        auto LP = pat.as_<Haskell::LazyPattern>();
+        auto LP = pat.as_<Hs::LazyPattern>();
         return find_vars_in_pattern(LP.pattern, top);
     }
-    if (pat.is_a<Haskell::StrictPattern>())
+    if (pat.is_a<Hs::StrictPattern>())
     {
-        auto SP = pat.as_<Haskell::StrictPattern>();
+        auto SP = pat.as_<Hs::StrictPattern>();
         return find_vars_in_pattern(SP.pattern, top);
     }
 
     // 3. Handle x@pat
-    if (pat.is_a<Haskell::AsPattern>())
+    if (pat.is_a<Hs::AsPattern>())
     {
-        auto& AP = pat.as_<Haskell::AsPattern>();
+        auto& AP = pat.as_<Hs::AsPattern>();
 	assert(not top);
 
 	auto bound = find_vars_in_pattern(AP.var, top);
@@ -165,17 +165,17 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
 	return bound;
     }
 
-    if (pat.is_a<Haskell::List>())
+    if (pat.is_a<Hs::List>())
     {
-        auto& L = pat.as_<Haskell::List>();
+        auto& L = pat.as_<Hs::List>();
         return find_vars_in_patterns(L.elements, top);
     }
-    else if (pat.is_a<Haskell::Tuple>())
+    else if (pat.is_a<Hs::Tuple>())
     {
-        auto& T = pat.as_<Haskell::Tuple>();
+        auto& T = pat.as_<Hs::Tuple>();
         return find_vars_in_patterns(T.elements, top);
     }
-    else if (auto v = pat.to<Haskell::Var>())
+    else if (auto v = pat.to<Hs::Var>())
     {
         auto id = unloc(v->name);
 
@@ -187,7 +187,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
 	return {id};
     }
     // If its a constructor pattern!
-    else if (auto c = pat.head().to<Haskell::Con>())
+    else if (auto c = pat.head().to<Hs::Con>())
     {
         auto id = unloc(c->name);
 
@@ -237,29 +237,29 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     assert(not pat.is_a<Hs::ApplyExp>());
 
     // 1. Handle _
-    if (pat.is_a<Haskell::WildcardPattern>())
+    if (pat.is_a<Hs::WildcardPattern>())
 	return {};
 
     // 2. Handle ~pat
-    if (pat.is_a<Haskell::LazyPattern>())
+    if (pat.is_a<Hs::LazyPattern>())
     {
-        auto LP = pat.as_<Haskell::LazyPattern>();
+        auto LP = pat.as_<Hs::LazyPattern>();
 	auto bound = rename_pattern(LP.pattern, top);
 	pat = LP;
 	return bound;
     }
-    else if (pat.is_a<Haskell::StrictPattern>())
+    else if (pat.is_a<Hs::StrictPattern>())
     {
-        auto SP = pat.as_<Haskell::StrictPattern>();
+        auto SP = pat.as_<Hs::StrictPattern>();
 	auto bound = rename_pattern(SP.pattern, top);
 	pat = SP;
 	return bound;
     }
 
     // 3. Handle x@pat
-    if (pat.is_a<Haskell::AsPattern>())
+    if (pat.is_a<Hs::AsPattern>())
     {
-        auto AP = pat.as_<Haskell::AsPattern>();
+        auto AP = pat.as_<Hs::AsPattern>();
 	assert(not top);
 
 	auto bound = rename_var_pattern(AP.var, false);
@@ -272,31 +272,31 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     }
     
     //4. Handle List pattern.
-    if (pat.is_a<Haskell::List>())
+    if (pat.is_a<Hs::List>())
     {
-        auto L = pat.as_<Haskell::List>();
+        auto L = pat.as_<Hs::List>();
         auto bound = rename_patterns(L.elements,top);
         pat = L;
         return bound;
     }
     //5. Handle List pattern.
-    else if (pat.is_a<Haskell::Tuple>())
+    else if (pat.is_a<Hs::Tuple>())
     {
-        auto T = pat.as_<Haskell::Tuple>();
+        auto T = pat.as_<Hs::Tuple>();
         auto bound = rename_patterns(T.elements,top);
         pat = T;
         return bound;
     }
-    else if (auto v = pat.to<Haskell::Var>())
+    else if (auto v = pat.to<Hs::Var>())
     {
         auto V = *v;
         auto bound = rename_var_pattern(V);
         pat = V;
 	return bound;
     }
-    else if (pat.head().is_a<Haskell::Con>())
+    else if (pat.head().is_a<Hs::Con>())
     {
-        auto C = pat.head().as_<Haskell::Con>();
+        auto C = pat.head().as_<Hs::Con>();
         auto id = unloc(C.name);
 
         // 7. Resolve constructor name if identifier is a constructor
