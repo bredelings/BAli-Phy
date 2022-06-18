@@ -215,7 +215,9 @@ struct typechecker_state: FreshVarSource
 
     void match(const Hs::Type& t1, const Hs::Type& t2);
 
-    std::optional<std::pair<Hs::Type, Hs::Type>> unify_function(const Hs::Type& t);
+    std::pair<Hs::Type, Hs::Type> unify_function(const Hs::Type& t);
+
+    std::pair<Hs::Type, Hs::Type> unify_function(const Hs::Type& t, const myexception& e);
 
     Hs::Type constructor_type(const Hs::Con&);
 

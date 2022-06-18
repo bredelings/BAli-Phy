@@ -74,15 +74,12 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
 
     for(int i=0;i<App.args.size();i++)
     {
-        // Fixme -- throwing an error from inside unify_function( ) would simply this a lot.
-        // The paper calls unify_function on an EXPRESSION, not a type.
-        auto arg_result_types = unify_function(t1);
-        if (not arg_result_types)
-            throw myexception()<<"Applying "<<App.args.size()<<" arguments to function "<<App.head.print()<<", but it only takes "<<i<<"!";
+        auto e = myexception()<<"Applying "<<App.args.size()<<" arguments to function "<<App.head.print()<<", but it only takes "<<i<<"!";
 
-        auto [expected_arg_type, result_type] = *arg_result_types;
+        auto [expected_arg_type, result_type] = unify_function(t1, e);
 
         checkRho(App.args[i], expected_arg_type);
+
         t1 = result_type;
     }
 
@@ -243,10 +240,8 @@ void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
     auto op_type = inferRho(LSec.op);
 
     // 2. Check that the op is a function
-    auto ftype = unify_function(op_type);
-    if (not ftype)
-        throw myexception()<<"In left section, "<<LSec.op<<" is not a function!";
-    auto [left_arg_type, result_type] = *ftype;
+    auto e = myexception()<<"In left section, "<<LSec.op<<" is not a function!";
+    auto [left_arg_type, result_type] = unify_function(op_type, e);
 
     // 3. Typecheck the left argument
     checkRho(LSec.l_arg, left_arg_type);
