@@ -10,6 +10,10 @@
 #include "var.H"
 #include "literal.H"
 
+// Do we need an InfixPat? Maybe.
+// We could try and convert expression_ref to pattern AFTER handling infix expressions,
+// but then how would we store AsPatterns in the meantime?
+
 namespace Haskell
 {
 
