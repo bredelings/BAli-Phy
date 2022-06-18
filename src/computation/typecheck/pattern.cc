@@ -43,6 +43,15 @@ typechecker_state::infer_var_pattern_type(Hs::Var& V, const map<string, Hs::Type
     return {type, gve};
 }
 
+local_value_env
+typechecker_state::checkPat(Hs::Pattern& pat, const Hs::SigmaType& exp_type, const map<string, Hs::Type>& sigs)
+{
+    auto [type, env] = infer_pattern_type(pat, sigs);
+    unify(type, exp_type);
+    return env;
+}
+
+
 // Figure 24. Rules for patterns
 local_value_env
 typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<string, Hs::Type>& sigs)
@@ -51,9 +60,8 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     if (auto v = pat.to<Hs::Var>())
     {
         auto V = *v;
-        auto [type,lve] = infer_var_pattern_type(V, sigs);
+        auto lve = tcVarPat(V, exp_type, sigs);
         pat = V;
-        exp_type.infer_type() = type;
         return lve;
     }
     // CONSTR-PAT
@@ -100,18 +108,16 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     else if (auto lp = pat.to<Hs::LazyPattern>())
     {
         auto Lp = *lp;
-        auto [t, lve] = infer_pattern_type(Lp.pattern, sigs);
+        auto lve = tcPat(Lp.pattern, exp_type, sigs);
         pat = Lp;
-        exp_type.infer_type() = t;
         return lve;
     }
     // not in paper (STRICT-PAT)
     else if (auto sp = pat.to<Hs::StrictPattern>())
     {
         auto Sp = *sp;
-        auto [t, lve] = infer_pattern_type(Sp.pattern, sigs);
+        auto lve = tcPat(Sp.pattern, exp_type, sigs);
         pat = Sp;
-        exp_type.infer_type() = t;
         return lve;
     }
     // WILD-PAT
