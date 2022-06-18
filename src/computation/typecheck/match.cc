@@ -50,15 +50,30 @@ void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type, int i)
 {
     if (i < rule.patterns.size())
     {
-        auto [t1, lve1] = infer_pattern_type(rule.patterns[i]);
+        if (exp_type.infer())
+        {
+            auto [pat_type, lve1] = infer_pattern_type(rule.patterns[i]);
 
-        auto new_state = copy_add_binders( lve1 );
+            auto tc2 = copy_add_binders( lve1 );
 
-        Hs::Type t2;
-        new_state.tcRho(rule, Infer(t2), i+1);
-        current_lie() += new_state.current_lie();
+            Hs::Type body_type;
+            tc2.tcRho(rule, Infer(body_type), i+1);
+            current_lie() += tc2.current_lie();
 
-        exp_type.infer_type( Hs::make_arrow_type(t1,t2) );
+            exp_type.infer_type( Hs::make_arrow_type(pat_type, body_type) );
+        }
+        else
+        {
+            auto [arg_type, result_type] = unify_function(exp_type.check_type());
+
+            auto lve1 = checkPat(rule.patterns[i], arg_type);
+
+            auto tc2 = copy_add_binders(lve1);
+
+            tc2.tcRho(rule, Check(result_type), i + 1);
+
+            current_lie() += tc2.current_lie();
+        }
     }
     else
         tcRho(rule.rhs, exp_type);
