@@ -116,10 +116,14 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
     // Bind stmt
     else if (auto pq = stmt.to<Hs::PatQual>())
     {
+        // FIXME!  There should be a better way to do this -- that allows us to use checkRho or checkSigma
+
         // pat <- exp ; stmts  =>  exp >>= (\pat -> stmts)
         auto PQ = *pq;
 
         // 1. Typecheck (>>=)
+        // (>>=) ::            exp_type -> (pat_type -> stmts_type) -> b
+        // (>>=) :: Monad m => m a      -> ( a       -> m b)        -> b
         PQ.bindOp = Hs::Var({noloc,"Compiler.Base.>>="});
         auto bind_op_type = inferRho(PQ.bindOp);
 
