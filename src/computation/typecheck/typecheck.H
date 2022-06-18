@@ -255,6 +255,9 @@ struct typechecker_state: FreshVarSource
     global_value_env
     tcVarPat(Hs::Var& v, const Expected&, const signature_env& sigs = {});
 
+    global_value_env
+    checkVarPat(Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs);
+
     std::tuple<Hs::Type, local_value_env>
     infer_lhs_type(expression_ref& decl, const signature_env& sigs);
 

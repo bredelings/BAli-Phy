@@ -10,7 +10,16 @@ using std::pair;
 using std::optional;
 
 local_value_env
-typechecker_state::tcVarPat(Hs::Var& V, const Expected& exp_type, const map<string, Hs::Type>& sigs)
+typechecker_state::checkVarPat(Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs)
+{
+    auto [type, env] = infer_var_pattern_type(v, sigs);
+    unify(type, exp_type);
+    return env;
+}
+
+
+local_value_env
+typechecker_state::tcVarPat(Hs::Var& V, const Expected& exp_type, const signature_env& sigs)
 {
     auto& name = unloc(V.name);
     local_value_env lve;
@@ -86,13 +95,11 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     {
         auto Ap = *ap;
 
-        auto [t1, lve1] = infer_pattern_type(Ap.pattern, sigs);
-
-        auto [t2, lve2] = infer_var_pattern_type(Ap.var, sigs);
-
-        unify(t1, t2);
+        auto type = expTypeToType(exp_type);
+        auto lve1 = checkPat(Ap.pattern, type, sigs);
+        auto lve2 = checkVarPat(Ap.var, type, sigs);
         pat = Ap;
-        exp_type.infer_type( t1 );
+
         return lve1 + lve2;
     }
     // LAZY-PAT
@@ -124,6 +131,8 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
         auto L = *l;
 
         local_value_env lve;
+        // We need some way of getting the elemement type that is able to extract
+        // forall a.a->a from [forall a. a-> a]
         Hs::Type element_type = fresh_meta_type_var( kind_star() );
         for(auto& element: L.elements)
             lve += checkPat(element, element_type, sigs);
@@ -206,8 +215,6 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
         else
             std::abort();
     }
-    else if (pat.is_log_double())
-        throw myexception()<<"log_double literal should be impossible: '"<<pat<<"'!";
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
