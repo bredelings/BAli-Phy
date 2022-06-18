@@ -239,7 +239,7 @@ struct typechecker_state: FreshVarSource
 
     wrapper subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2);
 
-    wrapper instantiateSigma(const Hs::Type& t, const Expected& exp_rho);
+    std::pair<wrapper, std::vector<Hs::Type>> instantiateSigma(const Hs::Type& t, const Expected& exp_rho);
 
     std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
 

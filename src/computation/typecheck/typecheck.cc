@@ -790,19 +790,28 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
            y = x Int dictEqInt
       where entails checks that there is actually an instance for (Eq Int)?
 
-      I think there should not be any un-substituted meta-type vars in constraints -- otherwise the type would be ambiguous!
+      Example 4. If t1 = (forall a. Eq a => a -> a) and t2 = b (meta type var) then
+           b ~ a -> a
+      and constraints1 = {Eq a}.  Currently this fails, because we can't infer Eq a.
+      However, perhaps we should add Eq a to the environment?
+
+      Q: I think there should not be any un-substituted meta-type vars in constraints -- otherwise the type would be ambiguous!
+      A: There could be un-substituted meta-type vars from t1 if t2 is a meta-type var.
 
       How about something like forall a.Int?  I think that is not a problem right now, because we don't have type lambdas.
+      Later, we might need to put back foralls on meta-type-vars from t1 that aren't substituted for.
     */
 
     /* So... it seems that we need to be able to make the dictionaries for type2 from the dictionaries of type1!
 
-       Constraints don't enter the environment here -- then enter when the t2 type is instantiated.
+       In cases like Example 2, constraints don't enter the environment here -- they enter when the t2 type is instantiated.
+
+       But how about cases like Example 4?
     */
 
-    auto [tvs1, constraints1, type1] = instantiate(t1);
-
     auto [tvs2, constraints2, type2] = skolemize(t2, true);
+
+    auto [tvs1, constraints1, type1] = instantiate(t1);
 
     unify(type1, type2);
 
@@ -829,27 +838,44 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
     for(auto& [dvar, _]: lie1)
         dict1_args.push_back(dvar);
     
-    auto w = [=](const Hs::Expression& x) -> Hs::Expression
+    auto w = [=](const Hs::Expression& x)
     {
-        // y = \dictY1 dictY2 dictY3 -> let binds in x dictX1 dictX2 dictX3        
-        return Hs::LambdaExp(dict2_pats, Hs::LetExp({noloc,*binds}, {noloc,Hs::ApplyExp(x, dict1_args)}));
+        // y = \dictY1 dictY2 dictY3 -> let binds in x dictX1 dictX2 dictX3
+
+        Hs::Expression X = x;
+
+        if (dict1_args.size())
+            X = Hs::ApplyExp(X, dict1_args);
+
+        if (binds->size())
+            X = Hs::LetExp({noloc,*binds}, {noloc,X});
+
+        if (dict2_pats.size())
+            X = Hs::LambdaExp(dict2_pats, X);
+
+        return X;
     };
 
     return w;
 }
 
-wrapper typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
+wrapper wrapper_id = [](const Hs::Expression& x) {return x;};
+
+std::pair<wrapper, vector<Hs::Type>>
+typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
 {
     if (exp_type.infer())
     {
         auto [tvs, constraints, type] = instantiate(t);
         exp_type.infer_type(type);
-        std::abort();
+        return {wrapper_id, constraints};
     }
     else
     {
         assert(is_rho_type(exp_type.check_type()));
-        return subsumptionCheck(t, exp_type.check_type());
+        auto wrapper = subsumptionCheck(t, exp_type.check_type());
+        auto [tvs, constraints, type] = instantiate( exp_type.check_type() );
+        return {wrapper, constraints};
     }
 }
 // FIXME:: Wrappers:
