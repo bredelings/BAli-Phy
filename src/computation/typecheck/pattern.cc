@@ -30,7 +30,7 @@ typechecker_state::tcVarPat(Hs::Var& V, const Expected& exp_type, const map<stri
         type = tv;
     }
     V.type = type;
-    exp_type.infer_type() = type;
+    exp_type.infer_type( type );
     lve = lve.insert({name,type});
     return lve;
 }
@@ -78,7 +78,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             lve += checkPat(Con.args[i], field_types[i]);
         pat = Con;
 
-        exp_type.infer_type() = type;
+        exp_type.infer_type( type );
         return lve;
     }
     // AS-PAT
@@ -92,7 +92,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
         unify(t1, t2);
         pat = Ap;
-        exp_type.infer_type() = t1;
+        exp_type.infer_type( t1 );
         return lve1 + lve2;
     }
     // LAZY-PAT
@@ -115,7 +115,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     else if (pat.is_a<Hs::WildcardPattern>())
     {
         auto tv = fresh_meta_type_var( kind_star() );
-        exp_type.infer_type() = tv;
+        exp_type.infer_type( tv );
         return {};
     }
     // LIST-PAT
@@ -129,7 +129,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             lve += checkPat(element, element_type, sigs);
 
         pat = L;
-        exp_type.infer_type() = Hs::ListType(element_type);
+        exp_type.infer_type( Hs::ListType(element_type) );
         return lve;
     }
     // TUPLE-PAT
@@ -145,7 +145,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             lve += lve1;
         }
         pat = T;
-        exp_type.infer_type() = Hs::TupleType(types);
+        exp_type.infer_type( Hs::TupleType(types) );
         return lve;
     }
     else if (auto l = pat.to<Hs::Literal>())
@@ -154,7 +154,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
         if (L.is_BoxedInteger())
         {
-            exp_type.infer_type() = int_type();
+            exp_type.infer_type( int_type() );
             return {};
         }
 
@@ -164,7 +164,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
         if (L.is_Char())
         {
-            exp_type.infer_type() = char_type();
+            exp_type.infer_type( char_type() );
             return {};
         }
         else if (auto i = L.is_Integer())
@@ -180,12 +180,12 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             L.literal = Hs::Integer(*i, fromInteger);
 
             pat = L;
-            exp_type.infer_type() = result_type;
+            exp_type.infer_type( result_type );
             return {};
         }
         else if (L.is_String())
         {
-            exp_type.infer_type() = Hs::ListType(char_type());
+            exp_type.infer_type( Hs::ListType(char_type()) );
             return {};
         }
         else if (auto d = L.is_Double())
@@ -200,7 +200,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
             L.literal = Hs::Double(*d, fromRational);
             pat = L;
-            exp_type.infer_type() = result_type;
+            exp_type.infer_type( result_type );
             return {};
         }
         else

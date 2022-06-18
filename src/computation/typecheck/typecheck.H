@@ -56,21 +56,47 @@ struct global_tc_state
 //    Check(const Hs::Type& t):type(t) {}
 //};
 
-struct Infer
+class Infer
 {
-    Hs::Type& type;
-    Infer(Hs::Type& t):type(t) {}
+    Hs::Type& type_;
+
+public:
+    void set_type(const Hs::Type& t)
+    {
+        assert(type_.empty());
+        type_ = t;
+        assert(not type_.empty());
+    }
+
+    std::optional<Hs::Type> type() const
+    {
+        if (type_.empty())
+            return {};
+        else
+            return type_;
+    }
+
+    Infer(Hs::Type& t):type_(t) { assert(type_.empty()); }
 };
 
 class Expected
 {
-    std::variant<Infer, std::monostate> value;
+    mutable std::variant<Infer, std::monostate> value;
 public:
 //    bool check() const {return std::holds_alternative<Check>(value);}
-//    bool infer() const {return std::holds_alternative<Infer>(value);}
+    bool infer() const {return std::holds_alternative<Infer>(value);}
 
-//    const Hs::Type& check_type() const {return std::get<Check>(value).type;}
-          Hs::Type& infer_type() const {return std::get<Infer>(value).type;}
+    std::optional<Hs::Type> inferred_type() const
+    {
+        assert(infer());
+        return std::get<Infer>(value).type();
+    }
+
+    void infer_type(const Hs::Type& t)  const
+    {
+        assert(infer());
+        std::get<Infer>(value).set_type(t);
+    }
 
 //    Expected(const Check& c):value(c) {}
     Expected(const Infer& i):value(i) {}
@@ -103,6 +129,8 @@ struct typechecker_state: FreshVarSource
 
           u_substitution_t& type_var_to_type()       {return global_state->type_var_to_type;}
     const u_substitution_t& type_var_to_type() const {return global_state->type_var_to_type;}
+
+    Hs::Type expTypeToType(const Expected& E);
 
     //------- local state ------------//
 

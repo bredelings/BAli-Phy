@@ -320,6 +320,28 @@ global_tc_state::global_tc_state(const Module& m)
     :this_mod(m)
 { }
 
+
+Hs::Type typechecker_state::expTypeToType(const Expected& E)
+{
+    if (E.infer())
+    {
+        if (auto T = E.inferred_type())
+        {
+            assert(is_tau_type(*T));
+            return *T;
+        }
+        else
+        {
+            // This can now only be a monotype
+            auto tv = fresh_meta_type_var( kind_star() );
+            E.infer_type(tv);
+            return tv;
+        }
+    }
+    else
+        std::abort();
+}
+
 void typechecker_state::get_tycon_info(const Hs::Decls& type_decls)
 {
     type_con_env new_tycons;
