@@ -339,7 +339,7 @@ Hs::Type typechecker_state::expTypeToType(const Expected& E)
         }
     }
     else
-        std::abort();
+        return E.check_type();
 }
 
 void typechecker_state::get_tycon_info(const Hs::Decls& type_decls)

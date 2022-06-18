@@ -50,11 +50,11 @@ struct global_tc_state
     global_tc_state(const Module& m);
 };
 
-//struct Check
-//{
-//    Hs::Type type;
-//    Check(const Hs::Type& t):type(t) {}
-//};
+struct Check
+{
+    Hs::Type type;
+    Check(const Hs::Type& t):type(t) {}
+};
 
 class Infer
 {
@@ -81,10 +81,16 @@ public:
 
 class Expected
 {
-    mutable std::variant<Infer, std::monostate> value;
+    mutable std::variant<Infer, Check> value;
 public:
-//    bool check() const {return std::holds_alternative<Check>(value);}
+    bool check() const {return std::holds_alternative<Check>(value);}
     bool infer() const {return std::holds_alternative<Infer>(value);}
+
+    Hs::Type check_type() const
+    {
+        assert(check());
+        return std::get<Check>(value).type;
+    }
 
     std::optional<Hs::Type> inferred_type() const
     {
@@ -98,7 +104,7 @@ public:
         std::get<Infer>(value).set_type(t);
     }
 
-//    Expected(const Check& c):value(c) {}
+    Expected(const Check& c):value(c) {}
     Expected(const Infer& i):value(i) {}
 };
 
