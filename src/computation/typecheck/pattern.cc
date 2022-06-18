@@ -121,8 +121,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     // WILD-PAT
     else if (pat.is_a<Hs::WildcardPattern>())
     {
-        auto tv = fresh_meta_type_var( kind_star() );
-        exp_type.infer_type( tv );
+        expTypeToType(exp_type);
         return {};
     }
     // LIST-PAT
