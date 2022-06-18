@@ -34,8 +34,7 @@ typechecker_state::infer_qual_type(Hs::Qual& qual)
     if (auto sq = qual.to<Hs::SimpleQual>())
     {
         auto SQ = *sq;
-        auto cond_type = inferRho(SQ.exp);
-        unify( cond_type, bool_type() );
+        checkRho(SQ.exp, bool_type());
         qual = SQ;
     }
     // GENERATOR.
