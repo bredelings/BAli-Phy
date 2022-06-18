@@ -806,6 +806,12 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
 
     unify(type1, type2);
 
+    // We are looking for type variables in t1, not type1.
+    // This will only contains skolem variables if t1 contains a meta-variable BEFORE instantiation.
+    for(auto ftv: free_type_variables(apply_current_subst(t1)))
+        if (includes(tvs2, ftv))
+            throw myexception()<<"Type not polymorphic enough";
+
     auto lie1 = constraints_to_lie(constraints1);
     
     auto lie2 = constraints_to_lie(constraints2);
