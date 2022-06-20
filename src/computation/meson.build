@@ -11,7 +11,7 @@ computation_sources = [
   'param.cc',
   'fresh_vars.cc',
 
-  'parser/driver.cc', 'parser/lexer.cc', 'parser/parser.cc',
+  'parser/driver.cc', 'parser/lex.yy.cpp', 'parser/parser.cc',
 
   'rename/rename.cc', 'rename/expression.cc', 'rename/pattern.cc',
   'rename/decls.cc', 'rename/stmt.cc', 'rename/match.cc',
