@@ -51,6 +51,8 @@
 
 %code {
 # include "driver.hh"
+YY_DECL;
+
 }
 
 %define api.token.prefix {TOK_}
