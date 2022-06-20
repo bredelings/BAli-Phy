@@ -113,6 +113,7 @@ signed       {negative}?
 
 %{
   // Code run each time a pattern is matched.
+  # undef YY_USER_ACTION
   # define YY_USER_ACTION  loc.columns (yyleng);
 %}
 
