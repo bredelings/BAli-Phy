@@ -1552,12 +1552,9 @@ YY_RULE_SETUP
 loc.lines(1); loc.step();
 	YY_BREAK
 case 15:
-*yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
-(yy_c_buf_p) = yy_cp -= 1;
-YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
 #line 156 "lexer.l"
-if (auto tok = drv.do_bol(loc)) return *tok;
+yyless(0); loc.columns(-1); if (auto tok = drv.do_bol(loc)) return *tok;
 	YY_BREAK
 case YY_STATE_EOF(BOL):
 #line 157 "lexer.l"
@@ -1588,38 +1585,26 @@ YY_RULE_SETUP
 drv.hopefully_open_brace(loc);
 	YY_BREAK
 case 19:
-*yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
-(yy_c_buf_p) = yy_cp -= 1;
-YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
 #line 163 "lexer.l"
-yy_pop_state();
+yyless(0); loc.columns(-1); yy_pop_state();
 	YY_BREAK
 case 20:
-*yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
-(yy_c_buf_p) = yy_cp -= 1;
-YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
 #line 165 "lexer.l"
-return drv.new_layout_context(loc, true, true, yy::parser::token::TOK_VOCURLY);
+yyless(0); loc.columns(-1); return drv.new_layout_context(loc, true, true, yy::parser::token::TOK_VOCURLY);
 	YY_BREAK
 case 21:
-*yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
-(yy_c_buf_p) = yy_cp -= 1;
-YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
 #line 166 "lexer.l"
-return drv.new_layout_context(loc, false, true, yy::parser::token::TOK_VOCURLY);
+yyless(0); loc.columns(-1); return drv.new_layout_context(loc, false, true, yy::parser::token::TOK_VOCURLY);
 	YY_BREAK
 /* If we've generated a VOCURLY and started a new line to the left, then
      we need to generate a VCCURLY */
 case 22:
-*yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
-(yy_c_buf_p) = yy_cp -= 1;
-YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
 #line 170 "lexer.l"
-return drv.do_layout_left(loc);
+yyless(0); return drv.do_layout_left(loc);
 	YY_BREAK
 case 23:
 /* rule 23 can match eol */
@@ -1815,7 +1800,7 @@ YY_RULE_SETUP
 #line 240 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1819 "lexer.cc"
+#line 1804 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{

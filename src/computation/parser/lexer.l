@@ -152,21 +152,21 @@ signed       {negative}?
 
   /* bol state */
 <BOL>[\n]  loc.lines(1); loc.step();
-<BOL>""/.  if (auto tok = drv.do_bol(loc)) return *tok;
+<BOL>.     yyless(0); loc.columns(-1); if (auto tok = drv.do_bol(loc)) return *tok;
 <BOL><<EOF>>  if (auto tok = drv.do_bol(loc)) return *tok;
 
 <layout,layout_do,layout_if>"{"/[^-]    return drv.hopefully_open_brace(loc);
 <layout,layout_do,layout_if>[\n]        loc.lines(1); loc.step();
 
 <layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  drv.hopefully_open_brace(loc);
-<layout_if>""/.                             yy_pop_state();
+<layout_if>.                                yyless(0); loc.columns(-1); yy_pop_state();
 
-<layout>""/.                              return drv.new_layout_context(loc, true, true, yy::parser::token::TOK_VOCURLY);
-<layout_do>""/.                           return drv.new_layout_context(loc, false, true, yy::parser::token::TOK_VOCURLY);
+<layout>.                                 yyless(0); loc.columns(-1); return drv.new_layout_context(loc, true, true, yy::parser::token::TOK_VOCURLY);
+<layout_do>.                              yyless(0); loc.columns(-1); return drv.new_layout_context(loc, false, true, yy::parser::token::TOK_VOCURLY);
 
   /* If we've generated a VOCURLY and started a new line to the left, then
      we need to generate a VCCURLY */
-<layout_left>""/.                       return drv.do_layout_left(loc);
+<layout_left>.                          yyless(0); return drv.do_layout_left(loc);
 
 <INITIAL,option_prags>[\n]              loc.lines(1); loc.step (); yy_push_state(BOL);
 
