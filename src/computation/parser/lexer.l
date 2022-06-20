@@ -37,6 +37,7 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc);
 
 %}
 
+%option params="driver& drv"
 %option noyywrap nounput batch debug noinput stack never-interactive nounistd
 %s layout layout_do layout_if layout_left BOL nested_comment nested_comment2
 %s option_prags line_prag1a line_prag2 line_prag2a
