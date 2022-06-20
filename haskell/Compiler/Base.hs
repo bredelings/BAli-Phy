@@ -46,8 +46,9 @@ instance Monad IO where
     return x = IOAction (\s -> (s, x))
 --unsafePerformIO (MFix f) = let x = unsafePerformIO (f x) in x
     mfix f = IOAction (\state1 -> let result@(state2, x) = runIO (f x) state1 in result)
--- unsafeInterleaveIO x = LazyIO x
--- unsafePerformIO (LazyIO f) = unsafePerformIO f
--- unsafePerformIO (IOAndPass (LazyIO f) g) = let x = unsafePerformIO f in unsafePerformIO (g x)
+{- unsafeInterleaveIO x = LazyIO x
+   unsafePerformIO (LazyIO f) = unsafePerformIO f
+   unsafePerformIO (IOAndPass (LazyIO f) g) = let x = unsafePerformIO f in unsafePerformIO (g x)
+-}
     unsafeInterleaveIO f = IOAction (\state -> (state, snd $ runIO f state))
 

@@ -38,7 +38,7 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc);
 %}
 
 %option noyywrap nounput batch debug noinput stack never-interactive nounistd
-%s layout layout_do layout_if layout_left bol
+%s layout layout_do layout_if layout_left bol nested_comment nested_comment2
 %s option_prags line_prag1a line_prag2 line_prag2a
 
 unispace     \x05
@@ -129,7 +129,21 @@ signed       {negative}?
 {tab}	         loc.step ();
 
   /* GHC calls some handwritten code to deal with nested comments */
-"{-"[^\n-#]*"-}"      loc.step();
+  /* "{-"[^\n-#]*"-}"      loc.step(); */
+<nested_comment,nested_comment2>{
+"{-"/[^#]                    yy_push_state(nested_comment2);
+[^-\n]*      // each a chunk with no newline or "-"
+"-"          // eat a "-" not followed by "}"
+[\n]         loc.lines(1);
+}
+"{-"/[^#]                    yy_push_state(nested_comment);
+
+<nested_comment2>"-}"        yy_pop_state();
+<nested_comment>"-}"         loc.step(); yy_pop_state();
+"-}"         throw yy::parser::syntax_error(loc, "Too many -}");
+
+
+
 
 "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].*           loc.step();
 "--"-*$           loc.step();
