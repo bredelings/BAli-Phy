@@ -38,7 +38,7 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc);
 %}
 
 %option noyywrap nounput batch debug noinput stack never-interactive nounistd
-%s layout layout_do layout_if layout_left bol nested_comment nested_comment2
+%s layout layout_do layout_if layout_left BOL nested_comment nested_comment2
 %s option_prags line_prag1a line_prag2 line_prag2a
 
 unispace     \x05
@@ -151,9 +151,9 @@ signed       {negative}?
 "-- "$            loc.step();
 
   /* bol state */
-<bol>[\n]  loc.lines(1); loc.step();
-<bol>""/.  if (auto tok = drv.do_bol(loc)) return *tok;
-<bol><<EOF>>  if (auto tok = drv.do_bol(loc)) return *tok;
+<BOL>[\n]  loc.lines(1); loc.step();
+<BOL>""/.  if (auto tok = drv.do_bol(loc)) return *tok;
+<BOL><<EOF>>  if (auto tok = drv.do_bol(loc)) return *tok;
 
 <layout,layout_do,layout_if>"{"/[^-]    return drv.hopefully_open_brace(loc);
 <layout,layout_do,layout_if>[\n]        loc.lines(1); loc.step();
@@ -168,7 +168,7 @@ signed       {negative}?
      we need to generate a VCCURLY */
 <layout_left>""/.                       return drv.do_layout_left(loc);
 
-<INITIAL,option_prags>[\n]              loc.lines(1); loc.step (); yy_push_state(bol);
+<INITIAL,option_prags>[\n]              loc.lines(1); loc.step (); yy_push_state(BOL);
 
   /* known pragmas */
 "{-#"{whitechar}*{pragmachar}+
@@ -543,7 +543,7 @@ yy::parser::symbol_type driver::do_layout_left(const yy::parser::location_type& 
 {
 //    std::cerr<<"Doing layout_left at "<<loc<<std::endl;
     yy_pop_state();
-    yy_push_state(bol);
+    yy_push_state(BOL);
     return yy::parser::make_VCCURLY(loc);
 }
 

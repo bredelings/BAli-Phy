@@ -1074,7 +1074,7 @@ yy::parser::symbol_type make_string(const yy::parser::location_type& loc);
 #define layout_do 2
 #define layout_if 3
 #define layout_left 4
-#define bol 5
+#define BOL 5
 #define nested_comment 6
 #define nested_comment2 7
 #define option_prags 8
@@ -1559,7 +1559,7 @@ YY_RULE_SETUP
 #line 156 "lexer.l"
 if (auto tok = drv.do_bol(loc)) return *tok;
 	YY_BREAK
-case YY_STATE_EOF(bol):
+case YY_STATE_EOF(BOL):
 #line 157 "lexer.l"
 if (auto tok = drv.do_bol(loc)) return *tok;
 	YY_BREAK
@@ -1625,7 +1625,7 @@ case 23:
 /* rule 23 can match eol */
 YY_RULE_SETUP
 #line 172 "lexer.l"
-loc.lines(1); loc.step (); yy_push_state(bol);
+loc.lines(1); loc.step (); yy_push_state(BOL);
 	YY_BREAK
 /* known pragmas */
 case 24:
@@ -3286,7 +3286,7 @@ yy::parser::symbol_type driver::do_layout_left(const yy::parser::location_type& 
 {
 //    std::cerr<<"Doing layout_left at "<<loc<<std::endl;
     yy_pop_state();
-    yy_push_state(bol);
+    yy_push_state(BOL);
     return yy::parser::make_VCCURLY(loc);
 }
 
