@@ -135,6 +135,7 @@ signed       {negative}?
 [^-\n]*      // each a chunk with no newline or "-"
 "-"          // eat a "-" not followed by "}"
 [\n]         loc.lines(1);
+<<EOF>>      throw yy::parser::syntax_error(loc, "Unterminated {-");
 }
 "{-"/[^#]                    yy_push_state(nested_comment);
 
@@ -152,6 +153,7 @@ signed       {negative}?
   /* bol state */
 <bol>[\n]  loc.lines(1); loc.step();
 <bol>""/.  if (auto tok = drv.do_bol(loc)) return *tok;
+<bol><<EOF>>  if (auto tok = drv.do_bol(loc)) return *tok;
 
 <layout,layout_do,layout_if>"{"/[^-]    return drv.hopefully_open_brace(loc);
 <layout,layout_do,layout_if>[\n]        loc.lines(1); loc.step();

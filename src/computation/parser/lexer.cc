@@ -1005,12 +1005,12 @@ int yy_flex_debug = 1;
 
 static const flex_int16_t yy_rule_linenum[54] =
     {   0,
-      129,  130,  135,  136,  137,  138,  140,  142,  143,  144,
-      149,  150,  151,  154,  155,  157,  158,  160,  161,  163,
-      164,  168,  170,  173,  185,  187,  189,  193,  194,  195,
-      196,  197,  198,  199,  202,  204,  206,  207,  208,  209,
-      214,  215,  216,  217,  219,  220,  221,  223,  224,  227,
-      229,  230,  232
+      129,  130,  135,  136,  137,  138,  141,  143,  144,  145,
+      150,  151,  152,  155,  156,  159,  160,  162,  163,  165,
+      166,  170,  172,  175,  187,  189,  191,  195,  196,  197,
+      198,  199,  200,  201,  204,  206,  208,  209,  210,  211,
+      216,  217,  218,  219,  221,  222,  223,  225,  226,  229,
+      231,  232,  234
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1492,6 +1492,11 @@ YY_RULE_SETUP
 #line 138 "lexer.l"
 loc.lines(1);
 	YY_BREAK
+case YY_STATE_EOF(nested_comment):
+case YY_STATE_EOF(nested_comment2):
+#line 139 "lexer.l"
+throw yy::parser::syntax_error(loc, "Unterminated {-");
+	YY_BREAK
 
 case 7:
 /* rule 7 can match eol */
@@ -1500,27 +1505,27 @@ YY_LINENO_REWIND_TO(yy_bp + 2);
 (yy_c_buf_p) = yy_cp = yy_bp + 2;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 140 "lexer.l"
+#line 141 "lexer.l"
 yy_push_state(nested_comment);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 142 "lexer.l"
+#line 143 "lexer.l"
 yy_pop_state();
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 143 "lexer.l"
+#line 144 "lexer.l"
 loc.step(); yy_pop_state();
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 144 "lexer.l"
+#line 145 "lexer.l"
 throw yy::parser::syntax_error(loc, "Too many -}");
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 149 "lexer.l"
+#line 150 "lexer.l"
 loc.step();
 	YY_BREAK
 case 12:
@@ -1528,7 +1533,7 @@ case 12:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 150 "lexer.l"
+#line 151 "lexer.l"
 loc.step();
 	YY_BREAK
 case 13:
@@ -1536,14 +1541,14 @@ case 13:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 151 "lexer.l"
+#line 152 "lexer.l"
 loc.step();
 	YY_BREAK
 /* bol state */
 case 14:
 /* rule 14 can match eol */
 YY_RULE_SETUP
-#line 154 "lexer.l"
+#line 155 "lexer.l"
 loc.lines(1); loc.step();
 	YY_BREAK
 case 15:
@@ -1551,7 +1556,11 @@ case 15:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 155 "lexer.l"
+#line 156 "lexer.l"
+if (auto tok = drv.do_bol(loc)) return *tok;
+	YY_BREAK
+case YY_STATE_EOF(bol):
+#line 157 "lexer.l"
 if (auto tok = drv.do_bol(loc)) return *tok;
 	YY_BREAK
 case 16:
@@ -1561,13 +1570,13 @@ YY_LINENO_REWIND_TO(yy_bp + 1);
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 157 "lexer.l"
+#line 159 "lexer.l"
 return drv.hopefully_open_brace(loc);
 	YY_BREAK
 case 17:
 /* rule 17 can match eol */
 YY_RULE_SETUP
-#line 158 "lexer.l"
+#line 160 "lexer.l"
 loc.lines(1); loc.step();
 	YY_BREAK
 case 18:
@@ -1575,7 +1584,7 @@ case 18:
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 160 "lexer.l"
+#line 162 "lexer.l"
 drv.hopefully_open_brace(loc);
 	YY_BREAK
 case 19:
@@ -1583,7 +1592,7 @@ case 19:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 161 "lexer.l"
+#line 163 "lexer.l"
 yy_pop_state();
 	YY_BREAK
 case 20:
@@ -1591,7 +1600,7 @@ case 20:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 163 "lexer.l"
+#line 165 "lexer.l"
 return drv.new_layout_context(loc, true, true, yy::parser::token::TOK_VOCURLY);
 	YY_BREAK
 case 21:
@@ -1599,7 +1608,7 @@ case 21:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 164 "lexer.l"
+#line 166 "lexer.l"
 return drv.new_layout_context(loc, false, true, yy::parser::token::TOK_VOCURLY);
 	YY_BREAK
 /* If we've generated a VOCURLY and started a new line to the left, then
@@ -1609,20 +1618,20 @@ case 22:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 168 "lexer.l"
+#line 170 "lexer.l"
 return drv.do_layout_left(loc);
 	YY_BREAK
 case 23:
 /* rule 23 can match eol */
 YY_RULE_SETUP
-#line 170 "lexer.l"
+#line 172 "lexer.l"
 loc.lines(1); loc.step (); yy_push_state(bol);
 	YY_BREAK
 /* known pragmas */
 case 24:
 /* rule 24 can match eol */
 YY_RULE_SETUP
-#line 173 "lexer.l"
+#line 175 "lexer.l"
 
 	YY_BREAK
 /* <line_prag1> single-line line pragmas: # <line> "<file>" <extra-stuff> \n */
@@ -1634,156 +1643,156 @@ YY_RULE_SETUP
 case 25:
 /* rule 25 can match eol */
 YY_RULE_SETUP
-#line 185 "lexer.l"
+#line 187 "lexer.l"
 
 	YY_BREAK
 /* one-word pragmas */
 case 26:
 /* rule 26 can match eol */
 YY_RULE_SETUP
-#line 187 "lexer.l"
+#line 189 "lexer.l"
 
 	YY_BREAK
 /* end pragma */
 case 27:
 YY_RULE_SETUP
-#line 189 "lexer.l"
+#line 191 "lexer.l"
 
 	YY_BREAK
 /* unboxed tuples: (# and #) */
 case 28:
 YY_RULE_SETUP
-#line 193 "lexer.l"
+#line 195 "lexer.l"
 return yy::parser::make_OPAREN (loc);
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 194 "lexer.l"
+#line 196 "lexer.l"
 return yy::parser::make_CPAREN (loc);
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 195 "lexer.l"
+#line 197 "lexer.l"
 return yy::parser::make_OBRACK (loc);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 196 "lexer.l"
+#line 198 "lexer.l"
 return yy::parser::make_CBRACK (loc);
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 197 "lexer.l"
+#line 199 "lexer.l"
 return yy::parser::make_COMMA  (loc);
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 198 "lexer.l"
+#line 200 "lexer.l"
 return yy::parser::make_SEMI   (loc);
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 199 "lexer.l"
+#line 201 "lexer.l"
 return yy::parser::make_BACKQUOTE (loc);
 	YY_BREAK
 /* action: push a "NoLayout" context into the stack */
 case 35:
 YY_RULE_SETUP
-#line 202 "lexer.l"
+#line 204 "lexer.l"
 drv.push_context(); return yy::parser::make_OCURLY (loc);
 	YY_BREAK
 /* action: pop the top context from the stack */
 case 36:
 YY_RULE_SETUP
-#line 204 "lexer.l"
+#line 206 "lexer.l"
 drv.pop_context(); return yy::parser::make_CCURLY (loc);
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 206 "lexer.l"
+#line 208 "lexer.l"
 return yy::parser::make_QVARID (yytext, loc);
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 207 "lexer.l"
+#line 209 "lexer.l"
 return yy::parser::make_QCONID (yytext, loc);
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 208 "lexer.l"
+#line 210 "lexer.l"
 return varid(loc);
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 209 "lexer.l"
+#line 211 "lexer.l"
 return yy::parser::make_CONID  (yytext, loc);
 	YY_BREAK
 /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 case 41:
 YY_RULE_SETUP
-#line 214 "lexer.l"
+#line 216 "lexer.l"
 return yy::parser::make_QVARSYM  (yytext,loc);
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 215 "lexer.l"
+#line 217 "lexer.l"
 return yy::parser::make_QCONSYM  (yytext,loc);
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 216 "lexer.l"
+#line 218 "lexer.l"
 return varsym(loc);
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 217 "lexer.l"
+#line 219 "lexer.l"
 return consym(loc);
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 219 "lexer.l"
+#line 221 "lexer.l"
 return make_boxed_integer(10,false,0,loc);
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 220 "lexer.l"
+#line 222 "lexer.l"
 return make_boxed_integer(10,true,0,loc);
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 221 "lexer.l"
+#line 223 "lexer.l"
 return make_integer(10,true,0,loc);
 	YY_BREAK
 /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
 case 48:
 YY_RULE_SETUP
-#line 223 "lexer.l"
+#line 225 "lexer.l"
 return make_integer( 8,true,2,loc);
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 224 "lexer.l"
+#line 226 "lexer.l"
 return make_integer(16,true,2,loc);
 	YY_BREAK
 /* negative literals depend on an extension */
 case 50:
 YY_RULE_SETUP
-#line 227 "lexer.l"
+#line 229 "lexer.l"
 return make_rational(loc);
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 229 "lexer.l"
+#line 231 "lexer.l"
 return make_char(loc);
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 230 "lexer.l"
+#line 232 "lexer.l"
 return make_string(loc);
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 232 "lexer.l"
+#line 234 "lexer.l"
 {
              throw yy::parser::syntax_error
                (loc, "invalid character: " + std::string(yytext));
@@ -1794,22 +1803,19 @@ case YY_STATE_EOF(layout):
 case YY_STATE_EOF(layout_do):
 case YY_STATE_EOF(layout_if):
 case YY_STATE_EOF(layout_left):
-case YY_STATE_EOF(bol):
-case YY_STATE_EOF(nested_comment):
-case YY_STATE_EOF(nested_comment2):
 case YY_STATE_EOF(option_prags):
 case YY_STATE_EOF(line_prag1a):
 case YY_STATE_EOF(line_prag2):
 case YY_STATE_EOF(line_prag2a):
-#line 237 "lexer.l"
+#line 239 "lexer.l"
 return yy::parser::make_END (loc);
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 238 "lexer.l"
+#line 240 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1813 "lexer.cc"
+#line 1819 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2972,7 +2978,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 238 "lexer.l"
+#line 240 "lexer.l"
 
 
 
