@@ -81,9 +81,17 @@ using std::tuple;
   * Implement literals, including literal strings.
   * Replace let-bound vars w/o signatures with local monomorphic ids.
   * Handle type synonyms.
+  * add tcRho( ).
 
   TODO:
-  0. OK, so to switch over to using some kind of tcRho(T&, const Expected& exp_type)
+  0. We should be able to use skolemise with infer_type_for_single_fundecl_with_sig
+  -- see tcSkolemiseScoped in Binds.hs
+  i. OK, maybe we need to push down the GIVEN constraints.
+     This should allow us to push down skolemized constraints in checksigma( )
+  ii. We need to make a version of instantiation that invents and applies dictionaries... by creating a wrapper,
+      and also puts the dictionaries in lie_wanted?
+  iii. I guess skolemization does not do this... .. but we could make a version that creates dictionaries and puts them in 
+      lie_given, or something?
   0. Make a Pattern class...
   0. Make an Expression class, similar to the Type class, that allows the object to be modified.
      - It can hold things in a cow_ptr
