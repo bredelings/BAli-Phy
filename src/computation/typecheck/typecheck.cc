@@ -10,6 +10,7 @@
 #include "immer/map.hpp" // for immer::map
 
 #include "util/set.H"
+#include "util/string/join.H"
 
 #include "util/graph.H" // for get_ordered_strong_components( )
 
@@ -86,6 +87,8 @@ using std::tuple;
   TODO:
   0. We should be able to use skolemise with infer_type_for_single_fundecl_with_sig
   -- see tcSkolemiseScoped in Binds.hs
+  -- can we make versions of (i) classify_constraints and (ii) default_preds that handle regular type variables?
+  -- can we just use free_type_variables, instead of free_meta_type_variables?
   i. OK, maybe we need to push down the GIVEN constraints.
      This should allow us to push down skolemized constraints in checksigma( )
   ii. We need to make a version of instantiation that invents and applies dictionaries... by creating a wrapper,
@@ -323,6 +326,17 @@ using std::tuple;
 // GVE = global value environment      = var -> polytype
 // LVE = local  value environment      = var -> monotype
 
+
+std::string print(const LIE& lie)
+{
+    std::ostringstream oss;
+    vector<string> ss;
+    for(auto& [value,type]: lie)
+    {
+        ss.push_back(value.print() + " :: " + type.print());
+    }
+    return "{ " + join(ss, "; ") + " }";
+}
 
 global_tc_state::global_tc_state(const Module& m)
     :this_mod(m)
@@ -817,7 +831,7 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
        But how about cases like Example 4?
     */
 
-    auto [tvs2, constraints2, type2] = skolemize(t2, true);
+    auto [tvs2, givens, type2] = skolemize(t2, true);
 
     auto [tvs1, constraints1, type1] = instantiate(t1);
 
@@ -829,21 +843,19 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
         if (includes(tvs2, ftv))
             throw myexception()<<"Type not polymorphic enough";
 
-    auto lie1 = constraints_to_lie(constraints1);
+    auto wanteds = constraints_to_lie(constraints1);
     
-    auto lie2 = constraints_to_lie(constraints2);
-
-    auto [binds, failed_constraints] = entails(unordered_lie(lie2), unordered_lie(lie1));
+    auto [binds, failed_constraints] = entails(unordered_lie(givens), unordered_lie(wanteds));
 
     if (not binds)
         throw myexception()<<"Type\n\n  "<<t1<<"\n\n  does not subsume\n\n  "<<t2;
 
     vector<Hs::Pattern> dict2_pats;
-    for(auto& [dvar, _]: lie2)
+    for(auto& [dvar, _]: givens)
         dict2_pats.push_back(dvar);
 
     vector<Hs::Expression> dict1_args;
-    for(auto& [dvar, _]: lie1)
+    for(auto& [dvar, _]: wanteds)
         dict1_args.push_back(dvar);
     
     auto w = [=](const Hs::Expression& x)
@@ -954,11 +966,11 @@ tuple<vector<Hs::MetaTypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::in
     return {tvs, constraints, type};
 }
 
-tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::skolemize(const Hs::Type& t, bool skolem)
+tuple<vector<Hs::TypeVar>, vector<pair<Hs::Var,Hs::Type>>, Hs::Type> typechecker_state::skolemize(const Hs::Type& t, bool skolem)
 {
     // 1. Handle foralls
     vector<Hs::TypeVar> tvs;
-    vector<Hs::Type> constraints;
+    vector<std::pair<Hs::Var,Hs::Type>> givens;
     Hs::Type type = t;
 
     if (auto fa = type.to<Hs::ForallType>())
@@ -983,25 +995,25 @@ tuple<vector<Hs::TypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::skolem
     // 2. Handle constraints
     if (auto ct = type.to<Hs::ConstrainedType>())
     {
-        constraints = ct->context.constraints;
+        givens = constraints_to_lie(ct->context.constraints);
         type = ct->type;
     }
 
     // 3. Handle the exposed type being a polytype
-    if (not tvs.empty() or not constraints.empty())
+    if (not tvs.empty() or not givens.empty())
     {
-        auto [tvs2, constraints2, type2] = skolemize(type, skolem);
+        auto [tvs2, givens2, type2] = skolemize(type, skolem);
 
         for(auto& tv2: tvs2)
             tvs.push_back(tv2);
 
-        for(auto& constraint2:  constraints2)
-            constraints.push_back(constraint2);
+        for(auto& given:  givens2)
+            givens.push_back(given);
 
         type = type2;
     }
 
-    return {tvs, constraints, type};
+    return {tvs, givens, type};
 }
 
 vector<pair<Hs::Var,Hs::Type>> typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)

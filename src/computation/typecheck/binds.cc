@@ -169,6 +169,14 @@ vector<Hs::Type> constraints_from_lie(const local_instance_env& lie)
     return constraints;
 }
 
+vector<Hs::Type> constraints_from_lie(const vector<pair<Hs::Var, Hs::Type>>& lie)
+{
+    vector<Hs::Type> constraints;
+    for(auto& [_, constraint]: lie)
+        constraints.push_back(constraint);
+    return constraints;
+}
+
 vector<Hs::Var> vars_from_lie(const local_instance_env& lie)
 {
     vector<Hs::Var> dict_vars;
@@ -263,35 +271,30 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 1. skolemize the type -> (tvs, givens, rho-type)
         auto polytype = gve.at(name);
-        auto [tvs, given_constraints, rho_type] = skolemize(polytype, true);
-        auto ordered_lie_given = constraints_to_lie(given_constraints);
-        auto dict_vars = vars_from_lie( ordered_lie_given );
-        auto lie_given = unordered_lie(ordered_lie_given);
+        auto [tvs, givens, rho_type] = skolemize(polytype, true);
 
         // 2. typecheck the rhs
         auto tcs2 = copy_clear_lie();
         tcs2.tcRho(FD.match, Check(rho_type));
-        auto lie_wanted = tcs2.current_lie();
+        auto lie_wanted = apply_current_subst( tcs2.current_lie() );
 
-        // 3. match(rhs_type => given_type)
-        Hs::Type monotype = apply_current_subst(rho_type);
-        lie_wanted = apply_current_subst( lie_wanted );
-
-        // 4. find free type variables in the most general type
+        // 3. default ambiguous constraints.
         auto fixed_mtvs = free_meta_type_variables( apply_current_subst(gve) );
-
-        // 5. default ambiguous constraints.
         auto [s1, binds1, lie_wanted_unambiguous] = default_preds( fixed_mtvs, {}, lie_wanted );
         auto ev_binds = binds1;
 
-        // 6. check that the remaining constraints are satisfied by the constraints in the type signature
-        auto [ev_binds2, lie_failed] = entails(lie_given, lie_wanted_unambiguous);
+        // 4. check that the remaining constraints are satisfied by the constraints in the type signature
+        auto [ev_binds2, lie_failed] = entails( unordered_lie(givens), lie_wanted_unambiguous);
         if (not ev_binds2)
-            throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(lie_given)<<"'";
+            throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
         ev_binds = *ev_binds2 + ev_binds;
 
-        // 10. return GenBind with tvs, givens, body
+        // 5. return GenBind with tvs, givens, body
         Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
+
+        Hs::Type monotype = apply_current_subst(rho_type);
+
+        auto dict_vars = vars_from_lie( givens );
 
         Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
 

@@ -230,7 +230,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
     auto inst_type = instance_env().at(unloc(dfun.name));
     // Instantiate it with rigid type variables.
-    auto [instance_tvs, instance_constraints, instance_head] = skolemize(inst_type, false);
+    auto [instance_tvs, givens, instance_head] = skolemize(inst_type, false);
     auto [instance_class, instance_args] = Hs::decompose_type_apps(instance_head);
 
     // 2. Get the class info
@@ -247,26 +247,21 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     for(auto& superclass_constraint: superclass_constraints)
         superclass_constraint = apply_subst(subst, superclass_constraint);
 
-    // 5. build a local instance environment from the instance constraints
-    auto ordered_lie_instance = constraints_to_lie(instance_constraints);
-    auto lie_instance = unordered_lie(ordered_lie_instance);
-
-    // 6. Construct binds_super
-    auto ordered_lie_super = constraints_to_lie(superclass_constraints);
-    auto lie_super = unordered_lie(ordered_lie_super);
-    auto [binds_super, failed_constraints] = entails(lie_instance, lie_super);
+    // 5. Construct binds_super
+    auto wanteds = constraints_to_lie(superclass_constraints);
+    auto [binds_super, failed_constraints] = entails(givens, wanteds);
     if (not binds_super)
-        throw myexception()<<"Can't derive superclass constraints "<<print(failed_constraints)<<" from instance constraints "<<print(lie_instance)<<"!";
+        throw myexception()<<"Can't derive superclass constraints "<<print(failed_constraints)<<" from instance constraints "<<print(givens)<<"!";
 
     // 7. make some intermediates
-    auto instance_constraint_dvars = vars_from_lie(ordered_lie_instance);
+    auto instance_constraint_dvars = vars_from_lie(givens);
 
     vector<Hs::Pattern> lambda_vars;
     for(auto dv: instance_constraint_dvars)
         lambda_vars.push_back(dv);
 
     vector<Hs::Expression> dict_entries;
-    for(auto& [var,constraint]: ordered_lie_super)
+    for(auto& [var,constraint]: wanteds)
         dict_entries.push_back(var);
 
     // 7. Construct binds_methods
@@ -290,7 +285,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
         // forall b. Ix b => [x] -> b -> b
         op_type = apply_subst(subst, op_type);
         // forall x. (C1 x, C2 x) => forall b. Ix b => [x] -> b -> b
-        op_type = Hs::add_forall_vars(instance_tvs,Hs::add_constraints(instance_constraints, op_type));
+        op_type = Hs::add_forall_vars(instance_tvs,Hs::add_constraints(constraints_from_lie(givens), op_type));
 
         gve = gve.insert( {unloc(op.name), op_type} );
 

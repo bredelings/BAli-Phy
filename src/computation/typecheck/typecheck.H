@@ -110,6 +110,10 @@ public:
 
 typedef std::function<Hs::Expression(const Hs::Expression&)> wrapper;
 
+typedef std::vector<std::pair<Hs::Var, Hs::Type>> LIE;
+
+std::string print(const LIE& lie);
+
 struct typechecker_state: FreshVarSource
 {
     //------- global state ------------//
@@ -145,6 +149,8 @@ struct typechecker_state: FreshVarSource
     immer::map<std::string, std::pair<Hs::Var, Hs::Type>> mono_local_env;
 
     global_value_env gve;
+
+    local_instance_env lie_given;
 
     local_instance_env lie;
 
@@ -241,7 +247,7 @@ struct typechecker_state: FreshVarSource
 
     std::pair<wrapper, std::vector<Hs::Type>> instantiateSigma(const Hs::Type& t, const Expected& exp_rho);
 
-    std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::Type>, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
+    std::tuple<std::vector<Hs::TypeVar>, std::vector<std::pair<Hs::Var,Hs::Type>>, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
 
     void tcRhoStmts(int i, std::vector<Hs::Qual>& stmts, const Expected& exp_type);
 
@@ -297,11 +303,19 @@ struct typechecker_state: FreshVarSource
             header<<"but got type\n\n";
             header<<"   "<<apply_current_subst(type)<<"\n\n";
             header<<"for expression\n\n";
-            header<<"   "<<orig_t<<"\n";
+            header<<"   "<<orig_t.print()<<"\n";
 
             ex.prepend(header.str());
             throw;
         }
+    }
+
+    template <typename T>
+    void checkSigma(T& t, const Hs::Type& exp_sigma)
+    {
+        auto [tvs, givens, exp_rho] = skolemize(exp_sigma, true);
+        /// what do we do with the constraints???
+        checkRho(t, exp_rho);
     }
 
     // inferRho
@@ -425,12 +439,24 @@ struct typechecker_state: FreshVarSource
     entails_by_superclass(const std::pair<ID, Hs::Type>& to_keep,
                           const std::pair<ID, Hs::Type>& to_remove);
 
+    // FIXME: this should be  const
+    std::optional<Hs::Binds>
+    entails_by_superclass(const std::pair<Hs::Var, Hs::Type>& to_keep,
+                          const std::pair<Hs::Var, Hs::Type>& to_remove);
+
     template <typename T>
     std::optional<Hs::Binds>
     entails(const T& to_keep, const std::pair<ID, Hs::Type>& to_check);
 
+    template <typename T>
+    std::optional<Hs::Binds>
+    entails(const T& to_keep, const std::pair<Hs::Var, Hs::Type>& to_check);
+
     std::pair<std::optional<Hs::Binds>, local_instance_env>
     entails(const local_instance_env& lie1, const local_instance_env& lie2);
+
+    std::pair<std::optional<Hs::Binds>, LIE>
+    entails(const LIE& lie1, const LIE& lie2);
 
     std::optional<std::pair<Hs::Var,std::vector<Hs::Type>>> lookup_instance(const Hs::Type& constraint);
 
@@ -487,9 +513,48 @@ std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std:
     return {};
 }
 
+template <typename T>
+std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std::pair<Hs::Var, Hs::Type>& to_remove)
+{
+    // 1. First check if the relevant constraints are superclasses of the current constraint.
+    for(auto& constraint2: to_keep)
+    {
+        if (auto binds = entails_by_superclass(constraint2, to_remove))
+            return *binds;
+    }
+
+    // 2. Then check if there is an instance dfun :: (K1 a, K2 a) => K a
+    if (auto inst = lookup_instance(to_remove.second))
+    {
+        auto [dfun, constraints] = *inst;
+
+        Hs::Binds binds;
+        // If we can get (dvar1 :: K1 a) and (dvar2 :: K2 a) and a dfun so that dvar = dfun dvar1 dvar2
+        std::vector<Hs::Exp> args;
+        for(auto& constraint: constraints)
+        {
+            Hs::Decls decls;
+            auto dvar = fresh_dvar(constraint);
+            args.push_back(dvar);
+            if (auto cbinds = entails(to_keep, {dvar,constraint}))
+            {
+                ranges::insert(binds, binds.begin(), *cbinds);
+            }
+            else
+                return {};
+        }
+
+        Hs::Decls decls;
+        decls.push_back( Hs::simple_decl( to_remove.first, apply_expression(dfun, args)) );
+        binds.push_back( decls );
+
+        return binds;
+    }
+
+    return {};
+}
+
 local_instance_env unordered_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie1);
-std::vector<Hs::Var> vars_from_lie(const local_instance_env& lie);
-std::vector<Hs::Var> vars_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie);
 
 std::optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint);
 ID get_class_name_from_constraint(const Hs::Type& constraint);
@@ -508,4 +573,11 @@ std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_
 
 ID get_full_class_name_from_constraint(const Hs::Type& constraint);
 
+std::vector<Hs::Type> constraints_from_lie(const local_instance_env& lie);
+
+std::vector<Hs::Type> constraints_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie);
+
+std::vector<Hs::Var> vars_from_lie(const local_instance_env& lie);
+
+std::vector<Hs::Var> vars_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie);
 #endif

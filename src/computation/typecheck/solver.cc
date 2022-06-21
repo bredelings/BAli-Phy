@@ -207,11 +207,19 @@ optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<string, 
     auto& [dvar_to_keep_name, constraint_to_keep] = to_keep;
     auto& [dvar_to_remove_name, constraint_to_remove] = to_remove;
 
+    Hs::Var dvar_to_keep({noloc, dvar_to_keep_name});
+    Hs::Var dvar_to_remove({noloc, dvar_to_remove_name});
+
+    return entails_by_superclass({dvar_to_keep, constraint_to_keep}, {dvar_to_remove, constraint_to_remove});
+}
+
+optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<Hs::Var, Hs::Type>& to_keep, const pair<Hs::Var, Hs::Type>& to_remove)
+{
+    auto& [dvar_to_keep, constraint_to_keep] = to_keep;
+    auto& [dvar_to_remove, constraint_to_remove] = to_remove;
+
     if (auto extractors = is_superclass_of(constraint_to_remove, constraint_to_keep))
     {
-        Hs::Var dvar_to_keep({noloc, dvar_to_keep_name});
-        Hs::Var dvar_to_remove({noloc, dvar_to_remove_name});
-
         Hs::Exp dict_exp = dvar_to_keep;
         for(auto& extractor: *extractors | views::reverse)
         {
@@ -228,6 +236,26 @@ optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<string, 
     }
     else
         return {};
+}
+
+// How does this relate to simplifying constraints?
+pair<optional<Hs::Binds>, LIE> typechecker_state::entails(const LIE& lie1, const LIE& lie2)
+{
+    Hs::Binds binds;
+    LIE failed_constraints;
+
+    for(auto& constraint: lie2)
+    {
+        auto binds1 = entails(lie1, constraint);
+        if (not binds1)
+            failed_constraints.push_back(constraint);
+        else
+            ranges::insert(binds, binds.begin(), *binds1);
+    }
+    if (failed_constraints.size())
+        return {{} , failed_constraints};
+    else
+        return {binds, {}};
 }
 
 // How does this relate to simplifying constraints?
