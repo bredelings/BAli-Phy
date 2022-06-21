@@ -23,12 +23,7 @@ void typechecker_state::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int
         current_lie() += state2.current_lie();
     }
     else
-    {
-        if (exp_type.infer())
-            tcRho(rhs.body, exp_type);
-        else
-            checkRho(rhs.body, exp_type.check_type());
-    }
+        tcRho(rhs.body, exp_type);
 }
 
 // Fig 25. GUARD-OR
