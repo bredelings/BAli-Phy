@@ -29,21 +29,29 @@ void typechecker_state::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int
 // Fig 25. GUARD-OR
 void typechecker_state::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type)
 {
-    substitution_t s;
-    Hs::Type type = fresh_meta_type_var( kind_star() );
-
-    auto state2 = copy_clear_lie();
-    if (rhs.decls)
-        state2.infer_type_for_binds(unloc(*rhs.decls)); 
-
-    for(auto& guarded_rhs: rhs.guarded_rhss)
+    if (exp_type.infer())
     {
-        auto t1 = state2.inferRho(guarded_rhs);
-        unify(t1,type);
-    }
-    current_lie() += state2.current_lie();
+        substitution_t s;
+        Hs::Type type = fresh_meta_type_var( kind_star() );
+
+        auto state2 = copy_clear_lie();
+        if (rhs.decls)
+            state2.infer_type_for_binds(unloc(*rhs.decls));
+
+        for(auto& guarded_rhs: rhs.guarded_rhss)
+        {
+            auto t1 = state2.inferRho(guarded_rhs);
+            unify(t1,type);
+        }
+        current_lie() += state2.current_lie();
     
-    exp_type.infer_type( type );
+        exp_type.infer_type( type );
+    }
+    else
+    {
+        auto type = inferRho(rhs);
+        unify(type, exp_type.check_type());
+    }
 };
 
 void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type, int i)
@@ -95,8 +103,8 @@ void typechecker_state::tcRho(Hs::Match& m, const Expected& exp_type)
     }
     else
     {
-        auto type = inferRho(m);
-        unify(type, exp_type.check_type());
+        for(auto& rule: m.rules)
+            tcRho(rule, Check(exp_type.check_type()));
     }
 }
 
