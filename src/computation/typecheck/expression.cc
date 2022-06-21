@@ -11,6 +11,9 @@ using std::tuple;
 
 Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_rho)
 {
+    if (exp_rho.check())
+        checkRho(x, exp_rho.check_type());
+
     auto& x_name = unloc(x.name);
     if (auto it = mono_local_env.find(x_name))
     {
@@ -48,6 +51,9 @@ Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_rh
 
 void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(con, exp_type.check_type());
+
     auto sigma = constructor_type(con);
     auto [tvs, constraints, result_type] = instantiate( sigma );
 
@@ -66,6 +72,9 @@ void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(App, exp_type.check_type());
+
     // If we're checking, the expected type maybe be a rho type sigma_arg -> sigma_result
     // If so, then we can do checkSigma(arg, sigma_arg)
     // Eventually this may lead to checkSigma(var, sigma), which affects how much instantiation we do.
@@ -88,6 +97,9 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(Let, exp_type.check_type());
+
     auto state2 = copy_clear_lie();
 
     state2.infer_type_for_binds(unloc(Let.binds));
@@ -100,6 +112,9 @@ void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(Lam, exp_type.check_type());
+
     auto rule = Hs::MRule{Lam.args, Lam.body};
     tcRho(rule, exp_type);
     Lam.args = rule.patterns;
@@ -108,6 +123,9 @@ void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 
 Hs::Expression typechecker_state::tcRho(const Hs::TypedExp& TExp, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(TExp, exp_type.check_type());
+
     // 1. So, ( e :: tau ) should be equivalent to ( let x :: tau ; x = e in x )
     // according to the 2010 report.
 
@@ -138,6 +156,9 @@ Hs::Expression typechecker_state::tcRho(const Hs::TypedExp& TExp, const Expected
 
 void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(Case, exp_type.check_type());
+
     // 1. Determine object type
     auto object_type = inferRho(Case.object);
 
@@ -165,6 +186,9 @@ void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::List& L, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(L, exp_type.check_type());
+
     Hs::Type element_type = fresh_meta_type_var( kind_star() );
 
     for(auto& element: L.elements)
@@ -175,6 +199,9 @@ void typechecker_state::tcRho(Hs::List& L, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::Tuple& T, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(T, exp_type.check_type());
+
     vector<Hs::Type> element_types;
     for(auto& element: T.elements)
     {
@@ -187,6 +214,9 @@ void typechecker_state::tcRho(Hs::Tuple& T, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(Lit, exp_type.check_type());
+
     if (Lit.is_Char())
         exp_type.infer_type( char_type() );
     else if (Lit.is_String())
@@ -236,6 +266,9 @@ void typechecker_state::tcRho(Hs::IfExp& If, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(LSec, exp_type.check_type());
+
     // 1. Typecheck the op
     auto op_type = inferRho(LSec.op);
 
@@ -251,6 +284,9 @@ void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(RSec, exp_type.check_type());
+
     // 1. Typecheck the op
     auto op_type = inferRho(RSec.op);
 
@@ -270,11 +306,17 @@ void typechecker_state::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::Do& DoExp, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(DoExp, exp_type.check_type());
+
     tcRhoStmts(0, DoExp.stmts.stmts, exp_type);
 }
 
 void typechecker_state::tcRho(Hs::ListComprehension& LComp, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(LComp, exp_type.check_type());
+
     auto state2 = copy_clear_lie();
     state2.infer_quals_type(LComp.quals);
     auto body_type = state2.inferRho(LComp.body);
@@ -286,6 +328,9 @@ void typechecker_state::tcRho(Hs::ListComprehension& LComp, const Expected& exp_
 
 void typechecker_state::tcRho(Hs::ListFrom& L, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(L, exp_type.check_type());
+
     // 1. Typecheck enumFrom
     L.enumFromOp = Hs::Var({noloc,"Compiler.Enum.enumFrom"});
     auto enumFrom_type = inferRho(L.enumFromOp);
@@ -302,6 +347,9 @@ void typechecker_state::tcRho(Hs::ListFrom& L, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::ListFromThen& L, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(L, exp_type.check_type());
+
     // 1. Typecheck enumFrom
     L.enumFromThenOp = Hs::Var({noloc,"Compiler.Enum.enumFromThen"});
     auto enumFromThen_type = inferRho(L.enumFromThenOp);
@@ -325,6 +373,9 @@ void typechecker_state::tcRho(Hs::ListFromThen& L, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(L, exp_type.check_type());
+
     // 1. Typecheck enumFrom
     L.enumFromToOp = Hs::Var({noloc,"Compiler.Enum.enumFromTo"});
     auto enumFromTo_type = inferRho(L.enumFromToOp);
@@ -348,6 +399,9 @@ void typechecker_state::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
 {
+    if (exp_type.check())
+        checkRho(L, exp_type.check_type());
+
     // 1. Typecheck enumFromThenTo
     L.enumFromThenToOp = Hs::Var({noloc,"Compiler.Enum.enumFromThenTo"});
     auto enumFromThenTo_type = inferRho(L.enumFromThenToOp);
