@@ -255,33 +255,33 @@ classify_constraints(const local_instance_env& lie,
 tuple<expression_ref, ID, Hs::Type>
 typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
+    // Q: Are we getting the monotype correct?
+
     try
     {
         auto& name = unloc(FD.v.name);
 
-        // 1. instantiate the type -> (tvs, givens, rho-type)
+        // 1. skolemize the type -> (tvs, givens, rho-type)
         auto polytype = gve.at(name);
-        auto [tvs, given_constraints, given_type] = skolemize(polytype, true);
+        auto [tvs, given_constraints, rho_type] = skolemize(polytype, true);
         auto ordered_lie_given = constraints_to_lie(given_constraints);
         auto dict_vars = vars_from_lie( ordered_lie_given );
         auto lie_given = unordered_lie(ordered_lie_given);
 
-        // 2. typecheck the rhs -> (rhs_type, wanted, body)
+        // 2. typecheck the rhs
         auto tcs2 = copy_clear_lie();
-        auto rhs_type = tcs2.inferRho(FD.match);
+        tcs2.tcRho(FD.match, Check(rho_type));
         auto lie_wanted = tcs2.current_lie();
 
         // 3. match(rhs_type => given_type)
-        match(rhs_type, given_type);
-        Hs::Type monotype = apply_current_subst(rhs_type);
+        Hs::Type monotype = apply_current_subst(rho_type);
         lie_wanted = apply_current_subst( lie_wanted );
 
         // 4. find free type variables in the most general type
         auto fixed_mtvs = free_meta_type_variables( apply_current_subst(gve) );
-        auto free_mtvs = free_meta_type_variables(monotype) - fixed_mtvs;
 
         // 5. default ambiguous constraints.
-        auto [s1, binds1, lie_wanted_unambiguous] = default_preds( fixed_mtvs, free_mtvs, lie_wanted );
+        auto [s1, binds1, lie_wanted_unambiguous] = default_preds( fixed_mtvs, {}, lie_wanted );
         auto ev_binds = binds1;
 
         // 6. check that the remaining constraints are satisfied by the constraints in the type signature
