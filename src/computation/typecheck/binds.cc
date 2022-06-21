@@ -255,21 +255,13 @@ classify_constraints(const local_instance_env& lie,
 tuple<expression_ref, ID, Hs::Type>
 typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
-    // We need to
-    // 1. skolemize the polytype
-    // 2. do checkRho on the body
-    //   - this requires checkRho on Match, MRule, etc.
-    // 3. checkrho on MRule is basically doing \(x::sigma)
-    // 4. when we do checkSigma(var x, sigma), we basically avoid instantiating x
-    //    -- or avoid COMPLETELY instantiating it.
-    // 5. How do we handle classify_constraint and default_preds with skolemized variables?
     try
     {
         auto& name = unloc(FD.v.name);
 
         // 1. instantiate the type -> (tvs, givens, rho-type)
         auto polytype = gve.at(name);
-        auto [mtvs, given_constraints, given_type] = instantiate(polytype);
+        auto [tvs, given_constraints, given_type] = skolemize(polytype, true);
         auto ordered_lie_given = constraints_to_lie(given_constraints);
         auto dict_vars = vars_from_lie( ordered_lie_given );
         auto lie_given = unordered_lie(ordered_lie_given);
@@ -277,44 +269,26 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         // 2. typecheck the rhs -> (rhs_type, wanted, body)
         auto tcs2 = copy_clear_lie();
         auto rhs_type = tcs2.inferRho(FD.match);
-        auto unreduced_collected_lie = tcs2.current_lie();
+        auto lie_wanted = tcs2.current_lie();
 
         // 3. match(rhs_type => given_type)
         match(rhs_type, given_type);
         Hs::Type monotype = apply_current_subst(rhs_type);
+        lie_wanted = apply_current_subst( lie_wanted );
 
-        // 4. simplify constraints
-        auto [ev_binds, collected_lie] = reduce( apply_current_subst( unreduced_collected_lie) );
+        // 4. find free type variables in the most general type
+        auto fixed_mtvs = free_meta_type_variables( apply_current_subst(gve) );
+        auto free_mtvs = free_meta_type_variables(monotype) - fixed_mtvs;
 
-        // 5. find free type variables in the most general type
-        auto fixed_tvs = free_meta_type_variables( apply_current_subst(gve) );
-        auto free_tvs = free_meta_type_variables(monotype) - fixed_tvs;
+        // 5. default ambiguous constraints.
+        auto [s1, binds1, lie_wanted_unambiguous] = default_preds( fixed_mtvs, free_mtvs, lie_wanted );
+        auto ev_binds = binds1;
 
-        // 6. figure out which constraints are relevant here
-        auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
-        current_lie() += lie_deferred;
-
-        // 7. default ambiguous constraints.
-        auto [s1, binds1, lie_unambiguous_retained] = default_preds( fixed_tvs, free_tvs, lie_retained );
-        ev_binds = binds1 + ev_binds;
-
-        // 8. check that the remaining constraints are satisfied by the constraints in the type signature
-        auto [ev_binds2, lie_failed] = entails(lie_given, lie_unambiguous_retained);
+        // 6. check that the remaining constraints are satisfied by the constraints in the type signature
+        auto [ev_binds2, lie_failed] = entails(lie_given, lie_wanted_unambiguous);
         if (not ev_binds2)
             throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(lie_given)<<"'";
         ev_binds = *ev_binds2 + ev_binds;
-
-        // 9. replace MetaTypeVars with TypeVars.
-        // FIXME -- this seems ugly -- if we instantiate the polytype with real type vars, could we avoid this?
-        vector<Hs::TypeVar> tvs;
-        u_substitution_t mtv_subst;
-        for(auto& mtv: mtvs)
-        {
-            auto tv = fresh_other_type_var(unloc(mtv.name), *mtv.kind);
-            mtv_subst = mtv_subst.insert({mtv, tv});
-            tvs.push_back(tv);
-        }
-        monotype = apply_subst(mtv_subst, monotype);
 
         // 10. return GenBind with tvs, givens, body
         Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
