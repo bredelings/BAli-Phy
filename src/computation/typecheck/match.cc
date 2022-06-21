@@ -23,36 +23,30 @@ void typechecker_state::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int
         current_lie() += state2.current_lie();
     }
     else
-        tcRho(rhs.body, exp_type);
+    {
+        if (exp_type.infer())
+            tcRho(rhs.body, exp_type);
+        else
+            checkRho(rhs.body, exp_type.check_type());
+    }
 }
 
 // Fig 25. GUARD-OR
 void typechecker_state::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type)
 {
-    if (exp_type.infer())
-    {
-        substitution_t s;
-        Hs::Type type = fresh_meta_type_var( kind_star() );
+    substitution_t s;
+    Hs::Type type = fresh_meta_type_var( kind_star() );
 
-        auto state2 = copy_clear_lie();
-        if (rhs.decls)
-            state2.infer_type_for_binds(unloc(*rhs.decls));
+    auto state2 = copy_clear_lie();
+    if (rhs.decls)
+        state2.infer_type_for_binds(unloc(*rhs.decls));
 
-        for(auto& guarded_rhs: rhs.guarded_rhss)
-        {
-            auto t1 = state2.inferRho(guarded_rhs);
-            unify(t1,type);
-        }
-        current_lie() += state2.current_lie();
-    
-        exp_type.infer_type( type );
-    }
-    else
-    {
-        auto type = inferRho(rhs);
-        unify(type, exp_type.check_type());
-    }
-};
+    auto etype = expTypeToType(exp_type);
+    for(auto& guarded_rhs: rhs.guarded_rhss)
+        state2.tcRho(guarded_rhs, Check(etype));
+
+    current_lie() += state2.current_lie();
+}
 
 void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type, int i)
 {
