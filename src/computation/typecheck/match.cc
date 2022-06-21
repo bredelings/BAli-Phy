@@ -81,15 +81,23 @@ void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type, int i)
 
 void typechecker_state::tcRho(Hs::Match& m, const Expected& exp_type)
 {
-    Hs::Type result_type = fresh_meta_type_var( kind_star() );
-
-    for(auto& rule: m.rules)
+    if (exp_type.infer())
     {
-        auto t1 = inferRho(rule);
-        unify(result_type, t1);
-    }
+        Hs::Type result_type = fresh_meta_type_var( kind_star() );
 
-    exp_type.infer_type( result_type );
+        for(auto& rule: m.rules)
+        {
+            auto t1 = inferRho(rule);
+            unify(result_type, t1);
+        }
+
+        exp_type.infer_type( result_type );
+    }
+    else
+    {
+        auto type = inferRho(m);
+        unify(type, exp_type.check_type());
+    }
 }
 
 
