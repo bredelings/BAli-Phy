@@ -86,7 +86,8 @@ void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
     }
 
     auto sigma = constructor_type(con);
-    auto [tvs, wanteds, result_type] = instantiate( sigma );
+
+    auto [w, wanteds] = instantiateSigma(sigma, exp_type);
 
     if (not wanteds.empty())
     {
@@ -97,8 +98,6 @@ void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
 
         throw e;
     }
-
-    exp_type.infer_type(result_type);
 }
 
 void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
