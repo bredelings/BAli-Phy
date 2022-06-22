@@ -52,7 +52,7 @@ void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma
     }
 }
 
-Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_type)
+Hs::Expression typechecker_state::tcRho(Hs::Var x, const Expected& exp_type)
 {
     if (exp_type.check())
     {
@@ -62,23 +62,22 @@ Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_ty
         return E;
     }
 
-    auto& x_name = unloc(x.name);
-    if (auto it = mono_local_env.find(x_name))
+    Hs::Type sigma;
+    // First look for x in the local type environment
+    if (auto& x_name = unloc(x.name); auto it = mono_local_env.find(x_name))
     {
         auto& [v,type] = *it;
-
-        exp_type.infer_type(type);
-
-        return v;
+        // translate to the monomorpic id;
+        x = v;
+        sigma = type;
     }
-
-    auto sigma = gve.find( x_name );
-
-    // x should be in the type environment
-    if (not sigma)
+    // x should be in the global type environment
+    else if (auto sigma_ptr = gve.find( x_name ))
+        sigma = *sigma_ptr;
+    else
         throw myexception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 
-    auto [_, wanteds, type] = instantiate(*sigma);
+    auto [_, wanteds, type] = instantiate(sigma);
 
     Hs::Expression E = x;
     if (wanteds.size())

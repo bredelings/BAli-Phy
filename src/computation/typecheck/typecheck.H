@@ -322,7 +322,7 @@ struct typechecker_state: FreshVarSource
 
     void tcRho(expression_ref& exp, const Expected& E);
 
-    Hs::Expression tcRho(const Hs::Var&, const Expected& E);
+    Hs::Expression tcRho(Hs::Var, const Expected& E);
 
     void tcRho(const Hs::Con& con, const Expected& E);
 
