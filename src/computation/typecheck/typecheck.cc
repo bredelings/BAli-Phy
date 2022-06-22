@@ -783,7 +783,7 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
     return env2;
 }
 
-wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2)
+pair<wrapper,LIE> typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2)
 {
     /*
       How do we handle dictionary constraints?
@@ -883,7 +883,7 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
         return X;
     };
 
-    return w;
+    return {w, non_entailed_wanteds};
 }
 
 wrapper wrapper_id = [](const Hs::Expression& x) {return x;};
@@ -895,14 +895,27 @@ typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
     {
         auto [tvs, wanteds, type] = instantiate(t);
         exp_type.infer_type(type);
-        return {wrapper_id, wanteds};
+
+        auto dict_args = vars_from_lie<Hs::Expression>(wanteds);
+
+        auto w = [=](const Hs::Expression& x)
+        {
+            Hs::Expression X = x;
+
+            if (dict_args.size())
+                X = Hs::ApplyExp(X, dict_args);
+
+            return X;
+        };
+
+
+        return {w, wanteds};
     }
     else
     {
-        assert(is_rho_type(exp_type.check_type()));
-        auto wrapper = subsumptionCheck(t, exp_type.check_type());
-        auto [tvs, wanteds, type] = instantiate( exp_type.check_type() );
-        return {wrapper, wanteds};
+        // why would this be a rho?
+        // assert(is_rho_type(exp_type.check_type()));
+        return subsumptionCheck(t, exp_type.check_type());
     }
 }
 // FIXME:: Wrappers:
