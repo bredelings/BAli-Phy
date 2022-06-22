@@ -100,7 +100,7 @@ void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
     }
 }
 
-void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
+void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
 {
     if (exp_type.check())
     {
@@ -108,24 +108,20 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
         return;
     }
 
-    // If we're checking, the expected type maybe be a rho type sigma_arg -> sigma_result
-    // If so, then we can do checkSigma(arg, sigma_arg)
-    // Eventually this may lead to checkSigma(var, sigma), which affects how much instantiation we do.
+    int arg_index = int(App.args.size())-1-i;
 
-    auto t1 = inferRho(App.head);
+    Hs::Type fun_type;
+    if (arg_index > 0)
+        tcRho(App, Infer(fun_type), i + 1);
+    else
+        tcRho(App.head, Infer(fun_type));
 
-    for(int i=0;i<App.args.size();i++)
-    {
-        auto e = myexception()<<"Applying "<<App.args.size()<<" arguments to function "<<App.head.print()<<", but it only takes "<<i<<"!";
+    auto e = myexception()<<"Applying "<<(arg_index+1)<<" arguments to function "<<App.head.print()<<", but it only takes "<<i<<"!";
+    auto [arg_type, result_type] = unify_function(fun_type, e);
 
-        auto [expected_arg_type, result_type] = unify_function(t1, e);
+    checkRho(App.args[arg_index], arg_type);
 
-        checkRho(App.args[i], expected_arg_type);
-
-        t1 = result_type;
-    }
-
-    exp_type.infer_type(t1);
+    exp_type.infer_type(result_type);
 }
 
 void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
