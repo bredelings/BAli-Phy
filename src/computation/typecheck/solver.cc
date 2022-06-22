@@ -57,7 +57,7 @@ bool constraint_is_hnf(const Hs::Type& constraint)
 // 7. Unless we actually FORBID unification of variables at any higher level, then this won't work.
 // 8. Simply forbidding substitution to a deeper depth won't cut it.
 
-optional<pair<Hs::Var,LIE>> typechecker_state::lookup_instance(const Hs::Type& constraint)
+optional<pair<Hs::Expression,LIE>> typechecker_state::lookup_instance(const Hs::Type& constraint)
 {
     for(auto& [name, type]: instance_env() )
     {
@@ -75,7 +75,11 @@ optional<pair<Hs::Var,LIE>> typechecker_state::lookup_instance(const Hs::Type& c
 
         auto dfun = Hs::Var({noloc, name});
 
-        return {{dfun, wanteds}};
+        Hs::Expression dfun_exp = dfun;
+        if (wanteds.size())
+            dfun_exp = Hs::ApplyExp(dfun, vars_from_lie<Hs::Expression>(wanteds));
+
+        return {{dfun_exp, wanteds}};
     }
     return {};
 }
@@ -100,7 +104,7 @@ pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const ID& name, cons
         if (not instance)
             throw myexception()<<"No instance for '"<<constraint<<"'";
 
-        auto [dfun,wanteds] = *instance;
+        auto [dfun_exp, wanteds] = *instance;
 
         // 2. We need to make up new dvar names for all the input constraints.
         // Then we would add to the decls:
@@ -109,17 +113,13 @@ pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const ID& name, cons
         //     dvar_new1 :: constraint1
         //     dvar_new2 :: constraint2
         //     dvar_new3 :: constraint3
-        expression_ref rhs = dfun;
         for(auto& [dvar, constraint]: wanteds)
-        {
             lie2 = lie2.insert({unloc(dvar.name), constraint});
-            rhs = {rhs,dvar};
-        }
 
         Hs::Var dvar({noloc, name});
 
         Hs::Decls decls;
-        decls.push_back(Hs::simple_decl(dvar, rhs));
+        decls.push_back(Hs::simple_decl(dvar, dfun_exp));
 
         // 3. Finally, we may need to further simplify the new LIE
         auto [binds2, lie3] = toHnfs(lie2);
