@@ -308,13 +308,7 @@ struct typechecker_state: FreshVarSource
         }
     }
 
-    template <typename T>
-    void checkSigma(T& t, const Hs::Type& exp_sigma)
-    {
-        auto [tvs, givens, exp_rho] = skolemize(exp_sigma, true);
-        /// what do we do with the constraints???
-        checkRho(t, exp_rho);
-    }
+    void checkSigma(Hs::Expression& e, const Hs::SigmaType& sigma_type);
 
     // inferRho
 

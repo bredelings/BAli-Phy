@@ -9,6 +9,40 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
+
+// OK, so this returns something of type exp_sigma
+void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma_type)
+{
+    // 1. skolemize the type
+    auto [tvs, givens, rho_type] = skolemize(sigma_type, true);
+
+    // 2. typecheck
+    auto tcs2 = copy_clear_lie();
+    tcs2.tcRho(E, Check(rho_type));
+    auto lie_wanted = apply_current_subst( tcs2.current_lie() );
+
+    // 3.  default ambiguous constraints.
+    auto fixed_mtvs = free_meta_type_variables( apply_current_subst(gve) );
+    auto [s1, binds1, lie_wanted_unambiguous] = default_preds( fixed_mtvs, {}, lie_wanted );
+    auto ev_binds = binds1;
+
+    // 4. check that the remaining constraints are satisfied by the constraints in the type signature
+    auto [ev_binds2, lie_failed] = entails( unordered_lie(givens), lie_wanted_unambiguous);
+    if (not ev_binds2)
+        throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
+    ev_binds = *ev_binds2 + ev_binds;
+
+    // 5. modify E, which is of type rho_type, to be of type sigma_type
+    if (ev_binds.size())
+        E = Hs::LetExp({noloc, ev_binds}, {noloc, E});
+
+    if (givens.size())
+    {
+        auto dict_pats = vars_from_lie<Hs::Pattern>(givens);
+        E = Hs::LambdaExp(dict_pats, E);
+    }
+}
+
 Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_type)
 {
     if (exp_type.check())
