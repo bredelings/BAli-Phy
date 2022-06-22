@@ -21,18 +21,27 @@ void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma
     tcs2.tcRho(E, Check(rho_type));
     auto lie_wanted = apply_current_subst( tcs2.current_lie() );
 
-    // 3.  default ambiguous constraints.
-    auto fixed_mtvs = free_meta_type_variables( apply_current_subst(gve) );
+    // 3. Check for escaped skolem variables
+    gve = apply_current_subst(gve);
+    auto s2 = apply_current_subst(sigma_type);
+    auto free_tvs = free_type_variables(gve);
+    add(free_tvs, free_type_variables(s2));
+    for(auto ftv: free_tvs)
+        if (includes(tvs, ftv))
+            throw myexception()<<"Type not polymorphic enough";
+
+    // 4.  default ambiguous constraints.
+    auto fixed_mtvs = free_meta_type_variables( gve );
     auto [s1, binds1, lie_wanted_unambiguous] = default_preds( fixed_mtvs, {}, lie_wanted );
     auto ev_binds = binds1;
 
-    // 4. check that the remaining constraints are satisfied by the constraints in the type signature
+    // 5. check that the remaining constraints are satisfied by the constraints in the type signature
     auto [ev_binds2, lie_failed] = entails( unordered_lie(givens), lie_wanted_unambiguous);
     if (not lie_failed.empty())
         throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
     ev_binds = ev_binds2 + ev_binds;
 
-    // 5. modify E, which is of type rho_type, to be of type sigma_type
+    // 6. modify E, which is of type rho_type, to be of type sigma_type
     if (ev_binds.size())
         E = Hs::LetExp({noloc, ev_binds}, {noloc, E});
 
