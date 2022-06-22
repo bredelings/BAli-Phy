@@ -836,13 +836,9 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
     if (not binds)
         throw myexception()<<"Type\n\n  "<<t1<<"\n\n  does not subsume\n\n  "<<t2;
 
-    vector<Hs::Pattern> dict2_pats;
-    for(auto& [dvar, _]: givens)
-        dict2_pats.push_back(dvar);
+    auto dict2_pats = vars_from_lie<Hs::Pattern>(givens);
 
-    vector<Hs::Expression> dict1_args;
-    for(auto& [dvar, _]: wanteds)
-        dict1_args.push_back(dvar);
+    auto dict1_args = vars_from_lie<Hs::Expression>(wanteds);
     
     auto w = [=](const Hs::Expression& x)
     {
