@@ -238,7 +238,7 @@ optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<Hs::Var,
 }
 
 // How does this relate to simplifying constraints?
-pair<optional<Hs::Binds>, LIE> typechecker_state::entails(const LIE& lie1, const LIE& lie2)
+pair<Hs::Binds, LIE> typechecker_state::entails(const LIE& lie1, const LIE& lie2)
 {
     Hs::Binds binds;
     LIE failed_constraints;
@@ -251,14 +251,11 @@ pair<optional<Hs::Binds>, LIE> typechecker_state::entails(const LIE& lie1, const
         else
             ranges::insert(binds, binds.begin(), *binds1);
     }
-    if (failed_constraints.size())
-        return {{} , failed_constraints};
-    else
-        return {binds, {}};
+    return {binds, failed_constraints};
 }
 
 // How does this relate to simplifying constraints?
-pair<optional<Hs::Binds>, local_instance_env> typechecker_state::entails(const local_instance_env& lie1, const local_instance_env& lie2)
+pair<Hs::Binds, local_instance_env> typechecker_state::entails(const local_instance_env& lie1, const local_instance_env& lie2)
 {
     Hs::Binds binds;
     local_instance_env failed_constraints;
@@ -271,10 +268,7 @@ pair<optional<Hs::Binds>, local_instance_env> typechecker_state::entails(const l
         else
             ranges::insert(binds, binds.begin(), *binds1);
     }
-    if (failed_constraints.size())
-        return {{} , failed_constraints};
-    else
-        return {binds, {}};
+    return {binds, failed_constraints};
 }
 
 pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_instance_env& lie)

@@ -72,8 +72,8 @@ typechecker_state::candidates(const Hs::MetaTypeVar& tv, const local_instance_en
         u_substitution_t s;
         s = s.insert({tv, type});
         auto [binds, failed_constraints] = entails({}, apply_subst(s, tv_lie));
-        if (binds)
-            return pair(s, *binds);
+        if (failed_constraints.empty())
+            return pair(s, binds);
     }
 
     return {};

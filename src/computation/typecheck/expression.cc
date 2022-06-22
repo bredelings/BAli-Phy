@@ -28,9 +28,9 @@ void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma
 
     // 4. check that the remaining constraints are satisfied by the constraints in the type signature
     auto [ev_binds2, lie_failed] = entails( unordered_lie(givens), lie_wanted_unambiguous);
-    if (not ev_binds2)
+    if (not lie_failed.empty())
         throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
-    ev_binds = *ev_binds2 + ev_binds;
+    ev_binds = ev_binds2 + ev_binds;
 
     // 5. modify E, which is of type rho_type, to be of type sigma_type
     if (ev_binds.size())

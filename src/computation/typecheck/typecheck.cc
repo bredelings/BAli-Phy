@@ -833,7 +833,7 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
 
     auto [binds, failed_constraints] = entails(unordered_lie(givens), unordered_lie(wanteds));
 
-    if (not binds)
+    if (not failed_constraints.empty())
         throw myexception()<<"Type\n\n  "<<t1<<"\n\n  does not subsume\n\n  "<<t2;
 
     auto dict2_pats = vars_from_lie<Hs::Pattern>(givens);
@@ -849,8 +849,8 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
         if (dict1_args.size())
             X = Hs::ApplyExp(X, dict1_args);
 
-        if (binds->size())
-            X = Hs::LetExp({noloc,*binds}, {noloc,X});
+        if (binds.size())
+            X = Hs::LetExp({noloc,binds}, {noloc,X});
 
         if (dict2_pats.size())
             X = Hs::LambdaExp(dict2_pats, X);
