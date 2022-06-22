@@ -319,7 +319,10 @@ void typechecker_state::tcRho(Hs::IfExp& If, const Expected& exp_type)
 void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
 {
     if (exp_type.check())
+    {
         checkRho(LSec, exp_type.check_type());
+        return;
+    }
 
     // 1. Typecheck the op
     auto op_type = inferRho(LSec.op);
