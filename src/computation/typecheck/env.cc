@@ -40,6 +40,24 @@ string print(const value_env& env)
     return "{ " + join(ss, "; ") + " }";
 }
 
+std::string print(const LIE& lie)
+{
+    std::ostringstream oss;
+    vector<string> ss;
+    for(auto& [value,type]: lie)
+    {
+        ss.push_back(value.print() + " :: " + type.print());
+    }
+    return "{ " + join(ss, "; ") + " }";
+}
+
+LIE& operator+=(LIE& lie1, const LIE& lie2)
+{
+    lie1.insert(lie1.end(), lie2.begin(), lie2.end());
+    return lie1;
+}
+
+
 void add_prefer_right(value_env& e1, const value_env& e2)
 {
     if (e1.empty())

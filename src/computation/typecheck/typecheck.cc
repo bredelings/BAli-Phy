@@ -327,17 +327,6 @@ using std::tuple;
 // LVE = local  value environment      = var -> monotype
 
 
-std::string print(const LIE& lie)
-{
-    std::ostringstream oss;
-    vector<string> ss;
-    for(auto& [value,type]: lie)
-    {
-        ss.push_back(value.print() + " :: " + type.print());
-    }
-    return "{ " + join(ss, "; ") + " }";
-}
-
 global_tc_state::global_tc_state(const Module& m)
     :this_mod(m)
 { }
@@ -966,11 +955,11 @@ tuple<vector<Hs::MetaTypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::in
     return {tvs, constraints, type};
 }
 
-tuple<vector<Hs::TypeVar>, vector<pair<Hs::Var,Hs::Type>>, Hs::Type> typechecker_state::skolemize(const Hs::Type& t, bool skolem)
+tuple<vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skolemize(const Hs::Type& t, bool skolem)
 {
     // 1. Handle foralls
     vector<Hs::TypeVar> tvs;
-    vector<std::pair<Hs::Var,Hs::Type>> givens;
+    LIE givens;
     Hs::Type type = t;
 
     if (auto fa = type.to<Hs::ForallType>())

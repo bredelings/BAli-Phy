@@ -110,8 +110,6 @@ public:
 
 typedef std::function<Hs::Expression(const Hs::Expression&)> wrapper;
 
-typedef std::vector<std::pair<Hs::Var, Hs::Type>> LIE;
-
 std::string print(const LIE& lie);
 
 struct typechecker_state: FreshVarSource

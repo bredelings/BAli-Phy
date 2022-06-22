@@ -32,6 +32,9 @@ typedef local_value_env local_instance_env;
 
 typedef value_env constr_env;
 
+typedef std::vector<std::pair<Hs::Var, Hs::Type>> LIE;
+LIE& operator+=(LIE& lie1, const LIE& lie2);
+
 std::string print(const value_env& env);
 void add_no_overlap(value_env& e1, const value_env& e2);
 value_env plus_no_overlap(const value_env& e1, const value_env& e2);
