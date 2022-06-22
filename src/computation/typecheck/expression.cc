@@ -35,15 +35,15 @@ Hs::Expression typechecker_state::tcRho(const Hs::Var& x, const Expected& exp_ty
     if (not sigma)
         throw myexception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 
-    auto [_, constraints, type] = instantiate(*sigma);
+    auto [_, wanteds, type] = instantiate(*sigma);
 
     Hs::Expression E = x;
-    if (constraints.size())
+    if (wanteds.size())
     {
         vector<Hs::Expression> d_args;
-        for(auto& constraint: constraints)
+        for(auto& [dvar,constraint]: wanteds)
         {
-            auto dvar = add_dvar(constraint);
+            lie = lie.insert( {unloc(dvar.name), constraint} );
             d_args.push_back( dvar );
         }
         E = Hs::ApplyExp(x, d_args);
@@ -63,9 +63,9 @@ void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
     }
 
     auto sigma = constructor_type(con);
-    auto [tvs, constraints, result_type] = instantiate( sigma );
+    auto [tvs, wanteds, result_type] = instantiate( sigma );
 
-    if (not constraints.empty())
+    if (not wanteds.empty())
     {
         myexception e;
         e<<"Constructor "<<unloc(con.name)<<" has constraints!  Type is:\n\n";

@@ -83,12 +83,9 @@ using std::tuple;
   * Replace let-bound vars w/o signatures with local monomorphic ids.
   * Handle type synonyms.
   * add tcRho( ).
+  * skolemize in single_fundecl_with_sig
 
   TODO:
-  0. We should be able to use skolemise with infer_type_for_single_fundecl_with_sig
-  -- see tcSkolemiseScoped in Binds.hs
-  -- can we make versions of (i) classify_constraints and (ii) default_preds that handle regular type variables?
-  -- can we just use free_type_variables, instead of free_meta_type_variables?
   i. OK, maybe we need to push down the GIVEN constraints.
      This should allow us to push down skolemized constraints in checksigma( )
   ii. We need to make a version of instantiation that invents and applies dictionaries... by creating a wrapper,
@@ -762,7 +759,9 @@ pair<Hs::Type, vector<Hs::Type>> typechecker_state::constructor_pattern_types(co
 {
     // Question: is this how we should handle constraint arguments?
 
-    auto [_, constraints, con_type] = instantiate( constructor_type(con) );
+    auto [_, wanteds, con_type] = instantiate( constructor_type(con) );
+    assert(wanteds.empty());
+
     vector<Hs::Type> field_types;
 
     while(auto f = Hs::is_function_type(con_type))
@@ -822,7 +821,7 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
 
     auto [tvs2, givens, type2] = skolemize(t2, true);
 
-    auto [tvs1, constraints1, type1] = instantiate(t1);
+    auto [tvs1, wanteds, type1] = instantiate(t1);
 
     unify(type1, type2);
 
@@ -832,8 +831,6 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
         if (includes(tvs2, ftv))
             throw myexception()<<"Type not polymorphic enough";
 
-    auto wanteds = constraints_to_lie(constraints1);
-    
     auto [binds, failed_constraints] = entails(unordered_lie(givens), unordered_lie(wanteds));
 
     if (not binds)
@@ -870,21 +867,21 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
 
 wrapper wrapper_id = [](const Hs::Expression& x) {return x;};
 
-std::pair<wrapper, vector<Hs::Type>>
+std::pair<wrapper, LIE>
 typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
 {
     if (exp_type.infer())
     {
-        auto [tvs, constraints, type] = instantiate(t);
+        auto [tvs, wanteds, type] = instantiate(t);
         exp_type.infer_type(type);
-        return {wrapper_id, constraints};
+        return {wrapper_id, wanteds};
     }
     else
     {
         assert(is_rho_type(exp_type.check_type()));
         auto wrapper = subsumptionCheck(t, exp_type.check_type());
-        auto [tvs, constraints, type] = instantiate( exp_type.check_type() );
-        return {wrapper, constraints};
+        auto [tvs, wanteds, type] = instantiate( exp_type.check_type() );
+        return {wrapper, wanteds};
     }
 }
 // FIXME:: Wrappers:
@@ -909,11 +906,11 @@ typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
 //
 // Now, actually, we may NOT need this until add type /\s, because the dictionary arguments should be in the right order.
 
-tuple<vector<Hs::MetaTypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::instantiate(const Hs::Type& t)
+tuple<vector<Hs::MetaTypeVar>, LIE, Hs::Type> typechecker_state::instantiate(const Hs::Type& t)
 {
     // 1. Handle foralls
     vector<Hs::MetaTypeVar> tvs;
-    vector<Hs::Type> constraints;
+    LIE wanteds;
     Hs::Type type = t;
 
     if (auto fa = type.to<Hs::ForallType>())
@@ -934,25 +931,25 @@ tuple<vector<Hs::MetaTypeVar>, vector<Hs::Type>, Hs::Type> typechecker_state::in
     // 2. Handle constraints
     if (auto ct = type.to<Hs::ConstrainedType>())
     {
-        constraints = ct->context.constraints;
+        wanteds = constraints_to_lie(ct->context.constraints);
         type = ct->type;
     }
 
     // 3. Handle the exposed type being a polytype
-    if (not tvs.empty() or not constraints.empty())
+    if (not tvs.empty() or not wanteds.empty())
     {
-        auto [tvs2, constraints2, type2] = instantiate(type);
+        auto [tvs2, wanteds2, type2] = instantiate(type);
 
         for(auto& tv2: tvs2)
             tvs.push_back(tv2);
 
-        for(auto& constraint2:  constraints2)
-            constraints.push_back(constraint2);
+        for(auto& wanted: wanteds2)
+            wanteds.push_back(wanted);
 
         type = type2;
     }
 
-    return {tvs, constraints, type};
+    return {tvs, wanteds, type};
 }
 
 tuple<vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skolemize(const Hs::Type& t, bool skolem)

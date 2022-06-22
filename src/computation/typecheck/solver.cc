@@ -61,7 +61,7 @@ optional<pair<Hs::Var,LIE>> typechecker_state::lookup_instance(const Hs::Type& c
 {
     for(auto& [name, type]: instance_env() )
     {
-        auto [_, instance_constraints, instance_head] = instantiate(type);
+        auto [_, wanteds, instance_head] = instantiate(type);
 
         assert(not constraint_is_hnf(instance_head));
 
@@ -70,12 +70,12 @@ optional<pair<Hs::Var,LIE>> typechecker_state::lookup_instance(const Hs::Type& c
         // This instance doesn't match.
         if (not s) continue;
 
-        for(auto& instance_constraint: instance_constraints)
+        for(auto& [dvar, instance_constraint]: wanteds)
             instance_constraint = apply_subst(*s, instance_constraint);
 
         auto dfun = Hs::Var({noloc, name});
 
-        return {{dfun, constraints_to_lie(instance_constraints)}};
+        return {{dfun, wanteds}};
     }
     return {};
 }
@@ -159,13 +159,13 @@ vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const H
     for(auto& [name, type]: class_env().at(class_name).superclass_extractors)
     {
         // forall a.Klass a => Superklass a
-        auto [_, class_constraints, superclass_constraint] = instantiate(type);
+        auto [_, wanteds, superclass_constraint] = instantiate(type);
 
         assert(constraint_is_hnf(superclass_constraint));
 
-        assert(class_constraints.size() == 1);
+        assert(wanteds.size() == 1);
 
-        auto class_constraint = class_constraints[0];
+        auto class_constraint = wanteds[0].second;
         auto s = ::maybe_match(class_constraint, constraint);
 
         // The premise doesn't match the current class;

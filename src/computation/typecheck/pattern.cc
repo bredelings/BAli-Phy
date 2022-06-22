@@ -28,8 +28,8 @@ typechecker_state::tcVarPat(Hs::Var& V, const Expected& exp_type, const signatur
     if (sigs.count(name))
     {
         auto sig_type = sigs.at(name);
-        auto [tvs, constraints, monotype] = instantiate(sig_type);
-        if (constraints.size())
+        auto [tvs, wanteds, monotype] = instantiate(sig_type);
+        if (wanteds.size())
             throw myexception()<<"variable '"<<name<<"' cannot have constrained type '"<<sig_type<<"' due to monomorphism restriction";
         type = monotype;
     }
