@@ -97,6 +97,9 @@ set<Hs::TypeVar> free_type_variables(const Hs::Type& type)
         assert(is_haskell_varid(name));
         tvars.insert(tv);
     }
+    else if (type.is_a<Hs::MetaTypeVar>())
+    {
+    }
     else if (type.is_a<Hs::TypeApp>())
     {
         auto& app = type.as_<Hs::TypeApp>();

@@ -54,14 +54,6 @@ void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma
 
 Hs::Expression typechecker_state::tcRho(Hs::Var x, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        Hs::Type type;
-        auto E = tcRho(x, Infer(type));
-        unify(type, exp_type.check_type());
-        return E;
-    }
-
     Hs::Type sigma;
     // First look for x in the local type environment
     if (auto& x_name = unloc(x.name); auto it = mono_local_env.find(x_name))
