@@ -456,7 +456,7 @@ struct typechecker_state: FreshVarSource
     std::pair<std::optional<Hs::Binds>, LIE>
     entails(const LIE& lie1, const LIE& lie2);
 
-    std::optional<std::pair<Hs::Var,std::vector<Hs::Type>>> lookup_instance(const Hs::Type& constraint);
+    std::optional<std::pair<Hs::Var,LIE>> lookup_instance(const Hs::Type& constraint);
 
     std::pair<Hs::Binds,local_instance_env> toHnf(const ID& name, const Hs::Type& constraint);
     std::pair<Hs::Binds, local_instance_env> toHnfs(const local_instance_env& lie_in);
@@ -482,15 +482,13 @@ std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std:
     // 2. Then check if there is an instance dfun :: (K1 a, K2 a) => K a
     if (auto inst = lookup_instance(to_remove.second))
     {
-        auto [dfun, constraints] = *inst;
+        auto [dfun, wanteds] = *inst;
 
         Hs::Binds binds;
         // If we can get (dvar1 :: K1 a) and (dvar2 :: K2 a) and a dfun so that dvar = dfun dvar1 dvar2
         std::vector<Hs::Exp> args;
-        for(auto& constraint: constraints)
+        for(auto& [dvar,constraint]: wanteds)
         {
-            Hs::Decls decls;
-            auto dvar = fresh_dvar(constraint);
             args.push_back(dvar);
             if (auto cbinds = entails(to_keep, {unloc(dvar.name),constraint}))
             {
@@ -524,15 +522,13 @@ std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std:
     // 2. Then check if there is an instance dfun :: (K1 a, K2 a) => K a
     if (auto inst = lookup_instance(to_remove.second))
     {
-        auto [dfun, constraints] = *inst;
+        auto [dfun, wanteds] = *inst;
 
         Hs::Binds binds;
         // If we can get (dvar1 :: K1 a) and (dvar2 :: K2 a) and a dfun so that dvar = dfun dvar1 dvar2
         std::vector<Hs::Exp> args;
-        for(auto& constraint: constraints)
+        for(auto& [dvar, constraint]: wanteds)
         {
-            Hs::Decls decls;
-            auto dvar = fresh_dvar(constraint);
             args.push_back(dvar);
             if (auto cbinds = entails(to_keep, {dvar,constraint}))
             {
