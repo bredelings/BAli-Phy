@@ -77,23 +77,12 @@ Hs::Expression typechecker_state::tcRho(Hs::Var x, const Expected& exp_type)
     else
         throw myexception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 
-    auto [_, wanteds, type] = instantiate(sigma);
+    auto [w, wanteds] = instantiateSigma(sigma, exp_type);
 
-    Hs::Expression E = x;
-    if (wanteds.size())
-    {
-        vector<Hs::Expression> d_args;
-        for(auto& [dvar,constraint]: wanteds)
-        {
-            lie = lie.insert( {unloc(dvar.name), constraint} );
-            d_args.push_back( dvar );
-        }
-        E = Hs::ApplyExp(x, d_args);
-    }
+    for(auto& [dvar,constraint]: wanteds)
+        lie = lie.insert( {unloc(dvar.name), constraint} );
 
-    exp_type.infer_type(type);
-
-    return E;
+    return w(x);
 }
 
 void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
