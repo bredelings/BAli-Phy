@@ -444,10 +444,10 @@ struct typechecker_state: FreshVarSource
     std::optional<Hs::Binds>
     entails(const T& to_keep, const std::pair<Hs::Var, Hs::Type>& to_check);
 
-    std::pair<Hs::Binds, local_instance_env>
+    std::tuple<Hs::Binds, local_instance_env, local_instance_env>
     entails(const local_instance_env& lie1, const local_instance_env& lie2);
 
-    std::pair<Hs::Binds, LIE>
+    std::tuple<Hs::Binds, LIE, LIE>
     entails(const LIE& lie1, const LIE& lie2);
 
     std::optional<std::pair<Hs::Expression,LIE>> lookup_instance(const Hs::Type& constraint);

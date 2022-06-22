@@ -238,10 +238,11 @@ optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<Hs::Var,
 }
 
 // How does this relate to simplifying constraints?
-pair<Hs::Binds, LIE> typechecker_state::entails(const LIE& lie1, const LIE& lie2)
+tuple<Hs::Binds, LIE, LIE> typechecker_state::entails(const LIE& lie1, const LIE& lie2)
 {
     Hs::Binds binds;
     LIE failed_constraints;
+    LIE entailed_constraints;
 
     for(auto& constraint: lie2)
     {
@@ -249,16 +250,20 @@ pair<Hs::Binds, LIE> typechecker_state::entails(const LIE& lie1, const LIE& lie2
         if (not binds1)
             failed_constraints.push_back(constraint);
         else
+        {
+            entailed_constraints.push_back(constraint);
             ranges::insert(binds, binds.begin(), *binds1);
+        }
     }
-    return {binds, failed_constraints};
+    return {binds, entailed_constraints, failed_constraints};
 }
 
 // How does this relate to simplifying constraints?
-pair<Hs::Binds, local_instance_env> typechecker_state::entails(const local_instance_env& lie1, const local_instance_env& lie2)
+tuple<Hs::Binds, local_instance_env, local_instance_env> typechecker_state::entails(const local_instance_env& lie1, const local_instance_env& lie2)
 {
     Hs::Binds binds;
     local_instance_env failed_constraints;
+    local_instance_env entailed_constraints;
 
     for(auto& constraint: lie2)
     {
@@ -266,9 +271,12 @@ pair<Hs::Binds, local_instance_env> typechecker_state::entails(const local_insta
         if (not binds1)
             failed_constraints = failed_constraints.insert(constraint);
         else
+        {
+            entailed_constraints = entailed_constraints.insert(constraint);
             ranges::insert(binds, binds.begin(), *binds1);
+        }
     }
-    return {binds, failed_constraints};
+    return {binds, entailed_constraints, failed_constraints};
 }
 
 pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_instance_env& lie)

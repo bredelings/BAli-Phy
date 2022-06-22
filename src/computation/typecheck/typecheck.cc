@@ -826,15 +826,40 @@ wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& 
     unify(type1, type2);
 
     // We are looking for type variables in t1, not type1.
-    // This will only contains skolem variables if t1 contains a meta-variable BEFORE instantiation.
+    // This will only contain skolem variables if t1 contains a meta-variable BEFORE instantiation.
     for(auto ftv: free_type_variables(apply_current_subst(t1)))
         if (includes(tvs2, ftv))
             throw myexception()<<"Type not polymorphic enough";
 
-    auto [binds, failed_constraints] = entails(unordered_lie(givens), unordered_lie(wanteds));
+    // I *think* that we can just issue some of the wanteds into the environment.
+    // This is what would happen if t2 is just a meta-type-variable.
+    //
+    // But if t2 contains a skolem variable from tvs2, then we can't issue it into the environment.
+    // How about if it contains a meta-type variable
 
-    if (not failed_constraints.empty())
-        throw myexception()<<"Type\n\n  "<<t1<<"\n\n  does not subsume\n\n  "<<t2;
+    local_instance_env wanteds_to_emit;
+
+    // we could
+    // * try and entail things
+    // * fail if any of the remaining this have skolem variables (skolem escape)
+    // * emit the rest?
+    //
+    // this might work for:
+    //     * forall a.HasCallStack => a -> a,    t2 = forall c.HasCallStack => c -> c
+    //
+    // if any skolem variables, we need to try and entail them, I think.   C a[meta] b[skolem]
+    // if no meta variables, we maybe could emit them...
+    //     for example  t1 = 
+    local_instance_env wanteds_to_entail;
+
+    auto [binds, entailed_wanteds, non_entailed_wanteds] = entails(givens, wanteds);
+
+    for(auto& [dvar, constraint]: non_entailed_wanteds)
+    {
+        for(auto& ftv: free_type_variables(constraint))
+            if (includes(tvs2, ftv))
+                throw myexception()<<"Type\n\n  "<<t1<<"\n\n  does not subsume\n\n  "<<t2;
+    }
 
     auto dict2_pats = vars_from_lie<Hs::Pattern>(givens);
 
