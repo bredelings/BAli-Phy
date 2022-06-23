@@ -146,12 +146,6 @@ void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(Lam, exp_type.check_type());
-        return;
-    }
-
     auto rule = Hs::MRule{Lam.args, Lam.body};
     tcRho(rule, exp_type);
     Lam.args = rule.patterns;
