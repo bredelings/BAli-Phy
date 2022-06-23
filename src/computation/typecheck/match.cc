@@ -29,9 +29,6 @@ void typechecker_state::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int
 // Fig 25. GUARD-OR
 void typechecker_state::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type)
 {
-    substitution_t s;
-    Hs::Type type = fresh_meta_type_var( kind_star() );
-
     auto state2 = copy_clear_lie();
     if (rhs.decls)
         state2.infer_type_for_binds(unloc(*rhs.decls));
