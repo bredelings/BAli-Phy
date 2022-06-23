@@ -97,42 +97,10 @@ void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
     Lam.body = rule.rhs;
 }
 
-Hs::Expression typechecker_state::tcRho(const Hs::TypedExp& TExp, const Expected& exp_type)
+void typechecker_state::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        Hs::Type type;
-        auto E = tcRho(TExp, Infer(type));
-        unify(type, exp_type.check_type());
-        return E;
-    }
-
-    // 1. So, ( e :: tau ) should be equivalent to ( let x :: tau ; x = e in x )
-    // according to the 2010 report.
-
-    // Example: (\x -> x) :: Num a => a -> a
-    // In this example, we should rewrite this to \dNum -> \x -> x
-
-    // TExp.exp;
-    // TExp.type
-
-    // FIXME: For better error messages, we should inline the code for inferring types of LetExp.
-    //        We will know we will call infer_type_for_single_fundecl_with_sig
-
-    // 2. I think that we end up typechecking TExp.exp the condition that it has type sigma.
-    //    When then in the let body when we see the x, we would need to instantiate the type.
-
-    auto x = get_fresh_Var("tmp", false);
-    Hs::Decls decls;
-    decls.push_back(simple_decl(x,TExp.exp));
-    Hs::Binds binds;
-    // By making a LetExp, we rely on the Let code to handle the type here.
-    binds.signatures.insert({unloc(x.name), TExp.type});
-    binds.push_back(decls);
-    expression_ref E2 = Hs::LetExp({noloc,binds},{noloc,x});
-
-    tcRho(E2, exp_type);
-    return E2;
+    checkSigma( TExp.exp, TExp.type );
+    TExp.wrap = instantiateSigma(TExp.type, exp_type);
 }
 
 void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
@@ -492,7 +460,8 @@ void typechecker_state::tcRho(expression_ref& E, const Expected& exp_type)
     else if (auto texp = E.to<Hs::TypedExp>())
     {
         auto TExp = *texp;
-        E = tcRho(TExp, exp_type);
+        tcRho(TExp, exp_type);
+        E = TExp;
     }
     // LITERAL
     else if (auto L = E.to<Hs::Literal>())

@@ -330,9 +330,9 @@ struct typechecker_state: FreshVarSource
 
     void tcRho(Hs::LetExp&, const Expected&);
 
-    Hs::Expression tcRho(const Hs::TypedExp& TExp, const Expected&);
+    void tcRho(Hs::TypedExp& TExp, const Expected&);
 
-    void  tcRho(Hs::CaseExp& Case, const Expected&);
+    void tcRho(Hs::CaseExp& Case, const Expected&);
 
     void tcRho(Hs::List& L, const Expected&);
 

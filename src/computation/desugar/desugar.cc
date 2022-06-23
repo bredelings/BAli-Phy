@@ -535,6 +535,10 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
         return desugar(result);
     }
+    else if (auto texp = E.to<Hs::TypedExp>())
+    {
+        return desugar( texp->wrap(texp->exp) );
+    }
     else if (E.is_a<Hs::LambdaExp>())
     {
         auto L = E.as_<Hs::LambdaExp>();

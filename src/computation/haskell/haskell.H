@@ -199,6 +199,7 @@ struct TypedExp: public Object
 {
     Expression exp;
     Type type;
+    wrapper wrap;
 
     TypedExp* clone() const { return new TypedExp(*this);}
     std::string print() const;
