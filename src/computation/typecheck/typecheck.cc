@@ -82,31 +82,29 @@ using std::tuple;
   * Implement literals, including literal strings.
   * Replace let-bound vars w/o signatures with local monomorphic ids.
   * Handle type synonyms.
+  * assert in try_insert that we are inserting a tau type with no foralls.
+  * Make a different struct type for MetaTypeVar.
+  * Make a constructor expression that must be fully applied
   * add tcRho( ).
   * skolemize in single_fundecl_with_sig
+  * make a version of instantiation that invents and applied dictionaries by creating a wrapper.
 
   TODO:
-  i. OK, maybe we need to push down the GIVEN constraints.
-     This should allow us to push down skolemized constraints in checksigma( )
-  ii. We need to make a version of instantiation that invents and applies dictionaries... by creating a wrapper,
-      and also puts the dictionaries in lie_wanted?
-  iii. I guess skolemization does not do this... .. but we could make a version that creates dictionaries and puts them in 
-      lie_given, or something?
-  0. Make a Pattern class...
+  0. Where do we put the wrapper if we call instantiateSigma for an intermediate Apply?
+  0. Make a quals class.
+  0. Make a Pattern class.
+  0. Switch current_lie() to an ordered LIE.
+  0. Make environments not just take a string ... make them take a Var/Con or a (String,Int) pair?
   0. Make an Expression class, similar to the Type class, that allows the object to be modified.
      - It can hold things in a cow_ptr
      - We probably need to also make a Pattern class
      - We probably need to make an ExpressionOrPattern class that we parse to, and then fix up.
-  0. assert in try_insert that we are inserting a tau type with no foralls.
-  0. Make a different struct type for MetaTypeVar.
   0. Cleanup: convert ListType, TupleType, to applied TypeCon earlier.
      - We need to alter TypeApp printing, then!
      - How about StrictLazyType?  Is this part of the type, or part of the declaration?
   0. Cleanup: eliminate dependencies on expression_ref:
      - Make Pattern into a Type that doesn't depend on expression_ref.
        - Make a LitPattern that compares Int, Double, String, Char by equality.
-  0. Make a constructor expression that must be fully applied, instead of just
-     making the constructor a head?
   0. Cleanup: move generalization code out of binds.cc to generalize.cc?
   0. Should/Can we get default_method_decls and superclass extractor decls from a class decl?
   0. Exporting and importing types and instances between modules:
