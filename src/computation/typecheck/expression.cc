@@ -10,58 +10,6 @@ using std::optional;
 using std::tuple;
 
 
-// OK, so this returns something of type exp_sigma
-void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma_type)
-{
-    // 1. skolemize the type
-    auto [tvs, givens, rho_type] = skolemize(sigma_type, true);
-
-    // 2. typecheck
-    auto tcs2 = copy_clear_lie();
-    tcs2.tcRho(E, Check(rho_type));
-    auto lie_wanted = apply_current_subst( tcs2.current_lie() );
-
-    // 3. Check for escaped skolem variables
-    gve = apply_current_subst(gve);
-    auto s2 = apply_current_subst(sigma_type);
-    auto free_tvs = free_type_variables(gve);
-    add(free_tvs, free_type_variables(s2));
-    for(auto ftv: free_tvs)
-        if (includes(tvs, ftv))
-            throw myexception()<<"Type not polymorphic enough";
-
-    // 4. check that the remaining constraints are satisfied by the constraints in the type signature
-    auto [ev_binds, entailed_wanteds, non_entailed_wanteds] = entails( unordered_lie(givens), lie_wanted);
-
-    // 5. put wanteds without skolem variables into the current LIE
-    local_instance_env lie_failed;
-    for(auto& [dvar, constraint]: non_entailed_wanteds)
-    {
-        bool fail = false;
-        for(auto& ftv: free_type_variables(constraint))
-            if (includes(tvs, ftv))
-                fail = true;
-
-        if (fail)
-            lie_failed = lie_failed.insert({dvar,constraint});
-        else
-            current_lie() = current_lie().insert({dvar, constraint});
-    }
-
-    if (not lie_failed.empty())
-        throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
-
-    // 6. modify E, which is of type rho_type, to be of type sigma_type
-    if (ev_binds.size())
-        E = Hs::LetExp({noloc, ev_binds}, {noloc, E});
-
-    if (givens.size())
-    {
-        auto dict_pats = vars_from_lie<Hs::Pattern>(givens);
-        E = Hs::LambdaExp(dict_pats, E);
-    }
-}
-
 Hs::Expression typechecker_state::tcRho(Hs::Var x, const Expected& exp_type)
 {
     Hs::Type sigma;
