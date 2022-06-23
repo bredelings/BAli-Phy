@@ -79,10 +79,7 @@ Hs::Expression typechecker_state::tcRho(Hs::Var x, const Expected& exp_type)
     else
         throw myexception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 
-    auto [w, wanteds] = instantiateSigma(sigma, exp_type);
-
-    for(auto& [dvar,constraint]: wanteds)
-        lie = lie.insert( {unloc(dvar.name), constraint} );
+    auto w = instantiateSigma(sigma, exp_type);
 
     return w(x);
 }
@@ -91,9 +88,7 @@ void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
 {
     auto sigma = constructor_type(con);
 
-    auto [w, wanteds] = instantiateSigma(sigma, exp_type);
-
-    if (not wanteds.empty())
+    if (false) // (has_constraints(sigma))
     {
         myexception e;
         e<<"Constructor "<<unloc(con.name)<<" has constraints!  Type is:\n\n";
@@ -102,6 +97,8 @@ void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
 
         throw e;
     }
+
+    auto w = instantiateSigma(sigma, exp_type);
 
     // We should actually return w(con).
     // However, since (i) there are no wanteds and (ii) we aren't applying type variables,

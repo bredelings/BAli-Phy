@@ -781,7 +781,7 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
     return env2;
 }
 
-pair<Hs::wrapper,LIE> typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2)
+Hs::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2)
 {
     /*
       How do we handle dictionary constraints?
@@ -881,12 +881,15 @@ pair<Hs::wrapper,LIE> typechecker_state::subsumptionCheck(const Hs::Type& t1, co
         return X;
     };
 
-    return {w, non_entailed_wanteds};
+    for(auto& [dvar,constraint]: non_entailed_wanteds)
+        lie = lie.insert( {unloc(dvar.name), constraint} );
+
+    return w;
 }
 
 Hs::wrapper wrapper_id = [](const Hs::Expression& x) {return x;};
 
-std::pair<Hs::wrapper, LIE>
+Hs::wrapper
 typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
 {
     if (exp_type.infer())
@@ -906,8 +909,10 @@ typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
             return X;
         };
 
+        for(auto& [dvar,constraint]: wanteds)
+            lie = lie.insert( {unloc(dvar.name), constraint} );
 
-        return {w, wanteds};
+        return w;
     }
     else
     {
