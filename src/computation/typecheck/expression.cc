@@ -134,12 +134,6 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i
 
 void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(Let, exp_type.check_type());
-        return;
-    }
-
     auto state2 = copy_clear_lie();
 
     state2.infer_type_for_binds(unloc(Let.binds));
