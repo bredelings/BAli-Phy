@@ -10,6 +10,7 @@
 #include "computation/expression/expression_ref.H"
 #include "computation/parser/located.H"
 
+#include "core.H"
 #include "var.H"
 #include "literal.H"
 #include "pattern.H"
@@ -83,8 +84,6 @@ namespace Haskell
 typedef expression_ref Expression;
 typedef expression_ref Exp;
 typedef expression_ref Qual;
-
-typedef std::function<Expression(const Expression&)> wrapper;
 
 struct ApplyExp: public Object
 {
