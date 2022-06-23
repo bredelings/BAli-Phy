@@ -129,7 +129,7 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i
     auto e = myexception()<<"Applying "<<(arg_index+1)<<" arguments to function "<<App.head.print()<<", but it only takes "<<i<<"!";
     auto [arg_type, result_type] = unify_function(fun_type, e);
 
-    checkRho(App.args[arg_index], arg_type);
+    checkSigma(App.args[arg_index], arg_type);
 
     exp_type.infer_type(result_type);
 }
