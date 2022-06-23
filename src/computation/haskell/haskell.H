@@ -84,6 +84,7 @@ typedef expression_ref Expression;
 typedef expression_ref Exp;
 typedef expression_ref Qual;
 
+typedef std::function<Expression(const Expression&)> wrapper;
 
 struct ApplyExp: public Object
 {
