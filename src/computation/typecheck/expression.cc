@@ -30,17 +30,10 @@ void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma
         if (includes(tvs, ftv))
             throw myexception()<<"Type not polymorphic enough";
 
-    // 4.  default ambiguous constraints.
-    auto fixed_mtvs = free_meta_type_variables( gve );
-    auto sigma_mtvs  = free_meta_type_variables( s2 );
-    auto [s1, binds1, lie_wanted_unambiguous] = default_preds( fixed_mtvs, sigma_mtvs, lie_wanted );
-    auto ev_binds = binds1;
+    // 4. check that the remaining constraints are satisfied by the constraints in the type signature
+    auto [ev_binds, entailed_wanteds, non_entailed_wanteds] = entails( unordered_lie(givens), lie_wanted);
 
-    // 5. check that the remaining constraints are satisfied by the constraints in the type signature
-    auto [ev_binds2, entailed_wanteds, non_entailed_wanteds] = entails( unordered_lie(givens), lie_wanted_unambiguous);
-    ev_binds = ev_binds2 + ev_binds;
-
-    // 6. put wanteds without skolem variables into the current LIE
+    // 5. put wanteds without skolem variables into the current LIE
     local_instance_env lie_failed;
     for(auto& [dvar, constraint]: non_entailed_wanteds)
     {
@@ -58,7 +51,7 @@ void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma
     if (not lie_failed.empty())
         throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
 
-    // 7. modify E, which is of type rho_type, to be of type sigma_type
+    // 6. modify E, which is of type rho_type, to be of type sigma_type
     if (ev_binds.size())
         E = Hs::LetExp({noloc, ev_binds}, {noloc, E});
 
