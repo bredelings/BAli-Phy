@@ -89,12 +89,6 @@ Hs::Expression typechecker_state::tcRho(Hs::Var x, const Expected& exp_type)
 
 void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(con, exp_type.check_type());
-        return;
-    }
-
     auto sigma = constructor_type(con);
 
     auto [w, wanteds] = instantiateSigma(sigma, exp_type);
@@ -108,6 +102,10 @@ void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
 
         throw e;
     }
+
+    // We should actually return w(con).
+    // However, since (i) there are no wanteds and (ii) we aren't applying type variables,
+    //     the wrapper has to be an identity for the moment.
 }
 
 void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
