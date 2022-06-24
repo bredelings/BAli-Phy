@@ -32,7 +32,7 @@ typedef local_value_env local_instance_env;
 
 typedef value_env constr_env;
 
-typedef std::vector<std::pair<Hs::Var, Hs::Type>> LIE;
+typedef std::vector<std::pair<Core::Var, Hs::Type>> LIE;
 LIE& operator+=(LIE& lie1, const LIE& lie2);
 
 std::string print(const value_env& env);
