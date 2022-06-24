@@ -57,7 +57,7 @@ bool constraint_is_hnf(const Hs::Type& constraint)
 // 7. Unless we actually FORBID unification of variables at any higher level, then this won't work.
 // 8. Simply forbidding substitution to a deeper depth won't cut it.
 
-optional<pair<Hs::Expression,LIE>> typechecker_state::lookup_instance(const Hs::Type& constraint)
+optional<pair<Core::Exp,LIE>> typechecker_state::lookup_instance(const Hs::Type& constraint)
 {
     for(auto& [name, type]: instance_env() )
     {
@@ -73,7 +73,7 @@ optional<pair<Hs::Expression,LIE>> typechecker_state::lookup_instance(const Hs::
         for(auto& [dvar, instance_constraint]: wanteds)
             instance_constraint = apply_subst(*s, instance_constraint);
 
-        auto dfun = Hs::Var({noloc, name});
+        auto dfun = Core::Var({noloc, name});
 
         Hs::Expression dfun_exp = dfun;
         if (wanteds.size())

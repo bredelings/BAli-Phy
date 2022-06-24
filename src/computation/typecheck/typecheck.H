@@ -448,7 +448,7 @@ struct typechecker_state: FreshVarSource
     std::tuple<Hs::Binds, LIE, LIE>
     entails(const LIE& lie1, const LIE& lie2);
 
-    std::optional<std::pair<Hs::Expression,LIE>> lookup_instance(const Hs::Type& constraint);
+    std::optional<std::pair<Core::Exp,LIE>> lookup_instance(const Hs::Type& constraint);
 
     std::pair<Core::Decls, local_instance_env> toHnf(const ID& name, const Hs::Type& constraint);
     std::pair<Core::Decls, local_instance_env> toHnfs(const local_instance_env& lie_in);
