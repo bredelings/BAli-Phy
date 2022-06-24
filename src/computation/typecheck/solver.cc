@@ -273,9 +273,9 @@ tuple<Core::Decls, local_instance_env, local_instance_env> typechecker_state::en
     return {decls, entailed_constraints, failed_constraints};
 }
 
-pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_instance_env& lie)
+pair<Core::Decls, local_instance_env> typechecker_state::simplify(const local_instance_env& lie)
 {
-    Hs::Binds binds_out;
+    Core::Decls decls_out;
     local_instance_env lie_out;
     vector<pair<string,Hs::Type>> lie_vec;
     for(auto& entry: lie)
@@ -286,8 +286,8 @@ pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_inst
     {
         auto& pred = lie_vec[i];
         auto preds = views::concat(lie_vec | views::drop(i+1), checked);
-        if (auto new_decls = entails(preds, pred))
-            binds_out.push_back({*new_decls});
+        if (auto edecls = entails(preds, pred))
+            decls_out += *edecls;
         else
             checked.push_back(lie_vec[i]);
     }
@@ -295,16 +295,16 @@ pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_inst
     for(auto& var_equals_constraint: checked)
         lie_out = lie_out.insert(var_equals_constraint);
 
-    return {binds_out, lie_out};
+    return {decls_out, lie_out};
 }
 
 pair<Hs::Binds, local_instance_env> typechecker_state::reduce(const local_instance_env& lie)
 {
     auto [decls1, lie1] = toHnfs(lie);
 
-    auto [binds2, lie2] = simplify(lie1);
+    auto [decls2, lie2] = simplify(lie1);
 
-    auto binds = binds2;
+    auto binds = Hs::Binds({decls2});
     binds.push_back(decls1);
 
     return {binds, lie2};
