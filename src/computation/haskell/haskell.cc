@@ -755,6 +755,16 @@ namespace Core
         else
             return Hs::LetExp({noloc, {decls}}, {noloc, body});
     }
+
+    Exp Apply(const Exp& fun, const std::vector<Exp>& args)
+    {
+        if (args.empty())
+            return fun;
+        else
+        {
+            return Hs::ApplyExp(fun, args);
+        }
+    }
 }
 
 
