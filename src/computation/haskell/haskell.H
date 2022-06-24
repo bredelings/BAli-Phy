@@ -90,6 +90,7 @@ struct ApplyExp: public Object
     Exp head;
     std::vector<Exp> args;
 
+    std::optional<std::vector<Core::wrapper>> wrappers;
     ApplyExp* clone() const { return new ApplyExp(*this);}
     std::string print() const;
 
@@ -198,7 +199,7 @@ struct TypedExp: public Object
 {
     Expression exp;
     Type type;
-    wrapper wrap;
+    Core::wrapper wrap;
 
     TypedExp* clone() const { return new TypedExp(*this);}
     std::string print() const;

@@ -239,9 +239,9 @@ struct typechecker_state: FreshVarSource
 
     std::tuple<std::vector<Hs::MetaTypeVar>, LIE, Hs::Type> instantiate(const Hs::Type& t);
 
-    Hs::wrapper subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2);
+    Core::wrapper subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2);
 
-    Hs::wrapper instantiateSigma(const Hs::Type& t, const Expected& exp_rho);
+    Core::wrapper instantiateSigma(const Hs::Type& t, const Expected& exp_rho);
 
     std::tuple<std::vector<Hs::TypeVar>, std::vector<std::pair<Hs::Var,Hs::Type>>, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
 

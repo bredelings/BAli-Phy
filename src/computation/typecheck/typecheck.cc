@@ -847,7 +847,7 @@ void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma
     }
 }
 
-Hs::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2)
+Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2)
 {
     /*
       How do we handle dictionary constraints?
@@ -929,11 +929,11 @@ Hs::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Ty
 
     auto dict1_args = vars_from_lie<Hs::Expression>(wanteds);
     
-    auto w = [=](const Hs::Expression& x)
+    auto w = [=](const Core::Exp& x)
     {
         // y = \dictY1 dictY2 dictY3 -> let binds in x dictX1 dictX2 dictX3
 
-        Hs::Expression X = x;
+        Core::Exp X = x;
 
         if (dict1_args.size())
             X = Hs::ApplyExp(X, dict1_args);
@@ -953,9 +953,7 @@ Hs::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Ty
     return w;
 }
 
-Hs::wrapper wrapper_id = [](const Hs::Expression& x) {return x;};
-
-Hs::wrapper
+Core::wrapper
 typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
 {
     if (exp_type.infer())
@@ -965,9 +963,9 @@ typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
 
         auto dict_args = vars_from_lie<Hs::Expression>(wanteds);
 
-        auto w = [=](const Hs::Expression& x)
+        auto w = [=](const Core::Exp& x)
         {
-            Hs::Expression X = x;
+            Core::Exp X = x;
 
             if (dict_args.size())
                 X = Hs::ApplyExp(X, dict_args);

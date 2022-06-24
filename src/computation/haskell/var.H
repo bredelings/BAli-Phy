@@ -17,7 +17,7 @@ struct Var: public Object
 
     std::optional<Type> type;
 
-    std::optional<wrapper> wrap;
+    std::optional<Core::wrapper> wrap;
 
     bool operator==(const Object&) const;
     bool operator==(const Var&) const;

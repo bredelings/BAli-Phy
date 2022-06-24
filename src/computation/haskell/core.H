@@ -6,13 +6,16 @@
 
 // make a Core namespace
 
-namespace Haskell
+namespace Core
 {
     // This should be Core::Exp
-    typedef expression_ref Core;
+    typedef expression_ref Exp;
 
-    typedef std::function<Core(const Core&)> wrapper;
+    // Wrappers
+    typedef std::function<Exp(const Exp&)> wrapper;
 
-    // wrapper operator*(const wrapper&, const wrapper&)
+    extern Core::wrapper wrapper_id;
+
+    wrapper operator*(const wrapper&, const wrapper&);
 };
 #endif
