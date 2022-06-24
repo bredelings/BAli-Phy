@@ -504,7 +504,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     //    (ii) representing some constraints in terms of others.
     // This also substitutes into the current LIE, which we need to do 
     //    before finding free type vars in the LIE below.
-    auto [binds, collected_lie] = reduce( apply_current_subst( unreduced_collected_lie ) );
+    auto [reduce_decls, collected_lie] = reduce( apply_current_subst( unreduced_collected_lie ) );
 
     // B. Second, extract the "retained" predicates can be added without causing abiguity.
     auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
@@ -516,7 +516,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
     //   after generating definitions of their dictionaries.
     auto [s1, binds1, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
-    binds = binds1 + binds;
+    Hs::Binds binds = binds1 + Hs::Binds({reduce_decls});
     lie_retained = lie_not_completely_ambiguous;
 
     map<string, Hs::BindInfo> bind_infos;

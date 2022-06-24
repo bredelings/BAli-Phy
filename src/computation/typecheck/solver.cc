@@ -298,16 +298,13 @@ pair<Core::Decls, local_instance_env> typechecker_state::simplify(const local_in
     return {decls_out, lie_out};
 }
 
-pair<Hs::Binds, local_instance_env> typechecker_state::reduce(const local_instance_env& lie)
+pair<Core::Decls, local_instance_env> typechecker_state::reduce(const local_instance_env& lie)
 {
     auto [decls1, lie1] = toHnfs(lie);
 
     auto [decls2, lie2] = simplify(lie1);
 
-    auto binds = Hs::Binds({decls2});
-    binds.push_back(decls1);
-
-    return {binds, lie2};
+    return {decls2 + decls1, lie2};
 }
 
 Hs::Binds typechecker_state::reduce_current_lie()
@@ -316,11 +313,11 @@ Hs::Binds typechecker_state::reduce_current_lie()
 
     lie = apply_current_subst( lie );
 
-    auto [binds, new_lie] = reduce( lie );
+    auto [decls, new_lie] = reduce( lie );
 
     lie = new_lie;
 
-    return binds;
+    return Hs::Binds({decls});
 }
 
 
