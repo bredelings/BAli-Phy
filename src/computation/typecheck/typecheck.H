@@ -425,14 +425,14 @@ struct typechecker_state: FreshVarSource
     is_superclass_of(const Hs::Type&, const Hs::Type&);
 
     // FIXME: this should be  const
-    std::optional<Hs::Binds>
+    std::optional<Core::Decls>
     entails_by_superclass(const std::pair<ID, Hs::Type>& to_keep,
                           const std::pair<ID, Hs::Type>& to_remove);
 
     // FIXME: this should be  const
-    std::optional<Hs::Binds>
-    entails_by_superclass(const std::pair<Hs::Var, Hs::Type>& to_keep,
-                          const std::pair<Hs::Var, Hs::Type>& to_remove);
+    std::optional<Core::Decls>
+    entails_by_superclass(const std::pair<Core::Var, Hs::Type>& to_keep,
+                          const std::pair<Core::Var, Hs::Type>& to_remove);
 
     template <typename T>
     std::optional<Hs::Binds>
@@ -467,8 +467,8 @@ std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std:
     // 1. First check if the relevant constraints are superclasses of the current constraint.
     for(auto& constraint2: to_keep)
     {
-        if (auto binds = entails_by_superclass(constraint2, to_remove))
-            return *binds;
+        if (auto decls = entails_by_superclass(constraint2, to_remove))
+            return Hs::Binds({*decls});
     }
 
     // 2. Then check if there is an instance dfun :: (K1 a, K2 a) => K a
@@ -503,8 +503,8 @@ std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std:
     // 1. First check if the relevant constraints are superclasses of the current constraint.
     for(auto& constraint2: to_keep)
     {
-        if (auto binds = entails_by_superclass(constraint2, to_remove))
-            return *binds;
+        if (auto decls = entails_by_superclass(constraint2, to_remove))
+            return Hs::Binds({*decls});
     }
 
     // 2. Then check if there is an instance dfun :: (K1 a, K2 a) => K a

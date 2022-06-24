@@ -199,7 +199,7 @@ optional<vector<string>> typechecker_state::is_superclass_of(const Hs::Type& con
     }
 }
 
-optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<string, Hs::Type>& to_keep, const pair<string, Hs::Type>& to_remove)
+optional<Core::Decls> typechecker_state::entails_by_superclass(const pair<string, Hs::Type>& to_keep, const pair<string, Hs::Type>& to_remove)
 {
     auto& [dvar_to_keep_name, constraint_to_keep] = to_keep;
     auto& [dvar_to_remove_name, constraint_to_remove] = to_remove;
@@ -210,26 +210,22 @@ optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<string, 
     return entails_by_superclass({dvar_to_keep, constraint_to_keep}, {dvar_to_remove, constraint_to_remove});
 }
 
-optional<Hs::Binds> typechecker_state::entails_by_superclass(const pair<Hs::Var, Hs::Type>& to_keep, const pair<Hs::Var, Hs::Type>& to_remove)
+optional<Core::Decls> typechecker_state::entails_by_superclass(const pair<Core::Var, Hs::Type>& to_keep, const pair<Core::Var, Hs::Type>& to_remove)
 {
     auto& [dvar_to_keep, constraint_to_keep] = to_keep;
     auto& [dvar_to_remove, constraint_to_remove] = to_remove;
 
     if (auto extractors = is_superclass_of(constraint_to_remove, constraint_to_keep))
     {
-        Hs::Exp dict_exp = dvar_to_keep;
+        Core::Exp dict_exp = dvar_to_keep;
         for(auto& extractor: *extractors | views::reverse)
         {
-            Hs::Var get_dict({noloc, extractor});
+            Core::Var get_dict({noloc, extractor});
             dict_exp = {get_dict, dict_exp};
         }
 
-        Hs::Decls decls;
         // dvar_to_remove = extractor[n] extractor[n-1] ... extractor[0] dvar_to_keep
-        decls.push_back( Hs::simple_decl(dvar_to_remove, dict_exp) );
-        Hs::Binds binds;
-        binds.push_back(decls);
-        return binds;
+        return Hs::Decls( { Hs::simple_decl(dvar_to_remove, dict_exp) } );
     }
     else
         return {};
