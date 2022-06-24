@@ -255,7 +255,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
 
     // 7. make some intermediates
 
-    auto given_dvars = vars_from_lie<Core::Exp>(givens);
+    auto given_dvars = vars_from_lie(givens);
 
     vector<Hs::Expression> dict_entries;
     for(auto& [var,constraint]: wanteds)
@@ -275,7 +275,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     {
         auto op = get_fresh_Var("i"+method_name, true);
 
-        dict_entries.push_back( Core::Apply(op, given_dvars) );
+        dict_entries.push_back( Core::Apply(op, vars_from_lie<Core::Exp>(givens)) );
 
         // forall b. Ix b => a -> b -> b
         Hs::Type op_type = Hs::remove_top_gen(method_type);
@@ -310,7 +310,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     if (decls_super.size())
         dict = Core::Let( decls_super, dict );
 
-    return {decls, simple_fun_decl(dfun, given_dvars, dict)};
+    return {decls, simple_decl(dfun, Core::Lambda(given_dvars, dict))};
 }
 
 // We need to handle the instance decls in a mutually recursive way.
