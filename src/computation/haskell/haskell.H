@@ -95,7 +95,9 @@ struct ApplyExp: public Object
     Exp head;
     std::vector<Exp> args;
 
-    std::optional<std::vector<Core::wrapper>> wrappers;
+    std::vector<Core::wrapper> arg_wrappers;
+    std::vector<Core::wrapper> res_wrappers;
+
     ApplyExp* clone() const { return new ApplyExp(*this);}
     std::string print() const;
 

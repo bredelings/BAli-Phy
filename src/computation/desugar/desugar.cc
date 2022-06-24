@@ -603,8 +603,14 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         auto head = desugar(app->head);
 
         vector<expression_ref> args;
-        for(auto& arg: app->args)
-            args.push_back( desugar(arg) );
+        for(int i=0; i < app->args.size(); i++)
+        {
+            auto& arg = app->args[i];
+            if (app->arg_wrappers.empty())
+                args.push_back( desugar(arg) );
+            else
+                args.push_back( desugar( app->arg_wrappers[i](arg) ) );
+        }
 
         return apply_expression( head, args );
     }

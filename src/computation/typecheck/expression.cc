@@ -74,7 +74,7 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i
 
     auto wrap_arg = checkSigma(App.args[arg_index], arg_type);
 
-    App.args[arg_index] = wrap_arg(App.args[arg_index]);
+    App.arg_wrappers.push_back(wrap_arg);
 
     exp_type.infer_type(result_type);
 }
