@@ -406,11 +406,11 @@ struct typechecker_state: FreshVarSource
     infer_type_for_instances1(const Hs::Decls& decls);
 
     // Figure 12
-    Hs::Binds
+    std::pair<Hs::Binds, Core::Decls>
     infer_type_for_instances2(const std::vector<std::pair<Core::Var, Hs::InstanceDecl>>& named_instances);
 
     // Figure 12
-    Hs::Decls
+    std::pair<Hs::Decls, Core::Decl>
     infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& instance_decl);
 
     // Figure 26

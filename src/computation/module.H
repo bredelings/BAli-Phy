@@ -89,7 +89,9 @@ struct typechecker_result
 
     Hs::Binds default_method_decls;
 
-    Hs::Binds instance_decls;
+    Hs::Binds instance_method_decls;
+
+    Core::Decls dfun_decls;
 
     Core::Decls top_simplify_decls;
 

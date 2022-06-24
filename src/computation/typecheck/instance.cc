@@ -222,7 +222,7 @@ map<string, Hs::Match> get_instance_methods(const Hs::Binds& binds, const global
     return method_matches;
 }
 
-Hs::Decls
+pair<Hs::Decls, Core::Decl>
 typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& inst_decl)
 {
     // 1. Get instance head and constraints 
@@ -313,23 +313,24 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     if (decls_super.size())
         dict = Hs::LetExp( {noloc,{decls_super}}, {noloc, dict} );
 
-    decls.push_back ({ simple_fun_decl(dfun, lambda_vars, dict) });
-    return decls;
+    return {decls, simple_fun_decl(dfun, lambda_vars, dict)};
 }
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-Hs::Binds typechecker_state::infer_type_for_instances2(const vector<pair<Core::Var, Hs::InstanceDecl>>& named_instances)
+pair<Hs::Binds, Core::Decls> typechecker_state::infer_type_for_instances2(const vector<pair<Core::Var, Hs::InstanceDecl>>& named_instances)
 {
-    Hs::Binds instance_decls;
+    Hs::Binds instance_method_decls;
+    Core::Decls dfun_decls;
 
     for(auto& [dfun, instance_decl]: named_instances)
     {
         try
         {
-            auto decls = infer_type_for_instance2(dfun, instance_decl);
+            auto [decls, dfun_decl] = infer_type_for_instance2(dfun, instance_decl);
 
-            instance_decls.push_back(decls);
+            instance_method_decls.push_back(decls);
+            dfun_decls.push_back(dfun_decl);
         }
         catch (myexception& e)
         {
@@ -345,6 +346,6 @@ Hs::Binds typechecker_state::infer_type_for_instances2(const vector<pair<Core::V
 //    std::cerr<<instance_decls.print();
 //    std::cerr<<"\n\n";
 
-    return instance_decls;
+    return {instance_method_decls, dfun_decls};
 }
 

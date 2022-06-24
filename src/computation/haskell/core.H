@@ -10,6 +10,7 @@ namespace Core
 {
     // This should be Core::Exp
     typedef expression_ref Exp;
+    typedef expression_ref Decl;
 
     // Wrappers
     typedef std::function<Exp(const Exp&)> wrapper;
