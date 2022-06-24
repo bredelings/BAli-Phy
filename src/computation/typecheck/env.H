@@ -42,6 +42,14 @@ std::vector<T>& operator+=(std::vector<T>& v1, const std::vector<T>& v2)
     return v1;
 }
 
+template <typename T>
+std::vector<T> operator+(const std::vector<T>& v1, const std::vector<T>& v2)
+{
+    auto v3 = v1;
+    v3 += v2;
+    return v3;
+}
+
 std::string print(const value_env& env);
 void add_no_overlap(value_env& e1, const value_env& e2);
 value_env plus_no_overlap(const value_env& e1, const value_env& e2);

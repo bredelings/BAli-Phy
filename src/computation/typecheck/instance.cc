@@ -249,7 +249,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
     // 5. Construct binds_super
     auto wanteds = constraints_to_lie(superclass_constraints);
-    auto [binds_super, _, failed_constraints] = entails(givens, wanteds);
+    auto [decls_super, _, failed_constraints] = entails(givens, wanteds);
     if (not failed_constraints.empty())
         throw myexception()<<"Can't derive superclass constraints "<<print(failed_constraints)<<" from instance constraints "<<print(givens)<<"!";
 
@@ -310,8 +310,8 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>
     expression_ref dict = Hs::tuple(dict_entries);
 
-    if (binds_super.size())
-        dict = Hs::LetExp( {noloc,binds_super}, {noloc, dict} );
+    if (decls_super.size())
+        dict = Hs::LetExp( {noloc,{decls_super}}, {noloc, dict} );
 
     decls.push_back ({ simple_fun_decl(dfun, lambda_vars, dict) });
     return decls;

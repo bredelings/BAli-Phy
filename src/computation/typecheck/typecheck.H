@@ -435,17 +435,17 @@ struct typechecker_state: FreshVarSource
                           const std::pair<Core::Var, Hs::Type>& to_remove);
 
     template <typename T>
-    std::optional<Hs::Binds>
+    std::optional<Core::Decls>
     entails(const T& to_keep, const std::pair<ID, Hs::Type>& to_check);
 
     template <typename T>
-    std::optional<Hs::Binds>
+    std::optional<Core::Decls>
     entails(const T& to_keep, const std::pair<Hs::Var, Hs::Type>& to_check);
 
-    std::tuple<Hs::Binds, local_instance_env, local_instance_env>
+    std::tuple<Core::Decls, local_instance_env, local_instance_env>
     entails(const local_instance_env& lie1, const local_instance_env& lie2);
 
-    std::tuple<Hs::Binds, LIE, LIE>
+    std::tuple<Core::Decls, LIE, LIE>
     entails(const LIE& lie1, const LIE& lie2);
 
     std::optional<std::pair<Core::Exp,LIE>> lookup_instance(const Hs::Type& constraint);
@@ -462,13 +462,13 @@ struct typechecker_state: FreshVarSource
 };
 
 template <typename T>
-std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std::pair<ID, Hs::Type>& to_remove)
+std::optional<Core::Decls> typechecker_state::entails(const T& to_keep, const std::pair<ID, Hs::Type>& to_remove)
 {
     // 1. First check if the relevant constraints are superclasses of the current constraint.
     for(auto& constraint2: to_keep)
     {
         if (auto decls = entails_by_superclass(constraint2, to_remove))
-            return Hs::Binds({*decls});
+            return *decls;
     }
 
     // 2. Then check if there is an instance dfun :: (K1 a, K2 a) => K a
@@ -476,35 +476,34 @@ std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std:
     {
         auto [dfun_exp, wanteds] = *inst;
 
-        Hs::Binds binds;
+        Core::Var dvar( {noloc, to_remove.first} );
+        Core::Decls decls;
+        decls.push_back( Hs::simple_decl( dvar, dfun_exp) );
+
         // If we can get (dvar1 :: K1 a) and (dvar2 :: K2 a) and a dfun so that dvar = dfun dvar1 dvar2
         for(auto& [dvar,constraint]: wanteds)
         {
-            if (auto cbinds = entails(to_keep, {unloc(dvar.name),constraint}))
-                ranges::insert(binds, binds.begin(), *cbinds);
-            else
-                return {};
+            auto edecls = entails(to_keep, {unloc(dvar.name), constraint});
+
+            if (not edecls) return {};
+
+            decls = *edecls + decls;
         }
 
-        Hs::Decls decls;
-        Hs::Var dvar( {noloc, to_remove.first} );
-        decls.push_back( Hs::simple_decl( dvar, dfun_exp) );
-        binds.push_back( decls );
-
-        return binds;
+        return decls;
     }
 
     return {};
 }
 
 template <typename T>
-std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std::pair<Hs::Var, Hs::Type>& to_remove)
+std::optional<Hs::Decls> typechecker_state::entails(const T& to_keep, const std::pair<Core::Var, Hs::Type>& to_remove)
 {
     // 1. First check if the relevant constraints are superclasses of the current constraint.
     for(auto& constraint2: to_keep)
     {
         if (auto decls = entails_by_superclass(constraint2, to_remove))
-            return Hs::Binds({*decls});
+            return *decls;
     }
 
     // 2. Then check if there is an instance dfun :: (K1 a, K2 a) => K a
@@ -512,21 +511,20 @@ std::optional<Hs::Binds> typechecker_state::entails(const T& to_keep, const std:
     {
         auto [dfun_exp, wanteds] = *inst;
 
-        Hs::Binds binds;
+        Core::Decls decls;
+        decls.push_back( Hs::simple_decl( to_remove.first, dfun_exp) );
+
         // If we can get (dvar1 :: K1 a) and (dvar2 :: K2 a) and a dfun so that dvar = dfun dvar1 dvar2
         for(auto& [dvar, constraint]: wanteds)
         {
-            if (auto cbinds = entails(to_keep, {dvar,constraint}))
-                ranges::insert(binds, binds.begin(), *cbinds);
-            else
-                return {};
+            auto edecls = entails(to_keep, {dvar,constraint});
+
+            if (not edecls) return {};
+
+            decls = *edecls + decls;
         }
 
-        Hs::Decls decls;
-        decls.push_back( Hs::simple_decl( to_remove.first, dfun_exp) );
-        binds.push_back( decls );
-
-        return binds;
+        return decls;
     }
 
     return {};

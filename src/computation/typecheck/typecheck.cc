@@ -816,7 +816,7 @@ void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma
             throw myexception()<<"Type not polymorphic enough";
 
     // 4. check that the remaining constraints are satisfied by the constraints in the type signature
-    auto [ev_binds, entailed_wanteds, non_entailed_wanteds] = entails( unordered_lie(givens), lie_wanted);
+    auto [ev_decls, entailed_wanteds, non_entailed_wanteds] = entails( unordered_lie(givens), lie_wanted);
 
     // 5. put wanteds without skolem variables into the current LIE
     local_instance_env lie_failed;
@@ -837,8 +837,8 @@ void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma
         throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
 
     // 6. modify E, which is of type rho_type, to be of type sigma_type
-    if (ev_binds.size())
-        E = Hs::LetExp({noloc, ev_binds}, {noloc, E});
+    if (ev_decls.size())
+        E = Hs::LetExp({noloc, {ev_decls}}, {noloc, E});
 
     if (givens.size())
     {
@@ -916,7 +916,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
     //     for example  t1 = 
     local_instance_env wanteds_to_entail;
 
-    auto [binds, entailed_wanteds, non_entailed_wanteds] = entails(givens, wanteds);
+    auto [decls, entailed_wanteds, non_entailed_wanteds] = entails(givens, wanteds);
 
     for(auto& [dvar, constraint]: non_entailed_wanteds)
     {
@@ -938,8 +938,8 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
         if (dict1_args.size())
             X = Hs::ApplyExp(X, dict1_args);
 
-        if (binds.size())
-            X = Hs::LetExp({noloc,binds}, {noloc,X});
+        if (decls.size())
+            X = Hs::LetExp({noloc,{decls}}, {noloc,X});
 
         if (dict2_pats.size())
             X = Hs::LambdaExp(dict2_pats, X);

@@ -232,45 +232,45 @@ optional<Core::Decls> typechecker_state::entails_by_superclass(const pair<Core::
 }
 
 // How does this relate to simplifying constraints?
-tuple<Hs::Binds, LIE, LIE> typechecker_state::entails(const LIE& lie1, const LIE& lie2)
+tuple<Core::Decls, LIE, LIE> typechecker_state::entails(const LIE& lie1, const LIE& lie2)
 {
-    Hs::Binds binds;
+    Core::Decls decls;
     LIE failed_constraints;
     LIE entailed_constraints;
 
     for(auto& constraint: lie2)
     {
-        auto binds1 = entails(lie1, constraint);
-        if (not binds1)
+        auto decls1 = entails(lie1, constraint);
+        if (not decls1)
             failed_constraints.push_back(constraint);
         else
         {
             entailed_constraints.push_back(constraint);
-            ranges::insert(binds, binds.begin(), *binds1);
+            decls = *decls1 + decls;
         }
     }
-    return {binds, entailed_constraints, failed_constraints};
+    return {decls, entailed_constraints, failed_constraints};
 }
 
 // How does this relate to simplifying constraints?
-tuple<Hs::Binds, local_instance_env, local_instance_env> typechecker_state::entails(const local_instance_env& lie1, const local_instance_env& lie2)
+tuple<Core::Decls, local_instance_env, local_instance_env> typechecker_state::entails(const local_instance_env& lie1, const local_instance_env& lie2)
 {
-    Hs::Binds binds;
+    Core::Decls decls;
     local_instance_env failed_constraints;
     local_instance_env entailed_constraints;
 
     for(auto& constraint: lie2)
     {
-        auto binds1 = entails(lie1, constraint);
-        if (not binds1)
+        auto decls1 = entails(lie1, constraint);
+        if (not decls1)
             failed_constraints = failed_constraints.insert(constraint);
         else
         {
             entailed_constraints = entailed_constraints.insert(constraint);
-            ranges::insert(binds, binds.begin(), *binds1);
+            decls = *decls1 + decls;
         }
     }
-    return {binds, entailed_constraints, failed_constraints};
+    return {decls, entailed_constraints, failed_constraints};
 }
 
 pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_instance_env& lie)
@@ -286,8 +286,8 @@ pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_inst
     {
         auto& pred = lie_vec[i];
         auto preds = views::concat(lie_vec | views::drop(i+1), checked);
-        if (auto new_binds = entails(preds, pred))
-            ranges::insert(binds_out, binds_out.begin(), *new_binds);
+        if (auto new_decls = entails(preds, pred))
+            binds_out.push_back({*new_decls});
         else
             checked.push_back(lie_vec[i]);
     }
