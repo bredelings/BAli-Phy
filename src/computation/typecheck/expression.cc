@@ -72,7 +72,9 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i
     auto e = myexception()<<"Applying "<<(arg_index+1)<<" arguments to function "<<App.head.print()<<", but it only takes "<<i<<"!";
     auto [arg_type, result_type] = unify_function(fun_type, e);
 
-    checkSigma(App.args[arg_index], arg_type);
+    auto wrap_arg = checkSigma(App.args[arg_index], arg_type);
+
+    App.args[arg_index] = wrap_arg(App.args[arg_index]);
 
     exp_type.infer_type(result_type);
 }
@@ -99,8 +101,9 @@ void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
 {
-    checkSigma( TExp.exp, TExp.type );
-    TExp.wrap = instantiateSigma(TExp.type, exp_type);
+    Core::wrapper w1 = checkSigma( TExp.exp, TExp.type );
+    Core::wrapper w2 = instantiateSigma(TExp.type, exp_type);
+    TExp.wrap = w1 * w2;
 }
 
 void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)

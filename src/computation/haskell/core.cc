@@ -19,11 +19,13 @@ namespace Core
 
     wrapper wrapper_id = [](const Exp& x) {return x;};
 
-    wrapper operator*(const wrapper& w1, const wrapper& w2)
-    {
-        return [=](const Exp& x)
+}
+
+
+Core::wrapper operator*(const Core::wrapper& w1, const Core::wrapper& w2)
+{
+    return [=](const Core::Exp& x)
         {
             return w1(w2(x));
         };
-    }
 }

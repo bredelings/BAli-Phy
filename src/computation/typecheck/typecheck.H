@@ -306,7 +306,7 @@ struct typechecker_state: FreshVarSource
         }
     }
 
-    void checkSigma(Hs::Expression& e, const Hs::SigmaType& sigma_type);
+    Core::wrapper checkSigma(Hs::Expression& e, const Hs::SigmaType& sigma_type);
 
     // inferRho
 
