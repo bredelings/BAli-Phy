@@ -34,7 +34,7 @@ optional<Hs::TypeCon> simple_constraint_class(const Hs::Type& constraint)
 // 2. at least one of these classes is a numeric class, (that is, Num or a subclass of Num)
 // 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
 
-optional<tuple<u_substitution_t, Hs::Binds>>
+optional<tuple<u_substitution_t, Core::Decls>>
 typechecker_state::candidates(const Hs::MetaTypeVar& tv, const local_instance_env& tv_lie)
 {
     set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
@@ -73,7 +73,7 @@ typechecker_state::candidates(const Hs::MetaTypeVar& tv, const local_instance_en
         s = s.insert({tv, type});
         auto [decls, _, failed_constraints] = entails({}, apply_subst(s, tv_lie));
         if (failed_constraints.empty())
-            return pair(s, Hs::Binds({decls}));
+            return pair(s, decls);
     }
 
     return {};
@@ -114,13 +114,13 @@ ambiguities(const set<Hs::MetaTypeVar>& tvs1, const set<Hs::MetaTypeVar>& tvs2, 
 }
 
 
-tuple<u_substitution_t, Hs::Binds, local_instance_env>
+tuple<u_substitution_t, Core::Decls, local_instance_env>
 typechecker_state::default_preds( const set<Hs::MetaTypeVar>& fixed_tvs,
                                   const set<Hs::MetaTypeVar>& referenced_tvs,
                                   const local_instance_env& lie)
 {
     u_substitution_t s;
-    Hs::Binds binds;
+    Core::Decls decls;
     auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities(fixed_tvs, referenced_tvs, lie);
 
     for(auto& [tv, preds]: ambiguous_preds_by_var)
@@ -134,24 +134,24 @@ typechecker_state::default_preds( const set<Hs::MetaTypeVar>& fixed_tvs,
                 e<<constraint<<" ";
             throw e;
         }
-        auto& [s1, binds1] = *result;
+        auto& [s1, decls1] = *result;
 
         auto tmp = combine(s, s1);
         assert(tmp);
         s = *tmp; // These constraints should be on separate variables, and should not interact.
 
         // Each binds should be independent of the others, so order should not matter.
-        ranges::insert(binds, binds.end(), binds1);
+        decls += decls1;
     }
 
-    return {s, binds, unambiguous_preds};
+    return {s, decls, unambiguous_preds};
 }
 
-Hs::Binds typechecker_state::simplify_and_default_top_level()
+Core::Decls typechecker_state::simplify_and_default_top_level()
 {
-    auto top_simplify_binds = reduce_current_lie();
+    auto top_simplify_decls = reduce_current_lie();
 
-    auto [s, default_binds, unambiguous_preds] = default_preds({}, {}, current_lie());
+    auto [s, default_decls, unambiguous_preds] = default_preds({}, {}, current_lie());
     assert(unambiguous_preds.empty());
 
     // Record the substitution, since it can affect types.
@@ -171,7 +171,8 @@ Hs::Binds typechecker_state::simplify_and_default_top_level()
 //    }
 //    std::cerr<<"\n";
 
-    ranges::insert(top_simplify_binds, top_simplify_binds.end(), default_binds);
-    return top_simplify_binds;
+    top_simplify_decls += default_decls;
+
+    return top_simplify_decls;
 }
 

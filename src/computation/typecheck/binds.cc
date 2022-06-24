@@ -225,12 +225,12 @@ Hs::Decls rename_from_bindinfo(Hs::Decls decls,const map<string, Hs::BindInfo>& 
 
 Hs::GenBind mkGenBind(const vector<Hs::TypeVar>& tvs,
                       const vector<Hs::Var>& dict_vars,
-                      const Hs::Binds& binds,
+                      const Core::Decls& ev_decls,
                       Hs::Decls decls,
                       const map<string, Hs::BindInfo>& bind_infos)
 {
     decls = rename_from_bindinfo(decls, bind_infos);
-    return Hs::GenBind(tvs, dict_vars, binds, decls, bind_infos);
+    return Hs::GenBind(tvs, dict_vars, Hs::Binds({ev_decls}), decls, bind_infos);
 }
 
 // Why aren't we using `fixed_type_vars`?
@@ -280,14 +280,14 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 3. default ambiguous constraints.
         auto fixed_mtvs = free_meta_type_variables( apply_current_subst(gve) );
-        auto [s1, binds1, lie_wanted_unambiguous] = default_preds( fixed_mtvs, {}, lie_wanted );
-        auto ev_binds = binds1;
+        auto [s1, decls1, lie_wanted_unambiguous] = default_preds( fixed_mtvs, {}, lie_wanted );
+        auto ev_decls = decls1;
 
         // 4. check that the remaining constraints are satisfied by the constraints in the type signature
         auto [ev_decls2, _, lie_failed] = entails( unordered_lie(givens), lie_wanted_unambiguous);
         if (not lie_failed.empty())
             throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
-        ev_binds = Hs::Binds({ev_decls2}) + ev_binds;
+        ev_decls = ev_decls2 + ev_decls;
 
         // 5. return GenBind with tvs, givens, body
         Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
@@ -298,7 +298,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
 
-        auto decl = mkGenBind( tvs, dict_vars, ev_binds, Hs::Decls({FD}), {{name, bind_info}} );
+        auto decl = mkGenBind( tvs, dict_vars, ev_decls, Hs::Decls({FD}), {{name, bind_info}} );
 
         return {decl, name, polytype};
     }
@@ -515,8 +515,8 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     
     // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
     //   after generating definitions of their dictionaries.
-    auto [s1, binds1, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
-    Hs::Binds binds = binds1 + Hs::Binds({reduce_decls});
+    auto [s1, default_decls, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
+    auto ev_decls = default_decls + reduce_decls;
     lie_retained = lie_not_completely_ambiguous;
 
     map<string, Hs::BindInfo> bind_infos;
@@ -573,7 +573,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
                 qtvs_in_this_type.push_back(*qtv);
 
         // Default any constraints that do not occur in THIS type.
-        auto [s2, binds2, lie_for_this_type] = default_preds( fixed_tvs, mtvs_in_this_type, lie_retained );
+        auto [s2, decls2, lie_for_this_type] = default_preds( fixed_tvs, mtvs_in_this_type, lie_retained );
 
         auto constraints_for_this_type = constraints_from_lie(lie_for_this_type);
 
@@ -600,7 +600,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
         for(auto& [name, constraint]: lie_for_this_type)
             dict_args.push_back( Hs::Var({noloc,name}) );
 
-        Hs::BindInfo info(poly_id, mono_id, monotype, polytype, dict_args, binds2);
+        Hs::BindInfo info(poly_id, mono_id, monotype, polytype, dict_args, Hs::Binds({decls2}));
         bind_infos.insert({name, info});
 
         if (restricted)
@@ -613,7 +613,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
     assert(bind_infos.size() >= 1);
 
-    auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, binds, decls, bind_infos );
+    auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, ev_decls, decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
     return decls2;

@@ -227,15 +227,15 @@ struct typechecker_state: FreshVarSource
 
     std::pair<Hs::Type, std::vector<Hs::Type>> constructor_pattern_types(const Hs::Con&);
 
-    std::optional<std::tuple<u_substitution_t, Hs::Binds>>
+    std::optional<std::tuple<u_substitution_t, Core::Decls>>
     candidates(const Hs::MetaTypeVar& tv, const local_instance_env& tv_lie);
 
-    std::tuple<u_substitution_t, Hs::Binds, local_instance_env >
+    std::tuple<u_substitution_t, Core::Decls, local_instance_env >
     default_preds( const std::set<Hs::MetaTypeVar>& fixed_tvs,
                    const std::set<Hs::MetaTypeVar>& referenced_tvs,
                    const local_instance_env& lie);
 
-    Hs::Binds simplify_and_default_top_level();
+    Core::Decls simplify_and_default_top_level();
 
     std::tuple<std::vector<Hs::MetaTypeVar>, LIE, Hs::Type> instantiate(const Hs::Type& t);
 
@@ -398,11 +398,11 @@ struct typechecker_state: FreshVarSource
     Hs::Binds infer_type_for_default_methods(const Hs::Decls&);
 
     // Figure 12
-    std::pair<Hs::Var, Hs::Type>
+    std::pair<Core::Var, Hs::Type>
     infer_type_for_instance1(const Hs::InstanceDecl& instance_decl);
 
     // Figure 12
-    std::vector< std::pair<Hs::Var, Hs::InstanceDecl> >
+    std::vector< std::pair<Core::Var, Hs::InstanceDecl> >
     infer_type_for_instances1(const Hs::Decls& decls);
 
     // Figure 12
@@ -454,7 +454,7 @@ struct typechecker_state: FreshVarSource
     std::pair<Core::Decls, local_instance_env> toHnfs(const local_instance_env& lie_in);
     std::pair<Core::Decls, local_instance_env> simplify(const local_instance_env& lie_in);
     std::pair<Core::Decls, local_instance_env> reduce(const local_instance_env& lie_in);
-    Hs::Binds reduce_current_lie();
+    Core::Decls reduce_current_lie();
 
     void get_defaults(const Hs::ModuleDecls& M);
 

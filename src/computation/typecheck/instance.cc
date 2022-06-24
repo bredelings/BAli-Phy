@@ -223,7 +223,7 @@ map<string, Hs::Match> get_instance_methods(const Hs::Binds& binds, const global
 }
 
 Hs::Decls
-typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& inst_decl)
+typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& inst_decl)
 {
     // 1. Get instance head and constraints 
 
@@ -319,7 +319,7 @@ typechecker_state::infer_type_for_instance2(const Hs::Var& dfun, const Hs::Insta
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-Hs::Binds typechecker_state::infer_type_for_instances2(const vector<pair<Hs::Var, Hs::InstanceDecl>>& named_instances)
+Hs::Binds typechecker_state::infer_type_for_instances2(const vector<pair<Core::Var, Hs::InstanceDecl>>& named_instances)
 {
     Hs::Binds instance_decls;
 

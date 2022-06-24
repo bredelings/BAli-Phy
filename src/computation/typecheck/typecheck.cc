@@ -1278,7 +1278,7 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     // 12. Default top-level ambiguous type vars.
     auto top_simplify_binds = tc_state->simplify_and_default_top_level();
 
-    return {class_binds, value_decls, dm_decls, instance_binds, top_simplify_binds};
+    return {class_binds, value_decls, dm_decls, instance_binds, Hs::Binds({top_simplify_binds})};
 }
 
     // GIE_C = functions to extract sub-dictionaries from containing dictionaries?

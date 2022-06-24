@@ -307,7 +307,7 @@ pair<Core::Decls, local_instance_env> typechecker_state::reduce(const local_inst
     return {decls2 + decls1, lie2};
 }
 
-Hs::Binds typechecker_state::reduce_current_lie()
+Core::Decls typechecker_state::reduce_current_lie()
 {
     auto& lie = current_lie();
 
@@ -317,7 +317,7 @@ Hs::Binds typechecker_state::reduce_current_lie()
 
     lie = new_lie;
 
-    return Hs::Binds({decls});
+    return decls;
 }
 
 
