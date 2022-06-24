@@ -975,4 +975,9 @@ Expression error(const std::string& s);
 
 namespace Hs = Haskell;
 
+namespace Core
+{
+    Exp Lambda(const std::vector<Var>& args, const Exp& body);
+    Exp Let(const Decls& args, const Exp& body);
+}
 #endif

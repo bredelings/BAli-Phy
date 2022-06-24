@@ -1,7 +1,21 @@
 #include "core.H"
 
+#include "expression/tuple.H"
+
+using std::vector;
+
 namespace Core
 {
+
+    // Expression stuff
+
+    Exp Tuple(const std::vector<Exp>& es)
+    {
+        return get_tuple(es);
+    }
+
+
+    // wrapper stuff
 
     wrapper wrapper_id = [](const Exp& x) {return x;};
 

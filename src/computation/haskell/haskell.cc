@@ -730,6 +730,32 @@ expression_ref error(const std::string& s)
     expression_ref msg = Literal(String{s});
     return {error,msg};
 }
-
 }
+
+namespace Core
+{
+    Exp Lambda(const std::vector<Var>& args, const Exp& body)
+    {
+        if (args.empty())
+            return body;
+        else
+        {
+            std::vector<Hs::Pattern> arg_pats;
+            for(auto& arg: args)
+                arg_pats.push_back(arg);
+
+            return Hs::LambdaExp(arg_pats, body);
+        }
+    }
+
+    Exp Let(const Decls& decls, const Exp& body)
+    {
+        if (decls.empty())
+            return body;
+        else
+            return Hs::LetExp({noloc, {decls}}, {noloc, body});
+    }
+}
+
+
 

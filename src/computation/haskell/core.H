@@ -18,5 +18,7 @@ namespace Core
     extern Core::wrapper wrapper_id;
 
     wrapper operator*(const wrapper&, const wrapper&);
+
+    Exp Tuple(const std::vector<Exp>& es);
 };
 #endif

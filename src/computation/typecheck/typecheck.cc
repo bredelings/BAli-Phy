@@ -795,6 +795,8 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
     return env2;
 }
 
+// should return a wrapper!
+
 // OK, so this returns something of type exp_sigma
 void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma_type)
 {
@@ -837,14 +839,10 @@ void typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma
         throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
 
     // 6. modify E, which is of type rho_type, to be of type sigma_type
-    if (ev_decls.size())
-        E = Hs::LetExp({noloc, {ev_decls}}, {noloc, E});
+    E = Core::Let(ev_decls, E);
 
-    if (givens.size())
-    {
-        auto dict_pats = vars_from_lie<Hs::Pattern>(givens);
-        E = Hs::LambdaExp(dict_pats, E);
-    }
+    auto dict_vars = vars_from_lie(givens);
+    E = Core::Lambda(dict_vars, E);
 }
 
 Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2)
