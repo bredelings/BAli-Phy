@@ -961,4 +961,10 @@ Expression error(const std::string& s);
 
 namespace Hs = Haskell;
 
+namespace Core
+{
+    using Haskell::Var;
+    using Haskell::Decls;
+}
+
 #endif
