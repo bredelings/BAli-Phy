@@ -78,6 +78,11 @@
   - make infix use Name for the op?
 */
 
+namespace Core
+{
+    using Haskell::Var;
+}
+
 namespace Haskell
 {
 
@@ -253,6 +258,15 @@ public:
     Decls() = default;
     Decls(const vector<expression_ref>& ds): std::vector<expression_ref>(ds) {}
 };
+}
+
+namespace Core
+{
+    using Haskell::Decls;
+}
+
+namespace Haskell
+{
 
 struct Binds: public std::vector<Decls>
 {
@@ -908,10 +922,10 @@ struct GenBind: public Object
     std::vector<TypeVar> tv_args;
 
     // These variables MUST be type-annotated!
-    std::vector<Var> dict_args;
+    std::vector<Core::Var> dict_args;
 
     // Information for calling each of the binders in the group.
-    Binds dict_binds;
+    Core::Decls dict_decls;
 
     // These are the actual declarations.
     Decls body;
@@ -923,13 +937,13 @@ struct GenBind: public Object
     std::string print() const;
 
     GenBind(const std::vector<TypeVar>& v1,
-            const std::vector<Var>& v2,
-            const Binds& b,
+            const std::vector<Core::Var>& v2,
+            const Core::Decls& ev,
             const Decls& d,
             const std::map<std::string, BindInfo>& bi)
         :tv_args(v1),
          dict_args(v2),
-         dict_binds(b),
+         dict_decls(ev),
          body(d),
          bind_infos(bi)
     {
@@ -960,11 +974,5 @@ Expression error(const std::string& s);
 }
 
 namespace Hs = Haskell;
-
-namespace Core
-{
-    using Haskell::Var;
-    using Haskell::Decls;
-}
 
 #endif

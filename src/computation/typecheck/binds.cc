@@ -224,13 +224,13 @@ Hs::Decls rename_from_bindinfo(Hs::Decls decls,const map<string, Hs::BindInfo>& 
 }
 
 Hs::GenBind mkGenBind(const vector<Hs::TypeVar>& tvs,
-                      const vector<Hs::Var>& dict_vars,
+                      const vector<Core::Var>& dict_vars,
                       const Core::Decls& ev_decls,
                       Hs::Decls decls,
                       const map<string, Hs::BindInfo>& bind_infos)
 {
     decls = rename_from_bindinfo(decls, bind_infos);
-    return Hs::GenBind(tvs, dict_vars, Hs::Binds({ev_decls}), decls, bind_infos);
+    return Hs::GenBind(tvs, dict_vars, ev_decls, decls, bind_infos);
 }
 
 // Why aren't we using `fixed_type_vars`?

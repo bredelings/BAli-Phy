@@ -160,7 +160,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
             assert(N >= 1);
 
             // tup = \dict1 dict2 ... dictn -> let dict_binds in let {x_inner[1]=..;...;x_inner[n]=..} in (x_inner[1],x_inner[2],...x_inner[n])
-            expression_ref tup_body = let_expression ( desugar_decls(gb->dict_binds),
+            expression_ref tup_body = let_expression ( desugar_decls(gb->dict_decls),
                                       let_expression ( desugar_decls(gb->body),
                                       maybe_tuple(binders) ) );
             expression_ref tup_lambda = lambda_quantify( tup_dict_vars, tup_body );

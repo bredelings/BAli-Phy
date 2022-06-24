@@ -686,7 +686,7 @@ string GenBind::print() const
         ds.push_back( darg.print_with_type() );
 
     string s = "[ "+join(as," ")+" ]  [ "+join(ds," ")+" ]";
-    s += dict_binds.print()+"\n";
+    s += dict_decls.print()+"\n";
     s += body.print();
     return s;
 }
