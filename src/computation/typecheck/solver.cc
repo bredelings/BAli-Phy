@@ -84,9 +84,9 @@ optional<pair<Hs::Expression,LIE>> typechecker_state::lookup_instance(const Hs::
     return {};
 }
 
-pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const ID& name, const Hs::Type& constraint)
+pair<Core::Decls,local_instance_env> typechecker_state::toHnf(const ID& name, const Hs::Type& constraint)
 {
-    Hs::Binds binds;
+    Core::Decls decls;
     local_instance_env lie;
     if (constraint_is_hnf(constraint))
     {
@@ -118,32 +118,30 @@ pair<Hs::Binds,local_instance_env> typechecker_state::toHnf(const ID& name, cons
 
         Hs::Var dvar({noloc, name});
 
-        Hs::Decls decls;
-        decls.push_back(Hs::simple_decl(dvar, dfun_exp));
 
         // 3. Finally, we may need to further simplify the new LIE
-        auto [binds2, lie3] = toHnfs(lie2);
+        auto [decls2, lie3] = toHnfs(lie2);
 
         lie = lie3;
-        binds = binds2;
-        binds.push_back(decls);
+        decls = decls2;
+        decls.push_back(Hs::simple_decl(dvar, dfun_exp));
     }
-    return {binds,lie};
+    return {decls,lie};
 }
 
-pair<Hs::Binds, local_instance_env>
+pair<Core::Decls, local_instance_env>
 typechecker_state::toHnfs(const local_instance_env& lie_in)
 {
-    Hs::Binds binds_out;
+    Core::Decls decls_out;
     local_instance_env lie_out;
     for(auto& [name, constraint]: lie_in)
     {
-        auto [binds2, lie2] = toHnf(name, constraint);
-        for(auto& bind: binds2)
-            binds_out.push_back(bind);
+        auto [decls2, lie2] = toHnf(name, constraint);
+
+        decls_out += decls2;
         lie_out += lie2;
     }
-    return {binds_out, lie_out};
+    return {decls_out, lie_out};
 }
 
 // FIXME: there should be a `const` way of getting these.
@@ -306,13 +304,12 @@ pair<Hs::Binds, local_instance_env> typechecker_state::simplify(const local_inst
 
 pair<Hs::Binds, local_instance_env> typechecker_state::reduce(const local_instance_env& lie)
 {
-    auto [binds1, lie1] = toHnfs(lie);
+    auto [decls1, lie1] = toHnfs(lie);
 
     auto [binds2, lie2] = simplify(lie1);
 
     auto binds = binds2;
-    for(auto& bind: binds1)
-        binds.push_back(bind);
+    binds.push_back(decls1);
 
     return {binds, lie2};
 }

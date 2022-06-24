@@ -450,8 +450,8 @@ struct typechecker_state: FreshVarSource
 
     std::optional<std::pair<Hs::Expression,LIE>> lookup_instance(const Hs::Type& constraint);
 
-    std::pair<Hs::Binds,local_instance_env> toHnf(const ID& name, const Hs::Type& constraint);
-    std::pair<Hs::Binds, local_instance_env> toHnfs(const local_instance_env& lie_in);
+    std::pair<Core::Decls, local_instance_env> toHnf(const ID& name, const Hs::Type& constraint);
+    std::pair<Core::Decls, local_instance_env> toHnfs(const local_instance_env& lie_in);
     std::pair<Hs::Binds, local_instance_env> simplify(const local_instance_env& lie_in);
     std::pair<Hs::Binds, local_instance_env> reduce(const local_instance_env& lie_in);
     Hs::Binds reduce_current_lie();

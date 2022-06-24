@@ -35,6 +35,13 @@ typedef value_env constr_env;
 typedef std::vector<std::pair<Core::Var, Hs::Type>> LIE;
 LIE& operator+=(LIE& lie1, const LIE& lie2);
 
+template <typename T>
+std::vector<T>& operator+=(std::vector<T>& v1, const std::vector<T>& v2)
+{
+    v1.insert(v1.end(), v2.begin(), v2.end());
+    return v1;
+}
+
 std::string print(const value_env& env);
 void add_no_overlap(value_env& e1, const value_env& e2);
 value_env plus_no_overlap(const value_env& e1, const value_env& e2);
