@@ -923,9 +923,9 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
                 throw myexception()<<"Type\n\n  "<<t1<<"\n\n  does not subsume\n\n  "<<t2;
     }
 
-    auto dict2_pats = vars_from_lie<Hs::Pattern>(givens);
+    auto dict2_vars = vars_from_lie(givens);
 
-    auto dict1_args = vars_from_lie<Hs::Expression>(wanteds);
+    auto dict1_args = vars_from_lie<Core::Exp>(wanteds);
     
     auto w = [=](const Core::Exp& x)
     {
@@ -933,14 +933,9 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
 
         Core::Exp X = x;
 
-        if (dict1_args.size())
-            X = Hs::ApplyExp(X, dict1_args);
-
-        if (decls.size())
-            X = Hs::LetExp({noloc,{decls}}, {noloc,X});
-
-        if (dict2_pats.size())
-            X = Hs::LambdaExp(dict2_pats, X);
+        X = Core::Apply(X, dict1_args);
+        X = Core::Let(decls, X);
+        X = Core::Lambda(dict2_vars, X);
 
         return X;
     };

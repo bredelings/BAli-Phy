@@ -553,12 +553,12 @@ std::vector<Hs::Type> constraints_from_lie(const local_instance_env& lie);
 
 std::vector<Hs::Type> constraints_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie);
 
-std::vector<Hs::Var> vars_from_lie(const local_instance_env& lie);
+std::vector<Core::Var> vars_from_lie(const local_instance_env& lie);
 
-std::vector<Hs::Var> vars_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie);
+std::vector<Core::Var> vars_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie);
 
 template <typename T>
-std::vector<T> vars_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie)
+std::vector<T> vars_from_lie(const std::vector<std::pair<Core::Var, Hs::Type>>& lie)
 {
     std::vector<T> dvars;
     for(auto& [dvar, _]: lie)
