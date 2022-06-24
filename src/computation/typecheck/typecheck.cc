@@ -88,22 +88,12 @@ using std::tuple;
   * add tcRho( ).
   * skolemize in single_fundecl_with_sig
   * make a version of instantiation that invents and applied dictionaries by creating a wrapper.
+  * make wrappers operate on Core
+  * separate Core::Apply, Core::Let, Core::Lambda, Core::Tuple
+  * add a wrapper to checkSigma( ).
 
   TODO:
-  0. We need to make the wrappers operate on Core.
-    - Right now wrappers do three things: lambda dvar, let binds, and apply dvar.
-    - The binds are not appropriate for desugaring in their current form.
-    - Where do the binds come from?
-      + solver.cc: toHnf( )                 -- dvar = dfun dvar1 dvar2 etc.
-      + solver.cc: toHnfs( )                -- binds from toHnf
-      + solver.cc: entails_by_superclass( ) -- dvar = extractor dvar
-      + solver.cc: entails(lie,constraint)  -- binds from entails(lie,constraint)
-      + solver.cc: entails(lie,lie )        -- binds from entails(lie,constraint)
-      + solver.cc: simplify( )              -- binds from entails
-      + solver.cc: reduce( )                -- binds from toHnfs + simplify( )
-      + default.cc: default_preds( )        -> returns a binds from entails
-    - What kinds of statements do they contain?
-    - Where are they used?
+  0. Don't desugar Core::Decls, just the Hs::Binds.  But pass them both to the optimizer.
   0. Where do we put the wrapper if we call instantiateSigma for an intermediate Apply?
   0. Make a quals class.
   0. Make a Pattern class.
