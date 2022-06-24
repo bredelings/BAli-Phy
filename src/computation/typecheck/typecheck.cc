@@ -1206,7 +1206,7 @@ Hs::Binds typechecker_result::all_binds() const
 
     ranges::insert(all, all.end(), default_method_decls);
     ranges::insert(all, all.end(), instance_decls);
-    ranges::insert(all, all.end(), top_simplify_binds);
+    all.push_back({top_simplify_decls});
     ranges::insert(all, all.end(), class_binds);
 
     std::cerr<<all.print();
@@ -1276,9 +1276,9 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     auto instance_binds = tc_state->infer_type_for_instances2(named_instances);
 
     // 12. Default top-level ambiguous type vars.
-    auto top_simplify_binds = tc_state->simplify_and_default_top_level();
+    auto top_simplify_decls = tc_state->simplify_and_default_top_level();
 
-    return {class_binds, value_decls, dm_decls, instance_binds, Hs::Binds({top_simplify_binds})};
+    return {class_binds, value_decls, dm_decls, instance_binds, top_simplify_decls);
 }
 
     // GIE_C = functions to extract sub-dictionaries from containing dictionaries?

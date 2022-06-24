@@ -91,7 +91,7 @@ struct typechecker_result
 
     Hs::Binds instance_decls;
 
-    Hs::Binds top_simplify_binds;
+    Core::Decls top_simplify_decls;
 
     Hs::Binds all_binds() const;
 };
