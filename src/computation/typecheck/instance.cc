@@ -69,7 +69,7 @@ string get_name_for_typecon(const Hs::TypeCon& tycon)
         return get_unqualified_name(n);
 }
 
-pair<Hs::Var, Hs::Type>
+pair<Core::Var, Hs::Type>
 typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     // -- old -- //
@@ -141,12 +141,12 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 // See Tc/TyCl/Instance.hs
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-vector<pair<Hs::Var,Hs::InstanceDecl>>
+vector<pair<Core::Var,Hs::InstanceDecl>>
 typechecker_state::infer_type_for_instances1(const Hs::Decls& decls)
 {
     global_instance_env gie_inst;
 
-    vector<pair<Hs::Var, Hs::InstanceDecl>> named_instances;
+    vector<pair<Core::Var, Hs::InstanceDecl>> named_instances;
 
     for(auto& decl: decls)
     {
