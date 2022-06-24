@@ -254,11 +254,8 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
         throw myexception()<<"Can't derive superclass constraints "<<print(failed_constraints)<<" from instance constraints "<<print(givens)<<"!";
 
     // 7. make some intermediates
-    auto instance_constraint_dvars = vars_from_lie(givens);
 
-    vector<Hs::Pattern> lambda_vars;
-    for(auto dv: instance_constraint_dvars)
-        lambda_vars.push_back(dv);
+    auto given_dvars = vars_from_lie<Core::Exp>(givens);
 
     vector<Hs::Expression> dict_entries;
     for(auto& [var,constraint]: wanteds)
@@ -278,7 +275,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     {
         auto op = get_fresh_Var("i"+method_name, true);
 
-        dict_entries.push_back( apply_expression(op, lambda_vars) );
+        dict_entries.push_back( Core::Apply(op, given_dvars) );
 
         // forall b. Ix b => a -> b -> b
         Hs::Type op_type = Hs::remove_top_gen(method_type);
@@ -308,12 +305,12 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     }
 
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>
-    expression_ref dict = Hs::tuple(dict_entries);
+    auto dict = Core::Tuple(dict_entries);
 
     if (decls_super.size())
-        dict = Hs::LetExp( {noloc,{decls_super}}, {noloc, dict} );
+        dict = Core::Let( decls_super, dict );
 
-    return {decls, simple_fun_decl(dfun, lambda_vars, dict)};
+    return {decls, simple_fun_decl(dfun, given_dvars, dict)};
 }
 
 // We need to handle the instance decls in a mutually recursive way.
