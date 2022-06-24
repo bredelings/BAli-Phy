@@ -137,6 +137,7 @@ FreshVarSource::FreshVarSource(FreshVarState& s, const string& mn)
 var make_var(const Hs::Var& v)
 {
     assert(not v.index);
+    assert(not v.wrap);
     return var(unloc(v.name));
 }
 

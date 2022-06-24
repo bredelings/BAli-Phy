@@ -5,6 +5,7 @@
 #include "computation/parser/located.H"
 
 #include "type.H"
+#include "core.H"
 
 namespace Haskell
 {
@@ -15,6 +16,8 @@ struct Var: public Object
     std::optional<int> index;
 
     std::optional<Type> type;
+
+    std::optional<wrapper> wrap;
 
     bool operator==(const Object&) const;
     bool operator==(const Var&) const;

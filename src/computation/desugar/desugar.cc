@@ -458,7 +458,17 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         return get_tuple(T.elements);
     }
     else if (auto v = E.to<Hs::Var>())
-        return make_var(*v);
+    {
+        if (v->wrap)
+        {
+            auto V = *v;
+            auto w = *V.wrap;
+            V.wrap = {};
+            return desugar( w(V) );
+        }
+        else
+            return make_var(*v);
+    }
     else if (auto c = E.to<Hs::Con>())
         return var(unloc(c->name));
     else if (E.is_a<Hs::Do>())

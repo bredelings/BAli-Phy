@@ -10,7 +10,7 @@ using std::optional;
 using std::tuple;
 
 
-Hs::Expression typechecker_state::tcRho(Hs::Var x, const Expected& exp_type)
+void typechecker_state::tcRho(Hs::Var& x, const Expected& exp_type)
 {
     Hs::Type sigma;
     // First look for x in the local type environment
@@ -29,7 +29,7 @@ Hs::Expression typechecker_state::tcRho(Hs::Var x, const Expected& exp_type)
 
     auto w = instantiateSigma(sigma, exp_type);
 
-    return w(x);
+    x.wrap = w;
 }
 
 void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
@@ -420,8 +420,9 @@ void typechecker_state::tcRho(expression_ref& E, const Expected& exp_type)
     // VAR
     if (auto x = E.to<Hs::Var>())
     {
-        Hs::Type type;
-        E = tcRho(*x, exp_type);
+        auto X = *x;
+        tcRho(X, exp_type);
+        E = X;
     }
     // CON
     else if (auto con = E.to<Hs::Con>())

@@ -4,10 +4,15 @@
 #include <utility>  // for function
 #include "computation/expression/expression_ref.H"
 
-namespace Haskell {
+// make a Core namespace
+
+namespace Haskell
+{
+    // This should be Core::Exp
     typedef expression_ref Core;
 
     typedef std::function<Core(const Core&)> wrapper;
 
+    // wrapper operator*(const wrapper&, const wrapper&)
 };
 #endif
