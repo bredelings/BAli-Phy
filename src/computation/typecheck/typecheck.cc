@@ -966,12 +966,7 @@ typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
 
         auto w = [=](const Core::Exp& x)
         {
-            Core::Exp X = x;
-
-            if (dict_args.size())
-                X = Hs::ApplyExp(X, dict_args);
-
-            return X;
+            return Core::Apply(x, dict_args);
         };
 
         for(auto& [dvar,constraint]: wanteds)
