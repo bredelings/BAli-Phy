@@ -669,7 +669,7 @@ string MRule::print() const
 {
     vector<string> ss;
     for(auto& pat: patterns)
-        ss.push_back(pat.print());
+        ss.push_back(parenthesize_pattern(pat));
     ss.push_back(rhs.print());
 
     return join( ss, " ");
