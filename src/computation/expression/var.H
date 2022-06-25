@@ -7,6 +7,7 @@
 #include <functional>
 #include "computation/object.H"
 #include "expression_ref.H"
+#include "computation/haskell/type.H"
 
 enum class amount_t {Unknown, None, Once, Many};
 
@@ -39,10 +40,13 @@ struct var: public Object, public occurrence_info
 
     std::optional<int> level;
 
+    std::optional<Haskell::Type> type_;
+
     bool operator==(const var&) const;
     bool operator==(const Object& o) const;
     var* clone() const {return new var(*this);}
     std::string print() const;
+    std::string print_with_type() const;
   
     bool operator<(const var&) const;
 

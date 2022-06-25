@@ -49,6 +49,16 @@ string var::print() const {
     return s;
 }
 
+string var::print_with_type() const
+{
+    string uname = print();
+
+    if (type_)
+        uname = "("+uname + " :: " + (*type_).print()+")";
+
+    return uname;
+}
+
 bool var::operator<(const var& D) const 
 {
     if (index < D.index) return true;
