@@ -680,8 +680,8 @@ CDecls Module::desugar(const simplifier_options& opts, FreshVarState& state, con
 {
     auto cdecls = ::desugar(*this, state, topdecls);
 
-    if (opts.dump_desugared)
-        std::cout<<name<<"[desugared]:\n"<<print_cdecls(cdecls)<<"\n\n";
+//    if (opts.dump_desugared)
+//        std::cout<<name<<"[desugared]:\n"<<print_cdecls(cdecls)<<"\n\n";
 
     return cdecls;
 }
