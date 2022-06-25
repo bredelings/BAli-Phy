@@ -243,7 +243,7 @@ struct typechecker_state: FreshVarSource
 
     Core::wrapper instantiateSigma(const Hs::Type& t, const Expected& exp_rho);
 
-    std::tuple<std::vector<Hs::TypeVar>, std::vector<std::pair<Hs::Var,Hs::Type>>, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
+    std::tuple<std::vector<Hs::TypeVar>, LIE, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
 
     void tcRhoStmts(int i, std::vector<Hs::Qual>& stmts, const Expected& exp_type);
 
