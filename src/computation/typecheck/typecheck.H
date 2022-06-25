@@ -409,7 +409,7 @@ struct typechecker_state: FreshVarSource
 
     // Figure 12
     std::pair<Hs::Decls, Core::Decl>
-    infer_type_for_instance2(const Hs::Var& dfun, const Hs::InstanceDecl& instance_decl);
+    infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& instance_decl);
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).

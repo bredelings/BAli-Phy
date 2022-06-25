@@ -274,7 +274,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method_name, method_type]: class_info.members)
     {
-        Core::Var op = get_fresh_Var("i"+method_name, true);
+        auto op = get_fresh_Var("i"+method_name, true);
 
         dict_entries.push_back( Core::Apply(op, vars_from_lie<Core::Exp>(givens)) );
 
