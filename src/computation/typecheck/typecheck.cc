@@ -406,6 +406,14 @@ global_value_env apply_subst(const u_substitution_t& s, const value_env& env1)
     return env2;
 }
 
+LIE apply_subst(const u_substitution_t& s, const LIE& env1)
+{
+    LIE env2;
+    for(auto& [x,type]: env1)
+        env2.push_back({x, apply_subst(s,type)});
+    return env2;
+}
+
 optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint)
 {
     auto [tycon, args] = Hs::decompose_type_apps(constraint);
@@ -536,6 +544,11 @@ value_env typechecker_state::apply_current_subst(const value_env& env) const
     return apply_subst(type_var_to_type(), env);
 }
 
+LIE typechecker_state::apply_current_subst(const LIE& env) const
+{
+    return apply_subst(type_var_to_type(), env);
+}
+
 void typechecker_state::add_binders(const local_value_env& binders)
 {
     gve = plus_prefer_right( gve, binders );
@@ -549,23 +562,16 @@ typechecker_state::copy_add_binders(const local_value_env& binders) const
     return new_state;
 }
 
-local_instance_env& typechecker_state::current_lie() {
+LIE& typechecker_state::current_lie() {
     return lie;
 }
 
-void typechecker_state::add_dvar(const ID& name, const Hs::Type& constraint)
+void typechecker_state::add_dvar(const Core::Var& dvar, const Hs::Type& constraint)
 {
-    auto& lie = current_lie();
-    assert(not lie.count(name));
-    lie = lie.insert( {name, constraint} );
+    current_lie().push_back( {dvar, constraint} );
 }
 
-void typechecker_state::add_dvar(const Hs::Var& dvar, const Hs::Type& constraint)
-{
-    add_dvar(unloc(dvar.name), constraint);
-}
-
-Hs::Var typechecker_state::fresh_dvar(const Hs::Type& constraint)
+Core::Var typechecker_state::fresh_dvar(const Hs::Type& constraint)
 {
     ID name = "dvar";
     if (auto cname = maybe_get_class_name_from_constraint(constraint))
@@ -573,7 +579,7 @@ Hs::Var typechecker_state::fresh_dvar(const Hs::Type& constraint)
     return get_fresh_Var(name, false);
 }
 
-Hs::Var typechecker_state::add_dvar(const Hs::Type& constraint)
+Core::Var typechecker_state::add_dvar(const Hs::Type& constraint)
 {
     auto dvar = fresh_dvar(constraint);
 
@@ -808,10 +814,10 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
             throw myexception()<<"Type not polymorphic enough";
 
     // 4. check that the remaining constraints are satisfied by the constraints in the type signature
-    auto [ev_decls, entailed_wanteds, non_entailed_wanteds] = entails( unordered_lie(givens), lie_wanted);
+    auto [ev_decls, entailed_wanteds, non_entailed_wanteds] = entails( givens, lie_wanted);
 
     // 5. put wanteds without skolem variables into the current LIE
-    local_instance_env lie_failed;
+    LIE lie_failed;
     for(auto& [dvar, constraint]: non_entailed_wanteds)
     {
         bool fail = false;
@@ -820,9 +826,9 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
                 fail = true;
 
         if (fail)
-            lie_failed = lie_failed.insert({dvar,constraint});
+            lie_failed.push_back({dvar,constraint});
         else
-            current_lie() = current_lie().insert({dvar, constraint});
+            current_lie().push_back({dvar, constraint});
     }
 
     if (not lie_failed.empty())
@@ -897,7 +903,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
     // But if t2 contains a skolem variable from tvs2, then we can't issue it into the environment.
     // How about if it contains a meta-type variable
 
-    local_instance_env wanteds_to_emit;
+    LIE wanteds_to_emit;
 
     // we could
     // * try and entail things
@@ -910,7 +916,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
     // if any skolem variables, we need to try and entail them, I think.   C a[meta] b[skolem]
     // if no meta variables, we maybe could emit them...
     //     for example  t1 = 
-    local_instance_env wanteds_to_entail;
+    LIE wanteds_to_entail;
 
     auto [decls, entailed_wanteds, non_entailed_wanteds] = entails(givens, wanteds);
 
@@ -938,8 +944,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
         return X;
     };
 
-    for(auto& [dvar,constraint]: non_entailed_wanteds)
-        lie = lie.insert( {unloc(dvar.name), constraint} );
+    lie += non_entailed_wanteds;
 
     return w;
 }
@@ -959,8 +964,7 @@ typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
             return Core::Apply(x, dict_args);
         };
 
-        for(auto& [dvar,constraint]: wanteds)
-            lie = lie.insert( {unloc(dvar.name), constraint} );
+        lie += wanteds;
 
         return w;
     }
@@ -1099,14 +1103,6 @@ LIE typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
         ordered_lie.push_back({dvar, apply_current_subst(constraint)});
     }
     return ordered_lie;
-}
-
-local_instance_env unordered_lie(const LIE& lie1)
-{
-    local_instance_env lie2;
-    for(auto& [var,constraint]: lie1)
-        lie2 = lie2.insert({unloc(var.name), constraint});
-    return lie2;
 }
 
 Hs::Type remove_top_level_foralls(Hs::Type t)

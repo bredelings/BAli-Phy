@@ -116,7 +116,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         type = apply_current_subst(type);
         // Maybe intersect the forall_vars with USED vars?
         type = add_forall_vars(class_decl.type_vars, type);
-        class_info.superclass_extractors = class_info.superclass_extractors.insert({unloc(get_dict.name), type});
+        class_info.superclass_extractors.insert({get_dict, type});
 
         // Is this right???
         class_info.fields.push_back({unloc(get_dict.name), type});

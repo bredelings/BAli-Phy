@@ -35,7 +35,7 @@ optional<Hs::TypeCon> simple_constraint_class(const Hs::Type& constraint)
 // 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
 
 optional<tuple<u_substitution_t, Core::Decls>>
-typechecker_state::candidates(const Hs::MetaTypeVar& tv, const local_instance_env& tv_lie)
+typechecker_state::candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie)
 {
     set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
     set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
@@ -79,45 +79,45 @@ typechecker_state::candidates(const Hs::MetaTypeVar& tv, const local_instance_en
     return {};
 }
 
-pair<local_instance_env, map<Hs::MetaTypeVar, local_instance_env>>
-ambiguities(const set<Hs::MetaTypeVar>& tvs1, const set<Hs::MetaTypeVar>& tvs2, local_instance_env lie)
+pair<LIE, map<Hs::MetaTypeVar, LIE>>
+ambiguities(const set<Hs::MetaTypeVar>& tvs1, const set<Hs::MetaTypeVar>& tvs2, const LIE& lie)
 {
     // The input lie MUST be substituted to find its free type vars!
     // lie = apply_current_subst(lie);
     auto ambiguous_tvs = free_meta_type_variables(lie) - tvs1 - tvs2;
 
     // 1. Record the constraints WITH ambiguous type vars, by type var
-    map<Hs::MetaTypeVar,local_instance_env> ambiguities;
+    map<Hs::MetaTypeVar, LIE> ambiguities;
     for(auto& ambiguous_tv: ambiguous_tvs)
     {
-        local_instance_env lie_for_tv;
+        LIE lie_for_tv;
         for(auto& [dvar,constraint]: lie)
         {
             if (free_meta_type_variables(constraint).count(ambiguous_tv))
-                lie_for_tv = lie_for_tv.insert({dvar,constraint});
+                lie_for_tv.push_back({dvar,constraint});
         }
         if (not lie_for_tv.empty())
             ambiguities.insert({ambiguous_tv, lie_for_tv});
     }
 
     // 2. Find the constraints WITHOUT ambiguous type vars
-    local_instance_env unambiguous_preds;
+    LIE unambiguous_preds;
 
     for(auto& [dvar, constraint]: lie)
     {
         auto ftvs = free_meta_type_variables(constraint);
         if (not intersects(ftvs, ambiguous_tvs))
-            unambiguous_preds = unambiguous_preds.insert({dvar, constraint});
+            unambiguous_preds.push_back({dvar, constraint});
     }
 
     return {unambiguous_preds, ambiguities};
 }
 
 
-tuple<u_substitution_t, Core::Decls, local_instance_env>
+tuple<u_substitution_t, Core::Decls, LIE>
 typechecker_state::default_preds( const set<Hs::MetaTypeVar>& fixed_tvs,
                                   const set<Hs::MetaTypeVar>& referenced_tvs,
-                                  const local_instance_env& lie)
+                                  const LIE& lie)
 {
     u_substitution_t s;
     Core::Decls decls;

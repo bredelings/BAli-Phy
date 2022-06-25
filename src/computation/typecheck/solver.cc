@@ -59,7 +59,7 @@ bool constraint_is_hnf(const Hs::Type& constraint)
 
 optional<pair<Core::Exp,LIE>> typechecker_state::lookup_instance(const Hs::Type& constraint)
 {
-    for(auto& [name, type]: instance_env() )
+    for(auto& [dfun, type]: instance_env() )
     {
         auto [_, wanteds, instance_head] = instantiate(type);
 
@@ -73,28 +73,24 @@ optional<pair<Core::Exp,LIE>> typechecker_state::lookup_instance(const Hs::Type&
         for(auto& [dvar, instance_constraint]: wanteds)
             instance_constraint = apply_subst(*s, instance_constraint);
 
-        auto dfun = Core::Var({noloc, name});
-
-        Hs::Expression dfun_exp = dfun;
-        if (wanteds.size())
-            dfun_exp = Hs::ApplyExp(dfun, vars_from_lie<Hs::Expression>(wanteds));
+        auto dfun_exp = Core::Apply(dfun, vars_from_lie<Core::Exp>(wanteds));
 
         return {{dfun_exp, wanteds}};
     }
     return {};
 }
 
-pair<Core::Decls,local_instance_env> typechecker_state::toHnf(const ID& name, const Hs::Type& constraint)
+pair<Core::Decls, LIE> typechecker_state::toHnf(const Core::Var& dvar, const Hs::Type& constraint)
 {
     Core::Decls decls;
-    local_instance_env lie;
+    LIE lie;
     if (constraint_is_hnf(constraint))
     {
-        lie = lie.insert({name, constraint});
+        lie.push_back({dvar, constraint});
     }
     else
     {
-        local_instance_env lie2;
+        LIE lie2;
 
         // 1. find the (single) matching instance or fail.
         // The instance will be of the form
@@ -113,10 +109,8 @@ pair<Core::Decls,local_instance_env> typechecker_state::toHnf(const ID& name, co
         //     dvar_new1 :: constraint1
         //     dvar_new2 :: constraint2
         //     dvar_new3 :: constraint3
-        for(auto& [dvar, constraint]: wanteds)
-            lie2 = lie2.insert({unloc(dvar.name), constraint});
-
-        Hs::Var dvar({noloc, name});
+        for(auto& [wdvar, wconstraint]: wanteds)
+            lie2.push_back({wdvar, wconstraint});
 
 
         // 3. Finally, we may need to further simplify the new LIE
@@ -129,11 +123,11 @@ pair<Core::Decls,local_instance_env> typechecker_state::toHnf(const ID& name, co
     return {decls,lie};
 }
 
-pair<Core::Decls, local_instance_env>
-typechecker_state::toHnfs(const local_instance_env& lie_in)
+pair<Core::Decls, LIE>
+typechecker_state::toHnfs(const LIE& lie_in)
 {
     Core::Decls decls_out;
-    local_instance_env lie_out;
+    LIE lie_out;
     for(auto& [name, constraint]: lie_in)
     {
         auto [decls2, lie2] = toHnf(name, constraint);
@@ -147,14 +141,14 @@ typechecker_state::toHnfs(const local_instance_env& lie_in)
 // FIXME: there should be a `const` way of getting these.
 // FIXME: instantiate is not constant though.
 // FIXME: we shouldn't need fresh type vars if the type is unambiguous though.
-vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const Hs::Type& constraint)
+vector<pair<Core::Var, Hs::Type>> typechecker_state::superclass_constraints(const Hs::Type& constraint)
 {
-    vector<pair<string, Hs::Type>> constraints;
+    vector<pair<Core::Var, Hs::Type>> constraints;
 
     auto class_name = get_full_class_name_from_constraint(constraint);
 
     // Fixme... since we know the class name, can we simplify superclass_extractors???
-    for(auto& [name, type]: class_env().at(class_name).superclass_extractors)
+    for(auto& [dvar, type]: class_env().at(class_name).superclass_extractors)
     {
         // forall a.Klass a => Superklass a
         auto [_, wanteds, superclass_constraint] = instantiate(type);
@@ -171,27 +165,27 @@ vector<pair<string, Hs::Type>> typechecker_state::superclass_constraints(const H
 
         superclass_constraint = apply_subst(*s, superclass_constraint);
 
-        constraints.push_back( { name, superclass_constraint } );
+        constraints.push_back( { dvar, superclass_constraint } );
     }
 
     return constraints;
 }
 
 // We are trying to eliminate the *first* argument.
-optional<vector<string>> typechecker_state::is_superclass_of(const Hs::Type& constraint1, const Hs::Type& constraint2)
+optional<vector<Core::Var>> typechecker_state::is_superclass_of(const Hs::Type& constraint1, const Hs::Type& constraint2)
 {
-    vector<string> extractors;
+    vector<Core::Var> extractors;
     if (same_type(constraint1, constraint2))
         return extractors;
     else
     {
         // dvar1 :: constraint1 => dvar3 :: constraint3 => dvar2 :: constraint2
-        for(auto& [name, constraint3]: superclass_constraints(constraint2))
+        for(auto& [dvar, constraint3]: superclass_constraints(constraint2))
         {
             if (auto extractors2 = is_superclass_of(constraint1, constraint3))
             {
                 extractors = std::move(*extractors2);
-                extractors.push_back(name);
+                extractors.push_back(dvar);
                 return extractors;
             }
         }
@@ -219,10 +213,7 @@ optional<Core::Decls> typechecker_state::entails_by_superclass(const pair<Core::
     {
         Core::Exp dict_exp = dvar_to_keep;
         for(auto& extractor: *extractors | views::reverse)
-        {
-            Core::Var get_dict({noloc, extractor});
-            dict_exp = {get_dict, dict_exp};
-        }
+            dict_exp = {extractor, dict_exp};
 
         // dvar_to_remove = extractor[n] extractor[n-1] ... extractor[0] dvar_to_keep
         return Hs::Decls( { Hs::simple_decl(dvar_to_remove, dict_exp) } );
@@ -252,53 +243,26 @@ tuple<Core::Decls, LIE, LIE> typechecker_state::entails(const LIE& lie1, const L
     return {decls, entailed_constraints, failed_constraints};
 }
 
-// How does this relate to simplifying constraints?
-tuple<Core::Decls, local_instance_env, local_instance_env> typechecker_state::entails(const local_instance_env& lie1, const local_instance_env& lie2)
-{
-    Core::Decls decls;
-    local_instance_env failed_constraints;
-    local_instance_env entailed_constraints;
-
-    for(auto& constraint: lie2)
-    {
-        auto decls1 = entails(lie1, constraint);
-        if (not decls1)
-            failed_constraints = failed_constraints.insert(constraint);
-        else
-        {
-            entailed_constraints = entailed_constraints.insert(constraint);
-            decls = *decls1 + decls;
-        }
-    }
-    return {decls, entailed_constraints, failed_constraints};
-}
-
-pair<Core::Decls, local_instance_env> typechecker_state::simplify(const local_instance_env& lie)
+pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& lie)
 {
     Core::Decls decls_out;
-    local_instance_env lie_out;
-    vector<pair<string,Hs::Type>> lie_vec;
-    for(auto& entry: lie)
-       lie_vec.push_back(entry);
-    vector<pair<string,Hs::Type>> checked;
+    LIE lie_out;
+    LIE checked;
 
-    for(int i=0;i<lie_vec.size();i++)
+    for(int i=0;i<lie.size();i++)
     {
-        auto& pred = lie_vec[i];
-        auto preds = views::concat(lie_vec | views::drop(i+1), checked);
+        auto& pred = lie[i];
+        auto preds = views::concat(lie | views::drop(i+1), checked);
         if (auto edecls = entails(preds, pred))
             decls_out += *edecls;
         else
-            checked.push_back(lie_vec[i]);
+            lie_out.push_back(pred);
     }
-
-    for(auto& var_equals_constraint: checked)
-        lie_out = lie_out.insert(var_equals_constraint);
 
     return {decls_out, lie_out};
 }
 
-pair<Core::Decls, local_instance_env> typechecker_state::reduce(const local_instance_env& lie)
+pair<Core::Decls, LIE> typechecker_state::reduce(const LIE& lie)
 {
     auto [decls1, lie1] = toHnfs(lie);
 

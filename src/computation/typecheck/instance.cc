@@ -144,7 +144,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 vector<pair<Core::Var,Hs::InstanceDecl>>
 typechecker_state::infer_type_for_instances1(const Hs::Decls& decls)
 {
-    global_instance_env gie_inst;
+    GIE gie_inst;
 
     vector<pair<Core::Var, Hs::InstanceDecl>> named_instances;
 
@@ -155,7 +155,7 @@ typechecker_state::infer_type_for_instances1(const Hs::Decls& decls)
             auto [dfun, inst_type] = infer_type_for_instance1(*I);
 
             named_instances.push_back({dfun, *I});
-            gie_inst = gie_inst.insert({unloc(dfun.name), inst_type});
+            gie_inst.insert( {dfun, inst_type} );
         }
     }
 
@@ -166,7 +166,8 @@ typechecker_state::infer_type_for_instances1(const Hs::Decls& decls)
 //    }
 //    std::cerr<<"\n";
 
-    instance_env() += gie_inst;
+    for(auto pred: gie_inst)
+        instance_env().insert(pred);
 
     return named_instances;
 }
@@ -179,25 +180,25 @@ string get_class_for_constraint(const Hs::Type& constraint)
     return unloc(tc->name);
 }
 
-    // PROBLEM: we also need to know all the instance types to check the entails.
-    //          so, that part needs to come after a first pass over all instances...
-    // PROBLEM: we need to types for functions defined in the module...
-    //          so, typechecking the method bodies needs to come after typechecking the rest of the module.
-    // FIXME: What stuff do we want to know from infer_type_for_instance1( )?
-    //        * the dvar name
+// PROBLEM: we also need to know all the instance types to check the entails.
+//          so, that part needs to come after a first pass over all instances...
+// PROBLEM: we need to types for functions defined in the module...
+//          so, typechecking the method bodies needs to come after typechecking the rest of the module.
+// FIXME: What stuff do we want to know from infer_type_for_instance1( )?
+//        * the dvar name
     
-    // Construct superclass dictionary entries from instance constraints
+// Construct superclass dictionary entries from instance constraints
 
-    // Construct member function entries.
+// Construct member function entries.
 
-    /* dfun idvar1:instance_constraint1 ... idvar[N]:instance_constraint[N] =
-              let dvar1 = <construct superdict1>
-                  dvar2 = <construct superdictN>
+/* dfun idvar1:instance_constraint1 ... idvar[N]:instance_constraint[N] =
+   let dvar1 = <construct superdict1>
+   dvar2 = <construct superdictN>
 
-              in let var1 = <body1>
-                     varM = <bodyM>
-                 in <dvar1, ..., dvarN, var1, ..., varM>
-    */
+   in let var1 = <body1>
+   varM = <bodyM>
+   in <dvar1, ..., dvarN, var1, ..., varM>
+*/
 
 map<string, Hs::Match> get_instance_methods(const Hs::Binds& binds, const global_value_env& members, const string& class_name)
 {
@@ -228,7 +229,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     // 1. Get instance head and constraints 
 
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
-    auto inst_type = instance_env().at(unloc(dfun.name));
+    auto inst_type = instance_env().at(dfun);
     // Instantiate it with rigid type variables.
     auto [instance_tvs, givens, instance_head] = skolemize(inst_type, false);
     auto [instance_class, instance_args] = Hs::decompose_type_apps(instance_head);
@@ -273,7 +274,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method_name, method_type]: class_info.members)
     {
-        auto op = get_fresh_Var("i"+method_name, true);
+        Core::Var op = get_fresh_Var("i"+method_name, true);
 
         dict_entries.push_back( Core::Apply(op, vars_from_lie<Core::Exp>(givens)) );
 
@@ -298,7 +299,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
 
             auto dm_var = class_info.default_methods.at(method_name);
 
-            FD = simple_decl(op, dm_var);
+            FD = Hs::simple_decl(op, dm_var);
         }
         auto [decl2, _, __] = infer_type_for_single_fundecl_with_sig(*FD);
         decls.push_back(decl2);
@@ -310,7 +311,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     if (decls_super.size())
         dict = Core::Let( decls_super, dict );
 
-    return {decls, simple_decl(dfun, Core::Lambda(given_dvars, dict))};
+    return {decls, Hs::simple_decl(dfun, Core::Lambda(given_dvars, dict))};
 }
 
 // We need to handle the instance decls in a mutually recursive way.

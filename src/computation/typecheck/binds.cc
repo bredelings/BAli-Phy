@@ -161,32 +161,12 @@ bool single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signat
     return signatures.count(name) > 0;
 }
 
-vector<Hs::Type> constraints_from_lie(const local_instance_env& lie)
-{
-    vector<Hs::Type> constraints;
-    for(auto& [_, constraint]: lie)
-        constraints.push_back(constraint);
-    return constraints;
-}
-
 vector<Hs::Type> constraints_from_lie(const LIE& lie)
 {
     vector<Hs::Type> constraints;
     for(auto& [_, constraint]: lie)
         constraints.push_back(constraint);
     return constraints;
-}
-
-vector<Core::Var> vars_from_lie(const local_instance_env& lie)
-{
-    vector<Core::Var> dict_vars;
-    for(auto& [name, constraint]: lie)
-    {
-        Core::Var dict_var({noloc,name});
-        dict_var.type = constraint;
-        dict_vars.push_back( dict_var );
-    }
-    return dict_vars;
 }
 
 vector<Core::Var> vars_from_lie(const LIE& lie)
@@ -235,14 +215,14 @@ Hs::GenBind mkGenBind(const vector<Hs::TypeVar>& tvs,
 
 // Why aren't we using `fixed_type_vars`?
 // I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
-pair<local_instance_env, local_instance_env>
-classify_constraints(const local_instance_env& lie,
+pair<LIE, LIE>
+classify_constraints(const LIE& lie,
                      const set<Hs::MetaTypeVar>& fixed_type_vars)
 {
-    local_instance_env lie_deferred;
-    local_instance_env lie_retained;
+    LIE lie_deferred;
+    LIE lie_retained;
 
-    for(auto& [name, constraint]: lie)
+    for(auto& [dvar, constraint]: lie)
     {
         auto constraint_type_vars = free_meta_type_variables(constraint);
 
@@ -253,9 +233,9 @@ classify_constraints(const local_instance_env& lie,
                 all_fixed = false;
 
         if (all_fixed)
-            lie_deferred = lie_deferred.insert({name,constraint});
+            lie_deferred.push_back({dvar,constraint});
         else
-            lie_retained = lie_retained.insert({name,constraint});
+            lie_retained.push_back({dvar,constraint});
     }
     return {lie_deferred, lie_retained};
 }
@@ -284,7 +264,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         auto ev_decls = decls1;
 
         // 4. check that the remaining constraints are satisfied by the constraints in the type signature
-        auto [ev_decls2, _, lie_failed] = entails( unordered_lie(givens), lie_wanted_unambiguous);
+        auto [ev_decls2, _, lie_failed] = entails( givens, lie_wanted_unambiguous);
         if (not lie_failed.empty())
             throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
         ev_decls = ev_decls2 + ev_decls;
@@ -597,8 +577,8 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
         Hs::Var mono_id = mono_ids.at(name);
 
         vector<Core::Var> dict_args;
-        for(auto& [name, constraint]: lie_for_this_type)
-            dict_args.push_back( Core::Var({noloc,name}) );
+        for(auto& [dvar, constraint]: lie_for_this_type)
+            dict_args.push_back( dvar );
 
         Hs::BindInfo info(poly_id, mono_id, monotype, polytype, dict_args, Hs::Binds({decls2}));
         bind_infos.insert({name, info});

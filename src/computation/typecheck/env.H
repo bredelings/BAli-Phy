@@ -24,14 +24,10 @@ typedef value_env local_value_env;
 //   instance Eq a => Eq [a] where
 // leads to
 //   dEqList :: forall a. Eq a => Eq [a]
-typedef global_value_env global_instance_env;
-
-// The LIE maps local dictionary variables to the constraint for which they are a dictionary.
-// It DOES allow free type variables.
-typedef local_value_env local_instance_env;
 
 typedef value_env constr_env;
 
+typedef std::map<Core::Var, Hs::Type> GIE;
 typedef std::vector<std::pair<Core::Var, Hs::Type>> LIE;
 LIE& operator+=(LIE& lie1, const LIE& lie2);
 
@@ -100,7 +96,7 @@ struct ClassInfo
 
     local_value_env members;
 
-    global_instance_env superclass_extractors;
+    GIE superclass_extractors;
 
     std::map<ID, Hs::Var> default_methods;
 
@@ -113,6 +109,8 @@ typedef std::map<ID, ClassInfo> ClassEnv;
 std::set<Hs::TypeVar> free_type_variables(const value_env& env);
 
 std::set<Hs::MetaTypeVar> free_meta_type_variables(const value_env& env);
+
+std::set<Hs::MetaTypeVar> free_meta_type_variables(const LIE& env);
 
 template <typename T>
 std::set<T> operator-(const std::set<T>& s1, const std::set<T>& s2)

@@ -19,7 +19,7 @@ Hs::ModuleDecls typecheck(const std::string& s, const Module& m, Hs::ModuleDecls
 
 Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type type, const Haskell::Type& constraint);
 
-std::tuple<global_value_env, global_instance_env, ClassInfo, Hs::Decls>
+std::tuple<global_value_env, GIE, ClassInfo, Hs::Decls>
 type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::ClassDecl& class_decl);
 
 typedef value_env constr_env;
@@ -38,7 +38,7 @@ struct global_tc_state
 
     ClassEnv class_env;
 
-    global_instance_env instance_env;
+    GIE instance_env;
 
     std::vector<Hs::Type> defaults;
 
@@ -129,8 +129,8 @@ struct typechecker_state: FreshVarSource
           ClassEnv& class_env()       {return global_state->class_env;}
     const ClassEnv& class_env() const {return global_state->class_env;}
 
-          global_instance_env& instance_env()       {return global_state->instance_env;}
-    const global_instance_env& instance_env() const {return global_state->instance_env;}
+          GIE& instance_env()       {return global_state->instance_env;}
+    const GIE& instance_env() const {return global_state->instance_env;}
 
           std::vector<Hs::Type>& defaults()       {return global_state->defaults;}
     const std::vector<Hs::Type>& defaults() const {return global_state->defaults;}
@@ -146,9 +146,7 @@ struct typechecker_state: FreshVarSource
 
     global_value_env gve;
 
-    local_instance_env lie_given;
-
-    local_instance_env lie;
+    LIE lie;
 
     //------- Functions handling the LIE ---------
     typechecker_state copy_clear_lie() const;
@@ -157,15 +155,13 @@ struct typechecker_state: FreshVarSource
 
     typechecker_state copy_add_binders(const global_value_env& env) const;
 
-    local_instance_env& current_lie();
+    LIE& current_lie();
 
-    void add_dvar(const ID& name, const Hs::Type& constraint);
+    void add_dvar(const Core::Var& dvar, const Hs::Type& constraint);
 
-    void add_dvar(const Hs::Var& dvar, const Hs::Type& constraint);
+    Core::Var fresh_dvar(const Hs::Type& constraint);
 
-    Hs::Var fresh_dvar(const Hs::Type& constraint);
-
-    Hs::Var add_dvar(const Hs::Type& constraint);
+    Core::Var add_dvar(const Hs::Type& constraint);
 
     // ------ End: Functions handling the LIE ---
 
@@ -203,6 +199,8 @@ struct typechecker_state: FreshVarSource
 
     value_env apply_current_subst(const value_env& env) const;
 
+    LIE apply_current_subst(const LIE& env) const;
+
     bool add_substitution(const u_substitution_t& s);
 
     bool add_substitution(const Hs::MetaTypeVar& a, const Hs::Type& type);
@@ -228,12 +226,12 @@ struct typechecker_state: FreshVarSource
     std::pair<Hs::Type, std::vector<Hs::Type>> constructor_pattern_types(const Hs::Con&);
 
     std::optional<std::tuple<u_substitution_t, Core::Decls>>
-    candidates(const Hs::MetaTypeVar& tv, const local_instance_env& tv_lie);
+    candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie);
 
-    std::tuple<u_substitution_t, Core::Decls, local_instance_env >
+    std::tuple<u_substitution_t, Core::Decls, LIE >
     default_preds( const std::set<Hs::MetaTypeVar>& fixed_tvs,
                    const std::set<Hs::MetaTypeVar>& referenced_tvs,
-                   const local_instance_env& lie);
+                   const LIE& lie);
 
     Core::Decls simplify_and_default_top_level();
 
@@ -418,10 +416,10 @@ struct typechecker_state: FreshVarSource
     LIE constraints_to_lie(const std::vector<Hs::Type>&);
 
     // FIXME: this should be  const
-    std::vector<std::pair<std::string, Hs::Type>> superclass_constraints(const Hs::Type& constraint);
+    std::vector<std::pair<Core::Var, Hs::Type>> superclass_constraints(const Hs::Type& constraint);
 
     // FIXME: this should be  const
-    std::optional<std::vector<std::string>>
+    std::optional<std::vector<Core::Var>>
     is_superclass_of(const Hs::Type&, const Hs::Type&);
 
     // FIXME: this should be  const
@@ -442,18 +440,15 @@ struct typechecker_state: FreshVarSource
     std::optional<Core::Decls>
     entails(const T& to_keep, const std::pair<Core::Var, Hs::Type>& to_check);
 
-    std::tuple<Core::Decls, local_instance_env, local_instance_env>
-    entails(const local_instance_env& lie1, const local_instance_env& lie2);
-
     std::tuple<Core::Decls, LIE, LIE>
     entails(const LIE& lie1, const LIE& lie2);
 
     std::optional<std::pair<Core::Exp,LIE>> lookup_instance(const Hs::Type& constraint);
 
-    std::pair<Core::Decls, local_instance_env> toHnf(const ID& name, const Hs::Type& constraint);
-    std::pair<Core::Decls, local_instance_env> toHnfs(const local_instance_env& lie_in);
-    std::pair<Core::Decls, local_instance_env> simplify(const local_instance_env& lie_in);
-    std::pair<Core::Decls, local_instance_env> reduce(const local_instance_env& lie_in);
+    std::pair<Core::Decls, LIE> toHnf(const Core::Var& name, const Hs::Type& constraint);
+    std::pair<Core::Decls, LIE> toHnfs(const LIE& lie_in);
+    std::pair<Core::Decls, LIE> simplify(const LIE& lie_in);
+    std::pair<Core::Decls, LIE> reduce(const LIE& lie_in);
     Core::Decls reduce_current_lie();
 
     void get_defaults(const Hs::ModuleDecls& M);
@@ -530,12 +525,12 @@ std::optional<Core::Decls> typechecker_state::entails(const T& to_keep, const st
     return {};
 }
 
-local_instance_env unordered_lie(const LIE& lie1);
-
 std::optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint);
 ID get_class_name_from_constraint(const Hs::Type& constraint);
 
 value_env apply_subst(const u_substitution_t& s, const value_env& env1);
+
+LIE apply_subst(const u_substitution_t& s, const LIE& env1);
 
 std::map<ID, Hs::Match> get_instance_methods(const Hs::Binds& decls, const global_value_env& members, const std::string& class_name);
 
@@ -549,11 +544,7 @@ std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_
 
 ID get_full_class_name_from_constraint(const Hs::Type& constraint);
 
-std::vector<Hs::Type> constraints_from_lie(const local_instance_env& lie);
-
 std::vector<Hs::Type> constraints_from_lie(const LIE& lie);
-
-std::vector<Core::Var> vars_from_lie(const local_instance_env& lie);
 
 std::vector<Core::Var> vars_from_lie(const LIE& lie);
 
