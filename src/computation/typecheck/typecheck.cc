@@ -326,6 +326,25 @@ using std::tuple;
 // LVE = local  value environment      = var -> monotype
 
 
+string Check::print() const
+{
+    return "Check(" + type.print() + ")";
+}
+
+
+string Infer::print() const
+{
+    return "Infer(" + type_.print() + ")";
+}
+
+string Expected::print() const
+{
+    if (check())
+        return std::get<Check>(value).print();
+    else
+        return std::get<Infer>(value).print();
+}
+
 global_tc_state::global_tc_state(const Module& m)
     :this_mod(m)
 { }

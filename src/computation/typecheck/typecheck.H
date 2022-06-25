@@ -53,6 +53,9 @@ struct global_tc_state
 struct Check
 {
     Hs::Type type;
+
+    std::string print() const;
+
     Check(const Hs::Type& t):type(t) {}
 };
 
@@ -75,6 +78,8 @@ public:
         else
             return type_;
     }
+
+    std::string print() const;
 
     Infer(Hs::Type& t):type_(t) { assert(type_.empty()); }
 };
@@ -103,6 +108,8 @@ public:
         assert(infer());
         std::get<Infer>(value).set_type(t);
     }
+
+    std::string print() const;
 
     Expected(const Check& c):value(c) {}
     Expected(const Infer& i):value(i) {}
