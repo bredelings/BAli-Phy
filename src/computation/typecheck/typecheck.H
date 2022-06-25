@@ -415,7 +415,7 @@ struct typechecker_state: FreshVarSource
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
-    std::vector<std::pair<Hs::Var,Hs::Type>> constraints_to_lie(const std::vector<Hs::Type>&);
+    std::vector<std::pair<Core::Var,Hs::Type>> constraints_to_lie(const std::vector<Hs::Type>&);
 
     // FIXME: this should be  const
     std::vector<std::pair<std::string, Hs::Type>> superclass_constraints(const Hs::Type& constraint);
@@ -440,7 +440,7 @@ struct typechecker_state: FreshVarSource
 
     template <typename T>
     std::optional<Core::Decls>
-    entails(const T& to_keep, const std::pair<Hs::Var, Hs::Type>& to_check);
+    entails(const T& to_keep, const std::pair<Core::Var, Hs::Type>& to_check);
 
     std::tuple<Core::Decls, local_instance_env, local_instance_env>
     entails(const local_instance_env& lie1, const local_instance_env& lie2);
