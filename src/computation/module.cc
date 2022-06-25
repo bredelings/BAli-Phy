@@ -480,12 +480,19 @@ void Module::compile(const Program& P)
     // look only in value_decls now
     // FIXME: how to handle functions defined in instances and classes?
     value_decls = desugar(opts, P.fresh_var_state(), hs_decls);
-    auto core_decls2 = desugar(opts, P.fresh_var_state(), Hs::Binds({core_decls}));
-    value_decls += core_decls2;
+    value_decls += core_decls;
 
     value_decls = load_builtins(loader, M.foreign_decls, value_decls);
 
     value_decls = load_constructors(M.type_decls, value_decls);
+
+    if (opts.dump_desugared)
+    {
+        std::cerr<<"\n\nCore:\n";
+        for(auto& [x,rhs] : value_decls)
+            std::cerr<<x.print()<<" = "<<rhs.print()<<"\n";
+        std::cerr<<"\n\n";
+    }
 
     // Check for duplicate top-level names.
     check_duplicate_var(value_decls);
@@ -951,12 +958,12 @@ void mark_exported_decls(CDecls& decls,
     {
         // Instances are exported
         for(auto& [dvar, _]: tc_state->instance_env())
-            exported.insert(unloc(dvar.name));
+            exported.insert(dvar.name);
 
         for(auto& [cname,cinfo]: tc_state->class_env())
         {
             for(auto& [dvar, _]: cinfo.superclass_extractors)
-                exported.insert(unloc(dvar.name));
+                exported.insert(dvar.name);
 
             // Default methods are exported
             for(auto& [method, dm]: cinfo.default_methods)

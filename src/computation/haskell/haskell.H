@@ -78,11 +78,6 @@
   - make infix use Name for the op?
 */
 
-namespace Core
-{
-    using Haskell::Var;
-}
-
 namespace Haskell
 {
 
@@ -260,15 +255,6 @@ public:
     Decls() = default;
     Decls(const vector<expression_ref>& ds): std::vector<expression_ref>(ds) {}
 };
-}
-
-namespace Core
-{
-    using Haskell::Decls;
-}
-
-namespace Haskell
-{
 
 struct Binds: public std::vector<Decls>
 {
@@ -909,10 +895,10 @@ struct BindInfo
     std::vector<Core::Var> dict_args;
 
     // This defines construct the defaulted dictionaries from dict_args;
-    Binds binds;
+    Core::Decls default_decls;
 
-    BindInfo(const Var& o, const Var& i, const Type& m, const Type& p, const std::vector<Core::Var>& da, const Binds& b)
-        : outer_id(o), inner_id(i), monotype(m), polytype(p), dict_args(da), binds(b)
+    BindInfo(const Var& o, const Var& i, const Type& m, const Type& p, const std::vector<Core::Var>& da, const Core::Decls& d)
+        : outer_id(o), inner_id(i), monotype(m), polytype(p), dict_args(da), default_decls(d)
     {
         outer_id.type = polytype;
         inner_id.type = monotype;
@@ -977,10 +963,4 @@ Expression error(const std::string& s);
 
 namespace Hs = Haskell;
 
-namespace Core
-{
-    Exp Lambda(const std::vector<Var>& args, const Exp& body);
-    Exp Let(const Decls& args, const Exp& body);
-    Exp Apply(const Exp& fun, const std::vector<Exp>& args);
-}
 #endif

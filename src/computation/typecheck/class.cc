@@ -110,16 +110,16 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         string cname2 = get_class_name_from_constraint(class_constraint);
         string extractor_name = cname1+"From"+cname2;
 
-        auto get_dict = get_fresh_Var(extractor_name, true);
+        auto get_dict = get_fresh_var(extractor_name, true);
         // Should this be a function arrow?
         Hs::Type type = Hs::add_constraints({class_constraint}, superclass_constraint);
         type = apply_current_subst(type);
         // Maybe intersect the forall_vars with USED vars?
         type = add_forall_vars(class_decl.type_vars, type);
-        class_info.superclass_extractors.insert({get_dict, type});
+        class_info.superclass_extractors.insert(pair(get_dict, type));
 
         // Is this right???
-        class_info.fields.push_back({unloc(get_dict.name), type});
+        class_info.fields.push_back({get_dict.name, type});
     }
     for(auto& [name,type]: class_info.members)
         class_info.fields.push_back({qualified_name(name), type});

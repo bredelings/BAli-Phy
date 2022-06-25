@@ -118,7 +118,7 @@ pair<Core::Decls, LIE> typechecker_state::toHnf(const Core::Var& dvar, const Hs:
 
         lie = lie3;
         decls = decls2;
-        decls.push_back(Hs::simple_decl(dvar, dfun_exp));
+        decls.push_back( {dvar, dfun_exp} );
     }
     return {decls,lie};
 }
@@ -193,17 +193,6 @@ optional<vector<Core::Var>> typechecker_state::is_superclass_of(const Hs::Type& 
     }
 }
 
-optional<Core::Decls> typechecker_state::entails_by_superclass(const pair<string, Hs::Type>& to_keep, const pair<string, Hs::Type>& to_remove)
-{
-    auto& [dvar_to_keep_name, constraint_to_keep] = to_keep;
-    auto& [dvar_to_remove_name, constraint_to_remove] = to_remove;
-
-    Hs::Var dvar_to_keep({noloc, dvar_to_keep_name});
-    Hs::Var dvar_to_remove({noloc, dvar_to_remove_name});
-
-    return entails_by_superclass({dvar_to_keep, constraint_to_keep}, {dvar_to_remove, constraint_to_remove});
-}
-
 optional<Core::Decls> typechecker_state::entails_by_superclass(const pair<Core::Var, Hs::Type>& to_keep, const pair<Core::Var, Hs::Type>& to_remove)
 {
     auto& [dvar_to_keep, constraint_to_keep] = to_keep;
@@ -216,7 +205,7 @@ optional<Core::Decls> typechecker_state::entails_by_superclass(const pair<Core::
             dict_exp = {extractor, dict_exp};
 
         // dvar_to_remove = extractor[n] extractor[n-1] ... extractor[0] dvar_to_keep
-        return Hs::Decls( { Hs::simple_decl(dvar_to_remove, dict_exp) } );
+        return Core::Decls( { pair(dvar_to_remove, dict_exp) } );
     }
     else
         return {};

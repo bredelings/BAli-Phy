@@ -424,11 +424,6 @@ struct typechecker_state: FreshVarSource
 
     // FIXME: this should be  const
     std::optional<Core::Decls>
-    entails_by_superclass(const std::pair<ID, Hs::Type>& to_keep,
-                          const std::pair<ID, Hs::Type>& to_remove);
-
-    // FIXME: this should be  const
-    std::optional<Core::Decls>
     entails_by_superclass(const std::pair<Core::Var, Hs::Type>& to_keep,
                           const std::pair<Core::Var, Hs::Type>& to_remove);
 
@@ -473,7 +468,7 @@ std::optional<Core::Decls> typechecker_state::entails(const T& to_keep, const st
 
         Core::Var dvar( {noloc, to_remove.first} );
         Core::Decls decls;
-        decls.push_back( Hs::simple_decl( dvar, dfun_exp) );
+        decls.push_back( { dvar, dfun_exp} );
 
         // If we can get (dvar1 :: K1 a) and (dvar2 :: K2 a) and a dfun so that dvar = dfun dvar1 dvar2
         for(auto& [dvar,constraint]: wanteds)
@@ -507,7 +502,7 @@ std::optional<Core::Decls> typechecker_state::entails(const T& to_keep, const st
         auto [dfun_exp, wanteds] = *inst;
 
         Core::Decls decls;
-        decls.push_back( Hs::simple_decl( to_remove.first, dfun_exp) );
+        decls.push_back( { to_remove.first, dfun_exp} );
 
         // If we can get (dvar1 :: K1 a) and (dvar2 :: K2 a) and a dfun so that dvar = dfun dvar1 dvar2
         for(auto& [dvar, constraint]: wanteds)

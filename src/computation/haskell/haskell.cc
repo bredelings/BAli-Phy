@@ -686,7 +686,7 @@ string GenBind::print() const
         ds.push_back( darg.print_with_type() );
 
     string s = "[ "+join(as," ")+" ]  [ "+join(ds," ")+" ]";
-    s += dict_decls.print()+"\n";
+    s += print_cdecls(dict_decls)+"\n";
     s += body.print();
     return s;
 }
@@ -731,41 +731,3 @@ expression_ref error(const std::string& s)
     return {error,msg};
 }
 }
-
-namespace Core
-{
-    Exp Lambda(const std::vector<Var>& args, const Exp& body)
-    {
-        if (args.empty())
-            return body;
-        else
-        {
-            std::vector<Hs::Pattern> arg_pats;
-            for(auto& arg: args)
-                arg_pats.push_back(arg);
-
-            return Hs::LambdaExp(arg_pats, body);
-        }
-    }
-
-    Exp Let(const Decls& decls, const Exp& body)
-    {
-        if (decls.empty())
-            return body;
-        else
-            return Hs::LetExp({noloc, {decls}}, {noloc, body});
-    }
-
-    Exp Apply(const Exp& fun, const std::vector<Exp>& args)
-    {
-        if (args.empty())
-            return fun;
-        else
-        {
-            return Hs::ApplyExp(fun, args);
-        }
-    }
-}
-
-
-

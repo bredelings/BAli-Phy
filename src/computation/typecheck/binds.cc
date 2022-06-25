@@ -553,7 +553,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
                 qtvs_in_this_type.push_back(*qtv);
 
         // Default any constraints that do not occur in THIS type.
-        auto [s2, decls2, lie_for_this_type] = default_preds( fixed_tvs, mtvs_in_this_type, lie_retained );
+        auto [s2, default_decls, lie_for_this_type] = default_preds( fixed_tvs, mtvs_in_this_type, lie_retained );
 
         auto constraints_for_this_type = constraints_from_lie(lie_for_this_type);
 
@@ -575,12 +575,9 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
         Hs::Var poly_id({noloc,name});
         Hs::Var mono_id = mono_ids.at(name);
+        auto dict_args = vars_from_lie( lie_for_this_type );
 
-        vector<Core::Var> dict_args;
-        for(auto& [dvar, constraint]: lie_for_this_type)
-            dict_args.push_back( dvar );
-
-        Hs::BindInfo info(poly_id, mono_id, monotype, polytype, dict_args, Hs::Binds({decls2}));
+        Hs::BindInfo info(poly_id, mono_id, monotype, polytype, dict_args, default_decls);
         bind_infos.insert({name, info});
 
         if (restricted)

@@ -3,6 +3,8 @@
 
 #include <utility>  // for function
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/var.H"
+#include "computation/expression/let.H"
 
 // make a Core namespace
 
@@ -10,7 +12,10 @@ namespace Core
 {
     // This should be Core::Exp
     typedef expression_ref Exp;
-    typedef expression_ref Decl;
+    typedef CDecl Decl;
+    typedef CDecls Decls;
+
+    typedef var Var;
 
     // Wrappers
     typedef std::function<Exp(const Exp&)> wrapper;
@@ -18,6 +23,9 @@ namespace Core
     extern Core::wrapper wrapper_id;
 
     Exp Tuple(const std::vector<Exp>& es);
+    Exp Lambda(const std::vector<Var>& args, const Exp& body);
+    Exp Let(const Decls& args, const Exp& body);
+    Exp Apply(const Exp& fun, const std::vector<Exp>& args);
 };
 
 Core::wrapper operator*(const Core::wrapper&, const Core::wrapper&);

@@ -129,7 +129,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 
     string dfun_name = "d"+get_unqualified_name(class_info->name)+tycon_names;
     
-    auto dfun = get_fresh_Var(dfun_name, true);
+    auto dfun = get_fresh_var(dfun_name, true);
 
     //  -- new -- //
     Hs::Type inst_type = Hs::add_constraints(inst_decl.context, inst_decl.constraint);
@@ -276,7 +276,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     {
         auto op = get_fresh_Var("i"+method_name, true);
 
-        dict_entries.push_back( Core::Apply(op, vars_from_lie<Core::Exp>(givens)) );
+        dict_entries.push_back( Core::Apply(make_var(op), vars_from_lie<Core::Exp>(givens)) );
 
         // forall b. Ix b => a -> b -> b
         Hs::Type op_type = Hs::remove_top_gen(method_type);
@@ -311,7 +311,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     if (decls_super.size())
         dict = Core::Let( decls_super, dict );
 
-    return {decls, Hs::simple_decl(dfun, Core::Lambda(given_dvars, dict))};
+    return {decls, pair(dfun, Core::Lambda(given_dvars, dict))};
 }
 
 // We need to handle the instance decls in a mutually recursive way.

@@ -147,8 +147,6 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
         }
         else if (auto gb = decl.to<Hs::GenBind>())
         {
-            vector<var> tup_dict_vars = make_vars(gb->dict_args);
-
             vector<var> binders;
             for(auto& [name, info]: gb->bind_infos)
             {
@@ -160,10 +158,10 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
             assert(N >= 1);
 
             // tup = \dict1 dict2 ... dictn -> let dict_binds in let {x_inner[1]=..;...;x_inner[n]=..} in (x_inner[1],x_inner[2],...x_inner[n])
-            expression_ref tup_body = let_expression ( desugar_decls(gb->dict_decls),
+            expression_ref tup_body = let_expression ( gb->dict_decls,
                                       let_expression ( desugar_decls(gb->body),
                                       maybe_tuple(binders) ) );
-            expression_ref tup_lambda = lambda_quantify( tup_dict_vars, tup_body );
+            expression_ref tup_lambda = lambda_quantify( gb->dict_args, tup_body );
 
             if (N == 1)
             {
@@ -172,10 +170,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 
                 var x_outer = make_var(info.outer_id);
 
-                vector<var> dict_vars = make_vars(info.dict_args);
-
-                expression_ref extractor = lambda_quantify( dict_vars, let_expression( desugar_decls( info.binds ),
-                                                                                       tup_body ) );
+                expression_ref extractor = lambda_quantify( info.dict_args, let_expression( info.default_decls, tup_body ) );
 
                 decls.push_back({x_outer, extractor});
             }
@@ -194,16 +189,13 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
                     fields[i] = x_inner;
                     expression_ref pattern = get_tuple(fields);
 
-                    expression_ref extractor = tup;
-                    for(auto& dict_var: tup_dict_vars)
+                    Core::Exp extractor = tup;
+                    for(auto& dict_var: gb->dict_args)
                         extractor = {extractor, dict_var};
 
                     extractor = make_case_expression(extractor,{{pattern}},{x_inner});
 
-                    vector<var> dict_vars = make_vars(info.dict_args);
-
-                    extractor = lambda_quantify( dict_vars, let_expression( desugar_decls( info.binds ),
-                                                                            extractor ) );
+                    extractor = lambda_quantify( info.dict_args, let_expression( info.default_decls, extractor ) );
 
                     decls.push_back({x_outer, extractor});
 
@@ -459,15 +451,12 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     }
     else if (auto v = E.to<Hs::Var>())
     {
+        auto V = *v;
+        V.wrap = {};
+        Core::Exp E = make_var(V);
         if (v->wrap)
-        {
-            auto V = *v;
-            auto w = *V.wrap;
-            V.wrap = {};
-            return desugar( w(V) );
-        }
-        else
-            return make_var(*v);
+            E = (*v->wrap)(E);
+        return E;
     }
     else if (auto c = E.to<Hs::Con>())
         return var(unloc(c->name));
@@ -547,7 +536,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
-        return desugar( texp->wrap(texp->exp) );
+        return texp->wrap( desugar( texp->exp) );
     }
     else if (E.is_a<Hs::LambdaExp>())
     {
@@ -605,11 +594,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         vector<expression_ref> args;
         for(int i=0; i < app->args.size(); i++)
         {
-            auto& arg = app->args[i];
-            if (app->arg_wrappers.empty())
-                args.push_back( desugar(arg) );
-            else
-                args.push_back( desugar( app->arg_wrappers[i](arg) ) );
+            auto arg = desugar( app->args[i] );
+            if (not app->arg_wrappers.empty())
+                arg = app->arg_wrappers[i]( arg );
+
+            args.push_back( arg );
         }
 
         return apply_expression( head, args );

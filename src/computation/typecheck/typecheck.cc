@@ -576,7 +576,9 @@ Core::Var typechecker_state::fresh_dvar(const Hs::Type& constraint)
     ID name = "dvar";
     if (auto cname = maybe_get_class_name_from_constraint(constraint))
         name = "d" + *cname;
-    return get_fresh_Var(name, false);
+    auto dvar = get_fresh_var(name, false);
+    dvar.type_ = constraint;
+    return dvar;
 }
 
 Core::Var typechecker_state::add_dvar(const Hs::Type& constraint)
@@ -1098,8 +1100,7 @@ LIE typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
     LIE ordered_lie;
     for(auto& constraint:constraints)
     {
-        auto dvar = get_fresh_Var("dvar", false);
-        dvar.type = constraint;
+        auto dvar = fresh_dvar(constraint);
         ordered_lie.push_back({dvar, apply_current_subst(constraint)});
     }
     return ordered_lie;
@@ -1190,11 +1191,15 @@ pair<Hs::Binds,Core::Decls> typechecker_result::all_binds() const
     ranges::insert(all, all.end(), instance_method_decls);
     ranges::insert(all, all.end(), class_binds);
 
+    std::cerr<<"Haskell decls:\n";
     std::cerr<<all.print();
-    std::cerr<<"\n\n";
 
     Core::Decls all2 = top_simplify_decls;
     all2 += dfun_decls;
+
+    std::cerr<<"Core decls:\n";
+    std::cerr<<print_cdecls(all2);
+    std::cerr<<"\n\n";
 
     return {all, all2};
 }
