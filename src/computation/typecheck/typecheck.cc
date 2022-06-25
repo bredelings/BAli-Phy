@@ -1185,21 +1185,22 @@ Hs::Decls typechecker_state::add_type_var_kinds(Hs::Decls type_decls)
     return type_decls;
 }
 
-Hs::Binds typechecker_result::all_binds() const
+pair<Hs::Binds,Core::Decls> typechecker_result::all_binds() const
 {
     Hs::Binds all = value_decls;
     all.signatures = {};
 
     ranges::insert(all, all.end(), default_method_decls);
     ranges::insert(all, all.end(), instance_method_decls);
-    all.push_back({top_simplify_decls});
-    all.push_back({dfun_decls});
     ranges::insert(all, all.end(), class_binds);
 
     std::cerr<<all.print();
     std::cerr<<"\n\n";
 
-    return all;
+    Core::Decls all2 = top_simplify_decls;
+    all2 += dfun_decls;
+
+    return {all, all2};
 }
 
 

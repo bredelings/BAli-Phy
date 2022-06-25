@@ -95,7 +95,7 @@ struct typechecker_result
 
     Core::Decls top_simplify_decls;
 
-    Hs::Binds all_binds() const;
+    std::pair<Hs::Binds, Core::Decls> all_binds() const;
 };
 
 class Module

@@ -465,24 +465,23 @@ void Module::compile(const Program& P)
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = rename(opts, M);
 
-    if (opts.typecheck)
-    {
-        std::cerr<<"-------- module "<<name<<"--------\n";
-        auto tc_result = typecheck(M);
+    std::cerr<<"-------- module "<<name<<"--------\n";
+    auto tc_result = typecheck(M);
 
-        std::cerr<<"All decls:\n";
-        for(auto& [name,type]: tc_state->gve)
-            std::cerr<<name<<" :: "<<type<<"\n";
+    std::cerr<<"All decls:\n";
+    for(auto& [name,type]: tc_state->gve)
+        std::cerr<<name<<" :: "<<type<<"\n";
 
-        M.value_decls = tc_result.all_binds();
-    }
+    auto [hs_decls, core_decls] = tc_result.all_binds();
 
     // Updates exported_symols_ + exported_types_
     perform_exports();
 
     // look only in value_decls now
     // FIXME: how to handle functions defined in instances and classes?
-    value_decls = desugar(opts, P.fresh_var_state(), M.value_decls);
+    value_decls = desugar(opts, P.fresh_var_state(), hs_decls);
+    auto core_decls2 = desugar(opts, P.fresh_var_state(), Hs::Binds({core_decls}));
+    value_decls += core_decls2;
 
     value_decls = load_builtins(loader, M.foreign_decls, value_decls);
 
