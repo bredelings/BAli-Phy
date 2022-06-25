@@ -61,7 +61,7 @@ string WildcardPattern::print() const
 string parenthesize_pattern(const Pattern& p)
 {
     string result = p.print();
-    if (p.is_a<Located<Var>>() or p.is_a<Tuple>() or p.is_a<WildcardPattern>() or p.is_a<LazyPattern>() or p.is_a<AsPattern>() or p.is_a<List>())
+    if (p.is_a<Var>() or p.is_a<Tuple>() or p.is_a<WildcardPattern>() or p.is_a<LazyPattern>() or p.is_a<AsPattern>() or p.is_a<List>())
         ;
     else
         result = "(" + result + ")";
