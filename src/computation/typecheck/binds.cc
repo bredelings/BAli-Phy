@@ -558,7 +558,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
         auto constraints_for_this_type = constraints_from_lie(lie_for_this_type);
 
         Hs::Type polytype = Hs::add_constraints( constraints_for_this_type, monotype );
-        // Eliminate all meta type variales
+        // Eliminate all meta type variables
         polytype = apply_subst(qmtv_subst, polytype);
         // Only quantify over type variables that occur in THIS type.
         polytype = quantify( qtvs_in_this_type, polytype );
