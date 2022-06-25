@@ -906,12 +906,12 @@ struct BindInfo
     Type polytype;
 
     // Non-defaulted dictionaries -- still passed.
-    std::vector<Var> dict_args;
+    std::vector<Core::Var> dict_args;
 
     // This defines construct the defaulted dictionaries from dict_args;
     Binds binds;
 
-    BindInfo(const Var& o, const Var& i, const Type& m, const Type& p, const std::vector<Var>& da, const Binds& b)
+    BindInfo(const Var& o, const Var& i, const Type& m, const Type& p, const std::vector<Core::Var>& da, const Binds& b)
         : outer_id(o), inner_id(i), monotype(m), polytype(p), dict_args(da), binds(b)
     {
         outer_id.type = polytype;

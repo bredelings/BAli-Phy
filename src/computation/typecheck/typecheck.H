@@ -415,7 +415,7 @@ struct typechecker_state: FreshVarSource
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
-    std::vector<std::pair<Core::Var,Hs::Type>> constraints_to_lie(const std::vector<Hs::Type>&);
+    LIE constraints_to_lie(const std::vector<Hs::Type>&);
 
     // FIXME: this should be  const
     std::vector<std::pair<std::string, Hs::Type>> superclass_constraints(const Hs::Type& constraint);
@@ -497,7 +497,7 @@ std::optional<Core::Decls> typechecker_state::entails(const T& to_keep, const st
 }
 
 template <typename T>
-std::optional<Hs::Decls> typechecker_state::entails(const T& to_keep, const std::pair<Core::Var, Hs::Type>& to_remove)
+std::optional<Core::Decls> typechecker_state::entails(const T& to_keep, const std::pair<Core::Var, Hs::Type>& to_remove)
 {
     // 1. First check if the relevant constraints are superclasses of the current constraint.
     for(auto& constraint2: to_keep)
@@ -530,7 +530,7 @@ std::optional<Hs::Decls> typechecker_state::entails(const T& to_keep, const std:
     return {};
 }
 
-local_instance_env unordered_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie1);
+local_instance_env unordered_lie(const LIE& lie1);
 
 std::optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint);
 ID get_class_name_from_constraint(const Hs::Type& constraint);
@@ -551,14 +551,14 @@ ID get_full_class_name_from_constraint(const Hs::Type& constraint);
 
 std::vector<Hs::Type> constraints_from_lie(const local_instance_env& lie);
 
-std::vector<Hs::Type> constraints_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie);
+std::vector<Hs::Type> constraints_from_lie(const LIE& lie);
 
 std::vector<Core::Var> vars_from_lie(const local_instance_env& lie);
 
-std::vector<Core::Var> vars_from_lie(const std::vector<std::pair<Hs::Var, Hs::Type>>& lie);
+std::vector<Core::Var> vars_from_lie(const LIE& lie);
 
 template <typename T>
-std::vector<T> vars_from_lie(const std::vector<std::pair<Core::Var, Hs::Type>>& lie)
+std::vector<T> vars_from_lie(const LIE& lie)
 {
     std::vector<T> dvars;
     for(auto& [dvar, _]: lie)

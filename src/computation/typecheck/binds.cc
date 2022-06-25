@@ -169,7 +169,7 @@ vector<Hs::Type> constraints_from_lie(const local_instance_env& lie)
     return constraints;
 }
 
-vector<Hs::Type> constraints_from_lie(const vector<pair<Hs::Var, Hs::Type>>& lie)
+vector<Hs::Type> constraints_from_lie(const LIE& lie)
 {
     vector<Hs::Type> constraints;
     for(auto& [_, constraint]: lie)
@@ -177,21 +177,21 @@ vector<Hs::Type> constraints_from_lie(const vector<pair<Hs::Var, Hs::Type>>& lie
     return constraints;
 }
 
-vector<Hs::Var> vars_from_lie(const local_instance_env& lie)
+vector<Core::Var> vars_from_lie(const local_instance_env& lie)
 {
-    vector<Hs::Var> dict_vars;
+    vector<Core::Var> dict_vars;
     for(auto& [name, constraint]: lie)
     {
-        Hs::Var dict_var({noloc,name});
+        Core::Var dict_var({noloc,name});
         dict_var.type = constraint;
         dict_vars.push_back( dict_var );
     }
     return dict_vars;
 }
 
-vector<Hs::Var> vars_from_lie(const vector<pair<Hs::Var, Hs::Type>>& lie)
+vector<Core::Var> vars_from_lie(const LIE& lie)
 {
-    vector<Hs::Var> vars;
+    vector<Core::Var> vars;
     for(auto& [var, constraint]: lie)
         vars.push_back( var );
     return vars;
@@ -559,7 +559,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
     // 2. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
 
-    vector< Hs::Var > dict_vars = vars_from_lie( lie_retained );
+    vector< Core::Var > dict_vars = vars_from_lie( lie_retained );
 
     global_value_env poly_binder_env;
     for(auto& [name, monotype]: mono_binder_env)
@@ -596,9 +596,9 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
         Hs::Var poly_id({noloc,name});
         Hs::Var mono_id = mono_ids.at(name);
 
-        vector<Hs::Var> dict_args;
+        vector<Core::Var> dict_args;
         for(auto& [name, constraint]: lie_for_this_type)
-            dict_args.push_back( Hs::Var({noloc,name}) );
+            dict_args.push_back( Core::Var({noloc,name}) );
 
         Hs::BindInfo info(poly_id, mono_id, monotype, polytype, dict_args, Hs::Binds({decls2}));
         bind_infos.insert({name, info});

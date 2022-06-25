@@ -1089,9 +1089,9 @@ tuple<vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skolemize(const Hs:
     return {tvs, givens, type};
 }
 
-vector<pair<Hs::Var,Hs::Type>> typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
+LIE typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
 {
-    vector<pair<Hs::Var, Hs::Type>> ordered_lie;
+    LIE ordered_lie;
     for(auto& constraint:constraints)
     {
         auto dvar = get_fresh_Var("dvar", false);
@@ -1101,7 +1101,7 @@ vector<pair<Hs::Var,Hs::Type>> typechecker_state::constraints_to_lie(const vecto
     return ordered_lie;
 }
 
-local_instance_env unordered_lie(const vector<pair<Hs::Var, Hs::Type>>& lie1)
+local_instance_env unordered_lie(const LIE& lie1)
 {
     local_instance_env lie2;
     for(auto& [var,constraint]: lie1)
