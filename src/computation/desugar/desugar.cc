@@ -589,19 +589,21 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         std::abort();
     else if (auto app = E.to<Hs::ApplyExp>())
     {
-        auto head = desugar(app->head);
+        Core::Exp A = desugar(app->head);
 
-        vector<expression_ref> args;
         for(int i=0; i < app->args.size(); i++)
         {
             auto arg = desugar( app->args[i] );
             if (not app->arg_wrappers.empty())
                 arg = app->arg_wrappers[i]( arg );
 
-            args.push_back( arg );
+            A = apply_expression(A, arg);
+
+            if (not app->res_wrappers.empty())
+                A = app->res_wrappers[i]( A );
         }
 
-        return apply_expression( head, args );
+        return A;
     }
     else if (auto L = E.to<Hs::Literal>())
     {
