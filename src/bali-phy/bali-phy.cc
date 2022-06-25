@@ -498,6 +498,7 @@ int main(int argc,char* argv[])
         //------------- Setup module loader -------------//
         auto L = setup_module_loader(args, argv[0]);
         L->args = trailing_args(argc, argv, trailing_args_separator);
+        L->optimize = args["optimize"].as<bool>();
 
         //---------- Initialize random seed -----------//
         unsigned long seed = init_rng_and_get_seed(args);
@@ -509,10 +510,6 @@ int main(int argc,char* argv[])
         {
             string filename = args["test-module"].as<string>();
             auto M = L->load_module_from_file(filename);
-            if (args.count("no-type-check"))
-                L->typecheck = false;
-
-            L->optimize = args["optimize"].as<bool>();
 
             Program P(L);
             P.add(M);
@@ -526,11 +523,6 @@ int main(int argc,char* argv[])
         else if (args.count("run-module"))
         {
             string filename = args["run-module"].as<string>();
-
-            if (args.count("no-type-check"))
-                L->typecheck = false;
-
-            L->optimize = args["optimize"].as<bool>();
 
             execute_file(L, filename);
             exit(0);
