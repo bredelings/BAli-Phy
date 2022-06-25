@@ -22,7 +22,19 @@ var FreshVarSource::get_fresh_var()
 var FreshVarSource::get_fresh_var(const std::string& name)
 {
     assert(not is_haskell_builtin_con_name(name));
+//    assert(name.empty() or not is_qualified_symbol(name));
     return var(name, get_index() );
+}
+
+var FreshVarSource::get_fresh_var(const std::string& name, bool qualified)
+{
+    assert(not is_haskell_builtin_con_name(name));
+    string name2 = get_unqualified_name(name) + "@" + std::to_string( get_index() );
+
+    if (qualified)
+        name2 = qualified_name(name2);
+
+    return var(name2);
 }
 
 var FreshVarSource::get_fresh_var(const var& x)
