@@ -55,12 +55,6 @@ void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
 {
-    if (exp_type.check())
-    {
-        checkRho(App, exp_type.check_type());
-        return;
-    }
-
     int arg_index = int(App.args.size())-1-i;
 
     Hs::Type fun_type;
@@ -68,15 +62,18 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i
         tcRho(App, Infer(fun_type), i + 1);
     else
         tcRho(App.head, Infer(fun_type));
+    fun_type = apply_current_subst(fun_type);
 
     auto e = myexception()<<"Applying "<<(arg_index+1)<<" arguments to function "<<App.head.print()<<", but it only takes "<<i<<"!";
     auto [arg_type, result_type] = unify_function(fun_type, e);
 
+    // Check the argument according to its required type
     auto wrap_arg = checkSigma(App.args[arg_index], arg_type);
-
     App.arg_wrappers.push_back(wrap_arg);
 
-    exp_type.infer_type(result_type);
+    // Convert the result to the expected time for the term
+    auto wrap_res = instantiateSigma(result_type, exp_type);
+    App.res_wrappers.push_back(wrap_res);
 }
 
 void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
