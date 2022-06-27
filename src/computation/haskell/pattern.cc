@@ -48,9 +48,17 @@ string ListPattern::print() const
 string TuplePattern::print() const
 {
     vector<string> parts;
-    for(auto& pat: pats)
+    for(auto& pat: elements)
         parts.push_back( pat.print() );
     return "(" + join(parts,",") +")";
+}
+
+Pattern tuple_pattern(const std::vector<Pattern>& es)
+{
+    if (es.size() == 1)
+        return es[0];
+    else
+        return TuplePattern(es);
 }
 
 string WildcardPattern::print() const

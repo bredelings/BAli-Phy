@@ -72,10 +72,14 @@ struct ListPattern: public Object
 
 struct TuplePattern: public Object
 {
-    std::vector<Pattern> pats;
+    std::vector<Pattern> elements;
     TuplePattern* clone() const { return new TuplePattern(*this);}
     std::string print() const;
+    TuplePattern() {}
+    TuplePattern(const std::vector<Pattern>& es): elements(es) {}
 };
+
+Pattern tuple_pattern(const std::vector<Pattern>& es);
 
 struct LazyPattern: public Object
 {
