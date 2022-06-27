@@ -91,10 +91,12 @@ using std::tuple;
   * make wrappers operate on Core
   * separate Core::Apply, Core::Let, Core::Lambda, Core::Tuple
   * add a wrapper to checkSigma( ).
+  * record a result wrapper on ApplyExp
+  * Don't desugar Core::Decls, just the Hs::Binds.  But pass them both to the optimizer.
 
   TODO:
-  0. Don't desugar Core::Decls, just the Hs::Binds.  But pass them both to the optimizer.
-  0. Where do we put the wrapper if we call instantiateSigma for an intermediate Apply?
+  0. merge rename_pattern_from_bindinfo into tcPat( ) -> pass in (LetCtxt signatures (\id->monoid))
+  0. remove desugar_pattern( )
   0. Make a quals class.
   0. Make a Pattern class.
   0. Switch current_lie() to an ordered LIE.
