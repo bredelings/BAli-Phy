@@ -376,7 +376,7 @@ bound_var_info find_vars_in_pattern2(const expression_ref& pat)
         return find_vars_in_pattern2(sp->pattern);
     else if (auto ap = pat.to<Haskell::AsPattern>())
 	return plus( find_vars_in_pattern2(ap->var), find_vars_in_pattern2(ap->pattern) );
-    else if (auto l = pat.to<Haskell::List>())
+    else if (auto l = pat.to<Haskell::ListPattern>())
         return find_vars_in_patterns2(l->elements);
     else if (auto t = pat.to<Haskell::Tuple>())
         return find_vars_in_patterns2(t->elements);
