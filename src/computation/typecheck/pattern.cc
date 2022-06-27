@@ -141,7 +141,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
         return lve;
     }
     // TUPLE-PAT
-    else if (auto t = pat.to<Hs::Tuple>())
+    else if (auto t = pat.to<Hs::TuplePattern>())
     {
         auto T = *t;
         vector<Hs::Type> types;
@@ -289,7 +289,7 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<string, Hs::BindI
         return L;
     }
     // TUPLE-PAT
-    else if (auto t = pat.to<Hs::Tuple>())
+    else if (auto t = pat.to<Hs::TuplePattern>())
     {
         auto T = *t;
         for(auto& element: T.elements)

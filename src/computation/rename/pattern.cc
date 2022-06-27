@@ -25,12 +25,12 @@ expression_ref unapply(expression_ref E)
             LP.elements.push_back( unapply(pattern) );
         return LP;
     }
-    else if (E.is_a<Hs::Tuple>())
+    else if (auto t = E.to<Hs::Tuple>())
     {
-        auto T = E.as_<Hs::Tuple>();
-        for(auto& pattern: T.elements)
-            pattern = unapply(pattern);
-        return T;
+        Hs::TuplePattern TP;
+        for(auto& pattern: t->elements)
+            TP.elements.push_back( unapply(pattern) );
+        return TP;
     }
     else if (E.is_a<Hs::AsPattern>())
     {
@@ -137,9 +137,9 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         auto& L = pat.as_<Hs::ListPattern>();
         return find_vars_in_patterns(L.elements, top);
     }
-    else if (pat.is_a<Hs::Tuple>())
+    else if (pat.is_a<Hs::TuplePattern>())
     {
-        auto& T = pat.as_<Hs::Tuple>();
+        auto& T = pat.as_<Hs::TuplePattern>();
         return find_vars_in_patterns(T.elements, top);
     }
     else if (auto v = pat.to<Hs::Var>())
@@ -245,9 +245,9 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         return bound;
     }
     //5. Handle List pattern.
-    else if (pat.is_a<Hs::Tuple>())
+    else if (pat.is_a<Hs::TuplePattern>())
     {
-        auto T = pat.as_<Hs::Tuple>();
+        auto T = pat.as_<Hs::TuplePattern>();
         auto bound = rename_patterns(T.elements,top);
         pat = T;
         return bound;

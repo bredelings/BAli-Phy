@@ -244,9 +244,9 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
             element = desugar_pattern(element);
         return get_list(L.elements);
     }
-    else if (E.is_a<Hs::Tuple>())
+    else if (E.is_a<Hs::TuplePattern>())
     {
-        auto T = E.as_<Hs::Tuple>();
+        auto T = E.as_<Hs::TuplePattern>();
         for(auto& element: T.elements)
             element = desugar_pattern(element);
         return get_tuple(T.elements);
