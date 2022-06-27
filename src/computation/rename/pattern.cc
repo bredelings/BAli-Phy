@@ -132,9 +132,9 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
 	return bound;
     }
 
-    else if (pat.is_a<Hs::List>())
+    else if (pat.is_a<Hs::ListPattern>())
     {
-        auto& L = pat.as_<Hs::List>();
+        auto& L = pat.as_<Hs::ListPattern>();
         return find_vars_in_patterns(L.elements, top);
     }
     else if (pat.is_a<Hs::Tuple>())
