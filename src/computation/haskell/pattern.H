@@ -65,7 +65,7 @@ struct WildcardPattern: public Object
 
 struct ListPattern: public Object
 {
-    std::vector<Pattern> pats;
+    std::vector<Pattern> elements;
     ListPattern* clone() const { return new ListPattern(*this);}
     std::string print() const;
 };

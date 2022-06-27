@@ -18,12 +18,12 @@ using std::set;
 // so that f is actually the head.
 expression_ref unapply(expression_ref E)
 {
-    if (E.is_a<Hs::List>())
+    if (auto l = E.to<Hs::List>())
     {
-        auto L = E.as_<Hs::List>();
-        for(auto& pattern: L.elements)
-            pattern = unapply(pattern);
-        return L;
+        Hs::ListPattern LP;
+        for(auto& pattern: l->elements)
+            LP.elements.push_back( unapply(pattern) );
+        return LP;
     }
     else if (E.is_a<Hs::Tuple>())
     {
@@ -237,9 +237,9 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     }
     
     //4. Handle List pattern.
-    if (pat.is_a<Hs::List>())
+    if (pat.is_a<Hs::ListPattern>())
     {
-        auto L = pat.as_<Hs::List>();
+        auto L = pat.as_<Hs::ListPattern>();
         auto bound = rename_patterns(L.elements,top);
         pat = L;
         return bound;

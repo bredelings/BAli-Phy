@@ -237,9 +237,9 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
 
 expression_ref desugar_state::desugar_pattern(const expression_ref & E)
 {
-    if (E.is_a<Hs::List>())
+    if (E.is_a<Hs::ListPattern>())
     {
-        auto L = E.as_<Hs::List>();
+        auto L = E.as_<Hs::ListPattern>();
         for(auto& element: L.elements)
             element = desugar_pattern(element);
         return get_list(L.elements);

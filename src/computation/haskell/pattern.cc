@@ -40,8 +40,8 @@ string LiteralPattern::print() const
 string ListPattern::print() const
 {
     vector<string> parts;
-    for(auto& pat: pats)
-        parts.push_back( pat.print() );
+    for(auto& element: elements)
+        parts.push_back( element.print() );
     return "[" + join(parts,",") +"]";
 }
 

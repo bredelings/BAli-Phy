@@ -125,7 +125,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
         return {};
     }
     // LIST-PAT
-    else if (auto l = pat.to<Hs::List>())
+    else if (auto l = pat.to<Hs::ListPattern>())
     {
         auto L = *l;
 
@@ -279,7 +279,7 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<string, Hs::BindI
         return pat;
     }
     // LIST-PAT
-    else if (auto l = pat.to<Hs::List>())
+    else if (auto l = pat.to<Hs::ListPattern>())
     {
         auto L = *l;
 
