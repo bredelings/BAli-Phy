@@ -375,8 +375,8 @@ Hs::Type typechecker_state::expTypeToType(const Expected& E)
 
 void typechecker_state::set_expected_type(const Expected& E, const Hs::Type& type)
 {
-    if (exp_type.infer())
-        exp_type.infer_type(type);
+    if (E.infer())
+        E.infer_type(type);
     else
     {
         try {

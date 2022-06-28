@@ -114,10 +114,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             lve += checkPat(Con.args[i], field_types[i]);
         pat = Con;
 
-        if (exp_type.infer())
-            exp_type.infer_type( type );
-        else
-            unify( type, exp_type.check_type() );
+        set_expected_type( exp_type, type );
 
         return lve;
     }
@@ -168,10 +165,9 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             lve += checkPat(element, element_type, sigs);
 
         pat = L;
-        if (exp_type.infer())
-            exp_type.infer_type( Hs::ListType(element_type) );
-        else
-            unify( Hs::ListType(element_type), exp_type.check_type() );
+
+        set_expected_type(  exp_type, Hs::ListType(element_type) );
+
         return lve;
     }
     // TUPLE-PAT
@@ -187,10 +183,9 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             lve += lve1;
         }
         pat = T;
-        if (exp_type.infer())
-            exp_type.infer_type( Hs::TupleType(types) );
-        else
-            unify( Hs::TupleType(types), exp_type.check_type() );
+
+        set_expected_type( exp_type, Hs::TupleType(types) );
+
         return lve;
     }
     // case (x :: exp_type) of (pat :: type) -> E
@@ -207,10 +202,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
         if (L.is_BoxedInteger())
         {
-            if (exp_type.infer())
-                exp_type.infer_type( int_type() );
-            else
-                unify( int_type(), exp_type.check_type() );
+            set_expected_type( exp_type, int_type() );
             return {};
         }
 
@@ -220,10 +212,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
         if (L.is_Char())
         {
-            if (exp_type.infer())
-                exp_type.infer_type( char_type() );
-            else
-                unify( int_type(), exp_type.check_type() );
+            set_expected_type(  exp_type, char_type() );
             return {};
         }
         else if (auto i = L.is_Integer())
@@ -239,15 +228,12 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             L.literal = Hs::Integer(*i, fromInteger);
 
             pat = L;
-            if (exp_type.infer())
-                exp_type.infer_type( result_type );
-            else
-                unify( int_type(), exp_type.check_type() );
+            set_expected_type( exp_type, result_type );
             return {};
         }
         else if (L.is_String())
         {
-            exp_type.infer_type( Hs::ListType(char_type()) );
+            set_expected_type(exp_type, Hs::ListType(char_type()) );
             return {};
         }
         else if (auto d = L.is_Double())
@@ -262,10 +248,8 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
             L.literal = Hs::Double(*d, fromRational);
             pat = L;
-            if (exp_type.infer())
-                exp_type.infer_type( result_type );
-            else
-                unify( int_type(), exp_type.check_type() );
+
+            set_expected_type( exp_type, result_type );
             return {};
         }
         else
