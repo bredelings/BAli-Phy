@@ -46,7 +46,7 @@ void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type, int i)
     {
         if (exp_type.infer())
         {
-            auto [pat_type, lve1] = infer_pattern_type(rule.patterns[i]);
+            auto [pat_type, lve1] = inferPat(rule.patterns[i]);
 
             auto tc2 = copy_add_binders( lve1 );
 

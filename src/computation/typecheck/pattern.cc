@@ -55,7 +55,7 @@ typechecker_state::infer_var_pattern_type(Hs::Var& V, const map<string, Hs::Type
 local_value_env
 typechecker_state::checkPat(Hs::Pattern& pat, const Hs::SigmaType& exp_type, const map<string, Hs::Type>& sigs)
 {
-    auto [type, env] = infer_pattern_type(pat, sigs);
+    auto [type, env] = inferPat(pat, sigs);
     unify(type, exp_type);
     return env;
 }
@@ -148,7 +148,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
         local_value_env lve;
         for(auto& element: T.elements)
         {
-            auto [t1, lve1] = infer_pattern_type(element, sigs);
+            auto [t1, lve1] = inferPat(element, sigs);
             types.push_back(t1);
             lve += lve1;
         }
@@ -219,7 +219,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 }
 
 tuple<Hs::Type, local_value_env>
-typechecker_state::infer_pattern_type(Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
+typechecker_state::inferPat(Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
 {
     Hs::SigmaType type;
     auto gve = tcPat(pat, Infer(type), sigs);

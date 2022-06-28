@@ -43,7 +43,7 @@ typechecker_state::infer_qual_type(Hs::Qual& qual)
         auto PQ = *pq;
         // pat <- exp
         auto exp_type = inferRho(PQ.exp);
-        auto [pat_type, lve] = infer_pattern_type(PQ.bindpat);
+        auto [pat_type, lve] = inferPat(PQ.bindpat);
 
         // type(pat) = type(exp)
         unify(Hs::ListType(pat_type), exp_type);
@@ -131,7 +131,7 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         unify(bind_op_type, Hs::make_arrow_type(exp_type, a));
 
         // 4. Typecheck pat
-        auto [pat_type, pat_binders] = infer_pattern_type(PQ.bindpat);
+        auto [pat_type, pat_binders] = inferPat(PQ.bindpat);
 
         auto new_state = copy_clear_lie();
         new_state.add_binders(pat_binders);

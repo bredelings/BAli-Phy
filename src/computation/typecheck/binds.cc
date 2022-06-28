@@ -328,7 +328,7 @@ typechecker_state::infer_lhs_type(expression_ref& decl, const map<string, Hs::Ty
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
-        auto [type, lve] = infer_pattern_type( unloc(PD.lhs), signatures);
+        auto [type, lve] = inferPat( unloc(PD.lhs), signatures);
         decl = PD;
         return {type, lve};
     }
