@@ -271,13 +271,15 @@ struct typechecker_state: FreshVarSource
     global_value_env checkPat(Hs::Pattern& pat, const Hs::SigmaType&, const signature_env& sigs = {});
 
     std::tuple<Hs::Type, local_value_env>
-    infer_var_pattern_type(Hs::Var& v, const signature_env& sigs = {});
+    inferPat(Hs::Var& v, const signature_env& sigs = {});
 
     global_value_env
-    tcVarPat(Hs::Var& v, const Expected&, const signature_env& sigs = {});
+    tcPat(Hs::Var& v, const Expected&, const signature_env& sigs = {});
 
     global_value_env
-    checkVarPat(Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs);
+    checkPat(Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs);
+
+    Core::wrapper instPatSigma(const Hs::SigmaType& sigma_type, const Expected& exp_sigma_type);
 
     std::tuple<Hs::Type, local_value_env>
     infer_lhs_type(expression_ref& decl, const signature_env& sigs);

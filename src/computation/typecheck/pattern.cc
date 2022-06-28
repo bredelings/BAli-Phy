@@ -9,14 +9,17 @@ using std::set;
 using std::pair;
 using std::optional;
 
-local_value_env
-typechecker_state::checkVarPat(Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs)
+// Ensure that we can convert exp_type to pat_type, and get a wrapper proving it.
+Core::wrapper typechecker_state::instPatSigma(const Hs::SigmaType& pat_type, const Expected& exp_type)
 {
-    auto [type, env] = infer_var_pattern_type(v, sigs);
-    unify(type, exp_type);
-    return env;
+    if (exp_type.infer())
+    {
+        exp_type.infer_type( pat_type );
+        return Core::wrapper_id;
+    }
+    else
+        return subsumptionCheck( exp_type.check_type(), pat_type);
 }
-
 
 // OK, so if we have a signature x :: sigma1 and we do checkPat(x, sigma2)
 // then sigma2 is the type of the case object, and sigma1 is the type of a
@@ -31,7 +34,7 @@ typechecker_state::checkVarPat(Hs::Var& v, const Hs::SigmaType& exp_type, const 
 //
 
 local_value_env
-typechecker_state::tcVarPat(Hs::Var& V, const Expected& exp_type, const signature_env& sigs)
+typechecker_state::tcPat(Hs::Var& V, const Expected& exp_type, const signature_env& sigs)
 {
     auto& name = unloc(V.name);
     local_value_env lve;
@@ -70,22 +73,22 @@ typechecker_state::tcVarPat(Hs::Var& V, const Expected& exp_type, const signatur
     return lve;
 }
 
-tuple<Hs::Type, local_value_env>
-typechecker_state::infer_var_pattern_type(Hs::Var& V, const map<string, Hs::Type>& sigs)
-{
-    Hs::SigmaType type;
-    auto gve = tcVarPat(V, Infer(type), sigs);
-    return {type, gve};
-}
-
 local_value_env
-typechecker_state::checkPat(Hs::Pattern& pat, const Hs::SigmaType& exp_type, const map<string, Hs::Type>& sigs)
+typechecker_state::checkPat(Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs)
 {
-    auto [type, env] = inferPat(pat, sigs);
+    auto [type, env] = inferPat(v, sigs);
     unify(type, exp_type);
     return env;
 }
 
+
+tuple<Hs::Type, local_value_env>
+typechecker_state::inferPat(Hs::Var& V, const map<string, Hs::Type>& sigs)
+{
+    Hs::SigmaType type;
+    auto gve = tcPat(V, Infer(type), sigs);
+    return {type, gve};
+}
 
 // Figure 24. Rules for patterns
 local_value_env
@@ -95,7 +98,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     if (auto v = pat.to<Hs::Var>())
     {
         auto V = *v;
-        auto lve = tcVarPat(V, exp_type, sigs);
+        auto lve = tcPat(V, exp_type, sigs);
         pat = V;
         return lve;
     }
@@ -251,6 +254,15 @@ typechecker_state::inferPat(Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
     auto gve = tcPat(pat, Infer(type), sigs);
     return {type, gve};
 }
+
+local_value_env
+typechecker_state::checkPat(Hs::Pattern& pat, const Hs::SigmaType& exp_type, const map<string, Hs::Type>& sigs)
+{
+    auto [type, env] = inferPat(pat, sigs);
+    unify(type, exp_type);
+    return env;
+}
+
 
 Hs::Var
 rename_var_pattern_from_bindinfo(Hs::Var V, const map<string, Hs::BindInfo>& bind_info)
