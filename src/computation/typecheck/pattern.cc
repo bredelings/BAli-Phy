@@ -185,6 +185,14 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
         exp_type.infer_type( Hs::TupleType(types) );
         return lve;
     }
+    // case (x :: exp_type) of (pat :: type) -> E
+    else if (auto tp = pat.to<Hs::TypedPattern>())
+    {
+        auto TP = *tp;
+        auto binders = checkPat(TP.pat, TP.type);
+        TP.wrap = instPatSigma(TP.type, exp_type);
+        return binders;
+    }
     else if (auto l = pat.to<Hs::Literal>())
     {
         auto L = *l;

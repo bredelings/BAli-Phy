@@ -7,6 +7,8 @@
 // Can we eliminate this?
 #include "computation/expression/expression_ref.H"
 
+#include "core.H"
+
 #include "var.H"
 #include "literal.H"
 
@@ -44,6 +46,7 @@ struct TypedPattern: public Object
 {
     Pattern pat;
     Type type;
+    Core::wrapper wrap;
 
     TypedPattern* clone() const { return new TypedPattern(*this);}
     std::string print() const;
