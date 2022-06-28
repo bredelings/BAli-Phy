@@ -18,6 +18,18 @@ typechecker_state::checkVarPat(Hs::Var& v, const Hs::SigmaType& exp_type, const 
 }
 
 
+// OK, so if we have a signature x :: sigma1 and we do checkPat(x, sigma2)
+// then sigma2 is the type of the case object, and sigma1 is the type of a
+// binder that we create from the case object.
+//
+// So, it should be equivalent to
+//- tcPat(x :: sigma1, Check(sigma2)) = checkPat x sigma1
+//                                      instantiatePatSigma sigma1 Check(sigma2)
+//
+//                                    = wrapper <- subsCheck sigma2 sigma1
+//                                      return (wrapper, {x :: sigma1})
+//
+
 local_value_env
 typechecker_state::tcVarPat(Hs::Var& V, const Expected& exp_type, const signature_env& sigs)
 {
@@ -27,19 +39,33 @@ typechecker_state::tcVarPat(Hs::Var& V, const Expected& exp_type, const signatur
 
     if (sigs.count(name))
     {
+        // We can only have signatures for pattern binders in a let-context, not a lambda context.
         auto sig_type = sigs.at(name);
-        auto [tvs, wanteds, monotype] = instantiate(sig_type);
-        if (wanteds.size())
-            throw myexception()<<"variable '"<<name<<"' cannot have constrained type '"<<sig_type<<"' due to monomorphism restriction";
-        type = monotype;
+        if (exp_type.infer())
+        {
+            auto [tvs, wanteds, monotype] = instantiate(sig_type);
+            if (wanteds.size())
+                throw myexception()<<"variable '"<<name<<"' cannot have constrained type '"<<sig_type<<"' due to monomorphism restriction";
+            type = monotype;
+        }
+        else
+        {
+            // Add flat to check that the expected type doesn't have any non-entailed wanteds!
+            V.wrap = subsumptionCheck( exp_type.check_type(), sig_type );
+        }
     }
     else
     {
-        auto tv = fresh_meta_type_var( kind_star() );
-        type = tv;
+        if (exp_type.infer())
+            type = fresh_meta_type_var( kind_star() );
+        else
+            type = exp_type.check_type();
     }
+
+    if (exp_type.infer())
+        exp_type.infer_type( type );
+    
     V.type = type;
-    exp_type.infer_type( type );
     lve = lve.insert({name,type});
     return lve;
 }
