@@ -126,7 +126,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
         auto type = expTypeToType(exp_type);
         auto lve1 = checkPat(Ap.pattern, type, sigs);
-        auto lve2 = checkVarPat(Ap.var, type, sigs);
+        auto lve2 = checkPat(Ap.var, type, sigs);
         pat = Ap;
 
         return lve1 + lve2;
