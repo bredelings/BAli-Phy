@@ -875,9 +875,16 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
 Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2)
 {
     /*
-      How do we handle dictionary constraints?
+      If we can make y :: t2 out of x :: t1 then it is OK.  (without doing eta reduction, according to QL).
+      We return a wrapper that perform this conversion.
 
-      If we can make y :: t2 out of x :: t1 then it is OK.  (without doing eta reduction, according to QL).  
+      Q: How do we handle dictionary constraints?
+
+      A: When doing this conversion, we are allowed to make up dictionary variables for any constraints that
+      don't contain skolem variables, and emit them into the current LIE.
+
+      A: It is very much possible for t2 to be a simple meta-type-variable, in which case ALL
+      wanted constraints will be emitted into the current LIE.
 
       Example 1. If t1 = (forall a b . a -> b) and t2 = (forall c. c -> c) then
            y = x @c @c
@@ -893,19 +900,6 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
            b ~ a -> a
       and constraints1 = {Eq a}.  Currently this fails, because we can't infer Eq a.
       However, perhaps we should add Eq a to the environment?
-
-      Q: I think there should not be any un-substituted meta-type vars in constraints -- otherwise the type would be ambiguous!
-      A: There could be un-substituted meta-type vars from t1 if t2 is a meta-type var.
-
-      How about something like forall a.Int?  I think that is not a problem right now, because we don't have type lambdas.
-      Later, we might need to put back foralls on meta-type-vars from t1 that aren't substituted for.
-    */
-
-    /* So... it seems that we need to be able to make the dictionaries for type2 from the dictionaries of type1!
-
-       In cases like Example 2, constraints don't enter the environment here -- they enter when the t2 type is instantiated.
-
-       But how about cases like Example 4?
     */
 
     auto [tvs2, givens, type2] = skolemize(t2, true);
