@@ -270,9 +270,7 @@ typechecker_state::inferPat(Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
 local_value_env
 typechecker_state::checkPat(Hs::Pattern& pat, const Hs::SigmaType& exp_type, const map<string, Hs::Type>& sigs)
 {
-    auto [type, env] = inferPat(pat, sigs);
-    unify(type, exp_type);
-    return env;
+    return tcPat(pat, Check(exp_type), sigs);
 }
 
 

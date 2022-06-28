@@ -105,12 +105,6 @@ void typechecker_state::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(Case, exp_type.check_type());
-        return;
-    }
-
     // 1. Determine object type
     auto object_type = inferRho(Case.object);
 
@@ -138,12 +132,6 @@ void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::List& L, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(L, exp_type.check_type());
-        return;
-    }
-
     Hs::Type element_type = fresh_meta_type_var( kind_star() );
 
     for(auto& element: L.elements)
@@ -154,12 +142,6 @@ void typechecker_state::tcRho(Hs::List& L, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::Tuple& T, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(T, exp_type.check_type());
-        return;
-    }
-
     vector<Hs::Type> element_types;
     for(auto& element: T.elements)
     {
@@ -172,12 +154,6 @@ void typechecker_state::tcRho(Hs::Tuple& T, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(Lit, exp_type.check_type());
-        return;
-    }
-
     if (Lit.is_Char())
         set_expected_type( exp_type, char_type() );
     else if (Lit.is_String())
@@ -227,12 +203,6 @@ void typechecker_state::tcRho(Hs::IfExp& If, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(LSec, exp_type.check_type());
-        return;
-    }
-
     // 1. Typecheck the op
     auto op_type = inferRho(LSec.op);
 
@@ -248,12 +218,6 @@ void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(RSec, exp_type.check_type());
-        return;
-    }
-
     // 1. Typecheck the op
     auto op_type = inferRho(RSec.op);
 
@@ -273,23 +237,11 @@ void typechecker_state::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::Do& DoExp, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(DoExp, exp_type.check_type());
-        return;
-    }
-
     tcRhoStmts(0, DoExp.stmts.stmts, exp_type);
 }
 
 void typechecker_state::tcRho(Hs::ListComprehension& LComp, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(LComp, exp_type.check_type());
-        return;
-    }
-
     auto state2 = copy_clear_lie();
     state2.infer_quals_type(LComp.quals);
     auto body_type = state2.inferRho(LComp.body);
@@ -301,12 +253,6 @@ void typechecker_state::tcRho(Hs::ListComprehension& LComp, const Expected& exp_
 
 void typechecker_state::tcRho(Hs::ListFrom& L, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(L, exp_type.check_type());
-        return;
-    }
-
     // 1. Typecheck enumFrom
     L.enumFromOp = Hs::Var({noloc,"Compiler.Enum.enumFrom"});
     auto enumFrom_type = inferRho(L.enumFromOp);
@@ -323,12 +269,6 @@ void typechecker_state::tcRho(Hs::ListFrom& L, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::ListFromThen& L, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(L, exp_type.check_type());
-        return;
-    }
-
     // 1. Typecheck enumFrom
     L.enumFromThenOp = Hs::Var({noloc,"Compiler.Enum.enumFromThen"});
     auto enumFromThen_type = inferRho(L.enumFromThenOp);
@@ -352,12 +292,6 @@ void typechecker_state::tcRho(Hs::ListFromThen& L, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(L, exp_type.check_type());
-        return;
-    }
-
     // 1. Typecheck enumFrom
     L.enumFromToOp = Hs::Var({noloc,"Compiler.Enum.enumFromTo"});
     auto enumFromTo_type = inferRho(L.enumFromToOp);
@@ -381,12 +315,6 @@ void typechecker_state::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
 {
-    if (exp_type.check())
-    {
-        checkRho(L, exp_type.check_type());
-        return;
-    }
-
     // 1. Typecheck enumFromThenTo
     L.enumFromThenToOp = Hs::Var({noloc,"Compiler.Enum.enumFromThenTo"});
     auto enumFromThenTo_type = inferRho(L.enumFromThenToOp);

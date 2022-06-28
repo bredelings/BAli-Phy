@@ -289,35 +289,13 @@ struct typechecker_state: FreshVarSource
     Hs::Type
     infer_rhs_type(expression_ref& decl);
 
-    // checkRho
+    Core::wrapper checkSigma(Hs::Expression& e, const Hs::SigmaType& sigma_type);
+
     template <typename T>
     void checkRho(T& t, const Hs::Type& exp_rho)
     {
-        // FIXME -- we need the location!
-        auto orig_t = t;
-        auto type = inferRho(t);
-        try
-        {
-            unify(type, exp_rho);
-        }
-        catch (myexception& ex)
-        {
-            std::ostringstream header;
-            header<<"Expected type\n\n";
-            header<<"   "<<apply_current_subst(exp_rho)<<"\n\n";
-            header<<"but got type\n\n";
-            header<<"   "<<apply_current_subst(type)<<"\n\n";
-            header<<"for expression\n\n";
-            header<<"   "<<orig_t.print()<<"\n";
-
-            ex.prepend(header.str());
-            throw;
-        }
+        tcRho(t, Check(exp_rho));
     }
-
-    Core::wrapper checkSigma(Hs::Expression& e, const Hs::SigmaType& sigma_type);
-
-    // inferRho
 
     template <typename T>
     Hs::Type inferRho(T& t)
