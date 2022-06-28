@@ -373,6 +373,29 @@ Hs::Type typechecker_state::expTypeToType(const Expected& E)
         return E.check_type();
 }
 
+void typechecker_state::set_expected_type(const Expected& E, const Hs::Type& type)
+{
+    if (exp_type.infer())
+        exp_type.infer_type(type);
+    else
+    {
+        try {
+            unify(E.check_type(), type);
+        }
+        catch (myexception& ex)
+        {
+            std::ostringstream header;
+            header<<"Expected type\n\n";
+            header<<"   "<<apply_current_subst(E.check_type())<<"\n\n";
+            header<<"but got type\n\n";
+            header<<"   "<<apply_current_subst(type)<<"\n\n";
+
+            ex.prepend(header.str());
+            throw;
+        }
+    }
+}
+
 void typechecker_state::get_tycon_info(const Hs::Decls& type_decls)
 {
     type_con_env new_tycons;

@@ -133,7 +133,7 @@ void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 
     unify( Hs::make_arrow_type(object_type,result_type), match_type );
 
-    exp_type.infer_type(result_type);
+    set_expected_type( exp_type, result_type );
 }
 
 void typechecker_state::tcRho(Hs::List& L, const Expected& exp_type)

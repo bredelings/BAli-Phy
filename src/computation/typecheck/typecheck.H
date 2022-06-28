@@ -147,6 +147,8 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type expTypeToType(const Expected& E);
 
+    void set_expected_type(const Expected& E, const Hs::Type& type);
+
     //------- local state ------------//
 
     immer::map<std::string, std::pair<Hs::Var, Hs::Type>> mono_local_env;
