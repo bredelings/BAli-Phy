@@ -53,7 +53,7 @@ typechecker_state::tcPat(Hs::Var& V, const Expected& exp_type, const signature_e
         }
         else
         {
-            // Add flat to check that the expected type doesn't have any non-entailed wanteds!
+            // Add flag to check that the expected type doesn't have any non-entailed wanteds!
             V.wrap = subsumptionCheck( exp_type.check_type(), sig_type );
         }
     }
@@ -76,9 +76,7 @@ typechecker_state::tcPat(Hs::Var& V, const Expected& exp_type, const signature_e
 local_value_env
 typechecker_state::checkPat(Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs)
 {
-    auto [type, env] = inferPat(v, sigs);
-    unify(type, exp_type);
-    return env;
+    return tcPat(v, Check(exp_type), sigs);
 }
 
 
@@ -116,7 +114,11 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             lve += checkPat(Con.args[i], field_types[i]);
         pat = Con;
 
-        exp_type.infer_type( type );
+        if (exp_type.infer())
+            exp_type.infer_type( type );
+        else
+            unify( type, exp_type.check_type() );
+
         return lve;
     }
     // AS-PAT
@@ -166,7 +168,10 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             lve += checkPat(element, element_type, sigs);
 
         pat = L;
-        exp_type.infer_type( Hs::ListType(element_type) );
+        if (exp_type.infer())
+            exp_type.infer_type( Hs::ListType(element_type) );
+        else
+            unify( Hs::ListType(element_type), exp_type.check_type() );
         return lve;
     }
     // TUPLE-PAT
@@ -182,7 +187,10 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             lve += lve1;
         }
         pat = T;
-        exp_type.infer_type( Hs::TupleType(types) );
+        if (exp_type.infer())
+            exp_type.infer_type( Hs::TupleType(types) );
+        else
+            unify( Hs::TupleType(types), exp_type.check_type() );
         return lve;
     }
     // case (x :: exp_type) of (pat :: type) -> E
@@ -199,7 +207,10 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
         if (L.is_BoxedInteger())
         {
-            exp_type.infer_type( int_type() );
+            if (exp_type.infer())
+                exp_type.infer_type( int_type() );
+            else
+                unify( int_type(), exp_type.check_type() );
             return {};
         }
 
@@ -209,7 +220,10 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
         if (L.is_Char())
         {
-            exp_type.infer_type( char_type() );
+            if (exp_type.infer())
+                exp_type.infer_type( char_type() );
+            else
+                unify( int_type(), exp_type.check_type() );
             return {};
         }
         else if (auto i = L.is_Integer())
@@ -225,7 +239,10 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             L.literal = Hs::Integer(*i, fromInteger);
 
             pat = L;
-            exp_type.infer_type( result_type );
+            if (exp_type.infer())
+                exp_type.infer_type( result_type );
+            else
+                unify( int_type(), exp_type.check_type() );
             return {};
         }
         else if (L.is_String())
@@ -245,7 +262,10 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
             L.literal = Hs::Double(*d, fromRational);
             pat = L;
-            exp_type.infer_type( result_type );
+            if (exp_type.infer())
+                exp_type.infer_type( result_type );
+            else
+                unify( int_type(), exp_type.check_type() );
             return {};
         }
         else
