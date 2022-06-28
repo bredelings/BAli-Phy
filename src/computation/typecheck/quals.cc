@@ -155,7 +155,7 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         current_lie() += new_state.current_lie();
 
         stmt = PQ;
-        expected_type.infer_type( b );
+        set_expected_type( expected_type, b );
     }
     else if (auto sq = stmt.to<Hs::SimpleQual>())
     {
@@ -182,7 +182,7 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         unify(a, Hs::make_arrow_type(stmts_type, b));
 
         stmt = SQ;
-        expected_type.infer_type( b );
+        set_expected_type( expected_type, b);
     }
     else if (auto lq = stmt.to<Hs::LetQual>())
     {

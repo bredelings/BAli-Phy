@@ -149,7 +149,7 @@ void typechecker_state::tcRho(Hs::List& L, const Expected& exp_type)
     for(auto& element: L.elements)
         checkRho(element, element_type);
 
-    exp_type.infer_type( Hs::ListType(element_type) );
+    set_expected_type( exp_type, Hs::ListType(element_type) );
 }
 
 void typechecker_state::tcRho(Hs::Tuple& T, const Expected& exp_type)
@@ -166,8 +166,8 @@ void typechecker_state::tcRho(Hs::Tuple& T, const Expected& exp_type)
         auto element_type = inferRho(element);
         element_types.push_back( element_type );
     }
-    Hs::Type result_type = Hs::TupleType(element_types);
-    exp_type.infer_type( result_type );
+
+    set_expected_type( exp_type, Hs::TupleType(element_types) );
 }
 
 void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
@@ -179,11 +179,11 @@ void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
     }
 
     if (Lit.is_Char())
-        exp_type.infer_type( char_type() );
+        set_expected_type( exp_type, char_type() );
     else if (Lit.is_String())
-        exp_type.infer_type( Hs::ListType( char_type() ) );
+        set_expected_type( exp_type, Hs::ListType( char_type() ) );
     else if (Lit.is_BoxedInteger())
-        exp_type.infer_type( int_type() );
+        set_expected_type( exp_type, int_type() );
     else if (auto i = Lit.is_Integer())
     {
         // 1. Typecheck fromInteger
@@ -196,7 +196,7 @@ void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
 
         Lit = Hs::Literal(Hs::Integer{*i, fromInteger});
 
-        exp_type.infer_type( result_type );
+        set_expected_type( exp_type, result_type );
     }
     else if (auto d = Lit.is_Double())
     {
@@ -209,7 +209,7 @@ void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
         unify(fromRational_type, Hs::make_arrow_type(double_type(), result_type));
 
         Lit = Hs::Literal(Hs::Double{*d, fromRational});
-        exp_type.infer_type( result_type );
+        set_expected_type( exp_type, result_type );
     }
     else
         std::abort();
@@ -243,7 +243,7 @@ void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
     // 3. Typecheck the left argument
     checkRho(LSec.l_arg, left_arg_type);
 
-    exp_type.infer_type( result_type );
+    set_expected_type(exp_type, result_type);
 }
 
 void typechecker_state::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
@@ -268,7 +268,7 @@ void typechecker_state::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
     // 4. Compute the section type;
     Hs::Type section_type = Hs::function_type({left_arg_type}, result_type);
 
-    exp_type.infer_type( section_type );
+    set_expected_type( exp_type, section_type );
 }
 
 void typechecker_state::tcRho(Hs::Do& DoExp, const Expected& exp_type)
@@ -296,7 +296,7 @@ void typechecker_state::tcRho(Hs::ListComprehension& LComp, const Expected& exp_
 
     current_lie() += state2.current_lie();
 
-    exp_type.infer_type( Hs::ListType(body_type) );
+    set_expected_type( exp_type, Hs::ListType(body_type) );
 }
 
 void typechecker_state::tcRho(Hs::ListFrom& L, const Expected& exp_type)
@@ -318,7 +318,7 @@ void typechecker_state::tcRho(Hs::ListFrom& L, const Expected& exp_type)
     auto result_type = fresh_meta_type_var( kind_star() );
     unify(enumFrom_type, Hs::make_arrow_type(from_type, result_type));
 
-    exp_type.infer_type( result_type );
+    set_expected_type( exp_type, result_type );
 }
 
 void typechecker_state::tcRho(Hs::ListFromThen& L, const Expected& exp_type)
@@ -347,7 +347,7 @@ void typechecker_state::tcRho(Hs::ListFromThen& L, const Expected& exp_type)
     auto result_type = fresh_meta_type_var( kind_star() );
     unify(a, Hs::make_arrow_type(then_type, result_type));
         
-    exp_type.infer_type( result_type );
+    set_expected_type( exp_type, result_type );
 }
 
 void typechecker_state::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
@@ -376,7 +376,7 @@ void typechecker_state::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
     auto result_type = fresh_meta_type_var( kind_star() );
     unify(a, Hs::make_arrow_type(to_type, result_type));
         
-    exp_type.infer_type( result_type );
+    set_expected_type( exp_type, result_type );
 }
 
 void typechecker_state::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
@@ -412,7 +412,7 @@ void typechecker_state::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
     auto result_type = fresh_meta_type_var( kind_star() );
     unify(b, Hs::make_arrow_type(to_type, result_type));
 
-    exp_type.infer_type( result_type );
+    set_expected_type( exp_type, result_type );
 }
 
 void typechecker_state::tcRho(expression_ref& E, const Expected& exp_type)
