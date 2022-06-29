@@ -51,6 +51,7 @@ force_tree tree@(Tree nodes branches n_nodes) = force_nodes `seq` force_branches
 -- 2        2      1
 -- 3        4      3
 -- 4        6      5
+modifiable_cayley_tree :: (forall a.a->a) -> TreeImp -> TreeImp
 modifiable_cayley_tree modf tree = Tree (listArray' nodes) (listArray' branches) n_nodes where
     n_nodes = numNodes tree
     n_leaves | n_nodes == 1  = 1
@@ -206,7 +207,7 @@ force_time_tree (TimeTree rooted_tree times) = force_rooted_tree rooted_tree `se
 
 -- maybe modf has type (forall a . a -> a)?
 -- we should be able to apply it to both Int and Double...
-modifiable_time_tree :: (forall a.a -> a) -> TimeTreeImp t -> TimeTreeImp t
+modifiable_time_tree :: (forall a.a -> a) -> TimeTreeImp (RootedTreeImp TreeImp) -> TimeTreeImp (RootedTreeImp TreeImp)
 modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree times where
     rooted_tree = modifiable_rooted_tree modf rooted_tree'
     maybe_modf :: Int -> a -> a

@@ -169,12 +169,18 @@ run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
 --       SOMETHING `seq` result.  And this means that we need to frequently
 --       intersperse unsafeInterleaveIO to avoid `seq`-ing on previous statements.
 
+triggered_modifiable_structure :: ((forall a.a -> a) -> b -> b) -> (b -> c) -> b -> (b -> d) -> (b, b)
 triggered_modifiable_structure mod_structure force_structure value effect = (raw_x, triggered_x)
     where raw_x       = mod_structure modifiable value
           effect'     = force_structure raw_x `seq` effect
+          effecter :: forall x. x -> x
+          effecter v  = effect' `seq` v
           triggered_x = mod_structure (effect' `seq`) raw_x
 
-modifiable_structure = triggered_modifiable_structure ($) id
+apply_modifier :: (forall a.a -> a) -> b -> b
+apply_modifier x y = x y
+
+modifiable_structure = triggered_modifiable_structure apply_modifier (const ())
 
 -- It seems like we could return raw_x in most cases, except the case of a tree.
 -- But in the tree case, we could return triggered_x.
