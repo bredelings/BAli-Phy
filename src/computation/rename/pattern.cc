@@ -62,6 +62,13 @@ expression_ref unapply(expression_ref E)
 
         return Hs::ConPattern(App.head.as_<Hs::Con>(), std::move(App.args));
     }
+    else if (auto texp = E.to<Hs::TypedExp>())
+    {
+        Hs::TypedPattern TP;
+        TP.pat = unapply(texp->exp);
+        TP.type = texp->type;
+        return TP;
+    }
     else if (E.is_a<Hs::Literal>())
         return E;
     else if (E.is_a<Hs::Var>())
@@ -117,7 +124,10 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         auto SP = pat.as_<Hs::StrictPattern>();
         return find_vars_in_pattern(SP.pattern, top);
     }
-
+    else if (auto tpat = pat.to<Hs::TypedPattern>())
+    {
+        return find_vars_in_pattern(tpat->pat);
+    }
     // 3. Handle x@pat
     else if (pat.is_a<Hs::AsPattern>())
     {
@@ -219,6 +229,14 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
 	auto bound = rename_pattern(SP.pattern, top);
 	pat = SP;
 	return bound;
+    }
+    else if (auto tpat = pat.to<Hs::TypedPattern>())
+    {
+        auto TPat = *tpat;
+        auto bound = rename_pattern(TPat.pat, top);
+        TPat.type = rename_type(TPat.type);
+        pat = TPat;
+        return bound;
     }
 
     // 3. Handle x@pat

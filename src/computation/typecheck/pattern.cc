@@ -192,6 +192,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     else if (auto tp = pat.to<Hs::TypedPattern>())
     {
         auto TP = *tp;
+        TP.type = check_type(TP.type);
         auto binders = checkPat(TP.pat, TP.type);
         TP.wrap = instPatSigma(TP.type, exp_type);
         return binders;
@@ -335,6 +336,14 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<string, Hs::BindI
             element = rename_pattern_from_bindinfo(element, bind_info);
 
         return L;
+    }
+    else if (auto tpat = pat.to<Hs::TypedPattern>())
+    {
+        auto TPat = *tpat;
+
+        TPat.pat = rename_pattern_from_bindinfo(TPat.pat, bind_info);
+
+        return TPat;
     }
     // TUPLE-PAT
     else if (auto t = pat.to<Hs::TuplePattern>())

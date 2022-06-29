@@ -384,6 +384,8 @@ bound_var_info find_vars_in_pattern2(const expression_ref& pat)
 	return { unloc(v->name) };
     else if (auto c = pat.to<Hs::ConPattern>())
         return find_vars_in_patterns2(c->args);
+    else if (auto tp = pat.to<Hs::TypedPattern>())
+        return find_vars_in_pattern2(tp->pat);
     else if (pat.is_a<Hs::Literal>())
         return {};
     else

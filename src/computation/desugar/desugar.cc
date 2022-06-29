@@ -279,6 +279,12 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
         SP.pattern = desugar_pattern(SP.pattern);
         return SP;
     }
+    else if (auto tpat = E.to<Hs::TypedPattern>())
+    {
+        auto TPat = *tpat;
+        TPat.pat = desugar_pattern(TPat.pat);
+        return TPat;
+    }
     else if (E.is_log_double())
         std::abort();
     else if (auto L = E.to<Hs::Literal>())
