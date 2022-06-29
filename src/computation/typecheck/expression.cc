@@ -98,6 +98,7 @@ void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
 {
+    TExp.type = check_type(TExp.type);
     Core::wrapper w1 = checkSigma( TExp.exp, TExp.type );
     Core::wrapper w2 = instantiateSigma(TExp.type, exp_type);
     TExp.wrap = w1 * w2;
