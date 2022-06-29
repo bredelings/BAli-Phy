@@ -40,41 +40,59 @@ void typechecker_state::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type
     current_lie() += state2.current_lie();
 }
 
-void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type, int i)
+void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type)
 {
-    if (i < rule.patterns.size())
+    auto state2 = copy_clear_lie();
+
+    Hs::Type type;
+    if (exp_type.check())
+        type = exp_type.check_type();
+
+    vector<Hs::Type> pat_types;
+
+    for(int i=0; i< rule.patterns.size(); i++)
     {
         if (exp_type.infer())
         {
-            auto [pat_type, lve1] = inferPat(rule.patterns[i]);
+            auto [pat_type, lve1] = state2.inferPat(rule.patterns[i]);
 
-            auto tc2 = copy_add_binders( lve1 );
+            state2.add_binders( lve1 );
 
-            Hs::Type body_type;
-            tc2.tcRho(rule, Infer(body_type), i+1);
-            current_lie() += tc2.current_lie();
-
-            exp_type.infer_type( Hs::make_arrow_type(pat_type, body_type) );
+            pat_types.push_back(pat_type);
         }
         else
         {
-            auto [arg_type, result_type] = unify_function(exp_type.check_type());
+            auto [arg_type, result_type] = unify_function(type);
 
-            auto lve1 = checkPat(rule.patterns[i], arg_type);
+            auto lve1 = state2.checkPat(rule.patterns[i], arg_type);
 
-            auto tc2 = copy_add_binders(lve1);
+            state2.add_binders(lve1);
 
-            tc2.tcRho(rule, Check(result_type), i + 1);
-
-            current_lie() += tc2.current_lie();
+            type = result_type;
         }
     }
+
+    // Here, 'type' is the rhs type.
+    if (exp_type.infer())
+        state2.tcRho(rule.rhs, Infer(type));
     else
-        tcRho(rule.rhs, exp_type);
+        state2.tcRho(rule.rhs, Check(type));
+
+    current_lie() += state2.current_lie();
+
+    if (exp_type.infer())
+        exp_type.infer_type( function_type( pat_types, type ) );
 }
 
 void typechecker_state::tcRho(Hs::Match& m, const Expected& exp_type)
 {
+    // Idea: Change tcRho(MRule, exp_type) to take a list of
+    //       expected pattern types, and an expected rhs type.
+    //
+    //       Then we could pass Infer(NOTYPE) in for the patterns...
+    //       we need to handle passing an Infer( ) object to
+    //       tcPat( ) twice?
+
     if (exp_type.infer())
     {
         Hs::Type result_type = fresh_meta_type_var( kind_star() );

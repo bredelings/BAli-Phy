@@ -349,7 +349,7 @@ struct typechecker_state: FreshVarSource
 
     void tcRho(Hs::MultiGuardedRHS&, const Expected&);
 
-    void tcRho(Hs::MRule&, const Expected&, int i=0);
+    void tcRho(Hs::MRule&, const Expected&);
 
     void tcRho(Hs::Match&, const Expected&);
 
