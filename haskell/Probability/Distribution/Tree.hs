@@ -176,7 +176,7 @@ force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq`
 -- 2        3      2
 -- 3        5      4
 -- 4        7      6
-modifiable_rooted_tree :: (forall a.a -> a) -> RootedTreeImp t -> RootedTreeImp t
+modifiable_rooted_tree :: (forall a.a -> a) -> RootedTreeImp TreeImp -> RootedTreeImp TreeImp
 modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $ Tree (listArray' nodes) (listArray' branches) n_nodes where
     n_nodes = numNodes tree
     n_leaves = (n_nodes + 1) `div` 2
