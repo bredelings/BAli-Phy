@@ -14,19 +14,34 @@ import Data.Matrix
 --        Because we have no polymorphism, wfm needs to be defined after MixtureModel and MixtureModels.
 
 data CTMCOnTreeProperties = CTMCOnTreeProperties {
-      subst_root :: Int,
-      transition_ps :: Array Int (EVector (Matrix Double)),
-      cond_likes :: Array Int CondLikes,
-      anc_seqs :: EVector VectorPairIntInt,
-      likelihood :: LogDouble,
-      taxa :: Array Int CPPString,
-      get_weighted_frequency_matrix :: Matrix Double,
-      smap :: EVector Int,
-      leaf_sequences :: Array Int (EVector Int),
-      alphabet :: Alphabet,
-      as :: Array Int PairwiseAlignment,
-      n_states :: Int,
-      n_base_models :: Int
+      prop_subst_root :: Int,
+      prop_transition_ps :: Array Int (EVector (Matrix Double)),
+      prop_cond_likes :: Array Int CondLikes,
+      prop_anc_seqs :: EVector VectorPairIntInt,
+      prop_likelihood :: LogDouble,
+      prop_taxa :: Array Int CPPString,
+      prop_get_weighted_frequency_matrix :: Matrix Double,
+      prop_smap :: EVector Int,
+      prop_leaf_sequences :: Array Int (EVector Int),
+      prop_alphabet :: Alphabet,
+      prop_as :: Array Int PairwiseAlignment,
+      prop_n_states :: Int,
+      prop_n_base_models :: Int
+    }
+
+data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
+      prop_fa_subst_root :: Int,
+      prop_fa_transition_ps :: Array Int (EVector (Matrix Double)),
+      prop_fa_cond_likes :: Array Int CondLikes,
+      prop_fa_anc_seqs :: AlignmentMatrix,
+      prop_fa_likelihood :: LogDouble,
+      prop_fa_taxa :: [CPPString],
+      prop_fa_get_weighted_frequency_matrix :: Matrix Double,
+      prop_fa_smap :: EVector Int,
+      prop_fa_leaf_sequences :: Array Int (EVector Int),
+      prop_fa_alphabet :: Alphabet,
+      prop_fa_n_states :: Int,
+      prop_fa_n_base_models :: Int
     }
 
 
@@ -148,7 +163,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   property "n_states" (SModel.nStates smodel)
   property "n_base_models" (SModel.nBaseModels smodel)
   -- How about stuff related to alignment compression?
-  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood (map list_to_string taxa) f smap leaf_sequences alphabet Nothing (SModel.nStates smodel) (SModel.nBaseModels smodel) )
+  property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood (map list_to_string taxa) f smap leaf_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) )
 
   return [likelihood]
 
