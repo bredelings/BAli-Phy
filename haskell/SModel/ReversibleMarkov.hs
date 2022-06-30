@@ -4,15 +4,15 @@ import SModel.Frequency
 import Bio.Alphabet
 import Data.Matrix
 
-foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: () -> () -> () -> () -> ()
-foreign import bpcall "SModel:get_eigensystem" get_eigensystem :: () -> () -> ()
-foreign import bpcall "SModel:lExp" lExp :: () -> () -> () -> ()
-foreign import bpcall "SModel:MatrixExp" mexp :: () -> () -> ()
-foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: () -> () -> ()
-foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: () -> ()
-foreign import bpcall "SModel:elementwise_multiply" (%*%) :: () -> () -> ()
-
 data EigenSystem
+
+foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
+foreign import bpcall "SModel:get_eigensystem" get_eigensystem :: Matrix Double -> EVector Double -> EigenSystem
+foreign import bpcall "SModel:lExp" lExp :: EigenSystem -> EVector Double -> Double -> Matrix Double
+foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
+foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
+foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matrix Double -> Matrix Double
+foreign import bpcall "SModel:elementwise_multiply" (%*%) :: Matrix Double -> Matrix Double -> Matrix Double
 
 data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) (Matrix Double) (EVector Double) EigenSystem Double Double
 
@@ -54,10 +54,11 @@ get_element_exchange ((key,value):rest) x y = if key == x || key == y then value
 -- maybe put ReversibleFrequency into this file.
 -- clean up f1x4 and f3x4?
 gtr_sym' es' a = gtr_sym es a where lpairs = all_pairs (letters a)
+                                    es :: [Double]
                                     es = if length lpairs == length es' then
                                              [get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]
                                          else
-                                             error "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (length es')++"!"
+                                             error $ "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (length es')++"!"
 
 plus_f   a pi s   = gtr a s pi
 plus_fe  a s      = plus_f a (uniform_frequencies a) s
