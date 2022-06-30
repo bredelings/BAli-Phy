@@ -354,13 +354,15 @@ extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
 
     auto [A,counts,mapping] = compress_alignment(A1,n);
 
-    object_ptr<EVector> result(new EVector);
-    result->resize(3);
-    (*result)[0] = Box<alignment>(A);
-    (*result)[1] = EVector(counts);
-    (*result)[2] = EVector(mapping);
+    object_ptr<EPair> tmp23(new EPair);
+    tmp23->first = EVector(counts);
+    tmp23->second = EVector(mapping); 
 
-    return result;
+    object_ptr<EPair> tmp123(new EPair);
+    tmp123->first = Box<alignment>(A);
+    tmp123->second = tmp23;
+
+    return tmp123;
 }
 
 extern "C" closure builtin_function_uncompress_alignment(OperationArgs& Args)

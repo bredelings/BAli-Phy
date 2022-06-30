@@ -51,11 +51,11 @@ compute_sequence_lengths seqs tree as = [ if node < n_leaves then vector_size (s
 
 -- Current a' is an alignment, but counts and mapping are EVector
 -- AlignmentMatrix -> ETuple (AlignmentMatrix, EVector Int, EVector Int)
-foreign import bpcall "Alignment:compress_alignment" builtin_compress_alignment :: AlignmentMatrix -> EVector ()
-compress_alignment a = (compressed, counts, mapping) where ca = builtin_compress_alignment a
-                                                           compressed = get_vector_index ca 0
-                                                           counts = get_vector_index ca 1
-                                                           mapping = get_vector_index ca 2
+foreign import bpcall "Alignment:compress_alignment" builtin_compress_alignment :: AlignmentMatrix ->
+                                                                                   EPair AlignmentMatrix (EPair (EVector Int) (EVector Int))
+compress_alignment a = (compressed, counts, mapping) where tmp123 = builtin_compress_alignment a
+                                                           (compressed, tmp23) = pair_from_c tmp123
+                                                           (counts,   mapping) = pair_from_c tmp23
 
 alignment_on_tree_length (AlignmentOnTree t _ ls as) = (ls!0) + sumi [numInsert (as!b) | b <- allEdgesFromNode t 0]
 
