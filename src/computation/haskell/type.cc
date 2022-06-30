@@ -182,6 +182,46 @@ optional<pair<Type,Type>> is_function_type(const Type& t)
 }
 
 
+optional<Type> is_list_type(const Type& t)
+{
+    if (auto l = t.to<Hs::ListType>())
+        return l->element_type;
+
+    auto [head,args] = decompose_type_apps(t);
+
+    if (args.size() != 1) return {};
+
+    auto tc = head.to<TypeCon>();
+    if (not tc) return {};
+
+    if (unloc(tc->name) == "[]")
+        return {args[0]};
+    else
+        return {};
+}
+
+
+optional<vector<Type>> is_tuple_type(const Type& t)
+{
+    if (auto tup = t.to<Hs::TupleType>())
+        return tup->element_types;
+
+    auto [head,args] = decompose_type_apps(t);
+
+    auto tc = head.to<TypeCon>();
+    if (not tc) return {};
+
+    auto& head_name = unloc(tc->name);
+    if (not is_tuple_name(head_name))
+        return {};
+
+    if (args.size() == tuple_arity(head_name))
+        return args;
+    else
+        return {};
+}
+
+
 Type remove_top_gen(Type type)
 {
     if (auto f = type.to<ForallType>())
@@ -195,7 +235,7 @@ Type remove_top_gen(Type type)
 
 string parenthesize_type(const Hs::Type& t)
 {
-    if (t.is_a<TypeCon>() or t.is_a<MetaTypeVar>() or t.is_a<TypeVar>() or t.is_a<TupleType>() or t.is_a<ListType>())
+    if (t.is_a<TypeCon>() or t.is_a<MetaTypeVar>() or t.is_a<TypeVar>() or is_tuple_type(t) or is_list_type(t))
         return t.print();
     else
         return "(" + t.print() + ")";
@@ -320,8 +360,15 @@ string TypeApp::print() const
     if (auto ftype = is_function_type(*this))
     {
         auto& [source,dest] = *ftype;
-        return parenthesize_type(source) + " -> " + arg.print();
+        if (is_function_type(source))
+            return parenthesize_type(source) + " -> " + arg.print();
+        else
+            return source.print() + " -> " + arg.print();
     }
+    else if (auto etype = is_list_type(*this))
+        return ListType(*etype).print();
+    else if (auto ttype = is_tuple_type(*this))
+        return TupleType(*ttype).print();
 
     return head.print() + " " + parenthesize_type(arg);
 }

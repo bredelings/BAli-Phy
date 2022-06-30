@@ -280,6 +280,10 @@ std::optional<std::pair<Type,Type>> is_gen_function_type(const Type& t);
 
 std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
 
+std::optional<Type> is_list_type(const Type& t);
+
+std::optional<std::vector<Type>> is_tuple_type(const Type& t);
+
 Type remove_top_gen(Type type);
 
 // no foralls
