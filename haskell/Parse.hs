@@ -2,11 +2,40 @@ module Parse where
 
 import Data.Char
 
-data Parser a = Parser (String -> [(a,String)])
+data Parser a = Parser { parse :: String -> [(a,String)] }
 
-parse (Parser method) s = method s
-parse (IOAndPass p f) s = concat [parse (f x) s' | (x,s') <- parse p s]
-parse (IOReturn x) s = [(x,s)]
+instance Functor Parser where
+    fmap f (Parser p) = Parser (map (\(x,s) -> (f x,s)) . p)
+
+instance Applicative Parser where
+    pure x = Parser (\s -> [(x,s)])
+
+    p <*> q = Parser $ \s -> [(f x, s'') | (f, s' ) <- parse p s, (x, s'') <- parse q s'] 
+
+instance Alternative Parser where
+    empty   = Parser $ \s -> []
+    p <|> q = Parser $ \s ->
+              case parse p s of
+                []  -> parse q s
+                res -> res
+    some v = some_v where
+      many_v = some_v <|> return []
+      some_v = do
+        x <- v
+        xs <- many_v
+        return (x:xs)
+               
+    many v = many_v where
+      many_v = some_v <|> return []
+      some_v = do
+        x <- v
+        xs <- many_v
+        return (x:xs)
+               
+instance Monad Parser where
+    p >>= f   = Parser( \s -> concat [parse (f x) s' | (x,s') <- parse p s] )
+    return x  = Parser( \s -> [(x,s)] )
+
 
 runParser :: Parser a -> String -> a
 runParser m s = case parse m s of
@@ -26,27 +55,7 @@ failure = Parser (\s -> [])
 
 combine p q = Parser (\s -> parse p s ++ parse q s)
 
-p <|> q = Parser $ \s ->
-          case parse p s of
-            []  -> parse q s
-            res -> res
 
-some v = some_v
-    where
-      many_v = some_v <|> return []
-      some_v = do
-        x <- v
-        xs <- many_v
-        return (x:xs)
-               
-many v = many_v
-    where
-      many_v = some_v <|> return []
-      some_v = do
-        x <- v
-        xs <- many_v
-        return (x:xs)
-               
 satisfy p = do
   c <- item
   if p c
@@ -68,7 +77,8 @@ p `chainl1` op = do {a <- p; rest a}
 char c = satisfy (c ==)
 
 -- where to define read_int, read_double?
-natural = read_int <$> some digit
+natural :: Parser Int
+natural = read <$> some digit
 
 string [] = return []
 string (c:cs) = do { char c; string cs; return (c:cs) }
@@ -84,7 +94,7 @@ digit = satisfy isDigit
 number = do
   s <- string "-" <|> return []
   cs <- some digit
-  return $ read_int (s++cs)
+  return (read (s++cs) :: Int)
 
 parens m = do
   reserved "("
@@ -115,7 +125,7 @@ parse_double = do s <- option [] sign
                   i2 <- option [] fraction
                   i3 <- option [] exponent
                   let word = s++i1++i2++i3
-                  return (read_double word)
+                  return (read word :: Double)
     where fraction = do string "."
                         n <- some digit
                         return ('.':n)
