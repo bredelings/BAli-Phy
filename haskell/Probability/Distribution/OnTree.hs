@@ -57,9 +57,9 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
                    else
                        peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
       ancestral_sequences = if n_leaves == 1 then
-                                0
+                                error "Can't sample ancestors for 1-node trees"
                             else if n_leaves == 2 then
-                                0
+                                error "Can't sample ancestors for 2-node trees"
                             else
                                 array_to_vector $ sample_ancestral_sequences tree subst_root leaf_sequences as alphabet transition_ps f cls smap
 
