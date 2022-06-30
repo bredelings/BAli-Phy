@@ -28,7 +28,6 @@ sample_dirichlet_on items as = do ps <- sample_dirichlet as
 dirichlet_on_density as item_ps = dirichlet_density as ps where
     ps = map (\(item,p) -> p) item_ps
 
-symmetric_dirichlet_on :: [a] -> Double -> Distribution [(a,Double)]
 symmetric_dirichlet_on items a = dirichlet_on items (replicate (length items) a)
 
 class HasDirichlet d where
