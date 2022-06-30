@@ -4,10 +4,13 @@ import Bio.Alphabet
 import SModel.ReversibleMarkov
 import SModel.Nucleotides
 
-foreign import bpcall "SModel:m0" m0 :: () -> () -> () -> ()
-foreign import bpcall "SModel:f3x4_frequencies" f3x4_frequencies_builtin :: () -> () -> () -> () -> ()
-foreign import bpcall "SModel:singlet_to_triplet_rates" singlet_to_triplet_rates :: () -> () -> () -> () -> ()
-foreign import bpcall "SModel:dNdS_matrix" dNdS_matrix :: () -> () -> ()
+type TripletAlphabet = Alphabet
+type CodonAlphabet = TripletAlphabet
+
+foreign import bpcall "SModel:" m0 :: CodonAlphabet -> Matrix Double -> Double -> Matrix Double
+foreign import bpcall "SModel:f3x4_frequencies" f3x4_frequencies_builtin :: TripletAlphabet -> EVector Double -> EVector Double -> EVector Double -> EVector Double
+foreign import bpcall "SModel:" singlet_to_triplet_rates :: TripletAlphabet -> Matrix Double -> Matrix Double -> Matrix Double -> Matrix Double
+foreign import bpcall "SModel:" dNdS_matrix :: CodonAlphabet -> Double -> Matrix Double
 
 f3x4_frequencies a pi1 pi2 pi3 = let pi1' = list_to_vector pi1
                                      pi2' = list_to_vector pi2
