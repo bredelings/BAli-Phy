@@ -18,9 +18,9 @@ foreign import bpcall "Alignment:alignment_from_sequences" builtin_alignment_fro
 alignment_from_sequences :: Alphabet -> [Sequence] -> AlignmentMatrix
 alignment_from_sequences a seqs = builtin_alignment_from_sequences a (list_to_vector seqs)
 
-foreign import bpcall "Alignment:sequences_from_alignment" builtin_sequences_from_alignment :: AlignmentMatrix -> EVector Sequence
+foreign import bpcall "Alignment:sequences_from_alignment" builtin_sequences_from_alignment :: AlignmentMatrix -> EVector (EVector Int)
 
-sequences_from_alignment :: AlignmentMatrix -> [ Sequence ]
+sequences_from_alignment :: AlignmentMatrix -> [ EVector Int ]
 sequences_from_alignment a = list_from_vector $ builtin_sequences_from_alignment a
 
 foreign import bpcall "Alignment:sequence_names" builtin_sequence_names :: AlignmentMatrix -> EVector CPPString
