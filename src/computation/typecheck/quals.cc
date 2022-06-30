@@ -119,16 +119,18 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
 
         // 1. Typecheck (>>=)
         // (>>=) ::            exp_type -> (pat_type -> stmts_type) -> b
-        // (>>=) :: Monad m => m a      -> ( a       -> m b)        -> b
+        // (>>=) :: Monad m => m a      -> ( a       -> m b)        -> m b
         PQ.bindOp = Hs::Var({noloc,"Compiler.Base.>>="});
         auto bind_op_type = inferRho(PQ.bindOp);
 
-        // 2. Typecheck exp
-        auto exp_type = inferRho(PQ.exp);
+        // bind_op = exp_type -> result1_type
+        //         = exp_type -> arg2_type -> result_type
+        //         = exp_type -> (pat_type -> stmts_type) -> result_type
+        //         = m a      -> (a        -> m b)        -> m b
 
-        // 3. bind_op_type ~ (exp_type -> a)
-        auto a = fresh_meta_type_var( kind_star() );
-        unify(bind_op_type, Hs::make_arrow_type(exp_type, a));
+        // 2. Typecheck exp
+        auto [exp_type,  a] = unify_function(bind_op_type);
+        checkRho(PQ.exp, exp_type);
 
         // 4. Typecheck pat
         auto [pat_type, pat_binders] = inferPat(PQ.bindpat);
