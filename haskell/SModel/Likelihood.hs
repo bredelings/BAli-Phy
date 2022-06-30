@@ -59,6 +59,17 @@ peel_likelihood t cl as f root = let likelihoods = mkArray (numNodes t) peel_lik
 substitution_likelihood t root seqs as alpha ps f smap = let cl = cached_conditional_likelihoods t seqs as alpha ps f smap
                                                          in peel_likelihood t cl as f root
 
+sample_ancestral_sequences :: Tree t =>
+                              t ->
+                              Int ->
+                              Array Int (EVector Int) ->
+                              Array Int PairwiseAlignment ->
+                              Alphabet ->
+                              Array Int (EVector (Matrix Double)) ->
+                              Matrix Double ->
+                              Array Int CondLikes ->
+                              EVector Int ->
+                              Array Int VectorPairIntInt
 sample_ancestral_sequences t root seqs as alpha ps f cl smap =
     let rt = add_root root t
         ancestor_seqs = mkArray (numNodes t) ancestor_for_node
