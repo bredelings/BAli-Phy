@@ -85,7 +85,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   return [likelihood]
 
 ctmc_on_tree tree alignment smodel =
-    Distribution "ctmc_on_tree" (annotated_subst_like_on_tree tree alignment smodel) (no_quantile "ctmc_on_tree") () ()
+    Distribution "ctmc_on_tree" (annotated_subst_like_on_tree tree alignment smodel) (no_quantile "ctmc_on_tree") undefined undefined
 
 annotated_subst_likelihood_fixed_A tree smodel sequences = do
   let subst_root = modifiable (numNodes tree - 1)
@@ -153,4 +153,4 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   return [likelihood]
 
 ctmc_on_tree_fixed_A tree smodel =
-    Distribution "ctmc_on_tree_fixed_A" (annotated_subst_likelihood_fixed_A tree smodel) (no_quantile "ctmc_on_tree_fixed_A") () ()
+    Distribution "ctmc_on_tree_fixed_A" (annotated_subst_likelihood_fixed_A tree smodel) (no_quantile "ctmc_on_tree_fixed_A") undefined undefined
