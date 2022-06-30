@@ -7,7 +7,6 @@ data Range = OpenInterval (Maybe Double) (Maybe Double)
            | TrueFalseRange
            | Simplex Int Double
            | ListRange [Range]
-           | LabelledSimplex [Int] Double
            | TreeRange Int
            | NoRange
  
