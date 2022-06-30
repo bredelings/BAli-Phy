@@ -4,8 +4,10 @@ import Bio.Alphabet
 import SModel.ReversibleMarkov
 import SModel.Nucleotides
 
-foreign import bpcall "SModel:f2x4_frequencies" f2x4_frequencies_builtin :: () -> () -> () -> ()
-foreign import bpcall "SModel:singlet_to_doublet_rates" singlet_to_doublet_rates :: () -> () -> () -> ()
+type DoubletAlphabet = Alphabet
+
+foreign import bpcall "SModel:f2x4_frequencies" f2x4_frequencies_builtin :: DoubletAlphabet -> EVector Double -> EVector Double -> EVector Double
+foreign import bpcall "SModel:singlet_to_doublet_rates" singlet_to_doublet_rates :: DoubletAlphabet -> Matrix Double -> Matrix Double -> Matrix Double
 
 x2x2 a (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ _) =
     let smap = simple_smap a
@@ -16,12 +18,12 @@ x2x2 a (ReversibleMarkov _ _ q_1 pi_1 _ _ _) (ReversibleMarkov _ _ q_2 pi_2 _ _ 
 x2_sym a s = singlet_to_doublet_rates a s s
 x2 a q = x2x2 a q q
 
-foreign import bpcall "SModel:rna_16a_exchange" rna_stem_16a_exchange :: () -> () -> () -> () -> () -> () -> ()
+foreign import bpcall "SModel:rna_16a_exchange" rna_stem_16a_exchange :: DoubletAlphabet -> Double -> Double -> Double -> Double -> Double -> Matrix Double
 
 rna_stem_16a a aS aD b g e pi = gtr a (rna_stem_16a_exchange a aS aD b g e) pi
 
-foreign import bpcall "SModel:rna_editting_rates" rna_editting_rates :: () -> () -> () -> ()
-foreign import bpcall "SModel:rna_editting_pi" rna_editting_pi :: () -> () -> () -> ()
+foreign import bpcall "SModel:" rna_editting_rates :: DoubletAlphabet -> Matrix Double -> EVector (EPair Int Int) -> Matrix Double
+foreign import bpcall "SModel:" rna_editting_pi :: DoubletAlphabet -> EVector Double -> EVector (EPair Int Int) -> EVector Double
 
 rna_editting a (ReversibleMarkov _ _ q_nuc pi_nuc _ _ _) edits = reversible_markov a smap q pi 
     where smap = simple_smap a
