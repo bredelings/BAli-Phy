@@ -8,8 +8,8 @@ import SModel
 --                                      what we really need is transition probabilities for each partition.
 
 data IndelModel = IndelModel
-data ATModel = ATModel {
-      tree:: Tree ,
+data ATModel t = ATModel {
+      tree:: t,
       scales :: [Double],
       branch_categories :: [Int]
     }
