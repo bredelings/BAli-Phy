@@ -15,7 +15,7 @@ foreign import bpcall "SModel:alignment_index2" alignment_index2 :: PairwiseAlig
 foreign import bpcall "SModel:alignment_index3" alignment_index3 :: PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Int
 foreign import bpcall "SModel:peel_internal_branch" peel_internal_branch :: CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
 foreign import bpcall "SModel:calc_root_probability" calc_root_probability :: CondLikes -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> LogDouble
-foreign import bpcall "SModel:peel_likelihood_2" peel_likelihood_2 :: EVector Int -> EVector Int -> Alphabet -> PairwiseAlignment -> EVector Double -> Matrix Double -> LogDouble
+foreign import bpcall "SModel:peel_likelihood_2" peel_likelihood_2 :: EVector Int -> EVector Int -> Alphabet -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> LogDouble
 foreign import bpcall "SModel:peel_likelihood_1" peel_likelihood_1 :: EVector Int -> Alphabet -> Matrix Double -> LogDouble
 
 -- ancestral sequence sampling for connected-CLVs
