@@ -113,51 +113,50 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
     else if (auto pq = stmt.to<Hs::PatQual>())
     {
         // FIXME!  There should be a better way to do this -- that allows us to use checkRho or checkSigma
+        // - eliminate set_expected_type( )
+        // - unwind two interations of checkRho(App )
+        // - we would need to record wrappers for the first and second argument of (>>=)
 
-        // pat <- exp ; stmts  =>  exp >>= (\pat -> stmts)
+        // pat <- exp ; stmts    ~>    (>>=) exp (\pat -> stmts)
         auto PQ = *pq;
 
         // 1. Typecheck (>>=)
-        // (>>=) ::            exp_type -> (pat_type -> stmts_type) -> b
-        // (>>=) :: Monad m => m a      -> ( a       -> m b)        -> m b
         PQ.bindOp = Hs::Var({noloc,"Compiler.Base.>>="});
         auto bind_op_type = inferRho(PQ.bindOp);
 
-        // bind_op = exp_type -> result1_type
+        // (>>=) :: Monad m => m a -> ( a -> m b) -> m b
+
+        // bind_op = exp_type -> tmp
         //         = exp_type -> arg2_type -> result_type
         //         = exp_type -> (pat_type -> stmts_type) -> result_type
         //         = m a      -> (a        -> m b)        -> m b
+        auto [exp_type,  tmp        ] = unify_function(bind_op_type);
+        auto [arg2_type, result_type] = unify_function(tmp);
+        auto [pat_type, stmts_type  ] = unify_function(arg2_type);
 
-        // 2. Typecheck exp
-        auto [exp_type,  a] = unify_function(bind_op_type);
+        // 2. Check exp
         checkRho(PQ.exp, exp_type);
 
-        // 4. Typecheck pat
-        auto [pat_type, pat_binders] = inferPat(PQ.bindpat);
+        // 3. Check pat
+        auto pat_binders = checkPat(PQ.bindpat, pat_type);
 
-        auto new_state = copy_clear_lie();
-        new_state.add_binders(pat_binders);
+        // 4. Check stmts
+        auto state2 = copy_clear_lie();
+        state2.add_binders(pat_binders);
+        state2.tcRhoStmts(i+1, stmts, Check(stmts_type));
 
-        // 5. Typecheck stmts
-        Hs::Type stmts_type;
-        new_state.tcRhoStmts(i+1, stmts, Infer(stmts_type));
-
-        // 6. a ~ (pat_type -> stmts_type) -> b
-        auto b = fresh_meta_type_var( kind_star() );
-        unify(a, Hs::make_arrow_type(Hs::make_arrow_type(pat_type, stmts_type), b));
-
-        // 7. if pat is failable, also typecheck "fail"
-        // desugaring always emits fail right now, I think...
-        // but if we typecheck this without unifying it with anything, it will create an ambiguous constraint.
+        // 5. if pat is failable, also typecheck "fail".
+        // Desugaring always emits fail right now, I think...
+        //   but if we typecheck this without unifying it with anything, it will create an ambiguous constraint.
         if (false) 
         {
             PQ.failOp = Hs::Var({noloc,"Compiler.Base.fail"});
-            auto fail_op_type = new_state.inferRho(PQ.failOp);
+            auto fail_op_type = state2.inferRho(PQ.failOp);
         }
-        current_lie() += new_state.current_lie();
+        current_lie() += state2.current_lie();
 
         stmt = PQ;
-        set_expected_type( expected_type, b );
+        set_expected_type( expected_type, result_type );
     }
     else if (auto sq = stmt.to<Hs::SimpleQual>())
     {
