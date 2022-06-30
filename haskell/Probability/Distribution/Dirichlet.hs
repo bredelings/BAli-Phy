@@ -11,8 +11,6 @@ dirichlet_density as ps = builtin_dirichlet_density (list_to_vector as) (list_to
 sample_dirichlet as = RanSamplingRate (1.0/sqrt(intToDouble $ length as)) $ do vs <- mapM (\a-> gamma a 1.0) as
                                                                                return $ map (/(sum vs)) vs
 
-dirichlet as = Distribution "dirichlet" (make_densities $ dirichlet_density as) (no_quantile "dirichlet") (sample_dirichlet as) (Simplex (length as) 1.0)
-
 -- independent is a Distribution ... so shouldn't this fail because of a lack of a monad instance?
 
 -- The `v_dirichlet` takes an infinite list of as, and a number of them to keep.
@@ -30,9 +28,17 @@ sample_dirichlet_on items as = do ps <- sample_dirichlet as
 dirichlet_on_density as item_ps = dirichlet_density as ps where
     ps = map (\(item,p) -> p) item_ps
 
-dirichlet_on :: [a] -> [Double] -> Distribution [(a,Double)]
-dirichlet_on items as = Distribution "dirichlet_on" (make_densities $ dirichlet_on_density as) (no_quantile "dirichlet_on") (sample_dirichlet_on items as) NoRange
-
 symmetric_dirichlet_on :: [a] -> Double -> Distribution [(a,Double)]
 symmetric_dirichlet_on items a = dirichlet_on items (replicate (length items) a)
 
+class HasDirichlet d where
+    dirichlet :: [Double] -> d [Double]
+    dirichlet_on :: [a] -> [Double] -> d [(a,Double)]
+
+instance HasDirichlet Distribution where
+    dirichlet as = Distribution "dirichlet" (make_densities $ dirichlet_density as) (no_quantile "dirichlet") (sample_dirichlet as) (Simplex (length as) 1.0)
+    dirichlet_on items as = Distribution "dirichlet_on" (make_densities $ dirichlet_on_density as) (no_quantile "dirichlet_on") (sample_dirichlet_on items as) NoRange
+
+instance HasDirichlet Random where
+    dirichlet as = RanDistribution (dirichlet as)
+    dirichlet_on items as = RanDistribution (dirichlet_on items as)
