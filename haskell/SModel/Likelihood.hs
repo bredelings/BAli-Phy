@@ -19,7 +19,6 @@ foreign import bpcall "SModel:peel_likelihood_2" peel_likelihood_2 :: EVector In
 foreign import bpcall "SModel:peel_likelihood_1" peel_likelihood_1 :: EVector Int -> Alphabet -> Matrix Double -> LogDouble
 
 -- ancestral sequence sampling for connected-CLVs
-data VectorPairIntInt
 foreign import bpcall "SModel:sample_root_sequence" sample_root_sequence :: CondLikes -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
 foreign import bpcall "SModel:sample_internal_node_sequence" sample_internal_sequence :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
 foreign import bpcall "SModel:sample_leaf_node_sequence" sample_leaf_sequence :: VectorPairIntInt -> EVector (Matrix Double) -> EVector Int -> Alphabet -> EVector Int -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt

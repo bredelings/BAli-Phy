@@ -13,6 +13,8 @@ import Bio.Alphabet -- for Alphabet type
 import Bio.Alignment.Matrix
 import Bio.Alignment.Pairwise
 
+data VectorPairIntInt -- ancestral sequences with (int letter, int category) for each site.
+
 foreign import bpcall "Alignment:leaf_sequence_counts" builtin_leaf_sequence_counts :: AlignmentMatrix -> Int -> EVector Int -> EVector (EVector Int)
 
 branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) [0..n_branches-1]
@@ -66,7 +68,7 @@ uncompress_alignment (a, counts, mapping) = builtin_uncompress_alignment a mappi
 -- Alignment -> Int -> EVector Int -> [EVector Int]
 leaf_sequence_counts a n counts = list_from_vector $ builtin_leaf_sequence_counts a n counts
 
-foreign import bpcall "Alignment:ancestral_sequence_alignment" builtin_ancestral_sequence_alignment :: AlignmentMatrix -> EVector Int -> EVector Int -> AlignmentMatrix
+foreign import bpcall "Alignment:ancestral_sequence_alignment" builtin_ancestral_sequence_alignment :: AlignmentMatrix -> EVector VectorPairIntInt -> EVector Int -> AlignmentMatrix
 ancestral_sequence_alignment a0 states smap = builtin_ancestral_sequence_alignment a0 states smap
 
 foreign import bpcall "Alignment:select_alignment_columns" builtin_select_alignment_columns :: AlignmentMatrix -> EVector Int -> AlignmentMatrix
