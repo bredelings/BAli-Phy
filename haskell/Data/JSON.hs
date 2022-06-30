@@ -87,7 +87,7 @@ foreign import bpcall "Foreign:" ejson_object :: EVector (EPair CPPString EJSON)
 foreign import bpcall "Foreign:" ejson_number :: Double -> EJSON
 foreign import bpcall "Foreign:" ejson_string :: Text -> EJSON
 foreign import bpcall "Foreign:" ejson_bool   :: Bool -> EJSON
-foreign import bpcall "Foreign:" ejson_null   :: () -> EJSON                                                                                                  
+foreign import bpcall "Foreign:" ejson_null   :: () -> EJSON
 
 
 deep_eval_json (Array xs)  = ejson_array $ list_to_vector $ map deep_eval_json xs
