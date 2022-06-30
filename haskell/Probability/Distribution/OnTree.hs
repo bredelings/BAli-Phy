@@ -16,10 +16,10 @@ import Data.Matrix
 data CTMCOnTreeProperties = CTMCOnTreeProperties {
       subst_root :: Int,
       transition_ps :: Array Int (EVector (Matrix Double)),
-      cond_likes :: Array Int (EVector ()),
-      anc_seqs :: EVector (),
+      cond_likes :: Array Int CondLikes,
+      anc_seqs :: EVector VectorPairIntInt,
       likelihood :: LogDouble,
-      taxa :: [ CPPString ],
+      taxa :: Array Int CPPString,
       get_weighted_frequency_matrix :: Matrix Double,
       smap :: EVector Int,
       leaf_sequences :: Array Int (EVector Int),
