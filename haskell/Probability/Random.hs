@@ -95,6 +95,7 @@ instance Functor Random where
 instance Monad Random where
     return x = RanReturn x
     f >>= g  = RanBind f g
+    mfix f   = RanMFix f
 
 observe dist datum = LiftIO $ do
                        s <- register_dist_observe (dist_name dist)
