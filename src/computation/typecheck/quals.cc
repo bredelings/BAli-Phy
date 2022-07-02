@@ -121,7 +121,7 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         auto PQ = *pq;
 
         // 1. Typecheck (>>=)
-        PQ.bindOp = Hs::Var({noloc,"Compiler.Base.>>="});
+        PQ.bindOp = Hs::Var({noloc,"Control.Monad.>>="});
         auto bind_op_type = inferRho(PQ.bindOp);
 
         // (>>=) :: Monad m => m a -> ( a -> m b) -> m b
@@ -151,7 +151,7 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         //   but if we typecheck this without unifying it with anything, it will create an ambiguous constraint.
         if (false) 
         {
-            PQ.failOp = Hs::Var({noloc,"Compiler.Base.fail"});
+            PQ.failOp = Hs::Var({noloc,"Control.Monad.fail"});
             auto fail_op_type = state2.inferRho(PQ.failOp);
         }
         current_lie() += state2.current_lie();
@@ -164,7 +164,7 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         auto SQ = *sq;
 
         // 1. Typecheck (>>)
-        SQ.andThenOp = Hs::Var({noloc,"Compiler.Base.>>"});
+        SQ.andThenOp = Hs::Var({noloc,"Control.Monad.>>"});
         auto and_then_op_type = inferRho(SQ.andThenOp);
 
         auto [exp_type,   tmp        ] = unify_function(and_then_op_type);

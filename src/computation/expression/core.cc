@@ -21,7 +21,7 @@ var unpack_cpp_string()
 
 var unsafePerformIO()
 {
-    return var("Compiler.Base.unsafePerformIO");
+    return var("Compiler.IO.unsafePerformIO");
 }
 
 expression_ref unpack_cpp_string(const std::string& s)

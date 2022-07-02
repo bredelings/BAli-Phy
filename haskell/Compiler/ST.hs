@@ -3,7 +3,8 @@
 module Compiler.ST (ST, runST)
     where
 
-import Compiler.Base -- for seq, IO = IOActionX, LazyIO, IOAndPass, MFIX, IOReturn
+import Compiler.Base -- for seq
+import Control.Monad
 import Data.Tuple    -- for snd
 import Data.Function -- for $
 

@@ -2,6 +2,8 @@
 module Control.Monad where
 
 import Compiler.Base
+import Compiler.Error  -- for error
+import Data.Function   -- for id
 import Data.List
 import Data.Function
 import Data.Ord
@@ -9,7 +11,20 @@ import Compiler.Num
 
 -- import Control.Applicative
 
--- class Applicative m => Monad m
+infixl 1 >>, >>=
+
+class Monad m where
+    return :: a -> m a
+    (>>=)  :: m a -> (a -> m b) -> m b
+    (>>)   :: m a -> m b -> m b
+    fail   :: String -> m a
+    mfix   :: (a -> m a) -> m a
+    unsafeInterleaveIO :: m a -> m a
+
+    f >> g = f >>= (\x -> g)
+    fail s = error s
+    mfix = error "no mfix for this class"
+    unsafeInterleaveIO = error "no unsafeInterleaveIO for this class"
 
 mapM f = sequence . map f
 
@@ -43,7 +58,7 @@ forever as = do as
 
 --
 
--- join is implemented in Compiler.base
+join x = x >>= id
 
 replicateM n a | n <= 0    = return []
                | otherwise = do x <- a

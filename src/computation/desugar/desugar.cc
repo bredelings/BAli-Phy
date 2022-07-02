@@ -518,7 +518,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             {
                 // let {ok bindpat = do_stmts; ok _ = fail} in e >>= ok
                 auto ok = get_fresh_Var("ok", false);
-                expression_ref fail = {var("Compiler.Base.fail"), desugar_string_expression("Fail!")};
+                expression_ref fail = {var("Control.Monad.fail"), desugar_string_expression("Fail!")};
                 if (PQ.failOp)
                     fail = desugar(PQ.failOp);
                 auto rule1 = Hs::MRule{ {PQ.bindpat},            Hs::SimpleRHS({noloc,do_stmts}) };
