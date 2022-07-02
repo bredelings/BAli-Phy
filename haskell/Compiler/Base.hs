@@ -13,7 +13,7 @@ class Monad m where
     return :: a -> m a
     (>>=)  :: m a -> (a -> m b) -> m b
     (>>)   :: m a -> m b -> m b
-    fail   :: [Char] -> m a
+    fail   :: String -> m a
     mfix   :: (a -> m a) -> m a
     unsafeInterleaveIO :: m a -> m a
 
