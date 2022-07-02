@@ -15,37 +15,49 @@ import Data.Char
 
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
+class RootedTree t => WriteNewickNode t where
+    node_info :: t -> Int -> (Maybe String, Maybe String)
+    label_for_node :: t -> Int -> String
 
-label_for_node (RootedTree _ _ _) = (\node -> show node)
-label_for_node (LabelledTree _ labels) = go
-    where labels_array = listArray' labels
-          go node | inRange (bounds labels_array) node  = labels_array!node
-                  | otherwise                           = ""
-label_for_node (BranchLengthTree tree lengths) = (\node -> sublabel_for_node node ++ branch_label (parentBranch tree node))
-    where sublabel_for_node = label_for_node tree
-          branch_label (Just b) = ":" ++ show (lengths!b') where b' = min b (reverseEdge tree b)
-          branch_label Nothing  = ""
-label_for_node nht@(TimeTree tree _) = (\node -> sublabel_for_node node ++ branch_label (parentBranch tree node))
-    where sublabel_for_node = label_for_node tree
-          branch_label (Just b) = ":" ++ show (branch_length nht b)
-          branch_label Nothing  = ""
+    label_for_node tree node = case node_info tree node of
+                                 (Just name, Just branch) -> name ++ ":" ++ branch
+                                 (Just name, Nothing)     -> name
+                                 (Nothing  , Just branch) -> ":" ++ branch
+                                 (Nothing  , Nothing)     -> ""
 
-write_newick tree@(Tree _ _ _) = write_newick (make_rooted tree)
-write_newick rt@(RootedTree tree root _) = write_newick_node rt (label_for_node rt)
-write_newick (LabelledTree t@(Tree _ _ _) labels) = write_newick (LabelledTree (make_rooted t) labels)
-write_newick lt@(LabelledTree rt@(RootedTree tree root _) labels) = write_newick_node rt (label_for_node lt)
+instance Tree t => WriteNewickNode (RootedTreeImp t) where
+    node_info tree node = (Just $ show node, Nothing)
 
-write_newick blt@(BranchLengthTree (Tree _ _ _) _)                           = write_newick $ make_rooted blt
-write_newick blt@(BranchLengthTree (LabelledTree (Tree _ _ _) _) _)          = write_newick $ make_rooted blt
-write_newick blt@(BranchLengthTree rt@(RootedTree _ _ _) _)                  = write_newick_node rt (label_for_node blt)
-write_newick blt@(BranchLengthTree (LabelledTree rt@(RootedTree _ _ _) _) _) = write_newick_node rt (label_for_node blt)
+instance WriteNewickNode t => WriteNewickNode (LabelledTreeImp t) where
+    node_info (LabelledTree tree labels) node = (label, subbranch)
+        where labels_array = listArray' labels
+              label | inRange (bounds labels_array) node  = Just (labels_array!node)
+                    | otherwise                           = Nothing
+              (sublabel, subbranch)                       = node_info tree node
 
-write_newick nht@(TimeTree rt@(RootedTree _ _ _) _)                  = write_newick_node rt (label_for_node nht)
-write_newick nht@(TimeTree (LabelledTree rt@(RootedTree _ _ _) _) _) = write_newick_node rt (label_for_node nht)
+instance WriteNewickNode t => WriteNewickNode (BranchLengthTreeImp t) where
+    node_info blt@(BranchLengthTree tree lengths) node = (sublabel_for_node, branch_label (parentBranch tree node))
+        where sublabel_for_node = case node_info tree node of (sublabel,_) -> sublabel
+              branch_label (Just b) = Just $ show (branch_length blt b)
+              branch_label Nothing  = Nothing
 
-write_newick_node (RootedTree tree root _) label_for_node = (write_branches_and_node tree (edgesOutOfNode tree root) root) ++ ";" where
+instance WriteNewickNode t => WriteNewickNode (TimeTreeImp t) where
+    node_info nht@(TimeTree tree _) node = (sublabel_for_node, branch_label (parentBranch tree node))
+        where sublabel_for_node = case node_info tree node of (sublabel, _) -> sublabel
+              branch_label (Just b) = Just $ show (branch_length nht b)
+              branch_label Nothing  = Nothing
 
-    write_branches_and_node tree branches node = write_branches tree branches ++ label_for_node node
+instance (TimeTree t, WriteNewickNode t) => WriteNewickNode (RateTimeTreeImp t) where
+    node_info nht@(RateTimeTree tree _) node = (sublabel_for_node, branch_label (parentBranch tree node))
+        where sublabel_for_node = case node_info tree node of (sublabel, _) -> sublabel
+              branch_label (Just b) = Just $ show (branch_length nht b)
+              branch_label Nothing  = Nothing
+
+write_newick tree = write_newick_node tree (root tree)
+
+write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree node) node ++ ";" where
+
+    write_branches_and_node tree branches node = write_branches tree branches ++ label_for_node tree node
 
     write_branches tree [] = ""
     write_branches tree branches = "(" ++ text ++ ")" where
