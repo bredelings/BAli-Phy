@@ -14,7 +14,7 @@ uniform_quantile l u x | x < l      = 0.0
                        | x > u      = 1.0
                        | otherwise  = (x-l)/(u-l)
 
-uniform l u = Distribution "uniform" (make_densities $ uniform_density l u) (uniform_quantile l u) (sample_uniform l u) (uniform_bounds l u)
+
 
 uniform_int_quantile l u x | x <= l     = 0.0
                            | x > u      = 1.0
@@ -27,4 +27,14 @@ uniform_int_bounds l u = integer_between l u
 uniform_int_effect l u x = add_move $ slice_sample_integer_random_variable x (uniform_int_bounds l u)
 sample_uniform_int l u = RandomStructure (uniform_int_effect l u) modifiable_structure $ liftIO (IOAction (\s->(s,builtin_sample_uniform_int l u s)))
 
-uniform_int l u = Distribution "uniform_continuous" (make_densities $ uniform_int_density l u) (uniform_int_quantile l u) (sample_uniform_int l u) (integer_between l u)
+class HasUniform d where
+    uniform :: Double -> Double -> d Double
+    uniform_int :: Int -> Int -> d Int
+
+instance HasUniform Distribution where
+    uniform l u = Distribution "uniform" (make_densities $ uniform_density l u) (uniform_quantile l u) (sample_uniform l u) (uniform_bounds l u)
+    uniform_int l u = Distribution "uniform_continuous" (make_densities $ uniform_int_density l u) (uniform_int_quantile l u) (sample_uniform_int l u) (integer_between l u)
+
+instance HasUniform Random where
+    uniform l u = RanDistribution $ uniform l u
+    uniform_int l u = RanDistribution $ uniform_int l u
