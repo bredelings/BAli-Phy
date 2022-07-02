@@ -5,7 +5,7 @@ import           Tree.Newick
 
 model = do
     tree <- uniform_topology 5
-    return ["tree" %=% write_newick tree]
+    return ["tree" %=% write_newick (make_rooted tree)]
 
 main = do
   mcmc model
