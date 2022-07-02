@@ -18,8 +18,6 @@ sample_v_dirichlet n as = RanSamplingRate (1.0/sqrt(intToDouble n)) $ do vs <- i
                                                                          let ws = take n vs
                                                                          return $ map (/(sum ws)) ws
 
-v_dirichlet n as = Distribution "v_dirichlet" (make_densities $ dirichlet_density (take n as)) (no_quantile "v_dirichlet") (sample_v_dirichlet n as) (Simplex n 1.0)
-
 symmetric_dirichlet n a = v_dirichlet n (repeat a)
 
 sample_dirichlet_on items as = do ps <- sample_dirichlet as
@@ -33,11 +31,15 @@ symmetric_dirichlet_on items a = dirichlet_on items (replicate (length items) a)
 class HasDirichlet d where
     dirichlet :: [Double] -> d [Double]
     dirichlet_on :: [a] -> [Double] -> d [(a,Double)]
+    v_dirichlet :: Int -> [Double] -> d [Double]
 
 instance HasDirichlet Distribution where
     dirichlet as = Distribution "dirichlet" (make_densities $ dirichlet_density as) (no_quantile "dirichlet") (sample_dirichlet as) (Simplex (length as) 1.0)
     dirichlet_on items as = Distribution "dirichlet_on" (make_densities $ dirichlet_on_density as) (no_quantile "dirichlet_on") (sample_dirichlet_on items as) NoRange
+    v_dirichlet n as = Distribution "v_dirichlet" (make_densities $ dirichlet_density (take n as)) (no_quantile "v_dirichlet") (sample_v_dirichlet n as) (Simplex n 1.0)
+
 
 instance HasDirichlet Random where
     dirichlet as = RanDistribution (dirichlet as)
     dirichlet_on items as = RanDistribution (dirichlet_on items as)
+    v_dirichlet n as = RanDistribution (v_dirichlet n as)
