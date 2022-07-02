@@ -14,15 +14,19 @@ annotated_categorical_density qs x = do
   in_edge "qs" qs
   return [qs!x]
 
-class HasCategorical a where
-    categorical :: [Double] -> a Int
+class HasCategorical d where
+    categorical :: [Double] -> d Int
+    categorical_on :: Eq b => [(b,Double)] -> d b
 
 instance HasCategorical Distribution where
     categorical ps = Distribution "categorical" (annotated_categorical_density qs) (no_quantile "categorical") (sample_categorical ps) (integer_between 0 (length ps - 1))
                 where qs = listArray' $ map doubleToLogDouble ps
 
+    categorical_on pairs = Distribution "categorical_on" (annotated_categorical_on_density pairs) (no_quantile "categorical_on") (sample_categorical_on pairs) NoRange
+
 instance HasCategorical Random where
-    categorical ps = RanDistribution (categorical ps) :: Random Int
+    categorical ps = RanDistribution $ categorical ps
+    categorical_on pairs = RanDistribution $ categorical_on pairs
 
 sample_categorical_on :: [(a,Double)] -> Random a
 sample_categorical_on pairs = do
@@ -37,4 +41,4 @@ annotated_categorical_on_density pairs x = do
   in_edge "pairs" pairs
   return [categorical_on_density pairs x]
 
-categorical_on pairs = Distribution "categorical_on" (annotated_categorical_on_density pairs) (no_quantile "categorical_on") (sample_categorical_on pairs) NoRange
+
