@@ -27,9 +27,21 @@ void typechecker_state::tcRho(Hs::Var& x, const Expected& exp_type)
     else
         throw myexception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 
-    auto w = instantiateSigma(sigma, exp_type);
-
-    x.wrap = w;
+    try
+    {
+        auto w = instantiateSigma(sigma, exp_type);
+        x.wrap = w;
+    }
+    catch (myexception& ex)
+    {
+        std::ostringstream header;
+        if (x.name.loc)
+            header<<"At location "<<*x.name.loc<<"\n";
+        header<<"In expression\n\n";
+        header<<"   "<<unloc(x.name)<<"\n\n";
+        ex.prepend(header.str());
+        throw;
+    }
 }
 
 void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
@@ -46,7 +58,21 @@ void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
         throw e;
     }
 
-    auto w = instantiateSigma(sigma, exp_type);
+    try
+    {
+        auto w = instantiateSigma(sigma, exp_type);
+    }
+    catch (myexception& ex)
+    {
+        std::ostringstream header;
+        if (con.name.loc)
+            header<<"At location "<<*con.name.loc<<"\n";
+        header<<"In expression\n\n";
+        header<<"   "<<unloc(con.name)<<"\n\n";
+        ex.prepend(header.str());
+        throw;
+    }
+
 
     // We should actually return w(con).
     // However, since (i) there are no wanteds and (ii) we aren't applying type variables,
@@ -72,8 +98,19 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i
     App.arg_wrappers.push_back(wrap_arg);
 
     // Convert the result to the expected time for the term
-    auto wrap_res = instantiateSigma(result_type, exp_type);
-    App.res_wrappers.push_back(wrap_res);
+    try {
+        auto wrap_res = instantiateSigma(result_type, exp_type);
+        App.res_wrappers.push_back(wrap_res);
+    }
+    catch (myexception& ex)
+    {
+        std::ostringstream header;
+//        header<<"At location "<<con.name.loc<<"\n";
+        header<<"In expression\n\n";
+        header<<"   "<<App.print()<<"\n\n";
+        ex.prepend(header.str());
+        throw;
+    }
 }
 
 void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)

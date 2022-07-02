@@ -1012,7 +1012,20 @@ typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
     {
         // why would this be a rho?
         // assert(is_rho_type(exp_type.check_type()));
-        return subsumptionCheck(t, exp_type.check_type());
+        try {
+            return subsumptionCheck(t, exp_type.check_type());
+        }
+        catch (myexception& ex)
+        {
+            std::ostringstream header;
+            header<<"Expected type\n\n";
+            header<<"   "<<apply_current_subst(exp_type.check_type())<<"\n\n";
+            header<<"but got type\n\n";
+            header<<"   "<<apply_current_subst(t)<<"\n\n";
+
+            ex.prepend(header.str());
+            throw;
+        }
     }
 }
 // FIXME:: Wrappers:
