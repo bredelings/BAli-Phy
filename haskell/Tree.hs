@@ -92,7 +92,7 @@ branch_duration t b = abs (node_time t source - node_time t target)
           target = targetNode t b
 
 instance Tree t => BranchLengthTree (BranchLengthTreeImp t) where
-    branch_length (BranchLengthTree _ ds) b = ds!b
+    branch_length (BranchLengthTree tree ds) b = ds!b' where b' = min b (reverseEdge tree b)
 
 instance TimeTree t => BranchLengthTree (RateTimeTreeImp t) where
     branch_length tree b = branch_duration tree b * branch_rate tree b
