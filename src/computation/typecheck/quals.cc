@@ -167,23 +167,18 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         SQ.andThenOp = Hs::Var({noloc,"Compiler.Base.>>"});
         auto and_then_op_type = inferRho(SQ.andThenOp);
 
+        auto [exp_type,   tmp        ] = unify_function(and_then_op_type);
+        auto [stmts_type, result_type] = unify_function(tmp);
+
         // 2. Typecheck exp
-        auto exp_type = inferRho(SQ.exp);
+        checkRho(SQ.exp, exp_type);
 
-        // 3. and_then_op_type ~ (exp_type -> a)
-        auto a = fresh_meta_type_var( kind_star() );
-        unify(and_then_op_type, Hs::make_arrow_type(exp_type, a));
-
-        // 4. Typecheck stmts
-        Hs::Type stmts_type;
-        tcRhoStmts(i+1, stmts, Infer(stmts_type));
-
-        // 5. a ~ stmts_type -> b
-        auto b = fresh_meta_type_var( kind_star() );
-        unify(a, Hs::make_arrow_type(stmts_type, b));
+        // 3. Typecheck stmts
+        tcRhoStmts(i+1, stmts, Check(stmts_type));
 
         stmt = SQ;
-        set_expected_type( expected_type, b);
+
+        set_expected_type( expected_type, result_type);
     }
     else if (auto lq = stmt.to<Hs::LetQual>())
     {
