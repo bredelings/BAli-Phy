@@ -133,6 +133,7 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         auto [exp_type,  tmp        ] = unify_function(bind_op_type);
         auto [arg2_type, result_type] = unify_function(tmp);
         auto [pat_type, stmts_type  ] = unify_function(arg2_type);
+        set_expected_type( expected_type, result_type );
 
         // 2. Check exp
         checkRho(PQ.exp, exp_type);
@@ -156,7 +157,6 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         current_lie() += state2.current_lie();
 
         stmt = PQ;
-        set_expected_type( expected_type, result_type );
     }
     else if (auto sq = stmt.to<Hs::SimpleQual>())
     {
@@ -169,6 +169,7 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
 
         auto [exp_type,   tmp        ] = unify_function(and_then_op_type);
         auto [stmts_type, result_type] = unify_function(tmp);
+        set_expected_type( expected_type, result_type);
 
         // 2. Typecheck exp
         checkRho(SQ.exp, exp_type);
@@ -177,8 +178,6 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         tcRhoStmts(i+1, stmts, Check(stmts_type));
 
         stmt = SQ;
-
-        set_expected_type( expected_type, result_type);
     }
     else if (auto lq = stmt.to<Hs::LetQual>())
     {
