@@ -16,7 +16,7 @@ pick_index i (h : t) = let (x, t2) = pick_index (i - 1) t in (x, h : t2)
 
 remove_one []   = error "Cannot remove one from empty list"
 remove_one list = do
-    i <- RanDistribution $ uniform_int 0 (length list - 1)
+    i <- uniform_int 0 (length list - 1)
     return $ pick_index i list
 
 remove_n 0 list = return ([], list)
