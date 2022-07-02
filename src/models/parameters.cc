@@ -1334,7 +1334,7 @@ std::string generate_atmodel_program(int n_sequences,
 
     // M2. Topology
     auto topology_var = var("topology");
-    program.perform(topology_var, {var("SamplingRate"),0.0,{var("sample_topology"),taxon_names_var}});
+    program.perform(topology_var, {var("RanSamplingRate"),0.0,{var("sample_topology"),taxon_names_var}});
 
     // M3. Branch lengths
     expression_ref branch_lengths = List();
@@ -1343,7 +1343,7 @@ std::string generate_atmodel_program(int n_sequences,
         string var_name = "branch_lengths";
         auto code = branch_length_model.code;
         expression_ref E = {var("sample_"+var_name),topology_var};
-        E = {var("SamplingRate"),0.0,E};
+        E = {var("RanSamplingRate"),0.0,E};
 
         branch_lengths = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
     }
