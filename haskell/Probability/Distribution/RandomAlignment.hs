@@ -4,7 +4,10 @@ import           Probability.Random
 import           Tree
 import           Bio.Alignment
 import           Control.DeepSeq
+
 import qualified Data.Map as Map
+
+type IModel = (Array Int Double -> Int -> PairHMM, Int -> LogDouble)
 
 modifiable_alignment a@(AlignmentOnTree tree n_seqs ls as) | numNodes tree < 2 = a
 modifiable_alignment (AlignmentOnTree tree n_seqs ls as) | otherwise           = AlignmentOnTree tree n_seqs ls' as'
@@ -112,9 +115,18 @@ annotated_alignment_prs tree hmms model alignment = do
   property "properties" (RandomAlignmentProperties pr hmms lengthp as ls length_prs)
   return $ prs
 
-random_alignment tree model tip_lengths = Distribution "random_alignment"
-                                                       (annotated_alignment_prs tree hmms model)
-                                                       (no_quantile "random_alignment")
-                                                       (RandomStructure do_nothing triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths))
-                                                       NoRange
-    where hmms = branch_hmms model (branch_lengths tree) (numBranches tree)
+
+class HasRandomAlignment d where
+    random_alignment:: (LabelledTree t, Tree t) => BranchLengthTreeImp t -> IModel -> Map.Map String Int -> d (AlignmentOnTree (BranchLengthTreeImp t))
+
+
+instance HasRandomAlignment Distribution where
+    random_alignment tree model tip_lengths = Distribution "random_alignment"
+                                                 (annotated_alignment_prs tree hmms model)
+                                                 (no_quantile "random_alignment")
+                                                 (RandomStructure do_nothing triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths))
+                                                 NoRange
+        where hmms = branch_hmms model (branch_lengths tree) (numBranches tree)
+
+instance HasRandomAlignment Random where
+    random_alignment tree model tip_lengths = RanDistribution $ random_alignment tree model tip_lengths
