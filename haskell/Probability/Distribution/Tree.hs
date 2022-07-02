@@ -83,14 +83,8 @@ uniform_topology_effect tree = do
                                                -- if this were elsewhere then we would have to walk the whole tree for each partition... which might not be terrible...
   add_move $ walk_tree_sample_NNI tree         -- does this handle situations with no data partitions?
 
-uniform_topology n = Distribution "uniform_topology"
-                                  (\tree -> return [uniform_topology_pr n])
-                                  (no_quantile "uniform_topology")
-                                  (RandomStructure uniform_topology_effect triggered_modifiable_tree (sample_uniform_topology n))
-                                  (TreeRange n)
-
 uniform_labelled_topology taxa = do
-  topology <- RanDistribution $ uniform_topology (length taxa)
+  topology <- uniform_topology (length taxa)
   return $ add_labels taxa topology
 
 add_alignment_moves tree = do
@@ -224,13 +218,6 @@ uniform_time_tree_effect tree = sequence_ [ add_move $ slice_sample_real_random_
                                           | node <- [numLeaves tree..numNodes tree - 1], node /= root tree
                                           ]
 
--- FIXME -- maybe we should incorporate the "age" reg directly, here?
-uniform_time_tree age n = Distribution "uniform_time_tree"
-                                       (make_densities' $ uniform_time_tree_pr age n)
-                                       (no_quantile "uniform_time_tree")
-                                       (RandomStructure uniform_time_tree_effect triggered_modifiable_time_tree (sample_uniform_time_tree age n))
-                                       (TreeRange n)
-
 -- Add moves for internal-node times INCLUDING the root.
 -- FIXME: check that the leaves times are fixed?
 -- FIXME: check that numLeaves tree is not changeable?
@@ -282,9 +269,34 @@ sample_coalescent_tree theta n_leaves = do
   return (time_tree topology times)
 
 
-coalescent_tree theta n = Distribution "coalescent_tree"
-                                       (make_densities' $ coalescent_tree_pr_factors theta n)
-                                       (no_quantile "coalescent")
-                                       (RandomStructure coalescent_tree_effect triggered_modifiable_time_tree (sample_coalescent_tree theta n))
-                                       (TreeRange n)
+class HasTreeDistributions d where
+    uniform_topology :: Int -> d TreeImp
+    uniform_time_tree :: Double -> Int -> d (TimeTreeImp (RootedTreeImp TreeImp))
+    coalescent_tree :: Double -> Int -> d (TimeTreeImp (RootedTreeImp TreeImp))
 
+instance HasTreeDistributions Distribution where
+    uniform_topology n = Distribution "uniform_topology"
+                                      (\tree -> return [uniform_topology_pr n])
+                                      (no_quantile "uniform_topology")
+                                      (RandomStructure uniform_topology_effect triggered_modifiable_tree (sample_uniform_topology n))
+                                      (TreeRange n)
+
+    -- FIXME -- maybe we should incorporate the "age" reg directly, here?
+    uniform_time_tree age n = Distribution "uniform_time_tree"
+                                           (make_densities' $ uniform_time_tree_pr age n)
+                                           (no_quantile "uniform_time_tree")
+                                           (RandomStructure uniform_time_tree_effect triggered_modifiable_time_tree (sample_uniform_time_tree age n))
+                                           (TreeRange n)
+
+
+
+    coalescent_tree theta n = Distribution "coalescent_tree"
+                                           (make_densities' $ coalescent_tree_pr_factors theta n)
+                                           (no_quantile "coalescent")
+                                           (RandomStructure coalescent_tree_effect triggered_modifiable_time_tree (sample_coalescent_tree theta n))
+                                           (TreeRange n)
+
+instance HasTreeDistributions Random where
+    uniform_topology n = RanDistribution $ uniform_topology n
+    uniform_time_tree age n = RanDistribution $ uniform_time_tree age n
+    coalescent_tree theta n = RanDistribution $ coalescent_tree theta n
