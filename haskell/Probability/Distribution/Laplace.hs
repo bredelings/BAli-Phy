@@ -17,4 +17,12 @@ annotated_laplace_density m s x = do
 
 data Laplace = Laplace Double Double
 
-laplace m s = Distribution "laplace" (annotated_laplace_density m s) (error "no quantile") (sample_laplace m s) laplace_bounds
+
+class HasLaplace d where
+    laplace :: Double -> Double -> d Double
+
+instance HasLaplace Distribution where
+    laplace m s = Distribution "laplace" (annotated_laplace_density m s) (error "no quantile") (sample_laplace m s) laplace_bounds
+
+instance HasLaplace Random where
+    laplace m s = RanDistribution $ laplace m s
