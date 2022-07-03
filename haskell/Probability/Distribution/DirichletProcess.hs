@@ -29,8 +29,6 @@ stick (p:ps) (x:xs) = do keep <- bernoulli p
                          else
                              stick ps xs
 
-stick_dist ps xs = Distribution "stick" (error "no density") (error "no quantile") (stick ps xs) NoRange
-
 -- This version performs 1 exponential sample to select category n.
 --stick' ps xs = exponential 1.0 <&> negate <&> go_log ps xs  where
 --    go_log (p:ps) (x:xs) q  = let q' = q - log1p(-p)
