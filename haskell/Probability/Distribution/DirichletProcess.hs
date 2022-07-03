@@ -107,7 +107,6 @@ dp n alpha dist = lazy $ do
 
   atoms  <- sequence $ repeat $ dist
 
-  -- We need the Random Double here to avoid an ambiguous (HasBeta d) constraint.
-  breaks <- sequence $ repeat $ (beta 1.0 alpha :: Random Double)
+  breaks <- sequence $ repeat $ beta 1.0 alpha
 
   iid n (stick breaks atoms)
