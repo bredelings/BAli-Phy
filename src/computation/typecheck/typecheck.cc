@@ -95,6 +95,11 @@ using std::tuple;
   * Don't desugar Core::Decls, just the Hs::Binds.  But pass them both to the optimizer.
 
   TODO:
+  0. Speed up type checking!
+     - don't import EVERYTHING
+     - figure out the set of free metavariables faster...  could we just use levels?
+     - make types into a ref-counted type
+     - make MetaTypeVar's point to their target?
   0. merge rename_pattern_from_bindinfo into tcPat( ) -> pass in (LetCtxt signatures (\id->monoid))
   0. remove desugar_pattern( )
   0. Make a quals class.
