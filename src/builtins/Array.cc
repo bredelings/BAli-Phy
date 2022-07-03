@@ -4,15 +4,6 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/bool.H"
 
-extern "C" closure builtin_function_is_array(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate(0);
-    if (has_constructor(arg0,"Array"))
-        return {bool_true};
-    else
-        return {bool_false};
-}
-
 extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 {
     int n = Args.evaluate(0).as_int();

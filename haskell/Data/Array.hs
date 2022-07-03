@@ -20,9 +20,6 @@ import Foreign.Vector
 
 data Array a b
 
--- hack, until we have a type system
-foreign import bpcall "Array:is_array" is_array :: a -> Bool
-
 infixl 9 !
 foreign import bpcall "Array:getIndex" (!) :: Array a b -> a -> b
 
