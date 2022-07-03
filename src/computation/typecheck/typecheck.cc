@@ -100,6 +100,7 @@ using std::tuple;
      - figure out the set of free metavariables faster...  could we just use levels?
      - make types into a ref-counted type
      - make MetaTypeVar's point to their target?
+  0. Implement type class Num, Enum, Ix, and add Functor instance for array.
   0. merge rename_pattern_from_bindinfo into tcPat( ) -> pass in (LetCtxt signatures (\id->monoid))
   0. remove desugar_pattern( )
   0. Make a quals class.
