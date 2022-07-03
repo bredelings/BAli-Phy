@@ -10,9 +10,9 @@ independent_densities _  _          = [doubleToLogDouble 0.0]
 plate n dist_f = independent $ map dist_f [0..n-1]
 
 class HasIndependent d where
-    independent :: [Distribution a] -> d [a]
---    independent_on :: [(a,Distribution b)] -> d [(a,b)]
-    iid :: Int -> Distribution a -> d [a]
+    independent :: [d a] -> d [a]
+--    independent_on :: [(a,d b)] -> d [(a,b)]
+    iid :: Int -> d a -> d [a]
 
 instance HasIndependent Distribution where
 
@@ -25,7 +25,7 @@ instance HasIndependent Distribution where
 
 
 instance HasIndependent Random where
-    independent dists = lazy $ (sequence $ map RanDistribution dists)
+    independent dists = lazy $ sequence dists
 --    independent_on dists_pairs = RanDistribution (independent dists_pairs)
-    iid n dist = lazy $ do xs <- RanSamplingRate (1.0/sqrt (intToDouble n)) $ sequence (repeat $ RanDistribution dist)
+    iid n dist = lazy $ do xs <- RanSamplingRate (1.0/sqrt (intToDouble n)) $ sequence $ repeat dist
                            return $ take n xs
