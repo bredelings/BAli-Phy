@@ -25,6 +25,7 @@ instance HasIndependent Distribution where
 
 
 instance HasIndependent Random where
-    independent dists = RanDistribution (independent dists)
+    independent dists = lazy $ (sequence $ map RanDistribution dists)
 --    independent_on dists_pairs = RanDistribution (independent dists_pairs)
-    iid n dist = RanDistribution (iid n dist)
+    iid n dist = lazy $ do xs <- RanSamplingRate (1.0/sqrt (intToDouble n)) $ sequence (repeat $ RanDistribution dist)
+                           return $ take n xs
