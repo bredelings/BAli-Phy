@@ -78,12 +78,12 @@ safe_exp x = if (x < (-20.0)) then
              else
                exp x
 
---dpm_lognormal n alpha mean_dist noise_dist = dpm n alpha sample_dist
---    where sample_dist = do mean <- mean_dist
---                           sigma_over_mu <- noise_dist
---                           let sample_log_normal = do z <- normal 0.0 1.0
---                                                      return $ mean*safe_exp (z*sigma_over_mu)
---                           return sample_log_normal
+dpm_lognormal n alpha mean_dist noise_dist = dpm n alpha sample_dist
+    where sample_dist = do mean <- mean_dist
+                           sigma_over_mu <- noise_dist
+                           let sample_log_normal = do z <- normal 0.0 1.0
+                                                      return $ mean*safe_exp (z*sigma_over_mu)
+                           return sample_log_normal
 
 -- In theory we could implement `dpm` in terms of `dp`:
 --   dpm n alpha sample_dist = sequence $ dp n alpha sample_dist
@@ -91,16 +91,14 @@ safe_exp x = if (x < (-20.0)) then
 -- I need the take to be at the end:
 --   liftM (take n) $ sequence $ dp alpha sample_dist
 
---dpm :: Int -> Double -> Distribution (Distribution a)
---dpm n alpha sample_dist = lazy $ do
+dpm n alpha sample_dist = lazy $ do
 
---  dists  <- sequence $ repeat $ RanDistribution sample_dist
+  dists  <- sequence $ repeat $ sample_dist
 
---  breaks <- sequence $ repeat $ beta 1.0 alpha
+  breaks <- sequence $ repeat $ beta 1.0 alpha
 
 -- stick selects a distribution from the list, and join then samples from the distribution
--- here we really want 
---  iid n (join $ RanDistribution $ stick_dist breaks dists)
+  iid n (join $ stick breaks dists)
 
 dp :: Int -> Double -> Random a -> Random [a]
 dp n alpha dist = lazy $ do
