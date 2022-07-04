@@ -107,7 +107,7 @@ instance Fractional LogDouble where
     (/) = divide_logdouble
     recip = recip_logdouble
     fromRational = doubleToLogDouble
-                    
+
 foreign import bpcall "Prelude:expToLogDouble" expToLogDouble :: Double -> LogDouble
 foreign import bpcall "Prelude:doubleToLogDouble" doubleToLogDouble :: Double -> LogDouble
 
