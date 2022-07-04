@@ -35,7 +35,7 @@ sample_categorical_on pairs = do
 
 categorical_on_density pairs x = case lookup x pairs of
                                    Just p -> doubleToLogDouble p
-                                   Nothing -> doubleToLogDouble 0.0
+                                   Nothing -> 0
 
 annotated_categorical_on_density pairs x = do
   in_edge "pairs" pairs

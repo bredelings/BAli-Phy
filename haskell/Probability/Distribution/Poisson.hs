@@ -36,7 +36,7 @@ dropCount p xs = go p 0 xs where
                       | otherwise  = (n,xs)
 
 poisson_processes_densities [] [] = []
-poisson_processes_densities [] _  = [doubleToLogDouble 0.0]
+poisson_processes_densities [] _  = [0]
 poisson_processes_densities ((rate,t1,t2):intervals) points = poisson_process_density' rate t1 t2 n:poisson_processes_densities intervals remaining_points
     where (n,remaining_points) = dropCount (<= t2) points
 
