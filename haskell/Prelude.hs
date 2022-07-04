@@ -49,10 +49,6 @@ import Foreign.String
 foreign import bpcall "Prelude:putStrLn" builtin_putStrLn :: CPPString -> RealWorld -> EPair RealWorld ()
 putStrLn line = IOAction (pair_from_c . builtin_putStrLn (list_to_string line))
 
-foreign import bpcall "Prelude:" is_char :: a -> Bool
-foreign import bpcall "Prelude:" is_double :: a -> Bool
-foreign import bpcall "Prelude:" is_int :: a -> Bool
-
 foreign import bpcall "Prelude:" read_int :: CPPString -> Int
 foreign import bpcall "Prelude:" read_double :: CPPString -> Double
 

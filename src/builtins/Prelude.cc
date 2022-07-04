@@ -12,37 +12,6 @@ using std::string;
 using std::vector;
 
 //*****************************************************//
-
-extern "C" closure builtin_function_is_int(OperationArgs& Args)
-{
-    auto arg = Args.evaluate(0);
-
-    if (arg.is_int())
-	return {bool_true};
-    else
-	return {bool_false};
-}
-
-extern "C" closure builtin_function_is_double(OperationArgs& Args)
-{
-    auto arg = Args.evaluate(0);
-
-    if (arg.is_double())
-	return {bool_true};
-    else
-	return {bool_false};
-}
-
-extern "C" closure builtin_function_is_char(OperationArgs& Args)
-{
-    auto arg = Args.evaluate(0);
-
-    if (arg.is_char())
-	return {bool_true};
-    else
-	return {bool_false};
-}
-
 extern "C" closure builtin_function_truncate(OperationArgs& Args)
 {
     double x = Args.evaluate(0).as_double();
@@ -89,46 +58,12 @@ extern "C" closure builtin_function_add_char(OperationArgs& Args)
     return {x.as_log_double() + y.as_log_double()};
 }
 
-extern "C" closure builtin_function_add(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-
-    if (x.is_double())
-	return {x.as_double() + y.as_double()};
-    else if (x.is_int())
-	return {x.as_int() + y.as_int()};
-    else if (x.is_log_double())
-	return {x.as_log_double() + y.as_log_double()};
-    else if (x.is_char())
-	return {x.as_char() + y.as_char()};
-    else
-	throw myexception()<<"Add: object '"<<x.print()<<"' is not double, int, log_double, or char'";
-}
-
 extern "C" closure builtin_function_multiply_char(OperationArgs& Args)
 {
     auto x = Args.evaluate(0);
     auto y = Args.evaluate(1);
 
     return {x.as_log_double() * y.as_log_double()};
-}
-
-extern "C" closure builtin_function_multiply(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-
-    if (x.is_double())
-	return {x.as_double() * y.as_double()};
-    else if (x.is_int())
-	return {x.as_int() * y.as_int()};
-    else if (x.is_log_double())
-	return {x.as_log_double() * y.as_log_double()};
-    else if (x.is_char())
-	return {x.as_char() * y.as_char()};
-    else
-	throw myexception()<<"Multiply: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
 extern "C" closure builtin_function_divide_double(OperationArgs& Args)
@@ -161,23 +96,6 @@ extern "C" closure builtin_function_recip_logdouble(OperationArgs& Args)
     x.log() = -x.log();
 
     return {x};
-}
-
-extern "C" closure builtin_function_divide(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-  
-    if (x.is_double())
-	return {x.as_double() / y.as_double()};
-    else if (x.is_int())
-	return {double(x.as_int()) / double(y.as_int())};
-    else if (x.is_log_double())
-	return {x.as_log_double() / y.as_log_double()};
-    else if (x.is_char())
-	return {double(x.as_char()) / double(y.as_char())};
-    else
-	throw myexception()<<"Divide: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
 // Also see function `div_t div(int,int)` in stdlib.h
@@ -272,58 +190,11 @@ extern "C" closure builtin_function_subtract_char(OperationArgs& Args)
     return {x.as_log_double() - y.as_log_double()};
 }
 
-extern "C" closure builtin_function_subtract(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-
-    if (x.is_double())
-	return {x.as_double() - y.as_double()};
-    else if (x.is_int())
-	return {x.as_int() - y.as_int()};
-    else if (x.is_log_double())
-	return {x.as_log_double() - y.as_log_double()};
-    else if (x.is_char())
-	return {x.as_char() - y.as_char()};
-    else
-	throw myexception()<<"Minus: object '"<<x.print()<<"' is not double, int, log_double, or char'";
-}
-
 extern "C" closure builtin_function_negate_char(OperationArgs& Args)
 {
     char x = Args.evaluate(0).as_char();
 
     return { -x };
-}
-
-extern "C" closure builtin_function_negate(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-  
-    if (x.is_double())
-	return {-x.as_double()};
-    else if (x.is_int())
-	return {-x.as_int()};
-    else if (x.is_char())
-	return {-x.as_char()};
-    else
-	throw myexception()<<"Negate: object '"<<x.print()<<"' is not double, int, or char'";
-}
-
-extern "C" closure builtin_function_abs(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-  
-    if (x.is_double())
-	return {std::abs(x.as_double())};
-    else if (x.is_log_double())
-	return {x};
-    else if (x.is_int())
-	return {std::abs(x.as_int())};
-    else if (x.is_char())
-	return {std::abs(x.as_char())};
-    else
-	throw myexception()<<"Negate: object '"<<x.print()<<"' is not double, int, or char'";
 }
 
 extern "C" closure builtin_function_get_n_args(OperationArgs& Args)
