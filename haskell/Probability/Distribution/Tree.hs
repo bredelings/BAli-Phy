@@ -66,9 +66,9 @@ modifiable_cayley_tree modf tree = Tree (listArray' nodes) (listArray' branches)
 -- our current modifiable tree structure requires the node to have a constrant degree.
 
 
-uniform_topology_pr 1 = doubleToLogDouble 1.0
-uniform_topology_pr 2 = doubleToLogDouble 1.0
-uniform_topology_pr n = uniform_topology_pr (n - 1) / (doubleToLogDouble $ intToDouble $ 2 * n - 5)
+uniform_topology_pr 1 = 1
+uniform_topology_pr 2 = 1
+uniform_topology_pr n = uniform_topology_pr (n - 1) / (fromInteger $ 2 * n - 5)
 
 -- The *triggered* tree is lazy: when we access anything that is modifiable, it triggers all effects,
 -- which includes forcing all the modifiables in the *untriggered* tree.

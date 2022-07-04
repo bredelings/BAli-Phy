@@ -12,7 +12,7 @@ expTransform dist@(Distribution name d q s r) = Distribution name' pdf' q' s' r'
  where
   pdf' x = do
     ds <- d x
-    return $ (doubleToLogDouble 1.0/ doubleToLogDouble x):ds
+    return $ (1 / doubleToLogDouble x):ds
   q'   = exp . q
   s'   = do v <- RanDistribution dist
             return $ exp v

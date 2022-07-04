@@ -252,7 +252,7 @@ foldt f z []  = z
 foldt f _ [x] = x
 foldt f z xs  = foldt f z (pair_apply f xs)
 
-balanced_product xs = foldt (*) (doubleToLogDouble 1.0) xs
+balanced_product xs = foldt (*) 1 xs
 
 force_struct x = struct_seq x x
 

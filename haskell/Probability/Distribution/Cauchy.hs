@@ -24,14 +24,14 @@ instance HasCauchy Random where
 
 ---- half_cauchy
 
-half_cauchy_density m s x | x < m     = doubleToLogDouble 0.0
-                          | otherwise = doubleToLogDouble 2.0 * cauchy_density m s x
+half_cauchy_density m s x | x < m     = 0
+                          | otherwise = 2 * cauchy_density m s x
 
 sample_half_cauchy m s = do
   x <- cauchy m s
   return $ abs(x-m) + m
 
-half_cauchy_quantile m s p = cauchy_quantile m s ((p+1.0)/2.0)
+half_cauchy_quantile m s p = cauchy_quantile m s ((p+1)/2)
 half_cauchy_bounds m = above m
 
 half_cauchy m s = Distribution "half_cauchy" (make_densities $ half_cauchy_density m s) (half_cauchy_quantile m s) (sample_half_cauchy m s) (half_cauchy_bounds m)
