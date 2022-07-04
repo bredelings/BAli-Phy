@@ -40,6 +40,8 @@ elems   arr = [ arr!ix | ix <- indices arr ]
 
 assocs  arr = [ (ix, arr!ix) | ix <- indices arr ]
 
+-- We can't make an Functor instance for Array Int.
+-- We can only make a Fuctor instance for Ix a => Array a
 arrayMap f arr = mkArray (numElements arr) (\i -> f (arr!i))
 
 array_to_vector x = list_to_vector (elems x)
