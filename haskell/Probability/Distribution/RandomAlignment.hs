@@ -58,12 +58,10 @@ sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree
     as       = listArray' $ unaligned_alignments_on_tree tree tip_lengths
     n_nodes  = numNodes tree
 
-product' = foldl' (*) (doubleToLogDouble 1.0)
-
 alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a ! b)) (hmms ! b)
 
-alignment_pr_top as tree hmms = product' $ map (alignment_branch_pr as hmms) [0 .. numBranches tree - 1]
-alignment_pr_bot as tree (_, lengthp) = (product' $ map (lengthp . seqlength as tree) (internal_nodes tree)) ^ 2
+alignment_pr_top as tree hmms = product $ map (alignment_branch_pr as hmms) [0 .. numBranches tree - 1]
+alignment_pr_bot as tree (_, lengthp) = (product $ map (lengthp . seqlength as tree) (internal_nodes tree)) ^ 2
 alignment_pr1 length (_, lengthp) = lengthp length
 
 -- FIXME: Maybe the alignment argument should be last?
@@ -72,7 +70,7 @@ alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model | numNodes tree < 1 
                                                             | numNodes tree == 1 = alignment_pr1 (ls ! 0) model
                                                             | otherwise = (alignment_pr_top as tree hmms) / (alignment_pr_bot as tree model)
 
-alignment_prs_bot as tree (_, lengthp) = map ((\x -> x*x) . (doubleToLogDouble 1.0/) . lengthp . seqlength as tree) (internal_nodes tree)
+alignment_prs_bot as tree (_, lengthp) = map ((\x -> x*x) . (1/) . lengthp . seqlength as tree) (internal_nodes tree)
 alignment_prs_top as tree hmms = map (alignment_branch_pr as hmms) [0 .. numBranches tree - 1]
 alignment_prs hmms model (AlignmentOnTree tree n_seqs ls as) | numNodes tree < 1  = error $ "Tree only has " ++ show (numNodes tree) ++ " nodes."
                                                              | numNodes tree == 1 = [alignment_pr1 (ls ! 0) model]
@@ -104,7 +102,7 @@ annotated_alignment_prs tree hmms model alignment = do
   in_edge "tree" tree
   in_edge "imodel" model
   let prs = alignment_prs hmms model alignment
-      pr = product' prs
+      pr = product prs
       as = pairwise_alignments alignment
       ls = sequence_lengths alignment
       lengthp = snd model

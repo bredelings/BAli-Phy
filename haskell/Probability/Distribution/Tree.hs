@@ -88,30 +88,30 @@ uniform_labelled_topology taxa = do
   return $ add_labels taxa topology
 
 add_alignment_moves tree = do
-  SamplingRate 1.0 $ add_move $ walk_tree_sample_alignments tree
+  SamplingRate 1 $ add_move $ walk_tree_sample_alignments tree
   SamplingRate 0.1 $ add_move $ realign_from_tips tree
 
 add_SPR_moves tree = do
-  SamplingRate 1.0 $ add_move $ sample_SPR_all tree
+  SamplingRate 1 $ add_move $ sample_SPR_all tree
   SamplingRate 0.5 $ add_move $ sample_SPR_flat tree
   SamplingRate 0.5 $ add_move $ sample_SPR_nodes tree
 
 add_topology_moves tree = do
-  SamplingRate 1.0 $ add_SPR_moves tree
+  SamplingRate 1 $ add_SPR_moves tree
 
 
 add_length_moves tree = do
-  SamplingRate 1.0 $ add_move $ walk_tree_sample_branch_lengths tree
+  SamplingRate 1 $ add_move $ walk_tree_sample_branch_lengths tree
 
 add_tree_moves tree = do
-  SamplingRate 1.0 $ add_length_moves tree
-  SamplingRate 1.0 $ add_move $ walk_tree_sample_NNI_and_branch_lengths tree
+  SamplingRate 1 $ add_length_moves tree
+  SamplingRate 1 $ add_move $ walk_tree_sample_NNI_and_branch_lengths tree
   SamplingRate 2.0 $ add_move $ walk_tree_sample_NNI tree  -- if alignment is fixed this is really cheap -- increase weight?
   SamplingRate 0.5 $ add_move $ walk_tree_sample_NNI_and_A tree
 
 add_tree_alignment_moves tree = do
-  SamplingRate 2.0 $ add_tree_moves tree
-  SamplingRate 1.0 $ add_alignment_moves tree
+  SamplingRate 2 $ add_tree_moves tree
+  SamplingRate 1 $ add_alignment_moves tree
 
 uniform_labelled_tree taxa branch_lengths_dist = do
   -- These lines should be under SamplingRate 0.0 -- but then the polytomy trees won't work
@@ -151,8 +151,8 @@ sample_uniform_time_tree age n = do
   let all_times = replicate n 0.0 ++ times ++ [age]
   return $ time_tree topology all_times
 
-possible = doubleToLogDouble 1.0
-impossible = doubleToLogDouble 0.0
+possible = 1 :: LogDouble
+impossible = 0 :: LogDouble
 require p = if p then possible else impossible
 
 parent_before_child_prs n_leaves tree = [factor n | n <- [0 .. 2*n_leaves-2] ]
@@ -236,7 +236,7 @@ coalescent_tree_effect tree = do
 data CoalEvent = Leaf | Internal | RateShift Double
 node_type tree node = if is_leaf_node tree node then Leaf else Internal
 
-coalescent_tree_pr_factors theta n_leaves tree = go (0.0) (0) (2.0/theta) (doubleToLogDouble 1.0) times: parent_before_child_prs n_leaves tree
+coalescent_tree_pr_factors theta n_leaves tree = go 0 0 (2/theta) 1 times: parent_before_child_prs n_leaves tree
     where times = sortOn fst [ (node_time tree node, node_type tree node) | node <- [0..numNodes tree -1]]
           go prev_time n rate pr [] = pr
           go prev_time n rate pr ((time,event):events) =
@@ -262,10 +262,10 @@ coalescent_tree_pr_factors theta n_leaves tree = go (0.0) (0) (2.0/theta) (doubl
 sample_coalescent_tree theta n_leaves = do
   topology <- sample_uniform_ordered_tree n_leaves
 
-  let rate = 2.0/theta
-  dts <- sequence [ exponential (1.0 / (rate* n_choose_2) )| n <- reverse [2..n_leaves],
+  let rate = 2/theta
+  dts <- sequence [ exponential (1 / (rate* n_choose_2) )| n <- reverse [2..n_leaves],
                                                              let n_choose_2 = intToDouble $ n*(n-1) `div` 2]
-  let times = (replicate n_leaves 0.0) ++ (scanl1 (+) dts)
+  let times = (replicate n_leaves 0) ++ (scanl1 (+) dts)
   return (time_tree topology times)
 
 
