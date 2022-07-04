@@ -15,12 +15,12 @@ class Num a where
     negate y = 0 - y
 
 
-foreign import bpcall "Prelude:" add_int :: Int -> Int -> Int
-foreign import bpcall "Prelude:" subtract_int :: Int -> Int -> Int
-foreign import bpcall "Prelude:" multiply_int :: Int -> Int -> Int
-foreign import bpcall "Prelude:" abs_int :: Int -> Int
-foreign import bpcall "Prelude:" negate_int :: Int -> Int
-foreign import bpcall "Prelude:" signum_int :: Int -> Int
+foreign import bpcall "Num:" add_int :: Int -> Int -> Int
+foreign import bpcall "Num:" subtract_int :: Int -> Int -> Int
+foreign import bpcall "Num:" multiply_int :: Int -> Int -> Int
+foreign import bpcall "Num:" abs_int :: Int -> Int
+foreign import bpcall "Num:" negate_int :: Int -> Int
+foreign import bpcall "Num:" signum_int :: Int -> Int
 
 instance Num Int where
     (+) = add_int
@@ -32,13 +32,13 @@ instance Num Int where
     fromInteger x = x
 
 
-foreign import bpcall "Prelude:" add_double :: Double -> Double -> Double
-foreign import bpcall "Prelude:" subtract_double :: Double -> Double -> Double
-foreign import bpcall "Prelude:" multiply_double :: Double -> Double -> Double
-foreign import bpcall "Prelude:" abs_double :: Double -> Double
-foreign import bpcall "Prelude:" negate_double :: Double -> Double
-foreign import bpcall "Prelude:" signum_double :: Double -> Double
-foreign import bpcall "Prelude:intToDouble" intToDouble :: Int -> Double
+foreign import bpcall "Num:" add_double :: Double -> Double -> Double
+foreign import bpcall "Num:" subtract_double :: Double -> Double -> Double
+foreign import bpcall "Num:" multiply_double :: Double -> Double -> Double
+foreign import bpcall "Num:" abs_double :: Double -> Double
+foreign import bpcall "Num:" negate_double :: Double -> Double
+foreign import bpcall "Num:" signum_double :: Double -> Double
+foreign import bpcall "Num:" intToDouble :: Int -> Double
 
 instance Num Double where
     (+) = add_double

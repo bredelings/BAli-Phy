@@ -19,7 +19,7 @@ list_to_CList _ = c_nil 0#
 --   try to define it.
 foreign import bpcall "Prelude:increment_int" increment_int :: Int -> Int
 
-foreign import bpcall "Prelude:subtract_int" subtract_int' :: Int -> Int -> Int
+foreign import bpcall "Num:subtract_int" subtract_int' :: Int -> Int -> Int
 
 map_from :: Int -> Int -> (Int -> a) -> [a]
 map_from j1 j2 f = go j1 where
