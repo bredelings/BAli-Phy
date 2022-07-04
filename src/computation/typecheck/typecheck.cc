@@ -1255,7 +1255,7 @@ pair<Hs::Binds,Core::Decls> typechecker_result::all_binds() const
     Core::Decls all2 = top_simplify_decls;
     all2 += dfun_decls;
 
-    std::cerr<<"Core decls:\n";
+    std::cerr<<"\n\nCore decls:\n";
     std::cerr<<print_cdecls(all2);
     std::cerr<<"\n\n";
 
