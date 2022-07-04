@@ -11,7 +11,7 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
-// Constraints for defaulting must be of the form K a (e.g. Num a)
+// Constraints for defaulting must be of the form K a (e.g. Num a) where a is a MetaTypeVar.
 optional<Hs::TypeCon> simple_constraint_class(const Hs::Type& constraint)
 {
     auto [tycon, args] = Hs::decompose_type_apps(constraint);
@@ -20,7 +20,7 @@ optional<Hs::TypeCon> simple_constraint_class(const Hs::Type& constraint)
     if (args.size() != 1) return {};
 
     // The type is a typevar
-    if (not args[0].is_a<Hs::TypeVar>()) return {};
+    if (not args[0].is_a<Hs::MetaTypeVar>()) return {};
 
     // The constraint should be a TyCon, not (say) a variable.
     auto tc = tycon.to<Hs::TypeCon>();
