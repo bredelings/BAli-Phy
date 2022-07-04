@@ -214,14 +214,6 @@ allEdgesAfterEdge tree b = b:concat [allEdgesAfterEdge tree b' | b' <- edgesAfte
 allEdgesFromNode tree n = concat [allEdgesAfterEdge tree b | b <- edgesOutOfNode tree n]
 
 add_labels labels t = LabelledTree t labels
--- add_labels labels rt@(RootedTree _ _ _)   = LabelledTree rt labels
--- add_labels labels (LabelledTree _ _)      = error "add_labels: trying to add labels to an already-labelled tree!"
--- add_labels labels (BranchLengthTree t ds) = BranchLengthTree (add_labels labels t) ds
--- add_labels labels (TimeTree t hs)         = TimeTree (add_labels labels t) hs
--- add_labels labels (RateTimeTree t hs)     = RateTimeTree (add_labels labels t) hs
-
--- add_root r (LabelledTree t labels) = LabelledTree (add_root r t) labels
--- add_root r (BranchLengthTree t ds) = BranchLengthTree (add_root r t) ds
 
 add_root r t = rt
      where check_away_from_root b = (sourceNode rt b == root rt) || (or $ map (away_from_root rt) (edgesBeforeEdge rt b))
