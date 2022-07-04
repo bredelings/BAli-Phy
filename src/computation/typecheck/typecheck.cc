@@ -105,7 +105,8 @@ using std::tuple;
   0. remove desugar_pattern( )
   0. Make a quals class.
   0. Make a Pattern class.
-  0. Switch current_lie() to an ordered LIE.
+     - we would have to re-implement infix expression handling -> infix pattern handling
+     - does GHC do that?
   0. Make environments not just take a string ... make them take a Var/Con or a (String,Int) pair?
   0. Make an Expression class, similar to the Type class, that allows the object to be modified.
      - It can hold things in a cow_ptr
@@ -131,7 +132,7 @@ using std::tuple;
   1. Reject unification of variables, tycons, etc with different kinds.
      - Ensure that all ForallType binders have kinds.
      - Assign kinds to all TypeCons.... OR look it up in the symbol table when we need to!
-  2. Process type signatures for ambiguity and type synonyms.
+  2. Process type signatures for ambiguity (?)
   3. Efficient handling of recursion between instance method and dictionaries.
        + For example, if we have i==@1 = \(x:xs) (y:ys) -> (x == y) && (xs == ys) then
          it would be nice to make the call for (xs == ys) call i==@1 directly, instead of
