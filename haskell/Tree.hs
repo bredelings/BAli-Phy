@@ -71,6 +71,9 @@ instance Tree t => Tree (RateTimeTreeImp t) where
 instance RootedTree t => TimeTree (TimeTreeImp t) where
     node_time (TimeTree t hs) node = hs!node
 
+instance TimeTree t => TimeTree (LabelledTreeImp t) where
+    node_time (LabelledTree tt _) node = node_time tt node
+
 instance TimeTree t => TimeTree (RateTimeTreeImp t) where
     node_time (RateTimeTree tt _) node = node_time tt node
 
@@ -210,7 +213,7 @@ tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
 allEdgesAfterEdge tree b = b:concat [allEdgesAfterEdge tree b' | b' <- edgesAfterEdge tree b]
 allEdgesFromNode tree n = concat [allEdgesAfterEdge tree b | b <- edgesOutOfNode tree n]
 
-add_labels labels t@(Tree _ _ _)          = LabelledTree t labels
+add_labels labels t = LabelledTree t labels
 -- add_labels labels rt@(RootedTree _ _ _)   = LabelledTree rt labels
 -- add_labels labels (LabelledTree _ _)      = error "add_labels: trying to add labels to an already-labelled tree!"
 -- add_labels labels (BranchLengthTree t ds) = BranchLengthTree (add_labels labels t) ds
