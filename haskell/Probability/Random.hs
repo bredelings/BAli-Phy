@@ -148,6 +148,8 @@ run_lazy (RanSamplingRate _ a) = run_lazy a
 run_lazy (RanDistribution (Distribution _ _ _ a _)) = unsafeInterleaveIO $ run_lazy a
 run_lazy (PerformTKEffect e) = run_tk_effects 1.0 e
 run_lazy (WithTKEffect action _) = run_lazy action
+run_lazy (Lazy a) = run_lazy a
+run_lazy (Observe _ _) = error "run_lazy: observe"
 
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
 
