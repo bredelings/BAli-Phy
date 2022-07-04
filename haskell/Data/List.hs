@@ -37,6 +37,7 @@ uncons (x:xs) = Just (x,xs)
 null []          =  True
 null (_:_)       =  False
 
+length :: [a] -> Int
 length []        =  0
 length (_:l)     =  1 + length l
 
@@ -95,13 +96,9 @@ any p            =  or . map p
 
 all p            =  and . map p
 
-sum     = foldl (+) 0.0
+sum     = foldl (+) 0
 
-product = foldl (*) 1.0
-
-sumi     = foldl (+) 0
-
-producti = foldl (*) 1
+product = foldl (*) 1
 
 maximum = foldl1 (max)
 

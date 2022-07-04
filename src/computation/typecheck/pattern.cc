@@ -240,7 +240,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
         else if (auto d = L.is_Double())
         {
             // 1. Typecheck fromRational
-            expression_ref fromRational = Hs::Var({noloc,"Compiler.Num.fromRational"});
+            expression_ref fromRational = Hs::Var({noloc,"Compiler.Real.fromRational"});
             auto fromRational_type = inferRho(fromRational);
 
             // 2. Determine result type

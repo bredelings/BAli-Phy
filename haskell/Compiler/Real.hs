@@ -11,12 +11,20 @@ import Data.Function -- for .
 infixl 8 ^, ^^, **
 infixl 7 /, `quot`, `rem`, `div`, `mod`
 
-class Num a => Fractional a where { }
--- (/) :: a -> a -> a
--- recip :: a -> a
+class Num a => Fractional a where
+    (/) :: a -> a -> a
+    recip :: a -> a
 -- fromRational :: Rational -> a
+    fromRational :: Double -> a
 
-foreign import bpcall "Prelude:divide" (/) :: a -> a -> a
+foreign import bpcall "Prelude:" divide_double :: Double -> Double -> Double
+foreign import bpcall "Prelude:" recip_double :: Double -> Double
+
+instance Fractional Double where
+    (/) = divide_double
+    recip = recip_double
+    fromRational x = x
+
 
 class (Num a, Ord a) => Real a where { }
 --    toRational :: a -> Rational
@@ -73,20 +81,41 @@ foreign import bpcall "Prelude:ceiling" ceiling :: Double -> Int
 foreign import bpcall "Prelude:floor" floor :: Double -> Int
 foreign import bpcall "Prelude:round" round :: Double -> Int
 
-foreign import bpcall "Prelude:doubleToInt" doubleToInt :: Double -> Int
+foreign import bpcall "Prelude:" doubleToInt :: Double -> Int
 
 data LogDouble
 
+foreign import bpcall "Prelude:" add_logdouble :: LogDouble -> LogDouble -> LogDouble
+foreign import bpcall "Prelude:" subtract_logdouble :: LogDouble -> LogDouble -> LogDouble
+foreign import bpcall "Prelude:" multiply_logdouble :: LogDouble -> LogDouble -> LogDouble
+foreign import bpcall "Prelude:" signum_logdouble :: LogDouble -> LogDouble
+foreign import bpcall "Prelude:" intToLogDouble :: Int -> LogDouble
+
+instance Num LogDouble where
+    (+) = add_logdouble
+    (-) = subtract_logdouble
+    (*) = multiply_logdouble
+    abs x = x
+    negate = error "negate LogDouble"
+    signum = signum_logdouble
+    fromInteger = intToLogDouble
+
+foreign import bpcall "Prelude:" divide_logdouble :: LogDouble -> LogDouble -> LogDouble
+foreign import bpcall "Prelude:" recip_logdouble :: LogDouble -> LogDouble
+
+instance Fractional LogDouble where
+    (/) = divide_logdouble
+    recip = recip_logdouble
+    fromRational = doubleToLogDouble
+                    
 foreign import bpcall "Prelude:expToLogDouble" expToLogDouble :: Double -> LogDouble
 foreign import bpcall "Prelude:doubleToLogDouble" doubleToLogDouble :: Double -> LogDouble
 
 -- We need == to use GHC's code directly
-(^) :: a -> Int -> a
+(^) :: Num a => a -> Int -> a
 x0 ^ y0 | y0 < 0 = error "Negative exponent"
 x ^ 1 = x
 x ^ n = x*(x^(n-1))
-
-recip y = 1.0/y -- should be 1/y
 
 x ^^ n = if n >= 0 then x^n else recip (x^(negate n))
 

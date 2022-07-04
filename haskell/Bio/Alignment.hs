@@ -59,7 +59,7 @@ compress_alignment a = (compressed, counts, mapping) where tmp123 = builtin_comp
                                                            (compressed, tmp23) = pair_from_c tmp123
                                                            (counts,   mapping) = pair_from_c tmp23
 
-alignment_on_tree_length (AlignmentOnTree t _ ls as) = (ls!0) + sumi [numInsert (as!b) | b <- allEdgesFromNode t 0]
+alignment_on_tree_length (AlignmentOnTree t _ ls as) = (ls!0) + sum [numInsert (as!b) | b <- allEdgesFromNode t 0]
 
 foreign import bpcall "Alignment:uncompress_alignment" builtin_uncompress_alignment :: AlignmentMatrix -> EVector Int -> AlignmentMatrix
 

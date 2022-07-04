@@ -215,7 +215,7 @@ void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
     else if (auto d = Lit.is_Double())
     {
         // 1. Typecheck fromRational
-        expression_ref fromRational = Hs::Var({noloc,"Compiler.Num.fromRational"});
+        expression_ref fromRational = Hs::Var({noloc,"Compiler.Real.fromRational"});
         auto fromRational_type = inferRho(fromRational);
 
         // 2. Determine result type
