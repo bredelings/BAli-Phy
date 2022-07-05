@@ -242,6 +242,13 @@ struct typechecker_state: FreshVarSource
                    const std::set<Hs::MetaTypeVar>& referenced_tvs,
                    const LIE& lie);
 
+    std::optional<std::tuple<substitution_t, Core::Decls>>
+    candidates(const Hs::TypeVar& tv, const LIE& tv_lie);
+
+    std::tuple<substitution_t, Core::Decls, LIE >
+    default_preds( const std::set<Hs::TypeVar>& referenced_tvs,
+                   const LIE& lie);
+
     Core::Decls simplify_and_default_top_level();
 
     std::tuple<std::vector<Hs::MetaTypeVar>, LIE, Hs::Type> instantiate(const Hs::Type& t);

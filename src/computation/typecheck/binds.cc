@@ -6,6 +6,8 @@
 
 #include "util/set.H"
 
+#include <range/v3/all.hpp>
+
 using std::string;
 using std::vector;
 using std::map;
@@ -530,6 +532,8 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
         qmtv_subst = qmtv_subst.insert({qmtv, qtv});
         qtvs.insert(qtv);
     }
+    lie_retained = apply_subst(qmtv_subst, lie_retained);
+    mono_binder_env = apply_subst(qmtv_subst, mono_binder_env);
     
     // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group,
     // but we do need the defaults to define individual symbols.
@@ -544,23 +548,12 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     global_value_env poly_binder_env;
     for(auto& [name, monotype]: mono_binder_env)
     {
-        auto mtvs_in_this_type = free_meta_type_variables(monotype);
+        set<Hs::TypeVar> qtvs_in_this_type = intersection( qtvs, free_type_variables( monotype ) );
 
-        // Get real type variables for the intersection of map meta type variables to real type variables
-        vector<Hs::TypeVar> qtvs_in_this_type;
-        for(auto& mtv: mtvs_in_this_type)
-            if (auto qtv = qmtvs_to_qtvs.find(mtv))
-                qtvs_in_this_type.push_back(*qtv);
-
-        // Default any constraints that do not occur in THIS type.
-        auto [s2, default_decls, lie_for_this_type] = default_preds( fixed_tvs, mtvs_in_this_type, lie_retained );
+        auto [s2, default_decls, lie_for_this_type ] = default_preds( qtvs_in_this_type, lie_retained );
 
         auto constraints_for_this_type = constraints_from_lie(lie_for_this_type);
-
         Hs::Type polytype = Hs::add_constraints( constraints_for_this_type, monotype );
-        // Eliminate all meta type variables
-        polytype = apply_subst(qmtv_subst, polytype);
-        // Only quantify over type variables that occur in THIS type.
         polytype = quantify( qtvs_in_this_type, polytype );
 
         if (not signatures.count(name))
