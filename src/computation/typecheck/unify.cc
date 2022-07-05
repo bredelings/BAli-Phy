@@ -105,7 +105,9 @@ Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t)
 {
     if (s.empty()) return t;
 
-    if (t.is_a<Hs::MetaTypeVar>())
+    else if (auto tt = filled_meta_type_var(t))
+        return apply_subst(s, *tt);
+    else if (t.is_a<Hs::MetaTypeVar>())
         return t;
     else if (auto tv = t.to<Hs::TypeVar>())
     {
@@ -190,9 +192,13 @@ substitution_t compose(substitution_t s2, substitution_t s1)
 
 bool occurs_check(const Hs::MetaTypeVar& tv, const Hs::Type& t)
 {
-    if (auto x = t.to<Hs::MetaTypeVar>())
+    assert(not tv.filled());
+
+    if (auto tt = filled_meta_type_var(t))
+        return occurs_check(tv, *tt);
+    else if (auto x = t.to<Hs::MetaTypeVar>())
         return tv == *x;
-    if (t.is_a<Hs::TypeVar>())
+    else if (t.is_a<Hs::TypeVar>())
         return false;
     else if (t.is_a<Hs::TypeCon>())
         return false;
@@ -429,6 +435,7 @@ Hs::TypeVar unification_env::not_in_scope_tyvar(const Hs::TypeVar& tv1, const Hs
 // Is there a better way to implement this?
 optional<u_substitution_t> maybe_unify_(bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2)
 {
+    // Translate rigid type variables
     if (auto tv1 = t1.to<Hs::TypeVar>(); tv1 and (tv1->info == Hs::typevar_info::rigid) and env.mapping1.count(*tv1))
     {
         auto tv1_ = env.mapping1.at(*tv1);
@@ -439,6 +446,10 @@ optional<u_substitution_t> maybe_unify_(bool both_ways, const unification_env& e
         auto tv2_ = env.mapping2.at(*tv2);
         return maybe_unify_(both_ways, env, t1, tv2_);
     }
+    else if (auto tt1 = filled_meta_type_var(t1))
+        return maybe_unify_(both_ways, env, *tt1, t2);
+    else if (auto tt2 = filled_meta_type_var(t2))
+        return maybe_unify_(both_ways, env, t1, *tt2);
     else if (auto tv1 = t1.to<Hs::MetaTypeVar>())
     {
         u_substitution_t s;
@@ -565,7 +576,11 @@ std::optional<u_substitution_t> combine(u_substitution_t s1, u_substitution_t s2
 
 bool same_type(const Hs::Type& t1, const Hs::Type& t2)
 {
-    if (t1.is_a<Hs::MetaTypeVar>())
+    if (auto type1 = filled_meta_type_var(t1))
+        return same_type(*type1, t2);
+    else if (auto type2 = filled_meta_type_var(t2))
+        return same_type(t1, *type2);
+    else if (t1.is_a<Hs::MetaTypeVar>())
         return (t1 == t2);
     else if (t1.is_a<Hs::TypeVar>())
         return (t1 == t2);

@@ -109,12 +109,18 @@ namespace Haskell
 
     std::string parenthesize_type(const Type& t);
 
-struct MetaTypeVar
+class MetaTypeVar
 {
+    std::shared_ptr<Type> indirect;
+
+public:
     Located<std::string> name;
     std::optional<int> index;
 
     std::optional<Kind> kind;
+
+    std::optional<Type> filled() const;
+    void fill(const Type& t);
 
     bool operator==(const MetaTypeVar&) const;
     bool operator<(const MetaTypeVar&) const;
@@ -122,10 +128,12 @@ struct MetaTypeVar
     std::string print() const;
     std::string print_with_kind() const;
 
-    MetaTypeVar() = default;
-    MetaTypeVar(const Located<std::string>& s):name(s) {}
-    MetaTypeVar(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
+    MetaTypeVar();
+    MetaTypeVar(const Located<std::string>& s);
+    MetaTypeVar(const Located<std::string>& s, const Kind& k);
 };
+
+std::optional<Type> filled_meta_type_var(const Type& t);
 
 inline std::ostream& operator<<(std::ostream& o,const Type& t)
 {

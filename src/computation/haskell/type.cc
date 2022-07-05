@@ -15,8 +15,22 @@ namespace views = ranges::views;
 namespace Haskell
 {
 
+std::optional<Type> filled_meta_type_var(const Type& t)
+{
+    if (auto mtv = t.to<MetaTypeVar>())
+        return mtv->filled();
+    else
+        return {};
+}
+
 bool Type::operator==(const Type& t) const
 {
+    if (auto i1 = filled_meta_type_var(*this))
+        return (*i1) == t;
+
+    if (auto i2 = filled_meta_type_var(t))
+        return operator==(*i2);
+
     if (type_ptr.index() != t.type_ptr.index()) return false;
 
     if (type_ptr.index() == 0) return true;
@@ -111,8 +125,13 @@ pair<Type,vector<Type>> decompose_type_apps(Type t)
 
 bool is_tau_type(const Type& type)
 {
-    if (type.is_a<MetaTypeVar>())
-        return true;
+    if (auto mtv = type.to<MetaTypeVar>())
+    {
+        if (auto t = mtv->filled())
+            return is_tau_type(*t);
+        else
+            return true;
+    }
     else if (type.is_a<TypeVar>())
         return true;
     else if (auto l = type.to<ListType>())
@@ -143,8 +162,13 @@ bool is_tau_type(const Type& type)
 
 bool is_rho_type(const Type& type)
 {
-    if (type.is_a<MetaTypeVar>())
-        return true;
+    if (auto mtv = type.to<MetaTypeVar>())
+    {
+        if (auto t = mtv->filled())
+            return is_rho_type(*t);
+        else
+            return true;
+    }
     else if (type.is_a<TypeVar>())
         return true;
     else if (type.is_a<ListType>())
@@ -235,14 +259,34 @@ Type remove_top_gen(Type type)
 
 string parenthesize_type(const Hs::Type& t)
 {
+    if (auto t2 = filled_meta_type_var(t))
+        return parenthesize_type(*t2);
+
     if (t.is_a<TypeCon>() or t.is_a<MetaTypeVar>() or t.is_a<TypeVar>() or is_tuple_type(t) or is_list_type(t))
         return t.print();
     else
         return "(" + t.print() + ")";
 }
 
+optional<Type> MetaTypeVar::filled() const
+{
+    if (indirect->empty())
+        return {};
+    else
+        return *indirect;
+}
+
+void MetaTypeVar::fill(const Type& t)
+{
+    assert(indirect->empty());
+    *indirect = t;
+}
+
 string MetaTypeVar::print() const
 {
+    if (auto t = filled())
+        return t->print();
+
     string uname = unloc(name);
     if (index)
         uname = uname +"#"+std::to_string(*index);
@@ -252,6 +296,8 @@ string MetaTypeVar::print() const
 
 string MetaTypeVar::print_with_kind() const
 {
+    assert(not filled());
+
     string uname = print();
 
     if (kind)
@@ -262,11 +308,17 @@ string MetaTypeVar::print_with_kind() const
 
 bool MetaTypeVar::operator==(const MetaTypeVar& tv) const
 {
-    return index == tv.index and unloc(name) == unloc(tv.name);
+    return index == tv.index and unloc(name) == unloc(tv.name) and indirect == tv.indirect;
 }
 
 bool MetaTypeVar::operator<(const MetaTypeVar& tv) const
 {
+    if (indirect < tv.indirect)
+        return true;
+
+    if (indirect > tv.indirect)
+        return false;
+
     if (index < tv.index)
         return true;
 
@@ -277,6 +329,15 @@ bool MetaTypeVar::operator<(const MetaTypeVar& tv) const
 
     return (cmp < 0);
 }
+
+
+MetaTypeVar::MetaTypeVar(): MetaTypeVar({},{}) {}
+
+MetaTypeVar::MetaTypeVar(const Located<std::string>& s): MetaTypeVar(s, {}) {}
+
+MetaTypeVar::MetaTypeVar(const Located<std::string>& s, const Kind& k)
+    :indirect(new Type),name(s),kind(k)
+{}
 
 string TypeVar::print() const
 {

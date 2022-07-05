@@ -29,9 +29,14 @@ set<Hs::MetaTypeVar> free_meta_type_variables(const Hs::Type& type)
     { }
     else if (type.is_a<Hs::TypeVar>())
     { }
+    else if (auto t = filled_meta_type_var(type))
+    {
+        return free_meta_type_variables(*t);
+    }
     else if (type.is_a<Hs::MetaTypeVar>())
     {
         auto& tv = type.as_<Hs::MetaTypeVar>();
+        assert(not tv.filled());
         auto& name = unloc(tv.name);
         assert(name.size());
         tvars.insert(tv);
@@ -97,6 +102,8 @@ set<Hs::TypeVar> free_type_variables(const Hs::Type& type)
         assert(is_haskell_varid(name));
         tvars.insert(tv);
     }
+    else if (auto t = filled_meta_type_var(type))
+        return free_type_variables(*t);
     else if (type.is_a<Hs::MetaTypeVar>())
     {
     }
