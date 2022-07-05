@@ -516,6 +516,8 @@ value_env apply_subst(const u_substitution_t& s, const value_env& env1);
 
 LIE apply_subst(const u_substitution_t& s, const LIE& env1);
 
+LIE apply_subst(const substitution_t& s, const LIE& env1);
+
 std::map<ID, Hs::Match> get_instance_methods(const Hs::Binds& decls, const global_value_env& members, const std::string& class_name);
 
 Hs::Var

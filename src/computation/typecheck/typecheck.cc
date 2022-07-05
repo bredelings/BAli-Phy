@@ -482,6 +482,14 @@ LIE apply_subst(const u_substitution_t& s, const LIE& env1)
     return env2;
 }
 
+LIE apply_subst(const substitution_t& s, const LIE& env1)
+{
+    LIE env2;
+    for(auto& [x,type]: env1)
+        env2.push_back({x, apply_subst(s,type)});
+    return env2;
+}
+
 optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint)
 {
     auto [tycon, args] = Hs::decompose_type_apps(constraint);
