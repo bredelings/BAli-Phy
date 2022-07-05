@@ -93,14 +93,31 @@ using std::tuple;
   * add a wrapper to checkSigma( ).
   * record a result wrapper on ApplyExp
   * Don't desugar Core::Decls, just the Hs::Binds.  But pass them both to the optimizer.
+  * Implement type classes Num, Enum, and Ix.
 
   TODO:
-  0. Speed up type checking!
-     - don't import EVERYTHING
-     - figure out the set of free metavariables faster...  could we just use levels?
-     - make types into a ref-counted type
-     - make MetaTypeVar's point to their target?
-  0. Implement type class Num, Enum, Ix, and add Functor instance for array.
+  0. Speed up: make MetaTypeVar's point to their target?
+    - This might actually work...
+    - where do we look at meta type variables?
+      _ 
+  0. Speed up: where do we get free type variables for the whole environment?
+    - binds.cc: infer_type_for_single_fundecl_with_sig( ).
+    - binds.cc: infer_type_for_decls_groups( )
+  0. Speed up: where do we get free type variables for the LIE?
+    - binds.cc: classify_constraints
+    - binds.cc: infer_type_for_decls_groups( )
+    - default.cc: ambiguities( )
+  0. Speed up: add type variable levels.
+    - 
+  0. Speed up: don't import EVERYTHING
+    - Also put the stuff from other modules in a different environment that we know has no meta-type-variables.
+  0. Speed up: avoid the need to do apply_current_subst( )?
+  0. Speed up: make types into a ref-counted type?
+  0. Add Functor instance for Ix i => Array i.
+     - We need to make another type (Array# e) that is indexed by Int.
+     - We can then declare Array i e = Array i i (Array# e)
+     - The Array then contains its own bounds.
+     - The downside is that we need to subtract 0 from every index before we look it up.
   0. merge rename_pattern_from_bindinfo into tcPat( ) -> pass in (LetCtxt signatures (\id->monoid))
   0. remove desugar_pattern( )
   0. Make a quals class.
