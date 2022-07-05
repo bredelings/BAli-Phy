@@ -553,8 +553,8 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
         auto [s2, default_decls, lie_for_this_type ] = default_preds( qtvs_in_this_type, lie_retained );
 
         auto constraints_for_this_type = constraints_from_lie(lie_for_this_type);
-        Hs::Type polytype = Hs::add_constraints( constraints_for_this_type, monotype );
-        polytype = quantify( qtvs_in_this_type, polytype );
+
+        Hs::Type polytype = quantify( qtvs_in_this_type, Hs::add_constraints( constraints_for_this_type, monotype ) );
 
         if (not signatures.count(name))
         {
