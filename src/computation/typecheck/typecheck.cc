@@ -94,24 +94,14 @@ using std::tuple;
   * record a result wrapper on ApplyExp
   * Don't desugar Core::Decls, just the Hs::Binds.  But pass them both to the optimizer.
   * Implement type classes Num, Enum, and Ix.
+  * Make MetaTypeVar's point directly to their target.
 
-  TODO:
-  0. Speed up: make MetaTypeVar's point to their target?
-    - This might actually work...
-    - where do we look at meta type variables?
-      _ 
-  0. Speed up: where do we get free type variables for the whole environment?
-    - binds.cc: infer_type_for_single_fundecl_with_sig( ).
-    - binds.cc: infer_type_for_decls_groups( )
-  0. Speed up: where do we get free type variables for the LIE?
-    - binds.cc: classify_constraints
-    - binds.cc: infer_type_for_decls_groups( )
-    - default.cc: ambiguities( )
   0. Speed up: add type variable levels.
-    - 
+    - where do we increment the level?
+      + let-bindings
+      + lambda-bindings?
   0. Speed up: don't import EVERYTHING
     - Also put the stuff from other modules in a different environment that we know has no meta-type-variables.
-  0. Speed up: avoid the need to do apply_current_subst( )?
   0. Speed up: make types into a ref-counted type?
   0. Add Functor instance for Ix i => Array i.
      - We need to make another type (Array# e) that is indexed by Int.
