@@ -203,13 +203,14 @@ void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
         expression_ref fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
         auto fromInteger_type = inferRho(fromInteger);
 
-        // 2. Determine result type
-        auto result_type = fresh_meta_type_var( kind_star() );
-        unify(fromInteger_type, Hs::make_arrow_type(int_type(), result_type));
+        // 2. Check result type
+        auto [arg_type, result_type] = unify_function(fromInteger_type);
+        set_expected_type( exp_type, result_type );
+
+        // 3. The argument type should be Int
+        unify(arg_type, int_type());
 
         Lit = Hs::Literal(Hs::Integer{*i, fromInteger});
-
-        set_expected_type( exp_type, result_type );
     }
     else if (auto d = Lit.is_Double())
     {
@@ -217,12 +218,14 @@ void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
         expression_ref fromRational = Hs::Var({noloc,"Compiler.Real.fromRational"});
         auto fromRational_type = inferRho(fromRational);
 
-        // 2. Determine result type
-        Hs::Type result_type = fresh_meta_type_var( kind_star() );
-        unify(fromRational_type, Hs::make_arrow_type(double_type(), result_type));
+        // 2. Check result type
+        auto [arg_type, result_type] = unify_function(fromRational_type);
+        set_expected_type( exp_type, result_type );
+
+        // 3. The argument type should be Double (well, not not really, but for now....)
+        unify(arg_type, double_type());
 
         Lit = Hs::Literal(Hs::Double{*d, fromRational});
-        set_expected_type( exp_type, result_type );
     }
     else
         std::abort();
