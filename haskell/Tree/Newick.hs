@@ -15,7 +15,7 @@ import Data.Char
 
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
-class RootedTree t => WriteNewickNode t where
+class Tree t => WriteNewickNode t where
     node_info :: t -> Int -> Maybe String
     branch_info :: t -> (Maybe Int) -> Maybe String
 
@@ -42,7 +42,7 @@ instance WriteNewickNode t => WriteNewickNode (BranchLengthTreeImp t) where
     branch_info blt (Just b) = Just $ show (branch_length blt b)
     branch_info _   Nothing  = Nothing
 
-instance WriteNewickNode t => WriteNewickNode (TimeTreeImp t) where
+instance (RootedTree t, WriteNewickNode t) => WriteNewickNode (TimeTreeImp t) where
     node_info nht@(TimeTree tree _) node = node_info tree node
 
     branch_info nht (Just b) = Just $ show (branch_length nht b)
