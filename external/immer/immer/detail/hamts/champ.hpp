@@ -17,6 +17,102 @@ namespace immer {
 namespace detail {
 namespace hamts {
 
+#if IMMER_DEBUG_STATS
+struct champ_debug_stats
+{
+    std::size_t bits       = {};
+    std::size_t value_size = {};
+    std::size_t child_size = sizeof(void*);
+
+    std::size_t inner_node_count         = {};
+    std::size_t inner_node_w_value_count = {};
+    std::size_t inner_node_w_child_count = {};
+    std::size_t collision_node_count     = {};
+
+    std::size_t child_count     = {};
+    std::size_t value_count     = {};
+    std::size_t collision_count = {};
+
+    friend champ_debug_stats operator+(champ_debug_stats a, champ_debug_stats b)
+    {
+        if (a.bits != b.bits || a.value_size != b.value_size ||
+            a.child_size != b.child_size)
+            throw std::runtime_error{"accumulating incompatible stats"};
+        return {
+            a.bits,
+            a.value_size,
+            a.child_size,
+            a.inner_node_count + b.inner_node_count,
+            a.inner_node_w_value_count + b.inner_node_w_value_count,
+            a.inner_node_w_child_count + b.inner_node_w_child_count,
+            a.collision_node_count + b.collision_node_count,
+            a.child_count + b.child_count,
+            a.value_count + b.value_count,
+            a.collision_count + b.collision_count,
+        };
+    }
+
+    struct summary
+    {
+        double collision_ratio;
+
+        double utilization;
+        double child_utilization;
+        double value_utilization;
+
+        double dense_utilization;
+        double dense_value_utilization;
+        double dense_child_utilization;
+
+        friend std::ostream& operator<<(std::ostream& os, const summary& s)
+        {
+            os << "---\n";
+            os << "collisions\n"
+               << "  ratio = " << s.collision_ratio << " %\n";
+            os << "utilization\n"
+               << "  total    = " << s.utilization << " %\n"
+               << "  children = " << s.child_utilization << " %\n"
+               << "  values   = " << s.value_utilization << " %\n";
+            os << "utilization (dense)\n"
+               << "  total    = " << s.dense_utilization << " %\n"
+               << "  children = " << s.dense_child_utilization << " %\n"
+               << "  values   = " << s.dense_value_utilization << " %\n";
+            return os;
+        }
+    };
+
+    summary get_summary() const
+    {
+        auto m = std::size_t{1} << bits;
+
+        auto collision_ratio = 100. * collision_count / value_count;
+
+        auto capacity          = m * inner_node_count;
+        auto child_utilization = 100. * child_count / capacity;
+        auto value_utilization = 100. * value_count / capacity;
+        auto utilization =
+            100. * (value_count * value_size + child_count * child_size) /
+            (capacity * value_size + capacity * child_size);
+
+        auto value_capacity          = m * inner_node_w_value_count;
+        auto child_capacity          = m * inner_node_w_child_count;
+        auto dense_child_utilization = 100. * child_count / child_capacity;
+        auto dense_value_utilization = 100. * value_count / value_capacity;
+        auto dense_utilization =
+            100. * (value_count * value_size + child_count * child_size) /
+            (value_capacity * value_size + child_capacity * child_size);
+
+        return {collision_ratio,
+                utilization,
+                child_utilization,
+                value_utilization,
+                dense_utilization,
+                dense_child_utilization,
+                dense_value_utilization};
+    }
+};
+#endif
+
 template <typename T,
           typename Hash,
           typename Equal,
@@ -27,6 +123,8 @@ struct champ
     static constexpr auto bits = B;
 
     using node_t   = node<T, Hash, Equal, MemoryPolicy, B>;
+    using edit_t   = typename MemoryPolicy::transience_t::edit;
+    using owner_t  = typename MemoryPolicy::transience_t::owner;
     using bitmap_t = typename get_bitmap_type<B>::type;
 
     static_assert(branches<B> <= sizeof(bitmap_t) * 8, "");
@@ -85,6 +183,60 @@ struct champ
     {
         if (root->dec())
             node_t::delete_deep(root, 0);
+    }
+
+#if IMMER_DEBUG_STATS
+    void do_get_debug_stats(champ_debug_stats& stats,
+                            node_t* node,
+                            count_t depth) const
+    {
+        if (depth < max_depth<B>) {
+            ++stats.inner_node_count;
+            stats.inner_node_w_value_count += node->data_count() > 0;
+            stats.inner_node_w_child_count += node->children_count() > 0;
+            stats.value_count += node->data_count();
+            stats.child_count += node->children_count();
+            auto nodemap = node->nodemap();
+            if (nodemap) {
+                auto fst = node->children();
+                auto lst = fst + node->children_count();
+                for (; fst != lst; ++fst)
+                    do_get_debug_stats(stats, *fst, depth + 1);
+            }
+        } else {
+            ++stats.collision_node_count;
+            stats.collision_count += node->collision_count();
+        }
+    }
+
+    champ_debug_stats get_debug_stats() const
+    {
+        auto stats = champ_debug_stats{B, sizeof(T)};
+        do_get_debug_stats(stats, root, 0);
+        return stats;
+    }
+#endif
+
+    template <typename U>
+    static auto from_initializer_list(std::initializer_list<U> values)
+    {
+        auto e      = owner_t{};
+        auto result = champ{empty()};
+        for (auto&& v : values)
+            result.add_mut(e, v);
+        return result;
+    }
+
+    template <typename Iter,
+              typename Sent,
+              std::enable_if_t<compatible_sentinel_v<Iter, Sent>, bool> = true>
+    static auto from_range(Iter first, Sent last)
+    {
+        auto e      = owner_t{};
+        auto result = champ{empty()};
+        for (; first != last; ++first)
+            result.add_mut(e, *first);
+        return result;
     }
 
     template <typename Fn>
@@ -340,8 +492,13 @@ struct champ
         return Default{}();
     }
 
-    std::pair<node_t*, bool>
-    do_add(node_t* node, T v, hash_t hash, shift_t shift) const
+    struct add_result
+    {
+        node_t* node;
+        bool added;
+    };
+
+    add_result do_add(node_t* node, T v, hash_t hash, shift_t shift) const
     {
         assert(node);
         if (shift == max_shift<B>) {
@@ -362,12 +519,12 @@ struct champ
                 auto result = do_add(
                     node->children()[offset], std::move(v), hash, shift + B);
                 IMMER_TRY {
-                    result.first =
-                        node_t::copy_inner_replace(node, offset, result.first);
+                    result.node =
+                        node_t::copy_inner_replace(node, offset, result.node);
                     return result;
                 }
                 IMMER_CATCH (...) {
-                    node_t::delete_deep_shift(result.first, shift + B);
+                    node_t::delete_deep_shift(result.node, shift + B);
                     IMMER_RETHROW;
                 }
             } else if (node->datamap() & bit) {
@@ -402,16 +559,130 @@ struct champ
     {
         auto hash     = Hash{}(v);
         auto res      = do_add(root, std::move(v), hash, 0);
-        auto new_size = size + (res.second ? 1 : 0);
-        return {res.first, new_size};
+        auto new_size = size + (res.added ? 1 : 0);
+        return {res.node, new_size};
     }
+
+    struct add_mut_result
+    {
+        node_t* node;
+        bool added;
+        bool mutated;
+    };
+
+    add_mut_result
+    do_add_mut(edit_t e, node_t* node, T v, hash_t hash, shift_t shift) const
+    {
+        assert(node);
+        if (shift == max_shift<B>) {
+            auto fst = node->collisions();
+            auto lst = fst + node->collision_count();
+            for (; fst != lst; ++fst)
+                if (Equal{}(*fst, v)) {
+                    if (node->can_mutate(e)) {
+                        *fst = std::move(v);
+                        return {node, false, true};
+                    } else {
+                        auto r = node_t::copy_collision_replace(
+                            node, fst, std::move(v));
+                        return {node_t::owned(r, e), false, false};
+                    }
+                }
+            auto mutate = node->can_mutate(e);
+            auto r = mutate ? node_t::move_collision_insert(node, std::move(v))
+                            : node_t::copy_collision_insert(node, std::move(v));
+            return {node_t::owned(r, e), true, mutate};
+        } else {
+            auto idx = (hash & (mask<B> << shift)) >> shift;
+            auto bit = bitmap_t{1u} << idx;
+            if (node->nodemap() & bit) {
+                auto offset = node->children_count(bit);
+                auto child  = node->children()[offset];
+                if (node->can_mutate(e)) {
+                    auto result =
+                        do_add_mut(e, child, std::move(v), hash, shift + B);
+                    node->children()[offset] = result.node;
+                    if (!result.mutated)
+                        child->dec_unsafe();
+                    return {node, result.added, true};
+                } else {
+                    assert(node->children()[offset]);
+                    auto result = do_add(child, std::move(v), hash, shift + B);
+                    IMMER_TRY {
+                        result.node = node_t::copy_inner_replace(
+                            node, offset, result.node);
+                        node_t::owned(result.node, e);
+                        return {result.node, result.added, false};
+                    }
+                    IMMER_CATCH (...) {
+                        node_t::delete_deep_shift(result.node, shift + B);
+                        IMMER_RETHROW;
+                    }
+                }
+            } else if (node->datamap() & bit) {
+                auto offset = node->data_count(bit);
+                auto val    = node->values() + offset;
+                if (Equal{}(*val, v)) {
+                    if (node->can_mutate(e)) {
+                        auto vals    = node->ensure_mutable_values(e);
+                        vals[offset] = std::move(v);
+                        return {node, false, true};
+                    } else {
+                        auto r = node_t::copy_inner_replace_value(
+                            node, offset, std::move(v));
+                        return {node_t::owned_values(r, e), false, false};
+                    }
+                } else {
+                    auto mutate = node->can_mutate(e);
+                    auto hash2  = Hash{}(*val);
+                    auto child =
+                        node_t::make_merged_e(e,
+                                              shift + B,
+                                              std::move(v),
+                                              hash,
+                                              mutate ? std::move(*val) : *val,
+                                              hash2);
+                    IMMER_TRY {
+                        auto r = mutate ? node_t::move_inner_replace_merged(
+                                              e, node, bit, offset, child)
+                                        : node_t::copy_inner_replace_merged(
+                                              node, bit, offset, child);
+                        return {node_t::owned_values_safe(r, e), true, mutate};
+                    }
+                    IMMER_CATCH (...) {
+                        node_t::delete_deep_shift(child, shift + B);
+                        IMMER_RETHROW;
+                    }
+                }
+            } else {
+                auto mutate = node->can_mutate(e);
+                auto r      = mutate ? node_t::move_inner_insert_value(
+                                      e, node, bit, std::move(v))
+                                     : node_t::copy_inner_insert_value(
+                                      node, bit, std::move(v));
+                return {node_t::owned_values(r, e), true, mutate};
+            }
+        }
+    }
+
+    void add_mut(edit_t e, T v)
+    {
+        auto hash = Hash{}(v);
+        auto res  = do_add_mut(e, root, std::move(v), hash, 0);
+        if (!res.mutated)
+            root->dec_unsafe();
+        root = res.node;
+        size += res.added ? 1 : 0;
+    }
+
+    using update_result = add_result;
 
     template <typename Project,
               typename Default,
               typename Combine,
               typename K,
               typename Fn>
-    std::pair<node_t*, bool>
+    update_result
     do_update(node_t* node, K&& k, Fn&& fn, hash_t hash, shift_t shift) const
     {
         if (shift == max_shift<B>) {
@@ -443,12 +714,12 @@ struct champ
                     hash,
                     shift + B);
                 IMMER_TRY {
-                    result.first =
-                        node_t::copy_inner_replace(node, offset, result.first);
+                    result.node =
+                        node_t::copy_inner_replace(node, offset, result.node);
                     return result;
                 }
                 IMMER_CATCH (...) {
-                    node_t::delete_deep_shift(result.first, shift + B);
+                    node_t::delete_deep_shift(result.node, shift + B);
                     IMMER_RETHROW;
                 }
             } else if (node->datamap() & bit) {
@@ -501,8 +772,319 @@ struct champ
         auto hash = Hash{}(k);
         auto res  = do_update<Project, Default, Combine>(
             root, k, std::forward<Fn>(fn), hash, 0);
-        auto new_size = size + (res.second ? 1 : 0);
-        return {res.first, new_size};
+        auto new_size = size + (res.added ? 1 : 0);
+        return {res.node, new_size};
+    }
+
+    template <typename Project, typename Combine, typename K, typename Fn>
+    node_t* do_update_if_exists(
+        node_t* node, K&& k, Fn&& fn, hash_t hash, shift_t shift) const
+    {
+        if (shift == max_shift<B>) {
+            auto fst = node->collisions();
+            auto lst = fst + node->collision_count();
+            for (; fst != lst; ++fst)
+                if (Equal{}(*fst, k))
+                    return node_t::copy_collision_replace(
+                        node,
+                        fst,
+                        Combine{}(std::forward<K>(k),
+                                  std::forward<Fn>(fn)(Project{}(*fst))));
+            return nullptr;
+        } else {
+            auto idx = (hash & (mask<B> << shift)) >> shift;
+            auto bit = bitmap_t{1u} << idx;
+            if (node->nodemap() & bit) {
+                auto offset = node->children_count(bit);
+                auto result = do_update_if_exists<Project, Combine>(
+                    node->children()[offset],
+                    k,
+                    std::forward<Fn>(fn),
+                    hash,
+                    shift + B);
+                IMMER_TRY {
+                    return result ? node_t::copy_inner_replace(
+                                        node, offset, result)
+                                  : nullptr;
+                }
+                IMMER_CATCH (...) {
+                    node_t::delete_deep_shift(result, shift + B);
+                    IMMER_RETHROW;
+                }
+            } else if (node->datamap() & bit) {
+                auto offset = node->data_count(bit);
+                auto val    = node->values() + offset;
+                if (Equal{}(*val, k))
+                    return node_t::copy_inner_replace_value(
+                        node,
+                        offset,
+                        Combine{}(std::forward<K>(k),
+                                  std::forward<Fn>(fn)(Project{}(*val))));
+                else {
+                    return nullptr;
+                }
+            } else {
+                return nullptr;
+            }
+        }
+    }
+
+    template <typename Project, typename Combine, typename K, typename Fn>
+    champ update_if_exists(const K& k, Fn&& fn) const
+    {
+        auto hash = Hash{}(k);
+        auto res  = do_update_if_exists<Project, Combine>(
+            root, k, std::forward<Fn>(fn), hash, 0);
+        if (res) {
+            return {res, size};
+        } else {
+            return {root->inc(), size};
+        };
+    }
+
+    using update_mut_result = add_mut_result;
+
+    template <typename Project,
+              typename Default,
+              typename Combine,
+              typename K,
+              typename Fn>
+    update_mut_result do_update_mut(edit_t e,
+                                    node_t* node,
+                                    K&& k,
+                                    Fn&& fn,
+                                    hash_t hash,
+                                    shift_t shift) const
+    {
+        if (shift == max_shift<B>) {
+            auto fst = node->collisions();
+            auto lst = fst + node->collision_count();
+            for (; fst != lst; ++fst)
+                if (Equal{}(*fst, k)) {
+                    if (node->can_mutate(e)) {
+                        *fst = Combine{}(
+                            std::forward<K>(k),
+                            std::forward<Fn>(fn)(Project{}(std::move(*fst))));
+                        return {node, false, true};
+                    } else {
+                        auto r = node_t::copy_collision_replace(
+                            node,
+                            fst,
+                            Combine{}(std::forward<K>(k),
+                                      std::forward<Fn>(fn)(Project{}(*fst))));
+                        return {node_t::owned(r, e), false, false};
+                    }
+                }
+            auto v      = Combine{}(std::forward<K>(k),
+                               std::forward<Fn>(fn)(Default{}()));
+            auto mutate = node->can_mutate(e);
+            auto r = mutate ? node_t::move_collision_insert(node, std::move(v))
+                            : node_t::copy_collision_insert(node, std::move(v));
+            return {node_t::owned(r, e), true, mutate};
+        } else {
+            auto idx = (hash & (mask<B> << shift)) >> shift;
+            auto bit = bitmap_t{1u} << idx;
+            if (node->nodemap() & bit) {
+                auto offset = node->children_count(bit);
+                auto child  = node->children()[offset];
+                if (node->can_mutate(e)) {
+                    auto result = do_update_mut<Project, Default, Combine>(
+                        e, child, k, std::forward<Fn>(fn), hash, shift + B);
+                    node->children()[offset] = result.node;
+                    if (!result.mutated)
+                        child->dec_unsafe();
+                    return {node, result.added, true};
+                } else {
+                    auto result = do_update<Project, Default, Combine>(
+                        child, k, std::forward<Fn>(fn), hash, shift + B);
+                    IMMER_TRY {
+                        result.node = node_t::copy_inner_replace(
+                            node, offset, result.node);
+                        node_t::owned(result.node, e);
+                        return {result.node, result.added, false};
+                    }
+                    IMMER_CATCH (...) {
+                        node_t::delete_deep_shift(result.node, shift + B);
+                        IMMER_RETHROW;
+                    }
+                }
+            } else if (node->datamap() & bit) {
+                auto offset = node->data_count(bit);
+                auto val    = node->values() + offset;
+                if (Equal{}(*val, k)) {
+                    if (node->can_mutate(e)) {
+                        auto vals    = node->ensure_mutable_values(e);
+                        vals[offset] = Combine{}(std::forward<K>(k),
+                                                 std::forward<Fn>(fn)(Project{}(
+                                                     std::move(vals[offset]))));
+                        return {node, false, true};
+                    } else {
+                        auto r = node_t::copy_inner_replace_value(
+                            node,
+                            offset,
+                            Combine{}(std::forward<K>(k),
+                                      std::forward<Fn>(fn)(Project{}(*val))));
+                        return {node_t::owned_values(r, e), false, false};
+                    }
+                } else {
+                    auto mutate = node->can_mutate(e);
+                    auto hash2  = Hash{}(*val);
+                    auto child  = node_t::make_merged_e(
+                        e,
+                        shift + B,
+                        Combine{}(std::forward<K>(k),
+                                  std::forward<Fn>(fn)(Default{}())),
+                        hash,
+                        mutate ? std::move(*val) : *val,
+                        hash2);
+                    IMMER_TRY {
+                        auto r = mutate ? node_t::move_inner_replace_merged(
+                                              e, node, bit, offset, child)
+                                        : node_t::copy_inner_replace_merged(
+                                              node, bit, offset, child);
+                        return {node_t::owned_values_safe(r, e), true, mutate};
+                    }
+                    IMMER_CATCH (...) {
+                        node_t::delete_deep_shift(child, shift + B);
+                        IMMER_RETHROW;
+                    }
+                }
+            } else {
+                auto mutate = node->can_mutate(e);
+                auto v      = Combine{}(std::forward<K>(k),
+                                   std::forward<Fn>(fn)(Default{}()));
+                auto r      = mutate ? node_t::move_inner_insert_value(
+                                      e, node, bit, std::move(v))
+                                     : node_t::copy_inner_insert_value(
+                                      node, bit, std::move(v));
+                return {node_t::owned_values(r, e), true, mutate};
+            }
+        }
+    }
+
+    template <typename Project,
+              typename Default,
+              typename Combine,
+              typename K,
+              typename Fn>
+    void update_mut(edit_t e, const K& k, Fn&& fn)
+    {
+        auto hash = Hash{}(k);
+        auto res  = do_update_mut<Project, Default, Combine>(
+            e, root, k, std::forward<Fn>(fn), hash, 0);
+        if (!res.mutated)
+            root->dec_unsafe();
+        root = res.node;
+        size += res.added ? 1 : 0;
+    }
+
+    struct update_if_exists_mut_result
+    {
+        node_t* node;
+        bool mutated;
+    };
+
+    template <typename Project, typename Combine, typename K, typename Fn>
+    update_if_exists_mut_result do_update_if_exists_mut(edit_t e,
+                                                        node_t* node,
+                                                        K&& k,
+                                                        Fn&& fn,
+                                                        hash_t hash,
+                                                        shift_t shift) const
+    {
+        if (shift == max_shift<B>) {
+            auto fst = node->collisions();
+            auto lst = fst + node->collision_count();
+            for (; fst != lst; ++fst)
+                if (Equal{}(*fst, k)) {
+                    if (node->can_mutate(e)) {
+                        *fst = Combine{}(
+                            std::forward<K>(k),
+                            std::forward<Fn>(fn)(Project{}(std::move(*fst))));
+                        return {node, true};
+                    } else {
+                        auto r = node_t::copy_collision_replace(
+                            node,
+                            fst,
+                            Combine{}(std::forward<K>(k),
+                                      std::forward<Fn>(fn)(Project{}(*fst))));
+                        return {node_t::owned(r, e), false};
+                    }
+                }
+            return {nullptr, false};
+        } else {
+            auto idx = (hash & (mask<B> << shift)) >> shift;
+            auto bit = bitmap_t{1u} << idx;
+            if (node->nodemap() & bit) {
+                auto offset = node->children_count(bit);
+                auto child  = node->children()[offset];
+                if (node->can_mutate(e)) {
+                    auto result = do_update_if_exists_mut<Project, Combine>(
+                        e, child, k, std::forward<Fn>(fn), hash, shift + B);
+                    if (result.node) {
+                        node->children()[offset] = result.node;
+                        if (!result.mutated)
+                            child->dec_unsafe();
+                        return {node, true};
+                    } else {
+                        return {nullptr, false};
+                    }
+                } else {
+                    auto result = do_update_if_exists<Project, Combine>(
+                        child, k, std::forward<Fn>(fn), hash, shift + B);
+                    IMMER_TRY {
+                        if (result) {
+                            result = node_t::copy_inner_replace(
+                                node, offset, result);
+                            node_t::owned(result, e);
+                            return {result, false};
+                        } else {
+                            return {nullptr, false};
+                        }
+                    }
+                    IMMER_CATCH (...) {
+                        node_t::delete_deep_shift(result, shift + B);
+                        IMMER_RETHROW;
+                    }
+                }
+            } else if (node->datamap() & bit) {
+                auto offset = node->data_count(bit);
+                auto val    = node->values() + offset;
+                if (Equal{}(*val, k)) {
+                    if (node->can_mutate(e)) {
+                        auto vals    = node->ensure_mutable_values(e);
+                        vals[offset] = Combine{}(std::forward<K>(k),
+                                                 std::forward<Fn>(fn)(Project{}(
+                                                     std::move(vals[offset]))));
+                        return {node, true};
+                    } else {
+                        auto r = node_t::copy_inner_replace_value(
+                            node,
+                            offset,
+                            Combine{}(std::forward<K>(k),
+                                      std::forward<Fn>(fn)(Project{}(*val))));
+                        return {node_t::owned_values(r, e), false};
+                    }
+                } else {
+                    return {nullptr, false};
+                }
+            } else {
+                return {nullptr, false};
+            }
+        }
+    }
+
+    template <typename Project, typename Combine, typename K, typename Fn>
+    void update_if_exists_mut(edit_t e, const K& k, Fn&& fn)
+    {
+        auto hash = Hash{}(k);
+        auto res  = do_update_if_exists_mut<Project, Combine>(
+            e, root, k, std::forward<Fn>(fn), hash, 0);
+        if (res.node) {
+            if (!res.mutated)
+                root->dec_unsafe();
+            root = res.node;
+        }
     }
 
     // basically:
@@ -552,7 +1134,16 @@ struct champ
                     return node->collision_count() > 2
                                ? node_t::copy_collision_remove(node, cur)
                                : sub_result{fst + (cur == fst)};
+#if !defined(_MSC_VER)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+            // Apparently GCC is generating this warning sometimes when
+            // compiling the benchmarks. It makes however no sense at all.
             return {};
+#if !defined(_MSC_VER)
+#pragma GCC diagnostic pop
+#endif
         } else {
             auto idx = (hash & (mask<B> << shift)) >> shift;
             auto bit = bitmap_t{1u} << idx;
@@ -613,6 +1204,200 @@ struct champ
             return *this;
         case sub_result::tree:
             return {res.data.tree, size - 1};
+        default:
+            IMMER_UNREACHABLE;
+        }
+    }
+
+    struct sub_result_mut
+    {
+        using kind_t = typename sub_result::kind_t;
+        using data_t = typename sub_result::data_t;
+
+        kind_t kind;
+        data_t data;
+        bool mutated;
+
+        sub_result_mut(sub_result a)
+            : kind{a.kind}
+            , data{a.data}
+            , mutated{false}
+        {}
+        sub_result_mut(sub_result a, bool m)
+            : kind{a.kind}
+            , data{a.data}
+            , mutated{m}
+        {}
+        sub_result_mut(bool m)
+            : kind{kind_t::nothing}
+            , mutated{m} {};
+        sub_result_mut(T* x, bool m)
+            : kind{kind_t::singleton}
+            , mutated{m}
+        {
+            data.singleton = x;
+        };
+        sub_result_mut(node_t* x, bool m)
+            : kind{kind_t::tree}
+            , mutated{m}
+        {
+            data.tree = x;
+        };
+    };
+
+    template <typename K>
+    sub_result_mut do_sub_mut(edit_t e,
+                              node_t* node,
+                              const K& k,
+                              hash_t hash,
+                              shift_t shift,
+                              void* store) const
+    {
+        auto mutate = node->can_mutate(e);
+        if (shift == max_shift<B>) {
+            auto fst = node->collisions();
+            auto lst = fst + node->collision_count();
+            for (auto cur = fst; cur != lst; ++cur) {
+                if (Equal{}(*cur, k)) {
+                    if (node->collision_count() <= 2) {
+                        if (mutate) {
+                            auto r = new (store)
+                                T{std::move(node->collisions()[cur == fst])};
+                            node_t::delete_collision(node);
+                            return sub_result_mut{r, true};
+                        } else {
+                            return sub_result_mut{fst + (cur == fst), false};
+                        }
+                    } else {
+                        auto r = mutate
+                                     ? node_t::move_collision_remove(node, cur)
+                                     : node_t::copy_collision_remove(node, cur);
+                        return {node_t::owned(r, e), mutate};
+                    }
+                }
+            }
+            return {mutate};
+        } else {
+            auto idx = (hash & (mask<B> << shift)) >> shift;
+            auto bit = bitmap_t{1u} << idx;
+            if (node->nodemap() & bit) {
+                auto offset   = node->children_count(bit);
+                auto children = node->children();
+                auto child    = children[offset];
+                auto result =
+                    mutate ? do_sub_mut(e, child, k, hash, shift + B, store)
+                           : do_sub(child, k, hash, shift + B);
+                switch (result.kind) {
+                case sub_result::nothing:
+                    return {mutate};
+                case sub_result::singleton:
+                    if (node->datamap() == 0 && node->children_count() == 1 &&
+                        shift > 0) {
+                        if (mutate) {
+                            node_t::delete_inner(node);
+                            if (!result.mutated)
+                                child->dec_unsafe();
+                        }
+                        return {result.data.singleton, mutate};
+                    } else {
+                        auto r =
+                            mutate ? node_t::move_inner_replace_inline(
+                                         e,
+                                         node,
+                                         bit,
+                                         offset,
+                                         result.mutated
+                                             ? std::move(*result.data.singleton)
+                                             : *result.data.singleton)
+                                   : node_t::copy_inner_replace_inline(
+                                         node,
+                                         bit,
+                                         offset,
+                                         *result.data.singleton);
+                        if (result.mutated)
+                            detail::destroy_at(result.data.singleton);
+                        else if (mutate)
+                            child->dec_unsafe();
+                        return {node_t::owned_values(r, e), mutate};
+                    }
+                case sub_result::tree:
+                    if (mutate) {
+                        children[offset] = result.data.tree;
+                        if (!result.mutated)
+                            child->dec_unsafe();
+                        return {node, true};
+                    } else {
+                        IMMER_TRY {
+                            auto r = node_t::copy_inner_replace(
+                                node, offset, result.data.tree);
+                            return {node_t::owned(r, e), false};
+                        }
+                        IMMER_CATCH (...) {
+                            node_t::delete_deep_shift(result.data.tree,
+                                                      shift + B);
+                            IMMER_RETHROW;
+                        }
+                    }
+                }
+            } else if (node->datamap() & bit) {
+                auto offset = node->data_count(bit);
+                auto val    = node->values() + offset;
+                if (Equal{}(*val, k)) {
+                    auto nv = node->data_count();
+                    if (node->nodemap() || nv > 2) {
+                        auto r = mutate ? node_t::move_inner_remove_value(
+                                              e, node, bit, offset)
+                                        : node_t::copy_inner_remove_value(
+                                              node, bit, offset);
+                        return {node_t::owned_values_safe(r, e), mutate};
+                    } else if (nv == 2) {
+                        if (shift > 0) {
+                            if (mutate) {
+                                auto r = new (store)
+                                    T{std::move(node->values()[!offset])};
+                                node_t::delete_inner(node);
+                                return {r, mutate};
+                            } else {
+                                return {node->values() + !offset, mutate};
+                            }
+                        } else {
+                            auto& v = node->values()[!offset];
+                            auto r =
+                                node_t::make_inner_n(0,
+                                                     node->datamap() & ~bit,
+                                                     mutate ? std::move(v) : v);
+                            assert(!node->nodemap());
+                            if (mutate)
+                                node_t::delete_inner(node);
+                            return {node_t::owned_values(r, e), mutate};
+                        }
+                    } else {
+                        assert(shift == 0);
+                        if (mutate)
+                            node_t::delete_inner(node);
+                        return {empty(), mutate};
+                    }
+                }
+            }
+            return {mutate};
+        }
+    }
+
+    template <typename K>
+    void sub_mut(edit_t e, const K& k)
+    {
+        auto store = aligned_storage_for<T>{};
+        auto hash  = Hash{}(k);
+        auto res   = do_sub_mut(e, root, k, hash, 0, &store);
+        switch (res.kind) {
+        case sub_result::nothing:
+            break;
+        case sub_result::tree:
+            if (!res.mutated)
+                root->dec_unsafe();
+            root = res.data.tree;
+            --size;
+            break;
         default:
             IMMER_UNREACHABLE;
         }
