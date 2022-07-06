@@ -247,10 +247,11 @@ void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
     auto e = myexception()<<"In left section, "<<LSec.op<<" is not a function!";
     auto [left_arg_type, result_type] = unify_function(op_type, e);
 
-    // 3. Typecheck the left argument
-    checkRho(LSec.l_arg, left_arg_type);
-
+    // 3. Check expected type
     set_expected_type(exp_type, result_type);
+
+    // 4. Typecheck the left argument
+    checkRho(LSec.l_arg, left_arg_type);
 }
 
 void typechecker_state::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
@@ -258,18 +259,16 @@ void typechecker_state::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
     // 1. Typecheck the op
     auto op_type = inferRho(RSec.op);
 
-    // 2. Typecheck the right argument
-    auto right_arg_type = inferRho(RSec.r_arg);
+    // 2. Check the op is a two-argument function
+    auto [left_arg_type, tmp1] = unify_function(op_type);
+    auto [right_arg_type, result_type] = unify_function(tmp1);
 
-    // 3. Typecheck the function application:  op left_arg right_arg
-    auto left_arg_type = fresh_meta_type_var( kind_star() );
-    auto result_type = fresh_meta_type_var( kind_star() );
-    unify(op_type, Hs::function_type({left_arg_type, right_arg_type}, result_type));
-
-    // 4. Compute the section type;
+    // 3. Check the expected type
     Hs::Type section_type = Hs::function_type({left_arg_type}, result_type);
-
     set_expected_type( exp_type, section_type );
+
+    // 4. Check the right arg type.
+    checkRho(RSec.r_arg, right_arg_type);
 }
 
 void typechecker_state::tcRho(Hs::Do& DoExp, const Expected& exp_type)
