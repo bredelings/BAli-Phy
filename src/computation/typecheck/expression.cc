@@ -142,10 +142,7 @@ void typechecker_state::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 {
-    // 1. Determine object type
-    auto object_type = inferRho(Case.object);
-
-    // 2. Determine data type for object from patterns.
+    // 1. Determine the match type
     Hs::Match match;
     for(auto& alt: Case.alts)
     {
@@ -160,11 +157,12 @@ void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
         unloc(Case.alts[i]) = {match.rules[i].patterns[0], match.rules[i].rhs};
     }
 
-    Hs::Type result_type = fresh_meta_type_var( kind_star() );
-
-    unify( Hs::make_arrow_type(object_type,result_type), match_type );
-
+    // 2. Check the expected result type
+    auto [object_type, result_type] = unify_function(match_type);
     set_expected_type( exp_type, result_type );
+
+    // 3. Check the object type
+    checkRho(Case.object, object_type);
 }
 
 void typechecker_state::tcRho(Hs::List& L, const Expected& exp_type)
