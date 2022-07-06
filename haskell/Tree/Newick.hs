@@ -18,19 +18,12 @@ import Data.Char
 class RootedTree t => WriteNewickNode t where
     node_info :: t -> Int -> Maybe String
     branch_info :: t -> (Maybe Int) -> Maybe String
-    node_branch_info :: t -> Int -> (Maybe Int) -> (Maybe String, Maybe String)
-    label_for_node_branch :: t -> Int -> (Maybe Int) -> String
 
     node_info _ _ = Nothing
     branch_info _ _ = Nothing
 
-    node_branch_info t node branch = (node_info t node, branch_info t branch)
-
-    label_for_node_branch tree node branch = node_label ++ branch_label where
-                                        node_label = case node_info tree node of Just lab -> lab
-                                                                                 _         -> ""
-                                        branch_label = case branch_info tree branch of Just lab -> ":" ++ lab
-                                                                                       Nothing -> ""
+get_node_label   t node = case node_info t node of Just lab -> lab ; Nothing -> ""
+get_branch_label t branch = case branch_info t branch of Just lab -> ":" ++ lab; Nothing -> ""
 
 instance Tree t => WriteNewickNode (RootedTreeImp t) where
     node_info tree node = Just $ show node
@@ -65,7 +58,7 @@ write_newick tree = write_newick_node tree (root tree)
 
 write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree node) node Nothing ++ ";" where
 
-    write_branches_and_node tree branches node branch = write_branches tree branches ++ label_for_node_branch tree node branch
+    write_branches_and_node tree branches node branch = write_branches tree branches ++ get_node_label tree node ++ get_branch_label tree branch
 
     write_branches tree [] = ""
     write_branches tree branches = "(" ++ text ++ ")" where
