@@ -333,21 +333,17 @@ void typechecker_state::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
     L.enumFromToOp = Hs::Var({noloc,"Compiler.Enum.enumFromTo"});
     auto enumFromTo_type = inferRho(L.enumFromToOp);
 
-    // 2. Typecheck from argument
-    auto from_type = inferRho(L.from);
+    // 2. Check the result type
+    auto [from_type, tmp1] = unify_function(enumFromTo_type);
+    auto [to_type, result_type] = unify_function(tmp1);
 
-    // 3. enumFromTo_type ~ from_type -> a
-    auto a = fresh_meta_type_var( kind_star() );
-    unify(enumFromTo_type, Hs::make_arrow_type(from_type, a));
+    set_expected_type( exp_type, result_type );
+
+    // 3. Typecheck from argument
+    checkRho(L.from, from_type);
 
     // 4. Typecheck to argument
-    auto to_type = inferRho(L.to);
-
-    // 5. a ~ to_type -> result_type
-    auto result_type = fresh_meta_type_var( kind_star() );
-    unify(a, Hs::make_arrow_type(to_type, result_type));
-        
-    set_expected_type( exp_type, result_type );
+    checkRho(L.to, to_type);
 }
 
 void typechecker_state::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
@@ -356,28 +352,21 @@ void typechecker_state::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
     L.enumFromThenToOp = Hs::Var({noloc,"Compiler.Enum.enumFromThenTo"});
     auto enumFromThenTo_type = inferRho(L.enumFromThenToOp);
 
-    // 2. Typecheck from argument
-    auto from_type = inferRho(L.from);
-
-    // 3. enumFromThenTo_type ~ from_type -> a
-    auto a = fresh_meta_type_var( kind_star() );
-    unify(enumFromThenTo_type, Hs::make_arrow_type(from_type, a));
-
-    // 4. Typecheck then argument
-    auto then_type = inferRho(L.then);
-
-    // 5. a ~ then_type -> b
-    auto b = fresh_meta_type_var( kind_star() );
-    unify(a, Hs::make_arrow_type(then_type, b));
-
-    // 6. Typecheck to argument
-    auto to_type = inferRho(L.to);
-
-    // 7. b ~ to_type -> result_type
-    auto result_type = fresh_meta_type_var( kind_star() );
-    unify(b, Hs::make_arrow_type(to_type, result_type));
+    // 2. Check the result type
+    auto [from_type, tmp1] = unify_function(enumFromThenTo_type);
+    auto [then_type,  tmp2] = unify_function(tmp1);
+    auto [to_type, result_type] = unify_function(tmp2);
 
     set_expected_type( exp_type, result_type );
+
+    // 3. Typecheck from argument
+    checkRho(L.from, from_type);
+
+    // 4. Typecheck then argument
+    checkRho(L.then, then_type);
+
+    // 5. Typecheck to argument
+    checkRho(L.to, to_type);
 }
 
 void typechecker_state::tcRho(expression_ref& E, const Expected& exp_type)
