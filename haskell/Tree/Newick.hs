@@ -16,42 +16,50 @@ import Data.Char
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
 class RootedTree t => WriteNewickNode t where
+    node_info :: t -> Int -> Maybe String
+    branch_info :: t -> (Maybe Int) -> Maybe String
     node_branch_info :: t -> Int -> (Maybe Int) -> (Maybe String, Maybe String)
     label_for_node_branch :: t -> Int -> (Maybe Int) -> String
 
-    label_for_node_branch tree node mbranch = case node_branch_info tree node mbranch of
-                                         (Just name, Just branch) -> name ++ ":" ++ branch
-                                         (Just name, Nothing)     -> name
-                                         (Nothing  , Just branch) -> ":" ++ branch
-                                         (Nothing  , Nothing)     -> ""
+    node_info _ _ = Nothing
+    branch_info _ _ = Nothing
+
+    node_branch_info t node branch = (node_info t node, branch_info t branch)
+
+    label_for_node_branch tree node branch = node_label ++ branch_label where
+                                        node_label = case node_info tree node of Just lab -> lab
+                                                                                 _         -> ""
+                                        branch_label = case branch_info tree branch of Just lab -> ":" ++ lab
+                                                                                       Nothing -> ""
 
 instance Tree t => WriteNewickNode (RootedTreeImp t) where
-    node_branch_info tree node _ = (Just $ show node, Nothing)
+    node_info tree node = Just $ show node
 
 instance WriteNewickNode t => WriteNewickNode (LabelledTreeImp t) where
-    node_branch_info (LabelledTree tree labels) node branch = (label, subbranch)
+    node_info (LabelledTree tree labels) node = label
         where labels_array = listArray' labels
               label | inRange (bounds labels_array) node  = Just (labels_array!node)
                     | otherwise                           = Nothing
-              (sublabel, subbranch)                       = node_branch_info tree node branch
+
+    branch_info (LabelledTree tree labels) branch = branch_info tree branch
 
 instance WriteNewickNode t => WriteNewickNode (BranchLengthTreeImp t) where
-    node_branch_info blt@(BranchLengthTree tree lengths) node branch = (sublabel_for_node_branch, branch_label branch)
-        where sublabel_for_node_branch = case node_branch_info tree node branch of (sublabel,_) -> sublabel
-              branch_label (Just b) = Just $ show (branch_length blt b)
-              branch_label Nothing  = Nothing
+    node_info (BranchLengthTree tree lengths) node = node_info tree node
+
+    branch_info blt (Just b) = Just $ show (branch_length blt b)
+    branch_info _   Nothing  = Nothing
 
 instance WriteNewickNode t => WriteNewickNode (TimeTreeImp t) where
-    node_branch_info nht@(TimeTree tree _) node branch = (sublabel_for_node_branch, branch_label branch)
-        where sublabel_for_node_branch = case node_branch_info tree node branch of (sublabel, _) -> sublabel
-              branch_label (Just b) = Just $ show (branch_length nht b)
-              branch_label Nothing  = Nothing
+    node_info nht@(TimeTree tree _) node = node_info tree node
+
+    branch_info nht (Just b) = Just $ show (branch_length nht b)
+    branch_info nht Nothing  = Nothing
 
 instance (TimeTree t, WriteNewickNode t) => WriteNewickNode (RateTimeTreeImp t) where
-    node_branch_info nht@(RateTimeTree tree _) node branch = (sublabel_for_node_branch, branch_label branch)
-        where sublabel_for_node_branch = case node_branch_info tree node branch of (sublabel, _) -> sublabel
-              branch_label (Just b) = Just $ show (branch_length nht b)
-              branch_label Nothing  = Nothing
+    node_info nht@(RateTimeTree tree _) node = node_info tree node
+
+    branch_info nht (Just b) = Just $ show (branch_length nht b)
+    branch_info nht Nothing  = Nothing
 
 write_newick tree = write_newick_node tree (root tree)
 
