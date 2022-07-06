@@ -465,12 +465,12 @@ void Module::compile(const Program& P)
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = rename(opts, M);
 
-    std::cerr<<"-------- module "<<name<<"--------\n";
+//    std::cerr<<"-------- module "<<name<<"--------\n";
     auto tc_result = typecheck(M);
 
-    std::cerr<<"All decls:\n";
-    for(auto& [name,type]: tc_state->gve)
-        std::cerr<<name<<" :: "<<type<<"\n";
+//    std::cerr<<"All decls:\n";
+//    for(auto& [name,type]: tc_state->gve)
+//        std::cerr<<name<<" :: "<<type<<"\n";
 
     auto [hs_decls, core_decls] = tc_result.all_binds();
 
@@ -617,7 +617,7 @@ void Module::perform_exports()
             if (get_module_name(value) == name)
             {
                 if (not symbols.count(value))
-                    std::cerr<<"'"<<value<<"' is not a symbol!\n";
+                    ; //                std::cerr<<"'"<<value<<"' is not a symbol!\n";
                 else
                 {
                     auto& V = symbols.at(value);

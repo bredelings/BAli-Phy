@@ -1212,15 +1212,15 @@ pair<Hs::Binds,Core::Decls> typechecker_result::all_binds() const
     ranges::insert(all, all.end(), instance_method_decls);
     ranges::insert(all, all.end(), class_binds);
 
-    std::cerr<<"Haskell decls:\n";
-    std::cerr<<all.print();
+//    std::cerr<<"Haskell decls:\n";
+//    std::cerr<<all.print();
 
     Core::Decls all2 = top_simplify_decls;
     all2 += dfun_decls;
 
-    std::cerr<<"\n\nCore decls:\n";
-    std::cerr<<print_cdecls(all2);
-    std::cerr<<"\n\n";
+//    std::cerr<<"\n\nCore decls:\n";
+//    std::cerr<<print_cdecls(all2);
+//    std::cerr<<"\n\n";
 
     return {all, all2};
 }
