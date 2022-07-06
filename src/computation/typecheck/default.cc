@@ -34,7 +34,7 @@ optional<Hs::TypeCon> simple_constraint_class_meta(const Hs::Type& constraint)
 // 2. at least one of these classes is a numeric class, (that is, Num or a subclass of Num)
 // 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
 
-optional<tuple<u_substitution_t, Core::Decls>>
+optional<Core::Decls>
 typechecker_state::candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie)
 {
     set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
@@ -69,11 +69,12 @@ typechecker_state::candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie)
 
     for(auto& type: defaults() )
     {
-        u_substitution_t s;
-        s = s.insert({tv, type});
-        auto [decls, _, failed_constraints] = entails({}, apply_subst(s, tv_lie));
+        tv.fill(type);
+        auto [decls, _, failed_constraints] = entails({}, tv_lie);
         if (failed_constraints.empty())
-            return pair(s, decls);
+            return decls;
+        else
+            tv.clear();
     }
 
     return {};
@@ -82,8 +83,6 @@ typechecker_state::candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie)
 pair<LIE, map<Hs::MetaTypeVar, LIE>>
 ambiguities(const set<Hs::MetaTypeVar>& tvs1, const set<Hs::MetaTypeVar>& tvs2, const LIE& lie)
 {
-    // The input lie MUST be substituted to find its free type vars!
-    // lie = apply_current_subst(lie);
     auto ambiguous_tvs = free_meta_type_variables(lie) - tvs1 - tvs2;
 
     // 1. Record the constraints WITH ambiguous type vars, by type var
@@ -114,12 +113,11 @@ ambiguities(const set<Hs::MetaTypeVar>& tvs1, const set<Hs::MetaTypeVar>& tvs2, 
 }
 
 
-tuple<u_substitution_t, Core::Decls, LIE>
+tuple<Core::Decls, LIE>
 typechecker_state::default_preds( const set<Hs::MetaTypeVar>& fixed_tvs,
                                   const set<Hs::MetaTypeVar>& referenced_tvs,
                                   const LIE& lie)
 {
-    u_substitution_t s;
     Core::Decls decls;
     auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities(fixed_tvs, referenced_tvs, lie);
 
@@ -134,17 +132,12 @@ typechecker_state::default_preds( const set<Hs::MetaTypeVar>& fixed_tvs,
                 e<<constraint<<" ";
             throw e;
         }
-        auto& [s1, decls1] = *result;
+        auto& decls1 = *result;
 
-        auto tmp = combine(s, s1);
-        assert(tmp);
-        s = *tmp; // These constraints should be on separate variables, and should not interact.
-
-        // Each binds should be independent of the others, so order should not matter.
         decls += decls1;
     }
 
-    return {s, decls, unambiguous_preds};
+    return {decls, unambiguous_preds};
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,17 +284,11 @@ Core::Decls typechecker_state::simplify_and_default_top_level()
 {
     auto top_simplify_decls = reduce_current_lie();
 
-    auto [s, default_decls, unambiguous_preds] = default_preds({}, {}, current_lie());
+    auto [default_decls, unambiguous_preds] = default_preds({}, {}, current_lie());
     assert(unambiguous_preds.empty());
-
-    // Record the substitution, since it can affect types.
-    bool ok = add_substitution(s);
-    assert(ok);
 
     // Clear the LIE, which should now be empty.
     current_lie() = {};
-
-    gve = apply_current_subst(gve);
 
 //    std::cerr<<"GVE (all after defaulting):\n";
 //    for(auto& [x,t]: state.gve)

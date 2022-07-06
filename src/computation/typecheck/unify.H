@@ -6,8 +6,6 @@
 #include "immer/map.hpp" // for immer::map
 
 
-typedef immer::map<Hs::MetaTypeVar, Hs::Type> u_substitution_t;
-
 typedef immer::map<Hs::TypeVar, Hs::Type> substitution_t;
 
 std::string print(const substitution_t& s);
@@ -44,22 +42,17 @@ namespace std
     };
 }
 
-Hs::Type apply_subst(const u_substitution_t& s, const Hs::Type& t);
-Hs::Context apply_subst(const u_substitution_t& s, Hs::Context C);
-
 Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t);
 Hs::Context apply_subst(const substitution_t& s, Hs::Context C);
 Hs::Constructor apply_subst(const substitution_t& s, Hs::Constructor con);
 Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl d);
 
-std::optional<u_substitution_t> try_insert(const u_substitution_t& s, const Hs::MetaTypeVar& tv, Hs::Type type);
+bool try_insert(const Hs::MetaTypeVar& tv, Hs::Type type);
 bool occurs_check(const Haskell::MetaTypeVar& tv, const Hs::Type& t);
 
-std::optional<u_substitution_t> combine(u_substitution_t s1, u_substitution_t s2);
-
-std::optional<u_substitution_t> maybe_unify(const Hs::Type& t1, const Hs::Type& t2);
-std::optional<u_substitution_t> maybe_match(const Hs::Type& t1, const Hs::Type& t2);
-u_substitution_t unify(const Hs::Type& t1, const Hs::Type& t2);
+bool maybe_unify(const Hs::Type& t1, const Hs::Type& t2);
+bool maybe_match(const Hs::Type& t1, const Hs::Type& t2);
+void unify(const Hs::Type& t1, const Hs::Type& t2);
 
 bool same_type(const Hs::Type& t1, const Hs::Type& t2);
 #endif 

@@ -65,13 +65,7 @@ optional<pair<Core::Exp,LIE>> typechecker_state::lookup_instance(const Hs::Type&
 
         assert(not constraint_is_hnf(instance_head));
 
-        auto s = ::maybe_match(instance_head, constraint);
-
-        // This instance doesn't match.
-        if (not s) continue;
-
-        for(auto& [dvar, instance_constraint]: wanteds)
-            instance_constraint = apply_subst(*s, instance_constraint);
+        if (not maybe_match(instance_head, constraint)) continue;
 
         auto dfun_exp = Core::Apply(dfun, vars_from_lie<Core::Exp>(wanteds));
 
@@ -158,12 +152,9 @@ vector<pair<Core::Var, Hs::Type>> typechecker_state::superclass_constraints(cons
         assert(wanteds.size() == 1);
 
         auto class_constraint = wanteds[0].second;
-        auto s = ::maybe_match(class_constraint, constraint);
 
         // The premise doesn't match the current class;
-        if (not s) continue;
-
-        superclass_constraint = apply_subst(*s, superclass_constraint);
+        if (not maybe_match(class_constraint, constraint)) continue;
 
         constraints.push_back( { dvar, superclass_constraint } );
     }
@@ -263,8 +254,6 @@ pair<Core::Decls, LIE> typechecker_state::reduce(const LIE& lie)
 Core::Decls typechecker_state::reduce_current_lie()
 {
     auto& lie = current_lie();
-
-    lie = apply_current_subst( lie );
 
     auto [decls, new_lie] = reduce( lie );
 

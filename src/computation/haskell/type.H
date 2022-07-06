@@ -120,7 +120,8 @@ public:
     std::optional<Kind> kind;
 
     std::optional<Type> filled() const;
-    void fill(const Type& t);
+    void fill(const Type& t) const;
+    void clear() const;
 
     bool operator==(const MetaTypeVar&) const;
     bool operator<(const MetaTypeVar&) const;

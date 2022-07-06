@@ -102,6 +102,9 @@ Type function_type(const vector<Type>& arg_types, const Type& result_type)
 
 pair<Type,vector<Type>> decompose_type_apps(Type t)
 {
+    if (auto tt = filled_meta_type_var(t))
+        return decompose_type_apps(*tt);
+
     if (auto L = t.to<ListType>())
         return {TypeCon({noloc,"[]"}), {L->element_type}};
 
@@ -208,6 +211,9 @@ optional<pair<Type,Type>> is_function_type(const Type& t)
 
 optional<Type> is_list_type(const Type& t)
 {
+    if (auto tt = filled_meta_type_var(t))
+        return is_list_type(*tt);
+
     if (auto l = t.to<Hs::ListType>())
         return l->element_type;
 
@@ -227,6 +233,9 @@ optional<Type> is_list_type(const Type& t)
 
 optional<vector<Type>> is_tuple_type(const Type& t)
 {
+    if (auto tt = filled_meta_type_var(t))
+        return is_tuple_type(*tt);
+
     if (auto tup = t.to<Hs::TupleType>())
         return tup->element_types;
 
@@ -248,6 +257,9 @@ optional<vector<Type>> is_tuple_type(const Type& t)
 
 Type remove_top_gen(Type type)
 {
+    if (auto tt = filled_meta_type_var(type))
+        type = *tt;
+
     if (auto f = type.to<ForallType>())
         type = f->type;
 
@@ -276,10 +288,21 @@ optional<Type> MetaTypeVar::filled() const
         return *indirect;
 }
 
-void MetaTypeVar::fill(const Type& t)
+void MetaTypeVar::fill(const Type& t) const
 {
     assert(indirect->empty());
+    assert(not t.empty());
     *indirect = t;
+}
+
+void MetaTypeVar::clear() const
+{
+    if (not indirect->empty())
+    {
+        Hs::Type t;
+        *indirect = t;
+    }
+    assert(indirect->empty());
 }
 
 string MetaTypeVar::print() const

@@ -42,8 +42,6 @@ struct global_tc_state
 
     std::vector<Hs::Type> defaults;
 
-    u_substitution_t type_var_to_type;
-
     // maybe merge with gve by mapping name -> type,con-or-var
     constr_env con_info;
 
@@ -142,9 +140,6 @@ struct typechecker_state: FreshVarSource
           std::vector<Hs::Type>& defaults()       {return global_state->defaults;}
     const std::vector<Hs::Type>& defaults() const {return global_state->defaults;}
 
-          u_substitution_t& type_var_to_type()       {return global_state->type_var_to_type;}
-    const u_substitution_t& type_var_to_type() const {return global_state->type_var_to_type;}
-
     Hs::Type expTypeToType(const Expected& E);
 
     void set_expected_type(const Expected& E, const Hs::Type& type);
@@ -204,14 +199,6 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type double_type() const;
 
-    Hs::Type apply_current_subst(const Hs::Type& t) const;
-
-    value_env apply_current_subst(const value_env& env) const;
-
-    LIE apply_current_subst(const LIE& env) const;
-
-    bool add_substitution(const u_substitution_t& s);
-
     bool add_substitution(const Hs::MetaTypeVar& a, const Hs::Type& type);
 
     bool maybe_unify(const Hs::Type& t1, const Hs::Type& t2);
@@ -234,10 +221,10 @@ struct typechecker_state: FreshVarSource
 
     std::pair<Hs::Type, std::vector<Hs::Type>> constructor_pattern_types(const Hs::Con&);
 
-    std::optional<std::tuple<u_substitution_t, Core::Decls>>
+    std::optional<Core::Decls>
     candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie);
 
-    std::tuple<u_substitution_t, Core::Decls, LIE >
+    std::tuple<Core::Decls, LIE >
     default_preds( const std::set<Hs::MetaTypeVar>& fixed_tvs,
                    const std::set<Hs::MetaTypeVar>& referenced_tvs,
                    const LIE& lie);
@@ -518,10 +505,6 @@ std::optional<Core::Decls> typechecker_state::entails(const T& to_keep, const st
 
 std::optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint);
 ID get_class_name_from_constraint(const Hs::Type& constraint);
-
-value_env apply_subst(const u_substitution_t& s, const value_env& env1);
-
-LIE apply_subst(const u_substitution_t& s, const LIE& env1);
 
 LIE apply_subst(const substitution_t& s, const LIE& env1);
 

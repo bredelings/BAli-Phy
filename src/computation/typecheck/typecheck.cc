@@ -410,9 +410,9 @@ void typechecker_state::set_expected_type(const Expected& E, const Hs::Type& typ
         {
             std::ostringstream header;
             header<<"Expected type\n\n";
-            header<<"   "<<apply_current_subst(E.check_type())<<"\n\n";
+            header<<"   "<<E.check_type()<<"\n\n";
             header<<"but got type\n\n";
-            header<<"   "<<apply_current_subst(type)<<"\n\n";
+            header<<"   "<<type<<"\n\n";
 
             ex.prepend(header.str());
             throw;
@@ -465,22 +465,6 @@ struct instance_info
         return Hs::ForallType(type_vars, Hs::ConstrainedType(context, make_tyapps(class_con, argument_types)));
     }
 };
-
-global_value_env apply_subst(const u_substitution_t& s, const value_env& env1)
-{
-    global_value_env env2;
-    for(auto& [x,type]: env1)
-        env2 = env2.insert({x, apply_subst(s,type)});
-    return env2;
-}
-
-LIE apply_subst(const u_substitution_t& s, const LIE& env1)
-{
-    LIE env2;
-    for(auto& [x,type]: env1)
-        env2.push_back({x, apply_subst(s,type)});
-    return env2;
-}
 
 LIE apply_subst(const substitution_t& s, const LIE& env1)
 {
@@ -610,21 +594,6 @@ typechecker_state typechecker_state::copy_clear_lie() const
 }
 
 
-Hs::Type typechecker_state::apply_current_subst(const Hs::Type& t) const
-{
-    return apply_subst(type_var_to_type(), t);
-}
-
-value_env typechecker_state::apply_current_subst(const value_env& env) const
-{
-    return apply_subst(type_var_to_type(), env);
-}
-
-LIE typechecker_state::apply_current_subst(const LIE& env) const
-{
-    return apply_subst(type_var_to_type(), env);
-}
-
 void typechecker_state::add_binders(const local_value_env& binders)
 {
     gve = plus_prefer_right( gve, binders );
@@ -721,37 +690,20 @@ Hs::Type typechecker_state::double_type() const
     return find_prelude_tycon("Double");
 }
 
-bool typechecker_state::add_substitution(const u_substitution_t& s)
-{
-    if (auto s2 = combine(type_var_to_type(), s))
-    {
-        type_var_to_type() = *s2;
-        return true;
-    }
-    else
-        return false;
-}
-
 bool typechecker_state::add_substitution(const Hs::MetaTypeVar& a, const Hs::Type& type)
 {
-    if (auto s = try_insert({}, a, type))
-        return add_substitution(*s);
-    else
-        return false;
+    return try_insert(a, type);
 }
 
 bool typechecker_state::maybe_unify(const Hs::Type& t1, const Hs::Type& t2)
 {
-    if (auto s = ::maybe_unify(t1, t2))
-        return add_substitution(*s);
-    else
-        return false;
+    return ::maybe_unify(t1, t2);
 }
 
 void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2)
 {
     if (not maybe_unify(t1,t2))
-        throw myexception()<<"Unification failed: "<<apply_current_subst(t1)<<" !~ "<<apply_current_subst(t2);
+        throw myexception()<<"Unification failed: "<<t1<<" !~ "<<t2;
 }
 
 void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2, const myexception& e)
@@ -762,10 +714,7 @@ void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2, const myex
 
 bool typechecker_state::maybe_match(const Hs::Type& t1, const Hs::Type& t2)
 {
-    if (auto s = ::maybe_match(t1, t2))
-        return add_substitution(*s);
-    else
-        return false;
+    return ::maybe_match(t1, t2);
 }
 
 void typechecker_state::match(const Hs::Type& t1, const Hs::Type& t2, const myexception& e)
@@ -776,7 +725,7 @@ void typechecker_state::match(const Hs::Type& t1, const Hs::Type& t2, const myex
 
 void typechecker_state::match(const Hs::Type& t1, const Hs::Type& t2)
 {
-    auto e = myexception()<<"match failed: "<<apply_current_subst(t1)<<" !~ "<<apply_current_subst(t2);
+    auto e = myexception()<<"match failed: "<<t1<<" !~ "<<t2;
     match(t1,t2,e);
 }
 
@@ -880,11 +829,10 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
     // 2. typecheck
     auto tcs2 = copy_clear_lie();
     tcs2.tcRho(E, Check(rho_type));
-    auto lie_wanted = apply_current_subst( tcs2.current_lie() );
+    auto lie_wanted = tcs2.current_lie();
 
     // 3. Check for escaped skolem variables
-    gve = apply_current_subst(gve);
-    auto s2 = apply_current_subst(sigma_type);
+    auto s2 = sigma_type;
     auto free_tvs = free_type_variables(gve);
     add(free_tvs, free_type_variables(s2));
     for(auto ftv: free_tvs)
@@ -965,7 +913,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
 
     // We are looking for type variables in t1, not type1.
     // This will only contain skolem variables if t1 contains a meta-variable BEFORE instantiation.
-    for(auto ftv: free_type_variables(apply_current_subst(t1)))
+    for(auto ftv: free_type_variables(t1))
         if (includes(tvs2, ftv))
             throw myexception()<<"Type not polymorphic enough";
 
@@ -1051,9 +999,9 @@ typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
         {
             std::ostringstream header;
             header<<"Expected type\n\n";
-            header<<"   "<<apply_current_subst(exp_type.check_type())<<"\n\n";
+            header<<"   "<<exp_type.check_type()<<"\n\n";
             header<<"but got type\n\n";
-            header<<"   "<<apply_current_subst(t)<<"\n\n";
+            header<<"   "<<t<<"\n\n";
 
             ex.prepend(header.str());
             throw;
@@ -1184,7 +1132,7 @@ LIE typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
     for(auto& constraint:constraints)
     {
         auto dvar = fresh_dvar(constraint);
-        ordered_lie.push_back({dvar, apply_current_subst(constraint)});
+        ordered_lie.push_back({dvar, constraint});
     }
     return ordered_lie;
 }

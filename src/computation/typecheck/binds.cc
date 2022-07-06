@@ -258,11 +258,11 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         // 2. typecheck the rhs
         auto tcs2 = copy_clear_lie();
         tcs2.tcRho(FD.match, Check(rho_type));
-        auto lie_wanted = apply_current_subst( tcs2.current_lie() );
+        auto lie_wanted = tcs2.current_lie();
 
         // 3. default ambiguous constraints.
-        auto fixed_mtvs = free_meta_type_variables( apply_current_subst(gve) );
-        auto [s1, decls1, lie_wanted_unambiguous] = default_preds( fixed_mtvs, {}, lie_wanted );
+        auto fixed_mtvs = free_meta_type_variables( gve );
+        auto [decls1, lie_wanted_unambiguous] = default_preds( fixed_mtvs, {}, lie_wanted );
         auto ev_decls = decls1;
 
         // 4. check that the remaining constraints are satisfied by the constraints in the type signature
@@ -274,7 +274,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         // 5. return GenBind with tvs, givens, body
         Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
 
-        Hs::Type monotype = apply_current_subst(rho_type);
+        Hs::Type monotype = rho_type;
 
         auto dict_vars = vars_from_lie( givens );
 
@@ -461,11 +461,12 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     }
     auto unreduced_collected_lie = tcs2.current_lie();
 
-    // We need to substitute before looking for free type variables!
-    // We also need to substitute before we quantify below.
-    mono_binder_env = apply_current_subst(mono_binder_env);
-
-    auto fixed_tvs = free_meta_type_variables( apply_current_subst(gve) );
+    auto fixed_tvs = free_meta_type_variables( gve);
+    for(auto& [name, tmp]: mono_local_env)
+    {
+        auto& [x,type] = tmp;
+        add(fixed_tvs, free_meta_type_variables(type));
+    }
 
     /* NOTE: Constraints can reference variables that are in
      *        (i) ALL types in a recursive group
@@ -486,7 +487,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     //    (ii) representing some constraints in terms of others.
     // This also substitutes into the current LIE, which we need to do 
     //    before finding free type vars in the LIE below.
-    auto [reduce_decls, collected_lie] = reduce( apply_current_subst( unreduced_collected_lie ) );
+    auto [reduce_decls, collected_lie] = reduce( unreduced_collected_lie );
 
     // B. Second, extract the "retained" predicates can be added without causing abiguity.
     auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
@@ -497,7 +498,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     
     // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
     //   after generating definitions of their dictionaries.
-    auto [s1, default_decls, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
+    auto [default_decls, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
     auto ev_decls = default_decls + reduce_decls;
     lie_retained = lie_not_completely_ambiguous;
 
@@ -523,17 +524,12 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
     // non-meta type vars to replace them with
     set<Hs::TypeVar> qtvs;
-    immer::map<Hs::MetaTypeVar, Hs::TypeVar> qmtvs_to_qtvs;
-    u_substitution_t qmtv_subst;
     for(auto& qmtv: qmtvs)
     {
         Hs::TypeVar qtv = fresh_other_type_var(unloc(qmtv.name), *qmtv.kind);
-        qmtvs_to_qtvs = qmtvs_to_qtvs.insert({qmtv, qtv});
-        qmtv_subst = qmtv_subst.insert({qmtv, qtv});
         qtvs.insert(qtv);
+        qmtv.fill(qtv);
     }
-    lie_retained = apply_subst(qmtv_subst, lie_retained);
-    mono_binder_env = apply_subst(qmtv_subst, mono_binder_env);
     
     // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group,
     // but we do need the defaults to define individual symbols.
