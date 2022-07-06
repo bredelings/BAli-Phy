@@ -1716,13 +1716,6 @@ Parameters::Parameters(const Program& prog,
     // R2. Register individual scales
     PC->branch_scales_ = get_params_from_list(*this, scales_list.ref(*this));
 
-#ifndef NDEBUG
-    evaluate_expression( {var("Tree.numNodes"), my_tree()});
-    evaluate_expression( {var("Tree.numBranches"), my_tree()});
-    evaluate_expression( {var("Tree.edgesOutOfNode"), my_tree(), 0});
-    evaluate_expression( {var("Tree.neighbors"), my_tree(), 0});
-#endif
-
     // R5. Register branch categories
     auto maybe_branch_cats = evaluate_expression( {var("BAliPhy.ATModel.branch_categories"), my_atmodel()} );
     if (has_constructor(maybe_branch_cats,"Data.Maybe.Just"))
