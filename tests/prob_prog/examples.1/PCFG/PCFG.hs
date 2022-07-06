@@ -21,12 +21,12 @@ preterminals = [("N",[("John",0.6), ("soup",0.4)]),
 pcfg w@(Word s)        = return [w]
 
 pcfg (PreTerminal s) = case lookup s preterminals of
-                         Nothing -> "error: no word class '"++s++"'"
+                         Nothing -> error $ "no word class '"++s++"'"
                          Just words -> do w <- categorical_on words
                                           return [Word w]
 
 pcfg (Rule s)        = case lookup s rules of
-                         Nothing -> "error: no rule '"++s++"'"
+                         Nothing -> error $ "no rule '"++s++"'"
                          Just possibilities-> do let probs = map fst possibilities
                                                      rules = map snd possibilities
                                                  i <- categorical probs
