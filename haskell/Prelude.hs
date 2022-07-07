@@ -10,6 +10,7 @@ module Prelude (module Prelude,
                 module Data.Functor,
                 module Data.Ord,
                 module Text.Show,
+                module Text.Read,
                 module Foreign.Pair,
                 module Foreign.Vector,
                 module Foreign.String,
@@ -44,6 +45,7 @@ import Data.Function
 import Data.Functor
 import Data.Ord
 import Text.Show
+import Text.Read
 import Control.Applicative
 import Control.Monad
 import Foreign.Pair
@@ -53,9 +55,6 @@ import Foreign.String
 foreign import bpcall "Prelude:putStrLn" builtin_putStrLn :: CPPString -> RealWorld -> EPair RealWorld ()
 putStrLn line = IOAction (pair_from_c . builtin_putStrLn (list_to_string line))
 
-foreign import bpcall "Prelude:" read_int :: CPPString -> Int
-foreign import bpcall "Prelude:" read_double :: CPPString -> Double
-
 undefined = error "Prelude.undefined"
 
 -- zipWith' enforces equal lengths, unlike zipWith
@@ -64,17 +63,6 @@ zipWith' _ [] []         =  []
 
 zip' = zipWith' (,)
 
-
-class Read a where
-    read :: [Char] -> a
-
-instance Read Int where
-    read [] = error "Can't convert empty string to int."
-    read s = read_int (list_to_string s)
-
-instance Read Double where
-    read [] = error "Can't convert empty string to double."
-    read s = read_double (list_to_string s)
 
 foreign import bpcall "Data:readFile" builtin_readFile :: CPPString -> CPPString
 readFile filename = IOAction (\s -> (s,listFromString $ builtin_readFile $ list_to_string $ filename))
