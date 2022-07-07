@@ -1,4 +1,4 @@
-module Probability.Distribution.Categorical (categorical,categorical_on) where
+module Probability.Distribution.Categorical (categorical,categorical_on, HasCategorical) where
 
 import Probability.Random
 import MCMC
