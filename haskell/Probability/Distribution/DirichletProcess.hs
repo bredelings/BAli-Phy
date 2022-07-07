@@ -65,10 +65,6 @@ triggered_modifiable_list n value effect = let raw_list = mapn n modifiable valu
 
 crp_effect n d x = add_move (\c -> mapM_ (\l-> gibbs_sample_categorical (x!!l) (n+d) c) [0..n-1])
 
-crp alpha n d = Distribution "crp" (make_densities $ density) (no_quantile "crp") (RandomStructure (crp_effect n d) (triggered_modifiable_list n) (sample_crp alpha n d)) (ListRange $ replicate n subrange)
-                  where subrange = integer_between 0 (n+d-1)
-                        density = crp_density alpha n d
-
 safe_exp x = if (x < (-20.0)) then
                exp (-20.0)
              else if (x > 20.0) then
@@ -106,3 +102,14 @@ dp n alpha dist = lazy $ do
   breaks <- sequence $ repeat $ beta 1.0 alpha
 
   iid n (stick breaks atoms)
+
+class HasCRP d where
+    crp :: Double -> Int -> Int -> d [Int]
+
+instance HasCRP Distribution where
+    crp alpha n d = Distribution "crp" (make_densities $ density) (no_quantile "crp") (RandomStructure (crp_effect n d) (triggered_modifiable_list n) (sample_crp alpha n d)) NoRange
+                  where subrange = integer_between 0 (n+d-1)
+                        density = crp_density alpha n d
+
+instance HasCRP Random where
+    crp alpha n d = RanDistribution $ crp alpha n d
