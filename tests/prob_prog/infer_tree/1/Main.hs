@@ -37,7 +37,7 @@ model seq_data = do
     seq_data ~> ctmc_on_tree tree1 alignment tn93_model
 
     return
-        [ "tree1" %=% write_newick tree1
+        [ "tree1" %=% write_newick (make_rooted tree1)
         , "log(indel_rate)" %=% log indel_rate
         , "mean_length" %=% mean_length
         , "kappa1" %=% kappa1

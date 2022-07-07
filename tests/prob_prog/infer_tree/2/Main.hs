@@ -25,7 +25,7 @@ model seq_data = do
 
     seq_data ~> ctmc_on_tree_fixed_A tree1 tn93_model
 
-    return ["tree1" %=% write_newick tree1,
+    return ["tree1" %=% write_newick (make_rooted tree1),
             "scale" %=% scale1,
             "tn93:kappa1" %=% kappa1,
             "tn93:kappa2" %=% kappa2,
