@@ -1,2 +1,3 @@
-size = 0   Test.f = Test.g
-size = 2   Test.g = \#8079 -> let {#8080 = Test.g #8079} in Test.f #8080
+size = 0   Test.f = Test.g@20593#20612
+size = 0   Test.g = Test.g@20593#20612
+size = 2   Test.g@20593#20612 = \#20613 -> let {#20614 = Test.g@20593#20612 #20613} in Test.g@20593#20612 #20614

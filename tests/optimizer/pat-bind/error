@@ -1,17 +1,15 @@
-size = 1   Test.#8129 = 1
-size = 1   Test.#8130 = 2
-size = 1   Test.#8131 = (Test.#8129, Test.#8130)
-size = 1   Test.#8132 = 3
-size = 1   Test.#8133 = 4
-size = 1   Test.#8134 = (Test.#8132, Test.#8133)
-size = 1   Test.#8135 = []
-size = 1   Test.#8136 = Test.#8134:Test.#8135
-size = 1   Test.#8137 = []
-size = 3   Test.#8138 = \#8139 -> case #8139 of {(#8140, #8141) -> let {#8142 = Prelude:multiply #8140 #8140} in #8142:Test.#8137; _ -> Test.$v#8144}
-size = 1   Test.#8145 = Test.#8131:Test.#8136
-size = 2   Test.#8146 = Data.List.map Test.#8138 Test.#8145
-size = 1   Test.$v#8144 = []
-size = 1   Test.x = 1
-size = 1   Test.xxs = Data.List.concat Test.#8146
-size = 1   Test.xys = Test.#8131:Test.#8136
-size = 1   Test.y = 2
+size = 1   Test.#20689 = 1
+size = 1   Test.#20690 = 2
+size = 1   Test.#20691 = (Test.#20689, Test.#20690)
+size = 1   Test.#20692 = 3
+size = 1   Test.#20693 = 4
+size = 1   Test.#20694 = (Test.#20692, Test.#20693)
+size = 1   Test.#20695 = []
+size = 1   Test.#20696 = Test.#20694:Test.#20695
+size = 1   Test.#20697 = []
+size = 3   Test.#20698 = \#20699 -> case #20699 of {(#20700, #20701) -> let {#20702 = Num:multiply_int #20700 #20700} in #20702:Test.#20697; _ -> Test.$v#20704}
+size = 1   Test.#20705 = Test.#20691:Test.#20696
+size = 2   Test.#20706 = Data.List.map Test.#20698 Test.#20705
+size = 1   Test.$v#20704 = []
+size = 1   Test.xxs = Data.List.concat Test.#20706
+size = 1   Test.xys = Test.#20691:Test.#20696

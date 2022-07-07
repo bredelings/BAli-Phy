@@ -1,5 +1,4 @@
-size = 1   Test.#8091 = 10
-size = 1   Test.$v#8092 = Prelude:negate Test.#8091
-size = 0   Test.f = \#8093 -> Test.$v#8092
-size = 1   Test.g = \#8094 #8095 -> let {#8096 = \#8097 -> #8095} in Compiler.Base.IOAndPass #8094 #8096
-size = 1   Test.h = \#8098 #8099 -> #8098:#8099
+size = 1   Test.#20796 = 10
+size = 4   Test.f = \dNum@20645#20797 #20798 -> let {a#20799 = (case dNum@20645#20797 of {(#20800, #20801, #20802, #20803, #20804, #20805, #20806) -> #20803; _ -> Compiler.Num.$v#702}) Test.#20796} in (case dNum@20645#20797 of {(#20808, #20809, #20810, #20811, #20812, #20813, #20814) -> #20808; _ -> Compiler.Num.$v#652}) a#20799
+size = 1   Test.g = \dMonad@20698#20816 -> case dMonad@20698#20816 of {(#20817, #20818, #20819, #20820, #20821, #20822) -> #20822; _ -> Control.Monad.$v#15977}
+size = 1   Test.h = \#20824 #20825 -> #20824:#20825

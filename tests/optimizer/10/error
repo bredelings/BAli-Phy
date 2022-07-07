@@ -1,28 +1,18 @@
-size = 1   Test.#8136 = 'y'
-size = 1   Test.#8137 = 'o'
-size = 1   Test.#8138 = '!'
-size = 1   Test.#8139 = []
-size = 1   Test.#8140 = Test.#8138:Test.#8139
-size = 1   Test.#8141 = Test.#8137:Test.#8140
-size = 1   Test.#8142 = Test.#8136:Test.#8141
-size = 1   Test.#8144 = "case: failed pattern match"
-size = 1   Test.#8145 = Foreign.String.unpack_cpp_string Test.#8144
-size = 1   Test.#8151 = 'y'
-size = 1   Test.#8152 = 'o'
-size = 1   Test.#8153 = '!'
-size = 1   Test.#8154 = []
-size = 1   Test.#8155 = Test.#8153:Test.#8154
-size = 1   Test.#8156 = Test.#8152:Test.#8155
-size = 1   Test.#8157 = Test.#8151:Test.#8156
-size = 1   Test.#8159 = "case: failed pattern match"
-size = 1   Test.#8160 = Foreign.String.unpack_cpp_string Test.#8159
-size = 1   Test.#8162 = 10
-size = 1   Test.#8168 = 10
-size = 1   Test.#8169 = 2
-size = 1   Test.$v#8143 = Compiler.Base.error Test.#8142
-size = 1   Test.$v#8146 = Compiler.Base.error Test.#8145
-size = 1   Test.$v#8158 = Compiler.Base.error Test.#8157
-size = 1   Test.$v#8161 = Compiler.Base.error Test.#8160
-size = 1   Test.f = \#8147 -> case #8147 of {#8148:#8149 -> #8148; [] -> Test.$v#8143; _ -> Test.$v#8146}
-size = 2   Test.g = \#8163 -> let {#8164 = case #8163 of {#8165:#8166 -> #8165; [] -> Test.$v#8158; _ -> Test.$v#8161}} in Prelude:add Test.#8162 #8164
-size = 1   Test.h = Prelude:add Test.#8168 Test.#8169
+size = 1   Test.#20887 = "yo!"
+size = 1   Test.#20888 = Foreign.String.unpack_cpp_string Test.#20887
+size = 1   Test.#20890 = "case: failed pattern match"
+size = 1   Test.#20891 = Foreign.String.unpack_cpp_string Test.#20890
+size = 1   Test.#20897 = 10
+size = 1   Test.#20898 = "yo!"
+size = 1   Test.#20899 = Foreign.String.unpack_cpp_string Test.#20898
+size = 1   Test.#20901 = "case: failed pattern match"
+size = 1   Test.#20902 = Foreign.String.unpack_cpp_string Test.#20901
+size = 1   Test.#20927 = 2
+size = 1   Test.#20928 = 10
+size = 1   Test.$v#20889 = Compiler.Error.error Test.#20888
+size = 1   Test.$v#20892 = Compiler.Error.error Test.#20891
+size = 1   Test.$v#20900 = Compiler.Error.error Test.#20899
+size = 1   Test.$v#20903 = Compiler.Error.error Test.#20902
+size = 1   Test.f = \#20893 -> case #20893 of {#20894:#20895 -> #20894; [] -> Test.$v#20889; _ -> Test.$v#20892}
+size = 6   Test.g = \dNum@20612#20904 #20905 -> let {#20906 = (case dNum@20612#20904 of {(#20907, #20908, #20909, #20910, #20911, #20912, #20913) -> #20910; _ -> Compiler.Num.$v#702}) Test.#20897} in let {#20915 = case #20905 of {#20916:#20917 -> #20916; [] -> Test.$v#20900; _ -> Test.$v#20903}} in (case dNum@20612#20904 of {(#20919, #20920, #20921, #20922, #20923, #20924, #20925) -> #20925; _ -> Compiler.Num.$v#640}) #20906 #20915
+size = 7   Test.h = \dNum@20709#20929 -> let {#20930 = (case dNum@20709#20929 of {(#20931, #20932, #20933, #20934, #20935, #20936, #20937) -> #20934; _ -> Compiler.Num.$v#702}) Test.#20927} in let {#20939 = (case dNum@20709#20929 of {(#20940, #20941, #20942, #20943, #20944, #20945, #20946) -> #20943; _ -> Compiler.Num.$v#702}) Test.#20928} in (case dNum@20709#20929 of {(#20948, #20949, #20950, #20951, #20952, #20953, #20954) -> #20954; _ -> Compiler.Num.$v#640}) #20939 #20930
