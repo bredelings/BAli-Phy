@@ -6,14 +6,14 @@ cumsum xs = go 0 xs  where
 
 model = do
     z1 <- iid 3 (poisson 1.0)
-    let z2 = [1 .. 3]
-    let z3 = replicate 3 0
+    let z2 = [1 .. 3] :: [Int]
+    let z3 = replicate 3 0 :: [Int]
 
     -- print(z1)
     -- print(z2)
     -- print(z3)
 
-    let x  = [1, 2, 3]
+    let x  = [1, 2, 3] :: [Int]
 
     let y1 = cumsum x
 
