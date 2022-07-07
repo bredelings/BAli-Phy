@@ -156,3 +156,5 @@ toAscList (Set xs) = List.sort xs
 
 toDescList = reverse . toAscList
 
+instance Show a => Show (Set a) where
+    show (Set xs) = "Set " ++ show xs
