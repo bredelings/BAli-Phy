@@ -15,12 +15,15 @@ sample_cauchy m s = RandomStructure cauchy_effect modifiable_structure $ liftIO 
 
 class HasCauchy d where
     cauchy :: Double -> Double -> d Double
+    half_cauchy :: Double -> Double -> d Double
 
 instance HasCauchy Distribution where
     cauchy m s = Distribution "cauchy" (make_densities $ cauchy_density m s) (cauchy_quantile m s) (sample_cauchy m s) cauchy_bounds
+    half_cauchy m s = Distribution "half_cauchy" (make_densities $ half_cauchy_density m s) (half_cauchy_quantile m s) (sample_half_cauchy m s) (half_cauchy_bounds m)
 
 instance HasCauchy Random where
     cauchy m s = RanDistribution (cauchy m s)
+    half_cauchy m s = RanDistribution $ half_cauchy m s
 
 ---- half_cauchy
 
@@ -34,4 +37,3 @@ sample_half_cauchy m s = do
 half_cauchy_quantile m s p = cauchy_quantile m s ((p+1)/2)
 half_cauchy_bounds m = above m
 
-half_cauchy m s = Distribution "half_cauchy" (make_densities $ half_cauchy_density m s) (half_cauchy_quantile m s) (sample_half_cauchy m s) (half_cauchy_bounds m)
