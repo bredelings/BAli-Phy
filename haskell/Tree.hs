@@ -103,6 +103,9 @@ instance TimeTree t => BranchLengthTree (RateTimeTreeImp t) where
 instance RootedTree t => BranchLengthTree (TimeTreeImp t) where
     branch_length tree b = branch_duration tree b
 
+instance BranchLengthTree t => BranchLengthTree (LabelledTreeImp t) where
+    branch_length (LabelledTree tree _) b = branch_length tree b
+
 scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
     where ds' = arrayMap (factor*) ds
 
