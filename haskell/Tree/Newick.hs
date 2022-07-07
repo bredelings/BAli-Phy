@@ -25,8 +25,12 @@ class Tree t => WriteNewickNode t where
 get_node_label   t node = case node_info t node of Just lab -> lab ; Nothing -> ""
 get_branch_label t branch = case branch_info t branch of Just lab -> ":" ++ lab; Nothing -> ""
 
-instance Tree t => WriteNewickNode (RootedTreeImp t) where
+instance WriteNewickNode TreeImp where
     node_info tree node = Just $ show node
+
+instance WriteNewickNode t => WriteNewickNode (RootedTreeImp t) where
+    node_info (RootedTree tree _ _) = node_info tree
+    branch_info (RootedTree tree _ _) = branch_info tree
 
 instance WriteNewickNode t => WriteNewickNode (LabelledTreeImp t) where
     node_info (LabelledTree tree labels) node = label
