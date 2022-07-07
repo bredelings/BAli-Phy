@@ -67,7 +67,7 @@ class Show a where
 
     showList [] = "[]"
     showList (x:y) = "["++show x++show' y++"]" where show' [] = ""
-                                                     show' (x:y) = ", "++show x++show' y
+                                                     show' (x:y) = ","++show x++show' y
 
 foreign import bpcall "Prelude:" show_int :: Int -> CPPString
 foreign import bpcall "Prelude:" show_double :: Double -> CPPString
