@@ -79,7 +79,7 @@ class module_loader;
 
 class Program;
 
-class typechecker_state;
+struct typechecker_state;
 
 struct typechecker_result
 {

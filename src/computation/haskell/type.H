@@ -12,7 +12,7 @@
 
 namespace Haskell
 {
-    struct MetaTypeVar;
+    class MetaTypeVar;
     struct TypeVar;
     struct TypeCon;
     struct TupleType;
