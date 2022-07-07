@@ -52,3 +52,12 @@ instance Ord Int where
 instance Ord Double where
     (<) = lessthan_double
 
+instance Ord a => Ord [a] where
+    compare []     []      = EQ
+    compare []     (_:_)   = LT
+    compare (_:_)  []      = GT
+    compare (x:xs) (y:ys)  = case compare x y of LT -> LT
+                                                 GT -> GT
+                                                 EQ -> compare xs ys
+    x < y = compare x y == LT
+    x > y = compare x y == GT
