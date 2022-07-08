@@ -4,6 +4,7 @@ module Compiler.IO where
 
 import Compiler.Base
 import Control.Monad
+import Data.Functor
 import Data.Tuple     -- for snd
 
 type RealWorld = Int
@@ -40,3 +41,6 @@ unsafePerformIO (IOAndPass (IOLazy f) g) = let x = unsafePerformIO f in unsafePe
 unsafePerformIO (IOAndPass f g) = let x = unsafePerformIO f in x `seq` unsafePerformIO (g x)
 unsafePerformIO (IOMFix f) = let x = unsafePerformIO (f x) in x
 unsafePerformIO (IOReturn x) = x
+
+instance Functor IO where
+    fmap f x = IOAndPass x (\result -> IOReturn (f result))
