@@ -1,5 +1,5 @@
-size = 1   Test.#20674 = 2
-size = 1   Test.#20675 = "case: failed pattern match"
-size = 1   Test.#20676 = Foreign.String.unpack_cpp_string Test.#20675
-size = 1   Test.$v#20677 = Compiler.Error.error Test.#20676
-size = 3   Test.f = \dNum@20600#20678 #20679 -> let {$v#20690 = (case dNum@20600#20678 of {(#20682, #20683, #20684, #20685, #20686, #20687, #20688) -> #20685; _ -> Compiler.Num.$v#702}) Test.#20674} in case #20679 of {(#20680, #20681) -> $v#20690; _ -> Test.$v#20677}
+size = 1   Test.#20726 = 2
+size = 1   Test.#20727 = "case: failed pattern match"
+size = 1   Test.#20728 = Foreign.String.unpack_cpp_string Test.#20727
+size = 1   Test.$v#20729 = Compiler.Error.error Test.#20728
+size = 3   Test.f = \dNum@20652#20730 #20731 -> let {$v#20742 = (case dNum@20652#20730 of {(#20734, #20735, #20736, #20737, #20738, #20739, #20740) -> #20737; _ -> Compiler.Num.$v#702}) Test.#20726} in case #20731 of {(#20732, #20733) -> $v#20742; _ -> Test.$v#20729}

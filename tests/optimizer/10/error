@@ -1,18 +1,18 @@
-size = 1   Test.#20887 = "yo!"
-size = 1   Test.#20888 = Foreign.String.unpack_cpp_string Test.#20887
-size = 1   Test.#20890 = "case: failed pattern match"
-size = 1   Test.#20891 = Foreign.String.unpack_cpp_string Test.#20890
-size = 1   Test.#20897 = 10
-size = 1   Test.#20898 = "yo!"
-size = 1   Test.#20899 = Foreign.String.unpack_cpp_string Test.#20898
-size = 1   Test.#20901 = "case: failed pattern match"
-size = 1   Test.#20902 = Foreign.String.unpack_cpp_string Test.#20901
-size = 1   Test.#20927 = 2
-size = 1   Test.#20928 = 10
-size = 1   Test.$v#20889 = Compiler.Error.error Test.#20888
-size = 1   Test.$v#20892 = Compiler.Error.error Test.#20891
-size = 1   Test.$v#20900 = Compiler.Error.error Test.#20899
-size = 1   Test.$v#20903 = Compiler.Error.error Test.#20902
-size = 1   Test.f = \#20893 -> case #20893 of {#20894:#20895 -> #20894; [] -> Test.$v#20889; _ -> Test.$v#20892}
-size = 6   Test.g = \dNum@20612#20904 #20905 -> let {#20906 = (case dNum@20612#20904 of {(#20907, #20908, #20909, #20910, #20911, #20912, #20913) -> #20910; _ -> Compiler.Num.$v#702}) Test.#20897} in let {#20915 = case #20905 of {#20916:#20917 -> #20916; [] -> Test.$v#20900; _ -> Test.$v#20903}} in (case dNum@20612#20904 of {(#20919, #20920, #20921, #20922, #20923, #20924, #20925) -> #20925; _ -> Compiler.Num.$v#640}) #20906 #20915
-size = 7   Test.h = \dNum@20709#20929 -> let {#20930 = (case dNum@20709#20929 of {(#20931, #20932, #20933, #20934, #20935, #20936, #20937) -> #20934; _ -> Compiler.Num.$v#702}) Test.#20927} in let {#20939 = (case dNum@20709#20929 of {(#20940, #20941, #20942, #20943, #20944, #20945, #20946) -> #20943; _ -> Compiler.Num.$v#702}) Test.#20928} in (case dNum@20709#20929 of {(#20948, #20949, #20950, #20951, #20952, #20953, #20954) -> #20954; _ -> Compiler.Num.$v#640}) #20939 #20930
+size = 1   Test.#20939 = "yo!"
+size = 1   Test.#20940 = Foreign.String.unpack_cpp_string Test.#20939
+size = 1   Test.#20942 = "case: failed pattern match"
+size = 1   Test.#20943 = Foreign.String.unpack_cpp_string Test.#20942
+size = 1   Test.#20949 = 10
+size = 1   Test.#20950 = "yo!"
+size = 1   Test.#20951 = Foreign.String.unpack_cpp_string Test.#20950
+size = 1   Test.#20953 = "case: failed pattern match"
+size = 1   Test.#20954 = Foreign.String.unpack_cpp_string Test.#20953
+size = 1   Test.#20979 = 2
+size = 1   Test.#20980 = 10
+size = 1   Test.$v#20941 = Compiler.Error.error Test.#20940
+size = 1   Test.$v#20944 = Compiler.Error.error Test.#20943
+size = 1   Test.$v#20952 = Compiler.Error.error Test.#20951
+size = 1   Test.$v#20955 = Compiler.Error.error Test.#20954
+size = 1   Test.f = \#20945 -> case #20945 of {#20946:#20947 -> #20946; [] -> Test.$v#20941; _ -> Test.$v#20944}
+size = 6   Test.g = \dNum@20664#20956 #20957 -> let {#20958 = (case dNum@20664#20956 of {(#20959, #20960, #20961, #20962, #20963, #20964, #20965) -> #20962; _ -> Compiler.Num.$v#702}) Test.#20949} in let {#20967 = case #20957 of {#20968:#20969 -> #20968; [] -> Test.$v#20952; _ -> Test.$v#20955}} in (case dNum@20664#20956 of {(#20971, #20972, #20973, #20974, #20975, #20976, #20977) -> #20977; _ -> Compiler.Num.$v#640}) #20958 #20967
+size = 7   Test.h = \dNum@20761#20981 -> let {#20982 = (case dNum@20761#20981 of {(#20983, #20984, #20985, #20986, #20987, #20988, #20989) -> #20986; _ -> Compiler.Num.$v#702}) Test.#20979} in let {#20991 = (case dNum@20761#20981 of {(#20992, #20993, #20994, #20995, #20996, #20997, #20998) -> #20995; _ -> Compiler.Num.$v#702}) Test.#20980} in (case dNum@20761#20981 of {(#21000, #21001, #21002, #21003, #21004, #21005, #21006) -> #21006; _ -> Compiler.Num.$v#640}) #20991 #20982
