@@ -68,6 +68,7 @@ public:
     explicit operator bool() const {return head or value;}
 
     param() {}
+    param(const param&) = default;
     param(const context_ptr& p, eval_strategy s=eval_strategy::changeable):reg(p.get_reg()), strategy(s) {}
     param(const reg_var& rv, eval_strategy s=eval_strategy::changeable):reg(rv.target), strategy(s) {}
     param(int h, eval_strategy s=eval_strategy::changeable)

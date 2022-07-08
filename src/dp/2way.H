@@ -82,6 +82,8 @@ public:
     void set_insert(int i) {states_[i] = A2::states::G1;};
     void set_delete(int i) {states_[i] = A2::states::G2;};
 
+    pairwise_alignment_t& operator=(const pairwise_alignment_t&) = default;
+
     explicit pairwise_alignment_t(const std::vector<int>&);
     pairwise_alignment_t(const pairwise_alignment_t&) = default;
     pairwise_alignment_t();
