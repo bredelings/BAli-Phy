@@ -8,6 +8,7 @@ module SModel (module SModel,
                module SModel.Rate,
                module SModel.MixtureModel,
                module SModel.MixtureModels,
+               module SModel.Empirical,
                frequencies_from_dict) where
 
 import Probability
@@ -25,16 +26,10 @@ import SModel.Simple
 import SModel.Rate
 import SModel.MixtureModel
 import SModel.MixtureModels
+import SModel.Empirical
 
 import Data.Matrix
 
-foreign import bpcall "SModel:empirical" builtin_empirical :: Alphabet -> CPPString -> Matrix Double
-foreign import bpcall "SModel:" pam :: Alphabet -> Matrix Double
-foreign import bpcall "SModel:" jtt :: Alphabet -> Matrix Double
-foreign import bpcall "SModel:" wag :: Alphabet -> Matrix Double
-foreign import bpcall "SModel:wag_frequencies" builtin_wag_frequencies :: Alphabet -> EVector Double
-foreign import bpcall "SModel:lg_frequencies" builtin_lg_frequencies :: Alphabet -> EVector Double
-foreign import bpcall "SModel:" lg :: Alphabet -> Matrix Double
 foreign import bpcall "SModel:" mut_sel_q :: Matrix Double -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:" mut_sel_pi :: EVector Double -> EVector Double -> EVector Double
 foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double
@@ -261,9 +256,3 @@ transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_
 -- So, the question is, can we avoid distribution on things like mixtures of Rates.
 
 -- So, how are we going to handle rate scaling?  That should be part of the model!
-
-empirical a filename = builtin_empirical a (list_to_string filename)
-
-wag_frequencies a = zip (letters a) (list_from_vector $ builtin_wag_frequencies a)
-lg_frequencies a = zip (letters a) (list_from_vector $ builtin_lg_frequencies a)
-
