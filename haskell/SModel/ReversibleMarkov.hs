@@ -21,6 +21,10 @@ data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) (Matrix Double) 
 
 qExp (ReversibleMarkov a s q pi l t r) = mexp q t
 
+get_smap' (ReversibleMarkov a s q pi l t r) = s
+
+get_alphabet (ReversibleMarkov a s q pi l t r) = a
+
 get_q (ReversibleMarkov _ _ q _ _ t _) = scaleMatrix t q
 
 get_pi (ReversibleMarkov _ _ _ pi _ _ _) = pi
