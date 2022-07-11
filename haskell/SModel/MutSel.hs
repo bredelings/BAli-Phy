@@ -8,7 +8,7 @@ import SModel.Frequency -- for get_ordered_elements
 foreign import bpcall "SModel:" mut_sel_q :: Matrix Double -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:" mut_sel_pi :: EVector Double -> EVector Double -> EVector Double
 
-mut_sel w' (ReversibleMarkov a smap q0 pi0 _ _ _) = reversible_markov a smap q pi where
+mut_sel w' (ReversibleMarkov a smap q0 pi0 _ _) = reversible_markov a smap q pi where
     w = list_to_vector w'
     q = mut_sel_q q0 w
     pi = mut_sel_pi pi0 w
@@ -17,7 +17,7 @@ mut_sel' w' q0 = mut_sel w q0 where
     w = get_ordered_elements (letters a) w' "fitnesses"
     a = getAlphabet q0
 
-mut_sel_aa ws q@(ReversibleMarkov codon_a _ _ _ _ _ _) = mut_sel (aa_to_codon codon_a ws) q
+mut_sel_aa ws q@(ReversibleMarkov codon_a _ _ _ _ _) = mut_sel (aa_to_codon codon_a ws) q
 
 mut_sel_aa' ws' q0 = mut_sel_aa ws q0 where
     ws = get_ordered_elements (letters amino_alphabet) ws' "fitnesses"

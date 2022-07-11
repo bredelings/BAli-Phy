@@ -14,24 +14,24 @@ foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int 
 foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matrix Double -> Matrix Double
 foreign import bpcall "SModel:elementwise_multiply" (%*%) :: Matrix Double -> Matrix Double -> Matrix Double
 
-data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) (Matrix Double) (EVector Double) EigenSystem Double Double
+data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) (Matrix Double) (EVector Double) Double Double
 
-qExp (ReversibleMarkov a s q pi l t r) = mexp q t
+qExp (ReversibleMarkov a s q pi t r) = mexp q t
 
-get_smap' (ReversibleMarkov a s q pi l t r) = s
+get_smap' (ReversibleMarkov a s q pi t r) = s
 
-get_alphabet (ReversibleMarkov a s q pi l t r) = a
+get_alphabet (ReversibleMarkov a s q pi t r) = a
 
-get_q (ReversibleMarkov _ _ q _ _ t _) = scaleMatrix t q
+get_q (ReversibleMarkov _ _ q _ t _) = scaleMatrix t q
 
-get_pi (ReversibleMarkov _ _ _ pi _ _ _) = pi
+get_pi (ReversibleMarkov _ _ _ pi _ _) = pi
 
-frequencies (ReversibleMarkov _ _ _ pi _ _ _) = pi
+frequencies (ReversibleMarkov _ _ _ pi _ _) = pi
 
 simple_smap a = list_to_vector [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-reversible_markov a smap q pi = ReversibleMarkov a smap q2 pi (get_eigensystem q2 pi) 1.0 (get_equilibrium_rate a smap q2 pi) where q2 = fixup_diagonal_rates q
+reversible_markov a smap q pi = ReversibleMarkov a smap q2 pi 1.0 (get_equilibrium_rate a smap q2 pi) where q2 = fixup_diagonal_rates q
 
 generic_equ n x = generic_gtr_sym (replicate n_elements x) n
     where n_elements = n*(n-1) `div` 2
@@ -74,18 +74,18 @@ plus_f'  a pi s   = plus_f a (frequencies_from_dict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequencies_from_dict a pi) f s
 
 instance SimpleSModel ReversibleMarkov where
-    get_smap (ReversibleMarkov _ s _ _ _ _ _) = s
-    branch_transition_p (SingleBranchLengthModel tree smodel@(ReversibleMarkov _ _ _ _ _ _ _   )) b = [qExp $ scale (branch_length tree b/r) smodel]
+    get_smap (ReversibleMarkov _ s _ _ _ _) = s
+    branch_transition_p (SingleBranchLengthModel tree smodel@(ReversibleMarkov _ _ _ _ _ _   )) b = [qExp $ scale (branch_length tree b/r) smodel]
         where r = rate smodel
     distribution _ = [1.0]
-    weighted_frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _ _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [pi])
-    frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _ _) = builtin_frequency_matrix (list_to_vector [pi])
+    weighted_frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [pi])
+    frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _) = builtin_frequency_matrix (list_to_vector [pi])
     nBaseModels _ = 1
-    stateLetters (ReversibleMarkov _ smap _ _ _ _ _) = smap
-    getAlphabet (ReversibleMarkov a _ _ _ _ _ _) = a
-    componentFrequencies smodel@(ReversibleMarkov _ _ _ _ _ _ _) i = [frequencies smodel]!!i
+    stateLetters (ReversibleMarkov _ smap _ _ _ _) = smap
+    getAlphabet (ReversibleMarkov a _ _ _ _ _) = a
+    componentFrequencies smodel@(ReversibleMarkov _ _ _ _ _ _) i = [frequencies smodel]!!i
 
 instance RateModel ReversibleMarkov where
-    rate (ReversibleMarkov a s q pi l t r) = r
-    scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r)
+    rate (ReversibleMarkov a s q pi t r) = r
+    scale x (ReversibleMarkov a s q pi t r) = ReversibleMarkov a s q pi (x*t) (x*r)
 
