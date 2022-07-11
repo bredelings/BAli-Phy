@@ -49,8 +49,6 @@ data F81 = F81 Alphabet (EVector Int) () (EVector Double)
 -- Should we combine mixture only at one of the levels?
 -- Should we select branch-specific models at the level of rate matrices, or the level of transition probability matrices, or both?
 
-rescale r q = scale (r/rate q) q
-
 nStates m = vector_size (stateLetters m)
   
 --
