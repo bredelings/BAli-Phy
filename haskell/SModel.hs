@@ -4,6 +4,7 @@ module SModel (module SModel,
                module SModel.Codons,
                module SModel.ReversibleMarkov,
                module SModel.Likelihood,
+               module SModel.Simple,
                frequencies_from_dict) where
 import Probability
 import Bio.Alphabet
@@ -16,6 +17,7 @@ import SModel.Doublets
 import SModel.Codons
 import SModel.ReversibleMarkov
 import SModel.Likelihood
+import SModel.Simple
 
 import Data.Matrix
 
@@ -301,20 +303,6 @@ transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_
 -- So, the question is, can we avoid distribution on things like mixtures of Rates.
 
 -- So, how are we going to handle rate scaling?  That should be part of the model!
-
-data SingleBranchLengthModel t a = SingleBranchLengthModel t a
-get_tree' (SingleBranchLengthModel t _) = t        -- Avoid aliasing with get_tree from DataPartition
-
-class SimpleSModel m where
-    get_smap :: m -> EVector Int
-    branch_transition_p :: BranchLengthTree t => SingleBranchLengthModel t m -> Int -> [Matrix Double]
-    distribution :: m -> [Double]
-    weighted_frequency_matrix :: m -> Matrix Double
-    frequency_matrix :: m -> Matrix Double
-    nBaseModels :: m -> Int
-    stateLetters :: m -> EVector Int
-    getAlphabet :: m -> Alphabet
-    componentFrequencies :: m -> Int -> EVector Double
 
 instance SimpleSModel ReversibleMarkov where
     get_smap (ReversibleMarkov _ s _ _ _ _ _) = s
