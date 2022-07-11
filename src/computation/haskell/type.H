@@ -188,7 +188,6 @@ struct Context
 
     std::string print() const;
     Context() = default;
-    Context(const Context&) = default;
     Context(const std::vector<Type>& cs): constraints(cs) {}
 };
 
