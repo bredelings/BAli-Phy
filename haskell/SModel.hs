@@ -7,6 +7,7 @@ module SModel (module SModel,
                module SModel.Simple,
                module SModel.Rate,
                module SModel.MixtureModel,
+               module SModel.MixtureModels,
                frequencies_from_dict) where
 
 import Probability
@@ -23,6 +24,7 @@ import SModel.Likelihood
 import SModel.Simple
 import SModel.Rate
 import SModel.MixtureModel
+import SModel.MixtureModels
 
 import Data.Matrix
 
@@ -40,13 +42,6 @@ foreign import bpcall "SModel:modulated_markov_pi" builtin_modulated_markov_pi :
 foreign import bpcall "SModel:modulated_markov_smap" builtin_modulated_markov_smap :: EVector (EVector Int) -> EVector Int
 
 data F81 = F81 Alphabet (EVector Int) () (EVector Double)
-
--- Currently we are weirdly duplicating the mixture probabilities for each component.
--- Probably the actual data-type is something like [(Double,\Int->a)] or [(Double,[a])] where all the [a] should have the same length.
--- This would be a branch-dependent mixture
-data MixtureModels = MixtureModels [Int] [MixtureModel]
-
-branch_categories (MixtureModels categories _) = categories
 
 -- We need to combine branch lengths and rate matrices to get transition probability matrices.
 -- We need to combine mixtures of rate matrices.
@@ -271,22 +266,8 @@ transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_
 
 -- So, how are we going to handle rate scaling?  That should be part of the model!
 
-mmm branch_cats m = MixtureModels branch_cats [m]
-
 empirical a filename = builtin_empirical a (list_to_string filename)
 
 wag_frequencies a = zip (letters a) (list_from_vector $ builtin_wag_frequencies a)
 lg_frequencies a = zip (letters a) (list_from_vector $ builtin_lg_frequencies a)
-
-instance SimpleSModel MixtureModels where
-    get_smap                  (MixtureModels branch_cat_list mms) = get_smap $ head mms
-    branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModels branch_cat_list mms)) b = branch_transition_p (SingleBranchLengthModel tree mx) b
-        where mx = mms!!(branch_cat_list!!b)
-    distribution              (MixtureModels _ (m:ms)) = distribution m
-    weighted_frequency_matrix (MixtureModels _ (m:ms)) = weighted_frequency_matrix m
-    frequency_matrix          (MixtureModels _ (m:ms)) = frequency_matrix m
-    nBaseModels               (MixtureModels _ (m:ms)) = nBaseModels m
-    stateLetters              (MixtureModels _ (m:ms)) = stateLetters m
-    getAlphabet               (MixtureModels _ (m:ms)) = getAlphabet m
-    componentFrequencies      (MixtureModels _ (m:ms)) i = componentFrequencies m i
 
