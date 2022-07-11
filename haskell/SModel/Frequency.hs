@@ -1,7 +1,10 @@
 module SModel.Frequency where
 
 import Bio.Alphabet
+import Foreign.Vector
 foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix :: EVector Double -> Double -> Matrix Double
+foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: EVector Double -> EVector (EVector Double) -> Matrix Double
+foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: EVector (EVector Double) -> Matrix Double
 
 -- pi is a vector double here
 plus_f_matrix pi = plus_gwf_matrix pi 1.0

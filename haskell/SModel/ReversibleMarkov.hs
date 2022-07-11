@@ -1,8 +1,11 @@
 module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.Frequency) where
 
+import SModel.Simple
+import SModel.Rate
 import SModel.Frequency
 import Bio.Alphabet
 import Data.Matrix
+import Tree
 
 data EigenSystem
 
@@ -21,6 +24,8 @@ qExp (ReversibleMarkov a s q pi l t r) = mexp q t
 get_q (ReversibleMarkov _ _ q _ _ t _) = scaleMatrix t q
 
 get_pi (ReversibleMarkov _ _ _ pi _ _ _) = pi
+
+frequencies (ReversibleMarkov _ _ _ pi _ _ _) = pi
 
 simple_smap a = list_to_vector [0..(alphabetSize a)-1]
 
@@ -66,3 +71,20 @@ plus_gwf a pi f s = reversible_markov a (simple_smap a) (s %*% plus_gwf_matrix p
 
 plus_f'  a pi s   = plus_f a (frequencies_from_dict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequencies_from_dict a pi) f s
+
+instance SimpleSModel ReversibleMarkov where
+    get_smap (ReversibleMarkov _ s _ _ _ _ _) = s
+    branch_transition_p (SingleBranchLengthModel tree smodel@(ReversibleMarkov _ _ _ _ _ _ _   )) b = [qExp $ scale (branch_length tree b/r) smodel]
+        where r = rate smodel
+    distribution _ = [1.0]
+    weighted_frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _ _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [pi])
+    frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _ _) = builtin_frequency_matrix (list_to_vector [pi])
+    nBaseModels _ = 1
+    stateLetters (ReversibleMarkov _ smap _ _ _ _ _) = smap
+    getAlphabet (ReversibleMarkov a _ _ _ _ _ _) = a
+    componentFrequencies smodel@(ReversibleMarkov _ _ _ _ _ _ _) i = [frequencies smodel]!!i
+
+instance RateModel ReversibleMarkov where
+    rate (ReversibleMarkov a s q pi l t r) = r
+    scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r)
+

@@ -5,6 +5,7 @@ module SModel (module SModel,
                module SModel.ReversibleMarkov,
                module SModel.Likelihood,
                module SModel.Simple,
+               module SModel.Rate,
                frequencies_from_dict) where
 import Probability
 import Bio.Alphabet
@@ -18,6 +19,7 @@ import SModel.Codons
 import SModel.ReversibleMarkov
 import SModel.Likelihood
 import SModel.Simple
+import SModel.Rate
 
 import Data.Matrix
 
@@ -29,8 +31,6 @@ foreign import bpcall "SModel:" wag :: Alphabet -> Matrix Double
 foreign import bpcall "SModel:wag_frequencies" builtin_wag_frequencies :: Alphabet -> EVector Double
 foreign import bpcall "SModel:lg_frequencies" builtin_lg_frequencies :: Alphabet -> EVector Double
 foreign import bpcall "SModel:" lg :: Alphabet -> Matrix Double
-foreign import bpcall "SModel:weighted_frequency_matrix" builtin_weighted_frequency_matrix :: EVector Double -> EVector (EVector Double) -> Matrix Double
-foreign import bpcall "SModel:frequency_matrix" builtin_frequency_matrix :: EVector (EVector Double) -> Matrix Double
 foreign import bpcall "SModel:" mut_sel_q :: Matrix Double -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:" mut_sel_pi :: EVector Double -> EVector Double -> EVector Double
 foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double
@@ -85,8 +85,6 @@ baseModel (MixtureModel l) i = snd (l !! i)
 
 nStates m = vector_size (stateLetters m)
   
-frequencies (ReversibleMarkov _ _ _ pi _ _ _) = pi
-
 unwrapMM (MixtureModel dd) = dd
 
 mixMixtureModels l dd = MixtureModel (mix l (map unwrapMM dd))
@@ -304,18 +302,6 @@ transition_p_index smodel_on_tree = mkArray n_branches (list_to_vector . branch_
 
 -- So, how are we going to handle rate scaling?  That should be part of the model!
 
-instance SimpleSModel ReversibleMarkov where
-    get_smap (ReversibleMarkov _ s _ _ _ _ _) = s
-    branch_transition_p (SingleBranchLengthModel tree smodel@(ReversibleMarkov _ _ _ _ _ _ _   )) b = [qExp $ scale (branch_length tree b/r) smodel]
-        where r = rate smodel
-    distribution _ = [1.0]
-    weighted_frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _ _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [pi])
-    frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _ _) = builtin_frequency_matrix (list_to_vector [pi])
-    nBaseModels _ = 1
-    stateLetters (ReversibleMarkov _ smap _ _ _ _ _) = smap
-    getAlphabet (ReversibleMarkov a _ _ _ _ _ _) = a
-    componentFrequencies smodel@(ReversibleMarkov _ _ _ _ _ _ _) i = [frequencies smodel]!!i
-
 instance SimpleSModel MixtureModel where
     get_smap (MixtureModel ((_,m):_)) = get_smap m
     branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModel cs)) b = [qExp $ scale (branch_length tree b/r) component | (_,component) <- cs]
@@ -344,14 +330,6 @@ instance SimpleSModel MixtureModels where
     stateLetters              (MixtureModels _ (m:ms)) = stateLetters m
     getAlphabet               (MixtureModels _ (m:ms)) = getAlphabet m
     componentFrequencies      (MixtureModels _ (m:ms)) i = componentFrequencies m i
-
-class RateModel m where
-    rate :: m -> Double
-    scale :: Double -> m -> m
-
-instance RateModel ReversibleMarkov where
-    rate (ReversibleMarkov a s q pi l t r) = r
-    scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r)
 
 instance RateModel MixtureModel where
     rate (MixtureModel d) = average [(p,rate m) | (p,m) <- d]
