@@ -18,3 +18,4 @@ class SimpleSModel m where
     getAlphabet :: m -> Alphabet
     componentFrequencies :: m -> Int -> EVector Double
 
+nStates m = vector_size (stateLetters m)
