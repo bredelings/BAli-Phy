@@ -6,12 +6,9 @@ import SModel.Frequency
 import Bio.Alphabet
 import Data.Matrix
 import Tree
-
-data EigenSystem
+import SModel.EigenExp
 
 foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
-foreign import bpcall "SModel:get_eigensystem" get_eigensystem :: Matrix Double -> EVector Double -> EigenSystem
-foreign import bpcall "SModel:lExp" lExp :: EigenSystem -> EVector Double -> Double -> Matrix Double
 foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
 foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matrix Double -> Matrix Double
