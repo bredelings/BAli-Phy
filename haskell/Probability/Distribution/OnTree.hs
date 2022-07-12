@@ -85,7 +85,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   property "subst_root" subst_root
   property "transition_ps" transition_ps
   property "cond_likes" cls
-  property "anc_seqs" ancestral_sequences
+--  property "anc_seqs" ancestral_sequences
   property "likelihood" likelihood
   property "taxa" (map list_to_string taxa)
   property "weighted_frequency_matrix" f
