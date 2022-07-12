@@ -4,6 +4,7 @@ import Foreign.Vector
 import SModel.ReversibleMarkov
 import SModel.Codons
 import SModel.Frequency -- for get_ordered_elements
+import Bio.Alphabet
 
 foreign import bpcall "SModel:" mut_sel_q :: Matrix Double -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:" mut_sel_pi :: EVector Double -> EVector Double -> EVector Double
@@ -15,13 +16,13 @@ mut_sel w' (ReversibleMarkov a smap q0 pi0 _ _) = reversible_markov a smap q pi 
 
 mut_sel' w' q0 = mut_sel w q0 where
     w = get_ordered_elements (letters a) w' "fitnesses"
-    a = getAlphabet q0
+    a = get_alphabet q0
 
 mut_sel_aa ws q@(ReversibleMarkov codon_a _ _ _ _ _) = mut_sel (aa_to_codon codon_a ws) q
 
 mut_sel_aa' ws' q0 = mut_sel_aa ws q0 where
     ws = get_ordered_elements (letters amino_alphabet) ws' "fitnesses"
-    codon_alphabet = getAlphabet q0
+    codon_alphabet = get_alphabet q0
     amino_alphabet = getAminoAcids codon_alphabet
 
 fMutSel codon_a codon_w omega nuc_model = nuc_model & x3 codon_a & dNdS omega & mut_sel codon_w
