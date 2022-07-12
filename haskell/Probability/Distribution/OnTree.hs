@@ -82,19 +82,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  property "subst_root" subst_root
-  property "transition_ps" transition_ps
-  property "cond_likes" cls
---  property "anc_seqs" ancestral_sequences
-  property "likelihood" likelihood
   property "taxa" (map list_to_string taxa)
-  property "weighted_frequency_matrix" f
-  property "smap" smap
-  property "leaf_sequences" leaf_sequences
-  property "alphabet" alphabet
-  property "as" as
-  property "n_states" (SModel.nStates smodel)
-  property "n_base_models" (SModel.nBaseModels smodel)
   property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood (listArray' $ map list_to_string taxa) f smap leaf_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) )
 
   return [likelihood]
@@ -150,18 +138,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   in_edge "tree" tree
   in_edge "smodel" smodel
 
-  property "subst_root" subst_root
-  property "transition_ps" transition_ps
-  property "cond_likes" cls
-  property "anc_seqs" ancestral_sequences
-  property "likelihood" likelihood
   property "taxa" (map list_to_string taxa)
-  property "weighted_frequency_matrix" f
-  property "smap" smap
-  property "leaf_sequences" leaf_sequences
-  property "alphabet" alphabet
-  property "n_states" (SModel.nStates smodel)
-  property "n_base_models" (SModel.nBaseModels smodel)
   -- How about stuff related to alignment compression?
   property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood (map list_to_string taxa) f smap leaf_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) )
 
