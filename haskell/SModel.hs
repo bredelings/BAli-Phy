@@ -10,6 +10,7 @@ module SModel (module SModel,
                module SModel.MixtureModels,
                module SModel.Empirical,
                module SModel.MarkovModulated,
+               module SModel.MutSel,
                frequencies_from_dict) where
 
 import Probability
@@ -29,6 +30,7 @@ import SModel.MixtureModel
 import SModel.MixtureModels
 import SModel.Empirical
 import SModel.MarkovModulated
+import SModel.MutSel
 
 import Data.Matrix
 
