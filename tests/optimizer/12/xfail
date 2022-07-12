@@ -1,1 +1,0 @@
-Here we need to know that True and False are exhaustive in order to infer the identity function.

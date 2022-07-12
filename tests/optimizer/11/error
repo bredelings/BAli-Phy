@@ -1,6 +1,0 @@
-size = 1   Test.#1089 = 1
-size = 1   Test.#3 = 1
-size = 1   Test.f = \#1 #2 -> case #2 of {[] -> #1,__#1:__#280 -> __#280}
-size = 4   Test.g = \#1 -> let {#3 = case #1 of {[] -> Data.Bool.True,__#1:__#280 -> Data.Bool.False}} in let {#4 = case #1 of {__#1:t -> t,[] -> Data.List.#221}} in \#2 -> case #3 of {Data.Bool.True -> #2,_ -> #4}
-size = 2   Test.h = \#1 #2 -> case #1 of {Data.Bool.True -> 1,_ -> #2}
-size = 2   Test.q = \#1 #2 -> case #2 of {Data.Bool.True -> 1,_ -> #1}

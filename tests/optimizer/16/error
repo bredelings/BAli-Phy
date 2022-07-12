@@ -1,3 +1,0 @@
-size = 1   Test.Left = \#0 -> Test.Left #0
-size = 1   Test.Right = \#0 -> Test.Right #0
-size = 1   Test.f = \#1 -> 2

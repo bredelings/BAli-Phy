@@ -1,3 +1,0 @@
-Here, we need to know that error is a bottom value, and that case of error is error.
-
-In order to eliminate the _ branch, we also need to know that [] and (:) are exhaustive.

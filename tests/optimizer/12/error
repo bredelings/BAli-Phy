@@ -1,4 +1,0 @@
-size = 1   Test.#0 = Foreign.Vector.listFromString Test.#6
-size = 1   Test.#4 = Prelude:error Test.#0
-size = 1   Test.#6 = "Test.f: pattern match failure"
-size = 2   Test.f = \#1 -> case #1 of {Data.Bool.True -> Data.Bool.True,Data.Bool.False -> Data.Bool.False,_ -> Test.#4}
