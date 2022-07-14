@@ -12,7 +12,6 @@ foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alph
 foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
 foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matrix Double -> Matrix Double
-foreign import bpcall "SModel:elementwise_multiply" (%*%) :: Matrix Double -> Matrix Double -> Matrix Double
 
 data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) (Matrix Double) (EVector Double) Double Double
 

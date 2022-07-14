@@ -5,7 +5,7 @@ import Bio.Alphabet
 import SModel.ReversibleMarkov
 import SModel.MixtureModel
 import SModel.Rate
-import Data.Matrix -- for fromLists
+import Data.Matrix -- for fromLists, %*%
 
 foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double
 foreign import bpcall "SModel:modulated_markov_pi" builtin_modulated_markov_pi :: EVector (EVector Double) -> EVector Double -> EVector Double

@@ -3,6 +3,7 @@ module SModel.Codons (module SModel.Codons) where
 import Bio.Alphabet
 import SModel.ReversibleMarkov
 import SModel.Nucleotides
+import Data.Matrix
 
 type TripletAlphabet = Alphabet
 type CodonAlphabet = TripletAlphabet
