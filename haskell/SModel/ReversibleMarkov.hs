@@ -88,3 +88,6 @@ instance RateModel ReversibleMarkov where
     rate (ReversibleMarkov a s q pi t r) = r
     scale x (ReversibleMarkov a s q pi t r) = ReversibleMarkov a s q pi (x*t) (x*r)
 
+instance Show ReversibleMarkov where
+    show q = show $ get_q q
+
