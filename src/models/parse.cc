@@ -92,7 +92,9 @@ vector<string> split_args(string s)
 	if ((s[i] == ']' or s[i] == ',') and depth == 1)
 	{
 	    assert(i >= start);
-	    args.push_back(s.substr(start,i-start));
+            auto arg = s.substr(start,i-start);
+            if (not arg.empty() or s[i] == ',')
+                args.push_back(arg);
 	    start = i+1;
 	}
 
