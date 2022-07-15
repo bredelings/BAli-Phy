@@ -57,21 +57,34 @@ bool constraint_is_hnf(const Hs::Type& constraint)
 // 7. Unless we actually FORBID unification of variables at any higher level, then this won't work.
 // 8. Simply forbidding substitution to a deeper depth won't cut it.
 
-optional<pair<Core::Exp,LIE>> typechecker_state::lookup_instance(const Hs::Type& constraint)
+optional<pair<Core::Exp,LIE>> typechecker_state::lookup_instance(const Hs::Type& target_constraint)
 {
+    vector<pair<Core::Exp,LIE>> matching_instances;
+    vector<Hs::Type> types;
+
     for(auto& [dfun, type]: instance_env() )
     {
         auto [_, wanteds, instance_head] = instantiate(type);
 
         assert(not constraint_is_hnf(instance_head));
 
-        if (not maybe_match(instance_head, constraint)) continue;
+        if (not maybe_match(instance_head, target_constraint)) continue;
 
         auto dfun_exp = Core::Apply(dfun, vars_from_lie<Core::Exp>(wanteds));
 
-        return {{dfun_exp, wanteds}};
+        matching_instances.push_back({dfun_exp, wanteds});
+        types.push_back(type);
     }
-    return {};
+
+    if (matching_instances.size() == 0)
+        return {}; // No matching instances
+
+    if (matching_instances.size() > 1)
+    {
+        return {}; // Too many matching instances
+    }
+
+    return matching_instances[0];
 }
 
 pair<Core::Decls, LIE> typechecker_state::toHnf(const Core::Var& dvar, const Hs::Type& constraint)

@@ -133,10 +133,7 @@ instance RootedTree t => RootedTree (BranchLengthTreeImp t) where
     root (BranchLengthTree tree _) = root tree
     away_from_root (BranchLengthTree tree _  ) b = away_from_root tree b
 
-instance RootedTree t => RootedTree (RateTimeTreeImp t) where
-    root (RateTimeTree t _ ) = root t
-    away_from_root (RateTimeTree t _      ) b = away_from_root t b
-
+-- Check for duplicate instances!
 
 remove_root (RootedTree t _ _) = t
 -- remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
