@@ -46,9 +46,17 @@ bool constraint_is_hnf(const Hs::Type& constraint)
 }
 
 
+bool typechecker_state::instance_matches(const Hs::Type& type1, const Hs::Type& type2)
+{
+    auto [tvs1, wanteds1, head1] = instantiate(type1);
+    auto [tvs2, wanteds2, head2] = instantiate(type2);
+    return maybe_match(type1, type2);
+}
+
 bool typechecker_state::more_specific_than(const Hs::Type& type1, const Hs::Type& type2)
 {
-    return false;
+    // We can get type1 by constraining type2, so type1 is more specific than type2.
+    return instance_matches(type2, type1) and not instance_matches(type1, type2);
 }
 
 // 1. An instance looks like (forall as.Q1(as) => Q2(as))
