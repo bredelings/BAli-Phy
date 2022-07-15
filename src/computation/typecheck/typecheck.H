@@ -421,6 +421,7 @@ struct typechecker_state: FreshVarSource
     std::tuple<Core::Decls, LIE, LIE>
     entails(const LIE& lie1, const LIE& lie2);
 
+    bool more_specific_than(const Hs::Type&, const Hs::Type&);
     std::optional<std::pair<Core::Exp,LIE>> lookup_instance(const Hs::Type& constraint);
 
     std::pair<Core::Decls, LIE> toHnf(const Core::Var& name, const Hs::Type& constraint);

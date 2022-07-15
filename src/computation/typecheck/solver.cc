@@ -46,6 +46,11 @@ bool constraint_is_hnf(const Hs::Type& constraint)
 }
 
 
+bool typechecker_state::more_specific_than(const Hs::Type& type1, const Hs::Type& type2)
+{
+    return false;
+}
+
 // 1. An instance looks like (forall as.Q1(as) => Q2(as))
 // 2. We have some constraints Q3.
 // 3. We instantiate the instance with substitutions [as->gs].
@@ -79,12 +84,31 @@ optional<pair<Core::Exp,LIE>> typechecker_state::lookup_instance(const Hs::Type&
     if (matching_instances.size() == 0)
         return {}; // No matching instances
 
-    if (matching_instances.size() > 1)
+    vector<pair<Core::Exp, LIE>> surviving_instances;
+
+    for(int i=0;i<matching_instances.size();i++)
+    {
+        bool keep = true;
+        for(int j=0;keep and j<matching_instances.size();j++)
+        {
+            if (i == j) continue;
+
+            if (more_specific_than(types[j], types[i]))
+                keep = false;
+        }
+
+        if (keep)
+            surviving_instances.push_back(matching_instances[i]);
+    }
+
+    if (surviving_instances.size() > 1)
     {
         return {}; // Too many matching instances
     }
 
-    return matching_instances[0];
+    assert(surviving_instances.size() == 1);
+
+    return surviving_instances[0];
 }
 
 pair<Core::Decls, LIE> typechecker_state::toHnf(const Core::Var& dvar, const Hs::Type& constraint)
