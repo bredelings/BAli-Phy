@@ -149,6 +149,32 @@ model_t::model_t(const ptree& d, const set<string>& i, const ptree&t, const std:
 {
 }
 
+bool is_loggable_type(const type_t& type)
+{
+    if (type.get_value<string>() == "String") return true;
+
+    else if (type.get_value<string>() == "Int") return true;
+
+    else if (type.get_value<string>() == "Double") return true;
+
+    else if (type.get_value<string>() == "List")
+    {
+        if (type.size() != 1) return false;
+
+        return is_loggable_type(type[0].second);
+    }
+
+    else if (type.get_value<string>() == "Tuple")
+    {
+        for(auto& [_,type2]: type)
+            if (not is_loggable_type(type2)) return false;
+        return true;
+    }
+
+    return false;
+}
+
+
 void to_json(json& j, const pretty_model_t& m)
 {
     j["main"] = unparse_annotated(m.main);
