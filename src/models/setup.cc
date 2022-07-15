@@ -566,9 +566,9 @@ bool should_log(const Rules& R, const ptree& model_, const string& arg_name, con
 {
     auto model = model_.get_child("value");
 
-    auto name = model.get_value<string>();
-
     if (is_constant(model)) return false;
+
+    auto name = model.get_value<string>();
 
     if (not is_loggable_function(R, name)) return false;
 
@@ -801,7 +801,7 @@ optional<translation_result_t> get_model_let(const Rules& R, const ptree& model,
 
     // (x, log_x) <- arg_result
     perform_action_simplified(result, x, log_x, true, arg_result, var_name);
-    if (x_is_random)
+    if (x_is_random and is_loggable_type(var_exp.get_child("type")))
         result.code.log_value(var_name, x);
 
     // body_result
@@ -1035,7 +1035,7 @@ optional<translation_result_t> get_model_list(const Rules& R, const ptree& model
         use_block(result, log_x, element_result, log_name);
 
         // 3e. Maybe emit code for the element.
-        bool do_log = is_unlogged_random(R, element, scope);
+        bool do_log = is_unlogged_random(R, element, scope) and is_loggable_type(element.get_child("type"));
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
         if (do_log and not is_var(element_result.code.E))
@@ -1095,7 +1095,7 @@ optional<translation_result_t> get_model_tuple(const Rules& R, const ptree& mode
         use_block(result, log_x, element_result, log_name);
 
         // 3e. Maybe emit code for the element.
-        bool do_log = is_unlogged_random(R, element, scope);
+        bool do_log = is_unlogged_random(R, element, scope) and is_loggable_type(element.get_child("type"));
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
         if (do_log and not is_var(element_result.code.E))
@@ -1234,7 +1234,8 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         if (alphabet)
             scope3.set_state("alphabet", *alphabet);
 
-        arg_models[i] = get_model_as(R, model_rep.get_child(arg_names[i]), scope3);
+        arg = model_rep.get_child(arg_names[i]);
+        arg_models[i] = get_model_as(R, arg, scope3);
 
         // Move this to generate()
         if (result.code.perform_function and arg_models[i].lambda_vars.size())
@@ -1247,7 +1248,7 @@ translation_result_t get_model_function(const Rules& R, const ptree& model, cons
         auto x = arg_vars[i];
         auto log_x = log_vars[i];
 
-        bool do_log = should_log(R, model, arg_names[i], scope) and arg_models[i].lambda_vars.empty();
+        bool do_log = should_log(R, model, arg_names[i], scope) and is_loggable_type(arg.get_child("type")) and arg_models[i].lambda_vars.empty();
 
         // 6b. Emit x <- or x = for the variable, or prepare to substitute it.
         use_block(result, log_x, arg_models[i], log_names[i]);
