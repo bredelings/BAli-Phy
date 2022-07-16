@@ -90,35 +90,26 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 
 
     // Premise #2: Find the type vars mentioned in the constraint.
+    set<Hs::TypeVar> type_vars = free_type_variables(inst_decl.constraint);
     string tycon_names;
-    set<Hs::TypeVar> type_vars;
     // Premise #4: the class_arg must be a type constructor applied to simple, distinct type variables.
-    vector<Hs::TypeCon> types;
+    int var_args = 0;
     for(auto& class_arg: class_args)
     {
         auto [a_head, a_args] = Hs::decompose_type_apps(class_arg);
-        auto tc = a_head.to<Hs::TypeCon>();
-        if (not tc)
-            throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<a_head<<" is not a type constructor!";
 
-        tycon_names += get_name_for_typecon(*tc);
-
-        types.push_back(*tc);
-
-        // Add distinct type variables
-        for(auto& a_arg: a_args)
+        if (auto tc = a_head.to<Hs::TypeCon>())
+            tycon_names += get_name_for_typecon(*tc);
+        else if (a_head.is_a<Hs::TypeVar>())
         {
-            auto tv = a_arg.to<Hs::TypeVar>();
-
-            if (not tv)
-                throw myexception()<<"In instance for '"<<inst_decl.constraint<<"' for type '"<<class_arg<<"': "<<a_arg<<" is not a type variable!";
-
-            if (type_vars.count(*tv))
-                throw myexception()<<"Type variable '"<<tv->print()<<"' occurs twice in constraint '"<<inst_decl.constraint<<"'";
-
-            type_vars.insert(*tv);
+            tycon_names += "_";
+            var_args++;
         }
+        else
+            throw myexception()<<"Instance declaration for "<<inst_decl.constraint<<" doesn't make sense";
     }
+    if (class_args.size() == var_args)
+        throw myexception()<<"In instance declaration for "<<inst_decl.constraint<<", not all arguments can be type variables.";
 
     // Premise 5: Check that the context contains no variables not mentioned in `class_arg`
     for(auto& tv: free_type_variables(inst_decl.context))
@@ -128,7 +119,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     }
 
     string dfun_name = "d"+get_unqualified_name(class_info->name)+tycon_names;
-    
+
     auto dfun = get_fresh_var(dfun_name, true);
 
     //  -- new -- //

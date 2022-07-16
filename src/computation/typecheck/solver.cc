@@ -50,7 +50,7 @@ bool typechecker_state::instance_matches(const Hs::Type& type1, const Hs::Type& 
 {
     auto [tvs1, wanteds1, head1] = instantiate(type1);
     auto [tvs2, wanteds2, head2] = instantiate(type2);
-    return maybe_match(type1, type2);
+    return maybe_match(head1, head2);
 }
 
 bool typechecker_state::more_specific_than(const Hs::Type& type1, const Hs::Type& type2)
@@ -72,8 +72,7 @@ bool typechecker_state::more_specific_than(const Hs::Type& type1, const Hs::Type
 
 optional<pair<Core::Exp,LIE>> typechecker_state::lookup_instance(const Hs::Type& target_constraint)
 {
-    vector<pair<Core::Exp,LIE>> matching_instances;
-    vector<Hs::Type> types;
+    vector<pair<pair<Core::Exp, LIE>,Hs::Type>> matching_instances;
 
     for(auto& [dfun, type]: instance_env() )
     {
@@ -85,23 +84,26 @@ optional<pair<Core::Exp,LIE>> typechecker_state::lookup_instance(const Hs::Type&
 
         auto dfun_exp = Core::Apply(dfun, vars_from_lie<Core::Exp>(wanteds));
 
-        matching_instances.push_back({dfun_exp, wanteds});
-        types.push_back(type);
+        matching_instances.push_back({{dfun_exp, wanteds}, type});
     }
 
     if (matching_instances.size() == 0)
         return {}; // No matching instances
 
-    vector<pair<Core::Exp, LIE>> surviving_instances;
+    vector<pair<pair<Core::Exp, LIE>,Hs::Type>> surviving_instances;
 
     for(int i=0;i<matching_instances.size();i++)
     {
+        auto type_i = matching_instances[i].second;
+
         bool keep = true;
         for(int j=0;keep and j<matching_instances.size();j++)
         {
             if (i == j) continue;
 
-            if (more_specific_than(types[j], types[i]))
+            auto type_j = matching_instances[j].second;
+
+            if (more_specific_than(type_j, type_i))
                 keep = false;
         }
 
@@ -111,12 +113,15 @@ optional<pair<Core::Exp,LIE>> typechecker_state::lookup_instance(const Hs::Type&
 
     if (surviving_instances.size() > 1)
     {
-        return {}; // Too many matching instances
+        auto e = myexception()<<"Too many matching instances for "<<target_constraint<<":\n\n";
+        for(auto& [_,type]: surviving_instances)
+            e<<"  "<<remove_top_gen(type)<<"\n";
+        throw e;
     }
 
     assert(surviving_instances.size() == 1);
 
-    return surviving_instances[0];
+    return surviving_instances[0].first;
 }
 
 pair<Core::Decls, LIE> typechecker_state::toHnf(const Core::Var& dvar, const Hs::Type& constraint)
