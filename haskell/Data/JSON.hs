@@ -81,6 +81,10 @@ instance (ToJSONKey a, ToJSON b) => ToJSON (M.Map a b) where
 instance (ToJSON a, ToJSON b) => ToJSON (a,b) where
     toJSON (x,y) = Array [toJSON x, toJSON y]
 
+instance ToJSON a => ToJSON ([Char],a) where
+    toJSON (s,x) = Array [toJSON s, toJSON x]
+    toJSONList xs = Object [(toJSONKeyList key, toJSON value) | (key, value) <- xs]
+
 instance (ToJSON a, ToJSON b, ToJSON c) => ToJSON (a,b,c) where
     toJSON (x,y,z) = Array [toJSON x, toJSON y, toJSON z]
 
