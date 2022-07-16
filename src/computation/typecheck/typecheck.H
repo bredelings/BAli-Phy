@@ -500,3 +500,5 @@ std::vector<T> vars_from_lie(const LIE& lie)
     return dvars;
 }
 #endif
+
+bool constraint_is_hnf(const Hs::Type& constraint);
