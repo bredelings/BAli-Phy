@@ -24,6 +24,9 @@ void typechecker_state::tcRho(Hs::Var& x, const Expected& exp_type)
     // x should be in the global type environment
     else if (auto sigma_ptr = gve.find( x_name ))
         sigma = *sigma_ptr;
+    // x should be in the global type environment
+    else if (auto sigma_ptr = imported_gve.find( x_name ))
+        sigma = *sigma_ptr;
     else
         throw myexception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 
