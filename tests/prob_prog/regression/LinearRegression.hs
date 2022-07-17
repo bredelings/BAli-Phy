@@ -3,19 +3,17 @@ import           Data.Frame
 
 model xs ys = do
 
-    b     <- normal 0.0 1.0
+    b     <- normal 0 1
 
-    a     <- normal 0.0 1.0
+    a     <- normal 0 1
 
-    sigma <- exponential 1.0
+    sigma <- exponential 1
 
     let f x = b * x + a
 
     ys ~> independent [ normal (f x) sigma | x <- xs ]
 
-    let loggers = ["b" %=% b, "a" %=% a, "sigma" %=% sigma]
-
-    return loggers
+    return ["b" %=% b, "a" %=% a, "sigma" %=% sigma]
 
 main = do
   xy_data <- readTable "xy.csv"
