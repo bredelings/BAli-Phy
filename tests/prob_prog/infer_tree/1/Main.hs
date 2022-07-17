@@ -8,26 +8,26 @@ import           IModel
 import           Probability.Distribution.OnTree
 import           System.Environment  -- for getArgs
 
-branch_length_dist topology branch = gamma 0.5 (2.0 / intToDouble n) where n = numBranches topology
+branch_length_dist topology branch = gamma (1/2) (2/intToDouble n) where n = numBranches topology
 
 model seq_data = do
     let taxa            = map sequence_name seq_data
         tip_seq_lengths = get_sequence_lengths dna seq_data
 
     -- Tree
-    scale1 <- gamma 0.5 2.0
+    scale1 <- gamma (1/2) 2
     tree   <- uniform_labelled_tree taxa branch_length_dist
     let tree1 = scale_branch_lengths scale1 tree
 
     -- Indel model
-    indel_rate   <- log_laplace (-4.0) 0.707
-    mean_length <- (1.0 +) <$> exponential 10.0
+    indel_rate   <- log_laplace (-4) 0.707
+    mean_length <- (1 +) <$> exponential 10
     let imodel = rs07 indel_rate mean_length tree
 
     -- Substitution model
-    freqs  <- symmetric_dirichlet_on ["A", "C", "G", "T"] 1.0
-    kappa1 <- log_normal 0.0 1.0
-    kappa2 <- log_normal 0.0 1.0
+    freqs  <- symmetric_dirichlet_on ["A", "C", "G", "T"] 1
+    kappa1 <- log_normal 0 1
+    kappa2 <- log_normal 0 1
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 
     -- Alignment
