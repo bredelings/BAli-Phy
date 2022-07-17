@@ -2,8 +2,8 @@ import           Probability
 
 model fatalities = do
 
-    alpha <- cauchy 0.0 1.0
-    beta <- cauchy 0.0 1.0
+    alpha <- cauchy 0 1
+    beta  <- cauchy 0 1
 
     let loggers = ["alpha" %=% alpha, "beta" %=% beta]
 
