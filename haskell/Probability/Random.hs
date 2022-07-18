@@ -127,6 +127,7 @@ instance MonadIO Random where
     liftIO = RanLiftIO
 
 lazy = Lazy
+exchangeable = RanExchangeable
 infixl 2 `with_tk_effect`
 with_tk_effect = WithTKEffect
 
@@ -139,12 +140,12 @@ run_strict (RanBind f g) = do
 run_strict (RanReturn v) = return v
 run_strict (RanLiftIO a) = a
 run_strict (RanSamplingRate _ a) = run_strict a
+run_strict (RanExchangeable r) = return r
 -- These are the lazily executed parts of the strict monad.
 run_strict dist@(RanDistribution _) = run_lazy dist
 run_strict e@(WithTKEffect _ _) = run_lazy e
 run_strict (RanMFix f) = mfix (run_lazy . f)
 run_strict (Lazy r) = unsafeInterleaveIO $ run_lazy r
-
 
 add_move m = TKLiftIO $ (\rate -> register_transition_kernel rate m)
 
@@ -173,6 +174,7 @@ run_lazy (RanDistribution (Distribution _ _ _ a _)) = unsafeInterleaveIO $ run_l
 run_lazy (PerformTKEffect e) = run_tk_effects 1.0 e
 run_lazy (WithTKEffect action _) = run_lazy action
 run_lazy (Lazy a) = run_lazy a
+run_lazy (RanExchangeable a) = return a
 run_lazy (Observe _ _) = error "run_lazy: observe"
 
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
@@ -185,6 +187,7 @@ run_strict' rate (RanReturn v) = return v
 run_strict' rate (RanLiftIO io) = io
 run_strict' rate (PerformTKEffect e) = run_tk_effects rate e
 run_strict' rate (RanSamplingRate rate2 a) = run_strict' (rate*rate2) a
+run_strict' rate (RanExchangeable r) = fmap liftIO $ exchangeableIO $ run_strict' rate r
 -- These are the lazily executed parts of the strict monad.
 run_strict' rate dist@(RanDistribution _) = run_lazy' rate dist
 run_strict' rate e@(WithTKEffect _ _) = run_lazy' rate e
@@ -255,6 +258,7 @@ run_lazy' rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
   result <- unsafeInterleaveIO $ run_lazy' rate action
   run_tk_effects rate $ tk_effect result
   return result
+run_lazy' rate (RanExchangeable r) = fmap liftIO $ exchangeableIO $ run_lazy' rate r
 
 gen_model_no_alphabet m = run_strict' 1.0 m
 mcmc = gen_model_no_alphabet
