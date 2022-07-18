@@ -31,7 +31,7 @@ computation_sources = [
   'expression/case.cc','expression/trim.cc',
   'expression/tuple.cc','expression/list.cc',
   'expression/var.cc','expression/lambda.cc',
-  'expression/modifiable.cc',
+  'expression/modifiable.cc', 'expression/exchangeable.cc',
   'expression/reg_var.cc',
   'expression/bool.cc',
   'expression/maybe.cc',
