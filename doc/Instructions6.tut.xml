@@ -15,7 +15,7 @@
   </info>
 
 <para>This tutorial assumes a UNIX command line.  On Linux or Mac this is built in; on Windows install Cygwin.</para>
-<section><info><title>Exercise (Setup, MAFFT, HoT, Seaview)</title></info>
+<section><info><title>Exercise (Setup, MAFFT, HoT, AliView)</title></info>
 
 <section><info><title>Make a <filename>~/bin</filename> directory (for programs) and add it to your PATH</title></info>
 % cd                        			// go to your home directory
