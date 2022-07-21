@@ -1,0 +1,331 @@
+<!DOCTYPE book [
+<!ENTITY % sgml.features "IGNORE">
+<!ENTITY % xml.features "INCLUDE">
+
+<!ENTITY % ent-mmlalias
+      PUBLIC "-//W3C//ENTITIES Aiases for MathML 2.0//EN"
+             "/usr/share/xml/schema/w3c/mathml/dtd/mmlalias.ent" >
+%ent-mmlalias;
+]>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0" 
+         xmlns:mml="http://www.w3.org/1998/Math/MathML"
+	 xml:lang="en">
+  <info><title>Alignment Practical Exercises</title>
+    <author><personname><firstname>Benjamin</firstname><surname>Redelings</surname></personname></author>
+  </info>
+
+<para>This tutorial assumes a UNIX command line.  On Linux or Mac this is built in; on Windows install Cygwin.</para>
+<section><info><title>Exercise (Setup, MAFFT, HoT, AliView)</title></info>
+
+<section><info><title>Make a <filename>~/bin</filename> directory (for programs) and add it to your PATH</title></info>
+% cd                        			// go to your home directory
+% pwd                                           // where are we? = print working directory
+% ls                                            // look around
+% mkdir ~/bin            			// make a subdirectory
+% ls .bash_profile .profile                     // do you have .profile or .bash_profile?
+% nano .profile                                 // edit the startup script
+%% OR
+% nano .bash_profile                            // edit the startup script
+%%&lt;Add the line &quot;PATH=~/bin:$PATH&quot;.&gt;
+% cat ~/.bash_profile				// Check if your changes are there
+% cat ~/.profile				// Check if your changes are there
+%%&lt;Log out and log back in.&gt;
+% echo $PATH                                    // check that ~/bin is in PATH
+% echo $PATH | sed 's/:/\n/g'                   // easier to read!
+</section>
+
+<section><info><title>Download the alignment files we will use</title></info>
+% cd
+% mkdir alignment_files
+% cd ~/alignment_files
+% wget http://www.bali-phy.org/examples.tgz      // Download the files - Linux
+% curl -O http://www.bali-phy.org/examples.tgz   // Download the files - Mac
+%%&lt;Alternatively, download the files using your browser&gt;
+% tar -zxf examples.tgz                          // extract the compressed archive
+% ls examples					 // look inside the new directory that was created
+% less examples/ferns/cleaned.fasta              // examine the downloaded files – type q to quit
+% alignment-info examples/ferns/cleaned.fasta
+</section>
+
+<section><info><title>Install fasta-flip.pl to ~/bin</title></info>
+% cd ~/alignment_files/examples
+% chmod +x fasta-flip.pl			 // make the file executable
+% cp fasta-flip.pl ~/bin			 // copy the file to ~/bin
+% which fasta-flip.pl				 // check to make sure its in your PATH
+</section>
+
+<section><info><title>MAFFT and HoT and Seaview</title></info>
+% cp ferns/cleaned.fasta ferns.fasta                                          // make a copy of a file
+% mafft --auto ferns.fasta &gt; ferns-mafft.fasta                                // try a simple sequence alignment 
+% fasta-flip.pl ferns.fasta | mafft --auto - | fasta-flip.pl &gt; ferns-mafft-flipped.fasta
+% aliview ferns-mafft.fasta &#38; aliview ferns-mafft-flipped.fasta &#38;             // take a look at the two good alignments
+% ./compare-alignments ferns-mafft.fasta ferns-mafft-flipped.fasta &gt; ferns-compare.html
+% firefox ferns-compare.html                                                  // load in firefox, then shrink the font
+</section>
+</section>
+
+<section><info><title>Exercise (MUSCLE, FSA, PRANK)</title></info>
+
+<section><info><title>Alignment with MUSCLE (v5)</title></info>
+Look at the time to perform different numbers of iterations with MAFFT:
+% cd ~/alignment_files/examples
+% muscle -align ferns.fasta -output ferns-muscle.fasta
+% alignment-info ferns-muscle.fasta | grep columns                                       // How long is the alignment?
+% ./compare-alignments ferns-mafft.fasta ferns-muscle.fasta > ferns-compare-muscle-mafft.html
+% firefox ferns-compare-muscle-mafft.html
+% aliview ferns-muscle.fasta &amp;
+</section>
+
+<!-- Issue the ferns introns really are unalignable! -->
+
+<section><info><title>Alignment with FSA</title></info>
+Lets run FSA with no penalty for wrong homologies, like ProbCons.
+% time fsa --fast --gapfactor 0 ferns.fasta &gt; ferns-fsa0.fasta      	// This is similar to probcons – few gaps.
+% alignment-info ferns-fsa0.fasta | grep columns
+% aliview ferns-fsa0.fasta &#38;
+Let's run FSA with the standard penalty for wrong homologies:
+% time fsa --fast ferns.fasta &gt; ferns-fsa.fasta                        // This is the default. Some gaps.
+% alignment-info ferns-fsa.fasta | grep columns
+% aliview ferns-fsa.fasta &#38;
+
+How long is the probcons-like alignment, versus the FSA alignment?
+</section>
+
+<section><info><title>Alignment with PRANK</title></info>
+Now let's run PRANK:
+% time prank -d=ferns.fasta +F -o=ferns-prank
+% cp ferns-prank.best.fas ferns-prank.fasta
+% alignment-info ferns-prank.fasta | grep columns
+% aliview ferns-prank.fasta &#38;
+
+How long is the PRANK alignment?  How is the shape different from the other alignments?
+</section>
+
+</section>
+
+<section><info><title>BAli-Phy</title></info>
+
+  <para>This exercise offers a quick overview of bali-phy with an emphasis on concrete analysis of real datasets.  Other documentation includes:
+  <itemizedlist>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.xhtml">Users Guide</link> is much more complete.</listitem>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/Tutorial4.xhtml">Tutorial</link> is similar to this exercise, but covers more functionality.</listitem>
+    <listitem>You can run <userinput><replaceable>tool</replaceable> --help</userinput> to see command line options for <replaceable>tool</replaceable>.</listitem>
+    <listitem>You can run <userinput>man <replaceable>tool</replaceable></userinput> to see the manual page for <replaceable>tool</replaceable>.</listitem>
+    <listitem>Manual pages for bali-phy and tools are also available <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/docs.php#manpages">online</link>.</listitem>
+  </itemizedlist>
+  </para>
+
+<section><info><title>Creating a script file</title></info>
+<para>First, go to the <filename>~/alignment_files/examples</filename> directory and create
+a text file called <filename>ferns-config1.txt</filename> that looks like this:</para>
+<programlisting># sequence data for 7 partitions
+align = ferns.fasta:5-8       # exon 1
+align = ferns.fasta:12-444    # intron 1
+align = ferns.fasta:454-596   # exon 2
+align = ferns.fasta:609-844   # intron 2
+align = ferns.fasta:865-948   # exon 3
+align = ferns.fasta:953-1312  # intron 3
+align = ferns.fasta:1329-1393 # exon 4
+
+smodel = gtr+Rates.gamma+inv  # substitution model
+
+name = ferns-intron-exon      # determines name for output directory
+</programlisting>
+<para>It should be possible to copy and paste this text into the nano editor below
+% cd ~/alignment_files/examples
+% nano ferns-config1.txt           // Note the instructions on the bottom of the terminal: <userinput>^X</userinput> means <userinput>Control-X</userinput>
+% cat ferns-config1.txt
+% bali-phy -c ferns-config1.txt --test | less
+</para>
+</section>
+<section><info><title>Command line options</title></info>
+<para>A script file can be turned into a command-line by replacing commands like <userinput>command = value</userinput> with <userinput>--command value</userinput>.  The exception is that for <userinput>align=file</userinput> commands, you can just write the filename by itself:
+% bali-phy ferns.fasta:{5-8,12-444,454-596,609-844,865-948,953-1312,1329-1393} --smodel gtr+Rates.gamma+inv --name=ferns-intron-exon --test
+However, with partitioned analyses the command-line can become kind of long.  Raw command lines are more useful with a simple unpartitioned analysis:
+% bali-phy ferns.fasta --test
+</para>
+
+<para>You can see the options for bali-phy by running:
+% bali-phy help
+You can also get help on particular options or models with the help command:
+% bali-phy help smodel                // help on option
+% bali-phy help gtr                   // help on model
+</para>
+</section>
+
+
+<section><info><title>Running an analysis</title></info>
+After you get the <userinput>--test</userinput> command to work, remove the <userinput>--test</userinput> option and start two copies of this analysis:
+% bali-phy -c ferns-config1.txt &#38;
+% bali-phy -c ferns-config1.txt &#38;
+These should create directories called <filename>ferns-intron-exon-1</filename> and <filename>ferns-intron-exon-2</filename>.
+Lets look inside one of these directories:
+% ls ferns-intron-exon-1
+% less ferns-intron-exon-1/C1.log             // numerical parameter samples
+% less ferns-intron-exon-1/C1.trees           // tree samples
+% less ferns-intron-exon-1/C1.P1.fastas       // alignment samples for partition 1
+% less ferns-intron-exon-1/C1.P2.fastas       // alignment samples for partition 2
+</section>
+
+<section><info><title>Monitoring an analysis</title></info>
+You can monitor an analysis in two ways.  One way is to use the program <userinput>tracer</userinput>.
+% tracer ferns-intron-exon-1/C1.log ferns/intron-exon-2/C1.log   // you may need to double-click on Tracer and load log files via the menu.
+We would like to see that the likelihood and posterior probability have stabilized.  Another method of monitoring is just to
+generate the summary report.
+</section>
+
+<section><info><title>Interpreting parameter names</title></info>
+The parameter estimates have names that look like context1/value or context1/model:parameter.  For example S1/gtr:pi[A] indicates
+<variablelist>
+  <varlistentry><term>S1</term><listitem>The 1st substitution model</listitem></varlistentry>
+  <varlistentry><term>gtr</term><listitem>The GTR (general, time-reversible) nucleotide substitution model.</listitem></varlistentry>
+  <varlistentry><term>pi</term><listitem>The nucleotide frequencies</listitem></varlistentry>
+  <varlistentry><term>[A]</term><listitem>The frequency for A (adenine).</listitem></varlistentry>
+</variablelist>
+We can get information on what a parameter means by running <command>bali-phy help <replaceable>model</replaceable></command>:
+% bali-phy help gtr
+For more information on parameter names, see <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.xhtml#output">the section on Output / Field names</link> in the Users Guide.
+</section>
+
+<section><info><title>Summarizing the results of a run</title></info>
+% bp-analyze ferns-intron-exon-1 ferns-intron-exon-2
+% firefox Results/index.html
+Let's concatenate the summmary estimates for each partition to recover an alignment for the whole gene region.
+% alignment-cat Results/P{1..7}-max.fasta > ferns-bali-phy.fasta
+Since bali-phy is still running, we can get information on its progress by rerunning <userinput>bp-analyze</userinput>.
+</section>
+<section><info><title>Comparing to MAFFT, FSA, and PRANK</title></info>
+We can see how the different aligners affect the total alignment length:
+% alignment-info ferns-bali-phy.fasta | grep columns
+% alignment-info ferns-prank.fasta | grep columns
+% alignment-info ferns-fsa.fasta | grep columns
+% alignment-info ferns-fsa0.fasta | grep columns
+% alignment-info ferns-mafft.fasta | grep columns
+
+Let's visually compare the alignment by loading all the alignments in aliview.  Shrink each alignment so that it is very small, and look at the intron between exons 2 and 3.
+% aliview ferns-bali-phy.fasta &#38;
+% aliview ferns-prank.fasta &#38;
+% aliview ferns-fsa.fasta &#38;
+% aliview ferns-fsa0.fasta &#38;
+% aliview ferns-mafft.fasta &#38;
+</section>
+
+<section>
+<info><title>Improving the analysis</title></info>  
+<para>Lets make a few changes and improvements to our analysis.</para>
+
+<itemizedlist>
+  <listitem>Lets share a single substitution model between all exon partitions.
+This means that all the exons share a single set of nucleotide frequencies, etc.
+We share substitution models between partitions by specifying the list of partitions
+that a substitution model applies to.</listitem>
+
+<listitem>Let's also share a single substitution model between all introns.</listitem>
+
+<listitem>Lets use the "free rates" model instead of site-rate heterogeneity.
+This means that the rate for each bin is allowed to vary independently.
+So we drop the "+inv" part of the model
+</listitem>
+
+<listitem>Lets fix the alignment for the exons.
+We can do this by specifying an insertion-deletion model of "none" for those partitions.
+</listitem>
+</itemizedlist>
+
+Let's put the following into a configuration file called <filename>ferns-config2.txt</filename>.
+<programlisting># sequence data for 7 partitions
+align = ferns.fasta:5-8         # exon 1
+align = ferns.fasta:12-444      # intron 1
+align = ferns.fasta:454-596     # exon 2
+align = ferns.fasta:609-844     # intron 2
+align = ferns.fasta:865-948     # exon 3
+align = ferns.fasta:953-1312    # intron 3
+align = ferns.fasta:1329-1393   # exon 4
+
+smodel = 1,3,5,7:gtr+Rates.free # substitution model
+smodel = 2,4,6:gtr+Rates.free   # substitution model
+
+imodel = 1,3,5,7:none           # insertion-deletion model
+imodel = 2,4,6:rs07             # insertion-deletion model
+
+name = ferns-intron-exon2       # determines name for output directory
+</programlisting>
+
+% bali-phy -c ferns-config2.txt &amp;
+% bali-phy -c ferns-config2.txt &amp;
+%%&lt;wait a few minutes
+% wc -l ferns-intron-exon2-*/C1.log                      // How many iterations have been completed so far?
+% bp-analyze ferns-intron-exon2-1 ferns-intron-exon2-2   // Generate a summary of completed iterations.
+%%&lt;wait a few more minutes
+% wc -l ferns-intron-exon2-*/C1.log                      // How many iterations have been completed so far?
+% bp-analyze ferns-intron-exon2-1 ferns-intron-exon2-2   // Generate a summary of completed iterations.
+% firefox Results/index.html &amp;
+</section>
+
+
+<section><info><title>Codon models for the coding data</title></info>
+Lets concatenate the exons to form the codon data.
+In order to load nucleotide sequences as codons, three conditions must be met:
+<orderedlist>
+  <listitem>
+    <para><emphasis role="strong">Sequence lengths must be multiples of three.</emphasis></para>
+    <para><code>AAA --- TTT</code> is OK</para>
+    <para><code>AAA --- T--</code> is not OK.</para>
+  </listitem>
+  <listitem>
+    <para><emphasis role="strong">Gaps must be codon-aligned.</emphasis></para>
+    <para><code>AAA --- TTT</code> is OK</para>
+    <para><code>AA- --A TT-</code> is not OK.</para>
+  </listitem>
+  <listitem>
+    <para><emphasis role="strong">The sequences must be in-frame and not have stop codons.</emphasis></para>
+    <para><code>ATG AAT AAA</code> is OK, because it translates to <code>MNK</code>.</para>
+    <para><code>AAT GAA TAA</code> is not OK, because it translates to <code>NE*</code>, where<code>*</code> is a stop codon.</para>
+  </listitem>
+</orderedlist>
+Note that spaces in FASTA files are allowed, but not required.
+<para>Let's extract the coding data:
+% alignment-cat -c6-8,454-596,865-948,1329-1389 ferns.fasta --strip-gaps > coding.fasta
+% alignment-translate coding.fasta | less         // check that the coding frame is correct
+</para>
+
+<para>Now we can put the following into a configuration file called <filename>ferns-config3.txt</filename>.</para>
+<programlisting># sequence data for 7 partitions
+align = coding.fasta
+align = ferns.fasta:12-444    # intron 1
+align = ferns.fasta:609-844   # intron 2
+align = ferns.fasta:953-1312  # intron 3
+
+smodel = 1:gy94[pi=f1x4]
+#smodel = 1:m3
+#smodel = 1:gtr+x3+dNdS+mut_sel_aa
+#smodel = 1:function[w,gtr+x3+dNdS[omega=w]+mut_sel_aa]+m3
+smodel = 2,3,4:gtr+Rates.free
+
+imodel = 1:none
+imodel = 2,3,4:rs07
+
+name = ferns-intron-exon3
+</programlisting>
+
+% bali-phy -c ferns-config3.txt &amp;
+% bali-phy -c ferns-config3.txt &amp;
+% wc -l ferns-intron-exon3-*/C1.log                      // How many iterations have been completed so far?
+% bp-analyze ferns-intron-exon3-1 ferns-intron-exon3-2   // Generate a summary of completed iterations.
+%%&lt;wait a few more minutes
+% wc -l ferns-intron-exon3-*/C1.log                      // How many iterations have been completed so far?
+% bp-analyze ferns-intron-exon3-1 ferns-intron-exon3-2   // Generate a summary of completed iterations.
+%%&lt;wait a few minutes
+% firefox Results/index.html &amp;
+
+</section>
+<section><info><title>Further exploration...</title></info>
+  <para>For more information see:
+  <itemizedlist>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/Tutorial4.xhtml">Tutorial</link> is similar to this exercise, but covers more functionality.</listitem>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.xhtml">Users Guide</link> additionally covers ancestral sequence reconstruction, setting priors, etc.</listitem>
+  </itemizedlist>
+</para>
+</section>
+</section>
+</article>
