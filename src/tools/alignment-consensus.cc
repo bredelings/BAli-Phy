@@ -26,6 +26,7 @@
 #include <numeric>
 #include "util/myexception.H"
 #include "util/log-level.H"
+#include "util/io.H"
 #include "optimize.H"
 #include "findroot.H"
 #include "alignment/alignment-util.H"
@@ -45,16 +46,39 @@ using namespace std;
 void do_setup(const variables_map& args,vector<alignment>& alignments) 
 {
     //------------ Try to load alignments -----------//
-    int maxalignments = args["max-alignments"].as<int>();
+    vector<string> filenames;
+    if (args.count("files"))
+        filenames = args["files"].as<vector<string> >();
+
+    // read from cin if nothing specified
+    if (filenames.empty())
+        filenames.push_back("-");
+
+    int maxalignments = args["max"].as<int>();
     unsigned skip = args["skip"].as<unsigned>();
 
     // --------------------- try ---------------------- //
-    if (log_verbose)
-        std::cerr<<"alignment-consensus: Loading alignments...";
-    list<alignment> As = load_alignments(std::cin,get_alphabet_name(args),skip,maxalignments);
-    alignments.insert(alignments.begin(),As.begin(),As.end());
-    if (log_verbose)
-        std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+    for(auto& filename: filenames)
+    {
+        istream_or_ifstream input_stream(std::cin, "-", filename, "alignment collection");
+
+        if (log_verbose)
+            std::cerr<<"alignment-consensus: Loading alignments from "<<filename<<"...";
+
+        list<alignment> As;
+        if (alignments.empty())
+        {
+            As = load_alignments(input_stream, get_alphabet_name(args), skip, maxalignments);
+        }
+        else
+        {
+            As = load_alignments(input_stream, sequence_names(alignments[0]), get_alphabet_name(args), skip, maxalignments);
+        }
+        alignments.insert(alignments.end(),As.begin(),As.end());
+
+        if (log_verbose)
+            std::cerr<<"done. ("<<As.size()<<" alignments)"<<std::endl;
+    }
 
     if (not alignments.size())
         throw myexception()<<"Alignment sample is empty.";
@@ -65,27 +89,40 @@ variables_map parse_cmd_line(int argc,char* argv[])
 { 
     using namespace po;
 
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
+    // invisible options
+    options_description invisible("Invisible options");
+    invisible.add_options()
+	("files",value<vector<string> >()->composing(),"tree samples to examine")
+	;
+
+    // visible options
+    options_description visible("Allowed options");
+    visible.add_options()
         ("help,h", "produce help message")
         ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-        ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
-        ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
+        ("skip,s",value<unsigned>()->default_value(0),"number of alignment samples to skip")
+        ("max,m",value<int>()->default_value(1000),"maximum number of alignments to analyze")
         ("strict",value<double>(),"ignore events below this probability")
         ("cutoff",value<double>(),"ignore events below this probability")
         ("uncertainty",value<string>(),"file-name for AU uncertainty vs level")
-        ("verbose","Output more log messages on stderr.")
+        ("verbose,V","Output more log messages on stderr.")
         ;
 
+    options_description all("All options");
+    all.add(invisible).add(visible);
+
+    positional_options_description p;
+    p.add("files", -1);
+
     variables_map args;     
-    store(parse_command_line(argc, argv, all), args);
+    store(command_line_parser(argc, argv).
+	  options(all).positional(p).run(), args);
     notify(args);    
 
     if (args.count("help")) {
         cout<<"Construct a consensus alignment to summarize an alignment sample.\n\n";
-        cout<<"Usage: alignment-consensus [OPTIONS] < alignments-file\n\n";
-        cout<<all<<"\n";
+        cout<<"Usage: alignment-consensus alignments-file [alignments-file ...] [OPTIONS] \n\n";
+        cout<<visible<<"\n";
         exit(0);
     }
 

@@ -23,6 +23,7 @@
 #include <vector>
 #include <list>
 #include "util/myexception.H"
+#include "util/io.H"
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
 #include "alignment/load.H"
@@ -224,11 +225,19 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
 {
     //--------------- Load and link template A and T -----------------//
     A = load_A(args, false);
-    T = load_T(args);;
+    T = load_T(args);
     link(A,T,false);
     check_alignment(A,T,false);
 
     //------------ Try to load alignments -----------//
+    vector<string> filenames;
+    if (args.count("files"))
+        filenames = args["files"].as<vector<string> >();
+
+    // read from cin if nothing specified
+    if (filenames.empty())
+        filenames.push_back("-");
+
     int maxalignments = args["max-alignments"].as<int>();
     unsigned skip = args["skip"].as<unsigned>();
 
@@ -236,48 +245,32 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
 
     // Instead of reordering the tree, just specify the names, here.
 
-    try
+    for(auto& filename: filenames)
     {
-	alignments = load_alignments(std::cin, T.get_leaf_labels(), A.get_alphabet(), skip, maxalignments);
-    }
-    catch (std::exception& e)
-    {
-	if (alignments.size() == 0)
-	{
-	    add_internal_labels(T);
-	    alignments = load_alignments(std::cin, T.get_labels(), A.get_alphabet(), skip, maxalignments);
-	}
+        istream_or_ifstream input_stream(std::cin, "-", filename, "alignment collection");
+
+        try
+        {
+            auto new_alignments = load_alignments(input_stream, T.get_leaf_labels(), A.get_alphabet(), skip, maxalignments);
+            alignments.insert(alignments.end(), new_alignments.begin(), new_alignments.end());
+        }
+        catch (std::exception& e)
+        {
+            // what's going on here?
+            if (alignments.size() == 0)
+            {
+                add_internal_labels(T);
+                auto new_alignments = load_alignments(input_stream, T.get_labels(), A.get_alphabet(), skip, maxalignments);
+                alignments.insert(alignments.end(), new_alignments.begin(), new_alignments.end());
+            }
+            else
+                throw;
+        }
     }
 
     if (log_verbose) std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
     if (alignments.empty()) 
 	throw myexception()<<"Alignment sample is empty.";
-
-    /*
-    //---------- Re-link the tree to the loaded alignments -----------//
-    alignment A2 = chop_internal(alignments.front());
-  
-    link(A2,T,false);
-
-    //---------- Check compatability of estimate & samples -----------//
-    assert(A.n_sequences() == T.n_leaves());
-  
-    //  if (alignments.front().n_sequences() != T.n_nodes())
-    //    throw myexception()<<"Number of sequences in alignment estimate is NOT equal to number of tree nodes!";
-  
-    vector<int> pi = compute_mapping(T.get_leaf_labels(), sequence_names(A));
-
-    vector<string> names = sequence_names(A);
-  
-    for(int i=0;i<T.n_leaves();i++) {
-
-    if (A.seq(pi[i]).name != A2.seq(i).name)
-    throw myexception()<<"Alignment estimate has different sequences or sequence order than alignment samples";
-    
-    if (A.seqlength(pi[i]) != A2.seqlength(i))
-    throw myexception()<<"Sequence '"<<T.get_label(i)<<"' has different length in alignment estimate and alignment samples!";
-    }
-    */
 }
 
 
@@ -344,11 +337,17 @@ variables_map parse_cmd_line(int argc,char* argv[])
     using namespace po;
 
     // named options
-    options_description all("Allowed options");
-    all.add_options()
+    options_description invisible("Invisible options");
+    invisible.add_options()
+	("files",value<vector<string> >()->composing(),"tree samples to examine")
+	;
+
+    // named options
+    options_description visible("Allowed options");
+    visible.add_options()
 	("help,h", "produce help message")
-	("align", value<string>(),"file with sequences and initial alignment")
-	("tree",value<string>(),"file with initial tree")
+	("align", value<string>(),"file with alignment to annotate")
+	("tree",value<string>(),"file with tree")
 	("find-root","estimate the root position from branch lengths")
 	("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
 	("skip",value<unsigned>()->default_value(0),"number of alignment samples to skip")
@@ -356,10 +355,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("verbose,V","Output more log messages on stderr.")
 	;
 
+    options_description all("All options");
+    all.add(invisible).add(visible);
+
     // positional options
     positional_options_description p;
     p.add("align", 1);
     p.add("tree", 1);
+    p.add("files", -1);
   
     variables_map args;     
     store(command_line_parser(argc, argv).
@@ -369,8 +372,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("help")) {
 	cout<<"Annotate each residue in the alignment according to the probability that it should align to the hypothetical root character in its column.\n\n";
-	cout<<"Usage: alignment-gild alignment-file tree-file ... [OPTIONS] < alignments-file\n\n";
-	cout<<all<<"\n";
+	cout<<"Usage: alignment-gild alignment-file tree-file alignments-file [alignments-file] [OPTIONS]\n\n";
+	cout<<visible<<"\n";
 	exit(0);
     }
 
