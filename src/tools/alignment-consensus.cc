@@ -57,6 +57,10 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
     int maxalignments = args["max"].as<int>();
     unsigned skip = args["skip"].as<unsigned>();
 
+    std::optional<int> chop_to;
+    if (args.count("chop-to"))
+        chop_to = args["chop-to"].as<int>();
+
     // --------------------- try ---------------------- //
     for(auto& filename: filenames)
     {
@@ -79,6 +83,11 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
         if (log_verbose)
             std::cerr<<"done. ("<<As.size()<<" alignments)"<<std::endl;
     }
+
+    // Chop internal-node-sequences
+    if (chop_to)
+        for(auto& A: alignments)
+            A = chop_internal(A, *chop_to);
 
     if (not alignments.size())
         throw myexception()<<"Alignment sample is empty.";
@@ -105,6 +114,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("strict",value<double>(),"ignore events below this probability")
         ("cutoff",value<double>(),"ignore events below this probability")
         ("uncertainty",value<string>(),"file-name for AU uncertainty vs level")
+        ("chop-to",value<int>(),"keep only the first arg taxa")
         ("verbose,V","Output more log messages on stderr.")
         ;
 
