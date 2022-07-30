@@ -55,7 +55,7 @@ digit        {ascdigit}|{unidigit}
 special      [(),;[\]`\{\}]
 ascsymbol_except_colon    [!#$%&\*+./<=>?@\\^|\-~]
 ascsymbol    {ascsymbol_except_colon}|:
-unisymbol    \x05
+unisymbol    \x04
 symbol_except_colon {ascsymbol_except_colon}
 symbol       {ascsymbol}
 
@@ -129,19 +129,18 @@ signed       {negative}?
 {tab}	         loc.step ();
 
   /* GHC calls some handwritten code to deal with nested comments */
-  /* "{-"[^\n-#]*"-}"      loc.step(); */
+<nested_comment2>"-}"        yy_pop_state();
+<nested_comment>"-}"         loc.step(); yy_pop_state();
+"-}"         throw yy::parser::syntax_error(loc, "Too many -}");
+
 <nested_comment,nested_comment2>{
 "{-"/[^#]                    yy_push_state(nested_comment2);
-[^-\n]*      // each a chunk with no newline or "-"
+[^-\n]*      // eat a chunk with no newline or "-"
 "-"          // eat a "-" not followed by "}"
 [\n]         loc.lines(1);
 <<EOF>>      throw yy::parser::syntax_error(loc, "Unterminated {-");
 }
 "{-"/[^#]                    yy_push_state(nested_comment);
-
-<nested_comment2>"-}"        yy_pop_state();
-<nested_comment>"-}"         loc.step(); yy_pop_state();
-"-}"         throw yy::parser::syntax_error(loc, "Too many -}");
 
 
 
@@ -208,13 +207,17 @@ signed       {negative}?
 <INITIAL,option_prags>{qconid}      return yy::parser::make_QCONID (yytext, loc);
 <INITIAL,option_prags>{varid}       return varid(loc);
 <INITIAL,option_prags>{conid}       return yy::parser::make_CONID  (yytext, loc);
-
-
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
+
+
+  /* precededByClosing and followedByOpening -> tight infix
+     followedByOpening                       -> prefix
+     precededByClosing                       -> suffix
+     otherwise                               -> loose infix */
+<INITIAL>{varsym}       return varsym(loc);
 
 <INITIAL>{qvarsym}      return yy::parser::make_QVARSYM  (yytext,loc);
 <INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (yytext,loc);
-<INITIAL>{varsym}       return varsym(loc);
 <INITIAL>{consym}       return consym(loc);
 
 <INITIAL>"-"{decimal}"#"                        return make_boxed_integer(10,false,0,loc);
