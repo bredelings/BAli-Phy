@@ -306,6 +306,7 @@
 %type <std::vector<Hs::Type>> btype_no_ops
 %type <std::vector<Hs::Type>> tyapps
 %type <Hs::Type> tyapp
+%type <Hs::Type> tyop
 %type <Hs::Type> atype_docs
 %type <Hs::Type> atype
 %type <Hs::Type> inst_type
@@ -850,12 +851,15 @@ tyapps: tyapp                      {$$.push_back($1);}
 |       tyapps tyapp               {$$ = $1; $$.push_back($2);}
 
 tyapp: atype                       {$$ = $1;}
-|      qtyconop                    {$$ = Hs::TypeCon({@1,$1});}
+|      tyop                        {$$ = $1;}
+
+tyop:  qtyconop                    {$$ = Hs::TypeCon({@1,$1});}
 |      tyvarop                     {$$ = Hs::TypeVar({@1,$1});}
 /* Template Haskell
 |      SIMPLEQUOTE qconop
 |      SIMPLEQUOTE varop
 */
+
 
 atype_docs: atype /* FIX */        {$$ = $1;}
 
