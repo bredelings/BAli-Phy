@@ -302,8 +302,9 @@
 %type <Hs::Type> type
 %type <Hs::Type> typedoc
 %type <Hs::Type> btype
-%type <Hs::Type> infixtype
 %type <std::vector<Hs::Type>> btype_no_ops
+%type <Hs::Type> infixtype
+%type <Hs::Type> ftype
 %type <std::vector<Hs::Type>> tyapps
 %type <Hs::Type> tyapp
 %type <Hs::Type> tyop
@@ -841,11 +842,13 @@ typedoc: type
 
 btype: infixtype
 
-infixtype: tyapps                  {$$ = Hs::make_tyapps($1);}
-|      btype "~" btype             {$$ = Hs::make_tyapps({Hs::TypeCon({@2,"~"}),$1,$3});} 
+infixtype: ftype
+|          btype "~" btype         {$$ = Hs::make_tyapps({Hs::TypeCon({@2,"~"}),$1,$3});} 
 
 btype_no_ops: atype_docs               {$$.push_back($1);}
 |             btype_no_ops atype_docs  {$$ = $1; $$.push_back($2);}
+
+ftype: tyapps                      {$$ = Hs::make_tyapps($1);}
 
 tyapps: tyapp                      {$$.push_back($1);}
 |       tyapps tyapp               {$$ = $1; $$.push_back($2);}
