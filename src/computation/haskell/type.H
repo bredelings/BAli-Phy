@@ -282,11 +282,15 @@ Type function_type(const std::vector<Type>& arg_types, const Type& result_type);
 
 Type make_arrow_type(const Type& t1, const Type& t2);
 
+Type make_equality_constraint(const Type& t1, const Type& t2);
+
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
 
 std::optional<std::pair<Type,Type>> is_gen_function_type(const Type& t);
 
 std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
+
+std::optional<std::pair<Type,Type>> is_equality_constraint(const Type& t);
 
 std::optional<Type> is_list_type(const Type& t);
 

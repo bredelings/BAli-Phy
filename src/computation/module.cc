@@ -1128,6 +1128,10 @@ type_info Module::lookup_builtin_type(const std::string& name)
     {
         return {"->", type_name_category::type_func, {{right_fix,0}}, 2, make_n_args_kind(2)};
     }
+    else if (name == "~")
+    {
+        return {"~", type_name_category::type_func, {}, 2, make_n_args_constraint_kind(2)};
+    }
     // This doesn't include ()
     else if (is_tuple_name(name))
     {

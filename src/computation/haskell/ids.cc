@@ -164,7 +164,7 @@ bool is_haskell_var_name(const std::string& s)
 
 bool is_haskell_builtin_con_name(const std::string& s)
 {
-    if (s == "()" or s == "[]" or s == ":" or is_tuple_name(s)) 
+    if (s == "()" or s == "[]" or s == ":" or is_tuple_name(s))
         return true;
     else
         return false;
@@ -172,7 +172,7 @@ bool is_haskell_builtin_con_name(const std::string& s)
 
 bool is_haskell_builtin_type_name(const std::string& s)
 {
-    if (s == "()" or s == "[]" or s == "->" or is_tuple_name(s)) 
+    if (s == "()" or s == "[]" or s == "->" or s == "~" or is_tuple_name(s))
         return true;
     else if (s == "Double" or s == "Int" or s == "Char")
         return true;

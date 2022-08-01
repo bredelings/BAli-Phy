@@ -63,6 +63,8 @@ std::optional<k_substitution_t> kunify(const Hs::Kind& k1, const Hs::Kind& k2);
 
 Hs::Kind make_n_args_kind(int n);
 
+Hs::Kind make_n_args_constraint_kind(int n);
+
 Hs::Kind replace_kvar_with_star(const Hs::Kind& k);
 
 #endif /*KIND_H*/

@@ -149,6 +149,15 @@ Hs::Kind make_n_args_kind(int n)
     return k;
 }
 
+Hs::Kind make_n_args_constraint_kind(int n)
+{
+    Hs::Kind star = kind_star();
+    Hs::Kind k = kind_constraint();
+    for(int i=0;i<n;i++)
+        k = kind_arrow(star,k);
+    return k;
+}
+
 Hs::Kind replace_kvar_with_star(const Hs::Kind& k)
 {
     if (k.is_a<KindVar>())

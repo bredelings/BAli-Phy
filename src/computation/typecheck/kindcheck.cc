@@ -127,6 +127,8 @@ Hs::Kind kindchecker_state::kind_check_type_con(const string& name)
         return make_n_args_kind(1);
     else if (name == "->")
         return make_n_args_kind(2);
+    else if (name == "~")
+        return make_n_args_constraint_kind(2);
     else if (is_tuple_name(name))
     {
         int n = tuple_arity(name);

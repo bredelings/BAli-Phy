@@ -7,6 +7,7 @@
 
 using std::string;
 using std::pair;
+using std::tuple;
 using std::vector;
 using std::optional;
 
@@ -89,6 +90,12 @@ std::string Type::print() const
 Type make_arrow_type(const Type& t1, const Type& t2)
 {
     static TypeCon type_arrow(Located<string>({},"->"));
+    return TypeApp(TypeApp(type_arrow,t1),t2);
+}
+
+Type make_equality_constraint(const Type& t1, const Type& t2)
+{
+    static TypeCon type_arrow(Located<string>({},"~"));
     return TypeApp(TypeApp(type_arrow,t1),t2);
 }
 
@@ -208,6 +215,20 @@ optional<pair<Type,Type>> is_function_type(const Type& t)
         return {};
 }
 
+optional<pair<Type,Type>> is_equality_constraint(const Type& t)
+{
+    auto [head,args] = decompose_type_apps(t);
+
+    if (args.size() != 2) return {};
+
+    auto tc = head.to<TypeCon>();
+    if (not tc) return {};
+
+    if (unloc(tc->name) == "~")
+        return {{args[0],args[1]}};
+    else
+        return {};
+}
 
 optional<Type> is_list_type(const Type& t)
 {
@@ -439,15 +460,29 @@ bool TypeApp::operator==(const TypeApp& t) const
     return (head == t.head) and (arg == t.arg);
 }
 
+optional< std::tuple<TypeCon, Type, Type> > is_type_op(const Type& t)
+{
+    auto [head,args] = decompose_type_apps(t);
+
+    if (args.size() != 2) return {};
+
+    auto tc = head.to<TypeCon>();
+
+    if (tc and is_haskell_sym(unloc(tc->name)))
+        return {{*tc, args[0], args[1]}};
+    else
+        return {};
+}
+
 string TypeApp::print() const
 {
-    if (auto ftype = is_function_type(*this))
+    if (auto type_op = is_type_op(*this))
     {
-        auto& [source,dest] = *ftype;
-        if (is_function_type(source))
-            return parenthesize_type(source) + " -> " + arg.print();
+        auto& [tycon, arg1, arg2] = *type_op;
+        if (is_type_op(arg1))
+            return parenthesize_type(arg1) + " " + tycon.print() + " "+ arg2.print();
         else
-            return source.print() + " -> " + arg.print();
+            return arg1.print() + " " + tycon.print() + " "+ arg2.print();
     }
     else if (auto etype = is_list_type(*this))
         return ListType(*etype).print();
