@@ -146,9 +146,11 @@
   LARROW        "<-"
   RARROW        "->"
   AT            "@"
+  PREFIX_TILDE
   TILDE         "~"
   DARROW        "=>"
   MINUS         "-"
+  PREFIX_BANG
   BANG          "!"
   STAR          "*"
   lARROWTAIL    "-<"
@@ -464,7 +466,7 @@
 %type  <int> bars
 */
 
-%expect 140
+%expect 141
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -803,8 +805,8 @@ strict_mark: strictness                     {$$ = $1;}
 |            unpackedness strictness        {$$ = $2;}
 */
 
-strictness: "!" {$$ = Hs::StrictLazy::strict;}
-|           "~" {$$ = Hs::StrictLazy::lazy;}
+strictness: PREFIX_BANG  {$$ = Hs::StrictLazy::strict;}
+|           PREFIX_TILDE {$$ = Hs::StrictLazy::lazy;}
 
 /*
 unpackedness: "{-# UNPACK" "#-}"
@@ -836,6 +838,7 @@ typedoc: type                      {$$ = $1;}
 /* typedoc: .... */
 
 btype: tyapps                      {$$ = Hs::make_tyapps($1);}
+|      btype "~" btype             {$$ = Hs::make_tyapps({Hs::TypeCon({@2,"~"}),$1,$3});} 
 
 btype_no_ops: atype_docs               {$$.push_back($1);}
 |             btype_no_ops atype_docs  {$$ = $1; $$.push_back($2);}
@@ -961,7 +964,7 @@ deriv_clause_types: qtycondoc
 
 decl_no_th: sigdecl           {$$ = $1;}
 /* I guess this is a strict let. Code as DeclStrict, rather than StrictPattern, since docs say this is part of the binding, not part of the patter */
-| "!" aexp rhs                {$$ = Hs::StrictValueDecl{{@2,$2},$3}; }
+| PREFIX_BANG aexp rhs                {$$ = Hs::StrictValueDecl{{@2,$2},$3}; }
 | infixexp_top rhs            {$$ = Hs::ValueDecl({@1,$1},$2);}
 
 decl: decl_no_th              {$$ = $1;}
@@ -1037,7 +1040,7 @@ fexp: fexp aexp                  {$$ = make_apply($1, $2);}
 |     aexp                       {$$ = $1;}
 
 aexp: qvar "@" aexp              {$$ = Hs::AsPattern(Hs::Var({@1,$1}),$3);}
-|     "~" aexp                   {$$ = Hs::LazyPattern($2);}
+|     PREFIX_TILDE aexp                   {$$ = Hs::LazyPattern($2);}
 |     "\\" apats1 "->" exp       {$$ = Hs::LambdaExp($2,$4);}
 |     "let" binds "in" exp       {$$ = Hs::LetExp($2,{@4,$4});}
 /* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
@@ -1163,13 +1166,13 @@ ifgdpats : "{" gdpats "}"        {}
 gdpat: "|" guardquals "->" exp   {$$=Hs::GuardedRHS{$2,$4};}
 
 pat: exp      {$$ = $1;}
-|   "!" aexp  {$$ = Hs::StrictPattern($2);}
+|   PREFIX_BANG aexp  {$$ = Hs::StrictPattern($2);}
 
 bindpat: exp  {$$ = $1;}
-|   "!" aexp  {$$ = Hs::StrictPattern($2);}
+|   PREFIX_BANG aexp  {$$ = Hs::StrictPattern($2);}
 
 apat: aexp    {$$ = $1;}
-|    "!" aexp {$$ = Hs::StrictPattern($2);}
+|    PREFIX_BANG aexp {$$ = Hs::StrictPattern($2);}
 
 apats1: apats1 apat {$$ = $1; $$.push_back($2);}
 |       apat        {$$.push_back($1);}

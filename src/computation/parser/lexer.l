@@ -330,6 +330,12 @@ yy::parser::symbol_type varid(const yy::parser::location_type& loc)
     }
 }
 
+std::map<std::string,std::pair<yy::parser::token_type,int>> prefix_reserved_symbols =
+{
+    {"~",{parser::token::TOK_PREFIX_TILDE,0}},
+    {"!",{parser::token::TOK_PREFIX_BANG,0}}
+};
+
 std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_symbols =
 {
     {"..",{parser::token::TOK_DOTDOT,0}},
@@ -396,6 +402,16 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_symbols =
 
 yy::parser::symbol_type varsym(bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc)
 {
+    if (precededByClosing == false and followedByOpening == true)
+    {
+        auto it = prefix_reserved_symbols.find(yytext);
+        if (it != prefix_reserved_symbols.end())
+        {
+            auto tok = it->second.first;
+            return yy::parser::symbol_type(tok, loc);
+        }
+    }
+
     auto it = reserved_symbols.find(yytext);
     if (it == reserved_symbols.end())
 	return yy::parser::make_VARSYM  (yytext, loc);
