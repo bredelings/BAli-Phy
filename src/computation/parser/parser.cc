@@ -2570,13 +2570,13 @@ namespace yy {
 
   case 105: // sigtype: ctype
 #line 792 "parser.y"
-                 {yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > ();}
+         { yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > (); }
 #line 2575 "parser.cc"
     break;
 
   case 106: // sigtypedoc: ctypedoc
 #line 794 "parser.y"
-                     {yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > ();}
+            { yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > (); }
 #line 2581 "parser.cc"
     break;
 
@@ -2606,7 +2606,7 @@ namespace yy {
 
   case 111: // strict_mark: strictness
 #line 804 "parser.y"
-                                            {yylhs.value.as < Hs::StrictLazy > () = yystack_[0].value.as < Hs::StrictLazy > ();}
+             { yylhs.value.as < Hs::StrictLazy > () = yystack_[0].value.as < Hs::StrictLazy > (); }
 #line 2611 "parser.cc"
     break;
 
@@ -2636,13 +2636,13 @@ namespace yy {
 
   case 116: // ctype: type
 #line 821 "parser.y"
-                                   {yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > ();}
+       { yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > (); }
 #line 2641 "parser.cc"
     break;
 
   case 117: // ctypedoc: ctype
 #line 823 "parser.y"
-                                   {yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > ();}
+          { yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > (); }
 #line 2647 "parser.cc"
     break;
 
@@ -2660,7 +2660,7 @@ namespace yy {
 
   case 120: // type: btype
 #line 836 "parser.y"
-                                   {yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > ();}
+      { yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > (); }
 #line 2665 "parser.cc"
     break;
 
@@ -2672,7 +2672,7 @@ namespace yy {
 
   case 122: // typedoc: type
 #line 839 "parser.y"
-                                   {yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > ();}
+         { yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > (); }
 #line 2677 "parser.cc"
     break;
 
@@ -2720,13 +2720,13 @@ namespace yy {
 
   case 130: // tyapp: atype
 #line 853 "parser.y"
-                                   {yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > ();}
+       { yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > (); }
 #line 2725 "parser.cc"
     break;
 
   case 131: // tyapp: tyop
 #line 854 "parser.y"
-                                   {yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > ();}
+       { yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > (); }
 #line 2731 "parser.cc"
     break;
 
@@ -2744,7 +2744,7 @@ namespace yy {
 
   case 134: // atype_docs: atype
 #line 864 "parser.y"
-                                   {yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > ();}
+            { yylhs.value.as < Hs::Type > () = yystack_[0].value.as < Hs::Type > (); }
 #line 2749 "parser.cc"
     break;
 

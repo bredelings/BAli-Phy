@@ -789,9 +789,9 @@ opt_sig: %empty  {}
 opt_tyconsig: %empty {}
 | "::" gtycon        {$$ = Hs::TypeCon({@2,$2});}
 
-sigtype: ctype   {$$ = $1;}
+sigtype: ctype
 
-sigtypedoc: ctypedoc {$$ = $1;}
+sigtypedoc: ctypedoc
 
 sig_vars: sig_vars "," var {$$ = $1; $$.push_back(Hs::Var({@3,$3}));}
 |         var              {$$.push_back(Hs::Var({@1,$1}));}
@@ -801,7 +801,7 @@ sigtypes1: sigtype               {$$.push_back($1);}
 
 /* ------------- Types ------------------------------------------- */
 
-strict_mark: strictness                     {$$ = $1;}
+strict_mark: strictness
 /*
 |            unpackedness                   {}
 |            unpackedness strictness        {$$ = $2;}
@@ -818,9 +818,9 @@ unpackedness: "{-# UNPACK" "#-}"
 ctype: "forall" tv_bndrs "." ctype {$$ = Hs::ForallType($2, $4);}
 |      context "=>" ctype          {$$ = Hs::ConstrainedType($1,$3);}
 /* |      ipvar "::" type             {} */
-|      type                        {$$ = $1;}
+|      type
 
-ctypedoc: ctype                    {$$ = $1;}
+ctypedoc: ctype
 
 /*
 ctypedoc:  "forall" tv_bnrds "." ctypedoc
@@ -833,10 +833,10 @@ context: btype                     {$$ = make_context($1);}
 
 context_no_ops: btype_no_ops       {$$ = make_context(Hs::make_tyapps($1));}
 
-type: btype                        {$$ = $1;}
+type: btype
 |     btype "->" ctype             {$$ = Hs::make_tyapps({Hs::TypeCon({@2,"->"}),$1,$3});}
 
-typedoc: type                      {$$ = $1;}
+typedoc: type
 /* typedoc: .... */
 
 btype: infixtype
@@ -850,8 +850,8 @@ btype_no_ops: atype_docs               {$$.push_back($1);}
 tyapps: tyapp                      {$$.push_back($1);}
 |       tyapps tyapp               {$$ = $1; $$.push_back($2);}
 
-tyapp: atype                       {$$ = $1;}
-|      tyop                        {$$ = $1;}
+tyapp: atype
+|      tyop
 
 tyop:  qtyconop                    {$$ = Hs::TypeCon({@1,$1});}
 |      tyvarop                     {$$ = Hs::TypeVar({@1,$1});}
@@ -861,7 +861,7 @@ tyop:  qtyconop                    {$$ = Hs::TypeCon({@1,$1});}
 */
 
 
-atype_docs: atype /* FIX */        {$$ = $1;}
+atype_docs: atype /* FIX */
 
 /* '*' is either a binary type operator (m * n) or the * kind, unless the StarIsType
  * extension is enabled.
