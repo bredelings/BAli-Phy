@@ -305,8 +305,7 @@
 %type <std::vector<Hs::Type>> btype_no_ops
 %type <Hs::Type> infixtype
 %type <Hs::Type> ftype
-%type <std::vector<Hs::Type>> tyapps
-%type <Hs::Type> tyapp
+%type <Hs::Type> tyarg
 %type <Hs::Type> tyop
 %type <Hs::Type> atype_docs
 %type <Hs::Type> atype
@@ -469,7 +468,7 @@
 %type  <int> bars
 */
 
-%expect 141
+%expect 134
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -848,13 +847,11 @@ infixtype: ftype
 btype_no_ops: atype_docs               {$$.push_back($1);}
 |             btype_no_ops atype_docs  {$$ = $1; $$.push_back($2);}
 
-ftype: tyapps                      {$$ = Hs::make_tyapps($1);}
-
-tyapps: tyapp                      {$$.push_back($1);}
-|       tyapps tyapp               {$$ = $1; $$.push_back($2);}
-
-tyapp: atype
+ftype: atype
 |      tyop
+|      ftype tyarg                 { $$ = Hs::TypeApp($1,$2); }
+
+tyarg: atype
 
 tyop:  qtyconop                    {$$ = Hs::TypeCon({@1,$1});}
 |      tyvarop                     {$$ = Hs::TypeVar({@1,$1});}
