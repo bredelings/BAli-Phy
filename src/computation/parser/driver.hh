@@ -64,6 +64,11 @@ public:
     bool trace_scanning;
     // The token's location used by the scanner.
     yy::location location;
+
+    int prec_close_count = 0;
+    void step_closing_token() {if (prec_close_count > 0) prec_close_count--;}
+    void set_closing_token() {prec_close_count = 2;}
+    bool check_closing_token() {return prec_close_count > 0;}
 };
 
 Haskell::Module parse_module_file(const std::string& content, const std::string& input_name);

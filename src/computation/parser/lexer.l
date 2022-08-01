@@ -21,7 +21,7 @@
 
 // Forward declarations
 yy::parser::symbol_type varid(const yy::parser::location_type&);
-yy::parser::symbol_type varsym(const yy::parser::location_type&);
+yy::parser::symbol_type varsym(bool precededByClosing, bool followedByOpening, const yy::parser::location_type&);
 yy::parser::symbol_type consym(const yy::parser::location_type&);
 
 yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
@@ -113,15 +113,15 @@ signed       {negative}?
 
 %{
   // Code run each time a pattern is matched.
-  # define YY_USER_ACTION  loc.columns (yyleng);
+  # define YY_USER_ACTION  loc.columns (yyleng); drv.step_closing_token();
 %}
 
 %%
 
+  /* Code run each time yylex is called. */
 %{
   // A handy shortcut to the location held by the driver.
   yy::location& loc = drv.location;
-  // Code run each time yylex is called.
   loc.step ();
 %}
 
@@ -191,9 +191,9 @@ signed       {negative}?
   /* unboxed tuples: (# and #) */
 
 <INITIAL,option_prags>"("      return yy::parser::make_OPAREN (loc);
-<INITIAL,option_prags>")"      return yy::parser::make_CPAREN (loc);
+<INITIAL,option_prags>")"      drv.set_closing_token(); return yy::parser::make_CPAREN (loc);
 <INITIAL,option_prags>"["      return yy::parser::make_OBRACK (loc);
-<INITIAL,option_prags>"]"      return yy::parser::make_CBRACK (loc);
+<INITIAL,option_prags>"]"      drv.set_closing_token(); return yy::parser::make_CBRACK (loc);
 <INITIAL,option_prags>","      return yy::parser::make_COMMA  (loc);
 <INITIAL,option_prags>";"      return yy::parser::make_SEMI   (loc);
 <INITIAL,option_prags>"`"      return yy::parser::make_BACKQUOTE (loc);
@@ -201,12 +201,12 @@ signed       {negative}?
   /* action: push a "NoLayout" context into the stack */
 "{"      drv.push_context(); return yy::parser::make_OCURLY (loc);
   /* action: pop the top context from the stack */
-"}"      drv.pop_context(); return yy::parser::make_CCURLY (loc);
+"}"      drv.set_closing_token(); drv.pop_context(); return yy::parser::make_CCURLY (loc);
 
-<INITIAL,option_prags>{qvarid}      return yy::parser::make_QVARID (yytext, loc);
-<INITIAL,option_prags>{qconid}      return yy::parser::make_QCONID (yytext, loc);
-<INITIAL,option_prags>{varid}       return varid(loc);
-<INITIAL,option_prags>{conid}       return yy::parser::make_CONID  (yytext, loc);
+<INITIAL,option_prags>{qvarid}      drv.set_closing_token(); return yy::parser::make_QVARID (yytext, loc);
+<INITIAL,option_prags>{qconid}      drv.set_closing_token(); return yy::parser::make_QCONID (yytext, loc);
+<INITIAL,option_prags>{varid}       drv.set_closing_token(); return varid(loc);
+<INITIAL,option_prags>{conid}       drv.set_closing_token(); return yy::parser::make_CONID  (yytext, loc);
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
 
@@ -214,24 +214,26 @@ signed       {negative}?
      followedByOpening                       -> prefix
      precededByClosing                       -> suffix
      otherwise                               -> loose infix */
-<INITIAL>{varsym}       return varsym(loc);
+<INITIAL>{varsym}/"{-"                   return varsym(drv.check_closing_token(), false, loc);
+<INITIAL>{varsym}/[{([\"\'_A-Za-z0-9]    return varsym(drv.check_closing_token(), true, loc);
+<INITIAL>{varsym}                        return varsym(drv.check_closing_token(), false, loc);
 
 <INITIAL>{qvarsym}      return yy::parser::make_QVARSYM  (yytext,loc);
 <INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (yytext,loc);
 <INITIAL>{consym}       return consym(loc);
 
-<INITIAL>"-"{decimal}"#"                        return make_boxed_integer(10,false,0,loc);
-<INITIAL>{decimal}"#"                           return make_boxed_integer(10,true,0,loc);
-<INITIAL>{decimal}                              return make_integer(10,true,0,loc);
+<INITIAL>"-"{decimal}"#"                        drv.set_closing_token(); return make_boxed_integer(10,false,0,loc);
+<INITIAL>{decimal}"#"                           drv.set_closing_token(); return make_boxed_integer(10,true,0,loc);
+<INITIAL>{decimal}                              drv.set_closing_token(); return make_integer(10,true,0,loc);
   /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
-<INITIAL>0[oO]{numspc}{octal}                   return make_integer( 8,true,2,loc);
-<INITIAL>0[xX]{numspc}{hexadecimal}             return make_integer(16,true,2,loc);
+<INITIAL>0[oO]{numspc}{octal}                   drv.set_closing_token(); return make_integer( 8,true,2,loc);
+<INITIAL>0[xX]{numspc}{hexadecimal}             drv.set_closing_token(); return make_integer(16,true,2,loc);
 
   /* negative literals depend on an extension */
-<INITIAL>{floating_point}                       return make_rational(loc);
+<INITIAL>{floating_point}                       drv.set_closing_token(); return make_rational(loc);
 
-<INITIAL>\'({graphicnonq}|" "|{escape})\'         return make_char(loc);
-<INITIAL>[\"]({graphicnonqq}|" "|{escape})*[\"]   return make_string(loc);
+<INITIAL>\'({graphicnonq}|" "|{escape})\'         drv.set_closing_token(); return make_char(loc);
+<INITIAL>[\"]({graphicnonqq}|" "|{escape})*[\"]   drv.set_closing_token(); return make_string(loc);
 
 <*>.          {
              throw yy::parser::syntax_error
@@ -392,7 +394,7 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_symbols =
 
 */
 
-yy::parser::symbol_type varsym(const yy::parser::location_type& loc)
+yy::parser::symbol_type varsym(bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc)
 {
     auto it = reserved_symbols.find(yytext);
     if (it == reserved_symbols.end())
