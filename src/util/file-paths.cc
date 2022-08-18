@@ -4,11 +4,11 @@
 #include "util/string/join.H"
 #include <vector>
 
-#include <boost/filesystem/operations.hpp>
+#include <filesystem>
 
 using std::vector;
 using std::string;
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 using std::optional;
 
@@ -16,8 +16,7 @@ optional<fs::path> check_file_in_path(const vector<string>& paths, const fs::pat
 {
     for(const string& prefix: paths)
     {
-	fs::path filename = prefix;
-	filename /= file_path;
+	auto filename = prefix / file_path;
 	if (not fs::exists(filename)) continue;
 	return filename;
     }
@@ -72,8 +71,7 @@ fs::path find_exe_path(const fs::path& argv0)
 	if (loc)
 	    program_location = *loc;
     }
-    program_location = canonical(program_location);
-    program_location.remove_filename();
+    program_location = canonical(program_location).parent_path();
 
     return program_location;
 }

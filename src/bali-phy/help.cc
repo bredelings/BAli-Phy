@@ -2,8 +2,8 @@
 
 #include <regex>
 #include <list>
+#include <filesystem>
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
 #include "cmd_line.H"
 #include "paths.H"
@@ -28,7 +28,7 @@ using std::optional;
 namespace po = boost::program_options;
 using po::variables_map;
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 string get_topic_from_string(const string& s)
 {

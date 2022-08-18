@@ -29,7 +29,7 @@
 
 #include <algorithm>                                // for copy
 #include <boost/smart_ptr/intrusive_ptr.hpp>        // for intrusive_ptr
-#include <boost/filesystem.hpp>                     // for boost::filesystem::path
+#include <filesystem>                               // for std::filesystem::path
 #include <memory>                                   // for shared_ptr, alloc...
 #include <optional>                                 // for optional
 #include <string>                                   // for string
@@ -318,7 +318,7 @@ expression_ref get_alphabet_expression(const alphabet& a);
 
 Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
                             const Model::key_map_t& k,
-                            const boost::filesystem::path& program_filename,
+                            const std::filesystem::path& program_filename,
 
                             const std::vector<expression_ref>& alphabet_exps,
                             const std::vector<std::pair<std::string,std::string>>& filename_ranges,

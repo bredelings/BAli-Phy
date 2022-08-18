@@ -41,9 +41,9 @@ namespace mpi = boost::mpi;
 #include <sstream>
 #include <new>
 #include <map>
+#include <filesystem>
 
 #include <boost/program_options.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/chrono.hpp>
 
 #include "substitution/substitution.H"
@@ -75,7 +75,7 @@ namespace mpi = boost::mpi;
 #include "computation/expression/expression.H" // for parse_object( )
 #include "computation/loader.H"
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace chrono = boost::chrono;
 
 namespace po = boost::program_options;

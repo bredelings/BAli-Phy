@@ -4,10 +4,10 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <boost/filesystem/path.hpp>
+#include <filesystem>
 
-std::optional<boost::filesystem::path> check_file_in_path(const std::vector<std::string>& paths, const boost::filesystem::path& file_path);
-boost::filesystem::path find_file_in_path(const std::vector<std::string>& paths, const boost::filesystem::path& file_path);
-boost::filesystem::path find_exe_path(const boost::filesystem::path& argv0);
-std::vector<boost::filesystem::path> clean_paths(const std::vector<boost::filesystem::path>& paths);
+std::optional<std::filesystem::path> check_file_in_path(const std::vector<std::string>& paths, const std::filesystem::path& file_path);
+std::filesystem::path find_file_in_path(const std::vector<std::string>& paths, const std::filesystem::path& file_path);
+std::filesystem::path find_exe_path(const std::filesystem::path& argv0);
+std::vector<std::filesystem::path> clean_paths(const std::vector<std::filesystem::path>& paths);
 #endif

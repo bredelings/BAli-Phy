@@ -1,11 +1,11 @@
 #include "util/io.H"
 
-#include <boost/filesystem/operations.hpp>
+#include <filesystem>
 #include "util/myexception.H"
 
 using namespace std;
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 
 /// \brief Read a line from a file with their UNIX or DOS or Mac line endings.

@@ -1,4 +1,4 @@
-#include <boost/filesystem/operations.hpp>
+#include <filesystem>
 #include <iostream>
 
 #include "util/io.H"
@@ -19,7 +19,7 @@ using std::ofstream;
 using std::ostream;
 using std::shared_ptr;
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 using po::variables_map;
 
@@ -97,7 +97,7 @@ string run_name(const variables_map& args)
 	{
 	    auto [name,range] = split_on_last(':',filename_range);
             auto p = fs::absolute( fs::path( name ) );
-            auto filename = remove_extension( fs::path( name ).leaf().string() );
+            auto filename = fs::path(name).filename().stem().string();
             if (not seen.count(p))
             {
                 seen.insert(p);
@@ -190,7 +190,7 @@ void run_info(json& info, int /*proc_id*/, int argc, char* argv[])
 	    env[var] = evar;
 
     info["command"] = command;
-    info["directory"] = fs::initial_path().string();
+    info["directory"] = fs::current_path().string();
     info["start time"] = start_time;
     info["environment"] = env;
     info["pid"] = getpid();
@@ -237,7 +237,7 @@ vector<shared_ptr<ostream>> init_files(int proc_id, const string& dirname,
 	s_out<<"start time: "<<ctime(&now)<<endl;
     }
     print_version_info(s_out);
-    s_out<<"directory: "<<fs::initial_path().string()<<endl;
+    s_out<<"directory: "<<fs::current_path().string()<<endl;
     s_out<<"subdirectory: "<<dirname<<endl;
     if (getenv("SLURM_JOBID"))
 	s_out<<"SLURM_JOBID: "<<getenv("SLURM_JOBID")<<endl;

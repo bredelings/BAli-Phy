@@ -1,7 +1,7 @@
 #include "A-T-model.H"
 #include <algorithm>                                // for max, find, min
+#include <filesystem>                               // for path, operator/
 #include <boost/dynamic_bitset.hpp>                 // for dynamic_bitset
-#include <boost/filesystem/path.hpp>                // for path, operator/
 #include <boost/program_options.hpp>                // for program_options
 #include <map>                                      // for map, map<>::mappe...
 #include <optional>                                 // for optional
@@ -42,7 +42,7 @@ class module_loader;
 
 extern int log_verbose;
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 namespace po = boost::program_options;
 using po::variables_map;

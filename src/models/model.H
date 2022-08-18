@@ -32,7 +32,7 @@
 #include <string>                                   // for string
 #include <utility>                                  // for pair
 #include <vector>                                   // for vector
-#include <boost/filesystem/path.hpp>
+#include <filesystem>
 #include "computation/context.H"                    // for context
 #include "computation/expression/expression_ref.H"  // for EVector, expressi...
 #include "computation/module.H"                     // for Module
@@ -113,5 +113,5 @@ std::string show_probability_expression(const expression_ref&);
 
 std::vector< std::string > show_probability_expressions(const context& C);
 
-void execute_file(const std::shared_ptr<module_loader>& L, const boost::filesystem::path& filename);
+void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename);
 #endif

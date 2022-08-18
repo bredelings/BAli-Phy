@@ -27,7 +27,7 @@
 
 #include <vector>
 
-#include <boost/filesystem/operations.hpp>
+#include <filesystem>
 
 #include "link-partitions.H"
 #include "util/mapping.H"
@@ -51,7 +51,7 @@ using std::endl;
 using std::shared_ptr;
 using std::optional;
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 using po::variables_map;

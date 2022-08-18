@@ -13,7 +13,7 @@ using std::set;
 using std::map;
 using std::string;
 using std::optional;
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 // TODO: reject HKY+HKY -- reduce constraints.
 //       reject HKY model with amino acid data.
@@ -325,11 +325,11 @@ void Rules::add_rule(const fs::path& path, const fs::path& rel_path)
     }
     catch (const std::exception& e)
     {
-	throw myexception()<<"Error parsing JSON function description '"<<path.string()<<"'\n:  "<<e.what();
+	throw myexception()<<"Error parsing JSON function description "<<path<<"\n:  "<<e.what();
     }
     catch (...)
     {
-	throw myexception()<<"Error parsing JSON function description '"<<path.string()<<"'\n";
+	throw myexception()<<"Error parsing JSON function description "<<path<<"\n";
     }
 
     string name = rule.get<string>("name");

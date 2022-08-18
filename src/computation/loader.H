@@ -5,7 +5,7 @@
 #include <vector>
 #include <set>
 #include <map>
-#include <boost/filesystem/path.hpp>
+#include <filesystem>
 #include "computation/module.H"
 #include "computation/optimization/simplifier.H" // for simplifier_options
 
@@ -18,19 +18,19 @@ public:
 
     std::vector<std::string> args;
 
-    bool try_add_plugin_path(const boost::filesystem::path& path);
+    bool try_add_plugin_path(const std::filesystem::path& path);
   
-    boost::filesystem::path find_module(const std::string& modid) const;
-    boost::filesystem::path find_plugin(const std::string& plugin_name) const;
+    std::filesystem::path find_module(const std::string& modid) const;
+    std::filesystem::path find_plugin(const std::string& plugin_name) const;
     /// Load the module file from disk.
     /// Add the hard-coded elements to the module.
-    Module load_module_from_file(const boost::filesystem::path&) const;
+    Module load_module_from_file(const std::filesystem::path&) const;
     Module load_module(const std::string&) const;
-    module_loader(const std::vector<boost::filesystem::path>& paths);
+    module_loader(const std::vector<std::filesystem::path>& paths);
 };
 
 expression_ref load_builtin(const module_loader& L, const std::string& symbol_name, const std::string& plugin_name, int n, const std::string& fname);
-expression_ref load_builtin(const std::string& symbol_name, const boost::filesystem::path& filename, int n, const std::string& fname);
+expression_ref load_builtin(const std::string& symbol_name, const std::filesystem::path& filename, int n, const std::string& fname);
 
 extern const std::string plugin_extension;
 #endif

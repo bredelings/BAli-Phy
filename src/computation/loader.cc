@@ -3,7 +3,6 @@
 #include "computation/loader.H"
 #include "computation/module.H"
 #include "computation/operations.H"
-#include <boost/filesystem/operations.hpp>
 #include "expression/lambda.H"
 #include "util/file-paths.H"
 #include "parser/driver.hh"
@@ -11,7 +10,7 @@
 
 #include "util/io.H"
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 using std::string;
 using std::vector;

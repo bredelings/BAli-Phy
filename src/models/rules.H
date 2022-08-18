@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include "util/ptree.H"
-#include <boost/filesystem/operations.hpp>
+#include <filesystem>
 
 typedef ptree Rule;
 
@@ -21,9 +21,9 @@ class Rules
 {
     std::map<std::string,Rule> rules;
 
-    std::vector<boost::filesystem::path> path_list;
+    std::vector<std::filesystem::path> path_list;
 
-    void add_rule(const boost::filesystem::path&, const boost::filesystem::path&);
+    void add_rule(const std::filesystem::path&, const std::filesystem::path&);
 
 public:
     std::optional<Rule> get_rule_for_func(const std::string& s) const;
@@ -34,7 +34,7 @@ public:
 
     type_t get_result_type(const ptree& func) const;
 
-    Rules(const std::vector<boost::filesystem::path>& path_list);
+    Rules(const std::vector<std::filesystem::path>& path_list);
 };
 
 #endif

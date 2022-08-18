@@ -1,5 +1,5 @@
+#include <filesystem>
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
 #include "cmd_line.H"
 #include "paths.H"
@@ -26,7 +26,7 @@ using po::variables_map;
 
 const string trailing_args_separator = "--";
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 /// Parse the file $HOME/.bali-phy and add the options it contains to the command line arguments.
 ///

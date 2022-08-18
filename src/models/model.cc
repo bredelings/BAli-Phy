@@ -45,7 +45,7 @@ using boost::dynamic_pointer_cast;
 template <typename T>
 using Bounds = Box<bounds<T>>;
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 Model::Model(const context_ref& C, const key_map_t& k)
     :context(C),keys(new key_map_t(k))
