@@ -181,10 +181,10 @@ sub install_archive
 	error_exit("install: Package $name is in a broken state. Try uninstalling first.");
     }
     
-    if (!is_new_version($name,$version))
+    if (!is_same_or_newer_version($name,$version))
     {
 	my $installed_version = get_package_version($name);
-	error_exit("install: Version $version not newer than installed version $installed_version.\nAborting installation.");
+	error_exit("install: Version $version not the same or newer than installed version $installed_version.\nAborting installation.");
     }
 
     check_overwrite($archive,$name);
@@ -563,6 +563,16 @@ sub is_new_version
 
     my $installed_version = get_package_version($name);
     return (version->declare("v".$version) > version->declare("v".$installed_version));
+}
+
+sub is_same_or_newer_version
+{
+    my $name = shift;
+    my $version = shift;
+    return 1 if (!is_package_installed($name));
+
+    my $installed_version = get_package_version($name);
+    return (version->declare("v".$version) >= version->declare("v".$installed_version));
 }
 
 
