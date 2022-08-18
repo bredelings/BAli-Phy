@@ -495,7 +495,7 @@ void check_partitions_informative(const vector<partition>& partitions)
 
 string get_graph_name(string filepath)
 {
-    return fs::path(filepath).filename().stem();
+    return fs::path(filepath).filename().stem().string();
 }
 
 bool partition_wanders_over(const partition& p1,const partition& p2)
