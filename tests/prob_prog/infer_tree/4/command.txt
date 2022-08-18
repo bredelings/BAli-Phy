@@ -1,1 +1,1 @@
--m Main.hs --iter=5 --name ignore-output --- 5d-muscle.fasta
+-m Main 5d-muscle.fasta --iter=5 --name ignore-output 

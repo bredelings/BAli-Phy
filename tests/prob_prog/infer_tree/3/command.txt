@@ -1,1 +1,1 @@
--m Main.hs bglobin.fasta --iter=5 --name ignore-output
+-m Main bglobin.fasta --iter=5 --name ignore-output
