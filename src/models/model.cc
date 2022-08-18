@@ -45,6 +45,8 @@ using boost::dynamic_pointer_cast;
 template <typename T>
 using Bounds = Box<bounds<T>>;
 
+namespace fs = boost::filesystem;
+
 Model::Model(const context_ref& C, const key_map_t& k)
     :context(C),keys(new key_map_t(k))
 { }
@@ -308,7 +310,7 @@ Model::key_map_t parse_key_map(const vector<string>& key_value_strings)
     return keys;
 }
 
-void execute_file(const std::shared_ptr<module_loader>& L, const std::string& filename)
+void execute_file(const std::shared_ptr<module_loader>& L, const fs::path& filename)
 {
     Program P(L);
     auto m = L->load_module_from_file(filename);

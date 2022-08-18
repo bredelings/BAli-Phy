@@ -24,11 +24,11 @@ const string plugin_extension = ".dll";
 const string plugin_extension = ".so";
 #endif
 
-bool module_loader::try_add_plugin_path(const string& path)
+bool module_loader::try_add_plugin_path(const fs::path& filepath)
 {
-    if (fs::exists(path))
+    if (fs::exists(filepath))
     {
-	plugins_path.push_back(path);
+	plugins_path.push_back(filepath.string());
 	return true;
     }
     else
@@ -44,15 +44,14 @@ fs::path get_relative_path_from_haskell_id(const string& modid)
     return file_path;
 }
 
-string module_loader::find_module(const string& modid) const
+fs::path module_loader::find_module(const string& modid) const
 {
     try
     {
 	fs::path path = get_relative_path_from_haskell_id(modid);
 	path.replace_extension(".hs");
     
-	fs::path filename = find_file_in_path(plugins_path, "haskell"/path );
-	return filename.string();
+	return find_file_in_path(plugins_path, "haskell"/path );
     }
     catch (myexception& e)
     {
@@ -90,15 +89,15 @@ set<string> language_options(string& mod)
     return options;
 }
 
-Module module_loader::load_module_from_file(const string& filename) const
+Module module_loader::load_module_from_file(const fs::path& filename) const
 {
-    if (not modules.count(filename))
+    if (not modules.count(filename.string()))
     {
 	try
 	{
-            auto fname = std::make_shared<string>(filename);
+            auto fname = std::make_shared<string>(filename.string());
 
-	    string file_contents = read_file(filename,"module");
+	    string file_contents = read_file(filename.string(), "module");
 
 	    auto lang_options = language_options(file_contents);
 
@@ -107,27 +106,27 @@ Module module_loader::load_module_from_file(const string& filename) const
 	    if (dump_parsed)
 		std::cout<<m.print()<<std::endl;
 
-	    modules.insert( {filename, Module(m, lang_options)} );
+	    modules.insert( {filename.string(), Module(m, lang_options)} );
 
             // Save a reference to the string that we allocated, so we can clean it up later.
-            modules.at(filename).filename = fname;
+            modules.at(filename.string()).filename = fname;
 	}
 	catch (myexception& e)
 	{
-	    e.prepend("Loading module from file '"+filename+"':\n  ");
+	    e.prepend("Loading module from file '"+filename.string()+"':\n  ");
 	    throw;
 	}
     }
 
-    return modules.at(filename);
+    return modules.at(filename.string());
 }
 
 Module module_loader::load_module(const string& module_name) const
 {
-    string filename = find_module(module_name);
+    auto filename = find_module(module_name);
     Module M = load_module_from_file(filename);
     if (M.name != module_name)
-	throw myexception()<<"Loading module file '"<<filename<<"'\n  Expected module '"<<module_name<<"'\n  Found module    '"<<M.name<<"'";
+	throw myexception()<<"Loading module file "<<filename<<"\n  Expected module '"<<module_name<<"'\n  Found module    '"<<M.name<<"'";
     return M;
 }
 
@@ -139,13 +138,13 @@ module_loader::module_loader(const vector<fs::path>& path_list)
 
 #include <dlfcn.h>
 
-expression_ref load_builtin_(const string& filename, const string& symbol_name, int n, const string& fname)
+expression_ref load_builtin_(const fs::path& filename, const string& symbol_name, int n, const string& fname)
 {
     // If not, then I think its treated as being already in WHNF, and not evaluated.
     if (n < 1) throw myexception()<<"A builtin must have at least 1 argument";
 
     // load the library
-    void* library = dlopen(filename.c_str(), RTLD_LAZY);
+    void* library = dlopen(filename.string().c_str(), RTLD_LAZY);
     if (not library)
 	throw myexception() << "Cannot load library: " << dlerror();
 
@@ -156,7 +155,7 @@ expression_ref load_builtin_(const string& filename, const string& symbol_name, 
     void* fn =  dlsym(library, symbol_name.c_str());
     const char* dlsym_error = dlerror();
     if (dlsym_error)
-	throw myexception() << "Cannot load symbol for builtin '"<<fname<<"' from file '"<<filename<<": " << dlsym_error;
+	throw myexception() << "Cannot load symbol for builtin '"<<fname<<"' from file "<<filename<<": " << dlsym_error;
     
     // Create the operation
     Operation O(n, (operation_fn)fn, fname);
@@ -165,21 +164,20 @@ expression_ref load_builtin_(const string& filename, const string& symbol_name, 
     return lambda_expression(O);
 }
 
-expression_ref load_builtin(const string& symbol_name, const string& filename, int n, const string& function_name)
+expression_ref load_builtin(const string& symbol_name, const fs::path& filename, int n, const string& function_name)
 {
     return load_builtin_(filename, symbol_name, n, function_name);
 }
 
-string module_loader::find_plugin(const string& plugin_name) const
+fs::path module_loader::find_plugin(const string& plugin_name) const
 {
-    fs::path filepath = find_file_in_path(plugins_path, plugin_name + plugin_extension);
-    return filepath.string();
+    return find_file_in_path(plugins_path, plugin_name + plugin_extension);
 }
 
 expression_ref load_builtin(const module_loader& L, const string& symbol_name, const string& plugin_name, int n, const string& function_name)
 {
     // Presumably on windows we don't need to search separately for ".DLL", since the FS isn't case sensitive.
-    string filename = L.find_plugin(plugin_name);
+    auto filename = L.find_plugin(plugin_name);
     return load_builtin(symbol_name, filename, n, function_name);
 }
 
