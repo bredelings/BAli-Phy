@@ -15,6 +15,20 @@
 #include "computation/haskell/haskell.H"
 #include "types.H"
 
+// The kind-inference paper treats substitutions as a list of terms of the form
+// * a     (declaration)
+// * b ~ a (definition)
+// I think that you have a sequence like {a, b ~ a} then you can't later define a,
+// since it is already "declared".
+
+struct unification_env
+{
+    immer::map<Hs::TypeVar, Hs::TypeVar> mapping1;
+    immer::map<Hs::TypeVar, Hs::TypeVar> mapping2;
+    Hs::TypeVar fresh_tyvar() const;
+    Hs::TypeVar not_in_scope_tyvar(const Hs::TypeVar& tv1, const Hs::TypeVar& tv2);
+};
+
 Hs::ModuleDecls typecheck(const std::string& s, const Module& m, Hs::ModuleDecls M);
 
 Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type type, const Haskell::Type& constraint);
@@ -203,7 +217,7 @@ struct typechecker_state: FreshVarSource
 
     bool add_substitution(const Hs::MetaTypeVar& a, const Hs::Type& type);
 
-    bool maybe_unify(const Hs::Type& t1, const Hs::Type& t2);
+    bool maybe_unify_(bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2);
 
     void unify(const Hs::Type& t1, const Hs::Type& t2);
 
