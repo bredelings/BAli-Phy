@@ -108,14 +108,14 @@ string run_name(const variables_map& args)
     }
     else if (args.count("model"))
     {
-	string filename = args["model"].as<string>();
+	string filename = args["model"].as<vector<string>>()[0];
 	auto M = module_loader({}).load_module_from_file(filename);
 	name = M.name;
 	name = get_unqualified_name(name);
     }
     else if (args.count("Model"))
     {
-	name = args["Model"].as<string>();
+	name = args["Model"].as<vector<string>>()[0];
 	name = get_unqualified_name(name);
     }
 

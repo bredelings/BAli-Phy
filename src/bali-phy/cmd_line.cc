@@ -36,18 +36,19 @@ namespace fs = boost::filesystem;
 void load_bali_phy_rc(po::variables_map& args,const po::options_description& options)
 {
     if (getenv("HOME")) {
-	string home_dir = getenv("HOME");
+        fs::path home_dir = getenv("HOME");
 	if (not fs::exists(home_dir))
-	    cerr<<"Home directory '"<<home_dir<<"' does not exist!"<<endl;
+	    cerr<<"Home directory "<<home_dir<<" does not exist!"<<endl;
 	else if (not fs::is_directory(home_dir))
-	    cerr<<"Home directory '"<<home_dir<<"' is not a directory!"<<endl;
+	    cerr<<"Home directory "<<home_dir<<" is not a directory!"<<endl;
 	else {
-	    string filename = home_dir + "/.bali-phy";
+	    auto filename = home_dir / ".bali-phy";
 
-	    if (fs::exists(filename)) {
+	    if (fs::exists(filename))
+            {
 		if (log_verbose >= 1)
 		    cerr<<"Reading ~/.bali-phy ...";
-		checked_ifstream file(filename, "config file");
+		checked_ifstream file(filename.string(), "config file");
 
 		store(parse_config_file(file, options), args);
 		notify(args);
@@ -204,8 +205,8 @@ po::options_description model_options(int level)
 
     if (level >= 2)
 	model.add_options()
-	    ("model,m",value<string>(),"File containing hierarchical model.")
-	    ("Model,M",value<string>(),"Module containing hierarchical model.")
+	    ("model,m",value<vector<string>>()->multitoken(),"File containing hierarchical model.")
+            ("Model,M",value<vector<string>>()->multitoken(),"Module containing hierarchical model.")
 	    ("print,p",value<string>(),"Evaluate and print expression.");
     return model;
 }
@@ -218,7 +219,7 @@ po::options_description developer_options()
     developer.add_options()
 	("test-module",value<string>(),"Parse and optimize the given module")
 	("--no-type-check","Type-check modules")
-	("run-module",value<string>(),"Run the given module")
+	("run-module,r",value<vector<string>>()->multitoken(),"Run the given module")
 	("partition-weights",value<string>(),"File containing tree with partition weights")
 	("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
 	("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")

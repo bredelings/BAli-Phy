@@ -431,6 +431,23 @@ void run_print_expression(const string& argv0, variables_map& args, const shared
 
 int simple_size(const expression_ref& E);
 
+std::pair<string, vector<string>> extract_prog_args(variables_map& args, int argc, char* argv[], const string& cmd)
+{
+    auto args_v = args[cmd].as<vector<string>>();
+
+    if (args_v.empty())
+        throw myexception()<<"--"<<cmd<<" requires at least one argument";
+
+    string name = args_v[0];
+
+    args_v.erase(args_v.begin());
+
+    for(auto& arg: trailing_args(argc, argv, trailing_args_separator))
+        args_v.push_back(arg);
+
+    return {name, args_v};
+}
+
 int main(int argc,char* argv[])
 { 
     int n_procs = 1;
@@ -522,7 +539,12 @@ int main(int argc,char* argv[])
         }
         else if (args.count("run-module"))
         {
-            string filename = args["run-module"].as<string>();
+            auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "run-module");
+            L->args = args_v;
+
+            fs::path filename = filename_s;
+            if (filename.extension() != ".hs")
+                filename += ".hs";
 
             execute_file(L, filename);
             exit(0);
@@ -585,14 +607,22 @@ int main(int argc,char* argv[])
             Program P(L, Program::exe_type::log_list);
             if (args.count("model"))
             {
-                auto filename = args["model"].as<string>();
+                auto [filename_s, args_v] = extract_prog_args(args, argc, argv, "model");
+                L->args = args_v;
+
+                fs::path filename = filename_s;
+                if (filename.extension() != ".hs")
+                    filename += ".hs";
+
                 auto m = P.get_module_loader()->load_module_from_file(filename);
                 P.add(m);
                 P.main = m.name + ".main";
             }
             else if (args.count("Model"))
             {
-                auto module_name = args["Model"].as<string>();
+                auto [module_name, args_v] = extract_prog_args(args, argc, argv, "Model");
+                L->args = args_v;
+
                 P.add(module_name);
                 P.main = module_name + ".main";
             }
