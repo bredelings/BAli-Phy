@@ -75,12 +75,12 @@ class istream_or_ifstream: public std::istream
     owned_ptr<checked_filebuf> buf;
     nullbuf buf_null;
 public:
-    void open(std::istream&, const std::string&, const std::string&);
-    void open(std::istream&, const std::string&, const std::string&,const std::string&);
+    void open(std::istream&, const std::string&, const std::filesystem::path&);
+    void open(std::istream&, const std::string&, const std::filesystem::path&,const std::string&);
 
     istream_or_ifstream();
-    istream_or_ifstream(std::istream&, const std::string&, const std::string&);
-    istream_or_ifstream(std::istream&, const std::string&, const std::string&, const std::string&);
+    istream_or_ifstream(std::istream&, const std::string&, const std::filesystem::path&);
+    istream_or_ifstream(std::istream&, const std::string&, const std::filesystem::path&, const std::string&);
 };
 
 class ostream_or_ofstream: public std::ostream
@@ -88,12 +88,12 @@ class ostream_or_ofstream: public std::ostream
     owned_ptr<checked_filebuf> buf;
     nullbuf buf_null;
 public:
-    void open(std::ostream&, const std::string&, const std::string&);
-    void open(std::ostream&, const std::string&, const std::string&,const std::string&);
+    void open(std::ostream&, const std::string&, const std::filesystem::path&);
+    void open(std::ostream&, const std::string&, const std::filesystem::path&,const std::string&);
 
     ostream_or_ofstream();
-    ostream_or_ofstream(std::ostream&, const std::string&, const std::string&);
-    ostream_or_ofstream(std::ostream&, const std::string&, const std::string&, const std::string&);
+    ostream_or_ofstream(std::ostream&, const std::string&, const std::filesystem::path&);
+    ostream_or_ofstream(std::ostream&, const std::string&, const std::filesystem::path&, const std::string&);
 };
 
 class null_ostream: public std::ostream

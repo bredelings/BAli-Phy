@@ -5,6 +5,7 @@
 #include <vector>
 #include <list>
 #include <string>
+#include <filesystem>
 #include <boost/program_options.hpp>
 #include "sequence/sequence.H"
 #include "sequence/alphabet.H"
@@ -17,13 +18,13 @@ std::string get_alphabet_name(const boost::program_options::variables_map& args)
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true, bool remove_empty_columns=true);
 
 /// Load an alignment from file
-std::vector<sequence> load_sequences_with_range(const std::string& filename, const std::string&_range);
+std::vector<sequence> load_sequences_with_range(const std::filesystem::path& filename, const std::string&_range);
 
 /// Load an alignment from file
-alignment load_alignment_with_range(const std::string& filename, const std::string&_range, const std::string& alph_name = "");
+alignment load_alignment_with_range(const std::filesystem::path& filename, const std::string&_range, const std::string& alph_name = "");
 
 /// Load an alignment from file
-alignment load_alignment(const std::string& filename, const std::string& alph_name = "", bool remove_empty_columns = true);
+alignment load_alignment(const std::filesystem::path& filename, const std::string& alph_name = "", bool remove_empty_columns = true);
 
 /// Load an alignment from file
 alignment load_alignment(const std::vector<sequence>& sequences, const std::string& alph_name = "", bool remove_empty_columns = true);

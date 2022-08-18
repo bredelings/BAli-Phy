@@ -23,6 +23,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <string>
 #include <istream>
+#include <filesystem>
+
 #include "tree/tree.H"
 
 
@@ -68,7 +70,7 @@ public:
   virtual void read(std::istream& file);
 
   /// load this tree from the file "\a filename"
-  virtual void read(const std::string& filename);
+  virtual void read(const std::filesystem::path& filename);
 
   /// make an empty sequenctree
   SequenceTree() {}

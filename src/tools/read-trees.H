@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include <istream>
+#include <filesystem>
 
 #include "util/io.H"
 #include "tree/tree.H"
@@ -64,7 +65,7 @@ namespace trees_format {
 	bool skip(int);
 	bool done() const;
 
-	Newick(const std::string& filename);
+	Newick(const std::filesystem::path& filename);
 	Newick(std::istream&);
 	~Newick();
     };
@@ -86,7 +87,7 @@ namespace trees_format {
 	bool skip(int);
 	bool done() const;
 
-	NEXUS(const std::string& filename);
+	NEXUS(const std::filesystem::path& filename);
 	NEXUS(std::istream&);
 	~NEXUS();
     };
@@ -113,7 +114,7 @@ namespace trees_format {
     public:
 	Newick_or_NEXUS* clone() const {return new Newick_or_NEXUS(*this);}
 
-	Newick_or_NEXUS(const std::string&);
+	Newick_or_NEXUS(const std::filesystem::path&);
 	Newick_or_NEXUS(std::istream&);
     };
 

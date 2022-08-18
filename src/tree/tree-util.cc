@@ -38,15 +38,17 @@ using std::endl;
 
 using boost::dynamic_bitset;
 
+namespace fs = std::filesystem;
+
 /// Load a tree from command line args "--tree filename"
-RootedSequenceTree load_tree_from_file(const string_view& filename)
+RootedSequenceTree load_tree_from_file(const fs::path& filename)
 {
     using namespace trees_format;
 
-    std::shared_ptr<reader_t> trees_in(new Newick_or_NEXUS((string)filename));
+    std::shared_ptr<reader_t> trees_in(new Newick_or_NEXUS(filename));
     RootedSequenceTree RT;
     if (not trees_in->next_tree(RT))
-	throw myexception()<<"No tree in file '"<<filename<<"'";
+	throw myexception()<<"No tree in file "<<filename;
 
     return RT;
 }

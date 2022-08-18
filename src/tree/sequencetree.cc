@@ -29,6 +29,8 @@
 
 using namespace std;
 
+namespace fs = std::filesystem;
+
 using boost::dynamic_bitset;
 
 //-------------------------- SequenceTree methods ----------------------------//
@@ -90,7 +92,7 @@ nodeview SequenceTree::create_node_on_branch(int b)
     return nv;
 }
 
-void SequenceTree::read(const string& filename) {
+void SequenceTree::read(const fs::path& filename) {
     checked_ifstream file(filename, "NEWICK tree file");
     read(file);
 }

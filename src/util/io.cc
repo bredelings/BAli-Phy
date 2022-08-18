@@ -122,16 +122,16 @@ void checked_filebuf::report_open_error(const std::filesystem::path& filename, i
 
     if (fs::is_directory(filename))
     {
-        e<<"Refusing to open '"<<filename<<"' because it is a directory.";
+        e<<"Refusing to open "<<filename<<" because it is a directory.";
         throw e;
     }
 
     if ((mode&ios_base::out) and not (mode&ios_base::in))
-        e<<"Failed to write to "<<description<<" '"<<filename<<"'";
+        e<<"Failed to write to "<<description<<" "<<filename;
     else if ((mode&ios_base::in) and not (mode&ios_base::out))
-        e<<"Failed to read from "<<description<<" '"<<filename<<"'";
+        e<<"Failed to read from "<<description<<" "<<filename;
     else
-        e<<"Failed to open "<<description<<" '"<<filename<<"'";
+        e<<"Failed to open "<<description<<" "<<filename;
 
     if (mode&ios_base::out)
     {
@@ -219,12 +219,12 @@ checked_ofstream::checked_ofstream(const fs::path& filename, const string& descr
     buf.open(filename, flags);
 }
 
-void istream_or_ifstream::open(std::istream& is, const std::string& is_name, const std::string& filename, const std::string& description)
+void istream_or_ifstream::open(std::istream& is, const std::string& is_name, const fs::path& filename, const std::string& description)
 {
     if (buf)
         throw myexception()<<"Cannot reopen file!\n";
 
-    if (filename == is_name)
+    if (filename.string() == is_name)
         this->init(is.rdbuf());
     else
     {
@@ -240,13 +240,13 @@ istream_or_ifstream::istream_or_ifstream()
     this->init(&buf_null);
 }
 
-istream_or_ifstream::istream_or_ifstream(std::istream& is, const std::string& is_name, const std::string& filename)
+istream_or_ifstream::istream_or_ifstream(std::istream& is, const std::string& is_name, const fs::path& filename)
     :istream(nullptr)
 {
     open(is,is_name,filename,"file");
 }
 
-istream_or_ifstream::istream_or_ifstream(std::istream& is, const std::string& is_name, const std::string& filename,
+istream_or_ifstream::istream_or_ifstream(std::istream& is, const std::string& is_name, const fs::path& filename,
                                          const std::string& description)
     :istream(nullptr)
 {
@@ -254,12 +254,12 @@ istream_or_ifstream::istream_or_ifstream(std::istream& is, const std::string& is
 }
 
 
-void ostream_or_ofstream::open(std::ostream& os, const std::string& os_name, const std::string& filename, const std::string& description)
+void ostream_or_ofstream::open(std::ostream& os, const std::string& os_name, const fs::path& filename, const std::string& description)
 {
     if (buf)
         throw myexception()<<"Cannot reopen file!\n";
 
-    if (filename == os_name)
+    if (filename.string() == os_name)
         this->init(os.rdbuf());
     else
     {
@@ -274,12 +274,12 @@ ostream_or_ofstream::ostream_or_ofstream()
     this->init(&buf_null);
 }
 
-ostream_or_ofstream::ostream_or_ofstream(std::ostream& os, const std::string& os_name, const std::string& filename)
+ostream_or_ofstream::ostream_or_ofstream(std::ostream& os, const std::string& os_name, const fs::path& filename)
 {
     open(os,os_name,filename,"file");
 }
 
-ostream_or_ofstream::ostream_or_ofstream(std::ostream& os, const std::string& os_name, const std::string& filename,
+ostream_or_ofstream::ostream_or_ofstream(std::ostream& os, const std::string& os_name, const fs::path& filename,
                                          const std::string& description)
 {
     open(os,os_name,filename,description);

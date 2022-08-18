@@ -32,6 +32,8 @@ using std::valarray;
 using std::istream;
 using std::shared_ptr;
 
+namespace fs = std::filesystem;
+
 bad_letter::bad_letter(const string& l)
     :myexception(string("Letter '") + sanitize_string(l) + string("' not in alphabet.")),letter(l)
 {}
@@ -1029,7 +1031,7 @@ void Genetic_Code::setup_table(std::istream& file)
     setup_table(n1,n2,n3,aa);
 }
 
-void Genetic_Code::setup_table_from_file(const std::string& filename)
+void Genetic_Code::setup_table_from_file(const fs::path& filename)
 {
     checked_ifstream file(filename,"genetic code file");
     setup_table(file);
@@ -1067,7 +1069,7 @@ Genetic_Code::Genetic_Code(const string& n, istream& file)
     setup_table(file);
 }
 
-Genetic_Code::Genetic_Code(const string& n, const string& filename)
+Genetic_Code::Genetic_Code(const string& n, const fs::path& filename)
     :name_(n)
 {
     setup_table_from_file(filename);

@@ -27,6 +27,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <filesystem>
 
 #include "sequence.H"
 
@@ -57,13 +58,11 @@ namespace sequence_format
     /// Read an alignments letters and names from a file in fasta format
     void write_fasta(std::ostream& file, const std::vector<sequence>& sequences);
 
-
+    /// load a format from a file with name filename
+    std::vector<sequence> load_from_file(loader_t loader,const std::filesystem::path& filename);
 
     /// load a format from a file with name filename
-    std::vector<sequence> load_from_file(loader_t loader,const std::string& filename);
-
-    /// load a format from a file with name filename
-    std::vector<sequence> load_from_file(const std::string& filename);
+    std::vector<sequence> load_from_file(const std::filesystem::path& filename);
 
     /// write a format to a file.
     void write_to_file(loader_t loader,const std::vector<sequence>&,const std::string&);

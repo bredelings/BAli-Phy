@@ -24,12 +24,14 @@
 #ifndef ALIGNMENT_H
 #define ALIGNMENT_H
 
-#include "sequence/alphabet.H"
-#include "sequence/sequence.H"
-#include "sequence/sequence-format.H"
 #include <iostream>
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
+#include <filesystem>
+
+#include "sequence/alphabet.H"
+#include "sequence/sequence.H"
+#include "sequence/sequence-format.H"
 #include "util/matrix.H"
 
 // TODO - This kind of alignment requires searching every row to find the characters
@@ -95,9 +97,9 @@ public:
     void load(const std::string& alph_name,sequence_format::loader_t,std::istream&);
 
     /// Load PHYLIP or FASTA file 'filename', depending on extention
-    void load(const std::string& filename);
+    void load(const std::filesystem::path& filename);
     /// Load PHYLIP or FASTA file 'filename', depending on extention
-    void load(const std::string& alph_name,const std::string& filename);
+    void load(const std::string& alph_name,const std::filesystem::path& filename);
 
     /// Get a list of sequences (with gaps) that represent the current alignment.
     std::vector<sequence> convert_to_sequences() const;
@@ -168,7 +170,7 @@ public:
     explicit alignment(const alphabet&, int n, int L);
 
     /// Construct an alignment from file filename using alphabet a
-    explicit alignment(const alphabet& a,const std::string& filename);
+    explicit alignment(const alphabet& a,const std::filesystem::path& filename);
 /*
     Techniques to load alignments include:
     1. alignment(); A.load(alph_name, sequences)

@@ -25,6 +25,8 @@
 
 using namespace std;
 
+namespace fs = std::filesystem;
+
 namespace sequence_format {
 
     void upcase(string& s)
@@ -384,19 +386,10 @@ namespace sequence_format {
 	    return read_fasta_entire_file(file);
     }
 
-    vector<sequence> load_from_file(loader_t loader,const string& filename) 
+    vector<sequence> load_from_file(loader_t loader,const fs::path& filename) 
     {
 	istream_or_ifstream file(std::cin, "-", filename, "alignment-file");
 	return loader(file);
-    }
-
-    string get_extension(const string& s) 
-    {
-	int pos = s.rfind('.');
-	if (pos == -1)
-	    return "";
-	else
-	    return s.substr(pos);
     }
 
     string StringToLower(string strToConvert)
@@ -407,11 +400,11 @@ namespace sequence_format {
 	return strToConvert;//return the converted string
     }
 
-    vector<sequence> load_from_file(const string& filename) 
+    vector<sequence> load_from_file(const fs::path& filename) 
     {
 	loader_t *loader = read_guess;
 
-	string extension = StringToLower(get_extension(filename));
+	string extension = StringToLower(filename.extension());
 	if (extension == ".phy")
 	    loader = read_phylip;
 	else if ((extension == ".fasta") or 
@@ -427,11 +420,11 @@ namespace sequence_format {
     }
 
     vector<sequence> write_to_file(dumper_t dumper,const vector<sequence>& sequences,
-				   const string& filename) 
+				   const fs::path& filename) 
     {
 	ofstream file(filename.c_str());
 	if (not file)
-	    throw myexception()<<"Couldn't open file '"<<filename<<"'";
+	    throw myexception()<<"Couldn't open file "<<filename;
 	dumper(file,sequences);
 	file.close();
 	return sequences;

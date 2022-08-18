@@ -38,6 +38,8 @@ using std::istream;
 using boost::dynamic_bitset;
 using std::shared_ptr;
 
+namespace fs = std::filesystem;
+
 // FIXME: current_tree_(T) may invoke virtual functions of T that cause trouble.
 // EXAMPLE: T.prune_leaves( ) messeses with sequence names if not prevented by
 //          calling T.Tree::prune_leaves( ).
@@ -131,7 +133,7 @@ namespace trees_format
 	//FIXME - this loses the first line!
     }
 
-    Newick::Newick(const std::string& filename)
+    Newick::Newick(const fs::path& filename)
 	:fileptr(new checked_ifstream(filename,"Newick tree file")),
 	 fileref(*fileptr)
 	 
@@ -388,7 +390,7 @@ namespace trees_format
 	}
     }
 
-    NEXUS::NEXUS(const std::string& filename)
+    NEXUS::NEXUS(const fs::path& filename)
 	:fileptr(new checked_ifstream(filename,"NEXUS tree file")),
 	 fileref(*fileptr),
 	 translate(false)
@@ -432,7 +434,7 @@ namespace trees_format
     { }
 
 
-    Newick_or_NEXUS::Newick_or_NEXUS(const string& filename)
+    Newick_or_NEXUS::Newick_or_NEXUS(const fs::path& filename)
     {
 	checked_ifstream file(filename,"tree file");
 

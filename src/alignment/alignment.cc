@@ -31,6 +31,8 @@ using std::string;
 using std::vector;
 using std::endl;
 
+namespace fs = std::filesystem;
+
 void resize(matrix<int>& M1,int s1,int s2,int clear=0)
 {
     matrix<int> M2(s1,s2);
@@ -274,7 +276,7 @@ string get_extension(const string& s) {
 	return s.substr(pos);
 }
 
-void alignment::load(const string& filename) 
+void alignment::load(const fs::path& filename) 
 {
     // read from file
     vector<sequence> seqs = sequence_format::load_from_file(filename);
@@ -283,7 +285,7 @@ void alignment::load(const string& filename)
     load(seqs);
 }
 
-void alignment::load(const string& alph_name,const string& filename)
+void alignment::load(const string& alph_name, const fs::path& filename)
 {
     // read from file
     vector<sequence> seqs = sequence_format::load_from_file(filename);
@@ -365,7 +367,7 @@ alignment::alignment(const alphabet& a1, int n, int L)
     // This is used in compressing alignments (site-compression.{H,cc}, among other things...
 }
 
-alignment::alignment(const alphabet& a1,const string& filename) 
+alignment::alignment(const alphabet& a1,const fs::path& filename) 
     :a(a1.clone())
 { 
     load(filename); 

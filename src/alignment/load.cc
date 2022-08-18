@@ -17,6 +17,8 @@ using std::endl;
 using std::optional;
 using boost::program_options::variables_map;
 
+namespace fs = std::filesystem;
+
 std::string get_alphabet_name(const boost::program_options::variables_map& args)
 {
     string alph_name;
@@ -25,7 +27,7 @@ std::string get_alphabet_name(const boost::program_options::variables_map& args)
     return alph_name;
 }
 
-vector<sequence> load_sequences_with_range(const string& filename, const string& range)
+vector<sequence> load_sequences_with_range(const fs::path& filename, const string& range)
 {
     vector<sequence> sequences = sequence_format::load_from_file(filename);
 
@@ -34,7 +36,7 @@ vector<sequence> load_sequences_with_range(const string& filename, const string&
     return sequences;
 }
 
-alignment load_alignment_with_range(const string& filename, const string& range, const string& alph_name)
+alignment load_alignment_with_range(const fs::path& filename, const string& range, const string& alph_name)
 {
     auto sequences = load_sequences_with_range(filename,range);
 
@@ -47,15 +49,15 @@ alignment load_alignment_with_range(const string& filename, const string& range,
     catch (myexception& e)
     {
 	if (range.empty())
-	    e.prepend("In file '"+filename+"': ");
+	    e.prepend("In file '"+filename.string()+"': ");
 	else
-	    e.prepend("In file '"+filename+"' columns "+range+": ");
+	    e.prepend("In file '"+filename.string()+"' columns "+range+": ");
 	throw;
     }
   
     int n_empty = remove_empty_columns(A);
     if (n_empty)
-	if (log_verbose >= 1) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
+	if (log_verbose >= 1) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment "<<filename<<"!\n"<<endl;
   
     if (A.n_sequences() == 0)
 	throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
@@ -82,7 +84,7 @@ alignment load_alignment(const vector<sequence>& sequences, const string& alph_n
     return A;
 }
 
-alignment load_alignment(const string& filename, const string& alph_name, bool remove_empty)
+alignment load_alignment(const fs::path& filename, const string& alph_name, bool remove_empty)
 {
     try
     {
@@ -92,7 +94,7 @@ alignment load_alignment(const string& filename, const string& alph_name, bool r
     }
     catch (myexception& e)
     {
-	e.prepend("Reading alignment from file '"+filename+"': ");
+	e.prepend("Reading alignment from file '"+filename.string()+"': ");
 	throw;
     }
 }
@@ -104,8 +106,8 @@ alignment load_A(const variables_map& args,bool keep_internal, bool remove_empty
     if (not args.count("align")) 
 	throw myexception("Alignment file not specified! (--align <filename>)");
   
-    string filename = args["align"].as<string>();
-    alignment A = load_alignment(filename, get_alphabet_name(args), remove_empty);
+    fs::path filepath = args["align"].as<string>();
+    alignment A = load_alignment(filepath, get_alphabet_name(args), remove_empty);
 
     if (not keep_internal)
 	A = chop_internal(A);

@@ -29,6 +29,8 @@
 #include <valarray>
 #include <iostream>
 #include <string>
+#include <filesystem>
+
 #include "util/assert.hh"
 #include <boost/dynamic_bitset.hpp>
 #include "util/myexception.H"
@@ -417,7 +419,7 @@ protected:
 
     void setup_table(std::istream&);
 
-    void setup_table_from_file(const std::string& filename);
+    void setup_table_from_file(const std::filesystem::path& filename);
 
 public:
     virtual Genetic_Code* clone() const=0;
@@ -439,7 +441,7 @@ public:
 
     Genetic_Code(const std::string& name, std::istream&);
 
-    Genetic_Code(const std::string& name, const std::string& filename);
+    Genetic_Code(const std::string& name, const std::filesystem::path& filename);
 
     virtual ~Genetic_Code() = default;
 };

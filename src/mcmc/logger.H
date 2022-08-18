@@ -35,6 +35,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <filesystem>
 
 #include "models/parameters.H"
 #include "tools/stats-table.H"
@@ -359,7 +360,7 @@ namespace MCMC {
             log_file->flush();
         }
 
-	append_line_to_file(const std::string& filename, const F& f)
+	append_line_to_file(const std::filesystem::path& filename, const F& f)
             :log_file(new checked_ofstream(filename,false)), function(f)
             {}
     };
@@ -376,7 +377,7 @@ namespace MCMC {
             log_file->flush();
         }
 
-	append_to_file(const std::string& filename, const F& f)
+	append_to_file(const std::filesystem::path& filename, const F& f)
             :log_file(new checked_ofstream(filename,false)), function(f)
             {}
     };
