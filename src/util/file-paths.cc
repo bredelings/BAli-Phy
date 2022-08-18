@@ -25,9 +25,10 @@ optional<fs::path> check_file_in_path(const vector<fs::path>& paths, const fs::p
 
 string show_path(const vector<fs::path>& path_list)
 {
+    // apparently using p.native() returns a string of wide characters on windows.
     vector<string> path_strings;
     for(auto& p: path_list)
-        path_strings.push_back(p.native());
+        path_strings.push_back(p.string());
     return join(path_strings, ":");
 }
 
