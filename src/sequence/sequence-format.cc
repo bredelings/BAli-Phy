@@ -404,7 +404,7 @@ namespace sequence_format {
     {
 	loader_t *loader = read_guess;
 
-	string extension = StringToLower(filename.extension());
+	string extension = StringToLower(filename.extension().string());
 	if (extension == ".phy")
 	    loader = read_phylip;
 	else if ((extension == ".fasta") or 
