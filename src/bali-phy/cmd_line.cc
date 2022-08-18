@@ -24,7 +24,7 @@ using std::optional;
 namespace po = boost::program_options;
 using po::variables_map;
 
-const string trailing_args_separator = "---";
+const string trailing_args_separator = "--";
 
 namespace fs = boost::filesystem;
 
