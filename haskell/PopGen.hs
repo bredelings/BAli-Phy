@@ -16,9 +16,9 @@ foreign import bpcall "PopGen:ewens_sampling_mixture_probability" builtin_ewens_
 foreign import bpcall "PopGen:selfing_coalescence_probability" builtin_selfing_coalescence_probability :: Int -> Double -> EVector Int -> LogDouble
 foreign import bpcall "SMC:li_stephens_2003_composite_likelihood" li_stephens_2003_composite_likelihood :: EVector Int -> Double -> AlignmentMatrix -> LogDouble
 
-read_phase_file filename = map list_from_vector $ list_from_vector $ builtin_read_phase_file $ list_to_string filename
+read_phase_file filename = IOAction (\s -> (s, map list_from_vector $ list_from_vector $ builtin_read_phase_file $ list_to_string filename))
 
-read_phase2_file filename = map list_from_vector $ list_from_vector $ builtin_read_phase2_file $ list_to_string filename
+read_phase2_file filename = IOAction (\s -> (s, map list_from_vector $ list_from_vector $ builtin_read_phase2_file $ list_to_string filename))
 
 ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_probability (list_to_vector thetas) (list_to_vector ps) x
 
