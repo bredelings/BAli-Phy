@@ -1,1 +1,1 @@
---test -m LiStephens2003_1.hs --- A-sites.fasta A-locs.csv
+--test -m LiStephens2003_1 A-sites.fasta A-locs.csv

@@ -1,2 +1,3 @@
--m Main.hs --iter=2 --name ignore-output --- x.csv
+--iter=2 --name ignore-output -m Main.hs x.csv
+
 
