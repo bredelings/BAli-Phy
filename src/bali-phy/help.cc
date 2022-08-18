@@ -399,7 +399,7 @@ ptree load_help_files(const std::vector<fs::path>& package_paths)
 		auto abs_path = fs::canonical(dir_entry.path());
 		if (not fs::is_directory(abs_path) and abs_path.extension() == ".txt")
 		{
-		    string content = boost::trim_copy(read_file(abs_path.string(), "help file"));
+		    string content = boost::trim_copy(read_file(abs_path, "help file"));
 
 		    auto rel_path = fs::relative(dir_entry.path(), path);
 		    content = pseudo_markdown(content)+"\n";

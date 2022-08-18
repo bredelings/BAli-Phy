@@ -15,6 +15,8 @@
 #include "util/string/split.H"
 #include "util/json.hh"
 
+namespace fs = std::filesystem;
+
 extern int log_verbose;
 
 using std::vector;
@@ -313,7 +315,7 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
                                        owned_ptr<Model>& M, int subsample,
                                        const vector<string>& Rao_Blackwellize,
                                        int proc_id,
-                                       const string& dir_name)
+                                       const fs::path& dir_name)
 {
     // FIXME - avoid the need to manually SubSampleFunction to every logger?
 
@@ -322,7 +324,7 @@ vector<MCMC::Logger> construct_loggers(const boost::program_options::variables_m
 
     owned_ptr<Parameters> P = M.as<Parameters>();
 
-    string base = dir_name + "/" + "C" + convertToString(proc_id+1);
+    string base = dir_name / ("C" + convertToString(proc_id+1));
 
     auto TL = construct_table_function(M, Rao_Blackwellize);
 

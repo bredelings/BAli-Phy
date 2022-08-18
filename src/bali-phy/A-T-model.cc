@@ -514,7 +514,7 @@ model_t get_smodel(const Rules& R, const std::string& model)
 
 owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
                                       ostream& out_cache, ostream& out_screen, ostream& out_both, json& info,
-                                      int proc_id, const string& dir)
+                                      int proc_id, const fs::path& dir)
 {
     //------ Determine number of partitions ------//
     auto filename_ranges = split_on_last(':', args["align"].as<vector<string> >() );
@@ -857,7 +857,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     if (args.count("set"))
         keys = parse_key_map(args["set"].as<vector<string> >());
 
-    fs::path program_filename = fs::path(dir) / "BAliPhy.Main.hs";
+    fs::path program_filename = dir / "BAliPhy.Main.hs";
     vector<expression_ref> alphabet_exps;
     for(int i=0;i<n_partitions;i++)
         alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
@@ -897,11 +897,9 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     return P;
 }
 
-void write_initial_alignments(variables_map& args, int proc_id, const string& dir_name)
+void write_initial_alignments(variables_map& args, int proc_id, const fs::path& dir)
 {
     auto filename_ranges = split_on_last(':', args["align"].as<vector<string> >() );
-
-    fs::path dir(dir_name);
 
     string base = "C" + convertToString(proc_id+1);
 
@@ -911,8 +909,7 @@ void write_initial_alignments(variables_map& args, int proc_id, const string& di
         auto sequences = load_sequences_with_range(filename, range);
 
         auto target = fs::path(base+".P"+convertToString(i)+".initial.fasta");
-        target = dir/target;
-        checked_ofstream out(target.string(), false);
+        checked_ofstream out(dir/target, false);
         sequence_format::write_fasta(out, sequences);
 
         i++;

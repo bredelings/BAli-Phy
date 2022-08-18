@@ -48,7 +48,7 @@ void load_bali_phy_rc(po::variables_map& args,const po::options_description& opt
             {
 		if (log_verbose >= 1)
 		    cerr<<"Reading ~/.bali-phy ...";
-		checked_ifstream file(filename.string(), "config file");
+		checked_ifstream file(filename, "config file");
 
 		store(parse_config_file(file, options), args);
 		notify(args);

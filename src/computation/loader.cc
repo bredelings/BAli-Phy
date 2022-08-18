@@ -27,7 +27,7 @@ bool module_loader::try_add_plugin_path(const fs::path& filepath)
 {
     if (fs::exists(filepath))
     {
-	plugins_path.push_back(filepath.string());
+	plugins_path.push_back(filepath);
 	return true;
     }
     else

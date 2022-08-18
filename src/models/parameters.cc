@@ -1612,7 +1612,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
 {
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     {
-        checked_ofstream program_file(program_filename.string());
+        checked_ofstream program_file(program_filename);
         program_file<<generate_atmodel_program(n_leaves,
                                                alphabet_exps,
                                                filename_ranges,
@@ -1624,7 +1624,7 @@ Program gen_atmodel_program(const std::shared_ptr<module_loader>& L,
     }
 
     Program P(L, Program::exe_type::log_pair);
-    auto m = P.get_module_loader()->load_module_from_file(program_filename.string());
+    auto m = P.get_module_loader()->load_module_from_file(program_filename);
     P.add(m);
     P.main = "Main.main";
     return P;

@@ -22,6 +22,7 @@
 #include "util/range.H"
 #include "util/string/join.H" 
 #include "util/string/convert.H"
+#include <filesystem>
 
 extern int log_verbose;
 
@@ -33,6 +34,8 @@ using std::endl;
 using std::ostream;
 
 using boost::dynamic_bitset;
+
+namespace fs = std::filesystem;
 
 vector<int> MC_tree::map_graph_nodes_to_tree_nodes()
 {
@@ -490,9 +493,9 @@ void check_partitions_informative(const vector<partition>& partitions)
 	    throw myexception()<<"Partition "<<i+1<<" is not informative.";
 }
 
-string get_graph_name(string filename)
+string get_graph_name(string filepath)
 {
-    return remove_extension(get_basename(filename));
+    return fs::path(filepath).filename().stem();
 }
 
 bool partition_wanders_over(const partition& p1,const partition& p2)

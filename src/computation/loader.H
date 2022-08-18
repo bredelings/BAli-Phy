@@ -14,7 +14,7 @@ class module_loader: public simplifier_options
     mutable std::map<std::string, Module> modules;
 
 public:
-    std::vector<std::string> plugins_path;
+    std::vector<std::filesystem::path> plugins_path;
 
     std::vector<std::string> args;
 

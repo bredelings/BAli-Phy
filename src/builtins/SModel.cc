@@ -865,7 +865,7 @@ object_ptr<const Object> Empirical_Frequencies_Function(const alphabet& a, istre
 
 object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, const String& filename)
 {
-    checked_ifstream ifile(filename, "empirical rate matrix file");
+    checked_ifstream ifile(filename.value(), "empirical rate matrix file");
     return Empirical_Exchange_Function(a,ifile);
 }
 

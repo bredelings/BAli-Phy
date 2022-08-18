@@ -311,7 +311,7 @@ ptree json_to_ptree(const json& j)
 
 void Rules::add_rule(const fs::path& path, const fs::path& rel_path)
 {
-    checked_ifstream infile(path.string(),"function file");
+    checked_ifstream infile(path, "function file");
 
     Rule rule;
     try {

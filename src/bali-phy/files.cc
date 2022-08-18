@@ -39,19 +39,22 @@ void delete_files(vector<string>& filenames)
     filenames.clear();
 }
 
-vector<shared_ptr<ofstream>> open_files(int proc_id, const string& name, vector<string>& names)
+vector<shared_ptr<ofstream>> open_files(int proc_id, const fs::path& dir, vector<string>& names)
 {
+    assert(fs::is_directory(dir));
+
     vector<shared_ptr<ofstream>> files;
     vector<string> filenames;
 
     for(int j=0;j<names.size();j++) 
     {
-	string filename = name + "C" + convertToString(proc_id+1)+"."+names[j];
+        fs::path filename = dir / ("C" + convertToString(proc_id+1)+"."+names[j]);
       
-	if (fs::exists(filename)) {
+	if (fs::exists(filename))
+        {
 	    close_files(files);
 	    delete_files(filenames);
-	    throw myexception()<<"Trying to open '"<<filename<<"' but it already exists!";
+	    throw myexception()<<"Trying to open "<<filename<<" but it already exists!";
 	}
 	else {
 	    files.push_back(shared_ptr<ofstream>(new ofstream(filename.c_str())));
@@ -128,8 +131,8 @@ fs::path init_dir(const variables_map& args)
     string name = run_name(args);
     
     fs::path dir = open_dir(name);
-    cerr<<"Created directory '"<<dir.string()<<"/' for output files."<<endl;
-    return dir.string();
+    cerr<<"Created directory "<<dir<<" for output files."<<endl;
+    return dir;
 }
 
 #if defined _MSC_VER || defined __MINGW32__
@@ -209,7 +212,7 @@ void run_info(json& info, int /*proc_id*/, int argc, char* argv[])
 }
 
 /// Create output files for thread 'proc_id' in directory 'dirname'
-vector<shared_ptr<ostream>> init_files(int proc_id, const string& dirname,
+vector<shared_ptr<ostream>> init_files(int proc_id, const fs::path& dirname,
 				       int argc,char* argv[])
 {
     vector<shared_ptr<ostream>> files;
@@ -219,7 +222,7 @@ vector<shared_ptr<ostream>> init_files(int proc_id, const string& dirname,
     filenames.push_back("err");
     filenames.push_back("run.json");
 
-    vector<shared_ptr<ofstream>> files2 = open_files(proc_id, dirname+"/",filenames);
+    vector<shared_ptr<ofstream>> files2 = open_files(proc_id, dirname, filenames);
     files.clear();
     for(int i=0;i<files2.size();i++)
 	files.push_back(files2[i]);

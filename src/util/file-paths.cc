@@ -12,9 +12,9 @@ namespace fs = std::filesystem;
 
 using std::optional;
 
-optional<fs::path> check_file_in_path(const vector<string>& paths, const fs::path& file_path)
+optional<fs::path> check_file_in_path(const vector<fs::path>& paths, const fs::path& file_path)
 {
-    for(const string& prefix: paths)
+    for(const auto& prefix: paths)
     {
 	auto filename = prefix / file_path;
 	if (not fs::exists(filename)) continue;
@@ -23,11 +23,19 @@ optional<fs::path> check_file_in_path(const vector<string>& paths, const fs::pat
     return {};
 }
 
-fs::path find_file_in_path(const vector<string>& path_list, const fs::path& file_path)
+string show_path(const vector<fs::path>& path_list)
+{
+    vector<string> path_strings;
+    for(auto& p: path_list)
+        path_strings.push_back(p.native());
+    return join(path_strings, ":");
+}
+
+fs::path find_file_in_path(const vector<fs::path>& path_list, const fs::path& file_path)
 {
     auto path = check_file_in_path(path_list, file_path);
     if (not path)
-	throw myexception()<<"Couldn't find file '"<<file_path.string()<<"' in path '"<<join(path_list,':')<<"'";
+	throw myexception()<<"Couldn't find file "<<file_path<<" in path '"<<show_path(path_list)<<"'";
     return *path;
 }
 
@@ -66,7 +74,9 @@ fs::path find_exe_path(const fs::path& argv0)
     else if (not argv0.is_absolute() and getenv("PATH"))
     {
 	string PATH = getenv("PATH");
-	vector<string> paths = split(PATH,':');
+	vector<fs::path> paths;
+        for(auto& p: split(PATH,':'))
+            paths.push_back(p);
 	auto loc = check_file_in_path(paths, argv0);
 	if (loc)
 	    program_location = *loc;

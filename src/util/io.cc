@@ -113,34 +113,7 @@ vector<string> load_lines(istream& file,int skip,int subsample, int max)
     return lines;
 }
 
-/// \brief Get the basename of a filename (i.e. remove parent directories.)
-///
-/// \param filename The filename.
-///
-string get_basename(string filename)
-{
-    // remove the pathname 
-    while(filename.find('/') != -1) 
-        filename = filename.substr(filename.find('/')+1);
-
-    return filename;
-}
-
-/// \brief Remove the extension from a filename
-///
-/// \param filename The filename.
-///
-string remove_extension(string filename)
-{
-    // remove the extension
-    int dot = filename.rfind('.');
-    string name = filename;
-    if (dot != -1)
-        name = filename.substr(0,dot);
-    return name;
-}
-
-void checked_filebuf::report_open_error(const string& filename, ios_base::openmode mode, bool existed_before)
+void checked_filebuf::report_open_error(const std::filesystem::path& filename, ios_base::openmode mode, bool existed_before)
 {
     myexception e;
     bool exists_now = fs::exists(filename);
@@ -182,18 +155,18 @@ void checked_filebuf::report_open_error(const string& filename, ios_base::openmo
     throw e;
 }
 
-checked_filebuf * checked_filebuf::open ( const std::string& filename, std::ios_base::openmode mode )
+checked_filebuf * checked_filebuf::open ( const std::filesystem::path& filepath, std::ios_base::openmode mode )
 {
-    bool already_existed = fs::exists(filename);
-    bool is_dir = fs::is_directory(filename);
+    bool already_existed = fs::exists(filepath);
+    bool is_dir = fs::is_directory(filepath);
     std::filebuf* buf = 0;
 
     // open the file if either we're not going to overwrite it, or we're opening the truncate flag
     if (!is_dir and (!already_existed or not (mode&ios_base::out) or (mode&ios_base::trunc)))
-        buf = std::filebuf::open(filename.c_str(), mode);
+        buf = std::filebuf::open(filepath, mode);
 
     if (!buf)
-        report_open_error(filename, mode, already_existed);
+        report_open_error(filepath, mode, already_existed);
 
     return this;
 }
@@ -208,7 +181,7 @@ checked_filebuf::checked_filebuf(const string& s)
 {
 }
 
-checked_ifstream::checked_ifstream(const string& filename)
+checked_ifstream::checked_ifstream(const fs::path& filename)
     :istream(nullptr),
      buf("file")
 {
@@ -216,12 +189,34 @@ checked_ifstream::checked_ifstream(const string& filename)
     buf.open(filename, ios_base::in);
 }
 
-checked_ifstream::checked_ifstream(const string& filename, const string& description)
+checked_ifstream::checked_ifstream(const fs::path& filename, const string& description)
     :istream(nullptr),
      buf(description)
 {
     this->init(&buf);
     buf.open(filename, ios_base::in);
+}
+
+checked_ofstream::checked_ofstream(const fs::path& filename,bool trunc)
+    :buf("file")
+{
+    this->init(&buf);
+    std::ios_base::openmode flags = ios_base::out;
+    if (trunc)
+        flags |= ios_base::trunc;
+
+    buf.open(filename, flags);
+}
+
+checked_ofstream::checked_ofstream(const fs::path& filename, const string& description, bool trunc)
+    :buf(description)
+{
+    this->init(&buf);
+    std::ios_base::openmode flags = ios_base::out;
+    if (trunc)
+        flags |= ios_base::trunc;
+
+    buf.open(filename, flags);
 }
 
 void istream_or_ifstream::open(std::istream& is, const std::string& is_name, const std::string& filename, const std::string& description)
@@ -258,28 +253,6 @@ istream_or_ifstream::istream_or_ifstream(std::istream& is, const std::string& is
     open(is,is_name,filename,description);
 }
 
-
-checked_ofstream::checked_ofstream(const string& filename,bool trunc)
-    :buf("file")
-{
-    this->init(&buf);
-    std::ios_base::openmode flags = ios_base::out;
-    if (trunc)
-        flags |= ios_base::trunc;
-
-    buf.open(filename, flags);
-}
-
-checked_ofstream::checked_ofstream(const string& filename, const string& description, bool trunc)
-    :buf(description)
-{
-    this->init(&buf);
-    std::ios_base::openmode flags = ios_base::out;
-    if (trunc)
-        flags |= ios_base::trunc;
-
-    buf.open(filename, flags);
-}
 
 void ostream_or_ofstream::open(std::ostream& os, const std::string& os_name, const std::string& filename, const std::string& description)
 {
@@ -325,7 +298,7 @@ vector<string> read_lines(std::istream& file)
     return lines;
 }
 
-string read_file(const string& filename)
+string read_file(const fs::path& filename)
 {
     checked_ifstream file(filename);
     std::stringstream buffer;
@@ -333,7 +306,7 @@ string read_file(const string& filename)
     return buffer.str();
 }
 
-string read_file(const string& filename, const string& description)
+string read_file(const fs::path& filename, const string& description)
 {
     checked_ifstream file(filename,description);
     std::stringstream buffer;

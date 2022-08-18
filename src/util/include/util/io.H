@@ -1,6 +1,7 @@
 #ifndef IO_H
 #define IO_H
 
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -31,10 +32,6 @@ void scan_lines(std::istream& file,int skip,int subsample, int max,
 
 std::vector<std::string> load_lines(std::istream& file,int skip,int subsample, int max);
 
-std::string get_basename(std::string filename);
-
-std::string remove_extension(std::string filename);
-
 // hmm... should not inherit from ifstream, cuz cannot override non virtual open( )
 
 /// A stringbuf that write to 2 streambufs
@@ -47,11 +44,11 @@ public:
 class checked_filebuf: public std::filebuf
 {
     std::string description;
-    void report_open_error(const std::string&, std::ios_base::openmode, bool);
+    void report_open_error(const std::filesystem::path&, std::ios_base::openmode, bool);
 
 public:
 
-    checked_filebuf* open ( const std::string& s, std::ios_base::openmode mode );
+    checked_filebuf* open ( const std::filesystem::path& s, std::ios_base::openmode mode );
 
     checked_filebuf();
     explicit checked_filebuf(const std::string&);
@@ -61,8 +58,16 @@ class checked_ifstream: public std::istream
 {
     checked_filebuf buf;
 public:
-    explicit checked_ifstream(const std::string&);
-    checked_ifstream(const std::string&,const std::string&);
+    explicit checked_ifstream(const std::filesystem::path&);
+    checked_ifstream(const std::filesystem::path&,const std::string&);
+};
+
+class checked_ofstream: public std::ostream
+{
+    checked_filebuf buf;
+public:
+    explicit checked_ofstream(const std::filesystem::path&, bool=true);
+    checked_ofstream(const std::filesystem::path&, const std::string&, bool=true);
 };
 
 class istream_or_ifstream: public std::istream
@@ -76,14 +81,6 @@ public:
     istream_or_ifstream();
     istream_or_ifstream(std::istream&, const std::string&, const std::string&);
     istream_or_ifstream(std::istream&, const std::string&, const std::string&, const std::string&);
-};
-
-class checked_ofstream: public std::ostream
-{
-    checked_filebuf buf;
-public:
-    explicit checked_ofstream(const std::string&,bool=true);
-    checked_ofstream(const std::string&,const std::string&,bool=true);
 };
 
 class ostream_or_ofstream: public std::ostream
@@ -106,9 +103,9 @@ public:
     null_ostream();
 };
 
-std::string read_file(const std::string& filename);
+std::string read_file(const std::filesystem::path&);
 
-std::string read_file(const std::string& filename, const std::string& description);
+std::string read_file(const std::filesystem::path&, const std::string& description);
 
 std::vector<std::string> read_lines(std::istream& file);
 #endif

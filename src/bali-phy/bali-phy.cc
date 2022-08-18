@@ -588,7 +588,7 @@ int main(int argc,char* argv[])
         if (args.count("align"))
         {
             Rules R(get_package_paths(argv[0], args));
-            M = create_A_and_T_model(R, args, L, out_cache, out_screen, out_both, info, proc_id, output_dir.string());
+            M = create_A_and_T_model(R, args, L, out_cache, out_screen, out_both, info, proc_id, output_dir);
 
             if (args.count("tree") and M.as<Parameters>())
             {
@@ -673,11 +673,11 @@ int main(int argc,char* argv[])
 
             if (not args.count("test")) {
                 info["subdirectory"] = output_dir.string();
-                files = init_files(proc_id, output_dir.string(), argc, argv);
-                loggers = construct_loggers(args, M, subsample, Rao_Blackwellize, proc_id, output_dir.string());
+                files = init_files(proc_id, output_dir, argc, argv);
+                loggers = construct_loggers(args, M, subsample, Rao_Blackwellize, proc_id, output_dir);
 
                 if (args.count("align"))
-                    write_initial_alignments(args, proc_id, output_dir.string());
+                    write_initial_alignments(args, proc_id, output_dir);
             }
             else {
                 files.push_back(shared_ptr<ostream>(new ostream(cout.rdbuf())));
@@ -714,19 +714,19 @@ int main(int argc,char* argv[])
                 out_screen<<"   Maximum number of iterations set to "<<max_iterations<<"."<<endl;
 
             out_screen<<"\nBeginning MCMC computations."<<endl;
-            out_screen<<"   - Future screen output sent to '"<<output_dir.string()<<"/C1.out'"<<endl;
-            out_screen<<"   - Future debugging output sent to '"<<output_dir.string()<<"/C1.err'"<<endl;
+            out_screen<<"   - Future screen output sent to "<< output_dir / "C1.out" <<endl;
+            out_screen<<"   - Future debugging output sent to "<< output_dir / "C1.err" <<endl;
             if (M.as<Parameters>())
             {
-                out_screen<<"   - Sampled trees logged to '"<<output_dir.string()<<"/C1.trees'"<<endl;
-                out_screen<<"   - Sampled alignments logged to '"<<output_dir.string()<<"/C1.P<partition>.fastas'"<<endl;
-                out_screen<<"   - Run info written to '"<<output_dir.string()<<"/C1.run.json'"<<endl;
+                out_screen<<"   - Sampled trees logged to "<< output_dir / "C1.trees" <<endl;
+                out_screen<<"   - Sampled alignments logged to "<< output_dir / "C1.P<partition>.fastas" <<endl;
+                out_screen<<"   - Run info written to "<< output_dir / "C1.run.json" <<endl;
             }
             auto log_formats = get_log_formats(args,(bool)M.as<Parameters>());
             if (log_formats.count("json"))
-                out_screen<<"   - Sampled numerical parameters logged to '"<<output_dir.string()<<"/C1.log.json' as JSON\n";
+                out_screen<<"   - Sampled numerical parameters logged to "<< output_dir / "C1.log.json" <<" as JSON\n";
             if (log_formats.count("tsv"))
-                out_screen<<"   - Sampled numerical parameters logged to '"<<output_dir.string()<<"/C1.log' as TSV\n";
+                out_screen<<"   - Sampled numerical parameters logged to '"<< output_dir / "C1.log" << " as TSV\n";
             out_screen<<"\n";
             if (log_formats.count("tsv"))
                 out_screen<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n";
