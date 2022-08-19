@@ -10,18 +10,22 @@ The second step is necessary to make the C++ function visible in Haskell.
 A builtin is declared via the following syntax:
 
 ``` Haskell
-builtin haskell_name number_of_arguments "c++ name" "module name"
+foreign import bpcall "module_name:cpp_func_name" haskell_name :: Type
 ```
 
 For example, the Haskell function `poisson_density` is declared with the following line from [haskell/Distributions.hs](https://github.com/bredelings/BAli-Phy/blob/master/haskell/Distributions.hs):
 
 ``` Haskell
-builtin poisson_density 2 "poisson_density" "Distribution"
+foreign import bpcall "Distribution:poisson_density" poisson_density :: Double -> Int -> LogDouble
 ```
 
-The first two arguments specify the Haskell name (`poisson_density`) and the number of arguments in Haskell (`2`).  The C++ function name is derived from the third argument (`poisson_density`) by adding `builtin_function_` in front.  So the C++ function will be called `builtin_function_poisson_density`.  The last argument specifies which loadable module contains the C++ function.  Since this function is in the module "Distribution", its source code goes in [src/builtins/Distribution.cc](https://github.com/bredelings/BAli-Phy/blob/master/src/builtins/Distribution.cc).
+The quoted string specifies the loadable module that contains the function and the C++ function name.
+Since this function is in the module "Distribution", its source code goes in [src/builtins/Distribution.cc](https://github.com/bredelings/BAli-Phy/blob/master/src/builtins/Distribution.cc).
 
-To make this  in the [haskell/](https://github.com/bredelings/BAli-Phy/blob/master/haskell/) directory.
+The C++ function name is obtained by adding `builtin_function_` in front of `poisson_density`.
+So the C++ function will be called `builtin_function_poisson_density`.
+
+The rest of the declaration specifies the Haskell name (`poisson_density`) and the type (`Double -> Int -> Double`).
 
 ## Writing a builtin in C++
 
