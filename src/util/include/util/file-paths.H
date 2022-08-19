@@ -12,4 +12,5 @@ std::filesystem::path find_file_in_path(const std::vector<std::filesystem::path>
 std::string show_path(const std::vector<std::filesystem::path>& paths);
 std::filesystem::path find_exe_path(const std::filesystem::path& argv0);
 std::vector<std::filesystem::path> clean_paths(const std::vector<std::filesystem::path>& paths);
+std::optional<std::filesystem::path> get_home_dir();
 #endif

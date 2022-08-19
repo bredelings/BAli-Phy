@@ -6,6 +6,7 @@
 #include "util/string/join.H"
 #include "util/text.H"
 #include "util/io.H"
+#include "util/file-paths.H"
 #include "version.H"
 #include "models/rules.H"
 #include "models/parse.H"
@@ -35,14 +36,15 @@ namespace fs = std::filesystem;
 ///
 void load_bali_phy_rc(po::variables_map& args,const po::options_description& options)
 {
-    if (getenv("HOME")) {
-        fs::path home_dir = getenv("HOME");
-	if (not fs::exists(home_dir))
-	    cerr<<"Home directory "<<home_dir<<" does not exist!"<<endl;
-	else if (not fs::is_directory(home_dir))
-	    cerr<<"Home directory "<<home_dir<<" is not a directory!"<<endl;
-	else {
-	    auto filename = home_dir / ".bali-phy";
+    if (auto home_dir = get_home_dir())
+    {
+	if (not fs::exists(*home_dir))
+	    cerr<<"Home directory "<<*home_dir<<" does not exist!"<<endl;
+	else if (not fs::is_directory(*home_dir))
+	    cerr<<"Home directory "<<*home_dir<<" is not a directory!"<<endl;
+	else
+        {
+	    auto filename = *home_dir / ".bali-phy";
 
 	    if (fs::exists(filename))
             {
@@ -58,7 +60,7 @@ void load_bali_phy_rc(po::variables_map& args,const po::options_description& opt
 	}
     }
     else
-	cerr<<"Environment variable HOME not set!"<<endl;
+	cerr<<"Environment variables HOME and USERPROFILE not set!"<<endl;
 }
 
 vector<string> drop_trailing_args(int argc, char* argv[], const string& separator)

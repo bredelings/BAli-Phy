@@ -40,8 +40,23 @@ fs::path find_file_in_path(const vector<fs::path>& path_list, const fs::path& fi
     return *path;
 }
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 fs::path find_exe_path(const fs::path& argv0)
 {
+    fs::path program_location;
+
+#ifdef _WIN32
+    constexpr int MAX_DIR_PATH = 2048;
+    char buffer[MAX_DIR_PATH];
+
+    GetModuleFileName( NULL, buffer, MAX_DIR_PATH );
+    string path_string = buffer;
+    program_location = path_string;
+#else
+
     /*
       Linux: readlink /proc/self/exe
       FreeBSD: sysctl CTL_KERN KERN_PROC KERN_PROC_PATHNAME -1
@@ -60,7 +75,6 @@ fs::path find_exe_path(const fs::path& argv0)
        else
        printf("buffer too small; need size %u\n", size);
     */
-    fs::path program_location;
 
     // This only works on Linux.
     if (fs::exists("/proc/self/exe"))
@@ -82,6 +96,8 @@ fs::path find_exe_path(const fs::path& argv0)
 	if (loc)
 	    program_location = *loc;
     }
+#endif
+
     program_location = canonical(program_location).parent_path();
 
     return program_location;
@@ -96,3 +112,21 @@ vector<fs::path> clean_paths(const vector<fs::path>& paths)
     return paths2;
 }
 
+std::optional<fs::path> get_home_dir()
+{
+    if (auto HOME = getenv("HOME"))
+    {
+        fs::path home_dir = HOME;
+        return home_dir;
+    }
+
+    if (auto USERPROFILE = getenv("USERPROFILE"))
+    {
+        fs::path home_dir = USERPROFILE;
+        return home_dir;
+    }
+
+    // We could also check HOMEDRIVE / HOMEPATH and HOMESHARE / HOMEPATH
+
+    return {};
+}
