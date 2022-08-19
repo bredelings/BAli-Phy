@@ -32,23 +32,23 @@ void close_files(vector<shared_ptr<ofstream>>& files)
 }
 
 /// Delete the files specified by 'filenames'
-void delete_files(vector<string>& filenames)
+void delete_files(vector<fs::path>& filenames)
 {
     for(int i=0;i<filenames.size();i++)
 	fs::remove(filenames[i]);
     filenames.clear();
 }
 
-vector<shared_ptr<ofstream>> open_files(int proc_id, const fs::path& dir, vector<string>& names)
+std::pair<vector<fs::path>, vector<shared_ptr<ostream>>> open_files(int proc_id, const fs::path& dir, const vector<string>& names)
 {
     assert(fs::is_directory(dir));
 
     vector<shared_ptr<ofstream>> files;
-    vector<string> filenames;
+    vector<fs::path> filenames;
 
     for(int j=0;j<names.size();j++) 
     {
-        fs::path filename = dir / ("C" + convertToString(proc_id+1)+"."+names[j]);
+        fs::path filename = dir / ("C" + std::to_string(proc_id+1) + "." + names[j]);
       
 	if (fs::exists(filename))
         {
@@ -57,14 +57,16 @@ vector<shared_ptr<ofstream>> open_files(int proc_id, const fs::path& dir, vector
 	    throw myexception()<<"Trying to open "<<filename<<" but it already exists!";
 	}
 	else {
-	    files.push_back(shared_ptr<ofstream>(new ofstream(filename.c_str())));
+	    files.push_back(shared_ptr<ofstream>(new ofstream(filename)));
 	    filenames.push_back(filename);
 	}
     }
 
-    names = filenames;
+    vector<shared_ptr<ostream>> files2;
+    for(auto& f: files)
+        files2.push_back(f);
 
-    return files;
+    return {filenames, files2};
 }
 
 fs::path open_dir(const string& dirbase)
@@ -215,17 +217,7 @@ void run_info(json& info, int /*proc_id*/, int argc, char* argv[])
 vector<shared_ptr<ostream>> init_files(int proc_id, const fs::path& dirname,
 				       int argc,char* argv[])
 {
-    vector<shared_ptr<ostream>> files;
-
-    vector<string> filenames;
-    filenames.push_back("out");
-    filenames.push_back("err");
-    filenames.push_back("run.json");
-
-    vector<shared_ptr<ofstream>> files2 = open_files(proc_id, dirname, filenames);
-    files.clear();
-    for(int i=0;i<files2.size();i++)
-	files.push_back(files2[i]);
+    auto [filenames, files] = open_files(proc_id, dirname, {"out","err","run.json"});
 
     ostream& s_out = *files[0];
     
