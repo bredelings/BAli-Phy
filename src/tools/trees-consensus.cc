@@ -528,7 +528,7 @@ void write_extended_support_level_graph(variables_map& args, const vector<pair<p
 
     vector<unsigned> levels = get_Ml_levels(all_partitions, N, 0.5);
 
-    ofstream file(filename.c_str());
+    ofstream file(filename);
     if (!file)
 	throw myexception()<<"Couldn't open file '"<<filename<<"' for writing.";
   

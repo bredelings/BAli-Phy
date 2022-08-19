@@ -221,7 +221,7 @@ int main(int argc,char* argv[])
         if (args.count("uncertainty")) {
 
             string filename = args["uncertainty"].as<string>();
-            ofstream graph_file(filename.c_str());
+            ofstream graph_file(filename);
 
             int total_seq_length=0;
             for(int i=0;i<L.size();i++)

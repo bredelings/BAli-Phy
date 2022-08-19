@@ -299,7 +299,7 @@ int main(int argc,char* argv[])
 
 		// write out header: sequence names
 		string filename = args["differences-file"].as<string>();
-		std::ofstream d(filename.c_str());
+		std::ofstream d(filename);
 		for(int i=0;i<O.n_sequences();i++) {
 		    d<<O.seq(i).name;
 		    if (i !=  O.n_sequences()-1)

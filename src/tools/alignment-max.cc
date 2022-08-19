@@ -891,7 +891,7 @@ int main(int argc,char* argv[])
 	if (out == "-")
 	    cout<<amax<<endl;
 	else {
-	    ofstream outfile(out.c_str());
+	    ofstream outfile(out);
 	    if (not outfile)
 		throw myexception()<<"Can't open '"<<out<<"' to write result!";
 
@@ -905,7 +905,7 @@ int main(int argc,char* argv[])
 	    vector<double> column_probabilities = mpd.get_column_probabilities( amax );
 
 	    string outp = args["out-probabilities"].as<string>();
-	    ofstream outfile(outp.c_str());
+	    ofstream outfile(outp);
 
 	    if (not outfile)
 		throw myexception()<<"Can't open '"<<out<<"' to write column probabilities!";

@@ -310,7 +310,7 @@ void var_stats::calculate(double pseudocount, double confidence)
 
 void write_LODs(const string& filename, vector< vector< var_stats> >& VS)
 {
-    std::ofstream file(filename.c_str());
+    std::ofstream file(filename);
 
     int n_partitions = VS[0].size();
     for(int p=0; p<n_partitions; p++)

@@ -422,7 +422,7 @@ namespace sequence_format {
     vector<sequence> write_to_file(dumper_t dumper,const vector<sequence>& sequences,
 				   const fs::path& filename) 
     {
-	ofstream file(filename.c_str());
+	ofstream file(filename);
 	if (not file)
 	    throw myexception()<<"Couldn't open file "<<filename;
 	dumper(file,sequences);
