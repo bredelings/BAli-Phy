@@ -124,9 +124,9 @@ jobs:
     - name: Configure
       run: |
         if [ "$RUNNER_OS" = "macOS" ]; then
-          export CFLAGS="-mmacosx-version-min=10.14"
-          export CXXFLAGS="-mmacosx-version-min=10.14"
-          export LDFLAGS="-mmacosx-version-min=10.14"
+          export CFLAGS="-mmacosx-version-min=10.15"
+          export CXXFLAGS="-mmacosx-version-min=10.15"
+          export LDFLAGS="-mmacosx-version-min=10.15"
         fi
         if [ "${{ matrix.arch }}" = "win64" ]; then
           ARGS="${ARGS} --cross-file=win64-cross.txt"
