@@ -27,6 +27,7 @@ jobs:
             compiler: gcc
             version: "9"
             buildtype: "release"
+            arch: "linux64"
 
           - name: ubuntu-gcc-11-sanitize
             os: ubuntu-latest
@@ -34,36 +35,42 @@ jobs:
             version: "11"
             buildtype: "release"
             sanitize: "address"
+            arch: "linux64"
 
           - name: ubuntu-gcc-11-debugoptimized
             os: ubuntu-latest
             compiler: gcc
             version: "11"
             buildtype: "debugoptimized"
+            arch: "linux64"
 
           - name: ubuntu-gcc-11
             os: ubuntu-latest
             compiler: gcc
             version: "11"
             buildtype: "release"
+            arch: "linux64"
 
           - name: ubuntu-clang-11
             os: ubuntu-latest
             compiler: clang
             version: "11"
             buildtype: "release"
+            arch: "linux64"
 
           - name: macos-xcode-12.5
             os: macos-latest
             compiler: xcode
             version: "12.5"
             buildtype: "release"
+            arch: "mac64"
 
           - name: windows
             os: ubuntu-latest
             compiler: mingw
             version: "N/A"
             buildtype: "release"
+            arch: "win64"
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -138,7 +145,12 @@ jobs:
 
     - name: Configure
       run: |
-        if [ "${{ matrix.name }}" = "windows" ]; then
+        if [ "${{ runner.os }}" = "macOS" ]; then
+          export CFLAGS="-mmacosx-version-min=10.15"
+          export CXXFLAGS="-mmacosx-version-min=10.15"
+          export LDFLAGS="-mmacosx-version-min=10.15"
+        fi
+        if [ "${{ matrix.arch }}" = "win64" ]; then
           ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
         if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows" ] && [ "${{ matrix.sanitize }}" != "" ] ; then
@@ -154,6 +166,11 @@ jobs:
         ccache -s
         ninja -C build install -j4
         ccache -s
+
+    - name: Get version
+      id: get_version
+      run: |
+        echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3)
 
     - name: Copy shared libs (Linux)
       if: matrix.arch == 'linux64'

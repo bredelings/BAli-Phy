@@ -37,18 +37,21 @@ jobs:
             os: ubuntu-latest
             compiler: gcc
             version: "9"
+            buildtype: release
             arch: "linux64"
 
           - name: macos-xcode-12.5
             os: macos-latest
             compiler: xcode
             version: "12.5"
+            buildtype: release
             arch: "mac64"
 
           - name: windows
             os: ubuntu-latest
             compiler: mingw
             version: "N/A"
+            buildtype: release
             arch: "win64"
 
     runs-on: ${{ matrix.os }}
@@ -77,7 +80,7 @@ jobs:
       if: matrix.name == 'windows'
       run: |
         sudo apt update
-        sudo apt install -y pandoc ccache 
+        sudo apt install -y pandoc ccache
         sudo apt install -y dos2unix g++-mingw-w64 wine64 zstd
 
     - name: Install (macOS)
@@ -99,7 +102,7 @@ jobs:
     - name: Prepare ccache timestamp
       id: ccache_cache_timestamp
       run: |
-        if [ "$RUNNER_OS" = "Linux" ]; then
+        if [ "${{ runner.os }}" = "Linux" ]; then
           stamp=$(date '+%s')
         else
           stamp=$(gdate '+%s')
@@ -108,7 +111,8 @@ jobs:
         echo "::set-output name=timestamp::${stamp}"
 
     - name: ccache cache files
-      uses: actions/cache@v2
+#      uses: actions/cache@v2
+      uses: pat-s/always-upload-cache@v2
       with:
          path: ~/.ccache
          key: ${{ matrix.name }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
@@ -117,13 +121,13 @@ jobs:
 
     - name: Make windows sysroot and generate cross file
       if: matrix.name == 'windows'
-      # This command also generates the cross file 
+      # This command also generates the cross file
       run: |
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
 
     - name: Configure
       run: |
-        if [ "$RUNNER_OS" = "macOS" ]; then
+        if [ "${{ runner.os }}" = "macOS" ]; then
           export CFLAGS="-mmacosx-version-min=10.15"
           export CXXFLAGS="-mmacosx-version-min=10.15"
           export LDFLAGS="-mmacosx-version-min=10.15"
@@ -131,7 +135,12 @@ jobs:
         if [ "${{ matrix.arch }}" = "win64" ]; then
           ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
-        meson build --prefix=$HOME/local --buildtype=release -Db_ndebug=true ${ARGS}
+        if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows" ] && [ "${{ matrix.sanitize }}" != "" ] ; then
+          # Address sanitizer can't find its dylibs on OS X?
+          ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
+        fi
+        echo meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args='-g' ${ARGS}
+        meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Db_ndebug=true ${ARGS}
 
     - name: Build
       run: |
@@ -164,11 +173,34 @@ jobs:
         # We don't need this because we're building our own boost.
         # cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${PREFIX}/bin
 
-    - name: Test (not windows)
-      if: matrix.name != 'windows'
+    - name: Test
       run: |
-        export PATH=$HOME/local/bin:$PATH
-        bali-phy --help
+        export seed=$RANDOM
+        if [ "${{ matrix.name }}" = "windows" ]; then
+          export WINEPATH=$(winepath -w $HOME/local/bin)
+          BALIPHY="wine bali-phy"
+        else
+          export PATH=$HOME/local/bin:$PATH
+          BALIPHY=bali-phy
+        fi
+        echo "Running tests with seed=$seed"
+
+        echo ::group::Basic tests
+        ${BALIPHY} help
+        cp $HOME/local/share/doc/bali-phy/examples/sequences/5S-rRNA/5d-muscle.fasta .
+        ${BALIPHY} --seed=$seed 5d-muscle.fasta --test
+        ${BALIPHY} --seed=$seed 5d-muscle.fasta --iter=20
+        echo ::group::Test suite
+        cd tests
+        ./run-tests.py ${BALIPHY} --seed=$seed
+        cd
+        echo ::endgroup::
+
+        echo ::group::testiphy
+        git clone https://gitlab.com/testiphy/testiphy.git
+        cd testiphy
+        ./testiphy ${BALIPHY} --seed=$seed
+        echo ::endgroup::
 
     - name: Create tarball
       id: create_tarball
