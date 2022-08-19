@@ -333,7 +333,10 @@ class Tester:
 
 def get_test_method(cmd):
     prog = prog_name(cmd[0])
-    if prog == 'bali-phy':
+    if prog == 'wine':
+        prog = prog_name(cmd[1]);
+
+    if prog.startswith('bali-phy'):
         return BAliPhy(cmd)
     elif prog == 'rb' or prog.startswith('rb-'):
         return RevBayes(cmd)
