@@ -145,12 +145,6 @@ jobs:
       run: |
         echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3)
 
-    - name: Test (not windows)
-      if: matrix.name != 'windows'
-      run: |
-        export PATH=$HOME/local/bin:$PATH
-        bali-phy --help
-
     - name: Copy shared libs (Linux)
       if: matrix.arch == 'linux64'
       run: |
@@ -169,6 +163,12 @@ jobs:
         done
         # We don't need this because we're building our own boost.
         # cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${PREFIX}/bin
+
+    - name: Test (not windows)
+      if: matrix.name != 'windows'
+      run: |
+        export PATH=$HOME/local/bin:$PATH
+        bali-phy --help
 
     - name: Create tarball
       id: create_tarball

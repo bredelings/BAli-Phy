@@ -155,6 +155,25 @@ jobs:
         ninja -C build install -j4
         ccache -s
 
+    - name: Copy shared libs (Linux)
+      if: matrix.arch == 'linux64'
+      run: |
+        OUTPUT=$HOME/local
+        CC=gcc-${{ matrix.version }}
+        cp $(${CC} -print-file-name=libstdc++.so.6) $OUTPUT/lib/bali-phy/libstdc++.so.6
+
+    - name: Copy shared libs (Windows)
+      if: matrix.arch == 'win64'
+      run: |
+        OUTPUT=$HOME/local
+        CXX=x86_64-w64-mingw32-g++-posix
+        # Copy compiler DLLS
+        for libname in gcc_s_seh-1 stdc++-6 ssp-0 winpthread-1 ; do
+            cp $($CXX --print-file-name lib${libname}.dll) ${OUTPUT}/bin
+        done
+        # We don't need this because we're building our own boost.
+        # cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${PREFIX}/bin
+
     - name: Test
       run: |
         export seed=$RANDOM
