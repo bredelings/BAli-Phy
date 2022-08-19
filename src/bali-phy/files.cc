@@ -113,10 +113,8 @@ string run_name(const variables_map& args)
     }
     else if (args.count("model"))
     {
-	string filename = args["model"].as<vector<string>>()[0];
-	auto M = module_loader({}).load_module_from_file(filename);
-	name = M.name;
-	name = get_unqualified_name(name);
+        fs::path filepath = args["model"].as<vector<string>>()[0];
+        name = filepath.filename().stem().string();
     }
     else if (args.count("Model"))
     {
