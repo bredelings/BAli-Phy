@@ -155,24 +155,31 @@ jobs:
         ninja -C build install -j4
         ccache -s
 
-    - name: Test (not windows)
-      if: matrix.name != 'windows'
+    - name: Test
       run: |
-        export PATH=$HOME/local/bin:$PATH
         export seed=$RANDOM
+        if [ "${{ matrix.name }}" = "windows" ]; then
+          export WINEPATH=$(winepath -w $HOME/local/bin)
+          BALIPHY="wine bali-phy"
+        else
+          export PATH=$HOME/local/bin:$PATH
+          BALIPHY=bali-phy
+        fi
         echo "Running tests with seed=$seed"
+
         echo ::group::Basic tests
-        bali-phy help
-        bali-phy --seed=$seed $HOME/local/share/doc/bali-phy/examples/sequences/5S-rRNA/5d-muscle.fasta --test
-        bali-phy --seed=$seed $HOME/local/share/doc/bali-phy/examples/sequences/5S-rRNA/5d-muscle.fasta --iter=20
+        ${BALIPHY} help
+        cp $HOME/local/share/doc/bali-phy/examples/sequences/5S-rRNA/5d-muscle.fasta .
+        ${BALIPHY} --seed=$seed 5d-muscle.fasta --test
+        ${BALIPHY} --seed=$seed 5d-muscle.fasta --iter=20
         echo ::group::Test suite
         cd tests
-        ./run-tests.py bali-phy --seed=$seed
+        ./run-tests.py ${BALIPHY} --seed=$seed
         cd
         echo ::endgroup::
+
         echo ::group::testiphy
         git clone https://gitlab.com/testiphy/testiphy.git
         cd testiphy
-        which bali-phy || true
-        ./testiphy bali-phy --seed=$seed
+        ./testiphy ${BALIPHY} --seed=$seed
         echo ::endgroup::
