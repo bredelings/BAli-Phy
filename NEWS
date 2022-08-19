@@ -1,3 +1,13 @@
+* 4.0-alpha7 (Aug 18, 2022)
+ - make BES work with typechecking
+ - allow specifying model arguments as `-m Model arg1 arg2`
+ - alignment-consensus and alignment-gild can take a list of alignment files
+ - use std::filesystem for file operations.
+ - target Mac release builds to OS X 10.15
+
+* 4.0-alpha6 (Jul 17, 2022)
+ - Haskell typechecking is working!
+
 * 4.0-alpha5 (Apr 29, 2022)
  - Models
    - RNA editting model: new
