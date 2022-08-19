@@ -176,8 +176,7 @@ jobs:
       if: matrix.arch == 'linux64'
       run: |
         OUTPUT=$HOME/local
-        CC=gcc-${{ matrix.version }}
-        cp $(${CC} -print-file-name=libstdc++.so.6) $OUTPUT/lib/bali-phy/libstdc++.so.6
+        cp $(${CXX} -print-file-name=libstdc++.so.6) $OUTPUT/lib/bali-phy/libstdc++.so.6
 
     - name: Copy shared libs (Windows)
       if: matrix.arch == 'win64'
