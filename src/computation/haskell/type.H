@@ -22,6 +22,7 @@ namespace Haskell
     struct ForallType;
     struct StrictLazyType;
     struct FieldDecls;
+    struct Implication;
 
     struct Type
     {
@@ -37,7 +38,8 @@ namespace Haskell
             cow_ptr<ConstrainedType>,
             cow_ptr<ForallType>,
             cow_ptr<StrictLazyType>,
-            cow_ptr<FieldDecls>
+            cow_ptr<FieldDecls>,
+            cow_ptr<Implication>
         >
         type_ptr;
 
@@ -275,6 +277,17 @@ struct StrictLazyType
     bool operator==(const StrictLazyType& t) const;
     std::string print() const;
     StrictLazyType(const StrictLazy& sl, const Type& t):strict_lazy(sl), type(t) {}
+};
+
+struct Implication
+{
+    Context givens;
+    Context wanteds;
+
+    bool operator==(const Implication& t) const;
+
+    std::string print() const;
+    Implication(const Context& g, const Context& w);
 };
 
 
