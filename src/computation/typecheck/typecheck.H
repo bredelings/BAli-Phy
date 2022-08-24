@@ -428,10 +428,6 @@ struct typechecker_state: FreshVarSource
 
     template <typename T>
     std::optional<Core::Decls>
-    entails(const T& to_keep, const std::pair<ID, Hs::Type>& to_check);
-
-    template <typename T>
-    std::optional<Core::Decls>
     entails(const T& to_keep, const std::pair<Core::Var, Hs::Type>& to_check);
 
     std::tuple<Core::Decls, LIE, LIE>
