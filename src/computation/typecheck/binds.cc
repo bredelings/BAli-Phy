@@ -260,18 +260,22 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         tcs2.tcRho(FD.match, Check(rho_type));
         auto lie_wanted = tcs2.current_lie();
 
-        // 3. default ambiguous constraints.
+        // 3. try to solve the wanteds from the givens
+        // FIXME -- if there are higher-level givens, then we probably need those too!
+        auto [ev_decls2, _, lie_residual] = entails( givens, lie_wanted );
+
+        // 4. default ambiguous constraints.
+        // FIXME -- we COULD just bump all ambiguous constraints up to the top level and try to default them there...
         auto fixed_mtvs = free_meta_type_variables( gve );
-        auto [decls1, lie_wanted_unambiguous] = default_preds( fixed_mtvs, {}, lie_wanted );
+        auto [decls1, lie_residual_unambiguous] = default_preds( fixed_mtvs, {}, lie_residual );
         auto ev_decls = decls1;
 
-        // 4. check that the remaining constraints are satisfied by the constraints in the type signature
-        auto [ev_decls2, _, lie_failed] = entails( givens, lie_wanted_unambiguous);
-        if (not lie_failed.empty())
-            throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
+        // 5. check that the remaining constraints are satisfied by the constraints in the type signature
+        if (not lie_residual_unambiguous.empty())
+            throw myexception()<<"Can't derive constraints '"<<print(lie_residual_unambiguous)<<"' from specified constraints '"<<print(givens)<<"'";
         ev_decls = ev_decls2 + ev_decls;
 
-        // 5. return GenBind with tvs, givens, body
+        // 6. return GenBind with tvs, givens, body
         Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
 
         Hs::Type monotype = rho_type;
