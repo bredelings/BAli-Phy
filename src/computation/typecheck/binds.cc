@@ -465,12 +465,26 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     }
     auto unreduced_collected_lie = tcs2.current_lie();
 
+    // A. First, REDUCE the lie by
+    //    (i)  converting to Hnf
+    //     -- when do we do this?  Always?
+    //    (ii) representing some constraints in terms of others.
+    // This also substitutes into the current LIE, which we need to do 
+    //    before finding free type vars in the LIE below.
+    auto [reduce_decls, collected_lie_unsolved] = reduce( unreduced_collected_lie );
+    auto [solve_decls, _, collected_lie] = entails( {}, collected_lie_unsolved );
+
+    // B. Second, extract the "retained" predicates can be added without causing ambiguity.
     auto fixed_tvs = free_meta_type_variables( gve);
     for(auto& [name, tmp]: mono_local_env)
     {
         auto& [x,type] = tmp;
         add(fixed_tvs, free_meta_type_variables(type));
     }
+    auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
+
+
+    // C. Handle ambiguity -- default fully ambiguous type variables.
 
     /* NOTE: Constraints can reference variables that are in
      *        (i) ALL types in a recursive group
@@ -481,25 +495,6 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
      * For restricted bindings, only class (iii) (I think) needs defaults.
      */
 
-
-    // OK, we've got to do defaulting before we consider what variables to quantify over.
-
-    // A. First, REDUCE the lie by
-    //    (i)  converting to Hnf
-    //     -- when do we do this?  Always?
-    //    (ii) representing some constraints in terms of others.
-    // This also substitutes into the current LIE, which we need to do 
-    //    before finding free type vars in the LIE below.
-    auto [reduce_decls, collected_lie_unsolved] = reduce( unreduced_collected_lie );
-    auto [solve_decls, _, collected_lie] = entails( {}, collected_lie_unsolved );
-
-    // B. Second, extract the "retained" predicates can be added without causing abiguity.
-    auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
-
-
-    // FIXME: return {dvar = expression} as a mapping, instead of a sequence of binds?
-    // If we want to substitute an expression for an argument in the wrapper,
-    
     // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
     //   after generating definitions of their dictionaries.
     auto [tvs_in_any_type, tvs_in_all_types] = tvs_in_any_all_types(mono_binder_env);
