@@ -217,7 +217,7 @@ struct typechecker_state: FreshVarSource
 
     bool add_substitution(const Hs::MetaTypeVar& a, const Hs::Type& type);
 
-    bool maybe_unify_(bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2);
+    bool maybe_unify_(bool allow_unification, bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2);
 
     void unify(const Hs::Type& t1, const Hs::Type& t2);
 
