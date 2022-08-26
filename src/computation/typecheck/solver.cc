@@ -156,50 +156,53 @@ optional<vector<Core::Var>> typechecker_state::is_superclass_of(const Hs::Type& 
     }
 }
 
-optional<Core::Decls> typechecker_state::entails_by_superclass(const pair<Core::Var, Hs::Type>& to_keep, const pair<Core::Var, Hs::Type>& to_remove)
+optional<Core::Decls> typechecker_state::entails_by_superclass(const pair<Core::Var, Hs::Type>& given, const pair<Core::Var, Hs::Type>& wanted)
 {
-    auto& [dvar_to_keep, constraint_to_keep] = to_keep;
-    auto& [dvar_to_remove, constraint_to_remove] = to_remove;
+    auto& [dvar_given, given_constraint] = given;
+    auto& [dvar_wanted, wanted_constraint] = wanted;
 
-    if (auto extractors = is_superclass_of(constraint_to_remove, constraint_to_keep))
+    if (auto extractors = is_superclass_of(wanted_constraint, given_constraint))
     {
-        Core::Exp dict_exp = dvar_to_keep;
+        Core::Exp dict_exp = dvar_given;
         for(auto& extractor: *extractors | views::reverse)
             dict_exp = {extractor, dict_exp};
 
-        // dvar_to_remove = extractor[n] extractor[n-1] ... extractor[0] dvar_to_keep
-        return Core::Decls( { pair(dvar_to_remove, dict_exp) } );
+        // dvar_wanted = extractor[n] extractor[n-1] ... extractor[0] dvar_given
+        return Core::Decls( { pair(dvar_wanted, dict_exp) } );
     }
     else
         return {};
 }
 
 template <typename T>
-std::optional<Core::Decls> typechecker_state::entails(const T& to_keep, const std::pair<Core::Var, Hs::Type>& to_remove)
+std::optional<Core::Decls> typechecker_state::entails(const T& givens, const std::pair<Core::Var, Hs::Type>& wanted_pred)
 {
-    // 1. First check if the relevant constraints are superclasses of the current constraint.
-    for(auto& constraint2: to_keep)
+    // 1. First check if the wanted pred is a superclass of any of the givens.
+    //
+    //    A class implies all of its superclasses separately, but a single superclass of K may not imply K.
+    for(auto& given: givens)
     {
-        if (auto decls = entails_by_superclass(constraint2, to_remove))
+        if (auto decls = entails_by_superclass(given, wanted_pred))
             return *decls;
     }
 
     // 2. Then check if there is an instance dfun :: (K1 a, K2 a) => K a
-    if (auto inst = lookup_instance(to_remove.second))
+    auto [wanted_dvar, wanted_constraint] = wanted_pred;
+
+    if (auto inst = lookup_instance(wanted_constraint))
     {
-        auto [dfun_exp, wanteds] = *inst;
+        auto [dfun_exp, super_wanteds] = *inst;
 
         Core::Decls decls;
-        decls.push_back( { to_remove.first, dfun_exp} );
+        decls.push_back( { wanted_dvar, dfun_exp} );
 
         // If we can get (dvar1 :: K1 a) and (dvar2 :: K2 a) and a dfun so that dvar = dfun dvar1 dvar2
-        for(auto& [dvar, constraint]: wanteds)
+        for(auto& super_wanted: super_wanteds)
         {
-            auto edecls = entails(to_keep, {dvar,constraint});
-
-            if (not edecls) return {};
-
-            decls = *edecls + decls;
+            if (auto edecls = entails(givens, super_wanted))
+                decls = *edecls + decls;
+            else
+                return {};
         }
 
         return decls;
@@ -209,24 +212,22 @@ std::optional<Core::Decls> typechecker_state::entails(const T& to_keep, const st
 }
 
 // How does this relate to simplifying constraints?
-tuple<Core::Decls, LIE> typechecker_state::entails(const LIE& lie1, const LIE& lie2)
+tuple<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& wanteds)
 {
     Core::Decls decls;
-    LIE failed_constraints;
-    LIE entailed_constraints;
+    LIE residual_wanteds;
 
-    for(auto& constraint: lie2)
+    for(auto& constraint: wanteds)
     {
-        auto decls1 = entails(lie1, constraint);
+        auto decls1 = entails(givens, constraint);
         if (not decls1)
-            failed_constraints.push_back(constraint);
+            residual_wanteds.push_back(constraint);
         else
         {
-            entailed_constraints.push_back(constraint);
             decls = *decls1 + decls;
         }
     }
-    return {decls, entailed_constraints, failed_constraints};
+    return {decls, residual_wanteds};
 }
 
 pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& lie)
