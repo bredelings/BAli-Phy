@@ -262,7 +262,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 3. try to solve the wanteds from the givens
         // FIXME -- if there are higher-level givens, then we probably need those too!
-        auto [ev_decls2, _, lie_residual] = entails( givens, lie_wanted );
+        auto [ev_decls2, lie_residual] = entails( givens, lie_wanted );
 
         // 4. default ambiguous constraints.
         // FIXME -- we COULD just bump all ambiguous constraints up to the top level and try to default them there...
@@ -472,7 +472,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     // This also substitutes into the current LIE, which we need to do 
     //    before finding free type vars in the LIE below.
     auto [reduce_decls, collected_lie_unsolved] = reduce( unreduced_collected_lie );
-    auto [solve_decls, _, collected_lie] = entails( {}, collected_lie_unsolved );
+    auto [solve_decls, collected_lie] = entails( {}, collected_lie_unsolved );
 
     // B. Second, extract the "retained" predicates can be added without causing ambiguity.
     auto fixed_tvs = free_meta_type_variables( gve);

@@ -209,7 +209,7 @@ std::optional<Core::Decls> typechecker_state::entails(const T& to_keep, const st
 }
 
 // How does this relate to simplifying constraints?
-tuple<Core::Decls, LIE, LIE> typechecker_state::entails(const LIE& lie1, const LIE& lie2)
+tuple<Core::Decls, LIE> typechecker_state::entails(const LIE& lie1, const LIE& lie2)
 {
     Core::Decls decls;
     LIE failed_constraints;

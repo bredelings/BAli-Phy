@@ -70,7 +70,7 @@ typechecker_state::candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie)
     for(auto& type: defaults() )
     {
         tv.fill(type);
-        auto [decls, _, failed_constraints] = entails({}, tv_lie);
+        auto [decls, failed_constraints] = entails({}, tv_lie);
         if (failed_constraints.empty())
             return decls;
         else
@@ -203,7 +203,7 @@ typechecker_state::candidates(const Hs::TypeVar& tv, const LIE& tv_lie)
     {
         substitution_t s;
         s = s.insert({tv, type});
-        auto [decls, _, failed_constraints] = entails({}, apply_subst(s, tv_lie));
+        auto [decls, failed_constraints] = entails({}, apply_subst(s, tv_lie));
         if (failed_constraints.empty())
             return pair(s, decls);
     }

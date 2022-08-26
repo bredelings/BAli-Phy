@@ -241,7 +241,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
 
     // 5. Construct binds_super
     auto wanteds = constraints_to_lie(superclass_constraints);
-    auto [decls_super, _, failed_constraints] = entails(givens, wanteds);
+    auto [decls_super, failed_constraints] = entails(givens, wanteds);
     if (not failed_constraints.empty())
         throw myexception()<<"Can't derive superclass constraints "<<print(failed_constraints)<<" from instance constraints "<<print(givens)<<"!";
 

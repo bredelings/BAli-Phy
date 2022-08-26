@@ -430,7 +430,7 @@ struct typechecker_state: FreshVarSource
     std::optional<Core::Decls>
     entails(const T& to_keep, const std::pair<Core::Var, Hs::Type>& to_check);
 
-    std::tuple<Core::Decls, LIE, LIE>
+    std::tuple<Core::Decls, LIE>
     entails(const LIE& lie1, const LIE& lie2);
 
     bool instance_matches(const Hs::Type&, const Hs::Type&);

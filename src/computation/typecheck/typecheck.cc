@@ -977,7 +977,7 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
             throw myexception()<<"Type not polymorphic enough";
 
     // 4. check that the remaining constraints are satisfied by the constraints in the type signature
-    auto [ev_decls, entailed_wanteds, non_entailed_wanteds] = entails( givens, lie_wanted);
+    auto [ev_decls, non_entailed_wanteds] = entails( givens, lie_wanted);
 
     // 5. put wanteds without skolem variables into the current LIE
     LIE lie_failed;
@@ -1075,7 +1075,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
     //     for example  t1 = 
     LIE wanteds_to_entail;
 
-    auto [decls, entailed_wanteds, non_entailed_wanteds] = entails(givens, wanteds);
+    auto [decls, non_entailed_wanteds] = entails(givens, wanteds);
 
     for(auto& [dvar, constraint]: non_entailed_wanteds)
     {
