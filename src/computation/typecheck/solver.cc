@@ -212,41 +212,29 @@ std::optional<Core::Decls> typechecker_state::entails(const T& givens, const std
 }
 
 // How does this relate to simplifying constraints?
-tuple<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& wanteds)
+pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& wanteds)
 {
     Core::Decls decls;
     LIE residual_wanteds;
 
-    for(auto& constraint: wanteds)
+    for(int i=0;i<wanteds.size();i++)
     {
-        auto decls1 = entails(givens, constraint);
-        if (not decls1)
-            residual_wanteds.push_back(constraint);
+        auto& wanted = wanteds[i];
+
+        auto preds = views::concat(wanteds | views::drop(i+1), residual_wanteds, givens);
+
+        if (auto edecls = entails(preds, wanted))
+            decls += *edecls;
         else
-        {
-            decls = *decls1 + decls;
-        }
+            residual_wanteds.push_back(wanted);
     }
+
     return {decls, residual_wanteds};
 }
 
-pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& lie)
+pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& wanteds)
 {
-    Core::Decls decls_out;
-    LIE lie_out;
-    LIE checked;
-
-    for(int i=0;i<lie.size();i++)
-    {
-        auto& pred = lie[i];
-        auto preds = views::concat(lie | views::drop(i+1), checked);
-        if (auto edecls = entails(preds, pred))
-            decls_out += *edecls;
-        else
-            lie_out.push_back(pred);
-    }
-
-    return {decls_out, lie_out};
+    return entails({}, wanteds);
 }
 
 pair<Core::Decls, LIE> typechecker_state::reduce(const LIE& lie)
