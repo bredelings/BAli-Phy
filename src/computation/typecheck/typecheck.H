@@ -440,7 +440,6 @@ struct typechecker_state: FreshVarSource
     std::pair<Core::Decls, LIE> toHnf(const Core::Var& name, const Hs::Type& constraint);
     std::pair<Core::Decls, LIE> toHnfs(const LIE& lie_in);
     std::pair<Core::Decls, LIE> simplify(const LIE& lie_in);
-    std::pair<Core::Decls, LIE> reduce(const LIE& lie_in);
     Core::Decls simplify_current_lie();
 
     void get_defaults(const Hs::ModuleDecls& M);

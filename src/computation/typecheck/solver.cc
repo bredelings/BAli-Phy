@@ -237,15 +237,6 @@ pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& wanteds)
     return entails({}, wanteds);
 }
 
-pair<Core::Decls, LIE> typechecker_state::reduce(const LIE& lie)
-{
-    auto [decls1, lie1] = toHnfs(lie);
-
-    auto [decls2, lie2] = simplify(lie1);
-
-    return {decls2 + decls1, lie2};
-}
-
 Core::Decls typechecker_state::simplify_current_lie()
 {
     auto& lie = current_lie();

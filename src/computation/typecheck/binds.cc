@@ -463,7 +463,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
             throw;
         }
     }
-    auto unreduced_collected_lie = tcs2.current_lie();
+    auto wanteds = tcs2.current_lie();
 
     // A. First, REDUCE the lie by
     //    (i)  converting to Hnf
@@ -471,8 +471,9 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     //    (ii) representing some constraints in terms of others.
     // This also substitutes into the current LIE, which we need to do 
     //    before finding free type vars in the LIE below.
-    auto [reduce_decls, collected_lie_unsolved] = reduce( unreduced_collected_lie );
-    auto [solve_decls, collected_lie] = entails( {}, collected_lie_unsolved );
+    auto [solve_decls, residual_wanteds] = simplify( wanteds );
+
+    auto [reduce_decls, collected_lie] = toHnfs( residual_wanteds );
 
     // B. Second, extract the "retained" predicates can be added without causing ambiguity.
     auto fixed_tvs = free_meta_type_variables( gve);
