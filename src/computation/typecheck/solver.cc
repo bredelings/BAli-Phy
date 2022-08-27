@@ -246,11 +246,11 @@ pair<Core::Decls, LIE> typechecker_state::reduce(const LIE& lie)
     return {decls2 + decls1, lie2};
 }
 
-Core::Decls typechecker_state::reduce_current_lie()
+Core::Decls typechecker_state::simplify_current_lie()
 {
     auto& lie = current_lie();
 
-    auto [decls, new_lie] = reduce( lie );
+    auto [decls, new_lie] = simplify( lie );
 
     lie = new_lie;
 
