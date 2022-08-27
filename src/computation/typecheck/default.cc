@@ -282,7 +282,7 @@ typechecker_state::default_preds( const set<Hs::TypeVar>& qtvs,
 
 Core::Decls typechecker_state::simplify_and_default_top_level()
 {
-    auto& top_simplify_decls = simplify_current_lie();
+    auto top_simplify_decls = simplify_current_lie();
 
     auto [default_decls, unambiguous_preds] = default_preds({}, {}, current_lie());
     assert(unambiguous_preds.empty());
