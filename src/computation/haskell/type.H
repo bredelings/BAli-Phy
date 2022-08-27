@@ -281,6 +281,13 @@ struct StrictLazyType
 
 struct Implication
 {
+    // The implication may need a level number to describe the wanteds.
+    // Probably we can have constraints with a higher level number, but only inside an implication
+
+    // The implication may need a pointer to a modifiable set of evidence bindings.
+    // If we create an implication constraint for a case alternative, then equations that
+    //  relate the wanteds to the givens to be prepended to the alternative body.
+
     Context givens;
     Context wanteds;
 
