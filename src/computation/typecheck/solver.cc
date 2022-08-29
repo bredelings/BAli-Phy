@@ -174,6 +174,27 @@ optional<Core::Decls> typechecker_state::entails_by_superclass(const pair<Core::
         return {};
 }
 
+// 1. constraint solving loop: first process simple constraints, then go under implications.
+//    1a. Run the constraint solving loop on the simpled Wanted constraints.
+//        - This can create new implication constraints. (how?)
+//    1b. Process each implication constraint
+//        - Enter an implication.
+//        - Save the outer inert set.
+//        - Simplify the givens - add them to the inert set when this makes sense.
+//        - Solve the inner simple wanteds - also add them to the inert set?
+//          - does this have the effect of making simple wanteds affect implication constraints?
+//        - Recurse into nested implications.
+//        - Restore the saved inert set to what it was before entering the implication.
+//        - Then continue processing the next implication constraint.
+
+// 2. The interaction pipeline.
+//    2a. Pick an item from the work list.
+//    2b. If its not canonical, canonicalize it and goto 2a.
+//    2c. If we have an inert reaction, do it and goto 2a.
+//    2d. If we have a top-level reaction, do it and goto 2a.
+//    2e. If its canonical and there are no possible reactions left, add it to the inert set.
+
+
 template <typename T>
 std::optional<Core::Decls> typechecker_state::entails(const T& givens, const std::pair<Core::Var, Hs::Type>& wanted_pred)
 {
@@ -211,9 +232,57 @@ std::optional<Core::Decls> typechecker_state::entails(const T& givens, const std
     return {};
 }
 
-// How does this relate to simplifying constraints?
 pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& wanteds)
 {
+    // This should implement |->[solv] from Figure 14 of the OutsideIn(X) paper:
+    //   \mathcal{Q}; Q[given]; alpha[touchable] |->[solv] C[wanted] ~~> Q[residual]; theta
+    // where theta is a substitution.
+
+    // This has a few steps (rule SOLVE from Figure 14):
+    // 1. Run the simplifier (|->[simp]) on the non-implication constraints to produce Q[r]; theta
+    // 2. For each implication constraint alpha[i];Q[i] => C[i]
+    //    - apply theta to Q[i] and C[i] (which would happen automatically if we use metavars)
+    //    - run solve(\mathcal{Q}, Q[given] + Q[r] + Q[i]; alpha[i], C[i]) |->[solv] empty;theta[i]
+    //    - the theta[i] shouldn't affect anything outside the implication we are working on.
+    // 3. we return Q[r];theta
+    //    - interestingly, the implication constraints don't contribute here.
+
+    // The simplifier corresponds to the relation |->[simp] from Figure 19 of the OutsideIn(X) paper:
+    //    \mathcal{Q}; Q[given] ; alpha[touchable] |->[simp] Q[wanted] ~~> Q[residual]; theta
+    // where theta is the substitution -- which we should actually perform here instead of returning as an object.
+
+    // So, we need to to know the set of touchable variables, either through the typechecker_state, or
+    // as a function argument.
+
+    // This has a few steps (rule SIMPLES from Figure 19):
+    // 1. Run the the rewrite rules until no more are applicable.
+    //    We start out with no flattening substitution.
+    // 2. Apply the flattening transformation on the wanteds -> Q[rr].
+    // 3. \mathcal{E} = the set of (beta ~ tau) or (tau ~ beta) in Q[rr] where
+    //    * beta is a touchable unification variable
+    //    * beta is not in the free unification variables of tau
+    // 4. theta = substitutions (beta -> theta(tau)) from \mathcal{E}, where
+    //    * we choose only one substitution for beta if we have multiple equations on beta
+    //    * for example, if we have (beta ~ tau1) and (beta ~ tau2), we pick one.
+    //    * presumably, we can pick either one -> they would need to agree!
+    //    * if they don't, do we do Irresolvable (beta ~ tau1) and Irresolvable (beta ~ tau2)?
+    //    * we need to substitute into the taus using the theta that contains the taus!
+    //      - that probably works fine if we use meta-vars.
+    // 5. Q[r] = Q[rr] - \mathcal{E}
+    // 6. Return theta(Q[r])
+    //    * we can do this by just performing theta and returning Q[r].
+
+    // The rewrite rules (also Figure 19) include:
+    // a. replace a given/wanted by a canonicalized given/wanted (and maybe add a flattening substitution)
+    // b. interact a given/wanted Q1 with a given/wanted Q2 and to produce a given/wanted Q3.
+    //    - do we REPLACE Q1 and Q2 by Q3, or ADD Q3 to the set?
+    // c. react a given Q1 and a wanted Q2 to produce a new wanted Q3 = simplifies(Q1,Q2)
+    //    - replace the wanted Q2 by Q3.
+    // d. react a given Q1 with axioms in \mathcal{Q} to produce Q2.
+    //    - replace Q1 by Q2.
+    // e. react a wanted Q1 with axioms in \mathcal{Q} to produce Q2 and new touchable variables beta.
+    //    - replace Q1 by Q2 and add in the new touchable variables beta.
+
     Core::Decls decls;
     LIE residual_wanteds;
 
