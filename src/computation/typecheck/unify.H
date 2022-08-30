@@ -7,6 +7,7 @@
 
 
 typedef immer::map<Hs::TypeVar, Hs::Type> substitution_t;
+typedef immer::map<Hs::MetaTypeVar, Hs::Type> usubstitution_t;
 
 std::string print(const substitution_t& s);
 // TODO
@@ -42,13 +43,21 @@ namespace std
     };
 }
 
+std::optional<Hs::Context> check_apply_subst(const substitution_t& s, Hs::Context C);
+std::optional<Hs::Type> check_apply_subst(const substitution_t& s, const Hs::Type& t);
 Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t);
-Hs::Context apply_subst(const substitution_t& s, Hs::Context C);
+//Hs::Context apply_subst(const substitution_t& s, const Hs::Context& C);
+
+std::optional<Hs::Context> check_apply_subst(const usubstitution_t& s, Hs::Context C);
+std::optional<Hs::Type> check_apply_subst(const usubstitution_t& s, const Hs::Type& t);
+Hs::Type apply_subst(const usubstitution_t& s, const Hs::Type& t);
+
 Hs::Constructor apply_subst(const substitution_t& s, Hs::Constructor con);
 Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl d);
 
 bool try_insert(const Hs::MetaTypeVar& tv, Hs::Type type);
 bool occurs_check(const Haskell::MetaTypeVar& tv, const Hs::Type& t);
+bool occurs_check(const Hs::TypeVar& tv, const Hs::Type& t);
 
 bool maybe_tunify(const Hs::Type& t1, const Hs::Type& t2);
 bool maybe_tmatch(const Hs::Type& t1, const Hs::Type& t2);

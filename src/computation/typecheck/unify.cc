@@ -19,73 +19,289 @@ string print(const substitution_t& s)
     return oss.str();
 }
 
-Hs::Context apply_subst(const substitution_t& s, Hs::Context C)
+optional<Hs::Context> check_apply_subst(const substitution_t& s, Hs::Context C)
 {
+    bool changed = false;
     for(auto& constraint: C.constraints)
-        constraint = apply_subst(s, constraint);
-    return C;
+    {
+        if (auto maybe_constraint = check_apply_subst(s, constraint))
+        {
+            constraint = *maybe_constraint;
+            changed = true;
+        }
+    }
+    if (changed)
+        return C;
+    else
+        return {};
 }
 
-Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t)
+optional<Hs::Context> check_apply_subst(const usubstitution_t& s, Hs::Context C)
 {
-    if (s.empty()) return t;
+    bool changed = false;
+    for(auto& constraint: C.constraints)
+    {
+        if (auto maybe_constraint = check_apply_subst(s, constraint))
+        {
+            constraint = *maybe_constraint;
+            changed = true;
+        }
+    }
+    if (changed)
+        return C;
+    else
+        return {};
+}
 
-    else if (auto tt = filled_meta_type_var(t))
-        return apply_subst(s, *tt);
+std::optional<Hs::Type> check_apply_subst(const substitution_t& s, const Hs::Type& t)
+{
+    if (s.empty()) return {};
+
+    if (auto tt = filled_meta_type_var(t))
+        return check_apply_subst(s,  *tt);
     else if (t.is_a<Hs::MetaTypeVar>())
-        return t;
+        return {};
     else if (auto tv = t.to<Hs::TypeVar>())
     {
         if (auto t2 = s.find(*tv))
             return apply_subst(s,*t2);
         else
-            return t;
+            return {};
     }
     else if (t.is_a<Hs::TypeCon>())
-        return t;
+        return {};
     else if (auto tup = t.to<Hs::TupleType>())
     {
         auto T = *tup;
+        bool changed = false;
         for(auto& type: T.element_types)
-            type = apply_subst(s, type);
-        return T;
+        {
+            if (auto maybe_type = check_apply_subst(s,  type))
+            {
+                type = *maybe_type;
+                changed = true;
+            }
+        }
+
+        if (changed)
+            return T;
+        else
+            return {};
     }
     else if (auto l = t.to<Hs::ListType>())
     {
-        auto L = *l;
-        L.element_type = apply_subst(s, L.element_type);
-        return L;
+        if (auto maybe_element_type = check_apply_subst(s,  l->element_type))
+        {
+            auto L = *l;
+            L.element_type = *maybe_element_type;
+            return L;
+        }
+        else
+            return {};
     }
     else if (auto p_app = t.to<Hs::TypeApp>())
     {
         auto app = *p_app;
-        app.head = apply_subst(s, app.head);
-        app.arg  = apply_subst(s, app.arg);
-        return app;
-    }
-    else if (auto p_forall = t.to<Hs::ForallType>())
-    {
-        auto forall = *p_forall;
+        bool changed = false;
+        if (auto maybe_head = check_apply_subst(s, app.head))
+        {
+            app.head = *maybe_head;
+            changed = true;
+        }
+        if (auto maybe_arg = check_apply_subst(s, app.arg))
+        {
+            app.arg = *maybe_arg;
+            changed = true;
+        }
 
+        if (changed)
+            return app;
+        else
+            return {};
+    }
+    else if (auto forall = t.to<Hs::ForallType>())
+    {
         auto s2 = s;
-        for(auto& tv: forall.type_var_binders)
+        for(auto& tv: forall->type_var_binders)
             s2 = s2.erase(tv);
 
-        forall.type =  apply_subst(s2, forall.type);
-        return forall;
+        if (auto maybe_type = check_apply_subst(s2, forall->type))
+        {
+            auto Forall = *forall;
+            Forall.type = *maybe_type;
+            return Forall;
+        }
+        else
+            return {};
     }
     else if (auto c = t.to<Hs::ConstrainedType>())
     {
         auto C = *c;
-        C.context = apply_subst(s, C.context);
-        C.type = apply_subst(s, C.type);
-        return C;
+        bool changed = false;
+        if (auto maybe_context = check_apply_subst(s, c->context))
+        {
+            C.context = *maybe_context;
+            changed = true;
+        }
+        if (auto maybe_type = check_apply_subst(s, c->type))
+        {
+            C.type = *maybe_type;
+            changed = true;
+        }
+        if (changed)
+            return C;
+        else
+            return {};
     }
     else if (auto sl = t.to<Hs::StrictLazyType>())
     {
-        auto SL = *sl;
-        SL.type = apply_subst(s, SL.type);
-        return SL;
+        if (auto maybe_type = check_apply_subst(s, sl->type))
+        {
+            auto SL = *sl;
+            SL.type = *maybe_type;
+            return SL;
+        }
+        else
+            return {};
+    }
+    else
+        std::abort();
+}
+
+Hs::Context apply_subst(const substitution_t& s, const Hs::Context& C)
+{
+    if (auto c = check_apply_subst(s,C))
+        return *c;
+    else
+        return C;
+}
+
+Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t)
+{
+    if (auto T = check_apply_subst(s, t))
+        return *T;
+    else
+        return t;
+}
+
+Hs::Type apply_subst(const usubstitution_t& s, const Hs::Type& t)
+{
+    if (auto T = check_apply_subst(s, t))
+        return *T;
+    else
+        return t;
+}
+
+std::optional<Hs::Type> check_apply_subst(const usubstitution_t& s, const Hs::Type& t)
+{
+    if (s.empty()) return {};
+
+    if (auto tt = filled_meta_type_var(t))
+        return check_apply_subst(s,  *tt);
+    else if (auto tv = t.to<Hs::MetaTypeVar>())
+    {
+        if (auto t2 = s.find(*tv))
+        {
+            if (tv->filled())
+                throw myexception()<<"Trying to substitution for filled unification variable "<<unloc(tv->name);
+            return apply_subst(s,*t2);
+        }
+        else
+            return {};
+    }
+    else if (t.is_a<Hs::TypeVar>())
+        return {};
+    else if (t.is_a<Hs::TypeCon>())
+        return {};
+    else if (auto tup = t.to<Hs::TupleType>())
+    {
+        auto T = *tup;
+        bool changed = false;
+        for(auto& type: T.element_types)
+        {
+            if (auto maybe_type = check_apply_subst(s,  type))
+            {
+                type = *maybe_type;
+                changed = true;
+            }
+        }
+
+        if (changed)
+            return T;
+        else
+            return {};
+    }
+    else if (auto l = t.to<Hs::ListType>())
+    {
+        if (auto maybe_element_type = check_apply_subst(s,  l->element_type))
+        {
+            auto L = *l;
+            L.element_type = *maybe_element_type;
+            return L;
+        }
+        else
+            return {};
+    }
+    else if (auto p_app = t.to<Hs::TypeApp>())
+    {
+        auto app = *p_app;
+        bool changed = false;
+        if (auto maybe_head = check_apply_subst(s, app.head))
+        {
+            app.head = *maybe_head;
+            changed = true;
+        }
+        if (auto maybe_arg = check_apply_subst(s, app.arg))
+        {
+            app.arg = *maybe_arg;
+            changed = true;
+        }
+
+        if (changed)
+            return app;
+        else
+            return {};
+    }
+    else if (auto forall = t.to<Hs::ForallType>())
+    {
+        if (auto maybe_type = check_apply_subst(s, forall->type))
+        {
+            auto Forall = *forall;
+            Forall.type = *maybe_type;
+            return Forall;
+        }
+        else
+            return {};
+    }
+    else if (auto c = t.to<Hs::ConstrainedType>())
+    {
+        auto C = *c;
+        bool changed = false;
+        if (auto maybe_context = check_apply_subst(s, c->context))
+        {
+            C.context = *maybe_context;
+            changed = true;
+        }
+        if (auto maybe_type = check_apply_subst(s, c->type))
+        {
+            C.type = *maybe_type;
+            changed = true;
+        }
+        if (changed)
+            return C;
+        else
+            return {};
+    }
+    else if (auto sl = t.to<Hs::StrictLazyType>())
+    {
+        if (auto maybe_type = check_apply_subst(s, sl->type))
+        {
+            auto SL = *sl;
+            SL.type = *maybe_type;
+            return SL;
+        }
+        else
+            return {};
     }
     else
         std::abort();
@@ -128,6 +344,50 @@ bool occurs_check(const Hs::MetaTypeVar& tv, const Hs::Type& t)
         return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
     else if (auto f = t.to<Hs::ForallType>())
         return occurs_check(tv, f->type);
+    else if (auto c = t.to<Hs::ConstrainedType>())
+    {
+        // The context may not contain vars that don't occur in the head;
+        for(auto& constraint: c->context.constraints)
+            if (occurs_check(tv, constraint))
+                return true;
+
+        return occurs_check(tv, c->type);
+    }
+    else if (auto sl = t.to<Hs::StrictLazyType>())
+        return occurs_check(tv, sl->type);
+    else
+        std::abort();
+}
+
+bool occurs_check(const Hs::TypeVar& tv, const Hs::Type& t)
+{
+    if (auto tt = filled_meta_type_var(t))
+        return occurs_check(tv, *tt);
+    else if (t.is_a<Hs::MetaTypeVar>())
+        return false;
+    else if (auto x = t.to<Hs::TypeVar>())
+        return tv == *x;
+    else if (t.is_a<Hs::TypeCon>())
+        return false;
+    else if (auto tup = t.to<Hs::TupleType>())
+    {
+        for(auto& type: tup->element_types)
+            if (occurs_check(tv, type))
+                return true;
+        return false;
+    }
+    else if (auto l = t.to<Hs::ListType>())
+        return occurs_check(tv, l->element_type);
+    else if (auto p_app = t.to<Hs::TypeApp>())
+        return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
+    else if (auto f = t.to<Hs::ForallType>())
+    {
+        for(auto & qv: f->type_var_binders)
+            if (qv == tv)
+                return false;
+
+        return occurs_check(tv, f->type);
+    }
     else if (auto c = t.to<Hs::ConstrainedType>())
     {
         // The context may not contain vars that don't occur in the head;
