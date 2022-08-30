@@ -440,7 +440,87 @@ std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2)
     if (P1.flavor == P2.flavor) return {};
     if (P1.flavor != Given) return interact_g_w(P2, P1);
 
-    // here we can assume that P1 is given and P2 is wanted.
+    auto eq1 = to<CanonicalEqualityPred>(P1.pred);
+    auto eq2 = to<CanonicalEqualityPred>(P2.pred);
+
+    auto dict1 = to<CanonicalDictPred>(P1.pred);
+    auto dict2 = to<CanonicalDictPred>(P2.pred);
+
+    if (eq1 and eq2)
+    {
+        auto [v1, t1a, t1b] = *eq1;
+        auto uv1 = t1a.to<Hs::MetaTypeVar>();
+        while (uv1 and uv1->filled())
+        {
+            t1a = *uv1->filled();
+            uv1 = t1a.to<Hs::MetaTypeVar>();
+        }
+        auto tv1 = t1a.to<Hs::TypeVar>();
+
+        auto [v2, t2a, t2b] = *eq2;
+        auto uv2 = t2a.to<Hs::MetaTypeVar>();
+        while(uv2 and uv2->filled())
+        {
+            t2a = *uv2->filled();
+            uv2 = t2a.to<Hs::MetaTypeVar>();
+        }
+        auto tv2 = t2a.to<Hs::TypeVar>();
+
+        // SEQSAME: (tv1 ~ X1) simplifies (tv1 ~ X2) -> (X1 ~ X2) 
+        if ((tv1 and tv2 and *tv1 == *tv2) or (uv1 and uv2 and *uv1 == *uv2))
+        {
+            Predicate P3(Wanted, NonCanonicalPred(eq2->co, make_equality_constraint(t1b, t2b)));
+            return ReactSuccess({}, {P1,P3});
+        }
+        // SEQDIFF: (tv1 ~ X1) simplifies (tv2 ~ X2) -> (tv2 ~ [tv1->X1]X2) if tv1 in ftv(X2)
+        else if ((tv1 or uv1) and (tv2 or uv2))
+        {
+            if (auto t2b_subst = tv1?check_apply_subst({{*tv1, t1b}}, t2b):check_apply_subst({{*uv1, t1b}}, t2b))
+            {
+                Predicate P3(Wanted, NonCanonicalPred(eq2->co, make_equality_constraint(t2a, *t2b_subst)));
+                return ReactSuccess({}, {P1, P3});
+            }
+        }
+    }
+    // SEQDICT: (tv1 ~ X1) simplifies (D xs) -> (D [tv1->X1]xs) if tv1 in ftv(xs)
+    else if (eq1 and dict2)
+    {
+        auto [v1, t1a, t1b] = *eq1;
+        auto uv1 = t1a.to<Hs::MetaTypeVar>();
+        while (uv1 and uv1->filled())
+        {
+            t1a = *uv1->filled();
+            uv1 = t1a.to<Hs::MetaTypeVar>();
+        }
+        auto tv1 = t1a.to<Hs::TypeVar>();
+
+        bool changed = false;
+        CanonicalDictPred dict2_subst = *dict2;
+        for(auto& class_arg: dict2_subst.args)
+        {
+            if (auto maybe_class_arg = tv1?check_apply_subst({{*tv1,t1b}}, class_arg):check_apply_subst({{*uv1,t1b}},class_arg))
+            {
+                changed = true;
+                class_arg = *maybe_class_arg;
+            }
+        }
+        if (changed)
+            return ReactSuccess({},{Predicate(Wanted, dict2_subst)});
+    }
+    // SDDICTG:  (D xs) simplifies (D xs)     -> empty
+    else if (dict1 and dict2)
+    {
+        auto constraint1 = Hs::make_tyapps(dict1->klass,dict1->args);
+        auto constraint2 = Hs::make_tyapps(dict2->klass,dict2->args);
+
+        if (same_type(constraint1, constraint2))
+        {
+            Core::Decls decls = {{dict2->dvar, dict1->dvar}};
+            return ReactSuccess(decls,{P1});
+        }
+    }
+    // SEQFEQ:  (tv1 ~ X1) simplifies (F xs ~ x) -> (F [tv1->X1]xs ~ [tv1 -> X1]x) if tv1 in ftv(xs,x)
+    // SFEQFEQ: (F xs ~ X1) simplifies (F xs ~ X2) -> (X1 ~ X2)
 
     return {};
 }
@@ -537,7 +617,16 @@ pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& 
         
         // binary interact given/wanted
         for(int i=0;i<inert.size() and not reacted;i++)
+        {
             reacted = react(interact_g_w(p, inert[i]), p);
+            if (reacted)
+            {
+                if (i+1 < inert.size())
+                    std::swap(inert[i], inert.back());
+
+                inert.pop_back();
+            }
+        }
         if (reacted) continue;
 
         // top-level reactions
