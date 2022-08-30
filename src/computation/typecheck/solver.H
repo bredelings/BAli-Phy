@@ -1,0 +1,55 @@
+#ifndef SOLVER_H
+#define SOLVER_H
+
+#include "computation/haskell/haskell.H"
+
+#include <vector>
+#include <variant>
+
+enum ConstraintFlavor { Wanted, Given };
+
+struct NonCanonicalPred
+{
+    Core::Var dvar;
+    Hs::Type constraint;
+    NonCanonicalPred(const Core::Var& v, const Hs::Type& c):dvar(v), constraint(c) {}
+};
+
+struct CanonicalDictPred
+{
+    Core::Var dvar;
+    Hs::TypeCon klass;
+    std::vector<Hs::Type> args;
+};
+
+struct CanonicalEqualityPred
+{
+    Core::Var co;
+    Hs::Type a;
+    Hs::Type b;
+    CanonicalEqualityPred(const Core::Var& v, const Hs::Type& t1, const Hs::Type& t2):co(v),a(t1),b(t2) {}
+};
+
+typedef std::variant<NonCanonicalPred, CanonicalDictPred, CanonicalEqualityPred> Pred;
+
+struct Predicate
+{
+    ConstraintFlavor flavor;
+    Pred pred;
+
+    Predicate(ConstraintFlavor f, Pred p): flavor(f), pred(p) {}
+};
+
+struct ReactFail {};
+
+struct ReactSuccess
+{
+    Core::Decls decls;
+    std::vector<Predicate> predicates;
+    ReactSuccess(const Core::Decls& d, const std::vector<Predicate>& ps):decls(d), predicates(ps) {}
+    ReactSuccess(const Core::Decls& d, ConstraintFlavor f, const std::vector<std::pair<Core::Var, Hs::Type>>& ps);
+};
+
+typedef std::variant<ReactFail, ReactSuccess> Reaction;
+
+#endif

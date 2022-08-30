@@ -13,6 +13,7 @@
 #include "computation/expression/apply.H"
 
 #include "computation/haskell/haskell.H"
+#include "computation/typecheck/solver.H"
 #include "types.H"
 
 // The kind-inference paper treats substitutions as a list of terms of the form
@@ -126,6 +127,7 @@ public:
     Expected(const Check& c):value(c) {}
     Expected(const Infer& i):value(i) {}
 };
+
 
 std::string print(const LIE& lie);
 
@@ -425,6 +427,8 @@ struct typechecker_state: FreshVarSource
     std::optional<Core::Decls>
     entails_by_superclass(const std::pair<Core::Var, Hs::Type>& to_keep,
                           const std::pair<Core::Var, Hs::Type>& to_remove);
+
+    std::optional<Reaction> top_react(const Predicate& P);
 
     template <typename T>
     std::optional<Core::Decls>

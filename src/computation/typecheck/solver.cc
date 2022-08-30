@@ -1,5 +1,7 @@
 #include "typecheck.H"
 #include "kindcheck.H"
+#include "solver.H"
+#include "unify.H" // for occurs_check
 
 #include "util/set.H"
 
@@ -14,6 +16,15 @@ using std::optional;
 using std::tuple;
 
 namespace views = ranges::views;
+
+template <typename T, typename U>
+const T* to(const U& u)
+{
+    if (std::holds_alternative<T>(u))
+        return &std::get<T>(u);
+    else
+        return nullptr;
+}
 
 bool type_is_hnf(const Hs::Type& type)
 {
@@ -232,9 +243,314 @@ std::optional<Core::Decls> typechecker_state::entails(const T& givens, const std
     return {};
 }
 
+bool is_canonical(const Predicate& p)
+{
+    return std::holds_alternative<CanonicalDictPred>(p.pred) or
+        std::holds_alternative<CanonicalEqualityPred>(p.pred);
+}
+
+std::optional<Reaction> canonicalize_equality(const Core::Var& co_var, ConstraintFlavor flavor, const Hs::Type& t1, const Hs::Type& t2)
+{
+    // REFL: tau ~ tau
+    if (same_type(t1,t2))
+        return ReactSuccess({}, {});
+
+    auto [head1,args1] = decompose_type_apps(t1);
+    auto [head2,args2] = decompose_type_apps(t2);
+    auto h1 = head1.to<Hs::TypeCon>();
+    auto h2 = head2.to<Hs::TypeCon>();
+
+    if (h1 and h2)
+    {
+        // TDEC: T1 x1 y1 z1 = T1 x2 y2 z2
+        if (*h1 == *h2 and args1.size() == args2.size())
+        {
+            vector<Predicate> preds;
+            for(int i=0;i<args1.size();i++)
+                preds.push_back(Predicate(flavor,NonCanonicalPred(flavor, make_equality_constraint(args1[i],args2[i]))));
+            return ReactSuccess({}, preds);
+        }
+        // FAILDEC: T1 x1 y1 z1 = T2 x2 y2 z2
+        else
+        {
+            return ReactFail();
+        }
+    }
+
+    if (auto uv1 = t1.to<Hs::MetaTypeVar>())
+    {
+        if (auto uv2 = t2.to<Hs::MetaTypeVar>(); *uv2 < *uv1)
+            return canonicalize_equality(co_var, flavor, t2, t1);
+
+        if (occurs_check(*uv1, t2))
+            return ReactFail();
+    }
+    else if (t2.is_a<Hs::MetaTypeVar>())
+    {
+        return canonicalize_equality(co_var, flavor, t2, t1);
+    }
+    else if (auto tv1 = t1.to<Hs::TypeVar>())
+    {
+        if (auto tv2 = t2.to<Hs::TypeVar>(); *tv2 < *tv1)
+            return canonicalize_equality(co_var, flavor, t2, t1);
+
+        if (occurs_check(*tv1, t2))
+            return ReactFail();
+    }
+    else if (t2.is_a<Hs::TypeVar>())
+    {
+        return canonicalize_equality(co_var, flavor, t2, t1);
+    }
+
+    vector<Predicate> preds = {Predicate(flavor,CanonicalEqualityPred(co_var, t1, t2))};
+    return ReactSuccess({}, preds);
+}
+
+std::optional<Reaction> canonicalize(const Predicate& P)
+{
+    if (is_canonical(P)) return {};
+
+    Core::Decls decls;
+    vector<Predicate> preds;
+    auto NCP = std::get<NonCanonicalPred>(P.pred);
+    auto flavor = P.flavor;
+
+    if (auto eq = Hs::is_equality_constraint(NCP.constraint))
+    {
+        auto& [t1, t2] = *eq;
+        return canonicalize_equality(NCP.dvar, flavor, t1, t2);
+    }
+    else
+    {
+        auto [head,args] = decompose_type_apps(NCP.constraint);
+        assert(head.is_a<Hs::TypeCon>());
+        auto klass = head.as_<Hs::TypeCon>();
+        preds.push_back( Predicate{flavor, CanonicalDictPred{NCP.dvar, klass, args}} );
+    }
+    return ReactSuccess(decls, preds);
+}
+
+std::optional<Reaction> interact_same(const Predicate& P1, const Predicate& P2)
+{
+    assert(is_canonical(P1));
+    assert(is_canonical(P2));
+
+    if (P1.flavor != P2.flavor) return {};
+    auto flavor = P1.flavor;
+
+    auto eq1 = to<CanonicalEqualityPred>(P1.pred);
+    auto eq2 = to<CanonicalEqualityPred>(P2.pred);
+
+    auto dict1 = to<CanonicalDictPred>(P1.pred);
+    auto dict2 = to<CanonicalDictPred>(P2.pred);
+
+    if (eq2 and not eq1)
+        return interact_same(P2,P1);
+
+    else if (eq1 and eq2)
+    {
+        auto [v1, t1a, t1b] = *eq1;
+        auto uv1 = t1a.to<Hs::MetaTypeVar>();
+        while (uv1 and uv1->filled())
+        {
+            t1a = *uv1->filled();
+            uv1 = t1a.to<Hs::MetaTypeVar>();
+        }
+        auto tv1 = t1a.to<Hs::TypeVar>();
+
+        auto [v2, t2a, t2b] = *eq2;
+        auto uv2 = t2a.to<Hs::MetaTypeVar>();
+        while(uv2 and uv2->filled())
+        {
+            t2a = *uv2->filled();
+            uv2 = t2a.to<Hs::MetaTypeVar>();
+        }
+        auto tv2 = t2a.to<Hs::TypeVar>();
+
+        // EQSAME: (tv1 ~ X1) + (tv1 ~ X2) -> (tv1 ~ X1) && (X1 ~ X2) 
+        if ((tv1 and tv2 and *tv1 == *tv2) or (uv1 and uv2 and *uv1 == *uv2))
+        {
+            Predicate P3(flavor, NonCanonicalPred(eq2->co, make_equality_constraint(t1b, t2b)));
+            return ReactSuccess({}, {P1,P3});
+        }
+        // EQDIFF: (tv1 ~ X1) + (tv2 ~ X2) -> (tv1 ~ X1) && (tv2 ~ [tv1->X1]X2) if tv1 in ftv(X2)
+        else if ((tv1 or uv1) and (tv2 or uv2))
+        {
+            if (auto t2b_subst = tv1?check_apply_subst({{*tv1, t1b}}, t2b):check_apply_subst({{*uv1, t1b}}, t2b))
+            {
+                Predicate P3(flavor, NonCanonicalPred(eq2->co, make_equality_constraint(t2a, *t2b_subst)));
+                return ReactSuccess({}, {P1, P3});
+            }
+            else if (auto t1b_subst = tv2?check_apply_subst({{*tv2, t2b}}, t1b):check_apply_subst({{*uv2, t2b}}, t1b))
+            {
+                Predicate P3(flavor, NonCanonicalPred(eq2->co, make_equality_constraint(t1a, *t1b_subst)));
+                return ReactSuccess({}, {P3, P2});
+            }
+        }
+    }
+    // EQDICT: (tv1 ~ X1) + (D xs)     -> (tv1 ~ X1) && (D [tv1->X1]xs) if tv1 in ftv(xs)
+    else if (eq1 and dict2)
+    {
+        auto [v1, t1a, t1b] = *eq1;
+        auto uv1 = t1a.to<Hs::MetaTypeVar>();
+        while (uv1 and uv1->filled())
+        {
+            t1a = *uv1->filled();
+            uv1 = t1a.to<Hs::MetaTypeVar>();
+        }
+        auto tv1 = t1a.to<Hs::TypeVar>();
+
+        bool changed = false;
+        CanonicalDictPred dict2_subst = *dict2;
+        for(auto& class_arg: dict2_subst.args)
+        {
+            if (auto maybe_class_arg = tv1?check_apply_subst({{*tv1,t1b}}, class_arg):check_apply_subst({{*uv1,t1b}},class_arg))
+            {
+                changed = true;
+                class_arg = *maybe_class_arg;
+            }
+        }
+        if (changed)
+            return ReactSuccess({},{Predicate(flavor, dict2_subst)});
+    }
+    // DDICT:  (D xs)     + (D xs)     -> (D xs)
+    else if (dict1 and dict2)
+    {
+        auto constraint1 = Hs::make_tyapps(dict1->klass,dict1->args);
+        auto constraint2 = Hs::make_tyapps(dict2->klass,dict2->args);
+
+        if (same_type(constraint1, constraint2))
+        {
+            Core::Decls decls = {{dict2->dvar, dict1->dvar}};
+            return ReactSuccess(decls,{P1});
+        }
+    }
+    // EQFEQ:  (tv1 ~ X1) + (F xs ~ x) -> (tv1 ~ X1) && (F [tv1->X1]xs ~ [tv1 -> X1]x) if tv1 in ftv(xs,x)
+    // FEQFEQ: (F xs ~ X1) + (F xs ~ X2) -> (F xs ~ X1) && (X1 ~ X2)
+    
+    // No reaction
+    return {};
+}
+
+std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2)
+{
+    assert(is_canonical(P1));
+    assert(is_canonical(P2));
+
+    if (P1.flavor == P2.flavor) return {};
+    if (P1.flavor != Given) return interact_g_w(P2, P1);
+
+    // here we can assume that P1 is given and P2 is wanted.
+
+    return {};
+}
+
+
+ReactSuccess::ReactSuccess(const Core::Decls& d, ConstraintFlavor f, const std::vector<std::pair<Core::Var, Hs::Type>>& ps)
+    :decls(d)
+{
+    for(auto& [cvar, constraint]: ps)
+        predicates.push_back(Predicate(f,NonCanonicalPred(cvar,constraint)));
+}
+
+
+// we need to have three results: No react, React<vector<Predicates>>, ReactFail
+std::optional<Reaction> typechecker_state::top_react(const Predicate& P)
+{
+    assert(is_canonical(P));
+
+    if (auto can_dict = to<CanonicalDictPred>(P.pred))
+    {
+        auto [dvar, klass, args] = *can_dict;
+        auto constraint = Hs::make_tyapps(klass,args);
+
+        if (auto inst = lookup_instance(constraint))
+        {
+            // There should not be instances for given constraints
+            if (P.flavor == Given) return ReactFail();
+
+            auto [dfun_exp, super_wanteds] = *inst;
+
+            Core::Decls decls;
+            decls.push_back( { dvar, dfun_exp } );
+
+            return ReactSuccess(decls, Wanted, super_wanteds);
+        }
+    }
+    
+    return {};
+}
+
+
 pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& wanteds)
 {
-    // This should implement |->[solv] from Figure 14 of the OutsideIn(X) paper:
+    Core::Decls solver_decls;
+
+    std::vector<Predicate> work_list;
+    std::vector<Predicate> inert;
+    std::vector<Predicate> failed;
+
+    auto react = [&](const optional<Reaction>& maybe_react, const Predicate& P) -> bool
+    {
+        if (maybe_react)
+        {
+            if (auto r = to<ReactSuccess>(*maybe_react))
+            {
+                auto& new_preds = r->predicates;
+                solver_decls += r->decls;
+                work_list.insert(work_list.end(), new_preds.begin(), new_preds.end());
+            }
+            else
+                failed.push_back(P);
+        }
+        return bool(maybe_react);
+        
+    };
+    
+    for(auto& [evar, constraint]: givens)
+        work_list.push_back({Given, NonCanonicalPred(evar, constraint)});
+    for(auto& [evar, constraint]: wanteds)
+        work_list.push_back({Wanted, NonCanonicalPred(evar, constraint)});
+
+    while(not work_list.empty())
+    {
+        auto p = work_list.back(); work_list.pop_back();
+
+        // canonicalize
+        if (react(canonicalize(p), p))
+            continue;
+
+        // binary interact with other preds with same flavor
+        bool reacted = false;
+        for(int i=0;i<inert.size() and not reacted;i++)
+        {
+            reacted = react(interact_same(p, inert[i]), p);
+            if (reacted)
+            {
+                if (i+1 < inert.size())
+                    std::swap(inert[i], inert.back());
+
+                inert.pop_back();
+            }
+        }
+        if (reacted) continue;
+        
+        // binary interact given/wanted
+        for(int i=0;i<inert.size() and not reacted;i++)
+            reacted = react(interact_g_w(p, inert[i]), p);
+        if (reacted) continue;
+
+        // top-level reactions
+        if (react(top_react(p), p))
+            continue;
+
+        // we should only ge this far if there are no reactions.
+
+        inert.push_back(p);
+    }
+
+
+// This should implement |->[solv] from Figure 14 of the OutsideIn(X) paper:
     //   \mathcal{Q}; Q[given]; alpha[touchable] |->[solv] C[wanted] ~~> Q[residual]; theta
     // where theta is a substitution.
 
