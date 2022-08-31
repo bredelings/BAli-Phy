@@ -428,7 +428,11 @@ struct typechecker_state: FreshVarSource
     entails_by_superclass(const std::pair<Core::Var, Hs::Type>& to_keep,
                           const std::pair<Core::Var, Hs::Type>& to_remove);
 
+    std::optional<Reaction> interact_same(const Predicate& P1, const Predicate& P2);
+    std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2);
     std::optional<Reaction> top_react(const Predicate& P);
+
+    std::pair<Core::Decls,LIE> simplifier(const LIE& givens, const LIE& wanteds);
 
     template <typename T>
     std::optional<Core::Decls>

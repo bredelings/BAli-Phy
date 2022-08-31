@@ -365,7 +365,7 @@ std::optional<Reaction> canonicalize(const Predicate& P)
     return ReactSuccess(decls, preds);
 }
 
-std::optional<Reaction> interact_same(const Predicate& P1, const Predicate& P2)
+std::optional<Reaction> typechecker_state::interact_same(const Predicate& P1, const Predicate& P2)
 {
     assert(is_canonical(P1));
     assert(is_canonical(P2));
@@ -448,16 +448,26 @@ std::optional<Reaction> interact_same(const Predicate& P1, const Predicate& P2)
         if (changed)
             return ReactSuccess({},{Predicate(flavor, dict2_subst)});
     }
-    // DDICT:  (D xs)     + (D xs)     -> (D xs)
     else if (dict1 and dict2)
     {
         auto constraint1 = Hs::make_tyapps(dict1->klass,dict1->args);
         auto constraint2 = Hs::make_tyapps(dict2->klass,dict2->args);
 
+        // DDICT:  (D xs)     + (D xs)     -> (D xs)
         if (same_type(constraint1, constraint2))
         {
             Core::Decls decls = {{dict2->dvar, dict1->dvar}};
             return ReactSuccess(decls,{P1});
+        }
+        // SUPER - not in the paper.
+        else if (auto decls = entails_by_superclass({dict1->dvar,constraint1}, {dict2->dvar,constraint2}))
+        {
+            return ReactSuccess(*decls, {P1});
+        }
+        // SUPER - not in the paper.
+        else if (auto decls = entails_by_superclass({dict2->dvar,constraint2}, {dict1->dvar,constraint1}))
+        {
+            return ReactSuccess(*decls, {P2});
         }
     }
     // EQFEQ:  (tv1 ~ X1) + (F xs ~ x) -> (tv1 ~ X1) && (F [tv1->X1]xs ~ [tv1 -> X1]x) if tv1 in ftv(xs,x)
@@ -467,7 +477,7 @@ std::optional<Reaction> interact_same(const Predicate& P1, const Predicate& P2)
     return {};
 }
 
-std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2)
+std::optional<Reaction> typechecker_state::interact_g_w(const Predicate& P1, const Predicate& P2)
 {
     assert(is_canonical(P1));
     assert(is_canonical(P2));
@@ -542,16 +552,21 @@ std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2)
         if (changed)
             return ReactSuccess({},{Predicate(Wanted, dict2_subst)});
     }
-    // SDDICTG:  (D xs) simplifies (D xs)     -> empty
     else if (dict1 and dict2)
     {
         auto constraint1 = Hs::make_tyapps(dict1->klass,dict1->args);
         auto constraint2 = Hs::make_tyapps(dict2->klass,dict2->args);
 
+        // SDDICTG:  (D xs) simplifies (D xs)     -> empty
         if (same_type(constraint1, constraint2))
         {
             Core::Decls decls = {{dict2->dvar, dict1->dvar}};
             return ReactSuccess(decls,{P1});
+        }
+        // SSUPER - not in the paper.
+        else if (auto decls = entails_by_superclass({dict1->dvar,constraint1}, {dict2->dvar,constraint2}))
+        {
+            return ReactSuccess(*decls, {P1});
         }
     }
     // SEQFEQ:  (tv1 ~ X1) simplifies (F xs ~ x) -> (F [tv1->X1]xs ~ [tv1 -> X1]x) if tv1 in ftv(xs,x)
@@ -596,10 +611,51 @@ std::optional<Reaction> typechecker_state::top_react(const Predicate& P)
     return {};
 }
 
-
-pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& wanteds)
+bool is_touchable(const Hs::MetaTypeVar&)
 {
-    Core::Decls solver_decls;
+    return true;
+}
+
+
+    // The simplifier corresponds to the relation |->[simp] from Figure 19 of the OutsideIn(X) paper:
+    //    \mathcal{Q}; Q[given] ; alpha[touchable] |->[simp] Q[wanted] ~~> Q[residual]; theta
+    // where theta is the substitution -- which we should actually perform here instead of returning as an object.
+
+    // So, we need to to know the set of touchable variables, either through the typechecker_state, or
+    // as a function argument.
+
+    // This has a few steps (rule SIMPLES from Figure 19):
+    // 1. Run the the rewrite rules until no more are applicable.
+    //    We start out with no flattening substitution.
+    // 2. Apply the flattening transformation on the wanteds -> Q[rr].
+    // 3. \mathcal{E} = the set of (beta ~ tau) or (tau ~ beta) in Q[rr] where
+    //    * beta is a touchable unification variable
+    //    * beta is not in the free unification variables of tau
+    // 4. theta = substitutions (beta -> theta(tau)) from \mathcal{E}, where
+    //    * we choose only one substitution for beta if we have multiple equations on beta
+    //    * for example, if we have (beta ~ tau1) and (beta ~ tau2), we pick one.
+    //    * presumably, we can pick either one -> they would need to agree!
+    //    * if they don't, do we do Irresolvable (beta ~ tau1) and Irresolvable (beta ~ tau2)?
+    //    * we need to substitute into the taus using the theta that contains the taus!
+    //      - that probably works fine if we use meta-vars.
+    // 5. Q[r] = Q[rr] - \mathcal{E}
+    // 6. Return theta(Q[r])
+    //    * we can do this by just performing theta and returning Q[r].
+
+    // The rewrite rules (also Figure 19) include:
+    // a. replace a given/wanted by a canonicalized given/wanted (and maybe add a flattening substitution)
+    // b. interact a given/wanted Q1 with a given/wanted Q2 and to produce a given/wanted Q3.
+    //    - do we REPLACE Q1 and Q2 by Q3, or ADD Q3 to the set?
+    // c. react a given Q1 and a wanted Q2 to produce a new wanted Q3 = simplifies(Q1,Q2)
+    //    - replace the wanted Q2 by Q3.
+    // d. react a given Q1 with axioms in \mathcal{Q} to produce Q2.
+    //    - replace Q1 by Q2.
+    // e. react a wanted Q1 with axioms in \mathcal{Q} to produce Q2 and new touchable variables beta.
+    //    - replace Q1 by Q2 and add in the new touchable variables beta.
+
+pair<Core::Decls, LIE> typechecker_state::simplifier(const LIE& givens, const LIE& wanteds)
+{
+    Core::Decls decls;
 
     std::vector<Predicate> work_list;
     std::vector<Predicate> inert;
@@ -612,7 +668,7 @@ pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& 
             if (auto r = to<ReactSuccess>(*maybe_react))
             {
                 auto& new_preds = r->predicates;
-                solver_decls += r->decls;
+                decls += r->decls;
                 work_list.insert(work_list.end(), new_preds.begin(), new_preds.end());
             }
             else
@@ -673,8 +729,55 @@ pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& 
         inert.push_back(p);
     }
 
+    if (not failed.empty())
+        throw myexception()<<"Equations have no solution!";
 
-// This should implement |->[solv] from Figure 14 of the OutsideIn(X) paper:
+    // Split inert into substitution and remaining constraints
+    LIE residual_wanteds;
+    vector<pair<Hs::MetaTypeVar,Hs::Type>> equations;
+    for(auto& P: inert)
+    {
+        assert(is_canonical(P));
+
+        if (P.flavor == Given) continue;
+
+        if (auto eq = to<CanonicalEqualityPred>(P.pred))
+        {
+            auto [_, t_a, t_b] = *eq;
+            auto uv = t_a.to<Hs::MetaTypeVar>();
+            while (uv and uv->filled())
+            {
+                t_a = *uv->filled();
+                uv = t_a.to<Hs::MetaTypeVar>();
+            }
+            if (uv and is_touchable(*uv) and not occurs_check(*uv, t_b))
+                equations.push_back({*uv,t_b});
+            else
+                residual_wanteds.push_back({eq->co, Hs::make_equality_constraint(t_a, t_b)});
+        }
+        else if (auto dict = to<CanonicalDictPred>(P.pred))
+        {
+            auto constraint = Hs::make_tyapps(dict->klass, dict->args);
+            residual_wanteds.push_back({dict->dvar, constraint});
+        }
+    }
+
+    // Actually perform the substitution.
+    for(auto& [uv,type]: equations)
+    {
+        if (not uv.filled())
+            uv.fill(type);
+    }
+
+    return {decls, residual_wanteds};
+}
+
+
+pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& wanteds)
+{
+    auto [decls, residual_wanteds] = simplifier(givens, wanteds);
+
+    // This should implement |->[solv] from Figure 14 of the OutsideIn(X) paper:
     //   \mathcal{Q}; Q[given]; alpha[touchable] |->[solv] C[wanted] ~~> Q[residual]; theta
     // where theta is a substitution.
 
@@ -686,57 +789,6 @@ pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& 
     //    - the theta[i] shouldn't affect anything outside the implication we are working on.
     // 3. we return Q[r];theta
     //    - interestingly, the implication constraints don't contribute here.
-
-    // The simplifier corresponds to the relation |->[simp] from Figure 19 of the OutsideIn(X) paper:
-    //    \mathcal{Q}; Q[given] ; alpha[touchable] |->[simp] Q[wanted] ~~> Q[residual]; theta
-    // where theta is the substitution -- which we should actually perform here instead of returning as an object.
-
-    // So, we need to to know the set of touchable variables, either through the typechecker_state, or
-    // as a function argument.
-
-    // This has a few steps (rule SIMPLES from Figure 19):
-    // 1. Run the the rewrite rules until no more are applicable.
-    //    We start out with no flattening substitution.
-    // 2. Apply the flattening transformation on the wanteds -> Q[rr].
-    // 3. \mathcal{E} = the set of (beta ~ tau) or (tau ~ beta) in Q[rr] where
-    //    * beta is a touchable unification variable
-    //    * beta is not in the free unification variables of tau
-    // 4. theta = substitutions (beta -> theta(tau)) from \mathcal{E}, where
-    //    * we choose only one substitution for beta if we have multiple equations on beta
-    //    * for example, if we have (beta ~ tau1) and (beta ~ tau2), we pick one.
-    //    * presumably, we can pick either one -> they would need to agree!
-    //    * if they don't, do we do Irresolvable (beta ~ tau1) and Irresolvable (beta ~ tau2)?
-    //    * we need to substitute into the taus using the theta that contains the taus!
-    //      - that probably works fine if we use meta-vars.
-    // 5. Q[r] = Q[rr] - \mathcal{E}
-    // 6. Return theta(Q[r])
-    //    * we can do this by just performing theta and returning Q[r].
-
-    // The rewrite rules (also Figure 19) include:
-    // a. replace a given/wanted by a canonicalized given/wanted (and maybe add a flattening substitution)
-    // b. interact a given/wanted Q1 with a given/wanted Q2 and to produce a given/wanted Q3.
-    //    - do we REPLACE Q1 and Q2 by Q3, or ADD Q3 to the set?
-    // c. react a given Q1 and a wanted Q2 to produce a new wanted Q3 = simplifies(Q1,Q2)
-    //    - replace the wanted Q2 by Q3.
-    // d. react a given Q1 with axioms in \mathcal{Q} to produce Q2.
-    //    - replace Q1 by Q2.
-    // e. react a wanted Q1 with axioms in \mathcal{Q} to produce Q2 and new touchable variables beta.
-    //    - replace Q1 by Q2 and add in the new touchable variables beta.
-
-    Core::Decls decls;
-    LIE residual_wanteds;
-
-    for(int i=0;i<wanteds.size();i++)
-    {
-        auto& wanted = wanteds[i];
-
-        auto preds = views::concat(wanteds | views::drop(i+1), residual_wanteds, givens);
-
-        if (auto edecls = entails(preds, wanted))
-            decls += *edecls;
-        else
-            residual_wanteds.push_back(wanted);
-    }
 
     return {decls, residual_wanteds};
 }
