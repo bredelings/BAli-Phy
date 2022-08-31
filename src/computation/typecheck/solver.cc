@@ -284,8 +284,30 @@ bool is_canonical(const Predicate& p)
         std::holds_alternative<CanonicalEqualityPred>(p.pred);
 }
 
-std::optional<Reaction> canonicalize_equality(const Core::Var& co_var, ConstraintFlavor flavor, const Hs::Type& t1, const Hs::Type& t2)
+// This is guaranteed not to return a filled meta-typevar.
+Hs::Type follow_meta_type_var(Hs::Type t)
 {
+    while(auto uv = t.to<Hs::MetaTypeVar>())
+    {
+        if (uv->filled())
+            t = *uv->filled();
+        else
+            return t;
+    }
+    return t;
+}
+
+const Hs::MetaTypeVar* unfilled_meta_type_var(Hs::Type& t)
+{
+    t = follow_meta_type_var(t);
+    return t.to<Hs::MetaTypeVar>();
+}
+
+std::optional<Reaction> canonicalize_equality(const Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
+{
+    auto uv1 = unfilled_meta_type_var(t1);
+    auto uv2 = unfilled_meta_type_var(t2);
+
     // REFL: tau ~ tau
     if (same_type(t1,t2))
         return ReactSuccess({}, {});
@@ -312,15 +334,17 @@ std::optional<Reaction> canonicalize_equality(const Core::Var& co_var, Constrain
         }
     }
 
-    if (auto uv1 = t1.to<Hs::MetaTypeVar>())
+    if (uv1 and uv2)
     {
-        if (auto uv2 = t2.to<Hs::MetaTypeVar>(); *uv2 < *uv1)
+        if (*uv2 < *uv1)
             return canonicalize_equality(co_var, flavor, t2, t1);
-
+    }
+    else if (uv1)
+    {
         if (occurs_check(*uv1, t2))
             return ReactFail();
     }
-    else if (t2.is_a<Hs::MetaTypeVar>())
+    else if (uv2)
     {
         return canonicalize_equality(co_var, flavor, t2, t1);
     }
@@ -385,21 +409,11 @@ std::optional<Reaction> typechecker_state::interact_same(const Predicate& P1, co
     else if (eq1 and eq2)
     {
         auto [v1, t1a, t1b] = *eq1;
-        auto uv1 = t1a.to<Hs::MetaTypeVar>();
-        while (uv1 and uv1->filled())
-        {
-            t1a = *uv1->filled();
-            uv1 = t1a.to<Hs::MetaTypeVar>();
-        }
+        auto uv1 = unfilled_meta_type_var(t1a);
         auto tv1 = t1a.to<Hs::TypeVar>();
 
         auto [v2, t2a, t2b] = *eq2;
-        auto uv2 = t2a.to<Hs::MetaTypeVar>();
-        while(uv2 and uv2->filled())
-        {
-            t2a = *uv2->filled();
-            uv2 = t2a.to<Hs::MetaTypeVar>();
-        }
+        auto uv2 = unfilled_meta_type_var(t2a);
         auto tv2 = t2a.to<Hs::TypeVar>();
 
         // EQSAME: (tv1 ~ X1) + (tv1 ~ X2) -> (tv1 ~ X1) && (X1 ~ X2) 
@@ -427,12 +441,7 @@ std::optional<Reaction> typechecker_state::interact_same(const Predicate& P1, co
     else if (eq1 and dict2)
     {
         auto [v1, t1a, t1b] = *eq1;
-        auto uv1 = t1a.to<Hs::MetaTypeVar>();
-        while (uv1 and uv1->filled())
-        {
-            t1a = *uv1->filled();
-            uv1 = t1a.to<Hs::MetaTypeVar>();
-        }
+        auto uv1 = unfilled_meta_type_var(t1a);
         auto tv1 = t1a.to<Hs::TypeVar>();
 
         bool changed = false;
@@ -494,21 +503,11 @@ std::optional<Reaction> typechecker_state::interact_g_w(const Predicate& P1, con
     if (eq1 and eq2)
     {
         auto [v1, t1a, t1b] = *eq1;
-        auto uv1 = t1a.to<Hs::MetaTypeVar>();
-        while (uv1 and uv1->filled())
-        {
-            t1a = *uv1->filled();
-            uv1 = t1a.to<Hs::MetaTypeVar>();
-        }
+        auto uv1 = unfilled_meta_type_var(t1a);
         auto tv1 = t1a.to<Hs::TypeVar>();
 
         auto [v2, t2a, t2b] = *eq2;
-        auto uv2 = t2a.to<Hs::MetaTypeVar>();
-        while(uv2 and uv2->filled())
-        {
-            t2a = *uv2->filled();
-            uv2 = t2a.to<Hs::MetaTypeVar>();
-        }
+        auto uv2 = unfilled_meta_type_var(t2a);
         auto tv2 = t2a.to<Hs::TypeVar>();
 
         // SEQSAME: (tv1 ~ X1) simplifies (tv1 ~ X2) -> (X1 ~ X2) 
@@ -531,12 +530,7 @@ std::optional<Reaction> typechecker_state::interact_g_w(const Predicate& P1, con
     else if (eq1 and dict2)
     {
         auto [v1, t1a, t1b] = *eq1;
-        auto uv1 = t1a.to<Hs::MetaTypeVar>();
-        while (uv1 and uv1->filled())
-        {
-            t1a = *uv1->filled();
-            uv1 = t1a.to<Hs::MetaTypeVar>();
-        }
+        auto uv1 = unfilled_meta_type_var(t1a);
         auto tv1 = t1a.to<Hs::TypeVar>();
 
         bool changed = false;
@@ -655,6 +649,8 @@ bool is_touchable(const Hs::MetaTypeVar&)
 
 pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& givens, const LIE& wanteds)
 {
+    if (wanteds.empty()) return {{}, {}};
+
     Core::Decls decls;
 
     std::vector<Predicate> work_list;
@@ -744,12 +740,7 @@ pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& givens, const LIE&
         if (auto eq = to<CanonicalEqualityPred>(P.pred))
         {
             auto [_, t_a, t_b] = *eq;
-            auto uv = t_a.to<Hs::MetaTypeVar>();
-            while (uv and uv->filled())
-            {
-                t_a = *uv->filled();
-                uv = t_a.to<Hs::MetaTypeVar>();
-            }
+            auto uv = unfilled_meta_type_var(t_a);
             if (uv and is_touchable(*uv) and not occurs_check(*uv, t_b))
                 equations.push_back({*uv,t_b});
             else
