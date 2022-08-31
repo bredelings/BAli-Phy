@@ -17,6 +17,41 @@ using std::tuple;
 
 namespace views = ranges::views;
 
+string NonCanonicalPred::print() const
+{
+    return dvar.print() + " :: " + constraint.print();
+}
+
+string CanonicalDictPred::print() const
+{
+    auto constraint = Hs::make_tyapps(klass, args);
+    return dvar.print() + " :: " + constraint.print();
+}
+
+string CanonicalEqualityPred::print() const
+{
+    auto constraint = Hs::make_equality_constraint(a, b);
+    return co.print() + " :: " + constraint.print();
+}
+
+string Pred::print() const
+{
+    if (std::holds_alternative<NonCanonicalPred>(*this))
+        return std::get<NonCanonicalPred>(*this).print();
+    else if (std::holds_alternative<CanonicalDictPred>(*this))
+        return std::get<CanonicalDictPred>(*this).print();
+    else if (std::holds_alternative<CanonicalEqualityPred>(*this))
+        return std::get<CanonicalEqualityPred>(*this).print();
+    else
+        std::abort();
+}
+
+string Predicate::print()  const
+{
+    string s = (flavor==Given)?"[G] ":"[W] ";
+    s += pred.print();
+    return s;
+}
 template <typename T, typename U>
 const T* to(const U& u)
 {
@@ -539,9 +574,9 @@ std::optional<Reaction> typechecker_state::top_react(const Predicate& P)
 {
     assert(is_canonical(P));
 
-    if (auto can_dict = to<CanonicalDictPred>(P.pred))
+    if (auto dict = to<CanonicalDictPred>(P.pred))
     {
-        auto [dvar, klass, args] = *can_dict;
+        auto [dvar, klass, args] = *dict;
         auto constraint = Hs::make_tyapps(klass,args);
 
         if (auto inst = lookup_instance(constraint))

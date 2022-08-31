@@ -12,6 +12,7 @@ struct NonCanonicalPred
 {
     Core::Var dvar;
     Hs::Type constraint;
+    std::string print() const;
     NonCanonicalPred(const Core::Var& v, const Hs::Type& c):dvar(v), constraint(c) {}
 };
 
@@ -20,6 +21,7 @@ struct CanonicalDictPred
     Core::Var dvar;
     Hs::TypeCon klass;
     std::vector<Hs::Type> args;
+    std::string print() const;
 };
 
 struct CanonicalEqualityPred
@@ -27,16 +29,23 @@ struct CanonicalEqualityPred
     Core::Var co;
     Hs::Type a;
     Hs::Type b;
+    std::string print() const;
     CanonicalEqualityPred(const Core::Var& v, const Hs::Type& t1, const Hs::Type& t2):co(v),a(t1),b(t2) {}
 };
 
-typedef std::variant<NonCanonicalPred, CanonicalDictPred, CanonicalEqualityPred> Pred;
+struct Pred: public std::variant<NonCanonicalPred, CanonicalDictPred, CanonicalEqualityPred>
+{
+    std::string print() const;
+
+    using variant::variant;
+};
 
 struct Predicate
 {
     ConstraintFlavor flavor;
     Pred pred;
 
+    std::string print() const;
     Predicate(ConstraintFlavor f, Pred p): flavor(f), pred(p) {}
 };
 
