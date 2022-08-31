@@ -432,7 +432,7 @@ struct typechecker_state: FreshVarSource
     std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2);
     std::optional<Reaction> top_react(const Predicate& P);
 
-    std::pair<Core::Decls,LIE> simplifier(const LIE& givens, const LIE& wanteds);
+    std::pair<Core::Decls,LIE> simplify(const LIE& givens, const LIE& wanteds);
 
     template <typename T>
     std::optional<Core::Decls>
@@ -447,8 +447,6 @@ struct typechecker_state: FreshVarSource
 
     std::pair<Core::Decls, LIE> toHnf(const Core::Var& name, const Hs::Type& constraint);
     std::pair<Core::Decls, LIE> toHnfs(const LIE& lie_in);
-    std::pair<Core::Decls, LIE> simplify(const LIE& lie_in);
-    Core::Decls simplify_current_lie();
 
     void get_defaults(const Hs::ModuleDecls& M);
 

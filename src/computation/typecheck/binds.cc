@@ -471,7 +471,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     //    (ii) representing some constraints in terms of others.
     // This also substitutes into the current LIE, which we need to do 
     //    before finding free type vars in the LIE below.
-    auto [solve_decls, residual_wanteds] = simplify( wanteds );
+    auto [solve_decls, residual_wanteds] = entails({},  wanteds );
 
     auto [reduce_decls, collected_lie] = toHnfs( residual_wanteds );
 

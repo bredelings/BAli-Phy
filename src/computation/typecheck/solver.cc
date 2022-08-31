@@ -653,7 +653,7 @@ bool is_touchable(const Hs::MetaTypeVar&)
     // e. react a wanted Q1 with axioms in \mathcal{Q} to produce Q2 and new touchable variables beta.
     //    - replace Q1 by Q2 and add in the new touchable variables beta.
 
-pair<Core::Decls, LIE> typechecker_state::simplifier(const LIE& givens, const LIE& wanteds)
+pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& givens, const LIE& wanteds)
 {
     Core::Decls decls;
 
@@ -775,7 +775,7 @@ pair<Core::Decls, LIE> typechecker_state::simplifier(const LIE& givens, const LI
 
 pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& wanteds)
 {
-    auto [decls, residual_wanteds] = simplifier(givens, wanteds);
+    auto [decls, residual_wanteds] = simplify(givens, wanteds);
 
     // This should implement |->[solv] from Figure 14 of the OutsideIn(X) paper:
     //   \mathcal{Q}; Q[given]; alpha[touchable] |->[solv] C[wanted] ~~> Q[residual]; theta
@@ -792,21 +792,3 @@ pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& 
 
     return {decls, residual_wanteds};
 }
-
-pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& wanteds)
-{
-    return entails({}, wanteds);
-}
-
-Core::Decls typechecker_state::simplify_current_lie()
-{
-    auto& lie = current_lie();
-
-    auto [decls, new_lie] = simplify( lie );
-
-    lie = new_lie;
-
-    return decls;
-}
-
-
