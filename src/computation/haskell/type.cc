@@ -357,12 +357,6 @@ bool MetaTypeVar::operator==(const MetaTypeVar& tv) const
 
 bool MetaTypeVar::operator<(const MetaTypeVar& tv) const
 {
-    if (indirect < tv.indirect)
-        return true;
-
-    if (indirect > tv.indirect)
-        return false;
-
     if (index < tv.index)
         return true;
 
@@ -370,6 +364,9 @@ bool MetaTypeVar::operator<(const MetaTypeVar& tv) const
         return false;
 
     int cmp = unloc(name).compare(unloc(tv.name));
+
+    // Don't depend on the location of *indirect, if indirect is non-null.
+    assert(cmp != 0 or indirect == tv.indirect);
 
     return (cmp < 0);
 }
