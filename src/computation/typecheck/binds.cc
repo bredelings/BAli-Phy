@@ -410,16 +410,16 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
     std::map<std::string, Hs::Var> mono_ids;
 
+    auto tcs2 = copy_clear_lie();
+
     vector<Hs::Type> lhs_types;
     for(int i=0;i<decls.size();i++)
     {
-        auto [type, lve] = infer_lhs_type( decls[i], signatures );
+        auto [type, lve] = tcs2.infer_lhs_type( decls[i], signatures );
 
         lhs_types.push_back(type);
         mono_binder_env += lve;
     }
-
-    auto tcs2 = copy_clear_lie();
 
     for(auto& [name, type]: mono_binder_env)
     {
