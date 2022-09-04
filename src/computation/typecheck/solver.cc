@@ -312,57 +312,111 @@ std::optional<Reaction> canonicalize_equality(const Core::Var& co_var, Constrain
     if (same_type(t1,t2))
         return ReactSuccess({}, {});
 
-    auto [head1,args1] = decompose_type_apps(t1);
-    auto [head2,args2] = decompose_type_apps(t2);
-    auto h1 = head1.to<Hs::TypeCon>();
-    auto h2 = head2.to<Hs::TypeCon>();
-
-    if (h1 and h2)
-    {
-        // TDEC: T1 x1 y1 z1 = T1 x2 y2 z2
-        if (*h1 == *h2 and args1.size() == args2.size())
-        {
-            vector<Predicate> preds;
-            for(int i=0;i<args1.size();i++)
-                preds.push_back(Predicate(flavor,NonCanonicalPred(flavor, make_equality_constraint(args1[i],args2[i]))));
-            return ReactSuccess({}, preds);
-        }
-        // FAILDEC: T1 x1 y1 z1 = T2 x2 y2 z2
-        else
-        {
-            return ReactFail();
-        }
-    }
+    auto tv1 = t1.to<Hs::TypeVar>();
+    auto tv2 = t2.to<Hs::TypeVar>();
 
     if (uv1 and uv2)
     {
         if (*uv2 < *uv1)
             return canonicalize_equality(co_var, flavor, t2, t1);
+        else
+        {
+            Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
+            return ReactSuccess({}, {P});
+        }
     }
     else if (uv1)
     {
         if (occurs_check(*uv1, t2))
             return ReactFail();
+        else
+        {
+            Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
+            return ReactSuccess({}, {P});
+        }
     }
     else if (uv2)
     {
         return canonicalize_equality(co_var, flavor, t2, t1);
     }
-    else if (auto tv1 = t1.to<Hs::TypeVar>())
+    else if (tv1 and  tv2)
     {
-        if (auto tv2 = t2.to<Hs::TypeVar>(); *tv2 < *tv1)
+        if (*tv2 < *tv1)
             return canonicalize_equality(co_var, flavor, t2, t1);
-
+        else
+        {
+            Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
+            return ReactSuccess({}, {P});
+        }
+    }
+    else if (tv1)
+    {
         if (occurs_check(*tv1, t2))
             return ReactFail();
+        else
+        {
+            Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
+            return ReactSuccess({}, {P});
+        }
     }
-    else if (t2.is_a<Hs::TypeVar>())
+    else if (tv2)
     {
         return canonicalize_equality(co_var, flavor, t2, t1);
     }
+    else
+    {
+        // Right now the only TypeCon heads are data constructors and variables.
+        // Unlike GHC, we don't consider representational equality.
+        // When we add type families, this will become more complicated.
+        // See [Decomposing equality] in Tc/Solver/Canonical.hs
 
-    vector<Predicate> preds = {Predicate(flavor,CanonicalEqualityPred(co_var, t1, t2))};
-    return ReactSuccess({}, preds);
+        if (auto tuple = t1.to<Hs::TupleType>())
+            t1 = canonicalize_type(*tuple);
+        else if (auto list = t1.to<Hs::ListType>())
+            t1 = canonicalize_type(*list);
+
+        if (auto tuple = t2.to<Hs::TupleType>())
+            t2 = canonicalize_type(*tuple);
+        else if (auto list = t2.to<Hs::ListType>())
+            t2 = canonicalize_type(*list);
+
+        auto [head1,args1] = decompose_type_apps(t1);
+        auto [head2,args2] = decompose_type_apps(t2);
+
+        if (args1.size() != args2.size())
+            return ReactFail();
+
+        auto h1 = head1.to<Hs::TypeCon>();
+        auto h2 = head2.to<Hs::TypeCon>();
+
+        vector<Predicate> preds;
+        if (h1 and h2)
+        {
+            if (*h1 == *h2)
+            {
+                // TDEC: T x1 y1 z1 = T x2 y2 z2
+                // Fall through.
+            }
+            else
+            {
+                // FAILDEC: T x1 y1 z1 = S x2 y2 z2
+                return ReactFail();
+            }
+        }
+        // We will need to do extra stuff here if either of the heads is a type family.
+        else
+        {
+            preds.push_back(Predicate(flavor,NonCanonicalPred(flavor, make_equality_constraint(head1, head2))));
+        }
+
+        // If we've gotten here, the heads are both injective, and might be equal.
+        for(int i=0;i<args1.size();i++)
+            preds.push_back(Predicate(flavor,NonCanonicalPred(flavor, make_equality_constraint(args1[i],args2[i]))));
+
+        return ReactSuccess({}, preds);
+    }
+
+    std::abort();
 }
 
 std::optional<Reaction> canonicalize(const Predicate& P)
@@ -444,18 +498,21 @@ std::optional<Reaction> typechecker_state::interact_same(const Predicate& P1, co
         auto uv1 = unfilled_meta_type_var(t1a);
         auto tv1 = t1a.to<Hs::TypeVar>();
 
-        bool changed = false;
-        CanonicalDictPred dict2_subst = *dict2;
-        for(auto& class_arg: dict2_subst.args)
+        if (tv1 or uv1)
         {
-            if (auto maybe_class_arg = tv1?check_apply_subst({{*tv1,t1b}}, class_arg):check_apply_subst({{*uv1,t1b}},class_arg))
+            bool changed = false;
+            CanonicalDictPred dict2_subst = *dict2;
+            for(auto& class_arg: dict2_subst.args)
             {
-                changed = true;
-                class_arg = *maybe_class_arg;
+                if (auto maybe_class_arg = tv1?check_apply_subst({{*tv1,t1b}}, class_arg):check_apply_subst({{*uv1,t1b}},class_arg))
+                {
+                    changed = true;
+                    class_arg = *maybe_class_arg;
+                }
             }
+            if (changed)
+                return ReactSuccess({},{Predicate(flavor, dict2_subst)});
         }
-        if (changed)
-            return ReactSuccess({},{Predicate(flavor, dict2_subst)});
     }
     else if (dict1 and dict2)
     {
