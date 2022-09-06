@@ -739,6 +739,10 @@ pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& givens, const LIE&
     for(auto& [evar, constraint]: wanteds)
         work_list.push_back({Wanted, NonCanonicalPred(evar, constraint)});
 
+//    std::cerr<<"---------------\n";
+//    for(auto& w: work_list)
+//        std::cerr<<"  "<<w.print()<<"\n";
+
     while(not work_list.empty())
     {
         auto p = work_list.back(); work_list.pop_back();
@@ -819,6 +823,10 @@ pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& givens, const LIE&
         if (not uv.filled())
             uv.fill(type);
     }
+
+//    std::cerr<<" residual wanteds = \n";
+//    for(auto& [v,c]: residual_wanteds)
+//        std::cerr<<"  "<<v.print()<<" :  "<<c.print()<<"\n";
 
     return {decls, residual_wanteds};
 }
