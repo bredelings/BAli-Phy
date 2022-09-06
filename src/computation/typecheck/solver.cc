@@ -511,7 +511,10 @@ std::optional<Reaction> typechecker_state::interact_same(const Predicate& P1, co
                 }
             }
             if (changed)
-                return ReactSuccess({},{Predicate(flavor, dict2_subst)});
+            {
+                auto P3 = Predicate(flavor, dict2_subst);
+                return ReactSuccess({},{P1, P3});
+            }
         }
     }
     else if (dict1 and dict2)
