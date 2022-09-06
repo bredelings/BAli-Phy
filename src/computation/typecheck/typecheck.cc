@@ -845,7 +845,7 @@ void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2, const myex
 {
     unification_env env;
 
-    if (not maybe_unify_(true, true, env, t1,t2))
+    if (not maybe_unify_(false, true, env, t1,t2))
         throw e;
 }
 
