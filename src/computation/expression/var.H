@@ -40,6 +40,7 @@ struct var: public Object, public occurrence_info
 
     std::optional<int> level;
 
+    // We use this only to print dvar :: constraint
     std::optional<Haskell::Type> type_;
 
     bool operator==(const var&) const;
