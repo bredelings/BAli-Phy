@@ -15,6 +15,7 @@ using std::set;
 using std::pair;
 using std::optional;
 using std::tuple;
+using std::shared_ptr;
 
 
 template <typename T>
@@ -207,7 +208,7 @@ Hs::Decls rename_from_bindinfo(Hs::Decls decls,const map<string, Hs::BindInfo>& 
 
 Hs::GenBind mkGenBind(const vector<Hs::TypeVar>& tvs,
                       const vector<Core::Var>& dict_vars,
-                      const Core::Decls& ev_decls,
+                      const shared_ptr<const Core::Decls>& ev_decls,
                       Hs::Decls decls,
                       const map<string, Hs::BindInfo>& bind_infos)
 {
@@ -283,7 +284,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
 
-        auto decl = mkGenBind( tvs, dict_vars, ev_decls, Hs::Decls({FD}), {{name, bind_info}} );
+        auto decl = mkGenBind( tvs, dict_vars, std::make_shared<Core::Decls>(ev_decls), Hs::Decls({FD}), {{name, bind_info}} );
 
         return {decl, name, polytype};
     }
@@ -579,7 +580,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
     assert(bind_infos.size() >= 1);
 
-    auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, ev_decls, decls, bind_infos );
+    auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, std::make_shared<Core::Decls>(ev_decls), decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
     return decls2;

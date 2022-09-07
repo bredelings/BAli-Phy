@@ -913,7 +913,7 @@ struct GenBind: public Object
     std::vector<Core::Var> dict_args;
 
     // Information for calling each of the binders in the group.
-    Core::Decls dict_decls;
+    std::shared_ptr<const Core::Decls> dict_decls;
 
     // These are the actual declarations.
     Decls body;
@@ -926,7 +926,7 @@ struct GenBind: public Object
 
     GenBind(const std::vector<TypeVar>& v1,
             const std::vector<Core::Var>& v2,
-            const Core::Decls& ev,
+            const std::shared_ptr<const Core::Decls>& ev,
             const Decls& d,
             const std::map<std::string, BindInfo>& bi)
         :tv_args(v1),
