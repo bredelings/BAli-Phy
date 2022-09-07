@@ -267,13 +267,12 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         // 4. default ambiguous constraints.
         // FIXME -- we COULD just bump all ambiguous constraints up to the top level and try to default them there...
         auto fixed_mtvs = free_meta_type_variables( gve );
-        auto [decls1, lie_residual_unambiguous] = default_preds( fixed_mtvs, {}, lie_residual );
-        auto ev_decls = decls1;
+        auto [ev_decls1, lie_residual_unambiguous] = default_preds( fixed_mtvs, {}, lie_residual );
 
         // 5. check that the remaining constraints are satisfied by the constraints in the type signature
         if (not lie_residual_unambiguous.empty())
             throw myexception()<<"Can't derive constraints '"<<print(lie_residual_unambiguous)<<"' from specified constraints '"<<print(givens)<<"'";
-        ev_decls = ev_decls2 + ev_decls;
+        auto ev_decls = ev_decls1 + ev_decls2;
 
         // 6. return GenBind with tvs, givens, body
         Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
