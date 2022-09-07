@@ -3,12 +3,14 @@
 
 #include <variant>
 #include <iostream>
+#include <set>
 
 #include "util/cow-ptr.H"
 #include "computation/parser/located.H"
 
 // Can we eliminate this?
 #include "computation/expression/expression_ref.H"
+#include "core.H"
 
 namespace Haskell
 {
@@ -281,12 +283,16 @@ struct StrictLazyType
 
 struct Implication
 {
-    // The implication may need a level number to describe the wanteds.
-    // Probably we can have constraints with a higher level number, but only inside an implication
+    // Add a level number l.
+    // The givens  can have type vars with level <  l.
+    // The wanteds can have type vars with level <= l.
 
-    // The implication may need a pointer to a modifiable set of evidence bindings.
-    // If we create an implication constraint for a case alternative, then equations that
-    //  relate the wanteds to the givens to be prepended to the alternative body.
+    // Variables that we are allowed to unify.
+    std::set<TypeVar> touchable_vars;
+
+    // Pointer to a set of evidence bindings.
+    // We can append new bindings to this object.
+    std::shared_ptr<Core::Decls> evidence_binds;
 
     Context givens;
     Context wanteds;
