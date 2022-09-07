@@ -2,6 +2,7 @@
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
 #include "haskell/ids.H"
+#include "haskell/type.H"
 
 using std::set;
 using std::vector;

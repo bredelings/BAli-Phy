@@ -760,7 +760,7 @@ Core::Var typechecker_state::fresh_dvar(const Hs::Type& constraint)
     if (auto cname = maybe_get_class_name_from_constraint(constraint))
         name = "d" + *cname;
     auto dvar = get_fresh_var(name, false);
-    dvar.type_ = constraint;
+    dvar.type_ = std::make_shared<Hs::Type>(constraint);
     return dvar;
 }
 
