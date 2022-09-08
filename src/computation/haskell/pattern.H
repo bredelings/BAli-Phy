@@ -103,7 +103,6 @@ struct StrictPattern: public Object
 
 struct AsPattern: public Object
 {
-    // We need this to be Var until desugaring, at which point it becomes var.
     Var var;
     Pattern pattern;
 
@@ -112,11 +111,13 @@ struct AsPattern: public Object
     AsPattern(const Var& v, const Pattern& p):var(v),pattern(p) {}
 };
 
-// var pattern
-// constructor pattern
-// list pattern
-// tuple pattern
-// literal pattern (int,  char, double, string)    
+// InfixPattern!
+// The main holdup here is infix handling for patterns.
+// We need to handle i.e.
+//   x : y : z
+//   x : y : - 1
+// Now, ":" is not a pattern (or not obviously).
+// And "-" is also not a pattern.
 
 }
 #endif
