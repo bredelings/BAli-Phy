@@ -119,5 +119,28 @@ struct AsPattern: public Object
 // Now, ":" is not a pattern (or not obviously).
 // And "-" is also not a pattern.
 
+// There are a few problems:
+// 1. Parsing things that could turn out to be either an expression or a pattern.
+// 2. Storing the parsing result of something unresolved.
+// 3. Performing infix resolution on patterns.
+
+// I'd like to say that an AsPattern takes a Var and a Pattern.
+// However, the parser has "aexp: qvar @ aexp; ...".
+// We could do the disambiguation before we construct the AsPattern object.
+// But the "aexp" node would still need to return an ExpressionOrPattern kind of thing.
+// Could it just return variant<Expression,Pattern>?
+// Or, pair<Expression,Pattern>, where the Expression is an error object if it cannot be an expression?
+
+// Looks like GHC parses x@p as an expression, and stores in an intermediate thing.
+// See AsPat, mkHsAsPatPV.
+// So, ECP is an expression, command, or pattern.
+//  - sometimes we know what it is.
+//  - sometimes we don't.
+// For e1 op e2, the op is specifically stored as an op.
+// For an expression, this goes to (OppApp annotations e1 op e2)
+// For a pattern, this goes to (PatBuilderOppApp p1 op p2 annotations)
+//
+// So... basically they have written a second parser that gives more specific error messages...
+
 }
 #endif
