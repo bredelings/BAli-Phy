@@ -12,10 +12,42 @@
 #include "var.H"
 #include "literal.H"
 
-// Do we need an InfixPat? Maybe.
-// We could try and convert expression_ref to pattern AFTER handling infix expressions,
-// but then how would we store AsPatterns in the meantime?
+// Currently we translate expressions into these pattern objects in rename/pattern.
+// But we are not using VarPattern or LiteralPattern.
+// We do this AFTER we do deal with infix expression.
 
+// Ideally we'd translate expression-or-pattern things to patterns BEFORE renaming.
+// Then we'd need to to infix handling for patterns separately from expressions.
+
+// We need to handle i.e.
+//   x : y : z
+//   x : y : - 1
+// Now, ":" is not a pattern (or not obviously).
+// And "-" is also not a pattern.
+
+// There are a few problems:
+// 1. Parsing things that could turn out to be either an expression or a pattern.
+// 2. Storing the parsing result of something unresolved.
+// 3. Performing infix resolution on patterns.
+
+
+// I'd like to say that an AsPattern takes a Var and a Pattern.
+// However, the parser has "aexp: qvar @ aexp; ...".
+// We could do the disambiguation before we construct the AsPattern object.
+// But the "aexp" node would still need to return an ExpressionOrPattern kind of thing.
+// Could it just return variant<Expression,Pattern>?
+// Or, pair<Expression,Pattern>, where the Expression is an error object if it cannot be an expression?
+
+// Looks like GHC parses x@p as an expression, and stores in an intermediate thing.
+// See AsPat, mkHsAsPatPV.
+// So, ECP is an expression, command, or pattern.
+//  - sometimes we know what it is.
+//  - sometimes we don't.
+// For e1 op e2, the op is specifically stored as an op.
+// For an expression, this goes to (OppApp annotations e1 op e2)
+// For a pattern, this goes to (PatBuilderOppApp p1 op p2 annotations)
+//
+// So... basically they have written a second parser that gives more specific error messages...
 namespace Haskell
 {
 
@@ -26,10 +58,12 @@ std::string parenthesize_pattern(const Pattern& p);
 
 struct VarPattern: public Object
 {
-    Var v;
+    Var var;
 
     VarPattern* clone() const { return new VarPattern(*this);}
     std::string print() const;
+
+    VarPattern(const Var& v):var(v) {}
 };
 
 struct ConPattern: public Object
@@ -58,6 +92,8 @@ struct LiteralPattern: public Object
 
     LiteralPattern* clone() const { return new LiteralPattern(*this);}
     std::string print() const;
+
+    LiteralPattern(const Literal& l): lit(l) {}
 };
 
 struct WildcardPattern: public Object
@@ -71,6 +107,9 @@ struct ListPattern: public Object
     std::vector<Pattern> elements;
     ListPattern* clone() const { return new ListPattern(*this);}
     std::string print() const;
+
+    ListPattern() {}
+    ListPattern(const std::vector<Pattern>& es):elements(es) {}
 };
 
 struct TuplePattern: public Object
@@ -111,36 +150,6 @@ struct AsPattern: public Object
     AsPattern(const Var& v, const Pattern& p):var(v),pattern(p) {}
 };
 
-// InfixPattern!
-// The main holdup here is infix handling for patterns.
-// We need to handle i.e.
-//   x : y : z
-//   x : y : - 1
-// Now, ":" is not a pattern (or not obviously).
-// And "-" is also not a pattern.
-
-// There are a few problems:
-// 1. Parsing things that could turn out to be either an expression or a pattern.
-// 2. Storing the parsing result of something unresolved.
-// 3. Performing infix resolution on patterns.
-
-// I'd like to say that an AsPattern takes a Var and a Pattern.
-// However, the parser has "aexp: qvar @ aexp; ...".
-// We could do the disambiguation before we construct the AsPattern object.
-// But the "aexp" node would still need to return an ExpressionOrPattern kind of thing.
-// Could it just return variant<Expression,Pattern>?
-// Or, pair<Expression,Pattern>, where the Expression is an error object if it cannot be an expression?
-
-// Looks like GHC parses x@p as an expression, and stores in an intermediate thing.
-// See AsPat, mkHsAsPatPV.
-// So, ECP is an expression, command, or pattern.
-//  - sometimes we know what it is.
-//  - sometimes we don't.
-// For e1 op e2, the op is specifically stored as an op.
-// For an expression, this goes to (OppApp annotations e1 op e2)
-// For a pattern, this goes to (PatBuilderOppApp p1 op p2 annotations)
-//
-// So... basically they have written a second parser that gives more specific error messages...
 
 }
 #endif

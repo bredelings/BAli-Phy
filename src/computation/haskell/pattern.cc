@@ -15,7 +15,7 @@ namespace Haskell
 
 string VarPattern::print() const
 {
-    return v.print();
+    return var.print();
 }
 
 string ConPattern::print() const
