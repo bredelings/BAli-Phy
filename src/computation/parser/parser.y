@@ -1016,8 +1016,11 @@ explicit_activation: "[" INTEGER "]"
 
 /* ------------- Expressions ------------------------------------- */
 
+/* EP */
 exp: infixexp "::" sigtype { $$ = Hs::TypedExp($1,$3); }
 |    infixexp              { $$ = $1; }
+
+/* EP */
 
 infixexp: exp10                 {$$ = Hs::InfixExp({$1});}
 |         infixexp qop exp10    {$$ = $1; $$.terms.push_back($2); $$.terms.push_back($3);}
@@ -1029,6 +1032,7 @@ exp10_top: "-" fexp                {$$ = make_minus($2);}
 |          "{-# CORE" STRING "#-}" {}
 |          fexp                    {$$ = $1;}
 
+/* EP */
 exp10: exp10_top                 {$$ = $1;}
 |      scc_annot exp             {}
 
@@ -1041,11 +1045,13 @@ scc_annot: "{-# SCC" STRING "#-}"
 
 /* hpc_annot */
 
+/* EP */
 fexp: fexp aexp                  {$$ = make_apply($1, $2);}
 |     fexp TYPEAPP atype         {}
 |     "static" aexp              {}
 |     aexp                       {$$ = $1;}
 
+/* EP */
 aexp: qvar "@" aexp              {$$ = Hs::AsPattern(Hs::Var({@1,$1}),$3);}
 |     PREFIX_TILDE aexp                   {$$ = Hs::LazyPattern($2);}
 |     "\\" apats1 "->" exp       {$$ = Hs::LambdaExp($2,$4);}
@@ -1059,9 +1065,11 @@ aexp: qvar "@" aexp              {$$ = Hs::AsPattern(Hs::Var({@1,$1}),$3);}
 /* |     "proc" aexp "->" exp       {} -XArrows not currently handled */
 |     aexp1                      {$$ = $1;}
 
+/* EP */
 aexp1: aexp1 "{" fbinds "}"   {}
 |      aexp2                  {$$ = $1;}
 
+/* EP */
 aexp2: qvar                   {$$ = Hs::Var({@1,$1});}
 |      qcon                   {$$ = Hs::Con({@1,$1});}
 |      literal                {$$ = $1;}
@@ -1077,6 +1085,7 @@ aexp2: qvar                   {$$ = Hs::Var({@1,$1});}
 
 /* ------------- Tuple expressions ------------------------------- */
 
+/* EP */
 texp: exp             {$$ = $1;}
 |     infixexp qop    {$$ = Hs::LeftSection ( $1, $2 ); }
 |     qopm infixexp   {$$ = Hs::RightSection( $1, $2 ); }
