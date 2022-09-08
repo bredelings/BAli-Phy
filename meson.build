@@ -1,7 +1,7 @@
 project('bali-phy', ['cpp','c'],
-        version: '4.0-alpha7',
+        version: '4.0-alpha8pre',
         default_options : [
-          'cpp_std=c++17',
+          'cpp_std=c++20',
           'warning_level=3',
           'buildtype=release',
           'b_ndebug=if-release'
