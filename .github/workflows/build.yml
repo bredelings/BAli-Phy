@@ -16,6 +16,7 @@ jobs:
                ubuntu-gcc-11-sanitize,
                ubuntu-gcc-11-debugoptimized,
                ubuntu-gcc-11,
+               ubuntu-gcc-12,
                ubuntu-clang-11,
                macos-xcode-12.5,
                windows
@@ -48,6 +49,13 @@ jobs:
             os: ubuntu-latest
             compiler: gcc
             version: "11"
+            buildtype: "release"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-12
+            os: ubuntu-22.04
+            compiler: gcc
+            version: "12"
             buildtype: "release"
             arch: "linux64"
 
@@ -84,7 +92,12 @@ jobs:
       run: |
         sudo apt-get install -y pandoc libcairo2-dev ccache
         sudo rm -rf /usr/local/share/boost
+
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          # For newer GCCs, maybe.
+          # sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
+          # sudo apt-get update
+
           sudo apt-get install -y g++-${{ matrix.version }}
           echo "CC=ccache gcc-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CXX=ccache g++-${{ matrix.version }}" >> $GITHUB_ENV
