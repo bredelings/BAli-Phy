@@ -256,10 +256,12 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
     else if (auto c = E.to<Hs::ConPattern>())
     {
         auto C = constructor(unloc(c->head.name), *c->head.arity);
-        auto pats = c->args;
-        for(auto& pat: pats)
-            pat = desugar_pattern(pat);
-        return expression_ref(C,pats);
+        vector<expression_ref> args;
+        for(auto& darg: c->dict_args)
+            args.push_back(darg);
+        for(auto& pat: c->args)
+            args.push_back(desugar_pattern(pat));
+        return expression_ref(C, args);
     }
     else if (E.is_a<Hs::WildcardPattern>())
         return var(-1);
