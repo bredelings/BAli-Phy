@@ -40,6 +40,34 @@ string print(const value_env& env)
     return "{ " + join(ss, "; ") + " }";
 }
 
+LIE dictionary_constraints(const LIE& lie1)
+{
+    LIE lie2;
+
+    for(auto& pred: lie1)
+    {
+        auto& [_, constraint] = pred;
+        if (not Hs::is_equality_constraint(constraint))
+            lie2.push_back(pred);
+    }
+
+    return lie2;
+}
+
+LIE equality_constraints(const LIE& lie1)
+{
+    LIE lie2;
+
+    for(auto& pred: lie1)
+    {
+        auto& [_, constraint] = pred;
+        if (Hs::is_equality_constraint(constraint))
+            lie2.push_back(pred);
+    }
+
+    return lie2;
+}
+
 std::string print(const LIE& lie)
 {
     std::ostringstream oss;

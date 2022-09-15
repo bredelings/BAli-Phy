@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include "immer/map.hpp" // for immer::map
-#include "haskell/haskell.H"
+#include "haskell/haskell.H" // for Hs::Var, Hs::Type, Hs::Kind, Hs::TypeVar, Hs::Context, Hs::MetaTypeVar
 #include "util/set.H"
 #include "kind.H"
 
@@ -30,6 +30,10 @@ typedef value_env constr_env;
 typedef std::map<Core::Var, Hs::Type> GIE;
 typedef std::vector<std::pair<Core::Var, Hs::Type>> LIE;
 LIE& operator+=(LIE& lie1, const LIE& lie2);
+
+LIE dictionary_constraints(const LIE& lie);
+
+LIE equality_constraints(const LIE& lie);
 
 template <typename T>
 std::vector<T>& operator+=(std::vector<T>& v1, const std::vector<T>& v2)
