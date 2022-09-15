@@ -927,26 +927,6 @@ Hs::Type typechecker_state::constructor_type(const Hs::Con& con)
 }
 
 
-pair<Hs::Type, vector<Hs::Type>> typechecker_state::constructor_pattern_types(const Hs::Con& con)
-{
-    // Question: is this how we should handle constraint arguments?
-
-    auto [_, wanteds, con_type] = instantiate( constructor_type(con) );
-    assert(wanteds.empty());
-
-    vector<Hs::Type> field_types;
-
-    while(auto f = Hs::is_function_type(con_type))
-    {
-        auto [t1,t2] = *f;
-        field_types.push_back(t1);
-        con_type = t2;
-    }
-    auto object_type = con_type;
-
-    return {object_type, field_types};
-}
-
 value_env add_constraints(const std::vector<Haskell::Type>& constraints, const value_env& env1)
 {
     value_env env2;

@@ -9,6 +9,23 @@ using std::set;
 using std::pair;
 using std::optional;
 
+tuple<LIE, vector<Hs::Type>, Hs::Type> typechecker_state::constructor_pattern_types(const Hs::Con& con)
+{
+    auto [_, predicates, con_type] = instantiate( constructor_type(con) );
+
+    vector<Hs::Type> field_types;
+
+    while(auto f = Hs::is_function_type(con_type))
+    {
+        auto [t1,t2] = *f;
+        field_types.push_back(t1);
+        con_type = t2;
+    }
+    auto result_type = con_type;
+
+    return {predicates, field_types, result_type};
+}
+
 // Ensure that we can convert exp_type to pat_type, and get a wrapper proving it.
 Core::wrapper typechecker_state::instPatSigma(const Hs::SigmaType& pat_type, const Expected& exp_type)
 {
@@ -105,9 +122,11 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     {
         auto Con = *con;
 
-        auto [type,field_types] = constructor_pattern_types(Con.head);
+        auto [givens, field_types, type] = constructor_pattern_types(Con.head);
 
         assert(field_types.size() == Con.args.size());
+        Con.givens = givens;
+        Con.dict_args = vars_from_lie( dictionary_constraints( givens ) );
 
         local_value_env lve;
         for(int i=0; i < field_types.size(); i++)

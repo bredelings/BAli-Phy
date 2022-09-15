@@ -51,16 +51,6 @@ void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
 {
     auto sigma = constructor_type(con);
 
-    if (false) // (has_constraints(sigma))
-    {
-        myexception e;
-        e<<"Constructor "<<unloc(con.name)<<" has constraints!  Type is:\n\n";
-        e<<"    "<<sigma<<"\n\n";
-        e<<"Constructor constraints are not implemented yet.\n\n";
-
-        throw e;
-    }
-
     try
     {
         auto w = instantiateSigma(sigma, exp_type);

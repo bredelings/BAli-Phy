@@ -237,7 +237,7 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type constructor_type(const Hs::Con&);
 
-    std::pair<Hs::Type, std::vector<Hs::Type>> constructor_pattern_types(const Hs::Con&);
+    std::tuple<LIE, std::vector<Hs::Type>, Hs::Type> constructor_pattern_types(const Hs::Con&);
 
     std::optional<Core::Decls>
     candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie);
