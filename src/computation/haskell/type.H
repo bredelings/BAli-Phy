@@ -335,5 +335,6 @@ typedef Type RhoType;
 typedef Type SigmaType;
 }
 
+namespace Hs = Haskell;
 
 #endif 

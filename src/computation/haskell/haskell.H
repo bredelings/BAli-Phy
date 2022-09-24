@@ -961,6 +961,4 @@ struct ModuleDecls
 Expression error(const std::string& s);
 }
 
-namespace Hs = Haskell;
-
 #endif
