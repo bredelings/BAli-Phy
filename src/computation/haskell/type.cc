@@ -637,19 +637,4 @@ string ListType::print() const
     return "[" + element_type.print() + "]";
 }
 
-bool Implication::operator==(const Implication& I) const
-{
-    return givens == I.givens and wanteds == I.wanteds;
-}
-
-std::string Implication::print() const
-{
-    return givens.print() + " => " + wanteds.print();
-}
-
-Implication::Implication(const Context& g, const Context& w)
-    :givens(g), wanteds(w)
-{
-}
-
 }

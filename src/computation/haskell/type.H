@@ -24,7 +24,6 @@ namespace Haskell
     struct ForallType;
     struct StrictLazyType;
     struct FieldDecls;
-    struct Implication;
 
     struct Type
     {
@@ -40,8 +39,7 @@ namespace Haskell
             cow_ptr<ConstrainedType>,
             cow_ptr<ForallType>,
             cow_ptr<StrictLazyType>,
-            cow_ptr<FieldDecls>,
-            cow_ptr<Implication>
+            cow_ptr<FieldDecls>
         >
         type_ptr;
 
@@ -280,29 +278,6 @@ struct StrictLazyType
     std::string print() const;
     StrictLazyType(const StrictLazy& sl, const Type& t):strict_lazy(sl), type(t) {}
 };
-
-struct Implication
-{
-    // Add a level number l.
-    // The givens  can have type vars with level <  l.
-    // The wanteds can have type vars with level <= l.
-
-    // Variables that we are allowed to unify.
-    std::set<TypeVar> touchable_vars;
-
-    // Pointer to a set of evidence bindings.
-    // We can append new bindings to this object.
-    std::shared_ptr<Core::Decls> evidence_binds;
-
-    Context givens;
-    Context wanteds;
-
-    bool operator==(const Implication& t) const;
-
-    std::string print() const;
-    Implication(const Context& g, const Context& w);
-};
-
 
 Type function_type(const std::vector<Type>& arg_types, const Type& result_type);
 
