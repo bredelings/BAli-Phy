@@ -831,10 +831,25 @@ pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& givens, const LIE&
     return {decls, residual_wanteds};
 }
 
-
-pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const LIE& wanteds)
+pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const WantedConstraints& wanteds)
 {
-    auto [decls, residual_wanteds] = simplify(givens, wanteds);
+    // 1. Simplify the simple wanteds.
+    auto [decls, residual_wanteds] = simplify(givens, wanteds.simple);
+
+    // 2. Handle implications
+    for(auto& implic: wanteds.implications)
+    {
+        LIE sub_givens = implic->givens;
+        sub_givens += givens;
+        sub_givens += residual_wanteds;
+
+        auto [sub_decls, r] = entails(sub_givens, implic->wanteds);
+
+        if (not r.empty())
+            throw myexception()<<"Could not solve constraint "<<r[0].second<<" in implication";
+
+        *implic->evidence_binds += sub_decls;
+    }
 
     // This should implement |->[solv] from Figure 14 of the OutsideIn(X) paper:
     //   \mathcal{Q}; Q[given]; alpha[touchable] |->[solv] C[wanted] ~~> Q[residual]; theta
