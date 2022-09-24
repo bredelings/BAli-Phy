@@ -730,4 +730,10 @@ expression_ref error(const std::string& s)
     expression_ref msg = Literal(String{s});
     return {error,msg};
 }
+
+string EvidenceDecls::print()  const
+{
+    return "core::let " + print_cdecls(*decls) + " in " + body.print();
+}
+
 }
