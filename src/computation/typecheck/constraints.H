@@ -29,4 +29,35 @@ std::vector<T> operator+(const std::vector<T>& v1, const std::vector<T>& v2)
     v3 += v2;
     return v3;
 }
+
+struct Implication;
+
+struct WantedConstraints
+{
+    LIE simple;
+    std::vector<std::shared_ptr<Implication>> implications;
+
+    WantedConstraints(const LIE& l);
+};
+
+struct Implication
+{
+    // Add a level number l.
+    // The givens  can have type vars with level <  l.
+    // The wanteds can have type vars with level <= l.
+
+    // Variables that we are allowed to unify.
+    std::set<Hs::TypeVar> touchable_vars;
+
+    // Pointer to a set of evidence bindings.
+    // We can append new bindings to this object.
+    std::shared_ptr<Core::Decls> evidence_binds;
+
+    LIE givens;
+
+    WantedConstraints wanteds;
+
+    //    std::string print() const;
+};
+
 #endif
