@@ -5,6 +5,7 @@
 #include <map>
 #include "immer/map.hpp" // for immer::map
 #include "haskell/haskell.H" // for Hs::Var, Hs::Type, Hs::Kind, Hs::TypeVar, Hs::Context, Hs::MetaTypeVar
+#include "constraints.H" // for LIE
 #include "util/set.H"
 #include "kind.H"
 
@@ -28,27 +29,6 @@ typedef value_env local_value_env;
 typedef value_env constr_env;
 
 typedef std::map<Core::Var, Hs::Type> GIE;
-typedef std::vector<std::pair<Core::Var, Hs::Type>> LIE;
-LIE& operator+=(LIE& lie1, const LIE& lie2);
-
-LIE dictionary_constraints(const LIE& lie);
-
-LIE equality_constraints(const LIE& lie);
-
-template <typename T>
-std::vector<T>& operator+=(std::vector<T>& v1, const std::vector<T>& v2)
-{
-    v1.insert(v1.end(), v2.begin(), v2.end());
-    return v1;
-}
-
-template <typename T>
-std::vector<T> operator+(const std::vector<T>& v1, const std::vector<T>& v2)
-{
-    auto v3 = v1;
-    v3 += v2;
-    return v3;
-}
 
 std::string print(const value_env& env);
 void add_no_overlap(value_env& e1, const value_env& e2);
