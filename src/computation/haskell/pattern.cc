@@ -4,6 +4,7 @@
 #include "util/set.H"   // for includes( , )
 
 #include "haskell.H" // for Var, Tuple, List
+#include "ids.H"     // for is_haskell_consym
 
 using std::string;
 using std::pair;
@@ -20,10 +21,19 @@ string VarPattern::print() const
 
 string ConPattern::print() const
 {
-    vector<string> ss;
-    ss.push_back(head.print());
+    string con = head.print();
+
+    vector<string> ss = {con};
     for(auto& arg: args)
         ss.push_back(parenthesize_pattern(arg));
+
+    if (is_haskell_sym(con))
+    {
+        assert(args.size() == 2);
+
+        std::swap(ss[0], ss[1]);
+    }
+
     return join(ss, " ");
 }
 
@@ -69,10 +79,16 @@ string WildcardPattern::print() const
 string parenthesize_pattern(const Pattern& p)
 {
     string result = p.print();
-    if (p.is_a<Var>() or p.is_a<Tuple>() or p.is_a<WildcardPattern>() or p.is_a<LazyPattern>() or p.is_a<AsPattern>() or p.is_a<List>())
-        ;
-    else
+
+    bool add_parens = false;
+    if (auto c = p.to<ConPattern>(); c and not c->args.empty())
+        add_parens = true;
+    else if (p.is_a<TypedPattern>())
+        add_parens = true;
+
+    if (add_parens)
         result = "(" + result + ")";
+
     return result;
 }
 
