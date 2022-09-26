@@ -342,38 +342,14 @@ using std::tuple;
 // LVE = local  value environment      = var -> monotype
 
 
-Hs::TypeVar unification_env::fresh_tyvar() const
+Hs::TypeVar unification_env::fresh_tyvar(const std::optional<Hs::Kind>& kind) const
 {
-    Hs::TypeVar ftv({noloc,"utv"});
-
-    int index = 0;
-    for(auto& [name,tv]: mapping1)
-    {
-        if (tv.index)
-            index = std::max(index, *tv.index);
-    }
-    for(auto& [name,tv]: mapping2)
-    {
-        if (tv.index)
-            index = std::max(index, *tv.index);
-    }
-    ftv.index = index + 1;
+    Hs::TypeVar ftv({noloc,"utv"+std::to_string(next_index)});
+    ftv.index = next_index++;
     ftv.info = Hs::typevar_info::rigid;
+    ftv.kind = kind;
     return ftv;
 }
-
-// We need a typevar that isn't in scope in either term
-Hs::TypeVar unification_env::not_in_scope_tyvar(const Hs::TypeVar& tv1, const Hs::TypeVar& tv2)
-{
-    if (not mapping1.count(tv1) and not mapping2.count(tv1))
-        return tv1;
-    if (not mapping1.count(tv2) and not mapping2.count(tv2))
-        return tv2;
-    auto ftv = fresh_tyvar();
-    ftv.kind = tv1.kind;
-    return ftv;
-}
-
 
 // Is there a better way to implement this?
 bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2)
@@ -381,15 +357,17 @@ bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, con
     // Translate rigid type variables
     if (auto tv1 = t1.to<Hs::TypeVar>(); tv1 and env.mapping1.count(*tv1))
     {
-        assert(tv1->info == Hs::typevar_info::rigid);
+        assert(tv1->info == Hs::typevar_info::other);
         auto tv1_remapped = env.mapping1.at(*tv1);
+        assert(tv1_remapped.info == Hs::typevar_info::rigid);
         assert(not env.mapping1.count(tv1_remapped));
         return maybe_unify_(allow_unification, both_ways, env, tv1_remapped, t2);
     }
     else if (auto tv2 = t2.to<Hs::TypeVar>(); tv2 and env.mapping2.count(*tv2))
     {
-        assert(tv2->info == Hs::typevar_info::rigid);
+        assert(tv2->info == Hs::typevar_info::other);
         auto tv2_remapped = env.mapping2.at(*tv2);
+        assert(tv2_remapped.info == Hs::typevar_info::rigid);
         assert(not env.mapping2.count(tv2_remapped));
         return maybe_unify_(allow_unification, both_ways, env, t1, tv2_remapped);
     }
@@ -479,7 +457,9 @@ bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, con
             auto tv1 = fa1->type_var_binders[i];
             auto tv2 = fa2->type_var_binders[i];
 
-            auto v = env2.not_in_scope_tyvar(tv1, tv2);
+            if (tv1.kind != tv2.kind) return false;
+
+            auto v = env2.fresh_tyvar(tv1.kind);
             env2.mapping1 = env2.mapping1.insert({tv1,v});
             env2.mapping2 = env2.mapping2.insert({tv2,v});
         }

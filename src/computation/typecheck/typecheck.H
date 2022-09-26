@@ -24,10 +24,10 @@
 
 struct unification_env
 {
+    mutable int next_index = 0;
     immer::map<Hs::TypeVar, Hs::TypeVar> mapping1;
     immer::map<Hs::TypeVar, Hs::TypeVar> mapping2;
-    Hs::TypeVar fresh_tyvar() const;
-    Hs::TypeVar not_in_scope_tyvar(const Hs::TypeVar& tv1, const Hs::TypeVar& tv2);
+    Hs::TypeVar fresh_tyvar(const std::optional<Hs::Kind>& k) const;
 };
 
 Hs::ModuleDecls typecheck(const std::string& s, const Module& m, Hs::ModuleDecls M);
