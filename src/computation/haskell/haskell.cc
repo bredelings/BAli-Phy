@@ -1,4 +1,5 @@
 #include "haskell.H"
+#include "ids.H"
 #include "util/string/join.H"
 #include "util/set.H"           // for includes( , )
 #include "util/string/split.H"  // for split( , )
@@ -586,10 +587,26 @@ std::string parenthesize_exp(const Expression& E)
 
 std::string ApplyExp::print() const
 {
-    vector<string> ss;
+    string func = head.print();
 
-    ss.push_back(head.print());
+    if (is_haskell_sym(func))
+    {
+        if (args.size() < 2)
+            func = "(" + func + ")";
+        else
+        {
+            string result = parenthesize_exp(args[0]) + " " + func + " " + parenthesize_exp(args[1]);
+            if (args.size() > 2)
+            {
+                result = "(" + result + ")";
+                for(int i=2;i<args.size();i++)
+                    result += " " + parenthesize_exp(args[i]);
+            }
+            return result;
+        }
+    }
 
+    vector<string> ss = {func};
     for(auto& arg: args)
         ss.push_back( parenthesize_exp( arg ) );
 
