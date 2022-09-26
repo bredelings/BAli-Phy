@@ -74,7 +74,11 @@ void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type)
 
     // Here, 'type' is the rhs type.
     if (exp_type.infer())
-        state2.tcRho(rule.rhs, Infer(type));
+    {
+        Expected exp_type2 = Infer();
+        state2.tcRho(rule.rhs, exp_type2);
+        type = exp_type2.read_type();
+    }
     else
         state2.tcRho(rule.rhs, Check(type));
 

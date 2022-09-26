@@ -493,6 +493,25 @@ string Expected::print() const
         return std::get<Infer>(value).print();
 }
 
+optional<Hs::Type> Expected::read_type_maybe() const
+{
+    if (check())
+        return check_type();
+    else if (infer())
+        return inferred_type();
+}
+
+
+Hs::Type Expected::read_type() const
+{
+    auto t = read_type_maybe();
+    if (not t)
+        throw myexception()<<"read_type: empty inferred type!";
+    else
+        return *t;
+}
+
+
 global_tc_state::global_tc_state(const Module& m)
     :this_mod(m)
 { }

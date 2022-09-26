@@ -74,7 +74,7 @@ struct Check
 
 class Infer
 {
-    Hs::Type& type_;
+    Hs::Type type_;
 
 public:
     void set_type(const Hs::Type& t)
@@ -93,8 +93,6 @@ public:
     }
 
     std::string print() const;
-
-    Infer(Hs::Type& t):type_(t) { assert(type_.empty()); }
 };
 
 class Expected
@@ -121,6 +119,10 @@ public:
         assert(infer());
         std::get<Infer>(value).set_type(t);
     }
+
+    std::optional<Hs::Type> read_type_maybe() const;
+
+    Hs::Type read_type() const;
 
     std::string print() const;
 
@@ -312,9 +314,9 @@ struct typechecker_state: FreshVarSource
     template <typename T>
     Hs::Type inferRho(T& t)
     {
-        Hs::Type result_type;
-        tcRho(t, Infer(result_type));
-        return result_type;
+        Expected result_type = Infer();
+        tcRho(t, result_type);
+        return result_type.read_type();
     }
 
     void tcRho(expression_ref& exp, const Expected& E);

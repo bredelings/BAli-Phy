@@ -100,9 +100,9 @@ typechecker_state::checkPat(Hs::Var& v, const Hs::SigmaType& exp_type, const sig
 tuple<Hs::Type, local_value_env>
 typechecker_state::inferPat(Hs::Var& V, const map<string, Hs::Type>& sigs)
 {
-    Hs::SigmaType type;
-    auto gve = tcPat(V, Infer(type), sigs);
-    return {type, gve};
+    Expected exp_type = Infer();
+    auto gve = tcPat(V, exp_type, sigs);
+    return {exp_type.read_type(), gve};
 }
 
 // Figure 24. Rules for patterns
@@ -282,9 +282,9 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 tuple<Hs::Type, local_value_env>
 typechecker_state::inferPat(Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
 {
-    Hs::SigmaType type;
-    auto gve = tcPat(pat, Infer(type), sigs);
-    return {type, gve};
+    Expected exp_type = Infer();
+    auto gve = tcPat(pat, exp_type, sigs);
+    return {exp_type.read_type(), gve};
 }
 
 local_value_env
