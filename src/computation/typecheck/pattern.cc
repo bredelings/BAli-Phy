@@ -110,10 +110,10 @@ local_value_env
 typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<string, Hs::Type>& sigs)
 {
     // TAUT-PAT
-    if (auto v = pat.to<Hs::Var>())
+    if (auto v = pat.to<Hs::VarPattern>())
     {
         auto V = *v;
-        auto lve = tcPat(V, exp_type, sigs);
+        auto lve = tcPat(V.var, exp_type, sigs);
         pat = V;
         return lve;
     }
@@ -216,11 +216,11 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
         TP.wrap = instPatSigma(TP.type, exp_type);
         return binders;
     }
-    else if (auto l = pat.to<Hs::Literal>())
+    else if (auto l = pat.to<Hs::LiteralPattern>())
     {
         auto L = *l;
 
-        if (L.is_BoxedInteger())
+        if (L.lit.is_BoxedInteger())
         {
             set_expected_type( exp_type, int_type() );
             return {};
@@ -230,12 +230,12 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 //        auto [equals, equals_type] = inferRho(gve, Hs::Var({noloc,"Data.Eq.=="}));
 //        L.equalsOp = equals;
 
-        if (L.is_Char())
+        if (L.lit.is_Char())
         {
             set_expected_type(  exp_type, char_type() );
             return {};
         }
-        else if (auto i = L.is_Integer())
+        else if (auto i = L.lit.is_Integer())
         {
             // 1. Typecheck fromInteger
             expression_ref fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
@@ -245,18 +245,18 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             auto result_type = fresh_meta_type_var( kind_star() );
             unify(fromInteger_type, Hs::make_arrow_type(int_type(), result_type));
 
-            L.literal = Hs::Integer(*i, fromInteger);
+            L.lit.literal = Hs::Integer(*i, fromInteger);
 
             pat = L;
             set_expected_type( exp_type, result_type );
             return {};
         }
-        else if (L.is_String())
+        else if (L.lit.is_String())
         {
             set_expected_type(exp_type, Hs::ListType(char_type()) );
             return {};
         }
-        else if (auto d = L.is_Double())
+        else if (auto d = L.lit.is_Double())
         {
             // 1. Typecheck fromRational
             expression_ref fromRational = Hs::Var({noloc,"Compiler.Real.fromRational"});
@@ -266,7 +266,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             auto result_type = fresh_meta_type_var( kind_star() );
             unify(fromRational_type, Hs::make_arrow_type(double_type(), result_type));
 
-            L.literal = Hs::Double(*d, fromRational);
+            L.lit.literal = Hs::Double(*d, fromRational);
             pat = L;
 
             set_expected_type( exp_type, result_type );
@@ -295,12 +295,15 @@ typechecker_state::checkPat(Hs::Pattern& pat, const Hs::SigmaType& exp_type, con
 
 
 Hs::Var
-rename_var_pattern_from_bindinfo(Hs::Var V, const map<string, Hs::BindInfo>& bind_info)
+rename_var_from_bindinfo(const Hs::Var& v, const map<string, Hs::BindInfo>& bind_info_for_ids)
 {
-    auto& name = unloc(V.name);
-    auto it = bind_info.find(name);
-    assert(it != bind_info.end());
-    return it->second.inner_id;
+    auto& name = unloc(v.name);
+
+    // QUESTION: if there is a wrapper on the outer id, is it already on the inner id?
+    // Perhaps any such wrapper should be part of the bindinfo and go from the inner id to the outer id?
+    // Should there be a separate wrapper for the inner id?
+
+    return bind_info_for_ids.at(name).inner_id;
 }
 
 // Figure 24. Rules for patterns
@@ -308,9 +311,11 @@ Hs::Pattern
 rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<string, Hs::BindInfo>& bind_info)
 {
     // TAUT-PAT
-    if (auto v = pat.to<Hs::Var>())
+    if (auto v = pat.to<Hs::VarPattern>())
     {
-        return rename_var_pattern_from_bindinfo(*v, bind_info);
+        auto VP = *v;
+        VP.var = rename_var_from_bindinfo(VP.var, bind_info);
+        return VP;
     }
     // CONSTR-PAT
     else if (auto con = pat.to<Hs::ConPattern>())
@@ -327,7 +332,7 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<string, Hs::BindI
     {
         auto p1 = rename_pattern_from_bindinfo(ap->pattern, bind_info);
 
-        auto v2 = rename_var_pattern_from_bindinfo(ap->var, bind_info);
+        auto v2 = rename_var_from_bindinfo(ap->var, bind_info);
 
         return Hs::AsPattern(v2, p1);
     }
@@ -373,7 +378,7 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<string, Hs::BindI
 
         return T;
     }
-    else if (pat.is_a<Hs::Literal>())
+    else if (pat.is_a<Hs::LiteralPattern>())
         return pat;
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";

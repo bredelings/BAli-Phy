@@ -375,18 +375,18 @@ bound_var_info find_vars_in_pattern2(const expression_ref& pat)
     else if (auto sp = pat.to<Haskell::StrictPattern>())
         return find_vars_in_pattern2(sp->pattern);
     else if (auto ap = pat.to<Haskell::AsPattern>())
-	return plus( find_vars_in_pattern2(ap->var), find_vars_in_pattern2(ap->pattern) );
+	return plus( find_vars_in_pattern2(Hs::VarPattern(ap->var)), find_vars_in_pattern2(ap->pattern) );
     else if (auto l = pat.to<Haskell::ListPattern>())
         return find_vars_in_patterns2(l->elements);
     else if (auto t = pat.to<Haskell::TuplePattern>())
         return find_vars_in_patterns2(t->elements);
-    else if (auto v = pat.to<Haskell::Var>())
-	return { unloc(v->name) };
+    else if (auto v = pat.to<Haskell::VarPattern>())
+	return { unloc(v->var.name) };
     else if (auto c = pat.to<Hs::ConPattern>())
         return find_vars_in_patterns2(c->args);
     else if (auto tp = pat.to<Hs::TypedPattern>())
         return find_vars_in_pattern2(tp->pat);
-    else if (pat.is_a<Hs::Literal>())
+    else if (pat.is_a<Hs::LiteralPattern>())
         return {};
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
@@ -397,7 +397,7 @@ bound_var_info renamer_state::find_bound_vars_in_funpatdecl(const expression_ref
     if (auto d = decl.to<Haskell::PatDecl>())
         return find_vars_in_pattern( unloc(d->lhs), top);
     else if (auto d = decl.to<Haskell::FunDecl>())
-        return find_vars_in_pattern(d->v, top);
+        return find_vars_in_pattern(Hs::VarPattern(d->v), top);
     else
         std::abort();
 }

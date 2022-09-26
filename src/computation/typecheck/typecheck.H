@@ -460,8 +460,7 @@ LIE apply_subst(const substitution_t& s, const LIE& env1);
 
 std::map<ID, Hs::Match> get_instance_methods(const Hs::Binds& decls, const global_value_env& members, const std::string& class_name);
 
-Hs::Var
-rename_var_pattern_from_bindinfo(Hs::Var V, const std::map<ID, Hs::BindInfo>& bind_info);
+Hs::Var rename_var_from_bindinfo(const Hs::Var& V, const std::map<ID, Hs::BindInfo>& bind_info);
 
 Hs::Pattern
 rename_pattern_from_bindinfo(const Hs::Pattern& pat, const std::map<ID, Hs::BindInfo>& bind_info);

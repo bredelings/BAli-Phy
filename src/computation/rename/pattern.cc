@@ -69,14 +69,14 @@ expression_ref unapply(expression_ref E)
         TP.type = texp->type;
         return TP;
     }
-    else if (E.is_a<Hs::Literal>())
-        return E;
-    else if (E.is_a<Hs::Var>())
-        return E;
+    else if (auto l = E.to<Hs::Literal>())
+        return Hs::LiteralPattern(*l);
+    else if (auto c = E.to<Hs::Con>())
+        return Hs::ConPattern(*c, {});
+    else if (auto v = E.to<Hs::Var>())
+        return Hs::VarPattern(*v);
     else if (E.is_a<Hs::WildcardPattern>())
         return E;
-    else if (E.is_a<Hs::Con>())
-        return Hs::ConPattern(E.as_<Hs::Con>(),{});
     else
         std::abort();
 }
@@ -134,7 +134,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         auto& AP = pat.as_<Hs::AsPattern>();
 	assert(not top);
 
-	auto bound = find_vars_in_pattern(AP.var, top);
+	auto bound = find_vars_in_pattern(Hs::VarPattern(AP.var), top);
 	bool overlap = not disjoint_add(bound, find_vars_in_pattern(AP.pattern, top));
 
 	if (overlap)
@@ -152,9 +152,9 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         auto& T = pat.as_<Hs::TuplePattern>();
         return find_vars_in_patterns(T.elements, top);
     }
-    else if (auto v = pat.to<Hs::Var>())
+    else if (auto v = pat.to<Hs::VarPattern>())
     {
-        auto id = unloc(v->name);
+        auto id = unloc(v->var.name);
 
 	if (is_qualified_symbol(id)) throw myexception()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<pat<<"'!";
 
@@ -181,7 +181,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         // 11. Return the variables bound
         return find_vars_in_patterns(c->args, top);
     }
-    else if (pat.is_a<Hs::Literal>())
+    else if (pat.is_a<Hs::LiteralPattern>())
         return {};
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
@@ -270,10 +270,10 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         pat = T;
         return bound;
     }
-    else if (auto v = pat.to<Hs::Var>())
+    else if (auto v = pat.to<Hs::VarPattern>())
     {
         auto V = *v;
-        auto bound = rename_var_pattern(V);
+        auto bound = rename_var_pattern(V.var);
         pat = V;
 	return bound;
     }
@@ -319,7 +319,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
         return bound;
     }
     // 4. Handle literal values
-    else if (pat.is_a<Hs::Literal>())
+    else if (pat.is_a<Hs::LiteralPattern>())
         return {};
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";

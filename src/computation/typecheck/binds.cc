@@ -186,7 +186,7 @@ rename_from_bindinfo(expression_ref decl, const map<string, Hs::BindInfo>& bind_
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
-        FD.v = rename_var_pattern_from_bindinfo(FD.v, bind_infos);
+        FD.v = rename_var_from_bindinfo(FD.v, bind_infos);
         return FD;
     }
     else if (auto pd = decl.to<Hs::PatDecl>())

@@ -48,16 +48,19 @@ bool is_definitely_pattern(const Haskell::Expression& lhs)
 {
     if (lhs.is_a<Haskell::List>())
         return true;
-    if (lhs.is_a<Haskell::Tuple>())
+    else if (lhs.is_a<Haskell::Tuple>())
         return true;
-    if (lhs.is_a<Haskell::AsPattern>())
+    else if (lhs.is_a<Haskell::AsPattern>())
         return true;
-    if (lhs.is_a<Haskell::LazyPattern>())
+    else if (lhs.is_a<Haskell::LazyPattern>())
         return true;
-    if (lhs.is_a<Haskell::StrictPattern>())
+    else if (lhs.is_a<Haskell::StrictPattern>())
         return true;
-    // FIXME: we should make a ConPattern
-    if (lhs.is_a<Haskell::ConPattern>())
+    else if (lhs.is_a<Haskell::ConPattern>())
+        return true;
+    else if (lhs.is_a<Haskell::VarPattern>())
+        return true;
+    else if (lhs.is_a<Haskell::LiteralPattern>())
         return true;
 
     return false;

@@ -23,7 +23,7 @@ Hs::FunDecl dictionary_extractor(const string& name, int i, int N)
 
     // (_,field,_,_)
     vector<Hs::Pattern> pats(N, Hs::WildcardPattern());
-    pats[i] = field;
+    pats[i] = Hs::VarPattern(field);
     Hs::Pattern pattern = Hs::tuple_pattern(pats);
 
     // (_,field,_,_) -> field

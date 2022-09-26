@@ -251,8 +251,8 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
             element = desugar_pattern(element);
         return get_tuple(T.elements);
     }
-    else if (auto v = E.to<Hs::Var>())
-        return make_var(*v);
+    else if (auto v = E.to<Hs::VarPattern>())
+        return make_var(v->var);
     else if (auto c = E.to<Hs::ConPattern>())
     {
         auto C = constructor(unloc(c->head.name), *c->head.arity);
@@ -289,26 +289,26 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
     }
     else if (E.is_log_double())
         std::abort();
-    else if (auto L = E.to<Hs::Literal>())
+    else if (auto L = E.to<Hs::LiteralPattern>())
     {
-        if (auto c = L->is_Char())
+        if (auto c = L->lit.is_Char())
         {
             return *c;
         }
-        else if (auto i = L->is_Integer())
+        else if (auto i = L->lit.is_Integer())
         {
             return *i;
         }
-        else if (auto d = L->is_Double())
+        else if (auto d = L->lit.is_Double())
         {
             // FIXME: we want to actually compare with fromFractional(E)
             return *d;
         }
-        else if (auto s = L->is_String())
+        else if (auto s = L->lit.is_String())
         {
             return desugar_string_pattern(*s);
         }
-        else if (auto i = L->is_BoxedInteger())
+        else if (auto i = L->lit.is_BoxedInteger())
         {
             return *i;
         }
