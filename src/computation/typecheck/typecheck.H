@@ -168,16 +168,16 @@ struct typechecker_state: FreshVarSource
 
     global_value_env gve;
 
-    LIE lie;
+    WantedConstraints collected_wanteds;
 
     //------- Functions handling the LIE ---------
-    typechecker_state copy_clear_lie() const;
+    typechecker_state copy_clear_wanteds() const;
 
     void add_binders(const local_value_env& binders);
 
     typechecker_state copy_add_binders(const global_value_env& env) const;
 
-    LIE& current_lie();
+    WantedConstraints& current_wanteds();
 
     void add_dvar(const Core::Var& dvar, const Hs::Type& constraint);
 

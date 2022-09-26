@@ -37,7 +37,11 @@ struct WantedConstraints
     LIE simple;
     std::vector<std::shared_ptr<Implication>> implications;
 
+    WantedConstraints() = default;
     WantedConstraints(const LIE& l);
+
+    WantedConstraints& operator+=(const WantedConstraints& wc2);
+    WantedConstraints operator+(const WantedConstraints& wc2) const;
 };
 
 struct Implication

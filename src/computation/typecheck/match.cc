@@ -15,12 +15,12 @@ void typechecker_state::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int
     if (i < rhs.guards.size())
     {
         // Fig 25. GUARD
-        auto state2 = copy_clear_lie();
+        auto state2 = copy_clear_wanteds();
         state2.infer_guard_type(rhs.guards[i]);
 
         state2.tcRho(rhs, exp_type, i+1);
 
-        current_lie() += state2.current_lie();
+        current_wanteds() += state2.current_wanteds();
     }
     else
         tcRho(rhs.body, exp_type);
@@ -29,7 +29,7 @@ void typechecker_state::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int
 // Fig 25. GUARD-OR
 void typechecker_state::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type)
 {
-    auto state2 = copy_clear_lie();
+    auto state2 = copy_clear_wanteds();
     if (rhs.decls)
         state2.infer_type_for_binds(unloc(*rhs.decls));
 
@@ -37,12 +37,12 @@ void typechecker_state::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type
     for(auto& guarded_rhs: rhs.guarded_rhss)
         state2.tcRho(guarded_rhs, Check(etype));
 
-    current_lie() += state2.current_lie();
+    current_wanteds() += state2.current_wanteds();
 }
 
 void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type)
 {
-    auto state2 = copy_clear_lie();
+    auto state2 = copy_clear_wanteds();
 
     Hs::Type type;
     if (exp_type.check())
@@ -78,7 +78,7 @@ void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type)
     else
         state2.tcRho(rule.rhs, Check(type));
 
-    current_lie() += state2.current_lie();
+    current_wanteds() += state2.current_wanteds();
 
     if (exp_type.infer())
         exp_type.infer_type( function_type( pat_types, type ) );

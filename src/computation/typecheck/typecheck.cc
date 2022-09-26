@@ -708,10 +708,10 @@ Hs::Type typechecker_state::check_constraint(const Hs::Type& type) const
 
 }
 
-typechecker_state typechecker_state::copy_clear_lie() const
+typechecker_state typechecker_state::copy_clear_wanteds() const
 {
     auto tc2 = *this;
-    tc2.current_lie() = {};
+    tc2.current_wanteds() = {};
     return tc2;
 }
 
@@ -724,18 +724,19 @@ void typechecker_state::add_binders(const local_value_env& binders)
 typechecker_state
 typechecker_state::copy_add_binders(const local_value_env& binders) const
 {
-    auto new_state = copy_clear_lie();
+    auto new_state = copy_clear_wanteds();
     new_state.add_binders( binders );
     return new_state;
 }
 
-LIE& typechecker_state::current_lie() {
-    return lie;
+WantedConstraints& typechecker_state::current_wanteds()
+{
+    return collected_wanteds;
 }
 
 void typechecker_state::add_dvar(const Core::Var& dvar, const Hs::Type& constraint)
 {
-    current_lie().push_back( {dvar, constraint} );
+    current_wanteds().simple.push_back( {dvar, constraint} );
 }
 
 Core::Var typechecker_state::fresh_dvar(const Hs::Type& constraint)
@@ -928,9 +929,9 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
     auto [tvs, givens, rho_type] = skolemize(sigma_type, true);
 
     // 2. typecheck
-    auto tcs2 = copy_clear_lie();
+    auto tcs2 = copy_clear_wanteds();
     tcs2.tcRho(E, Check(rho_type));
-    auto lie_wanted = tcs2.current_lie();
+    auto new_wanteds = tcs2.current_wanteds();
 
     // 3. Check for escaped skolem variables
     auto s2 = sigma_type;
@@ -941,7 +942,7 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
             throw myexception()<<"Type not polymorphic enough";
 
     // 4. check that the remaining constraints are satisfied by the constraints in the type signature
-    auto [ev_decls, non_entailed_wanteds] = entails( givens, lie_wanted);
+    auto [ev_decls, non_entailed_wanteds] = entails( givens, new_wanteds );
 
     // 5. put wanteds without skolem variables into the current LIE
     LIE lie_failed;
@@ -955,7 +956,7 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
         if (fail)
             lie_failed.push_back({dvar,constraint});
         else
-            current_lie().push_back({dvar, constraint});
+            current_wanteds().simple.push_back({dvar, constraint});
     }
 
     if (not lie_failed.empty())
@@ -1065,7 +1066,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
         return X;
     };
 
-    lie += non_entailed_wanteds;
+    collected_wanteds += non_entailed_wanteds;
 
     return w;
 }
@@ -1085,7 +1086,7 @@ typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
             return Core::Apply(x, dict_args);
         };
 
-        lie += wanteds;
+        collected_wanteds += wanteds;
 
         return w;
     }

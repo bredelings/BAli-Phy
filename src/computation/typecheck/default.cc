@@ -282,17 +282,17 @@ typechecker_state::default_preds( const set<Hs::TypeVar>& qtvs,
 
 Core::Decls typechecker_state::simplify_and_default_top_level()
 {
-    auto& lie = current_lie();
+    auto& w = current_wanteds();
 
-    auto [top_simplify_decls, new_lie] = entails( {}, lie );
+    auto [top_simplify_decls, new_wanteds] = entails( {}, w );
 
-    lie = new_lie;
+    collected_wanteds = new_wanteds;
 
-    auto [default_decls, unambiguous_preds] = default_preds({}, {}, current_lie());
+    auto [default_decls, unambiguous_preds] = default_preds({}, {}, current_wanteds().simple);
     assert(unambiguous_preds.empty());
 
     // Clear the LIE, which should now be empty.
-    current_lie() = {};
+    current_wanteds() = {};
 
 //    std::cerr<<"GVE (all after defaulting):\n";
 //    for(auto& [x,t]: state.gve)

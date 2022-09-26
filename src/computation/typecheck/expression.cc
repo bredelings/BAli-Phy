@@ -107,14 +107,14 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i
 
 void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 {
-    auto state2 = copy_clear_lie();
+    auto state2 = copy_clear_wanteds();
 
     state2.infer_type_for_binds(unloc(Let.binds));
 
     // 2. Compute type of let body
     state2.tcRho(unloc(Let.body), exp_type);
 
-    current_lie() += state2.current_lie();
+    current_wanteds() += state2.current_wanteds();
 }
 
 void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
@@ -271,11 +271,11 @@ void typechecker_state::tcRho(Hs::Do& DoExp, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::ListComprehension& LComp, const Expected& exp_type)
 {
-    auto state2 = copy_clear_lie();
+    auto state2 = copy_clear_wanteds();
     state2.infer_quals_type(LComp.quals);
     auto body_type = state2.inferRho(LComp.body);
 
-    current_lie() += state2.current_lie();
+    current_wanteds() += state2.current_wanteds();
 
     set_expected_type( exp_type, Hs::ListType(body_type) );
 }

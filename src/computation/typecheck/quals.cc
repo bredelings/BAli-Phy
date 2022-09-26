@@ -142,7 +142,7 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         auto pat_binders = checkPat(PQ.bindpat, pat_type);
 
         // 4. Check stmts
-        auto state2 = copy_clear_lie();
+        auto state2 = copy_clear_wanteds();
         state2.add_binders(pat_binders);
         state2.tcRhoStmts(i+1, stmts, Check(stmts_type));
 
@@ -154,7 +154,7 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
             PQ.failOp = Hs::Var({noloc,"Control.Monad.fail"});
             auto fail_op_type = state2.inferRho(PQ.failOp);
         }
-        current_lie() += state2.current_lie();
+        current_wanteds() += state2.current_wanteds();
 
         stmt = PQ;
     }
@@ -185,13 +185,13 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         auto LQ = *lq;
 
         // 1. Typecheck binds and add values to global env
-        auto state2 = copy_clear_lie();
+        auto state2 = copy_clear_wanteds();
         state2.infer_type_for_binds(unloc(LQ.binds));
 
         // 2. Typecheck stmts
         state2.tcRhoStmts(i+1, stmts, expected_type);
 
-        current_lie() += state2.current_lie();
+        current_wanteds() += state2.current_wanteds();
 
         stmt = LQ;
     }

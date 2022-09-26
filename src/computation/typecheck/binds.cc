@@ -257,9 +257,9 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         auto [tvs, givens, rho_type] = skolemize(polytype, true);
 
         // 2. typecheck the rhs
-        auto tcs2 = copy_clear_lie();
+        auto tcs2 = copy_clear_wanteds();
         tcs2.tcRho(FD.match, Check(rho_type));
-        auto lie_wanted = tcs2.current_lie();
+        auto lie_wanted = tcs2.current_wanteds();
 
         // 3. try to solve the wanteds from the givens
         // FIXME -- if there are higher-level givens, then we probably need those too!
@@ -410,7 +410,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
     std::map<std::string, Hs::Var> mono_ids;
 
-    auto tcs2 = copy_clear_lie();
+    auto tcs2 = copy_clear_wanteds();
 
     vector<Hs::Type> lhs_types;
     for(int i=0;i<decls.size();i++)
@@ -463,7 +463,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
             throw;
         }
     }
-    auto wanteds = tcs2.current_lie();
+    auto wanteds = tcs2.current_wanteds();
 
     // A. First, REDUCE the lie by
     //    (i)  converting to Hnf
@@ -516,7 +516,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
         add(fixed_tvs, free_meta_type_variables(lie_deferred));
     }
 
-    current_lie() += lie_deferred;
+    current_wanteds() += lie_deferred;
 
     // 10. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
 
