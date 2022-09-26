@@ -8,9 +8,9 @@ object_ptr<KindConstraint> kind_constraint() {return new KindConstraint();}
 
 string KindArrow::print() const
 {
-    string s1 = k1.print();
-    string s2 = k2.print();
-    if (k1.is_a<KindArrow>())
+    string s1 = arg_kind.print();
+    string s2 = result_kind.print();
+    if (arg_kind.is_a<KindArrow>())
         s1 = "("+s1+")";
     return s1+" -> "+s2;
 }
@@ -25,6 +25,48 @@ std::string KindVar::print() const {
 }
 
 object_ptr<KindVar> kind_var(const std::string& s, int i) {return new KindVar(s,i);}
+
+bool KindStar::operator==(const KindStar&) const
+{
+    return true;
+}
+
+bool KindStar::operator==(const Object& o) const
+{
+    auto K = dynamic_cast<const KindStar*>(&o);
+    if (not K)
+        return false;
+
+    return (*this) == *K;
+}
+
+bool KindConstraint::operator==(const KindConstraint&) const
+{
+    return true;
+}
+
+bool KindConstraint::operator==(const Object& o) const
+{
+    auto K = dynamic_cast<const KindConstraint*>(&o);
+    if (not K)
+        return false;
+
+    return (*this) == *K;
+}
+
+bool KindArrow::operator==(const KindArrow& K2) const
+{
+    return arg_kind == K2.arg_kind and result_kind == K2.result_kind; 
+}
+
+bool KindArrow::operator==(const Object& o) const
+{
+    auto K = dynamic_cast<const KindArrow*>(&o);
+    if (not K)
+        return false;
+
+    return (*this) == *K;
+}
 
 bool KindVar::operator==(const Object& o) const
 {
@@ -63,9 +105,9 @@ Hs::Kind apply_subst(const k_substitution_t& s, const Hs::Kind& k)
     }
     else if (auto a = k.to<KindArrow>())
     {
-        auto k1 = apply_subst(s, a->k1);
-        auto k2 = apply_subst(s, a->k2);
-        return kind_arrow(k1,k2);
+        auto arg_kind    = apply_subst(s, a->arg_kind);
+        auto result_kind = apply_subst(s, a->result_kind);
+        return kind_arrow(arg_kind,result_kind);
     }
     else
         return k;
@@ -93,7 +135,7 @@ bool occurs_check(const KindVar& kv, const Hs::Kind& k)
         return kv == *kv2;
     else if (auto a = k.to<KindArrow>())
     {
-        return occurs_check(kv, a->k1) or occurs_check(kv, a->k2);
+        return occurs_check(kv, a->arg_kind) or occurs_check(kv, a->result_kind);
     }
     else
         return false;
@@ -105,10 +147,10 @@ std::optional<k_substitution_t> kunify(const Hs::Kind& k1, const Hs::Kind& k2)
     {
         auto A = k1.to<KindArrow>();
         auto B = k2.to<KindArrow>();
-        auto s1 = kunify(A->k1, B->k1);
+        auto s1 = kunify(A->arg_kind, B->arg_kind);
         if (not s1) return {};
 
-        auto s2 = kunify(apply_subst(*s1, A->k2), apply_subst(*s1, B->k2));
+        auto s2 = kunify(apply_subst(*s1, A->result_kind), apply_subst(*s1, B->result_kind));
         if (not s2) return {};
 
         return compose(*s1,*s2);
@@ -166,9 +208,9 @@ Hs::Kind replace_kvar_with_star(const Hs::Kind& k)
     }
     else if (auto a = k.to<KindArrow>())
     {
-        auto k1 = replace_kvar_with_star( a->k1 );
-        auto k2 = replace_kvar_with_star( a->k2 );
-        return kind_arrow(k1,k2);
+        auto arg_kind    = replace_kvar_with_star( a->arg_kind );
+        auto result_kind = replace_kvar_with_star( a->result_kind );
+        return kind_arrow( arg_kind, result_kind );
     }
     else
         return k;

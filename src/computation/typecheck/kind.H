@@ -11,6 +11,8 @@ struct KindStar: public Object
 {
     virtual bool is_kstar() const {return true;}
     KindStar* clone()  const { return new KindStar(); }
+    bool operator==(const KindStar&) const;
+    bool operator==(const Object&) const;
     std::string print() const { return "*"; }
 };
 
@@ -20,6 +22,8 @@ struct KindConstraint: public Object
 {
     virtual bool is_kconstraint() const {return true;}
     KindConstraint* clone()  const { return new KindConstraint(); }
+    bool operator==(const KindConstraint&) const;
+    bool operator==(const Object&) const;
     std::string print() const { return "Constraint"; }
 };
 
@@ -30,6 +34,8 @@ struct KindArrow: public Object
     Hs::Kind arg_kind;
     Hs::Kind result_kind;
     KindArrow* clone()  const { return new KindArrow(*this); }
+    bool operator==(const KindArrow&) const;
+    bool operator==(const Object&) const;
     std::string print() const;
 
     KindArrow(const Hs::Kind& k1, const Hs::Kind& k2):arg_kind(k1),result_kind(k2) {}
