@@ -379,15 +379,19 @@ Hs::TypeVar unification_env::not_in_scope_tyvar(const Hs::TypeVar& tv1, const Hs
 bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2)
 {
     // Translate rigid type variables
-    if (auto tv1 = t1.to<Hs::TypeVar>(); tv1 and (tv1->info == Hs::typevar_info::rigid) and env.mapping1.count(*tv1))
+    if (auto tv1 = t1.to<Hs::TypeVar>(); tv1 and env.mapping1.count(*tv1))
     {
-        auto tv1_ = env.mapping1.at(*tv1);
-        return maybe_unify_(allow_unification, both_ways, env, tv1_, t2);
+        assert(tv1->info == Hs::typevar_info::rigid);
+        auto tv1_remapped = env.mapping1.at(*tv1);
+        assert(not env.mapping1.count(tv1_remapped));
+        return maybe_unify_(allow_unification, both_ways, env, tv1_remapped, t2);
     }
-    else if (auto tv2 = t2.to<Hs::TypeVar>(); tv2 and (tv2->info == Hs::typevar_info::rigid) and env.mapping2.count(*tv2))
+    else if (auto tv2 = t2.to<Hs::TypeVar>(); tv2 and env.mapping2.count(*tv2))
     {
-        auto tv2_ = env.mapping2.at(*tv2);
-        return maybe_unify_(allow_unification, both_ways, env, t1, tv2_);
+        assert(tv2->info == Hs::typevar_info::rigid);
+        auto tv2_remapped = env.mapping2.at(*tv2);
+        assert(not env.mapping2.count(tv2_remapped));
+        return maybe_unify_(allow_unification, both_ways, env, t1, tv2_remapped);
     }
     else if (auto tt1 = filled_meta_type_var(t1))
         return maybe_unify_(allow_unification, both_ways, env, *tt1, t2);
