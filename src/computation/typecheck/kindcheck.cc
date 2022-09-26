@@ -181,9 +181,9 @@ Hs::Kind kindchecker_state::kind_check_type(Hs::Type& t)
         }
         else if (auto a = kind1.to<KindArrow>())
         {
-            if (not unify(a->k1, kind2))
+            if (not unify(a->arg_kind, kind2))
                 throw myexception()<<"In type '"<<t<<"', can't apply type ("<<Tapp.head<<" :: "<<apply_substitution(kind1)<<") to type ("<<Tapp.arg<<" :: "<<apply_substitution(kind2)<<")";
-            return a->k2;
+            return a->result_kind;
         }
         else
             throw myexception()<<"Can't apply type "<<Tapp.head<<" :: "<<kind1.print()<<" to type "<<Tapp.arg<<".";
@@ -257,7 +257,7 @@ Hs::Kind kindchecker_state::kind_for_type(const Hs::Type& t)
 
         // The kind should be k1 -> k2
         if (auto ka = hkind.to<KindArrow>())
-            return ka->k2;
+            return ka->result_kind;
         else
             throw myexception()<<"Kind of applied tycon is not an arrow kind!";
     }
@@ -454,10 +454,10 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
         assert(ka);
 
         // map the name to its kind
-        bind_type_var(tv, ka->k1);
+        bind_type_var(tv, ka->arg_kind);
 
         // set up the next iteration
-        kind = ka->k2;
+        kind = ka->result_kind;
     }
     assert(kind.is_a<KindStar>());
 
@@ -492,15 +492,15 @@ map<string,Hs::Type> kindchecker_state::type_check_data_type(const Hs::DataOrNew
         assert(ka);
 
         // map the name to its kind
-        bind_type_var(tv, ka->k1);
+        bind_type_var(tv, ka->arg_kind);
 
         // record a version of the var with that contains its kind
         auto tv2 = tv;
-        tv2.kind = ka->k1;
+        tv2.kind = ka->arg_kind;
         datatype_typevars.push_back(tv2);
 
         // set up the next iteration
-        k = ka->k2;
+        k = ka->result_kind;
     }
     assert(k.is_a<KindStar>());
 
@@ -594,10 +594,10 @@ void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
         assert(ka);
 
         // map the name to its kind
-        bind_type_var(tv, ka->k1);
+        bind_type_var(tv, ka->arg_kind);
 
         // set up the next iteration
-        k = ka->k2;
+        k = ka->result_kind;
     }
     assert(k.is_a<KindConstraint>());
 
@@ -635,10 +635,10 @@ void kindchecker_state::kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_de
         assert(ka);
 
         // map the name to its kind
-        bind_type_var(tv, ka->k1);
+        bind_type_var(tv, ka->arg_kind);
 
         // set up the next iteration
-        k = ka->k2;
+        k = ka->result_kind;
     }
     assert(k.is_a<KindStar>());
 

@@ -1295,10 +1295,10 @@ Hs::Kind result_kind_for_type_vars(vector<Hs::TypeVar>& type_vars, Hs::Kind k)
         assert(ka);
 
         // record a version of the var with that contains its kind
-        tv.kind = ka->k1;
+        tv.kind = ka->arg_kind;
 
         // set up the next iteration
-        k = ka->k2;
+        k = ka->result_kind;
     }
     // This is the result kind.
     return k;

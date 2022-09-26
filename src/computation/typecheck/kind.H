@@ -27,11 +27,12 @@ object_ptr<KindConstraint> kind_constraint();
 
 struct KindArrow: public Object
 {
-    Hs::Kind k1;
-    Hs::Kind k2;
+    Hs::Kind arg_kind;
+    Hs::Kind result_kind;
     KindArrow* clone()  const { return new KindArrow(*this); }
-    KindArrow(const Hs::Kind& _k1, const Hs::Kind& _k2):k1(_k1),k2(_k2) {}
     std::string print() const;
+
+    KindArrow(const Hs::Kind& k1, const Hs::Kind& k2):arg_kind(k1),result_kind(k2) {}
 };
 
 object_ptr<KindArrow> kind_arrow(const Hs::Kind& k1, const Hs::Kind& k2);
