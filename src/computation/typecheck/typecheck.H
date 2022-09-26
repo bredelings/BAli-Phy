@@ -363,7 +363,7 @@ struct typechecker_state: FreshVarSource
 
     void tcRho(Hs::MRule&, const Expected&);
 
-    void tcRho(Hs::Match&, const Expected&);
+    void tcRho(Hs::Matches&, const Expected&);
 
     // Figures 13, 14, 15?
     Hs::Decls
@@ -458,7 +458,7 @@ ID get_class_name_from_constraint(const Hs::Type& constraint);
 
 LIE apply_subst(const substitution_t& s, const LIE& env1);
 
-std::map<ID, Hs::Match> get_instance_methods(const Hs::Binds& decls, const global_value_env& members, const std::string& class_name);
+std::map<ID, Hs::Matches> get_instance_methods(const Hs::Binds& decls, const global_value_env& members, const std::string& class_name);
 
 Hs::Var rename_var_from_bindinfo(const Hs::Var& V, const std::map<ID, Hs::BindInfo>& bind_info);
 

@@ -132,7 +132,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 
             vector<equation_info_t> equations;
 
-            for(auto& rule: fd->match.rules)
+            for(auto& rule: fd->matches.rules)
             {
                 auto rhs = desugar_rhs(rule.rhs);
 
@@ -432,7 +432,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                     expression_ref fail = Hs::List({});
                     auto rule1 = Hs::MRule{ {PQ->bindpat},           Hs::SimpleRHS({noloc, L})        };
                     auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc, fail})     };
-                    auto decl  = Hs::FunDecl(ok, Hs::Match{{rule1, rule2}});
+                    auto decl  = Hs::FunDecl(ok, Hs::Matches{{rule1, rule2}});
 
                     expression_ref body = {var("Data.List.concatMap"), ok, PQ->exp};
                     return desugar( Hs::LetExp({noloc,{{{decl}}}}, {noloc,body}) );
@@ -525,7 +525,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                     fail = desugar(PQ.failOp);
                 auto rule1 = Hs::MRule{ {PQ.bindpat},            Hs::SimpleRHS({noloc,do_stmts}) };
                 auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc,fail})     };
-                auto decl  = Hs::FunDecl(ok, Hs::Match{{rule1, rule2}});
+                auto decl  = Hs::FunDecl(ok, Hs::Matches{{rule1, rule2}});
 
                 expression_ref body = {bind,e,ok};
                 result = Hs::LetExp({noloc,{{{decl}}}}, {noloc,body});

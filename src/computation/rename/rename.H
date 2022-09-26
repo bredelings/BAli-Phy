@@ -50,7 +50,7 @@ struct renamer_state
     bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
     Hs::MultiGuardedRHS rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
     Hs::MultiGuardedRHS rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, std::set<std::string>& free_vars);
-    Hs::Match rename(Hs::Match match, const bound_var_info& bound, std::set<std::string>& free_vars);
+    Hs::Matches rename(Hs::Matches match, const bound_var_info& bound, std::set<std::string>& free_vars);
 
     Haskell::Decls rename_type_decls(Haskell::Decls decls);
     Haskell::InstanceDecl rename(Haskell::InstanceDecl);

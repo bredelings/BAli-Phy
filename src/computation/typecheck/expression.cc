@@ -136,22 +136,22 @@ void typechecker_state::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
 void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 {
     // 1. Determine the match type
-    Hs::Match match;
+    Hs::Matches matches;
     for(auto& alt: Case.alts)
     {
         auto& [pattern, body] = unloc(alt);
-        match.rules.push_back(Hs::MRule{{pattern},body});
+        matches.rules.push_back(Hs::MRule{{pattern},body});
     }
 
-    auto match_type = inferRho(match);
+    auto matches_type = inferRho(matches);
 
     for(int i=0;i<Case.alts.size();i++)
     {
-        unloc(Case.alts[i]) = {match.rules[i].patterns[0], match.rules[i].rhs};
+        unloc(Case.alts[i]) = {matches.rules[i].patterns[0], matches.rules[i].rhs};
     }
 
     // 2. Check the expected result type
-    auto [object_type, result_type] = unify_function(match_type);
+    auto [object_type, result_type] = unify_function(matches_type);
     set_expected_type( exp_type, result_type );
 
     // 3. Check the object type

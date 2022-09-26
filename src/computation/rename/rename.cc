@@ -303,7 +303,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
                     if (mdecl.is_a<Hs::PatDecl>())
                         throw myexception()<<"Illegal pattern binding in class "<<C.name;
                     auto FD = mdecl.as_<Hs::FunDecl>();
-                    FD.match = Rn.rename( FD.match, bound_names, FD.rhs_free_vars);
+                    FD.matches = Rn.rename( FD.matches, bound_names, FD.rhs_free_vars);
                     mdecl = FD;
                 }
             }
@@ -322,7 +322,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
                     if (mdecl.is_a<Hs::PatDecl>())
                         throw myexception()<<"Illegal pattern binding in instance "<<I.constraint.print();
                     auto FD = mdecl.as_<Hs::FunDecl>();
-                    FD.match = Rn.rename( FD.match, bound_names, FD.rhs_free_vars);
+                    FD.matches = Rn.rename( FD.matches, bound_names, FD.rhs_free_vars);
                     mdecl = FD;
                 }
             }

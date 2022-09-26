@@ -84,7 +84,7 @@ void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type)
         exp_type.infer_type( function_type( pat_types, type ) );
 }
 
-void typechecker_state::tcRho(Hs::Match& m, const Expected& exp_type)
+void typechecker_state::tcRho(Hs::Matches& m, const Expected& exp_type)
 {
     // Idea: Change tcRho(MRule, exp_type) to take a list of
     //       expected pattern types, and an expected rhs type.
@@ -114,5 +114,3 @@ void typechecker_state::tcRho(Hs::Match& m, const Expected& exp_type)
             tcRho(rule, Check(exp_type.check_type()));
     }
 }
-
-

@@ -28,9 +28,9 @@ Hs::FunDecl dictionary_extractor(const string& name, int i, int N)
 
     // (_,field,_,_) -> field
     Hs::MRule rule{{pattern}, Hs::SimpleRHS({noloc, field})};
-    Hs::Match match{{rule}};
+    Hs::Matches matches{{rule}};
 
-    return Hs::FunDecl(extractor, match);
+    return Hs::FunDecl(extractor, matches);
 }
 
 // OK, so

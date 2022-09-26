@@ -191,9 +191,9 @@ string get_class_for_constraint(const Hs::Type& constraint)
    in <dvar1, ..., dvarN, var1, ..., varM>
 */
 
-map<string, Hs::Match> get_instance_methods(const Hs::Binds& binds, const global_value_env& members, const string& class_name)
+map<string, Hs::Matches> get_instance_methods(const Hs::Binds& binds, const global_value_env& members, const string& class_name)
 {
-    std::map<string,Hs::Match> method_matches;
+    std::map<string,Hs::Matches> method_matches;
     for(auto& decls: binds)
     {
         for(auto& decl: decls)
@@ -207,7 +207,7 @@ map<string, Hs::Match> get_instance_methods(const Hs::Binds& binds, const global
             if (method_matches.count(method_name))
                 throw myexception()<<"method '"<<method_name<<"' defined twice!";
 
-            method_matches.insert({method_name, fd.match});
+            method_matches.insert({method_name, fd.matches});
         }
     }
 
@@ -256,7 +256,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     // 7. Construct binds_methods
     Hs::Decls decls;
 
-    map<string, Hs::Match> method_matches;
+    map<string, Hs::Matches> method_matches;
     if (inst_decl.binds)
         method_matches = get_instance_methods( unloc( *inst_decl.binds ), class_info.members, class_name );
 

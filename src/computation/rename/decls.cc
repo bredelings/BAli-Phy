@@ -146,15 +146,15 @@ pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
         }
         else if (auto fvar = fundecl_head(decl))
         {
-            Hs::Match m;
+            Hs::Matches m;
             for(int j=i;j<decls.size();j++)
             {
                 if (fundecl_head(decls[j]) != fvar) break;
 
                 auto& FD = decls[j].as_<Hs::FunDecl>();
 
-                assert(FD.match.rules.size() == 1);
-                m.rules.push_back( FD.match.rules[0] );
+                assert(FD.matches.rules.size() == 1);
+                m.rules.push_back( FD.matches.rules[0] );
 
                 if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
                     throw myexception()<<"Function '"<<*fvar<<"' has different numbers of arguments!";
@@ -323,7 +323,7 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
             if (top)
                 name = m.name + "." + name;
 
-            FD.match = rename(FD.match, bound, FD.rhs_free_vars);
+            FD.matches = rename(FD.matches, bound, FD.rhs_free_vars);
 
             decl = FD;
         }

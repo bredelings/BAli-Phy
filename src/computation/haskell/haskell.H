@@ -853,7 +853,7 @@ struct MRule
     MultiGuardedRHS rhs;
 };
 
-struct Match
+struct Matches
 {
     std::vector<MRule> rules;
 };
@@ -864,12 +864,12 @@ struct FunDecl: public Object
     std::string print() const;
 
     Var v;
-    Match match;
+    Matches matches;
 
     // This holds vars discovered during renaming
     std::set<std::string> rhs_free_vars;
 
-    FunDecl(const Var& vv, const Match& m): v(vv), match(m) {}
+    FunDecl(const Var& vv, const Matches& ms): v(vv), matches(ms) {}
 };
 
 FunDecl simple_decl(const Var& v, const expression_ref&);

@@ -258,7 +258,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 2. typecheck the rhs
         auto tcs2 = copy_clear_wanteds();
-        tcs2.tcRho(FD.match, Check(rho_type));
+        tcs2.tcRho(FD.matches, Check(rho_type));
         auto lie_wanted = tcs2.current_wanteds();
 
         // 3. try to solve the wanteds from the givens
@@ -308,7 +308,7 @@ bool is_restricted(const map<ID, Hs::Type>& signatures, const Hs::Decls& decls)
         else if (auto fd = decl.to<Hs::FunDecl>())
         {
             // Simple pattern declaration
-            if (fd->match.rules[0].patterns.size() == 0)
+            if (fd->matches.rules[0].patterns.size() == 0)
             {
                 auto& name = unloc(fd->v.name);
                 if (not signatures.count(name)) return true;
@@ -348,7 +348,7 @@ typechecker_state::infer_rhs_type(expression_ref& decl)
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
-        auto rhs_type = inferRho(FD.match);
+        auto rhs_type = inferRho(FD.matches);
 
         decl = FD;
         return rhs_type;

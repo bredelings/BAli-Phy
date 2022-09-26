@@ -711,7 +711,7 @@ string GenBind::print() const
 string FunDecl::print() const
 {
     vector<string> lines;
-    for(auto& rule: match.rules)
+    for(auto& rule: matches.rules)
         lines.push_back( v.print() + " " + rule.print());
 
     return join( lines, "\n" );
@@ -725,10 +725,10 @@ FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const ex
 FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const MultiGuardedRHS& body)
 {
     MRule rule{pats, body};
-    Match m{{rule}};
+    Matches ms{{rule}};
 
     // v = E
-    return FunDecl(v,m);
+    return FunDecl(v,ms);
 }
 
 FunDecl simple_decl(const Var& v, const expression_ref& E)
