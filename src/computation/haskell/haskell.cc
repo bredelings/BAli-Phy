@@ -583,16 +583,16 @@ MultiGuardedRHS SimpleRHS(const Located<expression_ref>& body, const optional<Lo
 string LambdaExp::print() const
 {
     string result = "\\";
-    for(auto& arg: args)
-        result += parenthesize_pattern(arg) + " ";
+    for(auto& pat: matches.rules[0].patterns)
+        result += parenthesize_pattern(pat) + " ";
     result += "-> ";
-    result += body.print_no_equals();
+    result += matches.rules[0].rhs.print_no_equals();
     return result;
 }
 
 LambdaExp::LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b)
-    : args(ps), body(SimpleRHS({noloc,b}))
 {
+    matches.rules = {{ps,SimpleRHS({noloc,b})}};
     assert(not ps.empty());
 }
 

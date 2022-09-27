@@ -558,13 +558,10 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         auto L = E.as_<Hs::LambdaExp>();
 
-        for(auto& arg: L.args)
-            arg = desugar_pattern(arg);
+        auto equations = desugar_matches(L.matches);
+        expression_ref otherwise = Core::error("lambda: pattern match failure");
 
-        // 2. Desugar the body, binding vars mentioned in the lambda patterns.
-        auto rhs = desugar_rhs(L.body);
-
-        return def_function({{L.args, rhs}}, Core::error("lambda: pattern match failure"));
+        return def_function(equations, otherwise);
     }
     else if (E.is_a<Hs::LetExp>())
     {

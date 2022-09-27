@@ -695,18 +695,6 @@ struct Alts: public std::vector<Located<Alt>>
     Alts(const std::vector<Located<Alt>>& v): std::vector<Located<Alt>>(v) {};
 };
 
-struct LambdaExp: public Object
-{
-    std::vector<Pattern> args;
-    MultiGuardedRHS body;
-
-    LambdaExp* clone() const {return new LambdaExp(*this);}
-    std::string print() const;
-
-    LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b);
-};
-
-
 struct LetExp: public Object
 {
     Located<Binds> binds;
@@ -846,6 +834,17 @@ struct Matches
 {
     std::vector<MRule> rules;
 };
+
+struct LambdaExp: public Object
+{
+    Matches matches;
+
+    LambdaExp* clone() const {return new LambdaExp(*this);}
+    std::string print() const;
+
+    LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b);
+};
+
 
 struct CaseExp: public Object
 {

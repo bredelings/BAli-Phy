@@ -143,9 +143,9 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     else if (E.is_a<Haskell::LambdaExp>())
     {
         auto L = E.as_<Haskell::LambdaExp>();
-        for(auto& arg: L.args)
-            arg = unapply(rename_infix(m, arg));
-        L.body = rename_infix(m, L.body);
+        for(auto& pat: L.matches.rules[0].patterns)
+            pat = unapply(rename_infix(m, pat));
+        L.matches.rules[0].rhs = rename_infix(m, L.matches.rules[0].rhs);
 
         return L;
     }
@@ -425,15 +425,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     else if (E.is_a<Haskell::LambdaExp>())
     {
         auto L = E.as_<Haskell::LambdaExp>();
-
-        // 1. Rename patterns for lambda arguments
-        bound_var_info binders;
-        for(auto& arg: L.args)
-            add(binders, rename_pattern(arg));
-
-        // 2. Rename the body
-        L.body = rename(L. body, bound, binders, free_vars);
-
+        L.matches = rename(L.matches, bound, free_vars);
         return L;
     }
     else if (E.is_a<Haskell::LetExp>())
