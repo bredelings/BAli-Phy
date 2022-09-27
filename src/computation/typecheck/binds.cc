@@ -242,7 +242,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 2. typecheck the rhs
         auto tcs2 = copy_clear_wanteds();
-        tcs2.tcRho(FD.matches, Check(rho_type));
+        tcs2.tcMatchesFun(FD.matches, Check(rho_type));
         auto lie_wanted = tcs2.current_wanteds();
 
         // 3. try to solve the wanteds from the givens

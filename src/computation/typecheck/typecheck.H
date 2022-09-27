@@ -371,6 +371,16 @@ struct typechecker_state: FreshVarSource
 
     void tcRho(Hs::Matches&, const Expected&);
 
+    void tcMatch(Hs::MRule& m, const std::vector<Expected>& pat_types, const Expected& result_type);
+
+    void tcMatches(Hs::Matches& m, const std::vector<Expected>& pat_types, const Expected& result_type);
+
+    Core::wrapper tcMatchesFunInfer(Hs::Matches&, std::vector<Expected>& arg_types, int arity, const Expected& fun_type);
+
+    Core::wrapper tcMatchesFunCheck(Hs::Matches&, std::vector<Expected>& arg_types, int arity, Hs::Type type);
+
+    Core::wrapper tcMatchesFun(Hs::Matches&, Expected);
+
     // Figures 13, 14, 15?
     Hs::Decls
     infer_type_for_decls(const signature_env&, const Hs::Decls&, bool is_top_level);
