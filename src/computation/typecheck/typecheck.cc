@@ -538,6 +538,26 @@ Hs::Type typechecker_state::expTypeToType(const Expected& E)
         return E.check_type();
 }
 
+Hs::Type typechecker_state::inferResultToType(const Expected& E)
+{
+    if (not E.infer())
+        throw myexception()<<"inferResultToType: expected Infer, but got "<<E.print();
+
+    if (auto T = E.inferred_type())
+    {
+        if (not is_rho_type(*T))
+            throw myexception()<<"inferResultToType: expected monotype, but got Infer("<<T->print()<<")";
+        return *T;
+    }
+    else
+    {
+        // This can now only be a monotype
+        auto tv = fresh_meta_type_var( kind_star() );
+        E.infer_type(tv);
+        return tv;
+    }
+}
+
 void typechecker_state::set_expected_type(const Expected& E, const Hs::Type& type)
 {
     if (E.infer())

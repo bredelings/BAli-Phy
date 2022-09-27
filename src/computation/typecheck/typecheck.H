@@ -160,6 +160,8 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type expTypeToType(const Expected& E);
 
+    Hs::Type inferResultToType(const Expected& E);
+
     void set_expected_type(const Expected& E, const Hs::Type& type);
 
     //------- local state ------------//
