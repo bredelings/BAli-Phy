@@ -385,8 +385,31 @@ string Alts::print() const
 
 string CaseExp::print() const
 {
-    return "case " + object.print() + " of " + alts.print();
+    vector<string> alt_strings;
+    for(auto& alt: alts.rules)
+        alt_strings.push_back(alt.patterns[0].print() + " -> " + alt.rhs.print_no_equals());
+
+    return "case " + object.print() + " of {" + join(alt_strings, "\n;") + "}";
 }
+
+Matches matches_from_alts(const Alts& alts)
+{
+    Hs::Matches matches;
+    for(auto& alt: alts)
+    {
+        auto& [pattern, body] = unloc(alt);
+        matches.rules.push_back(Hs::MRule{{pattern},body});
+    }
+    return matches;
+}
+
+CaseExp::CaseExp(const Expression& o, const Matches& ms)
+    : object(o), alts(ms)
+{ }
+
+CaseExp::CaseExp(const Expression& o, const Alts& as)
+    : object(o), alts( matches_from_alts(as) )
+{ }
 
 std::string FieldDecl::print() const
 {

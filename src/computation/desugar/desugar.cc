@@ -586,10 +586,10 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
         vector<expression_ref> patterns;
         vector<failable_expression> bodies;
-        for(const auto& alt: C.alts)
+        for(const auto& [alt_patterns, alt_rhs]: C.alts.rules)
         {
-            patterns.push_back( desugar_pattern( unloc(alt).pattern) );
-            bodies.push_back( desugar_rhs(unloc(alt).rhs) );
+            patterns.push_back( desugar_pattern( alt_patterns[0] ) );
+            bodies.push_back( desugar_rhs( alt_rhs ) );
         }
         return case_expression(obj, patterns, bodies).result(Core::error("case: failed pattern match"));
     }

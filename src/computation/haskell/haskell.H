@@ -695,17 +695,6 @@ struct Alts: public std::vector<Located<Alt>>
     Alts(const std::vector<Located<Alt>>& v): std::vector<Located<Alt>>(v) {};
 };
 
-struct CaseExp: public Object
-{
-    Expression object;
-    Alts alts;
-
-    CaseExp* clone() const { return new CaseExp(*this);}
-    std::string print() const;
-
-    CaseExp(const Expression& o, Alts as): object(o), alts(as) {}
-};
-
 struct LambdaExp: public Object
 {
     std::vector<Pattern> args;
@@ -856,6 +845,18 @@ struct MRule
 struct Matches
 {
     std::vector<MRule> rules;
+};
+
+struct CaseExp: public Object
+{
+    Expression object;
+    Matches alts;
+
+    CaseExp* clone() const { return new CaseExp(*this);}
+    std::string print() const;
+
+    CaseExp(const Expression& o, const Alts& as);
+    CaseExp(const Expression& o, const Matches& ms);
 };
 
 struct FunDecl: public Object

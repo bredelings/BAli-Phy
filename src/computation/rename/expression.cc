@@ -172,11 +172,11 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
 
         C.object = rename_infix(m, C.object);
 
-        for(auto& alt: C.alts)
+        for(auto& [patterns, rhs]: C.alts.rules)
         {
-            unloc(alt).pattern = rename_infix(m, unloc(alt).pattern);
-            unloc(alt).pattern = unapply(unloc(alt).pattern);
-            unloc(alt).rhs = rename_infix(m, unloc(alt).rhs);
+            patterns[0] = rename_infix(m, patterns[0]);
+            patterns[0] = unapply(patterns[0]);
+            rhs = rename_infix(m, rhs);
         }
 
         return C;
@@ -418,15 +418,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         auto C = E.as_<Haskell::CaseExp>();
 
         C.object = rename(C.object, bound, free_vars);
-
-        for(auto& alt: C.alts)
-        {
-            // Rename pattern and get binders
-            auto binders = rename_pattern(unloc(alt).pattern);
-
-            // Rename rhs
-            unloc(alt).rhs = rename(unloc(alt).rhs, bound, binders, free_vars);
-        }
+        C.alts   = rename(C.alts,   bound, free_vars);
 
         return C;
     }
