@@ -67,6 +67,7 @@ typechecker_state::tcPat(Hs::Var& V, const Expected& exp_type, const signature_e
             if (wanteds.size())
                 throw myexception()<<"variable '"<<name<<"' cannot have constrained type '"<<sig_type<<"' due to monomorphism restriction";
             type = monotype;
+            exp_type.infer_type( type );
         }
         else
         {
@@ -77,14 +78,11 @@ typechecker_state::tcPat(Hs::Var& V, const Expected& exp_type, const signature_e
     else
     {
         if (exp_type.infer())
-            type = fresh_meta_type_var( kind_star() );
+            type = inferResultToType(exp_type);
         else
             type = exp_type.check_type();
     }
 
-    if (exp_type.infer())
-        exp_type.infer_type( type );
-    
     V.type = type;
     lve = lve.insert({name,type});
     return lve;
@@ -120,8 +118,12 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     // CONSTR-PAT
     else if (auto con = pat.to<Hs::ConPattern>())
     {
+        // See GHC/Core/DataCon.hs
+        // See GHC/Tc/Gen/Pat.hs > tcDataConPat
+        // See GHC/Core/DataCon.hs > mkData
         auto Con = *con;
 
+        // maybe also get type tvs, constructor tvs
         auto [givens, field_types, type] = constructor_pattern_types(Con.head);
 
         assert(field_types.size() == Con.args.size());
