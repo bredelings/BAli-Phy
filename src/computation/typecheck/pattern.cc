@@ -135,7 +135,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
             lve += checkPat(Con.args[i], field_types[i]);
         pat = Con;
 
-        set_expected_type( exp_type, type );
+        unify( expTypeToType(exp_type), type );
 
         return lve;
     }
@@ -236,7 +236,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
         if (L.lit.is_BoxedInteger())
         {
-            set_expected_type( exp_type, int_type() );
+            unify( expTypeToType(exp_type), int_type() );
             return {};
         }
 
@@ -246,7 +246,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
 
         if (L.lit.is_Char())
         {
-            set_expected_type(  exp_type, char_type() );
+            unify( expTypeToType(exp_type), char_type() );
             return {};
         }
         else if (auto i = L.lit.is_Integer())
@@ -263,7 +263,7 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
         }
         else if (L.lit.is_String())
         {
-            set_expected_type(exp_type, Hs::ListType(char_type()) );
+            unify(expTypeToType(exp_type), Hs::ListType(char_type()) );
             return {};
         }
         else if (auto d = L.lit.is_Double())
