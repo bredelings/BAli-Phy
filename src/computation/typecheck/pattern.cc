@@ -178,16 +178,23 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     {
         auto L = *l;
 
+        auto pat_type = expTypeToType(exp_type);
+
+        // This should be able to extract forall a.a->a from [forall a. a-> a]
+        Hs::Type element_type;
+        if (auto elem_type = is_list_type( pat_type ))
+            element_type = *elem_type;
+        else
+        {
+            element_type = fresh_meta_type_var( kind_star() );
+            unify( pat_type, Hs::ListType(element_type) );
+        }
+
         local_value_env lve;
-        // We need some way of getting the elemement type that is able to extract
-        // forall a.a->a from [forall a. a-> a]
-        Hs::Type element_type = fresh_meta_type_var( kind_star() );
         for(auto& element: L.elements)
             lve += checkPat(element, element_type, sigs);
 
         pat = L;
-
-        set_expected_type(  exp_type, Hs::ListType(element_type) );
 
         return lve;
     }
