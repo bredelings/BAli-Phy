@@ -671,6 +671,19 @@ const TypeSynonymInfo* typechecker_state::maybe_find_type_synonym(const Hs::Type
     return nullptr;
 }
 
+std::optional<Hs::Type> typechecker_state::is_type_synonym(const Hs::Type& type) const
+{
+    if (type.is_a<Hs::TypeCon>() or type.is_a<Hs::TypeApp>())
+    {
+        auto [head, args] = Hs::decompose_type_apps(type);
+
+        if (auto tsyn = maybe_find_type_synonym(head))
+            return tsyn->expand(args);
+    }
+
+    return {};
+}
+
 void typechecker_state::expand_type_synonyms(Hs::Type& type) const
 {
     if (type.is_a<Hs::TypeVar>())

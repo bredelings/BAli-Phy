@@ -199,6 +199,8 @@ struct typechecker_state: FreshVarSource
 
     const TypeSynonymInfo* maybe_find_type_synonym(const Hs::Type& type) const;
 
+    std::optional<Hs::Type> is_type_synonym(const Hs::Type& type) const;
+
     void expand_type_synonyms(Hs::Type& type) const;
 
     Hs::Type check_type(const Hs::Type&) const;
