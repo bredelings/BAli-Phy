@@ -40,59 +40,6 @@ void typechecker_state::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type
     current_wanteds() += state2.current_wanteds();
 }
 
-void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type)
-{
-    auto state2 = copy_clear_wanteds();
-
-    Hs::Type type;
-    if (exp_type.check())
-        type = exp_type.check_type();
-
-    vector<Hs::Type> pat_types;
-
-    for(int i=0; i< rule.patterns.size(); i++)
-    {
-        if (exp_type.infer())
-        {
-            auto [pat_type, lve1] = state2.inferPat(rule.patterns[i]);
-
-            state2.add_binders( lve1 );
-
-            pat_types.push_back(pat_type);
-        }
-        else
-        {
-            auto [arg_type, result_type] = unify_function(type);
-
-            auto lve1 = state2.checkPat(rule.patterns[i], arg_type);
-
-            state2.add_binders(lve1);
-
-            type = result_type;
-        }
-    }
-
-    // Here, 'type' is the rhs type.
-    if (exp_type.infer())
-    {
-        Expected exp_type2 = Infer();
-        state2.tcRho(rule.rhs, exp_type2);
-        type = exp_type2.read_type();
-    }
-    else
-        state2.tcRho(rule.rhs, Check(type));
-
-    current_wanteds() += state2.current_wanteds();
-
-    if (exp_type.infer())
-        exp_type.infer_type( function_type( pat_types, type ) );
-}
-
-void typechecker_state::tcRho(Hs::Matches& m, const Expected& exp_type)
-{
-    tcMatchesFun(m, exp_type);
-}
-
 void typechecker_state::tcMatch(Hs::MRule& m, const vector<Expected>& pat_types, const Expected& result_type)
 {
     assert(m.patterns.size() == pat_types.size());

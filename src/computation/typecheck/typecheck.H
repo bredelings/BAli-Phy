@@ -369,10 +369,6 @@ struct typechecker_state: FreshVarSource
 
     void tcRho(Hs::MultiGuardedRHS&, const Expected&);
 
-    void tcRho(Hs::MRule&, const Expected&);
-
-    void tcRho(Hs::Matches&, const Expected&);
-
     void tcMatch(Hs::MRule& m, const std::vector<Expected>& pat_types, const Expected& result_type);
 
     void tcMatches(Hs::Matches& m, const std::vector<Expected>& pat_types, const Expected& result_type);

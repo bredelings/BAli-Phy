@@ -332,10 +332,11 @@ typechecker_state::infer_rhs_type(expression_ref& decl)
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
-        auto rhs_type = inferRho(FD.matches);
+        Expected rhs_type = Infer();
+        tcMatchesFun(FD.matches, rhs_type);
 
         decl = FD;
-        return rhs_type;
+        return rhs_type.read_type();
     }
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
