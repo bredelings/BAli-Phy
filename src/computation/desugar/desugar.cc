@@ -99,6 +99,24 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
     return F;
 }
 
+vector<equation_info_t> desugar_state::desugar_matches(const Hs::Matches& matches)
+{
+    vector<equation_info_t> equations;
+
+    for(auto& rule: matches.rules)
+    {
+        auto rhs = desugar_rhs(rule.rhs);
+
+        auto patterns = rule.patterns;
+        for(auto& pattern: patterns)
+            pattern = desugar_pattern(pattern);
+
+        equations.push_back({ patterns, rhs});
+    }
+
+    return equations;
+}
+
 CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 {
     // Now we go through and translate groups of FunDecls.
@@ -130,19 +148,9 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
         {
             auto fvar = make_var(fd->v);
 
-            vector<equation_info_t> equations;
-
-            for(auto& rule: fd->matches.rules)
-            {
-                auto rhs = desugar_rhs(rule.rhs);
-
-                auto patterns = rule.patterns;
-                for(auto& pattern: patterns)
-                    pattern = desugar_pattern(pattern);
-
-                equations.push_back({ patterns, rhs});
-            }
+            auto equations = desugar_matches(fd->matches);
             auto otherwise = Core::error(fvar.name+": pattern match failure");
+
             decls.push_back( {fvar , def_function(equations, otherwise) } );
         }
         else if (auto gb = decl.to<Hs::GenBind>())
