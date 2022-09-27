@@ -326,24 +326,19 @@ typechecker_state::infer_lhs_type(expression_ref& decl, const map<string, Hs::Ty
         std::abort();
 }
 
-Hs::Type
-typechecker_state::infer_rhs_type(expression_ref& decl)
+void typechecker_state::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
-        Expected rhs_type = Infer();
         tcMatchesFun(FD.matches, rhs_type);
-
         decl = FD;
-        return rhs_type.read_type();
     }
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
-        auto rhs_type = inferRho(PD.rhs);
+        tcRho(PD.rhs, rhs_type);
         decl = PD;
-        return rhs_type;
     }
     else
         std::abort();
@@ -422,9 +417,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     for(int i=0;i<decls.size();i++)
     {
         try{
-            auto rhs_type = tcs2.infer_rhs_type(decls[i]);
-
-            tcs2.unify(lhs_types[i], rhs_type);
+            tcs2.infer_rhs_type(decls[i], Check(lhs_types[i]));
         }
         catch (myexception& e)
         {

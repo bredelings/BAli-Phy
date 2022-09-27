@@ -306,8 +306,7 @@ struct typechecker_state: FreshVarSource
     std::tuple<Hs::Type, local_value_env>
     infer_lhs_type(expression_ref& decl, const signature_env& sigs);
 
-    Hs::Type
-    infer_rhs_type(expression_ref& decl);
+    void infer_rhs_type(expression_ref& decl, const Expected& type);
 
     Core::wrapper checkSigma(Hs::Expression& e, const Hs::SigmaType& sigma_type);
 
