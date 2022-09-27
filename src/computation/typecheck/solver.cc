@@ -65,6 +65,8 @@ bool type_is_hnf(const Hs::Type& type)
 {
     auto [head,args] = Hs::decompose_type_apps(type);
 
+    head = follow_meta_type_var(head);
+
     if (head.is_a<Hs::TypeVar>())
         return true;
     else if (head.is_a<Hs::MetaTypeVar>())
