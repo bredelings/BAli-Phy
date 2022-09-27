@@ -200,17 +200,24 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     else if (auto t = pat.to<Hs::TuplePattern>())
     {
         auto T = *t;
-        vector<Hs::Type> types;
-        local_value_env lve;
-        for(auto& element: T.elements)
-        {
-            auto [t1, lve1] = inferPat(element, sigs);
-            types.push_back(t1);
-            lve += lve1;
-        }
-        pat = T;
 
-        set_expected_type( exp_type, Hs::TupleType(types) );
+        auto pat_type = expTypeToType(exp_type);
+
+        vector<Hs::Type> element_types;
+        if (auto elem_types = is_tuple_type( pat_type ))
+            element_types = *elem_types;
+        else
+        {
+            for(int i=0;i<T.elements.size();i++)
+                element_types.push_back( fresh_meta_type_var( kind_star() ) );
+            unify( pat_type, Hs::TupleType(element_types) );
+        }
+
+        local_value_env lve;
+        for(int i=0; i< T.elements.size(); i++)
+            lve += checkPat(T.elements[i], element_types[i], sigs);
+
+        pat = T;
 
         return lve;
     }
