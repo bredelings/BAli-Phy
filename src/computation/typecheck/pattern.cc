@@ -143,10 +143,8 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
     else if (auto ap = pat.to<Hs::AsPattern>())
     {
         auto Ap = *ap;
-
-        auto type = expTypeToType(exp_type);
-        auto lve1 = checkPat(Ap.pattern, type, sigs);
-        auto lve2 = checkPat(Ap.var, type, sigs);
+        auto lve1 = tcPat(Ap.pattern, exp_type, sigs);
+        auto lve2 = tcPat(Ap.var, exp_type, sigs);
         pat = Ap;
 
         return lve1 + lve2;
