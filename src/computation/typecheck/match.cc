@@ -90,33 +90,7 @@ void typechecker_state::tcRho(Hs::MRule& rule, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::Matches& m, const Expected& exp_type)
 {
-    // Idea: Change tcRho(MRule, exp_type) to take a list of
-    //       expected pattern types, and an expected rhs type.
-    //
-    //       Then we could pass Infer(NOTYPE) in for the patterns.
-    //       We would need to handle passing an Infer( ) object to tcPat( ) twice.
-    //       - if the variable has no signature, then use expTypeToType
-    //       - if the variable has a signature, and is empty then... just record it?
-    //         + but what if the variable has a signature and is NOT empty?
-    //         + see Gen/Pat.hs > tcPatBndr, which calls tc_sub_type
-
-    if (exp_type.infer())
-    {
-        Hs::Type result_type = fresh_meta_type_var( kind_star() );
-
-        for(auto& rule: m.rules)
-        {
-            auto t1 = inferRho(rule);
-            unify(result_type, t1);
-        }
-
-        exp_type.infer_type( result_type );
-    }
-    else
-    {
-        for(auto& rule: m.rules)
-            tcRho(rule, Check(exp_type.check_type()));
-    }
+    tcMatchesFun(m, exp_type);
 }
 
 void typechecker_state::tcMatch(Hs::MRule& m, const vector<Expected>& pat_types, const Expected& result_type)
