@@ -284,19 +284,6 @@ bool is_canonical(const Predicate& p)
         std::holds_alternative<CanonicalEqualityPred>(p.pred);
 }
 
-// This is guaranteed not to return a filled meta-typevar.
-Hs::Type follow_meta_type_var(Hs::Type t)
-{
-    while(auto uv = t.to<Hs::MetaTypeVar>())
-    {
-        if (uv->filled())
-            t = *uv->filled();
-        else
-            return t;
-    }
-    return t;
-}
-
 const Hs::MetaTypeVar* unfilled_meta_type_var(Hs::Type& t)
 {
     t = follow_meta_type_var(t);

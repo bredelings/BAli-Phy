@@ -109,8 +109,6 @@ namespace Haskell
 
     typedef expression_ref Kind;
 
-    std::string parenthesize_type(const Type& t);
-
 class MetaTypeVar
 {
     std::shared_ptr<Type> indirect;
@@ -285,6 +283,9 @@ Type make_arrow_type(const Type& t1, const Type& t2);
 
 Type make_equality_constraint(const Type& t1, const Type& t2);
 
+
+std::string parenthesize_type(Type t);
+
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
 
 std::optional<std::pair<Type,Type>> is_gen_function_type(const Type& t);
@@ -293,17 +294,19 @@ std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
 
 std::optional<std::pair<Type,Type>> is_equality_constraint(const Type& t);
 
-std::optional<Type> is_list_type(const Type& t);
+std::optional<Type> is_list_type(Type t);
 
-std::optional<std::vector<Type>> is_tuple_type(const Type& t);
+std::optional<std::vector<Type>> is_tuple_type(Type t);
+
+Type follow_meta_type_var(Type t);
 
 Type remove_top_gen(Type type);
 
 // no foralls
-bool is_tau_type(const Type& type);
+bool is_tau_type(Type type);
 
 // no foralls at top level
-bool is_rho_type(const Type& type);
+bool is_rho_type(Type type);
 
 typedef Type TauType;
 typedef Type RhoType;

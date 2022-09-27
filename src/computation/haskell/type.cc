@@ -109,8 +109,7 @@ Type function_type(const vector<Type>& arg_types, const Type& result_type)
 
 pair<Type,vector<Type>> decompose_type_apps(Type t)
 {
-    if (auto tt = filled_meta_type_var(t))
-        return decompose_type_apps(*tt);
+    t = follow_meta_type_var(t);
 
     if (auto L = t.to<ListType>())
         return {TypeCon({noloc,"[]"}), {L->element_type}};
@@ -133,15 +132,12 @@ pair<Type,vector<Type>> decompose_type_apps(Type t)
 }
 
 
-bool is_tau_type(const Type& type)
+bool is_tau_type(Type type)
 {
-    if (auto mtv = type.to<MetaTypeVar>())
-    {
-        if (auto t = mtv->filled())
-            return is_tau_type(*t);
-        else
-            return true;
-    }
+    type = follow_meta_type_var(type);
+
+    if (type.is_a<MetaTypeVar>())
+        return true;
     else if (type.is_a<TypeVar>())
         return true;
     else if (auto l = type.to<ListType>())
@@ -170,15 +166,12 @@ bool is_tau_type(const Type& type)
     throw myexception()<<"is_tau_type: I don't recognize type '"<<type<<"'";
 }
 
-bool is_rho_type(const Type& type)
+bool is_rho_type(Type type)
 {
-    if (auto mtv = type.to<MetaTypeVar>())
-    {
-        if (auto t = mtv->filled())
-            return is_rho_type(*t);
-        else
-            return true;
-    }
+    type = follow_meta_type_var(type);
+
+    if (type.is_a<MetaTypeVar>())
+        return true;
     else if (type.is_a<TypeVar>())
         return true;
     else if (type.is_a<ListType>())
@@ -230,10 +223,9 @@ optional<pair<Type,Type>> is_equality_constraint(const Type& t)
         return {};
 }
 
-optional<Type> is_list_type(const Type& t)
+optional<Type> is_list_type(Type t)
 {
-    if (auto tt = filled_meta_type_var(t))
-        return is_list_type(*tt);
+    t = follow_meta_type_var(t);
 
     if (auto l = t.to<Hs::ListType>())
         return l->element_type;
@@ -252,10 +244,9 @@ optional<Type> is_list_type(const Type& t)
 }
 
 
-optional<vector<Type>> is_tuple_type(const Type& t)
+optional<vector<Type>> is_tuple_type(Type t)
 {
-    if (auto tt = filled_meta_type_var(t))
-        return is_tuple_type(*tt);
+    t = follow_meta_type_var(t);
 
     if (auto tup = t.to<Hs::TupleType>())
         return tup->element_types;
@@ -278,8 +269,7 @@ optional<vector<Type>> is_tuple_type(const Type& t)
 
 Type remove_top_gen(Type type)
 {
-    if (auto tt = filled_meta_type_var(type))
-        type = *tt;
+    type = follow_meta_type_var(type);
 
     if (auto f = type.to<ForallType>())
         type = f->type;
@@ -290,10 +280,9 @@ Type remove_top_gen(Type type)
     return type;
 }
 
-string parenthesize_type(const Hs::Type& t)
+string parenthesize_type(Hs::Type t)
 {
-    if (auto t2 = filled_meta_type_var(t))
-        return parenthesize_type(*t2);
+    t = follow_meta_type_var(t);
 
     if (t.is_a<TypeCon>() or t.is_a<MetaTypeVar>() or t.is_a<TypeVar>() or is_tuple_type(t) or is_list_type(t))
         return t.print();
@@ -469,6 +458,19 @@ optional< std::tuple<TypeCon, Type, Type> > is_type_op(const Type& t)
         return {{*tc, args[0], args[1]}};
     else
         return {};
+}
+
+// This is guaranteed not to return a filled meta-typevar.
+Type follow_meta_type_var(Type t)
+{
+    while(auto uv = t.to<MetaTypeVar>())
+    {
+        if (uv->filled())
+            t = *uv->filled();
+        else
+            return t;
+    }
+    return t;
 }
 
 string TypeApp::print() const
