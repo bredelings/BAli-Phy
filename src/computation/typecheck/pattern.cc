@@ -251,18 +251,14 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
         }
         else if (auto i = L.lit.is_Integer())
         {
-            // 1. Typecheck fromInteger
             expression_ref fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
-            auto fromInteger_type = inferRho(fromInteger);
-
-            // 2. Determine result type
-            auto result_type = fresh_meta_type_var( kind_star() );
-            unify(fromInteger_type, Hs::make_arrow_type(int_type(), result_type));
+            auto [arg_type, result_type] = unify_function( inferRho(fromInteger) );
+            unify(arg_type, int_type());
+            unify(result_type, expTypeToType(exp_type));
 
             L.lit.literal = Hs::Integer(*i, fromInteger);
-
             pat = L;
-            set_expected_type( exp_type, result_type );
+
             return {};
         }
         else if (L.lit.is_String())
