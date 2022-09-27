@@ -57,11 +57,15 @@ struct Implication
     // We can append new bindings to this object.
     std::shared_ptr<Core::Decls> evidence_binds;
 
+    std::vector<Hs::TypeVar> tvs;
+
     LIE givens;
 
     WantedConstraints wanteds;
 
     //    std::string print() const;
+
+    Implication(const std::vector<Hs::TypeVar>& tvs, const LIE& g, const WantedConstraints& w);
 };
 
 #endif
