@@ -103,7 +103,7 @@ vector<equation_info_t> desugar_state::desugar_matches(const Hs::Matches& matche
 {
     vector<equation_info_t> equations;
 
-    for(auto& rule: matches.rules)
+    for(auto& rule: matches)
     {
         auto rhs = desugar_rhs(rule.rhs);
 
@@ -591,7 +591,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
         vector<expression_ref> patterns;
         vector<failable_expression> bodies;
-        for(const auto& [alt_patterns, alt_rhs]: C.alts.rules)
+        for(const auto& [alt_patterns, alt_rhs]: C.alts)
         {
             patterns.push_back( desugar_pattern( alt_patterns[0] ) );
             bodies.push_back( desugar_rhs( alt_rhs ) );

@@ -153,20 +153,20 @@ pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
 
                 auto& FD = decls[j].as_<Hs::FunDecl>();
 
-                assert(FD.matches.rules.size() == 1);
-                m.rules.push_back( FD.matches.rules[0] );
+                assert(FD.matches.size() == 1);
+                m.push_back( FD.matches[0] );
 
-                if (m.rules.back().patterns.size() != m.rules.front().patterns.size())
+                if (m.back().patterns.size() != m.front().patterns.size())
                     throw myexception()<<"Function '"<<*fvar<<"' has different numbers of arguments!";
             }
 
-            if (m.rules[0].patterns.empty() and m.rules.size() != 1)
+            if (m[0].patterns.empty() and m.size() != 1)
                 throw myexception()<<"Multiple definitions for variable "<<fvar->print()<<"!";
 
             decls2.push_back( Hs::FunDecl( *fvar, m ) );
 
             // skip the other bindings for this function
-            i += (m.rules.size()-1);
+            i += (m.size()-1);
         }
         else
             std::abort();

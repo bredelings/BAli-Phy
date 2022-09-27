@@ -42,9 +42,9 @@ Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var
     return R;
 }
 
-Hs::Matches renamer_state::rename(Hs::Matches match, const bound_var_info& bound, set<string>& free_vars)
+Hs::Matches renamer_state::rename(Hs::Matches matches, const bound_var_info& bound, set<string>& free_vars)
 {
-    for(auto& mrule: match.rules)
+    for(auto& mrule: matches)
     {
         bound_var_info binders;
 
@@ -63,6 +63,6 @@ Hs::Matches renamer_state::rename(Hs::Matches match, const bound_var_info& bound
         mrule.rhs = rename(mrule.rhs, bound, binders, free_vars);
     }
 
-    return match;
+    return matches;
 }
 

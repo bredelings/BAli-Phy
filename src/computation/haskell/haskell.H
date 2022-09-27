@@ -830,9 +830,9 @@ struct MRule
     MultiGuardedRHS rhs;
 };
 
-struct Matches
+struct Matches: public std::vector<MRule>
 {
-    std::vector<MRule> rules;
+    using std::vector<MRule>::vector;
 };
 
 struct LambdaExp: public Object

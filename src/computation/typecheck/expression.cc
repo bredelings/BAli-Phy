@@ -119,7 +119,7 @@ void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 {
-    tcRho(Lam.matches.rules[0], exp_type);
+    tcRho(Lam.matches[0], exp_type);
 }
 
 void typechecker_state::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)

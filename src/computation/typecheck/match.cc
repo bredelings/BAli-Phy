@@ -112,7 +112,7 @@ void typechecker_state::tcMatch(Hs::MRule& m, const vector<Expected>& pat_types,
 
 void typechecker_state::tcMatches(Hs::Matches& ms, const vector<Expected>& pat_types, const Expected& result_type)
 {
-    if (ms.rules.empty())
+    if (ms.empty())
     {
         for(auto& pat_type: pat_types)
             expTypeToType(pat_type);
@@ -122,7 +122,7 @@ void typechecker_state::tcMatches(Hs::Matches& ms, const vector<Expected>& pat_t
     }
     else
     {
-        for(auto& m: ms.rules)
+        for(auto& m: ms)
             tcMatch(m, pat_types, result_type);
 
         // record types on Match object?
@@ -220,17 +220,17 @@ Core::wrapper typechecker_state::tcMatchesFunCheck(Hs::Matches& m, vector<Expect
     std::abort();
 }
 
-Core::wrapper typechecker_state::tcMatchesFun(Hs::Matches& m, Expected fun_type)
+Core::wrapper typechecker_state::tcMatchesFun(Hs::Matches& matches, Expected fun_type)
 {
     vector<Expected> arg_types;
 
-    int arity = m.rules[0].patterns.size();
-    for(int i=0;i<m.rules.size();i++)
-        if (m.rules[i].patterns.size() != arity)
-            throw myexception()<<"Got "<<m.rules[i].patterns.size()<<" patterns but expected "<<arity<<":\n   "<<m.rules[i].print();
+    int arity = matches[0].patterns.size();
+    for(int i=0;i<matches.size();i++)
+        if (matches[i].patterns.size() != arity)
+            throw myexception()<<"Got "<<matches[i].patterns.size()<<" patterns but expected "<<arity<<":\n   "<<matches[i].print();
 
     if (fun_type.check())
-        return tcMatchesFunCheck(m, arg_types, arity, fun_type.read_type());
+        return tcMatchesFunCheck(matches, arg_types, arity, fun_type.read_type());
     else
-        return tcMatchesFunInfer(m, arg_types, arity, fun_type);
+        return tcMatchesFunInfer(matches, arg_types, arity, fun_type);
 }

@@ -292,7 +292,7 @@ bool is_restricted(const map<ID, Hs::Type>& signatures, const Hs::Decls& decls)
         else if (auto fd = decl.to<Hs::FunDecl>())
         {
             // Simple pattern declaration
-            if (fd->matches.rules[0].patterns.size() == 0)
+            if (fd->matches[0].patterns.size() == 0)
             {
                 auto& name = unloc(fd->v.name);
                 if (not signatures.count(name)) return true;

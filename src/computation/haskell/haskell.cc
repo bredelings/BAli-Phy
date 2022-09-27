@@ -386,7 +386,7 @@ string Alts::print() const
 string CaseExp::print() const
 {
     vector<string> alt_strings;
-    for(auto& alt: alts.rules)
+    for(auto& alt: alts)
         alt_strings.push_back(alt.patterns[0].print() + " -> " + alt.rhs.print_no_equals());
 
     return "case " + object.print() + " of {" + join(alt_strings, "\n;") + "}";
@@ -398,7 +398,7 @@ Matches matches_from_alts(const Alts& alts)
     for(auto& alt: alts)
     {
         auto& [pattern, body] = unloc(alt);
-        matches.rules.push_back(Hs::MRule{{pattern},body});
+        matches.push_back(Hs::MRule{{pattern},body});
     }
     return matches;
 }
@@ -583,16 +583,16 @@ MultiGuardedRHS SimpleRHS(const Located<expression_ref>& body, const optional<Lo
 string LambdaExp::print() const
 {
     string result = "\\";
-    for(auto& pat: matches.rules[0].patterns)
+    for(auto& pat: matches[0].patterns)
         result += parenthesize_pattern(pat) + " ";
     result += "-> ";
-    result += matches.rules[0].rhs.print_no_equals();
+    result += matches[0].rhs.print_no_equals();
     return result;
 }
 
 LambdaExp::LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b)
 {
-    matches.rules = {{ps,SimpleRHS({noloc,b})}};
+    matches = {{ps,SimpleRHS({noloc,b})}};
     assert(not ps.empty());
 }
 
@@ -734,7 +734,7 @@ string GenBind::print() const
 string FunDecl::print() const
 {
     vector<string> lines;
-    for(auto& rule: matches.rules)
+    for(auto& rule: matches)
         lines.push_back( v.print() + " " + rule.print());
 
     return join( lines, "\n" );
