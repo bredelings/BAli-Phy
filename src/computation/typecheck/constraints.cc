@@ -2,6 +2,22 @@
 
 using std::vector;
 
+vector<Hs::Type> constraints_from_lie(const LIE& lie)
+{
+    vector<Hs::Type> constraints;
+    for(auto& [_, constraint]: lie)
+        constraints.push_back(constraint);
+    return constraints;
+}
+
+vector<Core::Var> vars_from_lie(const LIE& lie)
+{
+    vector<Core::Var> vars;
+    for(auto& [var, constraint]: lie)
+        vars.push_back( var );
+    return vars;
+}
+
 WantedConstraints::WantedConstraints(const LIE& l)
     : simple(l)
 {

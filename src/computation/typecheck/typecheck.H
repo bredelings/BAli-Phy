@@ -473,18 +473,8 @@ std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_
 
 ID get_full_class_name_from_constraint(const Hs::Type& constraint);
 
-std::vector<Hs::Type> constraints_from_lie(const LIE& lie);
+bool constraint_is_hnf(const Hs::Type& constraint);
 
-std::vector<Core::Var> vars_from_lie(const LIE& lie);
-
-template <typename T>
-std::vector<T> vars_from_lie(const LIE& lie)
-{
-    std::vector<T> dvars;
-    for(auto& [dvar, _]: lie)
-        dvars.push_back(dvar);
-    return dvars;
-}
 #endif
 
-bool constraint_is_hnf(const Hs::Type& constraint);
+

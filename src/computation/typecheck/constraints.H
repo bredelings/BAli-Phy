@@ -68,4 +68,17 @@ struct Implication
     Implication(const std::vector<Hs::TypeVar>& tvs, const LIE& g, const WantedConstraints& w);
 };
 
+template <typename T>
+std::vector<T> vars_from_lie(const LIE& lie)
+{
+    std::vector<T> dvars;
+    for(auto& [dvar, _]: lie)
+        dvars.push_back(dvar);
+    return dvars;
+}
+
+std::vector<Hs::Type> constraints_from_lie(const LIE& lie);
+
+std::vector<Core::Var> vars_from_lie(const LIE& lie);
+
 #endif

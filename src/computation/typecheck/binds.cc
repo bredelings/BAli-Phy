@@ -164,22 +164,6 @@ bool single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signat
     return signatures.count(name) > 0;
 }
 
-vector<Hs::Type> constraints_from_lie(const LIE& lie)
-{
-    vector<Hs::Type> constraints;
-    for(auto& [_, constraint]: lie)
-        constraints.push_back(constraint);
-    return constraints;
-}
-
-vector<Core::Var> vars_from_lie(const LIE& lie)
-{
-    vector<Core::Var> vars;
-    for(auto& [var, constraint]: lie)
-        vars.push_back( var );
-    return vars;
-}
-
 expression_ref
 rename_from_bindinfo(expression_ref decl, const map<string, Hs::BindInfo>& bind_infos)
 {
