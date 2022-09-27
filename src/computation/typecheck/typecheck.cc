@@ -341,6 +341,12 @@ using std::tuple;
 // GVE = global value environment      = var -> polytype
 // LVE = local  value environment      = var -> monotype
 
+Infer::Infer()
+    : type_ref( std::make_shared<Hs::Type>() )
+{ }
+
+
+
 
 Hs::TypeVar unification_env::fresh_tyvar(const std::optional<Hs::Kind>& kind) const
 {
@@ -482,7 +488,7 @@ string Check::print() const
 
 string Infer::print() const
 {
-    return "Infer(" + type_.print() + ")";
+    return "Infer(" + type_ref->print() + ")";
 }
 
 string Expected::print() const
@@ -497,7 +503,7 @@ optional<Hs::Type> Expected::read_type_maybe() const
 {
     if (check())
         return check_type();
-    else if (infer())
+    else
         return inferred_type();
 }
 

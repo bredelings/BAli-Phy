@@ -74,25 +74,27 @@ struct Check
 
 class Infer
 {
-    Hs::Type type_;
+    std::shared_ptr<Hs::Type> type_ref;
 
 public:
     void set_type(const Hs::Type& t)
     {
-        assert(type_.empty());
-        type_ = t;
-        assert(not type_.empty());
+        assert(type_ref->empty());
+        *type_ref = t;
+        assert(not type_ref->empty());
     }
 
     std::optional<Hs::Type> type() const
     {
-        if (type_.empty())
+        if (type_ref->empty())
             return {};
         else
-            return type_;
+            return *type_ref;
     }
 
     std::string print() const;
+
+    Infer();
 };
 
 class Expected
