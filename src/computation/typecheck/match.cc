@@ -137,24 +137,29 @@ vector<Hs::Type> read_types(const vector<Expected>& exp_types)
     return types;
 }
 
-Core::wrapper typechecker_state::tcMatchesFunInfer(Hs::Matches& m, vector<Expected>& arg_types, int arity, const Expected& fun_type)
+Core::wrapper typechecker_state::tcMatchesFunInfer(Hs::Matches& m, vector<Expected>& arg_types, int arity, const Expected& extra_fun_type)
 {
+    vector<Expected> extra_arg_types;
     // pad out with FlexiTyVars ... what's that?
     while(arg_types.size() < arity)
-        arg_types.push_back( Infer() );
+    {
+        auto arg_type = Infer();
+        arg_types.push_back( arg_type );
+        extra_arg_types.push_back( arg_type );
+    }
     Expected result_type = Infer();
 
     tcMatches(m, arg_types, result_type);
 
-    auto unif_fun_type = Hs::function_type( read_types(arg_types), result_type.read_type());
+    auto unif_fun_type = Hs::function_type( read_types(extra_arg_types), result_type.read_type());
 
-    if (fun_type.infer() and not fun_type.inferred_type())
+    if (extra_fun_type.infer() and not extra_fun_type.inferred_type())
     {
-        fun_type.infer_type(unif_fun_type);
+        extra_fun_type.infer_type(unif_fun_type);
         return Core::wrapper_id;
     }
     else
-        return subsumptionCheck(unif_fun_type, fun_type.read_type());
+        return subsumptionCheck(unif_fun_type, extra_fun_type.read_type());
 }
 
 Core::wrapper typechecker_state::tcMatchesFunCheck(Hs::Matches& m, vector<Expected>& arg_types, int arity, Hs::Type type)
