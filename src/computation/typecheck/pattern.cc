@@ -268,18 +268,14 @@ typechecker_state::tcPat(Hs::Pattern& pat, const Expected& exp_type, const map<s
         }
         else if (auto d = L.lit.is_Double())
         {
-            // 1. Typecheck fromRational
             expression_ref fromRational = Hs::Var({noloc,"Compiler.Real.fromRational"});
-            auto fromRational_type = inferRho(fromRational);
-
-            // 2. Determine result type
-            auto result_type = fresh_meta_type_var( kind_star() );
-            unify(fromRational_type, Hs::make_arrow_type(double_type(), result_type));
+            auto [arg_type, result_type] = unify_function( inferRho(fromRational) );
+            unify(arg_type, double_type());
+            unify(result_type, expTypeToType(exp_type));
 
             L.lit.literal = Hs::Double(*d, fromRational);
             pat = L;
 
-            set_expected_type( exp_type, result_type );
             return {};
         }
         else
