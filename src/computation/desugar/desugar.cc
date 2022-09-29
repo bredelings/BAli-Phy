@@ -245,6 +245,7 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
 
 expression_ref desugar_state::desugar_pattern(const expression_ref & E)
 {
+    // FIXME - maybe we should keep these elements to use in desugar-case?
     if (E.is_a<Hs::ListPattern>())
     {
         auto L = E.as_<Hs::ListPattern>();
@@ -291,9 +292,8 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
     }
     else if (auto tpat = E.to<Hs::TypedPattern>())
     {
-        auto TPat = *tpat;
-        TPat.pat = desugar_pattern(TPat.pat);
-        return TPat;
+        // FIXME - what do we do with the wrapper?
+        return desugar_pattern(tpat->pat);
     }
     else if (E.is_log_double())
         std::abort();
