@@ -7,11 +7,35 @@ import Bio.Alphabet
 import Data.Matrix
 import Tree
 import SModel.EigenExp
+import SModel.LikelihoodMixtureModel
 
 foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
 foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
 foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matrix Double -> Matrix Double
+
+-- This takes the rate matrix q and adds:
+-- * a -> an alphabet
+-- * smap -> mapping from markov states -> alphabet states
+-- * pi -> a cached version of the equilibrium frequencies
+-- * t -> a scaling factor
+-- * r -> a cached version of the rate at equilibrium
+
+-- Now, all of these except (a,smap) are just caches for things that we can compute from q.
+-- It is the (a,smap) parts that make this into a SUBSTITUTION model.
+
+-- What the LIKELIHOOD wants is just:
+-- * component probabilities
+--   - number of components = component_probabilities.size()
+-- * mapping from states -> observed letters
+--   - number of states = smap(m).size()
+-- * for each branch, the probability of transitioning from i->j in component m.
+--   That is, transition_p(tree, branch, mixture) = matrix(i,j)
+-- * for each component, the root frequencies -> root_frequencies(m)
+-- I guess this is a "LikelihoodMixtureModel"
+-- Ideally, it would also specify if it is reversible
+--   that is, all transition_p matricies in component m satisfy detailed balance with respect to the root frequences in component m
+--
 
 data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) (Matrix Double) (EVector Double) Double Double
 
@@ -91,3 +115,13 @@ instance RateModel ReversibleMarkov where
 instance Show ReversibleMarkov where
     show q = show $ get_q q
 
+instance BranchLengthTree t => LikelihoodMixtureModel (ReversibleMarkov,t) where
+    alphabet (m,_) = getAlphabet m
+    numObservedStates m = length $ letters $ alphabet m
+    componentProbabilities (m,_) = [1.0]
+    numComponents _ = 1
+    stateToObservedState ((ReversibleMarkov _ smap _ _ _ _),_) (MixtureIndex 0) = smap
+    numStates m component = vector_size $ stateToObservedState m component
+    transitionProbabilities (smodel,tree) (MixtureIndex 0) b = qExp $ scale (branch_length tree b/r) smodel where r = rate smodel
+    rootFrequencies (m,_) (MixtureIndex 0) = get_pi m
+    isReversible m = True
