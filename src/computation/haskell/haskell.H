@@ -828,6 +828,7 @@ struct MRule
 
     std::vector<Pattern> patterns;
     MultiGuardedRHS rhs;
+    MRule(const std::vector<Pattern>& ps, const MultiGuardedRHS& r);
 };
 
 struct Matches: public std::vector<MRule>
@@ -837,7 +838,7 @@ struct Matches: public std::vector<MRule>
 
 struct LambdaExp: public Object
 {
-    Matches matches;
+    MRule match;
 
     LambdaExp* clone() const {return new LambdaExp(*this);}
     std::string print() const;

@@ -583,17 +583,17 @@ MultiGuardedRHS SimpleRHS(const Located<expression_ref>& body, const optional<Lo
 string LambdaExp::print() const
 {
     string result = "\\";
-    for(auto& pat: matches[0].patterns)
+    for(auto& pat: match.patterns)
         result += parenthesize_pattern(pat) + " ";
     result += "-> ";
-    result += matches[0].rhs.print_no_equals();
+    result += match.rhs.print_no_equals();
     return result;
 }
 
 LambdaExp::LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b)
+    :match(ps, SimpleRHS({noloc,b}))
 {
-    matches = {{ps,SimpleRHS({noloc,b})}};
-    assert(not ps.empty());
+    assert(not match.patterns.empty());
 }
 
 std::string parenthesize_exp(const Expression& E)
@@ -714,6 +714,12 @@ string MRule::print() const
 
     return join( ss, " ");
 }
+
+MRule::MRule(const std::vector<Pattern>& ps, const MultiGuardedRHS& r)
+    :patterns(ps), rhs(r)
+{
+}
+
 
 string GenBind::print() const
 {

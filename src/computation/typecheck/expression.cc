@@ -119,8 +119,8 @@ void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 {
-    tcMatchesFun( getArity(Lam.matches), exp_type, [&](const std::vector<Expected>& arg_types, const Expected& result_type){
-        return [&](typechecker_state& tc) { tc.tcMatches(Lam.matches, arg_types, result_type); }; }
+    tcMatchesFun( getArity(Lam.match), exp_type, [&](const std::vector<Expected>& arg_types, const Expected& result_type){
+        return [&](typechecker_state& tc) { tc.tcMatch(Lam.match, arg_types, result_type); }; }
         );
 }
 
