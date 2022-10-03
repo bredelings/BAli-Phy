@@ -1,6 +1,7 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 #include "types.H"
+#include "match.H" // for tcMatchesFun
 
 #include "rename/rename.H" // for get_indices_for_names( )
 

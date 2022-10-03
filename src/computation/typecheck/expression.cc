@@ -1,5 +1,6 @@
 #include "typecheck.H"
 #include "kindcheck.H"
+#include "match.H" // for tcMatchesFun
 
 using std::string;
 using std::vector;
