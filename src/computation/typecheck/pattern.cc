@@ -150,7 +150,6 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
 
         assert(field_types.size() == Con.args.size());
         Con.givens = givens;
-        Con.dict_args = vars_from_lie( dictionary_constraints( givens ) );
 
         auto tc2 = copy_clear_wanteds();
         tc2.tcPats(penv, Con.args, arg_types, sigs, a);

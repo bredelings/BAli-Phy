@@ -269,7 +269,7 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
     {
         auto C = constructor(unloc(c->head.name), *c->head.arity);
         vector<expression_ref> args;
-        for(auto& darg: c->dict_args)
+        for(auto& darg: c->dict_args())
             args.push_back(darg);
         for(auto& pat: c->args)
             args.push_back(desugar_pattern(pat));

@@ -72,14 +72,12 @@ struct ConPattern: public Object
     Con head;
     std::vector<Pattern> args;
 
-    // Extra stuff for typechecking and elaboration
-    std::vector<Core::Var> dict_args;
     std::vector<std::pair<Core::Var, Type>> givens;
 
+    std::vector<Core::Var> dict_args() const;
     ConPattern* clone() const { return new ConPattern(*this);}
     std::string print() const;
     ConPattern(const Con& h, const std::vector<Pattern>& as):head(h),args(as) {}
-    ConPattern(const Con& h, const std::vector<Core::Var>& das, const std::vector<Pattern>& as):head(h), args(as), dict_args(das) {}
 };
 
 struct TypedPattern: public Object
