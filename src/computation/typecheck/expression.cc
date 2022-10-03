@@ -119,7 +119,9 @@ void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 {
-    tcMatchesFun(Lam.matches, exp_type);
+    tcMatchesFun( getArity(Lam.matches), exp_type, [&](const std::vector<Expected>& arg_types, const Expected& result_type){
+        return [&](typechecker_state& tc) { tc.tcMatches(Lam.matches, arg_types, result_type); }; }
+        );
 }
 
 void typechecker_state::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
@@ -478,3 +480,4 @@ void typechecker_state::tcRho(expression_ref& E, const Expected& exp_type)
     else
         throw myexception()<<"type check expression: I don't recognize expression '"<<E<<"'";
 }
+

@@ -84,105 +84,16 @@ vector<Hs::Type> read_types(const vector<Expected>& exp_types)
     return types;
 }
 
-Core::wrapper typechecker_state::tcMatchesFunInfer(Hs::Matches& m, vector<Expected>& arg_types, int arity, const Expected& extra_fun_type)
+int getArity(const Hs::Matches& matches)
 {
-    vector<Expected> extra_arg_types;
-    // pad out with FlexiTyVars ... what's that?
-    while(arg_types.size() < arity)
-    {
-        auto arg_type = Infer();
-        arg_types.push_back( arg_type );
-        extra_arg_types.push_back( arg_type );
-    }
-    Expected result_type = Infer();
-
-    tcMatches(m, arg_types, result_type);
-
-    auto unif_fun_type = Hs::function_type( read_types(extra_arg_types), result_type.read_type());
-
-    if (extra_fun_type.infer() and not extra_fun_type.inferred_type())
-    {
-        extra_fun_type.infer_type(unif_fun_type);
-        return Core::wrapper_id;
-    }
-    else
-        return subsumptionCheck(unif_fun_type, extra_fun_type.read_type());
-}
-
-Core::wrapper typechecker_state::tcMatchesFunCheck(Hs::Matches& m, vector<Expected>& arg_types, int arity, Hs::Type type)
-{
-    // There should also be a wrapper for skolemize -- gen_wrapper.
-    // It will handle cases like forall a. C1 => forall b. C2 => E.
-    // Until we add type arguments, it should be Core::wrapper_id though.
-
-    if (auto [tvs, givens, rho_type] = skolemize(type,true); not tvs.empty() or not givens.empty())  // type has any foralls or a context.  // skolemize
-    {
-        assert(not tvs.size());
-        assert(not givens.size());
-
-        // push level here -- mark all variables untouchable
-        // we don't have levels yet, so record all variables in the untouchable set.
-
-        auto tc2 = copy_clear_wanteds();
-        auto match_wrapper = tc2.tcMatchesFunCheck(m, arg_types, arity, type);
-
-        current_wanteds().implications.push_back( std::make_shared<Implication>(tvs, givens, tc2.current_wanteds()) );
-
-        return match_wrapper;
-    }
-    else if (arg_types.size() == arity)
-    {
-        // If we got here, then the Check type had enough arguments.
-        // We don't need to construct a result type, we just need to check things.
-        tcMatches(m, arg_types, Check(type));
-        return Core::wrapper_id;
-    }
-    // look through type synonyms
-    else if (auto type2 = is_type_synonym(type))
-    {
-        return tcMatchesFunCheck(m, arg_types, arity, *type2);
-    }
-    // get the next argument type
-    else if (auto ftype = Hs::is_function_type(type))
-    {
-        auto [arg_type, result_type] = *ftype;
-        arg_types.push_back(Check(arg_type));
-        return tcMatchesFunCheck(m, arg_types, arity, result_type);
-    }
-    // look through filled MetaTypeVars
-    else if (auto mtv = type.to<Hs::MetaTypeVar>())
-    {
-        if (mtv->filled())
-            return tcMatchesFunCheck(m, arg_types, arity, *mtv->filled());
-        else
-        {
-            // We don't know the remaining argument types.
-            return tcMatchesFunInfer(m, arg_types, arity, Check(type));
-        }
-    }
-    // 
-    else
-    {
-        // This is different from the case above, because we know that the number
-        // of arguments doesn't match the arity.  Which is not NECESSARILY wrong.
-
-        return tcMatchesFunInfer(m, arg_types, arity, Check(type));
-    }
-
-    std::abort();
-}
-
-Core::wrapper typechecker_state::tcMatchesFun(Hs::Matches& matches, Expected fun_type)
-{
-    vector<Expected> arg_types;
-
-    int arity = matches[0].patterns.size();
+    int arity = getArity(matches[0]);
     for(int i=0;i<matches.size();i++)
         if (matches[i].patterns.size() != arity)
             throw myexception()<<"Got "<<matches[i].patterns.size()<<" patterns but expected "<<arity<<":\n   "<<matches[i].print();
+    return arity;
+}
 
-    if (fun_type.check())
-        return tcMatchesFunCheck(matches, arg_types, arity, fun_type.read_type());
-    else
-        return tcMatchesFunInfer(matches, arg_types, arity, fun_type);
+int getArity(const Hs::MRule& m)
+{
+    return m.patterns.size();
 }
