@@ -313,14 +313,16 @@ typechecker_state::infer_lhs_type(expression_ref& decl, const map<string, Hs::Ty
         // If there was a signature, we would have called infer_type_for_single_fundecl_with_sig
         assert(not signatures.count(unloc(FD.v.name)));
 
-        auto [type, lve] = inferPat(FD.v);
+        local_value_env lve;
+        auto type = inferPat(lve, FD.v);
         decl = FD;
         return {type, lve};
     }
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
-        auto [type, lve] = inferPat( unloc(PD.lhs), signatures);
+        local_value_env lve;
+        auto type = inferPat( lve, unloc(PD.lhs), signatures);
         decl = PD;
         return {type, lve};
     }

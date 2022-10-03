@@ -48,7 +48,8 @@ void typechecker_state::tcMatch(Hs::MRule& m, const vector<Expected>& pat_types,
 
     for(int i=0; i<m.patterns.size(); i++)
     {
-        auto pat_binders = state2.tcPat(m.patterns[i], pat_types[i]);
+        local_value_env pat_binders;
+        state2.tcPat(pat_binders, m.patterns[i], pat_types[i]);
         state2.add_binders( pat_binders );
     }
 

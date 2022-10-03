@@ -214,23 +214,19 @@ struct typechecker_state: FreshVarSource
     void infer_guard_type(Hs::Qual& guard);
 
     // Figure 24.
-    std::tuple<Hs::Type, local_value_env>
-    inferPat(Hs::Pattern& pat, const signature_env& sigs = {});
+    Hs::Type inferPat(local_value_env& penv, Hs::Pattern& pat, const signature_env& sigs = {});
 
     // takes and returns sigma types
-    global_value_env tcPat(Hs::Pattern& pat, const Expected&, const signature_env& sigs = {});
+    void tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&, const signature_env& sigs = {});
 
     // takes and returns sigma types
-    global_value_env checkPat(Hs::Pattern& pat, const Hs::SigmaType&, const signature_env& sigs = {});
+    void checkPat(local_value_env& penv, Hs::Pattern& pat, const Hs::SigmaType&, const signature_env& sigs = {});
 
-    std::tuple<Hs::Type, local_value_env>
-    inferPat(Hs::Var& v, const signature_env& sigs = {});
+    Hs::Type inferPat(local_value_env& penv, Hs::Var& v, const signature_env& sigs = {});
 
-    global_value_env
-    tcPat(Hs::Var& v, const Expected&, const signature_env& sigs = {});
+    void tcPat(local_value_env& penv, Hs::Var& v, const Expected&, const signature_env& sigs = {});
 
-    global_value_env
-    checkPat(Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs);
+    void checkPat(local_value_env& penv, Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs);
 
     Core::wrapper instPatSigma(const Hs::SigmaType& sigma_type, const Expected& exp_sigma_type);
 

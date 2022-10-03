@@ -43,7 +43,8 @@ typechecker_state::infer_qual_type(Hs::Qual& qual)
         auto PQ = *pq;
         // pat <- exp
         auto exp_type = inferRho(PQ.exp);
-        auto [pat_type, lve] = inferPat(PQ.bindpat);
+        local_value_env lve;
+        auto pat_type= inferPat(lve, PQ.bindpat);
 
         // type(pat) = type(exp)
         unify(Hs::ListType(pat_type), exp_type);
@@ -79,7 +80,8 @@ typechecker_state::infer_guard_type(Hs::Qual& guard)
 
         // pat <- body
         auto body_type = inferRho(PQ.exp);
-        auto lve = checkPat(PQ.bindpat, body_type);
+        local_value_env lve;
+        checkPat(lve, PQ.bindpat, body_type);
         guard = PQ;
 
         add_binders(lve);
@@ -139,7 +141,8 @@ void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expecte
         checkRho(PQ.exp, exp_type);
 
         // 3. Check pat
-        auto pat_binders = checkPat(PQ.bindpat, pat_type);
+        local_value_env pat_binders;
+        checkPat(pat_binders, PQ.bindpat, pat_type);
 
         // 4. Check stmts
         auto state2 = copy_clear_wanteds();
