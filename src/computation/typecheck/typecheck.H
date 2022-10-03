@@ -15,6 +15,7 @@
 #include "computation/haskell/haskell.H"
 #include "computation/typecheck/solver.H"
 #include "types.H"
+#include "expected.H"
 
 // The kind-inference paper treats substitutions as a list of terms of the form
 // * a     (declaration)
@@ -62,76 +63,6 @@ struct global_tc_state
 
     global_tc_state(const Module& m);
 };
-
-struct Check
-{
-    Hs::Type type;
-
-    std::string print() const;
-
-    Check(const Hs::Type& t):type(t) {}
-};
-
-class Infer
-{
-    std::shared_ptr<Hs::Type> type_ref;
-
-public:
-    void set_type(const Hs::Type& t)
-    {
-        assert(type_ref->empty());
-        *type_ref = t;
-        assert(not type_ref->empty());
-    }
-
-    std::optional<Hs::Type> type() const
-    {
-        if (type_ref->empty())
-            return {};
-        else
-            return *type_ref;
-    }
-
-    std::string print() const;
-
-    Infer();
-};
-
-class Expected
-{
-    mutable std::variant<Infer, Check> value;
-public:
-    bool check() const {return std::holds_alternative<Check>(value);}
-    bool infer() const {return std::holds_alternative<Infer>(value);}
-
-    Hs::Type check_type() const
-    {
-        assert(check());
-        return std::get<Check>(value).type;
-    }
-
-    std::optional<Hs::Type> inferred_type() const
-    {
-        assert(infer());
-        return std::get<Infer>(value).type();
-    }
-
-    void infer_type(const Hs::Type& t)  const
-    {
-        assert(infer());
-        std::get<Infer>(value).set_type(t);
-    }
-
-    std::optional<Hs::Type> read_type_maybe() const;
-
-    Hs::Type read_type() const;
-
-    std::string print() const;
-
-    Expected(const Check& c):value(c) {}
-    Expected(const Infer& i):value(i) {}
-};
-
 
 std::string print(const LIE& lie);
 
@@ -486,8 +417,6 @@ std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_
 ID get_full_class_name_from_constraint(const Hs::Type& constraint);
 
 bool constraint_is_hnf(const Hs::Type& constraint);
-
-std::vector<Hs::Type> read_types(const std::vector<Expected>& exp_types);
 
 template <typename A>
 Core::wrapper typechecker_state::tcMatchesFunInfer(std::vector<Expected>& arg_types, int arity, const Expected& extra_fun_type, const A& a)

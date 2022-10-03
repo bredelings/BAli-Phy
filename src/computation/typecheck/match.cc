@@ -76,14 +76,6 @@ void typechecker_state::tcMatches(Hs::Matches& ms, const vector<Expected>& pat_t
     }
 }
 
-vector<Hs::Type> read_types(const vector<Expected>& exp_types)
-{
-    vector<Hs::Type> types;
-    for(auto& exp_type: exp_types)
-        types.push_back( exp_type.read_type() );
-    return types;
-}
-
 int getArity(const Hs::Matches& matches)
 {
     int arity = getArity(matches[0]);
