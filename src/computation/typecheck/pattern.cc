@@ -152,11 +152,19 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
         Con.givens = givens;
         Con.dict_args = vars_from_lie( dictionary_constraints( givens ) );
 
-        tcPats(penv, Con.args, arg_types, sigs, a);
-
-        pat = Con;
+        auto tc2 = copy_clear_wanteds();
+        tc2.tcPats(penv, Con.args, arg_types, sigs, a);
+        if (givens.empty())
+            current_wanteds() += tc2.current_wanteds();
+        else
+        {
+            vector<Hs::TypeVar> tvs;
+            current_wanteds().implications.push_back( std::make_shared<Implication>(tvs, givens, tc2.current_wanteds()) );
+        }
 
         unify( expTypeToType(exp_type), type );
+
+        pat = Con;
     }
     // AS-PAT
     else if (auto ap = pat.to<Hs::AsPattern>())
