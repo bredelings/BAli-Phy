@@ -79,5 +79,6 @@ public:
 
 
 std::vector<Hs::Type> read_types(const std::vector<Expected>& exp_types);
+std::vector<Expected> check_types(const std::vector<Hs::Type>& types);
 
 #endif

@@ -55,3 +55,11 @@ vector<Hs::Type> read_types(const vector<Expected>& exp_types)
     return types;
 }
 
+vector<Expected> check_types(const vector<Hs::Type>& types)
+{
+    vector<Expected> exp_types;
+    for(auto& type: types)
+        exp_types.push_back( Check(type) );
+    return exp_types;
+}
+
