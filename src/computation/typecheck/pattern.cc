@@ -50,7 +50,7 @@ Core::wrapper typechecker_state::instPatSigma(const Hs::SigmaType& pat_type, con
 //                                      return (wrapper, {x :: sigma1})
 //
 
-void typechecker_state::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_type, const signature_env& sigs)
+void typechecker_state::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_type, const signature_env& sigs, const tc_action<local_value_env&>& a)
 {
     auto& name = unloc(V.name);
     Hs::Type type;
@@ -85,30 +85,52 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Var& V, const Expected&
     local_value_env lve;
     lve = lve.insert({name,type});
     penv += lve;
+
+    a(penv, *this);
 }
 
 void typechecker_state::checkPat(local_value_env& penv, Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs)
 {
-    return tcPat(penv, v, Check(exp_type), sigs);
+    return tcPat(penv, v, Check(exp_type), sigs, [](local_value_env&, typechecker_state&){});
 }
-
 
 Hs::Type typechecker_state::inferPat(local_value_env& penv, Hs::Var& V, const map<string, Hs::Type>& sigs)
 {
     Expected exp_type = Infer();
-    tcPat(penv, V, exp_type, sigs);
+    tcPat(penv, V, exp_type, sigs, [](local_value_env&, typechecker_state&){});
     return exp_type.read_type();
 }
 
+void typechecker_state::tcPats(local_value_env& penv,
+                               vector<Hs::Pattern>& pats, const vector<Expected>& pat_types,
+                               const signature_env& sigs,
+                               const std::function<void(local_value_env&,typechecker_state&)>& a,
+                               int i)
+{
+
+    if (i < pats.size())
+    {
+        tcPat(penv, pats[i], pat_types[i], sigs, [&,i=i+1](local_value_env& penv, typechecker_state& tc){
+            auto tc2 = tc.copy_clear_wanteds();
+            tc2.add_binders(penv);
+            tc2.tcPats(penv, pats, pat_types, sigs, a, i);
+            tc.current_wanteds() += tc2.current_wanteds();
+        });
+    }
+    else
+    {
+        a(penv, *this);
+    }
+}
+
 // Figure 24. Rules for patterns
-void
-typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected& exp_type, const map<string, Hs::Type>& sigs)
+void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected& exp_type, const map<string, Hs::Type>& sigs, const tc_action<local_value_env&>& a)
 {
     // TAUT-PAT
     if (auto v = pat.to<Hs::VarPattern>())
     {
         auto V = *v;
-        tcPat(penv, V.var, exp_type, sigs);
+        tcPat(penv, V.var, exp_type, sigs, a);
         pat = V;
     }
     // CONSTR-PAT
@@ -122,12 +144,16 @@ typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected
         // maybe also get type tvs, constructor tvs
         auto [givens, field_types, type] = constructor_pattern_types(Con.head);
 
+        vector<Expected> arg_types;
+        for(auto& field_type: field_types)
+            arg_types.push_back(Check(field_type));
+
         assert(field_types.size() == Con.args.size());
         Con.givens = givens;
         Con.dict_args = vars_from_lie( dictionary_constraints( givens ) );
 
-        for(int i=0; i < field_types.size(); i++)
-            checkPat(penv, Con.args[i], field_types[i]);
+        tcPats(penv, Con.args, arg_types, sigs, a);
+
         pat = Con;
 
         unify( expTypeToType(exp_type), type );
@@ -136,28 +162,30 @@ typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected
     else if (auto ap = pat.to<Hs::AsPattern>())
     {
         auto Ap = *ap;
-        tcPat(penv, Ap.pattern, exp_type, sigs);
-        tcPat(penv, Ap.var, exp_type, sigs);
+        tcPat(penv, Ap.var, exp_type, sigs, [&](local_value_env& penv, typechecker_state& tc) {
+            tc.tcPat(penv, Ap.pattern, exp_type, sigs, a);});
         pat = Ap;
     }
     // LAZY-PAT
     else if (auto lp = pat.to<Hs::LazyPattern>())
     {
         auto Lp = *lp;
-        tcPat(penv, Lp.pattern, exp_type, sigs);
+        tcPat(penv, Lp.pattern, exp_type, sigs, a);
         pat = Lp;
     }
     // not in paper (STRICT-PAT)
     else if (auto sp = pat.to<Hs::StrictPattern>())
     {
         auto Sp = *sp;
-        tcPat(penv, Sp.pattern, exp_type, sigs);
+        tcPat(penv, Sp.pattern, exp_type, sigs, a);
         pat = Sp;
     }
     // WILD-PAT
     else if (pat.is_a<Hs::WildcardPattern>())
     {
         expTypeToType(exp_type);
+
+        a(penv, *this);
     }
     // LIST-PAT
     else if (auto l = pat.to<Hs::ListPattern>())
@@ -176,8 +204,7 @@ typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected
             unify( pat_type, Hs::ListType(element_type) );
         }
 
-        for(auto& element: L.elements)
-            checkPat(penv, element, element_type, sigs);
+        tcPats(penv, L.elements, vector<Expected>(L.elements.size(), Check(element_type)), sigs, a);
 
         pat = L;
     }
@@ -198,8 +225,7 @@ typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected
             unify( pat_type, Hs::TupleType(element_types) );
         }
 
-        for(int i=0; i< T.elements.size(); i++)
-            checkPat(penv, T.elements[i], element_types[i], sigs);
+        tcPats(penv, T.elements, check_types(element_types), sigs, a);
 
         pat = T;
     }
@@ -208,7 +234,7 @@ typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected
     {
         auto TP = *tp;
         TP.type = check_type(TP.type);
-        checkPat(penv, TP.pat, TP.type);
+        tcPat(penv, TP.pat, Check(TP.type), sigs, a);
         TP.wrap = instPatSigma(TP.type, exp_type);
     }
     else if (auto l = pat.to<Hs::LiteralPattern>())
@@ -218,6 +244,7 @@ typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected
         if (L.lit.is_BoxedInteger())
         {
             unify( expTypeToType(exp_type), int_type() );
+            a(penv, *this);
             return;
         }
 
@@ -228,6 +255,7 @@ typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected
         if (L.lit.is_Char())
         {
             unify( expTypeToType(exp_type), char_type() );
+            a(penv, *this);
             return;
         }
         else if (auto i = L.lit.is_Integer())
@@ -240,6 +268,7 @@ typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected
             L.lit.literal = Hs::Integer(*i, fromInteger);
             pat = L;
 
+            a(penv, *this);
             return;
         }
         else if (L.lit.is_String())
@@ -257,6 +286,7 @@ typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected
             L.lit.literal = Hs::Double(*d, fromRational);
             pat = L;
 
+            a(penv, *this);
             return;
         }
         else
@@ -269,14 +299,13 @@ typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected
 Hs::Type typechecker_state::inferPat(local_value_env& penv, Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
 {
     Expected exp_type = Infer();
-    tcPat(penv, pat, exp_type, sigs);
+    tcPat(penv, pat, exp_type, sigs, [](local_value_env&, typechecker_state&) {});
     return exp_type.read_type();
 }
 
-
-void typechecker_state::checkPat(local_value_env& penv, Hs::Pattern& pat, const Hs::SigmaType& exp_type, const map<string, Hs::Type>& sigs)
+void typechecker_state::checkPat(local_value_env& penv, Hs::Pattern& pat, const Hs::SigmaType& exp_type, const signature_env& sigs)
 {
-    return tcPat(penv, pat, Check(exp_type), sigs);
+    tcPat(penv, pat, Check(exp_type), sigs, [](local_value_env&, typechecker_state&) {});
 }
 
 

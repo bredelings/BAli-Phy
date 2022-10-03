@@ -66,6 +66,11 @@ struct global_tc_state
 
 std::string print(const LIE& lie);
 
+struct typechecker_state;
+
+template <typename T>
+using tc_action = std::function<void(T,typechecker_state&)>;
+
 struct typechecker_state: FreshVarSource
 {
     //------- global state ------------//
@@ -216,15 +221,17 @@ struct typechecker_state: FreshVarSource
     // Figure 24.
     Hs::Type inferPat(local_value_env& penv, Hs::Pattern& pat, const signature_env& sigs = {});
 
+    void tcPats(local_value_env& penv, std::vector<Hs::Pattern>& pat, const std::vector<Expected>&, const signature_env& sigs, const tc_action<local_value_env&>& a, int i=0);
+
     // takes and returns sigma types
-    void tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&, const signature_env& sigs = {});
+    void tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&, const signature_env& sigs, const tc_action<local_value_env&>& a);
 
     // takes and returns sigma types
     void checkPat(local_value_env& penv, Hs::Pattern& pat, const Hs::SigmaType&, const signature_env& sigs = {});
 
     Hs::Type inferPat(local_value_env& penv, Hs::Var& v, const signature_env& sigs = {});
 
-    void tcPat(local_value_env& penv, Hs::Var& v, const Expected&, const signature_env& sigs = {});
+    void tcPat(local_value_env& penv, Hs::Var& v, const Expected&, const signature_env& sigs, const tc_action<local_value_env&>&);
 
     void checkPat(local_value_env& penv, Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs);
 
