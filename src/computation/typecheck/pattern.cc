@@ -9,9 +9,11 @@ using std::set;
 using std::pair;
 using std::optional;
 
-tuple<LIE, vector<Hs::Type>, Hs::Type> typechecker_state::constructor_pattern_types(const Hs::Con& con)
+tuple<vector<Hs::TypeVar>, vector<Hs::TypeVar>, LIE, vector<Hs::Type>, Hs::Type> typechecker_state::constructor_pattern_types(const Hs::Con& con)
 {
-    auto [_, predicates, con_type] = instantiate( constructor_type(con) );
+    // Should we be instantiating here?
+    auto full_con_type = constructor_type(con);
+    auto [mtvs, predicates, con_type] = instantiate( full_con_type );
 
     vector<Hs::Type> field_types;
 
@@ -23,7 +25,10 @@ tuple<LIE, vector<Hs::Type>, Hs::Type> typechecker_state::constructor_pattern_ty
     }
     auto result_type = con_type;
 
-    return {predicates, field_types, result_type};
+    vector<Hs::TypeVar> u_tvs;
+    vector<Hs::TypeVar> ex_tvs;
+
+    return {u_tvs, ex_tvs, predicates, field_types, result_type};
 }
 
 // Ensure that we can convert exp_type to pat_type, and get a wrapper proving it.
