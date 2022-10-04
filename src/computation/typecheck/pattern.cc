@@ -147,7 +147,7 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
         auto Con = *con;
 
         // maybe also get type tvs, constructor tvs
-        auto [givens, field_types, type] = constructor_pattern_types(Con.head);
+        auto [universal_tvs, existential_tvs, givens, field_types, type] = constructor_pattern_types(Con.head);
 
         vector<Expected> arg_types;
         for(auto& field_type: field_types)
