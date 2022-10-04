@@ -65,7 +65,7 @@ struct Implication
 
     //    std::string print() const;
 
-    Implication(const std::vector<Hs::TypeVar>& tvs, const LIE& g, const WantedConstraints& w);
+    Implication(const std::vector<Hs::TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb);
 };
 
 template <typename T>

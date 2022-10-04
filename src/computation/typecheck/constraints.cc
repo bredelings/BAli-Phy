@@ -38,7 +38,7 @@ WantedConstraints WantedConstraints::operator+(const WantedConstraints& wc2) con
     return tmp;
 }
 
-Implication::Implication(const vector<Hs::TypeVar>& v, const LIE& g, const WantedConstraints& w)
-    :tvs(v), givens(g), wanteds(w)
+Implication::Implication(const vector<Hs::TypeVar>& v, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb)
+    :evidence_binds(eb), tvs(v), givens(g), wanteds(w)
 {
 }

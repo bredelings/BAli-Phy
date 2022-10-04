@@ -155,15 +155,18 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
 
         assert(field_types.size() == Con.args.size());
         Con.givens = givens;
+        Con.existential_tyvars = existential_tvs;
 
         auto tc2 = copy_clear_wanteds();
+        // tcs2.set_untouchables( )
         tc2.tcPats(penv, Con.args, arg_types, sigs, a);
-        if (givens.empty())
+
+        if (Con.givens.empty() and Con.existential_tyvars.empty())
             current_wanteds() += tc2.current_wanteds();
         else
         {
-            vector<Hs::TypeVar> tvs;
-            current_wanteds().implications.push_back( std::make_shared<Implication>(tvs, givens, tc2.current_wanteds()) );
+            Con.ev_binds = std::make_shared<Core::Decls>();
+            current_wanteds().implications.push_back( std::make_shared<Implication>(Con.existential_tyvars, Con.givens, tc2.current_wanteds(), Con.ev_binds) );
         }
 
         unify( expTypeToType(exp_type), type );
