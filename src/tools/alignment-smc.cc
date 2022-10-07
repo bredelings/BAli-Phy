@@ -124,6 +124,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
         ("mask-gaps,G",value<int>(),"Remove columns within <arg> columns of a gap")
         ("strip-gaps,S","Remove columns within <arg> columns of a gap")
+        ("gap-fraction",value<double>()->default_value(0.01),"Fraction of sequences that need to have a gap")
         ("mask-file,M",value<vector<string>>()->composing(),"Apply mask-file")
         ("autoclean,A","Mask blocks with too many SNPs")
 
@@ -1526,7 +1527,9 @@ int main(int argc,char* argv[])
             int gap_label = 1;
             if (args.count("strip-gaps"))
                 gap_label = 2;
-            auto gaps = gap_columns(A,gap_label);
+            double gap_fraction = args["gap-fraction"].as<double>();
+
+            auto gaps = gap_columns(A, gap_label, gap_fraction);
 
             // 2. label nearby columns with '1' to mask them
             int mask_gap_dist = args["mask-gaps"].as<int>();

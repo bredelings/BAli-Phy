@@ -205,6 +205,8 @@ boost::dynamic_bitset<> gap_columns(const alignment& A);
 
 std::vector<int> gap_columns(const alignment& A, int label);
 
+std::vector<int> gap_columns(const alignment& A, int label, double fraction);
+
 boost::dynamic_bitset<> variant_columns(const alignment& A);
 
 boost::dynamic_bitset<> variant_column_at_distance(const alignment& A,int d);

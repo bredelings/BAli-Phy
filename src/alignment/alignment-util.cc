@@ -1281,6 +1281,21 @@ bool is_column_with_gap(const alignment& A, int c)
     return false;
 }
 
+bool is_column_with_gap_fraction(const alignment& A, int c, double fraction)
+{
+    int n_gaps = 0;
+    int n_letters = 0;
+    for(int i=0;i<A.n_sequences();i++)
+    {
+	if (A.gap(c,i))
+            n_gaps++;
+        else if(A(c,i) >= 0)
+            n_letters++;
+    }
+
+    return (double(n_gaps)/(n_gaps+n_letters) >= fraction);
+}
+
 int count_variant_columns(const alignment& A, int c1, int c2)
 {
     int count = 0;
@@ -1373,9 +1388,10 @@ dynamic_bitset<> gap_columns(const alignment& A)
     return find_columns(A, is_column_with_gap);
 }
 
-vector<int> gap_columns(const alignment& A, int label)
+vector<int> gap_columns(const alignment& A, int label, double fraction)
 {
-    return find_columns(A, is_column_with_gap, label);
+    auto is_gap_column = [&](const alignment& a, int c) {return is_column_with_gap_fraction(a, c, fraction);};
+    return find_columns(A, is_gap_column, label);
 }
 
 dynamic_bitset<> variant_columns(const alignment& A)
