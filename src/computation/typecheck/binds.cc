@@ -498,6 +498,9 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     bool restricted = is_restricted(signatures, decls) and not is_top_level;
     // TODO: complain here if restricted variable have signatures with constraints?
 
+    // FIXME! We also need to minimize constraints like (Eq a, Ord a) down to (Ord a).
+    // See mkMinimayBySCs -- am I already doing this inside entails( ) / solve( )?
+
     // 3. Try and solve the wanteds.  (See simplifyInfer)
     //
     //    This also substitutes into the current LIE, which we need to do 
