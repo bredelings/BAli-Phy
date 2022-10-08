@@ -124,7 +124,7 @@ typechecker_state::infer_type_for_decls(const signature_env& signatures, const H
     for(auto& group: bind_groups)
     {
         try {
-            auto group_decls = infer_type_for_decls_groups(signatures, group, is_top_level);
+            auto group_decls = infer_type_for_decls_group(signatures, group, is_top_level);
 
             for(auto& decl: group_decls)
                 decls2.push_back(decl);
@@ -375,33 +375,17 @@ pair<set<Hs::MetaTypeVar>, set<Hs::MetaTypeVar>> tvs_in_any_all_types(const loca
 
 
 
-Hs::Decls
-typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
+tuple< map<string, Hs::Var>, local_value_env > typechecker_state::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& decls)
 {
-    if (single_fundecl_with_sig(decls, signatures))
-    {
-        auto& FD = decls[0].as_<Hs::FunDecl>();
-
-        auto [decl, name, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
-
-        Hs::Decls decls({decl});
-
-        return decls;
-    }
-
-// How & when do we complain if there are predicates on signatures with the monomorphism restriction?
-
     // 1. Add each let-binder to the environment with a fresh type variable
     local_value_env mono_binder_env;
 
     std::map<std::string, Hs::Var> mono_ids;
 
-    auto tcs2 = copy_clear_wanteds();
-
     vector<Hs::Type> lhs_types;
     for(int i=0;i<decls.size();i++)
     {
-        auto [type, lve] = tcs2.infer_lhs_type( decls[i], signatures );
+        auto [type, lve] = infer_lhs_type( decls[i], signatures );
 
         lhs_types.push_back(type);
         mono_binder_env += lve;
@@ -414,8 +398,8 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
         if (not signatures.count(name))
         {
-            tcs2.mono_local_env = tcs2.mono_local_env.erase(name);
-            tcs2.mono_local_env = tcs2.mono_local_env.insert({name,{mono_id, type}});
+            mono_local_env = mono_local_env.erase(name);
+            mono_local_env = mono_local_env.insert({name,{mono_id, type}});
         }
     }
 
@@ -423,7 +407,7 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
     for(int i=0;i<decls.size();i++)
     {
         try{
-            tcs2.infer_rhs_type(decls[i], Check(lhs_types[i]));
+            infer_rhs_type(decls[i], Check(lhs_types[i]));
         }
         catch (myexception& e)
         {
@@ -447,7 +431,32 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
             throw;
         }
     }
+
+    return {mono_ids, mono_binder_env};
+}
+
+Hs::Decls
+typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
+{
+    if (single_fundecl_with_sig(decls, signatures))
+    {
+        auto& FD = decls[0].as_<Hs::FunDecl>();
+
+        auto [decl, name, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
+
+        Hs::Decls decls({decl});
+
+        return decls;
+    }
+
+    // 1. Add each let-binder to the environment with a fresh type variable
+
+    auto tcs2 = copy_clear_wanteds();
+    auto [mono_ids, mono_binder_env] = tcs2.tc_decls_group_mono(signatures, decls);
     auto wanteds = tcs2.current_wanteds();
+
+    // 1.5 Check if there are predicates on signatures with the monomorphism restriction..
+    bool restricted = is_restricted(signatures, decls) and not is_top_level;
 
     // A. First, REDUCE the lie by
     //    (i)  converting to Hnf
@@ -489,7 +498,6 @@ typechecker_state::infer_type_for_decls_groups(const map<string, Hs::Type>& sign
 
     map<string, Hs::BindInfo> bind_infos;
 
-    bool restricted = is_restricted(signatures, decls) and not is_top_level;
     if (restricted)
     {
         // 1. This removes defaulted constraints from the LIE.  (not_completely_ambiguous = retained but not defaulted)
