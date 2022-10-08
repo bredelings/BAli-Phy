@@ -435,6 +435,46 @@ tuple< map<string, Hs::Var>, local_value_env > typechecker_state::tc_decls_group
     return {mono_ids, mono_binder_env};
 }
 
+bool type_is_hnf(const Hs::Type& type)
+{
+    auto [head,args] = Hs::decompose_type_apps(type);
+
+    head = follow_meta_type_var(head);
+
+    if (head.is_a<Hs::TypeVar>())
+        return true;
+    else if (head.is_a<Hs::MetaTypeVar>())
+        return true;
+    else if (head.is_a<Hs::TypeCon>())
+        return false;
+    else if (head.is_a<Hs::ListType>())
+        return false;
+    else if (head.is_a<Hs::TupleType>())
+        return false;
+    else
+        std::abort();
+}
+
+// OK:     K a, K (a b), K (a [b]), etc. OK
+// NOT OK: K [a], K (a,b), etc. NOT OK.
+// Question: for multiparameter type classes, how about i.e. `K Int a`?
+bool constraint_is_hnf(const Hs::Type& constraint)
+{
+    auto [class_con, args] = Hs::decompose_type_apps(constraint);
+    for(auto& arg: args)
+        if (not type_is_hnf(arg))
+            return false;
+    return true;
+}
+
+
+void check_HNF(const LIE& wanteds)
+{
+    for(auto& [_,constraint]: wanteds)
+        if (not constraint_is_hnf(constraint))
+            throw myexception()<<"No instance for '"<<constraint<<"'";
+}
+
 Hs::Decls
 typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
 {
@@ -449,26 +489,22 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         return decls;
     }
 
-    // 1. Add each let-binder to the environment with a fresh type variable
-
+    // 1. Type check the decls group with monomorphic types for vars w/o signatures.
     auto tcs2 = copy_clear_wanteds();
     auto [mono_ids, mono_binder_env] = tcs2.tc_decls_group_mono(signatures, decls);
     auto wanteds = tcs2.current_wanteds();
 
-    // 1.5 Check if there are predicates on signatures with the monomorphism restriction..
+    // 2. Check if there are predicates on signatures with the monomorphism restriction..
     bool restricted = is_restricted(signatures, decls) and not is_top_level;
+    // TODO: complain here if restricted variable have signatures with constraints?
 
-    // A. First, REDUCE the lie by
-    //    (i)  converting to Hnf
-    //     -- when do we do this?  Always?
-    //    (ii) representing some constraints in terms of others.
-    // This also substitutes into the current LIE, which we need to do 
-    //    before finding free type vars in the LIE below.
-    auto [solve_decls, residual_wanteds] = entails({},  wanteds );
+    // 3. Try and solve the wanteds.  (See simplifyInfer)
+    //
+    //    This also substitutes into the current LIE, which we need to do 
+    //       before finding free type vars in the LIE below.
+    auto [solve_decls, collected_lie] = entails({},  wanteds );
 
-    auto [reduce_decls, collected_lie] = toHnfs( residual_wanteds );
-
-    // B. Second, extract the "retained" predicates can be added without causing ambiguity.
+    // 4. Second, extract the "retained" predicates can be added without causing ambiguity.
     auto fixed_tvs = free_meta_type_variables( gve);
     for(auto& [name, tmp]: mono_local_env)
     {
@@ -477,8 +513,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     }
     auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
 
-
-    // C. Handle ambiguity -- default fully ambiguous type variables.
+    // 5. Handle ambiguity -- default fully ambiguous type variables.
 
     /* NOTE: Constraints can reference variables that are in
      *        (i) ALL types in a recursive group
@@ -493,7 +528,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     //   after generating definitions of their dictionaries.
     auto [tvs_in_any_type, tvs_in_all_types] = tvs_in_any_all_types(mono_binder_env);
     auto [default_decls, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
-    auto ev_decls = default_decls + solve_decls + reduce_decls;
+    auto ev_decls = default_decls + solve_decls;
     lie_retained = lie_not_completely_ambiguous;
 
     map<string, Hs::BindInfo> bind_infos;
@@ -510,7 +545,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
 
     current_wanteds() += lie_deferred;
 
-    // 10. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
+    // 6. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
 
     // meta type vars to quantify over
     set<Hs::MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
@@ -523,14 +558,15 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         qtvs.insert(qtv);
         qmtv.fill(qtv);
     }
-    
+
     // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group,
     // but we do need the defaults to define individual symbols.
 
-    // 1. Quantify over variables in ANY type that are not fixed -- doesn't depend on defaulting.
+    // 7. Quantify over variables in ANY type that are not fixed -- doesn't depend on defaulting.
     // Never quantify over variables that are only in a LIE -- those must be defaulted.
 
-    // 2. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
+    // 8. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
+    check_HNF( lie_retained );
 
     vector< Core::Var > dict_vars = vars_from_lie( lie_retained );
 

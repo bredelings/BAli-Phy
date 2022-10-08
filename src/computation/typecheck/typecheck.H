@@ -398,9 +398,6 @@ struct typechecker_state: FreshVarSource
     bool more_specific_than(const Hs::Type&, const Hs::Type&);
     std::optional<std::pair<Core::Exp,LIE>> lookup_instance(const Hs::Type& constraint);
 
-    std::pair<Core::Decls, LIE> toHnf(const Core::Var& name, const Hs::Type& constraint);
-    std::pair<Core::Decls, LIE> toHnfs(const LIE& lie_in);
-
     void get_defaults(const Hs::ModuleDecls& M);
 
     typechecker_state(FreshVarState& fvs, const std::string& s, const Module& m);
