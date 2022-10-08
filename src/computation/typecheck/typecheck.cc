@@ -978,6 +978,20 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
     return w;
 }
 
+// The idea is that we need an e2, but we have a t1.
+// So, if we can make an e2 from the t1, then we are good.
+// The wrapper is evidence that we can, and also converts a value of type t1 to a value of type e2.
+Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Expected& e2)
+{
+    if (auto t2 = e2.read_type_maybe())
+        return subsumptionCheck(t1, *t2);
+    else
+    {
+        e2.infer_type(t1);
+        return Core::wrapper_id;
+    }
+}
+
 Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2)
 {
     /*
