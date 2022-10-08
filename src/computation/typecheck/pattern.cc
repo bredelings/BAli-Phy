@@ -149,17 +149,13 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
         // maybe also get type tvs, constructor tvs
         auto [universal_tvs, existential_tvs, givens, field_types, type] = constructor_pattern_types(Con.head);
 
-        vector<Expected> arg_types;
-        for(auto& field_type: field_types)
-            arg_types.push_back(Check(field_type));
-
         assert(field_types.size() == Con.args.size());
         Con.givens = givens;
         Con.existential_tyvars = existential_tvs;
 
         auto tc2 = copy_clear_wanteds();
         // tcs2.set_untouchables( )
-        tc2.tcPats(penv, Con.args, arg_types, sigs, a);
+        tc2.tcPats(penv, Con.args, check_types(field_types), sigs, a);
 
         if (Con.givens.empty() and Con.existential_tyvars.empty())
             current_wanteds() += tc2.current_wanteds();
