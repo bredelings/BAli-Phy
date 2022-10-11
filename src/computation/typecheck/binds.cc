@@ -204,26 +204,19 @@ Hs::GenBind mkGenBind(const vector<Hs::TypeVar>& tvs,
 // Why aren't we using `fixed_type_vars`?
 // I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
 pair<LIE, LIE>
-classify_constraints(const LIE& lie,
-                     const set<Hs::MetaTypeVar>& fixed_type_vars)
+classify_constraints(bool restricted, const LIE& lie, const set<Hs::MetaTypeVar>& qtvs)
 {
+    if (restricted) return {lie, {}};
+
     LIE lie_deferred;
     LIE lie_retained;
 
     for(auto& [dvar, constraint]: lie)
     {
-        auto constraint_type_vars = free_meta_type_variables(constraint);
-
-        // Does the constraint contain any ambiguous vars?
-        bool all_fixed = true;
-        for(auto& type_var: constraint_type_vars)
-            if (not fixed_type_vars.count(type_var))
-                all_fixed = false;
-
-        if (all_fixed)
-            lie_deferred.push_back({dvar,constraint});
-        else
+        if (intersects( free_meta_type_variables(constraint), qtvs ))
             lie_retained.push_back({dvar,constraint});
+        else
+            lie_deferred.push_back({dvar,constraint});
     }
     return {lie_deferred, lie_retained};
 }
@@ -464,6 +457,19 @@ void check_HNF(const LIE& wanteds)
             throw myexception()<<"No instance for '"<<constraint<<"'";
 }
 
+
+/* NOTE: Constraints can reference variables that are in
+ *        (i) ALL types in a recursive group
+ *       (ii) SOME-BUT-NOT-ALL types
+ *      (iii) NO types.
+ *
+ * For unrestricted bindings, classes (ii) and (iii) need defaults.
+ * For restricted bindings, only class (iii) (I think) needs defaults.
+ */
+
+// For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
+//   after generating definitions of their dictionaries.
+
 Hs::Decls
 typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
 {
@@ -494,7 +500,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     //
     //    This also substitutes into the current LIE, which we need to do 
     //       before finding free type vars in the LIE below.
-    auto [solve_decls, collected_lie] = tcs2.entails({},  wanteds );
+    auto [ev_decls, collected_lie] = tcs2.entails({},  wanteds );
 
     // 4. Second, extract the "retained" predicates can be added without causing ambiguity.
     auto fixed_tvs = free_meta_type_variables( gve);
@@ -527,42 +533,13 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     auto tvs_to_promote = tvs_in_any_type;
     add( tvs_to_promote, free_meta_type_variables(collected_lie) );
 
-    // This defers constraints where ALL mtvs are fixed.
-    auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
-
     // 5. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
 
-    // meta type vars to quantify over
+    // 6. meta type vars to quantify over
     set<Hs::MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
 
-    // 6. Handle ambiguity -- default fully ambiguous type variables.
-
-    /* NOTE: Constraints can reference variables that are in
-     *        (i) ALL types in a recursive group
-     *       (ii) SOME-BUT-NOT-ALL types
-     *      (iii) NO types.
-     *
-     * For unrestricted bindings, classes (ii) and (iii) need defaults.
-     * For restricted bindings, only class (iii) (I think) needs defaults.
-     */
-
-    // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
-    //   after generating definitions of their dictionaries.
-
-    auto [default_decls, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
-    auto ev_decls = default_decls + solve_decls;
-    lie_retained = lie_not_completely_ambiguous;
-
-    map<string, Hs::BindInfo> bind_infos;
-
-    if (restricted)
-    {
-        // 1. This removes defaulted constraints from the LIE.  (not_completely_ambiguous = retained but not defaulted)
-        lie_deferred += lie_retained;
-
-        lie_retained = {};
-    }
-
+    // 7. Defer constraints w/o any vars to quantify over
+    auto [lie_deferred, lie_retained] = classify_constraints( restricted, collected_lie, qmtvs );
     current_wanteds() += lie_deferred;
 
     // non-meta type vars to replace them with
@@ -598,6 +575,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
 
     vector< Core::Var > dict_vars = vars_from_lie( lie_retained );
 
+    map<string, Hs::BindInfo> bind_infos;
     global_value_env poly_binder_env;
     for(auto& [name, monotype]: mono_binder_env)
     {
