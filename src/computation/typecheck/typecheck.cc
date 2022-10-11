@@ -344,9 +344,9 @@ using std::tuple;
 
 Hs::TypeVar unification_env::fresh_tyvar(const std::optional<Hs::Kind>& kind) const
 {
-    Hs::TypeVar ftv({noloc,"utv"+std::to_string(next_index)});
+    int level = 0;
+    Hs::TypeVar ftv(level, {noloc,"utv"+std::to_string(next_index)});
     ftv.index = next_index++;
-    ftv.info = Hs::typevar_info::rigid;
     ftv.kind = kind;
     return ftv;
 }
@@ -357,17 +357,17 @@ bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, con
     // Translate rigid type variables
     if (auto tv1 = t1.to<Hs::TypeVar>(); tv1 and env.mapping1.count(*tv1))
     {
-        assert(tv1->info == Hs::typevar_info::other);
+        assert(not tv1->is_skolem_constant());
         auto tv1_remapped = env.mapping1.at(*tv1);
-        assert(tv1_remapped.info == Hs::typevar_info::rigid);
+        assert(tv1_remapped.is_skolem_constant());
         assert(not env.mapping1.count(tv1_remapped));
         return maybe_unify_(allow_unification, both_ways, env, tv1_remapped, t2);
     }
     else if (auto tv2 = t2.to<Hs::TypeVar>(); tv2 and env.mapping2.count(*tv2))
     {
-        assert(tv2->info == Hs::typevar_info::other);
+        assert(not tv2->is_skolem_constant());
         auto tv2_remapped = env.mapping2.at(*tv2);
-        assert(tv2_remapped.info == Hs::typevar_info::rigid);
+        assert(tv2_remapped.is_skolem_constant());
         assert(not env.mapping2.count(tv2_remapped));
         return maybe_unify_(allow_unification, both_ways, env, t1, tv2_remapped);
     }
@@ -610,6 +610,26 @@ ID get_class_name_from_constraint(const Hs::Type& constraint)
         return "Constraint";
 }
 
+Hs::MetaTypeVar typechecker_state::fresh_meta_type_var(const std::string& name, const Hs::Kind& k)
+{
+    return FreshVarSource::fresh_meta_type_var(level, name, k);
+}
+
+Hs::MetaTypeVar typechecker_state::fresh_meta_type_var(const Hs::Kind& k)
+{
+    return FreshVarSource::fresh_meta_type_var(level, k);
+}
+
+Hs::TypeVar typechecker_state::fresh_rigid_type_var(const std::string& name, const Hs::Kind& k)
+{
+    return FreshVarSource::fresh_rigid_type_var(level, name, k);
+}
+
+Hs::TypeVar typechecker_state::fresh_rigid_type_var(const Hs::Kind& k)
+{
+    return FreshVarSource::fresh_rigid_type_var(level, k);
+}
+
 // Wait, actually don't we assume that the value decls are divided into self-referencing binding groups, along with explicit signatures?
 // We would also need: infix declarations, default declarations, ???
 // I guess this is AFTER rename, so declarations have been un-infixed, and we could (theoretically) represent each function as something like [([pat],grhs)]
@@ -713,6 +733,14 @@ typechecker_state typechecker_state::copy_clear_wanteds() const
 {
     auto tc2 = *this;
     tc2.current_wanteds() = {};
+    return tc2;
+}
+
+typechecker_state typechecker_state::copy_inc_level_clear_wanteds() const
+{
+    auto tc2 = *this;
+    tc2.current_wanteds() = {};
+    tc2.level++;
     return tc2;
 }
 

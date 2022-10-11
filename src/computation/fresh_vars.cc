@@ -80,29 +80,28 @@ Hs::Var FreshVarSource::get_fresh_Var(const var& x, bool qualified)
 // "Wobbly" type vars come from existentially-quantified variables (I think).  We don't have any.
 // "Meta" type vars are unification type vars.
 
-Hs::MetaTypeVar FreshVarSource::fresh_meta_type_var(const string& name, const Hs::Kind& k)
+Hs::MetaTypeVar FreshVarSource::fresh_meta_type_var(int level, const string& name, const Hs::Kind& k)
 {
-    Hs::MetaTypeVar tv({noloc, name+std::to_string( get_index() )});
+    Hs::MetaTypeVar tv(level, {noloc, name+std::to_string( get_index() )});
     tv.kind = k;
     return tv;
 }
 
-Hs::MetaTypeVar FreshVarSource::fresh_meta_type_var(const Hs::Kind& k)
+Hs::MetaTypeVar FreshVarSource::fresh_meta_type_var(int level, const Hs::Kind& k)
 {
-    return fresh_meta_type_var("t", k);
+    return fresh_meta_type_var(level, "t", k);
 }
 
-Hs::TypeVar FreshVarSource::fresh_rigid_type_var(const string& name, const Hs::Kind& k)
+Hs::TypeVar FreshVarSource::fresh_rigid_type_var(int level, const string& name, const Hs::Kind& k)
 {
-    Hs::TypeVar tv({noloc, name+std::to_string( get_index() )});
+    Hs::TypeVar tv(level, {noloc, name+std::to_string( get_index() )});
     tv.kind = k;
-    tv.info = Hs::typevar_info::rigid;
     return tv;
 }
 
-Hs::TypeVar FreshVarSource::fresh_rigid_type_var(const Hs::Kind& k)
+Hs::TypeVar FreshVarSource::fresh_rigid_type_var(int level, const Hs::Kind& k)
 {
-    return fresh_rigid_type_var("t", k);
+    return fresh_rigid_type_var(level, "t", k);
 }
 
 Hs::TypeVar FreshVarSource::fresh_other_type_var(const string& name, const Hs::Kind& k)

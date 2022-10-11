@@ -111,9 +111,11 @@ namespace Haskell
 
 class MetaTypeVar
 {
-    std::shared_ptr<Type> indirect;
+    int level_;
 
+    std::shared_ptr<Type> indirect;
 public:
+
     Located<std::string> name;
     std::optional<int> index;
 
@@ -129,28 +131,33 @@ public:
     std::string print() const;
     std::string print_with_kind() const;
 
-    MetaTypeVar();
-    MetaTypeVar(const Located<std::string>& s);
-    MetaTypeVar(const Located<std::string>& s, const Kind& k);
+    int level() const;
+
+    MetaTypeVar(int level);
+    MetaTypeVar(int level, const Located<std::string>& s);
+    MetaTypeVar(int level, const Located<std::string>& s, const Kind& k);
 };
 
 std::optional<Type> filled_meta_type_var(const Type& t);
+
+std::optional<int> unfilled_meta_type_var(const Type& t);
 
 inline std::ostream& operator<<(std::ostream& o,const Type& t)
 {
     return o<<t.print();
 }
 
-enum class typevar_info {other, rigid};
-
-struct TypeVar
+class TypeVar
 {
+    std::optional<int> level_;
+
+public:
     Located<std::string> name;
     std::optional<int> index;
 
     std::optional<Kind> kind;
 
-    typevar_info info = typevar_info::other;
+    bool is_skolem_constant() const;
 
     bool operator==(const TypeVar&) const;
     bool operator<(const TypeVar&) const;
@@ -158,12 +165,17 @@ struct TypeVar
     std::string print() const;
     std::string print_with_kind() const;
 
-    TypeVar() = default;
-    TypeVar(const Located<std::string>& s):name(s) {}
-    TypeVar(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
+    int level() const;
+
+    TypeVar();
+    TypeVar(int l);
+    TypeVar(const Located<std::string>& s);
+    TypeVar(int l, const Located<std::string>& s);
+    TypeVar(const Located<std::string>& s, const Kind& k);
+    TypeVar(int l, const Located<std::string>& s, const Kind& k);
 };
 
-    
+
 struct TypeCon
 {
     Located<std::string> name;
@@ -307,6 +319,9 @@ bool is_tau_type(Type type);
 
 // no foralls at top level
 bool is_rho_type(Type type);
+
+int max_level(Type t);
+int max_level(const std::vector<Type>& t);
 
 typedef Type TauType;
 typedef Type RhoType;

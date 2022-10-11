@@ -201,6 +201,20 @@ const Hs::MetaTypeVar* unfilled_meta_type_var(Hs::Type& t)
     return t.to<Hs::MetaTypeVar>();
 }
 
+bool cmp_less(const Hs::MetaTypeVar& uv1, const Hs::MetaTypeVar& uv2)
+{
+    assert(not uv1.filled());
+    assert(not uv2.filled());
+
+    if (uv1.level() > uv2.level())
+        return true;
+    if (uv1.level() < uv2.level())
+        return false;
+
+    return (uv1 < uv2);
+}
+
+
 std::optional<Reaction> canonicalize_equality(const Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
 {
     auto uv1 = unfilled_meta_type_var(t1);
@@ -215,7 +229,7 @@ std::optional<Reaction> canonicalize_equality(const Core::Var& co_var, Constrain
 
     if (uv1 and uv2)
     {
-        if (*uv2 < *uv1)
+        if (cmp_less(*uv2,*uv1))
             return canonicalize_equality(co_var, flavor, t2, t1);
         else
         {
@@ -563,9 +577,11 @@ std::optional<Reaction> typechecker_state::top_react(const Predicate& P)
     return {};
 }
 
-bool is_touchable(const Hs::MetaTypeVar&)
+bool typechecker_state::is_touchable(const Hs::MetaTypeVar& mtv)
 {
-    return true;
+    assert(mtv.filled() or mtv.level() <= level);
+
+    return not mtv.filled() and mtv.level() == level;
 }
 
 

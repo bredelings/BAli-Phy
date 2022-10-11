@@ -24,6 +24,14 @@ std::optional<Type> filled_meta_type_var(const Type& t)
         return {};
 }
 
+std::optional<int> unfilled_meta_type_var(const Type& t)
+{
+    if (auto mtv = t.to<MetaTypeVar>(); mtv and not mtv->filled())
+        return mtv->level();
+    else
+        return {};
+}
+
 bool Type::operator==(const Type& t) const
 {
     if (auto i1 = filled_meta_type_var(*this))
@@ -58,6 +66,41 @@ bool Type::operator==(const Type& t) const
     std::abort();
 }
 
+
+int max_level(const vector<Type>& ts)
+{
+    int l = 0;
+    for(auto& t: ts)
+        l = std::max(l, max_level(t));
+    return l;
+}
+
+int max_level(Type t)
+{
+    t = follow_meta_type_var(t);
+
+    if (auto mtv = t.to<MetaTypeVar>())
+        return mtv->level();
+    else if (auto tv = t.to<TypeVar>())
+        return tv->level();
+    else if (t.is_a<TypeCon>())
+        return 0;
+    else if (auto tup = t.to<TupleType>())
+        return max_level( tup->element_types );
+    else if (auto l = t.to<ListType>())
+        return max_level(l->element_type);
+    else if (auto app = t.to<TypeApp>())
+        return std::max( max_level(app->head), max_level(app->arg) );
+    else if (auto ct = t.to<ConstrainedType>())
+        return std::max( max_level(ct->context.constraints), max_level(ct->type) );
+    else if (auto fa = t.to<ForallType>())
+        return max_level( fa->type );
+    else if (auto slt = t.to<StrictLazyType>())
+        return max_level( slt->type );
+
+    std::abort();
+    
+}
 
 std::string Type::print() const
 {
@@ -324,6 +367,8 @@ string MetaTypeVar::print() const
     if (index)
         uname = uname +"#"+std::to_string(*index);
 
+    uname = uname + "{"+std::to_string(level())+"}";
+
     return uname;
 }
 
@@ -360,15 +405,39 @@ bool MetaTypeVar::operator<(const MetaTypeVar& tv) const
     return (cmp < 0);
 }
 
+int MetaTypeVar::level() const
+{
+    if (not filled())
+        return level_;
+    else
+        throw myexception()<<"Trying to get level for filled meta-typevar";
+}
 
-MetaTypeVar::MetaTypeVar(): MetaTypeVar({},{}) {}
-
-MetaTypeVar::MetaTypeVar(const Located<std::string>& s): MetaTypeVar(s, {}) {}
-
-MetaTypeVar::MetaTypeVar(const Located<std::string>& s, const Kind& k)
-    :indirect(new Type),name(s),kind(k)
+MetaTypeVar::MetaTypeVar(int l)
+    :MetaTypeVar(l, {},{})
 {}
 
+MetaTypeVar::MetaTypeVar(int l, const Located<std::string>& s)
+    : MetaTypeVar(l, s, {})
+{}
+
+MetaTypeVar::MetaTypeVar(int l, const Located<std::string>& s, const Kind& k)
+    :level_(l), indirect(new Type),name(s),kind(k)
+{}
+
+bool TypeVar::is_skolem_constant() const
+{
+    return level_.has_value();
+}
+
+int TypeVar::level() const
+{
+    if (not is_skolem_constant())
+        return 0;
+
+    return *level_;
+}
+    
 string TypeVar::print() const
 {
     string uname = unloc(name);
@@ -378,19 +447,12 @@ string TypeVar::print() const
     return uname;
 }
 
-/*
-int TypeVar::get_level() const
-{
-    if (info == typevar_info::other)
-        return 0;
-    else
-        return *level;
-}
-*/
-
 string TypeVar::print_with_kind() const
 {
     string uname = print();
+
+    if (is_skolem_constant())
+        uname = uname + "{"+std::to_string(level())+"}";
 
     if (kind)
         uname = "("+uname + " :: " + (*kind).print()+")";
@@ -415,6 +477,29 @@ bool TypeVar::operator<(const TypeVar& tv) const
 
     return (cmp < 0);
 }
+
+TypeVar::TypeVar()
+{}
+
+TypeVar::TypeVar(int l)
+    :level_(l)
+{}
+
+TypeVar::TypeVar(const Located<std::string>& s)
+    :name(s)
+{}
+
+TypeVar::TypeVar(int l, const Located<std::string>& s)
+    :level_(l), name(s)
+{}
+
+TypeVar::TypeVar(const Located<std::string>& s, const Kind& k)
+    :name(s), kind(k)
+{}
+
+TypeVar::TypeVar(int l, const Located<std::string>& s, const Kind& k)
+    :level_(l), name(s),kind(k)
+{}
 
 string TypeCon::print() const
 {

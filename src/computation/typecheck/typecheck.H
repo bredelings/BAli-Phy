@@ -106,14 +106,25 @@ struct typechecker_state: FreshVarSource
 
     immer::map<std::string, std::pair<Hs::Var, Hs::Type>> mono_local_env;
 
+    int level = 0;
+
     global_value_env imported_gve;
 
     global_value_env gve;
 
     WantedConstraints collected_wanteds;
 
+    //-------
+    Hs::MetaTypeVar fresh_meta_type_var(const std::string& name, const Hs::Kind& k);
+    Hs::MetaTypeVar fresh_meta_type_var(const Hs::Kind& k);
+
+    Hs::TypeVar fresh_rigid_type_var(const std::string& name, const Hs::Kind& k);
+    Hs::TypeVar fresh_rigid_type_var(const Hs::Kind& k);
+
     //------- Functions handling the LIE ---------
     typechecker_state copy_clear_wanteds() const;
+
+    typechecker_state copy_inc_level_clear_wanteds() const;
 
     void add_binders(const local_value_env& binders);
 
@@ -377,6 +388,8 @@ struct typechecker_state: FreshVarSource
     // FIXME: this should be  const
     std::optional<std::vector<Core::Var>>
     is_superclass_of(const Hs::Type&, const Hs::Type&);
+
+    bool is_touchable(const Hs::MetaTypeVar& mtv);
 
     // FIXME: this should be  const
     std::optional<Core::Decls>

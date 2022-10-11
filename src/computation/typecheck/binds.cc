@@ -260,7 +260,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 3. try to solve the wanteds from the givens
         // FIXME -- if there are higher-level givens, then we probably need those too!
-        auto [ev_decls, lie_residual] = entails( givens, lie_wanted );
+        auto [ev_decls, lie_residual] = tcs2.entails( givens, lie_wanted );
 
         // 4. defer unsolved constraints that don't mention tyvars at this level.
         LIE lie_residual_keep;
@@ -504,7 +504,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     }
 
     // 1. Type check the decls group with monomorphic types for vars w/o signatures.
-    auto tcs2 = copy_clear_wanteds();
+    auto tcs2 = copy_inc_level_clear_wanteds();
     auto [mono_ids, mono_binder_env] = tcs2.tc_decls_group_mono(signatures, decls);
     auto wanteds = tcs2.current_wanteds();
 
@@ -519,7 +519,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     //
     //    This also substitutes into the current LIE, which we need to do 
     //       before finding free type vars in the LIE below.
-    auto [solve_decls, collected_lie] = entails({},  wanteds );
+    auto [solve_decls, collected_lie] = tcs2.entails({},  wanteds );
 
     // 4. Second, extract the "retained" predicates can be added without causing ambiguity.
     auto fixed_tvs = free_meta_type_variables( gve);
@@ -528,8 +528,36 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         auto& [x,type] = tmp;
         add(fixed_tvs, free_meta_type_variables(type));
     }
+
+    // If we have alpha[1] ~ [ beta[2] ], then beta should also be considered fixed.
+    for(auto& [dvar,constraint]: equality_constraints(collected_lie))
+    {
+        auto [t1,t2] = *is_equality_constraint(constraint);
+
+        if (auto lvl = Hs::unfilled_meta_type_var(t1); lvl and *lvl <= level)
+        {
+            add( fixed_tvs, free_meta_type_variables(t2) );
+        }
+        else
+        {
+            assert(not Hs::unfilled_meta_type_var(t2));
+        }
+    }
+
+    auto [tvs_in_any_type, tvs_in_all_types] = tvs_in_any_all_types(mono_binder_env);
+
+    auto tvs_to_promote = tvs_in_any_type;
+    for(auto& [_,constraint]: collected_lie)
+    {
+        add( tvs_to_promote, free_meta_type_variables(constraint) );
+    }
+
+    // This defers constraints where ALL mtvs are fixed.
     auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
 
+    // But maybe we need to keep only constraints which have mtvs in tvs_in_any_type.
+    // So maybe... follow the simplifyInfer code? :-S
+    
     // 5. Handle ambiguity -- default fully ambiguous type variables.
 
     /* NOTE: Constraints can reference variables that are in
@@ -543,7 +571,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
 
     // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
     //   after generating definitions of their dictionaries.
-    auto [tvs_in_any_type, tvs_in_all_types] = tvs_in_any_all_types(mono_binder_env);
+
     auto [default_decls, lie_not_completely_ambiguous] = default_preds( fixed_tvs, tvs_in_any_type, lie_retained );
     auto ev_decls = default_decls + solve_decls;
     lie_retained = lie_not_completely_ambiguous;
@@ -575,6 +603,19 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         qtvs.insert(qtv);
         qmtv.fill(qtv);
     }
+
+    // promote type vars that we are not quantifying over.
+    for(auto& tv: tvs_to_promote)
+    {
+        if (not tv.filled() and tv.level() > level)
+        {
+            assert(tv.level() == level+1);
+            tv.fill( fresh_meta_type_var(unloc(tv.name), *tv.kind) );
+        }
+    }
+
+    for(auto& tv: tvs_in_any_type)
+        assert(max_level(tv) <= level);
 
     // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group,
     // but we do need the defaults to define individual symbols.
@@ -627,6 +668,11 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
 
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, std::make_shared<Core::Decls>(ev_decls), decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
+
+    for(auto& [_,constraint]: current_wanteds().simple)
+    {
+        assert( max_level(constraint) <= level );
+    }
 
     return decls2;
 }

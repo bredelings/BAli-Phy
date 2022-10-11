@@ -39,11 +39,11 @@ public:
     // "Rigid" type vars come from forall-quantified variables.
     // "Meta" type vars are unification type vars.
     // "Other" type vars are used in foralls.
-    Hs::MetaTypeVar fresh_meta_type_var(const std::string& name, const Hs::Kind& k);
-    Hs::MetaTypeVar fresh_meta_type_var(const Hs::Kind& k);
+    Hs::MetaTypeVar fresh_meta_type_var(int level, const std::string& name, const Hs::Kind& k);
+    Hs::MetaTypeVar fresh_meta_type_var(int level, const Hs::Kind& k);
 
-    Hs::TypeVar fresh_rigid_type_var(const std::string& name, const Hs::Kind& k);
-    Hs::TypeVar fresh_rigid_type_var(const Hs::Kind& k);
+    Hs::TypeVar fresh_rigid_type_var(int level, const std::string& name, const Hs::Kind& k);
+    Hs::TypeVar fresh_rigid_type_var(int level, const Hs::Kind& k);
 
     Hs::TypeVar fresh_other_type_var(const std::string& name, const Hs::Kind& k);
     Hs::TypeVar fresh_other_type_var(const Hs::Kind& k);
