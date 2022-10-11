@@ -502,13 +502,15 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     //       before finding free type vars in the LIE below.
     auto [ev_decls, collected_lie] = tcs2.entails({},  wanteds );
 
+    auto tvs_in_any_type = free_meta_type_variables(mono_binder_env);
+    auto tvs_to_promote = tvs_in_any_type;
+    add( tvs_to_promote, free_meta_type_variables(collected_lie) );
+
     // 4. Second, extract the "retained" predicates can be added without causing ambiguity.
-    auto fixed_tvs = free_meta_type_variables( gve);
-    for(auto& [name, tmp]: mono_local_env)
-    {
-        auto& [x,type] = tmp;
-        add(fixed_tvs, free_meta_type_variables(type));
-    }
+    set<Hs::MetaTypeVar> fixed_tvs;
+    for(auto& tv: tvs_to_promote)
+        if (tv.level() <= level)
+            fixed_tvs.insert(tv);
 
     if (restricted)
         add(fixed_tvs, free_meta_type_variables(collected_lie));
@@ -527,11 +529,6 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
             assert(not Hs::unfilled_meta_type_var(t2));
         }
     }
-
-    auto tvs_in_any_type = free_meta_type_variables(mono_binder_env);
-
-    auto tvs_to_promote = tvs_in_any_type;
-    add( tvs_to_promote, free_meta_type_variables(collected_lie) );
 
     // 5. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
 
