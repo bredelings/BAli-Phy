@@ -470,6 +470,38 @@ void check_HNF(const LIE& wanteds)
 // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
 //   after generating definitions of their dictionaries.
 
+set<Hs::MetaTypeVar> find_fixed_tvs(bool restricted, int level, const LIE& wanteds, const set<Hs::MetaTypeVar>& tvs)
+{
+    set<Hs::MetaTypeVar> fixed;
+
+    for(auto& tv: tvs)
+        if (tv.level() <= level)
+            fixed.insert(tv);
+
+    if (restricted)
+        add(fixed, free_meta_type_variables(wanteds));
+
+    // If we have alpha[1] ~ [ beta[2] ], then beta should also be considered fixed.
+    for(auto& [dvar,constraint]: wanteds)
+    {
+        if (auto eq = is_equality_constraint(constraint))
+        {
+            auto [t1,t2] = *eq;
+
+            if (auto lvl = Hs::unfilled_meta_type_var(t1); lvl and *lvl <= level)
+            {
+                add( fixed, free_meta_type_variables(t2) );
+            }
+            else
+            {
+                assert(not Hs::unfilled_meta_type_var(t2));
+            }
+        }
+    }
+
+    return fixed;
+}
+
 Hs::Decls
 typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
 {
@@ -503,39 +535,16 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     auto [ev_decls, collected_lie] = tcs2.entails({},  wanteds );
 
     auto tvs_in_any_type = free_meta_type_variables(mono_binder_env);
-    auto tvs_to_promote = tvs_in_any_type;
-    add( tvs_to_promote, free_meta_type_variables(collected_lie) );
+    auto local_tvs = tvs_in_any_type;
+    add( local_tvs, free_meta_type_variables(collected_lie) );
 
-    // 4. Second, extract the "retained" predicates can be added without causing ambiguity.
-    set<Hs::MetaTypeVar> fixed_tvs;
-    for(auto& tv: tvs_to_promote)
-        if (tv.level() <= level)
-            fixed_tvs.insert(tv);
-
-    if (restricted)
-        add(fixed_tvs, free_meta_type_variables(collected_lie));
-
-    // If we have alpha[1] ~ [ beta[2] ], then beta should also be considered fixed.
-    for(auto& [dvar,constraint]: equality_constraints(collected_lie))
-    {
-        auto [t1,t2] = *is_equality_constraint(constraint);
-
-        if (auto lvl = Hs::unfilled_meta_type_var(t1); lvl and *lvl <= level)
-        {
-            add( fixed_tvs, free_meta_type_variables(t2) );
-        }
-        else
-        {
-            assert(not Hs::unfilled_meta_type_var(t2));
-        }
-    }
+    // 4. Figure out which type vars we cannot quantify over.
+    auto fixed_tvs = find_fixed_tvs(restricted, level, collected_lie, local_tvs);
 
     // 5. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
-
-    // 6. meta type vars to quantify over
     set<Hs::MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
 
-    // 7. Defer constraints w/o any vars to quantify over
+    // 6. Defer constraints w/o any vars to quantify over
     auto [lie_deferred, lie_retained] = classify_constraints( restricted, collected_lie, qmtvs );
     current_wanteds() += lie_deferred;
 
@@ -549,7 +558,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     }
 
     // promote type vars that we are not quantifying over.
-    for(auto& tv: tvs_to_promote)
+    for(auto& tv: local_tvs)
     {
         if (not tv.filled() and tv.level() > level)
         {
@@ -558,7 +567,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         }
     }
 
-    for(auto& tv: tvs_to_promote)
+    for(auto& tv: local_tvs)
         assert(max_level(tv) <= level);
 
     // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group,
