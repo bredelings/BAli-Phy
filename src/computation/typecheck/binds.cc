@@ -364,31 +364,6 @@ void typechecker_state::infer_rhs_type(expression_ref& decl, const Expected& rhs
         std::abort();
 }
 
-pair<set<Hs::MetaTypeVar>, set<Hs::MetaTypeVar>> tvs_in_any_all_types(const local_value_env& mono_binder_env)
-{
-    set<Hs::MetaTypeVar> tvs_in_any_type;  // type variables in ANY of the definitions
-    set<Hs::MetaTypeVar> tvs_in_all_types;  // type variables in ALL of the definitions
-    {
-        // FIXME - should we be looping over binder vars, or over definitions?
-        optional<set<Hs::MetaTypeVar>> tvs_in_all_types_;
-        for(auto& [_, type]: mono_binder_env)
-        {
-            auto tvs = free_meta_type_variables(type);
-            add(tvs_in_any_type, tvs);
-            if (tvs_in_all_types_)
-                tvs_in_all_types_ = intersection(*tvs_in_all_types_, tvs);
-            else
-                tvs_in_all_types_ = tvs;
-        }
-        assert(tvs_in_all_types_);
-        tvs_in_all_types = *tvs_in_all_types_;
-    }
-
-    return {tvs_in_any_type, tvs_in_all_types};
-}
-
-
-
 tuple< map<string, Hs::Var>, local_value_env > typechecker_state::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& decls)
 {
     // 1. Add each let-binder to the environment with a fresh type variable
@@ -544,13 +519,10 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         }
     }
 
-    auto [tvs_in_any_type, tvs_in_all_types] = tvs_in_any_all_types(mono_binder_env);
+    auto tvs_in_any_type = free_meta_type_variables(mono_binder_env);
 
     auto tvs_to_promote = tvs_in_any_type;
-    for(auto& [_,constraint]: collected_lie)
-    {
-        add( tvs_to_promote, free_meta_type_variables(constraint) );
-    }
+    add( tvs_to_promote, free_meta_type_variables(collected_lie) );
 
     // This defers constraints where ALL mtvs are fixed.
     auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
@@ -614,7 +586,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         }
     }
 
-    for(auto& tv: tvs_in_any_type)
+    for(auto& tv: tvs_to_promote)
         assert(max_level(tv) <= level);
 
     // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group,
