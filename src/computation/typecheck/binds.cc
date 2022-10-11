@@ -504,6 +504,9 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         add(fixed_tvs, free_meta_type_variables(type));
     }
 
+    if (restricted)
+        add(fixed_tvs, free_meta_type_variables(collected_lie));
+
     // If we have alpha[1] ~ [ beta[2] ], then beta should also be considered fixed.
     for(auto& [dvar,constraint]: equality_constraints(collected_lie))
     {
@@ -527,10 +530,12 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     // This defers constraints where ALL mtvs are fixed.
     auto [lie_deferred, lie_retained] = classify_constraints( collected_lie, fixed_tvs );
 
-    // But maybe we need to keep only constraints which have mtvs in tvs_in_any_type.
-    // So maybe... follow the simplifyInfer code? :-S
-    
-    // 5. Handle ambiguity -- default fully ambiguous type variables.
+    // 5. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
+
+    // meta type vars to quantify over
+    set<Hs::MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
+
+    // 6. Handle ambiguity -- default fully ambiguous type variables.
 
     /* NOTE: Constraints can reference variables that are in
      *        (i) ALL types in a recursive group
@@ -556,16 +561,9 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         lie_deferred += lie_retained;
 
         lie_retained = {};
-
-        add(fixed_tvs, free_meta_type_variables(lie_deferred));
     }
 
     current_wanteds() += lie_deferred;
-
-    // 6. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
-
-    // meta type vars to quantify over
-    set<Hs::MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
 
     // non-meta type vars to replace them with
     set<Hs::TypeVar> qtvs;
