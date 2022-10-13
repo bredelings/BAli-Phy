@@ -12,6 +12,7 @@ namespace Core
 {
     // This should be Core::Exp
     typedef expression_ref Exp;
+    typedef expression_ref Pat;
     typedef CDecl Decl;
     typedef CDecls Decls;
 
@@ -27,6 +28,7 @@ namespace Core
     Exp Let(const Decls& args, const Exp& body);
     Exp Apply(const Exp& fun, const std::vector<Exp>& args);
     Exp Apply(const Exp& fun, const std::vector<Var>& args);
+    Exp Case(const Exp& object, const std::vector<Pat>& patterns, const std::vector<Exp>& bodies);
 }
 
 Core::wrapper operator*(const Core::wrapper&, const Core::wrapper&);

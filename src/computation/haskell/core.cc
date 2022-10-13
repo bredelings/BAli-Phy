@@ -3,6 +3,7 @@
 #include "expression/tuple.H"
 #include "expression/apply.H"
 #include "expression/lambda.H"
+#include "expression/case.H"
 
 using std::vector;
 
@@ -52,6 +53,10 @@ namespace Core
         return apply_expression(fun, args2);
     }
 
+    Exp Case(const Exp& object, const std::vector<Pat>& patterns, const std::vector<Exp>& bodies)
+    {
+        return make_case_expression(object, patterns, bodies);
+    }
     // wrapper stuff
 
     wrapper wrapper_id = [](const Exp& x) {return x;};

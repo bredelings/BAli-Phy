@@ -169,10 +169,10 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
             assert(N >= 1);
 
             // tup = \dict1 dict2 ... dictn -> let dict_binds in let {x_inner[1]=..;...;x_inner[n]=..} in (x_inner[1],x_inner[2],...x_inner[n])
-            expression_ref tup_body = let_expression ( *(gb->dict_decls),
-                                      let_expression ( desugar_decls(gb->body),
-                                      maybe_tuple(binders) ) );
-            expression_ref tup_lambda = lambda_quantify( gb->dict_args, tup_body );
+            expression_ref tup_body = Core::Let ( *(gb->dict_decls),
+                                                  Core::Let ( desugar_decls(gb->body),
+                                                              maybe_tuple(binders) ) );
+            expression_ref tup_lambda = Core::Lambda( gb->dict_args, tup_body );
 
             auto tup = get_fresh_var("tup");
             decls.push_back({tup, tup_lambda});
@@ -204,8 +204,8 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 
                     // \dargs -> case (tup dargs) of (..fields..) -> field
                     Core::Exp x_tmp_body = Core::Lambda(gb->dict_args,
-                                                        make_case_expression( Core::Apply(tup, gb->dict_args)
-                                                                              ,{{pattern}},{x_inner}) );
+                                                        Core::Case( Core::Apply(tup, gb->dict_args),
+                                                                    {pattern},{x_inner}) );
 
                     decls.push_back({x_tmp, x_tmp_body});
 
