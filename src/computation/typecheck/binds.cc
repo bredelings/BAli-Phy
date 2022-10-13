@@ -237,17 +237,6 @@ classify_constraints(const LIE& lie, const set<Hs::TypeVar>& qtvs)
     return {lie_deferred, lie_retained};
 }
 
-template <typename T>
-bool intersects(const set<T>& s1, const vector<T>& v2)
-{
-    if (s1.empty()) return false;
-    if (v2.empty()) return false;
-    for(auto& x: v2)
-        if (s1.count(x)) return true;
-    return false;
-}
-
-
 tuple<expression_ref, ID, Hs::Type>
 typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
