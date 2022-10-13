@@ -113,11 +113,10 @@ ambiguities(const LIE& lie)
 }
 
 
-tuple<Core::Decls, LIE>
-typechecker_state::default_preds( const LIE& lie )
+Core::Decls typechecker_state::default_preds( WantedConstraints& wanted )
 {
     Core::Decls decls;
-    auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities( lie );
+    auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities( wanted.simple );
 
     for(auto& [tv, preds]: ambiguous_preds_by_var)
     {
@@ -134,8 +133,18 @@ typechecker_state::default_preds( const LIE& lie )
 
         decls += decls1;
     }
+    wanted.simple = unambiguous_preds;
 
-    return {decls, unambiguous_preds};
+    vector<std::shared_ptr<Implication>> keep;
+    for(auto& implication: wanted.implications)
+    {
+        decls += default_preds(implication->wanteds);
+        if (not implication->wanteds.empty())
+            keep.push_back(implication);
+    }
+    std::swap( wanted.implications, keep );
+
+    return decls;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -148,8 +157,10 @@ Core::Decls typechecker_state::simplify_and_default_top_level()
 
     collected_wanteds = new_wanteds;
 
-    auto [default_decls, unambiguous_preds] = default_preds( current_wanteds().simple );
-    assert(unambiguous_preds.empty());
+    auto default_decls = default_preds( current_wanteds() );
+
+    if (not current_wanteds().empty())
+        throw myexception()<<"Failed to solve wanteds: "<<print(current_wanteds().all_simple());
 
     // Clear the LIE, which should now be empty.
     current_wanteds() = {};

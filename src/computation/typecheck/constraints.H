@@ -42,6 +42,10 @@ struct WantedConstraints
 
     WantedConstraints& operator+=(const WantedConstraints& wc2);
     WantedConstraints operator+(const WantedConstraints& wc2) const;
+
+    bool empty() const;
+
+    LIE all_simple() const;
 };
 
 struct Implication

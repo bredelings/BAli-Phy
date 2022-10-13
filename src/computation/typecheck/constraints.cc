@@ -51,6 +51,21 @@ WantedConstraints WantedConstraints::operator+(const WantedConstraints& wc2) con
     return tmp;
 }
 
+bool WantedConstraints::empty() const
+{
+    return simple.empty() and implications.empty();
+}
+
+LIE WantedConstraints::all_simple() const
+{
+    LIE w = simple;
+
+    for(auto& implication: implications)
+        w += implication->wanteds.all_simple();
+
+    return w;
+}
+
 Implication::Implication(const vector<Hs::TypeVar>& v, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb)
     :evidence_binds(eb), tvs(v), givens(g), wanteds(w)
 {

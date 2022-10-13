@@ -195,8 +195,7 @@ struct typechecker_state: FreshVarSource
     std::optional<Core::Decls>
     candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie);
 
-    std::tuple<Core::Decls, LIE >
-    default_preds( const LIE& lie );
+    Core::Decls default_preds( WantedConstraints& wanteds );
 
     Core::Decls simplify_and_default_top_level();
 
