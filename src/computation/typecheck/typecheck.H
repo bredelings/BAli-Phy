@@ -64,8 +64,6 @@ struct global_tc_state
     global_tc_state(const Module& m);
 };
 
-std::string print(const LIE& lie);
-
 struct typechecker_state;
 
 template <typename T>
