@@ -1095,16 +1095,11 @@ typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
         auto [tvs, wanteds, type] = instantiate(t);
         exp_type.infer_type(type);
 
-        auto dict_args = vars_from_lie<Hs::Expression>( dictionary_constraints( wanteds ) );
-
-        auto w = [=](const Core::Exp& x)
-        {
-            return Core::Apply(x, dict_args);
-        };
-
         collected_wanteds += wanteds;
 
-        return w;
+        auto dict_args = vars_from_lie( dictionary_constraints( wanteds ) );
+
+        return Core::WrapApply(dict_args);
     }
     else
     {
