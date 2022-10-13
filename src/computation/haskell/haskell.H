@@ -892,14 +892,11 @@ struct BindInfo
     // The post-generalized type
     Type polytype;
 
-    // Non-defaulted dictionaries -- still passed.
-    std::vector<Core::Var> dict_args;
+    // Wrapper to apply types and dicts to the tuple entry.
+    Core::wrapper wrap;
 
-    // This defines construct the defaulted dictionaries from dict_args;
-    Core::Decls default_decls;
-
-    BindInfo(const Var& o, const Var& i, const Type& m, const Type& p, const std::vector<Core::Var>& da, const Core::Decls& d)
-        : outer_id(o), inner_id(i), monotype(m), polytype(p), dict_args(da), default_decls(d)
+    BindInfo(const Var& o, const Var& i, const Type& m, const Type& p, const Core::wrapper& w)
+        : outer_id(o), inner_id(i), monotype(m), polytype(p), wrap(w)
     {
         outer_id.type = polytype;
         inner_id.type = monotype;

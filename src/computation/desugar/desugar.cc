@@ -184,9 +184,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 
                 var x_outer = make_var(info.outer_id);
 
-                Core::Exp x_body = Core::Lambda( info.dict_args, Core::Let( info.default_decls, Core::Apply(tup, gb->dict_args) ) );
-
-                decls.push_back({x_outer, x_body});
+                decls.push_back({x_outer, info.wrap(tup)});
             }
             else
             {
@@ -209,9 +207,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 
                     decls.push_back({x_tmp, x_tmp_body});
 
-                    Core::Exp x_body = Core::Lambda( info.dict_args, Core::Let( info.default_decls, Core::Apply(x_tmp, gb->dict_args) ) );
-
-                    decls.push_back({x_outer, x_body});
+                    decls.push_back({x_outer, info.wrap(x_tmp)});
 
                     i++;
                 }

@@ -275,7 +275,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         auto dict_vars = vars_from_lie( givens );
 
-        Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, dict_vars, {});
+        Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, Core::wrapper_id);
 
         auto decl = mkGenBind( tvs, dict_vars, std::make_shared<Core::Decls>(ev_decls), Hs::Decls({FD}), {{name, bind_info}} );
 
@@ -607,7 +607,9 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         Hs::Var mono_id = mono_ids.at(name);
         auto dict_args = vars_from_lie( lie_for_this_type );
 
-        Hs::BindInfo info(poly_id, mono_id, monotype, polytype, dict_args, default_decls);
+        Core::wrapper wrap = [=](const Core::Exp& E) {return Core::Lambda( dict_args, Core::Let( default_decls, Core::Apply(E, dict_vars) ) );};
+
+        Hs::BindInfo info(poly_id, mono_id, monotype, polytype, wrap);
         bind_infos.insert({name, info});
 
         if (restricted)
