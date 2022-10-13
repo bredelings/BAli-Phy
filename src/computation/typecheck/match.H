@@ -50,7 +50,7 @@ Core::wrapper typechecker_state::tcMatchesFunCheck(std::vector<Expected>& arg_ty
         // FIXME - what do we do with this?
         std::shared_ptr<Core::Decls> evidence_binds;
 
-        current_wanteds().implications.push_back( std::make_shared<Implication>(tvs, givens, tc2.current_wanteds(), evidence_binds) );
+        current_wanteds().implications.push_back( std::make_shared<Implication>(level, tvs, givens, tc2.current_wanteds(), evidence_binds) );
 
         return match_wrapper;
     }

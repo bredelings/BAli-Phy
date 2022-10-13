@@ -50,12 +50,9 @@ struct WantedConstraints
 
 struct Implication
 {
-    // Add a level number l.
     // The givens  can have type vars with level <  l.
     // The wanteds can have type vars with level <= l.
-
-    // Variables that we are allowed to unify.
-    std::set<Hs::TypeVar> touchable_vars;
+    int level;
 
     // Pointer to a set of evidence bindings.
     // We can append new bindings to this object.
@@ -69,7 +66,7 @@ struct Implication
 
     //    std::string print() const;
 
-    Implication(const std::vector<Hs::TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb);
+    Implication(int l, const std::vector<Hs::TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb);
 };
 
 template <typename T>

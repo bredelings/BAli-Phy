@@ -162,7 +162,7 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
         else
         {
             Con.ev_binds = std::make_shared<Core::Decls>();
-            current_wanteds().implications.push_back( std::make_shared<Implication>(Con.existential_tyvars, Con.givens, tc2.current_wanteds(), Con.ev_binds) );
+            current_wanteds().implications.push_back( std::make_shared<Implication>(level, Con.existential_tyvars, Con.givens, tc2.current_wanteds(), Con.ev_binds) );
         }
 
         unify( expTypeToType(exp_type), type );
