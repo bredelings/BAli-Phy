@@ -986,19 +986,10 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
     if (not lie_failed.empty())
         throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
 
-    auto w = [=,ev_decls=ev_decls,givens=givens](const Core::Exp& e)
-    {
-        auto E = e;
-        // 6. modify E, which is of type rho_type, to be of type sigma_type
-        E = Core::Let(ev_decls, E);
+    auto dict_vars = vars_from_lie(givens);
 
-        auto dict_vars = vars_from_lie(givens);
-        E = Core::Lambda(dict_vars, E);
-
-        return E;
-    };
-
-    return w;
+    // 6. modify E, which is of type rho_type, to be of type sigma_type
+    return Core::WrapLambda(dict_vars) * Core::WrapLet(ev_decls);
 }
 
 // The idea is that we need an e2, but we have a t1.
@@ -1087,26 +1078,13 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
                 throw myexception()<<"Type\n\n  "<<t1<<"\n\n  does not subsume\n\n  "<<t2;
     }
 
+    collected_wanteds += non_entailed_wanteds;
+
     auto dict2_vars = vars_from_lie(givens);
 
     auto dict1_args = vars_from_lie<Core::Exp>(wanteds);
     
-    auto w = [=,decls=decls](const Core::Exp& x)
-    {
-        // y = \dictY1 dictY2 dictY3 -> let binds in x dictX1 dictX2 dictX3
-
-        Core::Exp X = x;
-
-        X = Core::Apply(X, dict1_args);
-        X = Core::Let(decls, X);
-        X = Core::Lambda(dict2_vars, X);
-
-        return X;
-    };
-
-    collected_wanteds += non_entailed_wanteds;
-
-    return w;
+    return Core::WrapLambda(dict2_vars) * Core::WrapLet(decls) * Core::WrapApply(dict1_args);
 }
 
 Core::wrapper

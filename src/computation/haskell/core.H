@@ -29,6 +29,11 @@ namespace Core
     Exp Apply(const Exp& fun, const std::vector<Exp>& args);
     Exp Apply(const Exp& fun, const std::vector<Var>& args);
     Exp Case(const Exp& object, const std::vector<Pat>& patterns, const std::vector<Exp>& bodies);
+
+    wrapper WrapLet(const Decls& args);
+    wrapper WrapLambda(const std::vector<Var>& args);
+    wrapper WrapApply(const std::vector<Exp>& args);
+    wrapper WrapApply(const std::vector<Var>& args);
 }
 
 Core::wrapper operator*(const Core::wrapper&, const Core::wrapper&);

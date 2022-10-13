@@ -61,6 +61,38 @@ namespace Core
 
     wrapper wrapper_id = [](const Exp& x) {return x;};
 
+    wrapper WrapLet(const Decls& args)
+    {
+        return [=](const Core::Exp& x)
+            {
+                return Let(args, x);
+            };
+    }
+
+    wrapper WrapLambda(const std::vector<Var>& args)
+    {
+        return [=](const Core::Exp& x)
+            {
+                return Lambda(args,x);
+            };
+    }
+
+    wrapper WrapApply(const std::vector<Exp>& args)
+    {
+        return [=](const Core::Exp& x)
+            {
+                return Apply(x, args);
+            };
+    }
+
+    wrapper WrapApply(const std::vector<Var>& args)
+    {
+        return [=](const Core::Exp& x)
+            {
+                return Apply(x, args);
+            };
+    }
+
 }
 
 
