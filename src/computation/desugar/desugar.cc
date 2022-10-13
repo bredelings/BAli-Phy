@@ -200,9 +200,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
                     fields[i] = x_inner;
                     expression_ref pattern = get_tuple(fields);
 
-                    Core::Exp extractor = tup;
-                    for(auto& dict_var: gb->dict_args)
-                        extractor = {extractor, dict_var};
+                    Core::Exp extractor = Core::Apply(tup, gb->dict_args);
 
                     extractor = make_case_expression(extractor,{{pattern}},{x_inner});
 
