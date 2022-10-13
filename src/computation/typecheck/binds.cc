@@ -593,21 +593,20 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
 
         Hs::Type polytype = quantify( qtvs_in_this_type, Hs::add_constraints( constraints_for_this_type, monotype ) );
 
+        Hs::Var poly_id({noloc,name});
+        Hs::Var mono_id = mono_ids.at(name);
+        auto dict_args = vars_from_lie( lie_for_this_type );
+
+        Core::wrapper wrap = [=](const Core::Exp& E) {return Core::Lambda( dict_args, Core::Let( default_decls, Core::Apply(E, dict_vars) ) );};
+
         if (not signatures.count(name))
         {
             poly_binder_env = poly_binder_env.insert( {name, polytype} );
         }
         else
         {
-            // How to generate a wrapper here?
-            std::abort();
+            wrap = subsumptionCheck(polytype, signatures.at(name)) * wrap;
         }
-
-        Hs::Var poly_id({noloc,name});
-        Hs::Var mono_id = mono_ids.at(name);
-        auto dict_args = vars_from_lie( lie_for_this_type );
-
-        Core::wrapper wrap = [=](const Core::Exp& E) {return Core::Lambda( dict_args, Core::Let( default_decls, Core::Apply(E, dict_vars) ) );};
 
         Hs::BindInfo info(poly_id, mono_id, monotype, polytype, wrap);
         bind_infos.insert({name, info});
