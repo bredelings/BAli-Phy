@@ -151,9 +151,7 @@ Core::Decls typechecker_state::default_preds( WantedConstraints& wanted )
 
 Core::Decls typechecker_state::simplify_and_default_top_level()
 {
-    auto& w = current_wanteds();
-
-    auto [top_simplify_decls, new_wanteds] = entails( {}, w );
+    auto [top_simplify_decls, new_wanteds] = entails( {}, current_wanteds() );
 
     collected_wanteds = new_wanteds;
 
