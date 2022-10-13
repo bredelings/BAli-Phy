@@ -596,8 +596,6 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     check_HNF( lie_retained );
     assert(not restricted or lie_retained.empty());
 
-    vector< Core::Var > dict_vars = vars_from_lie( lie_retained );
-
     map<string, Hs::BindInfo> bind_infos;
     global_value_env poly_binder_env;
 
@@ -647,6 +645,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
 
     assert(bind_infos.size() >= 1);
 
+    vector< Core::Var > dict_vars = vars_from_lie( lie_retained );
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, std::make_shared<Core::Decls>(ev_decls), decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
