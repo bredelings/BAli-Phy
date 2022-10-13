@@ -594,6 +594,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
 
     // 8. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
     check_HNF( lie_retained );
+    assert(not restricted or lie_retained.empty());
 
     vector< Core::Var > dict_vars = vars_from_lie( lie_retained );
 
@@ -614,44 +615,33 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
             auto new_tv = fresh_meta_type_var(*tv.kind);
             s = s.insert({tv, new_tv});
         }
-        auto lie_retained_subst = apply_subst(s, lie_retained);
+        auto lie_all = apply_subst(s, lie_retained);
 
         // Get new dict vars for constraints
-        for(auto& [dvar,constraint]: lie_retained_subst)
+        for(auto& [dvar,constraint]: lie_all)
             dvar = fresh_dvar(constraint);
 
-        auto [lie_unused, lie_for_this_type] = classify_constraints( lie_retained_subst, qtvs_in_this_type );
-
+        auto [lie_unused, lie_used] = classify_constraints( lie_all, qtvs_in_this_type );
         current_wanteds() += lie_unused;
 
-        auto constraints_for_this_type = constraints_from_lie(lie_for_this_type);
+        auto dict_args = vars_from_lie( lie_used );
+        auto tup_dict_args = vars_from_lie( lie_all );
+        Core::wrapper wrap = [=](const Core::Exp& E) {return Core::Lambda( dict_args, Core::Apply(E, tup_dict_args) );};
 
-        Hs::Type polytype = quantify( qtvs_in_this_type, Hs::add_constraints( constraints_for_this_type, monotype ) );
+        auto constraints_used = constraints_from_lie(lie_used);
+        Hs::Type polytype = quantify( qtvs_in_this_type, Hs::add_constraints( constraints_used, monotype ) );
+        if (not signatures.count(name))
+            poly_binder_env = poly_binder_env.insert( {name, polytype} );
+        else
+        {
+            auto sub_polytype = polytype;
+            polytype = signatures.at(name);
+            wrap = subsumptionCheck(sub_polytype, polytype) * wrap;
+        }
 
         Hs::Var poly_id({noloc,name});
         Hs::Var mono_id = mono_ids.at(name);
-        auto dict_args = vars_from_lie( lie_for_this_type );
-        auto tup_dict_args = vars_from_lie( lie_retained_subst );
-
-        Core::wrapper wrap = [=](const Core::Exp& E) {return Core::Lambda( dict_args, Core::Apply(E, tup_dict_args) );};
-
-        if (not signatures.count(name))
-        {
-            poly_binder_env = poly_binder_env.insert( {name, polytype} );
-        }
-        else
-        {
-            wrap = subsumptionCheck(polytype, signatures.at(name)) * wrap;
-        }
-
-        Hs::BindInfo info(poly_id, mono_id, monotype, polytype, wrap);
-        bind_infos.insert({name, info});
-
-        if (restricted)
-        {
-            assert(dict_args.empty());
-            assert(constraints_for_this_type.empty());
-        }
+        bind_infos.insert({name, Hs::BindInfo(poly_id, mono_id, monotype, polytype, wrap)});
     }
     add_binders(poly_binder_env);
 
