@@ -221,6 +221,22 @@ classify_constraints(bool restricted, const LIE& lie, const set<Hs::MetaTypeVar>
     return {lie_deferred, lie_retained};
 }
 
+pair<LIE, LIE>
+classify_constraints(const LIE& lie, const set<Hs::TypeVar>& qtvs)
+{
+    LIE lie_deferred;
+    LIE lie_retained;
+
+    for(auto& [dvar, constraint]: lie)
+    {
+        if (intersects( free_type_variables(constraint), qtvs ))
+            lie_retained.push_back({dvar,constraint});
+        else
+            lie_deferred.push_back({dvar,constraint});
+    }
+    return {lie_deferred, lie_retained};
+}
+
 template <typename T>
 bool intersects(const set<T>& s1, const vector<T>& v2)
 {
@@ -548,7 +564,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     auto [lie_deferred, lie_retained] = classify_constraints( restricted, collected_lie, qmtvs );
     current_wanteds() += lie_deferred;
 
-    // non-meta type vars to replace them with
+    // 7. Replace quantified meta-typevars with fresh type vars, and promote the other ones.
     set<Hs::TypeVar> qtvs;
     for(auto& qmtv: qmtvs)
     {
@@ -583,11 +599,30 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
 
     map<string, Hs::BindInfo> bind_infos;
     global_value_env poly_binder_env;
+
     for(auto& [name, monotype]: mono_binder_env)
     {
         set<Hs::TypeVar> qtvs_in_this_type = intersection( qtvs, free_type_variables( monotype ) );
 
-        auto [s2, default_decls, lie_for_this_type ] = default_preds( qtvs_in_this_type, lie_retained );
+        set<Hs::TypeVar> qtvs_unused = qtvs - qtvs_in_this_type;
+
+        // Replace any unused typevars with metavariables
+        substitution_t s;
+        for(auto& tv: qtvs_unused)
+        {
+            assert(tv.kind);
+            auto new_tv = fresh_meta_type_var(*tv.kind);
+            s = s.insert({tv, new_tv});
+        }
+        auto lie_retained_subst = apply_subst(s, lie_retained);
+
+        // Get new dict vars for constraints
+        for(auto& [dvar,constraint]: lie_retained_subst)
+            dvar = fresh_dvar(constraint);
+
+        auto [lie_unused, lie_for_this_type] = classify_constraints( lie_retained_subst, qtvs_in_this_type );
+
+        current_wanteds() += lie_unused;
 
         auto constraints_for_this_type = constraints_from_lie(lie_for_this_type);
 
@@ -596,8 +631,9 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         Hs::Var poly_id({noloc,name});
         Hs::Var mono_id = mono_ids.at(name);
         auto dict_args = vars_from_lie( lie_for_this_type );
+        auto tup_dict_args = vars_from_lie( lie_retained_subst );
 
-        Core::wrapper wrap = [=](const Core::Exp& E) {return Core::Lambda( dict_args, Core::Let( default_decls, Core::Apply(E, dict_vars) ) );};
+        Core::wrapper wrap = [=](const Core::Exp& E) {return Core::Lambda( dict_args, Core::Apply(E, tup_dict_args) );};
 
         if (not signatures.count(name))
         {
