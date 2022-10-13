@@ -1,0 +1,2 @@
+bali-phy: Error! In module 'Main':
+Ambiguous type variable 't2836028838{0}' in classes: Main.Foo t2836028838{0} Compiler.Num.Num t2836028838{0} Text.Show.Show t2836028838{0} 
