@@ -757,7 +757,9 @@ pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const Wante
         sub_givens += givens;
         sub_givens += residual_wanteds;
 
-        auto [sub_decls, r] = entails(sub_givens, implic->wanteds);
+        auto tcs2 = copy_clear_wanteds();
+        tcs2.level = implic->level;
+        auto [sub_decls, r] = tcs2.entails(sub_givens, implic->wanteds);
 
         if (not r.empty())
             throw myexception()<<"Could not solve constraint "<<r[0].second<<" in implication";
