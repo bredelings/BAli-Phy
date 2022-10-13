@@ -68,17 +68,6 @@ LIE equality_constraints(const LIE& lie1)
     return lie2;
 }
 
-std::string print(const LIE& lie)
-{
-    std::ostringstream oss;
-    vector<string> ss;
-    for(auto& [value,type]: lie)
-    {
-        ss.push_back(value.print() + " :: " + type.print());
-    }
-    return "{ " + join(ss, "; ") + " }";
-}
-
 LIE& operator+=(LIE& lie1, const LIE& lie2)
 {
     lie1.insert(lie1.end(), lie2.begin(), lie2.end());

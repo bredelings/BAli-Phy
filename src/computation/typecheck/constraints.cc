@@ -1,6 +1,19 @@
 #include "constraints.H"
+#include "util/string/join.H"
 
 using std::vector;
+using std::string;
+
+string print(const LIE& lie)
+{
+    std::ostringstream oss;
+    vector<string> ss;
+    for(auto& [value,type]: lie)
+    {
+        ss.push_back(value.print() + " :: " + type.print());
+    }
+    return "{ " + join(ss, "; ") + " }";
+}
 
 vector<Hs::Type> constraints_from_lie(const LIE& lie)
 {

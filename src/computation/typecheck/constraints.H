@@ -81,4 +81,6 @@ std::vector<Hs::Type> constraints_from_lie(const LIE& lie);
 
 std::vector<Core::Var> vars_from_lie(const LIE& lie);
 
+std::string print(const LIE& lie);
+
 #endif
