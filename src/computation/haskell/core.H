@@ -26,6 +26,7 @@ namespace Core
     Exp Lambda(const std::vector<Var>& args, const Exp& body);
     Exp Let(const Decls& args, const Exp& body);
     Exp Apply(const Exp& fun, const std::vector<Exp>& args);
+    Exp Apply(const Exp& fun, const std::vector<Var>& args);
 }
 
 Core::wrapper operator*(const Core::wrapper&, const Core::wrapper&);

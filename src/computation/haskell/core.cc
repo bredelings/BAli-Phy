@@ -40,6 +40,18 @@ namespace Core
             return apply_expression(fun, args);
     }
 
+    Exp Apply(const Exp& fun, const std::vector<Var>& args)
+    {
+        if (args.empty())
+            return fun;
+
+        vector<Exp> args2;
+        for(auto& arg: args)
+            args2.push_back(arg);
+
+        return apply_expression(fun, args2);
+    }
+
     // wrapper stuff
 
     wrapper wrapper_id = [](const Exp& x) {return x;};
