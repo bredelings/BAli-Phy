@@ -977,12 +977,7 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
     LIE lie_failed;
     for(auto& [dvar, constraint]: non_entailed_wanteds)
     {
-        bool fail = false;
-        for(auto& ftv: free_type_variables(constraint))
-            if (includes(tvs, ftv))
-                fail = true;
-
-        if (fail)
+        if (intersects(free_type_variables(constraint), tvs))
             lie_failed.push_back({dvar,constraint});
         else
             current_wanteds().simple.push_back({dvar, constraint});
