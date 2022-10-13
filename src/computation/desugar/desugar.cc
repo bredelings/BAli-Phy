@@ -174,6 +174,9 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
                                       maybe_tuple(binders) ) );
             expression_ref tup_lambda = lambda_quantify( gb->dict_args, tup_body );
 
+            auto tup = get_fresh_var("tup");
+            decls.push_back({tup, tup_lambda});
+
             if (N == 1)
             {
                 // x_outer[i] = \info.dict_args => let info.binds in case (tup dict1 .. dictn) of (_,_,x_inner[i],_,_) -> x_inner[i]
@@ -181,37 +184,37 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 
                 var x_outer = make_var(info.outer_id);
 
-                expression_ref extractor = lambda_quantify( info.dict_args, let_expression( info.default_decls, tup_body ) );
+                Core::Exp x_body = Core::Lambda( info.dict_args, Core::Let( info.default_decls, Core::Apply(tup, gb->dict_args) ) );
 
-                decls.push_back({x_outer, extractor});
+                decls.push_back({x_outer, x_body});
             }
             else
             {
-                auto tup = get_fresh_var("tup");
-
                 // x_outer[i] = \info.dict_args => let info.binds in case (tup dict1 .. dictn) of (_,_,x_inner[i],_,_) -> x_inner[i]
                 int i=0;
                 for(auto& [name, info]: gb->bind_infos)
                 {
                     var x_outer = make_var(info.outer_id);
                     var x_inner = make_var(info.inner_id);
+                    var x_tmp   = get_fresh_var();
 
                     vector<expression_ref> fields(N, wildcard());
                     fields[i] = x_inner;
                     expression_ref pattern = get_tuple(fields);
 
-                    Core::Exp extractor = Core::Apply(tup, gb->dict_args);
+                    // \dargs -> case (tup dargs) of (..fields..) -> field
+                    Core::Exp x_tmp_body = Core::Lambda(gb->dict_args,
+                                                        make_case_expression( Core::Apply(tup, gb->dict_args)
+                                                                              ,{{pattern}},{x_inner}) );
 
-                    extractor = make_case_expression(extractor,{{pattern}},{x_inner});
+                    decls.push_back({x_tmp, x_tmp_body});
 
-                    extractor = lambda_quantify( info.dict_args, let_expression( info.default_decls, extractor ) );
+                    Core::Exp x_body = Core::Lambda( info.dict_args, Core::Let( info.default_decls, Core::Apply(x_tmp, gb->dict_args) ) );
 
-                    decls.push_back({x_outer, extractor});
+                    decls.push_back({x_outer, x_body});
 
                     i++;
                 }
-
-                decls.push_back({tup, tup_lambda});
             }
         }
         else if (decl.is_a<Hs::ValueDecl>())
