@@ -548,7 +548,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     //
     //    This also substitutes into the current LIE, which we need to do 
     //       before finding free type vars in the LIE below.
-    auto [ev_decls, collected_lie] = tcs2.entails({},  wanteds );
+    auto [solve_decls, collected_lie] = tcs2.entails({},  wanteds );
 
     auto tvs_in_any_type = free_meta_type_variables(mono_binder_env);
     auto local_tvs = tvs_in_any_type;
@@ -619,6 +619,8 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         for(auto& [dvar,constraint]: lie_all)
             dvar = fresh_dvar(constraint);
 
+        // Any constraints that don't mention type vars of this type are ambiguous.
+        // We will put them into the environment in hopes that we can default them later.
         auto [lie_unused, lie_used] = classify_constraints( lie_all, qtvs_in_this_type );
         current_wanteds() += lie_unused;
 
@@ -641,12 +643,12 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         Hs::Var mono_id = mono_ids.at(name);
         bind_infos.insert({name, Hs::BindInfo(poly_id, mono_id, monotype, polytype, wrap)});
     }
-    add_binders(poly_binder_env);
-
     assert(bind_infos.size() >= 1);
 
+    add_binders(poly_binder_env);
+
     vector< Core::Var > dict_vars = vars_from_lie( lie_retained );
-    auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, std::make_shared<Core::Decls>(ev_decls), decls, bind_infos );
+    auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, std::make_shared<Core::Decls>(solve_decls), decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
     for(auto& [_,constraint]: current_wanteds().simple)
