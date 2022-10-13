@@ -265,11 +265,11 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         auto tcs2 = copy_clear_wanteds();
         tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type), [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
             tc.tcMatches(FD.matches, arg_types, result_type);};});
-        auto lie_wanted = tcs2.current_wanteds();
+        auto wanteds = tcs2.current_wanteds();
 
         // 3. try to solve the wanteds from the givens
         // FIXME -- if there are higher-level givens, then we probably need those too!
-        auto [ev_decls, lie_residual] = tcs2.entails( givens, lie_wanted );
+        auto [ev_decls, lie_residual] = tcs2.entails( givens, wanteds );
 
         // 4. defer unsolved constraints that don't mention tyvars at this level.
         LIE lie_residual_keep;
