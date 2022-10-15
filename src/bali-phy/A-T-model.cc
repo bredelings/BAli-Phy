@@ -139,10 +139,10 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 
     if (args.count("dbeta")) {
         vector<string> deltas = split(args["dbeta"].as<string>(),',');
-        for(int i=0;i<deltas.size();i++) {
-            vector<double> D = convertTo<double>(split(deltas[i],'*'));
+        for(auto& delta: deltas) {
+            vector<double> D = convertTo<double>(split(delta,'*'));
             if (D.size() != 2)
-                throw myexception()<<"Couldn't parse beta increment '"<<deltas[i]<<"'";
+                throw myexception()<<"Couldn't parse beta increment '"<<delta<<"'";
             int D1 = (int)D[0];
             double D2 = D[1];
             for(int i=0;i<D1;i++) {
@@ -324,10 +324,10 @@ void check_alignment_names(const alignment& A)
     for(int i=0;i<A.n_sequences();i++) {
         const string& name = A.seq(i).name;
         for(int j=0;j<name.size();j++)
-            for(int c=0;c<forbidden.size();c++)
+            for(char c: forbidden)
                 for(int pos=0;pos<name.size();pos++)
-                    if (name[pos] == forbidden[c])
-                        throw myexception()<<"Sequence name '"<<name<<"' contains illegal character '"<<forbidden[c]<<"'";
+                    if (name[pos] == c)
+                        throw myexception()<<"Sequence name '"<<name<<"' contains illegal character '"<<c<<"'";
     }
 }
 
@@ -444,13 +444,13 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
                                <<"' not found in topology constraint tree.";
     
         // mark branch and child branches as constrained
-        vector<const_branchview> b2 = branches_after_inclusive(TC,found); 
-        for(int j=0;j<b2.size();j++) {
-            if (b2[j].target().degree() > 3)
+        for(auto branch: branches_after_inclusive(TC, found))
+        {
+            if (branch.target().degree() > 3)
                 throw myexception()<<"Alignment constraint: clade '"
                                    <<join(name_groups[i],' ')
                                    <<"' has a polytomy in the topology constraint tree.";
-            branches.push_back(b2[j].undirected_name());
+            branches.push_back(branch.undirected_name());
         }
     }
 

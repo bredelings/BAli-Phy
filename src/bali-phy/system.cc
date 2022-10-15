@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 #include <string>
-#include <signal.h>
+#include <csignal>
 
 
 using std::cerr;
@@ -101,12 +101,12 @@ void block_signals()
     sigemptyset(&sa_new.sa_mask);       // signals to block while the handler runs
     sa_new.sa_flags = 0;                // flags
 
-    sigaction(SIGINT,NULL,&sa_old);
+    sigaction(SIGINT, nullptr, &sa_old);
     if (sa_old.sa_handler != SIG_IGN)
-        sigaction(SIGINT,&sa_new,NULL);
+        sigaction(SIGINT,&sa_new, nullptr);
 
-    sigaction(SIGTERM,NULL,&sa_old);
+    sigaction(SIGTERM,nullptr,&sa_old);
     if (sa_old.sa_handler != SIG_IGN)
-        sigaction(SIGTERM,&sa_new,NULL);
+        sigaction(SIGTERM,&sa_new, nullptr);
 #endif
 }

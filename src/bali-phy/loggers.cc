@@ -54,10 +54,8 @@ vector<vector<vector<int>>> get_un_identifiable_indices(const vector<string>& na
     // groups[prefix][label] = {indices} ; and the number of indices should be patterns.size
     map<string,map<string,vector<int>>> groups;
     std::optional<map<string,set<string>>> signature;
-    for(int i=0;i<patterns.size();i++)
+    for(auto& pattern : patterns)
     {
-	const auto& pattern = patterns[i];
-
 	auto z = parameters_with_extension(names, pattern);
 	if (not signature)
 	    signature = extract_signature(z);

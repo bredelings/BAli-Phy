@@ -680,8 +680,8 @@ int main(int argc,char* argv[])
                     write_initial_alignments(args, proc_id, output_dir);
             }
             else {
-                files.push_back(shared_ptr<ostream>(new ostream(cout.rdbuf())));
-                files.push_back(shared_ptr<ostream>(new ostream(cerr.rdbuf())));
+                files.push_back(std::make_shared<ostream>(cout.rdbuf()));
+                files.push_back(std::make_shared<ostream>(cerr.rdbuf()));
             }
 
             M->clear_program();

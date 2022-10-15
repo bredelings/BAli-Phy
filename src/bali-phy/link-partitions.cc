@@ -108,7 +108,7 @@ static set<string> valid_attributes {"smodel","imodel","scale","alphabet"};
 
 vector<vector<int>> get_link_groups(const variables_map& args, const string& key, int n)
 {
-    if (not args.count("link")) return vector<vector<int>>();
+    if (not args.count("link")) return {};
 
     auto link_group_names = args["link"].as<vector<string>>();
     vector<string> relevant_link_group_names;
@@ -324,22 +324,22 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
 	}
 
 	// 3. Map partitions to this model, unless they are already mapped
-	for(int j=0;j<partitions.size();j++) 
+	for(int partition: partitions)
 	{
 	    // Check for partition already mapped.
-	    if (mapping[partitions[j]] != -2)
-		throw myexception()<<"Trying to set '"<<key<<"' for partition "<<partitions[j]+1<<" twice.";
+	    if (mapping[partition] != -2)
+		throw myexception()<<"Trying to set '"<<key<<"' for partition "<<partition+1<<" twice.";
 
 	    // Map the partition to this model.
-	    mapping[partitions[j]] = index;
+	    mapping[partition] = index;
 	}
     }
 
     // Every unmentioned partition gets a mapping to a unique ""
-    for(int i=0;i<mapping.size();i++)
-	if (mapping[i] == -2) 
+    for(auto& i : mapping)
+	if (i == -2) 
 	{
-	    mapping[i] = model_names.size();
+	    i = model_names.size();
 	    model_names.push_back("");
 	}
 

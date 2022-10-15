@@ -26,16 +26,16 @@ using po::variables_map;
 /// Close the files.
 void close_files(vector<shared_ptr<ofstream>>& files)
 {
-    for(int i=0;i<files.size();i++)
-	files[i]->close();
+    for(auto& file : files)
+	file->close();
     files.clear();
 }
 
 /// Delete the files specified by 'filenames'
 void delete_files(vector<fs::path>& filenames)
 {
-    for(int i=0;i<filenames.size();i++)
-	fs::remove(filenames[i]);
+    for(auto& filename: filenames)
+	fs::remove(filename);
     filenames.clear();
 }
 
@@ -46,9 +46,9 @@ std::pair<vector<fs::path>, vector<shared_ptr<ostream>>> open_files(int proc_id,
     vector<shared_ptr<ofstream>> files;
     vector<fs::path> filenames;
 
-    for(int j=0;j<names.size();j++) 
+    for(auto& name: names)
     {
-        fs::path filename = dir / ("C" + std::to_string(proc_id+1) + "." + names[j]);
+        fs::path filename = dir / ("C" + std::to_string(proc_id+1) + "." + name);
       
 	if (fs::exists(filename))
         {
@@ -57,7 +57,7 @@ std::pair<vector<fs::path>, vector<shared_ptr<ostream>>> open_files(int proc_id,
 	    throw myexception()<<"Trying to open "<<filename<<" but it already exists!";
 	}
 	else {
-	    files.push_back(shared_ptr<ofstream>(new ofstream(filename)));
+	    files.push_back( std::make_shared<ofstream>(filename) );
 	    filenames.push_back(filename);
 	}
     }
@@ -183,7 +183,7 @@ void run_info(json& info, int /*proc_id*/, int argc, char* argv[])
     for(int i=0;i<argc;i++)
 	command.push_back(argv[i]);
 
-    time_t now = time(NULL);
+    time_t now = time( nullptr );
     string start_time = ctime(&now);
     rtrim(start_time);
 
