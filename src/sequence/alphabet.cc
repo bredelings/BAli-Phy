@@ -1,4 +1,4 @@
-c/*
+/*
   Copyright (C) 2004-2009 Benjamin Redelings
 
   This file is part of BAli-Phy.
