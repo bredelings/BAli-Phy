@@ -665,8 +665,8 @@ Doublets::Doublets(const string& s,const Nucleotides& a)
 
     // compute our 'unknown' letters
     unknown_letters.clear();
-    for(auto& unknown_letter: unknown_letters)
-        unknown_letters.push_back( N->unknown_letter() + N->unknown_letter() );
+    for(auto& unknown_letter: N->unknown_letters)
+        unknown_letters.push_back( unknown_letter + unknown_letter );
 
     setup_sub_nuc_table();
 
@@ -937,8 +937,8 @@ Triplets::Triplets(const string& s,const Nucleotides& a)
 
     // compute our 'unknown' letters
     unknown_letters.clear();
-    for(auto& unknown_letter: unknown_letters)
-        unknown_letters.push_back( N->unknown_letter() + N->unknown_letter() + N->unknown_letter());
+    for(auto& unknown_letter: N->unknown_letters)
+        unknown_letters.push_back( unknown_letter + unknown_letter + unknown_letter);
 
     setup_sub_nuc_table();
 
