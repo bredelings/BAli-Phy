@@ -115,8 +115,9 @@ int alphabet::operator[](const string& l) const
 	return alphabet::not_gap;
 
     // Check for unknown
-    if (l == unknown_letter)
-	return alphabet::unknown;
+    for(auto& unknown_letter: unknown_letters)
+        if (l == unknown_letter)
+            return alphabet::unknown;
 
     // We don't have this letter!
     throw bad_letter(l,name);
@@ -146,7 +147,7 @@ string alphabet::lookup(int i) const {
     else if (i == not_gap)
 	return wildcard;
     else if (i == unknown)
-	return unknown_letter;
+	return unknown_letter();
 
     return letter_class(i);
 }
@@ -256,33 +257,27 @@ string alphabet::print () const {
 
 
 alphabet::alphabet(const string& s)
-    :name(s),gap_letter("-"),wildcard("+"),unknown_letter("=")
+    :name(s)
 {
 }
 
 alphabet::alphabet(const string& s,const string& letters)
-    :name(s),gap_letter("-"),wildcard("+"),unknown_letter("=")
-{
-    for(int i=0;i<letters.length();i++)
-	insert(string(1U,s[i]));
-}
+    :alphabet(s, letters, "+")
+{ }
 
 alphabet::alphabet(const string& s,const string& letters,const string& m)
-    :name(s),gap_letter("-"),wildcard(m),unknown_letter("=")
+    :name(s), wildcard(m)
 {
     for(int i=0;i<letters.length();i++)
 	insert(string(1U,letters[i]));
 }
 
 alphabet::alphabet(const string& s,const vector<string>& letters)
-    :name(s),gap_letter("-"),wildcard("+"),unknown_letter("=")
-{
-    for(int i=0;i<letters.size();i++)
-	insert(letters[i]);
-}
+    :alphabet(s, letters, "+")
+{ }
 
 alphabet::alphabet(const string& s,const vector<string>& letters,const string& m) 
-    :name(s),gap_letter("-"),wildcard(m),unknown_letter("=")
+    :name(s),wildcard(m)
 {
     for(int i=0;i<letters.size();i++)
 	insert(letters[i]);
@@ -668,8 +663,10 @@ Doublets::Doublets(const string& s,const Nucleotides& a)
     // compute our 'gap' letters
     gap_letter = N->gap_letter + N->gap_letter;
 
-    // compute our 'unknown' letter
-    unknown_letter = N->unknown_letter + N->unknown_letter;
+    // compute our 'unknown' letters
+    unknown_letters.clear();
+    for(auto& unknown_letter: unknown_letters)
+        unknown_letters.push_back( N->unknown_letter() + N->unknown_letter() );
 
     setup_sub_nuc_table();
 
@@ -938,8 +935,10 @@ Triplets::Triplets(const string& s,const Nucleotides& a)
     // compute our 'gap' letters
     gap_letter = N->gap_letter + N->gap_letter + N->gap_letter;
 
-    // compute our 'unknown' letter
-    unknown_letter = N->unknown_letter + N->unknown_letter + N->unknown_letter;
+    // compute our 'unknown' letters
+    unknown_letters.clear();
+    for(auto& unknown_letter: unknown_letters)
+        unknown_letters.push_back( N->unknown_letter() + N->unknown_letter() + N->unknown_letter());
 
     setup_sub_nuc_table();
 

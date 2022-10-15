@@ -107,13 +107,15 @@ public:
     std::string name;
 
     /// The string for a gap (often '-')
-    std::string gap_letter;
+    std::string gap_letter = "-";
 
     /// The string for a not_gap (often 'N' or 'X')
-    std::string wildcard;
+    std::string wildcard = "+";
 
     /// The string for a unknown (often '?')
-    std::string unknown_letter;
+    std::vector<std::string> unknown_letters = {"?","="};
+
+    const std::string& unknown_letter() const {return unknown_letters[0];}
 
     virtual std::string letter_name() const {return "letter";};
     virtual std::string letters_name() const {return letter_name()+"s";};
@@ -129,7 +131,6 @@ public:
 
     /// Index of unknown ('?'): an ambiguous 'gap or not_gap' symbol.
     static constexpr int unknown = -3;
-
 
     /// The number of letters in the alphabet
     int n_letters() const {return letters_.size();}

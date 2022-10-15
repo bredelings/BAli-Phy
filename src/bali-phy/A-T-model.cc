@@ -345,7 +345,7 @@ void check_alignment_values(const alignment& A,const pair<string,string>& filena
                 auto [filename, range] = filename_range;
                 if (range.size())
                     filename = filename + ":" + range;
-                throw myexception()<<"Alignment file '"<<filename<<"' has a '"<<a.unknown_letter<<"' in sequence '"<<name<<"'.\n (Please replace with gap character '"<<a.gap_letter<<"' or wildcard '"<<a.wildcard<<"'.)";
+                throw myexception()<<"Alignment file '"<<filename<<"' has a '"<<a.unknown_letter()<<"' in sequence '"<<name<<"'.\n (Please replace with gap character '"<<a.gap_letter<<"' or wildcard '"<<a.wildcard<<"'.)";
             }
     }
 }
