@@ -175,6 +175,7 @@ public:
 	return letter_masks_[i2][i1];
     }
 
+    bool consistent(int i1, int i2) const;
 
     /// Do we contain the letter 'c'?
     bool contains(char c) const;

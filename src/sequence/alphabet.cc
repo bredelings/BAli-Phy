@@ -1,4 +1,4 @@
-/*
+c/*
   Copyright (C) 2004-2009 Benjamin Redelings
 
   This file is part of BAli-Phy.
@@ -47,6 +47,33 @@ bad_letter::bad_letter(const string& l,const string& name)
 const int alphabet::gap;
 const int alphabet::not_gap;
 const int alphabet::unknown;
+
+bool alphabet::consistent(int i1, int i2) const
+{
+    if (i1 == i2) return true;
+
+    if (i1 == alphabet::unknown or i2 == alphabet::unknown) return true;
+
+    if (i1 == alphabet::gap or i2 == alphabet::gap) return false;
+
+    if (i1 == alphabet::not_gap or i2 == alphabet::not_gap) return true;
+
+    if (i1 == alphabet::not_gap and is_feature(i2)) return true;
+    if (i2 == alphabet::not_gap and is_feature(i1)) return true;
+
+    assert(is_letter_class(i1) and is_letter_class(i2));
+
+    if (is_letter(i1) and is_letter(i2)) return false;
+
+    if (is_letter(i1))
+	return letter_masks_[i2][i1];
+
+    if (is_letter(i2))
+	return letter_masks_[i1][i2];
+
+    return (letter_masks_[i1] & letter_masks_[i2]).any();
+}
+
 
 bool alphabet::contains(char l) const {
     string s(1U,l);
