@@ -2836,15 +2836,13 @@ struct graph_plotter: public cairo_plotter
     graph_layout L;
     void operator()(cairo_t*);
 
-    bool draw_clouds;
+    bool draw_clouds = false;
 
-    bool draw_type_2_edges;
+    bool draw_type_2_edges = true;
 
     graph_plotter(const graph_layout& gl,double xw,double yw, double fs)
 	:cairo_plotter(xw,yw,fs),
-	 L(gl),
-	 draw_clouds(false),
-	 draw_type_2_edges(true)
+	 L(gl)
 	{}
 };
 

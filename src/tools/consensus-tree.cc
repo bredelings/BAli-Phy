@@ -89,9 +89,9 @@ map<dynamic_bitset<>,p_counts> get_multi_partitions_and_counts(const vector<tree
 }
 
 struct p_count {
-    int count;
-    int last_tree;
-    p_count(): count(0),last_tree(-1) {}
+    int count = 0;
+    int last_tree = -1;
+    p_count() {}
 };
 
 /// \brief Get the count and average length for each split

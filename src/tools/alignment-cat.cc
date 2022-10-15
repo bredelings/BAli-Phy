@@ -111,8 +111,8 @@ sequence strip_gaps(const sequence& s1, const vector<char>& missing)
 vector<sequence> strip_gaps(const vector<sequence>& S1, const vector<char>& missing)
 {
     vector<sequence> S2 = S1;
-    for(int i=0;i<S2.size();i++)
-	S2[i] = strip_gaps(S2[i], missing);
+    for(auto& seq: S2)
+	seq = strip_gaps(seq, missing);
     return S2;
 }
 
@@ -319,8 +319,8 @@ vector<int> get_leaf_order(const Tree& T,int b)
     std::sort(branches.begin(),branches.end(),branch_order(T));
 
     // accumulate results
-    for(int i=0;i<branches.size();i++) {
-	vector<int> sub_mapping = get_leaf_order(T,branches[i]);
+    for(int branch: branches) {
+	vector<int> sub_mapping = get_leaf_order(T,branch);
 	mapping.insert(mapping.end(),sub_mapping.begin(),sub_mapping.end());
     }
 
@@ -338,8 +338,8 @@ vector<int> get_leaf_order(const RootedTree& RT)
     std::sort(branches.begin(),branches.end(),branch_order(RT));
 
     // accumulate results
-    for(int i=0;i<branches.size();i++) {
-	vector<int> sub_mapping = get_leaf_order(RT,branches[i]);
+    for(int branch: branches) {
+	vector<int> sub_mapping = get_leaf_order(RT,branch);
 	mapping.insert(mapping.end(),sub_mapping.begin(),sub_mapping.end());
     }
 
@@ -542,8 +542,8 @@ int main(int argc,char* argv[])
 	vector<char> missing;
 	{
 	    string missing2 = args["missing"].as<string>();
-	    for(int i=0;i<missing2.size();i++)
-		missing.push_back(missing2[i]);
+	    for(char m: missing2)
+		missing.push_back(m);
 	}
 
 	if (args.count("align-by-amino"))

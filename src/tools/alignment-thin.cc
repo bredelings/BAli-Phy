@@ -154,7 +154,7 @@ std::pair<int,int> argmin(matrix<int>& M)
 		m1 = i;
 		m2 = j;
 	    }
-    return std::pair<int,int>(m1,m2);
+    return {m1,m2};
 }
 
 
@@ -175,7 +175,7 @@ std::pair<int,int> argmin(matrix<int>& M, const vector<int>& keep)
 			m1 = i;
 			m2 = j;
 		    }
-    return std::pair<int,int>(m1,m2);
+    return {m1,m2};
 }
 
 int argmin_row(matrix<int>& M, int i, const vector<int>& keep)
@@ -236,8 +236,8 @@ double symmetric_overlap(const alignment& A,int i,int j)
 int n_positive(const vector<int>& v) 
 {
     int count=0;
-    for(int i=0;i<v.size();i++)
-	if (v[i]>0)
+    for(int x: v)
+	if (x>0)
 	    count++;
     return count;
 }
@@ -418,14 +418,13 @@ int main(int argc,char* argv[])
 	// By default every sequence has status 1 which means, removeable, but not removed.
 	vector<int> keep(A.n_sequences(),1);
 
-	vector<string> protect = get_string_list(args, "protect");
 
-	for(int i=0;i<protect.size();i++)
+        for(auto& name: get_string_list(args, "protect"))
 	{
-	    if (auto p = find_index(names,protect[i]))
+	    if (auto p = find_index(names,name))
 		keep[*p] = 2;
 	    else
-		throw myexception()<<"keep: can't find sequence '"<<protect[i]<<"' to keep.";
+		throw myexception()<<"keep: can't find sequence '"<<name<<"' to keep.";
 	}
 
 	//----------------- remove by length ------------------//
@@ -553,8 +552,8 @@ int main(int argc,char* argv[])
 
 	    // convert the indices to a mask
 	    vector<int> target(names.size(),0);
-	    for(int i=0;i<compare_to.size();i++)
-		target[compare_to[i]] = 1;
+	    for(int i: compare_to)
+		target[i] = 1;
 
 	    // compute get the indices of the other taxa
 	    vector<int> not_compare_to;

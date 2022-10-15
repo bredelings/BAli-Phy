@@ -450,7 +450,7 @@ std::pair<int,int> arg_min_dist(const Matrix& D)
                 value = D(i,j);
             }
 
-    return std::pair<int,int>(xmin, ymin);
+    return {xmin, ymin};
 }
 
 int cluster_edges(Tree& T, const tree_edge& e1, const tree_edge& e2)

@@ -101,8 +101,8 @@ vector<int> find_triplet(const sequence& s,const string& triplet)
 vector<int> find_triplet(const vector<sequence>& sequences,const string& triplet) 
 {
     vector<int> found(3,0);
-    for(int i=0;i<sequences.size();i++)
-        add(found, find_triplet(sequences[i],triplet) );
+    for(auto& sequence: sequences)
+        add(found, find_triplet(sequence,triplet) );
     return found;
 }
 
@@ -277,9 +277,8 @@ map<gap,unsigned> guess_indels(const alignment& A)
     map<gap,unsigned> gaps;
     for(int i=0;i<A.n_sequences();i++)
     {
-        vector<gap> row = find_gaps(A,i);
-        for(int j=0;j<row.size();j++)
-            gaps[row[j]]++;
+        for(auto& g: find_gaps(A,i))
+            gaps[g]++;
     }
 
     // flip deletions in many taxa to insertions in few taxa
