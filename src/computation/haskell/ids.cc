@@ -99,9 +99,8 @@ bool is_haskell_id(const std::string& s)
 
     if (not (haskell_is_lower(s[0]) or isupper(s[0]))) return false;
 
-    for(int i=1;i<s.size();i++)
+    for(char c: s)
     {
-        char c = s[i];
         if (not (isupper(c) or haskell_is_lower(c) or isdigit(c) or c=='\''))
             return false;
     }

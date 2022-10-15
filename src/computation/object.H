@@ -64,9 +64,9 @@ public:
 
     Object& operator=(const Object&) {return *this;}
 
-    Object() {}
-    Object(const Object&):_refs(0) {}
-    virtual ~Object() {}
+    Object() = default;
+    Object(const Object&) {} // sets ref count to zero.
+    virtual ~Object() = default;
     void swap(Object&) {}
 };
 
