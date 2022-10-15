@@ -596,7 +596,8 @@ void mask_one_sequence(alignment& A, int i, const vector<int>& columns)
 {
     for(int col: columns)
     {
-        A.set_value(col, i, alphabet::not_gap);
+        if (A.character(col,i))
+            A.set_value(col, i, alphabet::not_gap);
     }
 }
 
@@ -1258,6 +1259,27 @@ vector<pair<int,int>> get_snps_versus_consensus(const alignment& A, const vector
     return positions;
 }
 
+vector<int> get_diff_columns(const alignment& A, const vector<int> consensus, int i)
+{
+    auto& a = A.get_alphabet();
+
+    vector<int> columns;
+
+    for(int c=0;c<A.length();c++)
+    {
+        int li = A(c,i);
+        int lc = consensus[c];
+
+        if (lc == li) continue;
+        if (lc == alphabet::not_gap and a.is_feature(li)) continue;
+        if (li == alphabet::not_gap and a.is_feature(lc)) continue;
+
+        columns.push_back(c);
+    }
+
+    return columns;
+}
+
 /*
 //using boost::hash_combine
 template <class T>
@@ -1308,14 +1330,14 @@ vector<int> get_allele_columns(const vector<int>& consensus, const alignment& A,
     vector<int> columns;
 
     // The position here is versus the reference (sequence 0).
-    auto snps = get_snps_versus_consensus(A, consensus, seq_index);
+    auto snps = get_diff_columns(A, consensus, seq_index);
 
     int column = -1;
     for(int snp_index=0; snp_index<(int)snps.size()-n_snps+1; snp_index++)
     {
         // number of columns from the (snp_index)-th SNP to the (snp_index+n_snps-1)-th SNP.
-        int c1 = snps[snp_index].first;
-        int c2 = snps[snp_index+n_snps-1].first;
+        int c1 = snps[snp_index];
+        int c2 = snps[snp_index+n_snps-1];
         int L = c2 - c1 + 1;
 
         if (L <= L_max)
@@ -1333,11 +1355,14 @@ vector<int> get_allele_columns(const vector<int>& consensus, const alignment& A,
 
 void mask_alleles(const vector<int>& consensus, alignment& A, int n_snps, int L_max)
 {
+    int total = 0;
     for(int i=0;i<A.n_sequences();i++)
     {
         auto columns = get_allele_columns(consensus, A, i, n_snps, L_max);
+        total += columns.size();
         mask_one_sequence(A, i, columns);
     }
+    std::cerr<<"mask_alleles: masked a total of "<<total<<" columns, with an average of "<<double(total)/A.n_sequences()<<" per sequence.\n";
 }
 
 typedef vector<pair<int,int>> allele_t;
