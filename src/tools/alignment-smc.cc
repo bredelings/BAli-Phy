@@ -801,7 +801,8 @@ vector<int> allele_counts(const alignment& A, int col)
 vector<int> allele_counts_with_gap(const alignment& A, int col)
 {
     auto& a = A.get_alphabet();
-    vector<int> counts(a.size()+1, 0);
+    vector<int> counts(a.size()+2, 0);
+    const int not_gap = a.size()-1;
     const int gap = a.size();
     for(int i=0;i<A.n_sequences();i++)
     {
@@ -810,7 +811,8 @@ vector<int> allele_counts_with_gap(const alignment& A, int col)
             counts[c]++;
         else if (c == alphabet::gap)
             counts[gap]++;
-        // Could be N!
+        else if (c == alphabet::not_gap)
+            counts[not_gap]++;
     }
     return counts;
 }
@@ -832,14 +834,17 @@ vector<int> allele_counts_with_gap(const alignment& A, int col, const vector<int
 {
     auto& a = A.get_alphabet();
     vector<int> counts(a.size()+1, 0);
-    int gap = a.size();
+    const int not_gap = a.size()-1;
+    const int gap = a.size();
     for(int i:seqs)
     {
         auto c = A(col,i);
         if (a.is_letter(c))
             counts[c]++;
-        else
+        else if (c == alphabet::gap)
             counts[gap]++;
+        else if (c == alphabet::not_gap)
+            counts[not_gap]++;
     }
     return counts;
 }
@@ -898,8 +903,10 @@ int largest_minor_allele_count(const alignment& A, int col)
 vector<int> get_consensus(const alignment& A, const vector<int>& seqs)
 {
     auto& a = A.get_alphabet();
-    int gap = a.size();
+    const int not_gap = a.size()-1;
+    const int gap = a.size();
 
+    // The consensus is not going to have ambiguity
     vector<int> consensus(A.length(), alphabet::unknown);
 
     for(int col=0; col < A.length(); col++)
@@ -910,7 +917,7 @@ vector<int> get_consensus(const alignment& A, const vector<int>& seqs)
             consensus[col] = alphabet::gap;
         else
         {
-            int total_non_gap = 0;
+            int total_non_gap = counts[not_gap];
             for(int letter = 0; letter < a.size(); letter++)
                 total_non_gap += counts[letter];
 
@@ -920,6 +927,35 @@ vector<int> get_consensus(const alignment& A, const vector<int>& seqs)
 
             if (consensus[col] == alphabet::unknown)
                 consensus[col] = alphabet::not_gap;
+        }
+    }
+
+    return consensus;
+}
+
+vector<int> get_consensus_strict(const alignment& A, const vector<int>& seqs)
+{
+    auto& a = A.get_alphabet();
+    const int not_gap = a.size()-1;
+    const int gap = a.size();
+
+    // The consensus is not going to have ambiguity
+    vector<int> consensus(A.length(), alphabet::gap);
+
+    for(int col=0; col < A.length(); col++)
+    {
+        auto counts = allele_counts_with_gap(A, col, seqs);
+
+        int total_non_gap = counts[not_gap];
+        for(int letter = 0; letter < a.size(); letter++)
+            total_non_gap += counts[letter];
+
+        if (counts[gap] < total_non_gap)
+        {
+            // drop - and +
+            counts.resize(a.size());
+
+            consensus[col] = argmax(counts);
         }
     }
 
@@ -1642,7 +1678,7 @@ int main(int argc,char* argv[])
             // This takes a range of SEQUENCES, not a range of columns.
             string range = args.count("consensus-seqs") ? args["consensus-seqs"].as<string>() : "-";
             auto consensus_seqs1 = parse_multi_range(range, A.n_sequences());
-            auto consensus1 = get_consensus(A, consensus_seqs1);
+            auto consensus1 = get_consensus_strict(A, consensus_seqs1);
 
             // Construct arguments n_snps, L
             auto find_args = split(args["mask-alleles"].as<string>(),':');
