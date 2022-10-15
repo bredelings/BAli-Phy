@@ -152,8 +152,8 @@ int main(int argc,char* argv[])
         vector<matrix<int> > Ms;
 
         do_setup(args,alignments);
-        for(int i=0;i<alignments.size();i++)
-            alignments[i] = chop_internal(alignments[i]);
+        for(auto& alignment: alignments)
+            alignment = chop_internal(alignment);
 
         if (not alignments.size()) 
             throw myexception()<<"Didn't read any alignments!";      
@@ -169,8 +169,8 @@ int main(int argc,char* argv[])
 
     
         //--------- Construct alignment indexes ---------//
-        for(int i=0;i<alignments.size();i++)
-            Ms.push_back(M(alignments[i]));
+        for(auto& alignment: alignments)
+            Ms.push_back(M(alignment));
 
 
         //--------- Build alignment from list ---------//
@@ -224,8 +224,8 @@ int main(int argc,char* argv[])
             ofstream graph_file(filename);
 
             int total_seq_length=0;
-            for(int i=0;i<L.size();i++)
-                total_seq_length += L[i];
+            for(int length: L)
+                total_seq_length += length;
 
             double scale1 = double(N)/total_seq_length;
             double scale2 = 1.0/total_seq_length;

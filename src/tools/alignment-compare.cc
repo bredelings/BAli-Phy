@@ -71,8 +71,8 @@ void load_alignments(vector<alignment>& alignments,
   if (not alignments.size())
     throw myexception()<<"Alignment sample"<<what<<" is empty.";  
 
-  for(int i=0;i<alignments.size();i++)
-    alignments[i] = chop_internal(alignments[i]);
+  for(auto& alignment: alignments)
+    alignment = chop_internal(alignment);
 
 
   if (alignments.size() > 1) {
@@ -169,10 +169,8 @@ matrix<double> get_counts(int s1,int s2,int L1,int L2,
       count(i,j) = 0;
 
   // get counts of each against each
-  for(int i=0;i<Ms.size();i++) 
+  for(auto& M: Ms)
   {
-    const matrix<int>& M = Ms[i];
-
     for(int c=0;c<M.size1();c++) {
       int index1 = M(c,s1);
       int index2 = M(c,s2);
@@ -316,11 +314,11 @@ int main(int argc,char* argv[])
     }
     
     //--------- Construct alignment indexes ---------//
-    for(int i=0;i<alignments1.size();i++)
-      M1.push_back(M(alignments1[i]));
+    for(auto& alignment: alignments1)
+      M1.push_back(M(alignment));
 
-    for(int i=0;i<alignments2.size();i++)
-      M2.push_back(M(alignments2[i]));
+    for(auto& alignment: alignments2)
+      M2.push_back(M(alignment));
 
     //-------- Compute tv distances for single homology statements --------//
     vector< vector< vector<double> > > TV1(N);
