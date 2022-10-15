@@ -615,7 +615,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
 
         auto dict_args = vars_from_lie( lie_used );
         auto tup_dict_args = vars_from_lie( lie_all );
-        Core::wrapper wrap = [=](const Core::Exp& E) {return Core::Lambda( dict_args, Core::Apply(E, tup_dict_args) );};
+        auto wrap = Core::WrapLambda(dict_args) * Core::WrapApply(tup_dict_args);
 
         auto constraints_used = constraints_from_lie(lie_used);
         Hs::Type polytype = quantify( qtvs_in_this_type, Hs::add_constraints( constraints_used, monotype ) );
