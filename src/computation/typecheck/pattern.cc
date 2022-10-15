@@ -247,6 +247,10 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
         TP.type = check_type(TP.type);
         tcPat(penv, TP.pat, Check(TP.type), sigs, a);
         TP.wrap = instPatSigma(TP.type, exp_type);
+        // I think we should translate this to case (wrap(x)) of pat -> E
+        // Does this undermine the grouping of constructors in desugaring?
+        // Does it only happen when pat is a var, so that we have
+        //    let pat = wrap(x) in E ?
     }
     else if (auto l = pat.to<Hs::LiteralPattern>())
     {

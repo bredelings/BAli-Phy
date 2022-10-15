@@ -293,6 +293,7 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
     else if (auto tpat = E.to<Hs::TypedPattern>())
     {
         // FIXME - what do we do with the wrapper?
+        // I think we need to apply it to the case object?
         return desugar_pattern(tpat->pat);
     }
     else if (E.is_log_double())
