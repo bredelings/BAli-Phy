@@ -1267,14 +1267,8 @@ vector<int> get_diff_columns(const alignment& A, const vector<int> consensus, in
 
     for(int c=0;c<A.length();c++)
     {
-        int li = A(c,i);
-        int lc = consensus[c];
-
-        if (lc == li) continue;
-        if (lc == alphabet::not_gap and a.is_feature(li)) continue;
-        if (li == alphabet::not_gap and a.is_feature(lc)) continue;
-
-        columns.push_back(c);
+        if (not a.consistent( A(c,i), consensus[c] ) )
+            columns.push_back(c);
     }
 
     return columns;
