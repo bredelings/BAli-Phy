@@ -146,7 +146,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("snp-snp-lengths",value<int>(),"Output counts of snp-snp\nlengths up to arg snps")
         ("sfs2d",value<string>(),"pop1:pop2:anc:window")
         ("find-alleles",value<string>(), "Find alleles with S snps in L bases and count >= N")
-        ("mask-alleles",value<string>(), "Find alleles with S snps in L bases and count >= N")
+        ("mask-alleles,m",value<vector<string>>()->composing(), "Find alleles with S snps in L bases and count >= N")
         ;
 
     // positional options
@@ -1359,7 +1359,9 @@ vector<int> get_allele_columns(const vector<int>& consensus, const alignment& A,
 
     vector<int> columns;
 
-    // The position here is versus the reference (sequence 0).
+    // The position here is in columns.
+    // This is probably OK, since any insertions of gaps would count as a difference, unless that
+    //   is the consensus.
     auto snps = get_diff_columns(A, consensus, seq_index);
 
     int column = -1;
@@ -1383,12 +1385,54 @@ vector<int> get_allele_columns(const vector<int>& consensus, const alignment& A,
     return columns;
 }
 
-void mask_alleles(const vector<int>& consensus, alignment& A, int n_snps, int L_max)
+vector<int> merge(const vector<int>& c1, const vector<int>& c2)
+{
+    vector<int> out;
+    int i1 = 0;
+    int i2 = 0;
+    while (i1 < c1.size() or i2 < c2.size())
+    {
+        if (i1 == c1.size())
+            out.push_back(c2[i2++]);
+        else if (i2 == c2.size())
+            out.push_back(c1[i1++]);
+        else if (c1[i1] < c2[i2])
+            out.push_back(c1[i1++]);
+        else if (c1[i1] > c2[i2])
+            out.push_back(c2[i2++]);
+        else
+        {
+            int C = c1[i1];
+            out.push_back(C);
+            i1++;
+            i2++;
+        }
+    }
+
+    assert(out.size() >= c1.size());
+    assert(out.size() >= c2.size());
+    assert(out.size() <= c1.size() + c2.size());
+
+    return out;
+}
+
+vector<int> get_allele_columns(const vector<int>& consensus, const alignment& A, int seq_index, const vector<pair<int,int>>& snp_lengths)
+{
+    vector<int> columns;
+    for(auto& [n,L]: snp_lengths)
+    {
+        auto columns2 = get_allele_columns(consensus, A, seq_index, n, L);
+        columns = merge(columns, columns2);
+    }
+    return columns;
+}
+
+void mask_alleles(const vector<int>& consensus, alignment& A, const vector<pair<int,int>>& snp_lengths)
 {
     int total = 0;
     for(int i=0;i<A.n_sequences();i++)
     {
-        auto columns = get_allele_columns(consensus, A, i, n_snps, L_max);
+        auto columns = get_allele_columns(consensus, A, i, snp_lengths);
         total += columns.size();
         mask_one_sequence(A, i, columns);
     }
@@ -1680,14 +1724,19 @@ int main(int argc,char* argv[])
             auto consensus_seqs1 = parse_multi_range(range, A.n_sequences());
             auto consensus1 = get_consensus_strict(A, consensus_seqs1);
 
-            // Construct arguments n_snps, L
-            auto find_args = split(args["mask-alleles"].as<string>(),':');
-            if (find_args.size() != 2)
-                throw myexception()<<"argument to --mask-alleles should have the form n:L, but got '"<<args["mask-alleles"].as<string>();
-            int n_snps = convertTo<int>(find_args[0]);
-            int L = convertTo<int>(find_args[1]);
+            vector<pair<int,int>> snp_lengths;
+            for(const string& allele_spec: args["mask-alleles"].as<vector<string>>())
+            {
+                // Construct arguments n_snps, L
+                auto find_args = split(allele_spec,':');
+                if (find_args.size() != 2)
+                    throw myexception()<<"argument to --mask-alleles should have the form n:L, but got '"<<args["mask-alleles"].as<string>();
+                int n_snps = convertTo<int>(find_args[0]);
+                int L = convertTo<int>(find_args[1]);
+                snp_lengths.push_back({n_snps, L});
+            }
 
-            mask_alleles(consensus1, A, n_snps, L);
+            mask_alleles(consensus1, A, snp_lengths);
         }
 
 
