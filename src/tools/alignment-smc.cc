@@ -146,6 +146,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("snp-snp-lengths",value<int>(),"Output counts of snp-snp\nlengths up to arg snps")
         ("sfs2d",value<string>(),"pop1:pop2:anc:window")
         ("find-alleles",value<string>(), "Find alleles with S snps in L bases and count >= N")
+        ("mask-alleles",value<string>(), "Find alleles with S snps in L bases and count >= N")
         ;
 
     // positional options
@@ -589,6 +590,14 @@ vector<int> expand_intervals(const vector<pair<int,int>>& intervals)
         for(int i=I.first;i<=I.second;i++)
             seq.push_back(i);
     return seq;
+}
+
+void mask_one_sequence(alignment& A, int i, const vector<int>& columns)
+{
+    for(int col: columns)
+    {
+        A.set_value(col, i, alphabet::not_gap);
+    }
 }
 
 void mask_columns(alignment& A, const vector<int>& columns)
@@ -1248,6 +1257,7 @@ vector<pair<int,int>> get_snps_versus_consensus(const alignment& A, const vector
 
     return positions;
 }
+
 /*
 //using boost::hash_combine
 template <class T>
@@ -1284,6 +1294,51 @@ namespace std
     };
 }
 */
+
+/*
+ * How about cases where we have >=n snps in L bases, but n UNIQUE snps in L bases?  Does thus make sense if looking for a count of (say) 2 for each base?
+ * Possibly, we could just pass min_count and max_count in to get_n_snps_versus consensus?
+ */
+vector<int> get_allele_columns(const vector<int>& consensus, const alignment& A, int seq_index, int n_snps, int L_max)
+{
+    assert(consensus.size() == A.length());
+    assert(n_snps > 1);
+    assert(L_max > 1);
+
+    vector<int> columns;
+
+    // The position here is versus the reference (sequence 0).
+    auto snps = get_snps_versus_consensus(A, consensus, seq_index);
+
+    int column = -1;
+    for(int snp_index=0; snp_index<(int)snps.size()-n_snps+1; snp_index++)
+    {
+        // number of columns from the (snp_index)-th SNP to the (snp_index+n_snps-1)-th SNP.
+        int c1 = snps[snp_index].first;
+        int c2 = snps[snp_index+n_snps-1].first;
+        int L = c2 - c1 + 1;
+
+        if (L <= L_max)
+        {
+            for(int c = std::max(column+1,c1); c <= c2; c++)
+            {
+                columns.push_back(c);
+                column = c;
+            }
+        }
+    }
+
+    return columns;
+}
+
+void mask_alleles(const vector<int>& consensus, alignment& A, int n_snps, int L_max)
+{
+    for(int i=0;i<A.n_sequences();i++)
+    {
+        auto columns = get_allele_columns(consensus, A, i, n_snps, L_max);
+        mask_one_sequence(A, i, columns);
+    }
+}
 
 typedef vector<pair<int,int>> allele_t;
 
@@ -1541,10 +1596,9 @@ int main(int argc,char* argv[])
 
         if (args.count("find-alleles"))
         {
+            // This takes a range of SEQUENCES, not a range of columns.
             string range = args.count("consensus-seqs") ? args["consensus-seqs"].as<string>() : "-";
-
             auto consensus_seqs1 = parse_multi_range(range, A.n_sequences());
-
             auto consensus1 = get_consensus(A, consensus_seqs1);
 
             auto find_args = split(args["find-alleles"].as<string>(),':');
@@ -1562,6 +1616,23 @@ int main(int argc,char* argv[])
             auto alleles = find_alleles(consensus1, A, n_snps, L, min_count, max_count, consensus_seqs1);
             show_alleles(alleles, A.get_alphabet(), consensus1);
             exit(0);
+        }
+
+        if (args.count("mask-alleles"))
+        {
+            // This takes a range of SEQUENCES, not a range of columns.
+            string range = args.count("consensus-seqs") ? args["consensus-seqs"].as<string>() : "-";
+            auto consensus_seqs1 = parse_multi_range(range, A.n_sequences());
+            auto consensus1 = get_consensus(A, consensus_seqs1);
+
+            // Construct arguments n_snps, L
+            auto find_args = split(args["mask-alleles"].as<string>(),':');
+            if (find_args.size() != 2)
+                throw myexception()<<"argument to --mask-alleles should have the form n:L, but got '"<<args["mask-alleles"].as<string>();
+            int n_snps = convertTo<int>(find_args[0]);
+            int L = convertTo<int>(find_args[1]);
+
+            mask_alleles(consensus1, A, n_snps, L);
         }
 
 
