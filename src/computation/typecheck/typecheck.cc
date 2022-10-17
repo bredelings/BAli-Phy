@@ -1212,7 +1212,7 @@ tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skol
         return {Core::wrapper_id, {}, {}, polytype};
 }
 
-std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls> typechecker_state::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::Type>& nested_action)
+std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, std::shared_ptr<const Core::Decls>> typechecker_state::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::Type>& nested_action)
 {
     // 1. Skolemize the type at level
     auto [wrap, tvs, givens, rho_type] = skolemize(polytype, true);
@@ -1243,7 +1243,7 @@ std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls> 
     if (not lie_residual_keep.empty())
         throw myexception()<<"Can't derive constraints '"<<print(lie_residual_keep)<<"' from specified constraints '"<<print(givens)<<"'";
 
-    return {wrap, tvs, givens, rho_type, ev_decls};
+    return {wrap, tvs, givens, rho_type, std::make_shared<Core::Decls>(ev_decls)};
 }
 
 LIE typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)

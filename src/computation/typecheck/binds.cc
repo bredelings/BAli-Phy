@@ -266,7 +266,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, Core::wrapper_id);
 
-        auto decl = mkGenBind( tvs, dict_vars, std::make_shared<Core::Decls>(ev_decls), Hs::Decls({FD}), {{name, bind_info}} );
+        auto decl = mkGenBind( tvs, dict_vars, ev_decls, Hs::Decls({FD}), {{name, bind_info}} );
 
         return {decl, name, polytype};
     }

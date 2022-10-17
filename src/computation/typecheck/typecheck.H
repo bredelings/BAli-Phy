@@ -218,10 +218,10 @@ struct typechecker_state: FreshVarSource
 
     std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
 
-    std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls> skolemize_and(const Hs::Type& t, const tc_action<Hs::Type>& nested_action);
+    std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, std::shared_ptr<const Core::Decls>> skolemize_and(const Hs::Type& t, const tc_action<Hs::Type>& nested_action);
 
     template <typename R>
-    std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls, R> skolemize_and_result(const Hs::Type& t, const tc_function<R, Hs::Type>& nested_action);
+    std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, std::shared_ptr<const Core::Decls>, R> skolemize_and_result(const Hs::Type& t, const tc_function<R, Hs::Type>& nested_action);
 
     void tcRhoStmts(int i, std::vector<Hs::Qual>& stmts, const Expected& exp_type);
 
@@ -442,7 +442,7 @@ int getArity(const Hs::Matches& m);
 int getArity(const Hs::MRule& m);
 
 template <typename R>
-std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls, R>
+std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, std::shared_ptr<const Core::Decls>, R>
 typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_function<R, Hs::Type>& nested_function)
 {
     // 1. Skolemize the type at level
@@ -463,9 +463,7 @@ typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_funct
     {
         promote(constraint);
         if (max_level(constraint) > level)
-        {
             throw myexception()<<"skolem-escape in "<<constraint;
-        }
         else if (intersects(free_type_variables(constraint), tvs))
             lie_residual_keep.push_back({var,constraint});
         else
@@ -476,7 +474,7 @@ typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_funct
     if (not lie_residual_keep.empty())
         throw myexception()<<"Can't derive constraints '"<<print(lie_residual_keep)<<"' from specified constraints '"<<print(givens)<<"'";
 
-    return {wrap, tvs, givens, rho_type, ev_decls, result};
+    return {wrap, tvs, givens, rho_type, std::make_shared<Core::Decls>(ev_decls), result};
 }
 
 
