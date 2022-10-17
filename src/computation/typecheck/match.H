@@ -36,21 +36,16 @@ Core::wrapper typechecker_state::tcMatchesFunCheck(std::vector<Expected>& arg_ty
     // It will handle cases like forall a. C1 => forall b. C2 => E.
     // Until we add type arguments, it should be Core::wrapper_id though.
 
-    if (auto [wrap_gen, tvs, givens, rho_type] = skolemize(type,true); not tvs.empty() or not givens.empty())  // type has any foralls or a context.  // skolemize
+    if (not is_rho_type(type))
     {
-        assert(not tvs.size());
-        assert(not givens.size());
-
-        // push level here -- mark all variables untouchable
-        // we don't have levels yet, so record all variables in the untouchable set.
-
-        auto tc2 = copy_clear_wanteds();
-        auto match_wrapper = tc2.tcMatchesFunCheck(arg_types, arity, type, a);
-
-        // FIXME - what do we do with this?
-        std::shared_ptr<Core::Decls> evidence_binds;
-
-        current_wanteds().implications.push_back( std::make_shared<Implication>(level, tvs, givens, tc2.current_wanteds(), evidence_binds) );
+        auto [wrap_gen, tcs, givens, rho_type, decls, match_wrapper] =
+            skolemize_and_result<Core::wrapper>
+            (
+                type,
+                [&](const Hs::Type& rho_type, auto& tc2) {
+                    return tc2.tcMatchesFunCheck(arg_types, arity, type, a);
+                }
+            );
 
         return wrap_gen * match_wrapper;
     }
