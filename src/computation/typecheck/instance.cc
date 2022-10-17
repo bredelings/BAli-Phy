@@ -124,7 +124,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 
     //  -- new -- //
     Hs::Type inst_type = Hs::add_constraints(inst_decl.context, inst_decl.constraint);
-    inst_type = check_constraint( inst_type );
+    inst_type = check_constraint( inst_type );  // kind-check the constraint and quantify it.
     return {dfun, inst_type};
 }
 
