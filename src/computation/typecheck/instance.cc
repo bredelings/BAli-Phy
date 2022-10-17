@@ -222,7 +222,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
     auto inst_type = instance_env().at(dfun);
     // Instantiate it with rigid type variables.
-    auto [instance_tvs, givens, instance_head] = skolemize(inst_type, false);
+    auto [wrap_gen, instance_tvs, givens, instance_head] = skolemize(inst_type, false);
     auto [instance_class, instance_args] = Hs::decompose_type_apps(instance_head);
 
     // 2. Get the class info

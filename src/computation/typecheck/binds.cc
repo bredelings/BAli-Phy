@@ -237,10 +237,10 @@ classify_constraints(const LIE& lie, const set<Hs::TypeVar>& qtvs)
     return {lie_deferred, lie_retained};
 }
 
-std::tuple<std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls> typechecker_state::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::Type>& nested_action)
+std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls> typechecker_state::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::Type>& nested_action)
 {
     // 1. Skolemize the type at level
-    auto [tvs, givens, rho_type] = skolemize(polytype, true);
+    auto [wrap, tvs, givens, rho_type] = skolemize(polytype, true);
 
     // 2. typecheck the rhs at level+1
     auto tcs2 = copy_inc_level_clear_wanteds();
@@ -275,7 +275,7 @@ std::tuple<std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls> typechecker_sta
     if (not lie_residual_keep.empty())
         throw myexception()<<"Can't derive constraints '"<<print(lie_residual_keep)<<"' from specified constraints '"<<print(givens)<<"'";
 
-    return {tvs, givens, rho_type, ev_decls};
+    return {wrap, tvs, givens, rho_type, ev_decls};
 }
 
 /// Compare to checkSigma, which also check for any skolem variables in the wanteds
@@ -290,7 +290,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 1. skolemize the type -> (tvs, givens, rho-type)
         auto polytype = gve.at(name);
-        auto [tvs, givens, rho_type, ev_decls] =
+        auto [wrap_gen, tvs, givens, rho_type, ev_decls] =
             skolemize_and(polytype,
                           [&](const Hs::Type& rho_type, auto& tcs2) {
                               tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type), [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {

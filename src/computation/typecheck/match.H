@@ -36,7 +36,7 @@ Core::wrapper typechecker_state::tcMatchesFunCheck(std::vector<Expected>& arg_ty
     // It will handle cases like forall a. C1 => forall b. C2 => E.
     // Until we add type arguments, it should be Core::wrapper_id though.
 
-    if (auto [tvs, givens, rho_type] = skolemize(type,true); not tvs.empty() or not givens.empty())  // type has any foralls or a context.  // skolemize
+    if (auto [wrap_gen, tvs, givens, rho_type] = skolemize(type,true); not tvs.empty() or not givens.empty())  // type has any foralls or a context.  // skolemize
     {
         assert(not tvs.size());
         assert(not givens.size());
@@ -52,7 +52,7 @@ Core::wrapper typechecker_state::tcMatchesFunCheck(std::vector<Expected>& arg_ty
 
         current_wanteds().implications.push_back( std::make_shared<Implication>(level, tvs, givens, tc2.current_wanteds(), evidence_binds) );
 
-        return match_wrapper;
+        return wrap_gen * match_wrapper;
     }
     else if (arg_types.size() == arity)
     {

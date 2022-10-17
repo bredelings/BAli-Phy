@@ -978,7 +978,7 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
 Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma_type)
 {
     // 1. skolemize the type
-    auto [tvs, givens, rho_type] = skolemize(sigma_type, true);
+    auto [wrap_gen, tvs, givens, rho_type] = skolemize(sigma_type, true);
 
     // 2. typecheck
     auto tcs2 = copy_clear_wanteds();
@@ -1009,10 +1009,8 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
     if (not lie_failed.empty())
         throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
 
-    auto dict_vars = vars_from_lie(givens);
-
     // 6. modify E, which is of type rho_type, to be of type sigma_type
-    return Core::WrapLambda(dict_vars) * Core::WrapLet(ev_decls);
+    return wrap_gen * Core::WrapLet(ev_decls);
 }
 
 // The idea is that we need an e2, but we have a t1.
@@ -1059,10 +1057,10 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
       However, perhaps we should add Eq a to the environment?
     */
 
-    auto [tvs2, givens, type2] = skolemize(t2, true);
+    auto [wrap_gen, tvs2, givens, type2] = skolemize(t2, true);
 
     auto tcs2 = copy_clear_wanteds();
-    auto [wrap1, type1] = tcs2.instantiate_emit(t1);
+    auto [wrap_apply, type1] = tcs2.instantiate_emit(t1);
     unify(type1, type2);
     auto wanteds = tcs2.current_wanteds();
 
@@ -1089,9 +1087,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
 
     collected_wanteds += non_entailed_wanteds;
 
-    auto dict2_vars = vars_from_lie(givens);
-
-    return Core::WrapLambda(dict2_vars) * Core::WrapLet(decls) * wrap1;
+    return wrap_gen * Core::WrapLet(decls) * wrap_apply;
 }
 
 std::tuple<Core::wrapper, Hs::Type>
@@ -1203,13 +1199,14 @@ tuple<vector<Hs::MetaTypeVar>, LIE, Hs::Type> typechecker_state::instantiate(con
     return {tvs, wanteds, type};
 }
 
-tuple<vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skolemize(const Hs::Type& t, bool skolem)
+tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skolemize(const Hs::Type& t, bool skolem)
 {
     // 1. Handle foralls
     vector<Hs::TypeVar> tvs;
     LIE givens;
     Hs::Type type = t;
-
+    Core::wrapper wrap = Core::wrapper_id;
+    
     if (auto fa = type.to<Hs::ForallType>())
     {
         substitution_t s;
@@ -1227,19 +1224,28 @@ tuple<vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skolemize(const Hs:
         }
         type = fa->type;
         type = apply_subst(s,type);
+
+        // TODO: wrap = Core::WrapLambdaTypes(fa->type_var_binders) * wrap;
     }
 
     // 2. Handle constraints
     if (auto ct = type.to<Hs::ConstrainedType>())
     {
         givens = constraints_to_lie(ct->context.constraints);
+
         type = ct->type;
+
+        auto dict_vars = vars_from_lie(givens);
+        
+        wrap = Core::WrapLambda( dict_vars );
     }
 
     // 3. Handle the exposed type being a polytype
     if (not tvs.empty() or not givens.empty())
     {
-        auto [tvs2, givens2, type2] = skolemize(type, skolem);
+        auto [wrap2, tvs2, givens2, type2] = skolemize(type, skolem);
+
+        wrap = wrap * wrap2;
 
         for(auto& tv2: tvs2)
             tvs.push_back(tv2);
@@ -1250,7 +1256,7 @@ tuple<vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skolemize(const Hs:
         type = type2;
     }
 
-    return {tvs, givens, type};
+    return {wrap, tvs, givens, type};
 }
 
 LIE typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
