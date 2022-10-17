@@ -237,6 +237,47 @@ classify_constraints(const LIE& lie, const set<Hs::TypeVar>& qtvs)
     return {lie_deferred, lie_retained};
 }
 
+std::tuple<std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls> typechecker_state::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::Type>& nested_action)
+{
+    // 1. Skolemize the type at level
+    auto [tvs, givens, rho_type] = skolemize(polytype, true);
+
+    // 2. typecheck the rhs at level+1
+    auto tcs2 = copy_inc_level_clear_wanteds();
+    nested_action(rho_type, tcs2);
+    auto wanteds = tcs2.current_wanteds();
+
+    // 3. try to solve the wanteds from the givens
+    // FIXME -- if there are higher-level givens, then we probably need those too!
+    auto [ev_decls, lie_residual] = tcs2.entails( givens, wanteds );
+
+    // 4. Promote any level+1 meta-vars and complain about level+1 skolem vars.
+    for(auto& [_,constraint]: lie_residual)
+    {
+        promote(constraint);
+        if (max_level(constraint) > level)
+        {
+            throw myexception()<<"skolem-escape in "<<constraint;
+        }
+    }
+
+    // 4. defer unsolved constraints that don't mention skolem tyvars at this level.
+    LIE lie_residual_keep;
+    for(auto& [var,constraint]: lie_residual)
+    {
+        if (intersects(free_type_variables(constraint), tvs))
+            lie_residual_keep.push_back({var,constraint});
+        else
+            current_wanteds().simple.push_back({var,constraint});
+    }
+
+    // 5. check that the remaining constraints are satisfied by the constraints in the type signature
+    if (not lie_residual_keep.empty())
+        throw myexception()<<"Can't derive constraints '"<<print(lie_residual_keep)<<"' from specified constraints '"<<print(givens)<<"'";
+
+    return {tvs, givens, rho_type, ev_decls};
+}
+
 /// Compare to checkSigma, which also check for any skolem variables in the wanteds
 tuple<expression_ref, ID, Hs::Type>
 typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
@@ -249,41 +290,15 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 1. skolemize the type -> (tvs, givens, rho-type)
         auto polytype = gve.at(name);
-        auto [tvs, givens, rho_type] = skolemize(polytype, true);
+        auto [tvs, givens, rho_type, ev_decls] =
+            skolemize_and(polytype,
+                          [&](const Hs::Type& rho_type, auto& tcs2) {
+                              tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type), [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
+                                  tc.tcMatches(FD.matches, arg_types, result_type);};});
+                          }
+                );
 
-        // 2. typecheck the rhs
-        auto tcs2 = copy_inc_level_clear_wanteds();
-        tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type), [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
-            tc.tcMatches(FD.matches, arg_types, result_type);};});
-        auto wanteds = tcs2.current_wanteds();
-
-        // 3. try to solve the wanteds from the givens
-        // FIXME -- if there are higher-level givens, then we probably need those too!
-        auto [ev_decls, lie_residual] = tcs2.entails( givens, wanteds );
-
-        for(auto& [_,constraint]: lie_residual)
-        {
-            promote(constraint);
-            if (max_level(constraint) > level)
-            {
-                throw myexception()<<"skolem-escape in "<<constraint;
-            }
-        }
-
-        // 4. defer unsolved constraints that don't mention skolem tyvars at this level.
-        LIE lie_residual_keep;
-        for(auto& [var,constraint]: lie_residual)
-        {
-            if (intersects(free_type_variables(constraint), tvs))
-                lie_residual_keep.push_back({var,constraint});
-            else
-                current_wanteds().simple.push_back({var,constraint});
-        }
-
-        // 5. check that the remaining constraints are satisfied by the constraints in the type signature
-        if (not lie_residual_keep.empty())
-            throw myexception()<<"Can't derive constraints '"<<print(lie_residual_keep)<<"' from specified constraints '"<<print(givens)<<"'";
-        // 6. return GenBind with tvs, givens, body
+        // 2. return GenBind with tvs, givens, body
         Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
 
         Hs::Type monotype = rho_type;

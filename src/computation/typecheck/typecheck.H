@@ -213,6 +213,8 @@ struct typechecker_state: FreshVarSource
 
     std::tuple<std::vector<Hs::TypeVar>, LIE, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
 
+    std::tuple<std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls> skolemize_and(const Hs::Type& t, const tc_action<Hs::Type>& nested_action);
+
     void tcRhoStmts(int i, std::vector<Hs::Qual>& stmts, const Expected& exp_type);
 
     // Figure 22.
