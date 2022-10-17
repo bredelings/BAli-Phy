@@ -124,6 +124,10 @@ struct typechecker_state: FreshVarSource
 
     typechecker_state copy_inc_level_clear_wanteds() const;
 
+    void promote_mtv(const Hs::MetaTypeVar& mtv);
+    bool maybe_promote_mtv(const Hs::MetaTypeVar& mtv);
+    void promote(Hs::Type t);
+
     void add_binders(const local_value_env& binders);
 
     typechecker_state copy_add_binders(const global_value_env& env) const;

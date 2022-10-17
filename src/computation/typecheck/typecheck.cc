@@ -744,6 +744,29 @@ typechecker_state typechecker_state::copy_inc_level_clear_wanteds() const
     return tc2;
 }
 
+void typechecker_state::promote_mtv(const Hs::MetaTypeVar& mtv)
+{
+    assert(mtv.level() > level);
+    mtv.fill( fresh_meta_type_var(unloc(mtv.name), *mtv.kind) );
+}
+
+bool typechecker_state::maybe_promote_mtv(const Hs::MetaTypeVar& mtv)
+{
+    if (mtv.level() > level)
+    {
+        assert(mtv.level() == level + 1);
+        promote_mtv(mtv);
+        return true;
+    }
+    else
+        return false;
+}
+
+void typechecker_state::promote(Hs::Type t)
+{
+    for(auto& mtv: free_meta_type_variables(t))
+        maybe_promote_mtv(mtv);
+}
 
 void typechecker_state::add_binders(const local_value_env& binders)
 {
