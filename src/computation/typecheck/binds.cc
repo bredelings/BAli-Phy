@@ -252,20 +252,13 @@ std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls> 
     auto [ev_decls, lie_residual] = tcs2.entails( givens, wanteds );
 
     // 4. Promote any level+1 meta-vars and complain about level+1 skolem vars.
-    for(auto& [_,constraint]: lie_residual)
+    LIE lie_residual_keep;
+    for(auto& [var, constraint]: lie_residual)
     {
         promote(constraint);
         if (max_level(constraint) > level)
-        {
             throw myexception()<<"skolem-escape in "<<constraint;
-        }
-    }
-
-    // 4. defer unsolved constraints that don't mention skolem tyvars at this level.
-    LIE lie_residual_keep;
-    for(auto& [var,constraint]: lie_residual)
-    {
-        if (intersects(free_type_variables(constraint), tvs))
+        else if (intersects(free_type_variables(constraint), tvs))
             lie_residual_keep.push_back({var,constraint});
         else
             current_wanteds().simple.push_back({var,constraint});

@@ -69,6 +69,9 @@ struct typechecker_state;
 template <typename T>
 using tc_action = std::function<void(T,typechecker_state&)>;
 
+template <typename R, typename T>
+using tc_function = std::function<R (T,typechecker_state&)>;
+
 struct typechecker_state: FreshVarSource
 {
     //------- global state ------------//
@@ -216,6 +219,9 @@ struct typechecker_state: FreshVarSource
     std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
 
     std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls> skolemize_and(const Hs::Type& t, const tc_action<Hs::Type>& nested_action);
+
+    template <typename R>
+    std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls, R> skolemize_and_result(const Hs::Type& t, const tc_function<R, Hs::Type>& nested_action);
 
     void tcRhoStmts(int i, std::vector<Hs::Qual>& stmts, const Expected& exp_type);
 
@@ -434,6 +440,46 @@ bool constraint_is_hnf(const Hs::Type& constraint);
 
 int getArity(const Hs::Matches& m);
 int getArity(const Hs::MRule& m);
+
+template <typename R>
+std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, Core::Decls, R>
+typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_function<R, Hs::Type>& nested_function)
+{
+    // 1. Skolemize the type at level
+    auto [wrap, tvs, givens, rho_type] = skolemize(polytype, true);
+
+    // 2. typecheck the rhs at level+1
+    auto tcs2 = copy_inc_level_clear_wanteds();
+    auto result = nested_function(rho_type, tcs2);
+    auto wanteds = tcs2.current_wanteds();
+
+    // 3. try to solve the wanteds from the givens
+    // FIXME -- if there are higher-level givens, then we probably need those too!
+    auto [ev_decls, lie_residual] = tcs2.entails( givens, wanteds );
+
+    // 4. Promote any level+1 meta-vars and complain about level+1 skolem vars.
+    LIE lie_residual_keep;
+    for(auto& [var,constraint]: lie_residual)
+    {
+        promote(constraint);
+        if (max_level(constraint) > level)
+        {
+            throw myexception()<<"skolem-escape in "<<constraint;
+        }
+        else if (intersects(free_type_variables(constraint), tvs))
+            lie_residual_keep.push_back({var,constraint});
+        else
+            current_wanteds().simple.push_back({var,constraint});
+    }
+
+    // 5. check that the remaining constraints are satisfied by the constraints in the type signature
+    if (not lie_residual_keep.empty())
+        throw myexception()<<"Can't derive constraints '"<<print(lie_residual_keep)<<"' from specified constraints '"<<print(givens)<<"'";
+
+    return {wrap, tvs, givens, rho_type, ev_decls, result};
+}
+
+
 #endif
 
 

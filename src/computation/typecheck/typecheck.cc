@@ -1031,36 +1031,19 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
       However, perhaps we should add Eq a to the environment?
     */
 
-    auto [wrap_gen, tvs2, givens, type2] = skolemize(t2, true);
+    auto [wrap_gen, tvs2, givens, type2, decls, wrap_apply]
+        = skolemize_and_result<Core::wrapper>
+        (
+            t2,
+            [&](const Hs::Type& rho_type, typechecker_state& tcs2)
+            {
+                auto [wrap_apply, type1] = tcs2.instantiate_emit(t1);
+                tcs2.unify(type1, rho_type);
+                return wrap_apply;
+            }
+        );
 
-    auto tcs2 = copy_clear_wanteds();
-    auto [wrap_apply, type1] = tcs2.instantiate_emit(t1);
-    unify(type1, type2);
-    auto wanteds = tcs2.current_wanteds();
-
-    // We are looking for type variables in t1, not type1.
-    // This will only contain skolem variables if t1 contains a meta-variable BEFORE instantiation.
-    for(auto ftv: free_type_variables(t1))
-        if (includes(tvs2, ftv))
-            throw myexception()<<"Type not polymorphic enough";
-
-    // I *think* that we can just issue some of the wanteds into the environment.
-    // This is what would happen if t2 is just a meta-type-variable.
-    //
-    // But if t2 contains a skolem variable from tvs2, then we can't issue it into the environment.
-    // How about if it contains a meta-type variable
-
-    auto [decls, non_entailed_wanteds] = entails(givens, wanteds);
-
-    for(auto& [dvar, constraint]: non_entailed_wanteds)
-    {
-        for(auto& ftv: free_type_variables(constraint))
-            if (includes(tvs2, ftv))
-                throw myexception()<<"Type\n\n  "<<t1<<"\n\n  does not subsume\n\n  "<<t2;
-    }
-
-    collected_wanteds += non_entailed_wanteds;
-
+    // For example, \darg1 -> \let darg2 = compute darg1 in function darg1 darg2
     return wrap_gen * Core::WrapLet(decls) * wrap_apply;
 }
 
