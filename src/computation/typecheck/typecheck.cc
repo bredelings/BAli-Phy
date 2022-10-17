@@ -1077,21 +1077,6 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
     // But if t2 contains a skolem variable from tvs2, then we can't issue it into the environment.
     // How about if it contains a meta-type variable
 
-    LIE wanteds_to_emit;
-
-    // we could
-    // * try and entail things
-    // * fail if any of the remaining this have skolem variables (skolem escape)
-    // * emit the rest?
-    //
-    // this might work for:
-    //     * forall a.HasCallStack => a -> a,    t2 = forall c.HasCallStack => c -> c
-    //
-    // if any skolem variables, we need to try and entail them, I think.   C a[meta] b[skolem]
-    // if no meta variables, we maybe could emit them...
-    //     for example  t1 = 
-    LIE wanteds_to_entail;
-
     auto [decls, non_entailed_wanteds] = entails(givens, wanteds);
 
     for(auto& [dvar, constraint]: non_entailed_wanteds)
