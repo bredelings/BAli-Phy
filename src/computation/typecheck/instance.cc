@@ -340,8 +340,8 @@ pair<Hs::Binds, Core::Decls> typechecker_state::infer_type_for_instances2(const 
 
 bool typechecker_state::instance_matches(const Hs::Type& type1, const Hs::Type& type2)
 {
-    auto [tvs1, wanteds1, head1] = instantiate(type1);
-    auto [tvs2, wanteds2, head2] = instantiate(type2);
+    auto [_1, _2, head1] = instantiate(type1);
+    auto [_3, _4, head2] = instantiate(type2);
     return maybe_match(head1, head2);
 }
 
