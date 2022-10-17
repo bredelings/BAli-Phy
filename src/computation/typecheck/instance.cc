@@ -247,8 +247,6 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
 
     // 7. make some intermediates
 
-    auto given_dvars = vars_from_lie(givens);
-
     vector<Hs::Expression> dict_entries;
     for(auto& [var,constraint]: wanteds)
         dict_entries.push_back(var);
@@ -302,7 +300,9 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     if (decls_super.size())
         dict = Core::Let( decls_super, dict );
 
-    return {decls, pair(dfun, Core::Lambda(given_dvars, dict))};
+    dict = wrap_gen(dict);
+
+    return {decls, pair(dfun, dict)};
 }
 
 // We need to handle the instance decls in a mutually recursive way.
