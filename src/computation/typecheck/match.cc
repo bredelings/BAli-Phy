@@ -47,7 +47,7 @@ void typechecker_state::tcMatch(Hs::MRule& m, const vector<Expected>& pat_types,
     auto state2 = copy_clear_wanteds();
 
     local_value_env penv;
-    state2.tcPats(penv, m.patterns, pat_types, {}, [&](auto& penv2, auto& tc) {tc.tcRho(m.rhs,result_type);});
+    state2.tcPats(penv, m.patterns, pat_types, {}, [&](auto& /*penv2*/, auto& tc) {tc.tcRho(m.rhs,result_type);});
 
     current_wanteds() += state2.current_wanteds();
 }
