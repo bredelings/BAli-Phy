@@ -1199,16 +1199,14 @@ tuple<vector<Hs::MetaTypeVar>, LIE, Hs::Type> typechecker_state::instantiate(con
     return {tvs, wanteds, type};
 }
 
-tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skolemize(const Hs::Type& t, bool skolem)
+tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skolemize(const Hs::Type& polytype, bool skolem)
 {
     // 1. Handle foralls
-    vector<Hs::TypeVar> tvs;
-    LIE givens;
-    Hs::Type type = t;
-    Core::wrapper wrap = Core::wrapper_id;
     
-    if (auto fa = type.to<Hs::ForallType>())
+    if (auto fa = polytype.to<Hs::ForallType>())
     {
+        vector<Hs::TypeVar> tvs;
+
         substitution_t s;
         for(auto& tv: fa->type_var_binders)
         {
@@ -1222,41 +1220,39 @@ tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skol
 
             tvs.push_back(new_tv);
         }
-        type = fa->type;
-        type = apply_subst(s,type);
 
-        // TODO: wrap = Core::WrapLambdaTypes(fa->type_var_binders) * wrap;
-    }
+        auto type = apply_subst(s, fa->type);
 
-    // 2. Handle constraints
-    if (auto ct = type.to<Hs::ConstrainedType>())
-    {
-        givens = constraints_to_lie(ct->context.constraints);
-
-        type = ct->type;
-
-        auto dict_vars = vars_from_lie(givens);
-        
-        wrap = Core::WrapLambda( dict_vars );
-    }
-
-    // 3. Handle the exposed type being a polytype
-    if (not tvs.empty() or not givens.empty())
-    {
         auto [wrap2, tvs2, givens2, type2] = skolemize(type, skolem);
 
-        wrap = wrap * wrap2;
-
+        // Compute tvs from local tvs followed by tvs of sub-type.
         for(auto& tv2: tvs2)
             tvs.push_back(tv2);
 
+        // auto wrap = Core::WrapLambdaTypes(fa->type_var_binders) * wrap2;
+        auto wrap = wrap2;
+
+        return {wrap, tvs, givens2, type2};
+    }
+
+    // 2. Handle constraints
+    else if (auto ct = polytype.to<Hs::ConstrainedType>())
+    {
+        auto [wrap2, tvs2, givens2, type2] = skolemize(ct->type, skolem);
+
+        // Compute givens from local givens followed by givens of sub-type.
+        auto givens = constraints_to_lie(ct->context.constraints);
         for(auto& given:  givens2)
             givens.push_back(given);
 
-        type = type2;
+        auto wrap = Core::WrapLambda( vars_from_lie(givens) ) * wrap2;
+
+        return {wrap, tvs2, givens, type2};
     }
 
-    return {wrap, tvs, givens, type};
+    // 3. If the type has no foralls and no constraints, then it is just a rho-type.
+    else
+        return {Core::wrapper_id, {}, {}, polytype};
 }
 
 LIE typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
