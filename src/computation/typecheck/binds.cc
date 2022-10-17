@@ -564,13 +564,8 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
 
     // promote type vars that we are not quantifying over.
     for(auto& tv: local_tvs)
-    {
-        if (not tv.filled() and tv.level() > level)
-        {
-            assert(tv.level() == level+1);
-            tv.fill( fresh_meta_type_var(unloc(tv.name), *tv.kind) );
-        }
-    }
+        if (not tv.filled())
+            maybe_promote_mtv(tv);
 
     for(auto& tv: local_tvs)
         assert(max_level(tv) <= level);
