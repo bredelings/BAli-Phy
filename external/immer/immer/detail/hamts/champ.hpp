@@ -94,21 +94,26 @@ struct champ_debug_stats
             100. * (value_count * value_size + child_count * child_size) /
             (capacity * value_size + capacity * child_size);
 
-        auto value_capacity          = m * inner_node_w_value_count;
-        auto child_capacity          = m * inner_node_w_child_count;
-        auto dense_child_utilization = 100. * child_count / child_capacity;
-        auto dense_value_utilization = 100. * value_count / value_capacity;
+        auto value_capacity = m * inner_node_w_value_count;
+        auto child_capacity = m * inner_node_w_child_count;
+        auto dense_child_utilization =
+            child_capacity == 0 ? 100. : 100. * child_count / child_capacity;
+        auto dense_value_utilization =
+            value_capacity == 0 ? 100. : 100. * value_count / value_capacity;
         auto dense_utilization =
-            100. * (value_count * value_size + child_count * child_size) /
-            (value_capacity * value_size + child_capacity * child_size);
+            value_capacity + child_capacity == 0
+                ? 100.
+                : 100. * (value_count * value_size + child_count * child_size) /
+                      (value_capacity * value_size +
+                       child_capacity * child_size);
 
         return {collision_ratio,
                 utilization,
                 child_utilization,
                 value_utilization,
                 dense_utilization,
-                dense_child_utilization,
-                dense_value_utilization};
+                dense_value_utilization,
+                dense_child_utilization};
     }
 };
 #endif
@@ -185,6 +190,63 @@ struct champ
             node_t::delete_deep(root, 0);
     }
 
+    std::size_t do_check_champ(node_t* node,
+                               count_t depth,
+                               size_t path_hash,
+                               size_t hash_mask) const
+    {
+        auto result = std::size_t{};
+        if (depth < max_depth<B>) {
+            auto nodemap = node->nodemap();
+            if (nodemap) {
+                auto fst = node->children();
+                for (auto idx = std::size_t{}; idx < branches<B>; ++idx) {
+                    if (nodemap & (1 << idx)) {
+                        auto child = *fst++;
+                        result +=
+                            do_check_champ(child,
+                                           depth + 1,
+                                           path_hash | (idx << (B * depth)),
+                                           (hash_mask << B) | mask<B>);
+                    }
+                }
+            }
+            auto datamap = node->datamap();
+            if (datamap) {
+                auto fst = node->values();
+                for (auto idx = std::size_t{}; idx < branches<B>; ++idx) {
+                    if (datamap & (1 << idx)) {
+                        auto hash  = Hash{}(*fst++);
+                        auto check = (hash & hash_mask) ==
+                                     (path_hash | (idx << (B * depth)));
+                        // assert(check);
+                        result += !!check;
+                    }
+                }
+            }
+        } else {
+            auto fst = node->collisions();
+            auto lst = fst + node->collision_count();
+            for (; fst != lst; ++fst) {
+                auto hash  = Hash{}(*fst);
+                auto check = hash == path_hash;
+                // assert(check);
+                result += !!check;
+            }
+        }
+        return result;
+    }
+
+    // Checks that the hashes of the values correspond with what has actually
+    // been inserted.  If it doesn't it can mean that corruption has happened
+    // due some value being moved out of the champ when it should have not.
+    bool check_champ() const
+    {
+        auto r = do_check_champ(root, 0, 0, mask<B>);
+        // assert(r == size);
+        return r == size;
+    }
+
 #if IMMER_DEBUG_STATS
     void do_get_debug_stats(champ_debug_stats& stats,
                             node_t* node,
@@ -246,7 +308,8 @@ struct champ
     }
 
     template <typename Fn>
-    void for_each_chunk_traversal(node_t* node, count_t depth, Fn&& fn) const
+    void
+    for_each_chunk_traversal(const node_t* node, count_t depth, Fn&& fn) const
     {
         if (depth < max_depth<B>) {
             auto datamap = node->datamap();
@@ -272,8 +335,8 @@ struct champ
     }
 
     template <typename EqualValue, typename Differ>
-    void diff(node_t* old_node,
-              node_t* new_node,
+    void diff(const node_t* old_node,
+              const node_t* new_node,
               count_t depth,
               Differ&& differ) const
     {
@@ -350,8 +413,8 @@ struct champ
     }
 
     template <typename EqualValue, typename Differ>
-    void diff_data_node(node_t* old_node,
-                        node_t* new_node,
+    void diff_data_node(const node_t* old_node,
+                        const node_t* new_node,
                         bitmap_t bit,
                         count_t depth,
                         Differ&& differ) const
@@ -379,8 +442,8 @@ struct champ
     }
 
     template <typename EqualValue, typename Differ>
-    void diff_node_data(node_t* old_node,
-                        node_t* new_node,
+    void diff_node_data(const node_t* old_node,
+                        const node_t* const new_node,
                         bitmap_t bit,
                         count_t depth,
                         Differ&& differ) const
@@ -408,8 +471,8 @@ struct champ
     }
 
     template <typename EqualValue, typename Differ>
-    void diff_data_data(node_t* old_node,
-                        node_t* new_node,
+    void diff_data_data(const node_t* old_node,
+                        const node_t* new_node,
                         bitmap_t bit,
                         Differ&& differ) const
     {
@@ -427,8 +490,9 @@ struct champ
     }
 
     template <typename EqualValue, typename Differ>
-    void
-    diff_collisions(node_t* old_node, node_t* new_node, Differ&& differ) const
+    void diff_collisions(const node_t* old_node,
+                         const node_t* new_node,
+                         Differ&& differ) const
     {
         auto old_begin = old_node->collisions();
         auto old_end   = old_node->collisions() + old_node->collision_count();
@@ -602,8 +666,8 @@ struct champ
                     auto result =
                         do_add_mut(e, child, std::move(v), hash, shift + B);
                     node->children()[offset] = result.node;
-                    if (!result.mutated)
-                        child->dec_unsafe();
+                    if (!result.mutated && child->dec())
+                        node_t::delete_deep_shift(child, shift + B);
                     return {node, result.added, true};
                 } else {
                     assert(node->children()[offset]);
@@ -633,15 +697,16 @@ struct champ
                         return {node_t::owned_values(r, e), false, false};
                     }
                 } else {
-                    auto mutate = node->can_mutate(e);
-                    auto hash2  = Hash{}(*val);
-                    auto child =
-                        node_t::make_merged_e(e,
-                                              shift + B,
-                                              std::move(v),
-                                              hash,
-                                              mutate ? std::move(*val) : *val,
-                                              hash2);
+                    auto mutate        = node->can_mutate(e);
+                    auto mutate_values = mutate && node->can_mutate_values(e);
+                    auto hash2         = Hash{}(*val);
+                    auto child         = node_t::make_merged_e(
+                        e,
+                        shift + B,
+                        std::move(v),
+                        hash,
+                        mutate_values ? std::move(*val) : *val,
+                        hash2);
                     IMMER_TRY {
                         auto r = mutate ? node_t::move_inner_replace_merged(
                                               e, node, bit, offset, child)
@@ -669,8 +734,8 @@ struct champ
     {
         auto hash = Hash{}(v);
         auto res  = do_add_mut(e, root, std::move(v), hash, 0);
-        if (!res.mutated)
-            root->dec_unsafe();
+        if (!res.mutated && root->dec())
+            node_t::delete_deep(root, 0);
         root = res.node;
         size += res.added ? 1 : 0;
     }
@@ -690,13 +755,13 @@ struct champ
             auto lst = fst + node->collision_count();
             for (; fst != lst; ++fst)
                 if (Equal{}(*fst, k))
-                    return {
-                        node_t::copy_collision_replace(
-                            node,
-                            fst,
-                            Combine{}(std::forward<K>(k),
-                                      std::forward<Fn>(fn)(Project{}(*fst)))),
-                        false};
+                    return {node_t::copy_collision_replace(
+                                node,
+                                fst,
+                                Combine{}(std::forward<K>(k),
+                                          std::forward<Fn>(fn)(Project{}(
+                                              detail::as_const(*fst))))),
+                            false};
             return {node_t::copy_collision_insert(
                         node,
                         Combine{}(std::forward<K>(k),
@@ -726,13 +791,13 @@ struct champ
                 auto offset = node->data_count(bit);
                 auto val    = node->values() + offset;
                 if (Equal{}(*val, k))
-                    return {
-                        node_t::copy_inner_replace_value(
-                            node,
-                            offset,
-                            Combine{}(std::forward<K>(k),
-                                      std::forward<Fn>(fn)(Project{}(*val)))),
-                        false};
+                    return {node_t::copy_inner_replace_value(
+                                node,
+                                offset,
+                                Combine{}(std::forward<K>(k),
+                                          std::forward<Fn>(fn)(Project{}(
+                                              detail::as_const(*val))))),
+                            false};
                 else {
                     auto child = node_t::make_merged(
                         shift + B,
@@ -789,7 +854,8 @@ struct champ
                         node,
                         fst,
                         Combine{}(std::forward<K>(k),
-                                  std::forward<Fn>(fn)(Project{}(*fst))));
+                                  std::forward<Fn>(fn)(
+                                      Project{}(detail::as_const(*fst)))));
             return nullptr;
         } else {
             auto idx = (hash & (mask<B> << shift)) >> shift;
@@ -819,7 +885,8 @@ struct champ
                         node,
                         offset,
                         Combine{}(std::forward<K>(k),
-                                  std::forward<Fn>(fn)(Project{}(*val))));
+                                  std::forward<Fn>(fn)(
+                                      Project{}(detail::as_const(*val)))));
                 else {
                     return nullptr;
                 }
@@ -871,7 +938,8 @@ struct champ
                             node,
                             fst,
                             Combine{}(std::forward<K>(k),
-                                      std::forward<Fn>(fn)(Project{}(*fst))));
+                                      std::forward<Fn>(fn)(
+                                          Project{}(detail::as_const(*fst)))));
                         return {node_t::owned(r, e), false, false};
                     }
                 }
@@ -891,8 +959,8 @@ struct champ
                     auto result = do_update_mut<Project, Default, Combine>(
                         e, child, k, std::forward<Fn>(fn), hash, shift + B);
                     node->children()[offset] = result.node;
-                    if (!result.mutated)
-                        child->dec_unsafe();
+                    if (!result.mutated && child->dec())
+                        node_t::delete_deep_shift(child, shift + B);
                     return {node, result.added, true};
                 } else {
                     auto result = do_update<Project, Default, Combine>(
@@ -923,19 +991,21 @@ struct champ
                             node,
                             offset,
                             Combine{}(std::forward<K>(k),
-                                      std::forward<Fn>(fn)(Project{}(*val))));
+                                      std::forward<Fn>(fn)(
+                                          Project{}(detail::as_const(*val)))));
                         return {node_t::owned_values(r, e), false, false};
                     }
                 } else {
-                    auto mutate = node->can_mutate(e);
-                    auto hash2  = Hash{}(*val);
-                    auto child  = node_t::make_merged_e(
+                    auto mutate        = node->can_mutate(e);
+                    auto mutate_values = mutate && node->can_mutate_values(e);
+                    auto hash2         = Hash{}(*val);
+                    auto child         = node_t::make_merged_e(
                         e,
                         shift + B,
                         Combine{}(std::forward<K>(k),
                                   std::forward<Fn>(fn)(Default{}())),
                         hash,
-                        mutate ? std::move(*val) : *val,
+                        mutate_values ? std::move(*val) : *val,
                         hash2);
                     IMMER_TRY {
                         auto r = mutate ? node_t::move_inner_replace_merged(
@@ -972,8 +1042,8 @@ struct champ
         auto hash = Hash{}(k);
         auto res  = do_update_mut<Project, Default, Combine>(
             e, root, k, std::forward<Fn>(fn), hash, 0);
-        if (!res.mutated)
-            root->dec_unsafe();
+        if (!res.mutated && root->dec())
+            node_t::delete_deep(root, 0);
         root = res.node;
         size += res.added ? 1 : 0;
     }
@@ -1007,7 +1077,8 @@ struct champ
                             node,
                             fst,
                             Combine{}(std::forward<K>(k),
-                                      std::forward<Fn>(fn)(Project{}(*fst))));
+                                      std::forward<Fn>(fn)(
+                                          Project{}(detail::as_const(*fst)))));
                         return {node_t::owned(r, e), false};
                     }
                 }
@@ -1023,8 +1094,8 @@ struct champ
                         e, child, k, std::forward<Fn>(fn), hash, shift + B);
                     if (result.node) {
                         node->children()[offset] = result.node;
-                        if (!result.mutated)
-                            child->dec_unsafe();
+                        if (!result.mutated && child->dec())
+                            node_t::delete_deep_shift(child, shift + B);
                         return {node, true};
                     } else {
                         return {nullptr, false};
@@ -1062,7 +1133,8 @@ struct champ
                             node,
                             offset,
                             Combine{}(std::forward<K>(k),
-                                      std::forward<Fn>(fn)(Project{}(*val))));
+                                      std::forward<Fn>(fn)(
+                                          Project{}(detail::as_const(*val)))));
                         return {node_t::owned_values(r, e), false};
                     }
                 } else {
@@ -1081,8 +1153,8 @@ struct champ
         auto res  = do_update_if_exists_mut<Project, Combine>(
             e, root, k, std::forward<Fn>(fn), hash, 0);
         if (res.node) {
-            if (!res.mutated)
-                root->dec_unsafe();
+            if (!res.mutated && root->dec())
+                node_t::delete_deep(root, 0);
             root = res.node;
         }
     }
@@ -1135,14 +1207,18 @@ struct champ
                                ? node_t::copy_collision_remove(node, cur)
                                : sub_result{fst + (cur == fst)};
 #if !defined(_MSC_VER)
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 #endif
             // Apparently GCC is generating this warning sometimes when
             // compiling the benchmarks. It makes however no sense at all.
             return {};
 #if !defined(_MSC_VER)
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
+#endif
 #endif
         } else {
             auto idx = (hash & (mask<B> << shift)) >> shift;
@@ -1216,29 +1292,41 @@ struct champ
 
         kind_t kind;
         data_t data;
+        bool owned;
         bool mutated;
 
         sub_result_mut(sub_result a)
             : kind{a.kind}
             , data{a.data}
+            , owned{false}
             , mutated{false}
         {}
         sub_result_mut(sub_result a, bool m)
             : kind{a.kind}
             , data{a.data}
+            , owned{false}
             , mutated{m}
         {}
-        sub_result_mut(bool m)
+        sub_result_mut()
             : kind{kind_t::nothing}
-            , mutated{m} {};
+            , mutated{false} {};
         sub_result_mut(T* x, bool m)
             : kind{kind_t::singleton}
+            , owned{m}
+            , mutated{m}
+        {
+            data.singleton = x;
+        };
+        sub_result_mut(T* x, bool o, bool m)
+            : kind{kind_t::singleton}
+            , owned{o}
             , mutated{m}
         {
             data.singleton = x;
         };
         sub_result_mut(node_t* x, bool m)
             : kind{kind_t::tree}
+            , owned{false}
             , mutated{m}
         {
             data.tree = x;
@@ -1276,7 +1364,7 @@ struct champ
                     }
                 }
             }
-            return {mutate};
+            return {};
         } else {
             auto idx = (hash & (mask<B> << shift)) >> shift;
             auto bit = bitmap_t{1u} << idx;
@@ -1289,16 +1377,16 @@ struct champ
                            : do_sub(child, k, hash, shift + B);
                 switch (result.kind) {
                 case sub_result::nothing:
-                    return {mutate};
+                    return {};
                 case sub_result::singleton:
                     if (node->datamap() == 0 && node->children_count() == 1 &&
                         shift > 0) {
                         if (mutate) {
                             node_t::delete_inner(node);
-                            if (!result.mutated)
-                                child->dec_unsafe();
+                            if (!result.mutated && child->dec())
+                                node_t::delete_deep_shift(child, shift + B);
                         }
-                        return {result.data.singleton, mutate};
+                        return {result.data.singleton, result.owned, mutate};
                     } else {
                         auto r =
                             mutate ? node_t::move_inner_replace_inline(
@@ -1306,7 +1394,7 @@ struct champ
                                          node,
                                          bit,
                                          offset,
-                                         result.mutated
+                                         result.owned
                                              ? std::move(*result.data.singleton)
                                              : *result.data.singleton)
                                    : node_t::copy_inner_replace_inline(
@@ -1314,17 +1402,17 @@ struct champ
                                          bit,
                                          offset,
                                          *result.data.singleton);
-                        if (result.mutated)
+                        if (result.owned)
                             detail::destroy_at(result.data.singleton);
-                        else if (mutate)
-                            child->dec_unsafe();
+                        if (!result.mutated && mutate && child->dec())
+                            node_t::delete_deep_shift(child, shift + B);
                         return {node_t::owned_values(r, e), mutate};
                     }
                 case sub_result::tree:
                     if (mutate) {
                         children[offset] = result.data.tree;
-                        if (!result.mutated)
-                            child->dec_unsafe();
+                        if (!result.mutated && child->dec())
+                            node_t::delete_deep_shift(child, shift + B);
                         return {node, true};
                     } else {
                         IMMER_TRY {
@@ -1340,8 +1428,9 @@ struct champ
                     }
                 }
             } else if (node->datamap() & bit) {
-                auto offset = node->data_count(bit);
-                auto val    = node->values() + offset;
+                auto offset        = node->data_count(bit);
+                auto val           = node->values() + offset;
+                auto mutate_values = mutate && node->can_mutate_values(e);
                 if (Equal{}(*val, k)) {
                     auto nv = node->data_count();
                     if (node->nodemap() || nv > 2) {
@@ -1352,20 +1441,20 @@ struct champ
                         return {node_t::owned_values_safe(r, e), mutate};
                     } else if (nv == 2) {
                         if (shift > 0) {
-                            if (mutate) {
+                            if (mutate_values) {
                                 auto r = new (store)
                                     T{std::move(node->values()[!offset])};
                                 node_t::delete_inner(node);
-                                return {r, mutate};
+                                return {r, true};
                             } else {
-                                return {node->values() + !offset, mutate};
+                                return {node->values() + !offset, false};
                             }
                         } else {
                             auto& v = node->values()[!offset];
-                            auto r =
-                                node_t::make_inner_n(0,
-                                                     node->datamap() & ~bit,
-                                                     mutate ? std::move(v) : v);
+                            auto r  = node_t::make_inner_n(
+                                0,
+                                node->datamap() & ~bit,
+                                mutate_values ? std::move(v) : v);
                             assert(!node->nodemap());
                             if (mutate)
                                 node_t::delete_inner(node);
@@ -1379,7 +1468,7 @@ struct champ
                     }
                 }
             }
-            return {mutate};
+            return {};
         }
     }
 
@@ -1393,8 +1482,8 @@ struct champ
         case sub_result::nothing:
             break;
         case sub_result::tree:
-            if (!res.mutated)
-                root->dec_unsafe();
+            if (!res.mutated && root->dec())
+                node_t::delete_deep(root, 0);
             root = res.data.tree;
             --size;
             break;

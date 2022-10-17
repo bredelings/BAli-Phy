@@ -92,7 +92,7 @@ struct for_each_chunk_visitor : visitor_base<for_each_chunk_visitor>
     static void visit_leaf(Pos&& pos, Fn&& fn)
     {
         auto data = pos.node()->leaf();
-        fn(data, data + pos.count());
+        fn(as_const(data), as_const(data) + pos.count());
     }
 };
 
@@ -109,7 +109,7 @@ struct for_each_chunk_p_visitor : visitor_base<for_each_chunk_p_visitor>
     template <typename Pos, typename Fn>
     static bool visit_leaf(Pos&& pos, Fn&& fn)
     {
-        auto data = pos.node()->leaf();
+        auto data = as_const(pos.node()->leaf());
         return fn(data, data + pos.count());
     }
 };
@@ -468,9 +468,8 @@ struct update_visitor : visitor_base<update_visitor<NodeT>>
         auto node   = node_t::make_inner_sr_n(count, pos.relaxed());
         IMMER_TRY {
             auto child = pos.towards_oh(this_t{}, idx, offset, fn);
-            node_t::do_copy_inner_sr(node, pos.node(), count);
-            node->inner()[offset]->dec_unsafe();
-            node->inner()[offset] = child;
+            node_t::do_copy_inner_replace_sr(
+                node, pos.node(), count, offset, child);
             return node;
         }
         IMMER_CATCH (...) {
@@ -487,9 +486,8 @@ struct update_visitor : visitor_base<update_visitor<NodeT>>
         auto node   = node_t::make_inner_n(count);
         IMMER_TRY {
             auto child = pos.towards_oh_ch(this_t{}, idx, offset, count, fn);
-            node_t::do_copy_inner(node, pos.node(), count);
-            node->inner()[offset]->dec_unsafe();
-            node->inner()[offset] = child;
+            node_t::do_copy_inner_replace(
+                node, pos.node(), count, offset, child);
             return node;
         }
         IMMER_CATCH (...) {

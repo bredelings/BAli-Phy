@@ -212,6 +212,10 @@ struct node
     {
         return refs(this).unique() || ownee(this).can_mutate(e);
     }
+    bool can_mutate_values(edit_t e) const
+    {
+        return can_mutate(impl.d.data.inner.values, e);
+    }
 
     static node_t* make_inner_n(count_t n)
     {
@@ -365,9 +369,9 @@ struct node
                 deallocate_values(nxt, nv);
                 IMMER_RETHROW;
             }
+            impl.d.data.inner.values = nxt;
             if (refs(old).dec())
                 delete_values(old, nv);
-            impl.d.data.inner.values = nxt;
             return dst;
         }
     }
@@ -515,8 +519,8 @@ struct node
         dst->impl.d.data.inner.datamap = src->datamap();
         dst->impl.d.data.inner.nodemap = src->nodemap();
         std::copy(srcp, srcp + n, dstp);
-        inc_nodes(srcp, n);
-        srcp[offset]->dec_unsafe();
+        inc_nodes(srcp, offset);
+        inc_nodes(srcp + offset + 1, n - offset - 1);
         dstp[offset] = child;
         return dst;
     }
@@ -628,7 +632,7 @@ struct node
         dst->impl.d.data.inner.datamap = src->datamap() & ~bit;
         dst->impl.d.data.inner.nodemap = src->nodemap() | bit;
         if (nv > 1) {
-            auto mutate_values = can_mutate(dst->impl.d.data.inner.values, e);
+            auto mutate_values = can_mutate(src->impl.d.data.inner.values, e);
             IMMER_TRY {
                 if (mutate_values)
                     detail::uninitialized_move(
@@ -707,8 +711,8 @@ struct node
             deallocate_inner(dst, n - 1, nv + 1);
             IMMER_RETHROW;
         }
-        inc_nodes(src->children(), n);
-        src->children()[noffset]->dec_unsafe();
+        inc_nodes(src->children(), noffset);
+        inc_nodes(src->children() + noffset + 1, n - noffset - 1);
         std::copy(src->children(), src->children() + noffset, dst->children());
         std::copy(src->children() + noffset + 1,
                   src->children() + n,
@@ -731,7 +735,7 @@ struct node
         dst->impl.d.data.inner.datamap = src->datamap() | bit;
         IMMER_TRY {
             auto mutate_values =
-                nv && can_mutate(dst->impl.d.data.inner.values, e);
+                nv && can_mutate(src->impl.d.data.inner.values, e);
             if (nv) {
                 if (mutate_values)
                     detail::uninitialized_move(
@@ -829,7 +833,7 @@ struct node
         dst->impl.d.data.inner.datamap = src->datamap() & ~bit;
         dst->impl.d.data.inner.nodemap = src->nodemap();
         if (nv > 1) {
-            auto mutate_values = can_mutate(dst->impl.d.data.inner.values, e);
+            auto mutate_values = can_mutate(src->impl.d.data.inner.values, e);
             if (mutate_values) {
                 IMMER_TRY {
                     detail::uninitialized_move(
@@ -925,7 +929,7 @@ struct node
         dst->impl.d.data.inner.nodemap = src->nodemap();
         IMMER_TRY {
             auto mutate_values =
-                nv && can_mutate(dst->impl.d.data.inner.values, e);
+                nv && can_mutate(src->impl.d.data.inner.values, e);
             if (nv) {
                 if (mutate_values)
                     detail::uninitialized_move(
@@ -1043,7 +1047,6 @@ struct node
     }
 
     bool dec() const { return refs(this).dec(); }
-    void dec_unsafe() const { refs(this).dec_unsafe(); }
 
     static void inc_nodes(node_t** p, count_t n)
     {

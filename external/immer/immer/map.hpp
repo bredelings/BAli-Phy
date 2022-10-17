@@ -170,6 +170,8 @@ public:
 
     using transient_type = map_transient<K, T, Hash, Equal, MemoryPolicy, B>;
 
+    using memory_policy_type = MemoryPolicy;
+
     /*!
      * Constructs a map containing the elements in `values`.
      */
@@ -361,7 +363,7 @@ public:
     }
 
     /*!
-     * Returns whether the sets are equal.
+     * Returns whether the maps are equal.
      */
     IMMER_NODISCARD bool operator==(const map& other) const
     {
