@@ -2,6 +2,7 @@
 #define CORE_H
 
 #include <utility>  // for function
+#include <memory>   // for shared_ptr
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/var.H"
 #include "computation/expression/let.H"
@@ -26,11 +27,13 @@ namespace Core
     Exp Tuple(const std::vector<Exp>& es);
     Exp Lambda(const std::vector<Var>& args, const Exp& body);
     Exp Let(const Decls& args, const Exp& body);
+    Exp Let(const std::shared_ptr<const Decls>& args, const Exp& body);
     Exp Apply(const Exp& fun, const std::vector<Exp>& args);
     Exp Apply(const Exp& fun, const std::vector<Var>& args);
     Exp Case(const Exp& object, const std::vector<Pat>& patterns, const std::vector<Exp>& bodies);
 
     wrapper WrapLet(const Decls& args);
+    wrapper WrapLet(const std::shared_ptr<const Decls>& args);
     wrapper WrapLambda(const std::vector<Var>& args);
     wrapper WrapApply(const std::vector<Exp>& args);
     wrapper WrapApply(const std::vector<Var>& args);

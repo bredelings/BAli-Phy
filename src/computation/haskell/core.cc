@@ -33,6 +33,14 @@ namespace Core
             return let_expression(decls, body);
     }
 
+    Exp Let(const std::shared_ptr<const Decls>& decls, const Exp& body)
+    {
+        if (decls->empty())
+            return body;
+        else
+            return let_expression(*decls, body);
+    }
+
     Exp Apply(const Exp& fun, const std::vector<Exp>& args)
     {
         if (args.empty())
@@ -63,6 +71,18 @@ namespace Core
 
     wrapper WrapLet(const Decls& args)
     {
+        return [=](const Core::Exp& x)
+            {
+                return Let(args, x);
+            };
+    }
+
+    wrapper WrapLet(const std::shared_ptr<const Decls>& args)
+    {
+        // This should hold a reference to the shared_ptr.
+
+        // The value will be read when wrapper is applied, not when it is constructed.
+
         return [=](const Core::Exp& x)
             {
                 return Let(args, x);
