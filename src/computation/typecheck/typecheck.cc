@@ -972,44 +972,18 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
     return env2;
 }
 
-// should return a wrapper!
-
 // OK, so this returns something of type exp_sigma
 Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma_type)
 {
     // 1. skolemize the type
-    auto [wrap_gen, tvs, givens, rho_type] = skolemize(sigma_type, true);
+    auto [wrap_gen, tvs, givens, rho_type, ev_decls] =
+        skolemize_and(sigma_type,
+                      [&](const Hs::Type& rho_type, auto& tcs2) {
+                          tcs2.tcRho(E, Check(rho_type));
+                      }
+            );
 
-    // 2. typecheck
-    auto tcs2 = copy_clear_wanteds();
-    tcs2.tcRho(E, Check(rho_type));
-    auto new_wanteds = tcs2.current_wanteds();
-
-    // 3. Check for escaped skolem variables
-    auto s2 = sigma_type;
-    auto free_tvs = free_type_variables(gve);
-    add(free_tvs, free_type_variables(s2));
-    for(auto ftv: free_tvs)
-        if (includes(tvs, ftv))
-            throw myexception()<<"Type not polymorphic enough";
-
-    // 4. check that the remaining constraints are satisfied by the constraints in the type signature
-    auto [ev_decls, non_entailed_wanteds] = entails( givens, new_wanteds );
-
-    // 5. put wanteds without skolem variables into the current LIE
-    LIE lie_failed;
-    for(auto& [dvar, constraint]: non_entailed_wanteds)
-    {
-        if (intersects(free_type_variables(constraint), tvs))
-            lie_failed.push_back({dvar,constraint});
-        else
-            current_wanteds().simple.push_back({dvar, constraint});
-    }
-
-    if (not lie_failed.empty())
-        throw myexception()<<"Can't derive constraints '"<<print(lie_failed)<<"' from specified constraints '"<<print(givens)<<"'";
-
-    // 6. modify E, which is of type rho_type, to be of type sigma_type
+    // 2. modify E, which is of type rho_type, to be of type sigma_type
     return wrap_gen * Core::WrapLet(ev_decls);
 }
 
