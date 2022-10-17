@@ -237,6 +237,7 @@ classify_constraints(const LIE& lie, const set<Hs::TypeVar>& qtvs)
     return {lie_deferred, lie_retained};
 }
 
+/// Compare to checkSigma, which also check for any skolem variables in the wanteds
 tuple<expression_ref, ID, Hs::Type>
 typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
@@ -251,7 +252,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         auto [tvs, givens, rho_type] = skolemize(polytype, true);
 
         // 2. typecheck the rhs
-        auto tcs2 = copy_clear_wanteds();
+        auto tcs2 = copy_inc_level_clear_wanteds();
         tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type), [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
             tc.tcMatches(FD.matches, arg_types, result_type);};});
         auto wanteds = tcs2.current_wanteds();
@@ -260,7 +261,16 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         // FIXME -- if there are higher-level givens, then we probably need those too!
         auto [ev_decls, lie_residual] = tcs2.entails( givens, wanteds );
 
-        // 4. defer unsolved constraints that don't mention tyvars at this level.
+        for(auto& [_,constraint]: lie_residual)
+        {
+            promote(constraint);
+            if (max_level(constraint) > level)
+            {
+                throw myexception()<<"skolem-escape in "<<constraint;
+            }
+        }
+
+        // 4. defer unsolved constraints that don't mention skolem tyvars at this level.
         LIE lie_residual_keep;
         for(auto& [var,constraint]: lie_residual)
         {
