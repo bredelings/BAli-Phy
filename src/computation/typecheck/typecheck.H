@@ -205,6 +205,8 @@ struct typechecker_state: FreshVarSource
 
     std::tuple<std::vector<Hs::MetaTypeVar>, LIE, Hs::Type> instantiate(const Hs::Type& t);
 
+    std::tuple<Core::wrapper, Hs::Type> instantiate_emit(const Hs::Type& t);
+
     Core::wrapper subsumptionCheck(const Hs::Type& t1, const Expected& e2);
 
     Core::wrapper subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2);

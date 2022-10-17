@@ -1061,9 +1061,10 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
 
     auto [tvs2, givens, type2] = skolemize(t2, true);
 
-    auto [tvs1, wanteds, type1] = instantiate(t1);
-
+    auto tcs2 = copy_clear_wanteds();
+    auto [wrap1, type1] = tcs2.instantiate_emit(t1);
     unify(type1, type2);
+    auto wanteds = tcs2.current_wanteds();
 
     // We are looking for type variables in t1, not type1.
     // This will only contain skolem variables if t1 contains a meta-variable BEFORE instantiation.
@@ -1090,31 +1091,36 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
 
     auto dict2_vars = vars_from_lie(givens);
 
-    auto dict1_args = vars_from_lie<Core::Exp>(wanteds);
-    
-    return Core::WrapLambda(dict2_vars) * Core::WrapLet(decls) * Core::WrapApply(dict1_args);
+    return Core::WrapLambda(dict2_vars) * Core::WrapLet(decls) * wrap1;
+}
+
+std::tuple<Core::wrapper, Hs::Type>
+typechecker_state::instantiate_emit(const Hs::Type& polytype)
+{
+    auto [_, wanteds, rho_type] = instantiate(polytype);
+
+    collected_wanteds += wanteds;
+
+    auto dict_args = vars_from_lie( dictionary_constraints( wanteds ) );
+
+    return {Core::WrapApply(dict_args), rho_type};
 }
 
 Core::wrapper
-typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
+typechecker_state::instantiateSigma(const Hs::Type& polytype, const Expected& exp_type)
 {
     if (exp_type.infer())
     {
-        auto [tvs, wanteds, type] = instantiate(t);
-        exp_type.infer_type(type);
-
-        collected_wanteds += wanteds;
-
-        auto dict_args = vars_from_lie( dictionary_constraints( wanteds ) );
-
-        return Core::WrapApply(dict_args);
+        auto [wrap, rho_type] = instantiate_emit(polytype);
+        exp_type.infer_type(rho_type);
+        return wrap;
     }
     else
     {
         // why would this be a rho?
         // assert(is_rho_type(exp_type.check_type()));
         try {
-            return subsumptionCheck(t, exp_type.check_type());
+            return subsumptionCheck(polytype, exp_type.check_type());
         }
         catch (myexception& ex)
         {
@@ -1122,7 +1128,7 @@ typechecker_state::instantiateSigma(const Hs::Type& t, const Expected& exp_type)
             header<<"Expected type\n\n";
             header<<"   "<<exp_type.check_type()<<"\n\n";
             header<<"but got type\n\n";
-            header<<"   "<<t<<"\n\n";
+            header<<"   "<<polytype<<"\n\n";
 
             ex.prepend(header.str());
             throw;
