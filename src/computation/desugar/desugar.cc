@@ -174,9 +174,6 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
                                                               maybe_tuple(binders) ) );
             expression_ref tup_lambda = Core::Lambda( gb->dict_args, tup_body );
 
-            auto tup = get_fresh_var("tup");
-            decls.push_back({tup, tup_lambda});
-
             if (N == 1)
             {
                 // x_outer[i] = \info.dict_args => let info.binds in case (tup dict1 .. dictn) of (_,_,x_inner[i],_,_) -> x_inner[i]
@@ -184,10 +181,13 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 
                 var x_outer = make_var(info.outer_id);
 
-                decls.push_back({x_outer, info.wrap(tup)});
+                decls.push_back({x_outer, info.wrap(tup_lambda)});
             }
             else
             {
+                auto tup = get_fresh_var("tup");
+                decls.push_back({tup, tup_lambda});
+
                 // x_outer[i] = \info.dict_args => let info.binds in case (tup dict1 .. dictn) of (_,_,x_inner[i],_,_) -> x_inner[i]
                 int i=0;
                 for(auto& [name, info]: gb->bind_infos)
