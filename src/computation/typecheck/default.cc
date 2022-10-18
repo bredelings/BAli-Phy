@@ -71,8 +71,8 @@ typechecker_state::candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie)
     {
         tv.fill(type);
         auto wanteds = WantedConstraints(tv_lie);
-        auto [decls, failed_constraints] = entails({}, wanteds);
-        if (failed_constraints.empty())
+        auto decls = entails({}, wanteds);
+        if (wanteds.simple.empty())
             return decls;
         else
             tv.clear();
@@ -152,9 +152,7 @@ Core::Decls typechecker_state::default_preds( WantedConstraints& wanted )
 
 Core::Decls typechecker_state::simplify_and_default_top_level()
 {
-    auto [top_simplify_decls, new_wanteds] = entails( {}, current_wanteds() );
-
-    collected_wanteds = new_wanteds;
+    auto top_simplify_decls = entails( {}, current_wanteds() );
 
     auto default_decls = default_preds( current_wanteds() );
 

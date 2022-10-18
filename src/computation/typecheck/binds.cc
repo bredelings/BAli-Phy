@@ -521,20 +521,20 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     //
     //    This also substitutes into the current LIE, which we need to do 
     //       before finding free type vars in the LIE below.
-    auto [solve_decls, collected_lie] = tcs2.entails({},  wanteds );
+    auto solve_decls = tcs2.entails({},  wanteds );
 
     auto tvs_in_any_type = free_meta_type_variables(mono_binder_env);
     auto local_tvs = tvs_in_any_type;
-    add( local_tvs, free_meta_type_variables(collected_lie) );
+    add( local_tvs, free_meta_type_variables(wanteds.simple) );
 
     // 4. Figure out which type vars we cannot quantify over.
-    auto fixed_tvs = find_fixed_tvs(restricted, level, collected_lie, local_tvs);
+    auto fixed_tvs = find_fixed_tvs(restricted, level, wanteds.simple, local_tvs);
 
     // 5. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
     set<Hs::MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
 
     // 6. Defer constraints w/o any vars to quantify over
-    auto [lie_deferred, lie_retained] = classify_constraints( restricted, collected_lie, qmtvs );
+    auto [lie_deferred, lie_retained] = classify_constraints( restricted, wanteds.simple, qmtvs );
     current_wanteds() += lie_deferred;
 
     // 7. Replace quantified meta-typevars with fresh type vars, and promote the other ones.

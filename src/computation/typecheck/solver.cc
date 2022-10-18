@@ -749,7 +749,7 @@ Core::Decls typechecker_state::simplify(const LIE& givens, LIE& wanteds)
     return decls;
 }
 
-pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, WantedConstraints& wanteds)
+Core::Decls typechecker_state::entails(const LIE& givens, WantedConstraints& wanteds)
 {
     Core::Decls decls;
     bool update = false;
@@ -770,11 +770,11 @@ pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, WantedConst
             // 4. try and sub-wanteds
             auto tcs2 = copy_clear_wanteds();
             tcs2.level = implic->level;
-            auto [sub_decls, lie_residual] = tcs2.entails(sub_givens, implic->wanteds);
+            auto sub_decls = tcs2.entails(sub_givens, implic->wanteds);
 
             // 5. Promote any level+1 meta-vars and complain about level+1 skolem vars.
             LIE lie_residual_keep;
-            for(auto& [var, constraint]: lie_residual)
+            for(auto& [var, constraint]: implic->wanteds.simple)
             {
                 promote(constraint);
                 if (max_level(constraint) > level)
@@ -812,5 +812,5 @@ pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, WantedConst
     // 3. we return Q[r];theta
     //    - interestingly, the implication constraints don't contribute here.
 
-    return {decls, wanteds.simple};
+    return decls;
 }

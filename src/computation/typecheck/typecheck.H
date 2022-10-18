@@ -408,8 +408,7 @@ struct typechecker_state: FreshVarSource
     std::optional<Core::Decls>
     entails(const T& to_keep, const std::pair<Core::Var, Hs::Type>& to_check);
 
-    std::pair<Core::Decls, LIE>
-    entails(const LIE& lie1, WantedConstraints& lie2);
+    Core::Decls entails(const LIE& lie1, WantedConstraints& lie2);
 
     bool instance_matches(const Hs::Type&, const Hs::Type&);
     bool more_specific_than(const Hs::Type&, const Hs::Type&);
