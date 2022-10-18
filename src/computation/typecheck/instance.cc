@@ -367,8 +367,14 @@ optional<pair<Core::Exp,LIE>> typechecker_state::lookup_instance(const Hs::Type&
 {
     vector<pair<pair<Core::Exp, LIE>,Hs::Type>> matching_instances;
 
+    string target_class = get_class_for_constraint(target_constraint);
+
     for(auto& [dfun, type]: instance_env() )
     {
+        auto instance_class = get_class_for_constraint( remove_top_gen(type));
+
+        if (instance_class != target_class) continue;
+
         auto [_, wanteds, instance_head] = instantiate(type);
 
         assert(not constraint_is_hnf(instance_head));
