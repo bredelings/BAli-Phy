@@ -749,27 +749,57 @@ pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& givens, const LIE&
     return {decls, residual_wanteds};
 }
 
-pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const WantedConstraints& wanteds)
+pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, WantedConstraints wanteds)
 {
-    // 1. Simplify the simple wanteds.
-    auto [decls, residual_wanteds] = simplify(givens, wanteds.simple);
-
-    // 2. Handle implications
-    for(auto& implic: wanteds.implications)
+    Core::Decls decls;
+    bool update = false;
+    do
     {
-        LIE sub_givens = implic->givens;
-        sub_givens += givens;
-        sub_givens += residual_wanteds;
+        // 1. Simplify the simple wanteds.
+        auto [ev_decls, residual_wanteds] = simplify(givens, wanteds.simple);
+        decls += ev_decls;
+        wanteds.simple = residual_wanteds;
+        update = false;
 
-        auto tcs2 = copy_clear_wanteds();
-        tcs2.level = implic->level;
-        auto [sub_decls, r] = tcs2.entails(sub_givens, implic->wanteds);
+        // 2. Handle implications
+        for(auto& implic: wanteds.implications)
+        {
+            // 3. construct sub-givens
+            LIE sub_givens = implic->givens;
+            sub_givens += givens;
+            sub_givens += residual_wanteds;
 
-        if (not r.empty())
-            throw myexception()<<"Could not solve constraint "<<r[0].second<<" in implication";
+            // 4. try and sub-wanteds
+            auto tcs2 = copy_clear_wanteds();
+            tcs2.level = implic->level;
+            auto [sub_decls, lie_residual] = tcs2.entails(sub_givens, implic->wanteds);
 
-        *implic->evidence_binds += sub_decls;
-    }
+            // 5. Promote any level+1 meta-vars and complain about level+1 skolem vars.
+            LIE lie_residual_keep;
+            for(auto& [var, constraint]: lie_residual)
+            {
+                promote(constraint);
+                if (max_level(constraint) > level)
+                    throw myexception()<<"skolem-escape in "<<constraint;
+                else if (intersects(free_type_variables(constraint), implic->tvs))
+                    lie_residual_keep.push_back({var,constraint});
+                else
+                {
+                    // If we've discovered a new simple wanted, then we need to run simplification again.
+                    update = true;
+                    wanteds.simple.push_back({var,constraint});
+                }
+            }
+
+            // 6. Issue collected warnings constraints that couldn't be derived from the givens.
+            if (not lie_residual_keep.empty())
+                throw myexception()<<"Can't derive constraints '"<<print(lie_residual_keep)<<"' from specified constraints '"<<print(givens)<<"'";
+
+            // 7. Write newly discovered evidence bidings.
+            *implic->evidence_binds += sub_decls;
+        }
+        wanteds.implications.clear();
+    } while(update);
 
     // This should implement |->[solv] from Figure 14 of the OutsideIn(X) paper:
     //   \mathcal{Q}; Q[given]; alpha[touchable] |->[solv] C[wanted] ~~> Q[residual]; theta
@@ -784,5 +814,5 @@ pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, const Wante
     // 3. we return Q[r];theta
     //    - interestingly, the implication constraints don't contribute here.
 
-    return {decls, residual_wanteds};
+    return {decls, wanteds.simple};
 }
