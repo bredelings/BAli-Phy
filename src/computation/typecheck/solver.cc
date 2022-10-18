@@ -625,7 +625,7 @@ bool typechecker_state::is_touchable(const Hs::MetaTypeVar& mtv)
     // e. react a wanted Q1 with axioms in \mathcal{Q} to produce Q2 and new touchable variables beta.
     //    - replace Q1 by Q2 and add in the new touchable variables beta.
 
-pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& givens, const LIE& wanteds)
+Core::Decls typechecker_state::simplify(const LIE& givens, LIE& wanteds)
 {
     if (wanteds.empty()) return {{}, {}};
 
@@ -711,7 +711,7 @@ pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& givens, const LIE&
         throw myexception()<<"Equations have no solution!";
 
     // Split inert into substitution and remaining constraints
-    LIE residual_wanteds;
+    wanteds.clear();
     vector<pair<Hs::MetaTypeVar,Hs::Type>> equations;
     for(auto& P: inert)
     {
@@ -726,12 +726,12 @@ pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& givens, const LIE&
             if (uv and is_touchable(*uv) and not occurs_check(*uv, t_b))
                 equations.push_back({*uv,t_b});
             else
-                residual_wanteds.push_back({eq->co, Hs::make_equality_constraint(t_a, t_b)});
+                wanteds.push_back({eq->co, Hs::make_equality_constraint(t_a, t_b)});
         }
         else if (auto dict = to<CanonicalDictPred>(P.pred))
         {
             auto constraint = Hs::make_tyapps(dict->klass, dict->args);
-            residual_wanteds.push_back({dict->dvar, constraint});
+            wanteds.push_back({dict->dvar, constraint});
         }
     }
 
@@ -746,7 +746,7 @@ pair<Core::Decls, LIE> typechecker_state::simplify(const LIE& givens, const LIE&
 //    for(auto& [v,c]: residual_wanteds)
 //        std::cerr<<"  "<<v.print()<<" :  "<<c.print()<<"\n";
 
-    return {decls, residual_wanteds};
+    return decls;
 }
 
 pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, WantedConstraints wanteds)
@@ -756,9 +756,7 @@ pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, WantedConst
     do
     {
         // 1. Simplify the simple wanteds.
-        auto [ev_decls, residual_wanteds] = simplify(givens, wanteds.simple);
-        decls += ev_decls;
-        wanteds.simple = residual_wanteds;
+        decls += simplify(givens, wanteds.simple);
         update = false;
 
         // 2. Handle implications
@@ -767,7 +765,7 @@ pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, WantedConst
             // 3. construct sub-givens
             LIE sub_givens = implic->givens;
             sub_givens += givens;
-            sub_givens += residual_wanteds;
+            sub_givens += wanteds.simple;
 
             // 4. try and sub-wanteds
             auto tcs2 = copy_clear_wanteds();

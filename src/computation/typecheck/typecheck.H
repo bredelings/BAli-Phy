@@ -402,7 +402,7 @@ struct typechecker_state: FreshVarSource
     std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2);
     std::optional<Reaction> top_react(const Predicate& P);
 
-    std::pair<Core::Decls,LIE> simplify(const LIE& givens, const LIE& wanteds);
+    Core::Decls simplify(const LIE& givens, LIE& wanteds);
 
     template <typename T>
     std::optional<Core::Decls>
