@@ -453,28 +453,11 @@ typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_funct
     auto result = nested_function(rho_type, tcs2);
     auto wanteds = tcs2.current_wanteds();
 
-    // 3. try to solve the wanteds from the givens
-    // FIXME -- if there are higher-level givens, then we probably need those too!
-    auto [ev_decls, lie_residual] = tcs2.entails( givens, wanteds );
+    auto ev_decls = std::make_shared<Core::Decls>();
+    auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls);
+    current_wanteds().implications.push_back( imp );
 
-    // 4. Promote any level+1 meta-vars and complain about level+1 skolem vars.
-    LIE lie_residual_keep;
-    for(auto& [var,constraint]: lie_residual)
-    {
-        promote(constraint);
-        if (max_level(constraint) > level)
-            throw myexception()<<"skolem-escape in "<<constraint;
-        else if (intersects(free_type_variables(constraint), tvs))
-            lie_residual_keep.push_back({var,constraint});
-        else
-            current_wanteds().simple.push_back({var,constraint});
-    }
-
-    // 5. check that the remaining constraints are satisfied by the constraints in the type signature
-    if (not lie_residual_keep.empty())
-        throw myexception()<<"Can't derive constraints '"<<print(lie_residual_keep)<<"' from specified constraints '"<<print(givens)<<"'";
-
-    return {wrap, tvs, givens, rho_type, std::make_shared<Core::Decls>(ev_decls), result};
+    return {wrap, tvs, givens, rho_type, ev_decls, result};
 }
 
 
