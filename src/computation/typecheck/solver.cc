@@ -749,7 +749,7 @@ Core::Decls typechecker_state::simplify(const LIE& givens, LIE& wanteds)
     return decls;
 }
 
-pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, WantedConstraints wanteds)
+pair<Core::Decls, LIE> typechecker_state::entails(const LIE& givens, WantedConstraints& wanteds)
 {
     Core::Decls decls;
     bool update = false;

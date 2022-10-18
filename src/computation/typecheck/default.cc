@@ -70,7 +70,8 @@ typechecker_state::candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie)
     for(auto& type: defaults() )
     {
         tv.fill(type);
-        auto [decls, failed_constraints] = entails({}, tv_lie);
+        auto wanteds = WantedConstraints(tv_lie);
+        auto [decls, failed_constraints] = entails({}, wanteds);
         if (failed_constraints.empty())
             return decls;
         else
