@@ -43,7 +43,7 @@ Core::wrapper typechecker_state::tcMatchesFunCheck(std::vector<Expected>& arg_ty
             (
                 type,
                 [&](const Hs::Type& rho_type, auto& tc2) {
-                    return tc2.tcMatchesFunCheck(arg_types, arity, type, a);
+                    return tc2.tcMatchesFunCheck(arg_types, arity, rho_type, a);
                 }
             );
 
