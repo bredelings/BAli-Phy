@@ -557,18 +557,18 @@ std::optional<Reaction> typechecker_state::top_react(const Predicate& P)
 
     if (auto dict = to<CanonicalDictPred>(P.pred))
     {
+        // We DO get givens like Eq Ordering that have instances.
+        // Should we be preventing such things from becoming givens, since we could
+        //   derive them from an instance instead?
+
+        // We don't use instances for givens.
+        if (P.flavor == Given) return {};
+
         auto [dvar, klass, args] = *dict;
         auto constraint = Hs::make_tyapps(klass,args);
 
         if (auto inst = lookup_instance(constraint))
         {
-            // We DO get givens like Eq Ordering that have instances.
-            // Should we be preventing such things from becoming givens, since we could
-            //   derive them from an instance instead?
-
-            // We don't use instances for givens.
-            if (P.flavor == Given) return {};
-
             auto [dfun_exp, super_wanteds] = *inst;
 
             Core::Decls decls;
