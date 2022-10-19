@@ -1,4 +1,5 @@
 #include "pattern.H"
+
 #include "util/string/join.H"
 #include "expression/tuple.H" // for tuple_name
 #include "util/set.H"   // for includes( , )
@@ -10,6 +11,9 @@ using std::string;
 using std::pair;
 using std::vector;
 using std::optional;
+
+#include <range/v3/all.hpp>
+namespace views = ranges::views;
 
 namespace Haskell
 {
@@ -118,9 +122,9 @@ string AsPattern::print() const
 }
 
 
-std::set<Hs::Var> vars_in_patterns(const std::vector<Hs::Pattern>& pats)
+std::set<Var> vars_in_patterns(const std::vector<Pattern>& pats)
 {
-    std::set<Hs::Var> vars;
+    std::set<Var> vars;
 
     for(auto& pat: pats)
         add(vars, vars_in_pattern(pat));
@@ -128,7 +132,7 @@ std::set<Hs::Var> vars_in_patterns(const std::vector<Hs::Pattern>& pats)
     return vars;
 }
 
-std::set<Hs::Var> vars_in_pattern(const Hs::Pattern& pat)
+std::set<Var> vars_in_pattern(const Pattern& pat)
 {
     if (pat.is_a<Haskell::WildcardPattern>())
 	return {};
@@ -137,7 +141,7 @@ std::set<Hs::Var> vars_in_pattern(const Hs::Pattern& pat)
     else if (auto sp = pat.to<Haskell::StrictPattern>())
         return vars_in_pattern(sp->pattern);
     else if (auto ap = pat.to<Haskell::AsPattern>())
-	return plus( vars_in_pattern(Hs::VarPattern(ap->var)),
+	return plus( vars_in_pattern(VarPattern(ap->var)),
                      vars_in_pattern(ap->pattern) );
     else if (auto l = pat.to<Haskell::ListPattern>())
         return vars_in_patterns(l->elements);
@@ -145,14 +149,58 @@ std::set<Hs::Var> vars_in_pattern(const Hs::Pattern& pat)
         return vars_in_patterns(t->elements);
     else if (auto v = pat.to<Haskell::VarPattern>())
 	return { v->var };
-    else if (auto c = pat.to<Hs::ConPattern>())
+    else if (auto c = pat.to<ConPattern>())
         return vars_in_patterns(c->args);
-    else if (auto tp = pat.to<Hs::TypedPattern>())
+    else if (auto tp = pat.to<TypedPattern>())
         return vars_in_pattern(tp->pat);
-    else if (pat.is_a<Hs::LiteralPattern>())
+    else if (pat.is_a<LiteralPattern>())
         return {};
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
+}
+
+ConPattern TruePat()
+{
+    return {Hs::True(), {}};
+}
+
+ConPattern FalsePat()
+{
+    return {Hs::False(), {}};
+}
+
+ConPattern ConsPat(const Pattern& p, const Pattern& ps)
+{
+    return {Hs::ConsCon(),{p, ps}};
+}
+
+ConPattern NilPat()
+{
+    return {Hs::Nil(),{}};
+}
+
+ConPattern to_con_pat(const ListPattern& L)
+{
+    ConPattern list_pat = NilPat();
+
+    for(auto& e: L.elements | views::reverse)
+        list_pat = ConsPat(e, list_pat);
+
+    return list_pat;
+}
+
+ConPattern to_con_pat(const std::string& s)
+{
+    ListPattern L;
+    for(char c: s)
+	L.elements.push_back(LiteralPattern(Literal(Char(c))));
+    return to_con_pat(L);
+}
+
+ConPattern to_con_pat(const TuplePattern& T)
+{
+    int n = T.elements.size();
+    return {TupleCon(n), T.elements};
 }
 
 }

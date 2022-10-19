@@ -163,8 +163,17 @@ struct AsPattern: public Object
     AsPattern(const Var& v, const Pattern& p):var(v),pattern(p) {}
 };
 
-std::set<Hs::Var> vars_in_pattern(const Hs::Pattern& pat);
-std::set<Hs::Var> vars_in_patterns(const std::vector<Hs::Pattern>& pats);
+std::set<Var> vars_in_pattern(const Pattern& pat);
+std::set<Var> vars_in_patterns(const std::vector<Pattern>& pats);
+
+ConPattern to_con_pat(const TuplePattern& T);
+ConPattern to_con_pat(const ListPattern& L);
+ConPattern to_con_pat(const std::string& s);
+
+ConPattern TruePat();
+ConPattern FalsePat();
+ConPattern ConsPat(const Pattern&, const Pattern&);
+ConPattern NilPat();
 
 }
 #endif
