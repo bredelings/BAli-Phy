@@ -17,6 +17,7 @@ namespace Haskell
 struct Char
 {
     char value;
+    Char(char c):value(c) {}
 };
 
 struct Integer
