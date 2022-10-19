@@ -22,6 +22,7 @@
 #include "util/assert.hh"
 #include "util/range.H"
 #include "computation/haskell/haskell.H"
+#include "computation/haskell/ids.H"
 
 #include "range/v3/all.hpp"
 namespace views = ranges::views;
@@ -39,14 +40,6 @@ desugar_state::desugar_state(const Module& m_, FreshVarState& state)
       m(m_)
 {}
 
-
-expression_ref desugar_string_pattern(const std::string& s)
-{
-    vector<expression_ref> chars;
-    for(char c: s)
-	chars.push_back(c);
-    return get_list(chars);
-}
 
 expression_ref desugar_string_expression(const std::string& s)
 {
@@ -75,7 +68,7 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 		;
 	    // F' = case condition of True -> F
 	    else
-		F = case_expression(condition,{true},{F});
+		F = case_expression(condition,{Hs::TruePat()},{F});
 	}
 	else if (guard.is_a<Hs::LetQual>())
 	{
@@ -144,8 +137,11 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 	    assert(not rhs.can_fail);
 
 	    // x = case z of pat -> x
-	    for(auto& x: get_free_indices(pat))
+	    for(auto& v: Hs::vars_in_pattern( unloc(pd->lhs) ) )
+            {
+                auto x = make_var(v);
 		decls.push_back( {x ,case_expression(z, {pat}, {failable_expression(x)}).result(Core::error("pattern binding: failed pattern match"))});
+            }
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
         {
@@ -243,37 +239,25 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
     return rhs;
 }
 
+
 expression_ref desugar_state::desugar_pattern(const expression_ref & E)
 {
     // FIXME - maybe we should keep these elements to use in desugar-case?
-    if (E.is_a<Hs::ListPattern>())
-    {
-        auto L = E.as_<Hs::ListPattern>();
-        for(auto& element: L.elements)
-            element = desugar_pattern(element);
-        return get_list(L.elements);
-    }
-    else if (E.is_a<Hs::TuplePattern>())
-    {
-        auto T = E.as_<Hs::TuplePattern>();
-        for(auto& element: T.elements)
-            element = desugar_pattern(element);
-        return get_tuple(T.elements);
-    }
+    if (auto L = E.to<Hs::ListPattern>())
+        return desugar_pattern( Hs::to_con_pat(*L) );
+    else if (auto T = E.to<Hs::TuplePattern>())
+        return desugar_pattern( Hs::to_con_pat(*T) );
     else if (auto v = E.to<Hs::VarPattern>())
-        return make_var(v->var);
+        return E;
     else if (auto c = E.to<Hs::ConPattern>())
     {
-        auto C = constructor(unloc(c->head.name), *c->head.arity);
-        vector<expression_ref> args;
-        for(auto& darg: c->dict_args())
-            args.push_back(darg);
-        for(auto& pat: c->args)
-            args.push_back(desugar_pattern(pat));
-        return expression_ref(C, args);
+        auto C = *c;
+        for(auto& pattern: C.args)
+            pattern = desugar_pattern(pattern);
+        return C;
     }
     else if (E.is_a<Hs::WildcardPattern>())
-        return var(-1);
+        return E;
     else if (E.is_a<Hs::AsPattern>())
     {
         auto& AP = E.as_<Hs::AsPattern>();
@@ -315,7 +299,7 @@ expression_ref desugar_state::desugar_pattern(const expression_ref & E)
         }
         else if (auto s = L->lit.is_String())
         {
-            return desugar_string_pattern(*s);
+            return desugar_pattern( Hs::to_con_pat(*s));
         }
         else if (auto i = L->lit.is_BoxedInteger())
         {
@@ -582,7 +566,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         auto true_branch = desugar(unloc(I.true_branch));
         auto false_branch = desugar(unloc(I.false_branch));
 
-        return case_expression(condition,{true},{failable_expression(true_branch)}).result(false_branch);
+        return case_expression(condition,{Hs::TruePat()},{failable_expression(true_branch)}).result(false_branch);
     }
     else if (E.is_a<Hs::CaseExp>())
     {

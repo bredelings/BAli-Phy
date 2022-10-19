@@ -62,12 +62,13 @@ failable_expression desugar_state::fold(const vector<failable_expression>& Es)
     return E;
 }
 
-int find_object(const vector<expression_ref>& v, const expression_ref& E)
+template <typename T>
+std::optional<int> find_object(const vector<T>& v, const T& E)
 {
     for(int i=0;i<v.size();i++)
 	if (E == v[i])
 	    return i;
-    return -1;
+    return {};
 }
 
 bool is_irrefutable_pattern(const expression_ref& E)
@@ -79,20 +80,24 @@ bool is_irrefutable_pattern(const expression_ref& E)
 bool is_simple_pattern(const expression_ref& E)
 {
     // (a) Is this irrefutable?
-    if (is_irrefutable_pattern(E)) return true;
-
-    // (b) Is this a constant with no arguments? (This can't be an irrefutable pattern, since we've already bailed on variables.)
-    if (not E.size()) return true;
-
-    assert(E.head().is_a<constructor>());
-
-    // Arguments of multi-arg constructors must all be irrefutable patterns
-    for(int j=0;j<E.size();j++)
-	if (not is_irrefutable_pattern(E.sub()[j]))
-	    return false;
-
+    if (is_irrefutable_pattern(E))
+        return true;
     // (c) Is this a constructor who arguments are irrefutable patterns?
-    return true;
+    else if (auto C = E.to<Hs::ConPattern>())
+    {
+        assert(C);
+
+        for(auto& pat: C->args)
+            if (not is_irrefutable_pattern(pat))
+                return false;
+        return true;
+    }
+    else if (E.is_char() or E.is_int() or E.is_double())
+    {
+        return true;
+    }
+    else
+        std::abort();
 }
 
 template <typename T>
@@ -138,10 +143,18 @@ pattern_type classify_equation(const equation_info_t& equation)
     assert(equation.patterns.size());
     auto& pat = equation.patterns[0];
 
-    if (is_var(pat))
+    // Var
+    if (pat.is_a<Hs::VarPattern>())
 	return pattern_type::var;
-    else if (is_constructor_exp(pat))
+    else if (pat.is_a<Hs::WildcardPattern>())
+	return pattern_type::var;
+    // Should we classify lazy patterns here, or clean them up before?
+
+    // Con
+    else if (pat.is_a<Hs::ConPattern>())
 	return pattern_type::constructor;
+
+    // Literal
     else if (pat.is_int())
 	return pattern_type::literal;
     else if (pat.is_char())
@@ -149,16 +162,16 @@ pattern_type classify_equation(const equation_info_t& equation)
     else if (pat.is_double())
 	return pattern_type::literal;
     else if (pat.is_a<Hs::Literal>())
-    {
-        // patterns should already be translated from Literal to something direct.
-        std::abort();
-	return pattern_type::constructor;
-    }
+	return pattern_type::literal;
+
+    // Strict
     else if (pat.is_a<Haskell::StrictPattern>())
     {
 	throw myexception()<<"The BangPattern extension is not implemented!";
         return pattern_type::bang;
     }
+
+    // ??
     else
 	throw myexception()<<"I don't understand pattern '"<<pat<<"'";
 }
@@ -186,30 +199,27 @@ failable_expression desugar_state::match_constructor(const vector<expression_ref
 
     assert(N > 0);
     assert(M > 0);
-#ifndef NDEBUG
     assert(equations[0].patterns.size());
-    for(auto& eqn:equations)
-	assert(not is_var(eqn.patterns[0]));
-#endif
 
     // 1. Categorize each rule according to the type of its top-level pattern
-    vector<expression_ref> constants;
+    vector< Hs::Con > constants;
     vector< vector<int> > rules;
     for(int j=0;j<M;j++)
     {
-	assert(not is_var(equations[j].patterns[0]));
+	auto con_pat = equations[j].patterns[0].to<Hs::ConPattern>();
+        assert(con_pat);
 
-	expression_ref C = equations[j].patterns[0].head();
-	int which = find_object(constants, C);
+	auto C = con_pat->head;
+	auto which = find_object(constants, C);
 
-	if (which == -1)
+	if (not which)
 	{
 	    which = constants.size();
 	    constants.push_back(C);
 	    rules.push_back(vector<int>{});
 	}
 
-	rules[which].push_back(j);
+	rules[*which].push_back(j);
     }
 
     // 2. Find the alternatives in the simple case expression
@@ -218,21 +228,20 @@ failable_expression desugar_state::match_constructor(const vector<expression_ref
 
     for(int c=0;c<constants.size();c++)
     {
-	expression_ref C = constants[c];
+	auto& C = constants[c];
 
 	// 2.1 Find the arity of the constructor
-	int arity = 0;
-	if (C.is_a<constructor>())
-	    arity = C.as_<constructor>().n_args();
+	int arity = *C.arity;
+        string name = unloc(C.name);
 
 	// 2.2 Construct the simple pattern for constant C
 	vector<expression_ref> args(arity);
 	for(int j=0;j<arity;j++)
 	    args[j] = get_fresh_var();
 
-	auto pat = C;
+	expression_ref pat = constructor(name, arity);
 	if (args.size())
-	    pat = expression_ref{C,args};
+	    pat = expression_ref{pat,args};
 
 	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
 	vector<expression_ref> x2;
@@ -244,10 +253,11 @@ failable_expression desugar_state::match_constructor(const vector<expression_ref
 	vector<equation_info_t> equations2;
 	for(int r: rules[c])
 	{
-	    assert(equations[r].patterns[0].size() == arity);
-
 	    // pattern: Add the sub-partitions of the first top-level pattern at the beginning.
-	    auto patterns = equations[r].patterns[0].copy_sub();
+            auto con_pat = equations[r].patterns[0].to<Hs::ConPattern>();
+	    auto patterns = con_pat->args;
+	    assert(patterns.size() == arity);
+
 	    // pattern: Add the remaining top-level patterns (minus the first).
 	    patterns.insert(patterns.end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
 
@@ -269,7 +279,7 @@ failable_expression desugar_state::match_constructor(const vector<expression_ref
     // Its not clear how that could cause incorrect scoping, but we could have different vars with the same index?
     auto o = get_fresh_var();
 
-    std::function<expression_ref(const expression_ref&)> result = [o,x0,simple_patterns,simple_bodies](const expression_ref& otherwise)
+    auto result = [=](const expression_ref& otherwise)
     {
 	// Bind the otherwise branch to a let var.
 	CDecls binds = {{o,otherwise}};
@@ -292,30 +302,25 @@ failable_expression desugar_state::match_literal(const vector<expression_ref>& x
 
     assert(N > 0);
     assert(M > 0);
-#ifndef NDEBUG
     assert(equations[0].patterns.size());
-    for(auto& eqn:equations)
-	assert(not is_var(eqn.patterns[0]));
-#endif
 
     // 1. Categorize each rule according to the type of its top-level pattern
     vector<expression_ref> constants;
     vector< vector<int> > rules;
     for(int j=0;j<M;j++)
     {
-	assert(not is_var(equations[j].patterns[0]));
-
 	expression_ref C = equations[j].patterns[0].head();
-	int which = find_object(constants, C);
+        assert(C.is_int() or C.is_double() or C.is_char() or C.is_a<Hs::Literal>());
+	auto which = find_object(constants, C);
 
-	if (which == -1)
+	if (not which)
 	{
 	    which = constants.size();
 	    constants.push_back(C);
 	    rules.push_back(vector<int>{});
 	}
 
-	rules[which].push_back(j);
+	rules[*which].push_back(j);
     }
 
     // 2. Find the alternatives in the simple case expression
@@ -398,15 +403,15 @@ failable_expression desugar_state::match_var(const vector<expression_ref>& x, co
 
     assert(N > 0);
     assert(M > 0);
-#ifndef NDEBUG
     assert(equations[0].patterns.size());
-    for(auto& eqn:equations)
-	assert(is_var(eqn.patterns[0]));
-#endif
 
     vector<equation_info_t> equations2;
     for(auto& eqn: equations)
+    {
+        assert(eqn.patterns[0].is_a<Hs::WildcardPattern>());
+
 	equations2.push_back({remove_first(eqn.patterns), eqn.rhs});
+    }
       
     return match(remove_first(x), equations2);
 }
@@ -433,32 +438,24 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
     assert(patterns.size());
 
     // case x of y -> rhs  =>  case x of _ => let {y=x} in rhs
-    if (is_var(pat1) and not is_wildcard(pat1))
+    if (auto v = pat1.to<Hs::VarPattern>())
     {
-	auto y = pat1.as_<var>();
+	auto y = make_var(v->var);
 	rhs.add_binding({{y, x}});
-	pat1 = var(-1);
-    }
-
-    // case x of H[y1,y2...] -> rhs => case x of (y1:(y2:...)) -> rhs
-    else if (pat1.is_a<Haskell::ListPattern>())
-    {
-        pat1 = get_list(pat1.as_<Haskell::ListPattern>().elements);
-    }
-    // case x of H(y1,y2...) -> rhs => case x of (y1,y2...) -> rhs
-    else if (pat1.is_a<Haskell::TuplePattern>())
-    {
-        pat1 = get_tuple(pat1.as_<Haskell::TuplePattern>().elements);
+	pat1 = Hs::WildcardPattern();
     }
     // case x of ~pat -> rhs  =>  case x of _ -> let pat=x in rhs
     else if (pat1.is_a<Haskell::LazyPattern>())
     {
         auto& LP = pat1.as_<Haskell::LazyPattern>();
 	CDecls binds = {};
-	for(auto& y: get_free_indices(LP.pattern))
+	for(auto& v: Hs::vars_in_pattern(LP.pattern))
+        {
+            auto y = make_var(v);
 	    binds.push_back({y,case_expression(x, {LP.pattern}, {failable_expression(y)}).result(Core::error("lazy pattern: failed pattern match"))});
+        }
 	rhs.add_binding(binds);
-	pat1 = var(-1);
+	pat1 = Hs::WildcardPattern();
     }
 
     // case x of {!pat -> rhs; _ -> rhs_fail}  =>  x `seq` case x of {pat -> rhs, _ -> rhs_fail}
