@@ -127,6 +127,7 @@ vector<T> remove_first(vector<T>&& v1)
 enum class pattern_type
 {
     constructor,
+    literal,
     var,
     bang,
     null
@@ -142,13 +143,11 @@ pattern_type classify_equation(const equation_info_t& equation)
     else if (is_constructor_exp(pat))
 	return pattern_type::constructor;
     else if (pat.is_int())
-	return pattern_type::constructor;
+	return pattern_type::literal;
     else if (pat.is_char())
-	return pattern_type::constructor;
+	return pattern_type::literal;
     else if (pat.is_double())
-	return pattern_type::constructor;
-    else if (pat.is_log_double())
-	return pattern_type::constructor;
+	return pattern_type::literal;
     else if (pat.is_a<Hs::Literal>())
     {
         // patterns should already be translated from Literal to something direct.
@@ -180,7 +179,113 @@ vector<pair<pattern_type,vector<equation_info_t>>> partition(const vector<equati
     return partitions;
 }
 
-failable_expression desugar_state::match_constant(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_constructor(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
+{
+    const int N = x.size();
+    const int M = equations.size();
+
+    assert(N > 0);
+    assert(M > 0);
+#ifndef NDEBUG
+    assert(equations[0].patterns.size());
+    for(auto& eqn:equations)
+	assert(not is_var(eqn.patterns[0]));
+#endif
+
+    // 1. Categorize each rule according to the type of its top-level pattern
+    vector<expression_ref> constants;
+    vector< vector<int> > rules;
+    for(int j=0;j<M;j++)
+    {
+	assert(not is_var(equations[j].patterns[0]));
+
+	expression_ref C = equations[j].patterns[0].head();
+	int which = find_object(constants, C);
+
+	if (which == -1)
+	{
+	    which = constants.size();
+	    constants.push_back(C);
+	    rules.push_back(vector<int>{});
+	}
+
+	rules[which].push_back(j);
+    }
+
+    // 2. Find the alternatives in the simple case expression
+    vector<expression_ref> simple_patterns;
+    vector<failable_expression> simple_bodies;
+
+    for(int c=0;c<constants.size();c++)
+    {
+	expression_ref C = constants[c];
+
+	// 2.1 Find the arity of the constructor
+	int arity = 0;
+	if (C.is_a<constructor>())
+	    arity = C.as_<constructor>().n_args();
+
+	// 2.2 Construct the simple pattern for constant C
+	vector<expression_ref> args(arity);
+	for(int j=0;j<arity;j++)
+	    args[j] = get_fresh_var();
+
+	auto pat = C;
+	if (args.size())
+	    pat = expression_ref{C,args};
+
+	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
+	vector<expression_ref> x2;
+	for(int j=0;j<arity;j++)
+	    x2.push_back(args[j]);
+	x2.insert(x2.end(), x.begin()+1, x.end());
+
+	// 2.4 Construct the various modified bodies and patterns
+	vector<equation_info_t> equations2;
+	for(int r: rules[c])
+	{
+	    assert(equations[r].patterns[0].size() == arity);
+
+	    // pattern: Add the sub-partitions of the first top-level pattern at the beginning.
+	    auto patterns = equations[r].patterns[0].copy_sub();
+	    // pattern: Add the remaining top-level patterns (minus the first).
+	    patterns.insert(patterns.end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
+
+	    // Add the equation
+	    auto eqn = equation_info_t{std::move(patterns), equations[r].rhs};
+	    equations2.push_back(std::move(eqn));
+	}
+
+	simple_patterns.push_back( pat );
+	simple_bodies.push_back( match(x2, equations2) );
+    }
+    simple_patterns.push_back(var(-1));
+    simple_bodies.push_back(fail_identity());
+
+    // 3. Construct a failable_expression.
+    auto x0 = x[0];
+
+    // What if we substitute into the failable_result twice?
+    // Its not clear how that could cause incorrect scoping, but we could have different vars with the same index?
+    auto o = get_fresh_var();
+
+    std::function<expression_ref(const expression_ref&)> result = [o,x0,simple_patterns,simple_bodies](const expression_ref& otherwise)
+    {
+	// Bind the otherwise branch to a let var.
+	CDecls binds = {{o,otherwise}};
+
+	vector<expression_ref> simple_bodies2;
+	for(auto& body: simple_bodies)
+	    simple_bodies2.push_back(body.result(o));
+
+	return let_expression({{o,otherwise}}, make_case_expression(x0, simple_patterns, simple_bodies2));
+    };
+
+    return failable_expression{true, result};
+}
+
+
+failable_expression desugar_state::match_literal(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -419,8 +524,10 @@ failable_expression desugar_state::match(const vector<expression_ref>& x, const 
 	assert(block.first != pattern_type::null);
 	if (block.first == pattern_type::var)
 	    E = combine(match_var(x, block.second), E);
+        else if (block.first == pattern_type::literal)
+	    E = combine(match_literal(x, block.second), E);
 	else
-	    E = combine(match_constant(x, block.second), E);
+	    E = combine(match_constructor(x, block.second), E);
     }
     return E;
 }
