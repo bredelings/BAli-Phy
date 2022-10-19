@@ -971,6 +971,11 @@ struct EvidenceDecls: public Object
 
 Expression error(const std::string& s);
 
+Con True();
+Con False();
+Con Cons();
+Con Nil();
+
 }
 
 #endif

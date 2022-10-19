@@ -782,4 +782,24 @@ string EvidenceDecls::print()  const
     return "core::let " + print_cdecls(*decls) + " in " + body.print();
 }
 
+Con True()
+{
+    return {{noloc, "Data.Bool.True"}, 0};
+}
+
+Con False()
+{
+    return {{noloc, "Data.Bool.False"}, 0};
+}
+
+Con Cons()
+{
+    return {{noloc,":"}, 2};
+}
+
+Con Nil()
+{
+    return {{noloc,"[]"}, 0};
+}
+
 }
