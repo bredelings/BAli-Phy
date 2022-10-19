@@ -48,7 +48,21 @@ bool Var::operator<(const Var& v) const
 
     int cmp = unloc(name).compare(unloc(v.name));
     
-    return (cmp < 0);;
+    return (cmp < 0);
+}
+
+bool Con::operator==(const Object& o) const
+{
+    auto C = dynamic_cast<const Con*>(&o);
+    if (not C)
+        return false;
+
+    return (*this) == *C;
+}
+
+bool Con::operator==(const Con& c) const
+{
+    return unloc(name) == unloc(c.name);
 }
 
 string Con::print() const
@@ -56,4 +70,4 @@ string Con::print() const
     return unloc(name);
 }
 
-}
+} // namespace Haskell
