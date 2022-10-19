@@ -80,7 +80,6 @@ struct desugar_state: public FreshVarSource
     equation_info_t desugar_match(const Hs::MRule& matches);
     std::vector<equation_info_t> desugar_matches(const Hs::Matches& matches);
 
-    expression_ref desugar_pattern(const expression_ref& E);
     expression_ref desugar(const expression_ref& E);
     CDecls desugar_decls(const Haskell::Decls&);
     CDecls desugar_decls(const Haskell::Binds&);

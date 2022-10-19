@@ -48,9 +48,8 @@ expression_ref desugar_string_expression(const std::string& s)
 
 bool is_irrefutable_pat(const expression_ref& E)
 {
-    assert(not E.is_a<Hs::WildcardPattern>());
-    assert(not E.is_a<Hs::Var>());
-    return E.head().is_a<var>();
+    assert(not E.head().is_a<var>());
+    return E.is_a<Hs::WildcardPattern>() or E.is_a<Hs::Var>() or E.is_a<Hs::LazyPattern>();
 }
 
 failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
@@ -79,11 +78,9 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 	}
         else if (guard.is_a<Hs::PatQual>())
         {
-            auto &PQ = guard.as_<Hs::PatQual>();
-            auto pat = desugar_pattern(PQ.bindpat);
-            auto E = desugar(PQ.exp);
+            auto& PQ = guard.as_<Hs::PatQual>();
 
-            F = case_expression(E,{pat},{F});
+            F = case_expression(desugar(PQ.exp), {PQ.bindpat}, {F});
         }
 	else
 	    std::abort();
@@ -94,13 +91,7 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 
 equation_info_t desugar_state::desugar_match(const Hs::MRule& rule)
 {
-    auto rhs = desugar_rhs(rule.rhs);
-
-    auto patterns = rule.patterns;
-    for(auto& pattern: patterns)
-        pattern = desugar_pattern(pattern);
-
-    return {patterns, rhs};
+    return {rule.patterns, desugar_rhs(rule.rhs)};
 }
 
 vector<equation_info_t> desugar_state::desugar_matches(const Hs::Matches& matches)
@@ -123,7 +114,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 
         if (auto pd = decl.to<Hs::PatDecl>())
         {
-            auto pat = desugar_pattern( unloc(pd->lhs) );
+            auto pat = unloc(pd->lhs);
             auto rhs = desugar_rhs(pd->rhs);
             var z = get_fresh_var();
             if (pat.is_a<Hs::AsPattern>())
@@ -240,78 +231,6 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
 }
 
 
-expression_ref desugar_state::desugar_pattern(const expression_ref & E)
-{
-    // FIXME - maybe we should keep these elements to use in desugar-case?
-    if (auto L = E.to<Hs::ListPattern>())
-        return desugar_pattern( Hs::to_con_pat(*L) );
-    else if (auto T = E.to<Hs::TuplePattern>())
-        return desugar_pattern( Hs::to_con_pat(*T) );
-    else if (auto v = E.to<Hs::VarPattern>())
-        return E;
-    else if (auto c = E.to<Hs::ConPattern>())
-    {
-        auto C = *c;
-        for(auto& pattern: C.args)
-            pattern = desugar_pattern(pattern);
-        return C;
-    }
-    else if (E.is_a<Hs::WildcardPattern>())
-        return E;
-    else if (E.is_a<Hs::AsPattern>())
-    {
-        auto& AP = E.as_<Hs::AsPattern>();
-        return Hs::AsPattern(AP.var, desugar_pattern(AP.pattern));
-    }
-    else if (E.is_a<Hs::LazyPattern>())
-    {
-        auto LP = E.as_<Hs::LazyPattern>();
-        return Hs::LazyPattern(desugar_pattern(LP.pattern));
-    }
-    else if (E.is_a<Hs::StrictPattern>())
-    {
-        auto SP = E.as_<Hs::StrictPattern>();
-        SP.pattern = desugar_pattern(SP.pattern);
-        return SP;
-    }
-    else if (auto tpat = E.to<Hs::TypedPattern>())
-    {
-        // FIXME - what do we do with the wrapper?
-        // I think we need to apply it to the case object?
-        return desugar_pattern(tpat->pat);
-    }
-    else if (E.is_log_double())
-        std::abort();
-    else if (auto L = E.to<Hs::LiteralPattern>())
-    {
-        if (auto c = L->lit.is_Char())
-        {
-            return *c;
-        }
-        else if (auto i = L->lit.is_Integer())
-        {
-            return *i;
-        }
-        else if (auto d = L->lit.is_Double())
-        {
-            // FIXME: we want to actually compare with fromFractional(E)
-            return *d;
-        }
-        else if (auto s = L->lit.is_String())
-        {
-            return desugar_pattern( Hs::to_con_pat(*s));
-        }
-        else if (auto i = L->lit.is_BoxedInteger())
-        {
-            return *i;
-        }
-        else
-            std::abort();
-    }
-
-    throw myexception()<<"I don't understand pattern '"<<E<<"'";
-}
-
 //TODO: make functions that do e.g.
 //      * desugar_decls -> CDecls
 //      * desugar_decl  -> CDecl
@@ -412,8 +331,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
             else if (auto PQ = B.to<Hs::PatQual>())
             {
-                auto bindpat = desugar_pattern(PQ->bindpat);
-                if (is_irrefutable_pat(bindpat))
+                if (is_irrefutable_pat(PQ->bindpat))
                 {
                     expression_ref f = Hs::LambdaExp({PQ->bindpat}, L);
                     return desugar( {var("Data.List.concatMap"), f, PQ->exp} );
@@ -498,16 +416,15 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         else if (first.is_a<Hs::PatQual>())
         {
             auto& PQ = first.as_<Hs::PatQual>();
-            expression_ref p = desugar_pattern(PQ.bindpat);
-            expression_ref e = PQ.exp;
+
             expression_ref bind = var("Compiler.Base.>>=");
             if (PQ.bindOp)
                 bind = desugar(PQ.bindOp);
 
-            if (is_irrefutable_pat(p))
+            if (is_irrefutable_pat(PQ.bindpat))
             {
                 expression_ref lambda = Hs::LambdaExp({PQ.bindpat}, do_stmts);
-                result = {bind,e,lambda};
+                result = {bind, PQ.exp, lambda};
             }
             else
             {
@@ -520,7 +437,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                 auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc,fail})     };
                 auto decl  = Hs::FunDecl(ok, Hs::Matches{{rule1, rule2}});
 
-                expression_ref body = {bind,e,ok};
+                expression_ref body = {bind, PQ.exp, ok};
                 result = Hs::LetExp({noloc,{{{decl}}}}, {noloc,body});
             }
         }
@@ -578,7 +495,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         vector<failable_expression> bodies;
         for(const auto& [alt_patterns, alt_rhs]: C.alts)
         {
-            patterns.push_back( desugar_pattern( alt_patterns[0] ) );
+            patterns.push_back( alt_patterns[0] );
             bodies.push_back( desugar_rhs( alt_rhs ) );
         }
         return case_expression(obj, patterns, bodies).result(Core::error("case: failed pattern match"));

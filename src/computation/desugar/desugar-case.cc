@@ -437,6 +437,37 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
     auto& rhs = eqn.rhs;
     assert(patterns.size());
 
+    if (auto L = pat1.to<Hs::ListPattern>())
+        pat1 = Hs::to_con_pat(*L);
+    else if (auto T = pat1.to<Hs::TuplePattern>())
+        pat1 = Hs::to_con_pat(*T);
+    else if (auto L = pat1.to<Hs::LiteralPattern>())
+    {
+        if (auto c = L->lit.is_Char())
+        {
+            pat1 = *c;
+        }
+        else if (auto i = L->lit.is_Integer())
+        {
+            pat1 = *i;
+        }
+        else if (auto d = L->lit.is_Double())
+        {
+            // FIXME: we want to actually compare with fromFractional(E)
+            pat1 = *d;
+        }
+        else if (auto s = L->lit.is_String())
+        {
+            pat1 = Hs::to_con_pat(*s);
+        }
+        else if (auto i = L->lit.is_BoxedInteger())
+        {
+            pat1 = *i;
+        }
+        else
+            std::abort();
+    }
+
     // case x of y -> rhs  =>  case x of _ => let {y=x} in rhs
     if (auto v = pat1.to<Hs::VarPattern>())
     {
