@@ -973,8 +973,9 @@ Expression error(const std::string& s);
 
 Con True();
 Con False();
-Con Cons();
+Con ConsCon();
 Con Nil();
+Con TupleCon(int n);
 
 }
 

@@ -792,7 +792,7 @@ Con False()
     return {{noloc, "Data.Bool.False"}, 0};
 }
 
-Con Cons()
+Con ConsCon()
 {
     return {{noloc,":"}, 2};
 }
@@ -800,6 +800,11 @@ Con Cons()
 Con Nil()
 {
     return {{noloc,"[]"}, 0};
+}
+
+Con TupleCon(int n)
+{
+    return {{noloc,tuple_name(n)}, n};
 }
 
 }
