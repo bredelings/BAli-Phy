@@ -1,6 +1,10 @@
 #ifndef HASKELL_PATTERN
 #define HASKELL_PATTERN
 
+#include <vector>
+#include <set>
+#include <string>
+
 #include "computation/object.H"
 #include "computation/parser/located.H"
 
@@ -159,6 +163,8 @@ struct AsPattern: public Object
     AsPattern(const Var& v, const Pattern& p):var(v),pattern(p) {}
 };
 
+std::set<Hs::Var> vars_in_pattern(const Hs::Pattern& pat);
+std::set<Hs::Var> vars_in_patterns(const std::vector<Hs::Pattern>& pats);
 
 }
 #endif

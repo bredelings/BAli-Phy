@@ -117,4 +117,42 @@ string AsPattern::print() const
     return var.print()+"@"+parenthesize_pattern(pattern);
 }
 
+
+std::set<Hs::Var> vars_in_patterns(const std::vector<Hs::Pattern>& pats)
+{
+    std::set<Hs::Var> vars;
+
+    for(auto& pat: pats)
+        add(vars, vars_in_pattern(pat));
+
+    return vars;
+}
+
+std::set<Hs::Var> vars_in_pattern(const Hs::Pattern& pat)
+{
+    if (pat.is_a<Haskell::WildcardPattern>())
+	return {};
+    else if (auto lp = pat.to<Haskell::LazyPattern>())
+        return vars_in_pattern(lp->pattern);
+    else if (auto sp = pat.to<Haskell::StrictPattern>())
+        return vars_in_pattern(sp->pattern);
+    else if (auto ap = pat.to<Haskell::AsPattern>())
+	return plus( vars_in_pattern(Hs::VarPattern(ap->var)),
+                     vars_in_pattern(ap->pattern) );
+    else if (auto l = pat.to<Haskell::ListPattern>())
+        return vars_in_patterns(l->elements);
+    else if (auto t = pat.to<Haskell::TuplePattern>())
+        return vars_in_patterns(t->elements);
+    else if (auto v = pat.to<Haskell::VarPattern>())
+	return { v->var };
+    else if (auto c = pat.to<Hs::ConPattern>())
+        return vars_in_patterns(c->args);
+    else if (auto tp = pat.to<Hs::TypedPattern>())
+        return vars_in_pattern(tp->pat);
+    else if (pat.is_a<Hs::LiteralPattern>())
+        return {};
+    else
+        throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
+}
+
 }
