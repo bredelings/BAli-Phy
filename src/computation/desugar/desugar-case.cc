@@ -163,7 +163,7 @@ vector<pair<pattern_type,vector<equation_info_t>>> partition(const vector<equati
     return partitions;
 }
 
-failable_expression desugar_state::match_constructor(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_constructor(const vector<var>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -206,16 +206,21 @@ failable_expression desugar_state::match_constructor(const vector<expression_ref
         string name = unloc(C.name);
 
 	// 2.2 Construct the simple pattern for constant C
-	vector<expression_ref> args(arity);
+	vector<var> args;
 	for(int j=0;j<arity;j++)
-	    args[j] = get_fresh_var();
+	    args.push_back( get_fresh_var() );
 
 	expression_ref pat = constructor(name, arity);
 	if (args.size())
-	    pat = expression_ref{pat,args};
+        {
+            vector<expression_ref> args2;
+            for(auto& arg: args)
+                args2.push_back(arg);
+	    pat = expression_ref{pat,args2};
+        }
 
 	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
-	vector<expression_ref> x2;
+	vector<var> x2;
 	for(int j=0;j<arity;j++)
 	    x2.push_back(args[j]);
 	x2.insert(x2.end(), x.begin()+1, x.end());
@@ -266,7 +271,7 @@ failable_expression desugar_state::match_constructor(const vector<expression_ref
 }
 
 
-failable_expression desugar_state::match_literal(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_literal(const vector<var>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -308,16 +313,21 @@ failable_expression desugar_state::match_literal(const vector<expression_ref>& x
 	    arity = C.as_<constructor>().n_args();
 
 	// 2.2 Construct the simple pattern for constant C
-	vector<expression_ref> args(arity);
+	vector<var> args;
 	for(int j=0;j<arity;j++)
-	    args[j] = get_fresh_var();
+	    args.push_back( get_fresh_var() );
 
 	auto pat = C;
 	if (args.size())
-	    pat = expression_ref{C,args};
+        {
+            vector<expression_ref> args2;
+            for(auto& arg: args)
+                args2.push_back(arg);
+	    pat = expression_ref{C,args2};
+        }
 
 	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
-	vector<expression_ref> x2;
+	vector<var> x2;
 	for(int j=0;j<arity;j++)
 	    x2.push_back(args[j]);
 	x2.insert(x2.end(), x.begin()+1, x.end());
@@ -367,7 +377,7 @@ failable_expression desugar_state::match_literal(const vector<expression_ref>& x
 }
 
 
-failable_expression desugar_state::match_var(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_var(const vector<var>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -388,7 +398,7 @@ failable_expression desugar_state::match_var(const vector<expression_ref>& x, co
 }
 
 
-failable_expression desugar_state::match_empty(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match_empty(const vector<var>& x, const vector<equation_info_t>& equations)
 {
     assert(x.size() == 0);
 
@@ -492,7 +502,7 @@ void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& e
     }
 }
 
-failable_expression desugar_state::match(const vector<expression_ref>& x, const vector<equation_info_t>& equations)
+failable_expression desugar_state::match(const vector<var>& x, const vector<equation_info_t>& equations)
 {
     const int N = x.size();
     const int M = equations.size();
@@ -548,7 +558,7 @@ failable_expression desugar_state::case_expression(const expression_ref& T, cons
 expression_ref desugar_state::def_function(const vector< equation_info_t >& equations, const expression_ref& otherwise)
 {
     // 1. Get fresh vars for the arguments
-    vector<expression_ref> args;
+    vector<var> args;
     for(int i=0;i<equations[0].patterns.size();i++)
 	args.push_back(get_fresh_var());
 

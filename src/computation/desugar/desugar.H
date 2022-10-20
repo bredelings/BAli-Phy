@@ -63,12 +63,12 @@ struct desugar_state: public FreshVarSource
 
     failable_expression case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<failable_expression>& bodies);
 
-    failable_expression match(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations);
+    failable_expression match(const std::vector<var>& x, const std::vector<equation_info_t>& equations);
 
-    failable_expression match_constructor(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations);
-    failable_expression match_literal(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations);
-    failable_expression match_var(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations);
-    failable_expression match_empty(const std::vector<expression_ref>& x, const std::vector<equation_info_t>& equations);
+    failable_expression match_constructor(const std::vector<var>& x, const std::vector<equation_info_t>& equations);
+    failable_expression match_literal(const std::vector<var>& x, const std::vector<equation_info_t>& equations);
+    failable_expression match_var(const std::vector<var>& x, const std::vector<equation_info_t>& equations);
+    failable_expression match_empty(const std::vector<var>& x, const std::vector<equation_info_t>& equations);
 
     failable_expression combine(const failable_expression& E1, const failable_expression& E2);
     failable_expression fold(const std::vector<failable_expression>& Es);
