@@ -71,35 +71,6 @@ std::optional<int> find_object(const vector<T>& v, const T& E)
     return {};
 }
 
-bool is_irrefutable_pattern(const expression_ref& E)
-{
-    return E.is_a<var>();
-}
-
-/// Is this either (a) irrefutable, (b) a constant, or (c) a constructor whose arguments are irrefutable patterns?
-bool is_simple_pattern(const expression_ref& E)
-{
-    // (a) Is this irrefutable?
-    if (is_irrefutable_pattern(E))
-        return true;
-    // (c) Is this a constructor who arguments are irrefutable patterns?
-    else if (auto C = E.to<Hs::ConPattern>())
-    {
-        assert(C);
-
-        for(auto& pat: C->args)
-            if (not is_irrefutable_pattern(pat))
-                return false;
-        return true;
-    }
-    else if (E.is_char() or E.is_int() or E.is_double())
-    {
-        return true;
-    }
-    else
-        std::abort();
-}
-
 template <typename T>
 vector<T> remove_first(const vector<T>& v1)
 {
