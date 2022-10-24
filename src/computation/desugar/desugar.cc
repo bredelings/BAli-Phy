@@ -414,10 +414,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         if (auto sq = first.to<Hs::SimpleQual>())
         {
             expression_ref e = first.as_<Hs::SimpleQual>().exp;
-            expression_ref and_then = Hs::Var({noloc,"Compiler.Base.>>"});
-            if (sq->andThenOp)
-                and_then = sq->andThenOp;
-            result = {and_then, e, do_stmts};
+            result = {sq->andThenOp, e, do_stmts};
         }
 
         // do { p <- e ; stmts} => let {ok p = do {stmts}; ok _ = fail "..."} in e >>= ok
@@ -426,14 +423,10 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         {
             auto& PQ = first.as_<Hs::PatQual>();
 
-            expression_ref bind = Hs::Var({noloc,"Compiler.Base.>>="});
-            if (PQ.bindOp)
-                bind = PQ.bindOp;
-
             if (is_irrefutable_pat(PQ.bindpat))
             {
                 expression_ref lambda = Hs::LambdaExp({PQ.bindpat}, do_stmts);
-                result = {bind, PQ.exp, lambda};
+                result = {PQ.bindOp, PQ.exp, lambda};
             }
             else
             {
@@ -446,7 +439,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                 auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc,fail})     };
                 auto decl  = Hs::FunDecl(ok, Hs::Matches{{rule1, rule2}});
 
-                expression_ref body = {bind, PQ.exp, ok};
+                expression_ref body = {PQ.bindOp, PQ.exp, ok};
                 result = Hs::LetExp({noloc,{{{decl}}}}, {noloc,body});
             }
         }
