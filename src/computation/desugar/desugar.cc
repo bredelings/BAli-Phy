@@ -332,10 +332,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
             else if (auto PQ = B.to<Hs::PatQual>())
             {
+                Hs::Var concatMap({noloc, "Data.List.concatMap"});
                 if (is_irrefutable_pat(PQ->bindpat))
                 {
                     expression_ref f = Hs::LambdaExp({PQ->bindpat}, L);
-                    return desugar( {var("Data.List.concatMap"), f, PQ->exp} );
+                    return desugar( {concatMap, f, PQ->exp} );
                 }
                 else
                 {
@@ -346,7 +347,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                     auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc, fail})     };
                     auto decl  = Hs::FunDecl(ok, Hs::Matches{{rule1, rule2}});
 
-                    expression_ref body = {var("Data.List.concatMap"), ok, PQ->exp};
+                    expression_ref body = {concatMap, ok, PQ->exp};
                     return desugar( Hs::LetExp({noloc,{{{decl}}}}, {noloc,body}) );
                 }
             }
@@ -413,9 +414,9 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         if (auto sq = first.to<Hs::SimpleQual>())
         {
             expression_ref e = first.as_<Hs::SimpleQual>().exp;
-            expression_ref and_then = var("Compiler.Base.>>");
+            expression_ref and_then = Hs::Var({noloc,"Compiler.Base.>>"});
             if (sq->andThenOp)
-                and_then = desugar(sq->andThenOp);
+                and_then = sq->andThenOp;
             result = {and_then, e, do_stmts};
         }
 
@@ -425,9 +426,9 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         {
             auto& PQ = first.as_<Hs::PatQual>();
 
-            expression_ref bind = var("Compiler.Base.>>=");
+            expression_ref bind = Hs::Var({noloc,"Compiler.Base.>>="});
             if (PQ.bindOp)
-                bind = desugar(PQ.bindOp);
+                bind = PQ.bindOp;
 
             if (is_irrefutable_pat(PQ.bindpat))
             {
@@ -438,9 +439,9 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             {
                 // let {ok bindpat = do_stmts; ok _ = fail} in e >>= ok
                 auto ok = get_fresh_Var("ok", false);
-                expression_ref fail = {var("Control.Monad.fail"), desugar_string_expression("Fail!")};
+                expression_ref fail = {Hs::Var({noloc,"Control.Monad.fail"}), Hs::Literal(Hs::String("Fail!"))};
                 if (PQ.failOp)
-                    fail = desugar(PQ.failOp);
+                    fail = PQ.failOp;
                 auto rule1 = Hs::MRule{ {PQ.bindpat},            Hs::SimpleRHS({noloc,do_stmts}) };
                 auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc,fail})     };
                 auto decl  = Hs::FunDecl(ok, Hs::Matches{{rule1, rule2}});
@@ -563,19 +564,17 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         else
             std::abort();
     }
+    else if (is_apply_exp(E))
+    {
+        auto args = E.copy_sub();
+        for(auto& arg: args)
+            arg = desugar(arg);
 
-    auto head = E.head();
-    vector<expression_ref> v = E.copy_sub();
+        assert(args.size());
+        return expression_ref{E.head(),args};
+    }
 
-    if (auto c = head.to<Hs::Con>())
-        head = constructor(unloc(c->name), *c->arity);
-    
-    for(auto& e: v)
-	e = desugar(e);
-    if (E.size())
-	return expression_ref{head,v};
-    else
-	return head;
+    std::abort();
 }
 
 expression_ref desugar(const Module& m, FreshVarState& state, const expression_ref& E)
