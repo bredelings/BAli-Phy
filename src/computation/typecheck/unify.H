@@ -46,6 +46,7 @@ namespace std
 std::optional<Hs::Context> check_apply_subst(const substitution_t& s, Hs::Context C);
 std::optional<Hs::Type> check_apply_subst(const substitution_t& s, const Hs::Type& t);
 Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t);
+std::vector<Hs::Type> apply_subst(const substitution_t& s, const std::vector<Hs::Type>& t);
 //Hs::Context apply_subst(const substitution_t& s, const Hs::Context& C);
 
 std::optional<Hs::Context> check_apply_subst(const usubstitution_t& s, Hs::Context C);

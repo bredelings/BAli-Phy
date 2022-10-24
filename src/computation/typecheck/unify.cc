@@ -184,6 +184,14 @@ Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t)
         return t;
 }
 
+vector<Hs::Type> apply_subst(const substitution_t& s, const vector<Hs::Type>& t)
+{
+    vector<Hs::Type> t2 = t;
+    for(auto& type: t2)
+        type = apply_subst(s, type);
+    return t2;
+}
+
 Hs::Type apply_subst(const usubstitution_t& s, const Hs::Type& t)
 {
     if (auto T = check_apply_subst(s, t))
