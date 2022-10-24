@@ -306,7 +306,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         // [ e | True   ]  =  [ e ]
         if (L.quals.size() == 1 and L.quals[0].is_a<Hs::SimpleQual>() and L.quals[0].as_<Hs::SimpleQual>().exp == bool_true)
         {
-            return desugar( List({L.body}) );
+            return desugar( Hs::List({L.body}) );
         }
 
         // [ e | q      ]  =  [ e | q, True ]
