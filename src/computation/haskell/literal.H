@@ -31,6 +31,7 @@ struct Integer
 struct String
 {
     std::string value;
+    String(const std::string& s):value(s) {}
 };
 
 struct Double
