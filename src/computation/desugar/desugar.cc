@@ -371,6 +371,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     }
     else if (auto v = E.to<Hs::Var>())
     {
+        // Why does make_var not want any wrappers?
         auto V = *v;
         V.wrap = {};
         Core::Exp E = make_var(V);
@@ -379,7 +380,13 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         return E;
     }
     else if (auto c = E.to<Hs::Con>())
-        return var(unloc(c->name));
+    {
+        // Sometimes c->wrap isn't set because we make up constructors on the fly for e.g. []
+        Core::Exp E = var(unloc(c->name));
+        if (c->wrap)
+            E = (*c->wrap)(E);
+        return E;
+    }
     else if (E.is_a<Hs::Do>())
     {
         auto stmts = E.as_<Hs::Do>().stmts.stmts;
