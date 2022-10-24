@@ -411,7 +411,7 @@ failable_expression desugar_state::match_empty(const vector<var>& x, const vecto
 }
 
 // Make this a member function of equation_info_t?
-void desugar_state::clean_up_pattern(const expression_ref& x, equation_info_t& eqn)
+void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
 {
     auto& patterns = eqn.patterns;
     auto& pat1 = patterns[0];
@@ -506,9 +506,6 @@ failable_expression desugar_state::match(const vector<var>& x, const vector<equa
 {
     const int N = x.size();
     const int M = equations.size();
-
-    for(int j=0;j<N;j++)
-	assert(is_var(x[j]));
 
     // Each pattern must have N components.
     for(int j=0;j<M;j++)

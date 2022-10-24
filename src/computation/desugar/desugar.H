@@ -75,7 +75,7 @@ struct desugar_state: public FreshVarSource
     failable_expression desugar_gdrh(const Haskell::GuardedRHS& ghrs);
     failable_expression desugar_rhs(const Hs::MultiGuardedRHS& R);
 
-    void clean_up_pattern(const expression_ref& x, equation_info_t& eqn);
+    void clean_up_pattern(const var& x, equation_info_t& eqn);
 
     equation_info_t desugar_match(const Hs::MRule& matches);
     std::vector<equation_info_t> desugar_matches(const Hs::Matches& matches);
