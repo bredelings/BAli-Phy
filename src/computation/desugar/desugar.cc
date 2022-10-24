@@ -119,16 +119,17 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
             var z = get_fresh_var();
             if (pat.is_a<Hs::AsPattern>())
             {
+                // Special-case for top-level as-patterns
+                // This isn't needed, but generates simpler code.
                 z = make_var(pat.as_<Hs::AsPattern>().var);
                 pat = pat.as_<Hs::AsPattern>().pattern;
             }
 
-            // z = pat
-	    decls.push_back( {z,rhs.result(0)});
+            decls.push_back( {z,rhs.result(0)});
 	    assert(not rhs.can_fail);
 
 	    // x = case z of pat -> x
-	    for(auto& v: Hs::vars_in_pattern( unloc(pd->lhs) ) )
+	    for(auto& v: Hs::vars_in_pattern( pat ) )
             {
                 auto x = make_var(v);
 		decls.push_back( {x ,case_expression(z, {pat}, {failable_expression(x)}).result(Core::error("pattern binding: failed pattern match"))});
