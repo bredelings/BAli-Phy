@@ -277,7 +277,7 @@ struct typechecker_state: FreshVarSource
 
     void tcRho(Hs::Var&, const Expected& E);
 
-    void tcRho(const Hs::Con& con, const Expected& E);
+    void tcRho(Hs::Con& con, const Expected& E);
 
     void tcRho(Hs::ApplyExp& app_exp, const Expected& E, int i=0);
 

@@ -33,8 +33,7 @@ void typechecker_state::tcRho(Hs::Var& x, const Expected& exp_type)
 
     try
     {
-        auto w = instantiateSigma(sigma, exp_type);
-        x.wrap = w;
+        x.wrap = instantiateSigma(sigma, exp_type);
     }
     catch (myexception& ex)
     {
@@ -48,13 +47,13 @@ void typechecker_state::tcRho(Hs::Var& x, const Expected& exp_type)
     }
 }
 
-void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
+void typechecker_state::tcRho(Hs::Con& con, const Expected& exp_type)
 {
     auto sigma = constructor_type(con);
 
     try
     {
-        auto w = instantiateSigma(sigma, exp_type);
+        con.wrap = instantiateSigma(sigma, exp_type);
     }
     catch (myexception& ex)
     {
@@ -66,11 +65,6 @@ void typechecker_state::tcRho(const Hs::Con& con, const Expected& exp_type)
         ex.prepend(header.str());
         throw;
     }
-
-
-    // We should actually return w(con).
-    // However, since (i) there are no wanteds and (ii) we aren't applying type variables,
-    //     the wrapper has to be an identity for the moment.
 }
 
 void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
@@ -343,16 +337,18 @@ void typechecker_state::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
 void typechecker_state::tcRho(expression_ref& E, const Expected& exp_type)
 {
     // VAR
-    if (auto x = E.to<Hs::Var>())
+    if (auto v = E.to<Hs::Var>())
     {
-        auto X = *x;
-        tcRho(X, exp_type);
-        E = X;
+        auto V = *v;
+        tcRho(V, exp_type);
+        E = V;
     }
     // CON
     else if (auto con = E.to<Hs::Con>())
     {
-        tcRho(*con, exp_type);
+        auto C = *con;
+        tcRho(C, exp_type);
+        E = C;
     }
     // APP
     else if (auto app = E.to<Hs::ApplyExp>())
