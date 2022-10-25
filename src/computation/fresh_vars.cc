@@ -5,6 +5,22 @@
 using std::vector;
 using std::string;
 
+string remove_suffix(const string& name)
+{
+    int i = name.size()-1;
+    while(i >=0 and name[i] >= '0' and name[i] <= '9')
+        i--;
+    if (i > 0 and name[i] == '_')
+        return name.substr(0,i);
+    else
+        return name;
+}
+
+string add_suffix(const string& name, int i)
+{
+    return remove_suffix(name)+"_"+std::to_string(i);
+}
+
 
 string FreshVarSource::qualified_name(const string& uname) const
 {
@@ -29,7 +45,7 @@ var FreshVarSource::get_fresh_var(const std::string& name)
 var FreshVarSource::get_fresh_var(const std::string& name, bool qualified)
 {
     assert(not is_haskell_builtin_con_name(name));
-    string name2 = get_unqualified_name(name) + "@" + std::to_string( get_index() );
+    string name2 = add_suffix(get_unqualified_name(name), get_index() );
 
     if (qualified)
         name2 = qualified_name(name2);
@@ -59,7 +75,7 @@ var FreshVarSource::get_fresh_var_copy(var x)
 
 Hs::Var FreshVarSource::get_fresh_Var(const std::string& name, bool qualified)
 {
-    string name2 = get_unqualified_name(name) + "@" + std::to_string( get_index() );
+    string name2 = add_suffix(get_unqualified_name(name), get_index() );
 
     if (qualified)
         name2 = qualified_name(name2);
@@ -82,7 +98,7 @@ Hs::Var FreshVarSource::get_fresh_Var(const var& x, bool qualified)
 
 Hs::MetaTypeVar FreshVarSource::fresh_meta_type_var(int level, const string& name, const Hs::Kind& k)
 {
-    Hs::MetaTypeVar tv(level, {noloc, name+std::to_string( get_index() )});
+    Hs::MetaTypeVar tv(level, {noloc, add_suffix(name, get_index() )});
     tv.kind = k;
     return tv;
 }
@@ -94,7 +110,7 @@ Hs::MetaTypeVar FreshVarSource::fresh_meta_type_var(int level, const Hs::Kind& k
 
 Hs::TypeVar FreshVarSource::fresh_rigid_type_var(int level, const string& name, const Hs::Kind& k)
 {
-    Hs::TypeVar tv(level, {noloc, name+std::to_string( get_index() )});
+    Hs::TypeVar tv(level, {noloc, add_suffix(name, get_index() )});
     tv.kind = k;
     return tv;
 }
@@ -106,7 +122,7 @@ Hs::TypeVar FreshVarSource::fresh_rigid_type_var(int level, const Hs::Kind& k)
 
 Hs::TypeVar FreshVarSource::fresh_other_type_var(const string& name, const Hs::Kind& k)
 {
-    Hs::TypeVar tv({noloc, name+std::to_string( get_index() )});
+    Hs::TypeVar tv({noloc, add_suffix(name, get_index() )});
     tv.kind = k;
     return tv;
 }
@@ -118,7 +134,7 @@ Hs::TypeVar FreshVarSource::fresh_other_type_var(const Hs::Kind& k)
 
 Hs::TypeVar FreshVarSource::fresh_other_type_var(const string& name)
 {
-    Hs::TypeVar tv({noloc, name+std::to_string( get_index() )});
+    Hs::TypeVar tv({noloc, add_suffix(name, get_index() )});
     return tv;
 }
 
