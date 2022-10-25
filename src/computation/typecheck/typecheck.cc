@@ -352,7 +352,7 @@ Hs::TypeVar unification_env::fresh_tyvar(const std::optional<Hs::Kind>& kind) co
 }
 
 // Is there a better way to implement this?
-bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2)
+bool typechecker_state::maybe_unify_(bool eager_unification, bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2)
 {
     // Translate rigid type variables
     if (auto tv1 = t1.to<Hs::TypeVar>(); tv1 and env.mapping1.count(*tv1))
@@ -361,7 +361,7 @@ bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, con
         auto tv1_remapped = env.mapping1.at(*tv1);
         assert(tv1_remapped.is_skolem_constant());
         assert(not env.mapping1.count(tv1_remapped));
-        return maybe_unify_(allow_unification, both_ways, env, tv1_remapped, t2);
+        return maybe_unify_(eager_unification, both_ways, env, tv1_remapped, t2);
     }
     else if (auto tv2 = t2.to<Hs::TypeVar>(); tv2 and env.mapping2.count(*tv2))
     {
@@ -369,15 +369,15 @@ bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, con
         auto tv2_remapped = env.mapping2.at(*tv2);
         assert(tv2_remapped.is_skolem_constant());
         assert(not env.mapping2.count(tv2_remapped));
-        return maybe_unify_(allow_unification, both_ways, env, t1, tv2_remapped);
+        return maybe_unify_(eager_unification, both_ways, env, t1, tv2_remapped);
     }
     else if (auto tt1 = filled_meta_type_var(t1))
-        return maybe_unify_(allow_unification, both_ways, env, *tt1, t2);
+        return maybe_unify_(eager_unification, both_ways, env, *tt1, t2);
     else if (auto tt2 = filled_meta_type_var(t2))
-        return maybe_unify_(allow_unification, both_ways, env, t1, *tt2);
+        return maybe_unify_(eager_unification, both_ways, env, t1, *tt2);
     else if (auto tv1 = t1.to<Hs::MetaTypeVar>())
     {
-        if (allow_unification)
+        if (eager_unification)
             return try_insert(*tv1, t2);
         else
         {
@@ -387,7 +387,7 @@ bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, con
     }
     else if (auto tv2 = t2.to<Hs::MetaTypeVar>(); tv2 and both_ways)
     {
-        if (allow_unification)
+        if (eager_unification)
             return try_insert(*tv2, t1);
         else
         {
@@ -397,18 +397,41 @@ bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, con
     }
     else if (auto tv1 = t1.to<Hs::TypeVar>())
     {
-        if (auto tv2 = t2.to<Hs::TypeVar>(); tv2 and *tv1 == *tv2)
-            return true;
+        if (eager_unification)
+        {
+            if (auto tv2 = t2.to<Hs::TypeVar>(); tv2 and *tv1 == *tv2)
+                return true;
+            else
+                return false;
+        }
         else
-            return false;
+        {
+            add_dvar(make_equality_constraint(t1, t2));
+            return true;
+        }
+    }
+    else if (auto tv2 = t2.to<Hs::TypeVar>())
+    {
+        if (eager_unification)
+        {
+            if (auto tv1 = t1.to<Hs::TypeVar>(); tv1 and *tv1 == *tv2)
+                return true;
+            else
+                return false;
+        }
+        else
+        {
+            add_dvar(make_equality_constraint(t1, t2));
+            return true;
+        }
     }
     else if (t1.is_a<Hs::TypeApp>() and t2.is_a<Hs::TypeApp>())
     {
         auto& app1 = t1.as_<Hs::TypeApp>();
         auto& app2 = t2.as_<Hs::TypeApp>();
 
-        return maybe_unify_(allow_unification, both_ways, env, app1.head, app2.head) and
-               maybe_unify_(allow_unification, both_ways, env, app1.arg , app2.arg );
+        return maybe_unify_(eager_unification, both_ways, env, app1.head, app2.head) and
+               maybe_unify_(eager_unification, both_ways, env, app1.arg , app2.arg );
     }
     else if (t1.is_a<Hs::TypeCon>() and
              t2.is_a<Hs::TypeCon>() and
@@ -418,19 +441,19 @@ bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, con
     }
     else if (auto tup1 = t1.to<Hs::TupleType>())
     {
-        return maybe_unify_(allow_unification, both_ways, env, canonicalize_type(*tup1), t2);
+        return maybe_unify_(eager_unification, both_ways, env, canonicalize_type(*tup1), t2);
     }
     else if (auto tup2 = t2.to<Hs::TupleType>())
     {
-        return maybe_unify_(allow_unification, both_ways, env, t1, canonicalize_type(*tup2));
+        return maybe_unify_(eager_unification, both_ways, env, t1, canonicalize_type(*tup2));
     }
     else if (auto l1 = t1.to<Hs::ListType>())
     {
-        return maybe_unify_(allow_unification, both_ways, env, canonicalize_type(*l1), t2);
+        return maybe_unify_(eager_unification, both_ways, env, canonicalize_type(*l1), t2);
     }
     else if (auto l2 = t2.to<Hs::ListType>())
     {
-        return maybe_unify_(allow_unification, both_ways, env, t1, canonicalize_type(*l2));
+        return maybe_unify_(eager_unification, both_ways, env, t1, canonicalize_type(*l2));
     }
     else if (t1.is_a<Hs::ConstrainedType>() and t2.is_a<Hs::ConstrainedType>())
     {
@@ -439,9 +462,9 @@ bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, con
         if (c1->context.constraints.size() != c2->context.constraints.size())
             return false;
         for(int i=0;i< c1->context.constraints.size();i++)
-            if (not maybe_unify_(allow_unification, both_ways, env, c1->context.constraints[i], c2->context.constraints[i]))
+            if (not maybe_unify_(eager_unification, both_ways, env, c1->context.constraints[i], c2->context.constraints[i]))
                 return false;
-        return maybe_unify_(allow_unification, both_ways, env, c1->type, c2->type);
+        return maybe_unify_(eager_unification, both_ways, env, c1->type, c2->type);
     }
     else if (t1.is_a<Hs::ForallType>() and t2.is_a<Hs::ForallType>())
     {
@@ -464,7 +487,7 @@ bool typechecker_state::maybe_unify_(bool allow_unification, bool both_ways, con
             env2.mapping2 = env2.mapping2.insert({tv2,v});
         }
 
-        return maybe_unify_(allow_unification, both_ways, env2, fa1->type, fa2->type);
+        return maybe_unify_(eager_unification, both_ways, env2, fa1->type, fa2->type);
     }
     else if (t1.is_a<Hs::StrictLazyType>() or t2.is_a<Hs::StrictLazyType>())
     {
