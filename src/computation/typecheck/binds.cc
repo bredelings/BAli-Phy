@@ -578,7 +578,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
         for(auto& tv: qtvs_unused)
         {
             assert(tv.kind);
-            auto new_tv = fresh_meta_type_var(*tv.kind);
+            auto new_tv = fresh_meta_type_var(unloc(tv.name), *tv.kind);
             s = s.insert({tv, new_tv});
         }
         auto lie_all = apply_subst(s, lie_retained);

@@ -1123,7 +1123,7 @@ tuple<vector<Hs::MetaTypeVar>, LIE, Hs::Type> typechecker_state::instantiate(con
         for(auto& tv: fa->type_var_binders)
         {
             assert(tv.kind);
-            auto new_tv = fresh_meta_type_var(*tv.kind);
+            auto new_tv = fresh_meta_type_var(unloc(tv.name), *tv.kind);
             s = s.insert({tv,new_tv});
 
             tvs.push_back(new_tv);
@@ -1170,9 +1170,9 @@ tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skol
             assert(tv.kind);
             Hs::TypeVar new_tv;
             if (skolem)
-                new_tv = fresh_rigid_type_var(*tv.kind);
+                new_tv = fresh_rigid_type_var(unloc(tv.name), *tv.kind);
             else
-                new_tv = fresh_other_type_var(*tv.kind);
+                new_tv = fresh_other_type_var(unloc(tv.name), *tv.kind);
             s = s.insert({tv,new_tv});
 
             tvs.push_back(new_tv);
