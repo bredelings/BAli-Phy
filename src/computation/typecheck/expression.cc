@@ -69,6 +69,10 @@ void typechecker_state::tcRho(Hs::Con& con, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
 {
+    // i         = the number of arguments we pretend we've removed from the end of App.
+    // arg_index = the index of the last argument that remains after these are removed.
+    // 0         = the index of the first argument.
+
     int arg_index = int(App.args.size())-1-i;
 
     Expected fun_type = Infer();
@@ -77,7 +81,7 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i
     else
         tcRho(App.head, fun_type);
 
-    auto e = myexception()<<"Applying "<<(arg_index+1)<<" arguments to function "<<App.head.print()<<", but it only takes "<<i<<"!";
+    auto e = myexception()<<"Applying "<<(arg_index+1)<<" arguments to function "<<App.head.print()<<", but it only takes "<<arg_index<<"!";
     auto [arg_type, result_type] = unify_function(fun_type.read_type(), e);
 
     // Check the argument according to its required type
