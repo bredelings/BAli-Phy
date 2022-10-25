@@ -35,6 +35,7 @@ instance Monad IO where
     mfix f   = IOMFix f
     unsafeInterleaveIO f = IOLazy f
 
+unsafePerformIO :: IO c -> c
 unsafePerformIO (IOAction f) = snd (f 0#)
 unsafePerformIO (IOLazy f) = unsafePerformIO f
 unsafePerformIO (IOAndPass (IOLazy f) g) = let x = unsafePerformIO f in unsafePerformIO (g x)
