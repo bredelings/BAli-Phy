@@ -112,6 +112,7 @@ with_tk_effect = WithTKEffect
 
 do_nothing _ = return ()
 
+run_strict :: Random a -> IO a
 run_strict (RanBind f g) = do
   x <- run_strict f
   run_strict $ g x
@@ -126,6 +127,8 @@ run_strict (Lazy r) = unsafeInterleaveIO $ run_lazy r
 
 
 add_move m = TKLiftIO $ (\rate -> register_transition_kernel rate m)
+
+run_tk_effects :: Double -> TKEffects a -> IO a
 run_tk_effects rate (TKBind f g) = do x <- run_tk_effects rate f
                                       run_tk_effects rate $ g x
 run_tk_effects rate (TKReturn v) = return v
@@ -153,6 +156,7 @@ run_lazy (Observe _ _) = error "run_lazy: observe"
 
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
 
+run_strict' :: Double -> Random a -> IO a
 run_strict' rate (RanBind f g) = do
   x <- run_strict' rate f
   run_strict' rate $ g x
@@ -201,6 +205,7 @@ modifiable_structure = triggered_modifiable_structure apply_modifier (const ())
 --         If it is run from run_strict' directly, then it is run with
 --         unsafeInterleaveIO $ run_lazy', so we get an unsafeInterleaveIO from there.
 --
+run_lazy' :: Double -> Random a -> IO a
 run_lazy' rate (LiftIO a) = a
 run_lazy' rate (RanBind f g) = do
   x <- unsafeInterleaveIO $ run_lazy' rate f
