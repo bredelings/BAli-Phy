@@ -106,6 +106,7 @@ enum class pattern_type
     literal,
     var,
     bang,
+    wrap,
     null
 };
 
@@ -499,6 +500,13 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
 	auto y = make_var(AP.var);
 	rhs.add_binding({{y, x}});
 	pat1 = AP.pattern;
+    }
+    // case x of (pat::type) -> rhs  => case wrap(x) of pat -> rhs
+    else if (auto tp = pat1.to<Haskell::TypedPattern>())
+    {
+        // FIXME: this ignores the wrapper!
+	pat1 = tp->pat;
+        clean_up_pattern(x, eqn);
     }
 }
 
