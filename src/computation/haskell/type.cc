@@ -444,15 +444,15 @@ string TypeVar::print() const
     if (index)
         uname = uname +"#"+std::to_string(*index);
 
+    if (is_skolem_constant())
+        uname = uname + "{{"+std::to_string(level())+"}}";
+
     return uname;
 }
 
 string TypeVar::print_with_kind() const
 {
     string uname = print();
-
-    if (is_skolem_constant())
-        uname = uname + "{"+std::to_string(level())+"}";
 
     if (kind)
         uname = "("+uname + " :: " + (*kind).print()+")";
