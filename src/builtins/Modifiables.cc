@@ -115,16 +115,16 @@ extern "C" closure builtin_function_register_dist(OperationArgs& Args)
     // The effect to register the sampling event is self-referential,
     // so we need to allocate the location BEFORE we construct the object.
 
-    int r = Args.allocate_reg();
+    int r_effect = Args.allocate_reg();
 
     expression_ref E(constructor("Effect.Dist",3), {index_var(0), observation, name});
 
     auto& M = Args.memory();
-    M.set_C(r, closure{E,{r}});
+    M.set_C(r_effect, closure{E,{r_effect}});
 
-    Args.set_effect(r);
+    Args.set_effect(r_effect);
 
-    return {index_var(0),{r}};
+    return {index_var(0),{r_effect}};
 }
 
 extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
