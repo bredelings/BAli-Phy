@@ -238,8 +238,13 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
 	    // pattern: Add the remaining top-level patterns (minus the first).
 	    patterns.insert(patterns.end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
 
+            // Add the ev_binds for the ConPattern to the rhs
+            auto rhs = equations[r].rhs;
+            if (con_pat->ev_binds)
+                rhs.add_binding(*con_pat->ev_binds);
+
 	    // Add the equation
-	    auto eqn = equation_info_t{std::move(patterns), equations[r].rhs};
+	    auto eqn = equation_info_t{std::move(patterns), std::move(rhs)};
 	    equations2.push_back(std::move(eqn));
 	}
 
