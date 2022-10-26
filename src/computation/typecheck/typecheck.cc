@@ -816,9 +816,13 @@ void typechecker_state::add_dvar(const Core::Var& dvar, const Hs::Type& constrai
 
 Core::Var typechecker_state::fresh_dvar(const Hs::Type& constraint)
 {
-    ID name = "dvar";
-    if (auto cname = maybe_get_class_name_from_constraint(constraint))
+    ID name;
+    if (is_equality_constraint(constraint))
+        name = "co";
+    else if (auto cname = maybe_get_class_name_from_constraint(constraint))
         name = "d" + *cname;
+    else
+        name = "dvar";
     auto dvar = get_fresh_var(name, false);
     dvar.type_ = std::make_shared<Hs::Type>(constraint);
     return dvar;
