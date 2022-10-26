@@ -14,6 +14,7 @@ using std::set;
 using std::pair;
 using std::optional;
 using std::tuple;
+using std::shared_ptr;
 
 namespace views = ranges::views;
 
@@ -768,7 +769,9 @@ Core::Decls typechecker_state::entails(const LIE& givens, WantedConstraints& wan
         update = false;
 
         // 2. Handle implications
-        for(auto& implic: wanteds.implications)
+        vector<shared_ptr<Implication>> wanted_implics;
+        std::swap(wanted_implics, wanteds.implications);
+        for(auto& implic: wanted_implics)
         {
             // 3. construct sub-givens
             LIE sub_givens = implic->givens;
@@ -798,6 +801,7 @@ Core::Decls typechecker_state::entails(const LIE& givens, WantedConstraints& wan
                         wanteds.simple.push_back({var,constraint});
                     }
                 }
+                implic->wanteds.simple.clear();
             }
 
             // 6. Issue collected warnings constraints that couldn't be derived from the givens.
@@ -806,8 +810,11 @@ Core::Decls typechecker_state::entails(const LIE& givens, WantedConstraints& wan
 
             // 7. Write newly discovered evidence bidings.
             *implic->evidence_binds += sub_decls;
+
+            // 8. Keep implication if not empty.
+            if (not implic->wanteds.empty())
+                wanteds.implications.push_back( implic );
         }
-        wanteds.implications.clear();
     } while(update);
 
     // This should implement |->[solv] from Figure 14 of the OutsideIn(X) paper:
