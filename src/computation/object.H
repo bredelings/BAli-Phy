@@ -3,40 +3,14 @@
 
 #include <string>
 #include <memory>
-#include <boost/intrusive_ptr.hpp>
 #include <iostream>
 
+#include "util/ref_counted.H"
 #include "util/math/log-double.H"
 #include "computation/type_constant.H"
 
-class Object 
+class Object: public ref_counted
 {
-    mutable int _refs = 0; 
-
-    friend inline void intrusive_ptr_release(Object* pThis)
-	{
-	    if (--pThis->_refs == 0 ) { 
-		delete pThis;
-	    }
-	}
-  
-    friend inline void intrusive_ptr_add_ref(Object* pThis)
-	{
-	    pThis->_refs++;
-	}
-  
-    friend inline void intrusive_ptr_release(const Object* pThis)
-	{
-	    if(--const_cast<Object*>(pThis)->_refs == 0 ) { 
-		delete const_cast<Object*>(pThis);
-	    }
-	}
-  
-    friend inline void intrusive_ptr_add_ref(const Object* pThis)
-	{
-	    const_cast<Object*>(pThis)->_refs++;
-	}
-
 public:
 
     virtual Object* clone() const =0;
@@ -56,23 +30,16 @@ public:
 	    return not operator==(o);
 	}
 
-    int ref_count() const {return _refs;}
-
     virtual type_constant type() const {return unknown_type;}
 
     virtual std::string print() const;
 
-    Object& operator=(const Object&) {return *this;}
-
-    Object() = default;
-    Object(const Object&) {} // sets ref count to zero.
     virtual ~Object() = default;
-    void swap(Object&) {}
 };
 
 // What type of smart pointer are we using to point to Objects?
 template <typename T>
-using object_ptr = boost::intrusive_ptr<T>;
+using object_ptr = ref_ptr<T>;
 
 template<typename T>
 class Box: public Object, public T
