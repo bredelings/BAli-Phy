@@ -9,14 +9,36 @@ using std::set;
 using std::pair;
 using std::optional;
 
-tuple<vector<Hs::TypeVar>, vector<Hs::TypeVar>, LIE, vector<Hs::Type>, Hs::Type> typechecker_state::constructor_pattern_types(const Hs::Con& con)
+tuple<vector<Hs::TypeVar>, vector<Hs::TypeVar>, vector<Hs::Type>, vector<Hs::Type>, Hs::Type>
+typechecker_state::constructor_pattern_types(const Hs::Con& con)
 {
-    // Should we be instantiating here?
+    // 1. Get the constructor type
     auto full_con_type = constructor_type(con);
-    auto [mtvs, predicates, con_type] = instantiate( full_con_type );
+    auto con_type = full_con_type;
 
+    // 2. Extract tyvar, givens, and rho type.
+    set<Hs::TypeVar> all_tvs;
+    vector<Hs::Type> constraints;
+    while(true)
+    {
+        if (auto fa = con_type.to<Hs::ForallType>())
+        {
+            for(auto& tv: fa->type_var_binders)
+                all_tvs.insert(tv);
+            con_type = fa->type;
+        }
+        else if (auto c = con_type.to<Hs::ConstrainedType>())
+        {
+            for(auto& constraint: c->context.constraints)
+                constraints.push_back(constraint);
+            con_type = c->type;
+        }
+        else
+            break;
+    }
+
+    // 3. Extract field_types and result type
     vector<Hs::Type> field_types;
-
     while(auto f = Hs::is_function_type(con_type))
     {
         auto [t1,t2] = *f;
@@ -25,10 +47,23 @@ tuple<vector<Hs::TypeVar>, vector<Hs::TypeVar>, LIE, vector<Hs::Type>, Hs::Type>
     }
     auto result_type = con_type;
 
-    vector<Hs::TypeVar> u_tvs;
-    vector<Hs::TypeVar> ex_tvs;
+    // 4. Classify universal and existental vars
+    auto [data_type, data_type_args] = Hs::decompose_type_apps(result_type);
 
-    return {u_tvs, ex_tvs, predicates, field_types, result_type};
+    vector<Hs::TypeVar> u_tvs;
+    for(auto& arg: data_type_args)
+    {
+        assert(arg.is_a<Hs::TypeVar>());
+        auto tv = arg.as_<Hs::TypeVar>();
+        assert(all_tvs.count(tv));
+        u_tvs.push_back(tv);
+    }
+
+    set<Hs::TypeVar> ex_tvs = all_tvs;
+    for(auto& u_tv: u_tvs)
+        ex_tvs.erase(u_tv);
+
+    return {u_tvs, ex_tvs| ranges::to<vector>, constraints, field_types, result_type};
 }
 
 // Ensure that we can convert exp_type to pat_type, and get a wrapper proving it.
@@ -146,23 +181,40 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
         // See GHC/Core/DataCon.hs > mkData
         auto Con = *con;
 
-        // maybe also get type tvs, constructor tvs
-        auto [universal_tvs, existential_tvs, givens, field_types, type] = constructor_pattern_types(Con.head);
-
+        auto [u_tvs, ex_tvs, constraints, field_types, type] = constructor_pattern_types(Con.head);
         assert(field_types.size() == Con.args.size());
-        Con.givens = givens;
-        Con.existential_tyvars = existential_tvs;
 
-        auto tc2 = copy_clear_wanteds();
-        // tcs2.set_untouchables( )
-        tc2.tcPats(penv, Con.args, check_types(field_types), sigs, a);
+        substitution_t s;
+        for(auto& tv: u_tvs)
+            s = s.insert({tv,fresh_meta_type_var(unloc(tv.name), *tv.kind)});
+
+        // These are supposed to be "super" skolems.
+        for(auto& tv: ex_tvs)
+        {
+            auto super_skol_tv = FreshVarSource::fresh_rigid_type_var(level+1, unloc(tv.name), *tv.kind);
+            s = s.insert({tv, super_skol_tv});
+        }
+
+        type = apply_subst(s, type);
+        field_types = apply_subst(s, field_types);
+        constraints = apply_subst(s, constraints);
+
+        Con.universal_tyvars = u_tvs;
+        Con.existential_tyvars = ex_tvs;
+        Con.givens = constraints_to_lie(constraints);
 
         if (Con.givens.empty() and Con.existential_tyvars.empty())
+        {
+            auto tc2 = copy_clear_wanteds();
+            tc2.tcPats(penv, Con.args, check_types(field_types), sigs, a);
             current_wanteds() += tc2.current_wanteds();
+        }
         else
         {
+            auto tc2 = copy_inc_level_clear_wanteds();
+            tc2.tcPats(penv, Con.args, check_types(field_types), sigs, a);
             Con.ev_binds = std::make_shared<Core::Decls>();
-            current_wanteds().implications.push_back( std::make_shared<Implication>(level, Con.existential_tyvars, Con.givens, tc2.current_wanteds(), Con.ev_binds) );
+            current_wanteds().implications.push_back( std::make_shared<Implication>(tc2.level, Con.existential_tyvars, Con.givens, tc2.current_wanteds(), Con.ev_binds) );
         }
 
         unify( expTypeToType(exp_type), type );
