@@ -749,6 +749,14 @@ Core::Decls typechecker_state::simplify(const LIE& givens, LIE& wanteds)
     return decls;
 }
 
+bool contains_equality_constraints(const LIE& givens)
+{
+    for(auto& [_,constraint]: givens)
+        if (is_equality_constraint(constraint))
+            return true;
+    return false;
+}
+
 Core::Decls typechecker_state::entails(const LIE& givens, WantedConstraints& wanteds)
 {
     Core::Decls decls;
@@ -774,18 +782,21 @@ Core::Decls typechecker_state::entails(const LIE& givens, WantedConstraints& wan
 
             // 5. Promote any level+1 meta-vars and complain about level+1 skolem vars.
             LIE lie_residual_keep;
-            for(auto& [var, constraint]: implic->wanteds.simple)
+            if (not contains_equality_constraints(implic->givens))
             {
-                promote(constraint);
-                if (max_level(constraint) > level)
-                    throw myexception()<<"skolem-escape in "<<constraint;
-                else if (intersects(free_type_variables(constraint), implic->tvs))
-                    lie_residual_keep.push_back({var,constraint});
-                else
+                for(auto& [var, constraint]: implic->wanteds.simple)
                 {
-                    // If we've discovered a new simple wanted, then we need to run simplification again.
-                    update = true;
-                    wanteds.simple.push_back({var,constraint});
+                    promote(constraint);
+                    if (max_level(constraint) > level)
+                        throw myexception()<<"skolem-escape in "<<constraint;
+                    else if (intersects(free_type_variables(constraint), implic->tvs))
+                        lie_residual_keep.push_back({var,constraint});
+                    else
+                    {
+                        // If we've discovered a new simple wanted, then we need to run simplification again.
+                        update = true;
+                        wanteds.simple.push_back({var,constraint});
+                    }
                 }
             }
 
