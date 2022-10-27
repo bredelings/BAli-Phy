@@ -11,11 +11,21 @@ import Effect
 
 data SamplingEvent
 
+{-
+data AnnotatedDensity a where
+    InEdge :: String -> b -> AnnotatedDensity ()
+    PropertyEdge :: String -> b -> AnnotatedDensity ()
+    ADBind :: AnnotatedDensity b -> (b -> AnnotatedDensity a) -> AnnotatedDensity a
+    ADReturn :: a -> AnnotatedDensity a
+    ProbFactor :: Double -> AnnotateDensity ()
+-}
+
 -- Here Int should be `a`
-data AnnotatedDensity a = InEdge String a
-                        | PropertyEdge String a
+data AnnotatedDensity a = forall b. (a ~ ()) => InEdge String b
+                        | forall b. (a ~ ()) => PropertyEdge String b
                         | forall b.ADBind (AnnotatedDensity b) (b -> AnnotatedDensity a)
-                        | ADReturn a -- | ProbFactor Double
+                        | ADReturn a
+                        | (a ~ ()) => ProbFactor Double
 
 in_edge name node = InEdge name node
 property name node = PropertyEdge name node
@@ -25,18 +35,13 @@ instance Monad AnnotatedDensity where
     f >>= g = ADBind f g
 
 
---- OK, so basically, want to allow some of the right-hand-sides to be IO () and some to be IO a, without assuming that
---- a always equals ().  This is probably basically what GADTs allow.
-
 -- Just get the densities out
 -- No ProbFactor events yet.
 get_densities :: AnnotatedDensity a -> a
 get_densities (ADReturn x) = x
 get_densities (ADBind f g) = let x = get_densities f in get_densities (g x)
-get_densities (InEdge _ x) = x
--- Probably this should return ()?  But that forces a to ().
--- But -- when we put a signature on this, it should be able to be limited!
-get_densities (PropertyEdge _ x) = x
+get_densities (InEdge _ x) = ()
+get_densities (PropertyEdge _ x) = ()
 
 
 make_edges :: Effect -> AnnotatedDensity a -> IO a
@@ -44,9 +49,9 @@ make_edges event (ADReturn x) = return x
 make_edges event (ADBind f g) = do x <- make_edges event f
                                    make_edges event (g x)
 make_edges event (InEdge name node) = do register_in_edge node event name
-                                         return node
+                                         return ()
 make_edges event (PropertyEdge name node) = do register_dist_property event node name
-                                               return node
+                                               return ()
 
 -- Define the Distribution type
 data Distribution a = Distribution String (a -> AnnotatedDensity [LogDouble]) (a->Double) (Random a) Range
@@ -76,9 +81,26 @@ instance Monad TKEffects where
     return x = TKReturn x
     f >>= g  = TKBind f g
 
+{-
+GADT syntax:
+
+data Random a where
+    RandomStructure :: (a -> TKEffects b) -> (forall c. a -> c -> (a,a)) -> Random a -> Random a
+    Observe         :: Distribution b -> b -> Random ()
+    Lazy            :: Random a -> Random a
+    WithTKEffect    :: Random a -> (a -> TKEffects b) -> Random a
+    LiftIO          :: IO a -> Random a
+    RanReturn       :: a -> Random a
+    RanBind         :: Random b -> (b -> Random a) -> Random a
+    RanMFix         :: (a -> Random a) -> Random a
+    RanDistribution :: Distribution a -> Random a
+    RanSamplingRate :: Double -> (Random a) -> Random a
+    RanExchange     :: Random b -> Random (Random b)
+-}
+
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = forall b c.RandomStructure (a->TKEffects b) (a->c->(a,a)) (Random a)
-              | forall b.Observe (Distribution b) b
+data Random a = forall b.RandomStructure (a->TKEffects b) (a->(a->())->(a,a)) (Random a)
+              | forall b.(a ~ ()) => Observe (Distribution b) b
               | Lazy (Random a)
               | forall b.WithTKEffect (Random a) (a -> TKEffects b)
               | PerformTKEffect (TKEffects a)
@@ -187,6 +209,7 @@ triggered_modifiable_structure mod_structure force_structure value effect = (raw
 apply_modifier :: (forall a.a -> a) -> b -> b
 apply_modifier x y = x y
 
+modifiable_structure :: forall dd.b -> (b -> dd) -> (b, b)
 modifiable_structure = triggered_modifiable_structure apply_modifier (const ())
 
 -- It seems like we could return raw_x in most cases, except the case of a tree.
@@ -221,8 +244,10 @@ run_lazy' rate (RanDistribution dist@(Distribution _ _ _ (RandomStructure tk_eff
         density_terms <- make_edges s $ annotated_densities dist raw_x
         sequence_ [register_prior s term | term <- density_terms]
         register_out_edge s raw_x
-      do_effects = unsafePerformIO effect
+        return ()
+      do_effects _ = unsafePerformIO effect
   return triggered_x
+
 run_lazy' rate (RanDistribution (Distribution _ _ _ s _)) = run_lazy' rate s
 run_lazy' rate (RanMFix f) = mfix ((run_lazy' rate).f)
 run_lazy' rate (RanSamplingRate rate2 a) = run_lazy' (rate*rate2) a

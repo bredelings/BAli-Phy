@@ -22,7 +22,7 @@ foreign import bpcall "Modifiables:register_in_edge" builtin_register_in_edge ::
 register_in_edge var dist role = IOAction (\s -> (s+1,builtin_register_in_edge var dist (list_to_string role)))
 
 foreign import bpcall "Modifiables:register_out_edge" builtin_register_out_edge :: Effect -> a -> Effect
-register_out_edge dist var = IOAction (\s -> (s+1, builtin_register_out_edge dist var `seq` var))
+register_out_edge dist var = IOAction (\s -> (s+1, builtin_register_out_edge dist var))
 
 foreign import bpcall "Modifiables:register_dist_property" builtin_register_dist_property :: d -> a -> CPPString -> Effect
 register_dist_property dist value property = IOAction (\s -> (s+1, builtin_register_dist_property dist value (list_to_string property)))
