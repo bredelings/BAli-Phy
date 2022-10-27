@@ -709,7 +709,12 @@ Core::Decls typechecker_state::simplify(const LIE& givens, LIE& wanteds)
     }
 
     if (not failed.empty())
-        throw myexception()<<"Equations have no solution!";
+    {
+        myexception e("Unsolvable equations:\n");
+        for(auto& f: failed)
+            e<<"  "<<f.print()<<"\n";
+        throw e;
+    }
 
     // Split inert into substitution and remaining constraints
     wanteds.clear();
