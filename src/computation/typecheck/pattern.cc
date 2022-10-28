@@ -189,10 +189,12 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
             s = s.insert({tv,fresh_meta_type_var(unloc(tv.name), *tv.kind)});
 
         // These are supposed to be "super" skolems.
+        vector<Hs::TypeVar> ex_tvs2;
         for(auto& tv: ex_tvs)
         {
             auto super_skol_tv = FreshVarSource::fresh_rigid_type_var(level+1, unloc(tv.name), *tv.kind);
             s = s.insert({tv, super_skol_tv});
+            ex_tvs2.push_back(super_skol_tv);
         }
 
         type = apply_subst(s, type);
@@ -200,7 +202,7 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
         constraints = apply_subst(s, constraints);
 
         Con.universal_tyvars = u_tvs;
-        Con.existential_tyvars = ex_tvs;
+        Con.existential_tyvars = ex_tvs2;
         Con.givens = constraints_to_lie(constraints);
 
         if (Con.givens.empty() and Con.existential_tyvars.empty())
