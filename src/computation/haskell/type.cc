@@ -102,6 +102,40 @@ int max_level(Type t)
     
 }
 
+int max_meta_level(const vector<Type>& ts)
+{
+    int l = 0;
+    for(auto& t: ts)
+        l = std::max(l, max_meta_level(t));
+    return l;
+}
+
+int max_meta_level(Type t)
+{
+    t = follow_meta_type_var(t);
+
+    if (auto mtv = t.to<MetaTypeVar>())
+        return mtv->level();
+    else if (auto tv = t.to<TypeVar>())
+        return 0;
+    else if (t.is_a<TypeCon>())
+        return 0;
+    else if (auto tup = t.to<TupleType>())
+        return max_meta_level( tup->element_types );
+    else if (auto l = t.to<ListType>())
+        return max_meta_level(l->element_type);
+    else if (auto app = t.to<TypeApp>())
+        return std::max( max_meta_level(app->head), max_meta_level(app->arg) );
+    else if (auto ct = t.to<ConstrainedType>())
+        return std::max( max_meta_level(ct->context.constraints), max_meta_level(ct->type) );
+    else if (auto fa = t.to<ForallType>())
+        return max_meta_level( fa->type );
+    else if (auto slt = t.to<StrictLazyType>())
+        return max_meta_level( slt->type );
+
+    std::abort();
+}
+
 std::string Type::print() const
 {
     if (type_ptr.index() == 0) return "NOTYPE";

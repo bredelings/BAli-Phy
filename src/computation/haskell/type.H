@@ -323,6 +323,9 @@ bool is_rho_type(Type type);
 int max_level(Type t);
 int max_level(const std::vector<Type>& t);
 
+int max_meta_level(Type t);
+int max_meta_level(const std::vector<Type>& t);
+
 typedef Type TauType;
 typedef Type RhoType;
 typedef Type SigmaType;
