@@ -1242,11 +1242,18 @@ tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skol
 std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, std::shared_ptr<const Core::Decls>>
 typechecker_state::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::Type>& nested_action)
 {
-    // 1. Skolemize the type at level
-    auto [wrap, tvs, givens, rho_type] = skolemize(polytype, true);
-
-    // 2. typecheck the rhs at level+1
+    // 1. Bump the level
     auto tcs2 = copy_inc_level_clear_wanteds();
+
+    // 2. Skolemize the type at level+1
+    auto [wrap, tvs, givens, rho_type] = tcs2.skolemize(polytype, true);
+
+    // We always need to bump the level for the skolemized type variables.
+    // However, we only need to run the nested action at the higher level if there are
+    // (i) tvs or (ii) givens.
+    // That is what GHC's checkConstraints is for -- see checking of ConPattern in pattern.cc
+
+    // 3. typecheck the rhs at level+1
     nested_action(rho_type, tcs2);
     auto wanteds = tcs2.current_wanteds();
 
