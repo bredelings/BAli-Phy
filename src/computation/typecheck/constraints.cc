@@ -69,11 +69,20 @@ LIE WantedConstraints::all_simple() const
 Implication::Implication(int l, const vector<Hs::TypeVar>& v, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb)
     :level(l), evidence_binds(eb), tvs(v), givens(g), wanteds(w)
 {
+    for(auto& tv: tvs)
+        assert(tv.level() == l);
+
     for(auto& [_,constraint]: givens)
-        assert(max_level(constraint) < level);
+    {
+        assert(max_meta_level(constraint) < level);
+        assert(max_level(constraint) <= level);
+    }
 
     for(auto& [_,constraint]: wanteds.simple)
+    {
         assert(max_level(constraint) <= level);
+        assert(max_meta_level(constraint) <= level);
+    }
 
     for(auto& implication: wanteds.implications)
         assert(implication->level > level);
