@@ -747,7 +747,7 @@ pattern_synonym_sig: "pattern" con_list "::" sigtypedoc
 
 /* ------------- Nested declarations ----------------------------- */
 
-/* Remove specializtion of binds for classes and instances */
+/* Remove specialization of binds for classes and instances */
 
 decls: decls ";" decl   {$$ = $1; $$.push_back($3);}
 |      decls ";"        {$$ = $1;}
