@@ -53,7 +53,7 @@ std::optional<Hs::Context> check_apply_subst(const usubstitution_t& s, Hs::Conte
 std::optional<Hs::Type> check_apply_subst(const usubstitution_t& s, const Hs::Type& t);
 Hs::Type apply_subst(const usubstitution_t& s, const Hs::Type& t);
 
-Hs::Constructor apply_subst(const substitution_t& s, Hs::Constructor con);
+Hs::ConstructorDecl apply_subst(const substitution_t& s, Hs::ConstructorDecl con);
 Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl d);
 
 bool try_insert(const Hs::MetaTypeVar& tv, Hs::Type type);

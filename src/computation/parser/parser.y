@@ -27,11 +27,11 @@
   std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
   Hs::Kind type_to_kind(const Hs::Type& kind);
-  Hs::Constructor make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::Type& typeish);
+  Hs::ConstructorDecl make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::Type& typeish);
   Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& type, const std::optional<Located<Hs::Binds>>& decls);
   Hs::TypeSynonymDecl make_type_synonym(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
-                                             const Hs::Type& header, const std::vector<Hs::Constructor>& constrs);
+                                             const Hs::Type& header, const std::vector<Hs::ConstructorDecl>& constrs);
   Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const std::optional<Located<Hs::Binds>>& decls);
   Hs::Context make_context(const Hs::Type& context);
 
@@ -329,9 +329,9 @@
  //%type <Hs::Kind> kind
 %type <expression_ref> kind
 
-%type <std::vector<Hs::Constructor>> constrs
-%type <std::vector<Hs::Constructor>> constrs1
-%type <Hs::Constructor> constr
+%type <std::vector<Hs::ConstructorDecl>> constrs
+%type <std::vector<Hs::ConstructorDecl>> constrs1
+%type <Hs::ConstructorDecl> constr
 %type <std::vector<Hs::TypeVar>> forall
 %type <Hs::Type> constr_stuff
 %type <std::vector<Hs::FieldDecl>> fielddecls
@@ -1525,7 +1525,7 @@ Hs::TypeSynonymDecl make_type_synonym(const Located<Hs::Type>& lhs_type, const L
 }
 
 Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
-                                           const Hs::Type& header, const vector<Hs::Constructor>& constrs)
+                                           const Hs::Type& header, const vector<Hs::ConstructorDecl>& constrs)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     if (d_or_n == Hs::DataOrNewtype::newtype and constrs.size() != 1)
@@ -1638,7 +1638,7 @@ optional<pair<string, std::vector<Hs::Type>>> is_normal_con(const Hs::Type& type
     return {{unloc(head.as_<Hs::TypeCon>().name), args}};
 }
 
-Hs::Constructor make_constructor(const vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::Type& typeish)
+Hs::ConstructorDecl make_constructor(const vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::Type& typeish)
 {
     if (auto constr = is_record_con(typeish))
     {

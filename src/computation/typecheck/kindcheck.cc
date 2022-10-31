@@ -375,7 +375,7 @@ void kindchecker_state::kind_check_context(Hs::Context& context)
         kind_check_constraint(constraint);
 }
 
-void kindchecker_state::kind_check_constructor(const Hs::Constructor& constructor, const Hs::Type& data_type)
+void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constructor, const Hs::Type& data_type)
 {
     auto type2 = data_type;
 
@@ -406,7 +406,7 @@ void kindchecker_state::kind_check_constructor(const Hs::Constructor& constructo
     kind_check_type_of_kind(type2, kind_star());
 }
 
-Hs::Type kindchecker_state::type_check_constructor(const Hs::Constructor& constructor, const Hs::Type& data_type)
+Hs::Type kindchecker_state::type_check_constructor(const Hs::ConstructorDecl& constructor, const Hs::Type& data_type)
 {
     // At the moment, constructors cannot introduce new type variables.
     // So, we just need to construct the type.

@@ -428,7 +428,7 @@ std::string FieldDecls::print() const
     return "{ " + join(field_decl_strings,"; ") + " }";
 }
 
-std::vector<Type> Constructor::get_field_types() const
+std::vector<Type> ConstructorDecl::get_field_types() const
 {
     if (fields.index() == 0)
         return std::get<0>(fields);
@@ -442,7 +442,7 @@ std::vector<Type> Constructor::get_field_types() const
     }
 }
 
-std::string Constructor::print() const
+std::string ConstructorDecl::print() const
 {
     string result;
     if (forall.size())
@@ -467,12 +467,12 @@ std::string Constructor::print() const
     return result;
 }
 
-bool Constructor::is_record_constructor() const
+bool ConstructorDecl::is_record_constructor() const
 {
     return fields.index() == 1;
 }
 
-int Constructor::arity() const
+int ConstructorDecl::arity() const
 {
     if (is_record_constructor())
     {
@@ -527,7 +527,7 @@ std::string DataOrNewtypeDecl::print() const
     return result;
 }
 
-std::optional<Constructor> DataOrNewtypeDecl::find_constructor_by_name(const string& s) const
+std::optional<ConstructorDecl> DataOrNewtypeDecl::find_constructor_by_name(const string& s) const
 {
     for(auto& constructor: constructors)
         if (constructor.name == s)

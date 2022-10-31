@@ -518,7 +518,7 @@ bool same_type(const Hs::Type& t1, const Hs::Type& t2)
 }
 
 
-Hs::Constructor apply_subst(const substitution_t& s, Hs::Constructor con)
+Hs::ConstructorDecl apply_subst(const substitution_t& s, Hs::ConstructorDecl con)
 {
     if (con.context)
         con.context = apply_subst(s, *con.context);

@@ -60,8 +60,8 @@ struct kindchecker_state
     // data or newtype
     std::map<std::string, Haskell::Type> type_check_data_type(const Haskell::DataOrNewtypeDecl& data_decl);
     void kind_check_data_type(Haskell::DataOrNewtypeDecl& data_decl);
-    Haskell::Type type_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
-    void kind_check_constructor(const Haskell::Constructor& constructor, const Haskell::Type& data_type);
+    Haskell::Type type_check_constructor(const Haskell::ConstructorDecl& constructor, const Haskell::Type& data_type);
+    void kind_check_constructor(const Haskell::ConstructorDecl& constructor, const Haskell::Type& data_type);
 
     // type synonym
     void kind_check_type_synonym(Haskell::TypeSynonymDecl& type_syn_decl);

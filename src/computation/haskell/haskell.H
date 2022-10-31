@@ -304,7 +304,7 @@ struct FieldDecls: public Object
     FieldDecls(const std::vector<FieldDecl>& ds):field_decls(ds) {}
 };
 
-struct Constructor
+struct ConstructorDecl
 {
     std::vector<TypeVar> forall;           // list of type variables we are forall-ing over.
     std::optional<Context> context;  // type constraints
@@ -320,22 +320,25 @@ struct Constructor
 
     int arity() const;
 
-    Constructor() = default;
+    ConstructorDecl() = default;
 
-    Constructor(const std::vector<TypeVar>& tvs, std::optional<Context> c, const std::string& s, std::vector<Type>& as)
+    ConstructorDecl(const std::vector<TypeVar>& tvs, std::optional<Context> c, const std::string& s, std::vector<Type>& as)
         :forall(tvs),
          context(c),
          name(s),
          fields(as)
    { }
 
-    Constructor(const std::vector<TypeVar>& tvs, std::optional<Context> c, const std::string& s, const FieldDecls& fds)
+    ConstructorDecl(const std::vector<TypeVar>& tvs, std::optional<Context> c, const std::string& s, const FieldDecls& fds)
         :forall(tvs),
          context(c),
          name(s),
          fields(fds)
    { }
 };
+
+// TODO: rename Constructor to ConstructorDecl?
+// How to incorporate GADT declarations?
 
 enum class DataOrNewtype {data,newtype};
 
@@ -348,9 +351,9 @@ struct DataOrNewtypeDecl: public Object
     std::vector<TypeVar> type_vars;
     Context context;
 
-    std::vector<Constructor> constructors;
+    std::vector<ConstructorDecl> constructors;
 
-    std::optional<Constructor> find_constructor_by_name(const std::string& s) const;
+    std::optional<ConstructorDecl> find_constructor_by_name(const std::string& s) const;
 
     // std::optional<derivings> derivings;
 
@@ -361,7 +364,7 @@ struct DataOrNewtypeDecl: public Object
                       const std::string& s,
                       const std::vector<TypeVar>& tvs,
                       const Context& ct,
-                      const std::vector<Constructor>& cs)
+                      const std::vector<ConstructorDecl>& cs)
         :data_or_newtype(dn),
          name(s),
          type_vars(tvs),
