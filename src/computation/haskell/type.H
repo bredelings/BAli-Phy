@@ -295,6 +295,9 @@ Type make_arrow_type(const Type& t1, const Type& t2);
 
 Type make_equality_constraint(const Type& t1, const Type& t2);
 
+Type canonicalize_type(const TupleType& type1);
+
+Type canonicalize_type(const ListType& type1);
 
 std::string parenthesize_type(Type t);
 
@@ -343,8 +346,32 @@ int max_meta_level(const std::vector<Type>& t);
 typedef Type TauType;
 typedef Type RhoType;
 typedef Type SigmaType;
+
+TypeCon tuple_tycon(int n);
+TypeCon list_tycon();
 }
 
 namespace Hs = Haskell;
+
+namespace std
+{
+    template <>
+    class hash < Hs::TypeVar >{
+    public :
+        size_t operator()(const Hs::TypeVar &x) const
+        {
+            return std::hash<std::string>()(unloc(x.name));
+        }
+    };
+
+    template <>
+    class hash < Hs::MetaTypeVar >{
+    public :
+        size_t operator()(const Hs::MetaTypeVar &x) const
+        {
+            return std::hash<std::string>()(unloc(x.name));
+        }
+    };
+}
 
 #endif 

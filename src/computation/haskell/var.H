@@ -51,4 +51,16 @@ struct Con: public Object
 
 }
 
+namespace std
+{
+    template <>
+    class hash < Hs::Var >{
+    public :
+        size_t operator()(const Hs::Var &x) const
+        {
+            return std::hash<std::string>()(unloc(x.name));
+        }
+    };
+}
+
 #endif

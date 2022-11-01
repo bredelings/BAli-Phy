@@ -1,5 +1,6 @@
 #include "type.H"
 #include "haskell.H"
+#include "typecheck/kind.H"
 #include "util/string/join.H"
 #include "haskell/ids.H"       // for tuple_name
 #include "util/set.H"          // for includes( , )
@@ -176,6 +177,19 @@ Type make_equality_constraint(const Type& t1, const Type& t2)
     return TypeApp(TypeApp(type_arrow,t1),t2);
 }
 
+Type canonicalize_type(const TupleType& type1)
+{
+    int n = type1.element_types.size();
+    Type type2 = tuple_tycon(n);
+    return make_tyapps(type2, type1.element_types);
+}
+
+Type canonicalize_type(const ListType& type1)
+{
+    Type type2 = list_tycon();
+    return TypeApp(type2, type1.element_type);
+}
+
 Type function_type(const vector<Type>& arg_types, const Type& result_type)
 {
     Type ftype = result_type;
@@ -265,14 +279,14 @@ bool is_rho_type(Type type)
 }
 
 
-Type type_apply(Type t, const std::vector<Hs::Type>& args)
+Type type_apply(Type t, const std::vector<Type>& args)
 {
     for(auto& arg: args)
         t = TypeApp(t,arg);
     return t;
 }
 
-Type type_apply(Type t, const std::vector<Hs::TypeVar>& args)
+Type type_apply(Type t, const std::vector<TypeVar>& args)
 {
     for(auto& arg: args)
         t = TypeApp(t,arg);
@@ -327,14 +341,14 @@ std::pair<std::vector<Type>,Type> arg_result_types(const Type& t)
 std::tuple<std::vector<TypeVar>, std::vector<Type>, Type> peel_top_gen(Type t)
 {
     std::vector<TypeVar> tvs;
-    if (auto fa = t.to<Hs::ForallType>())
+    if (auto fa = t.to<ForallType>())
     {
         tvs = fa->type_var_binders;
         t = fa->type;
     }
 
     std::vector<Type> constraints;
-    if (auto c = t.to<Hs::ConstrainedType>())
+    if (auto c = t.to<ConstrainedType>())
     {
         constraints = c->context.constraints;
         t = c->type;
@@ -384,7 +398,7 @@ optional<Type> is_list_type(Type t)
 {
     t = follow_meta_type_var(t);
 
-    if (auto l = t.to<Hs::ListType>())
+    if (auto l = t.to<ListType>())
         return l->element_type;
 
     auto [head,args] = decompose_type_apps(t);
@@ -405,7 +419,7 @@ optional<vector<Type>> is_tuple_type(Type t)
 {
     t = follow_meta_type_var(t);
 
-    if (auto tup = t.to<Hs::TupleType>())
+    if (auto tup = t.to<TupleType>())
         return tup->element_types;
 
     auto [head,args] = decompose_type_apps(t);
@@ -437,7 +451,7 @@ Type remove_top_gen(Type type)
     return type;
 }
 
-string parenthesize_type(Hs::Type t)
+string parenthesize_type(Type t)
 {
     t = follow_meta_type_var(t);
 
@@ -466,7 +480,7 @@ void MetaTypeVar::clear() const
 {
     if (not indirect->empty())
     {
-        Hs::Type t;
+        Type t;
         *indirect = t;
     }
     assert(indirect->empty());
@@ -836,6 +850,18 @@ bool ListType::operator==(const ListType& t) const
 string ListType::print() const
 {
     return "[" + element_type.print() + "]";
+}
+
+TypeCon tuple_tycon(int n)
+{
+    auto kind = make_n_args_kind(n);
+    return TypeCon( {noloc, tuple_name(n)}, kind );
+}
+
+TypeCon list_tycon()
+{
+    auto kind = make_n_args_kind(1);
+    return TypeCon( {noloc,"[]"}, kind );
 }
 
 }
