@@ -216,8 +216,11 @@ bool cmp_less(const Hs::MetaTypeVar& uv1, const Hs::MetaTypeVar& uv2)
 }
 
 
-std::optional<Reaction> canonicalize_equality(const Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
+std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
 {
+    tcs.expand_type_synonyms(t1);
+    tcs.expand_type_synonyms(t2);
+
     auto uv1 = unfilled_meta_type_var(t1);
     auto uv2 = unfilled_meta_type_var(t2);
 
@@ -231,7 +234,7 @@ std::optional<Reaction> canonicalize_equality(const Core::Var& co_var, Constrain
     if (uv1 and uv2)
     {
         if (cmp_less(*uv2,*uv1))
-            return canonicalize_equality(co_var, flavor, t2, t1);
+            return canonicalize_equality(tcs, co_var, flavor, t2, t1);
         else
         {
             Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
@@ -250,12 +253,12 @@ std::optional<Reaction> canonicalize_equality(const Core::Var& co_var, Constrain
     }
     else if (uv2)
     {
-        return canonicalize_equality(co_var, flavor, t2, t1);
+        return canonicalize_equality(tcs, co_var, flavor, t2, t1);
     }
     else if (tv1 and  tv2)
     {
         if (*tv2 < *tv1)
-            return canonicalize_equality(co_var, flavor, t2, t1);
+            return canonicalize_equality(tcs, co_var, flavor, t2, t1);
         else
         {
             Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
@@ -274,7 +277,7 @@ std::optional<Reaction> canonicalize_equality(const Core::Var& co_var, Constrain
     }
     else if (tv2)
     {
-        return canonicalize_equality(co_var, flavor, t2, t1);
+        return canonicalize_equality(tcs, co_var, flavor, t2, t1);
     }
     else
     {
@@ -332,7 +335,7 @@ std::optional<Reaction> canonicalize_equality(const Core::Var& co_var, Constrain
     std::abort();
 }
 
-std::optional<Reaction> canonicalize(const Predicate& P)
+std::optional<Reaction> canonicalize(const typechecker_state& tcs, const Predicate& P)
 {
     if (is_canonical(P)) return {};
 
@@ -344,7 +347,7 @@ std::optional<Reaction> canonicalize(const Predicate& P)
     if (auto eq = Hs::is_equality_constraint(NCP.constraint))
     {
         auto& [t1, t2] = *eq;
-        return canonicalize_equality(NCP.dvar, flavor, t1, t2);
+        return canonicalize_equality(tcs, NCP.dvar, flavor, t1, t2);
     }
     else
     {
@@ -667,7 +670,7 @@ Core::Decls typechecker_state::simplify(const LIE& givens, LIE& wanteds)
         auto p = work_list.back(); work_list.pop_back();
 
         // canonicalize
-        if (react(canonicalize(p), p))
+        if (react(canonicalize(*this, p), p))
             continue;
 
         // binary interact with other preds with same flavor
