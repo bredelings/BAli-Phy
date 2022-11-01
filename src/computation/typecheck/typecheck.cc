@@ -1145,7 +1145,7 @@ DataConInfo typechecker_state::constructor_info(const Hs::Con& con)
         auto a = fresh_other_type_var( kind_star() );
         info.uni_tvs = { a };
         info.field_types = { a, Hs::ListType(a) };
-        info.data_type = Hs::TypeCon({noloc,"[]"}, make_n_args_kind(2));
+        info.data_type = Hs::list_tycon();
         return info;
     }
     else if (con_name == "[]")
@@ -1153,7 +1153,7 @@ DataConInfo typechecker_state::constructor_info(const Hs::Con& con)
         DataConInfo info;
         auto a = fresh_other_type_var( kind_star() );
         info.uni_tvs = { a };
-        info.data_type = Hs::TypeCon({noloc,"[]"}, make_n_args_kind(2));
+        info.data_type = Hs::list_tycon();
         return info;
     }
     else if (is_tuple_name(con_name) or con_name == "()")
@@ -1166,7 +1166,7 @@ DataConInfo typechecker_state::constructor_info(const Hs::Con& con)
             info.uni_tvs.push_back( tv );
             info.field_types.push_back( tv );
         }
-        info.data_type = Hs::TypeCon({noloc,tuple_name(n)}, make_n_args_kind(n));
+        info.data_type = Hs::tuple_tycon(n);
         return info;
     }
 
