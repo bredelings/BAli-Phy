@@ -539,8 +539,17 @@ Hs::ConstructorDecl apply_subst(const substitution_t& s, Hs::ConstructorDecl con
 Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl d)
 {
     d.context = apply_subst(s, d.context);
-    for(auto& con: d.constructors)
-        con = apply_subst(s, con);
+
+    if (d.is_regular_decl())
+    {
+        for(auto& con: d.get_constructors())
+            con = apply_subst(s, con);
+    }
+    else if (d.is_gadt_decl())
+    {
+        for(auto& decl: d.get_gadt_constructors())
+            unloc(decl.type) = apply_subst(s, unloc(decl.type));
+    }
 
     return d;
 }

@@ -96,32 +96,45 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
 
     decl.context = rename(decl.context);
 
-    for(auto& constructor: decl.constructors)
+    if (decl.is_regular_decl())
     {
-        constructor.name = m.name + "." + constructor.name;
-
-        if (constructor.context)
+        for(auto& constructor: decl.get_constructors())
         {
-            for(auto& constraint: constructor.context->constraints)
-                constraint = rename_type(constraint);
-        }
+            constructor.name = m.name + "." + constructor.name;
 
-        if (constructor.is_record_constructor())
-        {
-            for(auto& field: std::get<1>(constructor.fields).field_decls)
+            if (constructor.context)
             {
-                for(auto& var: field.field_names)
-                    unloc(var.name) = m.name + "." + unloc(var.name);
-                field.type = rename_type(field.type);
+                for(auto& constraint: constructor.context->constraints)
+                    constraint = rename_type(constraint);
+            }
+
+            if (constructor.is_record_constructor())
+            {
+                for(auto& field: std::get<1>(constructor.fields).field_decls)
+                {
+                    for(auto& var: field.field_names)
+                        unloc(var.name) = m.name + "." + unloc(var.name);
+                    field.type = rename_type(field.type);
+                }
+            }
+            else
+            {
+                for(auto& type: std::get<0>(constructor.fields))
+                    type = rename_type(type);
             }
         }
-        else
+    }
+    else if (decl.is_gadt_decl())
+    {
+        for(auto& constructors: decl.get_gadt_constructors())
         {
-            for(auto& type: std::get<0>(constructor.fields))
-                type = rename_type(type);
+            for(auto& con_name: constructors.con_names)
+            {
+                unloc(con_name) = m.name + "." + unloc(con_name);
+            }
+            unloc(constructors.type) = rename_type(unloc(constructors.type));
         }
     }
-
     return decl;
 }
 

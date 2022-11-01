@@ -38,14 +38,7 @@ typechecker_state::constructor_pattern_types(const Hs::Con& con)
     }
 
     // 3. Extract field_types and result type
-    vector<Hs::Type> field_types;
-    while(auto f = Hs::is_function_type(con_type))
-    {
-        auto [t1,t2] = *f;
-        field_types.push_back(t1);
-        con_type = t2;
-    }
-    auto result_type = con_type;
+    auto [field_types, result_type] = arg_result_types(con_type);
 
     // 4. Classify universal and existental vars
     auto [data_type, data_type_args] = Hs::decompose_type_apps(result_type);

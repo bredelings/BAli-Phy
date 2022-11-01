@@ -428,6 +428,15 @@ std::string FieldDecls::print() const
     return "{ " + join(field_decl_strings,"; ") + " }";
 }
 
+string GADTConstructorDecl::print()  const
+{
+    vector<string> names;
+    for(auto& name: con_names)
+        names.push_back(unloc(name));
+
+    return join(names,", ") + " :: " + unloc(type).print();
+}
+
 std::vector<Type> ConstructorDecl::get_field_types() const
 {
     if (fields.index() == 0)
@@ -440,6 +449,15 @@ std::vector<Type> ConstructorDecl::get_field_types() const
                 types.push_back(fields.type);
         return types;
     }
+}
+
+string GADTConstructorsDecl::print()  const
+{
+    vector<string> decls;
+    for(auto& data_cons_decl: *this)
+        decls.push_back( data_cons_decl.print() );
+
+    return join(decls,"\n");
 }
 
 std::string ConstructorDecl::print() const
@@ -515,21 +533,72 @@ string TypeSynonymDecl::print() const
     return result;
 }
 
+string ConstructorsDecl::print() const
+{
+    vector<string> cons;
+    for(auto& con: *this)
+        cons.push_back(con.print());
+    return join(cons, " | ");
+}
+
+bool DataOrNewtypeDecl::is_empty_decl() const
+{
+    return std::holds_alternative<ConstructorsDecl>(constructors);
+}
+
+bool DataOrNewtypeDecl::is_regular_decl() const
+{
+    return std::holds_alternative<ConstructorsDecl>(constructors);
+}
+
+bool DataOrNewtypeDecl::is_gadt_decl() const
+{
+    return std::holds_alternative<GADTConstructorsDecl>(constructors);
+}
+
+const ConstructorsDecl& DataOrNewtypeDecl::get_constructors() const
+{
+    assert(is_regular_decl());
+    return std::get<ConstructorsDecl>(constructors);
+}
+
+ConstructorsDecl& DataOrNewtypeDecl::get_constructors()
+{
+    assert(is_regular_decl());
+    return std::get<ConstructorsDecl>(constructors);
+}
+
+const GADTConstructorsDecl& DataOrNewtypeDecl::get_gadt_constructors() const
+{
+    assert(is_gadt_decl());
+    return std::get<GADTConstructorsDecl>(constructors);
+}
+
+GADTConstructorsDecl& DataOrNewtypeDecl::get_gadt_constructors()
+{
+    assert(is_gadt_decl());
+    return std::get<GADTConstructorsDecl>(constructors);
+}
+
 std::string DataOrNewtypeDecl::print() const
 {
     string result = (data_or_newtype == DataOrNewtype::data) ? "data " : "newtype ";
     result += show_type_or_class_header(context, name, type_vars);
-    result += " = ";
-    vector<string> cons;
-    for(auto& con: constructors)
-        cons.push_back(con.print());
-    result += join(cons, " | ");
+    if (kind_sig)
+        result += " :: " + kind_sig->print();
+    
+    if (is_regular_decl())
+        result += " = " + get_constructors().print();
+
+    else if (is_gadt_decl())
+        result += "\n" + get_gadt_constructors().print();
+
     return result;
 }
 
-std::optional<ConstructorDecl> DataOrNewtypeDecl::find_constructor_by_name(const string& s) const
+std::optional<ConstructorDecl> ConstructorsDecl::find_constructor_by_name(const string& s) const
 {
-    for(auto& constructor: constructors)
+    for(auto& constructor: *this)
         if (constructor.name == s)
             return constructor;
     return {};

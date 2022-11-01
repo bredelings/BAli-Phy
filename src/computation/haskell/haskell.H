@@ -304,6 +304,22 @@ struct FieldDecls: public Object
     FieldDecls(const std::vector<FieldDecl>& ds):field_decls(ds) {}
 };
 
+struct GADTConstructorDecl
+{
+    std::vector<Located<std::string>> con_names;
+    Located<Type> type;
+    std::string print() const;
+
+    GADTConstructorDecl() = default; // so this can be a token value
+    GADTConstructorDecl(const std::vector<Located<std::string>>& cs, const Located<Type>& t):con_names(cs), type(t) {}
+};
+
+struct GADTConstructorsDecl: public std::vector<GADTConstructorDecl>
+{
+    std::string print() const;
+    using std::vector<GADTConstructorDecl>::vector;
+};
+
 struct ConstructorDecl
 {
     std::vector<TypeVar> forall;           // list of type variables we are forall-ing over.
@@ -337,6 +353,13 @@ struct ConstructorDecl
    { }
 };
 
+struct ConstructorsDecl: public std::vector<ConstructorDecl>
+{
+    std::optional<ConstructorDecl> find_constructor_by_name(const std::string& s) const;
+    std::string print() const;
+    using std::vector<ConstructorDecl>::vector;
+};
+
 // TODO: rename Constructor to ConstructorDecl?
 // How to incorporate GADT declarations?
 
@@ -346,16 +369,28 @@ struct DataOrNewtypeDecl: public Object
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
+    // Should I factor out this group into a DataOrNewtypeHeader?
     DataOrNewtype data_or_newtype;
     std::string name;
     std::vector<TypeVar> type_vars;
     Context context;
+    std::optional<Kind> kind_sig;
 
-    std::vector<ConstructorDecl> constructors;
+    // Do we need a variant where this is absent?
+    std::variant<std::monostate,ConstructorsDecl, GADTConstructorsDecl> constructors;
 
-    std::optional<ConstructorDecl> find_constructor_by_name(const std::string& s) const;
+    bool is_empty_decl() const;
+    bool is_regular_decl() const;
+    bool is_gadt_decl() const;
 
-    // std::optional<derivings> derivings;
+    const ConstructorsDecl& get_constructors() const;
+          ConstructorsDecl& get_constructors();
+
+    const GADTConstructorsDecl& get_gadt_constructors() const;
+          GADTConstructorsDecl& get_gadt_constructors();
+
+//  Instructors for deriving instances...
+//    std::optional<derivings> derivings;
 
     DataOrNewtypeDecl* clone() const { return new DataOrNewtypeDecl(*this);}
     std::string print() const;
@@ -364,12 +399,40 @@ struct DataOrNewtypeDecl: public Object
                       const std::string& s,
                       const std::vector<TypeVar>& tvs,
                       const Context& ct,
-                      const std::vector<ConstructorDecl>& cs)
+                      const std::optional<Kind>& k)
         :data_or_newtype(dn),
          name(s),
          type_vars(tvs),
          context(ct),
+         kind_sig(k)
+        {}
+
+    DataOrNewtypeDecl(DataOrNewtype dn,
+                      const std::string& s,
+                      const std::vector<TypeVar>& tvs,
+                      const Context& ct,
+                      const std::optional<Kind>& k,
+                      const ConstructorsDecl& cs)
+        :data_or_newtype(dn),
+         name(s),
+         type_vars(tvs),
+         context(ct),
+         kind_sig(k),
          constructors(cs)
+        {}
+
+    DataOrNewtypeDecl(DataOrNewtype dn,
+                      const std::string& s,
+                      const std::vector<TypeVar>& tvs,
+                      const Context& ct,
+                      const std::optional<Kind>& k,
+                      const GADTConstructorsDecl& gadt_cs)
+        :data_or_newtype(dn),
+         name(s),
+         type_vars(tvs),
+         context(ct),
+         kind_sig(k),
+         constructors(gadt_cs)
         {}
 };
 

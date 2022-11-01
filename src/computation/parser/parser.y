@@ -31,7 +31,9 @@
   Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& type, const std::optional<Located<Hs::Binds>>& decls);
   Hs::TypeSynonymDecl make_type_synonym(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
-                                             const Hs::Type& header, const std::vector<Hs::ConstructorDecl>& constrs);
+                                             const Hs::Type& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs);
+  Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
+                                             const Hs::Type& header, const std::optional<Hs::Kind>&, const std::optional<Hs::GADTConstructorsDecl>& constrs);
   Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const std::optional<Located<Hs::Binds>>& decls);
   Hs::Context make_context(const Hs::Type& context);
 
@@ -254,7 +256,7 @@
 %type <void> deriv_strategy_via
  */
 %type <Hs::DataOrNewtype> data_or_newtype
- /* %type <void> opt_kind_sig */
+%type <std::optional<Hs::Kind>> opt_kind_sig
 %type <std::pair<Hs::Context,Hs::Type>> tycl_hdr
 /* %type <void> capi_ctype 
 
@@ -329,8 +331,12 @@
  //%type <Hs::Kind> kind
 %type <expression_ref> kind
 
-%type <std::vector<Hs::ConstructorDecl>> constrs
-%type <std::vector<Hs::ConstructorDecl>> constrs1
+%type <std::optional<Hs::GADTConstructorsDecl>> gadt_constrlist
+%type <Hs::GADTConstructorsDecl> gadt_constrs
+%type <Hs::GADTConstructorDecl> gadt_constr
+
+%type <Hs::ConstructorsDecl> constrs
+%type <Hs::ConstructorsDecl> constrs1
 %type <Hs::ConstructorDecl> constr
 %type <std::vector<Hs::TypeVar>> forall
 %type <Hs::Type> constr_stuff
@@ -415,6 +421,7 @@
 %type <std::string> qcon
 %type <std::string> gen_qcon
 %type <std::string> con
+%type <std::vector<Located<std::string>>> con_list
 %type <std::string> sysdcon_no_list
 %type <std::string> sysdcon
 %type <std::string> conop
@@ -625,9 +632,10 @@ topdecl: cl_decl                               {$$ = $1;}
 
 cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2.first,$2.second,$3);}
 
-ty_decl: "type" type "=" ctypedoc                                          {$$ = make_type_synonym({@2,$2},{@4,$4});}
-|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1,$3.first,$3.second,$4);}
-|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig                  {$$ = make_data_or_newtype($1,$3.first,$3.second,{});}
+ty_decl: "type" type "=" ctypedoc                                          {$$ = make_type_synonym({@2, $2},{@4, $4});}
+|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1, $3.first, $3.second,{},$4);}
+/* This is kind of a hack to allow `data X` */
+|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig gadt_constrlist maybe_derivings {$$ = make_data_or_newtype($1, $3.first, $3.second, $4, $5);}
 /* |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family */
 /* |        "data" "family" type opt_datafam_kind_sig */
 
@@ -690,8 +698,8 @@ at_decl_cls: "data" opt_family type opt_datafam_kind_sig
 data_or_newtype: "data"    {$$=Hs::DataOrNewtype::data;}
 |                "newtype" {$$=Hs::DataOrNewtype::newtype;}
 
-opt_kind_sig: %empty
-|             "::" kind
+opt_kind_sig: %empty       {$$ = {};}
+|             "::" kind    {$$ = $2;}
 
 /*opt_datafam_kind_sig: %empty
 |                     "::" kind
@@ -929,6 +937,15 @@ kind: ctype  {$$ = type_to_kind($1);}
 
 
 /* ------------- Datatype declarations --------------------------- */
+
+gadt_constrlist: "where" "{" gadt_constrs "}"        {$$ = $3;}
+|                "where" VOCURLY gadt_constrs close  {$$ = $3;}
+|                %empty                              {$$ = {};}
+
+gadt_constrs: gadt_constrs ";" gadt_constr           {$$=$1; $$.push_back($3);}
+|             gadt_constr                            {$$.push_back($1);}
+
+gadt_constr: optSemi con_list "::" sigtype           {$$ = Hs::GADTConstructorDecl($2,{{},$4});}
 
 constrs: "=" constrs1           {$$ = $2;}
 
@@ -1265,8 +1282,8 @@ con: conid          { $$ = $1; }
 |    "(" consym ")" { $$ = $2; }
 |    sysdcon        { $$ = $1; }
 
-con_list: con
-|         con "," con_list
+con_list: con_list "," con  { $$ = $1; $$.push_back({@3,$3});}
+|         con               { $$.push_back({@1,$1});}
 
 sysdcon_no_list:  "(" ")"   { $$ =  "()"; }
 |                 "(" commas   ")" { $$ = "("+std::string($2,',')+")"; }
@@ -1525,12 +1542,28 @@ Hs::TypeSynonymDecl make_type_synonym(const Located<Hs::Type>& lhs_type, const L
 }
 
 Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
-                                           const Hs::Type& header, const vector<Hs::ConstructorDecl>& constrs)
+                                           const Hs::Type& header, const std::optional<Hs::Kind>& k, const Hs::ConstructorsDecl& constrs)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     if (d_or_n == Hs::DataOrNewtype::newtype and constrs.size() != 1)
         throw myexception()<<"newtype '"<<name<<"' may only have 1 constructors with 1 field";
-    return {d_or_n, name, check_all_type_vars(type_args), context, constrs};
+    return {d_or_n, name, check_all_type_vars(type_args), context, k, constrs};
+}
+
+Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
+                                           const Hs::Type& header, const std::optional<Hs::Kind>& k, const std::optional<Hs::GADTConstructorsDecl>& constrs)
+{
+    auto [name, type_args] = check_type_or_class_header(header);
+    if (d_or_n == Hs::DataOrNewtype::newtype)
+    {
+        if (not constrs or constrs->size() != 1 or (*constrs)[0].con_names.size() != 1)
+            throw myexception()<<"newtype '"<<name<<"' may only have 1 constructors with 1 field";
+    }
+
+    if (not constrs)
+        return {d_or_n, name, check_all_type_vars(type_args), context, k};
+    else
+        return {d_or_n, name, check_all_type_vars(type_args), context, k, *constrs};
 }
 
 Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& ltype, const optional<Located<Hs::Binds>>& binds)

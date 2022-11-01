@@ -135,7 +135,9 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
         if (not decl.is_a<Haskell::DataOrNewtypeDecl>()) continue;
         auto D = decl.as_<Haskell::DataOrNewtypeDecl>();
 
-        auto constrs = D.constructors;
+        if (not D.is_regular_decl()) continue;
+
+        auto& constrs = D.get_constructors();
         if (constrs.empty()) continue;
 
         // field -> con -> pos

@@ -469,14 +469,25 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     for(auto& tv: data_decl.type_vars)
         data_type = Hs::TypeApp(data_type, tv);
 
-    // e. Handle the constructor terms
-    for(auto& constructor: data_decl.constructors)
-        kind_check_constructor(constructor, data_type);
+    // e. Handle regular constructor terms (class variables ARE in scope)
+    if (data_decl.is_regular_decl())
+    {
+        for(auto& constructor: data_decl.get_constructors())
+            kind_check_constructor(constructor, data_type);
+    }
 
     pop_type_var_scope();
+
+    // f. Handle GADT constructor terms (class variables are NOT in scope)
+    if (data_decl.is_gadt_decl())
+    {
+        // We should ensure that these types follow: forall univ_tvs. stupid_theta => forall ex_tvs. written_type
+        for(auto& data_cons_decl: data_decl.get_gadt_constructors())
+            unloc(data_cons_decl.type) = kind_and_type_check_type(unloc(data_cons_decl.type));
+    }
 }
 
-map<string,Hs::Type> kindchecker_state::type_check_data_type(const Hs::DataOrNewtypeDecl& data_decl)
+map<string,Hs::Type> kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, const Hs::DataOrNewtypeDecl& data_decl)
 {
     push_type_var_scope();
 
@@ -509,30 +520,92 @@ map<string,Hs::Type> kindchecker_state::type_check_data_type(const Hs::DataOrNew
     // We should already have checked that it doesn't contain any unbound variables.
 
     // d. construct the data type
-    Hs::Type data_type = Hs::TypeCon(Unlocated(data_decl.name));
+    Hs::Type data_type_con = Hs::TypeCon(Unlocated(data_decl.name));
+    Hs::Type data_type = data_type_con;
     for(auto& tv: datatype_typevars)
         data_type = Hs::TypeApp(data_type, tv);
 
-    // e. Handle the constructor terms
+    // e. Handle regular constructor terms (class variables ARE in scope)
     map<string,Hs::Type> types;
-    for(auto& constructor: data_decl.constructors)
+    if (data_decl.is_regular_decl())
     {
-        // Constructors are not allowed to introduce new variables w/o GADT form, with a where clause.
-        // This should have already been checked.
+        for(auto& constructor: data_decl.get_constructors())
+        {
+            // Constructors are not allowed to introduce new variables w/o GADT form, with a where clause.
+            // This should have already been checked.
 
-        Hs::Type constructor_type = type_check_constructor(constructor, data_type);
+            Hs::Type constructor_type = type_check_constructor(constructor, data_type);
 
-        // Actually we should only add the constraints that use type variables that are used in the constructor.
-        constructor_type = Hs::add_constraints(data_decl.context.constraints, constructor_type);
+            // Actually we should only add the constraints that use type variables that are used in the constructor.
+            constructor_type = Hs::add_constraints(data_decl.context.constraints, constructor_type);
 
-        // QUESTION: do we need to replace the original user type vars with the new kind-annotated versions?
-        if (datatype_typevars.size())
-            constructor_type = Hs::ForallType(datatype_typevars, constructor_type);
+            // QUESTION: do we need to replace the original user type vars with the new kind-annotated versions?
+            if (datatype_typevars.size())
+                constructor_type = Hs::ForallType(datatype_typevars, constructor_type);
 
-        types.insert({constructor.name, constructor_type});
+            types.insert({constructor.name, constructor_type});
+        }
     }
 
     pop_type_var_scope();
+
+    // f. Handle GADT constructor terms (class variables are NOT in scope)
+    if (data_decl.is_gadt_decl())
+    {
+        for(auto& data_cons_decl: data_decl.get_gadt_constructors())
+        {
+            // 1. Kind-check and add foralls for free type vars.
+            auto written_type = unloc(data_cons_decl.type);
+            written_type = kind_and_type_check_type( written_type );
+
+            // 2. Extract tyvar, givens, and rho type.
+            auto [written_tvs, written_constraints, rho_type] = Hs::peel_top_gen( written_type );
+
+            // 3. Get field types and result_type
+            auto [field_types, result_type] = Hs::arg_result_types(rho_type);
+
+            // 4. Check result type name
+            auto [con, args] = Hs::decompose_type_apps(result_type);
+            if (con != data_type_con or args.size() != data_decl.type_vars.size())
+                throw myexception()<<"constructor result type '"<<result_type<<"' doesn't match data type "<< data_type;
+
+            // 5. Create equality constraints and universal vars
+            vector<Hs::TypeVar> u_tvs;
+            auto constraints = written_constraints;
+            for(int i=0;i<args.size();i++)
+            {
+                auto& arg = args[i];
+
+                if (auto tv = arg.to<Hs::TypeVar>())
+                {
+                    u_tvs.push_back(*tv);
+                }
+                else
+                {
+                    auto u_tv = fresh_vars.fresh_other_type_var(*data_decl.type_vars[i].kind);
+                    u_tvs.push_back(u_tv);
+                    constraints.push_back(make_equality_constraint(u_tv,arg));
+                }
+            }
+
+            // 6. Get existential vars
+            set<Hs::TypeVar> ex_tvs = written_tvs | ranges::to<set>;
+            for(auto& u_tv: u_tvs)
+                ex_tvs.erase(u_tv);
+
+            Hs::Type type = Hs::type_apply( data_type_con, u_tvs);
+            type = Hs::function_type( field_types, type);
+            type = Hs::add_constraints( constraints, type);
+            type = Hs::add_forall_vars( ex_tvs | ranges::to<vector>(), type);
+            type = Hs::add_forall_vars( u_tvs, type);
+            
+            for(auto& con_name: data_cons_decl.con_names)
+            {
+
+                types.insert({unloc(con_name), type});
+            }
+        }
+    }
 
     return types;
 }

@@ -1070,10 +1070,16 @@ string get_constructor_name(const Hs::Type& constr)
 
 CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
 {
+    // This comes after typechecking.
+    // FIXME: use the results of typechecking instead of the raw decls
     for(const auto& decl: topdecls)
-        if (auto d = decl.to<Haskell::DataOrNewtypeDecl>())
+    {
+        auto d = decl.to<Haskell::DataOrNewtypeDecl>();
+        if (not d) continue;
+
+        if (d->is_regular_decl())
         {
-            for(const auto& constr: d->constructors)
+            for(const auto& constr: d->get_constructors())
             {
                 auto arity = constr.arity();
                 auto cname = constr.name;
@@ -1082,6 +1088,19 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
                 cdecls.push_back( { var(cname) , body} );
             }
         }
+        else if (d->is_gadt_decl())
+        {
+            for(const auto& cons_decl: d->get_gadt_constructors())
+                for(auto& con_name: cons_decl.con_names)
+                {
+                    auto arity = Hs::gen_type_arity(unloc(cons_decl.type));
+                    auto cname = unloc(con_name);
+
+                    expression_ref body = lambda_expression( constructor(cname, arity) );
+                    cdecls.push_back( { var(cname) , body} );
+                }
+        }
+    }
     return cdecls;
 }
 
@@ -1377,16 +1396,27 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
             for(const auto& var_name: find_bound_vars( fd->v ))
                 maybe_def_function( var_name );
         }
-        else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
+        else if (auto data_decl = decl.to<Haskell::DataOrNewtypeDecl>())
         {
-            auto& ADT = decl.as_<Haskell::DataOrNewtypeDecl>();
-            def_ADT(ADT.name);
+            def_ADT(data_decl->name);
 
-            auto constrs = decl.as_<Haskell::DataOrNewtypeDecl>().constructors;
-            if (not constrs.size()) continue;
+            // Why are we recording the arity here?  This is too early...
+            // It looks like we use it when renaming patterns, but...
 
-            for(const auto& constr: constrs)
-                def_constructor(constr.name, constr.arity(), ADT.name);
+            if (data_decl->is_regular_decl())
+            {
+                for(const auto& constr: data_decl->get_constructors())
+                    def_constructor(constr.name, constr.arity(), data_decl->name);
+            }
+            else if (data_decl->is_gadt_decl())
+            {
+                for(const auto& cons_decl: data_decl->get_gadt_constructors())
+                    for(auto& con_name: cons_decl.con_names)
+                    {
+                        int arity = Hs::gen_type_arity( unloc(cons_decl.type) );
+                        def_constructor(unloc(con_name), arity, data_decl->name);
+                    }
+            }
         }
         else if (decl.is_a<Haskell::ClassDecl>())
         {

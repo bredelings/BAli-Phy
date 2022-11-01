@@ -1291,7 +1291,7 @@ void typechecker_state::get_constructor_info(const Hs::Decls& decls)
         auto d = decl.to<Hs::DataOrNewtypeDecl>();
         if (not d) continue;
 
-        auto constr_map = ks.type_check_data_type(*d);
+        auto constr_map = ks.type_check_data_type(*this, *d);
         for(auto& [name, type]: constr_map)
             con_info() = con_info().insert({name, check_type(type)});
     }

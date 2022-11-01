@@ -88,23 +88,31 @@ set<string> free_type_cons(const Hs::DataOrNewtypeDecl& type_decl)
 {
     set<string> tvars;
     add(tvars, free_type_cons(type_decl.context));
-    for(auto& constr: type_decl.constructors)
+    if (type_decl.is_regular_decl())
     {
-        if (constr.context)
-            add(tvars, free_type_cons(*constr.context));
+        for(auto& constr: type_decl.get_constructors())
+        {
+            if (constr.context)
+                add(tvars, free_type_cons(*constr.context));
 
-        if (constr.is_record_constructor())
-        {
-            auto& field_decls = std::get<1>(constr.fields).field_decls;
-            for(auto& field: field_decls)
-                add(tvars, free_type_cons(field.type));
+            if (constr.is_record_constructor())
+            {
+                auto& field_decls = std::get<1>(constr.fields).field_decls;
+                for(auto& field: field_decls)
+                    add(tvars, free_type_cons(field.type));
+            }
+            else
+            {
+                auto& types = std::get<0>(constr.fields);
+                for(auto& type: types)
+                    add(tvars, free_type_cons(type));
+            }
         }
-        else
-        {
-            auto& types = std::get<0>(constr.fields);
-            for(auto& type: types)
-                add(tvars, free_type_cons(type));
-        }
+    }
+    else if (type_decl.is_gadt_decl())
+    {
+        for(auto& data_cons_decl: type_decl.get_gadt_constructors())
+            add(tvars, free_type_cons(unloc(data_cons_decl.type)));
     }
     return tvars;
 }
