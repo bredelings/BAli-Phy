@@ -225,7 +225,8 @@ std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core
     auto uv2 = unfilled_meta_type_var(t2);
 
     // REFL: tau ~ tau
-    if (same_type(t1,t2))
+    // NOTE: this does not currently handle foralls or constraints!
+    if (tcs.same_type(t1,t2))
         return ReactSuccess({}, {});
 
     auto tv1 = t1.to<Hs::TypeVar>();

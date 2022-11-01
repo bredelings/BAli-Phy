@@ -463,61 +463,6 @@ Hs::Type canonicalize_type(const Hs::ListType& type1)
     return Hs::TypeApp(type2, type1.element_type);
 }
 
-bool same_type(const Hs::Type& t1, const Hs::Type& t2)
-{
-    if (auto type1 = filled_meta_type_var(t1))
-        return same_type(*type1, t2);
-    else if (auto type2 = filled_meta_type_var(t2))
-        return same_type(t1, *type2);
-    else if (t1.is_a<Hs::MetaTypeVar>())
-        return (t1 == t2);
-    else if (t1.is_a<Hs::TypeVar>())
-        return (t1 == t2);
-    else if (t1.is_a<Hs::TypeCon>())
-        return (t1 == t2);
-    else if (t1.is_a<Hs::TypeApp>() and t2.is_a<Hs::TypeApp>())
-    {
-        auto& app1 = t1.as_<Hs::TypeApp>();
-        auto& app2 = t2.as_<Hs::TypeApp>();
-
-        return same_type(app1.head, app2.head) and same_type(app1.arg, app2.arg);
-    }
-    else if (t1.is_a<Hs::TupleType>() and t2.is_a<Hs::TupleType>())
-    {
-        auto& tup1 = t1.as_<Hs::TupleType>();
-        auto& tup2 = t2.as_<Hs::TupleType>();
-        if (tup1.element_types.size() != tup2.element_types.size())
-            return false;
-
-        for(int i=0;i<tup1.element_types.size();i++)
-            if (not same_type(tup1.element_types[i], tup2.element_types[i])) return false;
-
-        return true;
-    }
-    else if (t1.is_a<Hs::ListType>() and t2.is_a<Hs::ListType>())
-    {
-        auto& L1 = t1.as_<Hs::ListType>();
-        auto& L2 = t2.as_<Hs::ListType>();
-
-        return same_type(L1.element_type, L2.element_type);
-    }
-    else if (t1.is_a<Hs::ForallType>() or t2.is_a<Hs::ForallType>())
-    {
-        throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle forall types?";
-    }
-    else if (t1.is_a<Hs::ConstrainedType>() or t2.is_a<Hs::ConstrainedType>())
-    {
-        throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle unification for constrained types?";
-    }
-    else if (t1.is_a<Hs::StrictLazyType>() or t2.is_a<Hs::StrictLazyType>())
-    {
-        throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle unification for strict/lazy types?";
-    }
-    else
-        return false;
-}
-
-
 Hs::ConstructorDecl apply_subst(const substitution_t& s, Hs::ConstructorDecl con)
 {
     if (con.context)

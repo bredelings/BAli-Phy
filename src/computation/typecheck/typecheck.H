@@ -181,6 +181,8 @@ struct typechecker_state: FreshVarSource
 
     bool maybe_unify_(bool allow_unification, bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2);
 
+    bool same_type(const Hs::Type& t1, const Hs::Type& t2) const;
+
     void unify(const Hs::Type& t1, const Hs::Type& t2);
 
     void unify(const Hs::Type& t1, const Hs::Type& t2, const myexception& e);
