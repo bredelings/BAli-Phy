@@ -8,7 +8,7 @@
 #include "kind.H"
 #include "kindcheck.H"
 #include "env.H"
-#include "unify.H"
+#include "substitution.H"
 #include <range/v3/all.hpp>
 #include "computation/expression/apply.H"
 

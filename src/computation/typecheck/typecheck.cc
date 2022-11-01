@@ -19,8 +19,6 @@
 #include "computation/operation.H" // for is_non_apply_op( )
 #include "haskell/ids.H"
 
-#include "unify.H"
-
 #include "alphabetize.H" // for alphabetize_type( ).
 
 namespace views = ranges::views;

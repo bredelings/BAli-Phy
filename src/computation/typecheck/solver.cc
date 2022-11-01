@@ -1,7 +1,6 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 #include "solver.H"
-#include "unify.H" // for occurs_check
 
 #include "util/set.H"
 

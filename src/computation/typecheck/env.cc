@@ -2,7 +2,7 @@
 #include "util/string/join.H"
 #include "util/set.H"                 // for add( , )
 #include "types.H"
-#include "unify.H"
+#include "substitution.H"
 
 using std::string;
 using std::vector;
