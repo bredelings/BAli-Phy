@@ -116,7 +116,7 @@ int max_meta_level(Type t)
 
     if (auto mtv = t.to<MetaTypeVar>())
         return mtv->level();
-    else if (auto tv = t.to<TypeVar>())
+    else if (t.is_a<TypeVar>())
         return 0;
     else if (t.is_a<TypeCon>())
         return 0;
@@ -265,6 +265,20 @@ bool is_rho_type(Type type)
 }
 
 
+Type type_apply(Type t, const std::vector<Hs::Type>& args)
+{
+    for(auto& arg: args)
+        t = TypeApp(t,arg);
+    return t;
+}
+
+Type type_apply(Type t, const std::vector<Hs::TypeVar>& args)
+{
+    for(auto& arg: args)
+        t = TypeApp(t,arg);
+    return t;
+}
+
 optional<pair<Type,Type>> is_gen_function_type(const Type& t)
 {
     return is_function_type( remove_top_gen(t) );
@@ -283,6 +297,72 @@ optional<pair<Type,Type>> is_function_type(const Type& t)
         return {{args[0],args[1]}};
     else
         return {};
+}
+
+std::pair<std::vector<Type>,Type> gen_arg_result_types(const Type& t)
+{
+    std::vector<Type> arg_types;
+    Type result_type = t;
+    while(auto x = is_gen_function_type(result_type))
+    {
+        arg_types.push_back(x->first);
+        result_type = x->second;
+    }
+    return {arg_types,result_type};
+}
+
+std::pair<std::vector<Type>,Type> arg_result_types(const Type& t)
+{
+    std::vector<Type> arg_types;
+    Type result_type = t;
+    while(auto x = is_function_type(result_type))
+    {
+        arg_types.push_back(x->first);
+        result_type = x->second;
+    }
+
+    return {arg_types,result_type};
+}
+
+std::tuple<std::vector<TypeVar>, std::vector<Type>, Type> peel_top_gen(Type t)
+{
+    std::vector<TypeVar> tvs;
+    if (auto fa = t.to<Hs::ForallType>())
+    {
+        tvs = fa->type_var_binders;
+        t = fa->type;
+    }
+
+    std::vector<Type> constraints;
+    if (auto c = t.to<Hs::ConstrainedType>())
+    {
+        constraints = c->context.constraints;
+        t = c->type;
+    }
+
+    return {tvs, constraints, t};
+}
+
+int gen_type_arity(Type t)
+{
+    int a = 0;
+    while(auto x = is_gen_function_type(t))
+    {
+        a++;
+        t = x->second;
+    }
+    return a;
+}
+
+int type_arity(Type t)
+{
+    int a = 0;
+    while(auto x = is_function_type(t))
+    {
+        a++;
+        t = x->second;
+    }
+    return a;
 }
 
 optional<pair<Type,Type>> is_equality_constraint(const Type& t)

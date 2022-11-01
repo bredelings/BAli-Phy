@@ -300,11 +300,25 @@ std::string parenthesize_type(Type t);
 
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
 
+Type type_apply(Type t, const std::vector<Type>& args);
+
+Type type_apply(Type t, const std::vector<TypeVar>& args);
+
 std::optional<std::pair<Type,Type>> is_gen_function_type(const Type& t);
 
 std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
 
+int gen_type_arity(Type t);
+
+int type_arity(Type t);
+
+std::pair<std::vector<Type>,Type> gen_arg_result_types(const Type&);
+
+std::pair<std::vector<Type>,Type> arg_result_types(const Type&);
+
 std::optional<std::pair<Type,Type>> is_equality_constraint(const Type& t);
+
+std::tuple<std::vector<TypeVar>, std::vector<Type>, Type> peel_top_gen(Type t);
 
 std::optional<Type> is_list_type(Type t);
 
