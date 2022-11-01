@@ -9,56 +9,6 @@ using std::set;
 using std::pair;
 using std::optional;
 
-tuple<vector<Hs::TypeVar>, vector<Hs::TypeVar>, vector<Hs::Type>, vector<Hs::Type>, Hs::Type>
-typechecker_state::constructor_pattern_types(const Hs::Con& con)
-{
-    // 1. Get the constructor type
-    auto full_con_type = constructor_type(con);
-    auto con_type = full_con_type;
-
-    // 2. Extract tyvar, givens, and rho type.
-    set<Hs::TypeVar> all_tvs;
-    vector<Hs::Type> constraints;
-    while(true)
-    {
-        if (auto fa = con_type.to<Hs::ForallType>())
-        {
-            for(auto& tv: fa->type_var_binders)
-                all_tvs.insert(tv);
-            con_type = fa->type;
-        }
-        else if (auto c = con_type.to<Hs::ConstrainedType>())
-        {
-            for(auto& constraint: c->context.constraints)
-                constraints.push_back(constraint);
-            con_type = c->type;
-        }
-        else
-            break;
-    }
-
-    // 3. Extract field_types and result type
-    auto [field_types, result_type] = arg_result_types(con_type);
-
-    // 4. Classify universal and existental vars
-    auto [data_type, data_type_args] = Hs::decompose_type_apps(result_type);
-
-    vector<Hs::TypeVar> u_tvs;
-    for(auto& arg: data_type_args)
-    {
-        assert(arg.is_a<Hs::TypeVar>());
-        auto tv = arg.as_<Hs::TypeVar>();
-        assert(all_tvs.count(tv));
-        u_tvs.push_back(tv);
-    }
-
-    set<Hs::TypeVar> ex_tvs = all_tvs;
-    for(auto& u_tv: u_tvs)
-        ex_tvs.erase(u_tv);
-
-    return {u_tvs, ex_tvs| ranges::to<vector>, constraints, field_types, result_type};
-}
-
 // Ensure that we can convert exp_type to pat_type, and get a wrapper proving it.
 Core::wrapper typechecker_state::instPatSigma(const Hs::SigmaType& pat_type, const Expected& exp_type)
 {
@@ -174,27 +124,33 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
         // See GHC/Core/DataCon.hs > mkData
         auto Con = *con;
 
-        auto [u_tvs, ex_tvs, constraints, field_types, type] = constructor_pattern_types(Con.head);
+        auto info = constructor_info(Con.head);
+        auto constraints = info.written_constraints;
+        for(auto& constraint: info.gadt_eq_constraints)
+            constraints.push_back(constraint);
+        auto field_types = info.field_types;
+        auto result_type = info.result_type();
+
         assert(field_types.size() == Con.args.size());
 
         substitution_t s;
-        for(auto& tv: u_tvs)
+        for(auto& tv: info.uni_tvs)
             s = s.insert({tv,fresh_meta_type_var(unloc(tv.name), *tv.kind)});
 
         // These are supposed to be "super" skolems.
         vector<Hs::TypeVar> ex_tvs2;
-        for(auto& tv: ex_tvs)
+        for(auto& tv: info.exi_tvs)
         {
             auto super_skol_tv = FreshVarSource::fresh_rigid_type_var(level+1, unloc(tv.name), *tv.kind);
             s = s.insert({tv, super_skol_tv});
             ex_tvs2.push_back(super_skol_tv);
         }
 
-        type = apply_subst(s, type);
+        result_type = apply_subst(s, result_type);
         field_types = apply_subst(s, field_types);
         constraints = apply_subst(s, constraints);
 
-        Con.universal_tyvars = u_tvs;
+        Con.universal_tyvars = info.uni_tvs;
         Con.existential_tyvars = ex_tvs2;
         Con.givens = constraints_to_lie(constraints);
 
@@ -212,7 +168,7 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
             current_wanteds().implications.push_back( std::make_shared<Implication>(tc2.level, Con.existential_tyvars, Con.givens, tc2.current_wanteds(), Con.ev_binds) );
         }
 
-        unify( expTypeToType(exp_type), type );
+        unify( expTypeToType(exp_type), result_type );
 
         pat = Con;
     }

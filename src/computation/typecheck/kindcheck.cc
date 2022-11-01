@@ -225,8 +225,7 @@ Hs::Kind kindchecker_state::kind_check_type(Hs::Type& t)
         vector<Hs::TypeVar> binders2;
         for(auto& tv: Fa.type_var_binders)
         {
-            auto k = fresh_kind_var();
-            tv.kind = k;
+            tv.kind = fresh_kind_var();
             bind_type_var(tv, *tv.kind);
         }
 
@@ -397,46 +396,60 @@ void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constr
             type2 = Hs::make_arrow_type(type, type2);
     }
 
-    // FIXME: how about constraints?
-    // Perhaps constraints on constructors lead to records that contain pointers to dictionaries??
+    // Are we allowed to write constraints here?
+    if (constructor.context)
+        type2 = add_constraints( constructor.context->constraints, type2);
 
-    // This requires {-# LANGUAGE ExistentialQuantification #-} ?
+    // This requires {-# LANGUAGE ExistentialQuantification #-}
     type2 = add_forall_vars( constructor.forall, type2 );
 
     kind_check_type_of_kind(type2, kind_star());
 }
 
-Hs::Type kindchecker_state::type_check_constructor(const Hs::ConstructorDecl& constructor, const Hs::Type& data_type)
+DataConInfo kindchecker_state::type_check_constructor(const Hs::ConstructorDecl& constructor)
 {
-    // At the moment, constructors cannot introduce new type variables.
-    // So, we just need to construct the type.
+    DataConInfo info;
 
-    auto type2 = data_type;
+    // 1. Record exi_tvs, written_constraints, and field_types
+    info.exi_tvs = constructor.forall;
+
+    if (constructor.context)
+        info.written_constraints = constructor.context->constraints;
 
     if (constructor.is_record_constructor())
     {
-        auto& fields = std::get<1>(constructor.fields);
-
-        for(auto& field_decl: fields.field_decls | views::reverse)
-        {
-            for(int i=0;i<field_decl.field_names.size();i++)
-                type2 = Hs::make_arrow_type(field_decl.type, type2);
-        }
+        for(auto& field_decl: std::get<1>(constructor.fields).field_decls)
+            for(int i=0; i < field_decl.field_names.size(); i++)
+                info.field_types.push_back(field_decl.type);
     }
     else
+        info.field_types = std::get<0>(constructor.fields);
+
+    // 2. Make up kind vars for exi_tvs
+    push_type_var_scope();
+    for(auto& tv: info.exi_tvs)
     {
-        auto& types = std::get<0>(constructor.fields);
-
-        for(auto& type: types | views::reverse)
-            type2 = Hs::make_arrow_type(type, type2);
-
+        tv.kind = fresh_kind_var();
+        bind_type_var(tv, *tv.kind);
     }
 
-    // FIXME: we need to check that these constraints constrain fields of the constructor.
-    if (constructor.context)
-        type2 = Hs::add_constraints(constructor.context->constraints, type2);
+    // 3. Infer kind for exi_tvs
+    for(auto& field_type: info.field_types)
+        unify(kind_star(), kind_check_type(field_type));
+    for(auto& constraint: info.written_constraints)
+        unify(kind_constraint(), kind_check_type(constraint));
+    
+    // 4. Substitute and replace kind vars
+    for(auto& field_type: info.field_types)
+        field_type = zonk_kind_for_type( field_type );
+    for(auto& constraint: info.written_constraints)
+        constraint = zonk_kind_for_type( constraint );
+    for(auto& tv : info.exi_tvs)
+        tv.kind = apply_substitution(*tv.kind);
 
-    return type2;
+    pop_type_var_scope();
+
+    return info;
 }
 
 void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
@@ -487,7 +500,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     }
 }
 
-map<string,Hs::Type> kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, const Hs::DataOrNewtypeDecl& data_decl)
+constr_env kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, const Hs::DataOrNewtypeDecl& data_decl)
 {
     push_type_var_scope();
 
@@ -520,30 +533,22 @@ map<string,Hs::Type> kindchecker_state::type_check_data_type(FreshVarSource& fre
     // We should already have checked that it doesn't contain any unbound variables.
 
     // d. construct the data type
-    Hs::Type data_type_con = Hs::TypeCon(Unlocated(data_decl.name));
+    auto data_type_con = Hs::TypeCon(Unlocated(data_decl.name));
     Hs::Type data_type = data_type_con;
     for(auto& tv: datatype_typevars)
         data_type = Hs::TypeApp(data_type, tv);
 
     // e. Handle regular constructor terms (class variables ARE in scope)
-    map<string,Hs::Type> types;
+    constr_env types;
     if (data_decl.is_regular_decl())
     {
         for(auto& constructor: data_decl.get_constructors())
         {
-            // Constructors are not allowed to introduce new variables w/o GADT form, with a where clause.
-            // This should have already been checked.
-
-            Hs::Type constructor_type = type_check_constructor(constructor, data_type);
-
-            // Actually we should only add the constraints that use type variables that are used in the constructor.
-            constructor_type = Hs::add_constraints(data_decl.context.constraints, constructor_type);
-
-            // QUESTION: do we need to replace the original user type vars with the new kind-annotated versions?
-            if (datatype_typevars.size())
-                constructor_type = Hs::ForallType(datatype_typevars, constructor_type);
-
-            types.insert({constructor.name, constructor_type});
+            DataConInfo info = type_check_constructor(constructor);
+            info.uni_tvs = datatype_typevars;
+            info.data_type = data_type_con;
+            info.top_constraints = data_decl.context.constraints;
+            types = types.insert({constructor.name, info});
         }
     }
 
@@ -554,6 +559,8 @@ map<string,Hs::Type> kindchecker_state::type_check_data_type(FreshVarSource& fre
     {
         for(auto& data_cons_decl: data_decl.get_gadt_constructors())
         {
+            DataConInfo info;
+
             // 1. Kind-check and add foralls for free type vars.
             auto written_type = unloc(data_cons_decl.type);
             written_type = kind_and_type_check_type( written_type );
@@ -566,8 +573,11 @@ map<string,Hs::Type> kindchecker_state::type_check_data_type(FreshVarSource& fre
 
             // 4. Check result type name
             auto [con, args] = Hs::decompose_type_apps(result_type);
-            if (con != data_type_con or args.size() != data_decl.type_vars.size())
-                throw myexception()<<"constructor result type '"<<result_type<<"' doesn't match data type "<< data_type;
+            if (con != data_type_con)
+                throw myexception()<<"constructor result '"<<result_type<<"' doesn't match data type "<< data_type_con;
+
+            // Failure here would have triggered a kind error earlier.
+            assert(args.size() == data_decl.type_vars.size());
 
             // 5. Create equality constraints and universal vars
             vector<Hs::TypeVar> u_tvs;
@@ -584,26 +594,24 @@ map<string,Hs::Type> kindchecker_state::type_check_data_type(FreshVarSource& fre
                 {
                     auto u_tv = fresh_vars.fresh_other_type_var(*data_decl.type_vars[i].kind);
                     u_tvs.push_back(u_tv);
-                    constraints.push_back(make_equality_constraint(u_tv,arg));
+                    info.gadt_eq_constraints.push_back(make_equality_constraint(u_tv,arg));
                 }
             }
 
             // 6. Get existential vars
-            set<Hs::TypeVar> ex_tvs = written_tvs | ranges::to<set>;
+            set<Hs::TypeVar> exi_tvs_set = written_tvs | ranges::to<set>;
             for(auto& u_tv: u_tvs)
-                ex_tvs.erase(u_tv);
+                exi_tvs_set.erase(u_tv);
 
-            Hs::Type type = Hs::type_apply( data_type_con, u_tvs);
-            type = Hs::function_type( field_types, type);
-            type = Hs::add_constraints( constraints, type);
-            type = Hs::add_forall_vars( ex_tvs | ranges::to<vector>(), type);
-            type = Hs::add_forall_vars( u_tvs, type);
+            info.field_types = field_types;
+            info.data_type = data_type_con;
+            info.written_constraints = constraints;
+            info.top_constraints = data_decl.context.constraints;
+            info.exi_tvs = exi_tvs_set | ranges::to<vector>();
+            info.uni_tvs = u_tvs;
             
             for(auto& con_name: data_cons_decl.con_names)
-            {
-
-                types.insert({unloc(con_name), type});
-            }
+                types = types.insert({unloc(con_name), info});
         }
     }
 

@@ -1022,33 +1022,39 @@ std::pair<Hs::Type, Hs::Type> typechecker_state::unify_function(const Hs::Type& 
 }
 
 
-Hs::Type typechecker_state::constructor_type(const Hs::Con& con)
+DataConInfo typechecker_state::constructor_info(const Hs::Con& con)
 {
     auto& con_name = unloc(con.name);
 
     if (con_name == ":")
     {
+        DataConInfo info;
         auto a = fresh_other_type_var( kind_star() );
-        return Hs::add_forall_vars({a},Hs::function_type({a, Hs::ListType(a)}, Hs::ListType(a)));
+        info.uni_tvs = { a };
+        info.field_types = { a, Hs::ListType(a) };
+        info.data_type = Hs::TypeCon({noloc,"[]"}, make_n_args_kind(2));
+        return info;
     }
     else if (con_name == "[]")
     {
+        DataConInfo info;
         auto a = fresh_other_type_var( kind_star() );
-        return Hs::add_forall_vars({a},Hs::function_type({}, Hs::ListType(a)));
+        info.uni_tvs = { a };
+        info.data_type = Hs::TypeCon({noloc,"[]"}, make_n_args_kind(2));
+        return info;
     }
     else if (is_tuple_name(con_name) or con_name == "()")
     {
+        DataConInfo info;
         int n = tuple_arity(con_name);
-        vector<Hs::Type> types;
-        vector<Hs::TypeVar> tvs;
         for(int i=0;i<n;i++)
         {
             auto tv = fresh_other_type_var( kind_star() );
-            types.push_back( tv );
-            tvs.push_back( tv );
+            info.uni_tvs.push_back( tv );
+            info.field_types.push_back( tv );
         }
-
-        return Hs::add_forall_vars(tvs, Hs::function_type(types, Hs::TupleType(types)));
+        info.data_type = Hs::TypeCon({noloc,tuple_name(n)}, make_n_args_kind(n));
+        return info;
     }
 
     if (not con_info().count(con_name))
@@ -1358,9 +1364,8 @@ void typechecker_state::get_constructor_info(const Hs::Decls& decls)
         auto d = decl.to<Hs::DataOrNewtypeDecl>();
         if (not d) continue;
 
-        auto constr_map = ks.type_check_data_type(*this, *d);
-        for(auto& [name, type]: constr_map)
-            con_info() = con_info().insert({name, check_type(type)});
+        for(auto& constr: ks.type_check_data_type(*this, *d))
+            con_info() = con_info().insert(constr);
     }
 
 //     for(auto& [con,type]: con_info())

@@ -38,10 +38,6 @@ Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type t
 std::tuple<global_value_env, GIE, ClassInfo, Hs::Decls>
 type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::ClassDecl& class_decl);
 
-typedef value_env constr_env;
-
-typedef std::map<ID, Hs::Type> signature_env;
-
 global_value_env sig_env(const signature_env& signatures);
 
 struct global_tc_state
@@ -197,9 +193,7 @@ struct typechecker_state: FreshVarSource
 
     std::pair<Hs::Type, Hs::Type> unify_function(const Hs::Type& t, const myexception& e);
 
-    Hs::Type constructor_type(const Hs::Con&);
-
-    std::tuple<std::vector<Hs::TypeVar>, std::vector<Hs::TypeVar>, std::vector<Hs::Type>, std::vector<Hs::Type>, Hs::Type> constructor_pattern_types(const Hs::Con&);
+    DataConInfo constructor_info(const Hs::Con&);
 
     std::optional<Core::Decls>
     candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie);

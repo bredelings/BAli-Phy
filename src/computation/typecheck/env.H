@@ -26,8 +26,6 @@ typedef value_env local_value_env;
 // leads to
 //   dEqList :: forall a. Eq a => Eq [a]
 
-typedef value_env constr_env;
-
 typedef std::map<Core::Var, Hs::Type> GIE;
 
 std::string print(const value_env& env);
@@ -69,6 +67,22 @@ struct TypeSynonymInfo
 
 typedef std::map<std::string, TypeSynonymInfo> TypeSynonymEnv;
 
+struct DataConInfo
+{
+    std::vector<Hs::TypeVar> uni_tvs;
+    std::vector<Hs::TypeVar> exi_tvs;
+    std::vector<Hs::Type> top_constraints; // The "stupid theta"
+    std::vector<Hs::Type> written_constraints;
+    std::vector<Hs::Type> gadt_eq_constraints;
+    std::vector<Hs::Type> field_types;
+    Hs::TypeCon data_type;
+    Hs::Type result_type() const;
+
+    Hs::Type constructor_type() const;
+};
+
+typedef immer::map<ID, DataConInfo> constr_env;
+
 struct ClassInfo
 {
     ID name;
@@ -90,6 +104,8 @@ struct ClassInfo
 
 typedef std::map<ID, ClassInfo> ClassEnv;
 
+typedef std::map<ID, Hs::Type> signature_env;
+
 std::set<Hs::TypeVar> free_type_variables(const value_env& env);
 
 std::set<Hs::TypeVar> free_type_variables(const LIE& env);
@@ -103,6 +119,5 @@ std::set<T> operator-(const std::set<T>& s1, const std::set<T>& s2)
 {
     return minus(s1,s2);
 }
-
 
 #endif

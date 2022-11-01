@@ -49,7 +49,7 @@ void typechecker_state::tcRho(Hs::Var& x, const Expected& exp_type)
 
 void typechecker_state::tcRho(Hs::Con& con, const Expected& exp_type)
 {
-    auto sigma = constructor_type(con);
+    auto sigma = constructor_info(con).constructor_type();
 
     try
     {

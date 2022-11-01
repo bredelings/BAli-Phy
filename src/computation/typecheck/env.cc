@@ -187,3 +187,23 @@ std::set<Hs::MetaTypeVar> free_meta_type_variables(const LIE& env)
     return free;
 }
 
+Hs::Type DataConInfo::result_type() const
+{
+    return Hs::type_apply( data_type, uni_tvs );
+}
+
+Hs::Type DataConInfo::constructor_type() const
+{
+    auto type = Hs::function_type(field_types, result_type());
+
+    // add_constraints will merge the constraints, here.
+    type = Hs::add_constraints(written_constraints, type);
+    type = Hs::add_constraints(gadt_eq_constraints, type);
+    type = Hs::add_forall_vars(exi_tvs, type);
+
+    // FIXME: Only add top constraints for type variables in constructor fields
+    type = Hs::add_constraints(top_constraints, type);
+    type = Hs::add_forall_vars(uni_tvs, type);
+
+    return type;
+}
