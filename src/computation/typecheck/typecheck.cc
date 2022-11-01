@@ -691,7 +691,11 @@ std::optional<Hs::Type> typechecker_state::is_type_synonym(const Hs::Type& type)
 
 void typechecker_state::expand_type_synonyms(Hs::Type& type) const
 {
-    if (type.is_a<Hs::TypeVar>())
+    type = Hs::follow_meta_type_var(type);
+
+    if (type.is_a<Hs::MetaTypeVar>())
+        ;
+    else if (type.is_a<Hs::TypeVar>())
         ;
     else if (auto l = type.to_modifiable<Hs::ListType>())
         expand_type_synonyms(l->element_type);
