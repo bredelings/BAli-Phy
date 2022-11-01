@@ -115,65 +115,6 @@ bool typechecker_state::try_insert(const Hs::MetaTypeVar& tv, Hs::Type type) con
     return true;
 }
 
-bool typechecker_state::same_type(const Hs::Type& t1, const Hs::Type& t2) const
-{
-    if (auto type1 = filled_meta_type_var(t1))
-        return same_type(*type1, t2);
-    else if (auto type2 = filled_meta_type_var(t2))
-        return same_type(t1, *type2);
-    else if (t1.is_a<Hs::MetaTypeVar>())
-        return (t1 == t2);
-    else if (t1.is_a<Hs::TypeVar>())
-        return (t1 == t2);
-    else if (t1.is_a<Hs::TypeCon>())
-        return (t1 == t2);
-    else if (auto s1 = is_type_synonym(t1))
-        return same_type(*s1, t2);
-    else if (auto s2 = is_type_synonym(t2))
-        return same_type(t1, *s2);
-    else if (t1.is_a<Hs::TypeApp>() and t2.is_a<Hs::TypeApp>())
-    {
-        auto& app1 = t1.as_<Hs::TypeApp>();
-        auto& app2 = t2.as_<Hs::TypeApp>();
-
-        return same_type(app1.head, app2.head) and same_type(app1.arg, app2.arg);
-    }
-    else if (t1.is_a<Hs::TupleType>() and t2.is_a<Hs::TupleType>())
-    {
-        auto& tup1 = t1.as_<Hs::TupleType>();
-        auto& tup2 = t2.as_<Hs::TupleType>();
-        if (tup1.element_types.size() != tup2.element_types.size())
-            return false;
-
-        for(int i=0;i<tup1.element_types.size();i++)
-            if (not same_type(tup1.element_types[i], tup2.element_types[i])) return false;
-
-        return true;
-    }
-    else if (t1.is_a<Hs::ListType>() and t2.is_a<Hs::ListType>())
-    {
-        auto& L1 = t1.as_<Hs::ListType>();
-        auto& L2 = t2.as_<Hs::ListType>();
-
-        return same_type(L1.element_type, L2.element_type);
-    }
-    else if (t1.is_a<Hs::ForallType>() or t2.is_a<Hs::ForallType>())
-    {
-        throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle forall types?";
-    }
-    else if (t1.is_a<Hs::ConstrainedType>() or t2.is_a<Hs::ConstrainedType>())
-    {
-        throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle unification for constrained types?";
-    }
-    else if (t1.is_a<Hs::StrictLazyType>() or t2.is_a<Hs::StrictLazyType>())
-    {
-        throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle unification for strict/lazy types?";
-    }
-    else
-        return false;
-}
-
-
 // Is there a better way to implement this?
 bool typechecker_state::maybe_unify_(bool eager_unification, bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2)
 {
@@ -325,4 +266,63 @@ bool typechecker_state::maybe_unify_(bool eager_unification, bool both_ways, con
     else
         return false;
 }
+
+bool typechecker_state::same_type(const Hs::Type& t1, const Hs::Type& t2) const
+{
+    if (auto type1 = filled_meta_type_var(t1))
+        return same_type(*type1, t2);
+    else if (auto type2 = filled_meta_type_var(t2))
+        return same_type(t1, *type2);
+    else if (t1.is_a<Hs::MetaTypeVar>())
+        return (t1 == t2);
+    else if (t1.is_a<Hs::TypeVar>())
+        return (t1 == t2);
+    else if (t1.is_a<Hs::TypeCon>())
+        return (t1 == t2);
+    else if (auto s1 = is_type_synonym(t1))
+        return same_type(*s1, t2);
+    else if (auto s2 = is_type_synonym(t2))
+        return same_type(t1, *s2);
+    else if (t1.is_a<Hs::TypeApp>() and t2.is_a<Hs::TypeApp>())
+    {
+        auto& app1 = t1.as_<Hs::TypeApp>();
+        auto& app2 = t2.as_<Hs::TypeApp>();
+
+        return same_type(app1.head, app2.head) and same_type(app1.arg, app2.arg);
+    }
+    else if (t1.is_a<Hs::TupleType>() and t2.is_a<Hs::TupleType>())
+    {
+        auto& tup1 = t1.as_<Hs::TupleType>();
+        auto& tup2 = t2.as_<Hs::TupleType>();
+        if (tup1.element_types.size() != tup2.element_types.size())
+            return false;
+
+        for(int i=0;i<tup1.element_types.size();i++)
+            if (not same_type(tup1.element_types[i], tup2.element_types[i])) return false;
+
+        return true;
+    }
+    else if (t1.is_a<Hs::ListType>() and t2.is_a<Hs::ListType>())
+    {
+        auto& L1 = t1.as_<Hs::ListType>();
+        auto& L2 = t2.as_<Hs::ListType>();
+
+        return same_type(L1.element_type, L2.element_type);
+    }
+    else if (t1.is_a<Hs::ForallType>() or t2.is_a<Hs::ForallType>())
+    {
+        throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle forall types?";
+    }
+    else if (t1.is_a<Hs::ConstrainedType>() or t2.is_a<Hs::ConstrainedType>())
+    {
+        throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle unification for constrained types?";
+    }
+    else if (t1.is_a<Hs::StrictLazyType>() or t2.is_a<Hs::StrictLazyType>())
+    {
+        throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle unification for strict/lazy types?";
+    }
+    else
+        return false;
+}
+
 
