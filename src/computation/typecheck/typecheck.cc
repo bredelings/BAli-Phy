@@ -375,6 +375,12 @@ bool typechecker_state::maybe_unify_(bool eager_unification, bool both_ways, con
         return maybe_unify_(eager_unification, both_ways, env, *tt1, t2);
     else if (auto tt2 = filled_meta_type_var(t2))
         return maybe_unify_(eager_unification, both_ways, env, t1, *tt2);
+
+    else if (auto s1 = is_type_synonym(t1))
+        return maybe_unify_(eager_unification, both_ways, env, *s1,  t2);
+    else if (auto s2 = is_type_synonym(t2))
+        return maybe_unify_(eager_unification, both_ways, env,  t1, *s2);
+
     else if (auto tv1 = t1.to<Hs::MetaTypeVar>())
     {
         if (eager_unification)
