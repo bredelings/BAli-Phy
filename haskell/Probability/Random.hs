@@ -11,21 +11,12 @@ import Effect
 
 data SamplingEvent
 
-{-
 data AnnotatedDensity a where
     InEdge :: String -> b -> AnnotatedDensity ()
     PropertyEdge :: String -> b -> AnnotatedDensity ()
     ADBind :: AnnotatedDensity b -> (b -> AnnotatedDensity a) -> AnnotatedDensity a
     ADReturn :: a -> AnnotatedDensity a
-    ProbFactor :: Double -> AnnotateDensity ()
--}
-
--- Here Int should be `a`
-data AnnotatedDensity a = forall b. (a ~ ()) => InEdge String b
-                        | forall b. (a ~ ()) => PropertyEdge String b
-                        | forall b.ADBind (AnnotatedDensity b) (b -> AnnotatedDensity a)
-                        | ADReturn a
-                        | (a ~ ()) => ProbFactor Double
+    ProbFactor :: Double -> AnnotatedDensity ()
 
 in_edge name node = InEdge name node
 property name node = PropertyEdge name node
