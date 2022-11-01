@@ -795,13 +795,11 @@ void typechecker_state::expand_type_synonyms(Hs::Type& type) const
 Hs::Type typechecker_state::check_type(const Hs::Type& type, kindchecker_state& K) const
 {
     // So, currently, we
-    // (1) infer kinds for all the variables.
-    // (2) then we all foralls.
+    // (1) infer kinds for all the free variables.
+    // (2) then add foralls for the free variables.
     // Should we be doing synonym substitution FIRST?
 
-    auto type2 = K.kind_and_type_check_type( type );
-    expand_type_synonyms(type2);
-    return type2;
+    return K.kind_and_type_check_type( type );
 }
 
 Hs::Type typechecker_state::check_type(const Hs::Type& type) const
