@@ -56,10 +56,6 @@ Hs::Type apply_subst(const usubstitution_t& s, const Hs::Type& t);
 Hs::ConstructorDecl apply_subst(const substitution_t& s, Hs::ConstructorDecl con);
 Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl d);
 
-bool try_insert(const Hs::MetaTypeVar& tv, Hs::Type type);
-bool occurs_check(const Haskell::MetaTypeVar& tv, const Hs::Type& t);
-bool occurs_check(const Hs::TypeVar& tv, const Hs::Type& t);
-
 Hs::Type canonicalize_type(const Hs::TupleType& type1);
 Hs::Type canonicalize_type(const Hs::ListType& type1);
 

@@ -244,7 +244,7 @@ std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core
     }
     else if (uv1)
     {
-        if (occurs_check(*uv1, t2))
+        if (tcs.occurs_check(*uv1, t2))
             return ReactFail();
         else
         {
@@ -268,7 +268,7 @@ std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core
     }
     else if (tv1)
     {
-        if (occurs_check(*tv1, t2))
+        if (tcs.occurs_check(*tv1, t2))
             return ReactFail();
         else
         {

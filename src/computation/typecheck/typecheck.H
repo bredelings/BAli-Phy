@@ -183,6 +183,12 @@ struct typechecker_state: FreshVarSource
 
     void unify(const Hs::Type& t1, const Hs::Type& t2, const myexception& e);
 
+    bool try_insert(const Hs::MetaTypeVar& tv, Hs::Type type) const;
+
+    bool occurs_check(const Haskell::MetaTypeVar& tv, const Hs::Type& t) const;
+
+    bool occurs_check(const Hs::TypeVar& tv, const Hs::Type& t) const;
+
     bool maybe_match(const Hs::Type& t1, const Hs::Type& t2);
 
     void match(const Hs::Type& t1, const Hs::Type& t2, const myexception& e);

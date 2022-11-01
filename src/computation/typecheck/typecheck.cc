@@ -503,6 +503,121 @@ bool typechecker_state::maybe_unify_(bool eager_unification, bool both_ways, con
         return false;
 }
 
+bool typechecker_state::occurs_check(const Hs::MetaTypeVar& tv, const Hs::Type& t) const
+{
+    assert(not tv.filled());
+
+    if (auto tt = filled_meta_type_var(t))
+        return occurs_check(tv, *tt);
+    else if (auto x = t.to<Hs::MetaTypeVar>())
+        return tv == *x;
+    else if (t.is_a<Hs::TypeVar>())
+        return false;
+    else if (t.is_a<Hs::TypeCon>())
+        return false;
+    else if (auto syn = is_type_synonym(t))
+        return occurs_check(tv,*syn);
+    else if (auto tup = t.to<Hs::TupleType>())
+    {
+        for(auto& type: tup->element_types)
+            if (occurs_check(tv, type))
+                return true;
+        return false;
+    }
+    else if (auto l = t.to<Hs::ListType>())
+        return occurs_check(tv, l->element_type);
+    else if (auto p_app = t.to<Hs::TypeApp>())
+        return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
+    else if (auto f = t.to<Hs::ForallType>())
+        return occurs_check(tv, f->type);
+    else if (auto c = t.to<Hs::ConstrainedType>())
+    {
+        // The context may not contain vars that don't occur in the head;
+        for(auto& constraint: c->context.constraints)
+            if (occurs_check(tv, constraint))
+                return true;
+
+        return occurs_check(tv, c->type);
+    }
+    else if (auto sl = t.to<Hs::StrictLazyType>())
+        return occurs_check(tv, sl->type);
+    else
+        std::abort();
+}
+
+bool typechecker_state::occurs_check(const Hs::TypeVar& tv, const Hs::Type& t) const
+{
+    if (auto tt = filled_meta_type_var(t))
+        return occurs_check(tv, *tt);
+    else if (t.is_a<Hs::MetaTypeVar>())
+        return false;
+    else if (auto x = t.to<Hs::TypeVar>())
+        return tv == *x;
+    else if (t.is_a<Hs::TypeCon>())
+        return false;
+    else if (auto syn = is_type_synonym(t))
+        return occurs_check(tv,*syn);
+    else if (auto tup = t.to<Hs::TupleType>())
+    {
+        for(auto& type: tup->element_types)
+            if (occurs_check(tv, type))
+                return true;
+        return false;
+    }
+    else if (auto l = t.to<Hs::ListType>())
+        return occurs_check(tv, l->element_type);
+    else if (auto p_app = t.to<Hs::TypeApp>())
+        return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
+    else if (auto f = t.to<Hs::ForallType>())
+    {
+        for(auto & qv: f->type_var_binders)
+            if (qv == tv)
+                return false;
+
+        return occurs_check(tv, f->type);
+    }
+    else if (auto c = t.to<Hs::ConstrainedType>())
+    {
+        // The context may not contain vars that don't occur in the head;
+        for(auto& constraint: c->context.constraints)
+            if (occurs_check(tv, constraint))
+                return true;
+
+        return occurs_check(tv, c->type);
+    }
+    else if (auto sl = t.to<Hs::StrictLazyType>())
+        return occurs_check(tv, sl->type);
+    else
+        std::abort();
+}
+
+bool typechecker_state::try_insert(const Hs::MetaTypeVar& tv, Hs::Type type) const
+{
+    // 1. We can't insert tv ~ type if we already have a substitution for tv.
+    assert(not tv.filled());
+
+    // 2. We can only bind meta type vars to tau types.
+    assert(Hs::is_tau_type(type));
+
+    // 3. Walk any meta-type-var indirections
+    auto safe_type = type;
+    while(auto t2 = filled_meta_type_var(safe_type))
+        safe_type = *t2;
+
+    // 4. tv ~ tv is already true, so in that case return success without doing anything.
+    if (auto tv2 = safe_type.to<Hs::MetaTypeVar>(); tv2 and *tv2 == tv)
+        return true;
+
+    // 5. If safe_type contains tv, then we have a substitution loop for tv.
+    //    Therefore return failure.  (This rules out infinite types.)
+    if (occurs_check(tv, safe_type)) return false;
+
+    // 6. It is safe to add tv -> safe_type
+    tv.fill(type);
+
+    return true;
+}
+
 bool typechecker_state::same_type(const Hs::Type& t1, const Hs::Type& t2) const
 {
     if (auto type1 = filled_meta_type_var(t1))
