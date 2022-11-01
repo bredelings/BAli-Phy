@@ -60,9 +60,6 @@ bool try_insert(const Hs::MetaTypeVar& tv, Hs::Type type);
 bool occurs_check(const Haskell::MetaTypeVar& tv, const Hs::Type& t);
 bool occurs_check(const Hs::TypeVar& tv, const Hs::Type& t);
 
-bool maybe_tunify(const Hs::Type& t1, const Hs::Type& t2);
-bool maybe_tmatch(const Hs::Type& t1, const Hs::Type& t2);
-
 Hs::Type canonicalize_type(const Hs::TupleType& type1);
 Hs::Type canonicalize_type(const Hs::ListType& type1);
 
