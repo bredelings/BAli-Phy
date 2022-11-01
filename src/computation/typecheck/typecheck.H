@@ -151,8 +151,6 @@ struct typechecker_state: FreshVarSource
 
     std::optional<Hs::Type> is_type_synonym(const Hs::Type& type) const;
 
-    void expand_type_synonyms(Hs::Type& type) const;
-
     Hs::Type check_type(const Hs::Type&) const;
 
     Hs::Type check_type(const Hs::Type&, kindchecker_state& K) const;

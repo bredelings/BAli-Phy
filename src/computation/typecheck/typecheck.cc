@@ -541,44 +541,6 @@ std::optional<Hs::Type> typechecker_state::is_type_synonym(const Hs::Type& type)
     return {};
 }
 
-void typechecker_state::expand_type_synonyms(Hs::Type& type) const
-{
-    type = Hs::follow_meta_type_var(type);
-
-    if (type.is_a<Hs::MetaTypeVar>())
-        ;
-    else if (type.is_a<Hs::TypeVar>())
-        ;
-    else if (auto l = type.to_modifiable<Hs::ListType>())
-        expand_type_synonyms(l->element_type);
-    else if (auto tup = type.to_modifiable<Hs::TupleType>())
-    {
-        for(auto& element_type: tup->element_types)
-            expand_type_synonyms(element_type);
-    }
-    else if (auto c = type.to_modifiable<Hs::ConstrainedType>())
-        expand_type_synonyms(c->type);
-    else if (auto fa = type.to_modifiable<Hs::ForallType>())
-        expand_type_synonyms(fa->type);
-    else if (type.is_a<Hs::TypeCon>() or type.is_a<Hs::TypeApp>())
-    {
-        auto [head, args] = Hs::decompose_type_apps(type);
-
-        while (auto tsyn = maybe_find_type_synonym(head))
-        {
-            auto type2 = tsyn->expand(args);
-            std::tie(head,args) = Hs::decompose_type_apps(type2);
-        }
-
-        for(auto& arg: args)
-            expand_type_synonyms(arg);
-
-        type = Hs::make_tyapps(head,args);
-    }
-    else
-        throw myexception()<<"expand_type_synonyms: I don't recognize type '"<<type<<"'";
-}
-
 Hs::Type typechecker_state::check_type(const Hs::Type& type, kindchecker_state& K) const
 {
     // So, currently, we

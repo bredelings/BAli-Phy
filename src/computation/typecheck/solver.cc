@@ -217,9 +217,6 @@ bool cmp_less(const Hs::MetaTypeVar& uv1, const Hs::MetaTypeVar& uv2)
 
 std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
 {
-    tcs.expand_type_synonyms(t1);
-    tcs.expand_type_synonyms(t2);
-
     auto uv1 = unfilled_meta_type_var(t1);
     auto uv2 = unfilled_meta_type_var(t2);
 
@@ -281,11 +278,16 @@ std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core
     }
     else
     {
-        // Right now the only TypeCon heads are data constructors and variables.
+        // Right now the only TypeCon heads are data constructors,
+        //   type synonyms, and variables.
         // Unlike GHC, we don't consider representational equality.
         // When we add type families, this will become more complicated.
         // See [Decomposing equality] in Tc/Solver/Canonical.hs
-
+        while(auto s1 = tcs.is_type_synonym(t1))
+            t1 = *s1;
+        while(auto s2 = tcs.is_type_synonym(t2))
+            t2 = *s2;
+        
         if (auto tuple = t1.to<Hs::TupleType>())
             t1 = canonicalize_type(*tuple);
         else if (auto list = t1.to<Hs::ListType>())
