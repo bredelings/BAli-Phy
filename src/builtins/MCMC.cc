@@ -20,6 +20,7 @@
 
 using boost::dynamic_pointer_cast;
 
+using std::pair;
 using std::optional;
 using std::vector;
 using std::shared_ptr;
@@ -1090,4 +1091,100 @@ extern "C" closure builtin_function_accept_MH(OperationArgs& Args)
     return {accept};
 }
 
+vector<int> get_exchangeable_list_entries_in_context(int list_reg, context_ref& C, reg_heap& M)
+{
+    auto list_ptr = context_ptr(C, list_reg);
+
+    vector<int> exchange_regs;
+    while(list_ptr.size() != 0)
+    {
+        int r_list = list_ptr.get_reg();
+        int r_element = M.closure_at(r_list).reg_for_slot(0);
+
+        if (auto e = M.find_precomputed_exchangeable_reg(r_element))
+            exchange_regs.push_back(*e);
+
+        int r_next = M.closure_at(r_list).reg_for_slot(1);
+        r_next = M.follow_index_var(r_next);
+        if (M.reg_is_unevaluated(r_next) or (M.reg_is_changeable(r_next) and not M.reg_is_forced(r_next)))
+            break;
+
+        list_ptr = list_ptr[1];
+    }
+
+    return exchange_regs;
+}
+
+Proposal exchange_regs_proposal(int r1, int r2)
+{
+    return [=](context_ref& C)
+           {
+               // 1. Exchange the regs
+               C.exchange_regs(r1, r2);
+
+               // 2. Return the proposal ratio
+               return 1.0;
+           };
+}
+
+pair<int,int> random_different_int_pair(int n)
+{
+    assert(n > 1);
+    int i1 = uniform_int(0,n-1);
+    int i2 = uniform_int(0,n-2);
+    if (i2 >= i1)
+        i2++;
+    return {i1,i2};
+}
+
+
+pair<int,int> random_different_element_pair(const vector<int>& v)
+{
+    auto [i1,i2] = random_different_int_pair(v.size());
+
+    return {v[i1],v[i2]};
+}
+
+
+extern "C" closure builtin_function_exchange_list_entries(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+    auto& M = Args.memory();
+
+    //------------- 1. Get list arguments --------------//
+    int list_reg = Args.reg_for_slot(0);
+
+    int c1 = Args.evaluate(1).as_int();
+
+    //------------ 2. Find exchangeable regs ----------//
+    context_ref C1(M, c1);
+
+    auto exchange_regs = get_exchangeable_list_entries_in_context(list_reg, C1, M);
+
+    if (log_verbose >= 3)
+    {
+        std::cerr<<"\n\n[exchange_list_entries] list = <"<<list_reg<<">    exchangeable entries = ";
+        for(auto& r: exchange_regs)
+            std::cerr<<"<"<<r<<"> ";
+        std::cerr<<"\n";
+    }
+
+    if (exchange_regs.size() > 1)
+    {
+        auto [r1, r2] = random_different_element_pair(exchange_regs);
+        if (log_verbose >= 3) std::cerr<<"\n\n[exchange_list_entries] exchanging = <"<<r1<<"> and <"<<r2<<">\n";
+        perform_MH_(M, c1, exchange_regs_proposal(r1, r2));
+    }
+
+    // Don't don't this if there are only 2 regs, as we've already permuted them, and don't want to go back.
+    if (exchange_regs.size() >= 4)
+    {
+        int r1 = exchange_regs[ uniform_int(0, exchange_regs.size()-2) ];
+        int r2 = exchange_regs.back();
+        if (log_verbose >= 3) std::cerr<<"\n\n[exchange_list_entries] exchanging = <"<<r1<<"> and <"<<r2<<">\n";
+        perform_MH_(M, c1, exchange_regs_proposal(r1, r2));
+    }
+
+    return constructor("()",0);
+}
 
