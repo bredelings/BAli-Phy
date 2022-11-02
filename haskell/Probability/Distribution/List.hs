@@ -44,7 +44,7 @@ instance HasIndependent Random where
     iid n dist = lazy $ do xs <- RanSamplingRate (1/sqrt (fromIntegral n)) $ sequence $ repeat dist
                            return $ take n xs
     iid_on vs dist = let n = length vs
-                     in lazy $ do xs <- RanSamplingRate (1.0/sqrt (fromIntegral n)) $ sequence $ repeat dist
+                     in lazy $ do xs <- RanSamplingRate (1/sqrt (fromIntegral n)) $ sequence $ repeat dist
                                   return $ zip vs xs
 
     iid_set n dist = lazy $ RanSamplingRate (1/sqrt (fromIntegral n)) $ do
