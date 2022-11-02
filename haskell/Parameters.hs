@@ -27,8 +27,8 @@ register_out_edge dist var = IOAction (\s -> (s+1, builtin_register_out_edge dis
 foreign import bpcall "Modifiables:register_dist_property" builtin_register_dist_property :: d -> a -> CPPString -> Effect
 register_dist_property dist value property = IOAction (\s -> (s+1, builtin_register_dist_property dist value (list_to_string property)))
 
-foreign import bpcall "Modifiables:register_dist" builtin_register_dist :: CPPString -> Int -> Effect
+foreign import bpcall "Modifiables:register_dist" builtin_register_dist :: CPPString -> Int -> RealWorld -> Effect
 -- The extra parameter to prevent invocations out of functions being floated
 -- out of let statements by referencing a local variable.
-register_dist_sample  name = IOAction (\s -> (s+1, builtin_register_dist (list_to_string name) 0))
-register_dist_observe name = IOAction (\s -> (s+1, builtin_register_dist (list_to_string name) 1))
+register_dist_sample  name = IOAction (\s -> (s+1, builtin_register_dist (list_to_string name) 0 s))
+register_dist_observe name = IOAction (\s -> (s+1, builtin_register_dist (list_to_string name) 1 s))
