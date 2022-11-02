@@ -1,6 +1,7 @@
 module Probability.Distribution.Bernoulli where
 
 import Probability.Random
+import Control.Monad.IO.Class
 import MCMC
 
 foreign import bpcall "Distribution:sample_bernoulli" builtin_sample_bernoulli :: Double -> RealWorld -> Int

@@ -1,6 +1,7 @@
 module Probability.Distribution.Poisson where
 
 import Probability.Random
+import Control.Monad.IO.Class
 import MCMC
 import Probability.Distribution.List
 import Probability.Distribution.Uniform

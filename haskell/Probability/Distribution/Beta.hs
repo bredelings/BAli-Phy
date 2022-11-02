@@ -1,6 +1,7 @@
 module Probability.Distribution.Beta where
 
 import Probability.Random
+import Control.Monad.IO.Class
 import MCMC
 
 foreign import bpcall "Distribution:beta_density" beta_density :: Double -> Double -> Double -> LogDouble

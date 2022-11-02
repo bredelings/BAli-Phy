@@ -8,6 +8,7 @@ import Parameters
 import MCMC
 import Data.JSON as J
 import Effect
+import Control.Monad.IO.Class -- for liftIO
 
 data SamplingEvent
 
@@ -78,7 +79,7 @@ data Random a where
     Lazy :: Random a -> Random a
     WithTKEffect :: Random a -> (a -> TKEffects b) -> Random a
     PerformTKEffect :: TKEffects a -> Random a
-    LiftIO :: IO a -> Random a
+    RanLiftIO :: IO a -> Random a
     RanReturn :: a -> Random a
     RanBind :: Random b -> (b -> Random a) -> Random a
     RanMFix :: (a -> Random a) -> Random a
@@ -94,7 +95,7 @@ instance Monad Random where
     f >>= g  = RanBind f g
     mfix f   = RanMFix f
 
-observe dist datum = LiftIO $ do
+observe dist datum = liftIO $ do
                        s <- register_dist_observe (dist_name dist)
                        register_out_edge s datum
                        density_terms <- make_edges s $ annotated_densities dist datum
@@ -102,7 +103,9 @@ observe dist datum = LiftIO $ do
 x ~> dist = observe dist x
 infix 0 ~>
 
-liftIO = LiftIO
+instance MonadIO Random where
+    liftIO = RanLiftIO
+
 lazy = Lazy
 infixl 2 `with_tk_effect`
 with_tk_effect = WithTKEffect
@@ -114,7 +117,7 @@ run_strict (RanBind f g) = do
   x <- run_strict f
   run_strict $ g x
 run_strict (RanReturn v) = return v
-run_strict (LiftIO a) = a
+run_strict (RanLiftIO a) = a
 run_strict (RanSamplingRate _ a) = run_strict a
 -- These are the lazily executed parts of the strict monad.
 run_strict dist@(RanDistribution _) = run_lazy dist
@@ -141,7 +144,7 @@ run_lazy (RanBind f g) = do
   x <- unsafeInterleaveIO $ run_lazy f
   run_lazy $ g x
 run_lazy (RanReturn v) = return v
-run_lazy (LiftIO a) = a
+run_lazy (RanLiftIO a) = a
 run_lazy (RanMFix f) = mfix (run_lazy.f)
 run_lazy (RanSamplingRate _ a) = run_lazy a
 -- Problem: distributions aren't part of the Random monad!
@@ -158,7 +161,7 @@ run_strict' rate (RanBind f g) = do
   x <- run_strict' rate f
   run_strict' rate $ g x
 run_strict' rate (RanReturn v) = return v
-run_strict' rate (LiftIO io) = io
+run_strict' rate (RanLiftIO io) = io
 run_strict' rate (PerformTKEffect e) = run_tk_effects rate e
 run_strict' rate (RanSamplingRate rate2 a) = run_strict' (rate*rate2) a
 -- These are the lazily executed parts of the strict monad.
@@ -204,7 +207,7 @@ modifiable_structure = triggered_modifiable_structure apply_modifier (const ())
 --         unsafeInterleaveIO $ run_lazy', so we get an unsafeInterleaveIO from there.
 --
 run_lazy' :: Double -> Random a -> IO a
-run_lazy' rate (LiftIO a) = a
+run_lazy' rate (RanLiftIO a) = a
 run_lazy' rate (RanBind f g) = do
   x <- unsafeInterleaveIO $ run_lazy' rate f
   run_lazy' rate $ g x

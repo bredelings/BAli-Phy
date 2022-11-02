@@ -1,6 +1,7 @@
 module Probability.Distribution.NegativeBinomial where
 
 import Probability.Random
+import Control.Monad.IO.Class
 import MCMC
 
 foreign import bpcall "Distribution:negative_binomial_density" negative_binomial_density :: () -> () -> () -> ()

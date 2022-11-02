@@ -1,6 +1,7 @@
 module Probability.Distribution.Geometric where
 
 import Probability.Random
+import Control.Monad.IO.Class
 import MCMC
 import Range
 

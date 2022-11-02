@@ -1,6 +1,7 @@
 module Probability.Distribution.DirichletProcess where
 
 import Probability.Random
+import Control.Monad.IO.Class
 
 import Probability.Distribution.List
 import Probability.Distribution.Normal

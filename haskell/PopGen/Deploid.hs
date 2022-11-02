@@ -1,6 +1,7 @@
 module PopGen.Deploid where
 
 import Probability
+import Control.Monad.IO.Class
 import Range
 import Data.CSV
 import Data.Matrix

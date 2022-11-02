@@ -1,6 +1,7 @@
 module Probability.Distribution.Laplace where
 
 import Probability.Random
+import Control.Monad.IO.Class
 import MCMC
 
 foreign import bpcall "Distribution:laplace_density" laplace_density :: Double -> Double -> Double -> LogDouble
