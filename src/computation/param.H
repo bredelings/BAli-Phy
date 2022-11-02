@@ -16,8 +16,9 @@ class context_ptr
     // This reg will never point to an index_var_no_force, since it is the result of evaluation.
     // Therefore, this reg will never be deleted behind our back!
 
-    // But it could point to an index-var-with-force.  So be careful to follow_index_var( ) before
-    // looking at the closure.
+    // But it could point to an index-var-with-force.  So we do a follow_index_var( )
+    // before we look into the closure via operator[](int), size(), and head().
+
     int reg;
 public:
     context_ptr result() const;
