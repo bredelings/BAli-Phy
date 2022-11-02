@@ -3,6 +3,9 @@
 #include "util/assert.hh"
 #include "util/range.H" // for remove_element( )
 
+#include "range/v3/all.hpp"
+namespace views = ranges::views;
+
 using std::vector;
 using std::pair;
 using std::optional;
@@ -104,6 +107,8 @@ void reg_heap::destroy_all_computations_in_token(int t)
     tokens[t].vm_result.clear();
 
     tokens[t].vm_force_count.clear();
+
+    tokens[t].exchanges.clear();
 }
 
 void reg_heap::release_tip_token(int t)
@@ -189,6 +194,7 @@ void reg_heap::release_tip_token(int t)
     assert(tokens[t].vm_step.empty());
     assert(tokens[t].vm_result.empty());
     assert(tokens[t].vm_force_count.empty());
+    assert(tokens[t].exchanges.empty());
 }
 
 // Given parent -> t1 -> t2 -> XXX, make t2 a child of parent instead of t1.
@@ -313,6 +319,11 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
         merge_split_mapping_(tokens[t].vm_step, tokens[child_token].vm_step, prog_temp);
     }
     unload_map(tokens[child_token].vm_step, prog_temp);
+
+    vector<exchange_op> all_exchanges;
+    for(int t: knuckle_tokens | views::reverse)
+        all_exchanges.insert(all_exchanges.end(), tokens[t].exchanges.begin(), tokens[t].exchanges.end());
+    std::swap( tokens[child_token].exchanges, all_exchanges );
 }
 
 // Release any knuckle tokens that are BEFORE the child token, and then return the parent of the child token.
@@ -659,6 +670,7 @@ int reg_heap::get_unused_token(token_type type, optional<int> prev_token)
     assert(tokens[t].children.empty());
     assert(tokens[t].vm_step.empty());
     assert(tokens[t].vm_result.empty());
+    assert(tokens[t].exchanges.empty());
     assert(not tokens[t].is_referenced());
 
     assert(tokens[t].prev_prog_active_refs.empty());

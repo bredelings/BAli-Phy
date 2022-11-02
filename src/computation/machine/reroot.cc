@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "util/range.H"
 #include "mapping.H"
+#include "computation/expression/exchangeable.H"
 
 using std::string;
 using std::vector;
@@ -114,6 +115,44 @@ void reg_heap::reroot_at(int t)
     pivot_mapping(prog_force_counts, tokens[t].vm_force_count);
     std::swap(tokens[parent].vm_force_count, tokens[t].vm_force_count);
 
+    // perform the exchanges
+    // -- exchangeables should never get their steps invalidated, but they could be unforced.
+    // -- results, however, can definitely change.
+    // but could we determine which token is OLDER?
+    for(auto& [r1,r2]: tokens[t].exchanges)
+    {
+        int& s1 = prog_steps[r1];
+        int& s2 = prog_steps[r2];
+        assert(s1 > 0);
+        assert(s2 > 0);
+        assert(prog_results[r1] > 0);
+        assert(prog_results[r2] > 0);
+
+        assert(is_exchangeable(expression_at(r1)));
+        assert(is_exchangeable(expression_at(r2)));
+
+        assert(step_exists_in_root(s1));
+        assert(step_exists_in_root(s2));
+
+        assert(steps[s1].source_reg == r1);
+        assert(steps[s2].source_reg == r2);
+
+        std::swap(steps[s1].source_reg, steps[s2].source_reg);
+        std::swap(s1, s2);
+        // wait... the results CAN be invalidated by the unsharing.
+        std::swap(prog_results[r1], prog_results[r2]);
+        // Don't swap force_counts.
+        // The force count of reg r is a property of computations NOT at r.
+
+        assert(steps[s1].source_reg == r1);
+        assert(steps[s2].source_reg == r2);
+    }
+    // Swap the order of the exchanges so that the reverse pivot does them in reverse order.
+    std::reverse(tokens[t].exchanges.begin(), tokens[t].exchanges.end());
+    // The root token shouldn't have any exchanges on it.
+    assert(tokens[parent].exchanges.empty());
+    std::swap(tokens[parent].exchanges, tokens[t].exchanges);
+
     // 4. Alter the inheritance tree
     tokens[t].type = reverse(tokens[t].type);
     std::swap(tokens[t].type, tokens[parent].type);
@@ -215,6 +254,7 @@ void reg_heap::unshare_regs1(int t)
 
     auto& vm_result = tokens[t].vm_result;
     auto& vm_step = tokens[t].vm_step;
+    auto& exchanges = tokens[t].exchanges;
 
     {
         // find all regs in t that are not shared from the root
@@ -298,27 +338,37 @@ void reg_heap::unshare_regs1(int t)
 
     int i =0; // (FIXME?) We have to rescan all the existing steps and results because there might be new EDGES to them that have been added.
 
-    // 2. Scan regs with different result in t that are used/called by root steps/results
-    for(;i<delta_result.size();i++)
-        if (auto [r,_] = delta_result[i]; has_result1(r))
-        {
-            auto& R = regs[r];
+    auto do_result_changed = [&](int r)
+    {
+        auto& R = regs[r];
 
-	    // Look at steps that CALL the reg in the root (that has overridden result in t)
-            for(int s2: R.called_by)
-                if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
-                    unshare_result(r2);
-
-	    // Look at steps that CALL the reg in the root (that has overridden result in t)
-            for(int r2: R.called_by_index_vars)
+        // Look at steps that CALL the reg in the root (that has overridden result in t)
+        for(int s2: R.called_by)
+            if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
                 unshare_result(r2);
 
-	    // Look at steps that USE the reg in the root (that has overridden result in t)
-            for(auto& [r2,_]: R.used_by)
-                if (prog_steps[r2] > 0)
-                    unshare_step(r2);
-        }
+        // Look at steps that CALL the reg in the root (that has overridden result in t)
+        for(int r2: R.called_by_index_vars)
+            unshare_result(r2);
 
+        // Look at steps that USE the reg in the root (that has overridden result in t)
+        for(auto& [r2,_]: R.used_by)
+            if (prog_steps[r2] > 0)
+                unshare_step(r2);
+    };
+
+    // 2. Scan regs with different result in t that are used/called by root steps/results
+    for(auto& [r1,r2]: exchanges)
+    {
+        assert(has_step1(r1));
+        do_result_changed(r1);
+        assert(has_step1(r2));
+        do_result_changed(r2);
+    }
+
+    for(;i<delta_result.size();i++)
+        if (auto [r,_] = delta_result[i]; has_result1(r))
+            do_result_changed(r);
 
     // 4. Scan unshared steps, and unshare steps for created regs IF THEY HAVE A STEP.
 
@@ -390,6 +440,7 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
 {
     auto& delta_result = tokens[t].vm_result.delta();
     auto& delta_step   = tokens[t].vm_step.delta();
+    auto& exchanges    = tokens[t].exchanges;
 
     auto unshare_result = [&](int r)
                               {
@@ -428,14 +479,10 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
     // All the same regs should have (r,-) in the result.
     assert(delta_step.size() == delta_result.size());
 
-#ifndef NDEBUG
-    check_created_regs_unshared(t);
-#endif
-
     // 2. Scan regs with different result in t that are used/called by root steps/results
-    for(int i=0;i<unshared_regs.size();i++)
+    auto do_result_changed = [&](int r)
     {
-        auto& R = regs[unshared_regs[i]];
+        auto& R = regs[r];
 
         // Look at steps that CALL the reg in the root (that has overridden result in t)
         for(int s2: R.called_by)
@@ -451,6 +498,24 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
         for(auto& [r2,_]: R.used_by)
             if (prog_steps[r2] > 0 and has_result1(r2))
                 unshare_step(r2);
+
+    };
+
+    for(auto& [r1,r2]: exchanges)
+    {
+        assert(has_step1(r1));
+        do_result_changed(r1);
+        assert(has_step2(r2));
+        do_result_changed(r2);
+    }
+
+#ifndef NDEBUG
+    check_created_regs_unshared(t);
+#endif
+
+    for(int i=0;i<unshared_regs.size();i++)
+    {
+        do_result_changed(unshared_regs[i]);
     }
 }
 

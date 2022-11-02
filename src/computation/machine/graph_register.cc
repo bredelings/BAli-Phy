@@ -12,6 +12,7 @@
 #include "computation/expression/reg_var.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/modifiable.H"
+#include "computation/expression/exchangeable.H"
 #include "computation/expression/expression.H" // is_WHNF( )
 #include "computation/operations.H"
 #include "effect.H"
@@ -1820,6 +1821,40 @@ int reg_heap::allocate_reg_from_step(int s, closure&& C)
     return r;
 }
 
+void reg_heap::exchange_regs(int r1, int r2, int t)
+{
+    assert(r1 != r2);
+    assert(reg_is_changeable(r1));
+    assert(reg_is_changeable(r2));
+    assert(not reg_is_unevaluated(r1));
+    assert(not reg_is_unevaluated(r2));
+
+    assert(not children_of_token(t).size());
+    if (not is_root_token(t))
+        assert(tokens[t].type == token_type::set);
+
+    // Check that this r1 indeed exchangeable
+    if (not is_exchangeable(expression_at(r1)))
+        throw myexception()<<"exchange_regs: reg1 ["<<r1<<"] = "<<closure_at(r1).print()<<" is not exchangeable!";
+
+    // Check that this r2 is indeed exchangeable
+    if (not is_exchangeable(expression_at(r2)))
+        throw myexception()<<"exchange_regs: reg2 ["<<r2<<"] = "<<closure_at(r2).print()<<" is not exchangeable!";
+
+    // Check that we are only exchanging steps for the same computation.
+    if (closure_at(r1) != closure_at(r2))
+        throw myexception()<<"exchange_regs: reg1 ["<<r1<<"] = "<<closure_at(r1).print()<<
+                                        "and reg2 ["<<r2<<"] = "<<closure_at(r2).print()<<" are not the same!";
+
+    assert(not is_root_token(t));
+
+    assert(is_root_token(parent_token(t)));
+
+    tokens[t].exchanges.push_back({r1,r2});
+
+    assert(not children_of_token(t).size());
+}
+
 // If we replace a computation at P that is newly defined in this token,
 // there may be computations that call or use it that are also newly
 // defined in this token.  Such computations must be cleared, because they
@@ -2648,6 +2683,15 @@ void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
     int t = switch_to_child_token(c, token_type::set);
 
     set_reg_value(P, std::move(C), t);
+}
+
+void reg_heap::exchange_regs_in_context(int r1, int r2, int c)
+{
+    reroot_at_context(c);
+
+    int t = switch_to_child_token(c, token_type::set);
+
+    exchange_regs(r1, r2, t);
 }
 
 bool reg_heap::execution_allowed() const

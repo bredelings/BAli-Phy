@@ -156,6 +156,12 @@ public:
     reg(reg&&) noexcept;
 };
 
+
+struct exchange_op
+{
+    int r1;
+    int r2;
+};
 // These bits are used in evaluation as well as unsharing.
 
 constexpr int unshare_result_bit = 1;
@@ -466,6 +472,8 @@ public:
         mapping vm_step;
         mapping vm_force_count;
 
+        std::vector<exchange_op> exchanges;
+
         boost::container::small_vector< int, 2> prev_prog_active_refs;
         boost::container::small_vector< int, 2> prev_prog_inactive_refs;
         std::optional<prev_prog_token_t> prev_prog_token;
@@ -582,6 +590,8 @@ public:
 
     const expression_ref& get_reg_value_in_context(int& R, int c);
 
+    void exchange_regs_in_context(int r1, int r2, int c);
+
     void set_reg_value_in_context(int index, closure&& C, int c);
 
     int get_modifiable_value_in_context(int R, int c);
@@ -682,6 +692,7 @@ public:
 
     /*----- Graph splitting -----*/
     /// Update the value of a non-constant, non-computed index
+    void exchange_regs(int r1, int r2, int t);
     void set_reg_value(int index, closure&&, int t);
     bool reg_is_shared(int t, int r) const;
     void check_created_regs_unshared(int t1);
