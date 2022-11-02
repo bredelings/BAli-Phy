@@ -1,11 +1,15 @@
 module Probability.Distribution.List where
 
 import Probability.Random
+import Effect
+import MCMC
 
 independent_densities (d:ds) (x:xs) = densities d x ++ independent_densities ds xs
 independent_densities [] []         = []
 independent_densities _  _          = [doubleToLogDouble 0.0]
 
+foreign import bpcall "MCMC:exchange_list_entries" builtin_exchange_list_entries :: [a] -> ContextIndex -> RealWorld -> ()
+exchange_list_entries xs c = makeIO $ builtin_exchange_list_entries xs c
 
 plate n dist_f = independent $ map dist_f [0..n-1]
 
@@ -22,27 +26,39 @@ instance HasIndependent Distribution where
 
     iid n dist = Distribution iid_name (make_densities' $ independent_densities (replicate n dist)) (no_quantile "iid") iid_sample (ListRange $ take n $ repeat $ distRange dist) where
                              iid_name = "iid "++(dist_name dist)
-                             iid_sample = do xs <- RanSamplingRate (1.0/sqrt (fromIntegral n)) $ sequence (repeat $ RanDistribution dist)
+                             iid_sample = do xs <- RanSamplingRate (1/sqrt (fromIntegral n)) $ sequence (repeat $ RanDistribution dist)
                                              return $ take n xs
     iid_on xs dist = undefined
 
     iid_set n dist = Distribution iid_name (make_densities' $ independent_densities (replicate n dist)) (no_quantile "iid") iid_sample (ListRange $ take n $ repeat $ distRange dist) where
                              iid_name = "iid_set "++(dist_name dist)
-                             iid_sample = do dist <- exchangeable $ RanDistribution dist
-                                             xs <- RanSamplingRate (1.0/sqrt (intToDouble n)) $ sequence $ repeat $ dist
-                                             return $ take n xs
+                             iid_sample = RanSamplingRate (1/sqrt (fromIntegral n)) $ do
+                                            dist <- exchangeable $ RanDistribution dist
+                                            xs <- sequence $ repeat $ dist -- `with_tk_effect` (\xs -> add_move $ exchange_list_entries xs)
+                                            return $ take n xs
 
 
 instance HasIndependent Random where
     independent dists = lazy $ sequence dists
 --    independent_on dists_pairs = RanDistribution (independent dists_pairs)
-    iid n dist = lazy $ do xs <- RanSamplingRate (1.0/sqrt (fromIntegral n)) $ sequence $ repeat dist
+    iid n dist = lazy $ do xs <- RanSamplingRate (1/sqrt (fromIntegral n)) $ sequence $ repeat dist
                            return $ take n xs
     iid_on vs dist = let n = length vs
                      in lazy $ do xs <- RanSamplingRate (1.0/sqrt (fromIntegral n)) $ sequence $ repeat dist
                                   return $ zip vs xs
 
-    iid_set n dist = lazy $ do dist <- exchangeable $ dist
-                               xs <- RanSamplingRate (1.0/sqrt (intToDouble n)) $ sequence $ repeat dist
-                               return $ take n xs
+    iid_set n dist = lazy $ RanSamplingRate (1/sqrt (fromIntegral n)) $ do
+                       let effect :: [a] -> TKEffects Effect
+                           effect = (\xs -> add_move $ exchange_list_entries xs)
+                       dist <- exchangeable dist
+                       xs <- (sequence $ repeat $ dist) `with_tk_effect` effect
+                       return $ take n xs
 
+{-
+  could we do i.e.
+  strict $ do
+    sampling_rate (1/sqrt (fromIntegral n)
+    xs <- lazy $ sequence $ repeat dist  -- lazy means no effects (add_move) or rate changes (sample_rate)
+    add_move $ exchange_list_entries xs  -- ideally this is only allowed within strict blocks!  And MCMC-specific blocks?
+    return $ take n xs
+-}
