@@ -20,6 +20,7 @@
 #include "desugar.H"
 #include "util/assert.hh"
 #include "util/range.H"
+#include "computation/typecheck/typecheck.H"
 
 using std::string;
 using std::vector;
@@ -203,15 +204,19 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
 	auto& C = constants[c];
 
 	// 2.1 Find the arity of the constructor
-	int arity = *C.arity;
         string name = unloc(C.name);
+        auto info = tc_state().constructor_info(C);
+        int dict_arity  = info.dict_arity();
+        int field_arity = info.arity();
+        assert(field_arity == *C.arity);
+        int total_arity = dict_arity + field_arity;
 
 	// 2.2 Construct the simple pattern for constant C
 	vector<var> args;
-	for(int j=0;j<arity;j++)
+	for(int j=0;j< total_arity; j++)
 	    args.push_back( get_fresh_var() );
 
-	expression_ref pat = constructor(name, arity);
+	expression_ref pat = constructor(name, total_arity);
 	if (args.size())
         {
             vector<expression_ref> args2;
@@ -221,9 +226,7 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
         }
 
 	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
-	vector<var> x2;
-	for(int j=0;j<arity;j++)
-	    x2.push_back(args[j]);
+	vector<var> x2 = args;
 	x2.insert(x2.end(), x.begin()+1, x.end());
 
 	// 2.4 Construct the various modified bodies and patterns
@@ -232,8 +235,12 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
 	{
 	    // pattern: Add the sub-partitions of the first top-level pattern at the beginning.
             auto con_pat = equations[r].patterns[0].to<Hs::ConPattern>();
-	    auto patterns = con_pat->args;
-	    assert(patterns.size() == arity);
+            vector<expression_ref> patterns;
+            for(auto& [dvar,constraint]: dictionary_constraints(con_pat->givens))
+                patterns.push_back(make_VarPattern(dvar));
+            for(auto& sub_pat: con_pat->args)
+                patterns.push_back(sub_pat);
+	    assert(patterns.size() == total_arity);
 
 	    // pattern: Add the remaining top-level patterns (minus the first).
 	    patterns.insert(patterns.end(), equations[r].patterns.begin()+1, equations[r].patterns.end());

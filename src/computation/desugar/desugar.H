@@ -53,11 +53,15 @@ struct equation_info_t
 
 var make_var(const Hs::Var&);
 
+Hs::VarPattern make_VarPattern(const var&);
+
 CDecls translate_decls_to_cdecls(const Haskell::Decls&);
 
 struct desugar_state: public FreshVarSource
 {
     const Module& m;
+
+    typechecker_state& tc_state() const;
 
     expression_ref def_function(const std::vector< equation_info_t >&, const expression_ref& otherwise);
 

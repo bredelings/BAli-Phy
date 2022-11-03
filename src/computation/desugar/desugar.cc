@@ -40,16 +40,28 @@ desugar_state::desugar_state(const Module& m_, FreshVarState& state)
       m(m_)
 {}
 
+typechecker_state& desugar_state::tc_state() const
+{
+    return *m.tc_state;
+}
 
 expression_ref desugar_string_expression(const std::string& s)
 {
     return Core::unpack_cpp_string(s);
 }
 
+Hs::VarPattern make_VarPattern(const var& v)
+{
+    assert(v.index == 0);
+    Hs::Var V({noloc, v.name});
+    return {V};
+}
+
 bool is_irrefutable_pat(const expression_ref& E)
 {
     assert(not E.head().is_a<var>());
-    return E.is_a<Hs::WildcardPattern>() or E.is_a<Hs::Var>() or E.is_a<Hs::LazyPattern>();
+    assert(not E.head().is_a<Hs::Var>());
+    return E.is_a<Hs::WildcardPattern>() or E.is_a<Hs::VarPattern>() or E.is_a<Hs::LazyPattern>();
 }
 
 failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
