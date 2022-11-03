@@ -159,6 +159,36 @@ std::set<Hs::MetaTypeVar> free_meta_type_variables(const LIE& env)
     return free;
 }
 
+vector<Hs::Type> DataConInfo::all_constraints() const
+{
+    auto cs = top_constraints;
+    for(auto& constraint: gadt_eq_constraints)
+        cs.push_back(constraint);
+    for(auto& constraint: written_constraints)
+        cs.push_back(constraint);
+    return cs;
+}
+
+vector<Hs::Type> DataConInfo::dictionary_constraints() const
+{
+    return Hs::dictionary_constraints(all_constraints());
+}
+
+vector<Hs::Type> DataConInfo::equality_constraints() const
+{
+    return Hs::equality_constraints(all_constraints());
+}
+
+int DataConInfo::dict_arity() const
+{
+    return dictionary_constraints().size();
+}
+
+int DataConInfo::arity() const
+{
+    return field_types.size();
+}
+
 Hs::Type DataConInfo::result_type() const
 {
     return Hs::type_apply( data_type, uni_tvs );

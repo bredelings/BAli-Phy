@@ -75,7 +75,12 @@ struct DataConInfo
     std::vector<Hs::Type> written_constraints;
     std::vector<Hs::Type> gadt_eq_constraints;
     std::vector<Hs::Type> field_types;
+    std::vector<Hs::Type> all_constraints() const;
+    std::vector<Hs::Type> dictionary_constraints() const;
+    std::vector<Hs::Type> equality_constraints() const;
     Hs::TypeCon data_type;
+    int dict_arity() const;
+    int arity() const;
     Hs::Type result_type() const;
 
     Hs::Type constructor_type() const;
