@@ -394,6 +394,28 @@ optional<pair<Type,Type>> is_equality_constraint(const Type& t)
         return {};
 }
 
+std::vector<Type> dictionary_constraints(const std::vector<Type> constraints)
+{
+    vector<Type> constraints2;
+
+    for(auto& constraint: constraints)
+        if (not is_equality_constraint(constraint))
+            constraints2.push_back(constraint);
+
+    return constraints2;
+}
+
+std::vector<Type> equality_constraints(const std::vector<Type> constraints)
+{
+    vector<Type> constraints2;
+
+    for(auto& constraint: constraints)
+        if (is_equality_constraint(constraint))
+            constraints2.push_back(constraint);
+
+    return constraints2;
+}
+
 optional<Type> is_list_type(Type t)
 {
     t = follow_meta_type_var(t);

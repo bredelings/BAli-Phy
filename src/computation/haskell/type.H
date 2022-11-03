@@ -321,6 +321,10 @@ std::pair<std::vector<Type>,Type> arg_result_types(const Type&);
 
 std::optional<std::pair<Type,Type>> is_equality_constraint(const Type& t);
 
+std::vector<Type> equality_constraints(const std::vector<Type> constraints);
+
+std::vector<Type> dictionary_constraints(const std::vector<Type> constraints);
+
 std::tuple<std::vector<TypeVar>, std::vector<Type>, Type> peel_top_gen(Type t);
 
 std::optional<Type> is_list_type(Type t);
