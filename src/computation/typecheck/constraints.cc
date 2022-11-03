@@ -31,6 +31,34 @@ vector<Core::Var> vars_from_lie(const LIE& lie)
     return vars;
 }
 
+LIE dictionary_constraints(const LIE& lie1)
+{
+    LIE lie2;
+
+    for(auto& pred: lie1)
+    {
+        auto& [_, constraint] = pred;
+        if (not Hs::is_equality_constraint(constraint))
+            lie2.push_back(pred);
+    }
+
+    return lie2;
+}
+
+LIE equality_constraints(const LIE& lie1)
+{
+    LIE lie2;
+
+    for(auto& pred: lie1)
+    {
+        auto& [_, constraint] = pred;
+        if (Hs::is_equality_constraint(constraint))
+            lie2.push_back(pred);
+    }
+
+    return lie2;
+}
+
 WantedConstraints::WantedConstraints(const LIE& l)
     : simple(l)
 {
@@ -87,3 +115,4 @@ Implication::Implication(int l, const vector<Hs::TypeVar>& v, const LIE& g, cons
     for(auto& implication: wanteds.implications)
         assert(implication->level > level);
 }
+
