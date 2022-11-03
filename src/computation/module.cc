@@ -1070,8 +1070,6 @@ string get_constructor_name(const Hs::Type& constr)
 
 CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
 {
-    // This comes after typechecking.
-    // FIXME: use the results of typechecking instead of the raw decls
     for(const auto& decl: topdecls)
     {
         auto d = decl.to<Haskell::DataOrNewtypeDecl>();
@@ -1081,8 +1079,9 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
         {
             for(const auto& constr: d->get_constructors())
             {
-                auto arity = constr.arity();
                 auto cname = constr.name;
+                auto info = tc_state->con_info().at(cname);
+                int arity = info.dict_arity() + info.arity();
 
                 expression_ref body = lambda_expression( constructor(cname, arity) );
                 cdecls.push_back( { var(cname) , body} );
@@ -1093,8 +1092,9 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
             for(const auto& cons_decl: d->get_gadt_constructors())
                 for(auto& con_name: cons_decl.con_names)
                 {
-                    auto arity = Hs::gen_type_arity(unloc(cons_decl.type));
                     auto cname = unloc(con_name);
+                    auto info = tc_state->con_info().at(cname);
+                    int arity = info.dict_arity() + info.arity();
 
                     expression_ref body = lambda_expression( constructor(cname, arity) );
                     cdecls.push_back( { var(cname) , body} );
