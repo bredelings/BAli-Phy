@@ -6,7 +6,6 @@ using std::string;
 
 string print(const LIE& lie)
 {
-    std::ostringstream oss;
     vector<string> ss;
     for(auto& [value,type]: lie)
     {
@@ -59,6 +58,16 @@ LIE equality_constraints(const LIE& lie1)
     return lie2;
 }
 
+string WantedConstraints::print() const
+{
+    vector<string> cs;
+    for(auto& [value, type]: simple)
+        cs.push_back(value.print() + " :: " + type.print());
+    for(auto& implication: implications)
+        cs.push_back(implication->print());
+    return "{ " + join(cs,"; ") + " }";
+}
+
 WantedConstraints::WantedConstraints(const LIE& l)
     : simple(l)
 {
@@ -92,6 +101,22 @@ LIE WantedConstraints::all_simple() const
         w += implication->wanteds.all_simple();
 
     return w;
+}
+
+string Implication::print() const
+{
+    std::ostringstream oss;
+    oss<<"forall["<<level<<"]";
+    for(auto& tv: tvs)
+        oss<<" "<<tv.print();
+    oss<<".(";
+    if (not givens.empty())
+        oss<< ::print(givens) <<" => ";
+    oss<<wanteds.print();
+    if (not evidence_binds->empty())
+        oss<<" =& "<<print_cdecls(*evidence_binds);
+    oss<<")";
+    return oss.str();
 }
 
 Implication::Implication(int l, const vector<Hs::TypeVar>& v, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb)

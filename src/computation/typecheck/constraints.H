@@ -45,6 +45,8 @@ struct WantedConstraints
 
     bool empty() const;
 
+    std::string print() const;
+
     LIE all_simple() const;
 };
 
@@ -64,7 +66,7 @@ struct Implication
 
     WantedConstraints wanteds;
 
-    //    std::string print() const;
+    std::string print() const;
 
     Implication(int l, const std::vector<Hs::TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb);
 };
