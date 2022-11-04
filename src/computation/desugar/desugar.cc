@@ -388,16 +388,14 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         auto V = *v;
         V.wrap = {};
         Core::Exp E = make_var(V);
-        if (v->wrap)
-            E = (*v->wrap)(E);
+        E = v->wrap(E);
         return E;
     }
     else if (auto c = E.to<Hs::Con>())
     {
         // Sometimes c->wrap isn't set because we make up constructors on the fly for e.g. []
         Core::Exp E = var(unloc(c->name));
-        if (c->wrap)
-            E = (*c->wrap)(E);
+        E = c->wrap(E);
         return E;
     }
     else if (E.is_a<Hs::Do>())

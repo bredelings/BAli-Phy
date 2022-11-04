@@ -15,7 +15,7 @@ Core::wrapper typechecker_state::instPatSigma(const Hs::SigmaType& pat_type, con
     if (exp_type.infer())
     {
         exp_type.infer_type( pat_type );
-        return Core::wrapper_id;
+        return Core::WrapId;
     }
     else
         return subsumptionCheck( exp_type.check_type(), pat_type);

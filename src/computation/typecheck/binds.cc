@@ -264,7 +264,7 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         auto dict_vars = vars_from_lie( givens );
 
-        Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, Core::wrapper_id);
+        Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, Core::WrapId);
 
         auto decl = mkGenBind( tvs, dict_vars, ev_decls, Hs::Decls({FD}), {{name, bind_info}} );
 

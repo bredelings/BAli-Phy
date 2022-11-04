@@ -849,7 +849,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Expe
     else
     {
         e2.infer_type(t1);
-        return Core::wrapper_id;
+        return Core::WrapId;
     }
 }
 
@@ -1061,7 +1061,7 @@ tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skol
 
     // 3. If the type has no foralls and no constraints, then it is just a rho-type.
     else
-        return {Core::wrapper_id, {}, {}, polytype};
+        return {Core::WrapId, {}, {}, polytype};
 }
 
 std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, std::shared_ptr<const Core::Decls>>

@@ -23,7 +23,7 @@ Core::wrapper typechecker_state::tcMatchesFunInfer(std::vector<Expected>& arg_ty
     if (extra_fun_type.infer() and not extra_fun_type.inferred_type())
     {
         extra_fun_type.infer_type(unif_fun_type);
-        return Core::wrapper_id;
+        return Core::WrapId;
     }
     else
         return subsumptionCheck(unif_fun_type, extra_fun_type.read_type());
@@ -54,7 +54,7 @@ Core::wrapper typechecker_state::tcMatchesFunCheck(std::vector<Expected>& arg_ty
         // If we got here, then the Check type had enough arguments.
         // We don't need to construct a result type, we just need to check things.
         a(arg_types, Check(type))(*this);
-        return Core::wrapper_id;
+        return Core::WrapId;
     }
     // look through type synonyms
     else if (auto type2 = is_type_synonym(type))
