@@ -1,2 +1,2 @@
 bali-phy: Error! In module 'Main':
-Ambiguous type variable 't_21845{0}' in classes: Compiler.Num.Num t_21845{0} Main.Foo t_21845{0} Text.Show.Show t_21845{0} 
+Ambiguous type variable 't_22379{0}' in classes: Compiler.Num.Num t_22379{0} Main.Foo t_22379{0} Text.Show.Show t_22379{0} 
