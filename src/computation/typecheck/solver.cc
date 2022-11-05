@@ -780,6 +780,7 @@ Core::Decls typechecker_state::entails(const LIE& givens, WantedConstraints& wan
 
         // 2. Handle implications
         vector<shared_ptr<Implication>> wanted_implics;
+        LIE new_wanteds;
         std::swap(wanted_implics, wanteds.implications);
         for(auto& implic: wanted_implics)
         {
@@ -808,7 +809,7 @@ Core::Decls typechecker_state::entails(const LIE& givens, WantedConstraints& wan
                     {
                         // If we've discovered a new simple wanted, then we need to run simplification again.
                         update = true;
-                        wanteds.simple.push_back({var,constraint});
+                        new_wanteds.push_back({var,constraint});
                     }
                 }
                 implic->wanteds.simple.clear();
@@ -825,6 +826,8 @@ Core::Decls typechecker_state::entails(const LIE& givens, WantedConstraints& wan
             if (not implic->wanteds.empty())
                 wanteds.implications.push_back( implic );
         }
+
+        wanteds.simple += new_wanteds;
     } while(update);
 
     // This should implement |->[solv] from Figure 14 of the OutsideIn(X) paper:
