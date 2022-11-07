@@ -119,9 +119,7 @@ struct typechecker_state: FreshVarSource
     Hs::TypeVar fresh_rigid_type_var(const Hs::Kind& k);
 
     //------- Functions handling the LIE ---------
-    typechecker_state copy_clear_wanteds() const;
-
-    typechecker_state copy_inc_level_clear_wanteds() const;
+    typechecker_state copy_clear_wanteds(bool bump_level = false) const;
 
     void promote_mtv(const Hs::MetaTypeVar& mtv);
     bool maybe_promote_mtv(const Hs::MetaTypeVar& mtv);
@@ -448,7 +446,7 @@ typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_funct
     auto [wrap, tvs, givens, rho_type] = skolemize(polytype, true);
 
     // 2. typecheck the rhs at level+1
-    auto tcs2 = copy_inc_level_clear_wanteds();
+    auto tcs2 = copy_clear_wanteds(true);
     auto result = nested_function(rho_type, tcs2);
     auto wanteds = tcs2.current_wanteds();
 

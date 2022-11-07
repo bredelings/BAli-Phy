@@ -506,7 +506,7 @@ typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signa
     }
 
     // 1. Type check the decls group with monomorphic types for vars w/o signatures.
-    auto tcs2 = copy_inc_level_clear_wanteds();
+    auto tcs2 = copy_clear_wanteds(true);
     auto [mono_ids, mono_binder_env] = tcs2.tc_decls_group_mono(signatures, decls);
     auto wanteds = tcs2.current_wanteds();
 

@@ -571,18 +571,12 @@ Hs::Type typechecker_state::check_constraint(const Hs::Type& type) const
 
 }
 
-typechecker_state typechecker_state::copy_clear_wanteds() const
+typechecker_state typechecker_state::copy_clear_wanteds(bool bump_level) const
 {
     auto tc2 = *this;
     tc2.current_wanteds() = {};
-    return tc2;
-}
-
-typechecker_state typechecker_state::copy_inc_level_clear_wanteds() const
-{
-    auto tc2 = *this;
-    tc2.current_wanteds() = {};
-    tc2.level++;
+    if (bump_level)
+        tc2.level++;
     return tc2;
 }
 
@@ -1068,7 +1062,7 @@ std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, std::shared_p
 typechecker_state::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::Type>& nested_action)
 {
     // 1. Bump the level
-    auto tcs2 = copy_inc_level_clear_wanteds();
+    auto tcs2 = copy_clear_wanteds(true);
 
     // 2. Skolemize the type at level+1
     auto [wrap, tvs, givens, rho_type] = tcs2.skolemize(polytype, true);
