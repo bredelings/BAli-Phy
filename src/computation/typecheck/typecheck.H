@@ -62,11 +62,11 @@ struct global_tc_state
 
 struct typechecker_state;
 
-template <typename T>
-using tc_action = std::function<void(T,typechecker_state&)>;
+template <typename... Args>
+using tc_action = std::function<void(Args...,typechecker_state&)>;
 
-template <typename R, typename T>
-using tc_function = std::function<R (T,typechecker_state&)>;
+template <typename R, typename... Args>
+using tc_function = std::function<R (Args...,typechecker_state&)>;
 
 struct typechecker_state: FreshVarSource
 {
