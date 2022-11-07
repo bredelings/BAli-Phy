@@ -216,10 +216,10 @@ struct typechecker_state: FreshVarSource
 
     std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
 
-    std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, std::shared_ptr<const Core::Decls>> skolemize_and(const Hs::Type& t, const tc_action<Hs::Type>& nested_action);
+    std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type> skolemize_and(const Hs::Type& t, const tc_action<Hs::Type>& nested_action);
 
     template <typename R>
-    std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, std::shared_ptr<const Core::Decls>, R> skolemize_and_result(const Hs::Type& t, const tc_function<R, Hs::Type>& nested_action);
+    std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, R> skolemize_and_result(const Hs::Type& t, const tc_function<R, Hs::Type>& nested_action);
 
     void tcRhoStmts(int i, std::vector<Hs::Qual>& stmts, const Expected& exp_type);
 
@@ -439,7 +439,7 @@ int getArity(const Hs::Matches& m);
 int getArity(const Hs::MRule& m);
 
 template <typename R>
-std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, std::shared_ptr<const Core::Decls>, R>
+std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, R>
 typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_function<R, Hs::Type>& nested_function)
 {
     // 1. Skolemize the type at level
@@ -454,7 +454,7 @@ typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_funct
     auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls);
     current_wanteds().implications.push_back( imp );
 
-    return {wrap, tvs, givens, rho_type, ev_decls, result};
+    return {wrap * Core::WrapLet(ev_decls), tvs, givens, rho_type, result};
 }
 
 

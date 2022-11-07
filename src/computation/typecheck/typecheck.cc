@@ -822,7 +822,7 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
 Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma_type)
 {
     // 1. skolemize the type
-    auto [wrap_gen, tvs, givens, rho_type, ev_decls] =
+    auto [wrap_gen, tvs, givens, rho_type] =
         skolemize_and(sigma_type,
                       [&](const Hs::Type& rho_type, auto& tcs2) {
                           tcs2.tcRho(E, Check(rho_type));
@@ -830,7 +830,7 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
             );
 
     // 2. modify E, which is of type rho_type, to be of type sigma_type
-    return wrap_gen * Core::WrapLet(ev_decls);
+    return wrap_gen;
 }
 
 // The idea is that we need an e2, but we have a t1.
@@ -877,7 +877,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
       However, perhaps we should add Eq a to the environment?
     */
 
-    auto [wrap_gen, tvs2, givens, type2, decls, wrap_apply]
+    auto [wrap_gen, tvs2, givens, type2, wrap_apply]
         = skolemize_and_result<Core::wrapper>
         (
             t2,
@@ -890,7 +890,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
         );
 
     // For example, \darg1 -> \let darg2 = compute darg1 in function darg1 darg2
-    return wrap_gen * Core::WrapLet(decls) * wrap_apply;
+    return wrap_gen * wrap_apply;
 }
 
 std::tuple<Core::wrapper, Hs::Type>
@@ -1058,7 +1058,7 @@ tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skol
         return {Core::WrapId, {}, {}, polytype};
 }
 
-std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, std::shared_ptr<const Core::Decls>>
+std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type>
 typechecker_state::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::Type>& nested_action)
 {
     // 1. Bump the level
@@ -1080,7 +1080,7 @@ typechecker_state::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::T
     auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls);
     current_wanteds().implications.push_back( imp );
 
-    return {wrap, tvs, givens, rho_type, ev_decls};
+    return {wrap * Core::WrapLet(ev_decls), tvs, givens, rho_type};
 }
 
 LIE typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)

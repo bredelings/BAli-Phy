@@ -38,7 +38,7 @@ Core::wrapper typechecker_state::tcMatchesFunCheck(std::vector<Expected>& arg_ty
 
     if (not is_rho_type(type))
     {
-        auto [wrap_gen, tcs, givens, rho_type, decls, match_wrapper] =
+        auto [wrap_gen, tcs, givens, rho_type, match_wrapper] =
             skolemize_and_result<Core::wrapper>
             (
                 type,

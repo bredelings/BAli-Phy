@@ -249,11 +249,12 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         // 1. skolemize the type -> (tvs, givens, rho-type)
         auto polytype = gve.at(name);
-        auto [wrap_gen, tvs, givens, rho_type, ev_decls] =
+        auto [wrap_gen, tvs, givens, rho_type] =
             skolemize_and(polytype,
                           [&](const Hs::Type& rho_type, auto& tcs2) {
-                              tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type), [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
-                                  tc.tcMatches(FD.matches, arg_types, result_type);};});
+                              tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type),
+                                                 [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
+                                                     tc.tcMatches(FD.matches, arg_types, result_type);};});
                           }
                 );
 
@@ -262,11 +263,9 @@ typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
         Hs::Type monotype = rho_type;
 
-        auto dict_vars = vars_from_lie( givens );
+        Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, wrap_gen);
 
-        Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, Core::WrapId);
-
-        auto decl = mkGenBind( tvs, dict_vars, ev_decls, Hs::Decls({FD}), {{name, bind_info}} );
+        auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls>(), Hs::Decls({FD}), {{name, bind_info}} );
 
         return {decl, name, polytype};
     }
