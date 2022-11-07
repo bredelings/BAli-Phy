@@ -5,28 +5,28 @@
 #include <utility>
 #include "util/assert.hh"
 
-template <typename T>
 class mapping
 {
-    std::vector<std::pair<int,T>> delta_;
+    std::vector<std::pair<int,int>> delta_;
 
 public:
-    mapping<T>& operator=(mapping<T>&) = default;
+    mapping& operator=(mapping&) = default;
 
-    mapping<T>& operator=(mapping<T>&& vm) noexcept
+    mapping& operator=(mapping&& vm) noexcept
 	{
 	    delta_ = std::move(vm.delta_);
 	    return *this;
 	}
 
-    void add_value(int r, T v)
+    void add_value(int r, int v)
     {
         // For the force_count program, we need 0-values.
 	// assert(v);
 
 	delta_.emplace_back(r,v);
     }
-    T erase_value_at(int index)
+
+    int erase_value_at(int index)
     {
 	auto back = delta_.back();
 	delta_.pop_back();
@@ -42,21 +42,23 @@ public:
     void resize(int s) { delta_.reserve(s);}
     bool empty() const {return delta_.empty();}
 
-    const std::vector<std::pair<int,T>>& delta() const {return delta_;}
-    std::vector<std::pair<int,T>>& delta()       {return delta_;}
+    const std::vector<std::pair<int,int>>& delta() const {return delta_;}
+          std::vector<std::pair<int,int>>& delta()       {return delta_;}
   
+    // This is for debugging
+    std::vector<int> find_values(int r0) const;
+
     mapping() {}
     mapping(int s) {resize(s);}
-    mapping(const mapping<T>&) = default;
-    mapping(mapping<T>&& vm) noexcept
+    mapping(const mapping&) = default;
+    mapping(mapping&& vm) noexcept
 	:delta_(std::move(vm.delta_))
 	{ }
 };
 
 // Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
 // where (m2,v2) is at the root and (m1,v1) is relative.
-template <typename T>
-void pivot_mapping(std::vector<T>& prog1, mapping<T>& vm2)
+inline void pivot_mapping(std::vector<int>& prog1, mapping& vm2)
 {
     for(int i=0;i<vm2.delta().size();i++)
     {

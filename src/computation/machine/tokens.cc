@@ -203,8 +203,7 @@ void reg_heap::capture_parent_token(int t2)
     tokens[t2].parent = parent;
 }
 
-template <typename T>
-void load_map(const mapping<T>& vm, vector<bitmask_8>& prog_temp)
+void load_map(const mapping& vm, vector<bitmask_8>& prog_temp)
 {
     for(auto [r,_]: vm.delta())
     {
@@ -213,8 +212,7 @@ void load_map(const mapping<T>& vm, vector<bitmask_8>& prog_temp)
     }
 }
 
-template<typename T>
-void unload_map(const mapping<T>& vm, vector<bitmask_8>& prog_temp)
+void unload_map(const mapping& vm, vector<bitmask_8>& prog_temp)
 {
     for(auto [r,_]: vm.delta())
     {
@@ -223,8 +221,7 @@ void unload_map(const mapping<T>& vm, vector<bitmask_8>& prog_temp)
     }
 }
 
-template <typename T>
-void merge_split_mapping_(mapping<T>& vm1, mapping<T>& vm2, vector<bitmask_8>& prog_temp)
+void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<bitmask_8>& prog_temp)
 {
     for(int i=0;i<vm1.delta().size();)
     {
@@ -245,6 +242,8 @@ void merge_split_mapping_(mapping<T>& vm1, mapping<T>& vm2, vector<bitmask_8>& p
 //   It is only ever used to remove knuckle tokens (see tokens.cc).
 // Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
+
+// Knuckle tokens is a list of tokens going toward the root.
 void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
 {
     if (knuckle_tokens.empty()) return;

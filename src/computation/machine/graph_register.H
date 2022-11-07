@@ -445,9 +445,9 @@ public:
         const auto& delta_result() const { return vm_result.delta(); }
         const auto& delta_step() const {return vm_step.delta(); }
 
-        mapping<int> vm_result;
-        mapping<int> vm_step;
-        mapping<int> vm_force_count;
+        mapping vm_result;
+        mapping vm_step;
+        mapping vm_force_count;
 
         boost::container::small_vector< int, 2> prev_prog_active_refs;
         boost::container::small_vector< int, 2> prev_prog_inactive_refs;
