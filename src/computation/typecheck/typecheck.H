@@ -462,7 +462,8 @@ typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_funct
 
 
     // 2. Perform the action, maybe creating an implication.
-    auto [ev_decls, result] = maybe_implication_result<R>(tvs, givens, [&](auto& tc) -> R {return nested_function(rho_type, tc);});
+    // c++20 should allow us to capture rho-type, but clang is broken until probably clang-16.
+    auto [ev_decls, result] = maybe_implication_result<R>(tvs, givens, [&,&rho_type=rho_type](auto& tc) -> R {return nested_function(rho_type, tc);});
 
     // 3. Combine the wrappers
     return {wrap * Core::WrapLet(ev_decls), tvs, givens, rho_type, result};
