@@ -108,7 +108,7 @@ jobs:
           stamp=$(gdate '+%s')
         fi
         echo "${stamp}"
-        echo "::set-output name=timestamp::${stamp}"
+        echo "timestamp=${stamp}" >> $GITHUB_OUTPUT
 
     - name: ccache cache files
 #      uses: actions/cache@v2
@@ -152,7 +152,7 @@ jobs:
     - name: Get version
       id: get_version
       run: |
-        echo ::set-output name=version::$(echo $GITHUB_REF | cut -d / -f 3)
+        echo "version=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
 
     - name: Copy shared libs (Linux)
       if: matrix.arch == 'linux64'
@@ -209,7 +209,7 @@ jobs:
         TAR=${PACKAGE}-${{ matrix.arch }}.tar.gz
         cp -a $OUTPUT $PACKAGE
         tar -zcf $TAR ${PACKAGE}
-        echo ::set-output name=archive::${TAR}
+        echo "archive=${TAR}" >> $GITHUB_OUTPUT
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
