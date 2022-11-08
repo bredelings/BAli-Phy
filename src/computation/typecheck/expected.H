@@ -19,10 +19,13 @@ struct Check
 
 class Infer
 {
-    int level;
+    const int level_;
     std::shared_ptr<Hs::Type> type_ref;
 
 public:
+
+    int level() const;
+
     void set_type(const Hs::Type& t)
     {
         assert(type_ref->empty());
@@ -47,26 +50,29 @@ class Expected
 {
     mutable std::variant<Infer, Check> value;
 public:
-    bool check() const {return std::holds_alternative<Check>(value);}
-    bool infer() const {return std::holds_alternative<Infer>(value);}
+
+    Infer* infer() const
+    {
+        if (std::holds_alternative<Infer>(value))
+            return &std::get<Infer>(value);
+        else
+            return nullptr;
+    }
+
+    const Check* check() const
+    {
+        if (std::holds_alternative<Check>(value))
+            return &std::get<Check>(value);
+        else
+            return nullptr;
+    }
 
     Hs::Type check_type() const
     {
         assert(check());
-        return std::get<Check>(value).type;
+        return check()->type;
     }
 
-    std::optional<Hs::Type> inferred_type() const
-    {
-        assert(infer());
-        return std::get<Infer>(value).type();
-    }
-
-    void infer_type(const Hs::Type& t)  const
-    {
-        assert(infer());
-        std::get<Infer>(value).set_type(t);
-    }
 
     std::optional<Hs::Type> read_type_maybe() const;
 

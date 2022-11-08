@@ -3,6 +3,25 @@
 
 #include "typecheck.H"
 
+/*
+tcSubType actual expected = addSubTypeCtxt actual expected $ tcSubTypeNC actual expected
+
+tcSubTypeNC actual expected = if expected.check then tc_sub_type actual expected.read_type
+                              if expected.infer then (wrap, rho) = instantiate actual
+                                            fillInferResult rho expected.infer
+
+tc_sub_type actual expected = tc_sub_type_shallow actual expected
+
+tc_sub_type_shallow actual expected = if definitely_poly expected and definitely_mono_shallow actual then
+                                         unify actual expected
+                                      else
+                                         (sk_rho,sk_wrap) = skolemize expected $ \sk_rho ->
+                                                      (i_rho,i_wrap) <- instantiate actual
+                                                      unify(i_rho, sk_rho)
+                                                      return inner_wrap
+                                         return (sk_wrap * inner_wrap)
+*/
+
 template <typename A>
 Core::wrapper typechecker_state::tcMatchesFunInfer(std::vector<Expected>& arg_types, int arity, const Expected& extra_fun_type, const A& a)
 {
@@ -20,9 +39,9 @@ Core::wrapper typechecker_state::tcMatchesFunInfer(std::vector<Expected>& arg_ty
 
     auto unif_fun_type = Hs::function_type( read_types(extra_arg_types), result_type.read_type());
 
-    if (extra_fun_type.infer() and not extra_fun_type.inferred_type())
+    if (auto I = extra_fun_type.infer(); I and not I->type())
     {
-        extra_fun_type.infer_type(unif_fun_type);
+        fillInfer(unif_fun_type, *I);
         return Core::WrapId;
     }
     else

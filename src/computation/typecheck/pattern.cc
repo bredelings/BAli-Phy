@@ -12,9 +12,9 @@ using std::optional;
 // Ensure that we can convert exp_type to pat_type, and get a wrapper proving it.
 Core::wrapper typechecker_state::instPatSigma(const Hs::SigmaType& pat_type, const Expected& exp_type)
 {
-    if (exp_type.infer())
+    if (auto I = exp_type.infer())
     {
-        exp_type.infer_type( pat_type );
+        fillInfer( pat_type, *I );
         return Core::WrapId;
     }
     else
@@ -42,13 +42,13 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Var& V, const Expected&
     {
         // We can only have signatures for pattern binders in a let-context, not a lambda context.
         auto sig_type = sigs.at(name);
-        if (exp_type.infer())
+        if (auto I = exp_type.infer())
         {
             auto [tvs, wanteds, monotype] = instantiate(sig_type);
             if (wanteds.size())
                 throw myexception()<<"variable '"<<name<<"' cannot have constrained type '"<<sig_type<<"' due to monomorphism restriction";
             type = monotype;
-            exp_type.infer_type( type );
+            fillInfer(type, *I);
         }
         else
         {
@@ -58,8 +58,8 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Var& V, const Expected&
     }
     else
     {
-        if (exp_type.infer())
-            type = inferResultToType(exp_type);
+        if (auto I = exp_type.infer())
+            type = inferResultToType(*I);
         else
             type = exp_type.check_type();
     }

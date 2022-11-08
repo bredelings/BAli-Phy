@@ -356,28 +356,24 @@ global_tc_state::global_tc_state(const Module& m)
 
 Hs::Type typechecker_state::expTypeToType(const Expected& E)
 {
-    if (E.infer())
-        return inferResultToType(E);
+    if (auto I = E.infer())
+        return inferResultToType(*I);
     else
         return E.check_type();
 }
 
-Hs::Type typechecker_state::inferResultToType(const Expected& E)
+Hs::Type typechecker_state::inferResultToType(Infer& I)
 {
-    if (not E.infer())
-        throw myexception()<<"inferResultToType: expected Infer, but got "<<E.print();
-
-    if (auto T = E.inferred_type())
+    if (auto T = I.type())
     {
-        if (not is_rho_type(*T))
-            throw myexception()<<"inferResultToType: expected monotype, but got Infer("<<T->print()<<")";
+        ensure_monotype(*T);
         return *T;
     }
     else
     {
         // This can now only be a monotype
         auto tv = fresh_meta_type_var( kind_star() );
-        E.infer_type(tv);
+        I.set_type(tv);
         return tv;
     }
 }
@@ -387,10 +383,55 @@ Expected typechecker_state::newInfer()
     return Infer(level);
 }
 
+void typechecker_state::fillInfer(const Hs::Type& type, Infer& I)
+{
+    if (auto result_type = I.type())
+    {
+        if (level != I.level()) ensure_monotype(*result_type);
+
+        unify(type, *result_type);
+    }
+    else
+    {
+        auto promoted_type = promote_type(I.level(), type);
+
+        I.set_type( promoted_type );
+    }
+}
+
+void typechecker_state::ensure_monotype(const Hs::Type& type)
+{
+    if (not is_rho_type(type))
+        throw myexception()<<"ensure_monotype: "<<type<<" is not a rho type!";
+
+    if (true) // a tau type
+        ;
+    else
+    {
+        auto mtv = fresh_meta_type_var("mono", {});  // unknown kind!
+        unify(type, mtv);
+    }
+}
+
+Hs::Type typechecker_state::promote_type(int dest_level, const Hs::Type& type)
+{
+    if (level == dest_level)
+        return type;
+    else
+    {
+        Hs::Type promoted_type = FreshVarSource::fresh_meta_type_var(dest_level, "hole", {}); // unknown kind!
+
+        // This wanted equality isn't "visible"?
+        unify(promoted_type, type);
+
+        return promoted_type;
+    }
+}
+
 void typechecker_state::set_expected_type(const Expected& E, const Hs::Type& type)
 {
-    if (E.infer())
-        E.infer_type(type);
+    if (auto I = E.infer())
+        fillInfer(type, *I);
     else
     {
         try {
@@ -847,7 +888,8 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Expe
         return subsumptionCheck(t1, *t2);
     else
     {
-        e2.infer_type(t1);
+        auto I = e2.infer();
+        fillInfer(t1, *I);
         return Core::WrapId;
     }
 }
@@ -913,10 +955,10 @@ typechecker_state::instantiate_emit(const Hs::Type& polytype)
 Core::wrapper
 typechecker_state::instantiateSigma(const Hs::Type& polytype, const Expected& exp_type)
 {
-    if (exp_type.infer())
+    if (auto I = exp_type.infer())
     {
         auto [wrap, rho_type] = instantiate_emit(polytype);
-        exp_type.infer_type(rho_type);
+        fillInfer(rho_type, *I);
         return wrap;
     }
     else

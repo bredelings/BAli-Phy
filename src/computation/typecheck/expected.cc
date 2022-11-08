@@ -6,10 +6,15 @@ using std::optional;
 
 
 Infer::Infer(int l)
-    : level(l),
+    : level_(l),
       type_ref( std::make_shared<Hs::Type>() )
 { }
 
+
+int Infer::level() const
+{
+    return level_;
+}
 
 string Check::print() const
 {
@@ -31,10 +36,10 @@ string Expected::print() const
 
 optional<Hs::Type> Expected::read_type_maybe() const
 {
-    if (check())
-        return check_type();
+    if (auto C = check())
+        return C->type;
     else
-        return inferred_type();
+        return infer()->type();
 }
 
 

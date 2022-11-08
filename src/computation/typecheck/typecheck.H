@@ -95,11 +95,17 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type expTypeToType(const Expected& E);
 
-    Hs::Type inferResultToType(const Expected& E);
+    Hs::Type inferResultToType(Infer& I);
 
     Expected newInfer();
 
+    void fillInfer(const Hs::Type& type, Infer& I);
+
+    Hs::Type promote_type(int dest_level, const Hs::Type& type);
+
     void set_expected_type(const Expected& E, const Hs::Type& type);
+
+    void ensure_monotype(const Hs::Type& type);
 
     //------- local state ------------//
 
