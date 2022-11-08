@@ -443,10 +443,10 @@ std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, R>
 typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_function<R, Hs::Type>& nested_function)
 {
     // 1. Skolemize the type at level
-    auto [wrap, tvs, givens, rho_type] = skolemize(polytype, true);
+    auto tcs2 = copy_clear_wanteds(true);
+    auto [wrap, tvs, givens, rho_type] = tcs2.skolemize(polytype, true);
 
     // 2. typecheck the rhs at level+1
-    auto tcs2 = copy_clear_wanteds(true);
     auto result = nested_function(rho_type, tcs2);
     auto wanteds = tcs2.current_wanteds();
 
