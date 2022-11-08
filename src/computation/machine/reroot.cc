@@ -795,7 +795,7 @@ void reg_heap::check_unshare_regs(int t)
 {
     assert(t >= 0);
 
-#if DEBUG_MACHINE >= 1
+#ifdef DEBUG_MACHINE
     const auto& delta_result = tokens[t].vm_result.delta();
     const auto& delta_step = tokens[t].vm_step.delta();
 
