@@ -223,6 +223,11 @@ struct typechecker_state: FreshVarSource
 
     void tcRhoStmts(int i, std::vector<Hs::Qual>& stmts, const Expected& exp_type);
 
+    std::shared_ptr<const Core::Decls> maybe_implication(const std::vector<Hs::TypeVar>& tvs, const LIE& givens, const tc_action<>& nested_action);
+
+    template <typename R>
+    std::tuple<std::shared_ptr<const Core::Decls>,R> maybe_implication_result(const std::vector<Hs::TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_action);
+
     // Figure 22.
     void infer_quals_type(std::vector<Hs::Qual>& quals);
 
@@ -443,20 +448,42 @@ std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, R>
 typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_function<R, Hs::Type>& nested_function)
 {
     // 1. Skolemize the type at level
-    auto tcs2 = copy_clear_wanteds(true);
-    auto [wrap, tvs, givens, rho_type] = tcs2.skolemize(polytype, true);
+    level++;
+    auto [wrap, tvs, givens, rho_type] = skolemize(polytype, true);
+    level--;
 
-    // 2. typecheck the rhs at level+1
-    auto result = nested_function(rho_type, tcs2);
-    auto wanteds = tcs2.current_wanteds();
 
-    auto ev_decls = std::make_shared<Core::Decls>();
-    auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls);
-    current_wanteds().implications.push_back( imp );
+    // 2. Perform the action, maybe creating an implication.
+    auto [ev_decls, result] = maybe_implication_result<R>(tvs, givens, [&](auto& tc) -> R {return nested_function(rho_type, tc);});
 
+    // 3. Combine the wrappers
     return {wrap * Core::WrapLet(ev_decls), tvs, givens, rho_type, result};
 }
 
+template <typename R>
+std::tuple<std::shared_ptr<const Core::Decls>, R>
+typechecker_state::maybe_implication_result(const std::vector<Hs::TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_function)
+{
+    auto ev_decls = std::make_shared<Core::Decls>();
+
+    bool need_implication = not (tvs.empty() and givens.empty());
+
+    auto tcs2 = copy_clear_wanteds(need_implication);
+
+    auto result = nested_function(tcs2);
+
+    auto wanteds = tcs2.current_wanteds();
+
+    if (need_implication)
+    {
+        auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls);
+        current_wanteds().implications.push_back( imp );
+    }
+    else
+        current_wanteds() += wanteds;
+
+    return {ev_decls, result};
+}
 
 #endif
 

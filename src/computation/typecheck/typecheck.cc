@@ -1061,26 +1061,40 @@ tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skol
 std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type>
 typechecker_state::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::Type>& nested_action)
 {
-    // 1. Bump the level
-    auto tcs2 = copy_clear_wanteds(true);
+    // 1. Skolemize the type at level+1
+    level++;
+    auto [wrap, tvs, givens, rho_type] = skolemize(polytype, true);
+    level--;
 
-    // 2. Skolemize the type at level+1
-    auto [wrap, tvs, givens, rho_type] = tcs2.skolemize(polytype, true);
+    // 2. Perform the action, maybe creating an implication.
+    auto ev_decls = maybe_implication(tvs, givens, [&](auto& tc) {nested_action(rho_type, tc);});
 
-    // We always need to bump the level for the skolemized type variables.
-    // However, we only need to run the nested action at the higher level if there are
-    // (i) tvs or (ii) givens.
-    // That is what GHC's checkConstraints is for -- see checking of ConPattern in pattern.cc
+    // 3. Combine the wrappers
+    return {wrap * Core::WrapLet(ev_decls), tvs, givens, rho_type};
+}
 
-    // 3. typecheck the rhs at level+1
-    nested_action(rho_type, tcs2);
+shared_ptr<const Core::Decls>
+typechecker_state::maybe_implication(const std::vector<Hs::TypeVar>& tvs, const LIE& givens, const tc_action<>& nested_action)
+{
+    auto ev_decls = std::make_shared<Core::Decls>();
+
+    bool need_implication = not (tvs.empty() and givens.empty());
+
+    auto tcs2 = copy_clear_wanteds(need_implication);
+
+    nested_action(tcs2);
+
     auto wanteds = tcs2.current_wanteds();
 
-    auto ev_decls = std::make_shared<Core::Decls>();
-    auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls);
-    current_wanteds().implications.push_back( imp );
+    if (need_implication)
+    {
+        auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls);
+        current_wanteds().implications.push_back( imp );
+    }
+    else
+        current_wanteds() += wanteds;
 
-    return {wrap * Core::WrapLet(ev_decls), tvs, givens, rho_type};
+    return ev_decls;
 }
 
 LIE typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
