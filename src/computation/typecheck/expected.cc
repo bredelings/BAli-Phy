@@ -5,8 +5,9 @@ using std::string;
 using std::optional;
 
 
-Infer::Infer()
-    : type_ref( std::make_shared<Hs::Type>() )
+Infer::Infer(int l)
+    : level(l),
+      type_ref( std::make_shared<Hs::Type>() )
 { }
 
 

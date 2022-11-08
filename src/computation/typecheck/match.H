@@ -10,11 +10,11 @@ Core::wrapper typechecker_state::tcMatchesFunInfer(std::vector<Expected>& arg_ty
     // pad out with FlexiTyVars ... what's that?
     while(arg_types.size() < arity)
     {
-        auto arg_type = Infer();
+        auto arg_type = newInfer();
         arg_types.push_back( arg_type );
         extra_arg_types.push_back( arg_type );
     }
-    Expected result_type = Infer();
+    Expected result_type = newInfer();
 
     a(arg_types, result_type)(*this);
 
@@ -32,10 +32,6 @@ Core::wrapper typechecker_state::tcMatchesFunInfer(std::vector<Expected>& arg_ty
 template <typename A>
 Core::wrapper typechecker_state::tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Hs::Type type, const A& a)
 {
-    // There should also be a wrapper for skolemize -- gen_wrapper.
-    // It will handle cases like forall a. C1 => forall b. C2 => E.
-    // Until we add type arguments, it should be Core::wrapper_id though.
-
     if (not is_rho_type(type))
     {
         auto [wrap_gen, tcs, givens, rho_type, match_wrapper] =

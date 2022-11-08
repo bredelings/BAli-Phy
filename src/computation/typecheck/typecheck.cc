@@ -382,6 +382,11 @@ Hs::Type typechecker_state::inferResultToType(const Expected& E)
     }
 }
 
+Expected typechecker_state::newInfer()
+{
+    return Infer(level);
+}
+
 void typechecker_state::set_expected_type(const Expected& E, const Hs::Type& type)
 {
     if (E.infer())

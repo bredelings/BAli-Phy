@@ -97,6 +97,8 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type inferResultToType(const Expected& E);
 
+    Expected newInfer();
+
     void set_expected_type(const Expected& E, const Hs::Type& type);
 
     //------- local state ------------//
@@ -271,7 +273,7 @@ struct typechecker_state: FreshVarSource
     template <typename T>
     Hs::Type inferRho(T& t)
     {
-        Expected result_type = Infer();
+        Expected result_type = newInfer();
         tcRho(t, result_type);
         return result_type.read_type();
     }

@@ -79,7 +79,7 @@ void typechecker_state::checkPat(local_value_env& penv, Hs::Var& v, const Hs::Si
 
 Hs::Type typechecker_state::inferPat(local_value_env& penv, Hs::Var& V, const map<string, Hs::Type>& sigs)
 {
-    Expected exp_type = Infer();
+    Expected exp_type = newInfer();
     tcPat(penv, V, exp_type, sigs, [](local_value_env&, typechecker_state&){});
     return exp_type.read_type();
 }
@@ -306,7 +306,7 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
 
 Hs::Type typechecker_state::inferPat(local_value_env& penv, Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
 {
-    Expected exp_type = Infer();
+    Expected exp_type = newInfer();
     tcPat(penv, pat, exp_type, sigs, [](local_value_env&, typechecker_state&) {});
     return exp_type.read_type();
 }

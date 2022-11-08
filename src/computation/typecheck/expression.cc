@@ -75,7 +75,7 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i
 
     int arg_index = int(App.args.size())-1-i;
 
-    Expected fun_type = Infer();
+    Expected fun_type = newInfer();
     if (arg_index > 0)
         tcRho(App, fun_type, i + 1);
     else

@@ -19,6 +19,7 @@ struct Check
 
 class Infer
 {
+    int level;
     std::shared_ptr<Hs::Type> type_ref;
 
 public:
@@ -39,7 +40,7 @@ public:
 
     std::string print() const;
 
-    Infer();
+    Infer(int l);
 };
 
 class Expected
