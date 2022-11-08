@@ -2,4 +2,4 @@ bali-phy: Error! In module 'Main':
 In recursive group:
     Main.apply
 
-skolem-escape in t_1{1} ~ Main.T a_3{1} -> b_4{{2}}
+skolem-escape in monotype_5{1} ~ b_4{{2}}
