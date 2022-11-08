@@ -80,7 +80,7 @@ struct ConPattern: public Object
     std::vector<Hs::TypeVar> universal_tyvars;        // What do we do with this?
     std::vector<Hs::TypeVar> existential_tyvars;      // What do we do with this?
     std::vector<std::pair<Core::Var, Type>> givens;
-    std::shared_ptr<Core::Decls> ev_binds;
+    std::shared_ptr<const Core::Decls> ev_binds;
 
     // get given variables for dictionaries only (nothing for type equalities)
     std::vector<Core::Var> dict_args() const;

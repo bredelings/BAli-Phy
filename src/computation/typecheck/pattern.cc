@@ -153,20 +153,10 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
         Con.universal_tyvars = info.uni_tvs;
         Con.existential_tyvars = ex_tvs2;
         Con.givens = constraints_to_lie(constraints);
-
-        if (Con.givens.empty() and Con.existential_tyvars.empty())
-        {
-            auto tc2 = copy_clear_wanteds(false);
-            tc2.tcPats(penv, Con.args, check_types(field_types), sigs, a);
-            current_wanteds() += tc2.current_wanteds();
-        }
-        else
-        {
-            auto tc2 = copy_clear_wanteds(true);
-            tc2.tcPats(penv, Con.args, check_types(field_types), sigs, a);
-            Con.ev_binds = std::make_shared<Core::Decls>();
-            current_wanteds().implications.push_back( std::make_shared<Implication>(tc2.level, Con.existential_tyvars, Con.givens, tc2.current_wanteds(), Con.ev_binds) );
-        }
+        Con.ev_binds = maybe_implication(ex_tvs2, Con.givens,
+                                         [&](auto& tc) {
+                                             tc.tcPats(penv, Con.args, check_types(field_types), sigs, a);
+                                         });
 
         unify( expTypeToType(exp_type), result_type );
 
