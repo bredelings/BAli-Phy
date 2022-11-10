@@ -15,6 +15,7 @@ jobs:
         name: [ubuntu-gcc-9,
                ubuntu-gcc-11-sanitize,
                ubuntu-gcc-11-debugoptimized,
+               ubuntu-gcc-11-DEBUG_MACHINE,
                ubuntu-gcc-11,
                ubuntu-gcc-12,
                ubuntu-clang-11,
@@ -43,6 +44,14 @@ jobs:
             compiler: gcc
             version: "11"
             buildtype: "debugoptimized"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-11-DEBUG_MACHINE
+            os: ubuntu-latest
+            compiler: gcc
+            version: "11"
+            buildtype: "debugoptimized"
+            cxxflags: "-DDEBUG_MACHINE=1"
             arch: "linux64"
 
           - name: ubuntu-gcc-11
@@ -163,6 +172,10 @@ jobs:
           export CXXFLAGS="-mmacosx-version-min=10.15"
           export LDFLAGS="-mmacosx-version-min=10.15"
         fi
+        CPPARGS="-g"
+        if [ "${{ matrix.cxxflags }}" != "" ] ; then
+          CPPARGS="$CPPARGS ${{ matrix.cxxflags }}"
+        fi
         if [ "${{ matrix.arch }}" = "win64" ]; then
           ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
@@ -170,8 +183,8 @@ jobs:
           # Address sanitizer can't find its dylibs on OS X?
           ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
-        echo meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args='-g' ${ARGS}
-        meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args='-g' ${ARGS}
+        echo meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
+        meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
 
     - name: Build
       run: |
