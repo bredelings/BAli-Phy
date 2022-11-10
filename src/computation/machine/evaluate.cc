@@ -859,7 +859,9 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
                     int t = tokens[root_token].children[0];
                     set_call(s, call);
 
-                    tokens[t].vm_step.add_value(r, prog_steps[r]);
+                    int s_bumped = prog_steps[r];
+                    tokens[t].vm_step.add_value(r, s_bumped);
+                    if (s_bumped > 0) note_step_not_in_root(s_bumped);
                     prog_steps[r] = s;
 
                     tokens[t].vm_result.add_value(r, prog_results[r]);
@@ -1048,7 +1050,9 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         int t = tokens[root_token].children[0];
         set_call(s, call);
 
-        tokens[t].vm_step.add_value(r, prog_steps[r]);
+        int s_bumped = prog_steps[r];
+        tokens[t].vm_step.add_value(r, s_bumped);
+        if (s_bumped > 0) note_step_not_in_root(s_bumped);
         prog_steps[r] = s;
 
         if (prog_unshare[r].test(unshare_result_bit) and regs_maybe_different_value(prog_results[r], result))
