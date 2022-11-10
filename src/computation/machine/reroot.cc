@@ -672,6 +672,18 @@ void reg_heap::remove_zero_count_regs(const std::vector<int>& zero_count_regs_in
 
 void reg_heap::unregister_effects_for_bumped_steps()
 {
+    int t2 = tokens[root_token].children[0];
+
+    for(auto [_,s]: tokens[t2].vm_step.delta())
+    {
+        if (s > 0)
+        {
+            assert(not step_is_in_root(s));
+            if (steps[s].has_effect())
+                assert(not steps[s].has_pending_effect_registration());
+        }
+    }
+
     do_pending_effect_unregistrations();
 }
 
