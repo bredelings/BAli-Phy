@@ -412,6 +412,11 @@ void context_ref::set_reg_value(int P, closure&& C)
     memory()->set_reg_value_in_context(P, std::move(C), context_index);
 }
 
+void context_ref::exchange_regs(int r1, int r2)
+{
+    memory()->exchange_regs_in_context(r1, r2, context_index);
+}
+
 
 std::set<int> context_ref::tweak_and_find_affected_sampling_events(const std::function<void(context_ref&)>& tweak)
 {
