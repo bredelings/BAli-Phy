@@ -146,12 +146,13 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
 
 extern "C" closure builtin_function_modifiable(OperationArgs& Args)
 {
-    int r_value = Args.reg_for_slot(0);
+    int f_reg = Args.reg_for_slot(0);
+    int x_reg = Args.reg_for_slot(1);
 
     // Allocate a reg, and fill it with a modifiable of the correct index
-    expression_ref mod_exp( modifiable(),{index_var(0)} );
+    expression_ref mod_exp( modifiable(),{index_var(1), index_var(0)} );
 
-    return {mod_exp, {r_value}};
+    return {mod_exp, {f_reg, x_reg}};
 }
 
 
