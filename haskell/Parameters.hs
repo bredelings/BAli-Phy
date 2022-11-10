@@ -9,7 +9,8 @@ import Effect             -- for Effect
 
 foreign import bpcall "Modifiables:maybe_modifiable_structure" maybe_modifiable_structure :: a -> a
 
-foreign import bpcall "Modifiables:modifiable" modifiable :: a -> a
+foreign import bpcall "Modifiables:modifiable" builtin_modifiable :: (b->a) -> b -> a
+modifiable x = builtin_modifiable id x
 
 foreign import bpcall "Modifiables:register_prior" builtin_register_prior :: Effect -> LogDouble -> Effect
 register_prior event prob = IOAction (\s -> (s+1, builtin_register_prior event prob))
