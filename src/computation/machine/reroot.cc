@@ -735,6 +735,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     increment_counts_from_new_calls();
 
     // 4b. Evaluate unconditionally-executed regs.
+    tokens[t2].flags.set(0);    // mark t2 a root-child for execution
     evaluate_unconditional_regs(unshared_regs);
 
     // 4c. Decrement counts from invalid calls
@@ -743,6 +744,7 @@ expression_ref reg_heap::unshare_regs2(int t)
 
     // 5. Evaluate forced invalid regs.
     evaluate_forced_invalid_regs(unshared_regs);
+    tokens[t2].flags.reset(0);    // unmark t2 a root-child for execution
 
     // 6. Get the program result.
     auto result = lazy_evaluate2(heads[*program_result_head]).exp;
