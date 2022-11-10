@@ -72,35 +72,19 @@ instance Monad TKEffects where
     return x = TKReturn x
     f >>= g  = TKBind f g
 
-{-
-GADT syntax:
-
 data Random a where
-    RandomStructure :: (a -> TKEffects b) -> (forall c. a -> c -> (a,a)) -> Random a -> Random a
-    Observe         :: Distribution b -> b -> Random ()
-    Lazy            :: Random a -> Random a
-    WithTKEffect    :: Random a -> (a -> TKEffects b) -> Random a
-    LiftIO          :: IO a -> Random a
-    RanReturn       :: a -> Random a
-    RanBind         :: Random b -> (b -> Random a) -> Random a
-    RanMFix         :: (a -> Random a) -> Random a
+    RandomStructure :: (a->TKEffects b) -> (a -> (a -> ()) -> (a,a)) -> (Random a) -> Random a
+    Observe :: Distribution b -> b -> Random ()
+    Lazy :: Random a -> Random a
+    WithTKEffect :: Random a -> (a -> TKEffects b) -> Random a
+    PerformTKEffect :: TKEffects a -> Random a
+    LiftIO :: IO a -> Random a
+    RanReturn :: a -> Random a
+    RanBind :: Random b -> (b -> Random a) -> Random a
+    RanMFix :: (a -> Random a) -> Random a
     RanDistribution :: Distribution a -> Random a
-    RanSamplingRate :: Double -> (Random a) -> Random a
-    RanExchange     :: Random b -> Random (Random b)
--}
-
--- This implements the Random monad by transforming it into the IO monad.
-data Random a = forall b.RandomStructure (a->TKEffects b) (a->(a->())->(a,a)) (Random a)
-              | forall b.(a ~ ()) => Observe (Distribution b) b
-              | Lazy (Random a)
-              | forall b.WithTKEffect (Random a) (a -> TKEffects b)
-              | PerformTKEffect (TKEffects a)
-              | LiftIO (IO a)
-              | RanReturn a
-              | forall b. RanBind (Random b) (b -> Random a)
-              | RanMFix (a -> Random a)
-              | RanDistribution (Distribution a)
-              | RanSamplingRate Double (Random a)
+    RanSamplingRate :: Double -> Random a -> Random a
+    RanExchangeable :: Random b -> Random (Random b)
 
 instance Functor Random where
     fmap f r = RanBind r (return . f)
