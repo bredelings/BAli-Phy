@@ -2227,12 +2227,15 @@ void reg_heap::check_used_regs_in_token(int t) const
         // Only  changeable regs can have steps.
         assert(reg_is_changeable(r));
 
-        // Since this step is in a non-root token, any steps of its child regs should not be in more root-ward tokens.
-        // So they certainly should not be in the root token.
-        for(int r2: steps[step].created_regs)
+        if (not root_child)
         {
-            assert(not has_step1(r2));
-            assert(not has_result1(r2));
+            // Since this step is in a non-root token, any steps of its child regs should not be in more root-ward tokens.
+            // So they certainly should not be in the root token.
+            for(int r2: steps[step].created_regs)
+            {
+                assert(not has_step1(r2));
+                assert(not has_result1(r2));
+            }
         }
     }
 
