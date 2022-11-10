@@ -307,6 +307,10 @@ private:
 
     void unregister_effect_at_step(int s);
 
+    void note_step_not_in_root(int s);
+
+    void note_step_in_root(int s);
+
     friend class RegOperationArgs1;
     friend class RegOperationArgs2Changeable;
     friend class RegOperationArgs2Unevaluated;
@@ -875,6 +879,23 @@ inline bool reg_heap::reg_is_forced(int r) const
 {
     assert(reg_is_changeable_or_forcing(r) or reg_is_unevaluated(r));
     return prog_force_counts[r] > 0;
+}
+
+inline void reg_heap::note_step_not_in_root(int s)
+{
+    if (steps[s].has_effect())
+    {
+        if (steps[s].has_pending_effect_registration())
+            unmark_effect_to_register_at_step(s);
+        else
+            mark_effect_to_unregister_at_step(s);
+    }
+}
+
+inline void reg_heap::note_step_in_root(int s)
+{
+    if (steps[s].has_effect())
+        mark_effect_to_register_at_step(s);
 }
 
 #endif
