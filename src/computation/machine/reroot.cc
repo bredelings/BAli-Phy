@@ -678,7 +678,6 @@ void reg_heap::unregister_effects_for_bumped_steps()
     {
         if (s > 0)
         {
-            assert(not step_is_in_root(s));
             if (steps[s].has_effect())
                 assert(not steps[s].has_pending_effect_registration());
         }
