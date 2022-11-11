@@ -267,12 +267,14 @@
 %type <void> cvars1
 %type <void> where_decls
 %type <void> pattern_synonym_sig
+*/
 
-%type <void> decl_cls
-%type <void> decls_cls
-%type <void> declslist_cls
-%type <void> where_cls
+%type <expression_ref> decl_cls
+%type <Hs::Decls> decls_cls
+%type <Located<Hs::Binds>> decllist_cls
+%type <std::optional<Located<Hs::Binds>>> where_cls
 
+/*
 %type <void> decl_inst
 %type <void> decls_inst
 %type <void> decllist_inst
@@ -322,6 +324,8 @@
  */
 %type <std::vector<Hs::TypeVar>> tv_bndrs
 %type <Hs::TypeVar> tv_bndr
+%type <Hs::TypeVar> tv_bndr_no_braces
+
  /*
 %type <void> fds
 %type <void> fds1
@@ -475,7 +479,7 @@
 %type  <int> bars
 */
 
-%expect 134
+%expect 135
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -615,9 +619,10 @@ topdecls_semi: topdecls_semi topdecl semis1 { $$ = $1; $$.push_back($2); }
 
 topdecl: cl_decl                               {$$ = $1;}
 |        ty_decl                               {$$ = $1;}
+|        standalone_kind_sig                   {}
 |        inst_decl                             {$$ = $1;}
-/*|        stand_alone_deriving
-  |        role_annot*/
+/*|        stand_alone_deriving */
+/*|        role_annot */
 |        "default" "(" comma_types0 ")"        {$$ = Hs::DefaultDecl($3); }
 |        "foreign" "import" "bpcall" STRING var "::" sigtypedoc  {$$ = Hs::ForeignDecl($4, $5, $7);}
 /*
@@ -630,14 +635,19 @@ topdecl: cl_decl                               {$$ = $1;}
 /* What is this for? How is this a decl ? */
 |        infixexp_top                          {$$ = $1;}
 
-cl_decl: "class" tycl_hdr /*fds*/ wherebinds   {$$ = make_class_decl($2.first,$2.second,$3);}
+cl_decl: "class" tycl_hdr /*fds*/ where_cls   {$$ = make_class_decl($2.first,$2.second,$3);}
 
 ty_decl: "type" type "=" ctypedoc                                          {$$ = make_type_synonym({@2, $2},{@4, $4});}
 |        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1, $3.first, $3.second,{},$4);}
 /* This is kind of a hack to allow `data X` */
 |        data_or_newtype capi_ctype tycl_hdr opt_kind_sig gadt_constrlist maybe_derivings {$$ = make_data_or_newtype($1, $3.first, $3.second, $4, $5);}
-/* |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family */
+|        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family     {}
 /* |        "data" "family" type opt_datafam_kind_sig */
+
+standalone_kind_sig: "type" sks_vars "::" sigktype
+
+sks_vars: sks_vars "," oqtycon
+|         oqtycon
 
 // inst_type -> sigtype -> ctype --maybe--> context => type
 inst_decl: "instance" overlap_pragma inst_type wherebinds                  {$$ = make_instance_decl({@3,$3},$4);}
@@ -664,7 +674,7 @@ deriv_standalone_strategy: "stock"
 |                          %empty
 */
 
-/* Injective type families 
+/* Injective type families */
 
 opt_injective_info: %empty
 |                   "|" injectivity_cond
@@ -673,8 +683,8 @@ injectivity_cond: tyvarid "->" inj_varids
 
 inj_varids: inj_varids tyvarid
 |           tyvarid
-*/
-/* Closed type families 
+
+/* Closed type families  */
 
 where_type_family: %empty
 |                  "where" ty_fam_inst_eqn_list
@@ -691,9 +701,18 @@ ty_fam_inst_eqns: ty_fam_inst_eqns ";" ty_fam_inst_eqn
 
 ty_fam_inst_eqn: type "=" ctype
 
+/* Associated type family declarations */
 at_decl_cls: "data" opt_family type opt_datafam_kind_sig
+              /* we can't use opt_family or we get shift/reduce conflicts*/
 |            "type" type opt_at_kind_inj_sig
-*/
+|            "type" "family" opt_at_kind_inj_sig
+              /* we can't use opt_family or we get shift/reduce conflicts*/
+|            "type" ty_fam_inst_eqn
+|            "type" "instance" ty_fam_inst_eqn
+
+opt_family: %empty | "family"
+
+opt_instance: %empty | "instance"
 
 data_or_newtype: "data"    {$$=Hs::DataOrNewtype::data;}
 |                "newtype" {$$=Hs::DataOrNewtype::newtype;}
@@ -701,12 +720,16 @@ data_or_newtype: "data"    {$$=Hs::DataOrNewtype::data;}
 opt_kind_sig: %empty       {$$ = {};}
 |             "::" kind    {$$ = $2;}
 
-/*opt_datafam_kind_sig: %empty
+opt_datafam_kind_sig: %empty
 |                     "::" kind
 
- opt_tyfam_kind:sigm: %empty */
+opt_tyfam_kind_sig: %empty
+|                   "::" kind
+|                   "=" tv_bndr
 
-/* opt_tyfam_at_kind_inj_sig: */
+opt_at_kind_inj_sig: %empty
+|                    "::" kind
+|                    "=" tv_bndr_no_braces "|" injectivity_cond
 
 tycl_hdr: context "=>" type  {$$ = {$1,$3};}
 |         type               {$$ = {{},$1};}
@@ -755,6 +778,20 @@ pattern_synonym_sig: "pattern" con_list "::" sigtypedoc
 
 /* ------------- Nested declarations ----------------------------- */
 
+decl_cls:  at_decl_cls  {}
+|          decl         {$$ = $1;}
+
+decls_cls: decls_cls ";" decl_cls          {$$ = $1; $$.push_back($3);}
+|          decls_cls ";"                   {$$ = $1;}
+|          decl_cls                        {$$.push_back($1);}
+|          %empty                          {}
+
+decllist_cls: "{" decls_cls "}"            {$$ = {@2,{$2}};}
+|               VOCURLY decls_cls close    {$$ = {@2,{$2}};}
+
+where_cls: "where" decllist_cls            {$$ = $2;}
+|            %empty                        {}
+
 /* Remove specialization of binds for classes and instances */
 
 decls: decls ";" decl   {$$ = $1; $$.push_back($3);}
@@ -794,8 +831,11 @@ opt_sig: %empty  {}
 | "::" sigtype   {$$ = $2;}
 */
 
-opt_tyconsig: %empty {}
-| "::" gtycon        {$$ = Hs::TypeCon({@2,$2});}
+opt_tyconsig: %empty             {}
+|             "::" gtycon        {$$ = Hs::TypeCon({@2,$2});}
+
+sigktype: sigtype
+|         ctype "::" kind
 
 sigtype: ctype
 
@@ -912,9 +952,13 @@ bar_types2: ctype "|" ctype
 tv_bndrs:   tv_bndrs tv_bndr   {$$ = $1; $$.push_back($2);}
 |           %empty             { /* default construction OK */}
 
+tv_bndr: tv_bndr_no_braces       {$$ = $1;}
+|        "{" tyvar "}"           {}
+|        "{" tyvar "::" kind "}" {}
+
 /* If we put the kind into the type var (maybe as an optional) we could unify these two */
-tv_bndr:    tyvar                   {$$ = Hs::TypeVar({@1,$1});}
-|           "(" tyvar "::" kind ")" {$$ = Hs::TypeVar({@2,$2},$4);}
+tv_bndr_no_braces:    tyvar                   {$$ = Hs::TypeVar({@1,$1});}
+|                     "(" tyvar "::" kind ")" {$$ = Hs::TypeVar({@2,$2},$4);}
 
 
 /* fds are functional dependencies = FunDeps 
