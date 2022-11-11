@@ -274,12 +274,10 @@
 %type <Located<Hs::Binds>> decllist_cls
 %type <std::optional<Located<Hs::Binds>>> where_cls
 
-/*
-%type <void> decl_inst
-%type <void> decls_inst
-%type <void> decllist_inst
-%type <void> where_inst
-*/
+%type <expression_ref> decl_inst
+%type <Hs::Decls> decls_inst
+%type <Located<Hs::Binds>> decllist_inst
+%type <std::optional<Located<Hs::Binds>>> where_inst
 
 %type <std::vector<expression_ref>> decls
 %type <Hs::Decls> decllist
@@ -650,8 +648,8 @@ sks_vars: sks_vars "," oqtycon
 |         oqtycon
 
 // inst_type -> sigtype -> ctype --maybe--> context => type
-inst_decl: "instance" overlap_pragma inst_type wherebinds                  {$$ = make_instance_decl({@3,$3},$4);}
-/* |          "type" "instance" ty_fam_inst_eqn */
+inst_decl: "instance" overlap_pragma inst_type where_inst                  {$$ = make_instance_decl({@3,$3},$4);}
+|          "type" "instance" ty_fam_inst_eqn                               {}
 /* |          data_or_newtype "instance" capi_ctype tycl_hdr constrs
    |          data_or_newtype "instance" capi_ctype opt_kind_sig */
 
@@ -714,8 +712,14 @@ opt_family: %empty | "family"
 
 opt_instance: %empty | "instance"
 
+/* Associated type instance declarations */
+
+at_decl_inst: "type" opt_instance ty_fam_inst_eqn
+
 data_or_newtype: "data"    {$$=Hs::DataOrNewtype::data;}
 |                "newtype" {$$=Hs::DataOrNewtype::newtype;}
+
+/* Family results and kind signatures */
 
 opt_kind_sig: %empty       {$$ = {};}
 |             "::" kind    {$$ = $2;}
@@ -730,6 +734,8 @@ opt_tyfam_kind_sig: %empty
 opt_at_kind_inj_sig: %empty
 |                    "::" kind
 |                    "=" tv_bndr_no_braces "|" injectivity_cond
+
+/* Type class header */
 
 tycl_hdr: context "=>" type  {$$ = {$1,$3};}
 |         type               {$$ = {{},$1};}
@@ -792,7 +798,20 @@ decllist_cls: "{" decls_cls "}"            {$$ = {@2,{$2}};}
 where_cls: "where" decllist_cls            {$$ = $2;}
 |            %empty                        {}
 
-/* Remove specialization of binds for classes and instances */
+decl_inst: at_decl_inst                    {}
+|          decl                            {$$ = $1;}
+
+decls_inst: decls_inst ";" decl_inst       {$$ = $1; $$.push_back($3);}
+|          decls_inst ";"                  {$$ = $1;}
+|          decl_inst                       {$$.push_back($1);}
+|          %empty                          {}
+
+decllist_inst: "{" decls_inst "}"          {$$ = {@2,{$2}};}
+|               VOCURLY decls_inst close   {$$ = {@2,{$2}};}
+
+where_inst: "where" decllist_inst          {$$ = $2;}
+|            %empty                        {}
+
 
 decls: decls ";" decl   {$$ = $1; $$.push_back($3);}
 |      decls ";"        {$$ = $1;}
@@ -804,7 +823,7 @@ decllist: "{" decls "}"          {$$ = $2;}  // location here should include { }
 
 binds: decllist                  {$$ = {@1,{$1}};}
 
-wherebinds: "where" binds        {$$ = $2;}                   // location here should include "where"?
+wherebinds: "where" binds        {$$ = $2;}                   // location here should include "where"
 |           %empty               {}
 
 
