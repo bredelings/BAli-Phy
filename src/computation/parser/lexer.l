@@ -273,6 +273,7 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words =
     {"deriving",{parser::token::TOK_DERIVING,0}},
     {"do",{parser::token::TOK_DO,0}},
     {"else",{parser::token::TOK_ELSE,0}},
+    {"family",{parser::token::TOK_FAMILY,0}},
     {"forall",{parser::token::TOK_FORALL,0}},
     {"foreign",{parser::token::TOK_FOREIGN,0}},
     {"hiding",{parser::token::TOK_HIDING,0}},
