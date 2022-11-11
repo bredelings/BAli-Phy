@@ -506,6 +506,22 @@ struct InstanceDecl: public Object
         {}
 };
 
+struct TypeFamilyDecl: public Object
+{
+    Hs::TypeCon con;
+    std::vector<Hs::TypeVar> args;
+    std::optional<Hs::Kind> kind_sig;
+    // optional injectivity clause
+    // optional where clause
+    TypeFamilyDecl* clone() const { return new TypeFamilyDecl(*this);}
+    std::string print() const;
+    TypeFamilyDecl(const Hs::TypeCon& tc, const std::vector<Hs::TypeVar>& as, const std::optional<Hs::Kind>& ks)
+        :con(tc),
+         args(as),
+         kind_sig(ks)
+    { }
+};
+
 struct DefaultDecl: public Object
 {
     std::vector<Type> types;

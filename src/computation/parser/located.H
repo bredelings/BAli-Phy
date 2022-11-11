@@ -45,6 +45,9 @@ public:
 	return object_ptr<Located<T>>(clone());
     }
 
+    const T& value() const {return obj;}
+          T& value()       {return obj;}
+
     Located() = default;
     Located(const Located<T>&) = default;
     Located(Located<T>&&) = default;

@@ -24,6 +24,7 @@ namespace Haskell
     struct ForallType;
     struct StrictLazyType;
     struct FieldDecls;
+    struct TypeOfKind;
 
     struct Type
     {
@@ -39,7 +40,8 @@ namespace Haskell
             cow_ptr<ConstrainedType>,
             cow_ptr<ForallType>,
             cow_ptr<StrictLazyType>,
-            cow_ptr<FieldDecls>
+            cow_ptr<FieldDecls>,
+            cow_ptr<TypeOfKind>
         >
         type_ptr;
 
@@ -287,6 +289,16 @@ struct StrictLazyType
     bool operator==(const StrictLazyType& t) const;
     std::string print() const;
     StrictLazyType(const StrictLazy& sl, const Type& t):strict_lazy(sl), type(t) {}
+};
+
+struct TypeOfKind
+{
+    Type type;
+    Kind kind;
+
+    bool operator==(const TypeOfKind& t) const;
+    std::string print() const;
+    TypeOfKind(const Type& t, const Kind& k):type(t), kind(k) {}
 };
 
 Type function_type(const std::vector<Type>& arg_types, const Type& result_type);

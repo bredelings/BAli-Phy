@@ -519,6 +519,17 @@ string InstanceDecl::print() const
     return result;
 }
 
+string TypeFamilyDecl::print() const
+{
+    std::ostringstream out;
+    out<<"type family "<<con.print();
+    for(auto& arg: args)
+        out<<" "<<arg.print_with_kind();
+    if (kind_sig)
+        out<<" :: "<<kind_sig->print();
+    return out.str();
+}
+
 string DefaultDecl::print() const
 {
     vector<string> ts;

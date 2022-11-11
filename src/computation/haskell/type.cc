@@ -874,6 +874,12 @@ string ListType::print() const
     return "[" + element_type.print() + "]";
 }
 
+string TypeOfKind::print() const
+{
+    return type.print() + " :: " + kind.print();
+}
+
+
 TypeCon tuple_tycon(int n)
 {
     auto kind = make_n_args_kind(n);
