@@ -14,17 +14,17 @@ class LikelihoodMixtureComponent m where
     -- The most general thing to do would be to specify Pr(observation=o|markov state=s) for each o and s.
     -- What we are doing here is to specify a list of states for which the probability is 1 or 0.
     -- Which could be shortened into just the list of which states are 1 - EVector (EVector Int)
-    stateToObservedState :: m -> MixtureIndex -> EVector Int
-    numObservedStates :: m -> Int
-    alphabet :: m -> Alphabet
+    _stateToObservedState :: m -> MixtureIndex -> EVector Int
+    _numObservedStates :: m -> Int
+    _alphabet :: m -> Alphabet
 
     -- In order for this to be a general interface, the tree type needs to be hidden!
-    transitionProbabilities :: m -> Int -> Matrix Double
+    _transitionProbabilities :: m -> Int -> Matrix Double
 
-    rootFrequencies :: m -> MixtureIndex -> EVector Double
+    _rootFrequencies :: m -> MixtureIndex -> EVector Double
     -- This means that all the transition_probability matrices in a component
     -- satisfy detailed balance with the root frequencies
-    isReversible :: m -> Bool
+    _isReversible :: m -> Bool
 
 
 class LikelihoodMixtureModel m where
