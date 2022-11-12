@@ -57,4 +57,14 @@ wssr07_ssrv s01 s10 nu model = tuffley_steel_98 s01 s10 $ galtier_01_ssrv nu mod
 
 wssr07 s01 s10 nu pi model = parameter_mixture_unit [(1-pi, 0), (pi, nu)] (\nu' -> wssr07_ssrv s01 s10 nu' model)
 
+-- Instead of passing rates_between+level_probs, could we just pass a q matrix?
+covarion_gtr_ssrv nu exchange model = modulated_markov models rates_between level_probs where
+    MixtureModel dist = rescale 1 model
+    level_probs = map fst dist
+    models = map snd dist
+    n_levels = length dist
+    -- This is really a gtr rate matrix, just without the alphabet / smap!
+    rates_between = (scaleMatrix nu exchange) %*% (plus_f_matrix $ list_to_vector level_probs)
+
+covarion_gtr nu exchange pi model = parameter_mixture_unit [(1-pi, 0), (pi, nu)] (\nu' -> covarion_gtr_ssrv nu' exchange model)
 
