@@ -1,18 +1,17 @@
 module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.Frequency) where
 
-import SModel.Simple
-import SModel.Rate
-import SModel.Frequency
-import Bio.Alphabet
-import Data.Matrix
-import Tree
-import SModel.EigenExp
-import SModel.LikelihoodMixtureModel
+import qualified Markov
+import           SModel.Simple
+import           SModel.Rate
+import           SModel.Frequency
+import           Bio.Alphabet
+import           Data.Matrix
+import           Tree
+import           SModel.EigenExp
+import           SModel.LikelihoodMixtureModel
 
 foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
 foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
-foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
-foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matrix Double -> Matrix Double
 
 -- This takes the rate matrix q and adds:
 -- * pi -> a cached version of the equilibrium frequencies
@@ -56,15 +55,11 @@ frequencies (ReversibleMarkov _ _ _ pi _ _) = pi
 simple_smap a = list_to_vector [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-reversible_markov a smap q pi = ReversibleMarkov a smap q2 pi 1.0 (get_equilibrium_rate a smap q2 pi) where q2 = fixup_diagonal_rates q
+reversible_markov a smap q pi = ReversibleMarkov a smap q2 pi 1.0 (get_equilibrium_rate a smap q2 pi) where q2 = Markov.fixup_diagonal_rates q
 
-generic_equ n x = generic_gtr_sym (replicate n_elements x) n
-    where n_elements = n*(n-1) `div` 2
+equ a = Markov.equ (alphabetSize a) 1.0
 
-equ a = generic_equ (alphabetSize a) 1.0
-
-generic_gtr_sym exchange n = builtin_gtr_sym (list_to_vector exchange) n
-gtr_sym exchange a = generic_gtr_sym exchange (alphabetSize a)
+gtr_sym exchange a = Markov.gtr_sym (alphabetSize a) exchange 
 
 gtr a s pi = reversible_markov a (simple_smap a) (s %*% plus_f_matrix pi') pi' where pi' = list_to_vector pi
 

@@ -5,6 +5,7 @@ import Bio.Alphabet
 import SModel.ReversibleMarkov
 import SModel.MixtureModel
 import SModel.Rate
+import qualified Markov
 import Data.Matrix -- for fromLists, %*%
 
 foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double
@@ -29,7 +30,7 @@ modulated_markov models rates_between level_probs = reversible_markov a smap q p
 
 markov_modulate_mixture nu (MixtureModel dist) = modulated_markov models rates_between level_probs where
     (level_probs,models) = unzip dist
-    rates_between = generic_equ (length models) nu
+    rates_between = Markov.equ (length models) nu
 
 -- We need to rescale submodels to have substitution rate `1`.
 -- Otherwise class-switching rates are not relative to the substitution rate.
@@ -49,7 +50,7 @@ galtier_01_ssrv nu model = modulated_markov models rates_between level_probs whe
     models = map snd dist
     n_levels = length dist
     -- This is really a generic gtr...  We should be able to get this with f81
-    rates_between = (generic_equ n_levels nu) %*% (plus_f_matrix $ list_to_vector level_probs)
+    rates_between = (Markov.equ n_levels nu) %*% (plus_f_matrix $ list_to_vector level_probs)
 
 galtier_01 nu pi model = parameter_mixture_unit [(1-pi, 0), (pi, nu)] (\nu' -> galtier_01_ssrv nu' model)
 
