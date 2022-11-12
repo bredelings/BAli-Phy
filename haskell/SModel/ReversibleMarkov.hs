@@ -11,7 +11,6 @@ import           SModel.EigenExp
 import           SModel.LikelihoodMixtureModel
 
 foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
-foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
 
 -- This takes the rate matrix q and adds:
 -- * pi -> a cached version of the equilibrium frequencies
@@ -38,24 +37,26 @@ foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matr
 --   that is, all transition_p matricies in component m satisfy detailed balance with respect to the root frequences in component m
 --
 
-data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) (Matrix Double) (EVector Double) Double Double
+data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) Markov.ReversibleMarkov Double
 
-qExp (ReversibleMarkov a s q pi t r) = Markov.mexp q t
+qExp (ReversibleMarkov a s m r) = Markov.qExp m
 
-get_smap (ReversibleMarkov a s q pi t r) = s
+get_smap (ReversibleMarkov a s m r) = s
 
-get_alphabet (ReversibleMarkov a s q pi t r) = a
+get_alphabet (ReversibleMarkov a s m r) = a
 
-get_q (ReversibleMarkov _ _ q _ t _) = scaleMatrix t q
+get_q (ReversibleMarkov _ _ m  _) = Markov.get_q m
 
-get_pi (ReversibleMarkov _ _ _ pi _ _) = pi
+get_pi (ReversibleMarkov _ _ m _) = Markov.get_pi m
 
-frequencies (ReversibleMarkov _ _ _ pi _ _) = pi
+frequencies = get_pi
 
 simple_smap a = list_to_vector [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-reversible_markov a smap q pi = ReversibleMarkov a smap q2 pi 1.0 (get_equilibrium_rate a smap q2 pi) where q2 = Markov.fixup_diagonal_rates q
+reversible_markov a smap q pi = ReversibleMarkov a smap rm rate where
+    rm = Markov.reversible_markov q pi
+    rate = get_equilibrium_rate a smap (Markov.get_q rm) pi
 
 equ a = Markov.equ (alphabetSize a) 1.0
 
@@ -94,19 +95,19 @@ plus_f'  a pi s   = plus_f a (frequencies_from_dict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequencies_from_dict a pi) f s
 
 instance SimpleSModel ReversibleMarkov where
-    branch_transition_p (SingleBranchLengthModel tree smodel@(ReversibleMarkov _ _ _ _ _ _   )) b = [qExp $ scale (branch_length tree b/r) smodel]
+    branch_transition_p (SingleBranchLengthModel tree smodel) b = [qExp $ scale (branch_length tree b/r) smodel]
         where r = rate smodel
     distribution _ = [1.0]
-    weighted_frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [pi])
-    frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _) = builtin_frequency_matrix (list_to_vector [pi])
+    weighted_frequency_matrix smodel@(ReversibleMarkov _ _ m _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [Markov.get_pi m])
+    frequency_matrix smodel@(ReversibleMarkov _ _ m _) = builtin_frequency_matrix (list_to_vector [Markov.get_pi m])
     nBaseModels _ = 1
     stateLetters rm = get_smap rm
-    getAlphabet (ReversibleMarkov a _ _ _ _ _) = a
-    componentFrequencies smodel@(ReversibleMarkov _ _ _ _ _ _) i = [frequencies smodel]!!i
+    getAlphabet (ReversibleMarkov a _ _ _) = a
+    componentFrequencies smodel i = [frequencies smodel]!!i
 
 instance RateModel ReversibleMarkov where
-    rate (ReversibleMarkov a s q pi t r) = r
-    scale x (ReversibleMarkov a s q pi t r) = ReversibleMarkov a s q pi (x*t) (x*r)
+    rate (ReversibleMarkov _ _ _ r) = r
+    scale x (ReversibleMarkov a s rm r) = ReversibleMarkov a s (Markov.scale x rm) (x*r)
 
 instance Show ReversibleMarkov where
     show q = show $ get_q q
@@ -116,7 +117,7 @@ instance BranchLengthTree t => LikelihoodMixtureModel (ReversibleMarkov,t) where
     numObservedStates m = length $ letters $ alphabet m
     componentProbabilities (m,_) = [1.0]
     numComponents _ = 1
-    stateToObservedState ((ReversibleMarkov _ smap _ _ _ _),_) (MixtureIndex 0) = smap
+    stateToObservedState ((ReversibleMarkov _ smap _ _ ),_) (MixtureIndex 0) = smap
     numStates m component = vector_size $ stateToObservedState m component
     transitionProbabilities (smodel,tree) (MixtureIndex 0) b = qExp $ scale (branch_length tree b/r) smodel where r = rate smodel
     rootFrequencies (m,_) (MixtureIndex 0) = get_pi m

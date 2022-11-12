@@ -19,6 +19,8 @@ foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matr
 -- For functions like equ, f81, and gtr, maybe I also need versions that just construct the matrix?
 data ReversibleMarkov = ReversibleMarkov (Matrix Double) (EVector Double) Double
 
+scale s (ReversibleMarkov q pi t) = ReversibleMarkov q pi (s*t)
+
 plus_f_matrix pi = plus_gwf_matrix pi 1.0
 
 get_q (ReversibleMarkov q _ scale) = scaleMatrix scale q
