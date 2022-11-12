@@ -31,29 +31,30 @@ markov_modulate_mixture nu (MixtureModel dist) = modulated_markov models rates_b
     (level_probs,models) = unzip dist
     rates_between = generic_equ (length models) nu
 
--- We need to rescale submodels to have substitution rate `1.0`.
+-- We need to rescale submodels to have substitution rate `1`.
 -- Otherwise class-switching rates are not relative to the substitution rate.
 
-tuffley_steel_98_unscaled s01 s10 q = modulated_markov [scale 0.0 q, q] rates_between level_probs where
+tuffley_steel_98_unscaled s01 s10 q = modulated_markov [scale 0 q, q] rates_between level_probs where
     level_probs = [s10/total, s01/total] where total = s10 + s01
     rates_between = fromLists [[-s01,s01],[s10,-s10]]
 
-tuffley_steel_98 s01 s10 q = tuffley_steel_98_unscaled s01 s10 (rescale 1.0 q)
+tuffley_steel_98 s01 s10 q = tuffley_steel_98_unscaled s01 s10 (rescale 1 q)
 
 huelsenbeck_02 s01 s10 model = MixtureModel [(p, tuffley_steel_98_unscaled s01 s10 q) | (p,q) <- dist] where
-    MixtureModel dist = rescale 1.0 model
+    MixtureModel dist = rescale 1 model
 
 galtier_01_ssrv nu model = modulated_markov models rates_between level_probs where
-    MixtureModel dist = rescale 1.0 model
+    MixtureModel dist = rescale 1 model
     level_probs = map fst dist
     models = map snd dist
     n_levels = length dist
     -- This is really a generic gtr...  We should be able to get this with f81
     rates_between = (generic_equ n_levels nu) %*% (plus_f_matrix $ list_to_vector level_probs)
 
-galtier_01 nu pi model = parameter_mixture_unit [(1.0-pi, 0.0), (pi, nu)] (\nu' -> galtier_01_ssrv nu' model)
+galtier_01 nu pi model = parameter_mixture_unit [(1-pi, 0), (pi, nu)] (\nu' -> galtier_01_ssrv nu' model)
 
 wssr07_ssrv s01 s10 nu model = tuffley_steel_98 s01 s10 $ galtier_01_ssrv nu model
 
-wssr07 s01 s10 nu pi model = parameter_mixture_unit [(1.0-pi, 0.0), (pi, nu)] (\nu' -> wssr07_ssrv s01 s10 nu' model)
+wssr07 s01 s10 nu pi model = parameter_mixture_unit [(1-pi, 0), (pi, nu)] (\nu' -> wssr07_ssrv s01 s10 nu' model)
+
 
