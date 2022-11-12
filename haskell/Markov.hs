@@ -5,6 +5,16 @@ import Data.Matrix
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
 foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matrix Double -> Matrix Double
 foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix :: EVector Double -> Double -> Matrix Double
+foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
+
+-- We don't have rates here, because rates require a concept of states being "equal".
+-- For cases like markov modulated models, the rate we care about is the rate of switching letter,
+--   not the rate of switching states.
+-- For codon models, we could care about the rate of switching codons, nucleotides, or amino acids.
+--   -- we prefer to scale branch lengths in terms of nucleotide changes.
+-- We also only care about the rate at equilibrium.
+-- Its possible to run nonreversible models from a non-equilibrium rate, but also we probably sometimes
+--  want to use the equilibrium rate.
 
 -- For functions like equ, f81, and gtr, maybe I also need versions that just construct the matrix?
 data ReversibleMarkov = ReversibleMarkov (Matrix Double) (EVector Double) Double
@@ -25,4 +35,12 @@ gtr er pi = reversible_markov (er %*% plus_f_matrix pi') pi' where pi' = list_to
 -- Probabily we should make a builtin for this
 equ n x = gtr_sym n (replicate n_elements x)
     where n_elements = n*(n-1) `div` 2
+
+f81 pi = gtr (equ n 1.0) pi where n = length pi
+
+uniform_frequencies n = replicate n $ 1.0/(intToDouble n)
+
+jukes_cantor n = gtr (equ n 1.0) (uniform_frequencies n)
+
+qExp (ReversibleMarkov q pi t) = mexp q t
 

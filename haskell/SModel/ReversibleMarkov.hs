@@ -40,7 +40,7 @@ foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matr
 
 data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) (Matrix Double) (EVector Double) Double Double
 
-qExp (ReversibleMarkov a s q pi t r) = mexp q t
+qExp (ReversibleMarkov a s q pi t r) = Markov.mexp q t
 
 get_smap (ReversibleMarkov a s q pi t r) = s
 
