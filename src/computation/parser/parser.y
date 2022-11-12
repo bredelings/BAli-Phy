@@ -30,7 +30,9 @@
   Hs::ConstructorDecl make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::Type& typeish);
   Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& type, const std::optional<Located<Hs::Binds>>& decls);
   Hs::TypeSynonymDecl make_type_synonym(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type);
-  Hs::TypeFamilyDecl make_type_family(const Located<Hs::Type>& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig);
+  Hs::TypeFamilyDecl make_type_family(const Located<Hs::Type>& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
+                                      const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns);
+  Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
                                              const Hs::Type& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
@@ -291,6 +293,11 @@
 %type <Located<Hs::Binds>> binds
 %type <std::optional<Located<Hs::Binds>>> wherebinds
 
+%type <std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>> where_type_family
+%type <std::vector<Hs::TypeFamilyInstanceEqn>> ty_fam_inst_eqn_list
+%type <std::vector<Hs::TypeFamilyInstanceEqn>> ty_fam_inst_eqns
+%type <Hs::TypeFamilyInstanceEqn> ty_fam_inst_eqn
+
  /*
 
 %type <void> strings
@@ -487,7 +494,7 @@
 %type  <int> bars
 */
 
-%expect 136
+%expect 135
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -649,7 +656,7 @@ ty_decl: "type" type "=" ktype                                             {$$ =
 |        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1, $3.first, $3.second,{},$4);}
 /* This is kind of a hack to allow `data X` */
 |        data_or_newtype capi_ctype tycl_hdr opt_kind_sig gadt_constrlist maybe_derivings {$$ = make_data_or_newtype($1, $3.first, $3.second, $4, $5);}
-|        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family     {$$ = make_type_family({@3,$3}, $4);}
+|        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family     {$$ = make_type_family({@3,$3}, $4, $6);}
 /* |        "data" "family" type opt_datafam_kind_sig */
 
 standalone_kind_sig: "type" sks_vars "::" sigktype
@@ -659,7 +666,7 @@ sks_vars: sks_vars "," oqtycon
 
 // inst_type -> sigtype -> ctype --maybe--> context => type
 inst_decl: "instance" overlap_pragma inst_type where_inst                  {$$ = make_instance_decl({@3,$3},$4);}
-|          "type" "instance" ty_fam_inst_eqn                               {}
+|          "type" "instance" ty_fam_inst_eqn                               {$$ = Hs::TypeFamilyInstanceDecl($3);}
 /* |          data_or_newtype "instance" capi_ctype tycl_hdr constrs
    |          data_or_newtype "instance" capi_ctype opt_kind_sig */
 
@@ -694,30 +701,30 @@ inj_varids: inj_varids tyvarid
 
 /* Closed type families  */
 
-where_type_family: %empty
-|                  "where" ty_fam_inst_eqn_list
+where_type_family: %empty                                  {}
+|                  "where" ty_fam_inst_eqn_list            {$$ = $2;}
 
-ty_fam_inst_eqn_list: "{" ty_fam_inst_eqns "}"
-|                     VOCURLY ty_fam_inst_eqns close
-|                     "{" ".." "}"
-|                     VOCURLY ".." close
+ty_fam_inst_eqn_list: "{" ty_fam_inst_eqns "}"             {$$ = $2;}
+|                     VOCURLY ty_fam_inst_eqns close       {$$ = $2;}
+|                     "{" ".." "}"                         {}
+|                     VOCURLY ".." close                   {}
 
-ty_fam_inst_eqns: ty_fam_inst_eqns ";" ty_fam_inst_eqn
-|                 ty_fam_inst_eqn ";"
-|                 ty_fam_inst_eqn
-|                 %empty
+ty_fam_inst_eqns: ty_fam_inst_eqns ";" ty_fam_inst_eqn     {$$ = $1; $$.push_back($3);}
+|                 ty_fam_inst_eqns ";"                     {$$ = $1;}
+|                 ty_fam_inst_eqn                          {$$ = {$1};}
+|                 %empty                                   {}
 
-ty_fam_inst_eqn: type "=" ctype
+ty_fam_inst_eqn: type "=" ctype                            {$$ = make_type_family_instance_eqn({@1,$1},{@3,$3});}
 
 /* Associated type family declarations */
 at_decl_cls: "data" opt_family type opt_datafam_kind_sig       {}
               /* we can't use opt_family or we get shift/reduce conflicts*/
-|            "type" type opt_at_kind_inj_sig                   { $$ = make_type_family({@2,$2}, $3); }
+|            "type" type opt_at_kind_inj_sig                   { $$ = make_type_family({@2,$2}, $3, {}); }
 
-|            "type" "family" type opt_at_kind_inj_sig               { $$ = make_type_family({@3,$3}, $4); }
+|            "type" "family" type opt_at_kind_inj_sig          { $$ = make_type_family({@3,$3}, $4, {}); }
               /* we can't use opt_family or we get shift/reduce conflicts*/
-|            "type" ty_fam_inst_eqn                            {}
-|            "type" "instance" ty_fam_inst_eqn                 {}
+|            "type" ty_fam_inst_eqn                            { $$ = Hs::TypeFamilyInstanceDecl($2);    }
+|            "type" "instance" ty_fam_inst_eqn                 { $$ = Hs::TypeFamilyInstanceDecl($3);    }
 
 opt_family: %empty | "family"
 
@@ -1619,7 +1626,8 @@ Hs::TypeSynonymDecl make_type_synonym(const Located<Hs::Type>& lhs_type, const L
     return {name, check_all_type_vars(type_args), rhs_type};
 }
 
-Hs::TypeFamilyDecl make_type_family(const Located<Hs::Type>& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig)
+Hs::TypeFamilyDecl make_type_family(const Located<Hs::Type>& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
+                                    const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns)
 {
     auto [head, args] = Hs::decompose_type_apps(lhs_type.value());
 
@@ -1653,7 +1661,19 @@ Hs::TypeFamilyDecl make_type_family(const Located<Hs::Type>& lhs_type, const std
     if (kind_sig)
         kind = kind_sig->value();
 
-    return Hs::TypeFamilyDecl(*con, tyvars, kind);
+    return Hs::TypeFamilyDecl(*con, tyvars, kind, eqns);
+}
+
+Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type)
+{
+    auto [head, args] = Hs::decompose_type_apps(lhs_type.value());
+
+    // Get type con
+    auto con = head.to<Hs::TypeCon>();
+    if (not con)
+        throw myexception()<<"Type family instance '"<<lhs_type.print()<<"' does not begin with a type constructor.";
+
+    return Hs::TypeFamilyInstanceEqn(*con, args, rhs_type.value());
 }
 
 Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,

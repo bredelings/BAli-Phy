@@ -506,19 +506,50 @@ struct InstanceDecl: public Object
         {}
 };
 
+struct TypeFamilyInstanceEqn: public Object
+{
+    // std::vector<TypeVar> forall;
+    TypeCon con;
+    std::vector<Type> args;
+    Type rhs;
+
+    TypeFamilyInstanceEqn* clone() const { return new TypeFamilyInstanceEqn(*this);}
+    std::string print() const;
+
+    TypeFamilyInstanceEqn() = default;
+    TypeFamilyInstanceEqn(const TypeCon& tc, const std::vector<Type>& as, const Type& t):
+        con(tc), args(as), rhs(t)
+    {}
+};
+
+struct TypeFamilyInstanceDecl: public TypeFamilyInstanceEqn
+{
+    TypeFamilyInstanceDecl* clone() const { return new TypeFamilyInstanceDecl(*this);}
+
+    std::string print() const;
+
+    using TypeFamilyInstanceEqn::TypeFamilyInstanceEqn;
+    TypeFamilyInstanceDecl(const TypeFamilyInstanceEqn& e):TypeFamilyInstanceEqn(e) {}
+};
+
 struct TypeFamilyDecl: public Object
 {
-    Hs::TypeCon con;
-    std::vector<Hs::TypeVar> args;
-    std::optional<Hs::Kind> kind_sig;
+    TypeCon con;
+    std::vector<TypeVar> args;
+    std::optional<Kind> kind_sig;
     // optional injectivity clause
-    // optional where clause
+    std::optional<std::vector<TypeFamilyInstanceEqn>> where_instances;
+
     TypeFamilyDecl* clone() const { return new TypeFamilyDecl(*this);}
+
     std::string print() const;
-    TypeFamilyDecl(const Hs::TypeCon& tc, const std::vector<Hs::TypeVar>& as, const std::optional<Hs::Kind>& ks)
+
+    TypeFamilyDecl(const TypeCon& tc, const std::vector<TypeVar>& as, const std::optional<Kind>& ks,
+                   const std::optional<std::vector<TypeFamilyInstanceEqn>>& es)
         :con(tc),
          args(as),
-         kind_sig(ks)
+         kind_sig(ks),
+         where_instances(es)
     { }
 };
 

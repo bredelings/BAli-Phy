@@ -519,6 +519,21 @@ string InstanceDecl::print() const
     return result;
 }
 
+string TypeFamilyInstanceEqn::print() const
+{
+    std::ostringstream out;
+    out<<con.print();
+    for(auto& arg: args)
+        out<<" "<<arg.print();
+    out<<" = "<<rhs.print();
+    return out.str();
+}
+
+string TypeFamilyInstanceDecl::print() const
+{
+    return "type instance " + TypeFamilyInstanceEqn::print();
+}
+
 string TypeFamilyDecl::print() const
 {
     std::ostringstream out;

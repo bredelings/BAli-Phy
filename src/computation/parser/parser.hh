@@ -68,7 +68,9 @@
   Hs::ConstructorDecl make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::Type& typeish);
   Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& type, const std::optional<Located<Hs::Binds>>& decls);
   Hs::TypeSynonymDecl make_type_synonym(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type);
-  Hs::TypeFamilyDecl make_type_family(const Located<Hs::Type>& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig);
+  Hs::TypeFamilyDecl make_type_family(const Located<Hs::Type>& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
+                                      const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns);
+  Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
                                              const Hs::Type& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
@@ -81,7 +83,7 @@
 
   expression_ref yy_make_string(const std::string&);
 
-#line 85 "parser.hh"
+#line 87 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -221,7 +223,7 @@
 #endif
 
 namespace yy {
-#line 225 "parser.hh"
+#line 227 "parser.hh"
 
 
 
@@ -527,31 +529,34 @@ namespace yy {
       // constr_stuff
       char dummy20[sizeof (Hs::Type)];
 
+      // ty_fam_inst_eqn
+      char dummy21[sizeof (Hs::TypeFamilyInstanceEqn)];
+
       // tv_bndr
       // tv_bndr_no_braces
-      char dummy21[sizeof (Hs::TypeVar)];
+      char dummy22[sizeof (Hs::TypeVar)];
 
       // alt
-      char dummy22[sizeof (Located<Hs::Alt>)];
+      char dummy23[sizeof (Located<Hs::Alt>)];
 
       // decllist_cls
       // decllist_inst
       // binds
-      char dummy23[sizeof (Located<Hs::Binds>)];
+      char dummy24[sizeof (Located<Hs::Binds>)];
 
       // qcname
-      char dummy24[sizeof (Located<std::string>)];
+      char dummy25[sizeof (Located<std::string>)];
 
       // optqualified
-      char dummy25[sizeof (bool)];
+      char dummy26[sizeof (bool)];
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy26[sizeof (char)];
+      char dummy27[sizeof (char)];
 
       // "RATIONAL"
       // "PRIMDOUBLE"
-      char dummy27[sizeof (double)];
+      char dummy28[sizeof (double)];
 
       // topdecl
       // cl_decl
@@ -581,55 +586,58 @@ namespace yy {
       // qop
       // qopm
       // literal
-      char dummy28[sizeof (expression_ref)];
+      char dummy29[sizeof (expression_ref)];
 
       // "PRIMFLOAT"
-      char dummy29[sizeof (float)];
+      char dummy30[sizeof (float)];
 
       // "INTEGER"
       // "PRIMINTEGER"
       // "PRIMWORD"
       // commas
-      char dummy30[sizeof (int)];
+      char dummy31[sizeof (int)];
 
       // export_subspec
-      char dummy31[sizeof (std::optional<Hs::ExportSubSpec>)];
+      char dummy32[sizeof (std::optional<Hs::ExportSubSpec>)];
 
       // gadt_constrlist
-      char dummy32[sizeof (std::optional<Hs::GADTConstructorsDecl>)];
+      char dummy33[sizeof (std::optional<Hs::GADTConstructorsDecl>)];
 
       // maybeimpspec
-      char dummy33[sizeof (std::optional<Hs::ImpSpec>)];
+      char dummy34[sizeof (std::optional<Hs::ImpSpec>)];
 
       // opt_kind_sig
-      char dummy34[sizeof (std::optional<Hs::Kind>)];
+      char dummy35[sizeof (std::optional<Hs::Kind>)];
 
       // where_cls
       // where_inst
       // wherebinds
-      char dummy35[sizeof (std::optional<Located<Hs::Binds>>)];
+      char dummy36[sizeof (std::optional<Located<Hs::Binds>>)];
 
       // opt_tyfam_kind_sig
       // opt_at_kind_inj_sig
-      char dummy36[sizeof (std::optional<Located<Hs::Kind>>)];
+      char dummy37[sizeof (std::optional<Located<Hs::Kind>>)];
 
       // prec
-      char dummy37[sizeof (std::optional<int>)];
+      char dummy38[sizeof (std::optional<int>)];
 
       // maybeas
-      char dummy38[sizeof (std::optional<std::string>)];
+      char dummy39[sizeof (std::optional<std::string>)];
 
       // maybeexports
-      char dummy39[sizeof (std::optional<std::vector<Hs::Export>>)];
+      char dummy40[sizeof (std::optional<std::vector<Hs::Export>>)];
+
+      // where_type_family
+      char dummy41[sizeof (std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>)];
 
       // tycl_hdr
-      char dummy40[sizeof (std::pair<Hs::Context,Hs::Type>)];
+      char dummy42[sizeof (std::pair<Hs::Context,Hs::Type>)];
 
       // body
       // body2
       // top
       // top1
-      char dummy41[sizeof (std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>)];
+      char dummy43[sizeof (std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>)];
 
       // "VARID"
       // "CONID"
@@ -683,45 +691,49 @@ namespace yy {
       // qconsym
       // consym
       // modid
-      char dummy42[sizeof (std::string)];
+      char dummy44[sizeof (std::string)];
 
       // exportlist
       // exportlist1
-      char dummy43[sizeof (std::vector<Hs::Export>)];
+      char dummy45[sizeof (std::vector<Hs::Export>)];
 
       // fielddecls
       // fielddecls1
-      char dummy44[sizeof (std::vector<Hs::FieldDecl>)];
+      char dummy46[sizeof (std::vector<Hs::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy45[sizeof (std::vector<Hs::GuardedRHS>)];
+      char dummy47[sizeof (std::vector<Hs::GuardedRHS>)];
 
       // importdecls
       // importdecls_semi
-      char dummy46[sizeof (std::vector<Hs::ImpDecl>)];
+      char dummy48[sizeof (std::vector<Hs::ImpDecl>)];
 
       // sigtypes1
       // btype_no_ops
       // comma_types0
       // comma_types1
-      char dummy47[sizeof (std::vector<Hs::Type>)];
+      char dummy49[sizeof (std::vector<Hs::Type>)];
+
+      // ty_fam_inst_eqn_list
+      // ty_fam_inst_eqns
+      char dummy50[sizeof (std::vector<Hs::TypeFamilyInstanceEqn>)];
 
       // tv_bndrs
       // forall
-      char dummy48[sizeof (std::vector<Hs::TypeVar>)];
+      char dummy51[sizeof (std::vector<Hs::TypeVar>)];
 
       // sig_vars
-      char dummy49[sizeof (std::vector<Hs::Var>)];
+      char dummy52[sizeof (std::vector<Hs::Var>)];
 
       // alts
       // alts1
-      char dummy50[sizeof (std::vector<Located<Hs::Alt>>)];
+      char dummy53[sizeof (std::vector<Located<Hs::Alt>>)];
 
       // qcnames
       // qcnames1
       // con_list
-      char dummy51[sizeof (std::vector<Located<std::string>>)];
+      char dummy54[sizeof (std::vector<Located<std::string>>)];
 
       // decls
       // tup_exprs
@@ -731,10 +743,10 @@ namespace yy {
       // guardquals1
       // apats1
       // stmts
-      char dummy52[sizeof (std::vector<expression_ref>)];
+      char dummy55[sizeof (std::vector<expression_ref>)];
 
       // ops
-      char dummy53[sizeof (std::vector<std::string>)];
+      char dummy56[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1433,6 +1445,10 @@ namespace yy {
         value.move< Hs::Type > (std::move (that.value));
         break;
 
+      case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
+        value.move< Hs::TypeFamilyInstanceEqn > (std::move (that.value));
+        break;
+
       case symbol_kind::S_tv_bndr: // tv_bndr
       case symbol_kind::S_tv_bndr_no_braces: // tv_bndr_no_braces
         value.move< Hs::TypeVar > (std::move (that.value));
@@ -1547,6 +1563,10 @@ namespace yy {
         value.move< std::optional<std::vector<Hs::Export>> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_where_type_family: // where_type_family
+        value.move< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_tycl_hdr: // tycl_hdr
         value.move< std::pair<Hs::Context,Hs::Type> > (std::move (that.value));
         break;
@@ -1638,6 +1658,11 @@ namespace yy {
       case symbol_kind::S_comma_types0: // comma_types0
       case symbol_kind::S_comma_types1: // comma_types1
         value.move< std::vector<Hs::Type> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_ty_fam_inst_eqn_list: // ty_fam_inst_eqn_list
+      case symbol_kind::S_ty_fam_inst_eqns: // ty_fam_inst_eqns
+        value.move< std::vector<Hs::TypeFamilyInstanceEqn> > (std::move (that.value));
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
@@ -1979,6 +2004,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Hs::TypeFamilyInstanceEqn&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Hs::TypeFamilyInstanceEqn& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, Hs::TypeVar&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -2245,6 +2284,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::pair<Hs::Context,Hs::Type>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -2350,6 +2403,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const std::vector<Hs::Type>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<Hs::TypeFamilyInstanceEqn>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<Hs::TypeFamilyInstanceEqn>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2571,6 +2638,10 @@ switch (yykind)
         value.template destroy< Hs::Type > ();
         break;
 
+      case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
+        value.template destroy< Hs::TypeFamilyInstanceEqn > ();
+        break;
+
       case symbol_kind::S_tv_bndr: // tv_bndr
       case symbol_kind::S_tv_bndr_no_braces: // tv_bndr_no_braces
         value.template destroy< Hs::TypeVar > ();
@@ -2685,6 +2756,10 @@ switch (yykind)
         value.template destroy< std::optional<std::vector<Hs::Export>> > ();
         break;
 
+      case symbol_kind::S_where_type_family: // where_type_family
+        value.template destroy< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > ();
+        break;
+
       case symbol_kind::S_tycl_hdr: // tycl_hdr
         value.template destroy< std::pair<Hs::Context,Hs::Type> > ();
         break;
@@ -2776,6 +2851,11 @@ switch (yykind)
       case symbol_kind::S_comma_types0: // comma_types0
       case symbol_kind::S_comma_types1: // comma_types1
         value.template destroy< std::vector<Hs::Type> > ();
+        break;
+
+      case symbol_kind::S_ty_fam_inst_eqn_list: // ty_fam_inst_eqn_list
+      case symbol_kind::S_ty_fam_inst_eqns: // ty_fam_inst_eqns
+        value.template destroy< std::vector<Hs::TypeFamilyInstanceEqn> > ();
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
@@ -5632,6 +5712,10 @@ switch (yykind)
         value.copy< Hs::Type > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
+        value.copy< Hs::TypeFamilyInstanceEqn > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_tv_bndr: // tv_bndr
       case symbol_kind::S_tv_bndr_no_braces: // tv_bndr_no_braces
         value.copy< Hs::TypeVar > (YY_MOVE (that.value));
@@ -5746,6 +5830,10 @@ switch (yykind)
         value.copy< std::optional<std::vector<Hs::Export>> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_where_type_family: // where_type_family
+        value.copy< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_tycl_hdr: // tycl_hdr
         value.copy< std::pair<Hs::Context,Hs::Type> > (YY_MOVE (that.value));
         break;
@@ -5837,6 +5925,11 @@ switch (yykind)
       case symbol_kind::S_comma_types0: // comma_types0
       case symbol_kind::S_comma_types1: // comma_types1
         value.copy< std::vector<Hs::Type> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_ty_fam_inst_eqn_list: // ty_fam_inst_eqn_list
+      case symbol_kind::S_ty_fam_inst_eqns: // ty_fam_inst_eqns
+        value.copy< std::vector<Hs::TypeFamilyInstanceEqn> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
@@ -6012,6 +6105,10 @@ switch (yykind)
         value.move< Hs::Type > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
+        value.move< Hs::TypeFamilyInstanceEqn > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_tv_bndr: // tv_bndr
       case symbol_kind::S_tv_bndr_no_braces: // tv_bndr_no_braces
         value.move< Hs::TypeVar > (YY_MOVE (s.value));
@@ -6126,6 +6223,10 @@ switch (yykind)
         value.move< std::optional<std::vector<Hs::Export>> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_where_type_family: // where_type_family
+        value.move< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_tycl_hdr: // tycl_hdr
         value.move< std::pair<Hs::Context,Hs::Type> > (YY_MOVE (s.value));
         break;
@@ -6217,6 +6318,11 @@ switch (yykind)
       case symbol_kind::S_comma_types0: // comma_types0
       case symbol_kind::S_comma_types1: // comma_types1
         value.move< std::vector<Hs::Type> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_ty_fam_inst_eqn_list: // ty_fam_inst_eqn_list
+      case symbol_kind::S_ty_fam_inst_eqns: // ty_fam_inst_eqns
+        value.move< std::vector<Hs::TypeFamilyInstanceEqn> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_tv_bndrs: // tv_bndrs
@@ -6320,7 +6426,7 @@ switch (yykind)
 
 
 } // yy
-#line 6324 "parser.hh"
+#line 6430 "parser.hh"
 
 
 
