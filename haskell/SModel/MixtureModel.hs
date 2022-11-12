@@ -44,7 +44,6 @@ baseModel (MixtureModel l) i = snd (l !! i)
 unwrapMM (MixtureModel dd) = dd
 
 instance SimpleSModel MixtureModel where
-    get_smap (MixtureModel ((_,m):_)) = get_smap m
     branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModel cs)) b = [qExp $ scale (branch_length tree b/r) component | (_,component) <- cs]
         where r = rate smodel
     distribution (MixtureModel l) = map fst l

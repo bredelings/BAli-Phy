@@ -41,7 +41,7 @@ data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) (Matrix Double) 
 
 qExp (ReversibleMarkov a s q pi t r) = mexp q t
 
-get_smap' (ReversibleMarkov a s q pi t r) = s
+get_smap (ReversibleMarkov a s q pi t r) = s
 
 get_alphabet (ReversibleMarkov a s q pi t r) = a
 
@@ -97,14 +97,13 @@ plus_f'  a pi s   = plus_f a (frequencies_from_dict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequencies_from_dict a pi) f s
 
 instance SimpleSModel ReversibleMarkov where
-    get_smap (ReversibleMarkov _ s _ _ _ _) = s
     branch_transition_p (SingleBranchLengthModel tree smodel@(ReversibleMarkov _ _ _ _ _ _   )) b = [qExp $ scale (branch_length tree b/r) smodel]
         where r = rate smodel
     distribution _ = [1.0]
     weighted_frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [pi])
     frequency_matrix smodel@(ReversibleMarkov _ _ _ pi _ _) = builtin_frequency_matrix (list_to_vector [pi])
     nBaseModels _ = 1
-    stateLetters (ReversibleMarkov _ smap _ _ _ _) = smap
+    stateLetters rm = get_smap rm
     getAlphabet (ReversibleMarkov a _ _ _ _ _) = a
     componentFrequencies smodel@(ReversibleMarkov _ _ _ _ _ _) i = [frequencies smodel]!!i
 

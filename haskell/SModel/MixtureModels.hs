@@ -13,7 +13,6 @@ branch_categories (MixtureModels categories _) = categories
 mmm branch_cats m = MixtureModels branch_cats [m]
 
 instance SimpleSModel MixtureModels where
-    get_smap                  (MixtureModels branch_cat_list mms) = get_smap $ head mms
     branch_transition_p (SingleBranchLengthModel tree smodel@(MixtureModels branch_cat_list mms)) b = branch_transition_p (SingleBranchLengthModel tree mx) b
         where mx = mms!!(branch_cat_list!!b)
     distribution              (MixtureModels _ (m:ms)) = distribution m
