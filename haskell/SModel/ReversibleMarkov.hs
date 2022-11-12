@@ -15,11 +15,13 @@ foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int 
 foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matrix Double -> Matrix Double
 
 -- This takes the rate matrix q and adds:
--- * a -> an alphabet
--- * smap -> mapping from markov states -> alphabet states
 -- * pi -> a cached version of the equilibrium frequencies
 -- * t -> a scaling factor
 -- * r -> a cached version of the rate at equilibrium
+--
+-- * the observation model
+--   + a -> an alphabet
+--   + smap -> mapping from markov states -> alphabet states
 
 -- Now, all of these except (a,smap) are just caches for things that we can compute from q.
 -- It is the (a,smap) parts that make this into a SUBSTITUTION model.
