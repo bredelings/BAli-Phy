@@ -59,9 +59,11 @@ instance SimpleSModel MixtureModel where
     componentFrequencies (MixtureModel d) i = frequencies (baseModel (MixtureModel d) i)
 
 
+instance Scalable MixtureModel where
+    scale x (MixtureModel dist              ) = MixtureModel [(p, scale x m) | (p, m) <- dist]
+
 instance RateModel MixtureModel where
     rate (MixtureModel d) = average [(p,rate m) | (p,m) <- d]
-    scale x (MixtureModel dist              ) = MixtureModel [(p, scale x m) | (p, m) <- dist]
 
 
 ---

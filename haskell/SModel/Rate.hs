@@ -1,8 +1,10 @@
 module SModel.Rate where
 
-class RateModel m where
-    rate :: m -> Double
+class Scalable m where
     scale :: Double -> m -> m
+
+class Scalable m => RateModel m where
+    rate :: m -> Double
 
 rescale r q = scale (r/rate q) q
 

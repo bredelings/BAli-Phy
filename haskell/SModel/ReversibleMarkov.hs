@@ -105,9 +105,11 @@ instance SimpleSModel ReversibleMarkov where
     getAlphabet (ReversibleMarkov a _ _ _) = a
     componentFrequencies smodel i = [frequencies smodel]!!i
 
+instance Scalable ReversibleMarkov where
+    scale x (ReversibleMarkov a s rm r) = ReversibleMarkov a s (scale x rm) (x*r)
+
 instance RateModel ReversibleMarkov where
     rate (ReversibleMarkov _ _ _ r) = r
-    scale x (ReversibleMarkov a s rm r) = ReversibleMarkov a s (Markov.scale x rm) (x*r)
 
 instance Show ReversibleMarkov where
     show q = show $ get_q q

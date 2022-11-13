@@ -1,6 +1,7 @@
 module Markov where
 
 import Data.Matrix
+import SModel.Rate
 
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
 foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matrix Double -> Matrix Double
@@ -19,7 +20,8 @@ foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matr
 -- For functions like equ, f81, and gtr, maybe I also need versions that just construct the matrix?
 data ReversibleMarkov = ReversibleMarkov (Matrix Double) (EVector Double) Double
 
-scale s (ReversibleMarkov q pi t) = ReversibleMarkov q pi (s*t)
+instance Scalable ReversibleMarkov where
+    scale f (ReversibleMarkov q pi s) = ReversibleMarkov q pi (s*f)
 
 plus_f_matrix pi = plus_gwf_matrix pi 1.0
 
