@@ -1227,6 +1227,32 @@ extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
     return {R};
 }
 
+extern "C" closure builtin_function_non_rev_from_vec(OperationArgs& Args)
+{
+    int n = Args.evaluate(0).as_int();
+
+    auto arg0 = Args.evaluate(1);
+    auto& S = arg0.as_<EVector>();
+
+    auto R = new Box<Matrix>(n,n);
+    if (S.size() != n*(n-1))
+	throw myexception()<<"Matrix of size "<<n<<" x "<<n<<" should have "<<n*(n-1)<<" off-diagonal entries, but got "<<S.size()<<"!";
+
+    int k=0;
+    for(int i=0;i<n;i++)
+    {
+	(*R)(i,i) = 0;
+	for(int j=0;j<n;j++)
+	{
+            if (i == j) continue;
+
+	    (*R)(i,j) = S[k++].as_double();
+	}
+    }
+
+    return {R};
+}
+
 // Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_fixup_diagonal_rates(OperationArgs& Args)
 {

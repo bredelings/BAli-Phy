@@ -4,6 +4,7 @@ import Data.Matrix
 import SModel.Rate
 
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
+foreign import bpcall "SModel:" non_rev_from_vec :: Int -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:fixup_diagonal_rates" fixup_diagonal_rates :: Matrix Double -> Matrix Double
 foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix :: EVector Double -> Double -> Matrix Double
 foreign import bpcall "SModel:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
@@ -36,6 +37,10 @@ class Scalable c => CTMC c where
 -- should I add a field for the stationary freqs?
 -- I could allow specifying it, or alternatively computing it and caching it.
 data Markov = Markov (Matrix Double) Double
+
+non_reversible_markov q = Markov (fixup_diagonal_rates q) 1.0
+
+non_rev_from_list n rates = non_rev_from_vec n (list_to_vector rates)
 
 instance Scalable Markov where
     scale f (Markov q s) = Markov q (s*f)
