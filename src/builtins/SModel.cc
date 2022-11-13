@@ -22,6 +22,63 @@ using std::abs;
 
 using Alphabet = PtrBox<alphabet>;
 
+extern "C" closure builtin_function_compute_stationary_freqs(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto& Q = arg0.as_<Box<Matrix>>();
+    int n = Q.size1();
+    assert(Q.size2() == n);
+
+    // Set up equations Q pi = 0, sum(pi) = 1
+
+    // 1. QQ = Q, but with an extra row of 1's
+    Eigen::MatrixXd QQ(n+1,n);
+    for(int i=0;i<n;i++)
+        for(int j=0;j<n;j++)
+            QQ(i,j) = Q(j,i); // transpose -- why?
+    // This sets up the sum(pi)
+    for(int j=0;j<n;j++)
+        QQ(n,j) = 1;
+
+    // 2. b = 0*n + 1
+    Eigen::VectorXd b(n+1);
+    for(int i=0;i<n;i++)
+        b[i] = 0;
+    // This sets up the sum(pi)
+    b[n] = 1;
+
+    // 3. Solve the equations
+    // Eigen::VectorXd epi = QQ.ColPivHouseholderQr.solve(b);  Maybe faster?
+    Eigen::VectorXd epi = QQ.fullPivLu().solve(b);
+
+    // 4. Copy back to an EVector double;
+    EVector pi(n);
+    for(int i=0;i<n;i++)
+        pi[i] = epi[i];
+
+    double err = (QQ * epi - b).cwiseAbs().sum();
+
+    // Compare with known pi
+
+    auto arg1 = Args.evaluate(1);
+    auto& pi0 = arg1.as_<EVector>();
+
+    // 2. b = 0*n + 1
+    Eigen::VectorXd epi0(n);
+    for(int i=0;i<n;i++)
+        epi0[i] = pi0[i].as_double();
+
+    double err2 = (QQ * epi0 - b).cwiseAbs().sum();
+    double err3 = (epi - epi0).cwiseAbs().sum();
+
+    if (err > 1.0e-5 or err2 > 1.0e-5 or err3 > 1.0e-5)
+    {
+        std::cerr<<"err1 = "<<err<<"   err2 = "<<err2<<"   err3 = "<<err3<<"\n";
+    }
+    return pi;
+}
+
+
 extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
