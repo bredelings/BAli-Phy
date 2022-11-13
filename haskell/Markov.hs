@@ -34,34 +34,55 @@ class Scalable c => CTMC c where
     get_pi m = builtin_get_pi (get_q m)
     qExp m = mexp (get_q m) 1.0
 
--- should I add a field for the stationary freqs?
--- I could allow specifying it, or alternatively computing it and caching it.
-data Markov = Markov (Matrix Double) Double
+-- Should I add gtr, equ n x, and f81 to this class? Probably...
 
-non_reversible_markov q = Markov (fixup_diagonal_rates q) 1.0
+-- Should I add SModel.ReversibleMarkov to this class?
+
+-- Can I make an SModel.Markov?
+
+instance Scalable (Matrix Double) where
+    scale f m = scaleMatrix f m
+
+instance CTMC (Matrix Double) where
+    get_q   m = m
+
+-- SHould I rename this to ctmc?
+-- can I hide the constructor, to guarantee that rows sum to zero, and frequencies sum to 1?
+data Markov = Markov (Matrix Double) (EVector Double) Double
+
+-- can I hide the Markov constructor?
+-- should I rename this function to ctmc?
+non_reversible_markov q pi = Markov q_fixed pi 1.0 where
+    q_fixed = fixup_diagonal_rates q
+
+non_reversible_markov' q = Markov q_fixed (builtin_get_pi q_fixed) 1.0 where
+    q_fixed = fixup_diagonal_rates q
 
 non_rev_from_list n rates = non_rev_from_vec n (list_to_vector rates)
 
 instance Scalable Markov where
-    scale f (Markov q s) = Markov q (s*f)
+    scale f (Markov q pi s) = Markov q pi (s*f)
 
 instance CTMC Markov where
-    get_q  (Markov q scale) = scaleMatrix scale q
-    qExp   (Markov q scale) = mexp q scale
+    get_q  (Markov q _  factor) = scaleMatrix factor q
+    get_pi (Markov _ pi _     ) = pi
+    qExp   (Markov q _  factor) = mexp q factor
 
-data ReversibleMarkov = ReversibleMarkov (Matrix Double) (EVector Double) Double
+data ReversibleMarkov = ReversibleMarkov Markov
 
 instance Scalable ReversibleMarkov where
-    scale f (ReversibleMarkov q pi s) = ReversibleMarkov q pi (s*f)
+    scale f (ReversibleMarkov m) = ReversibleMarkov $ scale f m
 
 instance CTMC ReversibleMarkov where
-    get_q  (ReversibleMarkov q _  scale) = scaleMatrix scale q
-    get_pi (ReversibleMarkov _ pi scale) = pi
-    qExp   (ReversibleMarkov q _  scale) = mexp q scale
+    get_q  (ReversibleMarkov m) = get_q m
+    get_pi (ReversibleMarkov m) = get_pi m
+    qExp   (ReversibleMarkov m) = qExp m
 
 plus_f_matrix pi = plus_gwf_matrix pi 1.0
 
-reversible_markov q pi = ReversibleMarkov (fixup_diagonal_rates q) pi 1.0
+reversible_markov q pi = ReversibleMarkov $ non_reversible_markov q pi
+
+reversible_markov' q = ReversibleMarkov $ non_reversible_markov' q
 
 gtr_sym n exchange = builtin_gtr_sym (list_to_vector exchange) n
 
