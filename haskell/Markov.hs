@@ -19,6 +19,21 @@ foreign import bpcall "SModel:compute_stationary_freqs" builtin_get_pi :: Matrix
 --  want to use the equilibrium rate.
 
 -- For functions like equ, f81, and gtr, maybe I also need versions that just construct the matrix?
+
+-- Storing the rate separately means that we don't need to recompute the equilibrium frequencies
+--    when we are just rescaling.
+-- Originally, it probably was a way to avoid recomputing the eigensystem when rescaling.
+
+class Scalable c => CTMC c where
+    equ_freqs :: c -> EVector Double
+    rate_matrix :: c -> Matrix Double
+    mExp :: c -> Matrix Double
+
+data Markov = Markov (Matrix Double) Double
+
+instance Scalable Markov where
+    scale f (Markov q s) = Markov q (s*f)
+
 data ReversibleMarkov = ReversibleMarkov (Matrix Double) (EVector Double) Double
 
 instance Scalable ReversibleMarkov where
