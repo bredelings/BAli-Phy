@@ -6,6 +6,7 @@ import SModel.ReversibleMarkov
 import SModel.MixtureModel
 import SModel.Rate
 import qualified Markov
+import Markov (get_q, get_pi)
 import Data.Matrix -- for fromLists, %*%
 
 foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double

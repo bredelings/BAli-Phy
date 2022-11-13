@@ -4,6 +4,7 @@ import Bio.Alphabet
 import SModel.ReversibleMarkov
 import SModel.Nucleotides
 import qualified Markov
+import Markov (get_q, get_pi)
 
 type DoubletAlphabet = Alphabet
 

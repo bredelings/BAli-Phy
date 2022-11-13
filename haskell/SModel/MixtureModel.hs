@@ -5,6 +5,7 @@ import SModel.Rate
 import SModel.Frequency
 import Probability.Distribution.Discrete -- for mix
 import Tree
+import Markov (qExp)
 
 import SModel.ReversibleMarkov
 

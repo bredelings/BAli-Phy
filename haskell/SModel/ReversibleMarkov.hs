@@ -1,6 +1,7 @@
 module SModel.ReversibleMarkov (module SModel.ReversibleMarkov, module SModel.Frequency) where
 
 import qualified Markov
+import           Markov (CTMC, get_q, get_pi, qExp)
 import           SModel.Simple
 import           SModel.Rate
 import           SModel.Frequency
@@ -39,15 +40,15 @@ foreign import bpcall "SModel:get_equilibrium_rate" get_equilibrium_rate :: Alph
 
 data ReversibleMarkov = ReversibleMarkov Alphabet (EVector Int) Markov.ReversibleMarkov Double
 
-qExp (ReversibleMarkov a s m r) = Markov.qExp m
-
+-- This is used both for observations, and also to determine which states are the same for computing rates.
 get_smap (ReversibleMarkov a s m r) = s
 
 get_alphabet (ReversibleMarkov a s m r) = a
 
-get_q (ReversibleMarkov _ _ m  _) = Markov.get_q m
-
-get_pi (ReversibleMarkov _ _ m _) = Markov.get_pi m
+instance CTMC ReversibleMarkov where
+    qExp (ReversibleMarkov _ _ m _) = qExp m
+    get_pi (ReversibleMarkov _ _ m _) = get_pi m
+    get_q (ReversibleMarkov _ _ m  _) = get_q m
 
 frequencies = get_pi
 
@@ -56,7 +57,7 @@ simple_smap a = list_to_vector [0..(alphabetSize a)-1]
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 reversible_markov a smap q pi = ReversibleMarkov a smap rm rate where
     rm = Markov.reversible_markov q pi
-    rate = get_equilibrium_rate a smap (Markov.get_q rm) pi
+    rate = get_equilibrium_rate a smap (get_q rm) pi
 
 equ a = Markov.equ (alphabetSize a) 1.0
 
@@ -98,8 +99,8 @@ instance SimpleSModel ReversibleMarkov where
     branch_transition_p (SingleBranchLengthModel tree smodel) b = [qExp $ scale (branch_length tree b/r) smodel]
         where r = rate smodel
     distribution _ = [1.0]
-    weighted_frequency_matrix smodel@(ReversibleMarkov _ _ m _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [Markov.get_pi m])
-    frequency_matrix smodel@(ReversibleMarkov _ _ m _) = builtin_frequency_matrix (list_to_vector [Markov.get_pi m])
+    weighted_frequency_matrix smodel@(ReversibleMarkov _ _ m _) = builtin_weighted_frequency_matrix (list_to_vector [1.0]) (list_to_vector [get_pi m])
+    frequency_matrix smodel@(ReversibleMarkov _ _ m _) = builtin_frequency_matrix (list_to_vector [get_pi m])
     nBaseModels _ = 1
     stateLetters rm = get_smap rm
     getAlphabet (ReversibleMarkov a _ _ _) = a

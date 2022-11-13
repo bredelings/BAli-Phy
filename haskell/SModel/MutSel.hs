@@ -6,6 +6,7 @@ import SModel.Codons
 import SModel.Frequency -- for get_ordered_elements
 import Bio.Alphabet
 import qualified Markov
+import Markov (get_q, get_pi)
 
 foreign import bpcall "SModel:" mut_sel_q :: Matrix Double -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:" mut_sel_pi :: EVector Double -> EVector Double -> EVector Double

@@ -44,7 +44,7 @@ instance Scalable (Matrix Double) where
     scale f m = scaleMatrix f m
 
 instance CTMC (Matrix Double) where
-    get_q   m = m
+    get_q m = m
 
 -- SHould I rename this to ctmc?
 -- can I hide the constructor, to guarantee that rows sum to zero, and frequencies sum to 1?

@@ -5,6 +5,7 @@ import SModel.ReversibleMarkov
 import SModel.Nucleotides
 import Data.Matrix
 import qualified Markov
+import Markov (get_q, get_pi)
 
 type TripletAlphabet = Alphabet
 type CodonAlphabet = TripletAlphabet
