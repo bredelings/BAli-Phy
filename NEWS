@@ -1,3 +1,8 @@
+* 4.0-alpha8 (Nov 15, 2022)
+ - Further improvements to the Haskell type system -- allow GADTs and equality constraints.
+ - Fixes to trees-bootstrap.
+ - Accept '?' again as maybe-an-N-maybe-a-gap.
+
 * 4.0-alpha7 (Aug 18, 2022)
  - make BES work with typechecking
  - allow specifying model arguments as `-m Model arg1 arg2`
