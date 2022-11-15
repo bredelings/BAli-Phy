@@ -151,6 +151,8 @@ map f (Set xs) = Set $ List.map f xs
 
 elems = toAscList
 
+toList (Set xs) = xs
+
 toAscList (Set xs) = List.sort xs
 
 toDescList = reverse . toAscList
