@@ -1,6 +1,7 @@
 module Probability.Distribution.List where
 
 import Probability.Random
+import Data.Unordered
 
 independent_densities (d:ds) (x:xs) = densities d x ++ independent_densities ds xs
 independent_densities [] []         = []
