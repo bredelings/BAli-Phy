@@ -40,9 +40,9 @@ import Data.Either
 import Data.Eq
 import Data.Tuple
 import Data.Maybe
-import Data.List hiding (foldl', foldr', notElem, elem, length, null)
+import Data.List hiding (foldl', foldr', notElem, elem, length, null, sum, product, maximum, minimum, foldr, foldl, foldr1, foldl1)
 import Data.Array
-import Data.Foldable (notElem, elem, length, null)
+import Data.Foldable hiding (fold, foldMap', toList, foldl', foldr')
 import Data.Function
 import Data.Functor
 import Data.Ord

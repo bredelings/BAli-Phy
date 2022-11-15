@@ -2,6 +2,7 @@ module Data.Set where
 
 import Prelude hiding (filter,foldl,foldr,null,map,take,drop,splitAt,empty)
 import qualified Data.List as List
+import qualified Data.Foldable as F
     
 -- This should at the minimum allow adding and removing elements, and
 -- holding identical elements at most once.
@@ -150,11 +151,12 @@ map f (Set xs) = Set $ List.map f xs
 
 elems = toAscList
 
-toList (Set xs) = xs
-
 toAscList (Set xs) = List.sort xs
 
 toDescList = reverse . toAscList
 
 instance Show a => Show (Set a) where
     show (Set xs) = "Set " ++ show xs
+
+instance F.Foldable Set where
+    toList (Set xs) = xs
