@@ -684,7 +684,12 @@ Hs::ModuleDecls Module::rename(const simplifier_options& opts, Hs::ModuleDecls M
     M = ::rename(opts, *this, M);
 
     if (opts.dump_renamed)
-        std::cout<<name<<"[renamed]:\n"<<M.value_decls.print()<<"\n\n";
+    {
+        std::cout<<name<<"[renamed]:\n";
+        std::cout<<M.type_decls.print()<<"\n";
+        std::cout<<M.value_decls.print()<<"\n";
+        std::cout<<"\n";
+    }
 
     return M;
 }
