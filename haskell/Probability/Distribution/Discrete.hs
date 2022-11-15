@@ -1,6 +1,7 @@
 module Probability.Distribution.Discrete where
 
 import Probability.Random
+import Data.List -- for foldl'
 
 uniformQuantiles q n = map (\i -> q ((2*(intToDouble i)+1)/(intToDouble n)) ) (take n [1..])
 

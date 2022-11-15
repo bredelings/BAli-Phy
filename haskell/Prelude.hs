@@ -8,6 +8,7 @@ module Prelude (module Prelude,
                 module Data.Array,
                 module Data.Function,
                 module Data.Functor,
+                module Data.Foldable,
                 module Data.Ord,
                 module Text.Show,
                 module Text.Read,
@@ -39,8 +40,9 @@ import Data.Either
 import Data.Eq
 import Data.Tuple
 import Data.Maybe
-import Data.List
+import Data.List hiding (foldl', foldr', notElem, elem, length, null)
 import Data.Array
+import Data.Foldable (notElem, elem, length, null)
 import Data.Function
 import Data.Functor
 import Data.Ord
