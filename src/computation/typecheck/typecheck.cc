@@ -1088,16 +1088,17 @@ tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skol
     // 2. Handle constraints
     else if (auto ct = polytype.to<Hs::ConstrainedType>())
     {
-        auto [wrap2, tvs2, givens2, type2] = skolemize(ct->type, skolem);
-
         // Compute givens from local givens followed by givens of sub-type.
         auto givens = constraints_to_lie(ct->context.constraints);
+        auto wrap1 = Core::WrapLambda( vars_from_lie(givens) );
+
+        auto [wrap2, tvs2, givens2, type2] = skolemize(ct->type, skolem);
+
+        // Append the inner givens to the list
         for(auto& given:  givens2)
             givens.push_back(given);
 
-        auto wrap = Core::WrapLambda( vars_from_lie(givens) ) * wrap2;
-
-        return {wrap, tvs2, givens, type2};
+        return {wrap1 * wrap2, tvs2, givens, type2};
     }
 
     // 3. If the type has no foralls and no constraints, then it is just a rho-type.
