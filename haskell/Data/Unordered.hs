@@ -1,6 +1,9 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 module Data.Unordered where
 
 import Data.Functor
+import Data.Foldable
+import Compiler.Num
 
 data Unordered a
 
@@ -14,3 +17,6 @@ foreign import bpcall "Array:" unorderedMap :: (a -> b) -> Unordered a -> Unorde
 
 instance Functor Unordered where
     fmap f u = unorderedMap f u
+
+instance Foldable Unordered where
+    toList u = [ unorderedGetIndex u i | i <- [0 .. unorderedSize u - 1]]
