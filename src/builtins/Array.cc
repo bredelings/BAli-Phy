@@ -107,3 +107,93 @@ extern "C" closure builtin_function_arrayMap(OperationArgs& Args)
     return result;
 }
 
+
+extern "C" closure builtin_function_mkUnordered(OperationArgs& Args)
+{
+    // 1. Compute the number of elements
+    int n = Args.evaluate(0).as_int();
+    assert(n >= 0);
+
+    // 2. Get a reference to the initial object
+    int x_reg = Args.reg_for_slot(1);
+
+    // 3. Allocate space for the result closure
+    closure result;
+    result.Env.resize(n);
+
+    object_ptr<expression> exp = new expression(constructor("Unordered",n));
+    exp->sub.resize(n);
+
+    // 4. Compute the expression fields and environment references.
+    for(int i=0;i<n;i++)
+    {
+        // Compute the environment index for each slot.
+	exp->sub[i] = index_var(n - 1 - i);
+	// Each slot points to x_reg.
+        result.Env[i] = x_reg;
+    }
+
+    result.exp = exp;
+
+    return result;
+}
+
+extern "C" closure builtin_function_unorderedSize(OperationArgs& Args)
+{
+    int N = Args.evaluate_slot_to_closure(0).exp.size();
+
+    return {N};
+}
+
+extern "C" closure builtin_function_unorderedGetIndex(OperationArgs& Args)
+{
+    extern long total_index_op;
+    total_index_op++;
+
+    int n = Args.evaluate(1).as_int();
+    // Do this second, so that evaluation of the 1st argument can't call expand_memory afterwards.
+    const closure& C = Args.evaluate_slot_to_closure(0);
+
+    if (not is_constructor(C.exp.head()) or C.exp.head().as_<constructor>().f_name != "Unordered")
+	throw myexception()<<"Trying to index expression that is not an unordered collection:   "<<C.exp;
+
+    int N = C.exp.size();
+    assert(C.Env.size() == C.exp.size());
+
+    if (n < 0 or n >= N)
+	throw myexception()<<"Trying to access index "<<n<<" in unordered collection "<<N<<".";
+
+    // Return a reference to the heap variable pointed to by the nth entry
+    return {index_var(0), {C.Env[n]} };
+}
+
+extern "C" closure builtin_function_unorderedMap(OperationArgs& Args)
+{
+    /**
+     ** NOTE: Because the initial object is created with an expression that looks at environment
+     **       slots in order, we don't need the change the expression.
+     **/
+
+    // 1. Get the location of the function
+    int f_reg = Args.reg_for_slot(0);
+
+    // 2. Get a copy of the input array
+    auto result = Args.evaluate_slot_to_closure(1);
+    int n = result.Env.size();
+
+    // 3. Create the expression part of an "apply <1> <0>" closure.
+    //    Indexing is from the end, which is why <1> comes before <1>.
+    expression_ref apply_1_0 = {index_var(1),index_var(0)};
+
+    // 4. Replace each x with (f x)
+    for(int i=0;i<n;i++)
+    {
+        // The current entry should already be an index_var pointing to the right slot.
+	int x_reg = result.Env[i];
+
+	// Allocate a reg for (f x) and record it in the environment
+	result.Env[i] = Args.allocate({apply_1_0, {f_reg, x_reg}});
+    }
+
+    return result;
+}
