@@ -60,29 +60,16 @@ instance Foldable [] where
     toList xs = xs
 
 
-notElem :: (Foldable t, Eq a) => a -> t a -> Bool
 notElem x c = not (elem x c)
 
-{-
+concat xs   = foldr (L.++) [] xs
 
-concat xs = foldr (++) [] xs
+concatMap f = concat . L.map f
 
-concatMap f = concat . map f
+and         =  foldr (&&) True
 
-and              =  foldr (&&) True
+or          =  foldr (||) False
 
-or               =  foldr (||) False
+any p       =  or . L.map p
 
-any p            =  or . map p
-
-all p            =  and . map p
-
-sum     = foldl (+) 0
-
-product = foldl (*) 1
-
-maximum = foldl1 (max)
-
-minimum = foldl1 (min)
-
--}
+all p       =  and . L.map p
