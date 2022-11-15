@@ -107,7 +107,7 @@ instance BranchLengthTree t => BranchLengthTree (LabelledTreeImp t) where
     branch_length (LabelledTree tree _) b = branch_length tree b
 
 scale_branch_lengths factor (BranchLengthTree t ds) = (BranchLengthTree t ds')
-    where ds' = arrayMap (factor*) ds
+    where ds' = fmap (factor*) ds
 
 -- Given that this is a tree, would numNodes t - numBranches t + 2 work for n_leaves >=3?
 numLeaves t = length $ leaf_nodes t

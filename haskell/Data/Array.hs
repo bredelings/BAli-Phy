@@ -12,6 +12,7 @@ module Data.Array (module Data.Array,
 -- See Data.Array.Unboxed
 
 import Data.Bool
+import Data.Functor
 import Data.Ix
 import Data.List
 import Data.Function
@@ -24,7 +25,8 @@ infixl 9 !
 foreign import bpcall "Array:getIndex" (!) :: Array a b -> a -> b
 
 foreign import bpcall "Array:arraySize" numElements :: Array a b -> Int
-foreign import bpcall "Array:mkArray" mkArray :: a -> (a -> b) -> Array a b
+foreign import bpcall "Array:" arrayMap :: (a -> b) -> Array ix a -> Array ix b
+foreign import bpcall "Array:" mkArray :: a -> (a -> b) -> Array a b
 
 listArray n l = mkArray n (\i -> l !! i)
 
@@ -40,8 +42,7 @@ elems   arr = [ arr!ix | ix <- indices arr ]
 
 assocs  arr = [ (ix, arr!ix) | ix <- indices arr ]
 
--- We can't make an Functor instance for Array Int.
--- We can only make a Fuctor instance for Ix a => Array a
-arrayMap f arr = mkArray (numElements arr) (\i -> f (arr!i))
+instance Functor (Array ix) where
+    fmap = arrayMap
 
 array_to_vector x = list_to_vector (elems x)

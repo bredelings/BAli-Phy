@@ -106,7 +106,7 @@ annotated_alignment_prs tree hmms model alignment = do
       as = pairwise_alignments alignment
       ls = sequence_lengths alignment
       lengthp = snd model
-      length_prs = arrayMap lengthp ls
+      length_prs = fmap lengthp ls
   property "lengthp" lengthp
   property "hmms" hmms
   property "pr" pr

@@ -29,17 +29,14 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
     result.Env.resize(n);
     for(int i=0;i<n;i++)
     {
-	// i
-	int i_reg = Args.allocate(expression_ref(i));
-
-	// %1 %0 {f,i}
-	int apply_reg = Args.allocate({apply_E,{f_reg, i_reg}});
-
-	// change to result.exp <<= index_var(i)
+	// Look at the right splot in the environment
 	exp->sub[i] = index_var(n - 1 - i);
 
+	// Allocate a reg for i
+	int i_reg = Args.allocate(expression_ref(i));
+
 	// Add the var to the environment
-	result.Env[i] = apply_reg;
+	result.Env[i] = Args.allocate({apply_E,{f_reg, i_reg}});
     }
     result.exp = exp;
   
@@ -74,3 +71,39 @@ extern "C" closure builtin_function_getIndex(OperationArgs& Args)
     // Return a reference to the heap variable pointed to by the nth entry
     return {index_var(0), {C.Env[n]} };
 }
+
+extern "C" closure builtin_function_arrayMap(OperationArgs& Args)
+{
+    // 1. Get the location of the function
+    int f_reg = Args.reg_for_slot(0);
+
+    // 2. Get a copy of the input array
+    auto result = Args.evaluate_slot_to_closure(1);
+    int n = result.Env.size();
+
+    // 3. Create the expression part of an "apply <1> <0>" closure.
+    //    Indexing is from the end, which is why <1> comes before <1>.
+    expression_ref apply_E;
+    {
+	expression_ref fE = index_var(1);
+	expression_ref argE = index_var(0);
+	apply_E = {fE, argE};
+    }
+    expression_ref apply_1_0 = {index_var(1),index_var(0)};
+
+    // 4. Replace each x with (f x)
+    for(int i=0;i<n;i++)
+    {
+        // The current entry should already be an index_var pointing to the right slot.
+	int x_reg = result.Env[i];
+
+	// Allocate a reg for (f x)
+	int apply_reg = Args.allocate({apply_E, {f_reg, x_reg}});
+
+	// Add the reg to the environment
+	result.Env[i] = apply_reg;
+    }
+
+    return result;
+}
+
