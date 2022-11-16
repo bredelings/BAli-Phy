@@ -22,8 +22,15 @@ data AnnotatedDensity a where
 in_edge name node = InEdge name node
 property name node = PropertyEdge name node
 
+
+instance Functor AnnotatedDensity where
+    fmap f x = ADBind x (\result -> ADReturn (f result))
+
+instance Applicative AnnotatedDensity where
+    pure  x = ADReturn x
+    f <*> x = ADBind x (\x' -> ADBind f (\f' -> pure (f' x')))
+
 instance Monad AnnotatedDensity where
-    return x = ADReturn x
     f >>= g = ADBind f g
 
 
@@ -69,6 +76,13 @@ data TKEffects a = SamplingRate Double (TKEffects a)
                  | TKReturn a
                  | forall b . TKBind (TKEffects b) (b -> TKEffects a)
 
+instance Functor TKEffects where
+    fmap f x = TKBind x (\result -> TKReturn (f result))
+
+instance Applicative TKEffects where
+    pure  x = TKReturn x
+    f <*> x = TKBind x (\x' -> TKBind f (\f' -> pure (f' x')))
+
 instance Monad TKEffects where
     return x = TKReturn x
     f >>= g  = TKBind f g
@@ -90,8 +104,11 @@ data Random a where
 instance Functor Random where
     fmap f r = RanBind r (return . f)
 
+instance Applicative Random where
+    pure  x = RanReturn x
+    f <*> x = RanBind x (\x' -> RanBind f (\f' -> pure (f' x')))
+
 instance Monad Random where
-    return x = RanReturn x
     f >>= g  = RanBind f g
     mfix f   = RanMFix f
 

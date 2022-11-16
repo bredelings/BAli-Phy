@@ -5,15 +5,15 @@ import Compiler.Base
 import Compiler.Error  -- for error
 import Data.Function   -- for id
 import Data.List
-import Data.Function
+import Data.Functor
 import Data.Ord
 import Compiler.Num
 
--- import Control.Applicative
+import Control.Applicative
 
 infixl 1 >>, >>=
 
-class Monad m where
+class Applicative m => Monad m where
     return :: a -> m a
     (>>=)  :: m a -> (a -> m b) -> m b
     (>>)   :: m a -> m b -> m b
@@ -21,6 +21,8 @@ class Monad m where
     mfix   :: (a -> m a) -> m a
     unsafeInterleaveIO :: m a -> m a
 
+
+    return = pure
     f >> g = f >>= (\x -> g)
     fail s = error s
     mfix = error "no mfix for this class"

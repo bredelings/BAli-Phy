@@ -34,7 +34,6 @@ instance Alternative Parser where
                
 instance Monad Parser where
     p >>= f   = Parser( \s -> concat [parse (f x) s' | (x,s') <- parse p s] )
-    return x  = Parser( \s -> [(x,s)] )
 
 
 runParser :: Parser a -> String -> a
