@@ -98,7 +98,40 @@ std::ostream& operator<<(std::ostream& o, token_type);
 
 class effect;
 
-class reg
+struct reg_deps
+{
+    /// Which reg's were used to reduce this expression?
+    boost::container::small_vector< std::pair<int,int>, 2 > used_regs;
+
+    boost::container::small_vector< std::pair<int,int>, 2 > forced_regs;
+
+    /// Which regs (reg,index) USE this reg?
+    boost::container::small_vector<std::pair<int,int>, 2> used_by;
+
+    /// Which regs (reg,index) FORCE this reg?
+    boost::container::small_vector<std::pair<int,int>, 2> forced_by;
+
+    /// Which reduction values made use of the value of this expression (via call)
+    boost::container::small_vector<int, 5> called_by;
+
+    /// Which reduction values made use of the value of this expression (via call)
+    boost::container::small_vector<int, 5> called_by_index_vars;
+
+    std::pair<int, int> index_var_ref;
+
+    void clear();
+
+    void check_cleared() const;
+
+    reg_deps& operator=(const reg_deps&) = delete;
+    reg_deps& operator=(reg_deps&&) noexcept;
+
+    reg_deps() = default;
+    reg_deps(const reg_deps&) = delete;
+    reg_deps(reg_deps&&) noexcept;
+};
+
+class reg: public reg_deps
 {
 public:
     /* The closure */
@@ -117,26 +150,8 @@ public:
 
     type_t type = type_t::unevaluated;
 
-    /// Which reg's were used to reduce this expression?
-    boost::container::small_vector< std::pair<int,int>, 2 > used_regs;
-
-    boost::container::small_vector< std::pair<int,int>, 2 > forced_regs;
-
-    /// Which regs (reg,index) USE this reg?
-    boost::container::small_vector<std::pair<int,int>, 2> used_by;
-
-    /// Which regs (reg,index) FORCE this reg?
-    boost::container::small_vector<std::pair<int,int>, 2> forced_by;
-
-    /// Which reduction values made use of the value of this expression (via call)
-    boost::container::small_vector<int, 5> called_by;
-
-    /// Which reduction values made use of the value of this expression (via call)
-    boost::container::small_vector<int, 5> called_by_index_vars;
-
     std::pair<int, int> created_by;
 
-    std::pair<int, int> index_var_ref;
 
     bitmask_8 flags;
 

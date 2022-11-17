@@ -180,6 +180,60 @@ Step::Step(Step&& S) noexcept
      flags ( S.flags )
 { }
 
+
+void reg_deps::clear()
+{
+    truncate(used_regs);
+    truncate(forced_regs);
+    truncate(used_by);
+    truncate(forced_by);
+    truncate(called_by);
+    truncate(called_by_index_vars);
+    index_var_ref = {0,0};
+}
+
+void reg_deps::check_cleared() const
+{
+    assert(used_regs.empty());
+    assert(forced_regs.empty());
+    assert(used_by.empty());
+    assert(forced_by.empty());
+    assert(called_by.empty());
+    assert(called_by_index_vars.empty());
+    assert(index_var_ref.first == 0);
+    assert(index_var_ref.second == 0);
+}
+
+reg_deps& reg_deps::operator=(reg_deps&& RD) noexcept
+{
+    used_regs  = std::move( RD.used_regs );
+
+    forced_regs  = std::move( RD.forced_regs );
+
+    used_by = std::move( RD.used_by );
+
+    forced_by = std::move( RD.forced_by );
+
+    called_by = std::move( RD.called_by );
+
+    called_by_index_vars = std::move( RD.called_by_index_vars );
+
+    index_var_ref = std::move(RD.index_var_ref);
+
+    return *this;
+}
+
+reg_deps::reg_deps(reg_deps&& RD) noexcept
+    :used_regs ( std::move(RD.used_regs) ),
+     forced_regs (std::move(RD.forced_regs) ),
+     used_by ( std::move( RD.used_by) ),
+     forced_by ( std::move( RD.forced_by) ),
+     called_by ( std::move( RD.called_by) ),
+     called_by_index_vars ( std::move( RD.called_by_index_vars) ),
+     index_var_ref( std::move(RD.index_var_ref) )
+{ }
+
+
 void reg::mark_unconditionally_evaluated()
 {
     flags.set(reg_is_always_evaluated_bit);
@@ -192,57 +246,32 @@ bool reg::is_unconditionally_evaluated() const
 
 void reg::clear()
 {
+    reg_deps::clear();
     C.clear();
     type = type_t::unevaluated;
-    truncate(used_regs);
-    truncate(forced_regs);
-    truncate(used_by);
-    truncate(forced_by);
-    truncate(called_by);
-    truncate(called_by_index_vars);
     created_by = {0,0};
-    index_var_ref = {0,0};
     flags.reset();
 }
 
 void reg::check_cleared() const
 {
+    reg_deps::check_cleared();
     assert(not C);
     assert(type == type_t::unevaluated);
-    assert(used_regs.empty());
-    assert(forced_regs.empty());
-    assert(used_by.empty());
-    assert(forced_by.empty());
-    assert(called_by.empty());
-    assert(called_by_index_vars.empty());
     assert(created_by.first == 0);
     assert(created_by.second == 0);
-    assert(index_var_ref.first == 0);
-    assert(index_var_ref.second == 0);
     assert(flags.none());
 }
 
 reg& reg::operator=(reg&& R) noexcept
 {
+    reg_deps::operator=(std::move(R));
+
     C = std::move(R.C);
 
     type = R.type;
 
-    used_regs  = std::move( R.used_regs );
-
-    forced_regs  = std::move( R.forced_regs );
-
-    used_by = std::move( R.used_by );
-
-    forced_by = std::move( R.forced_by );
-
-    called_by = std::move( R.called_by );
-
-    called_by_index_vars = std::move( R.called_by_index_vars );
-
     created_by = std::move(R.created_by);
-
-    index_var_ref = std::move(R.index_var_ref);
 
     flags = R.flags;
 
@@ -250,16 +279,10 @@ reg& reg::operator=(reg&& R) noexcept
 }
 
 reg::reg(reg&& R) noexcept
-    :C( std::move(R.C) ),
+    :reg_deps( std::move(R)),
+     C( std::move(R.C) ),
      type ( R.type ),
-     used_regs ( std::move(R.used_regs) ),
-     forced_regs (std::move(R.forced_regs) ),
-     used_by ( std::move( R.used_by) ),
-     forced_by ( std::move( R.forced_by) ),
-     called_by ( std::move( R.called_by) ),
-     called_by_index_vars ( std::move( R.called_by_index_vars) ),
      created_by( std::move(R.created_by) ),
-     index_var_ref( std::move(R.index_var_ref) ),
      flags ( R.flags )
 { }
 
