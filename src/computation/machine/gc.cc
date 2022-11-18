@@ -177,7 +177,7 @@ void reg_heap::trace_and_reclaim_unreachable()
 	{
             clear_back_edges_for_reg(r);
             assert(not has_result1(r));
-            regs.reclaim_used(r);
+            reclaim_used(r);
 	}
         else
             regs.unmark(r);
