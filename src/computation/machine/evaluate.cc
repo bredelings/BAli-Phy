@@ -372,6 +372,9 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
             int sp = regs[r].created_by.first;
 
+            if (not regs[r].deps_index)
+                regs[r].deps_index = deps.allocate();
+
             try
             {
                 RegOperationArgs1 Args(r, s, sp, *this);
@@ -839,6 +842,9 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
             int s = get_shared_step(r);
 
             int sp = regs[r].created_by.first;
+
+            if (not regs[r].deps_index)
+                regs[r].deps_index = deps.allocate();
 
             try
             {

@@ -302,7 +302,7 @@ void reg_heap::unshare_regs1(int t)
     for(;i<delta_result.size();i++)
         if (auto [r,_] = delta_result[i]; has_result1(r))
         {
-            auto& R = regs[r];
+            auto& R = deps_for_reg(r);
 
 	    // Look at steps that CALL the reg in the root (that has overridden result in t)
             for(int s2: R.called_by)
@@ -435,7 +435,7 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
     // 2. Scan regs with different result in t that are used/called by root steps/results
     for(int i=0;i<unshared_regs.size();i++)
     {
-        auto& R = regs[unshared_regs[i]];
+        auto& R = deps_for_reg(unshared_regs[i]);
 
         // Look at steps that CALL the reg in the root (that has overridden result in t)
         for(int s2: R.called_by)
@@ -590,11 +590,12 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
     for(int i=0;i<zero_count_regs.size();i++)
     {
         int r = zero_count_regs[i];
-        for(auto [r2,_]: regs[r].used_regs)
+        auto& RD = deps_for_reg(r);
+        for(auto [r2,_]: RD.used_regs)
             dec_force_count(r2);
-        for(auto [r2,_]: regs[r].forced_regs)
+        for(auto [r2,_]: RD.forced_regs)
             dec_force_count(r2);
-        int ref = regs[r].index_var_ref.first;
+        int ref = RD.index_var_ref.first;
         if (ref > 0)
             dec_force_count(ref);
 

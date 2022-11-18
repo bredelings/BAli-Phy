@@ -152,6 +152,7 @@ public:
 
     std::pair<int, int> created_by;
 
+    std::optional<int> deps_index;
 
     bitmask_8 flags;
 
@@ -191,6 +192,8 @@ constexpr int initially_unforced_bit = 6;
 class reg_heap: public Object
 {
     pool<reg> regs;
+
+    mutable pool<reg_deps> deps;
 
     mutable pool<Step> steps;
 
@@ -235,6 +238,10 @@ public:
     bool reg_exists(int r) const;
     bool step_exists_in_root(int s) const;
     size_t size() const;
+
+    bool reg_has_deps(int r) const;
+    const reg_deps& deps_for_reg(int r) const;
+          reg_deps& deps_for_reg(int r);
 
     reg_heap* clone() const {std::abort();}
 
@@ -829,6 +836,12 @@ inline void reg_heap::mark_reg_constant_no_force(int r)
 {
     assert( reg_is_constant_no_force(r) or reg_is_unevaluated(r));
 
+    if (regs[r].deps_index)
+    {
+        deps.reclaim_used(*regs[r].deps_index);
+        regs[r].deps_index = {};
+    }
+
     regs[r].type = reg::type_t::constant_no_force;
 }
 
@@ -852,12 +865,19 @@ inline bool reg_heap::unevaluated_reg_is_index_var_no_force(int r) const
 inline bool reg_heap::reg_is_index_var_no_force(int r) const
 {
     assert(not reg_is_unevaluated(r));
+
     return unevaluated_reg_is_index_var_no_force(r);
 }
 
 inline void reg_heap::mark_reg_index_var_no_force(int r)
 {
     assert( unevaluated_reg_is_index_var_no_force(r) or reg_is_unevaluated(r));
+
+    if (regs[r].deps_index)
+    {
+        deps.reclaim_used(*regs[r].deps_index);
+        regs[r].deps_index = {};
+    }
 
     regs.access(r).type = reg::type_t::index_var_no_force;
 }
@@ -942,4 +962,22 @@ inline void reg_heap::note_step_in_root(int s)
         mark_effect_to_register_at_step(s);
 }
 
+inline bool reg_heap::reg_has_deps(int r) const
+{
+    return regs[r].deps_index.has_value();
+}
+
+inline const reg_deps& reg_heap::deps_for_reg(int r) const
+{
+//    assert(reg_has_deps(r));
+//    return deps[*regs[r].deps_index];
+    return regs[r];
+}
+
+inline reg_deps& reg_heap::deps_for_reg(int r)
+{
+//    assert(reg_has_deps(r));
+//    return deps[*regs[r].deps_index];
+    return regs[r];
+}
 #endif
