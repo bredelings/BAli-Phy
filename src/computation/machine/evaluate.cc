@@ -217,6 +217,8 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
     else if (reg_is_changeable(r))
     {
+        assert(reg_has_deps(r));
+
         total_changeable_eval++;
         int result = result_for_reg(r);
 
@@ -314,7 +316,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
             // Update the index_var to point to the end of the index_var_no_force chain.
             if (r2 != r3) regs[r].C.Env[0] = r3;
 
-            if (regs[r].forced_regs.empty())
+            if (not reg_has_forces(r))
             {
                 mark_reg_index_var_no_force(r);
                 return {r3,result};
@@ -345,7 +347,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         else if (is_WHNF(expression_at(r)))
         {
             assert(not expression_at(r).is_a<Operation>());
-            if (regs[r].forced_regs.empty())
+            if (not reg_has_forces(r))
                 mark_reg_constant_no_force(r);
             else
                 mark_reg_constant_with_force(r);
@@ -387,7 +389,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 {
                     assert( not reg_has_call(r) );
                     assert( not reg_has_value(r) );
-                    assert( regs[r].used_regs.empty() );
+                    assert( not reg_has_uses(r) );
                     assert( steps[s].created_regs.empty() ); // Any allocations should have gone to sp
                     set_C( r, std::move(value) );
                     steps.reclaim_used(s);
@@ -780,7 +782,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 
             assert( not has_step1(r) );
 
-            bool has_forces = not regs[r].forced_regs.empty();
+            bool has_forces = reg_has_forces(r);
 
             int r2 = closure_at(r).reg_for_index_var();
             auto [r3, result] = incremental_evaluate2(r2, has_forces);
@@ -816,7 +818,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
         // Check for WHNF *OR* heap variables
         else if (is_WHNF(expression_at(r)))
         {
-            if (regs[r].forced_regs.empty())
+            if (not reg_has_forces(r))
                 mark_reg_constant_no_force(r);
             else
                 mark_reg_constant_with_force(r);
@@ -858,7 +860,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
                 {
                     assert( not reg_has_call(r) );
                     assert( not reg_has_value(r) );
-                    assert( regs[r].used_regs.empty() );
+                    assert( not reg_has_uses(r) );
                     assert( steps[s].created_regs.empty() ); // Any allocations should have gone to sp
                     set_C( r, std::move(value) );
                     steps.reclaim_used(s);

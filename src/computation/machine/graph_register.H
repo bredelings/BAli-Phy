@@ -131,7 +131,7 @@ struct reg_deps
     reg_deps(reg_deps&&) noexcept;
 };
 
-class reg: public reg_deps
+class reg
 {
 public:
     /* The closure */
@@ -270,6 +270,7 @@ public:
     bool reg_is_constant(int r) const;
     bool reg_is_changeable_or_forcing(int r) const;
     bool reg_is_to_changeable(int r) const;
+    bool reg_has_uses(int r) const;
     bool reg_has_forces(int r) const;
     std::optional<int> reg_has_single_force(int r) const;
     bool reg_is_on_stack(int r) const;
@@ -796,9 +797,14 @@ inline bool reg_heap::reg_is_unevaluated(int r) const
     return regs.access(r).type == reg::type_t::unevaluated;
 }
 
+inline bool reg_heap::reg_has_uses(int r) const
+{
+    return reg_has_deps(r) and not deps_for_reg(r).used_regs.empty();
+}
+
 inline bool reg_heap::reg_has_forces(int r) const
 {
-    return not regs[r].forced_regs.empty();
+    return reg_has_deps(r) and not deps_for_reg(r).forced_regs.empty();
 }
 
 inline bool reg_heap::reg_is_on_stack(int r) const
@@ -852,6 +858,8 @@ inline bool reg_heap::reg_is_changeable(int r) const
 
 inline void reg_heap::mark_reg_changeable(int r)
 {
+    assert( reg_has_deps(r) );
+
     assert( reg_is_changeable(r) or reg_is_unevaluated(r));
 
     regs.access(r).type = reg::type_t::changeable;
@@ -889,6 +897,8 @@ inline bool reg_heap::reg_is_index_var_with_force_to_nonchangeable(int r) const
 
 inline void reg_heap::mark_reg_index_var_with_force_to_nonchangeable(int r)
 {
+    assert( reg_has_deps(r) );
+
     assert( reg_is_index_var_with_force_to_nonchangeable(r) or reg_is_unevaluated(r));
 
     regs.access(r).type = reg::type_t::index_var_with_force_to_nonchangeable;
@@ -901,6 +911,8 @@ inline bool reg_heap::reg_is_index_var_with_force_to_changeable(int r) const
 
 inline void reg_heap::mark_reg_index_var_with_force_to_changeable(int r)
 {
+    assert( reg_has_deps(r) );
+
     assert( reg_is_index_var_with_force_to_changeable(r) or reg_is_unevaluated(r));
 
     regs.access(r).type = reg::type_t::index_var_with_force_to_changeable;
@@ -919,6 +931,8 @@ inline bool reg_heap::reg_is_constant_with_force(int r) const
 
 inline void reg_heap::mark_reg_constant_with_force(int r)
 {
+    assert( reg_has_deps(r) );
+
     assert( reg_is_constant_with_force(r) or reg_is_unevaluated(r));
 
     regs[r].type = reg::type_t::constant_with_force;
@@ -969,15 +983,14 @@ inline bool reg_heap::reg_has_deps(int r) const
 
 inline const reg_deps& reg_heap::deps_for_reg(int r) const
 {
-//    assert(reg_has_deps(r));
-//    return deps[*regs[r].deps_index];
-    return regs[r];
+    assert(reg_has_deps(r));
+    return deps[*regs[r].deps_index];
 }
 
 inline reg_deps& reg_heap::deps_for_reg(int r)
 {
-//    assert(reg_has_deps(r));
-//    return deps[*regs[r].deps_index];
-    return regs[r];
+    assert(reg_has_deps(r));
+    return deps[*regs[r].deps_index];
 }
+
 #endif

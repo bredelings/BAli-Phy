@@ -246,7 +246,6 @@ bool reg::is_unconditionally_evaluated() const
 
 void reg::clear()
 {
-    reg_deps::clear();
     C.clear();
     type = type_t::unevaluated;
     created_by = {0,0};
@@ -255,7 +254,6 @@ void reg::clear()
 
 void reg::check_cleared() const
 {
-    reg_deps::check_cleared();
     assert(not C);
     assert(type == type_t::unevaluated);
     assert(created_by.first == 0);
@@ -266,8 +264,6 @@ void reg::check_cleared() const
 
 reg& reg::operator=(reg&& R) noexcept
 {
-    reg_deps::operator=(std::move(R));
-
     C = std::move(R.C);
 
     type = R.type;
@@ -282,8 +278,7 @@ reg& reg::operator=(reg&& R) noexcept
 }
 
 reg::reg(reg&& R) noexcept
-    :reg_deps( std::move(R)),
-     C( std::move(R.C) ),
+    :C( std::move(R.C) ),
      type ( R.type ),
      created_by( std::move(R.created_by) ),
      deps_index( R.deps_index ),
@@ -658,19 +653,22 @@ void reg_heap::compute_initial_force_counts()
     for(int i=0;i<forced_regs.size();i++)
     {
         int r = forced_regs[i];
-        auto& R = deps_for_reg(r);
+        if (reg_has_deps(r))
+        {
+            auto& R = deps_for_reg(r);
 
-        // 3a. Count uses
-        for(auto [ur,_]: R.used_regs)
-            force_reg(ur);
+            // 3a. Count uses
+            for(auto [ur,_]: R.used_regs)
+                force_reg(ur);
 
-        // 3b. Count forces
-        for(auto [fr,_]: R.forced_regs)
-            force_reg(fr);
+            // 3b. Count forces
+            for(auto [fr,_]: R.forced_regs)
+                force_reg(fr);
 
-        int ref = R.index_var_ref.first;
-        if (ref > 0)
-            force_reg(ref);
+            int ref = R.index_var_ref.first;
+            if (ref > 0)
+                force_reg(ref);
+        }
 
         if (has_step1(r))
         {
@@ -1469,16 +1467,17 @@ bool reg_heap::has_result2(int r) const
 bool reg_heap::force_regs_check_same_inputs(int r)
 {
     assert(reg_is_changeable(r));
-    auto& R = deps_for_reg(r);
 
-    // We can't use a range-for here because regs[r] can be moved
-    // during the loop if we do evaluation, and the range-for saves
-    // the location of regs[r] from before it was moved.
+    int d = regs[r].deps_index.value();
+
+    // We can't take references or use a range-for here because
+    // deps[d] can be moved during the loop if we do evaluation,
+    // and the range-for saves the location of deps[d] from before it was moved.
 
     bool zero_count = not reg_is_forced(r);
-    for(int i=0;i<R.forced_regs.size();i++)
+    for(int i=0;i<deps[d].forced_regs.size();i++)
     {
-        auto [r2,_] = R.forced_regs[i];
+        auto [r2,_] = deps[d].forced_regs[i];
 
         incremental_evaluate2(r2, zero_count);
 
@@ -1489,9 +1488,9 @@ bool reg_heap::force_regs_check_same_inputs(int r)
     // We can only have the same inputs as a previous step if we have a step from the
     // previous program that was marked invalid.
     bool same_inputs = prog_unshare[r].test(unshare_step_bit);
-    for(int i=0;i<R.used_regs.size();i++)
+    for(int i=0;i<deps[d].used_regs.size();i++)
     {
-        auto [r2,_] = R.used_regs[i];
+        auto [r2,_] = deps[d].used_regs[i];
 
         incremental_evaluate2(r2, zero_count);
 
@@ -1508,13 +1507,14 @@ void reg_heap::force_reg_no_call(int r)
     assert(reg_is_changeable_or_forcing(r));
     assert(reg_is_constant_with_force(r) or has_result2(r));
     assert(not reg_is_forced(r));
-    auto& R = deps_for_reg(r);
 
-    // We can't use a range-for here because regs[r] can be moved
-    // during the loop if we do evaluation.
-    for(int i=0; i < R.used_regs.size(); i++)
+    int d = regs[r].deps_index.value();
+
+    // We can't take references or use a range-for here because
+    // deps[d] can be moved during the loop if we do evaluation.
+    for(int i=0; i < deps[d].used_regs.size(); i++)
     {
-        auto [r2,_] = R.used_regs[i];
+        auto [r2,_] = deps[d].used_regs[i];
 
         incremental_evaluate2(r2, true);
 
@@ -1522,9 +1522,9 @@ void reg_heap::force_reg_no_call(int r)
         assert(reg_is_forced(r2));
     }
 
-    for(int i=0; i < R.forced_regs.size(); i++)
+    for(int i=0; i < deps[d].forced_regs.size(); i++)
     {
-        auto [r2,_] = R.forced_regs[i];
+        auto [r2,_] = deps[d].forced_regs[i];
 
         incremental_evaluate2(r2, true);
 
@@ -1651,8 +1651,11 @@ std::optional<int> reg_heap::reg_has_single_force(int r) const
         return {};
 
     // Return the single forced reg if there is one.
-    if (regs[r].forced_regs.size() == 1)
-        return regs[r].forced_regs[0].first;
+    if (not reg_has_deps(r)) return {};
+
+    auto& R = deps_for_reg(r);
+    if (R.forced_regs.size() == 1)
+        return R.forced_regs[0].first;
     else
         return {};
 }
@@ -1767,7 +1770,7 @@ void reg_heap::clear_call(int s)
     {
         auto [r2,j] = S.call_edge;
         assert(call == r2);
-        auto& backward = regs[call].called_by;
+        auto& backward = deps_for_reg(call).called_by;
         assert(0 <= j and j < backward.size());
 
         // Move the last element to the hole, and adjust index of correspond forward edge.
@@ -1935,8 +1938,11 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
 {
     vector<int> U;
 
-    for(const auto& [r2,_]: deps_for_reg(r).used_regs)
-        U.push_back(r2);
+    if (reg_has_deps(r))
+    {
+        for(const auto& [r2,_]: deps_for_reg(r).used_regs)
+            U.push_back(r2);
+    }
 
     return U;
 }
@@ -1945,8 +1951,11 @@ std::vector<int> reg_heap::forced_regs_for_reg(int r) const
 {
     vector<int> U;
 
-    for(const auto& [r2,_]: deps_for_reg(r).forced_regs)
-        U.push_back(r2);
+    if (reg_has_deps(r))
+    {
+        for(const auto& [r2,_]: deps_for_reg(r).forced_regs)
+            U.push_back(r2);
+    }
 
     return U;
 }
@@ -1963,8 +1972,11 @@ void reg_heap::reclaim_used(int r)
   
     if (regs[r].deps_index)
     {
-        deps.reclaim_used(*regs[r].deps_index);
+        int d = *regs[r].deps_index;
+        deps[d].clear();
+        deps.reclaim_used(d);
         regs[r].deps_index = {};
+        regs[r].type = reg::type_t::unevaluated;
     }
 
     regs.reclaim_used(r);
@@ -2170,7 +2182,7 @@ void reg_heap::resize(int s)
 
 bool reg_heap::reg_is_called_by(int r1, int s1) const
 {
-    for(int s: regs[r1].called_by)
+    for(int s: deps_for_reg(r1).called_by)
         if (s == s1)
             return true;
 
@@ -2179,7 +2191,7 @@ bool reg_heap::reg_is_called_by(int r1, int s1) const
 
 bool reg_heap::reg_is_used_by(int r1, int r2) const
 {
-    for(auto& [r,_]: regs[r2].used_by)
+    for(auto& [r,_]: deps_for_reg(r2).used_by)
         if (r == r1)
             return true;
 
@@ -2188,7 +2200,7 @@ bool reg_heap::reg_is_used_by(int r1, int r2) const
 
 bool reg_heap::reg_is_forced_by(int r1, int r2) const
 {
-    for(auto& [r,_]: regs[r2].forced_by)
+    for(auto& [r,_]: deps_for_reg(r2).forced_by)
         if (r == r1)
             return true;
 
@@ -2413,10 +2425,10 @@ void reg_heap::check_used_regs() const
         if (prog_force_counts[r1] > 0)
             assert(reg_is_changeable_or_forcing(r1));
 
-        if (not regs[r1].used_regs.empty())
+        if (reg_has_uses(r1))
             assert(reg_is_changeable(r1) or reg_is_unevaluated(r1));
 
-        if (not regs[r1].forced_regs.empty())
+        if (reg_has_forces(r1))
             assert(reg_is_changeable_or_forcing(r1) or reg_is_unevaluated(r1));
 
         // Under what conditions should a constant_with_force have finished forcing its regs?
@@ -2435,7 +2447,7 @@ void reg_heap::check_used_regs() const
             }
         }
 
-        for(const auto& [r2,_]: regs[r1].used_regs)
+        for(const auto& [r2,_]: deps_for_reg(r1).used_regs)
         {
             // Used regs should have back-references to R
             assert( reg_is_used_by(r1, r2) );
@@ -2447,7 +2459,7 @@ void reg_heap::check_used_regs() const
             // so that this result can be invalidated, and the used result won't be GC-ed.
             // FIXME - nonlocal.  assert(is_modifiable(expression_at(R2)) or result_is_referenced(t,res2));
         }
-        for(const auto& [r2,_]: regs[r1].forced_regs)
+        for(const auto& [r2,_]: deps_for_reg(r1).forced_regs)
         {
             // Used regs should have back-references to R
             assert( reg_is_forced_by(r1, r2) );
@@ -2508,10 +2520,39 @@ void reg_heap::check_back_edges_cleared_for_step(int s) const
 
 void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
 {
+    assert(r > 0);
+
+    // 1. When destroying a reg, remove edge from step[s] ---created_regs---> regs[r]
+    if (creator_survives)
+    {
+        auto& created_by = regs.access(r).created_by;
+        auto [s,j] = created_by;
+        if (s > 0)
+        {
+            auto& backward = steps[s].created_regs;
+            assert(0 <= j and j < backward.size());
+
+            // Clear the forward edge.
+            created_by = {0, 0};
+
+            // Move the last element to the hole, and adjust index of correspond forward edge.
+            if (j + 1 < backward.size())
+            {
+                backward[j] = backward.back();
+                auto& forward2 = regs.access(backward[j]);
+                forward2.created_by.second = j;
+
+                assert(regs.access(backward[j]).created_by.second == j);
+            }
+            backward.pop_back();
+        }
+    }
+
+    if (not reg_has_deps(r)) return;
+
     auto& r_deps = deps_for_reg(r);
 
-    // 1. When destroying a reg, remove edge from regs[r] <---used_by--- regs[r3]
-    assert(r > 0);
+    // 2. When destroying a reg, remove edge from regs[r] <---used_by--- regs[r3]
     for(auto& forward: r_deps.used_regs)
     {
         auto [r3,j] = forward;
@@ -2539,13 +2580,13 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
     }
 
 
-    // 2. When destroying a reg, remove edge from regs[r] <---forced_by--- regs[r3]
+    // 3. When destroying a reg, remove edge from regs[r] <---forced_by--- regs[r3]
     assert(r > 0);
     for(auto& forward: r_deps.forced_regs)
     {
         auto [r3,j] = forward;
         if (regs.is_free(r3)) continue;
-        auto& backward = regs[r3].forced_by;
+        auto& backward = deps_for_reg(r3).forced_by;
         assert(0 <= j and j < backward.size());
 
         forward = {0,0};
@@ -2556,42 +2597,15 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
             backward[j] = backward.back();
             auto [r2,i2] = backward[j];
             // adjust the forward edge for that backward edge
-            auto& forward2 = regs[r2].forced_regs;
+            auto& forward2 = deps_for_reg(r2).forced_regs;
             assert(0 <= i2 and i2 < forward2.size());
             forward2[i2].second = j;
 
-            assert(regs[r2].forced_regs[i2].second == j);
-            assert(regs[forward2[i2].first].forced_by[forward2[i2].second].second == i2);
+            assert(deps_for_reg(r2).forced_regs[i2].second == j);
+            assert(deps_for_reg(forward2[i2].first).forced_by[forward2[i2].second].second == i2);
         }
 
         backward.pop_back();
-    }
-
-    // 3. When destroying a reg, remove edge from step[s] ---created_regs---> regs[r]
-    if (creator_survives)
-    {
-        assert(r > 0);
-        auto& created_by = regs.access(r).created_by;
-        auto [s,j] = created_by;
-        if (s > 0)
-        {
-            auto& backward = steps[s].created_regs;
-            assert(0 <= j and j < backward.size());
-
-            // Clear the forward edge.
-            created_by = {0, 0};
-
-            // Move the last element to the hole, and adjust index of correspond forward edge.
-            if (j + 1 < backward.size())
-            {
-                backward[j] = backward.back();
-                auto& forward2 = regs.access(backward[j]);
-                forward2.created_by.second = j;
-
-                assert(regs.access(backward[j]).created_by.second == j);
-            }
-            backward.pop_back();
-        }
     }
 
     // 4. When destroying a reg, if there is an edge from regs[r] ---- index_var_ref ----> regs[r2]
@@ -2610,10 +2624,10 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
         if (j + 1 < backward.size())
         {
             backward[j] = backward.back();
-            auto& forward2 = regs.access(backward[j]);
+            auto& forward2 = deps_for_reg(backward[j]);
             forward2.index_var_ref.second = j;
             
-            assert(regs.access(backward[j]).index_var_ref.second == j);
+            assert(deps_for_reg(backward[j]).index_var_ref.second == j);
         }
         backward.pop_back();
     }

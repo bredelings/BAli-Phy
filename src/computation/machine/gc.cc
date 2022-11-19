@@ -132,8 +132,9 @@ void reg_heap::trace(vector<int>& remap)
                 mark_reg(r);
         }
 
-        for(auto [r,_] : R.forced_regs)
-	    mark_reg(r);
+        if (reg_has_deps(r))
+            for(auto [r2,_] : deps_for_reg(r).forced_regs)
+                mark_reg(r2);
     }
 
     release_scratch_list();
