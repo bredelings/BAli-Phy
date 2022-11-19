@@ -260,6 +260,7 @@ void reg::check_cleared() const
     assert(type == type_t::unevaluated);
     assert(created_by.first == 0);
     assert(created_by.second == 0);
+    assert(not deps_index);
     assert(flags.none());
 }
 
@@ -273,6 +274,8 @@ reg& reg::operator=(reg&& R) noexcept
 
     created_by = std::move(R.created_by);
 
+    deps_index = R.deps_index;
+
     flags = R.flags;
 
     return *this;
@@ -283,6 +286,7 @@ reg::reg(reg&& R) noexcept
      C( std::move(R.C) ),
      type ( R.type ),
      created_by( std::move(R.created_by) ),
+     deps_index( R.deps_index ),
      flags ( R.flags )
 { }
 
