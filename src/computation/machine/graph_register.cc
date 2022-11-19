@@ -2447,6 +2447,8 @@ void reg_heap::check_used_regs() const
             }
         }
 
+        if (not reg_has_deps(r1)) continue;
+
         for(const auto& [r2,_]: deps_for_reg(r1).used_regs)
         {
             // Used regs should have back-references to R
