@@ -282,6 +282,7 @@
 %type <std::optional<Located<Hs::Binds>>> where_cls
 
 %type <expression_ref> at_decl_cls
+%type <expression_ref> at_decl_inst
 
 %type <expression_ref> decl_inst
 %type <Hs::Decls> decls_inst
@@ -732,7 +733,7 @@ opt_instance: %empty | "instance"
 
 /* Associated type instance declarations */
 
-at_decl_inst: "type" opt_instance ty_fam_inst_eqn
+at_decl_inst: "type" opt_instance ty_fam_inst_eqn             { $$ = Hs::TypeFamilyInstanceDecl($3);    }
 
 data_or_newtype: "data"    {$$=Hs::DataOrNewtype::data;}
 |                "newtype" {$$=Hs::DataOrNewtype::newtype;}
@@ -802,7 +803,7 @@ pattern_synonym_sig: "pattern" con_list "::" sigtypedoc
 
 /* ------------- Nested declarations ----------------------------- */
 
-decl_cls:  at_decl_cls  {}
+decl_cls:  at_decl_cls  {$$ = $1;}
 |          decl         {$$ = $1;}
 
 decls_cls: decls_cls ";" decl_cls          {$$ = $1; $$.push_back($3);}
@@ -816,7 +817,7 @@ decllist_cls: "{" decls_cls "}"            {$$ = {@2,{$2}};}
 where_cls: "where" decllist_cls            {$$ = $2;}
 |            %empty                        {}
 
-decl_inst: at_decl_inst                    {}
+decl_inst: at_decl_inst                    {$$ = $1;}
 |          decl                            {$$ = $1;}
 
 decls_inst: decls_inst ";" decl_inst       {$$ = $1; $$.push_back($3);}

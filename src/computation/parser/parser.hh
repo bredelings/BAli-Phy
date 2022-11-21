@@ -563,6 +563,7 @@ namespace yy {
       // ty_decl
       // inst_decl
       // at_decl_cls
+      // at_decl_inst
       // decl_cls
       // decl_inst
       // kind
@@ -1487,6 +1488,7 @@ namespace yy {
       case symbol_kind::S_ty_decl: // ty_decl
       case symbol_kind::S_inst_decl: // inst_decl
       case symbol_kind::S_at_decl_cls: // at_decl_cls
+      case symbol_kind::S_at_decl_inst: // at_decl_inst
       case symbol_kind::S_decl_cls: // decl_cls
       case symbol_kind::S_decl_inst: // decl_inst
       case symbol_kind::S_kind: // kind
@@ -2680,6 +2682,7 @@ switch (yykind)
       case symbol_kind::S_ty_decl: // ty_decl
       case symbol_kind::S_inst_decl: // inst_decl
       case symbol_kind::S_at_decl_cls: // at_decl_cls
+      case symbol_kind::S_at_decl_inst: // at_decl_inst
       case symbol_kind::S_decl_cls: // decl_cls
       case symbol_kind::S_decl_inst: // decl_inst
       case symbol_kind::S_kind: // kind
@@ -5754,6 +5757,7 @@ switch (yykind)
       case symbol_kind::S_ty_decl: // ty_decl
       case symbol_kind::S_inst_decl: // inst_decl
       case symbol_kind::S_at_decl_cls: // at_decl_cls
+      case symbol_kind::S_at_decl_inst: // at_decl_inst
       case symbol_kind::S_decl_cls: // decl_cls
       case symbol_kind::S_decl_inst: // decl_inst
       case symbol_kind::S_kind: // kind
@@ -6147,6 +6151,7 @@ switch (yykind)
       case symbol_kind::S_ty_decl: // ty_decl
       case symbol_kind::S_inst_decl: // inst_decl
       case symbol_kind::S_at_decl_cls: // at_decl_cls
+      case symbol_kind::S_at_decl_inst: // at_decl_inst
       case symbol_kind::S_decl_cls: // decl_cls
       case symbol_kind::S_decl_inst: // decl_inst
       case symbol_kind::S_kind: // kind
@@ -6426,7 +6431,7 @@ switch (yykind)
 
 
 } // yy
-#line 6430 "parser.hh"
+#line 6435 "parser.hh"
 
 
 
