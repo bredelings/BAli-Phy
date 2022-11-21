@@ -455,14 +455,16 @@ void Module::compile(const Program& P)
     // Currently this (1) translates field-decls into function declarations
     //                (2) rewrites @ f x y -> f x y (where f is the head) using unapply( ).
     //                (3) rewrites infix expressions through desugar_infix( )
+    //                (4) merges adjacent function declaration lines into a Match.
     M = ::rename_infix(*this, M);
 
     // We should be able to build these as we go, in rename!
     // We can merge them into a global symbol table (if we want) afterwards.
 
+    // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym, def_type_family
     add_local_symbols(M.type_decls);
 
-    add_local_symbols(M.value_decls[0]); // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym
+    add_local_symbols(M.value_decls[0]);
 
     for(auto& f: M.foreign_decls)
         def_function(f.function_name);
@@ -1321,6 +1323,14 @@ void Module::def_type_synonym(const std::string& sname)
     declare_type( {sname, type_name_category::type_syn, {}, /*arity*/ -1, /*kind*/ {}} );
 }
 
+void Module::def_type_family(const std::string& fname)
+{
+    if (is_qualified_symbol(fname))
+        throw myexception()<<"Locally defined type '"<<fname<<"' should not be qualified.";
+
+    declare_type( {fname, type_name_category::type_fam, {}, /*arity*/ -1, /*kind*/ {}} );
+}
+
 void Module::def_type_class(const std::string& cname)
 {
     if (is_qualified_symbol(cname))
@@ -1429,6 +1439,9 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 
             def_type_class(Class.name);
 
+            for(auto& tf: Class.type_fam_decls)
+                def_type_family( unloc(tf.con.name) );
+
             for(auto& sig_decl: Class.sig_decls)
                 for(auto& v: sig_decl.vars)
                     def_type_class_method(unloc(v.name), Class.name);
@@ -1438,6 +1451,10 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
             auto& Syn = decl.as_<Haskell::TypeSynonymDecl>();
 
             def_type_synonym(Syn.name);
+        }
+        else if (auto TF = decl.to<Hs::TypeFamilyDecl>())
+        {
+            def_type_family( unloc(TF->con.name) );
         }
 }
 

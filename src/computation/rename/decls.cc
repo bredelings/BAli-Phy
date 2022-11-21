@@ -256,7 +256,7 @@ bound_var_info renamer_state::rename_signatures(map<string, Hs::Type>& signature
 
         auto name2 = name;
         if (top)
-            name2 = m.name + "." + name;
+            qualify_name(name2);
         signatures2.insert( {name2, type} );
 
         bound.insert(name2);

@@ -46,7 +46,7 @@ struct symbol_info
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int, fixity_info);
 };
 
-enum class type_name_category {type_class, type_syn, type_func, ADT};
+enum class type_name_category {type_class, type_syn, type_func, ADT, type_fam};
 
 struct type_info
 {
@@ -182,6 +182,8 @@ public:
     void def_type_class_method(const std::string& method_name, const std::string& class_name);
 
     void def_type_synonym(const std::string& syn_name);
+
+    void def_type_family(const std::string& family_name);
 
     void add_symbol(const symbol_info&);
 

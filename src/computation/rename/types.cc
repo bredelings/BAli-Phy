@@ -17,6 +17,26 @@ using std::set;
 using std::optional;
 using std::map;
 
+Hs::TypeCon renamer_state::rename_type(const Hs::TypeCon& tc)
+{
+    auto& name = unloc(tc.name);
+    auto& loc = tc.name.loc;
+
+    if (m.type_is_declared(name))
+    {
+        auto T = m.lookup_type(name);
+        auto& qualified_name = T.name;
+        return Hs::TypeCon({loc, qualified_name});
+    }
+    else
+    {
+        if (loc)
+            throw myexception()<<"Can't find tycon '"<<name<<"' at "<<*loc;
+        else
+            throw myexception()<<"Can't find tycon '"<<name<<"'";
+    }
+}
+
 Haskell::Type renamer_state::rename_type(const Haskell::Type& type)
 {
     if (auto tc = type.to<Haskell::TypeCon>())
@@ -92,7 +112,7 @@ Haskell::Context renamer_state::rename(Haskell::Context context)
 
 Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl)
 {
-    decl.name = m.name + "." + decl.name;
+    qualify_name(decl.name);
 
     decl.context = rename(decl.context);
 
@@ -100,7 +120,7 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
     {
         for(auto& constructor: decl.get_constructors())
         {
-            constructor.name = m.name + "." + constructor.name;
+            qualify_name(constructor.name);
 
             if (constructor.context)
             {
@@ -113,7 +133,7 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
                 for(auto& field: std::get<1>(constructor.fields).field_decls)
                 {
                     for(auto& var: field.field_names)
-                        unloc(var.name) = m.name + "." + unloc(var.name);
+                        qualify_name(var);
                     field.type = rename_type(field.type);
                 }
             }
@@ -129,9 +149,8 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
         for(auto& constructors: decl.get_gadt_constructors())
         {
             for(auto& con_name: constructors.con_names)
-            {
-                unloc(con_name) = m.name + "." + unloc(con_name);
-            }
+                qualify_name(con_name);
+
             unloc(constructors.type) = rename_type(unloc(constructors.type));
         }
     }
@@ -143,6 +162,9 @@ Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
     I.context = rename(I.context);
     I.constraint = rename_type(I.constraint);
 
+    for(auto& type_inst_decl: I.type_inst_decls)
+        type_inst_decl = rename(type_inst_decl);
+
     // Renaming of the methods is done in rename_decls
 
     return I;
@@ -150,20 +172,21 @@ Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
 
 Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
 {
-    C.name = m.name + "." + C.name;
+    qualify_name(C.name);
     C.context = rename(C.context);
+
+    for(auto& type_fam_decl: C.type_fam_decls)
+        type_fam_decl = rename(type_fam_decl);
+
+    for(auto& default_type_inst_decl: C.default_type_inst_decls)
+        default_type_inst_decl = rename(default_type_inst_decl);
 
     for(auto& sig_decl: C.sig_decls)
     {
         sig_decl.type = rename_type(sig_decl.type);
 
         for(auto& v: sig_decl.vars)
-        {
-            auto& name = unloc(v.name);
-            assert(not is_qualified_symbol(name));
-
-            name = m.name + "." + name;
-        }
+            qualify_name(v);
     }
 
     // Renaming of the default_methods is done in rename_decls
@@ -173,9 +196,35 @@ Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
 
 Haskell::TypeSynonymDecl renamer_state::rename(Haskell::TypeSynonymDecl decl)
 {
-    decl.name = m.name + "." + decl.name;
+    qualify_name(decl.name);
     unloc(decl.rhs_type) = rename_type(unloc(decl.rhs_type));
     return decl;
+}
+
+Haskell::TypeFamilyDecl renamer_state::rename(Haskell::TypeFamilyDecl TF)
+{
+    qualify_name(TF.con);
+
+    if (TF.where_instances)
+        for(auto& inst: *TF.where_instances)
+            inst = rename(inst);
+
+    return TF;
+}
+
+Haskell::TypeFamilyInstanceEqn renamer_state::rename(Haskell::TypeFamilyInstanceEqn TIE)
+{
+    TIE.con = rename_type(TIE.con);
+    for(auto& arg: TIE.args)
+        rename_type(arg);
+    TIE.rhs = rename_type(TIE.rhs);
+    return TIE;
+}
+
+Haskell::TypeFamilyInstanceDecl renamer_state::rename(Haskell::TypeFamilyInstanceDecl TI)
+{
+    rename( static_cast<Hs::TypeFamilyInstanceEqn&>(TI) );
+    return TI;
 }
 
 
@@ -183,14 +232,20 @@ Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
 {
     for(auto& decl: decls)
     {
-        if (decl.is_a<Haskell::ClassDecl>())
-            decl = rename(decl.as_<Haskell::ClassDecl>());
-        else if (decl.is_a<Haskell::DataOrNewtypeDecl>())
-            decl = rename(decl.as_<Haskell::DataOrNewtypeDecl>());
-        else if (decl.is_a<Haskell::InstanceDecl>())
-            decl = rename(decl.as_<Haskell::InstanceDecl>());
-        else if (decl.is_a<Haskell::TypeSynonymDecl>())
-            decl = rename(decl.as_<Haskell::TypeSynonymDecl>());
+        if (auto C = decl.to<Hs::ClassDecl>())
+            decl = rename(*C);
+        else if (auto D = decl.to<Hs::DataOrNewtypeDecl>())
+            decl = rename(*D);
+        else if (auto I = decl.to<Hs::InstanceDecl>())
+            decl = rename(*I);
+        else if (auto T = decl.to<Hs::TypeSynonymDecl>())
+            decl = rename(*T);
+        else if (auto TF = decl.to<Hs::TypeFamilyDecl>())
+            decl = rename(*TF);
+        else if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
+            decl = rename(*TI);
+        else
+            throw myexception()<<"In module "<<m.name<<": Unrecognized declaration:\n  "<<decl.print();
     }
 
     return decls;

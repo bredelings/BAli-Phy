@@ -328,6 +328,31 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
 }
 
 
+void renamer_state::qualify_name(std::string& name) const
+{
+    assert(not is_qualified_symbol(name));
+    name = m.name + "." + name;
+}
+
+void renamer_state::qualify_name(Located<std::string>& name) const
+{
+    qualify_name(unloc(name));
+}
+
+void renamer_state::qualify_name(Hs::Var& v) const
+{
+    qualify_name(v.name);
+}
+
+void renamer_state::qualify_name(Hs::Con& c) const
+{
+    qualify_name(c.name);
+}
+
+void renamer_state::qualify_name(Hs::TypeCon& tc) const
+{
+    qualify_name(tc.name);
+}
 
 bound_var_info renamer_state::find_vars_in_patterns(const vector<expression_ref>& pats, bool top)
 {
