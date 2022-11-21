@@ -288,7 +288,7 @@ extern "C" closure builtin_function_compare_int(OperationArgs& Args)
     auto y = Args.evaluate(1).as_int();
 
     if (x < y)
-        return {0};
+        return expression_ref(0); // avoid constructing from (Object*)0
     else if (x == y)
         return {1};
     else if (x > y)
@@ -303,7 +303,7 @@ extern "C" closure builtin_function_compare_double(OperationArgs& Args)
     auto y = Args.evaluate(1).as_double();
 
     if (x < y)
-        return {0};
+        return expression_ref(0); // avoid constructing from (Object*)0
     else if (x == y)
         return {1};
     else if (x > y)
@@ -318,7 +318,7 @@ extern "C" closure builtin_function_compare_char(OperationArgs& Args)
     auto y = Args.evaluate(1).as_char();
 
     if (x < y)
-        return {0};
+        return expression_ref(0); // avoid constructing from (Object*)0
     else if (x == y)
         return {1};
     else if (x > y)
