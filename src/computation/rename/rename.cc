@@ -261,29 +261,21 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
 
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
+
+    // 1. Get bound names for top-level value decls
     bound_var_info bound_names;
     add(bound_names, Rn.find_bound_vars_in_decls(M.value_decls[0], true));
+
+    // 2. Add bound names for class methods
     for(auto& decl: M.type_decls)
     {
-        if (decl.is_a<Haskell::ClassDecl>())
+        if (auto C = decl.to<Haskell::ClassDecl>())
         {
-            auto C = decl.as_<Haskell::ClassDecl>();
-            add(bound_names, Rn.find_bound_vars_in_decls(C.default_method_decls, true));
-            decl = C;
+            for(auto& sig_decl: C->sig_decls)
+                for(auto& method_var: sig_decl.vars)
+                    bound_names.insert(unloc(method_var.name));
         }
         // Wait.. don't we need to discover constructors, too?
-    }
-
-    // Replace ids with dummies
-    for(auto& decl: M.type_decls)
-    {
-        if (decl.is_a<Haskell::ClassDecl>())
-        {
-            auto C = decl.as_<Haskell::ClassDecl>();
-            auto method_binders = Rn.rename_signatures( C.sig_decls, true);
-            add( bound_names, method_binders );
-            decl = C;
-        }
     }
 
     set<string> free_vars;

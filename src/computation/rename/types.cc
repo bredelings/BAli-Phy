@@ -143,17 +143,32 @@ Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
     I.context = rename(I.context);
     I.constraint = rename_type(I.constraint);
 
-    // Renaming of the decl group is done in rename_decls
+    // Renaming of the methods is done in rename_decls
 
     return I;
 }
 
-Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl decl)
+Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
 {
-    decl.name = m.name + "." + decl.name;
-    decl.context = rename(decl.context);
-    // Renaming of the decl group is done in rename_decls
-    return decl;
+    C.name = m.name + "." + C.name;
+    C.context = rename(C.context);
+
+    for(auto& sig_decl: C.sig_decls)
+    {
+        sig_decl.type = rename_type(sig_decl.type);
+
+        for(auto& v: sig_decl.vars)
+        {
+            auto& name = unloc(v.name);
+            assert(not is_qualified_symbol(name));
+
+            name = m.name + "." + name;
+        }
+    }
+
+    // Renaming of the default_methods is done in rename_decls
+
+    return C;
 }
 
 Haskell::TypeSynonymDecl renamer_state::rename(Haskell::TypeSynonymDecl decl)

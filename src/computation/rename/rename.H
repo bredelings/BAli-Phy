@@ -42,7 +42,6 @@ struct renamer_state
     bound_var_info find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool top = false);
 
     std::vector<std::vector<int>> rename_grouped_decls(Haskell::Decls& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
-    bound_var_info rename_signatures(std::vector<Hs::SignatureDecl>& signatures, bool top = false);
     bound_var_info rename_signatures(std::map<std::string, Hs::Type>& signatures, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);

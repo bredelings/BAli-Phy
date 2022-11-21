@@ -266,28 +266,6 @@ bound_var_info renamer_state::rename_signatures(map<string, Hs::Type>& signature
     return bound;
 }
 
-bound_var_info renamer_state::rename_signatures(vector<Hs::SignatureDecl>& sig_decls, bool top)
-{
-    bound_var_info bound;
-    for(auto& sig_decl: sig_decls)
-    {
-        sig_decl.type = rename_type(sig_decl.type);
-
-        for(auto& v: sig_decl.vars)
-        {
-            auto& name = unloc(v.name);
-            assert(not is_qualified_symbol(name));
-
-            if (top)
-                name = m.name + "." + name;
-
-            bound.insert(name);
-        }
-    }
-
-    return bound;
-}
-
 vector<Hs::Decls> split_decls(const Hs::Decls& decls, const vector< vector<int> >& referenced_decls)
 {
     // 1. Compute strongly-connected components
