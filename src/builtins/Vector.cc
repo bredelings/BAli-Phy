@@ -103,7 +103,7 @@ extern "C" closure builtin_function_clist_to_string(OperationArgs& Args)
     return s;
 }
 
-extern "C" closure builtin_function_emptyString(OperationArgs& Args)
+extern "C" closure builtin_function_emptyString(OperationArgs& /*Args*/)
 {
     object_ptr<String> s (new String);
 

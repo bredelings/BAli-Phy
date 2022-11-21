@@ -112,7 +112,7 @@ extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 
     int observation = Args.evaluate(1).as_int();
 
-    int io_state = Args.evaluate(2).as_int();
+    /*int io_state = */ Args.evaluate(2).as_int();
 
     // The effect to register the sampling event is self-referential,
     // so we need to allocate the location BEFORE we construct the object.
