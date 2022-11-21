@@ -782,6 +782,8 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
             foreign_decls.push_back(*b);
         else if (decl.is_a<ClassDecl>() or decl.is_a<TypeSynonymDecl>() or decl.is_a<DataOrNewtypeDecl>() or decl.is_a<InstanceDecl>())
             type_decls.push_back(decl);
+        else if (decl.is_a<TypeFamilyDecl>() or decl.is_a<TypeFamilyInstanceDecl>())
+            type_decls.push_back(decl);
         else if (auto d = decl.to<DefaultDecl>())
         {
             if (default_decl)
