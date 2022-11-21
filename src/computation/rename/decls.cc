@@ -41,7 +41,7 @@ using std::deque;
 // What are the rules for well-formed patterns?
 // Only one op can be a non-constructor (in decl patterns), and that op needs to end up at the top level.
 
-pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls);
+pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls); // value decls, signature decls, and fixity decls
 
 
 bool is_definitely_pattern(const Haskell::Expression& lhs)
@@ -102,6 +102,12 @@ expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
         return E;
     else if (E.is_a<Hs::FixityDecl>())
         return E;
+    else if (E.is_a<Hs::TypeFamilyDecl>() or E.is_a<Hs::TypeFamilyInstanceDecl>())
+    {
+        // We get here for type family stuff inside of class declarations.
+        // Ignoring infix type names for now?
+        return E;
+    }
     else
         std::abort();
 }
@@ -175,6 +181,48 @@ pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
     return {signatures, decls2};
 }
 
+Hs::Decls group_fundecls(const Haskell::Decls& decls)
+{
+    Haskell::Decls decls2;
+
+    for(int i=0;i<decls.size();i++)
+    {
+        auto& decl = decls[i];
+        if (auto d = decl.to<Haskell::PatDecl>())
+        {
+            decls2.push_back(*d);
+        }
+        else if (auto fvar = fundecl_head(decl))
+        {
+            Hs::Matches m;
+            for(int j=i;j<decls.size();j++)
+            {
+                if (fundecl_head(decls[j]) != fvar) break;
+
+                auto& FD = decls[j].as_<Hs::FunDecl>();
+
+                assert(FD.matches.size() == 1);
+                m.push_back( FD.matches[0] );
+
+                if (m.back().patterns.size() != m.front().patterns.size())
+                    throw myexception()<<"Function '"<<*fvar<<"' has different numbers of arguments!";
+            }
+
+            if (m[0].patterns.empty() and m.size() != 1)
+                throw myexception()<<"Multiple definitions for variable "<<fvar->print()<<"!";
+
+            decls2.push_back( Hs::FunDecl( *fvar, m ) );
+
+            // skip the other bindings for this function
+            i += (m.size()-1);
+        }
+        else
+            std::abort();
+    }
+
+    return decls2;
+}
+
 Haskell::Binds rename_infix(const Module& m, Haskell::Binds binds)
 {
     assert(binds.size() == 1);
@@ -215,6 +263,28 @@ bound_var_info renamer_state::rename_signatures(map<string, Hs::Type>& signature
     }
 
     signatures = std::move(signatures2);
+    return bound;
+}
+
+bound_var_info renamer_state::rename_signatures(vector<Hs::SignatureDecl>& sig_decls, bool top)
+{
+    bound_var_info bound;
+    for(auto& sig_decl: sig_decls)
+    {
+        sig_decl.type = rename_type(sig_decl.type);
+
+        for(auto& v: sig_decl.vars)
+        {
+            auto& name = unloc(v.name);
+            assert(not is_qualified_symbol(name));
+
+            if (top)
+                name = m.name + "." + name;
+
+            bound.insert(name);
+        }
+    }
+
     return bound;
 }
 

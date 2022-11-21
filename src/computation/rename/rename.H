@@ -42,6 +42,7 @@ struct renamer_state
     bound_var_info find_bound_vars_in_decl(const Haskell::SignatureDecl& decl, bool top = false);
 
     std::vector<std::vector<int>> rename_grouped_decls(Haskell::Decls& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
+    bound_var_info rename_signatures(std::vector<Hs::SignatureDecl>& signatures, bool top = false);
     bound_var_info rename_signatures(std::map<std::string, Hs::Type>& signatures, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars, bool top = false);
     bound_var_info rename_decls(Haskell::Binds& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
@@ -76,6 +77,8 @@ Haskell::Binds rename_infix(const Module& p, Haskell::Binds);
 expression_ref rename_infix(const Module& p, const expression_ref&);
 Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls);
 
+expression_ref rename_infix_decl(const Module& m, const expression_ref& E);
+Hs::Decls group_fundecls(const Haskell::Decls& decls); // only value decls
 
 // I think ghc returns a moduledecls AND a... class environment?
 Haskell::ModuleDecls rename(const simplifier_options&, const Module& p, Haskell::ModuleDecls);

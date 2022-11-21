@@ -76,11 +76,8 @@ set<string> free_type_cons(const Hs::ClassDecl& class_decl)
     // QUESTION: We are ignoring default methods here -- should we?
     set<string> tvars;
     add(tvars, free_type_cons(class_decl.context));
-    if (class_decl.binds)
-    {
-        for(auto& [name, type]: unloc(*class_decl.binds).signatures)
-            add(tvars, free_type_cons(type));
-    }
+    for(auto& sig_decl: class_decl.sig_decls)
+        add(tvars, free_type_cons(sig_decl.type));
     return tvars;
 }
 

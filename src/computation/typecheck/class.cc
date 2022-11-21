@@ -66,35 +66,37 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
     // 3. make global types for class methods
     global_value_env gve;
-    if (class_decl.binds)
+
+    // Add class methods to GVE
+    for(auto& sig_decl: class_decl.sig_decls)
     {
-        // Add class methods to GVE
-        for(auto& [qname, type]: unloc(*class_decl.binds).signatures)
+        // We need the class variables in scope here.
+        auto method_type = check_type(sig_decl.type, K);
+        // forall a. C a => method_type
+        method_type = Hs::add_constraints({class_constraint}, method_type);
+        method_type = Hs::add_forall_vars(class_decl.type_vars, method_type);
+
+        for(auto& v: sig_decl.vars)
         {
-            // We need the class variables in scope here.
-            auto method_type = check_type(type, K);
-
-            // forall a. C a => method_type
-            method_type = Hs::add_constraints({class_constraint}, method_type);
-            method_type = Hs::add_forall_vars(class_decl.type_vars, method_type);
-
+            auto& qname = unloc(v.name);
             gve = gve.insert({qname, method_type});
             class_info.members = class_info.members.insert({get_unqualified_name(qname), method_type});
         }
-
-        auto method_matches = get_instance_methods( unloc( *class_decl.binds ), class_info.members, class_info.name );
-
-        for(auto& [name, match]: method_matches)
-        {
-            auto dm = get_fresh_Var("dm"+name, true);
-            Hs::FunDecl FD(dm, match);
-            class_info.default_methods.insert({name, dm});
-
-            auto type = class_info.members.at(name);
-
-            gve = gve.insert({unloc(dm.name), type});
-        }
     }
+
+    auto method_matches = get_instance_methods( class_decl.default_method_decls, class_info.members, class_info.name );
+
+    for(auto& [name, match]: method_matches)
+    {
+        auto dm = get_fresh_Var("dm"+name, true);
+        Hs::FunDecl FD(dm, match);
+        class_info.default_methods.insert({name, dm});
+
+        auto type = class_info.members.at(name);
+
+        gve = gve.insert({unloc(dm.name), type});
+    }
+
 
     K.pop_type_var_scope();
 

@@ -23,9 +23,12 @@ struct Var: public Object
     bool operator==(const Var&) const;
     bool operator<(const Var&) const;
 
-    Var* clone() const { return new Var(*this);}
+    bool is_sym() const;
+    std::string print_without_parens() const;
     std::string print() const;
     std::string print_with_type() const;
+
+    Var* clone() const { return new Var(*this);}
 
     Var(const Located<std::string>& s):name(s) {}
     Var(const Located<std::string>& s, const Type& t):name(s),type(t) {}

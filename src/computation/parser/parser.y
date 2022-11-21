@@ -28,7 +28,7 @@
 
   Hs::Kind type_to_kind(const Hs::Type& kind);
   Hs::ConstructorDecl make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::Type& typeish);
-  Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& type, const std::optional<Located<Hs::Binds>>& decls);
+  Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& type, const std::optional<Located<Hs::Decls>>& decls);
   Hs::TypeSynonymDecl make_type_synonym(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type);
   Hs::TypeFamilyDecl make_type_family(const Located<Hs::Type>& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
                                       const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns);
@@ -37,7 +37,7 @@
                                              const Hs::Type& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
                                              const Hs::Type& header, const std::optional<Hs::Kind>&, const std::optional<Hs::GADTConstructorsDecl>& constrs);
-  Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const std::optional<Located<Hs::Binds>>& decls);
+  Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const std::optional<Located<Hs::Decls>>& decls);
   Hs::Context make_context(const Hs::Type& context);
 
   expression_ref make_minus(const expression_ref& exp);
@@ -278,16 +278,16 @@
 
 %type <expression_ref> decl_cls
 %type <Hs::Decls> decls_cls
-%type <Located<Hs::Binds>> decllist_cls
-%type <std::optional<Located<Hs::Binds>>> where_cls
+%type <Located<Hs::Decls>> decllist_cls
+%type <std::optional<Located<Hs::Decls>>> where_cls
 
 %type <expression_ref> at_decl_cls
 %type <expression_ref> at_decl_inst
 
 %type <expression_ref> decl_inst
 %type <Hs::Decls> decls_inst
-%type <Located<Hs::Binds>> decllist_inst
-%type <std::optional<Located<Hs::Binds>>> where_inst
+%type <Located<Hs::Decls>> decllist_inst
+%type <std::optional<Located<Hs::Decls>>> where_inst
 
 %type <std::vector<expression_ref>> decls
 %type <Hs::Decls> decllist
@@ -811,8 +811,8 @@ decls_cls: decls_cls ";" decl_cls          {$$ = $1; $$.push_back($3);}
 |          decl_cls                        {$$.push_back($1);}
 |          %empty                          {}
 
-decllist_cls: "{" decls_cls "}"            {$$ = {@2,{$2}};}
-|               VOCURLY decls_cls close    {$$ = {@2,{$2}};}
+decllist_cls: "{" decls_cls "}"            {$$ = {@2,$2};}
+|               VOCURLY decls_cls close    {$$ = {@2,$2};}
 
 where_cls: "where" decllist_cls            {$$ = $2;}
 |            %empty                        {}
@@ -825,8 +825,8 @@ decls_inst: decls_inst ";" decl_inst       {$$ = $1; $$.push_back($3);}
 |          decl_inst                       {$$.push_back($1);}
 |          %empty                          {}
 
-decllist_inst: "{" decls_inst "}"          {$$ = {@2,{$2}};}
-|               VOCURLY decls_inst close   {$$ = {@2,{$2}};}
+decllist_inst: "{" decls_inst "}"          {$$ = {@2,$2};}
+|               VOCURLY decls_inst close   {$$ = {@2,$2};}
 
 where_inst: "where" decllist_inst          {$$ = $2;}
 |            %empty                        {}
@@ -1702,7 +1702,7 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
         return {d_or_n, name, check_all_type_vars(type_args), context, k, *constrs};
 }
 
-Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& ltype, const optional<Located<Hs::Binds>>& binds)
+Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& ltype, const optional<Located<Hs::Decls>>& decls)
 {
     // GHC stores the instance as a polytype?
     // This would seem to allow (instance forall a.Eq a => forall a.Eq [a] x y ....)
@@ -1718,13 +1718,49 @@ Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& ltype, const option
         type = T.type;
     }
 
-    return {context, type, binds};
+    std::vector<Hs::TypeFamilyInstanceDecl> type_inst_decls;
+    Hs::Decls method_decls;
+    if (decls)
+        for(auto& decl: unloc(*decls))
+        {
+            if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
+                type_inst_decls.push_back(*TI);
+            else if (auto V = decl.to<Hs::ValueDecl>())
+                method_decls.push_back(*V);
+            else
+                throw myexception()<<"In declaration of instance "<<unloc(ltype).print()<<", I don't recognize declaration:\n   "<<decl.print();
+        }
+    return {context, type, type_inst_decls, method_decls};
 }
 
-Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const optional<Located<Hs::Binds>>& binds)
+Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const optional<Located<Hs::Decls>>& decls)
 {
     auto [name, type_args] = check_type_or_class_header(header);
-    return {name, check_all_type_vars(type_args), context, binds};
+
+    std::vector<Hs::FixityDecl> fixity_decls;
+    std::vector<Hs::TypeFamilyDecl> type_fam_decls;
+    std::vector<Hs::TypeFamilyInstanceDecl> default_type_inst_decls;
+    std::vector<Hs::SignatureDecl> sig_decls;
+    Hs::Decls default_method_decls;
+
+    if (decls)
+        for(auto& decl: unloc(*decls))
+        {
+            if (auto F = decl.to<Hs::FixityDecl>())
+                fixity_decls.push_back(*F);
+            else if (auto TF = decl.to<Hs::TypeFamilyDecl>())
+                type_fam_decls.push_back(*TF);
+            else if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
+                default_type_inst_decls.push_back(*TI);
+            else if (auto S = decl.to<Hs::SignatureDecl>())
+                sig_decls.push_back(*S);
+            else if (auto V = decl.to<Hs::ValueDecl>())
+                default_method_decls.push_back(*V);
+            else
+                throw myexception()<<"In declaration of class "<<name<<", I don't recognize declaration:\n   "<<decl.print();
+        }
+
+    return {context, name, check_all_type_vars(type_args), fixity_decls, type_fam_decls, default_type_inst_decls, sig_decls, default_method_decls};
 }
 
 // Can we change the context parsing rule to expect:

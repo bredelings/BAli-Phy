@@ -17,19 +17,16 @@ Hs::Decls typechecker_state::infer_type_for_default_methods(const Hs::ClassDecl&
     Hs::Decls decls_out;
 
     auto class_info = class_env().at(C.name);
-    if (C.binds)
-    {
-        for(auto& decls: unloc(*C.binds))
-            for(auto& decl: decls)
-            {
-                auto FD = decl.as_<Hs::FunDecl>();
-                auto method_name = unloc(FD.v.name);
-                auto dm = class_info.default_methods.at(method_name);
-                FD.v = dm;
 
-                auto [decl2, name, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
-                decls_out.push_back(decl2);
-            }
+    for(auto& decl: C.default_method_decls)
+    {
+        auto FD = decl.as_<Hs::FunDecl>();
+        auto method_name = unloc(FD.v.name);
+        auto dm = class_info.default_methods.at(method_name);
+        FD.v = dm;
+
+        auto [decl2, name, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
+        decls_out.push_back(decl2);
     }
 
 //    std::cerr<<"Default method ops:\n";
@@ -191,24 +188,21 @@ string get_class_for_constraint(const Hs::Type& constraint)
    in <dvar1, ..., dvarN, var1, ..., varM>
 */
 
-map<string, Hs::Matches> get_instance_methods(const Hs::Binds& binds, const global_value_env& members, const string& class_name)
+map<string, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const string& class_name)
 {
     std::map<string,Hs::Matches> method_matches;
-    for(auto& decls: binds)
+    for(auto& decl: decls)
     {
-        for(auto& decl: decls)
-        {
-            auto& fd = decl.as_<Hs::FunDecl>();
-            string method_name = unloc(fd.v.name);
+        auto& fd = decl.as_<Hs::FunDecl>();
+        string method_name = unloc(fd.v.name);
 
-            if (not members.count(method_name))
-                throw myexception()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'";
+        if (not members.count(method_name))
+            throw myexception()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'";
 
-            if (method_matches.count(method_name))
-                throw myexception()<<"method '"<<method_name<<"' defined twice!";
+        if (method_matches.count(method_name))
+            throw myexception()<<"method '"<<method_name<<"' defined twice!";
 
-            method_matches.insert({method_name, fd.matches});
-        }
+        method_matches.insert({method_name, fd.matches});
     }
 
     return method_matches;
@@ -256,8 +250,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
     Hs::Decls decls;
 
     map<string, Hs::Matches> method_matches;
-    if (inst_decl.binds)
-        method_matches = get_instance_methods( unloc( *inst_decl.binds ), class_info.members, class_name );
+    method_matches = get_instance_methods( inst_decl.method_decls, class_info.members, class_name );
 
     string classdict_name = "d" + get_class_name_from_constraint(instance_head);
 
@@ -325,8 +318,8 @@ pair<Hs::Binds, Core::Decls> typechecker_state::infer_type_for_instances2(const 
         catch (myexception& e)
         {
             string header = "In instance '" + instance_decl.constraint.print() + "' ";
-            if (instance_decl.binds and instance_decl.binds->loc)
-                header += " at " + convertToString(*instance_decl.binds->loc);
+//            if (instance_decl.binds and instance_decl.binds->loc)
+//                header += " at " + convertToString(*instance_decl.binds->loc);
             header += ":\n";
             e.prepend(header);
             throw;

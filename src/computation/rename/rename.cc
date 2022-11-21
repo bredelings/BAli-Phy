@@ -98,26 +98,45 @@ Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R)
     return R;
 }
 
+
+Hs::ClassDecl rename_infix(const Module& m, Hs::ClassDecl C)
+{
+    // 1. Recursively fix-up infix expressions
+    for(auto& e: C.default_method_decls)
+        e = rename_infix_decl(m, e);
+
+    // 2. Group different parts of fundecls
+    C.default_method_decls = group_fundecls(C.default_method_decls);
+
+    // Don't create sigs map yet.
+    return C;
+}
+
+Hs::InstanceDecl rename_infix(const Module& m, Hs::InstanceDecl I)
+{
+    // 1. Recursively fix-up infix expressions
+    for(auto& e: I.method_decls)
+        e = rename_infix_decl(m, e);
+
+    // 2. Group different parts of fundecls
+    I.method_decls = group_fundecls(I.method_decls);
+
+    return I;
+}
+
 Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls M)
 {
+    // 1. Handle value decls
     M.value_decls = rename_infix(m, M.value_decls);
 
     for(auto& type_decl: M.type_decls)
     {
-        if (type_decl.is_a<Haskell::ClassDecl>())
-        {
-            auto C = type_decl.as_<Haskell::ClassDecl>();
-            if (C.binds)
-                unloc(*C.binds) = rename_infix(m, unloc(*C.binds));
-            type_decl = C;
-        }
-        else if (type_decl.is_a<Haskell::InstanceDecl>())
-        {
-            auto I = type_decl.as_<Haskell::InstanceDecl>();
-            if (I.binds)
-                unloc(*I.binds) = rename_infix(m, unloc(*I.binds));
-            type_decl = I;
-        }
+        // 2. Handle default method decls
+        if (auto C = type_decl.to<Haskell::ClassDecl>())
+            type_decl = rename_infix(m, *C);
+        // 3. Handle method decls
+        else if (auto I = type_decl.to<Haskell::InstanceDecl>())
+            type_decl = rename_infix(m, *I);
     }
     return M;
 }
@@ -249,11 +268,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
-            if (C.binds)
-            {
-                auto& vdecls = unloc(*C.binds)[0];
-                add(bound_names, Rn.find_bound_vars_in_decls(vdecls, true));
-            }
+            add(bound_names, Rn.find_bound_vars_in_decls(C.default_method_decls, true));
             decl = C;
         }
         // Wait.. don't we need to discover constructors, too?
@@ -265,11 +280,8 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
-            if (C.binds)
-            {
-                auto method_binders = Rn.rename_signatures( unloc(*C.binds).signatures, true);
-                add( bound_names, method_binders );
-            }
+            auto method_binders = Rn.rename_signatures( C.sig_decls, true);
+            add( bound_names, method_binders );
             decl = C;
         }
     }
@@ -295,38 +307,26 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
-            if (C.binds)
+            for(auto& method_decl: C.default_method_decls)
             {
-                assert(unloc(*C.binds).size() == 1);
-                auto& decls = unloc(*C.binds)[0];
-
-                for(auto& mdecl: decls)
-                {
-                    if (mdecl.is_a<Hs::PatDecl>())
-                        throw myexception()<<"Illegal pattern binding in class "<<C.name;
-                    auto FD = mdecl.as_<Hs::FunDecl>();
-                    FD.matches = Rn.rename( FD.matches, bound_names, FD.rhs_free_vars);
-                    mdecl = FD;
-                }
+                if (method_decl.is_a<Hs::PatDecl>())
+                    throw myexception()<<"Illegal pattern binding in class "<<C.name;
+                auto FD = method_decl.as_<Hs::FunDecl>();
+                FD.matches = Rn.rename( FD.matches, bound_names, FD.rhs_free_vars);
+                method_decl = FD;
             }
             decl = C;
         }
         else if (decl.is_a<Haskell::InstanceDecl>())
         {
             auto I = decl.as_<Haskell::InstanceDecl>();
-            if (I.binds)
+            for(auto& method_decl: I.method_decls)
             {
-                assert(unloc(*I.binds).size() == 1);
-                auto& decls = unloc(*I.binds)[0];
-
-                for(auto& mdecl: decls)
-                {
-                    if (mdecl.is_a<Hs::PatDecl>())
-                        throw myexception()<<"Illegal pattern binding in instance "<<I.constraint.print();
-                    auto FD = mdecl.as_<Hs::FunDecl>();
-                    FD.matches = Rn.rename( FD.matches, bound_names, FD.rhs_free_vars);
-                    mdecl = FD;
-                }
+                if (method_decl.is_a<Hs::PatDecl>())
+                    throw myexception()<<"Illegal pattern binding in instance "<<I.constraint.print();
+                auto FD = method_decl.as_<Hs::FunDecl>();
+                FD.matches = Rn.rename( FD.matches, bound_names, FD.rhs_free_vars);
+                method_decl = FD;
             }
             decl = I;
         }

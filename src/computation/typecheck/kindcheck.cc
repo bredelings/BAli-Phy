@@ -682,11 +682,8 @@ void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
     }
     assert(k.is_a<KindConstraint>());
 
-    if (class_decl.binds)
-    {
-        for(auto& [name,type]: unloc(*class_decl.binds).signatures)
-            kind_and_type_check_type(type);
-    }
+    for(auto& sig_decl: class_decl.sig_decls)
+        kind_and_type_check_type(sig_decl.type);
 
     pop_type_var_scope();
 }

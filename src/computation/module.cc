@@ -694,7 +694,7 @@ Hs::ModuleDecls Module::rename(const simplifier_options& opts, Hs::ModuleDecls M
     return M;
 }
 
-CDecls Module::desugar(const simplifier_options& opts, FreshVarState& state, const Hs::Binds& topdecls)
+CDecls Module::desugar(const simplifier_options& /*opts*/, FreshVarState& state, const Hs::Binds& topdecls)
 {
     auto cdecls = ::desugar(*this, state, topdecls);
 
@@ -1366,8 +1366,8 @@ void Module::declare_fixities(const Hs::ModuleDecls& M)
 
     for(const auto& type_decl: M.type_decls)
         if (auto C = type_decl.to<Haskell::ClassDecl>())
-            if (C->binds)
-                declare_fixities_(unloc(*C->binds)[0]);
+            for(auto& fixity_decl: C->fixity_decls)
+                declare_fixities_(fixity_decl);
 }
 
 void Module::maybe_def_function(const string& var_name)
@@ -1429,26 +1429,9 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 
             def_type_class(Class.name);
 
-            if (Class.binds)
-            {
-                for(auto& [name, type]: unloc(*Class.binds).signatures)
-                    def_type_class_method(name, Class.name);
-
-                for(auto& decls: unloc(*Class.binds))
-                {
-                    for(auto& decl: decls)
-                    {
-                        if (decl.is_a<Haskell::SignatureDecl>())
-                        {
-                            auto& T = decl.as_<Haskell::SignatureDecl>();
-                            for(auto& var: T.vars)
-                            {
-                                def_type_class_method(unloc(var.name), Class.name);
-                            }
-                        }
-                    }
-                }
-            }
+            for(auto& sig_decl: Class.sig_decls)
+                for(auto& v: sig_decl.vars)
+                    def_type_class_method(unloc(v.name), Class.name);
         }
         else if (decl.is_a<Haskell::TypeSynonymDecl>())
         {

@@ -457,55 +457,6 @@ struct TypeSynonymDecl: public Object
         {}
 };
 
-struct ClassDecl: public Object
-{
-    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
-
-    std::string name;
-    std::vector<TypeVar> type_vars;
-    Context context;
-
-    std::optional<Located<Binds>> binds;
-    // std::vector<Located<expression_ref>> signatures;
-    // std::vector<Located<expression_ref>> default_decls;
-
-    ClassDecl* clone() const { return new ClassDecl(*this);}
-    std::string print() const;
-
-    ClassDecl(const std::string& s,
-              const std::vector<TypeVar>& tvs,
-              const Context& ct,
-              const std::optional<Located<Binds>>& bs)
-        :name(s),
-         type_vars(tvs),
-         context(ct),
-         binds(bs)
-        {}
-};
-
-struct InstanceDecl: public Object
-{
-    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
-
-    // This should be something like Eq a => Eq [a]
-    // Right now it could be either ForallType or ConstrainedType
-    Context context;
-    Type constraint;
-
-    std::optional<Located<Binds>> binds;
-
-    InstanceDecl* clone() const { return new InstanceDecl(*this);}
-    std::string print() const;
-
-    InstanceDecl(const Context& c,
-                 const Type& t,
-                 const std::optional<Located<Binds>>& bs)
-        :context(c),
-         constraint(t),
-         binds(bs)
-        {}
-};
-
 struct TypeFamilyInstanceEqn: public Object
 {
     // std::vector<TypeVar> forall;
@@ -551,6 +502,69 @@ struct TypeFamilyDecl: public Object
          kind_sig(ks),
          where_instances(es)
     { }
+};
+
+struct ClassDecl: public Object
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    Context context;
+    std::string name;
+    std::vector<TypeVar> type_vars;
+
+    std::vector<FixityDecl> fixity_decls;
+
+    std::vector<TypeFamilyDecl> type_fam_decls;
+    std::vector<TypeFamilyInstanceDecl> default_type_inst_decls;
+    std::vector<SignatureDecl> sig_decls;
+    Decls default_method_decls;
+
+    ClassDecl* clone() const { return new ClassDecl(*this);}
+    std::string print() const;
+
+    ClassDecl(const Context& ct,
+              const std::string& s,
+              const std::vector<TypeVar>& tvs,
+              const std::vector<FixityDecl>& fxs,
+              const std::vector<TypeFamilyDecl>& tfds,
+              const std::vector<TypeFamilyInstanceDecl>& tids,
+              const std::vector<SignatureDecl>& sds,
+              const Decls& dms)
+        :context(ct),
+         name(s),
+         type_vars(tvs),
+         fixity_decls(fxs),
+         type_fam_decls(tfds),
+         default_type_inst_decls(tids),
+         sig_decls(sds),
+         default_method_decls(dms)
+        {}
+};
+
+struct InstanceDecl: public Object
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    // This should be something like Eq a => Eq [a]
+    // Right now it could be either ForallType or ConstrainedType
+    Context context;
+    Type constraint;
+
+    std::vector<TypeFamilyInstanceDecl> type_inst_decls;
+    Decls method_decls;
+
+    InstanceDecl* clone() const { return new InstanceDecl(*this);}
+    std::string print() const;
+
+    InstanceDecl(const Context& c,
+                 const Type& t,
+                 const std::vector<TypeFamilyInstanceDecl>& tids,
+                 const Decls& ds)
+        :context(c),
+         constraint(t),
+         type_inst_decls(tids),
+         method_decls(ds)
+        {}
 };
 
 struct DefaultDecl: public Object

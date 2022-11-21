@@ -180,7 +180,7 @@ string SignatureDecl::print() const
 {
     vector<string> var_strings;
     for(auto& var: vars)
-        var_strings.push_back(unloc(var.name));
+        var_strings.push_back(var.print());
 
     return join(var_strings,", ") + " :: " + type.print();
 }
@@ -506,16 +506,38 @@ int ConstructorDecl::arity() const
 string ClassDecl::print() const
 {
     string result = "class " + show_type_or_class_header(context, name, type_vars);
-    if (binds)
-        result += " where " + binds->print();
+
+    vector<string> decls;
+    for(auto& decl: fixity_decls)
+        decls.push_back(decl.print());
+    for(auto& decl: type_fam_decls)
+        decls.push_back(decl.print());
+    for(auto& decl: default_type_inst_decls)
+        decls.push_back(decl.print());
+    for(auto& decl: sig_decls)
+        decls.push_back(decl.print());
+    for(auto& decl: default_method_decls)
+        decls.push_back(decl.print());
+
+    if (not decls.empty())
+        result += " where {" + join(decls,"; ") + "}";
+
     return result;
 }
 
 string InstanceDecl::print() const
 {
     string result = "instance " + show_instance_header(context, constraint);
-    if (binds)
-        result += " where " + binds->print();
+
+    vector<string> decls;
+    for(auto& decl: type_inst_decls)
+        decls.push_back(decl.print());
+    for(auto& decl: method_decls)
+        decls.push_back(decl.print());
+
+    if (not decls.empty())
+        result += " where {" + join(decls,"; ") + "}";
+
     return result;
 }
 
@@ -707,21 +729,16 @@ std::string ApplyExp::print() const
 {
     string func = head.print();
 
-    if (is_haskell_sym(func))
+    if (auto V = head.to<Hs::Var>(); V and V->is_sym() and args.size() >= 2)
     {
-        if (args.size() < 2)
-            func = "(" + func + ")";
-        else
+        string result = parenthesize_exp(args[0]) + " " + V->print_without_parens() + " " + parenthesize_exp(args[1]);
+        if (args.size() > 2)
         {
-            string result = parenthesize_exp(args[0]) + " " + func + " " + parenthesize_exp(args[1]);
-            if (args.size() > 2)
-            {
-                result = "(" + result + ")";
-                for(int i=2;i<args.size();i++)
-                    result += " " + parenthesize_exp(args[i]);
-            }
-            return result;
+            result = "(" + result + ")";
+            for(int i=2;i<args.size();i++)
+                result += " " + parenthesize_exp(args[i]);
         }
+        return result;
     }
 
     vector<string> ss = {func};

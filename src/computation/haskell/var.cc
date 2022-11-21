@@ -1,15 +1,31 @@
 #include "var.H"
+#include "ids.H"
 
 using std::string;
 
 namespace Haskell
 {
 
-string Var::print() const
+bool Var::is_sym() const
+{
+    return is_haskell_sym(unloc(name));
+}
+
+string Var::print_without_parens() const
 {
     string uname = unloc(name);
     if (index)
         uname = uname +"#"+std::to_string(*index);
+
+    return uname;
+}
+
+string Var::print() const
+{
+    string uname = print_without_parens();
+
+    if (is_haskell_sym(uname))
+        uname = "(" + uname + ")";
 
     return uname;
 }
