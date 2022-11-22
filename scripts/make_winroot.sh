@@ -79,9 +79,7 @@ cd ${SYSROOT}
 # of the *-win32/ versions.
 PKGS="boost-1.75.0-2"
 
-
 # We're going to use the /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll instead of downloading winpthread.
-PKGS=""
 
 for PKG in ${PKGS} ; do
     FILE=mingw-w64-x86_64-${PKG}-any.pkg.tar.zst
