@@ -23,6 +23,7 @@ module Prelude (module Prelude,
                 module Compiler.ST,
                 module Compiler.Num,
                 module Compiler.Real,
+                module Compiler.RealFrac,
                 module Compiler.Enum,
                 module Compiler.Classes)
     where
@@ -33,6 +34,7 @@ import Compiler.IO
 import Compiler.ST
 import Compiler.Num
 import Compiler.Real
+import Compiler.RealFrac
 import Compiler.Enum
 import Compiler.Classes
 import Data.Bool
