@@ -79,9 +79,9 @@ cd ${SYSROOT}
 # of the *-win32/ versions.
 PKGS="boost-1.75.0-2
 eigen3-3.4.0-1
-range-v3-0.12.0-1
-nlohman-json-3.11.2-1
-"
+range-v3-0.12.0-1"
+# nlohmann-json-3.11.2-1   This breaks things, maybe because we end up using both versions?
+
 
 # We're going to use the /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll instead of downloading winpthread.
 
