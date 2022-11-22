@@ -77,11 +77,9 @@ cd ${SYSROOT}
 # Note that the use of gcc-posix and g++-posix means that we need
 # *-posix/libgcc_s_seh-1.dll and *-posix2/libstdc++-6.dll instead
 # of the *-win32/ versions.
-PKGS="boost-1.75.0-2
-libwinpthread-git-9.0.0.6090.ad98746a-1
-"
+PKGS="boost-1.75.0-2"
 
-# We are going to build our own boost, for now.
+
 # We're going to use the /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll instead of downloading winpthread.
 PKGS=""
 
