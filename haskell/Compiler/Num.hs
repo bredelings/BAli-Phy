@@ -1,6 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Compiler.Num where
 
+import Compiler.Error
+
 infixl 7 *
 infixl 6 +, -
 
@@ -66,3 +68,23 @@ instance Num Double where
     negate = negate_double
     signum = signum_double
     fromInteger = intToDouble
+
+data LogDouble
+
+foreign import bpcall "Num:" add_logdouble :: LogDouble -> LogDouble -> LogDouble
+foreign import bpcall "Num:" subtract_logdouble :: LogDouble -> LogDouble -> LogDouble
+foreign import bpcall "Num:" multiply_logdouble :: LogDouble -> LogDouble -> LogDouble
+foreign import bpcall "Num:" signum_logdouble :: LogDouble -> LogDouble
+foreign import bpcall "Num:" intToLogDouble :: Int -> LogDouble
+
+instance Num LogDouble where
+    (+) = add_logdouble
+    (-) = subtract_logdouble
+    (*) = multiply_logdouble
+    abs x = x
+    negate = error "negate LogDouble"
+    signum = signum_logdouble
+    fromInteger = intToLogDouble
+
+
+

@@ -80,25 +80,7 @@ foreign import bpcall "Prelude:truncate" truncate :: Double -> Int
 foreign import bpcall "Prelude:ceiling" ceiling :: Double -> Int
 foreign import bpcall "Prelude:floor" floor :: Double -> Int
 foreign import bpcall "Prelude:round" round :: Double -> Int
-
 foreign import bpcall "Prelude:" doubleToInt :: Double -> Int
-
-data LogDouble
-
-foreign import bpcall "Num:" add_logdouble :: LogDouble -> LogDouble -> LogDouble
-foreign import bpcall "Num:" subtract_logdouble :: LogDouble -> LogDouble -> LogDouble
-foreign import bpcall "Num:" multiply_logdouble :: LogDouble -> LogDouble -> LogDouble
-foreign import bpcall "Num:" signum_logdouble :: LogDouble -> LogDouble
-foreign import bpcall "Num:" intToLogDouble :: Int -> LogDouble
-
-instance Num LogDouble where
-    (+) = add_logdouble
-    (-) = subtract_logdouble
-    (*) = multiply_logdouble
-    abs x = x
-    negate = error "negate LogDouble"
-    signum = signum_logdouble
-    fromInteger = intToLogDouble
 
 foreign import bpcall "Prelude:" divide_logdouble :: LogDouble -> LogDouble -> LogDouble
 foreign import bpcall "Prelude:" recip_logdouble :: LogDouble -> LogDouble
