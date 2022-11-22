@@ -46,7 +46,7 @@ template<typename T>
 class Box: public Object, public T
 {
 public:
-    Box<T>* clone() const {return new Box<T>(*this);}
+    Box<T>* clone() const override {return new Box<T>(*this);}
 
     Box<T>& operator=(const Box<T>& t) = default;
     Box<T>& operator=(Box<T>&& t) = default;
@@ -76,7 +76,7 @@ public:
             return false;
     }
 
-    std::string print() const {return Object::print();}
+    std::string print() const override {return Object::print();}
 
     const T& value() const {return *(const T*)this;}
 
