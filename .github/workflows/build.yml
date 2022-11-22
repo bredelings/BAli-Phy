@@ -12,7 +12,7 @@ jobs:
   build:
     strategy:
       matrix:
-        name: [ubuntu-gcc-9,
+        name: [ubuntu-gcc-10,
                ubuntu-gcc-11-sanitize,
                ubuntu-gcc-11-debugoptimized,
                ubuntu-gcc-11-DEBUG_MACHINE,
@@ -24,10 +24,10 @@ jobs:
                ]
 
         include:
-          - name: ubuntu-gcc-9
+          - name: ubuntu-gcc-10
             os: ubuntu-latest
             compiler: gcc
-            version: "9"
+            version: "10"
             buildtype: "release"
             arch: "linux64"
 

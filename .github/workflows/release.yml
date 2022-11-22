@@ -27,16 +27,16 @@ jobs:
     needs: create_release
     strategy:
       matrix:
-        name: [ubuntu-gcc-9,
+        name: [ubuntu-gcc-10,
                macos-xcode-12.5,
                windows
                ]
 
         include:
-          - name: ubuntu-gcc-9
+          - name: ubuntu-gcc-10
             os: ubuntu-latest
             compiler: gcc
-            version: "9"
+            version: "10"
             buildtype: release
             arch: "linux64"
 
