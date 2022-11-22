@@ -286,7 +286,7 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
         }
         else if (auto d = L.lit.is_Double())
         {
-            expression_ref fromRational = Hs::Var({noloc,"Compiler.Real.fromRational"});
+            expression_ref fromRational = Hs::Var({noloc,"Compiler.Frational.fromRational"});
             auto [arg_type, result_type] = unify_function( inferRho(fromRational) );
             unify(arg_type, double_type());
             unify(result_type, expTypeToType(exp_type));

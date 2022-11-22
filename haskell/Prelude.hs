@@ -18,6 +18,8 @@ module Prelude (module Prelude,
                 module Control.Applicative,
                 module Control.Monad,
                 module Compiler.Error,
+                module Compiler.Floating,
+                module Compiler.Fractional,
                 module Compiler.Base,
                 module Compiler.IO,
                 module Compiler.ST,
@@ -29,6 +31,8 @@ module Prelude (module Prelude,
     where
 
 import Compiler.Error
+import Compiler.Floating
+import Compiler.Fractional
 import Compiler.Base
 import Compiler.IO
 import Compiler.ST
