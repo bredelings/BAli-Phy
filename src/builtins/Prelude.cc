@@ -51,22 +51,6 @@ extern "C" closure builtin_function_doubleToInt(OperationArgs& Args)
     return {xi};
 }
 
-extern "C" closure builtin_function_add_char(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-
-    return {x.as_log_double() + y.as_log_double()};
-}
-
-extern "C" closure builtin_function_multiply_char(OperationArgs& Args)
-{
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
-
-    return {x.as_log_double() * y.as_log_double()};
-}
-
 extern "C" closure builtin_function_divide_double(OperationArgs& Args)
 {
     auto x = Args.evaluate(0);
@@ -118,84 +102,84 @@ T div(T x, T y)
     return (x - mod(x,y))/y;
 }
 
+// I think actually Char is a unicode character, not a 1-byte object.
+
+
 // x `quot` y should round towards -infinity
 // Also, supposedly (x `quot` y)*y + (x `mod` y) == x
 // Therefore, (x `quot` y) = (x - (x `mod` y))/y
-extern "C" closure builtin_function_div(OperationArgs& Args)
+extern "C" closure builtin_function_div_int(OperationArgs& Args)
 {
-    using boost::dynamic_pointer_cast;
-
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
+    auto x = Args.evaluate(0).as_int();
+    auto y = Args.evaluate(1).as_int();
   
-    if (x.is_int())
-	return { div<int>(x.as_int(),y.as_int()) };
-    else if (x.is_char())
-	return { div<char>(x.as_char(),y.as_char())};
-    else
-	throw myexception()<<"div: object '"<<x.print()<<"' is not int, or char'";
+    return { expression_ref(div<int>(x,y)) };
 }
 
-extern "C" closure builtin_function_mod(OperationArgs& Args)
+extern "C" closure builtin_function_mod_int(OperationArgs& Args)
 {
-    using boost::dynamic_pointer_cast;
-
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
+    auto x = Args.evaluate(0).as_int();
+    auto y = Args.evaluate(1).as_int();
   
-    if (x.is_int())
-	return {mod(x.as_int(),y.as_int())};
-    else if (x.is_char())
-	return {mod(x.as_char(),y.as_char())};
-    else
-	throw myexception()<<"mod: object '"<<x.print()<<"' is not int, or char'";
+    return { mod(x,y)};
 }
 
 // x `quot` y should round towards zero.
 // Therefore we use C integer division, which rounds towards 0.
-extern "C" closure builtin_function_quot(OperationArgs& Args)
+extern "C" closure builtin_function_quot_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+    auto y = Args.evaluate(1).as_int();
+  
+    return { x / y };
+}
+
+extern "C" closure builtin_function_rem_int(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_int();
+    auto y = Args.evaluate(1).as_int();
+  
+    return { x % y };
+}
+
+
+// x `quot` y should round towards -infinity
+// Also, supposedly (x `quot` y)*y + (x `mod` y) == x
+// Therefore, (x `quot` y) = (x - (x `mod` y))/y
+extern "C" closure builtin_function_div_integer(OperationArgs& Args)
 {
     using boost::dynamic_pointer_cast;
 
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
+    integer x = Args.evaluate(0).as_<Integer>();
+    integer y = Args.evaluate(1).as_<Integer>();
   
-    if (x.is_int())
-	return { x.as_int() / y.as_int() };
-    else if (x.is_char())
-	return { x.as_char() / y.as_char() };
-    else
-	throw myexception()<<"quot: object '"<<x.print()<<"' is not int, or char'";
+    return { Integer(div(x,y)) };
 }
 
-extern "C" closure builtin_function_rem(OperationArgs& Args)
+extern "C" closure builtin_function_mod_integer(OperationArgs& Args)
 {
-    using boost::dynamic_pointer_cast;
-
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
+    integer x = Args.evaluate(0).as_<Integer>();
+    integer y = Args.evaluate(1).as_<Integer>();
   
-    if (x.is_int())
-	return { x.as_int() % y.as_int() };
-    else if (x.is_char())
-	return { x.as_char() % y.as_char() };
-    else
-	throw myexception()<<"rem: object '"<<x.print()<<"' is not int, or char'";
+    return { Integer(mod(x,y)) };
 }
 
-extern "C" closure builtin_function_subtract_char(OperationArgs& Args)
+// x `quot` y should round towards zero.
+// Therefore we use C integer division, which rounds towards 0.
+extern "C" closure builtin_function_quot_integer(OperationArgs& Args)
 {
-    auto x = Args.evaluate(0);
-    auto y = Args.evaluate(1);
+    integer x = Args.evaluate(0).as_<Integer>();
+    integer y = Args.evaluate(1).as_<Integer>();
 
-    return {x.as_log_double() - y.as_log_double()};
+    return { Integer(x / y) };
 }
 
-extern "C" closure builtin_function_negate_char(OperationArgs& Args)
+extern "C" closure builtin_function_rem_integer(OperationArgs& Args)
 {
-    char x = Args.evaluate(0).as_char();
-
-    return { -x };
+    integer x = Args.evaluate(0).as_<Integer>();
+    integer y = Args.evaluate(1).as_<Integer>();
+  
+    return { Integer(x % y) };
 }
 
 extern "C" closure builtin_function_get_n_args(OperationArgs& Args)

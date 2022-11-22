@@ -6,9 +6,6 @@ using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
 
-typedef boost::multiprecision::cpp_int integer;
-typedef Box<integer> Integer;
-
 //********** Builtins for Num Int ****************//
 
 extern "C" closure builtin_function_add_integer(OperationArgs& Args)
