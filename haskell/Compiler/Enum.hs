@@ -38,6 +38,19 @@ instance Enum Int where
 
     enumFromThenTo from next to = enumByToFrom (next - from) to from
 
+instance Enum Integer where
+    succ n = n + 1
+    pred n = n - 1
+    toEnum n = intToInteger n
+    fromEnum n = integerToInt n
+
+    enumFromTo n m | fromEnum n <= fromEnum m    = n:enumFromTo (succ n) m
+                   | otherwise                   = []
+
+    enumFromThen from next = enumByFrom (next-from) from
+
+    enumFromThenTo from next to = enumByToFrom (next - from) to from
+
 instance Enum Double where
     succ x = x + 1
     pred x = x - 1

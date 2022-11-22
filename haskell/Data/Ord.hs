@@ -41,6 +41,7 @@ class Eq a => Ord a where
 
 foreign import bpcall "Prelude:" lessthan_char :: Char -> Char -> Bool
 foreign import bpcall "Prelude:" lessthan_int :: Int -> Int -> Bool
+foreign import bpcall "Prelude:" lessthan_integer :: Integer -> Integer -> Bool
 foreign import bpcall "Prelude:" lessthan_double :: Double -> Double -> Bool
 
 instance Ord Char where
@@ -48,6 +49,9 @@ instance Ord Char where
 
 instance Ord Int where
     (<) = lessthan_int 
+
+instance Ord Integer where
+    (<) = lessthan_integer
 
 instance Ord Double where
     (<) = lessthan_double

@@ -235,6 +235,14 @@ extern "C" closure builtin_function_equals_int(OperationArgs& Args)
     return { x == y };
 }
 
+extern "C" closure builtin_function_equals_integer(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+    integer y = Args.evaluate(1).as_<Integer>();
+
+    return { x == y };
+}
+
 extern "C" closure builtin_function_equals_double(OperationArgs& Args)
 {
     auto x = Args.evaluate(0).as_double();
@@ -418,6 +426,14 @@ extern "C" closure builtin_function_lessthan_int(OperationArgs& Args)
 {
     auto x = Args.evaluate(0).as_int();
     auto y = Args.evaluate(1).as_int();
+
+    return {x < y};
+}
+
+extern "C" closure builtin_function_lessthan_integer(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+    integer y = Args.evaluate(1).as_<Integer>();
 
     return {x < y};
 }

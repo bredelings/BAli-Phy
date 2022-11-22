@@ -27,6 +27,12 @@ foreign import bpcall "Prelude:" equals_int :: Int -> Int -> Bool
 instance Eq Int where
     (==) = equals_int
 
+-- Eq Integer
+foreign import bpcall "Prelude:" equals_integer :: Integer -> Integer-> Bool
+
+instance Eq Integer where
+    (==) = equals_integer
+
 -- Eq Double
 foreign import bpcall "Prelude:" equals_double :: Double -> Double -> Bool
 

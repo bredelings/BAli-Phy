@@ -1,10 +1,73 @@
 #include "computation/machine/args.H"
-
+#include "computation/haskell/Integer.H"
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 
 using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
+
+typedef boost::multiprecision::cpp_int integer;
+typedef Box<integer> Integer;
+
+//********** Builtins for Num Int ****************//
+
+extern "C" closure builtin_function_add_integer(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+    integer y = Args.evaluate(1).as_<Integer>();
+
+    return Integer(x + y);
+}
+
+extern "C" closure builtin_function_subtract_integer(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+    integer y = Args.evaluate(1).as_<Integer>();
+
+    return Integer( x - y );
+}
+
+extern "C" closure builtin_function_multiply_integer(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+    integer y = Args.evaluate(1).as_<Integer>();
+
+    return Integer( x * y );
+}
+
+extern "C" closure builtin_function_abs_integer(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+
+    return Integer( (x < 0) ? -x : x );
+}
+
+
+extern "C" closure builtin_function_negate_integer(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+
+    return Integer( -x );
+}
+
+extern "C" closure builtin_function_signum_integer(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+
+    integer result = (x > 0 ? 1 : 0) - (x < 0 ? -1 : 0);
+
+    return Integer( result );
+}
+
+extern "C" closure builtin_function_integerToInt(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+
+    int result = x.convert_to<int>();
+
+    return expression_ref( result );
+}
+
 
 //********** Builtins for Num Int ****************//
 
@@ -57,6 +120,14 @@ extern "C" closure builtin_function_signum_int(OperationArgs& Args)
 }
 
 
+extern "C" closure builtin_function_intToInteger(OperationArgs& Args)
+{
+    int x = Args.evaluate(0).as_int();
+
+    return Integer(x);
+}
+
+
 //********** Builtins for Num Double ****************//
 
 extern "C" closure builtin_function_add_double(OperationArgs& Args)
@@ -105,6 +176,12 @@ extern "C" closure builtin_function_signum_double(OperationArgs& Args)
     double result = (x > 0.0 ? 1.0 : 0.0) - (x < 0.0 ? -1.0 : 0.0);
 
     return {result};
+}
+
+extern "C" closure builtin_function_integerToDouble(OperationArgs& Args)
+{
+    integer i = Args.evaluate(0).as_<Integer>();
+    return {i.convert_to<double>()};
 }
 
 extern "C" closure builtin_function_intToDouble(OperationArgs& Args)
