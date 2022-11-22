@@ -69,7 +69,7 @@ jobs:
             arch: "linux64"
 
           - name: ubuntu-clang-11
-            os: ubuntu-latest
+            os: ubuntu-22.04
             compiler: clang
             version: "11"
             buildtype: "release"
