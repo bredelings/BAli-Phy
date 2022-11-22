@@ -176,6 +176,8 @@ struct typechecker_state: FreshVarSource
 
     Hs::Type int_type() const;
 
+    Hs::Type integer_type() const;
+
     Hs::Type double_type() const;
 
     bool add_substitution(const Hs::MetaTypeVar& a, const Hs::Type& type);

@@ -1146,6 +1146,8 @@ type_info Module::lookup_builtin_type(const std::string& name)
         return {"Double", type_name_category::ADT, {}, 0, kind_star()};
     else if (name == "Int")
         return {"Int", type_name_category::ADT, {}, 0, kind_star()};
+    else if (name == "Integer")
+        return {"Integer", type_name_category::ADT, {}, 0, kind_star()};
     else if (name == "()")
         return {"()", type_name_category::ADT, {}, 0, kind_star()};
     else if (name == "[]")

@@ -173,7 +173,7 @@ bool is_haskell_builtin_type_name(const std::string& s)
 {
     if (s == "()" or s == "[]" or s == "->" or s == "~" or is_tuple_name(s))
         return true;
-    else if (s == "Double" or s == "Int" or s == "Char")
+    else if (s == "Double" or s == "Int" or s == "Char" or s == "Integer")
         return true;
     else
         return false;

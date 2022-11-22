@@ -764,6 +764,11 @@ Hs::Type typechecker_state::int_type() const
     return find_prelude_tycon("Int");
 }
 
+Hs::Type typechecker_state::integer_type() const
+{
+    return find_prelude_tycon("Integer");
+}
+
 Hs::Type typechecker_state::double_type() const
 {
     return find_prelude_tycon("Double");

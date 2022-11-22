@@ -121,6 +121,8 @@ Hs::Kind kindchecker_state::kind_check_type_con(const string& name)
         return kind_star();
     else if (name == "Int")
         return kind_star();
+    else if (name == "Integer")
+        return kind_star();
     else if (name == "()")
         return kind_star();
     else if (name == "[]")

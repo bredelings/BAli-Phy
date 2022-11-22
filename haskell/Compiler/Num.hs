@@ -4,8 +4,6 @@ module Compiler.Num where
 infixl 7 *
 infixl 6 +, -
 
-data Integer
-
 class Num a where
     (+), (-), (*) :: a -> a -> a
     negate, abs, signum :: a -> a
