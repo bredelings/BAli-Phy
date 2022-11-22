@@ -7,6 +7,7 @@
 #include <variant>
 #include "computation/object.H"
 #include "computation/parser/located.H"
+#include "Integer.H"
 
 // Can we eliminate this? -- for the Ops
 #include "computation/expression/expression_ref.H"
@@ -22,10 +23,10 @@ struct Char
 
 struct Integer
 {
-    int value;
+    integer value;
     expression_ref fromIntegerOp;
-    Integer(int i): value(i) {}
-    Integer(int i, const expression_ref& op): value(i), fromIntegerOp(op) {}
+    Integer(integer i): value(i) {}
+    Integer(integer i, const expression_ref& op): value(i), fromIntegerOp(op) {}
 };
 
 struct String
@@ -44,7 +45,7 @@ struct Double
 
 struct BoxedInteger
 {
-    int value;
+    integer value;
 };
 
 struct Literal: public Object
@@ -60,10 +61,10 @@ struct Literal: public Object
     std::string print() const;
 
     std::optional<char> is_Char() const;
-    std::optional<int> is_Integer() const;
+    std::optional<integer> is_Integer() const;
     std::optional<std::string> is_String() const;
     std::optional<double> is_Double() const;
-    std::optional<int> is_BoxedInteger() const;
+    std::optional<integer> is_BoxedInteger() const;
 
     template <typename T>
     Literal(const T& t): literal(t) {}

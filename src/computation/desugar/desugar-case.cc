@@ -443,7 +443,7 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
         }
         else if (auto i = L->lit.is_Integer())
         {
-            pat1 = *i;
+            pat1 = i->convert_to<int>();
         }
         else if (auto d = L->lit.is_Double())
         {
@@ -456,7 +456,7 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
         }
         else if (auto i = L->lit.is_BoxedInteger())
         {
-            pat1 = *i;
+            pat1 = i->convert_to<int>();
         }
         else
             std::abort();

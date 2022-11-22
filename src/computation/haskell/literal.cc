@@ -12,13 +12,13 @@ string Literal::print() const
     if (literal.index() == 0)
         return "'" + std::string(1, std::get<0>(literal).value) + "'";
     else if (literal.index() == 1)
-        return std::to_string(std::get<1>(literal).value);
+        return std::get<1>(literal).value.str();
     else if (literal.index() == 2)
         return '"' + std::get<2>(literal).value + '"';
     else if (literal.index() == 3)
         return std::to_string(std::get<3>(literal).value);
     else if (literal.index() == 4)
-        return std::to_string(std::get<4>(literal).value) + "#";
+        return std::get<4>(literal).value.str() + "#";
     else
         std::abort();
 }
@@ -31,7 +31,7 @@ std::optional<char> Literal::is_Char() const
         return {};
 }
 
-std::optional<int> Literal::is_Integer() const
+std::optional<integer> Literal::is_Integer() const
 {
     if (literal.index() == 1)
         return std::get<1>(literal).value;
@@ -55,7 +55,7 @@ std::optional<double> Literal::is_Double() const
         return {};
 }
 
-std::optional<int> Literal::is_BoxedInteger() const
+std::optional<integer> Literal::is_BoxedInteger() const
 {
     if (literal.index() == 4)
         return std::get<4>(literal).value;

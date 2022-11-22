@@ -542,9 +542,9 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         {
             Hs::Integer I = std::get<Hs::Integer>(L->literal);
             if (I.fromIntegerOp)
-                return {desugar(I.fromIntegerOp), I.value};
+                return {desugar(I.fromIntegerOp), I.value.convert_to<int>()};
             else
-                return I.value;
+                return I.value.convert_to<int>();
         }
         else if (auto d = L->is_Double())
         {
@@ -562,7 +562,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         }
         else if (auto i = L->is_BoxedInteger())
         {
-            return *i;
+            return i->convert_to<int>();
         }
         else
             std::abort();
