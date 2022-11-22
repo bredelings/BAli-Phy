@@ -56,6 +56,8 @@ struct KindVar: public Object
     KindVar(const std::string& s, int i): name(s), index(i) {}
 };
 
+Hs::Kind function_kind(const std::vector<Hs::Kind>& arg_kinds, const Hs::Kind result_kind);
+
 object_ptr<KindVar> kind_var(const std::string& s, int i);
 
 typedef std::map<KindVar,Hs::Kind> k_substitution_t;

@@ -1,6 +1,10 @@
 #include "kind.H"
 
+#include <range/v3/all.hpp>
+
 using std::string;
+
+namespace views = ranges::views;
 
 object_ptr<KindStar> kind_star() {return new KindStar();}
 
@@ -180,6 +184,14 @@ std::optional<k_substitution_t> kunify(const Hs::Kind& k1, const Hs::Kind& k2)
         return {{}};
     else
         return {};
+}
+
+Hs::Kind function_kind(const std::vector<Hs::Kind>& arg_kinds, const Hs::Kind result_kind)
+{
+    auto kind = result_kind;
+    for(auto& arg_kind: arg_kinds | views::reverse)
+        kind = kind_arrow(arg_kind, kind);
+    return kind;
 }
 
 Hs::Kind make_n_args_kind(int n)
