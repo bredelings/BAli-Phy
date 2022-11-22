@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <iostream>
+#include <concepts>
 
 #include "util/ref_counted.H"
 #include "util/math/log-double.H"
@@ -61,6 +62,19 @@ public:
 	    T::operator=(std::move(t));
 	    return *this;
 	}
+
+    bool operator==(const Object& o2) const override
+    {
+        if constexpr (std::equality_comparable<T>)
+        {
+            if (const T* t2 = dynamic_cast<const T*>(&o2))
+                return (value() == *t2);
+            else
+                return false;
+        }
+        else
+            return false;
+    }
 
     std::string print() const {return Object::print();}
 
