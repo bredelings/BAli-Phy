@@ -165,7 +165,6 @@ jobs:
       # This command also generates the cross file
       run: |
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
-        echo "BOOST_ROOT=/home/runner/win_root/mingw64/" >> $GITHUB_ENV
 
     - name: Configure
       run: |
