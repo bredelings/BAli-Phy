@@ -80,27 +80,10 @@ if get_option('with-mpi')
   boost_modules += ['serialization', 'mpi']
 endif
 
-# FIXME: configure these things as sub-projects
-# FIXME: Build our own boost if cpp_debug_stl
-# FIXME: Only do the 'auto' approach (basically fallback)?
-# FIXME: Perhaps use our own if we think the system one won't work
+# NOTE: we can't use cpp_debug_stl unless we build our own BOOST.
+# But we don't have to build it inside of bali-phy.
 
-## Handle auto / system / internal method of finding/building BOOST
-used_boost = get_option('boost')
-if get_option('boost') == 'auto'
-  boost = dependency('boost', modules : boost_modules, version: '>=1.63', required: false)
-  if not boost.found()
-    message('Building internal BOOST libraries.')
-    subdir('external/boost')
-    used_boost = 'internal'
-  else
-    used_boost = 'system'
-  endif
-elif get_option('boost') == 'system'
-  boost = dependency('boost', modules : boost_modules)
-else
-  subdir('external/boost')
-endif
+boost = dependency('boost', modules : boost_modules)
 
 ## Handle auto / system / internal method of finding/building EIGEN
 used_eigen = get_option('eigen')
@@ -199,8 +182,7 @@ install_subdir('examples', install_dir: get_option('datadir')/'doc/bali-phy')
 summary({'host': host_machine.system()
         }, section: 'Architecture')
 
-summary({'BOOST': used_boost,
-         'Eigen': used_eigen,
+summary({'Eigen': used_eigen,
          'nlohmann::json': used_json,
          'range v3': used_librange,
          'cairo': used_cairo
