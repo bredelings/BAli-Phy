@@ -18,7 +18,7 @@ jobs:
                ubuntu-gcc-11-DEBUG_MACHINE,
                ubuntu-gcc-11,
                ubuntu-gcc-12,
-               ubuntu-clang-11,
+               ubuntu-clang-13,
                macos-xcode-13,
                windows
                ]
