@@ -1291,7 +1291,7 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     M.type_decls = tc_state->add_type_var_kinds( M.type_decls );
 
     // 4. Get type synonyms
-    tc_state->check_type_synonyms(M.type_decls);
+    tc_state->get_type_synonyms(M.type_decls);
 
     // 5. Get types for value constructors  (CVE_T = constructor types)
     tc_state->get_constructor_info(M.type_decls);

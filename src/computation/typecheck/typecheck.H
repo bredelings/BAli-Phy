@@ -363,8 +363,7 @@ struct typechecker_state: FreshVarSource
 
     void infer_type_for_binds(Hs::Binds& binds, bool is_top_level = false);
 
-    void
-    check_type_synonyms(const Hs::Decls& decls);
+    void get_type_synonyms(const Hs::Decls& decls);
 
     Hs::Binds infer_type_for_classes(const Hs::Decls& decls);
 

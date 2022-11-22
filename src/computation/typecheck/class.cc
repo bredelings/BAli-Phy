@@ -179,7 +179,7 @@ Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
 }
 
 void
-typechecker_state::check_type_synonyms(const Hs::Decls& decls)
+typechecker_state::get_type_synonyms(const Hs::Decls& decls)
 {
     for(auto& decl: decls)
     {
