@@ -3,6 +3,7 @@ module Compiler.RealFrac where
 
 import Compiler.Real
 import Compiler.Fractional
+import Compiler.Integral
 
 class (Real a, Fractional a) => RealFrac a where
     properFraction :: (Integral b) => a -> (b,a)

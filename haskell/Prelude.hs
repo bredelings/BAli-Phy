@@ -17,11 +17,12 @@ module Prelude (module Prelude,
                 module Foreign.String,
                 module Control.Applicative,
                 module Control.Monad,
+                module Compiler.Base,
                 module Compiler.Error,
                 module Compiler.Floating,
                 module Compiler.Fractional,
-                module Compiler.Base,
                 module Compiler.IO,
+                module Compiler.Integral,
                 module Compiler.ST,
                 module Compiler.Num,
                 module Compiler.Real,
@@ -36,6 +37,7 @@ import Compiler.Fractional
 import Compiler.Base
 import Compiler.IO
 import Compiler.ST
+import Compiler.Integral
 import Compiler.Num
 import Compiler.Real
 import Compiler.RealFrac
