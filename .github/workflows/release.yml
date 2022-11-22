@@ -67,6 +67,10 @@ jobs:
         sudo apt-get install -y pandoc libcairo2-dev ccache
         sudo rm -rf /usr/local/share/boost
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          # For newer GCCs, maybe.
+          # sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
+          # sudo apt-get update
+
           sudo apt-get install -y g++-${{ matrix.version }}
           echo "CC=ccache gcc-${{ matrix.version }}" >> $GITHUB_ENV
           echo "CXX=ccache g++-${{ matrix.version }}" >> $GITHUB_ENV
