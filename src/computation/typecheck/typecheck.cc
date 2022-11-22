@@ -451,9 +451,27 @@ void typechecker_state::set_expected_type(const Expected& E, const Hs::Type& typ
     }
 }
 
+void typechecker_state::get_tycon_info(const Hs::TypeFamilyDecl& F)
+{
+    tycon_info().insert({unloc(F.con.name), {F.kind(), (int)F.args.size()}});
+}
+
 void typechecker_state::get_tycon_info(const Hs::Decls& type_decls)
 {
     type_con_env new_tycons;
+
+    type_con_env new_fam_tycons;
+    for(auto& type_decl: type_decls)
+    {
+        if (auto F = type_decl.to<Hs::TypeFamilyDecl>())
+            get_tycon_info(*F);
+        else if (auto C = type_decl.to<Hs::ClassDecl>())
+        {
+            for(auto& F: C->type_fam_decls)
+                get_tycon_info(F);
+        }
+    }
+    tycon_info() += new_fam_tycons;
 
     auto type_decl_groups = find_type_groups(type_decls);
 
@@ -556,7 +574,7 @@ Hs::TypeVar typechecker_state::fresh_rigid_type_var(const Hs::Kind& k)
 // I guess this is AFTER rename, so declarations have been un-infixed, and we could (theoretically) represent each function as something like [([pat],grhs)]
 // SHOULD we actually translate each function to (say) a list of ([pat],ghrs)?  How do we store 
 //
-// typecheck_module(vector<ClassDecl>, vector<DataDecl>, vector<TypeSyonymDecl>, vector<InstanceDecl>, vector<ValueDecl>)
+// typecheck_module(vector<ClassDecl>, vector<DataDecl>, vector<TypeSynonymDecl>, vector<InstanceDecl>, vector<ValueDecl>)
 // {
 //    Kindcheck(classdecls, data_decls, type_decls);
 //

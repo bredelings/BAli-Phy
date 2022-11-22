@@ -147,6 +147,7 @@ struct typechecker_state: FreshVarSource
 
     // ------ End: Functions handling the LIE ---
 
+    void get_tycon_info(const Hs::TypeFamilyDecl&);
     void get_tycon_info(const Hs::Decls& type_decls);
 
     Hs::Decls add_type_var_kinds(Hs::Decls type_decls);
