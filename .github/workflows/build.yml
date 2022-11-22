@@ -187,6 +187,18 @@ jobs:
         echo meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
         meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
 
+    - name: Upload meson log if configure failed
+      uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: meson-log-${{ matrix.name }}
+        path: '/home/runner/work/BAli-Phy/BAli-Phy/build/meson-logs/meson-log.txt'
+
+    - name: Upload meson log if configure failed
+      if: failure()
+      run: |
+        cat /home/runner/work/BAli-Phy/BAli-Phy/build/meson-logs/meson-log.txt
+
     - name: Build
       run: |
         ccache -p
