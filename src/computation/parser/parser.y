@@ -21,6 +21,7 @@
   # include "computation/haskell/haskell.H"
   # include "computation/typecheck/types.H"
   # include "computation/typecheck/kind.H"
+  # include "computation/haskell/Integer.H"
 
   class driver;
 
@@ -199,12 +200,12 @@
 
 %token <char>          CHAR     "CHAR"
 %token <std::string>   STRING   "STRING"
-%token <int>           INTEGER  "INTEGER"
+%token <integer>       INTEGER  "INTEGER"
 %token <double>        RATIONAL "RATIONAL"
 
 %token <char>          PRIMCHAR    "PRIMCHAR"
 %token <std::string>   PRIMSTRING  "PRIMSTRING"
-%token <int>           PRIMINTEGER "PRIMINTEGER"
+%token <integer>       PRIMINTEGER "PRIMINTEGER"
 %token <int>           PRINTWORD   "PRIMWORD"
 %token <float>         PRIMFLOAT   "PRIMFLOAT"
 %token <double>        PRIMDOUBLE  "PRIMDOUBLE"
@@ -617,7 +618,7 @@ impspec: "(" exportlist ")"           { $$ = Hs::ImpSpec{false, $2}; }
 /* ------------- Fixity Declarations ----------------------------- */
 
 prec: %empty       { }
-|     INTEGER      { $$ = $1; }
+|     INTEGER      { $$ = $1.convert_to<int>(); }
 
 infix: "infix"     { $$ = Hs::Fixity::infix; }
 |      "infixl"    { $$ = Hs::Fixity::infixl; }

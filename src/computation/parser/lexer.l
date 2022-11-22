@@ -27,6 +27,8 @@ yy::parser::symbol_type consym(const yy::parser::location_type&);
 yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
 				     const yy::parser::location_type& loc);
 
+yy::parser::symbol_type make_integer10(const yy::parser::location_type& loc);
+
 yy::parser::symbol_type make_boxed_integer(int radix, bool positive, int shift,
 				           const yy::parser::location_type& loc);
 
@@ -224,7 +226,7 @@ signed       {negative}?
 
 <INITIAL>"-"{decimal}"#"                        drv.set_closing_token(); return make_boxed_integer(10,false,0,loc);
 <INITIAL>{decimal}"#"                           drv.set_closing_token(); return make_boxed_integer(10,true,0,loc);
-<INITIAL>{decimal}                              drv.set_closing_token(); return make_integer(10,true,0,loc);
+<INITIAL>{decimal}                              drv.set_closing_token(); return make_integer10(loc);
   /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
 <INITIAL>0[oO]{numspc}{octal}                   drv.set_closing_token(); return make_integer( 8,true,2,loc);
 <INITIAL>0[xX]{numspc}{hexadecimal}             drv.set_closing_token(); return make_integer(16,true,2,loc);
@@ -433,6 +435,11 @@ yy::parser::symbol_type consym(const yy::parser::location_type& loc)
 	auto tok = it->second.first;
 	return yy::parser::symbol_type(tok, loc);
     }
+}
+
+yy::parser::symbol_type make_integer10(const yy::parser::location_type& loc)
+{
+    return yy::parser::make_INTEGER(integer(yytext), loc);
 }
 
 yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
