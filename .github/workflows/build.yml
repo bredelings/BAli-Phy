@@ -83,7 +83,7 @@ jobs:
             arch: "mac64"
 
           - name: windows
-            os: ubuntu-latest
+            os: ubuntu-22.04
             compiler: mingw
             version: "N/A"
             buildtype: "release"
