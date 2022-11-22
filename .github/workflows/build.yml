@@ -68,10 +68,10 @@ jobs:
             buildtype: "release"
             arch: "linux64"
 
-          - name: ubuntu-clang-11
+          - name: ubuntu-clang-13
             os: ubuntu-22.04
             compiler: clang
-            version: "11"
+            version: "13"
             buildtype: "release"
             arch: "linux64"
 
