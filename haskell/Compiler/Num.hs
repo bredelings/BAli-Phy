@@ -9,7 +9,7 @@ infixl 6 +, -
 class Num a where
     (+), (-), (*) :: a -> a -> a
     negate, abs, signum :: a -> a
-    fromInteger :: Int -> a
+    fromInteger :: Integer -> a
 
     x - y = x + (negate y)
     negate y = 0 - y
@@ -21,8 +21,6 @@ foreign import bpcall "Num:" multiply_integer :: Integer -> Integer -> Integer
 foreign import bpcall "Num:" abs_integer :: Integer -> Integer
 foreign import bpcall "Num:" negate_integer :: Integer -> Integer
 foreign import bpcall "Num:" signum_integer :: Integer -> Integer
-foreign import bpcall "Num:" integerToInt :: Integer -> Int
-foreign import bpcall "Num:" intToInteger :: Int -> Integer
 
 instance Num Integer where
     (+) = add_integer
@@ -31,7 +29,7 @@ instance Num Integer where
     abs = abs_integer
     negate = negate_integer
     signum = signum_integer
-    fromInteger = intToInteger
+    fromInteger x = x
 
 
 foreign import bpcall "Num:" add_int :: Int -> Int -> Int
@@ -40,6 +38,7 @@ foreign import bpcall "Num:" multiply_int :: Int -> Int -> Int
 foreign import bpcall "Num:" abs_int :: Int -> Int
 foreign import bpcall "Num:" negate_int :: Int -> Int
 foreign import bpcall "Num:" signum_int :: Int -> Int
+foreign import bpcall "Num:" integerToInt :: Integer -> Int
 
 instance Num Int where
     (+) = add_int
@@ -48,7 +47,7 @@ instance Num Int where
     abs = abs_int
     negate = negate_int
     signum = signum_int
-    fromInteger x = x
+    fromInteger = integerToInt
 
 
 foreign import bpcall "Num:" add_double :: Double -> Double -> Double
@@ -57,7 +56,7 @@ foreign import bpcall "Num:" multiply_double :: Double -> Double -> Double
 foreign import bpcall "Num:" abs_double :: Double -> Double
 foreign import bpcall "Num:" negate_double :: Double -> Double
 foreign import bpcall "Num:" signum_double :: Double -> Double
-foreign import bpcall "Num:" intToDouble :: Int -> Double
+--foreign import bpcall "Num:" intToDouble :: Int -> Double
 foreign import bpcall "Num:" integerToDouble :: Integer -> Double
 
 instance Num Double where
@@ -67,7 +66,7 @@ instance Num Double where
     abs = abs_double
     negate = negate_double
     signum = signum_double
-    fromInteger = intToDouble
+    fromInteger = integerToDouble
 
 data LogDouble
 
@@ -75,7 +74,8 @@ foreign import bpcall "Num:" add_logdouble :: LogDouble -> LogDouble -> LogDoubl
 foreign import bpcall "Num:" subtract_logdouble :: LogDouble -> LogDouble -> LogDouble
 foreign import bpcall "Num:" multiply_logdouble :: LogDouble -> LogDouble -> LogDouble
 foreign import bpcall "Num:" signum_logdouble :: LogDouble -> LogDouble
-foreign import bpcall "Num:" intToLogDouble :: Int -> LogDouble
+--foreign import bpcall "Num:" intToLogDouble :: Int -> LogDouble
+foreign import bpcall "Num:" integerToLogDouble :: Integer -> LogDouble
 
 instance Num LogDouble where
     (+) = add_logdouble
@@ -84,7 +84,10 @@ instance Num LogDouble where
     abs x = x
     negate = error "negate LogDouble"
     signum = signum_logdouble
-    fromInteger = intToLogDouble
+    fromInteger = integerToLogDouble
 
 
+-- These may get used in other modules...
+foreign import bpcall "Num:" intToInteger :: Int -> Integer
+foreign import bpcall "Num:" intToDouble :: Int -> Double
 

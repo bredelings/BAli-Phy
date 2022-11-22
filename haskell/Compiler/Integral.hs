@@ -1,9 +1,9 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Compiler.Integral where
 
-import Compiler.Num -- for intToInteger
 import Compiler.Enum
 import Compiler.Real
+import Compiler.Num (intToInteger,fromInteger)
 
 infixl 7 `quot`, `rem`, `div`, `mod`
 
@@ -29,15 +29,6 @@ foreign import bpcall "Prelude:"  mod_integer :: Integer -> Integer -> Integer
 foreign import bpcall "Prelude:"  quot_integer :: Integer -> Integer -> Integer
 foreign import bpcall "Prelude:"  rem_integer :: Integer -> Integer -> Integer
 
-{-
-instance Integral Char where
-    quot = quot_char
-    rem = rem_char
-    div = div_char
-    mod = mod_char
-    toInteger = charToInteger
--}
-
 instance Integral Int where
     quot = quot_int
     rem = rem_int
@@ -53,4 +44,4 @@ instance Integral Integer where
     toInteger x = x
     
     
--- toIntegral = fromInteger . toInteger
+fromIntegral x = fromInteger (toInteger x)

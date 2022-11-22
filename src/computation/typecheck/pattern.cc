@@ -270,7 +270,7 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
         {
             expression_ref fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
             auto [arg_type, result_type] = unify_function( inferRho(fromInteger) );
-            unify(arg_type, int_type());
+            unify(arg_type, integer_type());
             unify(result_type, expTypeToType(exp_type));
 
             L.lit.literal = Hs::Integer(*i, fromInteger);

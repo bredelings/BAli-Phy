@@ -233,5 +233,15 @@ extern "C" closure builtin_function_intToLogDouble(OperationArgs& Args)
 }
 
 
+extern "C" closure builtin_function_integerToLogDouble(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+
+    log_double_t result(x.convert_to<double>());
+
+    return {result};
+}
+
+
 
 

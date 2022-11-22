@@ -180,7 +180,7 @@ void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
         set_expected_type( exp_type, result_type );
 
         // 3. The argument type should be Int
-        unify(arg_type, int_type());
+        unify(arg_type, integer_type());
 
         Lit = Hs::Literal(Hs::Integer{*i, fromInteger});
     }

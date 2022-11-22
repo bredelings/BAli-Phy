@@ -542,9 +542,9 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         {
             Hs::Integer I = std::get<Hs::Integer>(L->literal);
             if (I.fromIntegerOp)
-                return {desugar(I.fromIntegerOp), I.value.convert_to<int>()};
+                return {desugar(I.fromIntegerOp), Integer(I.value)};
             else
-                return I.value.convert_to<int>();
+                return Integer(I.value);
         }
         else if (auto d = L->is_Double())
         {

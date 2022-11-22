@@ -68,7 +68,7 @@ modifiable_cayley_tree modf tree = Tree (listArray' nodes) (listArray' branches)
 
 uniform_topology_pr 1 = 1
 uniform_topology_pr 2 = 1
-uniform_topology_pr n = uniform_topology_pr (n - 1) / (fromInteger $ 2 * n - 5)
+uniform_topology_pr n = uniform_topology_pr (n - 1) / (fromIntegral $ 2 * n - 5)
 
 -- The *triggered* tree is lazy: when we access anything that is modifiable, it triggers all effects,
 -- which includes forcing all the modifiables in the *untriggered* tree.
@@ -161,7 +161,7 @@ parent_before_child_prs n_leaves tree = [factor n | n <- [0 .. 2*n_leaves-2] ]
                                                Just p  -> require $ time n <= time p
 
 uniform_time_tree_pr age n_leaves tree = factor0 : parent_before_child_prs n_leaves tree
-    where factor0 = doubleToLogDouble age `pow` intToDouble (2-n_leaves)
+    where factor0 = doubleToLogDouble age `pow` fromIntegral (2-n_leaves)
 
 -- rooted_tree: force / modifiable / triggered_modifiable
 force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq` force_tree unrooted_tree
@@ -241,7 +241,7 @@ coalescent_tree_pr_factors theta n_leaves tree = go 0 0 (2/theta) 1 times: paren
           go prev_time n rate pr [] = pr
           go prev_time n rate pr ((time,event):events) =
               let delta_t = time - prev_time
-                  n_choose_2 = intToDouble $ (n*(n-1)) `div` 2
+                  n_choose_2 = fromIntegral $ (n*(n-1)) `div` 2
                   rate_all = rate * n_choose_2
                   pr_nothing = doubleToLogDouble $ exp $ (-rate_all * delta_t)
                   pr' = pr * pr_nothing
@@ -264,7 +264,7 @@ sample_coalescent_tree theta n_leaves = do
 
   let rate = 2/theta
   dts <- sequence [ exponential (1 / (rate* n_choose_2) )| n <- reverse [2..n_leaves],
-                                                             let n_choose_2 = intToDouble $ n*(n-1) `div` 2]
+                                                             let n_choose_2 = fromIntegral $ n*(n-1) `div` 2]
   let times = (replicate n_leaves 0) ++ (scanl1 (+) dts)
   return (time_tree topology times)
 
