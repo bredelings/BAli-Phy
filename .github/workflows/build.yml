@@ -183,8 +183,8 @@ jobs:
           # Address sanitizer can't find its dylibs on OS X?
           ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
-        echo meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
-        meson build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
+        echo meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
+        meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
 
     - name: Build
       run: |
