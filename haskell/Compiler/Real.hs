@@ -3,7 +3,7 @@ module Compiler.Real where
 
 import Compiler.Num
 import Data.Ord
-import Data.Ratio
+import Compiler.Ratio
 
 class (Num a, Ord a) => Real a where
     toRational :: a -> Rational

@@ -1,9 +1,12 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Ratio where
 
-import Compiler.Num -- for Integer
+import Compiler.Integral
+import Compiler.Ratio
+import Compiler.RealFrac
 
-data Ratio a = Ratio a a
+infixl 7 %
+(%) :: Integral a => a -> a -> Ratio a
+x % y = Ratio x y
 
-type Rational = Ratio Integer
-
+-- approxRational :: RealFrac a => a -> a -> Rational

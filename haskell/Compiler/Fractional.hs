@@ -2,6 +2,7 @@
 module Compiler.Fractional where
 
 import Compiler.Num
+import Compiler.Ratio
 
 infixl 7 /
 
