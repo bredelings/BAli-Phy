@@ -227,8 +227,7 @@ jobs:
         for libname in gcc_s_seh-1 stdc++-6 ssp-0 winpthread-1 ; do
             cp $($CXX --print-file-name lib${libname}.dll) ${OUTPUT}/bin
         done
-        # We don't need this because we're building our own boost.
-        # cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${PREFIX}/bin
+        cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${OUTPUT}/bin
 
     - name: Test
       run: |
