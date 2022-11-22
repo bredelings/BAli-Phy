@@ -445,6 +445,8 @@ struct TypeSynonymDecl: public Object
 
     Located<Type> rhs_type;
 
+    int arity() const {return type_vars.size();}
+
     TypeSynonymDecl* clone() const { return new TypeSynonymDecl(*this);}
     std::string print() const;
 
@@ -490,6 +492,11 @@ struct TypeFamilyDecl: public Object
     std::optional<Kind> kind_sig;
     // optional injectivity clause
     std::optional<std::vector<TypeFamilyInstanceEqn>> where_instances;
+
+    int arity() const {return args.size();}
+    Kind result_kind() const;
+    std::vector<Kind> arg_kinds() const;
+    Kind kind() const;
 
     TypeFamilyDecl* clone() const { return new TypeFamilyDecl(*this);}
 

@@ -3,6 +3,7 @@
 #include "util/string/join.H"
 #include "util/set.H"           // for includes( , )
 #include "util/string/split.H"  // for split( , )
+#include "typecheck/kind.H"
 
 using std::string;
 using std::pair;
@@ -565,6 +566,30 @@ string TypeFamilyDecl::print() const
     if (kind_sig)
         out<<" :: "<<kind_sig->print();
     return out.str();
+}
+
+
+vector<Kind> TypeFamilyDecl::arg_kinds() const
+{
+    vector<Kind> ks;
+
+    for(auto& arg: args)
+        ks.push_back(arg.kind.value_or(kind_star()));
+
+    return ks;
+}
+
+Kind TypeFamilyDecl::result_kind() const
+{
+    if (kind_sig)
+        return *kind_sig;
+    else
+        return kind_star();
+}
+
+Kind TypeFamilyDecl::kind() const
+{
+    return function_kind(arg_kinds(), result_kind());
 }
 
 string DefaultDecl::print() const
