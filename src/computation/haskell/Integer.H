@@ -7,4 +7,11 @@
 typedef boost::multiprecision::cpp_int integer;
 typedef Box<integer> Integer;
 
+
+template<>
+inline std::string Box<integer>::print() const
+{
+    return str();
+}
+
 #endif
