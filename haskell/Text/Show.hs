@@ -6,6 +6,7 @@ import Data.List
 import Data.Function
 
 foreign import bpcall "Prelude:" show_int :: Int -> CPPString
+foreign import bpcall "Prelude:" show_integer :: Integer -> CPPString
 foreign import bpcall "Prelude:" show_double :: Double -> CPPString
 
 class Show a where
@@ -22,6 +23,9 @@ instance Show Char where
 
 instance Show Int where
     show i = unpack_cpp_string $ show_int i
+
+instance Show Integer where
+    show i = unpack_cpp_string $ show_integer i
 
 instance Show Double where
     show  d = unpack_cpp_string $ show_double d

@@ -6,6 +6,7 @@
 #include "computation/operations.H"
 #include "util/string/convert.H"
 #include "computation/machine/graph_register.H"
+#include "computation/haskell/Integer.H"
 
 using boost::dynamic_pointer_cast;
 using std::string;
@@ -511,6 +512,16 @@ extern "C" closure builtin_function_show_int(OperationArgs& Args)
     *v = std::to_string(x);
     return v;
 }
+
+extern "C" closure builtin_function_show_integer(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+
+    object_ptr<String> v(new String);
+    *v = x.str();
+    return v;
+}
+
 
 extern "C" closure builtin_function_show_double(OperationArgs& Args)
 {
