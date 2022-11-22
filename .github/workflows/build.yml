@@ -165,13 +165,6 @@ jobs:
       # This command also generates the cross file
       run: |
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
-        ls ${HOME}
-        ls /home/runner/
-        ls /home/runner/win_root/
-        ls /home/runner/win_root/mingw64
-        ls /home/runner/win_root/mingw64/lib
-        ls /home/runner/win_root/mingw64/include
-        ls /home/runner/win_root/mingw64/include/boost
 
     - name: Configure
       run: |
