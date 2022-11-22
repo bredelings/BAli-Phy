@@ -153,6 +153,13 @@ jobs:
         meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
 
 
+    - name: Upload meson log if configure failed
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: meson-log-${{ matrix.name }}
+        path: '/home/runner/work/BAli-Phy/BAli-Phy/build/meson-logs/meson-log.txt'
+
     - name: Build
       run: |
         ccache -p
@@ -211,6 +218,13 @@ jobs:
         cd testiphy
         ./testiphy ${BALIPHY} --seed=$seed
         echo ::endgroup::
+
+    - name: Upload tests if they failed
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: tests-${{ matrix.name }}
+        path: tests
 
     - name: Create tarball
       id: create_tarball

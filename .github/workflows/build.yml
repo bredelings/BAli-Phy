@@ -188,7 +188,7 @@ jobs:
         meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
 
     - name: Upload meson log if configure failed
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v3
       if: failure()
       with:
         name: meson-log-${{ matrix.name }}
@@ -252,3 +252,11 @@ jobs:
         cd testiphy
         ./testiphy ${BALIPHY} --seed=$seed
         echo ::endgroup::
+
+    - name: Upload tests if they failed
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: tests-${{ matrix.name }}
+        path: tests
+
