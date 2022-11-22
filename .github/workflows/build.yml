@@ -194,11 +194,6 @@ jobs:
         name: meson-log-${{ matrix.name }}
         path: '/home/runner/work/BAli-Phy/BAli-Phy/build/meson-logs/meson-log.txt'
 
-    - name: Upload meson log if configure failed
-      if: failure()
-      run: |
-        cat /home/runner/work/BAli-Phy/BAli-Phy/build/meson-logs/meson-log.txt
-
     - name: Build
       run: |
         ccache -p
