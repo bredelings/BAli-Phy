@@ -101,6 +101,7 @@ jobs:
       run: |
         sudo apt-get install -y pandoc libcairo2-dev ccache
         sudo rm -rf /usr/local/share/boost
+        sudo apt-get install -y libboost-all-dev
 
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
           # For newer GCCs, maybe.
@@ -126,7 +127,7 @@ jobs:
     - name: Install (macOS)
       if: runner.os == 'macOS'
       run: |
-          brew install pkg-config pandoc cairo ccache coreutils
+          brew install pkg-config pandoc cairo ccache coreutils boost
           echo "DEVELOPER_DIR=/Applications/Xcode_${{ matrix.version }}.app/Contents/Developer" >> $GITHUB_ENV
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
@@ -164,6 +165,7 @@ jobs:
       # This command also generates the cross file
       run: |
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
+        echo "BOOST_ROOT=/home/runner/win_root/mingw64/" >> $GITHUB_ENV
 
     - name: Configure
       run: |
