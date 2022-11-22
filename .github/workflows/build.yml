@@ -185,6 +185,10 @@ jobs:
           ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
         echo meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
+        ls /home/runner/win_root/mingw64
+        ls /home/runner/win_root/mingw64/include
+        ls /home/runner/win_root/mingw64/lib
+        ls /home/runner/win_root/mingw64/include/boost
         meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
 
     - name: Upload meson log if configure failed
