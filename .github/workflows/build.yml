@@ -76,7 +76,7 @@ jobs:
             arch: "linux64"
 
           - name: macos-xcode-14
-            os: macos-latest
+            os: macos-12
             compiler: xcode
             version: "14"
             buildtype: "release"
