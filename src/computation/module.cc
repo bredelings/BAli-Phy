@@ -1315,20 +1315,20 @@ void Module::def_ADT(const std::string& tname, const fixity_info& fixity)
     declare_type( {tname, type_name_category::ADT, fixity, /*arity*/ -1, /*kind*/ {}} );
 }
 
-void Module::def_type_synonym(const std::string& sname)
+void Module::def_type_synonym(const std::string& sname, int arity)
 {
     if (is_qualified_symbol(sname))
         throw myexception()<<"Locally defined type '"<<sname<<"' should not be qualified.";
 
-    declare_type( {sname, type_name_category::type_syn, {}, /*arity*/ -1, /*kind*/ {}} );
+    declare_type( {sname, type_name_category::type_syn, {}, arity, /*kind*/ {}} );
 }
 
-void Module::def_type_family(const std::string& fname)
+void Module::def_type_family(const std::string& fname, int arity)
 {
     if (is_qualified_symbol(fname))
         throw myexception()<<"Locally defined type '"<<fname<<"' should not be qualified.";
 
-    declare_type( {fname, type_name_category::type_fam, {}, /*arity*/ -1, /*kind*/ {}} );
+    declare_type( {fname, type_name_category::type_fam, {}, arity, /*kind*/ {}} );
 }
 
 void Module::def_type_class(const std::string& cname)
@@ -1440,21 +1440,19 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
             def_type_class(Class.name);
 
             for(auto& tf: Class.type_fam_decls)
-                def_type_family( unloc(tf.con.name) );
+                def_type_family( unloc(tf.con.name), tf.arity() );
 
             for(auto& sig_decl: Class.sig_decls)
                 for(auto& v: sig_decl.vars)
                     def_type_class_method(unloc(v.name), Class.name);
         }
-        else if (decl.is_a<Haskell::TypeSynonymDecl>())
+        else if (auto S = decl.to<Haskell::TypeSynonymDecl>())
         {
-            auto& Syn = decl.as_<Haskell::TypeSynonymDecl>();
-
-            def_type_synonym(Syn.name);
+            def_type_synonym(S->name, S->arity());
         }
         else if (auto TF = decl.to<Hs::TypeFamilyDecl>())
         {
-            def_type_family( unloc(TF->con.name) );
+            def_type_family( unloc(TF->con.name), TF->arity() );
         }
 }
 

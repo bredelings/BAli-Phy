@@ -181,9 +181,9 @@ public:
 
     void def_type_class_method(const std::string& method_name, const std::string& class_name);
 
-    void def_type_synonym(const std::string& syn_name);
+    void def_type_synonym(const std::string& syn_name, int arity);
 
-    void def_type_family(const std::string& family_name);
+    void def_type_family(const std::string& family_name, int arity);
 
     void add_symbol(const symbol_info&);
 
