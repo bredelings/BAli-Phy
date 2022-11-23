@@ -958,7 +958,11 @@ class Analysis(object):
         else:
             subargs["stdout"] = subprocess.PIPE
 
-        if "stderr" in kwargs:
+        if "errfile" in kwargs:
+            errfile = kwargs["errfile"]
+            subargs["stderr"] = open(errfile,'w+',encoding='utf-8')
+            showcmd += f" 2> '{errfile}'"
+        elif "stderr" in kwargs:
             subargs["stderr"] = kwargs["stderr"]
         else:
             subargs["stderr"] = subprocess.PIPE
@@ -972,6 +976,8 @@ class Analysis(object):
             print(f"command: {showcmd}",file=sys.stderr)
             if "outfile" in kwargs and path.exists(kwargs["outfile"]):
                 os.remove(kwargs["outfile"])
+            if "errfile" in kwargs and path.exists(kwargs["errfile"]):
+                os.remove(kwargs["errfile"])
             if "handler" in kwargs:
                 handler = kwargs["handler"]
                 handler(result.returncode)
@@ -987,7 +993,7 @@ class Analysis(object):
             out_message = result.stdout.decode('utf-8')
 
         err_message = None
-        if "stderr" not in kwargs:
+        if "stderr" not in kwargs and "errfile" not in kwargs:
             err_message = result.stderr.decode('utf-8')
 
         # Always record error messages in the log file.
