@@ -206,6 +206,15 @@ def get_n_lines(filename):
             count += 1
     return count
 
+def get_tree_counts(filename):
+    counts = []
+    with open(filename, encoding='utf-8') as countfile:
+        for line in countfile:
+            m = re.match('Kept (\d+) trees', line)
+            if m:
+                counts.append(m.group(1))
+    return counts
+
 def get_json_from_file(filename):
     with open(filename, encoding='utf-8') as json_file:
         return json.load(json_file)
@@ -1414,7 +1423,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
         C = min(self.n_chains(),4)
         N = int(800/self.n_chains())
-        dist_cmd = ['trees-distances','matrix',f'--max={N}', '--jitter=0.3']
+        dist_cmd = ['trees-distances','matrix',f'--max={N}', '--jitter=0.3', '-V']
 
         if self.subsample is not None and self.subsample != 1:
             dist_cmd.append(f"--subsample={self.subsample}")
@@ -1427,6 +1436,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
         tree_files = self.get_trees_files()[0:C]
         matfile = self.outdir / "tree-MDS.M"
+        countfile = self.outdir / "tree-MDS.count"
 
         script = self.get_libexec_script(f"tree-plot.R")
         outfile = self.outdir / "tree-MDS.svg"
@@ -1434,16 +1444,16 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
         script3d = self.get_libexec_script(f"tree-plot-3D.R")
         outfile3d = self.outdir / "tree-MDS.points.html"
 
-        L = [ str(min([N,int((get_n_lines(tf)-self.burnin)/self.subsample)])) for tf in tree_files]
-
         if not more_recent_than_all_of(matfile, tree_files):
-            self.exec_show(dist_cmd+tree_files, outfile=matfile)
+            self.exec_show(dist_cmd+tree_files, outfile=matfile,errfile=countfile)
+
+        tree_counts = get_tree_counts(countfile)
 
         if not more_recent_than(outfile, matfile):
-            self.Rexec(script,[matfile,outfile]+L)
+            self.Rexec(script,[matfile,outfile]+tree_counts)
 
         if not more_recent_than(outfile3d,matfile):
-            point_string = self.Rexec(script3d, [matfile]+L)
+            point_string = self.Rexec(script3d, [matfile]+tree_counts)
             self.write_x3d_file(self.outdir, "tree-MDS.points", point_string)
 
         print(" done.")
