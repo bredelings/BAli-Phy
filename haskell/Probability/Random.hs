@@ -199,8 +199,6 @@ triggered_modifiable_structure :: ((forall a.a -> a) -> b -> b) -> (b -> c) -> b
 triggered_modifiable_structure mod_structure force_structure value effect = (raw_x, triggered_x)
     where raw_x       = mod_structure modifiable value
           effect'     = force_structure raw_x `seq` effect raw_x
-          effecter :: forall x. x -> x
-          effecter v  = effect' `seq` v
           triggered_x = mod_structure (effect' `seq`) raw_x
 
 apply_modifier :: (forall a.a -> a) -> b -> b
