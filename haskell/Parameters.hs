@@ -32,3 +32,10 @@ foreign import bpcall "Modifiables:register_dist" builtin_register_dist :: CPPSt
 -- out of let statements by referencing a local variable.
 register_dist_sample  name = IOAction (\s -> (s+1, builtin_register_dist (list_to_string name) 0 s))
 register_dist_observe name = IOAction (\s -> (s+1, builtin_register_dist (list_to_string name) 1 s))
+
+foreign import bpcall "Modifiables:changeable_apply" ($?) :: (a -> b) -> a -> b
+
+foreign import bpcall "Modifiables:" modifiable_apply :: (a -> b) -> a -> b
+
+io_modifiable action = modifiable_apply unsafePerformIO action
+

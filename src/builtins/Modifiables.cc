@@ -153,3 +153,28 @@ extern "C" closure builtin_function_modifiable(OperationArgs& Args)
 
     return {mod_exp, {r_value}};
 }
+
+
+extern "C" closure builtin_function_changeable_apply(OperationArgs& Args)
+{
+    Args.make_changeable();
+
+    int f_reg = Args.reg_for_slot(0);
+    int x_reg = Args.reg_for_slot(1);
+
+    expression_ref apply = {index_var(1), index_var(0)};
+    return {apply, {f_reg, x_reg}};
+}
+
+
+extern "C" closure builtin_function_modifiable_apply(OperationArgs& Args)
+{
+    int f_reg = Args.reg_for_slot(0);
+    int x_reg = Args.reg_for_slot(1);
+
+    // Allocate a reg, and fill it with a modifiable of the correct index
+    expression_ref mod_exp( modifiable(),{index_var(1),index_var(0)} );
+
+    return {mod_exp, {f_reg, x_reg}};
+
+}

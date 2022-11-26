@@ -171,6 +171,8 @@ run_lazy (WithTKEffect action _) = run_lazy action
 run_lazy (Lazy a) = run_lazy a
 run_lazy (Observe _ _) = error "run_lazy: observe"
 
+random_modifiable dist = io_modifiable $ run_lazy dist
+
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
 
 run_strict' :: Double -> Random a -> IO a
