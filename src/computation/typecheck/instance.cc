@@ -69,44 +69,54 @@ string get_name_for_typecon(const Hs::TypeCon& tycon)
 pair<Core::Var, Hs::Type>
 typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
-    // -- old -- //
+    // 1. Get class name and parameters for the instance
     auto [class_head, class_args] = Hs::decompose_type_apps(inst_decl.constraint);
 
-    // Premise #1: Look up the info for the class
-    optional<ClassInfo> class_info;
-    if (auto tc = class_head.to<Hs::TypeCon>())
-    {
-        // Check that this is a class, and not a data or type?
-        auto class_name = unloc(tc->name);
-        if (not class_env().count(class_name))
-            throw myexception()<<"In instance '"<<inst_decl.constraint<<"': no class '"<<class_name<<"'!";
-        class_info = class_env().at(class_name);
-    }
-    else
-        throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<class_head<<" is not a class!";
+    // 2. Look up the class info
+    auto tc = class_head.to<Hs::TypeCon>();
+    if (not tc)
+        throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<class_head<<" is not a type constructor!";
 
+    // Check that this is a class, and not a data or type?
+    auto class_name = unloc(tc->name);
+    if (not class_env().count(class_name))
+        throw myexception()<<"In instance '"<<inst_decl.constraint<<"': no class '"<<class_name<<"'!";
+    auto class_info = class_env().at(class_name);
 
-    // Premise #2: Find the type vars mentioned in the constraint.
+    // 3. Check that the instance has the right number of parameters
+    int N = class_info.type_vars.size();
+    if (class_args.size() != class_info.type_vars.size())
+        throw myexception()<<"In instance '"<<inst_decl.constraint<<"': should have "<<N<<" parameters, but has "<<class_args.size()<<".";
+
+    // 4. Construct the mapping from original class variables to instance variables
+    substitution_t instance_subst;
+    for(int i = 0; i < N; i++)
+        instance_subst = instance_subst.insert({class_info.type_vars[i], class_args[i]});
+
+    // 5. Find the type vars mentioned in the constraint.
     set<Hs::TypeVar> type_vars = free_type_variables(inst_decl.constraint);
+
+    // 6. The class_args must be (i) a variable or (ii) a type constructor applied to simple, distinct type variables.
     string tycon_names;
-    // Premise #4: the class_arg must be a type constructor applied to simple, distinct type variables.
-    int var_args = 0;
     for(auto& class_arg: class_args)
     {
-        auto [a_head, a_args] = Hs::decompose_type_apps(class_arg);
-
-        if (auto tc = a_head.to<Hs::TypeCon>())
-            tycon_names += get_name_for_typecon(*tc);
-        else if (a_head.is_a<Hs::TypeVar>())
+        if (class_arg.to<Hs::TypeVar>())
         {
             tycon_names += "_";
-            var_args++;
         }
         else
-            throw myexception()<<"Instance declaration for "<<inst_decl.constraint<<" doesn't make sense";
+        {
+            auto [a_head, a_args] = Hs::decompose_type_apps(class_arg);
+
+            if (auto tc = a_head.to<Hs::TypeCon>())
+                tycon_names += get_name_for_typecon(*tc);
+            else
+                throw myexception()<<"Instance declaration for "<<inst_decl.constraint<<" doesn't make sense";
+
+            // Now, tc needs to be a data type constructor!
+            // With FlexibleInstances, (i) the arguments do NOT have to be variables and (ii) type synonyms are allowed.
+        }
     }
-    if (class_args.size() == var_args)
-        throw myexception()<<"In instance declaration for "<<inst_decl.constraint<<", not all arguments can be type variables.";
 
     // Premise 5: Check that the context contains no variables not mentioned in `class_arg`
     for(auto& tv: free_type_variables(inst_decl.context))
@@ -115,7 +125,54 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
             throw myexception()<<"Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in '"<<inst_decl.constraint<<"'";
     }
 
-    string dfun_name = "d"+get_unqualified_name(class_info->name)+tycon_names;
+
+    // Look at associated type instances
+    for(auto& inst: inst_decl.type_inst_decls)
+    {
+        // Check that we only declare instances for type families associated with this class.
+        if (not class_info.associated_type_families.count(inst.con))
+            throw myexception()<<
+                "In instance '"<<inst_decl.constraint<<"':\n"<<
+                "  In type instance '"<<inst.print()<<"':\n"<<
+                "    No associated type '"<<inst.con.print()<<"'";
+
+        // Get the type family info
+        auto& tf_info = type_fam_info().at(inst.con);
+
+        // Check that the type instance has the right number of arguments
+        if (inst.args.size() != tf_info.args.size())
+            throw myexception()<<
+                "In instance '"<<inst_decl.constraint<<"':\n"<<
+                "  In type instance '"<<inst.print()<<"':\n"<<
+                "    Expected "<<tf_info.args.size()<<" parameters, but got "<<inst.args.size();
+
+        // Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
+        for(int i=0;i<tf_info.args.size();i++)
+        {
+            auto fam_tv = tf_info.args[i];
+            if (instance_subst.count(fam_tv))
+            {
+                auto expected = instance_subst.at(fam_tv);
+                if (not same_type(inst.args[i], expected))
+                    throw myexception()<<
+                        "In instance '"<<inst_decl.constraint<<"':\n"<<
+                        "  In type instance '"<<inst.print()<<"':\n"<<
+                        "    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'";
+            }
+        }
+
+        // Kind check arguments and result?
+        // Also kind default arguments for default type instances?
+        // Also handle kind specifiers on class arguments?
+
+        TypeFamEqnInfo eqn_info{inst.args, inst.rhs};
+
+        // Make up an equation id -- this is the "evidence" for the type family instance.
+        int eqn_id = FreshVarSource::get_index();
+        tf_info.equations.insert({eqn_id, eqn_info});
+    }
+
+    string dfun_name = "d"+get_unqualified_name(class_info.name)+tycon_names;
 
     auto dfun = get_fresh_var(dfun_name, true);
 
