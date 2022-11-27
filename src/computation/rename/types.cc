@@ -223,7 +223,7 @@ Haskell::TypeFamilyInstanceEqn renamer_state::rename(Haskell::TypeFamilyInstance
 
 Haskell::TypeFamilyInstanceDecl renamer_state::rename(Haskell::TypeFamilyInstanceDecl TI)
 {
-    rename( static_cast<Hs::TypeFamilyInstanceEqn&>(TI) );
+    TI = rename( static_cast<Hs::TypeFamilyInstanceEqn&>(TI) );
     return TI;
 }
 
