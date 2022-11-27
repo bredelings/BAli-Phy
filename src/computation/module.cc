@@ -346,7 +346,21 @@ void Module::import_module(const Program& P, const module_import& I)
                 tc_state->instance_env().insert({dfun, dfun_type});
         }
 
-        // 6. Import types for values.
+        // 6. Import information about type families
+        for(auto& [tf_con, tf_info]: M2.tc_state->type_fam_info())
+        {
+            if (not tc_state->type_fam_info().count(tf_con))
+                tc_state->type_fam_info().insert({tf_con, tf_info});
+            else
+            {
+                auto& info = tc_state->type_fam_info().at(tf_con);
+                assert(tf_info.args.size() == info.args.size());
+                for(auto& [id, eqn_info]: tf_info.equations)
+                    info.equations.insert({id, eqn_info});
+            }
+        }
+
+        // 7. Import types for values.
         for(auto& [name, type]: M2.tc_state->gve)
         {
             if (not tc_state->gve.count(name))

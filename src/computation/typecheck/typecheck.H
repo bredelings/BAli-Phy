@@ -46,6 +46,8 @@ struct global_tc_state
 
     type_con_env tycon_info;
 
+    TypeFamEnv type_fam_info;
+
     TypeSynonymEnv type_syn_info;
 
     ClassEnv class_env;
@@ -77,6 +79,9 @@ struct typechecker_state: FreshVarSource
 
           type_con_env& tycon_info()       {return global_state->tycon_info;}
     const type_con_env& tycon_info() const {return global_state->tycon_info;}
+
+          TypeFamEnv& type_fam_info()       {return global_state->type_fam_info;}
+    const TypeFamEnv& type_fam_info() const {return global_state->type_fam_info;}
 
           constr_env& con_info()       {return global_state->con_info;}
     const constr_env& con_info() const {return global_state->con_info;}
@@ -367,6 +372,8 @@ struct typechecker_state: FreshVarSource
     void infer_type_for_binds(Hs::Binds& binds, bool is_top_level = false);
 
     void get_type_synonyms(const Hs::Decls& decls);
+
+    void get_type_families(const Hs::Decls& decls);
 
     Hs::Binds infer_type_for_classes(const Hs::Decls& decls);
 

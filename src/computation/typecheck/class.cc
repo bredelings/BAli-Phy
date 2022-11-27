@@ -204,3 +204,28 @@ typechecker_state::get_type_synonyms(const Hs::Decls& decls)
         type_syn_info().insert({name, {name, type_vars, rhs_type}});
     }
 }
+
+void typechecker_state::get_type_families(const Hs::Decls& decls)
+{
+    for(auto& decl: decls)
+    {
+        if (auto type_fam_decl = decl.to<Hs::TypeFamilyDecl>())
+        {
+            bool closed = type_fam_decl->where_instances.has_value();
+            TypeFamInfo info{type_fam_decl->args, {}, {}, closed};
+            type_fam_info().insert({type_fam_decl->con, info});
+        }
+        else if (auto c = decl.to<Hs::ClassDecl>())
+        {
+            for(auto& type_fam_decl: c->type_fam_decls)
+            {
+                TypeFamInfo info{type_fam_decl.args, c->type_vars, {}, false};
+                type_fam_info().insert({type_fam_decl.con, info});
+            }
+
+            // Handle default associated type family instances here?
+
+            // We're going to need to put the associated type families AND DEFAULT INSTANCES into ClassInfo.
+        }
+    }
+}

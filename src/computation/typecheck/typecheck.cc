@@ -1316,28 +1316,31 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     // 4. Get type synonyms
     tc_state->get_type_synonyms(M.type_decls);
 
-    // 5. Get types for value constructors  (CVE_T = constructor types)
+    // 5. Get type families and type family instances
+    tc_state->get_type_families(M.type_decls);
+
+    // 6. Get types for value constructors  (CVE_T = constructor types)
     tc_state->get_constructor_info(M.type_decls);
 
-    // 6. Get types and values for class method selectors and superclass selectors (CE_C  = class name -> class info)
+    // 7. Get types and values for class method selectors and superclass selectors (CE_C  = class name -> class info)
     auto class_binds = tc_state->infer_type_for_classes(M.type_decls);
 
-    // 7. Get types and names for instances (pass 1)
+    // 8. Get types and names for instances (pass 1)
     auto named_instances = tc_state->infer_type_for_instances1(M.type_decls);
 
-    // 8. Get types for foreign imports
+    // 9. Get types for foreign imports
     tc_state->infer_type_for_foreign_imports(M.foreign_decls);
 
-    // 9. Typecheck value decls
+    // 10. Typecheck value decls
     auto value_decls = tc_state->infer_type_for_binds_top(M.value_decls);
 
-    // 10. Typecheck default methods
+    // 11. Typecheck default methods
     auto dm_decls = tc_state->infer_type_for_default_methods(M.type_decls);
 
-    // 11. Typecheck instance methods and generate dfuns (pass 2)
+    // 12. Typecheck instance methods and generate dfuns (pass 2)
     auto [instance_method_binds, dfun_decls] = tc_state->infer_type_for_instances2(named_instances);
 
-    // 12. Default top-level ambiguous type vars.
+    // 13. Default top-level ambiguous type vars.
     auto top_simplify_decls = tc_state->simplify_and_default_top_level();
 
     return {class_binds, value_decls, dm_decls, instance_method_binds, dfun_decls, top_simplify_decls};
