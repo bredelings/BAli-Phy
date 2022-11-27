@@ -107,6 +107,26 @@ struct ClassInfo
     std::vector<std::pair<ID,Hs::Type>> fields;
 };
 
+struct TypeFamEqnInfo
+{
+    std::vector<Hs::Type> args;
+    Hs::Type rhs;
+};
+
+// This index indicates a unique name for each instance, and also indicates the evidence for an instance.
+typedef int TypeFamEqnId;
+
+struct TypeFamInfo
+{
+    std::vector<Hs::TypeVar> args;
+    std::optional<std::vector<Hs::TypeVar>> class_args;
+    std::map<TypeFamEqnId, TypeFamEqnInfo> equations;
+    bool closed = false;
+};
+
+
+typedef std::map<Hs::TypeCon, TypeFamInfo> TypeFamEnv;
+
 typedef std::map<ID, ClassInfo> ClassEnv;
 
 typedef std::map<ID, Hs::Type> signature_env;
