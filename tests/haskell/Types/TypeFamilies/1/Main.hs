@@ -11,3 +11,5 @@ type instance Elem [c] = c
 type family F (c :: * -> *) :: *
 
 type instance F [] = [Int]
+
+type instance F Int = [Int] -- this should fail!
