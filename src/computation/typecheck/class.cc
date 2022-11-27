@@ -143,7 +143,66 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         i++;
     }
 
-    return {gve,class_info,decls};
+    // 6. Load associated type families
+    for(auto& type_fam_decl: class_decl.type_fam_decls)
+    {
+        TypeFamInfo info{type_fam_decl.args, class_decl.type_vars, {}, false};
+        type_fam_info().insert({type_fam_decl.con, info});
+        if (class_info.associated_type_families.count(type_fam_decl.con))
+            throw myexception()<<"Trying to define type family '"<<type_fam_decl.con.print()<<"' twice in class "<<class_decl.name;
+        class_info.associated_type_families.insert({type_fam_decl.con,false});
+    }
+
+    // 7. Load default associated type family instances
+    for(auto& def_inst: class_decl.default_type_inst_decls)
+    {
+        auto& tf_con = def_inst.con;
+        if (not class_info.associated_type_families.count(tf_con))
+            throw myexception()<<
+                "In class '"<<class_decl.name<<"':\n"<<
+                "  In default instance  '"<<def_inst.print()<<"', type family '"<<tf_con<<"' is not defined.";
+
+        // An associated type family can have only one default instance.
+        if (class_info.associated_type_families.at(tf_con))
+            throw myexception()<<
+                "In class '"<<class_decl.name<<"':\n"<<
+                "  Associated type family '"<<tf_con.print()<<"' may only have one default instance!";
+
+        // All type arguments must be variables.
+        // The type variables may not be repeated.
+        set<Hs::TypeVar> lhs_tvs;
+        for(auto& arg: def_inst.args)
+        {
+            auto tv = arg.to<Hs::TypeVar>();
+            if (not tv)
+                throw myexception()<<
+                    "In class '"<<class_decl.name<<"':\n"<<
+                    "  In default instance '"<<def_inst.print()<<"' argument '"<<arg.print()<<"' must be a type variable.";
+            if (lhs_tvs.count(*tv))
+                throw myexception()<<
+                    "In class '"<<class_decl.name<<"':\n"<<
+                    "  In default instance '"<<def_inst.print()<<"' argument '"<<arg.print()<<"' used twice.";
+            lhs_tvs.insert(*tv);
+        }
+
+        // The rhs may only mention type vars bound on the lhs.
+        for(auto& tv: free_type_variables(def_inst.rhs))
+            if (not lhs_tvs.count(tv))
+                throw myexception()<<
+                    "In class '"<<class_decl.name<<"':\n"<<
+                    "  In default instance '"<<def_inst.print()<<"' rhs variable '"<<tv.print()<<"' not bound on the lhs.";
+
+        // This type family has a default now.
+        class_info.associated_type_families.at(tf_con) = true;
+
+        TypeFamEqnInfo eqn_info{def_inst.args, def_inst.rhs};
+
+        // Make up an equation id -- this is the "evidence" for the type family instance.
+        int eqn_id = FreshVarSource::get_index();
+        type_fam_info().at(tf_con).equations.insert({eqn_id, eqn_info});
+    }
+
+    return {gve, class_info, decls};
 }
 
 Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
@@ -214,18 +273,6 @@ void typechecker_state::get_type_families(const Hs::Decls& decls)
             bool closed = type_fam_decl->where_instances.has_value();
             TypeFamInfo info{type_fam_decl->args, {}, {}, closed};
             type_fam_info().insert({type_fam_decl->con, info});
-        }
-        else if (auto c = decl.to<Hs::ClassDecl>())
-        {
-            for(auto& type_fam_decl: c->type_fam_decls)
-            {
-                TypeFamInfo info{type_fam_decl.args, c->type_vars, {}, false};
-                type_fam_info().insert({type_fam_decl.con, info});
-            }
-
-            // Handle default associated type family instances here?
-
-            // We're going to need to put the associated type families AND DEFAULT INSTANCES into ClassInfo.
         }
     }
 }
