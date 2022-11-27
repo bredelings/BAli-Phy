@@ -1,6 +1,7 @@
 #ifndef ENV_H
 #define ENV_H
 
+#include <set>
 #include <string>
 #include <map>
 #include "immer/map.hpp" // for immer::map
@@ -105,6 +106,8 @@ struct ClassInfo
 
     // FIXME - we need the order of the constraints, and the order of the members
     std::vector<std::pair<ID,Hs::Type>> fields;
+
+    std::map<Hs::TypeCon,bool> associated_type_families;
 };
 
 struct TypeFamEqnInfo
