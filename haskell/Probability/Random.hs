@@ -189,8 +189,6 @@ run_strict' rate e@(WithTKEffect _ _) = run_lazy' rate e
 run_strict' rate (RanMFix f) = mfix (run_lazy' rate . f)
 run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
 
--- 1. Could we somehow implement slice sampling windows for non-contingent variables?
-
 -- NOTE: In order for (run_lazy') to actually be lazy, we need to avoid returning
 --       SOMETHING `seq` result.  And this means that we need to frequently
 --       intersperse unsafeInterleaveIO to avoid `seq`-ing on previous statements.
