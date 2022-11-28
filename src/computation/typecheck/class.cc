@@ -195,11 +195,8 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         // This type family has a default now.
         class_info.associated_type_families.at(tf_con) = true;
 
-        TypeFamEqnInfo eqn_info{def_inst.args, def_inst.rhs};
-
-        // Make up an equation id -- this is the "evidence" for the type family instance.
-        int eqn_id = FreshVarSource::get_index();
-        type_fam_info().at(tf_con).equations.insert({eqn_id, eqn_info});
+        // Add the default type instance
+        check_add_type_instance(def_inst, class_decl.name, {});
     }
 
     return {gve, class_info, decls};
@@ -270,9 +267,17 @@ void typechecker_state::get_type_families(const Hs::Decls& decls)
     {
         if (auto type_fam_decl = decl.to<Hs::TypeFamilyDecl>())
         {
-            bool closed = type_fam_decl->where_instances.has_value();
-            TypeFamInfo info{type_fam_decl->args, {}, {}, closed};
+            TypeFamInfo info{type_fam_decl->args, {}, {}};
             type_fam_info().insert({type_fam_decl->con, info});
+
+            // Add instance equations for closed type families
+            if (type_fam_decl->where_instances)
+            {
+                for(auto& inst: *type_fam_decl->where_instances)
+                    check_add_type_instance(inst, {}, {});
+                type_fam_info().at(type_fam_decl->con).closed = true;
+            }
+
         }
     }
 }

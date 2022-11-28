@@ -66,6 +66,67 @@ string get_name_for_typecon(const Hs::TypeCon& tycon)
         return get_unqualified_name(n);
 }
 
+void typechecker_state::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
+{
+    // 1. Check that the type family exists.
+    if (not type_fam_info().count(inst.con))
+        throw myexception()<<
+            "In instance '"<<inst.print()<<"':\n"<<
+            "  No type family '"<<inst.con.print()<<"'";
+
+    // 2. Get the type family info
+    auto& tf_info = type_fam_info().at(inst.con);
+
+    if (tf_info.associated_class)
+    {
+        // 3. Check for unassociated instances declared for associated classes
+        if (not associated_class)
+            throw myexception()<<
+                "In instance '"<<inst.print()<<"':\n"<<
+                "  Can't declare non-associated type instance for type family '"<<inst.con.print()<<"' associated with class '"<<(*tf_info.associated_class)<<"'";
+
+        // 4. Check for instances associated with the wrong class
+        if (*tf_info.associated_class != *associated_class)
+            throw myexception()<<
+                "In instance '"<<inst.print()<<"':\n"<<
+                "  Trying to declare type instance in class '"<<*associated_class<<" for family '"<<inst.con.print()<<"' associated with class '"<<(*tf_info.associated_class)<<"'";
+
+        // 5. Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
+        for(int i=0;i<tf_info.args.size();i++)
+        {
+            auto fam_tv = tf_info.args[i];
+            if (instance_subst.count(fam_tv))
+            {
+                auto expected = instance_subst.at(fam_tv);
+                if (not same_type(inst.args[i], expected))
+                    throw myexception()<<
+//                        "In instance '"<<inst_decl.constraint<<"':\n"<<
+                        "  In type instance '"<<inst.print()<<"':\n"<<
+                        "    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'";
+            }
+        }
+    }
+
+    // 6. Check that the type family is not closed
+    if (tf_info.closed)
+        throw myexception()<<
+            "In instance '"<<inst.print()<<"':\n"<<
+            "  Can't declare additional type instance for closed type family '"<<inst.con.print()<<"'";
+
+    // 7. Check that the type instance has the right number of arguments
+    if (inst.args.size() != tf_info.args.size())
+        throw myexception()<<
+//            "In instance '"<<inst_decl.constraint<<"':\n"<<
+            "  In type instance '"<<inst.print()<<"':\n"<<
+            "    Expected "<<tf_info.args.size()<<" parameters, but got "<<inst.args.size();
+
+    TypeFamEqnInfo eqn_info{inst.args, inst.rhs};
+
+    // Make up an equation id -- this is the "evidence" for the type family instance.
+    int eqn_id = FreshVarSource::get_index();
+    tf_info.equations.insert({eqn_id, eqn_info});
+}
+
 pair<Core::Var, Hs::Type>
 typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
@@ -128,49 +189,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 
     // Look at associated type instances
     for(auto& inst: inst_decl.type_inst_decls)
-    {
-        // Check that we only declare instances for type families associated with this class.
-        if (not class_info.associated_type_families.count(inst.con))
-            throw myexception()<<
-                "In instance '"<<inst_decl.constraint<<"':\n"<<
-                "  In type instance '"<<inst.print()<<"':\n"<<
-                "    No associated type '"<<inst.con.print()<<"'";
-
-        // Get the type family info
-        auto& tf_info = type_fam_info().at(inst.con);
-
-        // Check that the type instance has the right number of arguments
-        if (inst.args.size() != tf_info.args.size())
-            throw myexception()<<
-                "In instance '"<<inst_decl.constraint<<"':\n"<<
-                "  In type instance '"<<inst.print()<<"':\n"<<
-                "    Expected "<<tf_info.args.size()<<" parameters, but got "<<inst.args.size();
-
-        // Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
-        for(int i=0;i<tf_info.args.size();i++)
-        {
-            auto fam_tv = tf_info.args[i];
-            if (instance_subst.count(fam_tv))
-            {
-                auto expected = instance_subst.at(fam_tv);
-                if (not same_type(inst.args[i], expected))
-                    throw myexception()<<
-                        "In instance '"<<inst_decl.constraint<<"':\n"<<
-                        "  In type instance '"<<inst.print()<<"':\n"<<
-                        "    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'";
-            }
-        }
-
-        // Kind check arguments and result?
-        // Also kind default arguments for default type instances?
-        // Also handle kind specifiers on class arguments?
-
-        TypeFamEqnInfo eqn_info{inst.args, inst.rhs};
-
-        // Make up an equation id -- this is the "evidence" for the type family instance.
-        int eqn_id = FreshVarSource::get_index();
-        tf_info.equations.insert({eqn_id, eqn_info});
-    }
+        check_add_type_instance(inst, class_name, instance_subst);
 
     string dfun_name = "d"+get_unqualified_name(class_info.name)+tycon_names;
 
@@ -202,6 +221,9 @@ typechecker_state::infer_type_for_instances1(const Hs::Decls& decls)
             named_instances.push_back({dfun, *I});
             gie_inst.insert( {dfun, inst_type} );
         }
+
+        if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
+            check_add_type_instance(*TI, {}, {});
     }
 
 //    std::cerr<<"GIE:\n";

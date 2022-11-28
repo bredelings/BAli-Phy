@@ -400,6 +400,8 @@ struct typechecker_state: FreshVarSource
     std::pair<Hs::Decls, Core::Decl>
     infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& instance_decl);
 
+    void check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const std::optional<std::string>& associated_class, const substitution_t& instance_subst);
+
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
     LIE constraints_to_lie(const std::vector<Hs::Type>&);
