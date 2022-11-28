@@ -122,7 +122,7 @@ typedef int TypeFamEqnId;
 struct TypeFamInfo
 {
     std::vector<Hs::TypeVar> args;
-    std::optional<std::vector<Hs::TypeVar>> class_args;
+    std::optional<std::string> associated_class;
     std::map<TypeFamEqnId, TypeFamEqnInfo> equations;
     bool closed = false;
 };

@@ -146,7 +146,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     // 6. Load associated type families
     for(auto& type_fam_decl: class_decl.type_fam_decls)
     {
-        TypeFamInfo info{type_fam_decl.args, class_decl.type_vars, {}, false};
+        TypeFamInfo info{type_fam_decl.args, class_decl.name, {}, false};
         type_fam_info().insert({type_fam_decl.con, info});
         if (class_info.associated_type_families.count(type_fam_decl.con))
             throw myexception()<<"Trying to define type family '"<<type_fam_decl.con.print()<<"' twice in class "<<class_decl.name;
