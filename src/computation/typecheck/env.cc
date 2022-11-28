@@ -6,6 +6,7 @@
 
 using std::string;
 using std::vector;
+using std::optional;
 
 int TypeSynonymInfo::arity() const
 {
@@ -208,4 +209,11 @@ Hs::Type DataConInfo::constructor_type() const
     type = Hs::add_forall_vars(uni_tvs, type);
 
     return type;
+}
+
+TypeFamInfo::TypeFamInfo(const vector<Hs::TypeVar>& as, const Hs::Kind& k, const optional<string>& s)
+    :args(as), result_kind(k), associated_class(s)
+{
+    for(auto& arg: args)
+        arg.kind = arg.kind.value_or(kind_star());
 }

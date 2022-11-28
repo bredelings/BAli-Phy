@@ -114,6 +114,7 @@ struct TypeFamEqnInfo
 {
     std::vector<Hs::Type> args;
     Hs::Type rhs;
+    std::vector<Hs::TypeVar> free_tvs;
 };
 
 // This index indicates a unique name for each instance, and also indicates the evidence for an instance.
@@ -122,9 +123,14 @@ typedef int TypeFamEqnId;
 struct TypeFamInfo
 {
     std::vector<Hs::TypeVar> args;
+    Hs::Kind result_kind;
+
     std::optional<std::string> associated_class;
-    std::map<TypeFamEqnId, TypeFamEqnInfo> equations;
     bool closed = false;
+
+    std::map<TypeFamEqnId, TypeFamEqnInfo> equations;
+
+    TypeFamInfo(const std::vector<Hs::TypeVar>&, const Hs::Kind&, const std::optional<std::string>& = {});
 };
 
 

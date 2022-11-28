@@ -120,11 +120,49 @@ void typechecker_state::check_add_type_instance(const Hs::TypeFamilyInstanceEqn&
             "  In type instance '"<<inst.print()<<"':\n"<<
             "    Expected "<<tf_info.args.size()<<" parameters, but got "<<inst.args.size();
 
-    TypeFamEqnInfo eqn_info{inst.args, inst.rhs};
+    // 8. The rhs may only mention type vars bound on the lhs.
+    set<Hs::TypeVar> lhs_tvs;
+    for(auto& arg: inst.args)
+    {
+        for(auto& tv: free_type_variables(arg))
+            lhs_tvs.insert(tv);
+    }
+
+    for(auto& tv: free_type_variables(inst.rhs))
+        if (not lhs_tvs.count(tv))
+            throw myexception()<<
+//                "In class '"<<class_decl.name<<"':\n"<<
+                "  In instance '"<<inst.print()<<"' rhs variable '"<<tv.print()<<"' not bound on the lhs.";
+
+    // 9. Kind-check the parameters and result type, and record the free type variables.
+    TypeFamEqnInfo eqn{inst.args, inst.rhs, lhs_tvs | ranges::to<vector>()};
+
+    // 9a. Bind the free type vars
+    kindchecker_state K( tycon_info() );
+    K.push_type_var_scope();
+    for(auto& tv: eqn.free_tvs)
+    {
+        assert(not K.type_var_in_scope(tv));
+        tv.kind = K.fresh_kind_var();
+        K.bind_type_var(tv, *tv.kind);
+    }
+
+    // 9b. Kind-check the type vars
+    for(int i=0; i<eqn.args.size(); i++)
+        K.kind_check_type_of_kind(eqn.args[i], *tf_info.args[i].kind);
+    K.kind_check_type_of_kind(eqn.rhs, tf_info.result_kind);
+
+    // 9c. Record the final kinds for the free type vars
+    for(int i=0; i<eqn.args.size(); i++)
+        eqn.args[i] = K.zonk_kind_for_type(eqn.args[i]);
+    eqn.rhs = K.zonk_kind_for_type(eqn.rhs);
+
+    for(auto& tv: eqn.free_tvs)
+        tv.kind = replace_kvar_with_star(K.kind_for_type_var(tv));
 
     // Make up an equation id -- this is the "evidence" for the type family instance.
     int eqn_id = FreshVarSource::get_index();
-    tf_info.equations.insert({eqn_id, eqn_info});
+    tf_info.equations.insert({eqn_id, eqn});
 }
 
 pair<Core::Var, Hs::Type>
