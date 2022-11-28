@@ -22,3 +22,9 @@ class Asdf a b where
 
 instance Asdf [y] z where
     type Foo [y] b = Int
+
+type family Closed a where
+    Closed Int = Int
+    Closed Double = Char
+
+type instance Closed Char = Char
