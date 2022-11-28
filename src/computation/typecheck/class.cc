@@ -195,7 +195,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
         // This type family has a default now.
         class_info.associated_type_families.at(tf_con) = true;
 
-        // Add the default type instance
+        // Add the default type instance -- no need for variables to match the class.
         check_add_type_instance(def_inst, class_decl.name, {});
     }
 
