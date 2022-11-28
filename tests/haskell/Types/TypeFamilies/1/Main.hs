@@ -12,8 +12,6 @@ type family F (c :: * -> *) :: *
 
 type instance F [] = [Int]
 
-type instance F Int = [Int] -- this should fail because the kind is wrong!
-
 instance Container [a] where
     type Element [a] = a
 
@@ -26,5 +24,3 @@ instance Asdf [y] z where
 type family Closed a where
     Closed Int = Int
     Closed Double = Char
-
-type instance Closed Char = Char
