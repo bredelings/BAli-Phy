@@ -547,15 +547,6 @@ std::optional<Reaction> typechecker_state::interact_g_w(const Predicate& P1, con
     return {};
 }
 
-
-ReactSuccess::ReactSuccess(const Core::Decls& d, ConstraintFlavor f, const std::vector<std::pair<Core::Var, Hs::Type>>& ps)
-    :decls(d)
-{
-    for(auto& [cvar, constraint]: ps)
-        predicates.push_back(Predicate(f,NonCanonicalPred(cvar,constraint)));
-}
-
-
 // we need to have three results: No react, React<vector<Predicates>>, ReactFail
 std::optional<Reaction> typechecker_state::top_react(const Predicate& P)
 {
@@ -580,7 +571,7 @@ std::optional<Reaction> typechecker_state::top_react(const Predicate& P)
             Core::Decls decls;
             decls.push_back( { dvar, dfun_exp } );
 
-            return ReactSuccess(decls, Wanted, super_wanteds);
+            return ReactSuccess(decls, make_predicates(Wanted, super_wanteds));
         }
     }
     
@@ -844,4 +835,12 @@ Core::Decls typechecker_state::entails(const LIE& givens, WantedConstraints& wan
     //    - interestingly, the implication constraints don't contribute here.
 
     return decls;
+}
+
+std::vector<Predicate> make_predicates(ConstraintFlavor f, const std::vector<std::pair<Core::Var, Hs::Type>>& ps)
+{
+    vector<Predicate> predicates;
+    for(auto& [cvar, constraint]: ps)
+        predicates.push_back(Predicate(f,NonCanonicalPred(cvar,constraint)));
+    return predicates;
 }

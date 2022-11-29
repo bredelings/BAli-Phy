@@ -49,6 +49,8 @@ struct Predicate
     Predicate(ConstraintFlavor f, Pred p): flavor(f), pred(p) {}
 };
 
+std::vector<Predicate> make_predicates(ConstraintFlavor, const std::vector<std::pair<Core::Var, Hs::Type>>&);
+
 struct ReactFail {};
 
 struct ReactSuccess
@@ -56,7 +58,6 @@ struct ReactSuccess
     Core::Decls decls;
     std::vector<Predicate> predicates;
     ReactSuccess(const Core::Decls& d, const std::vector<Predicate>& ps):decls(d), predicates(ps) {}
-    ReactSuccess(const Core::Decls& d, ConstraintFlavor f, const std::vector<std::pair<Core::Var, Hs::Type>>& ps);
 };
 
 typedef std::variant<ReactFail, ReactSuccess> Reaction;
