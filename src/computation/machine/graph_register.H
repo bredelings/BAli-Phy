@@ -479,6 +479,7 @@ private:
 
     std::vector<int> prog_steps;
     std::vector<int> prog_results;
+    std::vector<int> prog_prev_results;
     std::vector<int> prog_force_counts;
     mutable std::vector<bitmask_8> prog_temp;
     mutable std::vector<bitmask_8> prog_unshare;
