@@ -337,7 +337,7 @@ std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core
     std::abort();
 }
 
-std::optional<Reaction> canonicalize(const typechecker_state& tcs, const Predicate& P)
+std::optional<Reaction> Solver::canonicalize(const Predicate& P)
 {
     if (is_canonical(P)) return {};
 
@@ -349,7 +349,7 @@ std::optional<Reaction> canonicalize(const typechecker_state& tcs, const Predica
     if (auto eq = Hs::is_equality_constraint(NCP.constraint))
     {
         auto& [t1, t2] = *eq;
-        return canonicalize_equality(tcs, NCP.dvar, flavor, t1, t2);
+        return canonicalize_equality(*this, NCP.dvar, flavor, t1, t2);
     }
     else
     {
@@ -361,7 +361,7 @@ std::optional<Reaction> canonicalize(const typechecker_state& tcs, const Predica
     return ReactSuccess(decls, preds);
 }
 
-std::optional<Reaction> typechecker_state::interact_same(const Predicate& P1, const Predicate& P2)
+std::optional<Reaction> Solver::interact_same(const Predicate& P1, const Predicate& P2)
 {
     assert(is_canonical(P1));
     assert(is_canonical(P2));
@@ -464,7 +464,7 @@ std::optional<Reaction> typechecker_state::interact_same(const Predicate& P1, co
     return {};
 }
 
-std::optional<Reaction> typechecker_state::interact_g_w(const Predicate& P1, const Predicate& P2)
+std::optional<Reaction> Solver::interact_g_w(const Predicate& P1, const Predicate& P2)
 {
     assert(is_canonical(P1));
     assert(is_canonical(P2));
@@ -548,7 +548,7 @@ std::optional<Reaction> typechecker_state::interact_g_w(const Predicate& P1, con
 }
 
 // we need to have three results: No react, React<vector<Predicates>>, ReactFail
-std::optional<Reaction> typechecker_state::top_react(const Predicate& P)
+std::optional<Reaction> Solver::top_react(const Predicate& P)
 {
     assert(is_canonical(P));
 
@@ -622,7 +622,7 @@ bool typechecker_state::is_touchable(const Hs::MetaTypeVar& mtv)
     // e. react a wanted Q1 with axioms in \mathcal{Q} to produce Q2 and new touchable variables beta.
     //    - replace Q1 by Q2 and add in the new touchable variables beta.
 
-Core::Decls typechecker_state::simplify(const LIE& givens, LIE& wanteds)
+Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 {
     if (wanteds.empty()) return {{}, {}};
 
@@ -663,7 +663,7 @@ Core::Decls typechecker_state::simplify(const LIE& givens, LIE& wanteds)
         auto p = work_list.back(); work_list.pop_back();
 
         // canonicalize
-        if (react(canonicalize(*this, p), p))
+        if (react(canonicalize(p), p))
             continue;
 
         // binary interact with other preds with same flavor
@@ -766,7 +766,8 @@ Core::Decls typechecker_state::entails(const LIE& givens, WantedConstraints& wan
     do
     {
         // 1. Simplify the simple wanteds.
-        decls += simplify(givens, wanteds.simple);
+        Solver solver(*this);
+        decls += solver.simplify(givens, wanteds.simple);
         update = false;
 
         // 2. Handle implications
@@ -843,4 +844,9 @@ std::vector<Predicate> make_predicates(ConstraintFlavor f, const std::vector<std
     for(auto& [cvar, constraint]: ps)
         predicates.push_back(Predicate(f,NonCanonicalPred(cvar,constraint)));
     return predicates;
+}
+
+Solver::Solver(const typechecker_state& tc)
+    :typechecker_state(tc)
+{
 }

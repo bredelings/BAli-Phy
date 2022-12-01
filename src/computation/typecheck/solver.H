@@ -2,6 +2,7 @@
 #define SOLVER_H
 
 #include "computation/haskell/haskell.H"
+#include "typecheck.H"
 
 #include <vector>
 #include <variant>
@@ -61,5 +62,22 @@ struct ReactSuccess
 };
 
 typedef std::variant<ReactFail, ReactSuccess> Reaction;
+
+struct Solver: public typechecker_state
+{
+    Core::Decls decls;
+
+    std::vector<Predicate> work_list;
+    std::vector<Predicate> inert;
+    std::vector<Predicate> failed;
+
+    std::optional<Reaction> canonicalize(const Predicate& P);
+    std::optional<Reaction> interact_same(const Predicate& P1, const Predicate& P2);
+    std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2);
+    std::optional<Reaction> top_react(const Predicate& P);
+
+    Core::Decls simplify(const LIE& givens, LIE& wanteds);
+    Solver(const typechecker_state& tc);
+};
 
 #endif

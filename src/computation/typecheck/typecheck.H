@@ -13,7 +13,6 @@
 #include "computation/expression/apply.H"
 
 #include "computation/haskell/haskell.H"
-#include "computation/typecheck/solver.H"
 #include "types.H"
 #include "expected.H"
 
@@ -419,10 +418,6 @@ struct typechecker_state: FreshVarSource
     std::optional<Core::Decls>
     entails_by_superclass(const std::pair<Core::Var, Hs::Type>& to_keep,
                           const std::pair<Core::Var, Hs::Type>& to_remove);
-
-    std::optional<Reaction> interact_same(const Predicate& P1, const Predicate& P2);
-    std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2);
-    std::optional<Reaction> top_react(const Predicate& P);
 
     Core::Decls simplify(const LIE& givens, LIE& wanteds);
 
