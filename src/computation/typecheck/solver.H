@@ -63,7 +63,7 @@ struct ReactSuccess
 
 typedef std::variant<ReactFail, ReactSuccess> Reaction;
 
-struct Solver: public typechecker_state
+struct Solver: public TypeChecker
 {
     Core::Decls decls;
 
@@ -71,13 +71,14 @@ struct Solver: public typechecker_state
     std::vector<Predicate> inert;
     std::vector<Predicate> failed;
 
+    std::optional<Reaction> canonicalize_equality(Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2);
     std::optional<Reaction> canonicalize(const Predicate& P);
     std::optional<Reaction> interact_same(const Predicate& P1, const Predicate& P2);
     std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2);
     std::optional<Reaction> top_react(const Predicate& P);
 
     Core::Decls simplify(const LIE& givens, LIE& wanteds);
-    Solver(const typechecker_state& tc);
+    Solver(const TypeChecker& tc);
 };
 
 #endif

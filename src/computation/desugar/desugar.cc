@@ -40,7 +40,7 @@ desugar_state::desugar_state(const Module& m_, FreshVarState& state)
       m(m_)
 {}
 
-typechecker_state& desugar_state::tc_state() const
+TypeChecker& desugar_state::tc_state() const
 {
     return *m.tc_state;
 }

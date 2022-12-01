@@ -61,7 +61,7 @@ struct desugar_state: public FreshVarSource
 {
     const Module& m;
 
-    typechecker_state& tc_state() const;
+    TypeChecker& tc_state() const;
 
     expression_ref def_function(const std::vector< equation_info_t >&, const expression_ref& otherwise);
 

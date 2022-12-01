@@ -11,7 +11,7 @@ using std::optional;
 using std::tuple;
 
 
-void typechecker_state::tcRho(Hs::Var& x, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
 {
     Hs::Type sigma;
     // First look for x in the local type environment
@@ -47,7 +47,7 @@ void typechecker_state::tcRho(Hs::Var& x, const Expected& exp_type)
     }
 }
 
-void typechecker_state::tcRho(Hs::Con& con, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::Con& con, const Expected& exp_type)
 {
     auto sigma = constructor_info(con).constructor_type();
 
@@ -67,7 +67,7 @@ void typechecker_state::tcRho(Hs::Con& con, const Expected& exp_type)
     }
 }
 
-void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
+void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
 {
     // i         = the number of arguments we pretend we've removed from the end of App.
     // arg_index = the index of the last argument that remains after these are removed.
@@ -104,7 +104,7 @@ void typechecker_state::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i
     }
 }
 
-void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 {
     auto state2 = copy_clear_wanteds();
 
@@ -116,14 +116,14 @@ void typechecker_state::tcRho(Hs::LetExp& Let, const Expected& exp_type)
     current_wanteds() += state2.current_wanteds();
 }
 
-void typechecker_state::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 {
     tcMatchesFun( getArity(Lam.match), exp_type, [&](const std::vector<Expected>& arg_types, const Expected& result_type){
-        return [&](typechecker_state& tc) { tc.tcMatch(Lam.match, arg_types, result_type); }; }
+        return [&](TypeChecker& tc) { tc.tcMatch(Lam.match, arg_types, result_type); }; }
         );
 }
 
-void typechecker_state::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
 {
     TExp.type = check_type(TExp.type);
     Core::wrapper w1 = checkSigma( TExp.exp, TExp.type );
@@ -131,7 +131,7 @@ void typechecker_state::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
     TExp.wrap = w1 * w2;
 }
 
-void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 {
     // 2. Check the object
     auto object_type = inferRho(Case.object);
@@ -140,7 +140,7 @@ void typechecker_state::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
     tcMatches(Case.alts, {Check(object_type)}, exp_type);
 }
 
-void typechecker_state::tcRho(Hs::List& L, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::List& L, const Expected& exp_type)
 {
     Hs::Type element_type = fresh_meta_type_var( kind_star() );
     set_expected_type( exp_type, Hs::ListType(element_type) );
@@ -149,7 +149,7 @@ void typechecker_state::tcRho(Hs::List& L, const Expected& exp_type)
         checkRho(element, element_type);
 }
 
-void typechecker_state::tcRho(Hs::Tuple& T, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::Tuple& T, const Expected& exp_type)
 {
     vector<Hs::Type> element_types;
     for(auto& element: T.elements)
@@ -161,7 +161,7 @@ void typechecker_state::tcRho(Hs::Tuple& T, const Expected& exp_type)
     set_expected_type( exp_type, Hs::TupleType(element_types) );
 }
 
-void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
 {
     if (Lit.is_Char())
         set_expected_type( exp_type, char_type() );
@@ -203,7 +203,7 @@ void typechecker_state::tcRho(Hs::Literal& Lit, const Expected& exp_type)
         std::abort();
 }
 
-void typechecker_state::tcRho(Hs::IfExp& If, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::IfExp& If, const Expected& exp_type)
 {
     checkRho(unloc(If.condition), bool_type());
 
@@ -213,7 +213,7 @@ void typechecker_state::tcRho(Hs::IfExp& If, const Expected& exp_type)
 }
 
 
-void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
 {
     // 1. Typecheck the op
     auto op_type = inferRho(LSec.op);
@@ -229,7 +229,7 @@ void typechecker_state::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
     checkRho(LSec.l_arg, left_arg_type);
 }
 
-void typechecker_state::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
 {
     // 1. Typecheck the op
     auto op_type = inferRho(RSec.op);
@@ -246,12 +246,12 @@ void typechecker_state::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
     checkRho(RSec.r_arg, right_arg_type);
 }
 
-void typechecker_state::tcRho(Hs::Do& DoExp, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::Do& DoExp, const Expected& exp_type)
 {
     tcRhoStmts(0, DoExp.stmts.stmts, exp_type);
 }
 
-void typechecker_state::tcRho(Hs::ListComprehension& LComp, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::ListComprehension& LComp, const Expected& exp_type)
 {
     auto state2 = copy_clear_wanteds();
     state2.infer_quals_type(LComp.quals);
@@ -262,7 +262,7 @@ void typechecker_state::tcRho(Hs::ListComprehension& LComp, const Expected& exp_
     set_expected_type( exp_type, Hs::ListType(body_type) );
 }
 
-void typechecker_state::tcRho(Hs::ListFrom& L, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::ListFrom& L, const Expected& exp_type)
 {
     // 1. Typecheck enumFrom
     L.enumFromOp = Hs::Var({noloc,"Compiler.Enum.enumFrom"});
@@ -277,7 +277,7 @@ void typechecker_state::tcRho(Hs::ListFrom& L, const Expected& exp_type)
     checkRho(L.from, from_type);
 }
 
-void typechecker_state::tcRho(Hs::ListFromThen& L, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::ListFromThen& L, const Expected& exp_type)
 {
     // 1. Typecheck enumFrom
     L.enumFromThenOp = Hs::Var({noloc,"Compiler.Enum.enumFromThen"});
@@ -296,7 +296,7 @@ void typechecker_state::tcRho(Hs::ListFromThen& L, const Expected& exp_type)
     checkRho(L.then, then_type);
 }
 
-void typechecker_state::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
 {
     // 1. Typecheck enumFrom
     L.enumFromToOp = Hs::Var({noloc,"Compiler.Enum.enumFromTo"});
@@ -315,7 +315,7 @@ void typechecker_state::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
     checkRho(L.to, to_type);
 }
 
-void typechecker_state::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
 {
     // 1. Typecheck enumFromThenTo
     L.enumFromThenToOp = Hs::Var({noloc,"Compiler.Enum.enumFromThenTo"});
@@ -338,7 +338,7 @@ void typechecker_state::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
     checkRho(L.to, to_type);
 }
 
-void typechecker_state::tcRho(expression_ref& E, const Expected& exp_type)
+void TypeChecker::tcRho(expression_ref& E, const Expected& exp_type)
 {
     // VAR
     if (auto v = E.to<Hs::Var>())

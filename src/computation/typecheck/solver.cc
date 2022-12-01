@@ -64,7 +64,7 @@ const T* to(const U& u)
 // FIXME: there should be a `const` way of getting these.
 // FIXME: instantiate is not constant though.
 // FIXME: we shouldn't need fresh type vars if the type is unambiguous though.
-vector<pair<Core::Var, Hs::Type>> typechecker_state::superclass_constraints(const Hs::Type& constraint)
+vector<pair<Core::Var, Hs::Type>> TypeChecker::superclass_constraints(const Hs::Type& constraint)
 {
     vector<pair<Core::Var, Hs::Type>> constraints;
 
@@ -92,7 +92,7 @@ vector<pair<Core::Var, Hs::Type>> typechecker_state::superclass_constraints(cons
 }
 
 // We are trying to eliminate the *first* argument.
-optional<vector<Core::Var>> typechecker_state::is_superclass_of(const Hs::Type& constraint1, const Hs::Type& constraint2)
+optional<vector<Core::Var>> TypeChecker::is_superclass_of(const Hs::Type& constraint1, const Hs::Type& constraint2)
 {
     vector<Core::Var> extractors;
     if (same_type(constraint1, constraint2))
@@ -113,7 +113,7 @@ optional<vector<Core::Var>> typechecker_state::is_superclass_of(const Hs::Type& 
     }
 }
 
-optional<Core::Decls> typechecker_state::entails_by_superclass(const pair<Core::Var, Hs::Type>& given, const pair<Core::Var, Hs::Type>& wanted)
+optional<Core::Decls> TypeChecker::entails_by_superclass(const pair<Core::Var, Hs::Type>& given, const pair<Core::Var, Hs::Type>& wanted)
 {
     auto& [dvar_given, given_constraint] = given;
     auto& [dvar_wanted, wanted_constraint] = wanted;
@@ -153,7 +153,7 @@ optional<Core::Decls> typechecker_state::entails_by_superclass(const pair<Core::
 
 
 template <typename T>
-std::optional<Core::Decls> typechecker_state::entails(const T& givens, const std::pair<Core::Var, Hs::Type>& wanted_pred)
+std::optional<Core::Decls> TypeChecker::entails(const T& givens, const std::pair<Core::Var, Hs::Type>& wanted_pred)
 {
     // 1. First check if the wanted pred is a superclass of any of the givens.
     //
@@ -215,14 +215,14 @@ bool cmp_less(const Hs::MetaTypeVar& uv1, const Hs::MetaTypeVar& uv2)
 }
 
 
-std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
+std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
 {
     auto uv1 = unfilled_meta_type_var(t1);
     auto uv2 = unfilled_meta_type_var(t2);
 
     // REFL: tau ~ tau
     // NOTE: this does not currently handle foralls or constraints!
-    if (tcs.same_type(t1,t2))
+    if (same_type(t1,t2))
         return ReactSuccess({}, {});
 
     auto tv1 = t1.to<Hs::TypeVar>();
@@ -231,7 +231,7 @@ std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core
     if (uv1 and uv2)
     {
         if (cmp_less(*uv2,*uv1))
-            return canonicalize_equality(tcs, co_var, flavor, t2, t1);
+            return canonicalize_equality(co_var, flavor, t2, t1);
         else
         {
             Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
@@ -240,7 +240,7 @@ std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core
     }
     else if (uv1)
     {
-        if (tcs.occurs_check(*uv1, t2))
+        if (occurs_check(*uv1, t2))
             return ReactFail();
         else
         {
@@ -250,12 +250,12 @@ std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core
     }
     else if (uv2)
     {
-        return canonicalize_equality(tcs, co_var, flavor, t2, t1);
+        return canonicalize_equality(co_var, flavor, t2, t1);
     }
     else if (tv1 and  tv2)
     {
         if (*tv2 < *tv1)
-            return canonicalize_equality(tcs, co_var, flavor, t2, t1);
+            return canonicalize_equality(co_var, flavor, t2, t1);
         else
         {
             Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
@@ -264,7 +264,7 @@ std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core
     }
     else if (tv1)
     {
-        if (tcs.occurs_check(*tv1, t2))
+        if (occurs_check(*tv1, t2))
             return ReactFail();
         else
         {
@@ -274,7 +274,7 @@ std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core
     }
     else if (tv2)
     {
-        return canonicalize_equality(tcs, co_var, flavor, t2, t1);
+        return canonicalize_equality(co_var, flavor, t2, t1);
     }
     else
     {
@@ -283,9 +283,9 @@ std::optional<Reaction> canonicalize_equality(const typechecker_state& tcs, Core
         // Unlike GHC, we don't consider representational equality.
         // When we add type families, this will become more complicated.
         // See [Decomposing equality] in Tc/Solver/Canonical.hs
-        while(auto s1 = tcs.is_type_synonym(t1))
+        while(auto s1 = is_type_synonym(t1))
             t1 = *s1;
-        while(auto s2 = tcs.is_type_synonym(t2))
+        while(auto s2 = is_type_synonym(t2))
             t2 = *s2;
         
         if (auto tuple = t1.to<Hs::TupleType>())
@@ -349,7 +349,7 @@ std::optional<Reaction> Solver::canonicalize(const Predicate& P)
     if (auto eq = Hs::is_equality_constraint(NCP.constraint))
     {
         auto& [t1, t2] = *eq;
-        return canonicalize_equality(*this, NCP.dvar, flavor, t1, t2);
+        return canonicalize_equality(NCP.dvar, flavor, t1, t2);
     }
     else
     {
@@ -578,7 +578,7 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
     return {};
 }
 
-bool typechecker_state::is_touchable(const Hs::MetaTypeVar& mtv)
+bool TypeChecker::is_touchable(const Hs::MetaTypeVar& mtv)
 {
     assert(mtv.filled() or mtv.level() <= level);
 
@@ -590,7 +590,7 @@ bool typechecker_state::is_touchable(const Hs::MetaTypeVar& mtv)
     //    \mathcal{Q}; Q[given] ; alpha[touchable] |->[simp] Q[wanted] ~~> Q[residual]; theta
     // where theta is the substitution -- which we should actually perform here instead of returning as an object.
 
-    // So, we need to to know the set of touchable variables, either through the typechecker_state, or
+    // So, we need to to know the set of touchable variables, either through the TypeChecker, or
     // as a function argument.
 
     // This has a few steps (rule SIMPLES from Figure 19):
@@ -759,7 +759,7 @@ bool contains_equality_constraints(const LIE& givens)
     return false;
 }
 
-Core::Decls typechecker_state::entails(const LIE& givens, WantedConstraints& wanteds)
+Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
 {
     Core::Decls decls;
     bool update = false;
@@ -846,7 +846,7 @@ std::vector<Predicate> make_predicates(ConstraintFlavor f, const std::vector<std
     return predicates;
 }
 
-Solver::Solver(const typechecker_state& tc)
-    :typechecker_state(tc)
+Solver::Solver(const TypeChecker& tc)
+    :TypeChecker(tc)
 {
 }

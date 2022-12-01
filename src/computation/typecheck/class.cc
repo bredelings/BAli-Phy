@@ -40,7 +40,7 @@ Hs::FunDecl dictionary_extractor(const string& name, int i, int N)
 //                       = { made-up-name = \dict -> case dict of (superdict,_,_,_,_) -> superdict }
 
 tuple<global_value_env, ClassInfo, Hs::Decls>
-typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
+TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     kindchecker_state K( tycon_info() );
 
@@ -202,7 +202,7 @@ typechecker_state::infer_type_for_class(const Hs::ClassDecl& class_decl)
     return {gve, class_info, decls};
 }
 
-Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
+Hs::Binds TypeChecker::infer_type_for_classes(const Hs::Decls& decls)
 {
     Hs::Binds class_binds;
 
@@ -235,7 +235,7 @@ Hs::Binds typechecker_state::infer_type_for_classes(const Hs::Decls& decls)
 }
 
 void
-typechecker_state::get_type_synonyms(const Hs::Decls& decls)
+TypeChecker::get_type_synonyms(const Hs::Decls& decls)
 {
     for(auto& decl: decls)
     {
@@ -261,7 +261,7 @@ typechecker_state::get_type_synonyms(const Hs::Decls& decls)
     }
 }
 
-void typechecker_state::get_type_families(const Hs::Decls& decls)
+void TypeChecker::get_type_families(const Hs::Decls& decls)
 {
     for(auto& decl: decls)
     {

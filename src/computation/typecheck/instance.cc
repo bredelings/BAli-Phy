@@ -12,7 +12,7 @@ using std::set;
 using std::pair;
 using std::optional;
 
-Hs::Decls typechecker_state::infer_type_for_default_methods(const Hs::ClassDecl& C)
+Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
 {
     Hs::Decls decls_out;
 
@@ -36,7 +36,7 @@ Hs::Decls typechecker_state::infer_type_for_default_methods(const Hs::ClassDecl&
     return decls_out;
 }
 
-Hs::Binds typechecker_state::infer_type_for_default_methods(const Hs::Decls& decls)
+Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
 {
     Hs::Binds default_method_decls;
     for(auto& decl: decls)
@@ -66,7 +66,7 @@ string get_name_for_typecon(const Hs::TypeCon& tycon)
         return get_unqualified_name(n);
 }
 
-void typechecker_state::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
+void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
     // 1. Check that the type family exists.
     if (not type_fam_info().count(inst.con))
@@ -166,7 +166,7 @@ void typechecker_state::check_add_type_instance(const Hs::TypeFamilyInstanceEqn&
 }
 
 pair<Core::Var, Hs::Type>
-typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
+TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     // 1. Get class name and parameters for the instance
     auto [class_head, class_args] = Hs::decompose_type_apps(inst_decl.constraint);
@@ -244,7 +244,7 @@ typechecker_state::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
 vector<pair<Core::Var,Hs::InstanceDecl>>
-typechecker_state::infer_type_for_instances1(const Hs::Decls& decls)
+TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
 {
     GIE gie_inst;
 
@@ -326,7 +326,7 @@ map<string, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const glob
 }
 
 pair<Hs::Decls, Core::Decl>
-typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& inst_decl)
+TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& inst_decl)
 {
     // 1. Get instance head and constraints 
 
@@ -418,7 +418,7 @@ typechecker_state::infer_type_for_instance2(const Core::Var& dfun, const Hs::Ins
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-pair<Hs::Binds, Core::Decls> typechecker_state::infer_type_for_instances2(const vector<pair<Core::Var, Hs::InstanceDecl>>& named_instances)
+pair<Hs::Binds, Core::Decls> TypeChecker::infer_type_for_instances2(const vector<pair<Core::Var, Hs::InstanceDecl>>& named_instances)
 {
     Hs::Binds instance_method_decls;
     Core::Decls dfun_decls;
@@ -449,14 +449,14 @@ pair<Hs::Binds, Core::Decls> typechecker_state::infer_type_for_instances2(const 
     return {instance_method_decls, dfun_decls};
 }
 
-bool typechecker_state::instance_matches(const Hs::Type& type1, const Hs::Type& type2)
+bool TypeChecker::instance_matches(const Hs::Type& type1, const Hs::Type& type2)
 {
     auto [_1, _2, head1] = instantiate(type1);
     auto [_3, _4, head2] = instantiate(type2);
     return maybe_match(head1, head2);
 }
 
-bool typechecker_state::more_specific_than(const Hs::Type& type1, const Hs::Type& type2)
+bool TypeChecker::more_specific_than(const Hs::Type& type1, const Hs::Type& type2)
 {
     // We can get type1 by constraining type2, so type1 is more specific than type2.
     return instance_matches(type2, type1) and not instance_matches(type1, type2);
@@ -473,7 +473,7 @@ bool typechecker_state::more_specific_than(const Hs::Type& type1, const Hs::Type
 // 7. Unless we actually FORBID unification of variables at any higher level, then this won't work.
 // 8. Simply forbidding substitution to a deeper depth won't cut it.
 
-optional<pair<Core::Exp,LIE>> typechecker_state::lookup_instance(const Hs::Type& target_constraint)
+optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Hs::Type& target_constraint)
 {
     vector<pair<pair<Core::Exp, LIE>,Hs::Type>> matching_instances;
 

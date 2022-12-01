@@ -10,7 +10,7 @@ using std::optional;
 using std::tuple;
 
 // Figure 25. Rules for match, mrule, and grhs
-void typechecker_state::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int i)
+void TypeChecker::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int i)
 {
     if (i < rhs.guards.size())
     {
@@ -27,7 +27,7 @@ void typechecker_state::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int
 }
 
 // Fig 25. GUARD-OR
-void typechecker_state::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type)
 {
     auto state2 = copy_clear_wanteds();
     if (rhs.decls)
@@ -40,7 +40,7 @@ void typechecker_state::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type
     current_wanteds() += state2.current_wanteds();
 }
 
-void typechecker_state::tcMatch(Hs::MRule& m, const vector<Expected>& pat_types, const Expected& result_type)
+void TypeChecker::tcMatch(Hs::MRule& m, const vector<Expected>& pat_types, const Expected& result_type)
 {
     assert(m.patterns.size() == pat_types.size());
 
@@ -52,7 +52,7 @@ void typechecker_state::tcMatch(Hs::MRule& m, const vector<Expected>& pat_types,
     current_wanteds() += state2.current_wanteds();
 }
 
-void typechecker_state::tcMatches(Hs::Matches& ms, const vector<Expected>& pat_types, const Expected& result_type)
+void TypeChecker::tcMatches(Hs::Matches& ms, const vector<Expected>& pat_types, const Expected& result_type)
 {
     if (ms.empty())
     {

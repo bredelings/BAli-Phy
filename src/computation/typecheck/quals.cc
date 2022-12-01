@@ -20,7 +20,7 @@ using std::tuple;
 // * the original figure seems to assume that quals only occur in list comprehensions?
 
 void
-typechecker_state::infer_quals_type(vector<Hs::Qual>& quals)
+TypeChecker::infer_quals_type(vector<Hs::Qual>& quals)
 {
     local_value_env binders;
     for(auto& qual: quals)
@@ -28,7 +28,7 @@ typechecker_state::infer_quals_type(vector<Hs::Qual>& quals)
 }
 
 void
-typechecker_state::infer_qual_type(Hs::Qual& qual)
+TypeChecker::infer_qual_type(Hs::Qual& qual)
 {
     // FILTER
     if (auto sq = qual.to<Hs::SimpleQual>())
@@ -65,7 +65,7 @@ typechecker_state::infer_qual_type(Hs::Qual& qual)
 
 
 void
-typechecker_state::infer_guard_type(Hs::Qual& guard)
+TypeChecker::infer_guard_type(Hs::Qual& guard)
 {
     if (auto sq = guard.to<Hs::SimpleQual>())
     {
@@ -97,7 +97,7 @@ typechecker_state::infer_guard_type(Hs::Qual& guard)
 }
 
 
-void typechecker_state::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expected& expected_type)
+void TypeChecker::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expected& expected_type)
 {
     auto& stmt = stmts[i];
     // Last statement -- an expression.

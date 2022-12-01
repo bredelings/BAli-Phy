@@ -61,15 +61,15 @@ struct global_tc_state
     global_tc_state(const Module& m);
 };
 
-struct typechecker_state;
+struct TypeChecker;
 
 template <typename... Args>
-using tc_action = std::function<void(Args...,typechecker_state&)>;
+using tc_action = std::function<void(Args...,TypeChecker&)>;
 
 template <typename R, typename... Args>
-using tc_function = std::function<R (Args...,typechecker_state&)>;
+using tc_function = std::function<R (Args...,TypeChecker&)>;
 
-struct typechecker_state: FreshVarSource
+struct TypeChecker: FreshVarSource
 {
     //------- global state ------------//
     std::shared_ptr<global_tc_state> global_state;
@@ -131,7 +131,7 @@ struct typechecker_state: FreshVarSource
     Hs::TypeVar fresh_rigid_type_var(const Hs::Kind& k);
 
     //------- Functions handling the LIE ---------
-    typechecker_state copy_clear_wanteds(bool bump_level = false) const;
+    TypeChecker copy_clear_wanteds(bool bump_level = false) const;
 
     void promote_mtv(const Hs::MetaTypeVar& mtv);
     bool maybe_promote_mtv(const Hs::MetaTypeVar& mtv);
@@ -139,7 +139,7 @@ struct typechecker_state: FreshVarSource
 
     void add_binders(const local_value_env& binders);
 
-    typechecker_state copy_add_binders(const global_value_env& env) const;
+    TypeChecker copy_add_binders(const global_value_env& env) const;
 
     WantedConstraints& current_wanteds();
 
@@ -433,7 +433,7 @@ struct typechecker_state: FreshVarSource
 
     void get_defaults(const Hs::ModuleDecls& M);
 
-    typechecker_state(FreshVarState& fvs, const std::string& s, const Module& m);
+    TypeChecker(FreshVarState& fvs, const std::string& s, const Module& m);
 };
 
 std::optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint);
@@ -459,7 +459,7 @@ int getArity(const Hs::MRule& m);
 
 template <typename R>
 std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, R>
-typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_function<R, Hs::Type>& nested_function)
+TypeChecker::skolemize_and_result(const Hs::Type& polytype, const tc_function<R, Hs::Type>& nested_function)
 {
     // 1. Skolemize the type at level
     level++;
@@ -477,7 +477,7 @@ typechecker_state::skolemize_and_result(const Hs::Type& polytype, const tc_funct
 
 template <typename R>
 std::tuple<std::shared_ptr<const Core::Decls>, R>
-typechecker_state::maybe_implication_result(const std::vector<Hs::TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_function)
+TypeChecker::maybe_implication_result(const std::vector<Hs::TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_function)
 {
     auto ev_decls = std::make_shared<Core::Decls>();
 

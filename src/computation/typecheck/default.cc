@@ -35,7 +35,7 @@ optional<Hs::TypeCon> simple_constraint_class_meta(const Hs::Type& constraint)
 // 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
 
 optional<Core::Decls>
-typechecker_state::candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie)
+TypeChecker::candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie)
 {
     set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
     set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
@@ -114,7 +114,7 @@ ambiguities(const LIE& lie)
 }
 
 
-Core::Decls typechecker_state::default_preds( WantedConstraints& wanted )
+Core::Decls TypeChecker::default_preds( WantedConstraints& wanted )
 {
     Core::Decls decls;
     auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities( wanted.simple );
@@ -150,7 +150,7 @@ Core::Decls typechecker_state::default_preds( WantedConstraints& wanted )
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-Core::Decls typechecker_state::simplify_and_default_top_level()
+Core::Decls TypeChecker::simplify_and_default_top_level()
 {
     auto top_simplify_decls = entails( {}, current_wanteds() );
 

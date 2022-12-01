@@ -1,6 +1,6 @@
 #include "typecheck.H"
 
-bool typechecker_state::occurs_check(const Hs::MetaTypeVar& tv, const Hs::Type& t) const
+bool TypeChecker::occurs_check(const Hs::MetaTypeVar& tv, const Hs::Type& t) const
 {
     assert(not tv.filled());
 
@@ -42,7 +42,7 @@ bool typechecker_state::occurs_check(const Hs::MetaTypeVar& tv, const Hs::Type& 
         std::abort();
 }
 
-bool typechecker_state::occurs_check(const Hs::TypeVar& tv, const Hs::Type& t) const
+bool TypeChecker::occurs_check(const Hs::TypeVar& tv, const Hs::Type& t) const
 {
     if (auto tt = filled_meta_type_var(t))
         return occurs_check(tv, *tt);
@@ -88,7 +88,7 @@ bool typechecker_state::occurs_check(const Hs::TypeVar& tv, const Hs::Type& t) c
         std::abort();
 }
 
-bool typechecker_state::try_insert(const Hs::MetaTypeVar& tv, Hs::Type type) const
+bool TypeChecker::try_insert(const Hs::MetaTypeVar& tv, Hs::Type type) const
 {
     // 1. We can't insert tv ~ type if we already have a substitution for tv.
     assert(not tv.filled());
@@ -116,7 +116,7 @@ bool typechecker_state::try_insert(const Hs::MetaTypeVar& tv, Hs::Type type) con
 }
 
 // Is there a better way to implement this?
-bool typechecker_state::maybe_unify_(bool eager_unification, bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2)
+bool TypeChecker::maybe_unify_(bool eager_unification, bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2)
 {
     // Translate rigid type variables
     if (auto tv1 = t1.to<Hs::TypeVar>(); tv1 and env.mapping1.count(*tv1))
@@ -267,7 +267,7 @@ bool typechecker_state::maybe_unify_(bool eager_unification, bool both_ways, con
         return false;
 }
 
-bool typechecker_state::same_type(const Hs::Type& t1, const Hs::Type& t2) const
+bool TypeChecker::same_type(const Hs::Type& t1, const Hs::Type& t2) const
 {
     if (auto type1 = filled_meta_type_var(t1))
         return same_type(*type1, t2);

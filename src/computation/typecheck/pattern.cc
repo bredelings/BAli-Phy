@@ -10,7 +10,7 @@ using std::pair;
 using std::optional;
 
 // Ensure that we can convert exp_type to pat_type, and get a wrapper proving it.
-Core::wrapper typechecker_state::instPatSigma(const Hs::SigmaType& pat_type, const Expected& exp_type)
+Core::wrapper TypeChecker::instPatSigma(const Hs::SigmaType& pat_type, const Expected& exp_type)
 {
     if (auto I = exp_type.infer())
     {
@@ -33,7 +33,7 @@ Core::wrapper typechecker_state::instPatSigma(const Hs::SigmaType& pat_type, con
 //                                      return (wrapper, {x :: sigma1})
 //
 
-void typechecker_state::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_type, const signature_env& sigs, const tc_action<local_value_env&>& a)
+void TypeChecker::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_type, const signature_env& sigs, const tc_action<local_value_env&>& a)
 {
     auto& name = unloc(V.name);
     Hs::Type type;
@@ -72,28 +72,28 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Var& V, const Expected&
     a(penv, *this);
 }
 
-void typechecker_state::checkPat(local_value_env& penv, Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs)
+void TypeChecker::checkPat(local_value_env& penv, Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs)
 {
-    return tcPat(penv, v, Check(exp_type), sigs, [](local_value_env&, typechecker_state&){});
+    return tcPat(penv, v, Check(exp_type), sigs, [](local_value_env&, TypeChecker&){});
 }
 
-Hs::Type typechecker_state::inferPat(local_value_env& penv, Hs::Var& V, const map<string, Hs::Type>& sigs)
+Hs::Type TypeChecker::inferPat(local_value_env& penv, Hs::Var& V, const map<string, Hs::Type>& sigs)
 {
     Expected exp_type = newInfer();
-    tcPat(penv, V, exp_type, sigs, [](local_value_env&, typechecker_state&){});
+    tcPat(penv, V, exp_type, sigs, [](local_value_env&, TypeChecker&){});
     return exp_type.read_type();
 }
 
-void typechecker_state::tcPats(local_value_env& penv,
+void TypeChecker::tcPats(local_value_env& penv,
                                vector<Hs::Pattern>& pats, const vector<Expected>& pat_types,
                                const signature_env& sigs,
-                               const std::function<void(local_value_env&,typechecker_state&)>& a,
+                               const std::function<void(local_value_env&,TypeChecker&)>& a,
                                int i)
 {
 
     if (i < pats.size())
     {
-        tcPat(penv, pats[i], pat_types[i], sigs, [&,i=i+1](local_value_env& penv, typechecker_state& tc){
+        tcPat(penv, pats[i], pat_types[i], sigs, [&,i=i+1](local_value_env& penv, TypeChecker& tc){
             auto tc2 = tc.copy_clear_wanteds();
             tc2.add_binders(penv);
             tc2.tcPats(penv, pats, pat_types, sigs, a, i);
@@ -107,7 +107,7 @@ void typechecker_state::tcPats(local_value_env& penv,
 }
 
 // Figure 24. Rules for patterns
-void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected& exp_type, const map<string, Hs::Type>& sigs, const tc_action<local_value_env&>& a)
+void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected& exp_type, const map<string, Hs::Type>& sigs, const tc_action<local_value_env&>& a)
 {
     // TAUT-PAT
     if (auto v = pat.to<Hs::VarPattern>())
@@ -166,7 +166,7 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
     else if (auto ap = pat.to<Hs::AsPattern>())
     {
         auto Ap = *ap;
-        tcPat(penv, Ap.var, exp_type, sigs, [&](local_value_env& penv, typechecker_state& tc) {
+        tcPat(penv, Ap.var, exp_type, sigs, [&](local_value_env& penv, TypeChecker& tc) {
             tc.tcPat(penv, Ap.pattern, exp_type, sigs, a);});
         pat = Ap;
     }
@@ -304,16 +304,16 @@ void typechecker_state::tcPat(local_value_env& penv, Hs::Pattern& pat, const Exp
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
-Hs::Type typechecker_state::inferPat(local_value_env& penv, Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
+Hs::Type TypeChecker::inferPat(local_value_env& penv, Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
 {
     Expected exp_type = newInfer();
-    tcPat(penv, pat, exp_type, sigs, [](local_value_env&, typechecker_state&) {});
+    tcPat(penv, pat, exp_type, sigs, [](local_value_env&, TypeChecker&) {});
     return exp_type.read_type();
 }
 
-void typechecker_state::checkPat(local_value_env& penv, Hs::Pattern& pat, const Hs::SigmaType& exp_type, const signature_env& sigs)
+void TypeChecker::checkPat(local_value_env& penv, Hs::Pattern& pat, const Hs::SigmaType& exp_type, const signature_env& sigs)
 {
-    tcPat(penv, pat, Check(exp_type), sigs, [](local_value_env&, typechecker_state&) {});
+    tcPat(penv, pat, Check(exp_type), sigs, [](local_value_env&, TypeChecker&) {});
 }
 
 

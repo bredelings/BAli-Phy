@@ -448,7 +448,7 @@ void Module::compile(const Program& P)
     auto& loader = *P.get_module_loader();
     simplifier_options& opts = loader;
 
-    tc_state = std::make_shared<typechecker_state>( P.fresh_var_state(), name, *this);
+    tc_state = std::make_shared<TypeChecker>( P.fresh_var_state(), name, *this);
 
     // Scans imported modules and modifies symbol table and type table
     perform_imports(P);
@@ -970,7 +970,7 @@ vector<expression_ref> peel_lambdas(expression_ref& E)
 }
 
 void mark_exported_decls(CDecls& decls,
-                         const shared_ptr<typechecker_state>& tc_state,
+                         const shared_ptr<TypeChecker>& tc_state,
                          const map<string,symbol_info>& exports,
                          const string& module_name)
 {

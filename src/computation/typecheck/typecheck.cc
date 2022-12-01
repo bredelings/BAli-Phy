@@ -44,7 +44,7 @@ using std::tuple;
   * Check that constraints in classes only mention type vars.
   * Check that constraints in instance heads are of the form Class (Tycon a1 a2 a3..)
   * Switch from substitutions to constraints (i.e. from compose( ) to combine( ) ).
-  * Add a substitution to the typechecker_state, instead of returning substitutions from every call.
+  * Add a substitution to the TypeChecker, instead of returning substitutions from every call.
   * We no longer need to keep substituting into the type.
   * Handle exp :: type expressions.
   * Monomorphism restriction.
@@ -354,7 +354,7 @@ global_tc_state::global_tc_state(const Module& m)
 { }
 
 
-Hs::Type typechecker_state::expTypeToType(const Expected& E)
+Hs::Type TypeChecker::expTypeToType(const Expected& E)
 {
     if (auto I = E.infer())
         return inferResultToType(*I);
@@ -362,7 +362,7 @@ Hs::Type typechecker_state::expTypeToType(const Expected& E)
         return E.check_type();
 }
 
-Hs::Type typechecker_state::inferResultToType(Infer& I)
+Hs::Type TypeChecker::inferResultToType(Infer& I)
 {
     if (auto T = I.type())
     {
@@ -378,12 +378,12 @@ Hs::Type typechecker_state::inferResultToType(Infer& I)
     }
 }
 
-Expected typechecker_state::newInfer()
+Expected TypeChecker::newInfer()
 {
     return Infer(level);
 }
 
-void typechecker_state::fillInfer(const Hs::Type& type, Infer& I)
+void TypeChecker::fillInfer(const Hs::Type& type, Infer& I)
 {
     if (auto result_type = I.type())
     {
@@ -399,7 +399,7 @@ void typechecker_state::fillInfer(const Hs::Type& type, Infer& I)
     }
 }
 
-void typechecker_state::ensure_monotype(const Hs::Type& type)
+void TypeChecker::ensure_monotype(const Hs::Type& type)
 {
     if (not is_rho_type(type))
         throw myexception()<<"ensure_monotype: "<<type<<" is not a rho type!";
@@ -413,7 +413,7 @@ void typechecker_state::ensure_monotype(const Hs::Type& type)
     }
 }
 
-Hs::Type typechecker_state::promote_type(int dest_level, const Hs::Type& type)
+Hs::Type TypeChecker::promote_type(int dest_level, const Hs::Type& type)
 {
     if (level == dest_level)
         return type;
@@ -428,7 +428,7 @@ Hs::Type typechecker_state::promote_type(int dest_level, const Hs::Type& type)
     }
 }
 
-void typechecker_state::set_expected_type(const Expected& E, const Hs::Type& type)
+void TypeChecker::set_expected_type(const Expected& E, const Hs::Type& type)
 {
     if (auto I = E.infer())
         fillInfer(type, *I);
@@ -451,12 +451,12 @@ void typechecker_state::set_expected_type(const Expected& E, const Hs::Type& typ
     }
 }
 
-void typechecker_state::get_tycon_info(const Hs::TypeFamilyDecl& F)
+void TypeChecker::get_tycon_info(const Hs::TypeFamilyDecl& F)
 {
     tycon_info().insert({unloc(F.con.name), {F.kind(), (int)F.args.size()}});
 }
 
-void typechecker_state::get_tycon_info(const Hs::Decls& type_decls)
+void TypeChecker::get_tycon_info(const Hs::Decls& type_decls)
 {
     type_con_env new_tycons;
 
@@ -549,22 +549,22 @@ ID get_class_name_from_constraint(const Hs::Type& constraint)
         return "Constraint";
 }
 
-Hs::MetaTypeVar typechecker_state::fresh_meta_type_var(const std::string& name, const Hs::Kind& k)
+Hs::MetaTypeVar TypeChecker::fresh_meta_type_var(const std::string& name, const Hs::Kind& k)
 {
     return FreshVarSource::fresh_meta_type_var(level, name, k);
 }
 
-Hs::MetaTypeVar typechecker_state::fresh_meta_type_var(const Hs::Kind& k)
+Hs::MetaTypeVar TypeChecker::fresh_meta_type_var(const Hs::Kind& k)
 {
     return FreshVarSource::fresh_meta_type_var(level, k);
 }
 
-Hs::TypeVar typechecker_state::fresh_rigid_type_var(const std::string& name, const Hs::Kind& k)
+Hs::TypeVar TypeChecker::fresh_rigid_type_var(const std::string& name, const Hs::Kind& k)
 {
     return FreshVarSource::fresh_rigid_type_var(level, name, k);
 }
 
-Hs::TypeVar typechecker_state::fresh_rigid_type_var(const Hs::Kind& k)
+Hs::TypeVar TypeChecker::fresh_rigid_type_var(const Hs::Kind& k)
 {
     return FreshVarSource::fresh_rigid_type_var(level, k);
 }
@@ -581,7 +581,7 @@ Hs::TypeVar typechecker_state::fresh_rigid_type_var(const Hs::Kind& k)
 //
 // }
 
-const TypeSynonymInfo* typechecker_state::maybe_find_type_synonym(const Hs::Type& type) const
+const TypeSynonymInfo* TypeChecker::maybe_find_type_synonym(const Hs::Type& type) const
 {
     if (auto tycon = type.to<Hs::TypeCon>())
     {
@@ -592,7 +592,7 @@ const TypeSynonymInfo* typechecker_state::maybe_find_type_synonym(const Hs::Type
     return nullptr;
 }
 
-std::optional<Hs::Type> typechecker_state::is_type_synonym(const Hs::Type& type) const
+std::optional<Hs::Type> TypeChecker::is_type_synonym(const Hs::Type& type) const
 {
     if (auto t2 = filled_meta_type_var(type))
         return is_type_synonym(*t2);
@@ -608,7 +608,7 @@ std::optional<Hs::Type> typechecker_state::is_type_synonym(const Hs::Type& type)
     return {};
 }
 
-Hs::Type typechecker_state::check_type(const Hs::Type& type, kindchecker_state& K) const
+Hs::Type TypeChecker::check_type(const Hs::Type& type, kindchecker_state& K) const
 {
     // So, currently, we
     // (1) infer kinds for all the free variables.
@@ -618,7 +618,7 @@ Hs::Type typechecker_state::check_type(const Hs::Type& type, kindchecker_state& 
     return K.kind_and_type_check_type( type );
 }
 
-Hs::Type typechecker_state::check_type(const Hs::Type& type) const
+Hs::Type TypeChecker::check_type(const Hs::Type& type) const
 {
     // This should be rather wasteful... can we use a reference?
     kindchecker_state K( tycon_info() );
@@ -626,7 +626,7 @@ Hs::Type typechecker_state::check_type(const Hs::Type& type) const
     return check_type(type, K);
 }
 
-Hs::Type typechecker_state::check_constraint(const Hs::Type& type) const
+Hs::Type TypeChecker::check_constraint(const Hs::Type& type) const
 {
     // This should be rather wasteful... can we use a reference?
     kindchecker_state K( tycon_info() );
@@ -635,7 +635,7 @@ Hs::Type typechecker_state::check_constraint(const Hs::Type& type) const
 
 }
 
-typechecker_state typechecker_state::copy_clear_wanteds(bool bump_level) const
+TypeChecker TypeChecker::copy_clear_wanteds(bool bump_level) const
 {
     auto tc2 = *this;
     tc2.current_wanteds() = {};
@@ -644,13 +644,13 @@ typechecker_state typechecker_state::copy_clear_wanteds(bool bump_level) const
     return tc2;
 }
 
-void typechecker_state::promote_mtv(const Hs::MetaTypeVar& mtv)
+void TypeChecker::promote_mtv(const Hs::MetaTypeVar& mtv)
 {
     assert(mtv.level() > level);
     mtv.fill( fresh_meta_type_var(unloc(mtv.name), *mtv.kind) );
 }
 
-bool typechecker_state::maybe_promote_mtv(const Hs::MetaTypeVar& mtv)
+bool TypeChecker::maybe_promote_mtv(const Hs::MetaTypeVar& mtv)
 {
     if (mtv.level() > level)
     {
@@ -662,36 +662,36 @@ bool typechecker_state::maybe_promote_mtv(const Hs::MetaTypeVar& mtv)
         return false;
 }
 
-void typechecker_state::promote(Hs::Type t)
+void TypeChecker::promote(Hs::Type t)
 {
     for(auto& mtv: free_meta_type_variables(t))
         maybe_promote_mtv(mtv);
 }
 
-void typechecker_state::add_binders(const local_value_env& binders)
+void TypeChecker::add_binders(const local_value_env& binders)
 {
     gve = plus_prefer_right( gve, binders );
 }
 
-typechecker_state
-typechecker_state::copy_add_binders(const local_value_env& binders) const
+TypeChecker
+TypeChecker::copy_add_binders(const local_value_env& binders) const
 {
     auto new_state = copy_clear_wanteds();
     new_state.add_binders( binders );
     return new_state;
 }
 
-WantedConstraints& typechecker_state::current_wanteds()
+WantedConstraints& TypeChecker::current_wanteds()
 {
     return collected_wanteds;
 }
 
-void typechecker_state::add_dvar(const Core::Var& dvar, const Hs::Type& constraint)
+void TypeChecker::add_dvar(const Core::Var& dvar, const Hs::Type& constraint)
 {
     current_wanteds().simple.push_back( {dvar, constraint} );
 }
 
-Core::Var typechecker_state::fresh_dvar(const Hs::Type& constraint)
+Core::Var TypeChecker::fresh_dvar(const Hs::Type& constraint)
 {
     ID name;
     if (is_equality_constraint(constraint))
@@ -705,7 +705,7 @@ Core::Var typechecker_state::fresh_dvar(const Hs::Type& constraint)
     return dvar;
 }
 
-Core::Var typechecker_state::add_dvar(const Hs::Type& constraint)
+Core::Var TypeChecker::add_dvar(const Hs::Type& constraint)
 {
     auto dvar = fresh_dvar(constraint);
 
@@ -714,7 +714,7 @@ Core::Var typechecker_state::add_dvar(const Hs::Type& constraint)
     return dvar;
 }
 
-void typechecker_state::get_defaults(const Hs::ModuleDecls& M)
+void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
 {
     if (M.default_decl)
         defaults() = M.default_decl->types;
@@ -722,20 +722,20 @@ void typechecker_state::get_defaults(const Hs::ModuleDecls& M)
         defaults() = { Hs::TypeCon({noloc,"Int"}), Hs::TypeCon({noloc,"Double"}) };
 }
 
-typechecker_state::typechecker_state(FreshVarState& fvs, const string& s, const Module& m)
+TypeChecker::TypeChecker(FreshVarState& fvs, const string& s, const Module& m)
     :FreshVarSource(fvs, s)
 {
     global_state = std::make_shared<global_tc_state>(m);
 }
 
-Hs::Var typechecker_state::find_prelude_var(string name) const
+Hs::Var TypeChecker::find_prelude_var(string name) const
 {
     if (this_mod().is_declared(name))
         name = this_mod().lookup_symbol(name).name;
     return Hs::Var({noloc, name});
 }
 
-ID typechecker_state::find_prelude_tycon_name(const string& name) const
+ID TypeChecker::find_prelude_tycon_name(const string& name) const
 {
     if (this_mod().type_is_declared(name))
         return this_mod().lookup_type(name).name;
@@ -743,51 +743,51 @@ ID typechecker_state::find_prelude_tycon_name(const string& name) const
         return name;
 }
 
-Hs::TypeCon typechecker_state::find_prelude_tycon(const string& name) const
+Hs::TypeCon TypeChecker::find_prelude_tycon(const string& name) const
 {
     auto prelude_name = find_prelude_tycon_name(name);
     return Hs::TypeCon({noloc, prelude_name });
 }
 
-Hs::Type typechecker_state::bool_type() const
+Hs::Type TypeChecker::bool_type() const
 {
     return find_prelude_tycon("Bool");
 }
 
-Hs::Type typechecker_state::char_type() const
+Hs::Type TypeChecker::char_type() const
 {
     return find_prelude_tycon("Char");
 }
 
-Hs::Type typechecker_state::int_type() const
+Hs::Type TypeChecker::int_type() const
 {
     return find_prelude_tycon("Int");
 }
 
-Hs::Type typechecker_state::integer_type() const
+Hs::Type TypeChecker::integer_type() const
 {
     return find_prelude_tycon("Integer");
 }
 
-Hs::Type typechecker_state::double_type() const
+Hs::Type TypeChecker::double_type() const
 {
     return find_prelude_tycon("Double");
 }
 
-bool typechecker_state::add_substitution(const Hs::MetaTypeVar& a, const Hs::Type& type)
+bool TypeChecker::add_substitution(const Hs::MetaTypeVar& a, const Hs::Type& type)
 {
     return try_insert(a, type);
 }
 
 
-void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2)
+void TypeChecker::unify(const Hs::Type& t1, const Hs::Type& t2)
 {
     myexception e;
     e<<"Unification failed: "<<t1<<" !~ "<<t2;
     unify(t1, t2, e);
 }
 
-void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2, const myexception& e)
+void TypeChecker::unify(const Hs::Type& t1, const Hs::Type& t2, const myexception& e)
 {
     unification_env env;
 
@@ -795,34 +795,34 @@ void typechecker_state::unify(const Hs::Type& t1, const Hs::Type& t2, const myex
         throw e;
 }
 
-bool typechecker_state::maybe_match(const Hs::Type& t1, const Hs::Type& t2)
+bool TypeChecker::maybe_match(const Hs::Type& t1, const Hs::Type& t2)
 {
     unification_env env;
 
     return maybe_unify_(true, false, env, t1, t2);
 }
 
-void typechecker_state::match(const Hs::Type& t1, const Hs::Type& t2, const myexception& e)
+void TypeChecker::match(const Hs::Type& t1, const Hs::Type& t2, const myexception& e)
 {
     if (not maybe_match(t1,t2))
         throw e;
 }
 
-void typechecker_state::match(const Hs::Type& t1, const Hs::Type& t2)
+void TypeChecker::match(const Hs::Type& t1, const Hs::Type& t2)
 {
     auto e = myexception()<<"match failed: "<<t1<<" !~ "<<t2;
     match(t1,t2,e);
 }
 
 
-std::pair<Hs::Type, Hs::Type> typechecker_state::unify_function(const Hs::Type& t)
+std::pair<Hs::Type, Hs::Type> TypeChecker::unify_function(const Hs::Type& t)
 {
     auto e = myexception()<<"Not a function type:\n\n   "<<t;
     return unify_function(t, e);
 }
 
 
-std::pair<Hs::Type, Hs::Type> typechecker_state::unify_function(const Hs::Type& t, const myexception& e)
+std::pair<Hs::Type, Hs::Type> TypeChecker::unify_function(const Hs::Type& t, const myexception& e)
 {
     assert(is_rho_type(t));
     if (auto arg_and_result = Hs::is_function_type(t))
@@ -837,7 +837,7 @@ std::pair<Hs::Type, Hs::Type> typechecker_state::unify_function(const Hs::Type& 
 }
 
 
-DataConInfo typechecker_state::constructor_info(const Hs::Con& con)
+DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
 {
     auto& con_name = unloc(con.name);
 
@@ -888,7 +888,7 @@ value_env add_constraints(const std::vector<Haskell::Type>& constraints, const v
 }
 
 // OK, so this returns something of type exp_sigma
-Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma_type)
+Core::wrapper TypeChecker::checkSigma(Hs::Expression& E, const Hs::SigmaType& sigma_type)
 {
     // 1. skolemize the type
     auto [wrap_gen, tvs, givens, rho_type] =
@@ -905,7 +905,7 @@ Core::wrapper typechecker_state::checkSigma(Hs::Expression& E, const Hs::SigmaTy
 // The idea is that we need an e2, but we have a t1.
 // So, if we can make an e2 from the t1, then we are good.
 // The wrapper is evidence that we can, and also converts a value of type t1 to a value of type e2.
-Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Expected& e2)
+Core::wrapper TypeChecker::subsumptionCheck(const Hs::Type& t1, const Expected& e2)
 {
     if (auto t2 = e2.read_type_maybe())
         return subsumptionCheck(t1, *t2);
@@ -917,7 +917,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Expe
     }
 }
 
-Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2)
+Core::wrapper TypeChecker::subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2)
 {
     /*
       If we can make y :: t2 out of x :: t1 then it is OK.  (without doing eta reduction, according to QL).
@@ -951,7 +951,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
         = skolemize_and_result<Core::wrapper>
         (
             t2,
-            [&](const Hs::Type& rho_type, typechecker_state& tcs2)
+            [&](const Hs::Type& rho_type, TypeChecker& tcs2)
             {
                 auto [wrap_apply, type1] = tcs2.instantiate_emit(t1);
                 tcs2.unify(type1, rho_type);
@@ -964,7 +964,7 @@ Core::wrapper typechecker_state::subsumptionCheck(const Hs::Type& t1, const Hs::
 }
 
 std::tuple<Core::wrapper, Hs::Type>
-typechecker_state::instantiate_emit(const Hs::Type& polytype)
+TypeChecker::instantiate_emit(const Hs::Type& polytype)
 {
     auto [_, wanteds, rho_type] = instantiate(polytype);
 
@@ -976,7 +976,7 @@ typechecker_state::instantiate_emit(const Hs::Type& polytype)
 }
 
 Core::wrapper
-typechecker_state::instantiateSigma(const Hs::Type& polytype, const Expected& exp_type)
+TypeChecker::instantiateSigma(const Hs::Type& polytype, const Expected& exp_type)
 {
     if (auto I = exp_type.infer())
     {
@@ -1026,7 +1026,7 @@ typechecker_state::instantiateSigma(const Hs::Type& polytype, const Expected& ex
 //
 // Now, actually, we may NOT need this until add type /\s, because the dictionary arguments should be in the right order.
 
-tuple<vector<Hs::MetaTypeVar>, LIE, Hs::Type> typechecker_state::instantiate(const Hs::Type& t)
+tuple<vector<Hs::MetaTypeVar>, LIE, Hs::Type> TypeChecker::instantiate(const Hs::Type& t)
 {
     // 1. Handle foralls
     vector<Hs::MetaTypeVar> tvs;
@@ -1072,7 +1072,7 @@ tuple<vector<Hs::MetaTypeVar>, LIE, Hs::Type> typechecker_state::instantiate(con
     return {tvs, wanteds, type};
 }
 
-tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skolemize(const Hs::Type& polytype, bool skolem)
+tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> TypeChecker::skolemize(const Hs::Type& polytype, bool skolem)
 {
     // 1. Handle foralls
     
@@ -1130,7 +1130,7 @@ tuple<Core::wrapper, vector<Hs::TypeVar>, LIE, Hs::Type> typechecker_state::skol
 }
 
 std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type>
-typechecker_state::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::Type>& nested_action)
+TypeChecker::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::Type>& nested_action)
 {
     // 1. Skolemize the type at level+1
     level++;
@@ -1146,7 +1146,7 @@ typechecker_state::skolemize_and(const Hs::Type& polytype, const tc_action<Hs::T
 }
 
 shared_ptr<const Core::Decls>
-typechecker_state::maybe_implication(const std::vector<Hs::TypeVar>& tvs, const LIE& givens, const tc_action<>& nested_action)
+TypeChecker::maybe_implication(const std::vector<Hs::TypeVar>& tvs, const LIE& givens, const tc_action<>& nested_action)
 {
     auto ev_decls = std::make_shared<Core::Decls>();
 
@@ -1169,7 +1169,7 @@ typechecker_state::maybe_implication(const std::vector<Hs::TypeVar>& tvs, const 
     return ev_decls;
 }
 
-LIE typechecker_state::constraints_to_lie(const vector<Hs::Type>& constraints)
+LIE TypeChecker::constraints_to_lie(const vector<Hs::Type>& constraints)
 {
     LIE ordered_lie;
     for(auto& constraint:constraints)
@@ -1187,7 +1187,7 @@ Hs::Type remove_top_level_foralls(Hs::Type t)
     return t;
 }
 
-void typechecker_state::get_constructor_info(const Hs::Decls& decls)
+void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 {
     kindchecker_state ks( tycon_info() );
 
@@ -1225,7 +1225,7 @@ Hs::Kind result_kind_for_type_vars(vector<Hs::TypeVar>& type_vars, Hs::Kind k)
     return k;
 }
 
-Hs::Decls typechecker_state::add_type_var_kinds(Hs::Decls type_decls)
+Hs::Decls TypeChecker::add_type_var_kinds(Hs::Decls type_decls)
 {
     for(auto& type_decl: type_decls)
     {

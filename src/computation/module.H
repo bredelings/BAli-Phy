@@ -79,7 +79,7 @@ class module_loader;
 
 class Program;
 
-struct typechecker_state;
+struct TypeChecker;
 
 struct typechecker_result
 {
@@ -127,7 +127,7 @@ public:
     
     Haskell::Module module;
 
-    std::shared_ptr<typechecker_state> tc_state;
+    std::shared_ptr<TypeChecker> tc_state;
 
     CDecls value_decls;
 

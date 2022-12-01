@@ -40,13 +40,13 @@ global_value_env sig_env(const map<string, Hs::Type>& signatures)
     return sig_env;
 }
 
-Hs::Binds typechecker_state::infer_type_for_binds_top(Hs::Binds binds)
+Hs::Binds TypeChecker::infer_type_for_binds_top(Hs::Binds binds)
 {
     infer_type_for_binds(binds, true);
     return binds;
 }
 
-void typechecker_state::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreign_decls)
+void TypeChecker::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreign_decls)
 {
     global_value_env fte;
     for(auto& f: foreign_decls)
@@ -57,7 +57,7 @@ void typechecker_state::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& 
     gve += fte;
 }
 
-global_value_env typechecker_state::infer_type_for_sigs(signature_env& signatures) const
+global_value_env TypeChecker::infer_type_for_sigs(signature_env& signatures) const
 {
     for(auto& [name,type]: signatures)
         type = check_type(type);
@@ -67,7 +67,7 @@ global_value_env typechecker_state::infer_type_for_sigs(signature_env& signature
 
 
 void
-typechecker_state::infer_type_for_binds(Hs::Binds& binds, bool is_top_level)
+TypeChecker::infer_type_for_binds(Hs::Binds& binds, bool is_top_level)
 {
     add_binders(infer_type_for_sigs(binds.signatures));
 
@@ -114,7 +114,7 @@ vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const map<st
 }
 
 Hs::Decls
-typechecker_state::infer_type_for_decls(const signature_env& signatures, const Hs::Decls& decls, bool is_top_level)
+TypeChecker::infer_type_for_decls(const signature_env& signatures, const Hs::Decls& decls, bool is_top_level)
 {
     // The signatures for the binders should already be in the environment.
 
@@ -239,7 +239,7 @@ classify_constraints(const LIE& lie, const set<Hs::TypeVar>& qtvs)
 
 /// Compare to checkSigma, which also check for any skolem variables in the wanteds
 tuple<expression_ref, ID, Hs::Type>
-typechecker_state::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
+TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
     // Q: Are we getting the monotype correct?
 
@@ -300,7 +300,7 @@ bool is_restricted(const map<ID, Hs::Type>& signatures, const Hs::Decls& decls)
 };
 
 tuple<Hs::Type, local_value_env>
-typechecker_state::infer_lhs_type(expression_ref& decl, const map<string, Hs::Type>& signatures)
+TypeChecker::infer_lhs_type(expression_ref& decl, const map<string, Hs::Type>& signatures)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
     {
@@ -325,7 +325,7 @@ typechecker_state::infer_lhs_type(expression_ref& decl, const map<string, Hs::Ty
         std::abort();
 }
 
-void typechecker_state::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
+void TypeChecker::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
     {
@@ -345,7 +345,7 @@ void typechecker_state::infer_rhs_type(expression_ref& decl, const Expected& rhs
         std::abort();
 }
 
-tuple< map<string, Hs::Var>, local_value_env > typechecker_state::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& decls)
+tuple< map<string, Hs::Var>, local_value_env > TypeChecker::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& decls)
 {
     // 1. Add each let-binder to the environment with a fresh type variable
     local_value_env mono_binder_env;
@@ -491,7 +491,7 @@ set<Hs::MetaTypeVar> find_fixed_tvs(bool restricted, int level, const LIE& wante
 }
 
 Hs::Decls
-typechecker_state::infer_type_for_decls_group(const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
+TypeChecker::infer_type_for_decls_group(const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
 {
     if (single_fundecl_with_sig(decls, signatures))
     {

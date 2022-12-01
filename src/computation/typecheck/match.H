@@ -23,7 +23,7 @@ tc_sub_type_shallow actual expected = if definitely_poly expected and definitely
 */
 
 template <typename A>
-Core::wrapper typechecker_state::tcMatchesFunInfer(std::vector<Expected>& arg_types, int arity, const Expected& extra_fun_type, const A& a)
+Core::wrapper TypeChecker::tcMatchesFunInfer(std::vector<Expected>& arg_types, int arity, const Expected& extra_fun_type, const A& a)
 {
     std::vector<Expected> extra_arg_types;
     // pad out with FlexiTyVars ... what's that?
@@ -49,7 +49,7 @@ Core::wrapper typechecker_state::tcMatchesFunInfer(std::vector<Expected>& arg_ty
 }
 
 template <typename A>
-Core::wrapper typechecker_state::tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Hs::Type type, const A& a)
+Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Hs::Type type, const A& a)
 {
     if (not is_rho_type(type))
     {
@@ -107,7 +107,7 @@ Core::wrapper typechecker_state::tcMatchesFunCheck(std::vector<Expected>& arg_ty
 }
 
 template <typename A>
-Core::wrapper typechecker_state::tcMatchesFun(int arity, const Expected& fun_type, const A& action)
+Core::wrapper TypeChecker::tcMatchesFun(int arity, const Expected& fun_type, const A& action)
 {
     std::vector<Expected> arg_types;
     if (fun_type.check())
