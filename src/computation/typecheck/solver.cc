@@ -453,21 +453,23 @@ std::optional<Reaction> Solver::interact_same(const Predicate& P1, const Predica
         // DDICT:  (D xs)     + (D xs)     -> (D xs)
         if (same_type(constraint1, constraint2))
         {
-            Core::Decls decls = {{dict2->dvar, dict1->dvar}};
+            decls.push_back({dict2->dvar, dict1->dvar});
             work_list.push_back(P1);
-            return ReactSuccess(decls,{});
+            return ReactSuccess({}, {});
         }
         // SUPER - not in the paper.
-        else if (auto decls = entails_by_superclass({dict1->dvar,constraint1}, {dict2->dvar,constraint2}))
+        else if (auto sdecls = entails_by_superclass({dict1->dvar,constraint1}, {dict2->dvar,constraint2}))
         {
+            decls += *sdecls;
             work_list.push_back(P1);
-            return ReactSuccess(*decls, {});
+            return ReactSuccess({}, {});
         }
         // SUPER - not in the paper.
-        else if (auto decls = entails_by_superclass({dict2->dvar,constraint2}, {dict1->dvar,constraint1}))
+        else if (auto sdecls = entails_by_superclass({dict2->dvar,constraint2}, {dict1->dvar,constraint1}))
         {
+            decls += *sdecls;
             work_list.push_back(P2);
-            return ReactSuccess(*decls, {});
+            return ReactSuccess({}, {});
         }
     }
     // EQFEQ:  (tv1 ~ X1) + (F xs ~ x) -> (tv1 ~ X1) && (F [tv1->X1]xs ~ [tv1 -> X1]x) if tv1 in ftv(xs,x)
@@ -505,7 +507,9 @@ std::optional<Reaction> Solver::interact_g_w(const Predicate& P1, const Predicat
         if ((tv1 and tv2 and *tv1 == *tv2) or (uv1 and uv2 and *uv1 == *uv2))
         {
             Predicate P3(Wanted, NonCanonicalPred(eq2->co, make_equality_constraint(t1b, t2b)));
-            return ReactSuccess({}, {P1,P3});
+            work_list.push_back(P1);
+            work_list.push_back(P3);
+            return ReactSuccess({}, {});
         }
         // SEQDIFF: (tv1 ~ X1) simplifies (tv2 ~ X2) -> (tv2 ~ [tv1->X1]X2) if tv1 in ftv(X2)
         else if ((tv1 or uv1) and (tv2 or uv2))
@@ -513,7 +517,9 @@ std::optional<Reaction> Solver::interact_g_w(const Predicate& P1, const Predicat
             if (auto t2b_subst = tv1?check_apply_subst({{*tv1, t1b}}, t2b):check_apply_subst({{*uv1, t1b}}, t2b))
             {
                 Predicate P3(Wanted, NonCanonicalPred(eq2->co, make_equality_constraint(t2a, *t2b_subst)));
-                return ReactSuccess({}, {P1, P3});
+                work_list.push_back(P1);
+                work_list.push_back(P3);
+                return ReactSuccess({}, {});
             }
         }
     }
@@ -545,13 +551,16 @@ std::optional<Reaction> Solver::interact_g_w(const Predicate& P1, const Predicat
         // SDDICTG:  (D xs) simplifies (D xs)     -> empty
         if (same_type(constraint1, constraint2))
         {
-            Core::Decls decls = {{dict2->dvar, dict1->dvar}};
-            return ReactSuccess(decls,{P1});
+            decls.push_back({dict2->dvar, dict1->dvar});
+            work_list.push_back(P1);
+            return ReactSuccess({},{});
         }
         // SSUPER - not in the paper.
-        else if (auto decls = entails_by_superclass({dict1->dvar,constraint1}, {dict2->dvar,constraint2}))
+        else if (auto sdecls = entails_by_superclass({dict1->dvar,constraint1}, {dict2->dvar,constraint2}))
         {
-            return ReactSuccess(*decls, {P1});
+            decls += *sdecls;
+            work_list.push_back(P1);
+            return ReactSuccess({}, {});
         }
     }
     // SEQFEQ:  (tv1 ~ X1) simplifies (F xs ~ x) -> (F [tv1->X1]xs ~ [tv1 -> X1]x) if tv1 in ftv(xs,x)
@@ -581,10 +590,11 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
         {
             auto [dfun_exp, super_wanteds] = *inst;
 
-            Core::Decls decls;
             decls.push_back( { dvar, dfun_exp } );
+            for(auto& pred: make_predicates(Wanted, super_wanteds))
+                work_list.push_back( pred );
 
-            return ReactSuccess(decls, make_predicates(Wanted, super_wanteds));
+            return ReactSuccess({}, {});
         }
     }
     
