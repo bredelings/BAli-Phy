@@ -63,7 +63,7 @@ struct Solver: public TypeChecker
     Core::Decls decls;
 
     std::vector<Predicate> work_list;
-    std::vector<Predicate> inert;
+    std::vector<Predicate> inerts;
     std::vector<Predicate> failed;
 
     std::optional<Predicate> canonicalize_equality(Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2);

@@ -681,29 +681,29 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 
         // binary interact with other preds with same flavor
         bool reacted = false;
-        for(int i=0;i<inert.size() and not reacted;i++)
+        for(int i=0;i<inerts.size() and not reacted;i++)
         {
-            if (interact_same(p, inert[i]))
+            if (interact_same(p, inerts[i]))
             {
                 reacted = true;
-                if (i+1 < inert.size())
-                    std::swap(inert[i], inert.back());
+                if (i+1 < inerts.size())
+                    std::swap(inerts[i], inerts.back());
 
-                inert.pop_back();
+                inerts.pop_back();
             }
         }
         if (reacted) continue;
 
         // binary interact given/wanted
-        for(int i=0;i<inert.size() and not reacted;i++)
+        for(int i=0;i<inerts.size() and not reacted;i++)
         {
-            if (interact_g_w(p, inert[i]))
+            if (interact_g_w(p, inerts[i]))
             {
                 reacted = true;
-                if (i+1 < inert.size())
-                    std::swap(inert[i], inert.back());
+                if (i+1 < inerts.size())
+                    std::swap(inerts[i], inerts.back());
 
-                inert.pop_back();
+                inerts.pop_back();
             }
         }
         if (reacted) continue;
@@ -714,7 +714,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 
         // we should only ge this far if there are no reactions.
 
-        inert.push_back(p);
+        inerts.push_back(p);
     }
 
     if (not failed.empty())
@@ -728,7 +728,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
     // Split inert into substitution and remaining constraints
     wanteds.clear();
     vector<pair<Hs::MetaTypeVar,Hs::Type>> equations;
-    for(auto& P: inert)
+    for(auto& P: inerts)
     {
         assert(is_canonical(P));
 
