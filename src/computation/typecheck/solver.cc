@@ -235,7 +235,8 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         else
         {
             Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
-            return ReactSuccess({}, {P});
+            work_list.push_back(P);
+            return ReactSuccess({}, {});
         }
     }
     else if (uv1)
@@ -245,7 +246,8 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         else
         {
             Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
-            return ReactSuccess({}, {P});
+            work_list.push_back(P);
+            return ReactSuccess({}, {});
         }
     }
     else if (uv2)
@@ -259,7 +261,8 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         else
         {
             Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
-            return ReactSuccess({}, {P});
+            work_list.push_back(P);
+            return ReactSuccess({}, {});
         }
     }
     else if (tv1)
@@ -269,7 +272,8 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         else
         {
             Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
-            return ReactSuccess({}, {P});
+            work_list.push_back(P);
+            return ReactSuccess({}, {});
         }
     }
     else if (tv2)
@@ -324,14 +328,14 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         // We will need to do extra stuff here if either of the heads is a type family.
         else
         {
-            preds.push_back(Predicate(flavor,NonCanonicalPred(flavor, make_equality_constraint(head1, head2))));
+            work_list.push_back(Predicate(flavor,NonCanonicalPred(flavor, make_equality_constraint(head1, head2))));
         }
 
         // If we've gotten here, the heads are both injective, and might be equal.
         for(int i=0;i<args1.size();i++)
-            preds.push_back(Predicate(flavor,NonCanonicalPred(flavor, make_equality_constraint(args1[i],args2[i]))));
+            work_list.push_back(Predicate(flavor,NonCanonicalPred(flavor, make_equality_constraint(args1[i],args2[i]))));
 
-        return ReactSuccess({}, preds);
+        return ReactSuccess({}, {});
     }
 
     std::abort();
