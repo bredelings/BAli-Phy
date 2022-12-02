@@ -217,6 +217,8 @@ bool cmp_less(const Hs::MetaTypeVar& uv1, const Hs::MetaTypeVar& uv2)
 
 std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
 {
+    Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
+
     auto uv1 = unfilled_meta_type_var(t1);
     auto uv2 = unfilled_meta_type_var(t2);
 
@@ -234,7 +236,6 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
             return canonicalize_equality(co_var, flavor, t2, t1);
         else
         {
-            Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
             work_list.push_back(P);
             return ReactSuccess();
         }
@@ -242,10 +243,12 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
     else if (uv1)
     {
         if (occurs_check(*uv1, t2))
+        {
+            failed.push_back(P);
             return ReactFail();
+        }
         else
         {
-            Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
             work_list.push_back(P);
             return ReactSuccess();
         }
@@ -260,7 +263,6 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
             return canonicalize_equality(co_var, flavor, t2, t1);
         else
         {
-            Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
             work_list.push_back(P);
             return ReactSuccess();
         }
@@ -268,10 +270,12 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
     else if (tv1)
     {
         if (occurs_check(*tv1, t2))
+        {
+            failed.push_back(P);
             return ReactFail();
+        }
         else
         {
-            Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
             work_list.push_back(P);
             return ReactSuccess();
         }
@@ -306,7 +310,10 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         auto [head2,args2] = decompose_type_apps(t2);
 
         if (args1.size() != args2.size())
+        {
+            failed.push_back(P);
             return ReactFail();
+        }
 
         auto h1 = head1.to<Hs::TypeCon>();
         auto h2 = head2.to<Hs::TypeCon>();
@@ -322,6 +329,7 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
             else
             {
                 // FAILDEC: T x1 y1 z1 = S x2 y2 z2
+                failed.push_back(P);
                 return ReactFail();
             }
         }
@@ -652,15 +660,13 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 {
     if (wanteds.empty()) return {{}, {}};
 
-    auto react = [&](const optional<Reaction>& maybe_react, const Predicate& P) -> bool
+    auto react = [&](const optional<Reaction>& maybe_react) -> bool
     {
         if (maybe_react)
         {
             if (auto r = to<ReactSuccess>(*maybe_react))
             {
             }
-            else
-                failed.push_back(P);
         }
         return bool(maybe_react);
         
@@ -680,14 +686,14 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         auto p = work_list.back(); work_list.pop_back();
 
         // canonicalize
-        if (react(canonicalize(p), p))
+        if (react(canonicalize(p)))
             continue;
 
         // binary interact with other preds with same flavor
         bool reacted = false;
         for(int i=0;i<inert.size() and not reacted;i++)
         {
-            reacted = react(interact_same(p, inert[i]), p);
+            reacted = react(interact_same(p, inert[i]));
             if (reacted)
             {
                 if (i+1 < inert.size())
@@ -697,11 +703,11 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
             }
         }
         if (reacted) continue;
-        
+
         // binary interact given/wanted
         for(int i=0;i<inert.size() and not reacted;i++)
         {
-            reacted = react(interact_g_w(p, inert[i]), p);
+            reacted = react(interact_g_w(p, inert[i]));
             if (reacted)
             {
                 if (i+1 < inert.size())
@@ -713,7 +719,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         if (reacted) continue;
 
         // top-level reactions
-        if (react(top_react(p), p))
+        if (react(top_react(p)))
             continue;
 
         // we should only ge this far if there are no reactions.
