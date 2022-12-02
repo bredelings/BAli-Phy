@@ -626,12 +626,6 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 {
     if (wanteds.empty()) return {{}, {}};
 
-    Core::Decls decls;
-
-    std::vector<Predicate> work_list;
-    std::vector<Predicate> inert;
-    std::vector<Predicate> failed;
-
     auto react = [&](const optional<Reaction>& maybe_react, const Predicate& P) -> bool
     {
         if (maybe_react)
