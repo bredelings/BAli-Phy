@@ -765,7 +765,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         // canonicalize
         if (not canonicalize(p)) continue;
 
-        // binary interact with other preds with same flavor
+        // rewrite and interact
         bool done = false;
         bool changed = true;
         while (changed and not done)
@@ -788,41 +788,33 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         }
         if (done) continue;
 
-        // binary interact with other preds with same flavor
-        bool reacted = false;
-        for(int i=0;i<inerts.size() and not reacted;i++)
+        // kick-out for inerts that are rewritten by p
+        for(int i=0;i<inerts.size();i++)
         {
-            if (interact_same(p, inerts[i]))
+            auto I1 = interact(inerts[i], p);
+            assert(to<Unchanged>(I1));
+
+            auto I2 = interact(p, inerts[i]);
+            if (not to<Unchanged>(I2))
             {
-                reacted = true;
+                // If its noncanon or solved, we don't want to put it back!
+                if (auto C = to<Changed>(I2))
+                    work_list.push_back(C->P);
+
                 if (i+1 < inerts.size())
                     std::swap(inerts[i], inerts.back());
 
                 inerts.pop_back();
+                i--;
+                continue;
             }
         }
-        if (reacted) continue;
-
-        // binary interact given/wanted
-        for(int i=0;i<inerts.size() and not reacted;i++)
-        {
-            if (interact_g_w(p, inerts[i]))
-            {
-                reacted = true;
-                if (i+1 < inerts.size())
-                    std::swap(inerts[i], inerts.back());
-
-                inerts.pop_back();
-            }
-        }
-        if (reacted) continue;
 
         // top-level reactions
         if (top_react(p))
             continue;
 
-        // we should only ge this far if there are no reactions.
-
+        // we should only get this far if p is closed under rewriting, and unsolved.
         inerts.push_back(p);
     }
 
