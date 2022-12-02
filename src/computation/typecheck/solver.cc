@@ -660,18 +660,6 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 {
     if (wanteds.empty()) return {{}, {}};
 
-    auto react = [&](const optional<Reaction>& maybe_react) -> bool
-    {
-        if (maybe_react)
-        {
-            if (auto r = to<ReactSuccess>(*maybe_react))
-            {
-            }
-        }
-        return bool(maybe_react);
-        
-    };
-    
     for(auto& [evar, constraint]: givens)
         work_list.push_back({Given, NonCanonicalPred(evar, constraint)});
     for(auto& [evar, constraint]: wanteds)
@@ -686,16 +674,16 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         auto p = work_list.back(); work_list.pop_back();
 
         // canonicalize
-        if (react(canonicalize(p)))
+        if (canonicalize(p))
             continue;
 
         // binary interact with other preds with same flavor
         bool reacted = false;
         for(int i=0;i<inert.size() and not reacted;i++)
         {
-            reacted = react(interact_same(p, inert[i]));
-            if (reacted)
+            if (interact_same(p, inert[i]))
             {
+                reacted = true;
                 if (i+1 < inert.size())
                     std::swap(inert[i], inert.back());
 
@@ -707,9 +695,9 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         // binary interact given/wanted
         for(int i=0;i<inert.size() and not reacted;i++)
         {
-            reacted = react(interact_g_w(p, inert[i]));
-            if (reacted)
+            if (interact_g_w(p, inert[i]))
             {
+                reacted = true;
                 if (i+1 < inert.size())
                     std::swap(inert[i], inert.back());
 
@@ -719,7 +707,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         if (reacted) continue;
 
         // top-level reactions
-        if (react(top_react(p)))
+        if (top_react(p))
             continue;
 
         // we should only ge this far if there are no reactions.
