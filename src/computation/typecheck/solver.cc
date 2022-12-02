@@ -223,7 +223,7 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
     // REFL: tau ~ tau
     // NOTE: this does not currently handle foralls or constraints!
     if (same_type(t1,t2))
-        return ReactSuccess({}, {});
+        return ReactSuccess();
 
     auto tv1 = t1.to<Hs::TypeVar>();
     auto tv2 = t2.to<Hs::TypeVar>();
@@ -236,7 +236,7 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         {
             Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
             work_list.push_back(P);
-            return ReactSuccess({}, {});
+            return ReactSuccess();
         }
     }
     else if (uv1)
@@ -247,7 +247,7 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         {
             Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
             work_list.push_back(P);
-            return ReactSuccess({}, {});
+            return ReactSuccess();
         }
     }
     else if (uv2)
@@ -262,7 +262,7 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         {
             Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
             work_list.push_back(P);
-            return ReactSuccess({}, {});
+            return ReactSuccess();
         }
     }
     else if (tv1)
@@ -273,7 +273,7 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         {
             Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
             work_list.push_back(P);
-            return ReactSuccess({}, {});
+            return ReactSuccess();
         }
     }
     else if (tv2)
@@ -335,7 +335,7 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         for(int i=0;i<args1.size();i++)
             work_list.push_back(Predicate(flavor,NonCanonicalPred(flavor, make_equality_constraint(args1[i],args2[i]))));
 
-        return ReactSuccess({}, {});
+        return ReactSuccess();
     }
 
     std::abort();
@@ -360,7 +360,7 @@ std::optional<Reaction> Solver::canonicalize(const Predicate& P)
         auto klass = head.as_<Hs::TypeCon>();
         work_list.push_back( Predicate{flavor, CanonicalDictPred{NCP.dvar, klass, args}} );
     }
-    return ReactSuccess({}, {});
+    return ReactSuccess();
 }
 
 std::optional<Reaction> Solver::interact_same(const Predicate& P1, const Predicate& P2)
@@ -396,7 +396,7 @@ std::optional<Reaction> Solver::interact_same(const Predicate& P1, const Predica
             Predicate P3(flavor, NonCanonicalPred(eq2->co, make_equality_constraint(t1b, t2b)));
             work_list.push_back(P1);
             work_list.push_back(P3);
-            return ReactSuccess({}, {});
+            return ReactSuccess();
         }
         // EQDIFF: (tv1 ~ X1) + (tv2 ~ X2) -> (tv1 ~ X1) && (tv2 ~ [tv1->X1]X2) if tv1 in ftv(X2)
         else if ((tv1 or uv1) and (tv2 or uv2))
@@ -406,14 +406,14 @@ std::optional<Reaction> Solver::interact_same(const Predicate& P1, const Predica
                 Predicate P3(flavor, NonCanonicalPred(eq2->co, make_equality_constraint(t2a, *t2b_subst)));
                 work_list.push_back(P1);
                 work_list.push_back(P3);
-                return ReactSuccess({}, {});
+                return ReactSuccess();
             }
             else if (auto t1b_subst = tv2?check_apply_subst({{*tv2, t2b}}, t1b):check_apply_subst({{*uv2, t2b}}, t1b))
             {
                 Predicate P3(flavor, NonCanonicalPred(eq2->co, make_equality_constraint(t1a, *t1b_subst)));
                 work_list.push_back(P3);
                 work_list.push_back(P2);
-                return ReactSuccess({}, {});
+                return ReactSuccess();
             }
         }
     }
@@ -441,7 +441,7 @@ std::optional<Reaction> Solver::interact_same(const Predicate& P1, const Predica
                 auto P3 = Predicate(flavor, dict2_subst);
                 work_list.push_back(P1);
                 work_list.push_back(P3);
-                return ReactSuccess({},{});
+                return ReactSuccess();
             }
         }
     }
@@ -455,21 +455,21 @@ std::optional<Reaction> Solver::interact_same(const Predicate& P1, const Predica
         {
             decls.push_back({dict2->dvar, dict1->dvar});
             work_list.push_back(P1);
-            return ReactSuccess({}, {});
+            return ReactSuccess();
         }
         // SUPER - not in the paper.
         else if (auto sdecls = entails_by_superclass({dict1->dvar,constraint1}, {dict2->dvar,constraint2}))
         {
             decls += *sdecls;
             work_list.push_back(P1);
-            return ReactSuccess({}, {});
+            return ReactSuccess();
         }
         // SUPER - not in the paper.
         else if (auto sdecls = entails_by_superclass({dict2->dvar,constraint2}, {dict1->dvar,constraint1}))
         {
             decls += *sdecls;
             work_list.push_back(P2);
-            return ReactSuccess({}, {});
+            return ReactSuccess();
         }
     }
     // EQFEQ:  (tv1 ~ X1) + (F xs ~ x) -> (tv1 ~ X1) && (F [tv1->X1]xs ~ [tv1 -> X1]x) if tv1 in ftv(xs,x)
@@ -509,7 +509,7 @@ std::optional<Reaction> Solver::interact_g_w(const Predicate& P1, const Predicat
             Predicate P3(Wanted, NonCanonicalPred(eq2->co, make_equality_constraint(t1b, t2b)));
             work_list.push_back(P1);
             work_list.push_back(P3);
-            return ReactSuccess({}, {});
+            return ReactSuccess();
         }
         // SEQDIFF: (tv1 ~ X1) simplifies (tv2 ~ X2) -> (tv2 ~ [tv1->X1]X2) if tv1 in ftv(X2)
         else if ((tv1 or uv1) and (tv2 or uv2))
@@ -519,7 +519,7 @@ std::optional<Reaction> Solver::interact_g_w(const Predicate& P1, const Predicat
                 Predicate P3(Wanted, NonCanonicalPred(eq2->co, make_equality_constraint(t2a, *t2b_subst)));
                 work_list.push_back(P1);
                 work_list.push_back(P3);
-                return ReactSuccess({}, {});
+                return ReactSuccess();
             }
         }
     }
@@ -541,7 +541,10 @@ std::optional<Reaction> Solver::interact_g_w(const Predicate& P1, const Predicat
             }
         }
         if (changed)
-            return ReactSuccess({},{Predicate(Wanted, dict2_subst)});
+        {
+            work_list.push_back(Predicate(Wanted, dict2_subst));
+            return ReactSuccess();
+        }
     }
     else if (dict1 and dict2)
     {
@@ -553,14 +556,14 @@ std::optional<Reaction> Solver::interact_g_w(const Predicate& P1, const Predicat
         {
             decls.push_back({dict2->dvar, dict1->dvar});
             work_list.push_back(P1);
-            return ReactSuccess({},{});
+            return ReactSuccess();
         }
         // SSUPER - not in the paper.
         else if (auto sdecls = entails_by_superclass({dict1->dvar,constraint1}, {dict2->dvar,constraint2}))
         {
             decls += *sdecls;
             work_list.push_back(P1);
-            return ReactSuccess({}, {});
+            return ReactSuccess();
         }
     }
     // SEQFEQ:  (tv1 ~ X1) simplifies (F xs ~ x) -> (F [tv1->X1]xs ~ [tv1 -> X1]x) if tv1 in ftv(xs,x)
@@ -594,7 +597,7 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
             for(auto& pred: make_predicates(Wanted, super_wanteds))
                 work_list.push_back( pred );
 
-            return ReactSuccess({}, {});
+            return ReactSuccess();
         }
     }
     
@@ -655,9 +658,6 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         {
             if (auto r = to<ReactSuccess>(*maybe_react))
             {
-                auto& new_preds = r->predicates;
-                decls += r->decls;
-                work_list.insert(work_list.end(), new_preds.begin(), new_preds.end());
             }
             else
                 failed.push_back(P);
