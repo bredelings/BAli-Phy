@@ -374,6 +374,92 @@ bool Solver::canonicalize(Predicate& P)
     }
 }
 
+Change Solver::interact(const Predicate& P1, const Predicate& P2)
+{
+    assert(is_canonical(P1));
+    assert(is_canonical(P2));
+
+    // Don't allow wanteds to rewrite givens
+    if (P1.flavor == Wanted and P2.flavor == Given) return Unchanged();
+
+    auto eq1 = to<CanonicalEqualityPred>(P1.pred);
+    auto eq2 = to<CanonicalEqualityPred>(P2.pred);
+
+    auto dict1 = to<CanonicalDictPred>(P1.pred);
+    auto dict2 = to<CanonicalDictPred>(P2.pred);
+
+    if (eq1 and eq2)
+    {
+        auto [v1, t1a, t1b] = *eq1;
+        auto uv1 = unfilled_meta_type_var(t1a);
+        auto tv1 = t1a.to<Hs::TypeVar>();
+
+        auto [v2, t2a, t2b] = *eq2;
+        auto uv2 = unfilled_meta_type_var(t2a);
+        auto tv2 = t2a.to<Hs::TypeVar>();
+
+        // EQSAME: (tv1 ~ X1) + (tv1 ~ X2) -> (tv1 ~ X1) && (X1 ~ X2)
+        if ((tv1 and tv2 and *tv1 == *tv2) or (uv1 and uv2 and *uv1 == *uv2))
+        {
+            work_list.push_back(Predicate{P2.flavor, NonCanonicalPred(eq2->co, make_equality_constraint(t1b, t2b))});
+            return NonCanon();
+        }
+        // EQDIFF: (tv1 ~ X1) + (tv2 ~ X2) -> (tv1 ~ X1) && (tv2 ~ [tv1->X1]X2) if tv1 in ftv(X2)
+        else if (tv1 or uv1)
+        {
+            if (auto t2b_subst = tv1?check_apply_subst({{*tv1, t1b}}, t2b):check_apply_subst({{*uv1, t1b}}, t2b))
+            {
+                return Changed{Predicate{P2.flavor, CanonicalEqualityPred(eq2->co, t2a, *t2b_subst)}};
+            }
+        }
+    }
+    // EQDICT: (tv1 ~ X1) + (D xs)     -> (tv1 ~ X1) && (D [tv1->X1]xs) if tv1 in ftv(xs)
+    else if (eq1 and dict2)
+    {
+        auto [v1, t1a, t1b] = *eq1;
+        auto uv1 = unfilled_meta_type_var(t1a);
+        auto tv1 = t1a.to<Hs::TypeVar>();
+
+        if (tv1 or uv1)
+        {
+            bool changed = false;
+            CanonicalDictPred dict2_subst = *dict2;
+            for(auto& class_arg: dict2_subst.args)
+            {
+                if (auto maybe_class_arg = tv1?check_apply_subst({{*tv1,t1b}}, class_arg):check_apply_subst({{*uv1,t1b}},class_arg))
+                {
+                    changed = true;
+                    class_arg = *maybe_class_arg;
+                }
+            }
+            if (changed)
+                return Changed{Predicate(P2.flavor, dict2_subst)};
+        }
+    }
+    else if (dict1 and dict2)
+    {
+        auto constraint1 = Hs::make_tyapps(dict1->klass, dict1->args);
+        auto constraint2 = Hs::make_tyapps(dict2->klass, dict2->args);
+
+        // DDICT:  (D xs)     + (D xs)     -> (D xs)
+        if (same_type(constraint1, constraint2))
+        {
+            decls.push_back({dict2->dvar, dict1->dvar});
+            return Solved();
+        }
+        // SUPER - not in the paper.
+        else if (auto sdecls = entails_by_superclass({dict1->dvar,constraint1}, {dict2->dvar,constraint2}))
+        {
+            decls += *sdecls;
+            return Solved();
+        }
+    }
+    // EQFEQ:  (tv1 ~ X1) + (F xs ~ x) -> (tv1 ~ X1) && (F [tv1->X1]xs ~ [tv1 -> X1]x) if tv1 in ftv(xs,x)
+    // FEQFEQ: (F xs ~ X1) + (F xs ~ X2) -> (F xs ~ X1) && (X1 ~ X2)
+
+    return Unchanged();
+}
+
 std::optional<Reaction> Solver::interact_same(const Predicate& P1, const Predicate& P2)
 {
     assert(is_canonical(P1));
@@ -678,6 +764,29 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 
         // canonicalize
         if (not canonicalize(p)) continue;
+
+        // binary interact with other preds with same flavor
+        bool done = false;
+        bool changed = true;
+        while (changed and not done)
+        {
+            changed = false;
+            for(auto& inert: inerts)
+            {
+                auto I = interact(inert, p);
+                if (auto C = to<Changed>(I))
+                {
+                    p = C->P;
+                    changed = true;
+                }
+                else if (to<Solved>(I) or to<NonCanon>(I))
+                {
+                    done = true;
+                    break;
+                }
+            }
+        }
+        if (done) continue;
 
         // binary interact with other preds with same flavor
         bool reacted = false;

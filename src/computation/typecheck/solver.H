@@ -58,6 +58,25 @@ struct ReactSuccess {};
 
 typedef std::variant<ReactFail, ReactSuccess> Reaction;
 
+struct Changed
+{
+    Predicate P;
+};
+
+struct Unchanged
+{
+};
+
+struct Solved
+{
+};
+
+struct NonCanon
+{
+};
+
+typedef std::variant<Changed, Unchanged, Solved, NonCanon> Change;
+
 struct Solver: public TypeChecker
 {
     Core::Decls decls;
@@ -68,6 +87,9 @@ struct Solver: public TypeChecker
 
     std::optional<Predicate> canonicalize_equality(Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2);
     bool canonicalize(Predicate& P);
+
+    Change interact(const Predicate& P1, const Predicate& P2);
+
     std::optional<Reaction> interact_same(const Predicate& P1, const Predicate& P2);
     std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2);
     std::optional<Reaction> top_react(const Predicate& P);
