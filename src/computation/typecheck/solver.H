@@ -66,8 +66,8 @@ struct Solver: public TypeChecker
     std::vector<Predicate> inert;
     std::vector<Predicate> failed;
 
-    std::optional<Reaction> canonicalize_equality(Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2);
-    std::optional<Reaction> canonicalize(const Predicate& P);
+    std::optional<Predicate> canonicalize_equality(Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2);
+    bool canonicalize(Predicate& P);
     std::optional<Reaction> interact_same(const Predicate& P1, const Predicate& P2);
     std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2);
     std::optional<Reaction> top_react(const Predicate& P);

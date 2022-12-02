@@ -215,17 +215,16 @@ bool cmp_less(const Hs::MetaTypeVar& uv1, const Hs::MetaTypeVar& uv2)
 }
 
 
-std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
+std::optional<Predicate> Solver::canonicalize_equality(Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
 {
-    Predicate P = {flavor,CanonicalEqualityPred(co_var, t1, t2)};
+    Predicate P{flavor,CanonicalEqualityPred(co_var, t1, t2)};
 
     auto uv1 = unfilled_meta_type_var(t1);
     auto uv2 = unfilled_meta_type_var(t2);
 
     // REFL: tau ~ tau
     // NOTE: this does not currently handle foralls or constraints!
-    if (same_type(t1,t2))
-        return ReactSuccess();
+    if (same_type(t1,t2)) return {};
 
     auto tv1 = t1.to<Hs::TypeVar>();
     auto tv2 = t2.to<Hs::TypeVar>();
@@ -236,8 +235,7 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
             return canonicalize_equality(co_var, flavor, t2, t1);
         else
         {
-            work_list.push_back(P);
-            return ReactSuccess();
+            return P;
         }
     }
     else if (uv1)
@@ -245,26 +243,24 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         if (occurs_check(*uv1, t2))
         {
             failed.push_back(P);
-            return ReactFail();
+            return {};
         }
         else
         {
-            work_list.push_back(P);
-            return ReactSuccess();
+            return P;
         }
     }
     else if (uv2)
     {
         return canonicalize_equality(co_var, flavor, t2, t1);
     }
-    else if (tv1 and  tv2)
+    else if (tv1 and tv2)
     {
         if (*tv2 < *tv1)
             return canonicalize_equality(co_var, flavor, t2, t1);
         else
         {
-            work_list.push_back(P);
-            return ReactSuccess();
+            return P;
         }
     }
     else if (tv1)
@@ -272,12 +268,11 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         if (occurs_check(*tv1, t2))
         {
             failed.push_back(P);
-            return ReactFail();
+            return {};
         }
         else
         {
-            work_list.push_back(P);
-            return ReactSuccess();
+            return P;
         }
     }
     else if (tv2)
@@ -295,7 +290,7 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
             t1 = *s1;
         while(auto s2 = is_type_synonym(t2))
             t2 = *s2;
-        
+
         if (auto tuple = t1.to<Hs::TupleType>())
             t1 = canonicalize_type(*tuple);
         else if (auto list = t1.to<Hs::ListType>())
@@ -311,8 +306,9 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
 
         if (args1.size() != args2.size())
         {
+            // Is this too eager?
             failed.push_back(P);
-            return ReactFail();
+            return {};
         }
 
         auto h1 = head1.to<Hs::TypeCon>();
@@ -330,7 +326,7 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
             {
                 // FAILDEC: T x1 y1 z1 = S x2 y2 z2
                 failed.push_back(P);
-                return ReactFail();
+                return {};
             }
         }
         // We will need to do extra stuff here if either of the heads is a type family.
@@ -343,15 +339,15 @@ std::optional<Reaction> Solver::canonicalize_equality(Core::Var& co_var, Constra
         for(int i=0;i<args1.size();i++)
             work_list.push_back(Predicate(flavor,NonCanonicalPred(flavor, make_equality_constraint(args1[i],args2[i]))));
 
-        return ReactSuccess();
+        return {};
     }
 
     std::abort();
 }
 
-std::optional<Reaction> Solver::canonicalize(const Predicate& P)
+bool Solver::canonicalize(Predicate& P)
 {
-    if (is_canonical(P)) return {};
+    if (is_canonical(P)) return true;
 
     auto NCP = std::get<NonCanonicalPred>(P.pred);
     auto flavor = P.flavor;
@@ -359,16 +355,23 @@ std::optional<Reaction> Solver::canonicalize(const Predicate& P)
     if (auto eq = Hs::is_equality_constraint(NCP.constraint))
     {
         auto& [t1, t2] = *eq;
-        return canonicalize_equality(NCP.dvar, flavor, t1, t2);
+        if (auto C = canonicalize_equality(NCP.dvar, flavor, t1, t2))
+        {
+            P = *C;
+            return true;
+        }
+        else
+            return false;
     }
     else
     {
         auto [head,args] = decompose_type_apps(NCP.constraint);
         assert(head.is_a<Hs::TypeCon>());
         auto klass = head.as_<Hs::TypeCon>();
-        work_list.push_back( Predicate{flavor, CanonicalDictPred{NCP.dvar, klass, args}} );
+        P = Predicate{flavor, CanonicalDictPred{NCP.dvar, klass, args}};
+
+        return true;
     }
-    return ReactSuccess();
 }
 
 std::optional<Reaction> Solver::interact_same(const Predicate& P1, const Predicate& P2)
@@ -674,8 +677,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         auto p = work_list.back(); work_list.pop_back();
 
         // canonicalize
-        if (canonicalize(p))
-            continue;
+        if (not canonicalize(p)) continue;
 
         // binary interact with other preds with same flavor
         bool reacted = false;
