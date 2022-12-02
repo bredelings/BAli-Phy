@@ -414,14 +414,14 @@ std::optional<Reaction> Solver::interact_same(const Predicate& P1, const Predica
         {
             if (auto t2b_subst = tv1?check_apply_subst({{*tv1, t1b}}, t2b):check_apply_subst({{*uv1, t1b}}, t2b))
             {
-                Predicate P3(flavor, NonCanonicalPred(eq2->co, make_equality_constraint(t2a, *t2b_subst)));
+                Predicate P3(flavor, CanonicalEqualityPred(eq2->co, t2a, *t2b_subst));
                 work_list.push_back(P1);
                 work_list.push_back(P3);
                 return ReactSuccess();
             }
             else if (auto t1b_subst = tv2?check_apply_subst({{*tv2, t2b}}, t1b):check_apply_subst({{*uv2, t2b}}, t1b))
             {
-                Predicate P3(flavor, NonCanonicalPred(eq2->co, make_equality_constraint(t1a, *t1b_subst)));
+                Predicate P3(flavor, CanonicalEqualityPred(eq2->co, t1a, *t1b_subst));
                 work_list.push_back(P3);
                 work_list.push_back(P2);
                 return ReactSuccess();
