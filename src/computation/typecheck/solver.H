@@ -90,8 +90,6 @@ struct Solver: public TypeChecker
 
     Change interact(const Predicate& P1, const Predicate& P2);
 
-    std::optional<Reaction> interact_same(const Predicate& P1, const Predicate& P2);
-    std::optional<Reaction> interact_g_w(const Predicate& P1, const Predicate& P2);
     std::optional<Reaction> top_react(const Predicate& P);
 
     Core::Decls simplify(const LIE& givens, LIE& wanteds);
