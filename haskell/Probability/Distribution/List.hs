@@ -13,6 +13,7 @@ class HasIndependent d where
     independent :: [d a] -> d [a]
 --    independent_on :: [(a,d b)] -> d [(a,b)]
     iid :: Int -> d a -> d [a]
+    iid_on :: [a] -> d b -> d [(a,b)]
 
 instance HasIndependent Distribution where
 
@@ -20,12 +21,16 @@ instance HasIndependent Distribution where
 
     iid n dist = Distribution iid_name (make_densities' $ independent_densities (replicate n dist)) (no_quantile "iid") iid_sample (ListRange $ take n $ repeat $ distRange dist) where
                              iid_name = "iid "++(dist_name dist)
-                             iid_sample = do xs <- RanSamplingRate (1.0/sqrt (intToDouble n)) $ sequence (repeat $ RanDistribution dist)
+                             iid_sample = do xs <- RanSamplingRate (1.0/sqrt (fromIntegral n)) $ sequence (repeat $ RanDistribution dist)
                                              return $ take n xs
+    iid_on xs dist = undefined
 
 
 instance HasIndependent Random where
     independent dists = lazy $ sequence dists
 --    independent_on dists_pairs = RanDistribution (independent dists_pairs)
-    iid n dist = lazy $ do xs <- RanSamplingRate (1.0/sqrt (intToDouble n)) $ sequence $ repeat dist
+    iid n dist = lazy $ do xs <- RanSamplingRate (1.0/sqrt (fromIntegral n)) $ sequence $ repeat dist
                            return $ take n xs
+    iid_on vs dist = let n = length vs
+                     in lazy $ do xs <- RanSamplingRate (1.0/sqrt (fromIntegral n)) $ sequence $ repeat dist
+                                  return $ zip vs xs
