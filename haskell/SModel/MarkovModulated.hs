@@ -64,9 +64,15 @@ covarion_gtr_ssrv nu exchange model = modulated_markov models rates_between leve
     MixtureModel dist = rescale 1 model
     level_probs = map fst dist
     models = map snd dist
-    n_levels = length dist
     -- This is really a gtr rate matrix, just without the alphabet / smap!
     rates_between = (scaleMatrix nu exchange) %*% (plus_f_matrix $ list_to_vector level_probs)
 
 covarion_gtr nu exchange pi model = parameter_mixture_unit [(1-pi, 0), (pi, nu)] (\nu' -> covarion_gtr_ssrv nu' exchange model)
+
+covarion_gtr_sym :: Matrix Double -> MixtureModel -> ReversibleMarkov
+covarion_gtr_sym sym model = modulated_markov models rates_between level_probs where
+    MixtureModel dist = rescale 1 model
+    (level_probs, models) = unzip dist
+    rates_between = sym %*% (plus_f_matrix $ list_to_vector level_probs)
+
 
