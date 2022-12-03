@@ -98,3 +98,17 @@ uniform_frequencies n = replicate n $ 1.0/(intToDouble n)
 
 jukes_cantor n = gtr (equ n 1.0) (uniform_frequencies n)
 
+all_pairs l = [(x,y) | (x:ys) <- tails l, y <- ys]
+
+number_pairs n = [ show x ++ "|" ++ show y | (x,y) <- all_pairs [0..n-1]]
+
+get_element_exchange []                 x y = error ("No exchangeability specified for '" ++ x ++ "'")
+get_element_exchange ((key,value):rest) x y = if key == x || key == y then value else get_element_exchange rest x y
+
+gtr_sym_from_numbers n es' = gtr_sym n es where
+    npairs = all_pairs [0..n-1]
+    es :: [Double]
+    es = if length es' == length npairs then
+             [get_element_exchange es' (show l1 ++ "|" ++ show l2) (show l2 ++ "|" ++ show l1)| (l1,l2) <- npairs]
+         else
+             error $ "Expected "++show (length npairs)++" exchangeabilities but got "++ show (length es')++"!"
