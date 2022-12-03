@@ -25,7 +25,7 @@ json c_json(const expression_ref& E)
         return {};
     // String
     else if (type == 4)
-        return J.as_<String>();
+        return (string)J.as_<String>();
     // Bool
     else if (type == 3)
     {
