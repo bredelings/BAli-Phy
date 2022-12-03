@@ -88,6 +88,7 @@ struct Solver: public TypeChecker
     std::vector<Predicate> failed;
 
     std::optional<Predicate> canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P);
+    std::optional<Predicate> canonicalize_dict(ConstraintFlavor flavor, CanonicalDictPred P);
     std::optional<Predicate> canonicalize(Predicate& P);
 
     Change interact(const Predicate& P1, const Predicate& P2);

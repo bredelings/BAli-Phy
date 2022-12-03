@@ -348,6 +348,12 @@ bool is_canonical(const Predicate& p)
         std::holds_alternative<CanonicalEqualityPred>(p.pred);
 }
 
+
+optional<Predicate> Solver::canonicalize_dict(ConstraintFlavor flavor, CanonicalDictPred P)
+{
+    return {{flavor, P}};
+}
+
 optional<Predicate> Solver::canonicalize(Predicate& P)
 {
     if (auto NC = to<NonCanonicalPred>(P.pred))
@@ -365,11 +371,11 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
             auto [head,args] = decompose_type_apps(NCP.constraint);
             assert(head.is_a<Hs::TypeCon>());
             auto klass = head.as_<Hs::TypeCon>();
-            return Predicate{flavor, CanonicalDictPred{NCP.dvar, klass, args}};
+            return canonicalize_dict(P.flavor, CanonicalDictPred{NCP.dvar, klass, args});
         }
     }
-    else if (to<CanonicalDictPred>(P.pred))
-        return P;
+    else if (auto D = to<CanonicalDictPred>(P.pred))
+        return canonicalize_dict(P.flavor, *D);
     else if (auto E = to<CanonicalEqualityPred>(P.pred))
         return canonicalize_equality(P.flavor, *E);
 }
