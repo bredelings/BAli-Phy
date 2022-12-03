@@ -30,7 +30,7 @@ string CanonicalDictPred::print() const
 
 string CanonicalEqualityPred::print() const
 {
-    auto constraint = Hs::make_equality_constraint(a, b);
+    auto constraint = Hs::make_equality_constraint(t1, t2);
     return co.print() + " :: " + constraint.print();
 }
 
@@ -209,69 +209,72 @@ bool cmp_less(const Hs::MetaTypeVar& uv1, const Hs::MetaTypeVar& uv2)
 }
 
 
-std::optional<Predicate> Solver::canonicalize_equality(const Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
+CanonicalEqualityPred CanonicalEqualityPred::flip() const
 {
-    Predicate P{flavor,CanonicalEqualityPred(co_var, t1, t2)};
+    return {co, t2, t1};
+}
 
-    auto uv1 = unfilled_meta_type_var(t1);
-    auto uv2 = unfilled_meta_type_var(t2);
+std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P)
+{
+    auto uv1 = unfilled_meta_type_var(P.t1);
+    auto uv2 = unfilled_meta_type_var(P.t2);
 
     // REFL: tau ~ tau
     // NOTE: this does not currently handle foralls or constraints!
-    if (same_type(t1,t2)) return {};
+    if (same_type(P.t1, P.t2)) return {}; // Solved!
 
-    auto tv1 = t1.to<Hs::TypeVar>();
-    auto tv2 = t2.to<Hs::TypeVar>();
+    auto tv1 = P.t1.to<Hs::TypeVar>();
+    auto tv2 = P.t2.to<Hs::TypeVar>();
 
     if (uv1 and uv2)
     {
         if (cmp_less(*uv2,*uv1))
-            return canonicalize_equality(co_var, flavor, t2, t1);
+            return canonicalize_equality(flavor, P.flip());
         else
         {
-            return P;
+            return {{flavor, P}};
         }
     }
     else if (uv1)
     {
-        if (occurs_check(*uv1, t2))
+        if (occurs_check(*uv1, P.t2))
         {
-            failed.push_back(P);
+            failed.push_back({flavor,P});
             return {};
         }
         else
         {
-            return P;
+            return {{flavor, P}};
         }
     }
     else if (uv2)
     {
-        return canonicalize_equality(co_var, flavor, t2, t1);
+        return canonicalize_equality(flavor, P.flip());
     }
     else if (tv1 and tv2)
     {
         if (*tv2 < *tv1)
-            return canonicalize_equality(co_var, flavor, t2, t1);
+            return canonicalize_equality(flavor, P.flip());
         else
         {
-            return P;
+            return {{flavor, P}};
         }
     }
     else if (tv1)
     {
-        if (occurs_check(*tv1, t2))
+        if (occurs_check(*tv1, P.t2))
         {
-            failed.push_back(P);
+            failed.push_back({flavor,P});
             return {};
         }
         else
         {
-            return P;
+            return {{flavor, P}};
         }
     }
     else if (tv2)
     {
-        return canonicalize_equality(co_var, flavor, t2, t1);
+        return canonicalize_equality(flavor, P.flip());
     }
     else
     {
@@ -280,28 +283,28 @@ std::optional<Predicate> Solver::canonicalize_equality(const Core::Var& co_var, 
         // Unlike GHC, we don't consider representational equality.
         // When we add type families, this will become more complicated.
         // See [Decomposing equality] in Tc/Solver/Canonical.hs
-        while(auto s1 = is_type_synonym(t1))
-            t1 = *s1;
-        while(auto s2 = is_type_synonym(t2))
-            t2 = *s2;
+        while(auto s1 = is_type_synonym(P.t1))
+            P.t1 = *s1;
+        while(auto s2 = is_type_synonym(P.t2))
+            P.t2 = *s2;
 
-        if (auto tuple = t1.to<Hs::TupleType>())
-            t1 = canonicalize_type(*tuple);
-        else if (auto list = t1.to<Hs::ListType>())
-            t1 = canonicalize_type(*list);
+        if (auto tuple = P.t1.to<Hs::TupleType>())
+            P.t1 = canonicalize_type(*tuple);
+        else if (auto list = P.t1.to<Hs::ListType>())
+            P.t1 = canonicalize_type(*list);
 
-        if (auto tuple = t2.to<Hs::TupleType>())
-            t2 = canonicalize_type(*tuple);
-        else if (auto list = t2.to<Hs::ListType>())
-            t2 = canonicalize_type(*list);
+        if (auto tuple = P.t2.to<Hs::TupleType>())
+            P.t2 = canonicalize_type(*tuple);
+        else if (auto list = P.t2.to<Hs::ListType>())
+            P.t2 = canonicalize_type(*list);
 
-        auto [head1,args1] = decompose_type_apps(t1);
-        auto [head2,args2] = decompose_type_apps(t2);
+        auto [head1,args1] = decompose_type_apps(P.t1);
+        auto [head2,args2] = decompose_type_apps(P.t2);
 
         if (args1.size() != args2.size())
         {
             // Is this too eager?
-            failed.push_back(P);
+            failed.push_back({flavor,P});
             return {};
         }
 
@@ -319,19 +322,19 @@ std::optional<Predicate> Solver::canonicalize_equality(const Core::Var& co_var, 
             else
             {
                 // FAILDEC: T x1 y1 z1 = S x2 y2 z2
-                failed.push_back(P);
+                failed.push_back({flavor,P});
                 return {};
             }
         }
         // We will need to do extra stuff here if either of the heads is a type family.
         else
         {
-            work_list.push_back(Predicate(flavor,NonCanonicalPred(flavor, make_equality_constraint(head1, head2))));
+            work_list.push_back({flavor, NonCanonicalPred(flavor, make_equality_constraint(head1, head2)) });
         }
 
         // If we've gotten here, the heads are both injective, and might be equal.
         for(int i=0;i<args1.size();i++)
-            work_list.push_back(Predicate(flavor,NonCanonicalPred(flavor, make_equality_constraint(args1[i],args2[i]))));
+            work_list.push_back({flavor, NonCanonicalPred(flavor, make_equality_constraint(args1[i],args2[i])) });
 
         return {};
     }
@@ -345,7 +348,7 @@ bool is_canonical(const Predicate& p)
         std::holds_alternative<CanonicalEqualityPred>(p.pred);
 }
 
-bool Solver::canonicalize(Predicate& P)
+optional<Predicate> Solver::canonicalize(Predicate& P)
 {
     if (auto NC = to<NonCanonicalPred>(P.pred))
     {
@@ -355,36 +358,20 @@ bool Solver::canonicalize(Predicate& P)
         if (auto eq = Hs::is_equality_constraint(NCP.constraint))
         {
             auto& [t1, t2] = *eq;
-            if (auto C = canonicalize_equality(NCP.dvar, flavor, t1, t2))
-            {
-                P = *C;
-                return true;
-            }
-            else
-                return false;
+            return canonicalize_equality(flavor, {NCP.dvar, t1, t2});
         }
         else
         {
             auto [head,args] = decompose_type_apps(NCP.constraint);
             assert(head.is_a<Hs::TypeCon>());
             auto klass = head.as_<Hs::TypeCon>();
-            P = Predicate{flavor, CanonicalDictPred{NCP.dvar, klass, args}};
-
-            return true;
+            return Predicate{flavor, CanonicalDictPred{NCP.dvar, klass, args}};
         }
     }
     else if (to<CanonicalDictPred>(P.pred))
-        return true;
+        return P;
     else if (auto E = to<CanonicalEqualityPred>(P.pred))
-    {
-        if (auto C = canonicalize_equality(E->co, P.flavor, E->a, E->b))
-        {
-            P = *C;
-            return true;
-        }
-        else
-            return false;
-    }
+        return canonicalize_equality(P.flavor, *E);
 }
 
 Change Solver::interact(const Predicate& P1, const Predicate& P2)
@@ -567,7 +554,10 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         auto p = work_list.back(); work_list.pop_back();
 
         // canonicalize
-        if (not canonicalize(p)) continue;
+        if (auto cp = canonicalize(p))
+            p = *cp;
+        else
+            continue;
 
         // rewrite and interact
         bool done = false;

@@ -28,10 +28,11 @@ struct CanonicalDictPred
 struct CanonicalEqualityPred
 {
     Core::Var co;
-    Hs::Type a;
-    Hs::Type b;
+    Hs::Type t1;
+    Hs::Type t2;
+    CanonicalEqualityPred flip() const;
     std::string print() const;
-    CanonicalEqualityPred(const Core::Var& v, const Hs::Type& t1, const Hs::Type& t2):co(v),a(t1),b(t2) {}
+    CanonicalEqualityPred(const Core::Var& v, const Hs::Type& ta, const Hs::Type& tb):co(v),t1(ta),t2(tb) {}
 };
 
 struct Pred: public std::variant<NonCanonicalPred, CanonicalDictPred, CanonicalEqualityPred>
@@ -86,8 +87,8 @@ struct Solver: public TypeChecker
     std::vector<Predicate> inerts;
     std::vector<Predicate> failed;
 
-    std::optional<Predicate> canonicalize_equality(const Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2);
-    bool canonicalize(Predicate& P);
+    std::optional<Predicate> canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P);
+    std::optional<Predicate> canonicalize(Predicate& P);
 
     Change interact(const Predicate& P1, const Predicate& P2);
 
