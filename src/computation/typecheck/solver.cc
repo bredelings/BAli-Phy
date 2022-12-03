@@ -189,12 +189,6 @@ std::optional<Core::Decls> TypeChecker::entails(const T& givens, const std::pair
     return {};
 }
 
-bool is_canonical(const Predicate& p)
-{
-    return std::holds_alternative<CanonicalDictPred>(p.pred) or
-        std::holds_alternative<CanonicalEqualityPred>(p.pred);
-}
-
 const Hs::MetaTypeVar* unfilled_meta_type_var(Hs::Type& t)
 {
     t = follow_meta_type_var(t);
@@ -215,7 +209,7 @@ bool cmp_less(const Hs::MetaTypeVar& uv1, const Hs::MetaTypeVar& uv2)
 }
 
 
-std::optional<Predicate> Solver::canonicalize_equality(Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
+std::optional<Predicate> Solver::canonicalize_equality(const Core::Var& co_var, ConstraintFlavor flavor, Hs::Type t1, Hs::Type t2)
 {
     Predicate P{flavor,CanonicalEqualityPred(co_var, t1, t2)};
 
@@ -345,32 +339,51 @@ std::optional<Predicate> Solver::canonicalize_equality(Core::Var& co_var, Constr
     std::abort();
 }
 
+bool is_canonical(const Predicate& p)
+{
+    return std::holds_alternative<CanonicalDictPred>(p.pred) or
+        std::holds_alternative<CanonicalEqualityPred>(p.pred);
+}
+
 bool Solver::canonicalize(Predicate& P)
 {
-    if (is_canonical(P)) return true;
-
-    auto NCP = std::get<NonCanonicalPred>(P.pred);
-    auto flavor = P.flavor;
-
-    if (auto eq = Hs::is_equality_constraint(NCP.constraint))
+    if (auto NC = to<NonCanonicalPred>(P.pred))
     {
-        auto& [t1, t2] = *eq;
-        if (auto C = canonicalize_equality(NCP.dvar, flavor, t1, t2))
+        auto NCP = std::get<NonCanonicalPred>(P.pred);
+        auto flavor = P.flavor;
+
+        if (auto eq = Hs::is_equality_constraint(NCP.constraint))
+        {
+            auto& [t1, t2] = *eq;
+            if (auto C = canonicalize_equality(NCP.dvar, flavor, t1, t2))
+            {
+                P = *C;
+                return true;
+            }
+            else
+                return false;
+        }
+        else
+        {
+            auto [head,args] = decompose_type_apps(NCP.constraint);
+            assert(head.is_a<Hs::TypeCon>());
+            auto klass = head.as_<Hs::TypeCon>();
+            P = Predicate{flavor, CanonicalDictPred{NCP.dvar, klass, args}};
+
+            return true;
+        }
+    }
+    else if (to<CanonicalDictPred>(P.pred))
+        return true;
+    else if (auto E = to<CanonicalEqualityPred>(P.pred))
+    {
+        if (auto C = canonicalize_equality(E->co, P.flavor, E->a, E->b))
         {
             P = *C;
             return true;
         }
         else
             return false;
-    }
-    else
-    {
-        auto [head,args] = decompose_type_apps(NCP.constraint);
-        assert(head.is_a<Hs::TypeCon>());
-        auto klass = head.as_<Hs::TypeCon>();
-        P = Predicate{flavor, CanonicalDictPred{NCP.dvar, klass, args}};
-
-        return true;
     }
 }
 
