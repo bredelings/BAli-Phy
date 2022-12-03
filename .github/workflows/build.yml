@@ -25,14 +25,14 @@ jobs:
 
         include:
           - name: ubuntu-gcc-10
-            os: ubuntu-latest
+            os: ubuntu-22.04
             compiler: gcc
             version: "10"
             buildtype: "release"
             arch: "linux64"
 
           - name: ubuntu-gcc-11-sanitize
-            os: ubuntu-latest
+            os: ubuntu-22.04
             compiler: gcc
             version: "11"
             buildtype: "release"
@@ -40,14 +40,14 @@ jobs:
             arch: "linux64"
 
           - name: ubuntu-gcc-11-debugoptimized
-            os: ubuntu-latest
+            os: ubuntu-22.04
             compiler: gcc
             version: "11"
             buildtype: "debugoptimized"
             arch: "linux64"
 
           - name: ubuntu-gcc-11-DEBUG_MACHINE
-            os: ubuntu-latest
+            os: ubuntu-22.04
             compiler: gcc
             version: "11"
             buildtype: "debugoptimized"
@@ -55,7 +55,7 @@ jobs:
             arch: "linux64"
 
           - name: ubuntu-gcc-11
-            os: ubuntu-latest
+            os: ubuntu-22.04
             compiler: gcc
             version: "11"
             buildtype: "release"
