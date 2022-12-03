@@ -8,7 +8,7 @@
         {
             "arg_name": "sym",
             "arg_type": "List[Tuple[String,Double]]",
-	    "default_value":"~symmetric_dirichlet_on[number_pairs[n_components[@submodel]],1]",
+	    "default_value":"~iid_on[number_pairs[n_components[@submodel]],gamma[0.5,1.0]]",
 	    "description":"Symmetric class-switching exchangability matrix"
         },
         {
