@@ -1,0 +1,12 @@
+{
+    "name": "n_components",
+    "result_type": "Int",
+    "no_log": true,
+    "call": "length[unwrapMM[@x]]",
+    "args": [
+        {
+            "arg_name": "x",
+            "arg_type": "MixtureModel[a]"
+        }
+    ]
+}

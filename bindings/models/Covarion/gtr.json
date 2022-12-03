@@ -1,0 +1,24 @@
+{
+    "name": "Covarion.gtr",
+    "title":"The General Reversity Covarion Model",
+    "result_type": "MixtureModel[a]",
+    "call": "covarion_gtr_sym[gtr_sym_from_numbers[length[unwrapMM[@submodel]],@sym],@submodel]",
+    "import": ["SModel"],
+    "args": [
+        {
+            "arg_name": "sym",
+            "arg_type": "List[Tuple[String,Double]]",
+	    "default_value":"~symmetric_dirichlet_on[number_pairs[n_components[@submodel]],1]",
+	    "description":"Symmetric class-switching exchangability matrix"
+        },
+        {
+            "arg_name": "submodel",
+            "arg_type": "MixtureModel[a]",
+	    "description": "The base mixture model"
+        }
+    ],
+    "description": "The Galtier covarion model implements switching between classes at a rate `nu`.",
+    "examples": ["gtr+Rates.gamma+Covarion.gt01","gtr+Rates.free+Covarion.gt01"],
+    "see": ["markov_modulate"],
+    "extract": "all"
+}
