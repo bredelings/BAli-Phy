@@ -667,8 +667,9 @@ void TypeChecker::promote(Hs::Type type, int new_level)
     for(auto& mtv: free_meta_type_variables(type))
         maybe_promote_mtv(mtv, new_level);
 
+    // check for skolem_escape
     if (max_level(type) > new_level)
-        throw myexception()<<"skolem-escape in "<<type;
+        throw myexception()<<"skolem-escape in '"<<type<<"':\n  cannot promote to level "<<new_level<<" because of type variables on level "<<max_level(type);
 }
 
 void TypeChecker::add_binders(const local_value_env& binders)
