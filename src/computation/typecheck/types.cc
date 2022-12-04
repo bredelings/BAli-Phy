@@ -204,3 +204,54 @@ set<string> free_type_vars(const Hs::Context& context)
     return tvars;
 }
 
+bool affected_by_mtv(const vector<Hs::Type>& types, const Hs::MetaTypeVar& mtv)
+{
+    for(auto& type: types)
+        if (affected_by_mtv(type, mtv))
+            return true;
+    return false;
+}
+
+bool affected_by_mtv(const Hs::Type& type, const Hs::MetaTypeVar& mtv)
+{
+    if (type.is_a<Hs::TypeCon>())
+        return false;
+    else if (type.is_a<Hs::TypeVar>())
+        return false;
+    else if (auto mtv2 = type.to<Hs::MetaTypeVar>())
+    {
+        if (*mtv2 == mtv)
+            return true;
+        else if (auto t2 = mtv2->filled())
+            return affected_by_mtv(*t2, mtv);
+        else
+            return false;
+    }
+    else if (auto app = type.to<Hs::TypeApp>())
+    {
+        return affected_by_mtv(app->head, mtv) or affected_by_mtv(app->arg, mtv);
+    }
+    else if (auto tup = type.to<Hs::TupleType>())
+    {
+        return affected_by_mtv(tup->element_types, mtv);
+    }
+    else if (auto list = type.to<Hs::ListType>())
+    {
+        return affected_by_mtv(list->element_type, mtv);
+    }
+    else if (auto forall = type.to<Hs::ForallType>())
+    {
+        return affected_by_mtv(forall->type, mtv);
+    }
+    else if (auto c = type.to<Hs::ConstrainedType>())
+    {
+        return affected_by_mtv(c->context.constraints, mtv) or affected_by_mtv(c->type, mtv);
+    }
+    else if (auto sl = type.to<Hs::StrictLazyType>())
+    {
+        return affected_by_mtv(sl->type, mtv);
+    }
+    else
+        std::abort();
+}
+

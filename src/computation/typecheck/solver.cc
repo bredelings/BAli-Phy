@@ -507,6 +507,40 @@ bool TypeChecker::is_touchable(const Hs::MetaTypeVar& mtv)
     return not mtv.filled() and mtv.level() == level;
 }
 
+bool affected_by_mtv(const Pred& P, const Hs::MetaTypeVar& mtv)
+{
+    if (auto E = to<CanonicalEqualityPred>(P))
+        return affected_by_mtv(E->t1, mtv) or affected_by_mtv(E->t2, mtv);
+    else if (auto D = to<CanonicalDictPred>(P))
+        return affected_by_mtv(D->args, mtv);
+    else if (auto NC = to<NonCanonicalPred>(P))
+        return affected_by_mtv(NC->constraint, mtv);
+    else
+        std::abort();
+}
+
+bool affected_by_mtv(const Predicate& P, const Hs::MetaTypeVar& mtv)
+{
+    return affected_by_mtv(P.pred, mtv);
+}
+
+void Solver::kickout_after_unification(const Hs::MetaTypeVar& mtv)
+{
+    // kick-out for inerts that are rewritten by p
+    for(int i=0;i<inerts.size();i++)
+    {
+        if (affected_by_mtv(inerts[i], mtv))
+        {
+            // FIXME: put givens last, so that we process them first
+            work_list.push_back(inerts[i]);
+            if (i+1 < inerts.size())
+                std::swap(inerts[i], inerts.back());
+
+            inerts.pop_back();
+            i--;
+        }
+    }
+}
 
     // The simplifier corresponds to the relation |->[simp] from Figure 19 of the OutsideIn(X) paper:
     //    \mathcal{Q}; Q[given] ; alpha[touchable] |->[simp] Q[wanted] ~~> Q[residual]; theta
@@ -615,6 +649,23 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         // top-level reactions
         if (top_react(p))
             continue;
+
+
+        // perform same-level substitutions
+        if (auto E = to<CanonicalEqualityPred>(p.pred); E and p.flavor == Wanted)
+        {
+            auto t1 = Hs::follow_meta_type_var(E->t1);
+            if (auto mtv = t1.to<Hs::MetaTypeVar>())
+            {
+                if (mtv->level() == level)
+                {
+                    mtv->fill(E->t2);
+                    kickout_after_unification(*mtv);
+                    continue;
+                }
+            }
+
+        }
 
         // we should only get this far if p is closed under rewriting, and unsolved.
         inerts.push_back(p);
