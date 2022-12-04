@@ -133,9 +133,9 @@ struct TypeChecker: FreshVarSource
     //------- Functions handling the LIE ---------
     TypeChecker copy_clear_wanteds(bool bump_level = false) const;
 
-    void promote_mtv(const Hs::MetaTypeVar& mtv);
-    bool maybe_promote_mtv(const Hs::MetaTypeVar& mtv);
-    void promote(Hs::Type t);
+    void promote_mtv(const Hs::MetaTypeVar& mtv, int new_level);
+    bool maybe_promote_mtv(const Hs::MetaTypeVar& mtv, int new_level);
+    void promote(Hs::Type t, int new_level);
 
     void add_binders(const local_value_env& binders);
 

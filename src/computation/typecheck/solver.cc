@@ -759,10 +759,8 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
             {
                 for(auto& [var, constraint]: implic->wanteds.simple)
                 {
-                    promote(constraint);
-                    if (max_level(constraint) > level)
-                        throw myexception()<<"skolem-escape in "<<constraint;
-                    else if (intersects(free_type_variables(constraint), implic->tvs))
+                    promote(constraint, level);
+                    if (intersects(free_type_variables(constraint), implic->tvs))
                         lie_residual_keep.push_back({var,constraint});
                     else
                     {

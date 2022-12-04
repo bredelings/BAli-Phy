@@ -644,28 +644,31 @@ TypeChecker TypeChecker::copy_clear_wanteds(bool bump_level) const
     return tc2;
 }
 
-void TypeChecker::promote_mtv(const Hs::MetaTypeVar& mtv)
+void TypeChecker::promote_mtv(const Hs::MetaTypeVar& mtv, int new_level)
 {
-    assert(mtv.level() > level);
-    mtv.fill( fresh_meta_type_var(unloc(mtv.name), *mtv.kind) );
+    assert(mtv.level() > new_level);
+    auto mtv2 = FreshVarSource::fresh_meta_type_var( new_level, unloc(mtv.name), *mtv.kind);
+    mtv.fill( mtv2 );
 }
 
-bool TypeChecker::maybe_promote_mtv(const Hs::MetaTypeVar& mtv)
+bool TypeChecker::maybe_promote_mtv(const Hs::MetaTypeVar& mtv, int new_level)
 {
-    if (mtv.level() > level)
+    if (mtv.level() > new_level)
     {
-        assert(mtv.level() == level + 1);
-        promote_mtv(mtv);
+        promote_mtv(mtv, new_level);
         return true;
     }
     else
         return false;
 }
 
-void TypeChecker::promote(Hs::Type t)
+void TypeChecker::promote(Hs::Type type, int new_level)
 {
-    for(auto& mtv: free_meta_type_variables(t))
-        maybe_promote_mtv(mtv);
+    for(auto& mtv: free_meta_type_variables(type))
+        maybe_promote_mtv(mtv, new_level);
+
+    if (max_level(type) > new_level)
+        throw myexception()<<"skolem-escape in "<<type;
 }
 
 void TypeChecker::add_binders(const local_value_env& binders)

@@ -548,7 +548,7 @@ TypeChecker::infer_type_for_decls_group(const map<string, Hs::Type>& signatures,
     // promote type vars that we are not quantifying over.
     for(auto& tv: local_tvs)
         if (not tv.filled())
-            maybe_promote_mtv(tv);
+            maybe_promote_mtv(tv, level);
 
     for(auto& tv: local_tvs)
         assert(max_level(tv) <= level);
