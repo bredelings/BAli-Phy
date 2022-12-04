@@ -87,6 +87,8 @@ struct Solver: public TypeChecker
     std::vector<Predicate> inerts;
     std::vector<Predicate> failed;
 
+    bool is_touchable(const Hs::MetaTypeVar&) const;
+
     void kickout_after_unification(const Hs::MetaTypeVar&);
 
     std::optional<Predicate> canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P);
