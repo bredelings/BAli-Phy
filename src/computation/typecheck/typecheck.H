@@ -412,8 +412,6 @@ struct TypeChecker: FreshVarSource
     std::optional<std::vector<Core::Var>>
     is_superclass_of(const Hs::Type&, const Hs::Type&);
 
-    bool is_touchable(const Hs::MetaTypeVar& mtv);
-
     // FIXME: this should be  const
     std::optional<Core::Decls>
     entails_by_superclass(const std::pair<Core::Var, Hs::Type>& to_keep,

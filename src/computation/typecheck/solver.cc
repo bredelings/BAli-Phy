@@ -500,7 +500,7 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
     return {};
 }
 
-bool TypeChecker::is_touchable(const Hs::MetaTypeVar& mtv)
+bool Solver::is_touchable(const Hs::MetaTypeVar& mtv) const
 {
     assert(mtv.filled() or mtv.level() <= level);
 
