@@ -378,6 +378,8 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
         return canonicalize_dict(P.flavor, *D);
     else if (auto E = to<CanonicalEqualityPred>(P.pred))
         return canonicalize_equality(P.flavor, *E);
+    else
+        std::abort();
 }
 
 Change Solver::interact(const Predicate& P1, const Predicate& P2)
