@@ -604,10 +604,11 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 {
     if (wanteds.empty()) return {{}, {}};
 
-    for(auto& [evar, constraint]: givens)
-        work_list.push_back({Given, NonCanonicalPred(evar, constraint)});
     for(auto& [evar, constraint]: wanteds)
         work_list.push_back({Wanted, NonCanonicalPred(evar, constraint)});
+    // Givens must be processed first!
+    for(auto& [evar, constraint]: givens)
+        work_list.push_back({Given, NonCanonicalPred(evar, constraint)});
 
 //    std::cerr<<"---------------\n";
 //    for(auto& w: work_list)
