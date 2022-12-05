@@ -500,11 +500,27 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
     return {};
 }
 
-bool Solver::is_touchable(const Hs::MetaTypeVar& mtv) const
+bool Solver::is_touchable(const Hs::MetaTypeVar& mtv, const Hs::Type& rhs) const
 {
-    assert(mtv.filled() or mtv.level() <= level);
+    // We need to have done follow_meta_type_var( ) already.
+    assert(not mtv.filled());
 
-    return not mtv.filled() and (not inerts.given_eq_level or *inerts.given_eq_level < mtv.level()) and mtv.level() == level;
+    assert(mtv.level() <= level);
+
+    assert(inerts.given_eq_level.value_or(0) < level);
+
+    // 1. Check for intervening given equalities
+    bool intervening_given_eqs = inerts.given_eq_level and mtv.level() <= *inerts.given_eq_level;
+    if (not intervening_given_eqs) return false;
+
+    // 2. Check for skolem escapes
+    for(auto& tv: free_type_variables(rhs))
+    {
+        if (mtv.level() < tv.level())
+            return false;
+    }
+
+    return true;
 }
 
 bool affected_by_mtv(const Pred& P, const Hs::MetaTypeVar& mtv)
@@ -663,14 +679,14 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
                     kickout_after_unification(*mtv);
                     continue;
                 }
-                else if (mtv->level() < level and is_touchable(*mtv) and false)
+                else if (mtv->level() < level and is_touchable(*mtv, E->t2))
                 {
                     promote(E->t2, mtv->level());
+                    set_unification_level(mtv->level());
                     mtv->fill(E->t2);
                     kickout_after_unification(*mtv);
                     // Iterating at the level of mtv reconstructs the inert set from scratch, so ...
                     // we don't need to do kick-out at that level?
-                    set_unification_level(mtv->level());
                     continue;
 
                     // 3. maybe track which level the constraints are added on?  that way wanteds on a higher
@@ -791,16 +807,23 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
             if (not lie_residual_keep.empty())
                 throw myexception()<<"Can't derive constraints '"<<print(lie_residual_keep)<<"' from specified constraints '"<<print(givens)<<"'";
 
-            // 8. Keep implication if not empty.
+            // 7. Keep implication if not empty.
             if (not implic->wanteds.empty())
                 wanteds.implications.push_back( implic );
+
+            // 8. If there was a unification, that affected this level, then we have to iterate.
+            if (unification_level() and *unification_level() <= level)
+                break;
         }
 
         wanteds.simple += new_wanteds;
 
         // If there was a unification, that affected this level, then we have to iterate.
         if (unification_level() and *unification_level() == level)
+        {
             update = true;
+            clear_unification_level();
+        }
 
     } while(update);
 

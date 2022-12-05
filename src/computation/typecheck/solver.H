@@ -94,7 +94,7 @@ struct Solver: public TypeChecker
 
     InertSet inerts;
 
-    bool is_touchable(const Hs::MetaTypeVar&) const;
+    bool is_touchable(const Hs::MetaTypeVar&, const Hs::Type&) const;
 
     void kickout_after_unification(const Hs::MetaTypeVar&);
 
