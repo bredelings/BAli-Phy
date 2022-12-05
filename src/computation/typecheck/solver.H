@@ -78,14 +78,21 @@ struct NonCanon
 
 typedef std::variant<Changed, Unchanged, Solved, NonCanon> Change;
 
+struct InertSet
+{
+    std::optional<int> given_eq_level;
+    std::vector<Predicate> inerts;
+    std::vector<Predicate> failed;
+};
+
+
 struct Solver: public TypeChecker
 {
     Core::Decls decls;
 
     std::vector<Predicate> work_list;
 
-    std::vector<Predicate> inerts;
-    std::vector<Predicate> failed;
+    InertSet inerts;
 
     bool is_touchable(const Hs::MetaTypeVar&) const;
 

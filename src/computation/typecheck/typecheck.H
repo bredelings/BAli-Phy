@@ -58,6 +58,8 @@ struct global_tc_state
     // maybe merge with gve by mapping name -> type,con-or-var
     constr_env con_info;
 
+    std::optional<int> unification_level;
+
     global_tc_state(const Module& m);
 };
 
@@ -96,6 +98,12 @@ struct TypeChecker: FreshVarSource
 
           std::vector<Hs::Type>& defaults()       {return global_state->defaults;}
     const std::vector<Hs::Type>& defaults() const {return global_state->defaults;}
+
+    std::optional<int> unification_level() const;
+
+    void set_unification_level(int l);
+
+    void clear_unification_level();
 
     Hs::Type expTypeToType(const Expected& E);
 

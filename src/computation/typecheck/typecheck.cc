@@ -354,6 +354,22 @@ global_tc_state::global_tc_state(const Module& m)
 { }
 
 
+std::optional<int> TypeChecker::unification_level() const
+{
+    return global_state->unification_level;
+}
+
+void  TypeChecker::set_unification_level(int l)
+{
+    if (not unification_level() or *unification_level() > l)
+        global_state->unification_level = l;
+}
+
+void  TypeChecker::clear_unification_level()
+{
+    global_state->unification_level = {};
+}
+
 Hs::Type TypeChecker::expTypeToType(const Expected& E)
 {
     if (auto I = E.infer())

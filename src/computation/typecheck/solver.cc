@@ -239,7 +239,7 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     {
         if (occurs_check(*uv1, P.t2))
         {
-            failed.push_back({flavor,P});
+            inerts.failed.push_back({flavor,P});
             return {};
         }
         else
@@ -264,7 +264,7 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     {
         if (occurs_check(*tv1, P.t2))
         {
-            failed.push_back({flavor,P});
+            inerts.failed.push_back({flavor,P});
             return {};
         }
         else
@@ -304,7 +304,7 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
         if (args1.size() != args2.size())
         {
             // Is this too eager?
-            failed.push_back({flavor,P});
+            inerts.failed.push_back({flavor,P});
             return {};
         }
 
@@ -322,7 +322,7 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
             else
             {
                 // FAILDEC: T x1 y1 z1 = S x2 y2 z2
-                failed.push_back({flavor,P});
+                inerts.failed.push_back({flavor,P});
                 return {};
             }
         }
@@ -504,7 +504,7 @@ bool Solver::is_touchable(const Hs::MetaTypeVar& mtv) const
 {
     assert(mtv.filled() or mtv.level() <= level);
 
-    return not mtv.filled() and mtv.level() == level;
+    return not mtv.filled() and (not inerts.given_eq_level or *inerts.given_eq_level < mtv.level()) and mtv.level() == level;
 }
 
 bool affected_by_mtv(const Pred& P, const Hs::MetaTypeVar& mtv)
@@ -527,16 +527,16 @@ bool affected_by_mtv(const Predicate& P, const Hs::MetaTypeVar& mtv)
 void Solver::kickout_after_unification(const Hs::MetaTypeVar& mtv)
 {
     // kick-out for inerts that are rewritten by p
-    for(int i=0;i<inerts.size();i++)
+    for(int i=0;i<inerts.inerts.size();i++)
     {
-        if (affected_by_mtv(inerts[i], mtv))
+        if (affected_by_mtv(inerts.inerts[i], mtv))
         {
             // FIXME: put givens last, so that we process them first
-            work_list.push_back(inerts[i]);
-            if (i+1 < inerts.size())
-                std::swap(inerts[i], inerts.back());
+            work_list.push_back(inerts.inerts[i]);
+            if (i+1 < inerts.inerts.size())
+                std::swap(inerts.inerts[i], inerts.inerts.back());
 
-            inerts.pop_back();
+            inerts.inerts.pop_back();
             i--;
         }
     }
@@ -607,7 +607,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         while (changed and not done)
         {
             changed = false;
-            for(auto& inert: inerts)
+            for(auto& inert: inerts.inerts)
             {
                 auto I = interact(inert, p);
                 if (auto C = to<Changed>(I))
@@ -625,22 +625,22 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         if (done) continue;
 
         // kick-out for inerts that are rewritten by p
-        for(int i=0;i<inerts.size();i++)
+        for(int i=0;i<inerts.inerts.size();i++)
         {
-            auto I1 = interact(inerts[i], p);
+            auto I1 = interact(inerts.inerts[i], p);
             assert(to<Unchanged>(I1));
 
-            auto I2 = interact(p, inerts[i]);
+            auto I2 = interact(p, inerts.inerts[i]);
             if (not to<Unchanged>(I2))
             {
                 // If its noncanon or solved, we don't want to put it back!
                 if (auto C = to<Changed>(I2))
                     work_list.push_back(C->P);
 
-                if (i+1 < inerts.size())
-                    std::swap(inerts[i], inerts.back());
+                if (i+1 < inerts.inerts.size())
+                    std::swap(inerts.inerts[i], inerts.inerts.back());
 
-                inerts.pop_back();
+                inerts.inerts.pop_back();
                 i--;
                 continue;
             }
@@ -663,18 +663,45 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
                     kickout_after_unification(*mtv);
                     continue;
                 }
-            }
+                else if (mtv->level() < level and is_touchable(*mtv) and false)
+                {
+                    promote(E->t2, mtv->level());
+                    mtv->fill(E->t2);
+                    kickout_after_unification(*mtv);
+                    // Iterating at the level of mtv reconstructs the inert set from scratch, so ...
+                    // we don't need to do kick-out at that level?
+                    set_unification_level(mtv->level());
+                    continue;
 
+                    // 3. maybe track which level the constraints are added on?  that way wanteds on a higher
+                    //    level become givens automatically...
+
+                    // 4. create a CtLoc object and set it when we first create constraints...
+
+                    // 5. create a TcLclEnv object, and give one to implications also
+
+                    // 6. what to do with ic_given_eqs on implications?
+                }
+            }
+        }
+
+        if (auto E = to<CanonicalEqualityPred>(p.pred))
+        {
+            int eq_level = std::max( max_level(E->t1), max_level(E->t2));
+            if (eq_level < level and p.flavor == Given)
+            {
+                inerts.given_eq_level = std::max( inerts.given_eq_level.value_or(0), eq_level );
+            }
         }
 
         // we should only get this far if p is closed under rewriting, and unsolved.
-        inerts.push_back(p);
+        inerts.inerts.push_back(p);
     }
 
-    if (not failed.empty())
+    if (not inerts.failed.empty())
     {
         myexception e("Unsolvable equations:\n");
-        for(auto& f: failed)
+        for(auto& f: inerts.failed)
             e<<"  "<<f.print()<<"\n";
         throw e;
     }
@@ -682,7 +709,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
     // Split inert into substitution and remaining constraints
     wanteds.clear();
     vector<pair<Hs::MetaTypeVar,Hs::Type>> equations;
-    for(auto& P: inerts)
+    for(auto& P: inerts.inerts)
     {
         assert(is_canonical(P));
 
@@ -747,6 +774,7 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
                 for(auto& [var, constraint]: implic->wanteds.simple)
                 {
                     promote(constraint, level);
+
                     if (intersects(free_type_variables(constraint), implic->tvs))
                         lie_residual_keep.push_back({var,constraint});
                     else
@@ -772,6 +800,11 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
         }
 
         wanteds.simple += new_wanteds;
+
+        // If there was a unification, that affected this level, then we have to iterate.
+        if (unification_level() and *unification_level() == level)
+            update = true;
+
     } while(update);
 
     // This should implement |->[solv] from Figure 14 of the OutsideIn(X) paper:
