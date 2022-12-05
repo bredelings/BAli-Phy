@@ -686,29 +686,16 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
     {
         assert(is_canonical(P));
 
-        if (P.flavor == Given) continue;
-
-        if (auto eq = to<CanonicalEqualityPred>(P.pred))
+        if (P.flavor == Wanted)
         {
-            auto [_, t_a, t_b] = *eq;
-            auto uv = unfilled_meta_type_var(t_a);
-            if (uv and is_touchable(*uv) and not occurs_check(*uv, t_b))
-                equations.push_back({*uv,t_b});
-            else
-                wanteds.push_back({eq->co, Hs::make_equality_constraint(t_a, t_b)});
+            if (auto eq = to<CanonicalEqualityPred>(P.pred))
+                wanteds.push_back({eq->co, Hs::make_equality_constraint(eq->t1, eq->t2)});
+            else if (auto dict = to<CanonicalDictPred>(P.pred))
+            {
+                auto constraint = Hs::make_tyapps(dict->klass, dict->args);
+                wanteds.push_back({dict->dvar, constraint});
+            }
         }
-        else if (auto dict = to<CanonicalDictPred>(P.pred))
-        {
-            auto constraint = Hs::make_tyapps(dict->klass, dict->args);
-            wanteds.push_back({dict->dvar, constraint});
-        }
-    }
-
-    // Actually perform the substitution.
-    for(auto& [uv,type]: equations)
-    {
-        if (not uv.filled())
-            uv.fill(type);
     }
 
 //    std::cerr<<" residual wanteds = \n";
