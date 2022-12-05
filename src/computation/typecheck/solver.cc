@@ -511,7 +511,7 @@ bool Solver::is_touchable(const Hs::MetaTypeVar& mtv, const Hs::Type& rhs) const
 
     // 1. Check for intervening given equalities
     bool intervening_given_eqs = inerts.given_eq_level and mtv.level() <= *inerts.given_eq_level;
-    if (not intervening_given_eqs) return false;
+    if (intervening_given_eqs) return false;
 
     // 2. Check for skolem escapes
     for(auto& tv: free_type_variables(rhs))
