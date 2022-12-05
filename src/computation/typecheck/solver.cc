@@ -329,12 +329,18 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
         // We will need to do extra stuff here if either of the heads is a type family.
         else
         {
-            work_list.push_back({flavor, NonCanonicalPred(flavor, make_equality_constraint(head1, head2)) });
+            auto constraint = make_equality_constraint(head1, head2);
+            auto dvar = fresh_dvar(constraint);
+            work_list.push_back({flavor, NonCanonicalPred(dvar, constraint)});
         }
 
         // If we've gotten here, the heads are both injective, and might be equal.
         for(int i=0;i<args1.size();i++)
-            work_list.push_back({flavor, NonCanonicalPred(flavor, make_equality_constraint(args1[i],args2[i])) });
+        {
+            auto constraint = make_equality_constraint(args1[i], args2[i]);
+            auto dvar = fresh_dvar(constraint);
+            work_list.push_back({flavor, NonCanonicalPred(dvar, constraint)});
+        }
 
         return {};
     }
