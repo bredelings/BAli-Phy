@@ -442,6 +442,8 @@ struct TypeChecker: FreshVarSource
     std::pair<Hs::Decls, Core::Decl>
     infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& instance_decl);
 
+    std::map<std::string, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name) const;
+
     void check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const std::optional<std::string>& associated_class, const substitution_t& instance_subst);
 
     // Figure 26

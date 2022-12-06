@@ -289,7 +289,7 @@ string get_class_for_constraint(const Hs::Type& constraint)
 //          so, typechecking the method bodies needs to come after typechecking the rest of the module.
 // FIXME: What stuff do we want to know from infer_type_for_instance1( )?
 //        * the dvar name
-    
+
 // Construct superclass dictionary entries from instance constraints
 
 // Construct member function entries.
@@ -303,7 +303,7 @@ string get_class_for_constraint(const Hs::Type& constraint)
    in <dvar1, ..., dvarN, var1, ..., varM>
 */
 
-map<string, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const string& class_name)
+map<string, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const string& class_name) const
 {
     std::map<string,Hs::Matches> method_matches;
     for(auto& decl: decls)
@@ -312,10 +312,10 @@ map<string, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const glob
         string method_name = unloc(fd.v.name);
 
         if (not members.count(method_name))
-            throw myexception()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'";
+            throw err_context_exception()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'";
 
         if (method_matches.count(method_name))
-            throw myexception()<<"method '"<<method_name<<"' defined twice!";
+            throw err_context_exception()<<"method '"<<method_name<<"' defined twice!";
 
         method_matches.insert({method_name, fd.matches});
     }
@@ -326,6 +326,8 @@ map<string, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const glob
 pair<Hs::Decls, Core::Decl>
 TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& inst_decl)
 {
+    context.push_err_context( ErrorContext()<<"In instance '"<<inst_decl.constraint<<"':" );
+
     // 1. Get instance head and constraints 
 
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
@@ -353,7 +355,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     auto WC = WantedConstraints(wanteds);
     auto decls_super = entails(givens, WC);
     if (not WC.simple.empty())
-        throw myexception()<<"Can't derive superclass constraints "<<print(WC.simple)<<" from instance constraints "<<print(givens)<<"!";
+        throw err_context_exception()<<"Can't derive superclass constraints "<<print(WC.simple)<<" from instance constraints "<<print(givens)<<"!";
 
     // 7. make some intermediates
 
@@ -393,7 +395,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         else
         {
             if (not class_info.default_methods.count(method_name))
-                throw myexception()<<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'";
+                throw err_context_exception()<<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'";
 
             auto dm_var = class_info.default_methods.at(method_name);
 
@@ -410,6 +412,8 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         dict = Core::Let( decls_super, dict );
 
     dict = wrap_gen(dict);
+
+    context.pop_err_context();
 
     return {decls, pair(dfun, dict)};
 }
