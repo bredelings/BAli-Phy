@@ -39,6 +39,37 @@ type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::C
 
 global_value_env sig_env(const signature_env& signatures);
 
+struct ErrorContext
+{
+    std::string ctx;
+
+    void prepend(const std::string& s) {ctx = s + ctx;}
+
+    std::string print() const {return ctx;}
+
+    template <typename T> ErrorContext& operator<<(const T& t)
+    {
+        std::ostringstream oss;
+        oss<<ctx<<t;
+        ctx = oss.str();
+        return *this;
+    }
+
+    ErrorContext() = default;
+};
+
+struct TypeCheckerContext
+{
+//    yy::location source_span;
+    std::vector< ErrorContext > err_contexts;
+//    std::vector< Hs::Var > binder_stack;
+//    int level = 0;
+
+    void pop_err_context();
+    void push_err_context(const ErrorContext& e);
+    std::string print_err_context() const;
+};
+
 struct global_tc_state
 {
     const Module& this_mod; // for name lookups like Bool, Num, etc.
@@ -130,6 +161,10 @@ struct TypeChecker: FreshVarSource
     global_value_env gve;
 
     WantedConstraints collected_wanteds;
+
+    TypeCheckerContext context;
+
+    myexception err_context_exception() const;
 
     //-------
     Hs::MetaTypeVar fresh_meta_type_var(const std::string& name, const Hs::Kind& k);

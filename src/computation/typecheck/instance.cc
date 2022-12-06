@@ -68,11 +68,11 @@ string get_name_for_typecon(const Hs::TypeCon& tycon)
 
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
+    context.push_err_context( ErrorContext()<<"In instance '"<<inst.print()<<"':" );
+
     // 1. Check that the type family exists.
     if (not type_fam_info().count(inst.con))
-        throw myexception()<<
-            "In instance '"<<inst.print()<<"':\n"<<
-            "  No type family '"<<inst.con.print()<<"'";
+        throw err_context_exception()<<"  No type family '"<<inst.con.print()<<"'";
 
     // 2. Get the type family info
     auto& tf_info = type_fam_info().at(inst.con);
@@ -81,14 +81,12 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     {
         // 3. Check for unassociated instances declared for associated classes
         if (not associated_class)
-            throw myexception()<<
-                "In instance '"<<inst.print()<<"':\n"<<
+            throw err_context_exception()<<
                 "  Can't declare non-associated type instance for type family '"<<inst.con.print()<<"' associated with class '"<<(*tf_info.associated_class)<<"'";
 
         // 4. Check for instances associated with the wrong class
         if (*tf_info.associated_class != *associated_class)
-            throw myexception()<<
-                "In instance '"<<inst.print()<<"':\n"<<
+            throw err_context_exception()<<
                 "  Trying to declare type instance in class '"<<*associated_class<<" for family '"<<inst.con.print()<<"' associated with class '"<<(*tf_info.associated_class)<<"'";
 
         // 5. Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
@@ -99,9 +97,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
             {
                 auto expected = instance_subst.at(fam_tv);
                 if (not same_type(inst.args[i], expected))
-                    throw myexception()<<
-//                        "In instance '"<<inst_decl.constraint<<"':\n"<<
-                        "  In type instance '"<<inst.print()<<"':\n"<<
+                    throw err_context_exception()<<
                         "    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'";
             }
         }
@@ -109,15 +105,12 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 
     // 6. Check that the type family is not closed
     if (tf_info.closed)
-        throw myexception()<<
-            "In instance '"<<inst.print()<<"':\n"<<
+        throw err_context_exception()<<
             "  Can't declare additional type instance for closed type family '"<<inst.con.print()<<"'";
 
     // 7. Check that the type instance has the right number of arguments
     if (inst.args.size() != tf_info.args.size())
-        throw myexception()<<
-//            "In instance '"<<inst_decl.constraint<<"':\n"<<
-            "  In type instance '"<<inst.print()<<"':\n"<<
+        throw err_context_exception()<<
             "    Expected "<<tf_info.args.size()<<" parameters, but got "<<inst.args.size();
 
     // 8. The rhs may only mention type vars bound on the lhs.
@@ -130,9 +123,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 
     for(auto& tv: free_type_variables(inst.rhs))
         if (not lhs_tvs.count(tv))
-            throw myexception()<<
-//                "In class '"<<class_decl.name<<"':\n"<<
-                "  In instance '"<<inst.print()<<"' rhs variable '"<<tv.print()<<"' not bound on the lhs.";
+            throw err_context_exception()<<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.";
 
     // 9. Kind-check the parameters and result type, and record the free type variables.
     TypeFamEqnInfo eqn{inst.args, inst.rhs, lhs_tvs | ranges::to<vector>()};
@@ -163,29 +154,33 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     // Make up an equation id -- this is the "evidence" for the type family instance.
     int eqn_id = FreshVarSource::get_index();
     tf_info.equations.insert({eqn_id, eqn});
+
+    context.pop_err_context();
 }
 
 pair<Core::Var, Hs::Type>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
+    context.push_err_context( ErrorContext()<<"In instance '"<<inst_decl.constraint<<"':" );
+
     // 1. Get class name and parameters for the instance
     auto [class_head, class_args] = Hs::decompose_type_apps(inst_decl.constraint);
 
     // 2. Look up the class info
     auto tc = class_head.to<Hs::TypeCon>();
     if (not tc)
-        throw myexception()<<"In instance for '"<<inst_decl.constraint<<"': "<<class_head<<" is not a type constructor!";
+        throw err_context_exception()<<"  "<<class_head<<" is not a type constructor!";
 
     // Check that this is a class, and not a data or type?
     auto class_name = unloc(tc->name);
     if (not class_env().count(class_name))
-        throw myexception()<<"In instance '"<<inst_decl.constraint<<"': no class '"<<class_name<<"'!";
+        throw err_context_exception()<<"  no class '"<<class_name<<"'!";
     auto class_info = class_env().at(class_name);
 
     // 3. Check that the instance has the right number of parameters
     int N = class_info.type_vars.size();
     if (class_args.size() != class_info.type_vars.size())
-        throw myexception()<<"In instance '"<<inst_decl.constraint<<"': should have "<<N<<" parameters, but has "<<class_args.size()<<".";
+        throw err_context_exception()<<"  should have "<<N<<" parameters, but has "<<class_args.size()<<".";
 
     // 4. Construct the mapping from original class variables to instance variables
     substitution_t instance_subst;
@@ -210,7 +205,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
             if (auto tc = a_head.to<Hs::TypeCon>())
                 tycon_names += get_name_for_typecon(*tc);
             else
-                throw myexception()<<"Instance declaration for "<<inst_decl.constraint<<" doesn't make sense";
+                throw err_context_exception()<<"  '"<<a_head.print()<<"' is not a type constructor!";
 
             // Now, tc needs to be a data type constructor!
             // With FlexibleInstances, (i) the arguments do NOT have to be variables and (ii) type synonyms are allowed.
@@ -221,7 +216,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     for(auto& tv: free_type_variables(inst_decl.context))
     {
         if (not type_vars.count(tv))
-            throw myexception()<<"Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in '"<<inst_decl.constraint<<"'";
+            throw err_context_exception()<<"  Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in the instance declaration";
     }
 
 
@@ -236,6 +231,9 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     //  -- new -- //
     Hs::Type inst_type = Hs::add_constraints(inst_decl.context, inst_decl.constraint);
     inst_type = check_constraint( inst_type );  // kind-check the constraint and quantify it.
+
+    context.pop_err_context();
+
     return {dfun, inst_type};
 }
 

@@ -46,7 +46,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_t
         {
             auto [tvs, wanteds, monotype] = instantiate(sig_type);
             if (wanteds.size())
-                throw myexception()<<"variable '"<<name<<"' cannot have constrained type '"<<sig_type<<"' due to monomorphism restriction";
+                throw err_context_exception()<<"variable '"<<name<<"' cannot have constrained type '"<<sig_type<<"' due to monomorphism restriction";
             type = monotype;
             fillInfer(type, *I);
         }
@@ -301,7 +301,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
             std::abort();
     }
     else
-        throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
+        throw err_context_exception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
 Hs::Type TypeChecker::inferPat(local_value_env& penv, Hs::Pattern& pat, const map<string, Hs::Type>& sigs)

@@ -123,29 +123,25 @@ TypeChecker::infer_type_for_decls(const signature_env& signatures, const Hs::Dec
     Hs::Decls decls2;
     for(auto& group: bind_groups)
     {
-        try {
-            auto group_decls = infer_type_for_decls_group(signatures, group, is_top_level);
-
-            for(auto& decl: group_decls)
-                decls2.push_back(decl);
-        }
-        catch (myexception& e)
+        ErrorContext ec;
+        ec<<"In recursive group:\n";
+        for(auto& decl: group)
         {
-            std::ostringstream header;
-            header<<"In recursive group:\n";
-            for(auto& decl: group)
-            {
-                if (auto fd = decl.to<Hs::FunDecl>())
-                    header<<"    "<<fd->v.print()<<"\n";
-                else if (auto pd = decl.to<Hs::PatDecl>())
-                    header<<"    "<<pd->lhs.print()<<"\n";
-                else
-                    std::abort();
-            }
-            header<<"\n";
-            e.prepend(header.str());
-            throw;
+            if (auto fd = decl.to<Hs::FunDecl>())
+                ec<<"    "<<fd->v.print()<<"\n";
+            else if (auto pd = decl.to<Hs::PatDecl>())
+                ec<<"    "<<pd->lhs.print()<<"\n";
+            else
+                std::abort();
         }
+        context.push_err_context(ec);
+
+        auto group_decls = infer_type_for_decls_group(signatures, group, is_top_level);
+
+        context.pop_err_context();
+        
+        for(auto& decl: group_decls)
+            decls2.push_back(decl);
     }
     return decls2;
 }

@@ -340,6 +340,29 @@ using std::tuple;
 // LVE = local  value environment      = var -> monotype
 
 
+void TypeCheckerContext::pop_err_context()
+{
+    err_contexts.pop_back();
+}
+
+void TypeCheckerContext::push_err_context(const ErrorContext& e)
+{
+    err_contexts.push_back(e);
+}
+
+string TypeCheckerContext::print_err_context() const
+{
+    vector<string> estrings;
+    for(auto& err_context: err_contexts)
+        estrings.push_back(err_context.print()+"\n");
+    return join(estrings, "\n");
+}
+
+myexception TypeChecker::err_context_exception() const
+{
+    return myexception(context.print_err_context());
+}
+
 Hs::TypeVar unification_env::fresh_tyvar(const std::optional<Hs::Kind>& kind) const
 {
     int level = 0;
@@ -418,7 +441,7 @@ void TypeChecker::fillInfer(const Hs::Type& type, Infer& I)
 void TypeChecker::ensure_monotype(const Hs::Type& type)
 {
     if (not is_rho_type(type))
-        throw myexception()<<"ensure_monotype: "<<type<<" is not a rho type!";
+        throw err_context_exception()<<"ensure_monotype: "<<type<<" is not a rho type!";
 
     if (true) // a tau type
         ;
@@ -462,6 +485,7 @@ void TypeChecker::set_expected_type(const Expected& E, const Hs::Type& type)
             header<<"   "<<type<<"\n\n";
 
             ex.prepend(header.str());
+            ex.prepend(context.print_err_context());
             throw;
         }
     }
@@ -685,7 +709,9 @@ void TypeChecker::promote(Hs::Type type, int new_level)
 
     // check for skolem_escape
     if (max_level(type) > new_level)
-        throw myexception()<<"skolem-escape in '"<<type<<"':\n  cannot promote to level "<<new_level<<" because of type variables on level "<<max_level(type);
+    {
+        throw myexception(context.print_err_context())<<"skolem-escape in '"<<type<<"':\n  cannot promote to level "<<new_level<<" because of type variables on level "<<max_level(type);
+    }
 }
 
 void TypeChecker::add_binders(const local_value_env& binders)
@@ -893,7 +919,7 @@ DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
     }
 
     if (not con_info().count(con_name))
-        throw myexception()<<"Unrecognized constructor: "<<con;
+        throw err_context_exception()<<"Unrecognized constructor: "<<con;
 
     return con_info().at(con_name);
 }
