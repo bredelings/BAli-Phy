@@ -81,8 +81,12 @@ typedef std::variant<Changed, Unchanged, Solved, NonCanon> Change;
 struct InertSet
 {
     std::optional<int> given_eq_level;
-    std::vector<Predicate> inerts;
 
+    std::vector<Predicate> tv_eqs;
+    std::vector<Predicate> mtv_eqs;
+    std::vector<Predicate> tyfam_eqs;
+    std::vector<Predicate> dicts;
+    std::vector<Predicate> irreducible;
     std::vector<Predicate> failed;
 };
 
@@ -100,6 +104,7 @@ struct Solver: public TypeChecker
 
     bool is_touchable(const Hs::MetaTypeVar&, const Hs::Type&) const;
 
+    void kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps);
     void kickout_after_unification(const Hs::MetaTypeVar&);
 
     std::optional<Predicate> canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P);

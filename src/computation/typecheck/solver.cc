@@ -580,12 +580,12 @@ vector<Predicate> kickout_after_unification2(const Hs::MetaTypeVar& mtv, std::ve
 
 void Solver::kickout_after_unification(const Hs::MetaTypeVar& mtv)
 {
-    assert(inerts.tv_eqs.size() + inerts.mtv_eqs.size() + inerts.tyfam_eqs.size() + inerts.dicts.size() + inerts.irreducible.size() == inerts.inerts.size());
-
     // kick-out for inerts containing mtv
-    add_to_work_list(kickout_after_unification2(mtv, inerts.inerts));
-
-    assert(inerts.tv_eqs.size() + inerts.mtv_eqs.size() + inerts.tyfam_eqs.size() + inerts.dicts.size() + inerts.irreducible.size() == inerts.inerts.size());
+    kickout_after_unification2(mtv, inerts.tv_eqs);
+    kickout_after_unification2(mtv, inerts.mtv_eqs);
+    kickout_after_unification2(mtv, inerts.tyfam_eqs);
+    kickout_after_unification2(mtv, inerts.dicts);
+    kickout_after_unification2(mtv, inerts.irreducible);
 }
 
 void Solver::add_inert(const Predicate& p)
@@ -599,7 +599,24 @@ void Solver::add_inert(const Predicate& p)
         }
     }
 
-    inerts.inerts.push_back(p);
+    if (auto E = to<CanonicalEqualityPred>(p.pred))
+    {
+        auto t1 = Hs::follow_meta_type_var(E->t1);
+        if (t1.is_a<Hs::TypeVar>())
+            inerts.tv_eqs.push_back(p);
+        else if (t1.is_a<Hs::MetaTypeVar>())
+            inerts.mtv_eqs.push_back(p);
+        else if (false) // type fam application?
+            inerts.tyfam_eqs.push_back(p);
+        else
+            inerts.irreducible.push_back(p);
+    }
+    else if (to<CanonicalDictPred>(p.pred))
+    {
+        inerts.dicts.push_back(p);
+    }
+    else
+        std::abort();
 }
 
     // The simplifier corresponds to the relation |->[simp] from Figure 19 of the OutsideIn(X) paper:
@@ -638,6 +655,31 @@ void Solver::add_inert(const Predicate& p)
     // e. react a wanted Q1 with axioms in \mathcal{Q} to produce Q2 and new touchable variables beta.
     //    - replace Q1 by Q2 and add in the new touchable variables beta.
 
+void Solver::kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps)
+{
+    // kick-out for inerts that are rewritten by p
+    for(int i=0;i<ps.size();i++)
+    {
+        auto I1 = interact(ps[i], p);
+        assert(to<Unchanged>(I1));
+
+        auto I2 = interact(p, ps[i]);
+        if (not to<Unchanged>(I2))
+        {
+            // If its noncanon or solved, we don't want to put it back!
+            if (auto C = to<Changed>(I2))
+                work_list.push_back(C->P);
+
+            if (i+1 < ps.size())
+                std::swap(ps[i], ps.back());
+
+            ps.pop_back();
+            i--;
+            continue;
+        }
+    }
+}
+
 Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 {
     if (wanteds.empty()) return {{}, {}};
@@ -668,7 +710,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         while (changed and not done)
         {
             changed = false;
-            for(auto& inert: inerts.inerts)
+            for(auto& inert: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs, inerts.dicts, inerts.irreducible, inerts.failed))
             {
                 auto I = interact(inert, p);
                 if (auto C = to<Changed>(I))
@@ -686,26 +728,12 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         if (done) continue;
 
         // kick-out for inerts that are rewritten by p
-        for(int i=0;i<inerts.inerts.size();i++)
-        {
-            auto I1 = interact(inerts.inerts[i], p);
-            assert(to<Unchanged>(I1));
-
-            auto I2 = interact(p, inerts.inerts[i]);
-            if (not to<Unchanged>(I2))
-            {
-                // If its noncanon or solved, we don't want to put it back!
-                if (auto C = to<Changed>(I2))
-                    work_list.push_back(C->P);
-
-                if (i+1 < inerts.inerts.size())
-                    std::swap(inerts.inerts[i], inerts.inerts.back());
-
-                inerts.inerts.pop_back();
-                i--;
-                continue;
-            }
-        }
+        kickout_rewritten(p, inerts.tv_eqs);
+        kickout_rewritten(p, inerts.mtv_eqs);
+        kickout_rewritten(p, inerts.tyfam_eqs);
+        kickout_rewritten(p, inerts.dicts);
+        kickout_rewritten(p, inerts.irreducible);
+        kickout_rewritten(p, inerts.failed);
 
         // top-level reactions
         if (top_react(p))
@@ -760,8 +788,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 
     // Split inert into substitution and remaining constraints
     wanteds.clear();
-    vector<pair<Hs::MetaTypeVar,Hs::Type>> equations;
-    for(auto& P: inerts.inerts)
+    for(auto& P: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs, inerts.dicts, inerts.irreducible, inerts.failed))
     {
         assert(is_canonical(P));
 
