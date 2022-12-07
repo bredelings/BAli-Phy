@@ -546,22 +546,60 @@ bool affected_by_mtv(const Predicate& P, const Hs::MetaTypeVar& mtv)
     return affected_by_mtv(P.pred, mtv);
 }
 
-void Solver::kickout_after_unification(const Hs::MetaTypeVar& mtv)
+void Solver::add_to_work_list(const std::vector<Predicate>& ps)
 {
+    for(auto& p: ps)
+        if (p.flavor == Wanted)
+            work_list.push_back(p);
+
+    for(auto& p: ps)
+        if (p.flavor == Given)
+            work_list.push_back(p);
+}
+
+vector<Predicate> kickout_after_unification2(const Hs::MetaTypeVar& mtv, std::vector<Predicate>& preds)
+{
+    vector<Predicate> work_list;
     // kick-out for inerts that are rewritten by p
-    for(int i=0;i<inerts.inerts.size();i++)
+    for(int i=0;i<preds.size();i++)
     {
-        if (affected_by_mtv(inerts.inerts[i], mtv))
+        if (affected_by_mtv(preds[i], mtv))
         {
             // FIXME: put givens last, so that we process them first
-            work_list.push_back(inerts.inerts[i]);
-            if (i+1 < inerts.inerts.size())
-                std::swap(inerts.inerts[i], inerts.inerts.back());
+            work_list.push_back(preds[i]);
+            if (i+1 < preds.size())
+                std::swap(preds[i], preds.back());
 
-            inerts.inerts.pop_back();
+            preds.pop_back();
             i--;
         }
     }
+
+    return work_list;
+}
+
+void Solver::kickout_after_unification(const Hs::MetaTypeVar& mtv)
+{
+    assert(inerts.tv_eqs.size() + inerts.mtv_eqs.size() + inerts.tyfam_eqs.size() + inerts.dicts.size() + inerts.irreducible.size() == inerts.inerts.size());
+
+    // kick-out for inerts containing mtv
+    add_to_work_list(kickout_after_unification2(mtv, inerts.inerts));
+
+    assert(inerts.tv_eqs.size() + inerts.mtv_eqs.size() + inerts.tyfam_eqs.size() + inerts.dicts.size() + inerts.irreducible.size() == inerts.inerts.size());
+}
+
+void Solver::add_inert(const Predicate& p)
+{
+    if (auto E = to<CanonicalEqualityPred>(p.pred))
+    {
+        int eq_level = std::max( Hs::max_level(E->t1), Hs::max_level(E->t2));
+        if (eq_level < level and p.flavor == Given)
+        {
+            inerts.given_eq_level = std::max( inerts.given_eq_level.value_or(0), eq_level );
+        }
+    }
+
+    inerts.inerts.push_back(p);
 }
 
     // The simplifier corresponds to the relation |->[simp] from Figure 19 of the OutsideIn(X) paper:
@@ -708,17 +746,8 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
             }
         }
 
-        if (auto E = to<CanonicalEqualityPred>(p.pred))
-        {
-            int eq_level = std::max( max_level(E->t1), max_level(E->t2));
-            if (eq_level < level and p.flavor == Given)
-            {
-                inerts.given_eq_level = std::max( inerts.given_eq_level.value_or(0), eq_level );
-            }
-        }
-
         // we should only get this far if p is closed under rewriting, and unsolved.
-        inerts.inerts.push_back(p);
+        add_inert(p);
     }
 
     if (not inerts.failed.empty())

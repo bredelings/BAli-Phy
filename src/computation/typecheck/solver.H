@@ -82,6 +82,7 @@ struct InertSet
 {
     std::optional<int> given_eq_level;
     std::vector<Predicate> inerts;
+
     std::vector<Predicate> failed;
 };
 
@@ -93,6 +94,9 @@ struct Solver: public TypeChecker
     std::vector<Predicate> work_list;
 
     InertSet inerts;
+
+    void add_inert(const Predicate& P);
+    void add_to_work_list(const std::vector<Predicate>& ps);
 
     bool is_touchable(const Hs::MetaTypeVar&, const Hs::Type&) const;
 
