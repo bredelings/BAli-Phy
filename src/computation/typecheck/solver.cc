@@ -388,6 +388,66 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
         std::abort();
 }
 
+Change Solver::rewrite(const Predicate& P1, const Predicate& P2)
+{
+    assert(is_canonical(P1));
+    assert(is_canonical(P2));
+
+    // Don't allow wanteds to rewrite givens
+    if (P1.flavor == Wanted and P2.flavor == Given) return Unchanged();
+
+    auto eq1 = to<CanonicalEqualityPred>(P1.pred);
+    auto eq2 = to<CanonicalEqualityPred>(P2.pred);
+
+    auto dict1 = to<CanonicalDictPred>(P1.pred);
+    auto dict2 = to<CanonicalDictPred>(P2.pred);
+
+    if (eq1 and eq2)
+    {
+        auto [v1, t1a, t1b] = *eq1;
+        auto uv1 = unfilled_meta_type_var(t1a);
+        auto tv1 = t1a.to<Hs::TypeVar>();
+
+        auto [v2, t2a, t2b] = *eq2;
+        auto uv2 = unfilled_meta_type_var(t2a);
+        auto tv2 = t2a.to<Hs::TypeVar>();
+
+        // EQDIFF: (tv1 ~ X1) + (tv2 ~ X2) -> (tv1 ~ X1) && (tv2 ~ [tv1->X1]X2) if tv1 in ftv(X2)
+        if (tv1 or uv1)
+        {
+            if (auto t2b_subst = tv1?check_apply_subst({{*tv1, t1b}}, t2b):check_apply_subst({{*uv1, t1b}}, t2b))
+            {
+                return Changed{Predicate{P2.flavor, CanonicalEqualityPred(eq2->co, t2a, *t2b_subst)}};
+            }
+        }
+    }
+    // EQDICT: (tv1 ~ X1) + (D xs)     -> (tv1 ~ X1) && (D [tv1->X1]xs) if tv1 in ftv(xs)
+    else if (eq1 and dict2)
+    {
+        auto [v1, t1a, t1b] = *eq1;
+        auto uv1 = unfilled_meta_type_var(t1a);
+        auto tv1 = t1a.to<Hs::TypeVar>();
+
+        if (tv1 or uv1)
+        {
+            bool changed = false;
+            CanonicalDictPred dict2_subst = *dict2;
+            for(auto& class_arg: dict2_subst.args)
+            {
+                if (auto maybe_class_arg = tv1?check_apply_subst({{*tv1,t1b}}, class_arg):check_apply_subst({{*uv1,t1b}},class_arg))
+                {
+                    changed = true;
+                    class_arg = *maybe_class_arg;
+                }
+            }
+            if (changed)
+                return Changed{Predicate(P2.flavor, dict2_subst)};
+        }
+    }
+
+    return Unchanged();
+}
+
 Change Solver::interact(const Predicate& P1, const Predicate& P2)
 {
     assert(is_canonical(P1));
@@ -417,37 +477,6 @@ Change Solver::interact(const Predicate& P1, const Predicate& P2)
         {
             work_list.push_back(Predicate{P2.flavor, NonCanonicalPred(eq2->co, make_equality_constraint(t1b, t2b))});
             return NonCanon();
-        }
-        // EQDIFF: (tv1 ~ X1) + (tv2 ~ X2) -> (tv1 ~ X1) && (tv2 ~ [tv1->X1]X2) if tv1 in ftv(X2)
-        else if (tv1 or uv1)
-        {
-            if (auto t2b_subst = tv1?check_apply_subst({{*tv1, t1b}}, t2b):check_apply_subst({{*uv1, t1b}}, t2b))
-            {
-                return Changed{Predicate{P2.flavor, CanonicalEqualityPred(eq2->co, t2a, *t2b_subst)}};
-            }
-        }
-    }
-    // EQDICT: (tv1 ~ X1) + (D xs)     -> (tv1 ~ X1) && (D [tv1->X1]xs) if tv1 in ftv(xs)
-    else if (eq1 and dict2)
-    {
-        auto [v1, t1a, t1b] = *eq1;
-        auto uv1 = unfilled_meta_type_var(t1a);
-        auto tv1 = t1a.to<Hs::TypeVar>();
-
-        if (tv1 or uv1)
-        {
-            bool changed = false;
-            CanonicalDictPred dict2_subst = *dict2;
-            for(auto& class_arg: dict2_subst.args)
-            {
-                if (auto maybe_class_arg = tv1?check_apply_subst({{*tv1,t1b}}, class_arg):check_apply_subst({{*uv1,t1b}},class_arg))
-                {
-                    changed = true;
-                    class_arg = *maybe_class_arg;
-                }
-            }
-            if (changed)
-                return Changed{Predicate(P2.flavor, dict2_subst)};
         }
     }
     else if (dict1 and dict2)
@@ -660,10 +689,10 @@ void Solver::kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps)
     // kick-out for inerts that are rewritten by p
     for(int i=0;i<ps.size();i++)
     {
-        auto I1 = interact(ps[i], p);
+        auto I1 = rewrite(ps[i], p);
         assert(to<Unchanged>(I1));
 
-        auto I2 = interact(p, ps[i]);
+        auto I2 = rewrite(p, ps[i]);
         if (not to<Unchanged>(I2))
         {
             // If its noncanon or solved, we don't want to put it back!
@@ -706,6 +735,21 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 
         // rewrite and interact
         bool done = false;
+        for(auto& inert: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs))
+        {
+            auto I = rewrite(inert, p);
+            if (auto C = to<Changed>(I))
+            {
+                p = C->P;
+            }
+            else if (to<Solved>(I) or to<NonCanon>(I))
+            {
+                done = true;
+                break;
+            }
+        }
+        if (done) continue;
+
         for(auto& inert: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs, inerts.dicts, inerts.irreducible, inerts.failed))
         {
             auto I = interact(inert, p);
