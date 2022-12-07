@@ -111,7 +111,7 @@ struct Solver: public TypeChecker
     std::optional<Predicate> canonicalize_dict(ConstraintFlavor flavor, CanonicalDictPred P);
     std::optional<Predicate> canonicalize(Predicate& P);
 
-    Change rewrite(const Predicate& P1, const Predicate& P2);
+    bool rewrite(const Predicate& P1, Predicate& P2);
     Change interact(const Predicate& P1, const Predicate& P2);
 
     std::optional<Reaction> top_react(const Predicate& P);

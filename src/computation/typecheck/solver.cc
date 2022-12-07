@@ -388,13 +388,13 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
         std::abort();
 }
 
-Change Solver::rewrite(const Predicate& P1, const Predicate& P2)
+bool Solver::rewrite(const Predicate& P1, Predicate& P2)
 {
     assert(is_canonical(P1));
     assert(is_canonical(P2));
 
     // Don't allow wanteds to rewrite givens
-    if (P1.flavor == Wanted and P2.flavor == Given) return Unchanged();
+    if (P1.flavor == Wanted and P2.flavor == Given) return false;
 
     auto eq1 = to<CanonicalEqualityPred>(P1.pred);
     auto eq2 = to<CanonicalEqualityPred>(P2.pred);
@@ -417,7 +417,8 @@ Change Solver::rewrite(const Predicate& P1, const Predicate& P2)
         {
             if (auto t2b_subst = tv1?check_apply_subst({{*tv1, t1b}}, t2b):check_apply_subst({{*uv1, t1b}}, t2b))
             {
-                return Changed{Predicate{P2.flavor, CanonicalEqualityPred(eq2->co, t2a, *t2b_subst)}};
+                P2 = Predicate{P2.flavor, CanonicalEqualityPred(eq2->co, t2a, *t2b_subst)};
+                return true;
             }
         }
     }
@@ -441,11 +442,14 @@ Change Solver::rewrite(const Predicate& P1, const Predicate& P2)
                 }
             }
             if (changed)
-                return Changed{Predicate(P2.flavor, dict2_subst)};
+            {
+                P2 = Predicate(P2.flavor, dict2_subst);
+                return true;
+            }
         }
     }
 
-    return Unchanged();
+    return false;
 }
 
 Change Solver::interact(const Predicate& P1, const Predicate& P2)
@@ -689,15 +693,9 @@ void Solver::kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps)
     // kick-out for inerts that are rewritten by p
     for(int i=0;i<ps.size();i++)
     {
-        auto I1 = rewrite(ps[i], p);
-        assert(to<Unchanged>(I1));
-
-        auto I2 = rewrite(p, ps[i]);
-        if (not to<Unchanged>(I2))
+        if (rewrite(p, ps[i]))
         {
-            // If its noncanon or solved, we don't want to put it back!
-            if (auto C = to<Changed>(I2))
-                work_list.push_back(C->P);
+            work_list.push_back(ps[i]);
 
             if (i+1 < ps.size())
                 std::swap(ps[i], ps.back());
@@ -734,22 +732,10 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
             continue;
 
         // rewrite and interact
-        bool done = false;
         for(auto& inert: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs))
-        {
-            auto I = rewrite(inert, p);
-            if (auto C = to<Changed>(I))
-            {
-                p = C->P;
-            }
-            else if (to<Solved>(I) or to<NonCanon>(I))
-            {
-                done = true;
-                break;
-            }
-        }
-        if (done) continue;
+            rewrite(inert, p);
 
+        bool done = false;
         for(auto& inert: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs, inerts.dicts, inerts.irreducible, inerts.failed))
         {
             auto I = interact(inert, p);
