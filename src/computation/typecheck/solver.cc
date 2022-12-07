@@ -706,23 +706,17 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 
         // rewrite and interact
         bool done = false;
-        bool changed = true;
-        while (changed and not done)
+        for(auto& inert: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs, inerts.dicts, inerts.irreducible, inerts.failed))
         {
-            changed = false;
-            for(auto& inert: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs, inerts.dicts, inerts.irreducible, inerts.failed))
+            auto I = interact(inert, p);
+            if (auto C = to<Changed>(I))
             {
-                auto I = interact(inert, p);
-                if (auto C = to<Changed>(I))
-                {
-                    p = C->P;
-                    changed = true;
-                }
-                else if (to<Solved>(I) or to<NonCanon>(I))
-                {
-                    done = true;
-                    break;
-                }
+                p = C->P;
+            }
+            else if (to<Solved>(I) or to<NonCanon>(I))
+            {
+                done = true;
+                break;
             }
         }
         if (done) continue;
