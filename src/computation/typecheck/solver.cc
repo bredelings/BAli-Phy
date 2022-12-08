@@ -413,22 +413,30 @@ void Solver::rewrite(const Predicate& P1, Predicate& P2)
     if (auto eq2 = to<CanonicalEqualityPred>(P2.pred))
     {
         if (tv1)
-            eq2->t2 = apply_subst({{*tv1,t1b}}, eq2->t2);
+        {
+            substitution_t s = {{*tv1,t1b}};
+            eq2->t2 = apply_subst(s, eq2->t2);
+        }
         else if (uv1)
-            eq2->t2 = apply_subst({{*uv1,t1b}}, eq2->t2);
+        {
+            usubstitution_t s = {{*uv1,t1b}};
+            eq2->t2 = apply_subst(s, eq2->t2);
+        }
     }
     // EQDICT: (tv1 ~ X1) + (D xs)     -> (tv1 ~ X1) && (D [tv1->X1]xs) if tv1 in ftv(xs)
     else if (auto dict2 = to<CanonicalDictPred>(P2.pred))
     {
-        if (tv1 or uv1)
+        if (tv1)
         {
+            substitution_t s = {{*tv1,t1b}};
             for(auto& class_arg: dict2->args)
-            {
-                if (auto maybe_class_arg = tv1?check_apply_subst({{*tv1,t1b}}, class_arg):check_apply_subst({{*uv1,t1b}},class_arg))
-                {
-                    class_arg = *maybe_class_arg;
-                }
-            }
+                class_arg = apply_subst(s, class_arg);
+        }
+        else if (uv1)
+        {
+            usubstitution_t s = {{*uv1,t1b}};
+            for(auto& class_arg: dict2->args)
+                class_arg = apply_subst(s, class_arg);
         }
     }
 }
