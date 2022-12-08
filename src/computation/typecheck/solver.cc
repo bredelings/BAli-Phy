@@ -373,20 +373,19 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
 {
     if (auto NC = to<NonCanonicalPred>(P.pred))
     {
-        auto NCP = std::get<NonCanonicalPred>(P.pred);
         auto flavor = P.flavor;
 
-        if (auto eq = Hs::is_equality_constraint(NCP.constraint))
+        if (auto eq = Hs::is_equality_constraint(NC->constraint))
         {
             auto& [t1, t2] = *eq;
-            return canonicalize_equality(flavor, {NCP.dvar, t1, t2});
+            return canonicalize_equality(flavor, {NC->dvar, t1, t2});
         }
         else
         {
-            auto [head,args] = decompose_type_apps(NCP.constraint);
+            auto [head,args] = decompose_type_apps(NC->constraint);
             assert(head.is_a<Hs::TypeCon>());
             auto klass = head.as_<Hs::TypeCon>();
-            return canonicalize_dict(P.flavor, CanonicalDictPred{NCP.dvar, klass, args});
+            return canonicalize_dict(P.flavor, CanonicalDictPred{NC->dvar, klass, args});
         }
     }
     else if (auto D = to<CanonicalDictPred>(P.pred))
@@ -413,18 +412,10 @@ void Solver::rewrite(const Predicate& P1, Predicate& P2)
 
     if (auto eq2 = to<CanonicalEqualityPred>(P2.pred))
     {
-        auto& [v2, t2a, t2b] = *eq2;
-        auto uv2 = unfilled_meta_type_var(t2a);
-        auto tv2 = t2a.to<Hs::TypeVar>();
-
-        // EQDIFF: (tv1 ~ X1) + (tv2 ~ X2) -> (tv1 ~ X1) && (tv2 ~ [tv1->X1]X2) if tv1 in ftv(X2)
-        if (tv1 or uv1)
-        {
-            if (auto t2b_subst = tv1?check_apply_subst({{*tv1, t1b}}, t2b):check_apply_subst({{*uv1, t1b}}, t2b))
-            {
-                t2b = *t2b_subst;
-            }
-        }
+        if (tv1)
+            eq2->t2 = apply_subst({{*tv1,t1b}}, eq2->t2);
+        else if (uv1)
+            eq2->t2 = apply_subst({{*uv1,t1b}}, eq2->t2);
     }
     // EQDICT: (tv1 ~ X1) + (D xs)     -> (tv1 ~ X1) && (D [tv1->X1]xs) if tv1 in ftv(xs)
     else if (auto dict2 = to<CanonicalDictPred>(P2.pred))
@@ -703,9 +694,9 @@ bool Solver::can_rewrite(const Predicate& p1, const Predicate& p2) const
         else
             std::abort();
     }
-    else if (auto tycon = t1.to<Hs::TypeCon>())
+    else if (/*auto tycon =*/ t1.to<Hs::TypeCon>())
         return false;
-    else if (auto app = t1.to<Hs::TypeApp>())
+    else if (/*auto app =*/ t1.to<Hs::TypeApp>())
         return false;
     else
         return false;
