@@ -587,7 +587,8 @@ void TreeInterface::set_branch_length(int b, double l)
     int r = M[array_reg].reg_for_slot(b);
 
     auto m = C.find_modifiable_reg(r);
-    assert(m);
+    if (not m)
+        throw myexception()<<"set_branch_length: not modifiable!";
     C.set_modifiable_value(*m, l);
 }
 
