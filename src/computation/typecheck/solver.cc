@@ -198,12 +198,6 @@ std::optional<Core::Decls> TypeChecker::entails(const T& givens, const std::pair
     return {};
 }
 
-const Hs::MetaTypeVar* unfilled_meta_type_var(Hs::Type& t)
-{
-    t = follow_meta_type_var(t);
-    return t.to<Hs::MetaTypeVar>();
-}
-
 bool cmp_less(const Hs::MetaTypeVar& uv1, const Hs::MetaTypeVar& uv2)
 {
     assert(not uv1.filled());
@@ -228,8 +222,8 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     P.t1 = rewrite(flavor, P.t1);
     P.t2 = rewrite(flavor, P.t2);
 
-    auto uv1 = unfilled_meta_type_var(P.t1);
-    auto uv2 = unfilled_meta_type_var(P.t2);
+    auto uv1 = follow_meta_type_var(P.t1).to<Hs::MetaTypeVar>();
+    auto uv2 = follow_meta_type_var(P.t2).to<Hs::MetaTypeVar>();
 
     // REFL: tau ~ tau
     // NOTE: this does not currently handle foralls or constraints!
@@ -417,7 +411,7 @@ Hs::Type Solver::rewrite(ConstraintFlavor flavor, Hs::Type t) const
             substitution_t s = {{*tv1, eq->t2}};
             t = apply_subst(s, t);
         }
-        else if (auto uv1 = unfilled_meta_type_var(eq->t1))
+        else if (auto uv1 = follow_meta_type_var(eq->t1).to<Hs::MetaTypeVar>())
         {
             usubstitution_t s = {{*uv1, eq->t2}};
             t = apply_subst(s, t);
