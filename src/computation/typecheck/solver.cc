@@ -406,18 +406,13 @@ void Solver::rewrite(const Predicate& P1, Predicate& P2)
     if (P1.flavor == Wanted and P2.flavor == Given) return;
 
     auto eq1 = to<CanonicalEqualityPred>(P1.pred);
-    auto eq2 = to<CanonicalEqualityPred>(P2.pred);
-
-    auto dict2 = to<CanonicalDictPred>(P2.pred);
-
     assert(eq1);
+    auto [v1, t1a, t1b] = *eq1;
+    auto uv1 = unfilled_meta_type_var(t1a);
+    auto tv1 = t1a.to<Hs::TypeVar>();
 
-    if (eq1 and eq2)
+    if (auto eq2 = to<CanonicalEqualityPred>(P2.pred))
     {
-        auto [v1, t1a, t1b] = *eq1;
-        auto uv1 = unfilled_meta_type_var(t1a);
-        auto tv1 = t1a.to<Hs::TypeVar>();
-
         auto& [v2, t2a, t2b] = *eq2;
         auto uv2 = unfilled_meta_type_var(t2a);
         auto tv2 = t2a.to<Hs::TypeVar>();
@@ -432,15 +427,10 @@ void Solver::rewrite(const Predicate& P1, Predicate& P2)
         }
     }
     // EQDICT: (tv1 ~ X1) + (D xs)     -> (tv1 ~ X1) && (D [tv1->X1]xs) if tv1 in ftv(xs)
-    else if (eq1 and dict2)
+    else if (auto dict2 = to<CanonicalDictPred>(P2.pred))
     {
-        auto [v1, t1a, t1b] = *eq1;
-        auto uv1 = unfilled_meta_type_var(t1a);
-        auto tv1 = t1a.to<Hs::TypeVar>();
-
         if (tv1 or uv1)
         {
-            CanonicalDictPred dict2_subst = *dict2;
             for(auto& class_arg: dict2->args)
             {
                 if (auto maybe_class_arg = tv1?check_apply_subst({{*tv1,t1b}}, class_arg):check_apply_subst({{*uv1,t1b}},class_arg))
