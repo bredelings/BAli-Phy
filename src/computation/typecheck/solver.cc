@@ -61,6 +61,15 @@ const T* to(const U& u)
         return nullptr;
 }
 
+template <typename T, typename U>
+T* to(U& u)
+{
+    if (std::holds_alternative<T>(u))
+        return &std::get<T>(u);
+    else
+        return nullptr;
+}
+
 // FIXME: there should be a `const` way of getting these.
 // FIXME: instantiate is not constant though.
 // FIXME: we shouldn't need fresh type vars if the type is unambiguous though.
@@ -399,7 +408,6 @@ void Solver::rewrite(const Predicate& P1, Predicate& P2)
     auto eq1 = to<CanonicalEqualityPred>(P1.pred);
     auto eq2 = to<CanonicalEqualityPred>(P2.pred);
 
-    auto dict1 = to<CanonicalDictPred>(P1.pred);
     auto dict2 = to<CanonicalDictPred>(P2.pred);
 
     assert(eq1);
@@ -410,7 +418,7 @@ void Solver::rewrite(const Predicate& P1, Predicate& P2)
         auto uv1 = unfilled_meta_type_var(t1a);
         auto tv1 = t1a.to<Hs::TypeVar>();
 
-        auto [v2, t2a, t2b] = *eq2;
+        auto& [v2, t2a, t2b] = *eq2;
         auto uv2 = unfilled_meta_type_var(t2a);
         auto tv2 = t2a.to<Hs::TypeVar>();
 
@@ -419,8 +427,7 @@ void Solver::rewrite(const Predicate& P1, Predicate& P2)
         {
             if (auto t2b_subst = tv1?check_apply_subst({{*tv1, t1b}}, t2b):check_apply_subst({{*uv1, t1b}}, t2b))
             {
-                P2 = Predicate{P2.flavor, CanonicalEqualityPred(eq2->co, t2a, *t2b_subst)};
-                return;
+                t2b = *t2b_subst;
             }
         }
     }
@@ -433,19 +440,13 @@ void Solver::rewrite(const Predicate& P1, Predicate& P2)
 
         if (tv1 or uv1)
         {
-            bool changed = false;
             CanonicalDictPred dict2_subst = *dict2;
-            for(auto& class_arg: dict2_subst.args)
+            for(auto& class_arg: dict2->args)
             {
                 if (auto maybe_class_arg = tv1?check_apply_subst({{*tv1,t1b}}, class_arg):check_apply_subst({{*uv1,t1b}},class_arg))
                 {
-                    changed = true;
                     class_arg = *maybe_class_arg;
                 }
-            }
-            if (changed)
-            {
-                P2 = Predicate(P2.flavor, dict2_subst);
             }
         }
     }
