@@ -135,7 +135,6 @@ public:
 
     int level() const;
 
-    MetaTypeVar(int level);
     MetaTypeVar(int level, const Located<std::string>& s);
     MetaTypeVar(int level, const Located<std::string>& s, const Kind& k);
 };
@@ -170,7 +169,6 @@ public:
     int level() const;
 
     TypeVar();
-    TypeVar(int l);
     TypeVar(const Located<std::string>& s);
     TypeVar(int l, const Located<std::string>& s);
     TypeVar(const Located<std::string>& s, const Kind& k);

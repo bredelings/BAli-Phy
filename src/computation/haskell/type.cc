@@ -563,10 +563,6 @@ int MetaTypeVar::level() const
         throw myexception()<<"Trying to get level for filled meta-typevar";
 }
 
-MetaTypeVar::MetaTypeVar(int l)
-    :MetaTypeVar(l, {},{})
-{}
-
 MetaTypeVar::MetaTypeVar(int l, const Located<std::string>& s)
     : MetaTypeVar(l, s, {})
 {}
@@ -629,10 +625,6 @@ bool TypeVar::operator<(const TypeVar& tv) const
 }
 
 TypeVar::TypeVar()
-{}
-
-TypeVar::TypeVar(int l)
-    :level_(l)
 {}
 
 TypeVar::TypeVar(const Located<std::string>& s)
