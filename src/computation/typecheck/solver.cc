@@ -225,6 +225,9 @@ CanonicalEqualityPred CanonicalEqualityPred::flip() const
 
 std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P)
 {
+    P.t1 = rewrite(flavor, P.t1);
+    P.t2 = rewrite(flavor, P.t2);
+
     auto uv1 = unfilled_meta_type_var(P.t1);
     auto uv2 = unfilled_meta_type_var(P.t2);
 
@@ -366,6 +369,9 @@ bool is_canonical(const Predicate& p)
 
 optional<Predicate> Solver::canonicalize_dict(ConstraintFlavor flavor, CanonicalDictPred P)
 {
+    for(auto& arg: P.args)
+        arg = rewrite(flavor, arg);
+
     return {{flavor, P}};
 }
 
@@ -396,49 +402,29 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
         std::abort();
 }
 
-void Solver::rewrite(const Predicate& P1, Predicate& P2)
+Hs::Type Solver::rewrite(ConstraintFlavor flavor, Hs::Type t) const
 {
-    assert(is_canonical(P1));
-    assert(is_canonical(P2));
-
-    // Don't allow wanteds to rewrite givens
-    if (P1.flavor == Wanted and P2.flavor == Given) return;
-
-    auto eq1 = to<CanonicalEqualityPred>(P1.pred);
-    assert(eq1);
-    auto [v1, t1a, t1b] = *eq1;
-    auto uv1 = unfilled_meta_type_var(t1a);
-    auto tv1 = t1a.to<Hs::TypeVar>();
-
-    if (auto eq2 = to<CanonicalEqualityPred>(P2.pred))
+    for(auto& inert: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs))
     {
-        if (tv1)
+        // Don't allow wanteds to rewrite givens
+        if (inert.flavor == Wanted and flavor == Given) continue;
+
+        auto eq = to<CanonicalEqualityPred>(inert.pred);
+        assert(eq);
+
+        if (auto tv1 = eq->t1.to<Hs::TypeVar>())
         {
-            substitution_t s = {{*tv1,t1b}};
-            eq2->t2 = apply_subst(s, eq2->t2);
+            substitution_t s = {{*tv1, eq->t2}};
+            t = apply_subst(s, t);
         }
-        else if (uv1)
+        else if (auto uv1 = unfilled_meta_type_var(eq->t1))
         {
-            usubstitution_t s = {{*uv1,t1b}};
-            eq2->t2 = apply_subst(s, eq2->t2);
+            usubstitution_t s = {{*uv1, eq->t2}};
+            t = apply_subst(s, t);
         }
     }
-    // EQDICT: (tv1 ~ X1) + (D xs)     -> (tv1 ~ X1) && (D [tv1->X1]xs) if tv1 in ftv(xs)
-    else if (auto dict2 = to<CanonicalDictPred>(P2.pred))
-    {
-        if (tv1)
-        {
-            substitution_t s = {{*tv1,t1b}};
-            for(auto& class_arg: dict2->args)
-                class_arg = apply_subst(s, class_arg);
-        }
-        else if (uv1)
-        {
-            usubstitution_t s = {{*uv1,t1b}};
-            for(auto& class_arg: dict2->args)
-                class_arg = apply_subst(s, class_arg);
-        }
-    }
+
+    return t;
 }
 
 Change Solver::interact(const Predicate& P1, const Predicate& P2)
@@ -455,24 +441,7 @@ Change Solver::interact(const Predicate& P1, const Predicate& P2)
     auto dict1 = to<CanonicalDictPred>(P1.pred);
     auto dict2 = to<CanonicalDictPred>(P2.pred);
 
-    if (eq1 and eq2)
-    {
-        auto [v1, t1a, t1b] = *eq1;
-        auto uv1 = unfilled_meta_type_var(t1a);
-        auto tv1 = t1a.to<Hs::TypeVar>();
-
-        auto [v2, t2a, t2b] = *eq2;
-        auto uv2 = unfilled_meta_type_var(t2a);
-        auto tv2 = t2a.to<Hs::TypeVar>();
-
-        // EQSAME: (tv1 ~ X1) + (tv1 ~ X2) -> (tv1 ~ X1) && (X1 ~ X2)
-        if ((tv1 and tv2 and *tv1 == *tv2) or (uv1 and uv2 and *uv1 == *uv2))
-        {
-            work_list.push_back(Predicate{P2.flavor, NonCanonicalPred(eq2->co, make_equality_constraint(t1b, t2b))});
-            return NonCanon();
-        }
-    }
-    else if (dict1 and dict2)
+    if (dict1 and dict2)
     {
         auto constraint1 = Hs::make_tyapps(dict1->klass, dict1->args);
         auto constraint2 = Hs::make_tyapps(dict2->klass, dict2->args);
@@ -753,10 +722,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         else
             continue;
 
-        // rewrite and interact
-        for(auto& inert: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs))
-            rewrite(inert, p);
-
+        // interact
         bool done = false;
         for(auto& inert: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs, inerts.dicts, inerts.irreducible, inerts.failed))
         {
