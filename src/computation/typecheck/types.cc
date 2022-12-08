@@ -255,3 +255,107 @@ bool affected_by_mtv(const Hs::Type& type, const Hs::MetaTypeVar& mtv)
         std::abort();
 }
 
+bool contains_mtv(const vector<Hs::Type>& types, const Hs::MetaTypeVar& mtv)
+{
+    for(auto& type: types)
+        if (contains_mtv(type, mtv))
+            return true;
+    return false;
+}
+
+bool contains_mtv(const Hs::Type& type, const Hs::MetaTypeVar& mtv)
+{
+    assert(not mtv.filled());
+
+    if (type.is_a<Hs::TypeCon>())
+        return false;
+    else if (type.is_a<Hs::TypeVar>())
+        return false;
+    else if (auto mtv2 = type.to<Hs::MetaTypeVar>())
+    {
+        if (auto t2 = mtv2->filled())
+            return contains_mtv(*t2, mtv);
+        else if (*mtv2 == mtv)
+            return true;
+        else
+            return false;
+    }
+    else if (auto app = type.to<Hs::TypeApp>())
+    {
+        return contains_mtv(app->head, mtv) or contains_mtv(app->arg, mtv);
+    }
+    else if (auto tup = type.to<Hs::TupleType>())
+    {
+        return contains_mtv(tup->element_types, mtv);
+    }
+    else if (auto list = type.to<Hs::ListType>())
+    {
+        return contains_mtv(list->element_type, mtv);
+    }
+    else if (auto forall = type.to<Hs::ForallType>())
+    {
+        return contains_mtv(forall->type, mtv);
+    }
+    else if (auto c = type.to<Hs::ConstrainedType>())
+    {
+        return contains_mtv(c->context.constraints, mtv) or contains_mtv(c->type, mtv);
+    }
+    else if (auto sl = type.to<Hs::StrictLazyType>())
+    {
+        return contains_mtv(sl->type, mtv);
+    }
+    else
+        std::abort();
+}
+
+bool contains_tv(const vector<Hs::Type>& types, const Hs::TypeVar& tv)
+{
+    for(auto& type: types)
+        if (contains_tv(type, tv))
+            return true;
+    return false;
+}
+
+bool contains_tv(const Hs::Type& type, const Hs::TypeVar& tv)
+{
+    if (type.is_a<Hs::TypeCon>())
+        return false;
+    else if (auto tv2 = type.to<Hs::TypeVar>())
+    {
+        return tv == *tv2;
+    }
+    else if (auto mtv = type.to<Hs::MetaTypeVar>())
+    {
+        if (auto t2 = mtv->filled())
+            return contains_tv(*t2, tv);
+        else
+            return false;
+    }
+    else if (auto app = type.to<Hs::TypeApp>())
+    {
+        return contains_tv(app->head, tv) or contains_tv(app->arg, tv);
+    }
+    else if (auto tup = type.to<Hs::TupleType>())
+    {
+        return contains_tv(tup->element_types, tv);
+    }
+    else if (auto list = type.to<Hs::ListType>())
+    {
+        return contains_tv(list->element_type, tv);
+    }
+    else if (auto forall = type.to<Hs::ForallType>())
+    {
+        return contains_tv(forall->type, tv);
+    }
+    else if (auto c = type.to<Hs::ConstrainedType>())
+    {
+        return contains_tv(c->context.constraints, tv) or contains_tv(c->type, tv);
+    }
+    else if (auto sl = type.to<Hs::StrictLazyType>())
+    {
+        return contains_tv(sl->type, tv);
+    }
+    else
+        std::abort();
+}
+

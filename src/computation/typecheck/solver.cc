@@ -388,19 +388,21 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
         std::abort();
 }
 
-bool Solver::rewrite(const Predicate& P1, Predicate& P2)
+void Solver::rewrite(const Predicate& P1, Predicate& P2)
 {
     assert(is_canonical(P1));
     assert(is_canonical(P2));
 
     // Don't allow wanteds to rewrite givens
-    if (P1.flavor == Wanted and P2.flavor == Given) return false;
+    if (P1.flavor == Wanted and P2.flavor == Given) return;
 
     auto eq1 = to<CanonicalEqualityPred>(P1.pred);
     auto eq2 = to<CanonicalEqualityPred>(P2.pred);
 
     auto dict1 = to<CanonicalDictPred>(P1.pred);
     auto dict2 = to<CanonicalDictPred>(P2.pred);
+
+    assert(eq1);
 
     if (eq1 and eq2)
     {
@@ -418,7 +420,7 @@ bool Solver::rewrite(const Predicate& P1, Predicate& P2)
             if (auto t2b_subst = tv1?check_apply_subst({{*tv1, t1b}}, t2b):check_apply_subst({{*uv1, t1b}}, t2b))
             {
                 P2 = Predicate{P2.flavor, CanonicalEqualityPred(eq2->co, t2a, *t2b_subst)};
-                return true;
+                return;
             }
         }
     }
@@ -444,12 +446,9 @@ bool Solver::rewrite(const Predicate& P1, Predicate& P2)
             if (changed)
             {
                 P2 = Predicate(P2.flavor, dict2_subst);
-                return true;
             }
         }
     }
-
-    return false;
 }
 
 Change Solver::interact(const Predicate& P1, const Predicate& P2)
@@ -688,12 +687,45 @@ void Solver::add_inert(const Predicate& p)
     // e. react a wanted Q1 with axioms in \mathcal{Q} to produce Q2 and new touchable variables beta.
     //    - replace Q1 by Q2 and add in the new touchable variables beta.
 
+bool Solver::can_rewrite(const Predicate& p1, const Predicate& p2) const
+{
+    auto eq1 = to<CanonicalEqualityPred>(p1.pred);
+    if (not eq1) return false;
+
+    auto t1 = follow_meta_type_var(eq1->t1);
+
+    if (auto tv = t1.to<Hs::TypeVar>())
+    {
+        if (auto dict2 = to<CanonicalDictPred>(p2.pred))
+            return contains_tv(dict2->args, *tv);
+        else if (auto eq2 = to<CanonicalEqualityPred>(p2.pred))
+            return contains_tv(eq2->t1, *tv) or contains_tv(eq2->t2, *tv);
+        else
+            std::abort();
+    }
+    else if (auto mtv = t1.to<Hs::MetaTypeVar>())
+    {
+        if (auto dict2 = to<CanonicalDictPred>(p2.pred))
+            return contains_mtv(dict2->args, *mtv);
+        else if (auto eq2 = to<CanonicalEqualityPred>(p2.pred))
+            return contains_mtv(eq2->t1, *mtv) or contains_mtv(eq2->t2, *mtv);
+        else
+            std::abort();
+    }
+    else if (auto tycon = t1.to<Hs::TypeCon>())
+        return false;
+    else if (auto app = t1.to<Hs::TypeApp>())
+        return false;
+    else
+        return false;
+}
+
 void Solver::kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps)
 {
     // kick-out for inerts that are rewritten by p
     for(int i=0;i<ps.size();i++)
     {
-        if (rewrite(p, ps[i]))
+        if (can_rewrite(p, ps[i]))
         {
             work_list.push_back(ps[i]);
 

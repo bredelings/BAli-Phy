@@ -102,6 +102,8 @@ struct Solver: public TypeChecker
     void add_inert(const Predicate& P);
     void add_to_work_list(const std::vector<Predicate>& ps);
 
+    bool can_rewrite(const Predicate& P1, const Predicate& P2) const;
+
     bool is_touchable(const Hs::MetaTypeVar&, const Hs::Type&) const;
 
     void kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps);
@@ -111,7 +113,7 @@ struct Solver: public TypeChecker
     std::optional<Predicate> canonicalize_dict(ConstraintFlavor flavor, CanonicalDictPred P);
     std::optional<Predicate> canonicalize(Predicate& P);
 
-    bool rewrite(const Predicate& P1, Predicate& P2);
+    void rewrite(const Predicate& P1, Predicate& P2);
     Change interact(const Predicate& P1, const Predicate& P2);
 
     std::optional<Reaction> top_react(const Predicate& P);
