@@ -398,7 +398,9 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
 
 Hs::Type Solver::rewrite(ConstraintFlavor flavor, Hs::Type t) const
 {
-    for(auto& inert: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs))
+    // 1. Get the tv substitution
+    substitution_t tv_subst;
+    for(auto& inert: inerts.tv_eqs)
     {
         // Don't allow wanteds to rewrite givens
         if (inert.flavor == Wanted and flavor == Given) continue;
@@ -406,17 +408,31 @@ Hs::Type Solver::rewrite(ConstraintFlavor flavor, Hs::Type t) const
         auto eq = to<CanonicalEqualityPred>(inert.pred);
         assert(eq);
 
-        if (auto tv1 = eq->t1.to<Hs::TypeVar>())
-        {
-            substitution_t s = {{*tv1, eq->t2}};
-            t = apply_subst(s, t);
-        }
-        else if (auto uv1 = follow_meta_type_var(eq->t1).to<Hs::MetaTypeVar>())
-        {
-            usubstitution_t s = {{*uv1, eq->t2}};
-            t = apply_subst(s, t);
-        }
+        auto tv1 = eq->t1.to<Hs::TypeVar>();
+        assert(tv1);
+
+        assert(not tv_subst.count(*tv1));
+        tv_subst = tv_subst.insert({*tv1, eq->t2});
     }
+    t = apply_subst(tv_subst, t);
+
+    // 2. Get the mtv substitution
+    usubstitution_t mtv_subst;
+    for(auto& inert: inerts.mtv_eqs)
+    {
+        // Don't allow wanteds to rewrite givens
+        if (inert.flavor == Wanted and flavor == Given) continue;
+
+        auto eq = to<CanonicalEqualityPred>(inert.pred);
+        assert(eq);
+
+        auto uv1 = follow_meta_type_var(eq->t1).to<Hs::MetaTypeVar>();
+        assert(uv1);
+
+        assert(not mtv_subst.count(*uv1));
+        mtv_subst = mtv_subst.insert({*uv1, eq->t2});
+    }
+    t = apply_subst(mtv_subst, t);
 
     return t;
 }
