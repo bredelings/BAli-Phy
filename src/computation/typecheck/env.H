@@ -130,6 +130,8 @@ struct TypeFamInfo
 
     std::map<TypeFamEqnId, TypeFamEqnInfo> equations;
 
+    int arity() const {return args.size();}
+
     TypeFamInfo(const std::vector<Hs::TypeVar>&, const Hs::Kind&, const std::optional<std::string>& = {});
 };
 
