@@ -6,7 +6,7 @@ using std::string;
 
 namespace views = ranges::views;
 
-object_ptr<KindStar> kind_star() {return new KindStar();}
+object_ptr<KindStar> kind_type() {return new KindStar();}
 
 object_ptr<KindConstraint> kind_constraint() {return new KindConstraint();}
 
@@ -196,7 +196,7 @@ Hs::Kind function_kind(const std::vector<Hs::Kind>& arg_kinds, const Hs::Kind re
 
 Hs::Kind make_n_args_kind(int n)
 {
-    Hs::Kind star = kind_star();
+    Hs::Kind star = kind_type();
     Hs::Kind k = star;
     for(int i=0;i<n;i++)
         k = kind_arrow(star,k);
@@ -205,7 +205,7 @@ Hs::Kind make_n_args_kind(int n)
 
 Hs::Kind make_n_args_constraint_kind(int n)
 {
-    Hs::Kind star = kind_star();
+    Hs::Kind star = kind_type();
     Hs::Kind k = kind_constraint();
     for(int i=0;i<n;i++)
         k = kind_arrow(star,k);
@@ -216,7 +216,7 @@ Hs::Kind replace_kvar_with_star(const Hs::Kind& k)
 {
     if (k.is_a<KindVar>())
     {
-        return kind_star();
+        return kind_type();
     }
     else if (auto a = k.to<KindArrow>())
     {

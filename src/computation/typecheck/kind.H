@@ -13,10 +13,10 @@ struct KindStar: public Object
     KindStar* clone()  const { return new KindStar(); }
     bool operator==(const KindStar&) const;
     bool operator==(const Object&) const;
-    std::string print() const { return "*"; }
+    std::string print() const { return "Type"; }
 };
 
-object_ptr<KindStar> kind_star();
+object_ptr<KindStar> kind_type();
 
 struct KindConstraint: public Object
 {

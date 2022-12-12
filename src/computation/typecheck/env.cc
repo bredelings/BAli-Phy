@@ -215,5 +215,5 @@ TypeFamInfo::TypeFamInfo(const vector<Hs::TypeVar>& as, const Hs::Kind& k, const
     :args(as), result_kind(k), associated_class(s)
 {
     for(auto& arg: args)
-        arg.kind = arg.kind.value_or(kind_star());
+        arg.kind = arg.kind.value_or(kind_type());
 }

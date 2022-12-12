@@ -875,8 +875,8 @@ std::pair<Hs::Type, Hs::Type> TypeChecker::unify_function(const Hs::Type& t, con
         return *arg_and_result;
     else
     {
-        auto a = fresh_meta_type_var( kind_star() );
-        auto b = fresh_meta_type_var( kind_star() );
+        auto a = fresh_meta_type_var( kind_type() );
+        auto b = fresh_meta_type_var( kind_type() );
         unify(t, make_arrow_type(a,b), e);
         return {a,b};
     }
@@ -890,7 +890,7 @@ DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
     if (con_name == ":")
     {
         DataConInfo info;
-        auto a = fresh_other_type_var( kind_star() );
+        auto a = fresh_other_type_var( kind_type() );
         info.uni_tvs = { a };
         info.field_types = { a, Hs::ListType(a) };
         info.data_type = Hs::list_tycon();
@@ -899,7 +899,7 @@ DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
     else if (con_name == "[]")
     {
         DataConInfo info;
-        auto a = fresh_other_type_var( kind_star() );
+        auto a = fresh_other_type_var( kind_type() );
         info.uni_tvs = { a };
         info.data_type = Hs::list_tycon();
         return info;
@@ -910,7 +910,7 @@ DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
         int n = tuple_arity(con_name);
         for(int i=0;i<n;i++)
         {
-            auto tv = fresh_other_type_var( kind_star() );
+            auto tv = fresh_other_type_var( kind_type() );
             info.uni_tvs.push_back( tv );
             info.field_types.push_back( tv );
         }

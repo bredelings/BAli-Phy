@@ -574,7 +574,7 @@ vector<Kind> TypeFamilyDecl::arg_kinds() const
     vector<Kind> ks;
 
     for(auto& arg: args)
-        ks.push_back(arg.kind.value_or(kind_star()));
+        ks.push_back(arg.kind.value_or(kind_type()));
 
     return ks;
 }
@@ -584,7 +584,7 @@ Kind TypeFamilyDecl::result_kind() const
     if (kind_sig)
         return *kind_sig;
     else
-        return kind_star();
+        return kind_type();
 }
 
 Kind TypeFamilyDecl::kind() const

@@ -7278,8 +7278,8 @@ std::optional<Hs::Kind> type_to_kind_(const Hs::Type& kind)
 
     if (kind_args.empty())
     {
-        if (head_name == "*")
-            return kind_star();
+        if (head_name == "*" or head_name == "Type")
+            return kind_type();
         else
             return {};
     }

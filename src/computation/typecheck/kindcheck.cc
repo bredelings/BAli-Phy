@@ -114,17 +114,17 @@ Hs::Kind kindchecker_state::kind_check_type_var(const Hs::TypeVar& tv)
 Hs::Kind kindchecker_state::kind_check_type_con(const string& name)
 {
     if (name == "Num#")
-        return kind_star();
+        return kind_type();
     else if (name == "Char")
-        return kind_star();
+        return kind_type();
     else if (name == "Double")
-        return kind_star();
+        return kind_type();
     else if (name == "Int")
-        return kind_star();
+        return kind_type();
     else if (name == "Integer")
-        return kind_star();
+        return kind_type();
     else if (name == "()")
-        return kind_star();
+        return kind_type();
     else if (name == "[]")
         return make_n_args_kind(1);
     else if (name == "->")
@@ -194,19 +194,19 @@ Hs::Kind kindchecker_state::kind_check_type(Hs::Type& t)
     {
         auto L = *l;
 
-        unify(kind_star(), kind_check_type(L.element_type));
+        unify(kind_type(), kind_check_type(L.element_type));
 
         t = L;
-        return kind_star();
+        return kind_type();
     }
     else if (auto tup = t.to<Hs::TupleType>())
     {
         auto T = *tup;
         for(auto& element_type: T.element_types)
-            unify(kind_star(), kind_check_type(element_type));
+            unify(kind_type(), kind_check_type(element_type));
 
         t = T;
-        return kind_star();
+        return kind_type();
     }
     else if (auto c = t.to<Hs::ConstrainedType>())
     {
@@ -264,11 +264,11 @@ Hs::Kind kindchecker_state::kind_for_type(const Hs::Type& t)
     }
     else if (t.is_a<Hs::ListType>())
     {
-        return kind_star();
+        return kind_type();
     }
     else if (t.is_a<Hs::TupleType>())
     {
-        return kind_star();
+        return kind_type();
     }
     else if (auto c = t.to<Hs::ConstrainedType>())
     {
@@ -405,7 +405,7 @@ void kindchecker_state::kind_check_constructor(const Hs::ConstructorDecl& constr
     // This requires {-# LANGUAGE ExistentialQuantification #-}
     type2 = add_forall_vars( constructor.forall, type2 );
 
-    kind_check_type_of_kind(type2, kind_star());
+    kind_check_type_of_kind(type2, kind_type());
 }
 
 DataConInfo kindchecker_state::type_check_constructor(const Hs::ConstructorDecl& constructor)
@@ -437,7 +437,7 @@ DataConInfo kindchecker_state::type_check_constructor(const Hs::ConstructorDecl&
 
     // 3. Infer kind for exi_tvs
     for(auto& field_type: info.field_types)
-        unify(kind_star(), kind_check_type(field_type));
+        unify(kind_type(), kind_check_type(field_type));
     for(auto& constraint: info.written_constraints)
         unify(kind_constraint(), kind_check_type(constraint));
     
@@ -622,7 +622,7 @@ constr_env kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
 
 Hs::Type kindchecker_state::kind_and_type_check_type(const Hs::Type& type)
 {
-    return kind_and_type_check_type_(type, kind_star() );
+    return kind_and_type_check_type_(type, kind_type() );
 }
 
 Hs::Type kindchecker_state::kind_and_type_check_constraint(const Hs::Type& type)
@@ -669,7 +669,7 @@ void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
     auto k = kind_for_type_con(name); // FIXME -- check that this is a type class?
 
     // b. Put each type variable into the kind.
-    Hs::Kind k2 = kind_star();
+    Hs::Kind k2 = kind_type();
     for(auto& tv: class_decl.type_vars)
     {
         // the kind should be an arrow kind.
@@ -722,7 +722,7 @@ void kindchecker_state::kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_de
     }
     assert(k.is_a<KindStar>());
 
-    kind_check_type_of_kind( unloc(type_syn_decl.rhs_type), kind_star() );
+    kind_check_type_of_kind( unloc(type_syn_decl.rhs_type), kind_type() );
 
     pop_type_var_scope();
 }
@@ -741,7 +741,7 @@ type_con_env kindchecker_state::infer_kinds(const vector<expression_ref>& type_d
             auto& D = type_decl.as_<Hs::DataOrNewtypeDecl>();
             name = D.name;
             arity = D.type_vars.size();
-            kind = kind_star();
+            kind = kind_type();
         }
         else if (type_decl.is_a<Hs::ClassDecl>())
         {
@@ -755,7 +755,7 @@ type_con_env kindchecker_state::infer_kinds(const vector<expression_ref>& type_d
             auto & T = type_decl.as_<Hs::TypeSynonymDecl>();
             name = T.name;
             arity = T.type_vars.size();
-            kind = kind_star();
+            kind = kind_type();
         }
         else
             std::abort();

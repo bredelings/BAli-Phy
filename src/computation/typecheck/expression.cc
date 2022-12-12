@@ -135,7 +135,7 @@ void TypeChecker::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 
 void TypeChecker::tcRho(Hs::List& L, const Expected& exp_type)
 {
-    Hs::Type element_type = fresh_meta_type_var( kind_star() );
+    Hs::Type element_type = fresh_meta_type_var( kind_type() );
     set_expected_type( exp_type, Hs::ListType(element_type) );
 
     for(auto& element: L.elements)

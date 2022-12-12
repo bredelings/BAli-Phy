@@ -204,7 +204,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
             element_type = *elem_type;
         else
         {
-            element_type = fresh_meta_type_var( kind_star() );
+            element_type = fresh_meta_type_var( kind_type() );
             unify( pat_type, Hs::ListType(element_type) );
         }
 
@@ -225,7 +225,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         else
         {
             for(int i=0;i<T.elements.size();i++)
-                element_types.push_back( fresh_meta_type_var( kind_star() ) );
+                element_types.push_back( fresh_meta_type_var( kind_type() ) );
             unify( pat_type, Hs::TupleType(element_types) );
         }
 
