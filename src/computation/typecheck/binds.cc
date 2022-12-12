@@ -20,7 +20,7 @@ using std::shared_ptr;
 
 
 template <typename T>
-Hs::Type quantify(const T& tvs, const Hs::Type& monotype)
+Type quantify(const T& tvs, const Type& monotype)
 {
     if (tvs.empty())
         return monotype;
@@ -28,11 +28,11 @@ Hs::Type quantify(const T& tvs, const Hs::Type& monotype)
     {
         for(auto& tv: tvs)
             assert(tv.kind);
-        return Hs::ForallType(tvs | ranges::to<vector>, monotype);
+        return ForallType(tvs | ranges::to<vector>, monotype);
     }
 }
 
-global_value_env sig_env(const map<string, Hs::Type>& signatures)
+global_value_env sig_env(const map<string, Type>& signatures)
 {
     global_value_env sig_env;
     for(auto& [name, type]: signatures)
@@ -51,28 +51,28 @@ void TypeChecker::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreig
     global_value_env fte;
     for(auto& f: foreign_decls)
     {
-        f.type = check_type( f.type );
-        fte = fte.insert({f.function_name, f.type});
+        auto type = check_type( desugar(f.type) );
+        fte = fte.insert({f.function_name, type});
     }
     gve += fte;
 }
 
-global_value_env TypeChecker::infer_type_for_sigs(signature_env& signatures) const
-{
-    for(auto& [name,type]: signatures)
-        type = check_type(type);
-
-    return sig_env(signatures);
-}
-
-
 void
 TypeChecker::infer_type_for_binds(Hs::Binds& binds, bool is_top_level)
 {
-    add_binders(infer_type_for_sigs(binds.signatures));
+    global_value_env sigs;
+    signature_env sigs2;
+    for(auto& [name,type]: binds.signatures)
+    {
+        auto type2 = check_type(desugar(type));
+        sigs = sigs.insert({name,type2});
+        sigs2.insert({name,type2});
+    }
+
+    add_binders(sigs);
 
     for(auto& decls: binds)
-        decls = infer_type_for_decls(binds.signatures, decls, is_top_level);
+        decls = infer_type_for_decls(sigs2, decls, is_top_level);
 }
 
 value_env remove_sig_binders(value_env binder_env, const signature_env& signatures)
@@ -84,7 +84,7 @@ value_env remove_sig_binders(value_env binder_env, const signature_env& signatur
     return no_sig_binder_env;
 }
 
-vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const map<string, Hs::Type>& signatures)
+vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const map<string, Type>& signatures)
 {
     // 1. Map names to indices
     map<string,int> index_for_name = get_indices_for_names(decls);
@@ -187,7 +187,7 @@ Hs::Decls rename_from_bindinfo(Hs::Decls decls,const map<string, Hs::BindInfo>& 
     return decls;
 }
 
-Hs::GenBind mkGenBind(const vector<Hs::TypeVar>& tvs,
+Hs::GenBind mkGenBind(const vector<TypeVar>& tvs,
                       const vector<Core::Var>& dict_vars,
                       const shared_ptr<const Core::Decls>& ev_decls,
                       Hs::Decls decls,
@@ -200,7 +200,7 @@ Hs::GenBind mkGenBind(const vector<Hs::TypeVar>& tvs,
 // Why aren't we using `fixed_type_vars`?
 // I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
 pair<LIE, LIE>
-classify_constraints(bool restricted, const LIE& lie, const set<Hs::MetaTypeVar>& qtvs)
+classify_constraints(bool restricted, const LIE& lie, const set<MetaTypeVar>& qtvs)
 {
     if (restricted) return {lie, {}};
 
@@ -218,7 +218,7 @@ classify_constraints(bool restricted, const LIE& lie, const set<Hs::MetaTypeVar>
 }
 
 pair<LIE, LIE>
-classify_constraints(const LIE& lie, const set<Hs::TypeVar>& qtvs)
+classify_constraints(const LIE& lie, const set<TypeVar>& qtvs)
 {
     LIE lie_deferred;
     LIE lie_retained;
@@ -234,7 +234,7 @@ classify_constraints(const LIE& lie, const set<Hs::TypeVar>& qtvs)
 }
 
 /// Compare to checkSigma, which also check for any skolem variables in the wanteds
-tuple<expression_ref, ID, Hs::Type>
+tuple<expression_ref, ID, Type>
 TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
     // Q: Are we getting the monotype correct?
@@ -247,7 +247,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         auto polytype = gve.at(name);
         auto [wrap_gen, tvs, givens, rho_type] =
             skolemize_and(polytype,
-                          [&](const Hs::Type& rho_type, auto& tcs2) {
+                          [&](const Type& rho_type, auto& tcs2) {
                               tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type),
                                                  [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
                                                      tc.tcMatches(FD.matches, arg_types, result_type);};});
@@ -257,7 +257,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
         // 2. return GenBind with tvs, givens, body
         Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
 
-        Hs::Type monotype = rho_type;
+        Type monotype = rho_type;
 
         Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, wrap_gen);
 
@@ -276,7 +276,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
     }
 }
 
-bool is_restricted(const map<ID, Hs::Type>& signatures, const Hs::Decls& decls)
+bool is_restricted(const map<ID, Type>& signatures, const Hs::Decls& decls)
 {
     for(auto& decl: decls)
     {
@@ -295,8 +295,8 @@ bool is_restricted(const map<ID, Hs::Type>& signatures, const Hs::Decls& decls)
     return false;
 };
 
-tuple<Hs::Type, local_value_env>
-TypeChecker::infer_lhs_type(expression_ref& decl, const map<string, Hs::Type>& signatures)
+tuple<Type, local_value_env>
+TypeChecker::infer_lhs_type(expression_ref& decl, const map<string, Type>& signatures)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
     {
@@ -348,7 +348,7 @@ tuple< map<string, Hs::Var>, local_value_env > TypeChecker::tc_decls_group_mono(
 
     std::map<std::string, Hs::Var> mono_ids;
 
-    vector<Hs::Type> lhs_types;
+    vector<Type> lhs_types;
     for(int i=0;i<decls.size();i++)
     {
         auto [type, lve] = infer_lhs_type( decls[i], signatures );
@@ -401,21 +401,21 @@ tuple< map<string, Hs::Var>, local_value_env > TypeChecker::tc_decls_group_mono(
     return {mono_ids, mono_binder_env};
 }
 
-bool type_is_hnf(const Hs::Type& type)
+bool type_is_hnf(const Type& type)
 {
-    auto [head,args] = Hs::decompose_type_apps(type);
+    auto [head,args] = decompose_type_apps(type);
 
     head = follow_meta_type_var(head);
 
-    if (head.is_a<Hs::TypeVar>())
+    if (head.is_a<TypeVar>())
         return true;
-    else if (head.is_a<Hs::MetaTypeVar>())
+    else if (head.is_a<MetaTypeVar>())
         return true;
-    else if (head.is_a<Hs::TypeCon>())
+    else if (head.is_a<TypeCon>())
         return false;
-    else if (head.is_a<Hs::ListType>())
+    else if (head.is_a<ListType>())
         return false;
-    else if (head.is_a<Hs::TupleType>())
+    else if (head.is_a<TupleType>())
         return false;
     else
         std::abort();
@@ -424,9 +424,9 @@ bool type_is_hnf(const Hs::Type& type)
 // OK:     K a, K (a b), K (a [b]), etc. OK
 // NOT OK: K [a], K (a,b), etc. NOT OK.
 // Question: for multiparameter type classes, how about i.e. `K Int a`?
-bool constraint_is_hnf(const Hs::Type& constraint)
+bool constraint_is_hnf(const Type& constraint)
 {
-    auto [class_con, args] = Hs::decompose_type_apps(constraint);
+    auto [class_con, args] = decompose_type_apps(constraint);
     for(auto& arg: args)
         if (not type_is_hnf(arg))
             return false;
@@ -454,9 +454,9 @@ void check_HNF(const LIE& wanteds)
 // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
 //   after generating definitions of their dictionaries.
 
-set<Hs::MetaTypeVar> find_fixed_tvs(bool restricted, int level, const LIE& wanteds, const set<Hs::MetaTypeVar>& tvs)
+set<MetaTypeVar> find_fixed_tvs(bool restricted, int level, const LIE& wanteds, const set<MetaTypeVar>& tvs)
 {
-    set<Hs::MetaTypeVar> fixed;
+    set<MetaTypeVar> fixed;
 
     for(auto& tv: tvs)
         if (tv.level() <= level)
@@ -472,13 +472,13 @@ set<Hs::MetaTypeVar> find_fixed_tvs(bool restricted, int level, const LIE& wante
         {
             auto [t1,t2] = *eq;
 
-            if (auto lvl = Hs::unfilled_meta_type_var(t1); lvl and *lvl <= level)
+            if (auto lvl = unfilled_meta_type_var(t1); lvl and *lvl <= level)
             {
                 add( fixed, free_meta_type_variables(t2) );
             }
             else
             {
-                assert(not Hs::unfilled_meta_type_var(t2));
+                assert(not unfilled_meta_type_var(t2));
             }
         }
     }
@@ -487,7 +487,7 @@ set<Hs::MetaTypeVar> find_fixed_tvs(bool restricted, int level, const LIE& wante
 }
 
 Hs::Decls
-TypeChecker::infer_type_for_decls_group(const map<string, Hs::Type>& signatures, Hs::Decls decls, bool is_top_level)
+TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs::Decls decls, bool is_top_level)
 {
     if (single_fundecl_with_sig(decls, signatures))
     {
@@ -526,17 +526,17 @@ TypeChecker::infer_type_for_decls_group(const map<string, Hs::Type>& signatures,
     auto fixed_tvs = find_fixed_tvs(restricted, level, wanteds.simple, local_tvs);
 
     // 5. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
-    set<Hs::MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
+    set<MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
 
     // 6. Defer constraints w/o any vars to quantify over
     auto [lie_deferred, lie_retained] = classify_constraints( restricted, wanteds.simple, qmtvs );
     current_wanteds() += lie_deferred;
 
     // 7. Replace quantified meta-typevars with fresh type vars, and promote the other ones.
-    set<Hs::TypeVar> qtvs;
+    set<TypeVar> qtvs;
     for(auto& qmtv: qmtvs)
     {
-        Hs::TypeVar qtv = fresh_other_type_var(unloc(qmtv.name), *qmtv.kind);
+        TypeVar qtv = fresh_other_type_var(unloc(qmtv.name), *qmtv.kind);
         qtvs.insert(qtv);
         qmtv.fill(qtv);
     }
@@ -564,9 +564,9 @@ TypeChecker::infer_type_for_decls_group(const map<string, Hs::Type>& signatures,
 
     for(auto& [name, monotype]: mono_binder_env)
     {
-        set<Hs::TypeVar> qtvs_in_this_type = intersection( qtvs, free_type_variables( monotype ) );
+        set<TypeVar> qtvs_in_this_type = intersection( qtvs, free_type_variables( monotype ) );
 
-        set<Hs::TypeVar> qtvs_unused = qtvs - qtvs_in_this_type;
+        set<TypeVar> qtvs_unused = qtvs - qtvs_in_this_type;
 
         // Replace any unused typevars with metavariables
         substitution_t s;
@@ -592,7 +592,7 @@ TypeChecker::infer_type_for_decls_group(const map<string, Hs::Type>& signatures,
         auto wrap = Core::WrapLambda(dict_args) * Core::WrapApply(tup_dict_args);
 
         auto constraints_used = constraints_from_lie(lie_used);
-        Hs::Type polytype = quantify( qtvs_in_this_type, Hs::add_constraints( constraints_used, monotype ) );
+        Type polytype = quantify( qtvs_in_this_type, add_constraints( constraints_used, monotype ) );
         if (not signatures.count(name))
             poly_binder_env = poly_binder_env.insert( {name, polytype} );
         else

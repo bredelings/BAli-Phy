@@ -25,14 +25,14 @@
 struct unification_env
 {
     mutable int next_index = 0;
-    immer::map<Hs::TypeVar, Hs::TypeVar> mapping1;
-    immer::map<Hs::TypeVar, Hs::TypeVar> mapping2;
-    Hs::TypeVar fresh_tyvar(const std::optional<Hs::Kind>& k) const;
+    immer::map<TypeVar, TypeVar> mapping1;
+    immer::map<TypeVar, TypeVar> mapping2;
+    TypeVar fresh_tyvar(const std::optional<Kind>& k) const;
 };
 
 Hs::ModuleDecls typecheck(const std::string& s, const Module& m, Hs::ModuleDecls M);
 
-Haskell::Type type_check_class_method_type(kindchecker_state& K, Haskell::Type type, const Haskell::Type& constraint);
+Type type_check_class_method_type(kindchecker_state& K, Type type, const Type& constraint);
 
 std::tuple<global_value_env, GIE, ClassInfo, Hs::Decls>
 type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::ClassDecl& class_decl);
@@ -84,7 +84,7 @@ struct global_tc_state
 
     GIE instance_env;
 
-    std::vector<Hs::Type> defaults;
+    std::vector<Type> defaults;
 
     // maybe merge with gve by mapping name -> type,con-or-var
     constr_env con_info;
@@ -127,8 +127,8 @@ struct TypeChecker: FreshVarSource
           GIE& instance_env()       {return global_state->instance_env;}
     const GIE& instance_env() const {return global_state->instance_env;}
 
-          std::vector<Hs::Type>& defaults()       {return global_state->defaults;}
-    const std::vector<Hs::Type>& defaults() const {return global_state->defaults;}
+          std::vector<Type>& defaults()       {return global_state->defaults;}
+    const std::vector<Type>& defaults() const {return global_state->defaults;}
 
     std::optional<int> unification_level() const;
 
@@ -136,23 +136,23 @@ struct TypeChecker: FreshVarSource
 
     void clear_unification_level();
 
-    Hs::Type expTypeToType(const Expected& E);
+    Type expTypeToType(const Expected& E);
 
-    Hs::Type inferResultToType(Infer& I);
+    Type inferResultToType(Infer& I);
 
     Expected newInfer();
 
-    void fillInfer(const Hs::Type& type, Infer& I);
+    void fillInfer(const Type& type, Infer& I);
 
-    Hs::Type promote_type(int dest_level, const Hs::Type& type);
+    Type promote_type(int dest_level, const Type& type);
 
-    void set_expected_type(const Expected& E, const Hs::Type& type);
+    void set_expected_type(const Expected& E, const Type& type);
 
-    void ensure_monotype(const Hs::Type& type);
+    void ensure_monotype(const Type& type);
 
     //------- local state ------------//
 
-    immer::map<std::string, std::pair<Hs::Var, Hs::Type>> mono_local_env;
+    immer::map<std::string, std::pair<Hs::Var, Type>> mono_local_env;
 
     int level = 0;
 
@@ -167,18 +167,18 @@ struct TypeChecker: FreshVarSource
     myexception err_context_exception() const;
 
     //-------
-    Hs::MetaTypeVar fresh_meta_type_var(const std::string& name, const Hs::Kind& k);
-    Hs::MetaTypeVar fresh_meta_type_var(const Hs::Kind& k);
+    MetaTypeVar fresh_meta_type_var(const std::string& name, const Kind& k);
+    MetaTypeVar fresh_meta_type_var(const Kind& k);
 
-    Hs::TypeVar fresh_rigid_type_var(const std::string& name, const Hs::Kind& k);
-    Hs::TypeVar fresh_rigid_type_var(const Hs::Kind& k);
+    TypeVar fresh_rigid_type_var(const std::string& name, const Kind& k);
+    TypeVar fresh_rigid_type_var(const Kind& k);
 
     //------- Functions handling the LIE ---------
     TypeChecker copy_clear_wanteds(bool bump_level = false) const;
 
-    void promote_mtv(const Hs::MetaTypeVar& mtv, int new_level);
-    bool maybe_promote_mtv(const Hs::MetaTypeVar& mtv, int new_level);
-    void promote(Hs::Type t, int new_level);
+    void promote_mtv(const MetaTypeVar& mtv, int new_level);
+    bool maybe_promote_mtv(const MetaTypeVar& mtv, int new_level);
+    void promote(Type t, int new_level);
 
     void add_binders(const local_value_env& binders);
 
@@ -186,11 +186,11 @@ struct TypeChecker: FreshVarSource
 
     WantedConstraints& current_wanteds();
 
-    void add_dvar(const Core::Var& dvar, const Hs::Type& constraint);
+    void add_dvar(const Core::Var& dvar, const Type& constraint);
 
-    Core::Var fresh_dvar(const Hs::Type& constraint);
+    Core::Var fresh_dvar(const Type& constraint);
 
-    Core::Var add_dvar(const Hs::Type& constraint);
+    Core::Var add_dvar(const Type& constraint);
 
     // ------ End: Functions handling the LIE ---
 
@@ -201,90 +201,90 @@ struct TypeChecker: FreshVarSource
 
     void get_constructor_info(const Hs::Decls& decls);
 
-    const TypeSynonymInfo* maybe_find_type_synonym(const Hs::Type& type) const;
+    const TypeSynonymInfo* maybe_find_type_synonym(const Type& type) const;
 
-    std::optional<Hs::Type> is_type_synonym(const Hs::Type& type) const;
+    std::optional<Type> is_type_synonym(const Type& type) const;
 
-    Hs::Type check_type(const Hs::Type&) const;
+    Type check_type(const Type&) const;
 
-    Hs::Type check_type(const Hs::Type&, kindchecker_state& K) const;
+    Type check_type(const Type&, kindchecker_state& K) const;
 
-    Hs::Type check_constraint(const Hs::Type&) const;
+    Type check_constraint(const Type&) const;
 
     Hs::Var find_prelude_var(std::string name) const;
 
     ID find_prelude_tycon_name(const std::string& name) const;
 
-    Hs::TypeCon find_prelude_tycon(const std::string& name) const;
+    TypeCon find_prelude_tycon(const std::string& name) const;
 
-    Hs::Type bool_type() const;
+    Type bool_type() const;
 
-    Hs::Type char_type() const;
+    Type char_type() const;
 
-    Hs::Type int_type() const;
+    Type int_type() const;
 
-    Hs::Type integer_type() const;
+    Type integer_type() const;
 
-    Hs::Type double_type() const;
+    Type double_type() const;
 
-    bool add_substitution(const Hs::MetaTypeVar& a, const Hs::Type& type);
+    bool add_substitution(const MetaTypeVar& a, const Type& type);
 
-    bool maybe_unify_(bool allow_unification, bool both_ways, const unification_env& env, const Hs::Type& t1, const Hs::Type& t2);
+    bool maybe_unify_(bool allow_unification, bool both_ways, const unification_env& env, const Type& t1, const Type& t2);
 
-    bool same_type(const Hs::Type& t1, const Hs::Type& t2) const;
+    bool same_type(const Type& t1, const Type& t2) const;
 
-    void unify(const Hs::Type& t1, const Hs::Type& t2);
+    void unify(const Type& t1, const Type& t2);
 
-    void unify(const Hs::Type& t1, const Hs::Type& t2, const myexception& e);
+    void unify(const Type& t1, const Type& t2, const myexception& e);
 
-    bool try_insert(const Hs::MetaTypeVar& tv, Hs::Type type) const;
+    bool try_insert(const MetaTypeVar& tv, Type type) const;
 
-    bool occurs_check(const Haskell::MetaTypeVar& tv, const Hs::Type& t) const;
+    bool occurs_check(const MetaTypeVar& tv, const Type& t) const;
 
-    bool occurs_check(const Hs::TypeVar& tv, const Hs::Type& t) const;
+    bool occurs_check(const TypeVar& tv, const Type& t) const;
 
-    bool maybe_match(const Hs::Type& t1, const Hs::Type& t2);
+    bool maybe_match(const Type& t1, const Type& t2);
 
-    void match(const Hs::Type& t1, const Hs::Type& t2, const myexception& e);
+    void match(const Type& t1, const Type& t2, const myexception& e);
 
-    void match(const Hs::Type& t1, const Hs::Type& t2);
+    void match(const Type& t1, const Type& t2);
 
-    std::pair<Hs::Type, Hs::Type> unify_function(const Hs::Type& t);
+    std::pair<Type, Type> unify_function(const Type& t);
 
-    std::pair<Hs::Type, Hs::Type> unify_function(const Hs::Type& t, const myexception& e);
+    std::pair<Type, Type> unify_function(const Type& t, const myexception& e);
 
     DataConInfo constructor_info(const Hs::Con&);
 
     std::optional<Core::Decls>
-    candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie);
+    candidates(const MetaTypeVar& tv, const LIE& tv_lie);
 
     Core::Decls default_preds( WantedConstraints& wanteds );
 
     Core::Decls simplify_and_default_top_level();
 
-    std::tuple<std::vector<Hs::MetaTypeVar>, LIE, Hs::Type> instantiate(const Hs::Type& t);
+    std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const Type& t);
 
-    std::tuple<Core::wrapper, Hs::Type> instantiate_emit(const Hs::Type& t);
+    std::tuple<Core::wrapper, Type> instantiate_emit(const Type& t);
 
-    Core::wrapper subsumptionCheck(const Hs::Type& t1, const Expected& e2);
+    Core::wrapper subsumptionCheck(const Type& t1, const Expected& e2);
 
-    Core::wrapper subsumptionCheck(const Hs::Type& t1, const Hs::Type& t2);
+    Core::wrapper subsumptionCheck(const Type& t1, const Type& t2);
 
-    Core::wrapper instantiateSigma(const Hs::Type& t, const Expected& exp_rho);
+    Core::wrapper instantiateSigma(const Type& t, const Expected& exp_rho);
 
-    std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type> skolemize(const Hs::Type& t, bool skolem);
+    std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type> skolemize(const Type& t, bool skolem);
 
-    std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type> skolemize_and(const Hs::Type& t, const tc_action<Hs::Type>& nested_action);
+    std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type> skolemize_and(const Type& t, const tc_action<Type>& nested_action);
 
     template <typename R>
-    std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, R> skolemize_and_result(const Hs::Type& t, const tc_function<R, Hs::Type>& nested_action);
+    std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type, R> skolemize_and_result(const Type& t, const tc_function<R, Type>& nested_action);
 
     void tcRhoStmts(int i, std::vector<Hs::Qual>& stmts, const Expected& exp_type);
 
-    std::shared_ptr<const Core::Decls> maybe_implication(const std::vector<Hs::TypeVar>& tvs, const LIE& givens, const tc_action<>& nested_action);
+    std::shared_ptr<const Core::Decls> maybe_implication(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_action<>& nested_action);
 
     template <typename R>
-    std::tuple<std::shared_ptr<const Core::Decls>,R> maybe_implication_result(const std::vector<Hs::TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_action);
+    std::tuple<std::shared_ptr<const Core::Decls>,R> maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_action);
 
     // Figure 22.
     void infer_quals_type(std::vector<Hs::Qual>& quals);
@@ -295,7 +295,7 @@ struct TypeChecker: FreshVarSource
     void infer_guard_type(Hs::Qual& guard);
 
     // Figure 24.
-    Hs::Type inferPat(local_value_env& penv, Hs::Pattern& pat, const signature_env& sigs = {});
+    Type inferPat(local_value_env& penv, Hs::Pattern& pat, const signature_env& sigs = {});
 
     void tcPats(local_value_env& penv, std::vector<Hs::Pattern>& pat, const std::vector<Expected>&, const signature_env& sigs, const tc_action<local_value_env&>& a, int i=0);
 
@@ -303,31 +303,31 @@ struct TypeChecker: FreshVarSource
     void tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&, const signature_env& sigs, const tc_action<local_value_env&>& a);
 
     // takes and returns sigma types
-    void checkPat(local_value_env& penv, Hs::Pattern& pat, const Hs::SigmaType&, const signature_env& sigs = {});
+    void checkPat(local_value_env& penv, Hs::Pattern& pat, const SigmaType&, const signature_env& sigs = {});
 
-    Hs::Type inferPat(local_value_env& penv, Hs::Var& v, const signature_env& sigs = {});
+    Type inferPat(local_value_env& penv, Hs::Var& v, const signature_env& sigs = {});
 
     void tcPat(local_value_env& penv, Hs::Var& v, const Expected&, const signature_env& sigs, const tc_action<local_value_env&>&);
 
-    void checkPat(local_value_env& penv, Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs);
+    void checkPat(local_value_env& penv, Hs::Var& v, const SigmaType& exp_type, const signature_env& sigs);
 
-    Core::wrapper instPatSigma(const Hs::SigmaType& sigma_type, const Expected& exp_sigma_type);
+    Core::wrapper instPatSigma(const SigmaType& sigma_type, const Expected& exp_sigma_type);
 
-    std::tuple<Hs::Type, local_value_env>
+    std::tuple<Type, local_value_env>
     infer_lhs_type(expression_ref& decl, const signature_env& sigs);
 
     void infer_rhs_type(expression_ref& decl, const Expected& type);
 
-    Core::wrapper checkSigma(Hs::Expression& e, const Hs::SigmaType& sigma_type);
+    Core::wrapper checkSigma(Hs::Expression& e, const SigmaType& sigma_type);
 
     template <typename T>
-    void checkRho(T& t, const Hs::Type& exp_rho)
+    void checkRho(T& t, const Type& exp_rho)
     {
         tcRho(t, Check(exp_rho));
     }
 
     template <typename T>
-    Hs::Type inferRho(T& t)
+    Type inferRho(T& t)
     {
         Expected result_type = newInfer();
         tcRho(t, result_type);
@@ -386,7 +386,7 @@ struct TypeChecker: FreshVarSource
     Core::wrapper tcMatchesFunInfer(std::vector<Expected>& arg_types, int arity, const Expected& fun_type, const A& a);
 
     template <typename A>
-    Core::wrapper tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Hs::Type type, const A& a);
+    Core::wrapper tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Type type, const A& a);
 
     template <typename A>
     Core::wrapper tcMatchesFun(int arity, const Expected&, const A& a);
@@ -395,7 +395,7 @@ struct TypeChecker: FreshVarSource
     Hs::Decls
     infer_type_for_decls(const signature_env&, const Hs::Decls&, bool is_top_level);
 
-    std::tuple<expression_ref, ID, Hs::Type>
+    std::tuple<expression_ref, ID, Type>
     infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD);
 
     Hs::Decls
@@ -405,8 +405,6 @@ struct TypeChecker: FreshVarSource
     tc_decls_group_mono(const signature_env& sigs, Hs::Decls& decls);
 
     void infer_type_for_foreign_imports(std::vector<Hs::ForeignDecl>& foreign_decls);
-
-    global_value_env infer_type_for_sigs(signature_env& signatures) const;
 
     // Figures 13, 14, 15?
     Hs::Binds infer_type_for_binds_top(Hs::Binds binds);
@@ -427,7 +425,7 @@ struct TypeChecker: FreshVarSource
     Hs::Binds infer_type_for_default_methods(const Hs::Decls&);
 
     // Figure 12
-    std::pair<Core::Var, Hs::Type>
+    std::pair<Core::Var, Type>
     infer_type_for_instance1(const Hs::InstanceDecl& instance_decl);
 
     // Figure 12
@@ -448,39 +446,39 @@ struct TypeChecker: FreshVarSource
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
-    LIE constraints_to_lie(const std::vector<Hs::Type>&);
+    LIE constraints_to_lie(const std::vector<Type>&);
 
     // FIXME: this should be  const
-    std::vector<std::pair<Core::Var, Hs::Type>> superclass_constraints(const Hs::Type& constraint);
+    std::vector<std::pair<Core::Var, Type>> superclass_constraints(const Type& constraint);
 
     // FIXME: this should be  const
     std::optional<std::vector<Core::Var>>
-    is_superclass_of(const Hs::Type&, const Hs::Type&);
+    is_superclass_of(const Type&, const Type&);
 
     // FIXME: this should be  const
     std::optional<Core::Decls>
-    entails_by_superclass(const std::pair<Core::Var, Hs::Type>& to_keep,
-                          const std::pair<Core::Var, Hs::Type>& to_remove);
+    entails_by_superclass(const std::pair<Core::Var, Type>& to_keep,
+                          const std::pair<Core::Var, Type>& to_remove);
 
     Core::Decls simplify(const LIE& givens, LIE& wanteds);
 
     template <typename T>
     std::optional<Core::Decls>
-    entails(const T& to_keep, const std::pair<Core::Var, Hs::Type>& to_check);
+    entails(const T& to_keep, const std::pair<Core::Var, Type>& to_check);
 
     Core::Decls entails(const LIE& lie1, WantedConstraints& lie2);
 
-    bool instance_matches(const Hs::Type&, const Hs::Type&);
-    bool more_specific_than(const Hs::Type&, const Hs::Type&);
-    std::optional<std::pair<Core::Exp,LIE>> lookup_instance(const Hs::Type& constraint);
+    bool instance_matches(const Type&, const Type&);
+    bool more_specific_than(const Type&, const Type&);
+    std::optional<std::pair<Core::Exp,LIE>> lookup_instance(const Type& constraint);
 
     void get_defaults(const Hs::ModuleDecls& M);
 
     TypeChecker(FreshVarState& fvs, const std::string& s, const Module& m);
 };
 
-std::optional<ID> maybe_get_class_name_from_constraint(const Hs::Type& constraint);
-ID get_class_name_from_constraint(const Hs::Type& constraint);
+std::optional<ID> maybe_get_class_name_from_constraint(const Type& constraint);
+ID get_class_name_from_constraint(const Type& constraint);
 
 LIE apply_subst(const substitution_t& s, const LIE& env1);
 
@@ -493,16 +491,16 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const std::map<ID, Hs::Bind
 
 std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls);
 
-ID get_full_class_name_from_constraint(const Hs::Type& constraint);
+ID get_full_class_name_from_constraint(const Type& constraint);
 
-bool constraint_is_hnf(const Hs::Type& constraint);
+bool constraint_is_hnf(const Type& constraint);
 
 int getArity(const Hs::Matches& m);
 int getArity(const Hs::MRule& m);
 
 template <typename R>
-std::tuple<Core::wrapper, std::vector<Hs::TypeVar>, LIE, Hs::Type, R>
-TypeChecker::skolemize_and_result(const Hs::Type& polytype, const tc_function<R, Hs::Type>& nested_function)
+std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type, R>
+TypeChecker::skolemize_and_result(const Type& polytype, const tc_function<R, Type>& nested_function)
 {
     // 1. Skolemize the type at level
     level++;
@@ -520,7 +518,7 @@ TypeChecker::skolemize_and_result(const Hs::Type& polytype, const tc_function<R,
 
 template <typename R>
 std::tuple<std::shared_ptr<const Core::Decls>, R>
-TypeChecker::maybe_implication_result(const std::vector<Hs::TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_function)
+TypeChecker::maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_function)
 {
     auto ev_decls = std::make_shared<Core::Decls>();
 

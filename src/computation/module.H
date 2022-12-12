@@ -11,6 +11,7 @@
 #include <utility>                                  // for pair
 #include <iostream>
 #include "computation/haskell/haskell.H"
+#include "computation/haskell/coretype.H"
 #include "computation/typecheck/kind.H"
 #include "computation/optimization/simplifier.H"       // for simplifier options
 #include "computation/fresh_vars.H"
@@ -39,7 +40,7 @@ struct symbol_info
     std::optional<std::string> parent;
     int arity = -1;
     fixity_info fixity;
-    Hs::Type type;
+    Type type;
 
     symbol_info() {};
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int);
@@ -54,7 +55,7 @@ struct type_info
     type_name_category category;
     std::optional<fixity_info> fixity; // for the function arrow (->) only
     std::optional<int> arity;
-    Hs::Kind kind;
+    Kind kind;
 };
 
 bool operator==(const symbol_info& S1, const symbol_info& S2);

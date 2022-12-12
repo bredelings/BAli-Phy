@@ -47,9 +47,9 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     kindchecker_state K( tycon_info() );
 
     ClassInfo class_info;
-    class_info.type_vars = class_decl.type_vars;
+    class_info.type_vars = desugar(class_decl.type_vars);
     class_info.name = class_decl.name;
-    class_info.context = class_decl.context;
+    class_info.context = desugar(class_decl.context);
 
     // 1. Bind type parameters for class
     K. push_type_var_scope();
@@ -58,13 +58,13 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     auto class_kind = K.kind_for_type_con(class_info.name);
 
     // 1b. Record the kind for each type variable.
-    for(auto& tv: class_decl.type_vars)
+    for(auto& tv: desugar(class_decl.type_vars))
         K.bind_type_var(tv, *tv.kind);
 
     // 2. construct the constraint that represent the class
-    Hs::Type class_constraint = Hs::TypeCon(Unlocated(class_decl.name)); // put class_kind into TypeCon?
-    for(auto& tv: class_decl.type_vars)
-        class_constraint = Hs::TypeApp(class_constraint, tv);
+    Type class_constraint = TypeCon(Unlocated(class_decl.name)); // put class_kind into TypeCon?
+    for(auto& tv: desugar(class_decl.type_vars))
+        class_constraint = TypeApp(class_constraint, tv);
 
     // 3. make global types for class methods
     global_value_env gve;
@@ -73,10 +73,10 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     for(auto& sig_decl: class_decl.sig_decls)
     {
         // We need the class variables in scope here.
-        auto method_type = check_type(sig_decl.type, K);
+        auto method_type = check_type(desugar(sig_decl.type), K);
         // forall a. C a => method_type
-        method_type = Hs::add_constraints({class_constraint}, method_type);
-        method_type = Hs::add_forall_vars(class_decl.type_vars, method_type);
+        method_type = add_constraints({class_constraint}, method_type);
+        method_type = add_forall_vars(desugar(class_decl.type_vars), method_type);
 
         for(auto& v: sig_decl.vars)
         {
@@ -116,10 +116,10 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
         auto get_dict = get_fresh_var(extractor_name, true);
         // Should this be a function arrow?
-        Hs::Type type = Hs::add_constraints({class_constraint}, superclass_constraint);
+        Type type = add_constraints({class_constraint}, superclass_constraint);
 
         // Maybe intersect the forall_vars with USED vars?
-        type = add_forall_vars(class_decl.type_vars, type);
+        type = add_forall_vars( desugar(class_decl.type_vars), type);
         class_info.superclass_extractors.insert(pair(get_dict, type));
 
         // Is this right???
@@ -131,10 +131,10 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     // 5. Define superclass extractors and member function extractors
     Hs::Decls decls;
 
-    vector<Hs::Type> types;
+    vector<Type> types;
     for(auto& [name,type]: class_info.fields)
         types.push_back(type);
-    Hs::Type dict_type = Hs::tuple_type(types);
+    Type dict_type = tuple_type(types);
 
     int i = 0;
     int N = class_info.fields.size();
@@ -148,11 +148,12 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     // 6. Load associated type families
     for(auto& type_fam_decl: class_decl.type_fam_decls)
     {
-        TypeFamInfo info(type_fam_decl.args, type_fam_decl.result_kind(), class_decl.name);
-        type_fam_info().insert({type_fam_decl.con, info});
-        if (class_info.associated_type_families.count(type_fam_decl.con))
-            throw err_context_exception()<<"Trying to define type family '"<<type_fam_decl.con.print()<<"' twice";
-        class_info.associated_type_families.insert({type_fam_decl.con,false});
+        TypeFamInfo info(desugar(type_fam_decl.args), type_fam_decl.result_kind(), class_decl.name);
+        auto con = desugar(type_fam_decl.con);
+        type_fam_info().insert({con, info});
+        if (class_info.associated_type_families.count(con))
+            throw err_context_exception()<<"Trying to define type family '"<<con.print()<<"' twice";
+        class_info.associated_type_families.insert({con,false});
     }
 
     // 7. Load default associated type family instances
@@ -160,7 +161,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     {
         context.push_err_context( ErrorContext()<<"In default instance '"<<def_inst.print()<<"':");
 
-        auto& tf_con = def_inst.con;
+        auto tf_con = desugar(def_inst.con);
         if (not class_info.associated_type_families.count(tf_con))
             throw err_context_exception()<<
                 "  Type family '"<<tf_con<<"' is not defined.";
@@ -172,10 +173,10 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
         // All type arguments must be variables.
         // The type variables may not be repeated.
-        set<Hs::TypeVar> lhs_tvs;
-        for(auto& arg: def_inst.args)
+        set<TypeVar> lhs_tvs;
+        for(auto& arg: desugar(def_inst.args))
         {
-            auto tv = arg.to<Hs::TypeVar>();
+            auto tv = arg.to<TypeVar>();
 
             if (not tv)
                 throw err_context_exception()<<
@@ -189,7 +190,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         }
 
         // The rhs may only mention type vars bound on the lhs.
-        for(auto& tv: free_type_variables(def_inst.rhs))
+        for(auto& tv: free_type_variables(desugar(def_inst.rhs)))
             if (not lhs_tvs.count(tv))
                 throw err_context_exception()<<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.";
 
@@ -247,8 +248,8 @@ TypeChecker::get_type_synonyms(const Hs::Decls& decls)
         if (not t) continue;
 
         auto name = t->name;
-        auto type_vars = t->type_vars;
-        auto rhs_type = unloc(t->rhs_type);
+        auto type_vars = desugar(t->type_vars);
+        auto rhs_type = desugar(unloc(t->rhs_type));
 
         // ensure that these type variables will never occur in the arguments
         substitution_t s;
@@ -271,15 +272,16 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
     {
         if (auto type_fam_decl = decl.to<Hs::TypeFamilyDecl>())
         {
-            TypeFamInfo info(type_fam_decl->args, type_fam_decl->result_kind());
-            type_fam_info().insert({type_fam_decl->con, info});
+            auto con = desugar(type_fam_decl->con);
+            TypeFamInfo info(desugar(type_fam_decl->args), type_fam_decl->result_kind());
+            type_fam_info().insert({con, info});
 
             // Add instance equations for closed type families
             if (type_fam_decl->where_instances)
             {
                 for(auto& inst: *type_fam_decl->where_instances)
                     check_add_type_instance(inst, {}, {});
-                type_fam_info().at(type_fam_decl->con).closed = true;
+                type_fam_info().at(con).closed = true;
             }
 
         }

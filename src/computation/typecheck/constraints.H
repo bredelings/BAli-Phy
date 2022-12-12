@@ -4,10 +4,10 @@
 #include <vector>
 #include <utility>
 
-#include "haskell/type.H"
+#include "haskell/coretype.H"
 #include "haskell/core.H"
 
-typedef std::vector<std::pair<Core::Var, Hs::Type>> LIE;
+typedef std::vector<std::pair<Core::Var, Type>> LIE;
 
 LIE& operator+=(LIE& lie1, const LIE& lie2);
 
@@ -60,7 +60,7 @@ struct Implication
     // We can append new bindings to this object.
     std::shared_ptr<Core::Decls> evidence_binds;
 
-    std::vector<Hs::TypeVar> tvs;
+    std::vector<TypeVar> tvs;
 
     LIE givens;
 
@@ -68,7 +68,7 @@ struct Implication
 
     std::string print() const;
 
-    Implication(int l, const std::vector<Hs::TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb);
+    Implication(int l, const std::vector<TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb);
 };
 
 template <typename T>
@@ -80,7 +80,7 @@ std::vector<T> vars_from_lie(const LIE& lie)
     return dvars;
 }
 
-std::vector<Hs::Type> constraints_from_lie(const LIE& lie);
+std::vector<Type> constraints_from_lie(const LIE& lie);
 
 std::vector<Core::Var> vars_from_lie(const LIE& lie);
 

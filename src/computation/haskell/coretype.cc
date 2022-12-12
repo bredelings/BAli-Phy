@@ -889,6 +889,29 @@ TypeVar desugar(const Hs::TypeVar& tv)
     return t2;
 }
 
+TypeCon desugar(const Hs::TypeCon& tv)
+{
+    TypeCon t2;
+    t2.name = tv.name;
+    t2.kind = tv.kind;
+    return t2;
+}
+
+Context desugar(const Hs::Context& c)
+{
+    Context c2;
+    c2.constraints = desugar(c.constraints);
+    return c2;
+}
+
+vector<TypeVar> desugar(const std::vector<Hs::TypeVar>& ts1)
+{
+    vector<TypeVar> ts2;
+    for(auto& t1: ts1)
+        ts2.push_back(desugar(t1));
+    return ts2;
+}
+
 Type desugar(const Hs::Type& t)
 {
     if (t.empty())
@@ -939,6 +962,19 @@ Type desugar(const Hs::Type& t)
     {
         return TypeOfKind( desugar(tok->type), tok->kind);
     }
+    else if (auto ct = t.to<Hs::ConstrainedType>())
+    {
+        return ConstrainedType( desugar(ct->context), desugar(ct->type) );
+    }
     else
         std::abort();
 }
+
+vector<Type> desugar(const std::vector<Hs::Type>& ts1)
+{
+    vector<Type> ts2;
+    for(auto& t1: ts1)
+        ts2.push_back(desugar(t1));
+    return ts2;
+}
+

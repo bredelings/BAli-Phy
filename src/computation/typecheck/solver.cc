@@ -24,13 +24,13 @@ string NonCanonicalPred::print() const
 
 string CanonicalDictPred::print() const
 {
-    auto constraint = Hs::make_tyapps(klass, args);
+    auto constraint = make_tyapps(klass, args);
     return dvar.print() + " :: " + constraint.print();
 }
 
 string CanonicalEqualityPred::print() const
 {
-    auto constraint = Hs::make_equality_constraint(t1, t2);
+    auto constraint = make_equality_constraint(t1, t2);
     return co.print() + " :: " + constraint.print();
 }
 
@@ -73,9 +73,9 @@ T* to(U& u)
 // FIXME: there should be a `const` way of getting these.
 // FIXME: instantiate is not constant though.
 // FIXME: we shouldn't need fresh type vars if the type is unambiguous though.
-vector<pair<Core::Var, Hs::Type>> TypeChecker::superclass_constraints(const Hs::Type& constraint)
+vector<pair<Core::Var, Type>> TypeChecker::superclass_constraints(const Type& constraint)
 {
-    vector<pair<Core::Var, Hs::Type>> constraints;
+    vector<pair<Core::Var, Type>> constraints;
 
     auto class_name = get_full_class_name_from_constraint(constraint);
 
@@ -101,7 +101,7 @@ vector<pair<Core::Var, Hs::Type>> TypeChecker::superclass_constraints(const Hs::
 }
 
 // We are trying to eliminate the *first* argument.
-optional<vector<Core::Var>> TypeChecker::is_superclass_of(const Hs::Type& constraint1, const Hs::Type& constraint2)
+optional<vector<Core::Var>> TypeChecker::is_superclass_of(const Type& constraint1, const Type& constraint2)
 {
     vector<Core::Var> extractors;
     if (same_type(constraint1, constraint2))
@@ -122,7 +122,7 @@ optional<vector<Core::Var>> TypeChecker::is_superclass_of(const Hs::Type& constr
     }
 }
 
-optional<Core::Decls> TypeChecker::entails_by_superclass(const pair<Core::Var, Hs::Type>& given, const pair<Core::Var, Hs::Type>& wanted)
+optional<Core::Decls> TypeChecker::entails_by_superclass(const pair<Core::Var, Type>& given, const pair<Core::Var, Type>& wanted)
 {
     auto& [dvar_given, given_constraint] = given;
     auto& [dvar_wanted, wanted_constraint] = wanted;
@@ -162,7 +162,7 @@ optional<Core::Decls> TypeChecker::entails_by_superclass(const pair<Core::Var, H
 
 
 template <typename T>
-std::optional<Core::Decls> TypeChecker::entails(const T& givens, const std::pair<Core::Var, Hs::Type>& wanted_pred)
+std::optional<Core::Decls> TypeChecker::entails(const T& givens, const std::pair<Core::Var, Type>& wanted_pred)
 {
     // 1. First check if the wanted pred is a superclass of any of the givens.
     //
@@ -198,7 +198,7 @@ std::optional<Core::Decls> TypeChecker::entails(const T& givens, const std::pair
     return {};
 }
 
-bool cmp_less(const Hs::MetaTypeVar& uv1, const Hs::MetaTypeVar& uv2)
+bool cmp_less(const MetaTypeVar& uv1, const MetaTypeVar& uv2)
 {
     assert(not uv1.filled());
     assert(not uv2.filled());
@@ -222,15 +222,15 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     P.t1 = rewrite(flavor, P.t1);
     P.t2 = rewrite(flavor, P.t2);
 
-    auto uv1 = follow_meta_type_var(P.t1).to<Hs::MetaTypeVar>();
-    auto uv2 = follow_meta_type_var(P.t2).to<Hs::MetaTypeVar>();
+    auto uv1 = follow_meta_type_var(P.t1).to<MetaTypeVar>();
+    auto uv2 = follow_meta_type_var(P.t2).to<MetaTypeVar>();
 
     // REFL: tau ~ tau
     // NOTE: this does not currently handle foralls or constraints!
     if (same_type(P.t1, P.t2)) return {}; // Solved!
 
-    auto tv1 = P.t1.to<Hs::TypeVar>();
-    auto tv2 = P.t2.to<Hs::TypeVar>();
+    auto tv1 = P.t1.to<TypeVar>();
+    auto tv2 = P.t2.to<TypeVar>();
 
     if (uv1 and uv2)
     {
@@ -294,14 +294,14 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
         while(auto s2 = is_type_synonym(P.t2))
             P.t2 = *s2;
 
-        if (auto tuple = P.t1.to<Hs::TupleType>())
+        if (auto tuple = P.t1.to<TupleType>())
             P.t1 = canonicalize_type(*tuple);
-        else if (auto list = P.t1.to<Hs::ListType>())
+        else if (auto list = P.t1.to<ListType>())
             P.t1 = canonicalize_type(*list);
 
-        if (auto tuple = P.t2.to<Hs::TupleType>())
+        if (auto tuple = P.t2.to<TupleType>())
             P.t2 = canonicalize_type(*tuple);
-        else if (auto list = P.t2.to<Hs::ListType>())
+        else if (auto list = P.t2.to<ListType>())
             P.t2 = canonicalize_type(*list);
 
         auto [head1,args1] = decompose_type_apps(P.t1);
@@ -314,8 +314,8 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
             return {};
         }
 
-        auto h1 = head1.to<Hs::TypeCon>();
-        auto h2 = head2.to<Hs::TypeCon>();
+        auto h1 = head1.to<TypeCon>();
+        auto h2 = head2.to<TypeCon>();
 
         vector<Predicate> preds;
         if (h1 and h2)
@@ -375,7 +375,7 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
     {
         auto flavor = P.flavor;
 
-        if (auto eq = Hs::is_equality_constraint(NC->constraint))
+        if (auto eq = is_equality_constraint(NC->constraint))
         {
             auto& [t1, t2] = *eq;
             return canonicalize_equality(flavor, {NC->dvar, t1, t2});
@@ -383,8 +383,8 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
         else
         {
             auto [head,args] = decompose_type_apps(NC->constraint);
-            assert(head.is_a<Hs::TypeCon>());
-            auto klass = head.as_<Hs::TypeCon>();
+            assert(head.is_a<TypeCon>());
+            auto klass = head.as_<TypeCon>();
             return canonicalize_dict(P.flavor, CanonicalDictPred{NC->dvar, klass, args});
         }
     }
@@ -396,7 +396,7 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
         std::abort();
 }
 
-Hs::Type Solver::rewrite(ConstraintFlavor flavor, Hs::Type t) const
+Type Solver::rewrite(ConstraintFlavor flavor, Type t) const
 {
     // 1. Get the tv substitution
     substitution_t tv_subst;
@@ -408,7 +408,7 @@ Hs::Type Solver::rewrite(ConstraintFlavor flavor, Hs::Type t) const
         auto eq = to<CanonicalEqualityPred>(inert.pred);
         assert(eq);
 
-        auto tv1 = eq->t1.to<Hs::TypeVar>();
+        auto tv1 = eq->t1.to<TypeVar>();
         assert(tv1);
 
         assert(not tv_subst.count(*tv1));
@@ -426,7 +426,7 @@ Hs::Type Solver::rewrite(ConstraintFlavor flavor, Hs::Type t) const
         auto eq = to<CanonicalEqualityPred>(inert.pred);
         assert(eq);
 
-        auto uv1 = follow_meta_type_var(eq->t1).to<Hs::MetaTypeVar>();
+        auto uv1 = follow_meta_type_var(eq->t1).to<MetaTypeVar>();
         assert(uv1);
 
         assert(not mtv_subst.count(*uv1));
@@ -453,8 +453,8 @@ Change Solver::interact(const Predicate& P1, const Predicate& P2)
 
     if (dict1 and dict2)
     {
-        auto constraint1 = Hs::make_tyapps(dict1->klass, dict1->args);
-        auto constraint2 = Hs::make_tyapps(dict2->klass, dict2->args);
+        auto constraint1 = make_tyapps(dict1->klass, dict1->args);
+        auto constraint2 = make_tyapps(dict2->klass, dict2->args);
 
         // DDICT:  (D xs)     + (D xs)     -> (D xs)
         if (same_type(constraint1, constraint2))
@@ -490,7 +490,7 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
         if (P.flavor == Given) return {};
 
         auto [dvar, klass, args] = *dict;
-        auto constraint = Hs::make_tyapps(klass,args);
+        auto constraint = make_tyapps(klass,args);
 
         if (auto inst = lookup_instance(constraint))
         {
@@ -507,7 +507,7 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
     return {};
 }
 
-bool Solver::is_touchable(const Hs::MetaTypeVar& mtv, const Hs::Type& rhs) const
+bool Solver::is_touchable(const MetaTypeVar& mtv, const Type& rhs) const
 {
     // We need to have done follow_meta_type_var( ) already.
     assert(not mtv.filled());
@@ -530,7 +530,7 @@ bool Solver::is_touchable(const Hs::MetaTypeVar& mtv, const Hs::Type& rhs) const
     return true;
 }
 
-bool affected_by_mtv(const Pred& P, const Hs::MetaTypeVar& mtv)
+bool affected_by_mtv(const Pred& P, const MetaTypeVar& mtv)
 {
     if (auto E = to<CanonicalEqualityPred>(P))
         return affected_by_mtv(E->t1, mtv) or affected_by_mtv(E->t2, mtv);
@@ -542,7 +542,7 @@ bool affected_by_mtv(const Pred& P, const Hs::MetaTypeVar& mtv)
         std::abort();
 }
 
-bool affected_by_mtv(const Predicate& P, const Hs::MetaTypeVar& mtv)
+bool affected_by_mtv(const Predicate& P, const MetaTypeVar& mtv)
 {
     return affected_by_mtv(P.pred, mtv);
 }
@@ -558,7 +558,7 @@ void Solver::add_to_work_list(const std::vector<Predicate>& ps)
             work_list.push_back(p);
 }
 
-vector<Predicate> kickout_after_unification2(const Hs::MetaTypeVar& mtv, std::vector<Predicate>& preds)
+vector<Predicate> kickout_after_unification2(const MetaTypeVar& mtv, std::vector<Predicate>& preds)
 {
     vector<Predicate> work_list;
     // kick-out for inerts that are rewritten by p
@@ -579,7 +579,7 @@ vector<Predicate> kickout_after_unification2(const Hs::MetaTypeVar& mtv, std::ve
     return work_list;
 }
 
-void Solver::kickout_after_unification(const Hs::MetaTypeVar& mtv)
+void Solver::kickout_after_unification(const MetaTypeVar& mtv)
 {
     // kick-out for inerts containing mtv
     kickout_after_unification2(mtv, inerts.tv_eqs);
@@ -593,7 +593,7 @@ void Solver::add_inert(const Predicate& p)
 {
     if (auto E = to<CanonicalEqualityPred>(p.pred))
     {
-        int eq_level = std::max( Hs::max_level(E->t1), Hs::max_level(E->t2));
+        int eq_level = std::max( max_level(E->t1), max_level(E->t2));
         if (eq_level < level and p.flavor == Given)
         {
             inerts.given_eq_level = std::max( inerts.given_eq_level.value_or(0), eq_level );
@@ -602,10 +602,10 @@ void Solver::add_inert(const Predicate& p)
 
     if (auto E = to<CanonicalEqualityPred>(p.pred))
     {
-        auto t1 = Hs::follow_meta_type_var(E->t1);
-        if (t1.is_a<Hs::TypeVar>())
+        auto t1 = follow_meta_type_var(E->t1);
+        if (t1.is_a<TypeVar>())
             inerts.tv_eqs.push_back(p);
-        else if (t1.is_a<Hs::MetaTypeVar>())
+        else if (t1.is_a<MetaTypeVar>())
             inerts.mtv_eqs.push_back(p);
         else if (false) // type fam application?
             inerts.tyfam_eqs.push_back(p);
@@ -663,7 +663,7 @@ bool Solver::can_rewrite(const Predicate& p1, const Predicate& p2) const
 
     auto t1 = follow_meta_type_var(eq1->t1);
 
-    if (auto tv = t1.to<Hs::TypeVar>())
+    if (auto tv = t1.to<TypeVar>())
     {
         if (auto dict2 = to<CanonicalDictPred>(p2.pred))
             return contains_tv(dict2->args, *tv);
@@ -672,7 +672,7 @@ bool Solver::can_rewrite(const Predicate& p1, const Predicate& p2) const
         else
             std::abort();
     }
-    else if (auto mtv = t1.to<Hs::MetaTypeVar>())
+    else if (auto mtv = t1.to<MetaTypeVar>())
     {
         if (auto dict2 = to<CanonicalDictPred>(p2.pred))
             return contains_mtv(dict2->args, *mtv);
@@ -681,9 +681,9 @@ bool Solver::can_rewrite(const Predicate& p1, const Predicate& p2) const
         else
             std::abort();
     }
-    else if (/*auto tycon =*/ t1.to<Hs::TypeCon>())
+    else if (/*auto tycon =*/ t1.to<TypeCon>())
         return false;
-    else if (/*auto app =*/ t1.to<Hs::TypeApp>())
+    else if (/*auto app =*/ t1.to<TypeApp>())
         return false;
     else
         return false;
@@ -765,8 +765,8 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         // perform same-level substitutions
         if (auto E = to<CanonicalEqualityPred>(p.pred); E and p.flavor == Wanted)
         {
-            auto t1 = Hs::follow_meta_type_var(E->t1);
-            if (auto mtv = t1.to<Hs::MetaTypeVar>())
+            auto t1 = follow_meta_type_var(E->t1);
+            if (auto mtv = t1.to<MetaTypeVar>())
             {
                 if (mtv->level() == level)
                 {
@@ -817,10 +817,10 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         if (P.flavor == Wanted)
         {
             if (auto eq = to<CanonicalEqualityPred>(P.pred))
-                wanteds.push_back({eq->co, Hs::make_equality_constraint(eq->t1, eq->t2)});
+                wanteds.push_back({eq->co, make_equality_constraint(eq->t1, eq->t2)});
             else if (auto dict = to<CanonicalDictPred>(P.pred))
             {
-                auto constraint = Hs::make_tyapps(dict->klass, dict->args);
+                auto constraint = make_tyapps(dict->klass, dict->args);
                 wanteds.push_back({dict->dvar, constraint});
             }
         }
@@ -928,7 +928,7 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
     return decls;
 }
 
-std::vector<Predicate> make_predicates(ConstraintFlavor f, const std::vector<std::pair<Core::Var, Hs::Type>>& ps)
+std::vector<Predicate> make_predicates(ConstraintFlavor f, const std::vector<std::pair<Core::Var, Type>>& ps)
 {
     vector<Predicate> predicates;
     for(auto& [cvar, constraint]: ps)

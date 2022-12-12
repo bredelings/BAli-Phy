@@ -12,18 +12,18 @@ using std::optional;
 using std::tuple;
 
 // Constraints for defaulting must be of the form K a (e.g. Num a) where a is a MetaTypeVar.
-optional<Hs::TypeCon> simple_constraint_class_meta(const Hs::Type& constraint)
+optional<TypeCon> simple_constraint_class_meta(const Type& constraint)
 {
-    auto [tycon, args] = Hs::decompose_type_apps(constraint);
+    auto [tycon, args] = decompose_type_apps(constraint);
 
     // Only one constrained type.
     if (args.size() != 1) return {};
 
     // The type is a typevar
-    if (not args[0].is_a<Hs::MetaTypeVar>()) return {};
+    if (not args[0].is_a<MetaTypeVar>()) return {};
 
     // The constraint should be a TyCon, not (say) a variable.
-    auto tc = tycon.to<Hs::TypeCon>();
+    auto tc = tycon.to<TypeCon>();
     if (not tc) return {};
 
     return *tc;
@@ -35,7 +35,7 @@ optional<Hs::TypeCon> simple_constraint_class_meta(const Hs::Type& constraint)
 // 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
 
 optional<Core::Decls>
-TypeChecker::candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie)
+TypeChecker::candidates(const MetaTypeVar& tv, const LIE& tv_lie)
 {
     set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
     set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
@@ -81,13 +81,13 @@ TypeChecker::candidates(const Hs::MetaTypeVar& tv, const LIE& tv_lie)
     return {};
 }
 
-pair<LIE, map<Hs::MetaTypeVar, LIE>>
+pair<LIE, map<MetaTypeVar, LIE>>
 ambiguities(const LIE& lie)
 {
     auto ambiguous_tvs = free_meta_type_variables(lie);
 
     // 1. Record the constraints WITH ambiguous type vars, by type var
-    map<Hs::MetaTypeVar, LIE> ambiguities;
+    map<MetaTypeVar, LIE> ambiguities;
     for(auto& ambiguous_tv: ambiguous_tvs)
     {
         LIE lie_for_tv;

@@ -15,27 +15,27 @@ string alphabetized_type_var_name(int i)
     return s;
 }
 
-Haskell::TypeVar alphabetized_type_var(int i)
+TypeVar alphabetized_type_var(int i)
 {
     auto s = alphabetized_type_var_name(i);
-    auto v = Haskell::TypeVar({noloc,s});
+    auto v = TypeVar({noloc,s});
     return v;
 }
 
-Hs::Type alphabetize_type(const Hs::Type& type, map<Haskell::TypeVar,Haskell::TypeVar>& s, int& index);
+Type alphabetize_type(const Type& type, map<TypeVar,TypeVar>& s, int& index);
 
-Hs::Context alphabetize(Hs::Context context, map<Haskell::TypeVar,Haskell::TypeVar>& s, int& index)
+Context alphabetize(Context context, map<TypeVar,TypeVar>& s, int& index)
 {
     for(auto& constraint: context.constraints)
         constraint = alphabetize_type(constraint, s, index);
     return context;
 }
 
-Hs::Type alphabetize_type(const Hs::Type& type, map<Haskell::TypeVar,Haskell::TypeVar>& s, int& index)
+Type alphabetize_type(const Type& type, map<TypeVar,TypeVar>& s, int& index)
 {
     // Lets just assume that there is no shadowing.
 
-    if (auto tv = type.to<Haskell::TypeVar>())
+    if (auto tv = type.to<TypeVar>())
     {
         auto rec = s.find(*tv);
         if (rec == s.end())
@@ -44,11 +44,11 @@ Hs::Type alphabetize_type(const Hs::Type& type, map<Haskell::TypeVar,Haskell::Ty
         }
         return rec->second;
     }
-    else if (type.is_a<Haskell::TypeCon>())
+    else if (type.is_a<TypeCon>())
         return type;
-    else if (type.is_a<Haskell::ForallType>())
+    else if (type.is_a<ForallType>())
     {
-        auto forall = type.as_<Haskell::ForallType>();
+        auto forall = type.as_<ForallType>();
 
         // 2a. Ensure that we see each of the type var binders in the order they are used.
         for(auto& tv: forall.type_var_binders)
@@ -63,34 +63,34 @@ Hs::Type alphabetize_type(const Hs::Type& type, map<Haskell::TypeVar,Haskell::Ty
         // 2c. Return the type
         return forall;
     }
-    else if (type.is_a<Haskell::TypeApp>())
+    else if (type.is_a<TypeApp>())
     {
-        auto app = type.as_<Haskell::TypeApp>();
+        auto app = type.as_<TypeApp>();
         app.head = alphabetize_type(app.head, s, index);
         app.arg  = alphabetize_type(app.arg , s, index);
         return app;
     }
-    else if (auto l = type.to<Hs::ListType>())
+    else if (auto l = type.to<ListType>())
     {
         auto L = *l;
         L.element_type = alphabetize_type(L.element_type, s, index);
         return L;
     }
-    else if (auto tup = type.to<Hs::TupleType>())
+    else if (auto tup = type.to<TupleType>())
     {
         auto T = *tup;
         for(auto& type: T.element_types)
             type = alphabetize_type(type, s, index);
         return T;;
     }
-    else if (auto c = type.to<Hs::ConstrainedType>())
+    else if (auto c = type.to<ConstrainedType>())
     {
         auto C = *c;
         C.type = alphabetize_type(C.type, s, index);
         C.context = alphabetize(C.context, s, index);
         return C;
     }
-    else if (auto sl = type.to<Hs::StrictLazyType>())
+    else if (auto sl = type.to<StrictLazyType>())
     {
         auto SL = *sl;
         SL.type = alphabetize_type(SL.type, s, index);
@@ -100,9 +100,9 @@ Hs::Type alphabetize_type(const Hs::Type& type, map<Haskell::TypeVar,Haskell::Ty
         std::abort();
 }
 
-Hs::Type alphabetize_type(const Hs::Type& type)
+Type alphabetize_type(const Type& type)
 {
-    map<Haskell::TypeVar, Haskell::TypeVar> s;
+    map<TypeVar, TypeVar> s;
     int index = 0;
     return alphabetize_type(type, s, index);
 }

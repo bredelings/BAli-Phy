@@ -12,27 +12,27 @@ enum ConstraintFlavor { Wanted, Given };
 struct NonCanonicalPred
 {
     Core::Var dvar;
-    Hs::Type constraint;
+    Type constraint;
     std::string print() const;
-    NonCanonicalPred(const Core::Var& v, const Hs::Type& c):dvar(v), constraint(c) {}
+    NonCanonicalPred(const Core::Var& v, const Type& c):dvar(v), constraint(c) {}
 };
 
 struct CanonicalDictPred
 {
     Core::Var dvar;
-    Hs::TypeCon klass;
-    std::vector<Hs::Type> args;
+    TypeCon klass;
+    std::vector<Type> args;
     std::string print() const;
 };
 
 struct CanonicalEqualityPred
 {
     Core::Var co;
-    Hs::Type t1;
-    Hs::Type t2;
+    Type t1;
+    Type t2;
     CanonicalEqualityPred flip() const;
     std::string print() const;
-    CanonicalEqualityPred(const Core::Var& v, const Hs::Type& ta, const Hs::Type& tb):co(v),t1(ta),t2(tb) {}
+    CanonicalEqualityPred(const Core::Var& v, const Type& ta, const Type& tb):co(v),t1(ta),t2(tb) {}
 };
 
 struct Pred: public std::variant<NonCanonicalPred, CanonicalDictPred, CanonicalEqualityPred>
@@ -51,7 +51,7 @@ struct Predicate
     Predicate(ConstraintFlavor f, Pred p): flavor(f), pred(p) {}
 };
 
-std::vector<Predicate> make_predicates(ConstraintFlavor, const std::vector<std::pair<Core::Var, Hs::Type>>&);
+std::vector<Predicate> make_predicates(ConstraintFlavor, const std::vector<std::pair<Core::Var, Type>>&);
 
 struct ReactFail {};
 
@@ -104,16 +104,16 @@ struct Solver: public TypeChecker
 
     bool can_rewrite(const Predicate& P1, const Predicate& P2) const;
 
-    bool is_touchable(const Hs::MetaTypeVar&, const Hs::Type&) const;
+    bool is_touchable(const MetaTypeVar&, const Type&) const;
 
     void kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps);
-    void kickout_after_unification(const Hs::MetaTypeVar&);
+    void kickout_after_unification(const MetaTypeVar&);
 
     std::optional<Predicate> canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P);
     std::optional<Predicate> canonicalize_dict(ConstraintFlavor flavor, CanonicalDictPred P);
     std::optional<Predicate> canonicalize(Predicate& P);
 
-    Hs::Type rewrite(ConstraintFlavor, Hs::Type) const;
+    Type rewrite(ConstraintFlavor, Type) const;
     Change interact(const Predicate& P1, const Predicate& P2);
 
     std::optional<Reaction> top_react(const Predicate& P);

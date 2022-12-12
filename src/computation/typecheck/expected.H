@@ -6,34 +6,34 @@
 #include <optional>
 #include <map>
 #include <variant>
-#include "computation/haskell/type.H"
+#include "computation/haskell/coretype.H"
 
 struct Check
 {
-    Hs::Type type;
+    Type type;
 
     std::string print() const;
 
-    Check(const Hs::Type& t):type(t) {}
+    Check(const Type& t):type(t) {}
 };
 
 class Infer
 {
     const int level_;
-    std::shared_ptr<Hs::Type> type_ref;
+    std::shared_ptr<Type> type_ref;
 
 public:
 
     int level() const;
 
-    void set_type(const Hs::Type& t)
+    void set_type(const Type& t)
     {
         assert(type_ref->empty());
         *type_ref = t;
         assert(not type_ref->empty());
     }
 
-    std::optional<Hs::Type> type() const
+    std::optional<Type> type() const
     {
         if (type_ref->empty())
             return {};
@@ -67,16 +67,16 @@ public:
             return nullptr;
     }
 
-    Hs::Type check_type() const
+    Type check_type() const
     {
         assert(check());
         return check()->type;
     }
 
 
-    std::optional<Hs::Type> read_type_maybe() const;
+    std::optional<Type> read_type_maybe() const;
 
-    Hs::Type read_type() const;
+    Type read_type() const;
 
     std::string print() const;
 
@@ -85,7 +85,7 @@ public:
 };
 
 
-std::vector<Hs::Type> read_types(const std::vector<Expected>& exp_types);
-std::vector<Expected> check_types(const std::vector<Hs::Type>& types);
+std::vector<Type> read_types(const std::vector<Expected>& exp_types);
+std::vector<Expected> check_types(const std::vector<Type>& types);
 
 #endif

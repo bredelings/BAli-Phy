@@ -3,5 +3,5 @@
 
 #include "haskell/haskell.H"
 
-Hs::Type alphabetize_type(const Hs::Type& type);
+Type alphabetize_type(const Type& type);
 #endif

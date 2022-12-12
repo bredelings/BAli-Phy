@@ -3,27 +3,25 @@
 
 #include <optional>
 #include "computation/haskell/haskell.H"
+#include "computation/haskell/coretype.H"
 #include "immer/map.hpp" // for immer::map
 
 
-typedef immer::map<Hs::TypeVar, Hs::Type> substitution_t;
-typedef immer::map<Hs::MetaTypeVar, Hs::Type> usubstitution_t;
+typedef immer::map<TypeVar, Type> substitution_t;
+typedef immer::map<MetaTypeVar, Type> usubstitution_t;
 
 std::string print(const substitution_t& s);
 // TODO
 // 1. Merge unification / substitution code for types & kinds?
 
-std::optional<Hs::Context> check_apply_subst(const substitution_t& s, Hs::Context C);
-std::optional<Hs::Type> check_apply_subst(const substitution_t& s, const Hs::Type& t);
-Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t);
-std::vector<Hs::Type> apply_subst(const substitution_t& s, const std::vector<Hs::Type>& t);
-//Hs::Context apply_subst(const substitution_t& s, const Hs::Context& C);
+std::optional<Context> check_apply_subst(const substitution_t& s, Context C);
+std::optional<Type> check_apply_subst(const substitution_t& s, const Type& t);
+Type apply_subst(const substitution_t& s, const Type& t);
+std::vector<Type> apply_subst(const substitution_t& s, const std::vector<Type>& t);
+//Context apply_subst(const substitution_t& s, const Context& C);
 
-std::optional<Hs::Context> check_apply_subst(const usubstitution_t& s, Hs::Context C);
-std::optional<Hs::Type> check_apply_subst(const usubstitution_t& s, const Hs::Type& t);
-Hs::Type apply_subst(const usubstitution_t& s, const Hs::Type& t);
-
-Hs::ConstructorDecl apply_subst(const substitution_t& s, Hs::ConstructorDecl con);
-Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl d);
+std::optional<Context> check_apply_subst(const usubstitution_t& s, Context C);
+std::optional<Type> check_apply_subst(const usubstitution_t& s, const Type& t);
+Type apply_subst(const usubstitution_t& s, const Type& t);
 
 #endif 

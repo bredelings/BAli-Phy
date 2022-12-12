@@ -13,7 +13,7 @@ int TypeSynonymInfo::arity() const
     return type_vars.size();
 }
 
-Hs::Type TypeSynonymInfo::expand(const std::vector<Hs::Type>& args) const
+Type TypeSynonymInfo::expand(const std::vector<Type>& args) const
 {
     if (args.size() < arity())
         throw myexception()<<name<<" takes "<<arity()<<" arguments, but got "<<args.size()<<"!";
@@ -25,7 +25,7 @@ Hs::Type TypeSynonymInfo::expand(const std::vector<Hs::Type>& args) const
     auto type2 = apply_subst(s, result);
 
     for(int i=arity(); i< args.size(); i++)
-        type2 = Hs::TypeApp(type2, args[i]);
+        type2 = TypeApp(type2, args[i]);
 
     return type2;
 }
@@ -128,39 +128,39 @@ type_con_env operator+(const type_con_env& tycons1, const type_con_env& tycons2)
     return tycons3;
 }
 
-std::set<Hs::TypeVar> free_type_variables(const value_env& env)
+std::set<TypeVar> free_type_variables(const value_env& env)
 {
-    std::set<Hs::TypeVar> free;
+    std::set<TypeVar> free;
     for(auto& [x,type]: env)
         add(free, free_type_variables(type));
     return free;
 }
 
-std::set<Hs::TypeVar> free_type_variables(const LIE& env)
+std::set<TypeVar> free_type_variables(const LIE& env)
 {
-    std::set<Hs::TypeVar> free;
+    std::set<TypeVar> free;
     for(auto& [x,type]: env)
         add(free, free_type_variables(type));
     return free;
 }
 
-std::set<Hs::MetaTypeVar> free_meta_type_variables(const value_env& env)
+std::set<MetaTypeVar> free_meta_type_variables(const value_env& env)
 {
-    std::set<Hs::MetaTypeVar> free;
+    std::set<MetaTypeVar> free;
     for(auto& [x,type]: env)
         add(free, free_meta_type_variables(type));
     return free;
 }
 
-std::set<Hs::MetaTypeVar> free_meta_type_variables(const LIE& env)
+std::set<MetaTypeVar> free_meta_type_variables(const LIE& env)
 {
-    std::set<Hs::MetaTypeVar> free;
+    std::set<MetaTypeVar> free;
     for(auto& [x,type]: env)
         add(free, free_meta_type_variables(type));
     return free;
 }
 
-vector<Hs::Type> DataConInfo::all_constraints() const
+vector<Type> DataConInfo::all_constraints() const
 {
     auto cs = top_constraints;
     for(auto& constraint: gadt_eq_constraints)
@@ -170,14 +170,14 @@ vector<Hs::Type> DataConInfo::all_constraints() const
     return cs;
 }
 
-vector<Hs::Type> DataConInfo::dictionary_constraints() const
+vector<Type> DataConInfo::dictionary_constraints() const
 {
-    return Hs::dictionary_constraints(all_constraints());
+    return ::dictionary_constraints(all_constraints());
 }
 
-vector<Hs::Type> DataConInfo::equality_constraints() const
+vector<Type> DataConInfo::equality_constraints() const
 {
-    return Hs::equality_constraints(all_constraints());
+    return ::equality_constraints(all_constraints());
 }
 
 int DataConInfo::dict_arity() const
@@ -190,28 +190,28 @@ int DataConInfo::arity() const
     return field_types.size();
 }
 
-Hs::Type DataConInfo::result_type() const
+Type DataConInfo::result_type() const
 {
-    return Hs::type_apply( data_type, uni_tvs );
+    return type_apply( data_type, uni_tvs );
 }
 
-Hs::Type DataConInfo::constructor_type() const
+Type DataConInfo::constructor_type() const
 {
-    auto type = Hs::function_type(field_types, result_type());
+    auto type = function_type(field_types, result_type());
 
     // add_constraints will merge the constraints, here.
-    type = Hs::add_constraints(written_constraints, type);
-    type = Hs::add_constraints(gadt_eq_constraints, type);
-    type = Hs::add_forall_vars(exi_tvs, type);
+    type = add_constraints(written_constraints, type);
+    type = add_constraints(gadt_eq_constraints, type);
+    type = add_forall_vars(exi_tvs, type);
 
     // FIXME: Only add top constraints for type variables in constructor fields
-    type = Hs::add_constraints(top_constraints, type);
-    type = Hs::add_forall_vars(uni_tvs, type);
+    type = add_constraints(top_constraints, type);
+    type = add_forall_vars(uni_tvs, type);
 
     return type;
 }
 
-TypeFamInfo::TypeFamInfo(const vector<Hs::TypeVar>& as, const Hs::Kind& k, const optional<string>& s)
+TypeFamInfo::TypeFamInfo(const vector<TypeVar>& as, const Kind& k, const optional<string>& s)
     :args(as), result_kind(k), associated_class(s)
 {
     for(auto& arg: args)

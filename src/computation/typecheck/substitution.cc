@@ -19,7 +19,7 @@ string print(const substitution_t& s)
     return oss.str();
 }
 
-optional<Hs::Context> check_apply_subst(const substitution_t& s, Hs::Context C)
+optional<Context> check_apply_subst(const substitution_t& s, Context C)
 {
     bool changed = false;
     for(auto& constraint: C.constraints)
@@ -36,7 +36,7 @@ optional<Hs::Context> check_apply_subst(const substitution_t& s, Hs::Context C)
         return {};
 }
 
-optional<Hs::Context> check_apply_subst(const usubstitution_t& s, Hs::Context C)
+optional<Context> check_apply_subst(const usubstitution_t& s, Context C)
 {
     bool changed = false;
     for(auto& constraint: C.constraints)
@@ -53,24 +53,24 @@ optional<Hs::Context> check_apply_subst(const usubstitution_t& s, Hs::Context C)
         return {};
 }
 
-std::optional<Hs::Type> check_apply_subst(const substitution_t& s, const Hs::Type& t)
+std::optional<Type> check_apply_subst(const substitution_t& s, const Type& t)
 {
     if (s.empty()) return {};
 
     if (auto tt = filled_meta_type_var(t))
         return check_apply_subst(s,  *tt);
-    else if (t.is_a<Hs::MetaTypeVar>())
+    else if (t.is_a<MetaTypeVar>())
         return {};
-    else if (auto tv = t.to<Hs::TypeVar>())
+    else if (auto tv = t.to<TypeVar>())
     {
         if (auto t2 = s.find(*tv))
             return apply_subst(s,*t2);
         else
             return {};
     }
-    else if (t.is_a<Hs::TypeCon>())
+    else if (t.is_a<TypeCon>())
         return {};
-    else if (auto tup = t.to<Hs::TupleType>())
+    else if (auto tup = t.to<TupleType>())
     {
         auto T = *tup;
         bool changed = false;
@@ -88,7 +88,7 @@ std::optional<Hs::Type> check_apply_subst(const substitution_t& s, const Hs::Typ
         else
             return {};
     }
-    else if (auto l = t.to<Hs::ListType>())
+    else if (auto l = t.to<ListType>())
     {
         if (auto maybe_element_type = check_apply_subst(s,  l->element_type))
         {
@@ -99,7 +99,7 @@ std::optional<Hs::Type> check_apply_subst(const substitution_t& s, const Hs::Typ
         else
             return {};
     }
-    else if (auto p_app = t.to<Hs::TypeApp>())
+    else if (auto p_app = t.to<TypeApp>())
     {
         auto app = *p_app;
         bool changed = false;
@@ -119,7 +119,7 @@ std::optional<Hs::Type> check_apply_subst(const substitution_t& s, const Hs::Typ
         else
             return {};
     }
-    else if (auto forall = t.to<Hs::ForallType>())
+    else if (auto forall = t.to<ForallType>())
     {
         auto s2 = s;
         for(auto& tv: forall->type_var_binders)
@@ -134,7 +134,7 @@ std::optional<Hs::Type> check_apply_subst(const substitution_t& s, const Hs::Typ
         else
             return {};
     }
-    else if (auto c = t.to<Hs::ConstrainedType>())
+    else if (auto c = t.to<ConstrainedType>())
     {
         auto C = *c;
         bool changed = false;
@@ -153,7 +153,7 @@ std::optional<Hs::Type> check_apply_subst(const substitution_t& s, const Hs::Typ
         else
             return {};
     }
-    else if (auto sl = t.to<Hs::StrictLazyType>())
+    else if (auto sl = t.to<StrictLazyType>())
     {
         if (auto maybe_type = check_apply_subst(s, sl->type))
         {
@@ -168,7 +168,7 @@ std::optional<Hs::Type> check_apply_subst(const substitution_t& s, const Hs::Typ
         std::abort();
 }
 
-Hs::Context apply_subst(const substitution_t& s, const Hs::Context& C)
+Context apply_subst(const substitution_t& s, const Context& C)
 {
     if (auto c = check_apply_subst(s,C))
         return *c;
@@ -176,7 +176,7 @@ Hs::Context apply_subst(const substitution_t& s, const Hs::Context& C)
         return C;
 }
 
-Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t)
+Type apply_subst(const substitution_t& s, const Type& t)
 {
     if (auto T = check_apply_subst(s, t))
         return *T;
@@ -184,15 +184,15 @@ Hs::Type apply_subst(const substitution_t& s, const Hs::Type& t)
         return t;
 }
 
-vector<Hs::Type> apply_subst(const substitution_t& s, const vector<Hs::Type>& t)
+vector<Type> apply_subst(const substitution_t& s, const vector<Type>& t)
 {
-    vector<Hs::Type> t2 = t;
+    vector<Type> t2 = t;
     for(auto& type: t2)
         type = apply_subst(s, type);
     return t2;
 }
 
-Hs::Type apply_subst(const usubstitution_t& s, const Hs::Type& t)
+Type apply_subst(const usubstitution_t& s, const Type& t)
 {
     if (auto T = check_apply_subst(s, t))
         return *T;
@@ -200,13 +200,13 @@ Hs::Type apply_subst(const usubstitution_t& s, const Hs::Type& t)
         return t;
 }
 
-std::optional<Hs::Type> check_apply_subst(const usubstitution_t& s, const Hs::Type& t)
+std::optional<Type> check_apply_subst(const usubstitution_t& s, const Type& t)
 {
     if (s.empty()) return {};
 
     if (auto tt = filled_meta_type_var(t))
         return check_apply_subst(s,  *tt);
-    else if (auto tv = t.to<Hs::MetaTypeVar>())
+    else if (auto tv = t.to<MetaTypeVar>())
     {
         if (auto t2 = s.find(*tv))
         {
@@ -217,11 +217,11 @@ std::optional<Hs::Type> check_apply_subst(const usubstitution_t& s, const Hs::Ty
         else
             return {};
     }
-    else if (t.is_a<Hs::TypeVar>())
+    else if (t.is_a<TypeVar>())
         return {};
-    else if (t.is_a<Hs::TypeCon>())
+    else if (t.is_a<TypeCon>())
         return {};
-    else if (auto tup = t.to<Hs::TupleType>())
+    else if (auto tup = t.to<TupleType>())
     {
         auto T = *tup;
         bool changed = false;
@@ -239,7 +239,7 @@ std::optional<Hs::Type> check_apply_subst(const usubstitution_t& s, const Hs::Ty
         else
             return {};
     }
-    else if (auto l = t.to<Hs::ListType>())
+    else if (auto l = t.to<ListType>())
     {
         if (auto maybe_element_type = check_apply_subst(s,  l->element_type))
         {
@@ -250,7 +250,7 @@ std::optional<Hs::Type> check_apply_subst(const usubstitution_t& s, const Hs::Ty
         else
             return {};
     }
-    else if (auto p_app = t.to<Hs::TypeApp>())
+    else if (auto p_app = t.to<TypeApp>())
     {
         auto app = *p_app;
         bool changed = false;
@@ -270,7 +270,7 @@ std::optional<Hs::Type> check_apply_subst(const usubstitution_t& s, const Hs::Ty
         else
             return {};
     }
-    else if (auto forall = t.to<Hs::ForallType>())
+    else if (auto forall = t.to<ForallType>())
     {
         if (auto maybe_type = check_apply_subst(s, forall->type))
         {
@@ -281,7 +281,7 @@ std::optional<Hs::Type> check_apply_subst(const usubstitution_t& s, const Hs::Ty
         else
             return {};
     }
-    else if (auto c = t.to<Hs::ConstrainedType>())
+    else if (auto c = t.to<ConstrainedType>())
     {
         auto C = *c;
         bool changed = false;
@@ -300,7 +300,7 @@ std::optional<Hs::Type> check_apply_subst(const usubstitution_t& s, const Hs::Ty
         else
             return {};
     }
-    else if (auto sl = t.to<Hs::StrictLazyType>())
+    else if (auto sl = t.to<StrictLazyType>())
     {
         if (auto maybe_type = check_apply_subst(s, sl->type))
         {
@@ -325,41 +325,5 @@ substitution_t compose(substitution_t s2, substitution_t s1)
     for(auto& [tv,e]: s1)
         s3 = s3.insert({tv,apply_subst(s2,e)});
     return s3;
-}
-
-Hs::ConstructorDecl apply_subst(const substitution_t& s, Hs::ConstructorDecl con)
-{
-    if (con.context)
-        con.context = apply_subst(s, *con.context);
-
-    if (con.fields.index() == 0)
-    {
-        for(auto& t: std::get<0>(con.fields))
-            t = apply_subst(s, t);
-    }
-    else
-    {
-        for(auto& f: std::get<1>(con.fields).field_decls)
-            f.type = apply_subst(s, f.type);
-    }
-    return con;
-}
-
-Hs::DataOrNewtypeDecl apply_subst(const substitution_t& s, Hs::DataOrNewtypeDecl d)
-{
-    d.context = apply_subst(s, d.context);
-
-    if (d.is_regular_decl())
-    {
-        for(auto& con: d.get_constructors())
-            con = apply_subst(s, con);
-    }
-    else if (d.is_gadt_decl())
-    {
-        for(auto& decl: d.get_gadt_constructors())
-            unloc(decl.type) = apply_subst(s, unloc(decl.type));
-    }
-
-    return d;
 }
 

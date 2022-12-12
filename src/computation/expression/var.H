@@ -29,10 +29,7 @@ struct occurrence_info
     bool pre_inline() const;
 };
 
-namespace Haskell
-{
-    struct Type;
-}
+struct Type;
 
 // a variable expression
 struct var: public Object, public occurrence_info
@@ -44,7 +41,7 @@ struct var: public Object, public occurrence_info
     std::optional<int> level;
 
     // We use this only to print dvar :: constraint
-    std::shared_ptr<Haskell::Type> type_;
+    std::shared_ptr<Type> type_;
 
     bool operator==(const var&) const;
     bool operator==(const Object& o) const;

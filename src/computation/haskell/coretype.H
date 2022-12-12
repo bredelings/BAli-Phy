@@ -382,6 +382,13 @@ namespace std
     };
 }
 
+TypeVar desugar(const Hs::TypeVar& t);
+TypeCon desugar(const Hs::TypeCon& t);
+Context desugar(const Hs::Context& c);
+std::vector<TypeVar> desugar(const std::vector<Hs::TypeVar>& t);
+
 Type desugar(const Hs::Type& t);
+std::vector<Type> desugar(const std::vector<Hs::Type>& t);
+
 
 #endif 

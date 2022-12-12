@@ -14,9 +14,9 @@ string print(const LIE& lie)
     return "{ " + join(ss, "; ") + " }";
 }
 
-vector<Hs::Type> constraints_from_lie(const LIE& lie)
+vector<Type> constraints_from_lie(const LIE& lie)
 {
-    vector<Hs::Type> constraints;
+    vector<Type> constraints;
     for(auto& [_, constraint]: lie)
         constraints.push_back(constraint);
     return constraints;
@@ -37,7 +37,7 @@ LIE dictionary_constraints(const LIE& lie1)
     for(auto& pred: lie1)
     {
         auto& [_, constraint] = pred;
-        if (not Hs::is_equality_constraint(constraint))
+        if (not is_equality_constraint(constraint))
             lie2.push_back(pred);
     }
 
@@ -51,7 +51,7 @@ LIE equality_constraints(const LIE& lie1)
     for(auto& pred: lie1)
     {
         auto& [_, constraint] = pred;
-        if (Hs::is_equality_constraint(constraint))
+        if (is_equality_constraint(constraint))
             lie2.push_back(pred);
     }
 
@@ -119,7 +119,7 @@ string Implication::print() const
     return oss.str();
 }
 
-Implication::Implication(int l, const vector<Hs::TypeVar>& v, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb)
+Implication::Implication(int l, const vector<TypeVar>& v, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb)
     :level(l), evidence_binds(eb), tvs(v), givens(g), wanteds(w)
 {
     for(auto& tv: tvs)

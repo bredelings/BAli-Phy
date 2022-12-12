@@ -37,7 +37,7 @@ Core::wrapper TypeChecker::tcMatchesFunInfer(std::vector<Expected>& arg_types, i
 
     a(arg_types, result_type)(*this);
 
-    auto unif_fun_type = Hs::function_type( read_types(extra_arg_types), result_type.read_type());
+    auto unif_fun_type = function_type( read_types(extra_arg_types), result_type.read_type());
 
     if (auto I = extra_fun_type.infer(); I and not I->type())
     {
@@ -49,7 +49,7 @@ Core::wrapper TypeChecker::tcMatchesFunInfer(std::vector<Expected>& arg_types, i
 }
 
 template <typename A>
-Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Hs::Type type, const A& a)
+Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Type type, const A& a)
 {
     if (not is_rho_type(type))
     {
@@ -57,7 +57,7 @@ Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, i
             skolemize_and_result<Core::wrapper>
             (
                 type,
-                [&](const Hs::Type& rho_type, auto& tc2) {
+                [&](const Type& rho_type, auto& tc2) {
                     return tc2.tcMatchesFunCheck(arg_types, arity, rho_type, a);
                 }
             );
@@ -77,14 +77,14 @@ Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, i
         return tcMatchesFunCheck(arg_types, arity, *type2, a);
     }
     // get the next argument type
-    else if (auto ftype = Hs::is_function_type(type))
+    else if (auto ftype = is_function_type(type))
     {
         auto [arg_type, result_type] = *ftype;
         arg_types.push_back(Check(arg_type));
         return tcMatchesFunCheck(arg_types, arity, result_type, a);
     }
     // look through filled MetaTypeVars
-    else if (auto mtv = type.to<Hs::MetaTypeVar>())
+    else if (auto mtv = type.to<MetaTypeVar>())
     {
         if (mtv->filled())
             return tcMatchesFunCheck(arg_types, arity, *mtv->filled(), a);

@@ -28,7 +28,7 @@ vector<Core::Var> ConPattern::dict_args() const
 {
     vector<Core::Var> dvars;
     for(auto& [dvar,constraint]: givens)
-        if (not Hs::is_equality_constraint(constraint))
+        if (not is_equality_constraint(constraint))
             dvars.push_back(dvar);
     return dvars;
 }

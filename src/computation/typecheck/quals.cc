@@ -47,7 +47,7 @@ TypeChecker::infer_qual_type(Hs::Qual& qual)
         auto pat_type= inferPat(lve, PQ.bindpat);
 
         // type(pat) = type(exp)
-        unify(Hs::ListType(pat_type), exp_type);
+        unify(ListType(pat_type), exp_type);
 
         add_binders(lve);
 

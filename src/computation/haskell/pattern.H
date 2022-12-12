@@ -16,6 +16,7 @@
 #include "var.H"
 #include "literal.H"
 #include "type.H"
+#include "coretype.H"
 
 // Currently we translate expressions into these pattern objects in rename/pattern.
 // But we are not using VarPattern or LiteralPattern.
@@ -77,9 +78,9 @@ struct ConPattern: public Object
     std::vector<Pattern> args;
 
     // Extra stuff for typechecking
-    std::vector<Hs::TypeVar> universal_tyvars;        // What do we do with this?
-    std::vector<Hs::TypeVar> existential_tyvars;      // What do we do with this?
-    std::vector<std::pair<Core::Var, Type>> givens;
+    std::vector<::TypeVar> universal_tyvars;        // What do we do with this?
+    std::vector<::TypeVar> existential_tyvars;      // What do we do with this?
+    std::vector<std::pair<Core::Var, ::Type>> givens;
     std::shared_ptr<const Core::Decls> ev_binds;
 
     // get given variables for dictionaries only (nothing for type equalities)

@@ -1021,15 +1021,15 @@ struct BindInfo
     Var inner_id;
 
     // The pre-generalized type
-    Type monotype;
+    ::Type monotype;
 
     // The post-generalized type
-    Type polytype;
+    ::Type polytype;
 
     // Wrapper to apply types and dicts to the tuple entry.
     Core::wrapper wrap;
 
-    BindInfo(const Var& o, const Var& i, const Type& m, const Type& p, const Core::wrapper& w)
+    BindInfo(const Var& o, const Var& i, const ::Type& m, const ::Type& p, const Core::wrapper& w)
         : outer_id(o), inner_id(i), monotype(m), polytype(p), wrap(w)
     {
         outer_id.type = polytype;
@@ -1039,7 +1039,7 @@ struct BindInfo
 
 struct GenBind: public Object
 {
-    std::vector<TypeVar> tv_args;
+    std::vector<::TypeVar> tv_args;
 
     // These variables MUST be type-annotated!
     std::vector<Core::Var> dict_args;
@@ -1056,7 +1056,7 @@ struct GenBind: public Object
     GenBind* clone() const {return new GenBind(*this);}
     std::string print() const;
 
-    GenBind(const std::vector<TypeVar>& v1,
+    GenBind(const std::vector<::TypeVar>& v1,
             const std::vector<Core::Var>& v2,
             const std::shared_ptr<const Core::Decls>& ev,
             const Decls& d,

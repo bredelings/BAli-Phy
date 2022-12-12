@@ -10,7 +10,7 @@ using std::pair;
 using std::optional;
 
 // Ensure that we can convert exp_type to pat_type, and get a wrapper proving it.
-Core::wrapper TypeChecker::instPatSigma(const Hs::SigmaType& pat_type, const Expected& exp_type)
+Core::wrapper TypeChecker::instPatSigma(const SigmaType& pat_type, const Expected& exp_type)
 {
     if (auto I = exp_type.infer())
     {
@@ -36,7 +36,7 @@ Core::wrapper TypeChecker::instPatSigma(const Hs::SigmaType& pat_type, const Exp
 void TypeChecker::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_type, const signature_env& sigs, const tc_action<local_value_env&>& a)
 {
     auto& name = unloc(V.name);
-    Hs::Type type;
+    Type type;
 
     if (sigs.count(name))
     {
@@ -72,12 +72,12 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_t
     a(penv, *this);
 }
 
-void TypeChecker::checkPat(local_value_env& penv, Hs::Var& v, const Hs::SigmaType& exp_type, const signature_env& sigs)
+void TypeChecker::checkPat(local_value_env& penv, Hs::Var& v, const SigmaType& exp_type, const signature_env& sigs)
 {
     return tcPat(penv, v, Check(exp_type), sigs, [](local_value_env&, TypeChecker&){});
 }
 
-Hs::Type TypeChecker::inferPat(local_value_env& penv, Hs::Var& V, const map<string, Hs::Type>& sigs)
+Type TypeChecker::inferPat(local_value_env& penv, Hs::Var& V, const map<string, Type>& sigs)
 {
     Expected exp_type = newInfer();
     tcPat(penv, V, exp_type, sigs, [](local_value_env&, TypeChecker&){});
@@ -107,7 +107,7 @@ void TypeChecker::tcPats(local_value_env& penv,
 }
 
 // Figure 24. Rules for patterns
-void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected& exp_type, const map<string, Hs::Type>& sigs, const tc_action<local_value_env&>& a)
+void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected& exp_type, const map<string, Type>& sigs, const tc_action<local_value_env&>& a)
 {
     // TAUT-PAT
     if (auto v = pat.to<Hs::VarPattern>())
@@ -138,7 +138,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
             s = s.insert({tv,fresh_meta_type_var(unloc(tv.name), *tv.kind)});
 
         // These are supposed to be "super" skolems.
-        vector<Hs::TypeVar> ex_tvs2;
+        vector<TypeVar> ex_tvs2;
         for(auto& tv: info.exi_tvs)
         {
             auto super_skol_tv = FreshVarSource::fresh_rigid_type_var(level+1, unloc(tv.name), *tv.kind);
@@ -199,13 +199,13 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         auto pat_type = expTypeToType(exp_type);
 
         // This should be able to extract forall a.a->a from [forall a. a-> a]
-        Hs::Type element_type;
+        Type element_type;
         if (auto elem_type = is_list_type( pat_type ))
             element_type = *elem_type;
         else
         {
             element_type = fresh_meta_type_var( kind_type() );
-            unify( pat_type, Hs::ListType(element_type) );
+            unify( pat_type, ListType(element_type) );
         }
 
         tcPats(penv, L.elements, vector<Expected>(L.elements.size(), Check(element_type)), sigs, a);
@@ -219,14 +219,14 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
 
         auto pat_type = expTypeToType(exp_type);
 
-        vector<Hs::Type> element_types;
+        vector<Type> element_types;
         if (auto elem_types = is_tuple_type( pat_type ))
             element_types = *elem_types;
         else
         {
             for(int i=0;i<T.elements.size();i++)
                 element_types.push_back( fresh_meta_type_var( kind_type() ) );
-            unify( pat_type, Hs::TupleType(element_types) );
+            unify( pat_type, TupleType(element_types) );
         }
 
         tcPats(penv, T.elements, check_types(element_types), sigs, a);
@@ -237,9 +237,9 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
     else if (auto tp = pat.to<Hs::TypedPattern>())
     {
         auto TP = *tp;
-        TP.type = check_type(TP.type);
-        tcPat(penv, TP.pat, Check(TP.type), sigs, a);
-        TP.wrap = instPatSigma(TP.type, exp_type);
+        auto type = check_type(desugar(TP.type));
+        tcPat(penv, TP.pat, Check(type), sigs, a);
+        TP.wrap = instPatSigma(type, exp_type);
         // I think we should translate this to case (wrap(x)) of pat -> E
         // Does this undermine the grouping of constructors in desugaring?
         // Does it only happen when pat is a var, so that we have
@@ -281,7 +281,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         }
         else if (L.lit.is_String())
         {
-            unify(expTypeToType(exp_type), Hs::ListType(char_type()) );
+            unify(expTypeToType(exp_type), ListType(char_type()) );
             return;
         }
         else if (auto d = L.lit.is_Double())
@@ -304,14 +304,14 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         throw err_context_exception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
-Hs::Type TypeChecker::inferPat(local_value_env& penv, Hs::Pattern& pat, const map<string, Hs::Type>& sigs)
+Type TypeChecker::inferPat(local_value_env& penv, Hs::Pattern& pat, const map<string, Type>& sigs)
 {
     Expected exp_type = newInfer();
     tcPat(penv, pat, exp_type, sigs, [](local_value_env&, TypeChecker&) {});
     return exp_type.read_type();
 }
 
-void TypeChecker::checkPat(local_value_env& penv, Hs::Pattern& pat, const Hs::SigmaType& exp_type, const signature_env& sigs)
+void TypeChecker::checkPat(local_value_env& penv, Hs::Pattern& pat, const SigmaType& exp_type, const signature_env& sigs)
 {
     tcPat(penv, pat, Check(exp_type), sigs, [](local_value_env&, TypeChecker&) {});
 }

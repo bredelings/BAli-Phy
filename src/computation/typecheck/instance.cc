@@ -49,7 +49,7 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
     return default_method_decls;
 }
 
-string get_name_for_typecon(const Hs::TypeCon& tycon)
+string get_name_for_typecon(const TypeCon& tycon)
 {
     auto n = unloc(tycon.name);
 
@@ -69,13 +69,14 @@ string get_name_for_typecon(const Hs::TypeCon& tycon)
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
     context.push_err_context( ErrorContext()<<"In instance '"<<inst.print()<<"':" );
-
+    auto con = desugar(inst.con);
+    
     // 1. Check that the type family exists.
-    if (not type_fam_info().count(inst.con))
+    if (not type_fam_info().count( con ))
         throw err_context_exception()<<"  No type family '"<<inst.con.print()<<"'";
 
     // 2. Get the type family info
-    auto& tf_info = type_fam_info().at(inst.con);
+    auto& tf_info = type_fam_info().at(con);
 
     if (tf_info.associated_class)
     {
@@ -96,7 +97,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
             if (instance_subst.count(fam_tv))
             {
                 auto expected = instance_subst.at(fam_tv);
-                if (not same_type(inst.args[i], expected))
+                if (not same_type( desugar(inst.args[i]), expected))
                     throw err_context_exception()<<
                         "    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'";
             }
@@ -114,19 +115,19 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
             "    Expected "<<tf_info.args.size()<<" parameters, but got "<<inst.args.size();
 
     // 8. The rhs may only mention type vars bound on the lhs.
-    set<Hs::TypeVar> lhs_tvs;
-    for(auto& arg: inst.args)
+    set<TypeVar> lhs_tvs;
+    for(auto& arg: desugar(inst.args))
     {
         for(auto& tv: free_type_variables(arg))
             lhs_tvs.insert(tv);
     }
 
-    for(auto& tv: free_type_variables(inst.rhs))
+    for(auto& tv: free_type_variables(desugar(inst.rhs)))
         if (not lhs_tvs.count(tv))
             throw err_context_exception()<<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.";
 
     // 9. Kind-check the parameters and result type, and record the free type variables.
-    TypeFamEqnInfo eqn{inst.args, inst.rhs, lhs_tvs | ranges::to<vector>()};
+    TypeFamEqnInfo eqn{ desugar(inst.args), desugar(inst.rhs), lhs_tvs | ranges::to<vector>()};
 
     // 9a. Bind the free type vars
     kindchecker_state K( tycon_info() );
@@ -158,16 +159,16 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     context.pop_err_context();
 }
 
-pair<Core::Var, Hs::Type>
+pair<Core::Var, Type>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     context.push_err_context( ErrorContext()<<"In instance '"<<inst_decl.constraint<<"':" );
 
     // 1. Get class name and parameters for the instance
-    auto [class_head, class_args] = Hs::decompose_type_apps(inst_decl.constraint);
+    auto [class_head, class_args] = decompose_type_apps(desugar(inst_decl.constraint));
 
     // 2. Look up the class info
-    auto tc = class_head.to<Hs::TypeCon>();
+    auto tc = class_head.to<TypeCon>();
     if (not tc)
         throw err_context_exception()<<"  "<<class_head<<" is not a type constructor!";
 
@@ -185,24 +186,24 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     // 4. Construct the mapping from original class variables to instance variables
     substitution_t instance_subst;
     for(int i = 0; i < N; i++)
-        instance_subst = instance_subst.insert({class_info.type_vars[i], class_args[i]});
+        instance_subst = instance_subst.insert( {class_info.type_vars[i], class_args[i]} );
 
     // 5. Find the type vars mentioned in the constraint.
-    set<Hs::TypeVar> type_vars = free_type_variables(inst_decl.constraint);
+    set<TypeVar> type_vars = free_type_variables(desugar(inst_decl.constraint));
 
     // 6. The class_args must be (i) a variable or (ii) a type constructor applied to simple, distinct type variables.
     string tycon_names;
     for(auto& class_arg: class_args)
     {
-        if (class_arg.to<Hs::TypeVar>())
+        if (class_arg.to<TypeVar>())
         {
             tycon_names += "_";
         }
         else
         {
-            auto [a_head, a_args] = Hs::decompose_type_apps(class_arg);
+            auto [a_head, a_args] = decompose_type_apps(class_arg);
 
-            if (auto tc = a_head.to<Hs::TypeCon>())
+            if (auto tc = a_head.to<TypeCon>())
                 tycon_names += get_name_for_typecon(*tc);
             else
                 throw err_context_exception()<<"  '"<<a_head.print()<<"' is not a type constructor!";
@@ -213,7 +214,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     }
 
     // Premise 5: Check that the context contains no variables not mentioned in `class_arg`
-    for(auto& tv: free_type_variables(inst_decl.context))
+    for(auto& tv: free_type_variables(desugar(inst_decl.context.constraints)))
     {
         if (not type_vars.count(tv))
             throw err_context_exception()<<"  Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in the instance declaration";
@@ -229,7 +230,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     auto dfun = get_fresh_var(dfun_name, true);
 
     //  -- new -- //
-    Hs::Type inst_type = Hs::add_constraints(inst_decl.context, inst_decl.constraint);
+    Type inst_type = add_constraints(desugar(inst_decl.context.constraints), desugar(inst_decl.constraint));
     inst_type = check_constraint( inst_type );  // kind-check the constraint and quantify it.
 
     context.pop_err_context();
@@ -275,10 +276,10 @@ TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
     return named_instances;
 }
 
-string get_class_for_constraint(const Hs::Type& constraint)
+string get_class_for_constraint(const Type& constraint)
 {
-    auto [class_head, args] = Hs::decompose_type_apps(constraint);
-    auto tc = class_head.to<Hs::TypeCon>();
+    auto [class_head, args] = decompose_type_apps(constraint);
+    auto tc = class_head.to<TypeCon>();
     assert(tc);
     return unloc(tc->name);
 }
@@ -334,7 +335,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     auto inst_type = instance_env().at(dfun);
     // Instantiate it with rigid type variables.
     auto [wrap_gen, instance_tvs, givens, instance_head] = skolemize(inst_type, false);
-    auto [instance_class, instance_args] = Hs::decompose_type_apps(instance_head);
+    auto [instance_class, instance_args] = decompose_type_apps(instance_head);
 
     // 2. Get the class info
     auto class_name = get_class_for_constraint(instance_head);
@@ -379,11 +380,11 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         dict_entries.push_back( Core::Apply(make_var(op), vars_from_lie<Core::Exp>(givens)) );
 
         // forall b. Ix b => a -> b -> b
-        Hs::Type op_type = Hs::remove_top_gen(method_type);
+        Type op_type = remove_top_gen(method_type);
         // forall b. Ix b => [x] -> b -> b
         op_type = apply_subst(subst, op_type);
         // forall x. (C1 x, C2 x) => forall b. Ix b => [x] -> b -> b
-        op_type = Hs::add_forall_vars(instance_tvs,Hs::add_constraints(constraints_from_lie(givens), op_type));
+        op_type = add_forall_vars(instance_tvs,add_constraints(constraints_from_lie(givens), op_type));
 
         gve = gve.insert( {unloc(op.name), op_type} );
 
@@ -451,14 +452,14 @@ pair<Hs::Binds, Core::Decls> TypeChecker::infer_type_for_instances2(const vector
     return {instance_method_decls, dfun_decls};
 }
 
-bool TypeChecker::instance_matches(const Hs::Type& type1, const Hs::Type& type2)
+bool TypeChecker::instance_matches(const Type& type1, const Type& type2)
 {
     auto [_1, _2, head1] = instantiate(type1);
     auto [_3, _4, head2] = instantiate(type2);
     return maybe_match(head1, head2);
 }
 
-bool TypeChecker::more_specific_than(const Hs::Type& type1, const Hs::Type& type2)
+bool TypeChecker::more_specific_than(const Type& type1, const Type& type2)
 {
     // We can get type1 by constraining type2, so type1 is more specific than type2.
     return instance_matches(type2, type1) and not instance_matches(type1, type2);
@@ -475,9 +476,9 @@ bool TypeChecker::more_specific_than(const Hs::Type& type1, const Hs::Type& type
 // 7. Unless we actually FORBID unification of variables at any higher level, then this won't work.
 // 8. Simply forbidding substitution to a deeper depth won't cut it.
 
-optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Hs::Type& target_constraint)
+optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_constraint)
 {
-    vector<pair<pair<Core::Exp, LIE>,Hs::Type>> matching_instances;
+    vector<pair<pair<Core::Exp, LIE>,Type>> matching_instances;
 
     string target_class = get_class_for_constraint(target_constraint);
 
@@ -501,7 +502,7 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Hs::Type& targe
     if (matching_instances.size() == 0)
         return {}; // No matching instances
 
-    vector<pair<pair<Core::Exp, LIE>,Hs::Type>> surviving_instances;
+    vector<pair<pair<Core::Exp, LIE>,Type>> surviving_instances;
 
     for(int i=0;i<matching_instances.size();i++)
     {

@@ -13,7 +13,7 @@ using std::tuple;
 
 void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
 {
-    Hs::Type sigma;
+    Type sigma;
     // First look for x in the local type environment
     if (auto& x_name = unloc(x.name); auto it = mono_local_env.find(x_name))
     {
@@ -118,9 +118,9 @@ void TypeChecker::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 
 void TypeChecker::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
 {
-    TExp.type = check_type(TExp.type);
-    Core::wrapper w1 = checkSigma( TExp.exp, TExp.type );
-    Core::wrapper w2 = instantiateSigma(TExp.type, exp_type);
+    auto type = check_type(desugar(TExp.type));
+    Core::wrapper w1 = checkSigma( TExp.exp, type );
+    Core::wrapper w2 = instantiateSigma(type, exp_type);
     TExp.wrap = w1 * w2;
 }
 
@@ -135,8 +135,8 @@ void TypeChecker::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 
 void TypeChecker::tcRho(Hs::List& L, const Expected& exp_type)
 {
-    Hs::Type element_type = fresh_meta_type_var( kind_type() );
-    set_expected_type( exp_type, Hs::ListType(element_type) );
+    Type element_type = fresh_meta_type_var( kind_type() );
+    set_expected_type( exp_type, ListType(element_type) );
 
     for(auto& element: L.elements)
         checkRho(element, element_type);
@@ -144,14 +144,14 @@ void TypeChecker::tcRho(Hs::List& L, const Expected& exp_type)
 
 void TypeChecker::tcRho(Hs::Tuple& T, const Expected& exp_type)
 {
-    vector<Hs::Type> element_types;
+    vector<Type> element_types;
     for(auto& element: T.elements)
     {
         auto element_type = inferRho(element);
         element_types.push_back( element_type );
     }
 
-    set_expected_type( exp_type, Hs::TupleType(element_types) );
+    set_expected_type( exp_type, TupleType(element_types) );
 }
 
 void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
@@ -159,7 +159,7 @@ void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
     if (Lit.is_Char())
         set_expected_type( exp_type, char_type() );
     else if (Lit.is_String())
-        set_expected_type( exp_type, Hs::ListType( char_type() ) );
+        set_expected_type( exp_type, ListType( char_type() ) );
     else if (Lit.is_BoxedInteger())
         set_expected_type( exp_type, int_type() );
     else if (auto i = Lit.is_Integer())
@@ -232,7 +232,7 @@ void TypeChecker::tcRho(Hs::RightSection& RSec, const Expected& exp_type)
     auto [right_arg_type, result_type] = unify_function(tmp1);
 
     // 3. Check the expected type
-    Hs::Type section_type = Hs::function_type({left_arg_type}, result_type);
+    Type section_type = function_type({left_arg_type}, result_type);
     set_expected_type( exp_type, section_type );
 
     // 4. Check the right arg type.
@@ -252,7 +252,7 @@ void TypeChecker::tcRho(Hs::ListComprehension& LComp, const Expected& exp_type)
 
     current_wanteds() += state2.current_wanteds();
 
-    set_expected_type( exp_type, Hs::ListType(body_type) );
+    set_expected_type( exp_type, ListType(body_type) );
 }
 
 void TypeChecker::tcRho(Hs::ListFrom& L, const Expected& exp_type)

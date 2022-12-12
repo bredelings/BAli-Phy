@@ -7,7 +7,7 @@ using std::optional;
 
 Infer::Infer(int l)
     : level_(l),
-      type_ref( std::make_shared<Hs::Type>() )
+      type_ref( std::make_shared<Type>() )
 { }
 
 
@@ -34,7 +34,7 @@ string Expected::print() const
         return std::get<Infer>(value).print();
 }
 
-optional<Hs::Type> Expected::read_type_maybe() const
+optional<Type> Expected::read_type_maybe() const
 {
     if (auto C = check())
         return C->type;
@@ -43,7 +43,7 @@ optional<Hs::Type> Expected::read_type_maybe() const
 }
 
 
-Hs::Type Expected::read_type() const
+Type Expected::read_type() const
 {
     auto t = read_type_maybe();
     if (not t)
@@ -53,15 +53,15 @@ Hs::Type Expected::read_type() const
 }
 
 
-vector<Hs::Type> read_types(const vector<Expected>& exp_types)
+vector<Type> read_types(const vector<Expected>& exp_types)
 {
-    vector<Hs::Type> types;
+    vector<Type> types;
     for(auto& exp_type: exp_types)
         types.push_back( exp_type.read_type() );
     return types;
 }
 
-vector<Expected> check_types(const vector<Hs::Type>& types)
+vector<Expected> check_types(const vector<Type>& types)
 {
     vector<Expected> exp_types;
     for(auto& type: types)
