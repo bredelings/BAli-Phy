@@ -11,6 +11,7 @@
 // Can we eliminate this?
 #include "computation/expression/expression_ref.H"
 #include "core.H"
+#include "type.H"
 
     class MetaTypeVar;
     class TypeVar;
@@ -380,5 +381,7 @@ namespace std
         }
     };
 }
+
+Type desugar(const Hs::Type& t);
 
 #endif 

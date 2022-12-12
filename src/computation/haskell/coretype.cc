@@ -880,3 +880,65 @@ TypeCon list_tycon()
 }
 
 
+TypeVar desugar(const Hs::TypeVar& tv)
+{
+    TypeVar t2;
+    t2.name = tv.name;
+    t2.index = tv.index;
+    t2.kind = tv.kind;
+    return t2;
+}
+
+Type desugar(const Hs::Type& t)
+{
+    if (t.empty())
+        return {};
+    else if (t.to<Hs::MetaTypeVar>())
+        std::abort();
+    else if (auto tv = t.to<Hs::TypeVar>())
+        return desugar(*tv);
+    else if (auto tc = t.to<Hs::TypeCon>())
+    {
+        TypeCon t2;
+        t2.name = tc->name;
+        t2.kind = tc->kind;
+        return t2;
+    }
+    else if (auto l= t.to<Hs::ListType>())
+    {
+        return ListType( desugar(l->element_type) );
+    }
+    else if (auto tup = t.to<Hs::TupleType>())
+    {
+        vector<Type> element_types;
+        for(auto& e: tup->element_types)
+            element_types.push_back( desugar( e) );
+        return TupleType( element_types );
+    }
+    else if (auto app = t.to<Hs::TypeApp>())
+    {
+        return TypeApp( desugar(app->head), desugar(app->arg) );
+    }
+    else if (auto fa = t.to<Hs::ForallType>())
+    {
+        vector<TypeVar> tvs;
+        for(auto& tv: fa->type_var_binders)
+            tvs.push_back( desugar(tv) );
+        return ForallType(tvs, desugar(fa->type) );
+    }
+    else if (auto sl = t.to<Hs::StrictLazyType>())
+    {
+        StrictLazy strict_lazy;
+        if (sl->strict_lazy == Hs::StrictLazy::lazy)
+            strict_lazy = StrictLazy::lazy;
+        else
+            strict_lazy = StrictLazy::strict;
+        return StrictLazyType( strict_lazy, desugar(sl->type) );
+    }
+    else if (auto tok = t.to<Hs::TypeOfKind>())
+    {
+        return TypeOfKind( desugar(tok->type), tok->kind);
+    }
+    else
+        std::abort();
+}
