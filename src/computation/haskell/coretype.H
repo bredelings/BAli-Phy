@@ -20,7 +20,6 @@
     struct ConstrainedType;
     struct ForallType;
     struct StrictLazyType;
-    struct TypeOfKind;
 
     struct Type
     {
@@ -33,8 +32,7 @@
             cow_ptr<TypeApp>,
             cow_ptr<ConstrainedType>,
             cow_ptr<ForallType>,
-            cow_ptr<StrictLazyType>,
-            cow_ptr<TypeOfKind>
+            cow_ptr<StrictLazyType>
         >
         type_ptr;
 
@@ -256,16 +254,6 @@ struct StrictLazyType
     bool operator==(const StrictLazyType& t) const;
     std::string print() const;
     StrictLazyType(const StrictLazy& sl, const Type& t):strict_lazy(sl), type(t) {}
-};
-
-struct TypeOfKind
-{
-    Type type;
-    Kind kind;
-
-    bool operator==(const TypeOfKind& t) const;
-    std::string print() const;
-    TypeOfKind(const Type& t, const Kind& k):type(t), kind(k) {}
 };
 
 Type function_type(const std::vector<Type>& arg_types, const Type& result_type);

@@ -787,12 +787,6 @@ Type list_type(const Type& t)
     return type_apply(list_tycon(), {t});
 }
 
-string TypeOfKind::print() const
-{
-    return type.print() + " :: " + kind.print();
-}
-
-
 TypeCon tuple_tycon(int n)
 {
     auto kind = make_n_args_kind(n);
@@ -883,13 +877,13 @@ Type desugar(const Hs::Type& t)
             strict_lazy = StrictLazy::strict;
         return StrictLazyType( strict_lazy, desugar(sl->type) );
     }
-    else if (auto tok = t.to<Hs::TypeOfKind>())
-    {
-        return TypeOfKind( desugar(tok->type), tok->kind);
-    }
     else if (auto ct = t.to<Hs::ConstrainedType>())
     {
         return ConstrainedType( desugar(ct->context), desugar(ct->type) );
+    }
+    else if (auto tok = t.to<Hs::TypeOfKind>())
+    {
+        throw myexception()<<"Can't desugar TypeOfKind from Hs::Type to Type";
     }
     else
         std::abort();
