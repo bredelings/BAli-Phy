@@ -44,37 +44,6 @@ bool Type::operator==(const Type& t) const
 }
 
 
-int max_level(const vector<Type>& ts)
-{
-    int l = 0;
-    for(auto& t: ts)
-        l = std::max(l, max_level(t));
-    return l;
-}
-
-int max_level(Type t)
-{
-    if (auto tv = t.to<TypeVar>())
-        return tv->level();
-    else if (t.is_a<TypeCon>())
-        return 0;
-    else if (auto tup = t.to<TupleType>())
-        return max_level( tup->element_types );
-    else if (auto l = t.to<ListType>())
-        return max_level(l->element_type);
-    else if (auto app = t.to<TypeApp>())
-        return std::max( max_level(app->head), max_level(app->arg) );
-    else if (auto ct = t.to<ConstrainedType>())
-        return std::max( max_level(ct->context.constraints), max_level(ct->type) );
-    else if (auto fa = t.to<ForallType>())
-        return max_level( fa->type );
-    else if (auto slt = t.to<StrictLazyType>())
-        return max_level( slt->type );
-
-    std::abort();
-    
-}
-
 std::string Type::print() const
 {
     if (type_ptr.index() == 0) return "NOTYPE";
@@ -101,20 +70,6 @@ std::string Type::print() const
     std::abort();
 }
 
-Type make_arrow_type(const Type& t1, const Type& t2)
-{
-    static TypeCon type_arrow(Located<string>({},"->"));
-    return TypeApp(TypeApp(type_arrow,t1),t2);
-}
-
-Type function_type(const vector<Type>& arg_types, const Type& result_type)
-{
-    Type ftype = result_type;
-    for(auto& arg_type: arg_types | views::reverse)
-        ftype = make_arrow_type(arg_type, ftype);
-    return ftype;
-}
-
 pair<Type,vector<Type>> decompose_type_apps(Type t)
 {
     if (auto L = t.to<ListType>())
@@ -137,67 +92,15 @@ pair<Type,vector<Type>> decompose_type_apps(Type t)
     return {t,args};
 }
 
-
-bool is_tau_type(Type type)
+Type remove_top_gen(Type type)
 {
-    if (type.is_a<TypeVar>())
-        return true;
-    else if (auto l = type.to<ListType>())
-        return is_tau_type(l->element_type);
-    else if (auto tup = type.to<TupleType>())
-    {
-        for(auto& element_type: tup->element_types)
-            if (not is_tau_type(element_type))
-                return false;
-        return true;
-    }
-    else if (type.is_a<ConstrainedType>())
-        return false;
-    else if (type.is_a<ForallType>())
-        return false;
-    else if (type.is_a<TypeCon>() or type.is_a<TypeApp>())
-    {
-        auto [head, args] = decompose_type_apps(type);
+    if (auto f = type.to<ForallType>())
+        type = f->type;
 
-        for(auto& arg: args)
-            if (not is_tau_type(arg))
-                return false;
+    if (auto c = type.to<ConstrainedType>())
+        type = c->type;
 
-        return true;
-    }
-    throw myexception()<<"is_tau_type: I don't recognize type '"<<type<<"'";
-}
-
-bool is_rho_type(Type type)
-{
-    if (type.is_a<TypeVar>())
-        return true;
-    else if (type.is_a<ListType>())
-        return true;
-    else if (type.is_a<TupleType>())
-        return true;
-    else if (type.is_a<ConstrainedType>())
-        return false;
-    else if (type.is_a<ForallType>())
-        return false;
-    else if (type.is_a<TypeCon>() or type.is_a<TypeApp>())
-        return true;
-    throw myexception()<<"is_rho_type: I don't recognize type '"<<type<<"'";
-}
-
-
-Type type_apply(Type t, const std::vector<Type>& args)
-{
-    for(auto& arg: args)
-        t = TypeApp(t,arg);
-    return t;
-}
-
-Type type_apply(Type t, const std::vector<TypeVar>& args)
-{
-    for(auto& arg: args)
-        t = TypeApp(t,arg);
-    return t;
+    return type;
 }
 
 optional<pair<Type,Type>> is_gen_function_type(const Type& t)
@@ -218,50 +121,6 @@ optional<pair<Type,Type>> is_function_type(const Type& t)
         return {{args[0],args[1]}};
     else
         return {};
-}
-
-std::pair<std::vector<Type>,Type> gen_arg_result_types(const Type& t)
-{
-    std::vector<Type> arg_types;
-    Type result_type = t;
-    while(auto x = is_gen_function_type(result_type))
-    {
-        arg_types.push_back(x->first);
-        result_type = x->second;
-    }
-    return {arg_types,result_type};
-}
-
-std::pair<std::vector<Type>,Type> arg_result_types(const Type& t)
-{
-    std::vector<Type> arg_types;
-    Type result_type = t;
-    while(auto x = is_function_type(result_type))
-    {
-        arg_types.push_back(x->first);
-        result_type = x->second;
-    }
-
-    return {arg_types,result_type};
-}
-
-std::tuple<std::vector<TypeVar>, std::vector<Type>, Type> peel_top_gen(Type t)
-{
-    std::vector<TypeVar> tvs;
-    if (auto fa = t.to<ForallType>())
-    {
-        tvs = fa->type_var_binders;
-        t = fa->type;
-    }
-
-    std::vector<Type> constraints;
-    if (auto c = t.to<ConstrainedType>())
-    {
-        constraints = c->context.constraints;
-        t = c->type;
-    }
-
-    return {tvs, constraints, t};
 }
 
 int gen_type_arity(Type t)
@@ -286,123 +145,19 @@ int type_arity(Type t)
     return a;
 }
 
-optional<pair<Type,Type>> is_equality_constraint(const Type& t)
-{
-    auto [head,args] = decompose_type_apps(t);
-
-    if (args.size() != 2) return {};
-
-    auto tc = head.to<TypeCon>();
-    if (not tc) return {};
-
-    if (unloc(tc->name) == "~")
-        return {{args[0],args[1]}};
-    else
-        return {};
-}
-
-std::vector<Type> dictionary_constraints(const std::vector<Type> constraints)
-{
-    vector<Type> constraints2;
-
-    for(auto& constraint: constraints)
-        if (not is_equality_constraint(constraint))
-            constraints2.push_back(constraint);
-
-    return constraints2;
-}
-
-std::vector<Type> equality_constraints(const std::vector<Type> constraints)
-{
-    vector<Type> constraints2;
-
-    for(auto& constraint: constraints)
-        if (is_equality_constraint(constraint))
-            constraints2.push_back(constraint);
-
-    return constraints2;
-}
-
-optional<Type> is_list_type(Type t)
-{
-    if (auto l = t.to<ListType>())
-        return l->element_type;
-
-    auto [head,args] = decompose_type_apps(t);
-
-    if (args.size() != 1) return {};
-
-    auto tc = head.to<TypeCon>();
-    if (not tc) return {};
-
-    if (unloc(tc->name) == "[]")
-        return {args[0]};
-    else
-        return {};
-}
-
-
-optional<vector<Type>> is_tuple_type(Type t)
-{
-    if (auto tup = t.to<TupleType>())
-        return tup->element_types;
-
-    auto [head,args] = decompose_type_apps(t);
-
-    auto tc = head.to<TypeCon>();
-    if (not tc) return {};
-
-    auto& head_name = unloc(tc->name);
-    if (not is_tuple_name(head_name))
-        return {};
-
-    if (args.size() == tuple_arity(head_name))
-        return args;
-    else
-        return {};
-}
-
-
-Type remove_top_gen(Type type)
-{
-    if (auto f = type.to<ForallType>())
-        type = f->type;
-
-    if (auto c = type.to<ConstrainedType>())
-        type = c->type;
-
-    return type;
-}
-
 string parenthesize_type(Type t)
 {
-    if (t.is_a<TypeCon>() or t.is_a<TypeVar>() or is_tuple_type(t) or is_list_type(t))
+    if (t.is_a<TypeCon>() or t.is_a<TypeVar>() or t.is_a<ListType>() or t.is_a<TupleType>())
         return t.print();
     else
         return "(" + t.print() + ")";
 }
 
-bool TypeVar::is_skolem_constant() const
-{
-    return level_.has_value();
-}
-
-int TypeVar::level() const
-{
-    if (not is_skolem_constant())
-        return 0;
-
-    return *level_;
-}
-    
 string TypeVar::print() const
 {
     string uname = unloc(name);
     if (index)
         uname = uname +"#"+std::to_string(*index);
-
-    if (is_skolem_constant())
-        uname = uname + "{{"+std::to_string(level())+"}}";
 
     return uname;
 }
@@ -442,16 +197,8 @@ TypeVar::TypeVar(const Located<std::string>& s)
     :name(s)
 {}
 
-TypeVar::TypeVar(int l, const Located<std::string>& s)
-    :level_(l), name(s)
-{}
-
 TypeVar::TypeVar(const Located<std::string>& s, const Kind& k)
     :name(s), kind(k)
-{}
-
-TypeVar::TypeVar(int l, const Located<std::string>& s, const Kind& k)
-    :level_(l), name(s),kind(k)
 {}
 
 string TypeCon::print() const
@@ -508,10 +255,6 @@ string TypeApp::print() const
         else
             return arg1.print() + " " + tycon.print() + " "+ arg2.print();
     }
-    else if (auto etype = is_list_type(*this))
-        return ListType(*etype).print();
-    else if (auto ttype = is_tuple_type(*this))
-        return TupleType(*ttype).print();
 
     return head.print() + " " + parenthesize_type(arg);
 }
@@ -574,26 +317,6 @@ string ConstrainedType::print() const
     return context.print() + " => " + type.print();
 }
 
-Type add_constraints(const vector<Type>& constraints, const Type& type)
-{
-    if (constraints.empty())
-        return type;
-    else if (type.is_a<ConstrainedType>())
-    {
-        auto CT = type.as_<ConstrainedType>();
-        for(auto& constraint: constraints)
-            CT.context.constraints.push_back(constraint);
-        return CT;
-    }
-    else
-        return ConstrainedType(Context(constraints),type);
-}
-
-Type add_constraints(const Context& context, const Type& type)
-{
-    return add_constraints(context.constraints, type);
-}
-
 bool Context::operator==(const Context& c) const
 {
     if (constraints.size() != c.constraints.size()) return false;
@@ -646,14 +369,6 @@ string TupleType::print() const
     return "(" + join(parts,", ") +")";
 }
 
-Type tuple_type(const std::vector<Type>& ts)
-{
-    if (ts.size() == 1)
-        return ts[0];
-    else
-        return TupleType(ts);
-}
-
 bool ListType::operator==(const ListType& t) const
 {
     return element_type == t.element_type;
@@ -667,19 +382,6 @@ string ListType::print() const
 string TypeOfKind::print() const
 {
     return type.print() + " :: " + kind.print();
-}
-
-
-TypeCon tuple_tycon(int n)
-{
-    auto kind = make_n_args_kind(n);
-    return TypeCon( {noloc, tuple_name(n)}, kind );
-}
-
-TypeCon list_tycon()
-{
-    auto kind = make_n_args_kind(1);
-    return TypeCon( {noloc,"[]"}, kind );
 }
 
 }

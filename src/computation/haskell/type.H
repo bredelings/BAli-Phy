@@ -116,23 +116,17 @@ inline std::ostream& operator<<(std::ostream& o,const Type& t)
 
 class TypeVar
 {
-    std::optional<int> level_;
-
 public:
     Located<std::string> name;
     std::optional<int> index;
 
     std::optional<Kind> kind;
 
-    bool is_skolem_constant() const;
-
     bool operator==(const TypeVar&) const;
     bool operator<(const TypeVar&) const;
 
     std::string print() const;
     std::string print_with_kind() const;
-
-    int level() const;
 
     TypeVar();
     TypeVar(const Located<std::string>& s);
@@ -265,59 +259,15 @@ struct TypeOfKind
     TypeOfKind(const Type& t, const Kind& k):type(t), kind(k) {}
 };
 
-Type function_type(const std::vector<Type>& arg_types, const Type& result_type);
-
-Type make_arrow_type(const Type& t1, const Type& t2);
-
 std::string parenthesize_type(Type t);
 
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
 
-Type type_apply(Type t, const std::vector<Type>& args);
-
-Type type_apply(Type t, const std::vector<TypeVar>& args);
+std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
 
 std::optional<std::pair<Type,Type>> is_gen_function_type(const Type& t);
 
-std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
-
 int gen_type_arity(Type t);
-
-int type_arity(Type t);
-
-std::pair<std::vector<Type>,Type> gen_arg_result_types(const Type&);
-
-std::pair<std::vector<Type>,Type> arg_result_types(const Type&);
-
-std::optional<std::pair<Type,Type>> is_equality_constraint(const Type& t);
-
-std::vector<Type> equality_constraints(const std::vector<Type> constraints);
-
-std::vector<Type> dictionary_constraints(const std::vector<Type> constraints);
-
-std::tuple<std::vector<TypeVar>, std::vector<Type>, Type> peel_top_gen(Type t);
-
-std::optional<Type> is_list_type(Type t);
-
-std::optional<std::vector<Type>> is_tuple_type(Type t);
-
-Type remove_top_gen(Type type);
-
-// no foralls
-bool is_tau_type(Type type);
-
-// no foralls at top level
-bool is_rho_type(Type type);
-
-int max_level(Type t);
-int max_level(const std::vector<Type>& t);
-
-typedef Type TauType;
-typedef Type RhoType;
-typedef Type SigmaType;
-
-TypeCon tuple_tycon(int n);
-TypeCon list_tycon();
 }
 
 namespace Hs = Haskell;
