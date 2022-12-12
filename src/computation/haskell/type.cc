@@ -17,37 +17,13 @@ namespace views = ranges::views;
 namespace Haskell
 {
 
-std::optional<Type> filled_meta_type_var(const Type& t)
-{
-    if (auto mtv = t.to<MetaTypeVar>())
-        return mtv->filled();
-    else
-        return {};
-}
-
-std::optional<int> unfilled_meta_type_var(const Type& t)
-{
-    if (auto mtv = t.to<MetaTypeVar>(); mtv and not mtv->filled())
-        return mtv->level();
-    else
-        return {};
-}
-
 bool Type::operator==(const Type& t) const
 {
-    if (auto i1 = filled_meta_type_var(*this))
-        return (*i1) == t;
-
-    if (auto i2 = filled_meta_type_var(t))
-        return operator==(*i2);
-
     if (type_ptr.index() != t.type_ptr.index()) return false;
 
     if (type_ptr.index() == 0) return true;
 
-    if (is_a<MetaTypeVar>())
-        return as_<MetaTypeVar>() == t.as_<MetaTypeVar>();
-    else if (is_a<TypeVar>())
+    if (is_a<TypeVar>())
         return as_<TypeVar>() == t.as_<TypeVar>();
     else if (is_a<TypeCon>())
         return as_<TypeCon>() == t.as_<TypeCon>();
@@ -78,11 +54,7 @@ int max_level(const vector<Type>& ts)
 
 int max_level(Type t)
 {
-    t = follow_meta_type_var(t);
-
-    if (auto mtv = t.to<MetaTypeVar>())
-        return mtv->level();
-    else if (auto tv = t.to<TypeVar>())
+    if (auto tv = t.to<TypeVar>())
         return tv->level();
     else if (t.is_a<TypeCon>())
         return 0;
@@ -103,47 +75,11 @@ int max_level(Type t)
     
 }
 
-int max_meta_level(const vector<Type>& ts)
-{
-    int l = 0;
-    for(auto& t: ts)
-        l = std::max(l, max_meta_level(t));
-    return l;
-}
-
-int max_meta_level(Type t)
-{
-    t = follow_meta_type_var(t);
-
-    if (auto mtv = t.to<MetaTypeVar>())
-        return mtv->level();
-    else if (t.is_a<TypeVar>())
-        return 0;
-    else if (t.is_a<TypeCon>())
-        return 0;
-    else if (auto tup = t.to<TupleType>())
-        return max_meta_level( tup->element_types );
-    else if (auto l = t.to<ListType>())
-        return max_meta_level(l->element_type);
-    else if (auto app = t.to<TypeApp>())
-        return std::max( max_meta_level(app->head), max_meta_level(app->arg) );
-    else if (auto ct = t.to<ConstrainedType>())
-        return std::max( max_meta_level(ct->context.constraints), max_meta_level(ct->type) );
-    else if (auto fa = t.to<ForallType>())
-        return max_meta_level( fa->type );
-    else if (auto slt = t.to<StrictLazyType>())
-        return max_meta_level( slt->type );
-
-    std::abort();
-}
-
 std::string Type::print() const
 {
     if (type_ptr.index() == 0) return "NOTYPE";
 
-    if (is_a<MetaTypeVar>())
-        return as_<MetaTypeVar>().print();
-    else if (is_a<TypeVar>())
+    if (is_a<TypeVar>())
         return as_<TypeVar>().print();
     else if (is_a<TypeCon>())
         return as_<TypeCon>().print();
@@ -200,8 +136,6 @@ Type function_type(const vector<Type>& arg_types, const Type& result_type)
 
 pair<Type,vector<Type>> decompose_type_apps(Type t)
 {
-    t = follow_meta_type_var(t);
-
     if (auto L = t.to<ListType>())
         return {TypeCon({noloc,"[]"}), {L->element_type}};
 
@@ -225,11 +159,7 @@ pair<Type,vector<Type>> decompose_type_apps(Type t)
 
 bool is_tau_type(Type type)
 {
-    type = follow_meta_type_var(type);
-
-    if (type.is_a<MetaTypeVar>())
-        return true;
-    else if (type.is_a<TypeVar>())
+    if (type.is_a<TypeVar>())
         return true;
     else if (auto l = type.to<ListType>())
         return is_tau_type(l->element_type);
@@ -259,11 +189,7 @@ bool is_tau_type(Type type)
 
 bool is_rho_type(Type type)
 {
-    type = follow_meta_type_var(type);
-
-    if (type.is_a<MetaTypeVar>())
-        return true;
-    else if (type.is_a<TypeVar>())
+    if (type.is_a<TypeVar>())
         return true;
     else if (type.is_a<ListType>())
         return true;
@@ -418,8 +344,6 @@ std::vector<Type> equality_constraints(const std::vector<Type> constraints)
 
 optional<Type> is_list_type(Type t)
 {
-    t = follow_meta_type_var(t);
-
     if (auto l = t.to<ListType>())
         return l->element_type;
 
@@ -439,8 +363,6 @@ optional<Type> is_list_type(Type t)
 
 optional<vector<Type>> is_tuple_type(Type t)
 {
-    t = follow_meta_type_var(t);
-
     if (auto tup = t.to<TupleType>())
         return tup->element_types;
 
@@ -462,8 +384,6 @@ optional<vector<Type>> is_tuple_type(Type t)
 
 Type remove_top_gen(Type type)
 {
-    type = follow_meta_type_var(type);
-
     if (auto f = type.to<ForallType>())
         type = f->type;
 
@@ -475,101 +395,11 @@ Type remove_top_gen(Type type)
 
 string parenthesize_type(Type t)
 {
-    t = follow_meta_type_var(t);
-
-    if (t.is_a<TypeCon>() or t.is_a<MetaTypeVar>() or t.is_a<TypeVar>() or is_tuple_type(t) or is_list_type(t))
+    if (t.is_a<TypeCon>() or t.is_a<TypeVar>() or is_tuple_type(t) or is_list_type(t))
         return t.print();
     else
         return "(" + t.print() + ")";
 }
-
-optional<Type> MetaTypeVar::filled() const
-{
-    if (indirect->empty())
-        return {};
-    else
-        return *indirect;
-}
-
-void MetaTypeVar::fill(const Type& t) const
-{
-    assert(indirect->empty());
-    assert(not t.empty());
-    *indirect = t;
-}
-
-void MetaTypeVar::clear() const
-{
-    if (not indirect->empty())
-    {
-        Type t;
-        *indirect = t;
-    }
-    assert(indirect->empty());
-}
-
-string MetaTypeVar::print() const
-{
-    if (auto t = filled())
-        return t->print();
-
-    string uname = unloc(name);
-    if (index)
-        uname = uname +"#"+std::to_string(*index);
-
-    uname = uname + "{"+std::to_string(level())+"}";
-
-    return uname;
-}
-
-string MetaTypeVar::print_with_kind() const
-{
-    assert(not filled());
-
-    string uname = print();
-
-    if (kind)
-        uname = "("+uname + " :: " + (*kind).print()+")";
-
-    return uname;
-}
-
-bool MetaTypeVar::operator==(const MetaTypeVar& tv) const
-{
-    return index == tv.index and unloc(name) == unloc(tv.name) and indirect == tv.indirect;
-}
-
-bool MetaTypeVar::operator<(const MetaTypeVar& tv) const
-{
-    if (index < tv.index)
-        return true;
-
-    if (index > tv.index)
-        return false;
-
-    int cmp = unloc(name).compare(unloc(tv.name));
-
-    // Don't depend on the location of *indirect, if indirect is non-null.
-    assert(cmp != 0 or indirect == tv.indirect);
-
-    return (cmp < 0);
-}
-
-int MetaTypeVar::level() const
-{
-    if (not filled())
-        return level_;
-    else
-        throw myexception()<<"Trying to get level for filled meta-typevar";
-}
-
-MetaTypeVar::MetaTypeVar(int l, const Located<std::string>& s)
-    : MetaTypeVar(l, s, {})
-{}
-
-MetaTypeVar::MetaTypeVar(int l, const Located<std::string>& s, const Kind& k)
-    :level_(l), indirect(new Type),name(s),kind(k)
-{}
 
 bool TypeVar::is_skolem_constant() const
 {
@@ -685,19 +515,6 @@ optional< std::tuple<TypeCon, Type, Type> > is_type_op(const Type& t)
         return {{*tc, args[0], args[1]}};
     else
         return {};
-}
-
-// This is guaranteed not to return a filled meta-typevar.
-Type follow_meta_type_var(Type t)
-{
-    while(auto uv = t.to<MetaTypeVar>())
-    {
-        if (uv->filled())
-            t = *uv->filled();
-        else
-            return t;
-    }
-    return t;
 }
 
 string TypeApp::print() const

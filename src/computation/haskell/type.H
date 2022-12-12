@@ -14,7 +14,6 @@
 
 namespace Haskell
 {
-    class MetaTypeVar;
     class TypeVar;
     struct TypeCon;
     struct TupleType;
@@ -31,7 +30,6 @@ namespace Haskell
         std::variant
         <
             std::monostate,
-            cow_ptr<MetaTypeVar>,
             cow_ptr<TypeVar>,
             cow_ptr<TypeCon>,
             cow_ptr<TupleType>,
@@ -110,38 +108,6 @@ namespace Haskell
     };
 
     typedef expression_ref Kind;
-
-class MetaTypeVar
-{
-    int level_;
-
-    std::shared_ptr<Type> indirect;
-public:
-
-    Located<std::string> name;
-    std::optional<int> index;
-
-    std::optional<Kind> kind;
-
-    std::optional<Type> filled() const;
-    void fill(const Type& t) const;
-    void clear() const;
-
-    bool operator==(const MetaTypeVar&) const;
-    bool operator<(const MetaTypeVar&) const;
-
-    std::string print() const;
-    std::string print_with_kind() const;
-
-    int level() const;
-
-    MetaTypeVar(int level, const Located<std::string>& s);
-    MetaTypeVar(int level, const Located<std::string>& s, const Kind& k);
-};
-
-std::optional<Type> filled_meta_type_var(const Type& t);
-
-std::optional<int> unfilled_meta_type_var(const Type& t);
 
 inline std::ostream& operator<<(std::ostream& o,const Type& t)
 {
@@ -341,8 +307,6 @@ std::optional<Type> is_list_type(Type t);
 
 std::optional<std::vector<Type>> is_tuple_type(Type t);
 
-Type follow_meta_type_var(Type t);
-
 Type remove_top_gen(Type type);
 
 // no foralls
@@ -353,9 +317,6 @@ bool is_rho_type(Type type);
 
 int max_level(Type t);
 int max_level(const std::vector<Type>& t);
-
-int max_meta_level(Type t);
-int max_meta_level(const std::vector<Type>& t);
 
 typedef Type TauType;
 typedef Type RhoType;
@@ -373,15 +334,6 @@ namespace std
     class hash < Hs::TypeVar >{
     public :
         size_t operator()(const Hs::TypeVar &x) const
-        {
-            return std::hash<std::string>()(unloc(x.name));
-        }
-    };
-
-    template <>
-    class hash < Hs::MetaTypeVar >{
-    public :
-        size_t operator()(const Hs::MetaTypeVar &x) const
         {
             return std::hash<std::string>()(unloc(x.name));
         }

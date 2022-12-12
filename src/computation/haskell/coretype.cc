@@ -916,8 +916,6 @@ Type desugar(const Hs::Type& t)
 {
     if (t.empty())
         return {};
-    else if (t.to<Hs::MetaTypeVar>())
-        std::abort();
     else if (auto tv = t.to<Hs::TypeVar>())
         return desugar(*tv);
     else if (auto tc = t.to<Hs::TypeCon>())
