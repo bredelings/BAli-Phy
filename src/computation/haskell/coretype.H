@@ -16,8 +16,6 @@
     class MetaTypeVar;
     class TypeVar;
     struct TypeCon;
-    struct TupleType;
-    struct ListType;
     struct TypeApp;
     struct ConstrainedType;
     struct ForallType;
@@ -32,8 +30,6 @@
             cow_ptr<MetaTypeVar>,
             cow_ptr<TypeVar>,
             cow_ptr<TypeCon>,
-            cow_ptr<TupleType>,
-            cow_ptr<ListType>,
             cow_ptr<TypeApp>,
             cow_ptr<ConstrainedType>,
             cow_ptr<ForallType>,
@@ -201,30 +197,6 @@ struct Context
 };
 
 
-struct TupleType
-{
-    std::vector<Type> element_types;
-
-    bool operator==(const TupleType& t) const;
-
-    std::string print() const;
-    TupleType(const std::vector<Type>& v):element_types(v) {
-        assert(v.size() != 1);
-    }
-};
-
-Type tuple_type(const std::vector<Type>& v);
-
-struct ListType
-{
-    Type element_type;
-
-    bool operator==(const ListType& t) const;
-
-    std::string print() const;
-    ListType(const Type& t):element_type(t) {};
-};
-
 struct TypeApp
 {
     Type head;
@@ -302,10 +274,6 @@ Type make_arrow_type(const Type& t1, const Type& t2);
 
 Type make_equality_constraint(const Type& t1, const Type& t2);
 
-Type canonicalize_type(const TupleType& type1);
-
-Type canonicalize_type(const ListType& type1);
-
 std::string parenthesize_type(Type t);
 
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
@@ -337,6 +305,10 @@ std::tuple<std::vector<TypeVar>, std::vector<Type>, Type> peel_top_gen(Type t);
 std::optional<Type> is_list_type(Type t);
 
 std::optional<std::vector<Type>> is_tuple_type(Type t);
+
+Type list_type(const Type& t);
+
+Type tuple_type(const std::vector<Type>& v);
 
 Type follow_meta_type_var(Type t);
 

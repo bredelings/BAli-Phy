@@ -70,19 +70,6 @@ Type alphabetize_type(const Type& type, map<TypeVar,TypeVar>& s, int& index)
         app.arg  = alphabetize_type(app.arg , s, index);
         return app;
     }
-    else if (auto l = type.to<ListType>())
-    {
-        auto L = *l;
-        L.element_type = alphabetize_type(L.element_type, s, index);
-        return L;
-    }
-    else if (auto tup = type.to<TupleType>())
-    {
-        auto T = *tup;
-        for(auto& type: T.element_types)
-            type = alphabetize_type(type, s, index);
-        return T;;
-    }
     else if (auto c = type.to<ConstrainedType>())
     {
         auto C = *c;

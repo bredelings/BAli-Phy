@@ -413,10 +413,6 @@ bool type_is_hnf(const Type& type)
         return true;
     else if (head.is_a<TypeCon>())
         return false;
-    else if (head.is_a<ListType>())
-        return false;
-    else if (head.is_a<TupleType>())
-        return false;
     else
         std::abort();
 }

@@ -136,7 +136,7 @@ void TypeChecker::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 void TypeChecker::tcRho(Hs::List& L, const Expected& exp_type)
 {
     Type element_type = fresh_meta_type_var( kind_type() );
-    set_expected_type( exp_type, ListType(element_type) );
+    set_expected_type( exp_type, list_type(element_type) );
 
     for(auto& element: L.elements)
         checkRho(element, element_type);
@@ -151,7 +151,7 @@ void TypeChecker::tcRho(Hs::Tuple& T, const Expected& exp_type)
         element_types.push_back( element_type );
     }
 
-    set_expected_type( exp_type, TupleType(element_types) );
+    set_expected_type( exp_type, tuple_type(element_types) );
 }
 
 void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
@@ -159,7 +159,7 @@ void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
     if (Lit.is_Char())
         set_expected_type( exp_type, char_type() );
     else if (Lit.is_String())
-        set_expected_type( exp_type, ListType( char_type() ) );
+        set_expected_type( exp_type, list_type( char_type() ) );
     else if (Lit.is_BoxedInteger())
         set_expected_type( exp_type, int_type() );
     else if (auto i = Lit.is_Integer())
@@ -252,7 +252,7 @@ void TypeChecker::tcRho(Hs::ListComprehension& LComp, const Expected& exp_type)
 
     current_wanteds() += state2.current_wanteds();
 
-    set_expected_type( exp_type, ListType(body_type) );
+    set_expected_type( exp_type, list_type(body_type) );
 }
 
 void TypeChecker::tcRho(Hs::ListFrom& L, const Expected& exp_type)

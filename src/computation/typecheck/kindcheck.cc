@@ -189,28 +189,6 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Type& t)
         else
             throw myexception()<<"Can't apply type "<<Tapp.head<<" :: "<<kind1.print()<<" to type "<<Tapp.arg<<".";
     }
-    else if (auto l = t.to<ListType>())
-    {
-        auto L = *l;
-        auto [t2,k2] = kind_check_type(L.element_type);
-        
-        unify(kind_type(), k2);
-
-        L.element_type = t2;
-        return {L, kind_type()};
-    }
-    else if (auto tup = t.to<TupleType>())
-    {
-        auto T = *tup;
-        for(auto& element_type: T.element_types)
-        {
-            auto [t2,k2] = kind_check_type(element_type);
-            unify(kind_type(), k2);
-            element_type = t2;
-        }
-
-        return {T, kind_type()};
-    }
     else if (auto c = t.to<ConstrainedType>())
     {
         auto C = *c;
@@ -269,14 +247,6 @@ Kind kindchecker_state::kind_for_type(const Type& t)
         else
             throw myexception()<<"Kind of applied tycon is not an arrow kind!";
     }
-    else if (t.is_a<ListType>())
-    {
-        return kind_type();
-    }
-    else if (t.is_a<TupleType>())
-    {
-        return kind_type();
-    }
     else if (auto c = t.to<ConstrainedType>())
     {
         return kind_for_type(c->type);
@@ -325,19 +295,6 @@ Type kindchecker_state::zonk_kind_for_type(const Type& t)
         Tapp.head = zonk_kind_for_type(Tapp.head);
         Tapp.arg  = zonk_kind_for_type(Tapp.arg);
         return Tapp;
-    }
-    else if (auto l = t.to<ListType>())
-    {
-        auto L = *l;
-        L.element_type = zonk_kind_for_type( L.element_type );
-        return L;
-    }
-    else if (auto tup = t.to<TupleType>())
-    {
-        auto T = *tup;
-        for(auto& element_type: T.element_types)
-            element_type = zonk_kind_for_type( element_type );
-        return T;
     }
     else if (auto c = t.to<ConstrainedType>())
     {

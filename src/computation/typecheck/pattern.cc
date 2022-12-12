@@ -205,7 +205,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         else
         {
             element_type = fresh_meta_type_var( kind_type() );
-            unify( pat_type, ListType(element_type) );
+            unify( pat_type, list_type(element_type) );
         }
 
         tcPats(penv, L.elements, vector<Expected>(L.elements.size(), Check(element_type)), sigs, a);
@@ -226,7 +226,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         {
             for(int i=0;i<T.elements.size();i++)
                 element_types.push_back( fresh_meta_type_var( kind_type() ) );
-            unify( pat_type, TupleType(element_types) );
+            unify( pat_type, tuple_type(element_types) );
         }
 
         tcPats(penv, T.elements, check_types(element_types), sigs, a);
@@ -281,7 +281,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         }
         else if (L.lit.is_String())
         {
-            unify(expTypeToType(exp_type), ListType(char_type()) );
+            unify(expTypeToType(exp_type), list_type(char_type()) );
             return;
         }
         else if (auto d = L.lit.is_Double())

@@ -50,17 +50,6 @@ set<MetaTypeVar> free_meta_type_variables(const Type& type)
         add(tvars, free_meta_type_variables(app.head));
         add(tvars, free_meta_type_variables(app.arg));
     }
-    else if (type.is_a<TupleType>())
-    {
-        auto& tuple = type.as_<TupleType>();
-        for(auto element_type: tuple.element_types)
-            add(tvars, free_meta_type_variables(element_type));
-    }
-    else if (type.is_a<ListType>())
-    {
-        auto& list = type.as_<ListType>();
-        add(tvars, free_meta_type_variables(list.element_type));
-    }
     else if (type.is_a<ForallType>())
     {
         auto& forall = type.as_<ForallType>();
@@ -121,17 +110,6 @@ set<TypeVar> free_type_variables(const Type& type)
         add(tvars, free_type_variables(app.head));
         add(tvars, free_type_variables(app.arg));
     }
-    else if (type.is_a<TupleType>())
-    {
-        auto& tuple = type.as_<TupleType>();
-        for(auto element_type: tuple.element_types)
-            add(tvars, free_type_variables(element_type));
-    }
-    else if (type.is_a<ListType>())
-    {
-        auto& list = type.as_<ListType>();
-        add(tvars, free_type_variables(list.element_type));
-    }
     else if (type.is_a<ForallType>())
     {
         auto& forall = type.as_<ForallType>();
@@ -171,17 +149,6 @@ set<string> free_type_vars(const Type& type)
         auto& app = type.as_<TypeApp>();
         add(tvars, free_type_vars(app.head));
         add(tvars, free_type_vars(app.arg));
-    }
-    else if (type.is_a<TupleType>())
-    {
-        auto& tuple = type.as_<TupleType>();
-        for(auto element_type: tuple.element_types)
-            add(tvars, free_type_vars(element_type));
-    }
-    else if (type.is_a<ListType>())
-    {
-        auto& list = type.as_<ListType>();
-        return free_type_vars(list.element_type);
     }
     else if (auto forall = type.to<ForallType>())
     {
@@ -239,14 +206,6 @@ bool affected_by_mtv(const Type& type, const MetaTypeVar& mtv)
     {
         return affected_by_mtv(app->head, mtv) or affected_by_mtv(app->arg, mtv);
     }
-    else if (auto tup = type.to<TupleType>())
-    {
-        return affected_by_mtv(tup->element_types, mtv);
-    }
-    else if (auto list = type.to<ListType>())
-    {
-        return affected_by_mtv(list->element_type, mtv);
-    }
     else if (auto forall = type.to<ForallType>())
     {
         return affected_by_mtv(forall->type, mtv);
@@ -292,14 +251,6 @@ bool contains_mtv(const Type& type, const MetaTypeVar& mtv)
     {
         return contains_mtv(app->head, mtv) or contains_mtv(app->arg, mtv);
     }
-    else if (auto tup = type.to<TupleType>())
-    {
-        return contains_mtv(tup->element_types, mtv);
-    }
-    else if (auto list = type.to<ListType>())
-    {
-        return contains_mtv(list->element_type, mtv);
-    }
     else if (auto forall = type.to<ForallType>())
     {
         return contains_mtv(forall->type, mtv);
@@ -342,14 +293,6 @@ bool contains_tv(const Type& type, const TypeVar& tv)
     else if (auto app = type.to<TypeApp>())
     {
         return contains_tv(app->head, tv) or contains_tv(app->arg, tv);
-    }
-    else if (auto tup = type.to<TupleType>())
-    {
-        return contains_tv(tup->element_types, tv);
-    }
-    else if (auto list = type.to<ListType>())
-    {
-        return contains_tv(list->element_type, tv);
     }
     else if (auto forall = type.to<ForallType>())
     {

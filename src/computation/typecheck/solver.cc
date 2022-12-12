@@ -294,16 +294,6 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
         while(auto s2 = is_type_synonym(P.t2))
             P.t2 = *s2;
 
-        if (auto tuple = P.t1.to<TupleType>())
-            P.t1 = canonicalize_type(*tuple);
-        else if (auto list = P.t1.to<ListType>())
-            P.t1 = canonicalize_type(*list);
-
-        if (auto tuple = P.t2.to<TupleType>())
-            P.t2 = canonicalize_type(*tuple);
-        else if (auto list = P.t2.to<ListType>())
-            P.t2 = canonicalize_type(*list);
-
         auto [head1,args1] = decompose_type_apps(P.t1);
         auto [head2,args2] = decompose_type_apps(P.t2);
 

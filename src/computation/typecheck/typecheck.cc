@@ -892,7 +892,7 @@ DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
         DataConInfo info;
         auto a = fresh_other_type_var( kind_type() );
         info.uni_tvs = { a };
-        info.field_types = { a, ListType(a) };
+        info.field_types = { a, list_type(a) };
         info.data_type = list_tycon();
         return info;
     }

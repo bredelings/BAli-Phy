@@ -107,25 +107,6 @@ Type make_arrow_type(const Type& t1, const Type& t2)
     return TypeApp(TypeApp(type_arrow,t1),t2);
 }
 
-Type make_equality_constraint(const Type& t1, const Type& t2)
-{
-    static TypeCon type_arrow(Located<string>({},"~"));
-    return TypeApp(TypeApp(type_arrow,t1),t2);
-}
-
-Type canonicalize_type(const TupleType& type1)
-{
-    int n = type1.element_types.size();
-    Type type2 = tuple_tycon(n);
-    return make_tyapps(type2, type1.element_types);
-}
-
-Type canonicalize_type(const ListType& type1)
-{
-    Type type2 = list_tycon();
-    return TypeApp(type2, type1.element_type);
-}
-
 Type function_type(const vector<Type>& arg_types, const Type& result_type)
 {
     Type ftype = result_type;

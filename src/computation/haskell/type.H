@@ -269,12 +269,6 @@ Type function_type(const std::vector<Type>& arg_types, const Type& result_type);
 
 Type make_arrow_type(const Type& t1, const Type& t2);
 
-Type make_equality_constraint(const Type& t1, const Type& t2);
-
-Type canonicalize_type(const TupleType& type1);
-
-Type canonicalize_type(const ListType& type1);
-
 std::string parenthesize_type(Type t);
 
 std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);

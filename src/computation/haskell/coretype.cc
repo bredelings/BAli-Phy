@@ -48,10 +48,6 @@ bool Type::operator==(const Type& t) const
         return as_<TypeVar>() == t.as_<TypeVar>();
     else if (is_a<TypeCon>())
         return as_<TypeCon>() == t.as_<TypeCon>();
-    else if (is_a<TupleType>())
-        return as_<TupleType>() == t.as_<TupleType>();
-    else if (is_a<ListType>())
-        return as_<ListType>() == t.as_<ListType>();
     else if (is_a<TypeApp>())
         return as_<TypeApp>() == t.as_<TypeApp>();
     else if (is_a<ConstrainedType>())
@@ -83,10 +79,6 @@ int max_level(Type t)
         return tv->level();
     else if (t.is_a<TypeCon>())
         return 0;
-    else if (auto tup = t.to<TupleType>())
-        return max_level( tup->element_types );
-    else if (auto l = t.to<ListType>())
-        return max_level(l->element_type);
     else if (auto app = t.to<TypeApp>())
         return std::max( max_level(app->head), max_level(app->arg) );
     else if (auto ct = t.to<ConstrainedType>())
@@ -118,10 +110,6 @@ int max_meta_level(Type t)
         return 0;
     else if (t.is_a<TypeCon>())
         return 0;
-    else if (auto tup = t.to<TupleType>())
-        return max_meta_level( tup->element_types );
-    else if (auto l = t.to<ListType>())
-        return max_meta_level(l->element_type);
     else if (auto app = t.to<TypeApp>())
         return std::max( max_meta_level(app->head), max_meta_level(app->arg) );
     else if (auto ct = t.to<ConstrainedType>())
@@ -144,10 +132,6 @@ std::string Type::print() const
         return as_<TypeVar>().print();
     else if (is_a<TypeCon>())
         return as_<TypeCon>().print();
-    else if (is_a<TupleType>())
-        return as_<TupleType>().print();
-    else if (is_a<ListType>())
-        return as_<ListType>().print();
     else if (is_a<TypeApp>())
         return as_<TypeApp>().print();
     else if (is_a<ConstrainedType>())
@@ -172,19 +156,6 @@ Type make_equality_constraint(const Type& t1, const Type& t2)
     return TypeApp(TypeApp(type_arrow,t1),t2);
 }
 
-Type canonicalize_type(const TupleType& type1)
-{
-    int n = type1.element_types.size();
-    Type type2 = tuple_tycon(n);
-    return make_tyapps(type2, type1.element_types);
-}
-
-Type canonicalize_type(const ListType& type1)
-{
-    Type type2 = list_tycon();
-    return TypeApp(type2, type1.element_type);
-}
-
 Type function_type(const vector<Type>& arg_types, const Type& result_type)
 {
     Type ftype = result_type;
@@ -196,15 +167,6 @@ Type function_type(const vector<Type>& arg_types, const Type& result_type)
 pair<Type,vector<Type>> decompose_type_apps(Type t)
 {
     t = follow_meta_type_var(t);
-
-    if (auto L = t.to<ListType>())
-        return {TypeCon({noloc,"[]"}), {L->element_type}};
-
-    if (auto T = t.to<TupleType>())
-    {
-        int n = T->element_types.size();
-        return {TypeCon({noloc,tuple_name(n)}), T->element_types};
-    }
 
     vector<Type> args;
     while(t.is_a<TypeApp>())
@@ -226,15 +188,6 @@ bool is_tau_type(Type type)
         return true;
     else if (type.is_a<TypeVar>())
         return true;
-    else if (auto l = type.to<ListType>())
-        return is_tau_type(l->element_type);
-    else if (auto tup = type.to<TupleType>())
-    {
-        for(auto& element_type: tup->element_types)
-            if (not is_tau_type(element_type))
-                return false;
-        return true;
-    }
     else if (type.is_a<ConstrainedType>())
         return false;
     else if (type.is_a<ForallType>())
@@ -259,10 +212,6 @@ bool is_rho_type(Type type)
     if (type.is_a<MetaTypeVar>())
         return true;
     else if (type.is_a<TypeVar>())
-        return true;
-    else if (type.is_a<ListType>())
-        return true;
-    else if (type.is_a<TupleType>())
         return true;
     else if (type.is_a<ConstrainedType>())
         return false;
@@ -415,9 +364,6 @@ optional<Type> is_list_type(Type t)
 {
     t = follow_meta_type_var(t);
 
-    if (auto l = t.to<ListType>())
-        return l->element_type;
-
     auto [head,args] = decompose_type_apps(t);
 
     if (args.size() != 1) return {};
@@ -435,9 +381,6 @@ optional<Type> is_list_type(Type t)
 optional<vector<Type>> is_tuple_type(Type t)
 {
     t = follow_meta_type_var(t);
-
-    if (auto tup = t.to<TupleType>())
-        return tup->element_types;
 
     auto [head,args] = decompose_type_apps(t);
 
@@ -705,10 +648,15 @@ string TypeApp::print() const
         else
             return arg1.print() + " " + tycon.print() + " "+ arg2.print();
     }
-    else if (auto etype = is_list_type(*this))
-        return ListType(*etype).print();
-    else if (auto ttype = is_tuple_type(*this))
-        return TupleType(*ttype).print();
+    else if (auto element_type = is_list_type(*this))
+        return "[" + element_type->print() +"]";
+    else if (auto element_types = is_tuple_type(*this))
+    {
+        vector<string> parts;
+        for(auto& element_type: *element_types)
+            parts.push_back(element_type.print());
+        return "(" + join(parts,", ") +")";
+    }
 
     return head.print() + " " + parenthesize_type(arg);
 }
@@ -825,40 +773,18 @@ string StrictLazyType::print() const
     return mark + type.print();
 }
 
-bool TupleType::operator==(const TupleType& t) const
-{
-    if (element_types.size() != t.element_types.size()) return false;
-
-    for(int i=0; i<element_types.size(); i++)
-        if (element_types[i] != t.element_types[i]) return false;
-
-    return true;
-}
-
-string TupleType::print() const
-{
-    vector<string> parts;
-    for(auto& element_type: element_types)
-        parts.push_back(element_type.print());
-    return "(" + join(parts,", ") +")";
-}
-
 Type tuple_type(const std::vector<Type>& ts)
 {
-    if (ts.size() == 1)
+    int n = ts.size();
+    if (n == 1)
         return ts[0];
     else
-        return TupleType(ts);
+        return type_apply(tuple_tycon(n), ts);
 }
 
-bool ListType::operator==(const ListType& t) const
+Type list_type(const Type& t)
 {
-    return element_type == t.element_type;
-}
-
-string ListType::print() const
-{
-    return "[" + element_type.print() + "]";
+    return type_apply(list_tycon(), {t});
 }
 
 string TypeOfKind::print() const
@@ -927,14 +853,15 @@ Type desugar(const Hs::Type& t)
     }
     else if (auto l= t.to<Hs::ListType>())
     {
-        return ListType( desugar(l->element_type) );
+        return list_type( desugar(l->element_type) );
     }
     else if (auto tup = t.to<Hs::TupleType>())
     {
         vector<Type> element_types;
         for(auto& e: tup->element_types)
             element_types.push_back( desugar( e) );
-        return TupleType( element_types );
+
+        return tuple_type( element_types );
     }
     else if (auto app = t.to<Hs::TypeApp>())
     {

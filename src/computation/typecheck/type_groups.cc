@@ -34,17 +34,6 @@ set<string> free_type_cons(const Type& type)
         add(tcons, free_type_cons(app.head));
         add(tcons, free_type_cons(app.arg));
     }
-    else if (type.is_a<TupleType>())
-    {
-        auto& tuple = type.as_<TupleType>();
-        for(auto element_type: tuple.element_types)
-            add(tcons, free_type_cons(element_type));
-    }
-    else if (type.is_a<ListType>())
-    {
-        auto& list = type.as_<ListType>();
-        return free_type_cons(list.element_type);
-    }
     else if (auto forall = type.to<ForallType>())
     {
         return free_type_cons(forall->type);

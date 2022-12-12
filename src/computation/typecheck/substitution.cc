@@ -70,35 +70,6 @@ std::optional<Type> check_apply_subst(const substitution_t& s, const Type& t)
     }
     else if (t.is_a<TypeCon>())
         return {};
-    else if (auto tup = t.to<TupleType>())
-    {
-        auto T = *tup;
-        bool changed = false;
-        for(auto& type: T.element_types)
-        {
-            if (auto maybe_type = check_apply_subst(s,  type))
-            {
-                type = *maybe_type;
-                changed = true;
-            }
-        }
-
-        if (changed)
-            return T;
-        else
-            return {};
-    }
-    else if (auto l = t.to<ListType>())
-    {
-        if (auto maybe_element_type = check_apply_subst(s,  l->element_type))
-        {
-            auto L = *l;
-            L.element_type = *maybe_element_type;
-            return L;
-        }
-        else
-            return {};
-    }
     else if (auto p_app = t.to<TypeApp>())
     {
         auto app = *p_app;
@@ -221,35 +192,6 @@ std::optional<Type> check_apply_subst(const usubstitution_t& s, const Type& t)
         return {};
     else if (t.is_a<TypeCon>())
         return {};
-    else if (auto tup = t.to<TupleType>())
-    {
-        auto T = *tup;
-        bool changed = false;
-        for(auto& type: T.element_types)
-        {
-            if (auto maybe_type = check_apply_subst(s,  type))
-            {
-                type = *maybe_type;
-                changed = true;
-            }
-        }
-
-        if (changed)
-            return T;
-        else
-            return {};
-    }
-    else if (auto l = t.to<ListType>())
-    {
-        if (auto maybe_element_type = check_apply_subst(s,  l->element_type))
-        {
-            auto L = *l;
-            L.element_type = *maybe_element_type;
-            return L;
-        }
-        else
-            return {};
-    }
     else if (auto p_app = t.to<TypeApp>())
     {
         auto app = *p_app;

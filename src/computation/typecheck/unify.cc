@@ -14,15 +14,6 @@ bool TypeChecker::occurs_check(const MetaTypeVar& tv, const Type& t) const
         return false;
     else if (auto syn = is_type_synonym(t))
         return occurs_check(tv,*syn);
-    else if (auto tup = t.to<TupleType>())
-    {
-        for(auto& type: tup->element_types)
-            if (occurs_check(tv, type))
-                return true;
-        return false;
-    }
-    else if (auto l = t.to<ListType>())
-        return occurs_check(tv, l->element_type);
     else if (auto p_app = t.to<TypeApp>())
         return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
     else if (auto f = t.to<ForallType>())
@@ -54,15 +45,6 @@ bool TypeChecker::occurs_check(const TypeVar& tv, const Type& t) const
         return false;
     else if (auto syn = is_type_synonym(t))
         return occurs_check(tv,*syn);
-    else if (auto tup = t.to<TupleType>())
-    {
-        for(auto& type: tup->element_types)
-            if (occurs_check(tv, type))
-                return true;
-        return false;
-    }
-    else if (auto l = t.to<ListType>())
-        return occurs_check(tv, l->element_type);
     else if (auto p_app = t.to<TypeApp>())
         return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
     else if (auto f = t.to<ForallType>())
@@ -209,22 +191,6 @@ bool TypeChecker::maybe_unify_(bool eager_unification, bool both_ways, const uni
     {
         return true;
     }
-    else if (auto tup1 = t1.to<TupleType>())
-    {
-        return maybe_unify_(eager_unification, both_ways, env, canonicalize_type(*tup1), t2);
-    }
-    else if (auto tup2 = t2.to<TupleType>())
-    {
-        return maybe_unify_(eager_unification, both_ways, env, t1, canonicalize_type(*tup2));
-    }
-    else if (auto l1 = t1.to<ListType>())
-    {
-        return maybe_unify_(eager_unification, both_ways, env, canonicalize_type(*l1), t2);
-    }
-    else if (auto l2 = t2.to<ListType>())
-    {
-        return maybe_unify_(eager_unification, both_ways, env, t1, canonicalize_type(*l2));
-    }
     else if (t1.is_a<ConstrainedType>() and t2.is_a<ConstrainedType>())
     {
         auto c1 = t1.to<ConstrainedType>();
@@ -289,25 +255,6 @@ bool TypeChecker::same_type(const Type& t1, const Type& t2) const
         auto& app2 = t2.as_<TypeApp>();
 
         return same_type(app1.head, app2.head) and same_type(app1.arg, app2.arg);
-    }
-    else if (t1.is_a<TupleType>() and t2.is_a<TupleType>())
-    {
-        auto& tup1 = t1.as_<TupleType>();
-        auto& tup2 = t2.as_<TupleType>();
-        if (tup1.element_types.size() != tup2.element_types.size())
-            return false;
-
-        for(int i=0;i<tup1.element_types.size();i++)
-            if (not same_type(tup1.element_types[i], tup2.element_types[i])) return false;
-
-        return true;
-    }
-    else if (t1.is_a<ListType>() and t2.is_a<ListType>())
-    {
-        auto& L1 = t1.as_<ListType>();
-        auto& L2 = t2.as_<ListType>();
-
-        return same_type(L1.element_type, L2.element_type);
     }
     else if (t1.is_a<ForallType>() or t2.is_a<ForallType>())
     {
