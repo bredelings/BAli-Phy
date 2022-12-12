@@ -13,38 +13,38 @@
 #include "core.H"
 #include "type.H"
 
-    class MetaTypeVar;
-    class TypeVar;
-    struct TypeCon;
-    struct TypeApp;
-    struct ConstrainedType;
-    struct ForallType;
-    struct StrictLazyType;
+class MetaTypeVar;
+class TypeVar;
+struct TypeCon;
+struct TypeApp;
+struct ConstrainedType;
+struct ForallType;
+struct StrictLazyType;
 
-    struct Type
-    {
-        std::variant
-        <
-            std::monostate,
-            cow_ptr<MetaTypeVar>,
-            cow_ptr<TypeVar>,
-            cow_ptr<TypeCon>,
-            cow_ptr<TypeApp>,
-            cow_ptr<ConstrainedType>,
-            cow_ptr<ForallType>,
-            cow_ptr<StrictLazyType>
+struct Type
+{
+    std::variant
+    <
+        std::monostate,
+        cow_ptr<MetaTypeVar>,
+        cow_ptr<TypeVar>,
+        cow_ptr<TypeCon>,
+        cow_ptr<TypeApp>,
+        cow_ptr<ConstrainedType>,
+        cow_ptr<ForallType>,
+        cow_ptr<StrictLazyType>
         >
-        type_ptr;
+    type_ptr;
 
-        std::string print() const;
+    std::string print() const;
 
-        bool empty() const
+    bool empty() const
         {
             return std::holds_alternative<std::monostate>(type_ptr);
         }
 
-        template <typename T>
-        const T* to() const
+    template <typename T>
+    const T* to() const
         {
             if (std::holds_alternative<cow_ptr<T>>(type_ptr))
                 return std::get<cow_ptr<T>>(type_ptr).get();
@@ -53,8 +53,8 @@
         }
 
 
-        template <typename T>
-        T* to_modifiable()
+    template <typename T>
+    T* to_modifiable()
         {
             if (std::holds_alternative<cow_ptr<T>>(type_ptr))
                 return std::get<cow_ptr<T>>(type_ptr).modify_ptr().get();
@@ -63,19 +63,19 @@
         }
 
 
-        bool operator==(const Type& t) const;
-        bool operator!=(const Type& t) const {return not (*this == t);}
+    bool operator==(const Type& t) const;
+    bool operator!=(const Type& t) const {return not (*this == t);}
 
-        template <typename T>
-        bool is_a() const {return to<T>();}
+    template <typename T>
+    bool is_a() const {return to<T>();}
 
-        template <typename T>
-        const T& as_() const {return *std::get<cow_ptr<T>>(type_ptr).get_ptr();}
+    template <typename T>
+    const T& as_() const {return *std::get<cow_ptr<T>>(type_ptr).get_ptr();}
 
-        template <typename T>
-        T& as_modifiable() {return *std::get<cow_ptr<T>>(type_ptr).modify_ptr();}
+    template <typename T>
+    T& as_modifiable() {return *std::get<cow_ptr<T>>(type_ptr).modify_ptr();}
 
-        Type& operator=(const Type& t)
+    Type& operator=(const Type& t)
         {
             auto tmp = type_ptr;
             type_ptr = t.type_ptr;
@@ -83,24 +83,24 @@
             return *this;
         }
 
-        template <typename T>
-        Type& operator=(const T& t)
+    template <typename T>
+    Type& operator=(const T& t)
         {
             auto tmp = type_ptr;
             type_ptr = std::make_shared<const T>(t);
             return *this;
         }
 
-        Type() = default;
-        Type(const Type& t) = default;
+    Type() = default;
+    Type(const Type& t) = default;
 
-        template <typename T>
-        Type(const T& t):type_ptr( cow_ptr<T>(t) ) {}
+    template <typename T>
+    Type(const T& t):type_ptr( cow_ptr<T>(t) ) {}
 
-        ~Type() = default;
-    };
+    ~Type() = default;
+};
 
-    typedef expression_ref Kind;
+typedef expression_ref Kind;
 
 class MetaTypeVar
 {
