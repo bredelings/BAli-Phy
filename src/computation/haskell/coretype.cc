@@ -362,17 +362,15 @@ std::vector<Type> equality_constraints(const std::vector<Type> constraints)
 
 optional<Type> is_list_type(Type t)
 {
-    t = follow_meta_type_var(t);
+    if (auto tcapp = is_type_con_app(t))
+    {
+        auto& [tc, args] = *tcapp;
 
-    auto [head,args] = decompose_type_apps(t);
-
-    if (args.size() != 1) return {};
-
-    auto tc = head.to<TypeCon>();
-    if (not tc) return {};
-
-    if (unloc(tc->name) == "[]")
-        return {args[0]};
+        if (args.size() == 1 and unloc(tc.name) == "[]")
+            return args[0];
+        else
+            return {};
+    }
     else
         return {};
 }
@@ -380,19 +378,26 @@ optional<Type> is_list_type(Type t)
 
 optional<vector<Type>> is_tuple_type(Type t)
 {
-    t = follow_meta_type_var(t);
+    if (auto tcapp = is_type_con_app(t))
+    {
+        auto& [tc, args] = *tcapp;
 
+        auto& head_name = unloc(tc.name);
+        if (is_tuple_name(head_name) and args.size() == tuple_arity(head_name))
+            return args;
+        else
+            return {};
+    }
+    else
+        return {};
+}
+
+std::optional<std::tuple<TypeCon,std::vector<Type>>> is_type_con_app(const Type& t)
+{
     auto [head,args] = decompose_type_apps(t);
 
-    auto tc = head.to<TypeCon>();
-    if (not tc) return {};
-
-    auto& head_name = unloc(tc->name);
-    if (not is_tuple_name(head_name))
-        return {};
-
-    if (args.size() == tuple_arity(head_name))
-        return args;
+    if (auto tc = head.to<TypeCon>())
+        return {{*tc, args}};
     else
         return {};
 }

@@ -294,6 +294,8 @@ std::optional<Type> is_list_type(Type t);
 
 std::optional<std::vector<Type>> is_tuple_type(Type t);
 
+std::optional<std::tuple<TypeCon,std::vector<Type>>> is_type_con_app(const Type& t);
+
 Type list_type(const Type& t);
 
 Type tuple_type(const std::vector<Type>& v);
