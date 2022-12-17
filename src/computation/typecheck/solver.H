@@ -109,6 +109,12 @@ struct Solver: public TypeChecker
     void kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps);
     void kickout_after_unification(const MetaTypeVar&);
 
+    std::optional<Predicate>
+    canonicalize_equality_type_apps(ConstraintFlavor flavor,
+                               const Type&, const Type&, const Type&, const Type&);
+    std::optional<Predicate>
+    canonicalize_equality_type_cons(ConstraintFlavor flavor, const CanonicalEqualityPred& P,
+                                    const TypeCon&, const std::vector<Type>&, const TypeCon&, const std::vector<Type>&);
     std::optional<Predicate> canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P);
     std::optional<Predicate> canonicalize_dict(ConstraintFlavor flavor, CanonicalDictPred P);
     std::optional<Predicate> canonicalize(Predicate& P);

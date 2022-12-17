@@ -217,6 +217,40 @@ CanonicalEqualityPred CanonicalEqualityPred::flip() const
     return {co, t2, t1};
 }
 
+std::optional<Predicate>
+Solver::canonicalize_equality_type_apps(ConstraintFlavor flavor,
+                                        const Type& fun1, const Type& arg1, const Type& fun2, const Type& arg2)
+{
+    auto fun_constraint = make_equality_constraint(fun1, fun2);
+    auto fun_dvar = fresh_dvar(fun_constraint);
+    work_list.push_back({flavor, NonCanonicalPred(fun_dvar, fun_constraint)});
+
+    auto arg_constraint = make_equality_constraint(arg1, arg2);
+    auto arg_dvar = fresh_dvar(arg_constraint);
+    work_list.push_back({flavor, NonCanonicalPred(arg_dvar, arg_constraint)});
+
+    return {};
+}
+
+std::optional<Predicate> Solver::canonicalize_equality_type_cons(ConstraintFlavor flavor, const CanonicalEqualityPred& P, const TypeCon& tc1, const vector<Type>& args1, const TypeCon& tc2, const vector<Type>& args2)
+{
+    // if tc1 and tc2 and both non-type-family type cons...
+    if (tc1 == tc2 and args1.size() == args2.size())
+    {
+        // If we've gotten here, the heads are both injective, and might be equal.
+        for(int i=0;i<args1.size();i++)
+        {
+            auto constraint = make_equality_constraint(args1[i], args2[i]);
+            auto dvar = fresh_dvar(constraint);
+            work_list.push_back({flavor, NonCanonicalPred(dvar, constraint)});
+        }
+    }
+    else
+        inerts.failed.push_back({flavor,P});
+
+    return {};
+}
+
 std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P)
 {
     P.t1 = rewrite(flavor, P.t1);
@@ -250,21 +284,7 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     {
         auto& [tc1, args1] = *tcapp1;
         auto& [tc2, args2] = *tcapp2;
-        // if tc1 and tc2 and both non-type-family type cons...
-        if (tc1 == tc2 and args1.size() == args2.size())
-        {
-            // If we've gotten here, the heads are both injective, and might be equal.
-            for(int i=0;i<args1.size();i++)
-            {
-                auto constraint = make_equality_constraint(args1[i], args2[i]);
-                auto dvar = fresh_dvar(constraint);
-                work_list.push_back({flavor, NonCanonicalPred(dvar, constraint)});
-            }
-        }
-        else
-            inerts.failed.push_back({flavor,P});
-
-        return {};
+        return canonicalize_equality_type_cons(flavor, P, tc1, args1, tc2, args2);
     }
 
     // 5. If both are ForallType
@@ -276,16 +296,7 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     {
         auto& [fun1, arg1] = *tapp1;
         auto& [fun2, arg2] = *tapp2;
-
-        auto fun_constraint = make_equality_constraint(fun1, fun2);
-        auto fun_dvar = fresh_dvar(fun_constraint);
-        work_list.push_back({flavor, NonCanonicalPred(fun_dvar, fun_constraint)});
-
-        auto arg_constraint = make_equality_constraint(arg1, arg2);
-        auto arg_dvar = fresh_dvar(arg_constraint);
-        work_list.push_back({flavor, NonCanonicalPred(arg_dvar, arg_constraint)});
-
-        return {};
+        return canonicalize_equality_type_apps(flavor, fun1, arg1, fun2, arg2);
     }
 
     auto tv1 = P.t1.to<TypeVar>();
