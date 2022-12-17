@@ -382,32 +382,34 @@ bool TypeChecker::type_con_must_be_saturated(const TypeCon& tc) const
 
 std::optional<std::tuple<Type, Type>> TypeChecker::is_type_app(Type t) const
 {
+    // 1. Follow meta-type-vars
     t = follow_meta_type_var(t);
 
-    if (auto app = t.to<TypeApp>())
+    // 2. If there's no TypeApp, we are done.
+    auto app = t.to<TypeApp>();
+    if (not app) return {};
+
+    // 3. Get the head and arg types
+    auto fun = app->head;
+    auto arg = app->arg;
+
+    // 4. Avoid eating an argument from a saturated typecon that must remain saturated
+    t = fun;
+    int n_args = 0;
+    while(auto app2 = t.to<TypeApp>())
     {
-        auto fun = app->head;
-        auto arg = app->arg;
-
-        t = fun;
-        int n_args = 0;
-        while(auto app2 = t.to<TypeApp>())
-        {
-            t = app2->head;
-            n_args++;
-        }
-
-        if (auto tc = t.to<TypeCon>())
-        {
-            if (type_con_must_be_saturated(*tc) and n_args < type_con_arity(*tc))
-                return {};
-        }
-
-        return {{fun, arg}};
+        t = app2->head;
+        n_args++;
     }
-    else
-        return {};
+
+    if (auto tc = t.to<TypeCon>())
+    {
+        if (type_con_must_be_saturated(*tc) and n_args < type_con_arity(*tc))
+            return {};
+    }
     
+    // 5. Return the head and arg types
+    return {{fun, arg}};
 }
 
 
