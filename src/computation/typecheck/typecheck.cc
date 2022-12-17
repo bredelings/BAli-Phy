@@ -339,7 +339,6 @@ using std::tuple;
 // GVE = global value environment      = var -> polytype
 // LVE = local  value environment      = var -> monotype
 
-
 void TypeCheckerContext::pop_err_context()
 {
     err_contexts.pop_back();
@@ -357,6 +356,60 @@ string TypeCheckerContext::print_err_context() const
         estrings.push_back(err_context.print()+"\n");
     return join(estrings, "\n");
 }
+
+int TypeChecker::type_con_arity(const TypeCon& tc) const
+{
+    auto iter = tycon_info().find(unloc(tc.name));
+    if (iter == tycon_info().end())
+        throw err_context_exception()<<"Can't find type con '"<<tc<<"'";
+    return iter->second.arity;
+}
+
+bool TypeChecker::type_con_is_type_fam(const TypeCon& tc) const
+{
+    return type_fam_info().count(tc);
+}
+
+bool TypeChecker::type_con_is_type_syn(const TypeCon& tc) const
+{
+    return type_syn_info().count(unloc(tc.name));
+}
+
+bool TypeChecker::type_con_must_be_saturated(const TypeCon& tc) const
+{
+    return type_con_is_type_fam(tc) or type_con_is_type_syn(tc);
+}
+
+std::optional<std::tuple<Type, Type>> TypeChecker::is_type_app(Type t) const
+{
+    t = follow_meta_type_var(t);
+
+    if (auto app = t.to<TypeApp>())
+    {
+        auto fun = app->head;
+        auto arg = app->arg;
+
+        t = fun;
+        int n_args = 0;
+        while(auto app2 = t.to<TypeApp>())
+        {
+            t = app2->head;
+            n_args++;
+        }
+
+        if (auto tc = t.to<TypeCon>())
+        {
+            if (type_con_must_be_saturated(*tc) and n_args < type_con_arity(*tc))
+                return {};
+        }
+
+        return {{fun, arg}};
+    }
+    else
+        return {};
+    
+}
+
 
 myexception TypeChecker::err_context_exception() const
 {
