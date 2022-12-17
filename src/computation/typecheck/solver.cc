@@ -222,15 +222,77 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     P.t1 = rewrite(flavor, P.t1);
     P.t2 = rewrite(flavor, P.t2);
 
-    auto uv1 = follow_meta_type_var(P.t1).to<MetaTypeVar>();
-    auto uv2 = follow_meta_type_var(P.t2).to<MetaTypeVar>();
+    P.t1 = follow_meta_type_var(P.t1);
+    P.t2 = follow_meta_type_var(P.t2);
 
-    // REFL: tau ~ tau
-    // NOTE: this does not currently handle foralls or constraints!
-    if (same_type(P.t1, P.t2)) return {}; // Solved!
+// NOTE: this does not currently handle foralls or constraints!
+
+    // 1. Check if the types are identical -- not looking through type synonyms
+    if (same_type(P.t1, P.t2))
+        return {}; // Solved!
+    // 2. Check if we have two identical typecons with no arguments
+    //    Right now, this is redundant with #1, but might not be if we start doing loops.
+    auto tc1 = P.t1.to<TypeCon>();
+    auto tc2 = P.t2.to<TypeCon>();
+    if (tc1 and tc2 and *tc1 == *tc2)
+        return {}; // Solved!
+
+    // 3. Look through type synonyms
+    while(auto s1 = is_type_synonym(P.t1))
+        P.t1 = *s1;
+    while(auto s2 = is_type_synonym(P.t2))
+        P.t2 = *s2;
+
+    // 4. See if we have two tycons that aren't type family tycons
+    auto tcapp1 = is_type_con_app(P.t1);
+    auto tcapp2 = is_type_con_app(P.t2);
+    if (tcapp1 and tcapp2)
+    {
+        auto& [tc1, args1] = *tcapp1;
+        auto& [tc2, args2] = *tcapp2;
+        // if tc1 and tc2 and both non-type-family type cons...
+        if (tc1 == tc2 and args1.size() == args2.size())
+        {
+            // If we've gotten here, the heads are both injective, and might be equal.
+            for(int i=0;i<args1.size();i++)
+            {
+                auto constraint = make_equality_constraint(args1[i], args2[i]);
+                auto dvar = fresh_dvar(constraint);
+                work_list.push_back({flavor, NonCanonicalPred(dvar, constraint)});
+            }
+        }
+        else
+            inerts.failed.push_back({flavor,P});
+
+        return {};
+    }
+
+    // 5. If both are ForallType
+
+    // 6. If both are type applications without type con heads
+    auto tapp1 = is_type_app(P.t1);
+    auto tapp2 = is_type_app(P.t2);
+    if (tapp1 and tapp2)
+    {
+        auto& [fun1, arg1] = *tapp1;
+        auto& [fun2, arg2] = *tapp2;
+
+        auto fun_constraint = make_equality_constraint(fun1, fun2);
+        auto fun_dvar = fresh_dvar(fun_constraint);
+        work_list.push_back({flavor, NonCanonicalPred(fun_dvar, fun_constraint)});
+
+        auto arg_constraint = make_equality_constraint(arg1, arg2);
+        auto arg_dvar = fresh_dvar(arg_constraint);
+        work_list.push_back({flavor, NonCanonicalPred(arg_dvar, arg_constraint)});
+
+        return {};
+    }
 
     auto tv1 = P.t1.to<TypeVar>();
     auto tv2 = P.t2.to<TypeVar>();
+
+    auto uv1 = P.t1.to<MetaTypeVar>();
+    auto uv2 = P.t2.to<MetaTypeVar>();
 
     if (uv1 and uv2)
     {
@@ -284,61 +346,8 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     }
     else
     {
-        // Right now the only TypeCon heads are data constructors,
-        //   type synonyms, and variables.
-        // Unlike GHC, we don't consider representational equality.
-        // When we add type families, this will become more complicated.
-        // See [Decomposing equality] in Tc/Solver/Canonical.hs
-        while(auto s1 = is_type_synonym(P.t1))
-            P.t1 = *s1;
-        while(auto s2 = is_type_synonym(P.t2))
-            P.t2 = *s2;
-
-        auto [head1,args1] = decompose_type_apps(P.t1);
-        auto [head2,args2] = decompose_type_apps(P.t2);
-
-        if (args1.size() != args2.size())
-        {
-            // Is this too eager?
-            inerts.failed.push_back({flavor,P});
-            return {};
-        }
-
-        auto h1 = head1.to<TypeCon>();
-        auto h2 = head2.to<TypeCon>();
-
-        vector<Predicate> preds;
-        if (h1 and h2)
-        {
-            if (*h1 == *h2)
-            {
-                // TDEC: T x1 y1 z1 = T x2 y2 z2
-                // Fall through.
-            }
-            else
-            {
-                // FAILDEC: T x1 y1 z1 = S x2 y2 z2
-                inerts.failed.push_back({flavor,P});
-                return {};
-            }
-        }
-        // We will need to do extra stuff here if either of the heads is a type family.
-        else
-        {
-            auto constraint = make_equality_constraint(head1, head2);
-            auto dvar = fresh_dvar(constraint);
-            work_list.push_back({flavor, NonCanonicalPred(dvar, constraint)});
-        }
-
-        // If we've gotten here, the heads are both injective, and might be equal.
-        for(int i=0;i<args1.size();i++)
-        {
-            auto constraint = make_equality_constraint(args1[i], args2[i]);
-            auto dvar = fresh_dvar(constraint);
-            work_list.push_back({flavor, NonCanonicalPred(dvar, constraint)});
-        }
-
-        return {};
+        // This should end up in inerts.irreducible?
+        return {{flavor, P}};
     }
 
     std::abort();
