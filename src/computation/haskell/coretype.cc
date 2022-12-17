@@ -881,7 +881,7 @@ Type desugar(const Hs::Type& t)
     {
         return ConstrainedType( desugar(ct->context), desugar(ct->type) );
     }
-    else if (auto tok = t.to<Hs::TypeOfKind>())
+    else if (t.is_a<Hs::TypeOfKind>())
     {
         throw myexception()<<"Can't desugar TypeOfKind from Hs::Type to Type";
     }
