@@ -435,9 +435,6 @@ Change Solver::interact(const Predicate& P1, const Predicate& P2)
     // Don't allow wanteds to rewrite givens
     if (P1.flavor == Wanted and P2.flavor == Given) return Unchanged();
 
-    auto eq1 = to<CanonicalEqualityPred>(P1.pred);
-    auto eq2 = to<CanonicalEqualityPred>(P2.pred);
-
     auto dict1 = to<CanonicalDictPred>(P1.pred);
     auto dict2 = to<CanonicalDictPred>(P2.pred);
 
