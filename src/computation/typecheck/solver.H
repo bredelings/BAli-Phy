@@ -109,6 +109,11 @@ struct Solver: public TypeChecker
     void kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps);
     void kickout_after_unification(const MetaTypeVar&);
 
+    bool is_rewritable_lhs(Type t) const;
+
+    std::optional<Predicate>
+    canonicalize_equality_lhs(ConstraintFlavor flavor, const CanonicalEqualityPred& P);
+
     std::optional<Predicate>
     canonicalize_equality_type_apps(ConstraintFlavor flavor,
                                const Type&, const Type&, const Type&, const Type&);

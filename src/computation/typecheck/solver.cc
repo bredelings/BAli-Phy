@@ -251,54 +251,28 @@ std::optional<Predicate> Solver::canonicalize_equality_type_cons(ConstraintFlavo
     return {};
 }
 
-std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P)
+bool Solver::is_rewritable_lhs(Type t) const
 {
-    P.t1 = rewrite(flavor, P.t1);
-    P.t2 = rewrite(flavor, P.t2);
+    t = follow_meta_type_var(t);
 
-    P.t1 = follow_meta_type_var(P.t1);
-    P.t2 = follow_meta_type_var(P.t2);
-
-// NOTE: this does not currently handle foralls or constraints!
-
-    // 1. Check if the types are identical -- not looking through type synonyms
-    if (same_type(P.t1, P.t2))
-        return {}; // Solved!
-    // 2. Check if we have two identical typecons with no arguments
-    //    Right now, this is redundant with #1, but might not be if we start doing loops.
-    auto tc1 = P.t1.to<TypeCon>();
-    auto tc2 = P.t2.to<TypeCon>();
-    if (tc1 and tc2 and *tc1 == *tc2)
-        return {}; // Solved!
-
-    // 3. Look through type synonyms
-    while(auto s1 = is_type_synonym(P.t1))
-        P.t1 = *s1;
-    while(auto s2 = is_type_synonym(P.t2))
-        P.t2 = *s2;
-
-    // 4. See if we have two tycons that aren't type family tycons
-    auto tcapp1 = is_type_con_app(P.t1);
-    auto tcapp2 = is_type_con_app(P.t2);
-    if (tcapp1 and tcapp2)
+    if (t.is_a<MetaTypeVar>())
+        return true;
+    else if (t.is_a<TypeVar>())
+        return true;
+    else if (auto tcapp = is_type_con_app(t))
     {
-        auto& [tc1, args1] = *tcapp1;
-        auto& [tc2, args2] = *tcapp2;
-        return canonicalize_equality_type_cons(flavor, P, tc1, args1, tc2, args2);
+        auto& [tc,args] = *tcapp;
+        if (type_con_is_type_fam(tc) and args.size() == type_con_arity(tc))
+            return true;
+        else
+            return false;
     }
+    else
+        return false;
+}
 
-    // 5. If both are ForallType
-
-    // 6. If both are type applications without type con heads
-    auto tapp1 = is_type_app(P.t1);
-    auto tapp2 = is_type_app(P.t2);
-    if (tapp1 and tapp2)
-    {
-        auto& [fun1, arg1] = *tapp1;
-        auto& [fun2, arg2] = *tapp2;
-        return canonicalize_equality_type_apps(flavor, fun1, arg1, fun2, arg2);
-    }
-
+std::optional<Predicate> Solver::canonicalize_equality_lhs(ConstraintFlavor flavor, const CanonicalEqualityPred& P)
+{
     auto tv1 = P.t1.to<TypeVar>();
     auto tv2 = P.t2.to<TypeVar>();
 
@@ -355,6 +329,61 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     {
         return canonicalize_equality(flavor, P.flip());
     }
+    else
+        std::abort();
+}
+
+
+std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P)
+{
+    P.t1 = rewrite(flavor, P.t1);
+    P.t2 = rewrite(flavor, P.t2);
+
+    P.t1 = follow_meta_type_var(P.t1);
+    P.t2 = follow_meta_type_var(P.t2);
+
+// NOTE: this does not currently handle foralls or constraints!
+
+    // 1. Check if the types are identical -- not looking through type synonyms
+    if (same_type(P.t1, P.t2))
+        return {}; // Solved!
+    // 2. Check if we have two identical typecons with no arguments
+    //    Right now, this is redundant with #1, but might not be if we start doing loops.
+    auto tc1 = P.t1.to<TypeCon>();
+    auto tc2 = P.t2.to<TypeCon>();
+    if (tc1 and tc2 and *tc1 == *tc2)
+        return {}; // Solved!
+
+    // 3. Look through type synonyms
+    while(auto s1 = is_type_synonym(P.t1))
+        P.t1 = *s1;
+    while(auto s2 = is_type_synonym(P.t2))
+        P.t2 = *s2;
+
+    // 4. See if we have two tycons that aren't type family tycons
+    auto tcapp1 = is_type_con_app(P.t1);
+    auto tcapp2 = is_type_con_app(P.t2);
+    if (tcapp1 and tcapp2)
+    {
+        auto& [tc1, args1] = *tcapp1;
+        auto& [tc2, args2] = *tcapp2;
+        return canonicalize_equality_type_cons(flavor, P, tc1, args1, tc2, args2);
+    }
+
+    // 5. If both are ForallType
+
+    // 6. If both are type applications without type con heads
+    auto tapp1 = is_type_app(P.t1);
+    auto tapp2 = is_type_app(P.t2);
+    if (tapp1 and tapp2)
+    {
+        auto& [fun1, arg1] = *tapp1;
+        auto& [fun2, arg2] = *tapp2;
+        return canonicalize_equality_type_apps(flavor, fun1, arg1, fun2, arg2);
+    }
+
+    if (is_rewritable_lhs(P.t1) or is_rewritable_lhs(P.t2))
+        return canonicalize_equality_lhs(flavor, P);
     else
     {
         // This should end up in inerts.irreducible?
