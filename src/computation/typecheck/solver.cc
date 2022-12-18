@@ -271,14 +271,25 @@ bool Solver::is_rewritable_lhs(Type t) const
         return false;
 }
 
-std::optional<Predicate> Solver::canonicalize_equality_lhs(ConstraintFlavor flavor, const CanonicalEqualityPred& P)
+std::optional<Predicate> Solver::canonicalize_equality_lhs2(ConstraintFlavor flavor, const CanonicalEqualityPred& P)
 {
+    assert(is_rewritable_lhs(P.t1) and is_rewritable_lhs(P.t2));
+
     auto tv1 = P.t1.to<TypeVar>();
     auto tv2 = P.t2.to<TypeVar>();
 
     auto uv1 = P.t1.to<MetaTypeVar>();
     auto uv2 = P.t2.to<MetaTypeVar>();
 
+    // if caneqlhs lhs1 lhs2 then .... they are the same?
+
+    // if tv1 and tv2 then .... swap over tyvars (isGiven)
+
+    // if tv1 and tyfam2 then .... canonicalize_eq_tyvar_fun
+
+    // if tyfam1 and tv2 then swap and canonicalize_eq_tyvar_fun
+
+    // if tyfam1 and tyfam1 then check if swap for occurs check or for rewriting, and finish
     if (uv1 and uv2)
     {
         if (cmp_less(*uv2,*uv1))
@@ -333,6 +344,41 @@ std::optional<Predicate> Solver::canonicalize_equality_lhs(ConstraintFlavor flav
         std::abort();
 }
 
+std::optional<Predicate> Solver::canonicalize_equality_lhs1(ConstraintFlavor flavor, const CanonicalEqualityPred& P)
+{
+    if (auto uv1 = P.t1.to<MetaTypeVar>())
+    {
+        if (occurs_check(*uv1, P.t2))
+        {
+            inerts.failed.push_back({flavor,P});
+            return {};
+        }
+    }
+    else if (auto tv1 = P.t1.to<TypeVar>())
+    {
+        if (occurs_check(*tv1, P.t2))
+        {
+            inerts.failed.push_back({flavor,P});
+            return {};
+        }
+    }
+    else if (is_type_fam_app(P.t1))
+    {
+        // do occurs check;
+    }
+
+    return {{flavor, P}};
+}
+
+std::optional<Predicate> Solver::canonicalize_equality_lhs(ConstraintFlavor flavor, const CanonicalEqualityPred& P)
+{
+    if (is_rewritable_lhs(P.t2))
+        return canonicalize_equality_lhs2(flavor, P);
+    else
+        return canonicalize_equality_lhs1(flavor, P);
+
+}
+
 
 std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P)
 {
@@ -382,8 +428,10 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
         return canonicalize_equality_type_apps(flavor, fun1, arg1, fun2, arg2);
     }
 
-    if (is_rewritable_lhs(P.t1) or is_rewritable_lhs(P.t2))
+    if (is_rewritable_lhs(P.t1))
         return canonicalize_equality_lhs(flavor, P);
+    else if (is_rewritable_lhs(P.t2))
+        return canonicalize_equality_lhs(flavor, P.flip());
     else
     {
         // This should end up in inerts.irreducible?
