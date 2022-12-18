@@ -691,7 +691,7 @@ void Solver::add_inert(const Predicate& p)
             inerts.tv_eqs.push_back(p);
         else if (t1.is_a<MetaTypeVar>())
             inerts.mtv_eqs.push_back(p);
-        else if (false) // type fam application?
+        else if (is_type_fam_app(t1))
             inerts.tyfam_eqs.push_back(p);
         else
             inerts.irreducible.push_back(p);
