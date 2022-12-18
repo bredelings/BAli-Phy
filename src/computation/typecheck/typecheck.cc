@@ -412,6 +412,17 @@ std::optional<std::tuple<Type, Type>> TypeChecker::is_type_app(Type t) const
     return {{fun, arg}};
 }
 
+std::optional<std::tuple<TypeCon,std::vector<Type>>> TypeChecker::is_type_fam_app(const Type& t) const
+{
+    auto tcapp = is_type_con_app(t);
+    if (not tcapp) return {};
+    auto& [tc,args] = *tcapp;
+
+    if (type_con_is_type_fam(tc) and args.size() == type_con_arity(tc))
+        return tcapp;
+    else
+        return {};
+}
 
 myexception TypeChecker::err_context_exception() const
 {

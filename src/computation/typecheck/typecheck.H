@@ -170,6 +170,7 @@ struct TypeChecker: FreshVarSource
     bool type_con_must_be_saturated(const TypeCon& tc) const;
     int type_con_arity(const TypeCon& tc) const;
     std::optional<std::tuple<Type, Type>> is_type_app(Type t) const;
+    std::optional<std::tuple<TypeCon,std::vector<Type>>> is_type_fam_app(const Type& t) const;
 
     myexception err_context_exception() const;
 
