@@ -245,14 +245,8 @@ bool Solver::is_rewritable_lhs(Type t) const
         return true;
     else if (t.is_a<TypeVar>())
         return true;
-    else if (auto tcapp = is_type_con_app(t))
-    {
-        auto& [tc,args] = *tcapp;
-        if (type_con_is_type_fam(tc) and args.size() == type_con_arity(tc))
-            return true;
-        else
-            return false;
-    }
+    else if (is_type_fam_app(t))
+        return true;
     else
         return false;
 }
