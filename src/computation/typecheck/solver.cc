@@ -284,6 +284,7 @@ std::optional<Predicate> Solver::canonicalize_equality_lhs2(ConstraintFlavor fla
     // if caneqlhs lhs1 lhs2 then .... they are the same?
 
     // if tv1 and tv2 then .... swap over tyvars (isGiven)
+    // -- the deeper level should be on the left, regardless of uv/tv
 
     // if tv1 and tyfam2 then .... canonicalize_eq_tyvar_fun
 
@@ -293,53 +294,25 @@ std::optional<Predicate> Solver::canonicalize_equality_lhs2(ConstraintFlavor fla
     if (uv1 and uv2)
     {
         if (cmp_less(*uv2,*uv1))
-            return canonicalize_equality(flavor, P.flip());
+            return canonicalize_equality_lhs1(flavor, P.flip());
         else
-        {
-            return {{flavor, P}};
-        }
+            return canonicalize_equality_lhs1(flavor, P);
     }
     else if (uv1)
-    {
-        if (occurs_check(*uv1, P.t2))
-        {
-            inerts.failed.push_back({flavor,P});
-            return {};
-        }
-        else
-        {
-            return {{flavor, P}};
-        }
-    }
+        return canonicalize_equality_lhs1(flavor, P);
     else if (uv2)
-    {
-        return canonicalize_equality(flavor, P.flip());
-    }
+        return canonicalize_equality_lhs1(flavor, P.flip());
     else if (tv1 and tv2)
     {
         if (*tv2 < *tv1)
-            return canonicalize_equality(flavor, P.flip());
+            return canonicalize_equality_lhs1(flavor, P.flip());
         else
-        {
-            return {{flavor, P}};
-        }
+            return canonicalize_equality_lhs1(flavor, P);
     }
     else if (tv1)
-    {
-        if (occurs_check(*tv1, P.t2))
-        {
-            inerts.failed.push_back({flavor,P});
-            return {};
-        }
-        else
-        {
-            return {{flavor, P}};
-        }
-    }
+        return canonicalize_equality_lhs1(flavor, P);
     else if (tv2)
-    {
-        return canonicalize_equality(flavor, P.flip());
-    }
+        return canonicalize_equality_lhs1(flavor, P.flip());
     else
         std::abort();
 }
@@ -393,8 +366,10 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     // 1. Check if the types are identical -- not looking through type synonyms
     if (same_type(P.t1, P.t2))
         return {}; // Solved!
+
     // 2. Check if we have two identical typecons with no arguments
     //    Right now, this is redundant with #1, but might not be if we start doing loops.
+    //    Apparently this is a special case for handling nullary type synonyms before expansion.
     auto tc1 = P.t1.to<TypeCon>();
     auto tc2 = P.t2.to<TypeCon>();
     if (tc1 and tc2 and *tc1 == *tc2)
@@ -427,6 +402,9 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
         auto& [fun2, arg2] = *tapp2;
         return canonicalize_equality_type_apps(flavor, fun1, arg1, fun2, arg2);
     }
+
+    // the lhs & rhs should be rewritten by the time we get here.
+    // but what if we substitute for a type synonym?
 
     if (is_rewritable_lhs(P.t1))
         return canonicalize_equality_lhs(flavor, P);
@@ -485,6 +463,8 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
 
 Type Solver::rewrite(ConstraintFlavor flavor, Type t) const
 {
+    // Does this look through type synonyms?
+
     // 1. Get the tv substitution
     substitution_t tv_subst;
     for(auto& inert: inerts.tv_eqs)
