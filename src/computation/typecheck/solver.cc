@@ -198,20 +198,6 @@ std::optional<Core::Decls> TypeChecker::entails(const T& givens, const std::pair
     return {};
 }
 
-bool cmp_less(const MetaTypeVar& uv1, const MetaTypeVar& uv2)
-{
-    assert(not uv1.filled());
-    assert(not uv2.filled());
-
-    if (uv1.level() > uv2.level())
-        return true;
-    if (uv1.level() < uv2.level())
-        return false;
-
-    return (uv1 < uv2);
-}
-
-
 CanonicalEqualityPred CanonicalEqualityPred::flip() const
 {
     return {co, t2, t1};
@@ -271,45 +257,65 @@ bool Solver::is_rewritable_lhs(Type t) const
         return false;
 }
 
+int lhs_priority(const Type& t)
+{
+    if (t.is_a<TypeVar>()) return 0;
+    else if (t.is_a<MetaTypeVar>())
+    {
+        // later, cycle breakers are going to be here as priority 0.
+        return 1;
+    }
+    else
+        std::abort();
+}
+
+bool flip_type_vars(bool is_given, const Type& t1, const Type& t2)
+{
+    int p1 = lhs_priority(t1);
+    int p2 = lhs_priority(t2);
+
+    // 1. We want unification variables on the left in wanteds.
+    if (not is_given)
+    {
+        if (p1 == 0 and p2 > 0) return true;
+        if (p2 == 0 and p1 > 0) return false;
+    }
+
+    // 2. We want the deepest level variable on the left.
+    // * for wanteds, we want touchable meta-variables on the left.
+    // * for givens, we want to eliminate deeper skolems to avoid skolem-escape.
+
+    int l1 = max_level(t1);
+    int l2 = max_level(t2);
+
+    if (l1 > l2) return false;
+    if (l2 > l1) return true;
+
+    // 3. Otherwise we leave things the way they are.
+    //    This avoid infinite cycles of flips.
+
+    return false;
+}
+
 std::optional<Predicate> Solver::canonicalize_equality_lhs2(ConstraintFlavor flavor, CanonicalEqualityPred P)
 {
     assert(is_rewritable_lhs(P.t1) and is_rewritable_lhs(P.t2));
 
-    auto tv1 = P.t1.to<TypeVar>();
-    auto tv2 = P.t2.to<TypeVar>();
-
-    auto uv1 = P.t1.to<MetaTypeVar>();
-    auto uv2 = P.t2.to<MetaTypeVar>();
-
-    // if caneqlhs lhs1 lhs2 then .... they are the same?
-
-    // if tv1 and tv2 then .... swap over tyvars (isGiven)
-    // -- the deeper level should be on the left, regardless of uv/tv
-
-    // if tv1 and tyfam2 then .... canonicalize_eq_tyvar_fun
-
-    // if tyfam1 and tv2 then swap and canonicalize_eq_tyvar_fun
-
-    // if tyfam1 and tyfam1 then check if swap for occurs check or for rewriting, and finish
-    if (uv1 and uv2)
+    auto tfam1 = is_type_fam_app(P.t1);
+    auto tfam2 = is_type_fam_app(P.t2);
+    
+    if (not tfam1 and not tfam2)
     {
-        if (cmp_less(*uv2,*uv1))
+        if (flip_type_vars(flavor == Given, P.t1, P.t2))
             P = P.flip();
     }
-    else if (uv1)
+    else if (tfam1)
         ;
-    else if (uv2)
-        P = P.flip();
-    else if (tv1 and tv2)
-    {
-        if (*tv2 < *tv1)
-            P = P.flip();
-    }
-    else if (tv1)
+    else if (tfam2)
         ;
-    else if (tv2)
-        P = P.flip();
-
+    else
+        ;
+        
     return canonicalize_equality_lhs1(flavor, P);
 }
 
