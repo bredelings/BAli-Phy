@@ -297,7 +297,22 @@ bool flip_type_vars(bool is_given, const Type& t1, const Type& t2)
     return false;
 }
 
-std::optional<Predicate> Solver::canonicalize_equality_lhs2(ConstraintFlavor flavor, CanonicalEqualityPred P)
+std::optional<Predicate>
+Solver::canonicalize_equality_var_tyfam(ConstraintFlavor flavor, CanonicalEqualityPred P)
+{
+    assert(P.t1.is_a<TypeVar>() or P.t1.is_a<MetaTypeVar>());
+    assert(is_type_fam_app(P.t2));
+
+    auto mtv1 = P.t1.to<MetaTypeVar>();
+    if (mtv1 and is_touchable(*mtv1, P.t2))
+        return canonicalize_equality_lhs1(flavor, P);
+    else
+        return canonicalize_equality_lhs1(flavor, P.flip());
+}
+
+
+std::optional<Predicate>
+Solver::canonicalize_equality_lhs2(ConstraintFlavor flavor, CanonicalEqualityPred P)
 {
     assert(is_rewritable_lhs(P.t1) and is_rewritable_lhs(P.t2));
 
@@ -307,16 +322,22 @@ std::optional<Predicate> Solver::canonicalize_equality_lhs2(ConstraintFlavor fla
     if (not tfam1 and not tfam2)
     {
         if (flip_type_vars(flavor == Given, P.t1, P.t2))
-            P = P.flip();
+            return canonicalize_equality_lhs1(flavor, P.flip());
+        else
+            return canonicalize_equality_lhs1(flavor, P);
     }
     else if (tfam1)
-        ;
+        return canonicalize_equality_var_tyfam(flavor, P.flip());
     else if (tfam2)
-        ;
+        return canonicalize_equality_var_tyfam(flavor, P);
     else
-        ;
-        
-    return canonicalize_equality_lhs1(flavor, P);
+    {
+        // If both are type fam apps, then
+        // 1. If only one has metatypevars as its arguments, then put that one on the left
+        // 2. If the lhs occurs on the rhs, but not vice versa, then we want to swap.
+        //    For example F a ~ F (F a) should be swapped.
+        return canonicalize_equality_lhs1(flavor, P);
+    }
 }
 
 std::optional<Predicate> Solver::canonicalize_equality_lhs1(ConstraintFlavor flavor, const CanonicalEqualityPred& P)
