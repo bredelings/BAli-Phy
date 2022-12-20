@@ -271,7 +271,7 @@ bool Solver::is_rewritable_lhs(Type t) const
         return false;
 }
 
-std::optional<Predicate> Solver::canonicalize_equality_lhs2(ConstraintFlavor flavor, const CanonicalEqualityPred& P)
+std::optional<Predicate> Solver::canonicalize_equality_lhs2(ConstraintFlavor flavor, CanonicalEqualityPred P)
 {
     assert(is_rewritable_lhs(P.t1) and is_rewritable_lhs(P.t2));
 
@@ -294,27 +294,23 @@ std::optional<Predicate> Solver::canonicalize_equality_lhs2(ConstraintFlavor fla
     if (uv1 and uv2)
     {
         if (cmp_less(*uv2,*uv1))
-            return canonicalize_equality_lhs1(flavor, P.flip());
-        else
-            return canonicalize_equality_lhs1(flavor, P);
+            P = P.flip();
     }
     else if (uv1)
-        return canonicalize_equality_lhs1(flavor, P);
+        ;
     else if (uv2)
-        return canonicalize_equality_lhs1(flavor, P.flip());
+        P = P.flip();
     else if (tv1 and tv2)
     {
         if (*tv2 < *tv1)
-            return canonicalize_equality_lhs1(flavor, P.flip());
-        else
-            return canonicalize_equality_lhs1(flavor, P);
+            P = P.flip();
     }
     else if (tv1)
-        return canonicalize_equality_lhs1(flavor, P);
+        ;
     else if (tv2)
-        return canonicalize_equality_lhs1(flavor, P.flip());
-    else
-        std::abort();
+        P = P.flip();
+
+    return canonicalize_equality_lhs1(flavor, P);
 }
 
 std::optional<Predicate> Solver::canonicalize_equality_lhs1(ConstraintFlavor flavor, const CanonicalEqualityPred& P)

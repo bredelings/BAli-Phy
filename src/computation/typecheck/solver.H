@@ -112,7 +112,7 @@ struct Solver: public TypeChecker
     bool is_rewritable_lhs(Type t) const;
 
     std::optional<Predicate>
-    canonicalize_equality_lhs2(ConstraintFlavor flavor, const CanonicalEqualityPred& P);
+    canonicalize_equality_lhs2(ConstraintFlavor flavor, CanonicalEqualityPred P);
 
     std::optional<Predicate>
     canonicalize_equality_lhs1(ConstraintFlavor flavor, const CanonicalEqualityPred& P);
