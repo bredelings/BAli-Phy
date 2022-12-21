@@ -604,11 +604,8 @@ Type Solver::rewrite(ConstraintFlavor flavor, Type t) const
         auto& [tycon, args] = *tc;
         return rewrite_type_con_app(flavor, tycon, args);
     }
-    else if (auto app = is_type_app(t))
-    {
-        auto& [head,arg] = *app;
-        return rewrite_app(flavor, head, arg);
-    }
+    else if (auto app = t.to<TypeApp>())
+        return rewrite_app(flavor, app->head, app->arg);
     else
         std::abort();
 }
