@@ -221,6 +221,11 @@ Solver::canonicalize_equality_type_apps(ConstraintFlavor flavor,
 
 std::optional<Predicate> Solver::canonicalize_equality_type_cons(ConstraintFlavor flavor, const CanonicalEqualityPred& P, const TypeCon& tc1, const vector<Type>& args1, const TypeCon& tc2, const vector<Type>& args2)
 {
+    assert(not type_con_is_type_fam(tc1));
+    assert(not type_con_is_type_fam(tc2));
+    assert(not type_con_is_type_syn(tc1));
+    assert(not type_con_is_type_syn(tc2));
+
     // if tc1 and tc2 and both non-type-family type cons...
     if (tc1 == tc2 and args1.size() == args2.size())
     {
@@ -314,12 +319,13 @@ Solver::canonicalize_equality_lhs2(ConstraintFlavor flavor, CanonicalEqualityPre
     auto tfam1 = is_type_fam_app(P.t1);
     auto tfam2 = is_type_fam_app(P.t2);
     
-    if (not tfam1 and not tfam2)
+    if (tfam1 and tfam2)
     {
-        if (flip_type_vars(flavor == Given, P.t1, P.t2))
-            return canonicalize_equality_lhs1(flavor, P.flip());
-        else
-            return canonicalize_equality_lhs1(flavor, P);
+        // If both are type fam apps, then
+        // 1. If only one has metatypevars as its arguments, then put that one on the left
+        // 2. If the lhs occurs on the rhs, but not vice versa, then we want to swap.
+        //    For example F a ~ F (F a) should be swapped.
+        return canonicalize_equality_lhs1(flavor, P);
     }
     else if (tfam1)
         return canonicalize_equality_var_tyfam(flavor, P.flip());
@@ -327,11 +333,10 @@ Solver::canonicalize_equality_lhs2(ConstraintFlavor flavor, CanonicalEqualityPre
         return canonicalize_equality_var_tyfam(flavor, P);
     else
     {
-        // If both are type fam apps, then
-        // 1. If only one has metatypevars as its arguments, then put that one on the left
-        // 2. If the lhs occurs on the rhs, but not vice versa, then we want to swap.
-        //    For example F a ~ F (F a) should be swapped.
-        return canonicalize_equality_lhs1(flavor, P);
+        if (flip_type_vars(flavor == Given, P.t1, P.t2))
+            return canonicalize_equality_lhs1(flavor, P.flip());
+        else
+            return canonicalize_equality_lhs1(flavor, P);
     }
 }
 
@@ -406,7 +411,8 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     {
         auto& [tc1, args1] = *tcapp1;
         auto& [tc2, args2] = *tcapp2;
-        return canonicalize_equality_type_cons(flavor, P, tc1, args1, tc2, args2);
+        if (not type_con_is_type_fam(tc1) and not type_con_is_type_fam(tc2))
+            return canonicalize_equality_type_cons(flavor, P, tc1, args1, tc2, args2);
     }
 
     // 5. If both are ForallType
@@ -553,9 +559,6 @@ Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, co
 
             auto eq = to<CanonicalEqualityPred>(inert.pred);
             assert(eq);
-
-            auto uv1 = follow_meta_type_var(eq->t1).to<MetaTypeVar>();
-            assert(uv1);
 
             // FIXME: this doesn't handle forall types
             if (t == eq->t1) return eq->t2;
