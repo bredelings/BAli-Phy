@@ -461,6 +461,11 @@ class RegOperationArgs2Changeable final: public OperationArgs
 
     const closure& current_closure() const {return memory().closure_at(r);}
 
+    std::optional<int> previous_result_for_reg() const
+    {
+        return memory().previous_result_for_reg(r);
+    }
+
     bool evaluate_changeables() const {return true;}
 
     /// We don't need to evaluate r2 or record dependencies -- this should already have happened.

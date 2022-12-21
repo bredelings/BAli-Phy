@@ -13,6 +13,11 @@ int OperationArgs::reg_for_slot(int slot) const
 
 int OperationArgs::n_args() const {return current_closure().exp.size();}
 
+optional<int> OperationArgs::previous_result_for_reg() const
+{
+    return {};
+}
+
 const expression_ref& OperationArgs::reference(int slot) const
 {
     assert(0 <= slot);

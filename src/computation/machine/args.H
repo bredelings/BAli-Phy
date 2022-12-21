@@ -25,6 +25,8 @@ public:
 
     virtual const closure& current_closure() const = 0;
 
+    virtual std::optional<int> previous_result_for_reg() const;
+
     virtual bool evaluate_changeables() const = 0;
 
     virtual void make_changeable() = 0;
