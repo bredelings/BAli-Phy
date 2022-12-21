@@ -69,14 +69,14 @@ string get_name_for_typecon(const TypeCon& tycon)
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
     context.push_err_context( ErrorContext()<<"In instance '"<<inst.print()<<"':" );
-    auto con = desugar(inst.con);
+    auto tf_con = desugar(inst.con);
     
     // 1. Check that the type family exists.
-    if (not type_fam_info().count( con ))
+    if (not type_fam_info().count( tf_con ))
         throw err_context_exception()<<"  No type family '"<<inst.con.print()<<"'";
 
     // 2. Get the type family info
-    auto& tf_info = type_fam_info().at(con);
+    auto& tf_info = type_fam_info().at(tf_con);
 
     if (tf_info.associated_class)
     {
@@ -152,8 +152,17 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     for(auto& tv: eqn.free_tvs)
         tv.kind = replace_kvar_with_star(K.kind_for_type_var(tv));
 
-    // Make up an equation id -- this is the "evidence" for the type family instance.
-    int eqn_id = FreshVarSource::get_index();
+    // 10. Add the (~) instance to the instance environment
+    Type lhs = make_tyapps(tf_con, eqn.args);
+    Type constraint = make_equality_constraint(lhs, eqn.rhs);
+    Type inst_type = add_forall_vars(eqn.free_tvs, constraint);
+
+    int eqn_id = FreshVarSource::current_index();
+    auto dvar = fresh_dvar(constraint);
+
+    instance_env().insert( {dvar, inst_type} );
+
+    // 11. Make up an equation id -- this is the "evidence" for the type family instance.
     tf_info.equations.insert({eqn_id, eqn});
 
     context.pop_err_context();
