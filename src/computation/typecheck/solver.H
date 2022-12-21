@@ -90,7 +90,6 @@ struct InertSet
     std::vector<Predicate> failed;
 };
 
-
 struct Solver: public TypeChecker
 {
     Core::Decls decls;
@@ -103,14 +102,22 @@ struct Solver: public TypeChecker
     void add_to_work_list(const std::vector<Predicate>& ps);
 
     bool can_rewrite(const Predicate& P1, const Predicate& P2) const;
-
+    
     bool is_touchable(const MetaTypeVar&, const Type&) const;
 
     void kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps);
     void kickout_after_unification(const MetaTypeVar&);
 
     bool is_rewritable_lhs(Type t) const;
-
+    Type rewrite(ConstraintFlavor, Type) const;
+    std::vector<Type> rewrite(ConstraintFlavor, std::vector<Type>) const;
+    Type rewrite_mtv(ConstraintFlavor flavor, const MetaTypeVar&) const;
+    Type rewrite_tv(ConstraintFlavor flavor, const TypeVar&) const;
+    Type rewrite_constrained_type(ConstraintFlavor flavor, const ConstrainedType&) const;
+    Type rewrite_forall(ConstraintFlavor flavor, const ForallType&) const;
+    Type rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon&, const std::vector<Type>&) const;
+    Type rewrite_app(ConstraintFlavor flavor, const Type&, const Type&) const;
+    
     std::optional<Predicate>
     canonicalize_equality_var_tyfam(ConstraintFlavor flavor, CanonicalEqualityPred P);
 
@@ -133,7 +140,6 @@ struct Solver: public TypeChecker
     std::optional<Predicate> canonicalize_dict(ConstraintFlavor flavor, CanonicalDictPred P);
     std::optional<Predicate> canonicalize(Predicate& P);
 
-    Type rewrite(ConstraintFlavor, Type) const;
     Change interact(const Predicate& P1, const Predicate& P2);
 
     std::optional<Reaction> top_react(const Predicate& P);
