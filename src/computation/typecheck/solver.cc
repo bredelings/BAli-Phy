@@ -378,7 +378,7 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     P.t1 = follow_meta_type_var(P.t1);
     P.t2 = follow_meta_type_var(P.t2);
 
-// NOTE: this does not currently handle foralls or constraints!
+// NOTE: same_type does not currently handle foralls or constraints!
 
     // 1. Check if the types are identical -- not looking through type synonyms
     if (same_type(P.t1, P.t2))
