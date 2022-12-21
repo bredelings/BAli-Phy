@@ -88,6 +88,8 @@ struct InertSet
     std::vector<Predicate> dicts;
     std::vector<Predicate> irreducible;
     std::vector<Predicate> failed;
+
+    std::string print() const;
 };
 
 struct Solver: public TypeChecker

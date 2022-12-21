@@ -3,6 +3,7 @@
 #include "solver.H"
 
 #include "util/set.H"
+#include "util/string/join.H"
 
 #include <range/v3/all.hpp>
 
@@ -1128,4 +1129,14 @@ std::vector<Predicate> make_predicates(ConstraintFlavor f, const std::vector<std
 Solver::Solver(const TypeChecker& tc)
     :TypeChecker(tc)
 {
+}
+
+string InertSet::print() const
+{
+    vector<string> ps;
+    for(auto& pred: views::concat(tv_eqs, mtv_eqs, tyfam_eqs, dicts, irreducible, failed))
+    {
+        ps.push_back(pred.print());
+    }
+    return join(ps, "\n");
 }
