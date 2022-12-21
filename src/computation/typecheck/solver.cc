@@ -874,6 +874,8 @@ bool Solver::contains_type(const Type& t1_, const Type& t2) const
         return contains_type(*syn, t2);
     else if (auto app = t1.to<TypeApp>())
         return contains_type(app->head, t2) or contains_type(app->arg, t2);
+    else if (t1.is_a<TypeCon>())
+        return false;
     else
         std::abort();
 }
