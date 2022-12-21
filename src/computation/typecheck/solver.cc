@@ -540,7 +540,28 @@ Type Solver::rewrite_forall(ConstraintFlavor flavor, const ForallType& forall) c
 
 Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, const vector<Type>& args) const
 {
-    return make_tyapps(tc, rewrite(flavor, args));
+    Type t = make_tyapps(tc, rewrite(flavor, args));
+    if (auto t2 = is_type_synonym(t))
+        return rewrite(flavor, *t2);
+    else if (auto tfam = is_type_fam_app(t))
+    {
+        for(auto& inert: inerts.tyfam_eqs)
+        {
+            // Don't allow wanteds to rewrite givens
+            if (inert.flavor == Wanted and flavor == Given) continue;
+
+            auto eq = to<CanonicalEqualityPred>(inert.pred);
+            assert(eq);
+
+            auto uv1 = follow_meta_type_var(eq->t1).to<MetaTypeVar>();
+            assert(uv1);
+
+            // FIXME: this doesn't handle forall types
+            if (t == eq->t1) return eq->t2;
+        }
+    }
+
+    return t;
 }
 
 Type Solver::rewrite_app(ConstraintFlavor flavor, const Type& fun, const Type& arg) const
