@@ -1415,6 +1415,19 @@ bool reg_heap::has_result2(int r) const
     return (not prog_unshare[r].test(unshare_result_bit)) and has_result1(r);
 }
 
+bool reg_heap::has_previous_result(int r) const
+{
+    return has_result1(r) and not has_result2(r);
+}
+
+optional<int> reg_heap::previous_result_for_reg(int r) const
+{
+    if (has_previous_result(r))
+        return result_for_reg(r);
+    else
+        return {};
+}
+
 bool reg_heap::force_regs_check_same_inputs(int r)
 {
     assert(reg_is_changeable(r));

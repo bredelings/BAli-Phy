@@ -623,6 +623,8 @@ public:
     bool has_step2(int r) const;
     bool has_result1(int r) const;
     bool has_result2(int r) const;
+    bool has_previous_result(int r) const;
+    std::optional<int> previous_result_for_reg(int r) const;
     bool reg_has_value(int r) const;
     int follow_index_var(int r) const;
     int follow_index_var_no_force(int r) const;
