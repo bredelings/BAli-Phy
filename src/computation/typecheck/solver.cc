@@ -825,37 +825,57 @@ void Solver::add_inert(const Predicate& p)
     // e. react a wanted Q1 with axioms in \mathcal{Q} to produce Q2 and new touchable variables beta.
     //    - replace Q1 by Q2 and add in the new touchable variables beta.
 
+
+bool Solver::contains_type(const Type& t1_, const Type& t2) const
+{
+    assert(is_rewritable_lhs(t2));
+
+    Type t1 = follow_meta_type_var(t1_);
+
+    if (auto mtv = t1.to<MetaTypeVar>())
+        return *mtv == t2;
+    else if (auto tv = t1.to<TypeVar>())
+        return *tv == t2;
+    else if (auto con = t1.to<ConstrainedType>())
+        return contains_type(con->context.constraints, t2) or contains_type(con->type, t2);
+    else if (auto forall = t1.to<ForallType>())
+        return contains_type(forall->type, t2);
+    else if (auto sl = t1.to<StrictLazyType>())
+        return contains_type(sl->type, t2);
+    else if (auto syn = is_type_synonym(t1))
+        return contains_type(*syn, t2);
+    else if (auto app = t1.to<TypeApp>())
+        return contains_type(app->head, t2) or contains_type(app->arg, t2);
+    else
+        std::abort();
+}
+
+bool Solver::contains_type(const vector<Type>& ts1, const Type& t2) const
+{
+    for(auto& t1: ts1)
+        if (contains_type(t1, t2)) return true;
+    return false;
+}
+
 bool Solver::can_rewrite(const Predicate& p1, const Predicate& p2) const
 {
+    // 1. Check the flavor
+    if (p1.flavor == Wanted and p2.flavor == Given) return false;
+
+    // 2. Check if p1 can be used for rewriting.
     auto eq1 = to<CanonicalEqualityPred>(p1.pred);
-    if (not eq1) return false;
+    if (not eq1 or not is_rewritable_lhs(eq1->t1)) return false;
 
-    auto t1 = follow_meta_type_var(eq1->t1);
+    auto lhs = follow_meta_type_var(eq1->t1);
 
-    if (auto tv = t1.to<TypeVar>())
-    {
-        if (auto dict2 = to<CanonicalDictPred>(p2.pred))
-            return contains_tv(dict2->args, *tv);
-        else if (auto eq2 = to<CanonicalEqualityPred>(p2.pred))
-            return contains_tv(eq2->t1, *tv) or contains_tv(eq2->t2, *tv);
-        else
-            std::abort();
-    }
-    else if (auto mtv = t1.to<MetaTypeVar>())
-    {
-        if (auto dict2 = to<CanonicalDictPred>(p2.pred))
-            return contains_mtv(dict2->args, *mtv);
-        else if (auto eq2 = to<CanonicalEqualityPred>(p2.pred))
-            return contains_mtv(eq2->t1, *mtv) or contains_mtv(eq2->t2, *mtv);
-        else
-            std::abort();
-    }
-    else if (/*auto tycon =*/ t1.to<TypeCon>())
-        return false;
-    else if (/*auto app =*/ t1.to<TypeApp>())
-        return false;
+    if (auto dict2 = to<CanonicalDictPred>(p2.pred))
+        return contains_type(dict2->args, lhs);
+    else if (auto eq2 = to<CanonicalEqualityPred>(p2.pred))
+        return contains_type(eq2->t1, lhs) or contains_type(eq2->t2, lhs);
     else
-        return false;
+        std::abort();
+
+    return false;
 }
 
 void Solver::kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps)

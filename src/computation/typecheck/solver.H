@@ -102,11 +102,14 @@ struct Solver: public TypeChecker
     void add_to_work_list(const std::vector<Predicate>& ps);
 
     bool can_rewrite(const Predicate& P1, const Predicate& P2) const;
-    
+
     bool is_touchable(const MetaTypeVar&, const Type&) const;
 
     void kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps);
     void kickout_after_unification(const MetaTypeVar&);
+
+    bool contains_type(const Type&, const Type&) const;
+    bool contains_type(const std::vector<Type>&, const Type&) const;
 
     bool is_rewritable_lhs(Type t) const;
     Type rewrite(ConstraintFlavor, Type) const;
