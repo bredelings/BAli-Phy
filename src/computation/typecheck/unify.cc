@@ -1,5 +1,7 @@
 #include "typecheck.H"
 
+using std::vector;
+
 bool TypeChecker::occurs_check(const MetaTypeVar& tv, const Type& t) const
 {
     assert(not tv.filled());
@@ -233,43 +235,114 @@ bool TypeChecker::maybe_unify_(bool eager_unification, bool both_ways, const uni
         return false;
 }
 
-bool TypeChecker::same_type(const Type& t1, const Type& t2) const
+bool TypeChecker::same_type_no_syns(const Type& t1, const Type& t2) const
 {
-    if (auto type1 = filled_meta_type_var(t1))
-        return same_type(*type1, t2);
-    else if (auto type2 = filled_meta_type_var(t2))
-        return same_type(t1, *type2);
-    else if (t1.is_a<MetaTypeVar>())
-        return (t1 == t2);
-    else if (t1.is_a<TypeVar>())
-        return (t1 == t2);
-    else if (t1.is_a<TypeCon>())
-        return (t1 == t2);
-    else if (auto s1 = is_type_synonym(t1))
-        return same_type(*s1, t2);
-    else if (auto s2 = is_type_synonym(t2))
-        return same_type(t1, *s2);
-    else if (t1.is_a<TypeApp>() and t2.is_a<TypeApp>())
-    {
-        auto& app1 = t1.as_<TypeApp>();
-        auto& app2 = t2.as_<TypeApp>();
-
-        return same_type(app1.head, app2.head) and same_type(app1.arg, app2.arg);
-    }
-    else if (t1.is_a<ForallType>() or t2.is_a<ForallType>())
-    {
-        throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle forall types?";
-    }
-    else if (t1.is_a<ConstrainedType>() or t2.is_a<ConstrainedType>())
-    {
-        throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle unification for constrained types?";
-    }
-    else if (t1.is_a<StrictLazyType>() or t2.is_a<StrictLazyType>())
-    {
-        throw myexception()<<"same_type "<<t1.print()<<" "<<t2.print()<<": How should we handle unification for strict/lazy types?";
-    }
-    else
-        return false;
+    return same_type(true, t1, t2);
 }
 
+bool TypeChecker::same_type(const Type& t1, const Type& t2) const
+{
+    return same_type(false, t1, t2);
+}
+
+bool TypeChecker::same_type(bool keep_syns, const Type& t1, const Type& t2) const
+{
+    return same_type(keep_syns, {}, t1, t2);
+}
+
+bool TypeChecker::same_type(bool keep_syns, const RenameTyvarEnv2& env, const Type& t1, const Type& t2)const
+{
+    // 1. Follow filled meta type vars
+    if (auto t1_new = filled_meta_type_var(t1))
+        return same_type(keep_syns, env, *t1_new, t2);
+
+    if (auto t2_new = filled_meta_type_var(t2))
+        return same_type(keep_syns, env, t1, *t2_new);
+
+    // 2. Handle plain type cons
+    auto tc1 = t1.to<TypeCon>();
+    auto tc2 = t2.to<TypeCon>();
+    if (tc1 and tc2)
+        return (*tc1 == *tc2);
+
+    // 3. Maybe follow type synonyms
+    if (auto ts1 = is_type_synonym(t1); ts1 and not keep_syns)
+        return same_type(keep_syns, env, *ts1, t2);
+
+    if (auto ts2 = is_type_synonym(t2); ts2 and not keep_syns)
+        return same_type(keep_syns, env, t1, *ts2);
+
+    // 4. Handle Type vars
+    auto tv1 = t1.to<TypeVar>();
+    auto tv2 = t2.to<TypeVar>();
+    if (tv1 and tv2)
+    {
+        return env.map_left(*tv1) == env.map_right(*tv2);
+    }
+
+    // 5. Handle unfilled meta type vars
+    auto mtv1 = t1.to<MetaTypeVar>();
+    auto mtv2 = t2.to<MetaTypeVar>();
+    if (mtv1 and mtv2)
+        return *mtv1 == *mtv2;
+
+    // 6. Handle forall types
+    // Change the forall to one binder at a time!
+    auto forall1 = t1.to<ForallType>();
+    auto forall2 = t2.to<ForallType>();
+    if (forall1 and forall2)
+    {
+        if (forall1->type_var_binders.size() != forall2->type_var_binders.size()) return false;
+
+        auto env2 = rename_binders2(env, forall1->type_var_binders, forall2->type_var_binders);
+        return same_type(keep_syns, env2, forall1->type, forall2->type);
+    }
+
+    // 7. Handle constrained types
+    // Change the constrained type to be a special function type?
+    auto c1 = t1.to<ConstrainedType>();
+    auto c2 = t2.to<ConstrainedType>();
+    if (c1 and c2)
+    {
+        if (c1->context.constraints.size() != c2->context.constraints.size()) return false;
+
+        return same_types(keep_syns, env, c1->context.constraints, c2->context.constraints) and same_type(keep_syns, env, c1->type, c2->type);
+    }
+
+    // 8. Handle type apps
+    auto app1 = t1.to<TypeApp>();
+    auto app2 = t2.to<TypeApp>();
+    if (app1 and app2)
+        return same_type(keep_syns, env, app1->head, app2->head)
+            and same_type(keep_syns, env, app1->arg, app2->arg);
+
+    // 9. Handle Strict/Lazy types
+    auto sl1 = t1.to<StrictLazyType>();
+    auto sl2 = t2.to<StrictLazyType>();
+    if (sl1 and sl2)
+        return (sl1->strict_lazy == sl2->strict_lazy)
+            and same_type(keep_syns, env, sl1->type, sl2->type);
+
+    return false;
+}
+
+bool TypeChecker::same_types(bool keep_syns, const vector<Type>& ts1, const vector<Type>& ts2) const
+{
+    if (ts1.size() != ts2.size()) return false;
+
+    for(int i=0;i<ts1.size();i++)
+        if (not same_type(keep_syns, ts1[i], ts2[i])) return false;
+
+    return true;
+}
+
+bool TypeChecker::same_types(bool keep_syns, const RenameTyvarEnv2& env, const vector<Type>& ts1, const vector<Type>& ts2) const
+{
+    if (ts1.size() != ts2.size()) return false;
+
+    for(int i=0;i<ts1.size();i++)
+        if (not same_type(keep_syns, env, ts1[i], ts2[i])) return false;
+
+    return true;
+}
 

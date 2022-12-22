@@ -217,3 +217,79 @@ TypeFamInfo::TypeFamInfo(const vector<TypeVar>& as, const Kind& k, const optiona
     for(auto& arg: args)
         arg.kind = arg.kind.value_or(kind_type());
 }
+
+RenameTyvarEnv2 rename_binders2(RenameTyvarEnv2 env, const vector<TypeVar>& tvs1, const vector<TypeVar>& tvs2)
+{
+    assert(tvs1 == tvs2);
+    for(int i=0;i<tvs1.size();i++)
+    {
+        env = rename_binder2(env, tvs1[i], tvs2[i]);
+    }
+    return env;
+}
+
+RenameTyvarEnv2 rename_binder2(RenameTyvarEnv2 env, const TypeVar& tv1, const TypeVar& tv2)
+{
+    auto [env2, _] = rename_binder2_var(env, tv1, tv2);
+    return env2;
+}
+
+TypeVar locally_unique_tyvar(const VarSet& vars)
+{
+    TypeVar tv = TypeVar({noloc,"tvX"});
+    int index = 0;
+    for(auto& var: vars)
+    {
+        if (var.index and *var.index > index)
+            index = *var.index;
+    }
+    tv.index = index + 1;
+    return tv;
+}
+
+std::tuple<RenameTyvarEnv2,TypeVar> rename_binder2_var(RenameTyvarEnv2 env, const TypeVar& tv1, const TypeVar& tv2)
+{
+    TypeVar tv_new = tv1;
+    if (env.out_vars.count(tv_new))
+    {
+        tv_new = tv2;
+        if (env.out_vars.count(tv_new))
+            tv_new = locally_unique_tyvar(env.out_vars);
+    }
+
+    env.left = extendVarEnv(env.left, tv1, tv_new);
+    env.right = extendVarEnv(env.right, tv1, tv_new);
+    env.out_vars = extendVarSet(env.out_vars, tv_new);
+
+    return {env, tv_new};
+}
+
+VarEnv extendVarEnv(VarEnv env, const TypeVar& tv_in, const TypeVar& tv_out)
+{
+    env = env.insert({tv_in, tv_out});
+    return env;
+}
+
+VarSet extendVarSet(VarSet set, const TypeVar& tv_out)
+{
+    assert(not set.count(tv_out));
+    set = set.insert(tv_out);
+    return set;
+}
+
+TypeVar RenameTyvarEnv2::map_left(const TypeVar& tv) const
+{
+    if (auto it = left.find(tv))
+        return *it;
+    else
+        return tv;
+}
+
+TypeVar RenameTyvarEnv2::map_right(const TypeVar& tv) const
+{
+    if (auto it = right.find(tv))
+        return *it;
+    else
+        return tv;
+}
+

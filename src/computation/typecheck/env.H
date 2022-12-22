@@ -4,6 +4,7 @@
 #include <set>
 #include <string>
 #include <map>
+#include "immer/set.hpp" // for immer::map
 #include "immer/map.hpp" // for immer::map
 #include "haskell/haskell.H" // for Hs::Var, Type, Hs::Kind, TypeVar, Hs::Context, Hs::MetaTypeVar
 #include "haskell/coretype.H"
@@ -156,5 +157,28 @@ std::set<T> operator-(const std::set<T>& s1, const std::set<T>& s2)
 {
     return minus(s1,s2);
 }
+
+typedef immer::set<TypeVar> VarSet;
+typedef immer::map<TypeVar, TypeVar> VarEnv;
+
+struct RenameTyvarEnv2
+{
+    VarSet out_vars;
+    VarEnv left;
+    VarEnv right;
+
+    TypeVar map_left(const TypeVar&) const;
+    TypeVar map_right(const TypeVar&) const;
+};
+
+RenameTyvarEnv2 rename_binders2(RenameTyvarEnv2 env, const std::vector<TypeVar>& tvs1, const std::vector<TypeVar>& tvs2);
+
+RenameTyvarEnv2 rename_binder2(RenameTyvarEnv2 env, const TypeVar& tv1, const TypeVar& tv2);
+
+std::tuple<RenameTyvarEnv2,TypeVar> rename_binder2_var(RenameTyvarEnv2 env, const TypeVar& tv1, const TypeVar& tv2);
+
+VarEnv extendVarEnv(VarEnv env, const TypeVar& tv_in, const TypeVar& tv_out);
+
+VarSet extendVarSet(VarSet set, const TypeVar& tv_out);
 
 #endif

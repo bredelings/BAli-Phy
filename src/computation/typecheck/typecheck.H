@@ -172,6 +172,14 @@ struct TypeChecker: FreshVarSource
     std::optional<std::tuple<Type, Type>> is_type_app(Type t) const;
     std::optional<std::tuple<TypeCon,std::vector<Type>>> is_type_fam_app(const Type& t) const;
 
+    bool same_type(const Type& t1, const Type& t2) const;
+    bool same_type_no_syns(const Type& t1, const Type& t2) const;
+
+    bool same_type(bool keep_syns, const Type& t1, const Type& t2) const;
+    bool same_type(bool keep_syns, const RenameTyvarEnv2& env, const Type& t1, const Type& t2) const;
+    bool same_types(bool keep_syns, const std::vector<Type>& ts1, const std::vector<Type>& ts2) const;
+    bool same_types(bool keep_syns, const RenameTyvarEnv2& env, const std::vector<Type>& ts1, const std::vector<Type>& ts2) const;
+
     myexception err_context_exception() const;
 
     //-------
@@ -238,8 +246,6 @@ struct TypeChecker: FreshVarSource
     bool add_substitution(const MetaTypeVar& a, const Type& type);
 
     bool maybe_unify_(bool allow_unification, bool both_ways, const unification_env& env, const Type& t1, const Type& t2);
-
-    bool same_type(const Type& t1, const Type& t2) const;
 
     void unify(const Type& t1, const Type& t2);
 
