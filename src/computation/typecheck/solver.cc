@@ -80,13 +80,16 @@ vector<pair<Core::Var, Type>> TypeChecker::superclass_constraints(const Type& co
 
     auto class_name = get_full_class_name_from_constraint(constraint);
 
+    if (class_name == "~") return {};
+
     // Fixme... since we know the class name, can we simplify superclass_extractors???
     for(auto& [dvar, type]: class_env().at(class_name).superclass_extractors)
     {
         // forall a.Klass a => Superklass a
         auto [_, wanteds, superclass_constraint] = instantiate(type);
 
-        assert(constraint_is_hnf(superclass_constraint));
+        // Constraints like a ~ (Arg a -> Result a) violate this.
+        // assert(constraint_is_hnf(superclass_constraint));
 
         assert(wanteds.size() == 1);
 
