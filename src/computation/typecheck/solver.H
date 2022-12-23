@@ -89,8 +89,20 @@ struct InertSet
     std::vector<Predicate> irreducible;
     std::vector<Predicate> failed;
 
+    std::vector<std::tuple<MetaTypeVar,Type>> cycle_breakers;
+
     std::string print() const;
 };
+
+constexpr int occurs_definitely_bit = 0;
+constexpr int occurs_maybe_bit = 1;
+constexpr int impredicative_bit = 2;
+constexpr int type_family_bit = 3;
+constexpr std::bitset<8> ok_result;
+constexpr std::bitset<8> occurs_definitely_result(1);
+constexpr std::bitset<8> occurs_maybe_result(2);
+constexpr std::bitset<8> impredicative_result(4);
+constexpr std::bitset<8> type_family_result(8);
 
 struct Solver: public TypeChecker
 {
@@ -99,6 +111,8 @@ struct Solver: public TypeChecker
     std::vector<Predicate> work_list;
 
     InertSet inerts;
+
+    std::bitset<8> check_type_equality(const Type& lhs, const Type& rhs) const;
 
     void add_inert(const Predicate& P);
     void add_to_work_list(const std::vector<Predicate>& ps);
@@ -123,6 +137,11 @@ struct Solver: public TypeChecker
     Type rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon&, const std::vector<Type>&) const;
     Type rewrite_app(ConstraintFlavor flavor, const Type&, const Type&) const;
     
+    std::optional<Type> maybe_break_type_equality_cycle(ConstraintFlavor, const CanonicalEqualityPred&, std::bitset<8>);
+
+    Type break_type_equality_cycle(ConstraintFlavor, const Type&);
+    void unbreak_type_equality_cycles();
+
     std::optional<Predicate>
     canonicalize_equality_var_tyfam(ConstraintFlavor flavor, CanonicalEqualityPred P);
 

@@ -260,10 +260,12 @@ bool Solver::is_rewritable_lhs(Type t) const
 int lhs_priority(const Type& t)
 {
     if (t.is_a<TypeVar>()) return 0;
-    else if (t.is_a<MetaTypeVar>())
+    else if (auto mtv = t.to<MetaTypeVar>())
     {
-        // later, cycle breakers are going to be here as priority 0.
-        return 1;
+        if (mtv->cycle_breaker)
+            return 0;
+        else
+            return 1;
     }
     else
         std::abort();
@@ -325,7 +327,15 @@ Solver::canonicalize_equality_lhs2(ConstraintFlavor flavor, CanonicalEqualityPre
         // 1. If only one has metatypevars as its arguments, then put that one on the left
         // 2. If the lhs occurs on the rhs, but not vice versa, then we want to swap.
         //    For example F a ~ F (F a) should be swapped.
-        return canonicalize_equality_lhs1(flavor, P);
+
+        // Case 2: If we have F a = F (F a), then we want to flip.
+        bool flip_for_occurs = check_type_equality(P.t1, P.t2).test(occurs_definitely_bit)
+            and not check_type_equality(P.t2, P.t1).test(occurs_definitely_bit);
+
+        if (flip_for_occurs)
+            return canonicalize_equality_lhs1(flavor, P.flip());
+        else
+            return canonicalize_equality_lhs1(flavor, P);
     }
     else if (tfam1)
         return canonicalize_equality_var_tyfam(flavor, P.flip());
@@ -340,30 +350,231 @@ Solver::canonicalize_equality_lhs2(ConstraintFlavor flavor, CanonicalEqualityPre
     }
 }
 
-std::optional<Predicate> Solver::canonicalize_equality_lhs1(ConstraintFlavor flavor, const CanonicalEqualityPred& P)
+std::bitset<8> set_occurs_check_maybe(std::bitset<8> result)
 {
-    if (auto uv1 = P.t1.to<MetaTypeVar>())
+    if (result.test(occurs_definitely_bit))
     {
-        if (occurs_check(*uv1, P.t2))
+        result.reset(occurs_definitely_bit);
+        result.set(occurs_maybe_bit);
+    }
+    return result;
+}
+
+bool has_occurs_check(std::bitset<8> result)
+{
+    return result.test(occurs_definitely_bit) or result.test(occurs_maybe_bit);
+}
+
+std::bitset<8> Solver::check_type_equality(const Type& lhs, const Type& rhs) const
+{
+    if (auto tt = filled_meta_type_var(rhs))
+        return check_type_equality(lhs, *tt);
+    else if (auto mtv = rhs.to<MetaTypeVar>())
+    {
+        if (lhs == *mtv)
+            return occurs_definitely_result;
+        else
+            return ok_result;
+    }
+    else if (auto tv = rhs.to<TypeVar>())
+    {
+        if (lhs == *tv)
+            return occurs_definitely_result;
+        else
+            return ok_result;
+    }
+    else if (auto app = is_type_app(rhs))
+    {
+        auto& [fun,arg] = *app;
+        return check_type_equality(lhs, fun) | check_type_equality(lhs, arg);
+    }
+    else if (auto tfam = is_type_fam_app(rhs))
+    {
+        if (same_type(lhs,rhs))
+            return occurs_definitely_result;
+        else
         {
-            inerts.failed.push_back({flavor,P});
-            return {};
+            auto [_,args] = *tfam;
+            auto result = type_family_result;
+            for(auto& arg: args)
+                result |= check_type_equality(lhs,arg);
+            return set_occurs_check_maybe(result);
         }
     }
-    else if (auto tv1 = P.t1.to<TypeVar>())
+    // We can record that type synonyms either do or do not expand to have
+    // (i) type families
+    // (ii) foralls and constraints
+    else if (auto tsyn = is_type_synonym(rhs))
     {
-        if (occurs_check(*tv1, P.t2))
-        {
-            inerts.failed.push_back({flavor,P});
-            return {};
-        }
+        return check_type_equality(lhs, *tsyn);
     }
-    else if (is_type_fam_app(P.t1))
+    else if (rhs.is_a<TypeCon>())
     {
-        // do occurs check;
+        return ok_result;
+    }
+    else if (auto app = is_type_app(rhs))
+    {
+        auto& [fun,arg] = *app;
+        return check_type_equality(lhs, fun) | check_type_equality(lhs, arg);
+    }
+    else if (auto forall = rhs.to<ForallType>())
+    {
+        return check_type_equality(lhs, forall->type) | impredicative_result;
+    }
+    else if (auto con = rhs.to<ConstrainedType>())
+    {
+        auto result = check_type_equality(lhs, con->type) | impredicative_result;
+        for(auto& constraint: con->context.constraints)
+            result |= check_type_equality(lhs, constraint);
+        return result;
+    }
+    else if (auto sl = rhs.to<StrictLazyType>())
+    {
+        return check_type_equality(lhs, sl->type);
+    }
+    else
+        std::abort();
+}
+
+void Solver::unbreak_type_equality_cycles()
+{
+    for(auto& [mtv,type]: inerts.cycle_breakers)
+    {
+        mtv.fill(type);
+    }
+}
+
+Type Solver::break_type_equality_cycle(ConstraintFlavor flavor, const Type& type)
+{
+    if (auto t = filled_meta_type_var(type))
+        return break_type_equality_cycle(flavor, *t);
+    else if (type.is_a<MetaTypeVar>())
+        return type;
+    else if (type.is_a<TypeVar>())
+        return type;
+    else if (auto app = is_type_app(type))
+    {
+        auto& [head, arg] = *app;
+        return TypeApp(break_type_equality_cycle(flavor, head), break_type_equality_cycle(flavor, arg));
+    }
+    // FIXME!
+    // We should mark type synonyms for whether they contains type fams.
+    // Then we wouldn't have to look through them as much.
+    else if (auto syn = is_type_synonym(type))
+        return break_type_equality_cycle(flavor, *syn);
+    else if (auto tfam = is_type_fam_app(type))
+    {
+        auto& [tc,args] = *tfam;
+
+        // Get the kind for type
+        auto kind = tycon_info().at(unloc(tc.name)).kind;
+        for(int i=0;i<args.size();i++)
+        {
+            auto arrow = kind.to<KindArrow>();
+            assert(arrow);
+            kind = arrow->result_kind;
+        }
+
+        auto new_tv = fresh_meta_type_var("cbv", kind);
+        if (flavor == Given)
+        {
+            new_tv.cycle_breaker = true;
+            inerts.cycle_breakers.push_back({new_tv, type});
+        }
+
+        // TODO: Mark these as coming from a cycle-breaking operation.
+
+        auto constraint = make_equality_constraint(new_tv, type);
+        auto dvar = fresh_dvar(constraint);
+        work_list.push_back({flavor, NonCanonicalPred(dvar, constraint)});
+
+        return new_tv;
+    }
+    else if (type.is_a<TypeCon>())
+        return type;
+    else if (type.is_a<ForallType>()) // We can't fix type families under a forall?
+        return type;
+    else if (auto c = type.to<ConstrainedType>())
+    {
+        auto C = *c;
+        for(auto& constraint: C.context.constraints)
+            constraint = break_type_equality_cycle(flavor, constraint);
+        C.type = break_type_equality_cycle(flavor, C.type);
+        return C;
+    }
+    else if (auto sl = type.to<StrictLazyType>())
+    {
+        auto SL = *sl;
+        SL.type = break_type_equality_cycle(flavor, SL.type);
+        return SL;
+    }
+    else
+        std::abort();
+}
+
+std::optional<Type> Solver::maybe_break_type_equality_cycle(ConstraintFlavor flavor, const CanonicalEqualityPred& P, std::bitset<8> result)
+{
+    assert(result.any());
+
+    // 1. Only do this if we have an occurs check under a type family application.
+    if (result != occurs_maybe_result) return {};
+
+    // 2. Don't do this if we have a wanted cosntraint without a touchable mtv
+    bool should_break_cycle = true;
+    if (flavor == Wanted)
+    {
+        should_break_cycle = false;
+        auto lhs = follow_meta_type_var(P.t1);
+        if (auto mtv = lhs.to<MetaTypeVar>(); mtv and is_touchable(*mtv, P.t2))
+            should_break_cycle = true;
     }
 
-    return {{flavor, P}};
+    if (not should_break_cycle) return {};
+
+    // 3. Check that the equality does not come from a cycle breaking operation.
+
+    // 4. Actually do the cycle breaking
+    return break_type_equality_cycle(flavor, P.t2);
+}
+
+std::optional<Predicate> Solver::canonicalize_equality_lhs1(ConstraintFlavor flavor, const CanonicalEqualityPred& P)
+{
+    assert(is_rewritable_lhs(P.t1));
+
+    auto result0 = check_type_equality(P.t1, P.t2);
+
+    // Don't worry about type families here...
+    auto result1 = result0;
+    result1.reset(type_family_bit);
+    result1.reset(impredicative_bit); // FIXME!
+
+    if (result1 == ok_result)
+        return {{flavor, P}};
+
+    if (auto new_rhs = maybe_break_type_equality_cycle(flavor, P, result1))
+    {
+        auto P2 = P;
+        P2.t2 = *new_rhs;
+        auto result2 = check_type_equality(P2.t1, P2.t2);
+
+        if (has_occurs_check(result2))
+        {
+            inerts.failed.push_back({flavor, P});
+            return {};
+        }
+        else
+            return {{flavor, P2}};
+    }
+    else if (has_occurs_check(result1))
+    {
+        inerts.failed.push_back({flavor, P});
+        return {};
+    }
+    else
+    {
+        inerts.irreducible.push_back({flavor, P});
+        return {};
+    }
 }
 
 std::optional<Predicate> Solver::canonicalize_equality_lhs(ConstraintFlavor flavor, const CanonicalEqualityPred& P)
@@ -384,10 +595,8 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     P.t1 = follow_meta_type_var(P.t1);
     P.t2 = follow_meta_type_var(P.t2);
 
-// NOTE: this does not currently handle foralls or constraints!
-
     // 1. Check if the types are identical -- not looking through type synonyms
-    if (same_type(P.t1, P.t2))
+    if (same_type_no_syns(P.t1, P.t2))
         return {}; // Solved!
 
     // 2. Check if we have two identical typecons with no arguments
@@ -416,6 +625,9 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     }
 
     // 5. If both are ForallType
+
+    // NOTE: missing!
+
 
     // 6. If both are type applications without type con heads
     auto tapp1 = is_type_app(P.t1);
@@ -709,6 +921,8 @@ bool Solver::is_touchable(const MetaTypeVar& mtv, const Type& rhs) const
     assert(mtv.level() <= level);
 
     assert(inerts.given_eq_level.value_or(0) < level);
+
+    if (mtv.cycle_breaker) return false;
 
     // 1. Check for intervening given equalities
     bool intervening_given_eqs = inerts.given_eq_level and mtv.level() <= *inerts.given_eq_level;
@@ -1126,7 +1340,9 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
             clear_unification_level();
         }
 
-    } while(update);
+        solver.unbreak_type_equality_cycles();
+    }
+    while(update);
 
     // This should implement |->[solv] from Figure 14 of the OutsideIn(X) paper:
     //   \mathcal{Q}; Q[given]; alpha[touchable] |->[solv] C[wanted] ~~> Q[residual]; theta
