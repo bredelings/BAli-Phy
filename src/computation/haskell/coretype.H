@@ -111,6 +111,7 @@ public:
 
     Located<std::string> name;
     std::optional<int> index;
+    bool cycle_breaker = false;
 
     std::optional<Kind> kind;
 
