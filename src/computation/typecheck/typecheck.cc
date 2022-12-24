@@ -798,11 +798,6 @@ WantedConstraints& TypeChecker::current_wanteds()
     return collected_wanteds;
 }
 
-void TypeChecker::add_dvar(const Core::Var& dvar, const Type& constraint)
-{
-    current_wanteds().simple.push_back( {dvar, constraint} );
-}
-
 Core::Var TypeChecker::fresh_dvar(const Type& constraint)
 {
     ID name;
@@ -821,7 +816,7 @@ Core::Var TypeChecker::add_dvar(const Type& constraint)
 {
     auto dvar = fresh_dvar(constraint);
 
-    add_dvar(dvar, constraint);
+    current_wanteds().simple.push_back( {dvar, constraint} );
 
     return dvar;
 }

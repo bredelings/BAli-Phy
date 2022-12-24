@@ -202,8 +202,6 @@ struct TypeChecker: FreshVarSource
 
     WantedConstraints& current_wanteds();
 
-    void add_dvar(const Core::Var& dvar, const Type& constraint);
-
     Core::Var fresh_dvar(const Type& constraint);
 
     Core::Var add_dvar(const Type& constraint);
