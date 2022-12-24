@@ -14,8 +14,11 @@ struct Constraint
     ConstraintFlavor flavor;
     Core::Var ev_var;
     Type pred;
+    int level;
 
     std::string print() const;
+
+    Constraint(ConstraintFlavor, Core::Var, Type, int);
 };
 
 typedef std::vector<Constraint> LIE;

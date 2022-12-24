@@ -12,6 +12,7 @@ struct NonCanonical
     Constraint constraint;
 
     ConstraintFlavor flavor() const {return constraint.flavor;}
+    int level() const {return constraint.level;}
     std::string print() const;
     NonCanonical(const Constraint& c):constraint(c) {}
 };
@@ -23,6 +24,7 @@ struct CanonicalDict
     std::vector<Type> args;
 
     ConstraintFlavor flavor() const {return constraint.flavor;}
+    int level() const {return constraint.level;}
     std::string print() const;
 };
 
@@ -34,6 +36,7 @@ struct CanonicalEquality
 
     CanonicalEquality flip() const;
     ConstraintFlavor flavor() const {return constraint.flavor;}
+    int level() const {return constraint.level;}
     std::string print() const;
 
     CanonicalEquality(const Constraint& c, const Type& ta, const Type& tb):constraint(c),t1(ta),t2(tb) {}
@@ -44,6 +47,7 @@ struct Predicate: public std::variant<NonCanonical, CanonicalDict, CanonicalEqua
     std::string print() const;
     const Constraint& constraint() const;
     ConstraintFlavor flavor() const;
+    int level() const;
     using variant::variant;
 };
 
@@ -129,11 +133,11 @@ struct Solver: public TypeChecker
     Type rewrite_constrained_type(ConstraintFlavor flavor, const ConstrainedType&) const;
     Type rewrite_forall(ConstraintFlavor flavor, const ForallType&) const;
     Type rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon&, const std::vector<Type>&) const;
-    Type rewrite_app(ConstraintFlavor flavor, const Type&, const Type&) const;
+    Type rewrite_app(ConstraintFlavor, const Type&, const Type&) const;
     
     std::optional<Type> maybe_break_type_equality_cycle(const CanonicalEquality&, std::bitset<8>);
 
-    Type break_type_equality_cycle(ConstraintFlavor, const Type&);
+    Type break_type_equality_cycle(const Constraint&r, const Type&);
     void unbreak_type_equality_cycles();
 
     std::optional<Predicate>
@@ -149,8 +153,7 @@ struct Solver: public TypeChecker
     canonicalize_equality_lhs(const CanonicalEquality& P);
 
     std::optional<Predicate>
-    canonicalize_equality_type_apps(ConstraintFlavor flavor,
-                               const Type&, const Type&, const Type&, const Type&);
+    canonicalize_equality_type_apps(const Constraint& C, const Type&, const Type&, const Type&, const Type&);
     std::optional<Predicate>
     canonicalize_equality_type_cons(const CanonicalEquality& P,
                                     const TypeCon&, const std::vector<Type>&, const TypeCon&, const std::vector<Type>&);

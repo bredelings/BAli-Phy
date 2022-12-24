@@ -361,7 +361,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         superclass_constraint = apply_subst(subst, superclass_constraint);
 
     // 5. Construct binds_super
-    auto wanteds = preds_to_constraints(Wanted, superclass_constraints);
+    auto wanteds = preds_to_constraints(Wanted, superclass_constraints, level);
     auto WC = WantedConstraints(wanteds);
     auto decls_super = entails(givens, WC);
     if (not WC.simple.empty())

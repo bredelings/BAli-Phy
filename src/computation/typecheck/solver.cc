@@ -80,6 +80,11 @@ ConstraintFlavor Predicate::flavor() const
     return constraint().flavor;
 }
 
+int Predicate::level() const
+{
+    return constraint().level;
+}
+
 // FIXME: there should be a `const` way of getting these.
 // FIXME: instantiate is not constant though.
 // FIXME: we shouldn't need fresh type vars if the type is unambiguous though.
@@ -217,16 +222,16 @@ CanonicalEquality CanonicalEquality::flip() const
 }
 
 std::optional<Predicate>
-Solver::canonicalize_equality_type_apps(ConstraintFlavor flavor,
+Solver::canonicalize_equality_type_apps(const Constraint& C,
                                         const Type& fun1, const Type& arg1, const Type& fun2, const Type& arg2)
 {
     auto fun_constraint = make_equality_constraint(fun1, fun2);
     auto fun_dvar = fresh_dvar(fun_constraint);
-    work_list.push_back(NonCanonical({flavor, fun_dvar, fun_constraint}));
+    work_list.push_back(NonCanonical({C.flavor, fun_dvar, fun_constraint, C.level}));
 
     auto arg_constraint = make_equality_constraint(arg1, arg2);
     auto arg_dvar = fresh_dvar(arg_constraint);
-    work_list.push_back(NonCanonical({flavor, arg_dvar, arg_constraint}));
+    work_list.push_back(NonCanonical({C.flavor, arg_dvar, arg_constraint, C.level}));
 
     return {};
 }
@@ -246,7 +251,7 @@ std::optional<Predicate> Solver::canonicalize_equality_type_cons(const Canonical
         {
             auto constraint = make_equality_constraint(args1[i], args2[i]);
             auto dvar = fresh_dvar(constraint);
-            work_list.push_back(NonCanonical({P.flavor(), dvar, constraint}));
+            work_list.push_back(NonCanonical({P.flavor(), dvar, constraint, P.level()}));
         }
     }
     else
@@ -456,10 +461,10 @@ void Solver::unbreak_type_equality_cycles()
     }
 }
 
-Type Solver::break_type_equality_cycle(ConstraintFlavor flavor, const Type& type)
+Type Solver::break_type_equality_cycle(const Constraint& C, const Type& type)
 {
     if (auto t = filled_meta_type_var(type))
-        return break_type_equality_cycle(flavor, *t);
+        return break_type_equality_cycle(C, *t);
     else if (type.is_a<MetaTypeVar>())
         return type;
     else if (type.is_a<TypeVar>())
@@ -467,13 +472,13 @@ Type Solver::break_type_equality_cycle(ConstraintFlavor flavor, const Type& type
     else if (auto app = is_type_app(type))
     {
         auto& [head, arg] = *app;
-        return TypeApp(break_type_equality_cycle(flavor, head), break_type_equality_cycle(flavor, arg));
+        return TypeApp(break_type_equality_cycle(C, head), break_type_equality_cycle(C, arg));
     }
     // FIXME!
     // We should mark type synonyms for whether they contains type fams.
     // Then we wouldn't have to look through them as much.
     else if (auto syn = is_type_synonym(type))
-        return break_type_equality_cycle(flavor, *syn);
+        return break_type_equality_cycle(C, *syn);
     else if (auto tfam = is_type_fam_app(type))
     {
         auto& [tc,args] = *tfam;
@@ -488,7 +493,7 @@ Type Solver::break_type_equality_cycle(ConstraintFlavor flavor, const Type& type
         }
 
         auto new_tv = fresh_meta_type_var("cbv", kind);
-        if (flavor == Given)
+        if (C.flavor == Given)
         {
             new_tv.cycle_breaker = true;
             inerts.cycle_breakers.push_back({new_tv, type});
@@ -498,7 +503,7 @@ Type Solver::break_type_equality_cycle(ConstraintFlavor flavor, const Type& type
 
         auto constraint = make_equality_constraint(new_tv, type);
         auto dvar = fresh_dvar(constraint);
-        work_list.push_back(NonCanonical({flavor, dvar, constraint}));
+        work_list.push_back(NonCanonical({C.flavor, dvar, constraint, C.level}));
 
         return new_tv;
     }
@@ -508,16 +513,16 @@ Type Solver::break_type_equality_cycle(ConstraintFlavor flavor, const Type& type
         return type;
     else if (auto c = type.to<ConstrainedType>())
     {
-        auto C = *c;
-        for(auto& constraint: C.context.constraints)
-            constraint = break_type_equality_cycle(flavor, constraint);
-        C.type = break_type_equality_cycle(flavor, C.type);
-        return C;
+        auto CT = *c;
+        for(auto& constraint: CT.context.constraints)
+            constraint = break_type_equality_cycle(C, constraint);
+        CT.type = break_type_equality_cycle(C, CT.type);
+        return CT;
     }
     else if (auto sl = type.to<StrictLazyType>())
     {
         auto SL = *sl;
-        SL.type = break_type_equality_cycle(flavor, SL.type);
+        SL.type = break_type_equality_cycle(C, SL.type);
         return SL;
     }
     else
@@ -546,7 +551,7 @@ std::optional<Type> Solver::maybe_break_type_equality_cycle(const CanonicalEqual
     // 3. Check that the equality does not come from a cycle breaking operation.
 
     // 4. Actually do the cycle breaking
-    return break_type_equality_cycle(P.flavor(), P.t2);
+    return break_type_equality_cycle(P.constraint, P.t2);
 }
 
 std::optional<Predicate> Solver::canonicalize_equality_lhs1(const CanonicalEquality& P)
@@ -648,7 +653,7 @@ std::optional<Predicate> Solver::canonicalize_equality(CanonicalEquality P)
     {
         auto& [fun1, arg1] = *tapp1;
         auto& [fun2, arg2] = *tapp2;
-        return canonicalize_equality_type_apps(P.flavor(), fun1, arg1, fun2, arg2);
+        return canonicalize_equality_type_apps(P.constraint, fun1, arg1, fun2, arg2);
     }
 
     // the lhs & rhs should be rewritten by the time we get here.

@@ -11,6 +11,14 @@ string Constraint::print() const
     return s;
 }
 
+Constraint::Constraint(ConstraintFlavor f, Core::Var v, Type p, int l)
+    :flavor(f),
+     ev_var(v),
+     pred(p),
+     level(l)
+{
+}
+
 string print(const LIE& lie)
 {
     vector<string> ss;
