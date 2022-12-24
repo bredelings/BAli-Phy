@@ -236,7 +236,7 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
 	    // pattern: Add the sub-partitions of the first top-level pattern at the beginning.
             auto con_pat = equations[r].patterns[0].to<Hs::ConPattern>();
             vector<expression_ref> patterns;
-            for(auto& [dvar,constraint]: dictionary_constraints(con_pat->givens))
+            for(auto& dvar: con_pat->given_dict_vars)
                 patterns.push_back(make_VarPattern(dvar));
             for(auto& sub_pat: con_pat->args)
                 patterns.push_back(sub_pat);

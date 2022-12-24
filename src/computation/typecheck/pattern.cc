@@ -150,10 +150,12 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         field_types = apply_subst(s, field_types);
         constraints = apply_subst(s, constraints);
 
+        auto givens = constraints_to_lie(constraints);
         Con.universal_tyvars = info.uni_tvs;
         Con.existential_tyvars = ex_tvs2;
-        Con.givens = constraints_to_lie(constraints);
-        Con.ev_binds = maybe_implication(ex_tvs2, Con.givens,
+        for(auto& [dvar,constraint]: dictionary_constraints(givens))
+            Con.given_dict_vars.push_back(dvar);
+        Con.ev_binds = maybe_implication(ex_tvs2, givens,
                                          [&](auto& tc) {
                                              tc.tcPats(penv, Con.args, check_types(field_types), sigs, a);
                                          });

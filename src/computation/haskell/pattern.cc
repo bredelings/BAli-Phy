@@ -24,15 +24,6 @@ string VarPattern::print() const
 }
 
 
-vector<Core::Var> ConPattern::dict_args() const
-{
-    vector<Core::Var> dvars;
-    for(auto& [dvar,constraint]: givens)
-        if (not is_equality_constraint(constraint))
-            dvars.push_back(dvar);
-    return dvars;
-}
-
 string ConPattern::print() const
 {
     string con = head.print();
