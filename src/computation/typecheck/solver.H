@@ -51,7 +51,7 @@ struct Predicate
     Predicate(ConstraintFlavor f, Pred p): flavor(f), pred(p) {}
 };
 
-std::vector<Predicate> make_predicates(ConstraintFlavor, const std::vector<std::pair<Core::Var, Type>>&);
+std::vector<Predicate> make_predicates(ConstraintFlavor, const std::vector<Constraint>&);
 
 struct ReactFail {};
 

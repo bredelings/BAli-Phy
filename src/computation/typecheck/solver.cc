@@ -93,7 +93,7 @@ vector<pair<Core::Var, Type>> TypeChecker::superclass_constraints(const Type& co
 
         assert(wanteds.size() == 1);
 
-        auto class_constraint = wanteds[0].second;
+        auto class_constraint = wanteds[0].pred;
 
         // The premise doesn't match the current class;
         if (not maybe_match(class_constraint, constraint)) continue;
@@ -1363,7 +1363,7 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
     return decls;
 }
 
-std::vector<Predicate> make_predicates(ConstraintFlavor f, const std::vector<std::pair<Core::Var, Type>>& ps)
+std::vector<Predicate> make_predicates(ConstraintFlavor f, const std::vector<Constraint>& ps)
 {
     vector<Predicate> predicates;
     for(auto& [cvar, constraint]: ps)

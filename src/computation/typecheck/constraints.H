@@ -7,7 +7,15 @@
 #include "haskell/coretype.H"
 #include "haskell/core.H"
 
-typedef std::vector<std::pair<Core::Var, Type>> LIE;
+struct Constraint
+{
+    Core::Var ev_var;
+    Type pred;
+
+    std::string print() const;
+};
+
+typedef std::vector<Constraint> LIE;
 
 LIE& operator+=(LIE& lie1, const LIE& lie2);
 

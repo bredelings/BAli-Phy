@@ -4,12 +4,17 @@
 using std::vector;
 using std::string;
 
+string Constraint::print() const
+{
+    return ev_var.print() + " :: " + pred.print();
+}
+
 string print(const LIE& lie)
 {
     vector<string> ss;
-    for(auto& [value,type]: lie)
+    for(auto& constraint: lie)
     {
-        ss.push_back(value.print() + " :: " + type.print());
+        ss.push_back(constraint.print());
     }
     return "{ " + join(ss, "; ") + " }";
 }
