@@ -75,6 +75,11 @@ const Constraint& Predicate::constraint() const
         std::abort();
 }
 
+const ConstraintOrigin& Predicate::origin() const
+{
+    return constraint().origin;
+}
+
 ConstraintFlavor Predicate::flavor() const
 {
     return constraint().flavor;
@@ -227,11 +232,11 @@ Solver::canonicalize_equality_type_apps(const Constraint& C,
 {
     auto fun_constraint = make_equality_constraint(fun1, fun2);
     auto fun_dvar = fresh_dvar(fun_constraint);
-    work_list.push_back(NonCanonical({C.flavor, fun_dvar, fun_constraint, C.level}));
+    work_list.push_back(NonCanonical({C.origin, C.flavor, fun_dvar, fun_constraint, C.level}));
 
     auto arg_constraint = make_equality_constraint(arg1, arg2);
     auto arg_dvar = fresh_dvar(arg_constraint);
-    work_list.push_back(NonCanonical({C.flavor, arg_dvar, arg_constraint, C.level}));
+    work_list.push_back(NonCanonical({C.origin, C.flavor, arg_dvar, arg_constraint, C.level}));
 
     return {};
 }
@@ -251,7 +256,7 @@ std::optional<Predicate> Solver::canonicalize_equality_type_cons(const Canonical
         {
             auto constraint = make_equality_constraint(args1[i], args2[i]);
             auto dvar = fresh_dvar(constraint);
-            work_list.push_back(NonCanonical({P.flavor(), dvar, constraint, P.level()}));
+            work_list.push_back(NonCanonical({P.origin(), P.flavor(), dvar, constraint, P.level()}));
         }
     }
     else
@@ -503,7 +508,7 @@ Type Solver::break_type_equality_cycle(const Constraint& C, const Type& type)
 
         auto constraint = make_equality_constraint(new_tv, type);
         auto dvar = fresh_dvar(constraint);
-        work_list.push_back(NonCanonical({C.flavor, dvar, constraint, C.level}));
+        work_list.push_back(NonCanonical({CycleBreakerOrigin(), C.flavor, dvar, constraint, C.level}));
 
         return new_tv;
     }
@@ -549,6 +554,7 @@ std::optional<Type> Solver::maybe_break_type_equality_cycle(const CanonicalEqual
     if (not should_break_cycle) return {};
 
     // 3. Check that the equality does not come from a cycle breaking operation.
+    if (to<CycleBreakerOrigin>(P.constraint.origin)) return {};
 
     // 4. Actually do the cycle breaking
     return break_type_equality_cycle(P.constraint, P.t2);

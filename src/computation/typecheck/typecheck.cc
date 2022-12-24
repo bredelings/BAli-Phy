@@ -815,11 +815,11 @@ Core::Var TypeChecker::fresh_dvar(const Type& constraint)
     return dvar;
 }
 
-Core::Var TypeChecker::add_wanted(const Type& constraint)
+Core::Var TypeChecker::add_wanted(const ConstraintOrigin& origin, const Type& constraint)
 {
     auto dvar = fresh_dvar(constraint);
 
-    current_wanteds().simple.push_back( {Wanted, dvar, constraint, level} );
+    current_wanteds().simple.push_back( {origin, Wanted, dvar, constraint, level} );
 
     return dvar;
 }
@@ -1161,7 +1161,7 @@ tuple<vector<MetaTypeVar>, LIE, Type> TypeChecker::instantiate(const Type& t)
     // 2. Handle constraints
     if (auto ct = type.to<ConstrainedType>())
     {
-        wanteds = preds_to_constraints(Wanted, ct->context.constraints, level);
+        wanteds = preds_to_constraints(InstOrigin(), Wanted, ct->context.constraints, level);
         type = ct->type;
     }
 
@@ -1222,7 +1222,7 @@ tuple<Core::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const Ty
     else if (auto ct = polytype.to<ConstrainedType>())
     {
         // Compute givens from local givens followed by givens of sub-type.
-        auto givens = preds_to_constraints(Given, ct->context.constraints, level);
+        auto givens = preds_to_constraints(GivenOrigin(), Given, ct->context.constraints, level);
         auto wrap1 = Core::WrapLambda( vars_from_lie(givens) );
 
         auto [wrap2, tvs2, givens2, type2] = skolemize(ct->type, skolem);
@@ -1279,13 +1279,13 @@ TypeChecker::maybe_implication(const std::vector<TypeVar>& tvs, const LIE& given
     return ev_decls;
 }
 
-LIE TypeChecker::preds_to_constraints(ConstraintFlavor flavor, const vector<Type>& constraints, int l)
+LIE TypeChecker::preds_to_constraints(const ConstraintOrigin& origin, ConstraintFlavor flavor, const vector<Type>& constraints, int l)
 {
     LIE ordered_lie;
     for(auto& constraint: constraints)
     {
         auto dvar = fresh_dvar(constraint);
-        ordered_lie.push_back({flavor, dvar, constraint, l});
+        ordered_lie.push_back({origin, flavor, dvar, constraint, l});
     }
     return ordered_lie;
 }

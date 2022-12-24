@@ -7,10 +7,34 @@
 #include "haskell/coretype.H"
 #include "haskell/core.H"
 
+struct GivenOrigin
+{
+};
+
+struct InstOrigin
+{
+};
+
+struct PatOrigin
+{
+};
+
+struct CycleBreakerOrigin
+{
+};
+
+struct UnifyOrigin
+{
+};
+
+
+typedef std::variant<std::monostate, GivenOrigin, InstOrigin, PatOrigin, CycleBreakerOrigin,UnifyOrigin> ConstraintOrigin;
+
 enum ConstraintFlavor { Wanted, Given };
 
 struct Constraint
 {
+    ConstraintOrigin origin;
     ConstraintFlavor flavor;
     Core::Var ev_var;
     Type pred;
@@ -18,7 +42,7 @@ struct Constraint
 
     std::string print() const;
 
-    Constraint(ConstraintFlavor, Core::Var, Type, int);
+    Constraint(const ConstraintOrigin&, ConstraintFlavor, Core::Var, Type, int);
 };
 
 typedef std::vector<Constraint> LIE;

@@ -11,6 +11,7 @@ struct NonCanonical
 {
     Constraint constraint;
 
+    const ConstraintOrigin& origin() const {return constraint.origin;}
     ConstraintFlavor flavor() const {return constraint.flavor;}
     int level() const {return constraint.level;}
     std::string print() const;
@@ -23,6 +24,7 @@ struct CanonicalDict
     TypeCon klass;
     std::vector<Type> args;
 
+    const ConstraintOrigin& origin() const {return constraint.origin;}
     ConstraintFlavor flavor() const {return constraint.flavor;}
     int level() const {return constraint.level;}
     std::string print() const;
@@ -35,6 +37,7 @@ struct CanonicalEquality
     Type t2;
 
     CanonicalEquality flip() const;
+    const ConstraintOrigin& origin() const {return constraint.origin;}
     ConstraintFlavor flavor() const {return constraint.flavor;}
     int level() const {return constraint.level;}
     std::string print() const;
@@ -45,6 +48,7 @@ struct CanonicalEquality
 struct Predicate: public std::variant<NonCanonical, CanonicalDict, CanonicalEquality>
 {
     std::string print() const;
+    const ConstraintOrigin& origin() const;
     const Constraint& constraint() const;
     ConstraintFlavor flavor() const;
     int level() const;
