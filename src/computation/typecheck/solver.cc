@@ -1288,7 +1288,10 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
             // 3. construct sub-givens
             LIE sub_givens = implic->givens;
             sub_givens += givens;
-            sub_givens += wanteds.simple;
+            auto given_wanteds = wanteds.simple;
+            for(auto& c: given_wanteds)
+                c.flavor = Given;
+            sub_givens += given_wanteds;
 
             // 4. try and sub-wanteds
             auto tcs2 = copy_clear_wanteds();
