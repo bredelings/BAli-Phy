@@ -361,7 +361,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         superclass_constraint = apply_subst(subst, superclass_constraint);
 
     // 5. Construct binds_super
-    auto wanteds = constraints_to_lie(superclass_constraints);
+    auto wanteds = preds_to_constraints(Wanted, superclass_constraints);
     auto WC = WantedConstraints(wanteds);
     auto decls_super = entails(givens, WC);
     if (not WC.simple.empty())
@@ -370,8 +370,8 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // 7. make some intermediates
 
     vector<Hs::Expression> dict_entries;
-    for(auto& [var,constraint]: wanteds)
-        dict_entries.push_back(var);
+    for(auto& wanted: wanteds)
+        dict_entries.push_back(wanted.ev_var);
 
     // 7. Construct binds_methods
     Hs::Decls decls;
@@ -393,7 +393,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         // forall b. Ix b => [x] -> b -> b
         op_type = apply_subst(subst, op_type);
         // forall x. (C1 x, C2 x) => forall b. Ix b => [x] -> b -> b
-        op_type = add_forall_vars(instance_tvs,add_constraints(constraints_from_lie(givens), op_type));
+        op_type = add_forall_vars(instance_tvs,add_constraints(preds_from_lie(givens), op_type));
 
         gve = gve.insert( {unloc(op.name), op_type} );
 

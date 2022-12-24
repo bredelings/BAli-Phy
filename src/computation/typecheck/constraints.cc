@@ -6,7 +6,9 @@ using std::string;
 
 string Constraint::print() const
 {
-    return ev_var.print() + " :: " + pred.print();
+    string s = (flavor==Given)?"[G] ":"[W] ";
+    s += ev_var.print() + " :: " + pred.print();
+    return s;
 }
 
 string print(const LIE& lie)
@@ -19,19 +21,19 @@ string print(const LIE& lie)
     return "{ " + join(ss, "; ") + " }";
 }
 
-vector<Type> constraints_from_lie(const LIE& lie)
+vector<Type> preds_from_lie(const LIE& constraints)
 {
-    vector<Type> constraints;
-    for(auto& [_, constraint]: lie)
-        constraints.push_back(constraint);
-    return constraints;
+    vector<Type> preds;
+    for(auto& constraint: constraints)
+        preds.push_back(constraint.pred);
+    return preds;
 }
 
-vector<Core::Var> vars_from_lie(const LIE& lie)
+vector<Core::Var> vars_from_lie(const LIE& constraints)
 {
     vector<Core::Var> vars;
-    for(auto& [var, constraint]: lie)
-        vars.push_back( var );
+    for(auto& constraint: constraints)
+        vars.push_back( constraint.ev_var );
     return vars;
 }
 
@@ -39,11 +41,10 @@ LIE dictionary_constraints(const LIE& lie1)
 {
     LIE lie2;
 
-    for(auto& pred: lie1)
+    for(auto& constraint: lie1)
     {
-        auto& [_, constraint] = pred;
-        if (not is_equality_constraint(constraint))
-            lie2.push_back(pred);
+        if (not is_equality_constraint(constraint.pred))
+            lie2.push_back(constraint);
     }
 
     return lie2;
@@ -53,11 +54,10 @@ LIE equality_constraints(const LIE& lie1)
 {
     LIE lie2;
 
-    for(auto& pred: lie1)
+    for(auto& constraint: lie1)
     {
-        auto& [_, constraint] = pred;
-        if (is_equality_constraint(constraint))
-            lie2.push_back(pred);
+        if (is_equality_constraint(constraint.pred))
+            lie2.push_back(constraint);
     }
 
     return lie2;
@@ -66,8 +66,8 @@ LIE equality_constraints(const LIE& lie1)
 string WantedConstraints::print() const
 {
     vector<string> cs;
-    for(auto& [value, type]: simple)
-        cs.push_back(value.print() + " :: " + type.print());
+    for(auto& constraint: simple)
+        cs.push_back(constraint.print());
     for(auto& implication: implications)
         cs.push_back(implication->print());
     return "{ " + join(cs,"; ") + " }";
@@ -130,16 +130,16 @@ Implication::Implication(int l, const vector<TypeVar>& v, const LIE& g, const Wa
     for(auto& tv: tvs)
         assert(tv.level() == l);
 
-    for(auto& [_,constraint]: givens)
+    for(auto& given: givens)
     {
-        assert(max_meta_level(constraint) < level);
-        assert(max_level(constraint) <= level);
+        assert(max_meta_level(given.pred) < level);
+        assert(max_level(given.pred) <= level);
     }
 
-    for(auto& [_,constraint]: wanteds.simple)
+    for(auto& wanted: wanteds.simple)
     {
-        assert(max_level(constraint) <= level);
-        assert(max_meta_level(constraint) <= level);
+        assert(max_level(wanted.pred) <= level);
+        assert(max_meta_level(wanted.pred) <= level);
     }
 
     for(auto& implication: wanteds.implications)

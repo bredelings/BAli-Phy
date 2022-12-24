@@ -624,8 +624,11 @@ struct instance_info
 LIE apply_subst(const substitution_t& s, const LIE& env1)
 {
     LIE env2;
-    for(auto& [x,type]: env1)
-        env2.push_back({x, apply_subst(s,type)});
+    for(auto constraint: env1)
+    {
+        constraint.pred = apply_subst(s, constraint.pred);
+        env2.push_back(constraint);
+    }
     return env2;
 }
 
@@ -816,7 +819,7 @@ Core::Var TypeChecker::add_wanted(const Type& constraint)
 {
     auto dvar = fresh_dvar(constraint);
 
-    current_wanteds().simple.push_back( {dvar, constraint} );
+    current_wanteds().simple.push_back( {Wanted, dvar, constraint} );
 
     return dvar;
 }
@@ -1158,7 +1161,7 @@ tuple<vector<MetaTypeVar>, LIE, Type> TypeChecker::instantiate(const Type& t)
     // 2. Handle constraints
     if (auto ct = type.to<ConstrainedType>())
     {
-        wanteds = constraints_to_lie(ct->context.constraints);
+        wanteds = preds_to_constraints(Wanted, ct->context.constraints);
         type = ct->type;
     }
 
@@ -1219,7 +1222,7 @@ tuple<Core::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const Ty
     else if (auto ct = polytype.to<ConstrainedType>())
     {
         // Compute givens from local givens followed by givens of sub-type.
-        auto givens = constraints_to_lie(ct->context.constraints);
+        auto givens = preds_to_constraints(Given, ct->context.constraints);
         auto wrap1 = Core::WrapLambda( vars_from_lie(givens) );
 
         auto [wrap2, tvs2, givens2, type2] = skolemize(ct->type, skolem);
@@ -1276,13 +1279,13 @@ TypeChecker::maybe_implication(const std::vector<TypeVar>& tvs, const LIE& given
     return ev_decls;
 }
 
-LIE TypeChecker::constraints_to_lie(const vector<Type>& constraints)
+LIE TypeChecker::preds_to_constraints(ConstraintFlavor flavor, const vector<Type>& constraints)
 {
     LIE ordered_lie;
-    for(auto& constraint:constraints)
+    for(auto& constraint: constraints)
     {
         auto dvar = fresh_dvar(constraint);
-        ordered_lie.push_back({dvar, constraint});
+        ordered_lie.push_back({flavor, dvar, constraint});
     }
     return ordered_lie;
 }

@@ -207,12 +207,12 @@ classify_constraints(bool restricted, const LIE& lie, const set<MetaTypeVar>& qt
     LIE lie_deferred;
     LIE lie_retained;
 
-    for(auto& [dvar, constraint]: lie)
+    for(auto& constraint: lie)
     {
-        if (intersects( free_meta_type_variables(constraint), qtvs ))
-            lie_retained.push_back({dvar,constraint});
+        if (intersects( free_meta_type_variables(constraint.pred), qtvs ))
+            lie_retained.push_back(constraint);
         else
-            lie_deferred.push_back({dvar,constraint});
+            lie_deferred.push_back(constraint);
     }
     return {lie_deferred, lie_retained};
 }
@@ -223,12 +223,12 @@ classify_constraints(const LIE& lie, const set<TypeVar>& qtvs)
     LIE lie_deferred;
     LIE lie_retained;
 
-    for(auto& [dvar, constraint]: lie)
+    for(auto& constraint: lie)
     {
-        if (intersects( free_type_variables(constraint), qtvs ))
-            lie_retained.push_back({dvar,constraint});
+        if (intersects( free_type_variables(constraint.pred), qtvs ))
+            lie_retained.push_back(constraint);
         else
-            lie_deferred.push_back({dvar,constraint});
+            lie_deferred.push_back(constraint);
     }
     return {lie_deferred, lie_retained};
 }
@@ -432,9 +432,9 @@ bool constraint_is_hnf(const Type& constraint)
 
 void check_HNF(const LIE& wanteds)
 {
-    for(auto& [_,constraint]: wanteds)
-        if (not constraint_is_hnf(constraint))
-            throw myexception()<<"No instance for '"<<constraint<<"'";
+    for(auto& constraint: wanteds)
+        if (not constraint_is_hnf(constraint.pred))
+            throw myexception()<<"'"<<constraint.pred<<"' should be in HNF";
 }
 
 
@@ -462,9 +462,9 @@ set<MetaTypeVar> find_fixed_tvs(bool restricted, int level, const LIE& wanteds, 
         add(fixed, free_meta_type_variables(wanteds));
 
     // If we have alpha[1] ~ [ beta[2] ], then beta should also be considered fixed.
-    for(auto& [dvar,constraint]: wanteds)
+    for(auto& constraint: wanteds)
     {
-        if (auto eq = is_equality_constraint(constraint))
+        if (auto eq = is_equality_constraint(constraint.pred))
         {
             auto [t1,t2] = *eq;
 
@@ -575,8 +575,8 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
         auto lie_all = apply_subst(s, lie_retained);
 
         // Get new dict vars for constraints
-        for(auto& [dvar,constraint]: lie_all)
-            dvar = fresh_dvar(constraint);
+        for(auto& constraint: lie_all)
+            constraint.ev_var = fresh_dvar(constraint.pred);
 
         // Any constraints that don't mention type vars of this type are ambiguous.
         // We will put them into the environment in hopes that we can default them later.
@@ -587,7 +587,7 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
         auto tup_dict_args = vars_from_lie( lie_all );
         auto wrap = Core::WrapLambda(dict_args) * Core::WrapApply(tup_dict_args);
 
-        auto constraints_used = constraints_from_lie(lie_used);
+        auto constraints_used = preds_from_lie(lie_used);
         Type polytype = quantify( qtvs_in_this_type, add_constraints( constraints_used, monotype ) );
         if (not signatures.count(name))
             poly_binder_env = poly_binder_env.insert( {name, polytype} );
@@ -610,9 +610,9 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, std::make_shared<Core::Decls>(solve_decls), decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
-    for(auto& [_,constraint]: current_wanteds().simple)
+    for(auto& constraint: current_wanteds().simple)
     {
-        assert( max_level(constraint) <= level );
+        assert( max_level(constraint.pred) <= level );
     }
 
     return decls2;

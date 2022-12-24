@@ -7,8 +7,11 @@
 #include "haskell/coretype.H"
 #include "haskell/core.H"
 
+enum ConstraintFlavor { Wanted, Given };
+
 struct Constraint
 {
+    ConstraintFlavor flavor;
     Core::Var ev_var;
     Type pred;
 
@@ -80,15 +83,15 @@ struct Implication
 };
 
 template <typename T>
-std::vector<T> vars_from_lie(const LIE& lie)
+std::vector<T> vars_from_lie(const LIE& constraints)
 {
     std::vector<T> dvars;
-    for(auto& [dvar, _]: lie)
-        dvars.push_back(dvar);
+    for(auto& constraint: constraints)
+        dvars.push_back(constraint.ev_var);
     return dvars;
 }
 
-std::vector<Type> constraints_from_lie(const LIE& lie);
+std::vector<Type> preds_from_lie(const LIE& lie);
 
 std::vector<Core::Var> vars_from_lie(const LIE& lie);
 

@@ -18,41 +18,6 @@ using std::shared_ptr;
 
 namespace views = ranges::views;
 
-string NonCanonicalPred::print() const
-{
-    return dvar.print() + " :: " + constraint.print();
-}
-
-string CanonicalDictPred::print() const
-{
-    auto constraint = make_tyapps(klass, args);
-    return dvar.print() + " :: " + constraint.print();
-}
-
-string CanonicalEqualityPred::print() const
-{
-    auto constraint = make_equality_constraint(t1, t2);
-    return co.print() + " :: " + constraint.print();
-}
-
-string Pred::print() const
-{
-    if (std::holds_alternative<NonCanonicalPred>(*this))
-        return std::get<NonCanonicalPred>(*this).print();
-    else if (std::holds_alternative<CanonicalDictPred>(*this))
-        return std::get<CanonicalDictPred>(*this).print();
-    else if (std::holds_alternative<CanonicalEqualityPred>(*this))
-        return std::get<CanonicalEqualityPred>(*this).print();
-    else
-        std::abort();
-}
-
-string Predicate::print()  const
-{
-    string s = (flavor==Given)?"[G] ":"[W] ";
-    s += pred.print();
-    return s;
-}
 template <typename T, typename U>
 const T* to(const U& u)
 {
@@ -69,6 +34,50 @@ T* to(U& u)
         return &std::get<T>(u);
     else
         return nullptr;
+}
+
+string NonCanonical::print() const
+{
+    return constraint.print();
+}
+
+string CanonicalDict::print() const
+{
+    return constraint.print();
+}
+
+string CanonicalEquality::print() const
+{
+    return constraint.print();
+}
+
+string Predicate::print() const
+{
+    if (std::holds_alternative<NonCanonical>(*this))
+        return std::get<NonCanonical>(*this).print();
+    else if (std::holds_alternative<CanonicalDict>(*this))
+        return std::get<CanonicalDict>(*this).print();
+    else if (std::holds_alternative<CanonicalEquality>(*this))
+        return std::get<CanonicalEquality>(*this).print();
+    else
+        std::abort();
+}
+
+const Constraint& Predicate::constraint() const
+{
+    if (auto nc = to<NonCanonical>(*this))
+        return nc->constraint;
+    else if (auto dict = to<CanonicalDict>(*this))
+        return dict->constraint;
+    else if (auto eq = to<CanonicalEquality>(*this))
+        return eq->constraint;
+    else
+        std::abort();
+}
+
+ConstraintFlavor Predicate::flavor() const
+{
+    return constraint().flavor;
 }
 
 // FIXME: there should be a `const` way of getting these.
@@ -126,19 +135,16 @@ optional<vector<Core::Var>> TypeChecker::is_superclass_of(const Type& constraint
     }
 }
 
-optional<Core::Decls> TypeChecker::entails_by_superclass(const pair<Core::Var, Type>& given, const pair<Core::Var, Type>& wanted)
+optional<Core::Decls> TypeChecker::entails_by_superclass(const Constraint& given, const Constraint& wanted)
 {
-    auto& [dvar_given, given_constraint] = given;
-    auto& [dvar_wanted, wanted_constraint] = wanted;
-
-    if (auto extractors = is_superclass_of(wanted_constraint, given_constraint))
+    if (auto extractors = is_superclass_of(wanted.pred, given.pred))
     {
-        Core::Exp dict_exp = dvar_given;
+        Core::Exp dict_exp = given.ev_var;
         for(auto& extractor: *extractors | views::reverse)
             dict_exp = {extractor, dict_exp};
 
         // dvar_wanted = extractor[n] extractor[n-1] ... extractor[0] dvar_given
-        return Core::Decls( { pair(dvar_wanted, dict_exp) } );
+        return Core::Decls( { pair(wanted.ev_var, dict_exp) } );
     }
     else
         return {};
@@ -202,9 +208,12 @@ std::optional<Core::Decls> TypeChecker::entails(const T& givens, const std::pair
     return {};
 }
 
-CanonicalEqualityPred CanonicalEqualityPred::flip() const
+CanonicalEquality CanonicalEquality::flip() const
 {
-    return {co, t2, t1};
+    CanonicalEquality E = *this;
+    E.constraint.pred = make_equality_constraint(t2,t1);
+    std::swap(E.t1, E.t2);
+    return E;
 }
 
 std::optional<Predicate>
@@ -213,16 +222,16 @@ Solver::canonicalize_equality_type_apps(ConstraintFlavor flavor,
 {
     auto fun_constraint = make_equality_constraint(fun1, fun2);
     auto fun_dvar = fresh_dvar(fun_constraint);
-    work_list.push_back({flavor, NonCanonicalPred(fun_dvar, fun_constraint)});
+    work_list.push_back(NonCanonical({flavor, fun_dvar, fun_constraint}));
 
     auto arg_constraint = make_equality_constraint(arg1, arg2);
     auto arg_dvar = fresh_dvar(arg_constraint);
-    work_list.push_back({flavor, NonCanonicalPred(arg_dvar, arg_constraint)});
+    work_list.push_back(NonCanonical({flavor, arg_dvar, arg_constraint}));
 
     return {};
 }
 
-std::optional<Predicate> Solver::canonicalize_equality_type_cons(ConstraintFlavor flavor, const CanonicalEqualityPred& P, const TypeCon& tc1, const vector<Type>& args1, const TypeCon& tc2, const vector<Type>& args2)
+std::optional<Predicate> Solver::canonicalize_equality_type_cons(const CanonicalEquality& P, const TypeCon& tc1, const vector<Type>& args1, const TypeCon& tc2, const vector<Type>& args2)
 {
     assert(not type_con_is_type_fam(tc1));
     assert(not type_con_is_type_fam(tc2));
@@ -237,11 +246,11 @@ std::optional<Predicate> Solver::canonicalize_equality_type_cons(ConstraintFlavo
         {
             auto constraint = make_equality_constraint(args1[i], args2[i]);
             auto dvar = fresh_dvar(constraint);
-            work_list.push_back({flavor, NonCanonicalPred(dvar, constraint)});
+            work_list.push_back(NonCanonical({P.flavor(), dvar, constraint}));
         }
     }
     else
-        inerts.failed.push_back({flavor,P});
+        inerts.failed.push_back(P);
 
     return {};
 }
@@ -303,21 +312,21 @@ bool flip_type_vars(bool is_given, const Type& t1, const Type& t2)
 }
 
 std::optional<Predicate>
-Solver::canonicalize_equality_var_tyfam(ConstraintFlavor flavor, CanonicalEqualityPred P)
+Solver::canonicalize_equality_var_tyfam(CanonicalEquality P)
 {
     assert(P.t1.is_a<TypeVar>() or P.t1.is_a<MetaTypeVar>());
     assert(is_type_fam_app(P.t2));
 
     auto mtv1 = P.t1.to<MetaTypeVar>();
     if (mtv1 and is_touchable(*mtv1, P.t2))
-        return canonicalize_equality_lhs1(flavor, P);
+        return canonicalize_equality_lhs1(P);
     else
-        return canonicalize_equality_lhs1(flavor, P.flip());
+        return canonicalize_equality_lhs1(P.flip());
 }
 
 
 std::optional<Predicate>
-Solver::canonicalize_equality_lhs2(ConstraintFlavor flavor, CanonicalEqualityPred P)
+Solver::canonicalize_equality_lhs2(CanonicalEquality P)
 {
     assert(is_rewritable_lhs(P.t1) and is_rewritable_lhs(P.t2));
 
@@ -336,20 +345,20 @@ Solver::canonicalize_equality_lhs2(ConstraintFlavor flavor, CanonicalEqualityPre
             and not check_type_equality(P.t2, P.t1).test(occurs_definitely_bit);
 
         if (flip_for_occurs)
-            return canonicalize_equality_lhs1(flavor, P.flip());
+            return canonicalize_equality_lhs1(P.flip());
         else
-            return canonicalize_equality_lhs1(flavor, P);
+            return canonicalize_equality_lhs1(P);
     }
     else if (tfam1)
-        return canonicalize_equality_var_tyfam(flavor, P.flip());
+        return canonicalize_equality_var_tyfam(P.flip());
     else if (tfam2)
-        return canonicalize_equality_var_tyfam(flavor, P);
+        return canonicalize_equality_var_tyfam(P);
     else
     {
-        if (flip_type_vars(flavor == Given, P.t1, P.t2))
-            return canonicalize_equality_lhs1(flavor, P.flip());
+        if (flip_type_vars(P.flavor() == Given, P.t1, P.t2))
+            return canonicalize_equality_lhs1(P.flip());
         else
-            return canonicalize_equality_lhs1(flavor, P);
+            return canonicalize_equality_lhs1(P);
     }
 }
 
@@ -489,7 +498,7 @@ Type Solver::break_type_equality_cycle(ConstraintFlavor flavor, const Type& type
 
         auto constraint = make_equality_constraint(new_tv, type);
         auto dvar = fresh_dvar(constraint);
-        work_list.push_back({flavor, NonCanonicalPred(dvar, constraint)});
+        work_list.push_back(NonCanonical({flavor, dvar, constraint}));
 
         return new_tv;
     }
@@ -515,7 +524,7 @@ Type Solver::break_type_equality_cycle(ConstraintFlavor flavor, const Type& type
         std::abort();
 }
 
-std::optional<Type> Solver::maybe_break_type_equality_cycle(ConstraintFlavor flavor, const CanonicalEqualityPred& P, std::bitset<8> result)
+std::optional<Type> Solver::maybe_break_type_equality_cycle(const CanonicalEquality& P, std::bitset<8> result)
 {
     assert(result.any());
 
@@ -524,7 +533,7 @@ std::optional<Type> Solver::maybe_break_type_equality_cycle(ConstraintFlavor fla
 
     // 2. Don't do this if we have a wanted cosntraint without a touchable mtv
     bool should_break_cycle = true;
-    if (flavor == Wanted)
+    if (P.flavor() == Wanted)
     {
         should_break_cycle = false;
         auto lhs = follow_meta_type_var(P.t1);
@@ -537,10 +546,10 @@ std::optional<Type> Solver::maybe_break_type_equality_cycle(ConstraintFlavor fla
     // 3. Check that the equality does not come from a cycle breaking operation.
 
     // 4. Actually do the cycle breaking
-    return break_type_equality_cycle(flavor, P.t2);
+    return break_type_equality_cycle(P.flavor(), P.t2);
 }
 
-std::optional<Predicate> Solver::canonicalize_equality_lhs1(ConstraintFlavor flavor, const CanonicalEqualityPred& P)
+std::optional<Predicate> Solver::canonicalize_equality_lhs1(const CanonicalEquality& P)
 {
     assert(is_rewritable_lhs(P.t1));
 
@@ -552,9 +561,9 @@ std::optional<Predicate> Solver::canonicalize_equality_lhs1(ConstraintFlavor fla
     result1.reset(impredicative_bit); // FIXME!
 
     if (result1 == ok_result)
-        return {{flavor, P}};
+        return P;
 
-    if (auto new_rhs = maybe_break_type_equality_cycle(flavor, P, result1))
+    if (auto new_rhs = maybe_break_type_equality_cycle(P, result1))
     {
         auto P2 = P;
         P2.t2 = *new_rhs;
@@ -562,38 +571,38 @@ std::optional<Predicate> Solver::canonicalize_equality_lhs1(ConstraintFlavor fla
 
         if (has_occurs_check(result2))
         {
-            inerts.failed.push_back({flavor, P});
+            inerts.failed.push_back(P);
             return {};
         }
         else
-            return {{flavor, P2}};
+            return P2;
     }
     else if (has_occurs_check(result1))
     {
-        inerts.failed.push_back({flavor, P});
+        inerts.failed.push_back(P);
         return {};
     }
     else
     {
-        inerts.irreducible.push_back({flavor, P});
+        inerts.irreducible.push_back(P);
         return {};
     }
 }
 
-std::optional<Predicate> Solver::canonicalize_equality_lhs(ConstraintFlavor flavor, const CanonicalEqualityPred& P)
+std::optional<Predicate> Solver::canonicalize_equality_lhs(const CanonicalEquality& P)
 {
     if (is_rewritable_lhs(P.t2))
-        return canonicalize_equality_lhs2(flavor, P);
+        return canonicalize_equality_lhs2(P);
     else
-        return canonicalize_equality_lhs1(flavor, P);
+        return canonicalize_equality_lhs1(P);
 
 }
 
 
-std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P)
+std::optional<Predicate> Solver::canonicalize_equality(CanonicalEquality P)
 {
-    P.t1 = rewrite(flavor, P.t1);
-    P.t2 = rewrite(flavor, P.t2);
+    P.t1 = rewrite(P.flavor(), P.t1);
+    P.t2 = rewrite(P.flavor(), P.t2);
 
     P.t1 = follow_meta_type_var(P.t1);
     P.t2 = follow_meta_type_var(P.t2);
@@ -624,7 +633,7 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
         auto& [tc1, args1] = *tcapp1;
         auto& [tc2, args2] = *tcapp2;
         if (not type_con_is_type_fam(tc1) and not type_con_is_type_fam(tc2))
-            return canonicalize_equality_type_cons(flavor, P, tc1, args1, tc2, args2);
+            return canonicalize_equality_type_cons(P, tc1, args1, tc2, args2);
     }
 
     // 5. If both are ForallType
@@ -639,20 +648,20 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
     {
         auto& [fun1, arg1] = *tapp1;
         auto& [fun2, arg2] = *tapp2;
-        return canonicalize_equality_type_apps(flavor, fun1, arg1, fun2, arg2);
+        return canonicalize_equality_type_apps(P.flavor(), fun1, arg1, fun2, arg2);
     }
 
     // the lhs & rhs should be rewritten by the time we get here.
     // but what if we substitute for a type synonym?
 
     if (is_rewritable_lhs(P.t1))
-        return canonicalize_equality_lhs(flavor, P);
+        return canonicalize_equality_lhs(P);
     else if (is_rewritable_lhs(P.t2))
-        return canonicalize_equality_lhs(flavor, P.flip());
+        return canonicalize_equality_lhs(P.flip());
     else
     {
         // This should end up in inerts.irreducible?
-        return {{flavor, P}};
+        return P;
     }
 
     std::abort();
@@ -660,42 +669,42 @@ std::optional<Predicate> Solver::canonicalize_equality(ConstraintFlavor flavor, 
 
 bool is_canonical(const Predicate& p)
 {
-    return std::holds_alternative<CanonicalDictPred>(p.pred) or
-        std::holds_alternative<CanonicalEqualityPred>(p.pred);
+    return std::holds_alternative<CanonicalDict>(p) or
+        std::holds_alternative<CanonicalEquality>(p);
 }
 
 
-optional<Predicate> Solver::canonicalize_dict(ConstraintFlavor flavor, CanonicalDictPred P)
+optional<Predicate> Solver::canonicalize_dict(CanonicalDict P)
 {
     for(auto& arg: P.args)
-        arg = rewrite(flavor, arg);
+        arg = rewrite(P.flavor(), arg);
 
-    return {{flavor, P}};
+    P.constraint.pred = make_tyapps(P.klass, P.args);
+
+    return P;
 }
 
 optional<Predicate> Solver::canonicalize(Predicate& P)
 {
-    if (auto NC = to<NonCanonicalPred>(P.pred))
+    if (auto NC = to<NonCanonical>(P))
     {
-        auto flavor = P.flavor;
-
-        if (auto eq = is_equality_constraint(NC->constraint))
+        if (auto eq = is_equality_constraint(NC->constraint.pred))
         {
             auto& [t1, t2] = *eq;
-            return canonicalize_equality(flavor, {NC->dvar, t1, t2});
+            return canonicalize_equality({NC->constraint, t1, t2});
         }
         else
         {
-            auto [head,args] = decompose_type_apps(NC->constraint);
-            assert(head.is_a<TypeCon>());
-            auto klass = head.as_<TypeCon>();
-            return canonicalize_dict(P.flavor, CanonicalDictPred{NC->dvar, klass, args});
+            auto [head,args] = decompose_type_apps(NC->constraint.pred);
+            auto klass = head.to<TypeCon>();
+            assert(klass);
+            return canonicalize_dict({NC->constraint, *klass, args});
         }
     }
-    else if (auto D = to<CanonicalDictPred>(P.pred))
-        return canonicalize_dict(P.flavor, *D);
-    else if (auto E = to<CanonicalEqualityPred>(P.pred))
-        return canonicalize_equality(P.flavor, *E);
+    else if (auto D = to<CanonicalDict>(P))
+        return canonicalize_dict(*D);
+    else if (auto E = to<CanonicalEquality>(P))
+        return canonicalize_equality(*E);
     else
         std::abort();
 }
@@ -712,9 +721,9 @@ Type Solver::rewrite_mtv(ConstraintFlavor flavor, const MetaTypeVar& mtv) const
     for(auto& inert: inerts.mtv_eqs)
     {
         // Don't allow wanteds to rewrite givens
-        if (inert.flavor == Wanted and flavor == Given) continue;
+        if (inert.flavor() == Wanted and flavor == Given) continue;
 
-        auto eq = to<CanonicalEqualityPred>(inert.pred);
+        auto eq = to<CanonicalEquality>(inert);
         assert(eq);
 
         auto uv1 = follow_meta_type_var(eq->t1).to<MetaTypeVar>();
@@ -731,9 +740,9 @@ Type Solver::rewrite_tv(ConstraintFlavor flavor, const TypeVar& tv) const
     for(auto& inert: inerts.tv_eqs)
     {
         // Don't allow wanteds to rewrite givens
-        if (inert.flavor == Wanted and flavor == Given) continue;
+        if (inert.flavor() == Wanted and flavor == Given) continue;
 
-        auto eq = to<CanonicalEqualityPred>(inert.pred);
+        auto eq = to<CanonicalEquality>(inert);
         assert(eq);
 
         auto tv1 = eq->t1.to<TypeVar>();
@@ -770,9 +779,9 @@ Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, co
         for(auto& inert: inerts.tyfam_eqs)
         {
             // Don't allow wanteds to rewrite givens
-            if (inert.flavor == Wanted and flavor == Given) continue;
+            if (inert.flavor() == Wanted and flavor == Given) continue;
 
-            auto eq = to<CanonicalEqualityPred>(inert.pred);
+            auto eq = to<CanonicalEquality>(inert);
             assert(eq);
 
             // FIXME: this doesn't handle forall types
@@ -831,24 +840,21 @@ Change Solver::interact(const Predicate& P1, const Predicate& P2)
     assert(is_canonical(P2));
 
     // Don't allow wanteds to rewrite givens
-    if (P1.flavor == Wanted and P2.flavor == Given) return Unchanged();
+    if (P1.flavor() == Wanted and P2.flavor() == Given) return Unchanged();
 
-    auto dict1 = to<CanonicalDictPred>(P1.pred);
-    auto dict2 = to<CanonicalDictPred>(P2.pred);
+    auto dict1 = to<CanonicalDict>(P1);
+    auto dict2 = to<CanonicalDict>(P2);
 
     if (dict1 and dict2)
     {
-        auto constraint1 = make_tyapps(dict1->klass, dict1->args);
-        auto constraint2 = make_tyapps(dict2->klass, dict2->args);
-
         // DDICT:  (D xs)     + (D xs)     -> (D xs)
-        if (same_type(constraint1, constraint2))
+        if (same_type(dict1->constraint.pred, dict2->constraint.pred))
         {
-            decls.push_back({dict2->dvar, dict1->dvar});
+            decls.push_back({dict2->constraint.ev_var, dict1->constraint.ev_var});
             return Solved();
         }
         // SUPER - not in the paper.
-        else if (auto sdecls = entails_by_superclass({dict1->dvar,constraint1}, {dict2->dvar,constraint2}))
+        else if (auto sdecls = entails_by_superclass(dict1->constraint, dict2->constraint))
         {
             decls += *sdecls;
             return Solved();
@@ -865,33 +871,30 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
 {
     assert(is_canonical(P));
 
-    if (auto dict = to<CanonicalDictPred>(P.pred))
+    if (auto dict = to<CanonicalDict>(P))
     {
         // We DO get givens like Eq Ordering that have instances.
         // Should we be preventing such things from becoming givens, since we could
         //   derive them from an instance instead?
 
         // We don't use instances for givens.
-        if (P.flavor == Given) return {};
+        if (P.flavor() == Given) return {};
 
-        auto [dvar, klass, args] = *dict;
-        auto constraint = make_tyapps(klass,args);
-
-        if (auto inst = lookup_instance(constraint))
+        if (auto inst = lookup_instance(dict->constraint.pred))
         {
             auto [dfun_exp, super_wanteds] = *inst;
 
-            decls.push_back( { dvar, dfun_exp } );
-            for(auto& pred: make_predicates(Wanted, super_wanteds))
+            decls.push_back( { dict->constraint.ev_var, dfun_exp } );
+            for(auto& pred: super_wanteds)
                 work_list.push_back( pred );
 
             return ReactSuccess();
         }
     }
-    else if (auto eq = to<CanonicalEqualityPred>(P.pred))
+    else if (auto eq = to<CanonicalEquality>(P))
     {
         // We don't use instances for givens.
-        if (P.flavor == Given) return {};
+        if (P.flavor() == Given) return {};
 
         auto constraint = make_equality_constraint(eq->t1,eq->t2);
 
@@ -941,31 +944,19 @@ bool Solver::is_touchable(const MetaTypeVar& mtv, const Type& rhs) const
     return true;
 }
 
-bool affected_by_mtv(const Pred& P, const MetaTypeVar& mtv)
-{
-    if (auto E = to<CanonicalEqualityPred>(P))
-        return affected_by_mtv(E->t1, mtv) or affected_by_mtv(E->t2, mtv);
-    else if (auto D = to<CanonicalDictPred>(P))
-        return affected_by_mtv(D->args, mtv);
-    else if (auto NC = to<NonCanonicalPred>(P))
-        return affected_by_mtv(NC->constraint, mtv);
-    else
-        std::abort();
-}
-
 bool affected_by_mtv(const Predicate& P, const MetaTypeVar& mtv)
 {
-    return affected_by_mtv(P.pred, mtv);
+    return affected_by_mtv(P.constraint().pred, mtv);
 }
 
 void Solver::add_to_work_list(const std::vector<Predicate>& ps)
 {
     for(auto& p: ps)
-        if (p.flavor == Wanted)
+        if (p.flavor() == Wanted)
             work_list.push_back(p);
 
     for(auto& p: ps)
-        if (p.flavor == Given)
+        if (p.flavor() == Given)
             work_list.push_back(p);
 }
 
@@ -1002,16 +993,16 @@ void Solver::kickout_after_unification(const MetaTypeVar& mtv)
 
 void Solver::add_inert(const Predicate& p)
 {
-    if (auto E = to<CanonicalEqualityPred>(p.pred))
+    if (auto E = to<CanonicalEquality>(p))
     {
         int eq_level = std::max( max_level(E->t1), max_level(E->t2));
-        if (eq_level < level and p.flavor == Given)
+        if (eq_level < level and p.flavor() == Given)
         {
             inerts.given_eq_level = std::max( inerts.given_eq_level.value_or(0), eq_level );
         }
     }
 
-    if (auto E = to<CanonicalEqualityPred>(p.pred))
+    if (auto E = to<CanonicalEquality>(p))
     {
         auto t1 = follow_meta_type_var(E->t1);
         if (t1.is_a<TypeVar>())
@@ -1023,7 +1014,7 @@ void Solver::add_inert(const Predicate& p)
         else
             inerts.irreducible.push_back(p);
     }
-    else if (to<CanonicalDictPred>(p.pred))
+    else if (to<CanonicalDict>(p))
     {
         inerts.dicts.push_back(p);
     }
@@ -1104,17 +1095,17 @@ bool Solver::contains_type(const vector<Type>& ts1, const Type& t2) const
 bool Solver::can_rewrite(const Predicate& p1, const Predicate& p2) const
 {
     // 1. Check the flavor
-    if (p1.flavor == Wanted and p2.flavor == Given) return false;
+    if (p1.flavor() == Wanted and p2.flavor() == Given) return false;
 
     // 2. Check if p1 can be used for rewriting.
-    auto eq1 = to<CanonicalEqualityPred>(p1.pred);
+    auto eq1 = to<CanonicalEquality>(p1);
     if (not eq1 or not is_rewritable_lhs(eq1->t1)) return false;
 
     auto lhs = follow_meta_type_var(eq1->t1);
 
-    if (auto dict2 = to<CanonicalDictPred>(p2.pred))
+    if (auto dict2 = to<CanonicalDict>(p2))
         return contains_type(dict2->args, lhs);
-    else if (auto eq2 = to<CanonicalEqualityPred>(p2.pred))
+    else if (auto eq2 = to<CanonicalEquality>(p2))
         return contains_type(eq2->t1, lhs) or contains_type(eq2->t2, lhs);
     else
         std::abort();
@@ -1145,11 +1136,17 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 {
     if (wanteds.empty()) return {{}, {}};
 
-    for(auto& [evar, constraint]: wanteds)
-        work_list.push_back({Wanted, NonCanonicalPred(evar, constraint)});
+    for(auto& wanted: wanteds)
+    {
+        assert(wanted.flavor == Wanted);
+        work_list.push_back( NonCanonical(wanted) );
+    }
     // Givens must be processed first!
-    for(auto& [evar, constraint]: givens)
-        work_list.push_back({Given, NonCanonicalPred(evar, constraint)});
+    for(auto& given: givens)
+    {
+        assert(given.flavor == Given);
+        work_list.push_back( NonCanonical(given) );
+    }
 
 //    std::cerr<<"---------------\n";
 //    for(auto& w: work_list)
@@ -1196,7 +1193,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 
 
         // perform same-level substitutions
-        if (auto E = to<CanonicalEqualityPred>(p.pred); E and p.flavor == Wanted)
+        if (auto E = to<CanonicalEquality>(p); E and p.flavor() == Wanted)
         {
             auto t1 = follow_meta_type_var(E->t1);
             if (auto mtv = t1.to<MetaTypeVar>())
@@ -1247,16 +1244,8 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
     {
         assert(is_canonical(P));
 
-        if (P.flavor == Wanted)
-        {
-            if (auto eq = to<CanonicalEqualityPred>(P.pred))
-                wanteds.push_back({eq->co, make_equality_constraint(eq->t1, eq->t2)});
-            else if (auto dict = to<CanonicalDictPred>(P.pred))
-            {
-                auto constraint = make_tyapps(dict->klass, dict->args);
-                wanteds.push_back({dict->dvar, constraint});
-            }
-        }
+        if (P.flavor() == Wanted)
+            wanteds.push_back(P.constraint());
     }
 
 //    std::cerr<<" residual wanteds = \n";
@@ -1266,10 +1255,10 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
     return decls;
 }
 
-bool contains_equality_constraints(const LIE& givens)
+bool contains_equality_constraints(const LIE& constraints)
 {
-    for(auto& [_,constraint]: givens)
-        if (is_equality_constraint(constraint))
+    for(auto& constraint: constraints)
+        if (is_equality_constraint(constraint.pred))
             return true;
     return false;
 }
@@ -1305,17 +1294,17 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
             LIE lie_residual_keep;
             if (not contains_equality_constraints(implic->givens))
             {
-                for(auto& [var, constraint]: implic->wanteds.simple)
+                for(auto& constraint: implic->wanteds.simple)
                 {
-                    promote(constraint, level);
+                    promote(constraint.pred, level);
 
-                    if (intersects(free_type_variables(constraint), implic->tvs))
-                        lie_residual_keep.push_back({var,constraint});
+                    if (intersects(free_type_variables(constraint.pred), implic->tvs))
+                        lie_residual_keep.push_back(constraint);
                     else
                     {
                         // If we've discovered a new simple wanted, then we need to run simplification again.
                         update = true;
-                        new_wanteds.push_back({var,constraint});
+                        new_wanteds.push_back(constraint);
                     }
                 }
                 implic->wanteds.simple.clear();
@@ -1361,14 +1350,6 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
     //    - interestingly, the implication constraints don't contribute here.
 
     return decls;
-}
-
-std::vector<Predicate> make_predicates(ConstraintFlavor f, const std::vector<Constraint>& ps)
-{
-    vector<Predicate> predicates;
-    for(auto& [cvar, constraint]: ps)
-        predicates.push_back(Predicate(f,NonCanonicalPred(cvar,constraint)));
-    return predicates;
 }
 
 Solver::Solver(const TypeChecker& tc)

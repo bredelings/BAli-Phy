@@ -139,8 +139,8 @@ std::set<TypeVar> free_type_variables(const value_env& env)
 std::set<TypeVar> free_type_variables(const LIE& env)
 {
     std::set<TypeVar> free;
-    for(auto& [x,type]: env)
-        add(free, free_type_variables(type));
+    for(auto& constraint: env)
+        add(free, free_type_variables(constraint.pred));
     return free;
 }
 
@@ -155,8 +155,8 @@ std::set<MetaTypeVar> free_meta_type_variables(const value_env& env)
 std::set<MetaTypeVar> free_meta_type_variables(const LIE& env)
 {
     std::set<MetaTypeVar> free;
-    for(auto& [x,type]: env)
-        add(free, free_meta_type_variables(type));
+    for(auto& constraint: env)
+        add(free, free_meta_type_variables(constraint.pred));
     return free;
 }
 

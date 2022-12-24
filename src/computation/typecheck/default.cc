@@ -50,10 +50,10 @@ TypeChecker::candidates(const MetaTypeVar& tv, const LIE& tv_lie)
         std_classes.insert( find_prelude_tycon_name(cls) );
 
     bool any_num = false;
-    for(auto& [dvar,constraint]: tv_lie)
+    for(auto& constraint: tv_lie)
     {
         // Fail if any of the predicates is not a simple constraint.
-        auto tycon = simple_constraint_class_meta(constraint);
+        auto tycon = simple_constraint_class_meta(constraint.pred);
         if (not tycon) return {};
 
         auto& name = unloc(tycon->name);
@@ -91,10 +91,10 @@ ambiguities(const LIE& lie)
     for(auto& ambiguous_tv: ambiguous_tvs)
     {
         LIE lie_for_tv;
-        for(auto& [dvar,constraint]: lie)
+        for(auto& constraint: lie)
         {
-            if (free_meta_type_variables(constraint).count(ambiguous_tv))
-                lie_for_tv.push_back({dvar,constraint});
+            if (free_meta_type_variables(constraint.pred).count(ambiguous_tv))
+                lie_for_tv.push_back(constraint);
         }
         if (not lie_for_tv.empty())
             ambiguities.insert({ambiguous_tv, lie_for_tv});
@@ -103,11 +103,11 @@ ambiguities(const LIE& lie)
     // 2. Find the constraints WITHOUT ambiguous type vars
     LIE unambiguous_preds;
 
-    for(auto& [dvar, constraint]: lie)
+    for(auto& constraint: lie)
     {
-        auto ftvs = free_meta_type_variables(constraint);
+        auto ftvs = free_meta_type_variables(constraint.pred);
         if (not intersects(ftvs, ambiguous_tvs))
-            unambiguous_preds.push_back({dvar, constraint});
+            unambiguous_preds.push_back(constraint);
     }
 
     return {unambiguous_preds, ambiguities};
@@ -126,8 +126,8 @@ Core::Decls TypeChecker::default_preds( WantedConstraints& wanted )
         if (not result)
         {
             auto e = myexception()<<"Ambiguous type variable '"<<tv<<"' in classes: ";
-            for(auto& [dvar,constraint]: preds)
-                e<<constraint<<" ";
+            for(auto& constraint: preds)
+                e<<constraint.pred<<" ";
             throw e;
         }
         auto& decls1 = *result;

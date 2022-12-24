@@ -458,7 +458,7 @@ struct TypeChecker: FreshVarSource
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
-    LIE constraints_to_lie(const std::vector<Type>&);
+    LIE preds_to_constraints(ConstraintFlavor, const std::vector<Type>&);
 
     // FIXME: this should be  const
     std::vector<std::pair<Core::Var, Type>> superclass_constraints(const Type& constraint);
@@ -469,8 +469,8 @@ struct TypeChecker: FreshVarSource
 
     // FIXME: this should be  const
     std::optional<Core::Decls>
-    entails_by_superclass(const std::pair<Core::Var, Type>& to_keep,
-                          const std::pair<Core::Var, Type>& to_remove);
+    entails_by_superclass(const Constraint& to_keep,
+                          const Constraint& to_remove);
 
     Core::Decls simplify(const LIE& givens, LIE& wanteds);
 

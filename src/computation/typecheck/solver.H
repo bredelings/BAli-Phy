@@ -7,51 +7,45 @@
 #include <vector>
 #include <variant>
 
-enum ConstraintFlavor { Wanted, Given };
-
-struct NonCanonicalPred
+struct NonCanonical
 {
-    Core::Var dvar;
-    Type constraint;
+    Constraint constraint;
+
+    ConstraintFlavor flavor() const {return constraint.flavor;}
     std::string print() const;
-    NonCanonicalPred(const Core::Var& v, const Type& c):dvar(v), constraint(c) {}
+    NonCanonical(const Constraint& c):constraint(c) {}
 };
 
-struct CanonicalDictPred
+struct CanonicalDict
 {
-    Core::Var dvar;
+    Constraint constraint;
     TypeCon klass;
     std::vector<Type> args;
+
+    ConstraintFlavor flavor() const {return constraint.flavor;}
     std::string print() const;
 };
 
-struct CanonicalEqualityPred
+struct CanonicalEquality
 {
-    Core::Var co;
+    Constraint constraint;
     Type t1;
     Type t2;
-    CanonicalEqualityPred flip() const;
+
+    CanonicalEquality flip() const;
+    ConstraintFlavor flavor() const {return constraint.flavor;}
     std::string print() const;
-    CanonicalEqualityPred(const Core::Var& v, const Type& ta, const Type& tb):co(v),t1(ta),t2(tb) {}
+
+    CanonicalEquality(const Constraint& c, const Type& ta, const Type& tb):constraint(c),t1(ta),t2(tb) {}
 };
 
-struct Pred: public std::variant<NonCanonicalPred, CanonicalDictPred, CanonicalEqualityPred>
+struct Predicate: public std::variant<NonCanonical, CanonicalDict, CanonicalEquality>
 {
     std::string print() const;
-
+    const Constraint& constraint() const;
+    ConstraintFlavor flavor() const;
     using variant::variant;
 };
-
-struct Predicate
-{
-    ConstraintFlavor flavor;
-    Pred pred;
-
-    std::string print() const;
-    Predicate(ConstraintFlavor f, Pred p): flavor(f), pred(p) {}
-};
-
-std::vector<Predicate> make_predicates(ConstraintFlavor, const std::vector<Constraint>&);
 
 struct ReactFail {};
 
@@ -137,31 +131,31 @@ struct Solver: public TypeChecker
     Type rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon&, const std::vector<Type>&) const;
     Type rewrite_app(ConstraintFlavor flavor, const Type&, const Type&) const;
     
-    std::optional<Type> maybe_break_type_equality_cycle(ConstraintFlavor, const CanonicalEqualityPred&, std::bitset<8>);
+    std::optional<Type> maybe_break_type_equality_cycle(const CanonicalEquality&, std::bitset<8>);
 
     Type break_type_equality_cycle(ConstraintFlavor, const Type&);
     void unbreak_type_equality_cycles();
 
     std::optional<Predicate>
-    canonicalize_equality_var_tyfam(ConstraintFlavor flavor, CanonicalEqualityPred P);
+    canonicalize_equality_var_tyfam(CanonicalEquality P);
 
     std::optional<Predicate>
-    canonicalize_equality_lhs2(ConstraintFlavor flavor, CanonicalEqualityPred P);
+    canonicalize_equality_lhs2(CanonicalEquality P);
 
     std::optional<Predicate>
-    canonicalize_equality_lhs1(ConstraintFlavor flavor, const CanonicalEqualityPred& P);
+    canonicalize_equality_lhs1(const CanonicalEquality& P);
 
     std::optional<Predicate>
-    canonicalize_equality_lhs(ConstraintFlavor flavor, const CanonicalEqualityPred& P);
+    canonicalize_equality_lhs(const CanonicalEquality& P);
 
     std::optional<Predicate>
     canonicalize_equality_type_apps(ConstraintFlavor flavor,
                                const Type&, const Type&, const Type&, const Type&);
     std::optional<Predicate>
-    canonicalize_equality_type_cons(ConstraintFlavor flavor, const CanonicalEqualityPred& P,
+    canonicalize_equality_type_cons(const CanonicalEquality& P,
                                     const TypeCon&, const std::vector<Type>&, const TypeCon&, const std::vector<Type>&);
-    std::optional<Predicate> canonicalize_equality(ConstraintFlavor flavor, CanonicalEqualityPred P);
-    std::optional<Predicate> canonicalize_dict(ConstraintFlavor flavor, CanonicalDictPred P);
+    std::optional<Predicate> canonicalize_equality(CanonicalEquality P);
+    std::optional<Predicate> canonicalize_dict(CanonicalDict P);
     std::optional<Predicate> canonicalize(Predicate& P);
 
     Change interact(const Predicate& P1, const Predicate& P2);
