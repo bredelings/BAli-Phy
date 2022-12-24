@@ -812,7 +812,7 @@ Core::Var TypeChecker::fresh_dvar(const Type& constraint)
     return dvar;
 }
 
-Core::Var TypeChecker::add_dvar(const Type& constraint)
+Core::Var TypeChecker::add_wanted(const Type& constraint)
 {
     auto dvar = fresh_dvar(constraint);
 

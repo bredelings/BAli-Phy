@@ -135,7 +135,7 @@ bool TypeChecker::maybe_unify_(bool eager_unification, bool both_ways, const uni
             return try_insert(*tv1, t2);
         else
         {
-            add_dvar(make_equality_constraint(*tv1, t2));
+            add_wanted(make_equality_constraint(*tv1, t2));
             return true;
         }
     }
@@ -145,7 +145,7 @@ bool TypeChecker::maybe_unify_(bool eager_unification, bool both_ways, const uni
             return try_insert(*tv2, t1);
         else
         {
-            add_dvar(make_equality_constraint(*tv2, t1));
+            add_wanted(make_equality_constraint(*tv2, t1));
             return true;
         }
     }
@@ -160,7 +160,7 @@ bool TypeChecker::maybe_unify_(bool eager_unification, bool both_ways, const uni
         }
         else
         {
-            add_dvar(make_equality_constraint(t1, t2));
+            add_wanted(make_equality_constraint(t1, t2));
             return true;
         }
     }
@@ -175,7 +175,7 @@ bool TypeChecker::maybe_unify_(bool eager_unification, bool both_ways, const uni
         }
         else
         {
-            add_dvar(make_equality_constraint(t1, t2));
+            add_wanted(make_equality_constraint(t1, t2));
             return true;
         }
     }

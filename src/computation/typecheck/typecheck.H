@@ -204,7 +204,7 @@ struct TypeChecker: FreshVarSource
 
     Core::Var fresh_dvar(const Type& constraint);
 
-    Core::Var add_dvar(const Type& constraint);
+    Core::Var add_wanted(const Type& constraint);
 
     // ------ End: Functions handling the LIE ---
 
