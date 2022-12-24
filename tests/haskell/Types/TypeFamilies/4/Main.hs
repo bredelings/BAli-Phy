@@ -2,8 +2,8 @@
 
 {- This test creates:
 
-   [W] a ~ (Arg a -> Res a)
    [W] C a
+   [W] a ~ (Arg a -> Res a)
 
 Processing the first wanted creates two regular metatypevar's to break the cycle:
 
@@ -12,14 +12,14 @@ Processing the first wanted creates two regular metatypevar's to break the cycle
    [W] cbv1 ~ Arg a
    [W] cbv2 ~ Res a
  
-We then immediately substitute for a, yielding:
+We then immediately continue processing [W] a ~ (cbv1 -> cbv2) and substitute for a, yielding:
 
    [W] C (cbv1 -> cbv2)
    [W] cbv1 ~ Arg (cbv1 -> cbv2)
    [W] cbv2 ~ Res (cbv1 -> cbv2)
 
 The first wanted can then be satisfied via the class instance for C.
-The remaining wanteds are reduce to reflexivites via the type instances for Arg and Res.
+The remaining wanteds are reduced to reflexivites via the type instances for Arg and Res.
 
 -}
 
