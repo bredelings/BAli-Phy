@@ -327,11 +327,17 @@ Solver::canonicalize_equality_var_tyfam(CanonicalEquality P)
     assert(P.t1.is_a<TypeVar>() or P.t1.is_a<MetaTypeVar>());
     assert(is_type_fam_app(P.t2));
 
+    // If mtv1 -> tyfam is touchable and has no problems, do that.
     auto mtv1 = P.t1.to<MetaTypeVar>();
     if (mtv1 and is_touchable(*mtv1, P.t2))
-        return canonicalize_equality_lhs1(P);
-    else
-        return canonicalize_equality_lhs1(P.flip());
+    {
+        auto result = check_type_equality(P.t1, P.t2) & ~type_family_result;
+        if (result == ok_result)
+            return canonicalize_equality_lhs1(P);
+    }
+
+    // Otherwise prefer tyfam -> var
+    return canonicalize_equality_lhs1(P.flip());
 }
 
 
