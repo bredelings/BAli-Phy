@@ -336,6 +336,7 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const st
     L->fully_lazy = args["fully-lazy"].as<bool>();
     L->dump_parsed = args.count("dump-parsed");
     L->dump_renamed = args.count("dump-rn");
+    L->dump_typechecked = args.count("dump-tc");
     L->dump_desugared = args.count("dump-ds");
 
     return L;

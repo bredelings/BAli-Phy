@@ -448,6 +448,9 @@ void Module::compile(const Program& P)
     auto& loader = *P.get_module_loader();
     simplifier_options& opts = loader;
 
+    if (opts.dump_parsed or opts.dump_renamed or opts.dump_desugared or opts.dump_typechecked)
+        std::cerr<<"-------- module "<<name<<"--------\n";
+
     tc_state = std::make_shared<TypeChecker>( P.fresh_var_state(), name, *this);
 
     // Scans imported modules and modifies symbol table and type table
@@ -487,14 +490,23 @@ void Module::compile(const Program& P)
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = rename(opts, M);
 
-//    std::cerr<<"-------- module "<<name<<"--------\n";
     auto tc_result = typecheck(M);
 
-//    std::cerr<<"All decls:\n";
-//    for(auto& [name,type]: tc_state->gve)
-//        std::cerr<<name<<" :: "<<type<<"\n";
-
     auto [hs_decls, core_decls] = tc_result.all_binds();
+
+    if (opts.dump_typechecked)
+    {
+        std::cerr<<"\nType-checked:\n";
+        for(auto& [name,type]: tc_state->gve)
+        {
+            std::cerr<<name<<" :: "<<type.print()<<"\n";
+        }
+        for(auto& decl: hs_decls)
+        {
+            std::cerr<<decl.print()<<"\n";
+        }
+        std::cerr<<print_cdecls(core_decls)<<"\n";
+    }
 
     // Updates exported_symols_ + exported_types_
     perform_exports();
@@ -510,7 +522,7 @@ void Module::compile(const Program& P)
 
     if (opts.dump_desugared)
     {
-        std::cerr<<"\n\nCore:\n";
+        std::cerr<<"\nCore:\n";
         for(auto& [x,rhs] : value_decls)
             std::cerr<<x.print()<<" = "<<rhs.print()<<"\n";
         std::cerr<<"\n\n";

@@ -10,10 +10,22 @@
 
 #include "computation/fresh_vars.H"
 
-struct simplifier_options
+struct pass_options
 {
     bool typecheck = true;
     bool optimize = true;
+};
+
+struct dump_options
+{
+    bool dump_parsed = false;
+    bool dump_renamed = false;
+    bool dump_desugared = false;
+    bool dump_typechecked = false;
+};
+
+struct simplifier_options: public pass_options, public dump_options
+{
     bool pre_inline_unconditionally = true;
     bool post_inline_unconditionally = true;
     bool let_float_from_case = true;
@@ -28,10 +40,6 @@ struct simplifier_options
     double keenness = 1.5;
 
     bool fully_lazy = true;
-
-    bool dump_parsed = false;
-    bool dump_renamed = false;
-    bool dump_desugared = false;
 };
 
 class module_loader;
