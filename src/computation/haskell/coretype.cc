@@ -647,11 +647,12 @@ string TypeApp::print() const
 {
     if (auto type_op = is_type_op(*this))
     {
-        auto& [tycon, arg1, arg2] = *type_op;
-        if (is_type_op(arg1))
-            return parenthesize_type(arg1) + " " + tycon.print() + " "+ arg2.print();
-        else
-            return arg1.print() + " " + tycon.print() + " "+ arg2.print();
+        auto [tycon, arg1, arg2] = *type_op;
+
+        string arg1s = is_type_op(arg1) ? parenthesize_type(arg1) : arg1.print();
+        string arg2s = is_type_op(arg2) ? parenthesize_type(arg2) : arg2.print();
+
+        return arg1s + " " + tycon.print() + " "+ arg2s;
     }
     else if (auto element_type = is_list_type(*this))
         return "[" + element_type->print() +"]";
