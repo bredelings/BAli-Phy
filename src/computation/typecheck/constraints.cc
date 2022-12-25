@@ -53,7 +53,7 @@ LIE dictionary_constraints(const LIE& lie1)
 
     for(auto& constraint: lie1)
     {
-        if (not is_equality_constraint(constraint.pred))
+        if (is_dictionary_pred(constraint.pred))
             lie2.push_back(constraint);
     }
 
@@ -66,7 +66,7 @@ LIE equality_constraints(const LIE& lie1)
 
     for(auto& constraint: lie1)
     {
-        if (is_equality_constraint(constraint.pred))
+        if (is_equality_pred(constraint.pred))
             lie2.push_back(constraint);
     }
 

@@ -150,7 +150,7 @@ Type make_arrow_type(const Type& t1, const Type& t2)
     return TypeApp(TypeApp(type_arrow,t1),t2);
 }
 
-Type make_equality_constraint(const Type& t1, const Type& t2)
+Type make_equality_pred(const Type& t1, const Type& t2)
 {
     static TypeCon type_arrow(Located<string>({},"~"));
     return TypeApp(TypeApp(type_arrow,t1),t2);
@@ -323,7 +323,7 @@ int type_arity(Type t)
     return a;
 }
 
-optional<pair<Type,Type>> is_equality_constraint(const Type& t)
+optional<pair<Type,Type>> is_equality_pred(const Type& t)
 {
     auto [head,args] = decompose_type_apps(t);
 
@@ -340,7 +340,7 @@ optional<pair<Type,Type>> is_equality_constraint(const Type& t)
 
 optional<tuple<Type,vector<Type>>> is_dictionary_pred(const Type& t)
 {
-    // This should be mutually exclusive with is_equality_constraint
+    // This should be mutually exclusive with is_equality_pred
     // if the kind of the predicate is Constraint
     auto [head,args] = decompose_type_apps(t);
 
@@ -350,7 +350,7 @@ optional<tuple<Type,vector<Type>>> is_dictionary_pred(const Type& t)
         return {{head, args}};
 }
 
-std::vector<Type> dictionary_constraints(const std::vector<Type> constraints)
+std::vector<Type> dictionary_preds(const std::vector<Type> constraints)
 {
     vector<Type> constraints2;
 
@@ -361,12 +361,12 @@ std::vector<Type> dictionary_constraints(const std::vector<Type> constraints)
     return constraints2;
 }
 
-std::vector<Type> equality_constraints(const std::vector<Type> constraints)
+std::vector<Type> equality_preds(const std::vector<Type> constraints)
 {
     vector<Type> constraints2;
 
     for(auto& constraint: constraints)
-        if (is_equality_constraint(constraint))
+        if (is_equality_pred(constraint))
             constraints2.push_back(constraint);
 
     return constraints2;

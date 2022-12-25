@@ -154,7 +154,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 
     // 10. Add the (~) instance to the instance environment
     Type lhs = make_tyapps(tf_con, eqn.args);
-    Type constraint = make_equality_constraint(lhs, eqn.rhs);
+    Type constraint = make_equality_pred(lhs, eqn.rhs);
     Type inst_type = add_forall_vars(eqn.free_tvs, constraint);
 
     int eqn_id = FreshVarSource::current_index();

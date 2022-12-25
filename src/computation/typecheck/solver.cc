@@ -221,7 +221,7 @@ std::optional<Core::Decls> TypeChecker::entails(const T& givens, const std::pair
 CanonicalEquality CanonicalEquality::flip() const
 {
     CanonicalEquality E = *this;
-    E.constraint.pred = make_equality_constraint(t2,t1);
+    E.constraint.pred = make_equality_pred(t2,t1);
     std::swap(E.t1, E.t2);
     return E;
 }
@@ -230,11 +230,11 @@ std::optional<Predicate>
 Solver::canonicalize_equality_type_apps(const Constraint& C,
                                         const Type& fun1, const Type& arg1, const Type& fun2, const Type& arg2)
 {
-    auto fun_constraint = make_equality_constraint(fun1, fun2);
+    auto fun_constraint = make_equality_pred(fun1, fun2);
     auto fun_dvar = fresh_dvar(fun_constraint);
     work_list.push_back(NonCanonical({C.origin, C.flavor, fun_dvar, fun_constraint, C.level}));
 
-    auto arg_constraint = make_equality_constraint(arg1, arg2);
+    auto arg_constraint = make_equality_pred(arg1, arg2);
     auto arg_dvar = fresh_dvar(arg_constraint);
     work_list.push_back(NonCanonical({C.origin, C.flavor, arg_dvar, arg_constraint, C.level}));
 
@@ -254,7 +254,7 @@ std::optional<Predicate> Solver::canonicalize_equality_type_cons(const Canonical
         // If we've gotten here, the heads are both injective, and might be equal.
         for(int i=0;i<args1.size();i++)
         {
-            auto constraint = make_equality_constraint(args1[i], args2[i]);
+            auto constraint = make_equality_pred(args1[i], args2[i]);
             auto dvar = fresh_dvar(constraint);
             work_list.push_back(NonCanonical({P.origin(), P.flavor(), dvar, constraint, P.level()}));
         }
@@ -512,7 +512,7 @@ Type Solver::break_type_equality_cycle(const Constraint& C, const Type& type)
 
         // TODO: Mark these as coming from a cycle-breaking operation.
 
-        auto constraint = make_equality_constraint(new_tv, type);
+        auto constraint = make_equality_pred(new_tv, type);
         auto dvar = fresh_dvar(constraint);
         work_list.push_back(NonCanonical({CycleBreakerOrigin(), C.flavor, dvar, constraint, C.level}));
 
@@ -705,7 +705,7 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
 {
     if (auto NC = to<NonCanonical>(P))
     {
-        if (auto eq = is_equality_constraint(NC->constraint.pred))
+        if (auto eq = is_equality_pred(NC->constraint.pred))
         {
             auto& [t1, t2] = *eq;
             return canonicalize_equality({NC->constraint, t1, t2});
@@ -913,7 +913,7 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
         // We don't use instances for givens.
         if (P.flavor() == Given) return {};
 
-        auto constraint = make_equality_constraint(eq->t1,eq->t2);
+        auto constraint = make_equality_pred(eq->t1,eq->t2);
 
         if (auto inst = lookup_instance(constraint))
         {
@@ -1272,10 +1272,10 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
     return decls;
 }
 
-bool contains_equality_constraints(const LIE& constraints)
+bool contains_equality_preds(const LIE& constraints)
 {
     for(auto& constraint: constraints)
-        if (is_equality_constraint(constraint.pred))
+        if (is_equality_pred(constraint.pred))
             return true;
     return false;
 }
@@ -1312,7 +1312,7 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
 
             // 5. Promote any level+1 meta-vars and complain about level+1 skolem vars.
             LIE lie_residual_keep;
-            if (not contains_equality_constraints(implic->givens))
+            if (not contains_equality_preds(implic->givens))
             {
                 for(auto& constraint: implic->wanteds.simple)
                 {

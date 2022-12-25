@@ -571,7 +571,7 @@ constr_env kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
                 {
                     auto u_tv = fresh_vars.fresh_other_type_var(*data_decl.type_vars[i].kind);
                     u_tvs.push_back(u_tv);
-                    info.gadt_eq_constraints.push_back(make_equality_constraint(u_tv,arg));
+                    info.gadt_eq_constraints.push_back(make_equality_pred(u_tv,arg));
                 }
             }
 

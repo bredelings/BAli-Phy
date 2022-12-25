@@ -261,7 +261,7 @@ Type function_type(const std::vector<Type>& arg_types, const Type& result_type);
 
 Type make_arrow_type(const Type& t1, const Type& t2);
 
-Type make_equality_constraint(const Type& t1, const Type& t2);
+Type make_equality_pred(const Type& t1, const Type& t2);
 
 std::string parenthesize_type(Type t);
 
@@ -283,13 +283,13 @@ std::pair<std::vector<Type>,Type> gen_arg_result_types(const Type&);
 
 std::pair<std::vector<Type>,Type> arg_result_types(const Type&);
 
-std::optional<std::pair<Type,Type>> is_equality_constraint(const Type& t);
+std::optional<std::pair<Type,Type>> is_equality_pred(const Type& t);
 
 std::optional<std::tuple<Type,std::vector<Type>>> is_dictionary_pred(const Type& t);
 
-std::vector<Type> equality_constraints(const std::vector<Type> constraints);
+std::vector<Type> equality_preds(const std::vector<Type> constraints);
 
-std::vector<Type> dictionary_constraints(const std::vector<Type> constraints);
+std::vector<Type> dictionary_preds(const std::vector<Type> constraints);
 
 std::tuple<std::vector<TypeVar>, std::vector<Type>, Type> peel_top_gen(Type t);
 

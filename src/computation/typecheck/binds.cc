@@ -464,7 +464,7 @@ set<MetaTypeVar> find_fixed_tvs(bool restricted, int level, const LIE& wanteds, 
     // If we have alpha[1] ~ [ beta[2] ], then beta should also be considered fixed.
     for(auto& constraint: wanteds)
     {
-        if (auto eq = is_equality_constraint(constraint.pred))
+        if (auto eq = is_equality_pred(constraint.pred))
         {
             auto [t1,t2] = *eq;
 

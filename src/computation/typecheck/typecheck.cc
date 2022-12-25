@@ -801,25 +801,25 @@ WantedConstraints& TypeChecker::current_wanteds()
     return collected_wanteds;
 }
 
-Core::Var TypeChecker::fresh_dvar(const Type& constraint)
+Core::Var TypeChecker::fresh_dvar(const Type& pred)
 {
     ID name;
-    if (is_equality_constraint(constraint))
+    if (is_equality_pred(pred))
         name = "co";
-    else if (auto cname = maybe_get_class_name_from_constraint(constraint))
+    else if (auto cname = maybe_get_class_name_from_constraint(pred))
         name = "d" + *cname;
     else
         name = "dvar";
     auto dvar = get_fresh_var(name, false);
-    dvar.type_ = std::make_shared<Type>(constraint);
+    dvar.type_ = std::make_shared<Type>(pred);
     return dvar;
 }
 
-Core::Var TypeChecker::add_wanted(const ConstraintOrigin& origin, const Type& constraint)
+Core::Var TypeChecker::add_wanted(const ConstraintOrigin& origin, const Type& pred)
 {
-    auto dvar = fresh_dvar(constraint);
+    auto dvar = fresh_dvar(pred);
 
-    current_wanteds().simple.push_back( {origin, Wanted, dvar, constraint, level} );
+    current_wanteds().simple.push_back( {origin, Wanted, dvar, pred, level} );
 
     return dvar;
 }
@@ -989,11 +989,11 @@ DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
 }
 
 
-value_env add_constraints(const std::vector<Type>& constraints, const value_env& env1)
+value_env add_constraints(const std::vector<Type>& preds, const value_env& env1)
 {
     value_env env2;
     for(auto& [name, monotype]: env1)
-        env2 = env2.insert( {name, add_constraints(constraints, monotype)} );
+        env2 = env2.insert( {name, add_constraints(preds, monotype)} );
     return env2;
 }
 

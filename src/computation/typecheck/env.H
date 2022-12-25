@@ -79,8 +79,8 @@ struct DataConInfo
     std::vector<Type> gadt_eq_constraints;
     std::vector<Type> field_types;
     std::vector<Type> all_constraints() const;
-    std::vector<Type> dictionary_constraints() const;
-    std::vector<Type> equality_constraints() const;
+    std::vector<Type> dictionary_preds() const;
+    std::vector<Type> equality_preds() const;
     TypeCon data_type;
     int dict_arity() const;
     int arity() const;

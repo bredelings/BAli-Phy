@@ -170,19 +170,19 @@ vector<Type> DataConInfo::all_constraints() const
     return cs;
 }
 
-vector<Type> DataConInfo::dictionary_constraints() const
+vector<Type> DataConInfo::dictionary_preds() const
 {
-    return ::dictionary_constraints(all_constraints());
+    return ::dictionary_preds(all_constraints());
 }
 
-vector<Type> DataConInfo::equality_constraints() const
+vector<Type> DataConInfo::equality_preds() const
 {
-    return ::equality_constraints(all_constraints());
+    return ::equality_preds(all_constraints());
 }
 
 int DataConInfo::dict_arity() const
 {
-    return dictionary_constraints().size();
+    return dictionary_preds().size();
 }
 
 int DataConInfo::arity() const
