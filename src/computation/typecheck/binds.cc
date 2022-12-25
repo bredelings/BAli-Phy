@@ -527,29 +527,8 @@ Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& m
     return {poly_id, mono_id, monotype, polytype, wrap};
 }
 
-Hs::Decls
-TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs::Decls decls, bool is_top_level)
+tuple<set<TypeVar>, LIE, LIE, Core::Decls> TypeChecker::simplify_and_quantify(TypeChecker& tcs2, bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env)
 {
-    if (single_fundecl_with_sig(decls, signatures))
-    {
-        auto& FD = decls[0].as_<Hs::FunDecl>();
-
-        auto [decl, name, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
-
-        Hs::Decls decls({decl});
-
-        return decls;
-    }
-
-    // 1. Type check the decls group with monomorphic types for vars w/o signatures.
-    auto tcs2 = copy_clear_wanteds(true);
-    auto [mono_ids, mono_binder_env] = tcs2.tc_decls_group_mono(signatures, decls);
-    auto wanteds = tcs2.current_wanteds();
-
-    // 2. Check if there are predicates on signatures with the monomorphism restriction..
-    bool restricted = is_restricted(signatures, decls) and not is_top_level;
-    // TODO: complain here if restricted variable have signatures with constraints?
-
     // FIXME! We also need to minimize constraints like (Eq a, Ord a) down to (Ord a).
     // See mkMinimayBySCs -- am I already doing this inside entails( ) / solve( )?
 
@@ -571,7 +550,6 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
 
     // 6. Defer constraints w/o any vars to quantify over
     auto [lie_deferred, lie_retained] = classify_constraints( restricted, wanteds.simple, qmtvs );
-    current_wanteds() += lie_deferred;
 
     // 7. Replace quantified meta-typevars with fresh type vars, and promote the other ones.
     set<TypeVar> qtvs;
@@ -600,6 +578,39 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
     check_HNF( lie_retained );
     assert(not restricted or lie_retained.empty());
 
+    return {qtvs, lie_retained, lie_deferred, solve_decls};
+}
+
+Hs::Decls
+TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs::Decls decls, bool is_top_level)
+{
+    if (single_fundecl_with_sig(decls, signatures))
+    {
+        auto& FD = decls[0].as_<Hs::FunDecl>();
+
+        auto [decl, name, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
+
+        Hs::Decls decls({decl});
+
+        return decls;
+    }
+
+    // 1. Type check the decls group with monomorphic types for vars w/o signatures.
+    auto tcs2 = copy_clear_wanteds(true);
+    auto [mono_ids, mono_binder_env] = tcs2.tc_decls_group_mono(signatures, decls);
+    auto wanteds = tcs2.current_wanteds();
+
+    // 2. Check if there are predicates on signatures with the monomorphism restriction..
+    bool restricted = is_restricted(signatures, decls) and not is_top_level;
+    // TODO: complain here if restricted variable have signatures with constraints?
+
+    // 3. Determine what to quantify over and stuff
+    auto [qtvs, lie_retained, lie_deferred, solve_decls] = simplify_and_quantify(tcs2, restricted, wanteds, mono_binder_env);
+
+    // 4. Emit wanteds
+    current_wanteds() += lie_deferred;
+
+    // 5. Compute bind infos
     map<string, Hs::BindInfo> bind_infos;
     for(auto& [name, monotype]: mono_binder_env)
     {
@@ -609,15 +620,18 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
     }
     assert(bind_infos.size() >= 1);
 
+    // 6. Add types for binders
     global_value_env poly_binder_env;
     for(auto& [name, bind_info]: bind_infos)
         poly_binder_env = poly_binder_env.insert({name, bind_info.polytype});
     add_binders(poly_binder_env);
 
+    // 7. Construct the gen_bind
     vector< Core::Var > dict_vars = dict_vars_from_lie( lie_retained );
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, std::make_shared<Core::Decls>(solve_decls), decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
+    // 8. Check that we don't have any wanteds with a deeper level
     for(auto& constraint: current_wanteds().simple)
     {
         assert( max_level(constraint.pred) <= level );
