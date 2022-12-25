@@ -1080,7 +1080,7 @@ TypeChecker::instantiate_emit(const Type& polytype)
 
     collected_wanteds += wanteds;
 
-    auto dict_args = vars_from_lie( dictionary_constraints( wanteds ) );
+    auto dict_args = dict_vars_from_lie( wanteds );
 
     return {Core::WrapApply(dict_args), rho_type};
 }
@@ -1223,7 +1223,7 @@ tuple<Core::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const Ty
     {
         // Compute givens from local givens followed by givens of sub-type.
         auto givens = preds_to_constraints(GivenOrigin(), Given, ct->context.constraints, level);
-        auto wrap1 = Core::WrapLambda( vars_from_lie( dictionary_constraints(givens) ) );
+        auto wrap1 = Core::WrapLambda( dict_vars_from_lie( givens ) );
 
         auto [wrap2, tvs2, givens2, type2] = skolemize(ct->type, skolem);
 

@@ -386,7 +386,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     {
         auto op = get_fresh_Var("i"+method_name, true);
 
-        dict_entries.push_back( Core::Apply(make_var(op), vars_from_lie<Core::Exp>(givens)) );
+        dict_entries.push_back( Core::Apply(make_var(op), dict_vars_from_lie<Core::Exp>(givens)) );
 
         // forall b. Ix b => a -> b -> b
         Type op_type = remove_top_gen(method_type);
@@ -503,7 +503,7 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_co
 
         if (not maybe_match(instance_head, target_constraint)) continue;
 
-        auto dfun_exp = Core::Apply(dfun, vars_from_lie<Core::Exp>(wanteds));
+        auto dfun_exp = Core::Apply(dfun, dict_vars_from_lie<Core::Exp>(wanteds));
 
         matching_instances.push_back({{dfun_exp, wanteds}, type});
     }

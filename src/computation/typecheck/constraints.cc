@@ -38,11 +38,12 @@ vector<Type> preds_from_lie(const LIE& constraints)
     return preds;
 }
 
-vector<Core::Var> vars_from_lie(const LIE& constraints)
+vector<Core::Var> dict_vars_from_lie(const LIE& constraints)
 {
     vector<Core::Var> vars;
     for(auto& constraint: constraints)
-        vars.push_back( constraint.ev_var );
+        if (is_dictionary_pred(constraint.pred))
+            vars.push_back( constraint.ev_var );
     return vars;
 }
 

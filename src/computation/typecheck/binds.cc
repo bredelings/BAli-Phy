@@ -509,8 +509,8 @@ Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& m
     auto [lie_unused, lie_used] = classify_constraints( lie_all, qtvs_in_this_type );
     current_wanteds() += lie_unused;
 
-    auto dict_args = vars_from_lie( lie_used );
-    auto tup_dict_args = vars_from_lie( lie_all );
+    auto dict_args = dict_vars_from_lie( lie_used );
+    auto tup_dict_args = dict_vars_from_lie( lie_all );
     auto wrap = Core::WrapLambda(dict_args) * Core::WrapApply(tup_dict_args);
 
     auto constraints_used = preds_from_lie(lie_used);
@@ -614,7 +614,7 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
         poly_binder_env = poly_binder_env.insert({name, bind_info.polytype});
     add_binders(poly_binder_env);
 
-    vector< Core::Var > dict_vars = vars_from_lie( lie_retained );
+    vector< Core::Var > dict_vars = dict_vars_from_lie( lie_retained );
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, std::make_shared<Core::Decls>(solve_decls), decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 

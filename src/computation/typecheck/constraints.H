@@ -110,17 +110,18 @@ struct Implication
 };
 
 template <typename T>
-std::vector<T> vars_from_lie(const LIE& constraints)
+std::vector<T> dict_vars_from_lie(const LIE& constraints)
 {
     std::vector<T> dvars;
     for(auto& constraint: constraints)
-        dvars.push_back(constraint.ev_var);
+        if (is_dictionary_pred(constraint.pred))
+            dvars.push_back(constraint.ev_var);
     return dvars;
 }
 
 std::vector<Type> preds_from_lie(const LIE& lie);
 
-std::vector<Core::Var> vars_from_lie(const LIE& lie);
+std::vector<Core::Var> dict_vars_from_lie(const LIE& lie);
 
 std::string print(const LIE& lie);
 

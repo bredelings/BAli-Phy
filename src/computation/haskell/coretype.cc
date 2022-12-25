@@ -338,12 +338,24 @@ optional<pair<Type,Type>> is_equality_constraint(const Type& t)
         return {};
 }
 
+optional<tuple<Type,vector<Type>>> is_dictionary_pred(const Type& t)
+{
+    // This should be mutually exclusive with is_equality_constraint
+    // if the kind of the predicate is Constraint
+    auto [head,args] = decompose_type_apps(t);
+
+    if (auto tc = head.to<TypeCon>(); tc and unloc(tc->name) == "~")
+        return {};
+    else
+        return {{head, args}};
+}
+
 std::vector<Type> dictionary_constraints(const std::vector<Type> constraints)
 {
     vector<Type> constraints2;
 
     for(auto& constraint: constraints)
-        if (not is_equality_constraint(constraint))
+        if (is_dictionary_pred(constraint))
             constraints2.push_back(constraint);
 
     return constraints2;

@@ -285,6 +285,8 @@ std::pair<std::vector<Type>,Type> arg_result_types(const Type&);
 
 std::optional<std::pair<Type,Type>> is_equality_constraint(const Type& t);
 
+std::optional<std::tuple<Type,std::vector<Type>>> is_dictionary_pred(const Type& t);
+
 std::vector<Type> equality_constraints(const std::vector<Type> constraints);
 
 std::vector<Type> dictionary_constraints(const std::vector<Type> constraints);
