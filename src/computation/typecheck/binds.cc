@@ -482,6 +482,51 @@ set<MetaTypeVar> find_fixed_tvs(bool restricted, int level, const LIE& wanteds, 
     return fixed;
 }
 
+Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& mono_id, const set<TypeVar>& qtvs,
+                                            const Type& monotype, const signature_env& signatures,
+                                            const LIE& lie_retained)
+{
+    set<TypeVar> qtvs_in_this_type = intersection( qtvs, free_type_variables( monotype ) );
+
+    set<TypeVar> qtvs_unused = qtvs - qtvs_in_this_type;
+
+    // Replace any unused typevars with metavariables
+    substitution_t s;
+    for(auto& tv: qtvs_unused)
+    {
+        assert(tv.kind);
+        auto new_tv = fresh_meta_type_var(unloc(tv.name), *tv.kind);
+        s = s.insert({tv, new_tv});
+    }
+    auto lie_all = apply_subst(s, lie_retained);
+
+    // Get new dict vars for constraints
+    for(auto& constraint: lie_all)
+        constraint.ev_var = fresh_dvar(constraint.pred);
+
+    // Any constraints that don't mention type vars of this type are ambiguous.
+    // We will put them into the environment in hopes that we can default them later.
+    auto [lie_unused, lie_used] = classify_constraints( lie_all, qtvs_in_this_type );
+    current_wanteds() += lie_unused;
+
+    auto dict_args = vars_from_lie( lie_used );
+    auto tup_dict_args = vars_from_lie( lie_all );
+    auto wrap = Core::WrapLambda(dict_args) * Core::WrapApply(tup_dict_args);
+
+    auto constraints_used = preds_from_lie(lie_used);
+    Type polytype = quantify( qtvs_in_this_type, add_constraints( constraints_used, monotype ) );
+    if (signatures.count(name))
+    {
+        auto sub_polytype = polytype;
+        polytype = signatures.at(name);
+        wrap = subsumptionCheck(sub_polytype, polytype) * wrap;
+    }
+
+    Hs::Var poly_id({noloc,name});
+
+    return {poly_id, mono_id, monotype, polytype, wrap};
+}
+
 Hs::Decls
 TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs::Decls decls, bool is_top_level)
 {
@@ -556,54 +601,17 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
     assert(not restricted or lie_retained.empty());
 
     map<string, Hs::BindInfo> bind_infos;
-    global_value_env poly_binder_env;
-
     for(auto& [name, monotype]: mono_binder_env)
     {
-        set<TypeVar> qtvs_in_this_type = intersection( qtvs, free_type_variables( monotype ) );
-
-        set<TypeVar> qtvs_unused = qtvs - qtvs_in_this_type;
-
-        // Replace any unused typevars with metavariables
-        substitution_t s;
-        for(auto& tv: qtvs_unused)
-        {
-            assert(tv.kind);
-            auto new_tv = fresh_meta_type_var(unloc(tv.name), *tv.kind);
-            s = s.insert({tv, new_tv});
-        }
-        auto lie_all = apply_subst(s, lie_retained);
-
-        // Get new dict vars for constraints
-        for(auto& constraint: lie_all)
-            constraint.ev_var = fresh_dvar(constraint.pred);
-
-        // Any constraints that don't mention type vars of this type are ambiguous.
-        // We will put them into the environment in hopes that we can default them later.
-        auto [lie_unused, lie_used] = classify_constraints( lie_all, qtvs_in_this_type );
-        current_wanteds() += lie_unused;
-
-        auto dict_args = vars_from_lie( lie_used );
-        auto tup_dict_args = vars_from_lie( lie_all );
-        auto wrap = Core::WrapLambda(dict_args) * Core::WrapApply(tup_dict_args);
-
-        auto constraints_used = preds_from_lie(lie_used);
-        Type polytype = quantify( qtvs_in_this_type, add_constraints( constraints_used, monotype ) );
-        if (not signatures.count(name))
-            poly_binder_env = poly_binder_env.insert( {name, polytype} );
-        else
-        {
-            auto sub_polytype = polytype;
-            polytype = signatures.at(name);
-            wrap = subsumptionCheck(sub_polytype, polytype) * wrap;
-        }
-
-        Hs::Var poly_id({noloc,name});
-        Hs::Var mono_id = mono_ids.at(name);
-        bind_infos.insert({name, Hs::BindInfo(poly_id, mono_id, monotype, polytype, wrap)});
+        auto mono_id = mono_ids.at(name);
+        auto bind_info = compute_bind_info(name, mono_id, qtvs, monotype, signatures, lie_retained);
+        bind_infos.insert({name, bind_info});
     }
     assert(bind_infos.size() >= 1);
 
+    global_value_env poly_binder_env;
+    for(auto& [name, bind_info]: bind_infos)
+        poly_binder_env = poly_binder_env.insert({name, bind_info.polytype});
     add_binders(poly_binder_env);
 
     vector< Core::Var > dict_vars = vars_from_lie( lie_retained );

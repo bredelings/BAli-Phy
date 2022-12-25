@@ -410,6 +410,11 @@ struct TypeChecker: FreshVarSource
     std::tuple<expression_ref, ID, Type>
     infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD);
 
+    Hs::BindInfo compute_bind_info(const std::string& name, const Hs::Var& mono_id,
+                                   const std::set<TypeVar>& qtvs,
+                                   const Type& monotype, const signature_env& signatures,
+                                   const LIE& lie_retained);
+
     Hs::Decls
     infer_type_for_decls_group(const signature_env&, Hs::Decls E, bool is_top_level);
 
