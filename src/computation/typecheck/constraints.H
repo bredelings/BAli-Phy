@@ -53,6 +53,8 @@ LIE dictionary_constraints(const LIE& lie);
 
 LIE equality_constraints(const LIE& lie);
 
+bool contains_equality_constraints(const LIE& constraints);
+
 template <typename T>
 std::vector<T>& operator+=(std::vector<T>& v1, const std::vector<T>& v2)
 {

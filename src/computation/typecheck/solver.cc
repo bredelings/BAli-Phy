@@ -1272,14 +1272,6 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
     return decls;
 }
 
-bool contains_equality_preds(const LIE& constraints)
-{
-    for(auto& constraint: constraints)
-        if (is_equality_pred(constraint.pred))
-            return true;
-    return false;
-}
-
 Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
 {
     Core::Decls decls;
@@ -1312,7 +1304,7 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
 
             // 5. Promote any level+1 meta-vars and complain about level+1 skolem vars.
             LIE lie_residual_keep;
-            if (not contains_equality_preds(implic->givens))
+            if (not contains_equality_constraints(implic->givens))
             {
                 for(auto& constraint: implic->wanteds.simple)
                 {

@@ -73,6 +73,14 @@ LIE equality_constraints(const LIE& lie1)
     return lie2;
 }
 
+bool contains_equality_constraints(const LIE& constraints)
+{
+    for(auto& constraint: constraints)
+        if (is_equality_pred(constraint.pred))
+            return true;
+    return false;
+}
+
 string WantedConstraints::print() const
 {
     vector<string> cs;

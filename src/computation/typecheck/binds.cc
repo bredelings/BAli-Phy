@@ -528,53 +528,119 @@ Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& m
 }
 
 
-// I. approximateWC
+// I. approximateWC - never fails
 // start with an empty set of trapping variables
 // return any simple constraints that don't contain any of the trapping variables
 //   + any contraints we can float from implications
 // for each implication without given equalities
 //   + extend the trapping variable set with the existential vars
 //   + and float out from implic->wanteds with the extended set.
-// but... we haven't promoted any of these?
+// We need to promote any meta-type vars in these .... where?
+// This should succeed since we avoid floating anything that contains an existential var.
 
 // II. decideQuantification
 //
-// decideMonoTyVars == Get global tyvars and grow them using equalities.
+// 1. decideMonoTyVars == Get global tyvars and grow them using equalities.
 //                     If a is fixed, the a ~ [beta] fixes beta.
 //                     Returns new candidates by clearing all of them if restricted is true.
 //
-// defaultTyVarsAndSimplify == Promote known-fixed tyvars (to current level from rhs_tclvl)
+// 2. defaultTyVarsAndSimplify == Promote known-fixed tyvars (to current level from rhs_tclvl)
 //                             Default kind & levity vars?
 //                             Re-simplify ... to infer multiplicity?
+//                             Also... somehow promotes mtvs in candidates to rhs_tclvl?
 //                             Return simplified candidates...
 //
 //
-// decideQuantifiedTyVars ==
+// 3. decideQuantifiedTyVars ==
 // - tau_tys = list of zonked monotypes
-// - start with the type vars of tau_tyvs, and grow them in the following fashion:
-//     + GrowThetaTyVars: look for thetas that intersect the current type var set
-//     + If we find any, add their type vars to the var set.
-//     + So, basically a transitive closure of vars that are free in the tau types, plus
-//       vars that co-occur in a constraint.
-//       ... how about ones that are definitely at a higher level?
-// - 
+// - grown_tcvs = type vars of tau_tys + any that are transitively reachable through a candidate pred
+//   + this set includes metatypevars, typevars, and coercionvars
+// - dv <- candidateQTyVarsOfTypes (candidates ++ tau_tys)
+//   + find types in tau_tys OR candidates with a level that is deeper than the current level
+//   + classify into type and kinds (a tyvar can be both if we have e.g. forall k (a::k) ...
+// - dvs_plus = intersection of dv with grown_tcvs
+// - final_qtvs <- quantifyTyVars grown_tcvs
+//   + defaultTyVars
+//   + discard coercion vars
+//   + run skolemiseQuantifiedTyVar on them
+//     o  if its a metatyvar, then
+//        * replace with skolemtv with {kind = from metatv, tc_level = current_level+1, loc=here, where we are generalizing
+//     = if its a skolemtv, then
+//        * basically keep it... possibly with a deeper level?
+//
+// - return final_qtvs
+//
+// 4. pickQuantifiablePreds
+//
+// a) if it is of the form Class a b c... then keep if
+//    + args [a,b,c..] intersect qtvs
+//    + checkValidClsArgs True cls tys is true = True ?
+//    + no fixed dependencies... from FunDeps.
+// b) if it is of the form t1 ~ t2 then keep if either side
+//    + is a type family application and
+//    + the args intersect qtvs
+// c) otherwise (head is type variable?) then keep if
+//    + free vars of pred intersect qtvs
+//
+// 5. Minimize by superclass
+//
+//
+// III. emitResidualConstraints
+//
+// args = level solve_decls mono_binder_env qtvs givens solved_wanteds
+//
+// Instead of removing the wanteds for the candidates, we construct a new implication constraint with:
+// - level = rhs_level
+// - skols = qtvs
+// - givens = full_theta_vars
+// - wanteds = wanteds
+// - decls = solve_decls?
+// I guess this means that we try to solve the wanteds from the givens?
+
+
+LIE float_wanteds(const WantedConstraints& wanteds, const std::set<TypeVar>& trapping_tvs = {})
+{
+    LIE floated;
+
+    // 1. Float simple wanteds that don't contain any trapping tvs
+    for(auto& simple: wanteds.simple)
+        if (not intersects(free_type_variables(simple.pred), trapping_tvs))
+            floated.push_back(simple);
+
+    // 2. Try and float wanteds out of implications
+    for(auto& implication: wanteds.implications)
+    {
+        // 2a. Any vars in the implication block floating too.
+        auto trapping_tvs2 = trapping_tvs;
+        for(auto& tv: implication->tvs)
+            trapping_tvs2.insert(tv);
+
+        // 2b. And if there's a given equality, we can't float past that.
+        if (contains_equality_constraints(implication->givens)) continue;
+        
+        // 2c. What do float?
+        auto i_floated = float_wanteds(implication->wanteds, trapping_tvs2);
+
+        // 2d. Append
+        for(auto& wanted: i_floated)
+            floated.push_back(wanted);
+    }
+
+    return floated;
+}
 
 tuple<set<TypeVar>, LIE, LIE, Core::Decls>
 TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env)
 {
-    // FIXME! We also need to minimize constraints like (Eq a, Ord a) down to (Ord a).
-    // See mkMinimayBySCs -- am I already doing this inside entails( ) / solve( )?
-
-    // 3. Try and solve the wanteds.  (See simplifyInfer)
-    //
-    //    This also substitutes into the current LIE, which we need to do 
-    //       before finding free type vars in the LIE below.
+    // 1. Try and solve the wanteds.  (See simplifyInfer)
     auto tcs2 = copy_clear_wanteds(true);
     auto solve_decls = tcs2.entails({},  wanteds );
-
-    // Float wanteds out of implications if they aren't trapped by either
-    //   (i) given equalities or (ii) existential variables
-    // quant_pred_candidates <- constraints_to_preds(approximateWC False wanteds)
+    int rhs_level = level + 1;
+    
+    // 2. Float wanteds out of implications if they aren't trapped by (i) given equalities or (ii) type variables
+    auto maybe_quant_preds = preds_from_lie(float_wanteds(wanteds));
+    for(auto& pred: maybe_quant_preds)
+        promote(pred, rhs_level);
 
     // (qtvs, bound_theta) = decideQuantification resolved level rhs_level mono_binder_env quant_pred_candidates
     // bound_theta_vars = get new evidence vars for the preds in bound_theta?
