@@ -527,7 +527,40 @@ Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& m
     return {poly_id, mono_id, monotype, polytype, wrap};
 }
 
-tuple<set<TypeVar>, LIE, LIE, Core::Decls> TypeChecker::simplify_and_quantify(TypeChecker& tcs2, bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env)
+
+// I. approximateWC
+// start with an empty set of trapping variables
+// return any simple constraints that don't contain any of the trapping variables
+//   + any contraints we can float from implications
+// for each implication without given equalities
+//   + extend the trapping variable set with the existential vars
+//   + and float out from implic->wanteds with the extended set.
+// but... we haven't promoted any of these?
+
+// II. decideQuantification
+//
+// decideMonoTyVars == Get global tyvars and grow them using equalities.
+//                     If a is fixed, the a ~ [beta] fixes beta.
+//                     Returns new candidates by clearing all of them if restricted is true.
+//
+// defaultTyVarsAndSimplify == Promote known-fixed tyvars (to current level from rhs_tclvl)
+//                             Default kind & levity vars?
+//                             Re-simplify ... to infer multiplicity?
+//                             Return simplified candidates...
+//
+//
+// decideQuantifiedTyVars ==
+// - tau_tys = list of zonked monotypes
+// - start with the type vars of tau_tyvs, and grow them in the following fashion:
+//     + GrowThetaTyVars: look for thetas that intersect the current type var set
+//     + If we find any, add their type vars to the var set.
+//     + So, basically a transitive closure of vars that are free in the tau types, plus
+//       vars that co-occur in a constraint.
+//       ... how about ones that are definitely at a higher level?
+// - 
+
+tuple<set<TypeVar>, LIE, LIE, Core::Decls>
+TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env)
 {
     // FIXME! We also need to minimize constraints like (Eq a, Ord a) down to (Ord a).
     // See mkMinimayBySCs -- am I already doing this inside entails( ) / solve( )?
@@ -536,8 +569,19 @@ tuple<set<TypeVar>, LIE, LIE, Core::Decls> TypeChecker::simplify_and_quantify(Ty
     //
     //    This also substitutes into the current LIE, which we need to do 
     //       before finding free type vars in the LIE below.
+    auto tcs2 = copy_clear_wanteds(true);
     auto solve_decls = tcs2.entails({},  wanteds );
 
+    // Float wanteds out of implications if they aren't trapped by either
+    //   (i) given equalities or (ii) existential variables
+    // quant_pred_candidates <- constraints_to_preds(approximateWC False wanteds)
+
+    // (qtvs, bound_theta) = decideQuantification resolved level rhs_level mono_binder_env quant_pred_candidates
+    // bound_theta_vars = get new evidence vars for the preds in bound_theta?
+
+    // emit residual constraints?
+    // emitResidualConstraints rhs_level solve_decls mono_binder_env qtvs bound_theta_vars wanteds2
+    
     auto tvs_in_any_type = free_meta_type_variables(mono_binder_env);
     auto local_tvs = tvs_in_any_type;
     add( local_tvs, free_meta_type_variables(wanteds.simple) );
@@ -605,37 +649,37 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
     // TODO: complain here if restricted variable have signatures with constraints?
 
     // 3. Determine what to quantify over and stuff
-    auto [qtvs, lie_retained, lie_deferred, solve_decls] = simplify_and_quantify(tcs2, restricted, wanteds, mono_binder_env);
+    auto [qtvs, givens, wanteds_deferred, solve_decls] = simplify_and_quantify(restricted, wanteds, mono_binder_env);
 
     // 4. Emit wanteds
-    current_wanteds() += lie_deferred;
+    current_wanteds() += wanteds_deferred;
 
-    // 5. Compute bind infos
+    // 5. Check that we don't have any wanteds with a deeper level
+    for(auto& constraint: current_wanteds().simple)
+    {
+        assert( max_level(constraint.pred) <= level );
+    }
+
+    // 6. Compute bind infos
     map<string, Hs::BindInfo> bind_infos;
     for(auto& [name, monotype]: mono_binder_env)
     {
         auto mono_id = mono_ids.at(name);
-        auto bind_info = compute_bind_info(name, mono_id, qtvs, monotype, signatures, lie_retained);
+        auto bind_info = compute_bind_info(name, mono_id, qtvs, monotype, signatures, givens);
         bind_infos.insert({name, bind_info});
     }
     assert(bind_infos.size() >= 1);
 
-    // 6. Add types for binders
+    // 7. Record types for binders
     global_value_env poly_binder_env;
     for(auto& [name, bind_info]: bind_infos)
         poly_binder_env = poly_binder_env.insert({name, bind_info.polytype});
     add_binders(poly_binder_env);
 
-    // 7. Construct the gen_bind
-    vector< Core::Var > dict_vars = dict_vars_from_lie( lie_retained );
+    // 8. Construct the quantified declaration to return
+    vector< Core::Var > dict_vars = dict_vars_from_lie( givens );
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, std::make_shared<Core::Decls>(solve_decls), decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
-
-    // 8. Check that we don't have any wanteds with a deeper level
-    for(auto& constraint: current_wanteds().simple)
-    {
-        assert( max_level(constraint.pred) <= level );
-    }
 
     return decls2;
 }
