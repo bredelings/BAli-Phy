@@ -388,7 +388,7 @@ struct TypeChecker: FreshVarSource
 
     bool is_quantifiable_pred(const Type& pred, const std::set<TypeVar>& qtvs) const;
 
-    std::tuple<std::set<TypeVar>, LIE, LIE, Core::Decls> simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env);
+    std::tuple<std::set<TypeVar>, LIE, Core::Decls> simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env);
 
     Hs::Decls
     infer_type_for_decls_group(const signature_env&, Hs::Decls E, bool is_top_level);

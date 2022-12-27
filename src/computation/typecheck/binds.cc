@@ -618,7 +618,7 @@ bool TypeChecker::is_quantifiable_pred(const Type& pred, const set<TypeVar>& qtv
         return true;
 }
 
-tuple<set<TypeVar>, LIE, LIE, Core::Decls>
+tuple<set<TypeVar>, LIE, Core::Decls>
 TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env)
 {
     // 1. Try and solve the wanteds.  (See simplifyInfer)
@@ -678,7 +678,15 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     check_HNF( lie_retained );
     assert(not restricted or lie_retained.empty());
 
-    return {qtvs, lie_retained, lie_deferred, solve_decls};
+    // 4. Constrict givens from the preds
+    auto givens = lie_retained;
+    for(auto& given: givens)
+    {
+        given.ev_var = fresh_dvar(given.pred);
+        given.flavor = Given;
+    }
+
+    return {qtvs, givens, solve_decls};
 }
 
 Hs::Decls
@@ -705,15 +713,7 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
     // TODO: complain here if restricted variable have signatures with constraints?
 
     // 3. Determine what to quantify over and stuff
-    auto [qtvs, givens_, wanteds_deferred, solve_decls] = simplify_and_quantify(restricted, wanteds, mono_binder_env);
-
-    // 4. Emit wanteds
-    auto givens = givens_;
-    for(auto& given: givens)
-    {
-        given.ev_var = fresh_dvar(given.pred);
-        given.flavor = Given;
-    }
+    auto [qtvs, givens, solve_decls] = simplify_and_quantify(restricted, wanteds, mono_binder_env);
 
     auto ev_decls = std::make_shared<Core::Decls>(solve_decls);
 
