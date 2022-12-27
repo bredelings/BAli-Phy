@@ -199,6 +199,23 @@ Hs::GenBind mkGenBind(const vector<TypeVar>& tvs,
 
 // Why aren't we using `fixed_type_vars`?
 // I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
+vector<Type>
+classify_preds(bool restricted, const vector<Type>& preds, const set<MetaTypeVar>& qtvs)
+{
+    if (restricted) return {};
+
+    vector<Type> keep;
+
+    for(auto& pred: preds)
+    {
+        if (intersects( free_meta_type_variables(pred), qtvs ))
+            keep.push_back(pred);
+    }
+    return keep;
+}
+
+// Why aren't we using `fixed_type_vars`?
+// I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
 pair<LIE, LIE>
 classify_constraints(bool restricted, const LIE& lie, const set<MetaTypeVar>& qtvs)
 {
@@ -430,11 +447,11 @@ bool constraint_is_hnf(const Type& constraint)
 }
 
 
-void check_HNF(const LIE& wanteds)
+void check_HNF(const vector<Type>& preds)
 {
-    for(auto& constraint: wanteds)
-        if (not constraint_is_hnf(constraint.pred))
-            throw myexception()<<"'"<<constraint.pred<<"' should be in HNF";
+    for(auto& pred: preds)
+        if (not constraint_is_hnf(pred))
+            throw myexception()<<"'"<<pred<<"' should be in HNF";
 }
 
 
@@ -450,7 +467,7 @@ void check_HNF(const LIE& wanteds)
 // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
 //   after generating definitions of their dictionaries.
 
-set<MetaTypeVar> find_fixed_tvs(bool restricted, int level, const LIE& wanteds, const set<MetaTypeVar>& tvs)
+set<MetaTypeVar> find_fixed_tvs(bool restricted, int level, const vector<Type>& preds, const set<MetaTypeVar>& tvs)
 {
     set<MetaTypeVar> fixed;
 
@@ -459,12 +476,12 @@ set<MetaTypeVar> find_fixed_tvs(bool restricted, int level, const LIE& wanteds, 
             fixed.insert(tv);
 
     if (restricted)
-        add(fixed, free_meta_type_variables(wanteds));
+        add(fixed, free_meta_type_variables(preds));
 
     // If we have alpha[1] ~ [ beta[2] ], then beta should also be considered fixed.
-    for(auto& constraint: wanteds)
+    for(auto& pred: preds)
     {
-        if (auto eq = is_equality_pred(constraint.pred))
+        if (auto eq = is_equality_pred(pred))
         {
             auto [t1,t2] = *eq;
 
@@ -627,9 +644,9 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     int rhs_level = level + 1;
     
     // 2. Float wanteds out of implications if they aren't trapped by (i) given equalities or (ii) type variables
-    auto maybe_quant_constraints = float_wanteds(wanteds);
-    for(auto& constraint: maybe_quant_constraints)
-        promote(constraint.pred, rhs_level);
+    auto maybe_quant_preds = preds_from_lie(float_wanteds(wanteds));
+    for(auto& pred: maybe_quant_preds)
+        promote(pred, rhs_level);
 
     // (qtvs, bound_theta) = decideQuantification resolved level rhs_level mono_binder_env quant_pred_candidates
     // bound_theta_vars = get new evidence vars for the preds in bound_theta?
@@ -642,13 +659,13 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     add( local_tvs, free_meta_type_variables(wanteds.simple) );
 
     // 4. Figure out which type vars we cannot quantify over.
-    auto fixed_tvs = find_fixed_tvs(restricted, level, maybe_quant_constraints, local_tvs);
+    auto fixed_tvs = find_fixed_tvs(restricted, level, maybe_quant_preds, local_tvs);
 
     // 5. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
     set<MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
 
     // 6. Defer constraints w/o any vars to quantify over
-    auto [lie_deferred, lie_retained] = classify_constraints( restricted, maybe_quant_constraints, qmtvs );
+    auto quant_preds = classify_preds( restricted, maybe_quant_preds, qmtvs );
 
     // 7. Replace quantified meta-typevars with fresh type vars, and promote the other ones.
     set<TypeVar> qtvs;
@@ -675,16 +692,13 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     // Never quantify over variables that are only in a LIE -- those must be defaulted.
 
     // 8. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
-    check_HNF( lie_retained );
-    assert(not restricted or lie_retained.empty());
+    check_HNF( quant_preds );
+    assert(not restricted or quant_preds.empty() );
 
     // 4. Constrict givens from the preds
-    auto givens = lie_retained;
-    for(auto& given: givens)
-    {
-        given.ev_var = fresh_dvar(given.pred);
-        given.flavor = Given;
-    }
+    LIE givens;
+    for(auto& pred: quant_preds)
+        givens.push_back({GivenOrigin(), Given, fresh_dvar(pred), pred, rhs_level});
 
     return {qtvs, givens, solve_decls};
 }
