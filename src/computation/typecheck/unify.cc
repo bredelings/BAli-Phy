@@ -99,6 +99,12 @@ bool TypeChecker::try_insert(const MetaTypeVar& tv, Type type) const
     return true;
 }
 
+
+void TypeChecker::unify_defer(const ConstraintOrigin& origin, const Type& t1, const Type& t2)
+{
+    add_wanted(origin, make_equality_pred(t1, t2));
+}
+
 // Is there a better way to implement this?
 bool TypeChecker::maybe_unify_solve_(const ConstraintOrigin& origin, const unification_env& env, const Type& t1, const Type& t2)
 {
@@ -131,22 +137,22 @@ bool TypeChecker::maybe_unify_solve_(const ConstraintOrigin& origin, const unifi
 
     else if (auto tv1 = t1.to<MetaTypeVar>())
     {
-        add_wanted(origin, make_equality_pred(*tv1, t2));
+        unify_defer(origin, t1, t2);
         return true;
     }
     else if (auto tv2 = t2.to<MetaTypeVar>())
     {
-        add_wanted(origin, make_equality_pred(*tv2, t1));
+        unify_defer(origin, t1, t2);
         return true;
     }
     else if (auto tv1 = t1.to<TypeVar>())
     {
-        add_wanted(origin, make_equality_pred(t1, t2));
+        unify_defer(origin, t1, t2);
         return true;
     }
     else if (auto tv2 = t2.to<TypeVar>())
     {
-        add_wanted(origin, make_equality_pred(t1, t2));
+        unify_defer(origin, t1, t2);
         return true;
     }
     else if (t1.is_a<TypeApp>() and t2.is_a<TypeApp>())

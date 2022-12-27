@@ -214,6 +214,8 @@ struct TypeChecker: FreshVarSource
 
     bool add_substitution(const MetaTypeVar& a, const Type& type);
 
+    void unify_defer(const ConstraintOrigin& origin, const Type& t1, const Type& t2);
+
     bool maybe_unify_solve_(const ConstraintOrigin& origin, const unification_env& env, const Type& t1, const Type& t2);
 
     bool maybe_unify_(bool both_ways, const unification_env& env, const Type& t1, const Type& t2);
