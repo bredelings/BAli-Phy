@@ -943,7 +943,8 @@ bool Solver::is_touchable(const MetaTypeVar& mtv, const Type& rhs) const
 
     assert(mtv.level() <= level);
 
-    assert(inerts.given_eq_level.value_or(0) < level);
+    // why do we think this?
+    assert(not inerts.given_eq_level or *inerts.given_eq_level < level);
 
     if (mtv.cycle_breaker) return false;
 
