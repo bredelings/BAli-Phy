@@ -199,23 +199,6 @@ Hs::GenBind mkGenBind(const vector<TypeVar>& tvs,
 
 // Why aren't we using `fixed_type_vars`?
 // I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
-vector<Type>
-classify_preds(bool restricted, const vector<Type>& preds, const set<TypeVar>& qtvs)
-{
-    if (restricted) return {};
-
-    vector<Type> keep;
-
-    for(auto& pred: preds)
-    {
-        if (intersects( free_type_variables(pred), qtvs ))
-            keep.push_back(pred);
-    }
-    return keep;
-}
-
-// Why aren't we using `fixed_type_vars`?
-// I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
 pair<LIE, LIE>
 classify_constraints(bool restricted, const LIE& lie, const set<MetaTypeVar>& qtvs)
 {
@@ -547,7 +530,8 @@ Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& m
 // II. decideQuantification
 //
 // 1. decideMonoTyVars == Get global tyvars and grow them using equalities.
-//                     If a is fixed, the a ~ [beta] fixes beta.
+//                     If a is fixed, then (a ~ [beta]) fixes beta.
+//                     But (a ~ F) beta does not fix beta.
 //                     Returns new candidates by clearing all of them if restricted is true.
 //
 // 2. defaultTyVarsAndSimplify == Promote known-fixed tyvars (to current level from rhs_tclvl)
@@ -635,6 +619,20 @@ bool TypeChecker::is_quantifiable_pred(const Type& pred, const set<TypeVar>& qtv
         return true;
 }
 
+vector<Type>
+TypeChecker::get_quantifiable_preds(bool restricted, const vector<Type>& preds, const set<TypeVar>& qtvs) const
+{
+    if (restricted) return {};
+
+    vector<Type> keep;
+
+    for(auto& pred: preds)
+        if (is_quantifiable_pred(pred, qtvs))
+            keep.push_back(pred);
+
+    return keep;
+}
+
 tuple<set<TypeVar>, LIE, Core::Decls>
 TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env)
 {
@@ -689,7 +687,7 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     // Never quantify over variables that are only in a LIE -- those must be defaulted.
 
     // 6. Defer constraints w/o any vars to quantify over
-    auto quant_preds = classify_preds( restricted, maybe_quant_preds, qtvs );
+    auto quant_preds = get_quantifiable_preds( restricted, maybe_quant_preds, qtvs );
 
     // 8. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
     check_HNF( quant_preds );
