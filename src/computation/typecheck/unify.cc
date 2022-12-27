@@ -100,7 +100,7 @@ bool TypeChecker::try_insert(const MetaTypeVar& tv, Type type) const
 }
 
 // Is there a better way to implement this?
-bool TypeChecker::maybe_unify_(bool eager_unification, bool both_ways, const unification_env& env, const Type& t1, const Type& t2)
+bool TypeChecker::maybe_unify_solve_(const ConstraintOrigin& origin, const unification_env& env, const Type& t1, const Type& t2)
 {
     // Translate rigid type variables
     if (auto tv1 = t1.to<TypeVar>(); tv1 and env.mapping1.count(*tv1))
@@ -109,7 +109,7 @@ bool TypeChecker::maybe_unify_(bool eager_unification, bool both_ways, const uni
         auto tv1_remapped = env.mapping1.at(*tv1);
         assert(tv1_remapped.is_skolem_constant());
         assert(not env.mapping1.count(tv1_remapped));
-        return maybe_unify_(eager_unification, both_ways, env, tv1_remapped, t2);
+        return maybe_unify_solve_(origin, env, tv1_remapped, t2);
     }
     else if (auto tv2 = t2.to<TypeVar>(); tv2 and env.mapping2.count(*tv2))
     {
@@ -117,75 +117,45 @@ bool TypeChecker::maybe_unify_(bool eager_unification, bool both_ways, const uni
         auto tv2_remapped = env.mapping2.at(*tv2);
         assert(tv2_remapped.is_skolem_constant());
         assert(not env.mapping2.count(tv2_remapped));
-        return maybe_unify_(eager_unification, both_ways, env, t1, tv2_remapped);
+        return maybe_unify_solve_(origin, env, t1, tv2_remapped);
     }
     else if (auto tt1 = filled_meta_type_var(t1))
-        return maybe_unify_(eager_unification, both_ways, env, *tt1, t2);
+        return maybe_unify_solve_(origin, env, *tt1, t2);
     else if (auto tt2 = filled_meta_type_var(t2))
-        return maybe_unify_(eager_unification, both_ways, env, t1, *tt2);
+        return maybe_unify_solve_(origin, env, t1, *tt2);
 
     else if (auto s1 = is_type_synonym(t1))
-        return maybe_unify_(eager_unification, both_ways, env, *s1,  t2);
+        return maybe_unify_solve_(origin, env, *s1,  t2);
     else if (auto s2 = is_type_synonym(t2))
-        return maybe_unify_(eager_unification, both_ways, env,  t1, *s2);
+        return maybe_unify_solve_(origin, env,  t1, *s2);
 
     else if (auto tv1 = t1.to<MetaTypeVar>())
     {
-        if (eager_unification)
-            return try_insert(*tv1, t2);
-        else
-        {
-            add_wanted(UnifyOrigin(), make_equality_pred(*tv1, t2));
-            return true;
-        }
+        add_wanted(origin, make_equality_pred(*tv1, t2));
+        return true;
     }
-    else if (auto tv2 = t2.to<MetaTypeVar>(); tv2 and both_ways)
+    else if (auto tv2 = t2.to<MetaTypeVar>())
     {
-        if (eager_unification)
-            return try_insert(*tv2, t1);
-        else
-        {
-            add_wanted(UnifyOrigin(), make_equality_pred(*tv2, t1));
-            return true;
-        }
+        add_wanted(origin, make_equality_pred(*tv2, t1));
+        return true;
     }
     else if (auto tv1 = t1.to<TypeVar>())
     {
-        if (eager_unification)
-        {
-            if (auto tv2 = t2.to<TypeVar>(); tv2 and *tv1 == *tv2)
-                return true;
-            else
-                return false;
-        }
-        else
-        {
-            add_wanted(UnifyOrigin(), make_equality_pred(t1, t2));
-            return true;
-        }
+        add_wanted(origin, make_equality_pred(t1, t2));
+        return true;
     }
     else if (auto tv2 = t2.to<TypeVar>())
     {
-        if (eager_unification)
-        {
-            if (auto tv1 = t1.to<TypeVar>(); tv1 and *tv1 == *tv2)
-                return true;
-            else
-                return false;
-        }
-        else
-        {
-            add_wanted(UnifyOrigin(), make_equality_pred(t1, t2));
-            return true;
-        }
+        add_wanted(origin, make_equality_pred(t1, t2));
+        return true;
     }
     else if (t1.is_a<TypeApp>() and t2.is_a<TypeApp>())
     {
         auto& app1 = t1.as_<TypeApp>();
         auto& app2 = t2.as_<TypeApp>();
 
-        return maybe_unify_(eager_unification, both_ways, env, app1.head, app2.head) and
-               maybe_unify_(eager_unification, both_ways, env, app1.arg , app2.arg );
+        return maybe_unify_solve_(origin, env, app1.head, app2.head) and
+               maybe_unify_solve_(origin, env, app1.arg , app2.arg );
     }
     else if (t1.is_a<TypeCon>() and
              t2.is_a<TypeCon>() and
@@ -200,9 +170,9 @@ bool TypeChecker::maybe_unify_(bool eager_unification, bool both_ways, const uni
         if (c1->context.constraints.size() != c2->context.constraints.size())
             return false;
         for(int i=0;i< c1->context.constraints.size();i++)
-            if (not maybe_unify_(eager_unification, both_ways, env, c1->context.constraints[i], c2->context.constraints[i]))
+            if (not maybe_unify_solve_(origin, env, c1->context.constraints[i], c2->context.constraints[i]))
                 return false;
-        return maybe_unify_(eager_unification, both_ways, env, c1->type, c2->type);
+        return maybe_unify_solve_(origin, env, c1->type, c2->type);
     }
     else if (t1.is_a<ForallType>() and t2.is_a<ForallType>())
     {
@@ -225,7 +195,115 @@ bool TypeChecker::maybe_unify_(bool eager_unification, bool both_ways, const uni
             env2.mapping2 = env2.mapping2.insert({tv2,v});
         }
 
-        return maybe_unify_(eager_unification, both_ways, env2, fa1->type, fa2->type);
+        return maybe_unify_solve_(origin, env2, fa1->type, fa2->type);
+    }
+    else if (t1.is_a<StrictLazyType>() or t2.is_a<StrictLazyType>())
+    {
+        throw myexception()<<"maybe_unify "<<t1.print()<<" ~ "<<t2.print()<<": How should we handle unification for strict/lazy types?";
+    }
+    else
+        return false;
+}
+
+// Is there a better way to implement this?
+bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const Type& t1, const Type& t2)
+{
+    // Translate rigid type variables
+    if (auto tv1 = t1.to<TypeVar>(); tv1 and env.mapping1.count(*tv1))
+    {
+        assert(not tv1->is_skolem_constant());
+        auto tv1_remapped = env.mapping1.at(*tv1);
+        assert(tv1_remapped.is_skolem_constant());
+        assert(not env.mapping1.count(tv1_remapped));
+        return maybe_unify_(both_ways, env, tv1_remapped, t2);
+    }
+    else if (auto tv2 = t2.to<TypeVar>(); tv2 and env.mapping2.count(*tv2))
+    {
+        assert(not tv2->is_skolem_constant());
+        auto tv2_remapped = env.mapping2.at(*tv2);
+        assert(tv2_remapped.is_skolem_constant());
+        assert(not env.mapping2.count(tv2_remapped));
+        return maybe_unify_(both_ways, env, t1, tv2_remapped);
+    }
+    else if (auto tt1 = filled_meta_type_var(t1))
+        return maybe_unify_(both_ways, env, *tt1, t2);
+    else if (auto tt2 = filled_meta_type_var(t2))
+        return maybe_unify_(both_ways, env, t1, *tt2);
+
+    else if (auto s1 = is_type_synonym(t1))
+        return maybe_unify_(both_ways, env, *s1,  t2);
+    else if (auto s2 = is_type_synonym(t2))
+        return maybe_unify_(both_ways, env,  t1, *s2);
+
+    else if (auto tv1 = t1.to<MetaTypeVar>())
+    {
+        return try_insert(*tv1, t2);
+    }
+    else if (auto tv2 = t2.to<MetaTypeVar>(); tv2 and both_ways)
+    {
+        return try_insert(*tv2, t1);
+    }
+    else if (auto tv1 = t1.to<TypeVar>())
+    {
+        if (auto tv2 = t2.to<TypeVar>(); tv2 and *tv1 == *tv2)
+            return true;
+        else
+            return false;
+    }
+    else if (auto tv2 = t2.to<TypeVar>())
+    {
+        if (auto tv1 = t1.to<TypeVar>(); tv1 and *tv1 == *tv2)
+            return true;
+        else
+            return false;
+    }
+    else if (t1.is_a<TypeApp>() and t2.is_a<TypeApp>())
+    {
+        auto& app1 = t1.as_<TypeApp>();
+        auto& app2 = t2.as_<TypeApp>();
+
+        return maybe_unify_(both_ways, env, app1.head, app2.head) and
+               maybe_unify_(both_ways, env, app1.arg , app2.arg );
+    }
+    else if (t1.is_a<TypeCon>() and
+             t2.is_a<TypeCon>() and
+             t1.as_<TypeCon>() == t2.as_<TypeCon>())
+    {
+        return true;
+    }
+    else if (t1.is_a<ConstrainedType>() and t2.is_a<ConstrainedType>())
+    {
+        auto c1 = t1.to<ConstrainedType>();
+        auto c2 = t2.to<ConstrainedType>();
+        if (c1->context.constraints.size() != c2->context.constraints.size())
+            return false;
+        for(int i=0;i< c1->context.constraints.size();i++)
+            if (not maybe_unify_(both_ways, env, c1->context.constraints[i], c2->context.constraints[i]))
+                return false;
+        return maybe_unify_(both_ways, env, c1->type, c2->type);
+    }
+    else if (t1.is_a<ForallType>() and t2.is_a<ForallType>())
+    {
+        auto fa1 = t1.to<ForallType>();
+        auto fa2 = t2.to<ForallType>();
+
+        if (fa1->type_var_binders.size() != fa2->type_var_binders.size())
+            return false;
+
+        auto env2 = env;
+        for(int i=0;i < fa1->type_var_binders.size(); i++)
+        {
+            auto tv1 = fa1->type_var_binders[i];
+            auto tv2 = fa2->type_var_binders[i];
+
+            if (tv1.kind != tv2.kind) return false;
+
+            auto v = env2.fresh_tyvar(tv1.kind);
+            env2.mapping1 = env2.mapping1.insert({tv1,v});
+            env2.mapping2 = env2.mapping2.insert({tv2,v});
+        }
+
+        return maybe_unify_(both_ways, env2, fa1->type, fa2->type);
     }
     else if (t1.is_a<StrictLazyType>() or t2.is_a<StrictLazyType>())
     {

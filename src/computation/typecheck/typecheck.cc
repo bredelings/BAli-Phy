@@ -918,7 +918,7 @@ void TypeChecker::unify(const Type& t1, const Type& t2, const myexception& e)
 {
     unification_env env;
 
-    if (not maybe_unify_(false, true, env, t1,t2))
+    if (not maybe_unify_solve_(UnifyOrigin(), env, t1,t2))
         throw e;
 }
 
@@ -926,7 +926,7 @@ bool TypeChecker::maybe_match(const Type& t1, const Type& t2)
 {
     unification_env env;
 
-    return maybe_unify_(true, false, env, t1, t2);
+    return maybe_unify_(false, env, t1, t2);
 }
 
 void TypeChecker::match(const Type& t1, const Type& t2, const myexception& e)
