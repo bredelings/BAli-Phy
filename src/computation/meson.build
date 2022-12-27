@@ -45,7 +45,7 @@ computation_sources = [
   'typecheck/class.cc', 'typecheck/expression.cc', 'typecheck/pattern.cc', 'typecheck/match.cc',
   'typecheck/quals.cc', 'typecheck/binds.cc', 'typecheck/solver.cc', 'typecheck/default.cc',
   'typecheck/type_groups.cc', 'typecheck/constraints.cc', 'typecheck/expected.cc',
-  'typecheck/unify.cc',
+  'typecheck/unify.cc', 'typecheck/solver/canonicalize.cc',
 
   'optimization/free-vars.cc', 'optimization/set-levels.cc', 'optimization/float-out.cc',
 
