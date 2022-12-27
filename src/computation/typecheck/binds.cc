@@ -627,9 +627,9 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     int rhs_level = level + 1;
     
     // 2. Float wanteds out of implications if they aren't trapped by (i) given equalities or (ii) type variables
-    auto maybe_quant_preds = preds_from_lie(float_wanteds(wanteds));
-    for(auto& pred: maybe_quant_preds)
-        promote(pred, rhs_level);
+    auto maybe_quant_constraints = float_wanteds(wanteds);
+    for(auto& constraint: maybe_quant_constraints)
+        promote(constraint.pred, rhs_level);
 
     // (qtvs, bound_theta) = decideQuantification resolved level rhs_level mono_binder_env quant_pred_candidates
     // bound_theta_vars = get new evidence vars for the preds in bound_theta?
@@ -642,19 +642,19 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     add( local_tvs, free_meta_type_variables(wanteds.simple) );
 
     // 4. Figure out which type vars we cannot quantify over.
-    auto fixed_tvs = find_fixed_tvs(restricted, level, wanteds.simple, local_tvs);
+    auto fixed_tvs = find_fixed_tvs(restricted, level, maybe_quant_constraints, local_tvs);
 
     // 5. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
     set<MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
 
     // 6. Defer constraints w/o any vars to quantify over
-    auto [lie_deferred, lie_retained] = classify_constraints( restricted, wanteds.simple, qmtvs );
+    auto [lie_deferred, lie_retained] = classify_constraints( restricted, maybe_quant_constraints, qmtvs );
 
     // 7. Replace quantified meta-typevars with fresh type vars, and promote the other ones.
     set<TypeVar> qtvs;
     for(auto& qmtv: qmtvs)
     {
-        TypeVar qtv = fresh_other_type_var(unloc(qmtv.name), *qmtv.kind);
+        TypeVar qtv = FreshVarSource::fresh_rigid_type_var(rhs_level, unloc(qmtv.name), *qmtv.kind);
         qtvs.insert(qtv);
         qmtv.fill(qtv);
     }
@@ -664,8 +664,9 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
         if (not tv.filled())
             maybe_promote_mtv(tv, level);
 
-    for(auto& tv: local_tvs)
-        assert(max_level(tv) <= level);
+//  What do we want to assert here?
+//    for(auto& tv: local_tvs)
+//        assert(max_level(tv) <= level);
 
     // For the SOMEWHAT ambiguous constraints, we don't need the defaults to define the recursive group,
     // but we do need the defaults to define individual symbols.
@@ -704,10 +705,21 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
     // TODO: complain here if restricted variable have signatures with constraints?
 
     // 3. Determine what to quantify over and stuff
-    auto [qtvs, givens, wanteds_deferred, solve_decls] = simplify_and_quantify(restricted, wanteds, mono_binder_env);
+    auto [qtvs, givens_, wanteds_deferred, solve_decls] = simplify_and_quantify(restricted, wanteds, mono_binder_env);
 
     // 4. Emit wanteds
-    current_wanteds() += wanteds_deferred;
+    auto givens = givens_;
+    for(auto& given: givens)
+    {
+        given.ev_var = fresh_dvar(given.pred);
+        given.flavor = Given;
+    }
+
+    auto ev_decls = std::make_shared<Core::Decls>(solve_decls);
+
+    auto imp = std::make_shared<Implication>(level+1, qtvs | ranges::to<vector>, givens, wanteds, ev_decls, context);
+
+    current_wanteds().implications.push_back(imp);
 
     // 5. Check that we don't have any wanteds with a deeper level
     for(auto& constraint: current_wanteds().simple)
@@ -733,7 +745,7 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
 
     // 8. Construct the quantified declaration to return
     vector< Core::Var > dict_vars = dict_vars_from_lie( givens );
-    auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, std::make_shared<Core::Decls>(solve_decls), decls, bind_infos );
+    auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, ev_decls, decls, bind_infos );
     Hs::Decls decls2({ gen_bind });
 
     return decls2;
