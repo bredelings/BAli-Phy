@@ -437,22 +437,10 @@ pair<Hs::Binds, Core::Decls> TypeChecker::infer_type_for_instances2(const vector
 
     for(auto& [dfun, instance_decl]: named_instances)
     {
-        try
-        {
-            auto [decls, dfun_decl] = infer_type_for_instance2(dfun, instance_decl);
+        auto [decls, dfun_decl] = infer_type_for_instance2(dfun, instance_decl);
 
-            instance_method_decls.push_back(decls);
-            dfun_decls.push_back(dfun_decl);
-        }
-        catch (myexception& e)
-        {
-            string header = "In instance '" + instance_decl.constraint.print() + "' ";
-//            if (instance_decl.binds and instance_decl.binds->loc)
-//                header += " at " + convertToString(*instance_decl.binds->loc);
-            header += ":\n";
-            e.prepend(header);
-            throw;
-        }
+        instance_method_decls.push_back(decls);
+        dfun_decls.push_back(dfun_decl);
     }
 //    std::cerr<<"\nInstance ops and dfuns:\n";
 //    std::cerr<<instance_decls.print();
