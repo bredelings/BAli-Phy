@@ -142,8 +142,8 @@ string Implication::print() const
     return oss.str();
 }
 
-Implication::Implication(int l, const vector<TypeVar>& v, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb)
-    :level(l), evidence_binds(eb), tvs(v), givens(g), wanteds(w)
+Implication::Implication(int l, const vector<TypeVar>& v, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb, const TypeCheckerContext& c)
+    :level(l), evidence_binds(eb), tvs(v), givens(g), wanteds(w), context(c)
 {
     for(auto& tv: tvs)
         assert(tv.level() == l);

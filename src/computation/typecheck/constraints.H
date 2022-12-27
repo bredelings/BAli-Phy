@@ -6,6 +6,7 @@
 
 #include "haskell/coretype.H"
 #include "haskell/core.H"
+#include "err_context.H"
 
 struct GivenOrigin
 {
@@ -106,9 +107,11 @@ struct Implication
 
     WantedConstraints wanteds;
 
+    TypeCheckerContext context;
+
     std::string print() const;
 
-    Implication(int l, const std::vector<TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb);
+    Implication(int l, const std::vector<TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb, const TypeCheckerContext& c);
 };
 
 template <typename T>

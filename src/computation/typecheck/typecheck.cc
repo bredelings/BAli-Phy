@@ -1287,7 +1287,7 @@ TypeChecker::maybe_implication(const std::vector<TypeVar>& tvs, const LIE& given
 
     if (need_implication)
     {
-        auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls);
+        auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls, context);
         current_wanteds().implications.push_back( imp );
     }
     else
