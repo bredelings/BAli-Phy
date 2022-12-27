@@ -26,6 +26,8 @@ struct CycleBreakerOrigin
 
 struct UnifyOrigin
 {
+    Type t1;
+    Type t2;
 };
 
 

@@ -916,7 +916,7 @@ void TypeChecker::unify(const Type& t1, const Type& t2)
 
 void TypeChecker::unify(const Type& t1, const Type& t2, const myexception& e)
 {
-    if (not maybe_unify_solve_(UnifyOrigin(), t1, t2))
+    if (not maybe_unify_solve_(UnifyOrigin{t1,t2}, t1, t2))
         throw e;
 }
 
