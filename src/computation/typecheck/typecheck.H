@@ -386,6 +386,9 @@ struct TypeChecker: FreshVarSource
                                    const Type& monotype, const signature_env& signatures,
                                    const LIE& lie_retained);
 
+    std::set<MetaTypeVar> find_fixed_tvs(bool restricted, int level, const std::vector<Type>& preds, const std::set<MetaTypeVar>& tvs) const;
+    std::set<MetaTypeVar> injective_vars_for_type(const Type& type) const;
+
     bool is_quantifiable_pred(const Type& pred, const std::set<TypeVar>& qtvs) const;
 
     std::vector<Type> get_quantifiable_preds(bool restricted, const std::vector<Type>& preds, const std::set<TypeVar>& qtvs) const;

@@ -450,7 +450,70 @@ void check_HNF(const vector<Type>& preds)
 // For the COMPLETELY ambiguous constraints, we should be able to just discard the constraints,
 //   after generating definitions of their dictionaries.
 
-set<MetaTypeVar> find_fixed_tvs(bool restricted, int level, const vector<Type>& preds, const set<MetaTypeVar>& tvs)
+
+// This can't return TypeVar's...
+set<MetaTypeVar> TypeChecker::injective_vars_for_type(const Type& type) const
+{
+    if (auto type2 = filled_meta_type_var(type))
+        return injective_vars_for_type(*type2);
+    else if (auto type2 = is_type_synonym(type))
+        return injective_vars_for_type(*type2);
+    else if (type.is_a<TypeVar>())
+        return {};
+    else if (auto mtv = type.to<MetaTypeVar>())
+        return {*mtv};
+    else if (auto app = is_type_app(type))
+    {
+        auto& [head,arg] = *app;
+        auto mtvs = injective_vars_for_type(head);
+        add(mtvs, injective_vars_for_type(arg));
+        return mtvs;
+    }
+    else if (is_type_fam_app(type))
+        return {};
+    else if (auto forall = type.to<ForallType>())
+        return injective_vars_for_type(forall->type);
+    else if (auto constrained = type.to<ConstrainedType>())
+    {
+        auto mtvs = injective_vars_for_type(constrained->type);
+        for(auto& pred: constrained->context.constraints)
+            add(mtvs, injective_vars_for_type(pred));
+        return mtvs;
+    }
+    else
+        std::abort();
+}
+
+/*
+  (no_quant_preds, maybe_quant_preds) <- select preds based on restricted & overloaded strings
+
+  taus = list of values in mono_env
+
+  level = current level
+
+  psig_tys = []
+
+  co_vars = []
+  co_var_tvs = []
+
+  mono_tvs0 = metatypevars in preds that are NOT quantifiable at this level
+
+  mono_tvs1 = mono_tvs0
+
+  non_ip_candidates = candidates
+
+  mono_tvs2 = closeWrtFunDeps candidates monotvs1
+
+  constrained_tvs = closeWrtFunDeps candidates (metatypevars in no_quant_preds),
+                    minus those constrained by vars free in the environment,
+                    minus those that are not quantifiable at this level
+
+
+  closeWrtFunDeps = ???                  
+*/
+
+
+set<MetaTypeVar> TypeChecker::find_fixed_tvs(bool restricted, int level, const vector<Type>& preds, const set<MetaTypeVar>& tvs) const
 {
     set<MetaTypeVar> fixed;
 
@@ -470,11 +533,11 @@ set<MetaTypeVar> find_fixed_tvs(bool restricted, int level, const vector<Type>& 
 
             if (auto lvl = unfilled_meta_type_var(t1); lvl and *lvl <= level)
             {
-                add( fixed, free_meta_type_variables(t2) );
+                add( fixed, injective_vars_for_type(t2) );
             }
-            else
+            else if (auto lvl = unfilled_meta_type_var(t2); lvl and *lvl <= level)
             {
-                assert(not unfilled_meta_type_var(t2));
+                add( fixed, injective_vars_for_type(t1) );
             }
         }
     }
@@ -531,7 +594,7 @@ Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& m
 //
 // 1. decideMonoTyVars == Get global tyvars and grow them using equalities.
 //                     If a is fixed, then (a ~ [beta]) fixes beta.
-//                     But (a ~ F) beta does not fix beta.
+//                     But (a ~ F beta) does not fix beta.
 //                     Returns new candidates by clearing all of them if restricted is true.
 //
 // 2. defaultTyVarsAndSimplify == Promote known-fixed tyvars (to current level from rhs_tclvl)
