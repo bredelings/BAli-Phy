@@ -1289,6 +1289,14 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
         std::swap(wanted_implics, wanteds.implications);
         for(auto& implic: wanted_implics)
         {
+            // 8. If there was a unification that affected this level
+            //    then save any remaining implications and iterate.
+            if (unification_level() and *unification_level() <= level)
+            {
+                wanteds.implications.push_back( implic );
+                continue;
+            }
+
             // 3. construct sub-givens
             LIE sub_givens = implic->givens;
             sub_givens += givens;
@@ -1329,10 +1337,6 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
             // 7. Keep implication if not empty.
             if (not implic->wanteds.empty())
                 wanteds.implications.push_back( implic );
-
-            // 8. If there was a unification, that affected this level, then we have to iterate.
-            if (unification_level() and *unification_level() <= level)
-                break;
         }
 
         wanteds.simple += new_wanteds;
