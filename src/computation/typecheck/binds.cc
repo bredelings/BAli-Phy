@@ -200,7 +200,7 @@ Hs::GenBind mkGenBind(const vector<TypeVar>& tvs,
 // Why aren't we using `fixed_type_vars`?
 // I guess the deferred constraints that do not mention fixed_type_vars are ambiguous?
 vector<Type>
-classify_preds(bool restricted, const vector<Type>& preds, const set<MetaTypeVar>& qtvs)
+classify_preds(bool restricted, const vector<Type>& preds, const set<TypeVar>& qtvs)
 {
     if (restricted) return {};
 
@@ -208,7 +208,7 @@ classify_preds(bool restricted, const vector<Type>& preds, const set<MetaTypeVar
 
     for(auto& pred: preds)
     {
-        if (intersects( free_meta_type_variables(pred), qtvs ))
+        if (intersects( free_type_variables(pred), qtvs ))
             keep.push_back(pred);
     }
     return keep;
@@ -664,9 +664,6 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     // 5. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
     set<MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
 
-    // 6. Defer constraints w/o any vars to quantify over
-    auto quant_preds = classify_preds( restricted, maybe_quant_preds, qmtvs );
-
     // 7. Replace quantified meta-typevars with fresh type vars, and promote the other ones.
     set<TypeVar> qtvs;
     for(auto& qmtv: qmtvs)
@@ -690,6 +687,9 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
 
     // 7. Quantify over variables in ANY type that are not fixed -- doesn't depend on defaulting.
     // Never quantify over variables that are only in a LIE -- those must be defaulted.
+
+    // 6. Defer constraints w/o any vars to quantify over
+    auto quant_preds = classify_preds( restricted, maybe_quant_preds, qtvs );
 
     // 8. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
     check_HNF( quant_preds );
