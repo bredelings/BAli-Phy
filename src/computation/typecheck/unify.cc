@@ -120,11 +120,6 @@ bool TypeChecker::maybe_unify_solve_(const ConstraintOrigin& origin, const Type&
     else if (auto tt2 = filled_meta_type_var(t2))
         return maybe_unify_solve_(origin, t1, *tt2);
 
-    else if (auto s1 = is_type_synonym(t1))
-        return maybe_unify_solve_(origin, *s1,  t2);
-    else if (auto s2 = is_type_synonym(t2))
-        return maybe_unify_solve_(origin,  t1, *s2);
-
     else if (auto tv1 = t1.to<MetaTypeVar>())
     {
         unify_defer(origin, t1, t2);
@@ -135,23 +130,26 @@ bool TypeChecker::maybe_unify_solve_(const ConstraintOrigin& origin, const Type&
         unify_defer(origin, t1, t2);
         return true;
     }
-    else if (auto tv1 = t1.to<TypeVar>())
+    else if (t1.is_a<TypeVar>() or t2.is_a<TypeVar>())
     {
         unify_defer(origin, t1, t2);
         return true;
     }
-    else if (auto tv2 = t2.to<TypeVar>())
-    {
-        unify_defer(origin, t1, t2);
-        return true;
-    }
-    else if (t1.is_a<TypeApp>() and t2.is_a<TypeApp>())
-    {
-        auto& app1 = t1.as_<TypeApp>();
-        auto& app2 = t2.as_<TypeApp>();
+    // Handle type synonyms AFTER variables, so that we preserve more type synonyms.
+    else if (auto s1 = is_type_synonym(t1))
+        return maybe_unify_solve_(origin, *s1,  t2);
+    else if (auto s2 = is_type_synonym(t2))
+        return maybe_unify_solve_(origin,  t1, *s2);
 
-        return maybe_unify_solve_(origin, app1.head, app2.head) and
-               maybe_unify_solve_(origin, app1.arg , app2.arg );
+    auto app1 = is_type_app(t1);
+    auto app2 = is_type_app(t2);
+    if (app1 and app2)
+    {
+        auto& [fun1, arg1] = *app1;
+        auto& [fun2, arg2] = *app2;
+
+        return maybe_unify_solve_(origin, fun1, fun2) and
+               maybe_unify_solve_(origin, arg1, arg2);
     }
     else if (t1.is_a<TypeCon>() and
              t2.is_a<TypeCon>() and
@@ -166,7 +164,6 @@ bool TypeChecker::maybe_unify_solve_(const ConstraintOrigin& origin, const Type&
         unify_defer(origin, t1, t2);
         return true;
     }
-
 }
 
 // Is there a better way to implement this?
