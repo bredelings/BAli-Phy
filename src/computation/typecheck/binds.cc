@@ -527,17 +527,6 @@ Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& m
     return {poly_id, mono_id, monotype, polytype, wrap};
 }
 
-
-// I. approximateWC - never fails
-// start with an empty set of trapping variables
-// return any simple constraints that don't contain any of the trapping variables
-//   + any contraints we can float from implications
-// for each implication without given equalities
-//   + extend the trapping variable set with the existential vars
-//   + and float out from implic->wanteds with the extended set.
-// We need to promote any meta-type vars in these .... where?
-// This should succeed since we avoid floating anything that contains an existential var.
-
 // II. decideQuantification
 //
 // 1. decideMonoTyVars == Get global tyvars and grow them using equalities.
@@ -569,21 +558,6 @@ Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& m
 //        * basically keep it... possibly with a deeper level?
 //
 // - return final_qtvs
-//
-// 4. pickQuantifiablePreds
-//
-// a) if it is of the form Class a b c... then keep if
-//    + args [a,b,c..] intersect qtvs
-//    + checkValidClsArgs True cls tys is true = True ?
-//    + no fixed dependencies... from FunDeps.
-// b) if it is of the form t1 ~ t2 then keep if either side
-//    + is a type family application and
-//    + the args intersect qtvs
-// c) otherwise (head is type variable?) then keep if
-//    + free vars of pred intersect qtvs
-//
-// 5. Minimize by superclass
-//
 //
 // III. emitResidualConstraints
 //
