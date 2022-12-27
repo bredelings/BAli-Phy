@@ -216,7 +216,7 @@ Haskell::TypeFamilyInstanceEqn renamer_state::rename(Haskell::TypeFamilyInstance
 {
     TIE.con = rename_type(TIE.con);
     for(auto& arg: TIE.args)
-        rename_type(arg);
+        arg = rename_type(arg);
     TIE.rhs = rename_type(TIE.rhs);
     return TIE;
 }
