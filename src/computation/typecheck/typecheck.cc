@@ -1030,10 +1030,10 @@ Core::wrapper TypeChecker::checkSigma(Hs::Expression& E, const SigmaType& sigma_
 // The idea is that we need an e2, but we have a t1.
 // So, if we can make an e2 from the t1, then we are good.
 // The wrapper is evidence that we can, and also converts a value of type t1 to a value of type e2.
-Core::wrapper TypeChecker::subsumptionCheck(const Type& t1, const Expected& e2)
+Core::wrapper TypeChecker::subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Expected& e2)
 {
     if (auto t2 = e2.read_type_maybe())
-        return subsumptionCheck(t1, *t2);
+        return subsumptionCheck(origin, t1, *t2);
     else
     {
         auto I = e2.infer();
@@ -1042,7 +1042,7 @@ Core::wrapper TypeChecker::subsumptionCheck(const Type& t1, const Expected& e2)
     }
 }
 
-Core::wrapper TypeChecker::subsumptionCheck(const Type& t1, const Type& t2)
+Core::wrapper TypeChecker::subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Type& t2)
 {
     /*
       If we can make y :: t2 out of x :: t1 then it is OK.  (without doing eta reduction, according to QL).
@@ -1078,7 +1078,7 @@ Core::wrapper TypeChecker::subsumptionCheck(const Type& t1, const Type& t2)
             t2,
             [&](const Type& rho_type, TypeChecker& tcs2)
             {
-                auto [wrap_apply, type1] = tcs2.instantiate_emit(t1);
+                auto [wrap_apply, type1] = tcs2.instantiate_emit(origin, t1);
                 tcs2.unify(type1, rho_type);
                 return wrap_apply;
             }
@@ -1089,9 +1089,9 @@ Core::wrapper TypeChecker::subsumptionCheck(const Type& t1, const Type& t2)
 }
 
 std::tuple<Core::wrapper, Type>
-TypeChecker::instantiate_emit(const Type& polytype)
+TypeChecker::instantiate_emit(const ConstraintOrigin& origin, const Type& polytype)
 {
-    auto [_, wanteds, rho_type] = instantiate(polytype);
+    auto [_, wanteds, rho_type] = instantiate(origin, polytype);
 
     collected_wanteds += wanteds;
 
@@ -1101,11 +1101,11 @@ TypeChecker::instantiate_emit(const Type& polytype)
 }
 
 Core::wrapper
-TypeChecker::instantiateSigma(const Type& polytype, const Expected& exp_type)
+TypeChecker::instantiateSigma(const ConstraintOrigin& origin, const Type& polytype, const Expected& exp_type)
 {
     if (auto I = exp_type.infer())
     {
-        auto [wrap, rho_type] = instantiate_emit(polytype);
+        auto [wrap, rho_type] = instantiate_emit(origin, polytype);
         fillInfer(rho_type, *I);
         return wrap;
     }
@@ -1114,7 +1114,7 @@ TypeChecker::instantiateSigma(const Type& polytype, const Expected& exp_type)
         // why would this be a rho?
         // assert(is_rho_type(exp_type.check_type()));
         try {
-            return subsumptionCheck(polytype, exp_type.check_type());
+            return subsumptionCheck(origin, polytype, exp_type.check_type());
         }
         catch (myexception& ex)
         {
@@ -1151,7 +1151,7 @@ TypeChecker::instantiateSigma(const Type& polytype, const Expected& exp_type)
 //
 // Now, actually, we may NOT need this until add type /\s, because the dictionary arguments should be in the right order.
 
-tuple<vector<MetaTypeVar>, LIE, Type> TypeChecker::instantiate(const Type& t)
+tuple<vector<MetaTypeVar>, LIE, Type> TypeChecker::instantiate(const ConstraintOrigin& origin, const Type& t)
 {
     // 1. Handle foralls
     vector<MetaTypeVar> tvs;
@@ -1176,14 +1176,14 @@ tuple<vector<MetaTypeVar>, LIE, Type> TypeChecker::instantiate(const Type& t)
     // 2. Handle constraints
     if (auto ct = type.to<ConstrainedType>())
     {
-        wanteds = preds_to_constraints(InstOrigin(), Wanted, ct->context.constraints, level);
+        wanteds = preds_to_constraints(origin, Wanted, ct->context.constraints, level);
         type = ct->type;
     }
 
     // 3. Handle the exposed type being a polytype
     if (not tvs.empty() or not wanteds.empty())
     {
-        auto [tvs2, wanteds2, type2] = instantiate(type);
+        auto [tvs2, wanteds2, type2] = instantiate(origin, type);
 
         for(auto& tv2: tvs2)
             tvs.push_back(tv2);

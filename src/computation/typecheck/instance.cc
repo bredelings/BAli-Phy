@@ -451,8 +451,8 @@ pair<Hs::Binds, Core::Decls> TypeChecker::infer_type_for_instances2(const vector
 
 bool TypeChecker::instance_matches(const Type& type1, const Type& type2)
 {
-    auto [_1, _2, head1] = instantiate(type1);
-    auto [_3, _4, head2] = instantiate(type2);
+    auto [_1, _2, head1] = instantiate(InstanceOrigin(), type1);
+    auto [_3, _4, head2] = instantiate(InstanceOrigin(), type2);
     return maybe_match(head1, head2);
 }
 
@@ -485,7 +485,7 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_co
 
         if (instance_class != target_class) continue;
 
-        auto [_, wanteds, instance_head] = instantiate(type);
+        auto [_, wanteds, instance_head] = instantiate(InstanceOrigin(), type);
 
         assert(not constraint_is_hnf(instance_head));
 

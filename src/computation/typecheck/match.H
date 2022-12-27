@@ -45,7 +45,7 @@ Core::wrapper TypeChecker::tcMatchesFunInfer(std::vector<Expected>& arg_types, i
         return Core::WrapId;
     }
     else
-        return subsumptionCheck(unif_fun_type, extra_fun_type.read_type());
+        return subsumptionCheck(TypeConvertOrigin(), unif_fun_type, extra_fun_type.read_type());
 }
 
 template <typename A>

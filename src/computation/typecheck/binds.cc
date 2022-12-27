@@ -582,7 +582,7 @@ Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& m
     {
         auto sub_polytype = polytype;
         polytype = signatures.at(name);
-        wrap = subsumptionCheck(sub_polytype, polytype) * wrap;
+        wrap = subsumptionCheck(TypeConvertOrigin(), sub_polytype, polytype) * wrap;
     }
 
     Hs::Var poly_id({noloc,name});

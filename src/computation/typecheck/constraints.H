@@ -8,15 +8,34 @@
 #include "haskell/core.H"
 #include "err_context.H"
 
+struct OccurrenceOrigin
+{
+    Located<std::string> name;
+    OccurrenceOrigin(const std::string& s);
+    OccurrenceOrigin(const Located<std::string>& s);
+};
+
 struct GivenOrigin
 {
 };
 
-struct InstOrigin
+struct AppOrigin
+{
+};
+
+struct InstanceOrigin
 {
 };
 
 struct PatOrigin
+{
+};
+
+struct SuperclassOrigin
+{
+};
+
+struct TypeConvertOrigin
 {
 };
 
@@ -31,7 +50,7 @@ struct UnifyOrigin
 };
 
 
-typedef std::variant<std::monostate, GivenOrigin, InstOrigin, PatOrigin, CycleBreakerOrigin,UnifyOrigin> ConstraintOrigin;
+typedef std::variant<std::monostate, OccurrenceOrigin, GivenOrigin, AppOrigin, InstanceOrigin, PatOrigin, SuperclassOrigin, TypeConvertOrigin,CycleBreakerOrigin,UnifyOrigin> ConstraintOrigin;
 
 enum ConstraintFlavor { Wanted, Given };
 

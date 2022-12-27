@@ -33,7 +33,7 @@ void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
 
     try
     {
-        x.wrap = instantiateSigma(sigma, exp_type);
+        x.wrap = instantiateSigma(OccurrenceOrigin(x.name), sigma, exp_type);
     }
     catch (myexception& ex)
     {
@@ -53,7 +53,7 @@ void TypeChecker::tcRho(Hs::Con& con, const Expected& exp_type)
 
     try
     {
-        con.wrap = instantiateSigma(sigma, exp_type);
+        con.wrap = instantiateSigma(OccurrenceOrigin(con.name), sigma, exp_type);
     }
     catch (myexception& ex)
     {
@@ -91,7 +91,7 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
     context.push_err_context( ErrorContext() << "In expression '"<< App.print()<<"':" );
 
     // Convert the result to the expected time for the term
-    auto wrap_res = instantiateSigma(result_type, exp_type);
+    auto wrap_res = instantiateSigma(AppOrigin(), result_type, exp_type);
     App.res_wrappers.push_back(wrap_res);
 
     context.pop_err_context();
@@ -120,7 +120,7 @@ void TypeChecker::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
 {
     auto type = check_type(desugar(TExp.type));
     Core::wrapper w1 = checkSigma( TExp.exp, type );
-    Core::wrapper w2 = instantiateSigma(type, exp_type);
+    Core::wrapper w2 = instantiateSigma(TypeConvertOrigin(), type, exp_type);
     TExp.wrap = w1 * w2;
 }
 

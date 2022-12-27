@@ -249,15 +249,15 @@ struct TypeChecker: FreshVarSource
 
     Core::Decls simplify_and_default_top_level();
 
-    std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const Type& t);
+    std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const ConstraintOrigin& origin, const Type& t);
 
-    std::tuple<Core::wrapper, Type> instantiate_emit(const Type& t);
+    std::tuple<Core::wrapper, Type> instantiate_emit(const ConstraintOrigin& origin, const Type& t);
 
-    Core::wrapper subsumptionCheck(const Type& t1, const Expected& e2);
+    Core::wrapper subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Expected& e2);
 
-    Core::wrapper subsumptionCheck(const Type& t1, const Type& t2);
+    Core::wrapper subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Type& t2);
 
-    Core::wrapper instantiateSigma(const Type& t, const Expected& exp_rho);
+    Core::wrapper instantiateSigma(const ConstraintOrigin& origin, const Type& t, const Expected& exp_rho);
 
     std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type> skolemize(const Type& t, bool skolem);
 
