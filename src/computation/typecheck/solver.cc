@@ -1309,7 +1309,10 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
             // 4. try and sub-wanteds
             auto tcs2 = copy_clear_wanteds();
             tcs2.level = implic->level;
+            TypeCheckerContext tmp_context = context;
+            context = implic->context;
             *implic->evidence_binds += tcs2.entails(sub_givens, implic->wanteds);
+            context = tmp_context;
 
             // 5. Promote any level+1 meta-vars and complain about level+1 skolem vars.
             LIE lie_residual_keep;
