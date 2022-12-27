@@ -629,6 +629,21 @@ LIE float_wanteds(const WantedConstraints& wanteds, const std::set<TypeVar>& tra
     return floated;
 }
 
+// Don't quantify equality preds like Int ~ Bool or a ~ [b].
+// But we can quantify equality preds like F a [b] = Int
+bool TypeChecker::is_quantifiable_pred(const Type& pred, const set<TypeVar>& qtvs) const
+{
+    if (not intersects(free_type_variables(pred), qtvs)) return false;
+
+    if (auto eq = is_equality_pred(pred))
+    {
+        auto& [t1,t2] = *eq;
+        return (is_type_fam_app(t1) or is_type_fam_app(t2));
+    }
+    else
+        return true;
+}
+
 tuple<set<TypeVar>, LIE, LIE, Core::Decls>
 TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env)
 {

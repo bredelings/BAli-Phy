@@ -167,10 +167,12 @@ struct TypeChecker: FreshVarSource
     // If we could cache this info on the TypeCon, then we could move these out of the class.
     bool type_con_is_type_fam(const TypeCon& tc) const;
     bool type_con_is_type_syn(const TypeCon& tc) const;
+    bool type_con_is_type_class(const TypeCon& tc) const;
     bool type_con_must_be_saturated(const TypeCon& tc) const;
     int type_con_arity(const TypeCon& tc) const;
     std::optional<std::tuple<Type, Type>> is_type_app(Type t) const;
     std::optional<std::tuple<TypeCon,std::vector<Type>>> is_type_fam_app(const Type& t) const;
+    std::optional<std::tuple<TypeCon,std::vector<Type>>> is_type_class_app(const Type& t) const;
 
     bool same_type(const Type& t1, const Type& t2) const;
     bool same_type_no_syns(const Type& t1, const Type& t2) const;
@@ -414,6 +416,8 @@ struct TypeChecker: FreshVarSource
                                    const std::set<TypeVar>& qtvs,
                                    const Type& monotype, const signature_env& signatures,
                                    const LIE& lie_retained);
+
+    bool is_quantifiable_pred(const Type& pred, const std::set<TypeVar>& qtvs) const;
 
     std::tuple<std::set<TypeVar>, LIE, LIE, Core::Decls> simplify_and_quantify(bool restricted, WantedConstraints& wanteds, const value_env& mono_binder_env);
 

@@ -375,6 +375,11 @@ bool TypeChecker::type_con_is_type_syn(const TypeCon& tc) const
     return type_syn_info().count(unloc(tc.name));
 }
 
+bool TypeChecker::type_con_is_type_class(const TypeCon& tc) const
+{
+    return class_env().count(unloc(tc.name));
+}
+
 bool TypeChecker::type_con_must_be_saturated(const TypeCon& tc) const
 {
     return type_con_is_type_fam(tc) or type_con_is_type_syn(tc);
@@ -419,6 +424,18 @@ std::optional<std::tuple<TypeCon,std::vector<Type>>> TypeChecker::is_type_fam_ap
     auto& [tc,args] = *tcapp;
 
     if (type_con_is_type_fam(tc) and args.size() == type_con_arity(tc))
+        return tcapp;
+    else
+        return {};
+}
+
+std::optional<std::tuple<TypeCon,std::vector<Type>>> TypeChecker::is_type_class_app(const Type& t) const
+{
+    auto tcapp = is_type_con_app(t);
+    if (not tcapp) return {};
+    auto& [tc,args] = *tcapp;
+
+    if (type_con_is_type_class(tc) and args.size() == type_con_arity(tc))
         return tcapp;
     else
         return {};
