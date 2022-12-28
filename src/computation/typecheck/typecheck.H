@@ -242,10 +242,9 @@ struct TypeChecker: FreshVarSource
 
     DataConInfo constructor_info(const Hs::Con&);
 
-    std::optional<Core::Decls>
-    candidates(const MetaTypeVar& tv, const LIE& tv_lie);
+    bool candidates(const MetaTypeVar& tv, const LIE& tv_lie);
 
-    Core::Decls default_preds( WantedConstraints& wanteds );
+    bool default_preds( WantedConstraints& wanteds );
 
     Core::Decls simplify_and_default_top_level();
 
@@ -498,6 +497,8 @@ bool constraint_is_hnf(const Type& constraint);
 
 int getArity(const Hs::Matches& m);
 int getArity(const Hs::MRule& m);
+
+LIE float_wanteds(bool float_past_equalities, const WantedConstraints& wanteds, const std::set<TypeVar>& trapping_tvs = {});
 
 template <typename R>
 std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type, R>

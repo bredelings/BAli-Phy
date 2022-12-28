@@ -35,8 +35,8 @@ optional<TypeCon> simple_constraint_class_meta(const Type& constraint)
 // 2. at least one of these classes is a numeric class, (that is, Num or a subclass of Num)
 // 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
 
-optional<Core::Decls>
-TypeChecker::candidates(const MetaTypeVar& tv, const LIE& tv_lie)
+bool
+TypeChecker::candidates(const MetaTypeVar& tv, const LIE& tv_wanteds)
 {
     set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
     set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
@@ -51,35 +51,35 @@ TypeChecker::candidates(const MetaTypeVar& tv, const LIE& tv_lie)
         std_classes.insert( find_prelude_tycon_name(cls) );
 
     bool any_num = false;
-    for(auto& constraint: tv_lie)
+    for(auto& constraint: tv_wanteds)
     {
         // Fail if any of the predicates is not a simple constraint.
         auto tycon = simple_constraint_class_meta(constraint.pred);
-        if (not tycon) return {};
+        if (not tycon) return false;
 
         auto& name = unloc(tycon->name);
         if (num_classes.count(name))
             any_num = true;
 
         // Fail if any of the predicates are not in the standard prelude.
-        if (not std_classes.count(name)) return {};
+        if (not std_classes.count(name)) return false;
     }
 
     // Fail if none of the predicates is a numerical constraint
-    if (not any_num) return {};
+    if (not any_num) return false;
 
     for(auto& type: defaults() )
     {
         tv.fill(type);
-        auto wanteds = WantedConstraints(tv_lie);
-        auto decls = entails({}, wanteds);
-        if (wanteds.simple.empty())
-            return decls;
+        auto wanteds = WantedConstraints(tv_wanteds);
+        entails({}, wanteds);
+        if (wanteds.empty())
+            return true;
         else
             tv.clear();
     }
 
-    return {};
+    return false;
 }
 
 pair<LIE, map<MetaTypeVar, LIE>>
@@ -115,38 +115,56 @@ ambiguities(const LIE& lie)
 }
 
 
-Core::Decls TypeChecker::default_preds( WantedConstraints& wanted )
+// This is used both when generalizing let's in bind.cc, and in defaulting.
+// When we are generalizing, we don't want to float out of implications with given equalities.
+//   (float_past_equalities = false)
+// But when defaulting we do.
+//   (float_past_equalities = true)
+LIE float_wanteds(bool float_past_equalities, const WantedConstraints& wanteds, const std::set<TypeVar>& trapping_tvs)
+{
+    // GHC doesn't float insoluble wanteds?
+    // Then insoluble wanted must be marked...
+
+    LIE floated;
+
+    // 1. Float simple wanteds that don't contain any trapping tvs
+    for(auto& simple: wanteds.simple)
+        if (not intersects(free_type_variables(simple.pred), trapping_tvs))
+            floated.push_back(simple);
+
+    // 2. Try and float wanteds out of implications
+    for(auto& implication: wanteds.implications)
+    {
+        // 2a. Any vars in the implication block floating too.
+        auto trapping_tvs2 = trapping_tvs;
+        for(auto& tv: implication->tvs)
+            trapping_tvs2.insert(tv);
+
+        // 2b. And if there's a given equality, we can't float past that.
+        if (not float_past_equalities and contains_equality_constraints(implication->givens)) continue;
+
+        // 2c. What to float?
+        auto i_floated = float_wanteds(float_past_equalities, implication->wanteds, trapping_tvs2);
+
+        // 2d. Append
+        for(auto& wanted: i_floated)
+            floated.push_back(wanted);
+    }
+
+    return floated;
+}
+
+bool TypeChecker::default_preds( WantedConstraints& wanted )
 {
     Core::Decls decls;
-    auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities( wanted.simple );
+    auto simple_wanteds = float_wanteds(true, wanted);
+    auto [unambiguous_preds, ambiguous_preds_by_var] = ambiguities( simple_wanteds );
 
+    bool progress = false;
     for(auto& [tv, preds]: ambiguous_preds_by_var)
-    {
-        auto result = candidates(tv, preds);
+        progress = progress or candidates(tv, preds);
 
-        if (not result)
-        {
-            auto e = myexception()<<"Ambiguous type variable '"<<tv<<"' in classes: ";
-            for(auto& constraint: preds)
-                e<<constraint.pred<<" ";
-            throw e;
-        }
-        auto& decls1 = *result;
-
-        decls += decls1;
-    }
-    wanted.simple = unambiguous_preds;
-
-    vector<std::shared_ptr<Implication>> keep;
-    for(auto& implication: wanted.implications)
-    {
-        decls += default_preds(implication->wanteds);
-        if (not implication->wanteds.empty())
-            keep.push_back(implication);
-    }
-    std::swap( wanted.implications, keep );
-
-    return decls;
+    return progress;
 }
 
 string check_errors(const WantedConstraints& wanteds, const TypeCheckerContext& context)
@@ -177,13 +195,15 @@ Core::Decls TypeChecker::simplify_and_default_top_level()
 {
     auto top_simplify_decls = entails( {}, current_wanteds() );
 
-    auto default_decls = default_preds( current_wanteds() );
-
+    // Defaulting just sets the metatypevar, it doesn't actually move or remove the constraints.
+    while(default_preds( current_wanteds() ))
+        top_simplify_decls += entails( {}, current_wanteds() );
+        
     if (not current_wanteds().empty())
+    {
+        // Here we should complain about unsolved abiguities...
         throw myexception(check_errors(current_wanteds(),{}));
-
-    // Clear the LIE, which should now be empty.
-    current_wanteds() = {};
+    }
 
 //    std::cerr<<"GVE (all after defaulting):\n";
 //    for(auto& [x,t]: state.gve)
@@ -192,8 +212,6 @@ Core::Decls TypeChecker::simplify_and_default_top_level()
 //        std::cerr<<x<<" = "<<e<<"\n\n\n";
 //    }
 //    std::cerr<<"\n";
-
-    top_simplify_decls += default_decls;
 
     return top_simplify_decls;
 }

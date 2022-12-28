@@ -636,37 +636,6 @@ Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& m
 // I guess this means that we try to solve the wanteds from the givens?
 
 
-LIE float_wanteds(const WantedConstraints& wanteds, const std::set<TypeVar>& trapping_tvs = {})
-{
-    LIE floated;
-
-    // 1. Float simple wanteds that don't contain any trapping tvs
-    for(auto& simple: wanteds.simple)
-        if (not intersects(free_type_variables(simple.pred), trapping_tvs))
-            floated.push_back(simple);
-
-    // 2. Try and float wanteds out of implications
-    for(auto& implication: wanteds.implications)
-    {
-        // 2a. Any vars in the implication block floating too.
-        auto trapping_tvs2 = trapping_tvs;
-        for(auto& tv: implication->tvs)
-            trapping_tvs2.insert(tv);
-
-        // 2b. And if there's a given equality, we can't float past that.
-        if (contains_equality_constraints(implication->givens)) continue;
-        
-        // 2c. What do float?
-        auto i_floated = float_wanteds(implication->wanteds, trapping_tvs2);
-
-        // 2d. Append
-        for(auto& wanted: i_floated)
-            floated.push_back(wanted);
-    }
-
-    return floated;
-}
-
 // Don't quantify equality preds like Int ~ Bool or a ~ [b].
 // But we can quantify equality preds like F a [b] = Int
 bool TypeChecker::is_quantifiable_pred(const Type& pred, const set<TypeVar>& qtvs) const
@@ -705,7 +674,7 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     int rhs_level = level + 1;
     
     // 2. Float wanteds out of implications if they aren't trapped by (i) given equalities or (ii) type variables
-    auto maybe_quant_preds = preds_from_lie(float_wanteds(wanteds));
+    auto maybe_quant_preds = preds_from_lie(float_wanteds(false,wanteds));
     for(auto& pred: maybe_quant_preds)
         promote(pred, rhs_level);
 
