@@ -353,7 +353,7 @@ string TypeCheckerContext::print_err_context() const
 {
     vector<string> estrings;
     for(auto& err_context: err_contexts)
-        estrings.push_back(err_context.print()+"\n");
+        estrings.push_back("    • "+err_context.print()+"\n");
     return join(estrings, "\n");
 }
 
