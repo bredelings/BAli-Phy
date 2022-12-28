@@ -1,2 +1,23 @@
 bali-phy: Error! In module 'Main':
-Ambiguous type variable 'a_24499{0}' in classes: Text.Show.Show a_24499{0} Main.Foo a_24499{0} Compiler.Num.Num a_24499{0} 
+Error:
+    • In recursive group:
+    Main.main
+
+
+    • Could not derive `Text.Show.Show a_24499{0}` arising from a use of `Text.Show.show` at Main.hs:9.22-25
+
+Error:
+    • In recursive group:
+    Main.main
+
+
+    • Could not derive `Main.Foo a_24499{0}` arising from a use of `Main.bar` at Main.hs:9.29-31
+
+Error:
+    • In recursive group:
+    Main.main
+
+
+    • Could not derive `Compiler.Num.Num a_24499{0}` arising from a use of `Compiler.Num.fromInteger`
+
+
