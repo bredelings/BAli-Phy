@@ -336,7 +336,7 @@ map<string, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& decl
 pair<Hs::Decls, Core::Decl>
 TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& inst_decl)
 {
-    context.push_err_context( ErrorContext()<<"In instance '"<<inst_decl.constraint<<"':" );
+    context.push_err_context( ErrorContext()<<"In instance `"<<inst_decl.constraint<<"`:" );
 
     // 1. Get instance head and constraints 
 
@@ -384,6 +384,8 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method_name, method_type]: class_info.members)
     {
+        context.push_err_context( ErrorContext()<<"In method `"<<method_name<<"`:" );
+
         auto op = get_fresh_Var("i"+method_name, true);
 
         dict_entries.push_back( Core::Apply(make_var(op), dict_vars_from_lie<Core::Exp>(givens)) );
@@ -413,6 +415,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         }
         auto [decl2, _, __] = infer_type_for_single_fundecl_with_sig(*FD);
         decls.push_back(decl2);
+        context.pop_err_context();
     }
 
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>

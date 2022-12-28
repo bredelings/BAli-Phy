@@ -694,7 +694,6 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
             TypeCheckerContext tmp_context = context;
             context = implic->context;
             *implic->evidence_binds += tcs2.entails(sub_givens, implic->wanteds);
-            context = tmp_context;
 
             // 5. Promote any level+1 meta-vars and complain about level+1 skolem vars.
             LIE lie_residual_keep;
@@ -718,11 +717,13 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
 
             // 6. Issue collected warnings constraints that couldn't be derived from the givens.
             if (not lie_residual_keep.empty())
-                throw myexception()<<"Can't derive constraints '"<<print(lie_residual_keep)<<"' from specified constraints '"<<print(givens)<<"'";
+                throw err_context_exception()<<"Can't derive constraints '"<<print(lie_residual_keep)<<"' from specified constraints '"<<print(givens)<<"'";
 
             // 7. Keep implication if not empty.
             if (not implic->wanteds.empty())
                 wanteds.implications.push_back( implic );
+
+            context = tmp_context;
         }
 
         wanteds.simple += new_wanteds;
