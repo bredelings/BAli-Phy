@@ -1,4 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE NoImplicitPrelude, ExistentialQuantification #-}
 
 data T a = forall b.T (b -> a) b
 
