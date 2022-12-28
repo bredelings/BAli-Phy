@@ -668,11 +668,10 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
 
         // 2. Handle implications
         vector<shared_ptr<Implication>> wanted_implics;
-        LIE new_wanteds;
         std::swap(wanted_implics, wanteds.implications);
         for(auto& implic: wanted_implics)
         {
-            // 8. If there was a unification that affected this level
+            // 3. If there was a unification that affected this level
             //    then save any remaining implications and iterate.
             if (unification_level() and *unification_level() <= level)
             {
@@ -680,7 +679,7 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
                 continue;
             }
 
-            // 3. construct sub-givens
+            // 4. construct sub-givens
             LIE sub_givens = implic->givens;
             sub_givens += givens;
             auto given_wanteds = wanteds.simple;
@@ -688,53 +687,28 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
                 c.flavor = Given;
             sub_givens += given_wanteds;
 
-            // 4. try and sub-wanteds
+            // 5. try and sub-wanteds
             auto tcs2 = copy_clear_wanteds();
             tcs2.level = implic->level;
             TypeCheckerContext tmp_context = context;
             context = implic->context;
             *implic->evidence_binds += tcs2.entails(sub_givens, implic->wanteds);
 
-            // 5. Promote any level+1 meta-vars and complain about level+1 skolem vars.
-            LIE lie_residual_keep;
-            if (not contains_equality_constraints(implic->givens))
-            {
-                for(auto& constraint: implic->wanteds.simple)
-                {
-                    promote(constraint.pred, level);
-
-                    if (intersects(free_type_variables(constraint.pred), implic->tvs))
-                        lie_residual_keep.push_back(constraint);
-                    else
-                    {
-                        // If we've discovered a new simple wanted, then we need to run simplification again.
-                        update = true;
-                        new_wanteds.push_back(constraint);
-                    }
-                }
-                implic->wanteds.simple.clear();
-            }
-
-            // 6. Issue collected warnings constraints that couldn't be derived from the givens.
-            if (not lie_residual_keep.empty())
-                throw err_context_exception()<<"Can't derive constraints '"<<print(lie_residual_keep)<<"' from specified constraints '"<<print(givens)<<"'";
-
-            // 7. Keep implication if not empty.
+            // 6. Keep implication if not empty.
             if (not implic->wanteds.empty())
                 wanteds.implications.push_back( implic );
 
             context = tmp_context;
         }
 
-        wanteds.simple += new_wanteds;
-
-        // If there was a unification, that affected this level, then we have to iterate.
+        // 7. If there was a unification, that affected this level, then we have to iterate.
         if (unification_level() and *unification_level() == level)
         {
             update = true;
             clear_unification_level();
         }
 
+        // Does this work?
         solver.unbreak_type_equality_cycles();
     }
     while(update);
