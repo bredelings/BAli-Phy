@@ -148,7 +148,23 @@ Core::Decls TypeChecker::default_preds( WantedConstraints& wanted )
     return decls;
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
+string check_errors(const WantedConstraints& wanteds, const TypeCheckerContext& context)
+{
+    std::ostringstream out;
+    for(auto& wanted: wanteds.simple)
+    {
+        ErrorContext e;
+        e<<"Could not derive `"<<wanted.pred.print()<<"`";
+        auto context2 = context;
+        context2.push_err_context(e);
+        out<<context2.print_err_context()<<"\n";
+    }
+
+    for(auto& implic: wanteds.implications)
+        out<<check_errors(implic->wanteds,implic->context);
+
+    return out.str();
+}
 
 Core::Decls TypeChecker::simplify_and_default_top_level()
 {
@@ -157,7 +173,7 @@ Core::Decls TypeChecker::simplify_and_default_top_level()
     auto default_decls = default_preds( current_wanteds() );
 
     if (not current_wanteds().empty())
-        throw myexception()<<"Failed to solve wanteds: "<<print(current_wanteds().all_simple());
+        throw myexception(check_errors(current_wanteds(),{}));
 
     // Clear the LIE, which should now be empty.
     current_wanteds() = {};
