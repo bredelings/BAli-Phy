@@ -46,6 +46,7 @@ computation_sources = [
   'typecheck/quals.cc', 'typecheck/binds.cc', 'typecheck/solver.cc', 'typecheck/default.cc',
   'typecheck/type_groups.cc', 'typecheck/constraints.cc', 'typecheck/expected.cc',
   'typecheck/unify.cc', 'typecheck/solver/canonicalize.cc', 'typecheck/solver/rewrite.cc',
+  'typecheck/err_context.cc',
 
   'optimization/free-vars.cc', 'optimization/set-levels.cc', 'optimization/float-out.cc',
 

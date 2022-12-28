@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include "computation/parser/located.H"
 
 struct ErrorContext
 {
@@ -34,6 +35,22 @@ struct TypeCheckerContext
     void pop_err_context();
     void push_err_context(const ErrorContext& e);
     std::string print_err_context() const;
+};
+
+enum MessageType { ErrorMsg, WarningMsg};
+
+struct Message
+{
+    // Error or Warning
+    MessageType message_type;
+
+    // Should a message have a single location?
+    std::optional<yy::location> loc;
+    std::vector<ErrorContext> err_contexts;
+
+    std::string print() const;
+
+    Message(MessageType t, std::optional<yy::location> l, const std::vector<ErrorContext>& e);
 };
 
 #endif

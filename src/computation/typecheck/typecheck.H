@@ -55,6 +55,8 @@ struct global_tc_state
 
     std::vector<Type> defaults;
 
+    std::vector<Message> messages;
+
     // maybe merge with gve by mapping name -> type,con-or-var
     constr_env con_info;
 
@@ -98,6 +100,14 @@ struct TypeChecker: FreshVarSource
 
           std::vector<Type>& defaults()       {return global_state->defaults;}
     const std::vector<Type>& defaults() const {return global_state->defaults;}
+
+          std::vector<Message>& messages()       {return global_state->messages;}
+    const std::vector<Message>& messages() const {return global_state->messages;}
+
+    void record_error(std::optional<yy::location> l, const TypeCheckerContext& context, const ErrorContext& e);
+    void record_error(std::optional<yy::location> l, const ErrorContext& e);
+    void record_warning(std::optional<yy::location> l, const TypeCheckerContext& context, const ErrorContext& e);
+    void record_warning(std::optional<yy::location> l, const ErrorContext& e);
 
     std::optional<int> unification_level() const;
 
@@ -151,6 +161,7 @@ struct TypeChecker: FreshVarSource
     bool same_types(bool keep_syns, const std::vector<Type>& ts1, const std::vector<Type>& ts2) const;
     bool same_types(bool keep_syns, const RenameTyvarEnv2& env, const std::vector<Type>& ts1, const std::vector<Type>& ts2) const;
 
+    bool has_errors() const;
     myexception err_context_exception() const;
 
     //-------
@@ -247,6 +258,8 @@ struct TypeChecker: FreshVarSource
     bool default_preds( WantedConstraints& wanteds );
 
     Core::Decls simplify_and_default_top_level();
+
+    void check_wanteds(const WantedConstraints& wanteds, const TypeCheckerContext& context);
 
     std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const ConstraintOrigin& origin, const Type& t);
 

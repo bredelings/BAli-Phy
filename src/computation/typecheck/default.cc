@@ -167,28 +167,27 @@ bool TypeChecker::default_preds( WantedConstraints& wanted )
     return progress;
 }
 
-string check_errors(const WantedConstraints& wanteds, const TypeCheckerContext& context)
+void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const TypeCheckerContext& context)
 {
-    std::ostringstream out;
     for(auto& wanted: wanteds.simple)
     {
+        std::optional<yy::location> loc;
         ErrorContext e;
         e<<"Could not derive `"<<wanted.pred.print()<<"`";
         if (auto occ = to<OccurrenceOrigin>(wanted.origin))
         {
             e<<" arising from a use of `"<<unloc(occ->name)<<"`";
             if (occ->name.loc)
-                e<<" at "<<(*occ->name.loc);
+            {
+                loc = occ->name.loc;
+                e<<" at "<<(*loc);
+            }
         }
-        auto context2 = context;
-        context2.push_err_context(e);
-        out<<context2.print_err_context()<<"\n";
+        record_error(loc, context, e);
     }
 
     for(auto& implic: wanteds.implications)
-        out<<check_errors(implic->wanteds,implic->context);
-
-    return out.str();
+        check_wanteds(implic->wanteds,implic->context);
 }
 
 Core::Decls TypeChecker::simplify_and_default_top_level()
@@ -199,11 +198,8 @@ Core::Decls TypeChecker::simplify_and_default_top_level()
     while(default_preds( current_wanteds() ))
         top_simplify_decls += entails( {}, current_wanteds() );
         
-    if (not current_wanteds().empty())
-    {
-        // Here we should complain about unsolved abiguities...
-        throw myexception(check_errors(current_wanteds(),{}));
-    }
+    // Here we should complain about unsolved abiguities...
+    check_wanteds(current_wanteds(),{});
 
 //    std::cerr<<"GVE (all after defaulting):\n";
 //    for(auto& [x,t]: state.gve)

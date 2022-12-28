@@ -339,24 +339,6 @@ using std::tuple;
 // GVE = global value environment      = var -> polytype
 // LVE = local  value environment      = var -> monotype
 
-void TypeCheckerContext::pop_err_context()
-{
-    err_contexts.pop_back();
-}
-
-void TypeCheckerContext::push_err_context(const ErrorContext& e)
-{
-    err_contexts.push_back(e);
-}
-
-string TypeCheckerContext::print_err_context() const
-{
-    vector<string> estrings;
-    for(auto& err_context: err_contexts)
-        estrings.push_back("    • "+err_context.print()+"\n");
-    return "Error:\n"+join(estrings, "\n");
-}
-
 int TypeChecker::type_con_arity(const TypeCon& tc) const
 {
     auto iter = tycon_info().find(unloc(tc.name));
@@ -439,6 +421,40 @@ std::optional<std::tuple<TypeCon,std::vector<Type>>> TypeChecker::is_type_class_
         return tcapp;
     else
         return {};
+}
+
+void TypeChecker::record_error(std::optional<yy::location> l, const TypeCheckerContext& context, const ErrorContext& e)
+{
+    TypeCheckerContext context2 = context;
+    context2.push_err_context(e);
+
+    messages().push_back({ErrorMsg, l, context2.err_contexts});
+}
+
+void TypeChecker::record_error(std::optional<yy::location> l, const ErrorContext& e)
+{
+    return record_error(l, context, e);
+}
+
+void TypeChecker::record_warning(std::optional<yy::location> l, const TypeCheckerContext& context, const ErrorContext& e)
+{
+    TypeCheckerContext context2 = context;
+    context2.push_err_context(e);
+
+    messages().push_back({ErrorMsg, l, context2.err_contexts});
+}
+
+void TypeChecker::record_warning(std::optional<yy::location> l, const ErrorContext& e)
+{
+    return record_warning(l, context, e);
+}
+
+bool TypeChecker::has_errors() const
+{
+    for(auto& msg: messages())
+        if (msg.message_type == ErrorMsg)
+            return true;
+    return false;
 }
 
 myexception TypeChecker::err_context_exception() const
@@ -1467,6 +1483,18 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
 
     // 13. Default top-level ambiguous type vars.
     auto top_simplify_decls = tc_state->simplify_and_default_top_level();
+
+    // Perhaps we should sort them by location?
+    for(auto& msg: tc_state->messages())
+    {
+        std::cerr<<msg.print();
+        std::cerr<<"\n";
+    }
+
+    // If throw an exception later, the stuff printed to cerr will be printed again.
+    // Should we be printing to out_screen instead?
+    if (tc_state->has_errors())
+        exit(1);
 
     return {class_binds, value_decls, dm_decls, instance_method_binds, dfun_decls, top_simplify_decls};
 }
