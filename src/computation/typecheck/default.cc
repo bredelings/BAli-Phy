@@ -2,6 +2,7 @@
 #include "kindcheck.H"
 
 #include "util/set.H"   // for add( , )
+#include "util/variant.H"   // for to< >()
 
 using std::string;
 using std::vector;
@@ -155,6 +156,12 @@ string check_errors(const WantedConstraints& wanteds, const TypeCheckerContext& 
     {
         ErrorContext e;
         e<<"Could not derive `"<<wanted.pred.print()<<"`";
+        if (auto occ = to<OccurrenceOrigin>(wanted.origin))
+        {
+            e<<" arising from a use of `"<<unloc(occ->name)<<"`";
+            if (occ->name.loc)
+                e<<" at "<<(*occ->name.loc);
+        }
         auto context2 = context;
         context2.push_err_context(e);
         out<<context2.print_err_context()<<"\n";

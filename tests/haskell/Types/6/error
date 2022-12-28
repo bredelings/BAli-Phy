@@ -1,6 +1,10 @@
 bali-phy: Error! In module 'Main':
-In recursive group:
+    • In recursive group:
     Main.apply
 
-skolem-escape in 'monotype_5{1} ~ b_4{{2}}':
-  cannot promote to level 1 because of type variables on level 2
+
+    • In equation `(Main.T f x)  = x`
+
+    • Could not derive `b_4{{2}} ~ monotype_11{{1}}`
+
+
