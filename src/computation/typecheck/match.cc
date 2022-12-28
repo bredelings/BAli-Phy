@@ -42,6 +42,7 @@ void TypeChecker::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type)
 
 void TypeChecker::tcMatch(Hs::MRule& m, const vector<Expected>& pat_types, const Expected& result_type)
 {
+    context.push_err_context(ErrorContext()<<"In equation `"<<m.print()<<"`");
     assert(m.patterns.size() == pat_types.size());
 
     auto state2 = copy_clear_wanteds();
@@ -50,6 +51,7 @@ void TypeChecker::tcMatch(Hs::MRule& m, const vector<Expected>& pat_types, const
     state2.tcPats(penv, m.patterns, pat_types, {}, [&](auto& /*penv2*/, auto& tc) {tc.tcRho(m.rhs,result_type);});
 
     current_wanteds() += state2.current_wanteds();
+    context.pop_err_context();
 }
 
 void TypeChecker::tcMatches(Hs::Matches& ms, const vector<Expected>& pat_types, const Expected& result_type)
