@@ -7,6 +7,31 @@
 
 int terminal_width();
 
+namespace ANSI
+{
+    extern const std::string plain;
+    extern const std::string bold;
+    extern const std::string under;
+    extern const std::string inverse;
+    extern const std::string bold_off;
+    extern const std::string under_off;
+    extern const std::string inverse_off;
+    extern const std::string black;
+    extern const std::string bold_black;
+    extern const std::string red;
+    extern const std::string bold_red;
+    extern const std::string green;
+    extern const std::string bold_green;
+    extern const std::string yellow;
+    extern const std::string blue;
+    extern const std::string bold_blue;
+    extern const std::string magenta;
+    extern const std::string cyan;
+
+    extern const std::string bg_grey;
+    extern const std::string bg_grey2;
+}
+
 std::string show_options(const std::vector<std::string>&);
 
 std::string pad(const std::string& s, int n);

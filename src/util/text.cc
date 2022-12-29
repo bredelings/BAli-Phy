@@ -121,98 +121,101 @@ string indent(int indent, const string& text)
     return indent_and_wrap(indent, 100000, text);
 }
 
-const std::string ansi_plain("\033[0m");
-const std::string ansi_bold("\033[1m");
-const std::string ansi_under("\033[4m");
-const std::string ansi_inverse("\033[7m");
-const std::string ansi_bold_off("\033[21m");
-const std::string ansi_under_off("\033[24m");
-const std::string ansi_inverse_off("\033[27m");
-const std::string ansi_black("\033[0;30m");
-const std::string ansi_bold_black("\033[1;30m");
-const std::string ansi_red("\033[0;31m");
-const std::string ansi_bold_red("\033[1;31m");
-const std::string ansi_green("\033[0;32m");
-const std::string ansi_bold_green("\033[1;32m");
-const std::string ansi_yellow("\033[1;33m");
-const std::string ansi_blue("\033[0;34m");
-const std::string ansi_bold_blue("\033[1;34m");
-const std::string ansi_magenta("\033[1;35m");
-const std::string ansi_cyan("\033[1;36m");
+namespace ANSI
+{
+    const std::string plain("\033[0m");
+    const std::string bold("\033[1m");
+    const std::string under("\033[4m");
+    const std::string inverse("\033[7m");
+    const std::string bold_off("\033[21m");
+    const std::string under_off("\033[24m");
+    const std::string inverse_off("\033[27m");
+    const std::string black("\033[0;30m");
+    const std::string bold_black("\033[1;30m");
+    const std::string red("\033[0;31m");
+    const std::string bold_red("\033[1;31m");
+    const std::string green("\033[0;32m");
+    const std::string bold_green("\033[1;32m");
+    const std::string yellow("\033[1;33m");
+    const std::string blue("\033[0;34m");
+    const std::string bold_blue("\033[1;34m");
+    const std::string magenta("\033[1;35m");
+    const std::string cyan("\033[1;36m");
 
-const std::string ansi_bg_grey("\033[1;48;2;180;180;180m");
-const std::string ansi_bg_grey2("\033[47;1m");
+    const std::string bg_grey("\033[1;48;2;180;180;180m");
+    const std::string bg_grey2("\033[47;1m");
+}
 
 string red(const string& s)
 {
-    return ansi_red + s + ansi_plain;
+    return ANSI::red + s + ANSI::plain;
 }
 
 string black(const string& s)
 {
-    return ansi_black + s + ansi_plain;
+    return ANSI::black + s + ANSI::plain;
 }
 
 string bold_black(const string& s)
 {
-    return ansi_bold_black + s + ansi_plain;
+    return ANSI::bold_black + s + ANSI::plain;
 }
 
 string bold_red(const string& s)
 {
-    return ansi_bold_red + s + ansi_plain;
+    return ANSI::bold_red + s + ANSI::plain;
 }
 
 string green(const string& s)
 {
-    return ansi_green + s + ansi_plain;
+    return ANSI::green + s + ANSI::plain;
 }
 
 string bold_green(const string& s)
 {
-    return ansi_bold_green + s + ansi_plain;
+    return ANSI::bold_green + s + ANSI::plain;
 }
 
 string blue(const string& s)
 {
-    return ansi_blue + s + ansi_plain;
+    return ANSI::blue + s + ANSI::plain;
 }
 
 string bold_blue(const string& s)
 {
-    return ansi_bold_blue + s + ansi_plain;
+    return ANSI::bold_blue + s + ANSI::plain;
 }
 
 string cyan(const string& s)
 {
-    return ansi_cyan + s + ansi_plain;
+    return ANSI::cyan + s + ANSI::plain;
 }
 
 string magenta(const string& s)
 {
-    return ansi_magenta + s + ansi_plain;
+    return ANSI::magenta + s + ANSI::plain;
 }
 
 string bold(const string& line)
 {
-    return ansi_bold + line + ansi_plain;
+    return ANSI::bold + line + ANSI::plain;
 }
 
 // This works
 // print u"\u001b[44;1m A \u001b[45;1m B \u001b[46;1m C \u001b[47;1m D \u001b[0m"
 string highlight_bg(const string& line)
 {
-    return ansi_bg_grey2 + line + ansi_plain;
+    return ANSI::bg_grey2 + line + ANSI::plain;
 }
 
 string inverse(const string& line)
 {
-    return ansi_inverse + line + ansi_inverse_off;
+    return ANSI::inverse + line + ANSI::inverse_off;
 }
 
 string underline(const string& line)
 {
-    return ansi_under + line + ansi_under_off;
+    return ANSI::under + line + ANSI::under_off;
 }
 
 
