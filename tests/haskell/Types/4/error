@@ -1,0 +1,7 @@
+[1mMain.hs:12.19-20:[1;31m error:[0m[1m
+   • Could not derive `Data.Eq.Eq a_475{{2}}` arising from a use of
+     `Data.Eq.==` at Main.hs:12.19-20
+   [1;34m|[0m
+[1;34m12[0m [1;34m| [0mreflexive2 ae = x [1;31m==[0m x
+   [1;34m|[0m                   [1;31m^^[0m
+
