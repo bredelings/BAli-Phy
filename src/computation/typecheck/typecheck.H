@@ -65,6 +65,18 @@ struct global_tc_state
     global_tc_state(const Module& m);
 };
 
+struct TypeCheckerContext
+{
+//    yy::location source_span;
+    std::vector< Note > notes;
+//    std::vector< Hs::Var > binder_stack;
+//    int level = 0;
+
+    void pop_note();
+    void push_note(const Note& e);
+    std::string print_note() const;
+};
+
 struct TypeChecker;
 
 template <typename... Args>
