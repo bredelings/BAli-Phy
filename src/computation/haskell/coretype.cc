@@ -907,11 +907,6 @@ Type desugar(const Hs::Type& t)
         std::abort();
 }
 
-struct PrettyPrinter
-{
-    bool debug = true;
-};
-
 vector<Type> desugar(const std::vector<Hs::Type>& ts1)
 {
     vector<Type> ts2;
@@ -920,11 +915,15 @@ vector<Type> desugar(const std::vector<Hs::Type>& ts1)
     return ts2;
 }
 
-
 // Alternatively, we could make something with options, and do
 // ppr<<app.head<<" "<<app.arg.
-//
-// Haskell does have some functions like pprAsThing to print
+// This would allow us to record state on the ppr object, like:
+// struct PrettyPrinter
+// {
+//     bool debug = true;
+// };
+
+// However, GHC does have some functions like pprAsThing to print
 // something in a particular fashion.
 // We could handle this by constructing temprary objects like
 // ppr<<"this is a "<<Thing(obj), but...
