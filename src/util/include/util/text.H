@@ -35,8 +35,7 @@ namespace ANSI
 std::string show_options(const std::vector<std::string>&);
 
 std::string pad(const std::string& s, int n);
-std::list<std::string> get_lines(const std::string& line);
-std::vector<std::string> get_lines_vec(const std::string& line);
+std::vector<std::string> get_lines(const std::string& line);
 
 std::string indent_and_wrap(int indent_first_line, int indent_other_lines, int width, const std::string& text);
 std::string indent_and_wrap(int indent, int width, const std::string& text);

@@ -20,7 +20,7 @@ string FileContents::print_range(int line1, int col1, int line2, int col2) const
     assert(col2 >= 1);
     assert(line2 >= line1);
 
-    auto lines = get_lines_vec(contents);
+    auto lines = get_lines(contents);
 
     // Check that the lines exist in the file.
     assert(line1-1 < lines.size());

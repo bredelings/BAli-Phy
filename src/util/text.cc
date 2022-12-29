@@ -23,22 +23,7 @@ string pad(const string& s, int n)
 }
 
 
-list<string> get_lines(const string& line)
-{
-    list<string> lines;
-
-    for(int pos=0; pos<line.size();)
-    {
-	int next = line.find('\n', pos);
-	if (next == string::npos)
-	    next = line.size();
-	lines.push_back(line.substr(pos,next-pos));
-	pos = next + 1;
-    }
-    return lines;
-}
-
-vector<string> get_lines_vec(const string& line)
+vector<string> get_lines(const string& line)
 {
     vector<string> lines;
 
@@ -53,67 +38,84 @@ vector<string> get_lines_vec(const string& line)
     return lines;
 }
 
-
 // Given a line containing no line breaks, return the first wrapped line and the rest of the line.
-optional<list<string>> wrap(string line, int width)
+vector<string> wrap_lines(const string& line, int width)
 {
-    if (line.size() < width) return list<string>{line};
+    vector<string> lines;
 
-    int loc = line.find_last_of(" \t", width-1);
-
-    if (loc != string::npos)
+    int pos = 0;
+    while (pos < line.size())
     {
-	if (loc+1 < line.size())
-	    return list<string>{line.substr(0,loc),line.substr(loc+1)};
-	else
-	    return list<string>{line.substr(0,loc)};
-    }
+        // 1. If the remainder of the line fits, just return that.
+        if (pos + width > line.size())
+        {
+            lines.push_back( line.substr(pos) );
+            pos = line.size();
+            continue;
+        }
 
-    return {};
+        // 2. Try to split at the last space or tab near the edge of the page.
+        int loc = pos+width-1;
+        for(;loc >= pos; loc--)
+            if (line[loc] == ' ' or line[loc] == '\t')
+                break;
+
+        // 3. If that doesn't work, split at the first space of tab past the edge of the page.
+        if (loc < pos)
+            loc = line.find_first_of(" \t", pos + width);
+
+        // 4. If there is no space or tab in the rest of the line, just return the whole thing.
+        if (loc == string::npos)
+        {
+            lines.push_back( line.substr(pos) );
+            pos = line.size();
+            continue;
+        }
+
+        // 5. Check that we actually found a space.
+        assert(line[loc] == ' ' or line[loc] == '\t');
+
+        // 6. Otherwise return the first bit, and continue with the rest.
+        lines.push_back(line.substr(pos, loc - pos));
+        pos = loc + 1;
+    }
+    
+    return lines;
 }
 
-void wrap_and_indent_one_line(int indent, int width, list<string>& lines, list<string>& wrapped_lines)
+vector<string> wrap_lines(const vector<string>& lines, int width)
 {
-    lines.front() = string(indent,' ') + lines.front();
-    if (auto wrap_first = wrap(lines.front(), width))
+    vector<string> wrapped_lines;
+    for(auto& line: lines)
     {
-	// Move wrapped first line into wrapped_lines
-	wrapped_lines.push_back(wrap_first->front());
-	wrap_first->pop_front();
-
-	// Move remaining lines into wrapped_lines
-	lines.pop_front();
-	lines.insert(lines.begin(), wrap_first->begin(), wrap_first->end());
+        auto w = wrap_lines(line, width);
+        wrapped_lines.insert(wrapped_lines.end(), w.begin(), w.end());
     }
-    else
-    {
-	// Move the unwrapped lines into wrapped_lines
-	wrapped_lines.push_back(lines.front());
-	lines.pop_front();
-    }
+    return wrapped_lines;
 }
 
 string indent_and_wrap(int indent_first_line, int indent_other_lines, int width, const string& text)
 {
-    if (text.empty()) return text;
+    auto text2 = indent_and_wrap(indent_other_lines, width, text);
 
-    list<string> wrapped_lines;
-
-    auto lines = get_lines(text);
-    assert(not lines.empty());
-
-    // 1. Indent and wrap the first line
-    wrap_and_indent_one_line(indent_first_line, width, lines, wrapped_lines);
-
-    while(not lines.empty())
-	wrap_and_indent_one_line(indent_other_lines, width, lines, wrapped_lines);
-
-    return join(wrapped_lines, '\n');
+    if (indent_first_line < indent_other_lines)
+        return text2.substr(indent_other_lines - indent_first_line);
+    else if (indent_first_line > indent_other_lines)
+        return string(indent_first_line - indent_other_lines,' ') + text2;
+    else
+        return text2;
 }
 
 string indent_and_wrap(int indent, int width, const string& text)
 {
-    return indent_and_wrap(indent, indent, width, text);
+    if (text.empty()) return text;
+
+    auto lines = wrap_lines(get_lines(text), width - indent);
+
+    for(auto& line: lines)
+        line = string(indent,' ') + line;
+
+    return join(lines,'\n');
 }
 
 string indent(int indent, const string& text)
