@@ -1,7 +1,8 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 
-#include "util/set.H"   // for add( , )
+#include "util/text.H"      // for ANSI colors
+#include "util/set.H"       // for add( , )
 #include "util/variant.H"   // for to< >()
 #include "haskell/ids.H"
 
@@ -187,10 +188,10 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const TypeChec
     {
         std::optional<yy::location> loc;
         Note e;
-        e<<"Could not derive `"<<print_unqualified(wanted.pred)<<"`";
+        e<<"Could not derive `"<<bold_green(print_unqualified(wanted.pred))<<ANSI::bold<<"`";
         if (auto occ = to<OccurrenceOrigin>(wanted.origin))
         {
-            e<<" arising from a use of `"<<print_unqualified_id(occ->name)<<"`";
+            e<<" arising from a use of `"<<cyan(print_unqualified_id(occ->name))<<ANSI::bold<<"`";
             if (occ->name.loc)
             {
                 loc = occ->name.loc;
