@@ -1,0 +1,105 @@
+#include "err_context.H"
+#include <sstream>
+#include "util/text.H"
+#include "util/string/join.H"
+#include <range/v3/all.hpp>
+
+using std::string;
+using std::vector;
+
+namespace views = ranges::views;
+
+string FileContents::print_range(int line1, int col1, int line2, int col2) const
+{
+    std::ostringstream out;
+
+    // Check column and line numbers.
+    assert(line1 >= 1);
+    assert(col1 >= 1);
+    assert(line2 >= 1);
+    assert(col2 >= 1);
+    assert(line2 >= line1);
+
+    auto lines = get_lines_vec(contents);
+
+    // Check that the lines exist in the file.
+    assert(line1-1 < lines.size());
+    assert(line2-1 < lines.size());
+
+    // Check that the columns exist in the file.
+    assert(col1 -1 < lines[line1-1].size());
+    assert(col2 -1 < lines[line2-1].size());
+    
+    const string& line = lines[line1-1];
+
+    string line_no1 = std::to_string(line1);
+    int n = line_no1.size();
+
+    // For multi-line selections, just print the whole first line.
+    if (line2 > line1) col2 = line.size();
+    
+    out<<string(n+1,' ')<<bold_blue("|")<<"\n";
+    out<<bold_blue(line_no1)<<" "<<bold_blue("| ")<<line.substr(0,col1-1)<<bold_red(line.substr(col1-1,col2-col1))<<line.substr(col2-1)<<"\n";
+    out<<string(n+1,' ')<<bold_blue("|")<<string(col1,' ')<<bold_red(string(col2-col1,'^'))<<"\n";
+
+    return out.str();
+}
+
+
+void TypeCheckerContext::pop_err_context()
+{
+    err_contexts.pop_back();
+}
+
+void TypeCheckerContext::push_err_context(const ErrorContext& e)
+{
+    err_contexts.push_back(e);
+}
+
+string TypeCheckerContext::print_err_context() const
+{
+    vector<string> estrings;
+    for(auto& err_context: err_contexts)
+        estrings.push_back("    • "+err_context.print()+"\n");
+    return "Error:\n"+join(estrings, "\n");
+}
+
+string Message::print(const FileContents& file) const
+{
+    std::ostringstream out;
+
+    out<<ANSI::bold;
+    if (loc)
+        out<<(*loc)<<":";
+    else
+        out<<"<unknown>"<<":";
+
+    out<<((message_type==ErrorMsg)?bold_red(" error:"):" warning:");
+    out<<ANSI::bold;
+    out<<"\n";
+
+    for(auto& msg: views::reverse(err_contexts))
+    {
+        auto s = indent_and_wrap(5, terminal_width(), msg.print());
+        s = "   • " + s.substr(5);
+        out<<s<<"\n";
+    }
+
+    if (loc)
+    {
+        int line1 = loc->begin.line;
+        int col1 = loc->begin.column;
+
+        int line2 = loc->end.line;
+        int col2 = loc->end.column;
+
+        out<<file.print_range(line1, col1, line2, col2);
+    }
+
+    return out.str();
+}
+
+Message::Message(MessageType t, std::optional<yy::location> l, const std::vector<ErrorContext>& e)
+    :message_type(t), loc(l), err_contexts(e)
+{
+}
