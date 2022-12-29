@@ -42,7 +42,7 @@ Hs::FunDecl dictionary_extractor(const string& name, int i, int N)
 tuple<global_value_env, ClassInfo, Hs::Decls>
 TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
-    context.push_err_context( ErrorContext()<<"In class '"<<class_decl.name<<"':" );
+    context.push_note( Note()<<"In class '"<<class_decl.name<<"':" );
 
     kindchecker_state K( tycon_info() );
 
@@ -152,23 +152,23 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         auto con = desugar(type_fam_decl.con);
         type_fam_info().insert({con, info});
         if (class_info.associated_type_families.count(con))
-            throw err_context_exception()<<"Trying to define type family '"<<con.print()<<"' twice";
+            throw note_exception()<<"Trying to define type family '"<<con.print()<<"' twice";
         class_info.associated_type_families.insert({con,false});
     }
 
     // 7. Load default associated type family instances
     for(auto& def_inst: class_decl.default_type_inst_decls)
     {
-        context.push_err_context( ErrorContext()<<"In default instance '"<<def_inst.print()<<"':");
+        context.push_note( Note()<<"In default instance '"<<def_inst.print()<<"':");
 
         auto tf_con = desugar(def_inst.con);
         if (not class_info.associated_type_families.count(tf_con))
-            throw err_context_exception()<<
+            throw note_exception()<<
                 "  Type family '"<<tf_con<<"' is not defined.";
 
         // An associated type family can have only one default instance.
         if (class_info.associated_type_families.at(tf_con))
-            throw err_context_exception()<<
+            throw note_exception()<<
                 "  Associated type family '"<<tf_con.print()<<"' may only have one default instance!";
 
         // All type arguments must be variables.
@@ -179,11 +179,11 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
             auto tv = arg.to<TypeVar>();
 
             if (not tv)
-                throw err_context_exception()<<
+                throw note_exception()<<
                     "  Argument '"<<arg.print()<<"' must be a type variable.";
 
             if (lhs_tvs.count(*tv))
-                throw err_context_exception()<<
+                throw note_exception()<<
                     "  Argument '"<<arg.print()<<"' used twice.";
 
             lhs_tvs.insert(*tv);
@@ -192,7 +192,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         // The rhs may only mention type vars bound on the lhs.
         for(auto& tv: free_type_variables(desugar(def_inst.rhs)))
             if (not lhs_tvs.count(tv))
-                throw err_context_exception()<<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.";
+                throw note_exception()<<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.";
 
         // This type family has a default now.
         class_info.associated_type_families.at(tf_con) = true;
@@ -200,10 +200,10 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         // Add the default type instance -- no need for variables to match the class.
         check_add_type_instance(def_inst, class_decl.name, {});
 
-        context.pop_err_context();
+        context.pop_note();
     }
 
-    context.pop_err_context();
+    context.pop_note();
     return {gve, class_info, decls};
 }
 

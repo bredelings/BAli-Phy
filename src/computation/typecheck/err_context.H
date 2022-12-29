@@ -7,7 +7,7 @@
 #include "computation/parser/located.H"
 #include "computation/module.H"
 
-struct ErrorContext
+struct Note
 {
     std::string ctx;
 
@@ -15,7 +15,7 @@ struct ErrorContext
 
     std::string print() const {return ctx;}
 
-    template <typename T> ErrorContext& operator<<(const T& t)
+    template <typename T> Note& operator<<(const T& t)
     {
         std::ostringstream oss;
         oss<<ctx<<t;
@@ -23,19 +23,19 @@ struct ErrorContext
         return *this;
     }
 
-    ErrorContext() = default;
+    Note() = default;
 };
 
 struct TypeCheckerContext
 {
 //    yy::location source_span;
-    std::vector< ErrorContext > err_contexts;
+    std::vector< Note > notes;
 //    std::vector< Hs::Var > binder_stack;
 //    int level = 0;
 
-    void pop_err_context();
-    void push_err_context(const ErrorContext& e);
-    std::string print_err_context() const;
+    void pop_note();
+    void push_note(const Note& e);
+    std::string print_note() const;
 };
 
 enum MessageType { ErrorMsg, WarningMsg};
@@ -47,11 +47,11 @@ struct Message
 
     // Should a message have a single location?
     std::optional<yy::location> loc;
-    std::vector<ErrorContext> err_contexts;
+    std::vector<Note> notes;
 
     std::string print(const FileContents& file) const;
 
-    Message(MessageType t, std::optional<yy::location> l, const std::vector<ErrorContext>& e);
+    Message(MessageType t, std::optional<yy::location> l, const std::vector<Note>& e);
 };
 
 #endif

@@ -172,7 +172,7 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const TypeChec
     for(auto& wanted: wanteds.simple)
     {
         std::optional<yy::location> loc;
-        ErrorContext e;
+        Note e;
         e<<"Could not derive `"<<wanted.pred.print()<<"`";
         if (auto occ = to<OccurrenceOrigin>(wanted.origin))
         {

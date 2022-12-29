@@ -29,7 +29,7 @@ void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
     else if (auto sigma_ptr = imported_gve.find( x_name ))
         sigma = *sigma_ptr;
     else
-        throw err_context_exception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
+        throw note_exception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 
     try
     {
@@ -81,20 +81,20 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
     else
         tcRho(App.head, fun_type);
 
-    auto e = err_context_exception()<<"Applying "<<(arg_index+1)<<" arguments to function "<<App.head.print()<<", but it only takes "<<arg_index<<"!";
+    auto e = note_exception()<<"Applying "<<(arg_index+1)<<" arguments to function "<<App.head.print()<<", but it only takes "<<arg_index<<"!";
     auto [arg_type, result_type] = unify_function(fun_type.read_type(), e);
 
     // Check the argument according to its required type
     auto wrap_arg = checkSigma(App.args[arg_index], arg_type);
     App.arg_wrappers.push_back(wrap_arg);
 
-    context.push_err_context( ErrorContext() << "In expression '"<< App.print()<<"':" );
+    context.push_note( Note() << "In expression '"<< App.print()<<"':" );
 
     // Convert the result to the expected time for the term
     auto wrap_res = instantiateSigma(AppOrigin(), result_type, exp_type);
     App.res_wrappers.push_back(wrap_res);
 
-    context.pop_err_context();
+    context.pop_note();
 }
 
 void TypeChecker::tcRho(Hs::LetExp& Let, const Expected& exp_type)
@@ -472,6 +472,6 @@ void TypeChecker::tcRho(expression_ref& E, const Expected& exp_type)
         E = L;
     }
     else
-        throw err_context_exception()<<"type check expression: I don't recognize expression '"<<E<<"'";
+        throw note_exception()<<"type check expression: I don't recognize expression '"<<E<<"'";
 }
 

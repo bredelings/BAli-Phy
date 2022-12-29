@@ -343,7 +343,7 @@ int TypeChecker::type_con_arity(const TypeCon& tc) const
 {
     auto iter = tycon_info().find(unloc(tc.name));
     if (iter == tycon_info().end())
-        throw err_context_exception()<<"Can't find type con '"<<tc<<"'";
+        throw note_exception()<<"Can't find type con '"<<tc<<"'";
     return iter->second.arity;
 }
 
@@ -423,28 +423,28 @@ std::optional<std::tuple<TypeCon,std::vector<Type>>> TypeChecker::is_type_class_
         return {};
 }
 
-void TypeChecker::record_error(std::optional<yy::location> l, const TypeCheckerContext& context, const ErrorContext& e)
+void TypeChecker::record_error(std::optional<yy::location> l, const TypeCheckerContext& context, const Note& e)
 {
     TypeCheckerContext context2 = context;
-    context2.push_err_context(e);
+    context2.push_note(e);
 
-    messages().push_back({ErrorMsg, l, context2.err_contexts});
+    messages().push_back({ErrorMsg, l, context2.notes});
 }
 
-void TypeChecker::record_error(std::optional<yy::location> l, const ErrorContext& e)
+void TypeChecker::record_error(std::optional<yy::location> l, const Note& e)
 {
     return record_error(l, context, e);
 }
 
-void TypeChecker::record_warning(std::optional<yy::location> l, const TypeCheckerContext& context, const ErrorContext& e)
+void TypeChecker::record_warning(std::optional<yy::location> l, const TypeCheckerContext& context, const Note& e)
 {
     TypeCheckerContext context2 = context;
-    context2.push_err_context(e);
+    context2.push_note(e);
 
-    messages().push_back({ErrorMsg, l, context2.err_contexts});
+    messages().push_back({ErrorMsg, l, context2.notes});
 }
 
-void TypeChecker::record_warning(std::optional<yy::location> l, const ErrorContext& e)
+void TypeChecker::record_warning(std::optional<yy::location> l, const Note& e)
 {
     return record_warning(l, context, e);
 }
@@ -457,9 +457,9 @@ bool TypeChecker::has_errors() const
     return false;
 }
 
-myexception TypeChecker::err_context_exception() const
+myexception TypeChecker::note_exception() const
 {
-    return myexception(context.print_err_context());
+    return myexception(context.print_note());
 }
 
 TypeVar unification_env::fresh_tyvar(const std::optional<Kind>& kind) const
@@ -540,7 +540,7 @@ void TypeChecker::fillInfer(const Type& type, Infer& I)
 void TypeChecker::ensure_monotype(const Type& type)
 {
     if (not is_rho_type(type))
-        throw err_context_exception()<<"ensure_monotype: "<<type<<" is not a rho type!";
+        throw note_exception()<<"ensure_monotype: "<<type<<" is not a rho type!";
 
     if (true) // a tau type
         ;
@@ -584,7 +584,7 @@ void TypeChecker::set_expected_type(const Expected& E, const Type& type)
             header<<"   "<<type<<"\n\n";
 
             ex.prepend(header.str());
-            ex.prepend(context.print_err_context());
+            ex.prepend(context.print_note());
             throw;
         }
     }
@@ -812,7 +812,7 @@ void TypeChecker::promote(Type type, int new_level)
     // check for skolem_escape
     if (max_level(type) > new_level)
     {
-        throw myexception(context.print_err_context())<<"skolem-escape in '"<<type<<"':\n  cannot promote to level "<<new_level<<" because of type variables on level "<<max_level(type);
+        throw myexception(context.print_note())<<"skolem-escape in '"<<type<<"':\n  cannot promote to level "<<new_level<<" because of type variables on level "<<max_level(type);
     }
 }
 
@@ -1014,7 +1014,7 @@ DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
     }
 
     if (not con_info().count(con_name))
-        throw err_context_exception()<<"Unrecognized constructor: "<<con;
+        throw note_exception()<<"Unrecognized constructor: "<<con;
 
     return con_info().at(con_name);
 }

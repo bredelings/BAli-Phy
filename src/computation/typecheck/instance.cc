@@ -68,12 +68,12 @@ string get_name_for_typecon(const TypeCon& tycon)
 
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
-    context.push_err_context( ErrorContext()<<"In instance '"<<inst.print()<<"':" );
+    context.push_note( Note()<<"In instance '"<<inst.print()<<"':" );
     auto tf_con = desugar(inst.con);
     
     // 1. Check that the type family exists.
     if (not type_fam_info().count( tf_con ))
-        throw err_context_exception()<<"  No type family '"<<inst.con.print()<<"'";
+        throw note_exception()<<"  No type family '"<<inst.con.print()<<"'";
 
     // 2. Get the type family info
     auto& tf_info = type_fam_info().at(tf_con);
@@ -82,12 +82,12 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     {
         // 3. Check for unassociated instances declared for associated classes
         if (not associated_class)
-            throw err_context_exception()<<
+            throw note_exception()<<
                 "  Can't declare non-associated type instance for type family '"<<inst.con.print()<<"' associated with class '"<<(*tf_info.associated_class)<<"'";
 
         // 4. Check for instances associated with the wrong class
         if (*tf_info.associated_class != *associated_class)
-            throw err_context_exception()<<
+            throw note_exception()<<
                 "  Trying to declare type instance in class '"<<*associated_class<<" for family '"<<inst.con.print()<<"' associated with class '"<<(*tf_info.associated_class)<<"'";
 
         // 5. Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
@@ -98,7 +98,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
             {
                 auto expected = instance_subst.at(fam_tv);
                 if (not same_type( desugar(inst.args[i]), expected))
-                    throw err_context_exception()<<
+                    throw note_exception()<<
                         "    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'";
             }
         }
@@ -106,12 +106,12 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 
     // 6. Check that the type family is not closed
     if (tf_info.closed)
-        throw err_context_exception()<<
+        throw note_exception()<<
             "  Can't declare additional type instance for closed type family '"<<inst.con.print()<<"'";
 
     // 7. Check that the type instance has the right number of arguments
     if (inst.args.size() != tf_info.args.size())
-        throw err_context_exception()<<
+        throw note_exception()<<
             "    Expected "<<tf_info.args.size()<<" parameters, but got "<<inst.args.size();
 
     // 8. The rhs may only mention type vars bound on the lhs.
@@ -124,7 +124,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 
     for(auto& tv: free_type_variables(desugar(inst.rhs)))
         if (not lhs_tvs.count(tv))
-            throw err_context_exception()<<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.";
+            throw note_exception()<<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.";
 
     // 9. Kind-check the parameters and result type, and record the free type variables.
     TypeFamEqnInfo eqn{ desugar(inst.args), desugar(inst.rhs), lhs_tvs | ranges::to<vector>()};
@@ -165,13 +165,13 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     // 11. Make up an equation id -- this is the "evidence" for the type family instance.
     tf_info.equations.insert({eqn_id, eqn});
 
-    context.pop_err_context();
+    context.pop_note();
 }
 
 pair<Core::Var, Type>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
-    context.push_err_context( ErrorContext()<<"In instance '"<<inst_decl.constraint<<"':" );
+    context.push_note( Note()<<"In instance '"<<inst_decl.constraint<<"':" );
 
     // 1. Get class name and parameters for the instance
     auto [class_head, class_args] = decompose_type_apps(desugar(inst_decl.constraint));
@@ -179,18 +179,18 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     // 2. Look up the class info
     auto tc = class_head.to<TypeCon>();
     if (not tc)
-        throw err_context_exception()<<"  "<<class_head<<" is not a type constructor!";
+        throw note_exception()<<"  "<<class_head<<" is not a type constructor!";
 
     // Check that this is a class, and not a data or type?
     auto class_name = unloc(tc->name);
     if (not class_env().count(class_name))
-        throw err_context_exception()<<"  no class '"<<class_name<<"'!";
+        throw note_exception()<<"  no class '"<<class_name<<"'!";
     auto class_info = class_env().at(class_name);
 
     // 3. Check that the instance has the right number of parameters
     int N = class_info.type_vars.size();
     if (class_args.size() != class_info.type_vars.size())
-        throw err_context_exception()<<"  should have "<<N<<" parameters, but has "<<class_args.size()<<".";
+        throw note_exception()<<"  should have "<<N<<" parameters, but has "<<class_args.size()<<".";
 
     // 4. Construct the mapping from original class variables to instance variables
     substitution_t instance_subst;
@@ -215,7 +215,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
             if (auto tc = a_head.to<TypeCon>())
                 tycon_names += get_name_for_typecon(*tc);
             else
-                throw err_context_exception()<<"  '"<<a_head.print()<<"' is not a type constructor!";
+                throw note_exception()<<"  '"<<a_head.print()<<"' is not a type constructor!";
 
             // Now, tc needs to be a data type constructor!
             // With FlexibleInstances, (i) the arguments do NOT have to be variables and (ii) type synonyms are allowed.
@@ -226,7 +226,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     for(auto& tv: free_type_variables(desugar(inst_decl.context.constraints)))
     {
         if (not type_vars.count(tv))
-            throw err_context_exception()<<"  Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in the instance declaration";
+            throw note_exception()<<"  Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in the instance declaration";
     }
 
 
@@ -242,7 +242,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     Type inst_type = add_constraints(desugar(inst_decl.context.constraints), desugar(inst_decl.constraint));
     inst_type = check_constraint( inst_type );  // kind-check the constraint and quantify it.
 
-    context.pop_err_context();
+    context.pop_note();
 
     return {dfun, inst_type};
 }
@@ -322,10 +322,10 @@ map<string, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& decl
         string method_name = unloc(fd.v.name);
 
         if (not members.count(method_name))
-            throw err_context_exception()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'";
+            throw note_exception()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'";
 
         if (method_matches.count(method_name))
-            throw err_context_exception()<<"method '"<<method_name<<"' defined twice!";
+            throw note_exception()<<"method '"<<method_name<<"' defined twice!";
 
         method_matches.insert({method_name, fd.matches});
     }
@@ -336,7 +336,7 @@ map<string, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& decl
 pair<Hs::Decls, Core::Decl>
 TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& inst_decl)
 {
-    context.push_err_context( ErrorContext()<<"In instance `"<<inst_decl.constraint<<"`:" );
+    context.push_note( Note()<<"In instance `"<<inst_decl.constraint<<"`:" );
 
     // 1. Get instance head and constraints 
 
@@ -365,7 +365,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     auto WC = WantedConstraints(wanteds);
     auto decls_super = entails(givens, WC);
     if (not WC.simple.empty())
-        throw err_context_exception()<<"Can't derive superclass constraints "<<print(WC.simple)<<" from instance constraints "<<print(givens)<<"!";
+        throw note_exception()<<"Can't derive superclass constraints "<<print(WC.simple)<<" from instance constraints "<<print(givens)<<"!";
 
     // 7. make some intermediates
 
@@ -384,7 +384,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method_name, method_type]: class_info.members)
     {
-        context.push_err_context( ErrorContext()<<"In method `"<<method_name<<"`:" );
+        context.push_note( Note()<<"In method `"<<method_name<<"`:" );
 
         auto op = get_fresh_Var("i"+method_name, true);
 
@@ -407,7 +407,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         else
         {
             if (not class_info.default_methods.count(method_name))
-                throw err_context_exception()<<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'";
+                throw note_exception()<<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'";
 
             auto dm_var = class_info.default_methods.at(method_name);
 
@@ -415,7 +415,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         }
         auto [decl2, _, __] = infer_type_for_single_fundecl_with_sig(*FD);
         decls.push_back(decl2);
-        context.pop_err_context();
+        context.pop_note();
     }
 
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>
@@ -426,7 +426,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
     dict = wrap_gen(dict);
 
-    context.pop_err_context();
+    context.pop_note();
 
     return {decls, pair(dfun, dict)};
 }

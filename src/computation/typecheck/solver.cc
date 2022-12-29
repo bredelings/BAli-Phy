@@ -296,7 +296,7 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
 //            decls.push_back( { dvar, dfun_exp } );
 
             if (super_wanteds.size())
-                throw err_context_exception()<<"type family instances can't have constraints!";
+                throw note_exception()<<"type family instances can't have constraints!";
 
             return ReactSuccess();
         }
@@ -623,7 +623,7 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
 
     if (not inerts.failed.empty())
     {
-        ErrorContext e;
+        Note e;
         e<<"Unsolvable equations:\n";
         for(auto& f: inerts.failed)
         {
@@ -634,8 +634,8 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
                 e<<" arising from unifying '"<<u->t1<<"' and '"<<u->t2<<"'";
             e<<"\n";
         }
-        context.push_err_context(e);
-        throw err_context_exception();
+        context.push_note(e);
+        throw note_exception();
     }
 
     // Split inert into substitution and remaining constraints

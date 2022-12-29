@@ -123,7 +123,7 @@ TypeChecker::infer_type_for_decls(const signature_env& signatures, const Hs::Dec
     Hs::Decls decls2;
     for(auto& group: bind_groups)
     {
-        ErrorContext ec;
+        Note ec;
         ec<<"In recursive group:\n";
         for(auto& decl: group)
         {
@@ -134,11 +134,11 @@ TypeChecker::infer_type_for_decls(const signature_env& signatures, const Hs::Dec
             else
                 std::abort();
         }
-        context.push_err_context(ec);
+        context.push_note(ec);
 
         auto group_decls = infer_type_for_decls_group(signatures, group, is_top_level);
 
-        context.pop_err_context();
+        context.pop_note();
         
         for(auto& decl: group_decls)
             decls2.push_back(decl);

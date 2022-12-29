@@ -104,10 +104,10 @@ struct TypeChecker: FreshVarSource
           std::vector<Message>& messages()       {return global_state->messages;}
     const std::vector<Message>& messages() const {return global_state->messages;}
 
-    void record_error(std::optional<yy::location> l, const TypeCheckerContext& context, const ErrorContext& e);
-    void record_error(std::optional<yy::location> l, const ErrorContext& e);
-    void record_warning(std::optional<yy::location> l, const TypeCheckerContext& context, const ErrorContext& e);
-    void record_warning(std::optional<yy::location> l, const ErrorContext& e);
+    void record_error(std::optional<yy::location> l, const TypeCheckerContext& context, const Note& e);
+    void record_error(std::optional<yy::location> l, const Note& e);
+    void record_warning(std::optional<yy::location> l, const TypeCheckerContext& context, const Note& e);
+    void record_warning(std::optional<yy::location> l, const Note& e);
 
     std::optional<int> unification_level() const;
 
@@ -162,7 +162,7 @@ struct TypeChecker: FreshVarSource
     bool same_types(bool keep_syns, const RenameTyvarEnv2& env, const std::vector<Type>& ts1, const std::vector<Type>& ts2) const;
 
     bool has_errors() const;
-    myexception err_context_exception() const;
+    myexception note_exception() const;
 
     //-------
     MetaTypeVar fresh_meta_type_var(const std::string& name, const Kind& k);
