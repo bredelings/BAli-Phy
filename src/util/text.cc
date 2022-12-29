@@ -38,6 +38,21 @@ list<string> get_lines(const string& line)
     return lines;
 }
 
+vector<string> get_lines_vec(const string& line)
+{
+    vector<string> lines;
+
+    for(int pos=0; pos<line.size();)
+    {
+	int next = line.find('\n', pos);
+	if (next == string::npos)
+	    next = line.size();
+	lines.push_back(line.substr(pos,next-pos));
+	pos = next + 1;
+    }
+    return lines;
+}
+
 
 // Given a line containing no line breaks, return the first wrapped line and the rest of the line.
 optional<list<string>> wrap(string line, int width)
