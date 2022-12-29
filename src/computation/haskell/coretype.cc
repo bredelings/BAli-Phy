@@ -922,7 +922,12 @@ vector<Type> desugar(const std::vector<Hs::Type>& ts1)
 
 
 // Alternatively, we could make something with options, and do
-// ppr<<app.head<<" "<<
+// ppr<<app.head<<" "<<app.arg.
+//
+// Haskell does have some functions like pprAsThing to print
+// something in a particular fashion.
+// We could handle this by constructing temprary objects like
+// ppr<<"this is a "<<Thing(obj), but...
 
 std::string print_unqualified(const MetaTypeVar& mtv)
 {
