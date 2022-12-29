@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "err_context.H"
+#include "message.H"
 
 struct TypeCheckerContext
 {

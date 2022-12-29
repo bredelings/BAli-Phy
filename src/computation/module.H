@@ -15,6 +15,7 @@
 #include "computation/typecheck/kind.H"
 #include "computation/optimization/simplifier.H"       // for simplifier options
 #include "computation/fresh_vars.H"
+#include "message.H"
 
 constexpr auto unknown_fix = Haskell::Fixity::unknown;
 constexpr auto left_fix = Haskell::Fixity::infixl;
@@ -81,14 +82,6 @@ class module_loader;
 class Program;
 
 struct TypeChecker;
-
-struct FileContents
-{
-    std::string name;
-    std::string contents;
-
-    std::string print_range(int line1, int col1, int line2, int col2) const;
-};
 
 struct typechecker_result
 {

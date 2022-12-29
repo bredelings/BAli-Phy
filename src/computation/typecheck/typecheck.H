@@ -16,7 +16,7 @@
 #include "types.H"
 #include "expected.H"
 #include "context.H"
-#include "err_context.H"
+#include "message.H"
 
 // The kind-inference paper treats substitutions as a list of terms of the form
 // * a     (declaration)

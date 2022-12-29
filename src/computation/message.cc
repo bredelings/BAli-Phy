@@ -1,4 +1,4 @@
-#include "err_context.H"
+#include "message.H"
 #include <sstream>
 #include "util/text.H"
 #include "util/string/join.H"
@@ -29,7 +29,7 @@ string FileContents::print_range(int line1, int col1, int line2, int col2) const
     // Check that the columns exist in the file.
     assert(col1 -1 < lines[line1-1].size());
     assert(col2 -1 < lines[line2-1].size());
-    
+
     const string& line = lines[line1-1];
 
     string line_no1 = std::to_string(line1);
@@ -37,7 +37,7 @@ string FileContents::print_range(int line1, int col1, int line2, int col2) const
 
     // For multi-line selections, just print the whole first line.
     if (line2 > line1) col2 = line.size();
-    
+
     out<<string(n+1,' ')<<bold_blue("|")<<"\n";
     out<<bold_blue(line_no1)<<" "<<bold_blue("| ")<<line.substr(0,col1-1)<<bold_red(line.substr(col1-1,col2-col1))<<line.substr(col2-1)<<"\n";
     out<<string(n+1,' ')<<bold_blue("|")<<string(col1,' ')<<bold_red(string(col2-col1,'^'))<<"\n";

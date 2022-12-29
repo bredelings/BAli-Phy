@@ -1,11 +1,10 @@
-#ifndef TYPECHECKERCONTEXT
-#define TYPECHECKERCONTEXT
+#ifndef MESSAGE_H
+#define MESSAGE_H
 
 #include <string>
 #include <vector>
 #include <sstream>
 #include "computation/parser/located.H"
-#include "computation/module.H"
 
 struct Note
 {
@@ -24,6 +23,14 @@ struct Note
     }
 
     Note() = default;
+};
+
+struct FileContents
+{
+    std::string name;
+    std::string contents;
+
+    std::string print_range(int line1, int col1, int line2, int col2) const;
 };
 
 enum MessageType { ErrorMsg, WarningMsg};
