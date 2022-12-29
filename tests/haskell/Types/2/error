@@ -1,23 +1,24 @@
-bali-phy: Error! In module 'Main':
-Error:
-    • In recursive group:
-    Main.main
+[1mMain.hs:9.22-25:[1;31m error:[0m[1m
+   • Could not derive `Text.Show.Show a_24499{0}` arising from a use of
+     `Text.Show.show` at Main.hs:9.22-25
+   • In recursive group:
+         Main.main
+  [1;34m|[0m
+[1;34m9[0m [1;34m| [0mmain = do putStrLn $ [1;31mshow[0m $ bar 2 3
+  [1;34m|[0m                      [1;31m^^^^[0m
 
+[1mMain.hs:9.29-31:[1;31m error:[0m[1m
+   • Could not derive `Main.Foo a_24499{0}` arising from a use of `Main.bar`
+     at Main.hs:9.29-31
+   • In recursive group:
+         Main.main
+  [1;34m|[0m
+[1;34m9[0m [1;34m| [0mmain = do putStrLn $ show $ [1;31mbar[0m 2 3
+  [1;34m|[0m                             [1;31m^^^[0m
 
-    • Could not derive `Text.Show.Show a_24499{0}` arising from a use of `Text.Show.show` at Main.hs:9.22-25
-
-Error:
-    • In recursive group:
-    Main.main
-
-
-    • Could not derive `Main.Foo a_24499{0}` arising from a use of `Main.bar` at Main.hs:9.29-31
-
-Error:
-    • In recursive group:
-    Main.main
-
-
-    • Could not derive `Compiler.Num.Num a_24499{0}` arising from a use of `Compiler.Num.fromInteger`
-
+[1m<unknown>:[1;31m error:[0m[1m
+   • Could not derive `Compiler.Num.Num a_24499{0}` arising from a use of
+     `Compiler.Num.fromInteger`
+   • In recursive group:
+         Main.main
 
