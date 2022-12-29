@@ -1,5 +1,6 @@
 #include "typecheck.H"
 #include "kindcheck.H"
+#include "util/text.H"
 
 using std::string;
 using std::vector;
@@ -42,7 +43,7 @@ void TypeChecker::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type)
 
 void TypeChecker::tcMatch(const Hs::MatchContext& ctx, Hs::MRule& m, const vector<Expected>& pat_types, const Expected& result_type)
 {
-    context.push_note(Note()<<"In equation `"<<m.print()<<"`");
+    context.push_note(Note()<<"In equation `"<<ctx.print()<<get_lines(m.print())[0]<<"`");
     assert(m.patterns.size() == pat_types.size());
 
     auto state2 = copy_clear_wanteds();
