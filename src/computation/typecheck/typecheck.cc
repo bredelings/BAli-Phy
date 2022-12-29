@@ -457,24 +457,6 @@ bool TypeChecker::has_errors() const
     return false;
 }
 
-void TypeCheckerContext::pop_note()
-{
-    notes.pop_back();
-}
-
-void TypeCheckerContext::push_note(const Note& e)
-{
-    notes.push_back(e);
-}
-
-string TypeCheckerContext::print_note() const
-{
-    vector<string> estrings;
-    for(auto& note: notes)
-        estrings.push_back("    • "+note.print()+"\n");
-    return "Error:\n"+join(estrings, "\n");
-}
-
 myexception TypeChecker::note_exception() const
 {
     return myexception(context.print_note());

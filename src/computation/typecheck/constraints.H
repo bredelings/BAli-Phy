@@ -6,7 +6,7 @@
 
 #include "haskell/coretype.H"
 #include "haskell/core.H"
-#include "err_context.H"
+#include "context.H"
 
 struct OccurrenceOrigin
 {

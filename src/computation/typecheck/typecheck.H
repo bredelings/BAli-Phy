@@ -15,6 +15,8 @@
 #include "computation/haskell/haskell.H"
 #include "types.H"
 #include "expected.H"
+#include "context.H"
+#include "err_context.H"
 
 // The kind-inference paper treats substitutions as a list of terms of the form
 // * a     (declaration)
@@ -63,18 +65,6 @@ struct global_tc_state
     std::optional<int> unification_level;
 
     global_tc_state(const Module& m);
-};
-
-struct TypeCheckerContext
-{
-//    yy::location source_span;
-    std::vector< Note > notes;
-//    std::vector< Hs::Var > binder_stack;
-//    int level = 0;
-
-    void pop_note();
-    void push_note(const Note& e);
-    std::string print_note() const;
 };
 
 struct TypeChecker;
