@@ -355,5 +355,5 @@ std::vector<TypeVar> desugar(const std::vector<Hs::TypeVar>& t);
 Type desugar(const Hs::Type& t);
 std::vector<Type> desugar(const std::vector<Hs::Type>& t);
 
-
+std::string print_unqualified(const Type& t);
 #endif 

@@ -3,6 +3,7 @@
 
 #include "util/set.H"   // for add( , )
 #include "util/variant.H"   // for to< >()
+#include "haskell/ids.H"
 
 using std::string;
 using std::vector;
@@ -167,16 +168,29 @@ bool TypeChecker::default_preds( WantedConstraints& wanted )
     return progress;
 }
 
+string print_unqualified_id(const string& s)
+{
+    auto s2 = get_unqualified_name(s);
+    if (is_haskell_sym(s2))
+        s2 = "("+s2+")";
+    return s2;
+}
+
+string print_unqualified_id(const Located<string>& ls)
+{
+    return print_unqualified_id(unloc(ls));
+}
+
 void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const TypeCheckerContext& context)
 {
     for(auto& wanted: wanteds.simple)
     {
         std::optional<yy::location> loc;
         Note e;
-        e<<"Could not derive `"<<wanted.pred.print()<<"`";
+        e<<"Could not derive `"<<print_unqualified(wanted.pred)<<"`";
         if (auto occ = to<OccurrenceOrigin>(wanted.origin))
         {
-            e<<" arising from a use of `"<<unloc(occ->name)<<"`";
+            e<<" arising from a use of `"<<print_unqualified_id(occ->name)<<"`";
             if (occ->name.loc)
             {
                 loc = occ->name.loc;
