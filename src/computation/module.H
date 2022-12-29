@@ -136,8 +136,6 @@ public:
     
     Haskell::Module module;
 
-    FileContents file;
-
     std::shared_ptr<TypeChecker> tc_state;
 
     CDecls value_decls;
@@ -157,6 +155,8 @@ public:
     std::string name;
 
     std::shared_ptr<std::string> filename;
+
+    FileContents file;
 
     bool is_resolved() const {return resolved;}
 
