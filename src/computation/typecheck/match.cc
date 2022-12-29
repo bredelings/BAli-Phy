@@ -40,7 +40,7 @@ void TypeChecker::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type)
     current_wanteds() += state2.current_wanteds();
 }
 
-void TypeChecker::tcMatch(Hs::MRule& m, const vector<Expected>& pat_types, const Expected& result_type)
+void TypeChecker::tcMatch(const Hs::MatchContext& ctx, Hs::MRule& m, const vector<Expected>& pat_types, const Expected& result_type)
 {
     context.push_note(Note()<<"In equation `"<<m.print()<<"`");
     assert(m.patterns.size() == pat_types.size());
@@ -54,7 +54,7 @@ void TypeChecker::tcMatch(Hs::MRule& m, const vector<Expected>& pat_types, const
     context.pop_note();
 }
 
-void TypeChecker::tcMatches(Hs::Matches& ms, const vector<Expected>& pat_types, const Expected& result_type)
+void TypeChecker::tcMatches(const Hs::MatchContext& ctx, Hs::Matches& ms, const vector<Expected>& pat_types, const Expected& result_type)
 {
     if (ms.empty())
     {
@@ -67,7 +67,7 @@ void TypeChecker::tcMatches(Hs::Matches& ms, const vector<Expected>& pat_types, 
     else
     {
         for(auto& m: ms)
-            tcMatch(m, pat_types, result_type);
+            tcMatch(ctx, m, pat_types, result_type);
 
         // record types on Match object?
     }

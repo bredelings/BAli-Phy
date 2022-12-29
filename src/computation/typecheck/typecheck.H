@@ -379,9 +379,9 @@ struct TypeChecker: FreshVarSource
 
     void tcRho(Hs::MultiGuardedRHS&, const Expected&);
 
-    void tcMatch(Hs::MRule& m, const std::vector<Expected>& pat_types, const Expected& result_type);
+    void tcMatch(const Hs::MatchContext& ctx, Hs::MRule& m, const std::vector<Expected>& pat_types, const Expected& result_type);
 
-    void tcMatches(Hs::Matches& m, const std::vector<Expected>& pat_types, const Expected& result_type);
+    void tcMatches(const Hs::MatchContext& ctx, Hs::Matches& m, const std::vector<Expected>& pat_types, const Expected& result_type);
 
     template <typename A>
     Core::wrapper tcMatchesFunInfer(std::vector<Expected>& arg_types, int arity, const Expected& fun_type, const A& a);

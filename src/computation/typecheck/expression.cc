@@ -112,7 +112,7 @@ void TypeChecker::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 void TypeChecker::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 {
     tcMatchesFun( getArity(Lam.match), exp_type, [&](const std::vector<Expected>& arg_types, const Expected& result_type){
-        return [&](TypeChecker& tc) { tc.tcMatch(Lam.match, arg_types, result_type); }; }
+        return [&](TypeChecker& tc) { tc.tcMatch(Hs::LambdaContext(), Lam.match, arg_types, result_type); }; }
         );
 }
 
@@ -130,7 +130,7 @@ void TypeChecker::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
     auto object_type = inferRho(Case.object);
 
     // 3. Check the alternatives
-    tcMatches(Case.alts, {Check(object_type)}, exp_type);
+    tcMatches(Hs::CaseContext(), Case.alts, {Check(object_type)}, exp_type);
 }
 
 void TypeChecker::tcRho(Hs::List& L, const Expected& exp_type)
