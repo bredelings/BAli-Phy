@@ -2,6 +2,7 @@
 #include "ids.H"
 #include "util/string/join.H"
 #include "util/set.H"           // for includes( , )
+#include "util/variant.H"       // for to<>()
 #include "util/string/split.H"  // for split( , )
 #include "typecheck/kind.H"
 
@@ -736,6 +737,18 @@ LambdaExp::LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b)
     :match(ps, SimpleRHS({noloc,b}))
 {
     assert(not match.patterns.empty());
+}
+
+string MatchContext::print() const
+{
+    if (to<LambdaContext>(*this))
+        return "\\";
+    else if (to<CaseContext>(*this))
+        return "case ";
+    else if (auto fc = to<FunctionContext>(*this))
+        return get_unqualified_name(fc->name) + " ";
+    else
+        throw myexception()<<"MatchContext: should be unreachable";
 }
 
 std::string parenthesize_exp(const Expression& E)

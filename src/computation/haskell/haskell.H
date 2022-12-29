@@ -981,6 +981,19 @@ struct LambdaExp: public Object
 };
 
 
+struct LambdaContext { };
+struct CaseContext { };
+struct FunctionContext
+{
+    std::string name;
+};
+
+struct MatchContext: std::variant<LambdaContext, CaseContext, FunctionContext>
+{
+    using std::variant<LambdaContext, CaseContext, FunctionContext>::variant;
+    std::string print() const;
+};
+
 struct CaseExp: public Object
 {
     Expression object;
