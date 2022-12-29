@@ -1487,7 +1487,7 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     // Perhaps we should sort them by location?
     for(auto& msg: tc_state->messages())
     {
-        std::cerr<<msg.print();
+        std::cerr<<msg.print(file);
         std::cerr<<"\n";
     }
 

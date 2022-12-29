@@ -1488,7 +1488,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 Module::Module(const string& n)
     :name(n)
 {
-    if (not n.size())
+    if (not name.size())
         throw myexception()<<"Module name may not be empty!";
 }
 
@@ -1496,11 +1496,14 @@ Module::Module(const char *n)
     :Module(string(n))
 { }
 
-Module::Module(const Haskell::Module& M, const set<string>& lo)
+Module::Module(const Haskell::Module& M, const set<string>& lo, const FileContents& f)
     :language_options(lo),
      module(M),
-     name(module.modid)
+     name(module.modid),
+     file(f)
 {
+    if (not name.size())
+        throw myexception()<<"Module name may not be empty!";
 }
 
 std::ostream& operator<<(std::ostream& o, const Module& M)

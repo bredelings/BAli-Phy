@@ -105,7 +105,8 @@ Module module_loader::load_module_from_file(const fs::path& filename) const
 	    if (dump_parsed)
 		std::cout<<m.print()<<std::endl;
 
-	    modules.insert( {filename.string(), Module(m, lang_options)} );
+            string short_file_name = filename.filename().string();
+            modules.insert( {filename.string(), Module(m, lang_options, {short_file_name, file_contents})} );
 
             // Save a reference to the string that we allocated, so we can clean it up later.
             modules.at(filename.string()).filename = fname;

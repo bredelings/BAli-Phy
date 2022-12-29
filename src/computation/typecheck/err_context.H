@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include "computation/parser/located.H"
+#include "computation/module.H"
 
 struct ErrorContext
 {
@@ -48,7 +49,7 @@ struct Message
     std::optional<yy::location> loc;
     std::vector<ErrorContext> err_contexts;
 
-    std::string print() const;
+    std::string print(const FileContents& file) const;
 
     Message(MessageType t, std::optional<yy::location> l, const std::vector<ErrorContext>& e);
 };

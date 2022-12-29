@@ -82,6 +82,14 @@ class Program;
 
 struct TypeChecker;
 
+struct FileContents
+{
+    std::string name;
+    std::string contents;
+
+    std::string print_range(int line1, int col1, int line2, int col2) const;
+};
+
 struct typechecker_result
 {
     Hs::Binds class_binds;
@@ -127,6 +135,8 @@ public:
     bool do_optimize = true;
     
     Haskell::Module module;
+
+    FileContents file;
 
     std::shared_ptr<TypeChecker> tc_state;
 
@@ -264,7 +274,7 @@ public:
 
     explicit Module(const char*);
 
-    explicit Module(const Haskell::Module&, const std::set<std::string>& lo);
+    explicit Module(const Haskell::Module&, const std::set<std::string>& lo, const FileContents& f);
 };
 
 std::ostream& operator<<(std::ostream&, const Module&);
