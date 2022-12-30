@@ -319,7 +319,7 @@ void TypeChecker::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
-        auto ctx = Hs::FunctionContext(unloc(FD.v.name));
+        auto ctx = Hs::FunctionContext{unloc(FD.v.name)};
         tcMatchesFun( getArity(FD.matches), rhs_type, [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
             tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
                         );
