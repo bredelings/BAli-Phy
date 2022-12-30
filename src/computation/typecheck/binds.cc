@@ -248,7 +248,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
     auto [wrap_gen, tvs, givens, rho_type] =
         skolemize_and(polytype,
                       [&](const Type& rho_type, auto& tcs2) {
-                          auto ctx = Hs::FunctionContext(unloc(FD.v.name));
+                          auto ctx = Hs::FunctionContext{unloc(FD.v.name)};
                           tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type),
                                              [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
                                                  tc.tcMatches(ctx, FD.matches, arg_types, result_type);};});
