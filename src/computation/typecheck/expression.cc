@@ -31,40 +31,14 @@ void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
     else
         throw note_exception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 
-    try
-    {
-        x.wrap = instantiateSigma(OccurrenceOrigin(x.name), sigma, exp_type);
-    }
-    catch (myexception& ex)
-    {
-        std::ostringstream header;
-        if (x.name.loc)
-            header<<"At location "<<*x.name.loc<<"\n";
-        header<<"In expression\n\n";
-        header<<"   "<<unloc(x.name)<<"\n\n";
-        ex.prepend(header.str());
-        throw;
-    }
+    x.wrap = instantiateSigma(OccurrenceOrigin(x.name), sigma, exp_type);
 }
 
 void TypeChecker::tcRho(Hs::Con& con, const Expected& exp_type)
 {
     auto sigma = constructor_info(con).constructor_type();
 
-    try
-    {
-        con.wrap = instantiateSigma(OccurrenceOrigin(con.name), sigma, exp_type);
-    }
-    catch (myexception& ex)
-    {
-        std::ostringstream header;
-        if (con.name.loc)
-            header<<"At location "<<*con.name.loc<<"\n";
-        header<<"In expression\n\n";
-        header<<"   "<<unloc(con.name)<<"\n\n";
-        ex.prepend(header.str());
-        throw;
-    }
+    con.wrap = instantiateSigma(OccurrenceOrigin(con.name), sigma, exp_type);
 }
 
 void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
