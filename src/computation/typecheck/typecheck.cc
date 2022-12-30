@@ -925,15 +925,12 @@ bool TypeChecker::add_substitution(const MetaTypeVar& a, const Type& type)
 
 void TypeChecker::unify(const Type& t1, const Type& t2)
 {
-    myexception e;
-    e<<"Unification failed: "<<t1<<" !~ "<<t2;
-    unify(t1, t2, e);
+    unify_solve_(UnifyOrigin{t1,t2}, t1, t2);
 }
 
 void TypeChecker::unify(const Type& t1, const Type& t2, const myexception& e)
 {
-    if (not maybe_unify_solve_(UnifyOrigin{t1,t2}, t1, t2))
-        throw e;
+    unify_solve_(StringOrigin{t1,t2,e.what()}, t1, t2);
 }
 
 bool TypeChecker::maybe_match(const Type& t1, const Type& t2)

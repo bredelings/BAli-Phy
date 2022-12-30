@@ -113,33 +113,24 @@ void TypeChecker::unify_defer(const ConstraintOrigin& origin, const Type& t1, co
 }
 
 // Is there a better way to implement this?
-bool TypeChecker::maybe_unify_solve_(const ConstraintOrigin& origin, const Type& t1, const Type& t2)
+void TypeChecker::unify_solve_(const ConstraintOrigin& origin, const Type& t1, const Type& t2)
 {
     if (auto tt1 = filled_meta_type_var(t1))
-        return maybe_unify_solve_(origin, *tt1, t2);
+        unify_solve_(origin, *tt1, t2);
     else if (auto tt2 = filled_meta_type_var(t2))
-        return maybe_unify_solve_(origin, t1, *tt2);
+        unify_solve_(origin, t1, *tt2);
 
     else if (auto tv1 = t1.to<MetaTypeVar>())
-    {
         unify_defer(origin, t1, t2);
-        return true;
-    }
     else if (auto tv2 = t2.to<MetaTypeVar>())
-    {
         unify_defer(origin, t1, t2);
-        return true;
-    }
     else if (t1.is_a<TypeVar>() or t2.is_a<TypeVar>())
-    {
         unify_defer(origin, t1, t2);
-        return true;
-    }
     // Handle type synonyms AFTER variables, so that we preserve more type synonyms.
     else if (auto s1 = is_type_synonym(t1))
-        return maybe_unify_solve_(origin, *s1,  t2);
+        unify_solve_(origin, *s1,  t2);
     else if (auto s2 = is_type_synonym(t2))
-        return maybe_unify_solve_(origin,  t1, *s2);
+        unify_solve_(origin,  t1, *s2);
 
     auto app1 = is_type_app(t1);
     auto app2 = is_type_app(t2);
@@ -148,22 +139,17 @@ bool TypeChecker::maybe_unify_solve_(const ConstraintOrigin& origin, const Type&
         auto& [fun1, arg1] = *app1;
         auto& [fun2, arg2] = *app2;
 
-        return maybe_unify_solve_(origin, fun1, fun2) and
-               maybe_unify_solve_(origin, arg1, arg2);
+        unify_solve_(origin, fun1, fun2);
+        unify_solve_(origin, arg1, arg2);
     }
     else if (t1.is_a<TypeCon>() and
              t2.is_a<TypeCon>() and
              t1.as_<TypeCon>() == t2.as_<TypeCon>())
-    {
-        return true;
-    }
+    { }
     else if (same_type(t1, t2))
-        return true;
+    { }
     else
-    {
         unify_defer(origin, t1, t2);
-        return true;
-    }
 }
 
 // Is there a better way to implement this?

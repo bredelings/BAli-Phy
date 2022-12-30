@@ -188,9 +188,9 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const TypeChec
     {
         std::optional<yy::location> loc;
         Note e;
-        e<<"Could not derive `"<<bold_green(print_unqualified(wanted.pred))<<ANSI::bold<<"`";
         if (auto occ = to<OccurrenceOrigin>(wanted.origin))
         {
+            e<<"Could not derive `"<<bold_green(print_unqualified(wanted.pred))<<ANSI::bold<<"`";
             e<<" arising from a use of `"<<cyan(print_unqualified_id(occ->name))<<ANSI::bold<<"`";
             if (occ->name.loc)
             {
@@ -198,6 +198,17 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const TypeChec
                 e<<" at "<<(*loc);
             }
         }
+        else if (auto uorig = to<UnifyOrigin>(wanted.origin))
+        {
+            e<<"\n Expected `"<<bold_green(print_unqualified(uorig->t2))<<"` but got `"<<bold_green(print_unqualified(uorig->t1))<<"`";
+        }
+        else if (auto sorig = to<StringOrigin>(wanted.origin))
+        {
+            e<<"\n "<<sorig->msg;
+        }
+        else
+            e<<"Could not derive `"<<bold_green(print_unqualified(wanted.pred))<<ANSI::bold<<"`";
+
         record_error(loc, context, e);
     }
 
