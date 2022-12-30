@@ -1,0 +1,8 @@
+[1mMain.hs:9.11:[1;31m error:[0m[1m
+   • Applying 2 arguments to function Main.f, but it only takes 1!
+   • In recursive group:
+         Main.g
+  [1;34m|[0m
+[1;34m9[0m [1;34m| [0mg x = f x [1;31mx[0m
+  [1;34m|[0m           [1;31m^[0m
+
