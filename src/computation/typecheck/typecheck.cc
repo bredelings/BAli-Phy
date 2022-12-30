@@ -917,11 +917,6 @@ void TypeChecker::unify(const Type& t1, const Type& t2, const ConstraintOrigin& 
     unify_solve_(orig, t1, t2);
 }
 
-void TypeChecker::unify(const Type& t1, const Type& t2, const myexception& e)
-{
-    unify_solve_(StringOrigin{t1,t2,e.what()}, t1, t2);
-}
-
 bool TypeChecker::maybe_match(const Type& t1, const Type& t2)
 {
     unification_env env;
@@ -944,13 +939,6 @@ void TypeChecker::match(const Type& t1, const Type& t2)
 
 std::pair<Type, Type> TypeChecker::unify_function(const Type& t)
 {
-    auto e = myexception()<<"Not a function type:\n\n   "<<t;
-    return unify_function(t, e);
-}
-
-
-std::pair<Type, Type> TypeChecker::unify_function(const Type& t, const myexception& e)
-{
     assert(is_rho_type(t));
     if (auto arg_and_result = is_function_type(t))
         return *arg_and_result;
@@ -958,7 +946,8 @@ std::pair<Type, Type> TypeChecker::unify_function(const Type& t, const myexcepti
     {
         auto a = fresh_meta_type_var( kind_type() );
         auto b = fresh_meta_type_var( kind_type() );
-        unify(t, make_arrow_type(a,b), e);
+        auto fun_t = make_arrow_type(a,b);
+        unify(t, fun_t, UnifyOrigin{t, fun_t});
         return {a,b};
     }
 }

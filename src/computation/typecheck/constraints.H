@@ -30,6 +30,11 @@ struct InstanceOrigin
 {
 };
 
+struct LeftSectionOrigin
+{
+    expression_ref op;
+};
+
 struct PatOrigin
 {
 };
@@ -44,6 +49,7 @@ struct TypeConvertOrigin
 
 struct CycleBreakerOrigin
 {
+    // Mention original origin
 };
 
 struct StringOrigin
@@ -60,7 +66,7 @@ struct UnifyOrigin
 };
 
 
-typedef std::variant<std::monostate, OccurrenceOrigin, GivenOrigin, AppOrigin, InstanceOrigin, PatOrigin, SuperclassOrigin, TypeConvertOrigin,CycleBreakerOrigin,UnifyOrigin,StringOrigin> ConstraintOrigin;
+typedef std::variant<std::monostate, OccurrenceOrigin, GivenOrigin, AppOrigin, InstanceOrigin, LeftSectionOrigin, PatOrigin, SuperclassOrigin, TypeConvertOrigin,CycleBreakerOrigin,UnifyOrigin,StringOrigin> ConstraintOrigin;
 
 enum ConstraintFlavor { Wanted, Given };
 

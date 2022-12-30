@@ -211,6 +211,8 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const TypeChec
             e<<"Applying "<<(app->arg_index+1)<<" arguments to function "<<app->head.print()<<", but it only takes "<<app->arg_index<<"!";
             loc = app->loc;
         }
+        else if (auto lsec = to<LeftSectionOrigin>(wanted.origin))
+            e<<"In left section, "<<lsec->op<<" is not a function!";
         else
             e<<"Could not derive `"<<bold_green(print_unqualified(wanted.pred))<<ANSI::bold<<"`";
 

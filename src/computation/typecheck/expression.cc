@@ -186,8 +186,7 @@ void TypeChecker::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
     auto op_type = inferRho(LSec.op);
 
     // 2. Check that the op is a function
-    auto e = myexception()<<"In left section, "<<LSec.op<<" is not a function!";
-    auto [left_arg_type, result_type] = unify_function(op_type, e);
+    auto [left_arg_type, result_type] = unify_function(op_type, LeftSectionOrigin{LSec.op});
 
     // 3. Check expected type
     set_expected_type(exp_type, result_type);

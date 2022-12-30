@@ -237,8 +237,6 @@ struct TypeChecker: FreshVarSource
 
     void unify(const Type& t1, const Type& t2, const ConstraintOrigin& orig);
 
-    void unify(const Type& t1, const Type& t2, const myexception& e);
-
     bool try_insert(const MetaTypeVar& tv, Type type) const;
 
     bool occurs_check(const MetaTypeVar& tv, const Type& t) const;
@@ -252,8 +250,6 @@ struct TypeChecker: FreshVarSource
     void match(const Type& t1, const Type& t2);
 
     std::pair<Type, Type> unify_function(const Type& t);
-
-    std::pair<Type, Type> unify_function(const Type& t, const myexception& e);
 
     std::pair<Type, Type> unify_function(const Type& t, const ConstraintOrigin& o);
 
