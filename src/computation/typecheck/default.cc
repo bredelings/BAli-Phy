@@ -206,6 +206,11 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const TypeChec
         {
             e<<sorig->msg;
         }
+        else if (auto app = to<AppOrigin>(wanted.origin))
+        {
+            e<<"Applying "<<(app->arg_index+1)<<" arguments to function "<<app->head.print()<<", but it only takes "<<app->arg_index<<"!";
+            loc = app->loc;
+        }
         else
             e<<"Could not derive `"<<bold_green(print_unqualified(wanted.pred))<<ANSI::bold<<"`";
 

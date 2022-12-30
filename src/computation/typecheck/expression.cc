@@ -55,8 +55,8 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
     else
         tcRho(unloc(App.head), fun_type);
 
-    auto e = myexception()<<"Applying "<<(arg_index+1)<<" arguments to function "<<unloc(App.head).print()<<", but it only takes "<<arg_index<<"!";
-    auto [arg_type, result_type] = unify_function(fun_type.read_type(), e);
+    auto origin = AppOrigin{App.args[arg_index].loc, unloc(App.head), arg_index};
+    auto [arg_type, result_type] = unify_function(fun_type.read_type(), origin);
 
     // Check the argument according to its required type
     auto wrap_arg = checkSigma(unloc(App.args[arg_index]), arg_type);
