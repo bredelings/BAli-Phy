@@ -1110,20 +1110,7 @@ TypeChecker::instantiateSigma(const ConstraintOrigin& origin, const Type& polyty
     {
         // why would this be a rho?
         // assert(is_rho_type(exp_type.check_type()));
-        try {
-            return subsumptionCheck(origin, polytype, exp_type.check_type());
-        }
-        catch (myexception& ex)
-        {
-            std::ostringstream header;
-            header<<"Expected type\n\n";
-            header<<"   "<<exp_type.check_type()<<"\n\n";
-            header<<"but got type\n\n";
-            header<<"   "<<polytype<<"\n\n";
-
-            ex.prepend(header.str());
-            throw;
-        }
+        return subsumptionCheck(origin, polytype, exp_type.check_type());
     }
 }
 // FIXME:: Wrappers:
