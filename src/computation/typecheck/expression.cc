@@ -55,7 +55,7 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
     else
         tcRho(App.head, fun_type);
 
-    auto e = note_exception()<<"Applying "<<(arg_index+1)<<" arguments to function "<<App.head.print()<<", but it only takes "<<arg_index<<"!";
+    auto e = myexception()<<"Applying "<<(arg_index+1)<<" arguments to function "<<App.head.print()<<", but it only takes "<<arg_index<<"!";
     auto [arg_type, result_type] = unify_function(fun_type.read_type(), e);
 
     // Check the argument according to its required type
