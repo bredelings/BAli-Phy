@@ -516,11 +516,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         std::abort();
     else if (auto app = E.to<Hs::ApplyExp>())
     {
-        Core::Exp A = desugar(app->head);
+        Core::Exp A = desugar(unloc(app->head));
 
         for(int i=0; i < app->args.size(); i++)
         {
-            auto arg = desugar( app->args[i] );
+            auto arg = desugar( unloc(app->args[i]) );
             if (not app->arg_wrappers.empty())
                 arg = app->arg_wrappers[i]( arg );
 

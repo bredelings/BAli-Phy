@@ -17,7 +17,7 @@ namespace Haskell
 void flatten(ApplyExp& App)
 {
     // Flatten, in case we have an apply of an apply
-    if (auto app2 = App.head.to<Hs::ApplyExp>())
+    if (auto app2 = unloc(App.head).to<Hs::ApplyExp>())
     {
         auto App2 = *app2;
 
@@ -765,28 +765,28 @@ std::string parenthesize_exp(const Expression& E)
 
 std::string ApplyExp::print() const
 {
-    string func = head.print();
+    string func = unloc(head).print();
 
-    if (auto V = head.to<Hs::Var>(); V and V->is_sym() and args.size() >= 2)
+    if (auto V = unloc(head).to<Hs::Var>(); V and V->is_sym() and args.size() >= 2)
     {
-        string result = parenthesize_exp(args[0]) + " " + V->print_without_parens() + " " + parenthesize_exp(args[1]);
+        string result = parenthesize_exp(unloc(args[0])) + " " + V->print_without_parens() + " " + parenthesize_exp(unloc(args[1]));
         if (args.size() > 2)
         {
             result = "(" + result + ")";
             for(int i=2;i<args.size();i++)
-                result += " " + parenthesize_exp(args[i]);
+                result += " " + parenthesize_exp(unloc(args[i]));
         }
         return result;
     }
 
     vector<string> ss = {func};
     for(auto& arg: args)
-        ss.push_back( parenthesize_exp( arg ) );
+        ss.push_back( parenthesize_exp( unloc(arg) ) );
 
     return join(ss, " ");
 }
 
-ApplyExp::ApplyExp(const Expression& h, const std::vector<Expression>& as)
+ApplyExp::ApplyExp(const Located<Expression>& h, const std::vector<Located<Expression>>& as)
     :head(h), args(as)
 {
 }

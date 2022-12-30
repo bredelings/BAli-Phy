@@ -203,9 +203,9 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         auto App = *app;
 
-        App.head = rename_infix(m, App.head);
+        unloc(App.head) = rename_infix(m, unloc(App.head));
         for(auto& arg: App.args)
-            arg = rename_infix(m, arg);
+            unloc(arg) = rename_infix(m, unloc(arg));
 
 	return App;
     }
@@ -458,9 +458,9 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     else if (auto app = E.to<Hs::ApplyExp>())
     {
         auto App = *app;
-        App.head = rename(App.head, bound, free_vars);
+        unloc(App.head) = rename(unloc(App.head), bound, free_vars);
         for(auto& arg: App.args)
-            arg = rename(arg, bound, free_vars);
+            unloc(arg) = rename(unloc(arg), bound, free_vars);
         return App;
     }
 

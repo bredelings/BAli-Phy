@@ -42,7 +42,7 @@
   Hs::Context make_context(const Hs::Type& context);
 
   expression_ref make_minus(const expression_ref& exp);
-  Hs::ApplyExp make_apply(const Hs::Expression& head, const Hs::Expression& arg);
+  Hs::ApplyExp make_apply(const Located<Hs::Expression>& head, const Located<Hs::Expression>& arg);
 
   expression_ref yy_make_string(const std::string&);
 }
@@ -1150,7 +1150,7 @@ scc_annot: "{-# SCC" STRING "#-}"
 /* hpc_annot */
 
 /* EP */
-fexp: fexp aexp                  {$$ = make_apply($1, $2);}
+fexp: fexp aexp                  {$$ = make_apply({@1,$1}, {@2,$2});}
 |     fexp TYPEAPP atype         {}
 |     "static" aexp              {}
 |     aexp                       {$$ = $1;}
@@ -1865,9 +1865,9 @@ expression_ref make_minus(const expression_ref& exp)
     return Hs::InfixExp({Hs::Neg(),exp});
 }
 
-Hs::ApplyExp make_apply(const Hs::Exp& head, const Hs::Exp& arg)
+Hs::ApplyExp make_apply(const Located<Hs::Exp>& head, const Located<Hs::Exp>& arg)
 {
-    if (auto app = head.to<Hs::ApplyExp>())
+    if (auto app = unloc(head).to<Hs::ApplyExp>())
     {
         auto App = *app;
         App.args.push_back(arg);

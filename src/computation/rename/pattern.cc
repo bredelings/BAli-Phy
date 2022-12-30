@@ -55,12 +55,14 @@ expression_ref unapply(expression_ref E)
         flatten(App);
 
         // We shouldn't have e.g. (@ (@ f x) y) -- this should already be dealt with by rename_infix
-        assert(App.head.is_a<Hs::Con>());
+        assert(unloc(App.head).is_a<Hs::Con>());
 
+        // These aren't located,
+        vector<expression_ref> args;
         for(auto& arg: App.args)
-            arg = unapply(arg);
+            args.push_back(unapply(unloc(arg)));
 
-        return Hs::ConPattern(App.head.as_<Hs::Con>(), std::move(App.args));
+        return Hs::ConPattern(unloc(App.head).as_<Hs::Con>(), args);
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {

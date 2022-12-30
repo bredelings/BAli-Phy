@@ -193,10 +193,10 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
                 for(auto& [ConName,pos]: constrs)
                 {
                     int a = arity[ConName];
-                    vector<expression_ref> f(a, Hs::WildcardPattern());
-                    f[pos] = name;
+                    vector<Located<expression_ref>> f(a, {noloc,Hs::WildcardPattern()});
+                    unloc(f[pos]) = name;
 
-                    auto pattern = Hs::ApplyExp(Hs::Con({noloc,ConName},a),f);
+                    auto pattern = Hs::ApplyExp({noloc,Hs::Con({noloc,ConName},a)},f);
                     auto rhs = Haskell::SimpleRHS({noloc, name});
                     alts.push_back({noloc,{pattern,rhs}});
                 }

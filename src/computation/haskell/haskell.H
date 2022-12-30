@@ -87,8 +87,8 @@ typedef expression_ref Qual;
 
 struct ApplyExp: public Object
 {
-    Exp head;
-    std::vector<Exp> args;
+    Located<Exp> head;
+    std::vector<Located<Exp>> args;
 
     std::vector<Core::wrapper> arg_wrappers;
     std::vector<Core::wrapper> res_wrappers;
@@ -96,7 +96,7 @@ struct ApplyExp: public Object
     ApplyExp* clone() const { return new ApplyExp(*this);}
     std::string print() const;
 
-    ApplyExp(const Exp& h, const std::vector<Exp>& as);
+    ApplyExp(const Located<Exp>& h, const std::vector<Located<Exp>>& as);
 };
 
 void flatten(ApplyExp& app);

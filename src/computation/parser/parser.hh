@@ -80,7 +80,7 @@
   Hs::Context make_context(const Hs::Type& context);
 
   expression_ref make_minus(const expression_ref& exp);
-  Hs::ApplyExp make_apply(const Hs::Expression& head, const Hs::Expression& arg);
+  Hs::ApplyExp make_apply(const Located<Hs::Expression>& head, const Located<Hs::Expression>& arg);
 
   expression_ref yy_make_string(const std::string&);
 

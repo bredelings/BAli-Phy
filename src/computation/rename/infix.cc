@@ -31,7 +31,7 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
 
 	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol, {}, 2,{left_fix,6}), T);
 
-	return infix_parse(m, op1, Hs::ApplyExp(Hs::Var({noloc,"negate"}),{E1}), T);
+	return infix_parse(m, op1, Hs::ApplyExp({noloc,Hs::Var({noloc,"negate"})},{{noloc,E1}}), T);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
@@ -89,7 +89,7 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
 	T.pop_front();
 	expression_ref E3 = infix_parse_neg(m, op2, T);
 
-	expression_ref E1_op2_E3 = Hs::ApplyExp(op2_E, {E1, E3});
+	expression_ref E1_op2_E3 = Hs::ApplyExp({noloc,op2_E}, {{noloc,E1}, {noloc,E3}});
 
 	return infix_parse(m, op1, E1_op2_E3, T);
     }

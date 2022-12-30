@@ -3773,7 +3773,7 @@ namespace yy {
 
   case 290: // fexp: fexp aexp
 #line 1153 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = make_apply(yystack_[1].value.as < expression_ref > (), yystack_[0].value.as < expression_ref > ());}
+                                 {yylhs.value.as < expression_ref > () = make_apply({yystack_[1].location,yystack_[1].value.as < expression_ref > ()}, {yystack_[0].location,yystack_[0].value.as < expression_ref > ()});}
 #line 3778 "parser.cc"
     break;
 
@@ -7352,9 +7352,9 @@ expression_ref make_minus(const expression_ref& exp)
     return Hs::InfixExp({Hs::Neg(),exp});
 }
 
-Hs::ApplyExp make_apply(const Hs::Exp& head, const Hs::Exp& arg)
+Hs::ApplyExp make_apply(const Located<Hs::Exp>& head, const Located<Hs::Exp>& arg)
 {
-    if (auto app = head.to<Hs::ApplyExp>())
+    if (auto app = unloc(head).to<Hs::ApplyExp>())
     {
         auto App = *app;
         App.args.push_back(arg);
