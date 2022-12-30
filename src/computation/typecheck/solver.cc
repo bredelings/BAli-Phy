@@ -621,23 +621,6 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
         add_inert(p);
     }
 
-    if (not inerts.failed.empty())
-    {
-        Note e;
-        e<<"Unsolvable equations:\n";
-        for(auto& f: inerts.failed)
-        {
-            e<<"  "<<f.print();
-            if (auto occ = to<OccurrenceOrigin>(f.origin()))
-                e<<" arising from occurrence of "<<unloc(occ->name);
-            else if (auto u = to<UnifyOrigin>(f.origin()))
-                e<<" arising from unifying '"<<u->t1<<"' and '"<<u->t2<<"'";
-            e<<"\n";
-        }
-        context.push_note(e);
-        throw note_exception();
-    }
-
     // Split inert into substitution and remaining constraints
     wanteds.clear();
     for(auto& P: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs, inerts.dicts, inerts.irreducible, inerts.failed))
