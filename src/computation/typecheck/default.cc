@@ -204,7 +204,7 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const TypeChec
         }
         else if (auto sorig = to<StringOrigin>(wanted.origin))
         {
-            e<<"\n "<<sorig->msg;
+            e<<sorig->msg;
         }
         else
             e<<"Could not derive `"<<bold_green(print_unqualified(wanted.pred))<<ANSI::bold<<"`";
