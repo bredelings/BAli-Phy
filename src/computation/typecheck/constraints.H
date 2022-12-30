@@ -21,6 +21,9 @@ struct GivenOrigin
 
 struct AppOrigin
 {
+    std::optional<yy::location> loc;
+    expression_ref head;
+    int arg_index;
 };
 
 struct InstanceOrigin
