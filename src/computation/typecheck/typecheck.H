@@ -59,6 +59,8 @@ struct global_tc_state
 
     std::vector<Message> messages;
 
+    global_value_env imported_gve;
+
     // maybe merge with gve by mapping name -> type,con-or-var
     constr_env con_info;
 
@@ -106,6 +108,9 @@ struct TypeChecker: FreshVarSource
           std::vector<Message>& messages()       {return global_state->messages;}
     const std::vector<Message>& messages() const {return global_state->messages;}
 
+          global_value_env& imported_gve()       {return global_state->imported_gve;}
+    const global_value_env& imported_gve() const {return global_state->imported_gve;}
+
     void record_error(std::optional<yy::location> l, const TypeCheckerContext& context, const Note& e);
     void record_error(std::optional<yy::location> l, const Note& e);
     void record_warning(std::optional<yy::location> l, const TypeCheckerContext& context, const Note& e);
@@ -136,8 +141,6 @@ struct TypeChecker: FreshVarSource
     immer::map<std::string, std::pair<Hs::Var, Type>> mono_local_env;
 
     int level = 0;
-
-    global_value_env imported_gve;
 
     global_value_env gve;
 

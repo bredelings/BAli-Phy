@@ -364,13 +364,13 @@ void Module::import_module(const Program& P, const module_import& I)
         for(auto& [name, type]: M2.tc_state->gve)
         {
             if (not tc_state->gve.count(name))
-                tc_state->imported_gve = tc_state->imported_gve.insert({name,type});
+                tc_state->imported_gve() = tc_state->imported_gve().insert({name,type});
         }
 
-        for(auto& [name, type]: M2.tc_state->imported_gve)
+        for(auto& [name, type]: M2.tc_state->imported_gve())
         {
             if (not tc_state->gve.count(name))
-                tc_state->imported_gve = tc_state->imported_gve.insert({name,type});
+                tc_state->imported_gve() = tc_state->imported_gve().insert({name,type});
         }
     }
 }
