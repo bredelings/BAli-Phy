@@ -68,7 +68,7 @@ string get_name_for_typecon(const TypeCon& tycon)
 
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
-    context.push_note( Note()<<"In instance '"<<inst.print()<<"':" );
+    push_note( Note()<<"In instance '"<<inst.print()<<"':" );
     auto tf_con = desugar(inst.con);
     
     // 1. Check that the type family exists.
@@ -165,13 +165,13 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     // 11. Make up an equation id -- this is the "evidence" for the type family instance.
     tf_info.equations.insert({eqn_id, eqn});
 
-    context.pop_note();
+    pop_note();
 }
 
 pair<Core::Var, Type>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
-    context.push_note( Note()<<"In instance '"<<inst_decl.constraint<<"':" );
+    push_note( Note()<<"In instance '"<<inst_decl.constraint<<"':" );
 
     // 1. Get class name and parameters for the instance
     auto [class_head, class_args] = decompose_type_apps(desugar(inst_decl.constraint));
@@ -242,7 +242,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     Type inst_type = add_constraints(desugar(inst_decl.context.constraints), desugar(inst_decl.constraint));
     inst_type = check_constraint( inst_type );  // kind-check the constraint and quantify it.
 
-    context.pop_note();
+    pop_note();
 
     return {dfun, inst_type};
 }
@@ -336,7 +336,7 @@ map<string, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& decl
 pair<Hs::Decls, Core::Decl>
 TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& inst_decl)
 {
-    context.push_note( Note()<<"In instance `"<<inst_decl.constraint<<"`:" );
+    push_note( Note()<<"In instance `"<<inst_decl.constraint<<"`:" );
 
     // 1. Get instance head and constraints 
 
@@ -384,7 +384,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method_name, method_type]: class_info.members)
     {
-        context.push_note( Note()<<"In method `"<<method_name<<"`:" );
+        push_note( Note()<<"In method `"<<method_name<<"`:" );
 
         auto op = get_fresh_Var("i"+method_name, true);
 
@@ -415,7 +415,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         }
         auto [decl2, _, __] = infer_type_for_single_fundecl_with_sig(*FD);
         decls.push_back(decl2);
-        context.pop_note();
+        pop_note();
     }
 
     // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>
@@ -426,7 +426,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
     dict = wrap_gen(dict);
 
-    context.pop_note();
+    pop_note();
 
     return {decls, pair(dfun, dict)};
 }

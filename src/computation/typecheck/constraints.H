@@ -73,6 +73,8 @@ enum ConstraintFlavor { Wanted, Given };
 struct Constraint
 {
     ConstraintOrigin origin;
+    // std::shared_ptr<const tc_local_env> tc_env;
+
     ConstraintFlavor flavor;
     Core::Var ev_var;
     Type pred;

@@ -673,15 +673,15 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
             // 5. try and sub-wanteds
             auto tcs2 = copy_clear_wanteds();
             tcs2.level = implic->level;
-            TypeCheckerContext tmp_context = context;
-            context = implic->context;
+            TypeCheckerContext tmp_context = context();
+            context_ = implic->context; // FIXME
             *implic->evidence_binds += tcs2.entails(sub_givens, implic->wanteds);
 
             // 6. Keep implication if not empty.
             if (not implic->wanteds.empty())
                 wanteds.implications.push_back( implic );
 
-            context = tmp_context;
+            context_ = tmp_context; // FIXME
         }
 
         // 7. If there was a unification, that affected this level, then we have to iterate.

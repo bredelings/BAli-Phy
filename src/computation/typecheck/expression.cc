@@ -62,13 +62,13 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
     auto wrap_arg = checkSigma(unloc(App.args[arg_index]), arg_type);
     App.arg_wrappers.push_back(wrap_arg);
 
-    context.push_note( Note() << "In expression '"<< App.print()<<"':" );
+    push_note( Note() << "In expression '"<< App.print()<<"':" );
 
     // Convert the result to the expected time for the term
     auto wrap_res = instantiateSigma(AppOrigin(), result_type, exp_type);
     App.res_wrappers.push_back(wrap_res);
 
-    context.pop_note();
+    pop_note();
 }
 
 void TypeChecker::tcRho(Hs::LetExp& Let, const Expected& exp_type)

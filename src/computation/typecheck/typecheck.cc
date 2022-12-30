@@ -433,7 +433,7 @@ void TypeChecker::record_error(std::optional<yy::location> l, const TypeCheckerC
 
 void TypeChecker::record_error(std::optional<yy::location> l, const Note& e)
 {
-    return record_error(l, context, e);
+    return record_error(l, context(), e);
 }
 
 void TypeChecker::record_warning(std::optional<yy::location> l, const TypeCheckerContext& context, const Note& e)
@@ -446,7 +446,7 @@ void TypeChecker::record_warning(std::optional<yy::location> l, const TypeChecke
 
 void TypeChecker::record_warning(std::optional<yy::location> l, const Note& e)
 {
-    return record_warning(l, context, e);
+    return record_warning(l, context(), e);
 }
 
 bool TypeChecker::has_errors() const
@@ -459,7 +459,7 @@ bool TypeChecker::has_errors() const
 
 myexception TypeChecker::note_exception() const
 {
-    return myexception(context.print_note());
+    return myexception(print_note());
 }
 
 TypeVar unification_env::fresh_tyvar(const std::optional<Kind>& kind) const
@@ -796,7 +796,7 @@ void TypeChecker::promote(Type type, int new_level)
     // check for skolem_escape
     if (max_level(type) > new_level)
     {
-        throw myexception(context.print_note())<<"skolem-escape in '"<<type<<"':\n  cannot promote to level "<<new_level<<" because of type variables on level "<<max_level(type);
+        throw myexception(print_note())<<"skolem-escape in '"<<type<<"':\n  cannot promote to level "<<new_level<<" because of type variables on level "<<max_level(type);
     }
 }
 
@@ -1277,7 +1277,7 @@ TypeChecker::maybe_implication(const std::vector<TypeVar>& tvs, const LIE& given
 
     if (need_implication)
     {
-        auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls, context);
+        auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls, context());
         current_wanteds().implications.push_back( imp );
     }
     else

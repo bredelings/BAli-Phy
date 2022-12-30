@@ -134,11 +134,11 @@ TypeChecker::infer_type_for_decls(const signature_env& signatures, const Hs::Dec
             else
                 std::abort();
         }
-        context.push_note(ec);
+        push_note(ec);
 
         auto group_decls = infer_type_for_decls_group(signatures, group, is_top_level);
 
-        context.pop_note();
+        pop_note();
         
         for(auto& decl: group_decls)
             decls2.push_back(decl);
@@ -239,7 +239,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
     // Q: Are we getting the monotype correct?
 
-    context.push_note( Note()<<"In function '"<<FD.v.print()<<"'" );
+    push_note( Note()<<"In function '"<<FD.v.print()<<"'" );
 
     auto& name = unloc(FD.v.name);
 
@@ -264,7 +264,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
     auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls>(), Hs::Decls({FD}), {{name, bind_info}} );
 
-    context.pop_note();
+    pop_note();
 
     return {decl, name, polytype};
 }
@@ -372,11 +372,11 @@ tuple< map<string, Hs::Var>, local_value_env > TypeChecker::tc_decls_group_mono(
         else if (auto PD = decls[i].to<Hs::PatDecl>())
             n<<"In definition of `"<<unloc(PD->lhs).print()<<"`";
 
-        context.push_note(n);
+        push_note(n);
 
         infer_rhs_type(decls[i], Check(lhs_types[i]));
 
-        context.pop_note();
+        pop_note();
     }
 
     return {mono_ids, mono_binder_env};
@@ -734,7 +734,7 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
 
     auto ev_decls = std::make_shared<Core::Decls>(solve_decls);
 
-    auto imp = std::make_shared<Implication>(level+1, qtvs | ranges::to<vector>, givens, wanteds, ev_decls, context);
+    auto imp = std::make_shared<Implication>(level+1, qtvs | ranges::to<vector>, givens, wanteds, ev_decls, context());
 
     current_wanteds().implications.push_back(imp);
 

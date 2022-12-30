@@ -42,7 +42,7 @@ Hs::FunDecl dictionary_extractor(const string& name, int i, int N)
 tuple<global_value_env, ClassInfo, Hs::Decls>
 TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
-    context.push_note( Note()<<"In class '"<<class_decl.name<<"':" );
+    push_note( Note()<<"In class '"<<class_decl.name<<"':" );
 
     kindchecker_state K( tycon_info() );
 
@@ -159,7 +159,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     // 7. Load default associated type family instances
     for(auto& def_inst: class_decl.default_type_inst_decls)
     {
-        context.push_note( Note()<<"In default instance '"<<def_inst.print()<<"':");
+        push_note( Note()<<"In default instance '"<<def_inst.print()<<"':");
 
         auto tf_con = desugar(def_inst.con);
         if (not class_info.associated_type_families.count(tf_con))
@@ -200,10 +200,10 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         // Add the default type instance -- no need for variables to match the class.
         check_add_type_instance(def_inst, class_decl.name, {});
 
-        context.pop_note();
+        pop_note();
     }
 
-    context.pop_note();
+    pop_note();
     return {gve, class_info, decls};
 }
 

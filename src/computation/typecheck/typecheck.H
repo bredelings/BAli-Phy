@@ -77,11 +77,15 @@ using tc_action = std::function<void(Args...,TypeChecker&)>;
 template <typename R, typename... Args>
 using tc_function = std::function<R (Args...,TypeChecker&)>;
 
-struct TypeChecker: FreshVarSource
+class TypeChecker: FreshVarSource
 {
     //------- global state ------------//
     std::shared_ptr<global_tc_state> global_state;
 
+    //------- local state ------------//
+    TypeCheckerContext context_;
+
+public:
     const Module& this_mod() const {return global_state->this_mod;}
 
           type_con_env& tycon_info()       {return global_state->tycon_info;}
@@ -146,7 +150,11 @@ struct TypeChecker: FreshVarSource
 
     WantedConstraints collected_wanteds;
 
-    TypeCheckerContext context;
+    void pop_note() {context_.pop_note();}
+    void push_note(const Note& n) {context_.push_note(n);}
+    std::string print_note() const {return context_.print_note();}
+
+    const TypeCheckerContext& context() const {return context_;}
 
     // If we could cache this info on the TypeCon, then we could move these out of the class.
     bool type_con_is_type_fam(const TypeCon& tc) const;
@@ -552,7 +560,7 @@ TypeChecker::maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE
 
     if (need_implication)
     {
-        auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls, context);
+        auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls, context());
         current_wanteds().implications.push_back( imp );
     }
     else
