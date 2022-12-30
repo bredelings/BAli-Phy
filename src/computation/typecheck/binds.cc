@@ -239,42 +239,34 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
     // Q: Are we getting the monotype correct?
 
-    try
-    {
-        auto& name = unloc(FD.v.name);
+    context.push_note( Note()<<"In function '"<<FD.v.print()<<"'" );
 
-        // 1. skolemize the type -> (tvs, givens, rho-type)
-        auto polytype = gve.at(name);
-        auto [wrap_gen, tvs, givens, rho_type] =
-            skolemize_and(polytype,
-                          [&](const Type& rho_type, auto& tcs2) {
-                              auto ctx = Hs::FunctionContext(unloc(FD.v.name));
-                              tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type),
-                                                 [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
-                                                     tc.tcMatches(ctx, FD.matches, arg_types, result_type);};});
-                          }
-                );
+    auto& name = unloc(FD.v.name);
 
-        // 2. return GenBind with tvs, givens, body
-        Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
+    // 1. skolemize the type -> (tvs, givens, rho-type)
+    auto polytype = gve.at(name);
+    auto [wrap_gen, tvs, givens, rho_type] =
+        skolemize_and(polytype,
+                      [&](const Type& rho_type, auto& tcs2) {
+                          auto ctx = Hs::FunctionContext(unloc(FD.v.name));
+                          tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type),
+                                             [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
+                                                 tc.tcMatches(ctx, FD.matches, arg_types, result_type);};});
+                      }
+            );
 
-        Type monotype = rho_type;
+    // 2. return GenBind with tvs, givens, body
+    Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
 
-        Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, wrap_gen);
+    Type monotype = rho_type;
 
-        auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls>(), Hs::Decls({FD}), {{name, bind_info}} );
+    Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, wrap_gen);
 
-        return {decl, name, polytype};
-    }
-    catch (myexception& e)
-    {
-        string header = "In function '" + FD.v.print()+"'";
-        if (FD.v.name.loc)
-            header += " at " + convertToString(*FD.v.name.loc);
-        header += ":\n";
-        e.prepend(header);
-        throw;
-    }
+    auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls>(), Hs::Decls({FD}), {{name, bind_info}} );
+
+    context.pop_note();
+
+    return {decl, name, polytype};
 }
 
 bool is_restricted(const map<ID, Type>& signatures, const Hs::Decls& decls)
@@ -374,30 +366,17 @@ tuple< map<string, Hs::Var>, local_value_env > TypeChecker::tc_decls_group_mono(
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)
     {
-        try{
-            infer_rhs_type(decls[i], Check(lhs_types[i]));
-        }
-        catch (myexception& e)
-        {
-            string header;
-            if (auto FD = decls[i].to<Hs::FunDecl>())
-            {
-                header = "In function '" + FD->v.print()+"'";
-                if (FD->v.name.loc)
-                    header += " at " + convertToString(*FD->v.name.loc);
-            }
-            else if (auto PD = decls[i].to<Hs::PatDecl>())
-            {
-                header = "In definition of '" + unloc(PD->lhs).print() + "'";
-                if (PD->lhs.loc)
-                    header += " at " + convertToString(*PD->lhs.loc);
-            }
-            else
-                std::abort();
-            header += ":\n";
-            e.prepend(header);
-            throw;
-        }
+        Note n;
+        if (auto FD = decls[i].to<Hs::FunDecl>())
+            n<<"In function `"<<FD->v.print()<<"`";
+        else if (auto PD = decls[i].to<Hs::PatDecl>())
+            n<<"In definition of `"<<unloc(PD->lhs).print()<<"`";
+
+        context.push_note(n);
+
+        infer_rhs_type(decls[i], Check(lhs_types[i]));
+
+        context.pop_note();
     }
 
     return {mono_ids, mono_binder_env};
@@ -431,13 +410,6 @@ bool constraint_is_hnf(const Type& constraint)
     return true;
 }
 
-
-void check_HNF(const vector<Type>& preds)
-{
-    for(auto& pred: preds)
-        if (not constraint_is_hnf(pred))
-            throw myexception()<<"'"<<pred<<"' should be in HNF";
-}
 
 
 /* NOTE: Constraints can reference variables that are in
@@ -724,7 +696,6 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     auto quant_preds = get_quantifiable_preds( restricted, maybe_quant_preds, qtvs );
 
     // 8. Only the constraints with all fixed tvs are going to be visible outside this declaration group.
-    check_HNF( quant_preds );
     assert(not restricted or quant_preds.empty() );
 
     // 4. Constrict givens from the preds

@@ -1,6 +1,6 @@
 [1mMain.hs:9.22-25:[1;31m error:[0m[1m
-   • Could not derive `Text.Show.Show a_24499{0}` arising from a use of
-     `Text.Show.show` at Main.hs:9.22-25
+   • Could not derive `[1;32mShow t_27000[0m[1m` arising from a use of
+     `[1;36mshow[0m[1m` at Main.hs:9.22-25
    • In recursive group:
          Main.main
   [1;34m|[0m
@@ -8,8 +8,8 @@
   [1;34m|[0m                      [1;31m^^^^[0m
 
 [1mMain.hs:9.29-31:[1;31m error:[0m[1m
-   • Could not derive `Main.Foo a_24499{0}` arising from a use of `Main.bar`
-     at Main.hs:9.29-31
+   • Could not derive `[1;32mFoo t_27000[0m[1m` arising from a use of
+     `[1;36mbar[0m[1m` at Main.hs:9.29-31
    • In recursive group:
          Main.main
   [1;34m|[0m
@@ -17,8 +17,8 @@
   [1;34m|[0m                             [1;31m^^^[0m
 
 [1m<unknown>:[1;31m error:[0m[1m
-   • Could not derive `Compiler.Num.Num a_24499{0}` arising from a use of
-     `Compiler.Num.fromInteger`
+   • Could not derive `[1;32mNum t_27000[0m[1m` arising from a use of
+     `[1;36mfromInteger[0m[1m`
    • In recursive group:
          Main.main
 

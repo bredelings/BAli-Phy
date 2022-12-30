@@ -1,6 +1,8 @@
 [1m<unknown>:[1;31m error:[0m[1m
-   • Could not derive `b_4{{2}} ~ monotype_11{{1}}`
-   • In equation `(Main.T f x)  = x`
+   • Expected `[1;32mmonotype_14{{1}}[0m[1m` but got
+     `[1;32mb_4{{2}}[0m[1m`
+   • In equation `apply (Main.T f x)  = x`
+   • In function `Main.apply`
    • In recursive group:
          Main.apply
 
