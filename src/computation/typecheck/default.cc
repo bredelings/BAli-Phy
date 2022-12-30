@@ -200,7 +200,7 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const TypeChec
         }
         else if (auto uorig = to<UnifyOrigin>(wanted.origin))
         {
-            e<<"\n Expected `"<<bold_green(print_unqualified(uorig->t2))<<"` but got `"<<bold_green(print_unqualified(uorig->t1))<<"`";
+            e<<"Expected `"<<bold_green(print_unqualified(uorig->t2))<<ANSI::bold<<"` but got `"<<bold_green(print_unqualified(uorig->t1))<<ANSI::bold<<"`";
         }
         else if (auto sorig = to<StringOrigin>(wanted.origin))
         {
