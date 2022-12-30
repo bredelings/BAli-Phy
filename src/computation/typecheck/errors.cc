@@ -13,6 +13,18 @@ using std::set;
 using std::pair;
 using std::optional;
 
+string print_unqualified_id(const string& s)
+{
+    auto s2 = get_unqualified_name(s);
+    if (is_haskell_sym(s2))
+        s2 = "("+s2+")";
+    return s2;
+}
+
+string print_unqualified_id(const Located<string>& ls)
+{
+    return print_unqualified_id(unloc(ls));
+}
 
 void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const TypeCheckerContext& context)
 {

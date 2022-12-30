@@ -168,19 +168,6 @@ bool TypeChecker::default_preds( WantedConstraints& wanted )
     return progress;
 }
 
-string print_unqualified_id(const string& s)
-{
-    auto s2 = get_unqualified_name(s);
-    if (is_haskell_sym(s2))
-        s2 = "("+s2+")";
-    return s2;
-}
-
-string print_unqualified_id(const Located<string>& ls)
-{
-    return print_unqualified_id(unloc(ls));
-}
-
 Core::Decls TypeChecker::simplify_and_default_top_level()
 {
     auto top_simplify_decls = entails( {}, current_wanteds() );
