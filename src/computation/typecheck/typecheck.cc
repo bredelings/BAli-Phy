@@ -571,23 +571,7 @@ void TypeChecker::set_expected_type(const Expected& E, const Type& type)
     if (auto I = E.infer())
         fillInfer(type, *I);
     else
-    {
-        try {
-            unify(E.check_type(), type);
-        }
-        catch (myexception& ex)
-        {
-            std::ostringstream header;
-            header<<"Expected type\n\n";
-            header<<"   "<<E.check_type()<<"\n\n";
-            header<<"but got type\n\n";
-            header<<"   "<<type<<"\n\n";
-
-            ex.prepend(header.str());
-            ex.prepend(context.print_note());
-            throw;
-        }
-    }
+        unify(type, E.check_type());
 }
 
 void TypeChecker::get_tycon_info(const Hs::TypeFamilyDecl& F)
