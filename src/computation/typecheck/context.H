@@ -10,22 +10,19 @@
 #include "immer/map.hpp" // for immer::map
 #include "env.H"
 
-// Hold with a shared_ptr so that implications can reference this?
-
 typedef immer::map<std::string, std::pair<Hs::Var, Type>> mono_env_t;
 
 struct TypeCheckerContext
 {
-//    yy::location source_span;
+    std::optional<yy::location> source_span;
     int level = 0;
     mono_env_t mono_env;
     value_env poly_env;
 
     std::vector< Note > notes;
-//    local type environment               - Ids and TypeVars defined in this module
 //    std::vector< Hs::Var > binder_stack; - 
 //    WantedConstraints wanteds;           - the LIE.
-//    vector<Message> messages;            - Why local?
+//    vector<Message> messages;            - local errors could become global warnings, or be dropped...
     
     void pop_note();
     void push_note(const Note& e);
