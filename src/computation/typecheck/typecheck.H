@@ -117,9 +117,9 @@ public:
           global_value_env& imported_gve()       {return global_state->imported_gve;}
     const global_value_env& imported_gve() const {return global_state->imported_gve;}
 
-    void record_error(std::optional<yy::location> l, const TypeCheckerContext& context, const Note& e);
+    void record_error(std::optional<yy::location> l, cow_ptr<TypeCheckerContext> context, const Note& e);
     void record_error(std::optional<yy::location> l, const Note& e);
-    void record_warning(std::optional<yy::location> l, const TypeCheckerContext& context, const Note& e);
+    void record_warning(std::optional<yy::location> l, cow_ptr<TypeCheckerContext> context, const Note& e);
     void record_warning(std::optional<yy::location> l, const Note& e);
 
     std::optional<int> unification_level() const;
@@ -163,7 +163,7 @@ public:
     const mono_env_t& mono_local_env() const {return context_->mono_env;}
     const global_value_env& poly_env() const {return context_->poly_env;}
 
-    const TypeCheckerContext& context() const {return *context_;}
+    const cow_ptr<TypeCheckerContext>& context() const {return context_;}
 
     // If we could cache this info on the TypeCon, then we could move these out of the class.
     bool type_con_is_type_fam(const TypeCon& tc) const;
@@ -281,7 +281,7 @@ public:
 
     Core::Decls simplify_and_default_top_level();
 
-    void check_wanteds(const WantedConstraints& wanteds, const TypeCheckerContext& context);
+    void check_wanteds(const WantedConstraints& wanteds, const cow_ptr<TypeCheckerContext>& context);
 
     std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const ConstraintOrigin& origin, const Type& t);
 

@@ -423,12 +423,11 @@ std::optional<std::tuple<TypeCon,std::vector<Type>>> TypeChecker::is_type_class_
         return {};
 }
 
-void TypeChecker::record_error(std::optional<yy::location> l, const TypeCheckerContext& context, const Note& e)
+void TypeChecker::record_error(std::optional<yy::location> l, cow_ptr<TypeCheckerContext> context, const Note& e)
 {
-    TypeCheckerContext context2 = context;
-    context2.push_note(e);
+    context.modify()->push_note(e);
 
-    messages().push_back({ErrorMsg, l, context2.notes});
+    messages().push_back({ErrorMsg, l, context->notes});
 }
 
 void TypeChecker::record_error(std::optional<yy::location> l, const Note& e)
@@ -436,12 +435,11 @@ void TypeChecker::record_error(std::optional<yy::location> l, const Note& e)
     return record_error(l, context(), e);
 }
 
-void TypeChecker::record_warning(std::optional<yy::location> l, const TypeCheckerContext& context, const Note& e)
+void TypeChecker::record_warning(std::optional<yy::location> l, cow_ptr<TypeCheckerContext> context, const Note& e)
 {
-    TypeCheckerContext context2 = context;
-    context2.push_note(e);
+    context.modify()->push_note(e);
 
-    messages().push_back({ErrorMsg, l, context2.notes});
+    messages().push_back({WarningMsg, l, context->notes});
 }
 
 void TypeChecker::record_warning(std::optional<yy::location> l, const Note& e)

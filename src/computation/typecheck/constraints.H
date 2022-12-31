@@ -7,6 +7,7 @@
 #include "haskell/coretype.H"
 #include "haskell/core.H"
 #include "context.H"
+#include "util/cow-ptr.H"
 
 struct OccurrenceOrigin
 {
@@ -146,11 +147,11 @@ struct Implication
 
     WantedConstraints wanteds;
 
-    TypeCheckerContext context;
+    cow_ptr<TypeCheckerContext> tc_state;
 
     std::string print() const;
 
-    Implication(int l, const std::vector<TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb, const TypeCheckerContext& c);
+    Implication(int l, const std::vector<TypeVar>& tvs, const LIE& g, const WantedConstraints& w, const std::shared_ptr<Core::Decls>& eb, const cow_ptr<TypeCheckerContext>& c);
 };
 
 template <typename T>
