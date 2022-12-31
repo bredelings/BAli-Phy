@@ -358,8 +358,8 @@ tuple< map<string, Hs::Var>, local_value_env > TypeChecker::tc_decls_group_mono(
 
         if (not signatures.count(name))
         {
-            mono_local_env = mono_local_env.erase(name);
-            mono_local_env = mono_local_env.insert({name,{mono_id, type}});
+            mono_local_env() = mono_local_env().erase(name);
+            mono_local_env() = mono_local_env().insert({name,{mono_id, type}});
         }
     }
 

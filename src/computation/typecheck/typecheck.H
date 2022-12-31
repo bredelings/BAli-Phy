@@ -142,7 +142,6 @@ public:
 
     //------- local state ------------//
 
-    immer::map<std::string, std::pair<Hs::Var, Type>> mono_local_env;
 
     global_value_env gve;
 
@@ -156,7 +155,12 @@ public:
     void inc_level() {context_.level++;}
     void dec_level() {context_.level--;}
     void set_level(int l) {context_.level = l;}
-    
+
+private:
+          mono_env_t& mono_local_env()       {return context_.mono_env;}
+public:
+    const mono_env_t& mono_local_env() const {return context_.mono_env;}
+
     const TypeCheckerContext& context() const {return context_;}
 
     // If we could cache this info on the TypeCon, then we could move these out of the class.

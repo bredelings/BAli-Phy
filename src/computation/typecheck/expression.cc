@@ -15,7 +15,7 @@ void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
 {
     Type sigma;
     // First look for x in the local type environment
-    if (auto& x_name = unloc(x.name); auto it = mono_local_env.find(x_name))
+    if (auto& x_name = unloc(x.name); auto it = mono_local_env().find(x_name))
     {
         auto& [v,type] = *it;
         // translate to the monomorpic id;
