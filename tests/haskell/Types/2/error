@@ -24,7 +24,7 @@
 
 [1mMain.hs:9.35:[1;31m error:[0m[1m
    • Could not derive `[1;32mNum t_27000[0m[1m` arising from a use of
-     `[1;36mfromInteger[0m[1m`
+     `[1;36mfromInteger[0m[1m` at Main.hs:9.35
    • In equation `main  = do {Prelude.putStrLn Data.Function.$
      (Text.Show.show Data.Function.$ (Main.bar 2 3))`
    • In function `Main.main`

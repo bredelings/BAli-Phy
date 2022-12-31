@@ -7,13 +7,8 @@ using std::vector;
 using std::string;
 
 OccurrenceOrigin::OccurrenceOrigin(const std::string& s)
-    :name(noloc,s)
-{}
-
-OccurrenceOrigin::OccurrenceOrigin(const Located<std::string>& s)
     :name(s)
 {}
-
 
 int Constraint::level() const
 {

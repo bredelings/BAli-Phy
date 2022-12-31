@@ -117,10 +117,10 @@ public:
           global_value_env& imported_gve()       {return global_state->imported_gve;}
     const global_value_env& imported_gve() const {return global_state->imported_gve;}
 
-    void record_error(std::optional<yy::location> l, cow_ptr<TypeCheckerContext> context, const Note& e);
-    void record_error(std::optional<yy::location> l, const Note& e);
-    void record_warning(std::optional<yy::location> l, cow_ptr<TypeCheckerContext> context, const Note& e);
-    void record_warning(std::optional<yy::location> l, const Note& e);
+    void record_error(cow_ptr<TypeCheckerContext> context, const Note& e);
+    void record_error(const Note& e);
+    void record_warning(cow_ptr<TypeCheckerContext> context, const Note& e);
+    void record_warning(const Note& e);
 
     std::optional<int> unification_level() const;
 

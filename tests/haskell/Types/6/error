@@ -1,8 +1,11 @@
-[1m<unknown>:[1;31m error:[0m[1m
+[1mMain.hs:5.17:[1;31m error:[0m[1m
    • Expected `[1;32mmonotype_14{{1}}[0m[1m` but got
      `[1;32mb_4{{2}}[0m[1m`
    • In equation `apply (Main.T f x)  = x`
    • In function `Main.apply`
    • In recursive group:
          Main.apply
+  [1;34m|[0m
+[1;34m5[0m [1;34m| [0mapply (T f x) = [1;31mx[0m
+  [1;34m|[0m                 [1;31m^[0m
 

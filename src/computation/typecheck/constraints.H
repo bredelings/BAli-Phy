@@ -10,9 +10,8 @@
 
 struct OccurrenceOrigin
 {
-    Located<std::string> name;
+    std::string name;
     OccurrenceOrigin(const std::string& s);
-    OccurrenceOrigin(const Located<std::string>& s);
 };
 
 struct GivenOrigin
@@ -21,7 +20,6 @@ struct GivenOrigin
 
 struct AppOrigin
 {
-    std::optional<yy::location> loc;
     expression_ref head;
     int arg_index;
 };
