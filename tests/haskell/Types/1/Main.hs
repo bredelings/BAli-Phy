@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes, ScopedTypeVariables #-}
+
 module Main where
 
 polyapply :: (forall a.a->a) -> (Int, Char)
