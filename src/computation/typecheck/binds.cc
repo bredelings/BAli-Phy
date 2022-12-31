@@ -240,7 +240,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
     // Q: Are we getting the monotype correct?
 
-    push_note( Note()<<"In function '"<<FD.v.print()<<"'" );
+    push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
 
     auto& name = unloc(FD.v.name);
 
@@ -339,6 +339,7 @@ void TypeChecker::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
 tuple< map<string, Hs::Var>, local_value_env >
 TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
 {
+    push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
     // Note: No signature for function, or we'd be in infer_type_for_single_fundecl_with_sig( )
 
     // 1. Allocate a monomorphic id
@@ -360,6 +361,7 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
     local_value_env mono_binder_env;
     mono_binder_env = mono_binder_env.insert({poly_id, rhs_type.read_type()});
 
+    pop_note();
     return {mono_ids, mono_binder_env};
 }
 
