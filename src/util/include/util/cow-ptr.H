@@ -33,6 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define COW_PTR_H
 
 #include <memory>
+#include "util/assert.hh"
 
 using std::const_pointer_cast;
 
