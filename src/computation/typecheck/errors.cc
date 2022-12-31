@@ -56,7 +56,7 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const cow_ptr<
         else
             e<<"Could not derive `"<<bold_green(print_unqualified(wanted.pred))<<ANSI::bold<<"`";
 
-        record_error(loc, context, e);
+        record_error(loc, wanted.tc_state, e);
     }
 
     for(auto& implic: wanteds.implications)
