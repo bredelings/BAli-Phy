@@ -1098,7 +1098,7 @@ TypeChecker::instantiate_emit(const ConstraintOrigin& origin, const Type& polyty
 {
     auto [_, wanteds, rho_type] = instantiate(origin, polytype);
 
-    collected_wanteds += wanteds;
+    current_wanteds() += wanteds;
 
     auto dict_args = dict_vars_from_lie( wanteds );
 
