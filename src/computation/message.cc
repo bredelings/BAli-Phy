@@ -82,7 +82,7 @@ string Message::print(const FileContents& file) const
     return out.str();
 }
 
-Message::Message(MessageType t, std::optional<yy::location> l, const std::vector<Note>& e)
-    :message_type(t), loc(l), notes(e)
+Message::Message(MessageType t, std::optional<yy::location> l, const Notes& ns)
+    :message_type(t), loc(l), notes(ns)
 {
 }

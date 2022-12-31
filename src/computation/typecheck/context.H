@@ -19,7 +19,7 @@ struct TypeCheckerContext
     mono_env_t mono_env;
     value_env poly_env;
 
-    std::vector< Note > notes;
+    Notes notes;
 //    std::vector< Hs::Var > binder_stack; - 
 //    WantedConstraints wanteds;           - the LIE.
 //    vector<Message> messages;            - local errors could become global warnings, or be dropped...

@@ -35,6 +35,8 @@ struct FileContents
 
 enum MessageType { ErrorMsg, WarningMsg};
 
+typedef std::vector<Note> Notes;
+
 struct Message
 {
     // Error or Warning
@@ -42,11 +44,11 @@ struct Message
 
     // Should a message have a single location?
     std::optional<yy::location> loc;
-    std::vector<Note> notes;
+    Notes notes;
 
     std::string print(const FileContents& file) const;
 
-    Message(MessageType t, std::optional<yy::location> l, const std::vector<Note>& e);
+    Message(MessageType t, std::optional<yy::location> l, const Notes& e);
 };
 
 #endif
