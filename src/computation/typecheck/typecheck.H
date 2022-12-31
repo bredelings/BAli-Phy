@@ -281,7 +281,7 @@ public:
 
     Core::Decls simplify_and_default_top_level();
 
-    void check_wanteds(const WantedConstraints& wanteds, const cow_ptr<TypeCheckerContext>& context);
+    void check_wanteds(const WantedConstraints& wanteds);
 
     std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const ConstraintOrigin& origin, const Type& t);
 

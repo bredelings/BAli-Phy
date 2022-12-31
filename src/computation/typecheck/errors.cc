@@ -26,7 +26,7 @@ string print_unqualified_id(const Located<string>& ls)
     return print_unqualified_id(unloc(ls));
 }
 
-void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const cow_ptr<TypeCheckerContext>& context)
+void TypeChecker::check_wanteds(const WantedConstraints& wanteds)
 {
     for(auto& wanted: wanteds.simple)
     {
@@ -60,6 +60,6 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const cow_ptr<
     }
 
     for(auto& implic: wanteds.implications)
-        check_wanteds(implic->wanteds, implic->tc_state);
+        check_wanteds(implic->wanteds);
 }
 

@@ -177,7 +177,7 @@ Core::Decls TypeChecker::simplify_and_default_top_level()
         top_simplify_decls += entails( {}, current_wanteds() );
         
     // Here we should complain about unsolved abiguities...
-    check_wanteds(current_wanteds(), context());
+    check_wanteds(current_wanteds());
 
 //    std::cerr<<"GVE (all after defaulting):\n";
 //    for(auto& [x,t]: state.poly_env())
