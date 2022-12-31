@@ -518,14 +518,14 @@ Type TypeChecker::inferResultToType(Infer& I)
 
 Expected TypeChecker::newInfer()
 {
-    return Infer(level);
+    return Infer(level());
 }
 
 void TypeChecker::fillInfer(const Type& type, Infer& I)
 {
     if (auto result_type = I.type())
     {
-        if (level != I.level()) ensure_monotype(*result_type);
+        if (level() != I.level()) ensure_monotype(*result_type);
 
         unify(type, *result_type);
     }
@@ -553,7 +553,7 @@ void TypeChecker::ensure_monotype(const Type& type)
 
 Type TypeChecker::promote_type(int dest_level, const Type& type)
 {
-    if (level == dest_level)
+    if (level() == dest_level)
         return type;
     else
     {
@@ -677,22 +677,22 @@ ID get_class_name_from_constraint(const Type& constraint)
 
 MetaTypeVar TypeChecker::fresh_meta_type_var(const std::string& name, const Kind& k)
 {
-    return FreshVarSource::fresh_meta_type_var(level, name, k);
+    return FreshVarSource::fresh_meta_type_var(level(), name, k);
 }
 
 MetaTypeVar TypeChecker::fresh_meta_type_var(const Kind& k)
 {
-    return FreshVarSource::fresh_meta_type_var(level, k);
+    return FreshVarSource::fresh_meta_type_var(level(), k);
 }
 
 TypeVar TypeChecker::fresh_rigid_type_var(const std::string& name, const Kind& k)
 {
-    return FreshVarSource::fresh_rigid_type_var(level, name, k);
+    return FreshVarSource::fresh_rigid_type_var(level(), name, k);
 }
 
 TypeVar TypeChecker::fresh_rigid_type_var(const Kind& k)
 {
-    return FreshVarSource::fresh_rigid_type_var(level, k);
+    return FreshVarSource::fresh_rigid_type_var(level(), k);
 }
 
 // Wait, actually don't we assume that the value decls are divided into self-referencing binding groups, along with explicit signatures?
@@ -766,7 +766,7 @@ TypeChecker TypeChecker::copy_clear_wanteds(bool bump_level) const
     auto tc2 = *this;
     tc2.current_wanteds() = {};
     if (bump_level)
-        tc2.level++;
+        tc2.inc_level();
     return tc2;
 }
 
@@ -836,7 +836,7 @@ Core::Var TypeChecker::add_wanted(const ConstraintOrigin& origin, const Type& pr
 {
     auto dvar = fresh_dvar(pred);
 
-    current_wanteds().simple.push_back( {origin, Wanted, dvar, pred, level} );
+    current_wanteds().simple.push_back( {origin, Wanted, dvar, pred, level()} );
 
     return dvar;
 }
@@ -1168,7 +1168,7 @@ tuple<vector<MetaTypeVar>, LIE, Type> TypeChecker::instantiate(const ConstraintO
     // 2. Handle constraints
     if (auto ct = type.to<ConstrainedType>())
     {
-        wanteds = preds_to_constraints(origin, Wanted, ct->context.constraints, level);
+        wanteds = preds_to_constraints(origin, Wanted, ct->context.constraints, level());
         type = ct->type;
     }
 
@@ -1229,7 +1229,7 @@ tuple<Core::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const Ty
     else if (auto ct = polytype.to<ConstrainedType>())
     {
         // Compute givens from local givens followed by givens of sub-type.
-        auto givens = preds_to_constraints(GivenOrigin(), Given, ct->context.constraints, level);
+        auto givens = preds_to_constraints(GivenOrigin(), Given, ct->context.constraints, level());
         auto wrap1 = Core::WrapLambda( dict_vars_from_lie( givens ) );
 
         auto [wrap2, tvs2, givens2, type2] = skolemize(ct->type, skolem);
@@ -1250,9 +1250,9 @@ std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type>
 TypeChecker::skolemize_and(const Type& polytype, const tc_action<Type>& nested_action)
 {
     // 1. Skolemize the type at level+1
-    level++;
+    inc_level();
     auto [wrap, tvs, givens, rho_type] = skolemize(polytype, true);
-    level--;
+    dec_level();
 
     // 2. Perform the action, maybe creating an implication.
     // c++20 should allow us to capture rho-type, but clang is broken until probably clang-16.
@@ -1277,7 +1277,7 @@ TypeChecker::maybe_implication(const std::vector<TypeVar>& tvs, const LIE& given
 
     if (need_implication)
     {
-        auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls, context());
+        auto imp = std::make_shared<Implication>(level()+1, tvs, givens, wanteds, ev_decls, context());
         current_wanteds().implications.push_back( imp );
     }
     else

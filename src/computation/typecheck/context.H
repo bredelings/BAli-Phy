@@ -11,7 +11,7 @@ struct TypeCheckerContext
 {
 //    yy::location source_span;
     std::vector< Note > notes;
-//    int level = 0;                       - 
+    int level = 0;
 //    local type environment               - Ids and TypeVars defined in this module
 //    std::vector< Hs::Var > binder_stack; - 
 //    WantedConstraints wanteds;           - the LIE.

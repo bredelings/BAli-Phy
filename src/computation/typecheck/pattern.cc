@@ -141,7 +141,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         vector<TypeVar> ex_tvs2;
         for(auto& tv: info.exi_tvs)
         {
-            auto super_skol_tv = FreshVarSource::fresh_rigid_type_var(level+1, unloc(tv.name), *tv.kind);
+            auto super_skol_tv = FreshVarSource::fresh_rigid_type_var(level()+1, unloc(tv.name), *tv.kind);
             s = s.insert({tv, super_skol_tv});
             ex_tvs2.push_back(super_skol_tv);
         }
@@ -150,7 +150,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         field_types = apply_subst(s, field_types);
         constraints = apply_subst(s, constraints);
 
-        auto givens = preds_to_constraints(PatOrigin(), Given, constraints, level);
+        auto givens = preds_to_constraints(PatOrigin(), Given, constraints, level());
         Con.universal_tyvars = info.uni_tvs;
         Con.existential_tyvars = ex_tvs2;
         for(auto& constraint: dictionary_constraints(givens))

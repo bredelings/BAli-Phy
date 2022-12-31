@@ -645,7 +645,7 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     // 1. Try and solve the wanteds.  (See simplifyInfer)
     auto tcs2 = copy_clear_wanteds(true);
     auto solve_decls = tcs2.entails({},  wanteds );
-    int rhs_level = level + 1;
+    int rhs_level = level() + 1;
     
     // 2. Float wanteds out of implications if they aren't trapped by (i) given equalities or (ii) type variables
     auto maybe_quant_preds = preds_from_lie(float_wanteds(false,wanteds));
@@ -663,7 +663,7 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     add( local_tvs, free_meta_type_variables(wanteds.simple) );
 
     // 4. Figure out which type vars we cannot quantify over.
-    auto fixed_tvs = find_fixed_tvs(restricted, level, maybe_quant_preds, local_tvs);
+    auto fixed_tvs = find_fixed_tvs(restricted, level(), maybe_quant_preds, local_tvs);
 
     // 5. After deciding which vars we may NOT quantify over, figure out which ones we CAN quantify over.
     set<MetaTypeVar> qmtvs = tvs_in_any_type - fixed_tvs;
@@ -680,7 +680,7 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     // promote type vars that we are not quantifying over.
     for(auto& tv: local_tvs)
         if (not tv.filled())
-            maybe_promote_mtv(tv, level);
+            maybe_promote_mtv(tv, level());
 
 //  What do we want to assert here?
 //    for(auto& tv: local_tvs)
@@ -734,14 +734,14 @@ TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs:
 
     auto ev_decls = std::make_shared<Core::Decls>(solve_decls);
 
-    auto imp = std::make_shared<Implication>(level+1, qtvs | ranges::to<vector>, givens, wanteds, ev_decls, context());
+    auto imp = std::make_shared<Implication>(level()+1, qtvs | ranges::to<vector>, givens, wanteds, ev_decls, context());
 
     current_wanteds().implications.push_back(imp);
 
     // 5. Check that we don't have any wanteds with a deeper level
     for(auto& constraint: current_wanteds().simple)
     {
-        assert( max_level(constraint.pred) <= level );
+        assert( max_level(constraint.pred) <= level() );
     }
 
     // 6. Compute bind infos

@@ -314,10 +314,10 @@ bool Solver::is_touchable(const MetaTypeVar& mtv, const Type& rhs) const
     // We need to have done follow_meta_type_var( ) already.
     assert(not mtv.filled());
 
-    assert(mtv.level() <= level);
+    assert(mtv.level() <= level());
 
     // why do we think this?
-    assert(not inerts.given_eq_level or *inerts.given_eq_level < level);
+    assert(not inerts.given_eq_level or *inerts.given_eq_level < level());
 
     if (mtv.cycle_breaker) return false;
 
@@ -387,7 +387,7 @@ void Solver::add_inert(const Predicate& p)
     if (auto E = to<CanonicalEquality>(p))
     {
         int eq_level = std::max( max_level(E->t1), max_level(E->t2));
-        if (eq_level < level and p.flavor() == Given)
+        if (eq_level < level() and p.flavor() == Given)
         {
             inerts.given_eq_level = std::max( inerts.given_eq_level.value_or(0), eq_level );
         }
@@ -589,13 +589,13 @@ Core::Decls Solver::simplify(const LIE& givens, LIE& wanteds)
             auto t1 = follow_meta_type_var(E->t1);
             if (auto mtv = t1.to<MetaTypeVar>())
             {
-                if (mtv->level() == level)
+                if (mtv->level() == level())
                 {
                     mtv->fill(E->t2);
                     kickout_after_unification(*mtv);
                     continue;
                 }
-                else if (mtv->level() < level and is_touchable(*mtv, E->t2))
+                else if (mtv->level() < level() and is_touchable(*mtv, E->t2))
                 {
                     promote(E->t2, mtv->level());
                     set_unification_level(mtv->level());
@@ -656,7 +656,7 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
         {
             // 3. If there was a unification that affected this level
             //    then save any remaining implications and iterate.
-            if (unification_level() and *unification_level() <= level)
+            if (unification_level() and *unification_level() <= level())
             {
                 wanteds.implications.push_back( implic );
                 continue;
@@ -672,7 +672,7 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
 
             // 5. try and sub-wanteds
             auto tcs2 = copy_clear_wanteds();
-            tcs2.level = implic->level;
+            tcs2.set_level( implic->level );
             TypeCheckerContext tmp_context = context();
             context_ = implic->context; // FIXME
             *implic->evidence_binds += tcs2.entails(sub_givens, implic->wanteds);
@@ -685,7 +685,7 @@ Core::Decls TypeChecker::entails(const LIE& givens, WantedConstraints& wanteds)
         }
 
         // 7. If there was a unification, that affected this level, then we have to iterate.
-        if (unification_level() and *unification_level() == level)
+        if (unification_level() and *unification_level() == level())
         {
             update = true;
             clear_unification_level();

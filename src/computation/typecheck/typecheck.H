@@ -144,8 +144,6 @@ public:
 
     immer::map<std::string, std::pair<Hs::Var, Type>> mono_local_env;
 
-    int level = 0;
-
     global_value_env gve;
 
     WantedConstraints collected_wanteds;
@@ -154,6 +152,11 @@ public:
     void push_note(const Note& n) {context_.push_note(n);}
     std::string print_note() const {return context_.print_note();}
 
+    int level() const {return context_.level;}
+    void inc_level() {context_.level++;}
+    void dec_level() {context_.level--;}
+    void set_level(int l) {context_.level = l;}
+    
     const TypeCheckerContext& context() const {return context_;}
 
     // If we could cache this info on the TypeCon, then we could move these out of the class.
@@ -531,10 +534,9 @@ std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type, R>
 TypeChecker::skolemize_and_result(const Type& polytype, const tc_function<R, Type>& nested_function)
 {
     // 1. Skolemize the type at level
-    level++;
+    inc_level();
     auto [wrap, tvs, givens, rho_type] = skolemize(polytype, true);
-    level--;
-
+    dec_level();
 
     // 2. Perform the action, maybe creating an implication.
     // c++20 should allow us to capture rho-type, but clang is broken until probably clang-16.
@@ -560,7 +562,7 @@ TypeChecker::maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE
 
     if (need_implication)
     {
-        auto imp = std::make_shared<Implication>(level+1, tvs, givens, wanteds, ev_decls, context());
+        auto imp = std::make_shared<Implication>(level()+1, tvs, givens, wanteds, ev_decls, context());
         current_wanteds().implications.push_back( imp );
     }
     else
