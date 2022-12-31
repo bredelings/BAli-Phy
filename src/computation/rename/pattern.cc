@@ -55,7 +55,8 @@ expression_ref unapply(expression_ref E)
         flatten(App);
 
         // We shouldn't have e.g. (@ (@ f x) y) -- this should already be dealt with by rename_infix
-        assert(unloc(App.head).is_a<Hs::Con>());
+        if (not unloc(App.head).is_a<Hs::Con>())
+            throw myexception()<<"In pattern `"<<E<<"`:\n    `"<<App.head<<"` is not a data constructor.";
 
         // These aren't located,
         vector<expression_ref> args;

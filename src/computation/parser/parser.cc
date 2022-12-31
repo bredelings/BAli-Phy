@@ -7306,45 +7306,28 @@ Hs::Kind type_to_kind(const Hs::Type& kind)
     return *maybe_kind;
 }
 
-optional<pair<string, Hs::FieldDecls>> is_record_con(const Hs::Type& typeish)
-{
-    auto [head,args] = Hs::decompose_type_apps(typeish);
-
-    if (args.size() != 1) return {};
-
-    if (not head.is_a<Hs::TypeCon>()) return {};
-
-    if (not args[0].is_a<Hs::FieldDecls>()) return {};
-
-    return {{unloc(head.as_<Hs::TypeCon>().name), args[0].as_<Hs::FieldDecls>()}};
-}
-
-optional<pair<string, std::vector<Hs::Type>>> is_normal_con(const Hs::Type& typeish)
-{
-    if (is_record_con(typeish)) return {};
-
-    auto [head,args] = Hs::decompose_type_apps(typeish);
-
-    if (not head.is_a<Hs::TypeCon>())
-        return {};
-
-    return {{unloc(head.as_<Hs::TypeCon>().name), args}};
-}
-
 Hs::ConstructorDecl make_constructor(const vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::Type& typeish)
 {
-    if (auto constr = is_record_con(typeish))
+    // 1. Split into head and arguments
+    auto [head,args] = Hs::decompose_type_apps(typeish);
+
+    // 2. Get the constructor name.
+    auto tc = head.to<Hs::TypeCon>();
+    if (not tc)
+        throw myexception()<<"In constructor `"<<typeish<<"`:\n    `"<<head<<"` is not a data constructor!";
+    auto name = unloc(tc->name);
+
+    // 3. If we have 1 arg and its a FieldDecls, then make a record constructor.
+    if (args.size() == 1)
     {
-        auto [name, fields] = *constr;
-        return {forall, c, name, fields};
+        if (auto fd = args[0].to<Hs::FieldDecls>())
+        {
+            return {forall, c, name, *fd};
+        }
     }
-    else if (auto constr = is_normal_con(typeish))
-    {
-        auto [name, fields] = *constr;
-        return {forall, c, name, fields};
-    }
-    else
-        throw myexception()<<"constructor '"<<typeish<<"' does not make sense";
+
+    // 4. Otherwise make a normal constructor.
+    return {forall, c, name, args};
 }
 
 expression_ref make_minus(const expression_ref& exp)
