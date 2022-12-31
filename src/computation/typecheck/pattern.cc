@@ -150,7 +150,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         field_types = apply_subst(s, field_types);
         constraints = apply_subst(s, constraints);
 
-        auto givens = preds_to_constraints(PatOrigin(), Given, constraints, level());
+        auto givens = preds_to_constraints(PatOrigin(), Given, constraints);
         Con.universal_tyvars = info.uni_tvs;
         Con.existential_tyvars = ex_tvs2;
         for(auto& constraint: dictionary_constraints(givens))

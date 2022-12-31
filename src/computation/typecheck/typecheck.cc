@@ -1166,7 +1166,7 @@ tuple<vector<MetaTypeVar>, LIE, Type> TypeChecker::instantiate(const ConstraintO
     // 2. Handle constraints
     if (auto ct = type.to<ConstrainedType>())
     {
-        wanteds = preds_to_constraints(origin, Wanted, ct->context.constraints, level());
+        wanteds = preds_to_constraints(origin, Wanted, ct->context.constraints);
         type = ct->type;
     }
 
@@ -1227,7 +1227,7 @@ tuple<Core::wrapper, vector<TypeVar>, LIE, Type> TypeChecker::skolemize(const Ty
     else if (auto ct = polytype.to<ConstrainedType>())
     {
         // Compute givens from local givens followed by givens of sub-type.
-        auto givens = preds_to_constraints(GivenOrigin(), Given, ct->context.constraints, level());
+        auto givens = preds_to_constraints(GivenOrigin(), Given, ct->context.constraints);
         auto wrap1 = Core::WrapLambda( dict_vars_from_lie( givens ) );
 
         auto [wrap2, tvs2, givens2, type2] = skolemize(ct->type, skolem);
@@ -1284,7 +1284,7 @@ TypeChecker::maybe_implication(const std::vector<TypeVar>& tvs, const LIE& given
     return ev_decls;
 }
 
-LIE TypeChecker::preds_to_constraints(const ConstraintOrigin& origin, ConstraintFlavor flavor, const vector<Type>& constraints, int l)
+LIE TypeChecker::preds_to_constraints(const ConstraintOrigin& origin, ConstraintFlavor flavor, const vector<Type>& constraints)
 {
     LIE ordered_lie;
     for(auto& constraint: constraints)

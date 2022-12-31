@@ -481,7 +481,7 @@ public:
 
     // Figure 26
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
-    LIE preds_to_constraints(const ConstraintOrigin&, ConstraintFlavor, const std::vector<Type>&, int);
+    LIE preds_to_constraints(const ConstraintOrigin&, ConstraintFlavor, const std::vector<Type>&);
 
     // FIXME: this should be  const
     std::vector<std::pair<Core::Var, Type>> superclass_constraints(const Type& constraint);
