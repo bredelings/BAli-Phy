@@ -13,6 +13,43 @@ using std::set;
 using std::pair;
 using std::optional;
 
+void TypeChecker::record_error(cow_ptr<TypeCheckerContext> context, const Note& e)
+{
+    context.modify()->push_note(e);
+
+    messages().push_back({ErrorMsg, context->source_span(), context->notes});
+}
+
+void TypeChecker::record_error(const Note& e)
+{
+    return record_error(context(), e);
+}
+
+void TypeChecker::record_warning(cow_ptr<TypeCheckerContext> context, const Note& e)
+{
+    context.modify()->push_note(e);
+
+    messages().push_back({WarningMsg, context->source_span(), context->notes});
+}
+
+void TypeChecker::record_warning(const Note& e)
+{
+    return record_warning(context(), e);
+}
+
+bool TypeChecker::has_errors() const
+{
+    for(auto& msg: messages())
+        if (msg.message_type == ErrorMsg)
+            return true;
+    return false;
+}
+
+myexception TypeChecker::note_exception() const
+{
+    return myexception(print_note());
+}
+
 string print_unqualified_id(const string& s)
 {
     auto s2 = get_unqualified_name(s);

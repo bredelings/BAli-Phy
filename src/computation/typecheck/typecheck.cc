@@ -423,43 +423,6 @@ std::optional<std::tuple<TypeCon,std::vector<Type>>> TypeChecker::is_type_class_
         return {};
 }
 
-void TypeChecker::record_error(cow_ptr<TypeCheckerContext> context, const Note& e)
-{
-    context.modify()->push_note(e);
-
-    messages().push_back({ErrorMsg, context->source_span(), context->notes});
-}
-
-void TypeChecker::record_error(const Note& e)
-{
-    return record_error(context(), e);
-}
-
-void TypeChecker::record_warning(cow_ptr<TypeCheckerContext> context, const Note& e)
-{
-    context.modify()->push_note(e);
-
-    messages().push_back({WarningMsg, context->source_span(), context->notes});
-}
-
-void TypeChecker::record_warning(const Note& e)
-{
-    return record_warning(context(), e);
-}
-
-bool TypeChecker::has_errors() const
-{
-    for(auto& msg: messages())
-        if (msg.message_type == ErrorMsg)
-            return true;
-    return false;
-}
-
-myexception TypeChecker::note_exception() const
-{
-    return myexception(print_note());
-}
-
 TypeVar unification_env::fresh_tyvar(const std::optional<Kind>& kind) const
 {
     int level = 0;
