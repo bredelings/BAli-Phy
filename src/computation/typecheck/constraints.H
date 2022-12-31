@@ -6,7 +6,6 @@
 
 #include "haskell/coretype.H"
 #include "haskell/core.H"
-#include "context.H"
 #include "util/cow-ptr.H"
 
 struct OccurrenceOrigin
@@ -63,6 +62,8 @@ struct UnifyOrigin
 typedef std::variant<std::monostate, OccurrenceOrigin, GivenOrigin, AppOrigin, InstanceOrigin, LeftSectionOrigin, PatOrigin, SuperclassOrigin, TypeConvertOrigin,CycleBreakerOrigin,UnifyOrigin> ConstraintOrigin;
 
 enum ConstraintFlavor { Wanted, Given };
+
+class TypeCheckerContext;
 
 struct Constraint
 {

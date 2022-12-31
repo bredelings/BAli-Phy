@@ -1,6 +1,7 @@
 #include "constraints.H"
 #include "util/string/join.H"
 #include "types.H"
+#include "context.H"
 
 using std::vector;
 using std::string;
