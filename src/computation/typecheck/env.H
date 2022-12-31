@@ -8,7 +8,6 @@
 #include "immer/map.hpp" // for immer::map
 #include "haskell/haskell.H" // for Hs::Var, Type, Hs::Kind, TypeVar, Hs::Context, Hs::MetaTypeVar
 #include "haskell/coretype.H"
-#include "constraints.H" // for LIE
 #include "util/set.H"
 #include "kind.H"
 
@@ -146,11 +145,7 @@ typedef std::map<ID, Type> signature_env;
 
 std::set<TypeVar> free_type_variables(const value_env& env);
 
-std::set<TypeVar> free_type_variables(const LIE& env);
-
 std::set<MetaTypeVar> free_meta_type_variables(const value_env& env);
-
-std::set<MetaTypeVar> free_meta_type_variables(const LIE& env);
 
 template <typename T>
 std::set<T> operator-(const std::set<T>& s1, const std::set<T>& s2)

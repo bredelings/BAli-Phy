@@ -169,4 +169,8 @@ std::vector<Core::Var> dict_vars_from_lie(const LIE& lie);
 
 std::string print(const LIE& lie);
 
+std::set<TypeVar> free_type_variables(const LIE& env);
+
+std::set<MetaTypeVar> free_meta_type_variables(const LIE& env);
+
 #endif

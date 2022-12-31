@@ -41,13 +41,6 @@ string print(const value_env& env)
     return "{ " + join(ss, "; ") + " }";
 }
 
-LIE& operator+=(LIE& lie1, const LIE& lie2)
-{
-    lie1.insert(lie1.end(), lie2.begin(), lie2.end());
-    return lie1;
-}
-
-
 void add_prefer_right(value_env& e1, const value_env& e2)
 {
     if (e1.empty())
@@ -136,27 +129,11 @@ std::set<TypeVar> free_type_variables(const value_env& env)
     return free;
 }
 
-std::set<TypeVar> free_type_variables(const LIE& env)
-{
-    std::set<TypeVar> free;
-    for(auto& constraint: env)
-        add(free, free_type_variables(constraint.pred));
-    return free;
-}
-
 std::set<MetaTypeVar> free_meta_type_variables(const value_env& env)
 {
     std::set<MetaTypeVar> free;
     for(auto& [x,type]: env)
         add(free, free_meta_type_variables(type));
-    return free;
-}
-
-std::set<MetaTypeVar> free_meta_type_variables(const LIE& env)
-{
-    std::set<MetaTypeVar> free;
-    for(auto& constraint: env)
-        add(free, free_meta_type_variables(constraint.pred));
     return free;
 }
 

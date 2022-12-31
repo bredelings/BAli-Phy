@@ -1,5 +1,6 @@
 #include "constraints.H"
 #include "util/string/join.H"
+#include "types.H"
 
 using std::vector;
 using std::string;
@@ -171,4 +172,27 @@ Implication::Implication(int l, const vector<TypeVar>& v, const LIE& g, const Wa
     for(auto& implication: wanteds.implications)
         assert(implication->level > level);
 }
+
+std::set<TypeVar> free_type_variables(const LIE& env)
+{
+    std::set<TypeVar> free;
+    for(auto& constraint: env)
+        add(free, free_type_variables(constraint.pred));
+    return free;
+}
+
+std::set<MetaTypeVar> free_meta_type_variables(const LIE& env)
+{
+    std::set<MetaTypeVar> free;
+    for(auto& constraint: env)
+        add(free, free_meta_type_variables(constraint.pred));
+    return free;
+}
+
+LIE& operator+=(LIE& lie1, const LIE& lie2)
+{
+    lie1.insert(lie1.end(), lie2.begin(), lie2.end());
+    return lie1;
+}
+
 
