@@ -13,6 +13,12 @@ OccurrenceOrigin::OccurrenceOrigin(const Located<std::string>& s)
     :name(s)
 {}
 
+
+int Constraint::level() const
+{
+    return tc_state->level;
+}
+
 string Constraint::print() const
 {
     string s = (flavor==Given)?"[G] ":"[W] ";
@@ -20,12 +26,14 @@ string Constraint::print() const
     return s;
 }
 
-Constraint::Constraint(const ConstraintOrigin& o, ConstraintFlavor f, Core::Var v, Type p, int l)
+Constraint::Constraint(const ConstraintOrigin& o, ConstraintFlavor f, Core::Var v, Type p,
+                       const cow_ptr<TypeCheckerContext>& s)
     :origin(o),
+     tc_state(s),
+
      flavor(f),
      ev_var(v),
-     pred(p),
-     level(l)
+     pred(p)
 {
 }
 

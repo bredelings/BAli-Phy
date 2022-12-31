@@ -74,16 +74,16 @@ enum ConstraintFlavor { Wanted, Given };
 struct Constraint
 {
     ConstraintOrigin origin;
-    // std::shared_ptr<const tc_local_env> tc_env;
+    cow_ptr<TypeCheckerContext> tc_state;
 
     ConstraintFlavor flavor;
     Core::Var ev_var;
     Type pred;
-    int level;
 
+    int level() const;
     std::string print() const;
 
-    Constraint(const ConstraintOrigin&, ConstraintFlavor, Core::Var, Type, int);
+    Constraint(const ConstraintOrigin&, ConstraintFlavor, Core::Var, Type, const cow_ptr<TypeCheckerContext>& s);
 };
 
 typedef std::vector<Constraint> LIE;

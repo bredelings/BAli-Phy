@@ -70,7 +70,7 @@ ConstraintFlavor Predicate::flavor() const
 
 int Predicate::level() const
 {
-    return constraint().level;
+    return constraint().level();
 }
 
 // FIXME: there should be a `const` way of getting these.

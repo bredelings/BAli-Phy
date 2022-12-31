@@ -834,7 +834,7 @@ Core::Var TypeChecker::add_wanted(const ConstraintOrigin& origin, const Type& pr
 {
     auto dvar = fresh_dvar(pred);
 
-    current_wanteds().simple.push_back( {origin, Wanted, dvar, pred, level()} );
+    current_wanteds().simple.push_back( {origin, Wanted, dvar, pred, context()} );
 
     return dvar;
 }
@@ -1290,7 +1290,7 @@ LIE TypeChecker::preds_to_constraints(const ConstraintOrigin& origin, Constraint
     for(auto& constraint: constraints)
     {
         auto dvar = fresh_dvar(constraint);
-        ordered_lie.push_back({origin, flavor, dvar, constraint, l});
+        ordered_lie.push_back({origin, flavor, dvar, constraint, context()});
     }
     return ordered_lie;
 }

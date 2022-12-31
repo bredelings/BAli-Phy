@@ -701,7 +701,7 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
     // 4. Constrict givens from the preds
     LIE givens;
     for(auto& pred: quant_preds)
-        givens.push_back({GivenOrigin(), Given, fresh_dvar(pred), pred, rhs_level});
+        givens.push_back({GivenOrigin(), Given, fresh_dvar(pred), pred, context()});
 
     return {qtvs, givens, solve_decls};
 }

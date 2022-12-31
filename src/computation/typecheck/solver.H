@@ -13,7 +13,7 @@ struct NonCanonical
 
     const ConstraintOrigin& origin() const {return constraint.origin;}
     ConstraintFlavor flavor() const {return constraint.flavor;}
-    int level() const {return constraint.level;}
+    int level() const {return constraint.level();}
     std::string print() const;
     NonCanonical(const Constraint& c):constraint(c) {}
 };
@@ -26,7 +26,7 @@ struct CanonicalDict
 
     const ConstraintOrigin& origin() const {return constraint.origin;}
     ConstraintFlavor flavor() const {return constraint.flavor;}
-    int level() const {return constraint.level;}
+    int level() const {return constraint.level();}
     std::string print() const;
 };
 
@@ -39,7 +39,7 @@ struct CanonicalEquality
     CanonicalEquality flip() const;
     const ConstraintOrigin& origin() const {return constraint.origin;}
     ConstraintFlavor flavor() const {return constraint.flavor;}
-    int level() const {return constraint.level;}
+    int level() const {return constraint.level();}
     std::string print() const;
 
     CanonicalEquality(const Constraint& c, const Type& ta, const Type& tb):constraint(c),t1(ta),t2(tb) {}

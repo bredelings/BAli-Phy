@@ -101,11 +101,11 @@ Solver::canonicalize_equality_type_apps(const Constraint& C,
 {
     auto fun_constraint = make_equality_pred(fun1, fun2);
     auto fun_dvar = fresh_dvar(fun_constraint);
-    work_list.push_back(NonCanonical({C.origin, C.flavor, fun_dvar, fun_constraint, C.level}));
+    work_list.push_back(NonCanonical({C.origin, C.flavor, fun_dvar, fun_constraint, C.tc_state}));
 
     auto arg_constraint = make_equality_pred(arg1, arg2);
     auto arg_dvar = fresh_dvar(arg_constraint);
-    work_list.push_back(NonCanonical({C.origin, C.flavor, arg_dvar, arg_constraint, C.level}));
+    work_list.push_back(NonCanonical({C.origin, C.flavor, arg_dvar, arg_constraint, C.tc_state}));
 
     return {};
 }
@@ -125,7 +125,7 @@ std::optional<Predicate> Solver::canonicalize_equality_type_cons(const Canonical
         {
             auto constraint = make_equality_pred(args1[i], args2[i]);
             auto dvar = fresh_dvar(constraint);
-            work_list.push_back(NonCanonical({P.origin(), P.flavor(), dvar, constraint, P.level()}));
+            work_list.push_back(NonCanonical({P.origin(), P.flavor(), dvar, constraint, P.constraint.tc_state}));
         }
     }
     else
@@ -289,7 +289,7 @@ Type Solver::break_type_equality_cycle(const Constraint& C, const Type& type)
 
         auto constraint = make_equality_pred(new_tv, type);
         auto dvar = fresh_dvar(constraint);
-        work_list.push_back(NonCanonical({CycleBreakerOrigin(), C.flavor, dvar, constraint, C.level}));
+        work_list.push_back(NonCanonical({CycleBreakerOrigin(), C.flavor, dvar, constraint, C.tc_state}));
 
         return new_tv;
     }
