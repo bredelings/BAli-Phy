@@ -802,7 +802,7 @@ void TypeChecker::promote(Type type, int new_level)
 
 void TypeChecker::add_binders(const local_value_env& binders)
 {
-    gve = plus_prefer_right( gve, binders );
+    poly_env() = plus_prefer_right( poly_env(), binders );
 }
 
 TypeChecker

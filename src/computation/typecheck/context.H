@@ -8,6 +8,7 @@
 #include "computation/haskell/coretype.H"
 #include "computation/haskell/haskell.H"
 #include "immer/map.hpp" // for immer::map
+#include "env.H"
 
 // Hold with a shared_ptr so that implications can reference this?
 
@@ -18,6 +19,8 @@ struct TypeCheckerContext
 //    yy::location source_span;
     int level = 0;
     mono_env_t mono_env;
+    value_env poly_env;
+
     std::vector< Note > notes;
 //    local type environment               - Ids and TypeVars defined in this module
 //    std::vector< Hs::Var > binder_stack; - 

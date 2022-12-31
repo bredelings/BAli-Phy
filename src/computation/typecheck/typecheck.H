@@ -144,8 +144,6 @@ public:
     //------- local state ------------//
 
 
-    global_value_env gve;
-
     WantedConstraints collected_wanteds;
 
     void pop_note() {context_.pop_note();}
@@ -157,10 +155,12 @@ public:
     void dec_level() {context_.level--;}
     void set_level(int l) {context_.level = l;}
 
-private:
+
           mono_env_t& mono_local_env()       {return context_.mono_env;}
-public:
+          global_value_env& poly_env()       {return context_.poly_env;}
+
     const mono_env_t& mono_local_env() const {return context_.mono_env;}
+    const global_value_env& poly_env() const {return context_.poly_env;}
 
     const TypeCheckerContext& context() const {return context_;}
 

@@ -54,7 +54,7 @@ void TypeChecker::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreig
         auto type = check_type( desugar(f.type) );
         fte = fte.insert({f.function_name, type});
     }
-    gve += fte;
+    poly_env() += fte;
 }
 
 void
@@ -244,7 +244,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
     auto& name = unloc(FD.v.name);
 
     // 1. skolemize the type -> (tvs, givens, rho-type)
-    auto polytype = gve.at(name);
+    auto polytype = poly_env().at(name);
     auto [wrap_gen, tvs, givens, rho_type] =
         skolemize_and(polytype,
                       [&](const Type& rho_type, auto& tcs2) {

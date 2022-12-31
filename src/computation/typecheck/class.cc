@@ -218,7 +218,7 @@ Hs::Binds TypeChecker::infer_type_for_classes(const Hs::Decls& decls)
 
         auto [gve1, class_info, class_decls] = infer_type_for_class(*c);
 
-        gve += gve1;
+        poly_env() += gve1;
         class_env().insert({class_info.name, class_info});
 
         class_binds.push_back(class_decls);

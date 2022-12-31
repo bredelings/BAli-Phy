@@ -361,15 +361,15 @@ void Module::import_module(const Program& P, const module_import& I)
         }
 
         // 7. Import types for values.
-        for(auto& [name, type]: M2.tc_state->gve)
+        for(auto& [name, type]: M2.tc_state->poly_env())
         {
-            if (not tc_state->gve.count(name))
+            if (not tc_state->poly_env().count(name))
                 tc_state->imported_gve() = tc_state->imported_gve().insert({name,type});
         }
 
         for(auto& [name, type]: M2.tc_state->imported_gve())
         {
-            if (not tc_state->gve.count(name))
+            if (not tc_state->poly_env().count(name))
                 tc_state->imported_gve() = tc_state->imported_gve().insert({name,type});
         }
     }
@@ -497,7 +497,7 @@ void Module::compile(const Program& P)
     if (opts.dump_typechecked)
     {
         std::cerr<<"\nType-checked:\n";
-        for(auto& [name,type]: tc_state->gve)
+        for(auto& [name,type]: tc_state->poly_env())
         {
             std::cerr<<name<<" :: "<<type.print()<<"\n";
         }
@@ -646,7 +646,7 @@ void Module::perform_exports()
         }
 
         // Record types on the value symbol table
-        for(auto& [value,type]: tc_state->gve)
+        for(auto& [value,type]: tc_state->poly_env())
         {
             if (get_module_name(value) == name)
             {

@@ -180,7 +180,7 @@ Core::Decls TypeChecker::simplify_and_default_top_level()
     check_wanteds(current_wanteds(),{});
 
 //    std::cerr<<"GVE (all after defaulting):\n";
-//    for(auto& [x,t]: state.gve)
+//    for(auto& [x,t]: state.poly_env())
 //    {
 //        std::cerr<<x<<" :: "<<alphabetize_type(t)<<"\n";
 //        std::cerr<<x<<" = "<<e<<"\n\n\n";

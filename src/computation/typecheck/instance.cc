@@ -397,7 +397,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         // forall x. (C1 x, C2 x) => forall b. Ix b => [x] -> b -> b
         op_type = add_forall_vars(instance_tvs,add_constraints(preds_from_lie(givens), op_type));
 
-        gve = gve.insert( {unloc(op.name), op_type} );
+        poly_env() = poly_env().insert( {unloc(op.name), op_type} );
 
         optional<Hs::FunDecl> FD;
         if (auto it = method_matches.find(method_name); it != method_matches.end())

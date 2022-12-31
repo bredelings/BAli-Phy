@@ -23,7 +23,7 @@ void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
         sigma = type;
     }
     // x should be in the global type environment
-    else if (auto sigma_ptr = gve.find( x_name ))
+    else if (auto sigma_ptr = poly_env().find( x_name ))
         sigma = *sigma_ptr;
     // x should be in the global type environment
     else if (auto sigma_ptr = imported_gve().find( x_name ))
