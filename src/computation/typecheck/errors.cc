@@ -46,10 +46,6 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds, const cow_ptr<
         {
             e<<"Expected `"<<bold_green(print_unqualified(uorig->t2))<<ANSI::bold<<"` but got `"<<bold_green(print_unqualified(uorig->t1))<<ANSI::bold<<"`";
         }
-        else if (auto sorig = to<StringOrigin>(wanted.origin))
-        {
-            e<<sorig->msg;
-        }
         else if (auto app = to<AppOrigin>(wanted.origin))
         {
             e<<"Applying "<<(app->arg_index+1)<<" arguments to function "<<app->head.print()<<", but it only takes "<<app->arg_index<<"!";
