@@ -85,7 +85,7 @@ class TypeChecker: FreshVarSource
     std::shared_ptr<global_tc_state> global_state;
 
     //------- local state ------------//
-    cow_ptr<TypeCheckerContext> context_;
+    cow_ptr<TypeCheckerContext> local_state;
 
 public:
     const Module& this_mod() const {return global_state->this_mod;}
@@ -147,23 +147,23 @@ public:
 
     WantedConstraints collected_wanteds;
 
-    void pop_note() {context_.modify()->pop_note();}
-    void push_note(const Note& n) {context_.modify()->push_note(n);}
-    std::string print_note() const {return context_->print_note();}
+    void pop_note() {local_state.modify()->pop_note();}
+    void push_note(const Note& n) {local_state.modify()->push_note(n);}
+    std::string print_note() const {return local_state->print_note();}
 
-    int level() const {return context_->level;}
-    void inc_level() {context_.modify()->level++;}
-    void dec_level() {context_.modify()->level--;}
-    void set_level(int l) {context_.modify()->level = l;}
+    int level() const {return local_state->level;}
+    void inc_level() {local_state.modify()->level++;}
+    void dec_level() {local_state.modify()->level--;}
+    void set_level(int l) {local_state.modify()->level = l;}
 
 
-          mono_env_t& mono_local_env()       {return context_.modify()->mono_env;}
-          global_value_env& poly_env()       {return context_.modify()->poly_env;}
+          mono_env_t& mono_local_env()       {return local_state.modify()->mono_env;}
+          global_value_env& poly_env()       {return local_state.modify()->poly_env;}
 
-    const mono_env_t& mono_local_env() const {return context_->mono_env;}
-    const global_value_env& poly_env() const {return context_->poly_env;}
+    const mono_env_t& mono_local_env() const {return local_state->mono_env;}
+    const global_value_env& poly_env() const {return local_state->poly_env;}
 
-    const cow_ptr<TypeCheckerContext>& context() const {return context_;}
+    const cow_ptr<TypeCheckerContext>& context() const {return local_state;}
 
     // If we could cache this info on the TypeCon, then we could move these out of the class.
     bool type_con_is_type_fam(const TypeCon& tc) const;

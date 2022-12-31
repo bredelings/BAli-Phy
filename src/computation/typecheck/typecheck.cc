@@ -848,7 +848,7 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
 }
 
 TypeChecker::TypeChecker(FreshVarState& fvs, const string& s, const Module& m)
-    :FreshVarSource(fvs, s),context_(new TypeCheckerContext)
+    :FreshVarSource(fvs, s), local_state(new TypeCheckerContext)
 {
     global_state = std::make_shared<global_tc_state>(m);
 }
