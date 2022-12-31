@@ -441,6 +441,12 @@ public:
     infer_type_for_decls_group(const signature_env&, Hs::Decls E, bool is_top_level);
 
     std::tuple< std::map<std::string, Hs::Var>, local_value_env >
+    fd_mono_nonrec(Hs::FunDecl&);
+
+    std::tuple< std::map<std::string, Hs::Var>, local_value_env >
+    pd_mono_nonrec(Hs::PatDecl&);
+
+    std::tuple< std::map<std::string, Hs::Var>, local_value_env >
     tc_decls_group_mono(const signature_env& sigs, Hs::Decls& decls);
 
     void infer_type_for_foreign_imports(std::vector<Hs::ForeignDecl>& foreign_decls);

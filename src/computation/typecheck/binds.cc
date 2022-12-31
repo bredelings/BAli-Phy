@@ -91,10 +91,10 @@ vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const map<st
 
     // 2. Figure out which indices reference each other
     vector<vector<int>> referenced_decls;
-    for(int i=0;i<decls.size();i++)
+    for(auto& decl: decls)
     {
         vector<int> refs;
-        for(auto& name: get_rhs_free_vars(decls[i]))
+        for(auto& name: get_rhs_free_vars(decl))
         {
             auto it = index_for_name.find(name);
 
@@ -118,6 +118,7 @@ TypeChecker::infer_type_for_decls(const signature_env& signatures, const Hs::Dec
 {
     // The signatures for the binders should already be in the environment.
 
+    // This marks each Hs::Decls by whether its recursive when variables with signatures are ignored.
     auto bind_groups = split_decls_by_signatures(decls, signatures);
 
     Hs::Decls decls2;
@@ -335,8 +336,63 @@ void TypeChecker::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
         std::abort();
 }
 
+tuple< map<string, Hs::Var>, local_value_env >
+TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
+{
+    // Note: No signature for function, or we'd be in infer_type_for_single_fundecl_with_sig( )
+
+    // 1. Allocate a monomorphic id
+    string poly_id = unloc(FD.v.name);
+    Hs::Var mono_id = get_fresh_Var(poly_id, false);
+
+    // 2. Determine the RHS type using an Infer -- this can be polymorphic
+    Expected rhs_type = newInfer();
+    auto ctx = Hs::FunctionContext{poly_id};
+    tcMatchesFun( getArity(FD.matches), rhs_type, [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
+        tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
+        );
+
+    // 3. Record the correspondence between mono id and poly id
+    std::map<std::string, Hs::Var> mono_ids;
+    mono_ids.insert({poly_id, mono_id});
+
+    // 4. Record the type of the mono id
+    local_value_env mono_binder_env;
+    mono_binder_env = mono_binder_env.insert({poly_id, rhs_type.read_type()});
+
+    return {mono_ids, mono_binder_env};
+}
+
+tuple< map<string, Hs::Var>, local_value_env > TypeChecker::pd_mono_nonrec(Hs::PatDecl& PD)
+{
+    std::abort();
+}
+
 tuple< map<string, Hs::Var>, local_value_env > TypeChecker::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& decls)
 {
+    // We should know whether or not the decls are recursive.
+    assert(decls.recursive);
+
+    if (not *decls.recursive)
+    {
+        assert(decls.size() == 1);
+        auto& decl = decls[0];
+        if (auto fd = decl.to<Hs::FunDecl>())
+        {
+            auto FD = *fd;
+            auto result = fd_mono_nonrec(FD);
+            decl = FD;
+            return result;
+        }
+        else if (auto pd = decl.to<Hs::PatDecl>(); pd and false)
+        {
+            auto PD = *pd;
+            auto result = pd_mono_nonrec(PD);
+            decl = PD;
+            return result;
+        }
+    }
+
     // 1. Add each let-binder to the environment with a fresh type variable
     local_value_env mono_binder_env;
 

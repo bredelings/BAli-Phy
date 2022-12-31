@@ -350,7 +350,6 @@ std::optional<Predicate> Solver::canonicalize_equality_lhs1(const CanonicalEqual
     // Don't worry about type families here...
     auto result1 = result0;
     result1.reset(type_family_bit);
-    result1.reset(impredicative_bit); // FIXME!
 
     if (result1 == ok_result)
         return P;
