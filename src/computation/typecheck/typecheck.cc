@@ -427,7 +427,7 @@ void TypeChecker::record_error(std::optional<yy::location> l, cow_ptr<TypeChecke
 {
     context.modify()->push_note(e);
 
-    messages().push_back({ErrorMsg, l, context->notes});
+    messages().push_back({ErrorMsg, context->source_span(), context->notes});
 }
 
 void TypeChecker::record_error(std::optional<yy::location> l, const Note& e)
@@ -439,7 +439,7 @@ void TypeChecker::record_warning(std::optional<yy::location> l, cow_ptr<TypeChec
 {
     context.modify()->push_note(e);
 
-    messages().push_back({WarningMsg, l, context->notes});
+    messages().push_back({WarningMsg, context->source_span(), context->notes});
 }
 
 void TypeChecker::record_warning(std::optional<yy::location> l, const Note& e)

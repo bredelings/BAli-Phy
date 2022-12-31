@@ -151,6 +151,10 @@ public:
     void push_note(const Note& n) {local_state.modify()->push_note(n);}
     std::string print_note() const {return local_state->print_note();}
 
+    std::optional<yy::location> source_span() const {return local_state->source_span();}
+    void push_source_span(const yy::location& loc) {local_state.modify()->push_source_span(loc);}
+    void pop_source_span() {local_state.modify()->pop_source_span();}
+
     int level() const {return local_state->level;}
     void inc_level() {local_state.modify()->level++;}
     void dec_level() {local_state.modify()->level--;}

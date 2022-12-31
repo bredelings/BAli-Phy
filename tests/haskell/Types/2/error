@@ -22,7 +22,7 @@
 [1;34m9[0m [1;34m| [0mmain = do putStrLn $ show $ [1;31mbar[0m 2 3
   [1;34m|[0m                             [1;31m^^^[0m
 
-[1m<unknown>:[1;31m error:[0m[1m
+[1mMain.hs:9.35:[1;31m error:[0m[1m
    • Could not derive `[1;32mNum t_27000[0m[1m` arising from a use of
      `[1;36mfromInteger[0m[1m`
    • In equation `main  = do {Prelude.putStrLn Data.Function.$
@@ -30,4 +30,7 @@
    • In function `Main.main`
    • In recursive group:
          Main.main
+  [1;34m|[0m
+[1;34m9[0m [1;34m| [0mmain = do putStrLn $ show $ bar 2 [1;31m3[0m
+  [1;34m|[0m                                   [1;31m^[0m
 

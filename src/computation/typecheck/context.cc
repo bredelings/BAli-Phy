@@ -22,3 +22,20 @@ string TypeCheckerContext::print_note() const
     return "Error:\n"+join(estrings, "\n");
 }
 
+std::optional<yy::location> TypeCheckerContext::source_span() const
+{
+    if (locs.empty())
+        return {};
+    else
+        return locs.back();
+}
+
+void TypeCheckerContext::push_source_span(const yy::location& loc)
+{
+    locs.push_back(loc);
+}
+
+void TypeCheckerContext::pop_source_span()
+{
+    locs.pop_back();
+}

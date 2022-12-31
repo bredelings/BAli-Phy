@@ -31,14 +31,18 @@ void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
     else
         throw note_exception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 
+    if (x.name.loc) push_source_span(*x.name.loc);
     x.wrap = instantiateSigma(OccurrenceOrigin(x.name), sigma, exp_type);
+    if (x.name.loc) pop_source_span();
 }
 
 void TypeChecker::tcRho(Hs::Con& con, const Expected& exp_type)
 {
     auto sigma = constructor_info(con).constructor_type();
 
+    if (con.name.loc) push_source_span(*con.name.loc);
     con.wrap = instantiateSigma(OccurrenceOrigin(con.name), sigma, exp_type);
+    if (con.name.loc) pop_source_span();
 }
 
 void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
@@ -59,7 +63,10 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
     auto [arg_type, result_type] = unify_function(fun_type.read_type(), origin);
 
     // Check the argument according to its required type
+    if (App.args[arg_index].loc) push_source_span(*App.args[arg_index].loc);
     auto wrap_arg = checkSigma(unloc(App.args[arg_index]), arg_type);
+    if (App.args[arg_index].loc) pop_source_span();
+
     App.arg_wrappers.push_back(wrap_arg);
 
     push_note( Note() << "In expression '"<< App.print()<<"':" );

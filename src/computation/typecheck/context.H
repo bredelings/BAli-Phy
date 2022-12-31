@@ -14,7 +14,7 @@ typedef immer::map<std::string, std::pair<Hs::Var, Type>> mono_env_t;
 
 struct TypeCheckerContext
 {
-    std::optional<yy::location> source_span;
+    std::vector<yy::location> locs;
     int level = 0;
     mono_env_t mono_env;
     value_env poly_env;
@@ -24,6 +24,10 @@ struct TypeCheckerContext
 //    WantedConstraints wanteds;           - the LIE.
 //    vector<Message> messages;            - local errors could become global warnings, or be dropped...
     
+    void push_source_span(const yy::location&);
+    void pop_source_span();
+    std::optional<yy::location> source_span() const;
+
     void pop_note();
     void push_note(const Note& e);
     std::string print_note() const;
