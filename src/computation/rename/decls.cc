@@ -333,8 +333,9 @@ map<string,int> get_indices_for_names(const Hs::Decls& decls)
         else if (decl.is_a<Hs::PatDecl>())
         {
             auto& PD = decl.as_<Hs::PatDecl>();
-            for(const string& name: find_vars_in_pattern2( unloc(PD.lhs) ))
+            for(auto& x: Hs::vars_in_pattern( unloc(PD.lhs) ))
             {
+                auto& name = unloc(x.name);
                 if (index_for_name.count(name)) throw myexception()<<"name '"<<name<<"' is bound twice: "<<decls.print();
 
                 index_for_name.insert({name, i});
