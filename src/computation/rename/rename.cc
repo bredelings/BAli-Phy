@@ -264,11 +264,16 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
             auto C = decl.as_<Haskell::ClassDecl>();
             for(auto& method_decl: C.default_method_decls)
             {
-                if (method_decl.is_a<Hs::PatDecl>())
-                    throw myexception()<<"Illegal pattern binding in class "<<C.name;
-                auto FD = method_decl.as_<Hs::FunDecl>();
-                FD.matches = Rn.rename( FD.matches, bound_names, FD.rhs_free_vars);
-                method_decl = FD;
+                if (auto pd = method_decl.to<Hs::PatDecl>())
+                {
+                    Rn.error(pd->lhs.loc, Note()<<"Illegal pattern binding in class "<<C.name);
+                }
+                else
+                {
+                    auto FD = method_decl.as_<Hs::FunDecl>();
+                    FD.matches = Rn.rename( FD.matches, bound_names, FD.rhs_free_vars);
+                    method_decl = FD;
+                }
             }
             decl = C;
         }
@@ -277,19 +282,48 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
             auto I = decl.as_<Haskell::InstanceDecl>();
             for(auto& method_decl: I.method_decls)
             {
-                if (method_decl.is_a<Hs::PatDecl>())
-                    throw myexception()<<"Illegal pattern binding in instance "<<I.constraint.print();
-                auto FD = method_decl.as_<Hs::FunDecl>();
-                FD.matches = Rn.rename( FD.matches, bound_names, FD.rhs_free_vars);
-                method_decl = FD;
+                if (auto pd = method_decl.to<Hs::PatDecl>())
+                {
+                    Rn.error(pd->lhs.loc, Note()<<"Illegal pattern binding in instance "<<I.constraint.print());
+                }
+                else
+                {
+                    auto FD = method_decl.as_<Hs::FunDecl>();
+                    FD.matches = Rn.rename( FD.matches, bound_names, FD.rhs_free_vars);
+                    method_decl = FD;
+                }
             }
             decl = I;
         }
     }
 
+    show_messages(m.file, std::cerr, Rn.messages);
+
+    exit_on_error(Rn.messages);
+
     return M;
 }
 
+
+void renamer_state::error(const Note& note)
+{
+    messages.push_back({ErrorMsg, {}, {note}});
+}
+
+void renamer_state::error(const optional<yy::location>& loc, const Note& note)
+{
+    messages.push_back({ErrorMsg, loc, {note}});
+}
+
+void renamer_state::warning(const Note& note)
+{
+    messages.push_back({WarningMsg, {}, {note}});
+}
+
+void renamer_state::warning(const optional<yy::location>& loc, const Note& note)
+{
+    messages.push_back({WarningMsg, loc, {note}});
+}
 
 void renamer_state::qualify_name(std::string& name) const
 {
@@ -328,7 +362,7 @@ bound_var_info renamer_state::find_vars_in_patterns(const vector<expression_ref>
         if (not overlap.empty())
         {
             auto name = *overlap.begin();
-            throw myexception()<<"Pattern uses a variable '"<<name<<"' twice!";
+            error(Note()<<"Pattern uses a variable '"<<name<<"' twice!");
         }
         add(bound, bound_here);
     }

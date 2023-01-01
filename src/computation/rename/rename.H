@@ -7,6 +7,7 @@
 #include "computation/expression/expression_ref.H"
 #include "computation/haskell/haskell.H"
 #include "computation/optimization/simplifier.H"       // for simplifier options
+#include "computation/message.H"
 
 class Module;
 
@@ -24,6 +25,13 @@ bool disjoint_add(bound_var_info& bv1, const bound_var_info& bv2);
 struct renamer_state
 {
     const Module& m;
+
+    std::vector<Message> messages;
+
+    void error(const Note& e);
+    void error(const std::optional<yy::location>& loc, const Note& e);
+    void warning(const Note& e);
+    void warning(const std::optional<yy::location>& loc, const Note& e);
 
     void qualify_name(std::string& name) const;
     void qualify_name(Located<std::string>& name) const;

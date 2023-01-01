@@ -314,15 +314,13 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         }
         else
         {
-            if (loc)
-                throw myexception()<<"Can't find id '"<<name<<"' at "<<*loc;
-            else
-                throw myexception()<<"Can't find id '"<<name<<"'";
+            error(loc, Note()<<"Variable `"<<name<<"` not in scope.");
+            return E;
         }
     }
-    else if (E.is_a<Hs::Con>())
+    else if (auto con = E.to<Hs::Con>())
     {
-        auto C = E.as_<Haskell::Con>();
+        auto C = *con;
         auto& name = unloc(C.name);
         auto& loc = C.name.loc;
 
@@ -338,10 +336,8 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         }
         else
         {
-            if (loc)
-                throw myexception()<<"Can't find id '"<<name<<"' at "<<*loc;
-            else
-                throw myexception()<<"Can't find id '"<<name<<"'";
+            error(loc, Note()<<"Data constructor `"<<name<<"` not in scope.");
+            return E;
         }
     }
     else if (E.is_a<Haskell::RecStmt>())
