@@ -87,7 +87,7 @@ value_env remove_sig_binders(value_env binder_env, const signature_env& signatur
 vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const map<string, Type>& signatures)
 {
     // 1. Map names to indices
-    map<string,int> index_for_name = get_indices_for_names(decls);
+    auto [index_for_name,_] = get_indices_for_names(decls);
 
     // 2. Figure out which indices reference each other
     vector<vector<int>> referenced_decls;

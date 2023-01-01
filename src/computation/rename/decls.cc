@@ -314,38 +314,45 @@ void group_binds(Hs::Binds& binds, const vector< vector<int> >& referenced_decls
 // Splitting the decls for classes and instances into  components really doesn't make sense...
 
 // maps names in a declaration group to a declaration in the group.
-map<string,int> get_indices_for_names(const Hs::Decls& decls)
+std::tuple<map<string,int>, map<Hs::Var,vector<Hs::Var>>> get_indices_for_names(const Hs::Decls& decls)
 {
     map<string,int> index_for_name;
+    map<Hs::Var,std::vector<Hs::Var>> duplicate_defs;
 
     for(int i=0;i<decls.size();i++)
     {
         auto& decl = decls[i];
-        if (decl.is_a<Hs::FunDecl>())
-        {
-            auto& FD = decl.as_<Hs::FunDecl>();
-            const string& name = unloc(FD.v.name);
 
-            if (index_for_name.count(name)) throw myexception()<<"name '"<<name<<"' is bound twice: "<<decls.print();
-
-            index_for_name.insert({name, i});
-        }
-        else if (decl.is_a<Hs::PatDecl>())
-        {
-            auto& PD = decl.as_<Hs::PatDecl>();
-            for(auto& x: Hs::vars_in_pattern( unloc(PD.lhs) ))
-            {
-                auto& name = unloc(x.name);
-                if (index_for_name.count(name)) throw myexception()<<"name '"<<name<<"' is bound twice: "<<decls.print();
-
-                index_for_name.insert({name, i});
-            }
-        }
+        // Get the binder vars introduced by this declaration
+        set<Hs::Var> vars;
+        if (auto fd = decl.to<Hs::FunDecl>())
+            vars.insert({fd->v});
+        else if (auto pd = decl.to<Hs::PatDecl>())
+            vars = Hs::vars_in_pattern( unloc(pd->lhs) );
         else
             std::abort();
+
+        // Record the index for each of those vars
+        for(auto& var: vars)
+        {
+            auto iter = duplicate_defs.find(var);
+
+            if (iter == duplicate_defs.end())
+            {
+                // Record the index for each of those vars
+                index_for_name.insert({unloc(var.name), i});
+                // Create an empty list of duplicates.
+                duplicate_defs.insert({var,{}});
+            }
+            else
+            {
+                // Record a duplicate
+                iter->second.push_back(var);
+            }
+        }
     }
 
-    return index_for_name;
+    return {index_for_name, duplicate_defs};
 }
 
 vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, const bound_var_info& bound, set<string>& free_vars, bool top)
@@ -381,7 +388,18 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
     }
 
     // Map the names to indices
-    map<string,int> index_for_name = get_indices_for_names(decls);
+    auto [index_for_name, duplicate_defs] = get_indices_for_names(decls);
+    for(auto& [first_def, second_defs]: duplicate_defs)
+    {
+        for(auto& second_def: second_defs)
+        {
+            Note note;
+            note<<"Name `"<<unloc(second_def.name)<<"` redefined.";
+            if (first_def.name.loc)
+                note<<"\nFirst definition at "<<*first_def.name.loc;
+            error(second_def.name.loc, note);
+        }
+    }
 
     // Construct referenced decls
     vector<vector<int>> referenced_decls;

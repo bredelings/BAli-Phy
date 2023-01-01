@@ -103,6 +103,8 @@ expression_ref rename(const Module& p, const expression_ref&,const std::set<std:
 typedef std::set<std::string> bound_var_info;
 const bound_var_info& get_rhs_free_vars(const expression_ref& decl);
 std::vector<Hs::Decls> split_decls(const Hs::Decls& decls, const std::vector< std::vector<int> >& referenced_decls);
-std::map<std::string,int> get_indices_for_names(const Hs::Decls& decls);
+
+std::tuple<std::map<std::string,int>, std::map<Hs::Var,std::vector<Hs::Var>>>
+get_indices_for_names(const Hs::Decls& decls);
 
 #endif
