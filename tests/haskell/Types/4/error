@@ -1,5 +1,5 @@
 [1mMain.hs:12.19-20:[1;31m error:[0m[1m
-   • Could not derive `[1;32mEq a_505{{2}}[0m[1m` arising from a use of
+   • Could not derive `[1;32mEq a_508{{2}}[0m[1m` arising from a use of
      `[1;36m(==)[0m[1m` at Main.hs:12.19-20
    • In equation `reflexive2 ae  = x Data.Eq.== x`
    • In function `Main.reflexive2`
