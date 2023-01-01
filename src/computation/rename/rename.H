@@ -78,8 +78,6 @@ struct renamer_state
     renamer_state(const Module& m_):m(m_) {}
 };
 
-std::set<std::string> find_bound_vars(const expression_ref& E);
-
 Hs::Decls synthesize_field_accessors(const Hs::Decls& decls);
 
 Hs::Binds rename_infix(const Module& p, Hs::Binds);

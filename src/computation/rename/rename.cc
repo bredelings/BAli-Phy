@@ -45,43 +45,6 @@ using std::map;
 
 // B. try some different data sets from skyline papers -- hcv2, bison, etc.
 
-
-set<string> find_bound_vars(const expression_ref& E)
-{
-    if (E.is_expression())
-    {
-	set<string> bound;
-	for(const auto& e:E.sub())
-	    add(bound, find_bound_vars(e));
-	return bound;
-
-    }
-    else if (E.is_a<Haskell::List>())
-    {
-        auto& L = E.as_<Haskell::List>();
-	set<string> bound;
-	for(const auto& e: L.elements)
-	    add(bound, find_bound_vars(e));
-	return bound;
-    }
-    else if (E.is_a<Haskell::Tuple>())
-    {
-        auto& T = E.as_<Haskell::Tuple>();
-	set<string> bound;
-	for(const auto& e: T.elements)
-	    add(bound, find_bound_vars(e));
-	return bound;
-    }
-    else if (E.is_a<Hs::Var>())
-    {
-        auto& value = unloc(E.as_<Hs::Var>().name);
-	assert(not is_haskell_con_name(value));
-        return {value};
-    }
-    else
-        return {};
-}
-
 Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R)
 {
     for(auto& guarded_rhs: R.guarded_rhss)
