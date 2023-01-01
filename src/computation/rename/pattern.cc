@@ -97,7 +97,7 @@ bound_var_info renamer_state::rename_patterns(vector<expression_ref>& patterns, 
         if (not overlap.empty())
         {
             auto name = *overlap.begin();
-            throw myexception()<<"Pattern uses a variable '"<<name<<"' twice!";
+            error(Note()<<"Pattern uses variable '"<<name<<"' twice!");
         }
 	add(bound, bound_here);
     }
@@ -142,7 +142,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
 	bool overlap = not disjoint_add(bound, find_vars_in_pattern(AP.pattern, top));
 
 	if (overlap)
-	    throw myexception()<<"Pattern '"<<pat<<"' uses a variable twice!";
+	    error(Note()<<"Pattern '"<<pat<<"' uses a variable twice!");
 	return bound;
     }
 
@@ -173,14 +173,17 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         auto id = unloc(c->head.name);
 
         if (not m.is_declared(id))
-            throw myexception()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!";
+            error(c->head.name.loc, Note()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!");
+        else
+        {
+            const symbol_info& S = m.lookup_symbol(id);
+            if (S.symbol_type != constructor_symbol)
+                error(c->head.name.loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
 
-        const symbol_info& S = m.lookup_symbol(id);
-        if (S.symbol_type != constructor_symbol)
-            throw myexception()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!";
-
-        if (S.arity != c->args.size())
-            throw myexception()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!";
+            // FIXME -- we really want the location of the whole pattern here
+            if (S.arity != c->args.size())
+                error(c->head.name.loc, Note()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!");
+        }
 
         // 11. Return the variables bound
         return find_vars_in_patterns(c->args, top);

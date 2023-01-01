@@ -26,12 +26,12 @@ struct renamer_state
 {
     const Module& m;
 
-    std::vector<Message> messages;
+    mutable std::vector<Message> messages;
 
-    void error(const Note& e);
-    void error(const std::optional<yy::location>& loc, const Note& e);
-    void warning(const Note& e);
-    void warning(const std::optional<yy::location>& loc, const Note& e);
+    void error(const Note& e) const;
+    void error(const std::optional<yy::location>& loc, const Note& e) const;
+    void warning(const Note& e) const;
+    void warning(const std::optional<yy::location>& loc, const Note& e) const;
 
     void qualify_name(std::string& name) const;
     void qualify_name(Located<std::string>& name) const;

@@ -30,10 +30,8 @@ Hs::TypeCon renamer_state::rename_type(const Hs::TypeCon& tc)
     }
     else
     {
-        if (loc)
-            throw myexception()<<"Can't find tycon '"<<name<<"' at "<<*loc;
-        else
-            throw myexception()<<"Can't find tycon '"<<name<<"'";
+        error(loc, Note()<<"Can't find type constructor `"<<name<<"`");
+        return tc;
     }
 }
 
@@ -41,22 +39,7 @@ Haskell::Type renamer_state::rename_type(const Haskell::Type& type)
 {
     if (auto tc = type.to<Haskell::TypeCon>())
     {
-        auto& name = unloc(tc->name);
-        auto& loc = tc->name.loc;
-
-        if (m.type_is_declared(name))
-        {
-            auto T = m.lookup_type(name);
-            auto& qualified_name = T.name;
-            return Haskell::TypeCon({loc, qualified_name});
-        }
-        else
-        {
-            if (loc)
-                throw myexception()<<"Can't find tycon '"<<name<<"' at "<<*loc;
-            else
-                throw myexception()<<"Can't find tycon '"<<name<<"'";
-        }
+        return rename_type(*tc);
     }
     else if (auto tv = type.to<Haskell::TypeVar>())
     {

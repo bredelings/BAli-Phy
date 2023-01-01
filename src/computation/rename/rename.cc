@@ -305,22 +305,22 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
 }
 
 
-void renamer_state::error(const Note& note)
+void renamer_state::error(const Note& note) const
 {
     messages.push_back({ErrorMsg, {}, {note}});
 }
 
-void renamer_state::error(const optional<yy::location>& loc, const Note& note)
+void renamer_state::error(const optional<yy::location>& loc, const Note& note) const
 {
     messages.push_back({ErrorMsg, loc, {note}});
 }
 
-void renamer_state::warning(const Note& note)
+void renamer_state::warning(const Note& note) const
 {
     messages.push_back({WarningMsg, {}, {note}});
 }
 
-void renamer_state::warning(const optional<yy::location>& loc, const Note& note)
+void renamer_state::warning(const optional<yy::location>& loc, const Note& note) const
 {
     messages.push_back({WarningMsg, loc, {note}});
 }

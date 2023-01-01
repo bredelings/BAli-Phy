@@ -52,8 +52,8 @@ Hs::MRule renamer_state::rename(Hs::MRule mrule, const bound_var_info& bound, se
         auto overlap = intersection(binders, new_binders);
         if (not overlap.empty())
         {
-            string bad = *overlap.begin();
-            throw myexception()<<"Function declaration uses variable '"<<bad<<"' twice:\n"<<" "<<mrule.print();
+            string name = *overlap.begin();
+            error(Note()<<"Function declaration uses variable '"<<name<<"' twice!");
         }
         add(binders, new_binders);
     }
