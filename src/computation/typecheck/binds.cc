@@ -342,24 +342,24 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
     push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
     // Note: No signature for function, or we'd be in infer_type_for_single_fundecl_with_sig( )
 
-    // 1. Allocate a monomorphic id
-    string poly_id = unloc(FD.v.name);
-    Hs::Var mono_id = get_fresh_Var(poly_id, false);
+    // Note: Since the LHS variables don't appear on the RHS, we don't need to create
+    //       a type variable for the result type.
 
-    // 2. Determine the RHS type using an Infer -- this can be polymorphic
+    // 1. Determine the RHS type using an Infer -- this can be polymorphic
     Expected rhs_type = newInfer();
+    string poly_id = unloc(FD.v.name);
     auto ctx = Hs::FunctionContext{poly_id};
     tcMatchesFun( getArity(FD.matches), rhs_type, [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
         tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
         );
 
-    // 3. Record the correspondence between mono id and poly id
-    std::map<std::string, Hs::Var> mono_ids;
-    mono_ids.insert({poly_id, mono_id});
-
-    // 4. Record the type of the mono id
+    // 2. Record the type of the poly id
     local_value_env mono_binder_env;
     mono_binder_env = mono_binder_env.insert({poly_id, rhs_type.read_type()});
+
+    // 3. Make up a mono id and record the correspondence.
+    Hs::Var mono_id = get_fresh_Var(poly_id, false);
+    auto mono_ids = map<string,Hs::Var>{{poly_id, mono_id}};
 
     pop_note();
     return {mono_ids, mono_binder_env};
@@ -367,10 +367,42 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
 
 tuple< map<string, Hs::Var>, local_value_env > TypeChecker::pd_mono_nonrec(Hs::PatDecl& PD)
 {
-    std::abort();
+    push_note( Note()<<"In definition of `"<<unloc(PD.lhs).print()<<"`");
+    // Note: No signatures for lhs variables.
+
+    // Note: Since the LHS variables don't appear on the RHS, we don't need to create
+    //       a type variable for the result type.
+
+    // 1. Determine the RHS type using an Infer -- this can be polymorphic
+    Expected rhs_type = newInfer();
+    tcRho(PD.rhs, rhs_type);
+
+    // 2. Check the LHS pattern and find out the type of its ids.Allocate a monomorphic id
+    local_value_env mono_binder_env;
+    tc_action<local_value_env&> nothing = [](local_value_env&,TypeChecker&){};
+    tcPat(mono_binder_env, unloc(PD.lhs), Check(rhs_type.read_type()), {}, nothing);
+
+    // 3. Make up some mono_ids...
+    std::map<std::string, Hs::Var> mono_ids;
+    for(auto& [poly_id, type]: mono_binder_env)
+    {
+        Hs::Var mono_id = get_fresh_Var(poly_id, false);
+        mono_ids.insert({poly_id, mono_id});
+    }
+
+    pop_note();
+    return {mono_ids, mono_binder_env};
 }
 
-tuple< map<string, Hs::Var>, local_value_env > TypeChecker::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& decls)
+bool any_sigs_for_vars(const signature_env& sigs, const std::set<Hs::Var>& vars)
+{
+    for(auto& var: vars)
+        if (sigs.count(unloc(var.name))) return true;
+    return false;
+}
+
+tuple< map<string, Hs::Var>, local_value_env >
+TypeChecker::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& decls)
 {
     // We should know whether or not the decls are recursive.
     assert(decls.recursive);
@@ -386,7 +418,9 @@ tuple< map<string, Hs::Var>, local_value_env > TypeChecker::tc_decls_group_mono(
             decl = FD;
             return result;
         }
-        else if (auto pd = decl.to<Hs::PatDecl>(); pd and false)
+        else if (auto pd = decl.to<Hs::PatDecl>();
+                 pd
+                 and not any_sigs_for_vars(signatures, Hs::vars_in_pattern(unloc(pd->lhs))))
         {
             auto PD = *pd;
             auto result = pd_mono_nonrec(PD);
