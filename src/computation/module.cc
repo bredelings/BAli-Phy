@@ -1431,13 +1431,12 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
     for(const auto& decl: topdecls)
         if (auto pd = decl.to<Hs::PatDecl>())
         {
-            for(const auto& var_name: find_bound_vars( unloc(pd->lhs) ))
-                maybe_def_function( var_name );
+            for(const auto& var: Hs::vars_in_pattern( unloc(pd->lhs) ))
+                maybe_def_function( unloc(var.name) );
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
         {
-            for(const auto& var_name: find_bound_vars( fd->v ))
-                maybe_def_function( var_name );
+            maybe_def_function( unloc(fd->v.name) );
         }
         else if (auto data_decl = decl.to<Haskell::DataOrNewtypeDecl>())
         {
