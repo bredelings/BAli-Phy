@@ -276,7 +276,7 @@ bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
     else if (auto v = pat.to<Hs::VarPattern>())
     {
         auto V = *v;
-        auto bound = rename_var_pattern(V.var);
+        auto bound = rename_var_pattern(V.var, top);
         pat = V;
 	return bound;
     }
