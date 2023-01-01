@@ -1421,17 +1421,12 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     // 13. Default top-level ambiguous type vars.
     auto top_simplify_decls = tc_state->simplify_and_default_top_level();
 
-    // Perhaps we should sort them by location?
-    for(auto& msg: tc_state->messages())
-    {
-        std::cerr<<msg.print(file);
-        std::cerr<<"\n";
-    }
+    // 14. Print messages sorted by location.
+    show_messages(file, std::cerr, tc_state->messages());
 
-    // If throw an exception later, the stuff printed to cerr will be printed again.
+    // If we throw an exception later, the stuff printed to cerr will be printed again.
     // Should we be printing to out_screen instead?
-    if (tc_state->has_errors())
-        exit(1);
+    exit_on_error(tc_state->messages());
 
     return {class_binds, value_decls, dm_decls, instance_method_binds, dfun_decls, top_simplify_decls};
 }

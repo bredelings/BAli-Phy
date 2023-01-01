@@ -82,7 +82,56 @@ string Message::print(const FileContents& file) const
     return out.str();
 }
 
+bool Message::is_error() const
+{
+    return message_type == ErrorMsg;
+}
+
+bool Message::is_warning() const
+{
+    return message_type == WarningMsg;
+}
+
+
 Message::Message(MessageType t, std::optional<yy::location> l, const Notes& ns)
     :message_type(t), loc(l), notes(ns)
 {
+}
+
+bool message_before(const Message& m1, const Message& m2)
+{
+    if (not m1.loc) return false;
+    if (not m2.loc) return true;
+
+    if (m1.loc->begin.line < m2.loc->begin.line) return true;
+    if (m1.loc->begin.line > m2.loc->begin.line) return false;
+
+    return (m1.loc->begin.column < m2.loc->begin.column);
+}
+
+void show_messages(const FileContents& file, std::ostream& out, vector<Message> messages)
+{
+    std::sort(messages.begin(), messages.end(), message_before);
+    for(auto& msg: messages)
+    {
+        out<<msg.print(file);
+        out<<"\n";
+    }
+
+    if (has_errors(messages))
+        exit(1);
+}
+
+bool has_errors(const vector<Message>& messages)
+{
+    for(auto& message: messages)
+        if (message.is_error())
+            return true;
+    return false;
+}
+
+void exit_on_error(const vector<Message>& messages, int exit_code)
+{
+    if (has_errors(messages))
+        exit(exit_code);
 }

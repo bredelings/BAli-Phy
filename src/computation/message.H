@@ -46,9 +46,17 @@ struct Message
     std::optional<yy::location> loc;
     Notes notes;
 
+    bool is_error() const;
+    bool is_warning() const;
+
     std::string print(const FileContents& file) const;
 
     Message(MessageType t, std::optional<yy::location> l, const Notes& e);
 };
 
+void show_messages(const FileContents& file, std::ostream& out, std::vector<Message> messages);
+
+bool has_errors(const std::vector<Message>& messages);
+
+void exit_on_error(const std::vector<Message>& messages, int exit_code = 1);
 #endif

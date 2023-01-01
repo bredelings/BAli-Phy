@@ -39,10 +39,7 @@ void TypeChecker::record_warning(const Note& e)
 
 bool TypeChecker::has_errors() const
 {
-    for(auto& msg: messages())
-        if (msg.message_type == ErrorMsg)
-            return true;
-    return false;
+    return ::has_errors(messages());
 }
 
 myexception TypeChecker::note_exception() const
