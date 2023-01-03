@@ -39,3 +39,14 @@ void TypeCheckerContext::pop_source_span()
 {
     locs.pop_back();
 }
+
+void TypeCheckerContext::push_binder(const binder_info& binder)
+{
+    binder_stack.push_back(binder);
+}
+
+void TypeCheckerContext::pop_binder()
+{
+    binder_stack.pop_back();
+}
+

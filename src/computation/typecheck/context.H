@@ -9,8 +9,24 @@
 #include "computation/haskell/haskell.H"
 #include "immer/map.hpp" // for immer::map
 #include "env.H"
+#include "expected.H"
 
 typedef immer::map<std::string, std::pair<Hs::Var, Type>> mono_env_t;
+
+
+struct IDType
+{
+    Hs::Var var;
+    Type type;
+};
+
+struct IDExpType
+{
+    Hs::Var var;
+    Expected exp_type;
+};
+
+typedef std::variant<IDType, IDExpType> binder_info;
 
 struct TypeCheckerContext
 {
@@ -20,7 +36,7 @@ struct TypeCheckerContext
     value_env poly_env;
 
     Notes notes;
-//    std::vector< Hs::Var > binder_stack; - 
+    std::vector< std::variant<IDType,IDExpType> > binder_stack;
 //    WantedConstraints wanteds;           - the LIE.
 //    vector<Message> messages;            - local errors could become global warnings, or be dropped...
     
@@ -31,6 +47,9 @@ struct TypeCheckerContext
     void pop_note();
     void push_note(const Note& e);
     std::string print_note() const;
+
+    void push_binder(const binder_info& binder);
+    void pop_binder();
 
     TypeCheckerContext() = default;
 };

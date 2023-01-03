@@ -167,6 +167,9 @@ public:
     void push_source_span(const yy::location& loc) {local_state.modify()->push_source_span(loc);}
     void pop_source_span() {local_state.modify()->pop_source_span();}
 
+    void push_binder(const binder_info& binder) { local_state.modify()->push_binder(binder);}
+    void pop_binder() {local_state.modify()->pop_binder();}
+
     int level() const {return local_state->level;}
     void inc_level() {local_state.modify()->level++;}
     void dec_level() {local_state.modify()->level--;}
