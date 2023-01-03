@@ -1,5 +1,5 @@
 [1mMain.hs:9.9-11:[1;31m error:[0m[1m
-   • Expected `[1;32mT[0m[1m` but got `[1;32m[t_11{{1}}][0m[1m`
+   • Expected `T` but got `[t_11{{1}}]`
    • In equation `g x  = Main.f [x]`
    • In function `Main.g`
    • In recursive group:

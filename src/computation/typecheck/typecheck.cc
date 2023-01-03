@@ -695,6 +695,21 @@ std::optional<Type> TypeChecker::is_type_synonym(const Type& type) const
     return {};
 }
 
+Type TypeChecker::look_thru(const Type& t) const
+{
+    if (auto mtv = t.to<MetaTypeVar>())
+    {
+        if (auto t2 = mtv->filled())
+            return look_thru(*t2);
+        else
+            return t;
+    }
+    else if (auto s = is_type_synonym(t))
+        return look_thru(*s);
+    else
+        return t;
+}
+
 Type TypeChecker::check_type(const Type& type, kindchecker_state& K) const
 {
     // So, currently, we
@@ -720,6 +735,92 @@ Type TypeChecker::check_constraint(const Type& type) const
 
     return K.kind_and_type_check_constraint( type );
 
+}
+
+std::bitset<8> set_occurs_check_maybe(std::bitset<8> result)
+{
+    if (result.test(occurs_definitely_bit))
+    {
+        result.reset(occurs_definitely_bit);
+        result.set(occurs_maybe_bit);
+    }
+    return result;
+}
+
+bool has_occurs_check(std::bitset<8> result)
+{
+    return result.test(occurs_definitely_bit) or result.test(occurs_maybe_bit);
+}
+
+std::bitset<8> TypeChecker::check_type_equality(const Type& lhs, const Type& rhs) const
+{
+    if (auto tt = filled_meta_type_var(rhs))
+        return check_type_equality(lhs, *tt);
+    else if (auto mtv = rhs.to<MetaTypeVar>())
+    {
+        if (lhs == *mtv)
+            return occurs_definitely_result;
+        else
+            return ok_result;
+    }
+    else if (auto tv = rhs.to<TypeVar>())
+    {
+        if (lhs == *tv)
+            return occurs_definitely_result;
+        else
+            return ok_result;
+    }
+    else if (auto app = is_type_app(rhs))
+    {
+        auto& [fun,arg] = *app;
+        return check_type_equality(lhs, fun) | check_type_equality(lhs, arg);
+    }
+    else if (auto tfam = is_type_fam_app(rhs))
+    {
+        if (same_type(lhs,rhs))
+            return occurs_definitely_result;
+        else
+        {
+            auto [_,args] = *tfam;
+            auto result = type_family_result;
+            for(auto& arg: args)
+                result |= check_type_equality(lhs,arg);
+            return set_occurs_check_maybe(result);
+        }
+    }
+    // We can record that type synonyms either do or do not expand to have
+    // (i) type families
+    // (ii) foralls and constraints
+    else if (auto tsyn = is_type_synonym(rhs))
+    {
+        return check_type_equality(lhs, *tsyn);
+    }
+    else if (rhs.is_a<TypeCon>())
+    {
+        return ok_result;
+    }
+    else if (auto app = is_type_app(rhs))
+    {
+        auto& [fun,arg] = *app;
+        return check_type_equality(lhs, fun) | check_type_equality(lhs, arg);
+    }
+    else if (auto forall = rhs.to<ForallType>())
+    {
+        return check_type_equality(lhs, forall->type) | impredicative_result;
+    }
+    else if (auto con = rhs.to<ConstrainedType>())
+    {
+        auto result = check_type_equality(lhs, con->type) | impredicative_result;
+        for(auto& constraint: con->context.constraints)
+            result |= check_type_equality(lhs, constraint);
+        return result;
+    }
+    else if (auto sl = rhs.to<StrictLazyType>())
+    {
+        return check_type_equality(lhs, sl->type);
+    }
+    else
+        std::abort();
 }
 
 TypeChecker TypeChecker::copy_clear_wanteds(bool bump_level) const

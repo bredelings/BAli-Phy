@@ -1,6 +1,6 @@
 [1mMain.hs:7.19:[1;31m error:[0m[1m
-   • Expected `[1;32mmonotype_9{{1}}[0m[1m` but got `[1;32mI
-     a_1{{2}}[0m[1m`
+   • Cannot unify `monotype_9{{1}}` with `I a_1{{2}}` because the quantified
+     variable `a_1{{2}}` would escape its scope
    • In equation `unI (Main.MkSomeI i)  = i`
    • In function `Main.unI`
    • In recursive group:

@@ -71,6 +71,18 @@ struct global_tc_state
     global_tc_state(const Module& m);
 };
 
+constexpr int occurs_definitely_bit = 0;
+constexpr int occurs_maybe_bit = 1;
+constexpr int impredicative_bit = 2;
+constexpr int type_family_bit = 3;
+constexpr std::bitset<8> ok_result;
+constexpr std::bitset<8> occurs_definitely_result(1);
+constexpr std::bitset<8> occurs_maybe_result(2);
+constexpr std::bitset<8> impredicative_result(4);
+constexpr std::bitset<8> type_family_result(8);
+
+bool has_occurs_check(std::bitset<8> result);
+
 struct TypeChecker;
 
 template <typename... Args>
@@ -285,6 +297,13 @@ public:
 
     Core::Decls simplify_and_default_top_level();
 
+    std::bitset<8> check_type_equality(const Type& lhs, const Type& rhs) const;
+
+    Type look_thru(const Type& t) const;
+
+    Note check_eq_tv_constraint(std::vector<std::shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const;
+    Note check_eq_constraint(std::vector<std::shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const;
+    void check_wanteds(std::vector<std::shared_ptr<Implication>>& implic_scopes, const WantedConstraints& wanteds);
     void check_wanteds(const WantedConstraints& wanteds);
 
     std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const ConstraintOrigin& origin, const Type& t);

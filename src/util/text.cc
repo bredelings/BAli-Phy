@@ -3,6 +3,8 @@
 #include "util/text.H"
 #include "util/assert.hh"
 #include "util/string/join.H"
+#include "util/string/convert.H"
+#include <cstdlib>
 
 using std::string;
 using std::vector;
@@ -11,7 +13,17 @@ using std::optional;
 
 int terminal_width()
 {
+    string col_string;
+    const char* s = std::getenv( "COLUMNS" );
+    if (s)
+        col_string = s;
+
     int width = 80;
+    if (auto columns = can_be_converted_to<int>(col_string))
+        width = *columns;
+    if (width < 50)
+        width = 50;
+
     return width-2;
 }
 

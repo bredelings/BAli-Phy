@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <variant>
+#include <bitset>
 
 struct NonCanonical
 {
@@ -96,16 +97,6 @@ struct InertSet
     std::string print() const;
 };
 
-constexpr int occurs_definitely_bit = 0;
-constexpr int occurs_maybe_bit = 1;
-constexpr int impredicative_bit = 2;
-constexpr int type_family_bit = 3;
-constexpr std::bitset<8> ok_result;
-constexpr std::bitset<8> occurs_definitely_result(1);
-constexpr std::bitset<8> occurs_maybe_result(2);
-constexpr std::bitset<8> impredicative_result(4);
-constexpr std::bitset<8> type_family_result(8);
-
 struct Solver: public TypeChecker
 {
     Core::Decls decls;
@@ -113,8 +104,6 @@ struct Solver: public TypeChecker
     std::vector<Predicate> work_list;
 
     InertSet inerts;
-
-    std::bitset<8> check_type_equality(const Type& lhs, const Type& rhs) const;
 
     void add_inert(const Predicate& P);
     void add_to_work_list(const std::vector<Predicate>& ps);

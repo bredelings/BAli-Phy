@@ -1,6 +1,5 @@
 [1mMain.hs:5.17:[1;31m error:[0m[1m
-   • Expected `[1;32mmonotype_11{{1}}[0m[1m` but got
-     `[1;32mb_2{{2}}[0m[1m`
+   • Expected `monotype_11{{1}}` but got `b_2{{2}}`
    • In equation `apply (Main.T f x)  = x`
    • In function `Main.apply`
    • In recursive group:
