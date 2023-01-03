@@ -103,13 +103,13 @@ Note TypeChecker::check_eq_tv_constraint(vector<shared_ptr<Implication>>& implic
     // 1. Unification with polytype
     if (problems.test(impredicative_bit))
     {
-        cannot_unify<<"because it is a polytype";
+        cannot_unify<<" because it is a polytype";
         return cannot_unify;
     }
     // 2. Occurs check
     else if (has_occurs_check(problems))
     {
-        cannot_unify<<"because of occurs check";
+        cannot_unify<<" because of occurs check";
         return cannot_unify;
     }
     // 3. tv is blocked from escaping too
