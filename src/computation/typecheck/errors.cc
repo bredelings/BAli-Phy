@@ -9,11 +9,13 @@
 
 #include <range/v3/all.hpp>
 
+namespace views = ranges::views;
+
 using std::string;
 using std::vector;
 using std::map;
 using std::set;
-using std::pair;
+using std::tuple;
 using std::optional;
 using std::shared_ptr;
 
@@ -84,6 +86,45 @@ Note make_mismatch_message(const Constraint& wanted, const Type& t1, const Type&
     return mismatch;
 }
 
+vector<tuple<Hs::Var,Type>> get_relevant_bindings(const TypeCheckerContext& tc_state, const set<TypeVar>& ftvs, const set<MetaTypeVar>& fmtvs)
+{
+    vector<tuple<Hs::Var,Type>> relevant_bindings;
+
+    auto maybe_add = [&](const Hs::Var& var, const Type& type) -> bool
+    {
+        auto& name = unloc(var.name);
+        if (is_qualified_symbol(name)) return true;
+
+        if (intersects(free_type_variables(type), ftvs) or intersects(free_meta_type_variables(type), fmtvs))
+        {
+            relevant_bindings.push_back({var,type});
+
+            // Don't return too many relevant bindings.
+            if (relevant_bindings.size() > 5) return false;
+        }
+        return true;
+    };
+
+    for(auto& var_type: tc_state.binder_stack | views::reverse)
+    {
+        if (auto id_type = to<IDType>(var_type))
+        {
+            auto& [var,type] = *id_type;
+            if (not maybe_add(var,type)) break;
+        }
+        else if (auto id_type = to<IDExpType>(var_type))
+        {
+            auto& [var,exp_type] = *id_type;
+            if (not maybe_add(var, exp_type.read_type())) break;
+        }
+        else
+            std::abort();
+    }
+
+    return relevant_bindings;
+}
+
+
 Note TypeChecker::check_eq_tv_constraint(vector<shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const
 {
     const Implication * implic = nullptr;
@@ -99,6 +140,11 @@ Note TypeChecker::check_eq_tv_constraint(vector<shared_ptr<Implication>>& implic
     cannot_unify<<"Cannot unify `"<<print_unqualified(t1)<<"` with `"<<print_unqualified(t2)<<"`";
 
     auto problems = check_type_equality(t1,t2);
+
+    auto ftvs = free_type_variables(wanted.pred);
+    auto fmtvs = free_meta_type_variables(wanted.pred);
+
+    auto relevant_bindings = get_relevant_bindings(*wanted.tc_state, ftvs, fmtvs);
 
     // 1. Unification with polytype
     if (problems.test(impredicative_bit))
@@ -125,6 +171,14 @@ Note TypeChecker::check_eq_tv_constraint(vector<shared_ptr<Implication>>& implic
         for(auto& tv: escaped)
             escaped_names.push_back(tv.print());
         cannot_unify<<" because the quantified variable `"<<join(escaped_names," ")<<"` would escape its scope";
+
+        if (not relevant_bindings.empty())
+        {
+            for(auto& [var,type]: relevant_bindings)
+            {
+                cannot_unify<<"\n  relevant binding: "<<var.print()<<" :: "<<print_unqualified(type)<<"\n";
+            }
+        }
         return cannot_unify;
     }
     else if (mtv1)

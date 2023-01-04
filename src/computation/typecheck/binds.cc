@@ -244,21 +244,29 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
     auto& name = unloc(FD.v.name);
 
-    // 1. skolemize the type -> (tvs, givens, rho-type)
+    // 1. Make up a inner id.
+    Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
+
+    // 2. skolemize the type -> (tvs, givens, rho-type)
     auto polytype = poly_env().at(name);
     auto [wrap_gen, tvs, givens, rho_type] =
         skolemize_and(polytype,
                       [&](const Type& rho_type, auto& tcs2) {
+
+                          // 3. Record the mapping from inner_id -> rho_type for error messages
+                          // FIXME -- not using inner idea because we have mangled it.
+                          tcs2.push_binder( IDType{FD.v, rho_type} );
+
+                          // 4. Analyze the Matches
                           auto ctx = Hs::FunctionContext{unloc(FD.v.name)};
                           tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type),
                                              [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
                                                  tc.tcMatches(ctx, FD.matches, arg_types, result_type);};});
+                          tcs2.pop_binder();
                       }
             );
 
-    // 2. return GenBind with tvs, givens, body
-    Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
-
+    // 5. return GenBind with tvs, givens, body
     Type monotype = rho_type;
 
     Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, wrap_gen);
@@ -320,16 +328,26 @@ void TypeChecker::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
+
+        push_binder( IDType{ FD.v, mono_local_env().at(unloc(FD.v.name)).second } );
+        push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
         auto ctx = Hs::FunctionContext{unloc(FD.v.name)};
         tcMatchesFun( getArity(FD.matches), rhs_type, [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
             tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
                         );
+        pop_note();
+        pop_binder();
+
         decl = FD;
     }
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
+
+        push_note( Note()<<"In definition of `"<<unloc(PD.lhs).print()<<"`");
         tcRho(PD.rhs, rhs_type);
+        pop_note();
+
         decl = PD;
     }
     else
@@ -343,25 +361,37 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
     // Note: No signature for function, or we'd be in infer_type_for_single_fundecl_with_sig( )
 
     // Note: Since the LHS variables don't appear on the RHS, we don't need to create
-    //       a type variable for the result type.
+    //       a type variable for the result type when we analyze the RHS.
+    //       Therefore, we can use an Infer();
 
     // 1. Determine the RHS type using an Infer -- this can be polymorphic
-    Expected rhs_type = newInfer();
+    Expected fun_type = newInfer();
+
+    // 2. Make up a mono id and record the correspondence
     string poly_id = unloc(FD.v.name);
-    auto ctx = Hs::FunctionContext{poly_id};
-    tcMatchesFun( getArity(FD.matches), rhs_type, [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
-        tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
-        );
-
-    // 2. Record the type of the poly id
-    local_value_env mono_binder_env;
-    mono_binder_env = mono_binder_env.insert({poly_id, rhs_type.read_type()});
-
-    // 3. Make up a mono id and record the correspondence.
     Hs::Var mono_id = get_fresh_Var(poly_id, false);
     auto mono_ids = map<string,Hs::Var>{{poly_id, mono_id}};
 
+    // 3. Record the mono_id and type for the purpose of error messages.
+    //    The mono_id can't occur in the rhs, but parts of the fun_type might.
+    // FIXME -- using the poly_id because we've manged the mono_id
+    push_binder( IDExpType{mono_id, fun_type} );
+
+    // 4. Determine the expected type for arguments and result, and check rhs.
+    auto ctx = Hs::FunctionContext{poly_id};
+    tcMatchesFun( getArity(FD.matches), fun_type,
+                  [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
+                      tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
+        );
+
+    pop_binder();
+
+    // 5. Record the type of the poly id
+    local_value_env mono_binder_env;
+    mono_binder_env = mono_binder_env.insert({poly_id, fun_type.read_type()});
+
     pop_note();
+
     return {mono_ids, mono_binder_env};
 }
 
@@ -371,13 +401,16 @@ tuple< map<string, Hs::Var>, local_value_env > TypeChecker::pd_mono_nonrec(Hs::P
     // Note: No signatures for lhs variables.
 
     // Note: Since the LHS variables don't appear on the RHS, we don't need to create
-    //       a type variable for the result type.
+    //       a type variable for the result type when we analyze the RHS.
+    //       Therefore, we can use an Infer();
 
     // 1. Determine the RHS type using an Infer -- this can be polymorphic
     Expected rhs_type = newInfer();
     tcRho(PD.rhs, rhs_type);
 
-    // 2. Check the LHS pattern and find out the type of its ids.Allocate a monomorphic id
+    // FIXME! Record id/type for lhs vars on the binder stack.
+
+    // 2. Check the LHS pattern and find out the type of its ids.
     local_value_env mono_binder_env;
     tc_action<local_value_env&> nothing = [](local_value_env&,TypeChecker&){};
     tcPat(mono_binder_env, unloc(PD.lhs), Check(rhs_type.read_type()), {}, nothing);
@@ -457,19 +490,7 @@ TypeChecker::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& dec
 
     // 2. Infer the types of each of the x[i]
     for(int i=0;i<decls.size();i++)
-    {
-        Note n;
-        if (auto FD = decls[i].to<Hs::FunDecl>())
-            n<<"In function `"<<FD->v.print()<<"`";
-        else if (auto PD = decls[i].to<Hs::PatDecl>())
-            n<<"In definition of `"<<unloc(PD->lhs).print()<<"`";
-
-        push_note(n);
-
         infer_rhs_type(decls[i], Check(lhs_types[i]));
-
-        pop_note();
-    }
 
     return {mono_ids, mono_binder_env};
 }

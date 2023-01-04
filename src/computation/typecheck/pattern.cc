@@ -69,7 +69,9 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_t
     lve = lve.insert({name,type});
     penv += lve;
 
+    push_binder(IDType{V,type});
     a(penv, *this);
+    pop_binder();
 }
 
 void TypeChecker::checkPat(local_value_env& penv, Hs::Var& v, const SigmaType& exp_type, const signature_env& sigs)
