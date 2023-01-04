@@ -2,8 +2,8 @@
    • Cannot unify `t` with `[t]` because of occurs check
    • Relevant bindings:
        x :: t
-       Main.f :: t -> [[t]]
-   • In equation `f x  = : x (: [x] [])`
+       f :: t -> [[t]]
+   • In equation `f x  = x : ([x] : [])`
    • In function `Main.f`
    • In recursive group:
          Main.f
@@ -15,8 +15,8 @@
    • Cannot unify `t` with `[t]` because of occurs check
    • Relevant bindings:
        x :: t
-       Main.f :: t -> [[t]]
-   • In equation `f x  = : x (: [x] [])`
+       f :: t -> [[t]]
+   • In equation `f x  = x : ([x] : [])`
    • In function `Main.f`
    • In recursive group:
          Main.f

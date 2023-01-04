@@ -3,7 +3,7 @@
    • Relevant bindings:
        x :: b
        f :: b -> a
-       Main.apply :: T a -> m
+       apply :: T a -> m
    • In equation `apply (Main.T f x)  = x`
    • In function `Main.apply`
    • In recursive group:
