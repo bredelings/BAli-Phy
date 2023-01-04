@@ -32,7 +32,7 @@ Type quantify(const T& tvs, const Type& monotype)
     }
 }
 
-global_value_env sig_env(const map<string, Type>& signatures)
+global_value_env sig_env(const signature_env& signatures)
 {
     global_value_env sig_env;
     for(auto& [name, type]: signatures)
@@ -84,7 +84,7 @@ value_env remove_sig_binders(value_env binder_env, const signature_env& signatur
     return no_sig_binder_env;
 }
 
-vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const map<string, Type>& signatures)
+vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const signature_env& signatures)
 {
     // 1. Map names to indices
     auto [index_for_name,_] = get_indices_for_names(decls);
@@ -278,7 +278,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
     return {decl, name, polytype};
 }
 
-bool is_restricted(const map<ID, Type>& signatures, const Hs::Decls& decls)
+bool is_restricted(const signature_env& signatures, const Hs::Decls& decls)
 {
     for(auto& decl: decls)
     {
@@ -298,7 +298,7 @@ bool is_restricted(const map<ID, Type>& signatures, const Hs::Decls& decls)
 };
 
 tuple<Type, local_value_env>
-TypeChecker::infer_lhs_type(expression_ref& decl, const map<string, Type>& signatures)
+TypeChecker::infer_lhs_type(expression_ref& decl, const signature_env& signatures)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
     {
@@ -820,7 +820,7 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
 }
 
 Hs::Decls
-TypeChecker::infer_type_for_decls_group(const map<string, Type>& signatures, Hs::Decls decls, bool is_top_level)
+TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Decls decls, bool is_top_level)
 {
     if (single_fundecl_with_sig(decls, signatures))
     {
