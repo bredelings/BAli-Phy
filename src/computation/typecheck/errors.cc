@@ -19,11 +19,18 @@ using std::tuple;
 using std::optional;
 using std::shared_ptr;
 
-void TypeChecker::record_error(cow_ptr<TypeCheckerContext> context, const Note& e)
+void TypeChecker::record_error(cow_ptr<TypeCheckerContext> context, const Notes& notes)
 {
-    context.modify()->push_note(e);
+    auto c = context.modify();
+    for(auto& note: notes)
+        c->push_note(note);
 
     messages().push_back({ErrorMsg, context->source_span(), context->notes});
+}
+
+void TypeChecker::record_error(cow_ptr<TypeCheckerContext> context, const Note& e)
+{
+    record_error(context, Notes{e});
 }
 
 void TypeChecker::record_error(const Note& e)
@@ -31,11 +38,18 @@ void TypeChecker::record_error(const Note& e)
     return record_error(context(), e);
 }
 
-void TypeChecker::record_warning(cow_ptr<TypeCheckerContext> context, const Note& e)
+void TypeChecker::record_warning(cow_ptr<TypeCheckerContext> context, const Notes& notes)
 {
-    context.modify()->push_note(e);
+    auto c = context.modify();
+    for(auto& note: notes)
+        c->push_note(note);
 
     messages().push_back({WarningMsg, context->source_span(), context->notes});
+}
+
+void TypeChecker::record_warning(cow_ptr<TypeCheckerContext> context, const Note& e)
+{
+    record_warning(context, Notes{e});
 }
 
 void TypeChecker::record_warning(const Note& e)
@@ -124,8 +138,21 @@ vector<tuple<Hs::Var,Type>> get_relevant_bindings(const TypeCheckerContext& tc_s
     return relevant_bindings;
 }
 
+[[nodiscard]] Notes add_relevant_bindings(Notes notes, const vector<tuple<Hs::Var,Type>>& bindings)
+{
+    if (not bindings.empty())
+    {
+        auto note = Note()<<"Relevant bindings:";
+        for(auto& [var,type]: bindings)
+            note<<"\n  "<<var.print()<<" :: "<<print_unqualified(type);
+        notes.push_back(note);
+    }
+    return notes;
+}
 
-Note TypeChecker::check_eq_tv_constraint(vector<shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const
+
+
+Notes TypeChecker::check_eq_tv_constraint(vector<shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const
 {
     const Implication * implic = nullptr;
     if (not implic_scopes.empty()) implic = implic_scopes.back().get();
@@ -147,21 +174,22 @@ Note TypeChecker::check_eq_tv_constraint(vector<shared_ptr<Implication>>& implic
     auto relevant_bindings = get_relevant_bindings(*wanted.tc_state, ftvs, fmtvs);
 
     // 1. Unification with polytype
+    Notes notes;
     if (problems.test(impredicative_bit))
     {
         cannot_unify<<" because it is a polytype";
-        return cannot_unify;
+        notes.push_back(cannot_unify);
     }
     // 2. Occurs check
     else if (has_occurs_check(problems))
     {
         cannot_unify<<" because of occurs check";
-        return cannot_unify;
+        notes.push_back(cannot_unify);
     }
     // 3. tv is blocked from escaping too
     else if (tv1 and implic and includes(implic->tvs, *tv1))
     {
-        return mismatch;
+        notes.push_back(mismatch);
     }
     // 4. tv is NOT blocked from escaping, but t2 IS blocked.
     else if (implic and intersects(free_type_variables(t2), implic->tvs | ranges::to<set>()))
@@ -172,64 +200,66 @@ Note TypeChecker::check_eq_tv_constraint(vector<shared_ptr<Implication>>& implic
             escaped_names.push_back(tv.print());
         cannot_unify<<" because the quantified variable `"<<join(escaped_names," ")<<"` would escape its scope";
 
-        if (not relevant_bindings.empty())
-        {
-            for(auto& [var,type]: relevant_bindings)
-            {
-                cannot_unify<<"\n  relevant binding: "<<var.print()<<" :: "<<print_unqualified(type)<<"\n";
-            }
-        }
-        return cannot_unify;
+        notes.push_back(cannot_unify);
     }
     else if (mtv1)
     {
         // This is presumably an untouchable meta-type variable.
-        return mismatch;
+        notes.push_back(mismatch);
     }
     else
-        return mismatch;
+        notes.push_back(mismatch);
+
+    notes = add_relevant_bindings(notes, relevant_bindings);
+
+    // The "top" ones are supposed to be at the end...
+    std::reverse(notes.begin(), notes.end());
+
+    return notes;
 }
 
 
-Note TypeChecker::check_eq_constraint(vector<shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const
+Notes TypeChecker::check_eq_constraint(vector<shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const
 {
     // Need to pass in list of nested implications?
     // what about tidying?
     // what about relevant bindings?
-    Note note;
+    Notes notes;
 
     auto v1 = look_thru(t1);
     auto v2 = look_thru(t2);
 
     if (v1.to<TypeVar>() or v1.to<MetaTypeVar>())
-        note = check_eq_tv_constraint(implic_scopes, wanted, v1, t2);
+        notes = check_eq_tv_constraint(implic_scopes, wanted, v1, t2);
     else if (v2.to<TypeVar>() or v2.to<MetaTypeVar>())
-        note = check_eq_tv_constraint(implic_scopes, wanted, v2, t1);
+        notes = check_eq_tv_constraint(implic_scopes, wanted, v2, t1);
     else
-        note = make_mismatch_message(wanted, t1, t2);
-    return note;
+        notes.push_back( make_mismatch_message(wanted, t1, t2) );
+    return notes;
 }
 
 void TypeChecker::check_wanteds(vector<shared_ptr<Implication>>& implic_scopes, const WantedConstraints& wanteds)
 {
     for(auto& wanted: wanteds.simple)
     {
-        Note e;
+        Notes notes;
         if (auto eq = is_equality_pred(wanted.pred))
         {
             auto& [t1,t2] = *eq;
-            e = check_eq_constraint(implic_scopes, wanted, t1, t2);
+            notes = check_eq_constraint(implic_scopes, wanted, t1, t2);
         }
         else
         {
+            Note e;
             e<<"Could not derive `"<<bold_green(print_unqualified(wanted.pred))<<ANSI::bold<<"`";
             if (auto occ = to<OccurrenceOrigin>(wanted.origin))
                 e<<" arising from a use of `"<<cyan(print_unqualified_id(occ->name))<<ANSI::bold<<"`";
             if (wanted.tc_state->source_span())
                 e<<" at "<<(*wanted.tc_state->source_span());
+            notes.push_back(e);
         }
 
-        record_error(wanted.tc_state, e);
+        record_error(wanted.tc_state, notes);
     }
 
     for(auto& implic: wanteds.implications)

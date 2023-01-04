@@ -129,8 +129,11 @@ public:
           global_value_env& imported_gve()       {return global_state->imported_gve;}
     const global_value_env& imported_gve() const {return global_state->imported_gve;}
 
+    void record_error(cow_ptr<TypeCheckerContext> context, const Notes& notes);
     void record_error(cow_ptr<TypeCheckerContext> context, const Note& e);
     void record_error(const Note& e);
+
+    void record_warning(cow_ptr<TypeCheckerContext> context, const Notes& notes);
     void record_warning(cow_ptr<TypeCheckerContext> context, const Note& e);
     void record_warning(const Note& e);
 
@@ -304,8 +307,8 @@ public:
 
     Type look_thru(const Type& t) const;
 
-    Note check_eq_tv_constraint(std::vector<std::shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const;
-    Note check_eq_constraint(std::vector<std::shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const;
+    Notes check_eq_tv_constraint(std::vector<std::shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const;
+    Notes check_eq_constraint(std::vector<std::shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const;
     void check_wanteds(std::vector<std::shared_ptr<Implication>>& implic_scopes, const WantedConstraints& wanteds);
     void check_wanteds(const WantedConstraints& wanteds);
 
