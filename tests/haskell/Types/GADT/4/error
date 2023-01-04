@@ -3,7 +3,7 @@
      escape its scope
    • Relevant bindings:
        i :: I a
-       Main.unI :: SomeI -> m
+       unI :: SomeI -> m
    • In equation `unI (Main.MkSomeI i)  = i`
    • In function `Main.unI`
    • In recursive group:

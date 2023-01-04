@@ -145,7 +145,7 @@ vector<tuple<Hs::Var,Type>> get_relevant_bindings(const TypeCheckerContext& tc_s
     {
         auto note = Note()<<"Relevant bindings:";
         for(auto& [var,type]: bindings)
-            note<<"\n  "<<var.print()<<" :: "<<tidy_print(tidy_state, type);
+            note<<"\n  "<<print_unqualified_id(var.print())<<" :: "<<tidy_print(tidy_state, type);
         notes.push_back(note);
     }
     return notes;
