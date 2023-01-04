@@ -471,7 +471,7 @@ Type TypeChecker::inferResultToType(Infer& I)
     else
     {
         // This can now only be a monotype
-        auto tv = FreshVarSource::fresh_meta_type_var( I.level(), "monotype", {} ); // unknown kind!
+        auto tv = FreshVarSource::fresh_meta_type_var( I.level(), "m", {} ); // unknown kind!
         I.set_type(tv);
         return tv;
     }
