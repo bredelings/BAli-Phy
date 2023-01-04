@@ -1,7 +1,6 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 #include "haskell/ids.H"
-#include "desugar/desugar.H"
 
 using std::string;
 using std::vector;
