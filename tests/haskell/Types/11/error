@@ -1,5 +1,8 @@
 [1mMain.hs:2.7:[1;31m error:[0m[1m
-   • Cannot unify `t_23{{1}}` with `[t_23{{1}}]` because of occurs check
+   • Cannot unify `t` with `[t]` because of occurs check
+   • Relevant bindings:
+       x :: t
+       Main.f :: t -> [[t]]
    • In equation `f x  = : x (: [x] [])`
    • In function `Main.f`
    • In recursive group:
@@ -9,7 +12,10 @@
   [1;34m|[0m       [1;31m^[0m
 
 [1mMain.hs:2.7:[1;31m error:[0m[1m
-   • Cannot unify `t_23{{1}}` with `[t_23{{1}}]` because of occurs check
+   • Cannot unify `t` with `[t]` because of occurs check
+   • Relevant bindings:
+       x :: t
+       Main.f :: t -> [[t]]
    • In equation `f x  = : x (: [x] [])`
    • In function `Main.f`
    • In recursive group:

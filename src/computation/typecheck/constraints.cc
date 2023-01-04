@@ -4,6 +4,7 @@
 #include "context.H"
 
 using std::vector;
+using std::set;
 using std::string;
 
 OccurrenceOrigin::OccurrenceOrigin(const std::string& s)
@@ -177,21 +178,45 @@ Implication::Implication(int l, const vector<TypeVar>& v, const LIE& g, const Wa
         assert(implication->level > level);
 }
 
-std::set<TypeVar> free_type_variables(const LIE& env)
+set<TypeVar> free_type_variables(const LIE& env)
 {
-    std::set<TypeVar> free;
+    set<TypeVar> free;
     for(auto& constraint: env)
         add(free, free_type_variables(constraint.pred));
     return free;
 }
 
-std::set<MetaTypeVar> free_meta_type_variables(const LIE& env)
+set<MetaTypeVar> free_meta_type_variables(const LIE& env)
 {
-    std::set<MetaTypeVar> free;
+    set<MetaTypeVar> free;
     for(auto& constraint: env)
         add(free, free_meta_type_variables(constraint.pred));
     return free;
 }
+
+set<TypeVar> free_type_variables(const WantedConstraints& wanteds)
+{
+    set<TypeVar> free = free_type_variables(wanteds.simple);
+    for(auto& implic: wanteds.implications)
+    {
+        add(free, free_type_variables(implic->givens));
+        add(free, free_type_variables(implic->wanteds));
+    }
+    return free;
+}
+
+
+set<MetaTypeVar> free_meta_type_variables(const WantedConstraints& wanteds)
+{
+    set<MetaTypeVar> free = free_meta_type_variables(wanteds.simple);
+    for(auto& implic: wanteds.implications)
+    {
+        add(free, free_meta_type_variables(implic->givens));
+        add(free, free_meta_type_variables(implic->wanteds));
+    }
+    return free;
+}
+
 
 LIE& operator+=(LIE& lie1, const LIE& lie2)
 {

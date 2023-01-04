@@ -166,4 +166,7 @@ std::set<TypeVar> free_type_variables(const LIE& env);
 
 std::set<MetaTypeVar> free_meta_type_variables(const LIE& env);
 
+std::set<TypeVar> free_type_variables(const WantedConstraints& wanteds);
+
+std::set<MetaTypeVar> free_meta_type_variables(const WantedConstraints& wanteds);
 #endif

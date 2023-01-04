@@ -1,9 +1,9 @@
 [1mMain.hs:7.19:[1;31m error:[0m[1m
-   • Cannot unify `m_9{{1}}` with `I a_2{{2}}` because the quantified
-     variable `a_2{{2}}` would escape its scope
+   • Cannot unify `m` with `I a` because the quantified variable `a` would
+     escape its scope
    • Relevant bindings:
-       i :: I a_2{{2}}
-       unI_1 :: SomeI -> m_9{{1}}
+       i :: I a
+       Main.unI :: SomeI -> m
    • In equation `unI (Main.MkSomeI i)  = i`
    • In function `Main.unI`
    • In recursive group:

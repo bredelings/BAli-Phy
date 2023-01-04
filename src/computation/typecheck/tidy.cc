@@ -75,58 +75,69 @@ string TidyState::tidy_name(const string& name)
 // We could handle this by constructing temprary objects like
 // ppr<<"this is a "<<Thing(obj), but...
 
-std::string print_unqualified(const MetaTypeVar& mtv)
+std::string tidy_print(TidyState& tidy_state, const MetaTypeVar& mtv)
 {
     if (auto t = mtv.filled())
-        return print_unqualified(*t);
+        return tidy_print(tidy_state, *t);
 
-    return unloc(mtv.name);
+    auto name = unloc(mtv.name);
+    if (mtv.index)
+        name += "_"+std::to_string(*mtv.index);
+    return tidy_state.tidy_name(name);
 }
 
-std::string print_unqualified(const TypeCon& tc)
+std::string tidy_print(TidyState& tidy_state, const TypeVar& tv)
+{
+    auto name = unloc(tv.name);
+    if (tv.index)
+        name += "_"+std::to_string(*tv.index);
+    return tidy_state.tidy_name(name);
+}
+
+std::string tidy_print(TidyState&, const TypeCon& tc)
 {
     return get_unqualified_name(unloc(tc.name));
 }
 
-std::string print_unqualified(const TypeApp& app)
+std::string tidy_print(TidyState& tidy_state, const TypeApp& app)
 {
     if (auto type_op = is_type_op(app))
     {
         auto [tycon, arg1, arg2] = *type_op;
 
-        string arg1s = print_unqualified(arg1);
+        string arg1s = tidy_print(tidy_state, arg1);
         if (is_type_op(arg1)) arg1s = "(" + arg1s + ")";
-        string arg2s = print_unqualified(arg2);
+        string arg2s = tidy_print(tidy_state, arg2);
         if (is_type_op(arg2)) arg2s = "(" + arg2s + ")";
 
-        return arg1s + " " + print_unqualified(tycon) + " "+ arg2s;
+        return arg1s + " " + tidy_print(tidy_state, tycon) + " "+ arg2s;
     }
     else if (auto element_type = is_list_type(app))
-        return "[" + print_unqualified(*element_type) +"]";
+        return "[" + tidy_print(tidy_state, *element_type) +"]";
     else if (auto element_types = is_tuple_type(app))
     {
         vector<string> parts;
         for(auto& element_type: *element_types)
-            parts.push_back(print_unqualified(element_type));
+            parts.push_back(tidy_print(tidy_state, element_type));
         return "(" + join(parts,", ") +")";
     }
 
-    return print_unqualified(app.head) + " " + print_unqualified(app.arg);
+    return tidy_print(tidy_state, app.head) + " " + tidy_print(tidy_state, app.arg);
 }
 
-string print_unqualified(const ForallType& forall)
+string tidy_print(TidyState& tidy_state, const ForallType& forall)
 {
     vector<string> binders;
     for(auto& type_var_binder: forall.type_var_binders)
         binders.push_back(type_var_binder.print_with_kind());
-    return "forall "+join(binders," ")+". "+print_unqualified(forall.type);
+    return "forall "+join(binders," ")+". "+tidy_print(tidy_state, forall.type);
 }
 
-string print_unqualified(const Context& c)
+string tidy_print(TidyState& tidy_state, const Context& c)
 {
     vector<string> cs;
     for(auto& constraint: c.constraints)
-        cs.push_back(print_unqualified(constraint));
+        cs.push_back(tidy_print(tidy_state, constraint));
 
     string result = join(cs,", ");
     if (cs.size() == 1 and not is_type_op(c.constraints[0]))
@@ -135,36 +146,36 @@ string print_unqualified(const Context& c)
         return "(" + result + ")";
 }
 
-string print_unqualified(const ConstrainedType& ct)
+string tidy_print(TidyState& tidy_state, const ConstrainedType& ct)
 {
-    return print_unqualified(ct.context) + " => " + print_unqualified(ct.type);
+    return tidy_print(tidy_state, ct.context) + " => " + tidy_print(tidy_state, ct.type);
 }
 
-string print_unqualified(const StrictLazyType& sl)
+string tidy_print(TidyState& tidy_state, const StrictLazyType& sl)
 {
     string mark = (sl.strict_lazy == StrictLazy::strict)?"!":"~";
-    return mark + print_unqualified(sl.type);
+    return mark + tidy_print(tidy_state, sl.type);
 }
 
 
-std::string print_unqualified(const Type& type)
+std::string tidy_print(TidyState& tidy_state, const Type& type)
 {
     if (type.empty()) return "NOTYPE";
 
     if (auto mtv = type.to<MetaTypeVar>())
-        return print_unqualified(*mtv);
+        return tidy_print(tidy_state, *mtv);
     else if (auto tv = type.to<TypeVar>())
-        return tv->print();
+        return tidy_print(tidy_state, *tv);
     else if (auto tc = type.to<TypeCon>())
-        return print_unqualified(*tc);
+        return tidy_print(tidy_state, *tc);
     else if (auto app = type.to<TypeApp>())
-        return print_unqualified(*app);
+        return tidy_print(tidy_state, *app);
     else if (auto ct = type.to<ConstrainedType>())
-        return print_unqualified(*ct);
+        return tidy_print(tidy_state, *ct);
     else if (auto forall = type.to<ForallType>())
-        return print_unqualified(*forall);
+        return tidy_print(tidy_state, *forall);
     else if (auto sl = type.to<StrictLazyType>())
-        return print_unqualified(*sl);
+        return tidy_print(tidy_state, *sl);
 
     std::abort();
 }

@@ -372,7 +372,7 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
     // 3. Record the mono_id and type for the purpose of error messages.
     //    The mono_id can't occur in the rhs, but parts of the fun_type might.
     // FIXME -- using the poly_id because we've manged the mono_id
-    push_binder( IDExpType{mono_id, fun_type} );
+    push_binder( IDExpType{poly_id, fun_type} );
 
     // 4. Determine the expected type for arguments and result, and check rhs.
     auto ctx = Hs::FunctionContext{unloc(poly_id.name)};

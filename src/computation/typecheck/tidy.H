@@ -15,6 +15,6 @@ struct TidyState
     std::string tidy_name(const std::string& name);
 };
 
-std::string print_unqualified(const Type& t);
+std::string tidy_print(TidyState& tidy_state, const Type& t);
 
 #endif

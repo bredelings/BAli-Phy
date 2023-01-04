@@ -19,6 +19,7 @@
 #include "context.H"
 #include "constraints.H"
 #include "message.H"
+#include "tidy.H"
 
 // The kind-inference paper treats substitutions as a list of terms of the form
 // * a     (declaration)
@@ -307,9 +308,9 @@ public:
 
     Type look_thru(const Type& t) const;
 
-    Notes check_eq_tv_constraint(std::vector<std::shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const;
-    Notes check_eq_constraint(std::vector<std::shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const;
-    void check_wanteds(std::vector<std::shared_ptr<Implication>>& implic_scopes, const WantedConstraints& wanteds);
+    Notes check_eq_tv_constraint(TidyState&, std::vector<std::shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const;
+    Notes check_eq_constraint(TidyState&, std::vector<std::shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const;
+    void check_wanteds(TidyState&, std::vector<std::shared_ptr<Implication>>& implic_scopes, const WantedConstraints& wanteds);
     void check_wanteds(const WantedConstraints& wanteds);
 
     std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const ConstraintOrigin& origin, const Type& t);
