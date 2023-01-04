@@ -6,6 +6,7 @@
 #include "util/variant.H"     // for to< >()
 #include "util/string/join.H" // for join( )
 #include "haskell/ids.H"
+#include "tidy.H"
 
 #include <range/v3/all.hpp>
 
