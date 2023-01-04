@@ -767,9 +767,14 @@ std::string ApplyExp::print() const
 {
     string func = unloc(head).print();
 
+    optional<string> op;
     if (auto V = unloc(head).to<Hs::Var>(); V and V->is_sym() and args.size() >= 2)
+        op = V->print_without_parens();
+    else if (auto C = unloc(head).to<Hs::Con>(); C and C->is_sym() and args.size() >= 2)
+        op = C->print();
+    if (op)
     {
-        string result = parenthesize_exp(unloc(args[0])) + " " + V->print_without_parens() + " " + parenthesize_exp(unloc(args[1]));
+        string result = parenthesize_exp(unloc(args[0])) + " " + *op + " " + parenthesize_exp(unloc(args[1]));
         if (args.size() > 2)
         {
             result = "(" + result + ")";

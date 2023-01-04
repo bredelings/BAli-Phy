@@ -46,6 +46,8 @@ struct Con: public Object
     bool operator==(const Object&) const;
     bool operator==(const Con&) const;
 
+    bool is_sym() const;
+
     Con* clone() const { return new Con(*this);}
     std::string print() const;
 

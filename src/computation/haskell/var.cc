@@ -67,6 +67,11 @@ bool Var::operator<(const Var& v) const
     return (cmp < 0);
 }
 
+bool Con::is_sym() const
+{
+    return is_haskell_sym(unloc(name));
+}
+
 bool Con::operator==(const Object& o) const
 {
     auto C = dynamic_cast<const Con*>(&o);
