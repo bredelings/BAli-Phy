@@ -397,8 +397,8 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Binds& bin
     for(auto& decls: binds)
         add(bound_names, find_bound_vars_in_decls(decls, top));
 
-    for(auto& [name,_]: binds.signatures)
-        add(bound_names, find_vars_in_pattern(Hs::Var({noloc,name}), top));
+    for(auto& [var,_]: binds.signatures)
+        add(bound_names, find_vars_in_pattern(var, top));
 
     return bound_names;
 }

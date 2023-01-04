@@ -38,10 +38,10 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_t
     auto& name = unloc(V.name);
     Type type;
 
-    if (sigs.count(name))
+    if (sigs.count(V))
     {
         // We can only have signatures for pattern binders in a let-context, not a lambda context.
-        auto sig_type = sigs.at(name);
+        auto sig_type = sigs.at(V);
         if (auto I = exp_type.infer())
         {
             auto [tvs, wanteds, monotype] = instantiate( PatOrigin(), sig_type);
@@ -66,7 +66,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_t
 
     V.type = type;
     local_value_env lve;
-    lve = lve.insert({name,type});
+    lve = lve.insert({V,type});
     penv += lve;
 
     push_binder(IDType{V,type});
@@ -79,7 +79,7 @@ void TypeChecker::checkPat(local_value_env& penv, Hs::Var& v, const SigmaType& e
     return tcPat(penv, v, Check(exp_type), sigs, [](local_value_env&, TypeChecker&){});
 }
 
-Type TypeChecker::inferPat(local_value_env& penv, Hs::Var& V, const map<string, Type>& sigs)
+Type TypeChecker::inferPat(local_value_env& penv, Hs::Var& V, const signature_env& sigs)
 {
     Expected exp_type = newInfer();
     tcPat(penv, V, exp_type, sigs, [](local_value_env&, TypeChecker&){});
@@ -109,7 +109,7 @@ void TypeChecker::tcPats(local_value_env& penv,
 }
 
 // Figure 24. Rules for patterns
-void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected& exp_type, const map<string, Type>& sigs, const tc_action<local_value_env&>& a)
+void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected& exp_type, const signature_env& sigs, const tc_action<local_value_env&>& a)
 {
     // TAUT-PAT
     if (auto v = pat.to<Hs::VarPattern>())
@@ -308,7 +308,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         throw note_exception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
-Type TypeChecker::inferPat(local_value_env& penv, Hs::Pattern& pat, const map<string, Type>& sigs)
+Type TypeChecker::inferPat(local_value_env& penv, Hs::Pattern& pat, const signature_env& sigs)
 {
     Expected exp_type = newInfer();
     tcPat(penv, pat, exp_type, sigs, [](local_value_env&, TypeChecker&) {});
@@ -322,20 +322,19 @@ void TypeChecker::checkPat(local_value_env& penv, Hs::Pattern& pat, const SigmaT
 
 
 Hs::Var
-rename_var_from_bindinfo(const Hs::Var& v, const map<string, Hs::BindInfo>& bind_info_for_ids)
+rename_var_from_bindinfo(const Hs::Var& v, const map<Hs::Var, Hs::BindInfo>& bind_info_for_ids)
 {
-    auto& name = unloc(v.name);
 
     // QUESTION: if there is a wrapper on the outer id, is it already on the inner id?
     // Perhaps any such wrapper should be part of the bindinfo and go from the inner id to the outer id?
     // Should there be a separate wrapper for the inner id?
 
-    return bind_info_for_ids.at(name).inner_id;
+    return bind_info_for_ids.at(v).inner_id;
 }
 
 // Figure 24. Rules for patterns
 Hs::Pattern
-rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<string, Hs::BindInfo>& bind_info)
+rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<Hs::Var, Hs::BindInfo>& bind_info)
 {
     // TAUT-PAT
     if (auto v = pat.to<Hs::VarPattern>())

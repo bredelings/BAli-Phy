@@ -34,9 +34,9 @@ string print(const value_env& env)
 {
     std::ostringstream oss;
     vector<string> ss;
-    for(auto& [value,type]: env)
+    for(auto& [var,type]: env)
     {
-        ss.push_back(value+" :: "+type.print());
+        ss.push_back(unloc(var.name)+" :: "+type.print());
     }
     return "{ " + join(ss, "; ") + " }";
 }

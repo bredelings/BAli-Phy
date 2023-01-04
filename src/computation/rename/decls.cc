@@ -41,7 +41,7 @@ using std::deque;
 // What are the rules for well-formed patterns?
 // Only one op can be a non-constructor (in decl patterns), and that op needs to end up at the top level.
 
-pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls); // value decls, signature decls, and fixity decls
+pair<map<Hs::Var,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls); // value decls, signature decls, and fixity decls
 
 
 bool is_definitely_pattern(const Haskell::Expression& lhs)
@@ -121,9 +121,9 @@ optional<Hs::Var> fundecl_head(const expression_ref& decl)
 }
 
 // Probably we should first partition by (same x y = x and y are both function decls for the same variable)
-pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
+pair<map<Hs::Var,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
 {
-    map<string, Hs::Type> signatures;
+    map<Hs::Var, Hs::Type> signatures;
 
     Haskell::Decls decls2;
 
@@ -135,10 +135,9 @@ pair<map<string,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
         {
             for(auto& var: sd->vars)
             {
-                auto& name = unloc(var.name);
-                if (signatures.count(name))
-                    throw myexception()<<"Second signature for var '"<<name<<"' at location "<<*var.name.loc;
-                signatures.insert({name, sd->type});
+                if (signatures.count(var))
+                    throw myexception()<<"Second signature for var '"<<unloc(var.name)<<"' at location "<<*var.name.loc;
+                signatures.insert({var, sd->type});
             }
         }
         else if (decl.is_a<Haskell::FixityDecl>())
@@ -245,21 +244,21 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
     return new_binders;
 }
 
-bound_var_info renamer_state::rename_signatures(map<string, Hs::Type>& signatures, bool top)
+bound_var_info renamer_state::rename_signatures(map<Hs::Var, Hs::Type>& signatures, bool top)
 {
     bound_var_info bound;
-    map<string, Hs::Type> signatures2;
-    for(auto& [name, type]: signatures)
+    map<Hs::Var, Hs::Type> signatures2;
+    for(auto& [var, type]: signatures)
     {
-        assert(not is_qualified_symbol(name));
+        assert(not is_qualified_symbol(unloc(var.name)));
         type = rename_type(type);
 
-        auto name2 = name;
+        auto var2 = var;
         if (top)
-            qualify_name(name2);
-        signatures2.insert( {name2, type} );
+            qualify_name(unloc(var2.name));
+        signatures2.insert( {var2, type} );
 
-        bound.insert(name2);
+        bound.insert(unloc(var2.name));
     }
 
     signatures = std::move(signatures2);

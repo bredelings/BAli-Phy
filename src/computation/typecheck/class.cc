@@ -1,6 +1,7 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 #include "haskell/ids.H"
+#include "desugar/desugar.H"
 
 using std::string;
 using std::vector;
@@ -10,27 +11,32 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
-Hs::FunDecl dictionary_extractor(const string& name, int i, int N)
+Hs::FunDecl dictionary_extractor(const Hs::Var& extractor, int i, int N)
 {
     // Maybe we should emit the case directly, instead of relying on desugaring?
-
     // FIXME: We might need to put types on "extractor" and "field".
+
+    // extractor (_,field,_,_) = field;
 
     Hs::Var field({noloc,"field"});
 
-    // extractor (_,field,_,_) = field;
-    Hs::Var extractor({noloc, name});
-
-    // (_,field,_,_)
+    // pattern = (_,field,_,_)
     vector<Hs::Pattern> pats(N, Hs::WildcardPattern());
     pats[i] = Hs::VarPattern(field);
     Hs::Pattern pattern = Hs::tuple_pattern(pats);
 
-    // (_,field,_,_) -> field
+    // matches = (_,field,_,_) -> field
     Hs::MRule rule{{pattern}, Hs::SimpleRHS({noloc, field})};
     Hs::Matches matches{{rule}};
 
     return Hs::FunDecl(extractor, matches);
+}
+
+
+Hs::Var unqualified(Hs::Var v)
+{
+    unloc(v.name) = get_unqualified_name(unloc(v.name));
+    return v;
 }
 
 // OK, so
@@ -52,7 +58,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     class_info.context = desugar(class_decl.context);
 
     // 1. Bind type parameters for class
-    K. push_type_var_scope();
+    K.push_type_var_scope();
 
     // 1a. Look up kind for this data type.
     auto class_kind = K.kind_for_type_con(class_info.name);
@@ -80,23 +86,23 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
         for(auto& v: sig_decl.vars)
         {
-            auto& qname = unloc(v.name);
-            gve = gve.insert({qname, method_type});
-            class_info.members = class_info.members.insert({get_unqualified_name(qname), method_type});
+            gve = gve.insert({v, method_type});
+            class_info.members = class_info.members.insert({unqualified(v), method_type});
         }
     }
 
     auto method_matches = get_instance_methods( class_decl.default_method_decls, class_info.members, class_info.name );
 
-    for(auto& [name, match]: method_matches)
+    for(auto& [method, match]: method_matches)
     {
-        auto dm = get_fresh_Var("dm"+name, true);
+        auto& method_name = unloc(method.name);
+        auto dm = get_fresh_Var("dm"+method_name, true);
         Hs::FunDecl FD(dm, match);
-        class_info.default_methods.insert({name, dm});
+        class_info.default_methods.insert({method, dm});
 
-        auto type = class_info.members.at(name);
+        auto type = class_info.members.at(method);
 
-        gve = gve.insert({unloc(dm.name), type});
+        gve = gve.insert({dm, type});
     }
 
 
@@ -114,33 +120,33 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         string cname2 = get_class_name_from_constraint(class_constraint);
         string extractor_name = cname1+"From"+cname2;
 
-        auto get_dict = get_fresh_var(extractor_name, true);
+        auto get_dict = get_fresh_Var(extractor_name, true);
         // Should this be a function arrow?
         Type type = add_constraints({class_constraint}, superclass_constraint);
 
         // Maybe intersect the forall_vars with USED vars?
         type = add_forall_vars( desugar(class_decl.type_vars), type);
-        class_info.superclass_extractors.insert(pair(get_dict, type));
+        class_info.superclass_extractors.insert(pair(make_var(get_dict), type));
 
         // Is this right???
-        class_info.fields.push_back({get_dict.name, type});
+        class_info.fields.push_back(pair(get_dict, type));
     }
-    for(auto& [name,type]: class_info.members)
-        class_info.fields.push_back({qualified_name(name), type});
+    for(auto& [var,type]: class_info.members)
+        class_info.fields.push_back({add_mod_name(var), type});
 
     // 5. Define superclass extractors and member function extractors
     Hs::Decls decls;
 
     vector<Type> types;
-    for(auto& [name,type]: class_info.fields)
+    for(auto& [_,type]: class_info.fields)
         types.push_back(type);
     Type dict_type = tuple_type(types);
 
     int i = 0;
     int N = class_info.fields.size();
-    for(auto& [name,type]: class_info.fields)
+    for(auto& [var, type]: class_info.fields)
     {
-        decls.push_back( dictionary_extractor(name, i, N) );
+        decls.push_back( dictionary_extractor(var, i, N) );
 
         i++;
     }

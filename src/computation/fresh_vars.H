@@ -34,8 +34,10 @@ public:
     var get_fresh_var(const Hs::Var& x);
 
     std::string qualified_name(const std::string&) const;
+    Hs::Var add_mod_name(const Hs::Var&) const;
     Hs::Var get_fresh_Var(const std::string& name, bool qualified);
     Hs::Var get_fresh_Var(const var& x, bool qualified);
+    Hs::Var get_fresh_Var(const Hs::Var& x, bool qualified);
 
     // "Rigid" type vars come from forall-quantified variables.
     // "Meta" type vars are unification type vars.

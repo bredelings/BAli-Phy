@@ -52,7 +52,7 @@ void TypeChecker::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreig
     for(auto& f: foreign_decls)
     {
         auto type = check_type( desugar(f.type) );
-        fte = fte.insert({f.function_name, type});
+        fte = fte.insert({Hs::Var({noloc,f.function_name}), type});
     }
     poly_env() += fte;
 }
@@ -62,17 +62,19 @@ TypeChecker::infer_type_for_binds(Hs::Binds& binds, bool is_top_level)
 {
     global_value_env sigs;
     signature_env sigs2;
-    for(auto& [name,type]: binds.signatures)
+    for(auto& [var,type]: binds.signatures)
     {
         auto type2 = check_type(desugar(type));
-        sigs = sigs.insert({name,type2});
-        sigs2.insert({name,type2});
+        sigs = sigs.insert({var,type2});
+        sigs2.insert({var,type2});
     }
 
     add_binders(sigs);
 
     for(auto& decls: binds)
         decls = infer_type_for_decls(sigs2, decls, is_top_level);
+
+    // FIXME: replace signature location with definition location
 }
 
 value_env remove_sig_binders(value_env binder_env, const signature_env& signatures)
@@ -102,7 +104,7 @@ vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const signat
             if (it == index_for_name.end()) continue;
 
             // Skip if this name has a signature
-            if (signatures.count(name)) continue;
+            if (signatures.count(Hs::Var({noloc,name}))) continue;
 
             refs.push_back(it->second);
         }
@@ -157,13 +159,11 @@ bool single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signat
 
     auto& FD = decl.as_<Hs::FunDecl>();
 
-    auto& name = unloc(FD.v.name);
-
-    return signatures.count(name) > 0;
+    return signatures.count(FD.v) > 0;
 }
 
 expression_ref
-rename_from_bindinfo(expression_ref decl, const map<string, Hs::BindInfo>& bind_infos)
+rename_from_bindinfo(expression_ref decl, const map<Hs::Var, Hs::BindInfo>& bind_infos)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
     {
@@ -181,7 +181,7 @@ rename_from_bindinfo(expression_ref decl, const map<string, Hs::BindInfo>& bind_
         std::abort();
 }
 
-Hs::Decls rename_from_bindinfo(Hs::Decls decls,const map<string, Hs::BindInfo>& bind_infos)
+Hs::Decls rename_from_bindinfo(Hs::Decls decls,const map<Hs::Var, Hs::BindInfo>& bind_infos)
 {
     for(auto& decl: decls)
         decl = rename_from_bindinfo(decl, bind_infos);
@@ -192,7 +192,7 @@ Hs::GenBind mkGenBind(const vector<TypeVar>& tvs,
                       const vector<Core::Var>& dict_vars,
                       const shared_ptr<const Core::Decls>& ev_decls,
                       Hs::Decls decls,
-                      const map<string, Hs::BindInfo>& bind_infos)
+                      const map<Hs::Var, Hs::BindInfo>& bind_infos)
 {
     decls = rename_from_bindinfo(decls, bind_infos);
     return Hs::GenBind(tvs, dict_vars, ev_decls, decls, bind_infos);
@@ -235,20 +235,18 @@ classify_constraints(const LIE& lie, const set<TypeVar>& qtvs)
 }
 
 /// Compare to checkSigma, which also check for any skolem variables in the wanteds
-tuple<expression_ref, ID, Type>
+tuple<expression_ref, Type>
 TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 {
     // Q: Are we getting the monotype correct?
 
     push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
 
-    auto& name = unloc(FD.v.name);
-
     // 1. Make up a inner id.
-    Hs::Var inner_id = get_fresh_Var(unloc(FD.v.name),false);
+    Hs::Var inner_id = get_fresh_Var(FD.v.name, false);
 
     // 2. skolemize the type -> (tvs, givens, rho-type)
-    auto polytype = poly_env().at(name);
+    auto polytype = poly_env().at(FD.v);
     auto [wrap_gen, tvs, givens, rho_type] =
         skolemize_and(polytype,
                       [&](const Type& rho_type, auto& tcs2) {
@@ -271,11 +269,11 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
     Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, wrap_gen);
 
-    auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls>(), Hs::Decls({FD}), {{name, bind_info}} );
+    auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls>(), Hs::Decls({FD}), {{FD.v, bind_info}} );
 
     pop_note();
 
-    return {decl, name, polytype};
+    return {decl, polytype};
 }
 
 bool is_restricted(const signature_env& signatures, const Hs::Decls& decls)
@@ -289,8 +287,7 @@ bool is_restricted(const signature_env& signatures, const Hs::Decls& decls)
             // Simple pattern declaration
             if (fd->matches[0].patterns.size() == 0)
             {
-                auto& name = unloc(fd->v.name);
-                if (not signatures.count(name)) return true;
+                if (not signatures.count(fd->v)) return true;
             }
         }
     }
@@ -304,7 +301,7 @@ TypeChecker::infer_lhs_type(expression_ref& decl, const signature_env& signature
     {
         auto FD = *fd;
         // If there was a signature, we would have called infer_type_for_single_fundecl_with_sig
-        assert(not signatures.count(unloc(FD.v.name)));
+        assert(not signatures.count(FD.v));
 
         local_value_env lve;
         auto type = inferPat(lve, FD.v);
@@ -329,7 +326,7 @@ void TypeChecker::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
     {
         auto FD = *fd;
 
-        push_binder( IDType{ FD.v, mono_local_env().at(unloc(FD.v.name)).second } );
+        push_binder( IDType{ FD.v, mono_local_env().at(FD.v).second } );
         push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
         auto ctx = Hs::FunctionContext{unloc(FD.v.name)};
         tcMatchesFun( getArity(FD.matches), rhs_type, [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
@@ -354,7 +351,7 @@ void TypeChecker::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
         std::abort();
 }
 
-tuple< map<string, Hs::Var>, local_value_env >
+tuple< map<Hs::Var, Hs::Var>, local_value_env >
 TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
 {
     push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
@@ -368,9 +365,9 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
     Expected fun_type = newInfer();
 
     // 2. Make up a mono id and record the correspondence
-    string poly_id = unloc(FD.v.name);
+    auto& poly_id = FD.v;
     Hs::Var mono_id = get_fresh_Var(poly_id, false);
-    auto mono_ids = map<string,Hs::Var>{{poly_id, mono_id}};
+    auto mono_ids = map<Hs::Var,Hs::Var>{{poly_id, mono_id}};
 
     // 3. Record the mono_id and type for the purpose of error messages.
     //    The mono_id can't occur in the rhs, but parts of the fun_type might.
@@ -378,7 +375,7 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
     push_binder( IDExpType{mono_id, fun_type} );
 
     // 4. Determine the expected type for arguments and result, and check rhs.
-    auto ctx = Hs::FunctionContext{poly_id};
+    auto ctx = Hs::FunctionContext{unloc(poly_id.name)};
     tcMatchesFun( getArity(FD.matches), fun_type,
                   [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
                       tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
@@ -392,10 +389,10 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
 
     pop_note();
 
-    return {mono_ids, mono_binder_env};
+    return tuple<map<Hs::Var,Hs::Var>,local_value_env>(mono_ids, mono_binder_env);
 }
 
-tuple< map<string, Hs::Var>, local_value_env > TypeChecker::pd_mono_nonrec(Hs::PatDecl& PD)
+tuple< map<Hs::Var, Hs::Var>, local_value_env > TypeChecker::pd_mono_nonrec(Hs::PatDecl& PD)
 {
     push_note( Note()<<"In definition of `"<<unloc(PD.lhs).print()<<"`");
     // Note: No signatures for lhs variables.
@@ -416,7 +413,7 @@ tuple< map<string, Hs::Var>, local_value_env > TypeChecker::pd_mono_nonrec(Hs::P
     tcPat(mono_binder_env, unloc(PD.lhs), Check(rhs_type.read_type()), {}, nothing);
 
     // 3. Make up some mono_ids...
-    std::map<std::string, Hs::Var> mono_ids;
+    std::map<Hs::Var, Hs::Var> mono_ids;
     for(auto& [poly_id, type]: mono_binder_env)
     {
         Hs::Var mono_id = get_fresh_Var(poly_id, false);
@@ -430,11 +427,11 @@ tuple< map<string, Hs::Var>, local_value_env > TypeChecker::pd_mono_nonrec(Hs::P
 bool any_sigs_for_vars(const signature_env& sigs, const std::set<Hs::Var>& vars)
 {
     for(auto& var: vars)
-        if (sigs.count(unloc(var.name))) return true;
+        if (sigs.count(var)) return true;
     return false;
 }
 
-tuple< map<string, Hs::Var>, local_value_env >
+tuple< map<Hs::Var, Hs::Var>, local_value_env >
 TypeChecker::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& decls)
 {
     // We should know whether or not the decls are recursive.
@@ -465,7 +462,7 @@ TypeChecker::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& dec
     // 1. Add each let-binder to the environment with a fresh type variable
     local_value_env mono_binder_env;
 
-    std::map<std::string, Hs::Var> mono_ids;
+    std::map<Hs::Var, Hs::Var> mono_ids;
 
     vector<Type> lhs_types;
     for(int i=0;i<decls.size();i++)
@@ -476,15 +473,15 @@ TypeChecker::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& dec
         mono_binder_env += lve;
     }
 
-    for(auto& [name, type]: mono_binder_env)
+    for(auto& [poly_id, type]: mono_binder_env)
     {
-        Hs::Var mono_id = get_fresh_Var(name, false);
-        mono_ids.insert({name, mono_id});
+        Hs::Var mono_id = get_fresh_Var(poly_id, false);
+        mono_ids.insert({poly_id, mono_id});
 
-        if (not signatures.count(name))
+        if (not signatures.count(poly_id))
         {
-            mono_local_env() = mono_local_env().erase(name);
-            mono_local_env() = mono_local_env().insert({name,{mono_id, type}});
+            mono_local_env() = mono_local_env().erase(poly_id);
+            mono_local_env() = mono_local_env().insert({poly_id,{mono_id, type}});
         }
     }
 
@@ -632,7 +629,7 @@ set<MetaTypeVar> TypeChecker::find_fixed_tvs(bool restricted, int level, const v
     return fixed;
 }
 
-Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& mono_id, const set<TypeVar>& qtvs,
+Hs::BindInfo TypeChecker::compute_bind_info(const Hs::Var& poly_id, const Hs::Var& mono_id, const set<TypeVar>& qtvs,
                                             const Type& monotype, const signature_env& signatures,
                                             const LIE& lie_retained)
 {
@@ -665,14 +662,12 @@ Hs::BindInfo TypeChecker::compute_bind_info(const string& name, const Hs::Var& m
 
     auto constraints_used = preds_from_lie(lie_used);
     Type polytype = quantify( qtvs_in_this_type, add_constraints( constraints_used, monotype ) );
-    if (signatures.count(name))
+    if (signatures.count(poly_id))
     {
         auto sub_polytype = polytype;
-        polytype = signatures.at(name);
+        polytype = signatures.at(poly_id);
         wrap = subsumptionCheck(TypeConvertOrigin(), sub_polytype, polytype) * wrap;
     }
-
-    Hs::Var poly_id({noloc,name});
 
     return {poly_id, mono_id, monotype, polytype, wrap};
 }
@@ -826,7 +821,7 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
     {
         auto& FD = decls[0].as_<Hs::FunDecl>();
 
-        auto [decl, name, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
+        auto [decl, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
 
         Hs::Decls decls({decl});
 
@@ -858,12 +853,12 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
     }
 
     // 6. Compute bind infos
-    map<string, Hs::BindInfo> bind_infos;
-    for(auto& [name, monotype]: mono_binder_env)
+    map<Hs::Var, Hs::BindInfo> bind_infos;
+    for(auto& [var, monotype]: mono_binder_env)
     {
-        auto mono_id = mono_ids.at(name);
-        auto bind_info = compute_bind_info(name, mono_id, qtvs, monotype, signatures, givens);
-        bind_infos.insert({name, bind_info});
+        auto mono_id = mono_ids.at(var);
+        auto bind_info = compute_bind_info(var, mono_id, qtvs, monotype, signatures, givens);
+        bind_infos.insert({var, bind_info});
     }
     assert(bind_infos.size() >= 1);
 

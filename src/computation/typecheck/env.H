@@ -13,7 +13,7 @@
 
 typedef std::string ID;
 
-typedef immer::map<ID, Type> value_env;
+typedef immer::map<Hs::Var, Type> value_env;
 
 typedef value_env global_value_env;
 
@@ -103,10 +103,10 @@ struct ClassInfo
 
     GIE superclass_extractors;
 
-    std::map<ID, Hs::Var> default_methods;
+    std::map<Hs::Var, Hs::Var> default_methods;
 
     // FIXME - we need the order of the constraints, and the order of the members
-    std::vector<std::pair<ID,Type>> fields;
+    std::vector<std::pair<Hs::Var,Type>> fields;
 
     std::map<TypeCon,bool> associated_type_families;
 };
@@ -141,7 +141,7 @@ typedef std::map<TypeCon, TypeFamInfo> TypeFamEnv;
 
 typedef std::map<ID, ClassInfo> ClassEnv;
 
-typedef std::map<ID, Type> signature_env;
+typedef std::map<Hs::Var, Type> signature_env;
 
 std::set<TypeVar> free_type_variables(const value_env& env);
 

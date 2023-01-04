@@ -15,7 +15,7 @@ void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
 {
     Type sigma;
     // First look for x in the local type environment
-    if (auto& x_name = unloc(x.name); auto it = mono_local_env().find(x_name))
+    if (auto it = mono_local_env().find(x))
     {
         auto& [v,type] = *it;
         // translate to the monomorpic id;
@@ -23,10 +23,10 @@ void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
         sigma = type;
     }
     // x should be in the global type environment
-    else if (auto sigma_ptr = poly_env().find( x_name ))
+    else if (auto sigma_ptr = poly_env().find( x ))
         sigma = *sigma_ptr;
     // x should be in the global type environment
-    else if (auto sigma_ptr = imported_gve().find( x_name ))
+    else if (auto sigma_ptr = imported_gve().find( x ))
         sigma = *sigma_ptr;
     else
         throw note_exception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";

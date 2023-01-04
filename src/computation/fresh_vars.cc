@@ -30,6 +30,13 @@ string FreshVarSource::qualified_name(const string& uname) const
     return (*mod_name) + "." + uname;
 }
 
+Hs::Var FreshVarSource::add_mod_name(const Hs::Var& x) const
+{
+    auto x2 = x;
+    unloc(x2.name) = qualified_name(unloc(x2.name));
+    return x2;
+}
+
 var FreshVarSource::get_fresh_var()
 {
     return var( get_index() );
@@ -81,6 +88,14 @@ Hs::Var FreshVarSource::get_fresh_Var(const std::string& name, bool qualified)
         name2 = qualified_name(name2);
 
     return Hs::Var({noloc,name2});
+}
+
+Hs::Var FreshVarSource::get_fresh_Var(const Hs::Var& x, bool qualified)
+{
+    auto x2 = get_fresh_Var(unloc(x.name), qualified);
+    x2.name.loc = x.name.loc;
+    x2.type = x.type;
+    return x2;
 }
 
 Hs::Var FreshVarSource::get_fresh_Var(const var& x, bool qualified)

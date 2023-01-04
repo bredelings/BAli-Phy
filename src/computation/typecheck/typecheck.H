@@ -445,10 +445,10 @@ public:
     Hs::Decls
     infer_type_for_decls(const signature_env&, const Hs::Decls&, bool is_top_level);
 
-    std::tuple<expression_ref, ID, Type>
+    std::tuple<expression_ref, Type>
     infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD);
 
-    Hs::BindInfo compute_bind_info(const std::string& name, const Hs::Var& mono_id,
+    Hs::BindInfo compute_bind_info(const Hs::Var& poly_id, const Hs::Var& mono_id,
                                    const std::set<TypeVar>& qtvs,
                                    const Type& monotype, const signature_env& signatures,
                                    const LIE& lie_retained);
@@ -465,13 +465,13 @@ public:
     Hs::Decls
     infer_type_for_decls_group(const signature_env&, Hs::Decls E, bool is_top_level);
 
-    std::tuple< std::map<std::string, Hs::Var>, local_value_env >
+    std::tuple< std::map<Hs::Var, Hs::Var>, local_value_env >
     fd_mono_nonrec(Hs::FunDecl&);
 
-    std::tuple< std::map<std::string, Hs::Var>, local_value_env >
+    std::tuple< std::map<Hs::Var, Hs::Var>, local_value_env >
     pd_mono_nonrec(Hs::PatDecl&);
 
-    std::tuple< std::map<std::string, Hs::Var>, local_value_env >
+    std::tuple< std::map<Hs::Var, Hs::Var>, local_value_env >
     tc_decls_group_mono(const signature_env& sigs, Hs::Decls& decls);
 
     void infer_type_for_foreign_imports(std::vector<Hs::ForeignDecl>& foreign_decls);
@@ -510,7 +510,7 @@ public:
     std::pair<Hs::Decls, Core::Decl>
     infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& instance_decl);
 
-    std::map<std::string, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name) const;
+    std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name) const;
 
     void check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const std::optional<std::string>& associated_class, const substitution_t& instance_subst);
 
@@ -552,12 +552,12 @@ ID get_class_name_from_constraint(const Type& constraint);
 
 LIE apply_subst(const substitution_t& s, const LIE& env1);
 
-std::map<ID, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
+std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
 
-Hs::Var rename_var_from_bindinfo(const Hs::Var& V, const std::map<ID, Hs::BindInfo>& bind_info);
+Hs::Var rename_var_from_bindinfo(const Hs::Var& V, const std::map<Hs::Var, Hs::BindInfo>& bind_info);
 
 Hs::Pattern
-rename_pattern_from_bindinfo(const Hs::Pattern& pat, const std::map<ID, Hs::BindInfo>& bind_info);
+rename_pattern_from_bindinfo(const Hs::Pattern& pat, const std::map<Hs::Var, Hs::BindInfo>& bind_info);
 
 std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls);
 

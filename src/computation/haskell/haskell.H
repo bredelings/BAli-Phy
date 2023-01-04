@@ -259,7 +259,7 @@ public:
 struct Binds: public std::vector<Decls>
 {
     // FIXME: I should keep the SignatureDecl around for error messages.
-    std::map<std::string, Type> signatures;
+    std::map<Var, Type> signatures;
 
     std::string print() const;
 
@@ -1064,7 +1064,7 @@ struct GenBind: public Object
     Decls body;
 
     // Defaulting info for each binder
-    std::map<std::string, BindInfo> bind_infos;
+    std::map<Var, BindInfo> bind_infos;
 
     GenBind* clone() const {return new GenBind(*this);}
     std::string print() const;
@@ -1073,7 +1073,7 @@ struct GenBind: public Object
             const std::vector<Core::Var>& v2,
             const std::shared_ptr<const Core::Decls>& ev,
             const Decls& d,
-            const std::map<std::string, BindInfo>& bi)
+            const std::map<Var, BindInfo>& bi)
         :tv_args(v1),
          dict_args(v2),
          dict_decls(ev),

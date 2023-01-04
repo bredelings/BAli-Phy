@@ -646,8 +646,9 @@ void Module::perform_exports()
         }
 
         // Record types on the value symbol table
-        for(auto& [value,type]: tc_state->poly_env())
+        for(auto& [var,type]: tc_state->poly_env())
         {
+            auto& value = unloc(var.name);
             if (get_module_name(value) == name)
             {
                 if (not symbols.count(value))

@@ -21,11 +21,10 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
     for(auto& decl: C.default_method_decls)
     {
         auto FD = decl.as_<Hs::FunDecl>();
-        auto method_name = unloc(FD.v.name);
-        auto dm = class_info.default_methods.at(method_name);
+        auto dm = class_info.default_methods.at(FD.v);
         FD.v = dm;
 
-        auto [decl2, name, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
+        auto [decl2, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
         decls_out.push_back(decl2);
     }
 
@@ -313,21 +312,22 @@ string get_class_for_constraint(const Type& constraint)
    in <dvar1, ..., dvarN, var1, ..., varM>
 */
 
-map<string, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const string& class_name) const
+map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const string& class_name) const
 {
-    std::map<string,Hs::Matches> method_matches;
+    std::map<Hs::Var, Hs::Matches> method_matches;
     for(auto& decl: decls)
     {
         auto& fd = decl.as_<Hs::FunDecl>();
-        string method_name = unloc(fd.v.name);
+        auto& method = fd.v;
+        string method_name = unloc(method.name);
 
-        if (not members.count(method_name))
+        if (not members.count(method))
             throw note_exception()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'";
 
-        if (method_matches.count(method_name))
+        if (method_matches.count(method))
             throw note_exception()<<"method '"<<method_name<<"' defined twice!";
 
-        method_matches.insert({method_name, fd.matches});
+        method_matches.insert({method, fd.matches});
     }
 
     return method_matches;
@@ -376,14 +376,14 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // 7. Construct binds_methods
     Hs::Decls decls;
 
-    map<string, Hs::Matches> method_matches;
-    method_matches = get_instance_methods( inst_decl.method_decls, class_info.members, class_name );
-
+    auto method_matches = get_instance_methods( inst_decl.method_decls, class_info.members, class_name );
     string classdict_name = "d" + get_class_name_from_constraint(instance_head);
 
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
-    for(const auto& [method_name, method_type]: class_info.members)
+    for(const auto& [method, method_type]: class_info.members)
     {
+        auto& method_name = unloc(method.name);
+
         push_note( Note()<<"In method `"<<method_name<<"`:" );
 
         auto op = get_fresh_Var("i"+method_name, true);
@@ -397,23 +397,23 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         // forall x. (C1 x, C2 x) => forall b. Ix b => [x] -> b -> b
         op_type = add_forall_vars(instance_tvs,add_constraints(preds_from_lie(givens), op_type));
 
-        poly_env() = poly_env().insert( {unloc(op.name), op_type} );
+        poly_env() = poly_env().insert( {op, op_type} );
 
         optional<Hs::FunDecl> FD;
-        if (auto it = method_matches.find(method_name); it != method_matches.end())
+        if (auto it = method_matches.find(method); it != method_matches.end())
         {
             FD = Hs::FunDecl(op, it->second);
         }
         else
         {
-            if (not class_info.default_methods.count(method_name))
+            if (not class_info.default_methods.count(method))
                 throw note_exception()<<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'";
 
-            auto dm_var = class_info.default_methods.at(method_name);
+            auto dm_var = class_info.default_methods.at(method);
 
             FD = Hs::simple_decl(op, dm_var);
         }
-        auto [decl2, _, __] = infer_type_for_single_fundecl_with_sig(*FD);
+        auto [decl2, __] = infer_type_for_single_fundecl_with_sig(*FD);
         decls.push_back(decl2);
         pop_note();
     }

@@ -11,7 +11,7 @@
 #include "env.H"
 #include "expected.H"
 
-typedef immer::map<std::string, std::pair<Hs::Var, Type>> mono_env_t;
+typedef immer::map<Hs::Var, std::pair<Hs::Var, Type>> mono_env_t;
 
 
 struct IDType

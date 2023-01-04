@@ -229,8 +229,8 @@ Binds operator+(const Binds& b1, const Binds& b2)
 string Binds::print() const
 {
     vector<string> ds;
-    for(auto& [name, type]: signatures)
-        ds.push_back( name + " :: " + type.print() );
+    for(auto& [var, type]: signatures)
+        ds.push_back( unloc(var.name) + " :: " + type.print() );
     for(auto& decls: *this)
         ds.push_back(decls.print());
     return join( ds, "\n");
