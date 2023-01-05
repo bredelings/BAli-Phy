@@ -44,6 +44,8 @@ type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::C
 
 global_value_env sig_env(const signature_env& signatures);
 
+typedef GIE InstanceEnv;
+
 struct global_tc_state
 {
     const Module& this_mod; // for name lookups like Bool, Num, etc.
@@ -56,7 +58,7 @@ struct global_tc_state
 
     ClassEnv class_env;
 
-    GIE instance_env;
+    InstanceEnv instance_env;
 
     std::vector<Type> defaults;
 
@@ -118,8 +120,8 @@ public:
           ClassEnv& class_env()       {return global_state->class_env;}
     const ClassEnv& class_env() const {return global_state->class_env;}
 
-          GIE& instance_env()       {return global_state->instance_env;}
-    const GIE& instance_env() const {return global_state->instance_env;}
+          InstanceEnv& instance_env()       {return global_state->instance_env;}
+    const InstanceEnv& instance_env() const {return global_state->instance_env;}
 
           std::vector<Type>& defaults()       {return global_state->defaults;}
     const std::vector<Type>& defaults() const {return global_state->defaults;}
