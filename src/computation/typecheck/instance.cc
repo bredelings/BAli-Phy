@@ -294,12 +294,12 @@ TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
     return named_instances;
 }
 
-string get_class_for_constraint(const Type& constraint)
+TypeCon get_class_for_constraint(const Type& constraint)
 {
     auto [class_head, args] = decompose_type_apps(constraint);
     auto tc = class_head.to<TypeCon>();
     assert(tc);
-    return unloc(tc->name);
+    return *tc;
 }
 
 // PROBLEM: we also need to know all the instance types to check the entails.
@@ -357,7 +357,8 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     auto [instance_class, instance_args] = decompose_type_apps(instance_head);
 
     // 2. Get the class info
-    auto class_name = get_class_for_constraint(instance_head);
+    auto class_con = get_class_for_constraint(instance_head);
+    auto class_name = unloc(class_con.name);
     auto class_info = class_env().at(class_name);
 
     // 3. Get constrained version of the class
@@ -524,16 +525,14 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_co
 {
     vector<pair<pair<Core::Exp, LIE>,Type>> matching_instances;
 
-    string target_class = get_class_for_constraint(target_constraint);
+    TypeCon target_class = get_class_for_constraint(target_constraint);
 
     // If all arguments are variables, then we can't match an instance.
     if (not possible_instance_for(target_constraint)) return {};
 
     for(auto& [dfun, info]: instance_env() )
     {
-        auto instance_class = unloc(info.class_con.name);
-
-        if (instance_class != target_class) continue;
+        if (info.class_con != target_class) continue;
 
         auto type = info.type();
 
