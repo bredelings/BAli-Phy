@@ -288,19 +288,21 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
 
         auto constraint = make_equality_pred(eq->t1,eq->t2);
 
-        if (auto inst = lookup_instance(constraint))
+        if (is_type_fam_app(eq->t1))
         {
-            auto [dfun_exp, super_wanteds] = *inst;
+            if (auto inst = lookup_instance(constraint))
+            {
+                auto [dfun_exp, super_wanteds] = *inst;
 
 //            What is the evidence for type family instances?
 //            decls.push_back( { dvar, dfun_exp } );
 
-            if (super_wanteds.size())
-                throw note_exception()<<"type family instances can't have constraints!";
+                if (super_wanteds.size())
+                    throw note_exception()<<"type family instances can't have constraints!";
 
-            return ReactSuccess();
+                return ReactSuccess();
+            }
         }
-
         // How similar is this to looking up a class instance for (~) t1 t2?
 
         // I guess if we find a match then we are just done.
