@@ -545,6 +545,9 @@ public:
     bool more_specific_than(const Type&, const Type&);
     std::optional<std::pair<Core::Exp,LIE>> lookup_instance(const Type& constraint);
 
+    bool find_type_eq_instance_1way(const Type& t1, const Type& t2);
+    bool find_type_eq_instance(const Type& t1, const Type& t2);
+
     void get_defaults(const Hs::ModuleDecls& M);
 
     TypeChecker(FreshVarState& fvs, const std::string& s, const Module& m);

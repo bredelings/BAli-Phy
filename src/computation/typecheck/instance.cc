@@ -584,3 +584,30 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_co
     return surviving_instances[0].first;
 }
 
+bool TypeChecker::find_type_eq_instance_1way(const Type& t1, const Type& t2)
+{
+    if (not is_type_fam_app(t1)) return false;
+
+    auto constraint = make_equality_pred(t1, t2);
+
+    if (auto inst = lookup_instance(constraint))
+    {
+        auto [dfun_exp, super_wanteds] = *inst;
+
+//            What is the evidence for type family instances?
+//            decls.push_back( { dvar, dfun_exp } );
+
+        if (super_wanteds.size())
+            throw note_exception()<<"type family instances can't have constraints!";
+
+        return true;
+    }
+
+    return false;
+}
+
+bool TypeChecker::find_type_eq_instance(const Type& t1, const Type& t2)
+{
+    return find_type_eq_instance_1way(t1,t2) or find_type_eq_instance_1way(t2,t1);
+}
+
