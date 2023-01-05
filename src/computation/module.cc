@@ -585,6 +585,21 @@ bool Module::type_in_scope_with_name(const string& type_name, const string& id_n
     return false;
 }
 
+optional<string> symbol_in_module(const string& s, const string& modid)
+{
+    int M = modid.size();
+
+    if (s.size() < M+2) return {};
+
+    if (s[M] != '.') return {};
+
+    for(int i=0;i<M;i++)
+        if (s[i] != modid[i]) return {};
+
+    return s.substr(M+1);
+}
+
+
 // From the Haskell 2010 report:
 //    The form “module M” names the set of all entities that are in scope with both an unqualified name
 //    “e” and a qualified name “M.e”. This set may be empty.
@@ -595,9 +610,8 @@ void Module::export_module(const string& modid)
 
     // Find all the symbols that are in scope as both `modid.e` and `e`
     for(auto& [id_name, symbol_name]: aliases)
-        if (is_qualified_symbol(id_name) and
-            get_module_name(id_name) == modid and
-            symbol_in_scope_with_name(symbol_name, get_unqualified_name(id_name)))
+        if (auto uqname = symbol_in_module(id_name, modid);
+            uqname and symbol_in_scope_with_name(symbol_name, *uqname))
         {
             try
             {
@@ -613,9 +627,8 @@ void Module::export_module(const string& modid)
 
     // Find all the symbols that are in scope as both `modid.e` and `e`
     for(auto& [id_name, type_name]: type_aliases)
-        if (is_qualified_symbol(id_name) and
-            get_module_name(id_name) == modid and
-            type_in_scope_with_name(type_name, get_unqualified_name(id_name)))
+        if (auto uqname = symbol_in_module(id_name, modid);
+            uqname and type_in_scope_with_name(type_name, *uqname))
         {
             try
             {
