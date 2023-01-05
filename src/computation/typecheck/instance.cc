@@ -465,6 +465,40 @@ bool TypeChecker::more_specific_than(const Type& type1, const Type& type2)
     return instance_matches(type2, type1) and not instance_matches(type1, type2);
 }
 
+bool is_type_variable(const Type& t)
+{
+    if (auto mtv = t.to<MetaTypeVar>())
+    {
+        if (auto tt = mtv->filled())
+            return is_type_variable(*tt);
+        else
+            return true;
+    }
+    else if (t.to<TypeVar>())
+        return true;
+    else
+        return false;
+}
+
+bool possible_instance_for(Type t)
+{
+    int n = 0;
+
+    t = follow_meta_type_var(t);
+
+    while(auto app = t.to<TypeApp>())
+    {
+        if (not is_type_variable(app->arg))
+            n++;
+        t = follow_meta_type_var(app->head);
+    }
+
+    if (t.to<TypeCon>())
+        return (n > 0);
+    else
+        return false;
+}
+
 // 1. An instance looks like (forall as.Q1(as) => Q2(as))
 // 2. We have some constraints Q3.
 // 3. We instantiate the instance with substitutions [as->gs].
@@ -481,6 +515,9 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_co
     vector<pair<pair<Core::Exp, LIE>,Type>> matching_instances;
 
     string target_class = get_class_for_constraint(target_constraint);
+
+    // If all arguments are variables, then we can't match an instance.
+    if (not possible_instance_for(target_constraint)) return {};
 
     for(auto& [dfun, type]: instance_env() )
     {
