@@ -270,3 +270,7 @@ TypeVar RenameTyvarEnv2::map_right(const TypeVar& tv) const
         return tv;
 }
 
+Type InstanceInfo::type() const
+{
+    return add_forall_vars(tvs, add_constraints(constraints, type_apply(class_con, args)));
+}

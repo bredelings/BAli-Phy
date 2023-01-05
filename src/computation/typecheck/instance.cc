@@ -156,10 +156,12 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     Type constraint = make_equality_pred(lhs, eqn.rhs);
     Type inst_type = add_forall_vars(eqn.free_tvs, constraint);
 
+    InstanceInfo info{eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}};
+
     int eqn_id = FreshVarSource::current_index();
     auto dvar = fresh_dvar(constraint);
 
-    instance_env().insert( {dvar, inst_type} );
+    instance_env().insert( {dvar, info} );
 
     // 11. Make up an equation id -- this is the "evidence" for the type family instance.
     tf_info.equations.insert({eqn_id, eqn});
@@ -167,7 +169,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     pop_note();
 }
 
-pair<Core::Var, Type>
+pair<Core::Var, InstanceInfo>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     push_note( Note()<<"In instance '"<<inst_decl.constraint<<"':" );
@@ -241,9 +243,29 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     Type inst_type = add_constraints(desugar(inst_decl.context.constraints), desugar(inst_decl.constraint));
     inst_type = check_constraint( inst_type );  // kind-check the constraint and quantify it.
 
+    // -- break down the inst_type into pieces. -- //
+    auto tt = inst_type;
+    vector<TypeVar> tvs;
+    if (auto forall = tt.to<ForallType>())
+    {
+        tvs = forall->type_var_binders;
+        tt = forall->type;
+    }
+    vector<Type> constraints;
+    if (auto c = tt.to<ConstrainedType>())
+    {
+        constraints = c->context.constraints;
+        tt = c->type;
+    }
+    auto [head,args] = decompose_type_apps(tt);
+    auto class_con = head.to<TypeCon>();
+    assert(class_con);
+    
+    InstanceInfo info{tvs, constraints, *class_con, args};
+    
     pop_note();
 
-    return {dfun, inst_type};
+    return {dfun, info};
 }
 
 
@@ -259,10 +281,10 @@ TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
     {
         if (auto I = decl.to<Hs::InstanceDecl>())
         {
-            auto [dfun, inst_type] = infer_type_for_instance1(*I);
+            auto [dfun, inst_info] = infer_type_for_instance1(*I);
 
             named_instances.push_back({dfun, *I});
-            instance_env().insert( {dfun, inst_type} );
+            instance_env().insert( {dfun, inst_info} );
         }
 
         if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
@@ -329,7 +351,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // 1. Get instance head and constraints 
 
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
-    auto inst_type = instance_env().at(dfun);
+    auto inst_type = instance_env().at(dfun).type();
     // Instantiate it with rigid type variables.
     auto [wrap_gen, instance_tvs, givens, instance_head] = skolemize(inst_type, false);
     auto [instance_class, instance_args] = decompose_type_apps(instance_head);
@@ -507,11 +529,13 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_co
     // If all arguments are variables, then we can't match an instance.
     if (not possible_instance_for(target_constraint)) return {};
 
-    for(auto& [dfun, type]: instance_env() )
+    for(auto& [dfun, info]: instance_env() )
     {
-        auto instance_class = get_class_for_constraint( remove_top_gen(type));
+        auto instance_class = unloc(info.class_con.name);
 
         if (instance_class != target_class) continue;
+
+        auto type = info.type();
 
         auto [_, wanteds, instance_head] = instantiate(InstanceOrigin(), type);
 

@@ -44,7 +44,7 @@ type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::C
 
 global_value_env sig_env(const signature_env& signatures);
 
-typedef GIE InstanceEnv;
+typedef std::map<Core::Var, InstanceInfo> InstanceEnv;
 
 struct global_tc_state
 {
@@ -498,7 +498,7 @@ public:
     Hs::Binds infer_type_for_default_methods(const Hs::Decls&);
 
     // Figure 12
-    std::pair<Core::Var, Type>
+    std::pair<Core::Var, InstanceInfo>
     infer_type_for_instance1(const Hs::InstanceDecl& instance_decl);
 
     // Figure 12

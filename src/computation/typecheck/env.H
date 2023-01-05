@@ -111,6 +111,16 @@ struct ClassInfo
     std::map<TypeCon,bool> associated_type_families;
 };
 
+struct InstanceInfo
+{
+    std::vector<TypeVar> tvs;
+    std::vector<Type> constraints;
+    TypeCon class_con;
+    std::vector<Type> args;
+
+    Type type() const;
+};
+
 struct TypeFamEqnInfo
 {
     std::vector<Type> args;
