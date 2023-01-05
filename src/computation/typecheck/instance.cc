@@ -253,8 +253,6 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 vector<pair<Core::Var,Hs::InstanceDecl>>
 TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
 {
-    GIE gie_inst;
-
     vector<pair<Core::Var, Hs::InstanceDecl>> named_instances;
 
     for(auto& decl: decls)
@@ -264,22 +262,12 @@ TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
             auto [dfun, inst_type] = infer_type_for_instance1(*I);
 
             named_instances.push_back({dfun, *I});
-            gie_inst.insert( {dfun, inst_type} );
+            instance_env().insert( {dfun, inst_type} );
         }
 
         if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
             check_add_type_instance(*TI, {}, {});
     }
-
-//    std::cerr<<"GIE:\n";
-//    for(auto& [method,type]: gie_inst)
-//    {
-//        std::cerr<<method<<" :: "<<type.print()<<"\n";
-//    }
-//    std::cerr<<"\n";
-
-    for(auto pred: gie_inst)
-        instance_env().insert(pred);
 
     return named_instances;
 }
