@@ -853,6 +853,8 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
             type_decls.push_back(decl);
         else if (decl.is_a<TypeFamilyDecl>() or decl.is_a<TypeFamilyInstanceDecl>())
             type_decls.push_back(decl);
+        else if (decl.is_a<KindSigDecl>())
+            type_decls.push_back(decl);
         else if (auto d = decl.to<DefaultDecl>())
         {
             if (default_decl)

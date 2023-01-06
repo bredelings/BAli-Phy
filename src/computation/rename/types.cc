@@ -210,6 +210,13 @@ Haskell::TypeFamilyInstanceDecl renamer_state::rename(Haskell::TypeFamilyInstanc
     return TI;
 }
 
+Haskell::KindSigDecl renamer_state::rename(Haskell::KindSigDecl KS)
+{
+    for(auto& tycon: KS.tycons)
+        tycon = rename_type(tycon);
+    return KS;
+}
+
 
 Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
 {
@@ -227,6 +234,8 @@ Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
             decl = rename(*TF);
         else if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
             decl = rename(*TI);
+        else if (auto KS = decl.to<Hs::KindSigDecl>())
+            decl = rename(*KS);
         else
             throw myexception()<<"In module "<<m.name<<": Unrecognized declaration:\n  "<<decl.print();
     }
