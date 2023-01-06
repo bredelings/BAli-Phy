@@ -157,6 +157,10 @@ vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)
         {
             // Don't do anything for these.
         }
+        else if (decl.is_a<Hs::KindSigDecl>())
+        {
+            // Don't do anything for these.
+        }
         else
             std::abort();
     }
