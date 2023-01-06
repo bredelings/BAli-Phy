@@ -3,6 +3,9 @@
 #include <range/v3/all.hpp>
 
 using std::string;
+using std::optional;
+using std::pair;
+using std::vector;
 
 namespace views = ranges::views;
 
@@ -230,3 +233,31 @@ Hs::Kind replace_kvar_with_star(const Hs::Kind& k)
     std::abort();
 }
 
+optional<pair<vector<Hs::Kind>,Hs::Kind>> arg_and_result_kinds(int n, const Hs::Kind& kind)
+{
+    vector<Hs::Kind> arg_kinds;
+    auto k = kind;
+    for(int i=0;i<n;i++)
+    {
+        auto a = k.to<KindArrow>();
+        if (not a) return {};
+
+        arg_kinds.push_back(a->arg_kind);
+        k = a->result_kind;
+    }
+
+    return {{arg_kinds,k}};
+}
+
+int num_args_for_kind(const Hs::Kind& kind)
+{
+    auto k = kind;
+    int n = 0;
+    while(auto a = k.to<KindArrow>())
+    {
+        n++;
+        k = a->result_kind;
+    }
+
+    return n;
+}

@@ -76,4 +76,8 @@ Hs::Kind make_n_args_constraint_kind(int n);
 
 Hs::Kind replace_kvar_with_star(const Hs::Kind& k);
 
+std::optional<std::pair<std::vector<Hs::Kind>,Hs::Kind>> arg_and_result_kinds(int n, const Hs::Kind& kind);
+
+int num_args_for_kind(const Hs::Kind& k);
+
 #endif /*KIND_H*/
