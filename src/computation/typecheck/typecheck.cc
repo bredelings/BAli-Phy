@@ -540,6 +540,28 @@ void TypeChecker::get_tycon_info(const Hs::TypeFamilyDecl& F)
     tycon_info().insert({unloc(F.con.name), {F.kind(), (int)F.args.size()}});
 }
 
+void TypeChecker::get_kind_sigs(const Hs::Decls& type_decls)
+{
+    for(auto& type_decl: type_decls)
+    {
+        if (auto SK = type_decl.to<Hs::KindSigDecl>())
+        {
+            for(auto& hs_tycon: SK->tycons)
+            {
+                auto tycon = desugar(hs_tycon);
+                push_source_span(*tycon.name.loc);
+
+                if (kind_sigs().count(tycon))
+                    record_error( Note()<<"Second kind signature for `"<<unloc(tycon.name)<<"`" );
+                else
+                    kind_sigs().insert({tycon,SK->kind});
+
+                pop_source_span();
+            }
+        }
+    }
+}
+
 void TypeChecker::get_tycon_info(const Hs::Decls& type_decls)
 {
     type_con_env new_tycons;

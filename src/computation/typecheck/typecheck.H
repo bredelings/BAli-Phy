@@ -46,9 +46,13 @@ global_value_env sig_env(const signature_env& signatures);
 
 typedef std::map<Core::Var, InstanceInfo> InstanceEnv;
 
+typedef std::map<TypeCon,Kind> KindSigEnv;
+
 struct global_tc_state
 {
     const Module& this_mod; // for name lookups like Bool, Num, etc.
+
+    KindSigEnv kind_sigs;
 
     type_con_env tycon_info;
 
@@ -104,6 +108,9 @@ class TypeChecker: FreshVarSource
 
 public:
     const Module& this_mod() const {return global_state->this_mod;}
+
+          KindSigEnv& kind_sigs()       {return global_state->kind_sigs;}
+    const KindSigEnv& kind_sigs() const {return global_state->kind_sigs;}
 
           type_con_env& tycon_info()       {return global_state->tycon_info;}
     const type_con_env& tycon_info() const {return global_state->tycon_info;}
@@ -236,6 +243,8 @@ public:
     Core::Var add_wanted(const ConstraintOrigin& origin, const Type& constraint);
 
     // ------ End: Functions handling the LIE ---
+
+    void get_kind_sigs(const Hs::Decls& type_decls);
 
     void get_tycon_info(const Hs::TypeFamilyDecl&);
     void get_tycon_info(const Hs::Decls& type_decls);
