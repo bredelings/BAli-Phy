@@ -24,3 +24,11 @@ instance Asdf [y] z where
 type family Closed a where
     Closed Int = Int
     Closed Double = Char
+
+
+type G :: Type -> Type
+type family G c
+
+type instance G [] = [Int]
+type instance G ((,) a) = (a,a)
+

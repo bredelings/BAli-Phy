@@ -537,7 +537,32 @@ void TypeChecker::set_expected_type(const Expected& E, const Type& type)
 
 void TypeChecker::get_tycon_info(const Hs::TypeFamilyDecl& F)
 {
-    tycon_info().insert({unloc(F.con.name), {F.kind(), (int)F.args.size()}});
+    auto con = desugar(F.con);
+    auto kind = F.kind();
+    if (kind_sigs().count(con))
+    {
+        kind = kind_sigs().at(con);
+
+        // Complain if the declaration has kind annotation
+        if (F.has_kind_notes())
+        {
+            push_note( Note() <<"In type family `"<<con.print()<<"`");
+            push_source_span(*con.name.loc);
+            record_error( Note() << "Kind annotations in declaration not allowed with a kind signature");
+            pop_source_span();
+            pop_note();
+        }
+
+        // Complain if kind signature allow to few arguments.
+        if (num_args_for_kind(kind) < F.arity())
+        {
+            push_source_span(*con.name.loc);
+            record_error( Note() << "Kind signature for type family `"<<con.print()<<"` only allows "<<num_args_for_kind(kind)<<", but declaration has "<<F.arity());
+            kind = F.kind();
+            pop_source_span();
+        }
+    }
+    tycon_info().insert({unloc(F.con.name), {kind, (int)F.args.size()}});
 }
 
 void TypeChecker::get_kind_sigs(const Hs::Decls& type_decls)
@@ -564,6 +589,9 @@ void TypeChecker::get_kind_sigs(const Hs::Decls& type_decls)
 
 void TypeChecker::get_tycon_info(const Hs::Decls& type_decls)
 {
+    // First get standalone kind signatures
+    get_kind_sigs(type_decls);
+
     type_con_env new_tycons;
 
     type_con_env new_fam_tycons;
