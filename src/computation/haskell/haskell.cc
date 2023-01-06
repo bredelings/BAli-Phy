@@ -187,6 +187,15 @@ string SignatureDecl::print() const
     return join(var_strings,", ") + " :: " + type.print();
 }
 
+string KindSigDecl::print() const
+{
+    vector<string> tycon_strings;
+    for(auto& tycon: tycons)
+        tycon_strings.push_back(tycon.print());
+
+    return join(tycon_strings,", ") + " :: " + kind.print();
+}
+
 string StrictValueDecl::print() const
 {
     return "! " + unloc(lhs).print() + rhs.print();

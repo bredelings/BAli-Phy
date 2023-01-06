@@ -222,6 +222,18 @@ struct SignatureDecl: public Object
     SignatureDecl(const std::vector<Var>& vs, const Type& t): vars(vs), type(t) {}
 };
 
+struct KindSigDecl: public Object
+{
+    std::vector<TypeCon> tycons;
+    Kind kind;
+
+    KindSigDecl* clone() const { return new KindSigDecl(*this);}
+    std::string print() const;
+
+    KindSigDecl() = default;
+    KindSigDecl(const std::vector<TypeCon>& tcs, const Kind& k): tycons(tcs), kind(k) {}
+};
+
 struct ForeignDecl: public Object
 {
     std::string plugin_name;

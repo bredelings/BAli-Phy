@@ -255,6 +255,10 @@
 %type <expression_ref> ty_decl
 %type <expression_ref> inst_decl
 
+%type <expression_ref> standalone_kind_sig
+
+%type <std::vector<Hs::TypeCon>> sks_vars
+
  /*
 %type <void> overlap_pragma
 %type <void> deriv_strategy_no_via
@@ -308,7 +312,7 @@
  */
 %type <Hs::Type> opt_tyconsig
 %type <Hs::Type> sigtype
-%type <Hs::Type> sigktype
+ /* %type <Hs::Type> sigktype */
 %type <Hs::Type> sigtypedoc
 %type <std::vector<Hs::Var>> sig_vars
 %type <std::vector<Hs::Type>> sigtypes1
@@ -636,7 +640,7 @@ topdecls_semi: topdecls_semi topdecl semis1 { $$ = $1; $$.push_back($2); }
 
 topdecl: cl_decl                               {$$ = $1;}
 |        ty_decl                               {$$ = $1;}
-|        standalone_kind_sig                   {}
+|        standalone_kind_sig                   {$$ = $1;}
 |        inst_decl                             {$$ = $1;}
 /*|        stand_alone_deriving */
 /*|        role_annot */
@@ -661,10 +665,10 @@ ty_decl: "type" type "=" ktype                                             {$$ =
 |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family     {$$ = make_type_family({@3,$3}, $4, $6);}
 /* |        "data" "family" type opt_datafam_kind_sig */
 
-standalone_kind_sig: "type" sks_vars "::" sigktype
+standalone_kind_sig: "type" sks_vars "::" kind                             {$$ = Hs::KindSigDecl($2,$4);}
 
-sks_vars: sks_vars "," oqtycon
-|         oqtycon
+sks_vars: sks_vars "," oqtycon                                             {$$ = $1; $$.push_back(Hs::TypeCon({@3,$3})); }
+|         oqtycon                                                          {$$ = {Hs::TypeCon({@1,$1})}; }
 
 // inst_type -> sigtype -> ctype --maybe--> context => type
 inst_decl: "instance" overlap_pragma inst_type where_inst                  {$$ = make_instance_decl({@3,$3},$4);}
@@ -873,8 +877,10 @@ opt_sig: %empty  {}
 opt_tyconsig: %empty             {}
 |             "::" gtycon        {$$ = Hs::TypeCon({@2,$2});}
 
+/*
 sigktype: sigtype                {$$ = $1;}
 |         ctype "::" kind        {$$ = Hs::TypeOfKind($1, $3);}
+*/
 
 
 /* This is for types that obey the "forall or nothing" rule. */
