@@ -154,9 +154,14 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     for(auto& type_fam_decl: class_decl.type_fam_decls)
     {
         auto args = desugar(type_fam_decl.args);
-        for(auto& arg: args)
-            arg.kind = arg.kind.value_or(kind_type());
-        TypeFamInfo info(args, type_fam_decl.result_kind(), class_decl.name);
+        auto kind = type_fam_decl.kind();
+        auto [arg_kinds, result_kind] = *arg_and_result_kinds(args.size(), kind);
+
+        for(int i=0;i<args.size();i++)
+            args[i].kind = arg_kinds[i];
+
+        TypeFamInfo info(args, result_kind, class_decl.name);
+
         auto con = desugar(type_fam_decl.con);
         type_fam_info().insert({con, info});
         if (class_info.associated_type_families.count(con))
@@ -280,11 +285,14 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
     {
         if (auto type_fam_decl = decl.to<Hs::TypeFamilyDecl>())
         {
-            auto con = desugar(type_fam_decl->con);
             auto args = desugar(type_fam_decl->args);
-            for(auto& arg: args)
-                arg.kind = arg.kind.value_or(kind_type());
-            TypeFamInfo info(args, type_fam_decl->result_kind());
+            auto kind = type_fam_decl->kind();
+            auto [arg_kinds,result_kind] = *arg_and_result_kinds(args.size(), kind);
+            for(int i=0;i<args.size();i++)
+                args[i].kind = arg_kinds[i];
+            TypeFamInfo info(args, result_kind);
+
+            auto con = desugar(type_fam_decl->con);
             type_fam_info().insert({con, info});
 
             // Add instance equations for closed type families
