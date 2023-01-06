@@ -589,6 +589,15 @@ vector<Kind> TypeFamilyDecl::arg_kinds() const
     return ks;
 }
 
+bool TypeFamilyDecl::has_kind_notes() const
+{
+    bool kind_notes = kind_sig.has_value();
+    for(auto& tv: args)
+        if (tv.kind)
+            kind_notes = true;
+    return kind_notes;
+}
+
 Kind TypeFamilyDecl::result_kind() const
 {
     if (kind_sig)

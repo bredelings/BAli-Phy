@@ -509,6 +509,7 @@ struct TypeFamilyDecl: public Object
     Kind result_kind() const;
     std::vector<Kind> arg_kinds() const;
     Kind kind() const;
+    bool has_kind_notes() const;
 
     TypeFamilyDecl* clone() const { return new TypeFamilyDecl(*this);}
 
