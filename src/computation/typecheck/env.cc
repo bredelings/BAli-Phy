@@ -191,8 +191,6 @@ Type DataConInfo::constructor_type() const
 TypeFamInfo::TypeFamInfo(const vector<TypeVar>& as, const Kind& k, const optional<string>& s)
     :args(as), result_kind(k), associated_class(s)
 {
-    for(auto& arg: args)
-        arg.kind = arg.kind.value_or(kind_type());
 }
 
 RenameTyvarEnv2 rename_binders2(RenameTyvarEnv2 env, const vector<TypeVar>& tvs1, const vector<TypeVar>& tvs2)
