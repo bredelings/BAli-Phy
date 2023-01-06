@@ -155,12 +155,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     {
         auto args = desugar(type_fam_decl.args);
         auto kind = type_fam_decl.kind();
-        auto [arg_kinds, result_kind] = *arg_and_result_kinds(args.size(), kind);
-
-        for(int i=0;i<args.size();i++)
-            args[i].kind = arg_kinds[i];
-
-        TypeFamInfo info(args, result_kind, class_decl.name);
+        TypeFamInfo info(args, kind, class_decl.name);
 
         auto con = desugar(type_fam_decl.con);
         type_fam_info().insert({con, info});
@@ -287,10 +282,7 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
         {
             auto args = desugar(type_fam_decl->args);
             auto kind = type_fam_decl->kind();
-            auto [arg_kinds,result_kind] = *arg_and_result_kinds(args.size(), kind);
-            for(int i=0;i<args.size();i++)
-                args[i].kind = arg_kinds[i];
-            TypeFamInfo info(args, result_kind);
+            TypeFamInfo info(args, kind);
 
             auto con = desugar(type_fam_decl->con);
             type_fam_info().insert({con, info});

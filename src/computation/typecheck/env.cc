@@ -189,8 +189,12 @@ Type DataConInfo::constructor_type() const
 }
 
 TypeFamInfo::TypeFamInfo(const vector<TypeVar>& as, const Kind& k, const optional<string>& s)
-    :args(as), result_kind(k), associated_class(s)
+    :args(as), associated_class(s)
 {
+    auto [arg_kinds,rkind] = *arg_and_result_kinds(args.size(), k);
+    for(int i=0;i<args.size();i++)
+        args[i].kind = arg_kinds[i];
+    result_kind = rkind;
 }
 
 RenameTyvarEnv2 rename_binders2(RenameTyvarEnv2 env, const vector<TypeVar>& tvs1, const vector<TypeVar>& tvs2)
