@@ -40,6 +40,7 @@ computation_sources = [
   'machine/args.cc','machine/tokens.cc', 'machine/graph_register.cc',
   'machine/show_graph.cc', 'machine/evaluate.cc', 'machine/sums.cc',
   'machine/gc.cc','machine/reroot.cc', 'machine/effects.cc', 'machine/mapping.cc',
+  'machine/gcobject.cc',
 
   'typecheck/kind.cc', 'typecheck/kindcheck.cc', 'typecheck/typecheck.cc', 'typecheck/substitution.cc',
   'typecheck/env.cc', 'typecheck/alphabetize.cc', 'typecheck/types.cc', 'typecheck/instance.cc',

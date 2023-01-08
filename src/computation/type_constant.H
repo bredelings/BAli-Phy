@@ -30,7 +30,10 @@ enum type_constant {null_type=0,
                     seq_type=52,
                     join_type=53,
                     case_type=54,
-                    apply_type=55
+                    apply_type=55,
+
+                    // anything with type >= 100 is gc_able
+                    gc_type = 100
 };
 
 inline bool is_object_type(type_constant c) { return (c > index_var_type);}

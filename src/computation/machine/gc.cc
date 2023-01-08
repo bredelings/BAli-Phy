@@ -1,4 +1,5 @@
 #include "graph_register.H"
+#include "gcobject.H"
 
 using std::vector;
 
@@ -114,6 +115,7 @@ void reg_heap::trace(vector<int>& remap)
                     mark_reg(r);
 
     // 6. Mark regs referenced only by regs as used.
+    vector<int> tmp;
     for(int reg_index = 0;reg_index < used_regs.size();reg_index++)
     {
 	int r = used_regs[reg_index];
@@ -121,6 +123,15 @@ void reg_heap::trace(vector<int>& remap)
 	const auto& R = regs.access(r);
 	for(int r : R.C.Env)
 	    mark_reg(r);
+
+        if (auto& obj = R.C.exp; obj.type() >= gc_type)
+        {
+            auto gco = convert<GCObject>(obj.ptr());
+            gco->get_regs(tmp);
+            for(int r: tmp)
+                mark_reg(r);
+        }
+
         for(auto [r,_] : R.forced_regs)
 	    mark_reg(r);
     }
@@ -178,6 +189,7 @@ void reg_heap::trace_and_reclaim_unreachable()
 
     // remap closures not to point through index_vars
     for(reg& R: regs)
+    {
 	for(int& r2: R.C.Env)
 	{
 	    assert(regs.is_used(r2));
@@ -185,6 +197,12 @@ void reg_heap::trace_and_reclaim_unreachable()
 	    assert(regs.is_used(r2));
 	}
 
+        if (auto& obj = R.C.exp; obj.type() >= gc_type)
+        {
+            auto gco = convert<GCObject>(obj.ptr());
+            gco->update_regs(remap);
+        }
+    }
     //  release_scratch_list();
     release_scratch_list();
 }

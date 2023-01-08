@@ -165,10 +165,10 @@ std::shared_ptr<const T2> poly_convert_and_check(const Object* o)
 }
 
 template <typename T>
-object_ptr<T> convert_and_check(const object_ptr<const Object>& o)
+object_ptr<const T> convert_and_check(const object_ptr<const Object>& o)
 {
     assert(o);
-    object_ptr<T> converted =  boost::dynamic_pointer_cast<const T>(o);
+    object_ptr<const T> converted =  boost::dynamic_pointer_cast<const T>(o);
     if (not converted)
     {
 	const Object* oo = o.get();
@@ -212,10 +212,10 @@ std::shared_ptr<const T2> poly_convert(const Object* o)
 }
 
 template <typename T>
-object_ptr<T> convert(const object_ptr<const Object>& o)
+object_ptr<const T> convert(const object_ptr<const Object>& o)
 {
 #ifdef NDEBUG
-    return boost::static_pointer_cast<T>(o);
+    return boost::static_pointer_cast<const T>(o);
 #else
     return convert_and_check<T>(o);
 #endif
