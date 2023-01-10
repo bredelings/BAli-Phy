@@ -66,8 +66,6 @@ int HMM::n_characters() const
     return all_bits().count();
 }
 
-using std::bitset;
-
 HMM::bitmask_t remap_bits(HMM::bitmask_t bits, const vector<int>& mapping)
 {
     HMM::bitmask_t mask;
