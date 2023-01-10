@@ -1,6 +1,7 @@
 #ifndef GCOBJECT_H
 #define GCOBJECT_H
 
+#include <vector>
 #include "object.H"
 
 class GCObject: public Object
