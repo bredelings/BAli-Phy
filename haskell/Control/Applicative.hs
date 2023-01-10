@@ -35,3 +35,6 @@ class Applicative f => Alternative f where
 -- some
 -- many
 
+instance Applicative [] where
+    pure x = [x]
+    fs <*> xs = [f x | f <- fs, x <- xs]

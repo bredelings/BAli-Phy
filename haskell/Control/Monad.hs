@@ -28,6 +28,10 @@ class Applicative m => Monad m where
     mfix = error "no mfix for this class"
     unsafeInterleaveIO = error "no unsafeInterleaveIO for this class"
 
+
+instance Monad [] where
+    xs >>= f = concatMap f xs
+
 mapM f = sequence . map f
 
 mapM_ f = sequence_ . map f
