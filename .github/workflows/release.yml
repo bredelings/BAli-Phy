@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         name: [ubuntu-gcc-10,
-               macos-xcode-12.5,
+               macos-xcode-14,
                windows
                ]
 
@@ -40,18 +40,18 @@ jobs:
             buildtype: release
             arch: "linux64"
 
-          - name: macos-xcode-12.5
-            os: macos-latest
+          - name: macos-xcode-14
+            os: macos-12
             compiler: xcode
-            version: "12.5"
+            version: "14"
             buildtype: release
             arch: "mac64"
 
           - name: windows
-            os: ubuntu-latest
+            os: ubuntu-22.04
             compiler: mingw
             version: "N/A"
-            buildtype: release
+            buildtype: "release"
             arch: "win64"
 
     runs-on: ${{ matrix.os }}
@@ -64,9 +64,9 @@ jobs:
     - name: Install (Linux)
       if: runner.os == 'Linux' && matrix.name != 'windows'
       run: |
-        sudo apt-get install -y pandoc libcairo2-dev ccache
+        sudo apt-get install -y pandoc ccache
         sudo rm -rf /usr/local/share/boost
-        sudo apt-get install -y libboost-all-dev
+        sudo apt-get install -y libboost-all-dev nlohmann-json3-dev librange-v3-dev libeigen3-dev libcairo2-dev
 
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
           # For newer GCCs, maybe.
@@ -89,11 +89,17 @@ jobs:
         sudo apt-get install -y pandoc ccache
         sudo apt-get install -y dos2unix g++-mingw-w64 wine64 zstd
 
+    - name: Select XCode version (macOS)
+      if: runner.os == 'macOS'
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: ${{ matrix.version }}
+
     - name: Install (macOS)
       if: runner.os == 'macOS'
       run: |
-          brew install pkg-config pandoc cairo ccache coreutils boost
-          echo "DEVELOPER_DIR=/Applications/Xcode_${{ matrix.version }}.app/Contents/Developer" >> $GITHUB_ENV
+          brew install pkg-config pandoc ccache coreutils
+          brew install boost eigen range-v3 nlohmann-json cairo
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
           ccache --set-config=cache_dir=$HOME/.ccache
@@ -152,7 +158,6 @@ jobs:
         echo meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
         meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
 
-
     - name: Upload meson log if configure failed
       uses: actions/upload-artifact@v3
       if: failure()
@@ -187,8 +192,7 @@ jobs:
         for libname in gcc_s_seh-1 stdc++-6 ssp-0 winpthread-1 ; do
             cp $($CXX --print-file-name lib${libname}.dll) ${OUTPUT}/bin
         done
-        # We don't need this because we're building our own boost.
-        # cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${PREFIX}/bin
+        cp /home/runner/win_root/mingw64/bin/libboost_*.dll ${OUTPUT}/bin
 
     - name: Test
       run: |
