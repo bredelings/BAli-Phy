@@ -1,3 +1,17 @@
+* 4.0-alpha9 (Jan 9, 2023)
+ - Models
+   + Add Covarion.gtr to allow more flexible rates between classes.
+   + Add the `iid_on object sub_distribution` distribution.
+ - Fixes
+   + Fix tree MDS plots
+   + Don't segfault when the branch-length isn't modifiable.
+ - Tooling
+   - remove internal copy of boost
+ - Haskell infrastructure
+   - Add type families / associated types
+   - Add some readable error messages that show the error location, with color.
+   - Add unbounded Integer type, in addition to Int
+
 * 4.0-alpha8 (Nov 15, 2022)
  - Further improvements to the Haskell type system -- allow GADTs and equality constraints.
  - Fixes to trees-bootstrap.
