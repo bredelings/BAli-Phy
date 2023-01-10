@@ -16,3 +16,4 @@ f $ x = f x
 infixl 1 &
 x & f = f x
 
+fix f = let x = f x in x

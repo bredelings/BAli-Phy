@@ -31,6 +31,10 @@ class Applicative m => Monad m where
 
 instance Monad [] where
     xs >>= f = concatMap f xs
+    mfix f = case fix (f . head) of
+               []    -> []
+               (x:_) -> x : mfix (tail . f)
+
 
 mapM f = sequence . map f
 
