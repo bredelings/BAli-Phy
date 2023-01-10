@@ -26,7 +26,7 @@ type family Closed a where
     Closed Double = Char
 
 
-type G :: Type -> Type
+type G :: (Type -> Type) -> Type
 type family G c
 
 type instance G [] = [Int]
