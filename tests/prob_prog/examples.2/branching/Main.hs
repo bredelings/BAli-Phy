@@ -10,7 +10,7 @@ model n = do
        then return 6
        else do tmp <- poisson 4.0
                return $ fib (2 + r) + tmp
-  n ~> (poisson $ intToDouble l)
+  n ~> (poisson $ fromIntegral l)
   return ["r" %=% r]
 
 main = do

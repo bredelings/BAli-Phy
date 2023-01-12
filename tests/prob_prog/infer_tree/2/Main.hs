@@ -7,7 +7,7 @@ import           SModel
 import           Probability.Distribution.OnTree
 import           System.Environment  -- for getArgs
 
-branch_length_dist topology b = gamma 0.5 (2.0 / intToDouble n) where n = numBranches topology
+branch_length_dist topology b = gamma 0.5 (2.0 / fromIntegral n) where n = numBranches topology
 
 model seq_data = do
 

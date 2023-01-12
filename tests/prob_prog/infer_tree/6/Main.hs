@@ -12,30 +12,30 @@ import           System.Environment  -- for getArgs
 maybe_zero p dist = do
     is_zero <- bernoulli p
     length  <- dist
-    if is_zero == 1 then return 0.0 else return (length / (1.0 - p))
+    if is_zero == 1 then return 0 else return (length / (1 - p))
 
 branch_length_dist zero_p topology b | is_internal_branch topology b = branch_dist_internal
                                      | otherwise                     = branch_dist_leaf
   where
     n                    = numBranches topology
-    branch_dist_leaf     = gamma 0.5 (2.0 / intToDouble n)
+    branch_dist_leaf     = gamma 0.5 (2.0 / fromIntegral n)
     branch_dist_internal = maybe_zero zero_p branch_dist_leaf
 
 model seq_data = do
 
     let taxa = map sequence_name seq_data
 
-    zero_p <- beta 0.1 1.0
+    zero_p <- beta 0.1 1
 
-    scale  <- gamma 0.5 2.0
+    scale  <- gamma 0.5 2
 
     tree   <- scale_branch_lengths scale <$> uniform_labelled_tree taxa (branch_length_dist zero_p)
 
-    freqs  <- symmetric_dirichlet_on (letters dna) 1.0
+    freqs  <- symmetric_dirichlet_on (letters dna) 1
 
-    kappa1 <- log_normal 0.0 1.0
+    kappa1 <- log_normal 0 1
 
-    kappa2 <- log_normal 0.0 1.0
+    kappa2 <- log_normal 0 1
 
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 

@@ -8,7 +8,7 @@ model fatalities = do
     let loggers = ["alpha" %=% alpha, "beta" %=% beta]
 
     -- Poisson regression with mass = e^(a + b*i)
-    let dist i = poisson $ safe_exp (alpha + beta * (intToDouble i))
+    let dist i = poisson $ safe_exp (alpha + beta * (fromIntegral i))
 
     fatalities ~> independent [ dist i | i <- [0 .. length fatalities - 1] ]
 
