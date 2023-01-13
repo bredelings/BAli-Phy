@@ -11,9 +11,11 @@ module Data.Array (module Data.Array,
 -- See Data.Array.IO     - Mutable boxed and unboxed array in the IO monad.
 -- See Data.Array.Unboxed
 
+import Compiler.Base -- for `seq`
 import Data.Bool
 import Data.Ix
 import Data.List
+import Data.Ord
 import Data.Function
 import Compiler.Num
 import Foreign.Vector
@@ -50,3 +52,13 @@ instance Functor (Array Int) where
 instance Foldable (Array Int) where
     toList  = elems
     length = numElements
+
+    foldl f z arr = go 0 z where
+        go i x | i < n      = go (i+1) (f x (arr!i))
+               | otherwise  = x
+        n = length arr
+
+    foldl' f z arr = go 0 z where
+        go i x | i < n      = let z' = (f x (arr!i)) in z' `seq` go (i+1) z'
+               | otherwise  = x
+        n = length arr
