@@ -44,6 +44,7 @@ elems   arr = [ arr!ix | ix <- indices arr ]
 
 assocs  arr = [ (ix, arr!ix) | ix <- indices arr ]
 
+to_vector = list_to_vector . toList
 array_to_vector x = list_to_vector (elems x)
 
 instance Functor (Array Int) where
