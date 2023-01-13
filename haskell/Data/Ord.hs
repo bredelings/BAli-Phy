@@ -65,3 +65,9 @@ instance Ord a => Ord [a] where
                                                  EQ -> compare xs ys
     x < y = compare x y == LT
     x > y = compare x y == GT
+
+instance (Ord a, Ord b) => Ord (a,b) where
+    compare (x1,y1) (x2,y2) = let c1 = compare x1 x2
+                              in case c1 of
+                                   EQ -> compare y1 y2
+                                   _  -> c1
