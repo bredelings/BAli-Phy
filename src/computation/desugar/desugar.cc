@@ -344,7 +344,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
             // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
             else if (auto PQ = B.to<Hs::PatQual>())
             {
-                Hs::Var concatMap({noloc, "Data.List.concatMap"});
+                Hs::Var concatMap({noloc, "Data.OldList.concatMap"});
                 if (is_irrefutable_pat(PQ->bindpat))
                 {
                     expression_ref f = Hs::LambdaExp({PQ->bindpat}, L);

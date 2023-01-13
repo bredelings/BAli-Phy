@@ -1,7 +1,7 @@
 module Data.Map where
 
 import Prelude hiding (filter,foldl,foldr,null,map,take,drop,splitAt,elems,lookup,(!))
-import qualified Data.List as List
+import qualified Data.OldList as List
 import qualified Data.Set as Set
 
 data Map k a = Map [(k,a)]
@@ -148,7 +148,6 @@ keys m = List.map fst $ toAscList m
 assocs = toAscList
 
 keySet m = Set.fromList $ keys m
-
 
 
 toList (Map xs) = xs

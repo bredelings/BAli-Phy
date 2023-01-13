@@ -8,7 +8,7 @@ import Data.Semigroup
 import Data.Monoid
 import Compiler.Num -- for Num
 import Compiler.Error -- for error
-import qualified Data.List as L
+import qualified Data.OldList as L
 
 infix 4 `elem`, `notElem`
 

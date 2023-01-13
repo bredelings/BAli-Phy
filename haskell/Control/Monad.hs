@@ -4,7 +4,7 @@ module Control.Monad where
 import Compiler.Base
 import Compiler.Error  -- for error
 import Data.Function   -- for id
-import Data.List
+import Data.OldList
 import Data.Functor
 import Data.Ord
 import Compiler.Num
