@@ -356,6 +356,8 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
     return method_matches;
 }
 
+// FIXME: can we make the dictionary definition into an Hs::Decl?
+//        then we can just put the wrapper on the Hs::Var in the decl.
 pair<Hs::Decls, Core::Decl>
 TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& inst_decl)
 {
@@ -364,7 +366,10 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // 1. Get instance head and constraints 
 
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
-    auto inst_type = instance_env().at(dfun).type();
+    auto& inst_info = instance_env().at(dfun);
+    auto inst_type = inst_info.type();
+
+    push_source_span(*inst_info.class_con.name.loc);
     // Instantiate it with rigid type variables.
     auto [wrap_gen, instance_tvs, givens, instance_head] = skolemize(inst_type, false);
     auto [instance_class, instance_args] = decompose_type_apps(instance_head);
@@ -380,19 +385,24 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         subst = subst.insert({class_info.type_vars[i], instance_args[i]});
 
     // 4. Get (constrained) superclass constraints
+    push_note(Note()<<"Deriving superclass constraints for "<<instance_head.print());
     auto superclass_constraints = class_info.context.constraints;
     for(auto& superclass_constraint: superclass_constraints)
         superclass_constraint = apply_subst(subst, superclass_constraint);
 
     // 5. Construct binds_super
     auto wanteds = preds_to_constraints(GivenOrigin(), Wanted, superclass_constraints);
+    // FIXME: This isn't the right place to check if we can solve the constraints!
     auto WC = WantedConstraints(wanteds);
     auto decls_super = entails(givens, WC);
     if (not WC.simple.empty())
         record_error( Note() <<"Can't derive superclass constraints "<<print(WC.simple)<<" from instance constraints "<<print(givens)<<"!" );
+    // FIXME -- we can't instantiate the wrapper for install after solving is finished!
+    // auto decls_super = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
+    // auto wrap_let = Core::WrapLet(decls_super);
+    pop_note();
 
-    // 7. make some intermediates
-
+    // 6. Start adding fields for the superclass dictionaries
     vector<Hs::Expression> dict_entries;
     for(auto& wanted: wanteds)
         dict_entries.push_back(wanted.ev_var);
@@ -450,9 +460,11 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
     dict = wrap_gen(dict);
 
+    pop_source_span();
+
     pop_note();
 
-    return {decls, pair(dfun, dict)};
+    return {decls, {dfun, dict}};
 }
 
 // We need to handle the instance decls in a mutually recursive way.
