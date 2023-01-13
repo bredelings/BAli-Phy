@@ -10,6 +10,7 @@ using std::vector;
 using std::map;
 using std::set;
 using std::pair;
+using std::tuple;
 using std::optional;
 
 Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
@@ -358,7 +359,7 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
 
 // FIXME: can we make the dictionary definition into an Hs::Decl?
 //        then we can just put the wrapper on the Hs::Var in the decl.
-pair<Hs::Decls, Core::Decl>
+pair<Hs::Decls, tuple<Core::Var, Core::wrapper, Core::Exp>>
 TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& inst_decl)
 {
     push_note( Note()<<"In instance `"<<inst_decl.constraint<<"`:" );
@@ -393,13 +394,13 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // 5. Construct binds_super
     auto wanteds = preds_to_constraints(GivenOrigin(), Wanted, superclass_constraints);
     // FIXME: This isn't the right place to check if we can solve the constraints!
-    auto WC = WantedConstraints(wanteds);
-    auto decls_super = entails(givens, WC);
-    if (not WC.simple.empty())
-        record_error( Note() <<"Can't derive superclass constraints "<<print(WC.simple)<<" from instance constraints "<<print(givens)<<"!" );
+    // auto WC = WantedConstraints(wanteds);
+    // auto decls_super = entails(givens, WC);
+    // if (not WC.simple.empty())
+    //    record_error( Note() <<"Can't derive superclass constraints "<<print(WC.simple)<<" from instance constraints "<<print(givens)<<"!" );
     // FIXME -- we can't instantiate the wrapper for install after solving is finished!
-    // auto decls_super = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
-    // auto wrap_let = Core::WrapLet(decls_super);
+    auto decls_super = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
+    auto wrap_let = Core::WrapLet(decls_super);
     pop_note();
 
     // 6. Start adding fields for the superclass dictionaries
@@ -452,27 +453,24 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         pop_note();
     }
 
-    // dfun = /\a1..an -> \dicts:theta -> let binds_super in let_binds_methods in <superdict_vars,method_vars>
+    // dfun = /\a1..an -> \dicts:theta -> let decls_super in <superdict_vars,method_vars>
     auto dict = Core::Tuple(dict_entries);
 
-    if (decls_super.size())
-        dict = Core::Let( decls_super, dict );
-
-    dict = wrap_gen(dict);
+    auto wrap = wrap_gen * wrap_let;
 
     pop_source_span();
 
     pop_note();
 
-    return {decls, {dfun, dict}};
+    return {decls, {dfun, wrap, dict}};
 }
 
 // We need to handle the instance decls in a mutually recursive way.
 // And we may need to do instance decls once, then do value decls, then do instance decls a second time to generate the dfun bodies.
-pair<Hs::Binds, Core::Decls> TypeChecker::infer_type_for_instances2(const vector<pair<Core::Var, Hs::InstanceDecl>>& named_instances)
+pair<Hs::Binds, vector<tuple<Core::Var, Core::wrapper, Core::Exp>>> TypeChecker::infer_type_for_instances2(const vector<pair<Core::Var, Hs::InstanceDecl>>& named_instances)
 {
     Hs::Binds instance_method_decls;
-    Core::Decls dfun_decls;
+    vector<tuple<Core::Var, Core::wrapper, Core::Exp>> dfun_decls;
 
     for(auto& [dfun, instance_decl]: named_instances)
     {

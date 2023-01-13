@@ -516,11 +516,11 @@ public:
     infer_type_for_instances1(const Hs::Decls& decls);
 
     // Figure 12
-    std::pair<Hs::Binds, Core::Decls>
+    std::pair<Hs::Binds, std::vector<std::tuple<Core::Var, Core::wrapper, Core::Exp>>>
     infer_type_for_instances2(const std::vector<std::pair<Core::Var, Hs::InstanceDecl>>& named_instances);
 
     // Figure 12
-    std::pair<Hs::Decls, Core::Decl>
+    std::pair<Hs::Decls, std::tuple<Core::Var, Core::wrapper, Core::Exp>>
     infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& instance_decl);
 
     std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name) const;

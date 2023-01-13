@@ -1579,7 +1579,11 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     // Should we be printing to out_screen instead?
     exit_on_error(tc_state->messages());
 
-    return {class_binds, value_decls, dm_decls, instance_method_binds, dfun_decls, top_simplify_decls};
+    Core::Decls dfun_decls2;
+    for(auto& [var,wrap,rhs]: dfun_decls)
+        dfun_decls2.push_back({var,wrap(rhs)});
+
+    return {class_binds, value_decls, dm_decls, instance_method_binds, dfun_decls2, top_simplify_decls};
 }
 
 /*
