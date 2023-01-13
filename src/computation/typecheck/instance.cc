@@ -72,7 +72,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     
     // 1. Check that the type family exists.
     if (not type_fam_info().count( tf_con ))
-        throw note_exception()<<"  No type family '"<<inst.con.print()<<"'";
+        record_error( Note()<<"  No type family '"<<inst.con.print()<<"'");
 
     // 2. Get the type family info
     auto& tf_info = type_fam_info().at(tf_con);
@@ -81,13 +81,19 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     {
         // 3. Check for unassociated instances declared for associated classes
         if (not associated_class)
-            throw note_exception()<<
-                "  Can't declare non-associated type instance for type family '"<<inst.con.print()<<"' associated with class '"<<(*tf_info.associated_class)<<"'";
+        {
+            record_error(Note() << "  Can't declare non-associated type instance for type family '"<<inst.con.print()<<"' associated with class '"
+                         <<(*tf_info.associated_class)<<"'");
+            return;
+        }
 
         // 4. Check for instances associated with the wrong class
         if (*tf_info.associated_class != *associated_class)
-            throw note_exception()<<
-                "  Trying to declare type instance in class '"<<*associated_class<<" for family '"<<inst.con.print()<<"' associated with class '"<<(*tf_info.associated_class)<<"'";
+        {
+            record_error(Note() << "  Trying to declare type instance in class '"<<*associated_class<<" for family '"<<inst.con.print()
+                         <<"' associated with class '"<<(*tf_info.associated_class)<<"'");
+            return;
+        }
 
         // 5. Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
         for(int i=0;i<tf_info.args.size();i++)
@@ -97,21 +103,25 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
             {
                 auto expected = instance_subst.at(fam_tv);
                 if (not same_type( desugar(inst.args[i]), expected))
-                    throw note_exception()<<
-                        "    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'";
+                    record_error(Note() << "    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'");
             }
         }
     }
 
     // 6. Check that the type family is not closed
     if (tf_info.closed)
-        throw note_exception()<<
-            "  Can't declare additional type instance for closed type family '"<<inst.con.print()<<"'";
+    {
+        record_error( Note() << "  Can't declare additional type instance for closed type family '"<<inst.con.print()<<"'");
+        return;
+    }
+            
 
     // 7. Check that the type instance has the right number of arguments
     if (inst.args.size() != tf_info.args.size())
-        throw note_exception()<<
-            "    Expected "<<tf_info.args.size()<<" parameters, but got "<<inst.args.size();
+    {
+        record_error( Note() << "    Expected "<<tf_info.args.size()<<" parameters, but got "<<inst.args.size());
+        return;
+    }
 
     // 8. The rhs may only mention type vars bound on the lhs.
     set<TypeVar> lhs_tvs;
@@ -123,7 +133,10 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 
     for(auto& tv: free_type_variables(desugar(inst.rhs)))
         if (not lhs_tvs.count(tv))
-            throw note_exception()<<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.";
+        {
+            record_error( Note() <<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.");
+            return;
+        }
 
     // 9. Kind-check the parameters and result type, and record the free type variables.
     TypeFamEqnInfo eqn{ desugar(inst.args), desugar(inst.rhs), lhs_tvs | ranges::to<vector>()};
@@ -376,7 +389,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     auto WC = WantedConstraints(wanteds);
     auto decls_super = entails(givens, WC);
     if (not WC.simple.empty())
-        throw note_exception()<<"Can't derive superclass constraints "<<print(WC.simple)<<" from instance constraints "<<print(givens)<<"!";
+        record_error( Note() <<"Can't derive superclass constraints "<<print(WC.simple)<<" from instance constraints "<<print(givens)<<"!" );
 
     // 7. make some intermediates
 
@@ -418,7 +431,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         else
         {
             if (not class_info.default_methods.count(method))
-                throw note_exception()<<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'";
+                record_error( Note() <<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'" );
 
             auto dm_var = class_info.default_methods.at(method);
 
@@ -573,10 +586,10 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_co
 
     if (surviving_instances.size() > 1)
     {
-        auto e = myexception()<<"Too many matching instances for "<<target_constraint<<":\n\n";
+        auto n = Note()<<"Too many matching instances for "<<target_constraint<<":\n";
         for(auto& [_,type]: surviving_instances)
-            e<<"  "<<remove_top_gen(type)<<"\n";
-        throw e;
+            n<<"  "<<remove_top_gen(type)<<"\n";
+        record_error(n);
     }
 
     assert(surviving_instances.size() == 1);
