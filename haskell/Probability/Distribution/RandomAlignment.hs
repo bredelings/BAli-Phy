@@ -12,14 +12,14 @@ type IModel = (Array Int Double -> Int -> PairHMM, Int -> LogDouble)
 modifiable_alignment a@(AlignmentOnTree tree n_seqs ls as) | numNodes tree < 2 = a
 modifiable_alignment (AlignmentOnTree tree n_seqs ls as) | otherwise           = AlignmentOnTree tree n_seqs ls' as'
   where
-    as' = mkArray (numElements as) (\i -> modifiable $ (as ! i))
+    as' = mkArray (length as) (\i -> modifiable $ (as ! i))
     ls' = listArray' [ seqlength as' tree node | node <- [0 .. numNodes tree - 1] ]
 
 -- Compare to unaligned_alignments_on_tree in parameters.cc
 unaligned_alignments_on_tree tree ls = [ make_a' b | b <- [0 .. 2 * numBranches tree - 1] ]
   where
     taxa = listArray' $ get_labels tree
-    length_for_node node = if node < numElements taxa then ls Map.! (taxa ! node) else 0
+    length_for_node node = if node < length taxa then ls Map.! (taxa ! node) else 0
     make_a' b = let b' = reverseEdge tree b in if (b > b') then flip_alignment $ make_a b' else make_a b
     make_a b =
         let l1 = length_for_node $ sourceNode tree b
@@ -37,7 +37,7 @@ left_aligned_alignments_on_tree tree ls = [ make_A b | b <- [0 .. 2 * numBranche
     internal_sequence_length = median $ Map.elems $ ls
     -- FIXME: can we assume that the leaf nodes are [0..n_leaves-1]?
     -- If we check leaf nodes instead, then what if the root node was an unnamed leaf?
-    length_for_node node = if node < numElements taxa then ls Map.! (taxa ! node) else internal_sequence_length
+    length_for_node node = if node < length taxa then ls Map.! (taxa ! node) else internal_sequence_length
     make_A b = let b2 = reverseEdge tree b in
                if (b > b2) then
                    flip_alignment $ make_A' b2

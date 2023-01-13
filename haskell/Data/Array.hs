@@ -49,3 +49,4 @@ instance Functor (Array Int) where
 
 instance Foldable (Array Int) where
     toList  = elems
+    length = numElements

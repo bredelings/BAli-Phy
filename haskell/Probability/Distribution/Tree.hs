@@ -207,7 +207,7 @@ modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree 
     maybe_modf :: Int -> a -> a
     maybe_modf node x | node < numLeaves rooted_tree'   = x
                       | otherwise                       = modf x
-    times     = mkArray (numElements times') (\node -> maybe_modf node (times'!node))
+    times     = mkArray (length times') (\node -> maybe_modf node (times'!node))
 
 triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree force_time_tree
 

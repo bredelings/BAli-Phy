@@ -45,11 +45,11 @@ sequence_lengths    (AlignmentOnTree _ _ ls _) = ls
 pairwise_alignments (AlignmentOnTree _ _ _ as) = as
 
 -- not using this right now
--- get_sequence_lengths leaf_seqs_array = mkArray (numElements leaf_seqs_array) (\node -> vector_size (leaf_seqs_array!node))
+-- get_sequence_lengths leaf_seqs_array = mkArray (length leaf_seqs_array) (\node -> vector_size (leaf_seqs_array!node))
 
 -- This function handles the case where we have only 1 sequence.
 compute_sequence_lengths seqs tree as = [ if node < n_leaves then vector_size (seqs!node) else seqlength as tree node | node <- [0..numNodes tree-1] ]
-    where n_leaves = numElements seqs
+    where n_leaves = length seqs
 
 -- Current a' is an alignment, but counts and mapping are EVector
 -- AlignmentMatrix -> ETuple (AlignmentMatrix, EVector Int, EVector Int)
