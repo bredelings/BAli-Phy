@@ -211,8 +211,8 @@ tree_from_edges num_nodes edges = Tree nodesArray (listArray (2*num_branches) br
 
 tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
 
-allEdgesAfterEdge tree b = b:concat [allEdgesAfterEdge tree b' | b' <- edgesAfterEdge tree b]
-allEdgesFromNode tree n = concat [allEdgesAfterEdge tree b | b <- edgesOutOfNode tree n]
+allEdgesAfterEdge tree b = b:concatMap (allEdgesAfterEdge tree) (edgesAfterEdge tree b)
+allEdgesFromNode tree n = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree n)
 
 add_labels labels t = LabelledTree t labels
 
