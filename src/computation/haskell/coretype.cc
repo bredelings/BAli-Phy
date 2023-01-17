@@ -166,10 +166,8 @@ Type function_type(const vector<Type>& arg_types, const Type& result_type)
 
 pair<Type,vector<Type>> decompose_type_apps(Type t)
 {
-    t = follow_meta_type_var(t);
-
     vector<Type> args;
-    while(t.is_a<TypeApp>())
+    while(t = follow_meta_type_var(t), t.is_a<TypeApp>())
     {
         auto A = t.as_<TypeApp>();
         args.push_back(A.arg);
