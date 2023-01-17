@@ -239,9 +239,31 @@ Notes TypeChecker::check_eq_constraint(TidyState& tidy_state, vector<shared_ptr<
     return notes;
 }
 
+LIE deduplicate(const LIE& wanteds)
+{
+    LIE wanteds2;
+    std::set<tuple<int,int>> locs;
+    for(auto& wanted: wanteds)
+    {
+        // 1. Skip if this occurs at a previously-seen location
+        if (auto loc = wanted.tc_state->source_span())
+        {
+            auto loc2 = tuple(loc->begin.line, loc->begin.column);
+            if (locs.count(loc2))
+                continue;
+            else
+                locs.insert(loc2);
+        }
+
+        // 2. Otherwise keep
+        wanteds2.push_back(wanted);
+    }
+    return wanteds2;
+}
+
 void TypeChecker::check_wanteds(TidyState& tidy_state, vector<shared_ptr<Implication>>& implic_scopes, const WantedConstraints& wanteds)
 {
-    for(auto& wanted: wanteds.simple)
+    for(auto& wanted: deduplicate(wanteds.simple))
     {
         Notes notes;
         if (auto eq = is_equality_pred(wanted.pred))
