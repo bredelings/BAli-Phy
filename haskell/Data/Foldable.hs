@@ -3,6 +3,7 @@ module Data.Foldable where
 
 import Data.Eq
 import Data.Ord
+import Data.Maybe
 import Data.Function
 import Data.Semigroup
 import Data.Monoid
@@ -73,3 +74,8 @@ or          =  foldr (||) False
 any p       =  or . L.map p
 
 all p       =  and . L.map p
+
+find p xs = foldr found Nothing xs where
+    found x f = if p x
+                then Just x
+                else f
