@@ -62,6 +62,18 @@ string TidyState::tidy_name(const string& name)
 }
 
 
+std::string tidy_print_paren(TidyState& tidy_state, Type t)
+{
+    t = follow_meta_type_var(t);
+
+    auto s = tidy_print(tidy_state, t);
+
+    if (t.is_a<TypeCon>() or t.is_a<MetaTypeVar>() or t.is_a<TypeVar>() or is_tuple_type(t) or is_list_type(t))
+        return s;
+    else
+        return "(" + s + ")";
+}
+
 // Alternatively, we could make something with options, and do
 // ppr<<app.head<<" "<<app.arg.
 // This would allow us to record state on the ppr object, like:
@@ -122,7 +134,7 @@ std::string tidy_print(TidyState& tidy_state, const TypeApp& app)
         return "(" + join(parts,", ") +")";
     }
 
-    return tidy_print(tidy_state, app.head) + " " + tidy_print(tidy_state, app.arg);
+    return tidy_print(tidy_state, app.head) + " " + tidy_print_paren(tidy_state, app.arg);
 }
 
 string tidy_print(TidyState& tidy_state, const ForallType& forall)
