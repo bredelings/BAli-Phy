@@ -1,5 +1,6 @@
 module Tree where
 
+import Data.Foldable
 
 class Tree t where
     edgesOutOfNode :: t -> Int -> [Int]
@@ -157,7 +158,7 @@ instance LabelledTree t => LabelledTree (RateTimeTreeImp t) where
 
 toward_root rt b = not $ away_from_root rt b
 
-parentBranch rooted_tree n = listToMaybe [b | b <- edgesOutOfNode rooted_tree n, toward_root rooted_tree b]
+parentBranch rooted_tree n = find (toward_root rooted_tree) (edgesOutOfNode rooted_tree n)
 
 parentNode rooted_tree n = case parentBranch rooted_tree n of Just b  -> Just $ targetNode rooted_tree b
                                                               Nothing -> Nothing
