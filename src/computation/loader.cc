@@ -88,13 +88,26 @@ set<string> language_options(string& mod)
     return options;
 }
 
+fs::path pretty_module_path(const fs::path& filepath)
+{
+    fs::path hpath;
+    // if there's a path element called "haskell", split after that.
+    for(auto& p: filepath)
+    {
+        hpath /= p;
+        if (p == "haskell")
+            return filepath.lexically_relative(hpath);
+    }
+    return filepath.filename();
+}
+
 Module module_loader::load_module_from_file(const fs::path& filename) const
 {
     if (not modules.count(filename.string()))
     {
 	try
 	{
-            auto fname = std::make_shared<string>(filename.string());
+            auto fname = std::make_shared<string>( pretty_module_path(filename) );
 
 	    string file_contents = read_file(filename.string(), "module");
 
