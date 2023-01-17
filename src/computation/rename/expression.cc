@@ -196,8 +196,8 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
     {
         auto terms = I->terms;
         for(auto& term: terms)
-            term = rename_infix(m, term);
-	return desugar_infix(m, terms);
+            unloc(term) = rename_infix(m, unloc(term));
+	return unloc(desugar_infix(m, terms));
     }
     else if (auto app = E.to<Hs::ApplyExp>())
     {

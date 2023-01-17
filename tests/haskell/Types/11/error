@@ -1,4 +1,4 @@
-[1mMain.hs:2.7-14:[1;31m error:[0m[1m
+[1mMain.hs:2.9-14:[1;31m error:[0m[1m
    • Cannot unify `t` with `[t]` because of occurs check
    • Relevant bindings:
        x :: t
@@ -9,6 +9,6 @@
    • In recursive group:
          Main.f
   [1;34m|[0m
-[1;34m2[0m [1;34m| [0mf x = [1;31mx:[x]:[][0m
-  [1;34m|[0m       [1;31m^^^^^^^^[0m
+[1;34m2[0m [1;34m| [0mf x = x:[1;31m[x]:[][0m
+  [1;34m|[0m         [1;31m^^^^^^[0m
 

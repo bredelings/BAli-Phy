@@ -150,7 +150,7 @@ string InfixExp::print() const
 {
     vector<string> ts;
     for(auto& term: terms)
-        ts.push_back(term.print());
+        ts.push_back(unloc(term).print());
     return join(ts, " ");
 }
 

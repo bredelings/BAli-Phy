@@ -16,7 +16,7 @@ expression_ref unapply(expression_ref E);
 typedef std::set<std::string> bound_var_info;
 typedef std::set<std::string> bound_type_var_info;
 
-expression_ref desugar_infix(const Module& m, const std::vector<expression_ref>& T);
+Located<expression_ref> desugar_infix(const Module& m, const std::vector<Located<expression_ref>>& T);
 expression_ref rename_infix(const Module& m, const expression_ref& E);
 Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R);
 

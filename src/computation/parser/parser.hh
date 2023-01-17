@@ -79,12 +79,11 @@
   Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const std::optional<Located<Hs::Decls>>& decls);
   Hs::Context make_context(const Hs::Type& context);
 
-  expression_ref make_minus(const expression_ref& exp);
   Hs::ApplyExp make_apply(const Located<Hs::Expression>& head, const Located<Hs::Expression>& arg);
 
   expression_ref yy_make_string(const std::string&);
 
-#line 88 "parser.hh"
+#line 87 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -224,7 +223,7 @@
 #endif
 
 namespace yy {
-#line 228 "parser.hh"
+#line 227 "parser.hh"
 
 
 
@@ -6588,7 +6587,7 @@ switch (yykind)
 
 
 } // yy
-#line 6592 "parser.hh"
+#line 6591 "parser.hh"
 
 
 

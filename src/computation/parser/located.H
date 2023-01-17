@@ -89,4 +89,50 @@ const T& unloc(const Located<T>& l) {return l.obj;}
 
 template <typename T>
       T& unloc(      Located<T>& l) {return l.obj;}
+
+inline std::strong_ordering operator<=>(const yy::position& p1, const yy::position& p2)
+{
+    if (auto cmp = p1.line <=> p2.line; cmp != 0)
+        return cmp;
+    return p1.column <=> p2.column;
+}
+
+inline yy::location operator*(const yy::location& loc1, const yy::location& loc2)
+{
+    auto b = (loc1.begin < loc2.begin)?loc1.begin:loc2.begin;
+//    auto b = std::min(loc1.begin, loc2.begin);
+    auto e = (loc1.end > loc2.end)?loc1.end:loc2.end;
+//    auto e = std::max(loc1.end, loc2.end);
+    return {b,e};
+}
+
+inline std::optional<yy::location> range(const std::vector<yy::location>& locs)
+{
+    if (locs.empty()) return {};
+
+    auto loc = locs.front();
+    for(int i=1;i<locs.size();i++)
+        loc = loc * locs[i];
+
+    return loc;
+}
+
+inline std::optional<yy::location> operator*(const std::optional<yy::location>& loc1, const std::optional<yy::location>& loc2)
+{
+    if (not loc1) return loc2;
+    if (not loc2) return loc1;
+    return (*loc1) * (*loc2);
+}
+
+inline std::optional<yy::location> range(const std::vector<std::optional<yy::location>>& locs)
+{
+    if (locs.empty()) return {};
+
+    auto loc = locs.front();
+    for(int i=1;i<locs.size();i++)
+        loc = loc * locs[i];
+
+    return loc;
+}
+
 #endif

@@ -74,13 +74,15 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
 
     // 3. Check the return type
     auto exp_loc = App.head.loc;
-    auto arg_loc = App.args[arg_index].loc;
-    if (exp_loc and arg_loc)
-        *exp_loc += *arg_loc;
+    for(int i=0;i<= arg_index;i++)
+        exp_loc = exp_loc * App.args[i].loc;
 
     if (exp_loc) push_source_span(*exp_loc);
 
-    push_note( Note() << "In expression '"<< App.print()<<"':" );
+    auto App2 = App;
+    for(int j=0;j<i;j++)
+        App2.args.pop_back();
+    push_note( Note() << "In expression '"<< App2.print()<<"':" );
 
     // Convert the result to the expected time for the term
     auto wrap_res = instantiateSigma(AppOrigin(), result_type, exp_type);

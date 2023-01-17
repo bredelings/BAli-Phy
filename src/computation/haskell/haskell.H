@@ -187,13 +187,13 @@ struct Neg: public Object
 
 struct InfixExp: public Object
 {
-    std::vector<expression_ref> terms;
+    std::vector<Located<expression_ref>> terms;
 
     InfixExp* clone() const { return new InfixExp(*this);}
     std::string print() const;
 
     InfixExp() = default;
-    InfixExp(const std::vector<expression_ref>& ts): terms(ts) {}
+    InfixExp(const std::vector<Located<expression_ref>>& ts): terms(ts) {}
 };
 
 

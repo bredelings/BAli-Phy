@@ -41,7 +41,6 @@
   Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const std::optional<Located<Hs::Decls>>& decls);
   Hs::Context make_context(const Hs::Type& context);
 
-  expression_ref make_minus(const expression_ref& exp);
   Hs::ApplyExp make_apply(const Located<Hs::Expression>& head, const Located<Hs::Expression>& arg);
 
   expression_ref yy_make_string(const std::string&);
@@ -1132,13 +1131,13 @@ exp: infixexp "::" sigtype { $$ = Hs::TypedExp($1,$3); }
 
 /* EP */
 
-infixexp: exp10                 {$$ = Hs::InfixExp({$1});}
-|         infixexp qop exp10    {$$ = $1; $$.terms.push_back($2); $$.terms.push_back($3);}
+infixexp: exp10                 {$$ = Hs::InfixExp({{@1,$1}});}
+|         infixexp qop exp10    {$$ = $1; $$.terms.push_back({@2,$2}); $$.terms.push_back({@3,$3});}
 
-infixexp_top: exp10_top         {$$ = Hs::InfixExp({$1});}
-|             infixexp_top qop exp10_top  {$$ = $1; $$.terms.push_back($2); $$.terms.push_back($3);}
+infixexp_top: exp10_top         {$$ = Hs::InfixExp({{@1,$1}});}
+|             infixexp_top qop exp10_top  {$$ = $1; $$.terms.push_back({@2,$2}); $$.terms.push_back({@3,$3});}
 
-exp10_top: "-" fexp                {$$ = make_minus($2);}
+exp10_top: "-" fexp                {$$ = Hs::InfixExp( {{@1,Hs::Neg()}, {@2,$2}} );}
 |          "{-# CORE" STRING "#-}" {}
 |          fexp                    {$$ = $1;}
 
@@ -1847,11 +1846,6 @@ Hs::ConstructorDecl make_constructor(const vector<Hs::TypeVar>& forall, const st
 
     // 4. Otherwise make a normal constructor.
     return {forall, c, name, args};
-}
-
-expression_ref make_minus(const expression_ref& exp)
-{
-    return Hs::InfixExp({Hs::Neg(),exp});
 }
 
 Hs::ApplyExp make_apply(const Located<Hs::Exp>& head, const Located<Hs::Exp>& arg)
