@@ -121,9 +121,19 @@ void TypeChecker::unify_solve_(const ConstraintOrigin& origin, const Type& t1, c
         unify_solve_(origin, t1, *tt2);
 
     else if (auto tv1 = t1.to<MetaTypeVar>())
-        unify_defer(origin, t1, t2);
+    {
+        if (tv1->level() == level() and not tv1->cycle_breaker and check_type_equality(t1,t2) == ok_result)
+            tv1->fill(t2);
+        else
+            unify_defer(origin, t1, t2);
+    }
     else if (auto tv2 = t2.to<MetaTypeVar>())
-        unify_defer(origin, t1, t2);
+    {
+        if (tv2->level() == level() and not tv2->cycle_breaker and check_type_equality(t2,t1) == ok_result)
+            tv2->fill(t1);
+        else
+            unify_defer(origin, t2, t1);
+    }
     else if (t1.is_a<TypeVar>() or t2.is_a<TypeVar>())
         unify_defer(origin, t1, t2);
     // Handle type synonyms AFTER variables, so that we preserve more type synonyms.
