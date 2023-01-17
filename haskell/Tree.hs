@@ -164,17 +164,17 @@ parentNode rooted_tree n = case parentBranch rooted_tree n of Just b  -> Just $ 
                                                               Nothing -> Nothing
 
 -- For numNodes, numBranches, edgesOutOfNode, and nodesForEdge I'm currently using fake polymorphism
-edgesTowardNode t node = map (reverseEdge t) $ edgesOutOfNode t node
+edgesTowardNode t node = fmap (reverseEdge t) $ edgesOutOfNode t node
 sourceNode  tree b = let (s,_,_,_) = nodesForEdge tree b in s
 sourceIndex tree b = let (_,i,_,_) = nodesForEdge tree b in i
 targetNode  tree b = let (_,_,t,_) = nodesForEdge tree b in t
 reverseEdge tree b = let (_,_,_,r) = nodesForEdge tree b in r
-edgeForNodes t (n1,n2) = head [b | b <- (edgesOutOfNode t n1), (targetNode t b)==n2]
+edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNode t n1)
 nodeDegree t n = length (edgesOutOfNode t n)
-neighbors t n = map (targetNode t) (edgesOutOfNode t n)
+neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
 edgesBeforeEdge t b = let (source,index,_,_) = nodesForEdge t b
-                      in map (reverseEdge t) $ remove_element index $ edgesOutOfNode t source
-edgesAfterEdge t b  = map (reverseEdge t) $ edgesBeforeEdge t $ reverseEdge t b
+                      in fmap (reverseEdge t) $ remove_element index $ edgesOutOfNode t source
+edgesAfterEdge t b  = fmap (reverseEdge t) $ edgesBeforeEdge t $ reverseEdge t b
 
 is_leaf_node t n = (nodeDegree t n < 2)
 is_internal_node t n = not $ is_leaf_node t n
