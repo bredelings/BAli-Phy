@@ -617,13 +617,16 @@ TypeChecker::maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE
 
     auto wanteds = tcs2.current_wanteds();
 
-    if (need_implication)
+    if (not wanteds.empty())
     {
-        auto imp = std::make_shared<Implication>(level()+1, tvs, givens, wanteds, ev_decls, context());
-        current_wanteds().implications.push_back( imp );
+        if (need_implication)
+        {
+            auto imp = std::make_shared<Implication>(level()+1, tvs, givens, wanteds, ev_decls, context());
+            current_wanteds().implications.push_back( imp );
+        }
+        else
+            current_wanteds() += wanteds;
     }
-    else
-        current_wanteds() += wanteds;
 
     return {ev_decls, result};
 }

@@ -844,7 +844,8 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
 
     auto imp = std::make_shared<Implication>(level()+1, qtvs | ranges::to<vector>, givens, wanteds, ev_decls, context());
 
-    current_wanteds().implications.push_back(imp);
+    if (not wanteds.empty())
+        current_wanteds().implications.push_back(imp);
 
     // 5. Check that we don't have any wanteds with a deeper level
     for(auto& constraint: current_wanteds().simple)
