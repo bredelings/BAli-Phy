@@ -741,23 +741,25 @@ namespace yy {
       // alts1
       char dummy57[sizeof (std::vector<Located<Hs::Alt>>)];
 
+      // guardquals
+      // guardquals1
+      char dummy58[sizeof (std::vector<Located<expression_ref>>)];
+
       // qcnames
       // qcnames1
       // con_list
-      char dummy58[sizeof (std::vector<Located<std::string>>)];
+      char dummy59[sizeof (std::vector<Located<std::string>>)];
 
       // decls
       // tup_exprs
       // lexps
       // squals
-      // guardquals
-      // guardquals1
       // apats1
       // stmts
-      char dummy59[sizeof (std::vector<expression_ref>)];
+      char dummy60[sizeof (std::vector<expression_ref>)];
 
       // ops
-      char dummy60[sizeof (std::vector<std::string>)];
+      char dummy61[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1703,6 +1705,11 @@ namespace yy {
         value.move< std::vector<Located<Hs::Alt>> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_guardquals: // guardquals
+      case symbol_kind::S_guardquals1: // guardquals1
+        value.move< std::vector<Located<expression_ref>> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_qcnames: // qcnames
       case symbol_kind::S_qcnames1: // qcnames1
       case symbol_kind::S_con_list: // con_list
@@ -1713,8 +1720,6 @@ namespace yy {
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
-      case symbol_kind::S_guardquals: // guardquals
-      case symbol_kind::S_guardquals1: // guardquals1
       case symbol_kind::S_apats1: // apats1
       case symbol_kind::S_stmts: // stmts
         value.move< std::vector<expression_ref> > (std::move (that.value));
@@ -2546,6 +2551,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<Located<expression_ref>>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<Located<expression_ref>>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<Located<std::string>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -2966,6 +2985,11 @@ switch (yykind)
         value.template destroy< std::vector<Located<Hs::Alt>> > ();
         break;
 
+      case symbol_kind::S_guardquals: // guardquals
+      case symbol_kind::S_guardquals1: // guardquals1
+        value.template destroy< std::vector<Located<expression_ref>> > ();
+        break;
+
       case symbol_kind::S_qcnames: // qcnames
       case symbol_kind::S_qcnames1: // qcnames1
       case symbol_kind::S_con_list: // con_list
@@ -2976,8 +3000,6 @@ switch (yykind)
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
-      case symbol_kind::S_guardquals: // guardquals
-      case symbol_kind::S_guardquals1: // guardquals1
       case symbol_kind::S_apats1: // apats1
       case symbol_kind::S_stmts: // stmts
         value.template destroy< std::vector<expression_ref> > ();
@@ -6066,6 +6088,11 @@ switch (yykind)
         value.copy< std::vector<Located<Hs::Alt>> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_guardquals: // guardquals
+      case symbol_kind::S_guardquals1: // guardquals1
+        value.copy< std::vector<Located<expression_ref>> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_qcnames: // qcnames
       case symbol_kind::S_qcnames1: // qcnames1
       case symbol_kind::S_con_list: // con_list
@@ -6076,8 +6103,6 @@ switch (yykind)
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
-      case symbol_kind::S_guardquals: // guardquals
-      case symbol_kind::S_guardquals1: // guardquals1
       case symbol_kind::S_apats1: // apats1
       case symbol_kind::S_stmts: // stmts
         value.copy< std::vector<expression_ref> > (YY_MOVE (that.value));
@@ -6473,6 +6498,11 @@ switch (yykind)
         value.move< std::vector<Located<Hs::Alt>> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_guardquals: // guardquals
+      case symbol_kind::S_guardquals1: // guardquals1
+        value.move< std::vector<Located<expression_ref>> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_qcnames: // qcnames
       case symbol_kind::S_qcnames1: // qcnames1
       case symbol_kind::S_con_list: // con_list
@@ -6483,8 +6513,6 @@ switch (yykind)
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
-      case symbol_kind::S_guardquals: // guardquals
-      case symbol_kind::S_guardquals1: // guardquals1
       case symbol_kind::S_apats1: // apats1
       case symbol_kind::S_stmts: // stmts
         value.move< std::vector<expression_ref> > (YY_MOVE (s.value));
@@ -6560,7 +6588,7 @@ switch (yykind)
 
 
 } // yy
-#line 6564 "parser.hh"
+#line 6592 "parser.hh"
 
 
 

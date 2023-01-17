@@ -410,8 +410,8 @@
 %type <std::vector<expression_ref>> squals
  /* %type <expression_ref> transformqual */
 
-%type <std::vector<expression_ref>> guardquals
-%type <std::vector<expression_ref>> guardquals1
+%type <std::vector<Located<expression_ref>>> guardquals
+%type <std::vector<Located<expression_ref>>> guardquals1
 
 %type <Hs::Alts> altslist
 %type <std::vector<Located<Hs::Alt>>> alts
@@ -1096,7 +1096,7 @@ gdrhs: gdrhs gdrh             {$$ = $1; $$.push_back($2);}
 
 
 // gdrh is like gdpat, but with = instead of ->
-gdrh: "|" guardquals "=" exp  {$$ = Hs::GuardedRHS{$2,$4};}
+gdrh: "|" guardquals "=" exp  {$$ = Hs::GuardedRHS{$2,{@4,$4}};}
 
 /* sigdecl : infixexp_top "::" sigtypedoc        { }  | ...
 
@@ -1258,8 +1258,8 @@ transformqual: "then" exp                           {}
 /* ------------- Guards ------------------------------------------ */
 guardquals: guardquals1            {$$ = $1;}
 
-guardquals1: guardquals1 "," qual  {$$ = $1;$$.push_back($3);}
-|            qual                  {$$.push_back($1);}
+guardquals1: guardquals1 "," qual  {$$ = $1;$$.push_back({@3,$3});}
+|            qual                  {$$.push_back({@1,$1});}
 
 /* ------------- Case alternatives ------------------------------- */
 altslist: "{" alts "}"           {$$ = Hs::Alts{$2};}
@@ -1289,7 +1289,7 @@ ifgdpats : "{" gdpats "}"        {}
 |          gdpats close          {}
 */
 
-gdpat: "|" guardquals "->" exp   {$$=Hs::GuardedRHS{$2,$4};}
+gdpat: "|" guardquals "->" exp   {$$=Hs::GuardedRHS{$2,{@4,$4}};}
 
 pat: exp      {$$ = $1;}
 |   PREFIX_BANG aexp  {$$ = Hs::StrictPattern($2);}

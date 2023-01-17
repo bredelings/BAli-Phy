@@ -16,15 +16,21 @@ void TypeChecker::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int i)
     if (i < rhs.guards.size())
     {
         // Fig 25. GUARD
+        push_source_span(*rhs.guards[i].loc);
         auto state2 = copy_clear_wanteds();
-        state2.infer_guard_type(rhs.guards[i]);
+        state2.infer_guard_type(unloc(rhs.guards[i]));
+        pop_source_span();
 
         state2.tcRho(rhs, exp_type, i+1);
 
         current_wanteds() += state2.current_wanteds();
     }
     else
-        tcRho(rhs.body, exp_type);
+    {
+        push_source_span(*rhs.body.loc);
+        tcRho(unloc(rhs.body), exp_type);
+        pop_source_span();
+    }
 }
 
 // Fig 25. GUARD-OR

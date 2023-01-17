@@ -66,10 +66,11 @@ bool is_irrefutable_pat(const expression_ref& E)
 
 failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 {
-    auto F = failable_expression(desugar(grhs.body));
+    auto F = failable_expression(desugar(unloc(grhs.body)));
 
-    for(auto& guard: std::reverse(grhs.guards))
+    for(auto& lguard: std::reverse(grhs.guards))
     {
+        auto& guard = unloc(lguard);
 	if (guard.is_a<Hs::SimpleQual>())
 	{
             auto& SQ = guard.as_<Hs::SimpleQual>();

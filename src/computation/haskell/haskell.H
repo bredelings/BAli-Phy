@@ -687,14 +687,14 @@ Expression tuple(const std::vector<Expression>& es);
 
 struct GuardedRHS
 {
-    std::vector<expression_ref> guards;
-    expression_ref body;
+    std::vector<Located<expression_ref>> guards;
+    Located<expression_ref> body;
 
     std::string print() const;
     std::string print_no_equals() const;
 
     GuardedRHS() = default;
-    GuardedRHS(const std::vector<expression_ref> v, const expression_ref& e)
+    GuardedRHS(const std::vector<Located<expression_ref>> v, const Located<expression_ref>& e)
         :guards(v),
          body(e)
     { }

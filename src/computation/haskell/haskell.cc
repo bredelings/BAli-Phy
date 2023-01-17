@@ -701,8 +701,8 @@ std::string GuardedRHS::print() const
 {
     vector<string> guard_string;
     for(auto& guard: guards)
-        guard_string.push_back(guard.print());
-    string result = " = " + body.print();
+        guard_string.push_back(unloc(guard).print());
+    string result = " = " + unloc(body).print();
     if (not guard_string.empty())
         result = "| " + join(guard_string,", ") + result;
     return result;
@@ -711,7 +711,7 @@ std::string GuardedRHS::print() const
 std::string GuardedRHS::print_no_equals() const
 {
     assert(guards.empty());
-    return body.print();
+    return unloc(body).print();
 }
 
 std::string MultiGuardedRHS::print() const
@@ -738,7 +738,7 @@ std::string MultiGuardedRHS::print_no_equals() const
 
 MultiGuardedRHS SimpleRHS(const Located<expression_ref>& body, const optional<Located<Binds>>& decls)
 {
-    return MultiGuardedRHS( {{{},unloc(body)}}   ,decls);
+    return MultiGuardedRHS( {{{},body}}   ,decls);
 }
 
 string LambdaExp::print() const

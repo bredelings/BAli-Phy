@@ -50,9 +50,9 @@ Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R)
     for(auto& guarded_rhs: R.guarded_rhss)
     {
         for(auto& guard: guarded_rhs.guards)
-            guard = rename_infix(m, guard);
+            unloc(guard) = rename_infix(m, unloc(guard));
 
-        guarded_rhs.body = rename_infix(m, guarded_rhs.body);
+        unloc(guarded_rhs.body) = rename_infix(m, unloc(guarded_rhs.body));
     }
 
     if (R.decls)
