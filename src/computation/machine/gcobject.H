@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "object.H"
+#include "immer/map.hpp" // for immer::map
 
 class GCObject: public Object
 {
@@ -15,7 +16,7 @@ public:
 };
 
 
-class GCArray: public GCObject
+class IntArray: public GCObject
 {
     mutable std::vector<int> array_regs;
 
@@ -26,8 +27,24 @@ public:
     int size() const {return array_regs.size();}
     int get_reg(int i) const {return array_regs[i];}
 
-    GCArray(const std::vector<int>& a);
-    GCArray(const GCArray&) = default;
+    IntArray(const std::vector<int>& a);
+    IntArray(const IntArray&) = default;
+};
+
+class IntMap: public GCObject
+{
+    mutable immer::map<int,int> regs;
+
+public:
+    void get_regs(std::vector<int>& regs) const override;
+    void update_regs(const std::vector<int>& regs) const override;
+
+    int size() const {return regs.size();}
+    int get_reg(int i) const {return regs.at(i);}
+    bool has_reg(int i) const {return regs.count(i);}
+
+    IntMap(const immer::map<int,int>& a);
+    IntMap(const IntMap&) = default;
 };
 
 #endif
