@@ -53,12 +53,14 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
 
     int arg_index = int(App.args.size())-1-i;
 
+    // 1. Infer the head type
     Expected fun_type = newInfer();
     if (arg_index > 0)
         tcRho(App, fun_type, i + 1);
     else
         tcRho(unloc(App.head), fun_type);
 
+    // 2. Check the argument type
     if (App.args[arg_index].loc) push_source_span(*App.args[arg_index].loc);
     auto origin = AppOrigin{unloc(App.head), arg_index};
     auto [arg_type, result_type] = unify_function(fun_type.read_type(), origin);
@@ -68,13 +70,24 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
 
     App.arg_wrappers.push_back(wrap_arg);
 
+    if (App.args[arg_index].loc) pop_source_span();
+
+    // 3. Check the return type
+    auto exp_loc = App.head.loc;
+    auto arg_loc = App.args[arg_index].loc;
+    if (exp_loc and arg_loc)
+        *exp_loc += *arg_loc;
+
+    if (exp_loc) push_source_span(*exp_loc);
+
     push_note( Note() << "In expression '"<< App.print()<<"':" );
 
     // Convert the result to the expected time for the term
     auto wrap_res = instantiateSigma(AppOrigin(), result_type, exp_type);
     App.res_wrappers.push_back(wrap_res);
 
-    if (App.args[arg_index].loc) pop_source_span();
+    if (exp_loc) pop_source_span();
+
     pop_note();
 }
 
