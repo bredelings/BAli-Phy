@@ -63,3 +63,13 @@ instance Foldable (Array Int) where
         go i x | i < n      = let z' = (f x (arr!i)) in z' `seq` go (i+1) z'
                | otherwise  = x
         n = length arr
+
+    foldr f z arr = go 0 where
+        go i | i < n     = f (arr!i) $ go (i+1)
+             | otherwise = z
+        n = length arr
+
+    foldr1 f arr = go 0 where
+        go i | i < n' = f (arr!i) $ go (i+1)
+             | otherwise =  (arr!n')
+        n' = length arr - 1
