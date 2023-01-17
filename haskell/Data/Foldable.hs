@@ -65,15 +65,15 @@ notElem x c = not (elem x c)
 
 concat xs   = foldr (L.++) [] xs
 
-concatMap f = concat . L.map f
+concatMap f xs = foldr (\x ys -> f x L.++ ys) [] xs
 
 and         =  foldr (&&) True
 
 or          =  foldr (||) False
 
-any p       =  or . L.map p
+all p       =  foldr (\x y -> p x && y) True
 
-all p       =  and . L.map p
+any p       =  foldr (\x y -> p x || y) False
 
 find p xs = foldr found Nothing xs where
     found x f = if p x
