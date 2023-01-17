@@ -372,7 +372,8 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
     push_source_span(*inst_info.class_con.name.loc);
     // Instantiate it with rigid type variables.
-    auto [wrap_gen, instance_tvs, givens, instance_head] = skolemize(inst_type, false);
+    auto tc2 = copy_clear_wanteds(true);
+    auto [wrap_gen, instance_tvs, givens, instance_head] = tc2.skolemize(inst_type, true);
     auto [instance_class, instance_args] = decompose_type_apps(instance_head);
 
     // 2. Get the class info
@@ -393,12 +394,6 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
     // 5. Construct binds_super
     auto wanteds = preds_to_constraints(GivenOrigin(), Wanted, superclass_constraints);
-    // FIXME: This isn't the right place to check if we can solve the constraints!
-    // auto WC = WantedConstraints(wanteds);
-    // auto decls_super = entails(givens, WC);
-    // if (not WC.simple.empty())
-    //    record_error( Note() <<"Can't derive superclass constraints "<<print(WC.simple)<<" from instance constraints "<<print(givens)<<"!" );
-    // FIXME -- we can't instantiate the wrapper for install after solving is finished!
     auto decls_super = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
     auto wrap_let = Core::WrapLet(decls_super);
     pop_note();
