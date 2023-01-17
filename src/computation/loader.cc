@@ -107,7 +107,7 @@ Module module_loader::load_module_from_file(const fs::path& filename) const
     {
 	try
 	{
-            auto fname = std::make_shared<string>( pretty_module_path(filename) );
+            auto fname = std::make_shared<string>( pretty_module_path(filename).string() );
 
 	    string file_contents = read_file(filename.string(), "module");
 
