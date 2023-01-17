@@ -199,7 +199,7 @@ tree_from_edges num_nodes edges = Tree nodesArray (listArray (2*num_branches) br
 
     reverse b = (b + num_branches) `mod` (2*num_branches)
 
-    find_branch b = listToMaybe [(s,t) | (b',(s,t)) <- branch_edges, b==b']
+    find_branch b = fmap snd $ find (\(b',_) -> b' == b) branch_edges
 
     nodesArray = listArray num_nodes nodes where
         nodes = [ [b | (b,(x,y)) <- branch_edges, x==n] | n <- [0..num_nodes-1]]
