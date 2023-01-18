@@ -1009,14 +1009,14 @@ struct MatchContext: std::variant<LambdaContext, CaseContext, FunctionContext>
 
 struct CaseExp: public Object
 {
-    Expression object;
+    Located<Expression> object;
     Matches alts;
 
     CaseExp* clone() const { return new CaseExp(*this);}
     std::string print() const;
 
-    CaseExp(const Expression& o, const Alts& as);
-    CaseExp(const Expression& o, const Matches& ms);
+    CaseExp(const Located<Expression>& o, const Alts& as);
+    CaseExp(const Located<Expression>& o, const Matches& ms);
 };
 
 struct FunDecl: public Object

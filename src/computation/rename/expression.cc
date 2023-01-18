@@ -166,11 +166,11 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
         unloc(I.false_branch) = rename_infix(m, unloc(I.false_branch));
         return I;
     }
-    else if (E.is_a<Haskell::CaseExp>())
+    else if (auto c = E.to<Haskell::CaseExp>())
     {
-        auto C = E.as_<Haskell::CaseExp>();
+        auto C = *c;
 
-        C.object = rename_infix(m, C.object);
+        unloc(C.object) = rename_infix(m, unloc(C.object));
 
         for(auto& [patterns, rhs]: C.alts)
         {
@@ -409,12 +409,12 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         TE.type = rename_type(TE.type);
         return TE;
     }
-    else if (E.is_a<Haskell::CaseExp>())
+    else if (auto c = E.to<Haskell::CaseExp>())
     {
-        auto C = E.as_<Haskell::CaseExp>();
+        auto C = *c;
 
-        C.object = rename(C.object, bound, free_vars);
-        C.alts   = rename(C.alts,   bound, free_vars);
+        unloc(C.object) = rename(unloc(C.object), bound, free_vars);
+              C.alts    = rename(      C.alts,    bound, free_vars);
 
         return C;
     }

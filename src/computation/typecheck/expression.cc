@@ -123,7 +123,9 @@ void TypeChecker::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
 void TypeChecker::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 {
     // 2. Check the object
-    auto object_type = inferRho(Case.object);
+    if (Case.object.loc) push_source_span(*Case.object.loc);
+    auto object_type = inferRho(unloc(Case.object));
+    if (Case.object.loc) pop_source_span();
 
     // 3. Check the alternatives
     tcMatches(Hs::CaseContext(), Case.alts, {Check(object_type)}, exp_type);

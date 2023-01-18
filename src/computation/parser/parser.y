@@ -1168,7 +1168,7 @@ aexp: qvar "@" aexp              {$$ = Hs::AsPattern(Hs::Var({@1,$1}),$3);}
 /* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
 |     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = Hs::IfExp({@2,$2},{@5,$5},{@8,$8});}
 /* |     "if" ifgdpats              {} MultiWayIf extension not currently handled */
-|     "case" exp "of" altslist   {$$ = Hs::CaseExp($2,$4);}
+|     "case" exp "of" altslist   {$$ = Hs::CaseExp({@2,$2},$4);}
 |     "do" stmtlist              {$$ = Hs::Do($2);}
 |     "mdo" stmtlist             {$$ = Hs::MDo($2);}
 /* |     "proc" aexp "->" exp       {} -XArrows not currently handled */

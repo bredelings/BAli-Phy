@@ -3868,7 +3868,7 @@ namespace yy {
 
   case 297: // aexp: "case" exp "of" altslist
 #line 1171 "parser.y"
-                                 {yylhs.value.as < expression_ref > () = Hs::CaseExp(yystack_[2].value.as < expression_ref > (),yystack_[0].value.as < Hs::Alts > ());}
+                                 {yylhs.value.as < expression_ref > () = Hs::CaseExp({yystack_[2].location,yystack_[2].value.as < expression_ref > ()},yystack_[0].value.as < Hs::Alts > ());}
 #line 3873 "parser.cc"
     break;
 

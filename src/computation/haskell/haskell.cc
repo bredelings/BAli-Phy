@@ -400,7 +400,7 @@ string CaseExp::print() const
     for(auto& alt: alts)
         alt_strings.push_back(alt.patterns[0].print() + " -> " + alt.rhs.print_no_equals());
 
-    return "case " + object.print() + " of {" + join(alt_strings, "\n;") + "}";
+    return "case " + unloc(object).print() + " of {" + join(alt_strings, "\n;") + "}";
 }
 
 Matches matches_from_alts(const Alts& alts)
@@ -414,11 +414,11 @@ Matches matches_from_alts(const Alts& alts)
     return matches;
 }
 
-CaseExp::CaseExp(const Expression& o, const Matches& ms)
+CaseExp::CaseExp(const Located<Expression>& o, const Matches& ms)
     : object(o), alts(ms)
 { }
 
-CaseExp::CaseExp(const Expression& o, const Alts& as)
+CaseExp::CaseExp(const Located<Expression>& o, const Alts& as)
     : object(o), alts( matches_from_alts(as) )
 { }
 

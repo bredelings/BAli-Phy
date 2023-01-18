@@ -498,11 +498,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
         return case_expression(condition,{Hs::TruePat()},{failable_expression(true_branch)}).result(false_branch);
     }
-    else if (E.is_a<Hs::CaseExp>())
+    else if (auto c = E.to<Hs::CaseExp>())
     {
-        auto& C = E.as_<Hs::CaseExp>();
+        auto& C = *c;
 
-        expression_ref obj = desugar(C.object);
+        expression_ref obj = desugar(unloc(C.object));
 
         vector<expression_ref> patterns;
         vector<failable_expression> bodies;

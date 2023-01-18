@@ -167,7 +167,7 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
                 // This could lead to worse error messages.
 
                 Hs::Var x({noloc,"v$0"}); // FIXME??
-                expression_ref body = Haskell::CaseExp(x,Haskell::Alts(alts));
+                expression_ref body = Haskell::CaseExp({noloc,x},Haskell::Alts(alts));
                 body = Haskell::LambdaExp({x},body);
 
                 decls2.push_back(Haskell::ValueDecl({noloc,name}, body));
