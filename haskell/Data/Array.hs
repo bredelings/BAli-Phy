@@ -13,6 +13,7 @@ module Data.Array (module Data.Array,
 
 import Compiler.Base -- for `seq`
 import Data.Bool
+import Data.Maybe
 import Data.Ix
 import Data.List
 import Data.Ord
@@ -29,6 +30,8 @@ foreign import bpcall "Array:getIndex" (!) :: Array a b -> a -> b
 
 foreign import bpcall "Array:arraySize" numElements :: Array a b -> Int
 foreign import bpcall "Array:mkArray" mkArray :: a -> (a -> b) -> Array a b
+
+foreign import bpcall "Array:" removeElement :: Int -> Array Int e -> Array Int e
 
 listArray n l = mkArray n (\i -> l !! i)
 
@@ -73,3 +76,9 @@ instance Foldable (Array Int) where
         go i | i < n' = f (arr!i) $ go (i+1)
              | otherwise =  (arr!n')
         n' = length arr - 1
+
+elemIndexArray val array = go 0 where
+    go i | i >= n            = Nothing
+         | (array!i) == val  = Just i
+         | otherwise         = go (i+1)
+    n = numElements array

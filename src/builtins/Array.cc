@@ -74,3 +74,38 @@ extern "C" closure builtin_function_getIndex(OperationArgs& Args)
     // Return a reference to the heap variable pointed to by the nth entry
     return {index_var(0), {C.Env[n]} };
 }
+
+extern "C" closure builtin_function_removeElement(OperationArgs& Args)
+{
+    int idx = Args.evaluate(0).as_int();
+
+    // Do this second, so that evaluation of the 1st argument can't call expand_memory afterwards.
+    const closure& C = Args.evaluate_slot_to_closure(1);
+
+    if (not is_constructor(C.exp.head()) or C.exp.head().as_<constructor>().f_name != "Array")
+	throw myexception()<<"Trying to remove element from expression that is not an Array:   "<<C.exp;
+
+    int n = C.exp.size();
+    if (idx < 0 or idx >= n)
+        throw myexception()<<"Trying to remove element '"<<idx<<"' from an Array of size "<<n<<"!";
+
+    object_ptr<expression> exp = new expression(constructor("Array",n-1));
+    exp->sub.resize(n-1);
+
+    closure result;
+    result.Env.resize(n-1);
+    for(int i=0,j=0; i<n-1; i++,j++)
+    {
+        if (i==idx) j++;
+
+	// change to result.exp <<= index_var(i)
+	exp->sub[i] = index_var(n - 1 - i);
+
+	// Add the var to the environment
+	result.Env[i] = C.Env[j];
+    }
+    result.exp = exp;
+
+    return result;
+}
+
