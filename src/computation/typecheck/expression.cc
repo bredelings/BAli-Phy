@@ -123,9 +123,7 @@ void TypeChecker::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
 void TypeChecker::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
 {
     // 2. Check the object
-    if (Case.object.loc) push_source_span(*Case.object.loc);
-    auto object_type = inferRho(unloc(Case.object));
-    if (Case.object.loc) pop_source_span();
+    auto object_type = inferRho(Case.object);
 
     // 3. Check the alternatives
     tcMatches(Hs::CaseContext(), Case.alts, {Check(object_type)}, exp_type);
@@ -328,7 +326,14 @@ void TypeChecker::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
     checkRho(L.to, to_type);
 }
 
-void TypeChecker::tcRho(expression_ref& E, const Expected& exp_type)
+void TypeChecker::tcRho(Located<Hs::Expression>& E, const Expected& exp_type)
+{
+    if (E.loc) push_source_span(*E.loc);
+    tcRho(unloc(E), exp_type);
+    if (E.loc) pop_source_span();
+}
+
+void TypeChecker::tcRho(Hs::Expression& E, const Expected& exp_type)
 {
     // VAR
     if (auto v = E.to<Hs::Var>())

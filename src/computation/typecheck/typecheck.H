@@ -397,7 +397,8 @@ public:
         return result_type.read_type();
     }
 
-    void tcRho(expression_ref& exp, const Expected& E);
+    void tcRho(Located<Hs::Expression>& exp, const Expected& E);
+    void tcRho(Hs::Expression& exp, const Expected& E);
 
     void tcRho(Hs::Var&, const Expected& E);
 
