@@ -3,7 +3,7 @@ module Tree where
 import Data.Foldable
 
 class Tree t where
-    edgesOutOfNode :: t -> Int -> [Int]
+    edgesOutOfNode :: t -> Int -> Array Int Int
     nodesForEdge :: t -> Int -> (Int, Int, Int, Int)
     numNodes :: t -> Int
 
@@ -25,7 +25,7 @@ class Tree t => LabelledTree t where
     get_labels :: t -> [String]
 
 
-data TreeImp = Tree (Array Int [Int]) (Array Int (Int,Int,Int,Int)) Int
+data TreeImp = Tree (Array Int (Array Int Int)) (Array Int (Int,Int,Int,Int)) Int
 
 data RootedTreeImp t = RootedTree t Int (Array Int Bool)
 
@@ -173,7 +173,7 @@ edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutO
 nodeDegree t n = length (edgesOutOfNode t n)
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
 edgesBeforeEdge t b = let (source,index,_,_) = nodesForEdge t b
-                      in fmap (reverseEdge t) $ remove_element index $ edgesOutOfNode t source
+                      in fmap (reverseEdge t) $ removeElement index $ edgesOutOfNode t source
 edgesAfterEdge t b  = fmap (reverseEdge t) $ edgesBeforeEdge t $ reverseEdge t b
 
 is_leaf_node t n = (nodeDegree t n < 2)
@@ -202,10 +202,10 @@ tree_from_edges num_nodes edges = Tree nodesArray (listArray (2*num_branches) br
     find_branch b = fmap snd $ find (\(b',_) -> b' == b) branch_edges
 
     nodesArray = listArray num_nodes nodes where
-        nodes = [ [b | (b,(x,y)) <- branch_edges, x==n] | n <- [0..num_nodes-1]]
+        nodes = [ listArray' [b | (b,(x,y)) <- branch_edges, x==n] | n <- [0..num_nodes-1]]
 
     branches = [ let Just (s,t) = find_branch b
-                     Just i     = elemIndex b (nodesArray!s)
+                     Just i     = elemIndexArray b (nodesArray!s)
                  in (s,i,t,reverse b) | b <- [0..2*num_branches-1] ]
 
 
@@ -217,7 +217,7 @@ allEdgesFromNode tree n = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tre
 add_labels labels t = LabelledTree t labels
 
 add_root r t = rt
-     where check_away_from_root b = (sourceNode rt b == root rt) || (or $ map (away_from_root rt) (edgesBeforeEdge rt b))
+     where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdge rt b))
            nb = numBranches t * 2
            rt = RootedTree t r (mkArray nb check_away_from_root)
 

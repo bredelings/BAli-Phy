@@ -34,7 +34,7 @@ uniform_topology_edges (l : ls) (i : is) = do
     return $ [(l, i), (x, i), (i, y)] ++ es2
 
 -- We could rewrite uniform_topology_edges to automatically flip and sort the branches with leaf branches first.
-sample_uniform_topology 1 = return $ Tree (listArray' [[]]) (listArray' []) 1
+sample_uniform_topology 1 = return $ Tree (listArray' [listArray' []]) (listArray' []) 1
 sample_uniform_topology n = do
     let num_nodes = 2 * n - 2
     edges <- uniform_topology_edges [0 .. n - 1] [n .. num_nodes - 1]
@@ -43,7 +43,7 @@ sample_uniform_topology n = do
 
 force_tree tree@(Tree nodes branches n_nodes) = force_nodes `seq` force_branches where
     n_branches = numBranches tree
-    force_nodes    = force_struct $ listArray' [ force_list $ edgesOutOfNode tree node | node <- xrange 0 n_nodes ]
+    force_nodes    = force_struct $ listArray' [ force_struct $ edgesOutOfNode tree node | node <- xrange 0 n_nodes ]
     force_branches = force_struct $ listArray' [ force_struct $ nodesForEdge tree b | b <- xrange 0 (n_branches * 2)]
 
 -- leaves   nodes  branches
@@ -60,7 +60,7 @@ modifiable_cayley_tree modf tree = Tree (listArray' nodes) (listArray' branches)
     degree node | n_leaves == 1   = 0
                 | node < n_leaves = 1
                 | otherwise       = 3
-    nodes    = [ mapn (degree node) modf (edgesOutOfNode tree node) | node <- xrange 0 n_nodes ]
+    nodes    = [ mapnA (degree node) modf (edgesOutOfNode tree node) | node <- xrange 0 n_nodes ]
     branches = [ (modf s, modf i, modf t, (b + n_branches) `mod` (2*n_branches)) | b <- xrange 0 (n_branches * 2), let (s, i, t, _) = nodesForEdge tree b ]
 
 -- our current modifiable tree structure requires the node to have a constrant degree.
@@ -185,7 +185,7 @@ modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $
 
     reverse b = (b + n_branches) `mod` (2*n_branches)
 
-    nodes    = [ mapn (degree node) modf (edgesOutOfNode tree node) | node <- xrange 0 n_nodes ]
+    nodes    = [ mapnA (degree node) modf (edgesOutOfNode tree node) | node <- xrange 0 n_nodes ]
 
     branches = [ (modf s, modf i, modf t, reverse b) | b <- xrange 0 (n_branches * 2),
                                                        let (s, i, t, _) = nodesForEdge tree b ]

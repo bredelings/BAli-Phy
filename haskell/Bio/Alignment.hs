@@ -5,6 +5,7 @@ module Bio.Alignment (module Bio.Alignment,
 
 import Tree
 import Data.BitVector
+import Data.Foldable
 import Parameters
 import Foreign.Vector
 import Foreign.Pair
@@ -20,7 +21,7 @@ foreign import bpcall "Alignment:leaf_sequence_counts" builtin_leaf_sequence_cou
 branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) [0..n_branches-1]
   
 seqlength as tree node = pairwise_alignment_length1 (as!b) where
-    b = head $ edgesOutOfNode tree node
+    b = edgesOutOfNode tree node!0
 
 
 minimally_connect_characters a t = mkArray (numNodes t) node_to_bits where
@@ -28,9 +29,11 @@ minimally_connect_characters a t = mkArray (numNodes t) node_to_bits where
     node_to_bits n = if is_leaf_node t n then
                          alignment_row_to_bitvector a n
                      else
-                         foldl1 (.|.) $ [(character_behind_branch_array!b1) .&. (character_behind_branch_array!b2) | (b1,b2) <- pairs $ edgesTowardNode t n]
-    character_behind_branch b = case edgesBeforeEdge t b of [] -> alignment_row_to_bitvector a (sourceNode t b)
-                                                            [b1,b2] -> (character_behind_branch_array!b1) .|. (character_behind_branch_array!b2)
+                         foldl1 (.|.) $ [(character_behind_branch_array!b1) .&. (character_behind_branch_array!b2) | (b1,b2) <- pairs $ toList $ edgesTowardNode t n]
+    character_behind_branch b = let edges = edgesBeforeEdge t b
+                                in if null edges
+                                   then alignment_row_to_bitvector a (sourceNode t b)
+                                   else foldl1 (.|.) $ fmap (character_behind_branch_array!) edges
     character_behind_branch_array = mkArray (2*numBranches t) character_behind_branch
 
 pairwise_alignments_from_matrix a tree = [ pairwise_alignment_from_bits bits1 bits2 | b <- [0..2*numBranches tree-1],
