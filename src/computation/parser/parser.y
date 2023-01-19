@@ -41,7 +41,7 @@
   Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const std::optional<Located<Hs::Decls>>& decls);
   Hs::Context make_context(const Hs::Type& context);
 
-  Hs::ApplyExp make_apply(const Located<Hs::Expression>& head, const Located<Hs::Expression>& arg);
+  Hs::LExp make_apply(const Hs::LExp& head, const Hs::LExp& arg);
 
   expression_ref yy_make_string(const std::string&);
 }
@@ -384,29 +384,29 @@
 %type <void> explicit_activation
  */
 
-%type <expression_ref> exp
-%type <Hs::InfixExp> infixexp
-%type <Hs::InfixExp> infixexp_top
-%type <expression_ref> exp10_top
-%type <expression_ref> exp10
+%type <Located<expression_ref>> exp
+%type <Located<Hs::InfixExp>> infixexp
+%type <Located<Hs::InfixExp>> infixexp_top
+%type <Located<expression_ref>> exp10_top
+%type <Located<expression_ref>> exp10
 
-%type <expression_ref> fexp
-%type <expression_ref> aexp
-%type <expression_ref> aexp1
-%type <expression_ref> aexp2
-%type <expression_ref> texp
-%type <std::vector<expression_ref>> tup_exprs
+%type <Located<expression_ref>> fexp
+%type <Located<expression_ref>> aexp
+%type <Located<expression_ref>> aexp1
+%type <Located<expression_ref>> aexp2
+%type <Located<expression_ref>> texp
+%type <std::vector<Located<expression_ref>>> tup_exprs
  /*
 %type <void> tup_tail
  */
 %type <expression_ref> list
-%type <std::vector<expression_ref>> lexps
+%type <std::vector<Located<expression_ref>>> lexps
 
  /* 
 %type <std::vector<expression_ref>> flattenedpquals 
 %type <std::vector<expression_ref>> pquals
  */
-%type <std::vector<expression_ref>> squals
+%type <std::vector<Located<expression_ref>>> squals
  /* %type <expression_ref> transformqual */
 
 %type <std::vector<Located<expression_ref>>> guardquals
@@ -420,16 +420,16 @@
 %type <std::vector<Hs::GuardedRHS>> gdpats
  /* %type <expression_ref> ifgdpats */
 %type <Hs::GuardedRHS> gdpat
-%type <expression_ref> pat
-%type <expression_ref> bindpat
-%type <expression_ref> apat
-%type <std::vector<expression_ref>> apats1
+%type <Located<expression_ref>> pat
+%type <Located<expression_ref>> bindpat
+%type <Located<expression_ref>> apat
+%type <std::vector<Located<expression_ref>>> apats1
 
 %type <Hs::Stmts> stmtlist
-%type <std::vector<expression_ref>> stmts
-%type <expression_ref> stmt
+%type <std::vector<Located<expression_ref>>> stmts
+%type <Located<expression_ref>> stmt
 
-%type <expression_ref> qual
+%type <Located<expression_ref>> qual
  /*
 %type <void> fbinds
 %type <void> fbinds1
@@ -653,7 +653,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        annotation*/
 |        decl_no_th                            {$$ = $1;}
 /* What is this for? How is this a decl ? */
-|        infixexp_top                          {$$ = $1;}
+|        infixexp_top                          {$$ = unloc($1);}
 
 cl_decl: "class" tycl_hdr /*fds*/ where_cls   {$$ = make_class_decl($2.first,$2.second,$3);}
 
@@ -1080,14 +1080,14 @@ deriv_clause_types: qtycondoc
 
 decl_no_th: sigdecl           {$$ = $1;}
 /* I guess this is a strict let. Code as DeclStrict, rather than StrictPattern, since docs say this is part of the binding, not part of the patter */
-| PREFIX_BANG aexp rhs                {$$ = Hs::StrictValueDecl{{@2,$2},$3}; }
-| infixexp_top rhs            {$$ = Hs::ValueDecl({@1,$1},$2);}
+| PREFIX_BANG aexp rhs                {$$ = Hs::StrictValueDecl{$2,$3}; }
+| infixexp_top rhs            {$$ = Hs::ValueDecl({$1.loc,unloc($1)},$2);}
 
 decl: decl_no_th              {$$ = $1;}
 /*  | splice_exp */
 
 // rhs is like altrhs but with = instead of ->
-rhs: "=" exp wherebinds       {$$ = Hs::SimpleRHS({@2,$2},$3);}
+rhs: "=" exp wherebinds       {$$ = Hs::SimpleRHS($2,$3);}
 |    gdrhs wherebinds         {$$ = Hs::MultiGuardedRHS{$1,$2};}
 
 gdrhs: gdrhs gdrh             {$$ = $1; $$.push_back($2);}
@@ -1095,7 +1095,7 @@ gdrhs: gdrhs gdrh             {$$ = $1; $$.push_back($2);}
 
 
 // gdrh is like gdpat, but with = instead of ->
-gdrh: "|" guardquals "=" exp  {$$ = Hs::GuardedRHS{$2,{@4,$4}};}
+gdrh: "|" guardquals "=" exp  {$$ = Hs::GuardedRHS{$2,$4};}
 
 /* sigdecl : infixexp_top "::" sigtypedoc        { }  | ...
 
@@ -1126,18 +1126,18 @@ explicit_activation: "[" INTEGER "]"
 /* ------------- Expressions ------------------------------------- */
 
 /* EP */
-exp: infixexp "::" sigtype { $$ = Hs::TypedExp($1,$3); }
-|    infixexp              { $$ = $1; }
+exp: infixexp "::" sigtype { $$ = {@1+@3, Hs::TypedExp({$1.loc,unloc($1)},$3)}; }
+|    infixexp              { $$ = {$1.loc,unloc($1)}; }
 
 /* EP */
 
-infixexp: exp10                 {$$ = Hs::InfixExp({{@1,$1}});}
-|         infixexp qop exp10    {$$ = $1; $$.terms.push_back({@2,$2}); $$.terms.push_back({@3,$3});}
+infixexp: exp10                 {$$ = {@1,Hs::InfixExp({$1})};}
+|         infixexp qop exp10    {$$ = $1; $$.loc = @1+@3; unloc($$).terms.push_back({@2,$2}); unloc($$).terms.push_back($3);}
 
-infixexp_top: exp10_top         {$$ = Hs::InfixExp({{@1,$1}});}
-|             infixexp_top qop exp10_top  {$$ = $1; $$.terms.push_back({@2,$2}); $$.terms.push_back({@3,$3});}
+infixexp_top: exp10_top         {$$ = {@1, Hs::InfixExp({$1})};}
+|             infixexp_top qop exp10_top  {$$ = $1; $$.loc = @1+@3; unloc($$).terms.push_back({@2,$2}); unloc($$).terms.push_back($3);}
 
-exp10_top: "-" fexp                {$$ = Hs::InfixExp( {{@1,Hs::Neg()}, {@2,$2}} );}
+exp10_top: "-" fexp                {$$ = {@1+@2,Hs::InfixExp( { {@1,Hs::Neg()}, $2} )};}
 |          "{-# CORE" STRING "#-}" {}
 |          fexp                    {$$ = $1;}
 
@@ -1155,22 +1155,22 @@ scc_annot: "{-# SCC" STRING "#-}"
 /* hpc_annot */
 
 /* EP */
-fexp: fexp aexp                  {$$ = make_apply({@1,$1}, {@2,$2});}
+fexp: fexp aexp                  {$$ = make_apply($1, $2);}
 |     fexp TYPEAPP atype         {}
 |     "static" aexp              {}
 |     aexp                       {$$ = $1;}
 
 /* EP */
-aexp: qvar "@" aexp              {$$ = Hs::AsPattern(Hs::Var({@1,$1}),$3);}
-|     PREFIX_TILDE aexp                   {$$ = Hs::LazyPattern($2);}
-|     "\\" apats1 "->" exp       {$$ = Hs::LambdaExp($2,$4);}
-|     "let" binds "in" exp       {$$ = Hs::LetExp($2,{@4,$4});}
+aexp: qvar "@" aexp              {$$ = {@$, Hs::AsPattern(Hs::Var({@1,$1}),$3)}; }
+|     PREFIX_TILDE aexp          {$$ = {@$, Hs::LazyPattern($2)}; }
+|     "\\" apats1 "->" exp       {$$ = {@$, Hs::LambdaExp($2,$4)}; }
+|     "let" binds "in" exp       {$$ = {@$, Hs::LetExp($2,$4)}; }
 /* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
-|     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = Hs::IfExp({@2,$2},{@5,$5},{@8,$8});}
+|     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = {@1+@8,Hs::IfExp($2,$5,$8)}; }
 /* |     "if" ifgdpats              {} MultiWayIf extension not currently handled */
-|     "case" exp "of" altslist   {$$ = Hs::CaseExp({@2,$2},$4);}
-|     "do" stmtlist              {$$ = Hs::Do($2);}
-|     "mdo" stmtlist             {$$ = Hs::MDo($2);}
+|     "case" exp "of" altslist   {$$ = {@$, Hs::CaseExp($2,$4)}; }
+|     "do" stmtlist              {$$ = {@$, Hs::Do($2)}; }
+|     "mdo" stmtlist             {$$ = {@$, Hs::MDo($2)}; }
 /* |     "proc" aexp "->" exp       {} -XArrows not currently handled */
 |     aexp1                      {$$ = $1;}
 
@@ -1179,25 +1179,25 @@ aexp1: aexp1 "{" fbinds "}"   {}
 |      aexp2                  {$$ = $1;}
 
 /* EP */
-aexp2: qvar                   {$$ = Hs::Var({@1,$1});}
-|      qcon                   {$$ = Hs::Con({@1,$1});}
-|      literal                {$$ = $1;}
-|      "(" texp ")"           {$$ = $2;}
-|      "(" tup_exprs ")"      {$$ = Hs::Tuple($2);}
+aexp2: qvar                   {$$ = {@$, Hs::Var({@1,$1})};}
+|      qcon                   {$$ = {@$, Hs::Con({@1,$1})};}
+|      literal                {$$ = {@$, $1};}
+|      "(" texp ")"           {$$ = {@$, unloc($2)};}
+|      "(" tup_exprs ")"      {$$ = {@$, Hs::Tuple($2)};}
 /* 
 |      "(#" texp "#)"         {}
 |      "(#" tup_exprs "#)"    {}
 */
-|      "[" list "]"           {$$ = $2;}
-|      "_"                    {$$ = Hs::WildcardPattern();}
+|      "[" list "]"           {$$ = {@$, $2};}
+|      "_"                    {$$ = {@$, Hs::WildcardPattern()};}
 /* Skip Template Haskell Extensions */
 
 /* ------------- Tuple expressions ------------------------------- */
 
 /* EP */
 texp: exp             {$$ = $1;}
-|     infixexp qop    {$$ = Hs::LeftSection ( $1, $2 ); }
-|     qopm infixexp   {$$ = Hs::RightSection( $1, $2 ); }
+|     infixexp qop    {$$ = {@$, Hs::LeftSection ( {$1.loc, unloc($1)}, {@2,$2} )}; }
+|     qopm infixexp   {$$ = {@$, Hs::RightSection( {@1,$1}, {$2.loc,unloc($2)} )}; }
 /* view patterns 
 |     exp "->" texp
 */
@@ -1221,8 +1221,8 @@ tup_tail: texp commas_tup_tail
 */
 /* ------------- List expressions -------------------------------- */
 
-list: texp                       { $$ = Hs::List{{$1}}; }
-|     lexps                      { $$ = Hs::List{$1}; }
+list: texp                       { $$ = Hs::List({$1}); }
+|     lexps                      { $$ = Hs::List($1); }
 |     texp ".."                  { $$ = Hs::ListFrom($1); }
 |     texp "," exp ".."          { $$ = Hs::ListFromThen($1,$3); }
 |     texp ".." exp              { $$ = Hs::ListFromTo($1,$3); }
@@ -1257,8 +1257,8 @@ transformqual: "then" exp                           {}
 /* ------------- Guards ------------------------------------------ */
 guardquals: guardquals1            {$$ = $1;}
 
-guardquals1: guardquals1 "," qual  {$$ = $1;$$.push_back({@3,$3});}
-|            qual                  {$$.push_back({@1,$1});}
+guardquals1: guardquals1 "," qual  {$$ = $1;$$.push_back($3);}
+|            qual                  {$$.push_back($1);}
 
 /* ------------- Case alternatives ------------------------------- */
 altslist: "{" alts "}"           {$$ = Hs::Alts{$2};}
@@ -1275,7 +1275,7 @@ alts1: alts1 ";" alt             {$$ = $1; $$.push_back($3);}
 
 alt:   pat alt_rhs               {$$ = Located<Hs::Alt>{@1+@2,{$1,$2}};}
 
-alt_rhs: "->" exp wherebinds     {$$ = Hs::SimpleRHS({@2,$2},$3);}
+alt_rhs: "->" exp wherebinds     {$$ = Hs::SimpleRHS($2,$3);}
 |        gdpats   wherebinds     {$$ = Hs::MultiGuardedRHS($1,$2);}
 
 gdpats: gdpats gdpat             {$$ = $1; $$.push_back($2);}
@@ -1288,16 +1288,16 @@ ifgdpats : "{" gdpats "}"        {}
 |          gdpats close          {}
 */
 
-gdpat: "|" guardquals "->" exp   {$$=Hs::GuardedRHS{$2,{@4,$4}};}
+gdpat: "|" guardquals "->" exp   {$$=Hs::GuardedRHS{$2,$4};}
 
 pat: exp      {$$ = $1;}
-|   PREFIX_BANG aexp  {$$ = Hs::StrictPattern($2);}
+|   PREFIX_BANG aexp  {$$ = {@$, Hs::StrictPattern($2)};}
 
 bindpat: exp  {$$ = $1;}
-|   PREFIX_BANG aexp  {$$ = Hs::StrictPattern($2);}
+|   PREFIX_BANG aexp  {$$ = {@$, Hs::StrictPattern($2)};}
 
 apat: aexp    {$$ = $1;}
-|    PREFIX_BANG aexp {$$ = Hs::StrictPattern($2);}
+|    PREFIX_BANG aexp {$$ = {@$, Hs::StrictPattern($2)};}
 
 apats1: apats1 apat {$$ = $1; $$.push_back($2);}
 |       apat        {$$.push_back($1);}
@@ -1315,11 +1315,11 @@ stmts: stmts ";" stmt  {$$ = $1; $$.push_back($3);}
 |             %empty */
 
 stmt: qual              {$$ = $1;}
-|     "rec" stmtlist    {$$ = Hs::RecStmt($2);}
+|     "rec" stmtlist    {$$ = {@$, Hs::RecStmt($2)};}
 
-qual: bindpat "<-" exp  {$$ = Hs::PatQual($1,$3);}
-|     exp               {$$ = Hs::SimpleQual($1);}
-|     "let" binds       {$$ = Hs::LetQual($2);}
+qual: bindpat "<-" exp  {$$ = {@$, Hs::PatQual($1,$3)};}
+|     exp               {$$ = {@$, Hs::SimpleQual($1)};}
+|     "let" binds       {$$ = {@$, Hs::LetQual($2)};}
 
 
 /* ------------- Record Field Update/Construction ---------------- */
@@ -1848,14 +1848,14 @@ Hs::ConstructorDecl make_constructor(const vector<Hs::TypeVar>& forall, const st
     return {forall, c, name, args};
 }
 
-Hs::ApplyExp make_apply(const Located<Hs::Exp>& head, const Located<Hs::Exp>& arg)
+Hs::LExp make_apply(const Hs::LExp& head, const Hs::LExp& arg)
 {
     if (auto app = unloc(head).to<Hs::ApplyExp>())
     {
         auto App = *app;
         App.args.push_back(arg);
-        return App;
+        return {*head.loc + *arg.loc, App};
     }
     else
-        return Hs::ApplyExp(head, {arg});
+        return {*head.loc + *arg.loc, Hs::ApplyExp(head, {arg})};
 }

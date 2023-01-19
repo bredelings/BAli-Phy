@@ -20,9 +20,9 @@ Hs::FunDecl dictionary_extractor(const Hs::Var& extractor, int i, int N)
     Hs::Var field({noloc,"field"});
 
     // pattern = (_,field,_,_)
-    vector<Hs::Pattern> pats(N, Hs::WildcardPattern());
-    pats[i] = Hs::VarPattern(field);
-    Hs::Pattern pattern = Hs::tuple_pattern(pats);
+    vector<Hs::LPat> pats(N, {noloc,Hs::WildcardPattern()});
+    pats[i] = {noloc,Hs::VarPattern(field)};
+    Hs::LPat pattern = {noloc,Hs::tuple_pattern(pats)};
 
     // matches = (_,field,_,_) -> field
     Hs::MRule rule{{pattern}, Hs::SimpleRHS({noloc, field})};

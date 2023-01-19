@@ -72,26 +72,26 @@ expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
     {
         auto D = E.as_<Haskell::ValueDecl>();
 
-        auto lhs = rename_infix(m, unloc(D.lhs));
+        auto lhs = rename_infix(m, D.lhs);
         auto rhs = rename_infix(m, D.rhs);
 
-        if (auto v = lhs.to<Hs::Var>())
+        if (auto v = unloc(lhs).to<Hs::Var>())
             return Hs::simple_decl(*v, rhs);
-        else if (is_definitely_pattern(lhs))
-            return Hs::PatDecl( {D.lhs.loc, unapply(lhs)}, rhs);
-        else if (auto app = lhs.to<Hs::ApplyExp>())
+        else if (is_definitely_pattern(unloc(lhs)))
+            return Hs::PatDecl( unapply(lhs), rhs );
+        else if (auto app = unloc(lhs).to<Hs::ApplyExp>())
         {
             auto App = *app;
             flatten(App);
 
             if (unloc(App.head).is_a<Hs::Con>())
-                return Hs::PatDecl( {D.lhs.loc, unapply(lhs)}, rhs);
+                return Hs::PatDecl( unapply(lhs), rhs);
 
             else if (auto v = unloc(App.head).to<Hs::Var>())
             {
-                vector<Hs::Pattern> pats;
+                Hs::LPats pats;
                 for(auto& arg: App.args)
-                    pats.push_back( unapply(unloc(arg)) );
+                    pats.push_back( unapply(arg) );
 
                 return Hs::simple_fun_decl(*v, pats, rhs);
             }
@@ -327,7 +327,7 @@ std::tuple<map<string,int>, map<Hs::Var,vector<Hs::Var>>> get_indices_for_names(
         if (auto fd = decl.to<Hs::FunDecl>())
             vars.insert({fd->v});
         else if (auto pd = decl.to<Hs::PatDecl>())
-            vars = Hs::vars_in_pattern( unloc(pd->lhs) );
+            vars = Hs::vars_in_pattern( pd->lhs );
         else
             std::abort();
 
@@ -366,7 +366,7 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
         {
             auto PD = decl.as_<Hs::PatDecl>();
 
-            rename_pattern( unloc(PD.lhs), top);
+            rename_pattern( PD.lhs, top);
             PD.rhs = rename(PD.rhs, bound, PD.rhs_free_vars);
             decl = PD;
         }

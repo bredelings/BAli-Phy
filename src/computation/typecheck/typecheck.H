@@ -342,7 +342,7 @@ public:
     template <typename R>
     std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type, R> skolemize_and_result(const Type& t, const tc_function<R, Type>& nested_action);
 
-    void tcRhoStmts(int i, std::vector<Hs::Qual>& stmts, const Expected& exp_type);
+    void tcRhoStmts(int i, std::vector<Located<Hs::Qual>>& stmts, const Expected& exp_type);
 
     std::shared_ptr<const Core::Decls> maybe_implication(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_action<>& nested_action);
 
@@ -350,23 +350,23 @@ public:
     std::tuple<std::shared_ptr<const Core::Decls>,R> maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE& givens, const tc_function<R>& nested_action);
 
     // Figure 22.
-    void infer_quals_type(std::vector<Hs::Qual>& quals);
+    void infer_quals_type(std::vector<Located<Hs::Qual>>& quals);
 
     // Figure 22.
-    void infer_qual_type(Hs::Qual& qual);
+    void infer_qual_type(Located<Hs::Qual>& qual);
 
-    void infer_guard_type(Hs::Qual& guard);
+    void infer_guard_type(Located<Hs::Qual>& guard);
 
     // Figure 24.
-    Type inferPat(local_value_env& penv, Hs::Pattern& pat, const signature_env& sigs = {});
+    Type inferPat(local_value_env& penv, Hs::LPat& pat, const signature_env& sigs = {});
 
-    void tcPats(local_value_env& penv, std::vector<Hs::Pattern>& pat, const std::vector<Expected>&, const signature_env& sigs, const tc_action<local_value_env&>& a, int i=0);
-
-    // takes and returns sigma types
-    void tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&, const signature_env& sigs, const tc_action<local_value_env&>& a);
+    void tcPats(local_value_env& penv, Hs::LPats& pat, const std::vector<Expected>&, const signature_env& sigs, const tc_action<local_value_env&>& a, int i=0);
 
     // takes and returns sigma types
-    void checkPat(local_value_env& penv, Hs::Pattern& pat, const SigmaType&, const signature_env& sigs = {});
+    void tcPat(local_value_env& penv, Hs::LPat& pat, const Expected&, const signature_env& sigs, const tc_action<local_value_env&>& a);
+
+    // takes and returns sigma types
+    void checkPat(local_value_env& penv, Hs::LPat& pat, const SigmaType&, const signature_env& sigs = {});
 
     Type inferPat(local_value_env& penv, Hs::Var& v, const signature_env& sigs = {});
 
@@ -381,7 +381,7 @@ public:
 
     void infer_rhs_type(expression_ref& decl, const Expected& type);
 
-    Core::wrapper checkSigma(Hs::Expression& e, const SigmaType& sigma_type);
+    Core::wrapper checkSigma(Hs::LExp& e, const SigmaType& sigma_type);
 
     template <typename T>
     void checkRho(T& t, const Type& exp_rho)
@@ -573,8 +573,8 @@ std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, cons
 
 Hs::Var rename_var_from_bindinfo(const Hs::Var& V, const std::map<Hs::Var, Hs::BindInfo>& bind_info);
 
-Hs::Pattern
-rename_pattern_from_bindinfo(const Hs::Pattern& pat, const std::map<Hs::Var, Hs::BindInfo>& bind_info);
+Hs::LPat
+rename_pattern_from_bindinfo(Hs::LPat pat, const std::map<Hs::Var, Hs::BindInfo>& bind_info);
 
 std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls);
 

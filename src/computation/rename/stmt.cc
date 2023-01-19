@@ -31,43 +31,45 @@ using std::map;
 
 // Here we want to find all the variables bound by the list of stmts, and make sure that they don't overlap.
 // Getting the list of variables bound by a "rec" should return all the variables bound by the statements inside the rec.
-bound_var_info renamer_state::rename_rec_stmt(expression_ref& rec_stmt, const bound_var_info& bound, set<string>& free_vars)
+bound_var_info renamer_state::rename_rec_stmt(Hs::LExp& lrec_stmt, const bound_var_info& bound, set<string>& free_vars)
 {
+    auto& rec_stmt = unloc(lrec_stmt);
+
     auto rec_return = Hs::Var({noloc, "return"});
     auto mfix       = Hs::Var({noloc, "mfix"});
 
     bound_var_info rec_bound;
-    for(auto& stmt: rec_stmt.as_<Haskell::RecStmt>().stmts.stmts)
+    for(auto& stmt: rec_stmt.as_<Hs::RecStmt>().stmts.stmts)
     {
         bool overlap = not disjoint_add(rec_bound, find_bound_vars_in_stmt(stmt));
 	if (overlap)
 	    throw myexception()<<"rec command '"<<rec_stmt<<"' uses a variable twice!";
     }
     // 2. Construct the tuple and tuple pattern
-    vector<expression_ref> vars;
+    vector<Hs::LExp> vars;
     for(auto& var_name: rec_bound)
-        vars.push_back(Hs::Var({noloc,var_name}));
-    Hs::Expression rec_tuple = Hs::tuple(vars);
-    Hs::Pattern rec_tuple_pattern = unapply(rec_tuple); // This makes the tuple expression into a pattern
+        vars.push_back({noloc,Hs::Var({noloc,var_name})});
+    auto rec_tuple = Hs::tuple(vars);
+    auto rec_tuple_pattern = unapply({noloc,rec_tuple}); // This makes the tuple expression into a pattern
 
     // 3. Construct the do stmt
     expression_ref rec_return_stmt = Hs::ApplyExp({noloc,rec_return}, {{noloc,rec_tuple}});
     auto stmts = rec_stmt.as_<Haskell::RecStmt>().stmts.stmts;
-    stmts.push_back(Hs::SimpleQual(rec_return_stmt));
+    stmts.push_back({noloc,Hs::SimpleQual({noloc,rec_return_stmt})});
     auto rec_do = Haskell::Do(Haskell::Stmts(stmts));
 
     // 4. Construct the lambda function
-    expression_ref rec_lambda = Haskell::LambdaExp({Haskell::LazyPattern(rec_tuple_pattern)}, rec_do);      // \ ~(b,c) -> do { ... }
+    expression_ref rec_lambda = Haskell::LambdaExp({{noloc,Haskell::LazyPattern(rec_tuple_pattern)}}, {noloc,rec_do});      // \ ~(b,c) -> do { ... }
 
     // 5. Construct rec_tuple_pattern <- mfix rec_lambda
-    rec_stmt = Haskell::PatQual(rec_tuple_pattern, Hs::ApplyExp({noloc,mfix}, {{noloc,rec_lambda}}));
+    rec_stmt = Haskell::PatQual(rec_tuple_pattern, {noloc,Hs::ApplyExp({noloc,mfix}, {{noloc,rec_lambda}})});
 
     // Combine the set of bound variables and rename our rewritten statement;
-    return rename_stmt(rec_stmt, bound, rec_bound, free_vars);
+    return rename_stmt(lrec_stmt, bound, rec_bound, free_vars);
 }
 
 bound_var_info
-renamer_state::rename_stmt(expression_ref& stmt, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
+renamer_state::rename_stmt(Hs::LExp& stmt, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
 {
     set<string> stmt_free_vars;
     auto new_binders = rename_stmt(stmt, plus(bound, binders), stmt_free_vars);
@@ -75,8 +77,10 @@ renamer_state::rename_stmt(expression_ref& stmt, const bound_var_info& bound, co
     return new_binders;
 }
 
-bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_info& bound, set<string>& free_vars)
+bound_var_info renamer_state::rename_stmt(Hs::LExp& lstmt, const bound_var_info& bound, set<string>& free_vars)
 {
+    auto& stmt = unloc(lstmt);
+
     if (stmt.is_a<Hs::SimpleQual>())
     {
         auto SQ = stmt.as_<Hs::SimpleQual>();
@@ -101,7 +105,7 @@ bound_var_info renamer_state::rename_stmt(expression_ref& stmt, const bound_var_
     }
     else if (stmt.is_a<Haskell::RecStmt>())
     {
-        return rename_rec_stmt(stmt, bound, free_vars);
+        return rename_rec_stmt(lstmt, bound, free_vars);
     }
     else
 	std::abort();

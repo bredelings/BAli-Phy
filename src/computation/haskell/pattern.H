@@ -59,8 +59,11 @@ namespace Haskell
 
 typedef expression_ref Pattern;
 typedef expression_ref Pat;
+typedef Located<Pat> LPat;
+typedef std::vector<LPat> LPats;
 
-std::string parenthesize_pattern(const Pattern& p);
+std::string parenthesize_pattern(const Pat& p);
+std::string parenthesize_pattern(const LPat& p);
 
 struct VarPattern: public Object
 {
@@ -75,7 +78,7 @@ struct VarPattern: public Object
 struct ConPattern: public Object
 {
     Con head;
-    std::vector<Pattern> args;
+    LPats args;
 
     // Extra stuff for typechecking
     std::vector<::TypeVar> universal_tyvars;        // What do we do with this?
@@ -86,12 +89,12 @@ struct ConPattern: public Object
     // get given variables for dictionaries only (nothing for type equalities)
     ConPattern* clone() const { return new ConPattern(*this);}
     std::string print() const;
-    ConPattern(const Con& h, const std::vector<Pattern>& as):head(h),args(as) {}
+    ConPattern(const Con& h, const LPats& as):head(h),args(as) {}
 };
 
 struct TypedPattern: public Object
 {
-    Pattern pat;
+    LPat pat;
     Type type;
     Core::wrapper wrap;
 
@@ -117,54 +120,54 @@ struct WildcardPattern: public Object
 
 struct ListPattern: public Object
 {
-    std::vector<Pattern> elements;
+    LPats elements;
     ListPattern* clone() const { return new ListPattern(*this);}
     std::string print() const;
 
     ListPattern() {}
-    ListPattern(const std::vector<Pattern>& es):elements(es) {}
+    ListPattern(const LPats& es):elements(es) {}
 };
 
 struct TuplePattern: public Object
 {
-    std::vector<Pattern> elements;
+    LPats elements;
     TuplePattern* clone() const { return new TuplePattern(*this);}
     std::string print() const;
     TuplePattern() {}
-    TuplePattern(const std::vector<Pattern>& es): elements(es) {}
+    TuplePattern(const LPats& es): elements(es) {}
 };
 
-Pattern tuple_pattern(const std::vector<Pattern>& es);
+Pattern tuple_pattern(const LPats& es);
 
 struct LazyPattern: public Object
 {
-    Pattern pattern;
+    LPat pattern;
 
     LazyPattern* clone() const { return new LazyPattern(*this);}
     std::string print() const;
-    LazyPattern(const Pattern& p):pattern(p) {}
+    LazyPattern(const LPat& p):pattern(p) {}
 };
 
 struct StrictPattern: public Object
 {
-    Pattern pattern;
+    LPat pattern;
     StrictPattern* clone() const { return new StrictPattern(*this);}
     std::string print() const;
-    StrictPattern(const Pattern& p):pattern(p) {}
+    StrictPattern(const LPat& p):pattern(p) {}
 };
 
 struct AsPattern: public Object
 {
     Var var;
-    Pattern pattern;
+    LPat pattern;
 
     AsPattern* clone() const { return new AsPattern(*this);}
     std::string print() const;
-    AsPattern(const Var& v, const Pattern& p):var(v),pattern(p) {}
+    AsPattern(const Var& v, const LPat& p):var(v),pattern(p) {}
 };
 
-std::set<Var> vars_in_pattern(const Pattern& pat);
-std::set<Var> vars_in_patterns(const std::vector<Pattern>& pats);
+std::set<Var> vars_in_pattern(const LPat& pat);
+std::set<Var> vars_in_patterns(const LPats& pats);
 
 ConPattern to_con_pat(const TuplePattern& T);
 ConPattern to_con_pat(const ListPattern& L);
@@ -172,7 +175,7 @@ ConPattern to_con_pat(const std::string& s);
 
 ConPattern TruePat();
 ConPattern FalsePat();
-ConPattern ConsPat(const Pattern&, const Pattern&);
+ConPattern ConsPat(const LPat&, const LPat&);
 ConPattern NilPat();
 
 }

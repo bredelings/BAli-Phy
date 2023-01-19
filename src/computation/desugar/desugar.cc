@@ -57,16 +57,17 @@ Hs::VarPattern make_VarPattern(const var& v)
     return {V};
 }
 
-bool is_irrefutable_pat(const expression_ref& E)
+bool is_irrefutable_pat(const Hs::LPat& lpat)
 {
-    assert(not E.head().is_a<var>());
-    assert(not E.head().is_a<Hs::Var>());
-    return E.is_a<Hs::WildcardPattern>() or E.is_a<Hs::VarPattern>() or E.is_a<Hs::LazyPattern>();
+    auto& P = unloc(lpat);
+    assert(not P.head().is_a<var>());
+    assert(not P.head().is_a<Hs::Var>());
+    return P.is_a<Hs::WildcardPattern>() or P.is_a<Hs::VarPattern>() or P.is_a<Hs::LazyPattern>();
 }
 
 failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 {
-    auto F = failable_expression(desugar(unloc(grhs.body)));
+    auto F = failable_expression(desugar(grhs.body));
 
     for(auto& lguard: std::reverse(grhs.guards))
     {
@@ -93,7 +94,7 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
         {
             auto& PQ = guard.as_<Hs::PatQual>();
 
-            F = case_expression(desugar(PQ.exp), {PQ.bindpat}, {F});
+            F = case_expression(desugar(PQ.exp), {unloc(PQ.bindpat)}, {F});
         }
 	else
 	    std::abort();
@@ -104,7 +105,10 @@ failable_expression desugar_state::desugar_gdrh(const Hs::GuardedRHS& grhs)
 
 equation_info_t desugar_state::desugar_match(const Hs::MRule& rule)
 {
-    return {rule.patterns, desugar_rhs(rule.rhs)};
+    std::vector<Core::Pat> patterns;
+    for(auto& pattern: rule.patterns)
+        patterns.push_back( unloc(pattern) );
+    return {patterns, desugar_rhs(rule.rhs)};
 }
 
 vector<equation_info_t> desugar_state::desugar_matches(const Hs::Matches& matches)
@@ -127,15 +131,15 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 
         if (auto pd = decl.to<Hs::PatDecl>())
         {
-            auto pat = unloc(pd->lhs);
+            auto pat = pd->lhs;
             auto rhs = desugar_rhs(pd->rhs);
             var z = get_fresh_var();
-            if (pat.is_a<Hs::AsPattern>())
+            if (unloc(pat).is_a<Hs::AsPattern>())
             {
                 // Special-case for top-level as-patterns
                 // This isn't needed, but generates simpler code.
-                z = make_var(pat.as_<Hs::AsPattern>().var);
-                pat = pat.as_<Hs::AsPattern>().pattern;
+                z = make_var(unloc(pat).as_<Hs::AsPattern>().var);
+                pat = unloc(pat).as_<Hs::AsPattern>().pattern;
             }
 
             decls.push_back( {z,rhs.result(0)});
@@ -145,7 +149,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
 	    for(auto& v: Hs::vars_in_pattern( pat ) )
             {
                 auto x = make_var(v);
-		decls.push_back( {x ,case_expression(z, {pat}, {failable_expression(x)}).result(Core::error("pattern binding: failed pattern match"))});
+		decls.push_back( {x ,case_expression(z, {unloc(pat)}, {failable_expression(x)}).result(Core::error("pattern binding: failed pattern match"))});
             }
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
@@ -252,7 +256,12 @@ failable_expression desugar_state::desugar_rhs(const Hs::MultiGuardedRHS& R)
 //
 // One general issue with AST-izing is maybe needing to use object_ptr<T> to avoid copying things.
 
-expression_ref desugar_state::desugar(const expression_ref& E)
+Core::Exp desugar_state::desugar(const Hs::LExp& LE)
+{
+    return desugar(unloc(LE));
+}
+
+Core::Exp desugar_state::desugar(const Hs::Exp& E)
 {
     if (E.is_a<Hs::ClassDecl>())
     {
@@ -271,13 +280,14 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     else if (E.is_a<Hs::List>())
     {
         auto L = E.as_<Hs::List>();
+        vector<Core::Exp> elements;
         for(auto& element: L.elements)
-            element = desugar(element);
-        return get_list(L.elements);
+            elements.push_back(desugar(element));
+        return get_list(elements);
     }
     else if (auto L = E.to<Hs::ListFrom>())
     {
-        expression_ref enumFrom = var("Compiler.Enum.enumFrom");
+        Core::Exp enumFrom = var("Compiler.Enum.enumFrom");
         if (L->enumFromOp)
             enumFrom = desugar(L->enumFromOp);
 
@@ -317,7 +327,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         // [ e | let decls, Q] = let decls in [ e | Q ]
 
         // [ e | True   ]  =  [ e ]
-        if (L.quals.size() == 1 and L.quals[0].is_a<Hs::SimpleQual>() and L.quals[0].as_<Hs::SimpleQual>().exp == bool_true)
+        if (L.quals.size() == 1 and unloc(L.quals[0]).is_a<Hs::SimpleQual>() and unloc(unloc(L.quals[0]).as_<Hs::SimpleQual>().exp) == bool_true)
         {
             return desugar( Hs::List({L.body}) );
         }
@@ -325,20 +335,20 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         // [ e | q      ]  =  [ e | q, True ]
         else if (L.quals.size() == 1)
         {
-            L.quals.push_back( Hs::SimpleQual(bool_true) );
+            L.quals.push_back( {noloc,Hs::SimpleQual({noloc,bool_true})} );
             return desugar( L );
         }
 
         else
         {
             // Pop the next qual from the FRONT of the list
-            expression_ref B = L.quals[0];
+            expression_ref B = unloc(L.quals[0]);
             L.quals.erase(L.quals.begin());
             expression_ref E2 = L;
 
             // [ e | b, Q   ]  =  if b then [ e | Q ] else []
             if (auto cond = B.to<Hs::SimpleQual>())
-                return desugar( Hs::IfExp({noloc, cond->exp}, {noloc, E2}, {noloc, Hs::List({})}) );
+                return desugar( Hs::IfExp( cond->exp, {noloc, E2}, {noloc, Hs::List({})}) );
             // [ e | let decls, Q] = let decls in [ e | Q ]
             else if (auto LQ = B.to<Hs::LetQual>())
                 return desugar( Hs::LetExp( LQ->binds, {noloc, E2} ) );
@@ -348,19 +358,20 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                 Hs::Var concatMap({noloc, "Data.OldList.concatMap"});
                 if (is_irrefutable_pat(PQ->bindpat))
                 {
-                    expression_ref f = Hs::LambdaExp({PQ->bindpat}, L);
-                    return desugar( {concatMap, f, PQ->exp} );
+                    expression_ref f = Hs::LambdaExp({PQ->bindpat}, {noloc, L});
+                    return desugar( {concatMap, f, unloc(PQ->exp)} );
                 }
                 else
                 {
                     // let {ok bindpat = L; ok _ = []} in concatMap ok PQ->exp
                     auto ok = get_fresh_Var("ok", false);
                     expression_ref fail = Hs::List({});
-                    auto rule1 = Hs::MRule{ {PQ->bindpat},           Hs::SimpleRHS({noloc, L})        };
-                    auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc, fail})     };
+                    auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};
+                    auto rule1 = Hs::MRule{ { PQ->bindpat }, Hs::SimpleRHS({noloc, L})        };
+                    auto rule2 = Hs::MRule{ { _ },           Hs::SimpleRHS({noloc, fail})     };
                     auto decl  = Hs::FunDecl(ok, Hs::Matches{{rule1, rule2}});
 
-                    expression_ref body = {concatMap, ok, PQ->exp};
+                    expression_ref body = {concatMap, ok, unloc(PQ->exp)};
                     return desugar( Hs::LetExp({noloc,{{{decl}}}}, {noloc,body}) );
                 }
             }
@@ -379,9 +390,10 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     else if (E.is_a<Hs::Tuple>())
     {
         auto T = E.as_<Hs::Tuple>();
+        vector<Core::Exp> elements;
         for(auto& element: T.elements)
-            element = desugar(element);
-        return get_tuple(T.elements);
+            elements.push_back( desugar(element) );
+        return get_tuple( elements );
     }
     else if (auto v = E.to<Hs::Var>())
     {
@@ -406,17 +418,17 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         if (stmts.empty())
             throw myexception()<<"Empty do block!";
 
-        if (not stmts.back().is_a<Hs::SimpleQual>())
+        if (not unloc(stmts.back()).is_a<Hs::SimpleQual>())
             throw myexception()<<"The last statement in a do block must be an expression!";
 
         // do { e }  =>  e
         if (stmts.size() == 1) {
-            auto& stmt = stmts.front();
+            auto& stmt = unloc(stmts.front());
             auto exp = stmt.as_<Hs::SimpleQual>().exp;
             return desugar(exp);
         }
 
-        auto first = stmts[0];
+        auto first = unloc(stmts[0]);
         stmts.erase(stmts.begin());
         expression_ref do_stmts = Hs::Do(Hs::Stmts(stmts));
         expression_ref result;
@@ -424,7 +436,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         // do {e ; stmts }  =>  e >> do { stmts }
         if (auto sq = first.to<Hs::SimpleQual>())
         {
-            expression_ref e = first.as_<Hs::SimpleQual>().exp;
+            expression_ref e = unloc(first.as_<Hs::SimpleQual>().exp);
             result = {sq->andThenOp, e, do_stmts};
         }
 
@@ -436,8 +448,8 @@ expression_ref desugar_state::desugar(const expression_ref& E)
 
             if (is_irrefutable_pat(PQ.bindpat))
             {
-                expression_ref lambda = Hs::LambdaExp({PQ.bindpat}, do_stmts);
-                result = {PQ.bindOp, PQ.exp, lambda};
+                expression_ref lambda = Hs::LambdaExp({PQ.bindpat}, {noloc,do_stmts});
+                result = {PQ.bindOp, unloc(PQ.exp), lambda};
             }
             else
             {
@@ -446,11 +458,12 @@ expression_ref desugar_state::desugar(const expression_ref& E)
                 expression_ref fail = {Hs::Var({noloc,"Control.Monad.fail"}), Hs::Literal(Hs::String("Fail!"))};
                 if (PQ.failOp)
                     fail = PQ.failOp;
-                auto rule1 = Hs::MRule{ {PQ.bindpat},            Hs::SimpleRHS({noloc,do_stmts}) };
-                auto rule2 = Hs::MRule{ {Hs::WildcardPattern()}, Hs::SimpleRHS({noloc,fail})     };
+                auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};
+                auto rule1 = Hs::MRule{ { PQ.bindpat }, Hs::SimpleRHS({noloc,do_stmts}) };
+                auto rule2 = Hs::MRule{ { _ },          Hs::SimpleRHS({noloc,fail})     };
                 auto decl  = Hs::FunDecl(ok, Hs::Matches{{rule1, rule2}});
 
-                expression_ref body = {PQ.bindOp, PQ.exp, ok};
+                expression_ref body = {PQ.bindOp, unloc(PQ.exp), ok};
                 result = Hs::LetExp({noloc,{{{decl}}}}, {noloc,body});
             }
         }
@@ -483,7 +496,7 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         auto& L = E.as_<Hs::LetExp>();
 
         CDecls decls = desugar_decls(unloc(L.binds));
-        auto body = desugar(unloc(L.body));
+        auto body = desugar(L.body);
 
         // construct the new let expression.
         return let_expression(decls, body);
@@ -492,9 +505,9 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         auto& I = E.as_<Hs::IfExp>();
 
-        auto condition = desugar(unloc(I.condition));
-        auto true_branch = desugar(unloc(I.true_branch));
-        auto false_branch = desugar(unloc(I.false_branch));
+        auto condition = desugar(I.condition);
+        auto true_branch = desugar(I.true_branch);
+        auto false_branch = desugar(I.false_branch);
 
         return case_expression(condition,{Hs::TruePat()},{failable_expression(true_branch)}).result(false_branch);
     }
@@ -502,13 +515,13 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     {
         auto& C = *c;
 
-        expression_ref obj = desugar(unloc(C.object));
+        expression_ref obj = desugar(C.object);
 
         vector<expression_ref> patterns;
         vector<failable_expression> bodies;
         for(const auto& [alt_patterns, alt_rhs]: C.alts)
         {
-            patterns.push_back( alt_patterns[0] );
+            patterns.push_back( unloc(alt_patterns[0]) );
             bodies.push_back( desugar_rhs( alt_rhs ) );
         }
         return case_expression(obj, patterns, bodies).result(Core::error("case: failed pattern match"));
@@ -517,11 +530,11 @@ expression_ref desugar_state::desugar(const expression_ref& E)
         std::abort();
     else if (auto app = E.to<Hs::ApplyExp>())
     {
-        Core::Exp A = desugar(unloc(app->head));
+        Core::Exp A = desugar(app->head);
 
         for(int i=0; i < app->args.size(); i++)
         {
-            auto arg = desugar( unloc(app->args[i]) );
+            auto arg = desugar( app->args[i] );
             if (not app->arg_wrappers.empty())
                 arg = app->arg_wrappers[i]( arg );
 
@@ -570,6 +583,9 @@ expression_ref desugar_state::desugar(const expression_ref& E)
     }
     else if (is_apply_exp(E))
     {
+        // why are we desugaring this?
+        // whouldn't it be an applyexp that we are desugaring?
+
         auto args = E.copy_sub();
         for(auto& arg: args)
             arg = desugar(arg);

@@ -15,162 +15,163 @@ using std::vector;
 using std::pair;
 using std::set;
 
-expression_ref rename_infix(const Module& m, const expression_ref& E)
+Hs::LExp rename_infix(const Module& m, Hs::LExp LE)
 {
-    if (E.is_a<Haskell::List>())
+    auto& E = unloc(LE);
+    if (E.is_a<Hs::List>())
     {
-        auto L = E.as_<Haskell::List>();
+        auto L = E.as_<Hs::List>();
         for(auto& element: L.elements)
             element = rename_infix(m, element);
-        return L;
+        E = L;
     }
-    else if (E.is_a<Haskell::ListFrom>())
+    else if (E.is_a<Hs::ListFrom>())
     {
-        auto L = E.as_<Haskell::ListFrom>();
+        auto L = E.as_<Hs::ListFrom>();
         L.from = rename_infix(m, L.from);
-        return L;
+        E = L;
     }
-    else if (E.is_a<Haskell::ListFromThen>())
+    else if (E.is_a<Hs::ListFromThen>())
     {
-        auto L = E.as_<Haskell::ListFromThen>();
-        L.from = rename_infix(m, L.from);
-        L.then = rename_infix(m, L.then);
-        return L;
-    }
-    else if (E.is_a<Haskell::ListFromTo>())
-    {
-        auto L = E.as_<Haskell::ListFromTo>();
-        L.from = rename_infix(m, L.from);
-        L.to   = rename_infix(m, L.to);
-        return L;
-    }
-    else if (E.is_a<Haskell::ListFromThenTo>())
-    {
-        auto L = E.as_<Haskell::ListFromThenTo>();
+        auto L = E.as_<Hs::ListFromThen>();
         L.from = rename_infix(m, L.from);
         L.then = rename_infix(m, L.then);
-        L.to   = rename_infix(m, L.to);
-        return L;
+        E = L;
     }
-    else if (E.is_a<Haskell::ListComprehension>())
+    else if (E.is_a<Hs::ListFromTo>())
     {
-        auto L = E.as_<Haskell::ListComprehension>();
+        auto L = E.as_<Hs::ListFromTo>();
+        L.from = rename_infix(m, L.from);
+        L.to   = rename_infix(m, L.to);
+        E = L;
+    }
+    else if (E.is_a<Hs::ListFromThenTo>())
+    {
+        auto L = E.as_<Hs::ListFromThenTo>();
+        L.from = rename_infix(m, L.from);
+        L.then = rename_infix(m, L.then);
+        L.to   = rename_infix(m, L.to);
+        E = L;
+    }
+    else if (E.is_a<Hs::ListComprehension>())
+    {
+        auto L = E.as_<Hs::ListComprehension>();
         L.body = rename_infix(m, L.body);
         for(auto& qual: L.quals)
             qual = rename_infix(m, qual);
-        return L;
+        E = L;
     }
-    else if (E.is_a<Haskell::LeftSection>())
+    else if (E.is_a<Hs::LeftSection>())
     {
-        auto S = E.as_<Haskell::LeftSection>();
+        auto S = E.as_<Hs::LeftSection>();
         S.l_arg = rename_infix(m, S.l_arg);
-        return S;
+        E = S;
     }
-    else if (E.is_a<Haskell::RightSection>())
+    else if (E.is_a<Hs::RightSection>())
     {
-        auto S = E.as_<Haskell::RightSection>();
+        auto S = E.as_<Hs::RightSection>();
         S.r_arg = rename_infix(m, S.r_arg);
-        return S;
+        E = S;
     }
-    else if (E.is_a<Haskell::Tuple>())
+    else if (E.is_a<Hs::Tuple>())
     {
-        auto T = E.as_<Haskell::Tuple>();
+        auto T = E.as_<Hs::Tuple>();
         for(auto& element: T.elements)
             element = rename_infix(m, element);
-        return T;
+        E = T;
     }
-    else if (E.is_a<Haskell::PatQual>())
+    else if (E.is_a<Hs::PatQual>())
     {
-        auto PQ = E.as_<Haskell::PatQual>();
+        auto PQ = E.as_<Hs::PatQual>();
 
         PQ.bindpat = rename_infix(m, PQ.bindpat);
         PQ.bindpat = unapply(PQ.bindpat);
 
         PQ.exp = rename_infix(m, PQ.exp);
 
-        return PQ;
+        E = PQ;
     }
-    else if (E.is_a<Haskell::SimpleQual>())
+    else if (E.is_a<Hs::SimpleQual>())
     {
-        auto SQ = E.as_<Haskell::SimpleQual>();
+        auto SQ = E.as_<Hs::SimpleQual>();
         SQ.exp = rename_infix(m, SQ.exp);
-        return SQ;
+        E = SQ;
     }
-    else if (E.is_a<Haskell::LetQual>())
+    else if (E.is_a<Hs::LetQual>())
     {
-        auto LQ = E.as_<Haskell::LetQual>();
+        auto LQ = E.as_<Hs::LetQual>();
         unloc(LQ.binds) = rename_infix(m, unloc(LQ.binds));
-        return LQ;
+        E = LQ;
     }
-    else if (E.is_a<Haskell::AsPattern>())
+    else if (E.is_a<Hs::AsPattern>())
     {
-        auto& AP = E.as_<Haskell::AsPattern>();
-        return Haskell::AsPattern(AP.var, rename_infix(m,AP.pattern));
+        auto& AP = E.as_<Hs::AsPattern>();
+        E = Hs::AsPattern(AP.var, rename_infix(m,AP.pattern));
     }
-    else if (E.is_a<Haskell::LazyPattern>())
+    else if (E.is_a<Hs::LazyPattern>())
     {
-        auto LP = E.as_<Haskell::LazyPattern>();
-        return Haskell::LazyPattern(rename_infix(m,LP.pattern));
+        auto LP = E.as_<Hs::LazyPattern>();
+        E = Hs::LazyPattern(rename_infix(m,LP.pattern));
     }
-    else if (E.is_a<Haskell::StrictPattern>())
+    else if (E.is_a<Hs::StrictPattern>())
     {
-        auto SP = E.as_<Haskell::StrictPattern>();
+        auto SP = E.as_<Hs::StrictPattern>();
         SP.pattern = rename_infix(m, SP.pattern);
-        return SP;
+        E = SP;
     }
-    else if (E.is_a<Haskell::RecStmt>())
+    else if (E.is_a<Hs::RecStmt>())
     {
-        auto R = E.as_<Haskell::RecStmt>();
+        auto R = E.as_<Hs::RecStmt>();
         for(auto& stmt: R.stmts.stmts)
             stmt = rename_infix(m, stmt);
-        return R;
+        E = R;
     }
-    else if (E.is_a<Haskell::Do>())
+    else if (E.is_a<Hs::Do>())
     {
-        auto D = E.as_<Haskell::Do>();
+        auto D = E.as_<Hs::Do>();
         for(auto& stmt: D.stmts.stmts)
             stmt = rename_infix(m, stmt);
-        return D;
+        E = D;
     }
-    else if (E.is_a<Haskell::MDo>())
+    else if (E.is_a<Hs::MDo>())
     {
         throw myexception()<<"mdo is not handled yet!";
-        auto D = E.as_<Haskell::MDo>();
+        auto D = E.as_<Hs::MDo>();
         for(auto& stmt: D.stmts.stmts)
             stmt = rename_infix(m, stmt);
-        return D;
+        E = D;
     }
-    else if (E.is_a<Haskell::LambdaExp>())
+    else if (E.is_a<Hs::LambdaExp>())
     {
-        auto L = E.as_<Haskell::LambdaExp>();
+        auto L = E.as_<Hs::LambdaExp>();
         for(auto& pat: L.match.patterns)
             pat = unapply(rename_infix(m, pat));
         L.match.rhs = rename_infix(m, L.match.rhs);
 
-        return L;
+        E = L;
     }
-    else if (E.is_a<Haskell::LetExp>())
+    else if (E.is_a<Hs::LetExp>())
     {
-        auto L = E.as_<Haskell::LetExp>();
+        auto L = E.as_<Hs::LetExp>();
 
         unloc(L.binds) = rename_infix(m, unloc(L.binds));
-        unloc(L.body)  = rename_infix(m, unloc(L.body));
+        L.body  = rename_infix(m, L.body);
 
-        return L;
+        E = L;
     }
-    else if (E.is_a<Haskell::IfExp>())
+    else if (E.is_a<Hs::IfExp>())
     {
-        auto I = E.as_<Haskell::IfExp>();
-        unloc(I.condition) = rename_infix(m, unloc(I.condition));
-        unloc(I.true_branch) = rename_infix(m, unloc(I.true_branch));
-        unloc(I.false_branch) = rename_infix(m, unloc(I.false_branch));
-        return I;
+        auto I = E.as_<Hs::IfExp>();
+        I.condition = rename_infix(m, I.condition);
+        I.true_branch = rename_infix(m, I.true_branch);
+        I.false_branch = rename_infix(m, I.false_branch);
+        E = I;
     }
-    else if (auto c = E.to<Haskell::CaseExp>())
+    else if (auto c = E.to<Hs::CaseExp>())
     {
         auto C = *c;
 
-        unloc(C.object) = rename_infix(m, unloc(C.object));
+        C.object = rename_infix(m, C.object);
 
         for(auto& [patterns, rhs]: C.alts)
         {
@@ -179,88 +180,94 @@ expression_ref rename_infix(const Module& m, const expression_ref& E)
             rhs = rename_infix(m, rhs);
         }
 
-        return C;
+        E = C;
     }
     else if (E.is_a<Hs::Literal>())
     {
-        return E;
     }
     else if (auto te = E.to<Hs::TypedExp>())
     {
         auto TE = *te;
         TE.exp = rename_infix(m, TE.exp);
         // Nothing to do for TE.type, since there are no type operators unless extensions are enabled.
-        return TE;
+        E = TE;
     }
     else if (auto I = E.to<Hs::InfixExp>())
     {
         auto terms = I->terms;
         for(auto& term: terms)
-            unloc(term) = rename_infix(m, unloc(term));
-	return unloc(desugar_infix(m, terms));
+            term = rename_infix(m, term);
+	E = unloc(desugar_infix(m, terms));
     }
     else if (auto app = E.to<Hs::ApplyExp>())
     {
         auto App = *app;
 
-        unloc(App.head) = rename_infix(m, unloc(App.head));
+        App.head = rename_infix(m, App.head);
         for(auto& arg: App.args)
-            unloc(arg) = rename_infix(m, unloc(arg));
+            arg = rename_infix(m, arg);
 
-	return App;
+	E = App;
     }
     else if (E.is_a<Hs::WildcardPattern>())
-        return E;
+    {}
     else if (E.is_a<Hs::Var>())
-        return E;
+    {}
     else if (E.is_a<Hs::Con>())
-        return E;
+    {}
     else if (E.head().is_a<Hs::Neg>())
-        return E;
+    {}
     else
         std::abort();
+    return LE;
 }
 
-expression_ref renamer_state::rename(const expression_ref& E, const bound_var_info& bound, set<string>& free_vars)
+Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<string>& free_vars)
 {
-    if (E.is_a<Haskell::List>())
+    unloc(LE) = rename(unloc(LE), bound, free_vars);
+    return LE;
+}
+
+Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set<string>& free_vars)
+{
+    if (E.is_a<Hs::List>())
     {
-        auto L = E.as_<Haskell::List>();
+        auto L = E.as_<Hs::List>();
         for(auto& element: L.elements)
             element = rename(element, bound, free_vars);
         return L;
     }
-    else if (E.is_a<Haskell::ListFrom>())
+    else if (E.is_a<Hs::ListFrom>())
     {
-        auto L = E.as_<Haskell::ListFrom>();
+        auto L = E.as_<Hs::ListFrom>();
         L.from = rename(L.from, bound, free_vars);
         return L;
     }
-    else if (E.is_a<Haskell::ListFromThen>())
+    else if (E.is_a<Hs::ListFromThen>())
     {
-        auto L = E.as_<Haskell::ListFromThen>();
+        auto L = E.as_<Hs::ListFromThen>();
         L.from = rename(L.from, bound, free_vars);
         L.then = rename(L.then, bound, free_vars);
         return L;
     }
-    else if (E.is_a<Haskell::ListFromTo>())
+    else if (E.is_a<Hs::ListFromTo>())
     {
-        auto L = E.as_<Haskell::ListFromTo>();
+        auto L = E.as_<Hs::ListFromTo>();
         L.from = rename(L.from, bound, free_vars);
         L.to   = rename(L.to  , bound, free_vars);
         return L;
     }
-    else if (E.is_a<Haskell::ListFromThenTo>())
+    else if (E.is_a<Hs::ListFromThenTo>())
     {
-        auto L = E.as_<Haskell::ListFromThenTo>();
+        auto L = E.as_<Hs::ListFromThenTo>();
         L.from = rename(L.from, bound, free_vars);
         L.then = rename(L.then, bound, free_vars);
         L.to   = rename(L.to  , bound, free_vars);
         return L;
     }
-    else if (E.is_a<Haskell::ListComprehension>())
+    else if (E.is_a<Hs::ListComprehension>())
     {
-        auto L = E.as_<Haskell::ListComprehension>();
+        auto L = E.as_<Hs::ListComprehension>();
 
         bound_var_info binders;
         for(auto& qual: L.quals)
@@ -269,23 +276,23 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         L.body = rename(L.body, bound, binders, free_vars);
         return L;
     }
-    else if (E.is_a<Haskell::LeftSection>())
+    else if (E.is_a<Hs::LeftSection>())
     {
-        auto S = E.as_<Haskell::LeftSection>();
+        auto S = E.as_<Hs::LeftSection>();
         S.l_arg = rename(S.l_arg, bound, free_vars);
         S.op = rename(S.op, bound, free_vars);
         return S;
     }
-    else if (E.is_a<Haskell::RightSection>())
+    else if (E.is_a<Hs::RightSection>())
     {
-        auto S = E.as_<Haskell::RightSection>();
+        auto S = E.as_<Hs::RightSection>();
         S.op = rename(S.op, bound, free_vars);
         S.r_arg = rename(S.r_arg, bound, free_vars);
         return S;
     }
-    else if (E.is_a<Haskell::Tuple>())
+    else if (E.is_a<Hs::Tuple>())
     {
-        auto T = E.as_<Haskell::Tuple>();
+        auto T = E.as_<Hs::Tuple>();
         for(auto& element: T.elements)
             element = rename(element, bound, free_vars);
         return T;
@@ -340,23 +347,23 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
             return E;
         }
     }
-    else if (E.is_a<Haskell::RecStmt>())
+    else if (E.is_a<Hs::RecStmt>())
     {
         bound_var_info binders;
-        auto R = E.as_<Haskell::RecStmt>();
+        auto R = E.as_<Hs::RecStmt>();
         for(auto& stmt: R.stmts.stmts)
             add(binders, rename_stmt(stmt, bound, binders, free_vars));
         return R;
     }
-    else if (E.is_a<Haskell::Do>())
+    else if (E.is_a<Hs::Do>())
     {
         bound_var_info binders;
-        auto D = E.as_<Haskell::Do>();
+        auto D = E.as_<Hs::Do>();
         for(auto& stmt: D.stmts.stmts)
             add(binders, rename_stmt(stmt, bound, binders, free_vars));
         return D;
     }
-    else if (E.is_a<Haskell::MDo>())
+    else if (E.is_a<Hs::MDo>())
     {
             /*
          * See "The mdo notation" in https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html
@@ -397,7 +404,7 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         // FIXME: implement segmentation, and insert recs.
 
         bound_var_info binders;
-        auto MD = E.as_<Haskell::MDo>();
+        auto MD = E.as_<Hs::MDo>();
         for(auto& stmt: MD.stmts.stmts)
             add(binders, rename_stmt(stmt, bound, binders, free_vars));
         return MD;
@@ -409,37 +416,37 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
         TE.type = rename_type(TE.type);
         return TE;
     }
-    else if (auto c = E.to<Haskell::CaseExp>())
+    else if (auto c = E.to<Hs::CaseExp>())
     {
         auto C = *c;
 
-        unloc(C.object) = rename(unloc(C.object), bound, free_vars);
-              C.alts    = rename(      C.alts,    bound, free_vars);
+        C.object = rename(C.object, bound, free_vars);
+        C.alts   = rename(C.alts,    bound, free_vars);
 
         return C;
     }
-    else if (E.is_a<Haskell::LambdaExp>())
+    else if (E.is_a<Hs::LambdaExp>())
     {
-        auto L = E.as_<Haskell::LambdaExp>();
+        auto L = E.as_<Hs::LambdaExp>();
         L.match = rename(L.match, bound, free_vars);
         return L;
     }
-    else if (E.is_a<Haskell::LetExp>())
+    else if (E.is_a<Hs::LetExp>())
     {
-        auto L = E.as_<Haskell::LetExp>();
+        auto L = E.as_<Hs::LetExp>();
 
         auto binders = rename_decls(unloc(L.binds), bound, free_vars);
-        unloc(L.body) = rename(unloc(L.body), bound, binders, free_vars);
+        L.body = rename(L.body, bound, binders, free_vars);
 
         return L;
     }
-    else if (E.is_a<Haskell::IfExp>())
+    else if (E.is_a<Hs::IfExp>())
     {
-        auto I = E.as_<Haskell::IfExp>();
+        auto I = E.as_<Hs::IfExp>();
 
-        unloc(I.condition)    = rename(unloc(I.condition), bound, free_vars);
-        unloc(I.true_branch)  = rename(unloc(I.true_branch), bound, free_vars);
-        unloc(I.false_branch) = rename(unloc(I.false_branch), bound, free_vars);
+        I.condition    = rename(I.condition, bound, free_vars);
+        I.true_branch  = rename(I.true_branch, bound, free_vars);
+        I.false_branch = rename(I.false_branch, bound, free_vars);
 
         return I;
     }
@@ -454,9 +461,9 @@ expression_ref renamer_state::rename(const expression_ref& E, const bound_var_in
     else if (auto app = E.to<Hs::ApplyExp>())
     {
         auto App = *app;
-        unloc(App.head) = rename(unloc(App.head), bound, free_vars);
+        App.head = rename(App.head, bound, free_vars);
         for(auto& arg: App.args)
-            unloc(arg) = rename(unloc(arg), bound, free_vars);
+            arg = rename(arg, bound, free_vars);
         return App;
     }
 

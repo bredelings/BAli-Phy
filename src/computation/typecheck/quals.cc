@@ -20,7 +20,7 @@ using std::tuple;
 // * the original figure seems to assume that quals only occur in list comprehensions?
 
 void
-TypeChecker::infer_quals_type(vector<Hs::Qual>& quals)
+TypeChecker::infer_quals_type(vector<Located<Hs::Qual>>& quals)
 {
     local_value_env binders;
     for(auto& qual: quals)
@@ -28,8 +28,10 @@ TypeChecker::infer_quals_type(vector<Hs::Qual>& quals)
 }
 
 void
-TypeChecker::infer_qual_type(Hs::Qual& qual)
+TypeChecker::infer_qual_type(Located<Hs::Qual>& lqual)
 {
+    auto& qual = unloc(lqual);
+
     // FILTER
     if (auto sq = qual.to<Hs::SimpleQual>())
     {
@@ -65,8 +67,10 @@ TypeChecker::infer_qual_type(Hs::Qual& qual)
 
 
 void
-TypeChecker::infer_guard_type(Hs::Qual& guard)
+TypeChecker::infer_guard_type(Located<Hs::Qual>& lguard)
 {
+    auto& guard = unloc(lguard);
+
     if (auto sq = guard.to<Hs::SimpleQual>())
     {
         auto SQ = *sq;
@@ -97,9 +101,9 @@ TypeChecker::infer_guard_type(Hs::Qual& guard)
 }
 
 
-void TypeChecker::tcRhoStmts(int i, vector<Hs::Qual>& stmts, const Expected& expected_type)
+void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expected& expected_type)
 {
-    auto& stmt = stmts[i];
+    auto& stmt = unloc(stmts[i]);
     // Last statement -- an expression.
     if (i == stmts.size() - 1)
     {

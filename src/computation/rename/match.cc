@@ -34,9 +34,9 @@ Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var
     for(auto& guarded_rhs: R.guarded_rhss)
     {
         for(auto& guard: guarded_rhs.guards)
-            add(binders, rename_stmt(unloc(guard), bound, binders, free_vars));
+            add(binders, rename_stmt(guard, bound, binders, free_vars));
 
-        unloc(guarded_rhs.body) = rename(unloc(guarded_rhs.body), bound, binders, free_vars);
+        guarded_rhs.body = rename(guarded_rhs.body, bound, binders, free_vars);
     }
 
     return R;

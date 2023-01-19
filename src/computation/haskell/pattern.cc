@@ -68,10 +68,10 @@ string TuplePattern::print() const
     return "(" + join(parts,",") +")";
 }
 
-Pattern tuple_pattern(const std::vector<Pattern>& es)
+Pattern tuple_pattern(const LPats& es)
 {
     if (es.size() == 1)
-        return es[0];
+        return unloc(es[0]);
     else
         return TuplePattern(es);
 }
@@ -79,6 +79,11 @@ Pattern tuple_pattern(const std::vector<Pattern>& es)
 string WildcardPattern::print() const
 {
     return "_";
+}
+
+string parenthesize_pattern(const LPat& p)
+{
+    return parenthesize_pattern(unloc(p));
 }
 
 string parenthesize_pattern(const Pattern& p)
@@ -113,7 +118,7 @@ string AsPattern::print() const
 }
 
 
-std::set<Var> vars_in_patterns(const std::vector<Pattern>& pats)
+std::set<Var> vars_in_patterns(const LPats& pats)
 {
     std::set<Var> vars;
 
@@ -123,8 +128,10 @@ std::set<Var> vars_in_patterns(const std::vector<Pattern>& pats)
     return vars;
 }
 
-std::set<Var> vars_in_pattern(const Pattern& pat)
+std::set<Var> vars_in_pattern(const LPat& lpat)
 {
+    auto& pat = unloc(lpat);
+
     if (pat.is_a<Haskell::WildcardPattern>())
 	return {};
     else if (auto lp = pat.to<Haskell::LazyPattern>())
@@ -132,7 +139,7 @@ std::set<Var> vars_in_pattern(const Pattern& pat)
     else if (auto sp = pat.to<Haskell::StrictPattern>())
         return vars_in_pattern(sp->pattern);
     else if (auto ap = pat.to<Haskell::AsPattern>())
-	return plus( vars_in_pattern(VarPattern(ap->var)),
+	return plus( vars_in_pattern({noloc,VarPattern(ap->var)}),
                      vars_in_pattern(ap->pattern) );
     else if (auto l = pat.to<Haskell::ListPattern>())
         return vars_in_patterns(l->elements);
@@ -160,7 +167,7 @@ ConPattern FalsePat()
     return {Hs::False(), {}};
 }
 
-ConPattern ConsPat(const Pattern& p, const Pattern& ps)
+ConPattern ConsPat(const LPat& p, const LPat& ps)
 {
     return {Hs::ConsCon(),{p, ps}};
 }
@@ -175,7 +182,7 @@ ConPattern to_con_pat(const ListPattern& L)
     ConPattern list_pat = NilPat();
 
     for(auto& e: L.elements | views::reverse)
-        list_pat = ConsPat(e, list_pat);
+        list_pat = ConsPat(e, {noloc,list_pat});
 
     return list_pat;
 }
@@ -184,7 +191,7 @@ ConPattern to_con_pat(const std::string& s)
 {
     ListPattern L;
     for(char c: s)
-	L.elements.push_back(LiteralPattern(Literal(Char(c))));
+	L.elements.push_back({noloc,LiteralPattern(Literal(Char(c)))});
     return to_con_pat(L);
 }
 

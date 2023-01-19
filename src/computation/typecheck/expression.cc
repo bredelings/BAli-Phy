@@ -66,7 +66,7 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
     auto [arg_type, result_type] = unify_function(fun_type.read_type(), origin);
 
     // Check the argument according to its required type
-    auto wrap_arg = checkSigma(unloc(App.args[arg_index]), arg_type);
+    auto wrap_arg = checkSigma(App.args[arg_index], arg_type);
 
     App.arg_wrappers.push_back(wrap_arg);
 

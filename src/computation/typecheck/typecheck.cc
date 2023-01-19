@@ -1130,8 +1130,10 @@ value_env add_constraints(const std::vector<Type>& preds, const value_env& env1)
 }
 
 // OK, so this returns something of type exp_sigma
-Core::wrapper TypeChecker::checkSigma(Hs::Expression& E, const SigmaType& sigma_type)
+Core::wrapper TypeChecker::checkSigma(Hs::LExp& E, const SigmaType& sigma_type)
 {
+    if (E.loc) push_source_span(*E.loc);
+
     // 1. skolemize the type
     auto [wrap_gen, tvs, givens, rho_type] =
         skolemize_and(sigma_type,
@@ -1139,6 +1141,8 @@ Core::wrapper TypeChecker::checkSigma(Hs::Expression& E, const SigmaType& sigma_
                           tcs2.tcRho(E, Check(rho_type));
                       }
             );
+
+    if (E.loc) pop_source_span();
 
     // 2. modify E, which is of type rho_type, to be of type sigma_type
     return wrap_gen;

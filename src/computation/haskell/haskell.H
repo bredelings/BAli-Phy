@@ -83,7 +83,9 @@ namespace Haskell
 
 typedef expression_ref Expression;
 typedef expression_ref Exp;
+typedef Located<Exp> LExp;
 typedef expression_ref Qual;
+typedef Located<Qual> LQual;
 
 struct ApplyExp: public Object
 {
@@ -187,7 +189,7 @@ struct Neg: public Object
 
 struct InfixExp: public Object
 {
-    std::vector<Located<expression_ref>> terms;
+    std::vector<Located<Exp>> terms;
 
     InfixExp* clone() const { return new InfixExp(*this);}
     std::string print() const;
@@ -199,7 +201,7 @@ struct InfixExp: public Object
 
 struct TypedExp: public Object
 {
-    Expression exp;
+    LExp exp;
     Type type;
     Core::wrapper wrap;
 
@@ -207,7 +209,7 @@ struct TypedExp: public Object
     std::string print() const;
 
     TypedExp() = default;
-    TypedExp(const Expression& e, const Type& t): exp(e), type(t) {}
+    TypedExp(const LExp& e, const Type& t): exp(e), type(t) {}
 };
 
 struct SignatureDecl: public Object
@@ -599,102 +601,102 @@ struct DefaultDecl: public Object
 
 struct List: public Object
 {
-    std::vector<expression_ref> elements;
+    std::vector<LExp> elements;
     List* clone() const { return new List(*this);}
     std::string print() const;
-    List(const std::vector<expression_ref>& es): elements(es) {}
+    List(const std::vector<LExp>& es): elements(es) {}
 };
 
 struct ListFrom: public Object
 {
-    expression_ref from;
+    LExp from;
     expression_ref enumFromOp;
     ListFrom* clone() const { return new ListFrom(*this);}
     std::string print() const;
-    ListFrom(const expression_ref& e): from(e) {}
+    ListFrom(const LExp& e): from(e) {}
 };
 
 struct ListFromThen: public Object
 {
-    expression_ref from;
-    expression_ref then;
+    LExp from;
+    LExp then;
     expression_ref enumFromThenOp;
     ListFromThen* clone() const { return new ListFromThen(*this);}
     std::string print() const;
-    ListFromThen(const expression_ref& e1, const expression_ref& e2): from(e1), then(e2) {}
+    ListFromThen(const LExp& e1, const LExp& e2): from(e1), then(e2) {}
 };
 
 struct ListFromTo: public Object
 {
-    expression_ref from;
-    expression_ref to;
+    LExp from;
+    LExp to;
     expression_ref enumFromToOp;
     ListFromTo* clone() const { return new ListFromTo(*this);}
     std::string print() const;
-    ListFromTo(const expression_ref& e1, const expression_ref& e2): from(e1), to(e2) {}
+    ListFromTo(const LExp& e1, const LExp& e2): from(e1), to(e2) {}
 };
 
 struct ListFromThenTo: public Object
 {
-    expression_ref from;
-    expression_ref then;
-    expression_ref to;
+    LExp from;
+    LExp then;
+    LExp to;
     expression_ref enumFromThenToOp;
     ListFromThenTo* clone() const { return new ListFromThenTo(*this);}
     std::string print() const;
-    ListFromThenTo(const expression_ref& e1, const expression_ref& e2, const expression_ref& e3): from(e1), then(e2), to(e3) {}
+    ListFromThenTo(const LExp& e1, const LExp& e2, const LExp& e3): from(e1), then(e2), to(e3) {}
 };
 
 struct ListComprehension: public Object
 {
-    expression_ref body;
-    std::vector<Qual> quals;
+    LExp body;
+    std::vector<LQual> quals;
     ListComprehension* clone() const { return new ListComprehension(*this);}
     std::string print() const;
-    ListComprehension(const expression_ref& e, const std::vector<expression_ref>& es): body(e), quals(es) {}
+    ListComprehension(const LExp& e, const std::vector<LQual>& es): body(e), quals(es) {}
 };
 
 struct LeftSection: public Object
 {
-    expression_ref l_arg;
-    expression_ref op;
+    LExp l_arg;
+    LExp op;
     LeftSection* clone() const {return new LeftSection(*this);}
     std::string print() const;
-    LeftSection(const expression_ref& e, const expression_ref& v):l_arg(e),op(v) {}
+    LeftSection(const LExp& e, const LExp& v):l_arg(e),op(v) {}
 };
 
 struct RightSection: public Object
 {
-    expression_ref op;
-    expression_ref r_arg;
+    LExp op;
+    LExp r_arg;
     RightSection* clone() const {return new RightSection(*this);}
     std::string print() const;
-    RightSection(const expression_ref& v, const expression_ref& e):op(v), r_arg(e) {}
+    RightSection(const LExp& v, const LExp& e):op(v), r_arg(e) {}
 };
 
 struct Tuple: public Object
 {
-    std::vector<expression_ref> elements;
+    std::vector<LExp> elements;
     Tuple* clone() const { return new Tuple(*this);}
     std::string print() const;
-    Tuple(const std::vector<expression_ref>& es): elements(es)
+    Tuple(const std::vector<LExp>& es): elements(es)
         {
             assert(es.size() != 1);
         }
 };
 
-Expression tuple(const std::vector<Expression>& es);
+Exp tuple(const std::vector<LExp>& es);
 
 struct GuardedRHS
 {
-    std::vector<Located<expression_ref>> guards;
-    Located<expression_ref> body;
+    std::vector<LExp> guards;
+    LExp body;
 
     std::string print() const;
     std::string print_no_equals() const;
 
     GuardedRHS() = default;
-    GuardedRHS(const std::vector<Located<expression_ref>> v, const Located<expression_ref>& e)
+    GuardedRHS(const std::vector<LExp> v, const LExp& e)
         :guards(v),
          body(e)
     { }
@@ -718,7 +720,7 @@ MultiGuardedRHS SimpleRHS(const Located<expression_ref>&, const std::optional<Lo
 
 struct StrictValueDecl: public Object
 {
-    Located<expression_ref> lhs;
+    LExp lhs;
     MultiGuardedRHS rhs;
 
     StrictValueDecl* clone() const { return new StrictValueDecl(*this);}
@@ -734,7 +736,7 @@ struct StrictValueDecl: public Object
 
 struct ValueDecl: public Object
 {
-    Located<expression_ref> lhs;
+    LExp lhs;
     MultiGuardedRHS rhs;
 
     bool operator==(const Object& O) const;
@@ -747,15 +749,18 @@ struct ValueDecl: public Object
     ValueDecl(const Located<expression_ref>& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
 };
 
+typedef expression_ref Stmt;
+typedef Located<Stmt> LStmt;
+
 struct Stmts: public Object
 {
-    std::vector<expression_ref> stmts;
+    std::vector<LStmt> stmts;
 
     Stmts* clone() const { return new Stmts(*this);}
     std::string print() const;
 
     Stmts() = default;
-    Stmts(const std::vector<expression_ref>& v):stmts(v) {}
+    Stmts(const std::vector<LStmt>& v):stmts(v) {}
 };
 
 struct LetQual: public Object
@@ -768,24 +773,25 @@ struct LetQual: public Object
 
 struct SimpleQual: public Object
 {
-    expression_ref exp;
+    LExp exp;
     expression_ref andThenOp;
 
     SimpleQual* clone() const { return new SimpleQual(*this);}
     std::string print() const;
-    SimpleQual(const expression_ref &e): exp(e) {};
+    SimpleQual(const LExp &e): exp(e) {};
 };
 
 struct PatQual: public Object
 {
-    Pattern bindpat;
+    LPat bindpat;
+    LExp exp;
+
     expression_ref bindOp;
     expression_ref failOp;
 
-    expression_ref exp;
     PatQual* clone() const { return new PatQual(*this);}
     std::string print() const;
-    PatQual(const expression_ref &bp, const expression_ref& e): bindpat(bp), exp(e) {};
+    PatQual(const LPat &bp, const LExp& e): bindpat(bp), exp(e) {};
 };
 
 struct RecStmt: public Object
@@ -825,13 +831,13 @@ struct MDo: public Object
 
 struct Alt
 {
-    Pattern pattern;
+    LPat pattern;
     MultiGuardedRHS rhs;
 
     std::string print() const;
 
     Alt() = default;
-    Alt(const Pattern& p, const MultiGuardedRHS& r):pattern(p), rhs(r) {};
+    Alt(const LPat& p, const MultiGuardedRHS& r):pattern(p), rhs(r) {};
 };
 
 struct Alts: public std::vector<Located<Alt>>
@@ -845,26 +851,26 @@ struct Alts: public std::vector<Located<Alt>>
 struct LetExp: public Object
 {
     Located<Binds> binds;
-    Located<expression_ref> body;
+    LExp body;
 
     LetExp* clone() const {return new LetExp(*this);}
     std::string print() const;
 
-    LetExp(const Located<Binds>& bs, const Located<expression_ref>& b): binds(bs), body(b) {};
+    LetExp(const Located<Binds>& bs, const LExp& b): binds(bs), body(b) {};
 };
 
 LetExp simple_let(const Var&, const Expression&, const Expression&);
 
 struct IfExp: public Object
 {
-    Located<expression_ref> condition;
-    Located<expression_ref> true_branch;
-    Located<expression_ref> false_branch;
+    LExp condition;
+    LExp true_branch;
+    LExp false_branch;
 
     IfExp* clone() const {return new IfExp(*this);}
     std::string print() const;
 
-    IfExp(const Located<expression_ref>& c, const Located<expression_ref>& t, const Located<expression_ref>& f)
+    IfExp(const LExp& c, const LExp& t, const LExp& f)
         : condition(c),
           true_branch(t),
           false_branch(f)
@@ -960,22 +966,22 @@ struct PatDecl: public Object
     PatDecl* clone() const {return new PatDecl(*this);}
     std::string print() const;
 
-    Located<Pattern> lhs;
+    LPat lhs;
     MultiGuardedRHS rhs;
 
     // This holds vars discovered during renaming
     std::set<std::string> rhs_free_vars;
 
-    PatDecl(const Located<Pattern>& p, const MultiGuardedRHS& r):lhs(p), rhs(r) {}
+    PatDecl(const LPat& p, const MultiGuardedRHS& r):lhs(p), rhs(r) {}
 };
 
 struct MRule
 {
     std::string print() const;
 
-    std::vector<Pattern> patterns;
+    std::vector<LPat> patterns;
     MultiGuardedRHS rhs;
-    MRule(const std::vector<Pattern>& ps, const MultiGuardedRHS& r);
+    MRule(const std::vector<LPat>& ps, const MultiGuardedRHS& r);
 };
 
 struct Matches: public std::vector<MRule>
@@ -990,7 +996,7 @@ struct LambdaExp: public Object
     LambdaExp* clone() const {return new LambdaExp(*this);}
     std::string print() const;
 
-    LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b);
+    LambdaExp(const std::vector<LPat>& ps, const LExp& b);
 };
 
 
@@ -1009,14 +1015,14 @@ struct MatchContext: std::variant<LambdaContext, CaseContext, FunctionContext>
 
 struct CaseExp: public Object
 {
-    Located<Expression> object;
+    LExp object;
     Matches alts;
 
     CaseExp* clone() const { return new CaseExp(*this);}
     std::string print() const;
 
-    CaseExp(const Located<Expression>& o, const Alts& as);
-    CaseExp(const Located<Expression>& o, const Matches& ms);
+    CaseExp(const LExp& o, const Alts& as);
+    CaseExp(const LExp& o, const Matches& ms);
 };
 
 struct FunDecl: public Object
@@ -1033,10 +1039,10 @@ struct FunDecl: public Object
     FunDecl(const Var& vv, const Matches& ms): v(vv), matches(ms) {}
 };
 
-FunDecl simple_decl(const Var& v, const expression_ref&);
+FunDecl simple_decl(const Var& v, const LExp&);
 FunDecl simple_decl(const Var& v, const MultiGuardedRHS&);
-FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const expression_ref&);
-FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const MultiGuardedRHS&);
+FunDecl simple_fun_decl(const Var& v, const std::vector<LPat>& pats, const LExp&);
+FunDecl simple_fun_decl(const Var& v, const std::vector<LPat>& pats, const MultiGuardedRHS&);
 
 struct BindInfo
 {

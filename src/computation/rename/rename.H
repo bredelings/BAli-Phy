@@ -11,14 +11,18 @@
 
 class Module;
 
-expression_ref unapply(expression_ref E);
+Hs::LPat unapply(Hs::LExp E);
 
 typedef std::set<std::string> bound_var_info;
 typedef std::set<std::string> bound_type_var_info;
 
 Located<expression_ref> desugar_infix(const Module& m, const std::vector<Located<expression_ref>>& T);
-expression_ref rename_infix(const Module& m, const expression_ref& E);
+Hs::LExp rename_infix(const Module& m, Hs::LExp E);
 Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R);
+Hs::Binds rename_infix(const Module& p, Hs::Binds);
+Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls);
+
+expression_ref rename_infix_decl(const Module& m, const expression_ref& E);
 
 bool disjoint_add(bound_var_info& bv1, const bound_var_info& bv2);
 
@@ -39,14 +43,14 @@ struct renamer_state
     void qualify_name(Hs::Con& v) const;
     void qualify_name(Hs::TypeCon& v) const;
 
-    bound_var_info rename_patterns(std::vector<expression_ref>& pat, bool top = false);
+    bound_var_info rename_patterns(Hs::LPats& pat, bool top = false);
     bound_var_info rename_var_pattern(Hs::Var&, bool top = false);
-    bound_var_info rename_pattern(expression_ref& pat, bool top = false);
+    bound_var_info rename_pattern(Hs::LPat& pat, bool top = false);
 
-    bound_var_info find_vars_in_patterns(const std::vector<expression_ref>& pats, bool top = false);
-    bound_var_info find_vars_in_pattern(const expression_ref& pat, bool top = false);
+    bound_var_info find_vars_in_patterns(const Hs::LPats& pats, bool top = false);
+    bound_var_info find_vars_in_pattern(const Hs::LPat& pat, bool top = false);
     // the pattern*2 versions are for AFTER rename, and don't check things.  They just report what they find.
-    bound_var_info find_bound_vars_in_stmt(const expression_ref& stmt);
+    bound_var_info find_bound_vars_in_stmt(const Located<expression_ref>& stmt);
 
     // these all assume decls have been translated to FunDecl or PatDecl
     bound_var_info find_bound_vars_in_funpatdecl(const expression_ref& decl, bool top = false);
@@ -59,9 +63,9 @@ struct renamer_state
     bound_var_info rename_signatures(std::map<Hs::Var, Hs::Type>& signatures, bool top = false);
     bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars, bool top = false);
     bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
-    bound_var_info rename_rec_stmt(expression_ref& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
-    bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
-    bound_var_info rename_stmt(expression_ref& stmt, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
+    bound_var_info rename_rec_stmt(Hs::LExp& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
+    bound_var_info rename_stmt(Hs::LExp& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
+    bound_var_info rename_stmt(Hs::LExp& stmt, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
     Hs::MultiGuardedRHS rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
     Hs::MultiGuardedRHS rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, std::set<std::string>& free_vars);
     Hs::MRule rename(Hs::MRule match, const bound_var_info& bound, std::set<std::string>& free_vars);
@@ -80,20 +84,17 @@ struct renamer_state
     Hs::Type rename_type(const Hs::Type&);
     Hs::Context rename(Hs::Context);
 
-    std::pair<expression_ref,std::set<std::string>> rename(const expression_ref& E, const bound_var_info& bound);
-    expression_ref rename(const expression_ref& E, const bound_var_info& bound, std::set<std::string>& free_vars);
-    expression_ref rename(const expression_ref& E, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
+    Hs::Exp rename(const Hs::Exp& E, const bound_var_info& bound, std::set<std::string>& free_vars);
+    Hs::LExp rename(Hs::LExp E, const bound_var_info& bound, std::set<std::string>& free_vars);
+
+    std::pair<Hs::LExp,std::set<std::string>> rename(const Hs::LExp& E, const bound_var_info& bound);
+    Hs::LExp rename(const Hs::LExp& E, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
 
     renamer_state(const Module& m_):m(m_) {}
 };
 
 Hs::Decls synthesize_field_accessors(const Hs::Decls& decls);
 
-Hs::Binds rename_infix(const Module& p, Hs::Binds);
-expression_ref rename_infix(const Module& p, const expression_ref&);
-Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls);
-
-expression_ref rename_infix_decl(const Module& m, const expression_ref& E);
 Hs::Decls group_fundecls(const Hs::Decls& decls); // only value decls
 
 // I think ghc returns a moduledecls AND a... class environment?

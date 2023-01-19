@@ -334,10 +334,10 @@ string Tuple::print() const
     return "(" + join(parts,", ") +")";
 }
 
-Expression tuple(const std::vector<Expression>& es)
+Expression tuple(const std::vector<LExp>& es)
 {
     if (es.size() == 1)
-        return es[0];
+        return unloc(es[0]);
     else
         return Tuple(es);
 }
@@ -751,8 +751,8 @@ string LambdaExp::print() const
     return result;
 }
 
-LambdaExp::LambdaExp(const std::vector<Pattern>& ps, const expression_ref& b)
-    :match(ps, SimpleRHS({noloc,b}))
+LambdaExp::LambdaExp(const LPats& ps, const LExp& b)
+    :match(ps, SimpleRHS(b))
 {
     assert(not match.patterns.empty());
 }
@@ -819,13 +819,13 @@ string LetExp::print() const
     return "let " + binds.print() + " in " + body.print();
 }
 
-LetExp simple_let(const Var& x, const Expression& E, const Expression& body)
+LetExp simple_let(const Var& x, const LExp& E, const LExp& body)
 {
     auto decl = simple_decl(x, E);
     Decls decls({decl});
     Binds binds({decls});
 
-    return LetExp({noloc, binds}, {noloc,body});
+    return LetExp({noloc, binds}, body);
 }
 
 string IfExp::print() const
@@ -892,7 +892,7 @@ string MRule::print() const
     return join( ss, " ");
 }
 
-MRule::MRule(const std::vector<Pattern>& ps, const MultiGuardedRHS& r)
+MRule::MRule(const LPats& ps, const MultiGuardedRHS& r)
     :patterns(ps), rhs(r)
 {
 }
@@ -923,12 +923,12 @@ string FunDecl::print() const
     return join( lines, "\n" );
 }
 
-FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const expression_ref& body)
+FunDecl simple_fun_decl(const Var& v, const LPats& pats, const LExp& body)
 {
-    return simple_fun_decl(v, pats, SimpleRHS({noloc,body}));
+    return simple_fun_decl(v, pats, SimpleRHS(body));
 }
 
-FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const MultiGuardedRHS& body)
+FunDecl simple_fun_decl(const Var& v, const LPats& pats, const MultiGuardedRHS& body)
 {
     MRule rule{pats, body};
     Matches ms{{rule}};
@@ -937,7 +937,7 @@ FunDecl simple_fun_decl(const Var& v, const std::vector<Pattern>& pats, const Mu
     return FunDecl(v,ms);
 }
 
-FunDecl simple_decl(const Var& v, const expression_ref& E)
+FunDecl simple_decl(const Var& v, const LExp& E)
 {
     return simple_fun_decl(v,{},E);
 }

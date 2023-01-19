@@ -239,7 +239,7 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
             for(auto& dvar: con_pat->given_dict_vars)
                 patterns.push_back(make_VarPattern(dvar));
             for(auto& sub_pat: con_pat->args)
-                patterns.push_back(sub_pat);
+                patterns.push_back(unloc(sub_pat));
 	    assert(patterns.size() == total_arity);
 
 	    // pattern: Add the remaining top-level patterns (minus the first).
@@ -477,7 +477,7 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
 	for(auto& v: Hs::vars_in_pattern(LP.pattern))
         {
             auto y = make_var(v);
-	    binds.push_back({y,case_expression(x, {LP.pattern}, {failable_expression(y)}).result(Core::error("lazy pattern: failed pattern match"))});
+	    binds.push_back({y,case_expression(x, {unloc(LP.pattern)}, {failable_expression(y)}).result(Core::error("lazy pattern: failed pattern match"))});
         }
 	rhs.add_binding(binds);
 	pat1 = Hs::WildcardPattern();
@@ -496,9 +496,9 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
         //  then restore the strictness mark.
         // We could end up with (for example) a strict wildcard.
         auto SP = pat1.as_<Haskell::StrictPattern>();
-        pat1 = SP.pattern;
+        pat1 = unloc(SP.pattern);
         clean_up_pattern(x, eqn);
-        pat1 = Haskell::StrictPattern(pat1);
+        pat1 = Haskell::StrictPattern({noloc,pat1});
 
         // FIXME: does this work?
 
@@ -511,13 +511,13 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
         auto& AP = pat1.as_<Haskell::AsPattern>();
 	auto y = make_var(AP.var);
 	rhs.add_binding({{y, x}});
-	pat1 = AP.pattern;
+	pat1 = unloc(AP.pattern);
     }
     // case x of (pat::type) -> rhs  => case wrap(x) of pat -> rhs
     else if (auto tp = pat1.to<Haskell::TypedPattern>())
     {
         // FIXME: this ignores the wrapper!
-	pat1 = tp->pat;
+	pat1 = unloc(tp->pat);
         clean_up_pattern(x, eqn);
     }
 }

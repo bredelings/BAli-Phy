@@ -50,9 +50,9 @@ Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R)
     for(auto& guarded_rhs: R.guarded_rhss)
     {
         for(auto& guard: guarded_rhs.guards)
-            unloc(guard) = rename_infix(m, unloc(guard));
+            guard = rename_infix(m, guard);
 
-        unloc(guarded_rhs.body) = rename_infix(m, unloc(guarded_rhs.body));
+        guarded_rhs.body = rename_infix(m, guarded_rhs.body);
     }
 
     if (R.decls)
@@ -159,7 +159,7 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
                     vector<Located<expression_ref>> f(a, {noloc,Hs::WildcardPattern()});
                     unloc(f[pos]) = name;
 
-                    auto pattern = Hs::ApplyExp({noloc,Hs::Con({noloc,ConName},a)},f);
+                    Hs::LPat pattern = {noloc,Hs::ApplyExp({noloc,Hs::Con({noloc,ConName},a)},f)};
                     auto rhs = Haskell::SimpleRHS({noloc, name});
                     alts.push_back({noloc,{pattern,rhs}});
                 }
@@ -168,9 +168,9 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
 
                 Hs::Var x({noloc,"v$0"}); // FIXME??
                 expression_ref body = Haskell::CaseExp({noloc,x},Haskell::Alts(alts));
-                body = Haskell::LambdaExp({x},body);
+                expression_ref lambda = Haskell::LambdaExp({{noloc,x}},{noloc,body});
 
-                decls2.push_back(Haskell::ValueDecl({noloc,name}, body));
+                decls2.push_back(Haskell::ValueDecl({noloc,name}, lambda));
             }
         }
     }
@@ -351,7 +351,7 @@ void renamer_state::qualify_name(Hs::TypeCon& tc) const
     qualify_name(tc.name);
 }
 
-bound_var_info renamer_state::find_vars_in_patterns(const vector<expression_ref>& pats, bool top)
+bound_var_info renamer_state::find_vars_in_patterns(const Hs::LPats& pats, bool top)
 {
     bound_var_info bound;
 
@@ -373,9 +373,9 @@ bound_var_info renamer_state::find_vars_in_patterns(const vector<expression_ref>
 bound_var_info renamer_state::find_bound_vars_in_funpatdecl(const expression_ref& decl, bool top)
 {
     if (auto d = decl.to<Haskell::PatDecl>())
-        return find_vars_in_pattern( unloc(d->lhs), top);
+        return find_vars_in_pattern( d->lhs, top);
     else if (auto d = decl.to<Haskell::FunDecl>())
-        return find_vars_in_pattern(Hs::VarPattern(d->v), top);
+        return find_vars_in_pattern({noloc,Hs::VarPattern(d->v)}, top);
     else
         std::abort();
 }
@@ -398,7 +398,7 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Binds& bin
         add(bound_names, find_bound_vars_in_decls(decls, top));
 
     for(auto& [var,_]: binds.signatures)
-        add(bound_names, find_vars_in_pattern(var, top));
+        add(bound_names, find_vars_in_pattern({var.name.loc,var}, top));
 
     return bound_names;
 }
@@ -428,8 +428,9 @@ const set<string>& get_rhs_free_vars(const expression_ref& decl)
         std::abort();
 };
 
-bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt)
+bound_var_info renamer_state::find_bound_vars_in_stmt(const Located<expression_ref>& lstmt)
 {
+    auto& stmt = unloc(lstmt);
     if (stmt.is_a<Hs::SimpleQual>())
 	return {};
     else if (stmt.is_a<Haskell::PatQual>())
@@ -448,15 +449,15 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(const expression_ref& stmt
 	std::abort();
 }
 
-pair<expression_ref,set<string>> renamer_state::rename(const expression_ref& E, const bound_var_info& bound)
+pair<Hs::LExp,set<string>> renamer_state::rename(const Hs::LExp& E, const bound_var_info& bound)
 {
     set<string> free_vars;
     auto E2 = rename(E, bound, free_vars);
     return {E2,free_vars};
 }
 
-expression_ref
-renamer_state::rename(const expression_ref& E, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
+Hs::LExp
+renamer_state::rename(const Hs::LExp& E, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
 {
     if (binders.empty())
         return rename(E, bound, free_vars);

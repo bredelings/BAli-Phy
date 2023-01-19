@@ -174,7 +174,7 @@ rename_from_bindinfo(expression_ref decl, const map<Hs::Var, Hs::BindInfo>& bind
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
-        unloc(PD.lhs) = rename_pattern_from_bindinfo(unloc(PD.lhs), bind_infos);
+        PD.lhs = rename_pattern_from_bindinfo(PD.lhs, bind_infos);
         return PD;
     }
     else
@@ -312,7 +312,7 @@ TypeChecker::infer_lhs_type(expression_ref& decl, const signature_env& signature
     {
         auto PD = *pd;
         local_value_env lve;
-        auto type = inferPat( lve, unloc(PD.lhs), signatures);
+        auto type = inferPat( lve, PD.lhs, signatures);
         decl = PD;
         return {type, lve};
     }
@@ -410,7 +410,7 @@ tuple< map<Hs::Var, Hs::Var>, local_value_env > TypeChecker::pd_mono_nonrec(Hs::
     // 2. Check the LHS pattern and find out the type of its ids.
     local_value_env mono_binder_env;
     tc_action<local_value_env&> nothing = [](local_value_env&,TypeChecker&){};
-    tcPat(mono_binder_env, unloc(PD.lhs), Check(rhs_type.read_type()), {}, nothing);
+    tcPat(mono_binder_env, PD.lhs, Check(rhs_type.read_type()), {}, nothing);
 
     // 3. Make up some mono_ids...
     std::map<Hs::Var, Hs::Var> mono_ids;
@@ -450,7 +450,7 @@ TypeChecker::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& dec
         }
         else if (auto pd = decl.to<Hs::PatDecl>();
                  pd
-                 and not any_sigs_for_vars(signatures, Hs::vars_in_pattern(unloc(pd->lhs))))
+                 and not any_sigs_for_vars(signatures, Hs::vars_in_pattern(pd->lhs)))
         {
             auto PD = *pd;
             auto result = pd_mono_nonrec(PD);

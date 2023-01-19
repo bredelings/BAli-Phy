@@ -7,6 +7,7 @@
 #include "haskell/coretype.H"
 #include "haskell/core.H"
 #include "util/cow-ptr.H"
+#include "haskell/haskell.H" // for Hs::LExp
 
 struct OccurrenceOrigin
 {
@@ -30,7 +31,7 @@ struct InstanceOrigin
 
 struct LeftSectionOrigin
 {
-    expression_ref op;
+    Hs::LExp op;
 };
 
 struct PatOrigin

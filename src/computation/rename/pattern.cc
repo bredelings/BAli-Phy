@@ -16,37 +16,41 @@ using std::set;
 
 // The issue here is to rewrite @ f x y -> f x y
 // so that f is actually the head.
-expression_ref unapply(expression_ref E)
+Hs::LPat unapply(Hs::LExp LE)
 {
+    auto& E = unloc(LE);
+
+    Hs::LPat LP;
+    LP.loc = LE.loc;
+    auto& P = unloc(LP);
+
     if (auto l = E.to<Hs::List>())
     {
         Hs::ListPattern LP;
         for(auto& pattern: l->elements)
             LP.elements.push_back( unapply(pattern) );
-        return LP;
+        P = LP;
     }
     else if (auto t = E.to<Hs::Tuple>())
     {
         Hs::TuplePattern TP;
         for(auto& pattern: t->elements)
             TP.elements.push_back( unapply(pattern) );
-        return TP;
+        P = TP;
     }
-    else if (E.is_a<Hs::AsPattern>())
+    else if (auto ap = E.to<Hs::AsPattern>())
     {
-        auto& AP = E.as_<Hs::AsPattern>();
-        return Hs::AsPattern(AP.var, unapply(AP.pattern));
+        P = Hs::AsPattern(ap->var, unapply(ap->pattern));
     }
-    else if (E.is_a<Hs::LazyPattern>())
+    else if (auto lp = E.to<Hs::LazyPattern>())
     {
-        auto LP = E.as_<Hs::LazyPattern>();
-        return Hs::LazyPattern(unapply(LP.pattern));
+        P = Hs::LazyPattern(unapply(lp->pattern));
     }
     else if (E.is_a<Hs::StrictPattern>())
     {
         auto SP = E.as_<Hs::StrictPattern>();
         SP.pattern = unapply(SP.pattern);
-        return SP;
+        P = SP;
     }
     else if (auto app = E.to<Hs::ApplyExp>())
     {
@@ -59,33 +63,33 @@ expression_ref unapply(expression_ref E)
         if (not con)
             throw myexception()<<"In pattern `"<<E<<"`:\n    `"<<App.head<<"` is not a data constructor.";
 
-        // These aren't located,
-        vector<expression_ref> args;
+        Hs::LPats args;
         for(auto& arg: App.args)
-            args.push_back(unapply(unloc(arg)));
+            args.push_back(unapply(arg));
 
-        return Hs::ConPattern(*con, args);
+        P = Hs::ConPattern(*con, args);
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
         Hs::TypedPattern TP;
         TP.pat = unapply(texp->exp);
         TP.type = texp->type;
-        return TP;
+        P = TP;
     }
     else if (auto l = E.to<Hs::Literal>())
-        return Hs::LiteralPattern(*l);
+        P = Hs::LiteralPattern(*l);
     else if (auto c = E.to<Hs::Con>())
-        return Hs::ConPattern(*c, {});
+        P = Hs::ConPattern(*c, {});
     else if (auto v = E.to<Hs::Var>())
-        return Hs::VarPattern(*v);
+        P = Hs::VarPattern(*v);
     else if (E.is_a<Hs::WildcardPattern>())
-        return E;
+        P = Hs::WildcardPattern();
     else
         std::abort();
+    return LP;
 }
 
-bound_var_info renamer_state::rename_patterns(vector<expression_ref>& patterns, bool top)
+bound_var_info renamer_state::rename_patterns(Hs::LPats& patterns, bool top)
 {
     bound_var_info bound;
 
@@ -108,8 +112,9 @@ bound_var_info renamer_state::rename_patterns(vector<expression_ref>& patterns, 
 // FIXME - can we just call rename_pattern on this directly???
 // Convert ids to vars in pattern, and return a set of all names for vars (excluding wildcards, of course)
 // A single variable is a valid "pattern" for the purposes of this function.
-bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bool top)
+bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool top)
 {
+    auto& pat = unloc(lpat);
     assert(not is_apply_exp(pat));
     assert(not pat.is_a<Hs::ApplyExp>());
 
@@ -138,7 +143,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const expression_ref& pat, bo
         auto& AP = pat.as_<Hs::AsPattern>();
 	assert(not top);
 
-	auto bound = find_vars_in_pattern(Hs::VarPattern(AP.var), top);
+	auto bound = find_vars_in_pattern({noloc,Hs::VarPattern(AP.var)}, top);
 	bool overlap = not disjoint_add(bound, find_vars_in_pattern(AP.pattern, top));
 
 	if (overlap)
@@ -213,8 +218,9 @@ bound_var_info renamer_state::rename_var_pattern(Hs::Var& V, bool top)
 
 // Convert ids to vars in pattern, and return a set of all names for vars (excluding wildcards, of course)
 // A single variable is a valid "pattern" for the purposes of this function.
-bound_var_info renamer_state::rename_pattern(expression_ref& pat, bool top)
+bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
 {
+    auto& pat = unloc(lpat);
     assert(not is_apply_exp(pat));
     assert(not pat.is_a<Hs::ApplyExp>());
 

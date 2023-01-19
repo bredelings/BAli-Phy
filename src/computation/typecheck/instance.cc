@@ -441,7 +441,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
             auto dm_var = class_info.default_methods.at(method);
 
-            FD = Hs::simple_decl(op, dm_var);
+            FD = Hs::simple_decl(op, {noloc,dm_var});
         }
         auto [decl2, __] = infer_type_for_single_fundecl_with_sig(*FD);
         decls.push_back(decl2);

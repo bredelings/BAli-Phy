@@ -87,10 +87,10 @@ Type TypeChecker::inferPat(local_value_env& penv, Hs::Var& V, const signature_en
 }
 
 void TypeChecker::tcPats(local_value_env& penv,
-                               vector<Hs::Pattern>& pats, const vector<Expected>& pat_types,
-                               const signature_env& sigs,
-                               const std::function<void(local_value_env&,TypeChecker&)>& a,
-                               int i)
+                         Hs::LPats& pats, const vector<Expected>& pat_types,
+                         const signature_env& sigs,
+                         const std::function<void(local_value_env&,TypeChecker&)>& a,
+                         int i)
 {
 
     if (i < pats.size())
@@ -109,9 +109,12 @@ void TypeChecker::tcPats(local_value_env& penv,
 }
 
 // Figure 24. Rules for patterns
-void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected& exp_type, const signature_env& sigs, const tc_action<local_value_env&>& a)
+void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& exp_type, const signature_env& sigs, const tc_action<local_value_env&>& a)
 {
+    if (lpat.loc) push_source_span(*lpat.loc);
+
     // TAUT-PAT
+    auto& pat = unloc(lpat);
     if (auto v = pat.to<Hs::VarPattern>())
     {
         auto V = *v;
@@ -256,19 +259,15 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
         if (L.lit.is_BoxedInteger())
         {
             unify( expTypeToType(exp_type), int_type() );
-            a(penv, *this);
-            return;
         }
 
         // 1. Typecheck (==)
 //        auto [equals, equals_type] = inferRho(gve, Hs::Var({noloc,"Data.Eq.=="}));
 //        L.equalsOp = equals;
 
-        if (L.lit.is_Char())
+        else if (L.lit.is_Char())
         {
             unify( expTypeToType(exp_type), char_type() );
-            a(penv, *this);
-            return;
         }
         else if (auto i = L.lit.is_Integer())
         {
@@ -279,14 +278,10 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
 
             L.lit.literal = Hs::Integer(*i, fromInteger);
             pat = L;
-
-            a(penv, *this);
-            return;
         }
         else if (L.lit.is_String())
         {
             unify(expTypeToType(exp_type), list_type(char_type()) );
-            return;
         }
         else if (auto d = L.lit.is_Double())
         {
@@ -298,24 +293,26 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::Pattern& pat, const Expected&
             L.lit.literal = Hs::Double(*d, fromRational);
             pat = L;
 
-            a(penv, *this);
-            return;
         }
         else
             std::abort();
+
+        a(penv, *this);
     }
     else
         throw note_exception()<<"Unrecognized pattern '"<<pat<<"'!";
+
+    if (lpat.loc) pop_source_span();
 }
 
-Type TypeChecker::inferPat(local_value_env& penv, Hs::Pattern& pat, const signature_env& sigs)
+Type TypeChecker::inferPat(local_value_env& penv, Hs::LPat& pat, const signature_env& sigs)
 {
     Expected exp_type = newInfer();
     tcPat(penv, pat, exp_type, sigs, [](local_value_env&, TypeChecker&) {});
     return exp_type.read_type();
 }
 
-void TypeChecker::checkPat(local_value_env& penv, Hs::Pattern& pat, const SigmaType& exp_type, const signature_env& sigs)
+void TypeChecker::checkPat(local_value_env& penv, Hs::LPat& pat, const SigmaType& exp_type, const signature_env& sigs)
 {
     tcPat(penv, pat, Check(exp_type), sigs, [](local_value_env&, TypeChecker&) {});
 }
@@ -333,15 +330,17 @@ rename_var_from_bindinfo(const Hs::Var& v, const map<Hs::Var, Hs::BindInfo>& bin
 }
 
 // Figure 24. Rules for patterns
-Hs::Pattern
-rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<Hs::Var, Hs::BindInfo>& bind_info)
+Hs::LPat
+rename_pattern_from_bindinfo(Hs::LPat lpat, const map<Hs::Var, Hs::BindInfo>& bind_info)
 {
+    auto& pat = unloc(lpat);
+
     // TAUT-PAT
     if (auto v = pat.to<Hs::VarPattern>())
     {
         auto VP = *v;
         VP.var = rename_var_from_bindinfo(VP.var, bind_info);
-        return VP;
+        pat = VP;
     }
     // CONSTR-PAT
     else if (auto con = pat.to<Hs::ConPattern>())
@@ -351,7 +350,7 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<Hs::Var, Hs::Bind
         for(auto& sub_pat: Con.args)
             sub_pat = rename_pattern_from_bindinfo(sub_pat, bind_info);
 
-        return Con;
+        pat = Con;
     }
     // AS-PAT
     else if (auto ap = pat.to<Hs::AsPattern>())
@@ -360,22 +359,21 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<Hs::Var, Hs::Bind
 
         auto v2 = rename_var_from_bindinfo(ap->var, bind_info);
 
-        return Hs::AsPattern(v2, p1);
+        pat = Hs::AsPattern(v2, p1);
     }
     // LAZY-PAT
     else if (auto lp = pat.to<Hs::LazyPattern>())
     {
-        return Hs::LazyPattern( rename_pattern_from_bindinfo(lp->pattern, bind_info) );
+        pat = Hs::LazyPattern( rename_pattern_from_bindinfo(lp->pattern, bind_info) );
     }
     // not in paper (STRICT-PAT)
     else if (auto sp = pat.to<Hs::StrictPattern>())
     {
-        return Hs::StrictPattern( rename_pattern_from_bindinfo(sp->pattern, bind_info) );
+        pat = Hs::StrictPattern( rename_pattern_from_bindinfo(sp->pattern, bind_info) );
     }
     // WILD-PAT
     else if (pat.is_a<Hs::WildcardPattern>())
     {
-        return pat;
     }
     // LIST-PAT
     else if (auto l = pat.to<Hs::ListPattern>())
@@ -385,7 +383,7 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<Hs::Var, Hs::Bind
         for(auto& element: L.elements)
             element = rename_pattern_from_bindinfo(element, bind_info);
 
-        return L;
+        pat = L;
     }
     else if (auto tpat = pat.to<Hs::TypedPattern>())
     {
@@ -393,7 +391,7 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<Hs::Var, Hs::Bind
 
         TPat.pat = rename_pattern_from_bindinfo(TPat.pat, bind_info);
 
-        return TPat;
+        pat = TPat;
     }
     // TUPLE-PAT
     else if (auto t = pat.to<Hs::TuplePattern>())
@@ -402,12 +400,14 @@ rename_pattern_from_bindinfo(const Hs::Pattern& pat, const map<Hs::Var, Hs::Bind
         for(auto& element: T.elements)
             element = rename_pattern_from_bindinfo(element, bind_info);
 
-        return T;
+        pat = T;
     }
     else if (pat.is_a<Hs::LiteralPattern>())
-        return pat;
+    { }
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
+
+    return lpat;
 }
 
 
