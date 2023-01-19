@@ -82,3 +82,5 @@ elemIndexArray val array = go 0 where
          | (array!i) == val  = Just i
          | otherwise         = go (i+1)
     n = numElements array
+
+mapnA n f arr = mkArray n (\i -> f $ arr!i)
