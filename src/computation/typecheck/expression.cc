@@ -58,7 +58,7 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
     if (arg_index > 0)
         tcRho(App, fun_type, i + 1);
     else
-        tcRho(unloc(App.head), fun_type);
+        tcRho(App.head, fun_type);
 
     // 2. Check the argument type
     if (App.args[arg_index].loc) push_source_span(*App.args[arg_index].loc);
@@ -100,7 +100,7 @@ void TypeChecker::tcRho(Hs::LetExp& Let, const Expected& exp_type)
     state2.infer_type_for_binds(unloc(Let.binds));
 
     // 2. Compute type of let body
-    state2.tcRho(unloc(Let.body), exp_type);
+    state2.tcRho(Let.body, exp_type);
 
     current_wanteds() += state2.current_wanteds();
 }
@@ -161,7 +161,7 @@ void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
     else if (auto i = Lit.is_Integer())
     {
         // 1. Typecheck fromInteger
-        expression_ref fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
+        auto fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
         auto fromInteger_type = inferRho(fromInteger);
 
         // 2. Check result type
@@ -176,7 +176,7 @@ void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
     else if (auto d = Lit.is_Double())
     {
         // 1. Typecheck fromRational
-        expression_ref fromRational = Hs::Var({noloc,"Compiler.Fractional.fromRational"});
+        auto fromRational = Hs::Var({noloc,"Compiler.Fractional.fromRational"});
         auto fromRational_type = inferRho(fromRational);
 
         // 2. Check result type
@@ -194,11 +194,11 @@ void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
 
 void TypeChecker::tcRho(Hs::IfExp& If, const Expected& exp_type)
 {
-    checkRho(unloc(If.condition), bool_type());
+    checkRho(If.condition, bool_type());
 
     auto result_type = expTypeToType(exp_type);
-    checkRho(unloc(If.true_branch), result_type);
-    checkRho(unloc(If.false_branch), result_type);
+    checkRho(If.true_branch, result_type);
+    checkRho(If.false_branch, result_type);
 }
 
 
@@ -253,7 +253,6 @@ void TypeChecker::tcRho(Hs::ListComprehension& LComp, const Expected& exp_type)
 void TypeChecker::tcRho(Hs::ListFrom& L, const Expected& exp_type)
 {
     // 1. Typecheck enumFrom
-    L.enumFromOp = Hs::Var({noloc,"Compiler.Enum.enumFrom"});
     auto enumFrom_type = inferRho(L.enumFromOp);
 
     // 2. Check the result type
@@ -268,7 +267,6 @@ void TypeChecker::tcRho(Hs::ListFrom& L, const Expected& exp_type)
 void TypeChecker::tcRho(Hs::ListFromThen& L, const Expected& exp_type)
 {
     // 1. Typecheck enumFrom
-    L.enumFromThenOp = Hs::Var({noloc,"Compiler.Enum.enumFromThen"});
     auto enumFromThen_type = inferRho(L.enumFromThenOp);
 
     // 2. Check the result type
@@ -287,7 +285,6 @@ void TypeChecker::tcRho(Hs::ListFromThen& L, const Expected& exp_type)
 void TypeChecker::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
 {
     // 1. Typecheck enumFrom
-    L.enumFromToOp = Hs::Var({noloc,"Compiler.Enum.enumFromTo"});
     auto enumFromTo_type = inferRho(L.enumFromToOp);
 
     // 2. Check the result type
@@ -306,7 +303,6 @@ void TypeChecker::tcRho(Hs::ListFromTo& L, const Expected& exp_type)
 void TypeChecker::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
 {
     // 1. Typecheck enumFromThenTo
-    L.enumFromThenToOp = Hs::Var({noloc,"Compiler.Enum.enumFromThenTo"});
     auto enumFromThenTo_type = inferRho(L.enumFromThenToOp);
 
     // 2. Check the result type
@@ -329,11 +325,11 @@ void TypeChecker::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
 void TypeChecker::tcRho(Located<Hs::Expression>& E, const Expected& exp_type)
 {
     if (E.loc) push_source_span(*E.loc);
-    tcRho(unloc(E), exp_type);
+    tcRho_(unloc(E), exp_type);
     if (E.loc) pop_source_span();
 }
 
-void TypeChecker::tcRho(Hs::Expression& E, const Expected& exp_type)
+void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
 {
     // VAR
     if (auto v = E.to<Hs::Var>())

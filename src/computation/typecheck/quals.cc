@@ -127,7 +127,6 @@ void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expe
         auto PQ = *pq;
 
         // 1. Typecheck (>>=)
-        PQ.bindOp = Hs::Var({noloc,"Control.Monad.>>="});
         auto bind_op_type = inferRho(PQ.bindOp);
 
         // (>>=) :: Monad m => m a -> ( a -> m b) -> m b
@@ -159,7 +158,7 @@ void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expe
         if (false) 
         {
             PQ.failOp = Hs::Var({noloc,"Control.Monad.fail"});
-            auto fail_op_type = state2.inferRho(PQ.failOp);
+            auto fail_op_type = state2.inferRho(*PQ.failOp);
         }
         current_wanteds() += state2.current_wanteds();
 
@@ -171,7 +170,6 @@ void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expe
         auto SQ = *sq;
 
         // 1. Typecheck (>>)
-        SQ.andThenOp = Hs::Var({noloc,"Control.Monad.>>"});
         auto and_then_op_type = inferRho(SQ.andThenOp);
 
         auto [exp_type,   tmp        ] = unify_function(and_then_op_type);

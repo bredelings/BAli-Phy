@@ -271,7 +271,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
         }
         else if (auto i = L.lit.is_Integer())
         {
-            expression_ref fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
+            auto fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
             auto [arg_type, result_type] = unify_function( inferRho(fromInteger) );
             unify(arg_type, integer_type());
             unify(result_type, expTypeToType(exp_type));
@@ -285,14 +285,13 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
         }
         else if (auto d = L.lit.is_Double())
         {
-            expression_ref fromRational = Hs::Var({noloc,"Compiler.Frational.fromRational"});
+            auto fromRational = Hs::Var({noloc,"Compiler.Frational.fromRational"});
             auto [arg_type, result_type] = unify_function( inferRho(fromRational) );
             unify(arg_type, double_type());
             unify(result_type, expTypeToType(exp_type));
 
             L.lit.literal = Hs::Double(*d, fromRational);
             pat = L;
-
         }
         else
             std::abort();

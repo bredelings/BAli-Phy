@@ -179,7 +179,7 @@ std::string parenthesize_exp(const Expression& E);
 
 struct Neg: public Object
 {
-    expression_ref negate_op;
+    std::optional<Hs::Var> negate_op;
 
     Neg* clone() const { return new Neg(*this);}
     std::string print() const;
@@ -610,7 +610,7 @@ struct List: public Object
 struct ListFrom: public Object
 {
     LExp from;
-    expression_ref enumFromOp;
+    Hs::Var enumFromOp = {{noloc,"Compiler.Enum.enumFrom"}};
     ListFrom* clone() const { return new ListFrom(*this);}
     std::string print() const;
     ListFrom(const LExp& e): from(e) {}
@@ -620,7 +620,7 @@ struct ListFromThen: public Object
 {
     LExp from;
     LExp then;
-    expression_ref enumFromThenOp;
+    Hs::Var enumFromThenOp = {{noloc,"Compiler.Enum.enumFromThen"}};
     ListFromThen* clone() const { return new ListFromThen(*this);}
     std::string print() const;
     ListFromThen(const LExp& e1, const LExp& e2): from(e1), then(e2) {}
@@ -630,7 +630,7 @@ struct ListFromTo: public Object
 {
     LExp from;
     LExp to;
-    expression_ref enumFromToOp;
+    Hs::Var enumFromToOp = {{noloc,"Compiler.Enum.enumFromTo"}};
     ListFromTo* clone() const { return new ListFromTo(*this);}
     std::string print() const;
     ListFromTo(const LExp& e1, const LExp& e2): from(e1), to(e2) {}
@@ -641,7 +641,7 @@ struct ListFromThenTo: public Object
     LExp from;
     LExp then;
     LExp to;
-    expression_ref enumFromThenToOp;
+    Hs::Var enumFromThenToOp = {{noloc,"Compiler.Enum.enumFromThenTo"}};
     ListFromThenTo* clone() const { return new ListFromThenTo(*this);}
     std::string print() const;
     ListFromThenTo(const LExp& e1, const LExp& e2, const LExp& e3): from(e1), then(e2), to(e3) {}
@@ -774,7 +774,7 @@ struct LetQual: public Object
 struct SimpleQual: public Object
 {
     LExp exp;
-    expression_ref andThenOp;
+    Hs::Var andThenOp = {{noloc,"Control.Monad.>>"}};
 
     SimpleQual* clone() const { return new SimpleQual(*this);}
     std::string print() const;
@@ -786,8 +786,8 @@ struct PatQual: public Object
     LPat bindpat;
     LExp exp;
 
-    expression_ref bindOp;
-    expression_ref failOp;
+    Hs::Var bindOp = {{noloc,"Control.Monad.>>="}};
+    std::optional<Hs::Var> failOp;
 
     PatQual* clone() const { return new PatQual(*this);}
     std::string print() const;
@@ -797,7 +797,7 @@ struct PatQual: public Object
 struct RecStmt: public Object
 {
     Stmts stmts;
-    expression_ref mfixOp;
+    std::optional<Hs::Var> mfixOp;
 
     RecStmt* clone() const {return new RecStmt(*this);}
     std::string print() const;

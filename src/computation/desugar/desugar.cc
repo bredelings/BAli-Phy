@@ -288,31 +288,27 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
     else if (auto L = E.to<Hs::ListFrom>())
     {
         Core::Exp enumFrom = var("Compiler.Enum.enumFrom");
-        if (L->enumFromOp)
-            enumFrom = desugar(L->enumFromOp);
+        enumFrom = desugar(L->enumFromOp);
 
         return {enumFrom, desugar(L->from)};
     }
     else if (auto L = E.to<Hs::ListFromTo>())
     {
         expression_ref enumFromTo = var("Compiler.Enum.enumFromTo");
-        if (L->enumFromToOp)
-            enumFromTo = desugar(L->enumFromToOp);
+        enumFromTo = desugar(L->enumFromToOp);
 
         return {enumFromTo, desugar(L->from), desugar(L->to)};
     }
     else if (auto L = E.to<Hs::ListFromThen>())
     {
         expression_ref enumFromThen = var("Compiler.Enum.enumFromThen");
-        if (L->enumFromThenOp)
-            enumFromThen = desugar(L->enumFromThenOp);
+        enumFromThen = desugar(L->enumFromThenOp);
         return {enumFromThen, desugar(L->from), desugar(L->then)};
     }
     else if (auto L = E.to<Hs::ListFromThenTo>())
     {
         expression_ref enumFromThenTo = var("Compiler.Enum.enumFromThenTo");
-        if (L->enumFromThenToOp)
-            enumFromThenTo = desugar(L->enumFromThenToOp);
+        enumFromThenTo = desugar(L->enumFromThenToOp);
 
         return {enumFromThenTo, desugar(L->from), desugar(L->then), desugar(L->to)};
     }
@@ -457,7 +453,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
                 auto ok = get_fresh_Var("ok", false);
                 expression_ref fail = {Hs::Var({noloc,"Control.Monad.fail"}), Hs::Literal(Hs::String("Fail!"))};
                 if (PQ.failOp)
-                    fail = PQ.failOp;
+                    fail = *PQ.failOp;
                 auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};
                 auto rule1 = Hs::MRule{ { PQ.bindpat }, Hs::SimpleRHS({noloc,do_stmts}) };
                 auto rule2 = Hs::MRule{ { _ },          Hs::SimpleRHS({noloc,fail})     };

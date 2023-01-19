@@ -398,7 +398,9 @@ public:
     }
 
     void tcRho(Located<Hs::Expression>& exp, const Expected& E);
-    void tcRho(Hs::Expression& exp, const Expected& E);
+
+    // Eliminate?
+    void tcRho_(Hs::Expression& exp, const Expected& E);
 
     void tcRho(Hs::Var&, const Expected& E);
 
