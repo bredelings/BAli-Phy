@@ -37,8 +37,10 @@ bool Type::operator==(const Type& t) const
         return as_<ConstrainedType>() == t.as_<ConstrainedType>();
     else if (is_a<ForallType>())
         return as_<ForallType>() == t.as_<ForallType>();
-    else if (is_a<StrictLazyType>())
-        return as_<StrictLazyType>() == t.as_<StrictLazyType>();
+    else if (is_a<StrictType>())
+        return as_<StrictType>() == t.as_<StrictType>();
+    else if (is_a<LazyType>())
+        return as_<LazyType>() == t.as_<LazyType>();
 
     std::abort();
 }
@@ -62,8 +64,10 @@ std::string Type::print() const
         return as_<ConstrainedType>().print();
     else if (is_a<ForallType>())
         return as_<ForallType>().print();
-    else if (is_a<StrictLazyType>())
-        return as_<StrictLazyType>().print();
+    else if (is_a<StrictType>())
+        return as_<StrictType>().print();
+    else if (is_a<LazyType>())
+        return as_<LazyType>().print();
     else if (is_a<FieldDecls>())
         return as_<FieldDecls>().print();
 
@@ -340,15 +344,24 @@ std::string Context::print() const
         return "(" + result + ")";
 }
 
-bool StrictLazyType::operator==(const StrictLazyType& t) const
+bool StrictType::operator==(const StrictType& t) const
 {
-    return strict_lazy == t.strict_lazy and type == t.type;
+    return type == t.type;
 }
 
-string StrictLazyType::print() const
+string StrictType::print() const
 {
-    string mark = (strict_lazy == StrictLazy::strict)?"!":"~";
-    return mark + type.print();
+    return "!" + type.print();
+}
+
+bool LazyType::operator==(const LazyType& t) const
+{
+    return type == t.type;
+}
+
+string LazyType::print() const
+{
+    return "~" + type.print();
 }
 
 bool TupleType::operator==(const TupleType& t) const

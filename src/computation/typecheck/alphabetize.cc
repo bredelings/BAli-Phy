@@ -77,11 +77,17 @@ Type alphabetize_type(const Type& type, map<TypeVar,TypeVar>& s, int& index)
         C.context = alphabetize(C.context, s, index);
         return C;
     }
-    else if (auto sl = type.to<StrictLazyType>())
+    else if (auto st = type.to<StrictType>())
     {
-        auto SL = *sl;
-        SL.type = alphabetize_type(SL.type, s, index);
-        return SL;
+        auto ST = *st;
+        ST.type = alphabetize_type(ST.type, s, index);
+        return ST;
+    }
+    else if (auto lt = type.to<LazyType>())
+    {
+        auto LT = *lt;
+        LT.type = alphabetize_type(LT.type, s, index);
+        return LT;
     }
     else
         std::abort();

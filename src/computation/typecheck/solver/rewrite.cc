@@ -114,11 +114,17 @@ Type Solver::rewrite(ConstraintFlavor flavor, Type t) const
     {
         return rewrite_forall(flavor, *forall);
     }
-    else if (auto sl = t.to<StrictLazyType>())
+    else if (auto st = t.to<StrictType>())
     {
-        auto SL = *sl;
-        SL.type = rewrite(flavor, SL.type);
-        return SL;
+        auto ST = *st;
+        ST.type = rewrite(flavor, ST.type);
+        return ST;
+    }
+    else if (auto lt = t.to<LazyType>())
+    {
+        auto LT = *lt;
+        LT.type = rewrite(flavor, LT.type);
+        return LT;
     }
     else if (auto tc = is_type_con_app(t))
     {

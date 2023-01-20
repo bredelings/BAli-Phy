@@ -29,8 +29,10 @@ bool TypeChecker::occurs_check(const MetaTypeVar& tv, const Type& t) const
 
         return occurs_check(tv, c->type);
     }
-    else if (auto sl = t.to<StrictLazyType>())
-        return occurs_check(tv, sl->type);
+    else if (auto s = t.to<StrictType>())
+        return occurs_check(tv, s->type);
+    else if (auto l = t.to<LazyType>())
+        return occurs_check(tv, l->type);
     else
         std::abort();
 }
@@ -66,8 +68,10 @@ bool TypeChecker::occurs_check(const TypeVar& tv, const Type& t) const
 
         return occurs_check(tv, c->type);
     }
-    else if (auto sl = t.to<StrictLazyType>())
-        return occurs_check(tv, sl->type);
+    else if (auto s = t.to<StrictType>())
+        return occurs_check(tv, s->type);
+    else if (auto l = t.to<LazyType>())
+        return occurs_check(tv, l->type);
     else
         std::abort();
 }
@@ -262,7 +266,7 @@ bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const
 
         return maybe_unify_(both_ways, env2, fa1->type, fa2->type);
     }
-    else if (t1.is_a<StrictLazyType>() or t2.is_a<StrictLazyType>())
+    else if (t1.is_a<StrictType>() or t1.is_a<LazyType>() or t2.is_a<StrictType>() or t2.is_a<LazyType>())
     {
         throw myexception()<<"maybe_unify "<<t1.print()<<" ~ "<<t2.print()<<": How should we handle unification for strict/lazy types?";
     }
@@ -351,12 +355,17 @@ bool TypeChecker::same_type(bool keep_syns, const RenameTyvarEnv2& env, const Ty
         return same_type(keep_syns, env, app1->head, app2->head)
             and same_type(keep_syns, env, app1->arg, app2->arg);
 
-    // 9. Handle Strict/Lazy types
-    auto sl1 = t1.to<StrictLazyType>();
-    auto sl2 = t2.to<StrictLazyType>();
-    if (sl1 and sl2)
-        return (sl1->strict_lazy == sl2->strict_lazy)
-            and same_type(keep_syns, env, sl1->type, sl2->type);
+    // 9. Handle Strict types
+    auto s1 = t1.to<StrictType>();
+    auto s2 = t2.to<StrictType>();
+    if (s1 and s2)
+        return same_type(keep_syns, env, s1->type, s2->type);
+
+    // 10. Handle Strict types
+    auto l1 = t1.to<LazyType>();
+    auto l2 = t2.to<LazyType>();
+    if (l1 and l2)
+        return same_type(keep_syns, env, l1->type, l2->type);
 
     return false;
 }

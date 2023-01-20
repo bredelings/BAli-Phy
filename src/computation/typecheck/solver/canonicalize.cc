@@ -219,11 +219,17 @@ Type Solver::break_type_equality_cycle(const Constraint& C, const Type& type)
         CT.type = break_type_equality_cycle(C, CT.type);
         return CT;
     }
-    else if (auto sl = type.to<StrictLazyType>())
+    else if (auto st = type.to<StrictType>())
     {
-        auto SL = *sl;
-        SL.type = break_type_equality_cycle(C, SL.type);
-        return SL;
+        auto ST = *st;
+        ST.type = break_type_equality_cycle(C, ST.type);
+        return ST;
+    }
+    else if (auto lt = type.to<LazyType>())
+    {
+        auto LT = *lt;
+        LT.type = break_type_equality_cycle(C, LT.type);
+        return LT;
     }
     else
         std::abort();

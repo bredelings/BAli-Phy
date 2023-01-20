@@ -68,7 +68,7 @@
       how does ghc handle this?
 
   - figure out how to make recursive variant types for e.g. Exp, Type, Pattern
-    + rvariant<TypeVar, TypeCon, TypeApp, TupleType, ListType, StrictLazyType, ConstrainedType, ForallType>
+    + rvariant<TypeVar, TypeCon, TypeApp, TupleType, ListType, StrictType, LazyType, ConstrainedType, ForallType>
     + we could also do (i) shared_ptr<variant< >>, (ii) variant<shared_ptr<Args>...>, or (ii) shared_ptr<Type>
 
   - split the symbol table into a symbol (variable) table, a constructor table, and a type table

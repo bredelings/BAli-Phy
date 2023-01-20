@@ -124,13 +124,24 @@ std::optional<Type> check_apply_subst(const substitution_t& s, const Type& t)
         else
             return {};
     }
-    else if (auto sl = t.to<StrictLazyType>())
+    else if (auto st = t.to<StrictType>())
     {
-        if (auto maybe_type = check_apply_subst(s, sl->type))
+        if (auto maybe_type = check_apply_subst(s, st->type))
         {
-            auto SL = *sl;
-            SL.type = *maybe_type;
-            return SL;
+            auto ST = *st;
+            ST.type = *maybe_type;
+            return ST;
+        }
+        else
+            return {};
+    }
+    else if (auto lt = t.to<LazyType>())
+    {
+        if (auto maybe_type = check_apply_subst(s, lt->type))
+        {
+            auto LT = *lt;
+            LT.type = *maybe_type;
+            return LT;
         }
         else
             return {};
@@ -242,13 +253,24 @@ std::optional<Type> check_apply_subst(const usubstitution_t& s, const Type& t)
         else
             return {};
     }
-    else if (auto sl = t.to<StrictLazyType>())
+    else if (auto st = t.to<StrictType>())
     {
-        if (auto maybe_type = check_apply_subst(s, sl->type))
+        if (auto maybe_type = check_apply_subst(s, st->type))
         {
-            auto SL = *sl;
-            SL.type = *maybe_type;
-            return SL;
+            auto ST = *st;
+            ST.type = *maybe_type;
+            return ST;
+        }
+        else
+            return {};
+    }
+    else if (auto lt = t.to<LazyType>())
+    {
+        if (auto maybe_type = check_apply_subst(s, lt->type))
+        {
+            auto LT = *lt;
+            LT.type = *maybe_type;
+            return LT;
         }
         else
             return {};

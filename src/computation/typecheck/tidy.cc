@@ -163,10 +163,14 @@ string tidy_print(TidyState& tidy_state, const ConstrainedType& ct)
     return tidy_print(tidy_state, ct.context) + " => " + tidy_print(tidy_state, ct.type);
 }
 
-string tidy_print(TidyState& tidy_state, const StrictLazyType& sl)
+string tidy_print(TidyState& tidy_state, const StrictType& sl)
 {
-    string mark = (sl.strict_lazy == StrictLazy::strict)?"!":"~";
-    return mark + tidy_print(tidy_state, sl.type);
+    return "!" + tidy_print(tidy_state, sl.type);
+}
+
+string tidy_print(TidyState& tidy_state, const LazyType& sl)
+{
+    return "!" + tidy_print(tidy_state, sl.type);
 }
 
 
@@ -186,8 +190,10 @@ std::string tidy_print(TidyState& tidy_state, const Type& type)
         return tidy_print(tidy_state, *ct);
     else if (auto forall = type.to<ForallType>())
         return tidy_print(tidy_state, *forall);
-    else if (auto sl = type.to<StrictLazyType>())
-        return tidy_print(tidy_state, *sl);
+    else if (auto s = type.to<StrictType>())
+        return tidy_print(tidy_state, *s);
+    else if (auto l = type.to<LazyType>())
+        return tidy_print(tidy_state, *l);
 
     std::abort();
 }

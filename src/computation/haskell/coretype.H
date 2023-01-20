@@ -19,7 +19,8 @@ struct TypeCon;
 struct TypeApp;
 struct ConstrainedType;
 struct ForallType;
-struct StrictLazyType;
+struct StrictType;
+struct LazyType;
 
 struct Type
 {
@@ -32,7 +33,8 @@ struct Type
         cow_ptr<TypeApp>,
         cow_ptr<ConstrainedType>,
         cow_ptr<ForallType>,
-        cow_ptr<StrictLazyType>
+        cow_ptr<StrictType>,
+        cow_ptr<LazyType>
         >
     type_ptr;
 
@@ -245,16 +247,22 @@ struct ConstrainedType
 Type add_constraints(const std::vector<Type>& constraints, const Type& type);
 Type add_constraints(const Context& constraints, const Type& type);
 
-enum class StrictLazy {strict,lazy};
-
-struct StrictLazyType
+struct StrictType
 {
-    StrictLazy strict_lazy;
     Type type;
 
-    bool operator==(const StrictLazyType& t) const;
+    bool operator==(const StrictType& t) const;
     std::string print() const;
-    StrictLazyType(const StrictLazy& sl, const Type& t):strict_lazy(sl), type(t) {}
+    StrictType(const Type& t):type(t) {}
+};
+
+struct LazyType
+{
+    Type type;
+
+    bool operator==(const LazyType& t) const;
+    std::string print() const;
+    LazyType(const Type& t):type(t) {}
 };
 
 Type function_type(const std::vector<Type>& arg_types, const Type& result_type);

@@ -43,10 +43,10 @@ set<string> free_type_cons(const Type& type)
         add(tcons, free_type_cons(c->context));
         add(tcons, free_type_cons(c->type));
     }
-    else if (auto sl = type.to<StrictLazyType>())
-    {
-        return free_type_cons(sl->type);
-    }
+    else if (auto s = type.to<StrictType>())
+        return free_type_cons(s->type);
+    else if (auto l = type.to<LazyType>())
+        return free_type_cons(l->type);
     else
         std::abort();
     return tcons;

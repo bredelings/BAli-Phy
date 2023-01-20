@@ -314,8 +314,6 @@
 %type <std::vector<Hs::LVar>> sig_vars
 %type <std::vector<Hs::Type>> sigtypes1
 
-%type <Hs::StrictLazy> strict_mark
-%type <Hs::StrictLazy> strictness
 %type <Hs::Type> ktype
 %type <Hs::Type> ctype
 %type <Hs::Type> ctypedoc
@@ -891,15 +889,6 @@ sigtypes1: sigtype               {$$.push_back($1);}
 
 /* ------------- Types ------------------------------------------- */
 
-strict_mark: strictness
-/*
-|            unpackedness                   {}
-|            unpackedness strictness        {$$ = $2;}
-*/
-
-strictness: PREFIX_BANG  {$$ = Hs::StrictLazy::strict;}
-|           PREFIX_TILDE {$$ = Hs::StrictLazy::lazy;}
-
 /*
 unpackedness: "{-# UNPACK" "#-}"
 |             "{-# NOUNPACK" "#-}"
@@ -964,7 +953,8 @@ atype_docs: atype /* FIX */
 atype: ntgtycon                        {$$ = Hs::TypeCon({@1,$1});}
 |      tyvar                           {$$ = Hs::TypeVar({@1,$1});}
 |      "*"                             {$$ = Hs::TypeCon({@1,"*"});}
-|      strict_mark atype               {$$ = Hs::StrictLazyType($1,$2);}
+|      PREFIX_BANG atype               {$$ = Hs::StrictType($2);}
+|      PREFIX_TILDE atype              {$$ = Hs::LazyType($2);}
 |      "{" fielddecls "}"              {$$ = Hs::FieldDecls($2);}
 |      "(" ")"                         {$$ = Hs::TypeCon({@1,"()"});}
 |      "(" comma_types1 "," ktype")"   {auto ts = $2;ts.push_back($4);$$ = Hs::TupleType(ts);}
