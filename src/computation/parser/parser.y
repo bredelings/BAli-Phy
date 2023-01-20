@@ -148,8 +148,8 @@
   VBAR          "|"
   LARROW        "<-"
   RARROW        "->"
-  PREFIX_AT
-  AT            "@"
+  TIGHT_INFIX_AT
+  PREFIX_AT     "@"
   PREFIX_TILDE
   TILDE         "~"
   DARROW        "=>"
@@ -1135,7 +1135,7 @@ fexp: fexp aexp                  {$$ = {@$,Hs::ApplyExp($1, $2)};}
 |     aexp                       {$$ = $1;}
 
 /* EP */
-aexp: qvar "@" aexp              {$$ = {@$, Hs::AsPattern(Hs::Var($1),$3)}; }
+aexp: qvar TIGHT_INFIX_AT aexp              {$$ = {@$, Hs::AsPattern(Hs::Var($1),$3)}; }
 |     PREFIX_TILDE aexp          {$$ = {@$, Hs::LazyPattern($2)}; }
 |     PREFIX_BANG  aexp          {$$ = {@$, Hs::StrictPattern($2)}; }
 |     "\\" apats1 "->" exp       {$$ = {@$, Hs::LambdaExp($2,$4)}; }

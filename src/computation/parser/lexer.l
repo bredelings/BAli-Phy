@@ -333,6 +333,11 @@ yy::parser::symbol_type varid(const yy::parser::location_type& loc)
     }
 }
 
+std::map<std::string,std::pair<yy::parser::token_type,int>> tight_infix_reserved_symbols =
+{
+    {"@",{parser::token::TOK_TIGHT_INFIX_AT,0}}
+};
+
 std::map<std::string,std::pair<yy::parser::token_type,int>> prefix_reserved_symbols =
 {
     {"~",{parser::token::TOK_PREFIX_TILDE,0}},
@@ -350,7 +355,6 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_symbols =
     {"|",{parser::token::TOK_VBAR,0}},
     {"<-",{parser::token::TOK_LARROW,0}},
     {"->",{parser::token::TOK_RARROW,0}},
-    {"@",{parser::token::TOK_AT,0}},
     {"~",{parser::token::TOK_TILDE,0}},
     {"=>",{parser::token::TOK_DARROW,0}},
     {"-",{parser::token::TOK_MINUS,0}},
@@ -406,6 +410,21 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_symbols =
 
 yy::parser::symbol_type varsym(bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc)
 {
+    // if loose infix occurrences are always operators, then:
+    // if we handle type operators, then we should be able to parse (a ~ b) with ~ being a type operator.
+
+    // tight infix reserved symbols
+    if (precededByClosing and followedByOpening)
+    {
+        auto it = tight_infix_reserved_symbols.find(yytext);
+        if (it != tight_infix_reserved_symbols.end())
+        {
+            auto tok = it->second.first;
+            return yy::parser::symbol_type(tok, loc);
+        }
+    }
+
+    // prefix reserved symbols
     if (precededByClosing == false and followedByOpening == true)
     {
         auto it = prefix_reserved_symbols.find(yytext);
@@ -416,14 +435,14 @@ yy::parser::symbol_type varsym(bool precededByClosing, bool followedByOpening, c
         }
     }
 
+    // other reserved symbols
     auto it = reserved_symbols.find(yytext);
     if (it == reserved_symbols.end())
 	return yy::parser::make_VARSYM  (yytext, loc);
-    else
-    {
-	auto tok = it->second.first;
-	return yy::parser::symbol_type(tok, loc);
-    }
+
+    // general varsyms
+    auto tok = it->second.first;
+    return yy::parser::symbol_type(tok, loc);
 }
 
 yy::parser::symbol_type consym(const yy::parser::location_type& loc)

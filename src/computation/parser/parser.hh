@@ -889,8 +889,8 @@ namespace yy {
     TOK_VBAR = 339,                // "|"
     TOK_LARROW = 340,              // "<-"
     TOK_RARROW = 341,              // "->"
-    TOK_PREFIX_AT = 342,           // PREFIX_AT
-    TOK_AT = 343,                  // "@"
+    TOK_TIGHT_INFIX_AT = 342,      // TIGHT_INFIX_AT
+    TOK_PREFIX_AT = 343,           // "@"
     TOK_PREFIX_TILDE = 344,        // PREFIX_TILDE
     TOK_TILDE = 345,               // "~"
     TOK_DARROW = 346,              // "=>"
@@ -1046,8 +1046,8 @@ namespace yy {
         S_VBAR = 84,                             // "|"
         S_LARROW = 85,                           // "<-"
         S_RARROW = 86,                           // "->"
-        S_PREFIX_AT = 87,                        // PREFIX_AT
-        S_AT = 88,                               // "@"
+        S_TIGHT_INFIX_AT = 87,                   // TIGHT_INFIX_AT
+        S_PREFIX_AT = 88,                        // "@"
         S_PREFIX_TILDE = 89,                     // PREFIX_TILDE
         S_TILDE = 90,                            // "~"
         S_DARROW = 91,                           // "=>"
@@ -4524,6 +4524,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_TIGHT_INFIX_AT (location_type l)
+      {
+        return symbol_type (token::TOK_TIGHT_INFIX_AT, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_TIGHT_INFIX_AT (const location_type& l)
+      {
+        return symbol_type (token::TOK_TIGHT_INFIX_AT, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_PREFIX_AT (location_type l)
       {
         return symbol_type (token::TOK_PREFIX_AT, std::move (l));
@@ -4534,21 +4549,6 @@ switch (yykind)
       make_PREFIX_AT (const location_type& l)
       {
         return symbol_type (token::TOK_PREFIX_AT, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_AT (location_type l)
-      {
-        return symbol_type (token::TOK_AT, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_AT (const location_type& l)
-      {
-        return symbol_type (token::TOK_AT, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
