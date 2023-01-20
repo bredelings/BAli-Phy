@@ -511,7 +511,6 @@ namespace yy {
       // infixtype
       // ftype
       // tyarg
-      // tyop
       // atype_docs
       // atype
       // inst_type
@@ -652,6 +651,7 @@ namespace yy {
       // "LABELVARID"
       // "STRING"
       // "PRIMSTRING"
+      // tyop
       // qcon
       // gen_qcon
       // con
@@ -1426,7 +1426,6 @@ namespace yy {
       case symbol_kind::S_infixtype: // infixtype
       case symbol_kind::S_ftype: // ftype
       case symbol_kind::S_tyarg: // tyarg
-      case symbol_kind::S_tyop: // tyop
       case symbol_kind::S_atype_docs: // atype_docs
       case symbol_kind::S_atype: // atype
       case symbol_kind::S_inst_type: // inst_type
@@ -1596,6 +1595,7 @@ namespace yy {
       case symbol_kind::S_LABELVARID: // "LABELVARID"
       case symbol_kind::S_STRING: // "STRING"
       case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
+      case symbol_kind::S_tyop: // tyop
       case symbol_kind::S_qcon: // qcon
       case symbol_kind::S_gen_qcon: // gen_qcon
       case symbol_kind::S_con: // con
@@ -2702,7 +2702,6 @@ switch (yykind)
       case symbol_kind::S_infixtype: // infixtype
       case symbol_kind::S_ftype: // ftype
       case symbol_kind::S_tyarg: // tyarg
-      case symbol_kind::S_tyop: // tyop
       case symbol_kind::S_atype_docs: // atype_docs
       case symbol_kind::S_atype: // atype
       case symbol_kind::S_inst_type: // inst_type
@@ -2872,6 +2871,7 @@ switch (yykind)
       case symbol_kind::S_LABELVARID: // "LABELVARID"
       case symbol_kind::S_STRING: // "STRING"
       case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
+      case symbol_kind::S_tyop: // tyop
       case symbol_kind::S_qcon: // qcon
       case symbol_kind::S_gen_qcon: // gen_qcon
       case symbol_kind::S_con: // con
@@ -5631,7 +5631,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 5134,     ///< Last index in yytable_.
+      yylast_ = 4989,     ///< Last index in yytable_.
       yynnts_ = 202,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
@@ -5801,7 +5801,6 @@ switch (yykind)
       case symbol_kind::S_infixtype: // infixtype
       case symbol_kind::S_ftype: // ftype
       case symbol_kind::S_tyarg: // tyarg
-      case symbol_kind::S_tyop: // tyop
       case symbol_kind::S_atype_docs: // atype_docs
       case symbol_kind::S_atype: // atype
       case symbol_kind::S_inst_type: // inst_type
@@ -5971,6 +5970,7 @@ switch (yykind)
       case symbol_kind::S_LABELVARID: // "LABELVARID"
       case symbol_kind::S_STRING: // "STRING"
       case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
+      case symbol_kind::S_tyop: // tyop
       case symbol_kind::S_qcon: // qcon
       case symbol_kind::S_gen_qcon: // gen_qcon
       case symbol_kind::S_con: // con
@@ -6207,7 +6207,6 @@ switch (yykind)
       case symbol_kind::S_infixtype: // infixtype
       case symbol_kind::S_ftype: // ftype
       case symbol_kind::S_tyarg: // tyarg
-      case symbol_kind::S_tyop: // tyop
       case symbol_kind::S_atype_docs: // atype_docs
       case symbol_kind::S_atype: // atype
       case symbol_kind::S_inst_type: // inst_type
@@ -6377,6 +6376,7 @@ switch (yykind)
       case symbol_kind::S_LABELVARID: // "LABELVARID"
       case symbol_kind::S_STRING: // "STRING"
       case symbol_kind::S_PRIMSTRING: // "PRIMSTRING"
+      case symbol_kind::S_tyop: // tyop
       case symbol_kind::S_qcon: // qcon
       case symbol_kind::S_gen_qcon: // gen_qcon
       case symbol_kind::S_con: // con

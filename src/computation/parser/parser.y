@@ -326,7 +326,7 @@
 %type <Hs::Type> infixtype
 %type <Hs::Type> ftype
 %type <Hs::Type> tyarg
-%type <Hs::Type> tyop
+%type <std::string> tyop
 %type <Hs::Type> atype_docs
 %type <Hs::Type> atype
 %type <Hs::Type> inst_type
@@ -493,7 +493,7 @@
 %type  <int> bars
 */
 
-%expect 138
+%expect 150
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -924,20 +924,20 @@ typedoc: type
 btype: infixtype
 
 infixtype: ftype
-|          btype "~" btype         {$$ = Hs::make_tyapps({Hs::TypeCon({@2,"~"}),$1,$3});} 
+|          btype tyop btype         {$$ = Hs::make_tyapps({Hs::TypeCon({@2,$2}),$1,$3});}
 
 btype_no_ops: atype_docs               {$$.push_back($1);}
 |             btype_no_ops atype_docs  {$$ = $1; $$.push_back($2);}
 
 ftype: atype
-|      tyop
+/* |      tyop                     fail op too few args? */
 |      ftype tyarg                 { $$ = Hs::TypeApp($1,$2); }
 |      ftype PREFIX_AT atype       /* kind application */
 
 tyarg: atype
 
-tyop:  qtyconop                    {$$ = Hs::TypeCon({@1,$1});}
-|      tyvarop                     {$$ = Hs::TypeVar({@1,$1});}
+tyop:  qtyconop                    {$$ = $1;}
+|      tyvarop                     {$$ = $1;}
 /* Template Haskell
 |      SIMPLEQUOTE qconop
 |      SIMPLEQUOTE varop
@@ -1376,13 +1376,11 @@ ntgtycon: oqtycon          { $$ = $1; }
 
 oqtycon: qtycon            { $$ = $1; }
 |        "(" qtyconsym ")" { $$ = $2; }
-|        "(" "~" ")"       { $$ = "~"; }
 
 oqtycon_no_varcon: qtycon  { $$ = $1; }
 |        "(" QCONSYM ")"   { $$ = $2; }
 |        "(" CONSYM  ")"   { $$ = $2; }
 |        "(" ":"  ")"      { $$ = ":"; }
-|        "(" "~"  ")"      { $$ = "~"; }
 
 
 qtyconop: qtyconsym      {$$ = $1; }
