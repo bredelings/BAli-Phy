@@ -336,7 +336,8 @@ yy::parser::symbol_type varid(const yy::parser::location_type& loc)
 std::map<std::string,std::pair<yy::parser::token_type,int>> prefix_reserved_symbols =
 {
     {"~",{parser::token::TOK_PREFIX_TILDE,0}},
-    {"!",{parser::token::TOK_PREFIX_BANG,0}}
+    {"!",{parser::token::TOK_PREFIX_BANG,0}},
+    {"@",{parser::token::TOK_PREFIX_AT,0}}
 };
 
 std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_symbols =

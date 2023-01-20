@@ -148,6 +148,7 @@
   VBAR          "|"
   LARROW        "<-"
   RARROW        "->"
+  PREFIX_AT
   AT            "@"
   PREFIX_TILDE
   TILDE         "~"
@@ -161,7 +162,6 @@
   LARROWTAIL    "-<<"
   RARROWTAIL    ">>-"
   DOT           "."
-  TYPEAPP       "TYPEAPP"
 
   OCURLY        "{"
   CCURLY        "}"
@@ -493,7 +493,7 @@
 %type  <int> bars
 */
 
-%expect 137
+%expect 138
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -932,6 +932,7 @@ btype_no_ops: atype_docs               {$$.push_back($1);}
 ftype: atype
 |      tyop
 |      ftype tyarg                 { $$ = Hs::TypeApp($1,$2); }
+|      ftype PREFIX_AT atype       /* kind application */
 
 tyarg: atype
 
@@ -1129,7 +1130,7 @@ optSemi: ";"
 
 /* EP */
 fexp: fexp aexp                  {$$ = {@$,Hs::ApplyExp($1, $2)};}
-|     fexp TYPEAPP atype         {}
+|     fexp PREFIX_AT atype       {}
 |     "static" aexp              {}
 |     aexp                       {$$ = $1;}
 

@@ -889,20 +889,20 @@ namespace yy {
     TOK_VBAR = 339,                // "|"
     TOK_LARROW = 340,              // "<-"
     TOK_RARROW = 341,              // "->"
-    TOK_AT = 342,                  // "@"
-    TOK_PREFIX_TILDE = 343,        // PREFIX_TILDE
-    TOK_TILDE = 344,               // "~"
-    TOK_DARROW = 345,              // "=>"
-    TOK_MINUS = 346,               // "-"
-    TOK_PREFIX_BANG = 347,         // PREFIX_BANG
-    TOK_BANG = 348,                // "!"
-    TOK_STAR = 349,                // "*"
-    TOK_lARROWTAIL = 350,          // "-<"
-    TOK_rARROWTAIL = 351,          // ">-"
-    TOK_LARROWTAIL = 352,          // "-<<"
-    TOK_RARROWTAIL = 353,          // ">>-"
-    TOK_DOT = 354,                 // "."
-    TOK_TYPEAPP = 355,             // "TYPEAPP"
+    TOK_PREFIX_AT = 342,           // PREFIX_AT
+    TOK_AT = 343,                  // "@"
+    TOK_PREFIX_TILDE = 344,        // PREFIX_TILDE
+    TOK_TILDE = 345,               // "~"
+    TOK_DARROW = 346,              // "=>"
+    TOK_MINUS = 347,               // "-"
+    TOK_PREFIX_BANG = 348,         // PREFIX_BANG
+    TOK_BANG = 349,                // "!"
+    TOK_STAR = 350,                // "*"
+    TOK_lARROWTAIL = 351,          // "-<"
+    TOK_rARROWTAIL = 352,          // ">-"
+    TOK_LARROWTAIL = 353,          // "-<<"
+    TOK_RARROWTAIL = 354,          // ">>-"
+    TOK_DOT = 355,                 // "."
     TOK_OCURLY = 356,              // "{"
     TOK_CCURLY = 357,              // "}"
     TOK_VOCURLY = 358,             // "vocurly"
@@ -1046,20 +1046,20 @@ namespace yy {
         S_VBAR = 84,                             // "|"
         S_LARROW = 85,                           // "<-"
         S_RARROW = 86,                           // "->"
-        S_AT = 87,                               // "@"
-        S_PREFIX_TILDE = 88,                     // PREFIX_TILDE
-        S_TILDE = 89,                            // "~"
-        S_DARROW = 90,                           // "=>"
-        S_MINUS = 91,                            // "-"
-        S_PREFIX_BANG = 92,                      // PREFIX_BANG
-        S_BANG = 93,                             // "!"
-        S_STAR = 94,                             // "*"
-        S_lARROWTAIL = 95,                       // "-<"
-        S_rARROWTAIL = 96,                       // ">-"
-        S_LARROWTAIL = 97,                       // "-<<"
-        S_RARROWTAIL = 98,                       // ">>-"
-        S_DOT = 99,                              // "."
-        S_TYPEAPP = 100,                         // "TYPEAPP"
+        S_PREFIX_AT = 87,                        // PREFIX_AT
+        S_AT = 88,                               // "@"
+        S_PREFIX_TILDE = 89,                     // PREFIX_TILDE
+        S_TILDE = 90,                            // "~"
+        S_DARROW = 91,                           // "=>"
+        S_MINUS = 92,                            // "-"
+        S_PREFIX_BANG = 93,                      // PREFIX_BANG
+        S_BANG = 94,                             // "!"
+        S_STAR = 95,                             // "*"
+        S_lARROWTAIL = 96,                       // "-<"
+        S_rARROWTAIL = 97,                       // ">-"
+        S_LARROWTAIL = 98,                       // "-<<"
+        S_RARROWTAIL = 99,                       // ">>-"
+        S_DOT = 100,                             // "."
         S_OCURLY = 101,                          // "{"
         S_CCURLY = 102,                          // "}"
         S_VOCURLY = 103,                         // "vocurly"
@@ -4524,6 +4524,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_PREFIX_AT (location_type l)
+      {
+        return symbol_type (token::TOK_PREFIX_AT, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_PREFIX_AT (const location_type& l)
+      {
+        return symbol_type (token::TOK_PREFIX_AT, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_AT (location_type l)
       {
         return symbol_type (token::TOK_AT, std::move (l));
@@ -4714,21 +4729,6 @@ switch (yykind)
       make_DOT (const location_type& l)
       {
         return symbol_type (token::TOK_DOT, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_TYPEAPP (location_type l)
-      {
-        return symbol_type (token::TOK_TYPEAPP, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_TYPEAPP (const location_type& l)
-      {
-        return symbol_type (token::TOK_TYPEAPP, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -5631,7 +5631,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 5013,     ///< Last index in yytable_.
+      yylast_ = 5134,     ///< Last index in yytable_.
       yynnts_ = 202,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
