@@ -153,6 +153,7 @@
   PREFIX_TILDE
   TILDE         "~"
   DARROW        "=>"
+  PREFIX_MINUS
   MINUS         "-"
   PREFIX_BANG
   BANG          "!"
@@ -1120,7 +1121,7 @@ exp: infixexp "::" sigtype { $$ = {@1+@3, Hs::TypedExp({$1.loc,unloc($1)},$3)}; 
 infixexp: exp10                 {$$ = {@1,Hs::InfixExp({$1})};}
 |         infixexp qop exp10    {$$ = $1; $$.loc = @1+@3; unloc($$).terms.push_back({@2,$2}); unloc($$).terms.push_back($3);}
 
-exp10: "-" fexp                {$$ = {@1+@2,Hs::InfixExp( { {@1,Hs::Neg()}, $2} )};}
+exp10: PREFIX_MINUS fexp                {$$ = {@1+@2,Hs::InfixExp( { {@1,Hs::Neg()}, $2} )};}
 |      fexp                    {$$ = $1;}
 
 optSemi: ";"

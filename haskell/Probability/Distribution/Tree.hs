@@ -237,7 +237,7 @@ data CoalEvent = Leaf | Internal | RateShift Double
 node_type tree node = if is_leaf_node tree node then Leaf else Internal
 
 coalescent_tree_pr_factors theta n_leaves tree = go 0 0 (2/theta) 1 times: parent_before_child_prs n_leaves tree
-    where times = sortOn fst [ (node_time tree node, node_type tree node) | node <- [0..numNodes tree -1]]
+    where times = sortOn fst [ (node_time tree node, node_type tree node) | node <- [0..numNodes tree - 1]]
           go prev_time n rate pr [] = pr
           go prev_time n rate pr ((time,event):events) =
               let delta_t = time - prev_time
