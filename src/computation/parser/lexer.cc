@@ -3119,10 +3119,9 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_symbols =
     {"<-",{parser::token::TOK_LARROW,0}},
     {"->",{parser::token::TOK_RARROW,0}},
     {"=>",{parser::token::TOK_DARROW,0}},
-    {"-",{parser::token::TOK_MINUS,0}},
-    {"!",{parser::token::TOK_BANG,0}},
-    {".",{parser::token::TOK_DOT,0}},
-    {"*",{parser::token::TOK_STAR,0}}
+    {"-",{parser::token::TOK_MINUS,0}}, /* only when no lexical negation */
+    {".",{parser::token::TOK_DOT,0}}, /* remove this */
+    {"*",{parser::token::TOK_STAR,0}} /* only when StarIsType */
 };
 
 /*

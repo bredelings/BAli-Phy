@@ -493,7 +493,7 @@
 %type  <int> bars
 */
 
-%expect 150
+%expect 149
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -1494,8 +1494,7 @@ special_id:  "as"         { $$ = "as"; }
 |            "dependency" { $$ = "dependency"; }
 |            "signature"  { $$ = "signature"; }
 
-special_sym: "!" { $$ = "!"; }
-|            "." { $$ = "."; }
+special_sym: "." { $$ = "."; }
 |            "*" { $$ = "*"; }
 
 /* ------------- Data constructors ------------------------------- */
