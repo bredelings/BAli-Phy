@@ -493,7 +493,7 @@
 %type  <int> bars
 */
 
-%expect 135
+%expect 137
 
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
@@ -1066,7 +1066,6 @@ deriv_clause_types: qtycondoc
 
 decl_no_th: sigdecl           {$$ = $1;}
 /* I guess this is a strict let. Code as DeclStrict, rather than StrictPattern, since docs say this is part of the binding, not part of the patter */
-| PREFIX_BANG aexp rhs        {$$ = Hs::StrictValueDecl{$2,$3}; }
 | infixexp rhs                {$$ = Hs::ValueDecl({$1.loc,unloc($1)},$2);}
 
 decl: decl_no_th              {$$ = $1;}
@@ -1137,6 +1136,7 @@ fexp: fexp aexp                  {$$ = {@$,Hs::ApplyExp($1, $2)};}
 /* EP */
 aexp: qvar "@" aexp              {$$ = {@$, Hs::AsPattern(Hs::Var($1),$3)}; }
 |     PREFIX_TILDE aexp          {$$ = {@$, Hs::LazyPattern($2)}; }
+|     PREFIX_BANG  aexp          {$$ = {@$, Hs::StrictPattern($2)}; }
 |     "\\" apats1 "->" exp       {$$ = {@$, Hs::LambdaExp($2,$4)}; }
 |     "let" binds "in" exp       {$$ = {@$, Hs::LetExp($2,$4)}; }
 /* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
@@ -1265,13 +1265,10 @@ ifgdpats : "{" gdpats "}"        {}
 gdpat: "|" guardquals "->" exp   {$$=Hs::GuardedRHS{$2,$4};}
 
 pat: exp      {$$ = $1;}
-|   PREFIX_BANG aexp  {$$ = {@$, Hs::StrictPattern($2)};}
 
 bindpat: exp  {$$ = $1;}
-|   PREFIX_BANG aexp  {$$ = {@$, Hs::StrictPattern($2)};}
 
 apat: aexp    {$$ = $1;}
-|    PREFIX_BANG aexp {$$ = {@$, Hs::StrictPattern($2)};}
 
 apats1: apats1 apat {$$ = $1; $$.push_back($2);}
 |       apat        {$$.push_back($1);}
