@@ -83,8 +83,9 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         method_type = add_constraints({class_constraint}, method_type);
         method_type = add_forall_vars(desugar(class_decl.type_vars), method_type);
 
-        for(auto& v: sig_decl.vars)
+        for(auto& lv: sig_decl.vars)
         {
+            auto& v = unloc(lv);
             gve = gve.insert({v, method_type});
             class_info.members = class_info.members.insert({unqualified(v), method_type});
         }

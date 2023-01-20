@@ -35,6 +35,8 @@ struct Var: public Object
     Var(const std::string& s, const ::Type& t):name(s),type(t) {}
 };
 
+typedef Located<Var> LVar;
+
 struct Con: public Object
 {
     std::string name;

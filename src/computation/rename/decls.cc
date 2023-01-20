@@ -132,11 +132,13 @@ pair<map<Hs::Var,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
         // Remove signature and fixity decls after recording signatures.
         if (auto sd = decl.to<Haskell::SignatureDecl>())
         {
-            for(auto& var: sd->vars)
+            for(auto& lvar: sd->vars)
             {
+                auto& [loc,var] = lvar;
                 if (signatures.count(var))
-                    throw myexception()<<"Second signature for var '"<<var.name<<"'"; // at location "<<*var.name.loc;
-                signatures.insert({var, sd->type});
+                    throw myexception()<<"Second signature for var '"<<var.name<<"' at location "<<*loc;
+                else
+                    signatures.insert({var, sd->type});
             }
         }
         else if (decl.is_a<Haskell::FixityDecl>())

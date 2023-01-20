@@ -222,14 +222,14 @@ struct TypedExp: public Object
 
 struct SignatureDecl: public Object
 {
-    std::vector<Var> vars;
+    std::vector<LVar> vars;
     Type type;
 
     SignatureDecl* clone() const { return new SignatureDecl(*this);}
     std::string print() const;
 
     SignatureDecl() = default;
-    SignatureDecl(const std::vector<Var>& vs, const Type& t): vars(vs), type(t) {}
+    SignatureDecl(const std::vector<LVar>& vs, const Type& t): vars(vs), type(t) {}
 };
 
 struct KindSigDecl: public Object
@@ -307,12 +307,12 @@ struct FixityDecl: public Object
 
 struct FieldDecl
 {
-    std::vector<Var> field_names;
+    std::vector<LVar> field_names;
     Type type;
     std::string print()  const;
 
     FieldDecl() = default;       // so this can be a token value.
-    FieldDecl(const std::vector<Var>& vs, const Type& t):field_names(vs),type(t) {}
+    FieldDecl(const std::vector<LVar>& vs, const Type& t):field_names(vs),type(t) {}
 };
 
 

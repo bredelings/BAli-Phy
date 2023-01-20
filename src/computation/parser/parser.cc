@@ -534,6 +534,10 @@ namespace yy {
         value.YY_MOVE_OR_COPY< std::vector<Hs::ImpDecl> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_sig_vars: // sig_vars
+        value.YY_MOVE_OR_COPY< std::vector<Hs::LVar> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
       case symbol_kind::S_comma_types0: // comma_types0
@@ -553,10 +557,6 @@ namespace yy {
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
         value.YY_MOVE_OR_COPY< std::vector<Hs::TypeVar> > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_sig_vars: // sig_vars
-        value.YY_MOVE_OR_COPY< std::vector<Hs::Var> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_alts: // alts
@@ -931,6 +931,10 @@ namespace yy {
         value.move< std::vector<Hs::ImpDecl> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_sig_vars: // sig_vars
+        value.move< std::vector<Hs::LVar> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
       case symbol_kind::S_comma_types0: // comma_types0
@@ -950,10 +954,6 @@ namespace yy {
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
         value.move< std::vector<Hs::TypeVar> > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_sig_vars: // sig_vars
-        value.move< std::vector<Hs::Var> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_alts: // alts
@@ -1328,6 +1328,10 @@ namespace yy {
         value.copy< std::vector<Hs::ImpDecl> > (that.value);
         break;
 
+      case symbol_kind::S_sig_vars: // sig_vars
+        value.copy< std::vector<Hs::LVar> > (that.value);
+        break;
+
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
       case symbol_kind::S_comma_types0: // comma_types0
@@ -1347,10 +1351,6 @@ namespace yy {
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
         value.copy< std::vector<Hs::TypeVar> > (that.value);
-        break;
-
-      case symbol_kind::S_sig_vars: // sig_vars
-        value.copy< std::vector<Hs::Var> > (that.value);
         break;
 
       case symbol_kind::S_alts: // alts
@@ -1724,6 +1724,10 @@ namespace yy {
         value.move< std::vector<Hs::ImpDecl> > (that.value);
         break;
 
+      case symbol_kind::S_sig_vars: // sig_vars
+        value.move< std::vector<Hs::LVar> > (that.value);
+        break;
+
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
       case symbol_kind::S_comma_types0: // comma_types0
@@ -1743,10 +1747,6 @@ namespace yy {
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
         value.move< std::vector<Hs::TypeVar> > (that.value);
-        break;
-
-      case symbol_kind::S_sig_vars: // sig_vars
-        value.move< std::vector<Hs::Var> > (that.value);
         break;
 
       case symbol_kind::S_alts: // alts
@@ -2365,6 +2365,10 @@ namespace yy {
         yylhs.value.emplace< std::vector<Hs::ImpDecl> > ();
         break;
 
+      case symbol_kind::S_sig_vars: // sig_vars
+        yylhs.value.emplace< std::vector<Hs::LVar> > ();
+        break;
+
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
       case symbol_kind::S_comma_types0: // comma_types0
@@ -2384,10 +2388,6 @@ namespace yy {
       case symbol_kind::S_tv_bndrs: // tv_bndrs
       case symbol_kind::S_forall: // forall
         yylhs.value.emplace< std::vector<Hs::TypeVar> > ();
-        break;
-
-      case symbol_kind::S_sig_vars: // sig_vars
-        yylhs.value.emplace< std::vector<Hs::Var> > ();
         break;
 
       case symbol_kind::S_alts: // alts
@@ -3223,13 +3223,13 @@ namespace yy {
 
   case 167: // sig_vars: sig_vars "," var
 #line 888 "parser.y"
-                           {yylhs.value.as < std::vector<Hs::Var> > () = yystack_[2].value.as < std::vector<Hs::Var> > (); yylhs.value.as < std::vector<Hs::Var> > ().push_back(Hs::Var(yystack_[0].value.as < std::string > ()));}
+                           {yylhs.value.as < std::vector<Hs::LVar> > () = yystack_[2].value.as < std::vector<Hs::LVar> > (); yylhs.value.as < std::vector<Hs::LVar> > ().push_back({yystack_[0].location,Hs::Var(yystack_[0].value.as < std::string > ())});}
 #line 3228 "parser.cc"
     break;
 
   case 168: // sig_vars: var
 #line 889 "parser.y"
-                           {yylhs.value.as < std::vector<Hs::Var> > ().push_back(Hs::Var(yystack_[0].value.as < std::string > ()));}
+                           {yylhs.value.as < std::vector<Hs::LVar> > ().push_back({yystack_[0].location,Hs::Var(yystack_[0].value.as < std::string > ())});}
 #line 3234 "parser.cc"
     break;
 
@@ -3649,7 +3649,7 @@ namespace yy {
 
   case 240: // fielddecl: sig_vars "::" ctype
 #line 1060 "parser.y"
-                                        {yylhs.value.as < Hs::FieldDecl > () = Hs::FieldDecl(yystack_[2].value.as < std::vector<Hs::Var> > (),yystack_[0].value.as < Hs::Type > ());}
+                                        {yylhs.value.as < Hs::FieldDecl > () = Hs::FieldDecl(yystack_[2].value.as < std::vector<Hs::LVar> > (),yystack_[0].value.as < Hs::Type > ());}
 #line 3654 "parser.cc"
     break;
 
@@ -3709,7 +3709,7 @@ namespace yy {
 
   case 260: // sigdecl: sig_vars "::" sigtypedoc
 #line 1106 "parser.y"
-                                  { yylhs.value.as < expression_ref > () = Hs::SignatureDecl{yystack_[2].value.as < std::vector<Hs::Var> > (),yystack_[0].value.as < Hs::Type > ()}; }
+                                  { yylhs.value.as < expression_ref > () = Hs::SignatureDecl{yystack_[2].value.as < std::vector<Hs::LVar> > (),yystack_[0].value.as < Hs::Type > ()}; }
 #line 3714 "parser.cc"
     break;
 

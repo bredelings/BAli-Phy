@@ -311,7 +311,7 @@
 %type <Hs::Type> sigtype
  /* %type <Hs::Type> sigktype */
 %type <Hs::Type> sigtypedoc
-%type <std::vector<Hs::Var>> sig_vars
+%type <std::vector<Hs::LVar>> sig_vars
 %type <std::vector<Hs::Type>> sigtypes1
 
 %type <Hs::StrictLazy> strict_mark
@@ -885,8 +885,8 @@ sigtype: ctype
 
 sigtypedoc: ctypedoc
 
-sig_vars: sig_vars "," var {$$ = $1; $$.push_back(Hs::Var($3));}
-|         var              {$$.push_back(Hs::Var($1));}
+sig_vars: sig_vars "," var {$$ = $1; $$.push_back({@3,Hs::Var($3)});}
+|         var              {$$.push_back({@1,Hs::Var($1)});}
 
 sigtypes1: sigtype               {$$.push_back($1);}
 |          sigtypes1 "," sigtype {$$ = $1; $$.push_back($3);}

@@ -116,7 +116,7 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
                 for(auto& field: std::get<1>(constructor.fields).field_decls)
                 {
                     for(auto& var: field.field_names)
-                        qualify_name(var);
+                        qualify_name(unloc(var));
                     field.type = rename_type(field.type);
                 }
             }
@@ -169,7 +169,7 @@ Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
         sig_decl.type = rename_type(sig_decl.type);
 
         for(auto& v: sig_decl.vars)
-            qualify_name(v);
+            qualify_name(unloc(v));
     }
 
     // Renaming of the default_methods is done in rename_decls

@@ -138,7 +138,7 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
                 {
                     for(auto& field_name: field_group.field_names)
                     {
-                        constructor_fields[field_name.name][constr.name] = i;
+                        constructor_fields[unloc(field_name).name][constr.name] = i;
                         i++;
                     }
                 }
@@ -236,7 +236,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         {
             for(auto& sig_decl: C->sig_decls)
                 for(auto& method_var: sig_decl.vars)
-                    bound_names.insert(method_var.name);
+                    bound_names.insert(unloc(method_var).name);
         }
         // Wait.. don't we need to discover constructors, too?
     }
@@ -409,7 +409,7 @@ bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::SignatureDe
 
     for(auto& var: decl.vars)
     {
-        auto name = var.name;
+        auto name = unloc(var).name;
         if (is_top_level)
             name = m.name + "." + name;
         bound_names.insert(name);

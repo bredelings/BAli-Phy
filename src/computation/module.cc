@@ -1485,7 +1485,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 
             for(auto& sig_decl: Class.sig_decls)
                 for(auto& v: sig_decl.vars)
-                    def_type_class_method(v.name, Class.name);
+                    def_type_class_method(unloc(v).name, Class.name);
         }
         else if (auto S = decl.to<Haskell::TypeSynonymDecl>())
         {
