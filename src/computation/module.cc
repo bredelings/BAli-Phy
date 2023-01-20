@@ -661,7 +661,7 @@ void Module::perform_exports()
         // Record types on the value symbol table
         for(auto& [var,type]: tc_state->poly_env())
         {
-            auto& value = unloc(var.name);
+            auto& value = var.name;
             if (get_module_name(value) == name)
             {
                 if (not symbols.count(value))
@@ -1020,7 +1020,7 @@ void mark_exported_decls(CDecls& decls,
 
             // Default methods are exported
             for(auto& [method, dm]: cinfo.default_methods)
-                exported.insert(unloc(dm.name));
+                exported.insert(dm.name);
         }
     }
 
@@ -1446,11 +1446,11 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         if (auto pd = decl.to<Hs::PatDecl>())
         {
             for(const auto& var: Hs::vars_in_pattern( pd->lhs ))
-                maybe_def_function( unloc(var.name) );
+                maybe_def_function( var.name );
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
         {
-            maybe_def_function( unloc(fd->v.name) );
+            maybe_def_function( fd->v.name );
         }
         else if (auto data_decl = decl.to<Haskell::DataOrNewtypeDecl>())
         {
@@ -1485,7 +1485,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 
             for(auto& sig_decl: Class.sig_decls)
                 for(auto& v: sig_decl.vars)
-                    def_type_class_method(unloc(v.name), Class.name);
+                    def_type_class_method(v.name, Class.name);
         }
         else if (auto S = decl.to<Haskell::TypeSynonymDecl>())
         {

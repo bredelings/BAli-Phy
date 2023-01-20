@@ -52,7 +52,7 @@ void TypeChecker::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreig
     for(auto& f: foreign_decls)
     {
         auto type = check_type( desugar(f.type) );
-        fte = fte.insert({Hs::Var({noloc,f.function_name}), type});
+        fte = fte.insert({Hs::Var(f.function_name), type});
     }
     poly_env() += fte;
 }
@@ -104,7 +104,7 @@ vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const signat
             if (it == index_for_name.end()) continue;
 
             // Skip if this name has a signature
-            if (signatures.count(Hs::Var({noloc,name}))) continue;
+            if (signatures.count(Hs::Var(name))) continue;
 
             refs.push_back(it->second);
         }
@@ -256,7 +256,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
                           tcs2.push_binder( IDType{FD.v, rho_type} );
 
                           // 4. Analyze the Matches
-                          auto ctx = Hs::FunctionContext{unloc(FD.v.name)};
+                          auto ctx = Hs::FunctionContext{FD.v.name};
                           tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type),
                                              [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
                                                  tc.tcMatches(ctx, FD.matches, arg_types, result_type);};});
@@ -328,7 +328,7 @@ void TypeChecker::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
 
         push_binder( IDType{ FD.v, mono_local_env().at(FD.v).second } );
         push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
-        auto ctx = Hs::FunctionContext{unloc(FD.v.name)};
+        auto ctx = Hs::FunctionContext{FD.v.name};
         tcMatchesFun( getArity(FD.matches), rhs_type, [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
             tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
                         );
@@ -375,7 +375,7 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
     push_binder( IDExpType{poly_id, fun_type} );
 
     // 4. Determine the expected type for arguments and result, and check rhs.
-    auto ctx = Hs::FunctionContext{unloc(poly_id.name)};
+    auto ctx = Hs::FunctionContext{poly_id.name};
     tcMatchesFun( getArity(FD.matches), fun_type,
                   [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
                       tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}

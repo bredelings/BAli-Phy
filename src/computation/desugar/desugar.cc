@@ -53,7 +53,7 @@ expression_ref desugar_string_expression(const std::string& s)
 Hs::VarPattern make_VarPattern(const var& v)
 {
     assert(v.index == 0);
-    Hs::Var V({noloc, v.name});
+    Hs::Var V(v.name);
     return {V};
 }
 
@@ -351,7 +351,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
             // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
             else if (auto PQ = B.to<Hs::PatQual>())
             {
-                Hs::Var concatMap({noloc, "Data.OldList.concatMap"});
+                Hs::Var concatMap("Data.OldList.concatMap");
                 if (is_irrefutable_pat(PQ->bindpat))
                 {
                     expression_ref f = Hs::LambdaExp({PQ->bindpat}, {noloc, L});
@@ -403,7 +403,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
     else if (auto c = E.to<Hs::Con>())
     {
         // Sometimes c->wrap isn't set because we make up constructors on the fly for e.g. []
-        Core::Exp E = var(unloc(c->name));
+        Core::Exp E = var(c->name);
         E = c->wrap(E);
         return E;
     }
@@ -451,7 +451,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
             {
                 // let {ok bindpat = do_stmts; ok _ = fail} in e >>= ok
                 auto ok = get_fresh_Var("ok", false);
-                expression_ref fail = {Hs::Var({noloc,"Control.Monad.fail"}), Hs::Literal(Hs::String("Fail!"))};
+                expression_ref fail = {Hs::Var("Control.Monad.fail"), Hs::Literal(Hs::String("Fail!"))};
                 if (PQ.failOp)
                     fail = *PQ.failOp;
                 auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};

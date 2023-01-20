@@ -343,7 +343,7 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
     {
         auto& fd = decl.as_<Hs::FunDecl>();
         auto& method = fd.v;
-        string method_name = unloc(method.name);
+        string method_name = method.name;
 
         if (not members.count(method))
             throw note_exception()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'";
@@ -412,7 +412,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method, method_type]: class_info.members)
     {
-        auto& method_name = unloc(method.name);
+        auto& method_name = method.name;
 
         push_note( Note()<<"In method `"<<method_name<<"`:" );
 

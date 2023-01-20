@@ -3223,13 +3223,13 @@ namespace yy {
 
   case 167: // sig_vars: sig_vars "," var
 #line 888 "parser.y"
-                           {yylhs.value.as < std::vector<Hs::Var> > () = yystack_[2].value.as < std::vector<Hs::Var> > (); yylhs.value.as < std::vector<Hs::Var> > ().push_back(Hs::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()}));}
+                           {yylhs.value.as < std::vector<Hs::Var> > () = yystack_[2].value.as < std::vector<Hs::Var> > (); yylhs.value.as < std::vector<Hs::Var> > ().push_back(Hs::Var(yystack_[0].value.as < std::string > ()));}
 #line 3228 "parser.cc"
     break;
 
   case 168: // sig_vars: var
 #line 889 "parser.y"
-                           {yylhs.value.as < std::vector<Hs::Var> > ().push_back(Hs::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()}));}
+                           {yylhs.value.as < std::vector<Hs::Var> > ().push_back(Hs::Var(yystack_[0].value.as < std::string > ()));}
 #line 3234 "parser.cc"
     break;
 
@@ -3853,7 +3853,7 @@ namespace yy {
 
   case 292: // aexp: qvar "@" aexp
 #line 1162 "parser.y"
-                                 {yylhs.value.as < Located<expression_ref> > () = {yylhs.location, Hs::AsPattern(Hs::Var({yystack_[2].location,yystack_[2].value.as < std::string > ()}),yystack_[0].value.as < Located<expression_ref> > ())}; }
+                                 {yylhs.value.as < Located<expression_ref> > () = {yylhs.location, Hs::AsPattern(Hs::Var(yystack_[2].value.as < std::string > ()),yystack_[0].value.as < Located<expression_ref> > ())}; }
 #line 3858 "parser.cc"
     break;
 
@@ -3919,13 +3919,13 @@ namespace yy {
 
   case 303: // aexp2: qvar
 #line 1180 "parser.y"
-                              {yylhs.value.as < Located<expression_ref> > () = {yylhs.location, Hs::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()})};}
+                              {yylhs.value.as < Located<expression_ref> > () = {yylhs.location, Hs::Var(yystack_[0].value.as < std::string > ())};}
 #line 3924 "parser.cc"
     break;
 
   case 304: // aexp2: qcon
 #line 1181 "parser.y"
-                              {yylhs.value.as < Located<expression_ref> > () = {yylhs.location, Hs::Con({yystack_[0].location,yystack_[0].value.as < std::string > ()})};}
+                              {yylhs.value.as < Located<expression_ref> > () = {yylhs.location, Hs::Con(yystack_[0].value.as < std::string > ())};}
 #line 3930 "parser.cc"
     break;
 
@@ -4591,25 +4591,25 @@ namespace yy {
 
   case 422: // qop: qvarop
 #line 1444 "parser.y"
-                { yylhs.value.as < expression_ref > () = Hs::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()}); }
+                { yylhs.value.as < expression_ref > () = Hs::Var(yystack_[0].value.as < std::string > ()); }
 #line 4596 "parser.cc"
     break;
 
   case 423: // qop: qconop
 #line 1445 "parser.y"
-                { yylhs.value.as < expression_ref > () = Hs::Con({yystack_[0].location,yystack_[0].value.as < std::string > ()}); }
+                { yylhs.value.as < expression_ref > () = Hs::Con(yystack_[0].value.as < std::string > ()); }
 #line 4602 "parser.cc"
     break;
 
   case 424: // qopm: qvaropm
 #line 1448 "parser.y"
-                { yylhs.value.as < expression_ref > () = Hs::Var({yystack_[0].location,yystack_[0].value.as < std::string > ()}); }
+                { yylhs.value.as < expression_ref > () = Hs::Var(yystack_[0].value.as < std::string > ()); }
 #line 4608 "parser.cc"
     break;
 
   case 425: // qopm: qconop
 #line 1449 "parser.y"
-                { yylhs.value.as < expression_ref > () = Hs::Con({yystack_[0].location,yystack_[0].value.as < std::string > ()}); }
+                { yylhs.value.as < expression_ref > () = Hs::Con(yystack_[0].value.as < std::string > ()); }
 #line 4614 "parser.cc"
     break;
 

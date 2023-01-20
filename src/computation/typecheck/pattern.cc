@@ -35,7 +35,7 @@ Core::wrapper TypeChecker::instPatSigma(const SigmaType& pat_type, const Expecte
 
 void TypeChecker::tcPat(local_value_env& penv, Hs::Var& V, const Expected& exp_type, const signature_env& sigs, const tc_action<local_value_env&>& a)
 {
-    auto& name = unloc(V.name);
+    auto& name = V.name;
     Type type;
 
     if (sigs.count(V))
@@ -271,7 +271,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
         }
         else if (auto i = L.lit.is_Integer())
         {
-            auto fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
+            auto fromInteger = Hs::Var("Compiler.Num.fromInteger");
             auto [arg_type, result_type] = unify_function( inferRho(fromInteger) );
             unify(arg_type, integer_type());
             unify(result_type, expTypeToType(exp_type));
@@ -285,7 +285,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
         }
         else if (auto d = L.lit.is_Double())
         {
-            auto fromRational = Hs::Var({noloc,"Compiler.Frational.fromRational"});
+            auto fromRational = Hs::Var("Compiler.Frational.fromRational");
             auto [arg_type, result_type] = unify_function( inferRho(fromRational) );
             unify(arg_type, double_type());
             unify(result_type, expTypeToType(exp_type));

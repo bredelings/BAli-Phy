@@ -36,7 +36,7 @@ string print(const value_env& env)
     vector<string> ss;
     for(auto& [var,type]: env)
     {
-        ss.push_back(unloc(var.name)+" :: "+type.print());
+        ss.push_back(var.print()+" :: "+type.print());
     }
     return "{ " + join(ss, "; ") + " }";
 }

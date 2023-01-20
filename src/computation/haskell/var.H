@@ -13,7 +13,7 @@ namespace Haskell
 
 struct Var: public Object
 {
-    Located<std::string> name;
+    std::string name;
     std::optional<int> index;
 
     std::optional<::Type> type;
@@ -31,13 +31,13 @@ struct Var: public Object
 
     Var* clone() const { return new Var(*this);}
 
-    Var(const Located<std::string>& s):name(s) {}
-    Var(const Located<std::string>& s, const ::Type& t):name(s),type(t) {}
+    Var(const std::string& s):name(s) {}
+    Var(const std::string& s, const ::Type& t):name(s),type(t) {}
 };
 
 struct Con: public Object
 {
-    Located<std::string> name;
+    std::string name;
 
     std::optional<int> arity;
 
@@ -51,8 +51,8 @@ struct Con: public Object
     Con* clone() const { return new Con(*this);}
     std::string print() const;
 
-    Con(const Located<std::string>& s):name(s) {}
-    Con(const Located<std::string>& s, int a):name(s),arity(a) {}
+    Con(const std::string& s):name(s) {}
+    Con(const std::string& s, int a):name(s),arity(a) {}
 };
 
 }
@@ -64,7 +64,7 @@ namespace std
     public :
         size_t operator()(const Hs::Var &x) const
         {
-            return std::hash<std::string>()(unloc(x.name));
+            return std::hash<std::string>()(x.name);
         }
     };
 }

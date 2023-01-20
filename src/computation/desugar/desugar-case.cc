@@ -204,7 +204,7 @@ failable_expression desugar_state::match_constructor(const vector<var>& x, const
 	auto& C = constants[c];
 
 	// 2.1 Find the arity of the constructor
-        string name = unloc(C.name);
+        string name = C.name;
         auto info = tc_state().constructor_info(C);
         int dict_arity  = info.dict_arity();
         int field_arity = info.arity();

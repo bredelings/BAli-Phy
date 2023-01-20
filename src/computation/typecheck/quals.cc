@@ -157,7 +157,7 @@ void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expe
         //   but if we typecheck this without unifying it with anything, it will create an ambiguous constraint.
         if (false) 
         {
-            PQ.failOp = Hs::Var({noloc,"Control.Monad.fail"});
+            PQ.failOp = Hs::Var("Control.Monad.fail");
             auto fail_op_type = state2.inferRho(*PQ.failOp);
         }
         current_wanteds() += state2.current_wanteds();

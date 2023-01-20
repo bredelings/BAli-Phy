@@ -35,7 +35,7 @@ Located<expression_ref> infix_parse_neg(const Module& m, const Located<symbol_in
 
 	E1 = infix_parse_neg(m, neg, T);
 
-	return infix_parse(m, op1, Hs::apply({neg_loc,Hs::Var({noloc,"negate"})},{E1}), T);
+	return infix_parse(m, op1, Hs::apply({neg_loc,Hs::Var("negate")},{E1}), T);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
@@ -48,9 +48,9 @@ Located<symbol_info> get_op_sym(const Module& m, const Located<expression_ref>& 
     symbol_info op_sym;
     string name;
     if (auto v = unloc(O).to<Haskell::Var>())
-        name = unloc(v->name);
+        name = v->name;
     else if (auto c = unloc(O).to<Haskell::Con>())
-        name = unloc(c->name);
+        name = c->name;
     else
         std::abort();
 

@@ -618,7 +618,7 @@ struct List: public Object
 struct ListFrom: public Object
 {
     LExp from;
-    Hs::Var enumFromOp = {{noloc,"Compiler.Enum.enumFrom"}};
+    Hs::Var enumFromOp = {"Compiler.Enum.enumFrom"};
     ListFrom* clone() const { return new ListFrom(*this);}
     std::string print() const;
     ListFrom(const LExp& e): from(e) {}
@@ -628,7 +628,7 @@ struct ListFromThen: public Object
 {
     LExp from;
     LExp then;
-    Hs::Var enumFromThenOp = {{noloc,"Compiler.Enum.enumFromThen"}};
+    Hs::Var enumFromThenOp = {"Compiler.Enum.enumFromThen"};
     ListFromThen* clone() const { return new ListFromThen(*this);}
     std::string print() const;
     ListFromThen(const LExp& e1, const LExp& e2): from(e1), then(e2) {}
@@ -638,7 +638,7 @@ struct ListFromTo: public Object
 {
     LExp from;
     LExp to;
-    Hs::Var enumFromToOp = {{noloc,"Compiler.Enum.enumFromTo"}};
+    Hs::Var enumFromToOp = {"Compiler.Enum.enumFromTo"};
     ListFromTo* clone() const { return new ListFromTo(*this);}
     std::string print() const;
     ListFromTo(const LExp& e1, const LExp& e2): from(e1), to(e2) {}
@@ -649,7 +649,7 @@ struct ListFromThenTo: public Object
     LExp from;
     LExp then;
     LExp to;
-    Hs::Var enumFromThenToOp = {{noloc,"Compiler.Enum.enumFromThenTo"}};
+    Hs::Var enumFromThenToOp = {"Compiler.Enum.enumFromThenTo"};
     ListFromThenTo* clone() const { return new ListFromThenTo(*this);}
     std::string print() const;
     ListFromThenTo(const LExp& e1, const LExp& e2, const LExp& e3): from(e1), then(e2), to(e3) {}
@@ -782,7 +782,7 @@ struct LetQual: public Object
 struct SimpleQual: public Object
 {
     LExp exp;
-    Hs::Var andThenOp = {{noloc,"Control.Monad.>>"}};
+    Hs::Var andThenOp = {"Control.Monad.>>"};
 
     SimpleQual* clone() const { return new SimpleQual(*this);}
     std::string print() const;
@@ -794,7 +794,7 @@ struct PatQual: public Object
     LPat bindpat;
     LExp exp;
 
-    Hs::Var bindOp = {{noloc,"Control.Monad.>>="}};
+    Hs::Var bindOp = {"Control.Monad.>>="};
     std::optional<Hs::Var> failOp;
 
     PatQual* clone() const { return new PatQual(*this);}

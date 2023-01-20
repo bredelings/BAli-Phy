@@ -135,7 +135,7 @@ pair<map<Hs::Var,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
             for(auto& var: sd->vars)
             {
                 if (signatures.count(var))
-                    throw myexception()<<"Second signature for var '"<<unloc(var.name)<<"' at location "<<*var.name.loc;
+                    throw myexception()<<"Second signature for var '"<<var.name<<"'"; // at location "<<*var.name.loc;
                 signatures.insert({var, sd->type});
             }
         }
@@ -249,15 +249,15 @@ bound_var_info renamer_state::rename_signatures(map<Hs::Var, Hs::Type>& signatur
     map<Hs::Var, Hs::Type> signatures2;
     for(auto& [var, type]: signatures)
     {
-        assert(not is_qualified_symbol(unloc(var.name)));
+        assert(not is_qualified_symbol(var.name));
         type = rename_type(type);
 
         auto var2 = var;
         if (top)
-            qualify_name(unloc(var2.name));
+            qualify_name(var2.name);
         signatures2.insert( {var2, type} );
 
-        bound.insert(unloc(var2.name));
+        bound.insert(var2.name);
     }
 
     signatures = std::move(signatures2);
@@ -338,7 +338,7 @@ std::tuple<map<string,int>, map<Hs::Var,vector<Hs::Var>>> get_indices_for_names(
             if (iter == duplicate_defs.end())
             {
                 // Record the index for each of those vars
-                index_for_name.insert({unloc(var.name), i});
+                index_for_name.insert({var.name, i});
                 // Create an empty list of duplicates.
                 duplicate_defs.insert({var,{}});
             }
@@ -372,7 +372,7 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
         else if (decl.is_a<Hs::FunDecl>())
         {
             auto FD = decl.as_<Hs::FunDecl>();
-            auto& name = unloc(FD.v.name);
+            auto& name = FD.v.name;
             assert(not is_qualified_symbol(name));
             if (top)
                 name = m.name + "." + name;
@@ -392,10 +392,10 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
         for(auto& second_def: second_defs)
         {
             Note note;
-            note<<"Name `"<<unloc(second_def.name)<<"` redefined.";
-            if (first_def.name.loc)
-                note<<"\nFirst definition at "<<*first_def.name.loc;
-            error(second_def.name.loc, note);
+            note<<"Name `"<<second_def.name<<"` redefined.";
+//            if (first_def.name.loc)
+//                note<<"\nFirst definition at "<<*first_def.name.loc;
+            error( /*second_def.name.loc,*/ note);
         }
     }
 

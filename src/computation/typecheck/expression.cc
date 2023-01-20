@@ -31,18 +31,14 @@ void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
     else
         throw note_exception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 
-    if (x.name.loc) push_source_span(*x.name.loc);
-    x.wrap = instantiateSigma(OccurrenceOrigin(unloc(x.name)), sigma, exp_type);
-    if (x.name.loc) pop_source_span();
+    x.wrap = instantiateSigma(OccurrenceOrigin(x.name), sigma, exp_type);
 }
 
 void TypeChecker::tcRho(Hs::Con& con, const Expected& exp_type)
 {
     auto sigma = constructor_info(con).constructor_type();
 
-    if (con.name.loc) push_source_span(*con.name.loc);
-    con.wrap = instantiateSigma(OccurrenceOrigin(unloc(con.name)), sigma, exp_type);
-    if (con.name.loc) pop_source_span();
+    con.wrap = instantiateSigma(OccurrenceOrigin(con.name), sigma, exp_type);
 }
 
 void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
@@ -143,7 +139,7 @@ void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
     else if (auto i = Lit.is_Integer())
     {
         // 1. Typecheck fromInteger
-        auto fromInteger = Hs::Var({noloc,"Compiler.Num.fromInteger"});
+        auto fromInteger = Hs::Var("Compiler.Num.fromInteger");
         auto fromInteger_type = inferRho(fromInteger);
 
         // 2. Check result type
@@ -158,7 +154,7 @@ void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
     else if (auto d = Lit.is_Double())
     {
         // 1. Typecheck fromRational
-        auto fromRational = Hs::Var({noloc,"Compiler.Fractional.fromRational"});
+        auto fromRational = Hs::Var("Compiler.Fractional.fromRational");
         auto fromRational_type = inferRho(fromRational);
 
         // 2. Check result type

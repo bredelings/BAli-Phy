@@ -272,7 +272,7 @@ string Binds::print() const
 {
     vector<string> ds;
     for(auto& [var, type]: signatures)
-        ds.push_back( unloc(var.name) + " :: " + type.print() );
+        ds.push_back( var.print() + " :: " + type.print() );
     for(auto& decls: *this)
         ds.push_back(decls.print());
     return join( ds, "\n");
@@ -984,7 +984,7 @@ FunDecl simple_decl(const Var& v, const MultiGuardedRHS& E)
 
 expression_ref error(const std::string& s)
 {
-    expression_ref error = Var({noloc,"Compiler.Error.error"});
+    expression_ref error = Var("Compiler.Error.error");
     expression_ref msg = Literal(String{s});
     return {error,msg};
 }
@@ -996,27 +996,27 @@ string EvidenceDecls::print()  const
 
 Con True()
 {
-    return {{noloc, "Data.Bool.True"}, 0};
+    return {"Data.Bool.True", 0};
 }
 
 Con False()
 {
-    return {{noloc, "Data.Bool.False"}, 0};
+    return {"Data.Bool.False", 0};
 }
 
 Con ConsCon()
 {
-    return {{noloc,":"}, 2};
+    return {":", 2};
 }
 
 Con Nil()
 {
-    return {{noloc,"[]"}, 0};
+    return {"[]", 0};
 }
 
 Con TupleCon(int n)
 {
-    return {{noloc,tuple_name(n)}, n};
+    return {tuple_name(n), n};
 }
 
 }

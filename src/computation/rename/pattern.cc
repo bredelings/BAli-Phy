@@ -112,7 +112,8 @@ bound_var_info renamer_state::rename_patterns(Hs::LPats& patterns, bool top)
 // A single variable is a valid "pattern" for the purposes of this function.
 bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool top)
 {
-    auto& pat = unloc(lpat);
+    auto& [loc,pat] = lpat;
+
     assert(not is_apply_exp(pat));
     assert(not pat.is_a<Hs::ApplyExp>());
 
@@ -161,7 +162,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
     }
     else if (auto v = pat.to<Hs::VarPattern>())
     {
-        auto id = unloc(v->var.name);
+        auto id = v->var.name;
 
 	if (is_qualified_symbol(id)) throw myexception()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<pat<<"'!";
 
@@ -173,19 +174,19 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
     // If its a constructor pattern!
     else if (auto c = pat.to<Hs::ConPattern>())
     {
-        auto id = unloc(c->head.name);
+        auto id = c->head.name;
 
         if (not m.is_declared(id))
-            error(c->head.name.loc, Note()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!");
+            error(loc, Note()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!");
         else
         {
             const symbol_info& S = m.lookup_symbol(id);
             if (S.symbol_type != constructor_symbol)
-                error(c->head.name.loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
+                error(loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
 
             // FIXME -- we really want the location of the whole pattern here
             if (S.arity != c->args.size())
-                error(c->head.name.loc, Note()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!");
+                error(loc, Note()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!");
         }
 
         // 11. Return the variables bound
@@ -199,7 +200,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
 
 bound_var_info renamer_state::rename_var_pattern(Hs::Var& V, bool top)
 {
-    auto id = unloc(V.name);
+    auto id = V.name;
 
     if (is_qualified_symbol(id)) throw myexception()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<V.print()<<"'!";
     // Qualify the id if this is part of a top-level decl
@@ -209,7 +210,7 @@ bound_var_info renamer_state::rename_var_pattern(Hs::Var& V, bool top)
     {
         // FIXME - since we are creating an ID here, we should give it a unique id!
     }
-    unloc(V.name) = id;
+    V.name = id;
 
     return {id};
 }
@@ -218,7 +219,8 @@ bound_var_info renamer_state::rename_var_pattern(Hs::Var& V, bool top)
 // A single variable is a valid "pattern" for the purposes of this function.
 bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
 {
-    auto& pat = unloc(lpat);
+    auto& [loc,pat] = lpat;
+
     assert(not is_apply_exp(pat));
     assert(not pat.is_a<Hs::ApplyExp>());
 
@@ -308,22 +310,22 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
         if (overlap)
             error(Note()<<"Pattern '"<<pat<<"' uses a variable twice!");
 
-        auto id = unloc(C.head.name);
+        auto id = C.head.name;
 
         // 7. Resolve constructor name if identifier is a constructor
         if (not m.is_declared(id))
-            error(c->head.name.loc, Note()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!");
+            error(loc, Note()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!");
         else
         {
             const symbol_info& S = m.lookup_symbol(id);
             if (S.symbol_type != constructor_symbol)
-                error(c->head.name.loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
+                error(loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
 
             // FIXME -- we really want the location of the whole pattern here
             if (S.arity != c->args.size())
-                error(c->head.name.loc, Note()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!");
+                error(loc, Note()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!");
 
-            unloc(C.head.name) = S.name;
+            C.head.name = S.name;
             C.head.arity = S.arity;
 
             // 10. Construct the renamed pattern

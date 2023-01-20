@@ -885,8 +885,8 @@ sigtype: ctype
 
 sigtypedoc: ctypedoc
 
-sig_vars: sig_vars "," var {$$ = $1; $$.push_back(Hs::Var({@3,$3}));}
-|         var              {$$.push_back(Hs::Var({@1,$1}));}
+sig_vars: sig_vars "," var {$$ = $1; $$.push_back(Hs::Var($3));}
+|         var              {$$.push_back(Hs::Var($1));}
 
 sigtypes1: sigtype               {$$.push_back($1);}
 |          sigtypes1 "," sigtype {$$ = $1; $$.push_back($3);}
@@ -1159,7 +1159,7 @@ fexp: fexp aexp                  {$$ = {@$,Hs::ApplyExp($1, $2)};}
 |     aexp                       {$$ = $1;}
 
 /* EP */
-aexp: qvar "@" aexp              {$$ = {@$, Hs::AsPattern(Hs::Var({@1,$1}),$3)}; }
+aexp: qvar "@" aexp              {$$ = {@$, Hs::AsPattern(Hs::Var($1),$3)}; }
 |     PREFIX_TILDE aexp          {$$ = {@$, Hs::LazyPattern($2)}; }
 |     "\\" apats1 "->" exp       {$$ = {@$, Hs::LambdaExp($2,$4)}; }
 |     "let" binds "in" exp       {$$ = {@$, Hs::LetExp($2,$4)}; }
@@ -1177,8 +1177,8 @@ aexp1: aexp1 "{" fbinds "}"   {}
 |      aexp2                  {$$ = $1;}
 
 /* EP */
-aexp2: qvar                   {$$ = {@$, Hs::Var({@1,$1})};}
-|      qcon                   {$$ = {@$, Hs::Con({@1,$1})};}
+aexp2: qvar                   {$$ = {@$, Hs::Var($1)};}
+|      qcon                   {$$ = {@$, Hs::Con($1)};}
 |      literal                {$$ = {@$, $1};}
 |      "(" texp ")"           {$$ = {@$, unloc($2)};}
 |      "(" tup_exprs ")"      {$$ = {@$, Hs::Tuple($2)};}
@@ -1441,12 +1441,12 @@ op : varop { $$ = $1; }
 varop: varsym   { $$ = $1; }
 | "`" varid "`" { $$ = $2; }
 
-qop:  qvarop    { $$ = Hs::Var({@1,$1}); }
-|     qconop    { $$ = Hs::Con({@1,$1}); }
+qop:  qvarop    { $$ = Hs::Var($1); }
+|     qconop    { $$ = Hs::Con($1); }
 /* |     hole_op   { $$ = $1; } */
 
-qopm: qvaropm   { $$ = Hs::Var({@1,$1}); }
-|     qconop    { $$ = Hs::Con({@1,$1}); }
+qopm: qvaropm   { $$ = Hs::Var($1); }
+|     qconop    { $$ = Hs::Con($1); }
 /* |     hole_op   { $$ = $1; } */
 
 /* hole_op: "`" "_" "`"  { $$ = "_"; } */

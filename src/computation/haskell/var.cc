@@ -8,12 +8,12 @@ namespace Haskell
 
 bool Var::is_sym() const
 {
-    return is_haskell_sym(unloc(name));
+    return is_haskell_sym(name);
 }
 
 string Var::print_without_parens() const
 {
-    string uname = unloc(name);
+    string uname = name;
     if (index)
         uname = uname +"#"+std::to_string(*index);
 
@@ -51,7 +51,7 @@ bool Var::operator==(const Object& o) const
 
 bool Var::operator==(const Var& v) const
 {
-    return index == v.index and unloc(name) == unloc(v.name);
+    return index == v.index and name == v.name;
 }
 
 bool Var::operator<(const Var& v) const
@@ -62,14 +62,14 @@ bool Var::operator<(const Var& v) const
     if (index > v.index)
         return false;
 
-    int cmp = unloc(name).compare(unloc(v.name));
+    int cmp = name.compare(v.name);
     
     return (cmp < 0);
 }
 
 bool Con::is_sym() const
 {
-    return is_haskell_sym(unloc(name));
+    return is_haskell_sym(name);
 }
 
 bool Con::operator==(const Object& o) const
@@ -83,12 +83,12 @@ bool Con::operator==(const Object& o) const
 
 bool Con::operator==(const Con& c) const
 {
-    return unloc(name) == unloc(c.name);
+    return name == c.name;
 }
 
 string Con::print() const
 {
-    return unloc(name);
+    return name;
 }
 
 } // namespace Haskell

@@ -138,7 +138,7 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
                 {
                     for(auto& field_name: field_group.field_names)
                     {
-                        constructor_fields[unloc(field_name.name)][constr.name] = i;
+                        constructor_fields[field_name.name][constr.name] = i;
                         i++;
                     }
                 }
@@ -150,7 +150,7 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
         {
             for(auto& [field_name, constrs]: constructor_fields)
             {
-                expression_ref name = Hs::Var({noloc,field_name});
+                expression_ref name = Hs::Var(field_name);
                 vector<Located<Haskell::Alt>> alts;
 
                 for(auto& [ConName,pos]: constrs)
@@ -159,14 +159,14 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
                     vector<Located<expression_ref>> f(a, {noloc,Hs::WildcardPattern()});
                     unloc(f[pos]) = name;
 
-                    Hs::LPat pattern = Hs::apply({noloc,Hs::Con({noloc,ConName},a)},f);
+                    Hs::LPat pattern = Hs::apply({noloc,Hs::Con(ConName,a)},f);
                     auto rhs = Haskell::SimpleRHS({noloc, name});
                     alts.push_back({noloc,{pattern,rhs}});
                 }
                 // I removed the {_ -> error("{name}: no match")} alternative, since error( ) generates a var( ).
                 // This could lead to worse error messages.
 
-                Hs::Var x({noloc,"v$0"}); // FIXME??
+                Hs::Var x("v$0"); // FIXME??
                 expression_ref body = Haskell::CaseExp({noloc,x},Haskell::Alts(alts));
                 expression_ref lambda = Haskell::LambdaExp({{noloc,x}},{noloc,body});
 
@@ -236,7 +236,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         {
             for(auto& sig_decl: C->sig_decls)
                 for(auto& method_var: sig_decl.vars)
-                    bound_names.insert(unloc(method_var.name));
+                    bound_names.insert(method_var.name);
         }
         // Wait.. don't we need to discover constructors, too?
     }
@@ -398,7 +398,7 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Binds& bin
         add(bound_names, find_bound_vars_in_decls(decls, top));
 
     for(auto& [var,_]: binds.signatures)
-        add(bound_names, find_vars_in_pattern({var.name.loc,var}, top));
+        add(bound_names, find_vars_in_pattern({noloc,var}, top));
 
     return bound_names;
 }
@@ -409,7 +409,7 @@ bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::SignatureDe
 
     for(auto& var: decl.vars)
     {
-        auto name = unloc(var.name);
+        auto name = var.name;
         if (is_top_level)
             name = m.name + "." + name;
         bound_names.insert(name);

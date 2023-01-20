@@ -221,40 +221,43 @@ Hs::LExp rename_infix(const Module& m, Hs::LExp LE)
     return LE;
 }
 
-Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<string>& free_vars)
-{
-    unloc(LE) = rename(unloc(LE), bound, free_vars);
-    return LE;
-}
-
 Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set<string>& free_vars)
 {
+    return unloc(rename({noloc, E}, bound, free_vars));
+}
+
+
+Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<string>& free_vars)
+{
+    auto& E = unloc(LE);
+    auto& loc = LE.loc;
+
     if (E.is_a<Hs::List>())
     {
         auto L = E.as_<Hs::List>();
         for(auto& element: L.elements)
             element = rename(element, bound, free_vars);
-        return L;
+        E = L;
     }
     else if (E.is_a<Hs::ListFrom>())
     {
         auto L = E.as_<Hs::ListFrom>();
         L.from = rename(L.from, bound, free_vars);
-        return L;
+        E = L;
     }
     else if (E.is_a<Hs::ListFromThen>())
     {
         auto L = E.as_<Hs::ListFromThen>();
         L.from = rename(L.from, bound, free_vars);
         L.then = rename(L.then, bound, free_vars);
-        return L;
+        E = L;
     }
     else if (E.is_a<Hs::ListFromTo>())
     {
         auto L = E.as_<Hs::ListFromTo>();
         L.from = rename(L.from, bound, free_vars);
         L.to   = rename(L.to  , bound, free_vars);
-        return L;
+        E = L;
     }
     else if (E.is_a<Hs::ListFromThenTo>())
     {
@@ -262,7 +265,7 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
         L.from = rename(L.from, bound, free_vars);
         L.then = rename(L.then, bound, free_vars);
         L.to   = rename(L.to  , bound, free_vars);
-        return L;
+        E = L;
     }
     else if (E.is_a<Hs::ListComprehension>())
     {
@@ -273,40 +276,39 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
             add(binders, rename_stmt(qual, bound, binders, free_vars));
 
         L.body = rename(L.body, bound, binders, free_vars);
-        return L;
+        E = L;
     }
     else if (E.is_a<Hs::LeftSection>())
     {
         auto S = E.as_<Hs::LeftSection>();
         S.l_arg = rename(S.l_arg, bound, free_vars);
         S.op = rename(S.op, bound, free_vars);
-        return S;
+        E = S;
     }
     else if (E.is_a<Hs::RightSection>())
     {
         auto S = E.as_<Hs::RightSection>();
         S.op = rename(S.op, bound, free_vars);
         S.r_arg = rename(S.r_arg, bound, free_vars);
-        return S;
+        E = S;
     }
     else if (E.is_a<Hs::Tuple>())
     {
         auto T = E.as_<Hs::Tuple>();
         for(auto& element: T.elements)
             element = rename(element, bound, free_vars);
-        return T;
+        E = T;
     }
     else if (E.is_a<Hs::Var>())
     {
         auto V = E.as_<Hs::Var>();
-        auto& name = unloc(V.name);
-        auto& loc = V.name.loc;
+        auto& name = V.name;
 
         // Local vars bind id's tighter than global vars.
         if (includes(bound,name))
         {
             free_vars.insert(name);
-            return E;
+            E = E;
         }
         // If the variable is free, then try top-level names.
         else if (m.is_declared(name))
@@ -316,19 +318,18 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
             name = qualified_name;
             if (get_module_name(qualified_name) == m.name)
                 free_vars.insert(qualified_name);
-            return V;
+            E = V;
         }
         else
         {
             error(loc, Note()<<"Variable `"<<name<<"` not in scope.");
-            return E;
+            E = E;
         }
     }
     else if (auto con = E.to<Hs::Con>())
     {
         auto C = *con;
-        auto& name = unloc(C.name);
-        auto& loc = C.name.loc;
+        auto& name = C.name;
 
         // FIXME: we should look the constructor up in a constructor environment
         // Does that mean that we look up constructors in a different table?
@@ -338,12 +339,12 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
             name = S.name; // use the qualified name
             // We return a reference to a lambda function, in case the constructor isn't fully applied.
             C.arity = S.arity;
-            return C;
+            E = C;
         }
         else
         {
             error(loc, Note()<<"Data constructor `"<<name<<"` not in scope.");
-            return E;
+            E = E;
         }
     }
     else if (E.is_a<Hs::RecStmt>())
@@ -352,7 +353,7 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
         auto R = E.as_<Hs::RecStmt>();
         for(auto& stmt: R.stmts.stmts)
             add(binders, rename_stmt(stmt, bound, binders, free_vars));
-        return R;
+        E = R;
     }
     else if (E.is_a<Hs::Do>())
     {
@@ -360,7 +361,7 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
         auto D = E.as_<Hs::Do>();
         for(auto& stmt: D.stmts.stmts)
             add(binders, rename_stmt(stmt, bound, binders, free_vars));
-        return D;
+        E = D;
     }
     else if (E.is_a<Hs::MDo>())
     {
@@ -406,14 +407,14 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
         auto MD = E.as_<Hs::MDo>();
         for(auto& stmt: MD.stmts.stmts)
             add(binders, rename_stmt(stmt, bound, binders, free_vars));
-        return MD;
+        E = MD;
     }
     else if (auto te = E.to<Hs::TypedExp>())
     {
         auto TE = *te;
         TE.exp = rename(TE.exp, bound, free_vars);
         TE.type = rename_type(TE.type);
-        return TE;
+        E = TE;
     }
     else if (auto c = E.to<Hs::CaseExp>())
     {
@@ -422,13 +423,13 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
         C.object = rename(C.object, bound, free_vars);
         C.alts   = rename(C.alts,    bound, free_vars);
 
-        return C;
+        E = C;
     }
     else if (E.is_a<Hs::LambdaExp>())
     {
         auto L = E.as_<Hs::LambdaExp>();
         L.match = rename(L.match, bound, free_vars);
-        return L;
+        E = L;
     }
     else if (E.is_a<Hs::LetExp>())
     {
@@ -437,7 +438,7 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
         auto binders = rename_decls(unloc(L.binds), bound, free_vars);
         L.body = rename(L.body, bound, binders, free_vars);
 
-        return L;
+        E = L;
     }
     else if (E.is_a<Hs::IfExp>())
     {
@@ -447,24 +448,22 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
         I.true_branch  = rename(I.true_branch, bound, free_vars);
         I.false_branch = rename(I.false_branch, bound, free_vars);
 
-        return I;
+        E = I;
     }
     else if (E.is_int() or E.is_log_double() or E.is_double() or E.is_char())
-    {
-        return E;
-    }
+    { }
     else if (E.is_a<Hs::Literal>())
-    {
-        return E;
-    }
+    { }
     else if (auto app = E.to<Hs::ApplyExp>())
     {
         auto App = *app;
         App.head = rename(App.head, bound, free_vars);
         App.arg  = rename(App.arg,  bound, free_vars);
-        return App;
+        E = App;
     }
+    else
+        std::abort();
 
-    std::abort();
+    return LE;
 }
 

@@ -971,7 +971,7 @@ Hs::Var TypeChecker::find_prelude_var(string name) const
 {
     if (this_mod().is_declared(name))
         name = this_mod().lookup_symbol(name).name;
-    return Hs::Var({noloc, name});
+    return Hs::Var(name);
 }
 
 ID TypeChecker::find_prelude_tycon_name(const string& name) const
@@ -1081,7 +1081,7 @@ std::pair<Type, Type> TypeChecker::unify_function(const Type& t, const Constrain
 
 DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
 {
-    auto& con_name = unloc(con.name);
+    auto& con_name = con.name;
 
     if (con_name == ":")
     {

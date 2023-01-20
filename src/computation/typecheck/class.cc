@@ -17,7 +17,7 @@ Hs::FunDecl dictionary_extractor(const Hs::Var& extractor, int i, int N)
 
     // extractor (_,field,_,_) = field;
 
-    Hs::Var field({noloc,"field"});
+    Hs::Var field("field");
 
     // pattern = (_,field,_,_)
     vector<Hs::LPat> pats(N, {noloc,Hs::WildcardPattern()});
@@ -34,7 +34,7 @@ Hs::FunDecl dictionary_extractor(const Hs::Var& extractor, int i, int N)
 
 Hs::Var unqualified(Hs::Var v)
 {
-    unloc(v.name) = get_unqualified_name(unloc(v.name));
+    v.name = get_unqualified_name(v.name);
     return v;
 }
 
@@ -94,7 +94,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
     for(auto& [method, match]: method_matches)
     {
-        auto& method_name = unloc(method.name);
+        auto& method_name = method.name;
         auto dm = get_fresh_Var("dm"+method_name, true);
         Hs::FunDecl FD(dm, match);
         class_info.default_methods.insert({method, dm});
