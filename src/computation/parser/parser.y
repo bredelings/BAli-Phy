@@ -384,8 +384,6 @@
 
 %type <Located<expression_ref>> exp
 %type <Located<Hs::InfixExp>> infixexp
-%type <Located<Hs::InfixExp>> infixexp_top
-%type <Located<expression_ref>> exp10_top
 %type <Located<expression_ref>> exp10
 
 %type <Located<expression_ref>> fexp
@@ -651,7 +649,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        annotation*/
 |        decl_no_th                            {$$ = $1;}
 /* What is this for? How is this a decl ? */
-|        infixexp_top                          {$$ = unloc($1);}
+|        infixexp                              {$$ = unloc($1);}
 
 cl_decl: "class" tycl_hdr /*fds*/ where_cls   {$$ = make_class_decl($2.first,$2.second,$3);}
 
@@ -1078,8 +1076,8 @@ deriv_clause_types: qtycondoc
 
 decl_no_th: sigdecl           {$$ = $1;}
 /* I guess this is a strict let. Code as DeclStrict, rather than StrictPattern, since docs say this is part of the binding, not part of the patter */
-| PREFIX_BANG aexp rhs                {$$ = Hs::StrictValueDecl{$2,$3}; }
-| infixexp_top rhs            {$$ = Hs::ValueDecl({$1.loc,unloc($1)},$2);}
+| PREFIX_BANG aexp rhs        {$$ = Hs::StrictValueDecl{$2,$3}; }
+| infixexp rhs                {$$ = Hs::ValueDecl({$1.loc,unloc($1)},$2);}
 
 decl: decl_no_th              {$$ = $1;}
 /*  | splice_exp */
@@ -1132,23 +1130,11 @@ exp: infixexp "::" sigtype { $$ = {@1+@3, Hs::TypedExp({$1.loc,unloc($1)},$3)}; 
 infixexp: exp10                 {$$ = {@1,Hs::InfixExp({$1})};}
 |         infixexp qop exp10    {$$ = $1; $$.loc = @1+@3; unloc($$).terms.push_back({@2,$2}); unloc($$).terms.push_back($3);}
 
-infixexp_top: exp10_top         {$$ = {@1, Hs::InfixExp({$1})};}
-|             infixexp_top qop exp10_top  {$$ = $1; $$.loc = @1+@3; unloc($$).terms.push_back({@2,$2}); unloc($$).terms.push_back($3);}
-
-exp10_top: "-" fexp                {$$ = {@1+@2,Hs::InfixExp( { {@1,Hs::Neg()}, $2} )};}
-|          "{-# CORE" STRING "#-}" {}
-|          fexp                    {$$ = $1;}
-
-/* EP */
-exp10: exp10_top                 {$$ = $1;}
-|      scc_annot exp             {}
-
+exp10: "-" fexp                {$$ = {@1+@2,Hs::InfixExp( { {@1,Hs::Neg()}, $2} )};}
+|      fexp                    {$$ = $1;}
 
 optSemi: ";"
 |        %empty
-
-scc_annot: "{-# SCC" STRING "#-}"
-|          "{-# SCC" VARID "#-}"
 
 /* hpc_annot */
 

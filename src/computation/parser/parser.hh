@@ -540,11 +540,9 @@ namespace yy {
       char dummy24[sizeof (Located<Hs::Decls>)];
 
       // infixexp
-      // infixexp_top
       char dummy25[sizeof (Located<Hs::InfixExp>)];
 
       // exp
-      // exp10_top
       // exp10
       // fexp
       // aexp
@@ -1233,86 +1231,83 @@ namespace yy {
         S_explicit_activation = 265,             // explicit_activation
         S_exp = 266,                             // exp
         S_infixexp = 267,                        // infixexp
-        S_infixexp_top = 268,                    // infixexp_top
-        S_exp10_top = 269,                       // exp10_top
-        S_exp10 = 270,                           // exp10
-        S_optSemi = 271,                         // optSemi
-        S_scc_annot = 272,                       // scc_annot
-        S_fexp = 273,                            // fexp
-        S_aexp = 274,                            // aexp
-        S_aexp1 = 275,                           // aexp1
-        S_aexp2 = 276,                           // aexp2
-        S_texp = 277,                            // texp
-        S_tup_exprs = 278,                       // tup_exprs
-        S_list = 279,                            // list
-        S_lexps = 280,                           // lexps
-        S_squals = 281,                          // squals
-        S_guardquals = 282,                      // guardquals
-        S_guardquals1 = 283,                     // guardquals1
-        S_altslist = 284,                        // altslist
-        S_alts = 285,                            // alts
-        S_alts1 = 286,                           // alts1
-        S_alt = 287,                             // alt
-        S_alt_rhs = 288,                         // alt_rhs
-        S_gdpats = 289,                          // gdpats
-        S_gdpat = 290,                           // gdpat
-        S_pat = 291,                             // pat
-        S_bindpat = 292,                         // bindpat
-        S_apat = 293,                            // apat
-        S_apats1 = 294,                          // apats1
-        S_stmtlist = 295,                        // stmtlist
-        S_stmts = 296,                           // stmts
-        S_stmt = 297,                            // stmt
-        S_qual = 298,                            // qual
-        S_fbinds = 299,                          // fbinds
-        S_fbinds1 = 300,                         // fbinds1
-        S_fbind = 301,                           // fbind
-        S_qcon = 302,                            // qcon
-        S_gen_qcon = 303,                        // gen_qcon
-        S_con = 304,                             // con
-        S_con_list = 305,                        // con_list
-        S_sysdcon_no_list = 306,                 // sysdcon_no_list
-        S_sysdcon = 307,                         // sysdcon
-        S_conop = 308,                           // conop
-        S_qconop = 309,                          // qconop
-        S_gtycon = 310,                          // gtycon
-        S_ntgtycon = 311,                        // ntgtycon
-        S_oqtycon = 312,                         // oqtycon
-        S_oqtycon_no_varcon = 313,               // oqtycon_no_varcon
-        S_qtyconop = 314,                        // qtyconop
-        S_qtycondoc = 315,                       // qtycondoc
-        S_qtycon = 316,                          // qtycon
-        S_tycon = 317,                           // tycon
-        S_qtyconsym = 318,                       // qtyconsym
-        S_tyconsym = 319,                        // tyconsym
-        S_op = 320,                              // op
-        S_varop = 321,                           // varop
-        S_qop = 322,                             // qop
-        S_qopm = 323,                            // qopm
-        S_qvarop = 324,                          // qvarop
-        S_qvaropm = 325,                         // qvaropm
-        S_tyvar = 326,                           // tyvar
-        S_tyvarop = 327,                         // tyvarop
-        S_tyvarid = 328,                         // tyvarid
-        S_var = 329,                             // var
-        S_qvar = 330,                            // qvar
-        S_qvarid = 331,                          // qvarid
-        S_varid = 332,                           // varid
-        S_qvarsym = 333,                         // qvarsym
-        S_qvarsym_no_minus = 334,                // qvarsym_no_minus
-        S_qvarsym1 = 335,                        // qvarsym1
-        S_varsym = 336,                          // varsym
-        S_varsym_no_minus = 337,                 // varsym_no_minus
-        S_special_id = 338,                      // special_id
-        S_special_sym = 339,                     // special_sym
-        S_qconid = 340,                          // qconid
-        S_conid = 341,                           // conid
-        S_qconsym = 342,                         // qconsym
-        S_consym = 343,                          // consym
-        S_literal = 344,                         // literal
-        S_close = 345,                           // close
-        S_modid = 346,                           // modid
-        S_commas = 347                           // commas
+        S_exp10 = 268,                           // exp10
+        S_optSemi = 269,                         // optSemi
+        S_fexp = 270,                            // fexp
+        S_aexp = 271,                            // aexp
+        S_aexp1 = 272,                           // aexp1
+        S_aexp2 = 273,                           // aexp2
+        S_texp = 274,                            // texp
+        S_tup_exprs = 275,                       // tup_exprs
+        S_list = 276,                            // list
+        S_lexps = 277,                           // lexps
+        S_squals = 278,                          // squals
+        S_guardquals = 279,                      // guardquals
+        S_guardquals1 = 280,                     // guardquals1
+        S_altslist = 281,                        // altslist
+        S_alts = 282,                            // alts
+        S_alts1 = 283,                           // alts1
+        S_alt = 284,                             // alt
+        S_alt_rhs = 285,                         // alt_rhs
+        S_gdpats = 286,                          // gdpats
+        S_gdpat = 287,                           // gdpat
+        S_pat = 288,                             // pat
+        S_bindpat = 289,                         // bindpat
+        S_apat = 290,                            // apat
+        S_apats1 = 291,                          // apats1
+        S_stmtlist = 292,                        // stmtlist
+        S_stmts = 293,                           // stmts
+        S_stmt = 294,                            // stmt
+        S_qual = 295,                            // qual
+        S_fbinds = 296,                          // fbinds
+        S_fbinds1 = 297,                         // fbinds1
+        S_fbind = 298,                           // fbind
+        S_qcon = 299,                            // qcon
+        S_gen_qcon = 300,                        // gen_qcon
+        S_con = 301,                             // con
+        S_con_list = 302,                        // con_list
+        S_sysdcon_no_list = 303,                 // sysdcon_no_list
+        S_sysdcon = 304,                         // sysdcon
+        S_conop = 305,                           // conop
+        S_qconop = 306,                          // qconop
+        S_gtycon = 307,                          // gtycon
+        S_ntgtycon = 308,                        // ntgtycon
+        S_oqtycon = 309,                         // oqtycon
+        S_oqtycon_no_varcon = 310,               // oqtycon_no_varcon
+        S_qtyconop = 311,                        // qtyconop
+        S_qtycondoc = 312,                       // qtycondoc
+        S_qtycon = 313,                          // qtycon
+        S_tycon = 314,                           // tycon
+        S_qtyconsym = 315,                       // qtyconsym
+        S_tyconsym = 316,                        // tyconsym
+        S_op = 317,                              // op
+        S_varop = 318,                           // varop
+        S_qop = 319,                             // qop
+        S_qopm = 320,                            // qopm
+        S_qvarop = 321,                          // qvarop
+        S_qvaropm = 322,                         // qvaropm
+        S_tyvar = 323,                           // tyvar
+        S_tyvarop = 324,                         // tyvarop
+        S_tyvarid = 325,                         // tyvarid
+        S_var = 326,                             // var
+        S_qvar = 327,                            // qvar
+        S_qvarid = 328,                          // qvarid
+        S_varid = 329,                           // varid
+        S_qvarsym = 330,                         // qvarsym
+        S_qvarsym_no_minus = 331,                // qvarsym_no_minus
+        S_qvarsym1 = 332,                        // qvarsym1
+        S_varsym = 333,                          // varsym
+        S_varsym_no_minus = 334,                 // varsym_no_minus
+        S_special_id = 335,                      // special_id
+        S_special_sym = 336,                     // special_sym
+        S_qconid = 337,                          // qconid
+        S_conid = 338,                           // conid
+        S_qconsym = 339,                         // qconsym
+        S_consym = 340,                          // consym
+        S_literal = 341,                         // literal
+        S_close = 342,                           // close
+        S_modid = 343,                           // modid
+        S_commas = 344                           // commas
       };
     };
 
@@ -1473,12 +1468,10 @@ namespace yy {
         break;
 
       case symbol_kind::S_infixexp: // infixexp
-      case symbol_kind::S_infixexp_top: // infixexp_top
         value.move< Located<Hs::InfixExp> > (std::move (that.value));
         break;
 
       case symbol_kind::S_exp: // exp
-      case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
       case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
@@ -2770,12 +2763,10 @@ switch (yykind)
         break;
 
       case symbol_kind::S_infixexp: // infixexp
-      case symbol_kind::S_infixexp_top: // infixexp_top
         value.template destroy< Located<Hs::InfixExp> > ();
         break;
 
       case symbol_kind::S_exp: // exp
-      case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
       case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
@@ -5670,8 +5661,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 5443,     ///< Last index in yytable_.
-      yynnts_ = 207,  ///< Number of nonterminal symbols.
+      yylast_ = 5314,     ///< Last index in yytable_.
+      yynnts_ = 204,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
 
@@ -5876,12 +5867,10 @@ switch (yykind)
         break;
 
       case symbol_kind::S_infixexp: // infixexp
-      case symbol_kind::S_infixexp_top: // infixexp_top
         value.copy< Located<Hs::InfixExp> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_exp: // exp
-      case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
       case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
@@ -6289,12 +6278,10 @@ switch (yykind)
         break;
 
       case symbol_kind::S_infixexp: // infixexp
-      case symbol_kind::S_infixexp_top: // infixexp_top
         value.move< Located<Hs::InfixExp> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_exp: // exp
-      case symbol_kind::S_exp10_top: // exp10_top
       case symbol_kind::S_exp10: // exp10
       case symbol_kind::S_fexp: // fexp
       case symbol_kind::S_aexp: // aexp
@@ -6613,7 +6600,7 @@ switch (yykind)
 
 
 } // yy
-#line 6617 "parser.hh"
+#line 6604 "parser.hh"
 
 
 
