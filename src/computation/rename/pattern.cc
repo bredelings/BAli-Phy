@@ -52,22 +52,20 @@ Hs::LPat unapply(Hs::LExp LE)
         SP.pattern = unapply(SP.pattern);
         P = SP;
     }
-    else if (auto app = E.to<Hs::ApplyExp>())
+    else if (E.is_a<Hs::ApplyExp>())
     {
-        auto App = *app;
-
-        flatten(App);
+        auto [head, args] = Hs::decompose_apps(LE);
 
         // We shouldn't have e.g. (@ (@ f x) y) -- this should already be dealt with by rename_infix
-        auto con = unloc(App.head).to<Hs::Con>();
+        auto con = unloc(head).to<Hs::Con>();
         if (not con)
-            throw myexception()<<"In pattern `"<<E<<"`:\n    `"<<App.head<<"` is not a data constructor.";
+            throw myexception()<<"In pattern `"<<E<<"`:\n    `"<<head<<"` is not a data constructor.";
 
-        Hs::LPats args;
-        for(auto& arg: App.args)
-            args.push_back(unapply(arg));
+        Hs::LPats pat_args;
+        for(auto& arg: args)
+            pat_args.push_back(unapply(arg));
 
-        P = Hs::ConPattern(*con, args);
+        P = Hs::ConPattern(*con, pat_args);
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {

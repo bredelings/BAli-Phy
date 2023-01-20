@@ -79,18 +79,17 @@ expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
             return Hs::simple_decl(*v, rhs);
         else if (is_definitely_pattern(unloc(lhs)))
             return Hs::PatDecl( unapply(lhs), rhs );
-        else if (auto app = unloc(lhs).to<Hs::ApplyExp>())
+        else if (unloc(lhs).is_a<Hs::ApplyExp>())
         {
-            auto App = *app;
-            flatten(App);
+            auto [head,args] = Hs::decompose_apps(lhs);
 
-            if (unloc(App.head).is_a<Hs::Con>())
+            if (unloc(head).is_a<Hs::Con>())
                 return Hs::PatDecl( unapply(lhs), rhs);
 
-            else if (auto v = unloc(App.head).to<Hs::Var>())
+            else if (auto v = unloc(head).to<Hs::Var>())
             {
                 Hs::LPats pats;
-                for(auto& arg: App.args)
+                for(auto& arg: args)
                     pats.push_back( unapply(arg) );
 
                 return Hs::simple_fun_decl(*v, pats, rhs);

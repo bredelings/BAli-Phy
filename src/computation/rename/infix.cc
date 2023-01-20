@@ -34,9 +34,8 @@ Located<expression_ref> infix_parse_neg(const Module& m, const Located<symbol_in
         auto neg = Located<symbol_info>{neg_loc, neg_sym};
 
 	E1 = infix_parse_neg(m, neg, T);
-        auto neg_E1_loc = *neg_loc + *E1.loc;
 
-	return infix_parse(m, op1, {neg_E1_loc,Hs::ApplyExp({neg_loc,Hs::Var({noloc,"negate"})},{E1})}, T);
+	return infix_parse(m, op1, Hs::apply({neg_loc,Hs::Var({noloc,"negate"})},{E1}), T);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
@@ -97,11 +96,9 @@ Located<expression_ref> infix_parse(const Module& m, const Located<symbol_info>&
 	T.pop_front();
 	auto E3 = infix_parse_neg(m, loc_op2, T);
 
-	auto E1_op2_E3 = Hs::ApplyExp(op2_E, {E1, E3});
+	auto E1_op2_E3 = Hs::apply(op2_E, {E1, E3});
 
-        auto E123_loc = E1.loc.value() + E3.loc.value();
-        
-	return infix_parse(m, loc_op1, {E123_loc, E1_op2_E3}, T);
+	return infix_parse(m, loc_op1, E1_op2_E3, T);
     }
 }
 

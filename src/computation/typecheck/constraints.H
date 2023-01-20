@@ -21,8 +21,7 @@ struct GivenOrigin
 
 struct AppOrigin
 {
-    expression_ref head;
-    int arg_index;
+    expression_ref app;
 };
 
 struct InstanceOrigin

@@ -8,26 +8,59 @@
 
 using std::string;
 using std::pair;
+using std::tuple;
 using std::vector;
 using std::optional;
 
 namespace Haskell
 {
 
-void flatten(ApplyExp& App)
+std::tuple<LExp, vector<LExp>> decompose_apps(const LExp& E)
 {
-    // Flatten, in case we have an apply of an apply
-    if (auto app2 = unloc(App.head).to<Hs::ApplyExp>())
+    if (auto app = unloc(E).to<ApplyExp>())
     {
-        auto App2 = *app2;
-
-        flatten(App2);
-
-        for(auto& arg: App.args)
-            App2.args.push_back( std::move(arg) );
-
-        std::swap(App, App2);
+        auto head_args = decompose_apps(app->head);
+        std::get<1>(head_args).push_back(app->arg);
+        return head_args;
     }
+    else
+        return {E,{}};
+}
+
+vector<LExp> flatten(const LExp& E)
+{
+    if (auto app = unloc(E).to<ApplyExp>())
+    {
+        auto terms = flatten(app->head);
+        terms.push_back(app->arg);
+        return terms;
+    }
+    else
+        return {E};
+}
+
+LExp apply(const std::vector<LExp>& terms)
+{
+    auto exp = terms[0];
+    for(int i=1;i<terms.size();i++)
+    {
+        auto& arg = terms[i];
+
+        auto loc = exp.loc * arg.loc;
+        exp = {loc, ApplyExp(exp, arg)};
+    }
+    return exp;
+}
+
+LExp apply(const LExp& head, const std::vector<LExp>& args)
+{
+    auto exp = head;
+    for(auto& arg: args)
+    {
+        auto loc = exp.loc * arg.loc;
+        exp = {loc, ApplyExp(exp, arg)};
+    }
+    return exp;
 }
 
 string show_type_or_class_header(const Context& context, const string& name, const vector<TypeVar>& tvs)
@@ -783,6 +816,8 @@ std::string parenthesize_exp(const Expression& E)
 
 std::string ApplyExp::print() const
 {
+    auto [head,args] = decompose_apps({noloc,*this});
+
     string func = unloc(head).print();
 
     optional<string> op;
@@ -809,8 +844,8 @@ std::string ApplyExp::print() const
     return join(ss, " ");
 }
 
-ApplyExp::ApplyExp(const Located<Expression>& h, const std::vector<Located<Expression>>& as)
-    :head(h), args(as)
+ApplyExp::ApplyExp(const LExp& h, const LExp& a)
+    :head(h), arg(a)
 {
 }
 

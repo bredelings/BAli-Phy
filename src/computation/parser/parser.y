@@ -41,8 +41,6 @@
   Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const std::optional<Located<Hs::Decls>>& decls);
   Hs::Context make_context(const Hs::Type& context);
 
-  Hs::LExp make_apply(const Hs::LExp& head, const Hs::LExp& arg);
-
   expression_ref yy_make_string(const std::string&);
 }
 
@@ -1155,7 +1153,7 @@ scc_annot: "{-# SCC" STRING "#-}"
 /* hpc_annot */
 
 /* EP */
-fexp: fexp aexp                  {$$ = make_apply($1, $2);}
+fexp: fexp aexp                  {$$ = {@$,Hs::ApplyExp($1, $2)};}
 |     fexp TYPEAPP atype         {}
 |     "static" aexp              {}
 |     aexp                       {$$ = $1;}
@@ -1848,14 +1846,3 @@ Hs::ConstructorDecl make_constructor(const vector<Hs::TypeVar>& forall, const st
     return {forall, c, name, args};
 }
 
-Hs::LExp make_apply(const Hs::LExp& head, const Hs::LExp& arg)
-{
-    if (auto app = unloc(head).to<Hs::ApplyExp>())
-    {
-        auto App = *app;
-        App.args.push_back(arg);
-        return {*head.loc + *arg.loc, App};
-    }
-    else
-        return {*head.loc + *arg.loc, Hs::ApplyExp(head, {arg})};
-}

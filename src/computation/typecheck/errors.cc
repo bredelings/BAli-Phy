@@ -88,9 +88,12 @@ Note make_mismatch_message(TidyState& tidy_state, const Constraint& wanted, cons
     {
         mismatch<<"Expected `"<<tidy_print(tidy_state, uorig->t2)<<"` but got `"<<tidy_print(tidy_state, uorig->t1)<<"`";
     }
-    else if (auto app = to<AppOrigin>(wanted.origin))
+    else if (auto app = to<AppOrigin>(wanted.origin); app and app->app)
     {
-        mismatch<<"Applying "<<(app->arg_index+1)<<" arguments to function "<<app->head.print()<<", but it only takes "<<app->arg_index<<"!";
+        auto [head,args] = Hs::decompose_apps({noloc,app->app});
+        int arg_index = int(args.size())-1;
+
+        mismatch<<"Applying "<<(arg_index+1)<<" arguments to function "<<head<<", but it only takes "<<arg_index<<"!";
     }
     else if (auto lsec = to<LeftSectionOrigin>(wanted.origin))
         mismatch<<"In left section, "<<lsec->op<<" is not a function!";

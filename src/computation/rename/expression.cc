@@ -204,8 +204,7 @@ Hs::LExp rename_infix(const Module& m, Hs::LExp LE)
         auto App = *app;
 
         App.head = rename_infix(m, App.head);
-        for(auto& arg: App.args)
-            arg = rename_infix(m, arg);
+        App.arg  = rename_infix(m, App.arg );
 
 	E = App;
     }
@@ -462,8 +461,7 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
     {
         auto App = *app;
         App.head = rename(App.head, bound, free_vars);
-        for(auto& arg: App.args)
-            arg = rename(arg, bound, free_vars);
+        App.arg  = rename(App.arg,  bound, free_vars);
         return App;
     }
 

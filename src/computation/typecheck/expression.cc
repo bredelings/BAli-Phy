@@ -45,48 +45,30 @@ void TypeChecker::tcRho(Hs::Con& con, const Expected& exp_type)
     if (con.name.loc) pop_source_span();
 }
 
-void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type, int i)
+void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
 {
-    // i         = the number of arguments we pretend we've removed from the end of App.
-    // arg_index = the index of the last argument that remains after these are removed.
-    // 0         = the index of the first argument.
-
-    int arg_index = int(App.args.size())-1-i;
-
     // 1. Infer the head type
     Expected fun_type = newInfer();
-    if (arg_index > 0)
-        tcRho(App, fun_type, i + 1);
-    else
-        tcRho(App.head, fun_type);
+    tcRho(App.head, fun_type);
 
     // 2. Check the argument type
-    if (App.args[arg_index].loc) push_source_span(*App.args[arg_index].loc);
-    auto origin = AppOrigin{unloc(App.head), arg_index};
-    auto [arg_type, result_type] = unify_function(fun_type.read_type(), origin);
+    if (App.arg.loc) push_source_span(*App.arg.loc);
+    auto [arg_type, result_type] = unify_function(fun_type.read_type(), AppOrigin{App});
 
     // Check the argument according to its required type
-    auto wrap_arg = checkSigma(App.args[arg_index], arg_type);
+    App.arg_wrapper = checkSigma(App.arg, arg_type);
 
-    App.arg_wrappers.push_back(wrap_arg);
-
-    if (App.args[arg_index].loc) pop_source_span();
+    if (App.arg.loc) pop_source_span();
 
     // 3. Check the return type
-    auto exp_loc = App.head.loc;
-    for(int i=0;i<= arg_index;i++)
-        exp_loc = exp_loc * App.args[i].loc;
+    auto exp_loc = App.head.loc * App.arg.loc;
 
     if (exp_loc) push_source_span(*exp_loc);
 
-    auto App2 = App;
-    for(int j=0;j<i;j++)
-        App2.args.pop_back();
-    push_note( Note() << "In expression '"<< App2.print()<<"':" );
+    push_note( Note() << "In expression '"<< App.print()<<"':" );
 
     // Convert the result to the expected time for the term
-    auto wrap_res = instantiateSigma(AppOrigin(), result_type, exp_type);
-    App.res_wrappers.push_back(wrap_res);
+    App.res_wrapper = instantiateSigma(AppOrigin(), result_type, exp_type);
 
     if (exp_loc) pop_source_span();
 

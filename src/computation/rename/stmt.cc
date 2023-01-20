@@ -53,16 +53,16 @@ bound_var_info renamer_state::rename_rec_stmt(Hs::LExp& lrec_stmt, const bound_v
     auto rec_tuple_pattern = unapply({noloc,rec_tuple}); // This makes the tuple expression into a pattern
 
     // 3. Construct the do stmt
-    expression_ref rec_return_stmt = Hs::ApplyExp({noloc,rec_return}, {{noloc,rec_tuple}});
+    auto rec_return_stmt = Hs::apply({noloc,rec_return}, {{noloc,rec_tuple}});
     auto stmts = rec_stmt.as_<Haskell::RecStmt>().stmts.stmts;
-    stmts.push_back({noloc,Hs::SimpleQual({noloc,rec_return_stmt})});
+    stmts.push_back({noloc,Hs::SimpleQual(rec_return_stmt)});
     auto rec_do = Haskell::Do(Haskell::Stmts(stmts));
 
     // 4. Construct the lambda function
     expression_ref rec_lambda = Haskell::LambdaExp({{noloc,Haskell::LazyPattern(rec_tuple_pattern)}}, {noloc,rec_do});      // \ ~(b,c) -> do { ... }
 
     // 5. Construct rec_tuple_pattern <- mfix rec_lambda
-    rec_stmt = Haskell::PatQual(rec_tuple_pattern, {noloc,Hs::ApplyExp({noloc,mfix}, {{noloc,rec_lambda}})});
+    rec_stmt = Haskell::PatQual(rec_tuple_pattern, Hs::apply({noloc,mfix}, {{noloc,rec_lambda}}));
 
     // Combine the set of bound variables and rename our rewritten statement;
     return rename_stmt(lrec_stmt, bound, rec_bound, free_vars);

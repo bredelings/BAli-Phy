@@ -528,17 +528,13 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
     {
         Core::Exp A = desugar(app->head);
 
-        for(int i=0; i < app->args.size(); i++)
-        {
-            auto arg = desugar( app->args[i] );
-            if (not app->arg_wrappers.empty())
-                arg = app->arg_wrappers[i]( arg );
+        Core::Exp arg = desugar( app->arg );
 
-            A = apply_expression(A, arg);
+        arg = app->arg_wrapper( arg );
 
-            if (not app->res_wrappers.empty())
-                A = app->res_wrappers[i]( A );
-        }
+        A = apply_expression(A, arg);
+
+        A = app->res_wrapper( A );
 
         return A;
     }

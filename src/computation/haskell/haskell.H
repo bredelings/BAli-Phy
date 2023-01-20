@@ -6,6 +6,7 @@
 #include <variant>
 #include <map>
 #include <set>
+#include <tuple>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
 #include "computation/parser/located.H"
@@ -89,20 +90,27 @@ typedef Located<Qual> LQual;
 
 struct ApplyExp: public Object
 {
-    Located<Exp> head;
-    std::vector<Located<Exp>> args;
+    LExp head;
+    LExp arg;
 
-    std::vector<Core::wrapper> arg_wrappers;
-    std::vector<Core::wrapper> res_wrappers;
+    Core::wrapper arg_wrapper;
+    Core::wrapper res_wrapper;
 
     ApplyExp* clone() const { return new ApplyExp(*this);}
     std::string print() const;
 
-    ApplyExp(const Located<Exp>& h, const std::vector<Located<Exp>>& as);
+    ApplyExp(const LExp& h, const LExp& a);
 };
 
-void flatten(ApplyExp& app);
+std::tuple<LExp,std::vector<LExp>> decompose_apps(const LExp&);
 
+std::vector<LExp> flatten(const LExp&);
+
+LExp apply(const std::vector<LExp>& terms);
+
+LExp apply(const LExp& head, const std::vector<LExp>& args);
+
+    
 // HsDecl = type or class declaration
 //          instance declaration
 //          deriving declaration
