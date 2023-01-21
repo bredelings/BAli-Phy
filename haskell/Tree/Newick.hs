@@ -62,13 +62,15 @@ instance (TimeTree t, WriteNewickNode t) => WriteNewickNode (RateTimeTreeImp t) 
 
 write_newick tree = write_newick_node tree (root tree)
 
+intercalate2 t ts = foldl1 (\x y -> x `T.append` t `T.append` y) ts
+
 write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree node) node Nothing `T.snoc` ';' where
 
     write_branches_and_node tree branches node branch = write_branches tree branches `T.append` get_node_label tree node `T.append` get_branch_label tree branch
 
     write_branches tree branches | null branches = T.empty
     write_branches tree branches | otherwise     = (T.pack "(") `T.append` text `T.append` (T.pack ")") where
-        text = T.intercalate (T.pack ",") $ toList $ fmap (write_branch tree) $ branches
+        text = intercalate2 (T.pack ",") $ fmap (write_branch tree) $ branches
 
     write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch) (Just branch)
 
