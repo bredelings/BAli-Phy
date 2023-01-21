@@ -11,30 +11,31 @@ import Tree
 
 import Parse
 
+import qualified Data.Text as T
 import Data.Char
 import Data.Foldable
 
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
 class Tree t => WriteNewickNode t where
-    node_info :: t -> Int -> Maybe String
-    branch_info :: t -> (Maybe Int) -> Maybe String
+    node_info :: t -> Int -> Maybe T.Text
+    branch_info :: t -> (Maybe Int) -> Maybe T.Text
 
     node_info _ _ = Nothing
     branch_info _ _ = Nothing
 
-get_node_label   t node = case node_info t node of Just lab -> lab ; Nothing -> ""
-get_branch_label t branch = case branch_info t branch of Just lab -> ":" ++ lab; Nothing -> ""
+get_node_label   t node = case node_info t node of Just lab -> lab ; Nothing -> T.empty
+get_branch_label t branch = case branch_info t branch of Just lab -> ':' `T.cons` lab; Nothing -> T.empty
 
 instance WriteNewickNode TreeImp where
-    node_info tree node = Just $ show node
+    node_info tree node = Just $ T.pack $ show node
 
 instance WriteNewickNode t => WriteNewickNode (RootedTreeImp t) where
     node_info (RootedTree tree _ _) = node_info tree
     branch_info (RootedTree tree _ _) = branch_info tree
 
 instance WriteNewickNode t => WriteNewickNode (LabelledTreeImp t) where
-    node_info (LabelledTree tree labels) node = label
+    node_info (LabelledTree tree labels) node = fmap T.pack label
         where labels_array = listArray' labels
               label | inRange (bounds labels_array) node  = Just (labels_array!node)
                     | otherwise                           = Nothing
@@ -44,30 +45,30 @@ instance WriteNewickNode t => WriteNewickNode (LabelledTreeImp t) where
 instance WriteNewickNode t => WriteNewickNode (BranchLengthTreeImp t) where
     node_info (BranchLengthTree tree lengths) node = node_info tree node
 
-    branch_info blt (Just b) = Just $ show (branch_length blt b)
+    branch_info blt (Just b) = Just $ T.pack $ show (branch_length blt b)
     branch_info _   Nothing  = Nothing
 
 instance (RootedTree t, WriteNewickNode t) => WriteNewickNode (TimeTreeImp t) where
     node_info nht@(TimeTree tree _) node = node_info tree node
 
-    branch_info nht (Just b) = Just $ show (branch_length nht b)
+    branch_info nht (Just b) = Just $ T.pack $ show (branch_length nht b)
     branch_info nht Nothing  = Nothing
 
 instance (TimeTree t, WriteNewickNode t) => WriteNewickNode (RateTimeTreeImp t) where
     node_info nht@(RateTimeTree tree _) node = node_info tree node
 
-    branch_info nht (Just b) = Just $ show (branch_length nht b)
+    branch_info nht (Just b) = Just $ T.pack $ show (branch_length nht b)
     branch_info nht Nothing  = Nothing
 
 write_newick tree = write_newick_node tree (root tree)
 
-write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree node) node Nothing ++ ";" where
+write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree node) node Nothing `T.snoc` ';' where
 
-    write_branches_and_node tree branches node branch = write_branches tree branches ++ get_node_label tree node ++ get_branch_label tree branch
+    write_branches_and_node tree branches node branch = write_branches tree branches `T.append` get_node_label tree node `T.append` get_branch_label tree branch
 
-    write_branches tree branches | null branches = ""
-    write_branches tree branches | otherwise     = "(" ++ text ++ ")" where
-        text = intercalate "," $ toList $ fmap (write_branch tree) $ branches
+    write_branches tree branches | null branches = T.empty
+    write_branches tree branches | otherwise     = (T.pack "(") `T.append` text `T.append` (T.pack ")") where
+        text = T.intercalate (T.pack ",") $ toList $ fmap (write_branch tree) $ branches
 
     write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch) (Just branch)
 
