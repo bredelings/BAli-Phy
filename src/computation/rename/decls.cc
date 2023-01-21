@@ -41,7 +41,7 @@ using std::deque;
 // What are the rules for well-formed patterns?
 // Only one op can be a non-constructor (in decl patterns), and that op needs to end up at the top level.
 
-pair<map<Hs::Var,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls); // value decls, signature decls, and fixity decls
+pair<map<Hs::LVar,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls); // value decls, signature decls, and fixity decls
 
 
 bool is_definitely_pattern(const Haskell::Expression& lhs)
@@ -120,9 +120,9 @@ optional<Hs::Var> fundecl_head(const expression_ref& decl)
 }
 
 // Probably we should first partition by (same x y = x and y are both function decls for the same variable)
-pair<map<Hs::Var,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
+pair<map<Hs::LVar,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
 {
-    map<Hs::Var, Hs::Type> signatures;
+    map<Hs::LVar, Hs::Type> signatures;
 
     Haskell::Decls decls2;
 
@@ -134,11 +134,10 @@ pair<map<Hs::Var,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
         {
             for(auto& lvar: sd->vars)
             {
-                auto& [loc,var] = lvar;
-                if (signatures.count(var))
-                    throw myexception()<<"Second signature for var '"<<var.name<<"' at location "<<*loc;
+                if (signatures.count(lvar))
+                    throw myexception()<<"Second signature for var '"<<unloc(lvar).name<<"' at location "<<*lvar.loc;
                 else
-                    signatures.insert({var, sd->type});
+                    signatures.insert({lvar, sd->type});
             }
         }
         else if (decl.is_a<Haskell::FixityDecl>())
@@ -245,19 +244,20 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
     return new_binders;
 }
 
-bound_var_info renamer_state::rename_signatures(map<Hs::Var, Hs::Type>& signatures, bool top)
+bound_var_info renamer_state::rename_signatures(map<Hs::LVar, Hs::Type>& signatures, bool top)
 {
     bound_var_info bound;
-    map<Hs::Var, Hs::Type> signatures2;
-    for(auto& [var, type]: signatures)
+    map<Hs::LVar, Hs::Type> signatures2;
+    for(auto& [lvar, type]: signatures)
     {
-        assert(not is_qualified_symbol(var.name));
+        assert(not is_qualified_symbol(unloc(lvar).name));
         type = rename_type(type);
 
-        auto var2 = var;
+        auto lvar2 = lvar;
+        auto& var2 = unloc(lvar2);
         if (top)
             qualify_name(var2.name);
-        signatures2.insert( {var2, type} );
+        signatures2.insert( {lvar2, type} );
 
         bound.insert(var2.name);
     }
@@ -437,7 +437,7 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
 
     for(auto& sig_binder: sig_binders)
         if (not binders.count(sig_binder))
-            throw myexception()<<"Signature but no definition for '"<<sig_binder<<"'";
+            error(Note()<<"Signature but no definition for '"<<sig_binder<<"'");
 
     set<string> decls_free_vars;
     auto refs = rename_grouped_decls(decls, plus(bound, binders), decls_free_vars, top);

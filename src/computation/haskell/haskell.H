@@ -281,7 +281,7 @@ public:
 struct Binds: public std::vector<Decls>
 {
     // FIXME: I should keep the SignatureDecl around for error messages.
-    std::map<Var, Type> signatures;
+    std::map<LVar, Type> signatures;
 
     std::string print() const;
 

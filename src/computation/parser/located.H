@@ -53,6 +53,12 @@ public:
     Located(Located<T>&&) = default;
 
     template <typename U>
+    Located(const Located<U>& u):loc(u.loc),obj(u.obj) {}
+
+    template <typename U>
+    Located(Located<U>&& u):loc(u.loc),obj(std::move(u.obj)) {}
+
+    template <typename U>
     Located(const Unlocated<U>& u):obj(u.obj) {}
 
     template <typename U>
@@ -135,4 +141,15 @@ inline std::optional<yy::location> range(const std::vector<std::optional<yy::loc
     return loc;
 }
 
+template <typename T>
+bool operator<(const Located<T>& l1, const Located<T>& l2)
+{
+    return unloc(l1) < unloc(l2);
+}
+
+template <typename T>
+bool operator==(const Located<T>& l1, const Located<T>& l2)
+{
+    return unloc(l1) == unloc(l2);
+}
 #endif
