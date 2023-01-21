@@ -62,8 +62,9 @@ TypeChecker::infer_type_for_binds(Hs::Binds& binds, bool is_top_level)
 {
     global_value_env sigs;
     signature_env sigs2;
-    for(auto& [var,type]: binds.signatures)
+    for(auto& [lvar,type]: binds.signatures)
     {
+        auto& var = unloc(lvar);
         auto type2 = check_type(desugar(type));
         sigs = sigs.insert({var,type2});
         sigs2.insert({var,type2});
