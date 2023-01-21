@@ -62,8 +62,6 @@ extern "C" closure builtin_function_append(OperationArgs& Args)
 
     String s2  = Args.evaluate(1).as_<String>();
 
-    char c = Args.evaluate(1).as_char();
-
     String s3 = s1 + s2;
 
     return {s3};
