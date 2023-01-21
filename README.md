@@ -17,12 +17,12 @@ Install Prerequisites
 ---------------------
 On Ubuntu, you can use apt-get:
 ```bash
-sudo apt-get install g++ libcairo2-dev meson
+sudo apt-get install g++ libcairo2-dev meson libboost-all-dev
 ```
 
 On Mac (or Linux, actually) you can use homebrew:
 ```bash
-brew install cairo meson
+brew install cairo meson boost
 ```
 
 If the version of meson is not at least 1.0, then you need to install
