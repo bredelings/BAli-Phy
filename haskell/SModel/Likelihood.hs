@@ -44,15 +44,21 @@ foreign import bpcall "SModel:sample_leaf_node_sequence_SEV" sample_leaf_sequenc
 
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = mkArray (2*numBranches t) lcf
                                                                lcf b = let bb = b `mod` (numBranches t)
-                                                                       in case toList $ edgesBeforeEdge t b of 
-                                                                            []      -> let n=sourceNode t b
-                                                                                       in peel_leaf_branch (seqs!n) alpha (ps!bb) smap
-                                                                            [b1,b2] -> peel_internal_branch (lc!b1) (lc!b2) (as!b1) (as!b2) (ps!bb) f
+                                                                           edges = edgesBeforeEdge t b
+                                                                       in if null edges
+                                                                          then let n=sourceNode t b
+                                                                               in peel_leaf_branch (seqs!n) alpha (ps!bb) smap
+                                                                          else let b1 = edges!0
+                                                                                   b2 = edges!1
+                                                                               in peel_internal_branch (lc!b1) (lc!b2) (as!b1) (as!b2) (ps!bb) f
                                                            in lc
 
 peel_likelihood t cl as f root = let likelihoods = mkArray (numNodes t) peel_likelihood'
                                      peel_likelihood' root = let branches_in = edgesTowardNode t root
-                                                             in case toList $ branches_in of [b1,b2,b3]-> calc_root_probability (cl!b1) (cl!b2) (cl!b3) (as!b1) (as!b2) (as!b3) f
+                                                                 b1 = branches_in!0
+                                                                 b2 = branches_in!1
+                                                                 b3 = branches_in!2
+                                                             in calc_root_probability (cl!b1) (cl!b2) (cl!b3) (as!b1) (as!b2) (as!b3) f
                                  in likelihoods!root
 
 
@@ -74,14 +80,18 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
     let rt = add_root root t
         ancestor_seqs = mkArray (numNodes t) ancestor_for_node
         ancestor_for_node n = ancestor_for_branch n (parentBranch rt n)
-        ancestor_for_branch n Nothing = sample_root_sequence (cl!b0) (cl!b1) (cl!b2) (as!b0) (as!b1) (as!b2) f where [b0,b1,b2] = toList $ edgesTowardNode t n
+        ancestor_for_branch n Nothing = sample_root_sequence (cl!b0) (cl!b1) (cl!b2) (as!b0) (as!b1) (as!b2) f where edges = edgesTowardNode t n
+                                                                                                                     b0 = edges!0
+                                                                                                                     b1 = edges!1
+                                                                                                                     b2 = edges!2
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs!p
                                                 b0 = reverseEdge t to_p
                                                 ps_for_b0 = ps!(b0 `mod` (numBranches t))
                                                 a0 = as!b0
-                                            in case toList $ edgesBeforeEdge t to_p of
-                                                 [] -> sample_leaf_sequence
+                                                edges = edgesBeforeEdge t to_p
+                                            in if null edges
+                                               then sample_leaf_sequence
                                                           parent_seq
                                                           ps_for_b0
                                                           (seqs!n)
@@ -89,7 +99,9 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
                                                           smap
                                                           a0
                                                           f
-                                                 [b1,b2] -> sample_internal_sequence
+                                               else let b1 = edges!0
+                                                        b2 = edges!1
+                                                    in sample_internal_sequence
                                                                parent_seq
                                                                ps_for_b0
                                                                (cl!b1)
