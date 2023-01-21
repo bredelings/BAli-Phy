@@ -5,7 +5,7 @@ module Data.Text where
 -- The number of code points can be larger than the number of graphemes.
 -- Does (length) return the number of code points?  Probably.
 
-import Prelude as P
+import Prelude as P hiding (null, head, tail, init, length, empty, intercalate)
 import Data.Char
 import Data.Ord
 
@@ -23,43 +23,52 @@ pack = Text . builtin_pack . list_to_vector
 
 unpack (Text s) = unpack_cpp_string s
 
-singleton c = pack [c]
+foreign import bpcall "Text:singleton" builtin_singleton :: Char -> CPPString
+singleton c = Text $ builtin_singleton c
 
-empty = pack []
+foreign import bpcall "Text:empty" builtin_empty :: () -> CPPString
+empty = Text $ builtin_empty ()
 
-cons :: Char -> Text -> Text
 infixr 5 `cons`
-cons c t = pack (c:t') where t' = unpack t
+foreign import bpcall "Text:cons" builtin_cons :: Char -> CPPString -> CPPString
+cons c (Text s) = Text $ builtin_cons c s
 
--- snoc :: Text -> Char -> Text 
+foreign import bpcall "Text:snoc" builtin_snoc :: CPPString -> Char -> CPPString
+snoc (Text s) c = Text $ builtin_snoc s c
 
 append :: Text -> Text -> Text
-append t1 t2 = pack (unpack t1 ++ unpack t2)
+foreign import bpcall "Text:append" builtin_append :: CPPString -> CPPString -> CPPString
+append (Text s1) (Text s2) = Text $ builtin_append s1 s2
 
--- uncons :: Text -> Maybe (Char, Text)
+uncons t | null t    = Nothing
+         | otherwise = Just (head t, tail t)
 
 -- unsnoc :: Text -> Maybe (Text, Char)
 
-head :: Text -> Char
-head t = P.head (unpack t)
+foreign import bpcall "Text:head" builtin_head :: CPPString -> Char
+head (Text s) = builtin_head s
 
-last :: Text -> Char
-last t = P.last (unpack t)
+foreign import bpcall "Text:last" builtin_last :: CPPString -> Char
+last (Text s) = builtin_last s
 
-tail :: Text -> Text
-tail t = pack (P.tail $ unpack t)
+foreign import bpcall "Text:tail" builtin_tail :: CPPString -> CPPString
+tail (Text s) = Text $ builtin_tail s
 
--- init :: Text -> Text
+foreign import bpcall "Text:init" builtin_init :: CPPString -> CPPString
+init (Text s) = Text $ builtin_init s
 
--- null :: Text -> Bool
+null :: Text -> Bool
+null t = length t == 0
 
--- length :: Text -> Int
+foreign import bpcall "Text:length" builtin_length :: CPPString -> Int
+length (Text s) = builtin_length s
 
 -- compareLength :: Text -> Int -> Ordering
 
 -- map :: (Char -> Char) -> Text -> Text
 
--- intercalate :: Text -> [Text] -> Text
+intercalate :: Text -> [Text] -> Text
+intercalate t ts = foldl (\x y -> append x $ append t y) empty ts
 
 -- intersperse :: Char -> Text -> Text
 
