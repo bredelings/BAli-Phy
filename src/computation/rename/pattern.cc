@@ -10,6 +10,7 @@
 
 using std::string;
 using std::vector;
+using std::optional;
 using std::pair;
 using std::set;
 
@@ -164,7 +165,11 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
     {
         auto id = v->var.name;
 
-	if (is_qualified_symbol(id)) throw myexception()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<pat<<"'!";
+	if (is_qualified_symbol(id))
+        {
+            error(lpat.loc, Note()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<pat<<"'!");
+            return {};
+        }
 
 	// Qualify the id if this is part of a top-level decl
 	if (top)
@@ -198,11 +203,12 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
 
-bound_var_info renamer_state::rename_var_pattern(Hs::Var& V, bool top)
+bound_var_info renamer_state::rename_var_pattern(const optional<yy::location>& loc, Hs::Var& V, bool top)
 {
     auto id = V.name;
 
-    if (is_qualified_symbol(id)) throw myexception()<<"Binder variable '"<<id<<"' is qualified in pattern '"<<V.print()<<"'!";
+    if (is_qualified_symbol(id))
+        error(loc, Note() << "Binder variable '"<<id<<"' is qualified in pattern '"<<V.print()<<"'!");
     // Qualify the id if this is part of a top-level decl
     if (top)
         id = m.name + "." + id;
@@ -258,7 +264,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
         auto AP = pat.as_<Hs::AsPattern>();
 	assert(not top);
 
-	auto bound = rename_var_pattern(AP.var, false);
+	auto bound = rename_var_pattern(loc, AP.var, false);
 	bool overlap = not disjoint_add(bound, rename_pattern(AP.pattern, false));
         if (overlap)
             error(Note()<<"Pattern '"<<pat<<"' uses a variable twice!");
@@ -287,7 +293,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
     else if (auto v = pat.to<Hs::VarPattern>())
     {
         auto V = *v;
-        auto bound = rename_var_pattern(V.var, top);
+        auto bound = rename_var_pattern(loc, V.var, top);
         pat = V;
 	return bound;
     }
