@@ -12,6 +12,7 @@ import Tree
 import Parse
 
 import Data.Char
+import Data.Foldable
 
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
@@ -60,7 +61,7 @@ instance (TimeTree t, WriteNewickNode t) => WriteNewickNode (RateTimeTreeImp t) 
 
 write_newick tree = write_newick_node tree (root tree)
 
-write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree node) node Nothing ++ ";" where
+write_newick_node tree node = write_branches_and_node tree (toList $ edgesOutOfNode tree node) node Nothing ++ ";" where
 
     write_branches_and_node tree branches node branch = write_branches tree branches ++ get_node_label tree node ++ get_branch_label tree branch
 
@@ -68,7 +69,7 @@ write_newick_node tree node = write_branches_and_node tree (edgesOutOfNode tree 
     write_branches tree branches = "(" ++ text ++ ")" where
         text = intercalate "," $ map (write_branch tree) $ branches
 
-    write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch) (Just branch)
+    write_branch tree branch = write_branches_and_node tree (toList $ edgesAfterEdge tree branch) (targetNode tree branch) (Just branch)
 
 data Newick = Newick (Maybe String) (Maybe Double) [Newick]
 
