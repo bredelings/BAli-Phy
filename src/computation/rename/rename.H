@@ -44,7 +44,7 @@ struct renamer_state
     void qualify_name(Hs::TypeCon& v) const;
 
     bound_var_info rename_patterns(Hs::LPats& pat, bool top = false);
-    bound_var_info rename_var_pattern(Hs::Var&, bool top = false);
+    bound_var_info rename_var_pattern(const std::optional<yy::location>&, Hs::Var&, bool top = false);
     bound_var_info rename_pattern(Hs::LPat& pat, bool top = false);
 
     bound_var_info find_vars_in_patterns(const Hs::LPats& pats, bool top = false);
