@@ -8,10 +8,10 @@ If you just want to install bali-phy, please visit the [release page](http://www
 Compiling
 ---------
 
-You will need a C++ compiler that understands C++17.
- * gcc 9 (or higher) works
- * clang 8 (or higher) works
- * XCode 11 (or higher) works
+You will need a C++ compiler that understands C++20.
+ * gcc 10 (or higher) works
+ * clang 13 (or higher) works
+ * XCode 14 (or higher) works
 
 Install Prerequisites
 ---------------------
@@ -25,7 +25,7 @@ On Mac (or Linux, actually) you can use homebrew:
 brew install cairo meson
 ```
 
-If the version of meson is not at least 0.56, then you need to install
+If the version of meson is not at least 1.0, then you need to install
 meson through the python package manager "pip" or "pip3":
 
     pip3 -V
