@@ -94,7 +94,7 @@ equ n x = gtr_sym n (replicate n_elements x)
 
 f81 pi = gtr (equ n 1.0) pi where n = length pi
 
-uniform_frequencies n = replicate n $ 1.0/(intToDouble n)
+uniform_frequencies n = replicate n $ 1/fromIntegral n
 
 jukes_cantor n = gtr (equ n 1.0) (uniform_frequencies n)
 

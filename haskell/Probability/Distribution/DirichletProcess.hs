@@ -46,8 +46,8 @@ do_crp'' alpha n bins counts = let inc (c:cs) 0 = (c+1:cs)
                                    inc (c:cs) i = c:(inc cs (i-1))
                                    p alpha counts = normalize (map f counts)
                                    nzeros = length (filter (==0) counts)
-                                   f 0 = alpha/(intToDouble nzeros)
-                                   f i = intToDouble i
+                                   f 0 = alpha/fromIntegral nzeros
+                                   f i = fromIntegral i
                                in 
                                do c <- categorical (p alpha counts)
                                   cs <- do_crp'' alpha (n-1) bins (inc counts c) 

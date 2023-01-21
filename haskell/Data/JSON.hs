@@ -68,7 +68,7 @@ instance ToJSON Double where
     toJSON x = Number x
 
 instance ToJSON Int where
-    toJSON x = Number (intToDouble x)
+    toJSON x = Number (fromIntegral x)
 
 instance ToJSON a => ToJSON [a] where
     toJSON x = toJSONList x

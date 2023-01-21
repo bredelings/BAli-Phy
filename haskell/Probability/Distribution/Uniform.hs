@@ -11,15 +11,15 @@ uniform_bounds l u = between l u
 uniform_effect l u x = add_move $ slice_sample_real_random_variable x (uniform_bounds l u)
 sample_uniform l u = RandomStructure (uniform_effect l u) modifiable_structure $ liftIO (IOAction (\s->(s,builtin_sample_uniform l u s)))
 
-uniform_quantile l u x | x < l      = 0.0
-                       | x > u      = 1.0
+uniform_quantile l u x | x < l      = 0
+                       | x > u      = 1
                        | otherwise  = (x-l)/(u-l)
 
 
 
-uniform_int_quantile l u x | x <= l     = 0.0
-                           | x > u      = 1.0
-                           | otherwise  = intToDouble (x-l) / intToDouble (u-l+1)
+uniform_int_quantile l u x | x <= l     = 0
+                           | x > u      = 1
+                           | otherwise  = fromIntegral (x-l) / fromIntegral (u-l+1)
 
 foreign import bpcall "Distribution:uniform_int_density" uniform_int_density :: Int -> Int -> Int -> LogDouble
 foreign import bpcall "Distribution:sample_uniform_int" builtin_sample_uniform_int :: Int -> Int -> Int -> Int

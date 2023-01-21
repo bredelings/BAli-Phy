@@ -74,7 +74,6 @@ foreign import bpcall "Num:" add_logdouble :: LogDouble -> LogDouble -> LogDoubl
 foreign import bpcall "Num:" subtract_logdouble :: LogDouble -> LogDouble -> LogDouble
 foreign import bpcall "Num:" multiply_logdouble :: LogDouble -> LogDouble -> LogDouble
 foreign import bpcall "Num:" signum_logdouble :: LogDouble -> LogDouble
---foreign import bpcall "Num:" intToLogDouble :: Int -> LogDouble
 foreign import bpcall "Num:" integerToLogDouble :: Integer -> LogDouble
 
 instance Num LogDouble where

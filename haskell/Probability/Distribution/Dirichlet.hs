@@ -8,15 +8,15 @@ foreign import bpcall "Distribution:dirichlet_density" builtin_dirichlet_density
 dirichlet_density as ps = builtin_dirichlet_density (list_to_vector as) (list_to_vector ps)
 
 -- The `dirichlet` does not handle cases where the number of as changes in a ungraceful way: all entries are resampled!
-sample_dirichlet as = RanSamplingRate (1.0/sqrt(intToDouble $ length as)) $ do vs <- mapM (\a-> gamma a 1.0) as
-                                                                               return $ map (/(sum vs)) vs
+sample_dirichlet as = RanSamplingRate (1/sqrt(fromIntegral $ length as)) $ do vs <- mapM (\a-> gamma a 1.0) as
+                                                                              return $ map (/(sum vs)) vs
 
 -- independent is a Distribution ... so shouldn't this fail because of a lack of a monad instance?
 
 -- The `v_dirichlet` takes an infinite list of as, and a number of them to keep.
-sample_v_dirichlet n as = RanSamplingRate (1.0/sqrt(intToDouble n)) $ do vs <- independent [ gamma a 1.0 | a <- as ]
-                                                                         let ws = take n vs
-                                                                         return $ map (/(sum ws)) ws
+sample_v_dirichlet n as = RanSamplingRate (1/sqrt(fromIntegral n)) $ do vs <- independent [ gamma a 1.0 | a <- as ]
+                                                                        let ws = take n vs
+                                                                        return $ map (/(sum ws)) ws
 
 symmetric_dirichlet n a = v_dirichlet n (repeat a)
 

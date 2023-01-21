@@ -18,7 +18,7 @@ poisson_effect x = do
 sample_poisson mu = RandomStructure poisson_effect modifiable_structure $ liftIO (IOAction (\s -> (s, builtin_sample_poisson mu s)))
 
 --- Poisson process, constant rate --
-poisson_process_density' rate t1 t2 n = expToLogDouble $ (-rate*(t2-t1)) + ((intToDouble n)*log rate)
+poisson_process_density' rate t1 t2 n = expToLogDouble $ (-rate*(t2-t1)) + (fromIntegral n * log rate)
 poisson_process_density  rate t1 t2 points = poisson_process_density' rate t1 t2 n where n = length points
 sample_poisson_process rate t1 t2 = do
   n <- poisson (rate * (t2-t1))
