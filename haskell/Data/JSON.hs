@@ -1,6 +1,6 @@
 module Data.JSON where
 
-import Data.Text as T
+import qualified Data.Text as T
 import Foreign.String
 import qualified Data.Map as M
 
@@ -8,7 +8,7 @@ data CJSON
 
 data EJSON
 
-data Key = Key Text
+data Key = Key T.Text
 
 instance Show Key where
     show (Key t) = show t
@@ -16,7 +16,7 @@ instance Show Key where
 foreign import bpcall "Foreign:c_json" builtin_c_json :: EJSON -> CJSON
 
 -- Hmm... it doesn't look like we can have a JSON object, just JSON representation, because a JSON object would have to have existential type fields.
-data JSON = Array [JSON] | Object [(Key,JSON)] | Number Double | Bool Bool | String Text | Null
+data JSON = Array [JSON] | Object [(Key,JSON)] | Number Double | Bool Bool | String T.Text | Null
 
 -- BUG: No instance for 'Prelude.Show Compiler.Base.String' -- this is a mistake, because of type synonyms...
 -- Probably we need to check_type( ) on constructor argument types...
@@ -25,7 +25,7 @@ instance Show JSON where
     show Null = "null"
     show (Number x) = show x
     show (Bool x) = show x
-    show (String x) = show $ unpack x
+    show (String x) = show $ T.unpack x
     show (Array x) = "["++intercalate "," (map show x) ++ "]"
     show (Object x) = "{"++ intercalate ", " [show key ++ ": "++ show value | (key,value) <- x] ++ "}"
 
@@ -35,12 +35,12 @@ class ToJSONKey a where
     toJSONKeyList :: [a] -> Key
     toJSONKeyList s = error "toJSONKeyList: not implemented for this type"
 
-instance ToJSONKey Text where
+instance ToJSONKey T.Text where
     toJSONKey s = Key s
 
 instance ToJSONKey Char where
-    toJSONKey c = Key $ pack [c]
-    toJSONKeyList s = Key $ pack s
+    toJSONKey c = Key $ T.pack [c]
+    toJSONKeyList s = Key $ T.pack s
 
 instance ToJSONKey a => ToJSONKey [a] where
     toJSONKey l = toJSONKeyList l
@@ -55,10 +55,10 @@ instance ToJSON () where
     toJSON () = Null
 
 instance ToJSON Char where
-    toJSON c = String (pack [c])
-    toJSONList s = String (pack s)
+    toJSON c = String (T.pack [c])
+    toJSONList s = String (T.pack s)
 
-instance ToJSON Text where
+instance ToJSON T.Text where
     toJSON x = String x
 
 instance ToJSON Bool where
@@ -102,10 +102,10 @@ foreign import bpcall "Foreign:" ejson_null   :: () -> EJSON
 
 
 deep_eval_json (Array xs)  = ejson_array $ list_to_vector $ map deep_eval_json xs
-deep_eval_json (Object xs) = ejson_object $ list_to_vector [c_pair key (deep_eval_json value) | (Key (Text key), value) <- xs]
+deep_eval_json (Object xs) = ejson_object $ list_to_vector [c_pair key (deep_eval_json value) | (Key (T.Text key), value) <- xs]
 deep_eval_json (Number n)  = ejson_number n
 deep_eval_json (Bool b)    = ejson_bool b
-deep_eval_json (String (Text s))  = ejson_string s
+deep_eval_json (String (T.Text s))  = ejson_string s
 deep_eval_json Null        = ejson_null ()
 
 c_json = builtin_c_json . deep_eval_json
