@@ -46,4 +46,6 @@ inline bool is_literal_or_var_type(type_constant c) {return (c >=1 and c <= reg_
 
 inline bool is_whnf_type(type_constant c) {return (c >=1 and c < expression_type);}
 
+inline bool is_gcable_type(type_constant c) {return c >= gc_type and c < expression_type;}
+
 #endif
