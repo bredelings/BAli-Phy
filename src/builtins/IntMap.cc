@@ -88,11 +88,11 @@ extern "C" closure builtin_function_insert(OperationArgs& Args)
 {
     int key = Args.evaluate(0).as_int();
 
-    int value = Args.evaluate(1).as_int();
+    int v_reg = Args.current_closure().reg_for_slot(1);
 
     auto m = Args.evaluate(2).as_<IntMap>();
 
-    m.insert(key,value);
+    m.insert(key,v_reg);
 
     return m;
 }
