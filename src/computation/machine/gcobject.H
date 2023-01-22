@@ -2,8 +2,8 @@
 #define GCOBJECT_H
 
 #include <vector>
-#include "object.H"
 #include "immer/map.hpp" // for immer::map
+#include "computation/object.H"
 
 class GCObject: public Object
 {
@@ -27,6 +27,7 @@ public:
     int size() const {return array_regs.size();}
     int get_reg(int i) const {return array_regs[i];}
 
+    IntArray* clone() const {return new IntArray(*this);}
     IntArray(const std::vector<int>& a);
     IntArray(const IntArray&) = default;
 };
@@ -40,11 +41,24 @@ public:
     void update_regs(const std::vector<int>& regs) const override;
 
     int size() const {return regs.size();}
-    int get_reg(int i) const {return regs.at(i);}
-    bool has_reg(int i) const {return regs.count(i);}
+    bool has_key(int i) const {return regs.count(i);}
+    int operator[](int i) const {return regs.at(i);}
 
-    IntMap(const immer::map<int,int>& a);
+    void erase(int k);
+    void insert(int k, int v);
+
+    auto begin() {return regs.begin();}
+    auto end() {return regs.end();}
+
+    auto begin() const {return regs.begin();}
+    auto end() const {return regs.end();}
+
+    std::string print() const;
+    IntMap* clone() const {return new IntMap(*this);}
+
+    IntMap() = default;
     IntMap(const IntMap&) = default;
+    IntMap(const immer::map<int,int>& a);
 };
 
 #endif

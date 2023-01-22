@@ -1,4 +1,5 @@
 #include "gcobject.H"
+#include "util/string/join.H"
 
 
 void IntArray::get_regs(std::vector<int>& regs) const
@@ -17,6 +18,17 @@ IntArray::IntArray(const std::vector<int>& a)
 {
 }
 
+void IntMap::erase(int k)
+{
+    regs = regs.erase(k);
+}
+
+void IntMap::insert(int k, int v)
+{
+    regs = regs.erase(k);
+    regs = regs.insert({k,v});
+}
+
 void IntMap::get_regs(std::vector<int>& owned_regs) const
 {
     owned_regs.resize(regs.size());
@@ -29,14 +41,23 @@ void IntMap::update_regs(const std::vector<int>& remap) const
 {
     // The problem is that we should like these modifications
     // to affect ALL the shared maps;
+    // We actually want to modify shared storage here!
     for(auto& [key,reg]: regs)
     {
         if (reg != remap[reg])
         {
-            regs = regs.erase(key);
-            regs = regs.insert({key,remap[reg]});
+            const_cast<int&>(reg) = remap[reg];
+            assert(reg);
         }
     }
+}
+
+std::string IntMap::print() const
+{
+    std::vector<std::string> kvs;
+    for(auto& [k,r]: regs)
+        kvs.push_back(std::to_string(k)+"->" + std::to_string(r));
+    return "I{"+join(kvs,",")+"}";
 }
 
 IntMap::IntMap(const immer::map<int,int>& a)

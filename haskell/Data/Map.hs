@@ -138,9 +138,6 @@ infixl 9 !
 m ! k = case lookup k m of Just x -> x
                            Nothing -> error "Error: element not in the map"
 
-m ! k = case lookup k m of Just x -> x
-                           Nothing -> error "Error: element not in the map"
-
 elems m = List.map snd $ toAscList m
 
 keys m = List.map fst $ toAscList m
