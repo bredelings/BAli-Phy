@@ -198,8 +198,6 @@ closure case_op(OperationArgs& Args)
 		{
 		    // The number of constructor fields is the same the for case pattern and the case object.
 		    assert(object.exp.size() == object.exp.head().as_<constructor>().n_args());
-		    // The number of entries in the environment is the same as the number of constructor fields.
-		    assert(object.exp.size() == object.Env.size());
 		}
 #endif	
 		result.exp = this_body;
