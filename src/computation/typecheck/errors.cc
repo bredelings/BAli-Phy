@@ -278,6 +278,19 @@ void TypeChecker::check_wanteds(TidyState& tidy_state, vector<shared_ptr<Implica
         {
             Note e;
             e<<"Could not derive `"<<bold_green(tidy_print(tidy_state, wanted.pred))<<ANSI::bold<<"`";
+
+            // Begin(experimental): how should we report givens?
+            LIE givens;
+            for(auto& implic: implic_scopes)
+                givens += implic->givens;
+            if (not givens.empty())
+            {
+                e<<" in context ";
+                for(auto& given: givens)
+                    e<<tidy_print(tidy_state,given.pred)<<" ";
+            }
+            // End(xperimental)
+
             if (auto occ = to<OccurrenceOrigin>(wanted.origin))
                 e<<" arising from a use of `"<<cyan(print_unqualified_id(occ->name))<<ANSI::bold<<"`";
             if (wanted.tc_state->source_span())
