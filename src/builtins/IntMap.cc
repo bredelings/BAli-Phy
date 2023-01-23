@@ -5,6 +5,9 @@
 #include "computation/expression/bool.H"
 
 #include "computation/machine/gcobject.H"
+#include "immer/set.hpp"
+
+typedef Box<immer::set<int>> IntSet;
 
 extern "C" closure builtin_function_empty(OperationArgs& Args)
 {
@@ -331,5 +334,43 @@ extern "C" closure builtin_function_intersectionWith(OperationArgs& Args)
 
     }
     return m3;
+}
+
+extern "C" closure builtin_function_fromSet(OperationArgs& Args)
+{
+    const closure& C = Args.current_closure();
+
+    int f_reg = C.reg_for_slot(0);
+
+    auto& S = Args.evaluate(1).as_<IntSet>();
+
+    expression_ref apply_E;
+    {
+	expression_ref fE = index_var(1);
+	expression_ref argE = index_var(0);
+	apply_E = {fE, argE};
+    }
+
+    IntMap m;
+    for(auto& k: S)
+    {
+        int r1 = Args.allocate(expression_ref(k));
+        int r2 = Args.allocate({apply_E,{f_reg,r1}});
+        m.insert(k,r2);
+    }
+
+    return m;
+}
+
+extern "C" closure builtin_function_keysSet(OperationArgs& Args)
+{
+    auto& m = Args.evaluate(0).as_<IntMap>();
+
+    IntSet keys;
+
+    for(auto& [k,v]: m)
+        keys = keys.insert(k);
+
+    return keys;
 }
 

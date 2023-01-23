@@ -3,6 +3,8 @@ module Data.IntMap where
 import Prelude hiding (map,empty,lookup,(!))
 import Data.Functor
 import Foreign.Vector
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as IntSet
 
 data IntMap a
 
@@ -13,7 +15,7 @@ empty = _empty ()
 
 foreign import bpcall "IntMap:" singleton :: Key -> a -> IntMap a
 
--- fromSet :: (Key -> a) -> IntSet -> IntMap a
+foreign import bpcall "IntMap:" fromSet :: (Key -> a) -> IntSet -> IntMap a
 
 fromList []     = empty
 fromList ((k,v):kvs) = insert k v $ fromList kvs
@@ -31,7 +33,7 @@ foreign import bpcall "IntMap:" insertWith :: (a -> a -> a) -> Key -> a -> IntMa
 
 -- insertLookupWithKey :: (Key -> a -> a -> a) -> Key -> a -> IntMap a -> (Maybe a, IntMap a)
 
-foreign import bpcall "IntMap:delete" delete :: Int -> IntMap a -> IntMap a
+foreign import bpcall "IntMap:delete" delete :: Key -> IntMap a -> IntMap a
 
 -- adjust :: (a -> a) -> Key -> IntMap a -> IntMap a
 
@@ -116,12 +118,12 @@ instance Functor IntMap where
 -- Note!  These are supposed be to in ascending order of keys, but are not.
 elems m = [ m!k | k <- keys m]
 
-foreign import bpcall "IntMap:keys" _keys :: IntMap a -> EVector Key
-keys m = vector_to_list $ _keys m
+foreign import bpcall "IntMap:keys" keysVector :: IntMap a -> EVector Key
+keys m = vector_to_list $ keysVector m
 
 assocs m = [ (k,m!k) | k <- keys m]
 
--- keysSet :: IntMap a -> IntSet
+foreign import bpcall "IntMap:" keysSet :: IntMap a -> IntSet
 
 toList m = [ (k,m!k) | k <- keys m]
 
