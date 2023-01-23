@@ -84,21 +84,24 @@ foreign import bpcall "IntMap:" unionWith :: (a -> a -> a) -> IntMap a -> IntMap
 -- unions :: Foldable f => f (IntMap a) -> IntMap a
 -- unionsWith :: Foldable f => (a -> a -> a) -> f (IntMap a) -> IntMap a
 
--- difference :: IntMap a -> IntMap b -> IntMap a
+foreign import bpcall "IntMap:" difference :: IntMap a -> IntMap b -> IntMap a
 
--- (\\) = difference
+(\\) = difference
 
 -- differenceWith :: (a -> b -> Maybe a) -> IntMap a -> IntMap b -> IntMap a 
 
 -- differenceWithKey :: (Key -> a -> b -> Maybe a) -> IntMap a -> IntMap b -> IntMap a
 
--- intersection :: IntMap a -> IntMap b -> IntMap a
+foreign import bpcall "IntMap:" intersection :: IntMap a -> IntMap b -> IntMap a
 
--- intersectionWith :: (a -> b -> c) -> IntMap a -> IntMap b -> IntMap c
+foreign import bpcall "IntMap:" intersectionWith :: (a -> b -> c) -> IntMap a -> IntMap b -> IntMap c
 
 -- intersectionWithKey :: (Key -> a -> b -> c) -> IntMap a -> IntMap b -> IntMap c
 
--- disjoint :: IntMap a -> IntMap b -> Bool
+foreign import bpcall "IntMap:disjoint" _disjoint :: IntMap a -> IntMap a -> Int
+disjoint m1 m2 = case _disjoint m1 m2 of
+                   0 -> False
+                   _ -> True
 
 -- compose :: IntMap a -> IntMap Int -> IntMap a
 

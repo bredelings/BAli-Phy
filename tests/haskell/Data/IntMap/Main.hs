@@ -19,6 +19,11 @@ main = do
   putStrLn $ show m4
   putStrLn $ show m5
   putStrLn $ show $ unionWith (+) m6 m7
+  putStrLn $ show $ intersection m6 m7
+  putStrLn $ show $ intersection m7 m6
+  putStrLn $ show $ intersectionWith (+) m6 m7
+  putStrLn $ show $ m6 \\ m7
+  putStrLn $ show $ m7 \\ m6
 
 
 -- maybe make Foldable?
