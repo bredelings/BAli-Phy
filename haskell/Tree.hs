@@ -1,6 +1,8 @@
 module Tree where
 
 import Data.Foldable
+import Data.IntMap as IntMap (IntMap)
+import qualified Data.IntMap as IntMap
 
 class Tree t where
     edgesOutOfNode :: t -> Int -> Array Int Int
@@ -25,7 +27,7 @@ class Tree t => LabelledTree t where
     get_labels :: t -> [String]
 
 
-data TreeImp = Tree (Array Int (Array Int Int)) (Array Int (Int,Int,Int,Int)) Int
+data TreeImp = Tree (IntMap (Array Int Int)) (Array Int (Int,Int,Int,Int)) Int
 
 data RootedTreeImp t = RootedTree t Int (Array Int Bool)
 
@@ -40,7 +42,7 @@ data TimeTreeImp t  = TimeTree t (Array Int Double)
 data RateTimeTreeImp t = RateTimeTree t (Array Int Double)
 
 instance Tree TreeImp where
-    edgesOutOfNode (Tree nodesArray _ _) node = nodesArray ! node
+    edgesOutOfNode (Tree nodesMap _ _) node = nodesMap IntMap.! node
     nodesForEdge (Tree _ branchesArray _) edgeIndex   = branchesArray ! edgeIndex
     numNodes (Tree _ _ n)           = n
 
@@ -189,7 +191,7 @@ remove_element _ []     = []
 remove_element 0 (x:xs) = xs
 remove_element i (x:xs) = x:(remove_element (i-1) xs)
 
-tree_from_edges num_nodes edges = Tree nodesArray (listArray (2*num_branches) branches) num_nodes where
+tree_from_edges num_nodes edges = Tree nodesMap (listArray (2*num_branches) branches) num_nodes where
 
     num_branches   = num_nodes - 1
 
@@ -201,11 +203,11 @@ tree_from_edges num_nodes edges = Tree nodesArray (listArray (2*num_branches) br
 
     find_branch b = fmap snd $ find (\(b',_) -> b' == b) branch_edges
 
-    nodesArray = listArray num_nodes nodes where
+    nodesMap = IntMap.fromList $ zip [0..] nodes where
         nodes = [ listArray' [b | (b,(x,y)) <- branch_edges, x==n] | n <- [0..num_nodes-1]]
 
     branches = [ let Just (s,t) = find_branch b
-                     Just i     = elemIndexArray b (nodesArray!s)
+                     Just i     = elemIndexArray b (nodesMap IntMap.! s)
                  in (s,i,t,reverse b) | b <- [0..2*num_branches-1] ]
 
 
