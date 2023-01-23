@@ -241,7 +241,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     for(auto& tv: free_type_variables(desugar(inst_decl.context.constraints)))
     {
         if (not type_vars.count(tv))
-            throw note_exception()<<"  Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in the instance declaration";
+            record_error( Note() << "  Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in the instance declaration" );
     }
 
 
