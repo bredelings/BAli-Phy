@@ -1,4 +1,5 @@
 import Data.IntMap as I
+import qualified Data.IntSet as IS
 
 main = do
   let xs = [(i,i) | i <- [0..10]]
@@ -16,6 +17,9 @@ main = do
       m6 = I.fromList [(1,1),(2,4),(3,9)] :: IntMap Int
       m7 = I.fromList [(3,1), (4,16),(5,25)] :: IntMap Int
 
+      s1 = IS.fromList [1,2,3,4]
+      m8 = fromSet (\x -> x*x) s1
+
   putStrLn $ show m4
   putStrLn $ show m5
   putStrLn $ show $ unionWith (+) m6 m7
@@ -24,6 +28,9 @@ main = do
   putStrLn $ show $ intersectionWith (+) m6 m7
   putStrLn $ show $ m6 \\ m7
   putStrLn $ show $ m7 \\ m6
+  putStrLn "Set operations"
+  putStrLn $ show $ m8
+  putStrLn $ show $ keysSet m8
 
 
 -- maybe make Foldable?
