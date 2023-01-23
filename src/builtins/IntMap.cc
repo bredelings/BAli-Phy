@@ -15,6 +15,19 @@ extern "C" closure builtin_function_empty(OperationArgs& Args)
     return {m};
 }
 
+extern "C" closure builtin_function_singleton(OperationArgs& Args)
+{
+    int key = Args.evaluate(0).as_int();
+
+    int v_reg = Args.current_closure().reg_for_slot(1);
+
+    IntMap m;
+
+    m.insert(key,v_reg);
+
+    return {m};
+}
+
 extern "C" closure builtin_function_size(OperationArgs& Args)
 {
     auto& m = Args.evaluate(0).as_<IntMap>();
@@ -93,6 +106,31 @@ extern "C" closure builtin_function_insert(OperationArgs& Args)
     auto m = Args.evaluate(2).as_<IntMap>();
 
     m.insert(key,v_reg);
+
+    return m;
+}
+
+extern "C" closure builtin_function_insertWith(OperationArgs& Args)
+{
+    auto& C = Args.current_closure();
+
+    int f_reg = C.reg_for_slot(0);
+    int key   = Args.evaluate(1).as_int();
+    int v2_reg = C.reg_for_slot(2);
+
+    auto m = Args.evaluate(3).as_<IntMap>();
+
+    if (m.has_key(key))
+    {
+        int v1_reg = m[key];
+        expression_ref E =  {index_var(2), index_var(1), index_var(0)};
+
+        m.erase(key);
+        int v3_reg = Args.allocate({E,{f_reg,v1_reg,v2_reg}});
+        m.insert(key,v3_reg);
+    }
+    else 
+        m.insert(key, v2_reg);
 
     return m;
 }
