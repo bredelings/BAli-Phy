@@ -85,7 +85,7 @@ extern "C" closure builtin_function_map(OperationArgs& Args)
     return m2;
 }
 
-extern "C" closure builtin_function_erase(OperationArgs& Args)
+extern "C" closure builtin_function_delete(OperationArgs& Args)
 {
     int key = Args.evaluate(0).as_int();
 
@@ -124,8 +124,6 @@ extern "C" closure builtin_function_insertWith(OperationArgs& Args)
     {
         int v1_reg = m[key];
         expression_ref E =  {index_var(2), index_var(1), index_var(0)};
-
-        m.erase(key);
         int v3_reg = Args.allocate({E,{f_reg,v1_reg,v2_reg}});
         m.insert(key,v3_reg);
     }
@@ -147,3 +145,76 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
     return V;
 }
 
+extern "C" closure builtin_function_union(OperationArgs& Args)
+{
+    auto m1 = Args.evaluate(0).as_<IntMap>();
+    auto m2 = Args.evaluate(1).as_<IntMap>();
+
+    // Loop over the smaller map
+    if (m2.size() < m1.size())
+    {
+        // Prefer the left value on collisions
+        auto m3 = m1;
+        for(auto& [k,v]: m2)
+        {
+            if (not m3.has_key(k))
+                m3.insert(k,v);
+        }
+        return m3;
+    }
+    else
+    {
+        // Prefer the left value on collisions
+        auto m3 = m2;
+        for(auto& [k,v]: m1)
+            m3.insert(k,v);
+        return m3;
+    }
+}
+
+extern "C" closure builtin_function_unionWith(OperationArgs& Args)
+{
+    auto& C = Args.current_closure();
+
+    int f_reg = C.reg_for_slot(0);
+    auto m1 = Args.evaluate(1).as_<IntMap>();
+    auto m2 = Args.evaluate(2).as_<IntMap>();
+
+    // optimize: loop over whichever of m1 or m2 is smaller
+    if (m2.size() < m1.size())
+    {
+        auto m3 = m1;
+        for(auto& [key, v2_reg]: m2)
+        {
+            if (m3.has_key(key))
+            {
+                int v1_reg = m3[key];
+                expression_ref E =  {index_var(2), index_var(1), index_var(0)};
+                int v3_reg = Args.allocate({E, {f_reg, v1_reg, v2_reg}});
+                m3.insert(key, v3_reg);
+            }
+            else
+                m3.insert(key, v2_reg);
+        }
+
+        return m3;
+    }
+    else
+    {
+        auto m3 = m2;
+        for(auto& [key, v1_reg]: m1)
+        {
+            if (m3.has_key(key))
+            {
+                int v2_reg = m3[key];
+                expression_ref E =  {index_var(2), index_var(1), index_var(0)};
+                int v3_reg = Args.allocate({E, {f_reg, v1_reg, v2_reg}});
+                m3.insert(key, v3_reg);
+            }
+            else
+                m3.insert(key, v1_reg);
+        }
+
+        return m3;
+    }
+}

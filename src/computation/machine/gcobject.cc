@@ -25,8 +25,7 @@ void IntMap::erase(int k)
 
 void IntMap::insert(int k, int v)
 {
-    regs = regs.erase(k);
-    regs = regs.insert({k,v});
+    regs = regs.set(k,v);
 }
 
 void IntMap::get_regs(std::vector<int>& owned_regs) const
