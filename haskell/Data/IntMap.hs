@@ -18,7 +18,8 @@ foreign import bpcall "IntMap:" singleton :: Key -> a -> IntMap a
 fromList []     = empty
 fromList ((k,v):kvs) = insert k v $ fromList kvs
 
--- fromListWith :: (a -> a -> a) -> [(Key,a)] -> IntMap a
+fromListWith f [] = empty
+fromListWith f ((k,v):kvs) = insertWith f k v $ fromListWith f kvs
 
 -- FromListWithKey :: (Key -> a -> a -> a) -> [(Key,a)] -> IntMap a
 
@@ -48,13 +49,14 @@ foreign import bpcall "IntMap:delete" delete :: Int -> IntMap a -> IntMap a
 
 lookup :: Int -> IntMap a -> Maybe a
 lookup key m | member key m  = Just (m!key)
-             | otherwise      = Nothing
+             | otherwise     = Nothing
 
 infixl 9 !?
 m !? k = lookup k m
 
 foreign import bpcall "IntMap:subscript" (!) :: IntMap a -> Int -> a
 
+-- We could make a builtin for this
 findWithDefault def key m = case lookup key m of
                               Just x  -> x
                               Nothing -> def
