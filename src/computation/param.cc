@@ -8,6 +8,7 @@
 #include "computation/machine/graph_register.H"
 
 #include "util/log-level.H"
+#include "computation/machine/gcobject.H"
 
 using std::optional;
 using std::vector;
@@ -163,7 +164,16 @@ vector<param> get_params_from_array(context_ref& C, const expression_ref& array,
 context_ptr context_ptr::operator[](int i) const
 {
     int r = C.memory()->follow_index_var(reg);
-    r = C.memory()->closure_at(r).reg_for_slot(i);
+    auto& c = C.memory()->closure_at(r);
+    if (auto& e = c.exp; e.size() == 0 and is_gcable_type(e.type()))
+    {
+        if (auto im = e.to<IntMap>())
+            r = (*im)[i];
+        else
+            std::abort();
+    }
+    else
+        r = c.reg_for_slot(i);
     return {C, r};
 }
 
