@@ -81,7 +81,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 
     for(int n=0; n < n_nodes; n++)
     {
-        auto neighbor_branches = edges_out_of_node[n];
+        auto neighbor_branches = edges_out_of_node[n][1];
 
         vector<param> m_edges;
         for(int i=0;i<neighbor_branches.size();i++)

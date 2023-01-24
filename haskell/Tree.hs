@@ -27,8 +27,9 @@ class Tree t => LabelledTree t where
     get_label :: t -> Int -> String
     get_labels :: t -> [String]
 
+data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
 
-data TreeImp = Tree (IntMap (Array Int Int)) (Array Int (Int,Int,Int,Int)) Int
+data TreeImp = Tree (IntMap Node) (Array Int (Int,Int,Int,Int)) Int
 
 data RootedTreeImp t = RootedTree t Int (Array Int Bool)
 
@@ -43,9 +44,9 @@ data TimeTreeImp t  = TimeTree t (Array Int Double)
 data RateTimeTreeImp t = RateTimeTree t (Array Int Double)
 
 instance Tree TreeImp where
-    edgesOutOfNode (Tree nodesMap _ _) node = nodesMap IntMap.! node
+    edgesOutOfNode (Tree nodesMap _ _) node           = node_out_edges $ nodesMap IntMap.! node
     nodesForEdge (Tree _ branchesArray _) edgeIndex   = branchesArray ! edgeIndex
-    numNodes (Tree _ _ n)           = n
+    numNodes (Tree _ _ n)                             = n
 
 instance Tree t => Tree (RootedTreeImp t) where
     edgesOutOfNode (RootedTree t _ _) node      = edgesOutOfNode t node
@@ -205,10 +206,10 @@ tree_from_edges num_nodes edges = Tree nodesMap (listArray (2*num_branches) bran
     find_branch b = fmap snd $ find (\(b',_) -> b' == b) branch_edges
 
     nodesSet = IntSet.fromList [0..num_nodes-1]
-    nodesMap = IntMap.fromSet (\n ->  listArray' [b | (b,(x,y)) <- branch_edges, x==n] ) nodesSet
+    nodesMap = IntMap.fromSet (\n ->  Node n (listArray' [b | (b,(x,y)) <- branch_edges, x==n]) ) nodesSet
 
     branches = [ let Just (s,t) = find_branch b
-                     Just i     = elemIndexArray b (nodesMap IntMap.! s)
+                     Just i     = elemIndexArray b (node_out_edges (nodesMap IntMap.! s))
                  in (s,i,t,reverse b) | b <- [0..2*num_branches-1] ]
 
 tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
