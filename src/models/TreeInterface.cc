@@ -9,6 +9,7 @@
 #include "computation/expression/list.H"
 #include "computation/expression/constructor.H"
 #include "computation/machine/graph_register.H"
+#include "computation/machine/gcobject.H"
 
 using std::vector;
 using std::string;
@@ -72,11 +73,11 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     }
 
     assert(has_constructor(tree.head(),"Tree.Tree"));
-    assert(tree.size() == 3);
+    assert(tree.size() == 2);
 
     auto edges_out_of_node = tree[0];
     auto nodes_for_edge    = tree[1];
-    int n_nodes            = tree[2].head().as_int();
+    int n_nodes            = tree[0].value().as_<IntMap>().size();
     int n_branches         = n_nodes - 1;
 
     for(int n=0; n < n_nodes; n++)

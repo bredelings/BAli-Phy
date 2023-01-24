@@ -9,7 +9,9 @@ import qualified Data.IntSet as IntSet
 class Tree t where
     findNode :: t -> Int -> Node
     findEdge :: t -> Int -> Edge
-    numNodes :: t -> Int
+    getNodes :: t -> IntSet
+
+numNodes t = t & getNodes & IntSet.size
 
 edgesOutOfNode t node_index = findNode t node_index & node_out_edges
 
@@ -34,7 +36,7 @@ data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
 
 data Edge = Edge { e_source_node, e_source_index, e_target_node, e_reverse, edge_name :: Int }
 
-data TreeImp = Tree (IntMap Node) (Array Int Edge) Int
+data TreeImp = Tree (IntMap Node) (Array Int Edge)
 
 data RootedTreeImp t = RootedTree t Int (Array Int Bool)
 
@@ -49,34 +51,34 @@ data TimeTreeImp t  = TimeTree t (IntMap Double)
 data RateTimeTreeImp t = RateTimeTree t (Array Int Double)
 
 instance Tree TreeImp where
-    findNode (Tree nodesMap _ _) node           = nodesMap IntMap.! node
-    findEdge (Tree _ branchesArray _) edgeIndex = branchesArray ! edgeIndex
-    numNodes (Tree _ _ n)                       = n
+    getNodes (Tree nodesMap _)                = IntMap.keysSet nodesMap
+    findNode (Tree nodesMap _) node           = nodesMap IntMap.! node
+    findEdge (Tree _ branchesArray) edgeIndex = branchesArray ! edgeIndex
 
 instance Tree t => Tree (RootedTreeImp t) where
+    getNodes (RootedTree t _ _)                 = getNodes t
     findNode (RootedTree t _ _) node            = findNode t node
     findEdge (RootedTree t _ _) edgeIndex       = findEdge t edgeIndex
-    numNodes (RootedTree t _ _)     = numNodes t
 
 instance Tree t => Tree (LabelledTreeImp t) where
+    getNodes (LabelledTree t _)                 = getNodes t
     findNode (LabelledTree t _) node            = findNode t node
     findEdge (LabelledTree t _) edgeIndex       = findEdge t edgeIndex
-    numNodes (LabelledTree t _)     = numNodes t
 
 instance Tree t => Tree (BranchLengthTreeImp t) where
+    getNodes (BranchLengthTree t _)             = getNodes t
     findNode (BranchLengthTree t _) node        = findNode t node
     findEdge (BranchLengthTree t _) edgeIndex   = findEdge t edgeIndex
-    numNodes (BranchLengthTree t _) = numNodes t
 
 instance Tree t => Tree (TimeTreeImp t) where
+    getNodes (TimeTree t _)                     = getNodes t
     findNode (TimeTree t _) node                = findNode t node
     findEdge (TimeTree t _) edgeIndex           = findEdge t edgeIndex
-    numNodes (TimeTree t _)         = numNodes t
 
 instance Tree t => Tree (RateTimeTreeImp t) where
+    getNodes (RateTimeTree t _)                 = getNodes t
     findNode (RateTimeTree t _) node            = findNode t node
     findEdge (RateTimeTree t _) edgeIndex       = findEdge t edgeIndex
-    numNodes (RateTimeTree t _)     = numNodes t
 
 instance RootedTree t => TimeTree (TimeTreeImp t) where
     node_time (TimeTree t hs) node = hs IntMap.! node
@@ -200,7 +202,7 @@ remove_element _ []     = []
 remove_element 0 (x:xs) = xs
 remove_element i (x:xs) = x:(remove_element (i-1) xs)
 
-tree_from_edges num_nodes edges = Tree nodesMap (listArray (2*num_branches) branches) num_nodes where
+tree_from_edges num_nodes edges = Tree nodesMap (listArray (2*num_branches) branches) where
 
     num_branches   = num_nodes - 1
 

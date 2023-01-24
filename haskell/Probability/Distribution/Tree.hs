@@ -36,14 +36,15 @@ uniform_topology_edges (l : ls) (i : is) = do
     return $ [(l, i), (x, i), (i, y)] ++ es2
 
 -- We could rewrite uniform_topology_edges to automatically flip and sort the branches with leaf branches first.
-sample_uniform_topology 1 = return $ Tree (IntMap.singleton 0 (Node 0 (listArray' []))) (listArray' []) 1
+sample_uniform_topology 1 = return $ Tree (IntMap.singleton 0 (Node 0 (listArray' []))) (listArray' [])
 sample_uniform_topology n = do
     let num_nodes = 2 * n - 2
     edges <- uniform_topology_edges [0 .. n - 1] [n .. num_nodes - 1]
     return $ tree_from_edges num_nodes edges
 
 
-force_tree tree@(Tree nodes branches n_nodes) = force_nodes `seq` force_branches where
+force_tree tree@(Tree nodes branches) = force_nodes `seq` force_branches where
+    n_nodes    = numNodes tree
     n_branches = numBranches tree
     force_nodes    = force_struct $ listArray' [ force_struct $ edgesOutOfNode tree node | node <- xrange 0 n_nodes ]
     force_branches = force_struct $ listArray' [ force_struct $ findEdge tree b | b <- xrange 0 (n_branches * 2)]
@@ -54,7 +55,7 @@ force_tree tree@(Tree nodes branches n_nodes) = force_nodes `seq` force_branches
 -- 3        4      3
 -- 4        6      5
 modifiable_cayley_tree :: (forall a.a->a) -> TreeImp -> TreeImp
-modifiable_cayley_tree modf tree = Tree (IntMap.fromList $ zip [0..] nodes) (listArray' branches) n_nodes where
+modifiable_cayley_tree modf tree = Tree (IntMap.fromList $ zip [0..] nodes) (listArray' branches) where
     n_nodes = numNodes tree
     n_leaves | n_nodes == 1  = 1
              | otherwise     = (n_nodes+2) `div` 2
@@ -176,7 +177,7 @@ force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq`
 -- 3        5      4
 -- 4        7      6
 modifiable_rooted_tree :: (forall a.a -> a) -> RootedTreeImp TreeImp -> RootedTreeImp TreeImp
-modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $ Tree (IntMap.fromList $ zip [0..] nodes) (listArray' branches) n_nodes where
+modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $ Tree (IntMap.fromList $ zip [0..] nodes) (listArray' branches) where
     n_nodes = numNodes tree
     n_leaves = (n_nodes + 1) `div` 2
     n_branches = n_nodes - 1
