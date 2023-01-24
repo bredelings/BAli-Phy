@@ -205,7 +205,7 @@ tree_from_edges num_nodes edges = Tree nodesMap (listArray (2*num_branches) bran
     find_branch b = fmap snd $ find (\(b',_) -> b' == b) branch_edges
 
     nodesSet = IntSet.fromList [0..num_nodes-1]
-    nodesMap = IntMap.fromSet nodesSet (\n ->  listArray' [b | (b,(x,y)) <- branch_edges, x==n] )
+    nodesMap = IntMap.fromSet (\n ->  listArray' [b | (b,(x,y)) <- branch_edges, x==n] ) nodesSet
 
     branches = [ let Just (s,t) = find_branch b
                      Just i     = elemIndexArray b (nodesMap IntMap.! s)
