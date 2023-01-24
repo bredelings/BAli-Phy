@@ -32,7 +32,7 @@ class Tree t => LabelledTree t where
 
 data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
 
-data Edge = Edge { e_source_node, e_source_index, e_target_node, e_reverse :: Int }
+data Edge = Edge { e_source_node, e_source_index, e_target_node, e_reverse, edge_name :: Int }
 
 data TreeImp = Tree (IntMap Node) (Array Int Edge) Int
 
@@ -217,7 +217,7 @@ tree_from_edges num_nodes edges = Tree nodesMap (listArray (2*num_branches) bran
 
     branches = [ let Just (s,t) = find_branch b
                      Just i     = elemIndexArray b (node_out_edges (nodesMap IntMap.! s))
-                 in Edge s i t (reverse b) | b <- [0..2*num_branches-1] ]
+                 in Edge s i t (reverse b) b | b <- [0..2*num_branches-1] ]
 
 tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
 
