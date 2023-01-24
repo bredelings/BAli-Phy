@@ -7,6 +7,7 @@ import           Probability.Distribution.List
 import           Probability.Distribution.Exponential
 import           MCMC
 import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
 
 xrange start end | start < end = start : xrange (start + 1) end
                  | otherwise   = []
@@ -151,7 +152,8 @@ sample_uniform_time_tree age n = do
   topology <- sample_uniform_ordered_tree n
   times <- sort <$> iid (n-2) (uniform 0.0 age)
   let all_times = replicate n 0.0 ++ times ++ [age]
-  return $ time_tree topology all_times
+      all_node_times = IntMap.fromList $ zip [0..] all_times
+  return $ time_tree topology all_node_times
 
 possible = 1 :: LogDouble
 impossible = 0 :: LogDouble
@@ -209,7 +211,7 @@ modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree 
     maybe_modf :: Int -> a -> a
     maybe_modf node x | node < numLeaves rooted_tree'   = x
                       | otherwise                       = modf x
-    times     = mkArray (length times') (\node -> maybe_modf node (times'!node))
+    times     = IntSet.fromList [0..numNodes rooted_tree'-1] & IntMap.fromSet (\node -> maybe_modf node (times' IntMap.! node))
 
 triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree force_time_tree
 
@@ -268,7 +270,8 @@ sample_coalescent_tree theta n_leaves = do
   dts <- sequence [ exponential (1 / (rate* n_choose_2) )| n <- reverse [2..n_leaves],
                                                              let n_choose_2 = fromIntegral $ n*(n-1) `div` 2]
   let times = (replicate n_leaves 0) ++ (scanl1 (+) dts)
-  return (time_tree topology times)
+      node_times = IntMap.fromList $ zip [0..] times
+  return (time_tree topology node_times)
 
 
 class HasTreeDistributions d where

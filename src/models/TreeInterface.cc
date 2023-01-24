@@ -45,7 +45,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     if (has_constructor(tree.head(), "Tree.TimeTree"))
     {
         // We assume that the path to the array isn't changeable... ???
-        node_times_array_reg = tree[1].result().get_reg();
+        node_times_reg = tree[1].result().get_reg();
 
         tree = tree[0];
     }
@@ -122,9 +122,9 @@ std::optional<int> TreeInterface::root_reg() const
     return get_tree_constants().root_reg;
 }
 
-std::optional<int> TreeInterface::node_times_array_reg() const
+std::optional<int> TreeInterface::node_times_reg() const
 {
-    return get_tree_constants().node_times_array_reg;
+    return get_tree_constants().node_times_reg;
 }
 
 std::optional<int> TreeInterface::away_from_root_array_reg() const
@@ -590,7 +590,7 @@ void TreeInterface::set_branch_length(int b, double l)
 
 bool TreeInterface::has_node_times() const
 {
-    if (node_times_array_reg())
+    if (node_times_reg())
         return true;
     else
         return false;
@@ -598,40 +598,37 @@ bool TreeInterface::has_node_times() const
 
 double TreeInterface::node_time(int n) const
 {
-    int array_reg = *node_times_array_reg();
+    int times_reg = *node_times_reg();
 
-    auto& C = get_const_context();
+    auto times = context_ptr{get_const_context(), times_reg};
 
-    auto& M = C.get_memory();
-    int r = M[array_reg].reg_for_slot(n);
-
-    return C.evaluate_reg(r).as_double();
+    return times[n].value().as_double();
 }
 
 bool TreeInterface::can_set_node_time(int n) const
 {
-    int array_reg = *node_times_array_reg();
+    int times_reg = *node_times_reg();
 
-    auto& C = get_const_context();
+    auto times = context_ptr{get_const_context(), times_reg};
 
-    auto& M = C.get_memory();
-    int r = M[array_reg].reg_for_slot(n);
+    auto time = times[n];
 
-    auto m = C.find_modifiable_reg(r);
-    return bool(m);
+    return (bool)time.move_to_modifiable();
 }
 
 void TreeInterface::set_node_time(int n, double t)
 {
-    int array_reg = *node_times_array_reg();
-
     auto& C = get_context();
 
-    auto& M = C.get_memory();
-    int r = M[array_reg].reg_for_slot(n);
+    int times_reg = *node_times_reg();
 
-    auto m = C.find_modifiable_reg(r);
-    C.set_modifiable_value(*m, t);
+    auto times = context_ptr{C, times_reg};
+
+    auto time = times[n];
+
+    assert(time.move_to_modifiable());
+
+    C.set_modifiable_value(time.get_reg(), t);
 }
 
 const tree_constants& ParametersTreeInterface::get_tree_constants() const

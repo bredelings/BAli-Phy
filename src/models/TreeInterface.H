@@ -34,7 +34,7 @@ struct tree_constants: public Object
     std::optional<int> branch_durations_array_reg;
 
     // Node times
-    std::optional<int> node_times_array_reg;
+    std::optional<int> node_times_reg;
 
     tree_constants* clone() const {return new tree_constants(*this);}
 
@@ -52,7 +52,7 @@ class TreeInterface
 
     std::optional<int> root_reg() const;
 
-    std::optional<int> node_times_array_reg() const;
+    std::optional<int> node_times_reg() const;
 
     std::optional<int> away_from_root_array_reg() const;
 

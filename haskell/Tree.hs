@@ -1,8 +1,9 @@
 module Tree where
 
 import Data.Foldable
-import Data.IntMap as IntMap (IntMap)
+import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
+import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
 
 class Tree t where
@@ -42,7 +43,7 @@ data BranchLengthTreeImp t = BranchLengthTree t (Array Int Double)
 data LabelledTreeImp t = LabelledTree t [String]
 
 -- The array stores the node times
-data TimeTreeImp t  = TimeTree t (Array Int Double)
+data TimeTreeImp t  = TimeTree t (IntMap Double)
 
 -- The array stores the branch rates
 data RateTimeTreeImp t = RateTimeTree t (Array Int Double)
@@ -78,7 +79,7 @@ instance Tree t => Tree (RateTimeTreeImp t) where
     numNodes (RateTimeTree t _)     = numNodes t
 
 instance RootedTree t => TimeTree (TimeTreeImp t) where
-    node_time (TimeTree t hs) node = hs!node
+    node_time (TimeTree t hs) node = hs IntMap.! node
 
 instance TimeTree t => TimeTree (LabelledTreeImp t) where
     node_time (LabelledTree tt _) node = node_time tt node
@@ -95,7 +96,7 @@ branch_length_tree topology lengths = BranchLengthTree topology (listArray' leng
 
 branch_lengths (BranchLengthTree _ ds) = ds
 
-time_tree topology times = TimeTree topology (listArray n times) where n = numNodes topology
+time_tree topology times = TimeTree topology times
 
 rate_time_tree time_tree rates = RateTimeTree time_tree (listArray nb rates) where nb = numBranches time_tree
 

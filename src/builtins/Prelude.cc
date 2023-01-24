@@ -6,6 +6,7 @@
 #include "computation/operations.H"
 #include "util/string/convert.H"
 #include "computation/machine/graph_register.H"
+#include "computation/machine/gcobject.H"
 #include "computation/haskell/Integer.H"
 
 using boost::dynamic_pointer_cast;
@@ -591,6 +592,17 @@ extern "C" closure builtin_function_struct_seq(OperationArgs& Args)
     if (M.reg_is_to_changeable(r0))
 	throw myexception()<<"struct_seq: structure must be constant at reg "<<r0<<"!";
 
+    // 1. Force regs for gcable objects
+    if (is_gcable_type(c.exp.type()))
+    {
+        std::vector<int> regs;
+        auto* gcobj = c.exp.head().to<IntMap>();
+        gcobj->get_regs(regs);
+        for(int reg:regs)
+            Args.evaluate_reg_force(reg);
+    }
+
+    // 2. Force regs for other objects
     for(int i=0;i<c.exp.size();i++)
         Args.evaluate_reg_force(c.reg_for_slot(i));
 
