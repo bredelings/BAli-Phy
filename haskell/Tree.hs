@@ -3,6 +3,7 @@ module Tree where
 import Data.Foldable
 import Data.IntMap as IntMap (IntMap)
 import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
 
 class Tree t where
     edgesOutOfNode :: t -> Int -> Array Int Int
@@ -203,13 +204,12 @@ tree_from_edges num_nodes edges = Tree nodesMap (listArray (2*num_branches) bran
 
     find_branch b = fmap snd $ find (\(b',_) -> b' == b) branch_edges
 
-    nodesMap = IntMap.fromList $ zip [0..] nodes where
-        nodes = [ listArray' [b | (b,(x,y)) <- branch_edges, x==n] | n <- [0..num_nodes-1]]
+    nodesSet = IntSet.fromList [0..num_nodes-1]
+    nodesMap = IntMap.fromSet nodesSet (\n ->  listArray' [b | (b,(x,y)) <- branch_edges, x==n] )
 
     branches = [ let Just (s,t) = find_branch b
                      Just i     = elemIndexArray b (nodesMap IntMap.! s)
                  in (s,i,t,reverse b) | b <- [0..2*num_branches-1] ]
-
 
 tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
 
