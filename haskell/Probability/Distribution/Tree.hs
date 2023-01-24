@@ -45,7 +45,7 @@ sample_uniform_topology n = do
 force_tree tree@(Tree nodes branches n_nodes) = force_nodes `seq` force_branches where
     n_branches = numBranches tree
     force_nodes    = force_struct $ listArray' [ force_struct $ edgesOutOfNode tree node | node <- xrange 0 n_nodes ]
-    force_branches = force_struct $ listArray' [ force_struct $ nodesForEdge tree b | b <- xrange 0 (n_branches * 2)]
+    force_branches = force_struct $ listArray' [ force_struct $ findEdge tree b | b <- xrange 0 (n_branches * 2)]
 
 -- leaves   nodes  branches
 -- 1        1      0
@@ -63,7 +63,7 @@ modifiable_cayley_tree modf tree = Tree (IntMap.fromList $ zip [0..] nodes) (lis
                 | otherwise       = 3
     nodes    = [ Node node (mapnA (degree node) modf (edgesOutOfNode tree node)) | node <- xrange 0 n_nodes ]
     branches = [ Edge (modf s) (modf i) (modf t) ((b + n_branches) `mod` (2*n_branches)) | b <- xrange 0 (n_branches * 2),
-                                                                                                let Edge s i t _ = nodesForEdge tree b ]
+                                                                                                let Edge s i t _ = findEdge tree b ]
 
 -- our current modifiable tree structure requires the node to have a constrant degree.
 
@@ -190,7 +190,7 @@ modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $
     nodes    = [ Node node (mapnA (degree node) modf (edgesOutOfNode tree node)) | node <- xrange 0 n_nodes ]
 
     branches = [ Edge (modf s) (modf i) (modf t) (reverse b) | b <- xrange 0 (n_branches * 2),
-                                                               let Edge s i t _ = nodesForEdge tree b ]
+                                                               let Edge s i t _ = findEdge tree b ]
 
 -- our current modifiable tree structure requires the node to have a constrant degree.
 

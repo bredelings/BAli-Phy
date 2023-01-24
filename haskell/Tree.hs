@@ -6,9 +6,11 @@ import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 
 class Tree t where
-    edgesOutOfNode :: t -> Int -> Array Int Int
-    nodesForEdge :: t -> Int -> Edge
+    findNode :: t -> Int -> Node
+    findEdge :: t -> Int -> Edge
     numNodes :: t -> Int
+
+edgesOutOfNode t node_index = findNode t node_index & node_out_edges
 
 class Tree t => BranchLengthTree t where
     branch_length :: t -> Int -> Double
@@ -46,33 +48,33 @@ data TimeTreeImp t  = TimeTree t (Array Int Double)
 data RateTimeTreeImp t = RateTimeTree t (Array Int Double)
 
 instance Tree TreeImp where
-    edgesOutOfNode (Tree nodesMap _ _) node           = node_out_edges $ nodesMap IntMap.! node
-    nodesForEdge (Tree _ branchesArray _) edgeIndex   = branchesArray ! edgeIndex
-    numNodes (Tree _ _ n)                             = n
+    findNode (Tree nodesMap _ _) node           = nodesMap IntMap.! node
+    findEdge (Tree _ branchesArray _) edgeIndex = branchesArray ! edgeIndex
+    numNodes (Tree _ _ n)                       = n
 
 instance Tree t => Tree (RootedTreeImp t) where
-    edgesOutOfNode (RootedTree t _ _) node      = edgesOutOfNode t node
-    nodesForEdge (RootedTree t _ _) edgeIndex         = nodesForEdge t edgeIndex
+    findNode (RootedTree t _ _) node            = findNode t node
+    findEdge (RootedTree t _ _) edgeIndex       = findEdge t edgeIndex
     numNodes (RootedTree t _ _)     = numNodes t
 
 instance Tree t => Tree (LabelledTreeImp t) where
-    edgesOutOfNode (LabelledTree t _) node      = edgesOutOfNode t node
-    nodesForEdge (LabelledTree t _) edgeIndex         = nodesForEdge t edgeIndex
+    findNode (LabelledTree t _) node            = findNode t node
+    findEdge (LabelledTree t _) edgeIndex       = findEdge t edgeIndex
     numNodes (LabelledTree t _)     = numNodes t
 
 instance Tree t => Tree (BranchLengthTreeImp t) where
-    edgesOutOfNode (BranchLengthTree t _) node  = edgesOutOfNode t node
-    nodesForEdge (BranchLengthTree t _) edgeIndex     = nodesForEdge t edgeIndex
+    findNode (BranchLengthTree t _) node        = findNode t node
+    findEdge (BranchLengthTree t _) edgeIndex   = findEdge t edgeIndex
     numNodes (BranchLengthTree t _) = numNodes t
 
 instance Tree t => Tree (TimeTreeImp t) where
-    edgesOutOfNode (TimeTree t _) node          = edgesOutOfNode t node
-    nodesForEdge (TimeTree t _) edgeIndex             = nodesForEdge t edgeIndex
+    findNode (TimeTree t _) node                = findNode t node
+    findEdge (TimeTree t _) edgeIndex           = findEdge t edgeIndex
     numNodes (TimeTree t _)         = numNodes t
 
 instance Tree t => Tree (RateTimeTreeImp t) where
-    edgesOutOfNode (RateTimeTree t _) node      = edgesOutOfNode t node
-    nodesForEdge (RateTimeTree t _) edgeIndex         = nodesForEdge t edgeIndex
+    findNode (RateTimeTree t _) node            = findNode t node
+    findEdge (RateTimeTree t _) edgeIndex       = findEdge t edgeIndex
     numNodes (RateTimeTree t _)     = numNodes t
 
 instance RootedTree t => TimeTree (TimeTreeImp t) where
@@ -169,16 +171,16 @@ parentBranch rooted_tree n = find (toward_root rooted_tree) (edgesOutOfNode root
 parentNode rooted_tree n = case parentBranch rooted_tree n of Just b  -> Just $ targetNode rooted_tree b
                                                               Nothing -> Nothing
 
--- For numNodes, numBranches, edgesOutOfNode, and nodesForEdge I'm currently using fake polymorphism
+-- For numNodes, numBranches, edgesOutOfNode, and findEdge I'm currently using fake polymorphism
 edgesTowardNode t node = fmap (reverseEdge t) $ edgesOutOfNode t node
-sourceNode  tree b = e_source_node  $ nodesForEdge tree b
-sourceIndex tree b = e_source_index $ nodesForEdge tree b
-targetNode  tree b = e_target_node  $ nodesForEdge tree b
-reverseEdge tree b = e_reverse      $ nodesForEdge tree b
+sourceNode  tree b = e_source_node  $ findEdge tree b
+sourceIndex tree b = e_source_index $ findEdge tree b
+targetNode  tree b = e_target_node  $ findEdge tree b
+reverseEdge tree b = e_reverse      $ findEdge tree b
 edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNode t n1)
 nodeDegree t n = length (edgesOutOfNode t n)
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
-edgesBeforeEdge t b = let e = nodesForEdge t b
+edgesBeforeEdge t b = let e = findEdge t b
                           source = e_source_node $ e
                           index = e_source_index $ e
                       in fmap (reverseEdge t) $ removeElement index $ edgesOutOfNode t source
