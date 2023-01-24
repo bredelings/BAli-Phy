@@ -7,7 +7,7 @@ import qualified Data.IntSet as IntSet
 
 class Tree t where
     edgesOutOfNode :: t -> Int -> Array Int Int
-    nodesForEdge :: t -> Int -> (Int, Int, Int, Int)
+    nodesForEdge :: t -> Int -> Edge
     numNodes :: t -> Int
 
 class Tree t => BranchLengthTree t where
@@ -29,7 +29,9 @@ class Tree t => LabelledTree t where
 
 data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
 
-data TreeImp = Tree (IntMap Node) (Array Int (Int,Int,Int,Int)) Int
+data Edge = Edge { e_source_node, e_source_index, e_target_node, e_reverse :: Int }
+
+data TreeImp = Tree (IntMap Node) (Array Int Edge) Int
 
 data RootedTreeImp t = RootedTree t Int (Array Int Bool)
 
@@ -169,14 +171,16 @@ parentNode rooted_tree n = case parentBranch rooted_tree n of Just b  -> Just $ 
 
 -- For numNodes, numBranches, edgesOutOfNode, and nodesForEdge I'm currently using fake polymorphism
 edgesTowardNode t node = fmap (reverseEdge t) $ edgesOutOfNode t node
-sourceNode  tree b = let (s,_,_,_) = nodesForEdge tree b in s
-sourceIndex tree b = let (_,i,_,_) = nodesForEdge tree b in i
-targetNode  tree b = let (_,_,t,_) = nodesForEdge tree b in t
-reverseEdge tree b = let (_,_,_,r) = nodesForEdge tree b in r
+sourceNode  tree b = e_source_node  $ nodesForEdge tree b
+sourceIndex tree b = e_source_index $ nodesForEdge tree b
+targetNode  tree b = e_target_node  $ nodesForEdge tree b
+reverseEdge tree b = e_reverse      $ nodesForEdge tree b
 edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNode t n1)
 nodeDegree t n = length (edgesOutOfNode t n)
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
-edgesBeforeEdge t b = let (source,index,_,_) = nodesForEdge t b
+edgesBeforeEdge t b = let e = nodesForEdge t b
+                          source = e_source_node $ e
+                          index = e_source_index $ e
                       in fmap (reverseEdge t) $ removeElement index $ edgesOutOfNode t source
 edgesAfterEdge t b  = fmap (reverseEdge t) $ edgesBeforeEdge t $ reverseEdge t b
 
@@ -210,7 +214,7 @@ tree_from_edges num_nodes edges = Tree nodesMap (listArray (2*num_branches) bran
 
     branches = [ let Just (s,t) = find_branch b
                      Just i     = elemIndexArray b (node_out_edges (nodesMap IntMap.! s))
-                 in (s,i,t,reverse b) | b <- [0..2*num_branches-1] ]
+                 in Edge s i t (reverse b) | b <- [0..2*num_branches-1] ]
 
 tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
 
