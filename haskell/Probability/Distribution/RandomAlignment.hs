@@ -16,7 +16,7 @@ modifiable_alignment (AlignmentOnTree tree n_seqs ls as) | otherwise           =
     ls' = listArray' [ seqlength as' tree node | node <- [0 .. numNodes tree - 1] ]
 
 -- Compare to unaligned_alignments_on_tree in parameters.cc
-unaligned_alignments_on_tree tree ls = [ make_a' b | b <- [0 .. 2 * numBranches tree - 1] ]
+unaligned_alignments_on_tree tree ls = listArray' [ make_a' b | b <- [0 .. 2 * numBranches tree - 1] ]
   where
     taxa = listArray' $ get_labels tree
     length_for_node node = if node < length taxa then ls Map.! (taxa ! node) else 0
@@ -55,7 +55,7 @@ sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree
     n_leaves = Map.size tip_lengths
     taxa     = listArray' $ get_labels tree
     ls       = listArray' $ [ if node < n_leaves then tip_lengths Map.! (taxa ! node) else seqlength as tree node | node <- [0 .. n_nodes - 1] ]
-    as       = listArray' $ unaligned_alignments_on_tree tree tip_lengths
+    as       = unaligned_alignments_on_tree tree tip_lengths
     n_nodes  = numNodes tree
 
 alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a ! b)) (hmms ! b)
