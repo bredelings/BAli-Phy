@@ -9,7 +9,7 @@ import           System.Environment  -- for getArgs
 
 model seq_data = do
 
-    let taxa = map sequence_name seq_data
+    let taxa = zip [0..] $ map sequence_name seq_data
 
     age    <- gamma 0.5 2.0
     tree   <- add_labels taxa <$> uniform_time_tree age (length taxa)

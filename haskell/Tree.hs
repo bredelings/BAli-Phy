@@ -5,6 +5,7 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
+import Data.List (lookup)
 
 class Tree t where
     findNode :: t -> Int -> Node
@@ -30,6 +31,11 @@ class TimeTree t => RateTimeTree t where
 
 class Tree t => LabelledTree t where
     get_label :: t -> Int -> Maybe String
+    -- TODO: all_labels - a sorted list of labels that serves as a kind of taxon-map?
+    -- this would map integers to labels, and labels to integers, even if get_label
+    -- indexes on nodes...
+    -- TODO: make the C++ code handle this...
+    
     get_labels :: t -> Array Int String
 
 data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
@@ -226,7 +232,7 @@ tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
 allEdgesAfterEdge tree b = b:concatMap (allEdgesAfterEdge tree) (edgesAfterEdge tree b)
 allEdgesFromNode tree n = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree n)
 
-add_labels labels t = LabelledTree t (listArray' labels)
+add_labels labels t = LabelledTree t (mkArray (length labels) (\node -> fromJust $ lookup node labels))
 
 add_root r t = rt
      where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdge rt b))

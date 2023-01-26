@@ -9,7 +9,8 @@ allStrings = [ c : s | s <- "" : allStrings, c <- ['a','b','c','d','e','f','g','
 
 model = do
     tree <- uniform_time_tree 1.0 n_leaves
-    let ltree = add_labels (take n_leaves allStrings) tree
+    let labels = take n_leaves $ zip [0..] allStrings
+        ltree = add_labels labels tree
     let pr = uniform_time_tree_pr 1.0 n_leaves ltree
 
     let ps    = map (\n -> show (n, parentNode tree n)) [0 .. numNodes tree - 1]

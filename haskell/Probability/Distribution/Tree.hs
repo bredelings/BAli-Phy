@@ -89,7 +89,7 @@ uniform_topology_effect tree = do
 
 uniform_labelled_topology taxa = do
   topology <- uniform_topology (length taxa)
-  return $ add_labels taxa topology
+  return $ add_labels (zip [0..] taxa) topology
 
 add_alignment_moves tree = do
   SamplingRate 1 $ add_move $ walk_tree_sample_alignments tree
