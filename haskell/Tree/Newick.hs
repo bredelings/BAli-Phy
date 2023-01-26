@@ -36,9 +36,8 @@ instance WriteNewickNode t => WriteNewickNode (RootedTreeImp t) where
 
 instance WriteNewickNode t => WriteNewickNode (LabelledTreeImp t) where
     node_info (LabelledTree tree labels) node = fmap T.pack label
-        where labels_array = listArray' labels
-              label | inRange (bounds labels_array) node  = Just (labels_array!node)
-                    | otherwise                           = Nothing
+        where label | inRange (bounds labels) node  = Just (labels!node)
+                    | otherwise                     = Nothing
 
     branch_info (LabelledTree tree labels) branch = branch_info tree branch
 

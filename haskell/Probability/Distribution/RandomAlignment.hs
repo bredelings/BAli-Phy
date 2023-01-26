@@ -18,7 +18,7 @@ modifiable_alignment (AlignmentOnTree tree n_seqs ls as) | otherwise           =
 -- Compare to unaligned_alignments_on_tree in parameters.cc
 unaligned_alignments_on_tree tree ls = listArray' [ make_a' b | b <- [0 .. 2 * numBranches tree - 1] ]
   where
-    taxa = listArray' $ get_labels tree
+    taxa = get_labels tree
     length_for_node node = if node < length taxa then ls Map.! (taxa ! node) else 0
     make_a' b = let b' = reverseEdge tree b in if (b > b') then flip_alignment $ make_a b' else make_a b
     make_a b =
@@ -33,7 +33,7 @@ median xs = ys !! n where
 -- Compare to unaligned_alignments_on_tree in parameters.cc
 left_aligned_alignments_on_tree tree ls = [ make_A b | b <- [0 .. 2 * numBranches tree - 1] ]
   where
-    taxa = listArray' $ get_labels tree
+    taxa = get_labels tree
     internal_sequence_length = median $ Map.elems $ ls
     -- FIXME: can we assume that the leaf nodes are [0..n_leaves-1]?
     -- If we check leaf nodes instead, then what if the root node was an unnamed leaf?
@@ -53,7 +53,7 @@ left_aligned_alignments_on_tree tree ls = [ make_A b | b <- [0 .. 2 * numBranche
 sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree tree n_nodes ls as))
   where
     n_leaves = Map.size tip_lengths
-    taxa     = listArray' $ get_labels tree
+    taxa     = get_labels tree
     ls       = listArray' $ [ if node < n_leaves then tip_lengths Map.! (taxa ! node) else seqlength as tree node | node <- [0 .. n_nodes - 1] ]
     as       = unaligned_alignments_on_tree tree tip_lengths
     n_nodes  = numNodes tree

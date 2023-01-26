@@ -30,7 +30,7 @@ class TimeTree t => RateTimeTree t where
 
 class Tree t => LabelledTree t where
     get_label :: t -> Int -> String
-    get_labels :: t -> [String]
+    get_labels :: t -> Array Int String
 
 data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
 
@@ -42,7 +42,7 @@ data RootedTreeImp t = RootedTree t Int (Array Int Bool)
 
 data BranchLengthTreeImp t = BranchLengthTree t (Array Int Double)
 
-data LabelledTreeImp t = LabelledTree t [String]
+data LabelledTreeImp t = LabelledTree t (Array Int String)
 
 -- The array stores the node times
 data TimeTreeImp t  = TimeTree t (IntMap Double)
@@ -151,7 +151,7 @@ remove_root (RootedTree t _ _) = t
 -- remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
 
 instance Tree t => LabelledTree (LabelledTreeImp t) where
-    get_label  (LabelledTree _ labels) node = labels!!node
+    get_label  (LabelledTree _ labels) node = labels!node
     get_labels (LabelledTree _ labels) = labels
 
 instance LabelledTree t => LabelledTree (BranchLengthTreeImp t) where
@@ -226,7 +226,7 @@ tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
 allEdgesAfterEdge tree b = b:concatMap (allEdgesAfterEdge tree) (edgesAfterEdge tree b)
 allEdgesFromNode tree n = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree n)
 
-add_labels labels t = LabelledTree t labels
+add_labels labels t = LabelledTree t (listArray' labels)
 
 add_root r t = rt
      where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdge rt b))

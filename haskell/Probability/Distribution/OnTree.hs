@@ -8,6 +8,7 @@ import Bio.Sequence -- for sequence_to_indices
 import Bio.Alignment
 import Bio.Alphabet  -- for type Alphabet
 import Data.Matrix
+import Data.Foldable
 
 -- FIXME: need polymorphism.
 --        This needs to be after weighted_frequency_matrix.
@@ -51,7 +52,8 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   let n_leaves = numLeaves tree
       as = pairwise_alignments alignment
       taxa = get_labels tree
-      leaf_sequences = listArray' $ map (sequence_to_indices alphabet) $ reorder_sequences taxa sequences
+      taxa_list = toList taxa
+      leaf_sequences = listArray' $ map (sequence_to_indices alphabet) $ reorder_sequences taxa_list sequences
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
@@ -82,8 +84,8 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  property "taxa" (map list_to_string taxa)
-  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood (listArray' $ map list_to_string taxa) f smap leaf_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) )
+  property "taxa" (map list_to_string taxa_list)
+  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood (fmap list_to_string taxa) f smap leaf_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) )
 
   return [likelihood]
 
@@ -97,7 +99,8 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       (compressed_alignment',column_counts,mapping) = compress_alignment $ a0
       n_leaves = numLeaves tree
       taxa = get_labels tree
-      compressed_alignment = reorder_alignment taxa compressed_alignment'
+      taxa_list = toList taxa
+      compressed_alignment = reorder_alignment taxa_list compressed_alignment'
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
@@ -138,9 +141,9 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   in_edge "tree" tree
   in_edge "smodel" smodel
 
-  property "taxa" (map list_to_string taxa)
+  property "taxa" (map list_to_string taxa_list)
   -- How about stuff related to alignment compression?
-  property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood (map list_to_string taxa) f smap leaf_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) )
+  property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood (map list_to_string taxa_list) f smap leaf_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) )
 
   return [likelihood]
 
