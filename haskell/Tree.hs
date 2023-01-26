@@ -29,7 +29,7 @@ class TimeTree t => RateTimeTree t where
     branch_rate :: t -> Int -> Double
 
 class Tree t => LabelledTree t where
-    get_label :: t -> Int -> String
+    get_label :: t -> Int -> Maybe String
     get_labels :: t -> Array Int String
 
 data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
@@ -151,7 +151,7 @@ remove_root (RootedTree t _ _) = t
 -- remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
 
 instance Tree t => LabelledTree (LabelledTreeImp t) where
-    get_label  (LabelledTree _ labels) node = labels!node
+    get_label  (LabelledTree _ labels) node = if inRange (bounds labels) node then Just (labels!node) else Nothing
     get_labels (LabelledTree _ labels) = labels
 
 instance LabelledTree t => LabelledTree (BranchLengthTreeImp t) where

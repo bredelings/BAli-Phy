@@ -35,10 +35,7 @@ instance WriteNewickNode t => WriteNewickNode (RootedTreeImp t) where
     branch_info (RootedTree tree _ _) = branch_info tree
 
 instance WriteNewickNode t => WriteNewickNode (LabelledTreeImp t) where
-    node_info (LabelledTree tree labels) node = fmap T.pack label
-        where label | inRange (bounds labels) node  = Just (labels!node)
-                    | otherwise                     = Nothing
-
+    node_info   tree node                         = fmap T.pack (get_label tree node)
     branch_info (LabelledTree tree labels) branch = branch_info tree branch
 
 instance WriteNewickNode t => WriteNewickNode (BranchLengthTreeImp t) where
