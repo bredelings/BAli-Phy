@@ -12,7 +12,7 @@ type IModel = (Array Int Double -> Int -> PairHMM, Int -> LogDouble)
 modifiable_alignment a@(AlignmentOnTree tree n_seqs ls as) | numNodes tree < 2 = a
 modifiable_alignment (AlignmentOnTree tree n_seqs ls as) | otherwise           = AlignmentOnTree tree n_seqs ls' as'
   where
-    as' = mkArray (length as) (\i -> modifiable $ (as ! i))
+    as' = fmap modifiable as
     ls' = listArray' [ seqlength as' tree node | node <- [0 .. numNodes tree - 1] ]
 
 -- Compare to unaligned_alignments_on_tree in parameters.cc
