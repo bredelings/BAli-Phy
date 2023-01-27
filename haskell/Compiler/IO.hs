@@ -26,6 +26,7 @@ instance Monad IO where
 
 -}
 data IO a = IOAction  (RealWorld->(RealWorld,a)) |
+            IOChangeable (IO a) |
             IOLazy (IO a) |
             IOMFix (a -> IO a) |
             IOReturn a |
@@ -47,9 +48,12 @@ instance Monad IO where
 
 unsafePerformIO :: IO c -> c
 unsafePerformIO (IOAction f) = snd (f 0#)
+unsafePerformIO (IOChangeable f) = _changeable_apply unsafePerformIO f
 unsafePerformIO (IOLazy f) = unsafePerformIO f
 unsafePerformIO (IOAndPass (IOLazy f) g) = let x = unsafePerformIO f in unsafePerformIO (g x)
 unsafePerformIO (IOAndPass f g) = let x = unsafePerformIO f in x `seq` unsafePerformIO (g x)
 unsafePerformIO (IOMFix f) = let x = unsafePerformIO (f x) in x
 unsafePerformIO (IOReturn x) = x
 
+foreign import bpcall "Modifiables:changeable_apply" _changeable_apply :: (a -> b) -> a -> b
+changeableIO f = IOChangeable f
