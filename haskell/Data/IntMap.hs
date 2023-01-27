@@ -2,6 +2,7 @@ module Data.IntMap where
 
 import Prelude hiding (map,empty,lookup,(!))
 import Data.Functor
+import qualified Data.Foldable as F
 import Foreign.Vector
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
@@ -110,9 +111,6 @@ disjoint m1 m2 = case _disjoint m1 m2 of
 
 foreign import bpcall "IntMap:map" map :: (a -> b) -> IntMap a -> IntMap b
 
-instance Functor IntMap where
-    fmap = map
-
 ---
 
 -- Note!  These are supposed be to in ascending order of keys, but are not.
@@ -154,5 +152,12 @@ toList m = [ (k,m!k) | k <- keys m]
 -- deleteMax :: IntMap a -> IntMap a 
 
 
+instance Functor IntMap where
+    fmap = map
+
 instance Show a => Show (IntMap a) where
     show m = show $ toList m
+
+instance Foldable IntMap where
+    toList = elems
+    length = size
