@@ -62,4 +62,7 @@ instance NFData a => NFData [a] where
 
 
 instance NFData e => NFData (Array Int e) where
-    rnf arr = foldr seq () arr
+    rnf = foldr seq ()
+
+instance NFData e => NFData (IntMap e) where
+    rnf = foldr seq ()
