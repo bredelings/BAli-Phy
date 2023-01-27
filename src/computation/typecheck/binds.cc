@@ -541,12 +541,10 @@ set<MetaTypeVar> TypeChecker::injective_vars_for_type(const Type& type) const
 {
     if (auto type2 = filled_meta_type_var(type))
         return injective_vars_for_type(*type2);
-    else if (auto type2 = is_type_synonym(type))
-        return injective_vars_for_type(*type2);
-    else if (type.is_a<TypeVar>())
-        return {};
     else if (auto mtv = type.to<MetaTypeVar>())
         return {*mtv};
+    else if (type.is_a<TypeVar>())
+        return {};
     else if (auto app = is_type_app(type))
     {
         auto& [head,arg] = *app;
@@ -555,6 +553,10 @@ set<MetaTypeVar> TypeChecker::injective_vars_for_type(const Type& type) const
         return mtvs;
     }
     else if (is_type_fam_app(type))
+        return {};
+    else if (auto type2 = is_type_synonym(type))
+        return injective_vars_for_type(*type2);
+    else if (type.is_a<TypeCon>())
         return {};
     else if (auto forall = type.to<ForallType>())
         return injective_vars_for_type(forall->type);

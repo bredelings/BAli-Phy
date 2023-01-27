@@ -380,22 +380,23 @@ std::optional<std::tuple<Type, Type>> TypeChecker::is_type_app(Type t) const
     auto fun = app->head;
     auto arg = app->arg;
 
-    // 4. Avoid eating an argument from a saturated typecon that must remain saturated
-    t = fun;
+    // 4. Find the head and the number of args it has
+    t = follow_meta_type_var(fun);
     int n_args = 0;
     while(auto app2 = t.to<TypeApp>())
     {
-        t = app2->head;
+        t = follow_meta_type_var(app2->head);
         n_args++;
     }
 
+    // 5. Avoid eating an argument from a saturated typecon that must remain saturated
     if (auto tc = t.to<TypeCon>())
     {
         if (type_con_must_be_saturated(*tc) and n_args < type_con_arity(*tc))
             return {};
     }
     
-    // 5. Return the head and arg types
+    // 6. Return the head and arg types
     return {{fun, arg}};
 }
 
@@ -848,11 +849,6 @@ std::bitset<8> TypeChecker::check_type_equality(const Type& lhs, const Type& rhs
     else if (rhs.is_a<TypeCon>())
     {
         return ok_result;
-    }
-    else if (auto app = is_type_app(rhs))
-    {
-        auto& [fun,arg] = *app;
-        return check_type_equality(lhs, fun) | check_type_equality(lhs, arg);
     }
     else if (auto forall = rhs.to<ForallType>())
     {
