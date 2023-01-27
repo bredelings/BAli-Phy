@@ -5,6 +5,8 @@ import           Data.Array
 import           Data.IntMap
 import           Data.Foldable
 
+-- I don't think we can use this for cyclic data structures -- it would just go on forever.
+
 class NFData a where
     -- Reduce to Normal Form
     rnf :: a -> ()
@@ -12,15 +14,7 @@ class NFData a where
 
 infixr 0 `deepseq`
 
-deepseq x y =
-    let n = get_n_args x
-        go x 0 = get_arg x 0
-        go x i = get_arg x i `deepseq` go x (i - 1)
-    in  if n > 0
-        then go x (n - 1) `seq` y
-        else x `seq` y
-
--- deepseq x y = rnf x `seq` y
+deepseq x y = rnf x `seq` y
 
 force x = x `deepseq` x
 
