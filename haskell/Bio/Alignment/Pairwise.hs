@@ -1,6 +1,7 @@
 module Bio.Alignment.Pairwise where
 
 import Data.BitVector
+import Control.DeepSeq
 
 data PairHMM
 
@@ -31,3 +32,6 @@ foreign import bpcall "Alignment:left_aligned_pairwise_alignment" left_aligned_p
 
 foreign import bpcall "Alignment:flip_alignment" flip_alignment :: PairwiseAlignment -> PairwiseAlignment
 
+instance NFData PairHMM
+
+instance NFData PairwiseAlignment
