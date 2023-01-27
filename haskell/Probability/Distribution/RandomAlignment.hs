@@ -85,7 +85,7 @@ force_alignment a@(AlignmentOnTree tree n_seqs ls as) = force_ls `seq` force_as 
 --FIXME: Maybe I should also reduce this to just a list of pairwise alignments?
 triggered_modifiable_alignment value effect = triggered_a where
     raw_a       = modifiable_alignment value
-    effect'     = force_alignment raw_a `seq` effect raw_a
+    effect'     = force_alignment raw_a `seq` (unsafePerformIO $ effect raw_a)
     triggered_a = effect' `seq` raw_a
 
 

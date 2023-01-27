@@ -60,7 +60,7 @@ sample_crp alpha n d = RandomStructure do_nothing modifiable_structure $ liftIO 
                                                                                      return $ list_from_vector_of_size v n
 --crp alpha n d = Distribution "crp" (make_densities $ crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1))
 triggered_modifiable_list n value effect = let raw_list = mapn n modifiable value
-                                               effect' = force_list raw_list `seq` effect raw_list
+                                               effect' = force_list raw_list `seq` (unsafePerformIO $ effect raw_list)
                                                triggered_list = mapn n (effect' `seq`) raw_list
                                            in triggered_list
 
