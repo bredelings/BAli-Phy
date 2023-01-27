@@ -62,8 +62,5 @@ instance NFData a => NFData [a] where
 -- * the called reg IS referenced only by an index-var-with-force
 
 
-instance NFData e => NFData (Array Int e) where
-    rnf = foldr seq ()
-
-instance NFData e => NFData (IntMap e) where
+instance (Foldable f, NFData e) => NFData (f e) where
     rnf = foldr seq ()

@@ -183,7 +183,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     pop_note();
 }
 
-pair<Core::Var, InstanceInfo>
+std::optional<pair<Core::Var, InstanceInfo>>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     push_note( Note()<<"In instance '"<<inst_decl.constraint<<"':" );
@@ -194,18 +194,27 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     // 2. Look up the class info
     auto tc = class_head.to<TypeCon>();
     if (not tc)
-        throw note_exception()<<"  "<<class_head<<" is not a type constructor!";
+    {
+        record_error(Note() << "'"<<class_head<<"' is not a type constructor!");
+        return {};
+    }
 
     // Check that this is a class, and not a data or type?
     auto class_name = unloc(tc->name);
     if (not class_env().count(class_name))
-        throw note_exception()<<"  no class '"<<class_name<<"'!";
+    {
+        record_error( Note() <<"no class named '"<<class_name<<"'!");
+        return {};
+    }
     auto class_info = class_env().at(class_name);
 
     // 3. Check that the instance has the right number of parameters
     int N = class_info.type_vars.size();
     if (class_args.size() != class_info.type_vars.size())
-        throw note_exception()<<"  should have "<<N<<" parameters, but has "<<class_args.size()<<".";
+    {
+        record_error( Note() <<"  should have "<<N<<" parameters, but has "<<class_args.size()<<".");
+        return {};
+    }
 
     // 4. Construct the mapping from original class variables to instance variables
     substitution_t instance_subst;
@@ -229,10 +238,9 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 
             if (auto tc = a_head.to<TypeCon>())
                 tycon_names += get_name_for_typecon(*tc);
-            else
-                throw note_exception()<<"  '"<<a_head.print()<<"' is not a type constructor!";
+            else // this should only be allow with FlexibleInstances.  We default to FlexibleInstances I guess.
+                tycon_names += "_";
 
-            // Now, tc needs to be a data type constructor!
             // With FlexibleInstances, (i) the arguments do NOT have to be variables and (ii) type synonyms are allowed.
         }
     }
@@ -243,7 +251,6 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
         if (not type_vars.count(tv))
             record_error( Note() << "  Constraint context '"<<inst_decl.context.print()<<"' contains type variable '"<<tv.print()<<"' that is not mentioned in the instance declaration" );
     }
-
 
     // Look at associated type instances
     for(auto& inst: inst_decl.type_inst_decls)
@@ -279,7 +286,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     
     pop_note();
 
-    return {dfun, info};
+    return {{dfun, info}};
 }
 
 
@@ -295,13 +302,15 @@ TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
     {
         if (auto I = decl.to<Hs::InstanceDecl>())
         {
-            auto [dfun, inst_info] = infer_type_for_instance1(*I);
+            if (auto result = infer_type_for_instance1(*I))
+            {
+                auto& [dfun, inst_info] = *result;
 
-            named_instances.push_back({dfun, *I});
-            instance_env().insert( {dfun, inst_info} );
+                named_instances.push_back({dfun, *I});
+                instance_env().insert( {dfun, inst_info} );
+            }
         }
-
-        if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
+        else if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
             check_add_type_instance(*TI, {}, {});
     }
 
