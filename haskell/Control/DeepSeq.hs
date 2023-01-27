@@ -6,6 +6,7 @@ import           Data.IntMap
 import           Data.Foldable
 
 -- I don't think we can use this for cyclic data structures -- it would just go on forever.
+-- I guess for a graph, we could first find all the nodes & edges.
 
 class NFData a where
     -- Reduce to Normal Form
