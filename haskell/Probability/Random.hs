@@ -205,6 +205,15 @@ apply_modifier x y = x y
 modifiable_structure :: forall dd.b -> (b -> dd) -> (b, b)
 modifiable_structure = triggered_modifiable_structure apply_modifier (const ())
 
+sample_effect rate dist tk_effect x = unsafePerformIO $ do
+                                        run_tk_effects rate $ tk_effect x
+                                        s <- register_dist_sample (dist_name dist)
+                                        density_terms <- make_edges s $ annotated_densities dist x
+                                        sequence_ [register_prior s term | term <- density_terms]
+                                        register_out_edge s x
+                                        return ()
+
+
 -- It seems like we could return raw_x in most cases, except the case of a tree.
 -- But in the tree case, we could return triggered_x.
 
@@ -230,15 +239,7 @@ run_lazy' rate (RanReturn v) = return v
 run_lazy' rate (RanDistribution dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_sample) range)) = do
  -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy do_sample
-  let (raw_x,triggered_x) = structure value do_effects
-      effect = do
-        run_tk_effects rate $ tk_effect raw_x
-        s <- register_dist_sample (dist_name dist)
-        density_terms <- make_edges s $ annotated_densities dist raw_x
-        sequence_ [register_prior s term | term <- density_terms]
-        register_out_edge s raw_x
-        return ()
-      do_effects _ = unsafePerformIO effect
+  let (raw_x,triggered_x) = structure value (sample_effect rate dist tk_effect)
   return triggered_x
 
 run_lazy' rate (RanDistribution (Distribution _ _ _ s _)) = run_lazy' rate s
