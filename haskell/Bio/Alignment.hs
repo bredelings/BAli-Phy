@@ -6,6 +6,7 @@ module Bio.Alignment (module Bio.Alignment,
 import Tree
 import Data.BitVector
 import Data.Foldable
+import Data.Array
 import Parameters
 import Foreign.Vector
 import Foreign.Pair

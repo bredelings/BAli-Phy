@@ -1,5 +1,6 @@
 import Probability
 import Data.Frame
+import Data.Array
 import qualified Data.Map as M
 
 -- When we get polymorphism, maybe we can create an temporary array as a view on xs'
@@ -13,7 +14,7 @@ get_intervals (r:[]) (t:[]) tend = [(r,t,tend)]
 get_intervals (r:rs) (t1:ts@(t2:_)) tend = (r,t1,t2):get_intervals rs ts tend
 
 model (t1,t2) times = do
-  let lam = 3.0; nMax = 30; a = 1.0; b = 365.0/200.0
+  let lam = 3; nMax = 30; a = 1; b = 365/200
 
   -- n change points, n+1 intervals
   n <- min nMax <$> poisson lam
@@ -38,4 +39,4 @@ main = do
 
   let times = frame $$ "time" :: [Double]
 
-  mcmc $ model (1851.0,1963.0) times
+  mcmc $ model (1851, 1963) times

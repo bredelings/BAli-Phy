@@ -18,7 +18,8 @@ import Bio.Alphabet
 import Bio.Sequence
 import Tree
 import Parameters
-
+import Data.Array
+    
 import SModel.Nucleotides
 import SModel.Doublets
 import SModel.Codons

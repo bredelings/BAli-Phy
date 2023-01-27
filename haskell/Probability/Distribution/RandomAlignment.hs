@@ -4,6 +4,7 @@ import           Probability.Random
 import           Tree
 import           Bio.Alignment
 import           Control.DeepSeq
+import           Data.Array
 
 import qualified Data.Map as Map
 

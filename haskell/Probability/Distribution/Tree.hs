@@ -6,6 +6,7 @@ import           Probability.Distribution.Uniform
 import           Probability.Distribution.List
 import           Probability.Distribution.Exponential
 import           MCMC
+import           Data.Array
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 

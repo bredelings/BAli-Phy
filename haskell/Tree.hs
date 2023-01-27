@@ -1,6 +1,7 @@
 module Tree where
 
 import Data.Foldable
+import Data.Array
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import Data.IntSet (IntSet)

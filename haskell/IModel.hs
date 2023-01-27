@@ -1,5 +1,6 @@
 module IModel where
 
+import Data.Array
 import Probability
 import Tree
 import Bio.Alignment.Pairwise -- for PairHMM

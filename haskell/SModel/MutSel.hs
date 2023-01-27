@@ -1,5 +1,6 @@
 module SModel.MutSel where
 
+import Data.Array
 import Foreign.Vector
 import SModel.ReversibleMarkov
 import SModel.Codons

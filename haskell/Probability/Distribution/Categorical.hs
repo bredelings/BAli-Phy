@@ -1,6 +1,7 @@
 module Probability.Distribution.Categorical (categorical,categorical_on, HasCategorical) where
 
 import Probability.Random
+import Data.Array
 import Control.Monad.IO.Class
 import MCMC
 

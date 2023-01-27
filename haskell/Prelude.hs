@@ -5,7 +5,6 @@ module Prelude (module Prelude,
                 module Data.Tuple,
                 module Data.Maybe,
                 module Data.List,
-                module Data.Array,
                 module Data.Function,
                 module Data.Functor,
                 module Data.Foldable,
@@ -49,7 +48,6 @@ import Data.Eq
 import Data.Tuple
 import Data.Maybe
 import Data.List
-import Data.Array
 import Data.Foldable hiding (fold, foldMap', toList, foldl', foldr')
 import Data.Function
 import Data.Functor

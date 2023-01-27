@@ -6,6 +6,7 @@ import Bio.Alignment
 import Data.BitVector
 import Data.Foldable
 import Data.Matrix
+import Data.Array
 import Foreign.Vector
 
 data CondLikes
