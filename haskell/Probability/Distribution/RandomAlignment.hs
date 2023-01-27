@@ -83,7 +83,7 @@ force_alignment a@(AlignmentOnTree tree n_seqs ls as) = force_ls `seq` force_as 
 
 --FIXME: I should make this only trigger if you start looking at the VALUES of the pairwise alignments!
 --FIXME: Maybe I should also reduce this to just a list of pairwise alignments?
-triggered_modifiable_alignment value effect = (raw_a, triggered_a) where
+triggered_modifiable_alignment value effect = triggered_a where
     raw_a       = modifiable_alignment value
     effect'     = force_alignment raw_a `seq` effect raw_a
     triggered_a = effect' `seq` raw_a

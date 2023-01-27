@@ -62,7 +62,7 @@ sample_crp alpha n d = RandomStructure do_nothing modifiable_structure $ liftIO 
 triggered_modifiable_list n value effect = let raw_list = mapn n modifiable value
                                                effect' = force_list raw_list `seq` effect raw_list
                                                triggered_list = mapn n (effect' `seq`) raw_list
-                                                    in (raw_list, triggered_list)
+                                           in triggered_list
 
 crp_effect n d x = add_move (\c -> mapM_ (\l-> gibbs_sample_categorical (x!!l) (n+d) c) [0..n-1])
 

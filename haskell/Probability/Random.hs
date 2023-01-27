@@ -88,7 +88,7 @@ instance Monad TKEffects where
     f >>= g  = TKBind f g
 
 data Random a where
-    RandomStructure :: (a->TKEffects b) -> (a -> (a -> ()) -> (a,a)) -> (Random a) -> Random a
+    RandomStructure :: (a->TKEffects b) -> (a -> (a -> ()) -> a) -> (Random a) -> Random a
     Observe :: Distribution b -> b -> Random ()
     Lazy :: Random a -> Random a
     WithTKEffect :: Random a -> (a -> TKEffects b) -> Random a
@@ -193,8 +193,8 @@ run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
 --       SOMETHING `seq` result.  And this means that we need to frequently
 --       intersperse unsafeInterleaveIO to avoid `seq`-ing on previous statements.
 
-triggered_modifiable_structure :: ((forall a.a -> a) -> b -> b) -> (b -> c) -> b -> (b -> d) -> (b, b)
-triggered_modifiable_structure mod_structure force_structure value effect = (raw_x, triggered_x)
+triggered_modifiable_structure :: ((forall a.a -> a) -> b -> b) -> (b -> c) -> b -> (b -> d) -> b
+triggered_modifiable_structure mod_structure force_structure value effect = triggered_x
     where raw_x       = mod_structure modifiable value
           effect'     = force_structure raw_x `seq` effect raw_x
           triggered_x = mod_structure (effect' `seq`) raw_x
@@ -202,7 +202,7 @@ triggered_modifiable_structure mod_structure force_structure value effect = (raw
 apply_modifier :: (forall a.a -> a) -> b -> b
 apply_modifier x y = x y
 
-modifiable_structure :: forall dd.b -> (b -> dd) -> (b, b)
+modifiable_structure :: forall dd.b -> (b -> dd) -> b
 modifiable_structure = triggered_modifiable_structure apply_modifier (const ())
 
 sample_effect rate dist tk_effect x = unsafePerformIO $ do
@@ -239,8 +239,7 @@ run_lazy' rate (RanReturn v) = return v
 run_lazy' rate (RanDistribution dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_sample) range)) = do
  -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy do_sample
-  let (raw_x,triggered_x) = structure value (sample_effect rate dist tk_effect)
-  return triggered_x
+  return $ structure value (sample_effect rate dist tk_effect)
 
 run_lazy' rate (RanDistribution (Distribution _ _ _ s _)) = run_lazy' rate s
 run_lazy' rate (RanMFix f) = mfix ((run_lazy' rate).f)
