@@ -80,12 +80,10 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
                        peel_likelihood_2 (node_sequences IntMap.! 0) (node_sequences IntMap.! 1) alphabet (as ! 0) (transition_ps ! 0) f
                    else
                        peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
-      ancestral_sequences = if n_nodes == 1 then
-                                list_to_vector $ []
-                            else if n_nodes == 2 then
-                                list_to_vector $ []
-                            else
-                                array_to_vector $ sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
+      ancestral_sequences = case n_nodes of
+                              1 -> list_to_vector $ []
+                              2 -> list_to_vector $ []
+                              _ -> array_to_vector $ sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
 
   in_edge "tree" tree
   in_edge "alignment" alignment
@@ -131,22 +129,20 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
                    else
                        peel_likelihood_SEV tree cls f subst_root column_counts
 --    This also needs the map from columns to compressed columns:
-      ancestral_sequences = if n_nodes == 1 then
-                                a0
-                            else if n_nodes == 2 then
-                                a0
-                            else
-                                let ancestral_states = array_to_vector $ sample_ancestral_sequences_SEV
-                                      tree
-                                      subst_root
-                                      node_sequences
-                                      alphabet
-                                      transition_ps
-                                      f
-                                      cls
-                                      smap
-                                      mapping
-                                in ancestral_sequence_alignment a0 ancestral_states smap
+      ancestral_sequences = case n_nodes of
+                              1 -> a0
+                              2 -> a0
+                              _ -> let ancestral_states = array_to_vector $ sample_ancestral_sequences_SEV
+                                         tree
+                                         subst_root
+                                         node_sequences
+                                         alphabet
+                                         transition_ps
+                                         f
+                                         cls
+                                         smap
+                                         mapping
+                                   in ancestral_sequence_alignment a0 ancestral_states smap
   in_edge "tree" tree
   in_edge "smodel" smodel
 
