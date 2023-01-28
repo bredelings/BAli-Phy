@@ -53,7 +53,7 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
 annotated_subst_like_on_tree tree alignment smodel sequences = do
   let subst_root = modifiable (numNodes tree - 1)
 
-  let n_leaves = numLeaves tree
+  let n_nodes = numNodes tree
       as = pairwise_alignments alignment
       taxa = get_labels tree
       taxa_list = toList taxa
@@ -74,15 +74,15 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
               transition_ps
               f
               smap
-      likelihood = if n_leaves == 1 then
+      likelihood = if n_nodes == 1 then
                        peel_likelihood_1 (node_sequences IntMap.! 0) alphabet f
-                   else if n_leaves == 2 then
+                   else if n_nodes == 2 then
                        peel_likelihood_2 (node_sequences IntMap.! 0) (node_sequences IntMap.! 1) alphabet (as ! 0) (transition_ps ! 0) f
                    else
                        peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
-      ancestral_sequences = if n_leaves == 1 then
+      ancestral_sequences = if n_nodes == 1 then
                                 list_to_vector $ []
-                            else if n_leaves == 2 then
+                            else if n_nodes == 2 then
                                 list_to_vector $ []
                             else
                                 array_to_vector $ sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
@@ -104,7 +104,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
   let a0 = alignment_from_sequences alphabet sequences
       (compressed_alignment,column_counts,mapping) = compress_alignment $ a0
-      n_leaves = numLeaves tree
+      n_nodes = numNodes tree
       taxa = get_labels tree
       taxa_list = toList taxa
       find_sequence label = find (\s -> sequence_name s == label) sequences
@@ -124,16 +124,16 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
               f
               compressed_alignment
               smap
-      likelihood = if n_leaves == 1 then
+      likelihood = if n_nodes == 1 then
                        peel_likelihood_1_SEV compressed_alignment alphabet f column_counts
-                   else if n_leaves == 2 then
+                   else if n_nodes == 2 then
                        peel_likelihood_2_SEV compressed_alignment alphabet (transition_ps!0) f column_counts
                    else
                        peel_likelihood_SEV tree cls f subst_root column_counts
 --    This also needs the map from columns to compressed columns:
-      ancestral_sequences = if n_leaves == 1 then
+      ancestral_sequences = if n_nodes == 1 then
                                 a0
-                            else if n_leaves == 2 then
+                            else if n_nodes == 2 then
                                 a0
                             else
                                 let ancestral_states = array_to_vector $ sample_ancestral_sequences_SEV
