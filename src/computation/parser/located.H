@@ -112,17 +112,6 @@ inline yy::location operator*(const yy::location& loc1, const yy::location& loc2
     return {b,e};
 }
 
-inline std::optional<yy::location> range(const std::vector<yy::location>& locs)
-{
-    if (locs.empty()) return {};
-
-    auto loc = locs.front();
-    for(int i=1;i<locs.size();i++)
-        loc = loc * locs[i];
-
-    return loc;
-}
-
 inline std::optional<yy::location> operator*(const std::optional<yy::location>& loc1, const std::optional<yy::location>& loc2)
 {
     if (not loc1) return loc2;
@@ -130,13 +119,14 @@ inline std::optional<yy::location> operator*(const std::optional<yy::location>& 
     return (*loc1) * (*loc2);
 }
 
-inline std::optional<yy::location> range(const std::vector<std::optional<yy::location>>& locs)
+template <typename T>
+inline std::optional<yy::location> range(const std::vector<Located<T>>& xs)
 {
-    if (locs.empty()) return {};
+    if (xs.empty()) return {};
 
-    auto loc = locs.front();
-    for(int i=1;i<locs.size();i++)
-        loc = loc * locs[i];
+    auto loc = xs.front().loc;
+    for(int i=1;i<xs.size();i++)
+        loc = loc * xs[i].loc;
 
     return loc;
 }

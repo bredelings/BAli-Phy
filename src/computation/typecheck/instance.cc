@@ -70,10 +70,19 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 {
     push_note( Note()<<"In instance '"<<inst.print()<<"':" );
     auto tf_con = desugar(inst.con);
+    push_source_span( *(inst.con.loc * range(inst.args) * inst.rhs.loc) );
     
     // 1. Check that the type family exists.
     if (not type_fam_info().count( tf_con ))
+    {
+        push_source_span( *inst.con.loc );
         record_error( Note()<<"  No type family '"<<inst.con.print()<<"'");
+        pop_source_span();
+
+        pop_source_span();
+        pop_note();
+        return;
+    }
 
     // 2. Get the type family info
     auto& tf_info = type_fam_info().at(tf_con);
@@ -83,8 +92,13 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         // 3. Check for unassociated instances declared for associated classes
         if (not associated_class)
         {
-            record_error(Note() << "  Can't declare non-associated type instance for type family '"<<inst.con.print()<<"' associated with class '"
-                         <<(*tf_info.associated_class)<<"'");
+            push_source_span( *inst.con.loc );
+            record_error( Note() << "  Can't declare non-associated type instance for type family '"<<inst.con.print()<<"' associated with class '"
+                          <<(*tf_info.associated_class)<<"'");
+            pop_source_span();
+
+            pop_source_span();
+            pop_note();
             return;
         }
 
@@ -93,6 +107,9 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         {
             record_error(Note() << "  Trying to declare type instance in class '"<<*associated_class<<" for family '"<<inst.con.print()
                          <<"' associated with class '"<<(*tf_info.associated_class)<<"'");
+
+            pop_source_span();
+            pop_note();
             return;
         }
 
@@ -100,12 +117,14 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         for(int i=0;i<tf_info.args.size();i++)
         {
             auto fam_tv = tf_info.args[i];
+            push_source_span( *inst.args[i].loc );
             if (instance_subst.count(fam_tv))
             {
                 auto expected = instance_subst.at(fam_tv);
                 if (not same_type( desugar(inst.args[i]), expected))
-                    record_error(Note() << "    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'");
+                    record_error( Note() << "    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'");
             }
+            pop_source_span();
         }
     }
 
@@ -113,6 +132,9 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     if (tf_info.closed)
     {
         record_error( Note() << "  Can't declare additional type instance for closed type family '"<<inst.con.print()<<"'");
+
+        pop_source_span();
+        pop_note();
         return;
     }
             
@@ -120,7 +142,12 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     // 7. Check that the type instance has the right number of arguments
     if (inst.args.size() != tf_info.args.size())
     {
+        push_source_span( *range(inst.args) );
         record_error( Note() << "    Expected "<<tf_info.args.size()<<" parameters, but got "<<inst.args.size());
+        pop_source_span();
+
+        pop_source_span();
+        pop_note();
         return;
     }
 
@@ -136,6 +163,9 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         if (not lhs_tvs.count(tv))
         {
             record_error( Note() <<"  rhs variable '"<<tv.print()<<"' not bound on the lhs.");
+
+            pop_source_span();
+            pop_note();
             return;
         }
 
@@ -180,6 +210,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     // 11. Make up an equation id -- this is the "evidence" for the type family instance.
     tf_info.equations.insert({eqn_id, eqn});
 
+    pop_source_span();
     pop_note();
 }
 
@@ -187,46 +218,62 @@ std::optional<pair<Core::Var, InstanceInfo>>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     push_note( Note()<<"In instance '"<<inst_decl.constraint<<"':" );
-
+    auto inst_loc = range(inst_decl.context.constraints) * inst_decl.constraint.loc;
+    push_source_span( *inst_loc );
+    
     // 1. Get class name and parameters for the instance
-    auto [class_head, class_args] = decompose_type_apps(desugar(inst_decl.constraint));
+    auto [class_head, class_args] = Hs::decompose_type_apps(inst_decl.constraint);
 
     // 2. Look up the class info
-    auto tc = class_head.to<TypeCon>();
+    auto tc = unloc(class_head).to<Hs::TypeCon>();
+    push_source_span( *class_head.loc );
     if (not tc)
     {
-        record_error(Note() << "'"<<class_head<<"' is not a type constructor!");
+        record_error(Note() << "'"<<class_head.print()<<"' is not a type constructor!");
+
+        pop_source_span();
+        pop_source_span();
+        pop_note();
         return {};
     }
 
     // Check that this is a class, and not a data or type?
-    auto class_name = unloc(tc->name);
+    auto class_name = tc->name;
     if (not class_env().count(class_name))
     {
         record_error( Note() <<"no class named '"<<class_name<<"'!");
+        pop_source_span();
+        pop_source_span();
+        pop_note();
         return {};
     }
     auto class_info = class_env().at(class_name);
+    pop_source_span();
 
     // 3. Check that the instance has the right number of parameters
     int N = class_info.type_vars.size();
     if (class_args.size() != class_info.type_vars.size())
     {
-        record_error( Note() <<"  should have "<<N<<" parameters, but has "<<class_args.size()<<".");
+        push_source_span( *inst_decl.constraint.loc );
+        record_error( Note() <<inst_decl.constraint.print()<<" should have "<<N<<" parameters, but has "<<class_args.size()<<".");
+        pop_source_span();
+
+        pop_source_span();
+        pop_note();
         return {};
     }
 
     // 4. Construct the mapping from original class variables to instance variables
     substitution_t instance_subst;
     for(int i = 0; i < N; i++)
-        instance_subst = instance_subst.insert( {class_info.type_vars[i], class_args[i]} );
+        instance_subst = instance_subst.insert( {class_info.type_vars[i], desugar(class_args[i])} );
 
     // 5. Find the type vars mentioned in the constraint.
     set<TypeVar> type_vars = free_type_variables(desugar(inst_decl.constraint));
 
     // 6. The class_args must be (i) a variable or (ii) a type constructor applied to simple, distinct type variables.
     string tycon_names;
-    for(auto& class_arg: class_args)
+    for(auto& class_arg: desugar(class_args))
     {
         if (class_arg.to<TypeVar>())
         {
@@ -284,8 +331,8 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     
     InstanceInfo info{tvs, constraints, *class_con, args};
     
+    pop_source_span();
     pop_note();
-
     return {{dfun, info}};
 }
 
