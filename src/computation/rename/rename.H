@@ -60,7 +60,7 @@ struct renamer_state
     bound_var_info find_bound_vars_in_decl(const Hs::SignatureDecl& decl, bool top = false);
 
     std::vector<std::vector<int>> rename_grouped_decls(Hs::Decls& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
-    bound_var_info rename_signatures(std::map<Hs::LVar, Hs::Type>& signatures, bool top = false);
+    bound_var_info rename_signatures(std::map<Hs::LVar, Hs::LType>& signatures, bool top = false);
     bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars, bool top = false);
     bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
     bound_var_info rename_rec_stmt(Hs::LExp& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
@@ -80,8 +80,8 @@ struct renamer_state
     Hs::TypeFamilyInstanceDecl rename(Hs::TypeFamilyInstanceDecl);
     Hs::TypeFamilyInstanceEqn rename(Hs::TypeFamilyInstanceEqn);
     Haskell::KindSigDecl rename(Haskell::KindSigDecl KS);
-    Hs::TypeCon rename_type(const Hs::TypeCon&);
-    Hs::Type rename_type(const Hs::Type&);
+    Hs::LTypeCon rename_type(Hs::LTypeCon);
+    Hs::LType rename_type(Hs::LType);
     Hs::Context rename(Hs::Context);
 
     Hs::Exp rename(const Hs::Exp& E, const bound_var_info& bound, std::set<std::string>& free_vars);

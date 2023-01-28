@@ -17,73 +17,72 @@ using std::set;
 using std::optional;
 using std::map;
 
-Hs::TypeCon renamer_state::rename_type(const Hs::TypeCon& tc)
+Hs::LTypeCon renamer_state::rename_type(Hs::LTypeCon ltc)
 {
-    auto& name = unloc(tc.name);
-    auto& loc = tc.name.loc;
+    auto& [loc, tc] = ltc;
+    auto& name = tc.name;
 
     if (m.type_is_declared(name))
     {
         auto T = m.lookup_type(name);
-        auto& qualified_name = T.name;
-        return Hs::TypeCon({loc, qualified_name});
+        name = T.name;
     }
     else
-    {
         error(loc, Note()<<"Can't find type constructor `"<<name<<"`");
-        return tc;
-    }
+
+    return ltc;
 }
 
-Haskell::Type renamer_state::rename_type(const Haskell::Type& type)
+Haskell::LType renamer_state::rename_type(Haskell::LType ltype)
 {
+    auto& [loc, type] = ltype;
+
     if (auto tc = type.to<Haskell::TypeCon>())
     {
-        return rename_type(*tc);
+        ltype = rename_type(Hs::LTypeCon{loc,*tc});
     }
     else if (auto tv = type.to<Haskell::TypeVar>())
     {
-        auto& name = unloc(tv->name);
-
+        auto& name = tv->name;
         assert(is_haskell_varid(name));
-
-        return type;
     }
     else if (type.is_a<Haskell::TypeApp>())
     {
         auto app = type.as_<Haskell::TypeApp>();
         app.head = rename_type(app.head);
         app.arg  = rename_type(app.arg);
-        return app;
+        type = app;
     }
     else if (type.is_a<Haskell::TupleType>())
     {
         auto tuple = type.as_<Haskell::TupleType>();
-        for(auto& type: tuple.element_types)
-            type = rename_type(type);
-        return tuple;
+        for(auto& etype: tuple.element_types)
+            etype = rename_type(etype);
+        type = tuple;
     }
     else if (type.is_a<Haskell::ListType>())
     {
         auto list = type.as_<Haskell::ListType>();
         list.element_type = rename_type(list.element_type);
-        return list;
+        type = list;
     }
     else if (type.is_a<Haskell::ConstrainedType>())
     {
         auto ctype = type.as_<Haskell::ConstrainedType>();
         ctype.context = rename(ctype.context);
         ctype.type = rename_type(ctype.type);
-        return ctype;
+        type = ctype;
     }
     else if (auto fa = type.to<Hs::ForallType>())
     {
         auto Fa = *fa;
         Fa.type = rename_type(Fa.type);
-        return Fa;
+        type = Fa;
     }
     else
         throw myexception()<<"rename_type: unrecognized type \""<<type.print()<<"\"";
+
+    return ltype;
 }
 
 Haskell::Context renamer_state::rename(Haskell::Context context)
@@ -103,7 +102,7 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
     {
         for(auto& constructor: decl.get_constructors())
         {
-            qualify_name(constructor.name);
+            qualify_name(unloc(*constructor.con).name);
 
             if (constructor.context)
             {
@@ -134,7 +133,7 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
             for(auto& con_name: constructors.con_names)
                 qualify_name(con_name);
 
-            unloc(constructors.type) = rename_type(unloc(constructors.type));
+            constructors.type = rename_type(constructors.type);
         }
     }
     return decl;
@@ -180,13 +179,13 @@ Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
 Haskell::TypeSynonymDecl renamer_state::rename(Haskell::TypeSynonymDecl decl)
 {
     qualify_name(decl.name);
-    unloc(decl.rhs_type) = rename_type(unloc(decl.rhs_type));
+    decl.rhs_type = rename_type(decl.rhs_type);
     return decl;
 }
 
 Haskell::TypeFamilyDecl renamer_state::rename(Haskell::TypeFamilyDecl TF)
 {
-    qualify_name(TF.con);
+    qualify_name(unloc(TF.con));
 
     if (TF.where_instances)
         for(auto& inst: *TF.where_instances)

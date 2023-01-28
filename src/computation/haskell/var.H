@@ -57,6 +57,8 @@ struct Con: public Object
     Con(const std::string& s, int a):name(s),arity(a) {}
 };
 
+typedef Located<Con> LCon;
+
 }
 
 namespace std

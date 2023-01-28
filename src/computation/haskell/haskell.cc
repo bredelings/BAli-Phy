@@ -63,18 +63,18 @@ LExp apply(const LExp& head, const std::vector<LExp>& args)
     return exp;
 }
 
-string show_type_or_class_header(const Context& context, const string& name, const vector<TypeVar>& tvs)
+string show_type_or_class_header(const Context& context, const Located<string>& name, const vector<LTypeVar>& tvs)
 {
     vector<string> ss;
     if (context.constraints.size())
         ss = {context.print(), "=>"};
-    ss.push_back(name);
+    ss.push_back(unloc(name));
     for(auto& tv: tvs)
         ss.push_back(tv.print());
     return join(ss, " ");
 }
 
-string show_instance_header(const Context& context, const Type& constraint)
+string show_instance_header(const Context& context, const LType& constraint)
 {
     string result = constraint.print();
     if (context.constraints.size())
@@ -280,7 +280,7 @@ string Binds::print() const
 
 string ForeignDecl::print() const
 {
-    vector<string> v{"foreign", "import", "bpcall", '"'+string(plugin_name)+':'+string(symbol_name)+'"', function_name, "::", type.print()};
+    vector<string> v{"foreign", "import", "bpcall", '"'+string(plugin_name)+':'+string(symbol_name)+'"', unloc(function).name, "::", type.print()};
     return join(v," ");
 }
 
@@ -299,18 +299,18 @@ int ForeignDecl::n_args() const
     return n;
 }
 
-ForeignDecl::ForeignDecl(const std::string& n, const std::string& o, const Type& t)
-    : function_name(o), type(t)
+ForeignDecl::ForeignDecl(const std::string& n, const Hs::LVar& f, const LType& t)
+    : function(f), type(t)
 {
     vector<string> ns = split(n,":");
     if (ns.size() != 2)
-        throw myexception()<<"foreign declaration for "<<o<<": '"<<n<<"' should have exactly one colon";
+        throw myexception()<<"foreign declaration for "<<f.print()<<": '"<<n<<"' should have exactly one colon";
 
     plugin_name = ns[0];
     symbol_name = ns[1];
 
     if (symbol_name.empty())
-        symbol_name = function_name;
+        symbol_name = unloc(function).name;
 }
 
 string List::print() const
@@ -481,13 +481,13 @@ string GADTConstructorDecl::print()  const
     return join(names,", ") + " :: " + unloc(type).print();
 }
 
-std::vector<Type> ConstructorDecl::get_field_types() const
+std::vector<LType> ConstructorDecl::get_field_types() const
 {
     if (fields.index() == 0)
         return std::get<0>(fields);
     else
     {
-        vector<Type> types;
+        vector<LType> types;
         for(auto& fields: std::get<1>(fields).field_decls)
             for(int i=0;i<fields.field_names.size();i++)
                 types.push_back(fields.type);
@@ -518,7 +518,7 @@ std::string ConstructorDecl::print() const
     {
         result += context->print() + " => ";
     }
-    result += name;
+    result += con->print();
     if (fields.index() == 0)
     {
         for(auto& arg_type: std::get<0>(fields))
@@ -605,7 +605,7 @@ string TypeFamilyDecl::print() const
     std::ostringstream out;
     out<<"type family "<<con.print();
     for(auto& arg: args)
-        out<<" "<<arg.print_with_kind();
+        out<<" "<<unloc(arg).print_with_kind();
     if (kind_sig)
         out<<" :: "<<kind_sig->print();
     return out.str();
@@ -617,7 +617,7 @@ vector<Kind> TypeFamilyDecl::arg_kinds() const
     vector<Kind> ks;
 
     for(auto& arg: args)
-        ks.push_back(arg.kind.value_or(kind_type()));
+        ks.push_back(unloc(arg).kind.value_or(kind_type()));
 
     return ks;
 }
@@ -626,7 +626,7 @@ bool TypeFamilyDecl::has_kind_notes() const
 {
     bool kind_notes = kind_sig.has_value();
     for(auto& tv: args)
-        if (tv.kind)
+        if (unloc(tv).kind)
             kind_notes = true;
     return kind_notes;
 }
@@ -724,7 +724,7 @@ std::string DataOrNewtypeDecl::print() const
 std::optional<ConstructorDecl> ConstructorsDecl::find_constructor_by_name(const string& s) const
 {
     for(auto& constructor: *this)
-        if (constructor.name == s)
+        if (unloc(*constructor.con).name == s)
             return constructor;
     return {};
 }

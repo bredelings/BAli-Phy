@@ -484,7 +484,7 @@ void Module::compile(const Program& P)
     add_local_symbols(M.value_decls[0]);
 
     for(auto& f: M.foreign_decls)
-        def_function(f.function_name);
+        def_function( unloc(f.function).name );
 
     // Currently we do "renaming" here.
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
@@ -1091,7 +1091,7 @@ pair<string,expression_ref> parse_builtin(const Haskell::ForeignDecl& B, const m
 
     auto body = load_builtin(L, builtin_prefix + B.symbol_name, B.plugin_name, B.n_args(), operation_name);
 
-    return {B.function_name, body};
+    return {unloc(B.function).name, body};
 }
 
 CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls, CDecls cdecls)
@@ -1108,11 +1108,12 @@ CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::Forei
     return cdecls;
 }
 
-string get_constructor_name(const Hs::Type& constr)
+string get_constructor_name(const Hs::LType& constr)
 {
     auto [con,_] = Hs::decompose_type_apps(constr);
-    assert(con.is_a<Hs::TypeCon>());
-    return unloc(con.as_<Hs::TypeCon>().name);
+    auto tc = unloc(con).to<Hs::TypeCon>();
+    assert(tc);
+    return tc->name;
 }
 
 CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
@@ -1126,7 +1127,7 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
         {
             for(const auto& constr: d->get_constructors())
             {
-                auto cname = constr.name;
+                auto cname = unloc(*constr.con).name;
                 auto info = tc_state->con_info().at(cname);
                 int arity = info.dict_arity() + info.arity();
 
@@ -1399,7 +1400,7 @@ void Module::declare_fixities_(const Haskell::FixityDecl& FD)
 
     // Find op names and declare fixity and precedence.
     for(const auto& name: FD.names)
-        declare_fixity(name, precedence, FD.fixity);
+        declare_fixity(unloc(name), precedence, FD.fixity);
 }
 
 void Module::declare_fixities_(const Haskell::Decls& decls)
@@ -1454,7 +1455,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         }
         else if (auto data_decl = decl.to<Haskell::DataOrNewtypeDecl>())
         {
-            def_ADT(data_decl->name);
+            def_ADT(unloc(data_decl->name));
 
             // Why are we recording the arity here?  This is too early...
             // It looks like we use it when renaming patterns, but...
@@ -1462,15 +1463,15 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
             if (data_decl->is_regular_decl())
             {
                 for(const auto& constr: data_decl->get_constructors())
-                    def_constructor(constr.name, constr.arity(), data_decl->name);
+                    def_constructor(unloc(*constr.con).name, constr.arity(), unloc(data_decl->name));
             }
             else if (data_decl->is_gadt_decl())
             {
                 for(const auto& cons_decl: data_decl->get_gadt_constructors())
                     for(auto& con_name: cons_decl.con_names)
                     {
-                        int arity = Hs::gen_type_arity( unloc(cons_decl.type) );
-                        def_constructor(unloc(con_name), arity, data_decl->name);
+                        int arity = Hs::gen_type_arity( cons_decl.type );
+                        def_constructor(unloc(con_name), arity, unloc(data_decl->name));
                     }
             }
         }
@@ -1478,22 +1479,22 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         {
             auto& Class = decl.as_<Haskell::ClassDecl>();
 
-            def_type_class(Class.name);
+            def_type_class(unloc(Class.name));
 
             for(auto& tf: Class.type_fam_decls)
-                def_type_family( unloc(tf.con.name), tf.arity() );
+                def_type_family( unloc(tf.con).name, tf.arity() );
 
             for(auto& sig_decl: Class.sig_decls)
                 for(auto& v: sig_decl.vars)
-                    def_type_class_method(unloc(v).name, Class.name);
+                    def_type_class_method(unloc(v).name, unloc(Class.name));
         }
         else if (auto S = decl.to<Haskell::TypeSynonymDecl>())
         {
-            def_type_synonym(S->name, S->arity());
+            def_type_synonym(unloc(S->name), S->arity());
         }
         else if (auto TF = decl.to<Hs::TypeFamilyDecl>())
         {
-            def_type_family( unloc(TF->con.name), TF->arity() );
+            def_type_family( unloc(TF->con).name, TF->arity() );
         }
 }
 

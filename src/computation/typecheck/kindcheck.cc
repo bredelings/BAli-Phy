@@ -433,7 +433,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     push_type_var_scope();
 
     // a. Look up kind for this data type.
-    auto kind = kind_for_type_con(data_decl.name);  // FIXME -- check that this is a data type?
+    auto kind = kind_for_type_con(unloc(data_decl.name));  // FIXME -- check that this is a data type?
 
     // b. Put each type variable into the kind.
     for(auto& tv: desugar(data_decl.type_vars))
@@ -455,7 +455,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
         kind_check_constraint(constraint);
 
     // d. construct the data type
-    Type data_type = TypeCon(Unlocated(data_decl.name));
+    Type data_type = TypeCon(data_decl.name);
     for(auto& tv: desugar(data_decl.type_vars))
         data_type = TypeApp(data_type, tv);
 
@@ -473,7 +473,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     {
         // We should ensure that these types follow: forall univ_tvs. stupid_theta => forall ex_tvs. written_type
         for(auto& data_cons_decl: data_decl.get_gadt_constructors())
-            kind_and_type_check_type(desugar(unloc(data_cons_decl.type)));
+            kind_and_type_check_type(desugar(data_cons_decl.type));
     }
 }
 
@@ -482,7 +482,7 @@ constr_env kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
     push_type_var_scope();
 
     // a. Look up kind for this data type.
-    auto k = kind_for_type_con(data_decl.name);  // FIXME -- check that this is a data type?
+    auto k = kind_for_type_con(unloc(data_decl.name));  // FIXME -- check that this is a data type?
 
     // b. Bind each type variable.
     vector<TypeVar> datatype_typevars;
@@ -510,7 +510,7 @@ constr_env kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
     // We should already have checked that it doesn't contain any unbound variables.
 
     // d. construct the data type
-    auto data_type_con = TypeCon(Unlocated(data_decl.name));
+    auto data_type_con = TypeCon(data_decl.name);
     Type data_type = data_type_con;
     for(auto& tv: datatype_typevars)
         data_type = TypeApp(data_type, tv);
@@ -525,7 +525,7 @@ constr_env kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
             info.uni_tvs = datatype_typevars;
             info.data_type = data_type_con;
             info.top_constraints = desugar(data_decl.context.constraints);
-            types = types.insert({constructor.name, info});
+            types = types.insert({unloc(*constructor.con).name, info});
         }
     }
 
@@ -539,7 +539,7 @@ constr_env kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
             DataConInfo info;
 
             // 1. Kind-check and add foralls for free type vars.
-            auto written_type = desugar(unloc(data_cons_decl.type));
+            auto written_type = desugar(data_cons_decl.type);
             written_type = kind_and_type_check_type( written_type );
 
             // 2. Extract tyvar, givens, and rho type.
@@ -569,7 +569,7 @@ constr_env kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
                 }
                 else
                 {
-                    auto u_tv = fresh_vars.fresh_other_type_var(*data_decl.type_vars[i].kind);
+                    auto u_tv = fresh_vars.fresh_other_type_var(*unloc(data_decl.type_vars[i]).kind);
                     u_tvs.push_back(u_tv);
                     info.gadt_eq_constraints.push_back(make_equality_pred(u_tv,arg));
                 }
@@ -636,7 +636,7 @@ void kindchecker_state::kind_check_type_class(const Hs::ClassDecl& class_decl)
     // Bind type parameters for class
     push_type_var_scope();
 
-    auto& name = class_decl.name;
+    auto& name = unloc(class_decl.name);
 
     // a. Look up kind for this data type.
     auto k = kind_for_type_con(name); // FIXME -- check that this is a type class?
@@ -675,7 +675,7 @@ void kindchecker_state::kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_de
     // Bind type parameters for class
     push_type_var_scope();
 
-    auto& name = type_syn_decl.name;
+    auto& name = unloc(type_syn_decl.name);
 
     // a. Look up kind for this data type.
     auto k = kind_for_type_con(name); // FIXME -- check that this is a type class?
@@ -695,7 +695,7 @@ void kindchecker_state::kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_de
     }
     assert(k.is_a<KindStar>());
 
-    kind_check_type_of_kind( desugar(unloc(type_syn_decl.rhs_type)), kind_type() );
+    kind_check_type_of_kind( desugar(type_syn_decl.rhs_type), kind_type() );
 
     pop_type_var_scope();
 }
@@ -712,21 +712,21 @@ type_con_env kindchecker_state::infer_kinds(const vector<expression_ref>& type_d
         if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
         {
             auto& D = type_decl.as_<Hs::DataOrNewtypeDecl>();
-            name = D.name;
+            name = unloc(D.name);
             arity = D.type_vars.size();
             kind = kind_type();
         }
         else if (type_decl.is_a<Hs::ClassDecl>())
         {
             auto& C = type_decl.as_<Hs::ClassDecl>();
-            name = C.name;
+            name = unloc(C.name);
             arity = C.type_vars.size();
             kind = kind_constraint();
         }
         else if (type_decl.is_a<Hs::TypeSynonymDecl>())
         {
             auto & T = type_decl.as_<Hs::TypeSynonymDecl>();
-            name = T.name;
+            name = unloc(T.name);
             arity = T.type_vars.size();
             kind = kind_type();
         }

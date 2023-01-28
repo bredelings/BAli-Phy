@@ -111,6 +111,8 @@ namespace Haskell
 
     typedef expression_ref Kind;
 
+    typedef Located<Type> LType;
+
 inline std::ostream& operator<<(std::ostream& o,const Type& t)
 {
     return o<<t.print();
@@ -119,7 +121,7 @@ inline std::ostream& operator<<(std::ostream& o,const Type& t)
 class TypeVar
 {
 public:
-    Located<std::string> name;
+    std::string name;
     std::optional<int> index;
 
     std::optional<Kind> kind;
@@ -131,16 +133,17 @@ public:
     std::string print_with_kind() const;
 
     TypeVar();
-    TypeVar(const Located<std::string>& s);
-    TypeVar(int l, const Located<std::string>& s);
-    TypeVar(const Located<std::string>& s, const Kind& k);
-    TypeVar(int l, const Located<std::string>& s, const Kind& k);
+    TypeVar(const std::string& s);
+    TypeVar(int l, const std::string& s);
+    TypeVar(const std::string& s, const Kind& k);
+    TypeVar(int l, const std::string& s, const Kind& k);
 };
 
+typedef Located<TypeVar> LTypeVar;
 
 struct TypeCon
 {
-    Located<std::string> name;
+    std::string name;
     std::optional<Kind> kind;
 
     bool operator==(const TypeCon&) const;
@@ -150,64 +153,66 @@ struct TypeCon
     std::string print_with_kind() const;
 
     TypeCon() = default;
-    TypeCon(const Located<std::string>& s):name(s) {}
-    TypeCon(const Located<std::string>& s, const Kind& k):name(s),kind(k) {}
+    TypeCon(const std::string& s):name(s) {}
+    TypeCon(const std::string& s, const Kind& k):name(s),kind(k) {}
 };
+
+typedef Located<TypeCon> LTypeCon;
 
 struct Context
 {
-    std::vector<Type> constraints;
+    std::vector<LType> constraints;
 
     bool operator==(const Context& t) const;
 
     std::string print() const;
     Context() = default;
-    Context(const std::vector<Type>& cs): constraints(cs) {}
+    Context(const std::vector<LType>& cs): constraints(cs) {}
 };
 
 
 struct TupleType
 {
-    std::vector<Type> element_types;
+    std::vector<LType> element_types;
 
     bool operator==(const TupleType& t) const;
 
     std::string print() const;
-    TupleType(const std::vector<Type>& v):element_types(v) {
+    TupleType(const std::vector<LType>& v):element_types(v) {
         assert(v.size() != 1);
     }
 };
 
-Type tuple_type(const std::vector<Type>& v);
+Type tuple_type(const std::vector<LType>& v);
 
 struct ListType
 {
-    Type element_type;
+    LType element_type;
 
     bool operator==(const ListType& t) const;
 
     std::string print() const;
-    ListType(const Type& t):element_type(t) {};
+    ListType(const LType& t):element_type(t) {};
 };
 
 struct TypeApp
 {
-    Type head;
-    Type arg;
+    LType head;
+    LType arg;
 
     bool operator==(const TypeApp& t) const;
 
     std::string print() const;
-    TypeApp(const Type& t1, const Type& t2):head(t1), arg(t2) {}
+    TypeApp(const LType& t1, const LType& t2):head(t1), arg(t2) {}
 };
 
-Type make_tyapps(const std::vector<Type>& tyapps);
-Type make_tyapps(const Type& T0, const std::vector<Type>& args);
+LType make_tyapps(const std::vector<LType>& tyapps);
+LType make_tyapps(const LType& T0, const std::vector<LType>& args);
 
 template <typename T>
-Type make_tyapps(const Type& T0, const std::vector<T>& args)
+LType make_tyapps(const LType& T0, const std::vector<T>& args)
 {
-    std::vector<Type> type_args;
+    std::vector<LType> type_args;
     for(auto& arg: args)
         type_args.push_back(arg);
 
@@ -216,66 +221,66 @@ Type make_tyapps(const Type& T0, const std::vector<T>& args)
 
 struct ForallType
 {
-    std::vector<TypeVar> type_var_binders;
-    Type type;
+    std::vector<LTypeVar> type_var_binders;
+    LType type;
 
     bool operator==(const ForallType& t) const;
     std::string print() const;
-    ForallType(const std::vector<TypeVar>& tvb, const Type& t):type_var_binders(tvb), type(t) {}
+    ForallType(const std::vector<LTypeVar>& tvb, const LType& t):type_var_binders(tvb), type(t) {}
 };
 
-Type add_forall_vars(const std::vector<TypeVar>& type_vars, const Type& type);
+//Type add_forall_vars(const std::vector<TypeVar>& type_vars, const Type& type);
 
 struct ConstrainedType
 {
     Context context;
-    Type type;
+    LType type;
 
     bool operator==(const ConstrainedType& t) const;
     std::string print() const;
-    ConstrainedType(const Context& c, const Type& t):context(c), type(t) {}
+    ConstrainedType(const Context& c, const LType& t):context(c), type(t) {}
 };
 
-Type add_constraints(const std::vector<Type>& constraints, const Type& type);
-Type add_constraints(const Context& constraints, const Type& type);
+Type add_constraints(const std::vector<LType>& constraints, const LType& type);
+Type add_constraints(const Context& constraints, const LType& type);
 
 struct StrictType
 {
-    Type type;
+    LType type;
 
     bool operator==(const StrictType& t) const;
     std::string print() const;
-    StrictType(const Type& t):type(t) {}
+    StrictType(const LType& t):type(t) {}
 };
 
 struct LazyType
 {
-    Type type;
+    LType type;
 
     bool operator==(const LazyType& t) const;
     std::string print() const;
-    LazyType(const Type& t):type(t) {}
+    LazyType(const LType& t):type(t) {}
 };
 
 struct TypeOfKind
 {
-    Type type;
+    LType type;
     Kind kind;
 
     bool operator==(const TypeOfKind& t) const;
     std::string print() const;
-    TypeOfKind(const Type& t, const Kind& k):type(t), kind(k) {}
+    TypeOfKind(const LType& t, const Kind& k):type(t), kind(k) {}
 };
 
-std::string parenthesize_type(Type t);
+std::string parenthesize_type(const LType& t);
 
-std::pair<Type,std::vector<Type>> decompose_type_apps(Type t);
+std::pair<LType,std::vector<LType>> decompose_type_apps(LType t);
 
-std::optional<std::pair<Type,Type>> is_function_type(const Type& t);
+std::optional<std::pair<LType,LType>> is_function_type(const LType& t);
 
-std::optional<std::pair<Type,Type>> is_gen_function_type(const Type& t);
+std::optional<std::pair<LType,LType>> is_gen_function_type(const LType& t);
 
-int gen_type_arity(Type t);
+int gen_type_arity(LType t);
 }
 
 namespace Hs = Haskell;
@@ -287,7 +292,16 @@ namespace std
     public :
         size_t operator()(const Hs::TypeVar &x) const
         {
-            return std::hash<std::string>()(unloc(x.name));
+            return std::hash<std::string>()(x.name);
+        }
+    };
+
+    template <>
+    class hash < Hs::LTypeVar >{
+    public :
+        size_t operator()(const Hs::LTypeVar &x) const
+        {
+            return std::hash<std::string>()(unloc(x).name);
         }
     };
 }

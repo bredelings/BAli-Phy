@@ -53,7 +53,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
     ClassInfo class_info;
     class_info.type_vars = desugar(class_decl.type_vars);
-    class_info.name = class_decl.name;
+    class_info.name = unloc(class_decl.name);
     class_info.context = desugar(class_decl.context);
 
     // 1. Bind type parameters for class
@@ -67,7 +67,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         K.bind_type_var(tv, *tv.kind);
 
     // 2. construct the constraint that represent the class
-    Type class_constraint = TypeCon(Unlocated(class_decl.name)); // put class_kind into TypeCon?
+    Type class_constraint = TypeCon(class_decl.name); // put class_kind into TypeCon?
     for(auto& tv: desugar(class_decl.type_vars))
         class_constraint = TypeApp(class_constraint, tv);
 
@@ -155,9 +155,9 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     for(auto& type_fam_decl: class_decl.type_fam_decls)
     {
         auto args = desugar(type_fam_decl.args);
-        auto fname = unloc(type_fam_decl.con.name);
+        auto fname = unloc(type_fam_decl.con).name;
         auto kind = tycon_info().at(fname).kind;
-        TypeFamInfo info(args, kind, class_decl.name);
+        TypeFamInfo info(args, kind, unloc(class_decl.name));
 
         auto con = desugar(type_fam_decl.con);
         type_fam_info().insert({con, info});
@@ -208,7 +208,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         class_info.associated_type_families.at(tf_con) = true;
 
         // Add the default type instance -- no need for variables to match the class.
-        check_add_type_instance(def_inst, class_decl.name, {});
+        check_add_type_instance(def_inst, unloc(class_decl.name), {});
 
         pop_note();
     }
@@ -257,9 +257,9 @@ TypeChecker::get_type_synonyms(const Hs::Decls& decls)
         auto t = decl.to<Hs::TypeSynonymDecl>();
         if (not t) continue;
 
-        auto name = t->name;
+        auto name = unloc(t->name);
         auto type_vars = desugar(t->type_vars);
-        auto rhs_type = desugar(unloc(t->rhs_type));
+        auto rhs_type = desugar(t->rhs_type);
 
         // ensure that these type variables will never occur in the arguments
         substitution_t s;
@@ -283,7 +283,7 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
         if (auto type_fam_decl = decl.to<Hs::TypeFamilyDecl>())
         {
             auto args = desugar(type_fam_decl->args);
-            auto fname = unloc(type_fam_decl->con.name);
+            auto fname = unloc(type_fam_decl->con).name;
             auto kind = tycon_info().at(fname).kind;
             TypeFamInfo info(args, kind);
 

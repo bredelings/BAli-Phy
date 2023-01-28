@@ -837,20 +837,22 @@ TypeCon list_tycon()
 }
 
 
-TypeVar desugar(const Hs::TypeVar& tv)
+TypeVar desugar(const Hs::LTypeVar& ltv)
 {
+    auto& tv = unloc(ltv);
     TypeVar t2;
-    t2.name = tv.name;
+    t2.name = {ltv.loc,tv.name};
     t2.index = tv.index;
     t2.kind = tv.kind;
     return t2;
 }
 
-TypeCon desugar(const Hs::TypeCon& tv)
+TypeCon desugar(const Hs::LTypeCon& ltc)
 {
+    auto& tc = unloc(ltc);
     TypeCon t2;
-    t2.name = tv.name;
-    t2.kind = tv.kind;
+    t2.name = {ltc.loc,tc.name};
+    t2.kind = tc.kind;
     return t2;
 }
 
@@ -861,7 +863,7 @@ Context desugar(const Hs::Context& c)
     return c2;
 }
 
-vector<TypeVar> desugar(const std::vector<Hs::TypeVar>& ts1)
+vector<TypeVar> desugar(const std::vector<Hs::LTypeVar>& ts1)
 {
     vector<TypeVar> ts2;
     for(auto& t1: ts1)
@@ -869,19 +871,16 @@ vector<TypeVar> desugar(const std::vector<Hs::TypeVar>& ts1)
     return ts2;
 }
 
-Type desugar(const Hs::Type& t)
+Type desugar(const Hs::LType& lt)
 {
+    auto& [loc, t] = lt;
+
     if (t.empty())
         return {};
     else if (auto tv = t.to<Hs::TypeVar>())
-        return desugar(*tv);
+        return desugar(Hs::LTypeVar{loc, *tv});
     else if (auto tc = t.to<Hs::TypeCon>())
-    {
-        TypeCon t2;
-        t2.name = tc->name;
-        t2.kind = tc->kind;
-        return t2;
-    }
+        return desugar(Hs::LTypeCon{loc, *tc});
     else if (auto l= t.to<Hs::ListType>())
     {
         return list_type( desugar(l->element_type) );
@@ -925,7 +924,7 @@ Type desugar(const Hs::Type& t)
         std::abort();
 }
 
-vector<Type> desugar(const std::vector<Hs::Type>& ts1)
+vector<Type> desugar(const std::vector<Hs::LType>& ts1)
 {
     vector<Type> ts2;
     for(auto& t1: ts1)

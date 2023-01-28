@@ -210,53 +210,53 @@ struct InfixExp: public Object
 struct TypedExp: public Object
 {
     LExp exp;
-    Type type;
+    LType type;
     Core::wrapper wrap;
 
     TypedExp* clone() const { return new TypedExp(*this);}
     std::string print() const;
 
     TypedExp() = default;
-    TypedExp(const LExp& e, const Type& t): exp(e), type(t) {}
+    TypedExp(const LExp& e, const LType& t): exp(e), type(t) {}
 };
 
 struct SignatureDecl: public Object
 {
     std::vector<LVar> vars;
-    Type type;
+    LType type;
 
     SignatureDecl* clone() const { return new SignatureDecl(*this);}
     std::string print() const;
 
     SignatureDecl() = default;
-    SignatureDecl(const std::vector<LVar>& vs, const Type& t): vars(vs), type(t) {}
+    SignatureDecl(const std::vector<LVar>& vs, const LType& t): vars(vs), type(t) {}
 };
 
 struct KindSigDecl: public Object
 {
-    std::vector<TypeCon> tycons;
+    std::vector<LTypeCon> tycons;
     Kind kind;
 
     KindSigDecl* clone() const { return new KindSigDecl(*this);}
     std::string print() const;
 
     KindSigDecl() = default;
-    KindSigDecl(const std::vector<TypeCon>& tcs, const Kind& k): tycons(tcs), kind(k) {}
+    KindSigDecl(const std::vector<LTypeCon>& tcs, const Kind& k): tycons(tcs), kind(k) {}
 };
 
 struct ForeignDecl: public Object
 {
     std::string plugin_name;
     std::string symbol_name;
-    std::string function_name;
-    Type type;
+    Hs::LVar function;
+    LType type;
 
     int n_args() const;
 
     ForeignDecl* clone() const {return new ForeignDecl(*this);}
     std::string print() const;
 
-    ForeignDecl(const std::string& n, const std::string& o, const Type& t);
+    ForeignDecl(const std::string& n, const Hs::LVar& f, const LType& t);
 };
 
 // I think that these can originally be only
@@ -281,7 +281,7 @@ public:
 struct Binds: public std::vector<Decls>
 {
     // FIXME: I should keep the SignatureDecl around for error messages.
-    std::map<LVar, Type> signatures;
+    std::map<LVar, LType> signatures;
 
     std::string print() const;
 
@@ -296,23 +296,23 @@ struct FixityDecl: public Object
 {
     Fixity fixity;
     std::optional<int> precedence;
-    std::vector<std::string> names;
+    std::vector<Located<std::string>> names;
 
     FixityDecl* clone() const { return new FixityDecl(*this);}
     std::string print()  const;
 
     FixityDecl() = default;  // so this can be a token value.
-    FixityDecl(Fixity f, std::optional<int> oi, const std::vector<std::string>& v): fixity(f), precedence(oi), names(v) {}
+    FixityDecl(Fixity f, std::optional<int> oi, const std::vector<Located<std::string>>& v): fixity(f), precedence(oi), names(v) {}
 };
 
 struct FieldDecl
 {
     std::vector<LVar> field_names;
-    Type type;
+    LType type;
     std::string print()  const;
 
     FieldDecl() = default;       // so this can be a token value.
-    FieldDecl(const std::vector<LVar>& vs, const Type& t):field_names(vs),type(t) {}
+    FieldDecl(const std::vector<LVar>& vs, const LType& t):field_names(vs),type(t) {}
 };
 
 
@@ -329,11 +329,11 @@ struct FieldDecls: public Object
 struct GADTConstructorDecl
 {
     std::vector<Located<std::string>> con_names;
-    Located<Type> type;
+    LType type;
     std::string print() const;
 
     GADTConstructorDecl() = default; // so this can be a token value
-    GADTConstructorDecl(const std::vector<Located<std::string>>& cs, const Located<Type>& t):con_names(cs), type(t) {}
+    GADTConstructorDecl(const std::vector<Located<std::string>>& cs, const LType& t):con_names(cs), type(t) {}
 };
 
 struct GADTConstructorsDecl: public std::vector<GADTConstructorDecl>
@@ -344,13 +344,13 @@ struct GADTConstructorsDecl: public std::vector<GADTConstructorDecl>
 
 struct ConstructorDecl
 {
-    std::vector<TypeVar> forall;           // list of type variables we are forall-ing over.
-    std::optional<Context> context;  // type constraints
+    std::vector<LTypeVar> forall;           // list of type variables we are forall-ing over.
+    std::optional<Context> context;         // type constraints
 
-    std::string name;                // the name of the constructor
-    std::variant< std::vector<Type>, FieldDecls> fields;
+    std::optional<Hs::LCon> con;            // the name of the constructor
+    std::variant< std::vector<LType>, FieldDecls> fields;
 
-    std::vector<Type> get_field_types() const;
+    std::vector<LType> get_field_types() const;
 
     std::string print() const;
 
@@ -360,17 +360,17 @@ struct ConstructorDecl
 
     ConstructorDecl() = default;
 
-    ConstructorDecl(const std::vector<TypeVar>& tvs, std::optional<Context> c, const std::string& s, std::vector<Type>& as)
+    ConstructorDecl(const std::vector<LTypeVar>& tvs, const std::optional<Context>& ct, const Hs::LCon& c, std::vector<LType>& as)
         :forall(tvs),
-         context(c),
-         name(s),
+         context(ct),
+         con(c),
          fields(as)
    { }
 
-    ConstructorDecl(const std::vector<TypeVar>& tvs, std::optional<Context> c, const std::string& s, const FieldDecls& fds)
+    ConstructorDecl(const std::vector<LTypeVar>& tvs, const std::optional<Context>& ct, const Hs::LCon& c, const FieldDecls& fds)
         :forall(tvs),
-         context(c),
-         name(s),
+         context(ct),
+         con(c),
          fields(fds)
    { }
 };
@@ -393,8 +393,8 @@ struct DataOrNewtypeDecl: public Object
 
     // Should I factor out this group into a DataOrNewtypeHeader?
     DataOrNewtype data_or_newtype;
-    std::string name;
-    std::vector<TypeVar> type_vars;
+    Located<std::string> name;
+    std::vector<LTypeVar> type_vars;
     Context context;
     std::optional<Kind> kind_sig;
 
@@ -418,8 +418,8 @@ struct DataOrNewtypeDecl: public Object
     std::string print() const;
 
     DataOrNewtypeDecl(DataOrNewtype dn,
-                      const std::string& s,
-                      const std::vector<TypeVar>& tvs,
+                      const Located<std::string>& s,
+                      const std::vector<LTypeVar>& tvs,
                       const Context& ct,
                       const std::optional<Kind>& k)
         :data_or_newtype(dn),
@@ -430,8 +430,8 @@ struct DataOrNewtypeDecl: public Object
         {}
 
     DataOrNewtypeDecl(DataOrNewtype dn,
-                      const std::string& s,
-                      const std::vector<TypeVar>& tvs,
+                      const Located<std::string>& s,
+                      const std::vector<LTypeVar>& tvs,
                       const Context& ct,
                       const std::optional<Kind>& k,
                       const ConstructorsDecl& cs)
@@ -444,8 +444,8 @@ struct DataOrNewtypeDecl: public Object
         {}
 
     DataOrNewtypeDecl(DataOrNewtype dn,
-                      const std::string& s,
-                      const std::vector<TypeVar>& tvs,
+                      const Located<std::string>& s,
+                      const std::vector<LTypeVar>& tvs,
                       const Context& ct,
                       const std::optional<Kind>& k,
                       const GADTConstructorsDecl& gadt_cs)
@@ -462,18 +462,18 @@ struct TypeSynonymDecl: public Object
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
-    std::string name;
-    std::vector<TypeVar> type_vars;
+    Located<std::string> name;
+    std::vector<LTypeVar> type_vars;
 
-    Located<Type> rhs_type;
+    LType rhs_type;
 
     int arity() const {return type_vars.size();}
 
     TypeSynonymDecl* clone() const { return new TypeSynonymDecl(*this);}
     std::string print() const;
 
-    TypeSynonymDecl(const std::string& s,
-                    const std::vector<TypeVar>& tvs,
+    TypeSynonymDecl(const Located<std::string>& s,
+                    const std::vector<LTypeVar>& tvs,
                     const Located<Type>& rhs)
         :name(s),
          type_vars(tvs),
@@ -483,16 +483,16 @@ struct TypeSynonymDecl: public Object
 
 struct TypeFamilyInstanceEqn: public Object
 {
-    // std::vector<TypeVar> forall;
-    TypeCon con;
-    std::vector<Type> args;
-    Type rhs;
+    // std::vector<LTypeVar> forall;
+    Located<TypeCon> con;
+    std::vector<LType> args;
+    LType rhs;
 
     TypeFamilyInstanceEqn* clone() const { return new TypeFamilyInstanceEqn(*this);}
     std::string print() const;
 
     TypeFamilyInstanceEqn() = default;
-    TypeFamilyInstanceEqn(const TypeCon& tc, const std::vector<Type>& as, const Type& t):
+    TypeFamilyInstanceEqn(const LTypeCon& tc, const std::vector<LType>& as, const LType& t):
         con(tc), args(as), rhs(t)
     {}
 };
@@ -509,8 +509,8 @@ struct TypeFamilyInstanceDecl: public TypeFamilyInstanceEqn
 
 struct TypeFamilyDecl: public Object
 {
-    TypeCon con;
-    std::vector<TypeVar> args;
+    LTypeCon con;
+    std::vector<LTypeVar> args;
     std::optional<Kind> kind_sig;
     // optional injectivity clause
     std::optional<std::vector<TypeFamilyInstanceEqn>> where_instances;
@@ -525,7 +525,7 @@ struct TypeFamilyDecl: public Object
 
     std::string print() const;
 
-    TypeFamilyDecl(const TypeCon& tc, const std::vector<TypeVar>& as, const std::optional<Kind>& ks,
+    TypeFamilyDecl(const LTypeCon& tc, const std::vector<LTypeVar>& as, const std::optional<Kind>& ks,
                    const std::optional<std::vector<TypeFamilyInstanceEqn>>& es)
         :con(tc),
          args(as),
@@ -539,8 +539,8 @@ struct ClassDecl: public Object
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
     Context context;
-    std::string name;
-    std::vector<TypeVar> type_vars;
+    Located<std::string> name;
+    std::vector<LTypeVar> type_vars;
 
     std::vector<FixityDecl> fixity_decls;
 
@@ -553,8 +553,8 @@ struct ClassDecl: public Object
     std::string print() const;
 
     ClassDecl(const Context& ct,
-              const std::string& s,
-              const std::vector<TypeVar>& tvs,
+              const Located<std::string>& s,
+              const std::vector<LTypeVar>& tvs,
               const std::vector<FixityDecl>& fxs,
               const std::vector<TypeFamilyDecl>& tfds,
               const std::vector<TypeFamilyInstanceDecl>& tids,
@@ -578,7 +578,7 @@ struct InstanceDecl: public Object
     // This should be something like Eq a => Eq [a]
     // Right now it could be either ForallType or ConstrainedType
     Context context;
-    Type constraint;
+    LType constraint;
 
     std::vector<TypeFamilyInstanceDecl> type_inst_decls;
     Decls method_decls;
@@ -587,7 +587,7 @@ struct InstanceDecl: public Object
     std::string print() const;
 
     InstanceDecl(const Context& c,
-                 const Type& t,
+                 const LType& t,
                  const std::vector<TypeFamilyInstanceDecl>& tids,
                  const Decls& ds)
         :context(c),
@@ -599,11 +599,11 @@ struct InstanceDecl: public Object
 
 struct DefaultDecl: public Object
 {
-    std::vector<Type> types;
+    std::vector<LType> types;
     DefaultDecl() {}
     DefaultDecl* clone() const { return new DefaultDecl(*this);}
     std::string print() const;
-    DefaultDecl(const std::vector<Type>& ts):types(ts) {}
+    DefaultDecl(const std::vector<LType>& ts):types(ts) {}
 };
 
 

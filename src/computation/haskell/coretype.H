@@ -355,13 +355,13 @@ namespace std
     };
 }
 
-TypeVar desugar(const Hs::TypeVar& t);
-TypeCon desugar(const Hs::TypeCon& t);
+TypeVar desugar(const Hs::LTypeVar& t);
+TypeCon desugar(const Hs::LTypeCon& t);
 Context desugar(const Hs::Context& c);
-std::vector<TypeVar> desugar(const std::vector<Hs::TypeVar>& t);
+std::vector<TypeVar> desugar(const std::vector<Hs::LTypeVar>& t);
 
-Type desugar(const Hs::Type& t);
-std::vector<Type> desugar(const std::vector<Hs::Type>& t);
+Type desugar(const Hs::LType& t);
+std::vector<Type> desugar(const std::vector<Hs::LType>& t);
 
 std::optional< std::tuple<TypeCon, Type, Type> > is_type_op(const Type& t);
 #endif 

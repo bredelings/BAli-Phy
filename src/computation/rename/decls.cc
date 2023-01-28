@@ -41,7 +41,7 @@ using std::deque;
 // What are the rules for well-formed patterns?
 // Only one op can be a non-constructor (in decl patterns), and that op needs to end up at the top level.
 
-pair<map<Hs::LVar,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls); // value decls, signature decls, and fixity decls
+pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls); // value decls, signature decls, and fixity decls
 
 
 bool is_definitely_pattern(const Haskell::Expression& lhs)
@@ -120,9 +120,9 @@ optional<Hs::Var> fundecl_head(const expression_ref& decl)
 }
 
 // Probably we should first partition by (same x y = x and y are both function decls for the same variable)
-pair<map<Hs::LVar,Hs::Type>, Hs::Decls> group_decls(const Haskell::Decls& decls)
+pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls)
 {
-    map<Hs::LVar, Hs::Type> signatures;
+    map<Hs::LVar, Hs::LType> signatures;
 
     Haskell::Decls decls2;
 
@@ -244,20 +244,20 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
     return new_binders;
 }
 
-bound_var_info renamer_state::rename_signatures(map<Hs::LVar, Hs::Type>& signatures, bool top)
+bound_var_info renamer_state::rename_signatures(map<Hs::LVar, Hs::LType>& signatures, bool top)
 {
     bound_var_info bound;
-    map<Hs::LVar, Hs::Type> signatures2;
-    for(auto& [lvar, type]: signatures)
+    map<Hs::LVar, Hs::LType> signatures2;
+    for(auto& [lvar, ltype]: signatures)
     {
         assert(not is_qualified_symbol(unloc(lvar).name));
-        type = rename_type(type);
+        ltype = rename_type(ltype);
 
         auto lvar2 = lvar;
         auto& var2 = unloc(lvar2);
         if (top)
             qualify_name(var2.name);
-        signatures2.insert( {lvar2, type} );
+        signatures2.insert( {lvar2, ltype} );
 
         bound.insert(var2.name);
     }

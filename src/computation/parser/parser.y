@@ -27,19 +27,19 @@
 
   std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
-  Hs::Kind type_to_kind(const Hs::Type& kind);
-  Hs::ConstructorDecl make_constructor(const std::vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::Type& typeish);
-  Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& type, const std::optional<Located<Hs::Decls>>& decls);
-  Hs::TypeSynonymDecl make_type_synonym(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type);
-  Hs::TypeFamilyDecl make_type_family(const Located<Hs::Type>& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
+  Hs::Kind type_to_kind(const Hs::LType& kind);
+  Hs::ConstructorDecl make_constructor(const std::vector<Hs::LTypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::LType& typeish);
+  Hs::InstanceDecl make_instance_decl(const Hs::LType& type, const std::optional<Located<Hs::Decls>>& decls);
+  Hs::TypeSynonymDecl make_type_synonym(const Hs::LType& lhs_type, const Hs::LType& rhs_type);
+  Hs::TypeFamilyDecl make_type_family(const Hs::LType& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
                                       const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns);
-  Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type);
+  Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Hs::LType& lhs_type, const Hs::LType& rhs_type);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
-                                             const Hs::Type& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs);
+                                             const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
-                                             const Hs::Type& header, const std::optional<Hs::Kind>&, const std::optional<Hs::GADTConstructorsDecl>& constrs);
-  Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const std::optional<Located<Hs::Decls>>& decls);
-  Hs::Context make_context(const Hs::Type& context);
+                                             const Hs::LType& header, const std::optional<Hs::Kind>&, const std::optional<Hs::GADTConstructorsDecl>& constrs);
+  Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header, const std::optional<Located<Hs::Decls>>& decls);
+  Hs::Context make_context(const Hs::LType& context);
 
   expression_ref yy_make_string(const std::string&);
 }
@@ -243,7 +243,7 @@
 
 %type <std::optional<int>> prec
 %type <Hs::Fixity> infix
-%type <std::vector<std::string>> ops
+%type <std::vector<Located<std::string>>> ops
 
 
 %type <Hs::Decls> topdecls
@@ -255,7 +255,7 @@
 
 %type <expression_ref> standalone_kind_sig
 
-%type <std::vector<Hs::TypeCon>> sks_vars
+%type <std::vector<Hs::LTypeCon>> sks_vars
 
  /*
 %type <void> overlap_pragma
@@ -267,7 +267,7 @@
 %type <std::optional<Located<Hs::Kind>>> opt_tyfam_kind_sig
 %type <std::optional<Located<Hs::Kind>>> opt_at_kind_inj_sig
 
-%type <std::pair<Hs::Context,Hs::Type>> tycl_hdr
+%type <std::pair<Hs::Context,Hs::LType>> tycl_hdr
 /* %type <void> capi_ctype 
 
 
@@ -308,40 +308,40 @@
 %type <void> stringlist
 %type <expression_ref> opt_sig
  */
-%type <Hs::Type> opt_tyconsig
-%type <Hs::Type> sigtype
+%type <std::optional<Hs::LType>> opt_tyconsig
+%type <Hs::LType> sigtype
  /* %type <Hs::Type> sigktype */
-%type <Hs::Type> sigtypedoc
+%type <Hs::LType> sigtypedoc
 %type <std::vector<Hs::LVar>> sig_vars
-%type <std::vector<Hs::Type>> sigtypes1
+%type <std::vector<Hs::LType>> sigtypes1
 
-%type <Hs::Type> ktype
-%type <Hs::Type> ctype
-%type <Hs::Type> ctypedoc
+%type <Hs::LType> ktype
+%type <Hs::LType> ctype
+%type <Hs::LType> ctypedoc
 %type <Hs::Context> context
 %type <Hs::Context> context_no_ops
-%type <Hs::Type> type
-%type <Hs::Type> typedoc
-%type <Hs::Type> btype
-%type <std::vector<Hs::Type>> btype_no_ops
-%type <Hs::Type> infixtype
-%type <Hs::Type> ftype
-%type <Hs::Type> tyarg
+%type <Hs::LType> type
+%type <Hs::LType> typedoc
+%type <Hs::LType> btype
+%type <std::vector<Hs::LType>> btype_no_ops
+%type <Hs::LType> infixtype
+%type <Hs::LType> ftype
+%type <Hs::LType> tyarg
 %type <std::string> tyop
-%type <Hs::Type> atype_docs
-%type <Hs::Type> atype
-%type <Hs::Type> inst_type
+%type <Hs::LType> atype_docs
+%type <Hs::LType> atype
+%type <Hs::LType> inst_type
  /*
 %type <void> deriv_types
  */
-%type <std::vector<Hs::Type>> comma_types0
-%type <std::vector<Hs::Type>> comma_types1
+%type <std::vector<Hs::LType>> comma_types0
+%type <std::vector<Hs::LType>> comma_types1
  /*
 %type <void> bar_types2
  */
-%type <std::vector<Hs::TypeVar>> tv_bndrs
-%type <Hs::TypeVar> tv_bndr
-%type <Hs::TypeVar> tv_bndr_no_braces
+%type <std::vector<Hs::LTypeVar>> tv_bndrs
+%type <Hs::LTypeVar> tv_bndr
+%type <Hs::LTypeVar> tv_bndr_no_braces
 
  /*
 %type <void> fds
@@ -359,8 +359,8 @@
 %type <Hs::ConstructorsDecl> constrs
 %type <Hs::ConstructorsDecl> constrs1
 %type <Hs::ConstructorDecl> constr
-%type <std::vector<Hs::TypeVar>> forall
-%type <Hs::Type> constr_stuff
+%type <std::vector<Hs::LTypeVar>> forall
+%type <Hs::LType> constr_stuff
 %type <std::vector<Hs::FieldDecl>> fielddecls
 %type <std::vector<Hs::FieldDecl>> fielddecls1
 %type <Hs::FieldDecl> fielddecl
@@ -622,8 +622,8 @@ infix: "infix"     { $$ = Hs::Fixity::infix; }
 |      "infixl"    { $$ = Hs::Fixity::infixl; }
 |      "infixr"    { $$ = Hs::Fixity::infixr; }
 
-ops:   ops "," op  { $$ = $1; $$.push_back($3); }
-|      op          { $$ = {$1}; }
+ops:   ops "," op  { $$ = $1; $$.push_back({@3,$3}); }
+|      op          { $$ = {{@1,$1}}; }
 
 /* ------------- Top-Level Declarations -------------------------- */
 
@@ -639,7 +639,7 @@ topdecl: cl_decl                               {$$ = $1;}
 /*|        stand_alone_deriving */
 /*|        role_annot */
 |        "default" "(" comma_types0 ")"        {$$ = Hs::DefaultDecl($3); }
-|        "foreign" "import" "bpcall" STRING var "::" sigtypedoc  {$$ = Hs::ForeignDecl($4, $5, $7);}
+|        "foreign" "import" "bpcall" STRING var "::" sigtypedoc  {$$ = Hs::ForeignDecl($4, {@5,$5}, $7);}
 /*
 |        "foreign" fdecl
 |        "{-# DEPRECATED" deprecations "#-}"
@@ -652,20 +652,20 @@ topdecl: cl_decl                               {$$ = $1;}
 
 cl_decl: "class" tycl_hdr /*fds*/ where_cls   {$$ = make_class_decl($2.first,$2.second,$3);}
 
-ty_decl: "type" type "=" ktype                                             {$$ = make_type_synonym({@2, $2},{@4, $4});}
+ty_decl: "type" type "=" ktype                                             {$$ = make_type_synonym($2,$4);}
 |        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1, $3.first, $3.second,{},$4);}
 /* This is kind of a hack to allow `data X` */
 |        data_or_newtype capi_ctype tycl_hdr opt_kind_sig gadt_constrlist maybe_derivings {$$ = make_data_or_newtype($1, $3.first, $3.second, $4, $5);}
-|        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family     {$$ = make_type_family({@3,$3}, $4, $6);}
+|        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family     {$$ = make_type_family($3, $4, $6);}
 /* |        "data" "family" type opt_datafam_kind_sig */
 
 standalone_kind_sig: "type" sks_vars "::" kind                             {$$ = Hs::KindSigDecl($2,$4);}
 
-sks_vars: sks_vars "," oqtycon                                             {$$ = $1; $$.push_back(Hs::TypeCon({@3,$3})); }
-|         oqtycon                                                          {$$ = {Hs::TypeCon({@1,$1})}; }
+sks_vars: sks_vars "," oqtycon                                             {$$ = $1; $$.push_back({@3,Hs::TypeCon($3)}); }
+|         oqtycon                                                          {$$ = {{@1,Hs::TypeCon($1)}}; }
 
 // inst_type -> sigtype -> ctype --maybe--> context => type
-inst_decl: "instance" overlap_pragma inst_type where_inst                  {$$ = make_instance_decl({@3,$3},$4);}
+inst_decl: "instance" overlap_pragma inst_type where_inst                  {$$ = make_instance_decl($3,$4);}
 |          "type" "instance" ty_fam_inst_eqn                               {$$ = Hs::TypeFamilyInstanceDecl($3);}
 /* |          data_or_newtype "instance" capi_ctype tycl_hdr constrs
    |          data_or_newtype "instance" capi_ctype opt_kind_sig */
@@ -714,14 +714,14 @@ ty_fam_inst_eqns: ty_fam_inst_eqns ";" ty_fam_inst_eqn     {$$ = $1; $$.push_bac
 |                 ty_fam_inst_eqn                          {$$ = {$1};}
 |                 %empty                                   {}
 
-ty_fam_inst_eqn: type "=" ctype                            {$$ = make_type_family_instance_eqn({@1,$1},{@3,$3});}
+ty_fam_inst_eqn: type "=" ctype                            {$$ = make_type_family_instance_eqn($1,$3);}
 
 /* Associated type family declarations */
 at_decl_cls: "data" opt_family type opt_datafam_kind_sig       {}
               /* we can't use opt_family or we get shift/reduce conflicts*/
-|            "type" type opt_at_kind_inj_sig                   { $$ = make_type_family({@2,$2}, $3, {}); }
+|            "type" type opt_at_kind_inj_sig                   { $$ = make_type_family($2, $3, {}); }
 
-|            "type" "family" type opt_at_kind_inj_sig          { $$ = make_type_family({@3,$3}, $4, {}); }
+|            "type" "family" type opt_at_kind_inj_sig          { $$ = make_type_family($3, $4, {}); }
               /* we can't use opt_family or we get shift/reduce conflicts*/
 |            "type" ty_fam_inst_eqn                            { $$ = Hs::TypeFamilyInstanceDecl($2);    }
 |            "type" "instance" ty_fam_inst_eqn                 { $$ = Hs::TypeFamilyInstanceDecl($3);    }
@@ -868,8 +868,8 @@ opt_sig: %empty  {}
 | "::" sigtype   {$$ = $2;}
 */
 
-opt_tyconsig: %empty             {}
-|             "::" gtycon        {$$ = Hs::TypeCon({@2,$2});}
+opt_tyconsig: %empty             {$$ = {};}
+|             "::" gtycon        {$$ = {{@2,Hs::TypeCon($2)}};}
 
 /*
 sigktype: sigtype                {$$ = $1;}
@@ -896,10 +896,10 @@ unpackedness: "{-# UNPACK" "#-}"
 */
 
 ktype: ctype                       {$$ = $1;}
-|      ctype "::" kind             {$$ = Hs::TypeOfKind($1, $3);}
+|      ctype "::" kind             {$$ = {@$,Hs::TypeOfKind($1, $3)};}
 
-ctype: "forall" tv_bndrs "." ctype {$$ = Hs::ForallType($2, $4);}
-|      context "=>" ctype          {$$ = Hs::ConstrainedType($1,$3);}
+ctype: "forall" tv_bndrs "." ctype {$$ = {@$,Hs::ForallType($2, $4)};}
+|      context "=>" ctype          {$$ = {@$,Hs::ConstrainedType($1,$3)};}
 /* |      ipvar "::" type             {} */
 |      type
 
@@ -917,7 +917,7 @@ context: btype                     {$$ = make_context($1);}
 context_no_ops: btype_no_ops       {$$ = make_context(Hs::make_tyapps($1));}
 
 type: btype
-|     btype "->" ctype             {$$ = Hs::make_tyapps({Hs::TypeCon({@2,"->"}),$1,$3});}
+|     btype "->" ctype             {$$ = Hs::make_tyapps({{@2,Hs::TypeCon("->")},$1,$3});}
 
 typedoc: type
 /* typedoc: .... */
@@ -925,14 +925,14 @@ typedoc: type
 btype: infixtype
 
 infixtype: ftype
-|          btype tyop btype         {$$ = Hs::make_tyapps({Hs::TypeCon({@2,$2}),$1,$3});}
+|          btype tyop btype         {$$ = Hs::make_tyapps({{@2,Hs::TypeCon($2)},$1,$3});}
 
 btype_no_ops: atype_docs               {$$.push_back($1);}
 |             btype_no_ops atype_docs  {$$ = $1; $$.push_back($2);}
 
 ftype: atype
 /* |      tyop                     fail op too few args? */
-|      ftype tyarg                 { $$ = Hs::TypeApp($1,$2); }
+|      ftype tyarg                 { $$ = {@$,Hs::TypeApp($1,$2)}; }
 |      ftype PREFIX_AT atype       /* kind application */
 
 tyarg: atype
@@ -952,20 +952,20 @@ atype_docs: atype /* FIX */
  * Do I need a separate rule for it if I'm not using StarIsType?
  */
 
-atype: ntgtycon                        {$$ = Hs::TypeCon({@1,$1});}
-|      tyvar                           {$$ = Hs::TypeVar({@1,$1});}
-|      "*"                             {$$ = Hs::TypeCon({@1,"*"});}
-|      PREFIX_BANG atype               {$$ = Hs::StrictType($2);}
-|      PREFIX_TILDE atype              {$$ = Hs::LazyType($2);}
-|      "{" fielddecls "}"              {$$ = Hs::FieldDecls($2);}
-|      "(" ")"                         {$$ = Hs::TypeCon({@1,"()"});}
-|      "(" comma_types1 "," ktype")"   {auto ts = $2;ts.push_back($4);$$ = Hs::TupleType(ts);}
+atype: ntgtycon                        {$$ = {@$,Hs::TypeCon($1)};}
+|      tyvar                           {$$ = {@$,Hs::TypeVar($1)};}
+|      "*"                             {$$ = {@$,Hs::TypeCon("*")};}
+|      PREFIX_BANG atype               {$$ = {@$,Hs::StrictType($2)};}
+|      PREFIX_TILDE atype              {$$ = {@$,Hs::LazyType($2)};}
+|      "{" fielddecls "}"              {$$ = {@$,Hs::FieldDecls($2)};}
+|      "(" ")"                         {$$ = {@$,Hs::TypeCon("()")};}
+|      "(" comma_types1 "," ktype")"   {auto ts = $2;ts.push_back($4);$$ = {@$,Hs::TupleType(ts)};}
 /*
 |      "(#" "#)"                       {}
 |      "(#" comma_types1 "#)"          {}
 |      "(#" bar_types2   "#)"          {}
 */
-|      "[" ktype "]"                   {$$ = Hs::ListType{$2}; }
+|      "[" ktype "]"                   {$$ = {@$,Hs::ListType{$2}}; }
 |      "(" ktype ")"                   {$$ = $2;}
 /* Template Haskell */
 
@@ -989,12 +989,12 @@ tv_bndrs:   tv_bndrs tv_bndr   {$$ = $1; $$.push_back($2);}
 |           %empty             { /* default construction OK */}
 
 tv_bndr: tv_bndr_no_braces       {$$ = $1;}
-|        "{" tyvar "}"           {$$ = Hs::TypeVar({@2,$2});}
-|        "{" tyvar "::" kind "}" {$$ = Hs::TypeVar({@2,$2});}
+|        "{" tyvar "}"           {$$ = {@2,Hs::TypeVar($2)};}
+|        "{" tyvar "::" kind "}" {$$ = {@2,Hs::TypeVar($2)};}
 
 /* If we put the kind into the type var (maybe as an optional) we could unify these two */
-tv_bndr_no_braces:    tyvar                   {$$ = Hs::TypeVar({@1,$1});}
-|                     "(" tyvar "::" kind ")" {$$ = Hs::TypeVar({@2,$2},$4);}
+tv_bndr_no_braces:    tyvar                   {$$ = {@$,Hs::TypeVar($1)};}
+|                     "(" tyvar "::" kind ")" {$$ = {@$,Hs::TypeVar($2,$4)};}
 
 
 /* fds are functional dependencies = FunDeps 
@@ -1025,7 +1025,7 @@ gadt_constrlist: "where" "{" gadt_constrs "}"        {$$ = $3;}
 gadt_constrs: gadt_constrs ";" gadt_constr           {$$=$1; $$.push_back($3);}
 |             gadt_constr                            {$$.push_back($1);}
 
-gadt_constr: optSemi con_list "::" sigtype           {$$ = Hs::GADTConstructorDecl($2,{{},$4});}
+gadt_constr: optSemi con_list "::" sigtype           {$$ = Hs::GADTConstructorDecl($2,$4);}
 
 constrs: "=" constrs1           {$$ = $2;}
 
@@ -1039,7 +1039,11 @@ forall: "forall" tv_bndrs "."   {$$ = $2;}
 |       %empty                  {}
 
 constr_stuff: btype_no_ops                      {$$ = Hs::make_tyapps($1);}
-|             btype_no_ops conop btype_no_ops   {$$ = Hs::make_tyapps({Hs::TypeCon({@2,$2}),Hs::make_tyapps($1),Hs::make_tyapps($3)});}
+|             btype_no_ops conop btype_no_ops   {$$ = Hs::make_tyapps({
+                                                                          {@2,Hs::TypeCon($2)},
+                                                                          Hs::make_tyapps($1),
+                                                                          Hs::make_tyapps($3)
+                                                                       });}
 
 fielddecls: %empty              {}
 |           fielddecls1         {$$ = $1;}
@@ -1567,94 +1571,101 @@ pair<vector<Hs::ImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::I
 }
 
 // See PostProcess.hs:checkTyClHdr
-std::tuple<string, vector<Hs::Type>>
-check_type_or_class_header(const Hs::Type& type)
+std::tuple<Located<string>, vector<Hs::LType>>
+check_type_or_class_header(const Hs::LType& type)
 {
     auto [type_head, type_args] = Hs::decompose_type_apps(type);
 
     // FIXME -- add location!
-    if (not type_head.is_a<Hs::TypeCon>())
-        throw myexception()<<"Malformed type or class header '"<<type<<"'";
-    auto name = unloc(type_head.as_<Hs::TypeCon>().name);
+    auto tc = unloc(type_head).to<Hs::TypeCon>();
 
-    return {name, type_args};
+    // Convert to error message!
+    if (not tc)
+        throw myexception()<<"Malformed type or class header '"<<type<<"'";
+
+    auto name = tc->name;
+
+    return {{type_head.loc,name}, type_args};
 }
 
-vector<Hs::TypeVar> check_all_type_vars(const vector<Hs::Type>& types)
+vector<Hs::LTypeVar> check_all_type_vars(const vector<Hs::LType>& ltypes)
 {
-    vector<Hs::TypeVar> type_vars;
-    for(auto& type: types)
+    vector<Hs::LTypeVar> ltype_vars;
+    for(auto& ltype: ltypes)
     {
-        if (type.is_a<Hs::TypeVar>())
+        auto& [loc,type] = ltype;
+        if (auto tv = type.to<Hs::TypeVar>())
         {
-            type_vars.push_back(type.as_<Hs::TypeVar>());
+            ltype_vars.push_back({loc,*tv});
         }
         else
         {
             throw myexception()<<"Type '"<<type<<"' is not a type variable";
         }
     }
-    return type_vars;
+    return ltype_vars;
 }
 
-Hs::TypeSynonymDecl make_type_synonym(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type)
+Hs::TypeSynonymDecl make_type_synonym(const Hs::LType& lhs_type, const Hs::LType& rhs_type)
 {
-    auto [name, type_args] = check_type_or_class_header(unloc(lhs_type));
+    auto [name, type_args] = check_type_or_class_header(lhs_type);
     return {name, check_all_type_vars(type_args), rhs_type};
 }
 
-Hs::TypeFamilyDecl make_type_family(const Located<Hs::Type>& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
+Hs::TypeFamilyDecl make_type_family(const Hs::LType& lhs_type, const std::optional<Located<Hs::Kind>>& kind_sig,
                                     const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns)
 {
-    auto [head, args] = Hs::decompose_type_apps(lhs_type.value());
+    auto [lhead, largs] = Hs::decompose_type_apps(lhs_type);
 
     // Get type con
-    auto con = head.to<Hs::TypeCon>();
+    auto con = unloc(lhead).to<Hs::TypeCon>();
     if (not con)
         throw myexception()<<"Type family '"<<lhs_type.print()<<"' does not begin with a type constructor.";
-
+    auto lcon = Hs::LTypeCon{lhead.loc, *con};
+    
     // Get args as type vars
-    std::vector<Hs::TypeVar> tyvars;
-    for(auto arg: args)
+    std::vector<Hs::LTypeVar> tyvars;
+    for(auto larg: largs)
     {
         std::optional<Hs::Kind> kind;
-        if (auto ktype = arg.to<Hs::TypeOfKind>())
+        if (auto ktype = unloc(larg).to<Hs::TypeOfKind>())
         {
-            arg = ktype->type;
+            larg = ktype->type;
             kind = ktype->kind;
         }
 
-        if (auto tyvar = arg.to<Hs::TypeVar>())
+        if (auto tyvar = unloc(larg).to<Hs::TypeVar>())
         {
-            auto tv = *tyvar;
-            tv.kind = kind;
+            auto tv = Hs::LTypeVar{larg.loc, *tyvar};
+            unloc(tv).kind = kind;
             tyvars.push_back(tv);
         }
         else
-            throw myexception()<<"Type family '"<<lhs_type.print()<<"' argument '"<<arg.print()<<"' is not a type variable.";
+            throw myexception()<<"Type family '"<<lhs_type.print()<<"' argument '"<<larg.print()<<"' is not a type variable.";
     }
 
     std::optional<Hs::Kind> kind;
     if (kind_sig)
         kind = kind_sig->value();
 
-    return Hs::TypeFamilyDecl(*con, tyvars, kind, eqns);
+    return Hs::TypeFamilyDecl(lcon, tyvars, kind, eqns);
 }
 
-Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Located<Hs::Type>& lhs_type, const Located<Hs::Type>& rhs_type)
+Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Hs::LType& lhs_type, const Hs::LType& rhs_type)
 {
-    auto [head, args] = Hs::decompose_type_apps(lhs_type.value());
+    auto [head, args] = Hs::decompose_type_apps(lhs_type);
 
     // Get type con
-    auto con = head.to<Hs::TypeCon>();
+    auto con = unloc(head).to<Hs::TypeCon>();
     if (not con)
         throw myexception()<<"Type family instance '"<<lhs_type.print()<<"' does not begin with a type constructor.";
-
-    return Hs::TypeFamilyInstanceEqn(*con, args, rhs_type.value());
+    
+    return Hs::TypeFamilyInstanceEqn({head.loc, *con}, args, rhs_type);
 }
 
 Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
-                                           const Hs::Type& header, const std::optional<Hs::Kind>& k, const Hs::ConstructorsDecl& constrs)
+                                           const Hs::LType& header, const std::optional<Hs::Kind>& k,
+                                           const Hs::ConstructorsDecl& constrs)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     if (d_or_n == Hs::DataOrNewtype::newtype and constrs.size() != 1)
@@ -1663,7 +1674,7 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
 }
 
 Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
-                                           const Hs::Type& header, const std::optional<Hs::Kind>& k, const std::optional<Hs::GADTConstructorsDecl>& constrs)
+                                           const Hs::LType& header, const std::optional<Hs::Kind>& k, const std::optional<Hs::GADTConstructorsDecl>& constrs)
 {
     auto [name, type_args] = check_type_or_class_header(header);
     if (d_or_n == Hs::DataOrNewtype::newtype)
@@ -1678,20 +1689,20 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
         return {d_or_n, name, check_all_type_vars(type_args), context, k, *constrs};
 }
 
-Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& ltype, const optional<Located<Hs::Decls>>& decls)
+Hs::InstanceDecl make_instance_decl(const Hs::LType& ltype_orig, const optional<Located<Hs::Decls>>& decls)
 {
     // GHC stores the instance as a polytype?
     // This would seem to allow (instance forall a.Eq a => forall a.Eq [a] x y ....)
-
-    auto type = unloc(ltype);
+    auto ltype = ltype_orig;
+    auto& [loc, type] = ltype;
+    
     if (type.is_a<Hs::ForallType>())
-        throw myexception()<<"instance declaration '"<<type<<"' is malformed";
+        throw myexception()<<"instance declaration '"<<unloc(ltype)<<"' is malformed";
     Hs::Context context;
-    if (type.is_a<Hs::ConstrainedType>())
+    if (auto ct = type.to<Hs::ConstrainedType>())
     {
-        auto& T = type.as_<Hs::ConstrainedType>();
-        context = T.context;
-        type = T.type;
+        context = ct->context;
+        ltype = ct->type;
     }
 
     std::vector<Hs::TypeFamilyInstanceDecl> type_inst_decls;
@@ -1704,12 +1715,12 @@ Hs::InstanceDecl make_instance_decl(const Located<Hs::Type>& ltype, const option
             else if (auto V = decl.to<Hs::ValueDecl>())
                 method_decls.push_back(*V);
             else
-                throw myexception()<<"In declaration of instance "<<unloc(ltype).print()<<", I don't recognize declaration:\n   "<<decl.print();
+                throw myexception()<<"In declaration of instance "<<unloc(ltype_orig).print()<<", I don't recognize declaration:\n   "<<decl.print();
         }
-    return {context, type, type_inst_decls, method_decls};
+    return {context, ltype, type_inst_decls, method_decls};
 }
 
-Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header, const optional<Located<Hs::Decls>>& decls)
+Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header, const optional<Located<Hs::Decls>>& decls)
 {
     auto [name, type_args] = check_type_or_class_header(header);
 
@@ -1743,26 +1754,24 @@ Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::Type& header
 // nothing
 // | ctype => header
 // | ( ctypes2 ) => header
-Hs::Context make_context(const Hs::Type& context)
+Hs::Context make_context(const Hs::LType& context)
 {
-    vector<Hs::Type> constraints;
-    if (context.is_a<Hs::TupleType>())
-    {
-        constraints = context.as_<Hs::TupleType>().element_types;
-    }
+    vector<Hs::LType> constraints;
+    if (auto tuple = unloc(context).to<Hs::TupleType>())
+        constraints = tuple->element_types;
     else
         constraints.push_back(context);
 
     return {constraints};
 }
 
-std::optional<Hs::Kind> type_to_kind_(const Hs::Type& kind)
+std::optional<Hs::Kind> type_to_kind_(const Hs::LType& kind)
 {
     auto [kind_head, kind_args] = Hs::decompose_type_apps(kind);
 
-    if (not kind_head.is_a<Hs::TypeCon>()) return {};
-    auto V = kind_head.as_<Hs::TypeCon>();
-    auto head_name = unloc(V.name);
+    if (not unloc(kind_head).is_a<Hs::TypeCon>()) return {};
+    auto V = unloc(kind_head).as_<Hs::TypeCon>();
+    auto head_name = V.name;
 
     if (kind_args.empty())
     {
@@ -1784,7 +1793,7 @@ std::optional<Hs::Kind> type_to_kind_(const Hs::Type& kind)
         return {};
 }
 
-Hs::Kind type_to_kind(const Hs::Type& kind)
+Hs::Kind type_to_kind(const Hs::LType& kind)
 {
     auto maybe_kind = type_to_kind_(kind);
 
@@ -1794,27 +1803,27 @@ Hs::Kind type_to_kind(const Hs::Type& kind)
     return *maybe_kind;
 }
 
-Hs::ConstructorDecl make_constructor(const vector<Hs::TypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::Type& typeish)
+Hs::ConstructorDecl make_constructor(const vector<Hs::LTypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::LType& typeish)
 {
     // 1. Split into head and arguments
     auto [head,args] = Hs::decompose_type_apps(typeish);
 
     // 2. Get the constructor name.
-    auto tc = head.to<Hs::TypeCon>();
+    auto tc = unloc(head).to<Hs::TypeCon>();
     if (not tc)
         throw myexception()<<"In constructor `"<<typeish<<"`:\n    `"<<head<<"` is not a data constructor!";
-    auto name = unloc(tc->name);
+    auto con = Hs::LCon{head.loc, Hs::Con(tc->name)};
 
     // 3. If we have 1 arg and its a FieldDecls, then make a record constructor.
     if (args.size() == 1)
     {
-        if (auto fd = args[0].to<Hs::FieldDecls>())
+        if (auto fd = unloc(args[0]).to<Hs::FieldDecls>())
         {
-            return {forall, c, name, *fd};
+            return {forall, c, con, *fd};
         }
     }
 
     // 4. Otherwise make a normal constructor.
-    return {forall, c, name, args};
+    return {forall, c, con, args};
 }
 

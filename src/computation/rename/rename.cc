@@ -138,11 +138,11 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
                 {
                     for(auto& field_name: field_group.field_names)
                     {
-                        constructor_fields[unloc(field_name).name][constr.name] = i;
+                        constructor_fields[unloc(field_name).name][unloc(*constr.con).name] = i;
                         i++;
                     }
                 }
-                arity[constr.name] = i;
+                arity[unloc(*constr.con).name] = i;
             }
         }
 
@@ -246,12 +246,11 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
     // Extract sigs for foreign imports
     for(auto& foreign_decl: M.foreign_decls)
     {
-        assert(not is_qualified_symbol( foreign_decl.function_name ) );
-        foreign_decl.function_name = m.name + "." + foreign_decl.function_name;
+        Rn.qualify_name(unloc(foreign_decl.function).name );
 
         foreign_decl.type = Rn.rename_type( foreign_decl.type );
 
-        bound_names.insert( {foreign_decl.function_name} );
+        bound_names.insert( {unloc(foreign_decl.function).name} );
     }
 
     Rn.rename_decls(M.value_decls, bound_names, free_vars, true);

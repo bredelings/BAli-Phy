@@ -563,7 +563,7 @@ void TypeChecker::get_tycon_info(const Hs::TypeFamilyDecl& F)
             pop_source_span();
         }
     }
-    tycon_info().insert({unloc(F.con.name), {kind, (int)F.args.size()}});
+    tycon_info().insert({unloc(F.con).name, {kind, (int)F.args.size()}});
 }
 
 void TypeChecker::get_kind_sigs(const Hs::Decls& type_decls)
@@ -1443,7 +1443,7 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 //     std::cerr<<"\n";
 }
 
-Kind result_kind_for_type_vars(vector<Hs::TypeVar>& type_vars, Kind k)
+Kind result_kind_for_type_vars(vector<Hs::LTypeVar>& type_vars, Kind k)
 {
     for(auto& tv: type_vars)
     {
@@ -1452,7 +1452,7 @@ Kind result_kind_for_type_vars(vector<Hs::TypeVar>& type_vars, Kind k)
         assert(ka);
 
         // record a version of the var with that contains its kind
-        tv.kind = ka->arg_kind;
+        unloc(tv).kind = ka->arg_kind;
 
         // set up the next iteration
         k = ka->result_kind;
@@ -1468,21 +1468,21 @@ Hs::Decls TypeChecker::add_type_var_kinds(Hs::Decls type_decls)
         if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
         {
             auto D = type_decl.as_<Hs::DataOrNewtypeDecl>();
-            auto kind = tycon_info().at(D.name).kind;
+            auto kind = tycon_info().at(unloc(D.name)).kind;
             result_kind_for_type_vars( D.type_vars, kind);
             type_decl = D;
         }
         else if (type_decl.is_a<Hs::ClassDecl>())
         {
             auto C = type_decl.as_<Hs::ClassDecl>();
-            auto kind = tycon_info().at(C.name).kind;
+            auto kind = tycon_info().at(unloc(C.name)).kind;
             result_kind_for_type_vars( C.type_vars, kind);
             type_decl = C;
         }
         else if (type_decl.is_a<Hs::TypeSynonymDecl>())
         {
             auto T = type_decl.as_<Hs::TypeSynonymDecl>();
-            auto kind = tycon_info().at(T.name).kind;
+            auto kind = tycon_info().at(unloc(T.name)).kind;
             result_kind_for_type_vars( T.type_vars, kind);
             type_decl = T;
         }

@@ -52,7 +52,7 @@ void TypeChecker::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreig
     for(auto& f: foreign_decls)
     {
         auto type = check_type( desugar(f.type) );
-        fte = fte.insert({Hs::Var(f.function_name), type});
+        fte = fte.insert({unloc(f.function), type});
     }
     poly_env() += fte;
 }

@@ -95,7 +95,7 @@ struct ConPattern: public Object
 struct TypedPattern: public Object
 {
     LPat pat;
-    Type type;
+    LType type;
     Core::wrapper wrap;
 
     TypedPattern* clone() const { return new TypedPattern(*this);}

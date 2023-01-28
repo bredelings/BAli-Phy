@@ -74,71 +74,71 @@ std::string Type::print() const
     std::abort();
 }
 
-pair<Type,vector<Type>> decompose_type_apps(Type t)
+pair<LType,vector<LType>> decompose_type_apps(LType lt)
 {
-    if (auto L = t.to<ListType>())
-        return {TypeCon({noloc,"[]"}), {L->element_type}};
+    if (auto L = unloc(lt).to<ListType>())
+        return {{noloc, TypeCon("[]")}, {L->element_type}};
 
-    if (auto T = t.to<TupleType>())
+    if (auto T = unloc(lt).to<TupleType>())
     {
         int n = T->element_types.size();
-        return {TypeCon({noloc,tuple_name(n)}), T->element_types};
+        return {{noloc, TypeCon(tuple_name(n))}, T->element_types};
     }
 
-    vector<Type> args;
-    while(t.is_a<TypeApp>())
+    vector<LType> args;
+    while(unloc(lt).is_a<TypeApp>())
     {
-        auto A = t.as_<TypeApp>();
+        auto A = unloc(lt).as_<TypeApp>();
         args.push_back(A.arg);
-        t = A.head;
+        lt = A.head;
     }
     std::reverse(args.begin(), args.end());
-    return {t,args};
+    return {lt,args};
 }
 
-Type remove_top_gen(Type type)
+LType remove_top_gen(LType ltype)
 {
-    if (auto f = type.to<ForallType>())
-        type = f->type;
+    if (auto f = unloc(ltype).to<ForallType>())
+        ltype = f->type;
 
-    if (auto c = type.to<ConstrainedType>())
-        type = c->type;
+    if (auto c = unloc(ltype).to<ConstrainedType>())
+        ltype = c->type;
 
-    return type;
+    return ltype;
 }
 
-optional<pair<Type,Type>> is_gen_function_type(const Type& t)
+optional<pair<LType,LType>> is_gen_function_type(const LType& lt)
 {
-    return is_function_type( remove_top_gen(t) );
+    return is_function_type( remove_top_gen(lt) );
 }
 
-optional<pair<Type,Type>> is_function_type(const Type& t)
+optional<pair<LType,LType>> is_function_type(const LType& lt)
 {
-    auto [head,args] = decompose_type_apps(t);
+    auto [head,args] = decompose_type_apps(lt);
 
     if (args.size() != 2) return {};
 
-    auto tc = head.to<TypeCon>();
+    auto tc = unloc(head).to<TypeCon>();
     if (not tc) return {};
 
-    if (unloc(tc->name) == "->")
+    if (tc->name == "->")
         return {{args[0],args[1]}};
     else
         return {};
 }
 
-int gen_type_arity(Type t)
+int gen_type_arity(LType lt)
 {
     int a = 0;
-    while(auto x = is_gen_function_type(t))
+    while(auto x = is_gen_function_type(lt))
     {
         a++;
-        t = x->second;
+        lt = x->second;
     }
     return a;
 }
 
-int type_arity(Type t)
+int type_arity(LType t)
 {
     int a = 0;
     while(auto x = is_function_type(t))
@@ -149,8 +149,9 @@ int type_arity(Type t)
     return a;
 }
 
-string parenthesize_type(Type t)
+string parenthesize_type(const LType& lt)
 {
+    auto& t = unloc(lt);
     if (t.is_a<TypeCon>() or t.is_a<TypeVar>() or t.is_a<ListType>() or t.is_a<TupleType>())
         return t.print();
     else
@@ -159,7 +160,7 @@ string parenthesize_type(Type t)
 
 string TypeVar::print() const
 {
-    string uname = unloc(name);
+    string uname = name;
     if (index)
         uname = uname +"#"+std::to_string(*index);
 
@@ -178,7 +179,7 @@ string TypeVar::print_with_kind() const
 
 bool TypeVar::operator==(const TypeVar& tv) const
 {
-    return index == tv.index and unloc(name) == unloc(tv.name);
+    return index == tv.index and name == tv.name;
 }
 
 bool TypeVar::operator<(const TypeVar& tv) const
@@ -189,7 +190,7 @@ bool TypeVar::operator<(const TypeVar& tv) const
     if (index > tv.index)
         return false;
 
-    int cmp = unloc(name).compare(unloc(tv.name));
+    int cmp = name.compare(tv.name);
 
     return (cmp < 0);
 }
@@ -197,35 +198,35 @@ bool TypeVar::operator<(const TypeVar& tv) const
 TypeVar::TypeVar()
 {}
 
-TypeVar::TypeVar(const Located<std::string>& s)
+TypeVar::TypeVar(const std::string& s)
     :name(s)
 {}
 
-TypeVar::TypeVar(const Located<std::string>& s, const Kind& k)
+TypeVar::TypeVar(const std::string& s, const Kind& k)
     :name(s), kind(k)
 {}
 
 string TypeCon::print() const
 {
-    return unloc(name);
+    return name;
 }
 
 string TypeCon::print_with_kind() const
 {
     if (kind)
-        return "("+unloc(name) + " :: " + (*kind).print()+")";
+        return "("+name + " :: " + (*kind).print()+")";
     else
-        return unloc(name);
+        return name;
 }
 
 bool TypeCon::operator==(const TypeCon& tc) const
 {
-    return unloc(name) == unloc(tc.name);
+    return name == tc.name;
 }
 
 bool TypeCon::operator<(const TypeCon& tc) const
 {
-    int cmp = unloc(name).compare(unloc(tc.name));
+    int cmp = name.compare(tc.name);
 
     return (cmp < 0);
 }
@@ -235,16 +236,16 @@ bool TypeApp::operator==(const TypeApp& t) const
     return (head == t.head) and (arg == t.arg);
 }
 
-optional< std::tuple<TypeCon, Type, Type> > is_type_op(const Type& t)
+optional< std::tuple<LTypeCon, LType, LType> > is_type_op(const Type& t)
 {
-    auto [head,args] = decompose_type_apps(t);
+    auto [head,args] = decompose_type_apps({noloc,t});
 
     if (args.size() != 2) return {};
 
-    auto tc = head.to<TypeCon>();
+    auto tc = unloc(head).to<TypeCon>();
 
-    if (tc and is_haskell_sym(unloc(tc->name)))
-        return {{*tc, args[0], args[1]}};
+    if (tc and is_haskell_sym(tc->name))
+        return {{{head.loc,*tc}, args[0], args[1]}};
     else
         return {};
 }
@@ -254,7 +255,7 @@ string TypeApp::print() const
     if (auto type_op = is_type_op(*this))
     {
         auto& [tycon, arg1, arg2] = *type_op;
-        if (is_type_op(arg1))
+        if (is_type_op(unloc(arg1)))
             return parenthesize_type(arg1) + " " + tycon.print() + " "+ arg2.print();
         else
             return arg1.print() + " " + tycon.print() + " "+ arg2.print();
@@ -263,20 +264,20 @@ string TypeApp::print() const
     return head.print() + " " + parenthesize_type(arg);
 }
 
-Type make_tyapps(const std::vector<Type>& tyapps)
+LType make_tyapps(const std::vector<LType>& tyapps)
 {
     assert(not tyapps.empty());
-    Type T = tyapps[0];
+    LType T = tyapps[0];
     for(int i=1;i<tyapps.size();i++)
-	T = Haskell::TypeApp(T,tyapps[i]);
+	T = {T.loc * tyapps[i].loc, Hs::TypeApp(T,tyapps[i])};
     return T;
 }
 
-Type make_tyapps(const Type& T0, const std::vector<Type>& args)
+LType make_tyapps(const LType& T0, const std::vector<LType>& args)
 {
-    Type T = T0;
+    LType T = T0;
     for(auto& arg: args)
-	T = Haskell::TypeApp(T, arg);
+	T = {T.loc * arg.loc, Hs::TypeApp(T, arg)};
     return T;
 }
 
@@ -289,11 +290,12 @@ string ForallType::print() const
 {
     vector<string> binders;
     for(auto& type_var_binder: type_var_binders)
-        binders.push_back(type_var_binder.print_with_kind());
+        binders.push_back(unloc(type_var_binder).print_with_kind());
     return "forall "+join(binders," ")+". "+type.print();
 }
 
-Type add_forall_vars(const std::vector<TypeVar>& type_vars, const Type& type)
+/*
+LType add_forall_vars(const std::vector<LTypeVar>& type_vars, const LType& type)
 {
     if (type_vars.empty())
         return type;
@@ -310,6 +312,7 @@ Type add_forall_vars(const std::vector<TypeVar>& type_vars, const Type& type)
     else
         return ForallType(type_vars, type);
 }
+*/
 
 bool ConstrainedType::operator==(const ConstrainedType& t) const
 {

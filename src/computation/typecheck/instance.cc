@@ -17,7 +17,7 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
 {
     Hs::Decls decls_out;
 
-    auto class_info = class_env().at(C.name);
+    auto class_info = class_env().at(unloc(C.name));
 
     for(auto& decl: C.default_method_decls)
     {
@@ -564,8 +564,6 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_co
         auto type = info.type();
 
         auto [_, wanteds, instance_head] = instantiate(InstanceOrigin(), type);
-
-        assert(not constraint_is_hnf(instance_head));
 
         if (not maybe_match(instance_head, target_constraint)) continue;
 
