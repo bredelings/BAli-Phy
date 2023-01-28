@@ -58,8 +58,8 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
       taxa = get_labels tree
       taxa_list = toList taxa
       find_sequence label = find (\s -> sequence_name s == label) sequences
-      node_sequences' = getNodes tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
-                                                                                             Nothing ->  error "No label")
+      node_sequences' = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
+                                                                                                Nothing ->  error "No label")
       node_sequences = fmap (sequence_to_indices alphabet . fromJust) node_sequences'
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
@@ -108,8 +108,8 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       taxa = get_labels tree
       taxa_list = toList taxa
       find_sequence label = find (\s -> sequence_name s == label) sequences
-      node_sequences' = getNodes tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
-                                                                                             Nothing ->  error "No label")
+      node_sequences' = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
+                                                                                                Nothing ->  error "No label")
       node_sequences = fmap (sequence_to_indices alphabet . fromJust) node_sequences'
       compressed_alignment = reorder_alignment taxa_list compressed_alignment'
       alphabet = getAlphabet smodel
