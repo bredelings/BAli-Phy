@@ -40,7 +40,7 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_cond_likes :: Array Int CondLikes,
       prop_fa_anc_seqs :: AlignmentMatrix,
       prop_fa_likelihood :: LogDouble,
-      prop_fa_taxa :: [CPPString],
+      prop_fa_taxa :: Array Int CPPString,
       prop_fa_get_weighted_frequency_matrix :: Matrix Double,
       prop_fa_smap :: EVector Int,
       prop_fa_leaf_sequences :: IntMap (EVector Int),
@@ -145,7 +145,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
   property "taxa" (map list_to_string taxa_list)
   -- How about stuff related to alignment compression?
-  property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood (map list_to_string taxa_list) f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) )
+  property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood (fmap list_to_string taxa) f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) )
 
   return [likelihood]
 
