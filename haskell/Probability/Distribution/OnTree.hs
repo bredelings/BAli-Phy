@@ -103,7 +103,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   let subst_root = modifiable (numNodes tree - 1)
 
   let a0 = alignment_from_sequences alphabet sequences
-      (compressed_alignment',column_counts,mapping) = compress_alignment $ a0
+      (compressed_alignment,column_counts,mapping) = compress_alignment $ a0
       n_leaves = numLeaves tree
       taxa = get_labels tree
       taxa_list = toList taxa
@@ -111,7 +111,6 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       node_sequences' = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
                                                                                                 Nothing ->  error "No label")
       node_sequences = fmap (sequence_to_indices alphabet . fromJust) node_sequences'
-      compressed_alignment = reorder_alignment taxa_list compressed_alignment'
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
