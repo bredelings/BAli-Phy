@@ -9,6 +9,9 @@ import Data.Matrix
 import Data.Array
 import Foreign.Vector
 
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IntMap
+
 data CondLikes
 
 -- peeling for connected-CLVs
@@ -49,7 +52,7 @@ cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = mkArray (
                                                                            b1 = edges!0
                                                                            b2 = edges!1
                                                                        in case numElements edges of
-                                                                            0 -> let n=sourceNode t b in peel_leaf_branch (seqs!n) alpha (ps!bb) smap
+                                                                            0 -> let n=sourceNode t b in peel_leaf_branch (seqs IntMap.! n) alpha (ps!bb) smap
                                                                             2 -> peel_internal_branch (lc!b1) (lc!b2) (as!b1) (as!b2) (ps!bb) f
                                                            in lc
 
@@ -68,7 +71,7 @@ substitution_likelihood t root seqs as alpha ps f smap = let cl = cached_conditi
 sample_ancestral_sequences :: Tree t =>
                               t ->
                               Int ->
-                              Array Int (EVector Int) ->
+                              IntMap (EVector Int) ->
                               Array Int PairwiseAlignment ->
                               Alphabet ->
                               Array Int (EVector (Matrix Double)) ->
@@ -96,7 +99,7 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
                                                  0 -> sample_leaf_sequence
                                                           parent_seq
                                                           ps_for_b0
-                                                          (seqs!n)
+                                                          (seqs IntMap.! n)
                                                           alpha
                                                           smap
                                                           a0
@@ -119,7 +122,7 @@ cached_conditional_likelihoods_SEV t seqs alpha ps f a smap =
                     b1 = edges!0
                     b2 = edges!1
                 in case numElements edges of
-                     0 -> peel_leaf_branch_SEV (seqs!sourceNode t b) alpha (ps!bb) (bitmask_from_alignment a $ sourceNode t b) smap
+                     0 -> peel_leaf_branch_SEV (seqs IntMap.! sourceNode t b) alpha (ps!bb) (bitmask_from_alignment a $ sourceNode t b) smap
                      1 -> peel_deg2_branch_SEV (lc!b1) (ps!bb) f
                      2 -> peel_internal_branch_SEV (lc!b1) (lc!b2) (ps!bb) f
     in lc
@@ -154,7 +157,7 @@ sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed 
                                                  0 -> sample_leaf_sequence_SEV
                                                           parent_seq
                                                           ps_for_b0
-                                                          (seqs!n)
+                                                          (seqs IntMap.! n)
                                                           (cl!to_p)
                                                           alpha
                                                           smap

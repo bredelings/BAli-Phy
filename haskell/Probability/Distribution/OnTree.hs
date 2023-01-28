@@ -11,6 +11,9 @@ import Data.Array
 import Data.Matrix
 import Data.Foldable
 
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IntMap
+
 -- FIXME: need polymorphism.
 --        This needs to be after weighted_frequency_matrix.
 --        Because we have no polymorphism, wfm needs to be defined after MixtureModel and MixtureModels.
@@ -24,7 +27,7 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_taxa :: Array Int CPPString,
       prop_get_weighted_frequency_matrix :: Matrix Double,
       prop_smap :: EVector Int,
-      prop_leaf_sequences :: Array Int (EVector Int),
+      prop_leaf_sequences :: IntMap (EVector Int),
       prop_alphabet :: Alphabet,
       prop_as :: Array Int PairwiseAlignment,
       prop_n_states :: Int,
@@ -40,7 +43,7 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_taxa :: [CPPString],
       prop_fa_get_weighted_frequency_matrix :: Matrix Double,
       prop_fa_smap :: EVector Int,
-      prop_fa_leaf_sequences :: Array Int (EVector Int),
+      prop_fa_leaf_sequences :: IntMap (EVector Int),
       prop_fa_alphabet :: Alphabet,
       prop_fa_n_states :: Int,
       prop_fa_n_base_models :: Int
@@ -54,7 +57,10 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
       as = pairwise_alignments alignment
       taxa = get_labels tree
       taxa_list = toList taxa
-      leaf_sequences = listArray' $ map (sequence_to_indices alphabet) $ reorder_sequences taxa_list sequences
+      find_sequence label = find (\s -> sequence_name s == label) sequences
+      node_sequences' = getNodes tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
+                                                                                             Nothing ->  error "No label")
+      node_sequences = fmap (sequence_to_indices alphabet . fromJust) node_sequences'
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
@@ -62,16 +68,16 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
       f = weighted_frequency_matrix smodel
       cls = cached_conditional_likelihoods
               tree
-              leaf_sequences
+              node_sequences
               as
               alphabet
               transition_ps
               f
               smap
       likelihood = if n_leaves == 1 then
-                       peel_likelihood_1 (leaf_sequences ! 0) alphabet f
+                       peel_likelihood_1 (node_sequences IntMap.! 0) alphabet f
                    else if n_leaves == 2 then
-                       peel_likelihood_2 (leaf_sequences ! 0) (leaf_sequences ! 1) alphabet (as ! 0) (transition_ps ! 0) f
+                       peel_likelihood_2 (node_sequences IntMap.! 0) (node_sequences IntMap.! 1) alphabet (as ! 0) (transition_ps ! 0) f
                    else
                        peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
       ancestral_sequences = if n_leaves == 1 then
@@ -79,14 +85,14 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
                             else if n_leaves == 2 then
                                 list_to_vector $ []
                             else
-                                array_to_vector $ sample_ancestral_sequences tree subst_root leaf_sequences as alphabet transition_ps f cls smap
+                                array_to_vector $ sample_ancestral_sequences tree subst_root node_sequences as alphabet transition_ps f cls smap
 
   in_edge "tree" tree
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
   property "taxa" (map list_to_string taxa_list)
-  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood (fmap list_to_string taxa) f smap leaf_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) )
+  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood (fmap list_to_string taxa) f smap node_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) )
 
   return [likelihood]
 
@@ -101,16 +107,19 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       n_leaves = numLeaves tree
       taxa = get_labels tree
       taxa_list = toList taxa
+      find_sequence label = find (\s -> sequence_name s == label) sequences
+      node_sequences' = getNodes tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
+                                                                                             Nothing ->  error "No label")
+      node_sequences = fmap (sequence_to_indices alphabet . fromJust) node_sequences'
       compressed_alignment = reorder_alignment taxa_list compressed_alignment'
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
-      leaf_sequences = listArray' $ sequences_from_alignment compressed_alignment
       transition_ps = transition_p_index smodel_on_tree
       f = weighted_frequency_matrix smodel
       cls = cached_conditional_likelihoods_SEV
               tree
-              leaf_sequences
+              node_sequences
               alphabet
               transition_ps
               f
@@ -131,7 +140,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
                                 let ancestral_states = array_to_vector $ sample_ancestral_sequences_SEV
                                       tree
                                       subst_root
-                                      leaf_sequences
+                                      node_sequences
                                       alphabet
                                       transition_ps
                                       f
@@ -144,7 +153,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
   property "taxa" (map list_to_string taxa_list)
   -- How about stuff related to alignment compression?
-  property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood (map list_to_string taxa_list) f smap leaf_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) )
+  property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood (map list_to_string taxa_list) f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) )
 
   return [likelihood]
 
