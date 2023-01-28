@@ -74,12 +74,11 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
               transition_ps
               f
               smap
-      likelihood = if n_nodes == 1 then
-                       peel_likelihood_1 (node_sequences IntMap.! 0) alphabet f
-                   else if n_nodes == 2 then
-                       peel_likelihood_2 (node_sequences IntMap.! 0) (node_sequences IntMap.! 1) alphabet (as ! 0) (transition_ps ! 0) f
-                   else
-                       peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
+      likelihood | n_nodes > 2    = peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
+                 | n_nodes == 1   = let [n1] = getNodes tree
+                                    in peel_likelihood_1 (node_sequences IntMap.! n1) alphabet f
+                 | n_nodes == 2   = let [n1, n2] = getNodes tree
+                                    in peel_likelihood_2 (node_sequences IntMap.! n1) (node_sequences IntMap.! n2) alphabet (as ! 0) (transition_ps ! 0) f
       ancestral_sequences = case n_nodes of
                               1 -> list_to_vector $ []
                               2 -> list_to_vector $ []
@@ -122,12 +121,10 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
               f
               compressed_alignment
               smap
-      likelihood = if n_nodes == 1 then
-                       peel_likelihood_1_SEV compressed_alignment alphabet f column_counts
-                   else if n_nodes == 2 then
-                       peel_likelihood_2_SEV compressed_alignment alphabet (transition_ps!0) f column_counts
-                   else
-                       peel_likelihood_SEV tree cls f subst_root column_counts
+      likelihood | n_nodes > 2    = peel_likelihood_SEV tree cls f subst_root column_counts
+                 | n_nodes == 1   = peel_likelihood_1_SEV compressed_alignment alphabet f column_counts
+                 | n_nodes == 2   = peel_likelihood_2_SEV compressed_alignment alphabet (transition_ps!0) f column_counts
+
 --    This also needs the map from columns to compressed columns:
       ancestral_sequences = case n_nodes of
                               1 -> a0
