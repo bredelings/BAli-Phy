@@ -58,6 +58,7 @@
 #include "site-compression.H"
 #include "tree-align/link2.H"
 #include "computation/machine/graph_register.H"
+#include "computation/machine/gcobject.H"
 
 using std::vector;
 using std::string;
@@ -1681,18 +1682,20 @@ Parameters::Parameters(const Program& prog,
     context_ptr taxa_ptr(*this, *r_prop0);
     taxa_ptr = taxa_ptr[5];
     vector<string> labels;
-    for(int i=0; i<taxa_ptr.size();i++)
+    int n_nodes = taxa_ptr.value().as_<IntMap>().size();
+    for(int node = 0; node < n_nodes; node++)
     {
-        if (auto name = taxa_ptr[i].value().as_<EMaybe>())
+        if (auto name = taxa_ptr[node].value().as_<EMaybe>())
             labels.push_back(name->as_<String>());
     }
     auto leaf_labels = labels;
 
-    // FIXME: we should ask the tree how many nodes there are -- this is only correct for a rooted tree!
-    int n_nodes = 2*leaf_labels.size()-2;
     // FIXME: maybe do this inside the program?
-    for(int i=leaf_labels.size();i<n_nodes;i++)
-        labels.push_back("A"+std::to_string(i));
+    for(int node = 0; node < n_nodes; node++)
+    {
+        if (not taxa_ptr[node].value().as_<EMaybe>())
+            labels.push_back("A"+std::to_string(node));
+    }
 
     // 2. Set up the TreeInterface mapping to the tree inside the machine
 
