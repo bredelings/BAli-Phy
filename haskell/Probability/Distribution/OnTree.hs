@@ -10,6 +10,7 @@ import Bio.Alphabet  -- for type Alphabet
 import Data.Array
 import Data.Matrix
 import Data.Foldable
+import Foreign.Maybe
 
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
@@ -24,7 +25,7 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_cond_likes :: Array Int CondLikes,
       prop_anc_seqs :: EVector VectorPairIntInt,
       prop_likelihood :: LogDouble,
-      prop_taxa :: Array Int CPPString,
+      prop_taxa :: Array Int (CMaybe CPPString),
       prop_get_weighted_frequency_matrix :: Matrix Double,
       prop_smap :: EVector Int,
       prop_leaf_sequences :: IntMap (EVector Int),
@@ -40,7 +41,7 @@ data CTMCOnTreeFixedAProperties = CTMCOnTreeFixedAProperties {
       prop_fa_cond_likes :: Array Int CondLikes,
       prop_fa_anc_seqs :: AlignmentMatrix,
       prop_fa_likelihood :: LogDouble,
-      prop_fa_taxa :: Array Int CPPString,
+      prop_fa_taxa :: Array Int (CMaybe CPPString),
       prop_fa_get_weighted_frequency_matrix :: Matrix Double,
       prop_fa_smap :: EVector Int,
       prop_fa_leaf_sequences :: IntMap (EVector Int),
@@ -55,7 +56,8 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
-      taxa = get_labels tree
+      taxa' = fmap list_to_string $ get_labels tree           
+      taxa = fmap cMaybe $ mkArray n_nodes (\node -> if node < length taxa' then Just (taxa'!node) else Nothing)
       find_sequence label = find (\s -> sequence_name s == label) sequences
       node_sequences' = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
                                                                                                 Nothing ->  error "No label")
@@ -87,7 +89,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood (fmap list_to_string taxa) f smap node_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) )
+  property "properties" (CTMCOnTreeProperties subst_root transition_ps cls ancestral_sequences likelihood taxa f smap node_sequences alphabet as (SModel.nStates smodel) (SModel.nBaseModels smodel) )
 
   return [likelihood]
 
@@ -100,7 +102,8 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   let a0 = alignment_from_sequences alphabet sequences
       (compressed_alignment,column_counts,mapping) = compress_alignment $ a0
       n_nodes = numNodes tree
-      taxa = get_labels tree
+      taxa' = fmap list_to_string $ get_labels tree
+      taxa = fmap cMaybe $ mkArray n_nodes (\node -> if node < length taxa' then Just (taxa'!node) else Nothing)
       find_sequence label = find (\s -> sequence_name s == label) sequences
       node_sequences' = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
                                                                                                 Nothing ->  error "No label")
@@ -141,7 +144,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood (fmap list_to_string taxa) f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) )
+  property "properties" (CTMCOnTreeFixedAProperties subst_root transition_ps cls ancestral_sequences likelihood taxa f smap node_sequences alphabet (SModel.nStates smodel) (SModel.nBaseModels smodel) )
 
   return [likelihood]
 

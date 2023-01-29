@@ -157,8 +157,9 @@ vector< vector<int> > data_partition::leaf_sequences() const
 string data_partition::label(int i) const
 {
     auto labels = property(5);
-    if (i < labels.size())
-        return labels[i].value().as_<String>();
+
+    if (auto label = labels[i].value().as_<EMaybe>())
+        return label->as_<String>();
     else
         return "A"+std::to_string(i);
 }
@@ -1682,8 +1683,8 @@ Parameters::Parameters(const Program& prog,
     vector<string> labels;
     for(int i=0; i<taxa_ptr.size();i++)
     {
-        auto name = taxa_ptr[i].value();
-        labels.push_back(name.as_<String>());
+        if (auto name = taxa_ptr[i].value().as_<EMaybe>())
+            labels.push_back(name->as_<String>());
     }
     auto leaf_labels = labels;
 
