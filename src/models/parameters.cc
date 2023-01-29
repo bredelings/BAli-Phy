@@ -1679,9 +1679,9 @@ Parameters::Parameters(const Program& prog,
     // 1. Get the leaf labels out of the machine.  These should be based on the leaf sequences alignment for partition 1.
     context_ptr taxa_ptr(*this, *r_taxa);
     vector<string> labels;
-    for(auto taxon_vec: taxa_ptr.list_elements())
+    for(int i=0; i<taxa_ptr.size();i++)
     {
-        auto name = taxon_vec.value();
+        auto name = taxa_ptr[i].value();
         labels.push_back(name.as_<String>());
     }
     auto leaf_labels = labels;
