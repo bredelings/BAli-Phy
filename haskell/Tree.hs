@@ -38,7 +38,7 @@ class Tree t => LabelledTree t where
     -- indexes on nodes...
     -- TODO: make the C++ code handle this...
     
-    get_labels :: t -> Array Int String
+    get_labels :: t -> Array Int (Maybe String)
 
 data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
 
@@ -50,7 +50,7 @@ data RootedTreeImp t = RootedTree t Int (Array Int Bool)
 
 data BranchLengthTreeImp t = BranchLengthTree t (Array Int Double)
 
-data LabelledTreeImp t = LabelledTree t (Array Int String)
+data LabelledTreeImp t = LabelledTree t (Array Int (Maybe String))
 
 -- The array stores the node times
 data TimeTreeImp t  = TimeTree t (IntMap Double)
@@ -159,7 +159,7 @@ remove_root (RootedTree t _ _) = t
 -- remove_root (LabelledTree t labels) = LabelledTree (remove_root t) labels
 
 instance Tree t => LabelledTree (LabelledTreeImp t) where
-    get_label  (LabelledTree _ labels) node = if inRange (bounds labels) node then Just (labels!node) else Nothing
+    get_label  (LabelledTree _ labels) node = labels!node
     get_labels (LabelledTree _ labels) = labels
 
 instance LabelledTree t => LabelledTree (BranchLengthTreeImp t) where
@@ -234,7 +234,7 @@ tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
 allEdgesAfterEdge tree b = b:concatMap (allEdgesAfterEdge tree) (edgesAfterEdge tree b)
 allEdgesFromNode tree n = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree n)
 
-add_labels labels t = LabelledTree t (mkArray (length labels) (\node -> fromJust $ lookup node labels))
+add_labels labels t = LabelledTree t (mkArray (numNodes t) (\node -> lookup node labels))
 
 add_root r t = rt
      where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdge rt b))

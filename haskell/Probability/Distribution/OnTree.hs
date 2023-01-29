@@ -56,8 +56,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
 
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
-      taxa' = fmap list_to_string $ get_labels tree           
-      taxa = fmap cMaybe $ mkArray n_nodes (\node -> if node < length taxa' then Just (taxa'!node) else Nothing)
+      taxa = fmap (cMaybe . fmap list_to_string) $ get_labels tree
       find_sequence label = find (\s -> sequence_name s == label) sequences
       node_sequences' = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
                                                                                                 Nothing ->  error "No label")
@@ -102,8 +101,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
   let a0 = alignment_from_sequences alphabet sequences
       (compressed_alignment,column_counts,mapping) = compress_alignment $ a0
       n_nodes = numNodes tree
-      taxa' = fmap list_to_string $ get_labels tree
-      taxa = fmap cMaybe $ mkArray n_nodes (\node -> if node < length taxa' then Just (taxa'!node) else Nothing)
+      taxa = fmap (cMaybe . fmap list_to_string) $ get_labels tree
       find_sequence label = find (\s -> sequence_name s == label) sequences
       node_sequences' = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
                                                                                                 Nothing ->  error "No label")
