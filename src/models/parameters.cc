@@ -1655,7 +1655,7 @@ Parameters::Parameters(const Program& prog,
     auto sequence_data = program_result[1].list_elements();
 
     vector<int> partition_sampling_events;
-    optional<int> r_taxa;
+    optional<int> r_prop0;
     for(int i=0;i<sequence_data.size();i++)
     {
         auto& sequences = sequence_data[i];
@@ -1669,7 +1669,7 @@ Parameters::Parameters(const Program& prog,
         auto properties = dist_properties(s_sequences);
         if (i==0)
         {
-            r_taxa = properties->get("taxa");
+            r_prop0 = properties->get("properties");
         }
     }
 
@@ -1677,7 +1677,8 @@ Parameters::Parameters(const Program& prog,
     branches_from_affected_node.resize(ttt.n_nodes());
 
     // 1. Get the leaf labels out of the machine.  These should be based on the leaf sequences alignment for partition 1.
-    context_ptr taxa_ptr(*this, *r_taxa);
+    context_ptr taxa_ptr(*this, *r_prop0);
+    taxa_ptr = taxa_ptr[5];
     vector<string> labels;
     for(int i=0; i<taxa_ptr.size();i++)
     {

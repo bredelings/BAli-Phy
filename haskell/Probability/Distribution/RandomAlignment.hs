@@ -109,9 +109,6 @@ annotated_alignment_prs tree hmms model alignment = do
       ls = sequence_lengths alignment
       lengthp = snd model
       length_prs = fmap lengthp ls
-  property "lengthp" lengthp
-  property "hmms" hmms
-  property "pr" pr
   property "properties" (RandomAlignmentProperties pr hmms lengthp as ls length_prs)
   return $ prs
 
