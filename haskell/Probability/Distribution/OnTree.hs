@@ -56,7 +56,6 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
   let n_nodes = numNodes tree
       as = pairwise_alignments alignment
       taxa = get_labels tree
-      taxa_list = toList taxa
       find_sequence label = find (\s -> sequence_name s == label) sequences
       node_sequences' = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
                                                                                                 Nothing ->  error "No label")
@@ -102,7 +101,6 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
       (compressed_alignment,column_counts,mapping) = compress_alignment $ a0
       n_nodes = numNodes tree
       taxa = get_labels tree
-      taxa_list = toList taxa
       find_sequence label = find (\s -> sequence_name s == label) sequences
       node_sequences' = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
                                                                                                 Nothing ->  error "No label")
