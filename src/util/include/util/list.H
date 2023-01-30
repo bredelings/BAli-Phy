@@ -55,6 +55,12 @@ public:
 
     IList(const node_pointer& p):list(p) {}
 
+    IList(const std::initializer_list<T>& xs)
+    {
+        for(auto it = std::rbegin(xs); it != std::rend(xs); it++)
+            (*this) = push_front(*it);
+    }
+
     struct Iterator
     {
         using iterator_category = std::forward_iterator_tag;
