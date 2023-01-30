@@ -582,35 +582,6 @@ extern "C" closure builtin_function_read_double(OperationArgs& Args)
 	throw myexception()<<"Cannot convert string '"<<s<<"' to double!";
 }
 
-extern "C" closure builtin_function_struct_seq(OperationArgs& Args)
-{
-    int r0 = Args.reg_for_slot(0);
-    auto c = Args.evaluate_reg_to_closure_(r0);
-
-    auto& M = Args.memory();
-    r0 = M.follow_index_var_no_force(r0);
-    if (M.reg_is_to_changeable(r0))
-	throw myexception()<<"struct_seq: structure must be constant at reg "<<r0<<"!";
-
-    // 1. Force regs for gcable objects
-    if (is_gcable_type(c.exp.type()))
-    {
-        std::vector<int> regs;
-        auto* gcobj = c.exp.head().to<IntMap>();
-        gcobj->get_regs(regs);
-        for(int reg:regs)
-            Args.evaluate_reg_force(reg);
-    }
-
-    // 2. Force regs for other objects
-    for(int i=0;i<c.exp.size();i++)
-        Args.evaluate_reg_force(c.reg_for_slot(i));
-
-    int r1 = Args.current_closure().reg_for_slot(1);
-
-    return {index_var(0),{r1}};
-}
-
 extern "C" closure builtin_function_cNothing(OperationArgs&)
 {
     return { EMaybe() };

@@ -44,11 +44,14 @@ sample_uniform_topology n = do
     return $ tree_from_edges num_nodes edges
 
 
+instance ForceFields Edge where
+    force_fields e@(Edge s i t r n) = s `seq` i `seq` t `seq` t `seq` n `seq` e
+
 force_tree tree@(Tree nodes branches) = force_nodes `seq` force_branches where
     n_nodes    = numNodes tree
     n_branches = numBranches tree
-    force_nodes    = force_struct $ listArray' [ force_struct $ edgesOutOfNode tree node | node <- xrange 0 n_nodes ]
-    force_branches = force_struct $ listArray' [ force_struct $ findEdge tree b | b <- xrange 0 (n_branches * 2)]
+    force_nodes    = force_fields $ listArray' [ force_fields $ edgesOutOfNode tree node | node <- xrange 0 n_nodes ]
+    force_branches = force_fields $ listArray' [ force_fields $ findEdge tree b | b <- xrange 0 (n_branches * 2)]
 
 -- leaves   nodes  branches
 -- 1        1      0
@@ -203,7 +206,7 @@ triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_roo
 -- A uniform-ordered-history distribution would need to augment nodes with an Int order, instead of a Double order.
 
 -- time_tree: force / modifiable / triggered_modifiable
-force_time_tree (TimeTree rooted_tree times) = force_rooted_tree rooted_tree `seq` force_struct times
+force_time_tree (TimeTree rooted_tree times) = force_rooted_tree rooted_tree `seq` force_fields times
 
 -- maybe modf has type (forall a . a -> a)?
 -- we should be able to apply it to both Int and Double...

@@ -9,6 +9,8 @@ import MCMC
 import Data.JSON as J
 import Effect
 import Control.Monad.IO.Class -- for liftIO
+import Data.IntMap (IntMap)
+import Data.Array (Array)
 
 data SamplingEvent
 
@@ -277,10 +279,11 @@ foldt f z xs  = foldt f z (pair_apply f xs)
 
 balanced_product xs = foldt (*) 1 xs
 
-force_struct x = struct_seq x x
+class ForceFields a where
+    force_fields :: a -> a
 
-force_list [] = []
-force_list (x:xs) = force_struct (x:(force_list xs))
+instance Foldable f => ForceFields (f a) where
+    force_fields xs = foldr seq () xs `seq` xs
 
 -- maybe I should rename this to (modifiable_list_n n f value) or something.
 mapn n f xs = go 0 where
