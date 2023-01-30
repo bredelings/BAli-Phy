@@ -28,7 +28,7 @@ Hs::FunDecl dictionary_extractor(const Hs::Var& extractor, int i, int N)
     Hs::MRule rule{{pattern}, Hs::SimpleRHS({noloc, field})};
     Hs::Matches matches{{rule}};
 
-    return Hs::FunDecl(extractor, matches);
+    return Hs::FunDecl({noloc,extractor}, matches);
 }
 
 
@@ -97,7 +97,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     {
         auto& method_name = method.name;
         auto dm = get_fresh_Var("dm"+method_name, true);
-        Hs::FunDecl FD(dm, match);
+        Hs::FunDecl FD({noloc,dm}, match);
         class_info.default_methods.insert({method, dm});
 
         auto type = class_info.members.at(method);

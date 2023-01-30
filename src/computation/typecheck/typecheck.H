@@ -526,7 +526,7 @@ public:
     std::pair<Hs::Decls, std::tuple<Core::Var, Core::wrapper, Core::Exp>>
     infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceDecl& instance_decl);
 
-    std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name) const;
+    std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
 
     void check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const std::optional<std::string>& associated_class, const substitution_t& instance_subst);
 

@@ -22,8 +22,8 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
     for(auto& decl: C.default_method_decls)
     {
         auto FD = decl.as_<Hs::FunDecl>();
-        auto dm = class_info.default_methods.at(FD.v);
-        FD.v = dm;
+        auto dm = class_info.default_methods.at( unloc(FD.v) );
+        unloc(FD.v) = dm;
 
         auto [decl2, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
         decls_out.push_back(decl2);
@@ -392,22 +392,32 @@ TypeCon get_class_for_constraint(const Type& constraint)
    in <dvar1, ..., dvarN, var1, ..., varM>
 */
 
-map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const string& class_name) const
+map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const string& class_name)
 {
     std::map<Hs::Var, Hs::Matches> method_matches;
     for(auto& decl: decls)
     {
         auto& fd = decl.as_<Hs::FunDecl>();
-        auto& method = fd.v;
+        auto& method = unloc(fd.v);
         string method_name = method.name;
 
+        if (fd.v.loc) push_source_span(*fd.v.loc);
         if (not members.count(method))
-            throw note_exception()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'";
+        {
+            record_error( Note()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'" );
+            if (fd.v.loc) pop_source_span();
+            continue;
+        }
 
         if (method_matches.count(method))
-            throw note_exception()<<"method '"<<method_name<<"' defined twice!";
+        {
+            record_error( Note() <<"method '"<<method_name<<"' defined twice!" );
+            if (fd.v.loc) pop_source_span();
+            continue;
+        }
 
         method_matches.insert({method, fd.matches});
+        if (fd.v.loc) pop_source_span();
     }
 
     return method_matches;
@@ -488,16 +498,20 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         optional<Hs::FunDecl> FD;
         if (auto it = method_matches.find(method); it != method_matches.end())
         {
-            FD = Hs::FunDecl(op, it->second);
+            FD = Hs::FunDecl({noloc,op}, it->second);
         }
         else
         {
             if (not class_info.default_methods.count(method))
+            {
                 record_error( Note() <<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'" );
+                pop_note();
+                continue;
+            }
 
             auto dm_var = class_info.default_methods.at(method);
 
-            FD = Hs::simple_decl(op, {noloc,dm_var});
+            FD = Hs::simple_decl({noloc,op}, {noloc,dm_var});
         }
         auto [decl2, __] = infer_type_for_single_fundecl_with_sig(*FD);
         decls.push_back(decl2);

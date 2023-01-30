@@ -76,7 +76,7 @@ expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
         auto rhs = rename_infix(m, D.rhs);
 
         if (auto v = unloc(lhs).to<Hs::Var>())
-            return Hs::simple_decl(*v, rhs);
+            return Hs::simple_decl({lhs.loc,*v}, rhs);
         else if (is_definitely_pattern(unloc(lhs)))
             return Hs::PatDecl( unapply(lhs), rhs );
         else if (unloc(lhs).is_a<Hs::ApplyExp>())
@@ -92,7 +92,7 @@ expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
                 for(auto& arg: args)
                     pats.push_back( unapply(arg) );
 
-                return Hs::simple_fun_decl(*v, pats, rhs);
+                return Hs::simple_fun_decl({head.loc, *v}, pats, rhs);
             }
         }
         throw myexception()<<"I don't recognize this declaration:\n    "<<E.print();
@@ -111,7 +111,7 @@ expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
         std::abort();
 }
 
-optional<Hs::Var> fundecl_head(const expression_ref& decl)
+optional<Hs::LVar> fundecl_head(const expression_ref& decl)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
         return fd->v;
@@ -326,7 +326,7 @@ std::tuple<map<string,int>, map<Hs::Var,vector<Hs::Var>>> get_indices_for_names(
         // Get the binder vars introduced by this declaration
         set<Hs::Var> vars;
         if (auto fd = decl.to<Hs::FunDecl>())
-            vars.insert({fd->v});
+            vars.insert({unloc(fd->v)});
         else if (auto pd = decl.to<Hs::PatDecl>())
             vars = Hs::vars_in_pattern( pd->lhs );
         else
@@ -374,7 +374,7 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
         else if (decl.is_a<Hs::FunDecl>())
         {
             auto FD = decl.as_<Hs::FunDecl>();
-            auto& name = FD.v.name;
+            auto& name = unloc(FD.v).name;
             assert(not is_qualified_symbol(name));
             if (top)
                 name = m.name + "." + name;

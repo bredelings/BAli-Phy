@@ -867,7 +867,7 @@ struct LetExp: public Object
     LetExp(const Located<Binds>& bs, const LExp& b): binds(bs), body(b) {};
 };
 
-LetExp simple_let(const Var&, const Expression&, const Expression&);
+LetExp simple_let(const LVar&, const LExp&, const Exp&);
 
 struct IfExp: public Object
 {
@@ -1038,19 +1038,19 @@ struct FunDecl: public Object
     FunDecl* clone() const {return new FunDecl(*this);}
     std::string print() const;
 
-    Var v;
+    LVar v;
     Matches matches;
 
     // This holds vars discovered during renaming
     std::set<std::string> rhs_free_vars;
 
-    FunDecl(const Var& vv, const Matches& ms): v(vv), matches(ms) {}
+    FunDecl(const LVar& vv, const Matches& ms): v(vv), matches(ms) {}
 };
 
-FunDecl simple_decl(const Var& v, const LExp&);
-FunDecl simple_decl(const Var& v, const MultiGuardedRHS&);
-FunDecl simple_fun_decl(const Var& v, const std::vector<LPat>& pats, const LExp&);
-FunDecl simple_fun_decl(const Var& v, const std::vector<LPat>& pats, const MultiGuardedRHS&);
+FunDecl simple_decl(const LVar& v, const LExp&);
+FunDecl simple_decl(const LVar& v, const MultiGuardedRHS&);
+FunDecl simple_fun_decl(const LVar& v, const std::vector<LPat>& pats, const LExp&);
+FunDecl simple_fun_decl(const LVar& v, const std::vector<LPat>& pats, const MultiGuardedRHS&);
 
 struct BindInfo
 {

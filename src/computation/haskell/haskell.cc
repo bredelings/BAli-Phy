@@ -854,13 +854,13 @@ string LetExp::print() const
     return "let " + binds.print() + " in " + body.print();
 }
 
-LetExp simple_let(const Var& x, const LExp& E, const LExp& body)
+LetExp simple_let(const LVar& x, const LExp& E, const LExp& body)
 {
     auto decl = simple_decl(x, E);
     Decls decls({decl});
     Binds binds({decls});
 
-    return LetExp({noloc, binds}, body);
+    return LetExp({x.loc * E.loc, binds}, body);
 }
 
 string IfExp::print() const
@@ -958,12 +958,12 @@ string FunDecl::print() const
     return join( lines, "\n" );
 }
 
-FunDecl simple_fun_decl(const Var& v, const LPats& pats, const LExp& body)
+FunDecl simple_fun_decl(const LVar& v, const LPats& pats, const LExp& body)
 {
     return simple_fun_decl(v, pats, SimpleRHS(body));
 }
 
-FunDecl simple_fun_decl(const Var& v, const LPats& pats, const MultiGuardedRHS& body)
+FunDecl simple_fun_decl(const LVar& v, const LPats& pats, const MultiGuardedRHS& body)
 {
     MRule rule{pats, body};
     Matches ms{{rule}};
@@ -972,12 +972,12 @@ FunDecl simple_fun_decl(const Var& v, const LPats& pats, const MultiGuardedRHS& 
     return FunDecl(v,ms);
 }
 
-FunDecl simple_decl(const Var& v, const LExp& E)
+FunDecl simple_decl(const LVar& v, const LExp& E)
 {
     return simple_fun_decl(v,{},E);
 }
 
-FunDecl simple_decl(const Var& v, const MultiGuardedRHS& E)
+FunDecl simple_decl(const LVar& v, const MultiGuardedRHS& E)
 {
     return simple_fun_decl(v,{},E);
 }

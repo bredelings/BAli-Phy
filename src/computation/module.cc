@@ -1451,7 +1451,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
         {
-            maybe_def_function( fd->v.name );
+            maybe_def_function( unloc(fd->v).name );
         }
         else if (auto data_decl = decl.to<Haskell::DataOrNewtypeDecl>())
         {

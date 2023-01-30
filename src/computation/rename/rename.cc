@@ -374,7 +374,7 @@ bound_var_info renamer_state::find_bound_vars_in_funpatdecl(const expression_ref
     if (auto d = decl.to<Haskell::PatDecl>())
         return find_vars_in_pattern( d->lhs, top);
     else if (auto d = decl.to<Haskell::FunDecl>())
-        return find_vars_in_pattern({noloc,Hs::VarPattern(d->v)}, top);
+        return find_vars_in_pattern({d->v.loc,Hs::VarPattern(unloc(d->v))}, top);
     else
         std::abort();
 }

@@ -160,7 +160,7 @@ bool single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signat
 
     auto& FD = decl.as_<Hs::FunDecl>();
 
-    return signatures.count(FD.v) > 0;
+    return signatures.count(unloc(FD.v)) > 0;
 }
 
 expression_ref
@@ -169,7 +169,7 @@ rename_from_bindinfo(expression_ref decl, const map<Hs::Var, Hs::BindInfo>& bind
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
-        FD.v = rename_var_from_bindinfo(FD.v, bind_infos);
+        unloc(FD.v) = rename_var_from_bindinfo(unloc(FD.v), bind_infos);
         return FD;
     }
     else if (auto pd = decl.to<Hs::PatDecl>())
@@ -244,20 +244,20 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
     push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
 
     // 1. Make up a inner id.
-    Hs::Var inner_id = get_fresh_Var(FD.v.name, false);
+    Hs::Var inner_id = get_fresh_Var(unloc(FD.v).name, false);
 
     // 2. skolemize the type -> (tvs, givens, rho-type)
-    auto polytype = poly_env().at(FD.v);
+    auto polytype = poly_env().at(unloc(FD.v));
     auto [wrap_gen, tvs, givens, rho_type] =
         skolemize_and(polytype,
                       [&](const Type& rho_type, auto& tcs2) {
 
                           // 3. Record the mapping from inner_id -> rho_type for error messages
                           // FIXME -- not using inner idea because we have mangled it.
-                          tcs2.push_binder( IDType{FD.v, rho_type} );
+                          tcs2.push_binder( IDType{unloc(FD.v), rho_type} );
 
                           // 4. Analyze the Matches
-                          auto ctx = Hs::FunctionContext{FD.v.name};
+                          auto ctx = Hs::FunctionContext{unloc(FD.v).name};
                           tcs2.tcMatchesFun( getArity(FD.matches), Check(rho_type),
                                              [&](const vector<Expected>& arg_types, const Expected& result_type) {return [&](auto& tc) {
                                                  tc.tcMatches(ctx, FD.matches, arg_types, result_type);};});
@@ -268,9 +268,9 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
     // 5. return GenBind with tvs, givens, body
     Type monotype = rho_type;
 
-    Hs::BindInfo bind_info(FD.v, inner_id, monotype, polytype, wrap_gen);
+    Hs::BindInfo bind_info(unloc(FD.v), inner_id, monotype, polytype, wrap_gen);
 
-    auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls>(), Hs::Decls({FD}), {{FD.v, bind_info}} );
+    auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls>(), Hs::Decls({FD}), {{unloc(FD.v), bind_info}} );
 
     pop_note();
 
@@ -288,7 +288,7 @@ bool is_restricted(const signature_env& signatures, const Hs::Decls& decls)
             // Simple pattern declaration
             if (fd->matches[0].patterns.size() == 0)
             {
-                if (not signatures.count(fd->v)) return true;
+                if (not signatures.count(unloc(fd->v))) return true;
             }
         }
     }
@@ -302,10 +302,10 @@ TypeChecker::infer_lhs_type(expression_ref& decl, const signature_env& signature
     {
         auto FD = *fd;
         // If there was a signature, we would have called infer_type_for_single_fundecl_with_sig
-        assert(not signatures.count(FD.v));
+        assert(not signatures.count(unloc(FD.v)));
 
         local_value_env lve;
-        auto type = inferPat(lve, FD.v);
+        auto type = inferPat(lve, unloc(FD.v));
         decl = FD;
         return {type, lve};
     }
@@ -327,9 +327,9 @@ void TypeChecker::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
     {
         auto FD = *fd;
 
-        push_binder( IDType{ FD.v, mono_local_env().at(FD.v).second } );
-        push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
-        auto ctx = Hs::FunctionContext{FD.v.name};
+        push_binder( IDType{ unloc(FD.v), mono_local_env().at(unloc(FD.v)).second } );
+        push_note( Note()<<"In function `"<<unloc(FD.v).print()<<"`" );
+        auto ctx = Hs::FunctionContext{unloc(FD.v).name};
         tcMatchesFun( getArity(FD.matches), rhs_type, [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
             tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
                         );
@@ -355,7 +355,7 @@ void TypeChecker::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
 tuple< map<Hs::Var, Hs::Var>, local_value_env >
 TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
 {
-    push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
+    push_note( Note()<<"In function `"<<unloc(FD.v).print()<<"`" );
     // Note: No signature for function, or we'd be in infer_type_for_single_fundecl_with_sig( )
 
     // Note: Since the LHS variables don't appear on the RHS, we don't need to create
@@ -366,7 +366,7 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
     Expected fun_type = newInfer();
 
     // 2. Make up a mono id and record the correspondence
-    auto& poly_id = FD.v;
+    auto& poly_id = unloc(FD.v);
     Hs::Var mono_id = get_fresh_Var(poly_id, false);
     auto mono_ids = map<Hs::Var,Hs::Var>{{poly_id, mono_id}};
 

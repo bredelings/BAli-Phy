@@ -154,7 +154,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
         }
         else if (auto fd = decl.to<Hs::FunDecl>())
         {
-            auto fvar = make_var(fd->v);
+            auto fvar = make_var(unloc(fd->v));
 
             auto equations = desugar_matches(fd->matches);
             auto otherwise = Core::error(fvar.name+": pattern match failure");
@@ -365,7 +365,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
                     auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};
                     auto rule1 = Hs::MRule{ { PQ->bindpat }, Hs::SimpleRHS({noloc, L})        };
                     auto rule2 = Hs::MRule{ { _ },           Hs::SimpleRHS({noloc, fail})     };
-                    auto decl  = Hs::FunDecl(ok, Hs::Matches{{rule1, rule2}});
+                    auto decl  = Hs::FunDecl({noloc,ok}, Hs::Matches{{rule1, rule2}});
 
                     expression_ref body = {concatMap, ok, unloc(PQ->exp)};
                     return desugar( Hs::LetExp({noloc,{{{decl}}}}, {noloc,body}) );
@@ -457,7 +457,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
                 auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};
                 auto rule1 = Hs::MRule{ { PQ.bindpat }, Hs::SimpleRHS({noloc,do_stmts}) };
                 auto rule2 = Hs::MRule{ { _ },          Hs::SimpleRHS({noloc,fail})     };
-                auto decl  = Hs::FunDecl(ok, Hs::Matches{{rule1, rule2}});
+                auto decl  = Hs::FunDecl({noloc,ok}, Hs::Matches{{rule1, rule2}});
 
                 expression_ref body = {PQ.bindOp, unloc(PQ.exp), ok};
                 result = Hs::LetExp({noloc,{{{decl}}}}, {noloc,body});
