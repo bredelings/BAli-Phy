@@ -66,7 +66,7 @@ sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree
 
 alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a IntMap.! b)) (hmms IntMap.! b)
 
-alignment_pr_top as tree hmms = getUEdgesSet tree & IntMap.fromSet (alignment_branch_pr as hmms) & product
+alignment_pr_top as tree hmms = product [ alignment_branch_pr as hmms b | b <- getUEdges tree]
 alignment_pr_bot as tree (_, lengthp) = (product $ map (lengthp . seqlength as tree) (internal_nodes tree)) ^ 2
 alignment_pr1 length (_, lengthp) = lengthp length
 
