@@ -176,7 +176,8 @@ uniform_time_tree_pr age n_leaves tree = factor0 : parent_before_child_prs n_lea
     where factor0 = doubleToLogDouble age `pow` fromIntegral (2-n_leaves)
 
 -- rooted_tree: force / modifiable / triggered_modifiable
-force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq` force_fields unrooted_tree
+instance ForceFields t => ForceFields (RootedTreeImp t) where
+    force_fields rtree@(RootedTree unrooted_tree root_node _) = root_node `seq` force_fields unrooted_tree `seq` rtree
 
 -- leaves   nodes  branches
 -- 1        1      0
@@ -204,12 +205,12 @@ modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $
 
 -- our current modifiable tree structure requires the node to have a constrant degree.
 
-triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_rooted_tree force_rooted_tree
+triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_rooted_tree force_fields
 
 -- A uniform-ordered-history distribution would need to augment nodes with an Int order, instead of a Double order.
 
 -- time_tree: force / modifiable / triggered_modifiable
-force_time_tree (TimeTree rooted_tree times) = force_rooted_tree rooted_tree `seq` force_fields times
+force_time_tree (TimeTree rooted_tree times) = force_fields rooted_tree `seq` force_fields times
 
 -- maybe modf has type (forall a . a -> a)?
 -- we should be able to apply it to both Int and Double...
