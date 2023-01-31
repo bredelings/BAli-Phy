@@ -212,18 +212,16 @@ remove_element i (x:xs) = x:(remove_element (i-1) xs)
 
 tree_from_edges num_nodes edges = Tree nodesMap (listArray (2*num_branches) branches) where
 
-    num_branches   = num_nodes - 1
+    num_branches = num_nodes - 1
 
-    branch_edges   = forward_edges++backward_edges where
-        forward_edges  = zip [0..] edges
-        backward_edges = zip [num_branches..] (map swap edges)
+    forward_backward_edges = zip [0..] $ edges ++ map swap edges
 
     reverse b = (b + num_branches) `mod` (2*num_branches)
 
-    find_branch b = fmap snd $ find (\(b',_) -> b' == b) branch_edges
+    find_branch b = fmap snd $ find (\(b',_) -> b' == b) forward_backward_edges
 
     nodesSet = IntSet.fromList [0..num_nodes-1]
-    nodesMap = IntMap.fromSet (\n ->  Node n (listArray' [b | (b,(x,y)) <- branch_edges, x==n]) ) nodesSet
+    nodesMap = IntMap.fromSet (\n ->  Node n (listArray' [b | (b,(x,y)) <- forward_backward_edges, x==n]) ) nodesSet
 
     branches = [ let Just (s,t) = find_branch b
                      Just i     = elemIndexArray b (node_out_edges (nodesMap IntMap.! s))
