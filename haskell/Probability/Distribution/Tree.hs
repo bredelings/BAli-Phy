@@ -70,10 +70,9 @@ modifiable_cayley_tree modf tree@(Tree nodes0 branches0) = Tree nodesMap branche
     degree node | n_leaves == 1   = 0
                 | node < n_leaves = 1
                 | otherwise       = 3
-    nodesMap = (IntSet.fromList $ (xrange 0 n_nodes)) & IntMap.fromSet (\node -> Node node (mapnA (degree node) modf (edgesOutOfNode tree node)))
-    edgesSet = IntSet.fromList $ xrange 0 (n_branches * 2)
-    branches = edgesSet & IntMap.fromSet (\b ->  let Edge s i t _ _ = findEdge tree b
-                                                 in Edge (modf s) (modf i) (modf t) ((b + n_branches) `mod` (2*n_branches)) b)
+    nodesMap = getNodesSet tree & IntMap.fromSet (\node -> Node node (mapnA (degree node) modf (edgesOutOfNode tree node)))
+
+    branches = getEdgesSet tree & IntMap.fromSet (\b ->  case findEdge tree b of Edge s i t r _ -> Edge (modf s) (modf i) (modf t) r b )
 
 -- our current modifiable tree structure requires the node to have a constrant degree.
 
