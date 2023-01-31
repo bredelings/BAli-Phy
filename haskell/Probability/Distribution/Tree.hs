@@ -210,7 +210,8 @@ triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_roo
 -- A uniform-ordered-history distribution would need to augment nodes with an Int order, instead of a Double order.
 
 -- time_tree: force / modifiable / triggered_modifiable
-force_time_tree (TimeTree rooted_tree times) = force_fields rooted_tree `seq` force_fields times
+instance ForceFields t => ForceFields (TimeTreeImp t) where
+    force_fields ttree@(TimeTree rooted_tree times) = force_fields rooted_tree `seq` force_fields times `seq` ttree
 
 -- maybe modf has type (forall a . a -> a)?
 -- we should be able to apply it to both Int and Double...
@@ -222,7 +223,7 @@ modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree 
                       | otherwise                       = modf x
     times     = IntSet.fromList [0..numNodes rooted_tree'-1] & IntMap.fromSet (\node -> maybe_modf node (times' IntMap.! node))
 
-triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree force_time_tree
+triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree force_fields
 
 -- Add moves for non-root internal-node times.
 -- FIXME: check that the leaves times are fixed?
