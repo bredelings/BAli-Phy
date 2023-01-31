@@ -12,13 +12,13 @@ class Tree t where
     findNode    :: t -> Int -> Node
     findEdge    :: t -> Int -> Edge
     getNodesSet :: t -> IntSet
-    getEdges    :: t -> [Int]
+    getEdgesSet :: t -> IntSet
 
 getNodes t = t & getNodesSet & IntSet.toList
 numNodes t = t & getNodesSet & IntSet.size
 
+getEdges t  = getEdgesSet t & IntSet.toList
 getUEdges t = [ e | e <- getEdges t, e < (e_reverse $ findEdge t e)]
-getEdgesSet t  = getEdges  t & IntSet.fromList
 getUEdgesSet t = getUEdges t & IntSet.fromList
 numBranches t = length $ getUEdges t
 
@@ -67,39 +67,39 @@ data TimeTreeImp t  = TimeTree t (IntMap Double)
 data RateTimeTreeImp t = RateTimeTree t (IntMap Double)
 
 instance Tree TreeImp where
-    getNodesSet (Tree nodesMap _)                = IntMap.keysSet nodesMap
-    getEdges    (Tree _  branchesArray)          = [0 .. length branchesArray - 1]
+    getNodesSet (Tree nodesMap _)             = IntMap.keysSet nodesMap
+    getEdgesSet (Tree _  edgesMap)            = IntMap.keysSet edgesMap
 
-    findNode    (Tree nodesMap _) node           = nodesMap IntMap.! node
-    findEdge    (Tree _ branchesArray) edgeIndex = branchesArray IntMap.! edgeIndex
+    findNode    (Tree nodesMap _) node        = nodesMap IntMap.! node
+    findEdge    (Tree _ edgesMap) edgeIndex   = edgesMap IntMap.! edgeIndex
 
 instance Tree t => Tree (RootedTreeImp t) where
     getNodesSet (RootedTree t _ _)                 = getNodesSet t
-    getEdges    (RootedTree t _ _)                 = getEdges t
+    getEdgesSet (RootedTree t _ _)                 = getEdgesSet t
     findNode    (RootedTree t _ _) node            = findNode t node
     findEdge    (RootedTree t _ _) edgeIndex       = findEdge t edgeIndex
 
 instance Tree t => Tree (LabelledTreeImp t) where
     getNodesSet (LabelledTree t _)                 = getNodesSet t
-    getEdges    (LabelledTree t _)                 = getEdges t
+    getEdgesSet (LabelledTree t _)                 = getEdgesSet t
     findNode    (LabelledTree t _) node            = findNode t node
     findEdge    (LabelledTree t _) edgeIndex       = findEdge t edgeIndex
 
 instance Tree t => Tree (BranchLengthTreeImp t) where
     getNodesSet (BranchLengthTree t _)             = getNodesSet t
-    getEdges    (BranchLengthTree t _)             = getEdges t
+    getEdgesSet (BranchLengthTree t _)             = getEdgesSet t
     findNode    (BranchLengthTree t _) node        = findNode t node
     findEdge    (BranchLengthTree t _) edgeIndex   = findEdge t edgeIndex
 
 instance Tree t => Tree (TimeTreeImp t) where
     getNodesSet (TimeTree t _)                     = getNodesSet t
-    getEdges    (TimeTree t _)                     = getEdges t
+    getEdgesSet (TimeTree t _)                     = getEdgesSet t
     findNode    (TimeTree t _) node                = findNode t node
     findEdge    (TimeTree t _) edgeIndex           = findEdge t edgeIndex
 
 instance Tree t => Tree (RateTimeTreeImp t) where
     getNodesSet (RateTimeTree t _)                 = getNodesSet t
-    getEdges    (RateTimeTree t _)                 = getEdges t
+    getEdgesSet (RateTimeTree t _)                 = getEdgesSet t
     findNode    (RateTimeTree t _) node            = findNode t node
     findEdge    (RateTimeTree t _) edgeIndex       = findEdge t edgeIndex
 
@@ -216,11 +216,11 @@ is_internal_node t n = not $ is_leaf_node t n
 is_internal_branch t b = is_internal_node t (sourceNode t b) && is_internal_node t (targetNode t b)
 is_leaf_branch t b = not $ is_internal_branch t b
 
-nodes t = [0..numNodes t - 1]
+nodes t = getNodes t
 leaf_nodes t = filter (is_leaf_node t) (nodes t)
 internal_nodes t = filter (is_internal_node t) (nodes t)
 
-remove_element _ []     = []
+remove_element _ []     = [] -- no such element
 remove_element 0 (x:xs) = xs
 remove_element i (x:xs) = x:(remove_element (i-1) xs)
 
@@ -228,8 +228,10 @@ tree_from_edges nodes edges = Tree nodesMap branchesMap where
 
     num_nodes = length nodes
 
+    -- FIX: this is a way to avoid depending changeables when |edges| is constant, but edges is changeable.
     num_branches = num_nodes - 1
 
+    -- is this really how we want to name the branches?
     forward_backward_edges = zip [0..] $ edges ++ map swap edges
 
     reverse b = (b + num_branches) `mod` (2*num_branches)
@@ -244,7 +246,7 @@ tree_from_edges nodes edges = Tree nodesMap branchesMap where
                                             Just i     = elemIndexArray b (node_out_edges (nodesMap IntMap.! s))
                                         in Edge s i t (reverse b) b) branchesSet
 
-tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
+tree_length tree = sum [ branch_length tree b | b <- getUEdges tree ]
 
 allEdgesAfterEdge tree b = b:concatMap (allEdgesAfterEdge tree) (edgesAfterEdge tree b)
 allEdgesFromNode tree n = concatMap (allEdgesAfterEdge tree) (edgesOutOfNode tree n)
