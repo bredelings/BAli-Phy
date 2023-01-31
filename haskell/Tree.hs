@@ -52,7 +52,7 @@ data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
 --   and e_reverse would be of type Edge
 data Edge = Edge { e_source_node, e_source_index, e_target_node, e_reverse, edge_name :: Int }
 
-data TreeImp = Tree (IntMap Node) (Array Int Edge)
+data TreeImp = Tree (IntMap Node) (IntMap Edge)
 
 data RootedTreeImp t = RootedTree t Int (IntMap Bool)
 
@@ -71,7 +71,7 @@ instance Tree TreeImp where
     getEdges    (Tree _  branchesArray)          = [0 .. length branchesArray - 1]
 
     findNode    (Tree nodesMap _) node           = nodesMap IntMap.! node
-    findEdge    (Tree _ branchesArray) edgeIndex = branchesArray ! edgeIndex
+    findEdge    (Tree _ branchesArray) edgeIndex = branchesArray IntMap.! edgeIndex
 
 instance Tree t => Tree (RootedTreeImp t) where
     getNodesSet (RootedTree t _ _)                 = getNodesSet t
@@ -224,7 +224,7 @@ remove_element _ []     = []
 remove_element 0 (x:xs) = xs
 remove_element i (x:xs) = x:(remove_element (i-1) xs)
 
-tree_from_edges nodes edges = Tree nodesMap (listArray (2*num_branches) branches) where
+tree_from_edges nodes edges = Tree nodesMap branchesMap where
 
     num_nodes = length nodes
 
@@ -239,9 +239,10 @@ tree_from_edges nodes edges = Tree nodesMap (listArray (2*num_branches) branches
     nodesSet = IntSet.fromList nodes
     nodesMap = IntMap.fromSet (\n ->  Node n (listArray' [b | (b,(x,y)) <- forward_backward_edges, x==n]) ) nodesSet
 
-    branches = [ let Just (s,t) = find_branch b
-                     Just i     = elemIndexArray b (node_out_edges (nodesMap IntMap.! s))
-                 in Edge s i t (reverse b) b | b <- [0..2*num_branches-1] ]
+    branchesSet = IntSet.fromList [0..2*num_branches-1]
+    branchesMap = IntMap.fromSet (\b -> let Just (s,t) = find_branch b
+                                            Just i     = elemIndexArray b (node_out_edges (nodesMap IntMap.! s))
+                                        in Edge s i t (reverse b) b) branchesSet
 
 tree_length tree = sum [ branch_length tree b | b <- [0..numBranches tree - 1]]
 

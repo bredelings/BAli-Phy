@@ -37,7 +37,7 @@ uniform_topology_edges (l : ls) (i : is) = do
     return $ [(l, i), (x, i), (i, y)] ++ es2
 
 -- We could rewrite uniform_topology_edges to automatically flip and sort the branches with leaf branches first.
-sample_uniform_topology 1 = return $ Tree (IntMap.singleton 0 (Node 0 (listArray' []))) (listArray' [])
+sample_uniform_topology 1 = return $ Tree (IntMap.singleton 0 (Node 0 (listArray' []))) (IntMap.empty)
 sample_uniform_topology n = do
     let num_nodes = 2 * n - 2
     edges <- uniform_topology_edges [0 .. n - 1] [n .. num_nodes - 1]
@@ -62,7 +62,7 @@ instance ForceFields TreeImp where
 -- 3        4      3
 -- 4        6      5
 modifiable_cayley_tree :: (forall a.a->a) -> TreeImp -> TreeImp
-modifiable_cayley_tree modf tree = Tree (IntMap.fromList $ zip [0..] nodes) (listArray' branches) where
+modifiable_cayley_tree modf tree@(Tree nodes0 branches0) = Tree (IntMap.fromList $ zip [0..] nodes) branches where
     n_nodes = numNodes tree
     n_leaves | n_nodes == 1  = 1
              | otherwise     = (n_nodes+2) `div` 2
@@ -71,8 +71,8 @@ modifiable_cayley_tree modf tree = Tree (IntMap.fromList $ zip [0..] nodes) (lis
                 | node < n_leaves = 1
                 | otherwise       = 3
     nodes    = [ Node node (mapnA (degree node) modf (edgesOutOfNode tree node)) | node <- xrange 0 n_nodes ]
-    branches = [ Edge (modf s) (modf i) (modf t) ((b + n_branches) `mod` (2*n_branches)) b | b <- xrange 0 (n_branches * 2),
-                                                                                                  let Edge s i t _ _ = findEdge tree b ]
+    edgesSet = IntSet.fromList $ xrange 0 (n_branches * 2)
+    branches = edgesSet & IntMap.fromSet (\b ->  let Edge s i t _ _ = findEdge tree b in Edge (modf s) (modf i) (modf t) ((b + n_branches) `mod` (2*n_branches)) b)
 
 -- our current modifiable tree structure requires the node to have a constrant degree.
 
@@ -185,7 +185,7 @@ instance ForceFields t => ForceFields (RootedTreeImp t) where
 -- 3        5      4
 -- 4        7      6
 modifiable_rooted_tree :: (forall a.a -> a) -> RootedTreeImp TreeImp -> RootedTreeImp TreeImp
-modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $ Tree (IntMap.fromList $ zip [0..] nodes) (listArray' branches) where
+modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $ Tree (IntMap.fromList $ zip [0..] nodes) branches where
     n_nodes = numNodes tree
     n_leaves = (n_nodes + 1) `div` 2
     n_branches = n_nodes - 1
@@ -200,8 +200,8 @@ modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $
 
     nodes    = [ Node node (mapnA (degree node) modf (edgesOutOfNode tree node)) | node <- xrange 0 n_nodes ]
 
-    branches = [ Edge (modf s) (modf i) (modf t) (reverse b) b | b <- xrange 0 (n_branches * 2),
-                                                                 let Edge s i t _ _ = findEdge tree b ]
+    edgesSet = IntSet.fromList $ xrange 0 (n_branches * 2)
+    branches = edgesSet & IntMap.fromSet (\b ->  let Edge s i t _ _ = findEdge tree b in Edge (modf s) (modf i) (modf t) ((b + n_branches) `mod` (2*n_branches)) b)
 
 -- our current modifiable tree structure requires the node to have a constrant degree.
 
