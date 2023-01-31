@@ -62,7 +62,7 @@ instance ForceFields TreeImp where
 -- 3        4      3
 -- 4        6      5
 modifiable_cayley_tree :: (forall a.a->a) -> TreeImp -> TreeImp
-modifiable_cayley_tree modf tree@(Tree nodes0 branches0) = Tree (IntMap.fromList $ zip [0..] nodes) branches where
+modifiable_cayley_tree modf tree@(Tree nodes0 branches0) = Tree nodesMap branches where
     n_nodes = numNodes tree
     n_leaves | n_nodes == 1  = 1
              | otherwise     = (n_nodes+2) `div` 2
@@ -70,9 +70,10 @@ modifiable_cayley_tree modf tree@(Tree nodes0 branches0) = Tree (IntMap.fromList
     degree node | n_leaves == 1   = 0
                 | node < n_leaves = 1
                 | otherwise       = 3
-    nodes    = [ Node node (mapnA (degree node) modf (edgesOutOfNode tree node)) | node <- xrange 0 n_nodes ]
+    nodesMap = (IntSet.fromList $ (xrange 0 n_nodes)) & IntMap.fromSet (\node -> Node node (mapnA (degree node) modf (edgesOutOfNode tree node)))
     edgesSet = IntSet.fromList $ xrange 0 (n_branches * 2)
-    branches = edgesSet & IntMap.fromSet (\b ->  let Edge s i t _ _ = findEdge tree b in Edge (modf s) (modf i) (modf t) ((b + n_branches) `mod` (2*n_branches)) b)
+    branches = edgesSet & IntMap.fromSet (\b ->  let Edge s i t _ _ = findEdge tree b
+                                                 in Edge (modf s) (modf i) (modf t) ((b + n_branches) `mod` (2*n_branches)) b)
 
 -- our current modifiable tree structure requires the node to have a constrant degree.
 
