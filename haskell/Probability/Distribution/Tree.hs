@@ -47,11 +47,14 @@ sample_uniform_topology n = do
 instance ForceFields Edge where
     force_fields e@(Edge s i t r n) = s `seq` i `seq` t `seq` t `seq` n `seq` e
 
-force_tree tree@(Tree nodes branches) = force_nodes `seq` force_branches where
-    n_nodes    = numNodes tree
-    n_branches = numBranches tree
-    force_nodes    = force_fields $ listArray' [ force_fields $ edgesOutOfNode tree node | node <- xrange 0 n_nodes ]
-    force_branches = force_fields $ listArray' [ force_fields $ findEdge tree b | b <- xrange 0 (n_branches * 2)]
+instance ForceFields Node where
+    force_fields n@(Node name out_edges) = name `seq` force_fields out_edges `seq` n
+
+
+instance ForceFields TreeImp where
+    force_fields tree@(Tree nodes branches) = force_nodes `seq` force_branches `seq` tree where
+                             force_nodes    = force_fields $ listArray' [ force_fields $ findNode tree n | n <- getNodes tree ]
+                             force_branches = force_fields $ listArray' [ force_fields $ findEdge tree b | b <- getEdges tree ]
 
 -- leaves   nodes  branches
 -- 1        1      0
@@ -83,7 +86,7 @@ uniform_topology_pr n = uniform_topology_pr (n - 1) / (fromIntegral $ 2 * n - 5)
 
 -- We don't want to force all fields of the tree when _any_ tree field is accessed, only when a _random_ field is accessed.
 -- This is why triggered tree still uses 'tree' as input to 'modifiable_tree'.
-triggered_modifiable_tree = triggered_modifiable_structure modifiable_cayley_tree force_tree
+triggered_modifiable_tree = triggered_modifiable_structure modifiable_cayley_tree force_fields
 
 uniform_topology_effect tree = do
 --  add_move $ walk_tree_sample_NNI_unsafe tree  -- probably we should ensure that the probability of the alignment is zero if pairwise alignments don't match?
@@ -173,7 +176,7 @@ uniform_time_tree_pr age n_leaves tree = factor0 : parent_before_child_prs n_lea
     where factor0 = doubleToLogDouble age `pow` fromIntegral (2-n_leaves)
 
 -- rooted_tree: force / modifiable / triggered_modifiable
-force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq` force_tree unrooted_tree
+force_rooted_tree rtree@(RootedTree unrooted_tree root_node _) = root_node `seq` force_fields unrooted_tree
 
 -- leaves   nodes  branches
 -- 1        1      0
