@@ -15,13 +15,18 @@ import Bio.Alphabet -- for Alphabet type
 import Bio.Alignment.Matrix
 import Bio.Alignment.Pairwise
 
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as IntSet
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IntMap
+
 data VectorPairIntInt -- ancestral sequences with (int letter, int category) for each site.
 
 foreign import bpcall "Alignment:leaf_sequence_counts" builtin_leaf_sequence_counts :: AlignmentMatrix -> Int -> EVector Int -> EVector (EVector Int)
 
-branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) [0..n_branches-1]
+branch_hmms (model,_) distances n_branches = IntSet.fromList [0..n_branches-1] & IntMap.fromSet (model distances)
   
-seqlength as tree node = pairwise_alignment_length1 (as!b) where
+seqlength as tree node = pairwise_alignment_length1 (as IntMap.! b) where
     b = edgesOutOfNode tree node!0
 
 
@@ -43,7 +48,7 @@ pairwise_alignments_from_matrix a tree = [ pairwise_alignment_from_bits bits1 bi
     where bits = minimally_connect_characters a tree
 
 -- We can't just do forall t.AlignmentOnTree t, because then any constraints on t will be on existential variables, resulting in ambiguity.
-data AlignmentOnTree t = AlignmentOnTree t Int (Array Int Int) (Array Int PairwiseAlignment)
+data AlignmentOnTree t = AlignmentOnTree t Int (IntMap Int) (IntMap PairwiseAlignment)
 n_sequences         (AlignmentOnTree _ n _  _) = n
 sequence_lengths    (AlignmentOnTree _ _ ls _) = ls
 pairwise_alignments (AlignmentOnTree _ _ _ as) = as
@@ -63,7 +68,8 @@ compress_alignment a = (compressed, counts, mapping) where tmp123 = builtin_comp
                                                            (compressed, tmp23) = pair_from_c tmp123
                                                            (counts,   mapping) = pair_from_c tmp23
 
-alignment_on_tree_length (AlignmentOnTree t _ ls as) = (ls!0) + sum [numInsert (as!b) | b <- allEdgesFromNode t 0]
+alignment_on_tree_length (AlignmentOnTree t _ ls as) = (ls IntMap.! node0) + sum [numInsert (as IntMap.! b) | b <- allEdgesFromNode t node0]
+                                                       where node0 = head $ getNodes t
 
 foreign import bpcall "Alignment:uncompress_alignment" builtin_uncompress_alignment :: AlignmentMatrix -> EVector Int -> AlignmentMatrix
 

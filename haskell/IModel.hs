@@ -4,6 +4,7 @@ import Data.Array
 import Probability
 import Tree
 import Bio.Alignment.Pairwise -- for PairHMM
+import qualified Data.IntMap as IntMap
 
 foreign import bpcall "Alignment:rs05_branch_HMM" rs05_branch_HMM :: Double -> Double -> Double -> Double -> Bool -> PairHMM
 foreign import bpcall "Alignment:rs05_lengthp" builtin_rs05_lengthp :: PairHMM -> Int -> Double
@@ -23,7 +24,7 @@ rs05 logRate meanIndelLength tau tree = (\d b -> m, rs05_lengthp m) where
 
 rs07_lengthp e l = doubleToLogDouble (builtin_rs07_lengthp e l)
 
-rs07 rate mean_length tree = (\d b ->rs07_branch_HMM epsilon (rate * d!b) 1.0 False, rs07_lengthp epsilon)
+rs07 rate mean_length tree = (\d b ->rs07_branch_HMM epsilon (rate * (d IntMap.! b)) 1 False, rs07_lengthp epsilon)
     where epsilon = (mean_length-1.0)/mean_length
 
 rs07_relaxed_rates_model tree = do 

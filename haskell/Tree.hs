@@ -56,7 +56,7 @@ data TreeImp = Tree (IntMap Node) (Array Int Edge)
 
 data RootedTreeImp t = RootedTree t Int (IntMap Bool)
 
-data BranchLengthTreeImp t = BranchLengthTree t (Array Int Double)
+data BranchLengthTreeImp t = BranchLengthTree t (IntMap Double)
 
 data LabelledTreeImp t = LabelledTree t (IntMap (Maybe String))
 
@@ -115,7 +115,8 @@ instance TimeTree t => TimeTree (RateTimeTreeImp t) where
 instance TimeTree t => RateTimeTree (RateTimeTreeImp t) where
     branch_rate (RateTimeTree _ rs) node = rs!node
 
-branch_length_tree topology lengths = BranchLengthTree topology (listArray' lengths)
+branch_length_tree topology lengths = BranchLengthTree topology lengths' where
+    lengths' = IntMap.fromList $ zip [0..] lengths
 
 branch_lengths (BranchLengthTree _ ds) = ds
 
@@ -128,7 +129,7 @@ branch_duration t b = abs (node_time t source - node_time t target)
           target = targetNode t b
 
 instance Tree t => BranchLengthTree (BranchLengthTreeImp t) where
-    branch_length (BranchLengthTree tree ds) b = ds!b' where b' = min b (reverseEdge tree b)
+    branch_length (BranchLengthTree tree ds) b = ds IntMap.! b' where b' = min b (reverseEdge tree b)
 
 instance TimeTree t => BranchLengthTree (RateTimeTreeImp t) where
     branch_length tree b = branch_duration tree b * branch_rate tree b

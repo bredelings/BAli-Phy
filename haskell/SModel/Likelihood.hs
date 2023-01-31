@@ -53,7 +53,7 @@ cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = mkArray (
                                                                            b2 = edges!1
                                                                        in case numElements edges of
                                                                             0 -> let n=sourceNode t b in peel_leaf_branch (seqs IntMap.! n) alpha (ps!bb) smap
-                                                                            2 -> peel_internal_branch (lc!b1) (lc!b2) (as!b1) (as!b2) (ps!bb) f
+                                                                            2 -> peel_internal_branch (lc!b1) (lc!b2) (as IntMap.! b1) (as IntMap.! b2) (ps!bb) f
                                                            in lc
 
 peel_likelihood t cl as f root = let likelihoods = mkArray (numNodes t) peel_likelihood'
@@ -61,7 +61,7 @@ peel_likelihood t cl as f root = let likelihoods = mkArray (numNodes t) peel_lik
                                                                  b1 = branches_in!0
                                                                  b2 = branches_in!1
                                                                  b3 = branches_in!2
-                                                             in calc_root_probability (cl!b1) (cl!b2) (cl!b3) (as!b1) (as!b2) (as!b3) f
+                                                             in calc_root_probability (cl!b1) (cl!b2) (cl!b3) (as IntMap.! b1) (as IntMap.! b2) (as IntMap.! b3) f
                                  in likelihoods!root
 
 
@@ -72,7 +72,7 @@ sample_ancestral_sequences :: Tree t =>
                               t ->
                               Int ->
                               IntMap (EVector Int) ->
-                              Array Int PairwiseAlignment ->
+                              IntMap PairwiseAlignment ->
                               Alphabet ->
                               Array Int (EVector (Matrix Double)) ->
                               Matrix Double ->
@@ -83,15 +83,15 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
     let rt = add_root root t
         ancestor_seqs = mkArray (numNodes t) ancestor_for_node
         ancestor_for_node n = ancestor_for_branch n (parentBranch rt n)
-        ancestor_for_branch n Nothing = sample_root_sequence (cl!b0) (cl!b1) (cl!b2) (as!b0) (as!b1) (as!b2) f where edges = edgesTowardNode t n
-                                                                                                                     b0 = edges!0
-                                                                                                                     b1 = edges!1
-                                                                                                                     b2 = edges!2
+        ancestor_for_branch n Nothing = sample_root_sequence (cl!b0) (cl!b1) (cl!b2) (as IntMap.! b0) (as IntMap.! b1) (as IntMap.! b2) f where edges = edgesTowardNode t n
+                                                                                                                                                b0 = edges!0
+                                                                                                                                                b1 = edges!1
+                                                                                                                                                b2 = edges!2
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs!p
                                                 b0 = reverseEdge t to_p
                                                 ps_for_b0 = ps!(b0 `mod` (numBranches t))
-                                                a0 = as!b0
+                                                a0 = as IntMap.! b0
                                                 edges = edgesBeforeEdge t to_p
                                                 b1 = edges!0
                                                 b2 = edges!0
@@ -110,8 +110,8 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
                                                           (cl!b1)
                                                           (cl!b2)
                                                           a0
-                                                          (as!b1)
-                                                          (as!b2)
+                                                          (as IntMap.! b1)
+                                                          (as IntMap.! b2)
                                                           f
     in ancestor_seqs
 

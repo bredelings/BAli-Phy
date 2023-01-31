@@ -7,17 +7,19 @@ import           Control.DeepSeq
 import           Data.Array
 
 import qualified Data.Map as Map
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IntMap
 
-type IModel = (Array Int Double -> Int -> PairHMM, Int -> LogDouble)
+type IModel = (IntMap Double -> Int -> PairHMM, Int -> LogDouble)
 
 modifiable_alignment a@(AlignmentOnTree tree n_seqs ls as) | numNodes tree < 2 = a
 modifiable_alignment (AlignmentOnTree tree n_seqs ls as) | otherwise           = AlignmentOnTree tree n_seqs ls' as'
   where
     as' = fmap modifiable as
-    ls' = listArray' [ seqlength as' tree node | node <- [0 .. numNodes tree - 1] ]
+    ls' = getNodesSet tree & IntMap.fromSet (seqlength as' tree)
 
 -- Compare to unaligned_alignments_on_tree in parameters.cc
-unaligned_alignments_on_tree tree ls = listArray' [ make_a' b | b <- [0 .. 2 * numBranches tree - 1] ]
+unaligned_alignments_on_tree tree ls = getEdgesSet tree & IntMap.fromSet make_a'
   where
     length_for_node node = case get_label tree node of
                              Just label -> ls Map.! label
@@ -56,26 +58,28 @@ left_aligned_alignments_on_tree tree ls = [ make_A b | b <- [0 .. 2 * numBranche
 sample_alignment tree hmms tip_lengths = return (hmms `deepseq` (AlignmentOnTree tree n_nodes ls as))
   where
     n_leaves = Map.size tip_lengths
-    ls       = listArray' $ [ case get_label tree node of Just label -> tip_lengths Map.! label ; Nothing -> seqlength as tree node | node <- [0 .. n_nodes - 1] ]
+    ls       = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of
+                                                             Just label -> tip_lengths Map.! label
+                                                             Nothing -> seqlength as tree node )
     as       = unaligned_alignments_on_tree tree tip_lengths
     n_nodes  = numNodes tree
 
-alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a ! b)) (hmms ! b)
+alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a IntMap.! b)) (hmms IntMap.! b)
 
-alignment_pr_top as tree hmms = product $ map (alignment_branch_pr as hmms) [0 .. numBranches tree - 1]
+alignment_pr_top as tree hmms = getUEdgesSet tree & IntMap.fromSet (alignment_branch_pr as hmms) & product
 alignment_pr_bot as tree (_, lengthp) = (product $ map (lengthp . seqlength as tree) (internal_nodes tree)) ^ 2
 alignment_pr1 length (_, lengthp) = lengthp length
 
 -- FIXME: Maybe the alignment argument should be last?
 -- QUESTION: Should I be passing the tree in here separately?
 alignment_pr (AlignmentOnTree tree n_seqs ls as) hmms model | numNodes tree < 1 = error $ "Tree only has " ++ show (numNodes tree) ++ " nodes."
-                                                            | numNodes tree == 1 = alignment_pr1 (ls ! 0) model
+                                                            | numNodes tree == 1 = alignment_pr1 (ls IntMap.! 0) model
                                                             | otherwise = (alignment_pr_top as tree hmms) / (alignment_pr_bot as tree model)
 
 alignment_prs_bot as tree (_, lengthp) = map ((\x -> x*x) . (1/) . lengthp . seqlength as tree) (internal_nodes tree)
 alignment_prs_top as tree hmms = map (alignment_branch_pr as hmms) [0 .. numBranches tree - 1]
 alignment_prs hmms model (AlignmentOnTree tree n_seqs ls as) | numNodes tree < 1  = error $ "Tree only has " ++ show (numNodes tree) ++ " nodes."
-                                                             | numNodes tree == 1 = [alignment_pr1 (ls ! 0) model]
+                                                             | numNodes tree == 1 = [alignment_pr1 (ls IntMap.! 0) model]
                                                              | otherwise = alignment_prs_top as tree hmms ++ alignment_prs_bot as tree model -- [ doubleToLogDouble 1.0 / alignment_pr_bot as tree model]
 
 instance ForceFields (AlignmentOnTree t) where
@@ -92,11 +96,11 @@ triggered_modifiable_alignment value effect = triggered_a where
 data RandomAlignmentProperties = RandomAlignmentProperties 
     {
       probability :: LogDouble,
-      hmms :: Array Int PairHMM,
+      hmms :: IntMap PairHMM,
       lengthp :: Int -> LogDouble,
-      as :: Array Int PairwiseAlignment,
-      get_lengths :: Array Int Int,
-      get_length_prs :: Array Int LogDouble
+      as :: IntMap PairwiseAlignment,
+      get_lengths :: IntMap Int,
+      get_length_prs :: IntMap LogDouble
     }
 
 annotated_alignment_prs tree hmms model alignment = do

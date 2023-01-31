@@ -30,7 +30,7 @@ data CTMCOnTreeProperties = CTMCOnTreeProperties {
       prop_smap :: EVector Int,
       prop_leaf_sequences :: IntMap (EVector Int),
       prop_alphabet :: Alphabet,
-      prop_as :: Array Int PairwiseAlignment,
+      prop_as :: IntMap PairwiseAlignment,
       prop_n_states :: Int,
       prop_n_base_models :: Int
     }
@@ -78,7 +78,7 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
                  | n_nodes == 1   = let [n1] = getNodes tree
                                     in peel_likelihood_1 (node_sequences IntMap.! n1) alphabet f
                  | n_nodes == 2   = let [n1, n2] = getNodes tree
-                                    in peel_likelihood_2 (node_sequences IntMap.! n1) (node_sequences IntMap.! n2) alphabet (as ! 0) (transition_ps ! 0) f
+                                    in peel_likelihood_2 (node_sequences IntMap.! n1) (node_sequences IntMap.! n2) alphabet (as IntMap.! 0) (transition_ps ! 0) f
       ancestral_sequences = case n_nodes of
                               1 -> list_to_vector $ []
                               2 -> list_to_vector $ []
