@@ -41,7 +41,7 @@ sample_uniform_topology 1 = return $ Tree (IntMap.singleton 0 (Node 0 (listArray
 sample_uniform_topology n = do
     let num_nodes = 2 * n - 2
     edges <- uniform_topology_edges [0 .. n - 1] [n .. num_nodes - 1]
-    return $ tree_from_edges num_nodes edges
+    return $ tree_from_edges [0..num_nodes-1] edges
 
 
 instance ForceFields Edge where
@@ -150,7 +150,7 @@ sample_uniform_ordered_tree n = do
   let num_nodes = 2 * n - 1
   edges <- uniform_ordered_tree_edges [0..n-1] [n..]
   -- The number of edges should be 2*n-1, unchangably.
-  let utree = tree_from_edges num_nodes edges
+  let utree = tree_from_edges [0..num_nodes-1] edges
   return $ add_root (num_nodes - 1) utree
 
 sample_uniform_time_tree age n = do
