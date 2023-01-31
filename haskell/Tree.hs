@@ -54,7 +54,7 @@ data Edge = Edge { e_source_node, e_source_index, e_target_node, e_reverse, edge
 
 data TreeImp = Tree (IntMap Node) (Array Int Edge)
 
-data RootedTreeImp t = RootedTree t Int (Array Int Bool)
+data RootedTreeImp t = RootedTree t Int (IntMap Bool)
 
 data BranchLengthTreeImp t = BranchLengthTree t (Array Int Double)
 
@@ -148,7 +148,7 @@ numLeaves t = length $ leaf_nodes t
 
 instance Tree t => RootedTree (RootedTreeImp t) where
     root (RootedTree _ r _) = r
-    away_from_root (RootedTree t r arr    ) b = arr!b
+    away_from_root (RootedTree t r arr    ) b = arr IntMap.! b
 
 instance RootedTree t => RootedTree (LabelledTreeImp t) where
     root (LabelledTree t _) = root t
@@ -252,7 +252,7 @@ add_labels labels t = LabelledTree t (getNodesSet t & IntMap.fromSet (\node -> l
 add_root r t = rt
      where check_away_from_root b = (sourceNode rt b == root rt) || (or $ fmap (away_from_root rt) (edgesBeforeEdge rt b))
            nb = numBranches t * 2
-           rt = RootedTree t r (mkArray nb check_away_from_root)
+           rt = RootedTree t r (getEdgesSet t & IntMap.fromSet check_away_from_root)
 
 make_rooted tree = add_root (numNodes tree - 1) tree
 

@@ -67,7 +67,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
         root_reg = tree[1].get_reg();
 
         // We need to evaluate this to avoid getting an index_var.
-        away_from_root_array_reg = tree[2].get_reg();
+        away_from_root_reg = tree[2].get_reg();
 
         tree = tree[0];
     }
@@ -128,9 +128,9 @@ std::optional<int> TreeInterface::node_times_reg() const
     return get_tree_constants().node_times_reg;
 }
 
-std::optional<int> TreeInterface::away_from_root_array_reg() const
+std::optional<int> TreeInterface::away_from_root_reg() const
 {
-    return get_tree_constants().away_from_root_array_reg;
+    return get_tree_constants().away_from_root_reg;
 }
 
 int TreeInterface::n_nodes() const {
@@ -488,15 +488,13 @@ bool TreeInterface::away_from_root(int b) const
 {
     assert(has_root());
 
-    int array_reg = *away_from_root_array_reg();
+    int array_reg = *away_from_root_reg();
 
     auto& C = get_const_context();
 
-    auto& M = C.get_memory();
+    auto away = context_ptr(C, array_reg);
 
-    int r = M[array_reg].reg_for_slot(b);
-
-    return is_bool_true(C.evaluate_reg(r));
+    return is_bool_true(away[b].value());
 }
 
 bool TreeInterface::toward_root(int b) const

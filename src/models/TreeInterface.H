@@ -25,7 +25,7 @@ struct tree_constants: public Object
 
     // Root info
     std::optional<int> root_reg;
-    std::optional<int> away_from_root_array_reg;
+    std::optional<int> away_from_root_reg;
 
     // Node labels
     std::vector<std::string> node_labels;
@@ -54,7 +54,7 @@ class TreeInterface
 
     std::optional<int> node_times_reg() const;
 
-    std::optional<int> away_from_root_array_reg() const;
+    std::optional<int> away_from_root_reg() const;
 
     virtual const tree_constants& get_tree_constants() const = 0;
     virtual const context_ref& get_const_context() const = 0;
