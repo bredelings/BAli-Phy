@@ -31,7 +31,7 @@ struct tree_constants: public Object
     std::vector<std::string> node_labels;
 
     // Branch lengths
-    std::optional<int> branch_durations_array_reg;
+    std::optional<int> branch_durations_reg;
 
     // Node times
     std::optional<int> node_times_reg;
@@ -48,7 +48,7 @@ class TreeInterface
     void read_tree_node(const Tree&, int n);
     void end_modify_node(int n);
 
-    std::optional<int> branch_durations_array_reg() const;
+    std::optional<int> branch_durations_reg() const;
 
     std::optional<int> root_reg() const;
 

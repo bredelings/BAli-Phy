@@ -38,7 +38,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     if (has_constructor(tree.head(), "Tree.BranchLengthTree"))
     {
         // We assume that the path to the array isn't changeable... ???
-        branch_durations_array_reg = tree[1].result().get_reg();
+        branch_durations_reg = tree[1].result().get_reg();
 
         tree = tree[0];
     }
@@ -113,9 +113,9 @@ tree_constants::tree_constants(context_ref& C, const vector<string>& labels, con
     assert(node_labels.size() == n_nodes);
 }
 
-std::optional<int> TreeInterface::branch_durations_array_reg() const
+std::optional<int> TreeInterface::branch_durations_reg() const
 {
-    return get_tree_constants().branch_durations_array_reg;
+    return get_tree_constants().branch_durations_reg;
 }
 
 std::optional<int> TreeInterface::root_reg() const
@@ -533,7 +533,7 @@ std::vector<int> TreeInterface::children_of_node(int n) const
 
 bool TreeInterface::has_branch_lengths() const
 {
-    if (branch_durations_array_reg())
+    if (branch_durations_reg())
         return true;
     else
         return false;
@@ -541,50 +541,47 @@ bool TreeInterface::has_branch_lengths() const
 
 double TreeInterface::branch_length(int b) const
 {
-    b %= n_branches();
-
     assert(has_branch_lengths());
-    int array_reg = *branch_durations_array_reg();
 
-    auto& C = get_const_context();
+    b = std::min(b, reverse(b));
 
-    auto& M = C.get_memory();
-    int r = M[array_reg].reg_for_slot(b);
+    int array_reg = *branch_durations_reg();
 
-    return C.evaluate_reg(r).as_double();
+    auto lengths = context_ptr{get_const_context(), array_reg};
+
+    return lengths[b].value().as_double();
 }
 
 bool TreeInterface::can_set_branch_length(int b) const
 {
-    b %= n_branches();
+    assert(has_branch_lengths());
 
-    auto array_reg = branch_durations_array_reg();
-    if (not array_reg) return false;
+    b = std::min(b, reverse(b));
 
-    auto& C = get_const_context();
+    int array_reg = *branch_durations_reg();
 
-    auto& M = C.get_memory();
-    int r = M[*array_reg].reg_for_slot(b);
+    auto lengths = context_ptr{get_const_context(), array_reg};
 
-    auto m = C.find_modifiable_reg(r);
-    return bool(m);
+    auto length = lengths[b];
+
+    return (bool)length.move_to_modifiable();
 }
 
 void TreeInterface::set_branch_length(int b, double l)
 {
-    b %= n_branches();
-
-    int array_reg = *branch_durations_array_reg();
-
     auto& C = get_context();
 
-    auto& M = C.get_memory();
-    int r = M[array_reg].reg_for_slot(b);
+    assert(has_branch_lengths());
 
-    auto m = C.find_modifiable_reg(r);
-    if (not m)
-        throw myexception()<<"set_branch_length: not modifiable!";
-    C.set_modifiable_value(*m, l);
+    b = std::min(b, reverse(b));
+
+    int array_reg = *branch_durations_reg();
+
+    auto lengths = context_ptr{C, array_reg};
+
+    auto length = lengths[b];
+
+    C.set_modifiable_value(length.get_reg(), l);
 }
 
 bool TreeInterface::has_node_times() const
