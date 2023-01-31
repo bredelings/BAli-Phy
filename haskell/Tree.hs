@@ -16,11 +16,11 @@ class Tree t where
 
 getNodes t = t & getNodesSet & IntSet.toList
 numNodes t = t & getNodesSet & IntSet.size
-numBranches t = numNodes t - 1
 
 getUEdges t = [ e | e <- getEdges t, e < (e_reverse $ findEdge t e)]
 getEdgesSet t  = getEdges  t & IntSet.fromList
 getUEdgesSet t = getUEdges t & IntSet.fromList
+numBranches t = length $ getUEdges t
 
 edgesOutOfNode t node_index = findNode t node_index & node_out_edges
 
