@@ -16,6 +16,9 @@ class Tree t where
 getNodes t = t & getNodesSet & IntSet.toList
 numNodes t = t & getNodesSet & IntSet.size
 
+numBranches t = numNodes t - 1
+
+
 edgesOutOfNode t node_index = findNode t node_index & node_out_edges
 
 class Tree t => BranchLengthTree t where
@@ -99,8 +102,6 @@ instance TimeTree t => TimeTree (RateTimeTreeImp t) where
 
 instance TimeTree t => RateTimeTree (RateTimeTreeImp t) where
     branch_rate (RateTimeTree _ rs) node = rs!node
-
-numBranches t = numNodes t - 1
 
 branch_length_tree topology lengths = BranchLengthTree topology (listArray' lengths)
 
