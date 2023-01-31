@@ -64,7 +64,7 @@ data LabelledTreeImp t = LabelledTree t (IntMap (Maybe String))
 data TimeTreeImp t  = TimeTree t (IntMap Double)
 
 -- The array stores the branch rates
-data RateTimeTreeImp t = RateTimeTree t (Array Int Double)
+data RateTimeTreeImp t = RateTimeTree t (IntMap Double)
 
 instance Tree TreeImp where
     getNodesSet (Tree nodesMap _)                = IntMap.keysSet nodesMap
@@ -113,7 +113,7 @@ instance TimeTree t => TimeTree (RateTimeTreeImp t) where
     node_time (RateTimeTree tt _) node = node_time tt node
 
 instance TimeTree t => RateTimeTree (RateTimeTreeImp t) where
-    branch_rate (RateTimeTree _ rs) node = rs!node
+    branch_rate (RateTimeTree _ rs) node = rs IntMap.! node
 
 branch_length_tree topology lengths = BranchLengthTree topology lengths' where
     lengths' = IntMap.fromList $ zip [0..] lengths
@@ -122,7 +122,7 @@ branch_lengths (BranchLengthTree _ ds) = ds
 
 time_tree topology times = TimeTree topology times
 
-rate_time_tree time_tree rates = RateTimeTree time_tree (listArray nb rates) where nb = numBranches time_tree
+rate_time_tree time_tree rates = RateTimeTree time_tree rates
 
 branch_duration t b = abs (node_time t source - node_time t target)
     where source = sourceNode t b
