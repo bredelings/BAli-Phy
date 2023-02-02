@@ -57,7 +57,7 @@ foreign import bpcall "Distribution:CRP_density" builtin_crp_density :: Double -
 crp_density alpha n d z = builtin_crp_density alpha n d (list_to_vector z)
 foreign import bpcall "Distribution:sample_CRP" sample_crp_vector :: Double -> Int -> Int -> RealWorld -> EVector Int
 sample_crp alpha n d = RanAtomic do_nothing $ do v <- IOAction (\s->(s,sample_crp_vector alpha n d s))
-                                                      return $ list_from_vector_of_size v n
+                                                 return $ list_from_vector_of_size v n
 --crp alpha n d = Distribution "crp" (make_densities $ crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1))
 triggered_modifiable_list n value effect = let raw_list = mapn n modifiable value
                                                effect' = force_fields raw_list `seq` (unsafePerformIO $ effect raw_list)
