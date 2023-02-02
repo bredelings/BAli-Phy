@@ -13,7 +13,7 @@ binomial_effect n x = do
   add_move $ slice_sample_integer_random_variable x (binomial_bounds n)
   add_move $ inc_dec_mh x (binomial_bounds n)
 
-sample_binomial n p = RandomStructure (binomial_effect n) modifiable_structure $ liftIO (IOAction (\s->(s,builtin_sample_binomial n p s)))
+sample_binomial n p = RanAtomic (binomial_effect n) (IOAction (\s->(s,builtin_sample_binomial n p s)))
 
 class HasBinomial d where
     binomial :: Int -> Double -> d Int

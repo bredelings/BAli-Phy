@@ -238,16 +238,12 @@ extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
     int n = Args.evaluate_(0).as_int();
     double p = Args.evaluate_(1).as_double();
 
-    Args.make_changeable();
-
     return { (int)binomial(n,p) };
 }
 
 extern "C" closure builtin_function_sample_bernoulli(OperationArgs& Args)
 {
     double p = Args.evaluate_(0).as_double();
-
-    Args.make_changeable();
 
     return { (int)bernoulli(p) };
 }
@@ -265,8 +261,6 @@ extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
 {
     double p = Args.evaluate_(0).as_double();
 
-    Args.make_changeable();
-
     return { (int)geometric(p) };
 }
 
@@ -281,8 +275,6 @@ extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
 extern "C" closure builtin_function_sample_poisson(OperationArgs& Args)
 {
     double mu = Args.evaluate_(0).as_double();
-
-    Args.make_changeable();
 
     return { (int)poisson(mu) };
 }
@@ -399,8 +391,6 @@ extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
     //------------- 1. Get argument p -----------------
 
     auto z = (vector<double>) Args.evaluate_(0).as_<EVector>();
-
-    Args.make_changeable();
 
     return { choose_scratch(z) };
 }
