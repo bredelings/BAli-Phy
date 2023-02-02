@@ -163,44 +163,6 @@ optional<Core::Decls> TypeChecker::entails_by_superclass(const Constraint& given
 //    2d. If we have a top-level reaction, do it and goto 2a.
 //    2e. If its canonical and there are no possible reactions left, add it to the inert set.
 
-
-template <typename T>
-std::optional<Core::Decls> TypeChecker::entails(const T& givens, const std::pair<Core::Var, Type>& wanted_pred)
-{
-    // 1. First check if the wanted pred is a superclass of any of the givens.
-    //
-    //    A class implies all of its superclasses separately, but a single superclass of K may not imply K.
-    for(auto& given: givens)
-    {
-        if (auto decls = entails_by_superclass(given, wanted_pred))
-            return *decls;
-    }
-
-    // 2. Then check if there is an instance dfun :: (K1 a, K2 a) => K a
-    auto [wanted_dvar, wanted_constraint] = wanted_pred;
-
-    if (auto inst = lookup_instance(wanted_constraint))
-    {
-        auto [dfun_exp, super_wanteds] = *inst;
-
-        Core::Decls decls;
-        decls.push_back( { wanted_dvar, dfun_exp} );
-
-        // If we can get (dvar1 :: K1 a) and (dvar2 :: K2 a) and a dfun so that dvar = dfun dvar1 dvar2
-        for(auto& super_wanted: super_wanteds)
-        {
-            if (auto edecls = entails(givens, super_wanted))
-                decls = *edecls + decls;
-            else
-                return {};
-        }
-
-        return decls;
-    }
-
-    return {};
-}
-
 CanonicalEquality CanonicalEquality::flip() const
 {
     CanonicalEquality E = *this;

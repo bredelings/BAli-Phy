@@ -548,10 +548,6 @@ public:
 
     Core::Decls simplify(const LIE& givens, LIE& wanteds);
 
-    template <typename T>
-    std::optional<Core::Decls>
-    entails(const T& to_keep, const std::pair<Core::Var, Type>& to_check);
-
     Core::Decls entails(const LIE& lie1, WantedConstraints& lie2);
 
     bool instance_matches(const Type&, const Type&);
