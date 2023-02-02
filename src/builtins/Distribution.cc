@@ -29,8 +29,6 @@ extern "C" closure builtin_function_sample_shifted_gamma(OperationArgs& Args)
     double a2    = Args.evaluate_(1).as_double();
     double shift = Args.evaluate_(2).as_double();
   
-    Args.make_changeable();
-
     return { gamma(a1, a2) + shift };
 }
 
@@ -86,8 +84,6 @@ extern "C" closure builtin_function_sample_normal(OperationArgs& Args)
     double a1 = Args.evaluate_(0).as_double();
     double a2 = Args.evaluate_(1).as_double();
   
-    Args.make_changeable();
-
     return { gaussian(a1, a2) };
 }
  
@@ -174,8 +170,6 @@ extern "C" closure builtin_function_sample_uniform(OperationArgs& Args)
 
     assert(a1 < a2);
 
-    Args.make_changeable();
-
     return { a1 + (a2-a1)*uniform() };
 }
 
@@ -196,8 +190,6 @@ extern "C" closure builtin_function_sample_uniform_int(OperationArgs& Args)
     assert(a1 <= a2);
 
     int w = a2-a1+1;
-
-    Args.make_changeable();
 
     return { a1 + int(w*uniform()) };
 }

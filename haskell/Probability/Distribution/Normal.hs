@@ -10,7 +10,7 @@ foreign import bpcall "Distribution:sample_normal" builtin_sample_normal :: Doub
 
 normal_bounds = realLine
 normal_effect x = add_move $ slice_sample_real_random_variable x normal_bounds
-sample_normal m s = RandomStructure normal_effect modifiable_structure $ liftIO (IOAction (\state -> (state, builtin_sample_normal m s state)))
+sample_normal m s = RanAtomic normal_effect (IOAction (\state -> (state, builtin_sample_normal m s state)))
 
 annotated_normal_density mu sigma x = do
   in_edge "mu" mu
