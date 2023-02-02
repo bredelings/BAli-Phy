@@ -19,14 +19,14 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
 
     auto class_info = class_env().at(unloc(C.name));
 
-    for(auto& decl: C.default_method_decls)
+    for(auto& [loc,decl]: C.default_method_decls)
     {
         auto FD = decl.as_<Hs::FunDecl>();
         auto dm = class_info.default_methods.at( unloc(FD.v) );
         unloc(FD.v) = dm;
 
         auto [decl2, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
-        decls_out.push_back(decl2);
+        decls_out.push_back({loc,decl2});
     }
 
 //    std::cerr<<"Default method ops:\n";
@@ -39,7 +39,7 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
 Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
 {
     Hs::Binds default_method_decls;
-    for(auto& decl: decls)
+    for(auto& [_,decl]: decls)
     {
         auto c = decl.to<Hs::ClassDecl>();
         if (not c) continue;
@@ -345,7 +345,7 @@ TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
 {
     vector<pair<Core::Var, Hs::InstanceDecl>> named_instances;
 
-    for(auto& decl: decls)
+    for(auto& [loc,decl]: decls)
     {
         if (auto I = decl.to<Hs::InstanceDecl>())
         {
@@ -395,7 +395,7 @@ TypeCon get_class_for_constraint(const Type& constraint)
 map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const string& class_name)
 {
     std::map<Hs::Var, Hs::Matches> method_matches;
-    for(auto& decl: decls)
+    for(auto& [loc,decl]: decls)
     {
         auto& fd = decl.as_<Hs::FunDecl>();
         auto& method = unloc(fd.v);
@@ -514,7 +514,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
             FD = Hs::simple_decl({noloc,op}, {noloc,dm_var});
         }
         auto [decl2, __] = infer_type_for_single_fundecl_with_sig(*FD);
-        decls.push_back(decl2);
+        decls.push_back({noloc,decl2});
         pop_note();
     }
 

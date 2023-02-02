@@ -856,8 +856,9 @@ string LetExp::print() const
 
 LetExp simple_let(const LVar& x, const LExp& E, const LExp& body)
 {
+    auto loc = x.loc * E.loc;
     auto decl = simple_decl(x, E);
-    Decls decls({decl});
+    Decls decls({{loc,decl}});
     Binds binds({decls});
 
     return LetExp({x.loc * E.loc, binds}, body);
@@ -882,23 +883,25 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
     // Do we just append different uniques to them and dump them all in the valuedecl pool?
     // I suppose we can separate the instance objects (which contain methods) from the method function definitions.
 
-    for(auto& decl: topdecls)
+    for(auto& ldecl: topdecls)
     {
+        auto& [loc,decl] = ldecl;
+
 	if (decl.is_a<ValueDecl>() or decl.is_a<SignatureDecl>() or decl.is_a<FunDecl>() or decl.is_a<PatDecl>())
-            value_decls.front().push_back(decl);
+            value_decls.front().push_back(ldecl);
         else if (auto f = decl.to<FixityDecl>())
         {
-            value_decls.front().push_back(decl); // Fixity decls and split up a collection of value decls for the same function, I think.
+            value_decls.front().push_back({loc,decl}); // Fixity decls and split up a collection of value decls for the same function, I think.
             fixity_decls.push_back(*f);
         }
 	else if (auto b = decl.to<ForeignDecl>())
             foreign_decls.push_back(*b);
         else if (decl.is_a<ClassDecl>() or decl.is_a<TypeSynonymDecl>() or decl.is_a<DataOrNewtypeDecl>() or decl.is_a<InstanceDecl>())
-            type_decls.push_back(decl);
+            type_decls.push_back(ldecl);
         else if (decl.is_a<TypeFamilyDecl>() or decl.is_a<TypeFamilyInstanceDecl>())
-            type_decls.push_back(decl);
+            type_decls.push_back(ldecl);
         else if (decl.is_a<KindSigDecl>())
-            type_decls.push_back(decl);
+            type_decls.push_back(ldecl);
         else if (auto d = decl.to<DefaultDecl>())
         {
             if (default_decl)

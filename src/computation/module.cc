@@ -1118,7 +1118,7 @@ string get_constructor_name(const Hs::LType& constr)
 
 CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
 {
-    for(const auto& decl: topdecls)
+    for(const auto& [_,decl]: topdecls)
     {
         auto d = decl.to<Haskell::DataOrNewtypeDecl>();
         if (not d) continue;
@@ -1406,7 +1406,7 @@ void Module::declare_fixities_(const Haskell::FixityDecl& FD)
 void Module::declare_fixities_(const Haskell::Decls& decls)
 {
     // 0. Get names that are being declared.
-    for(const auto& decl: decls)
+    for(const auto& [_,decl]: decls)
         if (auto FD = decl.to<Haskell::FixityDecl>())
             declare_fixities_(*FD);
 }
@@ -1417,7 +1417,7 @@ void Module::declare_fixities(const Hs::ModuleDecls& M)
     for(auto& FD: M.fixity_decls)
         declare_fixities_(FD);
 
-    for(const auto& type_decl: M.type_decls)
+    for(const auto& [_,type_decl]: M.type_decls)
         if (auto C = type_decl.to<Haskell::ClassDecl>())
             for(auto& fixity_decl: C->fixity_decls)
                 declare_fixities_(fixity_decl);
@@ -1443,7 +1443,8 @@ void Module::maybe_def_function(const string& var_name)
 void Module::add_local_symbols(const Hs::Decls& topdecls)
 {
     // 0. Get names that are being declared.
-    for(const auto& decl: topdecls)
+    for(const auto& [_,decl]: topdecls)
+    {
         if (auto pd = decl.to<Hs::PatDecl>())
         {
             for(const auto& var: Hs::vars_in_pattern( pd->lhs ))
@@ -1496,6 +1497,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         {
             def_type_family( unloc(TF->con).name, TF->arity() );
         }
+    }
 }
 
 // A name of "" means that we are defining a top-level program, or a piece of a top-level program.

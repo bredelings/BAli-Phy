@@ -536,6 +536,18 @@ namespace yy {
       // infixexp
       char dummy24[sizeof (Located<Hs::InfixExp>)];
 
+      // topdecl
+      // cl_decl
+      // ty_decl
+      // standalone_kind_sig
+      // inst_decl
+      // at_decl_cls
+      // at_decl_inst
+      // decl_cls
+      // decl_inst
+      // decl_no_th
+      // decl
+      // sigdecl
       // exp
       // exp10
       // fexp
@@ -564,19 +576,7 @@ namespace yy {
       // "PRIMDOUBLE"
       char dummy29[sizeof (double)];
 
-      // topdecl
-      // cl_decl
-      // ty_decl
-      // standalone_kind_sig
-      // inst_decl
-      // at_decl_cls
-      // at_decl_inst
-      // decl_cls
-      // decl_inst
       // kind
-      // decl_no_th
-      // decl
-      // sigdecl
       // list
       // qop
       // qopm
@@ -736,6 +736,7 @@ namespace yy {
       // alts1
       char dummy58[sizeof (std::vector<Located<Hs::Alt>>)];
 
+      // decls
       // tup_exprs
       // lexps
       // squals
@@ -750,9 +751,6 @@ namespace yy {
       // ops
       // con_list
       char dummy60[sizeof (std::vector<Located<std::string>>)];
-
-      // decls
-      char dummy61[sizeof (std::vector<expression_ref>)];
     };
 
     /// The size of the largest semantic type.
@@ -1460,6 +1458,18 @@ namespace yy {
         value.move< Located<Hs::InfixExp> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_topdecl: // topdecl
+      case symbol_kind::S_cl_decl: // cl_decl
+      case symbol_kind::S_ty_decl: // ty_decl
+      case symbol_kind::S_standalone_kind_sig: // standalone_kind_sig
+      case symbol_kind::S_inst_decl: // inst_decl
+      case symbol_kind::S_at_decl_cls: // at_decl_cls
+      case symbol_kind::S_at_decl_inst: // at_decl_inst
+      case symbol_kind::S_decl_cls: // decl_cls
+      case symbol_kind::S_decl_inst: // decl_inst
+      case symbol_kind::S_decl_no_th: // decl_no_th
+      case symbol_kind::S_decl: // decl
+      case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10: // exp10
       case symbol_kind::S_fexp: // fexp
@@ -1493,19 +1503,7 @@ namespace yy {
         value.move< double > (std::move (that.value));
         break;
 
-      case symbol_kind::S_topdecl: // topdecl
-      case symbol_kind::S_cl_decl: // cl_decl
-      case symbol_kind::S_ty_decl: // ty_decl
-      case symbol_kind::S_standalone_kind_sig: // standalone_kind_sig
-      case symbol_kind::S_inst_decl: // inst_decl
-      case symbol_kind::S_at_decl_cls: // at_decl_cls
-      case symbol_kind::S_at_decl_inst: // at_decl_inst
-      case symbol_kind::S_decl_cls: // decl_cls
-      case symbol_kind::S_decl_inst: // decl_inst
       case symbol_kind::S_kind: // kind
-      case symbol_kind::S_decl_no_th: // decl_no_th
-      case symbol_kind::S_decl: // decl
-      case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_list: // list
       case symbol_kind::S_qop: // qop
       case symbol_kind::S_qopm: // qopm
@@ -1694,6 +1692,7 @@ namespace yy {
         value.move< std::vector<Located<Hs::Alt>> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_decls: // decls
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -1709,10 +1708,6 @@ namespace yy {
       case symbol_kind::S_ops: // ops
       case symbol_kind::S_con_list: // con_list
         value.move< std::vector<Located<std::string>> > (std::move (that.value));
-        break;
-
-      case symbol_kind::S_decls: // decls
-        value.move< std::vector<expression_ref> > (std::move (that.value));
         break;
 
       default:
@@ -2578,20 +2573,6 @@ namespace yy {
       {}
 #endif
 
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<expression_ref>&& v, location_type&& l)
-        : Base (t)
-        , value (std::move (v))
-        , location (std::move (l))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const std::vector<expression_ref>& v, const location_type& l)
-        : Base (t)
-        , value (v)
-        , location (l)
-      {}
-#endif
-
       /// Destroy the symbol.
       ~basic_symbol ()
       {
@@ -2736,6 +2717,18 @@ switch (yykind)
         value.template destroy< Located<Hs::InfixExp> > ();
         break;
 
+      case symbol_kind::S_topdecl: // topdecl
+      case symbol_kind::S_cl_decl: // cl_decl
+      case symbol_kind::S_ty_decl: // ty_decl
+      case symbol_kind::S_standalone_kind_sig: // standalone_kind_sig
+      case symbol_kind::S_inst_decl: // inst_decl
+      case symbol_kind::S_at_decl_cls: // at_decl_cls
+      case symbol_kind::S_at_decl_inst: // at_decl_inst
+      case symbol_kind::S_decl_cls: // decl_cls
+      case symbol_kind::S_decl_inst: // decl_inst
+      case symbol_kind::S_decl_no_th: // decl_no_th
+      case symbol_kind::S_decl: // decl
+      case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10: // exp10
       case symbol_kind::S_fexp: // fexp
@@ -2769,19 +2762,7 @@ switch (yykind)
         value.template destroy< double > ();
         break;
 
-      case symbol_kind::S_topdecl: // topdecl
-      case symbol_kind::S_cl_decl: // cl_decl
-      case symbol_kind::S_ty_decl: // ty_decl
-      case symbol_kind::S_standalone_kind_sig: // standalone_kind_sig
-      case symbol_kind::S_inst_decl: // inst_decl
-      case symbol_kind::S_at_decl_cls: // at_decl_cls
-      case symbol_kind::S_at_decl_inst: // at_decl_inst
-      case symbol_kind::S_decl_cls: // decl_cls
-      case symbol_kind::S_decl_inst: // decl_inst
       case symbol_kind::S_kind: // kind
-      case symbol_kind::S_decl_no_th: // decl_no_th
-      case symbol_kind::S_decl: // decl
-      case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_list: // list
       case symbol_kind::S_qop: // qop
       case symbol_kind::S_qopm: // qopm
@@ -2970,6 +2951,7 @@ switch (yykind)
         value.template destroy< std::vector<Located<Hs::Alt>> > ();
         break;
 
+      case symbol_kind::S_decls: // decls
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -2985,10 +2967,6 @@ switch (yykind)
       case symbol_kind::S_ops: // ops
       case symbol_kind::S_con_list: // con_list
         value.template destroy< std::vector<Located<std::string>> > ();
-        break;
-
-      case symbol_kind::S_decls: // decls
-        value.template destroy< std::vector<expression_ref> > ();
         break;
 
       default:
@@ -5850,6 +5828,18 @@ switch (yykind)
         value.copy< Located<Hs::InfixExp> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_topdecl: // topdecl
+      case symbol_kind::S_cl_decl: // cl_decl
+      case symbol_kind::S_ty_decl: // ty_decl
+      case symbol_kind::S_standalone_kind_sig: // standalone_kind_sig
+      case symbol_kind::S_inst_decl: // inst_decl
+      case symbol_kind::S_at_decl_cls: // at_decl_cls
+      case symbol_kind::S_at_decl_inst: // at_decl_inst
+      case symbol_kind::S_decl_cls: // decl_cls
+      case symbol_kind::S_decl_inst: // decl_inst
+      case symbol_kind::S_decl_no_th: // decl_no_th
+      case symbol_kind::S_decl: // decl
+      case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10: // exp10
       case symbol_kind::S_fexp: // fexp
@@ -5883,19 +5873,7 @@ switch (yykind)
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_topdecl: // topdecl
-      case symbol_kind::S_cl_decl: // cl_decl
-      case symbol_kind::S_ty_decl: // ty_decl
-      case symbol_kind::S_standalone_kind_sig: // standalone_kind_sig
-      case symbol_kind::S_inst_decl: // inst_decl
-      case symbol_kind::S_at_decl_cls: // at_decl_cls
-      case symbol_kind::S_at_decl_inst: // at_decl_inst
-      case symbol_kind::S_decl_cls: // decl_cls
-      case symbol_kind::S_decl_inst: // decl_inst
       case symbol_kind::S_kind: // kind
-      case symbol_kind::S_decl_no_th: // decl_no_th
-      case symbol_kind::S_decl: // decl
-      case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_list: // list
       case symbol_kind::S_qop: // qop
       case symbol_kind::S_qopm: // qopm
@@ -6084,6 +6062,7 @@ switch (yykind)
         value.copy< std::vector<Located<Hs::Alt>> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_decls: // decls
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -6099,10 +6078,6 @@ switch (yykind)
       case symbol_kind::S_ops: // ops
       case symbol_kind::S_con_list: // con_list
         value.copy< std::vector<Located<std::string>> > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_decls: // decls
-        value.copy< std::vector<expression_ref> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -6256,6 +6231,18 @@ switch (yykind)
         value.move< Located<Hs::InfixExp> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_topdecl: // topdecl
+      case symbol_kind::S_cl_decl: // cl_decl
+      case symbol_kind::S_ty_decl: // ty_decl
+      case symbol_kind::S_standalone_kind_sig: // standalone_kind_sig
+      case symbol_kind::S_inst_decl: // inst_decl
+      case symbol_kind::S_at_decl_cls: // at_decl_cls
+      case symbol_kind::S_at_decl_inst: // at_decl_inst
+      case symbol_kind::S_decl_cls: // decl_cls
+      case symbol_kind::S_decl_inst: // decl_inst
+      case symbol_kind::S_decl_no_th: // decl_no_th
+      case symbol_kind::S_decl: // decl
+      case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_exp10: // exp10
       case symbol_kind::S_fexp: // fexp
@@ -6289,19 +6276,7 @@ switch (yykind)
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_topdecl: // topdecl
-      case symbol_kind::S_cl_decl: // cl_decl
-      case symbol_kind::S_ty_decl: // ty_decl
-      case symbol_kind::S_standalone_kind_sig: // standalone_kind_sig
-      case symbol_kind::S_inst_decl: // inst_decl
-      case symbol_kind::S_at_decl_cls: // at_decl_cls
-      case symbol_kind::S_at_decl_inst: // at_decl_inst
-      case symbol_kind::S_decl_cls: // decl_cls
-      case symbol_kind::S_decl_inst: // decl_inst
       case symbol_kind::S_kind: // kind
-      case symbol_kind::S_decl_no_th: // decl_no_th
-      case symbol_kind::S_decl: // decl
-      case symbol_kind::S_sigdecl: // sigdecl
       case symbol_kind::S_list: // list
       case symbol_kind::S_qop: // qop
       case symbol_kind::S_qopm: // qopm
@@ -6490,6 +6465,7 @@ switch (yykind)
         value.move< std::vector<Located<Hs::Alt>> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_decls: // decls
       case symbol_kind::S_tup_exprs: // tup_exprs
       case symbol_kind::S_lexps: // lexps
       case symbol_kind::S_squals: // squals
@@ -6505,10 +6481,6 @@ switch (yykind)
       case symbol_kind::S_ops: // ops
       case symbol_kind::S_con_list: // con_list
         value.move< std::vector<Located<std::string>> > (YY_MOVE (s.value));
-        break;
-
-      case symbol_kind::S_decls: // decls
-        value.move< std::vector<expression_ref> > (YY_MOVE (s.value));
         break;
 
       default:
@@ -6577,7 +6549,7 @@ switch (yykind)
 
 
 } // yy
-#line 6581 "parser.hh"
+#line 6553 "parser.hh"
 
 
 

@@ -128,7 +128,7 @@ vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)
 
     vector<tuple<Hs::InstanceDecl,set<string>>> instance_decls;
 
-    for(auto& decl: type_decls)
+    for(auto& [_,decl]: type_decls)
     {
         if (decl.is_a<Hs::ClassDecl>())
         {

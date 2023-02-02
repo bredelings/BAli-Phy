@@ -98,7 +98,7 @@ vector<Hs::Decls> split_decls_by_signatures(const Hs::Decls& decls, const signat
 
     // 2. Figure out which indices reference each other
     vector<vector<int>> referenced_decls;
-    for(auto& decl: decls)
+    for(auto& [loc,decl]: decls)
     {
         vector<int> refs;
         for(auto& name: get_rhs_free_vars(decl))
@@ -133,7 +133,7 @@ TypeChecker::infer_type_for_decls(const signature_env& signatures, const Hs::Dec
     {
         Note ec;
         ec<<"In recursive group:\n";
-        for(auto& decl: group)
+        for(auto& [loc,decl]: group)
         {
             if (auto fd = decl.to<Hs::FunDecl>())
                 ec<<"    "<<fd->v.print()<<"\n";
@@ -158,7 +158,7 @@ bool single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signat
 {
     if (decls.size() != 1) return false;
 
-    auto& decl = decls[0];
+    auto& [loc,decl] = decls[0];
 
     if (not decl.is_a<Hs::FunDecl>()) return false;
 
@@ -167,29 +167,31 @@ bool single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signat
     return signatures.count(unloc(FD.v)) > 0;
 }
 
-expression_ref
-rename_from_bindinfo(expression_ref decl, const map<Hs::Var, Hs::BindInfo>& bind_infos)
+Hs::LDecl
+rename_from_bindinfo(Hs::LDecl ldecl, const map<Hs::Var, Hs::BindInfo>& bind_infos)
 {
+    auto& [loc,decl] = ldecl;
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
         unloc(FD.v) = rename_var_from_bindinfo(unloc(FD.v), bind_infos);
-        return FD;
+        decl = FD;
     }
     else if (auto pd = decl.to<Hs::PatDecl>())
     {
         auto PD = *pd;
         PD.lhs = rename_pattern_from_bindinfo(PD.lhs, bind_infos);
-        return PD;
+        decl = PD;
     }
     else
         std::abort();
+    return ldecl;
 }
 
 Hs::Decls rename_from_bindinfo(Hs::Decls decls,const map<Hs::Var, Hs::BindInfo>& bind_infos)
 {
-    for(auto& decl: decls)
-        decl = rename_from_bindinfo(decl, bind_infos);
+    for(auto& ldecl: decls)
+        ldecl = rename_from_bindinfo(ldecl, bind_infos);
     return decls;
 }
 
@@ -274,7 +276,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
     Hs::BindInfo bind_info(unloc(FD.v), inner_id, monotype, polytype, wrap_gen);
 
-    auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls>(), Hs::Decls({FD}), {{unloc(FD.v), bind_info}} );
+    auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls>(), Hs::Decls({{noloc,FD}}), {{unloc(FD.v), bind_info}} );
 
     pop_note();
 
@@ -283,7 +285,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
 bool is_restricted(const signature_env& signatures, const Hs::Decls& decls)
 {
-    for(auto& decl: decls)
+    for(auto& [loc,decl]: decls)
     {
         if (decl.is_a<Hs::PatDecl>())
             return true;
@@ -300,8 +302,9 @@ bool is_restricted(const signature_env& signatures, const Hs::Decls& decls)
 };
 
 tuple<Type, local_value_env>
-TypeChecker::infer_lhs_type(expression_ref& decl, const signature_env& signatures)
+TypeChecker::infer_lhs_type(Hs::LDecl& ldecl, const signature_env& signatures)
 {
+    auto& [loc,decl] = ldecl;
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
@@ -325,8 +328,9 @@ TypeChecker::infer_lhs_type(expression_ref& decl, const signature_env& signature
         std::abort();
 }
 
-void TypeChecker::infer_rhs_type(expression_ref& decl, const Expected& rhs_type)
+void TypeChecker::infer_rhs_type(Hs::LDecl& ldecl, const Expected& rhs_type)
 {
+    auto& [loc,decl] = ldecl;
     if (auto fd = decl.to<Hs::FunDecl>())
     {
         auto FD = *fd;
@@ -445,7 +449,7 @@ TypeChecker::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& dec
     if (not *decls.recursive)
     {
         assert(decls.size() == 1);
-        auto& decl = decls[0];
+        auto& [loc,decl] = decls[0];
         if (auto fd = decl.to<Hs::FunDecl>())
         {
             auto FD = *fd;
@@ -470,9 +474,9 @@ TypeChecker::tc_decls_group_mono(const signature_env& signatures, Hs::Decls& dec
     std::map<Hs::Var, Hs::Var> mono_ids;
 
     vector<Type> lhs_types;
-    for(int i=0;i<decls.size();i++)
+    for(auto& decl: decls)
     {
-        auto [type, lve] = infer_lhs_type( decls[i], signatures );
+        auto [type, lve] = infer_lhs_type( decl, signatures );
 
         lhs_types.push_back(type);
         mono_binder_env += lve;
@@ -826,11 +830,12 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
 {
     if (single_fundecl_with_sig(decls, signatures))
     {
-        auto& FD = decls[0].as_<Hs::FunDecl>();
+        auto& [loc0, decl0] = decls[0];
+        auto& FD = decl0.as_<Hs::FunDecl>();
 
         auto [decl, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
 
-        Hs::Decls decls({decl});
+        Hs::Decls decls({{loc0, decl}});
 
         return decls;
     }
@@ -879,7 +884,7 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
     // 8. Construct the quantified declaration to return
     vector< Core::Var > dict_vars = dict_vars_from_lie( givens );
     auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, ev_decls, decls, bind_infos );
-    Hs::Decls decls2({ gen_bind });
+    Hs::Decls decls2({{noloc, gen_bind }});
 
     return decls2;
 }

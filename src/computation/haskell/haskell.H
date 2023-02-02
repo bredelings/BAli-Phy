@@ -267,7 +267,10 @@ struct ForeignDecl: public Object
 // Eventually we replace ValueDecl with PatDecl and FunDecl,
 // move SignatureDecls to a map, and remove FixityDecls.
 
-struct Decls: public std::vector<expression_ref>
+typedef expression_ref Decl;
+typedef Located<Decl> LDecl;
+
+struct Decls: public std::vector<LDecl>
 {
 public:
     std::optional<bool> recursive;
@@ -275,7 +278,7 @@ public:
     std::string print() const;
 
     Decls() = default;
-    Decls(const vector<expression_ref>& ds): std::vector<expression_ref>(ds) {}
+    Decls(const vector<LDecl>& ds): std::vector<LDecl>(ds) {}
 };
 
 struct Binds: public std::vector<Decls>

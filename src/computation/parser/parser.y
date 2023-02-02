@@ -248,12 +248,12 @@
 
 %type <Hs::Decls> topdecls
 %type <Hs::Decls> topdecls_semi
-%type <expression_ref> topdecl
-%type <expression_ref> cl_decl
-%type <expression_ref> ty_decl
-%type <expression_ref> inst_decl
+%type <Located<expression_ref>> topdecl
+%type <Located<expression_ref>> cl_decl
+%type <Located<expression_ref>> ty_decl
+%type <Located<expression_ref>> inst_decl
 
-%type <expression_ref> standalone_kind_sig
+%type <Located<expression_ref>> standalone_kind_sig
 
 %type <std::vector<Hs::LTypeCon>> sks_vars
 
@@ -279,20 +279,20 @@
 %type <void> pattern_synonym_sig
 */
 
-%type <expression_ref> decl_cls
+%type <Located<expression_ref>> decl_cls
 %type <Hs::Decls> decls_cls
 %type <Located<Hs::Decls>> decllist_cls
 %type <std::optional<Located<Hs::Decls>>> where_cls
 
-%type <expression_ref> at_decl_cls
-%type <expression_ref> at_decl_inst
+%type <Located<expression_ref>> at_decl_cls
+%type <Located<expression_ref>> at_decl_inst
 
-%type <expression_ref> decl_inst
+%type <Located<expression_ref>> decl_inst
 %type <Hs::Decls> decls_inst
 %type <Located<Hs::Decls>> decllist_inst
 %type <std::optional<Located<Hs::Decls>>> where_inst
 
-%type <std::vector<expression_ref>> decls
+%type <std::vector<Located<expression_ref>>> decls
 %type <Hs::Decls> decllist
 %type <Located<Hs::Binds>> binds
 %type <std::optional<Located<Hs::Binds>>> wherebinds
@@ -370,12 +370,12 @@
 %type <void> deriv_clause_types
  */
 
-%type <expression_ref> decl_no_th
-%type <expression_ref> decl
+%type <Located<expression_ref>> decl_no_th
+%type <Located<expression_ref>> decl
 %type <Hs::MultiGuardedRHS> rhs
 %type <std::vector<Hs::GuardedRHS>> gdrhs
 %type <Hs::GuardedRHS> gdrh
-%type <expression_ref> sigdecl
+%type <Located<expression_ref>> sigdecl
  /*
 %type <void> activation
 %type <void> explicit_activation
@@ -638,8 +638,8 @@ topdecl: cl_decl                               {$$ = $1;}
 |        inst_decl                             {$$ = $1;}
 /*|        stand_alone_deriving */
 /*|        role_annot */
-|        "default" "(" comma_types0 ")"        {$$ = Hs::DefaultDecl($3); }
-|        "foreign" "import" "bpcall" STRING var "::" sigtypedoc  {$$ = Hs::ForeignDecl($4, {@5,$5}, $7);}
+|        "default" "(" comma_types0 ")"        {$$ = {@$,Hs::DefaultDecl($3)}; }
+|        "foreign" "import" "bpcall" STRING var "::" sigtypedoc  {$$ = {@$,Hs::ForeignDecl($4, {@5,$5}, $7)};}
 /*
 |        "foreign" fdecl
 |        "{-# DEPRECATED" deprecations "#-}"
@@ -648,25 +648,25 @@ topdecl: cl_decl                               {$$ = $1;}
 |        annotation*/
 |        decl_no_th                            {$$ = $1;}
 /* What is this for? How is this a decl ? */
-|        infixexp                              {$$ = unloc($1);}
+|        infixexp                              {$$ = $1;}
 
-cl_decl: "class" tycl_hdr /*fds*/ where_cls   {$$ = make_class_decl($2.first,$2.second,$3);}
+cl_decl: "class" tycl_hdr /*fds*/ where_cls   {$$ = {@$,make_class_decl($2.first,$2.second,$3)};}
 
-ty_decl: "type" type "=" ktype                                             {$$ = make_type_synonym($2,$4);}
-|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = make_data_or_newtype($1, $3.first, $3.second,{},$4);}
+ty_decl: "type" type "=" ktype                                             {$$ = {@$,make_type_synonym($2,$4)};}
+|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = {@$,make_data_or_newtype($1, $3.first, $3.second,{},$4)};}
 /* This is kind of a hack to allow `data X` */
-|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig gadt_constrlist maybe_derivings {$$ = make_data_or_newtype($1, $3.first, $3.second, $4, $5);}
-|        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family     {$$ = make_type_family($3, $4, $6);}
+|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig gadt_constrlist maybe_derivings {$$ = {@$,make_data_or_newtype($1, $3.first, $3.second, $4, $5)};}
+|        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family     {$$ = {@$,make_type_family($3, $4, $6)};}
 /* |        "data" "family" type opt_datafam_kind_sig */
 
-standalone_kind_sig: "type" sks_vars "::" kind                             {$$ = Hs::KindSigDecl($2,$4);}
+standalone_kind_sig: "type" sks_vars "::" kind                             {$$ = {@$,Hs::KindSigDecl($2,$4)};}
 
 sks_vars: sks_vars "," oqtycon                                             {$$ = $1; $$.push_back({@3,Hs::TypeCon($3)}); }
 |         oqtycon                                                          {$$ = {{@1,Hs::TypeCon($1)}}; }
 
 // inst_type -> sigtype -> ctype --maybe--> context => type
-inst_decl: "instance" overlap_pragma inst_type where_inst                  {$$ = make_instance_decl($3,$4);}
-|          "type" "instance" ty_fam_inst_eqn                               {$$ = Hs::TypeFamilyInstanceDecl($3);}
+inst_decl: "instance" overlap_pragma inst_type where_inst                  {$$ = {@$,make_instance_decl($3,$4)};}
+|          "type" "instance" ty_fam_inst_eqn                               {$$ = {@$,Hs::TypeFamilyInstanceDecl($3)};}
 /* |          data_or_newtype "instance" capi_ctype tycl_hdr constrs
    |          data_or_newtype "instance" capi_ctype opt_kind_sig */
 
@@ -719,12 +719,12 @@ ty_fam_inst_eqn: type "=" ctype                            {$$ = make_type_famil
 /* Associated type family declarations */
 at_decl_cls: "data" opt_family type opt_datafam_kind_sig       {}
               /* we can't use opt_family or we get shift/reduce conflicts*/
-|            "type" type opt_at_kind_inj_sig                   { $$ = make_type_family($2, $3, {}); }
+|            "type" type opt_at_kind_inj_sig                   { $$ = {@$,make_type_family($2, $3, {})}; }
 
-|            "type" "family" type opt_at_kind_inj_sig          { $$ = make_type_family($3, $4, {}); }
+|            "type" "family" type opt_at_kind_inj_sig          { $$ = {@$,make_type_family($3, $4, {})}; }
               /* we can't use opt_family or we get shift/reduce conflicts*/
-|            "type" ty_fam_inst_eqn                            { $$ = Hs::TypeFamilyInstanceDecl($2);    }
-|            "type" "instance" ty_fam_inst_eqn                 { $$ = Hs::TypeFamilyInstanceDecl($3);    }
+|            "type" ty_fam_inst_eqn                            { $$ = {@$,Hs::TypeFamilyInstanceDecl($2)};    }
+|            "type" "instance" ty_fam_inst_eqn                 { $$ = {@$,Hs::TypeFamilyInstanceDecl($3)};    }
 
 opt_family: %empty | "family"
 
@@ -732,7 +732,7 @@ opt_instance: %empty | "instance"
 
 /* Associated type instance declarations */
 
-at_decl_inst: "type" opt_instance ty_fam_inst_eqn             { $$ = Hs::TypeFamilyInstanceDecl($3);    }
+at_decl_inst: "type" opt_instance ty_fam_inst_eqn             { $$ = {@$,Hs::TypeFamilyInstanceDecl($3)};    }
 
 data_or_newtype: "data"    {$$=Hs::DataOrNewtype::data;}
 |                "newtype" {$$=Hs::DataOrNewtype::newtype;}
@@ -1072,7 +1072,7 @@ deriv_clause_types: qtycondoc
 
 decl_no_th: sigdecl           {$$ = $1;}
 /* I guess this is a strict let. Code as DeclStrict, rather than StrictPattern, since docs say this is part of the binding, not part of the patter */
-| infixexp rhs                {$$ = Hs::ValueDecl({$1.loc,unloc($1)},$2);}
+| infixexp rhs                {$$ = {@$,Hs::ValueDecl({$1.loc,unloc($1)},$2)};}
 
 decl: decl_no_th              {$$ = $1;}
 /*  | splice_exp */
@@ -1096,8 +1096,8 @@ gdrh: "|" guardquals "=" exp  {$$ = Hs::GuardedRHS{$2,$4};}
    GHC did this to allow expressions like f :: Int -> Int = ...
    See note [Joint value/type declarations]. */
 
-sigdecl: sig_vars "::" sigtypedoc { $$ = Hs::SignatureDecl{$1,$3}; }
-|        infix prec ops  { $$ = Hs::FixityDecl{$1,$2,$3}; }
+sigdecl: sig_vars "::" sigtypedoc { $$ = {@$,Hs::SignatureDecl{$1,$3}}; }
+|        infix prec ops  { $$ = {@$,Hs::FixityDecl{$1,$2,$3}}; }
 /* |        pattern_synonym_sig {}  */
 |        "{-# COMPLETE" con_list opt_tyconsig "#-}" {}
 |        "{-# INLINE" activation qvar "#-}" {}
@@ -1708,12 +1708,12 @@ Hs::InstanceDecl make_instance_decl(const Hs::LType& ltype_orig, const optional<
     std::vector<Hs::TypeFamilyInstanceDecl> type_inst_decls;
     Hs::Decls method_decls;
     if (decls)
-        for(auto& decl: unloc(*decls))
+        for(auto& [loc,decl]: unloc(*decls))
         {
             if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
                 type_inst_decls.push_back(*TI);
             else if (auto V = decl.to<Hs::ValueDecl>())
-                method_decls.push_back(*V);
+                method_decls.push_back({loc,*V});
             else
                 throw myexception()<<"In declaration of instance "<<unloc(ltype_orig).print()<<", I don't recognize declaration:\n   "<<decl.print();
         }
@@ -1731,7 +1731,7 @@ Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& heade
     Hs::Decls default_method_decls;
 
     if (decls)
-        for(auto& decl: unloc(*decls))
+        for(auto& [loc,decl]: unloc(*decls))
         {
             if (auto F = decl.to<Hs::FixityDecl>())
                 fixity_decls.push_back(*F);
@@ -1742,7 +1742,7 @@ Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& heade
             else if (auto S = decl.to<Hs::SignatureDecl>())
                 sig_decls.push_back(*S);
             else if (auto V = decl.to<Hs::ValueDecl>())
-                default_method_decls.push_back(*V);
+                default_method_decls.push_back({loc,*V});
             else
                 throw myexception()<<"In declaration of class "<<name<<", I don't recognize declaration:\n   "<<decl.print();
         }

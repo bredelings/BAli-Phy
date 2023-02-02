@@ -65,7 +65,7 @@ Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R)
 Hs::ClassDecl rename_infix(const Module& m, Hs::ClassDecl C)
 {
     // 1. Recursively fix-up infix expressions
-    for(auto& e: C.default_method_decls)
+    for(auto& [_,e]: C.default_method_decls)
         e = rename_infix_decl(m, e);
 
     // 2. Group different parts of fundecls
@@ -78,7 +78,7 @@ Hs::ClassDecl rename_infix(const Module& m, Hs::ClassDecl C)
 Hs::InstanceDecl rename_infix(const Module& m, Hs::InstanceDecl I)
 {
     // 1. Recursively fix-up infix expressions
-    for(auto& e: I.method_decls)
+    for(auto& [_,e]: I.method_decls)
         e = rename_infix_decl(m, e);
 
     // 2. Group different parts of fundecls
@@ -92,7 +92,7 @@ Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls M)
     // 1. Handle value decls
     M.value_decls = rename_infix(m, M.value_decls);
 
-    for(auto& type_decl: M.type_decls)
+    for(auto& [_,type_decl]: M.type_decls)
     {
         // 2. Handle default method decls
         if (auto C = type_decl.to<Haskell::ClassDecl>())
@@ -112,7 +112,7 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
 {
     Hs::Decls decls2;
 
-    for(auto& decl: decls)
+    for(auto& [_,decl]: decls)
     {
         if (not decl.is_a<Haskell::DataOrNewtypeDecl>()) continue;
         auto D = decl.as_<Haskell::DataOrNewtypeDecl>();
@@ -170,7 +170,7 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
                 expression_ref body = Haskell::CaseExp({noloc,x},Haskell::Alts(alts));
                 expression_ref lambda = Haskell::LambdaExp({{noloc,x}},{noloc,body});
 
-                decls2.push_back(Haskell::ValueDecl({noloc,name}, lambda));
+                decls2.push_back({noloc,Haskell::ValueDecl({noloc,name}, lambda)});
             }
         }
     }
@@ -230,7 +230,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
     add(bound_names, Rn.find_bound_vars_in_decls(M.value_decls[0], true));
 
     // 2. Add bound names for class methods
-    for(auto& decl: M.type_decls)
+    for(auto& [_,decl]: M.type_decls)
     {
         if (auto C = decl.to<Haskell::ClassDecl>())
         {
@@ -256,12 +256,12 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
     Rn.rename_decls(M.value_decls, bound_names, free_vars, true);
 
     // Replace ids with dummies
-    for(auto& decl: M.type_decls)
+    for(auto& [_,decl]: M.type_decls)
     {
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
-            for(auto& method_decl: C.default_method_decls)
+            for(auto& [_,method_decl]: C.default_method_decls)
             {
                 if (auto pd = method_decl.to<Hs::PatDecl>())
                 {
@@ -279,7 +279,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         else if (decl.is_a<Haskell::InstanceDecl>())
         {
             auto I = decl.as_<Haskell::InstanceDecl>();
-            for(auto& method_decl: I.method_decls)
+            for(auto& [_, method_decl]: I.method_decls)
             {
                 if (auto pd = method_decl.to<Hs::PatDecl>())
                 {
@@ -384,7 +384,7 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& dec
     // The idea is that we only add unqualified names here, and they shadow
     // qualified names.
     bound_var_info bound_names;
-    for(auto& decl: decls)
+    for(auto& [_,decl]: decls)
         add(bound_names, find_bound_vars_in_funpatdecl(decl, top));
 
     return bound_names;

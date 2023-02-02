@@ -377,9 +377,9 @@ public:
     Core::wrapper instPatSigma(const SigmaType& sigma_type, const Expected& exp_sigma_type);
 
     std::tuple<Type, local_value_env>
-    infer_lhs_type(expression_ref& decl, const signature_env& sigs);
+    infer_lhs_type(Hs::LDecl& decl, const signature_env& sigs);
 
-    void infer_rhs_type(expression_ref& decl, const Expected& type);
+    void infer_rhs_type(Hs::LDecl& decl, const Expected& type);
 
     Core::wrapper checkSigma(Hs::LExp& e, const SigmaType& sigma_type);
 

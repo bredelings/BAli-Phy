@@ -568,7 +568,7 @@ void TypeChecker::get_tycon_info(const Hs::TypeFamilyDecl& F)
 
 void TypeChecker::get_kind_sigs(const Hs::Decls& type_decls)
 {
-    for(auto& type_decl: type_decls)
+    for(auto& [_,type_decl]: type_decls)
     {
         if (auto SK = type_decl.to<Hs::KindSigDecl>())
         {
@@ -596,7 +596,7 @@ void TypeChecker::get_tycon_info(const Hs::Decls& type_decls)
     type_con_env new_tycons;
 
     type_con_env new_fam_tycons;
-    for(auto& type_decl: type_decls)
+    for(auto& [_,type_decl]: type_decls)
     {
         if (auto F = type_decl.to<Hs::TypeFamilyDecl>())
             get_tycon_info(*F);
@@ -1427,7 +1427,7 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 {
     kindchecker_state ks( tycon_info() );
 
-    for(auto& decl: decls)
+    for(auto& [_,decl]: decls)
     {
         auto d = decl.to<Hs::DataOrNewtypeDecl>();
         if (not d) continue;
@@ -1463,7 +1463,7 @@ Kind result_kind_for_type_vars(vector<Hs::LTypeVar>& type_vars, Kind k)
 
 Hs::Decls TypeChecker::add_type_var_kinds(Hs::Decls type_decls)
 {
-    for(auto& type_decl: type_decls)
+    for(auto& [_,type_decl]: type_decls)
     {
         if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
         {

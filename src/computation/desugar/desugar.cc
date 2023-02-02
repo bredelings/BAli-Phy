@@ -127,7 +127,7 @@ CDecls desugar_state::desugar_decls(const Hs::Decls& v)
     CDecls decls;
     for(int i=0;i<v.size();i++)
     {
-	auto& decl = v[i];
+	auto& [_,decl] = v[i];
 
         if (auto pd = decl.to<Hs::PatDecl>())
         {
@@ -368,7 +368,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
                     auto decl  = Hs::FunDecl({noloc,ok}, Hs::Matches{{rule1, rule2}});
 
                     expression_ref body = {concatMap, ok, unloc(PQ->exp)};
-                    return desugar( Hs::LetExp({noloc,{{{decl}}}}, {noloc,body}) );
+                    return desugar( Hs::LetExp({noloc,{{{{noloc,decl}}}}}, {noloc,body}) );
                 }
             }
         }
@@ -460,7 +460,7 @@ Core::Exp desugar_state::desugar(const Hs::Exp& E)
                 auto decl  = Hs::FunDecl({noloc,ok}, Hs::Matches{{rule1, rule2}});
 
                 expression_ref body = {PQ.bindOp, unloc(PQ.exp), ok};
-                result = Hs::LetExp({noloc,{{{decl}}}}, {noloc,body});
+                result = Hs::LetExp({noloc,{{{{noloc,decl}}}}}, {noloc,body});
             }
         }
         // do {let decls ; rest} = let decls in do {stmts}

@@ -128,7 +128,7 @@ pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls
 
     for(int i=0;i<decls.size();i++)
     {
-        auto& decl = decls[i];
+        auto [loc,decl] = decls[i];
         // Remove signature and fixity decls after recording signatures.
         if (auto sd = decl.to<Haskell::SignatureDecl>())
         {
@@ -147,16 +147,18 @@ pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls
         }
         else if (auto d = decl.to<Haskell::PatDecl>())
         {
-            decls2.push_back(*d);
+            decls2.push_back({loc,*d});
         }
         else if (auto fvar = fundecl_head(decl))
         {
             Hs::Matches m;
             for(int j=i;j<decls.size();j++)
             {
-                if (fundecl_head(decls[j]) != fvar) break;
+                auto [loc2,decl2] = decls[j];
+                if (fundecl_head(decl2) != fvar) break;
 
-                auto& FD = decls[j].as_<Hs::FunDecl>();
+                loc = loc * loc2;
+                auto& FD = decl2.as_<Hs::FunDecl>();
 
                 assert(FD.matches.size() == 1);
                 m.push_back( FD.matches[0] );
@@ -168,7 +170,7 @@ pair<map<Hs::LVar,Hs::LType>, Hs::Decls> group_decls(const Haskell::Decls& decls
             if (m[0].patterns.empty() and m.size() != 1)
                 throw myexception()<<"Multiple definitions for variable "<<fvar->print()<<"!";
 
-            decls2.push_back( Hs::FunDecl( *fvar, m ) );
+            decls2.push_back( {loc,Hs::FunDecl( *fvar, m )} );
 
             // skip the other bindings for this function
             i += (m.size()-1);
@@ -186,19 +188,21 @@ Hs::Decls group_fundecls(const Haskell::Decls& decls)
 
     for(int i=0;i<decls.size();i++)
     {
-        auto& decl = decls[i];
+        auto [loc,decl] = decls[i];
         if (auto d = decl.to<Haskell::PatDecl>())
         {
-            decls2.push_back(*d);
+            decls2.push_back({loc,*d});
         }
         else if (auto fvar = fundecl_head(decl))
         {
             Hs::Matches m;
             for(int j=i;j<decls.size();j++)
             {
-                if (fundecl_head(decls[j]) != fvar) break;
+                auto [loc2,decl2] = decls[j];
+                if (fundecl_head(decl2) != fvar) break;
 
-                auto& FD = decls[j].as_<Hs::FunDecl>();
+                auto& FD = decl2.as_<Hs::FunDecl>();
+                loc = loc * loc2;
 
                 assert(FD.matches.size() == 1);
                 m.push_back( FD.matches[0] );
@@ -210,7 +214,7 @@ Hs::Decls group_fundecls(const Haskell::Decls& decls)
             if (m[0].patterns.empty() and m.size() != 1)
                 throw myexception()<<"Multiple definitions for variable "<<fvar->print()<<"!";
 
-            decls2.push_back( Hs::FunDecl( *fvar, m ) );
+            decls2.push_back( {loc, Hs::FunDecl( *fvar, m )} );
 
             // skip the other bindings for this function
             i += (m.size()-1);
@@ -225,7 +229,7 @@ Hs::Decls group_fundecls(const Haskell::Decls& decls)
 Haskell::Binds rename_infix(const Module& m, Haskell::Binds binds)
 {
     assert(binds.size() == 1);
-    for(auto& e: binds[0])
+    for(auto& [_,e]: binds[0])
         e = rename_infix_decl(m, e);
 
     auto [sigs,bind0] = group_decls(binds[0]);
@@ -321,7 +325,7 @@ std::tuple<map<string,int>, map<Hs::Var,vector<Hs::Var>>> get_indices_for_names(
 
     for(int i=0;i<decls.size();i++)
     {
-        auto& decl = decls[i];
+        auto& [loc,decl] = decls[i];
 
         // Get the binder vars introduced by this declaration
         set<Hs::Var> vars;
@@ -361,7 +365,7 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
 
     for(int i=0;i<decls.size();i++)
     {
-        auto& decl = decls[i];
+        auto& [loc,decl] = decls[i];
 
         if (decl.is_a<Hs::PatDecl>())
         {
@@ -403,10 +407,10 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
 
     // Construct referenced decls
     vector<vector<int>> referenced_decls;
-    for(int i=0;i<decls.size();i++)
+    for(auto& [loc,decl]: decls)
     {
         vector<int> refs;
-        auto& rhs_free_vars = get_rhs_free_vars(decls[i]);
+        auto& rhs_free_vars = get_rhs_free_vars(decl);
         for(auto& name: rhs_free_vars)
         {
             auto it = index_for_name.find(name);

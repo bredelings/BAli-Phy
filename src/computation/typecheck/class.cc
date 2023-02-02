@@ -146,7 +146,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     int N = class_info.fields.size();
     for(auto& [var, type]: class_info.fields)
     {
-        decls.push_back( dictionary_extractor(var, i, N) );
+        decls.push_back( {noloc,dictionary_extractor(var, i, N)} );
 
         i++;
     }
@@ -221,7 +221,7 @@ Hs::Binds TypeChecker::infer_type_for_classes(const Hs::Decls& decls)
 {
     Hs::Binds class_binds;
 
-    for(auto& decl: decls)
+    for(auto& [_,decl]: decls)
     {
         auto c = decl.to<Hs::ClassDecl>();
         if (not c) continue;
@@ -252,7 +252,7 @@ Hs::Binds TypeChecker::infer_type_for_classes(const Hs::Decls& decls)
 void
 TypeChecker::get_type_synonyms(const Hs::Decls& decls)
 {
-    for(auto& decl: decls)
+    for(auto& [_,decl]: decls)
     {
         auto t = decl.to<Hs::TypeSynonymDecl>();
         if (not t) continue;
@@ -278,7 +278,7 @@ TypeChecker::get_type_synonyms(const Hs::Decls& decls)
 
 void TypeChecker::get_type_families(const Hs::Decls& decls)
 {
-    for(auto& decl: decls)
+    for(auto& [_,decl]: decls)
     {
         if (auto type_fam_decl = decl.to<Hs::TypeFamilyDecl>())
         {

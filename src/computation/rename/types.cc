@@ -219,7 +219,7 @@ Haskell::KindSigDecl renamer_state::rename(Haskell::KindSigDecl KS)
 
 Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
 {
-    for(auto& decl: decls)
+    for(auto& [_,decl]: decls)
     {
         if (auto C = decl.to<Hs::ClassDecl>())
             decl = rename(*C);
