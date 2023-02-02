@@ -14,7 +14,7 @@ type ContextIndex = Int
 
 foreign import bpcall "SMC:sample_haplotype01_from_plaf" builtin_sample_haplotype01_from_plaf :: EVector Double -> EVector Int
 sample_haplotype01_from_plaf plafs = let raw_action = builtin_sample_haplotype01_from_plaf $ list_to_vector plafs
-                                     in RandomStructure do_nothing modifiable_structure $ liftIO $ IOAction (\s->(s,raw_action))
+                                     in RanAtomic do_nothing (IOAction (\s->(s,raw_action)))
 
 foreign import bpcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability :: EVector Double -> EVector Int -> LogDouble
 haplotype01_from_plaf_probability plaf hap = builtin_haplotype01_from_plaf_probability (list_to_vector plaf) hap
@@ -43,7 +43,7 @@ sample_reads01 counts weights haplotypes error_rate c outlier_frac =
           f reads = map pair_from_c $ list_from_vector reads
 
 random_structure_reads01 counts weights haplotypes error_rate c outlier_frac =
-    RandomStructure do_nothing modifiable_structure $ liftIO $ sample_reads01 counts weights haplotypes error_rate c outlier_frac
+    RanAtomic do_nothing $ sample_reads01 counts weights haplotypes error_rate c outlier_frac
 
 foreign import bpcall "SMC:probability_of_reads01" builtin_probability_of_reads01 :: EVector Int -> EVector Double -> EVector (EVector Int) -> Double -> Double -> Double -> Reads -> LogDouble
 probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads = builtin_probability_of_reads01 counts' weights' haplotypes' error_rate c outlier_frac reads'
@@ -135,7 +135,7 @@ foreign import bpcall "SMC:sample_haplotype01_from_panel" builtin_sample_haploty
 sample_haplotype01_from_panel (p_sites,p_haps) switch_rate flip_prob = let raw_action s = builtin_sample_haplotype01_from_panel p_haps' p_sites' switch_rate flip_prob s
                                                                            p_haps' = list_to_vector p_haps
                                                                            p_sites' = list_to_vector p_sites
-                                                                       in RandomStructure do_nothing modifiable_structure $ liftIO $ IOAction (\s->(s,raw_action s))
+                                                                       in RanAtomic do_nothing (IOAction (\s->(s,raw_action s)))
 
 foreign import bpcall "SMC:haplotype01_from_panel_probability" builtin_haplotype01_from_panel_probability :: Panel -> Sites -> Double -> Double -> Haplotype -> LogDouble
 haplotype01_from_panel_probability (p_sites,p_haps) switch_rate flip_prob hap = builtin_haplotype01_from_panel_probability p_haps' p_sites' switch_rate flip_prob hap
