@@ -51,7 +51,7 @@ json c_json(const expression_ref& E)
     // Object
     else if (type == 1)
     {
-	json object;
+	json object = json::object();
 	for(auto& j: J.as_<EVector>())
 	{
             auto& K = j.as_<EPair>().first;
@@ -63,7 +63,7 @@ json c_json(const expression_ref& E)
     }
     else if (type == 0)
     {
-	json array;
+	json array = json::array();
 	for(auto& j: J.as_<EVector>())
 	    array.push_back(c_json(j));
 	return array;
