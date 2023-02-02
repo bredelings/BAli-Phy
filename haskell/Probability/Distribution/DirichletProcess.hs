@@ -56,8 +56,8 @@ do_crp'' alpha n bins counts = let inc (c:cs) 0 = (c+1:cs)
 foreign import bpcall "Distribution:CRP_density" builtin_crp_density :: Double -> Int -> Int -> EVector Int -> LogDouble
 crp_density alpha n d z = builtin_crp_density alpha n d (list_to_vector z)
 foreign import bpcall "Distribution:sample_CRP" sample_crp_vector :: Double -> Int -> Int -> RealWorld -> EVector Int
-sample_crp alpha n d = RandomStructure do_nothing modifiable_structure $ liftIO $ do v <- IOAction (\s->(s,sample_crp_vector alpha n d s))
-                                                                                     return $ list_from_vector_of_size v n
+sample_crp alpha n d = RanAtomic do_nothing $ do v <- IOAction (\s->(s,sample_crp_vector alpha n d s))
+                                                      return $ list_from_vector_of_size v n
 --crp alpha n d = Distribution "crp" (make_densities $ crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1))
 triggered_modifiable_list n value effect = let raw_list = mapn n modifiable value
                                                effect' = force_fields raw_list `seq` (unsafePerformIO $ effect raw_list)
@@ -66,17 +66,17 @@ triggered_modifiable_list n value effect = let raw_list = mapn n modifiable valu
 
 crp_effect n d x = add_move (\c -> mapM_ (\l-> gibbs_sample_categorical (x!!l) (n+d) c) [0..n-1])
 
-safe_exp x = if (x < (-20.0)) then
-               exp (-20.0)
-             else if (x > 20.0) then
-               exp 20.0
+safe_exp x = if (x < (-20)) then
+               exp (-20)
+             else if (x > 20) then
+               exp 20
              else
                exp x
 
 dpm_lognormal n alpha mean_dist noise_dist = dpm n alpha sample_dist
     where sample_dist = do mean <- mean_dist
                            sigma_over_mu <- noise_dist
-                           let sample_log_normal = do z <- normal 0.0 1.0
+                           let sample_log_normal = do z <- normal 0 1
                                                       return $ mean*safe_exp (z*sigma_over_mu)
                            return sample_log_normal
 
@@ -90,7 +90,7 @@ dpm n alpha sample_dist = lazy $ do
 
   dists  <- sequence $ repeat $ sample_dist
 
-  breaks <- sequence $ repeat $ beta 1.0 alpha
+  breaks <- sequence $ repeat $ beta 1 alpha
 
 -- stick selects a distribution from the list, and join then samples from the distribution
   iid n (join $ stick breaks dists)
@@ -100,7 +100,7 @@ dp n alpha dist = lazy $ do
 
   atoms  <- sequence $ repeat $ dist
 
-  breaks <- sequence $ repeat $ beta 1.0 alpha
+  breaks <- sequence $ repeat $ beta 1 alpha
 
   iid n (stick breaks atoms)
 
