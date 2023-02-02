@@ -56,8 +56,6 @@ extern "C" closure builtin_function_sample_beta(OperationArgs& Args)
     double a1 = Args.evaluate_(0).as_double();
     double a2 = Args.evaluate_(1).as_double();
   
-    Args.make_changeable();
-
     return { beta(a1, a2) };
 }
 
@@ -110,8 +108,6 @@ extern "C" closure builtin_function_sample_cauchy(OperationArgs& Args)
     double a1 = Args.evaluate_(0).as_double();
     double a2 = Args.evaluate_(1).as_double();
 
-    Args.make_changeable();
-
     return { cauchy(a1, a2) };
 }
 
@@ -149,8 +145,6 @@ extern "C" closure builtin_function_sample_laplace(OperationArgs& Args)
     double m = Args.evaluate_(0).as_double();
     double s = Args.evaluate_(1).as_double();
   
-    Args.make_changeable();
-
     return { laplace(m,s) };
 }
 
@@ -207,8 +201,6 @@ extern "C" closure builtin_function_sample_negative_binomial(OperationArgs& Args
 {
     int r = Args.evaluate_(0).as_int();
     double p = Args.evaluate_(1).as_double();
-
-    Args.make_changeable();
 
     return { negative_binomial(r,p) };
 }

@@ -12,7 +12,7 @@ foreign import bpcall "Distribution:sample_cauchy" builtin_sample_cauchy :: Doub
 
 cauchy_bounds = realLine
 cauchy_effect x = add_move $ slice_sample_real_random_variable x cauchy_bounds
-sample_cauchy m s = RandomStructure cauchy_effect modifiable_structure $ liftIO (IOAction (\state->(state,builtin_sample_cauchy m s state)))
+sample_cauchy m s = RanAtomic cauchy_effect (IOAction (\state->(state,builtin_sample_cauchy m s state)))
 
 class HasCauchy d where
     cauchy :: Double -> Double -> d Double
