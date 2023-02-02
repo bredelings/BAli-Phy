@@ -381,8 +381,6 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 	S->push_back(categories[index]);
     }
 
-    Args.make_changeable();
-
     return S;
 }
 
