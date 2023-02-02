@@ -238,7 +238,12 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
 
             decls.push_back( { dict->constraint.ev_var, dfun_exp } );
             for(auto& pred: super_wanteds)
+            {
+                // Say where in the source code we got this thing from
+                pred.tc_state = dict->constraint.tc_state;
+
                 work_list.push_back( pred );
+            }
 
             return ReactSuccess();
         }
