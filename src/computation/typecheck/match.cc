@@ -38,7 +38,7 @@ void TypeChecker::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type)
 {
     auto state2 = copy_clear_wanteds();
     if (rhs.decls)
-        state2.infer_type_for_binds(unloc(*rhs.decls));
+        state2.infer_type_for_binds(*rhs.decls);
 
     auto etype = expTypeToType(exp_type);
     for(auto& guarded_rhs: rhs.guarded_rhss)

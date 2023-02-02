@@ -42,8 +42,9 @@ global_value_env sig_env(const signature_env& signatures)
 
 Hs::Binds TypeChecker::infer_type_for_binds_top(Hs::Binds binds)
 {
-    infer_type_for_binds(binds, true);
-    return binds;
+    Hs::LBinds lbinds = {noloc,binds};
+    infer_type_for_binds(lbinds, true);
+    return unloc(lbinds);
 }
 
 void TypeChecker::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreign_decls)
@@ -57,9 +58,11 @@ void TypeChecker::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreig
     poly_env() += fte;
 }
 
-void
-TypeChecker::infer_type_for_binds(Hs::Binds& binds, bool is_top_level)
+void TypeChecker::infer_type_for_binds(Hs::LBinds& lbinds, bool is_top_level)
 {
+    auto& [loc, binds] = lbinds;
+    if (loc) push_source_span(*loc);
+
     global_value_env sigs;
     signature_env sigs2;
     for(auto& [lvar,type]: binds.signatures)
@@ -76,6 +79,7 @@ TypeChecker::infer_type_for_binds(Hs::Binds& binds, bool is_top_level)
         decls = infer_type_for_decls(sigs2, decls, is_top_level);
 
     // FIXME: replace signature location with definition location
+    if (loc) pop_source_span();
 }
 
 value_env remove_sig_binders(value_env binder_env, const signature_env& signatures)

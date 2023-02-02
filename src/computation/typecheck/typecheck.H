@@ -495,7 +495,7 @@ public:
     // Figures 13, 14, 15?
     Hs::Binds infer_type_for_binds_top(Hs::Binds binds);
 
-    void infer_type_for_binds(Hs::Binds& binds, bool is_top_level = false);
+    void infer_type_for_binds(Hs::LBinds& binds, bool is_top_level = false);
 
     void get_type_synonyms(const Hs::Decls& decls);
 

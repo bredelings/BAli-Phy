@@ -75,7 +75,7 @@ void TypeChecker::tcRho(Hs::LetExp& Let, const Expected& exp_type)
 {
     auto state2 = copy_clear_wanteds();
 
-    state2.infer_type_for_binds(unloc(Let.binds));
+    state2.infer_type_for_binds(Let.binds);
 
     // 2. Compute type of let body
     state2.tcRho(Let.body, exp_type);

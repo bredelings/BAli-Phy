@@ -288,6 +288,8 @@ struct Binds: public std::vector<Decls>
     using std::vector<Decls>::vector;
 };
 
+typedef Located<Binds> LBinds;
+
 Binds operator+(const Binds& b1, const Binds& b2);
 
 enum class Fixity {infixl, infix, infixr, unknown};
@@ -714,17 +716,17 @@ struct MultiGuardedRHS
 {
     std::vector<GuardedRHS> guarded_rhss;
     // We might need to make this into a shared_ptr< > to avoid an infinite structure.
-    std::optional<Located<Binds>> decls;
+    std::optional<LBinds> decls;
 
     std::string print() const;
     std::string print_no_equals() const;
 
     MultiGuardedRHS() = default;
     MultiGuardedRHS(const std::vector<GuardedRHS>& v):guarded_rhss(v) {}
-    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const std::optional<Located<Binds>>& ds):guarded_rhss(v), decls(ds) {}
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const std::optional<LBinds>& ds):guarded_rhss(v), decls(ds) {}
 };
 
-MultiGuardedRHS SimpleRHS(const Located<expression_ref>&, const std::optional<Located<Binds>>& ds = {});
+MultiGuardedRHS SimpleRHS(const Located<expression_ref>&, const std::optional<LBinds>& ds = {});
 
 struct StrictValueDecl: public Object
 {
@@ -773,10 +775,11 @@ struct Stmts: public Object
 
 struct LetQual: public Object
 {
-    Located<Binds> binds;
+    LBinds binds;
+
     LetQual* clone() const { return new LetQual(*this);}
     std::string print()  const;
-    LetQual(const Located<Binds>& b): binds(b) {}
+    LetQual(const LBinds& b): binds(b) {}
 };
 
 struct SimpleQual: public Object
@@ -858,13 +861,13 @@ struct Alts: public std::vector<Located<Alt>>
 
 struct LetExp: public Object
 {
-    Located<Binds> binds;
+    LBinds binds;
     LExp body;
 
     LetExp* clone() const {return new LetExp(*this);}
     std::string print() const;
 
-    LetExp(const Located<Binds>& bs, const LExp& b): binds(bs), body(b) {};
+    LetExp(const LBinds& bs, const LExp& b): binds(bs), body(b) {};
 };
 
 LetExp simple_let(const LVar&, const LExp&, const Exp&);

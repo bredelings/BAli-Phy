@@ -58,7 +58,7 @@ TypeChecker::infer_qual_type(Located<Hs::Qual>& lqual)
     else if (auto lq = qual.to<Hs::LetQual>())
     {
         auto LQ = *lq;
-        infer_type_for_binds(unloc(LQ.binds));
+        infer_type_for_binds(LQ.binds);
         qual = LQ;
     }
     else
@@ -93,7 +93,7 @@ TypeChecker::infer_guard_type(Located<Hs::Qual>& lguard)
     else if (auto lq = guard.to<Hs::LetQual>())
     {
         auto LQ = *lq;
-        infer_type_for_binds(unloc(LQ.binds));
+        infer_type_for_binds(LQ.binds);
         guard = LQ;
     }
     else
@@ -191,7 +191,7 @@ void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expe
 
         // 1. Typecheck binds and add values to global env
         auto state2 = copy_clear_wanteds();
-        state2.infer_type_for_binds(unloc(LQ.binds));
+        state2.infer_type_for_binds(LQ.binds);
 
         // 2. Typecheck stmts
         state2.tcRhoStmts(i+1, stmts, expected_type);
