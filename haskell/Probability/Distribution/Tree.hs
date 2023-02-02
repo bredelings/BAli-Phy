@@ -61,16 +61,9 @@ instance ForceFields TreeImp where
 -- 2        2      1
 -- 3        4      3
 -- 4        6      5
-modifiable_cayley_tree :: (forall a.a->a) -> TreeImp -> TreeImp
-modifiable_cayley_tree modf tree@(Tree nodes0 branches0) = Tree nodesMap branches where
-    n_nodes = numNodes tree
-    n_leaves | n_nodes == 1  = 1
-             | otherwise     = (n_nodes+2) `div` 2
-    degree node | n_leaves == 1   = 0
-                | node < n_leaves = 1
-                | otherwise       = 3
-
-    nodesMap = fmap (\(Node node branches_out) -> Node node (mapnA (degree node) modf branches_out)) nodes0
+modifiable_tree :: (forall a.a->a) -> TreeImp -> TreeImp
+modifiable_tree modf tree@(Tree nodes0 branches0) = Tree nodesMap branches where
+    nodesMap = fmap (\(Node node branches_out) -> Node node (fmap modf branches_out)) nodes0
     branches = fmap (\(Edge s i t r b) -> Edge (modf s) (modf i) (modf t) r b ) branches0
 
 -- our current modifiable tree structure requires the node to have a constrant degree.
@@ -85,7 +78,7 @@ uniform_topology_pr n = uniform_topology_pr (n - 1) / (fromIntegral $ 2 * n - 5)
 
 -- We don't want to force all fields of the tree when _any_ tree field is accessed, only when a _random_ field is accessed.
 -- This is why triggered tree still uses 'tree' as input to 'modifiable_tree'.
-triggered_modifiable_tree = triggered_modifiable_structure modifiable_cayley_tree force_fields
+triggered_modifiable_tree = triggered_modifiable_structure modifiable_tree force_fields
 
 uniform_topology_effect tree = do
 --  add_move $ walk_tree_sample_NNI_unsafe tree  -- probably we should ensure that the probability of the alignment is zero if pairwise alignments don't match?
@@ -184,25 +177,8 @@ instance ForceFields t => ForceFields (RootedTreeImp t) where
 -- 3        5      4
 -- 4        7      6
 modifiable_rooted_tree :: (forall a.a -> a) -> RootedTreeImp TreeImp -> RootedTreeImp TreeImp
-modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $ Tree (IntMap.fromList $ zip [0..] nodes) branches where
-    n_nodes = numNodes tree
-    n_leaves = (n_nodes + 1) `div` 2
-    n_branches = n_nodes - 1
-
-    degree node | n_leaves == 1      = 0
-                | node < n_leaves    = 1
-                | node == root_node  = 2
-                | node < n_nodes     = 3
-                | otherwise          = error $ "modifiable_rooted_tree: unknown node"++show node
-
-    reverse b = (b + n_branches) `mod` (2*n_branches)
-
-    nodes    = [ Node node (mapnA (degree node) modf (edgesOutOfNode tree node)) | node <- xrange 0 n_nodes ]
-
-    edgesSet = IntSet.fromList $ xrange 0 (n_branches * 2)
-    branches = edgesSet & IntMap.fromSet (\b ->  let Edge s i t _ _ = findEdge tree b in Edge (modf s) (modf i) (modf t) ((b + n_branches) `mod` (2*n_branches)) b)
-
--- our current modifiable tree structure requires the node to have a constrant degree.
+modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $ modifiable_tree modf tree
+-- Is it still true that we need the root node to have a constrant degree?
 
 triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_rooted_tree force_fields
 
