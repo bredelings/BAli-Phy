@@ -17,8 +17,8 @@ annotated_bernoulli_density2 p q x = do
   in_edge "p" p
   return [bernoulli_density2 p q x]
 
-bernoulli p = bernoulli2 p (1.0-p)
-rbernoulli q = bernoulli2 (1.0-q) q
+bernoulli p = bernoulli2 p (1-p)
+rbernoulli q = bernoulli2 (1-q) q
 
 
 class HasBernoulli d where

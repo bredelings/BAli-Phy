@@ -16,8 +16,8 @@ geometric_effect x = do
 
 sample_geometric p_success = RanAtomic geometric_effect (IOAction (\s->(s,builtin_sample_geometric p_success s)))
 
-geometric p = geometric2 (1.0-p) p
-rgeometric q = geometric2 q (1.0-q)
+geometric p = geometric2 (1-p) p
+rgeometric q = geometric2 q (1-q)
 
 class HasGeometric d where
     geometric2 :: Double -> Double -> d Int
