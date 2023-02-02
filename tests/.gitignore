@@ -1,5 +1,5 @@
 obtained-*
 token*.dot
-ignore-output-*
-rb-obtained-*
+ignore-*
+*-obtained-*
 history.txt
