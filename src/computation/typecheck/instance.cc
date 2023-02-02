@@ -609,14 +609,15 @@ bool possible_instance_for(Type t)
 // 7. Unless we actually FORBID unification of variables at any higher level, then this won't work.
 // 8. Simply forbidding substitution to a deeper depth won't cut it.
 
-optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_constraint)
+// FIXME! Change this to take a Constraint, which includes the tc_state for the constraint we are trying to satisfy.
+optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pred)
 {
     vector<pair<pair<Core::Exp, LIE>,Type>> matching_instances;
 
-    TypeCon target_class = get_class_for_constraint(target_constraint);
+    TypeCon target_class = get_class_for_constraint(target_pred);
 
     // If all arguments are variables, then we can't match an instance.
-    if (not possible_instance_for(target_constraint)) return {};
+    if (not possible_instance_for(target_pred)) return {};
 
     for(auto& [dfun, info]: instance_env() )
     {
@@ -626,7 +627,7 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_co
 
         auto [_, wanteds, instance_head] = instantiate(InstanceOrigin(), type);
 
-        if (not maybe_match(instance_head, target_constraint)) continue;
+        if (not maybe_match(instance_head, target_pred)) continue;
 
         auto dfun_exp = Core::Apply(dfun, dict_vars_from_lie<Core::Exp>(wanteds));
 
@@ -659,7 +660,7 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_co
 
     if (surviving_instances.size() > 1)
     {
-        auto n = Note()<<"Too many matching instances for "<<target_constraint<<":\n";
+        auto n = Note()<<"Too many matching instances for "<<target_pred<<":\n";
         for(auto& [_,type]: surviving_instances)
             n<<"  "<<remove_top_gen(type)<<"\n";
         record_error(n);
