@@ -86,7 +86,7 @@ class RegOperationArgs1 final: public OperationArgs
     bool evaluate_changeables() const {return true;}
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
-    int evaluate_reg_force(int r2)
+    int evaluate_reg_force(int r2) override
         {
             auto [r3, result] = M.incremental_evaluate1(r2);
 
@@ -100,7 +100,7 @@ class RegOperationArgs1 final: public OperationArgs
         }
 
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
-    int evaluate_reg_use(int r2)
+    int evaluate_reg_use(int r2) override
         {
             // Compute the value, and follow index_var chains (which are not changeable).
             auto [r3, result] = M.incremental_evaluate1(r2);
@@ -539,7 +539,7 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
     bool evaluate_changeables() const {return true;}
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
-    int evaluate_reg_force(int r2)
+    int evaluate_reg_force(int r2) override
         {
             auto [r3, result] = M.incremental_evaluate2(r2, zero_count);
 
@@ -550,7 +550,7 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
         }
 
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
-    int evaluate_reg_use(int r2)
+    int evaluate_reg_use(int r2) override
         {
             // Compute the value, and follow index_var chains (which are not changeable).
             auto [r3, result] = M.incremental_evaluate2(r2, zero_count);
@@ -1107,13 +1107,13 @@ class RegOperationArgsUnchangeable final: public OperationArgs
         }
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
-    int evaluate_reg_force(int r2)
+    int evaluate_reg_force(int r2) override
         {
             return evaluate_reg(r2);
         }
 
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
-    int evaluate_reg_use(int r2)
+    int evaluate_reg_use(int r2) override
         {
             return evaluate_reg(r2);
         }
