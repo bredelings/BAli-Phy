@@ -216,6 +216,37 @@ void reg_heap::unshare_regs1(int t)
     auto& vm_result = tokens[t].vm_result;
     auto& vm_step = tokens[t].vm_step;
 
+    {
+        // find all regs in t that are not shared from the root
+        auto& delta_result = vm_result.delta();
+        auto& delta_step   = vm_step.delta();
+
+        // 0. Eliminate steps and regs that don't exist in the root
+        for(int i=0;i<delta_result.size();)
+        {
+            auto [r,_] = delta_result[i];
+            if (reg_exists(r))
+                i++;
+            else
+            {
+                delta_result[i] = delta_result.back();
+                delta_result.pop_back();
+            }
+        }
+
+        for(int i=0;i<delta_step.size();)
+        {
+            auto [r,_] = delta_step[i];
+            if (reg_exists(r))
+                i++;
+            else
+            {
+                delta_step[i] = delta_step.back();
+                delta_step.pop_back();
+            }
+        }
+    }
+
     // find all regs in t that are not shared from the root
     const auto& delta_result = vm_result.delta();
     const auto& delta_step   = vm_step.delta();
