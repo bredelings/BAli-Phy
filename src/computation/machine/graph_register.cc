@@ -1531,6 +1531,10 @@ int reg_heap::result_for_reg(int r) const
 
 bool reg_heap::regs_maybe_different_value(int r1, int r2) const
 {
+    assert(r2 > 0);
+
+    if (r1 < 0) return true;
+
     if (r1 == r2) return false;
 
     auto& E1 = expression_at(r1);
