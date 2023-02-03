@@ -468,7 +468,9 @@ string label_for_reg(int R, const reg_heap& C, const map<int,string>& reg_names,
                 if (E.is_index_var())
                 {
                     int index = E.as_index_var();
-                    int R2 = CR.lookup_in_env( index );
+                    int R2 = -1;
+                    if (index < CR.Env.size())
+                        R2 = CR.lookup_in_env( index );
 	  
                     string reg_name = "<" + convertToString(R2) + ">";
                     if (constants.count(R2))
@@ -675,14 +677,17 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
                     if (E.is_index_var())
                     {
                         int index = E.as_index_var();
-                        int R2 = C[R].lookup_in_env( index );
-                        targets.push_back(R2);
+                        if (index < C[R].Env.size())
+                        {
+                            int R2 = C[R].lookup_in_env( index );
+                            targets.push_back(R2);
+                        }
                     }
                 }
 
 	    for(int R2: targets)
 	    {
-		if (not C.reg_is_used(R2)) continue;
+		if (C.reg_is_used(R2)) continue;
 
 		string name2 = "n" + convertToString(R2);
 		bool used = false;
