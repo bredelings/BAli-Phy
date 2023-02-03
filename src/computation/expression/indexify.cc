@@ -120,10 +120,16 @@ expression_ref indexify(const expression_ref& E, vector<var>& variables)
         return E;
     else if (is_constructor_exp(E) or is_apply_exp(E) or E.head().is_a<Operation>())
     {
-        expression* V = E.as_expression().clone();
-        for(int i=0;i<V->size();i++)
-            V->sub[i] = indexify(V->sub[i], variables);
-        return V;
+        // This handles (modifiable) with no arguments.
+        if (E.is_atomic())
+            return E;
+        else
+        {
+            expression* V = E.as_expression().clone();
+            for(int i=0;i<V->size();i++)
+                V->sub[i] = indexify(V->sub[i], variables);
+            return V;
+        }
     }
 
     std::abort();
@@ -224,10 +230,16 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
         return E;
     else if (is_constructor_exp(E) or is_apply_exp(E) or E.head().is_a<Operation>())
     {
-        expression* V = E.as_expression().clone();
-        for(int i=0;i<V->size();i++)
-            V->sub[i] = deindexify(V->sub[i], variables);
-        return V;
+        // This handles (modifiable) with no arguments.
+        if (E.is_atomic())
+            return E;
+        else
+        {
+            expression* V = E.as_expression().clone();
+            for(int i=0;i<V->size();i++)
+                V->sub[i] = deindexify(V->sub[i], variables);
+            return V;
+        }
     }
 
     std::abort();

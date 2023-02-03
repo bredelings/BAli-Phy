@@ -243,10 +243,16 @@ expression_ref unlet(const expression_ref& E)
     // 4. Constructor
     else if (is_constructor_exp(E) or is_apply_exp(E) or E.head().is_a<Operation>())
     {
-	expression* V = E.as_expression().clone();
-	for(int i=0;i<E.size();i++)
-	    V->sub[i] = unlet(E.sub()[i]);
-	return V;
+        // This handles (modifiable) with no arguments.
+        if (E.is_atomic())
+            return E;
+        else
+        {
+            expression* V = E.as_expression().clone();
+            for(int i=0;i<E.size();i++)
+                V->sub[i] = unlet(E.sub()[i]);
+            return V;
+        }
     }
 
     std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";
