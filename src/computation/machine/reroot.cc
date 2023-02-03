@@ -663,11 +663,16 @@ void reg_heap::remove_zero_count_regs(const std::vector<int>& zero_count_regs_in
             vm_result2->add_value(r, prog_results[r]);
             prog_results[r] = non_computed_index;
         }
-        if (has_step1(r))
+
+        // Only the step on unforgettable regs is unforgettable.
+        if (has_step1(r) and reg_is_forgettable(r))
         {
+            // Bump the step into the root child.
             int s = prog_steps[r];
-            vm_step2->add_value(r, s) ;
-            if (s > 0) note_step_not_in_root(s);
+            assert(s > 0);
+            vm_step2->add_value(r, s);
+
+            note_step_not_in_root(s);
             prog_steps[r] = non_computed_index;
         }
     }
@@ -694,8 +699,15 @@ void reg_heap::remove_zero_count_regs(const std::vector<int>& zero_count_regs_in
         }
         prog_results[r] = non_computed_index;
 
-        assert(not prog_unshare[r].test(unshare_step_bit));
-        prog_steps[r] = non_computed_index;
+        // Eliminate steps if the reg is either not created or forgettable.
+        int s = prog_steps[r];
+        if (has_step1(r) and (not reg_exists(r) or reg_is_forgettable(r)))
+        {
+            note_step_not_in_root(s);
+            prog_steps[r] = non_computed_index;
+
+            destroy_step_and_created_regs(s);
+        }
 
         prog_unshare[r].reset();
     }
