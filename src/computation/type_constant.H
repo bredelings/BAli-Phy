@@ -38,8 +38,6 @@ enum type_constant {null_type,
 
 inline bool is_object_type(type_constant c) { return (c > index_var_type);}
 
-inline bool is_literal_type(type_constant c) { return (c >=1 and c <=4) or (c==unknown_type);}
-
 inline bool is_operation_type(type_constant c) { return (c >= operation_type);}
 
 inline bool is_literal_or_var_type(type_constant c) {return (c >=1 and c <= reg_var_type);}
@@ -47,5 +45,7 @@ inline bool is_literal_or_var_type(type_constant c) {return (c >=1 and c <= reg_
 inline bool is_whnf_type(type_constant c) {return (c >=1 and c < expression_type);}
 
 inline bool is_gcable_type(type_constant c) {return c >= gc_type and c < expression_type;}
+
+inline bool is_literal_type(type_constant c) { return (c >=1 and c <=4) or (c==unknown_type) or is_gcable_type(c);}
 
 #endif
