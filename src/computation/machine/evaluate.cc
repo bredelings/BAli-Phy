@@ -964,8 +964,11 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
             set_call(s, call);
         }
 
-        // I think we can only get get here if the step is valid, but the result is invalid.
-        assert(prog_unshare[r].test(unshare_result_bit));
+        // I think we can only get get here if
+        // (i) the step is valid, but the result is invalid.
+        // (ii) there was never a value result here to begin with because the unforgettable step was
+        //      backward-shared, but the result was not.
+        assert(prog_unshare[r].test(unshare_result_bit) or reg_is_unforgettable(r));
 
         // If the result has changed, mark it with a bit.
         if (regs_maybe_different_value(prog_results[r],result))
