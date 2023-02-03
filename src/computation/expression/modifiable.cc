@@ -1,23 +1,39 @@
 #include "modifiable.H"
 #include "index_var.H"
+#include "computation/machine/graph_register.H"
 
 closure modifiable_op(OperationArgs& Args)
 {
-    Args.make_changeable();
-    
     auto& C = Args.current_closure();
 
     // Use the first argument as an initial value.
     if (C.exp.size() == 1)
     {
-        // We must call the reg instead of just calling its value. This records
-        // the dependence on the reg, which maybe changeable, so that if the changeable
-        // step is destroyed, we don't end up calling a non-existant reg.
-        int r_call = Args.reg_for_slot(0);
-        return {index_var(0), {r_call}};
+        auto& M = Args.memory();
+
+        // 1. Get the reg x to call.
+        int x = Args.reg_for_slot(0);
+
+        // 2. Allocate a new reg m with closure (modifiable).
+        int m = Args.allocate( {modifiable(),{}} );
+
+        // 3. Mark m changeable.
+        M.mark_reg_changeable(m);
+
+        // 4. Mark m unforgettable.
+        M.mark_reg_unforgettable(m);
+
+        // 5. Give m a step that calls x.
+        int s = M.add_shared_step(m);
+        M.set_call(s, x, true);
+
+        // 7. Unchangeably evaluate to m.
+        return {index_var(0), {m}};
     }
     else if (C.exp.size() == 2)
     {
+        Args.make_changeable();
+
         // 1. Get the function and object
         int f_reg = Args.reg_for_slot(0);
         int x_reg = Args.reg_for_slot(1);

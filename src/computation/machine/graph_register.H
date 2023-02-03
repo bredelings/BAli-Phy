@@ -244,6 +244,9 @@ public:
     bool reg_has_forces(int r) const;
     bool reg_is_on_stack(int r) const;
     bool regs_maybe_different_value(int r1, int r2) const;
+    bool reg_is_unforgettable(int r) const;
+    bool reg_is_forgettable(int r) const;
+    void mark_reg_unforgettable(int r);
 
     void set_used_reg(int r1, int r2);
     void set_forced_reg(int r1, int r2);
@@ -769,6 +772,22 @@ inline bool reg_heap::reg_has_forces(int r) const
 inline bool reg_heap::reg_is_on_stack(int r) const
 {
     return regs[r].flags.test(3);
+}
+
+inline bool reg_heap::reg_is_unforgettable(int r) const
+{
+    return regs[r].flags.test(4);
+}
+
+inline bool reg_heap::reg_is_forgettable(int r) const
+{
+    return not reg_is_unforgettable(r);
+}
+
+inline void reg_heap::mark_reg_unforgettable(int r)
+{
+    assert(reg_is_changeable(r));
+    regs[r].flags.set(4);
 }
 
 inline void reg_heap::mark_reg_unevaluated(int r)
