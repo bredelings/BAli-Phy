@@ -691,7 +691,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 
 	    for(int R2: targets)
 	    {
-		if (C.reg_is_used(R2)) continue;
+		if (not C.reg_is_used(R2)) continue;
 
 		string name2 = "n" + convertToString(R2);
 		bool used = false;
