@@ -11,6 +11,7 @@
 #include "util/set.H"
 #include "computation/context.H"
 #include "haskell/ids.H"
+#include "computation/machine/gcobject.H"
 
 using std::string;
 using std::vector;
@@ -63,65 +64,49 @@ void reg_heap::find_all_used_regs_in_context(int t, bool keep_identifiers, vecto
 
 void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<int>& unique) const
 {
-    for(int i=0;i<scan.size();i++)
-    {
-	int r = scan[i];
+    auto visit_reg = [&](int r) {
+        if (regs.is_used(r) and not regs.is_marked(r))
+        {
+            regs.set_mark(r);
+            unique.push_back(r);
+        }
+    };
+    
+    for(int r: scan)
+        visit_reg(r);
 
-	// This is a hack, but allows drawing graphs when we have edges to missing regs
-	if (regs.is_free(r)) continue;
-
-	assert(regs.is_used(r) or regs.is_marked(r));
-	if (regs.is_marked(r)) continue;
-
-	regs.set_mark(r);
-	unique.push_back(scan[i]);
-    }
-
+    vector<int> tmp;
     for(int i=0;i<unique.size();i++)
     {
 	int r = unique[i];
 	assert(regs.is_marked(r));
 
 	const reg& R = regs.access(r);
+        if (auto& obj = R.C.exp; is_gcable_type(obj.type()))
+        {
+            auto gco = convert<GCObject>(obj.ptr());
+            gco->get_regs(tmp);
+            for(int j: tmp)
+                visit_reg(j);
+        }
+
 	for(int j:R.C.Env)
-	{
-	    if (regs.is_used(j) and not regs.is_marked(j))
-	    {
-		regs.set_mark(j);
-		unique.push_back(j);
-	    }
-	}
+            visit_reg(j);
 
 	// We can get dependencies on used regs that are not in the environment if we
 	// have merged steps.
 	for(int j: used_regs_for_reg(r))
-	{
-	    if (regs.is_used(j) and not regs.is_marked(j))
-	    {
-		regs.set_mark(j);
-		unique.push_back(j);
-	    }
-	}
+            visit_reg(j);
 
 	// We can get dependencies on forced regs since we no merge operations that only force things.
 	for(int j: forced_regs_for_reg(r))
-	{
-	    if (regs.is_used(j) and not regs.is_marked(j))
-	    {
-		regs.set_mark(j);
-		unique.push_back(j);
-	    }
-	}
+            visit_reg(j);
 
 	// Count also the references from the call
 	if (reg_has_call(r))
 	{
 	    int called_reg = call_for_reg(r);
-	    if (not regs.is_marked(called_reg))
-	    {
-		regs.set_mark(called_reg);
-		unique.push_back(called_reg);
-	    }
+            visit_reg(called_reg);
 	}
     }
 
@@ -429,7 +414,9 @@ void write_dot_graph(const reg_heap& C)
 
 bool print_as_record(const expression_ref& E)
 {
-    if (E.head().type() == operation_type or E.head().type() == constructor_type)
+    if (E.head().is_a<IntMap>())
+        return true;
+    else if (E.head().type() == operation_type or E.head().type() == constructor_type)
     {
         if (not is_case(E) and not E.head().is_a<Apply>())
             return true;
@@ -461,7 +448,10 @@ string label_for_reg(int R, const reg_heap& C, const map<int,string>& reg_names,
     {
         label = "<table border='0' cellborder='1' cellspacing='0'><tr><td>"+escape(label) + "</td>";
 
-        label += "<td>"+escape(F.head().print())+"</td>";
+        if (F.is_a<IntMap>())
+            label += "<td>IntMap</td>";
+        else
+            label += "<td>"+escape(F.head().print())+"</td>";
         if (F.is_expression())
             for(const expression_ref& E: F.sub())
             {
@@ -492,6 +482,24 @@ string label_for_reg(int R, const reg_heap& C, const map<int,string>& reg_names,
                     label += "<td>" + E.print() + "</td>";
                 }
             }
+        else if (auto im = F.to<IntMap>())
+        {
+            for(auto& [key, R2]: *im)
+            {
+                string reg_name = "<" + convertToString(R2) + ">";
+                if (constants.count(R2))
+                    reg_name = constants.at(R2) + " " + reg_name;
+                else if (reg_names.count(R2))
+                {
+                    reg_name = reg_names.at(R2);
+                    auto loc = simplify.find(reg_name);
+                    if (loc != simplify.end())
+                        reg_name = loc->second;
+                }
+
+                label += "<td port=\"r" +convertToString(R2)+"\">" + std::to_string(key) + "&rarr;" + escape(reg_name) + "</td>";
+            }
+        }
         label += "</tr></table>";
     }
     else if (F.type() == index_var_type)
@@ -688,6 +696,11 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
                             std::clog<<"reg "<<R<<" has bad index in "<<C[R].print()<<std::endl;
                     }
                 }
+            else if (auto im = F.to<IntMap>())
+            {
+                for(auto& [_,R]: *im)
+                    targets.push_back(R);
+            }
 
 	    for(int R2: targets)
 	    {
