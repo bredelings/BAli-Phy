@@ -99,7 +99,7 @@ extern "C" closure builtin_function_removeElement(OperationArgs& Args)
         if (i==idx) j++;
 
 	// change to result.exp <<= index_var(i)
-	exp->sub[i] = index_var(n - 1 - i);
+	exp->sub[i] = index_var(n - 2 - i);
 
 	// Add the var to the environment
 	result.Env[i] = C.Env[j];
