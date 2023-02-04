@@ -763,7 +763,7 @@ void reg_heap::check_force_counts()
         assert(prog_unshare[r].none());
         if (not regs.is_free(r))
             assert(prog_force_counts[r] == force_count(r));
-        if (has_step1(r))
+        if (has_step1(r) and not reg_is_unforgettable(r))
             assert(prog_force_counts[r] > 0);
         if (prog_force_counts[r] > 0)
             assert(reg_is_constant_with_force(r) or has_result1(r));
@@ -2303,6 +2303,9 @@ void reg_heap::check_used_regs() const
         {
             assert(prog_force_counts[r1] == force_count(r1));
             if (has_step1(r1))
+                assert(reg_is_unforgettable(r1) or reg_is_forced(r1));
+
+            if (has_step1(r1) and reg_is_forced(r1))
                 assert(prog_force_counts[r1] > 0);
             if (has_result1(r1))
                 assert(prog_force_counts[r1] > 0);
