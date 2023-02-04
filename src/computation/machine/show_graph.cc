@@ -471,6 +471,8 @@ string label_for_reg(int R, const reg_heap& C, const map<int,string>& reg_names,
                     int R2 = -1;
                     if (index < CR.Env.size())
                         R2 = CR.lookup_in_env( index );
+                    else
+                        std::clog<<"reg "<<R<<" has bad index in "<<CR.print()<<std::endl;
 	  
                     string reg_name = "<" + convertToString(R2) + ">";
                     if (constants.count(R2))
@@ -682,6 +684,8 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
                             int R2 = C[R].lookup_in_env( index );
                             targets.push_back(R2);
                         }
+                        else
+                            std::clog<<"reg "<<R<<" has bad index in "<<C[R].print()<<std::endl;
                     }
                 }
 
