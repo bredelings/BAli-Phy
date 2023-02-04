@@ -2236,6 +2236,15 @@ void reg_heap::check_used_regs_in_token(int t) const
 
         if (not root_child)
         {
+            // If this step calls a constant reg, then that should be the result.
+            int call = steps[step].call;
+            assert(call > 0);
+            if (reg_is_constant(call))
+            {
+                int result = reg_to_result.at(r);
+                assert(result < 0 or result == call);
+            }
+
             // Since this step is in a non-root token, any steps of its child regs should not be in more root-ward tokens.
             // So they certainly should not be in the root token.
             for(int r2: steps[step].created_regs)
