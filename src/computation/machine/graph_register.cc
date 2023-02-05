@@ -1630,7 +1630,7 @@ void reg_heap::set_index_var_ref(int r1, int r2)
     regs[r1].index_var_ref = {r2, index};
 }
 
-void reg_heap::set_call(int s1, int r2)
+void reg_heap::set_call(int s1, int r2, bool unsafe)
 {
     // Check that step s is legal
     assert(steps.is_used(s1));
@@ -1641,7 +1641,7 @@ void reg_heap::set_call(int s1, int r2)
     // R2 could be unevaluated if we are setting the value of a modifiable.
 
     // R2 shouldn't have an index var.
-    assert(not reg_is_index_var_no_force(r2));
+    assert(unsafe or not reg_is_index_var_no_force(r2));
 
     // Don't override an *existing* call
     assert(steps[s1].call == 0);
@@ -1654,8 +1654,8 @@ void reg_heap::set_call(int s1, int r2)
     // We may need a call edge to constant-with-force nodes in order to achieve the proper count
     if (not reg_is_constant_no_force(r2))
     {
-        assert(not reg_is_index_var_no_force(r2));
-        assert(not reg_is_unevaluated(r2));
+        assert(unsafe or not reg_is_index_var_no_force(r2));
+        assert(unsafe or not reg_is_unevaluated(r2));
         // 6. Add a call edge from to R2.
         auto& R2 = regs[r2];
         int back_index = R2.called_by.size();
