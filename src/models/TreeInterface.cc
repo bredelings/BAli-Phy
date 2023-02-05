@@ -32,7 +32,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     :tree_exp(reg_var(tree_reg)),
      n_leaves(0)
 {
-    auto tree = context_ptr(C, tree_reg).result();
+    auto tree = context_ptr(C, tree_reg);
 
     //------------------------- Create the tree structure -----------------------//
     if (has_constructor(tree.head(), "Tree.BranchLengthTree"))

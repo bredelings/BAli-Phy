@@ -163,7 +163,7 @@ vector<param> get_params_from_array(context_ref& C, const expression_ref& array,
 
 context_ptr context_ptr::operator[](int i) const
 {
-    int r = C.memory()->follow_index_var(reg);
+    int r = C.memory()->value_for_reg(reg);
     auto& c = C.memory()->closure_at(r);
     if (auto& e = c.exp; e.size() == 0 and is_gcable_type(e.type()))
     {
@@ -184,7 +184,7 @@ context_ptr context_ptr::list_element(int index) const
     for(;L.size() > 0 and i < index;i++)
     {
         assert(L.size() == 2);
-        L = L[1].result();
+        L = L[1];
     }
     if (i < index)
         throw myexception()<<"Trying to get list element "<<index<<" for a list of size "<<i<<"!";
@@ -211,7 +211,7 @@ EVector context_ptr::list_to_vector() const
 
         vec->push_back(L[0].value());
 
-        L = L[1].result();
+        L = L[1];
     }
 
     return std::move(*vec);
@@ -228,7 +228,7 @@ vector<context_ptr> context_ptr::list_elements() const
 
         elements.push_back(L[0]);
 
-        L = L[1].result();
+        L = L[1];
     }
 
     return elements;
@@ -279,13 +279,13 @@ bool context_ptr::move_to_modifiable()
 
 int context_ptr::size() const
 {
-    int r = C.memory()->follow_index_var(reg);
+    int r = C.memory()->value_for_reg(reg);
     return C.memory()->expression_at(r).size();
 }
 
 expression_ref context_ptr::head() const
 {
-    int r = C.memory()->follow_index_var(reg);
+    int r = C.memory()->value_for_reg(reg);
     return C.memory()->expression_at(r).head();
 }
 
