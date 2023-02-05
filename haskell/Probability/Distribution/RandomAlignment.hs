@@ -83,7 +83,7 @@ alignment_prs hmms model (AlignmentOnTree tree n_seqs ls as) | numNodes tree < 1
                                                              | otherwise = alignment_prs_top as tree hmms ++ alignment_prs_bot as tree model -- [ doubleToLogDouble 1.0 / alignment_pr_bot as tree model]
 
 instance ForceFields (AlignmentOnTree t) where
-    force_fields a@(AlignmentOnTree tree n_seqs ls as) = force_fields as `seq` force_fields ls `seq` a
+    force_fields a@(AlignmentOnTree tree n_seqs ls as) = a
 
 --FIXME: I should make this only trigger if you start looking at the VALUES of the pairwise alignments!
 --FIXME: Maybe I should also reduce this to just a list of pairwise alignments?

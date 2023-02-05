@@ -52,9 +52,9 @@ instance ForceFields Node where
 
 
 instance ForceFields TreeImp where
-    force_fields tree@(Tree nodes branches) = force_nodes `seq` force_branches `seq` tree where
-                             force_nodes    = force_fields $ fmap force_fields nodes
-                             force_branches = force_fields $ fmap force_fields branches
+    force_fields tree@(Tree nodes branches) = tree {- force_nodes `seq` force_branches `seq` tree where
+                             force_nodes    = force_fields $ fmap force_fields nodes 
+                            force_branches = force_fields $ fmap force_fields branches -}
 
 -- leaves   nodes  branches
 -- 1        1      0
