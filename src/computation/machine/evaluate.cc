@@ -971,7 +971,7 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         assert(prog_unshare[r].test(unshare_result_bit) or reg_is_unforgettable(r));
 
         // If the result has changed, mark it with a bit.
-        if (regs_maybe_different_value(prog_results[r],result))
+        if (prog_unshare[r].test(unshare_result_bit) and regs_maybe_different_value(prog_results[r],result))
             prog_unshare[r].set(different_result_bit);
 
         // FIXME: How to avoid resharing results of changed modifiables?  Since the step is not shared, we should not reshare.
@@ -1009,7 +1009,7 @@ pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
         // Since the call is unchanged, we only need to increment the call count if its been decremented
         auto [call,result] = incremental_evaluate2(r2, prog_unshare[r].test(call_decremented_bit));
 
-        if (regs_maybe_different_value(prog_results[r],result))
+        if (prog_unshare[r].test(unshare_result_bit) and regs_maybe_different_value(prog_results[r],result))
             prog_unshare[r].set(different_result_bit);
 
         bool reshare_result = prog_results[r] == result;
