@@ -180,7 +180,7 @@ pair<int,int> reg_heap::incremental_evaluate1(int r)
     if (reg_is_on_stack(r))
         throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
 #endif
-    regs[r].flags.set(3);
+    regs[r].flags.set(reg_is_on_stack_bit);
     stack.push_back(r);
 
     auto result = incremental_evaluate1_(r);
@@ -190,7 +190,7 @@ pair<int,int> reg_heap::incremental_evaluate1(int r)
     assert(reg_is_on_stack(r));
 
     stack.pop_back();
-    regs[r].flags.reset(3);
+    regs[r].flags.reset(reg_is_on_stack_bit);
 
     return result;
 }
@@ -662,7 +662,7 @@ pair<int,int> reg_heap::incremental_evaluate2(int r, bool do_count)
     if (reg_is_on_stack(r))
         throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
 #endif
-    regs[r].flags.set(3);
+    regs[r].flags.set(reg_is_on_stack_bit);
     stack.push_back(r);
 
     auto result = incremental_evaluate2_(r);
@@ -672,7 +672,7 @@ pair<int,int> reg_heap::incremental_evaluate2(int r, bool do_count)
 
     assert(reg_is_on_stack(r));
     stack.pop_back();
-    regs[r].flags.reset(3);
+    regs[r].flags.reset(reg_is_on_stack_bit);
 
     int r2 = result.first;
     if (do_count and reg_is_changeable_or_forcing(r2))
@@ -1156,14 +1156,14 @@ int reg_heap::incremental_evaluate_unchangeable(int r)
         throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
 #endif
 
-    regs[r].flags.set(3);
+    regs[r].flags.set(reg_is_on_stack_bit);
     stack.push_back(r);
 
     auto result = incremental_evaluate_unchangeable_(r);
     assert(reg_is_on_stack(r));
 
     stack.pop_back();
-    regs[r].flags.reset(3);
+    regs[r].flags.reset(reg_is_on_stack_bit);
 
     return result;
 }

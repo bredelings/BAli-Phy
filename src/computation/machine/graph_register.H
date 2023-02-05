@@ -82,6 +82,8 @@ struct Step
 };
 
 // Bits in on regs[r].flags
+constexpr int reg_is_on_stack_bit = 3;
+constexpr int reg_is_unforgettable_bit = 4;
 constexpr int reg_is_always_evaluated_bit = 6;
 
 constexpr int non_computed_index = -1;
@@ -771,12 +773,12 @@ inline bool reg_heap::reg_has_forces(int r) const
 
 inline bool reg_heap::reg_is_on_stack(int r) const
 {
-    return regs[r].flags.test(3);
+    return regs[r].flags.test(reg_is_on_stack_bit);
 }
 
 inline bool reg_heap::reg_is_unforgettable(int r) const
 {
-    return regs[r].flags.test(4);
+    return regs[r].flags.test(reg_is_unforgettable_bit);
 }
 
 inline bool reg_heap::reg_is_forgettable(int r) const
@@ -787,7 +789,7 @@ inline bool reg_heap::reg_is_forgettable(int r) const
 inline void reg_heap::mark_reg_unforgettable(int r)
 {
     assert(reg_is_changeable(r));
-    regs[r].flags.set(4);
+    regs[r].flags.set(reg_is_unforgettable_bit);
 }
 
 inline void reg_heap::mark_reg_unevaluated(int r)
