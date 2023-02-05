@@ -197,17 +197,17 @@ run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
 --       SOMETHING `seq` result.  And this means that we need to frequently
 --       intersperse unsafeInterleaveIO to avoid `seq`-ing on previous statements.
 
-triggered_modifiable_structure :: ((forall a.a -> a) -> b -> b) -> (b -> c) -> b -> (b -> IO ()) -> b
-triggered_modifiable_structure mod_structure force_structure value effect = triggered_x
+triggered_modifiable_structure :: ((forall a.a -> a) -> b -> b) -> b -> (b -> IO ()) -> b
+triggered_modifiable_structure mod_structure value effect = triggered_x
     where raw_x       = mod_structure modifiable value
-          effect'     = force_structure raw_x `seq` (unsafePerformIO $ effect raw_x)
+          effect'     = unsafePerformIO $ effect raw_x
           triggered_x = mod_structure (effect' `seq`) raw_x
 
 apply_modifier :: (forall a.a -> a) -> b -> b
 apply_modifier x y = x y
 
 modifiable_structure :: b -> (b -> IO ()) -> b
-modifiable_structure = triggered_modifiable_structure apply_modifier (const ())
+modifiable_structure = triggered_modifiable_structure apply_modifier
 
 sample_effect rate dist tk_effect x = do
   run_tk_effects rate $ tk_effect x
@@ -284,12 +284,6 @@ foldt f _ [x] = x
 foldt f z xs  = foldt f z (pair_apply f xs)
 
 balanced_product xs = foldt (*) 1 xs
-
-class ForceFields a where
-    force_fields :: a -> a
-
-instance Foldable f => ForceFields (f a) where
-    force_fields xs = foldr seq () xs `seq` xs
 
 -- maybe I should rename this to (modifiable_list_n n f value) or something.
 mapn n f xs = go 0 where

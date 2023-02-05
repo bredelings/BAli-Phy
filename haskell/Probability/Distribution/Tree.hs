@@ -44,18 +44,6 @@ sample_uniform_topology n = do
     return $ tree_from_edges [0..num_nodes-1] edges
 
 
-instance ForceFields Edge where
-    force_fields e@(Edge s i t r n) = s `seq` i `seq` t `seq` t `seq` n `seq` e
-
-instance ForceFields Node where
-    force_fields n@(Node name out_edges) = name `seq` force_fields out_edges `seq` n
-
-
-instance ForceFields TreeImp where
-    force_fields tree@(Tree nodes branches) = tree {- force_nodes `seq` force_branches `seq` tree where
-                             force_nodes    = force_fields $ fmap force_fields nodes 
-                            force_branches = force_fields $ fmap force_fields branches -}
-
 -- leaves   nodes  branches
 -- 1        1      0
 -- 2        2      1
@@ -78,7 +66,7 @@ uniform_topology_pr n = uniform_topology_pr (n - 1) / (fromIntegral $ 2 * n - 5)
 
 -- We don't want to force all fields of the tree when _any_ tree field is accessed, only when a _random_ field is accessed.
 -- This is why triggered tree still uses 'tree' as input to 'modifiable_tree'.
-triggered_modifiable_tree = triggered_modifiable_structure modifiable_tree force_fields
+triggered_modifiable_tree = triggered_modifiable_structure modifiable_tree
 
 uniform_topology_effect tree = do
 --  add_move $ walk_tree_sample_NNI_unsafe tree  -- probably we should ensure that the probability of the alignment is zero if pairwise alignments don't match?
@@ -167,10 +155,6 @@ parent_before_child_prs n_leaves tree = [factor n | n <- [0 .. 2*n_leaves-2] ]
 uniform_time_tree_pr age n_leaves tree = factor0 : parent_before_child_prs n_leaves tree
     where factor0 = doubleToLogDouble age `pow` fromIntegral (2-n_leaves)
 
--- rooted_tree: force / modifiable / triggered_modifiable
-instance ForceFields t => ForceFields (RootedTreeImp t) where
-    force_fields rtree@(RootedTree unrooted_tree root_node _) = root_node `seq` force_fields unrooted_tree `seq` rtree
-
 -- leaves   nodes  branches
 -- 1        1      0
 -- 2        3      2
@@ -180,13 +164,9 @@ modifiable_rooted_tree :: (forall a.a -> a) -> RootedTreeImp TreeImp -> RootedTr
 modifiable_rooted_tree modf (RootedTree tree root_node _) = add_root root_node $ modifiable_tree modf tree
 -- Is it still true that we need the root node to have a constrant degree?
 
-triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_rooted_tree force_fields
+triggered_modifiable_rooted_tree = triggered_modifiable_structure modifiable_rooted_tree
 
 -- A uniform-ordered-history distribution would need to augment nodes with an Int order, instead of a Double order.
-
--- time_tree: force / modifiable / triggered_modifiable
-instance ForceFields t => ForceFields (TimeTreeImp t) where
-    force_fields ttree@(TimeTree rooted_tree times) = force_fields rooted_tree `seq` force_fields times `seq` ttree
 
 -- maybe modf has type (forall a . a -> a)?
 -- we should be able to apply it to both Int and Double...
@@ -198,7 +178,7 @@ modifiable_time_tree modf (TimeTree rooted_tree' times') = TimeTree rooted_tree 
                       | otherwise                       = modf x
     times     = IntSet.fromList [0..numNodes rooted_tree'-1] & IntMap.fromSet (\node -> maybe_modf node (times' IntMap.! node))
 
-triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree force_fields
+triggered_modifiable_time_tree = triggered_modifiable_structure modifiable_time_tree
 
 -- Add moves for non-root internal-node times.
 -- FIXME: check that the leaves times are fixed?
