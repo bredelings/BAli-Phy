@@ -1501,9 +1501,9 @@ void reg_heap::force_reg_with_call(int r)
         // If r has a result, then shouldn't its call have a result?
         // In this case, the call is to a constant-with-force.
         // Do those have results?
-        assert(has_result2(call));
+        assert(has_result2(call) or reg_is_constant_with_force(call));
         incremental_evaluate2(call, true);
-        assert(has_result2(call));
+        assert(has_result2(call) or reg_is_constant_with_force(call));
         assert(reg_is_forced(call));
     }
 }
