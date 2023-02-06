@@ -167,6 +167,7 @@ constexpr int call_decremented_bit = 4;
 //   and then it might not get cleared.
 // It is only tested in one place - force_regs_check_same_inputs( ).
 constexpr int different_result_bit = 5;
+constexpr int initially_unforced_bit = 6;
 
 // How do we handle parameters?
 // * well, parameters could be reg's, so that a separate reg must be a separate parameter.

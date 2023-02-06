@@ -414,9 +414,16 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
     for(auto [r,s]: delta_step)
     {
         assert(s > 0);
-        if (not reg_is_forced(r))
-            zero_count_regs_initial.push_back(r);
         unshare_step(r);
+
+        if (not reg_is_forced(r))
+        {
+            zero_count_regs_initial.push_back(r);
+
+            // Check that this reg is already in prog_unshare.
+            assert(not prog_unshare[r].none());
+            prog_unshare[r].set(initially_unforced_bit);
+        }
     }
     // All the same regs should have (r,-) in the result.
     assert(delta_step.size() == delta_result.size());
@@ -517,7 +524,7 @@ void reg_heap::evaluate_unconditional_regs(const vector<int>& unshared_regs)
 void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_regs, vector<int>& zero_count_regs)
 {
     int t2 = tokens[root_token].children[0];
-    
+
     auto* vm_step2   = &tokens[t2].vm_step;
     auto* vm_count2  = &tokens[t2].vm_force_count;
 
@@ -537,11 +544,13 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
             zero_count_regs.push_back(r);
     };
 
-    // 1. Decrement calls from bumped steps
+    // 1. Decrement calls from steps bumped during execution.
+    //    See decrement_counts_from_initial_bumped_calls() for steps bumped before execution.
+    //    Should all of these regs have force counts > 0, since there is a new step for the reg?
     for(auto& [r,s]: vm_step2->delta())
     {
         // We can get bumped -1 steps here from executing new regs.
-        if (s > 0)
+        if (s > 0 and not prog_unshare[r].test(initially_unforced_bit))
         {
             // But we should only be able to bump old steps here with new valid steps.
             assert(prog_steps[r] > 0);
@@ -560,6 +569,7 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
         // and so excludes e.g. the calls from modifiables.
         if (prog_unshare[r].test(unshare_step_bit))
         {
+            // Should all of these regs have force counts == 0, since there is NOT a new step for the reg?
             prog_unshare[r].set(call_decremented_bit);
             int s = prog_steps[r];
             int call = steps[s].call;
@@ -680,12 +690,16 @@ void reg_heap::remove_zero_count_regs(const std::vector<int>& zero_count_regs_in
     // 2. Remove new steps and results for unforced modifiables.
     //
     //    * We need to make sure that unshared results in the form [-]* are pushed into delta result;
+    //      QUESTION: does [-]* mean [result=-,unshared_result=true}?
     //
     //    * We should ideally consider modifiable that start with {0,+} counts and end with {0,+} counts.
     //      This block handles regs that start with 0 and end with 0.
+    //      QUESTION: does {0,+} mean {count=0,step>0}?
 
     for(int r: zero_count_regs_initial)
     {
+        prog_unshare[r].reset(initially_unforced_bit);
+
         if (reg_is_forced(r))
         {
             assert(prog_unshare[r].none());
