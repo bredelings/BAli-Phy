@@ -8,10 +8,22 @@ using std::optional;
 
 map<string,LangExt> ext_to_bit =
 {
-    {"ImplicitPrelude", {LangExt::ImplicitPrelude}},
-    {"LexicalNegation", {LangExt::LexicalNegation}},
-    {"OverloadedRecordDot", {LangExt::OverloadedRecordDot}},
-    {"StarIsType", {LangExt::StarIsType}}
+    {"EmptyDataDecls",              {LangExt::EmptyDataDecls}},
+    {"ExistentialQuantification",   {LangExt::EmptyDataDecls}},
+    {"FlexibleInstances",           {LangExt::FlexibleInstances}},
+    {"ForeignFunctionInterface",    {LangExt::FlexibleInstances}},
+    {"GADTSyntax",                  {LangExt::GADTSyntax}},
+    {"GADTs",                       {LangExt::GADTs}},
+    {"ImplicitPrelude",             {LangExt::ImplicitPrelude}},
+    {"KindSignatures",              {LangExt::KindSignatures}},
+    {"LexicalNegation",             {LangExt::LexicalNegation}},
+    {"MonoLocalBinds",              {LangExt::MonoLocalBinds}},
+    {"MultiParamTypeClasses",       {LangExt::MultiParamTypeClasses}},
+    {"OverloadedRecordDot",         {LangExt::OverloadedRecordDot}},
+    {"RankNTypes",                  {LangExt::RankNTypes}},
+    {"RecursiveDo",                 {LangExt::RecursiveDo}},
+    {"ScopedTypeVariables",         {LangExt::ScopedTypeVariables}},
+    {"StarIsType",                  {LangExt::StarIsType}},
 };
 
 set<LangExt> haskell98_extensions =
