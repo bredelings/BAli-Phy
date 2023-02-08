@@ -469,8 +469,10 @@
 %type <std::string> tyvarop
 %type <std::string> tyvarid
 
+ // These should all be located?
 %type <std::string> var
 %type <std::string> qvar
+%type <std::string> field
 %type <std::string> qvarid
 %type <std::string> varid
 %type <std::string> qvarsym
@@ -1155,8 +1157,9 @@ aexp: qvar TIGHT_INFIX_AT aexp              {$$ = {@$, Hs::AsPattern(Hs::Var($1)
 |     aexp1                      {$$ = $1;}
 
 /* EP */
-aexp1: aexp1 "{" fbinds "}"   {}
-|      aexp2                  {$$ = $1;}
+aexp1: aexp1 "{" fbinds "}"          {}
+/* |      aexp1 TIGHT_INFIX_DOT field   {} */
+|      aexp2                         {$$ = $1;}
 
 /* EP */
 aexp2: qvar                   {$$ = {@$, Hs::Var($1)};}
@@ -1164,13 +1167,19 @@ aexp2: qvar                   {$$ = {@$, Hs::Var($1)};}
 |      literal                {$$ = {@$, $1};}
 |      "(" texp ")"           {$$ = {@$, unloc($2)};}
 |      "(" tup_exprs ")"      {$$ = {@$, Hs::Tuple($2)};}
-/* 
+/*
+|      "(" projection ")"     {}  -- only possible with OverloadedRecordDot
 |      "(#" texp "#)"         {}
 |      "(#" tup_exprs "#)"    {}
 */
 |      "[" list "]"           {$$ = {@$, $2};}
 |      "_"                    {$$ = {@$, Hs::WildcardPattern()};}
 /* Skip Template Haskell Extensions */
+
+/*
+projection: projection TIGHT_INFIX_DOT field
+|           PREFIX_DOT field
+*/
 
 /* ------------- Tuple expressions ------------------------------- */
 
@@ -1310,6 +1319,10 @@ fbinds1: fbind "," fbinds1
 
 fbind: qvar "=" texp
 |      qvar
+/*
+|      field TIGHT_INFIX_DOT fieldToUpdate "=" texp
+|      field TIGHT_INFIX_DOT fieldToUpdate
+*/
 
 /* ------------- Implicit Parameter Bindings --------------------- */
 /* GHC Extension: implicit param ?x */
@@ -1453,6 +1466,8 @@ var: varid { $$ = $1; }
 qvar: qvarid { $$ = $1; }
 | "(" varsym ")" {$$ = $2; }
 | "(" qvarsym1 ")" {$$ = $2; }
+
+field: varid
 
 qvarid: varid { $$ = $1; }
 | QVARID { $$ = $1; }

@@ -68,7 +68,114 @@ void driver::pop_error_message()
 driver::driver (const LanguageExtensions& exts)
     : lang_exts(exts), trace_parsing (false), trace_scanning (false)
 {
-}
+    using namespace yy;
+
+    reserved_words = {
+        {"_",{parser::token::TOK_UNDERSCORE,0}},
+        {"as",{parser::token::TOK_AS,0}},
+        {"bpcall",{parser::token::TOK_BPCALL,0}},
+        {"case",{parser::token::TOK_CASE,0}},
+        {"class",{parser::token::TOK_CLASS,0}},
+        {"data",{parser::token::TOK_DATA,0}},
+        {"default",{parser::token::TOK_DEFAULT,0}},
+        {"deriving",{parser::token::TOK_DERIVING,0}},
+        {"do",{parser::token::TOK_DO,0}},
+        {"else",{parser::token::TOK_ELSE,0}},
+        {"family",{parser::token::TOK_FAMILY,0}},
+        {"forall",{parser::token::TOK_FORALL,0}},
+        {"foreign",{parser::token::TOK_FOREIGN,0}},
+        {"hiding",{parser::token::TOK_HIDING,0}},
+        {"if",{parser::token::TOK_IF,0}},
+        {"import",{parser::token::TOK_IMPORT,0}},
+        {"in",{parser::token::TOK_IN,0}},
+        {"infix",{parser::token::TOK_INFIX,0}},
+        {"infixl",{parser::token::TOK_INFIXL,0}},
+        {"infixr",{parser::token::TOK_INFIXR,0}},
+        {"instance",{parser::token::TOK_INSTANCE,0}},
+        {"let",{parser::token::TOK_LET,0}},
+        {"module",{parser::token::TOK_MODULE,0}},
+        {"newtype",{parser::token::TOK_NEWTYPE,0}},
+        {"of",{parser::token::TOK_OF,0}},
+        {"qualified",{parser::token::TOK_QUALIFIED,0}},
+        {"then",{parser::token::TOK_THEN,0}},
+        {"type",{parser::token::TOK_TYPE,0}},
+        {"where",{parser::token::TOK_WHERE,0}},
+        {"mdo", {parser::token::TOK_MDO,0}},
+        {"rec", {parser::token::TOK_REC,0}}
+    };
+
+    tight_infix_reserved_symbols = {
+        {"@",{parser::token::TOK_TIGHT_INFIX_AT,0}},
+        {"-",{parser::token::TOK_MINUS,0}}
+    };
+
+    prefix_reserved_symbols = {
+        {"~",{parser::token::TOK_PREFIX_TILDE,0}},
+        {"!",{parser::token::TOK_PREFIX_BANG,0}},
+        {"@",{parser::token::TOK_PREFIX_AT,0}},
+        {"-",{parser::token::TOK_PREFIX_MINUS,0}}
+    };
+
+    reserved_symbols = {
+        {"..",{parser::token::TOK_DOTDOT,0}},
+        {":",{parser::token::TOK_COLON,0}},
+        {"::",{parser::token::TOK_DCOLON,0}},
+        {"=",{parser::token::TOK_EQUAL,0}},
+        {"\\",{parser::token::TOK_LAM,0}},
+        {"|",{parser::token::TOK_VBAR,0}},
+        {"<-",{parser::token::TOK_LARROW,0}},
+        {"->",{parser::token::TOK_RARROW,0}},
+        {"=>",{parser::token::TOK_DARROW,0}},
+        {"-",{parser::token::TOK_MINUS,0}}, /* only when no lexical negation */
+        {".",{parser::token::TOK_DOT,0}}, /* remove this */
+        {"*",{parser::token::TOK_STAR,0}} /* only when StarIsType */
+    };
+};
+
+/*
+   map (\ (x,y,z) -> (mkFastString x,(y,z)))
+      [ ("..",  ITdotdot,              always)
+        -- (:) is a reserved op, meaning only list cons
+       ,(":",   ITcolon,               always)
+       ,("::",  ITdcolon NormalSyntax, always)
+       ,("=",   ITequal,               always)
+       ,("\\",  ITlam,                 always)
+       ,("|",   ITvbar,                always)
+       ,("<-",  ITlarrow NormalSyntax, always)
+       ,("->",  ITrarrow NormalSyntax, always)
+       ,("@",   ITat,                  always)
+       ,("~",   ITtilde,               always)
+       ,("=>",  ITdarrow NormalSyntax, always)
+       ,("-",   ITminus,               always)
+       ,("!",   ITbang,                always)
+       ,("*", ITstar NormalSyntax, starIsTypeEnabled)
+        -- For 'forall a . t'
+       ,(".", ITdot,  always) -- \i -> explicitForallEnabled i || inRulePrag i)
+       ,("-<",  ITlarrowtail NormalSyntax, arrowsEnabled)
+       ,(">-",  ITrarrowtail NormalSyntax, arrowsEnabled)
+       ,("-<<", ITLarrowtail NormalSyntax, arrowsEnabled)
+       ,(">>-", ITRarrowtail NormalSyntax, arrowsEnabled)
+       ,("∷",   ITdcolon UnicodeSyntax, unicodeSyntaxEnabled)
+       ,("⇒",   ITdarrow UnicodeSyntax, unicodeSyntaxEnabled)
+       ,("∀",   ITforall UnicodeSyntax, unicodeSyntaxEnabled)
+       ,("→",   ITrarrow UnicodeSyntax, unicodeSyntaxEnabled)
+       ,("←",   ITlarrow UnicodeSyntax, unicodeSyntaxEnabled)
+       ,("⤙",   ITlarrowtail UnicodeSyntax,
+                                \i -> unicodeSyntaxEnabled i && arrowsEnabled i)
+       ,("⤚",   ITrarrowtail UnicodeSyntax,
+                                \i -> unicodeSyntaxEnabled i && arrowsEnabled i)
+       ,("⤛",   ITLarrowtail UnicodeSyntax,
+                                \i -> unicodeSyntaxEnabled i && arrowsEnabled i)
+       ,("⤜",   ITRarrowtail UnicodeSyntax,
+                                \i -> unicodeSyntaxEnabled i && arrowsEnabled i)
+       ,("★",   ITstar UnicodeSyntax,
+                  \i -> unicodeSyntaxEnabled i && starIsTypeEnabled i)
+        -- ToDo: ideally, → and ∷ should be "specials", so that they cannot
+        -- form part of a large operator.  This would let us have a better
+        -- syntax for kinds: ɑ∷*→* would be a legal kind signature. (maybe).
+       ]
+
+*/
 
 int
 driver::parse_file (const std::string &filename)

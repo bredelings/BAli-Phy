@@ -20,10 +20,6 @@
 #endif
 
 // Forward declarations
-yy::parser::symbol_type varid(const yy::parser::location_type&);
-yy::parser::symbol_type varsym(bool precededByClosing, bool followedByOpening, const yy::parser::location_type&);
-yy::parser::symbol_type consym(const yy::parser::location_type&);
-
 yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
 				     const yy::parser::location_type& loc);
 
@@ -207,7 +203,7 @@ signed       {negative}?
 
 <INITIAL,option_prags>{qvarid}      drv.set_closing_token(); return yy::parser::make_QVARID (yytext, loc);
 <INITIAL,option_prags>{qconid}      drv.set_closing_token(); return yy::parser::make_QCONID (yytext, loc);
-<INITIAL,option_prags>{varid}       drv.set_closing_token(); return varid(loc);
+<INITIAL,option_prags>{varid}       drv.set_closing_token(); return drv.varid(loc);
 <INITIAL,option_prags>{conid}       drv.set_closing_token(); return yy::parser::make_CONID  (yytext, loc);
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
@@ -216,13 +212,13 @@ signed       {negative}?
      followedByOpening                       -> prefix
      precededByClosing                       -> suffix
      otherwise                               -> loose infix */
-<INITIAL>{varsym}/"{-"                   return varsym(drv.check_closing_token(), false, loc);
-<INITIAL>{varsym}/[{([\"\'_A-Za-z0-9]    return varsym(drv.check_closing_token(), true, loc);
-<INITIAL>{varsym}                        return varsym(drv.check_closing_token(), false, loc);
+<INITIAL>{varsym}/"{-"                   return drv.varsym(drv.check_closing_token(), false, loc);
+<INITIAL>{varsym}/[{([\"\'_A-Za-z0-9]    return drv.varsym(drv.check_closing_token(), true, loc);
+<INITIAL>{varsym}                        return drv.varsym(drv.check_closing_token(), false, loc);
 
 <INITIAL>{qvarsym}      return yy::parser::make_QVARSYM  (yytext,loc);
 <INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (yytext,loc);
-<INITIAL>{consym}       return consym(loc);
+<INITIAL>{consym}       return drv.consym(loc);
 
 <INITIAL>"-"{decimal}"#"                        drv.set_closing_token(); return make_boxed_integer(10,false,0,loc);
 <INITIAL>{decimal}"#"                           drv.set_closing_token(); return make_boxed_integer(10,true,0,loc);
@@ -263,43 +259,7 @@ driver::scan_end ()
 
 using namespace yy;
 
-std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words =
-{
-    {"_",{parser::token::TOK_UNDERSCORE,0}},
-    {"as",{parser::token::TOK_AS,0}},
-    {"bpcall",{parser::token::TOK_BPCALL,0}},
-    {"case",{parser::token::TOK_CASE,0}},
-    {"class",{parser::token::TOK_CLASS,0}},
-    {"data",{parser::token::TOK_DATA,0}},
-    {"default",{parser::token::TOK_DEFAULT,0}},
-    {"deriving",{parser::token::TOK_DERIVING,0}},
-    {"do",{parser::token::TOK_DO,0}},
-    {"else",{parser::token::TOK_ELSE,0}},
-    {"family",{parser::token::TOK_FAMILY,0}},
-    {"forall",{parser::token::TOK_FORALL,0}},
-    {"foreign",{parser::token::TOK_FOREIGN,0}},
-    {"hiding",{parser::token::TOK_HIDING,0}},
-    {"if",{parser::token::TOK_IF,0}},
-    {"import",{parser::token::TOK_IMPORT,0}},
-    {"in",{parser::token::TOK_IN,0}},
-    {"infix",{parser::token::TOK_INFIX,0}},
-    {"infixl",{parser::token::TOK_INFIXL,0}},
-    {"infixr",{parser::token::TOK_INFIXR,0}},
-    {"instance",{parser::token::TOK_INSTANCE,0}},
-    {"let",{parser::token::TOK_LET,0}},
-    {"module",{parser::token::TOK_MODULE,0}},
-    {"newtype",{parser::token::TOK_NEWTYPE,0}},
-    {"of",{parser::token::TOK_OF,0}},
-    {"qualified",{parser::token::TOK_QUALIFIED,0}},
-    {"then",{parser::token::TOK_THEN,0}},
-    {"type",{parser::token::TOK_TYPE,0}},
-    {"where",{parser::token::TOK_WHERE,0}},
-    {"mdo", {parser::token::TOK_MDO,0}},
-    {"rec", {parser::token::TOK_REC,0}}
-};
-
-
-yy::parser::symbol_type varid(const yy::parser::location_type& loc)
+yy::parser::symbol_type driver::varid(const yy::parser::location_type& loc) const
 {
     auto it = reserved_words.find(yytext);
     if (it == reserved_words.end())
@@ -408,7 +368,7 @@ std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_symbols =
 
 */
 
-yy::parser::symbol_type varsym(bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc)
+yy::parser::symbol_type driver::varsym(bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc) const
 {
     // if loose infix occurrences are always operators, then:
     // if we handle type operators, then we should be able to parse (a ~ b) with ~ being a type operator.
@@ -445,7 +405,7 @@ yy::parser::symbol_type varsym(bool precededByClosing, bool followedByOpening, c
     return yy::parser::symbol_type(tok, loc);
 }
 
-yy::parser::symbol_type consym(const yy::parser::location_type& loc)
+yy::parser::symbol_type driver::consym(const yy::parser::location_type& loc) const
 {
     auto it = reserved_symbols.find(yytext);
     if (it == reserved_symbols.end())

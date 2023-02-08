@@ -31,6 +31,11 @@ class driver
 
     LanguageExtensions lang_exts;
 
+    std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words;
+    std::map<std::string,std::pair<yy::parser::token_type,int>> tight_infix_reserved_symbols;
+    std::map<std::string,std::pair<yy::parser::token_type,int>> prefix_reserved_symbols;
+    std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_symbols;
+
 public:
     driver (const LanguageExtensions& lang_exts);
 
@@ -48,6 +53,9 @@ public:
     symbol_type new_layout_context(const location_type& loc, bool strict, bool gen_semis, token_type tok);
     symbol_type do_layout_left(const location_type& loc);
     void pop() {}
+    yy::parser::symbol_type varid(const yy::parser::location_type& loc) const;
+    yy::parser::symbol_type varsym(bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc) const;
+    yy::parser::symbol_type consym(const yy::parser::location_type& loc) const;
 
     void push_error_message(const location_type& loc, const std::string& err);
     void pop_error_message();
