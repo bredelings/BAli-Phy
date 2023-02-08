@@ -162,6 +162,8 @@
   rARROWTAIL    ">-"
   LARROWTAIL    "-<<"
   RARROWTAIL    ">>-"
+  TIGHT_INFIX_DOT
+  PREFIX_DOT
   DOT           "."
 
   OCURLY        "{"
@@ -1158,7 +1160,7 @@ aexp: qvar TIGHT_INFIX_AT aexp              {$$ = {@$, Hs::AsPattern(Hs::Var($1)
 
 /* EP */
 aexp1: aexp1 "{" fbinds "}"          {}
-/* |      aexp1 TIGHT_INFIX_DOT field   {} */
+|      aexp1 TIGHT_INFIX_DOT field   {}
 |      aexp2                         {$$ = $1;}
 
 /* EP */
@@ -1167,8 +1169,8 @@ aexp2: qvar                   {$$ = {@$, Hs::Var($1)};}
 |      literal                {$$ = {@$, $1};}
 |      "(" texp ")"           {$$ = {@$, unloc($2)};}
 |      "(" tup_exprs ")"      {$$ = {@$, Hs::Tuple($2)};}
+|      "(" projection ")"     {}  // only possible with OverloadedRecordDot
 /*
-|      "(" projection ")"     {}  -- only possible with OverloadedRecordDot
 |      "(#" texp "#)"         {}
 |      "(#" tup_exprs "#)"    {}
 */
@@ -1176,10 +1178,8 @@ aexp2: qvar                   {$$ = {@$, Hs::Var($1)};}
 |      "_"                    {$$ = {@$, Hs::WildcardPattern()};}
 /* Skip Template Haskell Extensions */
 
-/*
 projection: projection TIGHT_INFIX_DOT field
 |           PREFIX_DOT field
-*/
 
 /* ------------- Tuple expressions ------------------------------- */
 

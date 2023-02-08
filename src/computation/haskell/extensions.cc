@@ -7,13 +7,16 @@ using std::optional;
 
 std::map<string,LangExt> ext_to_bit =
 {
-    {"ImplicitPrelude", {LangExt::ImplicitPrelude}}
+    {"ImplicitPrelude", {LangExt::ImplicitPrelude}},
+    {"LexicalNegation", {LangExt::LexicalNegation}},
+    {"OverloadedRecordDot", {LangExt::OverloadedRecordDot}},
+    {"StarIsType", {LangExt::StarIsType}}
 };
 
 std::set<LangExt> haskell98_extensions = 
 {
-    LangExt::ImplicitPrelude
-//    LangExt::StarIsType,
+    LangExt::ImplicitPrelude,
+    LangExt::StarIsType,
 //    LangExt::CUSKs,
 //    LangExt::MonomorphismRestriction,
 //    LangExt::NPlusKPatterns,
@@ -26,8 +29,8 @@ std::set<LangExt> haskell98_extensions =
 
 std::set<LangExt> haskell2010_extensions = 
 {
-    LangExt::ImplicitPrelude
-//    LangExt::StarIsType,
+    LangExt::ImplicitPrelude,
+    LangExt::StarIsType,
 //    LangExt::CUSKs,
 //    LangExt::MonomorphismRestriction,
 //    LangExt::NPlusKPatterns,

@@ -116,6 +116,12 @@ driver::driver (const LanguageExtensions& exts)
         {"-",{parser::token::TOK_PREFIX_MINUS,0}}
     };
 
+    if (lang_exts.has_extension(LangExt::OverloadedRecordDot))
+    {
+        tight_infix_reserved_symbols.insert({".",{parser::token::TOK_TIGHT_INFIX_DOT,0}});
+        prefix_reserved_symbols.insert({".",{parser::token::TOK_PREFIX_DOT,0}});
+    }
+
     reserved_symbols = {
         {"..",{parser::token::TOK_DOTDOT,0}},
         {":",{parser::token::TOK_COLON,0}},
@@ -126,10 +132,18 @@ driver::driver (const LanguageExtensions& exts)
         {"<-",{parser::token::TOK_LARROW,0}},
         {"->",{parser::token::TOK_RARROW,0}},
         {"=>",{parser::token::TOK_DARROW,0}},
-        {"-",{parser::token::TOK_MINUS,0}}, /* only when no lexical negation */
-        {".",{parser::token::TOK_DOT,0}}, /* remove this */
-        {"*",{parser::token::TOK_STAR,0}} /* only when StarIsType */
+        {".",{parser::token::TOK_DOT,0}} /* remove this */
     };
+
+    if (not lang_exts.has_extension(LangExt::LexicalNegation))
+    {
+        reserved_symbols.insert({"-",{parser::token::TOK_MINUS,0}});
+    }
+
+    if (not lang_exts.has_extension(LangExt::StarIsType))
+    {
+        reserved_symbols.insert({"*",{parser::token::TOK_STAR,0}});
+    }
 };
 
 /*
