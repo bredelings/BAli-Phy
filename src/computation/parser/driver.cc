@@ -53,15 +53,16 @@ LayoutContext driver::get_offside(const yy::parser::location_type& loc)
 void driver::push_error_message(const std::pair<location_type,std::string>& e)
 {
 //    std::cerr<<"Pushing error message '"<<e.second<<"' at "<<e.first<<"\n";
-    error_messages.push_back(e);
+    auto ee = Note()<<e.second;
+    messages.push_back(Message{ErrorMsg, e.first, {ee}});
 }
 
 void driver::pop_error_message()
 {
 //    std::cerr<<"Popping error message\n";
-    if (error_messages.empty())
+    if (messages.empty())
 	throw myexception()<<"No message to pop!";
-    error_messages.pop_back();
+    messages.pop_back();
 }
 
 driver::driver (const LanguageExtensions& exts)
@@ -86,12 +87,10 @@ driver::parse_string (const string& file_contents, const std::string &input_name
   parser.set_debug_level (trace_parsing);
   int res = parser.parse ();
   scan_end ();
-  for(auto& e: error_messages)
-  {
-      std::cerr << e.first << ": " << e.second << '\n';
-  }
-  if (error_messages.size())
-      throw myexception()<<"Parsing failed.";
+
+  show_messages( {input_name, file_contents}, std::cerr, messages);
+  exit_on_error(messages);
+
   return res;
 }
 

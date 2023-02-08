@@ -5,6 +5,7 @@
 # include <set>
 # include "parser.hh"
 # include "computation/haskell/extensions.H"
+# include "computation/message.H"
 
 // Tell Flex the lexer's prototype ...
 # define YY_DECL \
@@ -25,7 +26,7 @@ class driver
     typedef yy::parser::symbol_type symbol_type;
     typedef yy::parser::token_type token_type;
 
-    std::vector<std::pair<location_type,std::string>> error_messages;
+    std::vector<Message> messages;
     std::vector<std::optional<LayoutContext>> contexts;
 
     LanguageExtensions lang_exts;
