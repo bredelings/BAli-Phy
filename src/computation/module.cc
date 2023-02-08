@@ -414,7 +414,7 @@ vector<module_import> Module::imports() const
     }
 
     // Import the Prelude if it wasn't explicitly mentioned in the import list.
-    if (not seen_Prelude and name != "Prelude" and not language_options.count("NoImplicitPrelude"))
+    if (not seen_Prelude and name != "Prelude" and language_extensions.has_extension(LangExt::ImplicitPrelude))
         imports_list.push_back( module_import("Prelude") );
 
     return imports_list;
@@ -1512,8 +1512,8 @@ Module::Module(const char *n)
     :Module(string(n))
 { }
 
-Module::Module(const Haskell::Module& M, const set<string>& lo, const FileContents& f)
-    :language_options(lo),
+Module::Module(const Haskell::Module& M, const LanguageExtensions& le, const FileContents& f)
+    :language_extensions(le),
      module(M),
      name(module.modid),
      file(f)

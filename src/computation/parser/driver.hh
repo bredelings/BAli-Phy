@@ -2,7 +2,9 @@
 # define DRIVER_HH
 # include <string>
 # include <map>
+# include <set>
 # include "parser.hh"
+# include "computation/haskell/extensions.H"
 
 // Tell Flex the lexer's prototype ...
 # define YY_DECL \
@@ -26,8 +28,10 @@ class driver
     std::vector<std::pair<location_type,std::string>> error_messages;
     std::vector<std::optional<LayoutContext>> contexts;
 
+    LanguageExtensions lang_exts;
+
 public:
-    driver ();
+    driver (const LanguageExtensions& lang_exts);
 
     LayoutContext get_offside(const location_type& loc);
 
@@ -71,6 +75,6 @@ public:
     bool check_closing_token() {return prec_close_count > 0;}
 };
 
-Haskell::Module parse_module_file(const std::string& content, const std::string& input_name);
+Haskell::Module parse_module_file(const std::string& content, const std::string& input_name, const LanguageExtensions& lang_exts);
 #endif // ! DRIVER_HH
 

@@ -11,11 +11,13 @@
 #include <utility>                                  // for pair
 #include <iostream>
 #include "computation/haskell/haskell.H"
+#include "computation/haskell/extensions.H"
 #include "computation/haskell/coretype.H"
 #include "computation/typecheck/kind.H"
 #include "computation/optimization/simplifier.H"       // for simplifier options
 #include "computation/fresh_vars.H"
 #include "message.H"
+
 
 constexpr auto unknown_fix = Haskell::Fixity::unknown;
 constexpr auto left_fix = Haskell::Fixity::infixl;
@@ -117,7 +119,7 @@ class Module
     // Doesn't this kind of duplicate the types table?
     // type_con_env tycons;
 
-    std::set<std::string> language_options;
+    LanguageExtensions language_extensions;
 
     bool resolved = false;
 
@@ -267,7 +269,7 @@ public:
 
     explicit Module(const char*);
 
-    explicit Module(const Haskell::Module&, const std::set<std::string>& lo, const FileContents& f);
+    explicit Module(const Haskell::Module&, const LanguageExtensions& lo, const FileContents& f);
 };
 
 std::ostream& operator<<(std::ostream&, const Module&);

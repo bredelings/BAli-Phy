@@ -7,6 +7,7 @@
 #include "util/file-paths.H"
 #include "parser/driver.hh"
 #include "haskell/ids.H"
+#include "haskell/extensions.H"
 
 #include "util/io.H"
 
@@ -62,7 +63,7 @@ fs::path module_loader::find_module(const string& modid) const
 //{-# LANGUAGE NoImplicitPrelude #-}
 static std::regex language_option_re("^\\s*\\{-#\\s+LANGUAGE\\s+(.*[^\\s])\\s+#-\\}");
 
-set<string> language_options(string& mod)
+LanguageExtensions language_extensions(const string& filename, string& mod)
 {
     set<string> options;
 
@@ -84,8 +85,22 @@ set<string> language_options(string& mod)
 
 	pos += m.length();
     }
+
+
+    LanguageExtensions lang_exts;
+    vector<Message> messages;
+    for(auto& option: options)
+    {
+        std::optional<yy::location> loc;
+        auto note = lang_exts.set_option(option);
+        if (note)
+            messages.push_back({ErrorMsg, loc, {*note}});
+    }
+    show_messages({filename, mod}, std::cout, messages);
+    exit_on_error(messages);
+    
     mod = mod.substr(pos);
-    return options;
+    return lang_exts;
 }
 
 fs::path pretty_module_path(const fs::path& filepath)
@@ -111,15 +126,15 @@ Module module_loader::load_module_from_file(const fs::path& filename) const
 
 	    string file_contents = read_file(filename.string(), "module");
 
-	    auto lang_options = language_options(file_contents);
+	    auto lang_exts = language_extensions(*fname, file_contents);
 
-	    auto m = parse_module_file(file_contents, *fname);
+	    auto m = parse_module_file(file_contents, *fname, lang_exts);
 
 	    if (dump_parsed)
 		std::cout<<m.print()<<std::endl;
 
             string short_file_name = filename.filename().string();
-            modules.insert( {filename.string(), Module(m, lang_options, {short_file_name, file_contents})} );
+            modules.insert( {filename.string(), Module(m, lang_exts, {short_file_name, file_contents})} );
 
             // Save a reference to the string that we allocated, so we can clean it up later.
             modules.at(filename.string()).filename = fname;

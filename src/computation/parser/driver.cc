@@ -4,6 +4,7 @@
 #include "util/io.H"
 
 using std::string;
+using std::set;
 
 void driver::pop_context()
 {
@@ -63,8 +64,8 @@ void driver::pop_error_message()
     error_messages.pop_back();
 }
 
-driver::driver ()
-    : trace_parsing (false), trace_scanning (false)
+driver::driver (const LanguageExtensions& exts)
+    : lang_exts(exts), trace_parsing (false), trace_scanning (false)
 {
 }
 
@@ -94,9 +95,9 @@ driver::parse_string (const string& file_contents, const std::string &input_name
   return res;
 }
 
-Haskell::Module parse_module_file(const string& content, const std::string& input_name)
+Haskell::Module parse_module_file(const string& content, const std::string& input_name, const LanguageExtensions& lang_exts)
 {
-    driver D;
+    driver D(lang_exts);
     D.parse_string(content, input_name);
     return D.result;
 }
