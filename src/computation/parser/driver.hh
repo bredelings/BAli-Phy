@@ -49,7 +49,7 @@ public:
     symbol_type do_layout_left(const location_type& loc);
     void pop() {}
 
-    void push_error_message(const std::pair<location_type,std::string>&);
+    void push_error_message(const location_type& loc, const std::string& err);
     void pop_error_message();
 
     // Store the result

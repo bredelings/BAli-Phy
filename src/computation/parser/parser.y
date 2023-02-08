@@ -1556,7 +1556,7 @@ using std::pair;
 void
 yy::parser::error (const location_type& l, const std::string& m)
 {
-    drv.push_error_message({l,m});
+    drv.push_error_message(l,m);
 }
 
 pair<vector<Hs::ImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls)
