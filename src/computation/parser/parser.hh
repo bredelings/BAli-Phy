@@ -1262,53 +1262,54 @@ namespace yy {
         S_fbinds = 298,                          // fbinds
         S_fbinds1 = 299,                         // fbinds1
         S_fbind = 300,                           // fbind
-        S_qcon = 301,                            // qcon
-        S_gen_qcon = 302,                        // gen_qcon
-        S_con = 303,                             // con
-        S_con_list = 304,                        // con_list
-        S_sysdcon_no_list = 305,                 // sysdcon_no_list
-        S_sysdcon = 306,                         // sysdcon
-        S_conop = 307,                           // conop
-        S_qconop = 308,                          // qconop
-        S_gtycon = 309,                          // gtycon
-        S_ntgtycon = 310,                        // ntgtycon
-        S_oqtycon = 311,                         // oqtycon
-        S_oqtycon_no_varcon = 312,               // oqtycon_no_varcon
-        S_qtyconop = 313,                        // qtyconop
-        S_qtycondoc = 314,                       // qtycondoc
-        S_qtycon = 315,                          // qtycon
-        S_tycon = 316,                           // tycon
-        S_qtyconsym = 317,                       // qtyconsym
-        S_tyconsym = 318,                        // tyconsym
-        S_op = 319,                              // op
-        S_varop = 320,                           // varop
-        S_qop = 321,                             // qop
-        S_qopm = 322,                            // qopm
-        S_qvarop = 323,                          // qvarop
-        S_qvaropm = 324,                         // qvaropm
-        S_tyvar = 325,                           // tyvar
-        S_tyvarop = 326,                         // tyvarop
-        S_tyvarid = 327,                         // tyvarid
-        S_var = 328,                             // var
-        S_qvar = 329,                            // qvar
-        S_field = 330,                           // field
-        S_qvarid = 331,                          // qvarid
-        S_varid = 332,                           // varid
-        S_qvarsym = 333,                         // qvarsym
-        S_qvarsym_no_minus = 334,                // qvarsym_no_minus
-        S_qvarsym1 = 335,                        // qvarsym1
-        S_varsym = 336,                          // varsym
-        S_varsym_no_minus = 337,                 // varsym_no_minus
-        S_special_id = 338,                      // special_id
-        S_special_sym = 339,                     // special_sym
-        S_qconid = 340,                          // qconid
-        S_conid = 341,                           // conid
-        S_qconsym = 342,                         // qconsym
-        S_consym = 343,                          // consym
-        S_literal = 344,                         // literal
-        S_close = 345,                           // close
-        S_modid = 346,                           // modid
-        S_commas = 347                           // commas
+        S_fieldToUpdate = 301,                   // fieldToUpdate
+        S_qcon = 302,                            // qcon
+        S_gen_qcon = 303,                        // gen_qcon
+        S_con = 304,                             // con
+        S_con_list = 305,                        // con_list
+        S_sysdcon_no_list = 306,                 // sysdcon_no_list
+        S_sysdcon = 307,                         // sysdcon
+        S_conop = 308,                           // conop
+        S_qconop = 309,                          // qconop
+        S_gtycon = 310,                          // gtycon
+        S_ntgtycon = 311,                        // ntgtycon
+        S_oqtycon = 312,                         // oqtycon
+        S_oqtycon_no_varcon = 313,               // oqtycon_no_varcon
+        S_qtyconop = 314,                        // qtyconop
+        S_qtycondoc = 315,                       // qtycondoc
+        S_qtycon = 316,                          // qtycon
+        S_tycon = 317,                           // tycon
+        S_qtyconsym = 318,                       // qtyconsym
+        S_tyconsym = 319,                        // tyconsym
+        S_op = 320,                              // op
+        S_varop = 321,                           // varop
+        S_qop = 322,                             // qop
+        S_qopm = 323,                            // qopm
+        S_qvarop = 324,                          // qvarop
+        S_qvaropm = 325,                         // qvaropm
+        S_tyvar = 326,                           // tyvar
+        S_tyvarop = 327,                         // tyvarop
+        S_tyvarid = 328,                         // tyvarid
+        S_var = 329,                             // var
+        S_qvar = 330,                            // qvar
+        S_field = 331,                           // field
+        S_qvarid = 332,                          // qvarid
+        S_varid = 333,                           // varid
+        S_qvarsym = 334,                         // qvarsym
+        S_qvarsym_no_minus = 335,                // qvarsym_no_minus
+        S_qvarsym1 = 336,                        // qvarsym1
+        S_varsym = 337,                          // varsym
+        S_varsym_no_minus = 338,                 // varsym_no_minus
+        S_special_id = 339,                      // special_id
+        S_special_sym = 340,                     // special_sym
+        S_qconid = 341,                          // qconid
+        S_conid = 342,                           // conid
+        S_qconsym = 343,                         // qconsym
+        S_consym = 344,                          // consym
+        S_literal = 345,                         // literal
+        S_close = 346,                           // close
+        S_modid = 347,                           // modid
+        S_commas = 348                           // commas
       };
     };
 
@@ -5665,8 +5666,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 5112,     ///< Last index in yytable_.
-      yynnts_ = 204,  ///< Number of nonterminal symbols.
+      yylast_ = 5091,     ///< Last index in yytable_.
+      yynnts_ = 205,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
 
@@ -6590,7 +6591,7 @@ switch (yykind)
 
 
 } // yy
-#line 6594 "parser.hh"
+#line 6595 "parser.hh"
 
 
 

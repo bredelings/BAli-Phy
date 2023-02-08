@@ -1319,10 +1319,12 @@ fbinds1: fbind "," fbinds1
 
 fbind: qvar "=" texp
 |      qvar
-/*
 |      field TIGHT_INFIX_DOT fieldToUpdate "=" texp
 |      field TIGHT_INFIX_DOT fieldToUpdate
-*/
+
+
+fieldToUpdate : fieldToUpdate TIGHT_INFIX_DOT field
+|               field
 
 /* ------------- Implicit Parameter Bindings --------------------- */
 /* GHC Extension: implicit param ?x */
