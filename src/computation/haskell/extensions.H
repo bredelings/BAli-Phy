@@ -1,6 +1,7 @@
 #ifndef HASKELL_OPTIONS_H
 #define HASKELL_OPTIONS_H
 
+#include <map>
 #include <set>
 #include <string>
 #include <optional>

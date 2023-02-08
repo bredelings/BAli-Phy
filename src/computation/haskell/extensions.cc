@@ -2,10 +2,11 @@
 #include "util/myexception.H"
 
 using std::set;
+using std::map;
 using std::string;
 using std::optional;
 
-std::map<string,LangExt> ext_to_bit =
+map<string,LangExt> ext_to_bit =
 {
     {"ImplicitPrelude", {LangExt::ImplicitPrelude}},
     {"LexicalNegation", {LangExt::LexicalNegation}},
@@ -13,7 +14,7 @@ std::map<string,LangExt> ext_to_bit =
     {"StarIsType", {LangExt::StarIsType}}
 };
 
-std::set<LangExt> haskell98_extensions = 
+set<LangExt> haskell98_extensions =
 {
     LangExt::ImplicitPrelude,
     LangExt::StarIsType,
@@ -27,7 +28,7 @@ std::set<LangExt> haskell98_extensions =
 //    LangExt::DeepSubsumption
 };
 
-std::set<LangExt> haskell2010_extensions = 
+set<LangExt> haskell2010_extensions =
 {
     LangExt::ImplicitPrelude,
     LangExt::StarIsType,
@@ -45,7 +46,7 @@ std::set<LangExt> haskell2010_extensions =
 //    LangExt::DeepSubsumption
 };
 
-std::set<LangExt> ghc2021_extensions = 
+set<LangExt> ghc2021_extensions =
 {
     LangExt::ImplicitPrelude
 //    LangExt::StarIsType,
@@ -97,7 +98,7 @@ std::set<LangExt> ghc2021_extensions =
 //    LangExt::TypeSynonymInstances
 };
 
-std::set<LangExt> default_extensions =
+set<LangExt> default_extensions =
 {
     LangExt::ImplicitPrelude
 };
