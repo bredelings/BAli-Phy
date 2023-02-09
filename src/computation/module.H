@@ -91,18 +91,6 @@ bool operator!=(const symbol_info& S1, const symbol_info& S2);
 bool operator==(const type_info& S1, const type_info& S2);
 bool operator!=(const type_info& S1, const type_info& S2);
 
-struct module_import
-{
-    std::string name;
-    bool qualified = false;
-    std::string as;
-    bool only = false;
-    bool hiding = false;
-    std::vector<Haskell::Export> symbols;
-    module_import() = default;
-    module_import(const std::string& s):name(s),as(s) {}
-};
-
 class module_loader;
 
 class Program;
@@ -185,7 +173,7 @@ public:
 
     std::set<std::string> dependencies() const;
 
-    std::vector<module_import> imports() const;
+    std::vector<Hs::LImpDecl> imports() const;
 
     const std::map<std::string, symbol_info>& exported_symbols() const {return exported_symbols_;}
 
@@ -235,7 +223,7 @@ public:
 
     void import_type(const type_info&, const std::string&, bool qualified);
 
-    void import_module(const Program& P, const module_import& I);
+    void import_module(const Program& P, const Hs::LImpDecl& I);
 
     void compile(const Program&);
 

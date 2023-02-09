@@ -281,8 +281,46 @@ bool contains_import(const vector<Haskell::Export>& es, const string& name)
 }
 
 
-void Module::import_module(const Program& P, const module_import& I)
+struct module_import
 {
+    std::string name;
+    bool qualified = false;
+    std::string as;
+    bool only = false;
+    bool hiding = false;
+    std::vector<Haskell::Export> symbols;
+    module_import() = default;
+    module_import(const std::string& s):name(s),as(s) {}
+};
+
+module_import parse_import(const Haskell::ImpDecl& impdecl)
+{
+    module_import mi;
+
+    mi.qualified = impdecl.qualified;
+
+    mi.name = unloc(impdecl.modid);
+
+    if (impdecl.as)
+        mi.as = unloc(*impdecl.as);
+    else
+        mi.as = mi.name;
+
+    if (auto impspec = impdecl.impspec)
+    {
+        mi.hiding = impspec->hiding;
+        mi.only = not mi.hiding;
+
+        for(auto& [loc,x]: impspec->imports)
+            mi.symbols.push_back(x);
+    }
+
+    return mi;
+}
+
+void Module::import_module(const Program& P, const Hs::LImpDecl& impdecl)
+{
+    auto I = parse_import(unloc(impdecl));
     auto& M2 = P.get_module(I.name);
     auto& modid = I.as;
     bool qualified = I.qualified;
@@ -401,47 +439,25 @@ void Module::import_module(const Program& P, const module_import& I)
     }
 }
 
-module_import parse_import(const Haskell::ImpDecl& impdecl)
+vector<Hs::LImpDecl> Module::imports() const
 {
-    module_import mi;
+    // 1. Copy the imports list
+    auto imports_list = module.impdecls;
 
-    mi.qualified = impdecl.qualified;
-            
-    mi.name = unloc(impdecl.modid);
-            
-    if (impdecl.as)
-        mi.as = unloc(*impdecl.as);
-    else
-        mi.as = mi.name;
-
-    if (auto impspec = impdecl.impspec)
+    // 2. Check if we've seen the Prelude
+    if (language_extensions.has_extension(LangExt::ImplicitPrelude) and name != "Prelude")
     {
-        mi.hiding = impspec->hiding;
-        mi.only = not mi.hiding;
+        bool seen_Prelude = false;
+        for(auto& [loc, impdecl]: imports_list)
+            if (unloc(impdecl.modid) == "Prelude")
+                seen_Prelude = true;
 
-        for(auto& [loc,x]: impspec->imports)
-            mi.symbols.push_back(x);
+        if (not seen_Prelude)
+        {
+            Hs::ImpDecl impdecl{false, {noloc,"Prelude"}, {}, {}};
+            imports_list.emplace_back(noloc,impdecl);
+        }
     }
-
-    return mi;
-}
-
-vector<module_import> Module::imports() const
-{
-    vector<module_import> imports_list;
-
-    bool seen_Prelude = false;
-    for(const auto& [loc,impdecl]: module.impdecls)
-    {
-        auto import = parse_import(impdecl);
-        if (import.name == "Prelude")
-            seen_Prelude = true;
-        imports_list.push_back(import);
-    }
-
-    // Import the Prelude if it wasn't explicitly mentioned in the import list.
-    if (not seen_Prelude and name != "Prelude" and language_extensions.has_extension(LangExt::ImplicitPrelude))
-        imports_list.push_back( module_import("Prelude") );
 
     return imports_list;
 }
@@ -449,11 +465,8 @@ vector<module_import> Module::imports() const
 set<string> Module::dependencies() const
 {
     set<string> modules;
-    for(auto& [loc,impdecl]: module.impdecls)
+    for(auto& [loc,impdecl]: imports() )
         modules.insert( unloc(impdecl.modid) );
-
-    if (name != "Prelude" and not modules.count("Prelude") and language_extensions.has_extension(LangExt::ImplicitPrelude))
-        modules.insert("Prelude");
     return modules;
 }
 
@@ -573,8 +586,8 @@ void Module::compile(const Program& P)
 
 void Module::perform_imports(const Program& P)
 {
-    for(auto& i: imports())
-        import_module(P, i);
+    for(auto& impdecl: imports() )
+        import_module(P, impdecl);
 }
 
 void Module::export_symbol(const symbol_info& S)
