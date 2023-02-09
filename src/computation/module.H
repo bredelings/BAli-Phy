@@ -149,6 +149,8 @@ class Module
 
     bool optimized = false;
 
+    std::vector<Message> messages;
+
 public:
 
     bool do_optimize = true;

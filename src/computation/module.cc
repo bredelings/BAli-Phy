@@ -718,39 +718,95 @@ void Module::perform_exports()
             }
             else if (ex.is_value())
             {
-                if (ex.subspec)
-                    throw myexception()<<"export `"<<ex.print()<<"` can't have subspec";
+                if (not aliases.count(id))
+                {
+                    messages.push_back({ErrorMsg, loc, {Note()<<"trying to export variable '"<<id<<"', which is not in scope."}});
+                    continue;
+                }
 
-                if (aliases.count(id))
-                    export_symbol(lookup_symbol(id));
-                else 
-                    throw myexception()<<"trying to export variable '"<<id<<"', which is not in scope.";
+                if (ex.subspec)
+                    messages.push_back({ErrorMsg, loc, {Note()<<"variable `"<<ex.print()<<"` can't have export subspec"}});
+
+                export_symbol(lookup_symbol(id));
             }
             else if (ex.is_type())
             {
-                if (type_aliases.count(id))
+                if (not type_aliases.count(id))
                 {
-                    auto t = lookup_type(id);
-                    export_type(t);
-                    if (not ex.subspec)
-                    {
-                        // just the type
+                    messages.push_back({ErrorMsg, loc, {Note()<<"trying to export type '"<<id<<"', which is not in scope."}});
+                    continue;
+                }
 
+                auto t = lookup_type(id);
+                export_type(t);
+                if (ex.subspec)
+                {
+                    if (t.is_type_fam())
+                    {
+                        messages.push_back({ErrorMsg, loc, {Note()<<"type family `"<<id<<"`can't have export subspec"}});
+                        continue;
                     }
-                    else if (not ex.subspec->names)
+                    else if (t.is_type_syn())
+                    {
+                        messages.push_back({ErrorMsg, loc, {Note()<<"type synonym `"<<id<<"` can't have export subspec"}});
+                        continue;
+                    }
+
+                    if (not ex.subspec->names)
                     {
                         // all children
+                        if (auto c = t.is_class())
+                        {
+                            for(auto& method: c->methods)
+                                export_symbol(lookup_symbol(method));
+                        }
+                        else if (auto d = t.is_data())
+                        {
+                            for(auto& constructor: d->constructors)
+                                export_symbol(lookup_symbol(constructor));
+                            for(auto& field: d->fields)
+                                export_symbol(lookup_symbol(field));
+                        }
                     }
                     else
                     {
-                        // some children
+                        // all children
+                        if (auto c = t.is_class())
+                        {
+                            for(auto& [loc,name]: *ex.subspec->names)
+                            {
+                                if (not c->methods.count(name))
+                                    messages.push_back({ErrorMsg, loc, {Note()<<"`"<<name<<"` is not a method for class `"<<id<<"`"}});
+                                else
+                                    export_symbol(lookup_symbol(name));
+                            }
+                        }
+                        else if (auto d = t.is_data())
+                        {
+                            for(auto& [loc,name]: *ex.subspec->names)
+                            {
+                                if (is_haskell_conid(name) and not d->constructors.count(name))
+                                {
+                                    messages.push_back({ErrorMsg, loc, {Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"}});
+                                    continue;
+                                }
+                                if (is_haskell_varid(name) and not d->fields.count(name))
+                                {
+                                    messages.push_back({ErrorMsg, loc, {Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`"}});
+                                    continue;
+                                }
+
+                                export_symbol(lookup_symbol(name));
+                            }
+                        }
+                            
                     }
                 }
-                else
-                    throw myexception()<<"trying to export type '"<<id<<"', which is not in scope.";
             }
         }
     }
+    show_messages(file, std::cerr, messages);
+    exit_on_error(messages);
 }
 
 map<var,expression_ref> Module::code_defs() const
