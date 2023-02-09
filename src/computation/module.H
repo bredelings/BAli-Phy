@@ -50,15 +50,39 @@ struct symbol_info
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int, fixity_info);
 };
 
-enum class type_name_category {type_class, type_syn, type_func, ADT, type_fam};
+
 
 struct type_info
 {
+    int category() const;
+
+    struct class_info
+    {
+        std::set<std::string> methods;
+    };
+    struct data_info
+    {
+        std::set<std::string> constructors;
+        std::set<std::string> fields;
+    };
+    struct type_syn_info {};
+    struct type_fam_info {};
+
+    bool is_type_other() const; // "->", but now also "~"
+    const class_info* is_class() const;
+    const data_info* is_data() const;
+    bool is_type_syn() const;
+    bool is_type_fam() const;
+
     std::string name;
-    type_name_category category;
+    // info/children
+    std::variant<std::monostate, class_info, data_info, type_syn_info, type_fam_info> info;
     std::optional<fixity_info> fixity; // for the function arrow (->) only
     std::optional<int> arity;
+
+    // Are we using this?
     Kind kind;
+
 };
 
 bool operator==(const symbol_info& S1, const symbol_info& S2);
@@ -180,10 +204,10 @@ public:
     void def_constructor(const std::string& name, int arity, const std::string& type_name);
 
     /// Add an ADT
-    void def_ADT(const std::string& name);
-    void def_ADT(const std::string& name, const fixity_info&);
+    void def_ADT(const std::string& name, const type_info::data_info& info);
+    void def_ADT(const std::string& name, const fixity_info&, const type_info::data_info& info);
 
-    void def_type_class(const std::string& class_name);
+    void def_type_class(const std::string& class_name, const type_info::class_info& info);
 
     void def_type_class_method(const std::string& method_name, const std::string& class_name);
 

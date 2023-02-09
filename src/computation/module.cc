@@ -3,6 +3,7 @@
 #include <tuple>
 #include "computation/module.H"
 #include "util/myexception.H"
+#include "util/variant.H"
 #include "range/v3/all.hpp"
 #include "util/range.H"
 #include "util/set.H"   // for add( , )
@@ -50,7 +51,6 @@ symbol_info::symbol_info(const std::string& s, symbol_type_t st, const optional<
 {
 }
 
-
 bool operator==(const symbol_info&S1, const symbol_info& S2)
 {
     return (S1.name == S2.name) and (S1.symbol_type == S2.symbol_type) and 
@@ -64,12 +64,42 @@ bool operator!=(const symbol_info&S1, const symbol_info& S2)
 
 bool operator==(const type_info& T1, const type_info& T2)
 {
-    return (T1.name == T2.name) and (T1.category == T2.category);
+    return (T1.name == T2.name) and (T1.category() == T2.category());
 }
 
 bool operator!=(const type_info& T1, const type_info& T2)
 {
     return not (T1 == T2);
+}
+
+int type_info::category() const
+{
+    return info.index();
+}
+
+bool type_info::is_type_other() const
+{
+    return (bool)to<std::monostate>(info);
+}
+
+const type_info::class_info* type_info::is_class() const
+{
+    return to<class_info>(info);
+}
+
+const type_info::data_info* type_info::is_data() const
+{
+    return to<data_info>(info);
+}
+
+bool type_info::is_type_syn() const
+{
+    return (bool)to<type_syn_info>(info);
+}
+
+bool type_info::is_type_fam() const
+{
+    return (bool)to<type_fam_info>(info);
 }
 
 symbol_info lookup_symbol(const string& name, const Program& P);
@@ -1182,31 +1212,33 @@ pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string
 type_info Module::lookup_builtin_type(const std::string& name)
 {
     if (name == "Char")
-        return {"Char", type_name_category::ADT, {}, 0, kind_type()};
+        return {"Char", type_info::data_info(), {}, 0, kind_type()};
     else if (name == "Double")
-        return {"Double", type_name_category::ADT, {}, 0, kind_type()};
+        return {"Double", type_info::data_info(), {}, 0, kind_type()};
     else if (name == "Int")
-        return {"Int", type_name_category::ADT, {}, 0, kind_type()};
+        return {"Int", type_info::data_info(), {}, 0, kind_type()};
     else if (name == "Integer")
-        return {"Integer", type_name_category::ADT, {}, 0, kind_type()};
+        return {"Integer", type_info::data_info(), {}, 0, kind_type()};
     else if (name == "()")
-        return {"()", type_name_category::ADT, {}, 0, kind_type()};
+    {
+        return {"()", type_info::data_info{{"()"},{}}, {}, 0, kind_type()};
+    }
     else if (name == "[]")
-        return {"[]", type_name_category::ADT, {}, 1, make_n_args_kind(1)};
+        return {"[]", type_info::data_info{{"[]",":"},{}}, {}, 1, make_n_args_kind(1)};
     else if (name == "->")
     {
-        return {"->", type_name_category::type_func, {{right_fix,0}}, 2, make_n_args_kind(2)};
+        return {"->", {}, {{right_fix,0}}, 2, make_n_args_kind(2)};
     }
     else if (name == "~")
     {
-        return {"~", type_name_category::type_func, {}, 2, make_n_args_constraint_kind(2)};
+        return {"~", {}, {}, 2, make_n_args_constraint_kind(2)};
     }
     // This doesn't include ()
     else if (is_tuple_name(name))
     {
         int n = tuple_arity(name);
 
-        return {name, type_name_category::ADT,{}, n, make_n_args_kind(n)};
+        return {name, type_info::data_info{{name},{}},{}, n, make_n_args_kind(n)};
     }
     throw myexception()<<"Symbol 'name' is not a builtin (type) symbol.";
 }
@@ -1342,20 +1374,20 @@ void Module::def_constructor(const string& cname, int arity, const string& type_
     declare_symbol( {cname, constructor_symbol, type_name, arity, {unknown_fix, -1}} );
 }
 
-void Module::def_ADT(const std::string& tname)
+void Module::def_ADT(const std::string& tname, const type_info::data_info& info)
 {
     if (is_qualified_symbol(tname))
         throw myexception()<<"Locally defined type '"<<tname<<"' should not be qualified.";
 
-    declare_type( {tname, type_name_category::ADT, {}, /*arity*/ -1, /*kind*/ {}} );
+    declare_type( {tname, info, {}, /*arity*/ -1, /*kind*/ {}} );
 }
 
-void Module::def_ADT(const std::string& tname, const fixity_info& fixity)
+void Module::def_ADT(const std::string& tname, const fixity_info& fixity, const type_info::data_info& info)
 {
     if (is_qualified_symbol(tname))
         throw myexception()<<"Locally defined symbol '"<<tname<<"' should not be qualified.";
 
-    declare_type( {tname, type_name_category::ADT, fixity, /*arity*/ -1, /*kind*/ {}} );
+    declare_type( {tname, info, fixity, /*arity*/ -1, /*kind*/ {}} );
 }
 
 void Module::def_type_synonym(const std::string& sname, int arity)
@@ -1363,7 +1395,7 @@ void Module::def_type_synonym(const std::string& sname, int arity)
     if (is_qualified_symbol(sname))
         throw myexception()<<"Locally defined type '"<<sname<<"' should not be qualified.";
 
-    declare_type( {sname, type_name_category::type_syn, {}, arity, /*kind*/ {}} );
+    declare_type( {sname, type_info::type_syn_info(), {}, arity, /*kind*/ {}} );
 }
 
 void Module::def_type_family(const std::string& fname, int arity)
@@ -1371,15 +1403,15 @@ void Module::def_type_family(const std::string& fname, int arity)
     if (is_qualified_symbol(fname))
         throw myexception()<<"Locally defined type '"<<fname<<"' should not be qualified.";
 
-    declare_type( {fname, type_name_category::type_fam, {}, arity, /*kind*/ {}} );
+    declare_type( {fname, type_info::type_fam_info(), {}, arity, /*kind*/ {}} );
 }
 
-void Module::def_type_class(const std::string& cname)
+void Module::def_type_class(const std::string& cname, const type_info::class_info& info)
 {
     if (is_qualified_symbol(cname))
         throw myexception()<<"Locally defined type '"<<cname<<"' should not be qualified.";
 
-    declare_type( {cname, type_name_category::type_class, {}, /*arity*/ -1, /*kind*/ {}} );
+    declare_type( {cname, info, {}, /*arity*/ -1, /*kind*/ {}} );
 }
 
 void Module::def_type_class_method(const string& method_name, const string& class_name)
@@ -1456,15 +1488,17 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         }
         else if (auto data_decl = decl.to<Haskell::DataOrNewtypeDecl>())
         {
-            def_ADT(unloc(data_decl->name));
-
             // Why are we recording the arity here?  This is too early...
             // It looks like we use it when renaming patterns, but...
-
+            type_info::data_info info;
             if (data_decl->is_regular_decl())
             {
                 for(const auto& constr: data_decl->get_constructors())
-                    def_constructor(unloc(*constr.con).name, constr.arity(), unloc(data_decl->name));
+                {
+                    auto cname = unloc(*constr.con).name;
+                    def_constructor(cname, constr.arity(), unloc(data_decl->name));
+                    info.constructors.insert(cname);
+                }
             }
             else if (data_decl->is_gadt_decl())
             {
@@ -1473,21 +1507,30 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                     {
                         int arity = Hs::gen_type_arity( cons_decl.type );
                         def_constructor(unloc(con_name), arity, unloc(data_decl->name));
+                        info.constructors.insert(unloc(con_name));
                     }
             }
+
+            def_ADT(unloc(data_decl->name), info);
         }
         else if (decl.is_a<Haskell::ClassDecl>())
         {
             auto& Class = decl.as_<Haskell::ClassDecl>();
 
-            def_type_class(unloc(Class.name));
+            type_info::class_info info;
 
             for(auto& tf: Class.type_fam_decls)
                 def_type_family( unloc(tf.con).name, tf.arity() );
 
             for(auto& sig_decl: Class.sig_decls)
                 for(auto& v: sig_decl.vars)
+                {
                     def_type_class_method(unloc(v).name, unloc(Class.name));
+                    info.methods.insert(unloc(v).name);
+                }
+            
+            
+            def_type_class(unloc(Class.name), info);
         }
         else if (auto S = decl.to<Haskell::TypeSynonymDecl>())
         {
