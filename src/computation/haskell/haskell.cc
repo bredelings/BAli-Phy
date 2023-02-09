@@ -124,9 +124,31 @@ string Export::print() const
 
 bool Export::is_module() const
 {
-    return (ns and unloc(*ns) == ImpExpNs::module);
+    bool is_mod = (ns and unloc(*ns) == ImpExpNs::module);
+    assert(not is_mod or is_haskell_module_name(unloc(symbol)));
+    return is_mod;
 }
-    
+
+// how about value constructors, with "pattern"?
+
+bool Export::is_value() const
+{
+    if (ns)
+        return false;
+
+    // varid or varsym at end of path
+    return is_haskell_var_name(unloc(symbol));
+}
+
+bool Export::is_type() const
+{
+    if (ns)
+        return unloc(*ns) == ImpExpNs::type;
+
+    // conid or consym at end of path
+    return is_haskell_con_name(unloc(symbol));
+}
+
 string ImpSpec::print() const
 {
     vector<string> is;

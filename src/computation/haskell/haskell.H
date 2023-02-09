@@ -958,6 +958,8 @@ struct Export
     std::optional<ExportSubSpec> subspec;
     std::string print() const;
     bool is_module() const;
+    bool is_value() const;
+    bool is_type() const;
 };
 
 struct ImpSpec
