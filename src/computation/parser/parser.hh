@@ -464,30 +464,27 @@ namespace yy {
       // decllist
       char dummy6[sizeof (Hs::Decls)];
 
-      // export
-      char dummy7[sizeof (Hs::Export)];
-
       // fielddecl
-      char dummy8[sizeof (Hs::FieldDecl)];
+      char dummy7[sizeof (Hs::FieldDecl)];
 
       // infix
-      char dummy9[sizeof (Hs::Fixity)];
+      char dummy8[sizeof (Hs::Fixity)];
 
       // gadt_constr
-      char dummy10[sizeof (Hs::GADTConstructorDecl)];
+      char dummy9[sizeof (Hs::GADTConstructorDecl)];
 
       // gadt_constrs
-      char dummy11[sizeof (Hs::GADTConstructorsDecl)];
+      char dummy10[sizeof (Hs::GADTConstructorsDecl)];
 
       // gdrh
       // gdpat
-      char dummy12[sizeof (Hs::GuardedRHS)];
+      char dummy11[sizeof (Hs::GuardedRHS)];
 
       // importdecl
-      char dummy13[sizeof (Hs::ImpDecl)];
+      char dummy12[sizeof (Hs::ImpDecl)];
 
       // impspec
-      char dummy14[sizeof (Hs::ImpSpec)];
+      char dummy13[sizeof (Hs::ImpSpec)];
 
       // sigtype
       // sigtypedoc
@@ -504,34 +501,37 @@ namespace yy {
       // atype
       // inst_type
       // constr_stuff
-      char dummy15[sizeof (Hs::LType)];
+      char dummy14[sizeof (Hs::LType)];
 
       // tv_bndr
       // tv_bndr_no_braces
-      char dummy16[sizeof (Hs::LTypeVar)];
+      char dummy15[sizeof (Hs::LTypeVar)];
 
       // module
-      char dummy17[sizeof (Hs::Module)];
+      char dummy16[sizeof (Hs::Module)];
 
       // rhs
       // alt_rhs
-      char dummy18[sizeof (Hs::MultiGuardedRHS)];
+      char dummy17[sizeof (Hs::MultiGuardedRHS)];
 
       // stmtlist
-      char dummy19[sizeof (Hs::Stmts)];
+      char dummy18[sizeof (Hs::Stmts)];
 
       // ty_fam_inst_eqn
-      char dummy20[sizeof (Hs::TypeFamilyInstanceEqn)];
+      char dummy19[sizeof (Hs::TypeFamilyInstanceEqn)];
 
       // alt
-      char dummy21[sizeof (Located<Hs::Alt>)];
+      char dummy20[sizeof (Located<Hs::Alt>)];
 
       // binds
-      char dummy22[sizeof (Located<Hs::Binds>)];
+      char dummy21[sizeof (Located<Hs::Binds>)];
 
       // decllist_cls
       // decllist_inst
-      char dummy23[sizeof (Located<Hs::Decls>)];
+      char dummy22[sizeof (Located<Hs::Decls>)];
+
+      // export
+      char dummy23[sizeof (Located<Hs::Export>)];
 
       // fbinds
       // fbinds1
@@ -633,11 +633,11 @@ namespace yy {
       // maybeas
       char dummy45[sizeof (std::optional<std::string>)];
 
-      // maybeexports
-      char dummy46[sizeof (std::optional<std::vector<Hs::Export>>)];
-
       // where_type_family
-      char dummy47[sizeof (std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>)];
+      char dummy46[sizeof (std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>)];
+
+      // maybeexports
+      char dummy47[sizeof (std::optional<std::vector<Located<Hs::Export>>>)];
 
       // tycl_hdr
       char dummy48[sizeof (std::pair<Hs::Context,Hs::LType>)];
@@ -704,45 +704,45 @@ namespace yy {
       // modid
       char dummy50[sizeof (std::string)];
 
-      // exportlist
-      // exportlist1
-      char dummy51[sizeof (std::vector<Hs::Export>)];
-
       // fielddecls
       // fielddecls1
-      char dummy52[sizeof (std::vector<Hs::FieldDecl>)];
+      char dummy51[sizeof (std::vector<Hs::FieldDecl>)];
 
       // gdrhs
       // gdpats
-      char dummy53[sizeof (std::vector<Hs::GuardedRHS>)];
+      char dummy52[sizeof (std::vector<Hs::GuardedRHS>)];
 
       // importdecls
       // importdecls_semi
-      char dummy54[sizeof (std::vector<Hs::ImpDecl>)];
+      char dummy53[sizeof (std::vector<Hs::ImpDecl>)];
 
       // sigtypes1
       // btype_no_ops
       // comma_types0
       // comma_types1
-      char dummy55[sizeof (std::vector<Hs::LType>)];
+      char dummy54[sizeof (std::vector<Hs::LType>)];
 
       // sks_vars
-      char dummy56[sizeof (std::vector<Hs::LTypeCon>)];
+      char dummy55[sizeof (std::vector<Hs::LTypeCon>)];
 
       // tv_bndrs
       // forall
-      char dummy57[sizeof (std::vector<Hs::LTypeVar>)];
+      char dummy56[sizeof (std::vector<Hs::LTypeVar>)];
 
       // sig_vars
-      char dummy58[sizeof (std::vector<Hs::LVar>)];
+      char dummy57[sizeof (std::vector<Hs::LVar>)];
 
       // ty_fam_inst_eqn_list
       // ty_fam_inst_eqns
-      char dummy59[sizeof (std::vector<Hs::TypeFamilyInstanceEqn>)];
+      char dummy58[sizeof (std::vector<Hs::TypeFamilyInstanceEqn>)];
 
       // alts
       // alts1
-      char dummy60[sizeof (std::vector<Located<Hs::Alt>>)];
+      char dummy59[sizeof (std::vector<Located<Hs::Alt>>)];
+
+      // exportlist
+      // exportlist1
+      char dummy60[sizeof (std::vector<Located<Hs::Export>>)];
 
       // decls
       // tup_exprs
@@ -1383,10 +1383,6 @@ namespace yy {
         value.move< Hs::Decls > (std::move (that.value));
         break;
 
-      case symbol_kind::S_export: // export
-        value.move< Hs::Export > (std::move (that.value));
-        break;
-
       case symbol_kind::S_fielddecl: // fielddecl
         value.move< Hs::FieldDecl > (std::move (that.value));
         break;
@@ -1467,6 +1463,10 @@ namespace yy {
       case symbol_kind::S_decllist_cls: // decllist_cls
       case symbol_kind::S_decllist_inst: // decllist_inst
         value.move< Located<Hs::Decls> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_export: // export
+        value.move< Located<Hs::Export> > (std::move (that.value));
         break;
 
       case symbol_kind::S_fbinds: // fbinds
@@ -1591,12 +1591,12 @@ namespace yy {
         value.move< std::optional<std::string> > (std::move (that.value));
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
-        value.move< std::optional<std::vector<Hs::Export>> > (std::move (that.value));
-        break;
-
       case symbol_kind::S_where_type_family: // where_type_family
         value.move< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_maybeexports: // maybeexports
+        value.move< std::optional<std::vector<Located<Hs::Export>>> > (std::move (that.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -1667,11 +1667,6 @@ namespace yy {
         value.move< std::string > (std::move (that.value));
         break;
 
-      case symbol_kind::S_exportlist: // exportlist
-      case symbol_kind::S_exportlist1: // exportlist1
-        value.move< std::vector<Hs::Export> > (std::move (that.value));
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.move< std::vector<Hs::FieldDecl> > (std::move (that.value));
@@ -1715,6 +1710,11 @@ namespace yy {
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.move< std::vector<Located<Hs::Alt>> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+        value.move< std::vector<Located<Hs::Export>> > (std::move (that.value));
         break;
 
       case symbol_kind::S_decls: // decls
@@ -1836,20 +1836,6 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Hs::Decls& v, const location_type& l)
-        : Base (t)
-        , value (v)
-        , location (l)
-      {}
-#endif
-
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Hs::Export&& v, location_type&& l)
-        : Base (t)
-        , value (std::move (v))
-        , location (std::move (l))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const Hs::Export& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2074,6 +2060,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Located<Hs::Decls>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Located<Hs::Export>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Located<Hs::Export>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2389,20 +2389,6 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::optional<std::vector<Hs::Export>>&& v, location_type&& l)
-        : Base (t)
-        , value (std::move (v))
-        , location (std::move (l))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const std::optional<std::vector<Hs::Export>>& v, const location_type& l)
-        : Base (t)
-        , value (v)
-        , location (l)
-      {}
-#endif
-
-#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -2410,6 +2396,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::optional<std::vector<Located<Hs::Export>>>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::optional<std::vector<Located<Hs::Export>>>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2452,20 +2452,6 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l)
-        : Base (t)
-        , value (v)
-        , location (l)
-      {}
-#endif
-
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<Hs::Export>&& v, location_type&& l)
-        : Base (t)
-        , value (std::move (v))
-        , location (std::move (l))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const std::vector<Hs::Export>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2599,6 +2585,20 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<Located<Hs::Export>>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<Located<Hs::Export>>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<Located<expression_ref>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -2678,10 +2678,6 @@ switch (yykind)
       case symbol_kind::S_decls_inst: // decls_inst
       case symbol_kind::S_decllist: // decllist
         value.template destroy< Hs::Decls > ();
-        break;
-
-      case symbol_kind::S_export: // export
-        value.template destroy< Hs::Export > ();
         break;
 
       case symbol_kind::S_fielddecl: // fielddecl
@@ -2764,6 +2760,10 @@ switch (yykind)
       case symbol_kind::S_decllist_cls: // decllist_cls
       case symbol_kind::S_decllist_inst: // decllist_inst
         value.template destroy< Located<Hs::Decls> > ();
+        break;
+
+      case symbol_kind::S_export: // export
+        value.template destroy< Located<Hs::Export> > ();
         break;
 
       case symbol_kind::S_fbinds: // fbinds
@@ -2888,12 +2888,12 @@ switch (yykind)
         value.template destroy< std::optional<std::string> > ();
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
-        value.template destroy< std::optional<std::vector<Hs::Export>> > ();
-        break;
-
       case symbol_kind::S_where_type_family: // where_type_family
         value.template destroy< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > ();
+        break;
+
+      case symbol_kind::S_maybeexports: // maybeexports
+        value.template destroy< std::optional<std::vector<Located<Hs::Export>>> > ();
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -2964,11 +2964,6 @@ switch (yykind)
         value.template destroy< std::string > ();
         break;
 
-      case symbol_kind::S_exportlist: // exportlist
-      case symbol_kind::S_exportlist1: // exportlist1
-        value.template destroy< std::vector<Hs::Export> > ();
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.template destroy< std::vector<Hs::FieldDecl> > ();
@@ -3012,6 +3007,11 @@ switch (yykind)
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.template destroy< std::vector<Located<Hs::Alt>> > ();
+        break;
+
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+        value.template destroy< std::vector<Located<Hs::Export>> > ();
         break;
 
       case symbol_kind::S_decls: // decls
@@ -5831,10 +5831,6 @@ switch (yykind)
         value.copy< Hs::Decls > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_export: // export
-        value.copy< Hs::Export > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_fielddecl: // fielddecl
         value.copy< Hs::FieldDecl > (YY_MOVE (that.value));
         break;
@@ -5915,6 +5911,10 @@ switch (yykind)
       case symbol_kind::S_decllist_cls: // decllist_cls
       case symbol_kind::S_decllist_inst: // decllist_inst
         value.copy< Located<Hs::Decls> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_export: // export
+        value.copy< Located<Hs::Export> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_fbinds: // fbinds
@@ -6039,12 +6039,12 @@ switch (yykind)
         value.copy< std::optional<std::string> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
-        value.copy< std::optional<std::vector<Hs::Export>> > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_where_type_family: // where_type_family
         value.copy< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_maybeexports: // maybeexports
+        value.copy< std::optional<std::vector<Located<Hs::Export>>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -6115,11 +6115,6 @@ switch (yykind)
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_exportlist: // exportlist
-      case symbol_kind::S_exportlist1: // exportlist1
-        value.copy< std::vector<Hs::Export> > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.copy< std::vector<Hs::FieldDecl> > (YY_MOVE (that.value));
@@ -6163,6 +6158,11 @@ switch (yykind)
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.copy< std::vector<Located<Hs::Alt>> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+        value.copy< std::vector<Located<Hs::Export>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_decls: // decls
@@ -6242,10 +6242,6 @@ switch (yykind)
       case symbol_kind::S_decls_inst: // decls_inst
       case symbol_kind::S_decllist: // decllist
         value.move< Hs::Decls > (YY_MOVE (s.value));
-        break;
-
-      case symbol_kind::S_export: // export
-        value.move< Hs::Export > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_fielddecl: // fielddecl
@@ -6328,6 +6324,10 @@ switch (yykind)
       case symbol_kind::S_decllist_cls: // decllist_cls
       case symbol_kind::S_decllist_inst: // decllist_inst
         value.move< Located<Hs::Decls> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_export: // export
+        value.move< Located<Hs::Export> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_fbinds: // fbinds
@@ -6452,12 +6452,12 @@ switch (yykind)
         value.move< std::optional<std::string> > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
-        value.move< std::optional<std::vector<Hs::Export>> > (YY_MOVE (s.value));
-        break;
-
       case symbol_kind::S_where_type_family: // where_type_family
         value.move< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_maybeexports: // maybeexports
+        value.move< std::optional<std::vector<Located<Hs::Export>>> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -6528,11 +6528,6 @@ switch (yykind)
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_exportlist: // exportlist
-      case symbol_kind::S_exportlist1: // exportlist1
-        value.move< std::vector<Hs::Export> > (YY_MOVE (s.value));
-        break;
-
       case symbol_kind::S_fielddecls: // fielddecls
       case symbol_kind::S_fielddecls1: // fielddecls1
         value.move< std::vector<Hs::FieldDecl> > (YY_MOVE (s.value));
@@ -6576,6 +6571,11 @@ switch (yykind)
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.move< std::vector<Located<Hs::Alt>> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+        value.move< std::vector<Located<Hs::Export>> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_decls: // decls

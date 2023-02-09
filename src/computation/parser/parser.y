@@ -223,10 +223,10 @@
 %type <std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>> top
 %type <std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>> top1
 
-%type <std::optional<std::vector<Hs::Export>>> maybeexports
-%type <std::vector<Hs::Export>> exportlist
-%type <std::vector<Hs::Export>> exportlist1
-%type <Hs::Export> export
+%type <std::optional<std::vector<Located<Hs::Export>>>> maybeexports
+%type <std::vector<Located<Hs::Export>>> exportlist
+%type <std::vector<Located<Hs::Export>>> exportlist1
+%type <Located<Hs::Export>> export
 %type <std::optional<Hs::ExportSubSpec>> export_subspec
 %type <std::vector<Located<std::string>>> qcnames
 %type <std::vector<Located<std::string>>> qcnames1
@@ -561,8 +561,8 @@ exportlist: exportlist1               {$$ = $1;}
 exportlist1: exportlist1 "," export   {$$ = $1; $$.push_back($3);}
 |            export                   {$$.push_back($1);}
 
-export: qcname export_subspec         {$$ = Hs::Export{{}, $1, $2}; }
-|       "module" modid                {$$ = Hs::Export{{{@1,Hs::ImpExpNs::module}}, {@2,$2}}; }
+export: qcname export_subspec         {$$ = {@$,Hs::Export{{}, $1, $2}}; }
+|       "module" modid                {$$ = {@$,Hs::Export{{{@1,Hs::ImpExpNs::module}}, {@2,$2}}}; }
 
 export_subspec: %empty                {}
 |              "(" qcnames ")"        { $$ = Hs::ExportSubSpec{$2}; }

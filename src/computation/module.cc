@@ -419,7 +419,7 @@ module_import parse_import(const Haskell::ImpDecl& impdecl)
         mi.hiding = impspec->hiding;
         mi.only = not mi.hiding;
 
-        for(auto& x: impspec->imports)
+        for(auto& [loc,x]: impspec->imports)
             mi.symbols.push_back(x);
     }
 
@@ -709,7 +709,7 @@ void Module::perform_exports()
         export_module(name);
     else
     {
-        for(auto& ex: *module.exports)
+        for(auto& [loc,ex]: *module.exports)
         {
             string id = unloc(ex.symbol);
             if (ex.is_module())

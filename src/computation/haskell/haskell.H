@@ -953,7 +953,7 @@ struct Export
 struct ImpSpec
 {
     bool hiding;
-    std::vector<Export> imports;
+    std::vector<Located<Export>> imports;
     std::string print() const;
 };
 
@@ -978,7 +978,7 @@ struct ImpDecl
 struct Module
 {
     std::string modid;
-    std::optional<std::vector<Export>> exports;
+    std::optional<std::vector<Located<Export>>> exports;
     std::vector<ImpDecl> impdecls;
     std::optional<Decls> topdecls;
 
@@ -986,7 +986,7 @@ struct Module
 
     Module() = default;
     Module(const std::string&s,
-           const std::optional<std::vector<Export>>& e,
+           const std::optional<std::vector<Located<Export>>>& e,
            const std::vector<ImpDecl>& i,
            const std::optional<Decls>& t)
         :modid(s),
