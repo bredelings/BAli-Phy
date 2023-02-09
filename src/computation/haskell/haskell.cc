@@ -313,6 +313,29 @@ ForeignDecl::ForeignDecl(const std::string& n, const Hs::LVar& f, const LType& t
         symbol_name = unloc(function).name;
 }
 
+string FieldBinding::print() const
+{
+    string result = unloc(field).print();
+    if (value)
+        result += " = " + unloc(*value).print();
+    return result;
+}
+
+string FieldBindings::print() const
+{
+    vector<string> ss;
+    for(auto& binding: *this)
+        ss.push_back(binding.print());
+    if (dotdot)
+        ss.push_back("..");
+    return join(ss, ",");
+}
+
+string RecordExp::print() const
+{
+    return head.print() + " {" + fbinds.print() + "}";
+}
+
 string List::print() const
 {
     vector<string> parts;

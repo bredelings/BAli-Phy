@@ -259,6 +259,44 @@ struct ForeignDecl: public Object
     ForeignDecl(const std::string& n, const Hs::LVar& f, const LType& t);
 };
 
+struct FieldBinding: public Object
+{
+    LVar field;
+    std::optional<LExp> value;
+
+    FieldBinding* clone() const { return new FieldBinding(*this);}
+    std::string print() const;
+
+    FieldBinding(const LVar& lv):field(lv) {}
+    FieldBinding(const LVar& lv, const LExp& le):field(lv),value(le) {}
+};
+
+struct FieldBindings: public Object, std::vector<Located<FieldBinding>>
+{
+    bool dotdot = false;
+
+    FieldBindings* clone() const { return new FieldBindings(*this);}
+    std::string print() const;
+};
+
+// This could be
+// * a record update    x {field = y} = case x of MkT a b c d e -> MkT a b y d e
+// * a constructor    MkT {field = y} = MkT u u y u u where u = ??
+// * a pattern        MkT {field = y} = MkT _ _ y _ _
+// Then there are ".." and named field puns...
+
+struct RecordExp: public Object
+{
+    LExp head;
+    Located<FieldBindings> fbinds;
+
+    RecordExp* clone() const { return new RecordExp(*this);}
+    std::string print() const;
+
+    RecordExp() = default;
+    RecordExp(const LExp& e, const Located<FieldBindings>& fb): head(e), fbinds(fb) {}
+};
+
 // I think that these can originally be only
 // * FixityDecl
 // * SignatureDecl

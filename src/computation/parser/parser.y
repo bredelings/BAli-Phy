@@ -427,11 +427,12 @@
 %type <Located<expression_ref>> stmt
 
 %type <Located<expression_ref>> qual
- /*
-%type <void> fbinds
-%type <void> fbinds1
-%type <void> fbind
 
+%type <Located<Hs::FieldBindings>> fbinds
+%type <Located<Hs::FieldBindings>> fbinds1
+%type <std::optional<Located<Hs::FieldBinding>>> fbind
+
+/*
 %type <void> dbinds
 %type <void> dbind
 %type <std::string> ipvar 
@@ -1159,9 +1160,9 @@ aexp: qvar TIGHT_INFIX_AT aexp              {$$ = {@$, Hs::AsPattern(Hs::Var($1)
 |     aexp1                      {$$ = $1;}
 
 /* EP */
-aexp1: aexp1 "{" fbinds "}"          {}
-|      aexp1 TIGHT_INFIX_DOT field   {}
-|      aexp2                         {$$ = $1;}
+aexp1: aexp1 "{" fbinds "}"          { $$ = {@$,Hs::RecordExp{$1,$3}}; }
+|      aexp1 TIGHT_INFIX_DOT field   { }
+|      aexp2                         { $$ = $1; }
 
 /* EP */
 aexp2: qvar                   {$$ = {@$, Hs::Var($1)};}
@@ -1310,17 +1311,17 @@ qual: bindpat "<-" exp  {$$ = {@$, Hs::PatQual($1,$3)};}
 
 /* ------------- Record Field Update/Construction ---------------- */
 
-fbinds: fbinds1
-|       %empty
+fbinds: fbinds1         {$$ = $1;}
+|       %empty          {}
 
-fbinds1: fbind "," fbinds1
-|        fbind
-|        ".."
+fbinds1: fbind "," fbinds1  {$$ = $3; unloc($$).insert(unloc($$).begin(), *$1); $$.loc = @$;}
+|        fbind              {unloc($$).push_back(*$1); $$.loc = @$;}
+|        ".."               {unloc($$).dotdot = true; $$.loc = @$;}
 
-fbind: qvar "=" texp
-|      qvar
-|      field TIGHT_INFIX_DOT fieldToUpdate "=" texp
-|      field TIGHT_INFIX_DOT fieldToUpdate
+fbind: qvar "=" texp        {$$ = {{@$, Hs::FieldBinding({@$,Hs::Var($1)}, $3)}};}
+|      qvar                 {$$ = {{@$, Hs::FieldBinding({@$,Hs::Var($1)})}};}
+|      field TIGHT_INFIX_DOT fieldToUpdate "=" texp   {}
+|      field TIGHT_INFIX_DOT fieldToUpdate            {}
 
 
 fieldToUpdate : fieldToUpdate TIGHT_INFIX_DOT field

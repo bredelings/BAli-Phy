@@ -92,6 +92,7 @@ struct ConPattern: public Object
     ConPattern(const Con& h, const LPats& as):head(h),args(as) {}
 };
 
+
 struct TypedPattern: public Object
 {
     LPat pat;
