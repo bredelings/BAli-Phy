@@ -10,6 +10,7 @@ map<string,LangExt> ext_to_bit =
 {
     {"EmptyDataDecls",              {LangExt::EmptyDataDecls}},
     {"ExistentialQuantification",   {LangExt::EmptyDataDecls}},
+    {"FieldSelectors",              {LangExt::FieldSelectors}},
     {"FlexibleInstances",           {LangExt::FlexibleInstances}},
     {"ForeignFunctionInterface",    {LangExt::FlexibleInstances}},
     {"GADTSyntax",                  {LangExt::GADTSyntax}},
@@ -35,7 +36,7 @@ set<LangExt> haskell98_extensions =
 //    LangExt::NPlusKPatterns,
 //    LangExt::DatatypeContexts,
 //    LangExt::TraditionalRecordSyntax,
-//    LangExt::FieldSelectors,
+    LangExt::FieldSelectors,
 //    LangExt::NondecreasingIndentation
 //    LangExt::DeepSubsumption
 };
@@ -51,7 +52,7 @@ set<LangExt> haskell2010_extensions =
 //    LangExt::TraditionalRecordSyntax,
 //    LangExt::EmptyDataDecls,
 //    LangExt::ForeignFunctionInterface,
-//    LangExt::FieldSelectors,
+    LangExt::FieldSelectors,
 //    LangExt::PatternGuards,
 //    LangExt::DoAndIfThenElse,
 //    LangExt::RelaxedPolyRec,
@@ -60,7 +61,7 @@ set<LangExt> haskell2010_extensions =
 
 set<LangExt> ghc2021_extensions =
 {
-    LangExt::ImplicitPrelude
+    LangExt::ImplicitPrelude,
 //    LangExt::StarIsType,
 //    LangExt::MonomorphismRestriction,
 //    LangExt::TraditionalRecordSyntax,
@@ -68,7 +69,7 @@ set<LangExt> ghc2021_extensions =
 //    LangExt::ForeignFunctionInterface,
 //    LangExt::PatternGuards,
 //    LangExt::DoAndIfThenElse,
-//    LangExt::FieldSelectors,
+    LangExt::FieldSelectors,
 //    LangExt::RelaxedPolyRec,
 
 //    LangExt::BangPatterns,
@@ -112,7 +113,8 @@ set<LangExt> ghc2021_extensions =
 
 set<LangExt> default_extensions =
 {
-    LangExt::ImplicitPrelude
+    LangExt::ImplicitPrelude,
+    LangExt::FieldSelectors
 };
 
 bool LanguageExtensions::has_extension(LangExt opt) const

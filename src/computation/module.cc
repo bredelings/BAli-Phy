@@ -495,8 +495,11 @@ void Module::compile(const Program& P)
     // Then we can AUGMENT this local fixity environment when we encounter fixities at lower levels.
     declare_fixities(M);
 
-    auto field_accessors = synthesize_field_accessors(M.type_decls);
-    M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
+    if (language_extensions.has_extension(LangExt::FieldSelectors))
+    {
+        auto field_accessors = synthesize_field_accessors(M.type_decls);
+        M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
+    }
 
     // FIXME - merge with rename() below.
     // Currently this (1) translates field-decls into function declarations
