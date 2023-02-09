@@ -100,29 +100,33 @@ string ExportSubSpec::print() const
     return std::visit([](auto&& x) {return x.print();}, (const std::variant<ExportSubSpecSome,ExportSubSpecAll>&)(*this));
 }
 
-string ExportSymbol::print() const
+string print(ImpExpNs ns)
 {
-    auto result = symbol.print();
-    if (subspec)
-    {
-        result += " " + subspec->print();
-    }
-    return result;
-};
+    using enum ImpExpNs;
 
-string ExportModule::print() const
-{
-    return "module " + unloc(modid);
-};
+    if (ns == module) return "module";
+    else if (ns == type) return "type";
+    else if (ns == pattern) return "pattern";
+
+    std::abort();
+}
+
 
 string Export::print() const
 {
-    // FIXME - Cast required to work around bug in GCC 11 libstdc++, supposedly fixed for GCC 12.
-    // See https://gitlab.com/jonathan-wakely/gcc/-/commit/486d89e403a18ef78f05f2efb1bc86bbd396899c
-    // See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90943
-    return std::visit([](auto&& x) {return x.print();}, (const std::variant<ExportSymbol,ExportModule>&)(*this));
+    string result = symbol.print();
+    if (ns)
+        result = Hs::print(unloc(*ns)) + " " + result;
+    if (subspec)
+        result += " " + subspec->print();
+    return result;
 };
 
+bool Export::is_module() const
+{
+    return (ns and unloc(*ns) == ImpExpNs::module);
+}
+    
 string ImpSpec::print() const
 {
     vector<string> is;

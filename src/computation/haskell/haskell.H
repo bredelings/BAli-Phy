@@ -947,24 +947,17 @@ struct ExportSubSpec: public std::variant<ExportSubSpecSome, ExportSubSpecAll>
     using variant::variant;
 };
 
-struct ExportSymbol
+enum class ImpExpNs {module, type, pattern};
+
+std::string print(ImpExpNs);
+
+struct Export
 {
+    std::optional<Located<ImpExpNs>> ns;
     Located<std::string> symbol;
     std::optional<ExportSubSpec> subspec;
     std::string print() const;
-};
-
-struct ExportModule
-{
-    Located<std::string> modid;
-    std::string print() const;
-};
-
-struct Export: public std::variant<ExportSymbol,ExportModule>
-{
-    std::string print() const;
-
-    using variant::variant;
+    bool is_module() const;
 };
 
 struct ImpSpec

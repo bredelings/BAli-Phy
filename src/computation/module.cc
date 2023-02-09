@@ -266,13 +266,10 @@ void Module::import_type(const type_info& T, const string& modid, bool qualified
 
 bool contains_import(const Haskell::Export& e, const string& name)
 {
-    if (auto em = std::get_if<Haskell::ExportModule>(&e))
-        throw myexception()<<"found "<<em->print()<<" in import list!";
+    if (e.is_module())
+        throw myexception()<<"found "<<e.print()<<" in import list!";
 
-    auto es = std::get_if<Haskell::ExportSymbol>(&e);
-    auto s_name = unloc(es->symbol);
-
-    return s_name == name;
+    return unloc(e.symbol) == name;
 }
 
 bool contains_import(const vector<Haskell::Export>& es, const string& name)
@@ -300,10 +297,9 @@ void Module::import_module(const Program& P, const module_import& I)
     {
         for(const auto& s: I.symbols)
         {
-            if (auto e = std::get_if<Haskell::ExportModule>(&s))
-                throw myexception()<<"module "<<I.name<<": found "<<e->print()<<" in import list!";
-            auto e = std::get_if<Haskell::ExportSymbol>(&s);
-            auto s_name = unloc(e->symbol);
+            if (s.is_module())
+                throw myexception()<<"module "<<I.name<<": found "<<s.print()<<" in import list!";
+            auto s_name = unloc(s.symbol);
 
             if (m2_exports.count(s_name))
             {
@@ -715,20 +711,20 @@ void Module::perform_exports()
     {
         for(auto& ex: *module.exports)
         {
-            if (auto e = std::get_if<Haskell::ExportSymbol>(&ex))
+            if (ex.is_module())
             {
-                string qvarid = unloc(e->symbol); // This ignores export subspec - see grammar.
+                string modid = unloc(ex.symbol);
+                export_module(modid);
+            }
+            else
+            {
+                string qvarid = unloc(ex.symbol); // This ignores export subspec - see grammar.
                 if (aliases.count(qvarid))
                     export_symbol(lookup_symbol(qvarid));
                 else if (type_aliases.count(qvarid))
                     export_type(lookup_type(qvarid));
                 else
                     throw myexception()<<"trying to export variable '"<<qvarid<<"', which is not in scope.";
-            }
-            else if (auto e = std::get_if<Haskell::ExportModule>(&ex))
-            {
-                string modid = unloc(e->modid);
-                export_module(modid);
             }
         }
     }

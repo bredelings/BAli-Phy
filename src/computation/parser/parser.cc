@@ -2543,13 +2543,13 @@ namespace yy {
 
   case 22: // export: qcname export_subspec
 #line 564 "parser.y"
-                                      {yylhs.value.as < Hs::Export > () = Hs::ExportSymbol{yystack_[1].value.as < Located<std::string> > (), yystack_[0].value.as < std::optional<Hs::ExportSubSpec> > ()}; }
+                                      {yylhs.value.as < Hs::Export > () = Hs::Export{{}, yystack_[1].value.as < Located<std::string> > (), yystack_[0].value.as < std::optional<Hs::ExportSubSpec> > ()}; }
 #line 2548 "parser.cc"
     break;
 
   case 23: // export: "module" modid
 #line 565 "parser.y"
-                                      {yylhs.value.as < Hs::Export > () = Hs::ExportModule{{yystack_[0].location,yystack_[0].value.as < std::string > ()}}; }
+                                      {yylhs.value.as < Hs::Export > () = Hs::Export{{{yystack_[1].location,Hs::ImpExpNs::module}}, {yystack_[0].location,yystack_[0].value.as < std::string > ()}}; }
 #line 2554 "parser.cc"
     break;
 
