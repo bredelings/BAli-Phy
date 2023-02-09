@@ -711,20 +711,43 @@ void Module::perform_exports()
     {
         for(auto& ex: *module.exports)
         {
+            string id = unloc(ex.symbol);
             if (ex.is_module())
             {
-                string modid = unloc(ex.symbol);
-                export_module(modid);
+                export_module(id);
             }
-            else
+            else if (ex.is_value())
             {
-                string qvarid = unloc(ex.symbol); // This ignores export subspec - see grammar.
-                if (aliases.count(qvarid))
-                    export_symbol(lookup_symbol(qvarid));
-                else if (type_aliases.count(qvarid))
-                    export_type(lookup_type(qvarid));
+                if (ex.subspec)
+                    throw myexception()<<"export `"<<ex.print()<<"` can't have subspec";
+
+                if (aliases.count(id))
+                    export_symbol(lookup_symbol(id));
+                else 
+                    throw myexception()<<"trying to export variable '"<<id<<"', which is not in scope.";
+            }
+            else if (ex.is_type())
+            {
+                if (type_aliases.count(id))
+                {
+                    auto t = lookup_type(id);
+                    export_type(t);
+                    if (not ex.subspec)
+                    {
+                        // just the type
+
+                    }
+                    else if (not ex.subspec->names)
+                    {
+                        // all children
+                    }
+                    else
+                    {
+                        // some children
+                    }
+                }
                 else
-                    throw myexception()<<"trying to export variable '"<<qvarid<<"', which is not in scope.";
+                    throw myexception()<<"trying to export type '"<<id<<"', which is not in scope.";
             }
         }
     }

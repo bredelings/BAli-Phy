@@ -565,8 +565,8 @@ export: qcname export_subspec         {$$ = Hs::Export{{}, $1, $2}; }
 |       "module" modid                {$$ = Hs::Export{{{@1,Hs::ImpExpNs::module}}, {@2,$2}}; }
 
 export_subspec: %empty                {}
-|              "(" qcnames ")"        { $$ = Hs::ExportSubSpecSome{$2}; }
-|              "(" ".." ")"           { $$ = Hs::ExportSubSpecAll(); }
+|              "(" qcnames ")"        { $$ = Hs::ExportSubSpec{$2}; }
+|              "(" ".." ")"           { $$ = Hs::ExportSubSpec(); }
 
 qcnames: %empty    {}
 |        qcnames1  {$$ = $1;}

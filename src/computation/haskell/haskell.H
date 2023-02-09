@@ -929,22 +929,10 @@ struct IfExp: public Object
         { }
 };
 
-struct ExportSubSpecSome
+struct ExportSubSpec
 {
-    std::vector<Located<std::string>> names;
+    std::optional<std::vector<Located<std::string>>> names;
     std::string print() const;
-};
-
-struct ExportSubSpecAll
-{
-    std::string print() const;
-};
-
-struct ExportSubSpec: public std::variant<ExportSubSpecSome, ExportSubSpecAll>
-{
-    std::string print() const;
-
-    using variant::variant;
 };
 
 enum class ImpExpNs {module, type, pattern};

@@ -82,22 +82,19 @@ string show_instance_header(const Context& context, const LType& constraint)
     return result;
 }
 
-string ExportSubSpecSome::print() const
-{
-    vector<string> ns;
-    for(auto& name: names)
-        ns.push_back( unloc(name) ) ;
-    return " (" + join(ns, ", ") + ")";
-}
-
-string ExportSubSpecAll::print() const
-{
-    return "(..)";
-}
-
 string ExportSubSpec::print() const
 {
-    return std::visit([](auto&& x) {return x.print();}, (const std::variant<ExportSubSpecSome,ExportSubSpecAll>&)(*this));
+    vector<string> ns;
+
+    if (not names)
+        ns.push_back("..");
+    else
+    {
+        for(auto& name: *names)
+            ns.push_back( unloc(name) ) ;
+    }
+
+    return " (" + join(ns, ", ") + ")";
 }
 
 string print(ImpExpNs ns)
