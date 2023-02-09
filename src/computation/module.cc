@@ -449,8 +449,11 @@ vector<module_import> Module::imports() const
 set<string> Module::dependencies() const
 {
     set<string> modules;
-    for(auto& mi: imports())
-        modules.insert(mi.name);
+    for(auto& [loc,impdecl]: module.impdecls)
+        modules.insert( unloc(impdecl.modid) );
+
+    if (name != "Prelude" and not modules.count("Prelude") and language_extensions.has_extension(LangExt::ImplicitPrelude))
+        modules.insert("Prelude");
     return modules;
 }
 
