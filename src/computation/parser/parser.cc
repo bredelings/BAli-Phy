@@ -436,12 +436,12 @@ namespace yy {
         value.YY_MOVE_OR_COPY< std::optional<Located<Hs::Kind>> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_prec: // prec
-        value.YY_MOVE_OR_COPY< std::optional<int> > (YY_MOVE (that.value));
+      case symbol_kind::S_maybeas: // maybeas
+        value.YY_MOVE_OR_COPY< std::optional<Located<std::string>> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_maybeas: // maybeas
-        value.YY_MOVE_OR_COPY< std::optional<std::string> > (YY_MOVE (that.value));
+      case symbol_kind::S_prec: // prec
+        value.YY_MOVE_OR_COPY< std::optional<int> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_where_type_family: // where_type_family
@@ -833,12 +833,12 @@ namespace yy {
         value.move< std::optional<Located<Hs::Kind>> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_prec: // prec
-        value.move< std::optional<int> > (YY_MOVE (that.value));
+      case symbol_kind::S_maybeas: // maybeas
+        value.move< std::optional<Located<std::string>> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_maybeas: // maybeas
-        value.move< std::optional<std::string> > (YY_MOVE (that.value));
+      case symbol_kind::S_prec: // prec
+        value.move< std::optional<int> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_where_type_family: // where_type_family
@@ -1230,12 +1230,12 @@ namespace yy {
         value.copy< std::optional<Located<Hs::Kind>> > (that.value);
         break;
 
-      case symbol_kind::S_prec: // prec
-        value.copy< std::optional<int> > (that.value);
+      case symbol_kind::S_maybeas: // maybeas
+        value.copy< std::optional<Located<std::string>> > (that.value);
         break;
 
-      case symbol_kind::S_maybeas: // maybeas
-        value.copy< std::optional<std::string> > (that.value);
+      case symbol_kind::S_prec: // prec
+        value.copy< std::optional<int> > (that.value);
         break;
 
       case symbol_kind::S_where_type_family: // where_type_family
@@ -1626,12 +1626,12 @@ namespace yy {
         value.move< std::optional<Located<Hs::Kind>> > (that.value);
         break;
 
-      case symbol_kind::S_prec: // prec
-        value.move< std::optional<int> > (that.value);
+      case symbol_kind::S_maybeas: // maybeas
+        value.move< std::optional<Located<std::string>> > (that.value);
         break;
 
-      case symbol_kind::S_maybeas: // maybeas
-        value.move< std::optional<std::string> > (that.value);
+      case symbol_kind::S_prec: // prec
+        value.move< std::optional<int> > (that.value);
         break;
 
       case symbol_kind::S_where_type_family: // where_type_family
@@ -2267,12 +2267,12 @@ namespace yy {
         yylhs.value.emplace< std::optional<Located<Hs::Kind>> > ();
         break;
 
-      case symbol_kind::S_prec: // prec
-        yylhs.value.emplace< std::optional<int> > ();
+      case symbol_kind::S_maybeas: // maybeas
+        yylhs.value.emplace< std::optional<Located<std::string>> > ();
         break;
 
-      case symbol_kind::S_maybeas: // maybeas
-        yylhs.value.emplace< std::optional<std::string> > ();
+      case symbol_kind::S_prec: // prec
+        yylhs.value.emplace< std::optional<int> > ();
         break;
 
       case symbol_kind::S_where_type_family: // where_type_family
@@ -2549,7 +2549,7 @@ namespace yy {
 
   case 23: // export: "module" modid
 #line 565 "parser.y"
-                                      {yylhs.value.as < Located<Hs::Export> > () = {yylhs.location,Hs::Export{{{yystack_[1].location,Hs::ImpExpNs::module}}, {yystack_[0].location,yystack_[0].value.as < std::string > ()}}}; }
+                                      {yylhs.value.as < Located<Hs::Export> > () = {yylhs.location,Hs::Export{{{yystack_[1].location,Hs::ImpExpNs::module}}, {yystack_[0].location,yystack_[0].value.as < std::string > ()}, {}}}; }
 #line 2554 "parser.cc"
     break;
 
@@ -2628,7 +2628,7 @@ namespace yy {
   case 40: // importdecl: "import" optqualified modid maybeas maybeimpspec
 #line 593 "parser.y"
                                                                                                         {
-    yylhs.value.as < Hs::ImpDecl > () = Hs::ImpDecl(yystack_[3].value.as < bool > (),yystack_[2].value.as < std::string > (),yystack_[1].value.as < std::optional<std::string> > (),yystack_[0].value.as < std::optional<Hs::ImpSpec> > ());
+    yylhs.value.as < Hs::ImpDecl > () = Hs::ImpDecl(yystack_[3].value.as < bool > (),{yystack_[2].location,yystack_[2].value.as < std::string > ()},yystack_[1].value.as < std::optional<Located<std::string>> > (),yystack_[0].value.as < std::optional<Hs::ImpSpec> > ());
 }
 #line 2634 "parser.cc"
     break;
@@ -2647,7 +2647,7 @@ namespace yy {
 
   case 43: // maybeas: "as" modid
 #line 609 "parser.y"
-                               { yylhs.value.as < std::optional<std::string> > () = yystack_[0].value.as < std::string > (); }
+                               { yylhs.value.as < std::optional<Located<std::string>> > () = {{yystack_[0].location,yystack_[0].value.as < std::string > ()}}; }
 #line 2652 "parser.cc"
     break;
 

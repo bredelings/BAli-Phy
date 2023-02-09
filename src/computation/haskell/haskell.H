@@ -960,14 +960,14 @@ struct ImpSpec
 struct ImpDecl
 {
     bool qualified;
-    std::string modid;
-    std::optional<std::string> as;
+    Located<std::string> modid;
+    std::optional<Located<std::string>> as;
     std::optional<ImpSpec> impspec;
 
     std::string print() const;
 
     ImpDecl() = default;
-    ImpDecl(bool b, const std::string& s, const std::optional<std::string>& a, const std::optional<ImpSpec>& is)
+    ImpDecl(bool b, const Located<std::string>& s, const std::optional<Located<std::string>>& a, const std::optional<ImpSpec>& is)
         :qualified(b),
          modid(s),
          as(a),

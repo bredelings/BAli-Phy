@@ -407,10 +407,10 @@ module_import parse_import(const Haskell::ImpDecl& impdecl)
 
     mi.qualified = impdecl.qualified;
             
-    mi.name = impdecl.modid;
+    mi.name = unloc(impdecl.modid);
             
     if (impdecl.as)
-        mi.as = *impdecl.as;
+        mi.as = unloc(*impdecl.as);
     else
         mi.as = mi.name;
 

@@ -163,9 +163,9 @@ string ImpDecl::print() const
     v.push_back("import");
     if (qualified)
         v.push_back("qualified");
-    v.push_back(modid);
+    v.push_back(unloc(modid));
     if (as)
-        v.push_back(*as);
+        v.push_back(unloc(*as));
     if (impspec)
         v.push_back(impspec->print());
     return join(v, " ");

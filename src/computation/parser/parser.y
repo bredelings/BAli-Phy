@@ -239,7 +239,7 @@
  // %type <bool> maybe_safe
  // %type <std::optional<std::string>> maybe_pkg
 %type <bool> optqualified
-%type <std::optional<std::string>> maybeas
+%type <std::optional<Located<std::string>>> maybeas
 %type <std::optional<Hs::ImpSpec>> maybeimpspec
 %type <Hs::ImpSpec> impspec
 
@@ -562,7 +562,7 @@ exportlist1: exportlist1 "," export   {$$ = $1; $$.push_back($3);}
 |            export                   {$$.push_back($1);}
 
 export: qcname export_subspec         {$$ = {@$,Hs::Export{{}, $1, $2}}; }
-|       "module" modid                {$$ = {@$,Hs::Export{{{@1,Hs::ImpExpNs::module}}, {@2,$2}}}; }
+|       "module" modid                {$$ = {@$,Hs::Export{{{@1,Hs::ImpExpNs::module}}, {@2,$2}, {}}}; }
 
 export_subspec: %empty                {}
 |              "(" qcnames ")"        { $$ = Hs::ExportSubSpec{$2}; }
@@ -591,7 +591,7 @@ importdecls_semi: importdecls_semi importdecl semis1 { $$ = $1; $$.push_back($2)
 |                 %empty { }
 
 importdecl: "import" /*maybe_src*/ /*maybe_safe*/ optqualified /*maybe_pkg*/ modid maybeas maybeimpspec {
-    $$ = Hs::ImpDecl($2,$3,$4,$5);
+    $$ = Hs::ImpDecl($2,{@3,$3},$4,$5);
 }
 /*
 maybe_src: "{-# SOURCE" "#-}"  { $$ = true; }
@@ -606,7 +606,7 @@ maybe_pkg: STRING              { $$ = $1; }
 optqualified: "qualified"      { $$ = true; }
 |             %empty           { $$ = false; }
 
-maybeas:  "as" modid           { $$ = $2; }
+maybeas:  "as" modid           { $$ = {{@2,$2}}; }
 |         %empty               { }
 
 maybeimpspec: impspec          { $$ = $1; }

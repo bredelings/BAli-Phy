@@ -627,11 +627,11 @@ namespace yy {
       // opt_at_kind_inj_sig
       char dummy43[sizeof (std::optional<Located<Hs::Kind>>)];
 
-      // prec
-      char dummy44[sizeof (std::optional<int>)];
-
       // maybeas
-      char dummy45[sizeof (std::optional<std::string>)];
+      char dummy44[sizeof (std::optional<Located<std::string>>)];
+
+      // prec
+      char dummy45[sizeof (std::optional<int>)];
 
       // where_type_family
       char dummy46[sizeof (std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>)];
@@ -1583,12 +1583,12 @@ namespace yy {
         value.move< std::optional<Located<Hs::Kind>> > (std::move (that.value));
         break;
 
-      case symbol_kind::S_prec: // prec
-        value.move< std::optional<int> > (std::move (that.value));
+      case symbol_kind::S_maybeas: // maybeas
+        value.move< std::optional<Located<std::string>> > (std::move (that.value));
         break;
 
-      case symbol_kind::S_maybeas: // maybeas
-        value.move< std::optional<std::string> > (std::move (that.value));
+      case symbol_kind::S_prec: // prec
+        value.move< std::optional<int> > (std::move (that.value));
         break;
 
       case symbol_kind::S_where_type_family: // where_type_family
@@ -2361,13 +2361,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::optional<int>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::optional<Located<std::string>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::optional<int>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::optional<Located<std::string>>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2375,13 +2375,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::optional<std::string>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::optional<int>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::optional<std::string>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::optional<int>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -2880,12 +2880,12 @@ switch (yykind)
         value.template destroy< std::optional<Located<Hs::Kind>> > ();
         break;
 
-      case symbol_kind::S_prec: // prec
-        value.template destroy< std::optional<int> > ();
+      case symbol_kind::S_maybeas: // maybeas
+        value.template destroy< std::optional<Located<std::string>> > ();
         break;
 
-      case symbol_kind::S_maybeas: // maybeas
-        value.template destroy< std::optional<std::string> > ();
+      case symbol_kind::S_prec: // prec
+        value.template destroy< std::optional<int> > ();
         break;
 
       case symbol_kind::S_where_type_family: // where_type_family
@@ -6031,12 +6031,12 @@ switch (yykind)
         value.copy< std::optional<Located<Hs::Kind>> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_prec: // prec
-        value.copy< std::optional<int> > (YY_MOVE (that.value));
+      case symbol_kind::S_maybeas: // maybeas
+        value.copy< std::optional<Located<std::string>> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_maybeas: // maybeas
-        value.copy< std::optional<std::string> > (YY_MOVE (that.value));
+      case symbol_kind::S_prec: // prec
+        value.copy< std::optional<int> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_where_type_family: // where_type_family
@@ -6444,12 +6444,12 @@ switch (yykind)
         value.move< std::optional<Located<Hs::Kind>> > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_prec: // prec
-        value.move< std::optional<int> > (YY_MOVE (s.value));
+      case symbol_kind::S_maybeas: // maybeas
+        value.move< std::optional<Located<std::string>> > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_maybeas: // maybeas
-        value.move< std::optional<std::string> > (YY_MOVE (s.value));
+      case symbol_kind::S_prec: // prec
+        value.move< std::optional<int> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_where_type_family: // where_type_family
