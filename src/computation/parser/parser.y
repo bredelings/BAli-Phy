@@ -25,7 +25,7 @@
 
   class driver;
 
-  std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
+  std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> make_body(const std::vector<Hs::LImpDecl>& imports, const std::optional<Hs::Decls>& topdecls);
 
   Hs::Kind type_to_kind(const Hs::LType& kind);
   Hs::ConstructorDecl make_constructor(const std::vector<Hs::LTypeVar>& forall, const std::optional<Hs::Context>& c, const Hs::LType& typeish);
@@ -218,23 +218,23 @@
 %type <Hs::Module> module
  /* %type <void> missing_module_keyword */
  /* %type <expression_ref> maybemodwarning */
-%type <std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>> body2
-%type <std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>> body
-%type <std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>> top
-%type <std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>>> top1
+%type <std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>>> body2
+%type <std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>>> body
+%type <std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>>> top
+%type <std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>>> top1
 
-%type <std::optional<std::vector<Located<Hs::Export>>>> maybeexports
-%type <std::vector<Located<Hs::Export>>> exportlist
-%type <std::vector<Located<Hs::Export>>> exportlist1
-%type <Located<Hs::Export>> export
+%type <std::optional<std::vector<Hs::LExport>>> maybeexports
+%type <std::vector<Hs::LExport>> exportlist
+%type <std::vector<Hs::LExport>> exportlist1
+%type <Hs::LExport> export
 %type <std::optional<Hs::ExportSubSpec>> export_subspec
 %type <std::vector<Located<std::string>>> qcnames
 %type <std::vector<Located<std::string>>> qcnames1
 %type <Located<std::string>> qcname
 
-%type <std::vector<Hs::ImpDecl>> importdecls
-%type <std::vector<Hs::ImpDecl>> importdecls_semi
-%type <Hs::ImpDecl> importdecl
+%type <std::vector<Hs::LImpDecl>> importdecls
+%type <std::vector<Hs::LImpDecl>> importdecls_semi
+%type <Hs::LImpDecl> importdecl
  // %type <bool> maybe_src
  // %type <bool> maybe_safe
  // %type <std::optional<std::string>> maybe_pkg
@@ -591,7 +591,7 @@ importdecls_semi: importdecls_semi importdecl semis1 { $$ = $1; $$.push_back($2)
 |                 %empty { }
 
 importdecl: "import" /*maybe_src*/ /*maybe_safe*/ optqualified /*maybe_pkg*/ modid maybeas maybeimpspec {
-    $$ = Hs::ImpDecl($2,$3,$4,$5);
+    $$ = {@$, Hs::ImpDecl($2,$3,$4,$5)};
 }
 /*
 maybe_src: "{-# SOURCE" "#-}"  { $$ = true; }
@@ -1577,7 +1577,7 @@ yy::parser::error (const location_type& l, const std::string& m)
     drv.push_error_message(l,m);
 }
 
-pair<vector<Hs::ImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls)
+pair<vector<Hs::LImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::LImpDecl>& imports, const std::optional<Hs::Decls>& topdecls)
 {
     if (topdecls)
     {

@@ -431,7 +431,7 @@ vector<module_import> Module::imports() const
     vector<module_import> imports_list;
 
     bool seen_Prelude = false;
-    for(const auto& impdecl: module.impdecls)
+    for(const auto& [loc,impdecl]: module.impdecls)
     {
         auto import = parse_import(impdecl);
         if (import.name == "Prelude")

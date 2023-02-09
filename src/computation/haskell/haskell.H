@@ -950,10 +950,12 @@ struct Export
     bool is_type() const;
 };
 
+typedef Located<Export> LExport;
+
 struct ImpSpec
 {
     bool hiding;
-    std::vector<Located<Export>> imports;
+    std::vector<LExport> imports;
     std::string print() const;
 };
 
@@ -975,19 +977,21 @@ struct ImpDecl
     {}
 };
 
+typedef Located<ImpDecl> LImpDecl;
+
 struct Module
 {
     Located<std::string> modid;
-    std::optional<std::vector<Located<Export>>> exports;
-    std::vector<ImpDecl> impdecls;
+    std::optional<std::vector<LExport>> exports;
+    std::vector<LImpDecl> impdecls;
     std::optional<Decls> topdecls;
 
     std::string print() const;
 
     Module() = default;
     Module(const Located<std::string>&s,
-           const std::optional<std::vector<Located<Export>>>& e,
-           const std::vector<ImpDecl>& i,
+           const std::optional<std::vector<LExport>>& e,
+           const std::vector<LImpDecl>& i,
            const std::optional<Decls>& t)
         :modid(s),
          exports(e),

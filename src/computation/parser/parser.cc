@@ -257,12 +257,16 @@ namespace yy {
         value.YY_MOVE_OR_COPY< Hs::GuardedRHS > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_importdecl: // importdecl
-        value.YY_MOVE_OR_COPY< Hs::ImpDecl > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_impspec: // impspec
         value.YY_MOVE_OR_COPY< Hs::ImpSpec > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_export: // export
+        value.YY_MOVE_OR_COPY< Hs::LExport > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_importdecl: // importdecl
+        value.YY_MOVE_OR_COPY< Hs::LImpDecl > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_sigtype: // sigtype
@@ -316,10 +320,6 @@ namespace yy {
       case symbol_kind::S_decllist_cls: // decllist_cls
       case symbol_kind::S_decllist_inst: // decllist_inst
         value.YY_MOVE_OR_COPY< Located<Hs::Decls> > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_export: // export
-        value.YY_MOVE_OR_COPY< Located<Hs::Export> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_fbinds: // fbinds
@@ -445,12 +445,12 @@ namespace yy {
         value.YY_MOVE_OR_COPY< std::optional<int> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_where_type_family: // where_type_family
-        value.YY_MOVE_OR_COPY< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (YY_MOVE (that.value));
+      case symbol_kind::S_maybeexports: // maybeexports
+        value.YY_MOVE_OR_COPY< std::optional<std::vector<Hs::LExport>> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
-        value.YY_MOVE_OR_COPY< std::optional<std::vector<Located<Hs::Export>>> > (YY_MOVE (that.value));
+      case symbol_kind::S_where_type_family: // where_type_family
+        value.YY_MOVE_OR_COPY< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -461,7 +461,7 @@ namespace yy {
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        value.YY_MOVE_OR_COPY< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -530,9 +530,14 @@ namespace yy {
         value.YY_MOVE_OR_COPY< std::vector<Hs::GuardedRHS> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+        value.YY_MOVE_OR_COPY< std::vector<Hs::LExport> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        value.YY_MOVE_OR_COPY< std::vector<Hs::ImpDecl> > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< std::vector<Hs::LImpDecl> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_sigtypes1: // sigtypes1
@@ -563,11 +568,6 @@ namespace yy {
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.YY_MOVE_OR_COPY< std::vector<Located<Hs::Alt>> > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_exportlist: // exportlist
-      case symbol_kind::S_exportlist1: // exportlist1
-        value.YY_MOVE_OR_COPY< std::vector<Located<Hs::Export>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_decls: // decls
@@ -654,12 +654,16 @@ namespace yy {
         value.move< Hs::GuardedRHS > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_importdecl: // importdecl
-        value.move< Hs::ImpDecl > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_impspec: // impspec
         value.move< Hs::ImpSpec > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_export: // export
+        value.move< Hs::LExport > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_importdecl: // importdecl
+        value.move< Hs::LImpDecl > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_sigtype: // sigtype
@@ -713,10 +717,6 @@ namespace yy {
       case symbol_kind::S_decllist_cls: // decllist_cls
       case symbol_kind::S_decllist_inst: // decllist_inst
         value.move< Located<Hs::Decls> > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_export: // export
-        value.move< Located<Hs::Export> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_fbinds: // fbinds
@@ -842,12 +842,12 @@ namespace yy {
         value.move< std::optional<int> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_where_type_family: // where_type_family
-        value.move< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (YY_MOVE (that.value));
+      case symbol_kind::S_maybeexports: // maybeexports
+        value.move< std::optional<std::vector<Hs::LExport>> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
-        value.move< std::optional<std::vector<Located<Hs::Export>>> > (YY_MOVE (that.value));
+      case symbol_kind::S_where_type_family: // where_type_family
+        value.move< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -858,7 +858,7 @@ namespace yy {
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        value.move< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > (YY_MOVE (that.value));
+        value.move< std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -927,9 +927,14 @@ namespace yy {
         value.move< std::vector<Hs::GuardedRHS> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+        value.move< std::vector<Hs::LExport> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        value.move< std::vector<Hs::ImpDecl> > (YY_MOVE (that.value));
+        value.move< std::vector<Hs::LImpDecl> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_sigtypes1: // sigtypes1
@@ -960,11 +965,6 @@ namespace yy {
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.move< std::vector<Located<Hs::Alt>> > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_exportlist: // exportlist
-      case symbol_kind::S_exportlist1: // exportlist1
-        value.move< std::vector<Located<Hs::Export>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_decls: // decls
@@ -1051,12 +1051,16 @@ namespace yy {
         value.copy< Hs::GuardedRHS > (that.value);
         break;
 
-      case symbol_kind::S_importdecl: // importdecl
-        value.copy< Hs::ImpDecl > (that.value);
-        break;
-
       case symbol_kind::S_impspec: // impspec
         value.copy< Hs::ImpSpec > (that.value);
+        break;
+
+      case symbol_kind::S_export: // export
+        value.copy< Hs::LExport > (that.value);
+        break;
+
+      case symbol_kind::S_importdecl: // importdecl
+        value.copy< Hs::LImpDecl > (that.value);
         break;
 
       case symbol_kind::S_sigtype: // sigtype
@@ -1110,10 +1114,6 @@ namespace yy {
       case symbol_kind::S_decllist_cls: // decllist_cls
       case symbol_kind::S_decllist_inst: // decllist_inst
         value.copy< Located<Hs::Decls> > (that.value);
-        break;
-
-      case symbol_kind::S_export: // export
-        value.copy< Located<Hs::Export> > (that.value);
         break;
 
       case symbol_kind::S_fbinds: // fbinds
@@ -1239,12 +1239,12 @@ namespace yy {
         value.copy< std::optional<int> > (that.value);
         break;
 
-      case symbol_kind::S_where_type_family: // where_type_family
-        value.copy< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (that.value);
+      case symbol_kind::S_maybeexports: // maybeexports
+        value.copy< std::optional<std::vector<Hs::LExport>> > (that.value);
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
-        value.copy< std::optional<std::vector<Located<Hs::Export>>> > (that.value);
+      case symbol_kind::S_where_type_family: // where_type_family
+        value.copy< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (that.value);
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -1255,7 +1255,7 @@ namespace yy {
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        value.copy< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > (that.value);
+        value.copy< std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > (that.value);
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -1324,9 +1324,14 @@ namespace yy {
         value.copy< std::vector<Hs::GuardedRHS> > (that.value);
         break;
 
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+        value.copy< std::vector<Hs::LExport> > (that.value);
+        break;
+
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        value.copy< std::vector<Hs::ImpDecl> > (that.value);
+        value.copy< std::vector<Hs::LImpDecl> > (that.value);
         break;
 
       case symbol_kind::S_sigtypes1: // sigtypes1
@@ -1357,11 +1362,6 @@ namespace yy {
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.copy< std::vector<Located<Hs::Alt>> > (that.value);
-        break;
-
-      case symbol_kind::S_exportlist: // exportlist
-      case symbol_kind::S_exportlist1: // exportlist1
-        value.copy< std::vector<Located<Hs::Export>> > (that.value);
         break;
 
       case symbol_kind::S_decls: // decls
@@ -1447,12 +1447,16 @@ namespace yy {
         value.move< Hs::GuardedRHS > (that.value);
         break;
 
-      case symbol_kind::S_importdecl: // importdecl
-        value.move< Hs::ImpDecl > (that.value);
-        break;
-
       case symbol_kind::S_impspec: // impspec
         value.move< Hs::ImpSpec > (that.value);
+        break;
+
+      case symbol_kind::S_export: // export
+        value.move< Hs::LExport > (that.value);
+        break;
+
+      case symbol_kind::S_importdecl: // importdecl
+        value.move< Hs::LImpDecl > (that.value);
         break;
 
       case symbol_kind::S_sigtype: // sigtype
@@ -1506,10 +1510,6 @@ namespace yy {
       case symbol_kind::S_decllist_cls: // decllist_cls
       case symbol_kind::S_decllist_inst: // decllist_inst
         value.move< Located<Hs::Decls> > (that.value);
-        break;
-
-      case symbol_kind::S_export: // export
-        value.move< Located<Hs::Export> > (that.value);
         break;
 
       case symbol_kind::S_fbinds: // fbinds
@@ -1635,12 +1635,12 @@ namespace yy {
         value.move< std::optional<int> > (that.value);
         break;
 
-      case symbol_kind::S_where_type_family: // where_type_family
-        value.move< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (that.value);
+      case symbol_kind::S_maybeexports: // maybeexports
+        value.move< std::optional<std::vector<Hs::LExport>> > (that.value);
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
-        value.move< std::optional<std::vector<Located<Hs::Export>>> > (that.value);
+      case symbol_kind::S_where_type_family: // where_type_family
+        value.move< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > (that.value);
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -1651,7 +1651,7 @@ namespace yy {
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        value.move< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > (that.value);
+        value.move< std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > (that.value);
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -1720,9 +1720,14 @@ namespace yy {
         value.move< std::vector<Hs::GuardedRHS> > (that.value);
         break;
 
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+        value.move< std::vector<Hs::LExport> > (that.value);
+        break;
+
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        value.move< std::vector<Hs::ImpDecl> > (that.value);
+        value.move< std::vector<Hs::LImpDecl> > (that.value);
         break;
 
       case symbol_kind::S_sigtypes1: // sigtypes1
@@ -1753,11 +1758,6 @@ namespace yy {
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         value.move< std::vector<Located<Hs::Alt>> > (that.value);
-        break;
-
-      case symbol_kind::S_exportlist: // exportlist
-      case symbol_kind::S_exportlist1: // exportlist1
-        value.move< std::vector<Located<Hs::Export>> > (that.value);
         break;
 
       case symbol_kind::S_decls: // decls
@@ -2088,12 +2088,16 @@ namespace yy {
         yylhs.value.emplace< Hs::GuardedRHS > ();
         break;
 
-      case symbol_kind::S_importdecl: // importdecl
-        yylhs.value.emplace< Hs::ImpDecl > ();
-        break;
-
       case symbol_kind::S_impspec: // impspec
         yylhs.value.emplace< Hs::ImpSpec > ();
+        break;
+
+      case symbol_kind::S_export: // export
+        yylhs.value.emplace< Hs::LExport > ();
+        break;
+
+      case symbol_kind::S_importdecl: // importdecl
+        yylhs.value.emplace< Hs::LImpDecl > ();
         break;
 
       case symbol_kind::S_sigtype: // sigtype
@@ -2147,10 +2151,6 @@ namespace yy {
       case symbol_kind::S_decllist_cls: // decllist_cls
       case symbol_kind::S_decllist_inst: // decllist_inst
         yylhs.value.emplace< Located<Hs::Decls> > ();
-        break;
-
-      case symbol_kind::S_export: // export
-        yylhs.value.emplace< Located<Hs::Export> > ();
         break;
 
       case symbol_kind::S_fbinds: // fbinds
@@ -2276,12 +2276,12 @@ namespace yy {
         yylhs.value.emplace< std::optional<int> > ();
         break;
 
-      case symbol_kind::S_where_type_family: // where_type_family
-        yylhs.value.emplace< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > ();
+      case symbol_kind::S_maybeexports: // maybeexports
+        yylhs.value.emplace< std::optional<std::vector<Hs::LExport>> > ();
         break;
 
-      case symbol_kind::S_maybeexports: // maybeexports
-        yylhs.value.emplace< std::optional<std::vector<Located<Hs::Export>>> > ();
+      case symbol_kind::S_where_type_family: // where_type_family
+        yylhs.value.emplace< std::optional<std::vector<Hs::TypeFamilyInstanceEqn>> > ();
         break;
 
       case symbol_kind::S_tycl_hdr: // tycl_hdr
@@ -2292,7 +2292,7 @@ namespace yy {
       case symbol_kind::S_body2: // body2
       case symbol_kind::S_top: // top
       case symbol_kind::S_top1: // top1
-        yylhs.value.emplace< std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();
+        yylhs.value.emplace< std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > ();
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -2361,9 +2361,14 @@ namespace yy {
         yylhs.value.emplace< std::vector<Hs::GuardedRHS> > ();
         break;
 
+      case symbol_kind::S_exportlist: // exportlist
+      case symbol_kind::S_exportlist1: // exportlist1
+        yylhs.value.emplace< std::vector<Hs::LExport> > ();
+        break;
+
       case symbol_kind::S_importdecls: // importdecls
       case symbol_kind::S_importdecls_semi: // importdecls_semi
-        yylhs.value.emplace< std::vector<Hs::ImpDecl> > ();
+        yylhs.value.emplace< std::vector<Hs::LImpDecl> > ();
         break;
 
       case symbol_kind::S_sigtypes1: // sigtypes1
@@ -2394,11 +2399,6 @@ namespace yy {
       case symbol_kind::S_alts: // alts
       case symbol_kind::S_alts1: // alts1
         yylhs.value.emplace< std::vector<Located<Hs::Alt>> > ();
-        break;
-
-      case symbol_kind::S_exportlist: // exportlist
-      case symbol_kind::S_exportlist1: // exportlist1
-        yylhs.value.emplace< std::vector<Located<Hs::Export>> > ();
         break;
 
       case symbol_kind::S_decls: // decls
@@ -2447,13 +2447,13 @@ namespace yy {
 
   case 3: // module: "module" modid maybemodwarning maybeexports "where" body
 #line 526 "parser.y"
-                                                                 {yylhs.value.as < Hs::Module > () = Hs::Module{yystack_[4].value.as < Located<std::string> > (),yystack_[2].value.as < std::optional<std::vector<Located<Hs::Export>>> > (),yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().first, yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().second};}
+                                                                 {yylhs.value.as < Hs::Module > () = Hs::Module{yystack_[4].value.as < Located<std::string> > (),yystack_[2].value.as < std::optional<std::vector<Hs::LExport>> > (),yystack_[0].value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > ().first, yystack_[0].value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > ().second};}
 #line 2452 "parser.cc"
     break;
 
   case 4: // module: body2
 #line 527 "parser.y"
-                                                                 {yylhs.value.as < Hs::Module > () = Hs::Module{{noloc,"Main"},{},yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().first, yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().second};}
+                                                                 {yylhs.value.as < Hs::Module > () = Hs::Module{{noloc,"Main"},{},yystack_[0].value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > ().first, yystack_[0].value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > ().second};}
 #line 2458 "parser.cc"
     break;
 
@@ -2465,55 +2465,55 @@ namespace yy {
 
   case 9: // body: "{" top "}"
 #line 537 "parser.y"
-                        {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();}
+                        {yylhs.value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > ();}
 #line 2470 "parser.cc"
     break;
 
   case 10: // body: "vocurly" top close
 #line 538 "parser.y"
-                        {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();}
+                        {yylhs.value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > ();}
 #line 2476 "parser.cc"
     break;
 
   case 11: // body2: "{" top "}"
 #line 540 "parser.y"
-                                           {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();}
+                                           {yylhs.value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > ();}
 #line 2482 "parser.cc"
     break;
 
   case 12: // body2: missing_module_keyword top close
 #line 541 "parser.y"
-                                           {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();}
+                                           {yylhs.value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > () = yystack_[1].value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > ();}
 #line 2488 "parser.cc"
     break;
 
   case 13: // top: semis top1
 #line 544 "parser.y"
-                                           {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ();}
+                                           {yylhs.value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > () = yystack_[0].value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > ();}
 #line 2494 "parser.cc"
     break;
 
   case 14: // top1: importdecls_semi topdecls_semi
 #line 546 "parser.y"
-                                           {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = make_body(yystack_[1].value.as < std::vector<Hs::ImpDecl> > (),yystack_[0].value.as < Hs::Decls > ());}
+                                           {yylhs.value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > () = make_body(yystack_[1].value.as < std::vector<Hs::LImpDecl> > (),yystack_[0].value.as < Hs::Decls > ());}
 #line 2500 "parser.cc"
     break;
 
   case 15: // top1: importdecls_semi topdecls
 #line 547 "parser.y"
-                                           {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = make_body(yystack_[1].value.as < std::vector<Hs::ImpDecl> > (),yystack_[0].value.as < Hs::Decls > ());}
+                                           {yylhs.value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > () = make_body(yystack_[1].value.as < std::vector<Hs::LImpDecl> > (),yystack_[0].value.as < Hs::Decls > ());}
 #line 2506 "parser.cc"
     break;
 
   case 16: // top1: importdecls
 #line 548 "parser.y"
-                                           {yylhs.value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > () = make_body(yystack_[0].value.as < std::vector<Hs::ImpDecl> > (),{});}
+                                           {yylhs.value.as < std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>> > () = make_body(yystack_[0].value.as < std::vector<Hs::LImpDecl> > (),{});}
 #line 2512 "parser.cc"
     break;
 
   case 17: // maybeexports: "(" exportlist ")"
 #line 556 "parser.y"
-                                      {yylhs.value.as < std::optional<std::vector<Located<Hs::Export>>> > () = yystack_[1].value.as < std::vector<Located<Hs::Export>> > ();}
+                                      {yylhs.value.as < std::optional<std::vector<Hs::LExport>> > () = yystack_[1].value.as < std::vector<Hs::LExport> > ();}
 #line 2518 "parser.cc"
     break;
 
@@ -2525,31 +2525,31 @@ namespace yy {
 
   case 19: // exportlist: exportlist1
 #line 559 "parser.y"
-                                      {yylhs.value.as < std::vector<Located<Hs::Export>> > () = yystack_[0].value.as < std::vector<Located<Hs::Export>> > ();}
+                                      {yylhs.value.as < std::vector<Hs::LExport> > () = yystack_[0].value.as < std::vector<Hs::LExport> > ();}
 #line 2530 "parser.cc"
     break;
 
   case 20: // exportlist1: exportlist1 "," export
 #line 561 "parser.y"
-                                      {yylhs.value.as < std::vector<Located<Hs::Export>> > () = yystack_[2].value.as < std::vector<Located<Hs::Export>> > (); yylhs.value.as < std::vector<Located<Hs::Export>> > ().push_back(yystack_[0].value.as < Located<Hs::Export> > ());}
+                                      {yylhs.value.as < std::vector<Hs::LExport> > () = yystack_[2].value.as < std::vector<Hs::LExport> > (); yylhs.value.as < std::vector<Hs::LExport> > ().push_back(yystack_[0].value.as < Hs::LExport > ());}
 #line 2536 "parser.cc"
     break;
 
   case 21: // exportlist1: export
 #line 562 "parser.y"
-                                      {yylhs.value.as < std::vector<Located<Hs::Export>> > ().push_back(yystack_[0].value.as < Located<Hs::Export> > ());}
+                                      {yylhs.value.as < std::vector<Hs::LExport> > ().push_back(yystack_[0].value.as < Hs::LExport > ());}
 #line 2542 "parser.cc"
     break;
 
   case 22: // export: qcname export_subspec
 #line 564 "parser.y"
-                                      {yylhs.value.as < Located<Hs::Export> > () = {yylhs.location,Hs::Export{{}, yystack_[1].value.as < Located<std::string> > (), yystack_[0].value.as < std::optional<Hs::ExportSubSpec> > ()}}; }
+                                      {yylhs.value.as < Hs::LExport > () = {yylhs.location,Hs::Export{{}, yystack_[1].value.as < Located<std::string> > (), yystack_[0].value.as < std::optional<Hs::ExportSubSpec> > ()}}; }
 #line 2548 "parser.cc"
     break;
 
   case 23: // export: "module" modid
 #line 565 "parser.y"
-                                      {yylhs.value.as < Located<Hs::Export> > () = {yylhs.location,Hs::Export{{{yystack_[1].location,Hs::ImpExpNs::module}}, yystack_[0].value.as < Located<std::string> > (), {}}}; }
+                                      {yylhs.value.as < Hs::LExport > () = {yylhs.location,Hs::Export{{{yystack_[1].location,Hs::ImpExpNs::module}}, yystack_[0].value.as < Located<std::string> > (), {}}}; }
 #line 2554 "parser.cc"
     break;
 
@@ -2609,13 +2609,13 @@ namespace yy {
 
   case 37: // importdecls: importdecls_semi importdecl
 #line 588 "parser.y"
-                                         { yylhs.value.as < std::vector<Hs::ImpDecl> > () = yystack_[1].value.as < std::vector<Hs::ImpDecl> > (), yylhs.value.as < std::vector<Hs::ImpDecl> > ().push_back(yystack_[0].value.as < Hs::ImpDecl > ()); }
+                                         { yylhs.value.as < std::vector<Hs::LImpDecl> > () = yystack_[1].value.as < std::vector<Hs::LImpDecl> > (), yylhs.value.as < std::vector<Hs::LImpDecl> > ().push_back(yystack_[0].value.as < Hs::LImpDecl > ()); }
 #line 2614 "parser.cc"
     break;
 
   case 38: // importdecls_semi: importdecls_semi importdecl semis1
 #line 590 "parser.y"
-                                                     { yylhs.value.as < std::vector<Hs::ImpDecl> > () = yystack_[2].value.as < std::vector<Hs::ImpDecl> > (); yylhs.value.as < std::vector<Hs::ImpDecl> > ().push_back(yystack_[1].value.as < Hs::ImpDecl > ()); }
+                                                     { yylhs.value.as < std::vector<Hs::LImpDecl> > () = yystack_[2].value.as < std::vector<Hs::LImpDecl> > (); yylhs.value.as < std::vector<Hs::LImpDecl> > ().push_back(yystack_[1].value.as < Hs::LImpDecl > ()); }
 #line 2620 "parser.cc"
     break;
 
@@ -2628,7 +2628,7 @@ namespace yy {
   case 40: // importdecl: "import" optqualified modid maybeas maybeimpspec
 #line 593 "parser.y"
                                                                                                         {
-    yylhs.value.as < Hs::ImpDecl > () = Hs::ImpDecl(yystack_[3].value.as < bool > (),yystack_[2].value.as < Located<std::string> > (),yystack_[1].value.as < std::optional<Located<std::string>> > (),yystack_[0].value.as < std::optional<Hs::ImpSpec> > ());
+    yylhs.value.as < Hs::LImpDecl > () = {yylhs.location, Hs::ImpDecl(yystack_[3].value.as < bool > (),yystack_[2].value.as < Located<std::string> > (),yystack_[1].value.as < std::optional<Located<std::string>> > (),yystack_[0].value.as < std::optional<Hs::ImpSpec> > ())};
 }
 #line 2634 "parser.cc"
     break;
@@ -2671,13 +2671,13 @@ namespace yy {
 
   case 47: // impspec: "(" exportlist ")"
 #line 617 "parser.y"
-                                      { yylhs.value.as < Hs::ImpSpec > () = Hs::ImpSpec{false, yystack_[1].value.as < std::vector<Located<Hs::Export>> > ()}; }
+                                      { yylhs.value.as < Hs::ImpSpec > () = Hs::ImpSpec{false, yystack_[1].value.as < std::vector<Hs::LExport> > ()}; }
 #line 2676 "parser.cc"
     break;
 
   case 48: // impspec: "hiding" "(" exportlist ")"
 #line 618 "parser.y"
-                                      { yylhs.value.as < Hs::ImpSpec > () = Hs::ImpSpec{true,  yystack_[1].value.as < std::vector<Located<Hs::Export>> > ()}; }
+                                      { yylhs.value.as < Hs::ImpSpec > () = Hs::ImpSpec{true,  yystack_[1].value.as < std::vector<Hs::LExport> > ()}; }
 #line 2682 "parser.cc"
     break;
 
@@ -7033,7 +7033,7 @@ yy::parser::error (const location_type& l, const std::string& m)
     drv.push_error_message(l,m);
 }
 
-pair<vector<Hs::ImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::ImpDecl>& imports, const std::optional<Hs::Decls>& topdecls)
+pair<vector<Hs::LImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::LImpDecl>& imports, const std::optional<Hs::Decls>& topdecls)
 {
     if (topdecls)
     {
