@@ -173,7 +173,7 @@ string ImpDecl::print() const
 
 string Module::print() const
 {
-    string result = "module " + modid;
+    string result = "module " + unloc(modid);
 
     if (exports)
     {

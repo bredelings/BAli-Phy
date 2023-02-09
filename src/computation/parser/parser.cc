@@ -359,6 +359,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_modid: // modid
         value.YY_MOVE_OR_COPY< Located<std::string> > (YY_MOVE (that.value));
         break;
 
@@ -516,7 +517,6 @@ namespace yy {
       case symbol_kind::S_conid: // conid
       case symbol_kind::S_qconsym: // qconsym
       case symbol_kind::S_consym: // consym
-      case symbol_kind::S_modid: // modid
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
         break;
 
@@ -756,6 +756,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_modid: // modid
         value.move< Located<std::string> > (YY_MOVE (that.value));
         break;
 
@@ -913,7 +914,6 @@ namespace yy {
       case symbol_kind::S_conid: // conid
       case symbol_kind::S_qconsym: // qconsym
       case symbol_kind::S_consym: // consym
-      case symbol_kind::S_modid: // modid
         value.move< std::string > (YY_MOVE (that.value));
         break;
 
@@ -1153,6 +1153,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_modid: // modid
         value.copy< Located<std::string> > (that.value);
         break;
 
@@ -1310,7 +1311,6 @@ namespace yy {
       case symbol_kind::S_conid: // conid
       case symbol_kind::S_qconsym: // qconsym
       case symbol_kind::S_consym: // consym
-      case symbol_kind::S_modid: // modid
         value.copy< std::string > (that.value);
         break;
 
@@ -1549,6 +1549,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_modid: // modid
         value.move< Located<std::string> > (that.value);
         break;
 
@@ -1706,7 +1707,6 @@ namespace yy {
       case symbol_kind::S_conid: // conid
       case symbol_kind::S_qconsym: // qconsym
       case symbol_kind::S_consym: // consym
-      case symbol_kind::S_modid: // modid
         value.move< std::string > (that.value);
         break;
 
@@ -2190,6 +2190,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_modid: // modid
         yylhs.value.emplace< Located<std::string> > ();
         break;
 
@@ -2347,7 +2348,6 @@ namespace yy {
       case symbol_kind::S_conid: // conid
       case symbol_kind::S_qconsym: // qconsym
       case symbol_kind::S_consym: // consym
-      case symbol_kind::S_modid: // modid
         yylhs.value.emplace< std::string > ();
         break;
 
@@ -2447,13 +2447,13 @@ namespace yy {
 
   case 3: // module: "module" modid maybemodwarning maybeexports "where" body
 #line 526 "parser.y"
-                                                                 {yylhs.value.as < Hs::Module > () = Hs::Module{yystack_[4].value.as < std::string > (),yystack_[2].value.as < std::optional<std::vector<Located<Hs::Export>>> > (),yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().first, yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().second};}
+                                                                 {yylhs.value.as < Hs::Module > () = Hs::Module{yystack_[4].value.as < Located<std::string> > (),yystack_[2].value.as < std::optional<std::vector<Located<Hs::Export>>> > (),yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().first, yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().second};}
 #line 2452 "parser.cc"
     break;
 
   case 4: // module: body2
 #line 527 "parser.y"
-                                                                 {yylhs.value.as < Hs::Module > () = Hs::Module{"Main",{},yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().first, yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().second};}
+                                                                 {yylhs.value.as < Hs::Module > () = Hs::Module{{noloc,"Main"},{},yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().first, yystack_[0].value.as < std::pair<std::vector<Hs::ImpDecl>, std::optional<Hs::Decls>> > ().second};}
 #line 2458 "parser.cc"
     break;
 
@@ -2549,7 +2549,7 @@ namespace yy {
 
   case 23: // export: "module" modid
 #line 565 "parser.y"
-                                      {yylhs.value.as < Located<Hs::Export> > () = {yylhs.location,Hs::Export{{{yystack_[1].location,Hs::ImpExpNs::module}}, {yystack_[0].location,yystack_[0].value.as < std::string > ()}, {}}}; }
+                                      {yylhs.value.as < Located<Hs::Export> > () = {yylhs.location,Hs::Export{{{yystack_[1].location,Hs::ImpExpNs::module}}, yystack_[0].value.as < Located<std::string> > (), {}}}; }
 #line 2554 "parser.cc"
     break;
 
@@ -2628,7 +2628,7 @@ namespace yy {
   case 40: // importdecl: "import" optqualified modid maybeas maybeimpspec
 #line 593 "parser.y"
                                                                                                         {
-    yylhs.value.as < Hs::ImpDecl > () = Hs::ImpDecl(yystack_[3].value.as < bool > (),{yystack_[2].location,yystack_[2].value.as < std::string > ()},yystack_[1].value.as < std::optional<Located<std::string>> > (),yystack_[0].value.as < std::optional<Hs::ImpSpec> > ());
+    yylhs.value.as < Hs::ImpDecl > () = Hs::ImpDecl(yystack_[3].value.as < bool > (),yystack_[2].value.as < Located<std::string> > (),yystack_[1].value.as < std::optional<Located<std::string>> > (),yystack_[0].value.as < std::optional<Hs::ImpSpec> > ());
 }
 #line 2634 "parser.cc"
     break;
@@ -2647,7 +2647,7 @@ namespace yy {
 
   case 43: // maybeas: "as" modid
 #line 609 "parser.y"
-                               { yylhs.value.as < std::optional<Located<std::string>> > () = {{yystack_[0].location,yystack_[0].value.as < std::string > ()}}; }
+                               { yylhs.value.as < std::optional<Located<std::string>> > () = yystack_[0].value.as < Located<std::string> > (); }
 #line 2652 "parser.cc"
     break;
 
@@ -5027,13 +5027,13 @@ namespace yy {
 
   case 490: // modid: "CONID"
 #line 1554 "parser.y"
-             {yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > ();}
+              {yylhs.value.as < Located<std::string> > () = {yylhs.location,yystack_[0].value.as < std::string > ()};}
 #line 5032 "parser.cc"
     break;
 
   case 491: // modid: "QCONID"
 #line 1555 "parser.y"
-         {yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > ();}
+              {yylhs.value.as < Located<std::string> > () = {yylhs.location,yystack_[0].value.as < std::string > ()};}
 #line 5038 "parser.cc"
     break;
 

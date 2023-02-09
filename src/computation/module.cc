@@ -1580,7 +1580,7 @@ Module::Module(const char *n)
 Module::Module(const Haskell::Module& M, const LanguageExtensions& le, const FileContents& f)
     :language_extensions(le),
      module(M),
-     name(module.modid),
+     name(unloc(module.modid)),
      file(f)
 {
     if (not name.size())

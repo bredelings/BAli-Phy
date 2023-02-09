@@ -977,7 +977,7 @@ struct ImpDecl
 
 struct Module
 {
-    std::string modid;
+    Located<std::string> modid;
     std::optional<std::vector<Located<Export>>> exports;
     std::vector<ImpDecl> impdecls;
     std::optional<Decls> topdecls;
@@ -985,7 +985,7 @@ struct Module
     std::string print() const;
 
     Module() = default;
-    Module(const std::string&s,
+    Module(const Located<std::string>&s,
            const std::optional<std::vector<Located<Export>>>& e,
            const std::vector<ImpDecl>& i,
            const std::optional<Decls>& t)

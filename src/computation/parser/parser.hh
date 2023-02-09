@@ -567,6 +567,7 @@ namespace yy {
       char dummy26[sizeof (Located<expression_ref>)];
 
       // qcname
+      // modid
       char dummy27[sizeof (Located<std::string>)];
 
       // optqualified
@@ -701,7 +702,6 @@ namespace yy {
       // conid
       // qconsym
       // consym
-      // modid
       char dummy50[sizeof (std::string)];
 
       // fielddecls
@@ -1506,6 +1506,7 @@ namespace yy {
         break;
 
       case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_modid: // modid
         value.move< Located<std::string> > (std::move (that.value));
         break;
 
@@ -1663,7 +1664,6 @@ namespace yy {
       case symbol_kind::S_conid: // conid
       case symbol_kind::S_qconsym: // qconsym
       case symbol_kind::S_consym: // consym
-      case symbol_kind::S_modid: // modid
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -2803,6 +2803,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_modid: // modid
         value.template destroy< Located<std::string> > ();
         break;
 
@@ -2960,7 +2961,6 @@ switch (yykind)
       case symbol_kind::S_conid: // conid
       case symbol_kind::S_qconsym: // qconsym
       case symbol_kind::S_consym: // consym
-      case symbol_kind::S_modid: // modid
         value.template destroy< std::string > ();
         break;
 
@@ -5954,6 +5954,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_modid: // modid
         value.copy< Located<std::string> > (YY_MOVE (that.value));
         break;
 
@@ -6111,7 +6112,6 @@ switch (yykind)
       case symbol_kind::S_conid: // conid
       case symbol_kind::S_qconsym: // qconsym
       case symbol_kind::S_consym: // consym
-      case symbol_kind::S_modid: // modid
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -6367,6 +6367,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_qcname: // qcname
+      case symbol_kind::S_modid: // modid
         value.move< Located<std::string> > (YY_MOVE (s.value));
         break;
 
@@ -6524,7 +6525,6 @@ switch (yykind)
       case symbol_kind::S_conid: // conid
       case symbol_kind::S_qconsym: // qconsym
       case symbol_kind::S_consym: // consym
-      case symbol_kind::S_modid: // modid
         value.move< std::string > (YY_MOVE (s.value));
         break;
 

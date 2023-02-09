@@ -492,7 +492,7 @@
 %type <std::string> consym
 
 %type  <expression_ref> literal
-%type  <std::string> modid
+%type  <Located<std::string>> modid
 %type  <int> commas
 /*
 %type  <int> bars0
@@ -524,7 +524,7 @@ identifier: qvar
 /* signature: backpack stuff */
 
 module: "module" modid maybemodwarning maybeexports "where" body {$$ = Hs::Module{$2,$4,$6.first, $6.second};}
-| body2                                                          {$$ = Hs::Module{"Main",{},$1.first, $1.second};}
+| body2                                                          {$$ = Hs::Module{{noloc,"Main"},{},$1.first, $1.second};}
 
 missing_module_keyword: %empty                                   {drv.push_module_context();}
 
@@ -562,7 +562,7 @@ exportlist1: exportlist1 "," export   {$$ = $1; $$.push_back($3);}
 |            export                   {$$.push_back($1);}
 
 export: qcname export_subspec         {$$ = {@$,Hs::Export{{}, $1, $2}}; }
-|       "module" modid                {$$ = {@$,Hs::Export{{{@1,Hs::ImpExpNs::module}}, {@2,$2}, {}}}; }
+|       "module" modid                {$$ = {@$,Hs::Export{{{@1,Hs::ImpExpNs::module}}, $2, {}}}; }
 
 export_subspec: %empty                {}
 |              "(" qcnames ")"        { $$ = Hs::ExportSubSpec{$2}; }
@@ -591,7 +591,7 @@ importdecls_semi: importdecls_semi importdecl semis1 { $$ = $1; $$.push_back($2)
 |                 %empty { }
 
 importdecl: "import" /*maybe_src*/ /*maybe_safe*/ optqualified /*maybe_pkg*/ modid maybeas maybeimpspec {
-    $$ = Hs::ImpDecl($2,{@3,$3},$4,$5);
+    $$ = Hs::ImpDecl($2,$3,$4,$5);
 }
 /*
 maybe_src: "{-# SOURCE" "#-}"  { $$ = true; }
@@ -606,7 +606,7 @@ maybe_pkg: STRING              { $$ = $1; }
 optqualified: "qualified"      { $$ = true; }
 |             %empty           { $$ = false; }
 
-maybeas:  "as" modid           { $$ = {{@2,$2}}; }
+maybeas:  "as" modid           { $$ = $2; }
 |         %empty               { }
 
 maybeimpspec: impspec          { $$ = $1; }
@@ -1551,8 +1551,8 @@ error { yyerrok; drv.pop_error_message(); drv.pop_context();}
 
 /* ------------- Miscellaneous (mostly renamings) ---------------- */
 
-modid: CONID {$$ = $1;}
-| QCONID {$$ = $1;}
+modid: CONID  {$$ = {@$,$1};}
+|      QCONID {$$ = {@$,$1};}
 
 commas: commas "," {$$ = $1 + 1;}
 |       ","        {$$ = 1;}
