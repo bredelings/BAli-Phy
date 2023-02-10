@@ -1648,7 +1648,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                     auto cname = unloc(*constr.con).name;
                     def_constructor(cname, constr.arity(), unloc(data_decl->name));
                     info.constructors.insert(cname);
-                    if (auto fields = to<Hs::FieldDecls>(constr.field))
+                    if (auto fields = to<Hs::FieldDecls>(constr.fields))
                         for(auto& field_decl: fields->field_decls)
                             for(auto& [loc,var]: field_decl.field_names)
                                 info.fields.insert(var.name);
