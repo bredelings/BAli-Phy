@@ -2,14 +2,17 @@
 import           Probability
 import           Tree
 import           Tree.Newick
+import qualified Data.Text as Text
 
 n_leaves = 3
 
-allStrings = [ c : s | s <- "" : allStrings, c <- ['a','b','c','d','e','f','g','h','i','j'] ]
+allStrings = [ c : s | s <- "" : allStrings, c <- ['a'..'j'] ]
+
+allTexts = fmap Text.pack allStrings
 
 model = do
     tree <- uniform_time_tree 1.0 n_leaves
-    let labels = take n_leaves $ zip [0..] allStrings
+    let labels = take n_leaves $ zip [0..] allTexts
         ltree = add_labels labels tree
     let pr = uniform_time_tree_pr 1.0 n_leaves ltree
 
