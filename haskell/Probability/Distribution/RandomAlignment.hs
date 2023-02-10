@@ -9,6 +9,8 @@ import           Data.Array
 import qualified Data.Map as Map
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
+import Data.Text (Text)
+import qualified Data.Text as Text
 
 type IModel = (IntMap Double -> Int -> PairHMM, Int -> LogDouble)
 
@@ -114,7 +116,7 @@ annotated_alignment_prs tree hmms model alignment = do
 
 
 class HasRandomAlignment d where
-    random_alignment:: (LabelledTree t, Tree t) => BranchLengthTreeImp t -> IModel -> Map.Map String Int -> d (AlignmentOnTree (BranchLengthTreeImp t))
+    random_alignment:: (LabelledTree t, Tree t) => BranchLengthTreeImp t -> IModel -> Map.Map Text Int -> d (AlignmentOnTree (BranchLengthTreeImp t))
 
 
 instance HasRandomAlignment Distribution where

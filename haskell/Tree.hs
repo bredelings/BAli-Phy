@@ -2,11 +2,14 @@ module Tree where
 
 import Data.Foldable
 import Data.Array
+import Data.List (lookup)
+
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
-import Data.List (lookup)
+import Data.Text (Text)
+import qualified Data.Text as Text
 
 class Tree t where
     findNode    :: t -> Int -> Node
@@ -38,13 +41,13 @@ class TimeTree t => RateTimeTree t where
     branch_rate :: t -> Int -> Double
 
 class Tree t => LabelledTree t where
-    get_label :: t -> Int -> Maybe String
+    get_label :: t -> Int -> Maybe Text
     -- TODO: all_labels - a sorted list of labels that serves as a kind of taxon-map?
     -- this would map integers to labels, and labels to integers, even if get_label
     -- indexes on nodes...
     -- TODO: make the C++ code handle this...
     
-    get_labels :: t -> IntMap (Maybe String)
+    get_labels :: t -> IntMap (Maybe Text)
 
 data Node = Node { node_name :: Int, node_out_edges:: Array Int Int}
 
@@ -58,7 +61,7 @@ data RootedTreeImp t = RootedTree t Int (IntMap Bool)
 
 data BranchLengthTreeImp t = BranchLengthTree t (IntMap Double)
 
-data LabelledTreeImp t = LabelledTree t (IntMap (Maybe String))
+data LabelledTreeImp t = LabelledTree t (IntMap (Maybe Text))
 
 -- The array stores the node times
 data TimeTreeImp t  = TimeTree t (IntMap Double)

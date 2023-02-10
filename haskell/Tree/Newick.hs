@@ -11,6 +11,7 @@ import Tree
 
 import Parse
 
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import Data.Char
 import Data.Foldable
@@ -18,8 +19,8 @@ import Data.Foldable
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.
 -- Can we do this more generically?
 class Tree t => WriteNewickNode t where
-    node_info :: t -> Int -> Maybe T.Text
-    branch_info :: t -> (Maybe Int) -> Maybe T.Text
+    node_info :: t -> Int -> Maybe Text
+    branch_info :: t -> (Maybe Int) -> Maybe Text
 
     node_info _ _ = Nothing
     branch_info _ _ = Nothing
@@ -35,7 +36,7 @@ instance WriteNewickNode t => WriteNewickNode (RootedTreeImp t) where
     branch_info (RootedTree tree _ _) = branch_info tree
 
 instance WriteNewickNode t => WriteNewickNode (LabelledTreeImp t) where
-    node_info   tree node                         = fmap T.pack (get_label tree node)
+    node_info   tree node                         = get_label tree node
     branch_info (LabelledTree tree labels) branch = branch_info tree branch
 
 instance WriteNewickNode t => WriteNewickNode (BranchLengthTreeImp t) where
