@@ -96,7 +96,7 @@ LanguageExtensions language_extensions(const string& filename, string& mod)
         if (note)
             messages.push_back({ErrorMsg, loc, {*note}});
     }
-    show_messages({filename, mod}, std::cout, messages);
+    show_messages({filename, mod}, std::cerr, messages);
     exit_on_error(messages);
     
     mod = mod.substr(pos);

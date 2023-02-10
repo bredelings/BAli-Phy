@@ -642,6 +642,9 @@ void Module::perform_imports(const Program& P)
 {
     for(auto& impdecl: imports() )
         import_module(P, impdecl);
+
+    show_messages(file, std::cerr, messages);
+    exit_on_error(messages);
 }
 
 void Module::export_symbol(const symbol_info& S)
