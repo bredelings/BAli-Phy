@@ -99,11 +99,11 @@ string ExportSubSpec::print() const
 
 string print(ImpExpNs ns)
 {
-    using enum ImpExpNs;
+    //  using enum ImpExpNs; -- GCC 10 can't handle this.
 
-    if (ns == module) return "module";
-    else if (ns == type) return "type";
-    else if (ns == pattern) return "pattern";
+    if (ns == ImpExpNs::module) return "module";
+    else if (ns == ImpExpNs::type) return "type";
+    else if (ns == ImpExpNs::pattern) return "pattern";
 
     std::abort();
 }
