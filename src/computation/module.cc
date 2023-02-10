@@ -872,7 +872,6 @@ void Module::perform_exports()
                                 export_symbol(lookup_symbol(name));
                             }
                         }
-                            
                     }
                 }
             }
@@ -1649,6 +1648,10 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                     auto cname = unloc(*constr.con).name;
                     def_constructor(cname, constr.arity(), unloc(data_decl->name));
                     info.constructors.insert(cname);
+                    if (auto fields = to<Hs::FieldDecls>(constr.field))
+                        for(auto& field_decl: fields->field_decls)
+                            for(auto& [loc,var]: field_decl.field_names)
+                                info.fields.insert(var.name);
                 }
             }
             else if (data_decl->is_gadt_decl())
@@ -1659,6 +1662,8 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                         int arity = Hs::gen_type_arity( cons_decl.type );
                         def_constructor(unloc(con_name), arity, unloc(data_decl->name));
                         info.constructors.insert(unloc(con_name));
+
+                        // FIXME: handle GADT fielddecls Constr :: { name1 :: ArgType1, name2 :: ArgType2 } -> ResultType
                     }
             }
 
