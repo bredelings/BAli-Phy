@@ -272,58 +272,24 @@ bool contains_import(const Haskell::Export& e, const string& name)
     return unloc(e.symbol) == name;
 }
 
-bool contains_import(const vector<Haskell::Export>& es, const string& name)
+bool contains_import(const vector<Haskell::LExport>& es, const string& name)
 {
-    for(auto& e: es)
+    for(auto& [_,e]: es)
         if (contains_import(e, name))
             return true;
     return false;
 }
 
 
-struct module_import
+void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
 {
-    std::string name;
-    bool qualified = false;
-    std::string as;
-    bool only = false;
-    bool hiding = false;
-    std::vector<Haskell::Export> symbols;
-    module_import() = default;
-    module_import(const std::string& s):name(s),as(s) {}
-};
+    auto& [imploc, impdecl] = limpdecl;
 
-module_import parse_import(const Haskell::ImpDecl& impdecl)
-{
-    module_import mi;
-
-    mi.qualified = impdecl.qualified;
-
-    mi.name = unloc(impdecl.modid);
-
+    auto& M2 = P.get_module( unloc(impdecl.modid) );
+    auto modid = unloc(impdecl.modid);
     if (impdecl.as)
-        mi.as = unloc(*impdecl.as);
-    else
-        mi.as = mi.name;
-
-    if (auto impspec = impdecl.impspec)
-    {
-        mi.hiding = impspec->hiding;
-        mi.only = not mi.hiding;
-
-        for(auto& [loc,x]: impspec->imports)
-            mi.symbols.push_back(x);
-    }
-
-    return mi;
-}
-
-void Module::import_module(const Program& P, const Hs::LImpDecl& impdecl)
-{
-    auto I = parse_import(unloc(impdecl));
-    auto& M2 = P.get_module(I.name);
-    auto& modid = I.as;
-    bool qualified = I.qualified;
+        modid = unloc(*impdecl.as);
+    bool qualified = impdecl.qualified;
     assert(modid != name);
 
     // Right now 'exports' only has functions, not data types or constructors
@@ -331,12 +297,13 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& impdecl)
     auto& m2_exports = M2.exported_symbols();
     auto& m2_exported_types = M2.exported_types();
 
-    if (I.only)
+    // import modid hiding ( etc )
+    if (impdecl.impspec and not impdecl.impspec->hiding)
     {
-        for(const auto& s: I.symbols)
+        for(const auto& [loc,s]: impdecl.impspec->imports)
         {
             if (s.is_module())
-                throw myexception()<<"module "<<I.name<<": found "<<s.print()<<" in import list!";
+                throw myexception()<<"module "<<unloc(impdecl.modid)<<": found "<<s.print()<<" in import list!";
             auto s_name = unloc(s.symbol);
 
             if (m2_exports.count(s_name))
@@ -353,11 +320,13 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& impdecl)
     }
     else
     {
+        // import modid
+        // import modid ( etc )
         for(const auto& [_,S]: m2_exports)
         {
             auto unqualified_name = get_unqualified_name(S.name);
 
-            if (I.hiding and contains_import(I.symbols, unqualified_name)) continue;
+            if (impdecl.impspec and impdecl.impspec->hiding and contains_import(impdecl.impspec->imports, unqualified_name)) continue;
 
             import_symbol(S, modid, qualified);
         }
@@ -365,7 +334,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& impdecl)
         {
             auto unqualified_name = get_unqualified_name(T.name);
 
-            if (I.hiding and contains_import(I.symbols, unqualified_name)) continue;
+            if (impdecl.impspec and impdecl.impspec->hiding and contains_import(impdecl.impspec->imports, unqualified_name)) continue;
 
             import_type(T, modid, qualified);
         }
