@@ -297,36 +297,121 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
     auto& m2_exports = M2.exported_symbols();
     auto& m2_exported_types = M2.exported_types();
 
-    // import modid hiding ( etc )
-    if (impdecl.impspec and not impdecl.impspec->hiding)
+    // import modid
+    if (not impdecl.impspec)
+    {
+        for(const auto& [_,S]: m2_exports)
+            import_symbol(S, modid, qualified);
+
+        for(const auto& [_,T]: m2_exported_types)
+            import_type(T, modid, qualified);
+    }
+    // import modid ( etc )
+    else if (impdecl.impspec and not impdecl.impspec->hiding)
     {
         for(const auto& [loc,s]: impdecl.impspec->imports)
         {
-            if (s.is_module())
-                throw myexception()<<"module "<<unloc(impdecl.modid)<<": found "<<s.print()<<" in import list!";
-            auto s_name = unloc(s.symbol);
+            string id = unloc(s.symbol);
 
-            if (m2_exports.count(s_name))
+            if (s.is_module())
             {
-                const symbol_info& S = m2_exports.at(s_name);
-                import_symbol(S, modid, qualified);
+                messages.push_back({ErrorMsg, loc, {Note()<<"found "<<s.print()<<" in import list!"}});
+                continue;
             }
-            else if (m2_exported_types.count(s_name))
+            else if (s.is_value())
             {
-                auto& T = m2_exported_types.at(s_name);
-                import_type(T, modid, qualified);
+                if (not m2_exports.count(id))
+                {
+                    messages.push_back({ErrorMsg, loc, {Note()<<"variable `"<<id<<"` not exported."}});
+                    continue;
+                }
+
+                if (s.subspec)
+                    messages.push_back({ErrorMsg, loc, {Note()<<"variable `"<<id<<"` can't have export subspec"}});
+
+                auto variable = m2_exports.at(id);
+                import_symbol( variable, modid, qualified );
+            }
+            else if (s.is_type())
+            {
+                if (not m2_exported_types.count(id))
+                {
+                    messages.push_back({ErrorMsg, loc, {Note()<<"type `"<<id<<"` is not exported."}});
+                    continue;
+                }
+
+                auto type = m2_exported_types.at(id);
+                import_type( type, modid, qualified );
+                if (s.subspec)
+                {
+                    if (type.is_type_fam())
+                    {
+                        messages.push_back({ErrorMsg, loc, {Note()<<"type family `"<<id<<"`can't have import subspec"}});
+                        continue;
+                    }
+                    else if (type.is_type_syn())
+                    {
+                        messages.push_back({ErrorMsg, loc, {Note()<<"type synonym `"<<id<<"` can't have import subspec"}});
+                        continue;
+                    }
+                    else if (auto c = type.is_class())
+                    {
+                        if (not s.subspec->names)
+                        {
+                            for(auto& method: c->methods)
+                                import_symbol( m2_exports.at(method), modid, qualified );
+                        }
+                        else
+                        {
+                            for(auto& [loc,name]: *s.subspec->names)
+                            {
+                                if (not c->methods.count(name))
+                                    messages.push_back({ErrorMsg, loc, {Note()<<"`"<<name<<"` is not a method for class `"<<id<<"`"}});
+                                else
+                                    import_symbol( m2_exports.at(name), modid, qualified );
+                            }
+                        }
+                    }
+                    else if (auto d = type.is_data())
+                    {
+                        if (not s.subspec->names)
+                        {
+                            for(auto& constructor: d->constructors)
+                                import_symbol(m2_exports.at(constructor), modid, qualified);
+                            for(auto& field: d->fields)
+                                import_symbol(m2_exports.at(field), modid, qualified);
+                        }
+                        else
+                        {
+                            for(auto& [loc,name]: *s.subspec->names)
+                            {
+                                if (is_haskell_conid(name) and not d->constructors.count(name))
+                                {
+                                    messages.push_back({ErrorMsg, loc, {Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"}});
+                                    continue;
+                                }
+                                if (is_haskell_varid(name) and not d->fields.count(name))
+                                {
+                                    messages.push_back({ErrorMsg, loc, {Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`"}});
+                                    continue;
+                                }
+
+                                import_symbol(m2_exports.at(name), modid, qualified);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
-    else
+    // import modid hiding ( etc )
+    else if (impdecl.impspec and impdecl.impspec->hiding)
     {
-        // import modid
-        // import modid ( etc )
         for(const auto& [_,S]: m2_exports)
         {
             auto unqualified_name = get_unqualified_name(S.name);
 
-            if (impdecl.impspec and impdecl.impspec->hiding and contains_import(impdecl.impspec->imports, unqualified_name)) continue;
+            if (contains_import(impdecl.impspec->imports, unqualified_name)) continue;
 
             import_symbol(S, modid, qualified);
         }
@@ -334,7 +419,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
         {
             auto unqualified_name = get_unqualified_name(T.name);
 
-            if (impdecl.impspec and impdecl.impspec->hiding and contains_import(impdecl.impspec->imports, unqualified_name)) continue;
+            if (contains_import(impdecl.impspec->imports, unqualified_name)) continue;
 
             import_type(T, modid, qualified);
         }
