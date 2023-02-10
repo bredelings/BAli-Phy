@@ -8,6 +8,7 @@ module Data.Text where
 import Prelude as P hiding (null, head, tail, init, length, empty, intercalate)
 import Data.Char
 import Data.Ord
+import Data.Eq
 
 import Foreign.String
 
@@ -232,3 +233,11 @@ intercalate t ts = foldl (\x y -> append x $ append t y) empty ts
 
 -- measureOff :: Int -> Text -> Int
 
+foreign import bpcall "Text:equals" builtin_equals :: CPPString -> CPPString -> Bool
+foreign import bpcall "Text:less_than" builtin_less_than :: CPPString -> CPPString -> Bool
+
+instance Eq Text where
+    (Text s1) == (Text s2) = builtin_equals s1 s2
+
+instance Ord Text where
+    (Text s1) < (Text s2) = builtin_less_than s1 s2

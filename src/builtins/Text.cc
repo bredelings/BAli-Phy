@@ -124,3 +124,27 @@ extern "C" closure builtin_function_length(OperationArgs& Args)
     return {length};
 }
 
+extern "C" closure builtin_function_equals(OperationArgs& Args)
+{
+    String s1  = Args.evaluate(0).as_<String>();
+    String s2  = Args.evaluate(1).as_<String>();
+
+    return {s1 == s2};
+}
+
+extern "C" closure builtin_function_less_than(OperationArgs& Args)
+{
+    String s1  = Args.evaluate(0).as_<String>();
+    String s2  = Args.evaluate(1).as_<String>();
+
+    for(int i=0;i<std::min(s1.size(),s2.size());i++)
+    {
+        if (s1[i] < s2[i])
+            return {true};
+        else if (s1[i] > s2[i])
+            return {false};
+    }
+
+    return {s1.size() < s2.size()};
+}
+
