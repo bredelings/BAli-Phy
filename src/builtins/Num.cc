@@ -56,16 +56,6 @@ extern "C" closure builtin_function_signum_integer(OperationArgs& Args)
     return Integer( result );
 }
 
-extern "C" closure builtin_function_integerToInt(OperationArgs& Args)
-{
-    integer x = Args.evaluate(0).as_<Integer>();
-
-    int result = x.convert_to<int>();
-
-    return expression_ref( result );
-}
-
-
 //********** Builtins for Num Int ****************//
 
 extern "C" closure builtin_function_add_int(OperationArgs& Args)
@@ -117,11 +107,106 @@ extern "C" closure builtin_function_signum_int(OperationArgs& Args)
 }
 
 
+extern "C" closure builtin_function_integerToInt(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+
+    int result = x.convert_to<int>();
+
+    return expression_ref( result );
+}
+
+
 extern "C" closure builtin_function_intToInteger(OperationArgs& Args)
 {
     int x = Args.evaluate(0).as_int();
 
     return Integer(x);
+}
+
+
+//********** Builtins for Num Char ****************//
+
+extern "C" closure builtin_function_add_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_char();
+    auto y = Args.evaluate(1).as_char();
+
+    return { x + y };
+}
+
+extern "C" closure builtin_function_subtract_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_char();
+    auto y = Args.evaluate(1).as_char();
+
+    return { x - y };
+}
+
+extern "C" closure builtin_function_multiply_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_char();
+    auto y = Args.evaluate(1).as_char();
+
+    return { x * y };
+}
+
+extern "C" closure builtin_function_abs_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_char();
+
+    return { std::abs(x) };
+}
+
+
+extern "C" closure builtin_function_negate_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_char();
+
+    return { -x };
+}
+
+extern "C" closure builtin_function_signum_char(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_char();
+
+    auto result = (x > 0 ? 1 : 0) - (x < 0 ? -1 : 0);
+
+    return { result };
+}
+
+
+extern "C" closure builtin_function_integerToChar(OperationArgs& Args)
+{
+    integer x = Args.evaluate(0).as_<Integer>();
+
+    char result = x.convert_to<char>();
+
+    return expression_ref( result );
+}
+
+
+extern "C" closure builtin_function_charToInteger(OperationArgs& Args)
+{
+    char x = Args.evaluate(0).as_char();
+
+    return Integer(x);
+}
+
+
+extern "C" closure builtin_function_intToChar(OperationArgs& Args)
+{
+    int x = Args.evaluate(0).as_int();
+
+    return { char(x) };
+}
+
+
+extern "C" closure builtin_function_charToInt(OperationArgs& Args)
+{
+    char x = Args.evaluate(0).as_char();
+
+    return {int(x)};
 }
 
 

@@ -25,6 +25,19 @@ class Enum a where
     enumFrom n = n:enumFrom (succ n)
 
 
+instance Enum Char where
+    succ n = n + 1
+    pred n = n - 1
+    toEnum n = intToChar n
+    fromEnum n = charToInt n
+
+    enumFromTo n m | fromEnum n <= fromEnum m    = n:enumFromTo (succ n) m
+                   | otherwise                   = []
+
+    enumFromThen from next = enumByFrom (next-from) from
+
+    enumFromThenTo from next to = enumByToFrom (next - from) to from
+
 instance Enum Int where
     succ n = n + 1
     pred n = n - 1

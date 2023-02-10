@@ -15,6 +15,26 @@ class Num a where
     negate y = 0 - y
 
 
+foreign import bpcall "Num:" add_char :: Char -> Char -> Char
+foreign import bpcall "Num:" subtract_char :: Char -> Char -> Char
+foreign import bpcall "Num:" multiply_char :: Char -> Char -> Char
+foreign import bpcall "Num:" abs_char :: Char -> Char
+foreign import bpcall "Num:" negate_char :: Char -> Char
+foreign import bpcall "Num:" signum_char :: Char -> Char
+foreign import bpcall "Num:" integerToChar :: Integer -> Char
+foreign import bpcall "Num:" intToChar :: Int -> Char
+foreign import bpcall "Num:" charToInt :: Char -> Int
+
+instance Num Char where
+    (+) = add_char
+    (-) = subtract_char
+    (*) = multiply_char
+    abs = abs_char
+    negate = negate_char
+    signum = signum_char
+    fromInteger x = integerToChar x
+
+
 foreign import bpcall "Num:" add_integer :: Integer -> Integer -> Integer
 foreign import bpcall "Num:" subtract_integer :: Integer -> Integer -> Integer
 foreign import bpcall "Num:" multiply_integer :: Integer -> Integer -> Integer
