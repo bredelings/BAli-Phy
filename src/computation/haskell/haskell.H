@@ -372,6 +372,9 @@ struct FieldDecls: public Object
 struct GADTConstructorDecl
 {
     std::vector<Located<std::string>> con_names;
+
+    // FIXME: handle GADT fielddecls Constr :: { name1 :: ArgType1, name2 :: ArgType2 } -> ResultType
+    // Constraint: all constructors with the same field must have the same result type.
     LType type;
     std::string print() const;
 
