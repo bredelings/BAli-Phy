@@ -4,6 +4,7 @@
 #include "computation/module.H"
 #include "util/myexception.H"
 #include "util/variant.H"
+#include "util/log-level.H"
 #include "range/v3/all.hpp"
 #include "util/range.H"
 #include "util/set.H"   // for add( , )
@@ -544,8 +545,8 @@ void Module::compile(const Program& P)
     auto& loader = *P.get_module_loader();
     simplifier_options& opts = loader;
 
-    if (opts.dump_parsed or opts.dump_renamed or opts.dump_desugared or opts.dump_typechecked)
-        std::cerr<<"-------- module "<<name<<"--------\n";
+    if (opts.dump_parsed or opts.dump_renamed or opts.dump_desugared or opts.dump_typechecked or log_verbose)
+        std::cerr<<"[ Compiling "<<name<<" ]\n";
 
     tc_state = std::make_shared<TypeChecker>( P.fresh_var_state(), name, *this);
 
