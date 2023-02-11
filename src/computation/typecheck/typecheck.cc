@@ -1079,6 +1079,14 @@ std::pair<Type, Type> TypeChecker::unify_function(const Type& t, const Constrain
 }
 
 
+std::tuple<Type, Type, Type> TypeChecker::unify_two_arg_function(const Type& t)
+{
+    auto [a, partial_result] = unify_function(t);
+    auto [b, result] = unify_function(partial_result);
+    return {a, b, result};
+}
+
+
 DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
 {
     auto& con_name = con.name;

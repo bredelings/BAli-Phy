@@ -308,6 +308,8 @@ public:
 
     std::pair<Type, Type> unify_function(const Type& t, const ConstraintOrigin& o);
 
+    std::tuple<Type, Type, Type> unify_two_arg_function(const Type& t);
+
     DataConInfo constructor_info(const Hs::Con&);
 
     bool candidates(const MetaTypeVar& tv, const LIE& tv_lie);
