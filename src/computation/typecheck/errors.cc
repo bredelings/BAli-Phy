@@ -264,6 +264,35 @@ LIE deduplicate(const LIE& wanteds)
     return wanteds2;
 }
 
+LIE pick_relevant_givens(set<MetaTypeVar> mtvs, set<TypeVar> tvs, LIE givens)
+{
+    LIE keep;
+    bool changed = true;
+    while(changed)
+    {
+        changed = false;
+        for(int i=0;i<givens.size();)
+        {
+            auto ftvs = free_type_variables(givens[i].pred);
+            auto fmtvs = free_meta_type_variables(givens[i].pred);
+            if (intersects(ftvs, tvs) or intersects(fmtvs, mtvs))
+            {
+                add(tvs, ftvs);
+                add(mtvs, fmtvs);
+                keep.push_back(givens[i]);
+                if (i+1<givens.size())
+                    std::swap(givens.back(), givens[i]);
+                givens.pop_back();
+                changed = true;
+            }
+            else
+                i++;
+        }
+    }
+
+    return keep;
+}
+
 void TypeChecker::check_wanteds(TidyState& tidy_state, vector<shared_ptr<Implication>>& implic_scopes, const WantedConstraints& wanteds)
 {
     for(auto& wanted: deduplicate(wanteds.simple))
@@ -283,11 +312,14 @@ void TypeChecker::check_wanteds(TidyState& tidy_state, vector<shared_ptr<Implica
             LIE givens;
             for(auto& implic: implic_scopes)
                 givens += implic->givens;
+
+            givens = pick_relevant_givens(free_meta_type_variables(wanted.pred), free_type_variables(wanted.pred), givens);
+
             if (not givens.empty())
             {
                 e<<" in context ";
                 for(auto& given: givens)
-                    e<<tidy_print(tidy_state,given.pred)<<" ";
+                    e<<tidy_print(tidy_state, given.pred)<<", ";
             }
             // End(xperimental)
 
