@@ -147,10 +147,12 @@ cycle xs         =  let xs' = xs ++ xs' in xs'
 
 --
 
+take :: Int -> [a] -> [a]
 take 0 x     = []
 take n []    = []
 take n (h:t) = h:(take (n-1) t)
 
+drop :: Int -> [a] -> [a]
 drop 0 xs     =  xs
 drop _ []     =  []
 drop n (_:xs) =  drop (n-1) xs
@@ -213,6 +215,7 @@ filter p (x:xs) = if (p x) then x:(filter p xs) else (filter p xs)
 -- partition
 
 infixr 9 !!
+(!!) :: [a] -> Int -> a
 (h:t) !! 0 = h
 (h:t) !! i = t !! (i-1)
 _     !! _ = error "Out of bounds list index!"
