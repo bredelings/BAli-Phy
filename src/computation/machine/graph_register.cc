@@ -1599,15 +1599,52 @@ void reg_heap::set_used_reg(int r1, int r2)
     assert(reg_is_used_by(r1,r2));
 }
 
+
+std::optional<int> reg_heap::reg_has_single_force(int r) const
+{
+    // Consider constant_with_force
+    if (reg_is_constant_with_force(r))
+        ;
+    // Consider index_var_with_force if it calls a constant
+    else if (reg_is_index_var_with_force(r))
+    {
+        int r2 = closure_at(r).reg_for_index_var();
+        if (not reg_is_constant(r2))
+            return {};
+    }
+    else
+        return {};
+
+    // Return the single forced reg if there is one.
+    if (regs[r].forced_regs.size() == 1)
+        return regs[r].forced_regs[0].first;
+    else
+        return {};
+}
+
 void reg_heap::set_forced_reg(int r1, int r2)
 {
-    assert(reg_is_changeable_or_forcing(r2));
-
     assert(regs.is_used(r2));
 
     assert(closure_at(r2));
 
+    assert(reg_is_changeable_or_forcing(r2));
+
     assert(reg_has_value(r2));
+
+    // If r2 forces only one thing and has no other effects, then force that thing instead.
+    if (auto r3 = reg_has_single_force(r2))
+    {
+        r2 = *r3;
+
+        assert(regs.is_used(r2));
+
+        assert(closure_at(r2));
+
+        assert(reg_is_changeable_or_forcing(r2));
+
+        assert(reg_has_value(r2));
+    }
 
     // An index_var's value only changes if the thing the index-var points to also changes.
     // So, we may as well forbid using an index_var as an input.
