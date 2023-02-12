@@ -351,12 +351,10 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
 
     // What if we substitute into the failable_result twice?
     // Its not clear how that could cause incorrect scoping, but we could have different vars with the same index?
-    auto o = get_fresh_var();
 
-    std::function<expression_ref(const expression_ref&)> result = [o,x0,simple_patterns,simple_bodies](const expression_ref& otherwise)
+    std::function<expression_ref(const expression_ref&)> result = [=,this](const expression_ref& otherwise)
     {
-	// Bind the otherwise branch to a let var.
-	CDecls binds = {{o,otherwise}};
+        auto o = get_fresh_var();
 
 	vector<expression_ref> simple_bodies2;
 	for(auto& body: simple_bodies)
