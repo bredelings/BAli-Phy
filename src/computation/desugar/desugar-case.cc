@@ -318,38 +318,17 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
 
     for(int c=0;c<constants.size();c++)
     {
-	expression_ref C = constants[c];
-
-	// 2.1 Find the arity of the constructor
-	int arity = 0;
-	if (C.is_a<constructor>())
-	    arity = C.as_<constructor>().n_args();
-
-	// 2.2 Construct the simple pattern for constant C
-	vector<var> args;
-	for(int j=0;j<arity;j++)
-	    args.push_back( get_fresh_var() );
-
-	auto pat = C;
-	if (args.size())
-        {
-            vector<expression_ref> args2;
-            for(auto& arg: args)
-                args2.push_back(arg);
-	    pat = expression_ref{C,args2};
-        }
+	auto pat = constants[c];
 
 	// 2.3 Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
 	vector<var> x2;
-	for(int j=0;j<arity;j++)
-	    x2.push_back(args[j]);
 	x2.insert(x2.end(), x.begin()+1, x.end());
 
 	// 2.4 Construct the various modified bodies and patterns
 	vector<equation_info_t> equations2;
 	for(int r: rules[c])
 	{
-	    assert(equations[r].patterns[0].size() == arity);
+	    assert(equations[r].patterns[0].size() == 0);
 
 	    // pattern: Add the sub-partitions of the first top-level pattern at the beginning.
 	    auto patterns = equations[r].patterns[0].copy_sub();
