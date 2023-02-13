@@ -4,15 +4,15 @@ module Data.Bool where
 data Bool = True | False
 
 infixr 3 &&
-True  && x = x
-False && x = False
+False && _  = False
+_     && x  = x
 
 infixr 2 ||
-True  || x  = True
-False || x = x
+True  || _  = True
+_     || x  = x
 
-not True         =  False
-not False        =  True
+not True    =  False
+not _       =  True
 
 otherwise = True
 
