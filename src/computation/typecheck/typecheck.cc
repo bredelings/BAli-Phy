@@ -953,14 +953,6 @@ Core::Var TypeChecker::add_wanted(const ConstraintOrigin& origin, const Type& pr
     return dvar;
 }
 
-void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
-{
-    if (M.default_decl)
-        defaults() = desugar( M.default_decl->types );
-    else
-        defaults() = { TypeCon({noloc,"Int"}), TypeCon({noloc,"Double"}) };
-}
-
 TypeChecker::TypeChecker(FreshVarState& fvs, const string& s, const Module& m)
     :FreshVarSource(fvs, s), local_state(new TypeCheckerContext)
 {

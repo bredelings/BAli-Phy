@@ -13,6 +13,14 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
+void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
+{
+    if (M.default_decl)
+        defaults() = desugar( M.default_decl->types );
+    else
+        defaults() = { TypeCon({noloc,"Int"}), TypeCon({noloc,"Double"}) };
+}
+
 // Constraints for defaulting must be of the form K a (e.g. Num a) where a is a MetaTypeVar.
 optional<TypeCon> simple_constraint_class_meta(const Type& constraint)
 {
