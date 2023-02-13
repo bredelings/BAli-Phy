@@ -128,13 +128,7 @@ pattern_type classify_equation(const equation_info_t& equation)
 	return pattern_type::constructor;
 
     // Literal
-    else if (pat.is_int())
-	return pattern_type::literal;
-    else if (pat.is_char())
-	return pattern_type::literal;
-    else if (pat.is_double())
-	return pattern_type::literal;
-    else if (pat.is_a<Hs::Literal>())
+    else if (pat.is_a<Hs::LiteralPattern>())
 	return pattern_type::literal;
 
     // Strict
@@ -294,18 +288,17 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
     assert(equations[0].patterns.size());
 
     // 1. Categorize each rule according to the type of its top-level pattern
-    vector<expression_ref> constants;
+    vector<Hs::LiteralPattern> constants;
     vector< vector<int> > rules;
     for(int j=0;j<M;j++)
     {
-	expression_ref C = equations[j].patterns[0].head();
-        assert(C.is_int() or C.is_double() or C.is_char() or C.is_a<Hs::Literal>());
-	auto which = find_object(constants, C);
+	auto L = equations[j].patterns[0].head().as_<Hs::LiteralPattern>();
+	auto which = find_object(constants, L);
 
 	if (not which)
 	{
 	    which = constants.size();
-	    constants.push_back(C);
+	    constants.push_back(L);
 	    rules.push_back(vector<int>{});
 	}
 
@@ -313,7 +306,6 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
     }
 
     // 2. Find the alternatives in the simple case expression
-    vector<expression_ref> simple_patterns;
     vector<failable_expression> simple_bodies;
 
     for(int c=0;c<constants.size();c++)
@@ -340,11 +332,8 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
 	    equations2.push_back(std::move(eqn));
 	}
 
-	simple_patterns.push_back( pat );
 	simple_bodies.push_back( match(x2, equations2) );
     }
-    simple_patterns.push_back(var(-1));
-    simple_bodies.push_back(fail_identity());
 
     // 3. Construct a failable_expression.
     auto x0 = x[0];
@@ -354,13 +343,23 @@ failable_expression desugar_state::match_literal(const vector<var>& x, const vec
 
     std::function<expression_ref(const expression_ref&)> result = [=,this](const expression_ref& otherwise)
     {
-        auto o = get_fresh_var();
+        expression_ref E = otherwise;
 
-	vector<expression_ref> simple_bodies2;
-	for(auto& body: simple_bodies)
-	    simple_bodies2.push_back(body.result(o));
+        for(int i=constants.size()-1; i>= 0; i--)
+        {
+            auto& LP = constants[i];
 
-	return let_expression({{o,otherwise}}, make_case_expression(x0, simple_patterns, simple_bodies2));
+            // condition = (x == constants[i])
+            expression_ref condition = {desugar(LP.equalsOp), x0, desugar(LP.lit)};
+
+            // let o = E in case condition of True -> true_branch(o); 
+            auto o = get_fresh_var();
+            Core::Exp true_branch = simple_bodies[i].result(o);
+            E = let_expression({{o,E}},
+                               case_expression(condition,
+                                               {Hs::TruePat()},{failable_expression(true_branch)}).result(o));
+        }
+        return E;
     };
 
     return failable_expression{true, result};
@@ -412,32 +411,6 @@ void desugar_state::clean_up_pattern(const var& x, equation_info_t& eqn)
         pat1 = Hs::to_con_pat(*L);
     else if (auto T = pat1.to<Hs::TuplePattern>())
         pat1 = Hs::to_con_pat(*T);
-    else if (auto L = pat1.to<Hs::LiteralPattern>())
-    {
-        if (auto c = L->lit.is_Char())
-        {
-            pat1 = *c;
-        }
-        else if (auto i = L->lit.is_Integer())
-        {
-            pat1 = i->convert_to<int>();
-        }
-        else if (auto d = L->lit.is_Double())
-        {
-            // FIXME: we want to actually compare with fromFractional(E)
-            pat1 = *d;
-        }
-        else if (auto s = L->lit.is_String())
-        {
-            pat1 = Hs::to_con_pat(*s);
-        }
-        else if (auto i = L->lit.is_BoxedInteger())
-        {
-            pat1 = i->convert_to<int>();
-        }
-        else
-            std::abort();
-    }
 
     // case x of y -> rhs  =>  case x of _ => let {y=x} in rhs
     if (auto v = pat1.to<Hs::VarPattern>())

@@ -256,45 +256,18 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
     {
         auto L = *l;
 
-        if (L.lit.is_BoxedInteger())
-        {
-            unify( expTypeToType(exp_type), int_type() );
-        }
+        // 1. (==) :: Eq a => a -> a -> Bool
+        auto [ obj_type, pattern_type, result_type ] = unify_two_arg_function( inferRho(L.equalsOp) );
+        unify( obj_type, pattern_type );
+        unify( result_type, bool_type() );
 
-        // 1. Typecheck (==)
-//        auto [equals, equals_type] = inferRho(gve, Hs::Var({noloc,"Data.Eq.=="}));
-//        L.equalsOp = equals;
+        // 2. exp_type ~ a
+        unify(pattern_type, expTypeToType(exp_type));
 
-        else if (L.lit.is_Char())
-        {
-            unify( expTypeToType(exp_type), char_type() );
-        }
-        else if (auto i = L.lit.is_Integer())
-        {
-            auto fromInteger = Hs::Var("Compiler.Num.fromInteger");
-            auto [arg_type, result_type] = unify_function( inferRho(fromInteger) );
-            unify(arg_type, integer_type());
-            unify(result_type, expTypeToType(exp_type));
+        // 3. a ~ type_of(L.lit)
+        tcRho(L.lit, Check(pattern_type) );
 
-            L.lit.literal = Hs::Integer(*i, fromInteger);
-            pat = L;
-        }
-        else if (L.lit.is_String())
-        {
-            unify(expTypeToType(exp_type), list_type(char_type()) );
-        }
-        else if (auto d = L.lit.is_Double())
-        {
-            auto fromRational = Hs::Var("Compiler.Frational.fromRational");
-            auto [arg_type, result_type] = unify_function( inferRho(fromRational) );
-            unify(arg_type, double_type());
-            unify(result_type, expTypeToType(exp_type));
-
-            L.lit.literal = Hs::Double(*d, fromRational);
-            pat = L;
-        }
-        else
-            std::abort();
+        pat = L;
 
         a(penv, *this);
     }
