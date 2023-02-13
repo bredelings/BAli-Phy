@@ -1,6 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Foreign.CList where
 
+import Data.Bool
+
 data CList a
 
 foreign import bpcall "Pair:c_pair" c_cons :: a -> CList a -> CList a
@@ -17,13 +19,13 @@ list_to_CList _ = c_nil 0#
 -- If we import something, that something might already reference Foreign.String.unpack_cpp_string
 -- Then during simplification we crash because unpack_cpp_string is already in free_vars when we
 --   try to define it.
-foreign import bpcall "Prelude:increment_int" increment_int :: Int -> Int
+foreign import bpcall "Prelude:" increment_int :: Int -> Int
 
-foreign import bpcall "Num:subtract_int" subtract_int' :: Int -> Int -> Int
+foreign import bpcall "Prelude:" equals_int :: Int -> Int -> Bool
 
 map_from :: Int -> Int -> (Int -> a) -> [a]
 map_from j1 j2 f = go j1 where
-    go i = case subtract_int' i j2 of
-             0# -> []
+    go i = case equals_int i j2 of
+             True -> []
              _  -> f i : go (increment_int i)
 
