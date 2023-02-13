@@ -106,6 +106,9 @@ struct TypedPattern: public Object
 struct LiteralPattern: public Object
 {
     Literal lit;
+    bool operator==(const LiteralPattern&) const;
+    bool operator==(const Object&) const override;
+
     Hs::Var equalsOp = {"Data.Eq.=="};
 
     LiteralPattern* clone() const { return new LiteralPattern(*this);}

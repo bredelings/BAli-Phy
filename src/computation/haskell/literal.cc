@@ -7,6 +7,30 @@ using std::optional;
 namespace Haskell
 {
 
+bool Integer::operator==(const Integer& I) const
+{
+    return (value == I.value);
+}
+
+bool Double::operator==(const Double& D) const
+{
+    return (value == D.value);
+}
+
+
+bool Literal::operator==(const Literal& L) const
+{
+    return literal == L.literal;
+}
+
+bool Literal::operator==(const Object& O) const
+{
+    if (auto l = dynamic_cast<const Literal*>(&O))
+        return (*this) == *l;
+    else
+        return false;
+}
+
 string Literal::print() const
 {
     if (literal.index() == 0)

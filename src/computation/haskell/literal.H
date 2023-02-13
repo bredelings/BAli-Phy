@@ -18,12 +18,16 @@ namespace Haskell
 struct Char
 {
     char value;
+
+    bool operator==(const Char&) const = default;
     Char(char c):value(c) {}
 };
 
 struct Integer
 {
     integer value;
+    bool operator==(const Integer&) const;
+
     expression_ref fromIntegerOp;
     Integer(integer i): value(i) {}
     Integer(integer i, const expression_ref& op): value(i), fromIntegerOp(op) {}
@@ -32,12 +36,15 @@ struct Integer
 struct String
 {
     std::string value;
+    bool operator==(const String&) const = default;
     String(const std::string& s):value(s) {}
 };
 
 struct Double
 {
     double value;
+    bool operator==(const Double&) const;
+
     expression_ref fromRationalOp;
     Double(double d): value(d) {}
     Double(double d, const expression_ref& op): value(d), fromRationalOp(op) {}
@@ -46,11 +53,15 @@ struct Double
 struct BoxedInteger
 {
     integer value;
+    bool operator==(const BoxedInteger&) const = default;
 };
 
 struct Literal: public Object
 {
     std::variant<Char, Integer, String, Double, BoxedInteger> literal;
+
+    bool operator==(const Literal&) const;
+    bool operator==(const Object&) const override;
 
     // In a pattern, we need an equals op to compare with.
     // Can we get away with a expression like (\x -> x == (fromInteger lit)) ??
