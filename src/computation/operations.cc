@@ -178,7 +178,7 @@ closure case_op(OperationArgs& Args)
 	const expression_ref& this_body = alts[i].body;
 
 	// If its _, then match it.
-	if (this_case.head().type() == var_type)
+	if (is_var(this_case))
 	{
 	    // We standardize to avoid case x of v -> f(v) so that f cannot reference v.
 	    assert(is_wildcard(this_case));
@@ -215,9 +215,8 @@ closure case_op(OperationArgs& Args)
     throw myexception()<<"Case: object '"<<object.exp<<"' doesn't match any alternative in '"<<make_case_expression(object.exp, cases, bodies)<<"'";
 #endif
 
-    result = get_trimmed(result);
-
-    return result;
+    // Trim the result.
+    return get_trimmed(result);
 }
 
 
