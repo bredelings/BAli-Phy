@@ -257,7 +257,7 @@ public:
     void mark_reg_unforgettable(int r);
 
     void set_used_reg(int r1, int r2);
-    void set_forced_reg(int r1, int r2);
+    int set_forced_reg(int r1, int r2);
     void set_call(int s, int r2, bool = false);
     void set_index_var_ref(int r1, int r2);
     void destroy_step_and_created_regs(int s);

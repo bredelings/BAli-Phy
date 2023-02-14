@@ -1617,7 +1617,7 @@ std::optional<int> reg_heap::reg_has_single_force(int r) const
         return {};
 }
 
-void reg_heap::set_forced_reg(int r1, int r2)
+int reg_heap::set_forced_reg(int r1, int r2)
 {
     assert(regs.is_used(r2));
 
@@ -1653,6 +1653,9 @@ void reg_heap::set_forced_reg(int r1, int r2)
     R1.forced_regs.push_back({r2,back_index});
 
     assert(reg_is_forced_by(r1,r2));
+
+    // Return the reg that was actually forced.
+    return r2;
 }
 
 void reg_heap::set_index_var_ref(int r1, int r2)
