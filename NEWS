@@ -1,3 +1,36 @@
+* 4.0-alpha10 (Feb 14, 2023)
+- Haskell
+  - Fix imports/exports of types & associated values.
+  - Default to Integer instead of Int.
+  - Correctly use == for literal patterns.
+  - Handle Language options better.
+  - Make list ops work on Arrays and other Foldable things.
+  - Better error messages
+    - Convert exceptions to error messages.
+    - Add locations to more error messages.
+    - Report context (givens).
+    - Improve readability.
+    - Improve error messages on superclass constraints.
+    - Readable error messages for parser.
+  - Speed
+    - Unify eagerly, don't create empty implications.
+- Refactor Tree data structure
+  - More efficient leaf labels.
+  - Convert out-edges to Array.
+  - Lookup nodes/edges in an IntMap.
+- Alignments
+  - Stop reordering alignments -- just look up sequences by name.
+- Virtual machine
+  - Don't forget modifiable fields of data structures even when unused.
+  - Don't force fields in alignments and trees -- saves RAM.
+  - Look through some constants when forcing.
+  - Simplify context_ptr to inspect the VM from C++.
+- MCMC
+  - Allow using random operations in MCMC proposals.
+- Bugs
+  - FIX JSON print empty arrays and objects.
+
+
 * 4.0-alpha9 (Jan 9, 2023)
  - Models
    + Add Covarion.gtr to allow more flexible rates between classes.
