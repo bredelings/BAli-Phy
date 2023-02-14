@@ -144,6 +144,24 @@ closure case_op(OperationArgs& Args)
     extern long total_case_op;
     total_case_op++;
 
+    // Handle case x of _ -> E = x `seq` E
+    {
+        auto& alts = Args.reference(1).as_<Run::Alts>();
+        if (alts.size() == 1 and is_var(alts[0].pattern))
+        {
+	    assert(is_wildcard(alts[0].pattern));
+
+            // Force x
+            Args.evaluate_slot_force(0);
+
+            // Get the current Env -- AFTER we force x, so GC can't invalidate it.
+            closure result(alts[0].body, Args.current_closure().Env);
+
+            // Trim the result.
+            return get_trimmed(result);
+        }
+    }
+
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
     const closure object = Args.evaluate_slot_to_closure(0);
