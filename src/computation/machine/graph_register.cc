@@ -1605,13 +1605,8 @@ std::optional<int> reg_heap::reg_has_single_force(int r) const
     // Consider constant_with_force
     if (reg_is_constant_with_force(r))
         ;
-    // Consider index_var_with_force if it calls a constant
-    else if (reg_is_index_var_with_force(r))
-    {
-        int r2 = closure_at(r).reg_for_index_var();
-        if (not reg_is_constant(r2))
-            return {};
-    }
+    // An index_var_with_force that calls a constant
+    // is awkward to handle, since it has a result we might have to clear.
     else
         return {};
 
