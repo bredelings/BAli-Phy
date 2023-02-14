@@ -2251,8 +2251,9 @@ void reg_heap::check_used_regs_in_token(int t) const
         {
             // If this step calls a constant reg, then that should be the result.
             int call = steps[step].call;
-            assert(call > 0);
-            if (reg_is_constant(call))
+            // There can be a step with call == 0 when we do set_reg_value -> allocate -> here.
+            // The call is only 0 temporarily.
+            if (call > 0 and reg_is_constant(call))
             {
                 int result = reg_to_result.at(r);
                 assert(result < 0 or result == call);
