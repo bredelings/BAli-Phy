@@ -538,10 +538,20 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2) override
         {
-            auto [r3, result] = M.incremental_evaluate2(r2, true);
+            auto [r3, result] = M.incremental_evaluate2(r2, false);
 
             if (M.reg_is_changeable_or_forcing(r3))
-                M.set_forced_reg(r, r3);
+            {
+                int r4 = M.set_forced_reg(r, r3);
+
+                // Case 1: r4 == r3 -> new force edge to r3!
+                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
+                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
+                if (r4 == r3 or M.reg_is_forced(r3))
+                    M.inc_count(r4);
+                else
+                    assert(M.reg_is_forced(r4));
+            }
 
             return result;
         }
@@ -550,17 +560,28 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
     int evaluate_reg_use(int r2) override
         {
             // Compute the value, and follow index_var chains (which are not changeable).
-            auto [r3, result] = M.incremental_evaluate2(r2, true);
+            auto [r3, result] = M.incremental_evaluate2(r2, false);
 
             // Note that although r2 is newly used, r3 might be already used if it was 
             // found from r2 through a non-changeable reg_var chain.
             if (M.reg_is_to_changeable(r3))
             {
                 make_changeable();
+                M.inc_count(r3);
                 M.set_used_reg(r, r3);
             }
             else if (M.reg_is_changeable_or_forcing(r3))
-                M.set_forced_reg(r, r3);
+            {
+                int r4 = M.set_forced_reg(r, r3);
+
+                // Case 1: r4 == r3 -> new force edge to r3!
+                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
+                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
+                if (r4 == r3 or M.reg_is_forced(r3))
+                    M.inc_count(r4);
+                else
+                    assert(M.reg_is_forced(r4));
+            }
 
             return result;
         }
