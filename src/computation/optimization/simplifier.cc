@@ -331,12 +331,16 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::A
     // Example: case #1 of {x:xs -> case #1 of {y:ys -> ys}} ==> case #1 of {x:xs -> xs} 
     //       We set #1=x:xs in the alternative, which means that a reference to #1 can reference xs.
 
-    // 0. If all alternatives are the same expression that doesn't depend on any bound pattern variables.
-    if (is_constant_case(patterns,bodies))
-    {
-        // We can ignore any let bindings inside the object, since we don't depend on the object.
-	return simplify(bodies[0], S, bound_vars, context);
-    }
+//  Eliminating the case expression is unsafe, as we would change case x of _ -> E into E.
+//  We could change case x of {[] -> F; (x:xs) -> F} into case x of _ -> F though, if F doesn't mention any of the pattern vars.
+//
+//    // 0. If all alternatives are the same expression that doesn't depend on any bound pattern variables.
+//    //    This transformation uses occurrence info.
+//    if (is_constant_case(patterns,bodies))
+//    {
+//        // We can ignore any let bindings inside the object, since we don't depend on the object.
+//	return simplify(bodies[0], S, bound_vars, context);
+//    }
 
     auto decls = strip_multi_let(object);
     bind_decls(bound_vars, decls);
@@ -445,11 +449,12 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::A
 	unbind_decls(bound_vars, pat_decls);
     }
 
-    // 7. If the case is an identity transformation
-    // Hmmm... this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
+    // 7. If the case is an identity transformation: case obj of {[] -> []; (y:ys) -> (y:ys); z -> z; _ -> obj}
+    // NOTE: this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
+    // NOTE: this preserves strictness, because the object is still evaluated.
     if (is_identity_case(object, patterns, bodies))
 	E2 = object;
-    // 8. case-of-case
+    // 8. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
     else if (is_case(object) and options.case_of_case)
     {
 	expression_ref object2;
