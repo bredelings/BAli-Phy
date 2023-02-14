@@ -457,8 +457,6 @@ class RegOperationArgs2Changeable final: public OperationArgs
 
     const int s;
 
-    const bool zero_count;
-
     const closure& current_closure() const {return memory().closure_at(r);}
 
     bool evaluate_changeables() const {return true;}
@@ -519,8 +517,9 @@ public:
     RegOperationArgs2Changeable* clone() const {return new RegOperationArgs2Changeable(*this);}
 
     RegOperationArgs2Changeable(int r_, int s_, reg_heap& m)
-        :OperationArgs(m), r(r_), s(s_), zero_count(not M.reg_is_forced(r))
-        { }
+        :OperationArgs(m), r(r_), s(s_)
+        {
+        }
 };
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
@@ -532,8 +531,6 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
 
     const int sp;  // creator step
 
-    const bool zero_count;
-
     const closure& current_closure() const {return memory().closure_at(r);}
 
     bool evaluate_changeables() const {return true;}
@@ -541,7 +538,7 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2) override
         {
-            auto [r3, result] = M.incremental_evaluate2(r2, zero_count);
+            auto [r3, result] = M.incremental_evaluate2(r2, true);
 
             if (M.reg_is_changeable_or_forcing(r3))
                 M.set_forced_reg(r, r3);
@@ -553,7 +550,7 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
     int evaluate_reg_use(int r2) override
         {
             // Compute the value, and follow index_var chains (which are not changeable).
-            auto [r3, result] = M.incremental_evaluate2(r2, zero_count);
+            auto [r3, result] = M.incremental_evaluate2(r2, true);
 
             // Note that although r2 is newly used, r3 might be already used if it was 
             // found from r2 through a non-changeable reg_var chain.
@@ -612,8 +609,10 @@ public:
     RegOperationArgs2Unevaluated* clone() const {return new RegOperationArgs2Unevaluated(*this);}
 
     RegOperationArgs2Unevaluated(int r_, int s_, int sp_, reg_heap& m)
-        :OperationArgs(m), r(r_), s(s_), sp(sp_), zero_count(not M.reg_is_forced(r))
-        { }
+        :OperationArgs(m), r(r_), s(s_), sp(sp_)
+        {
+            assert(not M.reg_is_forced(r));
+        }
 };
 
 int reg_heap::inc_count(int r)
