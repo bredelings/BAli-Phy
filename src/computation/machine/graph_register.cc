@@ -610,33 +610,46 @@ int reg_heap::force_count(int r) const
 
 void reg_heap::compute_initial_force_counts()
 {
-    for(auto& R: regs)
-    {
-        // 3a. Count uses
-        for(auto [ur,_]: R.used_regs)
-            prog_force_counts[ur]++;
+    vector<int> forced_regs;
 
-        // 3b. Count forces
-        for(auto [fr,_]: R.forced_regs)
-            prog_force_counts[fr]++;
-
-        int ref = R.index_var_ref.first;
-        if (ref > 0)
-            prog_force_counts[ref]++;
-    }
-
-    for(auto& S: steps)
-    {
-        // 3c. Count calls
-        if (reg_is_changeable_or_forcing(S.call))
-            prog_force_counts[S.call]++;
-    }
+    auto force_reg = [&,this](int r)
+        {
+            if (prog_force_counts[r] == 0)
+                forced_regs.push_back(r);
+            prog_force_counts[r]++;
+        };
 
     int r = heads[*program_result_head];
     if (reg_is_changeable_or_forcing(r))
     {
-        prog_force_counts[r]++;
+        force_reg(r);
         assert(steps.size() > 0);
+    }
+
+    for(int i=0;i<forced_regs.size();i++)
+    {
+        int r = forced_regs[i];
+        auto& R = regs[r];
+
+        // 3a. Count uses
+        for(auto [ur,_]: R.used_regs)
+            force_reg(ur);
+
+        // 3b. Count forces
+        for(auto [fr,_]: R.forced_regs)
+            force_reg(fr);
+
+        int ref = R.index_var_ref.first;
+        if (ref > 0)
+            force_reg(ref);
+
+        if (has_step1(r))
+        {
+            int call = step_for_reg(r).call;
+            assert(call);
+            if (reg_is_changeable_or_forcing(call))
+                force_reg(call);
+        }
     }
 }
 
