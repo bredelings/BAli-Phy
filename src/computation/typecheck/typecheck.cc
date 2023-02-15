@@ -593,9 +593,9 @@ void TypeChecker::get_tycon_info(const Hs::Decls& type_decls)
     // First get standalone kind signatures
     get_kind_sigs(type_decls);
 
-    type_con_env new_tycons;
+    TypeConEnv new_tycons;
 
-    type_con_env new_fam_tycons;
+    TypeConEnv new_fam_tycons;
     for(auto& [_,type_decl]: type_decls)
     {
         if (auto F = type_decl.to<Hs::TypeFamilyDecl>())
@@ -1524,7 +1524,7 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     // 2. Check the module's class declarations, produce some translated bindings -> binds_C ( GVE_C, CE_C, GIE_C )
     //
     // 3. We need to import/export:
-    //    - TCE_T: type_con_env& tce                type -> kind
+    //    - TCE_T: TypeConEnv& tce                type -> kind
     //    - CVE_T: constr_env& state.con_info       constructor id -> type
     //    - GIE_C: global_instance_env state.gie    ??
     //      * superclass extractors?

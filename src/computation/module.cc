@@ -293,8 +293,6 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
     bool qualified = impdecl.qualified;
     assert(modid != name);
 
-    // Right now 'exports' only has functions, not data types or constructors
-
     auto& m2_exports = M2.exported_symbols();
     auto& m2_exported_types = M2.exported_types();
 
@@ -444,7 +442,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                 tc_state->con_info() = tc_state->con_info().insert({cname,ctype});
         }
 
-        // 3. Import information about class ops
+        // 3. Import information about type synonyms
         for(auto& [tname,tinfo]: M2.tc_state->type_syn_info())
         {
             if (not tc_state->type_syn_info().count(tname))

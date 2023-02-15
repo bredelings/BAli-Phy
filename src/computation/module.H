@@ -128,9 +128,6 @@ class Module
 
     std::map<std::string, type_info> exported_types_;
 
-    // Doesn't this kind of duplicate the types table?
-    // type_con_env tycons;
-
     LanguageExtensions language_extensions;
 
     bool resolved = false;

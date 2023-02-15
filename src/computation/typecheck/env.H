@@ -49,13 +49,13 @@ struct type_con_info
 // -- perhaps we need to store the KIND, and not just the arity?
 };
 
-typedef std::map<ID, type_con_info> type_con_env;
+typedef std::map<ID, type_con_info> TypeConEnv;
 
-void add_no_overlap(type_con_env& e1, const type_con_env& e2);
-type_con_env plus_no_overlap(const type_con_env& e1, const type_con_env& e2);
+void add_no_overlap(TypeConEnv& e1, const TypeConEnv& e2);
+TypeConEnv plus_no_overlap(const TypeConEnv& e1, const TypeConEnv& e2);
 
-type_con_env& operator+=(type_con_env&, const type_con_env);
-type_con_env operator+(const type_con_env&, const type_con_env&);
+TypeConEnv& operator+=(TypeConEnv&, const TypeConEnv);
+TypeConEnv operator+(const TypeConEnv&, const TypeConEnv&);
 
 struct TypeSynonymInfo
 {

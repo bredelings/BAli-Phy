@@ -41,7 +41,7 @@ Hs::ModuleDecls typecheck(const std::string& s, const Module& m, Hs::ModuleDecls
 Type type_check_class_method_type(kindchecker_state& K, Type type, const Type& constraint);
 
 std::tuple<global_value_env, GIE, ClassInfo, Hs::Decls>
-type_check_type_class(const Module& m, const type_con_env& tce, const Haskell::ClassDecl& class_decl);
+type_check_type_class(const Module& m, const TypeConEnv& tce, const Haskell::ClassDecl& class_decl);
 
 global_value_env sig_env(const signature_env& signatures);
 
@@ -55,7 +55,7 @@ struct global_tc_state
 
     KindSigEnv kind_sigs;
 
-    type_con_env tycon_info;
+    TypeConEnv tycon_info;
 
     TypeFamEnv type_fam_info;
 
@@ -113,8 +113,8 @@ public:
           KindSigEnv& kind_sigs()       {return global_state->kind_sigs;}
     const KindSigEnv& kind_sigs() const {return global_state->kind_sigs;}
 
-          type_con_env& tycon_info()       {return global_state->tycon_info;}
-    const type_con_env& tycon_info() const {return global_state->tycon_info;}
+          TypeConEnv& tycon_info()       {return global_state->tycon_info;}
+    const TypeConEnv& tycon_info() const {return global_state->tycon_info;}
 
           TypeFamEnv& type_fam_info()       {return global_state->type_fam_info;}
     const TypeFamEnv& type_fam_info() const {return global_state->type_fam_info;}

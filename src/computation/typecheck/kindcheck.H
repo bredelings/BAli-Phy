@@ -17,7 +17,7 @@ struct kindchecker_state
     KindVar fresh_kind_var() {return fresh_named_kind_var("k");}
 
     // These three together form the "type context"
-    type_con_env type_con_to_kind;
+    TypeConEnv type_con_to_kind;
     std::vector<std::map<TypeVar,Kind>> type_var_to_kind;
     k_substitution_t kind_var_to_kind;
     // We also need the kinds for type classes and type constructors of previous groups.
@@ -66,9 +66,9 @@ struct kindchecker_state
     // type synonym
     void kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_decl);
 
-    type_con_env infer_kinds(const std::vector<expression_ref>& type_decl_group);
+    TypeConEnv infer_kinds(const std::vector<expression_ref>& type_decl_group);
 
-    kindchecker_state(const type_con_env& tce)
+    kindchecker_state(const TypeConEnv& tce)
         :type_con_to_kind(tce)
     {
         type_var_to_kind.push_back({});
