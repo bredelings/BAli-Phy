@@ -88,7 +88,7 @@ struct DataConInfo
     Type constructor_type() const;
 };
 
-typedef immer::map<ID, DataConInfo> constr_env;
+typedef immer::map<ID, DataConInfo> DataConEnv;
 
 struct ClassInfo
 {

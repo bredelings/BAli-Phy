@@ -58,7 +58,7 @@ struct kindchecker_state
     void kind_check_type_class(const Hs::ClassDecl& class_decl);
 
     // data or newtype
-    constr_env type_check_data_type(FreshVarSource& fresh_vars, const Hs::DataOrNewtypeDecl& data_decl);
+    DataConEnv type_check_data_type(FreshVarSource& fresh_vars, const Hs::DataOrNewtypeDecl& data_decl);
     void kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl);
     DataConInfo type_check_constructor(const Hs::ConstructorDecl& constructor);
     void kind_check_constructor(const Hs::ConstructorDecl& constructor, const Type& data_type);

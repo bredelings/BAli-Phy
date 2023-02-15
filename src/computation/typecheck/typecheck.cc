@@ -1114,10 +1114,10 @@ DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
         return info;
     }
 
-    if (not con_env().count(con_name))
+    if (not data_con_env().count(con_name))
         throw note_exception()<<"Unrecognized constructor: "<<con;
 
-    return con_env().at(con_name);
+    return data_con_env().at(con_name);
 }
 
 
@@ -1433,7 +1433,7 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
         if (not d) continue;
 
         for(auto& constr: ks.type_check_data_type(*this, *d))
-            con_env() = con_env().insert(constr);
+            data_con_env() = data_con_env().insert(constr);
     }
 
 //     for(auto& [con,type]: con_env())
@@ -1525,7 +1525,7 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     //
     // 3. We need to import/export:
     //    - TCE_T: TypeConEnv& tce                type -> kind
-    //    - CVE_T: constr_env& state.con_info       constructor id -> type
+    //    - CVE_T: DataConEnv& state.con_info       constructor id -> type
     //    - GIE_C: global_instance_env state.gie    ??
     //      * superclass extractors?
     //      * instance functions to create dictionaries...

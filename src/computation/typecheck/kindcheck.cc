@@ -477,7 +477,7 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
     }
 }
 
-constr_env kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, const Hs::DataOrNewtypeDecl& data_decl)
+DataConEnv kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, const Hs::DataOrNewtypeDecl& data_decl)
 {
     push_type_var_scope();
 
@@ -516,7 +516,7 @@ constr_env kindchecker_state::type_check_data_type(FreshVarSource& fresh_vars, c
         data_type = TypeApp(data_type, tv);
 
     // e. Handle regular constructor terms (class variables ARE in scope)
-    constr_env types;
+    DataConEnv types;
     if (data_decl.is_regular_decl())
     {
         for(auto& constructor: data_decl.get_constructors())

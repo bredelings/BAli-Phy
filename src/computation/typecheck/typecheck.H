@@ -72,7 +72,7 @@ struct global_tc_state
     global_value_env imported_gve;
 
     // maybe merge with gve by mapping name -> type,con-or-var
-    constr_env con_env;
+    DataConEnv data_con_env;
 
     std::optional<int> unification_level;
 
@@ -119,8 +119,8 @@ public:
           TypeFamEnv& type_fam_env()       {return global_state->type_fam_env;}
     const TypeFamEnv& type_fam_env() const {return global_state->type_fam_env;}
 
-          constr_env& con_env()       {return global_state->con_env;}
-    const constr_env& con_env() const {return global_state->con_env;}
+          DataConEnv& data_con_env()       {return global_state->data_con_env;}
+    const DataConEnv& data_con_env() const {return global_state->data_con_env;}
 
           TypeSynonymEnv& type_syn_env()       {return global_state->type_syn_env;}
     const TypeSynonymEnv& type_syn_env() const {return global_state->type_syn_env;}

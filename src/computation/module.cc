@@ -436,10 +436,10 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
         }
 
         // 2. Import information about the type of constructors
-        for(auto& [cname,ctype]: M2.tc_state->con_env())
+        for(auto& [cname,ctype]: M2.tc_state->data_con_env())
         {
-            if (not tc_state->con_env().count(cname))
-                tc_state->con_env() = tc_state->con_env().insert({cname,ctype});
+            if (not tc_state->data_con_env().count(cname))
+                tc_state->data_con_env() = tc_state->data_con_env().insert({cname,ctype});
         }
 
         // 3. Import information about type synonyms
@@ -1307,7 +1307,7 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
             for(const auto& constr: d->get_constructors())
             {
                 auto cname = unloc(*constr.con).name;
-                auto info = tc_state->con_env().at(cname);
+                auto info = tc_state->data_con_env().at(cname);
                 int arity = info.dict_arity() + info.arity();
 
                 expression_ref body = lambda_expression( constructor(cname, arity) );
@@ -1320,7 +1320,7 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
                 for(auto& con_name: cons_decl.con_names)
                 {
                     auto cname = unloc(con_name);
-                    auto info = tc_state->con_env().at(cname);
+                    auto info = tc_state->data_con_env().at(cname);
                     int arity = info.dict_arity() + info.arity();
 
                     expression_ref body = lambda_expression( constructor(cname, arity) );
