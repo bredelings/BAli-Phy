@@ -184,7 +184,7 @@ Type Solver::break_type_equality_cycle(const Constraint& C, const Type& type)
         auto& [tc,args] = *tfam;
 
         // Get the kind for type
-        auto kind = tycon_info().at(unloc(tc.name)).kind;
+        auto kind = tycon_env().at(unloc(tc.name)).kind;
         for(int i=0;i<args.size();i++)
         {
             auto arrow = kind.to<KindArrow>();

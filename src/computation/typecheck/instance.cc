@@ -73,7 +73,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     push_source_span( *(inst.con.loc * range(inst.args) * inst.rhs.loc) );
     
     // 1. Check that the type family exists.
-    if (not type_fam_info().count( tf_con ))
+    if (not type_fam_env().count( tf_con ))
     {
         push_source_span( *inst.con.loc );
         record_error( Note()<<"  No type family '"<<inst.con.print()<<"'");
@@ -85,7 +85,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     }
 
     // 2. Get the type family info
-    auto& tf_info = type_fam_info().at(tf_con);
+    auto& tf_info = type_fam_env().at(tf_con);
 
     if (tf_info.associated_class)
     {
@@ -173,7 +173,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     TypeFamEqnInfo eqn{ desugar(inst.args), desugar(inst.rhs), lhs_tvs | ranges::to<vector>()};
 
     // 9a. Bind the free type vars
-    kindchecker_state K( tycon_info() );
+    kindchecker_state K( tycon_env() );
     K.push_type_var_scope();
     for(auto& tv: eqn.free_tvs)
     {

@@ -49,7 +49,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     push_note( Note()<<"In class '"<<class_decl.name<<"':" );
 
-    kindchecker_state K( tycon_info() );
+    kindchecker_state K( tycon_env() );
 
     ClassInfo class_info;
     class_info.type_vars = desugar(class_decl.type_vars);
@@ -156,11 +156,11 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     {
         auto args = desugar(type_fam_decl.args);
         auto fname = unloc(type_fam_decl.con).name;
-        auto kind = tycon_info().at(fname).kind;
+        auto kind = tycon_env().at(fname).kind;
         TypeFamInfo info(args, kind, unloc(class_decl.name));
 
         auto con = desugar(type_fam_decl.con);
-        type_fam_info().insert({con, info});
+        type_fam_env().insert({con, info});
         if (class_info.associated_type_families.count(con))
             throw note_exception()<<"Trying to define type family '"<<con.print()<<"' twice";
         class_info.associated_type_families.insert({con,false});
@@ -272,7 +272,7 @@ TypeChecker::get_type_synonyms(const Hs::Decls& decls)
 
         rhs_type = apply_subst(s, rhs_type);
 
-        type_syn_info().insert({name, {name, type_vars, rhs_type}});
+        type_syn_env().insert({name, {name, type_vars, rhs_type}});
     }
 }
 
@@ -284,18 +284,18 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
         {
             auto args = desugar(type_fam_decl->args);
             auto fname = unloc(type_fam_decl->con).name;
-            auto kind = tycon_info().at(fname).kind;
+            auto kind = tycon_env().at(fname).kind;
             TypeFamInfo info(args, kind);
 
             auto con = desugar(type_fam_decl->con);
-            type_fam_info().insert({con, info});
+            type_fam_env().insert({con, info});
 
             // Add instance equations for closed type families
             if (type_fam_decl->where_instances)
             {
                 for(auto& inst: *type_fam_decl->where_instances)
                     check_add_type_instance(inst, {}, {});
-                type_fam_info().at(con).closed = true;
+                type_fam_env().at(con).closed = true;
             }
 
         }

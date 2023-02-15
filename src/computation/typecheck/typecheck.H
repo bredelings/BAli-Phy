@@ -55,11 +55,11 @@ struct global_tc_state
 
     KindSigEnv kind_sigs;
 
-    TypeConEnv tycon_info;
+    TypeConEnv tycon_env;
 
-    TypeFamEnv type_fam_info;
+    TypeFamEnv type_fam_env;
 
-    TypeSynonymEnv type_syn_info;
+    TypeSynonymEnv type_syn_env;
 
     ClassEnv class_env;
 
@@ -72,7 +72,7 @@ struct global_tc_state
     global_value_env imported_gve;
 
     // maybe merge with gve by mapping name -> type,con-or-var
-    constr_env con_info;
+    constr_env con_env;
 
     std::optional<int> unification_level;
 
@@ -113,17 +113,17 @@ public:
           KindSigEnv& kind_sigs()       {return global_state->kind_sigs;}
     const KindSigEnv& kind_sigs() const {return global_state->kind_sigs;}
 
-          TypeConEnv& tycon_info()       {return global_state->tycon_info;}
-    const TypeConEnv& tycon_info() const {return global_state->tycon_info;}
+          TypeConEnv& tycon_env()       {return global_state->tycon_env;}
+    const TypeConEnv& tycon_env() const {return global_state->tycon_env;}
 
-          TypeFamEnv& type_fam_info()       {return global_state->type_fam_info;}
-    const TypeFamEnv& type_fam_info() const {return global_state->type_fam_info;}
+          TypeFamEnv& type_fam_env()       {return global_state->type_fam_env;}
+    const TypeFamEnv& type_fam_env() const {return global_state->type_fam_env;}
 
-          constr_env& con_info()       {return global_state->con_info;}
-    const constr_env& con_info() const {return global_state->con_info;}
+          constr_env& con_env()       {return global_state->con_env;}
+    const constr_env& con_env() const {return global_state->con_env;}
 
-          TypeSynonymEnv& type_syn_info()       {return global_state->type_syn_info;}
-    const TypeSynonymEnv& type_syn_info() const {return global_state->type_syn_info;}
+          TypeSynonymEnv& type_syn_env()       {return global_state->type_syn_env;}
+    const TypeSynonymEnv& type_syn_env() const {return global_state->type_syn_env;}
 
           ClassEnv& class_env()       {return global_state->class_env;}
     const ClassEnv& class_env() const {return global_state->class_env;}

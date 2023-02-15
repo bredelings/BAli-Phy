@@ -429,24 +429,24 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
         // So.. if we import a data type declaration, do we ALSO have to import any types that its constructors reference?
 
         // 1. Import info about arity and kind of type constructors..
-        for(auto& [tycon,info]: M2.tc_state->tycon_info())
+        for(auto& [tycon,info]: M2.tc_state->tycon_env())
         {
-            if (not tc_state->tycon_info().count(tycon))
-                tc_state->tycon_info().insert({tycon,info});
+            if (not tc_state->tycon_env().count(tycon))
+                tc_state->tycon_env().insert({tycon,info});
         }
 
         // 2. Import information about the type of constructors
-        for(auto& [cname,ctype]: M2.tc_state->con_info())
+        for(auto& [cname,ctype]: M2.tc_state->con_env())
         {
-            if (not tc_state->con_info().count(cname))
-                tc_state->con_info() = tc_state->con_info().insert({cname,ctype});
+            if (not tc_state->con_env().count(cname))
+                tc_state->con_env() = tc_state->con_env().insert({cname,ctype});
         }
 
         // 3. Import information about type synonyms
-        for(auto& [tname,tinfo]: M2.tc_state->type_syn_info())
+        for(auto& [tname,tinfo]: M2.tc_state->type_syn_env())
         {
-            if (not tc_state->type_syn_info().count(tname))
-                tc_state->type_syn_info().insert({tname,tinfo});
+            if (not tc_state->type_syn_env().count(tname))
+                tc_state->type_syn_env().insert({tname,tinfo});
         }
 
         // 4. Import information about class ops
@@ -464,13 +464,13 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
         }
 
         // 6. Import information about type families
-        for(auto& [tf_con, tf_info]: M2.tc_state->type_fam_info())
+        for(auto& [tf_con, tf_info]: M2.tc_state->type_fam_env())
         {
-            if (not tc_state->type_fam_info().count(tf_con))
-                tc_state->type_fam_info().insert({tf_con, tf_info});
+            if (not tc_state->type_fam_env().count(tf_con))
+                tc_state->type_fam_env().insert({tf_con, tf_info});
             else
             {
-                auto& info = tc_state->type_fam_info().at(tf_con);
+                auto& info = tc_state->type_fam_env().at(tf_con);
                 assert(tf_info.args.size() == info.args.size());
                 for(auto& [id, eqn_info]: tf_info.equations)
                     info.equations.insert({id, eqn_info});
@@ -749,7 +749,7 @@ void Module::perform_exports()
     if (tc_state)
     {
         // Record kinds on the type symbol table
-        for(auto& [typecon,info]: tc_state->tycon_info())
+        for(auto& [typecon,info]: tc_state->tycon_env())
         {
             if (get_module_name(typecon) == name)
             {
@@ -1307,7 +1307,7 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
             for(const auto& constr: d->get_constructors())
             {
                 auto cname = unloc(*constr.con).name;
-                auto info = tc_state->con_info().at(cname);
+                auto info = tc_state->con_env().at(cname);
                 int arity = info.dict_arity() + info.arity();
 
                 expression_ref body = lambda_expression( constructor(cname, arity) );
@@ -1320,7 +1320,7 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
                 for(auto& con_name: cons_decl.con_names)
                 {
                     auto cname = unloc(con_name);
-                    auto info = tc_state->con_info().at(cname);
+                    auto info = tc_state->con_env().at(cname);
                     int arity = info.dict_arity() + info.arity();
 
                     expression_ref body = lambda_expression( constructor(cname, arity) );

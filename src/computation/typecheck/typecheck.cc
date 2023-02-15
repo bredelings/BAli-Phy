@@ -341,20 +341,20 @@ using std::tuple;
 
 int TypeChecker::type_con_arity(const TypeCon& tc) const
 {
-    auto iter = tycon_info().find(unloc(tc.name));
-    if (iter == tycon_info().end())
+    auto iter = tycon_env().find(unloc(tc.name));
+    if (iter == tycon_env().end())
         throw note_exception()<<"Can't find type con '"<<tc<<"'";
     return iter->second.arity;
 }
 
 bool TypeChecker::type_con_is_type_fam(const TypeCon& tc) const
 {
-    return type_fam_info().count(tc);
+    return type_fam_env().count(tc);
 }
 
 bool TypeChecker::type_con_is_type_syn(const TypeCon& tc) const
 {
-    return type_syn_info().count(unloc(tc.name));
+    return type_syn_env().count(unloc(tc.name));
 }
 
 bool TypeChecker::type_con_is_type_class(const TypeCon& tc) const
@@ -563,7 +563,7 @@ void TypeChecker::get_tycon_info(const Hs::TypeFamilyDecl& F)
             pop_source_span();
         }
     }
-    tycon_info().insert({unloc(F.con).name, {kind, (int)F.args.size()}});
+    tycon_env().insert({unloc(F.con).name, {kind, (int)F.args.size()}});
 }
 
 void TypeChecker::get_kind_sigs(const Hs::Decls& type_decls)
@@ -606,21 +606,21 @@ void TypeChecker::get_tycon_info(const Hs::Decls& type_decls)
                 get_tycon_info(F);
         }
     }
-    tycon_info() += new_fam_tycons;
+    tycon_env() += new_fam_tycons;
 
     auto type_decl_groups = find_type_groups(type_decls);
 
     // Compute kinds for type/class constructors.
     for(auto& type_decl_group: type_decl_groups)
     {
-        kindchecker_state K( tycon_info() );
+        kindchecker_state K( tycon_env() );
 
         auto new_tycons_for_group = K.infer_kinds(type_decl_group);
 
         new_tycons += new_tycons_for_group;
 
         // Later groups could refer to tycons from this group
-        tycon_info() += new_tycons_for_group;
+        tycon_env() += new_tycons_for_group;
     }
 
 //    for(auto& [tycon,ka]: new_tycons)
@@ -723,8 +723,8 @@ const TypeSynonymInfo* TypeChecker::maybe_find_type_synonym(const Type& type) co
 {
     if (auto tycon = type.to<TypeCon>())
     {
-        auto iter = type_syn_info().find( unloc(tycon->name) );
-        if (iter != type_syn_info().end())
+        auto iter = type_syn_env().find( unloc(tycon->name) );
+        if (iter != type_syn_env().end())
             return (&iter->second);
     }
     return nullptr;
@@ -774,7 +774,7 @@ Type TypeChecker::check_type(const Type& type, kindchecker_state& K) const
 Type TypeChecker::check_type(const Type& type) const
 {
     // This should be rather wasteful... can we use a reference?
-    kindchecker_state K( tycon_info() );
+    kindchecker_state K( tycon_env() );
 
     return check_type(type, K);
 }
@@ -782,7 +782,7 @@ Type TypeChecker::check_type(const Type& type) const
 Type TypeChecker::check_constraint(const Type& type) const
 {
     // This should be rather wasteful... can we use a reference?
-    kindchecker_state K( tycon_info() );
+    kindchecker_state K( tycon_env() );
 
     return K.kind_and_type_check_constraint( type );
 
@@ -1114,10 +1114,10 @@ DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
         return info;
     }
 
-    if (not con_info().count(con_name))
+    if (not con_env().count(con_name))
         throw note_exception()<<"Unrecognized constructor: "<<con;
 
-    return con_info().at(con_name);
+    return con_env().at(con_name);
 }
 
 
@@ -1425,7 +1425,7 @@ Type remove_top_level_foralls(Type t)
 
 void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 {
-    kindchecker_state ks( tycon_info() );
+    kindchecker_state ks( tycon_env() );
 
     for(auto& [_,decl]: decls)
     {
@@ -1433,10 +1433,10 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
         if (not d) continue;
 
         for(auto& constr: ks.type_check_data_type(*this, *d))
-            con_info() = con_info().insert(constr);
+            con_env() = con_env().insert(constr);
     }
 
-//     for(auto& [con,type]: con_info())
+//     for(auto& [con,type]: con_env())
 //     {
 //         std::cerr<<con<<" :: "<<type.print()<<"\n";
 //     }
@@ -1468,21 +1468,21 @@ Hs::Decls TypeChecker::add_type_var_kinds(Hs::Decls type_decls)
         if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
         {
             auto D = type_decl.as_<Hs::DataOrNewtypeDecl>();
-            auto kind = tycon_info().at(unloc(D.name)).kind;
+            auto kind = tycon_env().at(unloc(D.name)).kind;
             result_kind_for_type_vars( D.type_vars, kind);
             type_decl = D;
         }
         else if (type_decl.is_a<Hs::ClassDecl>())
         {
             auto C = type_decl.as_<Hs::ClassDecl>();
-            auto kind = tycon_info().at(unloc(C.name)).kind;
+            auto kind = tycon_env().at(unloc(C.name)).kind;
             result_kind_for_type_vars( C.type_vars, kind);
             type_decl = C;
         }
         else if (type_decl.is_a<Hs::TypeSynonymDecl>())
         {
             auto T = type_decl.as_<Hs::TypeSynonymDecl>();
-            auto kind = tycon_info().at(unloc(T.name)).kind;
+            auto kind = tycon_env().at(unloc(T.name)).kind;
             result_kind_for_type_vars( T.type_vars, kind);
             type_decl = T;
         }
