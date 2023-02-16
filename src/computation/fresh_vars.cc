@@ -179,7 +179,9 @@ var make_var(const Hs::Var& v)
 {
     assert(not v.index);
     assert(v.wrap.is_identity());
-    return var(v.name);
+    var v2(v.name);
+    v2.info = v.info;
+    return v2;
 }
 
 vector<var> make_vars(const vector<Hs::Var>& vs)

@@ -318,6 +318,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
             name = qualified_name;
             if (get_module_name(qualified_name) == m.name)
                 free_vars.insert(qualified_name);
+            V.info = S.info;
             E = V;
         }
         else
