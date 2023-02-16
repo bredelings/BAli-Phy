@@ -24,13 +24,28 @@ const std::shared_ptr<module_loader>& Program::get_module_loader() const
     return loader;
 }
 
+Module compiler_prim_module()
+{
+    Module m("Compiler.Prim");
+
+    // No implicit Prelude
+    m.language_extensions.set_extension(LangExt::ImplicitPrelude, false);
+
+    return m;
+}
+
+
 Program::Program(const std::shared_ptr<module_loader>& L)
     :loader(L)
-{}
+{
+    modules().push_back( compiler_prim_module() );
+}
 
 Program::Program(const std::shared_ptr<module_loader>& L, exe_type t)
     :loader(L),type(t)
-{}
+{
+    modules().push_back( compiler_prim_module() );
+}
 
 int Program::find_module(const string& module_name) const
 {
