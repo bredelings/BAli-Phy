@@ -1,12 +1,15 @@
 #ifndef HASKELL_VAR
 #define HASKELL_VAR
 
+#include <memory>
 #include "computation/object.H"
 #include "computation/parser/located.H"
 
 #include "type.H"
 #include "coretype.H"
 #include "core.H"
+
+struct VarInfo;
 
 namespace Haskell
 {
@@ -19,6 +22,8 @@ struct Var: public Object
     std::optional<::Type> type;
 
     Core::wrapper wrap;
+
+    std::shared_ptr<VarInfo> info;
 
     bool operator==(const Object&) const;
     bool operator==(const Var&) const;

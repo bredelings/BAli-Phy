@@ -22,6 +22,8 @@ struct fixity_info
 };
 
 
+struct VarInfo;
+
 enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, class_method_symbol = 2, unknown_symbol = 3};
 
 struct symbol_info
@@ -32,6 +34,7 @@ struct symbol_info
     int arity = -1;
     fixity_info fixity;
     Type type;
+    std::shared_ptr<VarInfo> info;
 
     symbol_info() {};
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int);

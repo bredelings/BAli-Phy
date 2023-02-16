@@ -13,6 +13,7 @@
 #include "computation/expression/indexify.H"
 #include "computation/expression/constructor.H"
 #include "occurrence.H"
+#include "computation/varinfo.H"
 
 #include "simplifier.H"
 #include "inliner.H"
@@ -104,8 +105,8 @@ bound_variable_info rebind_var(in_scope_set& bound_vars, const var& x, const exp
 
 void bind_decls(in_scope_set& bound_vars, const CDecls& decls)
 {
-    for(const auto& decl: decls)
-	bind_var(bound_vars, decl.first, decl.second);
+    for(const auto& [x,rhs]: decls)
+	bind_var(bound_vars, x, rhs);
 }
 
 void bind_decls(in_scope_set& bound_vars, const vector<CDecls>& decl_groups)
@@ -116,8 +117,8 @@ void bind_decls(in_scope_set& bound_vars, const vector<CDecls>& decl_groups)
 
 void unbind_decls(in_scope_set& bound_vars, const CDecls& decls)
 {
-    for(const auto& decl: decls)
-	unbind_var(bound_vars, decl.first);
+    for(const auto& [x, _]: decls)
+	unbind_var(bound_vars, x);
 }
 
 void unbind_decls(in_scope_set& bound_vars, const vector<CDecls>& decl_groups)
@@ -131,13 +132,15 @@ expression_ref SimplifierState::consider_inline(const expression_ref& E, in_scop
 {
     var x = E.as_<var>();
 
-    const auto& binding = bound_vars.at(x);
+    const auto& [rhs,occ_info] = bound_vars.at(x);
 
 //    std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
     
     // 1. If there's a binding x = E, and E = y for some variable y
-    if (binding.first and do_inline(binding.first, binding.second, context))
-	return simplify(binding.first, {}, bound_vars, context);
+    if (x.info and x.info->always_unfold)
+	return simplify(x.info->unfolding, {}, bound_vars, context);
+    else if (rhs and do_inline(rhs, occ_info, context))
+	return simplify(rhs, {}, bound_vars, context);
     else
 	return rebuild(E, bound_vars, context);
 }

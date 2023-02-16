@@ -29,6 +29,7 @@ struct occurrence_info
     bool pre_inline() const;
 };
 
+struct VarInfo;
 struct Type;
 
 // a variable expression
@@ -42,6 +43,9 @@ struct var: public Object, public occurrence_info
 
     // We use this only to print dvar :: constraint
     std::shared_ptr<Type> type_;
+
+    // This stores unfoldings, pragmas, etc.
+    std::shared_ptr<VarInfo> info;
 
     bool operator==(const var&) const;
     bool operator==(const Object& o) const;
