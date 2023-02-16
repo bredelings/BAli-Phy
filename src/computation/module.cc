@@ -703,17 +703,28 @@ void Module::perform_exports()
         for(auto& [var,type]: tc_state->poly_env())
         {
             auto& value = var.name;
-            if (get_module_name(value) == name)
+            assert(get_module_name(value) == name);
+            if (not symbols.count(value))
             {
-                if (not symbols.count(value))
-                    ; //                std::cerr<<"'"<<value<<"' is not a symbol!\n";
-                else
-                {
-                    auto& V = symbols.at(value);
-                    V.type = type;
-                }
+                // std::cerr<<"'"<<value<<"' is not a symbol! (type = "<<type<<")\n";
+                // this includes default methods (Data.Ord.dm<=2532)
+                // and instance methods (Data.Ord.i<_2628).
+
+                // do we actually need to record types for these?
+                // do we every use them outside of dictionary construction?
+            }
+            else
+            {
+                auto& V = symbols.at(value);
+                assert(V.symbol_type != constructor_symbol);
+                V.type = type;
             }
         }
+    }
+
+    for(auto& [name,value_info]:symbols)
+    {
+        assert(value_info.symbol_type == constructor_symbol or not value_info.type.empty());
     }
 
     // Currently we just export the local symbols
