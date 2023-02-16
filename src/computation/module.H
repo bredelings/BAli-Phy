@@ -56,8 +56,6 @@ class Module
 
     std::map<std::string, type_info> exported_types_;
 
-    LanguageExtensions language_extensions;
-
     bool resolved = false;
 
     bool optimized = false;
@@ -65,6 +63,8 @@ class Module
     std::vector<Message> messages;
 
 public:
+
+    LanguageExtensions language_extensions;
 
     bool do_optimize = true;
     
