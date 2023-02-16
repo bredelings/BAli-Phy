@@ -1,6 +1,10 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-module Compiler.Base where
+module Compiler.Base (String,
+                      seq,
+                      ($!),
+                      error) where
 
+import Compiler.Prim   -- for seq
 import Compiler.Error  -- for error
 
 type String = [Char]
