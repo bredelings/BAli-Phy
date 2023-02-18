@@ -1369,14 +1369,16 @@ symbol_info Module::lookup_symbol(const std::string& name) const
     }
 }
 
-symbol_info Module::lookup_resolved_symbol(const std::string& symbol_name) const
+optional<symbol_info> Module::lookup_resolved_symbol(const std::string& symbol_name) const
 {
     if (is_haskell_builtin_con_name(symbol_name))
         return lookup_builtin_symbol(symbol_name).first;
 
-    if (not symbols.count(symbol_name))
-        throw myexception()<<"Identifier '"<<name<<"' -> '"<<symbol_name<<"', which does not exist!";
-    return symbols.find(symbol_name)->second;
+    auto iter = symbols.find(symbol_name);
+    if (iter == symbols.end())
+        return {};
+    else
+        return iter->second;
 }
 
 symbol_info Module::get_operator(const string& name) const
