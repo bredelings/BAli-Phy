@@ -494,7 +494,8 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         // forall x. (C1 x, C2 x) => forall b. Ix b => [x] -> b -> b
         op_type = add_forall_vars(instance_tvs,add_constraints(preds_from_lie(givens), op_type));
 
-        poly_env() = poly_env().insert( {op, op_type} );
+        // Don't write the op_type into the global type environment?
+        // poly_env() = poly_env().insert( {op, op_type} );
 
         optional<Hs::FunDecl> FD;
         if (auto it = method_matches.find(method); it != method_matches.end())
@@ -515,8 +516,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
             FD = Hs::simple_decl({noloc,op}, {noloc,dm_var});
         }
 
-        auto sig_type = poly_env().at(unloc(FD->v));
-        auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, sig_type);
+        auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
         decls.push_back({noloc,decl2});
         pop_note();
     }
