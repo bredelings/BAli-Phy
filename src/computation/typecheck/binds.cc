@@ -259,7 +259,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
                       [&](const Type& rho_type, auto& tcs2) {
 
                           // 3. Record the mapping from inner_id -> rho_type for error messages
-                          // FIXME -- not using inner idea because we have mangled it.
+                          // FIXME -- not using inner id because we have mangled it.
                           tcs2.push_binder( IDType{unloc(FD.v), rho_type} );
 
                           // 4. Analyze the Matches
