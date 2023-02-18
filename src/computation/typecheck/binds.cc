@@ -154,17 +154,21 @@ TypeChecker::infer_type_for_decls(const signature_env& signatures, const Hs::Dec
     return decls2;
 }
 
-bool single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signatures)
+std::optional<Type> single_fundecl_with_sig(const Hs::Decls& decls, const signature_env& signatures)
 {
-    if (decls.size() != 1) return false;
+    if (decls.size() != 1) return {};
 
     auto& [loc,decl] = decls[0];
 
-    if (not decl.is_a<Hs::FunDecl>()) return false;
+    if (not decl.is_a<Hs::FunDecl>()) return {};
 
     auto& FD = decl.as_<Hs::FunDecl>();
 
-    return signatures.count(unloc(FD.v)) > 0;
+    auto iter = signatures.find(unloc(FD.v));
+    if (iter == signatures.end())
+        return {};
+    else
+        return iter->second;
 }
 
 Hs::LDecl
@@ -242,8 +246,8 @@ classify_constraints(const LIE& lie, const set<TypeVar>& qtvs)
 }
 
 /// Compare to checkSigma, which also check for any skolem variables in the wanteds
-tuple<expression_ref, Type>
-TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
+expression_ref
+TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& polytype)
 {
     // Q: Are we getting the monotype correct?
 
@@ -253,7 +257,6 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
     Hs::Var inner_id = get_fresh_Var(unloc(FD.v).name, false);
 
     // 2. skolemize the type -> (tvs, givens, rho-type)
-    auto polytype = poly_env().at(unloc(FD.v));
     auto [wrap_gen, tvs, givens, rho_type] =
         skolemize_and(polytype,
                       [&](const Type& rho_type, auto& tcs2) {
@@ -280,7 +283,7 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD)
 
     pop_note();
 
-    return {decl, polytype};
+    return decl;
 }
 
 bool is_restricted(const signature_env& signatures, const Hs::Decls& decls)
@@ -828,16 +831,14 @@ TypeChecker::simplify_and_quantify(bool restricted, WantedConstraints& wanteds, 
 Hs::Decls
 TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Decls decls, bool is_top_level)
 {
-    if (single_fundecl_with_sig(decls, signatures))
+    if (auto sigtype = single_fundecl_with_sig(decls, signatures))
     {
         auto& [loc0, decl0] = decls[0];
         auto& FD = decl0.as_<Hs::FunDecl>();
 
-        auto [decl, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
+        auto decl = infer_type_for_single_fundecl_with_sig(FD, *sigtype);
 
-        Hs::Decls decls({{loc0, decl}});
-
-        return decls;
+        return Hs::Decls({{loc0, decl}});
     }
 
     // 1. Type check the decls group with monomorphic types for vars w/o signatures.

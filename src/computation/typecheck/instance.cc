@@ -25,7 +25,8 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
         auto dm = class_info.default_methods.at( unloc(FD.v) );
         unloc(FD.v) = dm;
 
-        auto [decl2, sig_type] = infer_type_for_single_fundecl_with_sig(FD);
+        auto sig_type = poly_env().at(unloc(FD.v));
+        auto decl2 = infer_type_for_single_fundecl_with_sig(FD, sig_type);
         decls_out.push_back({loc,decl2});
     }
 
@@ -513,7 +514,9 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
             FD = Hs::simple_decl({noloc,op}, {noloc,dm_var});
         }
-        auto [decl2, __] = infer_type_for_single_fundecl_with_sig(*FD);
+
+        auto sig_type = poly_env().at(unloc(FD->v));
+        auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, sig_type);
         decls.push_back({noloc,decl2});
         pop_note();
     }
