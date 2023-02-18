@@ -24,7 +24,7 @@ struct fixity_info
 
 struct VarInfo;
 
-enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, class_method_symbol = 2, unknown_symbol = 3};
+enum symbol_type_t {variable_symbol = 0, constructor_symbol, class_method_symbol, default_method_symbol, unknown_symbol};
 
 struct symbol_info
 {
