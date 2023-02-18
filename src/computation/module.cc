@@ -1381,6 +1381,24 @@ optional<symbol_info> Module::lookup_resolved_symbol(const std::string& symbol_n
         return iter->second;
 }
 
+const symbol_info* Module::lookup_resolved_symbol_(const std::string& symbol_name) const
+{
+    auto iter = symbols.find(symbol_name);
+    if (iter == symbols.end())
+        return nullptr;
+    else
+        return &iter->second;
+}
+
+symbol_info* Module::lookup_resolved_symbol_(const std::string& symbol_name)
+{
+    auto iter = symbols.find(symbol_name);
+    if (iter == symbols.end())
+        return nullptr;
+    else
+        return &iter->second;
+}
+
 symbol_info Module::get_operator(const string& name) const
 {
     symbol_info S = lookup_symbol(name);
@@ -1423,15 +1441,34 @@ type_info Module::lookup_type(const std::string& name) const
     }
 }
 
-type_info Module::lookup_resolved_type(const std::string& type_name) const
+optional<type_info> Module::lookup_resolved_type(const std::string& type_name) const
 {
     if (is_haskell_builtin_type_name(type_name))
         return lookup_builtin_type(type_name);
 
-    if (not types.count(type_name))
-        throw myexception()<<"Identifier '"<<name<<"' -> '"<<type_name<<"', which does not exist!";
+    auto iter = types.find(type_name);
+    if (iter == types.end())
+        return {};
+    else
+        return iter->second;
+}
 
-    return types.find(type_name)->second;
+const type_info* Module::lookup_resolved_type_(const std::string& type_name) const
+{
+    auto iter = types.find(type_name);
+    if (iter == types.end())
+        return nullptr;
+    else
+        return &iter->second;
+}
+
+type_info* Module::lookup_resolved_type_(const std::string& type_name)
+{
+    auto iter = types.find(type_name);
+    if (iter == types.end())
+        return nullptr;
+    else
+        return &iter->second;
 }
 
 void parse_combinator_application(const expression_ref& E, string& name, vector<expression_ref>& patterns)

@@ -197,12 +197,16 @@ public:
     symbol_info lookup_symbol(const std::string&) const;
 
     std::optional<symbol_info> lookup_resolved_symbol(const std::string&) const;
+    const symbol_info* lookup_resolved_symbol_(const std::string&) const;
+          symbol_info* lookup_resolved_symbol_(const std::string&);
 
     symbol_info get_operator(const std::string& name) const;
 
     type_info lookup_type(const std::string&) const;
 
-    type_info lookup_resolved_type(const std::string&) const;
+    std::optional<type_info> lookup_resolved_type(const std::string&) const;
+    const type_info* lookup_resolved_type_(const std::string&) const;
+          type_info* lookup_resolved_type_(const std::string&);
 
     explicit Module(const std::string&);
 
