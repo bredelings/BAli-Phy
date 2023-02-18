@@ -41,7 +41,7 @@ struct symbol_info
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int, fixity_info);
 };
 
-
+struct ClassInfo;
 
 struct type_info
 {
@@ -50,6 +50,7 @@ struct type_info
     struct class_info
     {
         std::set<std::string> methods;
+        std::shared_ptr<ClassInfo> info;
     };
     struct data_info
     {
@@ -60,6 +61,7 @@ struct type_info
     struct type_fam_info {};
 
     bool is_type_other() const; // "->", but now also "~"
+          class_info* is_class();
     const class_info* is_class() const;
     const data_info* is_data() const;
     bool is_type_syn() const;

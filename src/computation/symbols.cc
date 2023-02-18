@@ -39,6 +39,11 @@ const type_info::class_info* type_info::is_class() const
     return to<class_info>(info);
 }
 
+type_info::class_info* type_info::is_class()
+{
+    return to<class_info>(info);
+}
+
 const type_info::data_info* type_info::is_data() const
 {
     return to<data_info>(info);
