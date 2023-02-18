@@ -36,12 +36,12 @@ struct unification_env
     TypeVar fresh_tyvar(const std::optional<Kind>& k) const;
 };
 
-Hs::ModuleDecls typecheck(const std::string& s, const Module& m, Hs::ModuleDecls M);
+Hs::ModuleDecls typecheck(const std::string& s, Module& m, Hs::ModuleDecls M);
 
 Type type_check_class_method_type(kindchecker_state& K, Type type, const Type& constraint);
 
 std::tuple<global_value_env, GIE, ClassInfo, Hs::Decls>
-type_check_type_class(const Module& m, const TypeConEnv& tce, const Haskell::ClassDecl& class_decl);
+type_check_type_class(Module& m, const TypeConEnv& tce, const Haskell::ClassDecl& class_decl);
 
 global_value_env sig_env(const signature_env& signatures);
 
@@ -51,7 +51,7 @@ typedef std::map<TypeCon,Kind> KindSigEnv;
 
 struct global_tc_state
 {
-    const Module& this_mod; // for name lookups like Bool, Num, etc.
+    Module& this_mod; // for name lookups like Bool, Num, etc.
 
     KindSigEnv kind_sigs;
 
@@ -76,7 +76,7 @@ struct global_tc_state
 
     std::optional<int> unification_level;
 
-    global_tc_state(const Module& m);
+    global_tc_state(Module& m);
 };
 
 constexpr int occurs_definitely_bit = 0;
@@ -108,6 +108,7 @@ class TypeChecker: FreshVarSource
     cow_ptr<TypeCheckerContext> local_state;
 
 public:
+          Module& this_mod()        {return global_state->this_mod;}
     const Module& this_mod() const {return global_state->this_mod;}
 
           KindSigEnv& kind_sigs()       {return global_state->kind_sigs;}
@@ -561,7 +562,7 @@ public:
 
     void get_defaults(const Hs::ModuleDecls& M);
 
-    TypeChecker(FreshVarState& fvs, const std::string& s, const Module& m);
+    TypeChecker(FreshVarState& fvs, const std::string& s, Module& m);
 };
 
 std::optional<ID> maybe_get_class_name_from_constraint(const Type& constraint);

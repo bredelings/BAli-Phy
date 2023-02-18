@@ -433,7 +433,7 @@ TypeVar unification_env::fresh_tyvar(const std::optional<Kind>& kind) const
     return ftv;
 }
 
-global_tc_state::global_tc_state(const Module& m)
+global_tc_state::global_tc_state(Module& m)
     :this_mod(m)
 { }
 
@@ -953,7 +953,7 @@ Core::Var TypeChecker::add_wanted(const ConstraintOrigin& origin, const Type& pr
     return dvar;
 }
 
-TypeChecker::TypeChecker(FreshVarState& fvs, const string& s, const Module& m)
+TypeChecker::TypeChecker(FreshVarState& fvs, const string& s, Module& m)
     :FreshVarSource(fvs, s), local_state(new TypeCheckerContext)
 {
     global_state = std::make_shared<global_tc_state>(m);
