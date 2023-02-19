@@ -69,8 +69,6 @@ struct global_tc_state
 
     std::vector<Message> messages;
 
-    global_value_env imported_gve;
-
     // maybe merge with gve by mapping name -> type,con-or-var
     DataConEnv data_con_env;
 
@@ -137,9 +135,6 @@ public:
 
           std::vector<Message>& messages()       {return global_state->messages;}
     const std::vector<Message>& messages() const {return global_state->messages;}
-
-          global_value_env& imported_gve()       {return global_state->imported_gve;}
-    const global_value_env& imported_gve() const {return global_state->imported_gve;}
 
     void record_error(cow_ptr<TypeCheckerContext> context, const Notes& notes);
     void record_error(cow_ptr<TypeCheckerContext> context, const Note& e);

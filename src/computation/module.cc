@@ -425,19 +425,6 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                     info.equations.insert({id, eqn_info});
             }
         }
-
-        // 7. Import types for values.
-        for(auto& [name, type]: M2.tc_state->poly_env())
-        {
-            if (not tc_state->poly_env().count(name))
-                tc_state->imported_gve() = tc_state->imported_gve().insert({name,type});
-        }
-
-        for(auto& [name, type]: M2.tc_state->imported_gve())
-        {
-            if (not tc_state->poly_env().count(name))
-                tc_state->imported_gve() = tc_state->imported_gve().insert({name,type});
-        }
     }
 }
 

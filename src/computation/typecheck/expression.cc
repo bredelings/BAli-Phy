@@ -26,18 +26,8 @@ void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
     else if (auto sigma_ptr = poly_env().find( x ))
         sigma = *sigma_ptr;
     // x should be in the global type environment
-    else if (auto sigma_ptr = imported_gve().find( x ))
-    {
-        sigma = *sigma_ptr;
-
-        auto S = this_mod().lookup_resolved_symbol(x.name);
-
-        // We don't have types for default methods and instance methods.
-        // We get asked for these types when type checking instance declarations.
-        assert(S);
-        auto sigma2 = S->type;
-        assert(sigma.print() == sigma2.print());
-    }
+    else if (auto S = this_mod().lookup_resolved_symbol(x.name))
+        sigma = S->type;
     else
         throw note_exception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 
