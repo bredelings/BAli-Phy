@@ -102,6 +102,13 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
         auto type = class_info.members.at(method);
 
+        // Hmm... so one issue is that I think we want to declare this (i) with NO alias and (ii) only with the original name.
+        auto S = symbol_info(dm.name, default_method_symbol, unloc(class_decl.name), -1, {unknown_fix, -1});
+        S.type = type;
+
+        // Default methods don't get an alias.
+        this_mod().add_symbol(S);
+
         gve = gve.insert({dm, type});
     }
 
