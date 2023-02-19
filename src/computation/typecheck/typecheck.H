@@ -61,8 +61,6 @@ struct global_tc_state
 
     TypeSynonymEnv type_syn_env;
 
-    ClassEnv class_env;
-
     InstanceEnv instance_env;
 
     std::vector<Type> defaults;
@@ -124,8 +122,7 @@ public:
           TypeSynonymEnv& type_syn_env()       {return global_state->type_syn_env;}
     const TypeSynonymEnv& type_syn_env() const {return global_state->type_syn_env;}
 
-          ClassEnv& class_env()       {return global_state->class_env;}
-    const ClassEnv& class_env() const {return global_state->class_env;}
+    const ClassInfo* info_for_class(const std::string& cname) const;
 
           InstanceEnv& instance_env()       {return global_state->instance_env;}
     const InstanceEnv& instance_env() const {return global_state->instance_env;}

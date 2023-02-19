@@ -104,6 +104,8 @@ public:
 
     const std::map<std::string, type_info>& exported_types() const {return exported_types_;}
 
+    std::map<std::string, type_info> required_types() const;
+
     void export_symbol(const symbol_info& S);
 
     void export_type(const type_info& S);

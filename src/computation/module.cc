@@ -250,9 +250,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
             import_symbol(S, modid, qualified);
 
         for(const auto& [_,T]: m2_exported_types)
-        {
             import_type(T, modid, qualified, m2_exports);
-        }
     }
     // import modid ( etc )
     else if (impdecl.impspec and not impdecl.impspec->hiding)
@@ -398,13 +396,6 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                 tc_state->type_syn_env().insert({tname,tinfo});
         }
 
-        // 4. Import information about class ops
-        for(auto& [cname,cinfo]: M2.tc_state->class_env())
-        {
-            if (not tc_state->class_env().count(cname))
-                tc_state->class_env().insert({cname,cinfo});
-        }
-
         // 5. Import information about instances
         for(auto& [dfun, dfun_type]: M2.tc_state->instance_env())
         {
@@ -426,6 +417,10 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
             }
         }
     }
+
+    // Add info for types that are referenced, perhaps indirectly, from exported values or types.
+    for(const auto& [_,T]: M2.required_types())
+        types.insert({T.name, T});
 }
 
 vector<Hs::LImpDecl> Module::imports() const
@@ -580,6 +575,15 @@ void Module::perform_imports(const Program& P)
 
     show_messages(file, std::cerr, messages);
     exit_on_error(messages);
+}
+
+// This should include types that are
+// * themselves exported
+// * referenced from exported values
+// * referenced from exported types (i.e. from class methods, data constructors, superclasses)
+map<string, type_info> Module::required_types() const
+{
+    return types;
 }
 
 void Module::export_symbol(const symbol_info& S)
@@ -1129,6 +1133,7 @@ vector<expression_ref> peel_lambdas(expression_ref& E)
 void mark_exported_decls(CDecls& decls,
                          const shared_ptr<TypeChecker>& tc_state,
                          const map<string,symbol_info>& exports,
+                         const map<string,type_info>& type_exports,
                          const string& module_name)
 {
     // Record exports
@@ -1144,14 +1149,17 @@ void mark_exported_decls(CDecls& decls,
         for(auto& [dvar, _]: tc_state->instance_env())
             exported.insert(dvar.name);
 
-        for(auto& [cname,cinfo]: tc_state->class_env())
+        for(auto& [tname,tinfo]: type_exports)
         {
-            for(auto& [dvar, _]: cinfo.superclass_extractors)
-                exported.insert(dvar.name);
+            if (auto c = tinfo.is_class())
+            {
+                for(auto& [dvar, _]: c->info->superclass_extractors)
+                    exported.insert(dvar.name);
 
-            // Default methods are exported
-            for(auto& [method, dm]: cinfo.default_methods)
-                exported.insert(dm.name);
+                // Default methods are exported
+                for(auto& [method, dm]: c->info->default_methods)
+                    exported.insert(dm.name);
+            }
         }
     }
 
@@ -1194,7 +1202,7 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
 
     if (opts.optimize)
     {
-        mark_exported_decls(cdecls, tc_state, exported_symbols(), name);
+        mark_exported_decls(cdecls, tc_state, exported_symbols(), types, name);
 
         vector<CDecls> decl_groups = {cdecls};
 

@@ -17,7 +17,7 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
 {
     Hs::Decls decls_out;
 
-    auto class_info = class_env().at(unloc(C.name));
+    auto class_info = *info_for_class(unloc(C.name));
 
     for(auto& [loc,decl]: C.default_method_decls)
     {
@@ -240,7 +240,8 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 
     // Check that this is a class, and not a data or type?
     auto class_name = tc->name;
-    if (not class_env().count(class_name))
+    auto maybe_class_info = info_for_class(class_name);
+    if (not maybe_class_info)
     {
         record_error( Note() <<"no class named '"<<class_name<<"'!");
         pop_source_span();
@@ -248,7 +249,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
         pop_note();
         return {};
     }
-    auto class_info = class_env().at(class_name);
+    auto class_info = *maybe_class_info;
     pop_source_span();
 
     // 3. Check that the instance has the right number of parameters
@@ -446,7 +447,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // 2. Get the class info
     auto class_con = get_class_for_constraint(instance_head);
     auto class_name = unloc(class_con.name);
-    auto class_info = class_env().at(class_name);
+    auto class_info = *info_for_class(class_name);
 
     // 3. Get constrained version of the class
     substitution_t subst;

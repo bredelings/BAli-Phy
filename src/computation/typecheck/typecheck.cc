@@ -339,6 +339,15 @@ using std::tuple;
 // GVE = global value environment      = var -> polytype
 // LVE = local  value environment      = var -> monotype
 
+const ClassInfo* TypeChecker::info_for_class(const std::string& name) const
+{
+    auto T = this_mod().lookup_resolved_type(name);
+    assert(T);
+    auto C = T->is_class();
+    assert(C);
+    return C->info.get();
+}
+
 int TypeChecker::type_con_arity(const TypeCon& tc) const
 {
     auto iter = tycon_env().find(unloc(tc.name));
@@ -359,7 +368,7 @@ bool TypeChecker::type_con_is_type_syn(const TypeCon& tc) const
 
 bool TypeChecker::type_con_is_type_class(const TypeCon& tc) const
 {
-    return class_env().count(unloc(tc.name));
+    return info_for_class(unloc(tc.name));
 }
 
 bool TypeChecker::type_con_must_be_saturated(const TypeCon& tc) const

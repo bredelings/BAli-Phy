@@ -236,7 +236,7 @@ Hs::Binds TypeChecker::infer_type_for_classes(const Hs::Decls& decls)
         auto [gve1, class_info, class_decls] = infer_type_for_class(*c);
 
         poly_env() += gve1;
-        class_env().insert({class_info.name, class_info});
+
         this_mod().lookup_resolved_type_(class_info.name)->is_class()->info = std::make_shared<ClassInfo>(class_info);
 
         class_binds.push_back(class_decls);
