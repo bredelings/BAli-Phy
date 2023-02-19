@@ -47,7 +47,9 @@ symbol_info seq_info()
     fixity_info fixity{Hs::Fixity::infixr, 0};
 
     // 4. always unfold to code.
-    auto info = std::make_shared<VarInfo>(true, code);
+    auto info = std::make_shared<VarInfo>();
+    info->always_unfold = true;
+    info->unfolding = code;
 
     // 5. create the symbol
     auto seq = symbol_info{"seq", variable_symbol, {}, 2, fixity};

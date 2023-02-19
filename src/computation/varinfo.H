@@ -10,4 +10,6 @@ struct VarInfo
     Core::Exp unfolding;
 
     // pragmas
+    bool pragma_inline = false;
+    bool pragma_inlineable = false;
 };
