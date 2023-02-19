@@ -191,7 +191,7 @@ void Module::import_symbol(const symbol_info& S, const string& modid, bool quali
 }
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
-void Module::import_type(const type_info& T, const string& modid, bool qualified)
+void Module::import_type(const type_info& T, const string& modid, bool qualified, const map<string,symbol_info>& m2_exports)
 {
     if (not is_qualified_symbol(T.name))
         throw myexception()<<"Imported symbols must have qualified names.";
@@ -203,6 +203,13 @@ void Module::import_type(const type_info& T, const string& modid, bool qualified
     // Add the alias for unqualified name.
     if (not qualified)
         add_type_alias(get_unqualified_name(T.name), T.name);
+
+    // Import default methods if its a class
+    if (auto c = T.is_class())
+    {
+        for(auto& [_,dmvar]: c->info->default_methods)
+            add_symbol( m2_exports.at(dmvar.name) );
+    }
 }
 
 bool contains_import(const Haskell::Export& e, const string& name)
@@ -243,7 +250,9 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
             import_symbol(S, modid, qualified);
 
         for(const auto& [_,T]: m2_exported_types)
-            import_type(T, modid, qualified);
+        {
+            import_type(T, modid, qualified, m2_exports);
+        }
     }
     // import modid ( etc )
     else if (impdecl.impspec and not impdecl.impspec->hiding)
@@ -280,7 +289,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                 }
 
                 auto type = m2_exported_types.at(id);
-                import_type( type, modid, qualified );
+                import_type( type, modid, qualified, m2_exports );
                 if (s.subspec)
                 {
                     if (type.is_type_fam())
@@ -360,7 +369,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
 
             if (contains_import(impdecl.impspec->imports, unqualified_name)) continue;
 
-            import_type(T, modid, qualified);
+            import_type(T, modid, qualified, m2_exports);
         }
     }
 
@@ -589,6 +598,14 @@ void Module::perform_imports(const Program& P)
 void Module::export_symbol(const symbol_info& S)
 {
     assert(is_qualified_symbol(S.name));
+
+    if (S.symbol_type == default_method_symbol)
+    {
+        // normal exported symbols are access by unqualified name.
+        exported_symbols_.insert({S.name, S});
+        return;
+    }
+
     auto uname = get_unqualified_name(S.name);
     if (not exported_symbols_.count(uname))
         exported_symbols_[uname] = S;
@@ -606,6 +623,13 @@ void Module::export_type(const type_info& T)
     // FIXME, this doesn't really say how the entities (which are different) were referenced in the export list
     else if (exported_types_[uname].name != T.name)
         throw myexception()<<"attempting to export both '"<<exported_types_[uname].name<<"' and '"<<T.name<<"', which have the same unqualified name!";
+
+    // Export default methods if its a class
+    if (auto c = T.is_class())
+    {
+        for(auto& [_,dmvar]: c->info->default_methods)
+            export_symbol(*lookup_resolved_symbol( dmvar.name ) );
+    }
 }
 
 bool Module::symbol_in_scope_with_name(const string& symbol_name, const string& id_name) const

@@ -146,7 +146,7 @@ public:
 
     void import_symbol(const symbol_info&, const std::string&, bool qualified);
 
-    void import_type(const type_info&, const std::string&, bool qualified);
+    void import_type(const type_info&, const std::string&, bool qualified, const std::map<std::string, symbol_info>&);
 
     void import_module(const Program& P, const Hs::LImpDecl& I);
 
