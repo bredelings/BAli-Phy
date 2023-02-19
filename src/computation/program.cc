@@ -8,6 +8,11 @@
 #include "util/assert.hh"
 #include "util/string/join.H"
 #include "util/mapping.H"
+#include "computation/varinfo.H"
+#include "computation/expression/lambda.H"
+#include "computation/expression/case.H"
+#include "computation/typecheck/kind.H"
+#include "computation/optimization/occurrence.H"
 
 using std::vector;
 using std::set;
@@ -24,12 +29,56 @@ const std::shared_ptr<module_loader>& Program::get_module_loader() const
     return loader;
 }
 
+symbol_info seq_info()
+{
+    // 1. seq = \x y -> case x of _ -> y
+    auto x = Core::Var("x");
+    auto y = Core::Var("y");
+    Core::Exp code = lambda_quantify(vector{x,y},make_case_expression(x,{{var(-1)}},{{y}}));
+
+    // 2. seq :: forall a b. a -> b -> b
+    TypeVar a({noloc,"a"});
+    a.kind = kind_type();
+    TypeVar b({noloc,"b"});
+    b.kind = kind_type();
+    Type type = ForallType({a,b},function_type({a,b},b));
+
+    // 3. infixr 0 seq
+    fixity_info fixity{Hs::Fixity::infixr, 0};
+
+    // 4. always unfold to code.
+    auto info = std::make_shared<VarInfo>(true, code);
+
+    // 5. create the symbol
+    auto seq = symbol_info{"seq", variable_symbol, {}, 2, fixity};
+    seq.type = type;
+    seq.info = info;
+
+    return seq;
+}
+
 Module compiler_prim_module()
 {
+    // 1. Create module Compiler.Prim
     Module m("Compiler.Prim");
 
-    // No implicit Prelude
+    // 2. No implicit Prelude
     m.language_extensions.set_extension(LangExt::ImplicitPrelude, false);
+
+    // 3. Add seq.
+    auto seq = seq_info();
+    if (seq.info and seq.info->unfolding)
+    {
+        auto& code = seq.info->unfolding;
+        m.value_decls.push_back({var("Compiler.Prim.seq"), code});
+        // Unfoldings must be occurrence-analyzed so that we can inline them.
+        auto [code2, _] = occurrence_analyzer(code);
+        code = code2;
+    }
+    m.declare_symbol(seq);
+
+    // 4. Copy symbols to the for-export maps.
+    m.perform_exports();
 
     return m;
 }

@@ -9,7 +9,6 @@ import Compiler.Error  -- for error
 
 type String = [Char]
 
-infixr 0 $!, `seq`
+infixr 0 $!
 f $! x = x `seq` f x
 
-foreign import bpcall "Prelude:seq" seq :: a -> b -> b
