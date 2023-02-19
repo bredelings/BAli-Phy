@@ -728,21 +728,11 @@ void Module::perform_exports()
         {
             auto& value = var.name;
             assert(get_module_name(value) == name);
-            if (not symbols.count(value))
-            {
-                // std::cerr<<"'"<<value<<"' is not a symbol! (type = "<<type<<")\n";
-                // this includes default methods (Data.Ord.dm<=2532)
-                // and instance methods (Data.Ord.i<_2628).
+            assert(symbols.count(value));
 
-                // do we actually need to record types for these?
-                // do we every use them outside of dictionary construction?
-            }
-            else
-            {
-                auto& V = symbols.at(value);
-                assert(V.symbol_type != constructor_symbol);
-                V.type = type;
-            }
+            auto& V = symbols.at(value);
+            assert(V.symbol_type != constructor_symbol);
+            V.type = type;
         }
     }
 
