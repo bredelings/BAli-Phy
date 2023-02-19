@@ -68,8 +68,8 @@ struct Literal: public Object
     // Or do we need a Wrapper, that takes a var, and generates (var == (fromInteger lit))?
     expression_ref equalsOp; // ??
 
-    Literal* clone() const {return new Literal(*this);}
-    std::string print() const;
+    Literal* clone() const override {return new Literal(*this);}
+    std::string print() const override;
 
     std::optional<char> is_Char() const;
     std::optional<integer> is_Integer() const;
