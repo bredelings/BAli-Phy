@@ -52,6 +52,8 @@ void parse_alts(const Run::Alts& alts, std::vector<expression_ref>& patterns, st
 
 bool parse_case_expression(const expression_ref& E, expression_ref& T, std::vector<expression_ref>& patterns, std::vector<expression_ref>& bodies);
 
+bool parse_case_expression(const expression_ref& E, expression_ref& T, Run::Alts& alts);
+
 void parse_alternatives(const expression_ref& E, std::vector<expression_ref>& cases, std::vector<expression_ref>& results);
 
 bool is_case(const expression_ref& E);

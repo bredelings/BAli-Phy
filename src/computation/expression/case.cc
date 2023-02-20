@@ -90,6 +90,18 @@ bool parse_case_expression(const expression_ref& E, expression_ref& object, vect
     return true;
 }
 
+/// R = case T of {patterns[i] -> bodies[i]}
+bool parse_case_expression(const expression_ref& E, expression_ref& object, Run::Alts& alts)
+{
+    if (not is_case(E)) return false;
+
+    object = E.sub()[0];
+
+    alts = E.sub()[1].as_<Run::Alts>();
+
+    return true;
+}
+
 Run::Alts make_alts(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
     assert(patterns.size() == bodies.size());
