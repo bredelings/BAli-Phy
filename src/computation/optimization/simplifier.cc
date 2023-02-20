@@ -393,6 +393,20 @@ tuple<CDecls,simplifier::substitution> SimplifierState::rename_and_bind_pattern_
     return {pat_decls, S2};
 }
 
+bool redundant_pattern(const Run::Alts& alts, const expression_ref& pattern)
+{
+    for(auto& [p,_]: alts)
+    {
+        if (is_var(p) and is_var(pattern))
+            return true;
+
+        if (not is_var(p) and p.head() == pattern.head())
+            return true;
+    }
+    return false;
+}
+
+
 // case object of alts.  Here the object has been simplified, but the alts have not.
 expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::Alts alts, const substitution& S, in_scope_set& bound_vars)
 {
@@ -461,20 +475,42 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::A
     if (last_index and *last_index + 1 < alts.size())
         alts.resize(*last_index);
 
-    expression_ref E2;
+    // 3. Merge case x of {...; _ -> let default_decls in case x of ...}
+    vector<CDecls> default_decls;
+    if (is_var(alts.back().pattern))
+    {
+        assert(is_wildcard(alts.back().pattern));
+        auto& body = alts.back().body;
 
-    // 7. If the case is an identity transformation: case obj of {[] -> []; (y:ys) -> (y:ys); z -> z; _ -> obj}
+        default_decls = strip_multi_let( body );
+
+        expression_ref object2;
+        Run::Alts alts2;
+        if (parse_case_expression(body, object2, alts2) and is_var(object2) and object2 == object)
+        {
+            alts.pop_back();
+            for(auto& [pattern2,body2]: alts2)
+            {
+                if (not redundant_pattern(alts, pattern2))
+                    alts.push_back({pattern2, body2});
+            }
+        }
+    }
+
+    // 4. If the case is an identity transformation: case obj of {[] -> []; (y:ys) -> (y:ys); z -> z; _ -> obj}
     // NOTE: this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
     // NOTE: this preserves strictness, because the object is still evaluated.
+    expression_ref E2;
     if (is_identity_case(object, alts))
 	E2 = object;
-    // 8. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
+    // 5. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
     else if (is_case(object) and options.case_of_case)
         E2 = case_of_case(object, alts, *this);
     else
         E2 = make_case_expression(object, alts);
 
-    return E2;
+    // 6. If we floated anything out, put it here.
+    return let_expression(default_decls, E2);
 }
 
 expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::Alts& alts, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
