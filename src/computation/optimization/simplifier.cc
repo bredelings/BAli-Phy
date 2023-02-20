@@ -350,6 +350,7 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::A
 
     // 6. Take a specific branch if the object is a constant
     expression_ref E2;
+    auto S2 = S;
     if (is_WHNF(object) and not is_var(object))
     {
 	for(int i=0; i<L and not E2; i++)
@@ -357,7 +358,7 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::A
 	    if (is_var(patterns[i]))
 	    {
 		assert(is_wildcard(patterns[i]));
-		E2 = simplify(bodies[i], S, bound_vars, context);
+		E2 = bodies[i];
 	    }
 	    else if (patterns[i].head() == object.head())
 	    {
@@ -370,7 +371,6 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::A
 		//   b. we should do EITHER pre- or post- inline substitution for each variable.  Replacing the z[i] by x[i].
 		// Since the x[i] are already simplified during this round, it SEEMS like we should be able to just add substitutions from y[i] -> x[i]!
 
-		auto S2 = S;
 		for(int j=0;j<patterns[i].size();j++)
 		{
 		    auto pat_var = patterns[i].sub()[j];
@@ -384,15 +384,19 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::A
 			S2.insert({x,obj_var});
 		    }
 		}
-		E2 = simplify(bodies[i], S2, bound_vars, context);
+		E2 = bodies[i];
 	    }
 	}
 	if (not E2)
 	    throw myexception()<<"Case object doesn't match any alternative in '"<<make_case_expression(object, patterns, bodies)<<"'";
 
-	unbind_decls(bound_vars, decls);
+        E2 = simplify(E2, S2, bound_vars, make_ok_context());
 
-	return let_expression(decls,E2);
+        unbind_decls(bound_vars, decls);
+
+        E2 = let_expression(decls, E2);
+
+        return rebuild(E2, bound_vars, context);
     }
 
 
