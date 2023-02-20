@@ -236,6 +236,9 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
         vector<expression_ref> patterns2(patterns.size());
         vector<expression_ref> bodies2(bodies.size());
         int level2 = level+1; // Increment level, since we're going to float out of case alternatives.
+
+        // Don't float out the entire case alternative if this isn't changeable.
+        bool non_changeable = patterns.size() == 1 and patterns[0].is_a<var>();
         for(int i=0;i<bodies2.size();i++)
         {
             auto binders = get_vars(patterns[i]);
@@ -246,7 +249,9 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
                 env2 = env2.insert({binder,binder2});
             }
             patterns2[i] = subst_pattern(patterns[i], env2);
-            bodies2[i] = set_level_maybe_MFE(bodies[i], level2, env2);
+            bodies2[i] = non_changeable?
+                set_level(bodies[i], level2, env2):
+                set_level_maybe_MFE(bodies[i], level2, env2);
         }
 
         return make_case_expression(object2,patterns2,bodies2);
