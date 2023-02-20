@@ -322,8 +322,10 @@ bool is_constant_case(const vector<expression_ref>& patterns, const vector<expre
 }
 
 // case E of alts.  Here E has been simplified, but the alts have not.
-expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::Alts& alts, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::rebuild_case_inner(expression_ref object, const Run::Alts& alts, const substitution& S, in_scope_set& bound_vars)
 {
+    assert(not is_let_expression(object));
+
     vector<expression_ref> patterns;
     vector<expression_ref> bodies;
     parse_alts(alts, patterns, bodies);
@@ -345,10 +347,7 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::A
 //	return simplify(bodies[0], S, bound_vars, context);
 //    }
 
-    auto decls = strip_multi_let(object);
-    bind_decls(bound_vars, decls);
-
-    // 6. Take a specific branch if the object is a constant
+    // 1. Take a specific branch if the object is a constant
     expression_ref E2;
     auto S2 = S;
     if (is_WHNF(object) and not is_var(object))
@@ -392,15 +391,11 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::A
 
         E2 = simplify(E2, S2, bound_vars, make_ok_context());
 
-        unbind_decls(bound_vars, decls);
-
-        E2 = let_expression(decls, E2);
-
-        return rebuild(E2, bound_vars, context);
+        return E2;
     }
 
 
-    // 1. Simplify each alternative
+    // 2. Simplify each alternative
     for(int i=0;i<L;i++)
     {
 	auto S2 = S;
@@ -510,8 +505,21 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::A
     else
         E2 = make_case_expression(object, patterns, bodies);
 
+    return E2;
+}
+
+expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::Alts& alts, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+{
+    // These lets should already be simplified, since we are rebuilding.
+    auto decls = strip_multi_let(object);
+
+    bind_decls(bound_vars, decls);
+    
+    auto E2 = rebuild_case_inner(object, alts, S, bound_vars);
+
     unbind_decls(bound_vars, decls);
 
+    // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
     E2 = let_expression(decls, E2);
 
     return rebuild(E2, bound_vars, context);
@@ -520,7 +528,7 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::A
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
 expression_ref SimplifierState::rebuild_let(const CDecls& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
-    // If the decl is empty, then we don't have to do anythign special here.
+    // If the decl is empty, then we don't have to do anything special here.
     bind_decls(bound_vars, decls);
 
     E = simplify(E, S, bound_vars, context);
