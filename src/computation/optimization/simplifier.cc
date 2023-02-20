@@ -459,6 +459,7 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::A
         index++;
     }
     if (last_index and *last_index + 1 < alts.size())
+        alts.resize(*last_index);
 
     expression_ref E2;
 
