@@ -434,17 +434,11 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::A
             f.work_dup = amount_t::Many;
             f.code_dup = amount_t::Many;
 
-	    expression_ref f_body = body;
-	    expression_ref f_call = f;
-	    for(int j=0;j<used_vars.size();j++)
-	    {
-		f_call = {f_call,used_vars[j]};
-		f_body = lambda_quantify(used_vars[used_vars.size()-1-j],f_body);
-	    }
+            // f = \x y .. -> body
+            cc_decls.push_back({f, lambda_quantify(used_vars, body)});
 
-	    cc_decls.push_back({f,f_body});
-
-	    body = f_call;
+            // body = f x y ...
+	    body = ::apply(expression_ref(f), used_vars);
 	}
 
 	// 3. The actual case-of-case transformation.
