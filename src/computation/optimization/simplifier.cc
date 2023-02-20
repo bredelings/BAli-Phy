@@ -223,56 +223,6 @@ void get_pattern_dummies(const expression_ref& pattern, set<var>& vars)
 	    get_pattern_dummies(y, vars);
 }
 
-
-// Get a list of patterns.size() names for let-bound variables that don't alias any bound vars  in patterns or patterns2
-vector<var> SimplifierState::get_body_function_names(in_scope_set& bound_vars, const vector<expression_ref>& patterns, const vector<expression_ref>& patterns2)
-{
-    vector<var> lifted_names;
-
-    int orig_size = bound_vars.size();
-
-    // 1. Get the list of dummies to avoid
-    set<var> avoid;
-    for(auto& pattern: patterns)
-	get_pattern_dummies(pattern, avoid);
-    for(auto& pattern: patterns2)
-	get_pattern_dummies(pattern, avoid);
-
-    // 2. Bind the unbound ones into scope
-    set<var> added;
-    for(auto& x:avoid)
-	if (not bound_vars.count(x))
-	{
-	    added.insert(x);
-	    bind_var(bound_vars, x, {});
-	}
-
-    // 3. Make some new names, putting them into scope as we go.
-    var z("_cc");
-    z.work_dup = amount_t::Many;
-    z.code_dup = amount_t::Many;
-    for(int i=0;i<patterns.size();i++)
-    {
-	z = get_new_name(z, bound_vars);
-	lifted_names.push_back(z);
-	bind_var(bound_vars, z, {});
-    }
-    assert(bound_vars.size() == orig_size + added.size() + patterns.size());
-
-    // 4. Unbind the new names from scope
-    for(int i=0;i<lifted_names.size();i++)
-	unbind_var(bound_vars, lifted_names[i]);
-
-    // 5. Unbind the names from the patterns from scope too.
-    for(auto& x: added)
-	unbind_var(bound_vars, x);
-
-    // 6. The scope size should now be the same size as when we started.
-    assert(bound_vars.size() == orig_size);
-
-    return lifted_names;
-}
-
 bool is_used_var(const var& x)
 {
     return (not x.is_wildcard() and x.code_dup != amount_t::None);

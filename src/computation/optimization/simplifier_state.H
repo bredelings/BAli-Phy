@@ -39,8 +39,6 @@ public:
     expression_ref
     rebuild_case_inner(expression_ref object, Run::Alts alts, const simplifier::substitution& S, in_scope_set& bound_vars);
 
-    std::vector<var> get_body_function_names(in_scope_set& bound_vars, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& patterns2);
-
     expression_ref
     rebuild_let(const CDecls& decls, expression_ref E, const simplifier::substitution& S, in_scope_set& bound_vars, const inline_context& context);
 
