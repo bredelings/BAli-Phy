@@ -190,21 +190,20 @@ var SimplifierState::rename_and_bind_var(const expression_ref& Evar, substitutio
     return x2;
 }
 
-bool is_identity_case(const expression_ref& object, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+bool is_identity_case(const expression_ref& object, const Run::Alts& alts)
 {
-    assert(patterns.size() == bodies.size());
-    for(int i=0;i<patterns.size();i++)
+    for(auto& [pattern, body]: alts)
     {
-	if (is_wildcard(patterns[i]))
+	if (is_wildcard(pattern))
 	{
-	    if (bodies[i] != object) return false;
+	    if (body != object) return false;
 	}
-	else if (is_var(patterns[i].head()))
+	else if (is_var(pattern.head()))
 	{
-	    assert(not patterns[i].size());
-	    if (bodies[i] != patterns[i] and bodies[i] != object) return false;
+	    assert(not pattern.size());
+	    if (body != pattern and body != object) return false;
 	}
-	else if (patterns[i] != bodies[i]) return false;
+	else if (pattern != body) return false;
     }
 
     return true;
@@ -370,18 +369,17 @@ find_constant_case_body(const expression_ref& object, const Run::Alts& alts, con
 
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
-expression_ref SimplifierState::rebuild_case_inner(expression_ref object, const Run::Alts& alts, const substitution& S, in_scope_set& bound_vars)
+expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::Alts alts, const substitution& S, in_scope_set& bound_vars)
 {
     assert(not is_let_expression(object));
+
+    //  Core is strict in the case object, so any optimizations must ensure that the object is evaluated.
 
     // NOTE: Any thing that relies on occurrence info for pattern vars should be done here, before
     //       we simplify alternatives, because that simplification can introduce new uses of the pattern vars.
     // Example: case #1 of {x:xs -> case #1 of {y:ys -> ys}} ==> case #1 of {x:xs -> xs} 
     //       We set #1=x:xs in the alternative, which means that a reference to #1 can reference xs.
 
-//  Eliminating the case expression is unsafe, as we would change case x of _ -> E into E.
-//  We could change case x of {[] -> F; (x:xs) -> F} into case x of _ -> F though, if F doesn't mention any of the pattern vars.
-//
 //    // 0. If all alternatives are the same expression that doesn't depend on any bound pattern variables.
 //    //    This transformation uses occurrence info.
 //    if (is_constant_case(patterns,bodies))
@@ -402,23 +400,16 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, const 
 	    throw myexception()<<"Case object doesn't match any alternative in '"<<make_case_expression(object, alts)<<"'";
     }
 
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    parse_alts(alts, patterns, bodies);
-    const int L = patterns.size();
-
-    expression_ref E2;
-
     // 2. Simplify each alternative
-    for(int i=0;i<L;i++)
+    for(auto& [pattern, body]: alts)
     {
 	auto S2 = S;
 	CDecls pat_decls;
 
 	// 2. Rename and bind pattern variables
-	if (patterns[i].size())
+	if (pattern.size())
 	{
-	    object_ptr<expression> pattern2 = patterns[i].as_expression().clone();
+	    object_ptr<expression> pattern2 = pattern.as_expression().clone();
 	    for(int j=0; j<pattern2->size(); j++)
 	    {
 		expression_ref& Evar = pattern2->sub[j];
@@ -438,37 +429,39 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, const 
 		Evar = x2;
 		pat_decls.push_back({x2, {}});
 	    }
-	    patterns[i] = pattern2;
+	    pattern = pattern2;
 	}
 
 	// 3. If we know something extra about the value (or range, theoretically) of the object in this case branch, then record that.
 	bound_variable_info original_binding;
 	if (is_var(object))
 	{
-	    if (is_wildcard(patterns[i]))
+	    if (is_wildcard(pattern))
 		; // we know that the object does NOT match any of the patterns on the other branches
 	          // we could record a negative range.
 	    else
-		original_binding = rebind_var(bound_vars, object.as_<var>(), patterns[i]);
+		original_binding = rebind_var(bound_vars, object.as_<var>(), pattern);
 	}
 
 	// 4. Simplify the alternative body
-	bodies[i] = simplify(bodies[i], S2, bound_vars, make_ok_context());
+	body = simplify(body, S2, bound_vars, make_ok_context());
 
 	// 5. Restore informatation about an object variable to information outside this case branch.
 	if (is_var(object))
 	{
-	    if (not is_wildcard(patterns[i]))
+	    if (not is_wildcard(pattern))
 		rebind_var(bound_vars, object.as_<var>(), original_binding.first);
 	}
 
 	unbind_decls(bound_vars, pat_decls);
     }
 
+    expression_ref E2;
+
     // 7. If the case is an identity transformation: case obj of {[] -> []; (y:ys) -> (y:ys); z -> z; _ -> obj}
     // NOTE: this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
     // NOTE: this preserves strictness, because the object is still evaluated.
-    if (is_identity_case(object, patterns, bodies))
+    if (is_identity_case(object, alts))
 	E2 = object;
     // 8. case-of-case: case (case obj1 of alts1) -> alts2  => case obj of alts1*alts2
     else if (is_case(object) and options.case_of_case)
@@ -478,20 +471,20 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, const 
 	vector<expression_ref> bodies2;
 	parse_case_expression(object, object2, patterns2, bodies2);
 
-        // 1. Find names for the lifted case bodies.
-	vector<var> lifted_names = get_body_function_names(bound_vars, patterns, patterns2);
-
 	// 2. Lift case bodies into let-bound functions, and replace the bodies with calls to these functions.
 	CDecls cc_decls;
-	for(int i=0;i<patterns.size();i++)
+	for(auto& [pattern, body]: alts)
 	{
 	    // Don't both factoring out trivial expressions
-	    if (is_trivial(patterns[i])) continue;
+	    if (is_trivial(pattern)) continue;
 
-	    vector<var> used_vars = get_used_vars(patterns[i]);
+	    vector<var> used_vars = get_used_vars(pattern);
 
-	    auto f = lifted_names[i];
-	    expression_ref f_body = bodies[i];
+	    auto f = get_fresh_var("_cc");
+            f.work_dup = amount_t::Many;
+            f.code_dup = amount_t::Many;
+
+	    expression_ref f_body = body;
 	    expression_ref f_call = f;
 	    for(int j=0;j<used_vars.size();j++)
 	    {
@@ -501,7 +494,7 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, const 
 
 	    cc_decls.push_back({f,f_body});
 
-	    bodies[i] = f_call;
+	    body = f_call;
 	}
 
 	// 3. The actual case-of-case transformation.
@@ -510,14 +503,13 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, const 
 	//                         to
 	//      case object2 of patterns2 -> case bodies2 of patterns => bodies
         //
-	auto alts = make_alts(patterns,bodies);
 	for(int i=0;i<patterns2.size();i++)
 	    bodies2[i] = make_case_expression(bodies2[i],alts);
 
 	E2 = let_expression(cc_decls, make_case_expression(object2,patterns2,bodies2));
     }
     else
-        E2 = make_case_expression(object, patterns, bodies);
+        E2 = make_case_expression(object, alts);
 
     return E2;
 }
