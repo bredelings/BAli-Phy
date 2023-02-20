@@ -426,6 +426,8 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::A
     }
 
     // 2. Simplify each alternative
+    std::optional<int> last_index;
+    int index = 0;
     for(auto& [pattern, body]: alts)
     {
 	// 2.1. Rename and bind pattern variables
@@ -447,7 +449,16 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::A
 
         // 2.5 Unbind the pattern vars.
 	unbind_decls(bound_vars, pat_decls);
+
+        if (is_var(pattern))
+        {
+            last_index = index;
+            break;
+        }
+
+        index++;
     }
+    if (last_index and *last_index + 1 < alts.size())
 
     expression_ref E2;
 
