@@ -2,18 +2,25 @@
 #define APPLY_H
 
 #include "expression_ref.H"
+#include "var.H"
 
 // Single-arg version  (Is this a function at all?)";
 expression_ref apply(const expression_ref& E,const expression_ref& arg);
 
 // Multiple-arg version
-expression_ref apply(const expression_ref& E, const std::vector< expression_ref > args);
+expression_ref apply(const expression_ref& E, const std::vector< expression_ref >& args);
+
+// Multiple-arg version
+expression_ref apply(const expression_ref& E, const std::vector< var >& args);
 
 // Single-arg version  (Is this a function at all?)";
 expression_ref apply_expression(const expression_ref& E,const expression_ref& arg);
 
 // Multiple-arg version
-expression_ref apply_expression(const expression_ref& E, const std::vector< expression_ref > args);
+expression_ref apply_expression(const expression_ref& E, const std::vector< expression_ref >& args);
+
+// Multiple-arg version
+expression_ref apply_expression(const expression_ref& E, const std::vector< var >& args);
 
 inline bool is_apply(const expression_ref& E)
 {

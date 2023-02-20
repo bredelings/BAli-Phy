@@ -15,7 +15,16 @@ expression_ref apply_expression(const expression_ref& R,const expression_ref& ar
 }
 
 expression_ref apply_expression(const expression_ref& E,
-				const vector< expression_ref > args)
+				const vector< expression_ref >& args)
+{
+    expression_ref E2 = E;
+    for(int i=0;i<args.size();i++)
+	E2 = apply_expression(E2,args[i]);
+    return E2;
+}
+
+expression_ref apply_expression(const expression_ref& E,
+				const vector< var >& args)
 {
     expression_ref E2 = E;
     for(int i=0;i<args.size();i++)
@@ -33,7 +42,17 @@ expression_ref apply(const expression_ref& E,const expression_ref& arg)
     return apply_expression(E,arg);
 }
 
-expression_ref apply(const expression_ref& E, const vector< expression_ref > args)
+expression_ref apply(const expression_ref& E, const vector< expression_ref >& args)
+{
+    expression_ref E2 = E;
+    for(int i=0;i<args.size();i++)
+	E2 = apply(E2,args[i]);
+    return E2;
+}
+
+
+// Multiple-arg version
+expression_ref apply(const expression_ref& E, const std::vector< var >& args)
 {
     expression_ref E2 = E;
     for(int i=0;i<args.size();i++)
