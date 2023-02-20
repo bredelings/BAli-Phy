@@ -39,6 +39,8 @@ using std::vector;
 using std::pair;
 using std::set;
 using std::map;
+using std::tuple;
+using std::optional;
 
 using std::cerr;
 using std::endl;
@@ -321,15 +323,56 @@ bool is_constant_case(const vector<expression_ref>& patterns, const vector<expre
     return true;
 }
 
-// case E of alts.  Here E has been simplified, but the alts have not.
+
+optional<tuple<expression_ref,substitution>>
+find_constant_case_body(const expression_ref& object, const Run::Alts& alts, const substitution& S)
+{
+    for(auto& [pattern, body]: alts)
+    {
+        if (is_var(pattern))
+        {
+            assert(is_wildcard(pattern));
+            return {{body, S}};
+        }
+        else if (pattern.head() == object.head())
+        {
+            assert(pattern.size() == object.size());
+
+            // 2. Rename and bind pattern variables
+            // case (x[1], x[2], ..., x[n]) of {(y[1], y[2], ..., y[n]) -> f y[1] y[2] ... y[n]}
+            //   a. add substitutions y[i] -> z[i] for z[i] fresh (i.e. not overlapping x[i])
+            //   b. let {z[i] = x[i]} in f y[1] y[2] ... y[n]  => let {z[i] = x[i]} in f' z[1] z[2] ... z[n]
+            // In the next round of simplification,
+            //   a. we simplify all the x[i], possibly replacing them with another variable, or a larger expression.  But lets assume they are left unchanged.
+            //   b. we should do EITHER pre- or post- inline substitution for each variable.  Replacing the z[i] by x[i].
+            // Since the x[i] are already simplified during this round, it SEEMS like we should be able to just add substitutions from y[i] -> x[i]!
+
+            auto S2 = S;       
+            for(int j=0;j<pattern.size();j++)
+            {
+                auto pat_var = pattern.sub()[j];
+                auto& x = pat_var.as_<var>();
+                if (not is_wildcard(pat_var))
+                {
+                    auto obj_var = object.sub()[j];
+                    assert(is_var(obj_var) and not is_wildcard(obj_var));
+                    assert(is_var(pat_var) and not is_wildcard(pat_var));
+                    S2.erase(x);
+                    S2.insert({x,obj_var});
+                }
+            }
+            return {{body, S2}};
+        }
+    }
+
+    return {};
+}
+
+
+// case object of alts.  Here the object has been simplified, but the alts have not.
 expression_ref SimplifierState::rebuild_case_inner(expression_ref object, const Run::Alts& alts, const substitution& S, in_scope_set& bound_vars)
 {
     assert(not is_let_expression(object));
-
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    parse_alts(alts, patterns, bodies);
-    const int L = patterns.size();
 
     // NOTE: Any thing that relies on occurrence info for pattern vars should be done here, before
     //       we simplify alternatives, because that simplification can introduce new uses of the pattern vars.
@@ -348,52 +391,23 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, const 
 //    }
 
     // 1. Take a specific branch if the object is a constant
-    expression_ref E2;
-    auto S2 = S;
     if (is_WHNF(object) and not is_var(object))
     {
-	for(int i=0; i<L and not E2; i++)
-	{
-	    if (is_var(patterns[i]))
-	    {
-		assert(is_wildcard(patterns[i]));
-		E2 = bodies[i];
-	    }
-	    else if (patterns[i].head() == object.head())
-	    {
-		// 2. Rename and bind pattern variables
-                // case (x[1], x[2], ..., x[n]) of {(y[1], y[2], ..., y[n]) -> f y[1] y[2] ... y[n]}
-		//   a. add substitutions y[i] -> z[i] for z[i] fresh (i.e. not overlapping x[i])
-		//   b. let {z[i] = x[i]} in f y[1] y[2] ... y[n]  => let {z[i] = x[i]} in f' z[1] z[2] ... z[n]
-		// In the next round of simplification,
-		//   a. we simplify all the x[i], possibly replacing them with another variable, or a larger expression.  But lets assume they are left unchanged.
-		//   b. we should do EITHER pre- or post- inline substitution for each variable.  Replacing the z[i] by x[i].
-		// Since the x[i] are already simplified during this round, it SEEMS like we should be able to just add substitutions from y[i] -> x[i]!
-
-		for(int j=0;j<patterns[i].size();j++)
-		{
-		    auto pat_var = patterns[i].sub()[j];
-		    auto& x = pat_var.as_<var>();
-		    if (not is_wildcard(pat_var))
-		    {
-			auto obj_var = object.sub()[j];
-			assert(is_var(obj_var) and not is_wildcard(obj_var));
-			assert(is_var(pat_var) and not is_wildcard(pat_var));
-			S2.erase(x);
-			S2.insert({x,obj_var});
-		    }
-		}
-		E2 = bodies[i];
-	    }
-	}
-	if (not E2)
-	    throw myexception()<<"Case object doesn't match any alternative in '"<<make_case_expression(object, patterns, bodies)<<"'";
-
-        E2 = simplify(E2, S2, bound_vars, make_ok_context());
-
-        return E2;
+        if (auto found = find_constant_case_body(object, alts, S))
+        {
+            auto& [body, S2] = *found;
+            return simplify(body, S2, bound_vars, make_ok_context());            
+        }
+        else
+	    throw myexception()<<"Case object doesn't match any alternative in '"<<make_case_expression(object, alts)<<"'";
     }
 
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    parse_alts(alts, patterns, bodies);
+    const int L = patterns.size();
+
+    expression_ref E2;
 
     // 2. Simplify each alternative
     for(int i=0;i<L;i++)
