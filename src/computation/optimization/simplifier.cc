@@ -359,6 +359,40 @@ expression_ref case_of_case(const expression_ref& object, Run::Alts alts, FreshV
     return let_expression(cc_decls, make_case_expression(object2,alts2));
 }
 
+tuple<CDecls,simplifier::substitution> SimplifierState::rename_and_bind_pattern_vars(expression_ref& pattern, const substitution& S, in_scope_set& bound_vars)
+{
+    auto S2 = S;
+    CDecls pat_decls;
+
+    if (pattern.size())
+    {
+        object_ptr<expression> pattern2 = pattern.as_expression().clone();
+        for(int j=0; j<pattern2->size(); j++)
+        {
+            expression_ref& Evar = pattern2->sub[j];
+            assert(is_var(Evar));
+
+            // Create an unused variable for wildcards.  This is for if we add a x=pattern binding.
+            if (is_wildcard(Evar))
+            {
+                auto wild = get_fresh_var("__");
+                wild.code_dup = amount_t::None;
+                wild.work_dup = amount_t::None;
+                wild.is_loop_breaker = false;
+                wild.context = var_context::unknown;
+                Evar = wild;
+            }
+
+            var x2 = rename_and_bind_var(Evar, S2, bound_vars);
+            Evar = x2;
+            pat_decls.push_back({x2, {}});
+        }
+        pattern = pattern2;
+    }
+
+    return {pat_decls, S2};
+}
+
 // case object of alts.  Here the object has been simplified, but the alts have not.
 expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::Alts alts, const substitution& S, in_scope_set& bound_vars)
 {
@@ -394,36 +428,10 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::A
     // 2. Simplify each alternative
     for(auto& [pattern, body]: alts)
     {
-	auto S2 = S;
-	CDecls pat_decls;
+	// 2.1. Rename and bind pattern variables
+	auto [pat_decls, S2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
 
-	// 2. Rename and bind pattern variables
-	if (pattern.size())
-	{
-	    object_ptr<expression> pattern2 = pattern.as_expression().clone();
-	    for(int j=0; j<pattern2->size(); j++)
-	    {
-		expression_ref& Evar = pattern2->sub[j];
-		assert(is_var(Evar));
-
-		// Create an unused variable for wildcards.  This is for if we add a x=pattern binding.
-		if (is_wildcard(Evar)) {
-		    var wild("__",1);
-		    wild.code_dup = amount_t::None;
-		    wild.work_dup = amount_t::None;
-		    wild.is_loop_breaker = false;
-		    wild.context = var_context::unknown;
-		    Evar = wild;
-		}
-
-		var x2 = rename_and_bind_var(Evar, S2, bound_vars);
-		Evar = x2;
-		pat_decls.push_back({x2, {}});
-	    }
-	    pattern = pattern2;
-	}
-
-	// 3. If we know something extra about the value (or range, theoretically) of the object in this case branch, then record that.
+	// 2.2. If we know something extra about the value (or range, theoretically) of the object in this case branch, then record that.
 	bound_variable_info original_binding;
 	if (is_var(object))
 	{
@@ -434,16 +442,17 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::A
 		original_binding = rebind_var(bound_vars, object.as_<var>(), pattern);
 	}
 
-	// 4. Simplify the alternative body
+	// 2.3. Simplify the alternative body
 	body = simplify(body, S2, bound_vars, make_ok_context());
 
-	// 5. Restore informatation about an object variable to information outside this case branch.
+	// 2.4. Restore informatation about an object variable to information outside this case branch.
 	if (is_var(object))
 	{
 	    if (not is_wildcard(pattern))
 		rebind_var(bound_vars, object.as_<var>(), original_binding.first);
 	}
 
+        // 2.5 Unbind the pattern vars.
 	unbind_decls(bound_vars, pat_decls);
     }
 
