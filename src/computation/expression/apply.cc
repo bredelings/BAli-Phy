@@ -59,6 +59,3 @@ expression_ref apply(const expression_ref& E, const std::vector< var >& args)
 	E2 = apply(E2,args[i]);
     return E2;
 }
-
-
-
