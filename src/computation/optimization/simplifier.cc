@@ -433,24 +433,17 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::A
 
 	// 2.2. If we know something extra about the value (or range, theoretically) of the object in this case branch, then record that.
 	bound_variable_info original_binding;
-	if (is_var(object))
-	{
-	    if (is_wildcard(pattern))
-		; // we know that the object does NOT match any of the patterns on the other branches
-	          // we could record a negative range.
-	    else
-		original_binding = rebind_var(bound_vars, object.as_<var>(), pattern);
-	}
+
+        // 2.3 Define x = pattern in this branch only
+	if (is_var(object) and not is_wildcard(pattern))
+            original_binding = rebind_var(bound_vars, object.as_<var>(), pattern);
 
 	// 2.3. Simplify the alternative body
 	body = simplify(body, S2, bound_vars, make_ok_context());
 
-	// 2.4. Restore informatation about an object variable to information outside this case branch.
-	if (is_var(object))
-	{
-	    if (not is_wildcard(pattern))
-		rebind_var(bound_vars, object.as_<var>(), original_binding.first);
-	}
+	// 2.4. Restore binding for x
+	if (is_var(object) and not is_wildcard(pattern))
+            rebind_var(bound_vars, object.as_<var>(), original_binding.first);
 
         // 2.5 Unbind the pattern vars.
 	unbind_decls(bound_vars, pat_decls);
