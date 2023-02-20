@@ -503,14 +503,14 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::A
 
 	E2 = let_expression(cc_decls, make_case_expression(object2,patterns2,bodies2));
     }
-
-    if (not E2) E2 = make_case_expression(object, patterns, bodies);
+    else
+        E2 = make_case_expression(object, patterns, bodies);
 
     unbind_decls(bound_vars, decls);
 
-    E2 = rebuild(E2, bound_vars, context);
+    E2 = let_expression(decls, E2);
 
-    return let_expression(decls, E2);
+    return rebuild(E2, bound_vars, context);
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
