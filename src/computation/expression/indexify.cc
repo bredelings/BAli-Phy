@@ -47,7 +47,7 @@ expression_ref indexify(const expression_ref& E, vector<var>& variables)
     }
 
     // Let expression
-    if (is_let_expression(E))
+    else if (is_let_expression(E))
     {
         auto& L = E.as_<let_exp>();
 	for(auto& [x,_]: L.binds)
@@ -66,37 +66,34 @@ expression_ref indexify(const expression_ref& E, vector<var>& variables)
     }
 
     // case expression
-    expression_ref T;
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    if (parse_case_expression(E, T, patterns, bodies))
+    else if (auto case_exp = parse_case_expression(E))
     {
-	T = indexify(T, variables);
+        auto& [object, alts] = *case_exp;
 
-	for(int i=0;i<bodies.size();i++)
+	object = indexify(object, variables);
+
+	for(auto& [pattern, body]: alts)
 	{
-	    // Handle c[i] x[i][1..n] -> body[i]
-	    expression_ref& P = patterns[i];
-	    expression_ref& B = bodies[i];
+	    // Handle C x[1..n] -> body[i]
 
 #ifndef NDEBUG
 	    // FIXME - I guess this doesn't handle case a of b -> f(b)?
-	    if (is_var(P))
-		assert(is_wildcard(P));
+	    if (is_var(pattern))
+		assert(is_wildcard(pattern));
 #endif
 
-	    for(int j=0;j<P.size();j++)
-		variables.push_back(P.sub()[j].as_<var>());
+	    for(int j=0;j<pattern.size();j++)
+		variables.push_back(pattern.sub()[j].as_<var>());
 
-	    B = indexify(B, variables);
+	    body = indexify(body, variables);
 
-	    for(int j=0;j<P.size();j++)
+	    for(int j=0;j<pattern.size();j++)
 		variables.pop_back();
 
-	    P = P.head();
+	    pattern = pattern.head();
 	}
 
-	return make_case_expression(T, patterns, bodies);
+	return make_case_expression(object, alts);
     }
 
     // Indexed Variable - This is assumed to be a free variable, so just shift it.
