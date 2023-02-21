@@ -56,6 +56,9 @@ struct Message
 
 void show_messages(const FileContents& file, std::ostream& out, std::vector<Message> messages);
 
+Message error(const std::optional<yy::location>& loc, const Note& note);
+Message warning(const std::optional<yy::location>& loc, const Note& note);
+
 bool has_errors(const std::vector<Message>& messages);
 
 void exit_on_error(const std::vector<Message>& messages, int exit_code = 1);

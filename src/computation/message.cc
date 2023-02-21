@@ -135,3 +135,13 @@ void exit_on_error(const vector<Message>& messages, int exit_code)
     if (has_errors(messages))
         exit(exit_code);
 }
+
+Message error(const std::optional<yy::location>& loc, const Note& note)
+{
+    return {ErrorMsg, loc, {note}};
+}
+
+Message warning(const std::optional<yy::location>& loc, const Note& note)
+{
+    return {WarningMsg, loc, {note}};
+}

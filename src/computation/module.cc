@@ -261,19 +261,19 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
 
             if (s.is_module())
             {
-                messages.push_back({ErrorMsg, loc, {Note()<<"found "<<s.print()<<" in import list!"}});
+                messages.push_back( error(loc, Note()<<"found "<<s.print()<<" in import list!"));
                 continue;
             }
             else if (s.is_value())
             {
                 if (not m2_exports.count(id))
                 {
-                    messages.push_back({ErrorMsg, loc, {Note()<<"variable `"<<id<<"` not exported."}});
+                    messages.push_back( error(loc, Note()<<"variable `"<<id<<"` not exported.") );
                     continue;
                 }
 
                 if (s.subspec)
-                    messages.push_back({ErrorMsg, loc, {Note()<<"variable `"<<id<<"` can't have export subspec"}});
+                    messages.push_back( error(loc, Note()<<"variable `"<<id<<"` can't have export subspec") );
 
                 auto variable = m2_exports.at(id);
                 import_symbol( variable, modid, qualified );
@@ -282,7 +282,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
             {
                 if (not m2_exported_types.count(id))
                 {
-                    messages.push_back({ErrorMsg, loc, {Note()<<"type `"<<id<<"` is not exported."}});
+                    messages.push_back( error(loc, Note()<<"type `"<<id<<"` is not exported.") );
                     continue;
                 }
 
@@ -292,12 +292,12 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                 {
                     if (type.is_type_fam())
                     {
-                        messages.push_back({ErrorMsg, loc, {Note()<<"type family `"<<id<<"`can't have import subspec"}});
+                        messages.push_back( error(loc, Note()<<"type family `"<<id<<"`can't have import subspec") );
                         continue;
                     }
                     else if (type.is_type_syn())
                     {
-                        messages.push_back({ErrorMsg, loc, {Note()<<"type synonym `"<<id<<"` can't have import subspec"}});
+                        messages.push_back( error(loc, Note()<<"type synonym `"<<id<<"` can't have import subspec") );
                         continue;
                     }
                     else if (auto c = type.is_class())
@@ -312,7 +312,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                             for(auto& [loc,name]: *s.subspec->names)
                             {
                                 if (not c->methods.count(name))
-                                    messages.push_back({ErrorMsg, loc, {Note()<<"`"<<name<<"` is not a method for class `"<<id<<"`"}});
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a method for class `"<<id<<"`") );
                                 else
                                     import_symbol( m2_exports.at(name), modid, qualified );
                             }
@@ -333,12 +333,12 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                             {
                                 if (is_haskell_conid(name) and not d->constructors.count(name))
                                 {
-                                    messages.push_back({ErrorMsg, loc, {Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"}});
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"));
                                     continue;
                                 }
                                 if (is_haskell_varid(name) and not d->fields.count(name))
                                 {
-                                    messages.push_back({ErrorMsg, loc, {Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`"}});
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`"));
                                     continue;
                                 }
 
@@ -748,12 +748,12 @@ void Module::perform_exports()
             {
                 if (not aliases.count(id))
                 {
-                    messages.push_back({ErrorMsg, loc, {Note()<<"trying to export variable '"<<id<<"', which is not in scope."}});
+                    messages.push_back( error(loc, Note()<<"trying to export variable '"<<id<<"', which is not in scope.") );
                     continue;
                 }
 
                 if (ex.subspec)
-                    messages.push_back({ErrorMsg, loc, {Note()<<"variable `"<<ex.print()<<"` can't have export subspec"}});
+                    messages.push_back( error(loc, Note()<<"variable `"<<ex.print()<<"` can't have export subspec") );
 
                 export_symbol(lookup_symbol(id));
             }
@@ -761,7 +761,7 @@ void Module::perform_exports()
             {
                 if (not type_aliases.count(id))
                 {
-                    messages.push_back({ErrorMsg, loc, {Note()<<"trying to export type '"<<id<<"', which is not in scope."}});
+                    messages.push_back( error(loc, Note()<<"trying to export type '"<<id<<"', which is not in scope.") );
                     continue;
                 }
 
@@ -771,12 +771,12 @@ void Module::perform_exports()
                 {
                     if (t.is_type_fam())
                     {
-                        messages.push_back({ErrorMsg, loc, {Note()<<"type family `"<<id<<"`can't have export subspec"}});
+                        messages.push_back( error(loc, Note()<<"type family `"<<id<<"`can't have export subspec") );
                         continue;
                     }
                     else if (t.is_type_syn())
                     {
-                        messages.push_back({ErrorMsg, loc, {Note()<<"type synonym `"<<id<<"` can't have export subspec"}});
+                        messages.push_back( error(loc, Note()<<"type synonym `"<<id<<"` can't have export subspec") );
                         continue;
                     }
 
@@ -804,7 +804,7 @@ void Module::perform_exports()
                             for(auto& [loc,name]: *ex.subspec->names)
                             {
                                 if (not c->methods.count(name))
-                                    messages.push_back({ErrorMsg, loc, {Note()<<"`"<<name<<"` is not a method for class `"<<id<<"`"}});
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a method for class `"<<id<<"`") );
                                 else
                                     export_symbol(lookup_symbol(name));
                             }
@@ -815,12 +815,12 @@ void Module::perform_exports()
                             {
                                 if (is_haskell_conid(name) and not d->constructors.count(name))
                                 {
-                                    messages.push_back({ErrorMsg, loc, {Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"}});
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"));
                                     continue;
                                 }
                                 if (is_haskell_varid(name) and not d->fields.count(name))
                                 {
-                                    messages.push_back({ErrorMsg, loc, {Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`"}});
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`") );
                                     continue;
                                 }
 
