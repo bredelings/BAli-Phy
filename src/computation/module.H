@@ -202,7 +202,7 @@ public:
     const symbol_info* lookup_resolved_symbol_(const std::string&) const;
           symbol_info* lookup_resolved_symbol_(const std::string&);
 
-    symbol_info get_operator(const std::string& name) const;
+    OpInfo get_operator(const std::string& name) const;
 
     type_info lookup_type(const std::string&) const;
 

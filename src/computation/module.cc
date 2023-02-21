@@ -1408,20 +1408,25 @@ symbol_info* Module::lookup_resolved_symbol_(const std::string& symbol_name)
         return &iter->second;
 }
 
-symbol_info Module::get_operator(const string& name) const
+OpInfo Module::get_operator(const string& name) const
 {
+    OpInfo O;
+
     symbol_info S = lookup_symbol(name);
+    O.name = S.name;
 
     // An operator of undefined precedence is treated as if it has the highest precedence
     if (S.fixity.precedence == -1 or S.fixity.fixity == unknown_fix) 
     {
         // If either is unset, then both must be unset!
         assert(S.fixity.precedence == -1 and S.fixity.fixity == unknown_fix);
-        S.fixity.precedence = 9;
-        S.fixity.fixity = left_fix;
-    }
 
-    return S;
+        O.fixity = {left_fix, 9};
+    }
+    else
+        O.fixity = S.fixity;
+
+    return O;
 }
 
 type_info Module::lookup_type(const std::string& name) const

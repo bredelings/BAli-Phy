@@ -21,6 +21,12 @@ struct fixity_info
     int precedence = -1;
 };
 
+struct OpInfo
+{
+    std::string name;
+    fixity_info fixity;
+};
+
 
 struct VarInfo;
 

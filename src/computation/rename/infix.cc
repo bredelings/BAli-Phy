@@ -14,10 +14,10 @@ using std::set;
 using std::optional;
 using std::deque;
 
-Located<expression_ref> infix_parse(const Module& m, const Located<symbol_info>& op1, const Located<expression_ref>& E1, deque<Located<expression_ref>>& T);
+Located<expression_ref> infix_parse(const Module& m, const Located<OpInfo>& op1, const Located<expression_ref>& E1, deque<Located<expression_ref>>& T);
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
-Located<expression_ref> infix_parse_neg(const Module& m, const Located<symbol_info>& op1, deque<Located<expression_ref>>& T)
+Located<expression_ref> infix_parse_neg(const Module& m, const Located<OpInfo>& op1, deque<Located<expression_ref>>& T)
 {
     assert(not T.empty());
 
@@ -30,8 +30,8 @@ Located<expression_ref> infix_parse_neg(const Module& m, const Located<symbol_in
 	if (unloc(op1).fixity.precedence >= 6) throw myexception()<<"Cannot parse '"<<unloc(op1).name<<"' -";
 
         auto neg_loc = E1.loc;
-        auto neg_sym = symbol_info("-",variable_symbol, {}, 2,{left_fix,6});
-        auto neg = Located<symbol_info>{neg_loc, neg_sym};
+        auto neg_sym = OpInfo{"-",{left_fix,6}};
+        auto neg = Located<OpInfo>{neg_loc, neg_sym};
 
 	E1 = infix_parse_neg(m, neg, T);
 
@@ -43,9 +43,9 @@ Located<expression_ref> infix_parse_neg(const Module& m, const Located<symbol_in
 }
 
 // FIXME: just return the fixity
-Located<symbol_info> get_op_sym(const Module& m, const Located<expression_ref>& O)
+Located<OpInfo> get_op_sym(const Module& m, const Located<expression_ref>& O)
 {
-    symbol_info op_sym;
+    OpInfo op_info;
     string name;
     if (auto v = unloc(O).to<Haskell::Var>())
         name = v->name;
@@ -55,15 +55,15 @@ Located<symbol_info> get_op_sym(const Module& m, const Located<expression_ref>& 
         std::abort();
 
     if (m.is_declared( name ) )
-	op_sym = m.get_operator( name );
+	op_info = m.get_operator( name );
     else
     {
 	// FIXME: if this name is simply never declared, we should warn here.
-	op_sym.name = name;
-	op_sym.fixity = {left_fix,9};
+	op_info.name = name;
+	op_info.fixity = {left_fix,9};
     }
 
-    return {O.loc, op_sym};
+    return {O.loc, op_info};
 }
 
 // FIXME: "h:t!!0 = h" gives an error that says that the arity of ":" is wrong.
@@ -71,7 +71,7 @@ Located<symbol_info> get_op_sym(const Module& m, const Located<expression_ref>& 
 //   This seems to be a result of the hack in unapply
 
 /// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
-Located<expression_ref> infix_parse(const Module& m, const Located<symbol_info>& loc_op1, const Located<expression_ref>& E1, deque<Located<expression_ref>>& T)
+Located<expression_ref> infix_parse(const Module& m, const Located<OpInfo>& loc_op1, const Located<expression_ref>& E1, deque<Located<expression_ref>>& T)
 {
     if (T.empty())
 	return E1;
@@ -107,7 +107,7 @@ Located<expression_ref> desugar_infix(const Module& m, const vector<Located<expr
     deque<Located<expression_ref>> T2;
     T2.insert(T2.begin(), T.begin(), T.end());
 
-    auto no_sym = symbol_info{"",variable_symbol,{}, 2,{non_fix,-1}};
+    auto no_sym = OpInfo{"",{non_fix,-1}};
     return infix_parse_neg(m, {noloc, no_sym}, T2);
 }
 
