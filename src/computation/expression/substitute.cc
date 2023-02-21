@@ -73,18 +73,17 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 
     // Handle case expressions differently
     {
-	expression_ref T;
-	vector<expression_ref> patterns;
-	vector<expression_ref> bodies;
 	bool changed = false;
-	if (parse_case_expression(E1,T,patterns,bodies))
+	if (auto C = parse_case_expression(E1))
 	{
-	    changed = do_substitute(T, D, E2) or changed;
+            auto& [object, alts] = *C;
 
-	    for(int i=0;i<patterns.size();i++)
+	    changed = do_substitute(object, D, E2) or changed;
+
+	    for(auto& [pattern, body]: alts)
 	    {
 		// 1. don't substitute into subtree where this variable is bound
-		std::set<var> bound = get_free_indices(patterns[i]);
+		std::set<var> bound = get_free_indices(pattern);
 
 		bool D_is_bound = false;
 		for(const auto& b: bound)
@@ -92,7 +91,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 		if (D_is_bound) continue;
 
 		// 2. If some of the free variables in E2 are bound in patterns[i], then do 
-		// alpha-renaming on (patterns[i],bodies[i]), to avoid name capture.
+		// alpha-renaming on (pattern,body), to avoid name capture.
 
 		std::set<var> fv2 = get_free_indices(E2);
 		std::set<var> overlap = intersection(bound,fv2);
@@ -100,7 +99,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 		if (not overlap.empty())
 		{
 		    // Determine the free variables of {patterns[i],bodies[i]} so that we can avoid them in alpha renaming
-		    std::set<var> fv1 = get_free_indices(bodies[i]);
+		    std::set<var> fv1 = get_free_indices(body);
 		    for(const auto& b: bound)
 			fv1.erase(b);
 	  
@@ -120,14 +119,14 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 		    // Do the alpha renaming
 		    for(const auto& o:overlap) 
 		    {
-			patterns[i] = substitute(patterns[i], var(o), var(new_index));
-			bodies[i] = substitute(bodies[i], var(o), var(new_index));
+			pattern = substitute(pattern, var(o), var(new_index));
+			body = substitute(body, var(o), var(new_index));
 			new_index++;
 		    }
 		    changed = true;
 	  
-		    // We rename a bound variable var(i) in patterns[i]/bodies[i] that is free in E2 to a new variable var(new_index)
-		    //   that is not bound or free in the initial version of patterns[i]/bodies[i] and free in E2.
+		    // We rename a bound variable var(i) in pattern/body that is free in E2 to a new variable var(new_index)
+		    //   that is not bound or free in the initial version of pattern/body and free in E2.
 	  
 		    // The conditions are therefore:
 		    //   var(*i) must be bound in patterns[i]
@@ -136,11 +135,11 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 		}
 
 		// assert that D contains no free variables that are bound in patterns[i]
-		changed = do_substitute(bodies[i], D, E2) or changed;
+		changed = do_substitute(body, D, E2) or changed;
 	    }
 
 	    if (changed)
-		E1 = make_case_expression(T, patterns, bodies);
+		E1 = make_case_expression(object, alts);
 
 	    return changed;
 	}

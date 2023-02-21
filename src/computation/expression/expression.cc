@@ -116,24 +116,22 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
     }
 
     // 6. Case
-    expression_ref object;
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    if (parse_case_expression(E, object, patterns, bodies))
+    else if (auto C = parse_case_expression(E))
     {
+        auto& [object, alts] = *C;
+
 	// Unormalize the object
 	object = launchbury_unnormalize(object);
 
-	const int L = patterns.size();
-	// Just unnormalize the bodies
-	for(int i=0;i<L;i++)
-	    bodies[i] = launchbury_unnormalize(bodies[i]);
+	// Unnormalize the bodies
+	for(auto& [pattern, body]: alts)
+	    body = launchbury_unnormalize(body);
     
-	return make_case_expression(object, patterns, bodies);
+	return make_case_expression(object, alts);
     }
 
     // 5. Let 
-    if (is_let_expression(E))
+    else if (is_let_expression(E))
     {
         auto L = E.as_<let_exp>();
 

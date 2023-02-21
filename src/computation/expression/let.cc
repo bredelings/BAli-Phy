@@ -95,29 +95,26 @@ int n_free_occurrences(const expression_ref& E1, const var& x)
     }
 
     // Handle case expressions differently
+    if (auto C = parse_case_expression(E1))
     {
-	expression_ref T;
-	vector<expression_ref> patterns;
-	vector<expression_ref> bodies;
-	if (parse_case_expression(E1,T,patterns,bodies))
-	{
-	    int count = n_free_occurrences(T, x);
+        auto& [object, alts] = *C;
 
-	    for(int i=0;i<bodies.size();i++)
-	    {
-		// don't substitute into subtree where this variable is bound
-		std::set<var> bound = get_free_indices(patterns[i]);
+        int count = n_free_occurrences(object, x);
 
-		bool x_is_bound = false;
-		for(const auto& b: bound)
-		    if (x == b) x_is_bound=true;
+        for(auto& [pattern, body]: alts)
+        {
+            // don't substitute into subtree where this variable is bound
+            std::set<var> bound = get_free_indices(pattern);
 
-		if (not x_is_bound)
-		    count += n_free_occurrences(bodies[i], x);
-	    }
+            bool x_is_bound = false;
+            for(const auto& b: bound)
+                if (x == b) x_is_bound=true;
 
-	    return count;
-	}
+            if (not x_is_bound)
+                count += n_free_occurrences(body, x);
+        }
+
+        return count;
     }
 
     if (is_let_expression(E1))
@@ -165,20 +162,18 @@ expression_ref unlet(const expression_ref& E)
     }
 
     // 6. Case
-    expression_ref object;
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    if (parse_case_expression(E, object, patterns, bodies))
+    if (auto C = parse_case_expression(E))
     {
+        auto& [object,alts] = *C;
+
 	// Unormalize the object
 	object = unlet(object);
 
-	const int L = patterns.size();
 	// Just unnormalize the bodies
-	for(int i=0;i<L;i++)
-	    bodies[i] = unlet(bodies[i]);
+	for(auto& [pattern, body]: alts)
+	    body = unlet(body);
     
-	return make_case_expression(object, patterns, bodies);
+	return make_case_expression(object, alts);
     }
 
     // 5. Let 
