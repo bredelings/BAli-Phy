@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <string>
+#include <optional>
+#include <tuple>
 #include "expression_ref.H"
 
 namespace Core
@@ -53,6 +55,8 @@ void parse_alts(const Core::Alts& alts, std::vector<expression_ref>& patterns, s
 bool parse_case_expression(const expression_ref& E, expression_ref& T, std::vector<expression_ref>& patterns, std::vector<expression_ref>& bodies);
 
 bool parse_case_expression(const expression_ref& E, expression_ref& T, Core::Alts& alts);
+
+std::optional<std::tuple<expression_ref, Core::Alts>> parse_case_expression(const expression_ref& E);
 
 void parse_alternatives(const expression_ref& E, std::vector<expression_ref>& cases, std::vector<expression_ref>& results);
 
