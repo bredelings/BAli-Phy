@@ -190,7 +190,7 @@ var SimplifierState::rename_and_bind_var(const expression_ref& Evar, substitutio
     return x2;
 }
 
-bool is_identity_case(const expression_ref& object, const Run::Alts& alts)
+bool is_identity_case(const expression_ref& object, const Core::Alts& alts)
 {
     for(auto& [pattern, body]: alts)
     {
@@ -274,7 +274,7 @@ bool is_constant_case(const vector<expression_ref>& patterns, const vector<expre
 
 
 optional<tuple<expression_ref,substitution>>
-find_constant_case_body(const expression_ref& object, const Run::Alts& alts, const substitution& S)
+find_constant_case_body(const expression_ref& object, const Core::Alts& alts, const substitution& S)
 {
     for(auto& [pattern, body]: alts)
     {
@@ -317,10 +317,10 @@ find_constant_case_body(const expression_ref& object, const Run::Alts& alts, con
     return {};
 }
 
-expression_ref case_of_case(const expression_ref& object, Run::Alts alts, FreshVarSource& fresh_vars)
+expression_ref case_of_case(const expression_ref& object, Core::Alts alts, FreshVarSource& fresh_vars)
 {
     expression_ref object2;
-    Run::Alts alts2;
+    Core::Alts alts2;
     parse_case_expression(object, object2, alts2);
 
     // 1. Lift case bodies into let-bound functions, and replace the bodies with calls to these functions.
@@ -393,7 +393,7 @@ tuple<CDecls,simplifier::substitution> SimplifierState::rename_and_bind_pattern_
     return {pat_decls, S2};
 }
 
-bool redundant_pattern(const Run::Alts& alts, const expression_ref& pattern)
+bool redundant_pattern(const Core::Alts& alts, const expression_ref& pattern)
 {
     for(auto& [p,_]: alts)
     {
@@ -408,7 +408,7 @@ bool redundant_pattern(const Run::Alts& alts, const expression_ref& pattern)
 
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
-expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::Alts alts, const substitution& S, in_scope_set& bound_vars)
+expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::Alts alts, const substitution& S, in_scope_set& bound_vars)
 {
     assert(not is_let_expression(object));
 
@@ -485,7 +485,7 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::A
         default_decls = strip_multi_let( body );
 
         expression_ref object2;
-        Run::Alts alts2;
+        Core::Alts alts2;
         if (parse_case_expression(body, object2, alts2) and is_var(object2) and object2 == object)
         {
             alts.pop_back();
@@ -513,7 +513,7 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Run::A
     return let_expression(default_decls, E2);
 }
 
-expression_ref SimplifierState::rebuild_case(expression_ref object, const Run::Alts& alts, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::rebuild_case(expression_ref object, const Core::Alts& alts, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
     // These lets should already be simplified, since we are rebuilding.
     auto decls = strip_multi_let(object);

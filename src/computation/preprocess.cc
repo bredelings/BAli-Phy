@@ -217,7 +217,7 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
     else if (is_case(E))
     {
         auto object = translate_refs(E.sub()[0], Env);
-        auto alts = E.sub()[1].as_<Run::Alts>();
+        auto alts = E.sub()[1].as_<Core::Alts>();
         for(auto& alt: alts)
             alt.body = translate_refs(alt.body, Env);
         return make_case_expression(object, alts);

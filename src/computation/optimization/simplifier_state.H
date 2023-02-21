@@ -36,10 +36,10 @@ public:
     std::tuple<CDecls,simplifier::substitution> rename_and_bind_pattern_vars(expression_ref& pattern, const simplifier::substitution& S, in_scope_set& bound_vars);
 
     expression_ref
-    rebuild_case(expression_ref object, const Run::Alts& alts, const simplifier::substitution& S, in_scope_set& bound_vars, const inline_context& context);
+    rebuild_case(expression_ref object, const Core::Alts& alts, const simplifier::substitution& S, in_scope_set& bound_vars, const inline_context& context);
 
     expression_ref
-    rebuild_case_inner(expression_ref object, Run::Alts alts, const simplifier::substitution& S, in_scope_set& bound_vars);
+    rebuild_case_inner(expression_ref object, Core::Alts alts, const simplifier::substitution& S, in_scope_set& bound_vars);
 
     expression_ref
     rebuild_let(const CDecls& decls, expression_ref E, const simplifier::substitution& S, in_scope_set& bound_vars, const inline_context& context);

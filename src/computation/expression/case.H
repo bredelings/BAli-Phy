@@ -5,7 +5,7 @@
 #include <string>
 #include "expression_ref.H"
 
-namespace Run
+namespace Core
 {
 
 // This isn't really the form that is run, because its not indexified yet!
@@ -40,19 +40,19 @@ struct Alts: public Object, public std::vector<Alt>
 
 }
 
-Run::Alts make_alts(const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
+Core::Alts make_alts(const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
 
 expression_ref make_case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
 
-expression_ref make_case_expression(const expression_ref& object, const Run::Alts& alts);
+expression_ref make_case_expression(const expression_ref& object, const Core::Alts& alts);
 
 expression_ref make_if_expression(const expression_ref& condition, const expression_ref& true_branch, const expression_ref& false_branch);
 
-void parse_alts(const Run::Alts& alts, std::vector<expression_ref>& patterns, std::vector<expression_ref>& bodies);
+void parse_alts(const Core::Alts& alts, std::vector<expression_ref>& patterns, std::vector<expression_ref>& bodies);
 
 bool parse_case_expression(const expression_ref& E, expression_ref& T, std::vector<expression_ref>& patterns, std::vector<expression_ref>& bodies);
 
-bool parse_case_expression(const expression_ref& E, expression_ref& T, Run::Alts& alts);
+bool parse_case_expression(const expression_ref& E, expression_ref& T, Core::Alts& alts);
 
 void parse_alternatives(const expression_ref& E, std::vector<expression_ref>& cases, std::vector<expression_ref>& results);
 

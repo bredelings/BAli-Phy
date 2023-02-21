@@ -146,7 +146,7 @@ closure case_op(OperationArgs& Args)
 
     // Handle case x of _ -> E = x `seq` E
     {
-        auto& alts = Args.reference(1).as_<Run::Alts>();
+        auto& alts = Args.reference(1).as_<Core::Alts>();
         if (alts.size() == 1 and is_var(alts[0].pattern))
         {
 	    assert(is_wildcard(alts[0].pattern));
@@ -171,7 +171,7 @@ closure case_op(OperationArgs& Args)
     // *invalid* after the call above!
     const closure& C = Args.current_closure();
 
-    auto& alts = Args.reference(1).as_<Run::Alts>();
+    auto& alts = Args.reference(1).as_<Core::Alts>();
     int L = alts.size();
 
 #ifndef NDEBUG

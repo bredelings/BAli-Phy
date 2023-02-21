@@ -10,7 +10,7 @@
 using std::vector;
 using std::string;
 
-namespace Run
+namespace Core
 {
 
 string Alt::print() const
@@ -64,9 +64,9 @@ bool Alts::operator!=(const Alts& as) const
 }
 
 
-} // end namespace Run
+} // end namespace Core
 
-void parse_alts(const Run::Alts& alts, vector<expression_ref>& patterns, vector<expression_ref>& bodies)
+void parse_alts(const Core::Alts& alts, vector<expression_ref>& patterns, vector<expression_ref>& bodies)
 {
     for(auto& alt: alts)
     {
@@ -85,36 +85,36 @@ bool parse_case_expression(const expression_ref& E, expression_ref& object, vect
 
     object = E.sub()[0];
 
-    parse_alts(E.sub()[1].as_<Run::Alts>(), patterns, bodies);
+    parse_alts(E.sub()[1].as_<Core::Alts>(), patterns, bodies);
 
     return true;
 }
 
 /// R = case T of {patterns[i] -> bodies[i]}
-bool parse_case_expression(const expression_ref& E, expression_ref& object, Run::Alts& alts)
+bool parse_case_expression(const expression_ref& E, expression_ref& object, Core::Alts& alts)
 {
     if (not is_case(E)) return false;
 
     object = E.sub()[0];
 
-    alts = E.sub()[1].as_<Run::Alts>();
+    alts = E.sub()[1].as_<Core::Alts>();
 
     return true;
 }
 
-Run::Alts make_alts(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+Core::Alts make_alts(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
     assert(patterns.size() == bodies.size());
     assert(not patterns.empty());
 
-    Run::Alts alts;
+    Core::Alts alts;
     for(int i=0;i<patterns.size();i++)
 	alts.push_back({patterns[i],bodies[i]});
     return alts;
 }
 
 
-expression_ref make_case_expression(const expression_ref& object, const Run::Alts& alts)
+expression_ref make_case_expression(const expression_ref& object, const Core::Alts& alts)
 {
     assert(object);
 
