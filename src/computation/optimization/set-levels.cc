@@ -224,37 +224,35 @@ expression_ref let_floater_state::set_level(const expression_ref& AE, int level,
     }
 
     // 4. Case
-    else if (is_case(E))
+    else if (auto C = parse_case_expression(E))
     {
-        expression_ref object;
-        vector<expression_ref> patterns;
-        vector<expression_ref> bodies;
-        parse_case_expression(E, object, patterns, bodies);
+        auto& [object, alts] = *C;
 
-        auto object2 = set_level_maybe_MFE(object, level, env);
+        object = set_level_maybe_MFE(object, level, env);
 
-        vector<expression_ref> patterns2(patterns.size());
-        vector<expression_ref> bodies2(bodies.size());
         int level2 = level+1; // Increment level, since we're going to float out of case alternatives.
 
         // Don't float out the entire case alternative if this isn't changeable.
-        bool non_changeable = patterns.size() == 1 and patterns[0].is_a<var>();
-        for(int i=0;i<bodies2.size();i++)
+        bool non_changeable = alts.size() == 1 and alts[0].pattern.is_a<var>();
+
+        for(auto& [pattern, body]: alts)
         {
-            auto binders = get_vars(patterns[i]);
+            // Extend environment with pattern vars at level2
             auto env2 = env;
-            for(auto binder: binders)
+            for(auto binder: get_vars(pattern))
             {
                 auto binder2 = new_unique_var(binder, level2);
                 env2 = env2.insert({binder,binder2});
             }
-            patterns2[i] = subst_pattern(patterns[i], env2);
-            bodies2[i] = non_changeable?
-                set_level(bodies[i], level2, env2):
-                set_level_maybe_MFE(bodies[i], level2, env2);
+
+            pattern = subst_pattern(pattern, env2);
+
+            body = non_changeable?
+                set_level(body, level2, env2):
+                set_level_maybe_MFE(body, level2, env2);
         }
 
-        return make_case_expression(object2,patterns2,bodies2);
+        return make_case_expression(object, alts);
     }
 
     // 5. Let

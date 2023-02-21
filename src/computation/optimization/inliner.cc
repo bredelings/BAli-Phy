@@ -115,15 +115,14 @@ int simple_size(const expression_ref& E)
 
 	return size;
     }
-    else if (is_case(E))
+    else if (auto C = parse_case_expression(E))
     {
-	expression_ref object;
-	vector<expression_ref> patterns;
-	vector<expression_ref> bodies;
-	parse_case_expression(E, object, patterns, bodies);
-	int alts_size = simple_size(bodies[0]);
-	for(int i=1;i<bodies.size();i++)
-	    alts_size = std::max(alts_size, simple_size(bodies[i]));
+        auto& [object, alts] = *C;
+
+        int alts_size = 0;
+	for(auto& [pattern, body]: alts)
+            alts_size = std::max(alts_size, simple_size(body));
+
 	return 1 + simple_size(object) + alts_size;
     }
     else if (is_non_apply_op_exp(E))

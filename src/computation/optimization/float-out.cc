@@ -235,24 +235,21 @@ float_lets(expression_ref& E, int level)
     }
 
     // 6. Case
-    else if (is_case(E))
+    else if (auto C = parse_case_expression(E))
     {
-        expression_ref object;
-        vector<expression_ref> patterns;
-        vector<expression_ref> bodies;
-        parse_case_expression(E, object, patterns, bodies);
+        auto& [object,alts] = *C;
 
         auto float_binds = float_lets(object, level);
         int level2 = level + 1;
-        for(int i=0; i<patterns.size(); i++)
+        for(auto& [pattern, body]: alts)
         {
-            patterns[i] = strip_level_from_pattern(patterns[i]);
-            auto float_binds_alt = float_lets_install_current_level(bodies[i],level2);
+            pattern = strip_level_from_pattern(pattern);
+            auto float_binds_alt = float_lets_install_current_level(body,level2);
 
             float_binds.append(float_binds_alt);
         }
 
-        E = make_case_expression(object,patterns,bodies);
+        E = make_case_expression(object,alts);
         return float_binds;
     }
 

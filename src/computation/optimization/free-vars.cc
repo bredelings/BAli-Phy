@@ -108,26 +108,20 @@ add_free_variable_annotations(const expression_ref& E)
     }
 
     // 4. Case
-    else if (is_case(E))
+    else if (auto C = parse_case_expression(E))
     {
-        expression_ref object;
-        vector<expression_ref> patterns;
-        vector<expression_ref> bodies;
-        parse_case_expression(E, object, patterns, bodies);
+        auto& [object, alts] = *C;
+        object = add_free_variable_annotations(object);
+        auto free_vars = get_free_vars(object);
 
-        auto object2 = add_free_variable_annotations(object);
-        auto free_vars = get_free_vars(object2);
-
-        vector<expression_ref> bodies2(bodies.size());
-        for(int i=0;i<bodies2.size();i++)
+        for(auto& [pattern, body]: alts)
         {
-            auto b2 = add_free_variable_annotations(bodies[i]);
-            auto free_vars_i = erase(get_free_vars(b2), get_vars(patterns[i]));
+            body = add_free_variable_annotations(body);
+            auto free_vars_i = erase(get_free_vars(body), get_vars(pattern));
             free_vars = get_union(free_vars, free_vars_i);
-            bodies2[i] = b2;
         }
 
-        return {free_vars,make_case_expression(object2,patterns,bodies2)};
+        return {free_vars, make_case_expression(object, alts)};
     }
 
     // 5. Let

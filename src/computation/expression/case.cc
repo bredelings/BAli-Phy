@@ -66,42 +66,6 @@ bool Alts::operator!=(const Alts& as) const
 
 } // end namespace Core
 
-void parse_alts(const Core::Alts& alts, vector<expression_ref>& patterns, vector<expression_ref>& bodies)
-{
-    for(auto& alt: alts)
-    {
-	patterns.push_back( alt.pattern );
-	bodies.push_back( alt.body );
-    }
-}
-
-/// R = case T of {patterns[i] -> bodies[i]}
-bool parse_case_expression(const expression_ref& E, expression_ref& object, vector<expression_ref>& patterns, vector<expression_ref>& bodies)
-{
-    patterns.clear();
-    bodies.clear();
-
-    if (not is_case(E)) return false;
-
-    object = E.sub()[0];
-
-    parse_alts(E.sub()[1].as_<Core::Alts>(), patterns, bodies);
-
-    return true;
-}
-
-/// R = case T of {patterns[i] -> bodies[i]}
-bool parse_case_expression(const expression_ref& E, expression_ref& object, Core::Alts& alts)
-{
-    if (not is_case(E)) return false;
-
-    object = E.sub()[0];
-
-    alts = E.sub()[1].as_<Core::Alts>();
-
-    return true;
-}
-
 /// R = case T of {patterns[i] -> bodies[i]}
 std::optional<std::tuple<expression_ref, Core::Alts>> parse_case_expression(const expression_ref& E)
 {
