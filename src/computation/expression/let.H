@@ -55,8 +55,6 @@ expression_ref unlet(const expression_ref& E);
 
 bool is_let_expression(const expression_ref& E);
 
-bool parse_indexed_let_expression(const expression_ref& E, std::vector<expression_ref>& bodies, expression_ref& T);
-
 // Should probably be optional<Let>, but is Let destructurable?
 std::optional<Let> parse_indexed_let_expression(const expression_ref& E);
 

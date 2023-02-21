@@ -137,10 +137,6 @@ string expression::print() const
 
     //  if (false)
     {
-	vector<expression_ref> vars;
-	vector<expression_ref> bodies;
-	expression_ref T;
-
 	if (head.is_a<lambda2>())
 	{
 	    result = sub[0].print();
@@ -166,7 +162,7 @@ string expression::print() const
 	    return result;
 	}
 
-	if (is_let_expression(head))
+	else if (is_let_expression(head))
 	{
             auto& L = head.as_<let_exp>();
 	    result = "let {";
@@ -178,15 +174,15 @@ string expression::print() const
 	    return result;
 	}
 
-	if (parse_indexed_let_expression(*this, bodies, T))
+	else if (auto L = parse_indexed_let_expression(*this))
 	{
 	    result = "let {";
-	    result += join(bodies,"; ");
-	    result += "} in " + T.print();
+	    result += join(L->binds,"; ");
+	    result += "} in " + L->body.print();
 	    return result;
 	}
 
-	if (head.is_a<Trim>())
+	else if (head.is_a<Trim>())
 	{
 	    auto& V = sub[0].as_<Vector<int>>();
 
@@ -194,12 +190,13 @@ string expression::print() const
 	    return result;
 	}
 
-	if (parse_case_expression(*this, T, vars, bodies))
+	else if (auto C = parse_case_expression(*this))
 	{
-	    result = "case " + T.print() + " of {";
+            auto& [object, alts] = *C;
+	    result = "case " + object.print() + " of {";
 	    vector<string> parts;
-	    for(int i=0;i<vars.size();i++)
-		parts.push_back( vars[i].print() + " -> " + bodies[i].print() );
+	    for(auto& [pattern, body]: alts)
+		parts.push_back( pattern.print() + " -> " + body.print() );
 	    result += join(parts,"; ");
 	    result += "}";
 	    return result;

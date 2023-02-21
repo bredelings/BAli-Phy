@@ -71,21 +71,6 @@ bool is_let_expression(const expression_ref& E)
     return (E.head().type() == let_type);
 }
 
-//let T bodies[i]
-bool parse_indexed_let_expression(const expression_ref& E, vector<expression_ref>& bodies, expression_ref& T)
-{
-    bodies.clear();
-
-    if (E.head().type() != let2_type) return false;
-
-    auto& L = E.as_<Let>();
-    T = L.body;
-    bodies = L.binds;
-
-    return true;
-}
-
-//let T bodies[i]
 std::optional<Let>
 parse_indexed_let_expression(const expression_ref& E)
 {

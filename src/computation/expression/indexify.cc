@@ -151,46 +151,43 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
     }
 
     // Let expression
-    vector<expression_ref> bodies;
-    vector<pair<var,expression_ref>> decls;
-    expression_ref body;
-    if (parse_indexed_let_expression(E, bodies, body))
+    else if (auto L = parse_indexed_let_expression(E))
     {
 	vector<expression_ref> variables2 = variables;
-	for(int i=0;i<bodies.size();i++)
+
+        vector<pair<var,expression_ref>> decls;
+	for(auto& bind: L->binds)
 	{
 	    var d = get_named_var(variables2.size());
-	    decls.push_back({d, bodies[i]});
+	    decls.push_back({d, bind});
 	    variables2.push_back( d );
 	}
 
 	// Deindexify let-bound stmts only after list of variables has been extended.
-	for(int i=0;i<decls.size();i++)
-	    decls[i].second = deindexify(decls[i].second, variables2);
+	for(auto& [x,rhs]: decls)
+	    rhs = deindexify(rhs, variables2);
 
-	body = deindexify(body, variables2);
+	auto body = deindexify(L->body, variables2);
 
 	return let_expression(decls, body);
     }
 
     // case expression
-    vector<expression_ref> patterns;
-    expression_ref T;
-    if (parse_case_expression(E, T, patterns, bodies))
+    else if (auto C = parse_case_expression(E))
     {
-	T = deindexify(T, variables);
+        auto& [object, alts] = *C;
 
-	for(int i=0;i<bodies.size();i++)
+        object = deindexify(object, variables);
+
+	for(auto& [pattern, body]: alts)
 	{
-	    assert(not patterns[i].size());
+	    assert(not pattern.size());
 	    // Make a new expression so we can add variables to the pattern if its a constructor
-	    expression_ref P = patterns[i];
-	    expression_ref& B = bodies[i];
 
 	    // Find the number of arguments in the constructor
 	    int n_args = 0;
-	    if (P.head().is_a<constructor>())
-		n_args = P.head().as_<constructor>().n_args();
+	    if (pattern.head().is_a<constructor>())
+		n_args = pattern.head().as_<constructor>().n_args();
 
 	    // Add n_arg variables to the stack and to the pattern
 	    vector<expression_ref> variables2 = variables;
@@ -198,19 +195,18 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
 	    {
 		var d = get_named_var(variables2.size());
 		variables2.push_back( d );
-		P = P + d;
+		pattern = pattern + d;
 	    }
 
 #ifndef NDEBUG
-	    if(is_var(P))
-		assert(is_wildcard(P));
+	    if(is_var(pattern))
+		assert(is_wildcard(pattern));
 #endif
 
-	    patterns[i] = P;
-	    B = deindexify(B, variables2);
+	    body = deindexify(body, variables2);
 	}
 
-	return make_case_expression(T, patterns, bodies);
+	return make_case_expression(object, alts);
     }
 
     // Indexed Variable - This is assumed to be a free variable, so just shift it.
