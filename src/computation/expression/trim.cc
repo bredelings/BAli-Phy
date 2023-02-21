@@ -60,7 +60,6 @@ vector<int> merge_vars(const vector<int>& v1, const vector<int>& v2)
 vector<int> get_free_index_vars(const expression_ref& E)
 {
     vector<expression_ref> bodies;
-    vector<expression_ref> patterns;
     expression_ref T;
 
     vector<int> vars;
@@ -94,19 +93,20 @@ vector<int> get_free_index_vars(const expression_ref& E)
     }
 
     // case expression
-    else if (parse_case_expression(E, T, patterns, bodies))
+    else if (auto case_exp = parse_case_expression(E))
     {
-	vars = get_free_index_vars(T);
+        auto& [object, alts] = *case_exp;
+	vars = get_free_index_vars(object);
 
-	for(int i=0;i<bodies.size();i++)
+	for(auto& [pattern, body]: alts)
 	{
 	    int n = 0;
 
 	    // Handle c[i] x[i][1..n] -> body[i]
-	    if (patterns[i].head().is_a<constructor>())
-		n = patterns[i].head().as_<constructor>().n_args();
+	    if (pattern.head().is_a<constructor>())
+		n = pattern.head().as_<constructor>().n_args();
 
-	    vars = merge_vars(vars, pop_vars(n, get_free_index_vars(bodies[i])) );
+	    vars = merge_vars(vars, pop_vars(n, get_free_index_vars(body)) );
 	}
     }
     else if (not E.size()) 
@@ -132,7 +132,6 @@ vector<int> get_free_index_vars(const expression_ref& E)
 expression_ref trim_normalize(const expression_ref& E)
 {
     vector<expression_ref> bodies;
-    vector<expression_ref> patterns;
     expression_ref T;
 
     vector<int> vars;
@@ -149,15 +148,16 @@ expression_ref trim_normalize(const expression_ref& E)
     }
 
     // case expression
-    else if (parse_case_expression(E, T, patterns, bodies))
+    else if (auto case_exp = parse_case_expression(E))
     {
-	// T should already be a variable, so don't bother about it.
-	assert(T.is_index_var());
+        auto& [object, alts] = *case_exp;
+	// object should already be a variable, so don't bother about it.
+	assert(object.is_index_var());
 
-	for(auto& body: bodies)
+	for(auto& [pattern, body]: alts)
 	    body = trim(trim_normalize(body));
 
-	return make_case_expression(T, patterns, bodies);
+	return make_case_expression(object, alts);
     }
     // Already normalized (though not trimmed)
     else if (not E.size()) return E;
@@ -191,7 +191,6 @@ expression_ref make_trim(const expression_ref& E, const vector<int>& indices)
 expression_ref remap_free_indices(const expression_ref& E, const vector<int>& mapping, int depth)
 {
     vector<expression_ref> bodies;
-    vector<expression_ref> patterns;
     expression_ref T;
 
     vector<int> vars;
@@ -246,22 +245,23 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
     }
   
     // case expression
-    else if (parse_case_expression(E, T, patterns, bodies))
+    else if (auto case_exp = parse_case_expression(E))
     {
-	T = remap_free_indices(T, mapping, depth);
+        auto& [object, alts] = *case_exp;
+	object = remap_free_indices(object, mapping, depth);
 
-	for(int i=0;i<bodies.size();i++)
+	for(auto& [pattern, body]: alts)
 	{
 	    int n = 0;
 
 	    // Handle c[i] x[i][1..n] -> body[i]
-	    if (patterns[i].head().is_a<constructor>())
-		n = patterns[i].head().as_<constructor>().n_args();
+	    if (pattern.head().is_a<constructor>())
+		n = pattern.head().as_<constructor>().n_args();
 
-	    bodies[i] = remap_free_indices(bodies[i], mapping, depth + n);
+	    body = remap_free_indices(body, mapping, depth + n);
 	}
 
-	return make_case_expression(T, patterns, bodies);
+	return make_case_expression(object, alts);
     }
     else if (not E.size())
     {
@@ -325,7 +325,6 @@ expression_ref untrim(const expression_ref& E)
 expression_ref trim_unnormalize(const expression_ref& E)
 {
     vector<expression_ref> bodies;
-    vector<expression_ref> patterns;
     expression_ref T;
 
     vector<int> vars;
@@ -342,15 +341,16 @@ expression_ref trim_unnormalize(const expression_ref& E)
     }
 
     // case expression
-    else if (parse_case_expression(E, T, patterns, bodies))
+    else if (auto case_exp = parse_case_expression(E))
     {
-	// T should already be a variable, so don't bother about it.
-	assert(T.is_index_var());
+        auto& [object, alts] = *case_exp;
+	// object should already be a variable, so don't bother about it.
+	assert(object.is_index_var());
 
-	for(auto& body: bodies)
+	for(auto& [pattern, body]: alts)
 	    body = trim_unnormalize(untrim(body));
 
-	return make_case_expression(T, patterns, bodies);
+        return make_case_expression(object, alts);
     }
     // Already normalized (though not trimmed)
     else if (not E.size()) return E;
