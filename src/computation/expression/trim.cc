@@ -59,9 +59,6 @@ vector<int> merge_vars(const vector<int>& v1, const vector<int>& v2)
 
 vector<int> get_free_index_vars(const expression_ref& E)
 {
-    vector<expression_ref> bodies;
-    expression_ref T;
-
     vector<int> vars;
   
     if (E.head().is_a<Trim>())
@@ -82,14 +79,14 @@ vector<int> get_free_index_vars(const expression_ref& E)
 	vars = pop_vars(1, get_free_index_vars(E.sub()[0]));
 
     // Let expression
-    else if (parse_indexed_let_expression(E, bodies, T))
+    else if (auto L = parse_indexed_let_expression(E))
     {
-	vars = get_free_index_vars(T);
+	vars = get_free_index_vars(L->body);
 
-	for(const auto& body: bodies)
-	    vars = merge_vars(vars, get_free_index_vars(body));
+	for(const auto& bind: L->binds)
+	    vars = merge_vars(vars, get_free_index_vars(bind));
 
-	vars = pop_vars(bodies.size(), vars);
+	vars = pop_vars(L->binds.size(), vars);
     }
 
     // case expression
@@ -131,20 +128,17 @@ vector<int> get_free_index_vars(const expression_ref& E)
 
 expression_ref trim_normalize(const expression_ref& E)
 {
-    vector<expression_ref> bodies;
-    expression_ref T;
-
     vector<int> vars;
   
     // Let expressions need to be normalized
-    if (parse_indexed_let_expression(E, bodies, T))
+    if (auto L = parse_indexed_let_expression(E))
     {
-	T = trim(trim_normalize(T));
+	L->body = trim(trim_normalize(L->body));
 
-	for(auto& body: bodies)
-	    body = trim(trim_normalize(body));
+	for(auto& bind: L->binds)
+	    bind = trim(trim_normalize(bind));
 
-	return indexed_let_expression(bodies,T);
+	return *L;
     }
 
     // case expression
@@ -190,9 +184,6 @@ expression_ref make_trim(const expression_ref& E, const vector<int>& indices)
 
 expression_ref remap_free_indices(const expression_ref& E, const vector<int>& mapping, int depth)
 {
-    vector<expression_ref> bodies;
-    expression_ref T;
-
     vector<int> vars;
   
     if (E.head().is_a<Trim>())
@@ -233,15 +224,15 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
     }
 
     // Let expression
-    else if (parse_indexed_let_expression(E, bodies, T))
+    else if (auto L = parse_indexed_let_expression(E))
     {
-	int n = bodies.size();
-	T = remap_free_indices(T, mapping, depth + n);
+	int n = L->binds.size();
+	L->body = remap_free_indices(L->body, mapping, depth + n);
 
-	for(auto& body: bodies)
-	    body = remap_free_indices(body, mapping, depth + n);
+	for(auto& bind: L->binds)
+	    bind = remap_free_indices(bind, mapping, depth + n);
 
-	return indexed_let_expression(bodies, T);
+	return *L;
     }
   
     // case expression
@@ -324,20 +315,17 @@ expression_ref untrim(const expression_ref& E)
 //  just like trim_normalize( ))
 expression_ref trim_unnormalize(const expression_ref& E)
 {
-    vector<expression_ref> bodies;
-    expression_ref T;
-
     vector<int> vars;
   
     // Let expressions need to be normalized
-    if (parse_indexed_let_expression(E, bodies, T))
+    if (auto L = parse_indexed_let_expression(E))
     {
-	T = trim_unnormalize(untrim(T));
+	L->body = trim_unnormalize(untrim(L->body));
 
-	for(auto& body: bodies)
-	    body = trim_unnormalize(untrim(body));
+	for(auto& bind: L->binds)
+	    bind = trim_unnormalize(untrim(bind));
 
-	return indexed_let_expression(bodies,T);
+	return *L;
     }
 
     // case expression

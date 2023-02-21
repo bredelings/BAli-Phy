@@ -85,6 +85,16 @@ bool parse_indexed_let_expression(const expression_ref& E, vector<expression_ref
     return true;
 }
 
+//let T bodies[i]
+std::optional<Let>
+parse_indexed_let_expression(const expression_ref& E)
+{
+    if (E.head().type() == let2_type)
+        return E.as_<Let>();
+    else
+        return {};
+}
+
 int n_free_occurrences(const expression_ref& E1, const var& x)
 {
     assert(not is_wildcard(x));

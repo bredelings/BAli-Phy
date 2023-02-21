@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <utility>
+#include <optional>
+#include <tuple>
 #include "computation/object.H"
 #include "expression_ref.H"
 #include "var.H"
@@ -54,6 +56,9 @@ expression_ref unlet(const expression_ref& E);
 bool is_let_expression(const expression_ref& E);
 
 bool parse_indexed_let_expression(const expression_ref& E, std::vector<expression_ref>& bodies, expression_ref& T);
+
+// Should probably be optional<Let>, but is Let destructurable?
+std::optional<Let> parse_indexed_let_expression(const expression_ref& E);
 
 expression_ref multi_let_body(expression_ref E);
 
