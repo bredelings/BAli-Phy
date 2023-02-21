@@ -407,30 +407,27 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
     }
 
     // 6. Case
-    expression_ref object;
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    if (parse_case_expression(E, object, patterns, bodies))
+    if (auto C = parse_case_expression(E))
     {
+        auto& [object, alts] = *C;
+
 	// Analyze the object
         auto [object_, free_vars] = occurrence_analyzer(object);
         object = object_;
 
-	const int L = patterns.size();
 	// Just normalize the bodies
-
 	set<var> alts_free_vars;
-	for(int i=0;i<L;i++)
+	for(auto& [pattern, body]: alts)
 	{
 	    // Analyze the i-ith branch
-            auto [bodies_i, alt_i_free_vars] = occurrence_analyzer(bodies[i]);
-            bodies[i] = bodies_i;
+            auto [body_, alt_i_free_vars] = occurrence_analyzer(body);
+            body = body_;
 
 	    // Remove pattern vars from free variables
 	    // Copy occurrence info into pattern variables
-	    if (patterns[i].size())
+	    if (pattern.size())
 	    {
-		object_ptr<expression> pattern2 = patterns[i].as_expression().clone();
+		object_ptr<expression> pattern2 = pattern.as_expression().clone();
 		for(int j=0;j < pattern2->size(); j++)
 		{
 		    if (not is_wildcard(pattern2->sub[j]))
@@ -439,7 +436,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 			pattern2->sub[j] = x; // use temporary to avoid deleting pattern2->sub[j]
 		    }
 		}
-		patterns[i] = pattern2;
+		pattern = pattern2;
 	    }
 
 	    // Merge occurrences for this pattern into the occurrence for the whole set of alts.
@@ -448,7 +445,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 	// We can avoid inlining directly into alternatives, since this might duplicate work.
         // merge_occurrences_into(free_vars, dup_work(alts_free_vars));
 	merge_occurrences_into(free_vars, alts_free_vars);
-	return {make_case_expression(object,patterns,bodies),free_vars};
+	return {make_case_expression(object,alts), free_vars};
     }
 
     // 5. Let (let {x[i] = F[i]} in body)

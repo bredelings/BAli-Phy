@@ -42,26 +42,24 @@ expression_ref graph_normalize(FreshVarSource& source, const expression_ref& E)
     }
 
     // 6. Case
-    expression_ref object;
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    if (parse_case_expression(E, object, patterns, bodies))
+    if (auto C = parse_case_expression(E))
     {
+        auto& [object, alts] = *C;
+
 	// Normalize the object
 	object = graph_normalize(source, object);
 
-	const int L = patterns.size();
 	// Just normalize the bodies
-	for(int i=0;i<L;i++)
-	    bodies[i] = graph_normalize(source, bodies[i]);
+	for(auto& [pattern, body]: alts)
+	    body = graph_normalize(source, body);
 
 	if (is_reglike(object))
-	    return make_case_expression(object, patterns, bodies);
+	    return make_case_expression(object, alts);
 	else
 	{
 	    auto x = source.get_fresh_var();
 
-	    return let_expression({{x,object}},make_case_expression(x, patterns, bodies));
+	    return let_expression({{x,object}},make_case_expression(x, alts));
 	}
     }
 

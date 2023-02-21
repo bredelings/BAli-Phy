@@ -136,21 +136,18 @@ void get_free_indices2(const expression_ref& E, multiset<var>& bound, set<var>& 
 
     // for case expressions get_bound_indices doesn't work correctly.
     // .. we need to handle each Alt separately.
-    expression_ref object;
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    if (parse_case_expression(E, object, patterns, bodies))
+    if (auto C = parse_case_expression(E))
     {
+        auto& [object, alts] = *C;
+
 	get_free_indices2(object, bound, free);
 
-	const int L = patterns.size();
-
-	for(int i=0;i<L;i++)
+	for(auto& [pattern, body]: alts)
 	{
-	    std::set<var> bound_ = get_free_indices(patterns[i]);
+	    std::set<var> bound_ = get_free_indices(pattern);
 	    for(const auto& d: bound_)
 		bound.insert(d);
-	    get_free_indices2(bodies[i], bound, free);
+	    get_free_indices2(body, bound, free);
 	    for(const auto& d: bound_)
 	    {
 		auto it = bound.find(d);

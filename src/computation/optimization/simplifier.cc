@@ -319,9 +319,7 @@ find_constant_case_body(const expression_ref& object, const Core::Alts& alts, co
 
 expression_ref case_of_case(const expression_ref& object, Core::Alts alts, FreshVarSource& fresh_vars)
 {
-    expression_ref object2;
-    Core::Alts alts2;
-    parse_case_expression(object, object2, alts2);
+    auto [object2, alts2] = *parse_case_expression(object);
 
     // 1. Lift case bodies into let-bound functions, and replace the bodies with calls to these functions.
     //
@@ -486,13 +484,17 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::
 
         expression_ref object2;
         Core::Alts alts2;
-        if (parse_case_expression(body, object2, alts2) and is_var(object2) and object2 == object)
+        if (auto C = parse_case_expression(body))
         {
-            alts.pop_back();
-            for(auto& [pattern2,body2]: alts2)
+            auto& [object2, alts2] = *C;
+            if (is_var(object2) and object2 == object)
             {
-                if (not redundant_pattern(alts, pattern2))
-                    alts.push_back({pattern2, body2});
+                alts.pop_back();
+                for(auto& [pattern2,body2]: alts2)
+                {
+                    if (not redundant_pattern(alts, pattern2))
+                        alts.push_back({pattern2, body2});
+                }
             }
         }
     }

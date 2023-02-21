@@ -987,32 +987,30 @@ expression_ref rename(const expression_ref& E, const map<var,var>& substitution,
     }
 
     // 6. Case
-    expression_ref object;
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    if (parse_case_expression(E, object, patterns, bodies))
+    if (auto C = parse_case_expression(E))
     {
+        auto& [object, alts] = *C;
         // Analyze the object
         object = rename(object, substitution, bound);
-        for(int i=0; i<patterns.size(); i++)
+        for(auto& [pattern, body]: alts)
         {
-            for(int j=0;j<patterns[i].size(); j++)
+            for(int j=0;j<pattern.size(); j++)
             {
-                auto& x = patterns[i].sub()[j].as_<var>();
+                auto& x = pattern.sub()[j].as_<var>();
                 if (not x.is_wildcard())
                     bound.insert(x);
             }
 
-            bodies[i] = rename(bodies[i], substitution, bound);
+            body = rename(body, substitution, bound);
 
-            for(int j=0;j<patterns[i].size(); j++)
+            for(int j=0;j<pattern.size(); j++)
             {
-                auto& x = patterns[i].sub()[j].as_<var>();
+                auto& x = pattern.sub()[j].as_<var>();
                 if (not x.is_wildcard())
                     erase_one(bound,x);
             }
         }
-        return make_case_expression(object, patterns, bodies);
+        return make_case_expression(object, alts);
     }
 
     // 5. Let (let {x[i] = F[i]} in body)
