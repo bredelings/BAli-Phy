@@ -1,4 +1,7 @@
-* 4.0-alpha10 (Feb 14, 2023)
+* 4.0-alpha10 (Feb 21, 2023)
+- Bugs
+  - FIX using too much memory for large trees.
+  - FIX JSON printing empty arrays and objects.
 - Haskell
   - Fix imports/exports of types & associated values.
   - Default to Integer instead of Int.
@@ -14,6 +17,8 @@
     - Readable error messages for parser.
   - Speed
     - Unify eagerly, don't create empty implications.
+    - Implement case-merging optimization.
+    - Implement (seq x E) as (case x of _ -> E).
 - Refactor Tree data structure
   - More efficient leaf labels.
   - Convert out-edges to Array.
@@ -27,8 +32,6 @@
   - Simplify context_ptr to inspect the VM from C++.
 - MCMC
   - Allow using random operations in MCMC proposals.
-- Bugs
-  - FIX JSON print empty arrays and objects.
 
 
 * 4.0-alpha9 (Jan 9, 2023)
