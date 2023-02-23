@@ -30,6 +30,18 @@
 #include "dp-engine.H"
 #include "substitution/cache.H"
 
+struct Cell
+{
+    double* start = nullptr;
+
+    int  scale()  const                  { return *(int*)start; }
+    int& scale()                         { return *(int*)start; }
+    double  emitMM() const               { return start[1];     }
+    double& emitMM()                     { return start[1];     }
+    double  prob_for_state(int s) const  { return start[s+2]; }
+    double& prob_for_state(int s)        { return start[s+2]; }
+};
+
 class state_matrix
 {
     const int s1;
@@ -37,7 +49,6 @@ class state_matrix
     const int s3;
 
     double* data;
-    int* scale_;
 
     // Guarantee that these things aren't ever copied
     state_matrix& operator=(const state_matrix&) = delete;
@@ -51,40 +62,45 @@ public:
     int size2() const {return s2;}
     int size3() const {return s3;}
 
-    double& operator()(int i,int j,int k) {
+    Cell cell(int i,int j)
+    {
         assert(data);
 	assert(0 <= i and i < s1);
 	assert(0 <= j and j < s2);
+        double* start = data + (s3+2)*(i*s2+j);
+        return {start};
+    }
+
+    const Cell cell(int i,int j) const {
+        assert(data);
+	assert(0 <= i and i < s1);
+	assert(0 <= j and j < s2);
+        double* start = data + (s3+2)*(i*s2+j);
+        return {start};
+    }
+
+    double& operator()(int i,int j,int k) {
 	assert(0 <= k and k < s3);
-	return data[s3*(i*s2+j)+k];
+        return cell(i,j).prob_for_state(k);
     }
 
     double operator()(int i,int j,int k) const {
-        assert(data);
-	assert(0 <= i and i < s1);
-	assert(0 <= j and j < s2);
 	assert(0 <= k and k < s3);
-	return data[s3*(i*s2+j)+k];
+        return cell(i,j).prob_for_state(k);
     }
 
     int& scale(int i,int j) {
-        assert(scale_);
-	assert(0 <= i and i < s1);
-	assert(0 <= j and j < s2);
-	return scale_[i*s2 + j];
+	return cell(i,j).scale();
     }
 
 
     int scale(int i,int j) const {
-	assert(0 <= i and i < s1);
-	assert(0 <= j and j < s2);
-	return scale_[i*s2 + j];
+	return cell(i,j).scale();
     }
 
     state_matrix(int i1,int i2,int i3)
 	:s1(i1),s2(i2),s3(i3),
-	 data(new double[s1*s2*s3]),
-	 scale_(new int[s1*s2]) 
+	 data(new double[s1*s2*(s3+2)])
 	{}
 
     state_matrix(const state_matrix&) = delete;

@@ -44,9 +44,6 @@ void state_matrix::clear()
 {
     delete[] data; 
     data = nullptr;
-  
-    delete[] scale_; 
-    scale_ = nullptr;
 }
 
 state_matrix::~state_matrix() 
