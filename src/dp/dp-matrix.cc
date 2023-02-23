@@ -53,9 +53,10 @@ state_matrix::~state_matrix()
 
 inline void DPmatrix::clear_cell(int i2,int j2) 
 {
-    scale(i2,j2) = INT_MIN;
+    auto C = cell(i2,j2);
+    C.scale() = INT_MIN;
     for(int S=0;S<n_dp_states();S++)
-	(*this)(i2,j2,S) = 0;
+	C.prob_for_state(S) = 0;
 }
 
 // 1. dp_order( ) must be considered here, because the 3-way HMM has
@@ -70,7 +71,8 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
     assert(0 < j2 and j2 < size2());
 
     // determine initial scale for this cell
-    scale(i2,j2) = 0;
+    auto C = cell(i2,j2);
+    C.scale() = 0;
 
     double maximum = 0;
 
@@ -88,7 +90,7 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
 	    for(int s1=0;s1<s2;s1++)  {
 		int S1 = dp_order(s1);
 
-		temp += (*this)(i2,j2,S1) * GQ(S1,S2);
+		temp += C.prob_for_state(S1) * GQ(S1,S2);
 	    }
 	}
 
@@ -96,7 +98,7 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
 	if (temp > maximum) maximum = temp;
 
 	// store the result
-	(*this)(i2,j2,S2) = temp;
+	C.prob_for_state(S2) = temp;
     }
 
     //------- if exponent is too high or too low, rescale ------//
@@ -105,8 +107,8 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
 	int logs = -(int)log2(maximum);
 	double scale_ = pow2(logs);
 	for(int S2=0;S2<n_dp_states();S2++) 
-	    (*this)(i2,j2,S2) *= scale_;
-	scale(i2,j2) -= logs;
+	    C.prob_for_state(S2) *= scale_;
+	C.scale() -= logs;
     }
 } 
 
