@@ -111,8 +111,8 @@ struct LiteralPattern: public Object
 
     Hs::Var equalsOp = {"Data.Eq.=="};
 
-    LiteralPattern* clone() const { return new LiteralPattern(*this);}
-    std::string print() const;
+    LiteralPattern* clone() const override { return new LiteralPattern(*this);}
+    std::string print() const override;
 
     LiteralPattern(const Literal& l): lit(l) {}
 };
