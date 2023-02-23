@@ -161,8 +161,6 @@ protected:
 
     log_double_t Pr_extra_subst = 1;
 
-    Matrix s12_sub;
-
     inline void prepare_cell(int i,int j);
 
 public:

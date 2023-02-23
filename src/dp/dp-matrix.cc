@@ -371,8 +371,9 @@ inline double sum(const valarray<double>& v) {
 }
 
 // switching dists1[] to matrices actually made things WORSE!
-inline double DPmatrixEmit::emitMM(int i,int j) const {
-    return s12_sub(i,j);
+inline double DPmatrixEmit::emitMM(int i,int j) const
+{
+    return cell(i,j).emitMM();
 }
 
 log_double_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const 
@@ -388,7 +389,7 @@ log_double_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const
 	    j++;
 
 	if (di(state2) and dj(state2))
-	    P_sub *= emitMM(i,j);
+	    P_sub *= cell(i,j).emitMM();
     }
     assert(i == size1()-1 and j == size2()-1);
     return P_sub * Pr_extra_subst;
@@ -410,7 +411,7 @@ void DPmatrixEmit::prepare_cell(int i,int j)
     if (B != 1.0)
 	total = pow(total,B);
 
-    s12_sub(i,j) = total;
+    cell(i,j).emitMM() = total;
 }
 
 DPmatrixEmit::DPmatrixEmit(const HMM& M,
@@ -418,7 +419,6 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
 			   EmissionProbs&& d2,
 			   const Matrix& weighted_frequencies)
     :DPmatrix(d1.n_columns(), d2.n_columns(), M),
-     s12_sub(d1.n_columns(), d2.n_columns()),
      dists1(std::move(d1)), dists2(std::move(d2))
 {
     //----- cache G1,G2 emission probabilities -----//
@@ -495,7 +495,7 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
 
 	//--- Include Emission Probability----
 	if (i1 != i2 and j1 != j2)
-	    temp *= emitMM(i2,j2);
+	    temp *= cell(i2,j2).emitMM();
 
 	// rescale result to scale of this cell
 	if (scale(i1,j1) != scale(i2,j2))
@@ -566,7 +566,7 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
 
 	//--- Include Emission Probability----
 	if (i1 != i2 and j1 != j2)
-	    temp *= emitMM(i2,j2);
+	    temp *= cell(i2,j2).emitMM();
 
 	// rescale result to scale of this cell
 	if (scale(i1,j1) != scale(i2,j2))
