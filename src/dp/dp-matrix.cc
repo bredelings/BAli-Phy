@@ -469,8 +469,13 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
 
     prepare_cell(i2,j2);
 
+    auto C = cell(i2,j2);
+    auto D = cell(i2-1,j2);
+    auto I = cell(i2,j2-1);
+    auto M = cell(i2-1,j2-1);
+
     // determine initial scale for this cell
-    scale(i2,j2) = max(scale(i2-1,j2), max( scale(i2-1,j2-1), scale(i2,j2-1) ) );
+    C.scale() = max(D.scale(), max( M.scale(), I.scale()));
 
     double maximum = 0;
 
@@ -488,24 +493,26 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
 	int j1 = j2;
 	if (dj(S2)) j1--;
 
-	//--- Compute Arrival Probability ----
+        auto P = cell(i1,j1);
+
+        //--- Compute Arrival Probability ----
 	double temp  = 0;
 	for(int S1=0;S1<n_dp_states();S1++)
-	    temp += (*this)(i1,j1,S1) * GQ(S1,S2);
+	    temp += P.prob_for_state(S1) * GQ(S1,S2);
 
 	//--- Include Emission Probability----
 	if (i1 != i2 and j1 != j2)
-	    temp *= cell(i2,j2).emitMM();
+	    temp *= C.emitMM();
 
 	// rescale result to scale of this cell
-	if (scale(i1,j1) != scale(i2,j2))
-	    temp *= pow2(scale(i1,j1)-scale(i2,j2));
+	if (int scale_delta = P.scale() - C.scale(); scale_delta != 0)
+	    temp *= pow2(scale_delta);
 
 	// record maximum
 	if (temp > maximum) maximum = temp;
 
 	// store the result
-	(*this)(i2,j2,S2) = temp;
+	C.prob_for_state(S2) = temp;
     }
 
     //------- if exponent is too high or too low, rescale ------//
@@ -514,8 +521,8 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
 	int logs = -(int)log2(maximum);
 	double scale_ = pow2(logs);
 	for(int S2=0;S2<n_dp_states();S2++) 
-	    (*this)(i2,j2,S2) *= scale_;
-	scale(i2,j2) -= logs;
+	    C.prob_for_state(S2) *= scale_;
+	C.scale() -= logs;
     }
 } 
 
