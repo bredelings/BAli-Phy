@@ -70,7 +70,7 @@ void Module::add_symbol(const symbol_info& S)
 
     auto loc = symbols.find(S.name);
     if (loc == symbols.end())
-        symbols[S.name] = S;
+        symbols.insert({S.name,S});
     else if (loc != symbols.end() and loc->second != S)
         throw myexception()<<"Trying to add symbol '"<<S.name<<"' twice to module '"<<name<<"' with different body";
 }
@@ -164,7 +164,7 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     string s2 = name + "." + s;
 
     if (not symbols.count(s2))
-        declare_symbol({s, unknown_symbol, {}, -1, {}});
+        declare_symbol({s, unknown_symbol, {}, {}, {}});
 
     symbols.at(s2).fixity = fixity_info{fixity, precedence};
 }
@@ -593,10 +593,10 @@ void Module::export_symbol(const symbol_info& S)
 
     auto uname = get_unqualified_name(S.name);
     if (not exported_symbols_.count(uname))
-        exported_symbols_[uname] = S;
+        exported_symbols_.insert({uname,S});
     // FIXME, this doesn't really say how the entities (which are different) were referenced in the export list
-    else if (exported_symbols_[uname].name != S.name)
-        throw myexception()<<"attempting to export both '"<<exported_symbols_[uname].name<<"' and '"<<S.name<<"', which have the same unqualified name!";
+    else if (exported_symbols_.at(uname).name != S.name)
+        throw myexception()<<"attempting to export both '"<<exported_symbols_.at(uname).name<<"' and '"<<S.name<<"', which have the same unqualified name!";
 }
 
 void Module::export_type(const type_info& T)
@@ -604,10 +604,10 @@ void Module::export_type(const type_info& T)
     assert(is_qualified_symbol(T.name));
     auto uname = get_unqualified_name(T.name);
     if (not exported_types_.count(uname))
-        exported_types_[uname] = T;
+        exported_types_.insert({uname,T});
     // FIXME, this doesn't really say how the entities (which are different) were referenced in the export list
-    else if (exported_types_[uname].name != T.name)
-        throw myexception()<<"attempting to export both '"<<exported_types_[uname].name<<"' and '"<<T.name<<"', which have the same unqualified name!";
+    else if (exported_types_.at(uname).name != T.name)
+        throw myexception()<<"attempting to export both '"<<exported_types_.at(uname).name<<"' and '"<<T.name<<"', which have the same unqualified name!";
 
     // Export default methods if its a class
     if (auto c = T.is_class())
@@ -1500,7 +1500,7 @@ void Module::def_function(const std::string& fname)
     if (is_qualified_symbol(fname))
         throw myexception()<<"Locally defined symbol '"<<fname<<"' should not be qualified in function declaration.";
 
-    declare_symbol({fname, variable_symbol, {}, -1, {}});
+    declare_symbol({fname, variable_symbol, {}, {}, {}});
 }
 
 void Module::def_constructor(const string& cname, int arity, const string& type_name)
@@ -1519,7 +1519,7 @@ void Module::def_ADT(const std::string& tname, const type_info::data_info& info)
     if (is_qualified_symbol(tname))
         throw myexception()<<"Locally defined type '"<<tname<<"' should not be qualified.";
 
-    declare_type( {tname, info, {}, /*arity*/ -1, /*kind*/ {}} );
+    declare_type( {tname, info, {}, /*arity*/ {}, /*kind*/ {}} );
 }
 
 void Module::def_ADT(const std::string& tname, const fixity_info& fixity, const type_info::data_info& info)
@@ -1527,7 +1527,7 @@ void Module::def_ADT(const std::string& tname, const fixity_info& fixity, const 
     if (is_qualified_symbol(tname))
         throw myexception()<<"Locally defined symbol '"<<tname<<"' should not be qualified.";
 
-    declare_type( {tname, info, fixity, /*arity*/ -1, /*kind*/ {}} );
+    declare_type( {tname, info, fixity, /*arity*/ {}, /*kind*/ {}} );
 }
 
 void Module::def_type_synonym(const std::string& sname, int arity)
@@ -1551,7 +1551,7 @@ void Module::def_type_class(const std::string& cname, const type_info::class_inf
     if (is_qualified_symbol(cname))
         throw myexception()<<"Locally defined type '"<<cname<<"' should not be qualified.";
 
-    declare_type( {cname, info, {}, /*arity*/ -1, /*kind*/ {}} );
+    declare_type( {cname, info, {}, /*arity*/ {}, /*kind*/ {}} );
 }
 
 void Module::def_type_class_method(const string& method_name, const string& class_name)

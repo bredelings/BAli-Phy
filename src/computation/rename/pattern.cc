@@ -190,8 +190,8 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
                 error(loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
 
             // FIXME -- we really want the location of the whole pattern here
-            if (S.arity != c->args.size())
-                error(loc, Note()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!");
+            if (*S.arity != c->args.size())
+                error(loc, Note()<<"Constructor '"<<id<<"' arity "<<*S.arity<<" doesn't match pattern '"<<pat<<"'!");
         }
 
         // 11. Return the variables bound
@@ -328,11 +328,11 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
                 error(loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
 
             // FIXME -- we really want the location of the whole pattern here
-            if (S.arity != c->args.size())
-                error(loc, Note()<<"Constructor '"<<id<<"' arity "<<S.arity<<" doesn't match pattern '"<<pat<<"'!");
+            if (*S.arity != c->args.size())
+                error(loc, Note()<<"Constructor '"<<id<<"' arity "<<*S.arity<<" doesn't match pattern '"<<pat<<"'!");
 
             C.head.name = S.name;
-            C.head.arity = S.arity;
+            C.head.arity = *S.arity;
 
             // 10. Construct the renamed pattern
             pat = C;

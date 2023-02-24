@@ -4,9 +4,10 @@
 using std::string;
 using std::optional;
 
-symbol_info::symbol_info(const string& s, symbol_type_t st, const optional<string>& p, int a, optional<fixity_info> f)
+symbol_info::symbol_info(const string& s, symbol_type_t st, const optional<string>& p, optional<int> a, optional<fixity_info> f)
     :name(s), symbol_type(st), parent(p), arity(a), fixity(f)
 {
+    if (a) assert(*a != -1);
 }
 
 bool operator==(const symbol_info&S1, const symbol_info& S2)

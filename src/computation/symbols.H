@@ -36,13 +36,12 @@ struct symbol_info
     std::string name;
     symbol_type_t symbol_type;
     std::optional<std::string> parent;
-    int arity = -1;
+    std::optional<int> arity;
     std::optional<fixity_info> fixity;
     Type type;
     std::shared_ptr<VarInfo> info;
 
-    symbol_info() {};
-    symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int, std::optional<fixity_info> = {});
+    symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, std::optional<int>, std::optional<fixity_info> = {});
 };
 
 struct ClassInfo;
