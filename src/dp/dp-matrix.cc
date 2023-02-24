@@ -177,7 +177,16 @@ void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
 	clear_cell( cell(x1,y1-1) );
 	forward_first_cell( cell(x1,y1) );
 	for(int y=y1+1;y<=y2;y++)
-	    forward_cell(x1,y);
+        {
+            auto C = cell(x1,y);
+            auto D = cell(x1-1,y);
+            auto I = cell(x1,y-1);
+            auto M = cell(x1-1,y-1);
+
+            Cell cells[4] = {C,D,I,M};
+
+            forward_cell(x1,y,cells);
+        }
     }
 
     // forward other rows: x = 1...I-1
@@ -200,7 +209,16 @@ void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
 
 	// compute the untouched cells in this row
 	for(int y=y1;y<=y2;y++)
-	    forward_cell(x,y);
+        {
+            auto C = cell(x,y);
+            auto D = cell(x-1,y);
+            auto I = cell(x,y-1);
+            auto M = cell(x-1,y-1);
+
+            Cell cells[4] = {C,D,I,M};
+
+            forward_cell(x,y,cells);
+        }
     }
 
     compute_Pr_sum_all_paths();
@@ -464,17 +482,12 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
 }
 
 
-void DPmatrixSimple::forward_cell(int i2,int j2) 
+void DPmatrixSimple::forward_cell(int i2,int j2,Cell* cells)
 {
     assert(0 < i2 and i2 < size1());
     assert(0 < j2 and j2 < size2());
 
-    auto C = cell(i2,j2);
-    auto D = cell(i2-1,j2);
-    auto I = cell(i2,j2-1);
-    auto M = cell(i2-1,j2-1);
-
-    Cell cells[4] = {C,D,I,M};
+    Cell C=cells[0], D=cells[1], I=cells[2], M=cells[3];
 
     // compute subst probability
     prepare_cell(C,i2,j2);
@@ -551,17 +564,12 @@ inline void DPmatrixConstrained::clear_cell(Cell C)
 	C.prob_for_state(S) = 0;
 }
 
-inline void DPmatrixConstrained::forward_cell(int i2,int j2) 
+inline void DPmatrixConstrained::forward_cell(int i2,int j2,Cell* cells)
 {
     assert(0 < i2 and i2 < size1());
     assert(0 < j2 and j2 < size2());
 
-    auto C = cell(i2,j2);
-    auto D = cell(i2-1,j2);
-    auto I = cell(i2,j2-1);
-    auto M = cell(i2-1,j2-1);
-
-    Cell cells[4] = {C,D,I,M};
+    Cell C=cells[0], D=cells[1], I=cells[2], M=cells[3];
 
     // compute subst probability
     prepare_cell(C,i2,j2);

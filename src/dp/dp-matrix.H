@@ -120,7 +120,7 @@ public:
 
     /// Compute the forward probabilities for a cell
     void forward_first_cell(Cell);
-    virtual void forward_cell(int,int)=0;
+    virtual void forward_cell(int,int,Cell*)=0;
 
     /// Compute the forward probabilities between y1(x) and y2(x)
     void forward_band(const std::vector< std::pair<int,int> >& boundaries);
@@ -182,7 +182,7 @@ public:
 /// 2D Dynamic Programming matrix with no constraints on states at each cell
 class DPmatrixSimple final: public DPmatrixEmit {
 public:
-    void forward_cell(int,int);
+    void forward_cell(int,int,Cell*);
 
     using DPmatrixEmit::DPmatrixEmit;
 
@@ -209,7 +209,7 @@ public:
     std::vector<int>& states(int j) {return allowed_states[j];}
 
     void clear_cell(Cell);
-    void forward_cell(int,int);
+    void forward_cell(int,int,Cell*);
 
     DPmatrixConstrained(const HMM& M,
 			EmissionProbs&& d1,
