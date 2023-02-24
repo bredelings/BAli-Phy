@@ -319,7 +319,8 @@ find_constant_case_body(const expression_ref& object, const Core::Alts& alts, co
 
 expression_ref case_of_case(const expression_ref& object, Core::Alts alts, FreshVarSource& fresh_vars)
 {
-    auto [object2, alts2] = *parse_case_expression(object);
+    auto C = parse_case_expression(object);
+    auto [object2, alts2] = *C;
 
     // 1. Lift case bodies into let-bound functions, and replace the bodies with calls to these functions.
     //
