@@ -119,7 +119,7 @@ public:
     virtual void clear_cell(Cell);
 
     /// Compute the forward probabilities for a cell
-    void forward_first_cell(int,int);
+    void forward_first_cell(Cell);
     virtual void forward_cell(int,int)=0;
 
     /// Compute the forward probabilities between y1(x) and y2(x)

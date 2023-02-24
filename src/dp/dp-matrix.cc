@@ -64,13 +64,9 @@ inline void DPmatrix::clear_cell(Cell C)
 //     3-way and 1-way HMMs have no more than 1 silent state
 //     (not counting the start or end states).
 
-inline void DPmatrix::forward_first_cell(int i2,int j2) 
+inline void DPmatrix::forward_first_cell(Cell C)
 { 
-    assert(0 < i2 and i2 < size1());
-    assert(0 < j2 and j2 < size2());
-
     // determine initial scale for this cell
-    auto C = cell(i2,j2);
     C.scale() = 0;
 
     double maximum = 0;
@@ -179,7 +175,7 @@ void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
 	int y2 = 1 + yboundaries[0].second;
 	assert(y1 <= y2);
 	clear_cell( cell(x1,y1-1) );
-	forward_first_cell(x1,y1);
+	forward_first_cell( cell(x1,y1) );
 	for(int y=y1+1;y<=y2;y++)
 	    forward_cell(x1,y);
     }
