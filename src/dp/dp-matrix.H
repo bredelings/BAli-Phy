@@ -79,25 +79,6 @@ public:
         return {start};
     }
 
-    double& operator()(int i,int j,int k) {
-	assert(0 <= k and k < s3);
-        return cell(i,j).prob_for_state(k);
-    }
-
-    double operator()(int i,int j,int k) const {
-	assert(0 <= k and k < s3);
-        return cell(i,j).prob_for_state(k);
-    }
-
-    int& scale(int i,int j) {
-	return cell(i,j).scale();
-    }
-
-
-    int scale(int i,int j) const {
-	return cell(i,j).scale();
-    }
-
     state_matrix(int i1,int i2,int i3)
 	:s1(i1),s2(i2),s3(i3),
 	 data(new double[s1*s2*(s3+2)])

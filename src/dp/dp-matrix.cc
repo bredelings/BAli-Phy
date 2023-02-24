@@ -216,9 +216,11 @@ void DPmatrix::compute_Pr_sum_all_paths()
     const int I = size1()-1;
     const int J = size2()-1;
 
+    auto E = cell(I,J);
+
     double total = 0.0;
     for(int state1=0;state1<n_dp_states();state1++)
-	total += (*this)(I,J,state1)*GQ(state1,endstate());
+	total += E.prob_for_state(state1)*GQ(state1,endstate());
 
     Pr_total *= pow(log_double_t(2.0), cell(I,J).scale()) * total;
     assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
@@ -248,9 +250,9 @@ log_double_t DPmatrix::path_P(const vector<int>& path) const
     // - instead we can check if l==0 - we know that the start state
     //   is at path[-1]
     while (l>0) {
-
+        auto C = cell(i,j);
 	for(int state1=0;state1<n_dp_states();state1++)
-	    transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
+	    transition[state1] = C.prob_for_state(state1)*GQ(state1,state2);
 
 	int state1 = path[l-1];
 	double p = choose_P(state1,transition);
@@ -267,8 +269,9 @@ log_double_t DPmatrix::path_P(const vector<int>& path) const
     assert(i == 1 and j == 1);
 
     // include probability of choosing 'Start' vs ---+ !
+    auto C = cell(1,1);
     for(int state1=0;state1<n_dp_states();state1++)
-	transition[state1] = (*this)(1,1,state1) * GQ(state1,state2);
+	transition[state1] = C.prob_for_state(state1) * GQ(state1,state2);
 
     // Get the probability that the previous state was 'Start'
     double p=0.0;
@@ -310,8 +313,9 @@ vector<int> DPmatrix::sample_path() const
     {
 	path.push_back(state2);
 
+        auto C = cell(i,j);
 	for(int state1=0;state1<n_dp_states();state1++)
-	    transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
+	    transition[state1] = C.prob_for_state(state1)*GQ(state1,state2);
 
 	int state1 = -1;
 	try {
@@ -364,8 +368,9 @@ DPmatrix::DPmatrix(int i1,
     const int I = size1()-1;
     const int J = size2()-1;
 
+    auto E = cell(I,J);
     for(int state1=0;state1<n_dp_states();state1++)
-	(*this)(I,J,state1) = 0;
+	E.prob_for_state(state1) = 0;
 }
 
 inline double sum(const valarray<double>& v) {
@@ -614,13 +619,15 @@ void DPmatrixConstrained::compute_Pr_sum_all_paths()
     const int I = size1()-1;
     const int J = size2()-1;
 
+    auto E = cell(I,J);
+
     double total = 0.0;
     for(int s1=0;s1<states(J).size();s1++) {
 	int S1 = states(J)[s1];
-	total += (*this)(I,J,S1)*GQ(S1,endstate());
+	total += E.prob_for_state(S1)*GQ(S1,endstate());
     }
 
-    Pr_total *= pow(log_double_t(2.0),scale(I,J)) * total;
+    Pr_total *= pow(log_double_t(2.0), E.scale()) * total;
     assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 
     // This really is a probability, so it should be <= 1
@@ -653,10 +660,11 @@ log_double_t DPmatrixConstrained::path_P(const vector<int>& path) const
     while (l>0) 
     {
 	transition.resize(states(j).size());
+        auto C = cell(i,j);
 	for(int s1=0;s1<states(j).size();s1++)
 	{
 	    int S1 = states(j)[s1];
-	    transition[s1] = (*this)(i,j,S1)*GQ(S1,S2);
+	    transition[s1] = C.prob_for_state(S1)*GQ(S1,S2);
 	}
 
 	int S1 = path[l-1];
@@ -676,9 +684,10 @@ log_double_t DPmatrixConstrained::path_P(const vector<int>& path) const
     assert(i == 1 and j == 1);
 
     // include probability of choosing 'Start' vs ---+ !
+    auto C = cell(1,1);
     transition.resize(n_dp_states());
     for(int S1=0;S1<n_dp_states();S1++)
-	transition[S1] = (*this)(1,1,S1) * GQ(S1,S2);
+	transition[S1] = C.prob_for_state(S1) * GQ(S1,S2);
 
     // Get the probability that the previous state was 'Start'
     double p=0.0;
@@ -721,11 +730,12 @@ vector<int> DPmatrixConstrained::sample_path() const
     {
 	path.push_back(S2);
 
+        auto C = cell(i,j);
 	transition.resize(states(j).size());
 	for(int s1=0;s1<states(j).size();s1++) 
 	{
 	    int S1 = states(j)[s1];
-	    transition[s1] = (*this)(i,j,S1)*GQ(S1,S2);
+	    transition[s1] = C.prob_for_state(S1)*GQ(S1,S2);
 	}
 
 	int s1 = -1;
@@ -740,7 +750,7 @@ vector<int> DPmatrixConstrained::sample_path() const
 	    for(int s1=0;s1<states(j).size();s1++)
 	    {
 		int S1 = states(j)[s1];
-		std::cerr<<"transition["<<s1<<"] = "<<transition[s1]<<" = "<<(*this)(i,j,S1)<<" * "<<GQ(S1,S2)<<std::endl;
+		std::cerr<<"transition["<<s1<<"] = "<<transition[s1]<<" = "<<C.prob_for_state(S1)<<" * "<<GQ(S1,S2)<<std::endl;
 	    }
 
 	    for(int state1=0;state1<n_dp_states();state1++)
