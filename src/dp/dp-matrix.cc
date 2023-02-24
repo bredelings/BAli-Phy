@@ -51,9 +51,8 @@ state_matrix::~state_matrix()
     clear();
 }
 
-inline void DPmatrix::clear_cell(int i2,int j2) 
+inline void DPmatrix::clear_cell(Cell C)
 {
-    auto C = cell(i2,j2);
     C.scale() = INT_MIN;
     for(int S=0;S<n_dp_states();S++)
 	C.prob_for_state(S) = 0;
@@ -171,7 +170,7 @@ void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
 	int y2 = 1 + yboundaries[0].second;
 	assert(y1 <= y2);
 	for(int y=y1;y<=y2;y++)
-	    clear_cell(x1-1,y);
+	    clear_cell( cell(x1-1,y) );
     }
 
     // forward first row, with exception for S(0,0): x = 0
@@ -179,7 +178,7 @@ void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
 	int y1 = 1 + yboundaries[0].first;
 	int y2 = 1 + yboundaries[0].second;
 	assert(y1 <= y2);
-	clear_cell(x1,y1-1);
+	clear_cell( cell(x1,y1-1) );
 	forward_first_cell(x1,y1);
 	for(int y=y1+1;y<=y2;y++)
 	    forward_cell(x1,y);
@@ -198,10 +197,10 @@ void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
 	int z2 = 1 + yboundaries[x-2].second;
 	assert(z2 >= y1-1);
 	for(int y=z2+1;y<=y2;y++)
-	    clear_cell(x-1,y);
+	    clear_cell( cell(x-1,y) );
 
 	// clear the untouched empty cell below us
-	clear_cell(x,y1-1);
+	clear_cell( cell(x,y1-1) );
 
 	// compute the untouched cells in this row
 	for(int y=y1;y<=y2;y++)
@@ -549,9 +548,8 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
 
 
 // Make this no longer virtual?
-inline void DPmatrixConstrained::clear_cell(int i2,int j2) 
+inline void DPmatrixConstrained::clear_cell(Cell C)
 {
-    auto C = cell(i2,j2);
     C.scale() = INT_MIN;
     for(int S=0;S<n_dp_states();S++)
 	C.prob_for_state(S) = 0;

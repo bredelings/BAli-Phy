@@ -116,7 +116,7 @@ public:
     bool dj(int S) const {return (state_emit[S]&emit2).any();}
 
     /// Zero out all (relevant) probabilities for a cell
-    virtual void clear_cell(int,int);
+    virtual void clear_cell(Cell);
 
     /// Compute the forward probabilities for a cell
     void forward_first_cell(int,int);
@@ -208,7 +208,7 @@ public:
     const std::vector<int>& states(int j) const {return allowed_states[j];}
     std::vector<int>& states(int j) {return allowed_states[j];}
 
-    void clear_cell(int,int);
+    void clear_cell(Cell);
     void forward_cell(int,int);
 
     DPmatrixConstrained(const HMM& M,
