@@ -479,6 +479,8 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
     auto I = cell(i2,j2-1);
     auto M = cell(i2-1,j2-1);
 
+    Cell cells[4] = {C,D,I,M};
+
     // compute subst probability
     prepare_cell(C,i2,j2);
 
@@ -495,13 +497,22 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
     for(int S2=0;S2<n_dp_states();S2++) 
     {
 	//--- Get (i1,j1) from (i2,j2) and S2
-	int i1 = i2;
-	if (di(S2)) i1--;
+        int delta = 0;
+        int i1 = i2;
+        if (di(S2))
+        {
+            i1--;
+            delta+=1;
+        }
 
-	int j1 = j2;
-	if (dj(S2)) j1--;
+        int j1 = j2;
+        if (dj(S2))
+        {
+            j1--;
+            delta+=2;
+        }
 
-        auto P = cell(i1,j1);
+        auto P = cells[delta];
 
         //--- Compute Arrival Probability ----
 	double temp  = 0;
@@ -556,6 +567,8 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
     auto I = cell(i2,j2-1);
     auto M = cell(i2-1,j2-1);
 
+    Cell cells[4] = {C,D,I,M};
+
     // compute subst probability
     prepare_cell(C,i2,j2);
 
@@ -569,13 +582,22 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
 	int S2 = states(j2)[s2];
 
 	//--- Get (i1,j1) from (i2,j2) and S2
-	int i1 = i2;
-	if (di(S2)) i1--;
+        int delta = 0;
+        int i1 = i2;
+        if (di(S2))
+        {
+            i1--;
+            delta+=1;
+        }
 
-	int j1 = j2;
-	if (dj(S2)) j1--;
+        int j1 = j2;
+        if (dj(S2))
+        {
+            j1--;
+            delta+=2;
+        }
 
-        auto P = cell(i1,j1);
+        auto P = cells[delta];
 
 	//--- Compute Arrival Probability ----
 	unsigned MAX = states(j1).size();
