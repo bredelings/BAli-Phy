@@ -606,10 +606,8 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
     {
 	int logs = -(int)log2(maximum);
 	double scale_ = pow2(logs);
-	for(int i=0;i<states(j2).size();i++) {
-	    int S2 = states(j2)[i];
+	for(int S2: states(j2))
 	    C.prob_for_state(S2) *= scale_;
-	}
 	C.scale() -= logs;
     }
 }
