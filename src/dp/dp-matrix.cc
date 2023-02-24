@@ -409,13 +409,13 @@ log_double_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const
     return P_sub * Pr_extra_subst;
 }
 
-void DPmatrixEmit::prepare_cell(Cell C, int i, int j)
+double DPmatrixEmit::emitMM(int i, int j) const
 {
     assert(i > 0);
     assert(j > 0);
   
-    double* __restrict__ m1 = dists1[i];
-    double* __restrict__ m2 = dists2[j];
+    const double* __restrict__ m1 = dists1[i];
+    const double* __restrict__ m2 = dists2[j];
 
     double total=0;
     const int MS = dists1.matrix_size();
@@ -425,7 +425,7 @@ void DPmatrixEmit::prepare_cell(Cell C, int i, int j)
     if (B != 1.0)
 	total = pow(total,B);
 
-    C.emitMM() = total;
+    return total;
 }
 
 DPmatrixEmit::DPmatrixEmit(const HMM& M,
@@ -481,13 +481,13 @@ void DPmatrixSimple::forward_cell(int i2,int j2,Cell* cells)
     assert(0 < i2 and i2 < size1());
     assert(0 < j2 and j2 < size2());
 
-    Cell C=cells[0], D=cells[1], I=cells[2], M=cells[3];
+    auto C=cells[0];
 
     // compute subst probability
-    prepare_cell(C,i2,j2);
+    C.emitMM() = emitMM(i2,j2);
 
     // determine initial scale for this cell
-    C.scale() = max(D.scale(), max( M.scale(), I.scale()));
+    C.scale() = max(cells[1].scale(), max( cells[3].scale(), cells[2].scale()));
 
     double maximum = 0;
 
@@ -563,13 +563,13 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2,Cell* cells)
     assert(0 < i2 and i2 < size1());
     assert(0 < j2 and j2 < size2());
 
-    Cell C=cells[0], D=cells[1], I=cells[2], M=cells[3];
+    auto C=cells[0];
 
     // compute subst probability
-    prepare_cell(C,i2,j2);
+    C.emitMM() = emitMM(i2,j2);
 
     // determine initial scale for this cell
-    C.scale() = max(D.scale(), max( M.scale(), I.scale()));
+    C.scale() = max(cells[1].scale(), max( cells[3].scale(), cells[2].scale()));
 
     double maximum = 0;
 

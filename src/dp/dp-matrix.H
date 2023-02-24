@@ -142,7 +142,7 @@ protected:
 
     log_double_t Pr_extra_subst = 1;
 
-    inline void prepare_cell(Cell C, int i,int j);
+    inline double emitMM(int i,int j) const;
 
 public:
     typedef Likelihood_Cache_Branch EmissionProbs;
