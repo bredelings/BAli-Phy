@@ -60,14 +60,14 @@ public:
 
     int size1() const {return s1;}
     int size2() const {return s2;}
-    int size3() const {return s3;}
+    int n_states() const {return s3-2;}
 
     Cell cell(int i,int j)
     {
         assert(data);
 	assert(0 <= i and i < s1);
 	assert(0 <= j and j < s2);
-        double* start = data + (s3+2)*(i*s2+j);
+        double* start = data + s3*(i*s2+j);
         return {start};
     }
 
@@ -75,13 +75,13 @@ public:
         assert(data);
 	assert(0 <= i and i < s1);
 	assert(0 <= j and j < s2);
-        double* start = data + (s3+2)*(i*s2+j);
+        double* start = data + s3*(i*s2+j);
         return {start};
     }
 
     state_matrix(int i1,int i2,int i3)
-	:s1(i1),s2(i2),s3(i3),
-	 data(new double[s1*s2*(s3+2)])
+	:s1(i1),s2(i2),s3(i3+2),
+	 data(new double[s1*s2*s3])
 	{}
 
     state_matrix(const state_matrix&) = delete;
