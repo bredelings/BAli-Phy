@@ -235,7 +235,7 @@ void DPmatrix::compute_Pr_sum_all_paths()
     for(int state1=0;state1<n_dp_states();state1++)
 	total += E.prob_for_state(state1)*GQ(state1,endstate());
 
-    Pr_total *= pow(log_double_t(2.0), cell(I,J).scale()) * total;
+    Pr_total *= pow(log_double_t(2.0), E.scale()) * total;
     assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 
     // This really is a probability, so it should be <= 1
