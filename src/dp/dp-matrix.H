@@ -159,15 +159,6 @@ public:
 
     log_double_t path_Q_subst(const std::vector<int>& path) const;
 
-    /// Emission probabilities for ++
-    double emitMM(int i,int j) const;
-    /// Emission probabilities for -+
-    static constexpr double emit_M(int,int) {return 1;}
-    /// Emission probabilities for +-
-    static constexpr double emitM_(int,int) {return 1;}
-    /// Emission probabilities for --
-    static constexpr double emit__(int,int) {return 1;}
-
     /// Construct a DP array from an HMM, emission probabilities, and substitution model
     DPmatrixEmit(const HMM& M,
 		 EmissionProbs&& dists1,

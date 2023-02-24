@@ -390,12 +390,6 @@ inline double sum(const valarray<double>& v) {
     return v.sum();
 }
 
-// switching dists1[] to matrices actually made things WORSE!
-inline double DPmatrixEmit::emitMM(int i,int j) const
-{
-    return cell(i,j).emitMM();
-}
-
 log_double_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const 
 {
     log_double_t P_sub=1.0;
