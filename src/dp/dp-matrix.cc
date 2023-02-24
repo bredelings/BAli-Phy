@@ -220,7 +220,7 @@ void DPmatrix::compute_Pr_sum_all_paths()
     for(int state1=0;state1<n_dp_states();state1++)
 	total += (*this)(I,J,state1)*GQ(state1,endstate());
 
-    Pr_total *= pow(log_double_t(2.0),scale(I,J)) * total;
+    Pr_total *= pow(log_double_t(2.0), cell(I,J).scale()) * total;
     assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 
     // This really is a probability, so it should be <= 1
@@ -534,9 +534,10 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
 // Make this no longer virtual?
 inline void DPmatrixConstrained::clear_cell(int i2,int j2) 
 {
-    scale(i2,j2) = INT_MIN;
+    auto C = cell(i2,j2);
+    C.scale() = INT_MIN;
     for(int S=0;S<n_dp_states();S++)
-	(*this)(i2,j2,S) = 0;
+	C.prob_for_state(S) = 0;
 }
 
 inline void DPmatrixConstrained::forward_cell(int i2,int j2) 
@@ -546,8 +547,13 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
 
     prepare_cell(i2,j2);
 
+    auto C = cell(i2,j2);
+    auto D = cell(i2-1,j2);
+    auto I = cell(i2,j2-1);
+    auto M = cell(i2-1,j2-1);
+
     // determine initial scale for this cell
-    scale(i2,j2) = max(scale(i2-1,j2), max( scale(i2-1,j2-1), scale(i2,j2-1) ) );
+    C.scale() = max(D.scale(), max( M.scale(), I.scale()));
 
     double maximum = 0;
 
@@ -562,6 +568,8 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
 	int j1 = j2;
 	if (dj(S2)) j1--;
 
+        auto P = cell(i1,j1);
+
 	//--- Compute Arrival Probability ----
 	unsigned MAX = states(j1).size();
 	if (not di(S2) and not dj(S2)) MAX = s2;
@@ -570,22 +578,22 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
 	for(int s1=0;s1<MAX;s1++) {
 	    int S1 = states(j1)[s1];
 
-	    temp +=  (*this)(i1,j1,S1) * GQ(S1,S2);
+	    temp += P.prob_for_state(S1) * GQ(S1,S2);
 	}
 
 	//--- Include Emission Probability----
 	if (i1 != i2 and j1 != j2)
-	    temp *= cell(i2,j2).emitMM();
+	    temp *= C.emitMM();
 
 	// rescale result to scale of this cell
-	if (scale(i1,j1) != scale(i2,j2))
-	    temp *= pow2(scale(i1,j1)-scale(i2,j2));
+	if (int scale_delta = P.scale() - C.scale(); scale_delta != 0)
+	    temp *= pow2(scale_delta);
 
 	// record maximum
 	if (temp > maximum) maximum = temp;
 
 	// store the result
-	(*this)(i2,j2,S2) = temp;
+	C.prob_for_state(S2) = temp;
     }
 
     //------- if exponent is too high or too low, rescale ------//
@@ -595,9 +603,9 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
 	double scale_ = pow2(logs);
 	for(int i=0;i<states(j2).size();i++) {
 	    int S2 = states(j2)[i];
-	    (*this)(i2,j2,S2) *= scale_;
+	    C.prob_for_state(S2) *= scale_;
 	}
-	scale(i2,j2) -= logs;
+	C.scale() -= logs;
     }
 }
 
