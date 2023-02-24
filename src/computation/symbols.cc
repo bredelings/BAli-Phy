@@ -4,11 +4,7 @@
 using std::string;
 using std::optional;
 
-symbol_info::symbol_info(const string& s, symbol_type_t st, const optional<string>& p, int a)
-    :name(s), symbol_type(st), parent(p), arity(a)
-{ }
-
-symbol_info::symbol_info(const string& s, symbol_type_t st, const optional<string>& p, int a, fixity_info f)
+symbol_info::symbol_info(const string& s, symbol_type_t st, const optional<string>& p, int a, optional<fixity_info> f)
     :name(s), symbol_type(st), parent(p), arity(a), fixity(f)
 {
 }

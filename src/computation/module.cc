@@ -161,18 +161,12 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     if (precedence < 0 or precedence > 9)
         throw myexception()<<"Precedence level "<<precedence<<" not allowed.";
 
-    if (fixity == unknown_fix)
-        throw myexception()<<"Cannot set fixity to unknown!";
-
     string s2 = name + "." + s;
 
     if (not symbols.count(s2))
-        declare_symbol({s, unknown_symbol, {}, -1, {unknown_fix,-1}});
+        declare_symbol({s, unknown_symbol, {}, -1, {}});
 
-    symbol_info& S = symbols.find(s2)->second;
-
-    S.fixity.precedence = precedence;
-    S.fixity.fixity = fixity;
+    symbols.at(s2).fixity = fixity_info{fixity, precedence};
 }
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
@@ -1306,7 +1300,7 @@ pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string
     else if (name == "[]")
         return {symbol_info("[]", constructor_symbol, "[]", 0), constructor("[]",0)};
     else if (name == ":")
-        return {symbol_info(":", constructor_symbol, "[]", 2, {right_fix,5}), lambda_expression( right_assoc_constructor(":",2) )};
+        return {symbol_info(":", constructor_symbol, "[]", 2, {{right_fix,5}}), lambda_expression( right_assoc_constructor(":",2) )};
     else if (is_tuple_name(name))
     {
         int arity = name.size() - 1;
@@ -1414,15 +1408,10 @@ OpInfo Module::get_operator(const string& name) const
     O.name = S.name;
 
     // An operator of undefined precedence is treated as if it has the highest precedence
-    if (S.fixity.precedence == -1 or S.fixity.fixity == unknown_fix) 
-    {
-        // If either is unset, then both must be unset!
-        assert(S.fixity.precedence == -1 and S.fixity.fixity == unknown_fix);
-
+    if (not S.fixity)
         O.fixity = {left_fix, 9};
-    }
     else
-        O.fixity = S.fixity;
+        O.fixity = *S.fixity;
 
     return O;
 }
@@ -1511,7 +1500,7 @@ void Module::def_function(const std::string& fname)
     if (is_qualified_symbol(fname))
         throw myexception()<<"Locally defined symbol '"<<fname<<"' should not be qualified in function declaration.";
 
-    declare_symbol({fname, variable_symbol, {}, -1, {unknown_fix, -1}});
+    declare_symbol({fname, variable_symbol, {}, -1, {}});
 }
 
 void Module::def_constructor(const string& cname, int arity, const string& type_name)
@@ -1522,7 +1511,7 @@ void Module::def_constructor(const string& cname, int arity, const string& type_
 //    if (not is_qualified_symbol(type_name))
 //        throw myexception()<<"Locally defined symbol '"<<type_name<<"' should not be qualified.";
 
-    declare_symbol( {cname, constructor_symbol, type_name, arity, {unknown_fix, -1}} );
+    declare_symbol( {cname, constructor_symbol, type_name, arity, {}} );
 }
 
 void Module::def_ADT(const std::string& tname, const type_info::data_info& info)
@@ -1573,7 +1562,7 @@ void Module::def_type_class_method(const string& method_name, const string& clas
 //    if (not is_qualified_symbol(class_name))
 //        throw myexception()<<"Locally defined type class '"<<class_name<<"' should be qualified.";
 
-    declare_symbol( {method_name, class_method_symbol, class_name, {}, {unknown_fix, -1}} );
+    declare_symbol( {method_name, class_method_symbol, class_name, {}, {}} );
 }
 
 void Module::declare_fixities_(const Haskell::FixityDecl& FD)

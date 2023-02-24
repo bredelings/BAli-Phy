@@ -7,7 +7,6 @@
 #include <variant>
 #include "computation/haskell/haskell.H"
 
-constexpr auto unknown_fix = Haskell::Fixity::unknown;
 constexpr auto left_fix = Haskell::Fixity::infixl;
 constexpr auto right_fix = Haskell::Fixity::infixr;
 constexpr auto non_fix = Haskell::Fixity::infix;
@@ -17,8 +16,8 @@ typedef Haskell::Fixity fixity_t;
 //  fixity is not a property of that entity’s name."
 struct fixity_info
 {
-    fixity_t fixity = unknown_fix;
-    int precedence = -1;
+    fixity_t fixity;
+    int precedence;
 };
 
 struct OpInfo
@@ -38,13 +37,12 @@ struct symbol_info
     symbol_type_t symbol_type;
     std::optional<std::string> parent;
     int arity = -1;
-    fixity_info fixity;
+    std::optional<fixity_info> fixity;
     Type type;
     std::shared_ptr<VarInfo> info;
 
     symbol_info() {};
-    symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int);
-    symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int, fixity_info);
+    symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, int, std::optional<fixity_info> = {});
 };
 
 struct ClassInfo;
