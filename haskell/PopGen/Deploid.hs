@@ -135,7 +135,7 @@ foreign import bpcall "SMC:sample_haplotype01_from_panel" builtin_sample_haploty
 sample_haplotype01_from_panel (p_sites,p_haps) switch_rate flip_prob = let raw_action s = builtin_sample_haplotype01_from_panel p_haps' p_sites' switch_rate flip_prob s
                                                                            p_haps' = list_to_vector p_haps
                                                                            p_sites' = list_to_vector p_sites
-                                                                       in RanAtomic do_nothing (makeIO $ raw_action s)
+                                                                       in RanAtomic do_nothing (makeIO $ raw_action)
 
 foreign import bpcall "SMC:haplotype01_from_panel_probability" builtin_haplotype01_from_panel_probability :: Panel -> Sites -> Double -> Double -> Haplotype -> LogDouble
 haplotype01_from_panel_probability (p_sites,p_haps) switch_rate flip_prob hap = builtin_haplotype01_from_panel_probability p_haps' p_sites' switch_rate flip_prob hap
@@ -165,7 +165,7 @@ resample_haplotypes_from_panel' indices (p_sites, p_haps) switch_rate flip_prob 
           reads' = list_to_vector $ map (\(x,y) -> c_pair x y) reads
 
 resample_haplotypes_from_panel indices panel switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context =
-    makeIO $ pair_from_c . resample_haplotypes_from_panel' indices panel switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context
+    makeIO $ resample_haplotypes_from_panel' indices panel switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context
 
 foreign import bpcall "SMC:resample_weights_and_haplotypes_from_panel" resample_weights_and_haplotypes_from_panel'' :: ContextIndex -> [Int] -> [Double] -> [Haplotype] -> Panel -> Sites -> Double -> Double -> EVector Double -> Reads -> Double -> Double -> Double -> RealWorld -> LogDouble
 
