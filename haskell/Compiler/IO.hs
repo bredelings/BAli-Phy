@@ -12,17 +12,17 @@ import Control.Monad
 type RealWorld = Int
 
 {-
-data IO a = IOAction { runIO :: RealWorld -> (RealWorld, a) }
+data IO a = IO { runIO :: RealWorld -> (RealWorld, a) }
 
--- unsafePerformIO (IOAction f) = snd (f 0)
+-- unsafePerformIO (IO f) = snd (f 0)
 unsafePerformIO :: IO a -> a
 unsafePerformIO f = snd $ runIO f 0#
 
 instance Monad IO where
-    f >>= g = IOAction (\state1 -> let (state2,x) = runIO f state1 in runIO (g x) state2)
-    return x = IOAction (\s -> (s, x))
-    mfix f = IOAction (\state1 -> let result@(state2, x) = runIO (f x) state1 in result)
-    unsafeInterleaveIO f = IOAction (\state -> (state, snd $ runIO f state))
+    f >>= g = IO (\state1 -> let (state2,x) = runIO f state1 in runIO (g x) state2)
+    return x = IO (\s -> (s, x))
+    mfix f = IO (\state1 -> let result@(state2, x) = runIO (f x) state1 in result)
+    unsafeInterleaveIO f = IO (\state -> (state, snd $ runIO f state))
 
 -}
 data IO a = IO (RealWorld -> (RealWorld,a)) |
