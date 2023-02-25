@@ -8,10 +8,10 @@ data AlignmentMatrix
 
 foreign import bpcall "Alignment:alignment_length" alignment_length :: AlignmentMatrix -> Int
 
-foreign import bpcall "Alignment:load_alignment" builtin_load_alignment :: Alphabet -> CPPString -> AlignmentMatrix
+foreign import bpcall "Alignment:load_alignment" builtin_load_alignment :: Alphabet -> CPPString -> RealWorld -> AlignmentMatrix
 
 load_alignment :: Alphabet -> String -> IO AlignmentMatrix
-load_alignment alphabet filename = IOAction (\s -> (s, builtin_load_alignment alphabet (list_to_string filename)))
+load_alignment alphabet filename = makeIO $ builtin_load_alignment alphabet (list_to_string filename)
 
 foreign import bpcall "Alignment:alignment_from_sequences" builtin_alignment_from_sequences :: Alphabet -> EVector Sequence -> AlignmentMatrix
 

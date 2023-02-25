@@ -397,6 +397,7 @@ extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto& a = *arg0.as_checked<Alphabet>();
+    Args.evaluate_(1); // force io state
 
     string filename = Args.evaluate(1).as_checked<String>();
 
