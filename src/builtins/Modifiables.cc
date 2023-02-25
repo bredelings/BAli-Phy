@@ -41,7 +41,7 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 
     auto prob = Args.evaluate(1).as_log_double();
 
-    Args.evaluate_(2); // io state //
+    Args.evaluate_(2); // force io state
 
     int r_prob = Args.current_closure().reg_for_slot(1);
 
@@ -65,6 +65,8 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 
     int r_prob = Args.current_closure().reg_for_slot(1);
 
+    Args.evaluate_(2); // force io state
+
     r_prob = Args.memory().follow_index_var_no_force(r_prob);
 
     object_ptr<effect> e(new register_likelihood(r_from_dist, r_prob, prob));
@@ -84,6 +86,7 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
     int r_from_var = Args.reg_for_slot(0);
     int r_to_dist  = Args.evaluate_slot_use(1);
     String role = Args.evaluate(2).as_<String>();
+    Args.evaluate_(3); // force io state
 
     expression_ref E(constructor("Effect.InEdge",3),{index_var(0), r_to_dist, role});
 
@@ -98,6 +101,7 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
 {
     int r_from_dist = Args.evaluate_slot_use(0);
     int r_to_var    = force_slot_to_safe_reg(Args,1);
+    Args.evaluate_(2); // force io state
 
     expression_ref E(constructor("Effect.OutEdge",2), {index_var(1), index_var(0)});
 

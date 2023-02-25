@@ -14,15 +14,14 @@ foreign import bpcall "Modifiables:modifiable" modifiable :: a -> a
 foreign import bpcall "Modifiables:register_prior" builtin_register_prior :: Effect -> LogDouble -> RealWorld -> Effect
 register_prior event prob = makeIO $ builtin_register_prior event prob
 
-foreign import bpcall "Modifiables:register_likelihood" builtin_register_likelihood :: a -> LogDouble -> Effect
-register_likelihood event prob = IOAction (\s -> (s+1, builtin_register_likelihood event prob))
+foreign import bpcall "Modifiables:register_likelihood" builtin_register_likelihood :: a -> LogDouble -> RealWorld -> Effect
+register_likelihood event prob = makeIO $ builtin_register_likelihood event prob
 
+foreign import bpcall "Modifiables:register_in_edge" builtin_register_in_edge :: a -> Effect -> CPPString -> RealWorld -> Effect
+register_in_edge var dist role = makeIO $ builtin_register_in_edge var dist (list_to_string role)
 
-foreign import bpcall "Modifiables:register_in_edge" builtin_register_in_edge :: a -> Effect -> CPPString -> Effect
-register_in_edge var dist role = IOAction (\s -> (s+1,builtin_register_in_edge var dist (list_to_string role)))
-
-foreign import bpcall "Modifiables:register_out_edge" builtin_register_out_edge :: Effect -> a -> Effect
-register_out_edge dist var = IOAction (\s -> (s+1, builtin_register_out_edge dist var))
+foreign import bpcall "Modifiables:register_out_edge" builtin_register_out_edge :: Effect -> a -> RealWorld -> Effect
+register_out_edge dist var = makeIO $ builtin_register_out_edge dist var
 
 foreign import bpcall "Modifiables:register_dist_property" builtin_register_dist_property :: d -> a -> CPPString -> Effect
 register_dist_property dist value property = IOAction (\s -> (s+1, builtin_register_dist_property dist value (list_to_string property)))
