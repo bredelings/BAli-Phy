@@ -1348,8 +1348,6 @@ extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& 
     auto arg0 = Args.evaluate_(0);
     auto& alt_allele_frequency = arg0.as_<EVector>();
 
-    Args.make_changeable();
-
     int num_sites = alt_allele_frequency.size();
 
     object_ptr<EVector> H (new EVector(num_sites));
@@ -1565,8 +1563,6 @@ extern "C" closure builtin_function_sample_reads01(OperationArgs& Args)
     // 6. Outlier fraction
     double outlier_frac = Args.evaluate_(5).as_double();
     assert(outlier_frac >= 0 and outlier_frac <= 1);
-
-    Args.make_changeable();
 
     int num_strains = weights.size();
     assert(haplotypes.size() == weights.size());
