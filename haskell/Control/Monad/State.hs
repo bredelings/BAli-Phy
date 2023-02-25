@@ -1,11 +1,9 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Control.Monad.State where
 
-import Compiler.Base -- for IO = IOAction, LazyIO, IOAndPass, MFix, IOReturn
 import Data.Tuple    -- for fst, snd
 import Data.Function -- for id
-
--- drat -- my implementation of IO assumes that the state is FIRST, but should be SECOND.
+import Control.Monad
 
 data State s a = State { runState :: s->(a,s) }
 
