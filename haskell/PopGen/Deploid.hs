@@ -12,9 +12,9 @@ type Panel = EVector (EVector Int)
 type Sites = EVector Int
 type ContextIndex = Int
 
-foreign import bpcall "SMC:sample_haplotype01_from_plaf" builtin_sample_haplotype01_from_plaf :: EVector Double -> EVector Int
-sample_haplotype01_from_plaf plafs = let raw_action = builtin_sample_haplotype01_from_plaf $ list_to_vector plafs
-                                     in RanAtomic do_nothing (IOAction (\s->(s,raw_action)))
+foreign import bpcall "SMC:sample_haplotype01_from_plaf" builtin_sample_haplotype01_from_plaf :: EVector Double -> RealWorld -> EVector Int
+sample_haplotype01_from_plaf plafs = let raw_action = builtin_sample_haplotype01_from_plaf (list_to_vector plafs)
+                                     in RanAtomic do_nothing (makeIO $ raw_action)
 
 foreign import bpcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability :: EVector Double -> EVector Int -> LogDouble
 haplotype01_from_plaf_probability plaf hap = builtin_haplotype01_from_plaf_probability (list_to_vector plaf) hap
@@ -34,9 +34,9 @@ haplotype01_from_plaf plafs = Distribution
 -- This version does not use the builtins above, and also produces a list, not a vector.
 --haplotype01_from_plaf plafs = independent [ bernoulli f | f <- plafs ]
 
-foreign import bpcall "SMC:sample_reads01" builtin_sample_reads01 :: EVector Int -> EVector Double -> EVector (EVector Int) -> Double -> Double -> Double -> EVector (EPair Int Int)
+foreign import bpcall "SMC:sample_reads01" builtin_sample_reads01 :: EVector Int -> EVector Double -> EVector (EVector Int) -> Double -> Double -> Double -> RealWorld -> EVector (EPair Int Int)
 sample_reads01 counts weights haplotypes error_rate c outlier_frac =
-    IOAction (\s->(s, f $ builtin_sample_reads01 counts' weights' haplotypes' error_rate c outlier_frac))
+    makeIO $ f . builtin_sample_reads01 counts' weights' haplotypes' error_rate c outlier_frac
     where counts'     = list_to_vector counts
           weights'    = list_to_vector weights
           haplotypes' = list_to_vector haplotypes
@@ -78,32 +78,32 @@ reads01_from_haps counts weights haplotypes error_rate c outlier_frac = Distribu
                                                                  NoRange
 
 ---
-foreign import bpcall "SMC:propose_haplotypes_from_plaf" propose_haplotypes_from_plaf'' :: ContextIndex -> RealWorld -> [Int] -> [Haplotype] -> EVector Double -> EVector Double -> EVector (EPair Int Int) -> Double -> Double -> Double -> EPair RealWorld LogDouble
+foreign import bpcall "SMC:propose_haplotypes_from_plaf" propose_haplotypes_from_plaf'' :: ContextIndex -> [Int] -> [Haplotype] -> EVector Double -> EVector Double -> EVector (EPair Int Int) -> Double -> Double -> Double -> RealWorld -> LogDouble
 
 propose_haplotypes_from_plaf' indices haps freqs w reads e c outlier_frac context io_state =
-    propose_haplotypes_from_plaf'' context io_state indices haps freqs' w' reads' e c outlier_frac
+    propose_haplotypes_from_plaf'' context indices haps freqs' w' reads' e c outlier_frac io_state
            where
              freqs' = list_to_vector freqs
              w'     = list_to_vector w
              reads' = list_to_vector $ map (\(x,y) -> c_pair x y) reads
 
 propose_haplotypes_from_plaf indices freqs weights reads haplotypes error_rate c outlier_frac context =
-    IOAction $ pair_from_c . propose_haplotypes_from_plaf' indices haplotypes freqs weights reads error_rate c outlier_frac context
+    makeIO $ propose_haplotypes_from_plaf' indices haplotypes freqs weights reads error_rate c outlier_frac context
 
 
 ---
 
-foreign import bpcall "SMC:propose_weights_and_haplotypes_from_plaf" propose_weights_and_haplotypes_from_plaf'' :: ContextIndex -> RealWorld -> [Int] -> [Double] -> [Haplotype] -> EVector Double -> EVector Double -> Reads -> Double -> Double -> Double -> EPair RealWorld LogDouble
+foreign import bpcall "SMC:propose_weights_and_haplotypes_from_plaf" propose_weights_and_haplotypes_from_plaf'' :: ContextIndex -> [Int] -> [Double] -> [Haplotype] -> EVector Double -> EVector Double -> Reads -> Double -> Double -> Double -> RealWorld -> LogDouble
 
 propose_weights_and_haplotypes_from_plaf' indices titres haps freqs w reads e c outlier_frac context io_state =
-    propose_weights_and_haplotypes_from_plaf'' context io_state indices titres haps freqs' w' reads' e c outlier_frac
+    propose_weights_and_haplotypes_from_plaf'' context indices titres haps freqs' w' reads' e c outlier_frac io_state
            where
              freqs' = list_to_vector freqs
              w'     = list_to_vector w
              reads' = list_to_vector $ map (\(x,y) -> c_pair x y) reads
 
 propose_weights_and_haplotypes_from_plaf indices titres freqs weights reads haplotypes error_rate c outlier_frac context =
-    IOAction $ pair_from_c . propose_weights_and_haplotypes_from_plaf' indices titres haplotypes freqs weights reads error_rate c outlier_frac context
+    makeIO $ propose_weights_and_haplotypes_from_plaf' indices titres haplotypes freqs weights reads error_rate c outlier_frac context
 
 -- Currently, these ignore the "chromosome" column.
 read_plaf filename = do
@@ -135,7 +135,7 @@ foreign import bpcall "SMC:sample_haplotype01_from_panel" builtin_sample_haploty
 sample_haplotype01_from_panel (p_sites,p_haps) switch_rate flip_prob = let raw_action s = builtin_sample_haplotype01_from_panel p_haps' p_sites' switch_rate flip_prob s
                                                                            p_haps' = list_to_vector p_haps
                                                                            p_sites' = list_to_vector p_sites
-                                                                       in RanAtomic do_nothing (IOAction (\s->(s,raw_action s)))
+                                                                       in RanAtomic do_nothing (makeIO $ raw_action s)
 
 foreign import bpcall "SMC:haplotype01_from_panel_probability" builtin_haplotype01_from_panel_probability :: Panel -> Sites -> Double -> Double -> Haplotype -> LogDouble
 haplotype01_from_panel_probability (p_sites,p_haps) switch_rate flip_prob hap = builtin_haplotype01_from_panel_probability p_haps' p_sites' switch_rate flip_prob hap
@@ -155,25 +155,25 @@ haplotype01_from_panel panel switch_rate flip_prob  = Distribution
                                                       (sample_haplotype01_from_panel panel switch_rate flip_prob)
                                                       NoRange
 
-foreign import bpcall "SMC:resample_haplotypes_from_panel" resample_haplotypes_from_panel'' :: ContextIndex -> RealWorld -> [Int] -> [Haplotype] -> Panel -> Sites -> Double -> Double -> EVector Double -> Reads -> Double -> Double -> Double -> EPair RealWorld ()
+foreign import bpcall "SMC:resample_haplotypes_from_panel" resample_haplotypes_from_panel'' :: ContextIndex -> [Int] -> [Haplotype] -> Panel -> Sites -> Double -> Double -> EVector Double -> Reads -> Double -> Double -> Double -> RealWorld -> ()
 
 resample_haplotypes_from_panel' indices (p_sites, p_haps) switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context io_state =
-    resample_haplotypes_from_panel'' context io_state indices haplotypes p_haps p_sites' switch_rate flip_prob weights' reads' error_rate c outlier_frac
+    resample_haplotypes_from_panel'' context indices haplotypes p_haps p_sites' switch_rate flip_prob weights' reads' error_rate c outlier_frac io_state
         where
           p_sites' = list_to_vector p_sites
           weights' = list_to_vector weights
           reads' = list_to_vector $ map (\(x,y) -> c_pair x y) reads
 
 resample_haplotypes_from_panel indices panel switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context =
-    IOAction $ pair_from_c . resample_haplotypes_from_panel' indices panel switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context
+    makeIO $ pair_from_c . resample_haplotypes_from_panel' indices panel switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context
 
-foreign import bpcall "SMC:resample_weights_and_haplotypes_from_panel" resample_weights_and_haplotypes_from_panel'' :: ContextIndex -> RealWorld -> [Int] -> [Double] -> [Haplotype] -> Panel -> Sites -> Double -> Double -> EVector Double -> Reads -> Double -> Double -> Double -> EPair RealWorld LogDouble
+foreign import bpcall "SMC:resample_weights_and_haplotypes_from_panel" resample_weights_and_haplotypes_from_panel'' :: ContextIndex -> [Int] -> [Double] -> [Haplotype] -> Panel -> Sites -> Double -> Double -> EVector Double -> Reads -> Double -> Double -> Double -> RealWorld -> LogDouble
 
 resample_weights_and_haplotypes_from_panel' indices titres haps (p_sites, p_haps) switching_rate miscopy_prob w reads e c outlier_frac context io_state =
-    resample_weights_and_haplotypes_from_panel'' context io_state indices titres haps p_haps p_sites switching_rate miscopy_prob w' reads' e c outlier_frac
+    resample_weights_and_haplotypes_from_panel'' context indices titres haps p_haps p_sites switching_rate miscopy_prob w' reads' e c outlier_frac io_state
            where
              w'       = list_to_vector w
              reads'   = list_to_vector $ map (\(x,y) -> c_pair x y) reads
 
 resample_weights_and_haplotypes_from_panel indices titres panel switching_rate miscopy_prob weights reads haplotypes error_rate c outlier_frac context =
-    IOAction $ pair_from_c . resample_weights_and_haplotypes_from_panel' indices titres haplotypes panel switching_rate miscopy_prob weights reads error_rate c outlier_frac context
+    makeIO $ resample_weights_and_haplotypes_from_panel' indices titres haplotypes panel switching_rate miscopy_prob weights reads error_rate c outlier_frac context
