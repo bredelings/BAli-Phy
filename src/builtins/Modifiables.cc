@@ -41,6 +41,8 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 
     auto prob = Args.evaluate(1).as_log_double();
 
+    Args.evaluate_(2); // io state //
+
     int r_prob = Args.current_closure().reg_for_slot(1);
 
     r_prob = Args.memory().follow_index_var_no_force(r_prob);

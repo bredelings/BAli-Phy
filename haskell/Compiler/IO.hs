@@ -60,3 +60,5 @@ unsafePerformIO (IOReturn x) = x
 
 foreign import bpcall "Modifiables:changeable_apply" _changeable_apply :: (a -> b) -> a -> b
 changeableIO f = IOChangeable f
+
+makeIO f = IO (\s -> let x = f s in (x `seq` 0#, x))

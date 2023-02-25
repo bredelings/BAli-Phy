@@ -11,8 +11,8 @@ foreign import bpcall "Modifiables:maybe_modifiable_structure" maybe_modifiable_
 
 foreign import bpcall "Modifiables:modifiable" modifiable :: a -> a
 
-foreign import bpcall "Modifiables:register_prior" builtin_register_prior :: Effect -> LogDouble -> Effect
-register_prior event prob = IOAction (\s -> (s+1, builtin_register_prior event prob))
+foreign import bpcall "Modifiables:register_prior" builtin_register_prior :: Effect -> LogDouble -> RealWorld -> Effect
+register_prior event prob = makeIO $ builtin_register_prior event prob
 
 foreign import bpcall "Modifiables:register_likelihood" builtin_register_likelihood :: a -> LogDouble -> Effect
 register_likelihood event prob = IOAction (\s -> (s+1, builtin_register_likelihood event prob))
