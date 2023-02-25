@@ -483,6 +483,7 @@ void Module::compile(const Program& P)
     // We should create a "local fixity environment" mapping from var and Module.var -> fixity info.
     // This can supplement the symbols that we imported from other modules.
     // Then we can AUGMENT this local fixity environment when we encounter fixities at lower levels.
+    // Currently rename_infix has to handle UNresolved top-level names, because we do it BEFORE renaming.
     declare_fixities(M);
 
     if (language_extensions.has_extension(LangExt::FieldSelectors))
