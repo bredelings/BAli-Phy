@@ -28,7 +28,6 @@ instance Monad IO where
 data IO a = IO (RealWorld -> (RealWorld,a)) |
             IOAction  (RealWorld->(RealWorld,a)) |
             IOChangeable (IO a) |
-            IOMFix (a -> IO a) |
             IOReturn a |
             forall b. IOAndPass (IO b) (b -> IO a)
 
@@ -41,9 +40,11 @@ instance Applicative IO where
 
 instance Monad IO where
     f >>= g  = IOAndPass f g
-    mfix f   = IOMFix f
+    mfix f   = IO (\state1 -> let result@(state2,x) = runIO (f x) state1 in result)
     unsafeInterleaveIO f = IO (\s -> (s, unsafePerformIO f))
 
+runIO (IO f) s = f s
+runIO g      s = let x = unsafePerformIO g in (x `seq` s, x)
 
 unsafePerformIO :: IO c -> c
 unsafePerformIO (IO f) = snd (f 0#)
@@ -51,7 +52,6 @@ unsafePerformIO (IOAction f) = snd (f 0#)
 unsafePerformIO (IOChangeable f) = _changeable_apply unsafePerformIO f
 unsafePerformIO (IOAndPass (IO f) g) = case f 0# of (s,x) -> s `seq` unsafePerformIO (g x)
 unsafePerformIO (IOAndPass f g) = let x = unsafePerformIO f in x `seq` unsafePerformIO (g x)
-unsafePerformIO (IOMFix f) = let x = unsafePerformIO (f x) in x
 unsafePerformIO (IOReturn x) = x
 
 foreign import bpcall "Modifiables:changeable_apply" _changeable_apply :: (a -> b) -> a -> b
