@@ -118,7 +118,7 @@ extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 
     int observation = Args.evaluate(1).as_int();
 
-    /*int io_state = */ Args.evaluate(2).as_int();
+    Args.evaluate_(2); // force io state
 
     // The effect to register the sampling event is self-referential,
     // so we need to allocate the location BEFORE we construct the object.
@@ -140,6 +140,7 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
     int r_from_dist = Args.evaluate_slot_use(0);
     int r_to_prop = Args.reg_for_slot(1);
     String property = Args.evaluate(2).as_<String>();
+    Args.evaluate_(3); // force io state
 
     expression_ref E(constructor("Effect.DistProperty",3), {r_from_dist, property, index_var(0)});
 

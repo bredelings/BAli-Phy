@@ -23,14 +23,15 @@ register_in_edge var dist role = makeIO $ builtin_register_in_edge var dist (lis
 foreign import bpcall "Modifiables:register_out_edge" builtin_register_out_edge :: Effect -> a -> RealWorld -> Effect
 register_out_edge dist var = makeIO $ builtin_register_out_edge dist var
 
-foreign import bpcall "Modifiables:register_dist_property" builtin_register_dist_property :: d -> a -> CPPString -> Effect
-register_dist_property dist value property = IOAction (\s -> (s+1, builtin_register_dist_property dist value (list_to_string property)))
+-- FIXME: Eliminate the CPPString, and allow each dist to only have one property
+foreign import bpcall "Modifiables:register_dist_property" builtin_register_dist_property :: d -> a -> CPPString -> RealWorld -> Effect
+register_dist_property dist value property = makeIO $ builtin_register_dist_property dist value (list_to_string property)
 
 foreign import bpcall "Modifiables:register_dist" builtin_register_dist :: CPPString -> Int -> RealWorld -> Effect
 -- The extra parameter to prevent invocations out of functions being floated
 -- out of let statements by referencing a local variable.
-register_dist_sample  name = IOAction (\s -> (s+1, builtin_register_dist (list_to_string name) 0 s))
-register_dist_observe name = IOAction (\s -> (s+1, builtin_register_dist (list_to_string name) 1 s))
+register_dist_sample  name = makeIO $ builtin_register_dist (list_to_string name) 0
+register_dist_observe name = makeIO $ builtin_register_dist (list_to_string name) 1
 
 foreign import bpcall "Modifiables:changeable_apply" ($?) :: (a -> b) -> a -> b
 
