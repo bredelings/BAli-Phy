@@ -26,7 +26,6 @@ instance Monad IO where
 
 -}
 data IO a = IO (RealWorld -> (RealWorld,a)) |
-            IOChangeable (IO a) |
             IOReturn a |
             forall b. IOAndPass (IO b) (b -> IO a)
 
@@ -47,13 +46,12 @@ runIO g      s = let x = unsafePerformIO g in (x `seq` s, x)
 
 unsafePerformIO :: IO c -> c
 unsafePerformIO (IO f) = snd (f 0#)
-unsafePerformIO (IOChangeable f) = _changeable_apply unsafePerformIO f
 unsafePerformIO (IOAndPass (IO f) g) = case f 0# of (s,x) -> s `seq` unsafePerformIO (g x)
 unsafePerformIO (IOAndPass f g) = let x = unsafePerformIO f in x `seq` unsafePerformIO (g x)
 unsafePerformIO (IOReturn x) = x
 
 foreign import bpcall "Modifiables:changeable_apply" _changeable_apply :: (a -> b) -> a -> b
-changeableIO f = IOChangeable f
+changeableIO f = IO (\s -> _changeable_apply (runIO f) s)
 
 -- Getting the value (x) forces the previous state.
 -- Getting the state (x `seq` 0#) forces the  value.
