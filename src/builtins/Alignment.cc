@@ -409,6 +409,7 @@ extern "C" closure builtin_function_load_alignment(OperationArgs& Args)
 extern "C" closure builtin_function_load_sequences(OperationArgs& Args)
 {
     string filename = Args.evaluate(0).as_checked<String>();
+    Args.evaluate_(1); // force io state
 
     auto sequences_ = sequence_format::load_from_file(filename);
 
