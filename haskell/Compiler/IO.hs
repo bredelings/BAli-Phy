@@ -37,12 +37,11 @@ instance Functor IO where
     fmap f x = IOAndPass x (\result -> IOReturn (f result))
 
 instance Applicative IO where
-    pure x    = IOReturn x
+    pure x  = IO (\s -> (s,x))
     f <*> x = IOAndPass x (\x' -> IOAndPass f (\f' -> pure (f' x')))
 
 instance Monad IO where
     f >>= g  = IOAndPass f g
-    return x = IO (\s -> (s,x))
     mfix f   = IOMFix f
     unsafeInterleaveIO f = IOLazy f
 
