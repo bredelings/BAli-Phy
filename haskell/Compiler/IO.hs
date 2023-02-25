@@ -11,49 +11,39 @@ import Control.Monad
 
 type RealWorld = Int
 
-{-
-data IO a = IO { runIO :: RealWorld -> (RealWorld, a) }
+-- Hmm... so maybe we want RealWorld -> (!RealWorld,a) ?
+-- Then accessing the value would force the state as well.
+-- And accessing the value should force the state.
 
--- unsafePerformIO (IO f) = snd (f 0)
-unsafePerformIO :: IO a -> a
-unsafePerformIO f = snd $ runIO f 0#
-
-instance Monad IO where
-    f >>= g = IO (\state1 -> let (state2,x) = runIO f state1 in runIO (g x) state2)
-    return x = IO (\s -> (s, x))
-    mfix f = IO (\state1 -> let result@(state2, x) = runIO (f x) state1 in result)
-    unsafeInterleaveIO f = IO (\state -> (state, snd $ runIO f state))
-
--}
-data IO a = IO (RealWorld -> (RealWorld,a)) |
-            IOReturn a |
-            forall b. IOAndPass (IO b) (b -> IO a)
+data IO a = IO { runIO :: RealWorld -> (RealWorld,a)}
 
 instance Functor IO where
-    fmap f x = IOAndPass x (\result -> IOReturn (f result))
+    fmap f x = IO (\state1 -> let (state2,   result) = runIO x state1
+                              in  (state2, f result))
 
 instance Applicative IO where
     pure x  = IO (\s -> (s,x))
-    f <*> x = IOAndPass x (\x' -> IOAndPass f (\f' -> pure (f' x')))
+    t1 <*> t2 = IO (\state1 -> let (state2,f) = runIO t1 state1
+                                   (state3,x) = runIO t2 state2
+                               in (state3, f x))
 
 instance Monad IO where
-    f >>= g  = IOAndPass f g
+    f >>= g  = IO (\state1 -> let (state2,x) = runIO f state1 in state2 `seq` runIO (g x) state2)
     mfix f   = IO (\state1 -> let result@(state2,x) = runIO (f x) state1 in result)
-    unsafeInterleaveIO f = IO (\s -> (s, unsafePerformIO f))
-
-runIO (IO f) s = f s
-runIO g      s = let x = unsafePerformIO g in (x `seq` s, x)
+    unsafeInterleaveIO f = IO (\s -> (s, s `seq` snd (runIO f s)) )
 
 unsafePerformIO :: IO c -> c
-unsafePerformIO (IO f) = snd (f 0#)
-unsafePerformIO (IOAndPass (IO f) g) = case f 0# of (s,x) -> s `seq` unsafePerformIO (g x)
-unsafePerformIO (IOAndPass f g) = let x = unsafePerformIO f in x `seq` unsafePerformIO (g x)
-unsafePerformIO (IOReturn x) = x
+unsafePerformIO f = let (s,x) = runIO f 0#
+                    in s `seq` x
 
 foreign import bpcall "Modifiables:changeable_apply" _changeable_apply :: (a -> b) -> a -> b
 changeableIO f = IO (\s -> _changeable_apply (runIO f) s)
 
--- Getting the value (x) forces the previous state.
--- Getting the state (x `seq` 0#) forces the  value.
-makeIO f = IO (\s -> let x = s `seq` f s in (x `seq` 0#, x))
+
+makeIO f = IO (\s -> let x = s `seq` f s  -- This emulates f forcing s, so the C++ code
+                                          -- doesn't have to.
+                     in (x `seq` s, x))   -- This ensures that getting the state forces x.
+                                          -- So, forcing the state ensures that f is run.
+                                          -- But if the state is strict, then we always run force the result?
+                                          -- I guess so -- which makes that makeIO creates strict IO operations.
 
