@@ -30,8 +30,6 @@ extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Ar
 
     int r_transition_kernel = Args.evaluate_reg_use(Args.reg_for_slot(1));
 
-    Args.evaluate_(2); // force io state
-
     expression_ref E(constructor("Effect.TransitionKernel",2),{rate, index_var(0)});
 
     int r_effect = Args.allocate(closure{E,{r_transition_kernel}});
@@ -82,8 +80,6 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     assert(not Args.evaluate_changeables());
 
     if (log_verbose >= 3) std::cerr<<"\n\n[sum_out_coals]\n";
-
-    Args.evaluate_(3); // force io state
 
     int c1 = Args.evaluate(2).as_int();
 
@@ -156,9 +152,6 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 
     //------------- 1c. Get context index --------------
     int c1 = Args.evaluate(2).as_int();
-
-    //------------- 1d. Get monad thread state ---------
-    Args.evaluate_(3); // force io state
 
     //------------- 2. Find the location of the variable -------------//
     auto& M = Args.memory();
@@ -267,9 +260,6 @@ extern "C" closure builtin_function_discrete_uniform_avoid_mh(OperationArgs& Arg
     //------------- 1d. Get context index --------------
     int c1 = Args.evaluate(3).as_int();
 
-    //------------- 1e. Get monad thread state ---------
-    Args.evaluate_(4); // force io state
-
     //------------- 2. Perform the proposal ------------
     auto& M = Args.memory();
 
@@ -337,9 +327,6 @@ extern "C" closure builtin_function_inc_dec_mh(OperationArgs& Args)
     int c1 = Args.evaluate(2).as_int();
     context_ref C1(M, c1);
 
-    //------------- 1d. Get monad thread state ---------
-    Args.evaluate_(3); // force io state
-
     //------------- 2. Perform the proposal ------------
     auto proposal = inc_dec_mh_proposal(x_reg, range);
 
@@ -362,8 +349,6 @@ extern "C" closure builtin_function_slice_sample_real_random_variable(OperationA
     // 2. context index = int
     int context_index = Args.evaluate(2).as_int();
     context_ref C(M,context_index);
-
-    Args.evaluate_(3); // force io state
 
     auto evaluate_slot = [&](int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
 
@@ -408,8 +393,6 @@ extern "C" closure builtin_function_slice_sample_integer_random_variable(Operati
     // 2. context index = int
     int context_index = Args.evaluate(2).as_int();
     context_ref C(M,context_index);
-
-    Args.evaluate_(3); // force io state
 
     auto evaluate_slot = [&](int slot) {return C.evaluate_reg(Args.reg_for_slot(slot));};
 
@@ -739,8 +722,6 @@ extern "C" closure builtin_function_FNPR_unsafe(OperationArgs& Args)
 
     int context_index = Args.evaluate(2).as_int();
 
-    Args.evaluate_(3); // force io state
-
     //------------ 2. Make a TreeInterface -------------//
     context_ref C(M, context_index);
 
@@ -761,8 +742,6 @@ extern "C" closure builtin_function_NNI_on_branch_unsafe(OperationArgs& Args)
 
     int c1 = Args.evaluate(2).as_int();
 
-    Args.evaluate_(3); // force io state
-
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
 
@@ -782,8 +761,6 @@ extern "C" closure builtin_function_TT_NNI_on_branch_unsafe(OperationArgs& Args)
     int b = Args.evaluate(1).as_int();
 
     int c1 = Args.evaluate(2).as_int();
-
-    Args.evaluate_(3); // force io state
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -828,8 +805,6 @@ extern "C" closure builtin_function_walk_tree_sample_alignments(OperationArgs& A
 
     int c1 = Args.evaluate(1).as_int();
 
-    Args.evaluate_(2); // force io state
-
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
 
@@ -853,8 +828,6 @@ extern "C" closure builtin_function_realign_from_tips(OperationArgs& Args)
     int tree_reg = Args.reg_for_slot(0);
 
     int c1 = Args.evaluate(1).as_int();
-
-    Args.evaluate_(2); // force io state
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -884,8 +857,6 @@ extern "C" closure builtin_function_sample_SPR_flat(OperationArgs& Args)
 
     int c1 = Args.evaluate(1).as_int();
 
-    Args.evaluate_(2); // force io state
-
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
 
@@ -911,8 +882,6 @@ extern "C" closure builtin_function_sample_SPR_nodes(OperationArgs& Args)
 
     int c1 = Args.evaluate(1).as_int();
 
-    Args.evaluate_(2); // force io state
-
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
 
@@ -936,8 +905,6 @@ extern "C" closure builtin_function_sample_SPR_all(OperationArgs& Args)
     int tree_reg = Args.reg_for_slot(0);
 
     int c1 = Args.evaluate(1).as_int();
-
-    Args.evaluate_(2); // force io state
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -964,8 +931,6 @@ extern "C" closure builtin_function_walk_tree_sample_branch_lengths(OperationArg
 
     int c1 = Args.evaluate(1).as_int();
 
-    Args.evaluate_(2); // force io state
-
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
 
@@ -991,8 +956,6 @@ extern "C" closure builtin_function_walk_tree_sample_NNI_and_branch_lengths(Oper
 
     int c1 = Args.evaluate(1).as_int();
 
-    Args.evaluate_(2); // force io state
-
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
 
@@ -1017,8 +980,6 @@ extern "C" closure builtin_function_walk_tree_sample_NNI(OperationArgs& Args)
 
     int c1 = Args.evaluate(1).as_int();
 
-    Args.evaluate_(2); // force io state
-
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
 
@@ -1042,8 +1003,6 @@ extern "C" closure builtin_function_walk_tree_sample_NNI_and_A(OperationArgs& Ar
     int tree_reg = Args.reg_for_slot(0);
 
     int c1 = Args.evaluate(1).as_int();
-
-    Args.evaluate_(2); // force io state
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -1075,8 +1034,6 @@ extern "C" closure builtin_function_copy_context(OperationArgs& Args)
 
     int c1 = Args.evaluate(0).as_int();
 
-    Args.evaluate_(1); // force io state
-
     int c2 = M.copy_context(c1);
 
     return {c2};
@@ -1090,8 +1047,6 @@ extern "C" closure builtin_function_release_context(OperationArgs& Args)
     reg_heap& M = Args.memory();
 
     int c = Args.evaluate(0).as_int();
-
-    Args.evaluate_(1); // force io state
 
     M.release_context(c);
 
@@ -1107,8 +1062,6 @@ extern "C" closure builtin_function_switch_to_context(OperationArgs& Args)
     int c1 = Args.evaluate(0).as_int();
 
     int c2 = Args.evaluate(1).as_int();
-
-    Args.evaluate_(2); // force io state
 
     M.switch_to_context(c1,c2);
 
@@ -1127,8 +1080,6 @@ extern "C" closure builtin_function_accept_MH(OperationArgs& Args)
     int c2 = Args.evaluate(1).as_int();
 
     log_double_t ratio = Args.evaluate(2).as_log_double();
-
-    Args.evaluate_(3); // force io state
 
     context_ref C1(M,c1);
 

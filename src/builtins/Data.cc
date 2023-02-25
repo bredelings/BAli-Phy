@@ -16,8 +16,6 @@ extern "C" closure builtin_function_read_csv(OperationArgs& Args)
 
   const char sep = Args.evaluate(1).as_char();
 
-  Args.evaluate_(1); // force io state
-
   checked_ifstream text_file(filename,"csv file");
 
   EVector vec_all_lines;
@@ -40,8 +38,6 @@ extern "C" closure builtin_function_read_csv(OperationArgs& Args)
 extern "C" closure builtin_function_readFile(OperationArgs& Args)
 {
   const string filename = Args.evaluate(0).as_<String>();
-
-  Args.evaluate_(1); // force io state
 
   std::ifstream in(filename, std::ios::in | std::ios::binary);
   if (in)

@@ -555,8 +555,6 @@ extern "C" closure builtin_function_putStrLn(OperationArgs& Args)
 {
     string message = Args.evaluate(0).as_<String>();
 
-    Args.evaluate_(1); // force io state
-
     std::cout<<message<<std::endl;
 
     return constructor("()",0);

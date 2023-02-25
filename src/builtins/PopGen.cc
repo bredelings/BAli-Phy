@@ -57,8 +57,6 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
 {
     const string& filename = Args.evaluate(0).as_<String>();
 
-    Args.evaluate_(1); // force io state
-
     checked_ifstream phase_file(filename,"PHASE v1 Input file");
 
     // Line 1
@@ -267,8 +265,6 @@ MSSSM
 extern "C" closure builtin_function_read_phase2_file(OperationArgs& Args)
 {
     const string& filename = Args.evaluate(0).as_<String>();
-
-    Args.evaluate_(1); // force io state
 
     checked_ifstream phase_file(filename,"PHASE v2 Input file");
 
