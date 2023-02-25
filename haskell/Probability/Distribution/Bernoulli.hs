@@ -8,7 +8,7 @@ foreign import bpcall "Distribution:sample_bernoulli" builtin_sample_bernoulli :
 
 bernoulli_effect x = add_move (\c -> discrete_uniform_avoid_mh x 0 1 c)
 
-sample_bernoulli p = RanAtomic bernoulli_effect (IOAction (\s->(s,builtin_sample_bernoulli p s)))
+sample_bernoulli p = RanAtomic bernoulli_effect (makeIO $ builtin_sample_bernoulli p)
 
 bernoulli_density2 p q 1 = (doubleToLogDouble p)
 bernoulli_density2 p q 0 = (doubleToLogDouble q)

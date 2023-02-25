@@ -10,7 +10,7 @@ foreign import bpcall "Distribution:sample_shifted_gamma" builtin_sample_shifted
 
 gamma_bounds shift = above shift
 gamma_effect shift x = add_move $ slice_sample_real_random_variable x (gamma_bounds shift)
-sample_shifted_gamma a b shift = RanAtomic (gamma_effect shift) (IOAction (\s->(s,builtin_sample_shifted_gamma a b shift s)))
+sample_shifted_gamma a b shift = RanAtomic (gamma_effect shift) (makeIO $ builtin_sample_shifted_gamma a b shift)
 
 annotated_shifted_gamma_density a b shift x = do
   in_edge "a" a
