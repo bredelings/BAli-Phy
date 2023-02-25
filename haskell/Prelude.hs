@@ -60,8 +60,8 @@ import Foreign.Pair
 import Foreign.Vector
 import Foreign.String
 
-foreign import bpcall "Prelude:putStrLn" builtin_putStrLn :: CPPString -> RealWorld -> EPair RealWorld ()
-putStrLn line = IOAction (pair_from_c . builtin_putStrLn (list_to_string line))
+foreign import bpcall "Prelude:putStrLn" builtin_putStrLn :: CPPString -> RealWorld -> ()
+putStrLn line = makeIO $ builtin_putStrLn (list_to_string line)
 
 undefined = error "Prelude.undefined"
 
@@ -72,5 +72,5 @@ zipWith' _ [] []         =  []
 zip' = zipWith' (,)
 
 
-foreign import bpcall "Data:readFile" builtin_readFile :: CPPString -> CPPString
-readFile filename = IOAction (\s -> (s,listFromString $ builtin_readFile $ list_to_string $ filename))
+foreign import bpcall "Data:readFile" builtin_readFile :: CPPString -> RealWorld -> CPPString
+readFile filename = makeIO $ builtin_readFile (list_to_string $ filename)

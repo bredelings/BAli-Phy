@@ -1,7 +1,6 @@
 module Parameters where
 
 import Range
-import Foreign.Pair       -- for pair_from_c
 import Foreign.String     -- for list_to_string
 import Effect             -- for Effect
 
