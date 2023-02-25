@@ -9,7 +9,7 @@ foreign import bpcall "Distribution:sample_uniform" builtin_sample_uniform :: Do
 
 uniform_bounds l u = between l u
 uniform_effect l u x = add_move $ slice_sample_real_random_variable x (uniform_bounds l u)
-sample_uniform l u = RanAtomic (uniform_effect l u) (IOAction (\s->(s,builtin_sample_uniform l u s)))
+sample_uniform l u = RanAtomic (uniform_effect l u) (makeIO $ builtin_sample_uniform l u)
 
 uniform_quantile l u x | x < l      = 0
                        | x > u      = 1
@@ -26,7 +26,7 @@ foreign import bpcall "Distribution:sample_uniform_int" builtin_sample_uniform_i
 
 uniform_int_bounds l u = integer_between l u
 uniform_int_effect l u x = add_move $ slice_sample_integer_random_variable x (uniform_int_bounds l u)
-sample_uniform_int l u = RanAtomic (uniform_int_effect l u) (IOAction (\s->(s,builtin_sample_uniform_int l u s)))
+sample_uniform_int l u = RanAtomic (uniform_int_effect l u) (makeIO $ builtin_sample_uniform_int l u)
 
 class HasUniform d where
     uniform :: Double -> Double -> d Double

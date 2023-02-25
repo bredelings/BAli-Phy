@@ -15,7 +15,7 @@ poisson_effect x = do
    add_move $ slice_sample_integer_random_variable x poisson_bounds
    add_move $ inc_dec_mh x poisson_bounds
 
-sample_poisson mu = RanAtomic poisson_effect (IOAction (\s -> (s, builtin_sample_poisson mu s)))
+sample_poisson mu = RanAtomic poisson_effect (makeIO $ builtin_sample_poisson mu)
 
 --- Poisson process, constant rate --
 poisson_process_density' rate t1 t2 n = expToLogDouble $ (-rate*(t2-t1)) + (fromIntegral n * log rate)

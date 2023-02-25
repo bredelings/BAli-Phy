@@ -14,7 +14,7 @@ geometric_effect x = do
   add_move $ slice_sample_integer_random_variable x geometric_bounds
   add_move $ inc_dec_mh x geometric_bounds
 
-sample_geometric p_success = RanAtomic geometric_effect (IOAction (\s->(s,builtin_sample_geometric p_success s)))
+sample_geometric p_success = RanAtomic geometric_effect (makeIO $ builtin_sample_geometric p_success)
 
 geometric p = geometric2 (1-p) p
 rgeometric q = geometric2 q (1-q)
