@@ -10,10 +10,10 @@ foreign import bpcall "Data:read_csv" builtin_read_csv :: CPPString -> Char -> R
 
 -- This gives the csv file as a list of rows
 read_csv :: String -> IO [ [ String ] ]
-read_csv filename = IO (\s -> map_vector_to_list (map_vector_to_list unpack_cpp_string) $ builtin_read_csv filename' ',' s)
+read_csv filename = makeIO (\s -> map_vector_to_list (map_vector_to_list unpack_cpp_string) $ builtin_read_csv filename' ',' s)
     where filename' = pack_cpp_string filename
 
 read_tsv :: String -> IO [ [ String ] ]
-read_tsv filename = IO (\s -> map_vector_to_list (map_vector_to_list unpack_cpp_string) $ builtin_read_csv filename' '\t' s)
+read_tsv filename = makeIO (\s -> map_vector_to_list (map_vector_to_list unpack_cpp_string) $ builtin_read_csv filename' '\t' s)
     where filename' = pack_cpp_string filename
 
