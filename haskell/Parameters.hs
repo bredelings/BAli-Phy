@@ -9,7 +9,6 @@ import Effect             -- for Effect
 foreign import bpcall "Modifiables:maybe_modifiable_structure" maybe_modifiable_structure :: a -> a
 
 foreign import bpcall "Modifiables:" modifiable :: a -> a
-foreign import bpcall "Modifiables:" exchangeable :: (a->b) -> a -> b
 
 foreign import bpcall "Modifiables:register_prior" builtin_register_prior :: Effect -> LogDouble -> RealWorld -> Effect
 register_prior event prob = makeIO $ builtin_register_prior event prob

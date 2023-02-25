@@ -39,6 +39,16 @@ unsafePerformIO f = let (s,x) = runIO f 0#
 foreign import bpcall "Modifiables:changeable_apply" _changeable_apply :: (a -> b) -> a -> b
 changeableIO f = IO (\s -> _changeable_apply (runIO f) s)
 
+-- In (state,value), the value is not responsible for forcing the state.
+-- Ideally, packaging them in the pair should force the state.
+-- Right now, the caller forces the state.
+
+-- We add an extra s2 argument to builtin_exchangeable to prevent floating outside the s2 lambda.
+foreign import bpcall "Modifiables:exchangeable" builtin_exchangeable :: (a->b) -> a -> a -> b
+exchangeableIO :: IO a -> IO (IO a)
+-- We also ensure that performing the exchangeable action FORCES the current IO state s2, even though
+-- it is not USED.
+exchangeableIO f = IO (\s1 -> (s1, IO (\s2 -> s2 `seq` builtin_exchangeable (runIO f) s1 s2)))
 
 makeIO f = IO (\s -> let x = s `seq` f s  -- This emulates f forcing s, so the C++ code doesn't have to.
                      in (x `seq` s, x))   -- This ensures that getting the new state forces f to run.
