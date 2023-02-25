@@ -28,7 +28,6 @@ instance Monad IO where
 data IO a = IO (RealWorld -> (RealWorld,a)) |
             IOAction  (RealWorld->(RealWorld,a)) |
             IOChangeable (IO a) |
-            IOLazy (IO a) |
             IOMFix (a -> IO a) |
             IOReturn a |
             forall b. IOAndPass (IO b) (b -> IO a)
@@ -43,15 +42,13 @@ instance Applicative IO where
 instance Monad IO where
     f >>= g  = IOAndPass f g
     mfix f   = IOMFix f
-    unsafeInterleaveIO f = IOLazy f
+    unsafeInterleaveIO f = IO (\s -> (s, unsafePerformIO f))
 
 
 unsafePerformIO :: IO c -> c
 unsafePerformIO (IO f) = snd (f 0#)
 unsafePerformIO (IOAction f) = snd (f 0#)
 unsafePerformIO (IOChangeable f) = _changeable_apply unsafePerformIO f
-unsafePerformIO (IOLazy f) = unsafePerformIO f
-unsafePerformIO (IOAndPass (IOLazy f) g) = let x = unsafePerformIO f in unsafePerformIO (g x)
 unsafePerformIO (IOAndPass (IO f) g) = case f 0# of (s,x) -> s `seq` unsafePerformIO (g x)
 unsafePerformIO (IOAndPass f g) = let x = unsafePerformIO f in x `seq` unsafePerformIO (g x)
 unsafePerformIO (IOMFix f) = let x = unsafePerformIO (f x) in x
