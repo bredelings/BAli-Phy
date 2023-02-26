@@ -154,94 +154,6 @@ vector<tuple<Hs::Var,Type>> get_relevant_bindings(const TypeCheckerContext& tc_s
     return notes;
 }
 
-
-
-Notes TypeChecker::check_eq_tv_constraint(TidyState& tidy_state, vector<shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const
-{
-    const Implication * implic = nullptr;
-    if (not implic_scopes.empty()) implic = implic_scopes.back().get();
-
-    auto tv1 = t1.to<TypeVar>();
-    auto mtv1 = t1.to<MetaTypeVar>();
-    assert(tv1 or mtv1);
-
-    Note mismatch = make_mismatch_message(tidy_state, wanted, t1, t2);
-
-    Note cannot_unify;
-    cannot_unify<<"Cannot unify `"<<tidy_print(tidy_state, t1)<<"` with `"<<tidy_print(tidy_state, t2)<<"`";
-
-    auto problems = check_type_equality(t1,t2);
-
-    auto ftvs = free_type_variables(wanted.pred);
-    auto fmtvs = free_meta_type_variables(wanted.pred);
-
-    auto relevant_bindings = get_relevant_bindings(*wanted.tc_state, ftvs, fmtvs);
-
-    // 1. Unification with polytype
-    Notes notes;
-    if (problems.test(impredicative_bit))
-    {
-        cannot_unify<<" because it is a polytype";
-        notes.push_back(cannot_unify);
-    }
-    // 2. Occurs check
-    else if (has_occurs_check(problems))
-    {
-        cannot_unify<<" because of occurs check";
-        notes.push_back(cannot_unify);
-    }
-    // 3. tv is blocked from escaping too
-    else if (tv1 and implic and includes(implic->tvs, *tv1))
-    {
-        notes.push_back(mismatch);
-    }
-    // 4. tv is NOT blocked from escaping, but t2 IS blocked.
-    else if (implic and intersects(free_type_variables(t2), implic->tvs | ranges::to<set>()))
-    {
-        auto escaped = intersection(free_type_variables(t2), implic->tvs | ranges::to<set>());
-        vector<string> escaped_names;
-        for(auto& tv: escaped)
-            escaped_names.push_back(tidy_print(tidy_state,tv));
-        cannot_unify<<" because the quantified variable `"<<join(escaped_names," ")<<"` would escape its scope";
-
-        notes.push_back(cannot_unify);
-    }
-    else if (mtv1)
-    {
-        // This is presumably an untouchable meta-type variable.
-        notes.push_back(mismatch);
-    }
-    else
-        notes.push_back(mismatch);
-
-    notes = add_relevant_bindings(tidy_state, notes, relevant_bindings);
-
-    // The "top" ones are supposed to be at the end...
-    std::reverse(notes.begin(), notes.end());
-
-    return notes;
-}
-
-
-Notes TypeChecker::check_eq_constraint(TidyState& tidy_state, vector<shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const
-{
-    // Need to pass in list of nested implications?
-    // what about tidying?
-    // what about relevant bindings?
-    Notes notes;
-
-    auto v1 = look_thru(t1);
-    auto v2 = look_thru(t2);
-
-    if (v1.to<TypeVar>() or v1.to<MetaTypeVar>())
-        notes = check_eq_tv_constraint(tidy_state, implic_scopes, wanted, v1, t2);
-    else if (v2.to<TypeVar>() or v2.to<MetaTypeVar>())
-        notes = check_eq_tv_constraint(tidy_state, implic_scopes, wanted, v2, t1);
-    else
-        notes.push_back( make_mismatch_message(tidy_state, wanted, t1, t2) );
-    return notes;
-}
-
 LIE deduplicate(const LIE& wanteds)
 {
     LIE wanteds2;
@@ -293,6 +205,114 @@ LIE pick_relevant_givens(set<MetaTypeVar> mtvs, set<TypeVar> tvs, LIE givens)
     return keep;
 }
 
+string get_context(TidyState& tidy_state, const Constraint& wanted, const vector<shared_ptr<Implication>>& implic_scopes)
+{
+    LIE givens;
+    for(auto& implic: implic_scopes)
+        givens += implic->givens;
+
+    givens = pick_relevant_givens(free_meta_type_variables(wanted.pred), free_type_variables(wanted.pred), givens);
+
+    if (not givens.empty())
+    {
+        vector<string> gs;
+        for(auto& given: givens)
+            gs.push_back(tidy_print(tidy_state, given.pred));
+        return " in context " + join(gs, ", ");
+    }
+    else
+        return "";
+}
+
+
+Notes TypeChecker::check_eq_tv_constraint(TidyState& tidy_state, vector<shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const
+{
+    const Implication * implic = nullptr;
+    if (not implic_scopes.empty()) implic = implic_scopes.back().get();
+
+    auto tv1 = t1.to<TypeVar>();
+    auto mtv1 = t1.to<MetaTypeVar>();
+    assert(tv1 or mtv1);
+
+    Note mismatch = make_mismatch_message(tidy_state, wanted, t1, t2);
+
+    Note cannot_unify;
+    cannot_unify<<"Cannot unify `"<<tidy_print(tidy_state, t1)<<"` with `"<<tidy_print(tidy_state, t2)<<"`";
+
+    auto problems = check_type_equality(t1,t2);
+
+    auto ftvs = free_type_variables(wanted.pred);
+    auto fmtvs = free_meta_type_variables(wanted.pred);
+
+    auto relevant_bindings = get_relevant_bindings(*wanted.tc_state, ftvs, fmtvs);
+
+    // 1. Unification with polytype
+    Notes notes;
+    if (problems.test(impredicative_bit))
+    {
+        cannot_unify<<" because it is a polytype";
+        notes.push_back(cannot_unify);
+    }
+    // 2. Occurs check
+    else if (has_occurs_check(problems))
+    {
+        cannot_unify<<" because of occurs check";
+        notes.push_back(cannot_unify);
+    }
+    // 3. tv is blocked from escaping too
+    else if (tv1 and implic and includes(implic->tvs, *tv1))
+    {
+        notes.push_back(mismatch);
+    }
+    // 4. tv is NOT blocked from escaping, but t2 IS blocked.
+    else if (implic and intersects(free_type_variables(t2), implic->tvs | ranges::to<set>()))
+    {
+        auto escaped = intersection(free_type_variables(t2), implic->tvs | ranges::to<set>());
+        vector<string> escaped_names;
+        for(auto& tv: escaped)
+            escaped_names.push_back(tidy_print(tidy_state,tv));
+        cannot_unify<<" because the quantified variable `"<<join(escaped_names," ")<<"` would escape its scope";
+
+        cannot_unify<<get_context(tidy_state, wanted, implic_scopes)<<".";
+
+        notes.push_back(cannot_unify);
+    }
+    else if (mtv1)
+    {
+        // This is presumably an untouchable meta-type variable.
+        notes.push_back(mismatch);
+    }
+    else
+        notes.push_back(mismatch);
+
+    notes = add_relevant_bindings(tidy_state, notes, relevant_bindings);
+
+    // The "top" ones are supposed to be at the end...
+    std::reverse(notes.begin(), notes.end());
+
+    return notes;
+}
+
+
+Notes TypeChecker::check_eq_constraint(TidyState& tidy_state, vector<shared_ptr<Implication>>& implic_scopes, const Constraint& wanted, const Type& t1, const Type& t2) const
+{
+    // Need to pass in list of nested implications?
+    // what about tidying?
+    // what about relevant bindings?
+    Notes notes;
+
+    auto v1 = look_thru(t1);
+    auto v2 = look_thru(t2);
+
+    if (v1.to<TypeVar>() or v1.to<MetaTypeVar>())
+        notes = check_eq_tv_constraint(tidy_state, implic_scopes, wanted, v1, t2);
+    else if (v2.to<TypeVar>() or v2.to<MetaTypeVar>())
+        notes = check_eq_tv_constraint(tidy_state, implic_scopes, wanted, v2, t1);
+    else
+        notes.push_back( make_mismatch_message(tidy_state, wanted, t1, t2) );
+    return notes;
+}
+
 void TypeChecker::check_wanteds(TidyState& tidy_state, vector<shared_ptr<Implication>>& implic_scopes, const WantedConstraints& wanteds)
 {
     for(auto& wanted: deduplicate(wanteds.simple))
@@ -308,20 +328,7 @@ void TypeChecker::check_wanteds(TidyState& tidy_state, vector<shared_ptr<Implica
             Note e;
             e<<"Could not derive `"<<bold_green(tidy_print(tidy_state, wanted.pred))<<ANSI::bold<<"`";
 
-            // Begin(experimental): how should we report givens?
-            LIE givens;
-            for(auto& implic: implic_scopes)
-                givens += implic->givens;
-
-            givens = pick_relevant_givens(free_meta_type_variables(wanted.pred), free_type_variables(wanted.pred), givens);
-
-            if (not givens.empty())
-            {
-                e<<" in context ";
-                for(auto& given: givens)
-                    e<<tidy_print(tidy_state, given.pred)<<", ";
-            }
-            // End(xperimental)
+            e<<get_context(tidy_state, wanted, implic_scopes);
 
             if (auto occ = to<OccurrenceOrigin>(wanted.origin))
                 e<<" arising from a use of `"<<cyan(print_unqualified_id(occ->name))<<ANSI::bold<<"`";
