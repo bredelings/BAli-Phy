@@ -344,6 +344,8 @@ private:
 
     std::vector<std::pair<int,closure>> find_set_regs_on_path(int child_token) const;
 
+    int force_simple_set_path_to_PPET(int c);
+
     expression_ref unshare_and_evaluate_program(int c);
 
     int force_count(int r) const;

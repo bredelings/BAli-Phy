@@ -783,7 +783,7 @@ void reg_heap::check_force_counts()
     }
 }
 
-expression_ref reg_heap::unshare_and_evaluate_program(int c)
+int reg_heap::force_simple_set_path_to_PPET(int c)
 {
     // 1. Reroot to the PPET
     int t = token_for_context(c);
@@ -802,7 +802,16 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
 
     assert( simple_set_path_to(t) );
 
-    // 3. Merge the set tokens and all the result an execute token.
+    return t;
+}
+
+
+expression_ref reg_heap::unshare_and_evaluate_program(int c)
+{
+    // 1. Reroot to the PPET
+    int t = force_simple_set_path_to_PPET(c);
+
+    // 2. Merge the set tokens and all the result an execute token.
 
     // NOTE: This creates merged SET tokens, which violates the assumptions of find_set_regs_on_path( ).
     //       Therefore we need to ensure that find_set_regs_on_path( ) never sees these.
@@ -810,7 +819,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     assert(tokens[t].parent == root_token);
     tokens[t].type = token_type::execute2;
 
-    // 4. Unshare regs in the token.
+    // 3. Unshare regs in the token.
     auto result = unshare_regs2(t);
 
     assert(get_prev_prog_token_for_context(c));
