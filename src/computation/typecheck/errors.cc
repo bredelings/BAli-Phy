@@ -267,6 +267,11 @@ Notes TypeChecker::check_eq_tv_constraint(TidyState& tidy_state, vector<shared_p
     // 4. tv is NOT blocked from escaping, but t2 IS blocked.
     else if (implic and intersects(free_type_variables(t2), implic->tvs | ranges::to<set>()))
     {
+        // Suppose we have a ~ Random b in a GADT alternative, and we try to do a ~ IO (Random b).
+        // In this we might be unable to unify a -> IO (Random b) because of scope issues, but we
+        // also can derive a direct contradition Random b ~ IO (Random b).
+        // So... error message should we report?
+
         auto escaped = intersection(free_type_variables(t2), implic->tvs | ranges::to<set>());
         vector<string> escaped_names;
         for(auto& tv: escaped)
