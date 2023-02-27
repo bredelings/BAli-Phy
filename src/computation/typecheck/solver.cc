@@ -407,10 +407,8 @@ bool Solver::contains_type(const Type& t1_, const Type& t2) const
 
     Type t1 = follow_meta_type_var(t1_);
 
-    if (auto mtv = t1.to<MetaTypeVar>())
-        return *mtv == t2;
-    else if (auto tv = t1.to<TypeVar>())
-        return *tv == t2;
+    if (t1.is_a<MetaTypeVar>() or t1.is_a<TypeVar>())
+        return t1 == t2;
     else if (auto con = t1.to<ConstrainedType>())
         return contains_type(con->context.constraints, t2) or contains_type(con->type, t2);
     else if (auto forall = t1.to<ForallType>())
