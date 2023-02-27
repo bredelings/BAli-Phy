@@ -23,7 +23,7 @@ class module_loader;
 
 class Program;
 
-struct TypeChecker;
+class TypeChecker;
 
 struct typechecker_result
 {

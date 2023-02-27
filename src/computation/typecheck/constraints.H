@@ -61,7 +61,7 @@ typedef std::variant<std::monostate, OccurrenceOrigin, GivenOrigin, AppOrigin, I
 
 enum ConstraintFlavor { Wanted, Given };
 
-class TypeCheckerContext;
+struct TypeCheckerContext;
 
 struct Constraint
 {

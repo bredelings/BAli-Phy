@@ -87,7 +87,7 @@ constexpr std::bitset<8> type_family_result(8);
 
 bool has_occurs_check(std::bitset<8> result);
 
-struct TypeChecker;
+class TypeChecker;
 
 template <typename... Args>
 using tc_action = std::function<void(Args...,TypeChecker&)>;
