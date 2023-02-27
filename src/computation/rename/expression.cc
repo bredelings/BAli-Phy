@@ -308,7 +308,6 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         if (includes(bound,name))
         {
             free_vars.insert(name);
-            E = E;
         }
         // If the variable is free, then try top-level names.
         else if (m.is_declared(name))
@@ -324,7 +323,6 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         else
         {
             error(loc, Note()<<"Variable `"<<name<<"` not in scope.");
-            E = E;
         }
     }
     else if (auto con = E.to<Hs::Con>())
@@ -345,7 +343,6 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         else
         {
             error(loc, Note()<<"Data constructor `"<<name<<"` not in scope.");
-            E = E;
         }
     }
     else if (E.is_a<Hs::RecStmt>())
