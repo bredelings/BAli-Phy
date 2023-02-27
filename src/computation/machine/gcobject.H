@@ -27,7 +27,7 @@ public:
     int size() const {return array_regs.size();}
     int get_reg(int i) const {return array_regs[i];}
 
-    IntArray* clone() const {return new IntArray(*this);}
+    IntArray* clone() const override {return new IntArray(*this);}
     IntArray(const std::vector<int>& a);
     IntArray(const IntArray&) = default;
 };
@@ -53,8 +53,8 @@ public:
     auto begin() const {return regs.begin();}
     auto end() const {return regs.end();}
 
-    std::string print() const;
-    IntMap* clone() const {return new IntMap(*this);}
+    std::string print() const override;
+    IntMap* clone() const override {return new IntMap(*this);}
 
     IntMap() = default;
     IntMap(const IntMap&) = default;
