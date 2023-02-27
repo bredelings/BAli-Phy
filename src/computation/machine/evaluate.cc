@@ -81,9 +81,9 @@ class RegOperationArgs1 final: public OperationArgs
 
     const bool first_eval;
 
-    const closure& current_closure() const {return memory().closure_at(r);}
+    const closure& current_closure() const override {return memory().closure_at(r);}
 
-    bool evaluate_changeables() const {return true;}
+    bool evaluate_changeables() const override {return true;}
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2) override
@@ -122,13 +122,13 @@ class RegOperationArgs1 final: public OperationArgs
             return result;
         }
 
-    const closure& evaluate_reg_to_closure(int r2)
+    const closure& evaluate_reg_to_closure(int r2) override
         {
             int r3 = evaluate_reg_use(r2);
             return M[r3];
         }
 
-    const closure& evaluate_reg_to_closure_(int r2)
+    const closure& evaluate_reg_to_closure_(int r2) override
         {
             int r3 = evaluate_reg_force(r2);
             return M[r3];
@@ -138,7 +138,7 @@ public:
 
     bool used_changeable = false;
 
-    void make_changeable()
+    void make_changeable() override
     {
         used_changeable = true;
     }
@@ -147,7 +147,7 @@ public:
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
 
-    int allocate_reg()
+    int allocate_reg() override
         {
             int s_alloc = used_changeable?s:sp;
             int r_alloc = OperationArgs::allocate_reg();
@@ -156,14 +156,14 @@ public:
             return r_alloc;
         }
 
-    void set_effect(int r)
+    void set_effect(int r) override
         {
             make_changeable();
             M.mark_step_with_effect(s);
             M._register_effect_at_reg(r, s);
         }
 
-    RegOperationArgs1* clone() const {return new RegOperationArgs1(*this);}
+    RegOperationArgs1* clone() const override {return new RegOperationArgs1(*this);}
 
     RegOperationArgs1(int r_, int s_, int sp_, reg_heap& m)
         :OperationArgs(m), r(r_), s(s_), sp(sp_), first_eval(m.reg_is_unevaluated(r))
@@ -531,9 +531,9 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
 
     const int sp;  // creator step
 
-    const closure& current_closure() const {return memory().closure_at(r);}
+    const closure& current_closure() const override {return memory().closure_at(r);}
 
-    bool evaluate_changeables() const {return true;}
+    bool evaluate_changeables() const override {return true;}
 
     /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
     int evaluate_reg_force(int r2) override
@@ -586,13 +586,13 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
             return result;
         }
 
-    const closure& evaluate_reg_to_closure(int r2)
+    const closure& evaluate_reg_to_closure(int r2) override
         {
             int r3 = evaluate_reg_use(r2);
             return M[r3];
         }
 
-    const closure& evaluate_reg_to_closure_(int r2)
+    const closure& evaluate_reg_to_closure_(int r2) override
         {
             int r3 = evaluate_reg_force(r2);
             return M[r3];
@@ -602,7 +602,7 @@ public:
 
     bool used_changeable = false;
 
-    void make_changeable()
+    void make_changeable() override
     {
         used_changeable = true;
     }
@@ -611,7 +611,7 @@ public:
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
 
-    int allocate_reg()
+    int allocate_reg() override
         {
             int s_alloc = used_changeable?s:sp;
             int r_alloc = OperationArgs::allocate_reg();
@@ -620,14 +620,14 @@ public:
             return r_alloc;
         }
 
-    void set_effect(int r)
+    void set_effect(int r) override
         {
             make_changeable();
             memory().mark_step_with_effect(s);
             M._register_effect_at_reg(r, s);
         }
 
-    RegOperationArgs2Unevaluated* clone() const {return new RegOperationArgs2Unevaluated(*this);}
+    RegOperationArgs2Unevaluated* clone() const override {return new RegOperationArgs2Unevaluated(*this);}
 
     RegOperationArgs2Unevaluated(int r_, int s_, int sp_, reg_heap& m)
         :OperationArgs(m), r(r_), s(s_), sp(sp_)
@@ -1116,9 +1116,9 @@ class RegOperationArgsUnchangeable final: public OperationArgs
 {
     const int r;
 
-    const closure& current_closure() const {return memory()[r];}
+    const closure& current_closure() const override {return memory()[r];}
 
-    bool evaluate_changeables() const {return false;}
+    bool evaluate_changeables() const override {return false;}
 
     // common worker called when either using or forcing.
     int evaluate_reg(int r2)
@@ -1141,14 +1141,14 @@ class RegOperationArgsUnchangeable final: public OperationArgs
             return evaluate_reg(r2);
         }
 
-    const closure& evaluate_reg_to_closure(int r2)
+    const closure& evaluate_reg_to_closure(int r2) override
         {
             int r3 = evaluate_reg_use(r2);
             assert(M.reg_is_constant_no_force(r3));
             return M[r3];
         }
 
-    const closure& evaluate_reg_to_closure_(int r2)
+    const closure& evaluate_reg_to_closure_(int r2) override
         {
             int r3 = evaluate_reg_force(r2);
             assert(M.reg_is_constant_no_force(r3));
@@ -1157,12 +1157,12 @@ class RegOperationArgsUnchangeable final: public OperationArgs
 
 public:
 
-    void make_changeable()
+    void make_changeable() override
     {
         throw no_context();
     }
 
-    RegOperationArgsUnchangeable* clone() const {return new RegOperationArgsUnchangeable(*this);}
+    RegOperationArgsUnchangeable* clone() const override {return new RegOperationArgsUnchangeable(*this);}
 
     RegOperationArgsUnchangeable(int r_, reg_heap& m)
         :OperationArgs(m),r(r_)
