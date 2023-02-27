@@ -23,11 +23,6 @@ bool Alt::operator==(const Alt& a) const
     return pattern == a.pattern and body == a.body;
 }
 
-bool Alt::operator!=(const Alt& a) const
-{
-    return not operator==(a);
-}
-
 string Alts::print() const
 {
     vector<string> as;
@@ -57,12 +52,6 @@ bool Alts::operator==(const Alts& as) const
 
     return true;
 }
-
-bool Alts::operator!=(const Alts& as) const
-{
-    return not operator==(as);
-}
-
 
 } // end namespace Core
 

@@ -62,22 +62,12 @@ public:
 	    }
 	}
 
-    bool operator!=(const expression_ref& E2) const
-	{
-	    return not (*this == E2);
-	}
-
     bool operator==(const Object& O) const
 	{
 	    if (not is_object_type())
 		return false;
 	    else
 		return (*ptr() == O);
-	}
-
-    bool operator!=(const Object& O) const
-	{
-	    return not (*this == O);
 	}
 
     void clear() {destroy_ptr();type_=null_type;}

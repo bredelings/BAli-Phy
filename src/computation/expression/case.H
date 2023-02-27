@@ -25,7 +25,6 @@ struct Alt
     expression_ref body;
 
     bool operator==(const Alt& a) const;
-    bool operator!=(const Alt& a) const;
 };
 
 struct Alts: public Object, public std::vector<Alt>
@@ -35,7 +34,6 @@ struct Alts: public Object, public std::vector<Alt>
 
     bool operator==(const Object& o) const;
     bool operator==(const Alts& a) const;
-    bool operator!=(const Alts& a) const;
 
     using std::vector<Alt>::vector;
 };

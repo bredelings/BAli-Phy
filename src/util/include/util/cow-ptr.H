@@ -283,11 +283,6 @@ template <class T, class U> inline bool operator==(const polymorphic_cow_ptr<T>&
   return t.get() == u.get();
 }
 
-template <class T, class U> inline bool operator!=(const polymorphic_cow_ptr<T>& t, const polymorphic_cow_ptr<U>& u)
-{
-  return t.get() != u.get();
-}
-
 template <class T, class U> inline bool operator<(const polymorphic_cow_ptr<T>& t, const polymorphic_cow_ptr<U>& u)
 {
   return t.get() < u.get();

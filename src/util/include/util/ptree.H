@@ -17,7 +17,6 @@ std::ostream& operator<<(std::ostream& o,const monostate&);
 inline bool operator<(const monostate&, const monostate&) {return false;}
 inline bool operator>(const monostate&, const monostate&) {return false;}
 inline bool operator==(const monostate&, const monostate&) {return true;}
-inline bool operator!=(const monostate&, const monostate&) {return false;}
 
 struct ptree;
 struct ptree: public std::vector<std::pair<std::string,ptree>>
@@ -49,7 +48,6 @@ public:
     int count(const std::string& key) const;
 
     bool operator==(const ptree&) const;
-    bool operator!=(const ptree&) const;
 
     bool operator==(int i) const
     {

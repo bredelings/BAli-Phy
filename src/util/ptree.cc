@@ -52,11 +52,6 @@ bool ptree::operator==(const ptree& p2) const
     return (value == p2.value) and ((vector<pair<string,ptree>>&)(*this) == (vector<pair<string,ptree>>&)p2);
 }
 
-bool ptree::operator!=(const ptree& p2) const
-{
-    return not ((*this) == p2);
-}
-
 ptree*
 ptree::get_child_optional(const std::string& key)
 {

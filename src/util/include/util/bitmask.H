@@ -91,12 +91,6 @@ bool operator==(const bitmask<T> b1, const bitmask<T> b2)
 }
 
 template <typename T>
-bool operator!=(const bitmask<T> b1, const bitmask<T> b2)
-{
-    return b1.raw() != b2.raw();
-}
-
-template <typename T>
 bitmask<T> operator&(bitmask<T> b1, const bitmask<T> b2)
 {
     b1 &= b2;

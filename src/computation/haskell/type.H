@@ -73,7 +73,6 @@ namespace Haskell
 
 
         bool operator==(const Type& t) const;
-        bool operator!=(const Type& t) const {return not (*this == t);}
 
         template <typename T>
         bool is_a() const {return to<T>();}

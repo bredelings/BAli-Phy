@@ -26,11 +26,6 @@ public:
 	    std::abort();
 	}
 
-    bool operator !=(const Object& o) const
-	{
-	    return not operator==(o);
-	}
-
     virtual type_constant type() const {return unknown_type;}
 
     virtual std::string print() const;

@@ -534,9 +534,6 @@ public:
 //------------------------------- Codons ------------------------------//
 
 
-/// Check if two alphabets are unequal
-inline bool operator!=(const alphabet& a1,const alphabet& a2) {return not (a1==a2);}
-
 /// Compute nucleotide counts from codon counts
 std::valarray<double> get_nucleotide_counts_from_codon_counts(const Triplets& C,const std::valarray<double>& C_counts);
 

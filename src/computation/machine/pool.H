@@ -207,7 +207,6 @@ public:
 	    }
 
 	bool operator ==(const PoolIterator &i2) const {assert(mypool == i2.mypool); return index == i2.index;}
-	bool operator !=(const PoolIterator &i2) const {return not (*this == i2);}
     };
 
     class constPoolIterator

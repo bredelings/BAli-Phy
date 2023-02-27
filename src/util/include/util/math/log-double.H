@@ -92,10 +92,6 @@ constexpr bool operator==(log_double_t x, log_double_t y) {
     return log(x)==log(y);
 }
 
-constexpr bool operator!=(log_double_t x, log_double_t y) {
-    return log(x) != log(y);
-}
-
 constexpr bool operator< (log_double_t x, log_double_t y) {
     return log(x)<log(y);
 }
@@ -136,11 +132,6 @@ constexpr bool operator==(log_double_t x, double y) {
 }
 
 constexpr bool operator==(double x, log_double_t y) { return (y == x);}
-
-constexpr bool operator!=(double x, log_double_t y) { return not (x == y);}
-
-constexpr bool operator!=(log_double_t x, double y) { return not (x == y); }
-
 
 /******** End: Comparisons with 0 ********/
 
