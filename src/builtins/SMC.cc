@@ -9,6 +9,7 @@
 #include "util/log-level.H"
 #include "util/range.H"
 #include "util/math/log-double.H"
+#include "util/assert.hh"
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
 #include "probability/choose.H"
@@ -1503,14 +1504,14 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     auto arg6 = Args.evaluate(6);
     auto& reads = arg6.as_<EVector>();
 
-    int num_strains = weights.size();
-    assert(haplotypes.size() == weights.size());
-
     int num_sites = counts.size();
     if (reads.size() != num_sites)
         return { log_double_t(0.0) };
 
 #ifndef NDEBUG
+    int num_strains = weights.size();
+    assert(haplotypes.size() == weights.size());
+
     for(int i=0;i<num_strains;i++)
         assert(haplotypes[i].as_<EVector>().size() == num_sites);
 #endif
@@ -1564,11 +1565,11 @@ extern "C" closure builtin_function_sample_reads01(OperationArgs& Args)
     double outlier_frac = Args.evaluate_(5).as_double();
     assert(outlier_frac >= 0 and outlier_frac <= 1);
 
+    int num_sites = counts.size();
+#ifndef NDEBUG
     int num_strains = weights.size();
     assert(haplotypes.size() == weights.size());
 
-    int num_sites = counts.size();
-#ifndef NDEBUG
     for(int i=0;i<num_strains;i++)
         assert(haplotypes[i].as_<EVector>().size() == num_sites);
 #endif
