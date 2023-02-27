@@ -18,9 +18,9 @@
 #include "computation/expression/constructor.H"
 #include "computation/haskell/haskell.H"
 #include "desugar.H"
-#include "util/assert.hh"
 #include "util/range.H"
 #include "computation/typecheck/typecheck.H"
+#include "util/assert.hh"
 
 using std::string;
 using std::vector;
