@@ -1356,6 +1356,7 @@ optional<int> reg_heap::find_precomputed_modifiable_reg_in_context(int r, int c)
 
         if (reg_is_unevaluated(r))  // 0
             return {};
+        // Here we follow unforced index_var_with_force
         else if (reg_is_index_var_no_force(r) or reg_is_index_var_with_force(r)) // 1, 4, 5
             r = C.reg_for_index_var();
         else if (reg_is_constant(r)) // 2, 6
@@ -1363,7 +1364,54 @@ optional<int> reg_heap::find_precomputed_modifiable_reg_in_context(int r, int c)
         else if (reg_is_changeable(r)) // 3
         {
             if (is_modifiable(C.exp))
+            {
+                // We might want to set the call for an unforced modifiable in the tree.
                 return r;
+            }
+            else if (not reg_has_call(r))
+                return {};
+            else
+                r = call_for_reg(r);
+        }
+        else
+            std::abort();
+    }
+
+    // unreachable
+}
+
+// This is an evaluation loop that follows calls instead of results
+// so that it doesn't jump over modifiables.
+optional<int> reg_heap::find_precomputed_exchangeable_reg_in_context(int r, int c)
+{
+    reroot_at_context(c);
+
+    return find_precomputed_exchangeable_reg(r);
+}
+
+// This is an evaluation loop that follows calls instead of results
+// so that it doesn't jump over modifiables.
+optional<int> reg_heap::find_precomputed_exchangeable_reg(int r)
+{
+    while(true)
+    {
+        auto& C = closure_at(r);
+
+        if (reg_is_unevaluated(r))  // 0
+            return {};
+        // Here we follow unforced index_var_with_force
+        else if (reg_is_index_var_no_force(r) or reg_is_index_var_with_force(r)) // 1, 4, 5
+            r = C.reg_for_index_var();
+        else if (reg_is_constant(r)) // 2, 6
+            return {};
+        else if (reg_is_changeable(r)) // 3
+        {
+            if (is_exchangeable(C.exp))
+            {
+                assert(reg_has_call(r));
+                assert(reg_is_forced(r));
+                return r;
+            }
             else if (not reg_has_call(r))
                 return {};
             else

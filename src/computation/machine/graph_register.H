@@ -444,12 +444,17 @@ public:
     /*----- Modifiable regs ----*/
 private:
     std::optional<int> find_update_modifiable_reg(int& R);
+
 public:
     std::optional<int> find_modifiable_reg(int R);
 
     std::optional<int> find_precomputed_const_or_modifiable_reg(int r);
 
     std::optional<int> find_precomputed_modifiable_reg_in_context(int R, int c);
+
+    std::optional<int> find_precomputed_exchangeable_reg(int R);
+
+    std::optional<int> find_precomputed_exchangeable_reg_in_context(int R, int c);
 
     std::optional<int> find_modifiable_reg_in_context(int R, int c);
 
