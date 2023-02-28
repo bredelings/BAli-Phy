@@ -5,6 +5,7 @@ module Compiler.IO where
 import Compiler.Base
 import Data.Tuple     -- for snd
 
+import Data.Function  -- for (.)
 import Data.Functor
 import Control.Applicative
 import Control.Monad
@@ -48,10 +49,12 @@ foreign import bpcall "Modifiables:exchangeable" builtin_exchangeable :: (a->b) 
 exchangeableIO :: IO a -> IO (IO a)
 -- We also ensure that performing the exchangeable action FORCES the current IO state s2, even though
 -- it is not USED.
-exchangeableIO f = IO (\s1 -> (s1, IO (\s2 -> s2 `seq` builtin_exchangeable (runIO f) s1 s2)))
+exchangeableIO f = IO $ \s1 -> (s1, makeIO $ snd . builtin_exchangeable (runIO f) s1 )
+-- PROBLEM: Because the exchangeable function produces a pair, we always end up with a changeable
+-- node as the list argument, instead of an exchangeable node as a list argument.
+-- Therefore, builtin_function_exchange_list_entries doesn't work.
 
 makeIO f = IO (\s -> let x = s `seq` f s  -- This emulates f forcing s, so the C++ code doesn't have to.
                      in (x `seq` s, x))   -- This ensures that getting the new state forces f to run.
                                           -- But if the pair is strict in the state, then just getting the pair
                                           -- forces f to run...
-
