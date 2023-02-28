@@ -14,7 +14,8 @@ geometric_effect x = do
   add_move $ slice_sample_integer_random_variable x geometric_bounds
   add_move $ inc_dec_mh x geometric_bounds
 
-sample_geometric p_success = RanAtomic geometric_effect (makeIO $ builtin_sample_geometric p_success)
+sample_geometric p_success = makeIO $ builtin_sample_geometric p_success
+ran_sample_geometric p_success = RanAtomic geometric_effect (sample_geometric p_success)
 
 geometric p = geometric2 (1-p) p
 rgeometric q = geometric2 q (1-q)
@@ -23,7 +24,7 @@ class HasGeometric d where
     geometric2 :: Double -> Double -> d Int
 
 instance HasGeometric Distribution where
-    geometric2 p_fail p_success = Distribution "geometric" (make_densities $ geometric_density p_fail p_success) (no_quantile "geometric") (sample_geometric p_success) (integer_above 0)
+    geometric2 p_fail p_success = Distribution "geometric" (make_densities $ geometric_density p_fail p_success) (no_quantile "geometric") (ran_sample_geometric p_success) (integer_above 0)
 
 
 instance HasGeometric Random where

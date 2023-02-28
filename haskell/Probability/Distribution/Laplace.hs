@@ -9,7 +9,8 @@ foreign import bpcall "Distribution:sample_laplace" builtin_sample_laplace :: Do
 
 laplace_bounds = realLine
 laplace_effect x = add_move $ slice_sample_real_random_variable x laplace_bounds
-sample_laplace m s = RanAtomic laplace_effect (makeIO $ builtin_sample_laplace m s)
+sample_laplace m s = makeIO $ builtin_sample_laplace m s
+ran_sample_laplace m s = RanAtomic laplace_effect $ sample_laplace m s
 
 annotated_laplace_density m s x = do
   in_edge "m" m
@@ -23,7 +24,7 @@ class HasLaplace d where
     laplace :: Double -> Double -> d Double
 
 instance HasLaplace Distribution where
-    laplace m s = Distribution "laplace" (annotated_laplace_density m s) (error "no quantile") (sample_laplace m s) laplace_bounds
+    laplace m s = Distribution "laplace" (annotated_laplace_density m s) (error "no quantile") (ran_sample_laplace m s) laplace_bounds
 
 instance HasLaplace Random where
     laplace m s = RanDistribution $ laplace m s

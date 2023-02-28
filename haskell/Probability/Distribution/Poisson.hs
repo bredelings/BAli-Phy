@@ -15,7 +15,8 @@ poisson_effect x = do
    add_move $ slice_sample_integer_random_variable x poisson_bounds
    add_move $ inc_dec_mh x poisson_bounds
 
-sample_poisson mu = RanAtomic poisson_effect (makeIO $ builtin_sample_poisson mu)
+sample_poisson mu = makeIO $ builtin_sample_poisson mu
+ran_sample_poisson mu = RanAtomic poisson_effect (sample_poisson mu)
 
 --- Poisson process, constant rate --
 poisson_process_density' rate t1 t2 n = expToLogDouble $ (-rate*(t2-t1)) + (fromIntegral n * log rate)
@@ -50,7 +51,7 @@ class HasPoisson d where
     poisson_processes :: [(Double,Double,Double)] -> d [Double]
 
 instance HasPoisson Distribution where
-    poisson mu = Distribution "poisson" (make_densities $ poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (integer_above 0)
+    poisson mu = Distribution "poisson" (make_densities $ poisson_density mu) (no_quantile "Poisson") (ran_sample_poisson mu) (integer_above 0)
     poisson_process rate t1 t2 = Distribution "poisson_process" (make_densities $ poisson_process_density rate t1 t2) (no_quantile "poisson_process") (sample_poisson_process rate t1 t2) NoRange
 
     poisson_processes intervals = Distribution "poisson_processes" (make_densities' $ poisson_processes_densities intervals) (no_quantile "poisson_processes") (sample_poisson_processes intervals) NoRange

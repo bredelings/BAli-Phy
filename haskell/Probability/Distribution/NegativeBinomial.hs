@@ -13,6 +13,7 @@ negative_binomial_effect r x = do
     add_move $ slice_sample_integer_random_variable x negative_binomial_bounds
     add_move $ inc_dec_mh x negative_binomial_bounds
 
-sample_negative_binomial r p = RanAtomic (negative_binomial_effect r) (makeIO $ builtin_sample_negative_binomial r p)
+sample_negative_binomial r p = makeIO $ builtin_sample_negative_binomial r p
+ran_sample_negative_binomial r p = RanAtomic (negative_binomial_effect r) (sample_negative_binomial r p)
 
-negative_binomial r p = Distribution "negative_binomial" (make_densities $ negative_binomial_density r p) (no_quantile "negative_binomial") (sample_negative_binomial r p) (negative_binomial_bounds n)
+negative_binomial r p = Distribution "negative_binomial" (make_densities $ negative_binomial_density r p) (no_quantile "negative_binomial") (ran_sample_negative_binomial r p) (negative_binomial_bounds n)
