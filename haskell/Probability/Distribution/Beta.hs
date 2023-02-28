@@ -8,9 +8,10 @@ foreign import bpcall "Distribution:beta_density" beta_density :: Double -> Doub
 foreign import bpcall "Distribution:beta_quantile" beta_quantile :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:sample_beta" builtin_sample_beta :: Double -> Double -> RealWorld -> Double
 
-beta_bounds = between 0.0 1.0
+beta_bounds = between 0 1
 beta_effect x = add_move $ slice_sample_real_random_variable x beta_bounds
-sample_beta a b = RanAtomic beta_effect (makeIO $ builtin_sample_beta a b)
+sample_beta a b = makeIO $ builtin_sample_beta a b
+ran_sample_beta a b = RanAtomic beta_effect (sample_beta a b)
 
 annotated_beta_density a b x = do
   in_edge "a" a
@@ -21,7 +22,7 @@ class HasBeta d where
     beta :: Double -> Double -> d Double
 
 instance HasBeta Distribution where
-    beta a b = Distribution "beta" (annotated_beta_density a b) (beta_quantile a b) (sample_beta a b) beta_bounds
+    beta a b = Distribution "beta" (annotated_beta_density a b) (beta_quantile a b) (ran_sample_beta a b) beta_bounds
 
 instance HasBeta Random where
     beta a b = RanDistribution (beta a b)

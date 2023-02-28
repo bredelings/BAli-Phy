@@ -12,14 +12,15 @@ foreign import bpcall "Distribution:sample_cauchy" builtin_sample_cauchy :: Doub
 
 cauchy_bounds = realLine
 cauchy_effect x = add_move $ slice_sample_real_random_variable x cauchy_bounds
-sample_cauchy m s = RanAtomic cauchy_effect (makeIO $ builtin_sample_cauchy m s)
+sample_cauchy m s = makeIO $ builtin_sample_cauchy m s
+ran_sample_cauchy m s = RanAtomic cauchy_effect (sample_cauchy m s)
 
 class HasCauchy d where
     cauchy :: Double -> Double -> d Double
     half_cauchy :: Double -> Double -> d Double
 
 instance HasCauchy Distribution where
-    cauchy m s = Distribution "cauchy" (make_densities $ cauchy_density m s) (cauchy_quantile m s) (sample_cauchy m s) cauchy_bounds
+    cauchy m s = Distribution "cauchy" (make_densities $ cauchy_density m s) (cauchy_quantile m s) (ran_sample_cauchy m s) cauchy_bounds
     half_cauchy m s = Distribution "half_cauchy" (make_densities $ half_cauchy_density m s) (half_cauchy_quantile m s) (sample_half_cauchy m s) (half_cauchy_bounds m)
 
 instance HasCauchy Random where

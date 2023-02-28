@@ -8,7 +8,8 @@ foreign import bpcall "Distribution:sample_bernoulli" builtin_sample_bernoulli :
 
 bernoulli_effect x = add_move (\c -> discrete_uniform_avoid_mh x 0 1 c)
 
-sample_bernoulli p = RanAtomic bernoulli_effect (makeIO $ builtin_sample_bernoulli p)
+sample_bernoulli p = makeIO $ builtin_sample_bernoulli p
+ran_sample_bernoulli p = RanAtomic bernoulli_effect (sample_bernoulli p)
 
 bernoulli_density2 p q 1 = (doubleToLogDouble p)
 bernoulli_density2 p q 0 = (doubleToLogDouble q)
@@ -25,7 +26,7 @@ class HasBernoulli d where
     bernoulli2 :: Double -> Double -> d Int
 
 instance HasBernoulli Distribution where
-    bernoulli2 p q = Distribution "bernoulli" (annotated_bernoulli_density2 p q) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1)
+    bernoulli2 p q = Distribution "bernoulli" (annotated_bernoulli_density2 p q) (no_quantile "bernoulli") (ran_sample_bernoulli p) (integer_between 0 1)
 
 instance HasBernoulli Random where
     bernoulli2 p q = RanDistribution (bernoulli2 p q)

@@ -10,7 +10,8 @@ foreign import bpcall "Distribution:sample_normal" builtin_sample_normal :: Doub
 
 normal_bounds = realLine
 normal_effect x = add_move $ slice_sample_real_random_variable x normal_bounds
-sample_normal m s = RanAtomic normal_effect (makeIO $ builtin_sample_normal m s)
+sample_normal m s = makeIO $ builtin_sample_normal m s
+ran_sample_normal m s = RanAtomic normal_effect (sample_normal m s)
 
 annotated_normal_density mu sigma x = do
   in_edge "mu" mu
@@ -21,7 +22,7 @@ class HasNormal d where
     normal :: Double -> Double -> d Double
 
 instance HasNormal Distribution where
-    normal m s = Distribution "normal" (annotated_normal_density m s) (normal_quantile m s) (sample_normal m s) normal_bounds
+    normal m s = Distribution "normal" (annotated_normal_density m s) (normal_quantile m s) (ran_sample_normal m s) normal_bounds
 
 instance HasNormal Random where
     normal m s = RanDistribution (normal m s)
