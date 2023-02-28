@@ -175,8 +175,6 @@ run_lazy (WithTKEffect action _) = run_lazy action
 run_lazy (Lazy a) = run_lazy a
 run_lazy (Observe _ _) = error "run_lazy: observe"
 
-random_modifiable dist = io_modifiable $ run_lazy dist
-
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
 
 run_strict' :: Double -> Random a -> IO a
@@ -241,7 +239,7 @@ run_lazy' rate (RanBind f g) = do
   run_lazy' rate $ g x
 run_lazy' rate (RanReturn v) = return v
 run_lazy' rate (RanDistribution dist@(Distribution _ _ _ (RanAtomic tk_effect do_sample) range)) = do
-  let x = io_modifiable do_sample
+  x <- modifiableIO do_sample
   effect <- sample_effect rate dist tk_effect x
   return (effect `seq` x)
 run_lazy' rate (RanDistribution dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_sample) range)) = do
