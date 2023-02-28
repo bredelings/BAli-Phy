@@ -40,10 +40,8 @@ foreign import bpcall "Modifiables:changeable_apply" _changeable_apply :: (a -> 
 changeableIO f = IO (\s -> _changeable_apply (runIO f) s)
 
 
-makeIO f = IO (\s -> let x = s `seq` f s  -- This emulates f forcing s, so the C++ code
-                                          -- doesn't have to.
-                     in (x `seq` s, x))   -- This ensures that getting the state forces x.
-                                          -- So, forcing the state ensures that f is run.
-                                          -- But if the state is strict, then we always run force the result?
-                                          -- I guess so -- which makes that makeIO creates strict IO operations.
+makeIO f = IO (\s -> let x = s `seq` f s  -- This emulates f forcing s, so the C++ code doesn't have to.
+                     in (x `seq` s, x))   -- This ensures that getting the new state forces f to run.
+                                          -- But if the pair is strict in the state, then just getting the pair
+                                          -- forces f to run...
 
