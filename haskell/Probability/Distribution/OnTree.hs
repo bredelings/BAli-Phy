@@ -76,9 +76,11 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
               transition_ps
               f
               smap
+      -- Possibly we should check that the sequence lengths match the alignment..
+      -- but instead we just ensure that the alignment is evaluated.
       likelihood | n_nodes > 2    = peel_likelihood tree cls as (weighted_frequency_matrix smodel) subst_root
                  | n_nodes == 1   = let [n1] = getNodes tree
-                                    in peel_likelihood_1 (node_sequences IntMap.! n1) alphabet f
+                                    in alignment `seq` peel_likelihood_1 (node_sequences IntMap.! n1) alphabet f
                  | n_nodes == 2   = let [n1, n2] = getNodes tree
                                     in peel_likelihood_2 (node_sequences IntMap.! n1) (node_sequences IntMap.! n2) alphabet (as IntMap.! 0) (transition_ps ! 0) f
       ancestral_sequences = case n_nodes of
