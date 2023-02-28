@@ -156,12 +156,20 @@ public:
     reg(reg&&) noexcept;
 };
 
+struct set_op
+{
+    int reg;
+    closure value;
+};
 
 struct exchange_op
 {
     int r1;
     int r2;
 };
+
+typedef std::variant<set_op, exchange_op> set_exchange_op;
+
 // These bits are used in evaluation as well as unsharing.
 
 constexpr int unshare_result_bit = 1;
@@ -348,7 +356,7 @@ private:
 
     bool simple_set_path_to(int child_token) const;
 
-    std::vector<std::pair<int,closure>> find_set_regs_on_path(int child_token) const;
+    std::vector<set_exchange_op> find_set_regs_on_path(int child_token) const;
 
     int force_simple_set_path_to_PPET(int c);
 
@@ -590,6 +598,10 @@ public:
 
     const expression_ref& get_reg_value_in_context(int& R, int c);
 
+private:
+    void exchange_regs_in_context_(int r1, int r2, int c);
+
+public:
     void exchange_regs_in_context(int r1, int r2, int c);
 
     void set_reg_value_in_context(int index, closure&& C, int c);

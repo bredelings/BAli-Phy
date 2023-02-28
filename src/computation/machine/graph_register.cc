@@ -744,11 +744,11 @@ bool reg_heap::simple_set_path_to(int child_token) const
     return true;
 }
 
-vector<pair<int,closure>> reg_heap::find_set_regs_on_path(int child_token) const
+vector<set_exchange_op> reg_heap::find_set_regs_on_path(int child_token) const
 {
     assert(token_is_used(child_token));
 
-    vector<pair<int,closure>> reg_values;
+    vector<set_exchange_op> reg_values;
     for(int t = child_token; t != root_token; t = tokens[t].parent)
     {
         assert(tokens[t].type != token_type::reverse_set);
@@ -756,17 +756,28 @@ vector<pair<int,closure>> reg_heap::find_set_regs_on_path(int child_token) const
         if (tokens[t].type == token_type::set or tokens[t].type == token_type::set_unshare)
         {
             auto [r, s] = tokens[t].vm_step.delta()[0];
-            assert(is_modifiable(expression_at(r)));
-            assert(s > 0);
-            int call = steps[s].call;
-            auto value = closure_at(call);
-            assert(value.exp.is_atomic());
 
-            reg_values.push_back({r, value});
+            if (is_modifiable(expression_at(r)))
+            {
+                assert(is_modifiable(expression_at(r)));
+                assert(s > 0);
+                int call = steps[s].call;
+                auto value = closure_at(call);
+                assert(value.exp.is_atomic());
+
+                reg_values.push_back(set_op{r, value});
+            }
+            else if (is_exchangeable(expression_at(r)))
+            {
+                int r1 = r;
+                assert(tokens[t].vm_step.delta().size() >= 2);
+                auto [r2,_] = tokens[t].vm_step.delta()[1];
+                reg_values.push_back(exchange_op{r1,r2});
+            }
         }
     }
+
     std::reverse(reg_values.begin(), reg_values.end());
-    assert(not reg_values.empty());
 
     return reg_values;
 }
@@ -795,10 +806,23 @@ int reg_heap::force_simple_set_path_to_PPET(int c)
     // 2. Ensure that the path from the PPET is composed only of SET tokens!
     if (not simple_set_path_to(t))
     {
+        // What if the path starts with a set?  We could keep that part.
+
         auto reg_values = find_set_regs_on_path(t);
         set_token_for_context(c, PPET);
-        for(auto& [reg, value]: reg_values)
-            set_reg_value_in_context(reg, std::move(value), c);
+        for(auto& op: reg_values)
+        {
+            if (std::holds_alternative<set_op>(op))
+            {
+                auto [reg,value] = std::get<set_op>(op);
+                set_reg_value_in_context(reg, std::move(value), c);
+            }
+            else if (std::holds_alternative<exchange_op>(op))
+            {
+                auto [r1, r2] = std::get<exchange_op>(op);
+                exchange_regs_in_context_(r1, r2, c);
+            }
+        }
         t = token_for_context(c);
     }
 
@@ -2685,13 +2709,18 @@ void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
     set_reg_value(P, std::move(C), t);
 }
 
-void reg_heap::exchange_regs_in_context(int r1, int r2, int c)
+void reg_heap::exchange_regs_in_context_(int r1, int r2, int c)
 {
-    reroot_at_context(c);
-
     int t = switch_to_child_token(c, token_type::set);
 
     exchange_regs(r1, r2, t);
+}
+
+void reg_heap::exchange_regs_in_context(int r1, int r2, int c)
+{
+    force_simple_set_path_to_PPET(c);
+
+    exchange_regs_in_context_(r1, r2, c);
 }
 
 bool reg_heap::execution_allowed() const
