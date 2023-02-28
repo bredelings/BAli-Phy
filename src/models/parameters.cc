@@ -1303,10 +1303,14 @@ std::string generate_atmodel_program(int n_sequences,
 
     auto SM_function_for_index = print_models("sample_smodel", SMs, program_file);
     auto IM_function_for_index = print_models("sample_imodel", IMs, program_file);
-    auto scaleM_function_for_index = print_models("sample_scale", scaleMs, program_file);
+    vector<string> scaleM_function_for_index;
+    if (n_branches > 0)
+    {
+        scaleM_function_for_index = print_models("sample_scale", scaleMs, program_file);
 
-    // F4. Branch lengths
-    program_file<<"sample_branch_lengths"<<print_equals_function(branch_length_model.code.generate())<<"\n";
+        // F4. Branch lengths
+        program_file<<"sample_branch_lengths"<<print_equals_function(branch_length_model.code.generate())<<"\n";
+    }
 
     // F5. Topology
     program_file<<"\nsample_topology taxa = uniform_labelled_topology taxa\n";
@@ -1370,23 +1374,26 @@ std::string generate_atmodel_program(int n_sequences,
 
     // M6. Scales
     vector<expression_ref> scales;
-    for(int i=0; i<scaleMs.size(); i++)
+    if (n_branches > 0)
     {
-        // FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
-        //        This would obviate the need to create a Scale1 (etc) prefix here.
-        string indexsuffix = (scaleMs.size()>1)?convertToString(i+1):"";
-        string index_suffix = (scaleMs.size()>1)?"_"+convertToString(i+1):"";
-        string var_name = "scale"+indexsuffix;
+        for(int i=0; i<scaleMs.size(); i++)
+        {
+            // FIXME: Ideally we would actually join these models together using a Cons operation and prefix.
+            //        This would obviate the need to create a Scale1 (etc) prefix here.
+            string indexsuffix = (scaleMs.size()>1)?convertToString(i+1):"";
+            string index_suffix = (scaleMs.size()>1)?"_"+convertToString(i+1):"";
+            string var_name = "scale"+indexsuffix;
 
-        auto code = scaleMs[i].code;
-        expression_ref E = var(scaleM_function_for_index[i]);
+            auto code = scaleMs[i].code;
+            expression_ref E = var(scaleM_function_for_index[i]);
 
-        auto scale_var = bind_and_log(true, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
+            auto scale_var = bind_and_log(true, var_name, E, code.is_action(), code.has_loggers(), program, program_loggers);
 
-        scales.push_back(scale_var);
+            scales.push_back(scale_var);
+        }
+        if (auto l = logger("scale", get_list(scales), List()) )
+            program_loggers.push_back( l );
     }
-    if (auto l = logger("scale", get_list(scales), List()) )
-        program_loggers.push_back( l );
 
     // M7. Substitution models
     vector<expression_ref> smodels;
@@ -1455,7 +1462,6 @@ std::string generate_atmodel_program(int n_sequences,
         int scale_index = *scale_mapping[i];
         int smodel_index = *s_mapping[i];
         auto imodel_index = i_mapping[i];
-        expression_ref scale = scales[scale_index];
         expression_ref smodel = smodels[smodel_index];
         expression_ref sequence_data_var = var("sequence_data");
         if (n_partitions > 1)
@@ -1463,7 +1469,13 @@ std::string generate_atmodel_program(int n_sequences,
 
         // Model.Partition.1. tree_part<i> = scale_branch_lengths scale tree
         var branch_dist_tree("tree" + part_suffix);
-        program.let(branch_dist_tree, {var("scale_branch_lengths"), scale, tree_var});
+        if (n_branches > 0)
+        {
+            expression_ref scale = scales[scale_index];
+            program.let(branch_dist_tree, {var("scale_branch_lengths"), scale, tree_var});
+        }
+        else
+            program.let(branch_dist_tree, tree_var);
 
         // Model.Partition.2. Sample the alignment
         var alignment_on_tree("alignment" + part_suffix);
