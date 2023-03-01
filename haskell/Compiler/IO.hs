@@ -28,7 +28,7 @@ instance Applicative IO where
                                in (state3, f x))
 
 instance Monad IO where
-    f >>= g  = IO (\state1 -> let (state2,x) = runIO f state1 in state2 `seq` runIO (g x) state2)
+    f >>= g  = IO (\state1 -> case runIO f state1 of (state2,x) -> state2 `seq` runIO (g x) state2)
     mfix f   = IO (\state1 -> let result@(state2,x) = runIO (f x) state1 in result)
     unsafeInterleaveIO f = IO (\s -> (s, s `seq` snd (runIO f s)) )
 
