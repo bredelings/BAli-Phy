@@ -42,6 +42,12 @@ struct Cell
     double& prob_for_state(int s)        { return start[s+2]; }
 };
 
+struct MatrixShape
+{
+    int size1;
+    int size2;
+};
+
 class state_matrix
 {
     const int s1;
@@ -79,8 +85,8 @@ public:
         return {start};
     }
 
-    state_matrix(int i1,int i2,int i3)
-	:s1(i1),s2(i2),s3(i3+2),
+    state_matrix(const MatrixShape& shape,int i3)
+	:s1(shape.size1),s2(shape.size2),s3(i3+2),
 	 data(new double[s1*s2*s3])
 	{}
 
@@ -130,7 +136,7 @@ public:
 
     log_double_t path_P(const std::vector<int>& path) const;
 
-    DPmatrix(int i1, int i2, const HMM& M);
+    DPmatrix(const MatrixShape& shape, const HMM& M);
 
     virtual ~DPmatrix() {}
 };
@@ -210,6 +216,8 @@ public:
     virtual ~DPmatrixConstrained() {}
 };
 
+std::vector<std::pair<int,int>> yboundaries_everything(int I, int J);
 std::vector<std::pair<int,int>> yboundaries_everything(const DPmatrix& M);
+std::vector<std::pair<int,int>> yboundaries_simple_band(int I, int J, int bandwidth);
 std::vector<std::pair<int,int>> yboundaries_simple_band(const DPmatrix& M, int bandwidth);
 #endif

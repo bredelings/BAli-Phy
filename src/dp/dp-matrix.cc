@@ -108,13 +108,18 @@ inline void DPmatrix::forward_first_cell(Cell C)
 } 
 
 
+vector<pair<int,int>> yboundaries_everything(int I, int J)
+{
+    return {std::size_t(I+1), {0,J}};
+}
+
 
 vector<pair<int,int>> yboundaries_everything(const DPmatrix& M)
 {
     const int I = M.seqlength1();
     const int J = M.seqlength2();
 
-    return {std::size_t(I+1), {0,J}};
+    return yboundaries_everything(I, J);
 }
 
 // The equation through a point (x1,y1) of slope 1 is y = y1 + (x-x1)
@@ -123,11 +128,8 @@ vector<pair<int,int>> yboundaries_everything(const DPmatrix& M)
 // For the lower bounadries, we take the lower  of two lines through (W,0) and (I,J-W).
 // (Then we do max(0,u) to avoid getting outside the rectangle.
 
-vector<pair<int,int>> yboundaries_simple_band(const DPmatrix& M, int W)
+vector<pair<int,int>> yboundaries_simple_band(int I, int J, int W)
 {
-    const int I = M.seqlength1();
-    const int J = M.seqlength2();
-
     auto yboundaries = vector<pair<int,int>>(I+1);
 
     for(int i=0;i<I+1;i++)
@@ -138,6 +140,14 @@ vector<pair<int,int>> yboundaries_simple_band(const DPmatrix& M, int W)
     }
 
     return yboundaries;
+}
+
+vector<pair<int,int>> yboundaries_simple_band(const DPmatrix& M, int W)
+{
+    const int I = M.seqlength1();
+    const int J = M.seqlength2();
+
+    return yboundaries_simple_band(I,J,W);
 }
 
 void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries) 
@@ -372,11 +382,10 @@ vector<int> DPmatrix::sample_path() const
     return path;
 }
 
-DPmatrix::DPmatrix(int i1,
-		   int i2,
+DPmatrix::DPmatrix(const MatrixShape& shape,
 		   const HMM& M)
     :DPengine(M),
-     state_matrix(i1,i2,n_dp_states())
+     state_matrix(shape, n_dp_states())
 {
     const int I = size1()-1;
     const int J = size2()-1;
@@ -432,7 +441,7 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
 			   EmissionProbs&& d1,
 			   EmissionProbs&& d2,
 			   const Matrix& weighted_frequencies)
-    :DPmatrix(d1.n_columns(), d2.n_columns(), M),
+    :DPmatrix({d1.n_columns(), d2.n_columns()}, M),
      dists1(std::move(d1)), dists2(std::move(d2))
 {
     //----- cache G1,G2 emission probabilities -----//
