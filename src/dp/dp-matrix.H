@@ -94,7 +94,15 @@ public:
         assert(data);
 	assert(0 <= i and i < s1);
 	assert(0 <= j and j < s2);
-        double* start = data + s3*(i*s2+j);
+
+        assert(0 <= i and i < extents.size());
+        i--;
+        j--;
+        auto [offset, y1, length] = extents[i+1];
+        int  delta = (j - y1);
+        assert( 0 <= delta and delta < length);
+        double* start = data + s3*(offset + delta);
+
         return {start};
     }
 
@@ -102,7 +110,15 @@ public:
         assert(data);
 	assert(0 <= i and i < s1);
 	assert(0 <= j and j < s2);
-        double* start = data + s3*(i*s2+j);
+
+        assert(0 <= i and i < extents.size());
+        i--;
+        j--;
+        auto [offset, y1, length] = extents[i+1];
+        int  delta = (j - y1);
+        assert( 0 <= delta and delta < length);
+        double* start = data + s3*(offset + delta);
+
         return {start};
     }
 
@@ -138,7 +154,6 @@ public:
             offset += length;
         }
 
-        assert(offset == s1 * s2);
         data = new double[offset * s3];
     }
 
