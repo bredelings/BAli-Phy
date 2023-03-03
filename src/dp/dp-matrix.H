@@ -57,6 +57,13 @@ struct MatrixShape: public MatrixSize
     MatrixShape(const MatrixSize& ms, YBoundaries&& yb);
 };
 
+struct Extent
+{
+    int offset;
+    int start_index;
+    int size;
+};
+
 class state_matrix
 {
     MatrixShape shape_;
