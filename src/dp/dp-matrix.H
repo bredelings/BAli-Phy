@@ -42,10 +42,19 @@ struct Cell
     double& prob_for_state(int s)        { return start[s+2]; }
 };
 
-struct MatrixShape
+struct MatrixSize
 {
     int size1;
     int size2;
+};
+
+
+typedef std::vector<std::pair<int,int>> YBoundaries;
+
+struct MatrixShape: public MatrixSize
+{
+    YBoundaries yboundaries;
+    MatrixShape(const MatrixSize& ms, YBoundaries&& yb);
 };
 
 class state_matrix
@@ -136,7 +145,7 @@ public:
     virtual void forward_cell(int,int,Cell*)=0;
 
     /// Compute the forward probabilities between y1(x) and y2(x)
-    void forward_band(const std::vector< std::pair<int,int> >& boundaries);
+    void forward_band();
 
     /// Sample a path from the HMM
     std::vector<int> sample_path() const;
@@ -225,6 +234,6 @@ public:
     virtual ~DPmatrixConstrained() {}
 };
 
-std::vector<std::pair<int,int>> yboundaries_everything(int I, int J);
-std::vector<std::pair<int,int>> yboundaries_simple_band(int I, int J, int bandwidth);
+YBoundaries yboundaries_everything(int I, int J);
+YBoundaries yboundaries_simple_band(int I, int J, int bandwidth);
 #endif

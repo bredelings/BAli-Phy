@@ -101,13 +101,14 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
 	branches[i] = t.find_branch(nodes[0],nodes[i+1]);
 
     // This includes the 2 columns of padding that we asked for above.
-    MatrixShape matrix_shape{dists1.n_columns(), dists23.n_columns()};
+    MatrixSize matrix_size{dists1.n_columns(), dists23.n_columns()};
 
     //-------------- Compute ymin and ymax for each x --------------//
     auto yboundaries = yboundaries_everything(dists1.n_columns()-2, dists23.n_columns()-2);
 
     if (bandwidth)
         yboundaries = yboundaries_simple_band(dists1.n_columns()-2, dists23.n_columns()-2, *bandwidth);
+    MatrixShape matrix_shape(matrix_size, std::move(yboundaries));
 
     auto Matrices = std::make_shared<DPmatrixConstrained>
                     (
@@ -154,7 +155,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     }
 
     //------------------ Compute the DP matrix ---------------------//
-    Matrices->forward_band(yboundaries);
+    Matrices->forward_band();
 
 /*
     //  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23);

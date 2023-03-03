@@ -40,6 +40,12 @@ using std::endl;
 using std::isfinite;
 using std::pair;
 
+MatrixShape::MatrixShape(const MatrixSize& ms, YBoundaries&& yb)
+    :MatrixSize(ms),
+     yboundaries( std::move(yb) )
+{
+}
+
 void state_matrix::clear() 
 {
     delete[] data; 
@@ -108,7 +114,7 @@ inline void DPmatrix::forward_first_cell(Cell C)
 } 
 
 
-vector<pair<int,int>> yboundaries_everything(int I, int J)
+YBoundaries yboundaries_everything(int I, int J)
 {
     return {std::size_t(I+1), {0,J}};
 }
@@ -120,7 +126,7 @@ vector<pair<int,int>> yboundaries_everything(int I, int J)
 // For the lower bounadries, we take the lower  of two lines through (W,0) and (I,J-W).
 // (Then we do max(0,u) to avoid getting outside the rectangle.
 
-vector<pair<int,int>> yboundaries_simple_band(int I, int J, int W)
+YBoundaries yboundaries_simple_band(int I, int J, int W)
 {
     auto yboundaries = vector<pair<int,int>>(I+1);
 
@@ -134,8 +140,10 @@ vector<pair<int,int>> yboundaries_simple_band(int I, int J, int W)
     return yboundaries;
 }
 
-void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries) 
+void DPmatrix::forward_band() 
 {
+    auto& yboundaries = shape().yboundaries;
+
     // note: (x,y) is located at (x+1,y+1) in the matrix.
 
     const int I = size1()-1;
