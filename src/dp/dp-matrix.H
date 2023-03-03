@@ -50,6 +50,8 @@ struct MatrixShape
 
 class state_matrix
 {
+    MatrixShape shape_;
+
     const int s1;
     const int s2;
     const int s3;
@@ -63,6 +65,8 @@ class state_matrix
 public:
 
     void clear();
+
+    const MatrixShape& shape() const {return shape_;}
 
     int size1() const {return s1;}
     int size2() const {return s2;}
@@ -85,8 +89,11 @@ public:
         return {start};
     }
 
-    state_matrix(const MatrixShape& shape,int i3)
-	:s1(shape.size1),s2(shape.size2),s3(i3+2),
+    state_matrix(MatrixShape&& ms,int i3)
+	:shape_(std::move(ms)),
+         s1(shape_.size1),
+         s2(shape_.size2),
+         s3(i3+2),
 	 data(new double[s1*s2*s3])
 	{}
 
@@ -136,7 +143,7 @@ public:
 
     log_double_t path_P(const std::vector<int>& path) const;
 
-    DPmatrix(const MatrixShape& shape, const HMM& M);
+    DPmatrix(MatrixShape&& shape, const HMM& M);
 
     virtual ~DPmatrix() {}
 };
@@ -166,7 +173,8 @@ public:
     log_double_t path_Q_subst(const std::vector<int>& path) const;
 
     /// Construct a DP array from an HMM, emission probabilities, and substitution model
-    DPmatrixEmit(const HMM& M,
+    DPmatrixEmit(MatrixShape&& shape,
+                 const HMM& M,
 		 EmissionProbs&& dists1,
 		 EmissionProbs&& dists2,
 		 const Matrix& frequency);
@@ -208,7 +216,8 @@ public:
     void clear_cell(Cell);
     void forward_cell(int,int,Cell*);
 
-    DPmatrixConstrained(const HMM& M,
+    DPmatrixConstrained(MatrixShape&& shape,
+                        const HMM& M,
 			EmissionProbs&& d1,
 			EmissionProbs&& d2, 
 			const Matrix& f);

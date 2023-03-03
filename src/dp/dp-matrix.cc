@@ -382,10 +382,10 @@ vector<int> DPmatrix::sample_path() const
     return path;
 }
 
-DPmatrix::DPmatrix(const MatrixShape& shape,
+DPmatrix::DPmatrix(MatrixShape&& ms,
 		   const HMM& M)
     :DPengine(M),
-     state_matrix(shape, n_dp_states())
+     state_matrix(std::move(ms), n_dp_states())
 {
     const int I = size1()-1;
     const int J = size2()-1;
@@ -437,13 +437,17 @@ double DPmatrixEmit::emitMM(int i, int j) const
     return total;
 }
 
-DPmatrixEmit::DPmatrixEmit(const HMM& M,
+DPmatrixEmit::DPmatrixEmit(MatrixShape&& ms,
+                           const HMM& M,
 			   EmissionProbs&& d1,
 			   EmissionProbs&& d2,
 			   const Matrix& weighted_frequencies)
-    :DPmatrix({d1.n_columns(), d2.n_columns()}, M),
+    :DPmatrix(std::move(ms), M),
      dists1(std::move(d1)), dists2(std::move(d2))
 {
+    assert(shape().size1 == dists1.n_columns());
+    assert(shape().size2 == dists2.n_columns());
+
     //----- cache G1,G2 emission probabilities -----//
     int scale = 0;
     log_prod prod;
@@ -823,11 +827,12 @@ int DPmatrixConstrained::order_of_computation() const {
 }
 
 
-DPmatrixConstrained::DPmatrixConstrained(const HMM& M,
+DPmatrixConstrained::DPmatrixConstrained(MatrixShape&& ms,
+                                         const HMM& M,
 					 EmissionProbs&& d1,
 					 EmissionProbs&& d2,
 					 const Matrix& f):
-    DPmatrixEmit(M,std::move(d1),std::move(d2),f),
+    DPmatrixEmit(std::move(ms),M,std::move(d1),std::move(d2),f),
     allowed_states(dists2.n_columns())
 { }
 
