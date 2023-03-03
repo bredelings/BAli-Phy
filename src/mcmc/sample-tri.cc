@@ -102,8 +102,14 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
 
     MatrixShape matrix_shape{dists1.n_columns(), dists23.n_columns()};
 
-    shared_ptr<DPmatrixConstrained> 
-	Matrices(new DPmatrixConstrained(std::move(matrix_shape), m123, std::move(dists1), std::move(dists23), *P.WeightedFrequencyMatrix()));
+    auto Matrices = std::make_shared<DPmatrixConstrained>
+                    (
+                        std::move(matrix_shape),
+                        m123,
+                        std::move(dists1),
+                        std::move(dists23),
+                        *P.WeightedFrequencyMatrix()
+                    );
     Matrices->emit1 = 1;
     Matrices->emit2 = 2|4;
 
