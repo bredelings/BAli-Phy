@@ -67,6 +67,7 @@ struct Extent
 class state_matrix
 {
     MatrixShape shape_;
+    std:: vector<Extent> extents;
 
     const int s1;
     const int s2;
@@ -109,9 +110,37 @@ public:
 	:shape_(std::move(ms)),
          s1(shape_.size1),
          s2(shape_.size2),
-         s3(i3+2),
-	 data(new double[s1*s2*s3])
-	{}
+         s3(i3+2)
+    {
+        auto& yboundaries = shape().yboundaries;
+
+        // We need an extent for column -1 also.
+        extents.resize(yboundaries.size()+1);
+
+        int offset = 0;
+        for(int i=0;i<extents.size();i++)
+        {
+            // Column (i-1)
+
+            // Column -1 starts at -1.
+            int y1 = -1;
+            if (i>0)
+                y1 = yboundaries[i-1].first-1;
+
+            // Column I ends at J.
+            int y2 = yboundaries.back().second;
+            if (i < yboundaries.size())
+                y2 = yboundaries[i].second;
+
+            int length = y2 - y1 + 1;
+            assert(length > 0);
+            extents[i] = {offset, y1, length};
+            offset += length;
+        }
+
+        assert(offset == s1 * s2);
+        data = new double[offset * s3];
+    }
 
     state_matrix(const state_matrix&) = delete;
     state_matrix(state_matrix&&) = delete;
