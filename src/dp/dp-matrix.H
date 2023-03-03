@@ -226,7 +226,5 @@ public:
 };
 
 std::vector<std::pair<int,int>> yboundaries_everything(int I, int J);
-std::vector<std::pair<int,int>> yboundaries_everything(const DPmatrix& M);
 std::vector<std::pair<int,int>> yboundaries_simple_band(int I, int J, int bandwidth);
-std::vector<std::pair<int,int>> yboundaries_simple_band(const DPmatrix& M, int bandwidth);
 #endif

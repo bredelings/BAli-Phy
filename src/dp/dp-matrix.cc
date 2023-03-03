@@ -114,14 +114,6 @@ vector<pair<int,int>> yboundaries_everything(int I, int J)
 }
 
 
-vector<pair<int,int>> yboundaries_everything(const DPmatrix& M)
-{
-    const int I = M.seqlength1();
-    const int J = M.seqlength2();
-
-    return yboundaries_everything(I, J);
-}
-
 // The equation through a point (x1,y1) of slope 1 is y = y1 + (x-x1)
 // For the upper boundaries, we take the higher of two lines through (0,W) and (I-W,J).
 // (Then we do min(J,y) to avoid getting outside the rectangle.
@@ -140,14 +132,6 @@ vector<pair<int,int>> yboundaries_simple_band(int I, int J, int W)
     }
 
     return yboundaries;
-}
-
-vector<pair<int,int>> yboundaries_simple_band(const DPmatrix& M, int W)
-{
-    const int I = M.seqlength1();
-    const int J = M.seqlength2();
-
-    return yboundaries_simple_band(I,J,W);
 }
 
 void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries) 

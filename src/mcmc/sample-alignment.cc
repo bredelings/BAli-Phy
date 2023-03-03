@@ -93,8 +93,16 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
     state_emit[2] |= (1<<0);
     state_emit[3] |= 0;
 
+    // This includes the 2 columns of padding that we asked for above.
     MatrixShape matrix_shape{dists1.n_columns(), dists2.n_columns()};
 
+    //-------------- Compute ymin and ymax for each x --------------//
+    auto yboundaries = yboundaries_everything(dists1.n_columns()-2, dists2.n_columns()-2);
+
+    if (bandwidth)
+        yboundaries = yboundaries_simple_band(dists1.n_columns()-2, dists2.n_columns()-2, *bandwidth);
+
+    //------------------ Compute the DP matrix ---------------------//
     auto Matrices = std::make_shared<DPmatrixSimple>
                     (
                          std::move(matrix_shape),
@@ -104,13 +112,6 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
                          *P.WeightedFrequencyMatrix()
                     );
 
-    //-------------- Compute ymin and ymax for each x --------------//
-    auto yboundaries = yboundaries_everything(*Matrices);
-
-    if (bandwidth)
-        yboundaries = yboundaries_simple_band(*Matrices, *bandwidth);
-
-    //------------------ Compute the DP matrix ---------------------//
     Matrices->forward_band(yboundaries);
 
     return Matrices;
