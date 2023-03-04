@@ -53,7 +53,7 @@ state_matrix::~state_matrix()
 
 inline void DPmatrix::clear_cell(Cell C)
 {
-    C.scale() = INT_MIN;
+    C.scale() = INT_MIN/2;
     for(int S=0;S<n_dp_states();S++)
 	C.prob_for_state(S) = 0;
 }
@@ -553,7 +553,7 @@ void DPmatrixSimple::forward_cell(int i2,int j2,Cell* cells)
 // Make this no longer virtual?
 inline void DPmatrixConstrained::clear_cell(Cell C)
 {
-    C.scale() = INT_MIN;
+    C.scale() = INT_MIN/2;
     for(int S=0;S<n_dp_states();S++)
 	C.prob_for_state(S) = 0;
 }
