@@ -60,9 +60,9 @@ class Module
 
     bool optimized = false;
 
-    std::vector<Message> messages;
-
 public:
+
+    std::vector<Message> messages;
 
     LanguageExtensions language_extensions;
 

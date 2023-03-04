@@ -65,8 +65,6 @@ struct global_tc_state
 
     std::vector<Type> defaults;
 
-    std::vector<Message> messages;
-
     // maybe merge with gve by mapping name -> type,con-or-var
     DataConEnv data_con_env;
 
@@ -130,8 +128,8 @@ public:
           std::vector<Type>& defaults()       {return global_state->defaults;}
     const std::vector<Type>& defaults() const {return global_state->defaults;}
 
-          std::vector<Message>& messages()       {return global_state->messages;}
-    const std::vector<Message>& messages() const {return global_state->messages;}
+          std::vector<Message>& messages()       {return this_mod().messages;}
+    const std::vector<Message>& messages() const {return this_mod().messages;}
 
     void record_error(cow_ptr<TypeCheckerContext> context, const Notes& notes);
     void record_error(cow_ptr<TypeCheckerContext> context, const Note& e);
