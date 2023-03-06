@@ -94,7 +94,7 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
                                                 a0 = as IntMap.! b0
                                                 edges = edgesBeforeEdge t to_p
                                                 b1 = edges!0
-                                                b2 = edges!0
+                                                b2 = edges!1
                                             in case numElements edges of
                                                  0 -> sample_leaf_sequence
                                                           parent_seq
