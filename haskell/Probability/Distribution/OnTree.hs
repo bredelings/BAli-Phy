@@ -104,12 +104,19 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
   let a0 = alignment_from_sequences alphabet sequences
       (compressed_alignment,column_counts,mapping) = compress_alignment $ a0
+
+      compressed_indices = sequences_from_alignment compressed_alignment
+      compressed_names = map Text.pack $ sequence_names compressed_alignment
+      compressed_sequences = zip compressed_names compressed_indices
+
       n_nodes = numNodes tree
       taxa = fmap (cMaybe . fmap (\(Text s) -> s)) $ get_labels tree
-      find_sequence label = find (\s -> sequence_name s == label) sequences
-      node_sequences' = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
-                                                                                                Nothing ->  error "No label")
-      node_sequences = fmap (sequence_to_indices alphabet . fromJust) node_sequences'
+      node_sequences = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of
+                                                                     Nothing ->  error "No label"
+                                                                     Just label ->
+                                                                         case lookup label compressed_sequences of
+                                                                             Just indices -> indices
+                                                                             Nothing -> error $ "No such sequence " ++ Text.unpack label)
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
