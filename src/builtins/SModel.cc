@@ -1693,13 +1693,11 @@ namespace substitution {
     object_ptr<const Likelihood_Cache_Branch>
     peel_internal_branch_SEV(const Likelihood_Cache_Branch& LCB1,
 			     const Likelihood_Cache_Branch& LCB2,
-			     const EVector& transition_P,
-			     const Matrix& F);
+			     const EVector& transition_P);
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_deg2_branch_SEV(const Likelihood_Cache_Branch& LCB1,
-                         const EVector& transition_P,
-                         const Matrix& /*F*/);
+                         const EVector& transition_P);
 }
 
 extern "C" closure builtin_function_alignment_index2(OperationArgs& Args)
@@ -1745,8 +1743,7 @@ extern "C" closure builtin_function_peel_internal_branch_SEV(OperationArgs& Args
 
     return substitution::peel_internal_branch_SEV(arg0.as_<Likelihood_Cache_Branch>(),
 						  arg1.as_<Likelihood_Cache_Branch>(),
-						  arg2.as_<EVector>(),
-						  arg3.as_<Box<Matrix>>());
+						  arg2.as_<EVector>());
 }
 
 extern "C" closure builtin_function_peel_deg2_branch_SEV(OperationArgs& Args)
@@ -1756,8 +1753,7 @@ extern "C" closure builtin_function_peel_deg2_branch_SEV(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
 
     return substitution::peel_deg2_branch_SEV(arg0.as_<Likelihood_Cache_Branch>(),
-                                              arg1.as_<EVector>(),
-                                              arg2.as_<Box<Matrix>>());
+                                              arg1.as_<EVector>());
 }
 
 namespace substitution {

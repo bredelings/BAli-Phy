@@ -1227,8 +1227,7 @@ namespace substitution {
     object_ptr<const Likelihood_Cache_Branch>
     peel_internal_branch_SEV(const Likelihood_Cache_Branch& LCB1,
                              const Likelihood_Cache_Branch& LCB2,
-                             const EVector& transition_P,
-                             const Matrix& /*F*/)
+                             const EVector& transition_P)
     {
         total_peel_internal_branches++;
 
@@ -1317,8 +1316,7 @@ namespace substitution {
     // Generalize to degree n>=1?
     object_ptr<const Likelihood_Cache_Branch>
     peel_deg2_branch_SEV(const Likelihood_Cache_Branch& LCB1,
-                         const EVector& transition_P,
-                         const Matrix& /*F*/)
+                         const EVector& transition_P)
     {
         total_peel_internal_branches++;
 
