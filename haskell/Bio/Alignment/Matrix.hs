@@ -31,7 +31,7 @@ indices_from_alignment a = list_from_vector $ builtin_indices_from_alignment a
 
 -- use isequences instead of "sequences" since we aren't using C++ Box<sequence> here.
 isequences_from_alignment a = zip (sequence_names a) (indices_from_alignment a)
-                           
+
 
 foreign import bpcall "Alignment:reorder_alignment" builtin_reorder_alignment :: EVector CPPString -> AlignmentMatrix -> AlignmentMatrix
 reorder_alignment :: [String] -> AlignmentMatrix -> AlignmentMatrix
