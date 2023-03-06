@@ -1077,7 +1077,7 @@ parameters_constants::parameters_constants(int n_partitions, const SequenceTree&
                                            const vector<optional<int>>& s_mapping,
                                            const vector<optional<int>>& i_mapping,
                                            const vector<optional<int>>& scale_mapping)
-    :n_scales(num_distinct(scale_mapping))
+    :n_scales( t.n_branches() ? num_distinct(scale_mapping) : 0)
 {
     // check that smodel mapping has correct size.
     if (s_mapping.size() != n_partitions)
