@@ -253,10 +253,16 @@ jobs:
         cd
         echo ::endgroup::
 
-        echo ::group::testiphy
+        echo ::group::testiphy variable A
         git clone https://gitlab.com/testiphy/testiphy.git
         cd testiphy
         ./testiphy ${BALIPHY} --seed=$seed
+        echo ::endgroup::
+
+        echo ::group::testiphy fixed A
+        git clone https://gitlab.com/testiphy/testiphy.git
+        cd testiphy
+        ./testiphy ${BALIPHY} --seed=$seed -Inone
         echo ::endgroup::
 
     - name: Upload tests if they failed
