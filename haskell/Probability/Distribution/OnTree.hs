@@ -60,9 +60,12 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
       as = pairwise_alignments alignment
       taxa = fmap (cMaybe . fmap (\(Text s) -> s)) $ get_labels tree
       find_sequence label = find (\s -> sequence_name s == label) sequences
-      node_sequences' = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of Just label -> find_sequence label;
-                                                                                                Nothing ->  error "No label")
-      node_sequences = fmap (sequence_to_indices alphabet . fromJust) node_sequences'
+      node_sequences = getNodesSet tree & IntMap.fromSet (\node -> case get_label tree node of
+                                                                     Nothing ->  error "No label"
+                                                                     Just label ->
+                                                                         case find_sequence label of
+                                                                           Just sequence -> sequence_to_indices alphabet sequence
+                                                                           Nothing -> error $ "No such sequence " ++ Text.unpack label)
       alphabet = getAlphabet smodel
       smap   = stateLetters smodel
       smodel_on_tree = SingleBranchLengthModel tree smodel
