@@ -104,10 +104,7 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
   let a0 = alignment_from_sequences alphabet sequences
       (compressed_alignment,column_counts,mapping) = compress_alignment $ a0
-
-      compressed_indices = sequences_from_alignment compressed_alignment
-      compressed_names = map Text.pack $ sequence_names compressed_alignment
-      compressed_sequences = zip compressed_names compressed_indices
+      compressed_sequences = isequences_from_alignment compressed_alignment
 
       n_nodes = numNodes tree
       taxa = fmap (cMaybe . fmap (\(Text s) -> s)) $ get_labels tree

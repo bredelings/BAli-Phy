@@ -3,6 +3,8 @@ module Bio.Alignment.Matrix where
 import Bio.Sequence
 import Bio.Alphabet
 import Data.BitVector
+import Data.Text (Text)
+import qualified Data.Text as Text
 
 data AlignmentMatrix
 
@@ -18,15 +20,18 @@ foreign import bpcall "Alignment:alignment_from_sequences" builtin_alignment_fro
 alignment_from_sequences :: Alphabet -> [Sequence] -> AlignmentMatrix
 alignment_from_sequences a seqs = builtin_alignment_from_sequences a (list_to_vector seqs)
 
-foreign import bpcall "Alignment:sequences_from_alignment" builtin_sequences_from_alignment :: AlignmentMatrix -> EVector (EVector Int)
-
-sequences_from_alignment :: AlignmentMatrix -> [ EVector Int ]
-sequences_from_alignment a = list_from_vector $ builtin_sequences_from_alignment a
 
 foreign import bpcall "Alignment:sequence_names" builtin_sequence_names :: AlignmentMatrix -> EVector CPPString
+sequence_names :: AlignmentMatrix -> [Text]
+sequence_names a = map Text.Text $ list_from_vector $ builtin_sequence_names a
 
-sequence_names :: AlignmentMatrix -> [String]
-sequence_names a = map unpack_cpp_string $ list_from_vector $ builtin_sequence_names a
+foreign import bpcall "Alignment:sequences_from_alignment" builtin_indices_from_alignment :: AlignmentMatrix -> EVector (EVector Int)
+indices_from_alignment :: AlignmentMatrix -> [ EVector Int ]
+indices_from_alignment a = list_from_vector $ builtin_indices_from_alignment a
+
+-- use isequences instead of "sequences" since we aren't using C++ Box<sequence> here.
+isequences_from_alignment a = zip (sequence_names a) (indices_from_alignment a)
+                           
 
 foreign import bpcall "Alignment:reorder_alignment" builtin_reorder_alignment :: EVector CPPString -> AlignmentMatrix -> AlignmentMatrix
 reorder_alignment :: [String] -> AlignmentMatrix -> AlignmentMatrix
