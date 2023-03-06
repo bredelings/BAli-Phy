@@ -31,8 +31,8 @@ foreign import bpcall "SModel:sample_leaf_node_sequence" sample_leaf_sequence ::
 -- peeling for SEV
 foreign import bpcall "Alignment:bitmask_from_alignment" bitmask_from_alignment :: AlignmentMatrix -> Int -> CBitVector
 foreign import bpcall "SModel:peel_leaf_branch_SEV" peel_leaf_branch_SEV :: EVector Int -> Alphabet -> EVector (Matrix Double) -> CBitVector -> EVector Int -> CondLikes
-foreign import bpcall "SModel:peel_internal_branch_SEV" peel_internal_branch_SEV :: CondLikes -> CondLikes -> EVector (Matrix Double) -> Matrix Double -> CondLikes
-foreign import bpcall "SModel:peel_deg2_branch_SEV" peel_deg2_branch_SEV :: CondLikes -> EVector (Matrix Double) -> Matrix Double -> CondLikes
+foreign import bpcall "SModel:peel_internal_branch_SEV" peel_internal_branch_SEV :: CondLikes -> CondLikes -> EVector (Matrix Double) -> CondLikes
+foreign import bpcall "SModel:peel_deg2_branch_SEV" peel_deg2_branch_SEV :: CondLikes -> EVector (Matrix Double) -> CondLikes
 foreign import bpcall "SModel:calc_root_probability_SEV" calc_root_probability_SEV :: CondLikes -> CondLikes -> CondLikes -> Matrix Double -> EVector Int -> LogDouble
 foreign import bpcall "SModel:calc_root_deg2_probability_SEV" calc_root_deg2_probability_SEV :: CondLikes -> CondLikes -> Matrix Double -> EVector Int -> LogDouble
 foreign import bpcall "SModel:peel_likelihood_2_SEV" peel_likelihood_2_SEV :: AlignmentMatrix -> Alphabet -> EVector (Matrix Double) -> Matrix Double -> EVector Int -> LogDouble
@@ -115,7 +115,7 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
                                                           f
     in ancestor_seqs
 
-cached_conditional_likelihoods_SEV t seqs alpha ps f a smap =
+cached_conditional_likelihoods_SEV t seqs alpha ps a smap =
     let lc    = mkArray (2*numBranches t) lcf
         lcf b = let bb = b `mod` (numBranches t)
                     edges = edgesBeforeEdge t b
@@ -123,8 +123,8 @@ cached_conditional_likelihoods_SEV t seqs alpha ps f a smap =
                     b2 = edges!1
                 in case numElements edges of
                      0 -> peel_leaf_branch_SEV (seqs IntMap.! sourceNode t b) alpha (ps!bb) (bitmask_from_alignment a $ sourceNode t b) smap
-                     1 -> peel_deg2_branch_SEV (lc!b1) (ps!bb) f
-                     2 -> peel_internal_branch_SEV (lc!b1) (lc!b2) (ps!bb) f
+                     1 -> peel_deg2_branch_SEV (lc!b1) (ps!bb)
+                     2 -> peel_internal_branch_SEV (lc!b1) (lc!b2) (ps!bb)
     in lc
 
 peel_likelihood_SEV t cl f root counts = let branches_in = fmap (reverseEdge t) (edgesOutOfNode t root)

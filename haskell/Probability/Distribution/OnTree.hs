@@ -127,7 +127,6 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
               node_sequences
               alphabet
               transition_ps
-              f
               compressed_alignment
               smap
       likelihood | n_nodes > 2    = peel_likelihood_SEV tree cls f subst_root column_counts

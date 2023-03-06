@@ -1739,7 +1739,6 @@ extern "C" closure builtin_function_peel_internal_branch_SEV(OperationArgs& Args
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
-    auto arg3 = Args.evaluate(3);
 
     return substitution::peel_internal_branch_SEV(arg0.as_<Likelihood_Cache_Branch>(),
 						  arg1.as_<Likelihood_Cache_Branch>(),
@@ -1750,7 +1749,6 @@ extern "C" closure builtin_function_peel_deg2_branch_SEV(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
-    auto arg2 = Args.evaluate(2);
 
     return substitution::peel_deg2_branch_SEV(arg0.as_<Likelihood_Cache_Branch>(),
                                               arg1.as_<EVector>());
