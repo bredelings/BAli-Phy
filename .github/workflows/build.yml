@@ -253,15 +253,14 @@ jobs:
         cd
         echo ::endgroup::
 
-        echo ::group::testiphy variable A
         git clone https://gitlab.com/testiphy/testiphy.git
         cd testiphy
+
+        echo ::group::testiphy variable A
         ./testiphy ${BALIPHY} --seed=$seed
         echo ::endgroup::
 
         echo ::group::testiphy fixed A
-        git clone https://gitlab.com/testiphy/testiphy.git
-        cd testiphy
         ./testiphy ${BALIPHY} --seed=$seed -Inone
         echo ::endgroup::
 
