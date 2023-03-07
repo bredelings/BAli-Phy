@@ -1897,7 +1897,7 @@ extern "C" closure builtin_function_sample_root_deg2_sequence_SEV(OperationArgs&
                                                        arg3.as_<EVector>());
 }
 
-extern "C" closure builtin_function_sample_internal_node_sequence(OperationArgs& Args)
+extern "C" closure builtin_function_sample_internal_sequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
@@ -1918,7 +1918,7 @@ extern "C" closure builtin_function_sample_internal_node_sequence(OperationArgs&
                                                        arg7.as_<Box<Matrix>>());
 }
 
-extern "C" closure builtin_function_sample_internal_node_sequence_SEV(OperationArgs& Args)
+extern "C" closure builtin_function_sample_internal_sequence_SEV(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
@@ -1933,7 +1933,7 @@ extern "C" closure builtin_function_sample_internal_node_sequence_SEV(OperationA
                                                            arg4.as_<EVector>());
 }
 
-extern "C" closure builtin_function_sample_deg2_node_sequence_SEV(OperationArgs& Args)
+extern "C" closure builtin_function_sample_deg2_sequence_SEV(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
@@ -1946,7 +1946,7 @@ extern "C" closure builtin_function_sample_deg2_node_sequence_SEV(OperationArgs&
                                                        arg3.as_<EVector>());
 }
 
-extern "C" closure builtin_function_sample_leaf_node_sequence(OperationArgs& Args)
+extern "C" closure builtin_function_sample_leaf_sequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
@@ -1965,7 +1965,7 @@ extern "C" closure builtin_function_sample_leaf_node_sequence(OperationArgs& Arg
                                                    arg6.as_<Box<Matrix>>());
 }
 
-extern "C" closure builtin_function_sample_leaf_node_sequence_SEV(OperationArgs& Args)
+extern "C" closure builtin_function_sample_leaf_sequence_SEV(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);

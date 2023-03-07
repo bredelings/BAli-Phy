@@ -15,35 +15,35 @@ import qualified Data.IntMap as IntMap
 data CondLikes
 
 -- peeling for connected-CLVs
-foreign import bpcall "SModel:peel_leaf_branch" peel_leaf_branch :: EVector Int -> Alphabet -> EVector (Matrix Double) -> EVector Int -> CondLikes
-foreign import bpcall "SModel:alignment_index2" alignment_index2 :: PairwiseAlignment -> PairwiseAlignment -> Matrix Int
-foreign import bpcall "SModel:alignment_index3" alignment_index3 :: PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Int
-foreign import bpcall "SModel:peel_internal_branch" peel_internal_branch :: CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
-foreign import bpcall "SModel:calc_root_probability" calc_root_probability :: CondLikes -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> LogDouble
-foreign import bpcall "SModel:peel_likelihood_2" peel_likelihood_2 :: EVector Int -> EVector Int -> Alphabet -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> LogDouble
-foreign import bpcall "SModel:peel_likelihood_1" peel_likelihood_1 :: EVector Int -> Alphabet -> Matrix Double -> LogDouble
+foreign import bpcall "SModel:" peel_leaf_branch :: EVector Int -> Alphabet -> EVector (Matrix Double) -> EVector Int -> CondLikes
+foreign import bpcall "SModel:" alignment_index2 :: PairwiseAlignment -> PairwiseAlignment -> Matrix Int
+foreign import bpcall "SModel:" alignment_index3 :: PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Int
+foreign import bpcall "SModel:" peel_internal_branch :: CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
+foreign import bpcall "SModel:" calc_root_probability :: CondLikes -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> LogDouble
+foreign import bpcall "SModel:" peel_likelihood_2 :: EVector Int -> EVector Int -> Alphabet -> PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> LogDouble
+foreign import bpcall "SModel:" peel_likelihood_1 :: EVector Int -> Alphabet -> Matrix Double -> LogDouble
 
 -- ancestral sequence sampling for connected-CLVs
-foreign import bpcall "SModel:sample_root_sequence" sample_root_sequence :: CondLikes -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
-foreign import bpcall "SModel:sample_internal_node_sequence" sample_internal_sequence :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
-foreign import bpcall "SModel:sample_leaf_node_sequence" sample_leaf_sequence :: VectorPairIntInt -> EVector (Matrix Double) -> EVector Int -> Alphabet -> EVector Int -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
+foreign import bpcall "SModel:" sample_root_sequence :: CondLikes -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
+foreign import bpcall "SModel:" sample_internal_sequence :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> CondLikes -> PairwiseAlignment -> PairwiseAlignment -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
+foreign import bpcall "SModel:" sample_leaf_sequence :: VectorPairIntInt -> EVector (Matrix Double) -> EVector Int -> Alphabet -> EVector Int -> PairwiseAlignment -> Matrix Double -> VectorPairIntInt
 
 -- peeling for SEV
-foreign import bpcall "Alignment:bitmask_from_alignment" bitmask_from_alignment :: AlignmentMatrix -> Int -> CBitVector
-foreign import bpcall "SModel:peel_leaf_branch_SEV" peel_leaf_branch_SEV :: EVector Int -> Alphabet -> EVector (Matrix Double) -> CBitVector -> EVector Int -> CondLikes
-foreign import bpcall "SModel:peel_internal_branch_SEV" peel_internal_branch_SEV :: CondLikes -> CondLikes -> EVector (Matrix Double) -> CondLikes
-foreign import bpcall "SModel:peel_deg2_branch_SEV" peel_deg2_branch_SEV :: CondLikes -> EVector (Matrix Double) -> CondLikes
-foreign import bpcall "SModel:calc_root_probability_SEV" calc_root_probability_SEV :: CondLikes -> CondLikes -> CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "SModel:calc_root_deg2_probability_SEV" calc_root_deg2_probability_SEV :: CondLikes -> CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "SModel:peel_likelihood_2_SEV" peel_likelihood_2_SEV :: AlignmentMatrix -> Alphabet -> EVector (Matrix Double) -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "SModel:peel_likelihood_1_SEV" peel_likelihood_1_SEV :: AlignmentMatrix -> Alphabet -> Matrix Double -> EVector Int -> LogDouble
+foreign import bpcall "Alignment:" bitmask_from_alignment :: AlignmentMatrix -> Int -> CBitVector
+foreign import bpcall "SModel:" peel_leaf_branch_SEV :: EVector Int -> Alphabet -> EVector (Matrix Double) -> CBitVector -> EVector Int -> CondLikes
+foreign import bpcall "SModel:" peel_internal_branch_SEV :: CondLikes -> CondLikes -> EVector (Matrix Double) -> CondLikes
+foreign import bpcall "SModel:" peel_deg2_branch_SEV :: CondLikes -> EVector (Matrix Double) -> CondLikes
+foreign import bpcall "SModel:" calc_root_probability_SEV :: CondLikes -> CondLikes -> CondLikes -> Matrix Double -> EVector Int -> LogDouble
+foreign import bpcall "SModel:" calc_root_deg2_probability_SEV :: CondLikes -> CondLikes -> Matrix Double -> EVector Int -> LogDouble
+foreign import bpcall "SModel:" peel_likelihood_2_SEV :: AlignmentMatrix -> Alphabet -> EVector (Matrix Double) -> Matrix Double -> EVector Int -> LogDouble
+foreign import bpcall "SModel:" peel_likelihood_1_SEV :: AlignmentMatrix -> Alphabet -> Matrix Double -> EVector Int -> LogDouble
 
 -- ancestral sequence sampling for SEV
-foreign import bpcall "SModel:sample_root_sequence_SEV" sample_root_sequence_SEV :: CondLikes -> CondLikes -> CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
-foreign import bpcall "SModel:sample_root_deg2_sequence_SEV" sample_root_deg2_sequence_SEV :: CondLikes -> CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
-foreign import bpcall "SModel:sample_internal_node_sequence_SEV" sample_internal_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> CondLikes -> EVector Int -> VectorPairIntInt
-foreign import bpcall "SModel:sample_deg2_node_sequence_SEV" sample_deg2_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> EVector Int -> VectorPairIntInt
-foreign import bpcall "SModel:sample_leaf_node_sequence_SEV" sample_leaf_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> EVector Int -> CondLikes -> Alphabet -> EVector Int -> EVector Int -> VectorPairIntInt
+foreign import bpcall "SModel:" sample_root_sequence_SEV :: CondLikes -> CondLikes -> CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
+foreign import bpcall "SModel:" sample_root_deg2_sequence_SEV :: CondLikes -> CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
+foreign import bpcall "SModel:" sample_internal_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> CondLikes -> EVector Int -> VectorPairIntInt
+foreign import bpcall "SModel:" sample_deg2_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> CondLikes -> EVector Int -> VectorPairIntInt
+foreign import bpcall "SModel:" sample_leaf_sequence_SEV :: VectorPairIntInt -> EVector (Matrix Double) -> EVector Int -> CondLikes -> Alphabet -> EVector Int -> EVector Int -> VectorPairIntInt
 
 
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = mkArray (2*numBranches t) lcf
