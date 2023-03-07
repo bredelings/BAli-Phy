@@ -204,9 +204,8 @@ public:
     const_symbol_ptr lookup_symbol(const std::string&) const;
 
     const_symbol_ptr lookup_resolved_symbol(const std::string&) const;
-    const symbol_info* lookup_resolved_symbol_(const std::string&) const;
     // This should just be for local symbols
-          symbol_info* lookup_resolved_symbol_(const std::string&);
+    symbol_ptr lookup_local_symbol(const std::string&);
 
     Hs::Var get_external_var(const std::string& s) const;
 
@@ -215,8 +214,7 @@ public:
     type_info lookup_type(const std::string&) const;
 
     std::optional<type_info> lookup_resolved_type(const std::string&) const;
-    const type_info* lookup_resolved_type_(const std::string&) const;
-          type_info* lookup_resolved_type_(const std::string&);
+    type_info* lookup_local_type(const std::string&);
 
     explicit Module(const std::string&);
 

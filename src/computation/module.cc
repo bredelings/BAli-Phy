@@ -1396,22 +1396,14 @@ const_symbol_ptr Module::lookup_resolved_symbol(const std::string& symbol_name) 
         return iter->second;
 }
 
-const symbol_info* Module::lookup_resolved_symbol_(const std::string& symbol_name) const
+symbol_ptr Module::lookup_local_symbol(const std::string& symbol_name)
 {
+    assert( get_module_name(symbol_name) == name);
     auto iter = symbols.find(symbol_name);
     if (iter == symbols.end())
         return nullptr;
     else
-        return iter->second.get();
-}
-
-symbol_info* Module::lookup_resolved_symbol_(const std::string& symbol_name)
-{
-    auto iter = symbols.find(symbol_name);
-    if (iter == symbols.end())
-        return nullptr;
-    else
-        return iter->second.get();
+        return iter->second;
 }
 
 OpInfo Module::get_operator(const string& name) const
@@ -1468,17 +1460,10 @@ optional<type_info> Module::lookup_resolved_type(const std::string& type_name) c
         return iter->second;
 }
 
-const type_info* Module::lookup_resolved_type_(const std::string& type_name) const
+type_info* Module::lookup_local_type(const std::string& type_name)
 {
-    auto iter = types.find(type_name);
-    if (iter == types.end())
-        return nullptr;
-    else
-        return &iter->second;
-}
+    assert( get_module_name(type_name) == name);
 
-type_info* Module::lookup_resolved_type_(const std::string& type_name)
-{
     auto iter = types.find(type_name);
     if (iter == types.end())
         return nullptr;
