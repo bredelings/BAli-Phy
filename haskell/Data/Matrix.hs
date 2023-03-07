@@ -6,7 +6,8 @@ import Text.Show
 
 fromLists xss = fromVectors $ list_to_vector $ map list_to_vector xss
 
-foreign import bpcall "SModel:scaleMatrix" scaleMatrix :: a -> Matrix a -> Matrix a
+foreign import bpcall "SModel:transpose" tr :: Matrix a -> Matrix a
+foreign import bpcall "SModel:" scaleMatrix :: a -> Matrix a -> Matrix a
 foreign import bpcall "SModel:elementwise_multiply" (%*%) :: Matrix Double -> Matrix Double -> Matrix Double
 foreign import bpcall "Prelude:show" showMatrix :: Matrix a -> CPPString
 
