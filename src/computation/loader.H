@@ -11,7 +11,7 @@
 
 class module_loader: public simplifier_options
 {
-    mutable std::map<std::string, Module> modules;
+    mutable std::map<std::string, std::shared_ptr<const Module>> modules;
 
 public:
     std::vector<std::filesystem::path> plugins_path;
@@ -24,8 +24,8 @@ public:
     std::filesystem::path find_plugin(const std::string& plugin_name) const;
     /// Load the module file from disk.
     /// Add the hard-coded elements to the module.
-    Module load_module_from_file(const std::filesystem::path&) const;
-    Module load_module(const std::string&) const;
+    std::shared_ptr<Module> load_module_from_file(const std::filesystem::path&) const;
+    std::shared_ptr<Module> load_module(const std::string&) const;
     module_loader(const std::vector<std::filesystem::path>& paths);
 };
 

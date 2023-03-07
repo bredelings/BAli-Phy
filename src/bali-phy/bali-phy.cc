@@ -531,8 +531,8 @@ int main(int argc,char* argv[])
 
             Program P(L);
             P.add(M);
-            auto& M2 = P.get_module(M.name);
-            for(const auto& [name, body]: M2.code_defs())
+            auto M2 = P.get_module(M->name);
+            for(const auto& [name, body]: M2->code_defs())
             {
                 std::cerr<<"size = "<<simple_size(body)<<"   "<<name<<" = "<<body<<std::endl;
             }
@@ -617,7 +617,7 @@ int main(int argc,char* argv[])
 
                 auto m = P.get_module_loader()->load_module_from_file(filename);
                 P.add(m);
-                P.main = m.name + ".main";
+                P.main = m->name + ".main";
             }
             else if (args.count("Model"))
             {

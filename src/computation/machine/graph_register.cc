@@ -2804,7 +2804,7 @@ void reg_heap::allocate_identifiers_for_program()
 {
     // 1. Give each identifier a pointer to an unused location; define parameter bodies.
     for(auto& M: *program)
-        for(const auto& [x, _]: M.code_defs())
+        for(const auto& [x, _]: M->code_defs())
             add_identifier(x);
 
     // Since the body for any identifier could reference the body for any other, we have to
@@ -2812,7 +2812,7 @@ void reg_heap::allocate_identifiers_for_program()
 
     // 2. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
     for(auto& M: *program)
-        for(const auto& [x, body]: M.code_defs())
+        for(const auto& [x, body]: M->code_defs())
         {
             // get the root for each identifier
             auto loc = identifiers.find(x);

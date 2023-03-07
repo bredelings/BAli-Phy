@@ -73,7 +73,7 @@ public:
     
     Haskell::Module module;
 
-    std::map<std::string, const Module*> transitively_imported_modules;
+    std::map<std::string, std::shared_ptr<const Module>> transitively_imported_modules;
 
     std::shared_ptr<TypeChecker> tc_state;
 
@@ -204,8 +204,11 @@ public:
     const_symbol_ptr lookup_symbol(const std::string&) const;
 
     const_symbol_ptr lookup_resolved_symbol(const std::string&) const;
-    // This should just be for local symbols
-    symbol_ptr lookup_local_symbol(const std::string&);
+
+    const_symbol_ptr lookup_local_symbol(const std::string&) const;
+          symbol_ptr lookup_local_symbol(const std::string&);
+
+    const_symbol_ptr lookup_external_symbol(const std::string&) const;
 
     Hs::Var get_external_var(const std::string& s) const;
 

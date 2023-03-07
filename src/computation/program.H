@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <optional>
 #include "computation/expression/expression_ref.H"
 #include "computation/fresh_vars.H"
 
@@ -13,7 +14,7 @@ class module_loader;
 
 class Module;
 
-class Program: public std::vector<Module>
+class Program: public std::vector<std::shared_ptr<Module>>
 {
     std::shared_ptr<module_loader> loader;
 
@@ -21,7 +22,7 @@ class Program: public std::vector<Module>
 
     void compile(int i);
 
-    int find_module(const std::string& module_name) const;
+    std::optional<int> find_module(const std::string& module_name) const;
 
     int count_module(const std::string& module_name) const;
 
@@ -35,15 +36,13 @@ public:
 
     std::optional<std::string> main;
 
-          std::vector<Module>& modules();
-
-    const std::vector<Module>& modules() const;
+    std::vector<std::shared_ptr<Module>>& modules();
 
     FreshVarState& fresh_var_state() const {return fresh_var_state_;}
 
-    void add(const Module& M);
+    void add(const std::shared_ptr<Module>& M);
 
-    void add(const std::vector<Module>& modules);
+    void add(const std::vector<std::shared_ptr<Module>>& modules);
 
     void add(const std::string& name);
 
@@ -57,7 +56,9 @@ public:
 
     bool contains_module(const std::string& module_name) const;
 
-    const Module& get_module(const std::string& module_name) const;
+    std::shared_ptr<const Module> get_module(const std::string& module_name) const;
+
+    std::shared_ptr<Module> get_module(const std::string& module_name);
 
     const std::shared_ptr<module_loader>& get_module_loader() const;
 

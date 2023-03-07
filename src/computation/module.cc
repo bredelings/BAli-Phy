@@ -83,7 +83,7 @@ symbol_ptr Module::add_symbol(const symbol_info& S)
 
 void Module::add_alias(const string& identifier_name, const const_symbol_ptr& resolved_symbol)
 {
-    if (not symbols.count(resolved_symbol->name))
+    if (not lookup_resolved_symbol(resolved_symbol->name))
         throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_symbol->name<<"' in module '"<<name<<"' because '"<<resolved_symbol->name<<"' is neither declared nor imported.";
 
     // Don't add duplicate aliases.
@@ -181,13 +181,11 @@ void Module::import_symbol(const const_symbol_ptr& S, const string& modid, bool 
     if (not is_qualified_symbol(S->name))
         throw myexception()<<"Imported symbols must have qualified names.";
 
-    // Add the symbol.
-    auto S2p = add_symbol(*S);
     // Add the alias for qualified name.
-    add_alias(modid+"."+get_unqualified_name(S->name), S2p);
+    add_alias(modid+"."+get_unqualified_name(S->name), S);
     // Add the alias for unqualified name.
     if (not qualified)
-        add_alias(get_unqualified_name(S->name), S2p);
+        add_alias(get_unqualified_name(S->name), S);
 }
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
@@ -203,13 +201,6 @@ void Module::import_type(const type_info& T, const string& modid, bool qualified
     // Add the alias for unqualified name.
     if (not qualified)
         add_type_alias(get_unqualified_name(T.name), T.name);
-
-    // Import default methods if its a class
-    if (auto c = T.is_class())
-    {
-        for(auto& [_,dmvar]: c->info->default_methods)
-            add_symbol( *m2_exports.at(dmvar.name) );
-    }
 }
 
 bool contains_import(const Haskell::Export& e, const string& name)
@@ -232,10 +223,10 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
 {
     auto& [imploc, impdecl] = limpdecl;
 
-    auto& M2 = P.get_module( unloc(impdecl.modid) );
+    auto M2 = P.get_module( unloc(impdecl.modid) );
 
-    transitively_imported_modules.insert({M2.name, &M2});
-    for(auto& [mod_name, mod]: M2.transitively_imported_modules)
+    transitively_imported_modules.insert({M2->name, M2});
+    for(auto& [mod_name, mod]: M2->transitively_imported_modules)
         transitively_imported_modules.insert({mod_name, mod});
 
     auto modid = unloc(impdecl.modid);
@@ -244,8 +235,8 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
     bool qualified = impdecl.qualified;
     assert(modid != name);
 
-    auto& m2_exports = M2.exported_symbols();
-    auto& m2_exported_types = M2.exported_types();
+    auto& m2_exports = M2->exported_symbols();
+    auto& m2_exported_types = M2->exported_types();
 
     // import modid
     if (not impdecl.impspec)
@@ -375,40 +366,40 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
         }
     }
 
-    if (M2.tc_state)
+    if (M2->tc_state)
     {
         // So.. if we import a data type declaration, do we ALSO have to import any types that its constructors reference?
 
         // 1. Import info about arity and kind of type constructors..
-        for(auto& [tycon,info]: M2.tc_state->tycon_env())
+        for(auto& [tycon,info]: M2->tc_state->tycon_env())
         {
             if (not tc_state->tycon_env().count(tycon))
                 tc_state->tycon_env().insert({tycon,info});
         }
 
         // 2. Import information about the type of constructors
-        for(auto& [cname,ctype]: M2.tc_state->data_con_env())
+        for(auto& [cname,ctype]: M2->tc_state->data_con_env())
         {
             if (not tc_state->data_con_env().count(cname))
                 tc_state->data_con_env() = tc_state->data_con_env().insert({cname,ctype});
         }
 
         // 3. Import information about type synonyms
-        for(auto& [tname,tinfo]: M2.tc_state->type_syn_env())
+        for(auto& [tname,tinfo]: M2->tc_state->type_syn_env())
         {
             if (not tc_state->type_syn_env().count(tname))
                 tc_state->type_syn_env().insert({tname,tinfo});
         }
 
         // 5. Import information about instances
-        for(auto& [dfun, dfun_type]: M2.tc_state->instance_env())
+        for(auto& [dfun, dfun_type]: M2->tc_state->instance_env())
         {
             if (not tc_state->instance_env().count(dfun))
                 tc_state->instance_env().insert({dfun, dfun_type});
         }
 
         // 6. Import information about type families
-        for(auto& [tf_con, tf_info]: M2.tc_state->type_fam_env())
+        for(auto& [tf_con, tf_info]: M2->tc_state->type_fam_env())
         {
             if (not tc_state->type_fam_env().count(tf_con))
                 tc_state->type_fam_env().insert({tf_con, tf_info});
@@ -423,7 +414,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
     }
 
     // Add info for types that are referenced, perhaps indirectly, from exported values or types.
-    for(const auto& [_,T]: M2.required_types())
+    for(const auto& [_,T]: M2->required_types())
         types.insert({T.name, T});
 }
 
@@ -903,9 +894,9 @@ pair< map<var, expression_ref>, set<var> > Module::import_small_decls(const Prog
     // Collect small decls from imported modules;
     for(auto& imp_mod_name: dependencies())
     {
-        auto& M = P.get_module(imp_mod_name);
-        small_decls_in.insert(M.small_decls_out.begin(), M.small_decls_out.end());
-        small_decls_in_free_vars.insert(M.small_decls_out_free_vars.begin(), M.small_decls_out_free_vars.end());
+        auto M = P.get_module(imp_mod_name);
+        small_decls_in.insert(M->small_decls_out.begin(), M->small_decls_out.end());
+        small_decls_in_free_vars.insert(M->small_decls_out_free_vars.begin(), M->small_decls_out_free_vars.end());
     }
 
     add_constructor(small_decls_in, constructor(":",2));
@@ -1381,12 +1372,25 @@ const_symbol_ptr Module::lookup_symbol(const std::string& name) const
 
 const_symbol_ptr Module::lookup_resolved_symbol(const std::string& symbol_name) const
 {
+    // 1. Handle builtin names
     if (is_haskell_builtin_con_name(symbol_name))
         return lookup_builtin_symbol(symbol_name).first;
 
+    // 2. Handle local names
+    else if (name == get_module_name(symbol_name))
+        return lookup_local_symbol(symbol_name);
+
+    // 3. Handle external names
+    else
+        return lookup_external_symbol(symbol_name);
+}
+
+const_symbol_ptr Module::lookup_local_symbol(const std::string& symbol_name) const
+{
+    assert( get_module_name(symbol_name) == name);
     auto iter = symbols.find(symbol_name);
     if (iter == symbols.end())
-        return {};
+        return nullptr;
     else
         return iter->second;
 }
@@ -1399,6 +1403,21 @@ symbol_ptr Module::lookup_local_symbol(const std::string& symbol_name)
         return nullptr;
     else
         return iter->second;
+}
+
+const_symbol_ptr Module::lookup_external_symbol(const std::string& symbol_name) const
+{
+    assert(is_qualified_symbol(symbol_name));
+
+    auto mod_name = get_module_name(symbol_name);
+
+    auto uname = get_unqualified_name(symbol_name);
+
+    auto mod_iter = transitively_imported_modules.find(mod_name);
+    if (mod_iter == transitively_imported_modules.end())
+        throw myexception()<<"Can't find external symbol '"<<symbol_name<<"' because module '"<<mod_name<<"' is not transitively imported.";
+
+    return mod_iter->second->lookup_local_symbol(symbol_name);
 }
 
 OpInfo Module::get_operator(const string& name) const
@@ -1725,24 +1744,15 @@ const_symbol_ptr lookup_symbol(const string& name, const Program& P)
     string name2 = get_unqualified_name(name);
 
     for(const auto& module: P)
-        if (module.name == name1)
-            return module.lookup_symbol(name);
+        if (module->name == name1)
+            return module->lookup_symbol(name);
 
     std::abort();
 }
 
-Hs::Var Module::get_external_var(const string& name) const
+Hs::Var Module::get_external_var(const string& sname) const
 {
-    assert(is_qualified_symbol(name));
-
-    auto mod_name = get_module_name(name);
-
-    auto uname = get_unqualified_name(name);
-
-    if (not transitively_imported_modules.count(mod_name))
-        throw myexception()<<"Can't handle external var '"<<name<<"' because module '"<<mod_name<<"' is not available.";
-
     Hs::Var v(name);
-    v.info = transitively_imported_modules.at(mod_name)->lookup_symbol(name);
+    v.info = lookup_external_symbol(sname);
     return v;
 }

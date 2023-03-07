@@ -19,10 +19,13 @@ using std::set;
 using std::pair;
 using std::map;
 using std::string;
+using std::shared_ptr;
+using std::optional;
 
-      vector<Module>& Program::modules()       {return *this;}
-
-const vector<Module>& Program::modules() const {return *this;}
+vector<shared_ptr<Module>>& Program::modules()
+{
+    return *this;
+}
 
 const std::shared_ptr<module_loader>& Program::get_module_loader() const
 {
@@ -59,28 +62,28 @@ symbol_info seq_info()
     return seq;
 }
 
-Module compiler_prim_module()
+shared_ptr<Module> compiler_prim_module()
 {
     // 1. Create module Compiler.Prim
-    Module m("Compiler.Prim");
+    auto m = std::make_shared<Module>("Compiler.Prim");
 
     // 2. No implicit Prelude
-    m.language_extensions.set_extension(LangExt::ImplicitPrelude, false);
+    m->language_extensions.set_extension(LangExt::ImplicitPrelude, false);
 
     // 3. Add seq.
     auto seq = seq_info();
     if (seq.info and seq.info->unfolding)
     {
         auto& code = seq.info->unfolding;
-        m.value_decls.push_back({var("Compiler.Prim.seq"), code});
+        m->value_decls.push_back({var("Compiler.Prim.seq"), code});
         // Unfoldings must be occurrence-analyzed so that we can inline them.
         auto [code2, _] = occurrence_analyzer(code);
         code = code2;
     }
-    m.declare_symbol(seq);
+    m->declare_symbol(seq);
 
     // 4. Copy symbols to the for-export maps.
-    m.perform_exports();
+    m->perform_exports();
 
     return m;
 }
@@ -98,32 +101,47 @@ Program::Program(const std::shared_ptr<module_loader>& L, exe_type t)
     modules().push_back( compiler_prim_module() );
 }
 
-int Program::find_module(const string& module_name) const
+optional<int> Program::find_module(const string& module_name) const
 {
-    for(int i=0;i<modules().size();i++)
-	if (modules()[i].name == module_name)
-	    return i;
-    return -1;
+    int i=0;
+    for(auto& m: (*this))
+    {
+        if (m->name == module_name)
+            return i;
+        i++;
+    }
+
+    return {};
 }
 
 bool Program::contains_module(const string& module_name) const
 {
-    return find_module(module_name) != -1;
+    return find_module(module_name).has_value();
 }
 
-const Module& Program::get_module(const string& module_name) const
+shared_ptr<const Module> Program::get_module(const string& module_name) const
 {
-    int index = find_module(module_name);
-    if (index == -1)
-	throw myexception()<<"Program does not contain module '"<<module_name<<"'";
-    return modules()[index];
+    for(auto& m: (*this))
+        if (m->name == module_name)
+            return m;
+
+    throw myexception()<<"Program does not contain module '"<<module_name<<"'";
+}
+
+shared_ptr<Module> Program::get_module(const string& module_name)
+{
+    for(auto& m: (*this))
+        if (m->name == module_name)
+            return m;
+
+    throw myexception()<<"Program does not contain module '"<<module_name<<"'";
 }
 
 vector<string> Program::module_names() const
 {
     vector<string> names;
-    for(const auto& module: modules())
-	names.push_back(module.name);
+    for(const auto& module: *this)
+	names.push_back(module->name);
     return names;
 }
 
@@ -135,16 +153,16 @@ string Program::module_names_path() const
 set<string> Program::module_names_set() const
 {
     set<string> names;
-    for(const auto& module: modules())
-	names.insert(module.name);
+    for(const auto& module: *this)
+	names.insert(module->name);
     return names;
 }
 
 int Program::count_module(const string& module_name) const
 {
     int count = 0;
-    for(const auto& module: modules())
-	if (module.name == module_name)
+    for(const auto& module: *this)
+	if (module->name == module_name)
 	    count++;
     return count;
 }
@@ -170,7 +188,7 @@ vector<string> sort_modules_by_dependencies(const module_loader& L, vector<strin
     for(int i=0;i<new_module_names.size();i++)
     {
 	auto& name = new_module_names[i];
-	for(auto& import_name: L.load_module(name).dependencies())
+	for(auto& import_name: L.load_module(name)->dependencies())
 	    if (auto j = find_index(new_module_names, import_name))
 		boost::add_edge(vertices[i], vertices[*j], graph);
     }
@@ -217,11 +235,11 @@ void Program::check_dependencies()
     for(int i=0;i<modules().size();i++)
     {
 	auto& M = modules()[i];
-	for(auto& name: M.dependencies())
+	for(auto& name: M->dependencies())
 	{
-	    int index = find_module(name);
-	    assert(index != -1);
-	    assert(index < i);
+	    auto index = find_module(name);
+	    assert(index.has_value());
+	    assert(*index < i);
 	}
     }
 }
@@ -232,12 +250,12 @@ void Program::compile(int i)
 
     auto& M = modules()[i];
     try {
-	M.compile(*this);
+	M->compile(*this);
     }
     catch (myexception& e)
     {
 	std::ostringstream o;
-	o<<"In module '"<<M.name<<"':\n";
+	o<<"In module '"<<M->name<<"':\n";
 	e.prepend(o.str());
 	throw;
     }
@@ -260,7 +278,7 @@ set<string> new_module_names(const module_loader& L, const set<string>& old_modu
 	// Add it to the list of new modules
 	new_module_names.insert(module);
 
-	for(auto& import: L.load_module(module).dependencies())
+	for(auto& import: L.load_module(module)->dependencies())
 	    modules_to_consider.push_back(import);
     }
 
@@ -294,20 +312,20 @@ void Program::add(const vector<string>& module_names)
 	add(name);
 }
 
-void Program::add(const vector<Module>& modules)
+void Program::add(const vector<shared_ptr<Module>>& modules)
 {
     for(const auto& M: modules)
 	add(M);
 }
 
-void Program::add(const Module& M)
+void Program::add(const shared_ptr<Module>& M)
 {
-    for(auto& name: M.dependencies())
+    for(auto& name: M->dependencies())
 	add(name);
 
     // 1. Check that the program doesn't already contain this module name.
-    if (contains_module(M.name))
-	throw myexception()<<"Trying to add duplicate module '"<<M.name<<"' to program "<<module_names_path();
+    if (contains_module(M->name))
+	throw myexception()<<"Trying to add duplicate module '"<<M->name<<"' to program "<<module_names_path();
 
     // 2. Actually add the module.
     modules().push_back( M );
@@ -316,7 +334,7 @@ void Program::add(const Module& M)
 #ifndef NDEBUG
     // 3. Assert that every module exists only once in the list.
     for(const auto& module: modules())
-	assert(count_module(module.name) == 1);
+	assert(count_module(module->name) == 1);
 #endif
 }
 

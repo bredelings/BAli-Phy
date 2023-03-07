@@ -17,6 +17,8 @@ using std::string;
 using std::vector;
 using std::set;
 using std::map;
+using std::optional;
+using std::shared_ptr;
 
 #if defined _MSC_VER || defined __MINGW32__ || defined __CYGWIN__
 const string plugin_extension = ".dll";
@@ -116,7 +118,7 @@ fs::path pretty_module_path(const fs::path& filepath)
     return filepath.filename();
 }
 
-Module module_loader::load_module_from_file(const fs::path& filename) const
+shared_ptr<Module> module_loader::load_module_from_file(const fs::path& filename) const
 {
     if (not modules.count(filename.string()))
     {
@@ -134,10 +136,11 @@ Module module_loader::load_module_from_file(const fs::path& filename) const
 		std::cout<<m.print()<<std::endl;
 
             string short_file_name = filename.filename().string();
-            modules.insert( {filename.string(), Module(m, lang_exts, {short_file_name, file_contents})} );
 
+            auto M = std::make_shared<Module>(Module(m, lang_exts, {short_file_name, file_contents}));
             // Save a reference to the string that we allocated, so we can clean it up later.
-            modules.at(filename.string()).filename = fname;
+            M->filename = fname;
+            modules.insert( {filename.string(), M} );
 	}
 	catch (myexception& e)
 	{
@@ -146,15 +149,16 @@ Module module_loader::load_module_from_file(const fs::path& filename) const
 	}
     }
 
-    return modules.at(filename.string());
+    // Return a COPY of the cached module.
+    return std::make_shared<Module>( *modules.at(filename.string()) );
 }
 
-Module module_loader::load_module(const string& module_name) const
+shared_ptr<Module> module_loader::load_module(const string& module_name) const
 {
     auto filename = find_module(module_name);
-    Module M = load_module_from_file(filename);
-    if (M.name != module_name)
-	throw myexception()<<"Loading module file "<<filename<<"\n  Expected module '"<<module_name<<"'\n  Found module    '"<<M.name<<"'";
+    auto M = load_module_from_file(filename);
+    if (M->name != module_name)
+	throw myexception()<<"Loading module file "<<filename<<"\n  Expected module '"<<module_name<<"'\n  Found module    '"<<M->name<<"'";
     return M;
 }
 
