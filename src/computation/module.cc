@@ -228,12 +228,16 @@ bool contains_import(const vector<Haskell::LExport>& es, const string& name)
     return false;
 }
 
-
 void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
 {
     auto& [imploc, impdecl] = limpdecl;
 
     auto& M2 = P.get_module( unloc(impdecl.modid) );
+
+    transitively_imported_modules.insert({M2.name, &M2});
+    for(auto& [mod_name, mod]: M2.transitively_imported_modules)
+        transitively_imported_modules.insert({mod_name, mod});
+
     auto modid = unloc(impdecl.modid);
     if (impdecl.as)
         modid = unloc(*impdecl.as);
@@ -1747,3 +1751,18 @@ const_symbol_ptr lookup_symbol(const string& name, const Program& P)
     std::abort();
 }
 
+Hs::Var Module::get_external_var(const string& name) const
+{
+    assert(is_qualified_symbol(name));
+
+    auto mod_name = get_module_name(name);
+
+    auto uname = get_unqualified_name(name);
+
+    if (not transitively_imported_modules.count(mod_name))
+        throw myexception()<<"Can't handle external var '"<<name<<"' because module '"<<mod_name<<"' is not available.";
+
+    Hs::Var v(name);
+    v.info = transitively_imported_modules.at(mod_name)->lookup_symbol(name);
+    return v;
+}
