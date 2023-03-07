@@ -312,12 +312,12 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         // If the variable is free, then try top-level names.
         else if (m.is_declared(name))
         {
-            const symbol_info& S = *m.lookup_symbol(name);
-            string qualified_name = S.name;
+            auto S = m.lookup_symbol(name);
+            string qualified_name = S->name;
             name = qualified_name;
             if (get_module_name(qualified_name) == m.name)
                 free_vars.insert(qualified_name);
-            V.info = S.info;
+            V.info = S;
             E = V;
         }
         else

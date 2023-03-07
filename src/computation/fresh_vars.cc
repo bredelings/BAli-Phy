@@ -1,6 +1,7 @@
 #include "computation/fresh_vars.H"
 #include "computation/haskell/ids.H"
 #include "util/myexception.H"
+#include "symbols.H"
 
 using std::vector;
 using std::string;
@@ -180,7 +181,8 @@ var make_var(const Hs::Var& v)
     assert(not v.index);
     assert(v.wrap.is_identity());
     var v2(v.name);
-    v2.info = v.info;
+    if (v.info)
+        v2.info = v.info->info;
     return v2;
 }
 
