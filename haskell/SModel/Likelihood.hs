@@ -47,13 +47,13 @@ foreign import bpcall "SModel:sample_leaf_node_sequence_SEV" sample_leaf_sequenc
 
 
 cached_conditional_likelihoods t seqs as alpha ps f smap = let lc    = mkArray (2*numBranches t) lcf
-                                                               lcf b = let bb = b `mod` (numBranches t)
+                                                               lcf b = let p = ps!(undirectedName t b)
                                                                            edges = edgesBeforeEdge t b
                                                                            b1 = edges!0
                                                                            b2 = edges!1
                                                                        in case numElements edges of
-                                                                            0 -> let n=sourceNode t b in peel_leaf_branch (seqs IntMap.! n) alpha (ps!bb) smap
-                                                                            2 -> peel_internal_branch (lc!b1) (lc!b2) (as IntMap.! b1) (as IntMap.! b2) (ps!bb) f
+                                                                            0 -> let n=sourceNode t b in peel_leaf_branch (seqs IntMap.! n) alpha p smap
+                                                                            2 -> peel_internal_branch (lc!b1) (lc!b2) (as IntMap.! b1) (as IntMap.! b2) p f
                                                            in lc
 
 peel_likelihood t cl as f root = let likelihoods = mkArray (numNodes t) peel_likelihood'
@@ -90,7 +90,7 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs!p
                                                 b0 = reverseEdge t to_p
-                                                ps_for_b0 = ps!(b0 `mod` (numBranches t))
+                                                ps_for_b0 = ps!(undirectedName t b0)
                                                 a0 = as IntMap.! b0
                                                 edges = edgesBeforeEdge t to_p
                                                 b1 = edges!0
@@ -117,14 +117,14 @@ sample_ancestral_sequences t root seqs as alpha ps f cl smap =
 
 cached_conditional_likelihoods_SEV t seqs alpha ps a smap =
     let lc    = mkArray (2*numBranches t) lcf
-        lcf b = let bb = b `mod` (numBranches t)
+        lcf b = let p = ps!(undirectedName t b)
                     edges = edgesBeforeEdge t b
                     b1 = edges!0
                     b2 = edges!1
                 in case numElements edges of
-                     0 -> peel_leaf_branch_SEV (seqs IntMap.! sourceNode t b) alpha (ps!bb) (bitmask_from_alignment a $ sourceNode t b) smap
-                     1 -> peel_deg2_branch_SEV (lc!b1) (ps!bb)
-                     2 -> peel_internal_branch_SEV (lc!b1) (lc!b2) (ps!bb)
+                     0 -> peel_leaf_branch_SEV (seqs IntMap.! sourceNode t b) alpha p (bitmask_from_alignment a $ sourceNode t b) smap
+                     1 -> peel_deg2_branch_SEV (lc!b1) p
+                     2 -> peel_internal_branch_SEV (lc!b1) (lc!b2) p
     in lc
 
 peel_likelihood_SEV t cl f root counts = let branches_in = fmap (reverseEdge t) (edgesOutOfNode t root)
@@ -149,7 +149,7 @@ sample_ancestral_sequences_SEV t root seqs alpha ps f cl smap col_to_compressed 
         ancestor_for_branch n (Just to_p) = let p = targetNode t to_p
                                                 parent_seq = ancestor_seqs!p
                                                 b0 = reverseEdge t to_p
-                                                ps_for_b0 = ps!(b0 `mod` (numBranches t))
+                                                ps_for_b0 = ps!(undirectedName t b0)
                                                 edges = edgesBeforeEdge t to_p
                                                 b1 = edges!0
                                                 b2 = edges!1
