@@ -1367,12 +1367,7 @@ const_symbol_ptr Module::lookup_symbol(const std::string& name) const
     if (count == 0)
         throw myexception()<<"Indentifier '"<<name<<"' not declared.";
     else if (count == 1)
-    {
-        string symbol_name = aliases.find(name)->second->name;
-        if (not symbols.count(symbol_name))
-            throw myexception()<<"Identifier '"<<name<<"' -> '"<<symbol_name<<"', which does not exist!";
-        return symbols.find(symbol_name)->second;
-    }
+        return aliases.find(name)->second;
     else
     {
         myexception e;
