@@ -25,6 +25,8 @@ getUEdges t = [ e | e <- getEdges t, e < (e_reverse $ findEdge t e)]
 getUEdgesSet t = getUEdges t & IntSet.fromList
 numBranches t = length $ getUEdges t
 
+undirectedName t e = min e (reverseEdge t e)
+
 edgesOutOfNode t node_index = findNode t node_index & node_out_edges
 
 class Tree t => BranchLengthTree t where
