@@ -2291,10 +2291,10 @@ extern "C" closure builtin_function_peel_likelihood_2_SEV(OperationArgs& Args)
 extern "C" closure builtin_function_transpose(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
-    auto& M1 = argo.as_<Box<Matrix>>();
+    auto& M1 = arg0.as_<Box<Matrix>>();
 
-    auto M2P = new Box<Matrix>(M1.size2(), M1.size1());
-    auto& M2 = *M2P;
+    auto M2p = new Box<Matrix>(M1.size2(), M1.size1());
+    auto& M2 = *M2p;
     for(int i=0;i<M2.size1();i++)
         for(int j=0;i<M2.size2();i++)
             M2(i,j) = M1(j,i);
