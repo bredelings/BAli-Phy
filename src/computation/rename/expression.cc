@@ -334,10 +334,10 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         // Does that mean that we look up constructors in a different table?
         if (m.is_declared(name))
         {
-            const symbol_info& S = *m.lookup_symbol(name);
-            name = S.name; // use the qualified name
+            auto S = m.lookup_symbol(name);
+            name = S->name; // use the qualified name
             // We return a reference to a lambda function, in case the constructor isn't fully applied.
-            C.arity = S.arity;
+            C.arity = S->arity;
             E = C;
         }
         else
