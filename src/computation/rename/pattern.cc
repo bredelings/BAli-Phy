@@ -185,7 +185,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
             error(loc, Note()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!");
         else
         {
-            const symbol_info& S = m.lookup_symbol(id);
+            const symbol_info& S = *m.lookup_symbol(id);
             if (S.symbol_type != constructor_symbol)
                 error(loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
 
@@ -323,7 +323,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
             error(loc, Note()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!");
         else
         {
-            const symbol_info& S = m.lookup_symbol(id);
+            const symbol_info& S = *m.lookup_symbol(id);
             if (S.symbol_type != constructor_symbol)
                 error(loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
 

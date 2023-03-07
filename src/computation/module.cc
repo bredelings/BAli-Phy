@@ -43,7 +43,7 @@ using std::vector;
 using std::tuple;
 using std::shared_ptr;
 
-symbol_info lookup_symbol(const string& name, const Program& P);
+const_symbol_ptr lookup_symbol(const string& name, const Program& P);
 
 void Module::add_type(const type_info& T)
 {
@@ -60,7 +60,7 @@ void Module::add_type(const type_info& T)
         throw myexception()<<"Trying to add type '"<<T.name<<"' twice to module '"<<name<<"' with different body";
 }
 
-void Module::add_symbol(const symbol_info& S)
+symbol_ptr Module::add_symbol(const symbol_info& S)
 {
     if (is_haskell_builtin_con_name(S.name))
         throw myexception()<<"Can't add builtin symbol '"<<S.name<<"'";
@@ -70,20 +70,26 @@ void Module::add_symbol(const symbol_info& S)
 
     auto loc = symbols.find(S.name);
     if (loc == symbols.end())
-        symbols.insert({S.name,S});
-    else if (loc != symbols.end() and loc->second != S)
+    {
+        auto ptr = std::make_shared<symbol_info>(S);
+        symbols.insert({S.name, ptr});
+        return ptr;
+    }
+    else if (loc != symbols.end() and loc->second->name != S.name)
         throw myexception()<<"Trying to add symbol '"<<S.name<<"' twice to module '"<<name<<"' with different body";
+    else
+        return loc->second;
 }
 
-void Module::add_alias(const string& identifier_name, const string& resolved_name)
+void Module::add_alias(const string& identifier_name, const const_symbol_ptr& resolved_symbol)
 {
-    if (not symbols.count(resolved_name))
-        throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_name<<"' in module '"<<name<<"' because '"<<resolved_name<<"' is neither declared nor imported.";
+    if (not symbols.count(resolved_symbol->name))
+        throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_symbol->name<<"' in module '"<<name<<"' because '"<<resolved_symbol->name<<"' is neither declared nor imported.";
 
     // Don't add duplicate aliases.
-    if (symbol_in_scope_with_name(resolved_name, identifier_name)) return;
+    if (symbol_in_scope_with_name(resolved_symbol->name, identifier_name)) return;
 
-    aliases.insert( {identifier_name, resolved_name} );
+    aliases.insert( {identifier_name, resolved_symbol} );
 }
 
 void Module::add_type_alias(const string& identifier_name, const string& resolved_name)
@@ -110,10 +116,10 @@ void Module::declare_symbol(const symbol_info& S)
         // FIXME! We created a partially-empty symbol to hold the fixity information.
         auto& S3 = symbols.at(S2.name);
 
-        if (S3.symbol_type == unknown_symbol)
+        if (S3->symbol_type == unknown_symbol)
         {
-            S2.fixity = S3.fixity;
-            S3 = S2;
+            S2.fixity = S3->fixity;
+            *S3 = S2;
             return;
         }
         else
@@ -121,11 +127,11 @@ void Module::declare_symbol(const symbol_info& S)
     }
 
     // Add the symbol first.
-    add_symbol(S2);
+    auto S2p = add_symbol(S2);
     // Add the alias for qualified name: S.name -> S2.name;
-    add_alias(S2.name, S2.name);
+    add_alias(S2.name, S2p);
     // Add the alias for unqualified name: S.name -> S2.name;
-    add_alias(S.name, S2.name);
+    add_alias(S.name, S2p);
 }
 
 void Module::declare_type(const type_info& T)
@@ -166,26 +172,26 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     if (not symbols.count(s2))
         declare_symbol({s, unknown_symbol, {}, {}, {}});
 
-    symbols.at(s2).fixity = fixity_info{fixity, precedence};
+    symbols.at(s2)->fixity = fixity_info{fixity, precedence};
 }
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
-void Module::import_symbol(const symbol_info& S, const string& modid, bool qualified)
+void Module::import_symbol(const const_symbol_ptr& S, const string& modid, bool qualified)
 {
-    if (not is_qualified_symbol(S.name))
+    if (not is_qualified_symbol(S->name))
         throw myexception()<<"Imported symbols must have qualified names.";
 
     // Add the symbol.
-    add_symbol(S);
+    auto S2p = add_symbol(*S);
     // Add the alias for qualified name.
-    add_alias(modid+"."+get_unqualified_name(S.name), S.name);
+    add_alias(modid+"."+get_unqualified_name(S->name), S2p);
     // Add the alias for unqualified name.
     if (not qualified)
-        add_alias(get_unqualified_name(S.name), S.name);
+        add_alias(get_unqualified_name(S->name), S2p);
 }
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
-void Module::import_type(const type_info& T, const string& modid, bool qualified, const map<string,symbol_info>& m2_exports)
+void Module::import_type(const type_info& T, const string& modid, bool qualified, const map<string,const_symbol_ptr>& m2_exports)
 {
     if (not is_qualified_symbol(T.name))
         throw myexception()<<"Imported symbols must have qualified names.";
@@ -202,7 +208,7 @@ void Module::import_type(const type_info& T, const string& modid, bool qualified
     if (auto c = T.is_class())
     {
         for(auto& [_,dmvar]: c->info->default_methods)
-            add_symbol( m2_exports.at(dmvar.name) );
+            add_symbol( *m2_exports.at(dmvar.name) );
     }
 }
 
@@ -349,7 +355,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
     {
         for(const auto& [_,S]: m2_exports)
         {
-            auto unqualified_name = get_unqualified_name(S.name);
+            auto unqualified_name = get_unqualified_name(S->name);
 
             if (contains_import(impdecl.impspec->imports, unqualified_name)) continue;
 
@@ -581,23 +587,23 @@ map<string, type_info> Module::required_types() const
     return types;
 }
 
-void Module::export_symbol(const symbol_info& S)
+void Module::export_symbol(const const_symbol_ptr& S)
 {
-    assert(is_qualified_symbol(S.name));
+    assert(is_qualified_symbol(S->name));
 
-    if (S.symbol_type == default_method_symbol)
+    if (S->symbol_type == default_method_symbol)
     {
         // normal exported symbols are access by unqualified name.
-        exported_symbols_.insert({S.name, S});
+        exported_symbols_.insert({S->name, S});
         return;
     }
 
-    auto uname = get_unqualified_name(S.name);
+    auto uname = get_unqualified_name(S->name);
     if (not exported_symbols_.count(uname))
         exported_symbols_.insert({uname,S});
     // FIXME, this doesn't really say how the entities (which are different) were referenced in the export list
-    else if (exported_symbols_.at(uname).name != S.name)
-        throw myexception()<<"attempting to export both '"<<exported_symbols_.at(uname).name<<"' and '"<<S.name<<"', which have the same unqualified name!";
+    else if (exported_symbols_.at(uname)->name != S->name)
+        throw myexception()<<"attempting to export both '"<<exported_symbols_.at(uname)->name<<"' and '"<<S->name<<"', which have the same unqualified name!";
 }
 
 void Module::export_type(const type_info& T)
@@ -614,7 +620,7 @@ void Module::export_type(const type_info& T)
     if (auto c = T.is_class())
     {
         for(auto& [_,dmvar]: c->info->default_methods)
-            export_symbol(*lookup_resolved_symbol( dmvar.name ) );
+            export_symbol(lookup_resolved_symbol( dmvar.name ) );
     }
 }
 
@@ -622,7 +628,7 @@ bool Module::symbol_in_scope_with_name(const string& symbol_name, const string& 
 {
     auto range = aliases.equal_range(id_name);
     for(auto it = range.first; it != range.second; it++)
-        if (it->second == symbol_name)
+        if (it->second->name == symbol_name)
             return true;
     return false;
 }
@@ -660,9 +666,9 @@ void Module::export_module(const string& modid)
         throw myexception()<<"module '"<<modid<<"' is exported but not imported";
 
     // Find all the symbols that are in scope as both `modid.e` and `e`
-    for(auto& [id_name, symbol_name]: aliases)
+    for(auto& [id_name, symbol]: aliases)
         if (auto uqname = symbol_in_module(id_name, modid);
-            uqname and symbol_in_scope_with_name(symbol_name, *uqname))
+            uqname and symbol_in_scope_with_name(symbol->name, *uqname))
         {
             try
             {
@@ -717,14 +723,14 @@ void Module::perform_exports()
             assert(symbols.count(value));
 
             auto& V = symbols.at(value);
-            assert(V.symbol_type != constructor_symbol);
-            V.type = type;
+            assert(V->symbol_type != constructor_symbol);
+            V->type = type;
         }
     }
 
     for(auto& [name,value_info]:symbols)
     {
-        assert(value_info.symbol_type == constructor_symbol or not value_info.type.empty());
+        assert(value_info->symbol_type == constructor_symbol or not value_info->type.empty());
     }
 
     // Currently we just export the local symbols
@@ -1125,15 +1131,15 @@ vector<expression_ref> peel_lambdas(expression_ref& E)
 
 void mark_exported_decls(CDecls& decls,
                          const shared_ptr<TypeChecker>& tc_state,
-                         const map<string,symbol_info>& exports,
+                         const map<string,const_symbol_ptr>& exports,
                          const map<string,type_info>& type_exports,
                          const string& module_name)
 {
     // Record exports
     set<string> exported;
     for(auto& [name,symbol]: exports)
-        if (get_module_name(symbol.name) == module_name)
-            exported.insert(symbol.name);
+        if (get_module_name(symbol->name) == module_name)
+            exported.insert(symbol->name);
 
     // Mark some generated functions as exported
     if (tc_state)
@@ -1232,7 +1238,7 @@ CDecls Module::load_builtins(const module_loader& L, const std::vector<Hs::Forei
     {
         auto [function_name, body] = parse_builtin(decl, L);
 
-        function_name = lookup_symbol(function_name).name;
+        function_name = lookup_symbol(function_name)->name;
 
         cdecls.push_back( { var(function_name), body} );
     }
@@ -1294,19 +1300,22 @@ bool Module::type_is_declared(const std::string& name) const
     return is_haskell_builtin_type_name(name) or (type_aliases.count(name) > 0);
 }
 
-pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string& name)
+pair<const_symbol_ptr,expression_ref> Module::lookup_builtin_symbol(const std::string& name)
 {
     if (name == "()")
-        return {symbol_info("()", constructor_symbol, "()", 0), constructor("()",0)};
+        return {std::make_shared<const symbol_info>("()", constructor_symbol, "()", 0), constructor("()",0)};
     else if (name == "[]")
-        return {symbol_info("[]", constructor_symbol, "[]", 0), constructor("[]",0)};
+        return {std::make_shared<const symbol_info>("[]", constructor_symbol, "[]", 0), constructor("[]",0)};
     else if (name == ":")
-        return {symbol_info(":", constructor_symbol, "[]", 2, {{right_fix,5}}), lambda_expression( right_assoc_constructor(":",2) )};
+    {
+        symbol_info cons(":", constructor_symbol, "[]", 2, {{right_fix,5}});
+        return {std::make_shared<const symbol_info>(cons), lambda_expression( right_assoc_constructor(":",2) )};
+    }
     else if (is_tuple_name(name))
     {
         int arity = name.size() - 1;
         expression_ref body = lambda_expression( tuple_head(arity) );
-        return {symbol_info(name, constructor_symbol, name, arity), body};
+        return {std::make_shared<const symbol_info>(name, constructor_symbol, name, arity), body};
     }
     throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
 }
@@ -1345,7 +1354,7 @@ type_info Module::lookup_builtin_type(const std::string& name)
     throw myexception()<<"Symbol 'name' is not a builtin (type) symbol.";
 }
 
-symbol_info Module::lookup_symbol(const std::string& name) const
+const_symbol_ptr Module::lookup_symbol(const std::string& name) const
 {
     if (is_haskell_builtin_con_name(name))
         return lookup_builtin_symbol(name).first;
@@ -1355,7 +1364,7 @@ symbol_info Module::lookup_symbol(const std::string& name) const
         throw myexception()<<"Indentifier '"<<name<<"' not declared.";
     else if (count == 1)
     {
-        string symbol_name = aliases.find(name)->second;
+        string symbol_name = aliases.find(name)->second->name;
         if (not symbols.count(symbol_name))
             throw myexception()<<"Identifier '"<<name<<"' -> '"<<symbol_name<<"', which does not exist!";
         return symbols.find(symbol_name)->second;
@@ -1371,7 +1380,7 @@ symbol_info Module::lookup_symbol(const std::string& name) const
     }
 }
 
-optional<symbol_info> Module::lookup_resolved_symbol(const std::string& symbol_name) const
+const_symbol_ptr Module::lookup_resolved_symbol(const std::string& symbol_name) const
 {
     if (is_haskell_builtin_con_name(symbol_name))
         return lookup_builtin_symbol(symbol_name).first;
@@ -1389,7 +1398,7 @@ const symbol_info* Module::lookup_resolved_symbol_(const std::string& symbol_nam
     if (iter == symbols.end())
         return nullptr;
     else
-        return &iter->second;
+        return iter->second.get();
 }
 
 symbol_info* Module::lookup_resolved_symbol_(const std::string& symbol_name)
@@ -1398,21 +1407,21 @@ symbol_info* Module::lookup_resolved_symbol_(const std::string& symbol_name)
     if (iter == symbols.end())
         return nullptr;
     else
-        return &iter->second;
+        return iter->second.get();
 }
 
 OpInfo Module::get_operator(const string& name) const
 {
     OpInfo O;
 
-    symbol_info S = lookup_symbol(name);
-    O.name = S.name;
+    auto S = lookup_symbol(name);
+    O.name = S->name;
 
     // An operator of undefined precedence is treated as if it has the highest precedence
-    if (not S.fixity)
+    if (not S->fixity)
         O.fixity = {left_fix, 9};
     else
-        O.fixity = *S.fixity;
+        O.fixity = *S->fixity;
 
     return O;
 }
@@ -1604,10 +1613,10 @@ void Module::maybe_def_function(const string& var_name)
 
     if (loc != symbols.end())
     {
-        symbol_info& S = loc->second;
+        auto S = loc->second;
         // Only the fixity has been declared!
-        if (S.symbol_type == unknown_symbol)
-            S.symbol_type = variable_symbol;
+        if (S->symbol_type == unknown_symbol)
+            S->symbol_type = variable_symbol;
     }
     else
         def_function(var_name);
@@ -1721,7 +1730,8 @@ std::ostream& operator<<(std::ostream& o, const Module& M)
     return o;
 }
 
-symbol_info lookup_symbol(const string& name, const Program& P)
+
+const_symbol_ptr lookup_symbol(const string& name, const Program& P)
 {
     if (is_haskell_builtin_con_name(name))
         return Module::lookup_builtin_symbol(name).first;
@@ -1736,3 +1746,4 @@ symbol_info lookup_symbol(const string& name, const Program& P)
 
     std::abort();
 }
+

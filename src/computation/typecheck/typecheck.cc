@@ -971,7 +971,7 @@ TypeChecker::TypeChecker(FreshVarState& fvs, const string& s, Module& m)
 Hs::Var TypeChecker::find_prelude_var(string name) const
 {
     if (this_mod().is_declared(name))
-        name = this_mod().lookup_symbol(name).name;
+        name = this_mod().lookup_symbol(name)->name;
     return Hs::Var(name);
 }
 

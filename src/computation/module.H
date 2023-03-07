@@ -42,17 +42,20 @@ struct typechecker_result
     std::pair<Hs::Binds, Core::Decls> all_binds() const;
 };
 
+typedef std::shared_ptr<symbol_info> symbol_ptr;
+typedef std::shared_ptr<const symbol_info> const_symbol_ptr;
+
 class Module
 {
-    std::map<std::string, symbol_info> symbols;
+    std::map<std::string, symbol_ptr> symbols;
 
-    std::multimap<std::string, std::string> aliases;
+    std::multimap<std::string, const_symbol_ptr> aliases;
 
     std::map<std::string, type_info> types;
 
     std::multimap<std::string, std::string> type_aliases;
 
-    std::map<std::string, symbol_info> exported_symbols_;
+    std::map<std::string, const_symbol_ptr> exported_symbols_;
 
     std::map<std::string, type_info> exported_types_;
 
@@ -100,13 +103,13 @@ public:
 
     std::vector<Hs::LImpDecl> imports() const;
 
-    const std::map<std::string, symbol_info>& exported_symbols() const {return exported_symbols_;}
+    const std::map<std::string, const_symbol_ptr>& exported_symbols() const {return exported_symbols_;}
 
     const std::map<std::string, type_info>& exported_types() const {return exported_types_;}
 
     std::map<std::string, type_info> required_types() const;
 
-    void export_symbol(const symbol_info& S);
+    void export_symbol(const const_symbol_ptr& S);
 
     void export_type(const type_info& S);
 
@@ -132,11 +135,11 @@ public:
 
     void def_type_family(const std::string& family_name, int arity);
 
-    void add_symbol(const symbol_info&);
+    symbol_ptr add_symbol(const symbol_info&);
 
     void add_type(const type_info&);
 
-    void add_alias(const std::string&, const std::string&);
+    void add_alias(const std::string&, const const_symbol_ptr&);
 
     void add_type_alias(const std::string&, const std::string&);
 
@@ -146,9 +149,9 @@ public:
 
     void declare_type(const type_info&);
 
-    void import_symbol(const symbol_info&, const std::string&, bool qualified);
+    void import_symbol(const const_symbol_ptr&, const std::string&, bool qualified);
 
-    void import_type(const type_info&, const std::string&, bool qualified, const std::map<std::string, symbol_info>&);
+    void import_type(const type_info&, const std::string&, bool qualified, const std::map<std::string, const_symbol_ptr>&);
 
     void import_module(const Program& P, const Hs::LImpDecl& I);
 
@@ -192,14 +195,15 @@ public:
 
     bool type_in_scope_with_name(const std::string&, const std::string&) const;
 
-    static std::pair<symbol_info,expression_ref> lookup_builtin_symbol(const std::string&);
+    static std::pair<const_symbol_ptr,expression_ref> lookup_builtin_symbol(const std::string&);
 
     static type_info lookup_builtin_type(const std::string&);
 
-    symbol_info lookup_symbol(const std::string&) const;
+    const_symbol_ptr lookup_symbol(const std::string&) const;
 
-    std::optional<symbol_info> lookup_resolved_symbol(const std::string&) const;
+    const_symbol_ptr lookup_resolved_symbol(const std::string&) const;
     const symbol_info* lookup_resolved_symbol_(const std::string&) const;
+    // This should just be for local symbols
           symbol_info* lookup_resolved_symbol_(const std::string&);
 
     OpInfo get_operator(const std::string& name) const;
