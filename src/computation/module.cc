@@ -1316,7 +1316,7 @@ const_type_ptr Module::lookup_builtin_type(const std::string& name)
     {
         int n = tuple_arity(name);
 
-        return const_type_ptr(new type_info(name, type_info::data_info{{name},{}},{}, n, make_n_args_kind(n)));
+        return const_type_ptr(new type_info{name, type_info::data_info{{name},{}},{}, n, make_n_args_kind(n)});
     }
     throw myexception()<<"Symbol 'name' is not a builtin (type) symbol.";
 }
