@@ -47,6 +47,7 @@ struct symbol_info
 };
 
 struct ClassInfo;
+struct TypeSynonymInfo;
 
 struct type_info
 {
@@ -62,14 +63,18 @@ struct type_info
         std::set<std::string> constructors;
         std::set<std::string> fields;
     };
-    struct type_syn_info {};
+    struct type_syn_info
+    {
+        std::shared_ptr<TypeSynonymInfo> info;
+    };
     struct type_fam_info {};
 
     bool is_type_other() const; // "->", but now also "~"
-          class_info* is_class();
-    const class_info* is_class() const;
     const data_info* is_data() const;
-    bool is_type_syn() const;
+    const class_info* is_class() const;
+          class_info* is_class();
+    const type_syn_info* is_type_syn() const;
+          type_syn_info* is_type_syn();
     bool is_type_fam() const;
 
     std::string name;

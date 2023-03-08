@@ -379,13 +379,6 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                 tc_state->data_con_env() = tc_state->data_con_env().insert({cname,ctype});
         }
 
-        // 3. Import information about type synonyms
-        for(auto& [tname,tinfo]: M2->tc_state->type_syn_env())
-        {
-            if (not tc_state->type_syn_env().count(tname))
-                tc_state->type_syn_env().insert({tname,tinfo});
-        }
-
         // 5. Import information about instances
         for(auto& [dfun, dfun_type]: M2->tc_state->instance_env())
         {

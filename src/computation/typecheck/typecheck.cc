@@ -348,6 +348,15 @@ const ClassInfo* TypeChecker::info_for_class(const std::string& name) const
     return C->info.get();
 }
 
+const TypeSynonymInfo* TypeChecker::info_for_type_synonym(const std::string& name) const
+{
+    auto T = this_mod().lookup_resolved_type(name);
+    assert(T);
+    auto S = T->is_type_syn();
+    assert(S);
+    return S->info.get();
+}
+
 int TypeChecker::type_con_arity(const TypeCon& tc) const
 {
     auto T = this_mod().lookup_resolved_type(unloc(tc.name));
@@ -364,7 +373,7 @@ bool TypeChecker::type_con_is_type_fam(const TypeCon& tc) const
 
 bool TypeChecker::type_con_is_type_syn(const TypeCon& tc) const
 {
-    return type_syn_env().count(unloc(tc.name));
+    return info_for_type_synonym(unloc(tc.name));
 }
 
 bool TypeChecker::type_con_is_type_class(const TypeCon& tc) const
@@ -737,12 +746,9 @@ TypeVar TypeChecker::fresh_rigid_type_var(const Kind& k)
 const TypeSynonymInfo* TypeChecker::maybe_find_type_synonym(const Type& type) const
 {
     if (auto tycon = type.to<TypeCon>())
-    {
-        auto iter = type_syn_env().find( unloc(tycon->name) );
-        if (iter != type_syn_env().end())
-            return (&iter->second);
-    }
-    return nullptr;
+        return info_for_type_synonym(unloc(tycon->name));
+    else
+        return nullptr;
 }
 
 std::optional<Type> TypeChecker::is_type_synonym(const Type& type) const

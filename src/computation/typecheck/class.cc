@@ -280,7 +280,9 @@ TypeChecker::get_type_synonyms(const Hs::Decls& decls)
 
         rhs_type = apply_subst(s, rhs_type);
 
-        type_syn_env().insert({name, {name, type_vars, rhs_type}});
+        auto& info = this_mod().lookup_local_type(name)->is_type_syn()->info;
+        assert(not info);
+        info = std::make_shared<TypeSynonymInfo>(name, type_vars, rhs_type);
     }
 }
 
