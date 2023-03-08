@@ -354,9 +354,10 @@ const TypeSynonymInfo* TypeChecker::info_for_type_synonym(const std::string& nam
 {
     auto T = this_mod().lookup_resolved_type(name);
     assert(T);
-    auto S = T->is_type_syn();
-    assert(S);
-    return S->info.get();
+    if (auto S = T->is_type_syn())
+        return S->info.get();
+    else
+        return nullptr;
 }
 
 const TypeFamInfo* TypeChecker::info_for_type_fam(const std::string& name) const
