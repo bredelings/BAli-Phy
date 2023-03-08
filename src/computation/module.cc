@@ -1290,26 +1290,26 @@ pair<const_symbol_ptr,expression_ref> Module::lookup_builtin_symbol(const std::s
 const_type_ptr Module::lookup_builtin_type(const std::string& name)
 {
     if (name == "Char")
-        return const_type_ptr(new type_info("Char", type_info::data_info(), {}, 0, kind_type()));
+        return const_type_ptr(new type_info{"Char", type_info::data_info(), {}, 0, kind_type()});
     else if (name == "Double")
-        return const_type_ptr(new type_info("Double", type_info::data_info(), {}, 0, kind_type()));
+        return const_type_ptr(new type_info{"Double", type_info::data_info(), {}, 0, kind_type()});
     else if (name == "Int")
-        return const_type_ptr(new type_info("Int", type_info::data_info(), {}, 0, kind_type()));
+        return const_type_ptr(new type_info{"Int", type_info::data_info(), {}, 0, kind_type()});
     else if (name == "Integer")
-        return const_type_ptr(new type_info("Integer", type_info::data_info(), {}, 0, kind_type()));
+        return const_type_ptr(new type_info{"Integer", type_info::data_info(), {}, 0, kind_type()});
     else if (name == "()")
     {
-        return const_type_ptr(new type_info("()", type_info::data_info{{"()"},{}}, {}, 0, kind_type()));
+        return const_type_ptr(new type_info{"()", type_info::data_info{{"()"},{}}, {}, 0, kind_type()});
     }
     else if (name == "[]")
-        return const_type_ptr(new type_info("[]", type_info::data_info{{"[]",":"},{}}, {}, 1, make_n_args_kind(1)));
+        return const_type_ptr(new type_info{"[]", type_info::data_info{{"[]",":"},{}}, {}, 1, make_n_args_kind(1)});
     else if (name == "->")
     {
-        return const_type_ptr(new type_info("->", {}, {{right_fix,0}}, 2, make_n_args_kind(2)));
+        return const_type_ptr(new type_info{"->", {}, {{right_fix,0}}, 2, make_n_args_kind(2)});
     }
     else if (name == "~")
     {
-        return const_type_ptr(new type_info("~", {}, {}, 2, make_n_args_constraint_kind(2)));
+        return const_type_ptr(new type_info{"~", {}, {}, 2, make_n_args_constraint_kind(2)});
     }
     // This doesn't include ()
     else if (is_tuple_name(name))
