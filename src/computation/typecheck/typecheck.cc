@@ -978,7 +978,7 @@ Hs::Var TypeChecker::find_prelude_var(string name) const
 ID TypeChecker::find_prelude_tycon_name(const string& name) const
 {
     if (this_mod().type_is_declared(name))
-        return this_mod().lookup_type(name).name;
+        return this_mod().lookup_type(name)->name;
     else
         return name;
 }

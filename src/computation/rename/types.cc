@@ -25,7 +25,7 @@ Hs::LTypeCon renamer_state::rename_type(Hs::LTypeCon ltc)
     if (m.type_is_declared(name))
     {
         auto T = m.lookup_type(name);
-        name = T.name;
+        name = T->name;
     }
     else
         error(loc, Note()<<"Can't find type constructor `"<<name<<"`");

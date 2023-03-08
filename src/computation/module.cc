@@ -43,9 +43,7 @@ using std::vector;
 using std::tuple;
 using std::shared_ptr;
 
-const_symbol_ptr lookup_symbol(const string& name, const Program& P);
-
-void Module::add_type(const type_info& T)
+type_ptr Module::add_type(const type_info& T)
 {
     if (is_haskell_builtin_type_name(T.name))
         throw myexception()<<"Can't add builtin symbol '"<<T.name<<"'";
@@ -55,9 +53,15 @@ void Module::add_type(const type_info& T)
 
     auto loc = types.find(T.name);
     if (loc == types.end())
-        types[T.name] = T;
-    else if (loc != types.end() and loc->second != T)
+    {
+        auto ptr = std::make_shared<type_info>(T);
+        types.insert({T.name, ptr});
+        return ptr;
+    }
+    else if (loc != types.end() and loc->second->name != T.name)
         throw myexception()<<"Trying to add type '"<<T.name<<"' twice to module '"<<name<<"' with different body";
+    else
+        return loc->second;
 }
 
 symbol_ptr Module::add_symbol(const symbol_info& S)
@@ -92,15 +96,15 @@ void Module::add_alias(const string& identifier_name, const const_symbol_ptr& re
     aliases.insert( {identifier_name, resolved_symbol} );
 }
 
-void Module::add_type_alias(const string& identifier_name, const string& resolved_name)
+void Module::add_type_alias(const string& identifier_name, const const_type_ptr& resolved_type)
 {
-    if (not types.count(resolved_name))
-        throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_name<<"' in module '"<<name<<"' because '"<<resolved_name<<"' is neither declared nor imported.";
+    if (not lookup_resolved_type(resolved_type->name))
+        throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_type->name<<"' in module '"<<name<<"' because '"<<resolved_type->name<<"' is neither declared nor imported.";
 
     // Don't add duplicate aliases.
-    if (type_in_scope_with_name(resolved_name, identifier_name)) return;
+    if (type_in_scope_with_name(resolved_type->name, identifier_name)) return;
 
-    type_aliases.insert( {identifier_name, resolved_name} );
+    type_aliases.insert( {identifier_name, resolved_type} );
 }
 
 void Module::declare_symbol(const symbol_info& S)
@@ -149,11 +153,11 @@ void Module::declare_type(const type_info& T)
         throw myexception()<<"Trying to declare '"<<T.name<<"' twice in module '"<<name<<"'";
 
     // Add the symbol first.
-    add_type(T2);
+    auto T2p = add_type(T2);
     // Add the alias for qualified name: S.name -> S2.name;
-    add_type_alias(T2.name, T2.name);
+    add_type_alias(T2.name, T2p);
     // Add the alias for unqualified name: S.name -> S2.name;
-    add_type_alias(T.name, T2.name);
+    add_type_alias(T.name, T2p);
 }
 
 // "Also like a type signature, a fixity declaration can only occur in the same sequence of declarations as the declaration of the operator itself, and at most one fixity declaration may be given for any operator."
@@ -179,7 +183,7 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
 void Module::import_symbol(const const_symbol_ptr& S, const string& modid, bool qualified)
 {
     if (not is_qualified_symbol(S->name))
-        throw myexception()<<"Imported symbols must have qualified names.";
+        throw myexception()<<"Error importing symbol '"<<S->name<<"': name not qualified";
 
     // Add the alias for qualified name.
     add_alias(modid+"."+get_unqualified_name(S->name), S);
@@ -189,18 +193,16 @@ void Module::import_symbol(const const_symbol_ptr& S, const string& modid, bool 
 }
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
-void Module::import_type(const type_info& T, const string& modid, bool qualified, const map<string,const_symbol_ptr>& m2_exports)
+void Module::import_type(const const_type_ptr& T, const string& modid, bool qualified)
 {
-    if (not is_qualified_symbol(T.name))
-        throw myexception()<<"Imported symbols must have qualified names.";
+    if (not is_qualified_symbol(T->name))
+        throw myexception()<<"Error importing type '"<<T->name<<"': name not qualified";
 
-    // Add the symbol.
-    add_type(T);
     // Add the alias for qualified name.
-    add_type_alias(modid+"."+get_unqualified_name(T.name), T.name);
+    add_type_alias(modid+"."+get_unqualified_name(T->name), T);
     // Add the alias for unqualified name.
     if (not qualified)
-        add_type_alias(get_unqualified_name(T.name), T.name);
+        add_type_alias(get_unqualified_name(T->name), T);
 }
 
 bool contains_import(const Haskell::Export& e, const string& name)
@@ -245,7 +247,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
             import_symbol(S, modid, qualified);
 
         for(const auto& [_,T]: m2_exported_types)
-            import_type(T, modid, qualified, m2_exports);
+            import_type(T, modid, qualified);
     }
     // import modid ( etc )
     else if (impdecl.impspec and not impdecl.impspec->hiding)
@@ -282,20 +284,20 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                 }
 
                 auto type = m2_exported_types.at(id);
-                import_type( type, modid, qualified, m2_exports );
+                import_type( type, modid, qualified );
                 if (s.subspec)
                 {
-                    if (type.is_type_fam())
+                    if (type->is_type_fam())
                     {
                         messages.push_back( error(loc, Note()<<"type family `"<<id<<"`can't have import subspec") );
                         continue;
                     }
-                    else if (type.is_type_syn())
+                    else if (type->is_type_syn())
                     {
                         messages.push_back( error(loc, Note()<<"type synonym `"<<id<<"` can't have import subspec") );
                         continue;
                     }
-                    else if (auto c = type.is_class())
+                    else if (auto c = type->is_class())
                     {
                         if (not s.subspec->names)
                         {
@@ -313,7 +315,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                             }
                         }
                     }
-                    else if (auto d = type.is_data())
+                    else if (auto d = type->is_data())
                     {
                         if (not s.subspec->names)
                         {
@@ -358,11 +360,11 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
         }
         for(const auto& [_,T]: m2_exported_types)
         {
-            auto unqualified_name = get_unqualified_name(T.name);
+            auto unqualified_name = get_unqualified_name(T->name);
 
             if (contains_import(impdecl.impspec->imports, unqualified_name)) continue;
 
-            import_type(T, modid, qualified, m2_exports);
+            import_type(T, modid, qualified);
         }
     }
 
@@ -412,10 +414,6 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
             }
         }
     }
-
-    // Add info for types that are referenced, perhaps indirectly, from exported values or types.
-    for(const auto& [_,T]: M2->required_types())
-        types.insert({T.name, T});
 }
 
 vector<Hs::LImpDecl> Module::imports() const
@@ -573,15 +571,6 @@ void Module::perform_imports(const Program& P)
     exit_on_error(messages);
 }
 
-// This should include types that are
-// * themselves exported
-// * referenced from exported values
-// * referenced from exported types (i.e. from class methods, data constructors, superclasses)
-map<string, type_info> Module::required_types() const
-{
-    return types;
-}
-
 void Module::export_symbol(const const_symbol_ptr& S)
 {
     assert(is_qualified_symbol(S->name));
@@ -601,18 +590,19 @@ void Module::export_symbol(const const_symbol_ptr& S)
         throw myexception()<<"attempting to export both '"<<exported_symbols_.at(uname)->name<<"' and '"<<S->name<<"', which have the same unqualified name!";
 }
 
-void Module::export_type(const type_info& T)
+void Module::export_type(const const_type_ptr& T)
 {
-    assert(is_qualified_symbol(T.name));
-    auto uname = get_unqualified_name(T.name);
+    assert(is_qualified_symbol(T->name));
+
+    auto uname = get_unqualified_name(T->name);
     if (not exported_types_.count(uname))
         exported_types_.insert({uname,T});
     // FIXME, this doesn't really say how the entities (which are different) were referenced in the export list
-    else if (exported_types_.at(uname).name != T.name)
-        throw myexception()<<"attempting to export both '"<<exported_types_.at(uname).name<<"' and '"<<T.name<<"', which have the same unqualified name!";
+    else if (exported_types_.at(uname)->name != T->name)
+        throw myexception()<<"attempting to export both '"<<exported_types_.at(uname)->name<<"' and '"<<T->name<<"', which have the same unqualified name!";
 
     // Export default methods if its a class
-    if (auto c = T.is_class())
+    if (auto c = T->is_class())
     {
         for(auto& [_,dmvar]: c->info->default_methods)
             export_symbol(lookup_resolved_symbol( dmvar.name ) );
@@ -632,7 +622,7 @@ bool Module::type_in_scope_with_name(const string& type_name, const string& id_n
 {
     auto range = type_aliases.equal_range(id_name);
     for(auto it = range.first; it != range.second; it++)
-        if (it->second == type_name)
+        if (it->second->name == type_name)
             return true;
     return false;
 }
@@ -678,9 +668,9 @@ void Module::export_module(const string& modid)
         }
 
     // Find all the symbols that are in scope as both `modid.e` and `e`
-    for(auto& [id_name, type_name]: type_aliases)
+    for(auto& [id_name, type]: type_aliases)
         if (auto uqname = symbol_in_module(id_name, modid);
-            uqname and type_in_scope_with_name(type_name, *uqname))
+            uqname and type_in_scope_with_name(type->name, *uqname))
         {
             try
             {
@@ -704,9 +694,9 @@ void Module::perform_exports()
         {
             if (get_module_name(typecon) == name)
             {
-                auto& T = types.at(typecon);
-                assert(not T.kind);
-                T.kind = info.kind;
+                auto T = types.at(typecon);
+                assert(not T->kind);
+                T->kind = info.kind;
             }
         }
 
@@ -765,12 +755,12 @@ void Module::perform_exports()
                 export_type(t);
                 if (ex.subspec)
                 {
-                    if (t.is_type_fam())
+                    if (t->is_type_fam())
                     {
                         messages.push_back( error(loc, Note()<<"type family `"<<id<<"`can't have export subspec") );
                         continue;
                     }
-                    else if (t.is_type_syn())
+                    else if (t->is_type_syn())
                     {
                         messages.push_back( error(loc, Note()<<"type synonym `"<<id<<"` can't have export subspec") );
                         continue;
@@ -779,12 +769,12 @@ void Module::perform_exports()
                     if (not ex.subspec->names)
                     {
                         // all children
-                        if (auto c = t.is_class())
+                        if (auto c = t->is_class())
                         {
                             for(auto& method: c->methods)
                                 export_symbol(lookup_symbol(method));
                         }
-                        else if (auto d = t.is_data())
+                        else if (auto d = t->is_data())
                         {
                             for(auto& constructor: d->constructors)
                                 export_symbol(lookup_symbol(constructor));
@@ -795,7 +785,7 @@ void Module::perform_exports()
                     else
                     {
                         // all children
-                        if (auto c = t.is_class())
+                        if (auto c = t->is_class())
                         {
                             for(auto& [loc,name]: *ex.subspec->names)
                             {
@@ -805,7 +795,7 @@ void Module::perform_exports()
                                     export_symbol(lookup_symbol(name));
                             }
                         }
-                        else if (auto d = t.is_data())
+                        else if (auto d = t->is_data())
                         {
                             for(auto& [loc,name]: *ex.subspec->names)
                             {
@@ -1127,7 +1117,7 @@ vector<expression_ref> peel_lambdas(expression_ref& E)
 void mark_exported_decls(CDecls& decls,
                          const shared_ptr<TypeChecker>& tc_state,
                          const map<string,const_symbol_ptr>& exports,
-                         const map<string,type_info>& type_exports,
+                         const map<string,type_ptr>& type_exports,
                          const string& module_name)
 {
     // Record exports
@@ -1145,7 +1135,7 @@ void mark_exported_decls(CDecls& decls,
 
         for(auto& [tname,tinfo]: type_exports)
         {
-            if (auto c = tinfo.is_class())
+            if (auto c = tinfo->is_class())
             {
                 for(auto& [dvar, _]: c->info->superclass_extractors)
                     exported.insert(dvar.name);
@@ -1315,36 +1305,36 @@ pair<const_symbol_ptr,expression_ref> Module::lookup_builtin_symbol(const std::s
     throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
 }
 
-type_info Module::lookup_builtin_type(const std::string& name)
+const_type_ptr Module::lookup_builtin_type(const std::string& name)
 {
     if (name == "Char")
-        return {"Char", type_info::data_info(), {}, 0, kind_type()};
+        return const_type_ptr(new type_info("Char", type_info::data_info(), {}, 0, kind_type()));
     else if (name == "Double")
-        return {"Double", type_info::data_info(), {}, 0, kind_type()};
+        return const_type_ptr(new type_info("Double", type_info::data_info(), {}, 0, kind_type()));
     else if (name == "Int")
-        return {"Int", type_info::data_info(), {}, 0, kind_type()};
+        return const_type_ptr(new type_info("Int", type_info::data_info(), {}, 0, kind_type()));
     else if (name == "Integer")
-        return {"Integer", type_info::data_info(), {}, 0, kind_type()};
+        return const_type_ptr(new type_info("Integer", type_info::data_info(), {}, 0, kind_type()));
     else if (name == "()")
     {
-        return {"()", type_info::data_info{{"()"},{}}, {}, 0, kind_type()};
+        return const_type_ptr(new type_info("()", type_info::data_info{{"()"},{}}, {}, 0, kind_type()));
     }
     else if (name == "[]")
-        return {"[]", type_info::data_info{{"[]",":"},{}}, {}, 1, make_n_args_kind(1)};
+        return const_type_ptr(new type_info("[]", type_info::data_info{{"[]",":"},{}}, {}, 1, make_n_args_kind(1)));
     else if (name == "->")
     {
-        return {"->", {}, {{right_fix,0}}, 2, make_n_args_kind(2)};
+        return const_type_ptr(new type_info("->", {}, {{right_fix,0}}, 2, make_n_args_kind(2)));
     }
     else if (name == "~")
     {
-        return {"~", {}, {}, 2, make_n_args_constraint_kind(2)};
+        return const_type_ptr(new type_info("~", {}, {}, 2, make_n_args_constraint_kind(2)));
     }
     // This doesn't include ()
     else if (is_tuple_name(name))
     {
         int n = tuple_arity(name);
 
-        return {name, type_info::data_info{{name},{}},{}, n, make_n_args_kind(n)};
+        return const_type_ptr(new type_info(name, type_info::data_info{{name},{}},{}, n, make_n_args_kind(n)));
     }
     throw myexception()<<"Symbol 'name' is not a builtin (type) symbol.";
 }
@@ -1436,7 +1426,7 @@ OpInfo Module::get_operator(const string& name) const
     return O;
 }
 
-type_info Module::lookup_type(const std::string& name) const
+const_type_ptr Module::lookup_type(const std::string& name) const
 {
     if (is_haskell_builtin_type_name(name))
         return lookup_builtin_type(name);
@@ -1445,12 +1435,7 @@ type_info Module::lookup_type(const std::string& name) const
     if (count == 0)
         throw myexception()<<"Type identifier '"<<name<<"' not declared.";
     else if (count == 1)
-    {
-        string type_name = type_aliases.find(name)->second;
-        if (not types.count(type_name))
-            throw myexception()<<"Identifier '"<<name<<"' -> '"<<type_name<<"', which does not exist!";
-        return types.find(type_name)->second;
-    }
+        return type_aliases.find(name)->second;
     else
     {
         myexception e;
@@ -1462,27 +1447,54 @@ type_info Module::lookup_type(const std::string& name) const
     }
 }
 
-optional<type_info> Module::lookup_resolved_type(const std::string& type_name) const
+const_type_ptr Module::lookup_resolved_type(const std::string& type_name) const
 {
+    // 1. Handle builtin names
     if (is_haskell_builtin_type_name(type_name))
         return lookup_builtin_type(type_name);
 
-    auto iter = types.find(type_name);
-    if (iter == types.end())
-        return {};
+    // 2. Handle local names
+    else if (name == get_module_name(type_name))
+        return lookup_local_type(type_name);
+
+    // 3. Handle external names
     else
-        return iter->second;
+        return lookup_external_type(type_name);
 }
 
-type_info* Module::lookup_local_type(const std::string& type_name)
+const_type_ptr Module::lookup_local_type(const std::string& type_name) const
 {
     assert( get_module_name(type_name) == name);
-
     auto iter = types.find(type_name);
     if (iter == types.end())
         return nullptr;
     else
-        return &iter->second;
+        return iter->second;
+}
+
+type_ptr Module::lookup_local_type(const std::string& type_name)
+{
+    assert( get_module_name(type_name) == name);
+    auto iter = types.find(type_name);
+    if (iter == types.end())
+        return nullptr;
+    else
+        return iter->second;
+}
+
+const_type_ptr Module::lookup_external_type(const std::string& type_name) const
+{
+    assert(is_qualified_symbol(type_name));
+
+    auto mod_name = get_module_name(type_name);
+
+    auto uname = get_unqualified_name(type_name);
+
+    auto mod_iter = transitively_imported_modules.find(mod_name);
+    if (mod_iter == transitively_imported_modules.end())
+        throw myexception()<<"Can't find external type '"<<type_name<<"' because module '"<<mod_name<<"' is not transitively imported.";
+
+    return mod_iter->second->lookup_local_type(type_name);
 }
 
 void parse_combinator_application(const expression_ref& E, string& name, vector<expression_ref>& patterns)
@@ -1733,22 +1745,6 @@ std::ostream& operator<<(std::ostream& o, const Module& M)
     return o;
 }
 
-
-const_symbol_ptr lookup_symbol(const string& name, const Program& P)
-{
-    if (is_haskell_builtin_con_name(name))
-        return Module::lookup_builtin_symbol(name).first;
-
-    assert(is_qualified_symbol(name));
-    string name1 = get_module_name(name);
-    string name2 = get_unqualified_name(name);
-
-    for(const auto& module: P)
-        if (module->name == name1)
-            return module->lookup_symbol(name);
-
-    std::abort();
-}
 
 Hs::Var Module::get_external_var(const string& sname) const
 {
