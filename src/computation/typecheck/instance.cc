@@ -208,9 +208,6 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 
     instance_env().insert( {dvar, info} );
 
-    // 11. Make up an equation id -- this is the "evidence" for the type family instance.
-    tf_info->equations.insert({eqn_id, eqn});
-
     pop_source_span();
     pop_note();
 }

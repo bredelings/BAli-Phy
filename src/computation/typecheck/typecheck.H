@@ -110,7 +110,6 @@ public:
     const TypeSynonymInfo* info_for_type_synonym(const std::string& sname) const;
 
     const TypeFamInfo* info_for_type_fam(const std::string& fname) const;
-          TypeFamInfo* info_for_type_fam(const std::string& fname);
 
           InstanceEnv& instance_env()       {return global_state->instance_env;}
     const InstanceEnv& instance_env() const {return global_state->instance_env;}

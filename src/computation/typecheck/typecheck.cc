@@ -364,18 +364,10 @@ const TypeFamInfo* TypeChecker::info_for_type_fam(const std::string& name) const
 {
     auto T = this_mod().lookup_resolved_type(name);
     assert(T);
-    auto F = T->is_type_fam();
-    assert(F);
-    return F->info.get();
-}
-
-TypeFamInfo* TypeChecker::info_for_type_fam(const std::string& name)
-{
-    auto T = this_mod().lookup_resolved_type(name);
-    assert(T);
-    auto F = T->is_type_fam();
-    assert(F);
-    return F->info.get();
+    if (auto F = T->is_type_fam())
+        return F->info.get();
+    else
+        return nullptr;
 }
 
 int TypeChecker::type_con_arity(const TypeCon& tc) const

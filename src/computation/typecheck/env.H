@@ -139,8 +139,6 @@ struct TypeFamInfo
     std::optional<std::string> associated_class;
     bool closed = false;
 
-    std::map<TypeFamEqnId, TypeFamEqnInfo> equations;
-
     int arity() const {return args.size();}
 
     TypeFamInfo(const std::vector<TypeVar>&, const Kind&, const std::optional<std::string>& = {});
