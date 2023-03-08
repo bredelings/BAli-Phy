@@ -343,9 +343,11 @@ const ClassInfo* TypeChecker::info_for_class(const std::string& name) const
 {
     auto T = this_mod().lookup_resolved_type(name);
     assert(T);
-    auto C = T->is_class();
-    assert(C);
-    return C->info.get();
+
+    if (auto C = T->is_class())
+        return C->info.get();
+    else
+        return nullptr;
 }
 
 const TypeSynonymInfo* TypeChecker::info_for_type_synonym(const std::string& name) const
