@@ -372,13 +372,6 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
     {
         // So.. if we import a data type declaration, do we ALSO have to import any types that its constructors reference?
 
-        // 1. Import info about arity and kind of type constructors..
-        for(auto& [tycon,info]: M2->tc_state->tycon_env())
-        {
-            if (not tc_state->tycon_env().count(tycon))
-                tc_state->tycon_env().insert({tycon,info});
-        }
-
         // 2. Import information about the type of constructors
         for(auto& [cname,ctype]: M2->tc_state->data_con_env())
         {
@@ -689,17 +682,6 @@ void Module::perform_exports()
 {
     if (tc_state)
     {
-        // Record kinds on the type symbol table
-        for(auto& [typecon,info]: tc_state->tycon_env())
-        {
-            if (get_module_name(typecon) == name)
-            {
-                auto T = types.at(typecon);
-                assert(not T->kind);
-                T->kind = info.kind;
-            }
-        }
-
         // Record types on the value symbol table
         for(auto& [var,type]: tc_state->poly_env())
         {

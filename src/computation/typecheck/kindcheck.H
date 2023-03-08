@@ -13,6 +13,8 @@ struct kindchecker_state
 {
     int next_kvar_index = 1;
 
+    const Module& mod;
+
     KindVar fresh_named_kind_var(const std::string& s) {return KindVar(s,next_kvar_index++);}
     KindVar fresh_kind_var() {return fresh_named_kind_var("k");}
 
@@ -68,8 +70,8 @@ struct kindchecker_state
 
     TypeConEnv infer_kinds(const std::vector<expression_ref>& type_decl_group);
 
-    kindchecker_state(const TypeConEnv& tce)
-        :type_con_to_kind(tce)
+    kindchecker_state(const Module& m)
+        :mod(m)
     {
         type_var_to_kind.push_back({});
     }

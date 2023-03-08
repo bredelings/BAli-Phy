@@ -72,7 +72,16 @@ void kindchecker_state::add_substitution(const k_substitution_t& s)
 
 Kind kindchecker_state::kind_for_type_con(const std::string& name) const
 {
-    auto kind = type_con_to_kind.at(name).kind;
+    Kind kind;
+    if (type_con_to_kind.count(name))
+        kind = type_con_to_kind.at(name).kind;
+    else
+    {
+        auto T = mod.lookup_resolved_type(name);
+        assert(T);
+        kind = T->kind;
+    }
+
     return apply_substitution(kind);
 }
 

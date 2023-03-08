@@ -350,10 +350,11 @@ const ClassInfo* TypeChecker::info_for_class(const std::string& name) const
 
 int TypeChecker::type_con_arity(const TypeCon& tc) const
 {
-    auto iter = tycon_env().find(unloc(tc.name));
-    if (iter == tycon_env().end())
+    auto T = this_mod().lookup_resolved_type(unloc(tc.name));
+    if (not T)
         throw note_exception()<<"Can't find type con '"<<tc<<"'";
-    return iter->second.arity;
+    assert(T->arity);
+    return (*T->arity);
 }
 
 bool TypeChecker::type_con_is_type_fam(const TypeCon& tc) const
@@ -572,7 +573,11 @@ void TypeChecker::get_tycon_info(const Hs::TypeFamilyDecl& F)
             pop_source_span();
         }
     }
-    tycon_env().insert({unloc(F.con).name, {kind, (int)F.args.size()}});
+    auto T = this_mod().lookup_local_type(unloc(F.con).name);
+    assert(T);
+    T->kind = kind;
+    // We could probably do this earlier...
+    T->arity = (int)F.args.size();
 }
 
 void TypeChecker::get_kind_sigs(const Hs::Decls& type_decls)
@@ -604,7 +609,6 @@ void TypeChecker::get_tycon_info(const Hs::Decls& type_decls)
 
     TypeConEnv new_tycons;
 
-    TypeConEnv new_fam_tycons;
     for(auto& [_,type_decl]: type_decls)
     {
         if (auto F = type_decl.to<Hs::TypeFamilyDecl>())
@@ -615,21 +619,23 @@ void TypeChecker::get_tycon_info(const Hs::Decls& type_decls)
                 get_tycon_info(F);
         }
     }
-    tycon_env() += new_fam_tycons;
 
     auto type_decl_groups = find_type_groups(type_decls);
 
     // Compute kinds for type/class constructors.
     for(auto& type_decl_group: type_decl_groups)
     {
-        kindchecker_state K( tycon_env() );
+        kindchecker_state K( this_mod() );
 
-        auto new_tycons_for_group = K.infer_kinds(type_decl_group);
+        auto new_tycons = K.infer_kinds(type_decl_group);
 
-        new_tycons += new_tycons_for_group;
-
-        // Later groups could refer to tycons from this group
-        tycon_env() += new_tycons_for_group;
+        for(auto& [tycon,ka]: new_tycons)
+        {
+            auto& [k,arity] = ka;
+            auto T = this_mod().lookup_local_type(tycon);
+            T->kind = k;
+            T->arity = arity;
+        }
     }
 
 //    for(auto& [tycon,ka]: new_tycons)
@@ -783,7 +789,7 @@ Type TypeChecker::check_type(const Type& type, kindchecker_state& K) const
 Type TypeChecker::check_type(const Type& type) const
 {
     // This should be rather wasteful... can we use a reference?
-    kindchecker_state K( tycon_env() );
+    kindchecker_state K( this_mod() );
 
     return check_type(type, K);
 }
@@ -791,7 +797,7 @@ Type TypeChecker::check_type(const Type& type) const
 Type TypeChecker::check_constraint(const Type& type) const
 {
     // This should be rather wasteful... can we use a reference?
-    kindchecker_state K( tycon_env() );
+    kindchecker_state K( this_mod() );
 
     return K.kind_and_type_check_constraint( type );
 
@@ -1434,7 +1440,7 @@ Type remove_top_level_foralls(Type t)
 
 void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 {
-    kindchecker_state ks( tycon_env() );
+    kindchecker_state ks( this_mod() );
 
     for(auto& [_,decl]: decls)
     {
@@ -1477,21 +1483,24 @@ Hs::Decls TypeChecker::add_type_var_kinds(Hs::Decls type_decls)
         if (type_decl.is_a<Hs::DataOrNewtypeDecl>())
         {
             auto D = type_decl.as_<Hs::DataOrNewtypeDecl>();
-            auto kind = tycon_env().at(unloc(D.name)).kind;
+            auto kind = this_mod().lookup_local_type(unloc(D.name))->kind;
+            assert(kind);
             result_kind_for_type_vars( D.type_vars, kind);
             type_decl = D;
         }
         else if (type_decl.is_a<Hs::ClassDecl>())
         {
             auto C = type_decl.as_<Hs::ClassDecl>();
-            auto kind = tycon_env().at(unloc(C.name)).kind;
+            auto kind = this_mod().lookup_local_type(unloc(C.name))->kind;
+            assert(kind);
             result_kind_for_type_vars( C.type_vars, kind);
             type_decl = C;
         }
         else if (type_decl.is_a<Hs::TypeSynonymDecl>())
         {
             auto T = type_decl.as_<Hs::TypeSynonymDecl>();
-            auto kind = tycon_env().at(unloc(T.name)).kind;
+            auto kind = this_mod().lookup_local_type(unloc(T.name))->kind;
+            assert(kind);
             result_kind_for_type_vars( T.type_vars, kind);
             type_decl = T;
         }

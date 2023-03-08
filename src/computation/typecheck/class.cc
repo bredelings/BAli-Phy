@@ -49,7 +49,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     push_note( Note()<<"In class '"<<class_decl.name<<"':" );
 
-    kindchecker_state K( tycon_env() );
+    kindchecker_state K( this_mod() );
 
     ClassInfo class_info;
     class_info.type_vars = desugar(class_decl.type_vars);
@@ -163,7 +163,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     {
         auto args = desugar(type_fam_decl.args);
         auto fname = unloc(type_fam_decl.con).name;
-        auto kind = tycon_env().at(fname).kind;
+        auto kind = this_mod().lookup_local_type(fname)->kind;
         TypeFamInfo info(args, kind, unloc(class_decl.name));
 
         auto con = desugar(type_fam_decl.con);
@@ -292,7 +292,7 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
         {
             auto args = desugar(type_fam_decl->args);
             auto fname = unloc(type_fam_decl->con).name;
-            auto kind = tycon_env().at(fname).kind;
+            auto kind = this_mod().lookup_local_type(fname)->kind;
             TypeFamInfo info(args, kind);
 
             auto con = desugar(type_fam_decl->con);

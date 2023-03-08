@@ -174,7 +174,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     TypeFamEqnInfo eqn{ desugar(inst.args), desugar(inst.rhs), lhs_tvs | ranges::to<vector>()};
 
     // 9a. Bind the free type vars
-    kindchecker_state K( tycon_env() );
+    kindchecker_state K( this_mod() );
     K.push_type_var_scope();
     for(auto& tv: eqn.free_tvs)
     {
