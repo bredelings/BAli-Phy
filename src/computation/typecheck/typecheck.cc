@@ -357,6 +357,24 @@ const TypeSynonymInfo* TypeChecker::info_for_type_synonym(const std::string& nam
     return S->info.get();
 }
 
+const TypeFamInfo* TypeChecker::info_for_type_fam(const std::string& name) const
+{
+    auto T = this_mod().lookup_resolved_type(name);
+    assert(T);
+    auto F = T->is_type_fam();
+    assert(F);
+    return F->info.get();
+}
+
+TypeFamInfo* TypeChecker::info_for_type_fam(const std::string& name)
+{
+    auto T = this_mod().lookup_resolved_type(name);
+    assert(T);
+    auto F = T->is_type_fam();
+    assert(F);
+    return F->info.get();
+}
+
 int TypeChecker::type_con_arity(const TypeCon& tc) const
 {
     auto T = this_mod().lookup_resolved_type(unloc(tc.name));
@@ -368,7 +386,7 @@ int TypeChecker::type_con_arity(const TypeCon& tc) const
 
 bool TypeChecker::type_con_is_type_fam(const TypeCon& tc) const
 {
-    return type_fam_env().count(tc);
+    return info_for_type_fam(unloc(tc.name));
 }
 
 bool TypeChecker::type_con_is_type_syn(const TypeCon& tc) const
@@ -751,10 +769,10 @@ const TypeSynonymInfo* TypeChecker::maybe_find_type_synonym(const Type& type) co
         return nullptr;
 }
 
-std::optional<Type> TypeChecker::is_type_synonym(const Type& type) const
+std::optional<Type> TypeChecker::expand_type_synonym(const Type& type) const
 {
     if (auto t2 = filled_meta_type_var(type))
-        return is_type_synonym(*t2);
+        return expand_type_synonym(*t2);
 
     if (type.is_a<TypeCon>() or type.is_a<TypeApp>())
     {
@@ -776,7 +794,7 @@ Type TypeChecker::look_thru(const Type& t) const
         else
             return t;
     }
-    else if (auto s = is_type_synonym(t))
+    else if (auto s = expand_type_synonym(t))
         return look_thru(*s);
     else
         return t;
@@ -863,7 +881,7 @@ std::bitset<8> TypeChecker::check_type_equality(const Type& lhs, const Type& rhs
     // We can record that type synonyms either do or do not expand to have
     // (i) type families
     // (ii) foralls and constraints
-    else if (auto tsyn = is_type_synonym(rhs))
+    else if (auto tsyn = expand_type_synonym(rhs))
     {
         return check_type_equality(lhs, *tsyn);
     }

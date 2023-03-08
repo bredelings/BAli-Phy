@@ -14,7 +14,7 @@ bool TypeChecker::occurs_check(const MetaTypeVar& tv, const Type& t) const
         return false;
     else if (t.is_a<TypeCon>())
         return false;
-    else if (auto syn = is_type_synonym(t))
+    else if (auto syn = expand_type_synonym(t))
         return occurs_check(tv,*syn);
     else if (auto p_app = t.to<TypeApp>())
         return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
@@ -47,7 +47,7 @@ bool TypeChecker::occurs_check(const TypeVar& tv, const Type& t) const
         return tv == *x;
     else if (t.is_a<TypeCon>())
         return false;
-    else if (auto syn = is_type_synonym(t))
+    else if (auto syn = expand_type_synonym(t))
         return occurs_check(tv,*syn);
     else if (auto p_app = t.to<TypeApp>())
         return occurs_check(tv, p_app->head) or occurs_check(tv, p_app->arg);
@@ -141,9 +141,9 @@ void TypeChecker::unify_solve_(const ConstraintOrigin& origin, const Type& t1, c
     else if (t1.is_a<TypeVar>() or t2.is_a<TypeVar>())
         unify_defer(origin, t1, t2);
     // Handle type synonyms AFTER variables, so that we preserve more type synonyms.
-    else if (auto s1 = is_type_synonym(t1))
+    else if (auto s1 = expand_type_synonym(t1))
         unify_solve_(origin, *s1,  t2);
-    else if (auto s2 = is_type_synonym(t2))
+    else if (auto s2 = expand_type_synonym(t2))
         unify_solve_(origin,  t1, *s2);
 
     auto app1 = is_type_app(t1);
@@ -191,9 +191,9 @@ bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const
     else if (auto tt2 = filled_meta_type_var(t2))
         return maybe_unify_(both_ways, env, t1, *tt2);
 
-    else if (auto s1 = is_type_synonym(t1))
+    else if (auto s1 = expand_type_synonym(t1))
         return maybe_unify_(both_ways, env, *s1,  t2);
-    else if (auto s2 = is_type_synonym(t2))
+    else if (auto s2 = expand_type_synonym(t2))
         return maybe_unify_(both_ways, env,  t1, *s2);
 
     else if (auto tv1 = t1.to<MetaTypeVar>())
@@ -305,10 +305,10 @@ bool TypeChecker::same_type(bool keep_syns, const RenameTyvarEnv2& env, const Ty
         return (*tc1 == *tc2);
 
     // 3. Maybe follow type synonyms
-    if (auto ts1 = is_type_synonym(t1); ts1 and not keep_syns)
+    if (auto ts1 = expand_type_synonym(t1); ts1 and not keep_syns)
         return same_type(keep_syns, env, *ts1, t2);
 
-    if (auto ts2 = is_type_synonym(t2); ts2 and not keep_syns)
+    if (auto ts2 = expand_type_synonym(t2); ts2 and not keep_syns)
         return same_type(keep_syns, env, t1, *ts2);
 
     // 4. Handle Type vars

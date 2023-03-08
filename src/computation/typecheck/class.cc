@@ -164,10 +164,9 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         auto args = desugar(type_fam_decl.args);
         auto fname = unloc(type_fam_decl.con).name;
         auto kind = this_mod().lookup_local_type(fname)->kind;
-        TypeFamInfo info(args, kind, unloc(class_decl.name));
 
         auto con = desugar(type_fam_decl.con);
-        type_fam_env().insert({con, info});
+        this_mod().lookup_local_type(unloc(con.name))->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, kind, unloc(class_decl.name));
         if (class_info.associated_type_families.count(con))
             throw note_exception()<<"Trying to define type family '"<<con.print()<<"' twice";
         class_info.associated_type_families.insert({con,false});
@@ -295,19 +294,17 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
             auto args = desugar(type_fam_decl->args);
             auto fname = unloc(type_fam_decl->con).name;
             auto kind = this_mod().lookup_local_type(fname)->kind;
-            TypeFamInfo info(args, kind);
 
             auto con = desugar(type_fam_decl->con);
-            type_fam_env().insert({con, info});
+            this_mod().lookup_local_type(unloc(con.name))->is_type_fam()->info = std::make_shared<TypeFamInfo>(args,kind);
 
             // Add instance equations for closed type families
             if (type_fam_decl->where_instances)
             {
                 for(auto& inst: *type_fam_decl->where_instances)
                     check_add_type_instance(inst, {}, {});
-                type_fam_env().at(con).closed = true;
+                this_mod().lookup_local_type(unloc(con.name))->is_type_fam()->info->closed = true;
             }
-
         }
     }
 }

@@ -56,8 +56,13 @@ type_info::type_syn_info* type_info::is_type_syn()
     return to<type_syn_info>(info);
 }
 
-bool type_info::is_type_fam() const
+const type_info::type_fam_info* type_info::is_type_fam() const
 {
-    return (bool)to<type_fam_info>(info);
+    return to<type_fam_info>(info);
+}
+
+type_info::type_fam_info* type_info::is_type_fam()
+{
+    return to<type_fam_info>(info);
 }
 

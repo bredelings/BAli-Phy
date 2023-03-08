@@ -565,7 +565,7 @@ set<MetaTypeVar> TypeChecker::injective_vars_for_type(const Type& type) const
     }
     else if (is_type_fam_app(type))
         return {};
-    else if (auto type2 = is_type_synonym(type))
+    else if (auto type2 = expand_type_synonym(type))
         return injective_vars_for_type(*type2);
     else if (type.is_a<TypeCon>())
         return {};

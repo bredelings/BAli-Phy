@@ -72,7 +72,7 @@ Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, i
         return Core::WrapId;
     }
     // look through type synonyms
-    else if (auto type2 = is_type_synonym(type))
+    else if (auto type2 = expand_type_synonym(type))
     {
         return tcMatchesFunCheck(arg_types, arity, *type2, a);
     }

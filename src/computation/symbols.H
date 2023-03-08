@@ -48,6 +48,7 @@ struct symbol_info
 
 struct ClassInfo;
 struct TypeSynonymInfo;
+struct TypeFamInfo;
 
 struct type_info
 {
@@ -67,7 +68,9 @@ struct type_info
     {
         std::shared_ptr<TypeSynonymInfo> info;
     };
-    struct type_fam_info {};
+    struct type_fam_info {
+        std::shared_ptr<TypeFamInfo> info;
+    };
 
     bool is_type_other() const; // "->", but now also "~"
     const data_info* is_data() const;
@@ -75,7 +78,8 @@ struct type_info
           class_info* is_class();
     const type_syn_info* is_type_syn() const;
           type_syn_info* is_type_syn();
-    bool is_type_fam() const;
+    const type_fam_info* is_type_fam() const;
+          type_fam_info* is_type_fam();
 
     std::string name;
     // info/children

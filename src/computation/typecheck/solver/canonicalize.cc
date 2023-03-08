@@ -177,7 +177,7 @@ Type Solver::break_type_equality_cycle(const Constraint& C, const Type& type)
     // FIXME!
     // We should mark type synonyms for whether they contains type fams.
     // Then we wouldn't have to look through them as much.
-    else if (auto syn = is_type_synonym(type))
+    else if (auto syn = expand_type_synonym(type))
         return break_type_equality_cycle(C, *syn);
     else if (auto tfam = is_type_fam_app(type))
     {
@@ -331,9 +331,9 @@ std::optional<Predicate> Solver::canonicalize_equality(CanonicalEquality P)
         return {}; // Solved!
 
     // 3. Look through type synonyms
-    while(auto s1 = is_type_synonym(P.t1))
+    while(auto s1 = expand_type_synonym(P.t1))
         P.t1 = *s1;
-    while(auto s2 = is_type_synonym(P.t2))
+    while(auto s2 = expand_type_synonym(P.t2))
         P.t2 = *s2;
 
     // 4. See if we have two tycons that aren't type family tycons

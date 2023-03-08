@@ -69,7 +69,7 @@ Type Solver::rewrite_forall(ConstraintFlavor flavor, const ForallType& forall) c
 Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, const vector<Type>& args) const
 {
     Type t = make_tyapps(tc, rewrite(flavor, args));
-    if (auto t2 = is_type_synonym(t))
+    if (auto t2 = expand_type_synonym(t))
         return rewrite(flavor, *t2);
     else if (auto tfam = is_type_fam_app(t))
     {

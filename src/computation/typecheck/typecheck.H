@@ -55,8 +55,6 @@ struct global_tc_state
 
     KindSigEnv kind_sigs;
 
-    TypeFamEnv type_fam_env;
-
     InstanceEnv instance_env;
 
     std::vector<Type> defaults;
@@ -104,15 +102,15 @@ public:
           KindSigEnv& kind_sigs()       {return global_state->kind_sigs;}
     const KindSigEnv& kind_sigs() const {return global_state->kind_sigs;}
 
-          TypeFamEnv& type_fam_env()       {return global_state->type_fam_env;}
-    const TypeFamEnv& type_fam_env() const {return global_state->type_fam_env;}
-
           DataConEnv& data_con_env()       {return global_state->data_con_env;}
     const DataConEnv& data_con_env() const {return global_state->data_con_env;}
 
     const ClassInfo* info_for_class(const std::string& cname) const;
 
-    const TypeSynonymInfo* info_for_type_synonym(const std::string& cname) const;
+    const TypeSynonymInfo* info_for_type_synonym(const std::string& sname) const;
+
+    const TypeFamInfo* info_for_type_fam(const std::string& fname) const;
+          TypeFamInfo* info_for_type_fam(const std::string& fname);
 
           InstanceEnv& instance_env()       {return global_state->instance_env;}
     const InstanceEnv& instance_env() const {return global_state->instance_env;}
@@ -239,7 +237,7 @@ public:
 
     const TypeSynonymInfo* maybe_find_type_synonym(const Type& type) const;
 
-    std::optional<Type> is_type_synonym(const Type& type) const;
+    std::optional<Type> expand_type_synonym(const Type& type) const;
 
     Type check_type(const Type&) const;
 

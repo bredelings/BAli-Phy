@@ -417,7 +417,7 @@ bool Solver::contains_type(const Type& t1_, const Type& t2) const
         return contains_type(st->type, t2);
     else if (auto lt = t1.to<LazyType>())
         return contains_type(lt->type, t2);
-    else if (auto syn = is_type_synonym(t1))
+    else if (auto syn = expand_type_synonym(t1))
         return contains_type(*syn, t2);
     else if (auto app = t1.to<TypeApp>())
         return contains_type(app->head, t2) or contains_type(app->arg, t2);

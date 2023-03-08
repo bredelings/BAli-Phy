@@ -74,7 +74,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     push_source_span( *(inst.con.loc * range(inst.args) * inst.rhs.loc) );
     
     // 1. Check that the type family exists.
-    if (not type_fam_env().count( tf_con ))
+    if (not type_con_is_type_fam( tf_con ) )
     {
         push_source_span( *inst.con.loc );
         record_error( Note()<<"  No type family '"<<inst.con.print()<<"'");
@@ -86,16 +86,16 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     }
 
     // 2. Get the type family info
-    auto& tf_info = type_fam_env().at(tf_con);
+    auto tf_info = info_for_type_fam( unloc(tf_con.name) );
 
-    if (tf_info.associated_class)
+    if (tf_info->associated_class)
     {
         // 3. Check for unassociated instances declared for associated classes
         if (not associated_class)
         {
             push_source_span( *inst.con.loc );
             record_error( Note() << "  Can't declare non-associated type instance for type family '"<<inst.con.print()<<"' associated with class '"
-                          <<(*tf_info.associated_class)<<"'");
+                          <<(*tf_info->associated_class)<<"'");
             pop_source_span();
 
             pop_source_span();
@@ -104,10 +104,10 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         }
 
         // 4. Check for instances associated with the wrong class
-        if (*tf_info.associated_class != *associated_class)
+        if (*tf_info->associated_class != *associated_class)
         {
             record_error(Note() << "  Trying to declare type instance in class '"<<*associated_class<<" for family '"<<inst.con.print()
-                         <<"' associated with class '"<<(*tf_info.associated_class)<<"'");
+                         <<"' associated with class '"<<(*tf_info->associated_class)<<"'");
 
             pop_source_span();
             pop_note();
@@ -115,9 +115,9 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         }
 
         // 5. Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
-        for(int i=0;i<tf_info.args.size();i++)
+        for(int i=0;i<tf_info->args.size();i++)
         {
-            auto fam_tv = tf_info.args[i];
+            auto fam_tv = tf_info->args[i];
             push_source_span( *inst.args[i].loc );
             if (instance_subst.count(fam_tv))
             {
@@ -130,7 +130,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     }
 
     // 6. Check that the type family is not closed
-    if (tf_info.closed)
+    if (tf_info->closed)
     {
         record_error( Note() << "  Can't declare additional type instance for closed type family '"<<inst.con.print()<<"'");
 
@@ -141,10 +141,10 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
             
 
     // 7. Check that the type instance has the right number of arguments
-    if (inst.args.size() != tf_info.args.size())
+    if (inst.args.size() != tf_info->args.size())
     {
         push_source_span( *range(inst.args) );
-        record_error( Note() << "    Expected "<<tf_info.args.size()<<" parameters, but got "<<inst.args.size());
+        record_error( Note() << "    Expected "<<tf_info->args.size()<<" parameters, but got "<<inst.args.size());
         pop_source_span();
 
         pop_source_span();
@@ -185,8 +185,8 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 
     // 9b. Kind-check the type vars
     for(int i=0; i<eqn.args.size(); i++)
-        K.kind_check_type_of_kind(eqn.args[i], *tf_info.args[i].kind);
-    K.kind_check_type_of_kind(eqn.rhs, tf_info.result_kind);
+        K.kind_check_type_of_kind(eqn.args[i], *tf_info->args[i].kind);
+    K.kind_check_type_of_kind(eqn.rhs, tf_info->result_kind);
 
     // 9c. Record the final kinds for the free type vars
     for(int i=0; i<eqn.args.size(); i++)
@@ -209,7 +209,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     instance_env().insert( {dvar, info} );
 
     // 11. Make up an equation id -- this is the "evidence" for the type family instance.
-    tf_info.equations.insert({eqn_id, eqn});
+    tf_info->equations.insert({eqn_id, eqn});
 
     pop_source_span();
     pop_note();
