@@ -281,7 +281,7 @@ TypeChecker::get_type_synonyms(const Hs::Decls& decls)
 
         auto& info = this_mod().lookup_local_type(name)->is_type_syn()->info;
         assert(not info);
-        info = std::make_shared<TypeSynonymInfo>(name, type_vars, rhs_type);
+        info = std::shared_ptr<TypeSynonymInfo>(new TypeSynonymInfo{name, type_vars, rhs_type});
     }
 }
 
