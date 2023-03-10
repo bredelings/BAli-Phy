@@ -114,7 +114,7 @@ qvarid: varid  { $$ = $1; }
 
 varid: VARID        { $$ = $1; }
 
-literal: STRING      {$$ = ptree($1);}
+literal: STRING      {$$ = ptree('"' + $1 + '"');}
 |        INTEGER     {$$ = ptree($1);}
 |        FLOAT       {$$ = ptree($1);}
 

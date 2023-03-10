@@ -845,7 +845,7 @@ namespace zz {
 
   case 25: // literal: "STRING"
 #line 117 "parser.y"
-                     {yylhs.value.as < ptree > () = ptree(yystack_[0].value.as < std::string > ());}
+                     {yylhs.value.as < ptree > () = ptree('"' + yystack_[0].value.as < std::string > () + '"');}
 #line 850 "parser.cc"
     break;
 
