@@ -422,6 +422,27 @@ string unparse_annotated(const ptree& ann)
     }
     else if (s == "List")
     {
+        bool list_of_pairs = true;
+        vector<string> pairs;
+        for(auto& [_,item]: p)
+        {
+            auto type = item.get_child("type");
+            if (type.get_value<string>() == "Tuple" and type.size() == 2)
+            {
+                auto value = item.get_child("value");
+                pairs.push_back(unparse_annotated(value[0].second)+": "+unparse_annotated(value[1].second));
+            }
+            else
+            {
+                list_of_pairs = false;
+                break;
+            }
+        }
+        if (list_of_pairs)
+        {
+            return "{" + join(pairs,", ") + "}";
+        }
+
         vector<string> items;
         for(auto& [_,item]: p)
             items.push_back(unparse_annotated(item));
