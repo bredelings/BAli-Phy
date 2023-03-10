@@ -434,6 +434,7 @@ namespace zz {
 
       // exp
       // term
+      // ditem
       // literal
       char dummy3[sizeof (ptree)];
 
@@ -450,6 +451,7 @@ namespace zz {
       // terms
       char dummy6[sizeof (std::vector<ptree>)];
 
+      // ditems
       // args
       // tup_args
       char dummy7[sizeof (std::vector<std::pair<std::string,ptree>>)];
@@ -506,20 +508,23 @@ namespace zz {
     TOK_ZZerror = 256,             // error
     TOK_ZZUNDEF = 257,             // "invalid token"
     TOK_SEMI = 258,                // ";"
-    TOK_EQUAL = 259,               // "="
-    TOK_TILDE = 260,               // "~"
-    TOK_OBRACK = 261,              // "["
-    TOK_CBRACK = 262,              // "]"
-    TOK_OPAREN = 263,              // "("
-    TOK_CPAREN = 264,              // ")"
-    TOK_COMMA = 265,               // ","
-    TOK_PLUS = 266,                // "+"
-    TOK_AT = 267,                  // "@"
-    TOK_VARID = 268,               // "VARID"
-    TOK_QVARID = 269,              // "QVARID"
-    TOK_STRING = 270,              // "STRING"
-    TOK_INTEGER = 271,             // "INTEGER"
-    TOK_FLOAT = 272                // "FLOAT"
+    TOK_COLON = 259,               // ":"
+    TOK_EQUAL = 260,               // "="
+    TOK_TILDE = 261,               // "~"
+    TOK_OBRACK = 262,              // "["
+    TOK_CBRACK = 263,              // "]"
+    TOK_OPAREN = 264,              // "("
+    TOK_CPAREN = 265,              // ")"
+    TOK_OCURLY = 266,              // "{"
+    TOK_CCURLY = 267,              // "}"
+    TOK_COMMA = 268,               // ","
+    TOK_PLUS = 269,                // "+"
+    TOK_AT = 270,                  // "@"
+    TOK_VARID = 271,               // "VARID"
+    TOK_QVARID = 272,              // "QVARID"
+    TOK_STRING = 273,              // "STRING"
+    TOK_INTEGER = 274,             // "INTEGER"
+    TOK_FLOAT = 275                // "FLOAT"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -536,37 +541,42 @@ namespace zz {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 18, ///< Number of tokens.
+        YYNTOKENS = 21, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
         S_YYUNDEF = 2,                           // "invalid token"
         S_SEMI = 3,                              // ";"
-        S_EQUAL = 4,                             // "="
-        S_TILDE = 5,                             // "~"
-        S_OBRACK = 6,                            // "["
-        S_CBRACK = 7,                            // "]"
-        S_OPAREN = 8,                            // "("
-        S_CPAREN = 9,                            // ")"
-        S_COMMA = 10,                            // ","
-        S_PLUS = 11,                             // "+"
-        S_AT = 12,                               // "@"
-        S_VARID = 13,                            // "VARID"
-        S_QVARID = 14,                           // "QVARID"
-        S_STRING = 15,                           // "STRING"
-        S_INTEGER = 16,                          // "INTEGER"
-        S_FLOAT = 17,                            // "FLOAT"
-        S_YYACCEPT = 18,                         // $accept
-        S_unit = 19,                             // unit
-        S_exp = 20,                              // exp
-        S_terms = 21,                            // terms
-        S_term = 22,                             // term
-        S_args = 23,                             // args
-        S_arg = 24,                              // arg
-        S_tup_args = 25,                         // tup_args
-        S_qvarid = 26,                           // qvarid
-        S_varid = 27,                            // varid
-        S_literal = 28                           // literal
+        S_COLON = 4,                             // ":"
+        S_EQUAL = 5,                             // "="
+        S_TILDE = 6,                             // "~"
+        S_OBRACK = 7,                            // "["
+        S_CBRACK = 8,                            // "]"
+        S_OPAREN = 9,                            // "("
+        S_CPAREN = 10,                           // ")"
+        S_OCURLY = 11,                           // "{"
+        S_CCURLY = 12,                           // "}"
+        S_COMMA = 13,                            // ","
+        S_PLUS = 14,                             // "+"
+        S_AT = 15,                               // "@"
+        S_VARID = 16,                            // "VARID"
+        S_QVARID = 17,                           // "QVARID"
+        S_STRING = 18,                           // "STRING"
+        S_INTEGER = 19,                          // "INTEGER"
+        S_FLOAT = 20,                            // "FLOAT"
+        S_YYACCEPT = 21,                         // $accept
+        S_unit = 22,                             // unit
+        S_exp = 23,                              // exp
+        S_terms = 24,                            // terms
+        S_term = 25,                             // term
+        S_ditems = 26,                           // ditems
+        S_ditem = 27,                            // ditem
+        S_args = 28,                             // args
+        S_arg = 29,                              // arg
+        S_tup_args = 30,                         // tup_args
+        S_qvarid = 31,                           // qvarid
+        S_varid = 32,                            // varid
+        S_literal = 33                           // literal
       };
     };
 
@@ -613,6 +623,7 @@ namespace zz {
 
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
+      case symbol_kind::S_ditem: // ditem
       case symbol_kind::S_literal: // literal
         value.move< ptree > (std::move (that.value));
         break;
@@ -633,6 +644,7 @@ namespace zz {
         value.move< std::vector<ptree> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
         value.move< std::vector<std::pair<std::string,ptree>> > (std::move (that.value));
@@ -793,6 +805,7 @@ switch (yykind)
 
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
+      case symbol_kind::S_ditem: // ditem
       case symbol_kind::S_literal: // literal
         value.template destroy< ptree > ();
         break;
@@ -813,6 +826,7 @@ switch (yykind)
         value.template destroy< std::vector<ptree> > ();
         break;
 
+      case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
         value.template destroy< std::vector<std::pair<std::string,ptree>> > ();
@@ -1066,6 +1080,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_COLON (location_type l)
+      {
+        return symbol_type (token::TOK_COLON, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_COLON (const location_type& l)
+      {
+        return symbol_type (token::TOK_COLON, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_EQUAL (location_type l)
       {
         return symbol_type (token::TOK_EQUAL, std::move (l));
@@ -1151,6 +1180,36 @@ switch (yykind)
       make_CPAREN (const location_type& l)
       {
         return symbol_type (token::TOK_CPAREN, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_OCURLY (location_type l)
+      {
+        return symbol_type (token::TOK_OCURLY, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_OCURLY (const location_type& l)
+      {
+        return symbol_type (token::TOK_OCURLY, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_CCURLY (location_type l)
+      {
+        return symbol_type (token::TOK_CCURLY, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_CCURLY (const location_type& l)
+      {
+        return symbol_type (token::TOK_CCURLY, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1376,7 +1435,7 @@ switch (yykind)
 
 #if ZZDEBUG
     // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-    static const signed char yyrline_[];
+    static const unsigned char yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r) const;
     /// Print the state stack on the debug stream.
@@ -1603,9 +1662,9 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 113,     ///< Last index in yytable_.
-      yynnts_ = 11,  ///< Number of nonterminal symbols.
-      yyfinal_ = 28 ///< Termination state number.
+      yylast_ = 146,     ///< Last index in yytable_.
+      yynnts_ = 13,  ///< Number of nonterminal symbols.
+      yyfinal_ = 33 ///< Termination state number.
     };
 
 
@@ -1651,10 +1710,10 @@ switch (yykind)
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17
+      15,    16,    17,    18,    19,    20
     };
     // Last valid token kind.
-    const int code_max = 272;
+    const int code_max = 275;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -1683,6 +1742,7 @@ switch (yykind)
 
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
+      case symbol_kind::S_ditem: // ditem
       case symbol_kind::S_literal: // literal
         value.copy< ptree > (YY_MOVE (that.value));
         break;
@@ -1703,6 +1763,7 @@ switch (yykind)
         value.copy< std::vector<ptree> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
         value.copy< std::vector<std::pair<std::string,ptree>> > (YY_MOVE (that.value));
@@ -1749,6 +1810,7 @@ switch (yykind)
 
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
+      case symbol_kind::S_ditem: // ditem
       case symbol_kind::S_literal: // literal
         value.move< ptree > (YY_MOVE (s.value));
         break;
@@ -1769,6 +1831,7 @@ switch (yykind)
         value.move< std::vector<ptree> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
         value.move< std::vector<std::pair<std::string,ptree>> > (YY_MOVE (s.value));
@@ -1841,7 +1904,7 @@ switch (yykind)
 
 #line 6 "parser.y"
 } // zz
-#line 1845 "parser.hh"
+#line 1908 "parser.hh"
 
 
 

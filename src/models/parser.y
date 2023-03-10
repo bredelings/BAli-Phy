@@ -43,12 +43,15 @@ ptree fold_terms(const std::vector<ptree>& terms);
   END  0  "end of file"
 
   SEMI          ";"
+  COLON         ":"
   EQUAL         "="
   TILDE         "~"
   OBRACK        "["
   CBRACK        "]"
   OPAREN        "("
   CPAREN        ")"
+  OCURLY        "{"
+  CCURLY        "}"
   COMMA         ","
   PLUS          "+"
   AT            "@"
@@ -66,6 +69,8 @@ ptree fold_terms(const std::vector<ptree>& terms);
 %type <std::vector<ptree>>       terms
 %type <std::vector<std::pair<std::string,ptree>>> args
 %type <std::pair<std::string,ptree>> arg
+%type <std::vector<std::pair<std::string,ptree>>> ditems
+%type <ptree> ditem
 %type <std::vector<std::pair<std::string,ptree>>> tup_args
 
 %type <std::string> qvarid
@@ -102,6 +107,13 @@ term: qvarid                      { $$ = ptree($1); }
 |     "(" tup_args "," exp ")"    { $2.push_back({"",$4}); $$ = ptree("Tuple",$2); }
 |     "~" term                    { $$ = add_sample($2); }
 |     literal                     { $$ = $1; }
+|     "{" ditems "}"              { $$ = ptree("List",$2); }
+|     "{" "}"                     { $$ = ptree("List",{}); }
+
+ditems: ditem                     { $$.push_back({"",$1}); }
+|       ditems "," ditem          { $$ = $1; $$.push_back({"",$3}); }
+
+ditem: exp ":" exp  { $$ = ptree("Tuple",{{"",$1},{"",$3}}); }
 
 args: arg                 { $$.push_back($1); }
 |     args "," arg        { $$ = $1; $$.push_back($3); }
