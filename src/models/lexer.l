@@ -85,6 +85,7 @@ escape	     \\[abfnrtv\"\']
 
 qual         ({conid}\.)+
 qvarid       {qual}{varid}
+qconid       {qual}{conid}
 
 floating_point      {numspc}{decimal}\.{decimal}{exponent}?|{numspc}{decimal}{exponent}
 
@@ -125,8 +126,11 @@ signed       {negative}?
 "@"      return zz::parser::make_AT     (loc);
 "~"      return zz::parser::make_TILDE  (loc);
 
+
 {qvarid}      return zz::parser::make_QVARID (yytext, loc);
+{qconid}      return zz::parser::make_QVARID (yytext, loc);
 {varid}       return drv.varid(loc);
+{conid}       return drv.varid(loc);
 
 {signed}{decimal}                              return zz_make_integer10(loc);
 
