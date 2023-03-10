@@ -42,6 +42,7 @@ ptree fold_terms(const std::vector<ptree>& terms);
 %token
   END  0  "end of file"
 
+  FUNCTION      "function"
   SEMI          ";"
   COLON         ":"
   EQUAL         "="
@@ -88,9 +89,9 @@ ptree fold_terms(const std::vector<ptree>& terms);
 unit: exp {drv.result = $1;}
 
 
-exp: terms                                { $$ = fold_terms($1); }
-|           "(" exp ")"                   { $$ = $2; }
-|           varid "=" exp ";" exp  { $$ = ptree("let",{{$1,$3},{"",$5}}); }
+exp: terms                                    { $$ = fold_terms($1); }
+|    "(" exp ")"                              { $$ = $2; }
+|    varid "=" exp ";" exp                    { $$ = ptree("let",{{$1,$3},{"",$5}}); }
 
 terms: term                 { $$.push_back($1);}
 |      terms "+" term       { $$ = $1; $$.push_back($3);}
@@ -109,6 +110,8 @@ term: qvarid                      { $$ = ptree($1); }
 |     literal                     { $$ = $1; }
 |     "{" ditems "}"              { $$ = ptree("List",$2); }
 |     "{" "}"                     { $$ = ptree("List",{}); }
+|    "function" "(" varid ":" exp ")"         { $$ = ptree("function",{{"",ptree($3)},{"",$5}}); }
+|    "function" "[" varid "," exp "]"         { $$ = ptree("function",{{"",ptree($3)},{"",$5}}); }
 
 ditems: ditem                     { $$.push_back({"",$1}); }
 |       ditems "," ditem          { $$ = $1; $$.push_back({"",$3}); }

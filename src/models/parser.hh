@@ -507,24 +507,25 @@ namespace zz {
     TOK_END = 0,                   // "end of file"
     TOK_ZZerror = 256,             // error
     TOK_ZZUNDEF = 257,             // "invalid token"
-    TOK_SEMI = 258,                // ";"
-    TOK_COLON = 259,               // ":"
-    TOK_EQUAL = 260,               // "="
-    TOK_TILDE = 261,               // "~"
-    TOK_OBRACK = 262,              // "["
-    TOK_CBRACK = 263,              // "]"
-    TOK_OPAREN = 264,              // "("
-    TOK_CPAREN = 265,              // ")"
-    TOK_OCURLY = 266,              // "{"
-    TOK_CCURLY = 267,              // "}"
-    TOK_COMMA = 268,               // ","
-    TOK_PLUS = 269,                // "+"
-    TOK_AT = 270,                  // "@"
-    TOK_VARID = 271,               // "VARID"
-    TOK_QVARID = 272,              // "QVARID"
-    TOK_STRING = 273,              // "STRING"
-    TOK_INTEGER = 274,             // "INTEGER"
-    TOK_FLOAT = 275                // "FLOAT"
+    TOK_FUNCTION = 258,            // "function"
+    TOK_SEMI = 259,                // ";"
+    TOK_COLON = 260,               // ":"
+    TOK_EQUAL = 261,               // "="
+    TOK_TILDE = 262,               // "~"
+    TOK_OBRACK = 263,              // "["
+    TOK_CBRACK = 264,              // "]"
+    TOK_OPAREN = 265,              // "("
+    TOK_CPAREN = 266,              // ")"
+    TOK_OCURLY = 267,              // "{"
+    TOK_CCURLY = 268,              // "}"
+    TOK_COMMA = 269,               // ","
+    TOK_PLUS = 270,                // "+"
+    TOK_AT = 271,                  // "@"
+    TOK_VARID = 272,               // "VARID"
+    TOK_QVARID = 273,              // "QVARID"
+    TOK_STRING = 274,              // "STRING"
+    TOK_INTEGER = 275,             // "INTEGER"
+    TOK_FLOAT = 276                // "FLOAT"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -541,42 +542,43 @@ namespace zz {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 21, ///< Number of tokens.
+        YYNTOKENS = 22, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
         S_YYUNDEF = 2,                           // "invalid token"
-        S_SEMI = 3,                              // ";"
-        S_COLON = 4,                             // ":"
-        S_EQUAL = 5,                             // "="
-        S_TILDE = 6,                             // "~"
-        S_OBRACK = 7,                            // "["
-        S_CBRACK = 8,                            // "]"
-        S_OPAREN = 9,                            // "("
-        S_CPAREN = 10,                           // ")"
-        S_OCURLY = 11,                           // "{"
-        S_CCURLY = 12,                           // "}"
-        S_COMMA = 13,                            // ","
-        S_PLUS = 14,                             // "+"
-        S_AT = 15,                               // "@"
-        S_VARID = 16,                            // "VARID"
-        S_QVARID = 17,                           // "QVARID"
-        S_STRING = 18,                           // "STRING"
-        S_INTEGER = 19,                          // "INTEGER"
-        S_FLOAT = 20,                            // "FLOAT"
-        S_YYACCEPT = 21,                         // $accept
-        S_unit = 22,                             // unit
-        S_exp = 23,                              // exp
-        S_terms = 24,                            // terms
-        S_term = 25,                             // term
-        S_ditems = 26,                           // ditems
-        S_ditem = 27,                            // ditem
-        S_args = 28,                             // args
-        S_arg = 29,                              // arg
-        S_tup_args = 30,                         // tup_args
-        S_qvarid = 31,                           // qvarid
-        S_varid = 32,                            // varid
-        S_literal = 33                           // literal
+        S_FUNCTION = 3,                          // "function"
+        S_SEMI = 4,                              // ";"
+        S_COLON = 5,                             // ":"
+        S_EQUAL = 6,                             // "="
+        S_TILDE = 7,                             // "~"
+        S_OBRACK = 8,                            // "["
+        S_CBRACK = 9,                            // "]"
+        S_OPAREN = 10,                           // "("
+        S_CPAREN = 11,                           // ")"
+        S_OCURLY = 12,                           // "{"
+        S_CCURLY = 13,                           // "}"
+        S_COMMA = 14,                            // ","
+        S_PLUS = 15,                             // "+"
+        S_AT = 16,                               // "@"
+        S_VARID = 17,                            // "VARID"
+        S_QVARID = 18,                           // "QVARID"
+        S_STRING = 19,                           // "STRING"
+        S_INTEGER = 20,                          // "INTEGER"
+        S_FLOAT = 21,                            // "FLOAT"
+        S_YYACCEPT = 22,                         // $accept
+        S_unit = 23,                             // unit
+        S_exp = 24,                              // exp
+        S_terms = 25,                            // terms
+        S_term = 26,                             // term
+        S_ditems = 27,                           // ditems
+        S_ditem = 28,                            // ditem
+        S_args = 29,                             // args
+        S_arg = 30,                              // arg
+        S_tup_args = 31,                         // tup_args
+        S_qvarid = 32,                           // qvarid
+        S_varid = 33,                            // varid
+        S_literal = 34                           // literal
       };
     };
 
@@ -1065,6 +1067,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_FUNCTION (location_type l)
+      {
+        return symbol_type (token::TOK_FUNCTION, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_FUNCTION (const location_type& l)
+      {
+        return symbol_type (token::TOK_FUNCTION, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_SEMI (location_type l)
       {
         return symbol_type (token::TOK_SEMI, std::move (l));
@@ -1402,7 +1419,7 @@ switch (yykind)
     // Tables.
     // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
     // STATE-NUM.
-    static const signed char yypact_[];
+    static const short yypact_[];
 
     // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
     // Performed when YYTABLE does not specify something else to do.  Zero
@@ -1662,9 +1679,9 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 146,     ///< Last index in yytable_.
+      yylast_ = 182,     ///< Last index in yytable_.
       yynnts_ = 13,  ///< Number of nonterminal symbols.
-      yyfinal_ = 33 ///< Termination state number.
+      yyfinal_ = 36 ///< Termination state number.
     };
 
 
@@ -1710,10 +1727,10 @@ switch (yykind)
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,    20
+      15,    16,    17,    18,    19,    20,    21
     };
     // Last valid token kind.
-    const int code_max = 275;
+    const int code_max = 276;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -1904,7 +1921,7 @@ switch (yykind)
 
 #line 6 "parser.y"
 } // zz
-#line 1908 "parser.hh"
+#line 1925 "parser.hh"
 
 
 
