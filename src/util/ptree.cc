@@ -190,22 +190,40 @@ ptree::operator const std::string& () const
 	return get_value<string>();
 }
 
-string ptree::show() const
+string ptree::show(bool pretty) const
 {
-    return ::show(*this);
+    return ::show(*this, pretty);
 }
 
-string show(const ptree& pt, int depth)
+string show(const ptree& pt, bool pretty, int depth)
 {
-    string indent(depth,' ');
-    string indent2(depth+2,' ');
     string result = convertToString(pt.value);
     if (pt.has_value<string>())
-	result = "'" + result + "'";
-    for(auto c: pt)
+        result = "'" + result + "'";
+    if (pretty)
     {
-	result += "\n" + indent2 + c.first + " : ";
-	result += show(c.second,depth+4);
+        string indent(depth,' ');
+        string indent2(depth+2,' ');
+        for(auto& [key,value]: pt)
+        {
+            result += "\n" + indent2 + key + " : ";
+            result += show(value,depth+4);
+        }
+    }
+    else
+    {
+        vector<string> pairs;
+        for(auto& [key,value]: pt)
+        {
+            pairs.push_back(key + ": " + show(value));
+        }
+        if (not pairs.empty())
+        {
+            if (pt.value_is_empty())
+                result = "{"+join(pairs,", ")+"}";
+            else
+                result += "["+join(pairs,", ")+"]";
+        }
     }
     return result;
 }

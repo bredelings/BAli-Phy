@@ -121,7 +121,7 @@ public:
     operator double () const;
     operator const std::string& () const;
 
-    std::string show() const;
+    std::string show(bool pretty=true) const;
 
     ptree() {};
 
@@ -139,7 +139,7 @@ template <>  inline bool ptree::has_value<int>()    const {return value.index() 
 template <>  inline bool ptree::has_value<double>() const {return value.index() == 3;}
 template <>  inline bool ptree::has_value<std::string>() const {return value.index() == 1;}
 
-std::string show(const ptree& pt, int depth=0);
+std::string show(const ptree& pt, bool pretty = false, int depth=0);
 
 void to_json(json& j, const ptree::value_t& p);
 void to_json(json& j, const ptree& p);
