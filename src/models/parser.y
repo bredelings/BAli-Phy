@@ -90,7 +90,8 @@ terms: term                 { $$.push_back($1);}
 // See parse_no_submodel( )
 term: qvarid                { $$ = ptree($1); }
 |     "@" varid             { $$ = ptree("@"+$2); }
-|     qvarid "[" args "]"   { $$ = ptree($1,$3); }  
+|     qvarid "[" args "]"   { $$ = ptree($1,$3); }
+|     qvarid "(" args ")"   { $$ = ptree($1,$3); }
 |     "[" args "]"          { $$ = ptree("List",$2); }
 |     "[" "]"               { $$ = ptree("List",{}); }
 |     "(" args "," arg ")"  { $2.push_back($4); $$ = ptree("Tuple",$2); }
