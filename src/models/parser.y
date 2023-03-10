@@ -42,6 +42,7 @@ ptree fold_terms(const std::vector<ptree>& terms);
 %token
   END  0  "end of file"
 
+  SEMI          ";"
   EQUAL         "="
   TILDE         "~"
   OBRACK        "["
@@ -81,8 +82,9 @@ ptree fold_terms(const std::vector<ptree>& terms);
 unit: expression {drv.result = $1;}
 
 
-expression: terms  { $$ = fold_terms($1); }
-|           "(" expression ")" { $$ = $2; }
+expression: terms                                { $$ = fold_terms($1); }
+|           "(" expression ")"                   { $$ = $2; }
+|           varid "=" expression ";" expression  { $$ = ptree("let",{{$1,$3},{"",$5}}); }
 
 terms: term                 { $$.push_back($1);}
 |      terms "+" term       { $$ = $1; $$.push_back($3);}

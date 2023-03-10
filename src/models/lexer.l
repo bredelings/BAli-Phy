@@ -125,6 +125,7 @@ signed       {negative}?
 "+"      return zz::parser::make_PLUS   (loc);
 "@"      return zz::parser::make_AT     (loc);
 "~"      return zz::parser::make_TILDE  (loc);
+";"      return zz::parser::make_SEMI   (loc);
 
 
 {qvarid}      return zz::parser::make_QVARID (yytext, loc);
