@@ -13,5 +13,5 @@
         }
     ],
     "description":"The Bernoulli distribution yields 1 with probability p, and 0 with probability (1-p).",
-    "examples": ["~bernoulli[0.5]"]
+    "examples": ["~bernoulli(0.5)"]
 }

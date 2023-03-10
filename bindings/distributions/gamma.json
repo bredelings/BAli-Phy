@@ -18,10 +18,10 @@
     ],
     "title" : "The gamma distribution",
     "description": "mean = a * b\nvariance = a*b^2",
-    "examples": ["~gamma[1.0,mu]                   # An exponential",
-		 "~iid[10,gamma[0.5,2]]            # 10 samples",
-		 "quantile[gamma[0.5,2],0.95]",
-		 "density[gamma[0.5,2],0.95]"
+    "examples": ["~gamma(1.0, mu)                   # An exponential",
+		 "~iid(10, gamma(0.5, 2))            # 10 samples",
+		 "quantile(gamma(0.5, 2), 0.95)",
+		 "density(gamma(0.5,2), 0.95)"
 		],
     "see": ["shifted_gamma","log_gamma"]
 }

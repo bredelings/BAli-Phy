@@ -17,5 +17,5 @@
         }
     ],
     "title": "The normal distribution",
-    "examples": ["~normal[0,1]","~iid[10,normal[0,1]]"]
+    "examples": ["~normal(0,1)","~iid(10, normal(0,1))"]
 }

@@ -18,8 +18,8 @@
         }
     ],
     "description": "The Binomial distribution gives the number of successes in n trials, where each trial has probability p.  Thus the sum of n Bernoulli random variables with success probability p follows the Binomal[n,p] distribution.",
-    "examples": ["~binomial[10,0.25]",
-		 "~iid[10,binomial[10,0.25]]",
-		 "density[binomial[10,0.25],2]"
+    "examples": ["~binomial(10, 0.25)",
+		 "~iid(10, binomial(10, 0.25)]",
+		 "density(binomial(10, 0.25), 2)"
 		]
 }

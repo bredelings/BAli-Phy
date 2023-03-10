@@ -22,11 +22,11 @@
     ],
     "title" : "The gamma distribution",
     "description": "mean = a * b\nvariance = a*b^2",
-    "examples": ["~shifted_gamma[1.0,mu,0]                   # An exponential",
-		 "~shifted_gamma[a,b,1.5]                  # A Gamma shifted right by 1.5",
-		 "~iid[10,shifted_gamma[0.5,2,1.5]]            # 10 samples",
-		 "quantile[shifted_gamma[0.5,2,0],0.95]",
-		 "density[sihfted_gamma[0.5,2],0.95]"
+    "examples": ["~shifted_gamma(1.0, mu, 0)                   # An exponential",
+		 "~shifted_gamma(a, b, 1.5)                    # A Gamma shifted right by 1.5",
+		 "~iid(10, shifted_gamma(0.5, 2, 1.5))         # 10 samples",
+		 "quantile(shifted_gamma(0.5, 2, 0), 0.95)",
+		 "density(shifted_gamma(0.5, 2), 0.95)"
 		],
     "see": ["gamma"]
 }

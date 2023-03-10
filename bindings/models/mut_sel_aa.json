@@ -21,7 +21,7 @@
 	{
 	    "arg_name": "a",
 	    "arg_type": "Codons[a]",
-	    "default_value": "get_state[alphabet]",
+	    "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
 	}
     ],

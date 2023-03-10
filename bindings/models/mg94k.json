@@ -9,25 +9,25 @@
         {
             "arg_name": "kappa",
             "arg_type": "Double",
-            "default_value": "~log_normal[log[2],0.25]",
+            "default_value": "~log_normal(log(2),0.25)",
             "description": "Transition\/transversion ratio"
         },
         {
             "arg_name": "omega",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
             "description": "Relative rate of non-synonymous changes relative to synonymous changes"
         },
         {
             "arg_name": "pi",
             "arg_type": "List[Tuple[String,Double]]",
-            "default_value": "~symmetric_dirichlet_on[letters[getNucleotides[@a]],1.0]",
+            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)), 1.0)",
 	    "description": "Nucleotide frequencies"
         },
         {
             "arg_name": "a",
             "arg_type": "a",
-            "default_value": "get_state[alphabet]",
+            "default_value": "get_state(alphabet)",
 	    "description": "The alphabet"
         }
     ],

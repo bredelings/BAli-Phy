@@ -18,5 +18,5 @@
     ],
     "title": "The Cauchy-Lorentz distribution",
     "description":"The Cauchy distribution is so widely dispersed that its mean and variance are both undefined.",
-    "examples": ["~cauchy[0,1]","~iid[10,cauchy[0,1]]"]
+    "examples": ["~cauchy(0,1)","~iid(10, cauchy(0, 1))"]
 }

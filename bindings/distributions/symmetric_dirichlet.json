@@ -15,6 +15,6 @@
         }
     ],
     "title":"The Dirichlet distribution",
-    "examples": ["~symmetric_dirichlet[2,4.0]"],
+    "examples": ["~symmetric_dirichlet(2, 4)"],
     "description": "This is a Dirichlet with identical weight in all categories"
 }

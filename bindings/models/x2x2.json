@@ -21,7 +21,7 @@
         {
             "arg_name": "a",
             "arg_type": "a",
-            "default_value": "get_state[alphabet]",
+            "default_value": "get_state(alphabet)",
 	    "description": "The Triplets alphabet"
         }
     ],

@@ -17,43 +17,43 @@
         {
             "arg_name": "aS",
             "arg_type": "Double",
-            "default_value": "~log_normal[log[2],0.25]",
+            "default_value": "~log_normal(log(2),0.25)",
 	    "description": "Exchange rate: 1 change, match <-> match"
         },
         {
             "arg_name": "aD",
             "arg_type": "Double",
-            "default_value": "~log_normal[log[2],0.25]",
+            "default_value": "~log_normal(log(2),0.25)",
 	    "description": "Exchange rate: 2 changes, match <-> match, both transitions"
         },
         {
             "arg_name": "b",
             "arg_type": "Double",
-            "default_value": "~log_normal[log[2],0.25]",
+            "default_value": "~log_normal(log(2),0.25)",
 	    "description": "Exchange rate: 2 changes, match <-> match, both transversions"
         },
         {
             "arg_name": "g",
             "arg_type": "Double",
-            "default_value": "~log_normal[log[2],0.25]",
+            "default_value": "~log_normal(log(2),0.25)",
 	    "description": "Exchange rate: 1 changes, match <-> mismatch"
         },
         {
             "arg_name": "e",
             "arg_type": "Double",
-            "default_value": "~log_normal[log[2],0.25]",
+            "default_value": "~log_normal(log(2),0.25)",
 	    "description": "Exchange rate: 1 changes, mismatch <-> mismatch"
         },
         {
             "arg_name": "pi",
             "arg_type": "List[Tuple[String,Double]]",
-            "default_value": "~symmetric_dirichlet_on[letters[@a],1]",
+            "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
 	    "description": "Doublet frequencies"
         },
         {
             "arg_name": "a",
             "arg_type": "a",
-            "default_value": "get_state[alphabet]",
+            "default_value": "get_state(alphabet)",
 	    "description": "The Doublets alphabet"
         }
     ],
