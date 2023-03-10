@@ -324,12 +324,26 @@ string unparse(const ptree& p)
     if (s == "let")
     {
 	string name = p[0].first;
-	return "let["+name+"="+unparse(p[0].second)+","+unparse(p[1].second)+"]";
+	return name+"="+unparse(p[0].second)+";"+unparse(p[1].second);
     }
     else if (s == "function")
     {
 	string name = p[0].first;
-	return "function["+name+","+unparse(p[1].second)+"]";
+	return "function("+name+":"+unparse(p[1].second)+")";
+    }
+    else if (s == "List")
+    {
+        vector<string> items;
+        for(auto& [_,item]: p)
+            items.push_back(unparse(item));
+        return "[" + join(items,", ") + "]";
+    }
+    else if (s == "Tuple")
+    {
+        vector<string> items;
+        for(auto& [_,item]: p)
+            items.push_back(unparse(item));
+        return "(" + join(items,", ") + ")";
     }
     else if (s == "sample")
 	return "~" + unparse(p.begin()->second);
@@ -341,28 +355,28 @@ string unparse(const ptree& p)
 	    return unparse(*child);
     vector<string> args;
     optional<string> submodel;
-    for(const auto& pair: p)
+    for(const auto& [arg_name, arg]: p)
     {
-	if (pair.second.is_null())
+	if (arg.is_null())
 	{
 	    args.push_back("");
 	    continue;
 	}
 	// Don't print submodel arguments: move out to submodel + <this>
-	else if (pair.first == "submodel")
+	else if (arg_name == "submodel")
 	{
 	    assert(not submodel);
-	    submodel = unparse(pair.second);
+	    submodel = unparse(arg);
 	    args.push_back("");
 	}
 	else
-	    args.push_back( unparse(pair.second) );
+	    args.push_back( unparse(arg) );
 	// FIXME: don't print get_state[state_name] if its a default value?
     }
     while (args.size() and args.back() == "")
 	args.pop_back();
     if (not args.empty())
-	s = s + "[" + join(args,',') + "]";
+	s = s + "(" + join(args,',') + ")";
     if (submodel)
 	s = *submodel + "+" + s;
     return s;
@@ -400,17 +414,31 @@ string unparse_annotated(const ptree& ann)
     if (s == "let")
     {
 	string name = p[0].first;
-	return "let["+name+show_model_annotated(p[0].second)+","+unparse_annotated(p[1].second)+"]";
+	return name+show_model_annotated(p[0].second)+";"+unparse_annotated(p[1].second);
     }
     else if (s == "function")
     {
-	return "function["+unparse_annotated(p[0].second)+","+unparse_annotated(p[1].second)+"]";
+	return "function("+unparse_annotated(p[0].second)+":"+unparse_annotated(p[1].second)+")";
     }
-    if (s == "sample")
+    else if (s == "List")
+    {
+        vector<string> items;
+        for(auto& [_,item]: p)
+            items.push_back(unparse_annotated(item));
+        return "[" + join(items,", ") + "]";
+    }
+    else if (s == "Tuple")
+    {
+        vector<string> items;
+        for(auto& [_,item]: p)
+            items.push_back(unparse_annotated(item));
+        return "(" + join(items,", ") + ")";
+    }
+    else if (s == "sample")
 	return "~" + unparse_annotated(p.begin()->second);
-    if (s == "intToDouble")
+    else if (s == "intToDouble")
 	return unparse_annotated(p.get_child("x"));
-    if (s == "unit_mixture" or s == "multiMixtureModel")
+    else if (s == "unit_mixture" or s == "multiMixtureModel")
 	if (auto child = p.get_child_optional("submodel"))
 	    return unparse_annotated(*child);
     vector<string> args;
@@ -448,7 +476,7 @@ string unparse_annotated(const ptree& ann)
     while (args.size() and args.back() == "")
 	args.pop_back();
     if (not args.empty())
-	s = s + "[" + join(args,',') + "]";
+	s = s + "(" + join(args,',') + ")";
     if (submodel)
 	s = *submodel + "+" + s;
     return s;
