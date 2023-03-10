@@ -61,11 +61,12 @@ ptree fold_terms(const std::vector<ptree>& terms);
 %token <int>           INTEGER  "INTEGER"
 %token <double>        FLOAT    "FLOAT"
 
-%type <ptree>       expression
+%type <ptree>       exp
 %type <ptree>       term
 %type <std::vector<ptree>>       terms
 %type <std::vector<std::pair<std::string,ptree>>> args
 %type <std::pair<std::string,ptree>> arg
+%type <std::vector<std::pair<std::string,ptree>>> tup_args
 
 %type <std::string> qvarid
 %type <std::string> varid
@@ -79,34 +80,37 @@ ptree fold_terms(const std::vector<ptree>& terms);
 
 %%
 %start unit;
-unit: expression {drv.result = $1;}
+unit: exp {drv.result = $1;}
 
 
-expression: terms                                { $$ = fold_terms($1); }
-|           "(" expression ")"                   { $$ = $2; }
-|           varid "=" expression ";" expression  { $$ = ptree("let",{{$1,$3},{"",$5}}); }
+exp: terms                                { $$ = fold_terms($1); }
+|           "(" exp ")"                   { $$ = $2; }
+|           varid "=" exp ";" exp  { $$ = ptree("let",{{$1,$3},{"",$5}}); }
 
 terms: term                 { $$.push_back($1);}
 |      terms "+" term       { $$ = $1; $$.push_back($3);}
 
 // See parse_no_submodel( )
-term: qvarid                { $$ = ptree($1); }
-|     "@" varid             { $$ = ptree("@"+$2); }
-|     qvarid "[" args "]"   { $$ = ptree($1,$3); }
-|     qvarid "(" args ")"   { $$ = ptree($1,$3); }
-|     "[" args "]"          { $$ = ptree("List",$2); }
-|     "[" "]"               { $$ = ptree("List",{}); }
-|     "(" args "," arg ")"  { $2.push_back($4); $$ = ptree("Tuple",$2); }
-|     "~" term              { $$ = add_sample($2); }
-|     literal               { $$ = $1; }
+term: qvarid                      { $$ = ptree($1); }
+|     "@" varid                   { $$ = ptree("@"+$2); }
+|     qvarid "[" args "]"         { $$ = ptree($1,$3); }
+|     qvarid "(" args ")"         { $$ = ptree($1,$3); }
+|     "[" args "]"                { $$ = ptree("List",$2); }
+|     "[" "]"                     { $$ = ptree("List",{}); }
+|     "(" tup_args "," exp ")"    { $2.push_back({"",$4}); $$ = ptree("Tuple",$2); }
+|     "~" term                    { $$ = add_sample($2); }
+|     literal                     { $$ = $1; }
 
 args: arg                 { $$.push_back($1); }
 |     args "," arg        { $$ = $1; $$.push_back($3); }
 |     args ","            { $$ = $1; $$.push_back({}); }
 
-arg: varid "=" expression { $$ = {$1,$3}; }
-|    varid "~" expression { $$ = {$1,add_sample($3)}; }
-|    expression           { $$ = {"",$1}; }
+arg: varid "=" exp { $$ = {$1,$3}; }
+|    varid "~" exp { $$ = {$1,add_sample($3)}; }
+|    exp           { $$ = {"",$1}; }
+
+tup_args: exp               { $$.push_back({"",$1});}
+|         tup_args "," exp  { $$ = $1; $1.push_back({"",$3});}
 
 
 /* ------------- Literal ----------------------------------------- */

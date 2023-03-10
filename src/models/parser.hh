@@ -432,7 +432,7 @@ namespace zz {
       // "INTEGER"
       char dummy2[sizeof (int)];
 
-      // expression
+      // exp
       // term
       // literal
       char dummy3[sizeof (ptree)];
@@ -451,6 +451,7 @@ namespace zz {
       char dummy6[sizeof (std::vector<ptree>)];
 
       // args
+      // tup_args
       char dummy7[sizeof (std::vector<std::pair<std::string,ptree>>)];
     };
 
@@ -557,14 +558,15 @@ namespace zz {
         S_FLOAT = 17,                            // "FLOAT"
         S_YYACCEPT = 18,                         // $accept
         S_unit = 19,                             // unit
-        S_expression = 20,                       // expression
+        S_exp = 20,                              // exp
         S_terms = 21,                            // terms
         S_term = 22,                             // term
         S_args = 23,                             // args
         S_arg = 24,                              // arg
-        S_qvarid = 25,                           // qvarid
-        S_varid = 26,                            // varid
-        S_literal = 27                           // literal
+        S_tup_args = 25,                         // tup_args
+        S_qvarid = 26,                           // qvarid
+        S_varid = 27,                            // varid
+        S_literal = 28                           // literal
       };
     };
 
@@ -609,7 +611,7 @@ namespace zz {
         value.move< int > (std::move (that.value));
         break;
 
-      case symbol_kind::S_expression: // expression
+      case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_literal: // literal
         value.move< ptree > (std::move (that.value));
@@ -632,6 +634,7 @@ namespace zz {
         break;
 
       case symbol_kind::S_args: // args
+      case symbol_kind::S_tup_args: // tup_args
         value.move< std::vector<std::pair<std::string,ptree>> > (std::move (that.value));
         break;
 
@@ -788,7 +791,7 @@ switch (yykind)
         value.template destroy< int > ();
         break;
 
-      case symbol_kind::S_expression: // expression
+      case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_literal: // literal
         value.template destroy< ptree > ();
@@ -811,6 +814,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_args: // args
+      case symbol_kind::S_tup_args: // tup_args
         value.template destroy< std::vector<std::pair<std::string,ptree>> > ();
         break;
 
@@ -1599,8 +1603,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 70,     ///< Last index in yytable_.
-      yynnts_ = 10,  ///< Number of nonterminal symbols.
+      yylast_ = 89,     ///< Last index in yytable_.
+      yynnts_ = 11,  ///< Number of nonterminal symbols.
       yyfinal_ = 28 ///< Termination state number.
     };
 
@@ -1677,7 +1681,7 @@ switch (yykind)
         value.copy< int > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_expression: // expression
+      case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_literal: // literal
         value.copy< ptree > (YY_MOVE (that.value));
@@ -1700,6 +1704,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_args: // args
+      case symbol_kind::S_tup_args: // tup_args
         value.copy< std::vector<std::pair<std::string,ptree>> > (YY_MOVE (that.value));
         break;
 
@@ -1742,7 +1747,7 @@ switch (yykind)
         value.move< int > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_expression: // expression
+      case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_literal: // literal
         value.move< ptree > (YY_MOVE (s.value));
@@ -1765,6 +1770,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_args: // args
+      case symbol_kind::S_tup_args: // tup_args
         value.move< std::vector<std::pair<std::string,ptree>> > (YY_MOVE (s.value));
         break;
 
@@ -1835,7 +1841,7 @@ switch (yykind)
 
 #line 6 "parser.y"
 } // zz
-#line 1839 "parser.hh"
+#line 1845 "parser.hh"
 
 
 
