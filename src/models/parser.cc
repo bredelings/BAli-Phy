@@ -766,7 +766,7 @@ namespace zz {
 
   case 11: // term: qvarid "[" "," args "]"
 #line 97 "parser.y"
-                                  { yystack_[1].value.as < std::vector<std::pair<std::string,ptree>> > ().insert(yystack_[1].value.as < std::vector<std::pair<std::string,ptree>> > ().begin(),{}); yylhs.value.as < ptree > () = ptree(yystack_[4].value.as < std::string > (),yystack_[1].value.as < std::vector<std::pair<std::string,ptree>> > ()); }
+                                  { yylhs.value.as < ptree > () = ptree(yystack_[4].value.as < std::string > ()); yylhs.value.as < ptree > ().push_back({}); yylhs.value.as < ptree > ().insert(yylhs.value.as < ptree > ().end(),yystack_[1].value.as < std::vector<std::pair<std::string,ptree>> > ().begin(), yystack_[1].value.as < std::vector<std::pair<std::string,ptree>> > ().end()); }
 #line 771 "parser.cc"
     break;
 
@@ -778,7 +778,7 @@ namespace zz {
 
   case 13: // term: qvarid "(" "," args ")"
 #line 99 "parser.y"
-                                  { yystack_[1].value.as < std::vector<std::pair<std::string,ptree>> > ().insert(yystack_[1].value.as < std::vector<std::pair<std::string,ptree>> > ().begin(),{}); yylhs.value.as < ptree > () = ptree(yystack_[4].value.as < std::string > (),yystack_[1].value.as < std::vector<std::pair<std::string,ptree>> > ()); }
+                                  { yylhs.value.as < ptree > () = ptree(yystack_[4].value.as < std::string > ()); yylhs.value.as < ptree > ().push_back({}); yylhs.value.as < ptree > ().insert(yylhs.value.as < ptree > ().end(),yystack_[1].value.as < std::vector<std::pair<std::string,ptree>> > ().begin(), yystack_[1].value.as < std::vector<std::pair<std::string,ptree>> > ().end()); }
 #line 783 "parser.cc"
     break;
 

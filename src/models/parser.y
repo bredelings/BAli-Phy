@@ -94,9 +94,9 @@ terms: term                 { $$.push_back($1);}
 term: qvarid                      { $$ = ptree($1); }
 |     "@" varid                   { $$ = ptree("@"+$2); }
 |     qvarid "[" args "]"         { $$ = ptree($1,$3); }
-|     qvarid "[" "," args "]"     { $4.insert($4.begin(),{}); $$ = ptree($1,$4); }
+|     qvarid "[" "," args "]"     { $$ = ptree($1); $$.push_back({}); $$.insert($$.end(),$4.begin(), $4.end()); }
 |     qvarid "(" args ")"         { $$ = ptree($1,$3); }
-|     qvarid "(" "," args ")"     { $4.insert($4.begin(),{}); $$ = ptree($1,$4); }
+|     qvarid "(" "," args ")"     { $$ = ptree($1); $$.push_back({}); $$.insert($$.end(),$4.begin(), $4.end()); }
 |     "[" args "]"                { $$ = ptree("List",$2); }
 |     "[" "]"                     { $$ = ptree("List",{}); }
 |     "(" tup_args "," exp ")"    { $2.push_back({"",$4}); $$ = ptree("Tuple",$2); }
