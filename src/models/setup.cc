@@ -1370,6 +1370,14 @@ translation_result_t get_model_as(const Rules& R, const ptree& model_rep, const 
     return get_model_function(R, model_rep, scope);
 }
 
+void substitute_annotated(const equations& equations, ptree& model)
+{
+    auto& type = model.get_child("type");
+    substitute(equations, type);
+
+    for(auto& [key, value]: model.get_child("value"))
+        substitute_annotated(equations, value);
+}
 
 /// \brief Constrict a substitution::MultiModel for a specific alphabet
 ///
@@ -1414,6 +1422,7 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
 
     substitute(equations, model_rep);
     substitute(equations, required_type);
+    substitute_annotated(equations, model);
     if (log_verbose >= 1)
     {
         std::cout<<"model = "<<unparse_annotated(model)<<std::endl;
@@ -1470,6 +1479,14 @@ bool annotated_term_is_model(const ptree& term)
 
     return false;
 }
+
+// Don't extract terms that
+// * contain function variables
+// * don't extract gamma::n if its an integer
+// Suppress gamma::a = getAlphabet
+// Some terms seem to have types like 'var5' so they always fail the check for
+//   extractable types.
+
 
 bool do_extract(const ptree& func, const ptree& arg)
 {
