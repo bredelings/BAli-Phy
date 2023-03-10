@@ -64,7 +64,7 @@ using po::variables_map;
 /// \return the string.
 ///
 
-static std::regex part_spec("(\\d+(,\\d+)*):(.*)");
+static std::regex part_spec("(\\d+(,\\d+)*):((.|\n)*)");
 string parse_partitions_and_model(string s, vector<int>& partitions, int n, bool default_model = true)
 {
     std::smatch m;
