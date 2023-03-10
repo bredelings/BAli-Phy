@@ -1,6 +1,6 @@
-[1mfrom string:1.1:[1;31m error:[0m[1m
+[1mfrom string:1.9:[1;31m error:[0m[1m
    • syntax error, unexpected +
   [1;34m|[0m
-[1;34m1[0m [1;34m| [0m[1;31m[0mgtr_sym++f
-  [1;34m|[0m [1;31m[0m
+[1;34m1[0m [1;34m| [0mgtr_sym+[1;31m+[0mf
+  [1;34m|[0m         [1;31m^[0m
 
