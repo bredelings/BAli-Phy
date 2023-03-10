@@ -28,6 +28,7 @@
 #include <vector>
 
 #include <filesystem>
+#include <regex>
 
 #include "link-partitions.H"
 #include "util/mapping.H"
@@ -62,11 +63,18 @@ using po::variables_map;
 /// \param partitions The list of integers.
 /// \return the string.
 ///
+
+static std::regex part_spec("(\\d+(,\\d+)*):(.*)");
 string parse_partitions_and_model(string s, vector<int>& partitions, int n, bool default_model = true)
 {
-    int colon = s.find(':');
+    std::smatch m;
     string value;
-    if (colon == -1)
+    if (std::regex_match(s, m, part_spec))
+    {
+	partitions = convertTo<int>(split(m[1],','));
+	value = m[3];
+    }
+    else
     {
 	if (default_model)
 	{
@@ -78,11 +86,6 @@ string parse_partitions_and_model(string s, vector<int>& partitions, int n, bool
 	    partitions = convertTo<int>(split(s,','));
 	    value = "";
 	}
-    }
-    else
-    {
-	partitions = convertTo<int>(split(s.substr(0,colon),','));
-	value = s.substr(colon+1);
     }
 
     // Adjust numbers from [1,n] -> [0,n-1].   Also check for bad partition numbers.
