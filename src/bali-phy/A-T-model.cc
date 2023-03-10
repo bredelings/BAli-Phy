@@ -730,7 +730,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
             if (need_constant_a)
             {
                 imodel_names_mapping.remove_nth_item(i);
-                break;
+                continue;
             }
             else
                 value = "rs07";
