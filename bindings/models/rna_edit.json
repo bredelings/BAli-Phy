@@ -7,12 +7,6 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "RevCTMC[b]",
-            "alphabet": "getNucleotides[@a]",
-	    "description": "Nucleotide rates"
-        },
-        {
             "arg_name": "edits",
             "arg_type": "List[Tuple[String,String]]",
             "description": "List of [from,to] to describe editting"
@@ -22,8 +16,15 @@
             "arg_type": "Doublets[a]",
             "default_value": "get_state(alphabet)",
 	    "description": "The Doublets alphabet"
+        },
+        {
+            "arg_name": "submodel",
+            "arg_type": "RevCTMC[b]",
+            "alphabet": "getNucleotides(@a)",
+	    "description": "Nucleotide rates"
         }
     ],
     "description":"Rate matrix on doublets, constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up doublet models incrementally.",
-    "examples": ["rna_edit[hky85,[Tuple[\"C\",\"U\"]]]"]
+    "examples": ["hky85+rna_edit({})                 # no editting",
+                 "hky85+rna_edit({\"C\",\"U\"})       # C->U editting"]
 }
