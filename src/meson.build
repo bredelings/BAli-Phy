@@ -96,6 +96,11 @@ libbaliphy_sources = [
   'models/setup.cc',
   'models/rules.cc',
   'models/parse.cc',
+
+  'models/driver.cc',
+  'models/parser.cc',
+  'models/lexer.cc',
+
   'models/typecheck.cc',
   'models/unification.cc',
   'models/model.cc',

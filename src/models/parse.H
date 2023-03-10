@@ -16,6 +16,9 @@ std::string show_model_abbrev(const ptree p, int length);
 ptree parse_type(const std::string& s);
 ptree parse(const Rules& R, const std::string& s);
 
+ptree add_sample(const ptree& p);
+ptree add_submodel(ptree term, const ptree& submodel);
+
 // This assumes that any non-empty string is a variable, except the empty Tuple and empty List.
 bool is_nontype_variable(const ptree&);
 bool is_list(const ptree&);

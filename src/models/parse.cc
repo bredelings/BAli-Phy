@@ -8,6 +8,7 @@
 #include "util/range.H" // for reverse( )
 #include "rules.H"
 #include "setup.H"
+#include "driver.hh"
 
 using std::vector;
 using std::list;
@@ -15,53 +16,6 @@ using std::string;
 using std::pair;
 using std::optional;
 
-optional<pair<string,string>> split_keyword(const string& s, char c)
-{
-    for(int i=0;i<s.size();i++)
-    {
-	if (s[i] == '[' or s[i] == ']') return {};
-	if (s[i] == c)
-	    return pair<string,string>({s.substr(0,i),s.substr(i+1)});
-    }
-    return {};
-}
-
-/// \brief Turn an expression of the form h1[a]+h2[b] -> {h1[a],h2[b]}
-///
-/// \param sstack A stack of strings that represent a substitution model.
-/// \param s The model name to match.
-/// \param args The possible argument.
-///
-vector<string> split_top_plus(const string& s)
-{
-    vector<string> terms;
-
-    // Split on '+' where depth == 0.
-    int pos = 0;
-    int depth = 0;
-    for(int i=0;i<s.size();i++)
-    {
-	if (s[i] == '[')
-	    depth++;
-	else if (s[i] == ']')
-	{
-	    depth--;
-	    if (depth < 0) throw myexception()<<"Too many ']' in string '"<<s<<"'";
-	}
-	else if (depth == 0 and s[i] == '+')
-	{
-	    terms.push_back(s.substr(pos,i-pos));
-	    pos = i+1;
-	}
-    }
-
-    if (depth != 0)
-	throw myexception()<<"Too many '[' in string '"<<s<<"'";
-  
-    terms.push_back(s.substr(pos,int(s.size())-pos));
-
-    return terms;
-}
 
 // Turn an expression of the form head[arg1, arg2, ..., argn] -> {head, arg1, arg2, ..., argn}.
 vector<string> split_args(string s)
@@ -141,108 +95,13 @@ ptree add_sample(const ptree& p)
     return p2;
 }
 
-ptree parse(const string& s);
-
-/// Parse strings of the form {~}head[value1, value2, key3=value3, ...]
-ptree parse_no_submodel(const string& s)
+ptree add_submodel(ptree term, const ptree& submodel)
 {
-    if (s.empty())
-	throw myexception()<<"term is empty!";
+    if (term.count("submodel"))
+        throw myexception()<<"Trying to specify a submodel with '+' when submodel already specified by keyword!";
 
-    // 0. Handle ~
-    if (not s.empty() and s[0] == '~')
-	return add_sample(parse_no_submodel(s.substr(1)));
-
-    // 1. Split the head and the arguments
-    auto args = split_args(s);
-
-    // 2. Set the head
-    string head = args.front();
-    args.erase(args.begin());
-
-    ptree result;
-    if (auto i = can_be_converted_to<int>(head))
-	result.put_value(*i);
-    else if (auto d = can_be_converted_to<double>(head))
-	result.put_value(*d);
-    else if (auto b = can_be_converted_to<bool>(head))
-	result.put_value(*b);
-    // Currently we leave literal (i.e. quoted) strings as strings w/ quotes.
-    else
-	result.put_value(head);
-
-    if (args.size() and not result.is_a<string>())
-	throw myexception()<<"Error parsing '"<<s<<"': constant '"<<head<<"' should not have arguments, but has "<<args.size()<<"!";
-
-    // 3. Attempt to set the supplied arguments
-    for(int i=0;i<args.size();i++)
-    {
-	pair<string,string> key_value;
-
-	// 3.1. 'key=value'
-	if (auto arg = split_keyword(args[i],'='))
-	{
-	    key_value = *arg;
-
-	    if (arg->first.empty())
-		throw myexception()<<"Parameter name missing in argument '"<<args[i]<<"'";
-	}
-	// 3.2 'key~value'
-	else if ((arg = split_keyword(args[i],'~')) and arg->first.size())
-	{
-	    key_value = *arg;
-	    key_value.second = "~"+key_value.second;
-	}
-	// 3.3. 'value'
-	else
-	    key_value.second = args[i];
-
-	if (key_value.first.empty() and key_value.second.empty())
-	    result.push_back({{},{}});
-	else
-	    result.push_back({key_value.first, parse(key_value.second)});
-    }
-
-    return result;
-}
-
-ptree parse(const string& s)
-{
-    // 1. Get the last head[args]
-    vector<string> terms = split_top_plus(s);
-
-    // 2. Parse the terms and handle submodels;
-    ptree expression;
-    for(int i=0;i<terms.size();i++)
-    {
-	auto& term = terms[i];
-	try
-	{
-	    ptree parsed_term = parse_no_submodel(term);
-	    if (parsed_term.is_null())        throw myexception()<<"Term is empty!";
-
-	    if (not expression.is_null())
-	    {
-		if (parsed_term.count("submodel"))    throw myexception()<<"Trying to specify a submodel with '+' when submodel already specified by keyword!";
-		parsed_term.push_back({"submodel", expression});
-	    }
-	    expression = parsed_term;
-
-	    assert(not expression.is_null());
-	}
-	catch (myexception& e)
-	{
-	    string eterm = term;
-	    if (i-1 >= 0)
-		eterm = "+"+eterm;
-	    if (i+1 < terms.size())
-		eterm = eterm + "+";
-	    e.prepend("Parsing '"+eterm+"': ");
-	    throw;
-	}
-    }
-
-    return expression;
+    term.push_back({"submodel", submodel});
+    return term;
 }
 
 void ptree_map(std::function<void(ptree&)> f, ptree& p)
