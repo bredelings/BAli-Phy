@@ -22,12 +22,6 @@
 #include "message.H"
 #include "tidy.H"
 
-// The kind-inference paper treats substitutions as a list of terms of the form
-// * a     (declaration)
-// * b ~ a (definition)
-// I think that you have a sequence like {a, b ~ a} then you can't later define a,
-// since it is already "declared".
-
 struct unification_env
 {
     mutable int next_index = 0;
