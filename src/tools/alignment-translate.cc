@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "sequence/genetic_code.H"
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
 #include <boost/program_options.hpp>
