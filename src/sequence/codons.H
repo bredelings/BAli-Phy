@@ -2,6 +2,7 @@
 #define CODONS_H
 
 #include "alphabet.H"
+#include "triplets.H"
 #include "genetic_code.H"
 
 /// A Triplets alphabet with a mapping to an AminoAcids alphabet

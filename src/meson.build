@@ -17,6 +17,7 @@ libcommon_sources = [
   'tree-align/n_indels.cc',
 
   'sequence/alphabet.cc',
+  'sequence/triplets.cc',
   'sequence/genetic_code.cc',
   'sequence/codons.cc',
   'sequence/sequence.cc',
