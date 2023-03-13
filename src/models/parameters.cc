@@ -28,6 +28,7 @@
 #include <sstream>
 #include "util/assert.hh"
 
+#include "sequence/doublets.H"
 #include "sequence/codons.H"
 #include "models/parameters.H"
 #include "models/TreeInterface.H"

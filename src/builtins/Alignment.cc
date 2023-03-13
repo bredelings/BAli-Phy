@@ -5,6 +5,7 @@
 #include "computation/expression/bool.H"
 #include "computation/expression/constructor.H"
 #include <boost/dynamic_bitset.hpp>
+#include "sequence/doublets.H"
 #include "alignment/alignment.H"
 #include "sequence/sequence-format.H"
 #include "dp/2way.H"
