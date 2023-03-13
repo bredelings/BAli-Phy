@@ -71,6 +71,11 @@ public:
             return false;
     }
 
+    bool operator==(const Box<T>& b2) const requires std::equality_comparable<T>
+    {
+        return (value() == b2.value());
+    }
+
     std::string print() const override {return Object::print();}
 
     const T& value() const {return *(const T*)this;}
