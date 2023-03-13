@@ -83,6 +83,7 @@
 #include "util/graph.H"
 
 #include "models/setup.H"
+#include "sequence/codons.H"
 #include "util/string/join.H"
 #include "util/string/pred.H"
 #include "util/set.H"

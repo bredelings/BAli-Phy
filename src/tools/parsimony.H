@@ -19,6 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 #include "sequence/alphabet.H"
+#include "sequence/codons.H"
 #include "alignment/alignment.H"
 #include "tree/sequencetree.H"
 #include "util/matrix.H"

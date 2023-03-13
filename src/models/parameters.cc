@@ -28,6 +28,7 @@
 #include <sstream>
 #include "util/assert.hh"
 
+#include "sequence/codons.H"
 #include "models/parameters.H"
 #include "models/TreeInterface.H"
 #include "dp/2way.H"

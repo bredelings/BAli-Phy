@@ -1,6 +1,7 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
 #include "sequence/alphabet.H"
+#include "sequence/codons.H"
 
 using Alphabet = PtrBox<alphabet>;
 

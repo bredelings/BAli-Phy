@@ -21,6 +21,7 @@
 #include "models/rules.H"                           // for Rules
 #include "models/setup.H"                           // for model_t, get_model
 #include "sequence/alphabet.H"                      // for alphabet, Doublets
+#include "sequence/codons.H"                        // for alphabet, Doublets
 #include "sequence/sequence-format.H"               // for load_from_file
 #include "sequence/sequence.H"                      // for sequence, select
 #include "tree-align/link.H"                        // for link
