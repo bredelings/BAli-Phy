@@ -319,18 +319,41 @@ json log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     return info;
 }
 
-void check_alignment_names(const alignment& A)
+void warn_if_newick_chars_in_alignment_names(const alignment& A)
 {
-    const string forbidden = "();:\"'[]&,";
+    const string special = "();:,[]&'";
 
-    for(int i=0;i<A.n_sequences();i++) {
+    bool warn = false;
+    for(int i=0;i<A.n_sequences();i++)
+    {
+        // 1. Get the sequence name.
         const string& name = A.seq(i).name;
-        for(int j=0;j<name.size();j++)
-            for(char c: forbidden)
-                for(int pos=0;pos<name.size();pos++)
-                    if (name[pos] == c)
-                        throw myexception()<<"Sequence name '"<<name<<"' contains illegal character '"<<c<<"'";
+
+        // 2. Find special chars that it contains.
+        std::set<char> chars;
+        for(char c: special)
+            if (name.find(c) != -1)
+                chars.insert(c);
+
+        // 3. Warning about the name if it contains special chars.
+        if (not chars.empty())
+        {
+            warn = true;
+            std::cerr<<"WARNING: Sequence name \""<<name<<"\" contains Newick special character";
+            if (chars.size() > 1)
+                std::cerr<<'s';
+            std::cerr<<": ";
+
+            vector<string> cs;
+            for(auto c: chars)
+                cs.push_back(string(1,char('"'))+c+char('"'));
+            std::cerr<<join(cs,", ")<<std::endl;
+        }
     }
+
+    // 4. Explain
+    if (warn)
+        std::cerr<<"WARNING: Some phylogenetics software may not correctly read Newick trees with these sequence names."<<std::endl;
 }
 
 void check_alignment_values(const alignment& A,const pair<string,string>& filename_range)
@@ -665,7 +688,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     }
 
     for(int i=0;i<A.size();i++) {
-        check_alignment_names(A[i]);
+        warn_if_newick_chars_in_alignment_names(A[i]);
         check_alignment_values(A[i],filename_ranges[i]);
     }
 
