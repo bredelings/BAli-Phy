@@ -342,7 +342,7 @@ void warn_if_newick_chars_in_alignment_names(const alignment& A)
             std::cerr<<"WARNING: Sequence name \""<<name<<"\" contains Newick special character";
             if (chars.size() > 1)
                 std::cerr<<'s';
-            std::cerr<<": ";
+            std::cerr<<" ";
 
             vector<string> cs;
             for(auto c: chars)
@@ -353,7 +353,7 @@ void warn_if_newick_chars_in_alignment_names(const alignment& A)
 
     // 4. Explain
     if (warn)
-        std::cerr<<"WARNING: Some phylogenetics software may not correctly read Newick trees with these sequence names."<<std::endl;
+        std::cerr<<"WARNING: Some phylogenetics software may not correctly read Newick trees with these sequence names."<<std::endl<<std::endl;
 }
 
 void check_alignment_values(const alignment& A,const pair<string,string>& filename_range)
