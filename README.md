@@ -33,7 +33,7 @@ conda install meson gxx boost-cpp cmake pkg-config cairo
 export BOOST_ROOT=$CONDA_PREFIX
 ```
 
-In general, the version of meson needs to be at least 1.0.
+The meson version needs to be at least 1.0.
 If your distribution provides a version of meson that is less than 1.0,
 then you may need to install meson through the python package manager "pip" or "pip3":
 
