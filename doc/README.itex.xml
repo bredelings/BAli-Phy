@@ -401,7 +401,7 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
     is equivalent to
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -A DNA -S tn93 -I rs07</userinput></screen>
-    Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option.
+    Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option.  You will generally need to write the substitution model inside single quotes unless it is just a single word.
 
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S 'lg08&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;inv'</userinput></screen>
     Every short option like <userinput>-S</userinput> has an equivalent long option like <userinput>--smodel</userinput>.
@@ -1423,7 +1423,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
       <programlisting language="java">hky85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) + x2
 
-hky85_sym + x2_sym + f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "CC":0.01, "CG":0.22, "CU":0.01, "GA":0.01, "GC":0.22, "GG":0.01, "GU":0.01, "UA":0.22, "UC":0.01, "UG":0.01, "UU",0.01})</programlisting>
+hky85_sym + x2_sym + f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "CC":0.01, "CG":0.22, "CU":0.01, "GA":0.01, "GC":0.22, "GG":0.01, "GU":0.01, "UA":0.22, "UC":0.01, "UG":0.01, "UU":0.01})</programlisting>
 
       <para>Frequencies can also be specified using functions:</para>
       <!-- para>
@@ -1530,7 +1530,7 @@ hky85_sym + x2_sym + f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">hky85(pi={"A",0.1, "C":0.2, "T":0.3, "G":0.4}) + x3</programlisting>
+      <programlisting language="java">hky85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) + x3</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
 	<programlisting language="java">hky85_sym + x3_sym + f(pi=f1x4)            // nucleotide frequencies are estimated</programlisting>
