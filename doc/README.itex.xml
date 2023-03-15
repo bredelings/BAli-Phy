@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "3.6.0"         >
+<!ENTITY  version        "4.0-beta2"         >
 
 <!ENTITY  source.file    "bali-phy-&version;.tar.gz"         >
 <!ENTITY  linux64.file   "bali-phy-&version;-linux64.tar.gz"         >
