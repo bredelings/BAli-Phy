@@ -403,7 +403,7 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -A DNA -S tn93 -I rs07</userinput></screen>
     Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option.
 
-    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S lg08+Rates.gamma+inv</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S 'lg08&nbsp;+&nbsp;Rates.gamma&nbsp;+&nbsp;inv'</userinput></screen>
     Every short option like <userinput>-S</userinput> has an equivalent long option like <userinput>--smodel</userinput>.
     To see the most frequently-used command-line options, you can run
     <screen><prompt>%</prompt> <userinput>bali-phy help</userinput></screen>
@@ -432,7 +432,7 @@ align = 5.8S.fasta
 align = ITS2.fasta
 
 # linked substitution model for 1st and 3rd partition
-smodel = 1,3:tn93+Rates.free[n=3]
+smodel = 1,3:tn93&nbsp;+&nbsp;Rates.free(n=3)
 
 # substitution model for 2nd partition
 smodel = 2:tn93
@@ -1148,11 +1148,11 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency:</para>
-      <programlisting language="java">gtr[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]</programlisting>
+      <programlisting language="java">gtr(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})</programlisting>
       <para>Frequencies can also be specified using functions:</para>
 
       <para>
-	<programlisting language="java">gtr[pi=Frequencies.uniform]</programlisting>
+	<programlisting language="java">gtr(pi=Frequencies.uniform)</programlisting>
       </para>
 
       <informaltable>
@@ -1220,7 +1220,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>jtt+f</userinput></para>
+		<para><userinput>jtt&nbsp;+&nbsp;f</userinput></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>
@@ -1233,7 +1233,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>wag+f</userinput></para>
+		<para><userinput>wag&nbsp;+&nbsp;f</userinput></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>
@@ -1246,7 +1246,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>lg08+f</userinput></para>
+		<para><userinput>lg08&nbsp;+&nbsp;f</userinput></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>
@@ -1259,7 +1259,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>empirical[<replaceable>file</replaceable>]+f</userinput></para>
+		<para><userinput>empirical(<replaceable>file</replaceable>)&nbsp;+&nbsp;f</userinput></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>
@@ -1283,10 +1283,10 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency:</para>
-      <programlisting language="java">wag+f[pi=List[Tuple["A",0.047],Tuple["R",0.19],...]]</programlisting>
+      <programlisting language="java">wag + f({"A":0.047, "R":0.19,...})</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="java">wag+f[pi=Frequencies.uniform]</programlisting>
+	<programlisting language="java">wag + f(pi=Frequencies.uniform)</programlisting>
       </para>
 
       <informaltable>
@@ -1322,9 +1322,9 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	</tgroup>
       </informaltable>
 	  
-      <para>The <userinput>+fe</userinput> model is shorthand for <userinput>+f[pi=Frequencies.uniform]</userinput>:</para>
+      <para>The <userinput>+fe</userinput> model is shorthand for <userinput>+f(pi=Frequencies.uniform)</userinput>:</para>
       <para>
-	<programlisting language="java">wag+fe</programlisting>
+	<programlisting language="java">wag + fe</programlisting>
       </para>
     </section>
 
@@ -1334,7 +1334,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <section xml:id="doublet_models">
       <info><title>Doublet models (RNA stems)</title></info>
       <para>The doublets alphabet consists of 16 RNA dinucleotides.  It is used to model RNA stems, where two nucleotides matched in the RNA secondary structure are highly correlated.</para>
-      <para>The default substitution model for doublets is <userinput>tn93_sym+x2_sym+f</userinput>.</para>
+      <para>The default substitution model for doublets is <userinput>tn93_sym&nbsp;+&nbsp;x2_sym&nbsp;+&nbsp;f</userinput>.</para>
       <section xml:id="doublet-data">
 	<info><title>Doublet data</title></info>
 	<para>As of version 3.4, BAli-Phy does not yet allow specifying which nucleotides are paired either with a string like <userinput>((.))</userinput> or with a "pairs" file.  Instead you must manually extract the paired nucleotides and put them in their own partition (for stems), and then manually extract each loop and put it in its own partition.</para>
@@ -1357,7 +1357,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  
 	  <tbody>
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>+x2</userinput></entry>
+	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+&nbsp;x2</userinput></entry>
 	      <entry>df(nuc_model)</entry>
 	      <entry>
 		<para>The the same as <replaceable>nuc_model</replaceable>, but on dinucleotides instead of nucleotides.</para>
@@ -1367,7 +1367,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>+x2+mut_sel</userinput></entry>
+	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+&nbsp;x2&nbsp;+&nbsp;mut_sel</userinput></entry>
 	      <entry>df(nuc_model)+15</entry>
 	      <entry>
 		<para>Mutation-selection model: neutral mutation follows <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns on dinucleotides.</para>
@@ -1376,7 +1376,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>+x2_sym+f</userinput></entry>
+	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+&nbsp;x2_sym&nbsp;+&nbsp;f</userinput></entry>
 	      <entry>df(nuc_model)+15</entry>
 	      <entry><para>This model has separate frequencies for each dinucleotide.</para>
 	      <para>Simultaneous changes of both letters are <emphasis>not</emphasis> allowed.</para>
@@ -1421,13 +1421,13 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">hky85[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]+x2
+      <programlisting language="java">hky85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) + x2
 
-hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tuple["AU",0.22],Tuple["CA",0.01],Tuple["CC",0.01],Tuple["CG",0.22],Tuple["CU",0.01],Tuple["GA",0.01],Tuple["GC",0.22],Tuple["GG",0.01],Tuple["GU",0.01],Tuple["UA",0.22],Tuple["UC",0.01],Tuple["UG",0.01],Tuple["UU",0.01]]]</programlisting>
+hky85_sym + x2_sym + f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "CC":0.01, "CG":0.22, "CU":0.01, "GA":0.01, "GC":0.22, "GG":0.01, "GU":0.01, "UA":0.22, "UC":0.01, "UG":0.01, "UU",0.01})</programlisting>
 
       <para>Frequencies can also be specified using functions:</para>
       <!-- para>
-	<programlisting language="java">hky85_sym+x2_sym+f[pi=f1x4]            // nucleotide frequencies are estimated</programlisting>
+	<programlisting language="java">hky85_sym+x2_sym+f(pi=f1x4)            // nucleotide frequencies are estimated</programlisting>
       </para -->
 
 
@@ -1477,7 +1477,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
     <section xml:id="triplet_models">
       <info><title>Triplet models</title></info>
       <para>The triplets alphabet is similar to the codons alphabet, except that stop codons are included. Unlike the codons alphabet, the triplets alphabet has no knowledge of the genetic code.</para>
-      <para>The default substitution model for triplets is tn93+x3.</para>
+      <para>The default substitution model for triplets is tn93 + x3.</para>
       <section>
 	<info><title>Substitution rates</title></info>
       <informaltable>
@@ -1494,14 +1494,14 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	  
 	  <tbody>
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>+x3_sym+f</userinput></entry>
+	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+&nbsp;x3_sym&nbsp;+&nbsp;f</userinput></entry>
 	      <entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
 	      <entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix.</para>
 	      </entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>+x3</userinput></entry>
+	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+&nbsp;x3</userinput></entry>
 	      <entry>df(<replaceable>nuc_model</replaceable>)</entry>
 	      <entry><para>MG94-style rate matrix constructed from nucleotide rate matrix.</para>
 	             <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on triplets, but not on codons.</para>
@@ -1509,14 +1509,14 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	    </row>
 
 	    <!-- row> This is too advanced
-	      <entry><userinput>x3x3[q1,q2,q3]</userinput></entry>
+	      <entry><userinput>x3x3(q1,q2,q3)</userinput></entry>
 	      <entry>df(q1)+df(q2)+df(q3)</entry>
 	      <entry><para>Triplet rate matrix constructed from a nucleotide rate matrix for each codon position.</para>
 	      </entry>
 	    </row -->
 
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>+x3+mut_sel</userinput></entry>
+		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+&nbsp;x3&nbsp;+&nbsp;mut_sel</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
 		<entry><para>Mutation-selection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
 		</entry>
@@ -1530,10 +1530,10 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">hky85[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]+x3</programlisting>
+      <programlisting language="java">hky85(pi={"A",0.1, "C":0.2, "T":0.3, "G":0.4}) + x3</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="java">hky85_sym+x3_sym+f[pi=f1x4]            // nucleotide frequencies are estimated</programlisting>
+	<programlisting language="java">hky85_sym + x3_sym + f(pi=f1x4)            // nucleotide frequencies are estimated</programlisting>
       </para>
 
 
@@ -1570,9 +1570,9 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	  </tbody>
 	</tgroup>
       </informaltable>
-	<para>The <userinput>+fe</userinput> model is shorthand for <userinput>+f[pi=Frequencies.uniform]</userinput>:</para>
+	<para>The <userinput>+fe</userinput> model is shorthand for <userinput>+f(pi=Frequencies.uniform)</userinput>:</para>
 	<para>
-	  <programlisting language="java">hky85_sym+x3_sym+fe</programlisting>
+	  <programlisting language="java">hky85_sym + x3_sym + fe</programlisting>
 	</para>
     </section>
 
@@ -1614,7 +1614,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      </row>
 
 	      <row>
-		<entry><userinput>gy94[pi=f1x4]</userinput></entry>
+		<entry><userinput>gy94(pi=f1x4)</userinput></entry>
 		<entry>5</entry>
 		<entry><para>The GY94 model with codon frequencies constructed from nucleotide frequencies.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
@@ -1624,7 +1624,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      </row>
 
 	      <row>
-		<entry><userinput>gy94[pi=f3x4]</userinput></entry>
+		<entry><userinput>gy94(pi=f3x4)</userinput></entry>
 		<entry>11</entry>
 		<entry><para>The GY94 model with codon frequencies constructed from nucleotide frequencies for each codon position.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
@@ -1634,7 +1634,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      </row>
 
 	      <row>
-		<entry><userinput>gy94_ext[<replaceable>nuc_model</replaceable>]</userinput></entry>
+		<entry><userinput>gy94_ext(<replaceable>nuc_model</replaceable>)</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+61</entry>
 		<entry><para>GY94 model extended with a generic nucleotide exchangeability matrix.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
@@ -1666,7 +1666,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      </row>
 
 	      <row>
-		<entry><userinput>mg94_ext[<replaceable>nuc_model</replaceable>]</userinput></entry>
+		<entry><userinput>mg94_ext(<replaceable>nuc_model</replaceable>)</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+1</entry>
 		<entry><para>Model of dN/dS with <replaceable>nuc_model</replaceable> as the neutral model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040152">
@@ -1696,7 +1696,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      </row>
 	      
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>+x3_sym+f</userinput></entry>
+		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+&nbsp;x3_sym&nbsp;+&nbsp;f</userinput></entry>
 		<entry>df(nuc_model)+60</entry>
 		<entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix (dN/dS = 1).</para>
 	               <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on codons only if the frequency of stop codons is zero.</para>
@@ -1704,21 +1704,21 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      </row>
 
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>+x3</userinput></entry>
+		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+&nbsp;x3</userinput></entry>
 		<entry>df(nuc_model)</entry>
 		<entry><para>MG94-style rate matrix constructed from nucleotide rate matrix (dN/dS = 1).</para>
 		</entry>
 	      </row>
 
 	      <!-- row>
-		<entry><userinput>x3x3[q1,q2,q3]</userinput></entry>
+		<entry><userinput>x3x3(q1,q2,q3)</userinput></entry>
 		<entry>df(q1)+df(q2)+df(q3)</entry>
 		<entry><para>Triplet rate matrix constructed from a nucleotide rate matrix for each codon position (dN/dS = 1).</para>
 		</entry>
 	      </row -->
 
 	      <row>
-		<entry><userinput><replaceable>codon_model</replaceable>+dNdS[omega]</userinput></entry>
+		<entry><userinput><replaceable>codon_model</replaceable>+dNdS(omega)</userinput></entry>
 		<entry>df(<replaceable>codon_model</replaceable>)+1</entry>
 		<entry><para>Scales non-synonymous rates by <replaceable>omega</replaceable>.</para>
 		</entry>
@@ -1732,7 +1732,7 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	      </row>
 
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>+x3+mut_sel_aa</userinput></entry>
+		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+&nbsp;x3&nbsp;+&nbsp;mut_sel_aa</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+19</entry>
 		<entry><para>Mutation-selection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each amino acid</emphasis>.</para>
 		</entry>
@@ -1747,11 +1747,11 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
 	<para>The <userinput>x3</userinput>, <userinput>x3_sym</userinput>, <userinput>x3x3</userinput>, <userinput>dNdS</userinput>, and <userinput>mut_sel</userinput> models
 	can be used to build up codon models piecewise:
 	<itemizedlist>
-	  <listitem><userinput>mg94</userinput> is equivalent to <userinput>f81+x3+dNdS</userinput>.</listitem>
-	  <listitem><userinput>mg94k</userinput> is equivalent to <userinput>hky85+x3+dNdS</userinput>.</listitem>
-	  <listitem><userinput>gy94</userinput> is equivalent to <userinput>hky85_sym+x3_sym+f+dNdS</userinput>.</listitem>
-	  <listitem><userinput>fMutSel</userinput> is equivalent to <userinput>gtr+x3+dNdS+mut_sel</userinput>.</listitem>
-	  <listitem><userinput>fMutSel0</userinput> is equivalent to <userinput>gtr+x3+dNdS+mut_sel_aa</userinput>.</listitem>
+	  <listitem><userinput>mg94</userinput> is equivalent to <userinput>f81 + x3 + dNdS</userinput>.</listitem>
+	  <listitem><userinput>mg94k</userinput> is equivalent to <userinput>hky85 + x3 + dNdS</userinput>.</listitem>
+	  <listitem><userinput>gy94</userinput> is equivalent to <userinput>hky85_sym + x3_sym + f + dNdS</userinput>.</listitem>
+	  <listitem><userinput>fMutSel</userinput> is equivalent to <userinput>gtr + x3 + dNdS + mut_sel</userinput>.</listitem>
+	  <listitem><userinput>fMutSel0</userinput> is equivalent to <userinput>gtr + x3 + dNdS + mut_sel_aa</userinput>.</listitem>
 	</itemizedlist>
 	</para>
       </section>
@@ -1760,12 +1760,12 @@ hky85_sym+x2_sym+f[pi=List[Tuple["AA",0.01],Tuple["AC",0.01],Tuple["AG",0.01],Tu
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">gy94[pi=List[Tuple["AAA",0.01],Tuple["C",0.02],...]]
-mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
+      <programlisting language="java">gy94(pi={"AAA":0.01, "C":0.02,...})
+mg94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
 </programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="java">gy94[pi=f1x4]              // nucleotide frequencies are estimated</programlisting>
+	<programlisting language="java">gy94(pi=f1x4)              // nucleotide frequencies are estimated</programlisting>
       </para>
 
 
@@ -1960,7 +1960,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
     
     <para>
       Complex substitution models in <application>BAli-Phy</application>
-      are constructed as mixtures of reversible CTMC models that run at different rates (e.g. $\Gamma_4+INV$)
+      are constructed as mixtures of reversible CTMC models that run at different rates (e.g. $\Gamma_4 + INV$)
       or have different parameters (e.g. an M2a codon model).
     </para>
 
@@ -1975,7 +1975,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	  <tbody>
 
 	    <row>
-	      <entry><userinput><replaceable>submodel</replaceable> + Rates.gamma</userinput></entry>
+	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Rates.gamma</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Site rates follow a discrete approximation to the Gamma distribution</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF00160154">
@@ -1986,7 +1986,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>submodel</replaceable> + Rates.log_normal</userinput></para>
+		<para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Rates.log_normal</userinput></para>
 	      </entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Site rates follow a discrete approximation to the logNormal distribution</para>
@@ -1994,7 +1994,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	    </row>
 
 	    <row>
-	      <entry><para><userinput><replaceable>submodel</replaceable> + Rates.free</userinput></para></entry>
+	      <entry><para><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;Rates.free</userinput></para></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+2($n$-1)</entry>
 	      <entry><para>Sites fall in one of $n$ categories. Each category has its own rate.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/139.2.993">
@@ -2004,13 +2004,13 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>submodel</replaceable> + multi_rate[<replaceable>dist</replaceable>]</userinput></entry>
+	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;multi_rate(<replaceable>dist</replaceable>)</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+df(<replaceable>dist</replaceable>)</entry>
 	      <entry><para>Site rates follow a discrete approximation to the distribution <replaceable>dist</replaceable>.</para></entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>submodel</replaceable> + inv</userinput></entry>
+	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+&nbsp;inv</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Some fraction inv:p_inv of sites are invariable.</para>
 	      </entry>
@@ -2043,7 +2043,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	  <tbody>
 
 	    <row>
-	      <entry><userinput><replaceable>Q</replaceable> + Covarion.ts98</userinput></entry>
+	      <entry><userinput><replaceable>Q</replaceable>&nbsp;+&nbsp;Covarion.ts98</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+2</entry>
 	      <entry>
                 <para>Each state in rate matrix Q is split into an ON and OFF variant.  Models burstiness.</para>
@@ -2110,8 +2110,8 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
         <note>
           Note that the obvious way to combine the Tuffley-Steel model with rate heterogeneity is wrong:
           <itemizedlist>
-            <listitem><para><userinput>Q+Covarion.ts98+Rates.gamma</userinput>: This is <emphasis>wrong</emphasis>!  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster.</para></listitem>
-            <listitem><para><userinput>Q+Rates.gamma+Covarion.hb02</userinput>: This is correct.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
+            <listitem><para><userinput>Q + Covarion.ts98 + Rates.gamma</userinput>: This is <emphasis>wrong</emphasis>!  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster.</para></listitem>
+            <listitem><para><userinput>Q + Rates.gamma + Covarion.hb02</userinput>: This is correct.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
           </itemizedlist>
         </note>
       </para>
@@ -2177,7 +2177,7 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 	</informaltable>
 	    
 	<para>The user can specify priors and parameters for indel models (See section <xref linkend="functions"/>):
-<programlisting>rs07[log_rate~log_laplace[-4,0.707],mean_length=2]</programlisting>
+<programlisting>rs07(log_rate~log_laplace(-4,0.707),mean_length=2)</programlisting>
 	</para>
 
     </section>
@@ -2186,16 +2186,16 @@ mg94[pi=List[Tuple["A",0.1],Tuple["C",0.2],Tuple["T",0.3],Tuple["G",0.4]]]
 
   <section><info><title>Models and distributions are functions</title></info>
   <para>Models, probability distributions, and functions are treated the same in BAli-Phy because all of them have parameters or arguments. Parameters have names in BAli-Phy.  Parameter values are specified using square brackets as follows:
-  <programlisting>hky85[kappa=2]            // model
-log[x=2]                  // function
-normal[mean=0,sigma=1]    // probability distribution</programlisting>
+  <programlisting>hky85(kappa=2)            // model
+log(x=2)                  // function
+normal(mean=0,sigma=1)    // probability distribution</programlisting>
 It is possible to specify parameter values by position instead of by name:
-  <programlisting>hky85[2]
-log[2]
-normal[0,1]</programlisting>
+  <programlisting>hky85(2)
+log(2)
+normal(0,1)</programlisting>
 It is even possible to mix positional and named arguments, as long as all the positional arguments come before all the named arguments:
-<programlisting>normal[0,sigma=1]   // OK
-normal[mean=0,1]    // not OK</programlisting>
+<programlisting>normal(0,sigma=1)   // OK
+normal(mean=0,1)    // not OK</programlisting>
 
   The order and type of parameters for a function can be found with the <userinput>help</userinput> command.  For example,
 <screen><prompt>%</prompt> <userinput>bali-phy help hky85</userinput></screen>
@@ -2204,22 +2204,22 @@ A value must be given for each parameter, unless the parameter has a default val
 	<note>
 	  <para>
 	    If you are using the <command>csh</command>, <command>tcsh</command>, or <command>zsh</command> instead of the <command>bash</command> shell, then you need to put single quotes around terms with square brackets on the command-line:
-<screen><prompt>%</prompt> <userinput>bali-phy file.fasta -S 'hky85[kappa=2]'</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy file.fasta -S 'hky85(kappa=2)'</userinput></screen>
 	  </para>
 
-	  <para>If you do not add quotes, you will get an error message like "<computeroutput>bali-phy: No match.</computeroutput>" (for <command>csh</command>) or "<computeroutput>zsh: no matches found: hky85[kappa=2]</computeroutput>" (for <command>zsh</command>).
+	  <para>If you do not add quotes, you will get an error message like "<computeroutput>bali-phy: No match.</computeroutput>" (for <command>csh</command>) or "<computeroutput>zsh: no matches found: hky85(kappa=2)</computeroutput>" (for <command>zsh</command>).
 	  </para>
 	</note>
 
   </section>
 
   <section><info><title>Models and '<userinput>+</userinput>' notation</title></info>
-  <para>Models in phylogenetics literature are often combined using <userinput>+</userinput>. For example, the model <userinput>WAG+F+G4+I</userinput> starts with the WAG amino-acid model, and places several modifiers, like "+G4" on the right.</para>
-  <para>BAli-Phy follows this convention by treating <userinput>A+B</userinput> as an abbreviation for <userinput>B[submodel=A]</userinput>.  When there are multiple '<userinput>+</userinput>' symbols they associate to the left, so that <userinput>A+B+C</userinput> is understood to mean <userinput>(A+B)+C</userinput>.  For example:
-<programlisting>hky85+Rates.gamma        // rewritten to Rates.gamma[submodel=hky85]
-hky85+inv                // rewritten to inv[submodel=hky85]
-wag+f                    // rewritten to f[submodel=wag]
-wag+f+Rates.gamma+inv    // rewritten to inv[submodel=Rates.gamma[submodel=f[submodel=wag]]]
+  <para>Models in phylogenetics literature are often combined using <userinput>+</userinput>. For example, the model <userinput>WAG + F + G4 + I</userinput> starts with the WAG amino-acid model, and places several modifiers, like " + G4" on the right.</para>
+  <para>BAli-Phy follows this convention by treating <userinput>A + B</userinput> as an abbreviation for <userinput>B(submodel=A)</userinput>.  When there are multiple '<userinput>+</userinput>' symbols they associate to the left, so that <userinput>A + B + C</userinput> is understood to mean <userinput>(A + B) + C</userinput>.  For example:
+<programlisting>hky85 + Rates.gamma            // rewritten to Rates.gamma(submodel=hky85)
+hky85 + inv                    // rewritten to inv(submodel=hky85)
+wag + f                        // rewritten to f(submodel=wag)
+wag + f + Rates.gamma + inv    // rewritten to inv(submodel=Rates.gamma(submodel=f(submodel=wag)))
 </programlisting>
 This allows a simple method for combining models, when one model is an argument to another model.
 </para>
@@ -2228,32 +2228,32 @@ This allows a simple method for combining models, when one model is an argument 
   <section xml:id="priors"><info><title>Priors</title></info>
   <section><info><title>Specifying priors</title></info>
 <para>Priors on model parameters are specified by giving a random value. Random values can be obtained from distributions using the function <userinput>sample</userinput>.  For example, this places a log-normal prior on the parameter <userinput>kappa</userinput> of the <userinput>hky85</userinput> model:
-<programlisting>hky85[kappa=sample[log_normal[1,1]]]</programlisting>
-You can write <userinput>~Dist</userinput> as a shorthand for <userinput>sample[Dist]</userinput>:
-<programlisting>hky85[kappa=~log_normal[1,1]]</programlisting>
+<programlisting>hky85(kappa=sample(log_normal(1,1)))</programlisting>
+You can write <userinput>~Dist</userinput> as a shorthand for <userinput>sample(Dist)</userinput>:
+<programlisting>hky85(kappa = ~log_normal(1,1))</programlisting>
 The <userinput>=~</userinput> can be further shortened to just <userinput>~</userinput>:
-<programlisting>hky85[kappa~log_normal[1,1]]</programlisting>
+<programlisting>hky85(kappa ~ log_normal(1,1))</programlisting>
 </para>
 </section>
 
   <section><info><title>Random function arguments</title></info>
 <para>It also is possible to use random values as inputs to other functions.  For example:
-<programlisting>add[1,~exponential[10]]</programlisting>
+<programlisting>add(1,~exponential(10))</programlisting>
 In such cases the parameter value should be specified with <userinput>=</userinput>, as in the following example:
-<programlisting>rs07[mean_length=add[1,~exponential[10]]]]</programlisting>
+<programlisting>rs07(mean_length=add(1,~exponential(10)))</programlisting>
 </para>
   </section>
 <section><info><title>Distributions are not random values</title></info>
 <para>Random values and distributions have different types.  For example, the
 following is of type <userinput>Distribution[Double]</userinput>:
-<programlisting>uniform[0,1]</programlisting>
+<programlisting>uniform(0,1)</programlisting>
 In contrast, the following are both of type <userinput>Double</userinput>:
-<programlisting>sample[uniform[0,1]]
-~uniform[0,1]</programlisting>
+<programlisting>sample(uniform(0,1))
+~uniform(0,1)</programlisting>
 This is important when passing distributions as arguments to other
 distributions and functions.  For example, the distribution <userinput>iid</userinput> is used to generate a specific number of samples from another distribution.  Thus, it needs to receive a distribution as an argument:
-<programlisting>~iid[4,normal[0,1]]      // OK    : 4 samples from the normal[0,1] distribution
-~iid[4,~normal[0,1]]     // not OK: 4 samples from ... a random number?</programlisting>
+<programlisting>~iid(4, normal(0,1))      // OK    : 4 samples from the normal(0,1) distribution
+~iid(4, ~normal(0,1))     // not OK: 4 samples from ... a random number?</programlisting>
 (See <xref linkend="types"/>.)
 </para>
   </section>
@@ -2262,11 +2262,11 @@ distributions and functions.  For example, the distribution <userinput>iid</user
   <section xml:id="default_values"><info><title>Default values and default priors</title></info>
   <para>
 Some function arguments have default values.  For example, the <userinput>Rates.gamma</userinput> parameter <userinput>n</userinput> has a default value of 4.  Thus the following are equivalent:
-<programlisting>hky85+Rates.gamma[n=4]+inv
-hky85+Rates.gamma+inv</programlisting></para>
+<programlisting>hky85 + Rates.gamma(n=4) + inv
+hky85 + Rates.gamma + inv</programlisting></para>
 
-  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>hky85</userinput> has a default value of <userinput>~log_normal[log[2],0.25]</userinput>, so the following are equivalent:
-<programlisting>hky85[kappa~log_normal[log[2],0.25]]
+  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>hky85</userinput> has a default value of <userinput>~log_normal(log(2),0.25)</userinput>, so the following are equivalent:
+<programlisting>hky85(kappa~log_normal(log(2),0.25))
 hky85</programlisting>
 The <userinput>help</userinput> command can be used to determine the default value for a parameter, if there is one.</para>
   </section>
@@ -2275,8 +2275,8 @@ The <userinput>help</userinput> command can be used to determine the default val
   <para>  Every function has a <emphasis>result type</emphasis>, as well as an <emphasis>argument type</emphasis> for each argument.  The argument type specifies what kind of arguments are acceptable, and the result type specifies what kind of result the function produces.  Types include <userinput>Int</userinput> for integers, <userinput>Double</userinput> for double-precision floating point numbers, and <userinput>String</userinput> for text strings.  Integer arguments are implicitly converted to <userinput>Double</userinput> when the argument type is <userinput>Double</userinput>.</para>
 
   <para>Some types contain parameters.  For example <userinput>List[Int]</userinput> indicates a list of integers and <userinput>List[Double]</userinput> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <emphasis>type variable</emphasis> <userinput>a</userinput> and write <userinput>List[a]</userinput>.  Type variables always begin with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <userinput>add[x,y]</userinput> takes two arguments of type <userinput>a</userinput> and has a result of type <userinput>a</userinput>.  Thus:
-<programlisting>add[1,2]        // arguments are a=Int, so result is of type Int
-add[1.0,2.0]    // arguments are a=Double, so result is of type Double</programlisting>
+<programlisting>add(1,2)        // arguments are a=Int, so result is of type Int
+add(1.0,2.0)    // arguments are a=Double, so result is of type Double</programlisting>
 <userinput>Tuple[a,b]</userinput> is a parameterized type that can be specialized to (for example) <userinput>Tuple[String,Double]</userinput> and <userinput>Tuple[Int,Int]</userinput>.
   </para>
 
@@ -2903,10 +2903,10 @@ The stabilization criterion is the same one described above for numerical values
 
     <para>In order to compile BAli-Phy, you need
     <itemizedlist>
-      <listitem>a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://en.wikipedia.org/wiki/C%2B%2B14">C++17</link> compiler</listitem>
-      <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://mesonbuild.com">meson</link> (version >= 0.53)</listitem>
+      <listitem>a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://en.wikipedia.org/wiki/C%2B%2B14">C++20</link> compiler</listitem>
+      <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://mesonbuild.com">meson</link> (version >= 1.0)</listitem>
     </itemizedlist>
-    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 9.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 8 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>. </para>
+    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 10.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 13 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>. </para>
 
     <section><info><title>Linux</title></info>
     <para>On Debian and Ubuntu, you can type:
@@ -2983,8 +2983,8 @@ The command <command>bali-phy</command> and its associated tools should then be 
     </section>
       <section><info><title>Options: compiler and linker flags</title></info>
 	
-      <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-9</command> on systems where <command>g++</command> invokes a compiler that is too old:
- <screen><prompt>%</prompt> <userinput>CXX=g++-9 meson build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
+      <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-10</command> on systems where <command>g++</command> invokes a compiler that is too old:
+ <screen><prompt>%</prompt> <userinput>CXX=g++-10 meson build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
  You may also set compiler and linker options using the CPPFLAGS, CXXFLAGS, and LDFLAGS variables.  For example, you can instruct the compiler to use all the features of your chip, instead of producing generic code that will run anywhere:
  <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
 
@@ -3113,10 +3113,10 @@ The command <command>bali-phy</command> and its associated tools should then be 
       
       <qandaset>
 	<qandaentry>
-	  <question><para>I tried to use <userinput>-S lg08+Rates.gamma[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
+	  <question><para>I tried to use <userinput>-S 'lg08 + Rates.gamma(6)'</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
 	  <answer>
-	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>lg08+Rates.gamma[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn&apos;t even run <command>bali-phy</command>.</para>
-	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>-S "lg08+Rates.gamma[6]"</userinput>.  This will keep the C-shell from interfering with your command.
+	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>lg08 + Rates.gamma(6)</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn&apos;t even run <command>bali-phy</command>.</para>
+	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>-S 'lg08 + Rates.gamma(6)'</userinput>.  This will keep the C-shell from interfering with your command.
 	    </para>
 	  </answer>
 	</qandaentry>
