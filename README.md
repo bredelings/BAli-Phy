@@ -25,8 +25,17 @@ On Mac (or Linux, actually) you can use homebrew:
 brew install cairo meson boost
 ```
 
-If the version of meson is not at least 1.0, then you need to install
-meson through the python package manager "pip" or "pip3":
+On miniconda, you can use:
+```
+conda create -n devel -c conda-forge --strict-channel-priority
+conda activate devel
+conda install meson gxx boost-cpp cmake pkg-config cairo
+export BOOST_ROOT=$CONDA_PREFIX
+```
+
+In general, the version of meson needs to be at least 1.0.
+If your distribution provides a version of meson that is less than 1.0,
+then you may need to install meson through the python package manager "pip" or "pip3":
 
     pip3 -V
     PATH=$HOME/.local/bin:$PATH
