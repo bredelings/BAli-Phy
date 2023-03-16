@@ -16,5 +16,5 @@
         }
     ],
     "title": "The Independent and Identically Distributed (i.i.d.) distribution",
-    "examples": ["~iid_on[[1,2,3],normal[0,1]]    // A list of 10 normal[0,1] random variables"]
+    "examples": ["~iid_on([1,2,3],normal(0,1))    // A list of 3 normal(0,1) random variables"]
 }

@@ -15,8 +15,8 @@
 
     "description":"The geometric distribution gives the number of failures before the first success, where success has probability p. The probability mass function is:\n\n   Pr(X=n) = p*(1-p)^n\n\nSampled values are in the set {0, 1, 2, ... }.",
 
-    "examples": ["~geometric[0.1]          # A large number of failures.",
-		 "~geometric[0.9]          # A small number of failures.",
-		 "add[1,~geometric[0.9]]   # A geometric starting at 1",
-		 "~iid[10,geometric[0.9]]"]
+    "examples": ["~geometric(0.1)          # A large number of failures.",
+		 "~geometric(0.9)          # A small number of failures.",
+		 "add(1,~geometric(0.9))   # A geometric starting at 1",
+		 "~iid(10,geometric[0.9))"]
 }

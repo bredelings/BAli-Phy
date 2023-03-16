@@ -18,8 +18,8 @@
     ],
     "title": "The Beta distribution",
     "description": "The Beta distribution has mean a*b and variance\n a*b/((a+b)^2 * (a+b+1)).",
-    "examples": ["~beta[1,1]               // Sample from a uniform(0,1)",
-		 "~iid[10,beta[1,1]]       // Generate 10 uniform samples",
-		 "density[beta[3,4],0.5]   // Compute the beta[3,4] density at 0.5"
+    "examples": ["~beta(1,1)               // Sample from a uniform(0,1)",
+		 "~iid(10, beta(1,1))       // Generate 10 uniform samples",
+		 "density(beta(3,4),0.5)   // Compute the beta[3,4] density at 0.5"
 		 ]
 }

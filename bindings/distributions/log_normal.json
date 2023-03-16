@@ -18,5 +18,5 @@
     ],
     "title": "The log-normal distribution",
     "examples": ["~log_normal(0,1)","~iid(10, log_normal(0,1))"],
-    "description": "A variable X is log-normal if log[X] is normal."
+    "description": "A variable X is log-normal if log(X) is normal."
 }
