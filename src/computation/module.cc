@@ -372,13 +372,6 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
     {
         // So.. if we import a data type declaration, do we ALSO have to import any types that its constructors reference?
 
-        // 2. Import information about the type of constructors
-        for(auto& [cname,ctype]: M2->tc_state->data_con_env())
-        {
-            if (not tc_state->data_con_env().count(cname))
-                tc_state->data_con_env() = tc_state->data_con_env().insert({cname,ctype});
-        }
-
         // 5. Import information about instances
         for(auto& [dfun, dfun_type]: M2->tc_state->instance_env())
         {
@@ -1212,8 +1205,9 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
             for(const auto& constr: d->get_constructors())
             {
                 auto cname = unloc(*constr.con).name;
-                auto info = tc_state->data_con_env().at(cname);
-                int arity = info.dict_arity() + info.arity();
+                auto info = lookup_resolved_symbol(cname)->con_info;
+                assert(info);
+                int arity = info->dict_arity() + info->arity();
 
                 expression_ref body = lambda_expression( constructor(cname, arity) );
                 cdecls.push_back( { var(cname) , body} );
@@ -1225,8 +1219,9 @@ CDecls Module::load_constructors(const Hs::Decls& topdecls, CDecls cdecls)
                 for(auto& con_name: cons_decl.con_names)
                 {
                     auto cname = unloc(con_name);
-                    auto info = tc_state->data_con_env().at(cname);
-                    int arity = info.dict_arity() + info.arity();
+                    auto info = lookup_resolved_symbol(cname)->con_info;
+                    assert(info);
+                    int arity = info->dict_arity() + info->arity();
 
                     expression_ref body = lambda_expression( constructor(cname, arity) );
                     cdecls.push_back( { var(cname) , body} );

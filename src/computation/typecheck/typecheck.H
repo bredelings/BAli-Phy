@@ -53,9 +53,6 @@ struct global_tc_state
 
     std::vector<Type> defaults;
 
-    // maybe merge with gve by mapping name -> type,con-or-var
-    DataConEnv data_con_env;
-
     std::optional<int> unification_level;
 
     global_tc_state(Module& m);
@@ -95,9 +92,6 @@ public:
 
           KindSigEnv& kind_sigs()       {return global_state->kind_sigs;}
     const KindSigEnv& kind_sigs() const {return global_state->kind_sigs;}
-
-          DataConEnv& data_con_env()       {return global_state->data_con_env;}
-    const DataConEnv& data_con_env() const {return global_state->data_con_env;}
 
     const ClassInfo* info_for_class(const std::string& cname) const;
 

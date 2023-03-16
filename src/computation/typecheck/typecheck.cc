@@ -1148,10 +1148,12 @@ DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
         return info;
     }
 
-    if (not data_con_env().count(con_name))
-        throw note_exception()<<"Unrecognized constructor: "<<con;
+    auto C = this_mod().lookup_resolved_symbol(con_name);
 
-    return data_con_env().at(con_name);
+    if (not C)
+        throw note_exception()<<"Unrecognized constructor: "<<con_name;
+
+    return *C->con_info;
 }
 
 
@@ -1466,8 +1468,13 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
         auto d = decl.to<Hs::DataOrNewtypeDecl>();
         if (not d) continue;
 
-        for(auto& constr: ks.type_check_data_type(*this, *d))
-            data_con_env() = data_con_env().insert(constr);
+        for(auto& [name,con_info]: ks.type_check_data_type(*this, *d))
+        {
+            auto C = this_mod().lookup_local_symbol(name);
+            assert(C);
+            assert(not C->con_info);
+            C->con_info = std::make_shared<DataConInfo>(con_info);
+        }
     }
 
 //     for(auto& [con,type]: con_env())

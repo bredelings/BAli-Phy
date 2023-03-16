@@ -28,6 +28,7 @@ struct OpInfo
 
 
 struct VarInfo;
+struct DataConInfo;
 
 // Unknown_symbol is for when we add symbol where the only thing we know is fixity.
 // If we create a fixity environment instead, we could avoid that.
@@ -42,6 +43,7 @@ struct symbol_info
     std::optional<fixity_info> fixity;
     Type type;
     std::shared_ptr<VarInfo> info;
+    std::shared_ptr<DataConInfo> con_info;
 
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, std::optional<int>, std::optional<fixity_info> = {});
 };
