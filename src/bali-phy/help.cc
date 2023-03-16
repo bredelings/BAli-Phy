@@ -241,7 +241,7 @@ string get_help_for_rule(const Rule& rule)
     }
     help<<header("Usage");
     help<<"   "<<bold(name);
-    if (args_names_types.size()) help<<"["<<join(args_names_types,", ")<<"]";
+    if (args_names_types.size()) help<<"("<<join(args_names_types,", ")<<")";
     help<<"\n\n";
     
     if (auto synonyms = rule.get_child_optional("synonyms"))

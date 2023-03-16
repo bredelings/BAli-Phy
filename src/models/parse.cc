@@ -538,7 +538,7 @@ string unparse_abbrev(ptree p, int length)
     {
 	output = convertToString(p.value);
 	if (p.size())
-	    output += "[..]";
+	    output += "(..)";
     }
     return output;
 }
