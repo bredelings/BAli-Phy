@@ -525,6 +525,10 @@ void Module::compile(const Program& P)
 
     // result returned in this->small_decls_out, this->small_decls_out_free_vars
     std::tie(small_decls_out, small_decls_out_free_vars) = export_small_decls(value_decls, small_decls_in);
+
+    // We're done, we don't need these any more.
+    small_decls_in.clear();
+    small_decls_in_free_vars.clear();
 }
 
 void Module::perform_imports(const Program& P)
