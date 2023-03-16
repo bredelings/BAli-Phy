@@ -16,43 +16,43 @@
         {
             "arg_name": "submodel",
             "arg_type": "Function[Double,RevCTMC[a]]",
-            "default_value": "function[w,gy94[omega=w]]",
+            "default_value": "function(w:gy94(omega=w))",
 	    "description": "The model, as a function of dN/dS"
         },
         {
             "arg_name": "fs",
             "arg_type": "List[Double]",
-            "default_value": "~symmetric_dirichlet[2,1]",
+            "default_value": "~symmetric_dirichlet(2,1)",
 	    "description":"Class frequencies in the background model."
         },
         {
             "arg_name": "omegas",
             "arg_type": "List[Double]",
-            "default_value": "~iid[1,uniform[0,1]]",
+            "default_value": "~iid(1,uniform(0,1))",
 	    "description":"dN/dS ratios for the first n-1 classes in the background model."
         },
         {
             "arg_name": "posP",
             "arg_type": "Double",
-            "default_value": "~beta[1,10]",
+            "default_value": "~beta(1,10)",
 	    "description": "The fraction of sites switching to positive selection on the foreground branches."
         },
         {
             "arg_name": "posW",
             "arg_type": "Double",
-            "default_value": "~log_gamma[4,0.25]",
+            "default_value": "~log_gamma(4,0.25)",
 	    "description": "The dN/dS ratio for positively selected sites on the foreground branches."
         },
         {
             "arg_name": "posSelection",
             "arg_type": "Int",
-            "default_value": "~bernoulli[0.5]",
+            "default_value": "~bernoulli(0.5)",
 	    "description": "The model indicator: if 0, the sites only switch to neutrality on the foreground branches.\n If 1 then sites may switch to dN/dS=posW."
         },
         {
             "arg_name": "branch_cats",
             "arg_type": "List[Int]",
-            "default_value": "get_state[branch_categories]"
+            "default_value": "get_state(branch_categories)"
         }
     ],
     "extract": "all"
