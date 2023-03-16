@@ -22,7 +22,7 @@
         {
             "arg_name": "pi",
             "arg_type": "Double",
-	    "default_value":"~uniform[0,1]",
+	    "default_value":"~uniform(0,1)",
 	    "description":"Fraction of sites undergoing class-switching"
         },
         {
