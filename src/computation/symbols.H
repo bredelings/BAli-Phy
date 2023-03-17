@@ -45,6 +45,10 @@ struct symbol_info
     std::shared_ptr<VarInfo> var_info;
     std::shared_ptr<DataConInfo> con_info;
 
+    // Set to false if this is just for exporting information about vars like Data.Bool.$v#55 that are created by optimization.
+    // Variables like this currently have no type info.
+    bool visible = true;
+
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, std::optional<int>, std::optional<fixity_info> = {});
 };
 
