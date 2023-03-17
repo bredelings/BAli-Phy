@@ -30,6 +30,7 @@
 #include "computation/optimization/inliner.H"
 #include "computation/haskell/haskell.H"
 #include "computation/haskell/ids.H"
+#include "computation/varinfo.H"
 
 namespace views = ranges::views;
 
@@ -76,6 +77,9 @@ symbol_ptr Module::add_symbol(const symbol_info& S)
     if (loc == symbols.end())
     {
         auto ptr = std::make_shared<symbol_info>(S);
+        if (not ptr->var_info)
+            ptr->var_info = std::make_shared<VarInfo>();
+
         symbols.insert({S.name, ptr});
         return ptr;
     }
@@ -123,6 +127,8 @@ void Module::declare_symbol(const symbol_info& S)
         if (S3->symbol_type == unknown_symbol)
         {
             S2.fixity = S3->fixity;
+            if (not S2.var_info)
+                S2.var_info = std::make_shared<VarInfo>();
             *S3 = S2;
             return;
         }
