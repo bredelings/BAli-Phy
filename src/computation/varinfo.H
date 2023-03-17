@@ -6,6 +6,7 @@
 
 struct VarInfo
 {
+    bool conlike = false;
     bool always_unfold = false;
     Core::Exp unfolding;
 
