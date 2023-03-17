@@ -1288,22 +1288,37 @@ bool Module::type_is_declared(const std::string& name) const
 
 pair<const_symbol_ptr,expression_ref> Module::lookup_builtin_symbol(const std::string& name)
 {
+    symbol_ptr S;
+    expression_ref U;
     if (name == "()")
-        return {std::make_shared<const symbol_info>("()", constructor_symbol, "()", 0), constructor("()",0)};
+    {
+        S = std::make_shared<symbol_info>("()", constructor_symbol, "()", 0);
+        U = constructor("()",0);
+    }
     else if (name == "[]")
-        return {std::make_shared<const symbol_info>("[]", constructor_symbol, "[]", 0), constructor("[]",0)};
+    {
+        S = std::make_shared<symbol_info>("[]", constructor_symbol, "[]", 0);
+        U = constructor("[]",0);
+    }
     else if (name == ":")
     {
         symbol_info cons(":", constructor_symbol, "[]", 2, {{right_fix,5}});
-        return {std::make_shared<const symbol_info>(cons), lambda_expression( right_assoc_constructor(":",2) )};
+        S = std::make_shared<symbol_info>(cons);
+        U = lambda_expression( right_assoc_constructor(":",2) );
     }
     else if (is_tuple_name(name))
     {
         int arity = name.size() - 1;
-        expression_ref body = lambda_expression( tuple_head(arity) );
-        return {std::make_shared<const symbol_info>(name, constructor_symbol, name, arity), body};
+        S = std::make_shared<symbol_info>(name, constructor_symbol, name, arity);
+        U = lambda_expression( tuple_head(arity) );
     }
-    throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
+    else
+        throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
+
+    auto [E, free_vars] = occurrence_analyzer(U);
+    S->var_info->unfolding = E;
+    assert(free_vars.empty());
+    return {S,U};
 }
 
 const_type_ptr Module::lookup_builtin_type(const std::string& name)
