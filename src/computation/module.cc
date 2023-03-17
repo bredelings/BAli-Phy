@@ -896,13 +896,26 @@ pair<map<var,expression_ref>, set<var>> Module::export_small_decls(const CDecls&
 
     set<var> small_decls_out_free_vars;
 
+    // FIXME: add a wrapper for EVERY constructor!
+
     for(auto& [x,rhs]: cdecls)
     {
         assert(not x.name.empty());
         assert(get_module_name(x.name) == name);
 
         if (simple_size(rhs) <= 5)
+        {
             small_decls_out.insert({x, rhs});
+
+            // Add the unfolding for this variable.
+            auto S = lookup_make_local_symbol(x.name);
+
+            // Label vars with whether they are used or not, and collect free vars.
+            auto [E, free_vars] = occurrence_analyzer(rhs);
+
+            // The unfolding need to be occurrence analyzed.
+            S->var_info->unfolding = E;
+        }
     }
 
     // Find free vars in the decls that are not bound by *other* decls.
