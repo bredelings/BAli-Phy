@@ -42,7 +42,7 @@ struct symbol_info
     std::optional<int> arity;
     std::optional<fixity_info> fixity;
     Type type;
-    std::shared_ptr<VarInfo> info;
+    std::shared_ptr<VarInfo> var_info;
     std::shared_ptr<DataConInfo> con_info;
 
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, std::optional<int>, std::optional<fixity_info> = {});

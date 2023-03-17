@@ -57,7 +57,7 @@ symbol_info seq_info()
     // 5. create the symbol
     auto seq = symbol_info{"seq", variable_symbol, {}, 2, fixity};
     seq.type = type;
-    seq.info = info;
+    seq.var_info = info;
 
     return seq;
 }
@@ -72,9 +72,9 @@ shared_ptr<Module> compiler_prim_module()
 
     // 3. Add seq.
     auto seq = seq_info();
-    if (seq.info and seq.info->unfolding)
+    if (seq.var_info and seq.var_info->unfolding)
     {
-        auto& code = seq.info->unfolding;
+        auto& code = seq.var_info->unfolding;
         m->value_decls.push_back({var("Compiler.Prim.seq"), code});
         // Unfoldings must be occurrence-analyzed so that we can inline them.
         auto [code2, _] = occurrence_analyzer(code);
