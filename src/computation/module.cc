@@ -869,6 +869,26 @@ pair< map<var, expression_ref>, set<var> > Module::import_small_decls(const Prog
     return {small_decls_in, small_decls_in_free_vars};
 }
 
+symbol_ptr Module::lookup_make_local_symbol(const std::string& var_name)
+{
+    auto S = lookup_local_symbol(var_name);
+
+    // If there isn't a symbol, then make one.
+    if (not S)
+    {
+        add_symbol({var_name, variable_symbol, {}, {}, {}});
+        S = lookup_local_symbol(var_name);
+        assert(S);
+        S->visible = false;
+    }
+
+    assert(S);
+    assert(S->var_info);
+
+    return S;
+}
+
+
 pair<map<var,expression_ref>, set<var>> Module::export_small_decls(const CDecls& cdecls, const map<var,expression_ref>& small_decls_in)
 {
     // Modules that we imported should have their small_decls transitively inherited

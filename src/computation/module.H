@@ -205,6 +205,7 @@ public:
     const_symbol_ptr lookup_resolved_symbol(const std::string&) const;
     const_symbol_ptr lookup_local_symbol(const std::string&) const;
           symbol_ptr lookup_local_symbol(const std::string&);
+          symbol_ptr lookup_make_local_symbol(const std::string&);
     const_symbol_ptr lookup_external_symbol(const std::string&) const;
 
     static const_type_ptr lookup_builtin_type(const std::string&);
