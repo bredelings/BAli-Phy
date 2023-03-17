@@ -77,8 +77,6 @@ symbol_ptr Module::add_symbol(const symbol_info& S)
     if (loc == symbols.end())
     {
         auto ptr = std::make_shared<symbol_info>(S);
-        if (not ptr->var_info)
-            ptr->var_info = std::make_shared<VarInfo>();
 
         symbols.insert({S.name, ptr});
         return ptr;
@@ -127,8 +125,6 @@ void Module::declare_symbol(const symbol_info& S)
         if (S3->symbol_type == unknown_symbol)
         {
             S2.fixity = S3->fixity;
-            if (not S2.var_info)
-                S2.var_info = std::make_shared<VarInfo>();
             *S3 = S2;
             return;
         }
@@ -1542,7 +1538,6 @@ void Module::def_constructor(const string& cname, int arity, const string& type_
 //        throw myexception()<<"Locally defined symbol '"<<type_name<<"' should not be qualified.";
 
     auto S = symbol_info(cname, constructor_symbol, type_name, arity, {});
-    S.var_info = std::make_shared<VarInfo>();
     S.var_info->conlike = true;
     declare_symbol( S );
 }
