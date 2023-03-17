@@ -1503,7 +1503,10 @@ void Module::def_constructor(const string& cname, int arity, const string& type_
 //    if (not is_qualified_symbol(type_name))
 //        throw myexception()<<"Locally defined symbol '"<<type_name<<"' should not be qualified.";
 
-    declare_symbol( {cname, constructor_symbol, type_name, arity, {}} );
+    auto S = symbol_info(cname, constructor_symbol, type_name, arity, {});
+    S.var_info = std::make_shared<VarInfo>();
+    S.var_info->conlike = true;
+    declare_symbol( S );
 }
 
 void Module::def_ADT(const std::string& tname, const type_info::data_info& info)
