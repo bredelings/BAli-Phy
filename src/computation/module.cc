@@ -873,6 +873,7 @@ pair<map<var,expression_ref>, set<var>> Module::export_small_decls(const CDecls&
     for(auto& [x,rhs]: cdecls)
     {
         assert(not x.name.empty());
+        assert(get_module_name(x.name) == name);
 
         if (simple_size(rhs) <= 5)
             small_decls_out.insert({x, rhs});
