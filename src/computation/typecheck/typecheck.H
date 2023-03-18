@@ -49,8 +49,6 @@ struct global_tc_state
 
     KindSigEnv kind_sigs;
 
-    InstanceEnv instance_env;
-
     std::vector<Type> defaults;
 
     std::optional<int> unification_level;
@@ -98,9 +96,6 @@ public:
     const TypeSynonymInfo* info_for_type_synonym(const std::string& sname) const;
 
     const TypeFamInfo* info_for_type_fam(const std::string& fname) const;
-
-          InstanceEnv& instance_env()       {return global_state->instance_env;}
-    const InstanceEnv& instance_env() const {return global_state->instance_env;}
 
           std::vector<Type>& defaults()       {return global_state->defaults;}
     const std::vector<Type>& defaults() const {return global_state->defaults;}

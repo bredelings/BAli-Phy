@@ -209,7 +209,6 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
-    instance_env().insert( {dvar, *S.instance_info} );
     this_mod().local_instances.insert( {dvar, *S.instance_info} );
 
     pop_source_span();
@@ -360,7 +359,6 @@ TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
                 auto& [dfun, inst_info] = *result;
 
                 named_instances.push_back({dfun, *I});
-                instance_env().insert( {dfun, inst_info} );
                 this_mod().local_instances.insert( {dfun, inst_info} );
             }
         }
