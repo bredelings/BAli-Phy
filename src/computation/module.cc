@@ -915,7 +915,7 @@ pair<map<var,expression_ref>, set<var>> Module::export_small_decls(const CDecls&
             // Check that we have local symbols for everything that we've put in an unfolding.
             for(auto& y: free_vars)
                 if (is_qualified_symbol(y.name) and get_module_name(y.name) == name)
-                    lookup_make_local_symbol(x.name);
+                    lookup_make_local_symbol(y.name);
         }
     }
 
