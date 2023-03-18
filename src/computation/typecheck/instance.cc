@@ -201,12 +201,16 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     Type constraint = make_equality_pred(lhs, eqn.rhs);
     Type inst_type = add_forall_vars(eqn.free_tvs, constraint);
 
-    InstanceInfo info{eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}};
-
     int eqn_id = FreshVarSource::current_index();
     auto dvar = fresh_dvar(constraint);
 
-    instance_env().insert( {dvar, info} );
+    auto S = symbol_info(dvar.name, instance_dfun_symbol, {}, {}, {});
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}} );
+    S.type = S.instance_info->type();
+    this_mod().add_symbol(S);
+
+    instance_env().insert( {dvar, *S.instance_info} );
+    this_mod().local_instances.insert( {dvar, *S.instance_info} );
 
     pop_source_span();
     pop_note();
@@ -327,12 +331,15 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     auto [head,args] = decompose_type_apps(tt);
     auto class_con = head.to<TypeCon>();
     assert(class_con);
-    
-    InstanceInfo info{tvs, constraints, *class_con, args};
-    
+
+    auto S = symbol_info(dfun.name, instance_dfun_symbol, {}, {}, {});
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{tvs, constraints, *class_con, args} );
+    S.type = S.instance_info->type();
+    this_mod().add_symbol(S);
+
     pop_source_span();
     pop_note();
-    return {{dfun, info}};
+    return {{dfun, *S.instance_info}};
 }
 
 
@@ -354,6 +361,7 @@ TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
 
                 named_instances.push_back({dfun, *I});
                 instance_env().insert( {dfun, inst_info} );
+                this_mod().local_instances.insert( {dfun, inst_info} );
             }
         }
         else if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
@@ -432,10 +440,10 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     // 1. Get instance head and constraints 
 
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
-    auto& inst_info = instance_env().at(dfun);
-    auto inst_type = inst_info.type();
+    auto inst_info = this_mod().lookup_local_symbol(dfun.name)->instance_info;
+    auto inst_type = inst_info->type();
 
-    push_source_span(*inst_info.class_con.name.loc);
+    push_source_span(*inst_info->class_con.name.loc);
     // Instantiate it with rigid type variables.
     auto tc2 = copy_clear_wanteds(true);
     auto [wrap_gen, instance_tvs, givens, instance_head] = tc2.skolemize(inst_type, true);
@@ -620,7 +628,24 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
     // If all arguments are variables, then we can't match an instance.
     if (not possible_instance_for(target_pred)) return {};
 
-    for(auto& [dfun, info]: instance_env() )
+    for(auto& [modid, mod]: this_mod().transitively_imported_modules)
+    {
+        for(auto& [dfun, info]: mod->local_instances)
+        {
+            if (info.class_con != target_class) continue;
+
+            auto type = info.type();
+
+            auto [_, wanteds, instance_head] = instantiate(InstanceOrigin(), type);
+
+            if (not maybe_match(instance_head, target_pred)) continue;
+
+            auto dfun_exp = Core::Apply(dfun, dict_vars_from_lie<Core::Exp>(wanteds));
+
+            matching_instances.push_back({{dfun_exp, wanteds}, type});
+        }
+    }
+    for(auto& [dfun, info]: this_mod().local_instances)
     {
         if (info.class_con != target_class) continue;
 

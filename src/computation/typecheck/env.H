@@ -10,6 +10,7 @@
 #include "haskell/coretype.H"
 #include "util/set.H"
 #include "kind.H"
+#include "computation/instance_info.H"
 
 typedef std::string ID;
 
@@ -109,16 +110,6 @@ struct ClassInfo
     std::vector<std::pair<Hs::Var,Type>> fields;
 
     std::map<TypeCon,bool> associated_type_families;
-};
-
-struct InstanceInfo
-{
-    std::vector<TypeVar> tvs;
-    std::vector<Type> constraints;
-    TypeCon class_con;
-    std::vector<Type> args;
-
-    Type type() const;
 };
 
 struct TypeFamEqnInfo

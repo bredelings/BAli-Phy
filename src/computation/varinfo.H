@@ -1,6 +1,5 @@
-#ifndef INFO_H
-#define INFO_H
-#endif
+#ifndef VAR_INFO_H
+#define VAR_INFO_H
 
 #include "haskell/core.H"
 
@@ -14,3 +13,5 @@ struct VarInfo
     bool pragma_inline = false;
     bool pragma_inlineable = false;
 };
+
+#endif
