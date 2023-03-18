@@ -1438,9 +1438,9 @@ const_symbol_ptr Module::lookup_external_symbol(const std::string& symbol_name) 
 
     auto mod_iter = transitively_imported_modules.find(mod_name);
     if (mod_iter == transitively_imported_modules.end())
-        throw myexception()<<"Can't find external symbol '"<<symbol_name<<"' because module '"<<mod_name<<"' is not transitively imported.";
-
-    return mod_iter->second->lookup_local_symbol(symbol_name);
+        return nullptr;
+    else
+        return mod_iter->second->lookup_local_symbol(symbol_name);
 }
 
 OpInfo Module::get_operator(const string& name) const
