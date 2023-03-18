@@ -53,9 +53,9 @@ void TypeChecker::infer_type_for_foreign_imports(vector<Hs::ForeignDecl>& foreig
     for(auto& f: foreign_decls)
     {
         auto type = check_type( desugar(f.type) );
-        fte = fte.insert({unloc(f.function), type});
+        auto FI = this_mod().lookup_local_symbol(unloc(f.function).name);
+        FI->type = type;
     }
-    poly_env() += fte;
 }
 
 void TypeChecker::infer_type_for_binds(Hs::LBinds& lbinds, bool is_top_level)
