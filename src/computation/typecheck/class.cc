@@ -44,7 +44,7 @@ Hs::Var unqualified(Hs::Var v)
 // * Hs::Decls           = { name         = \dict -> case dict of (_,_,method,_,_) -> method }
 //                       = { made-up-name = \dict -> case dict of (superdict,_,_,_,_) -> superdict }
 
-tuple<global_value_env, ClassInfo, Hs::Decls>
+tuple<ClassInfo, Hs::Decls>
 TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
     push_note( Note()<<"In class '"<<class_decl.name<<"':" );
@@ -72,7 +72,6 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         class_constraint = TypeApp(class_constraint, tv);
 
     // 3. make global types for class methods
-    global_value_env gve;
 
     // Add class methods to GVE
     for(auto& sig_decl: class_decl.sig_decls)
@@ -86,7 +85,8 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         for(auto& lv: sig_decl.vars)
         {
             auto& v = unloc(lv);
-            gve = gve.insert({v, method_type});
+            auto S = this_mod().lookup_local_symbol(v.name);
+            S->type = method_type;
             class_info.members = class_info.members.insert({unqualified(v), method_type});
         }
     }
@@ -108,8 +108,6 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
         // Default methods don't get an alias.
         this_mod().add_symbol(S);
-
-        gve = gve.insert({dm, type});
     }
 
 
@@ -220,7 +218,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     }
 
     pop_note();
-    return {gve, class_info, decls};
+    return {class_info, decls};
 }
 
 Hs::Binds TypeChecker::infer_type_for_classes(const Hs::Decls& decls)
@@ -232,9 +230,7 @@ Hs::Binds TypeChecker::infer_type_for_classes(const Hs::Decls& decls)
         auto c = decl.to<Hs::ClassDecl>();
         if (not c) continue;
 
-        auto [gve1, class_info, class_decls] = infer_type_for_class(*c);
-
-        poly_env() += gve1;
+        auto [class_info, class_decls] = infer_type_for_class(*c);
 
         this_mod().lookup_local_type(class_info.name)->is_class()->info = std::make_shared<ClassInfo>(class_info);
 

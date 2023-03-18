@@ -25,7 +25,7 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
         auto dm = class_info.default_methods.at( unloc(FD.v) );
         unloc(FD.v) = dm;
 
-        auto sig_type = poly_env().at(unloc(FD.v));
+        auto sig_type = this_mod().lookup_resolved_symbol( unloc(FD.v).name )->type;
         auto decl2 = infer_type_for_single_fundecl_with_sig(FD, sig_type);
         decls_out.push_back({loc,decl2});
     }
