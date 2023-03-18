@@ -139,8 +139,9 @@ expression_ref SimplifierState::consider_inline(const expression_ref& E, in_scop
 //    std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
 
     // 1. If there's a binding x = E, and E = y for some variable y
-    if (x.info and x.info->always_unfold and (not context.is_stop_context() or is_trivial(x.info->unfolding)))
-	return simplify(x.info->unfolding, {}, bound_vars, context);
+    auto info = x.info.lock();
+    if (info and info->always_unfold and (not context.is_stop_context() or is_trivial(info->unfolding)))
+	return simplify(info->unfolding, {}, bound_vars, context);
     else if (rhs and do_inline(rhs, occ_info, context))
 	return simplify(rhs, {}, bound_vars, context);
     else
