@@ -475,9 +475,9 @@ void Module::compile(const Program& P)
     if (opts.dump_typechecked)
     {
         std::cerr<<"\nType-checked:\n";
-        for(auto& [name,type]: tc_state->poly_env())
+        for(auto& [name, sym]: symbols)
         {
-            std::cerr<<name<<" :: "<<type.print()<<"\n";
+            std::cerr<<name<<" :: "<<sym->type.print()<<"\n";
         }
         for(auto& decl: hs_decls)
         {
@@ -646,21 +646,6 @@ void Module::export_module(const string& modid)
 
 void Module::perform_exports()
 {
-    if (tc_state)
-    {
-        // Record types on the value symbol table
-        for(auto& [var,type]: tc_state->poly_env())
-        {
-            auto& value = var.name;
-            assert(get_module_name(value) == name);
-            assert(symbols.count(value));
-
-            auto& V = symbols.at(value);
-            assert(V->symbol_type != constructor_symbol);
-            V->type = type;
-        }
-    }
-
     for(auto& [name,value_info]:symbols)
     {
         assert(value_info->symbol_type == constructor_symbol or not value_info->type.empty());

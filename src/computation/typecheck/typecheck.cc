@@ -1623,7 +1623,17 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     // 13. Default top-level ambiguous type vars.
     auto top_simplify_decls = tc_state->simplify_and_default_top_level();
 
-    // 14. Print messages sorted by location.
+    // 14. Record types on the value symbol table
+    for(auto& [var,type]: tc_state->poly_env())
+    {
+        auto& value = var.name;
+
+        auto V = lookup_local_symbol(var.name);
+        assert(V->symbol_type != constructor_symbol);
+        V->type = type;
+    }
+
+    // 15. Print messages sorted by location.
     show_messages(file, std::cerr, tc_state->messages());
 
     // If we throw an exception later, the stuff printed to cerr will be printed again.

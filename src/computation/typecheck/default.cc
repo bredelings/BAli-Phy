@@ -187,14 +187,6 @@ Core::Decls TypeChecker::simplify_and_default_top_level()
     // Here we should complain about unsolved abiguities...
     check_wanteds(current_wanteds());
 
-//    std::cerr<<"GVE (all after defaulting):\n";
-//    for(auto& [x,t]: state.poly_env())
-//    {
-//        std::cerr<<x<<" :: "<<alphabetize_type(t)<<"\n";
-//        std::cerr<<x<<" = "<<e<<"\n\n\n";
-//    }
-//    std::cerr<<"\n";
-
     return top_simplify_decls;
 }
 
