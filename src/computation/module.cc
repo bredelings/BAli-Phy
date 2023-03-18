@@ -1416,6 +1416,46 @@ const_symbol_ptr Module::lookup_external_symbol(const std::string& symbol_name) 
         return mod_iter->second->lookup_local_symbol(symbol_name);
 }
 
+std::optional<DataConInfo> Module::constructor_info(const string& con_name) const
+{
+    if (con_name == ":")
+    {
+        DataConInfo info;
+        TypeVar a({noloc, "a"}, kind_type());
+        info.uni_tvs = { a };
+        info.field_types = { a, list_type(a) };
+        info.data_type = list_tycon();
+        return info;
+    }
+    else if (con_name == "[]")
+    {
+        DataConInfo info;
+        TypeVar a({noloc, "a"}, kind_type());
+        info.uni_tvs = { a };
+        info.data_type = list_tycon();
+        return info;
+    }
+    else if (is_tuple_name(con_name) or con_name == "()")
+    {
+        DataConInfo info;
+        int n = tuple_arity(con_name);
+        for(int i=0;i<n;i++)
+        {
+            TypeVar tv({noloc, "a"+std::to_string(i+1)}, kind_type());
+            info.uni_tvs.push_back( tv );
+            info.field_types.push_back( tv );
+        }
+        info.data_type = tuple_tycon(n);
+        return info;
+    }
+
+    auto C = lookup_resolved_symbol(con_name);
+
+    if (not C) return {};
+
+    return *C->con_info;
+}
+
 OpInfo Module::get_operator(const string& name) const
 {
     OpInfo O;

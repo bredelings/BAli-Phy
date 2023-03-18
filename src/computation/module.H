@@ -17,6 +17,7 @@
 #include "computation/optimization/simplifier.H"       // for simplifier options
 #include "computation/fresh_vars.H"
 #include "computation/instance_info.H"
+#include "computation/data_con_info.H"
 #include "message.H"
 #include "symbols.H"
 
@@ -125,6 +126,8 @@ public:
     void export_type(const const_type_ptr& S);
 
     void export_module(const std::string& S);
+
+    std::optional<DataConInfo> constructor_info(const std::string& n) const;
 
     /// Add a function
     void def_function(const std::string& name);

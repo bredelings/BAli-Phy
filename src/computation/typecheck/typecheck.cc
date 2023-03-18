@@ -1115,45 +1115,10 @@ std::tuple<Type, Type, Type> TypeChecker::unify_two_arg_function(const Type& t)
 
 DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
 {
-    auto& con_name = con.name;
-
-    if (con_name == ":")
-    {
-        DataConInfo info;
-        auto a = fresh_other_type_var( kind_type() );
-        info.uni_tvs = { a };
-        info.field_types = { a, list_type(a) };
-        info.data_type = list_tycon();
-        return info;
-    }
-    else if (con_name == "[]")
-    {
-        DataConInfo info;
-        auto a = fresh_other_type_var( kind_type() );
-        info.uni_tvs = { a };
-        info.data_type = list_tycon();
-        return info;
-    }
-    else if (is_tuple_name(con_name) or con_name == "()")
-    {
-        DataConInfo info;
-        int n = tuple_arity(con_name);
-        for(int i=0;i<n;i++)
-        {
-            auto tv = fresh_other_type_var( kind_type() );
-            info.uni_tvs.push_back( tv );
-            info.field_types.push_back( tv );
-        }
-        info.data_type = tuple_tycon(n);
-        return info;
-    }
-
-    auto C = this_mod().lookup_resolved_symbol(con_name);
-
-    if (not C)
-        throw note_exception()<<"Unrecognized constructor: "<<con_name;
-
-    return *C->con_info;
+    if (auto info = this_mod().constructor_info(con.name))
+        return *info;
+    else
+        throw note_exception()<<"Unrecognized constructor: "<<con.name;
 }
 
 
