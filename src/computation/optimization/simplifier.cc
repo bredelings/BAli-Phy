@@ -130,6 +130,29 @@ void unbind_decls(in_scope_set& bound_vars, const vector<CDecls>& decl_groups)
 	unbind_decls(bound_vars, decls);
 }
 
+set<string> special_prelude_symbols =
+{
+    // This is kind of a secret one, used in the desugaring of strings.
+    "Foreign.String.unpack_cpp_string",
+
+    // These are all Prelude symbols used in desugaring.
+    // Modid.name should be equivalent to Prelude.name.
+    "Compiler.Error.error",
+    "Data.OldList.concatMap",
+    "Control.Monad.fail",
+    "Compiler.Enum.enumFrom",
+    "Compiler.Enum.enumFromTo",
+    "Compiler.Enum.enumFromThen",
+    "Compiler.Enum.enumFromThenTo",
+    "Compiler.Enum.enumFrom",
+    "Prelude.undefined"
+};
+
+bool special_prelude_symbol(const string& name)
+{
+    return special_prelude_symbols.count(name) > 0;
+}
+
 // Do we have to explicitly skip loop breakers here?
 expression_ref SimplifierState::consider_inline(const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
 {
