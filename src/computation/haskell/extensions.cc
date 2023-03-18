@@ -9,10 +9,10 @@ using std::optional;
 map<string,LangExt> ext_to_bit =
 {
     {"EmptyDataDecls",              {LangExt::EmptyDataDecls}},
-    {"ExistentialQuantification",   {LangExt::EmptyDataDecls}},
+    {"ExistentialQuantification",   {LangExt::ExistentialQuantification}},
     {"FieldSelectors",              {LangExt::FieldSelectors}},
     {"FlexibleInstances",           {LangExt::FlexibleInstances}},
-    {"ForeignFunctionInterface",    {LangExt::FlexibleInstances}},
+    {"ForeignFunctionInterface",    {LangExt::ForeignFunctionInterface}},
     {"GADTSyntax",                  {LangExt::GADTSyntax}},
     {"GADTs",                       {LangExt::GADTs}},
     {"ImplicitPrelude",             {LangExt::ImplicitPrelude}},
