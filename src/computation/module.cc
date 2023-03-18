@@ -1286,7 +1286,7 @@ bool Module::type_is_declared(const std::string& name) const
     return is_haskell_builtin_type_name(name) or (type_aliases.count(name) > 0);
 }
 
-const_symbol_ptr Module::lookup_builtin_symbol(const std::string& name)
+const_symbol_ptr make_builtin_symbol(const std::string& name)
 {
     symbol_ptr S;
     expression_ref U;
@@ -1319,6 +1319,23 @@ const_symbol_ptr Module::lookup_builtin_symbol(const std::string& name)
     S->var_info->unfolding = E;
     assert(free_vars.empty());
     return S;
+}
+
+// Holding the symbols here permanently ensures that there is always a
+// reference to the VarInfo for these symbols.
+std::map<std::string, const_symbol_ptr> builtin_symbols_cache;
+
+const_symbol_ptr Module::lookup_builtin_symbol(const std::string& name)
+{
+    auto iter = builtin_symbols_cache.find(name);
+    if (iter == builtin_symbols_cache.end())
+    {
+        builtin_symbols_cache.insert({name, make_builtin_symbol(name)});
+        iter = builtin_symbols_cache.find(name);
+        assert(iter != builtin_symbols_cache.end());
+    }
+
+    return iter->second;
 }
 
 const_type_ptr Module::lookup_builtin_type(const std::string& name)
