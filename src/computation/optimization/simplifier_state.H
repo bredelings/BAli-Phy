@@ -8,6 +8,14 @@
 
 class Module;
 
+// It should be possible to put
+// -- the substitution
+// -- the bound_vars
+// -- the inline context?
+// into the simplifier state.
+
+// Then we wouldn't have to undo changes to bound_vars, for example.
+
 class SimplifierState: FreshVarSource
 {
     simplifier_options options;
