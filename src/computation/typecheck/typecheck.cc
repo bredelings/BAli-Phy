@@ -1522,8 +1522,7 @@ pair<Hs::Binds,Core::Decls> typechecker_result::all_binds() const
     return {all, all2};
 }
 
-
-typechecker_result Module::typecheck( Hs::ModuleDecls M )
+typechecker_result Module::typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
     //    OK, so datatypes produce a
@@ -1547,6 +1546,7 @@ typechecker_result Module::typecheck( Hs::ModuleDecls M )
     //
     // 4. Should imports/export only affect what NAMES are in scope, or also things like the instance environment?
 
+    auto tc_state = std::make_shared<TypeChecker>( fresh_vars, name, *this);
 
     // 1. Get the types for defaulting.
     tc_state->get_defaults( M );

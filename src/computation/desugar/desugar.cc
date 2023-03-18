@@ -40,11 +40,6 @@ desugar_state::desugar_state(const Module& m_, FreshVarState& state)
       m(m_)
 {}
 
-TypeChecker& desugar_state::tc_state() const
-{
-    return *m.tc_state;
-}
-
 expression_ref desugar_string_expression(const std::string& s)
 {
     return Core::unpack_cpp_string(s);

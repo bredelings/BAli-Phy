@@ -425,8 +425,6 @@ void Module::compile(const Program& P)
     if (opts.dump_parsed or opts.dump_renamed or opts.dump_desugared or opts.dump_typechecked or log_verbose)
         std::cerr<<"[ Compiling "<<name<<" ]\n";
 
-    tc_state = std::make_shared<TypeChecker>( P.fresh_var_state(), name, *this);
-
     // Scans imported modules and modifies symbol table and type table
     perform_imports(P);
 
@@ -468,7 +466,7 @@ void Module::compile(const Program& P)
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = rename(opts, M);
 
-    auto tc_result = typecheck(M);
+    auto tc_result = typecheck(P.fresh_var_state(), M);
 
     auto [hs_decls, core_decls] = tc_result.all_binds();
 
@@ -1087,7 +1085,7 @@ vector<expression_ref> peel_lambdas(expression_ref& E)
 }
 
 void mark_exported_decls(CDecls& decls,
-                         const shared_ptr<TypeChecker>& tc_state,
+                         const InstanceEnv& instance_env,
                          const map<string,const_symbol_ptr>& exports,
                          const map<string,type_ptr>& type_exports,
                          const string& module_name)
@@ -1099,10 +1097,10 @@ void mark_exported_decls(CDecls& decls,
             exported.insert(symbol->name);
 
     // Mark some generated functions as exported
-    if (tc_state)
+    if (true)
     {
         // Instances are exported
-        for(auto& [dvar, _]: tc_state->instance_env())
+        for(auto& [dvar, _]: instance_env)
             exported.insert(dvar.name);
 
         for(auto& [tname,tinfo]: type_exports)
@@ -1158,7 +1156,7 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
 
     if (opts.optimize)
     {
-        mark_exported_decls(cdecls, tc_state, exported_symbols(), types, name);
+        mark_exported_decls(cdecls, local_instances, exported_symbols(), types, name);
 
         vector<CDecls> decl_groups = {cdecls};
 

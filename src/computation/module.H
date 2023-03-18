@@ -25,8 +25,6 @@ class module_loader;
 
 class Program;
 
-class TypeChecker;
-
 struct typechecker_result
 {
     Hs::Binds class_binds;
@@ -82,8 +80,6 @@ public:
     Haskell::Module module;
 
     std::map<std::string, std::shared_ptr<const Module>> transitively_imported_modules;
-
-    std::shared_ptr<TypeChecker> tc_state;
 
     InstanceEnv local_instances;
 
@@ -181,7 +177,7 @@ public:
 
     void perform_imports(const Program&);
 
-    typechecker_result typecheck(Hs::ModuleDecls);
+    typechecker_result typecheck(FreshVarState&, Hs::ModuleDecls);
 
     void perform_exports();
 
