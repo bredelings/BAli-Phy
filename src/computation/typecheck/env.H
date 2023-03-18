@@ -11,6 +11,7 @@
 #include "util/set.H"
 #include "kind.H"
 #include "computation/instance_info.H"
+#include "computation/data_con_info.H"
 
 typedef std::string ID;
 
