@@ -369,18 +369,6 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
             import_type(T, modid, qualified);
         }
     }
-
-    if (M2->tc_state)
-    {
-        // So.. if we import a data type declaration, do we ALSO have to import any types that its constructors reference?
-
-        // 5. Import information about instances
-        for(auto& [dfun, dfun_type]: M2->tc_state->instance_env())
-        {
-            if (not tc_state->instance_env().count(dfun))
-                tc_state->instance_env().insert({dfun, dfun_type});
-        }
-    }
 }
 
 vector<Hs::LImpDecl> Module::imports() const
