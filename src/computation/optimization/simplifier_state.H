@@ -6,10 +6,14 @@
 #include "inliner.H"
 #include "computation/fresh_vars.H"
 
+class Module;
 
 class SimplifierState: FreshVarSource
 {
     simplifier_options options;
+
+    Module& this_mod;
+
 public:
 
     var get_new_name(var x, const in_scope_set& bound_vars);
@@ -50,7 +54,7 @@ public:
     std::vector<CDecls>
     simplify_module_one(const std::map<var, expression_ref>&, const std::set<var>&, const std::vector<CDecls>& decl_groups);
 
-    SimplifierState(const simplifier_options& opts, FreshVarState& s);
+    SimplifierState(const simplifier_options& opts, FreshVarState& s, Module& m);
 };
 
 #endif

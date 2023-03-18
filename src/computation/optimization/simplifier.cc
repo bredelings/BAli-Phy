@@ -14,6 +14,7 @@
 #include "computation/expression/constructor.H"
 #include "occurrence.H"
 #include "computation/varinfo.H"
+#include "computation/module.H"
 
 #include "simplifier.H"
 #include "inliner.H"
@@ -912,7 +913,7 @@ SimplifierState::simplify_module_one(const map<var,expression_ref>& small_decls_
 }
 
 
-vector<CDecls> simplify_module_gently(const simplifier_options& options, FreshVarState& fresh_var_state,
+vector<CDecls> simplify_module_gently(const simplifier_options& options, FreshVarState& fresh_var_state, Module& m,
                                       const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
                                       const vector<CDecls>& decl_groups_in)
 {
@@ -921,15 +922,15 @@ vector<CDecls> simplify_module_gently(const simplifier_options& options, FreshVa
     options_gentle.inline_threshhold = -100;
 //    options_gentle.beta_reduction = false;  This breaks the inliner.  Should probably fix!
 
-    SimplifierState state(options_gentle, fresh_var_state);
+    SimplifierState state(options_gentle, fresh_var_state, m);
     return state.simplify_module_one(small_decls_in, small_decls_in_free_vars, decl_groups_in);
 }
 
-vector<CDecls> simplify_module(const simplifier_options& options, FreshVarState& fresh_var_state,
+vector<CDecls> simplify_module(const simplifier_options& options, FreshVarState& fresh_var_state, Module& m,
                                const map<var,expression_ref>& small_decls_in,const set<var>& small_decls_in_free_vars,
                                const vector<CDecls>& decl_groups_in)
 {
-    SimplifierState state(options, fresh_var_state);
+    SimplifierState state(options, fresh_var_state, m);
     auto decl_groups = decl_groups_in;
 
     for(int i = 0; i < options.max_iterations; i++)
@@ -941,7 +942,7 @@ vector<CDecls> simplify_module(const simplifier_options& options, FreshVarState&
 }
 
 
-SimplifierState::SimplifierState(const simplifier_options& opts, FreshVarState& state)
-    :FreshVarSource(state), options(opts)
+SimplifierState::SimplifierState(const simplifier_options& opts, FreshVarState& state, Module& m)
+    :FreshVarSource(state), options(opts), this_mod(m)
 {
 }

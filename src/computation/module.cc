@@ -1189,12 +1189,12 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
 
         vector<CDecls> decl_groups = {cdecls};
 
-        decl_groups = simplify_module_gently(opts, fvstate, small_decls_in, small_decls_in_free_vars, decl_groups);
+        decl_groups = simplify_module_gently(opts, fvstate, *this, small_decls_in, small_decls_in_free_vars, decl_groups);
 
         if (opts.fully_lazy)
             float_out_from_module(fvstate, decl_groups);
 
-        decl_groups = simplify_module(opts, fvstate, small_decls_in, small_decls_in_free_vars, decl_groups);
+        decl_groups = simplify_module(opts, fvstate, *this, small_decls_in, small_decls_in_free_vars, decl_groups);
 
         if (opts.fully_lazy)
             float_out_from_module(fvstate, decl_groups);
