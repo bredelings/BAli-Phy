@@ -215,7 +215,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     pop_note();
 }
 
-std::optional<pair<Core::Var, InstanceInfo>>
+std::optional<Core::Var>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     push_note( Note()<<"In instance '"<<inst_decl.constraint<<"':" );
@@ -338,7 +338,7 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 
     pop_source_span();
     pop_note();
-    return {{dfun, *S.instance_info}};
+    return dfun;
 }
 
 
@@ -356,10 +356,12 @@ TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
         {
             if (auto result = infer_type_for_instance1(*I))
             {
-                auto& [dfun, inst_info] = *result;
+                auto dfun = *result;
+                auto inst_info = this_mod().lookup_local_symbol(dfun.name)->instance_info;
+                assert(inst_info);
 
                 named_instances.push_back({dfun, *I});
-                this_mod().local_instances.insert( {dfun, inst_info} );
+                this_mod().local_instances.insert( {dfun, *inst_info} );
             }
         }
         else if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())

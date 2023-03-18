@@ -476,7 +476,7 @@ public:
     Hs::Binds infer_type_for_default_methods(const Hs::Decls&);
 
     // Figure 12
-    std::optional<std::pair<Core::Var, InstanceInfo>>
+    std::optional<Core::Var>
     infer_type_for_instance1(const Hs::InstanceDecl& instance_decl);
 
     // Figure 12
