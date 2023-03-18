@@ -27,6 +27,9 @@ bool is_haskell_module_name(const std::string& s);
 
 bool is_qualified_symbol(const std::string&);
 
+bool is_qualified_by_module(const std::string&, const std::string&);
+bool is_local_symbol(const std::string&, const std::string&);
+
 std::string get_module_name(const std::string&);
 std::string get_unqualified_name(const std::string&);
 

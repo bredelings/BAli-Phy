@@ -224,7 +224,25 @@ bool is_haskell_module_name(const std::string& s)
 
 bool is_qualified_symbol(const string& s)
 {
-    return (get_haskell_identifier_path(s).size() >= 2);
+    return (not s.empty() and get_haskell_identifier_path(s).size() >= 2);
+}
+
+bool is_qualified_by_module(const std::string& s, const std::string& modid)
+{
+    if (not is_qualified_symbol(s)) return false;
+
+    return get_module_name(s) == modid;
+}
+
+bool is_local_symbol(const std::string& s, const std::string& modid)
+{
+    if (is_haskell_builtin_con_name(s)) return false;
+
+    if (is_haskell_builtin_type_name(s)) return false;
+
+    if (not is_qualified_symbol(s)) return true;
+
+    return is_qualified_by_module(s, modid);
 }
 
 string get_module_name(const std::string& s)
