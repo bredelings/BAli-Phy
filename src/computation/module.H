@@ -200,7 +200,7 @@ public:
 
     bool type_in_scope_with_name(const std::string&, const std::string&) const;
 
-    static std::pair<const_symbol_ptr,expression_ref> lookup_builtin_symbol(const std::string&);
+    static const_symbol_ptr lookup_builtin_symbol(const std::string&);
     const_symbol_ptr lookup_symbol(const std::string&) const;
     const_symbol_ptr lookup_resolved_symbol(const std::string&) const;
     const_symbol_ptr lookup_local_symbol(const std::string&) const;

@@ -1286,7 +1286,7 @@ bool Module::type_is_declared(const std::string& name) const
     return is_haskell_builtin_type_name(name) or (type_aliases.count(name) > 0);
 }
 
-pair<const_symbol_ptr,expression_ref> Module::lookup_builtin_symbol(const std::string& name)
+const_symbol_ptr Module::lookup_builtin_symbol(const std::string& name)
 {
     symbol_ptr S;
     expression_ref U;
@@ -1318,7 +1318,7 @@ pair<const_symbol_ptr,expression_ref> Module::lookup_builtin_symbol(const std::s
     auto [E, free_vars] = occurrence_analyzer(U);
     S->var_info->unfolding = E;
     assert(free_vars.empty());
-    return {S,U};
+    return S;
 }
 
 const_type_ptr Module::lookup_builtin_type(const std::string& name)
@@ -1358,7 +1358,7 @@ const_type_ptr Module::lookup_builtin_type(const std::string& name)
 const_symbol_ptr Module::lookup_symbol(const std::string& name) const
 {
     if (is_haskell_builtin_con_name(name))
-        return lookup_builtin_symbol(name).first;
+        return lookup_builtin_symbol(name);
 
     int count = aliases.count(name);
     if (count == 0)
@@ -1380,7 +1380,7 @@ const_symbol_ptr Module::lookup_resolved_symbol(const std::string& symbol_name) 
 {
     // 1. Handle builtin names
     if (is_haskell_builtin_con_name(symbol_name))
-        return lookup_builtin_symbol(symbol_name).first;
+        return lookup_builtin_symbol(symbol_name);
 
     // 2. Handle local names
     else if (name == get_module_name(symbol_name))

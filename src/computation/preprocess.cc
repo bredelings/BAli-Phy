@@ -13,6 +13,7 @@
 #include "computation/expression/reg_var.H"
 #include "computation/expression/expression.H" // for is_reglike( )
 #include "computation/fresh_vars.H"
+#include "computation/varinfo.H"
 #include "haskell/ids.H"
 
 using std::optional;
@@ -160,8 +161,9 @@ int reg_heap::reg_for_id(const var& x)
 	{
             assert(x.index == 0);
 
-	    auto [sym,code] = Module::lookup_builtin_symbol(name);
-	    add_identifier(x);
+            auto sym = Module::lookup_builtin_symbol(name);
+            auto code = sym->var_info->unfolding;
+            add_identifier(x);
 
 	    // get the root for each identifier
 	    loc = identifiers.find(x);
