@@ -72,6 +72,8 @@ expression_ref peel_n_lambdas1(const expression_ref& E, int n);
 
 bool is_trivial(const expression_ref& E);
 
+bool special_prelude_symbol(const std::string& name);
+
 class Module;
 
 std::vector<CDecls> simplify_module_gently(const simplifier_options&, FreshVarState&, Module&, const std::map<var, expression_ref>&, const std::set<var>&, const std::vector<CDecls>& decl_groups);
