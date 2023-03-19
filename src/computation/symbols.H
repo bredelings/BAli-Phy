@@ -33,7 +33,16 @@ struct InstanceInfo;
 
 // Unknown_symbol is for when we add symbol where the only thing we know is fixity.
 // If we create a fixity environment instead, we could avoid that.
-enum symbol_type_t {variable_symbol = 0, constructor_symbol, class_method_symbol, default_method_symbol, instance_dfun_symbol, unknown_symbol};
+enum symbol_type_t
+{
+    variable_symbol = 0,
+    constructor_symbol,
+    class_method_symbol,
+    default_method_symbol,
+    instance_method_symbol,
+    instance_dfun_symbol,
+    unknown_symbol
+};
 
 struct symbol_info
 {

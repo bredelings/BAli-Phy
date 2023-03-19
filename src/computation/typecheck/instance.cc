@@ -524,6 +524,11 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
         auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
         decls.push_back({noloc,decl2});
+
+        auto S = symbol_info(op.name, instance_method_symbol, {}, {}, {});
+        S.type = op_type;
+        this_mod().add_symbol(S);
+
         pop_note();
     }
 
