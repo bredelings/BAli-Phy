@@ -1096,24 +1096,20 @@ void mark_exported_decls(CDecls& decls,
         if (get_module_name(symbol->name) == module_name)
             exported.insert(symbol->name);
 
-    // Mark some generated functions as exported
-    if (true)
+    // Instances are exported
+    for(auto& [dvar, _]: instance_env)
+        exported.insert(dvar.name);
+
+    for(auto& [tname,tinfo]: type_exports)
     {
-        // Instances are exported
-        for(auto& [dvar, _]: instance_env)
-            exported.insert(dvar.name);
-
-        for(auto& [tname,tinfo]: type_exports)
+        if (auto c = tinfo->is_class())
         {
-            if (auto c = tinfo->is_class())
-            {
-                for(auto& [dvar, _]: c->info->superclass_extractors)
-                    exported.insert(dvar.name);
+            for(auto& [dvar, _]: c->info->superclass_extractors)
+                exported.insert(dvar.name);
 
-                // Default methods are exported
-                for(auto& [method, dm]: c->info->default_methods)
-                    exported.insert(dm.name);
-            }
+            // Default methods are exported
+            for(auto& [method, dm]: c->info->default_methods)
+                exported.insert(dm.name);
         }
     }
 
