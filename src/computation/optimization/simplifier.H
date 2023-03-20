@@ -11,30 +11,13 @@
 #include "computation/fresh_vars.H"
 #include "immer/map.hpp"
 #include "simplifier_options.H"
+#include "substitution.H"
 
 class module_loader;
 
 typedef std::pair<expression_ref,occurrence_info> bound_variable_info;
 
 typedef immer::map<var, bound_variable_info> in_scope_set;
-
-namespace simplifier
-{
-
-struct substitution_range;
-struct substitution: public std::map<var, substitution_range>
-{
-    using map::map;
-};
-
-struct substitution_range
-{
-    expression_ref E;
-    const substitution* S = nullptr;
-    substitution_range(const expression_ref& e):E(e) {}
-    substitution_range(const expression_ref& e, const substitution& s):E(e),S(&s) {}
-};
-}
 
 int get_n_lambdas1(const expression_ref& E);
 

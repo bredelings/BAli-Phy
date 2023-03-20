@@ -6,7 +6,7 @@
 #include <variant>
 #include <memory>
 #include "computation/expression/expression_ref.H"
-#include "simplifier.H"
+#include "substitution.H"
 
 struct ok_context;
 struct stop_context;
