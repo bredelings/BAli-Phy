@@ -202,7 +202,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     Type inst_type = add_forall_vars(eqn.free_tvs, constraint);
 
     int eqn_id = FreshVarSource::current_index();
-    auto dvar = fresh_dvar(constraint);
+    auto dvar = fresh_dvar(constraint, true);
 
     auto S = symbol_info(dvar.name, instance_dfun_symbol, {}, {}, {});
     S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}} );

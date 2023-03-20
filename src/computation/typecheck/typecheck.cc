@@ -964,7 +964,7 @@ WantedConstraints& TypeChecker::current_wanteds()
     return collected_wanteds;
 }
 
-Core::Var TypeChecker::fresh_dvar(const Type& pred)
+Core::Var TypeChecker::fresh_dvar(const Type& pred, bool qualified)
 {
     ID name;
     if (is_equality_pred(pred))
@@ -973,7 +973,7 @@ Core::Var TypeChecker::fresh_dvar(const Type& pred)
         name = "d" + *cname;
     else
         name = "dvar";
-    auto dvar = get_fresh_var(name, false);
+    auto dvar = get_fresh_var(name, qualified);
     dvar.type_ = std::make_shared<Type>(pred);
     return dvar;
 }

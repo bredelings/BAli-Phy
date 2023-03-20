@@ -202,7 +202,7 @@ public:
 
     WantedConstraints& current_wanteds();
 
-    Core::Var fresh_dvar(const Type& constraint);
+    Core::Var fresh_dvar(const Type& constraint, bool qualified = false);
 
     Core::Var add_wanted(const ConstraintOrigin& origin, const Type& constraint);
 
