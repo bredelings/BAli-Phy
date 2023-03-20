@@ -45,7 +45,7 @@ public:
     expression_ref
     rebuild(const expression_ref& E, in_scope_set& bound_vars, const inline_context& context);
 
-    std::tuple<CDecls,simplifier::substitution> rename_and_bind_pattern_vars(expression_ref& pattern, const simplifier::substitution& S, in_scope_set& bound_vars);
+    std::tuple<CDecls,simplifier::substitution,in_scope_set> rename_and_bind_pattern_vars(expression_ref& pattern, const simplifier::substitution& S, const in_scope_set& bound_vars);
 
     expression_ref
     rebuild_case(expression_ref object, const Core::Alts& alts, const simplifier::substitution& S, in_scope_set& bound_vars, const inline_context& context);

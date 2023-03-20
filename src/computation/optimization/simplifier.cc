@@ -107,28 +107,20 @@ bound_variable_info rebind_var(in_scope_set& bound_vars, const var& x, const exp
     return old_binding;
 }
 
-void bind_decls(in_scope_set& bound_vars, const CDecls& decls)
+[[nodiscard]] in_scope_set bind_decls(const in_scope_set& bound_vars_in, const CDecls& decls)
 {
+    auto bound_vars = bound_vars_in;
     for(const auto& [x,rhs]: decls)
 	bind_var(bound_vars, x, rhs);
+    return bound_vars;
 }
 
-void bind_decls(in_scope_set& bound_vars, const vector<CDecls>& decl_groups)
+[[nodiscard]] in_scope_set bind_decls(const in_scope_set& bound_vars_in, const vector<CDecls>& decl_groups)
 {
+    auto bound_vars = bound_vars_in;
     for(auto& decls: decl_groups)
-	bind_decls(bound_vars, decls);
-}
-
-void unbind_decls(in_scope_set& bound_vars, const CDecls& decls)
-{
-    for(const auto& [x, _]: decls)
-	unbind_var(bound_vars, x);
-}
-
-void unbind_decls(in_scope_set& bound_vars, const vector<CDecls>& decl_groups)
-{
-    for(auto& decls: reverse(decl_groups))
-	unbind_decls(bound_vars, decls);
+	bound_vars = bind_decls(bound_vars, decls);
+    return bound_vars;
 }
 
 set<string> special_prelude_symbols =
@@ -418,10 +410,11 @@ expression_ref case_of_case(const expression_ref& object, Core::Alts alts, Fresh
     return let_expression(cc_decls, make_case_expression(object2,alts2));
 }
 
-tuple<CDecls,simplifier::substitution> SimplifierState::rename_and_bind_pattern_vars(expression_ref& pattern, const substitution& S, in_scope_set& bound_vars)
+tuple<CDecls,simplifier::substitution,in_scope_set> SimplifierState::rename_and_bind_pattern_vars(expression_ref& pattern, const substitution& S, const in_scope_set& bound_vars_in)
 {
     auto S2 = S;
     CDecls pat_decls;
+    auto bound_vars = bound_vars_in;
 
     if (pattern.size())
     {
@@ -449,7 +442,7 @@ tuple<CDecls,simplifier::substitution> SimplifierState::rename_and_bind_pattern_
         pattern = pattern2;
     }
 
-    return {pat_decls, S2};
+    return {pat_decls, S2, bound_vars};
 }
 
 bool redundant_pattern(const Core::Alts& alts, const expression_ref& pattern)
@@ -504,10 +497,9 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::
     for(auto& [pattern, body]: alts)
     {
 	// 2.1. Rename and bind pattern variables
-	auto [pat_decls, S2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
+	auto [pat_decls, S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
 
         // 2.2 Define x = pattern in this branch only
-        auto bound_vars2 = bound_vars;
 	if (is_var(object) and not is_wildcard(pattern))
         {
             auto x = object.as_<var>();
@@ -527,9 +519,6 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::
 
 	// 2.3. Simplify the alternative body
 	body = simplify(body, S2, bound_vars2, make_ok_context());
-
-        // 2.4 Unbind the pattern vars.
-	unbind_decls(bound_vars, pat_decls);
 
         if (is_var(pattern))
         {
@@ -589,11 +578,9 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Core::
     // These lets should already be simplified, since we are rebuilding.
     auto decls = strip_multi_let(object);
 
-    bind_decls(bound_vars, decls);
+    auto bound_vars2 = bind_decls(bound_vars, decls);
     
-    auto E2 = rebuild_case_inner(object, alts, S, bound_vars);
-
-    unbind_decls(bound_vars, decls);
+    auto E2 = rebuild_case_inner(object, alts, S, bound_vars2);
 
     // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
     E2 = let_expression(decls, E2);
@@ -605,11 +592,9 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Core::
 expression_ref SimplifierState::rebuild_let(const CDecls& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
     // If the decl is empty, then we don't have to do anything special here.
-    bind_decls(bound_vars, decls);
+    auto bound_vars2 = bind_decls(bound_vars, decls);
 
-    E = simplify(E, S, bound_vars, context);
-
-    unbind_decls(bound_vars, decls);
+    E = simplify(E, S, bound_vars2, context);
 
     return let_expression(decls, E);
 }
@@ -970,7 +955,7 @@ SimplifierState::simplify_module_one(const vector<CDecls>& decl_groups_in)
     {
 	auto s = simplify_decls(decls, S.back(), bound_vars, true);
 	S.push_back( s );
-	bind_decls(bound_vars, decls);
+	bound_vars = bind_decls(bound_vars, decls);
     }
 
     return decl_groups;
