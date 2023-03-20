@@ -77,7 +77,7 @@ shared_ptr<Module> compiler_prim_module()
         auto& code = seq.var_info->unfolding;
         m->value_decls.push_back({var("Compiler.Prim.seq"), code});
         // Unfoldings must be occurrence-analyzed so that we can inline them.
-        auto [code2, _] = occurrence_analyzer(code);
+        auto [code2, _] = occurrence_analyzer(*m, code);
         code = code2;
     }
     m->declare_symbol(seq);

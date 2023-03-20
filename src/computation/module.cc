@@ -798,14 +798,6 @@ CDecls Module::desugar(const simplifier_options& /*opts*/, FreshVarState& state,
     return cdecls;
 }
 
-void add_constructor(map<var,expression_ref>& decls, const constructor& con)
-{
-    var x(con.name());
-    expression_ref body = lambda_expression(con);
-    auto res = occurrence_analyzer(body);
-    decls.insert({x,res.first});
-}
-
 pair< map<var, expression_ref>, set<var> > Module::import_small_decls(const Program& P)
 {
     map<var, expression_ref> small_decls_in;
@@ -819,19 +811,6 @@ pair< map<var, expression_ref>, set<var> > Module::import_small_decls(const Prog
         small_decls_in.insert(M->small_decls_out.begin(), M->small_decls_out.end());
         small_decls_in_free_vars.insert(M->small_decls_out_free_vars.begin(), M->small_decls_out_free_vars.end());
     }
-
-    add_constructor(small_decls_in, constructor(":",2));
-    add_constructor(small_decls_in, constructor("[]",0));
-    add_constructor(small_decls_in, constructor("()",0));
-    add_constructor(small_decls_in, constructor("(,)",2));
-    add_constructor(small_decls_in, constructor("(,,)",3));
-    add_constructor(small_decls_in, constructor("(,,,)",4));
-    add_constructor(small_decls_in, constructor("(,,,,)",5));
-    add_constructor(small_decls_in, constructor("(,,,,,)",6));
-    add_constructor(small_decls_in, constructor("(,,,,,,)",7));
-    add_constructor(small_decls_in, constructor("(,,,,,,,)",8));
-    add_constructor(small_decls_in, constructor("(,,,,,,,,)",9));
-    add_constructor(small_decls_in, constructor("(,,,,,,,,,)",10));
 
     return {small_decls_in, small_decls_in_free_vars};
 }
@@ -859,7 +838,7 @@ symbol_ptr Module::lookup_make_local_symbol(const std::string& var_name)
 pair<map<var,expression_ref>, set<var>> Module::export_small_decls(const CDecls& cdecls, const map<var,expression_ref>& small_decls_in)
 {
     // Modules that we imported should have their small_decls transitively inherited
-    map<var, expression_ref> small_decls_out = small_decls_in;
+    map<var, expression_ref> small_decls_out;
 
     set<var> small_decls_out_free_vars;
 
@@ -872,13 +851,11 @@ pair<map<var,expression_ref>, set<var>> Module::export_small_decls(const CDecls&
 
         if (simple_size(rhs) <= 5)
         {
-            small_decls_out.insert({x, rhs});
-
             // Add the unfolding for this variable.
             auto S = lookup_make_local_symbol(x.name);
 
             // Label vars with whether they are used or not, and collect free vars.
-            auto [E, free_vars] = occurrence_analyzer(rhs);
+            auto [E, free_vars] = occurrence_analyzer(*this, rhs);
 
             // The unfolding need to be occurrence analyzed.
             S->var_info->unfolding = E;
@@ -888,17 +865,6 @@ pair<map<var,expression_ref>, set<var>> Module::export_small_decls(const CDecls&
                 if (is_qualified_symbol(y.name) and get_module_name(y.name) == name)
                     lookup_make_local_symbol(y.name);
         }
-    }
-
-    // Find free vars in the decls that are not bound by *other* decls.
-    for(auto& [_,F]: small_decls_out)
-    {
-        auto [E, free_vars] = occurrence_analyzer(F);
-        F = E;
-
-        for(auto& x: free_vars)
-            if (not small_decls_out.count(x))
-                small_decls_out_free_vars.insert(x);
     }
 
     return {small_decls_out, small_decls_out_free_vars};
@@ -1282,7 +1248,9 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
     else
         throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
 
-    auto [E, free_vars] = occurrence_analyzer(U);
+    Module empty("Empty");
+
+    auto [E, free_vars] = occurrence_analyzer(empty, U);
     S->var_info->unfolding = E;
     assert(free_vars.empty());
     return S;

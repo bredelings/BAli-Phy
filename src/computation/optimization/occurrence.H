@@ -7,8 +7,10 @@
 #include "computation/expression/let.H"
 #include "computation/expression/var.H"
 
-std::pair<expression_ref,std::set<var>> occurrence_analyzer(const expression_ref& E, var_context context=var_context::unknown);
-std::vector<CDecls> occurrence_analyze_decls(CDecls decls, std::set<var>& free_vars);
-std::vector<CDecls> occurrence_analyze_decl_groups(const std::vector<CDecls>& decls, std::set<var>& free_vars);
+class Module;
+
+std::pair<expression_ref,std::set<var>> occurrence_analyzer(const Module& m, const expression_ref& E, var_context context=var_context::unknown);
+std::vector<CDecls> occurrence_analyze_decls(const Module& m, CDecls decls, std::set<var>& free_vars);
+std::vector<CDecls> occurrence_analyze_decl_groups(const Module& m, const std::vector<CDecls>& decls, std::set<var>& free_vars);
 
 #endif

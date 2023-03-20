@@ -15,6 +15,7 @@
 #include "occurrence.H"
 #include "computation/varinfo.H"
 #include "computation/module.H"
+#include "computation/haskell/ids.H"
 
 #include "simplifier.H"
 #include "inliner.H"
@@ -158,18 +159,52 @@ expression_ref SimplifierState::consider_inline(const expression_ref& E, in_scop
 {
     var x = E.as_<var>();
 
-    const auto& [rhs,occ_info] = bound_vars.at(x);
+    if (is_local_symbol(x.name, this_mod.name))
+    {
+        const auto& [rhs,occ_info] = bound_vars.at(x);
 
 //    std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
 
-    // 1. If there's a binding x = E, and E = y for some variable y
-    auto info = x.info.lock();
-    if (info and info->always_unfold and (not context.is_stop_context() or is_trivial(info->unfolding)))
-	return simplify(info->unfolding, {}, bound_vars, context);
-    else if (rhs and do_inline(rhs, occ_info, context))
-	return simplify(rhs, {}, bound_vars, context);
+        // 1. If there's a binding x = E, and E = y for some variable y
+        if (rhs and do_inline(rhs, occ_info, context))
+            return simplify(rhs, {}, bound_vars, context);
+        else
+            return rebuild(E, bound_vars, context);
+    }
+
+    assert(not x.name.empty());
+
+    // FIXME -- why is x.info->var_info empty?  Why can't we just use x.info->var_info->unfolding?
+    expression_ref unfolding;
+
+    if (is_haskell_builtin_con_name(x.name))
+    {
+        auto S = this_mod.lookup_builtin_symbol(x.name);
+        assert(S);
+        unfolding = S->var_info->unfolding;
+    }
     else
-	return rebuild(E, bound_vars, context);
+    {
+        assert(is_qualified_symbol(x.name) and get_module_name(x.name) != this_mod.name);
+
+        if (auto S = this_mod.lookup_external_symbol(x.name))
+            unfolding = S->var_info->unfolding;
+        else if (not special_prelude_symbol(x.name))
+            throw myexception()<<"Symbol '"<<x.name<<"' not transitively included in module '"<<this_mod.name<<"'";
+    }
+
+    occurrence_info occ_info;
+    occ_info.work_dup = amount_t::Many;
+    occ_info.code_dup = amount_t::Many;
+
+    // FIXME -- pass var_info to do_inline( ).
+    auto info = x.info.lock();
+    if (unfolding and do_inline(unfolding, occ_info, context))
+        return simplify(unfolding, {}, bound_vars, context);
+    else if (info and info->always_unfold and (not context.is_stop_context() or is_trivial(info->unfolding)))
+        return simplify(info->unfolding, {}, bound_vars, context);
+    else
+        return rebuild(x, bound_vars, context);
 }
 
 var SimplifierState::get_new_name(var x, const in_scope_set& bound_vars)
@@ -471,21 +506,29 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::
 	// 2.1. Rename and bind pattern variables
 	auto [pat_decls, S2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
 
-	// 2.2. If we know something extra about the value (or range, theoretically) of the object in this case branch, then record that.
-	bound_variable_info original_binding;
-
-        // 2.3 Define x = pattern in this branch only
+        // 2.2 Define x = pattern in this branch only
+        auto bound_vars2 = bound_vars;
 	if (is_var(object) and not is_wildcard(pattern))
-            original_binding = rebind_var(bound_vars, object.as_<var>(), pattern);
+        {
+            auto x = object.as_<var>();
+            if (is_local_symbol(x.name, this_mod.name))
+                rebind_var(bound_vars2, x, pattern);
+            else
+            {
+                assert(special_prelude_symbol(x.name) or this_mod.lookup_external_symbol(x.name));
+                x.work_dup = amount_t::Many;
+                x.code_dup = amount_t::Many;
+                if (bound_vars2.count(x))
+                    rebind_var(bound_vars2, x, pattern);
+                else
+                    bind_var(bound_vars2, x, pattern);
+            }
+        }
 
 	// 2.3. Simplify the alternative body
-	body = simplify(body, S2, bound_vars, make_ok_context());
+	body = simplify(body, S2, bound_vars2, make_ok_context());
 
-	// 2.4. Restore binding for x
-	if (is_var(object) and not is_wildcard(pattern))
-            rebind_var(bound_vars, object.as_<var>(), original_binding.first);
-
-        // 2.5 Unbind the pattern vars.
+        // 2.4 Unbind the pattern vars.
 	unbind_decls(bound_vars, pat_decls);
 
         if (is_var(pattern))
@@ -768,7 +811,11 @@ expression_ref SimplifierState::simplify(const expression_ref& E, const substitu
 	// 1.2 If there's no substitution determine whether to inline at call site.
 	else
 	{
-	    if (not bound_vars.count(x))
+            if (is_haskell_builtin_con_name(x.name))
+                ;
+            else if (is_qualified_symbol(x.name) and get_module_name(x.name) != this_mod.name)
+                ;
+	    else if (not bound_vars.count(x))
 		throw myexception()<<"Variable '"<<x.print()<<"' not bound!";
 
 	    return consider_inline(E, bound_vars, context);
@@ -906,23 +953,18 @@ SimplifierState::simplify_module_one(const map<var,expression_ref>& small_decls_
     set<var> free_vars;
 
     // Decompose the decls, remove unused decls, and occurrence-analyze the decls.
-    auto decl_groups = occurrence_analyze_decl_groups(decl_groups_in, free_vars);
-
-    in_scope_set bound_vars;
-
-    for(auto& decl: small_decls_in)
-    {
-	var x = decl.first;
-	x.work_dup = amount_t::Many;
-	x.code_dup = amount_t::Many;
-	bound_vars.insert({x,{decl.second,x}});
-    }
-
-    for(auto& x: small_decls_in_free_vars)
-	bound_vars.insert({x,{}});
+    auto decl_groups = occurrence_analyze_decl_groups(this_mod, decl_groups_in, free_vars);
 
     for(auto& x: free_vars)
-	bound_vars.insert({x,{}});
+    {
+        if (is_qualified_symbol(x.name) and not is_qualified_by_module(x.name, this_mod.name))
+        {
+            auto S = this_mod.lookup_external_symbol(x.name);
+            assert(special_prelude_symbol(x.name) or S);
+        }
+    }
+
+    in_scope_set bound_vars;
 
     vector<substitution> S(1);
     for(auto& decls: decl_groups)

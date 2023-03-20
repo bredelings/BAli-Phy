@@ -13,6 +13,9 @@
 #include "computation/expression/expression.H" // for is_reglike( )
 #include "occurrence.H"
 
+#include "computation/module.H"
+#include "computation/haskell/ids.H"
+
 #include "util/range.H"
 #include "util/mapping.H"
 #include "util/graph.H"
@@ -121,7 +124,7 @@ bool is_alive(const occurrence_info& x)
     return (x.is_exported or x.code_dup != amount_t::None);
 }
 
-Graph construct_directed_reference_graph(CDecls& decls, set<var>& free_vars)
+Graph construct_directed_reference_graph(const Module& m, CDecls& decls, set<var>& free_vars)
 {
     using namespace boost;
     const int L = decls.size();
@@ -148,7 +151,7 @@ Graph construct_directed_reference_graph(CDecls& decls, set<var>& free_vars)
     {
 	int i = work[k];
 	// 3.1 Analyze the bound statement
-	auto [E, free_vars_i] = occurrence_analyzer(decls[i].second);
+	auto [E, free_vars_i] = occurrence_analyzer(m, decls[i].second);
         decls[i].second = E;
 
 	// 3.2 Record occurrences
@@ -239,22 +242,22 @@ int select_loop_breaker(const vector<int>& sub_component, const vector<int>& com
 //
 
 vector<CDecls>
-occurrence_analyze_decl_groups(const vector<CDecls>& decl_groups, set<var>& free_vars)
+occurrence_analyze_decl_groups(const Module& m, const vector<CDecls>& decl_groups, set<var>& free_vars)
 {
     vector<vector<CDecls>> output;
     for(const auto& decls: reverse(decl_groups))
-	output.push_back(occurrence_analyze_decls(decls, free_vars));
+	output.push_back(occurrence_analyze_decls(m, decls, free_vars));
 
     std::reverse(output.begin(), output.end());
     return flatten(std::move(output));
 }
 
 vector<CDecls>
-occurrence_analyze_decls(CDecls decls, set<var>& free_vars)
+occurrence_analyze_decls(const Module& m, CDecls decls, set<var>& free_vars)
 {
     // 1. Determine which vars are alive or dead..
     // 2. Construct reference graph between (live) vars.
-    auto graph = construct_directed_reference_graph(decls, free_vars);
+    auto graph = construct_directed_reference_graph(m, decls, free_vars);
 
     // 3. Copy use information into dummies in decls
     // 4. Remove declared vars from free_vars.
@@ -368,7 +371,7 @@ expression_ref maybe_eta_reduce(const expression_ref& E)
 	return {};
 }
 
-pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_context context)
+pair<expression_ref,set<var>> occurrence_analyzer(const Module& m, const expression_ref& E, var_context context)
 {
     assert(E);
     if (not E) return {E,set<var>{}};
@@ -377,11 +380,23 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
     if (is_var(E))
     {
 	var x = E.as_<var>();
-	x.work_dup = amount_t::Once;
-	x.code_dup = amount_t::Once;
 	x.is_loop_breaker = false;
 	x.context = context;
-	return {E,{x}};
+        if (is_local_symbol(x.name, m.name))
+        {
+            x.work_dup = amount_t::Once;
+            x.code_dup = amount_t::Once;
+            return {E,{x}};
+        }
+        else
+        {
+            if (not is_haskell_builtin_con_name(x.name))
+            {
+                assert(is_qualified_symbol(x.name));
+                assert(special_prelude_symbol(x.name) or m.lookup_external_symbol(x.name));
+            }
+            return {E,{}};
+        }
     }
 
     // 2. Lambda (E = \x -> body)
@@ -390,7 +405,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 	assert(E.size() == 2);
 
 	// 1. Analyze the body and marks its variables
-	auto [body, free_vars] = occurrence_analyzer(E.sub()[1]);
+	auto [body, free_vars] = occurrence_analyzer(m, E.sub()[1]);
 
 	// 2. Mark bound variable with occurrence info from the body
 	// 3. Remove variable from free variables
@@ -412,7 +427,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
         auto& [object, alts] = *C;
 
 	// Analyze the object
-        auto [object_, free_vars] = occurrence_analyzer(object);
+        auto [object_, free_vars] = occurrence_analyzer(m, object);
         object = object_;
 
 	// Just normalize the bodies
@@ -420,7 +435,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 	for(auto& [pattern, body]: alts)
 	{
 	    // Analyze the i-ith branch
-            auto [body_, alt_i_free_vars] = occurrence_analyzer(body);
+            auto [body_, alt_i_free_vars] = occurrence_analyzer(m, body);
             body = body_;
 
 	    // Remove pattern vars from free variables
@@ -454,9 +469,9 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
         auto& L = E.as_<let_exp>();
 
 	// 1. Analyze the body
-	auto [body, free_vars] = occurrence_analyzer(L.body);
+	auto [body, free_vars] = occurrence_analyzer(m, L.body);
 
-	auto decls_groups = occurrence_analyze_decls(L.binds, free_vars);
+	auto decls_groups = occurrence_analyze_decls(m, L.binds, free_vars);
 
 	return {let_expression(decls_groups, body), free_vars};
     }
@@ -472,7 +487,7 @@ pair<expression_ref,set<var>> occurrence_analyzer(const expression_ref& E, var_c
 	for(int i=0;i<E.size();i++)
 	{
 	    auto context = (i==0 and is_apply_exp(E)) ? var_context::unknown : var_context::argument;
-	    auto [arg_i, free_vars_i] = occurrence_analyzer(E.sub()[i], context);
+	    auto [arg_i, free_vars_i] = occurrence_analyzer(m, E.sub()[i], context);
 	    F->sub.push_back(arg_i);
 	    merge_occurrences_into(free_vars, free_vars_i);
 	}
