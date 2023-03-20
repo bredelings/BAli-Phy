@@ -88,13 +88,13 @@ void bind_var(in_scope_set& bound_vars, const var& x, const expression_ref& E)
     assert(not bound_vars.count(x));
     assert(x.work_dup != amount_t::Unknown);
     assert(x.code_dup != amount_t::Unknown);
-    bound_vars.insert({x,{E,x}});
+    bound_vars = bound_vars.insert({x,{E,x}});
 }
 
 void unbind_var(in_scope_set& bound_vars, const var& x)
 {
     assert(bound_vars.count(x));
-    bound_vars.erase(x);
+    bound_vars = bound_vars.erase(x);
 }
 
 bound_variable_info rebind_var(in_scope_set& bound_vars, const var& x, const expression_ref& E)

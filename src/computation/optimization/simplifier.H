@@ -9,13 +9,14 @@
 #include "computation/expression/var.H"
 
 #include "computation/fresh_vars.H"
+#include "immer/map.hpp"
 #include "simplifier_options.H"
 
 class module_loader;
 
 typedef std::pair<expression_ref,occurrence_info> bound_variable_info;
 
-typedef std::map<var, bound_variable_info> in_scope_set;
+typedef immer::map<var, bound_variable_info> in_scope_set;
 
 namespace simplifier
 {
