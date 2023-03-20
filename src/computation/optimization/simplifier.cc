@@ -91,12 +91,6 @@ bool is_trivial(const expression_ref& E)
     return bound_vars.insert({x,{E,x}});
 }
 
-[[nodiscard]] in_scope_set unbind_var(const in_scope_set& bound_vars, const var& x)
-{
-    assert(bound_vars.count(x));
-    return bound_vars.erase(x);
-}
-
 [[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const var& x, const expression_ref& E)
 {
     bound_variable_info old_binding = bound_vars.at(x);
@@ -599,7 +593,7 @@ expression_ref SimplifierState::rebuild_let(const CDecls& decls, expression_ref 
 // FIXME - Until we can know that decls are non-recursive, we can't simplify an Decls into more than one Decls - we have to merge them.
 
 substitution
-SimplifierState::simplify_decls(CDecls& orig_decls, const substitution& S, in_scope_set& bound_vars, bool is_top_level)
+SimplifierState::simplify_decls(CDecls& orig_decls, const substitution& S, in_scope_set bound_vars, bool is_top_level)
 {
     auto S2 = S;
 
@@ -698,8 +692,6 @@ SimplifierState::simplify_decls(CDecls& orig_decls, const substitution& S, in_sc
 	    }
 	}
     }
-    for(auto& new_name: new_names)
-	bound_vars = unbind_var(bound_vars, new_name);
 
     std::swap(orig_decls, new_decls);
     return S2;
@@ -843,18 +835,16 @@ expression_ref SimplifierState::simplify(const expression_ref& E, const substitu
         }
 
 	// 2.2. Get the new name, possibly adding a substitution
-	var x2 = rename_and_bind_var(Evar, S2, bound_vars);
+        auto bound_vars_x = bound_vars;
+	var x2 = rename_and_bind_var(Evar, S2, bound_vars_x);
 
 	// 2.3 Simplify the body with x added to the bound set.
-	auto new_body = simplify(Ebody, S2, bound_vars, make_ok_context());
+	auto new_body = simplify(Ebody, S2, bound_vars_x, make_ok_context());
 
-	// 2.4 Remove x2 from the bound set.
-	bound_vars = unbind_var(bound_vars,x2);
-
-	// 2.5 Return (\x2 -> new_body) after eta-reduction
+	// 2.4 Return (\x2 -> new_body) after eta-reduction
         auto E2 = lambda_quantify(x2, new_body);
 
-        // 2.6 Maybe eta reduce
+        // 2.5 Maybe eta reduce
         //     I don't think there can be any substitutions that make the function body or other arguments
         //     depend on x here, so this SHOULD be safe...
         E2 = maybe_eta_reduce2( E2 );
