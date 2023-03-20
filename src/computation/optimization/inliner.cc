@@ -16,7 +16,7 @@
 #include "simplifier.H"
 #include "util/assert.hh"
 
-#include "simplifier_state.H"
+#include "simplifier.H"
 
 using std::string;
 using std::vector;

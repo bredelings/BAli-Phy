@@ -18,8 +18,6 @@
 #include "computation/haskell/ids.H"
 
 #include "simplifier.H"
-#include "inliner.H"
-#include "simplifier_state.H"
 
 #include "util/assert.hh"
 
