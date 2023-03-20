@@ -138,7 +138,7 @@ bool special_prelude_symbol(const string& name)
 }
 
 // Do we have to explicitly skip loop breakers here?
-expression_ref SimplifierState::consider_inline(const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::consider_inline(const expression_ref& E, const in_scope_set& bound_vars, const inline_context& context)
 {
     var x = E.as_<var>();
 
@@ -451,7 +451,7 @@ bool redundant_pattern(const Core::Alts& alts, const expression_ref& pattern)
 
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
-expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::Alts alts, const substitution& S, in_scope_set& bound_vars)
+expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::Alts alts, const substitution& S, const in_scope_set& bound_vars)
 {
     assert(not is_let_expression(object));
 
@@ -564,7 +564,7 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::
     return let_expression(default_decls, E2);
 }
 
-expression_ref SimplifierState::rebuild_case(expression_ref object, const Core::Alts& alts, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::rebuild_case(expression_ref object, const Core::Alts& alts, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     // These lets should already be simplified, since we are rebuilding.
     auto decls = strip_multi_let(object);
@@ -580,7 +580,7 @@ expression_ref SimplifierState::rebuild_case(expression_ref object, const Core::
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
-expression_ref SimplifierState::rebuild_let(const CDecls& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::rebuild_let(const CDecls& decls, expression_ref E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     // If the decl is empty, then we don't have to do anything special here.
     auto bound_vars2 = bind_decls(bound_vars, decls);
@@ -743,7 +743,7 @@ expression_ref maybe_eta_reduce2(const expression_ref& E)
     }
 }
 
-expression_ref SimplifierState::rebuild(const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::rebuild(const expression_ref& E, const in_scope_set& bound_vars, const inline_context& context)
 {
     if (auto cc = context.is_case_context())
     {
@@ -763,7 +763,7 @@ expression_ref SimplifierState::rebuild(const expression_ref& E, in_scope_set& b
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
-expression_ref SimplifierState::simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+expression_ref SimplifierState::simplify(const expression_ref& E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
 {
     assert(E);
 
