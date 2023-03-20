@@ -81,43 +81,40 @@ bool is_trivial(const expression_ref& E)
     return is_reglike(E);
 }
 
-void bind_var(in_scope_set& bound_vars, const var& x, const expression_ref& E)
+[[nodiscard]] in_scope_set bind_var(const in_scope_set& bound_vars, const var& x, const expression_ref& E)
 {
     assert(x.index >= 0);
     assert(not is_wildcard(E));
     assert(not bound_vars.count(x));
     assert(x.work_dup != amount_t::Unknown);
     assert(x.code_dup != amount_t::Unknown);
-    bound_vars = bound_vars.insert({x,{E,x}});
+    return bound_vars.insert({x,{E,x}});
 }
 
-void unbind_var(in_scope_set& bound_vars, const var& x)
+[[nodiscard]] in_scope_set unbind_var(const in_scope_set& bound_vars, const var& x)
 {
     assert(bound_vars.count(x));
-    bound_vars = bound_vars.erase(x);
+    return bound_vars.erase(x);
 }
 
-bound_variable_info rebind_var(in_scope_set& bound_vars, const var& x, const expression_ref& E)
+[[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const var& x, const expression_ref& E)
 {
     bound_variable_info old_binding = bound_vars.at(x);
-    unbind_var(bound_vars,x);
+    bound_vars = bound_vars.erase(x);
     var x2 = x;
     static_cast<occurrence_info&>(x2) = old_binding.second;
-    bind_var(bound_vars,x2,E);
-    return old_binding;
+    return bind_var(bound_vars,x2,E);
 }
 
-[[nodiscard]] in_scope_set bind_decls(const in_scope_set& bound_vars_in, const CDecls& decls)
+[[nodiscard]] in_scope_set bind_decls(in_scope_set bound_vars, const CDecls& decls)
 {
-    auto bound_vars = bound_vars_in;
     for(const auto& [x,rhs]: decls)
-	bind_var(bound_vars, x, rhs);
+	bound_vars = bind_var(bound_vars, x, rhs);
     return bound_vars;
 }
 
-[[nodiscard]] in_scope_set bind_decls(const in_scope_set& bound_vars_in, const vector<CDecls>& decl_groups)
+[[nodiscard]] in_scope_set bind_decls(in_scope_set bound_vars, const vector<CDecls>& decl_groups)
 {
-    auto bound_vars = bound_vars_in;
     for(auto& decls: decl_groups)
 	bound_vars = bind_decls(bound_vars, decls);
     return bound_vars;
@@ -237,7 +234,7 @@ var SimplifierState::rename_and_bind_var(const expression_ref& Evar, substitutio
 {
     var x2 = rename_var(Evar, S, bound_vars);
 
-    bind_var(bound_vars, x2, {});
+    bound_vars = bind_var(bound_vars, x2, {});
 
     return x2;
 }
@@ -504,16 +501,16 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::
         {
             auto x = object.as_<var>();
             if (is_local_symbol(x.name, this_mod.name))
-                rebind_var(bound_vars2, x, pattern);
+                bound_vars2 = rebind_var(bound_vars2, x, pattern);
             else
             {
                 assert(special_prelude_symbol(x.name) or this_mod.lookup_external_symbol(x.name));
                 x.work_dup = amount_t::Many;
                 x.code_dup = amount_t::Many;
                 if (bound_vars2.count(x))
-                    rebind_var(bound_vars2, x, pattern);
+                    bound_vars2 = rebind_var(bound_vars2, x, pattern);
                 else
-                    bind_var(bound_vars2, x, pattern);
+                    bound_vars2 = bind_var(bound_vars2, x, pattern);
             }
         }
 
@@ -681,7 +678,7 @@ SimplifierState::simplify_decls(CDecls& orig_decls, const substitution& S, in_sc
 		for(auto& decls: strip_multi_let(F))
 		    for(auto& decl: decls)
 		    {
-			bind_var(bound_vars, decl.first, decl.second);
+			bound_vars = bind_var(bound_vars, decl.first, decl.second);
 			new_names.push_back(decl.first);
 			new_decls.push_back(decl);
 		    }
@@ -697,12 +694,12 @@ SimplifierState::simplify_decls(CDecls& orig_decls, const substitution& S, in_sc
 		new_decls.push_back({x2,F});
 
 		// Any later occurrences will see the bound value of x[i] when they are simplified.
-		rebind_var(bound_vars, x2, F);
+		bound_vars = rebind_var(bound_vars, x2, F);
 	    }
 	}
     }
     for(auto& new_name: new_names)
-	unbind_var(bound_vars, new_name);
+	bound_vars = unbind_var(bound_vars, new_name);
 
     std::swap(orig_decls, new_decls);
     return S2;
@@ -852,7 +849,7 @@ expression_ref SimplifierState::simplify(const expression_ref& E, const substitu
 	auto new_body = simplify(Ebody, S2, bound_vars, make_ok_context());
 
 	// 2.4 Remove x2 from the bound set.
-	unbind_var(bound_vars,x2);
+	bound_vars = unbind_var(bound_vars,x2);
 
 	// 2.5 Return (\x2 -> new_body) after eta-reduction
         auto E2 = lambda_quantify(x2, new_body);
