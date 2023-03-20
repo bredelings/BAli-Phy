@@ -7,7 +7,7 @@
 #include <map>
 #include <filesystem>
 #include "computation/module.H"
-#include "computation/optimization/simplifier.H" // for simplifier_options
+#include "computation/optimization/simplifier_options.H" // for simplifier_options
 
 class module_loader: public simplifier_options
 {

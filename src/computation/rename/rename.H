@@ -6,7 +6,7 @@
 #include <string>
 #include "computation/expression/expression_ref.H"
 #include "computation/haskell/haskell.H"
-#include "computation/optimization/simplifier.H"       // for simplifier options
+#include "computation/optimization/simplifier_options.H"       // for simplifier options
 #include "computation/message.H"
 
 class Module;
