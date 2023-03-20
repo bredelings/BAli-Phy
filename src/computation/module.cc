@@ -507,16 +507,10 @@ void Module::compile(const Program& P)
     // Check for duplicate top-level names.
     check_duplicate_var(value_decls);
 
-    std::tie(small_decls_in, small_decls_in_free_vars) = import_small_decls(P);
+    value_decls = optimize(opts, P.fresh_var_state(), value_decls);
 
-    value_decls = optimize(opts, P.fresh_var_state(), value_decls, small_decls_in, small_decls_in_free_vars);
-
-    // result returned in this->small_decls_out, this->small_decls_out_free_vars
-    std::tie(small_decls_out, small_decls_out_free_vars) = export_small_decls(value_decls, small_decls_in);
-
-    // We're done, we don't need these any more.
-    small_decls_in.clear();
-    small_decls_in_free_vars.clear();
+    // this records unfoldings.
+    export_small_decls(value_decls);
 }
 
 void Module::perform_imports(const Program& P)
@@ -798,23 +792,6 @@ CDecls Module::desugar(const simplifier_options& /*opts*/, FreshVarState& state,
     return cdecls;
 }
 
-pair< map<var, expression_ref>, set<var> > Module::import_small_decls(const Program& P)
-{
-    map<var, expression_ref> small_decls_in;
-
-    set<var> small_decls_in_free_vars;
-
-    // Collect small decls from imported modules;
-    for(auto& imp_mod_name: dependencies())
-    {
-        auto M = P.get_module(imp_mod_name);
-        small_decls_in.insert(M->small_decls_out.begin(), M->small_decls_out.end());
-        small_decls_in_free_vars.insert(M->small_decls_out_free_vars.begin(), M->small_decls_out_free_vars.end());
-    }
-
-    return {small_decls_in, small_decls_in_free_vars};
-}
-
 symbol_ptr Module::lookup_make_local_symbol(const std::string& var_name)
 {
     auto S = lookup_local_symbol(var_name);
@@ -835,13 +812,8 @@ symbol_ptr Module::lookup_make_local_symbol(const std::string& var_name)
 }
 
 
-pair<map<var,expression_ref>, set<var>> Module::export_small_decls(const CDecls& cdecls, const map<var,expression_ref>& small_decls_in)
+void Module::export_small_decls(const CDecls& cdecls)
 {
-    // Modules that we imported should have their small_decls transitively inherited
-    map<var, expression_ref> small_decls_out;
-
-    set<var> small_decls_out_free_vars;
-
     // FIXME: add a wrapper for EVERY constructor!
 
     for(auto& [x,rhs]: cdecls)
@@ -866,8 +838,6 @@ pair<map<var,expression_ref>, set<var>> Module::export_small_decls(const CDecls&
                     lookup_make_local_symbol(y.name);
         }
     }
-
-    return {small_decls_out, small_decls_out_free_vars};
 }
 
 template <typename T>
@@ -1103,7 +1073,7 @@ void mark_exported_decls(CDecls& decls,
     }
 }
 
-CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, CDecls cdecls, const map<var, expression_ref>& small_decls_in, const set<var>& small_decls_in_free_vars)
+CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, CDecls cdecls)
 {
     // 1. why do we keep on re-optimizing the same module?
     if (optimized) return cdecls;
@@ -1122,12 +1092,12 @@ CDecls Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, 
 
         vector<CDecls> decl_groups = {cdecls};
 
-        decl_groups = simplify_module_gently(opts, fvstate, *this, small_decls_in, small_decls_in_free_vars, decl_groups);
+        decl_groups = simplify_module_gently(opts, fvstate, *this, decl_groups);
 
         if (opts.fully_lazy)
             float_out_from_module(fvstate, decl_groups);
 
-        decl_groups = simplify_module(opts, fvstate, *this, small_decls_in, small_decls_in_free_vars, decl_groups);
+        decl_groups = simplify_module(opts, fvstate, *this, decl_groups);
 
         if (opts.fully_lazy)
             float_out_from_module(fvstate, decl_groups);

@@ -87,16 +87,6 @@ public:
 
     std::vector<std::vector<expression_ref>> class_and_type_decls;
 
-    std::map<var,expression_ref> small_decls_in;
-
-    // When the simplifier becomes type-aware, then change to global_value_env
-    std::set<var> small_decls_in_free_vars;
-
-    std::map<var,expression_ref> small_decls_out;
-
-    // When the simplifier becomes type-aware, then change to global_value_env
-    std::set<var> small_decls_out_free_vars;
-
     std::string name;
 
     std::shared_ptr<std::string> filename;
@@ -185,13 +175,11 @@ public:
 
     CDecls desugar(const simplifier_options&, FreshVarState&, const Hs::Binds&);
 
-    std::pair< std::map<var,expression_ref>, std::set<var> > import_small_decls(const Program&);
-
-    std::pair< std::map<var,expression_ref>, std::set<var> > export_small_decls(const CDecls&, const std::map< var, expression_ref>& );
+    void export_small_decls(const CDecls&);
 
     std::map<var,expression_ref> code_defs() const;
 
-    CDecls optimize(const simplifier_options&, FreshVarState&, CDecls, const std::map<var, expression_ref>&, const std::set<var>&);
+    CDecls optimize(const simplifier_options&, FreshVarState&, CDecls);
 
     CDecls load_builtins(const module_loader&, const std::vector<Hs::ForeignDecl>&, CDecls);
 

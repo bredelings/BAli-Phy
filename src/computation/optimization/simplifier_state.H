@@ -60,7 +60,7 @@ public:
     simplify_decls(CDecls& orig_decls, const simplifier::substitution& S, in_scope_set& bound_vars, bool is_top_level);
     
     std::vector<CDecls>
-    simplify_module_one(const std::map<var, expression_ref>&, const std::set<var>&, const std::vector<CDecls>& decl_groups);
+    simplify_module_one(const std::vector<CDecls>& decl_groups);
 
     SimplifierState(const simplifier_options& opts, FreshVarState& s, Module& m);
 };
