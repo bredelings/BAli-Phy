@@ -102,7 +102,6 @@ jobs:
           brew install boost eigen range-v3 nlohmann-json cairo
           echo "CC=ccache clang" >> $GITHUB_ENV
           echo "CXX=ccache clang++" >> $GITHUB_ENV
-          ccache --set-config=cache_dir=$HOME/.ccache
 
     - name: Install meson
       run: |
@@ -114,6 +113,8 @@ jobs:
     - name: Prepare ccache timestamp
       id: ccache_cache_timestamp
       run: |
+        ccache --set-config=cache_dir=$HOME/.ccache
+
         if [ "${{ runner.os }}" = "Linux" ]; then
           stamp=$(date '+%s')
         else
@@ -182,6 +183,11 @@ jobs:
       run: |
         OUTPUT=$HOME/local
         cp $(${CXX} -print-file-name=libstdc++.so.6) $OUTPUT/lib/bali-phy/libstdc++.so.6
+        for libname in $(ldd ${OUTPUT}/bin/bali-phy | grep libboost | sed s'/\s*lib\(boost.*\) =>.*/\1/') ; do
+            echo cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/lib/bali-phy/
+            cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/lib/bali-phy/
+        done
+        ldd ${OUTPUT}/bin/bali-phy
 
     - name: Copy shared libs (Windows)
       if: matrix.arch == 'win64'
@@ -217,10 +223,15 @@ jobs:
         cd
         echo ::endgroup::
 
-        echo ::group::testiphy
         git clone https://gitlab.com/testiphy/testiphy.git
         cd testiphy
+
+        echo ::group::testiphy variable A
         ./testiphy ${BALIPHY} --seed=$seed
+        echo ::endgroup::
+
+        echo ::group::testiphy fixed A
+        ./testiphy ${BALIPHY} --seed=$seed -Inone
         echo ::endgroup::
 
     - name: Upload tests if they failed
