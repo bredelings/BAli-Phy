@@ -518,7 +518,7 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::
         index++;
     }
     if (last_index and *last_index + 1 < alts.size())
-        alts.resize(*last_index);
+        alts.resize(*last_index + 1);
 
     // 3. Merge case x of {...; _ -> let default_decls in case x of ...}
     vector<CDecls> default_decls;
