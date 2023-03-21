@@ -561,7 +561,7 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::
 	// 2.3. Simplify the alternative body
 	body = simplify(body, S2, bound_vars2, make_ok_context());
 
-        if (is_var(pattern))
+        if (is_var(pattern) or unseen_constructors.empty())
         {
             last_index = index;
             break;
