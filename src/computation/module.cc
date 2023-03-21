@@ -1748,3 +1748,26 @@ Hs::Var Module::get_external_var(const string& sname) const
     v.info = lookup_external_symbol(sname);
     return v;
 }
+
+set<string> special_prelude_symbols =
+{
+    // This is kind of a secret one, used in the desugaring of strings.
+    "Foreign.String.unpack_cpp_string",
+
+    // These are all Prelude symbols used in desugaring.
+    // Modid.name should be equivalent to Prelude.name.
+    "Compiler.Error.error",
+    "Data.OldList.concatMap",
+    "Control.Monad.fail",
+    "Compiler.Enum.enumFrom",
+    "Compiler.Enum.enumFromTo",
+    "Compiler.Enum.enumFromThen",
+    "Compiler.Enum.enumFromThenTo",
+    "Compiler.Enum.enumFrom",
+    "Prelude.undefined"
+};
+
+bool special_prelude_symbol(const string& name)
+{
+    return special_prelude_symbols.count(name) > 0;
+}

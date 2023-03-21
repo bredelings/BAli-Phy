@@ -225,4 +225,8 @@ public:
 std::ostream& operator<<(std::ostream&, const Module&);
 
 expression_ref resolve_refs(const Program&, const expression_ref&);
+
+bool special_prelude_symbol(const std::string& name);
+
+extern std::set<std::string> special_prelude_symbols;
 #endif
