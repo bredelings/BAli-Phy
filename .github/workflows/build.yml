@@ -218,6 +218,10 @@ jobs:
       run: |
         OUTPUT=$HOME/local
         cp $(${CXX} -print-file-name=libstdc++.so.6) $OUTPUT/lib/bali-phy/libstdc++.so.6
+        for libname in $(ldd ${OUTPUT}/bin/bali-phy | grep libboost | sed s'/\s*\(libboost.*\) =>.*/\1/')
+            cp $($CXX --print-file-name lib${libname}.dll) ${OUTPUT}/bin
+        done
+        ldd ${OUTPUT}/bin/bali-phy
 
     - name: Copy shared libs (Windows)
       if: matrix.arch == 'win64'
