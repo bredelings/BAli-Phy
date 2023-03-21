@@ -26,8 +26,8 @@
 #ifndef IMODEL_H
 #define IMODEL_H
 
-#include "models/model.H"
 #include "computation/object.H"
+#include "computation/expression/expression_ref.H"
 
 /******************************* InDel Models ***********************************/
 
@@ -35,7 +35,8 @@
 
 //FIXME - add a 'name' method, and names for parameters.
 
-namespace indel {
+namespace indel
+{
     class PairHMM: public Matrix, public Object {
 	std::vector<double> start_pi_;
     public:
@@ -105,13 +106,15 @@ struct transducer_state_info
 
 
 /// A generic insertion/deletion model
-class IndelModel: public Model 
+class IndelModel
 {
     bool in_training;
     double heat;
 public: 
 
-    virtual IndelModel* clone() const =0;
+    expression_ref get_modifiable_value(int) const {return 0;}
+    
+    virtual log_double_t prior() const = 0;
 
     /// Probability that an alignment has a sequence with length 'i'
     virtual log_double_t lengthp(int i) const=0;
@@ -127,7 +130,7 @@ public:
 
     virtual double get_heat() const;
 
-    IndelModel(const std::shared_ptr<module_loader>& L);
+    IndelModel();
 
     virtual ~IndelModel();
 };
@@ -145,15 +148,13 @@ protected:
 public:
     log_double_t prior() const;
 
-    SimpleIndelModel* clone() const {return new SimpleIndelModel(*this);}
-
     log_double_t lengthp(int i) const;
 
     indel::PairHMM get_branch_HMM(double t) const;
 
     std::string name() const;
 
-    SimpleIndelModel(const std::shared_ptr<module_loader>&);
+    SimpleIndelModel();
 };
 
 
@@ -164,14 +165,12 @@ public:
 
     log_double_t prior() const;
   
-    TKF1* clone() const {return new TKF1(*this);}
-
     log_double_t lengthp(int i) const;
     indel::PairHMM get_branch_HMM(double t) const;
 
     std::string name() const;
 
-    explicit TKF1(const std::shared_ptr<module_loader>&,bool);
+    explicit TKF1(bool);
 };
 
 class TKF2: public IndelModel 
@@ -181,33 +180,29 @@ public:
 
     log_double_t prior() const;
   
-    TKF2* clone() const {return new TKF2(*this);}
-
     log_double_t lengthp(int i) const;
     indel::PairHMM get_branch_HMM(double t) const;
 
     std::string name() const;
 
-    explicit TKF2(const std::shared_ptr<module_loader>&,bool);
+    explicit TKF2(bool);
 };
 
 /// A generic insertion/deletion model
-class TransducerIndelModel: public Model 
+class TransducerIndelModel 
 {
 public: 
 
-    virtual Matrix root_chain() const =0;
+    expression_ref get_modifiable_value(int) const {return 0;}
+    
+    virtual log_double_t prior() const = 0;
 
-    virtual TransducerIndelModel* clone() const =0;
+    virtual Matrix root_chain() const =0;
 
     /// Alignment distribution for a branch of time t
     virtual indel::PairTransducer get_branch_Transducer(double t) const=0;
 
     virtual int n_letters() const =0;
-
-    TransducerIndelModel(const std::shared_ptr<module_loader>&);
-
-    virtual ~TransducerIndelModel();
 };
 
 class TKF1_Transducer: public TransducerIndelModel
@@ -217,11 +212,10 @@ public:
     Matrix root_chain() const;
 
     log_double_t prior() const;
-    TKF1_Transducer* clone() const {return new TKF1_Transducer(*this);}
     indel::PairTransducer get_branch_Transducer(double t) const;
     std::string name() const;
     int n_letters() const {return 1;}
-    TKF1_Transducer(const std::shared_ptr<module_loader>&,bool);
+    TKF1_Transducer(bool);
 };
 
 class FS_Transducer: public TransducerIndelModel
@@ -231,11 +225,10 @@ public:
     Matrix root_chain() const;
 
     log_double_t prior() const;
-    FS_Transducer* clone() const {return new FS_Transducer(*this);}
     indel::PairTransducer get_branch_Transducer(double t) const;
     std::string name() const;
     int n_letters() const {return 2;}
-    FS_Transducer(const std::shared_ptr<module_loader>&,bool);
+    FS_Transducer(bool);
 };
 
 void remove_one_state(Matrix& Q,int S);

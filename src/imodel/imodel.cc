@@ -204,8 +204,8 @@ void IndelModel::set_heat(double h)
     heat = h;
 }
 
-IndelModel::IndelModel(const std::shared_ptr<module_loader>& L)
-    :Model(L),in_training(false), heat(1)
+IndelModel::IndelModel()
+    :in_training(false), heat(1)
 { }
 
 IndelModel::~IndelModel() {}
@@ -486,8 +486,8 @@ log_double_t SimpleIndelModel::prior() const
 
 string SimpleIndelModel::name() const {return "RS05";}
 
-SimpleIndelModel::SimpleIndelModel(const std::shared_ptr<module_loader>& L)
-    :IndelModel(L),QE(Q1.size1(),Q1.size2())
+SimpleIndelModel::SimpleIndelModel()
+    :QE(Q1.size1(),Q1.size2())
 {
 //    add_modifiable_parameter("delta",  -5.0);
 //    add_modifiable_parameter("epsilon",-0.25); // no upper bound on transformed scale
@@ -652,8 +652,8 @@ log_double_t TKF1::lengthp(int l) const
     return (1.0-sigma)*pow(log_double_t(sigma),l);
 }
 
-TKF1::TKF1(const std::shared_ptr<module_loader>& L, bool b)
-    :IndelModel(L),time_dependant(b)
+TKF1::TKF1(bool b)
+    :time_dependant(b)
 {
 //    add_modifiable_parameter("lambda",-5.0);
 //    add_modifiable_parameter("meanLength",100.0);
@@ -719,8 +719,8 @@ log_double_t TKF2::lengthp(int l) const
     return (1.0-sigma)*pow(log_double_t(sigma),l);
 }
 
-TKF2::TKF2(const std::shared_ptr<module_loader>& L, bool b)
-    :IndelModel(L), time_dependant(b)
+TKF2::TKF2(bool b)
+    :time_dependant(b)
 {
 //    add_modifiable_parameter("lambda",-5.0);
 //    add_modifiable_parameter("epsilon",-0.25);
@@ -730,12 +730,6 @@ TKF2::TKF2(const std::shared_ptr<module_loader>& L, bool b)
 //    add_modifiable_parameter("epsilonPriorLength", 10.0);
 //    add_modifiable_parameter("meanLengthPriorMean", 1.5);
 }
-
-TransducerIndelModel::TransducerIndelModel(const std::shared_ptr<module_loader>& module_path)
-    :Model(module_path)
-{ }
-
-TransducerIndelModel::~TransducerIndelModel() {}
 
 log_double_t TKF1_Transducer::prior() const 
 {
@@ -855,8 +849,8 @@ string TKF1_Transducer::name() const
     return "TKF1_Transducer";
 }
 
-TKF1_Transducer::TKF1_Transducer(const std::shared_ptr<module_loader>& L,bool b)
-    :TransducerIndelModel(L),time_dependent(b)
+TKF1_Transducer::TKF1_Transducer(bool b)
+    :time_dependent(b)
 {
 //    add_modifiable_parameter("lambda",-5.0);
 //    add_modifiable_parameter("meanLength",100.0);
@@ -1168,8 +1162,8 @@ string FS_Transducer::name() const
     return "FS_Transducer";
 }
 
-FS_Transducer::FS_Transducer(const std::shared_ptr<module_loader>& L,bool b)
-    :TransducerIndelModel(L),time_dependent(b)
+FS_Transducer::FS_Transducer(bool b)
+    :time_dependent(b)
 {
 //    add_modifiable_parameter("lambdaS", -5.0);                  // 0
 //    add_modifiable_parameter("lambdaF", -3.0);                  // 1
