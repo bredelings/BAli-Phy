@@ -336,20 +336,21 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                         if (not s.subspec->names)
                         {
                             for(auto& constructor: d->constructors)
-                                import_symbol(m2_exports.at(constructor), modid, qualified);
+                                import_symbol(m2_exports.at( get_unqualified_name(constructor) ), modid, qualified);
                             for(auto& field: d->fields)
-                                import_symbol(m2_exports.at(field), modid, qualified);
+                                import_symbol(m2_exports.at( get_unqualified_name(field) ), modid, qualified);
                         }
                         else
                         {
+                            auto type_modid = get_module_name(type->name);
                             for(auto& [loc,name]: *s.subspec->names)
                             {
-                                if (is_haskell_conid(name) and not d->constructors.count(name))
+                                if (is_haskell_conid(name) and not d->constructors.count(type_modid + "." + name))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"));
                                     continue;
                                 }
-                                if (is_haskell_varid(name) and not d->fields.count(name))
+                                if (is_haskell_varid(name) and not d->fields.count(type_modid + "." + name))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`"));
                                     continue;
@@ -738,12 +739,12 @@ void Module::perform_exports()
                         {
                             for(auto& [loc,name]: *ex.subspec->names)
                             {
-                                if (is_haskell_conid(name) and not d->constructors.count(name))
+                                if (is_haskell_conid(name) and not d->constructors.count( qualify_local_name(name) ))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"));
                                     continue;
                                 }
-                                if (is_haskell_varid(name) and not d->fields.count(name))
+                                if (is_haskell_varid(name) and not d->fields.count( qualify_local_name(name) ))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`") );
                                     continue;
@@ -1528,7 +1529,7 @@ void Module::def_constructor(const string& cname, int arity, const string& type_
 //    if (not is_qualified_symbol(type_name))
 //        throw myexception()<<"Locally defined symbol '"<<type_name<<"' should not be qualified.";
 
-    auto S = symbol_info(cname, constructor_symbol, type_name, arity, {});
+    auto S = symbol_info(cname, constructor_symbol, qualify_local_name(type_name), arity, {});
     S.var_info->conlike = true;
     declare_symbol( S );
 }
@@ -1656,11 +1657,11 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                 {
                     auto cname = unloc(*constr.con).name;
                     def_constructor(cname, constr.arity(), unloc(data_decl->name));
-                    info.constructors.insert(cname);
+                    info.constructors.insert( qualify_local_name(cname) );
                     if (auto fields = to<Hs::FieldDecls>(constr.fields))
                         for(auto& field_decl: fields->field_decls)
                             for(auto& [loc,var]: field_decl.field_names)
-                                info.fields.insert(var.name);
+                                info.fields.insert( qualify_local_name(var.name) );
                 }
             }
             else if (data_decl->is_gadt_decl())
@@ -1669,8 +1670,9 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                     for(auto& con_name: cons_decl.con_names)
                     {
                         int arity = Hs::gen_type_arity( cons_decl.type );
-                        def_constructor(unloc(con_name), arity, unloc(data_decl->name));
-                        info.constructors.insert(unloc(con_name));
+                        auto cname = unloc(con_name);
+                        def_constructor(cname, arity, unloc(data_decl->name));
+                        info.constructors.insert( qualify_local_name(cname) );
 
                         // FIXME: handle GADT fielddecls Constr :: { name1 :: ArgType1, name2 :: ArgType2 } -> ResultType
                     }
