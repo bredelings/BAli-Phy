@@ -962,7 +962,7 @@ vector<bool> get_args_referenced(const vector<string>& arg_names, const vector<s
             if (used_args_for_arg[i].count(arg_names[j]))
             {
                 referenced[j] = true;
-                if (log_verbose > 1)
+                if (log_verbose > 2)
                     std::cerr<<arg_names[i]<<" references "<<arg_names[j]<<"\n";
             }
         }
@@ -1392,7 +1392,7 @@ model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& con
     // --------- Convert model to MultiMixtureModel ------------//
     auto [code, imports, _1, _2] = get_model_as(R, model_rep, scope);
 
-    if (log_verbose >= 2)
+    if (log_verbose >= 3)
         std::cout<<"full_model = "<<code.print()<<std::endl;
 
     for(const string& state_name: code.used_states)
@@ -1425,7 +1425,7 @@ model_t get_model(const Rules& R, const string& type, const string& model_string
     substitute(equations, model_rep);
     substitute(equations, required_type);
     substitute_annotated(equations, model);
-    if (log_verbose >= 1)
+    if (log_verbose >= 2)
     {
         std::cout<<"model = "<<unparse_annotated(model)<<std::endl;
         std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
