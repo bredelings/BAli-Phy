@@ -219,8 +219,8 @@ jobs:
         OUTPUT=$HOME/local
         cp $(${CXX} -print-file-name=libstdc++.so.6) $OUTPUT/lib/bali-phy/libstdc++.so.6
         for libname in $(ldd ${OUTPUT}/bin/bali-phy | grep libboost | sed s'/\s*lib\(boost.*\) =>.*/\1/') ; do
-            echo cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/bin
-            cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/bin
+            echo cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/lib/bali-phy/
+            cp $($CXX --print-file-name lib${libname}) ${OUTPUT}/lib/bali-phy/
         done
         ldd ${OUTPUT}/bin/bali-phy
 
