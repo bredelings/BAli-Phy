@@ -663,7 +663,10 @@ Hs::BindInfo TypeChecker::compute_bind_info(const Hs::Var& poly_id, const Hs::Va
 
     // Get new dict vars for constraints
     for(auto& constraint: lie_all)
+    {
         constraint.ev_var = fresh_dvar(constraint.pred);
+        constraint.flavor = Wanted;
+    }
 
     // Any constraints that don't mention type vars of this type are ambiguous.
     // We will put them into the environment in hopes that we can default them later.
