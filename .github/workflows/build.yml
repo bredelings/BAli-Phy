@@ -25,7 +25,7 @@ jobs:
 
         include:
           - name: ubuntu-gcc-10
-            os: ubuntu-22.04
+            os: ubuntu-20.04
             compiler: gcc
             version: "10"
             buildtype: "release"
