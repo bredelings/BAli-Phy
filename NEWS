@@ -3,6 +3,9 @@
   + Allow sequences names to contain Newick special characters, but give warning.
   + Update command-line model syntax to be more readable.
   + Allow restricting dynamic programming to a central band.
+- Haskell
+  - Optimization: eliminate unused error paths.
+  - Decrease memory usage from compilation.
 
 * 4.0-beta1
 - Bugs
