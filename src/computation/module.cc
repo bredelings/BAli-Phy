@@ -44,6 +44,20 @@ using std::vector;
 using std::tuple;
 using std::shared_ptr;
 
+std::string Module::qualify_local_name(const std::string& n) const
+{
+    assert(not is_qualified_symbol(n));
+    assert(not is_haskell_builtin_con_name(n));
+    assert(not is_haskell_builtin_type_name(n)); // This includes e.g. Double, Char, etc.  Is this right?
+
+    return name + "." + n;
+}
+
+bool Module::is_local_qualified_name(const std::string& n) const
+{
+    return is_local_symbol(n, name);
+}
+
 type_ptr Module::add_type(const type_info& T)
 {
     if (is_haskell_builtin_type_name(T.name))
@@ -115,7 +129,7 @@ void Module::declare_symbol(const symbol_info& S)
         throw myexception()<<"Locally defined symbol '"<<S.name<<"' should not be qualified in declaration.";
 
     symbol_info S2 = S;
-    S2.name = name + "." + S.name;
+    S2.name = qualify_local_name(S.name);
 
     if (symbols.count(S2.name))
     {
@@ -149,7 +163,7 @@ void Module::declare_type(const type_info& T)
         throw myexception()<<"Locally defined symbol '"<<T.name<<"' should not be qualified in declaration.";
 
     auto T2 = T;
-    T2.name = name + "." + T.name;
+    T2.name = qualify_local_name(T.name);
 
     if (types.count(T2.name))
         throw myexception()<<"Trying to declare '"<<T.name<<"' twice in module '"<<name<<"'";
@@ -173,7 +187,7 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     if (precedence < 0 or precedence > 9)
         throw myexception()<<"Precedence level "<<precedence<<" not allowed.";
 
-    string s2 = name + "." + s;
+    string s2 = qualify_local_name(s);
 
     if (not symbols.count(s2))
         declare_symbol({s, unknown_symbol, {}, {}, {}});
@@ -1603,7 +1617,7 @@ void Module::declare_fixities(const Hs::ModuleDecls& M)
 void Module::maybe_def_function(const string& var_name)
 {
     // We don't know the type yet, probably, because we don't know the body.
-    string qualified_name = name+"."+var_name;
+    string qualified_name = qualify_local_name(var_name);
     auto loc = symbols.find(qualified_name);
 
     if (loc != symbols.end())

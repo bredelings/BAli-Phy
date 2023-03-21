@@ -105,6 +105,9 @@ public:
 
     const std::map<std::string, const_type_ptr>& exported_types() const {return exported_types_;}
 
+    std::string qualify_local_name(const std::string&) const;
+    bool is_local_qualified_name(const std::string& n) const;
+
     std::map<std::string, const_type_ptr> required_types() const;
 
     void export_symbol(const const_symbol_ptr& S);
