@@ -50,23 +50,6 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
     return default_method_decls;
 }
 
-string get_name_for_typecon(const TypeCon& tycon)
-{
-    auto n = unloc(tycon.name);
-
-    if (n == "[]")
-        return "List";
-    else if (n == "->")
-        return "Func";
-    else if (is_tuple_name(n))
-    {
-        int m = tuple_arity(n);
-        return std::to_string(m)+"Tuple";
-    }
-    else
-        return get_unqualified_name(n);
-}
-
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
     push_note( Note()<<"In instance '"<<inst.print()<<"':" );
@@ -201,7 +184,6 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     Type constraint = make_equality_pred(lhs, eqn.rhs);
     Type inst_type = add_forall_vars(eqn.free_tvs, constraint);
 
-    int eqn_id = FreshVarSource::current_index();
     auto dvar = fresh_dvar(constraint, true);
 
     auto S = symbol_info(dvar.name, instance_dfun_symbol, {}, {}, {});
@@ -271,28 +253,8 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
         instance_subst = instance_subst.insert( {class_info.type_vars[i], desugar(class_args[i])} );
 
     // 5. Find the type vars mentioned in the constraint.
-    set<TypeVar> type_vars = free_type_variables(desugar(inst_decl.constraint));
-
-    // 6. The class_args must be (i) a variable or (ii) a type constructor applied to simple, distinct type variables.
-    string tycon_names;
-    for(auto& class_arg: desugar(class_args))
-    {
-        if (class_arg.to<TypeVar>())
-        {
-            tycon_names += "_";
-        }
-        else
-        {
-            auto [a_head, a_args] = decompose_type_apps(class_arg);
-
-            if (auto tc = a_head.to<TypeCon>())
-                tycon_names += get_name_for_typecon(*tc);
-            else // this should only be allow with FlexibleInstances.  We default to FlexibleInstances I guess.
-                tycon_names += "_";
-
-            // With FlexibleInstances, (i) the arguments do NOT have to be variables and (ii) type synonyms are allowed.
-        }
-    }
+    auto constraint = desugar(inst_decl.constraint);
+    set<TypeVar> type_vars = free_type_variables(constraint);
 
     // Premise 5: Check that the context contains no variables not mentioned in `class_arg`
     for(auto& tv: free_type_variables(desugar(inst_decl.context.constraints)))
@@ -305,12 +267,10 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     for(auto& inst: inst_decl.type_inst_decls)
         check_add_type_instance(inst, class_name, instance_subst);
 
-    string dfun_name = "d"+get_unqualified_name(class_info.name)+tycon_names;
-
-    auto dfun = get_fresh_var(dfun_name, true);
+    auto dfun = fresh_dvar(constraint, true);
 
     //  -- new -- //
-    Type inst_type = add_constraints(desugar(inst_decl.context.constraints), desugar(inst_decl.constraint));
+    Type inst_type = add_constraints(desugar(inst_decl.context.constraints), constraint);
     inst_type = check_constraint( inst_type );  // kind-check the constraint and quantify it.
 
     // -- break down the inst_type into pieces. -- //

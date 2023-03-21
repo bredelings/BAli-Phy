@@ -964,15 +964,50 @@ WantedConstraints& TypeChecker::current_wanteds()
     return collected_wanteds;
 }
 
+string get_name_for_typecon(const TypeCon& tycon)
+{
+    auto n = unloc(tycon.name);
+
+    if (n == "[]")
+        return "List";
+    else if (n == "->")
+        return "Func";
+    else if (is_tuple_name(n))
+    {
+        int m = tuple_arity(n);
+        return std::to_string(m)+"Tuple";
+    }
+    else
+        return get_unqualified_name(n);
+}
+
+string class_arg_name(const Type& class_arg)
+{
+    auto [a_head, _] = decompose_type_apps(class_arg);
+
+    if (auto tc = a_head.to<TypeCon>())
+        return get_name_for_typecon(*tc);
+    else
+        return "_";
+}
+
 Core::Var TypeChecker::fresh_dvar(const Type& pred, bool qualified)
 {
-    ID name;
-    if (is_equality_pred(pred))
-        name = "co";
-    else if (auto cname = maybe_get_class_name_from_constraint(pred))
-        name = "d" + *cname;
-    else
-        name = "dvar";
+    auto [class_head, class_args] = decompose_type_apps(pred);
+    string name = "dvar";
+    if (auto tc = class_head.to<TypeCon>())
+    {
+        // 1. Get constraint class
+        name = get_unqualified_name(unloc(tc->name));
+        if (name == "~")
+            name = "co";
+        else
+            name = "d" + name;
+
+        // 2. The class_args must be (i) a variable or (ii) a type constructor applied to simple, distinct type variables.
+        for(auto& class_arg: class_args)
+            name += class_arg_name(class_arg);
+    }
     auto dvar = get_fresh_var(name, qualified);
     dvar.type_ = std::make_shared<Type>(pred);
     return dvar;
@@ -1591,8 +1626,6 @@ typechecker_result Module::typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls
     // 14. Record types on the value symbol table
     for(auto& [var,type]: tc_state->poly_env())
     {
-        auto& value = var.name;
-
         auto V = lookup_local_symbol(var.name);
         assert(V->symbol_type != constructor_symbol);
         V->type = type;
