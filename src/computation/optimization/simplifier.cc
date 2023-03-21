@@ -447,6 +447,16 @@ bool redundant_pattern(const Core::Alts& alts, const expression_ref& pattern)
     return false;
 }
 
+optional<string> con_name_for_pattern(const expression_ref& pattern)
+{
+    if (is_var(pattern))
+        return {};
+
+    auto con = pattern.head().to<constructor>();
+    assert(con);
+    return con->f_name;
+}
+
 
 // case object of alts.  Here the object has been simplified, but the alts have not.
 expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::Alts alts, const substitution& S, const in_scope_set& bound_vars)
@@ -483,10 +493,52 @@ expression_ref SimplifierState::rebuild_case_inner(expression_ref object, Core::
     // 2. Simplify each alternative
     std::optional<int> last_index;
     int index = 0;
+    optional<string> object_type;
+    set<string> seen_constructors;
+    set<string> unseen_constructors;
     for(auto& [pattern, body]: alts)
     {
 	// 2.1. Rename and bind pattern variables
 	auto [pat_decls, S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
+
+        auto con_name = con_name_for_pattern(pattern);
+
+        // Get type and its constructors
+        if (con_name)
+        {
+            auto C = this_mod.lookup_resolved_symbol(*con_name);
+
+            string pattern_type = *C->parent;
+            if (object_type)
+                assert(*object_type == pattern_type);
+            else
+            {
+                object_type = pattern_type;
+                auto T = this_mod.lookup_resolved_type(*object_type);
+                assert(T);
+                auto D = T->is_data();
+                assert(D);
+                unseen_constructors = D->constructors;
+                assert(not unseen_constructors.empty());
+            }
+        }
+
+        // Remove this constructors from the total list of constructors
+        if (con_name)
+        {
+            if (unseen_constructors.count(*con_name))
+            {
+                unseen_constructors.erase(*con_name);
+                seen_constructors.insert(*con_name);
+            }
+            else if (seen_constructors.count(*con_name))
+            {
+                // we should ignore this branch!
+                // and this shouldn't happen.
+            }
+            else
+                std::abort();
+        }
 
         // 2.2 Define x = pattern in this branch only
 	if (is_var(object) and not is_wildcard(pattern))
