@@ -2787,7 +2787,12 @@ int reg_heap::add_identifier(const var& x)
 {
     // if there's already an 's', then complain
     if (identifiers.count(x))
-        throw myexception()<<"Cannot add identifier '"<<x<<"': there is already an identifier with that name.";
+    {
+        if (special_prelude_symbols.count(x.name))
+            return identifiers.at(x);
+        else
+            throw myexception()<<"Cannot add identifier '"<<x<<"': there is already an identifier with that name.";
+    }
 
     int R = allocate();
 
@@ -2803,16 +2808,17 @@ int reg_heap::add_identifier(const var& x)
 //
 void reg_heap::allocate_identifiers_for_program()
 {
-    // 1. Give each identifier a pointer to an unused location; define parameter bodies.
+    // 1. Pre-allocate locations for symbols that can be used without being imported.
+    for(auto name: special_prelude_symbols)
+        add_identifier(var(name));
+
+    // 2. Give each identifier a pointer to an unused location; define parameter bodies.
     for(auto& M: *program)
+    {
+        // 2.1 Pre-allocate locations for all symbols in the module.
         for(const auto& [x, _]: M->code_defs())
             add_identifier(x);
 
-    // Since the body for any identifier could reference the body for any other, we have to
-    // allocate locations for all identifiers before we preprocess the bodies for any.
-
-    // 2. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
-    for(auto& M: *program)
         for(const auto& [x, body]: M->code_defs())
         {
             // get the root for each identifier
@@ -2829,6 +2835,7 @@ void reg_heap::allocate_identifiers_for_program()
             assert(R != -1);
             set_C(R, preprocess(body) );
         }
+    }
 }
 
 reg_heap::reg_heap(const Program& P)
