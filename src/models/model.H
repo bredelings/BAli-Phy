@@ -35,7 +35,6 @@
 #include <filesystem>
 #include "computation/context.H"                    // for context
 #include "computation/expression/expression_ref.H"  // for EVector, expressi...
-#include "computation/module.H"                     // for Module
 #include "util/cow-ptr.H"                           // for cow_ptr
 #include "util/json.hh"                             // for json
 #include "util/math/log-double.H"                   // for log_double_t, ope...

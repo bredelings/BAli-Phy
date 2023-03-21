@@ -6,8 +6,10 @@
 #include <set>
 #include <map>
 #include <filesystem>
-#include "computation/module.H"
 #include "computation/optimization/simplifier_options.H" // for simplifier_options
+#include "computation/expression/expression_ref.H"
+
+class Module;
 
 class module_loader: public simplifier_options
 {

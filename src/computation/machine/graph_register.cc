@@ -6,6 +6,7 @@
 #include "util/string/join.H"
 #include "util/io/vector.H"
 #include "graph_register.H"
+#include "computation/module.H"
 #include "computation/expression/core.H"
 #include "computation/expression/var.H"
 #include "computation/expression/reg_var.H"
