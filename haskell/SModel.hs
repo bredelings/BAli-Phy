@@ -50,38 +50,38 @@ infixl 2 +>
 submodel +> model = model submodel
 
 --
-m1a_omega_dist f1 w1 = [(f1,w1), (1.0-f1,1.0)]
+m1a_omega_dist f1 w1 = [(f1,w1), (1-f1, 1)]
 
 m2a_omega_dist f1 w1 posP posW = extendDiscreteDistribution (m1a_omega_dist f1 w1) posP posW
 
-m2a_test_omega_dist f1 w1 posP posW 0 = m2a_omega_dist f1 w1 posP 1.0
+m2a_test_omega_dist f1 w1 posP posW 0 = m2a_omega_dist f1 w1 posP 1
 m2a_test_omega_dist f1 w1 posP posW _ = m2a_omega_dist f1 w1 posP posW
 
 m3_omega_dist ps omegas = zip' ps omegas
 
 m3p_omega_dist ps omegas posP posW = extendDiscreteDistribution (m3_omega_dist ps omegas) posP posW
 
-m3_test_omega_dist ps omegas posP posW 0 = m3p_omega_dist ps omegas posP 1.0
+m3_test_omega_dist ps omegas posP posW 0 = m3p_omega_dist ps omegas posP 1
 m3_test_omega_dist ps omegas posP posW _ = m3p_omega_dist ps omegas posP posW
 
 -- The M7 is just a beta distribution
 -- gamma' = var(x)/(mu*(1-mu)) = 1/(a+b+1) = 1/(n+1)
-m7_omega_dist mu gamma n_bins = uniformDiscretize (beta a b) n_bins where cap = min (mu/(1.0+mu)) ((1.0-mu)/(2.0-mu))
+m7_omega_dist mu gamma n_bins = uniformDiscretize (beta a b) n_bins where cap = min (mu/(1+mu)) ((1-mu)/(2-mu))
                                                                           gamma' = gamma*cap
-                                                                          n = (1.0/gamma')-1.0
+                                                                          n = (1/gamma')-1
                                                                           a = n*mu
-                                                                          b = n*(1.0 - mu)
+                                                                          b = n*(1 - mu)
 
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
 m8_omega_dist mu gamma n_bins posP posW = extendDiscreteDistribution (m7_omega_dist mu gamma n_bins) posP posW
 
-m8a_omega_dist mu gamma n_bins posP = m8_omega_dist mu gamma n_bins posP 1.0
+m8a_omega_dist mu gamma n_bins posP = m8_omega_dist mu gamma n_bins posP 1
 
-m8a_test_omega_dist mu gamma n_bins posP posW 0 = m8_omega_dist mu gamma n_bins posP 1.0
+m8a_test_omega_dist mu gamma n_bins posP posW 0 = m8_omega_dist mu gamma n_bins posP 1
 m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins posP posW
 
---  w1 <- uniform 0.0 1.0
---  [f1, f2] <- symmetric_dirichlet 2 1.0
+--  w1 <- uniform 0 1
+--  [f1, f2] <- symmetric_dirichlet 2 1
 m1a w1 f1 model_func = parameter_mixture_unit (m1a_omega_dist f1 w1) model_func
 
 m2a w1 f1 posP posW model_func = parameter_mixture_unit (m2a_omega_dist f1 w1 posP posW) model_func
@@ -102,24 +102,24 @@ m8a_test mu gamma n_bins posP posW posSelection model_func = parameter_mixture_u
 
 -- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function model_func to all the omegas?
 branch_site fs ws posP posW branch_cats model_func = MixtureModels branch_cats [bg_mixture,fg_mixture]
--- background omega distribution -- where the last omega is 1.0 (neutral)
-    where bg_dist = zip fs (ws ++ [1.0])
+-- background omega distribution -- where the last omega is 1 (neutral)
+    where bg_dist = zip fs (ws ++ [1])
 -- accelerated omega distribution -- posW for all categories
           accel_dist = zip fs (repeat posW)
 -- background branches always use the background omega distribution              
-          bg_mixture = parameter_mixture_unit (mix [1.0-posP, posP] [bg_dist, bg_dist]) model_func
+          bg_mixture = parameter_mixture_unit (mix [1-posP, posP] [bg_dist, bg_dist]) model_func
 -- foreground branches use the foreground omega distribution with probability posP
-          fg_mixture = parameter_mixture_unit (mix [1.0-posP, posP] [bg_dist, accel_dist]) model_func
+          fg_mixture = parameter_mixture_unit (mix [1-posP, posP] [bg_dist, accel_dist]) model_func
 
 branch_site_test fs ws posP posW posSelection branch_cats model_func = branch_site fs ws posP posW' branch_cats model_func
-    where posW' = if (posSelection == 1) then posW else 1.0
+    where posW' = if (posSelection == 1) then posW else 1
 
 
-gamma_rates_dist alpha = gamma alpha (1.0/alpha)
+gamma_rates_dist alpha = gamma alpha (1/alpha)
 
 gamma_rates alpha n base = rate_mixture_unif_bins base (gamma_rates_dist alpha) n
 
-log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where x = log(1.0+sigmaOverMu^2)
+log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where x = log(1+sigmaOverMu^2)
                                                                 lmu = -0.5*x
                                                                 lsigma = sqrt x
 
