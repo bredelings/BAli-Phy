@@ -420,7 +420,7 @@ void run_print_expression(const string& argv0, variables_map& args, const shared
 {
     const string mstring = args["print"].as<string>();
     Rules R(get_package_paths(argv0, args));
-    model_t print = get_model(R,"a",mstring,{},{{"alphabet",{"alphabet","b"}}});
+    model_t print = get_model(R,"a",mstring,"print expression", {},{{"alphabet",{"alphabet","b"}}});
 
     expression_ref a = get_alphabet_expression_from_args(args);
     {
