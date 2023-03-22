@@ -1,1 +1,1 @@
---test codons-dna.fasta --smodel=tn93_sym+x3
+--test codons-dna.fasta --smodel=tn93_sym+>x3

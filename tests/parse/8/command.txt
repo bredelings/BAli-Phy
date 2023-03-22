@@ -1,1 +1,1 @@
---test dna.fasta --smodel=hky85_sym+gwF+Rates.gamma[n=4]
+--test dna.fasta --smodel=hky85_sym+>gwF+>Rates.gamma(n=4)

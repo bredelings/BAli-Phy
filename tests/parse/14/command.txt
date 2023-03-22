@@ -1,1 +1,1 @@
---test amino.fasta --smodel lg08+Rates.free[n=4]
+--test amino.fasta --smodel lg08+>Rates.free(n=4)

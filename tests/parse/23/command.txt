@@ -1,1 +1,1 @@
---test codons-dna.fasta --smodel=function[w,gy94[omega=w]]+m8
+--test codons-dna.fasta --smodel=function(w:gy94(omega=w))+>m8

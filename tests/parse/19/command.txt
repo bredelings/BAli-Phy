@@ -1,1 +1,1 @@
---test codons-dna.fasta --smodel=gy94[pi=f3x4]
+--test codons-dna.fasta --smodel=gy94(pi=f3x4)

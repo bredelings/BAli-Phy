@@ -8,7 +8,7 @@
  align = dna2.fasta
 
  # Link the first and third partitions
- smodel = 1,3:tn93+Rates.free[n=3]
+ smodel = 1,3:tn93+>Rates.free(n=3)
 
  # The second partition has a fixed alignment.
  smodel = 2:tn93

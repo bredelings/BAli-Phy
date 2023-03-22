@@ -1,1 +1,1 @@
---print gtr_sym+[x=2]+f
+--print gtr_sym+>(x=2)+>f

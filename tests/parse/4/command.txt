@@ -1,1 +1,1 @@
---test dna.fasta --smodel=hky85_sym+F
+--test dna.fasta --smodel=hky85_sym+>F

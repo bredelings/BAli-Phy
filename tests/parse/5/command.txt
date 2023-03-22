@@ -1,1 +1,1 @@
---test dna.fasta --smodel=hky85_sym(kappa=2)+F(pi=[("A",0.1),("C",0.2),("T",0.3),("G",0.4)])
+--test dna.fasta --smodel=hky85_sym(kappa=2)+>F(pi={"A":0.1,"C":0.2,"T":0.3,"G":0.4})

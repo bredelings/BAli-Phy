@@ -1,1 +1,1 @@
---test codons-dna.fasta --smodel=gtr+x3+dNdS+mut_sel
+--test codons-dna.fasta --smodel=gtr+>x3+>dNdS+>mut_sel

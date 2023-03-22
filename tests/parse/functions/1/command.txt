@@ -1,1 +1,1 @@
-dna.fasta -S function[k,hky85[k]]+parameter_mixture[~iid[4,log_normal[0,1]],~symmetric_dirichlet[4,1]] --test
+dna.fasta -S function(k:hky85(k))+>parameter_mixture(~iid(4,log_normal(0,1)),~symmetric_dirichlet(4,1)) --test

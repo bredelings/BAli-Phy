@@ -1,1 +1,1 @@
-5d.fasta --smodel=hky85[kappa=2,pi=List[Tuple["A",0.1],Pair["C",0.2],Pair["T",0.3],Pair["G",0.4]]] --iter=10 --name=ignore-output --scale=1
+5d.fasta --smodel=hky85(kappa=2,pi={"A":0.1,"C":0.2,"T":0.3,"G":0.4}) --iter=10 --name=ignore-output --scale=1

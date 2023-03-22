@@ -1,1 +1,1 @@
---test codons-dna.fasta --smodel=hky85_sym+F+fMutSel
+--test codons-dna.fasta --smodel=hky85_sym+>F+>fMutSel

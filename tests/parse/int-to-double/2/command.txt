@@ -1,1 +1,1 @@
---test dna.fasta --smodel=hky85_sym[kappa=Add[2.0,2]]
+--test dna.fasta --smodel=hky85_sym(kappa=Add(2.0,2))
