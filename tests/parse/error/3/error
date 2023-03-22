@@ -1,4 +1,4 @@
-[1m:1.8:[1;31m error:[0m[1m
+[1mprint expression:1.8:[1;31m error:[0m[1m
    • syntax error, unexpected +, expecting end of file
   [1;34m|[0m
 [1;34m1[0m [1;34m| [0mgtr_sym[1;31m+[0m+f
