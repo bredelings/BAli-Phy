@@ -45,6 +45,10 @@ data F81 = F81 Alphabet (EVector Int) () (EVector Double)
 -- Should we combine mixture only at one of the levels?
 -- Should we select branch-specific models at the level of rate matrices, or the level of transition probability matrices, or both?
 
+
+infixl 2 +>
+submodel +> model = model submodel
+
 --
 m1a_omega_dist f1 w1 = [(f1,w1), (1.0-f1,1.0)]
 
