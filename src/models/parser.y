@@ -55,6 +55,7 @@ ptree fold_terms(const std::vector<ptree>& terms);
   CCURLY        "}"
   COMMA         ","
   PLUS          "+"
+  STACK         "+>"
   AT            "@"
 ;
 
@@ -95,6 +96,7 @@ exp: terms                                    { $$ = fold_terms($1); }
 
 terms: term                 { $$.push_back($1);}
 |      terms "+" term       { $$ = $1; $$.push_back($3);}
+|      terms "+>" term       { $$ = $1; $$.push_back($3);}
 
 // See parse_no_submodel( )
 term: qvarid                      { $$ = ptree($1); }

@@ -124,6 +124,7 @@ signed       {negative}?
 "}"      return zz::parser::make_CCURLY (loc);
 ","      return zz::parser::make_COMMA  (loc);
 "="      return zz::parser::make_EQUAL  (loc);
+"+>"     return zz::parser::make_STACK  (loc);
 "+"      return zz::parser::make_PLUS   (loc);
 "@"      return zz::parser::make_AT     (loc);
 "~"      return zz::parser::make_TILDE  (loc);

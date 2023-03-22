@@ -520,12 +520,13 @@ namespace zz {
     TOK_CCURLY = 268,              // "}"
     TOK_COMMA = 269,               // ","
     TOK_PLUS = 270,                // "+"
-    TOK_AT = 271,                  // "@"
-    TOK_VARID = 272,               // "VARID"
-    TOK_QVARID = 273,              // "QVARID"
-    TOK_STRING = 274,              // "STRING"
-    TOK_INTEGER = 275,             // "INTEGER"
-    TOK_FLOAT = 276                // "FLOAT"
+    TOK_STACK = 271,               // "+>"
+    TOK_AT = 272,                  // "@"
+    TOK_VARID = 273,               // "VARID"
+    TOK_QVARID = 274,              // "QVARID"
+    TOK_STRING = 275,              // "STRING"
+    TOK_INTEGER = 276,             // "INTEGER"
+    TOK_FLOAT = 277                // "FLOAT"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -542,7 +543,7 @@ namespace zz {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 22, ///< Number of tokens.
+        YYNTOKENS = 23, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -560,25 +561,26 @@ namespace zz {
         S_CCURLY = 13,                           // "}"
         S_COMMA = 14,                            // ","
         S_PLUS = 15,                             // "+"
-        S_AT = 16,                               // "@"
-        S_VARID = 17,                            // "VARID"
-        S_QVARID = 18,                           // "QVARID"
-        S_STRING = 19,                           // "STRING"
-        S_INTEGER = 20,                          // "INTEGER"
-        S_FLOAT = 21,                            // "FLOAT"
-        S_YYACCEPT = 22,                         // $accept
-        S_unit = 23,                             // unit
-        S_exp = 24,                              // exp
-        S_terms = 25,                            // terms
-        S_term = 26,                             // term
-        S_ditems = 27,                           // ditems
-        S_ditem = 28,                            // ditem
-        S_args = 29,                             // args
-        S_arg = 30,                              // arg
-        S_tup_args = 31,                         // tup_args
-        S_qvarid = 32,                           // qvarid
-        S_varid = 33,                            // varid
-        S_literal = 34                           // literal
+        S_STACK = 16,                            // "+>"
+        S_AT = 17,                               // "@"
+        S_VARID = 18,                            // "VARID"
+        S_QVARID = 19,                           // "QVARID"
+        S_STRING = 20,                           // "STRING"
+        S_INTEGER = 21,                          // "INTEGER"
+        S_FLOAT = 22,                            // "FLOAT"
+        S_YYACCEPT = 23,                         // $accept
+        S_unit = 24,                             // unit
+        S_exp = 25,                              // exp
+        S_terms = 26,                            // terms
+        S_term = 27,                             // term
+        S_ditems = 28,                           // ditems
+        S_ditem = 29,                            // ditem
+        S_args = 30,                             // args
+        S_arg = 31,                              // arg
+        S_tup_args = 32,                         // tup_args
+        S_qvarid = 33,                           // qvarid
+        S_varid = 34,                            // varid
+        S_literal = 35                           // literal
       };
     };
 
@@ -1262,6 +1264,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_STACK (location_type l)
+      {
+        return symbol_type (token::TOK_STACK, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_STACK (const location_type& l)
+      {
+        return symbol_type (token::TOK_STACK, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_AT (location_type l)
       {
         return symbol_type (token::TOK_AT, std::move (l));
@@ -1679,7 +1696,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 182,     ///< Last index in yytable_.
+      yylast_ = 184,     ///< Last index in yytable_.
       yynnts_ = 13,  ///< Number of nonterminal symbols.
       yyfinal_ = 36 ///< Termination state number.
     };
@@ -1727,10 +1744,10 @@ switch (yykind)
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,    20,    21
+      15,    16,    17,    18,    19,    20,    21,    22
     };
     // Last valid token kind.
-    const int code_max = 276;
+    const int code_max = 277;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -1921,7 +1938,7 @@ switch (yykind)
 
 #line 6 "parser.y"
 } // zz
-#line 1925 "parser.hh"
+#line 1942 "parser.hh"
 
 
 
