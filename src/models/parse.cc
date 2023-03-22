@@ -378,7 +378,7 @@ string unparse(const ptree& p)
     if (not args.empty())
 	s = s + "(" + join(args,',') + ")";
     if (submodel)
-	s = *submodel + "+" + s;
+	s = *submodel + " +> " + s;
     return s;
 }
 
@@ -499,7 +499,7 @@ string unparse_annotated(const ptree& ann)
     if (not args.empty())
 	s = s + "(" + join(args,',') + ")";
     if (submodel)
-	s = *submodel + "+" + s;
+	s = *submodel + " +> " + s;
     return s;
 }
 
