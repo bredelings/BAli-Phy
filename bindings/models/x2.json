@@ -9,7 +9,7 @@
         {
             "arg_name": "submodel",
             "arg_type": "RevCTMC[b]",
-            "alphabet": "getNucleotides[@a]",
+            "alphabet": "getNucleotides(@a)",
 	    "description": "Nucleotide rates"
         },
         {
@@ -20,6 +20,6 @@
         }
     ],
     "description":"Rate matrix on doublets, constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up doublet models incrementally.",
-    "examples": ["f81+x2","gtr+x2"],
+    "examples": ["f81 +> x2","gtr +> x2"],
     "see": ["x2_sym"]
 }

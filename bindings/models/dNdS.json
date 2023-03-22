@@ -18,7 +18,7 @@
             "description": "Rate matrix on codons"
         }
     ],
-    "examples": ["hky85+x3+dNdS","gtr+x3+dNdS"],
+    "examples": ["hky85 +> x3 +> dNdS","gtr +> x3 +> dNdS"],
     "see": ["mg94"],
     "extract": "all"
 }

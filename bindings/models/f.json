@@ -8,7 +8,7 @@
         {
             "arg_name": "pi",
             "arg_type": "List[Tuple[String,Double]]",
-            "default_value": "~symmetric_dirichlet_on[letters[@a],1]",
+            "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
 	    "description": "Letter frequencies"
         },
         {
@@ -25,7 +25,7 @@
     ],
     "title": "The +F frequency model",
     "description": "The +F frequency model species the rate matrix Q as:\n  Q(i,j) = s(i,j) * pi[j].",
-    "examples": ["wag+f"],
+    "examples": ["wag +> f"],
     "extract": "all",
     "see":["fe"]
 }

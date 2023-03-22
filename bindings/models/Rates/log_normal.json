@@ -15,7 +15,7 @@
             "arg_name": "lsigma",
             "arg_type": "Double",
             "description": "The standard deviation parameter",
-            "default_value": "~log_laplace[-3,1]"
+            "default_value": "~log_laplace(-3,1)"
         },
         {
             "arg_name": "submodel",
@@ -23,5 +23,5 @@
             "description": "The model being scaled"
         }
     ],
-    "examples": ["gtr+Rates.log_normal[4]+inv"]
+    "examples": ["gtr +> Rates.log_normal(4) +> inv"]
 }

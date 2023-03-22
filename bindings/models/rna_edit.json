@@ -25,6 +25,6 @@
         }
     ],
     "description":"Rate matrix on doublets, constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up doublet models incrementally.",
-    "examples": ["hky85+rna_edit({})                 # no editting",
-                 "hky85+rna_edit({\"C\",\"U\"})       # C->U editting"]
+    "examples": ["hky85 +> rna_edit({})                 # no editting",
+                 "hky85 +> rna_edit({\"C\",\"U\"})       # C->U editting"]
 }

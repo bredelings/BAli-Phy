@@ -20,7 +20,7 @@
 		"journal": {"name": "Molecular Biology and Evolution", "volume": "25", "number": "7", "pages": "1307--1320"},
 		"identifier": [{"type":"doi","id":"10.1093/molbev/msn067"}]
 	       },
-    "examples": ["lg08+f[lg08_frequencies]"],
+    "examples": ["lg08 +> f(lg08_frequencies)"],
     "see": ["lg08"],
     "extract": "all"
 }

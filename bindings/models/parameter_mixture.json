@@ -25,8 +25,8 @@
     "description": "A scaled and weighted mixture of other mixture models.",
     "examples":
     [
-        "function(k,hky85(kappa=k))+parameter_mixture([1.0,2.0],[0.5,0.5])",
-        "function(k,hky85(k))+parameter_mixture(~iid(4,log_normal(0,1)),~symmetric_dirichlet(4,1))"
+        "function(k,hky85(kappa=k)) +> parameter_mixture([1.0,2.0],[0.5,0.5])",
+        "function(k,hky85(k)) +> parameter_mixture(~iid(4,log_normal(0,1)),~symmetric_dirichlet(4,1))"
     ],
     "extract": "all"
 }

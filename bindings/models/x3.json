@@ -9,7 +9,7 @@
         {
             "arg_name": "submodel",
             "arg_type": "RevCTMC[b]",
-            "alphabet": "getNucleotides[@a]",
+            "alphabet": "getNucleotides(@a)",
 	    "description": "Nucleotide rates"
         },
         {
@@ -20,6 +20,6 @@
         }
     ],
     "description":"Rate matrix on triplets or codons constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up triplet and codon models incrementally.",
-    "examples": ["f81+x3+dNdS      // equivalent to mg94","gtr+x3"],
+    "examples": ["f81 +> x3 +> dNdS      // equivalent to mg94","gtr +> x3"],
     "see": ["mg94","mg94_ext"]
 }

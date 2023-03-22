@@ -9,7 +9,7 @@
         {
             "arg_name": "sym",
             "arg_type": "List[Tuple[String,Double]]",
-	    "default_value":"~symmetric_dirichlet_on[letter_pairs[@a],1]",
+	    "default_value":"~symmetric_dirichlet_on(letter_pairs(@a),1)",
 	    "description":"Symmetric exchangability matrix"
         },
         {

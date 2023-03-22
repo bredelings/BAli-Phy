@@ -9,13 +9,13 @@
         {
             "arg_name": "rates1",
             "arg_type": "RevCTMC[b]",
-            "alphabet": "getNucleotides[@a]",
+            "alphabet": "getNucleotides(@a)",
 	    "description": "Rates for position 1"
         },
         {
             "arg_name": "rates2",
             "arg_type": "RevCTMC[b]",
-            "alphabet": "getNucleotides[@a]",
+            "alphabet": "getNucleotides(@a)",
 	    "description": "Rates for position 2"
         },
         {
@@ -26,6 +26,6 @@
         }
     ],
     "description":"A doublet rate matrix constructed from separate nucleotide rate matrices for the first and second doublet positions",
-    "examples": ["let[q=hky85[a=getNucleotides],x2x2[q,q]]"],
+    "examples": ["q=hky85(a=getNucleotides); x2x2(q,q)"],
     "see": ["x2"]
 }

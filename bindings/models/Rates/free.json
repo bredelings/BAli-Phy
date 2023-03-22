@@ -8,13 +8,13 @@
         {
             "arg_name": "rates",
             "arg_type": "List[Double]",
-            "default_value": "~symmetric_dirichlet[@n,2]",
+            "default_value": "~symmetric_dirichlet(@n,2)",
 	    "description" : "Rates for each category"
         },
         {
             "arg_name": "frequencies",
             "arg_type": "List[Double]",
-            "default_value": "~symmetric_dirichlet[@n,3]",
+            "default_value": "~symmetric_dirichlet(@n,3)",
 	    "description" : "Frequencies for each category"
         },
         {
@@ -31,7 +31,7 @@
     ],
     "title": "Free rates model",
     "description":"Rate heterogeneity model where the rate and frequency of each category can be estimated from the data.",
-    "examples": ["hky85+Rates.free[n=3]"],
+    "examples": ["hky85 +> Rates.free(n=3)"],
     "citation":{"type": "article",
 		"title": "A space-time process model for the evolution of DNA sequences.",
 		"year": "1995",

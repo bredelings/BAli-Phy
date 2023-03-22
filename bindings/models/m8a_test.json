@@ -15,41 +15,41 @@
         {
             "arg_name": "submodel",
             "arg_type": "Function[Double,RevCTMC[a]]",
-            "default_value": "function[w,gy94[omega=w]]",
+            "default_value": "function(w: gy94(omega=w))",
 	    "description": "The model, as a function of dN/dS"
         },
         {
             "arg_name": "mu",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
 	    "description": "The mean of the Beta distribution"
         },
         {
             "arg_name": "gamma",
             "arg_type": "Double",
-            "default_value": "~beta[1,10]",
+            "default_value": "~beta(1,10)",
 	    "description": "The fraction of possible Beta variance given mu"
         },
         {
             "arg_name": "posP",
             "arg_type": "Double",
-            "default_value": "~beta[1,10]",
+            "default_value": "~beta(1,10)",
             "description": "The fraction of positively-selected or neutral sites"
         },
         {
             "arg_name": "posW",
             "arg_type": "Double",
-            "default_value": "~log_gamma[4,0.25]",
+            "default_value": "~log_gamma(4,0.25)",
             "description": "The dN\/dS value for positively-selected or neutral sites"
         },
         {
             "arg_name": "posSelection",
             "arg_type": "Int",
-            "default_value": "~bernoulli[0.5]",
+            "default_value": "~bernoulli(0.5)",
             "description": "The model indicator -- H0 or H1"
         }
     ],
-    "description": "This is a Bayesian version of the M8a test for positive selection. The original M8a test is a likelihood-ratio test. The Bayesian version of the test chooses a prior with 50% mass on the null hypothesis H0 and 50% on the alternative hypothesis H1:\n\n   H0: no positive selection\n   H1: some positive selection.\n\nWhen posSelection = 0, the value of posW is ignored and dN/dS=1. When posSelection = 1, the value of posW is used and dN/dS=posW. The posterior probability of posSelection gives the posterior probability of H1.  The Bayes Factor is given by Pr(posSelection=1)/Pr(posSelection=0).\n\nThe M8a test (Swanson et al, 2003) has null and alternative hypotheses given by:\n\n   H0: m8[posW=1] = m8a\n   H1: m8\n\nThis is an improvement over the test originally proposed by Yang (2000):\n\n   H0: m8[posP=1] = m7\n   H1: m8\n\nIn the originally proposed likelihood-ratio test, a mixture of conserved and neutral sites would not fit the null hypothesis (m7), leading to the erroneous inference of positive selection. In the M8a test, the null hypothesis (m8a) has been improved to handle both neutral and conserved sites, so that positive selection is not incorrectly inferred.",
+    "description": "This is a Bayesian version of the M8a test for positive selection. The original M8a test is a likelihood-ratio test. The Bayesian version of the test chooses a prior with 50% mass on the null hypothesis H0 and 50% on the alternative hypothesis H1:\n\n   H0: no positive selection\n   H1: some positive selection.\n\nWhen posSelection = 0, the value of posW is ignored and dN/dS=1. When posSelection = 1, the value of posW is used and dN/dS=posW. The posterior probability of posSelection gives the posterior probability of H1.  The Bayes Factor is given by Pr(posSelection=1)/Pr(posSelection=0).\n\nThe M8a test (Swanson et al, 2003) has null and alternative hypotheses given by:\n\n   H0: m8(posW=1) = m8a\n   H1: m8\n\nThis is an improvement over the test originally proposed by Yang (2000):\n\n   H0: m8(posP=1) = m7\n   H1: m8\n\nIn the originally proposed likelihood-ratio test, a mixture of conserved and neutral sites would not fit the null hypothesis (m7), leading to the erroneous inference of positive selection. In the M8a test, the null hypothesis (m8a) has been improved to handle both neutral and conserved sites, so that positive selection is not incorrectly inferred.",
     "see": ["m7","m8a","m8a"],
     "citation":{"type": "article",
 		"title": "Pervasive Adaptive Evolution in Mammalian Fertilization Proteins",

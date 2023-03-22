@@ -8,37 +8,37 @@
         {
             "arg_name": "submodel",
             "arg_type": "Function[Double,RevCTMC[a]]",
-            "default_value": "function[w,gy94[omega=w]]",
+            "default_value": "function(w: gy94(omega=w))",
 	    "description": "The model as a function of dN/dS"
         },
         {
             "arg_name": "ps",
             "arg_type": "List[Double]",
-            "default_value": "~symmetric_dirichlet[@n,2]",
+            "default_value": "~symmetric_dirichlet(@n,2)",
 	    "description": "The frequency of each omega"
         },
         {
             "arg_name": "omegas",
             "arg_type": "List[Double]",
-            "default_value": "~iid[@n,uniform[0,1]]",
+            "default_value": "~iid(@n,uniform(0,1))",
 	    "description": "The omega (i.e. dN/dS) values"
         },
         {
             "arg_name": "posP",
             "arg_type": "Double",
-            "default_value": "~beta[1,10]",
+            "default_value": "~beta(1,10)",
             "description": "The fraction of positively selected sites"
         },
         {
             "arg_name": "posW",
             "arg_type": "Double",
             "description": "The dN\/dS value for positively selected sites",
-            "default_value": "~log_gamma[4,0.25]"
+            "default_value": "~log_gamma(4,0.25)"
         },
         {
             "arg_name": "posSelection",
             "arg_type": "Int",
-            "default_value": "~bernoulli[0.5]",
+            "default_value": "~bernoulli(0.5)",
             "description": "The model selector: 1 if positive selection, 0 if not"
         },
         {

@@ -9,19 +9,19 @@
         {
             "arg_name": "pi1",
             "arg_type": "List[Tuple[String,Double]]",
-            "default_value": "~symmetric_dirichlet_on[letters[getNucleotides[@a]],1.0]",
+            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies for position 1"
         },
         {
             "arg_name": "pi2",
             "arg_type": "List[Tuple[String,Double]]",
-            "default_value": "~symmetric_dirichlet_on[letters[getNucleotides[@a]],1.0]",
+            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies for position 2"
         },
         {
             "arg_name": "pi3",
             "arg_type": "List[Tuple[String,Double]]",
-            "default_value": "~symmetric_dirichlet_on[letters[getNucleotides[@a]],1.0]",
+            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies for position 3"
         },
         {
@@ -32,7 +32,7 @@
         }
     ],
     "description": "The F3x4 model describes codon frequencies pi' in terms of nucleotide frequencies pi1, pi2, and pi3:\n   pi'[ijk] = pi1[i]*pi2[l]*pi3[k].",
-    "examples": ["gy94[pi=f3x4]","f3x4[a=codons[dna]]"],
+    "examples": ["gy94(pi=f3x4)","f3x4(a=codons(dna))"],
     "see": ["f1x4","gy94"],
     "extract": "all"
 }

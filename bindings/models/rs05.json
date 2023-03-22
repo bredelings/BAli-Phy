@@ -15,12 +15,12 @@
         {
             "arg_name": "log_prob",
             "arg_type": "Double",
-            "default_value": "~laplace[-4,0.707]"
+            "default_value": "~laplace(-4, 0.707)"
         },
         {
             "arg_name": "mean_length",
             "arg_type": "Double",
-            "default_value": "~shifted_exponential[10,1]"
+            "default_value": "~shifted_exponential(10,1)"
         },
         {
             "arg_name": "tau",
@@ -30,7 +30,7 @@
         {
             "arg_name": "topology",
             "arg_type": "Topology",
-            "default_value": "get_state[topology]"
+            "default_value": "get_state(topology)"
         }
     ],
     "extract": "all"

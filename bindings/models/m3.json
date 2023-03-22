@@ -8,19 +8,19 @@
         {
             "arg_name": "submodel",
             "arg_type": "Function[Double,RevCTMC[a]]",
-            "default_value": "function[w,gy94[omega=w]]",
+            "default_value": "function(w: gy94(omega=w))",
 	    "description": "The model as a function of dN/dS"
         },
         {
             "arg_name": "ps",
             "arg_type": "List[Double]",
-            "default_value": "~symmetric_dirichlet[@n,2]",
+            "default_value": "~symmetric_dirichlet(@n,2)",
 	    "description": "The frequency of each omega"
         },
         {
             "arg_name": "omegas",
             "arg_type": "List[Double]",
-            "default_value": "~iid[@n,uniform[0,1]]",
+            "default_value": "~iid(@n, uniform(0,1))",
 	    "description": "The omega (i.e. dN/dS) values"
         },
         {
@@ -39,7 +39,7 @@
 		 "journal": {"name": "Genetics", "volume": "155", "number": "1", "pages": "431--449"},
 		 "link": [{"url":"http://www.genetics.org/content/155/1/431.full"}]
 		},
-    "examples": ["function[w,gy94[omega=w,pi=f1x4]]+m3","function[w,mg94[omega=w]]+m3","function[w,fMutSel0[omega=w]]+m3"],
+    "examples": ["function(w: gy94(omega=w,pi=f1x4)) +> m3","function(w: mg94(omega=w)) +> m3","function(w: fMutSel0(omega=w)) +> m3"],
     "extract": "all",
     "see": ["m3_test"]
 }

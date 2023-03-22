@@ -14,7 +14,7 @@
         {
             "arg_name": "alpha",
             "arg_type": "Double",
-            "default_value": "~log_laplace[6,2]",
+            "default_value": "~log_laplace(6,2)",
             "description": "The shape parameter for the Gamma distribution"
         },
         {
@@ -23,7 +23,7 @@
             "description": "The model being scaled"
         }
     ],
-    "examples": ["gtr+Rates.gamma[4]+inv"],
+    "examples": ["gtr +> Rates.gamma(4) +> inv"],
     "title": "The discrete-Gamma rate heterogeneity model",
     "description": "The describes rate-heterogeneity across sites, where the rates for each site follow a Gamma distribution",
     "citation":{"type": "article",

@@ -17,6 +17,6 @@
         }
     ],
     "title": "The quantile function",
-    "examples": ["quantile[gamma[1,2],0.5]   // compute the median of gamma[1,2]"],
+    "examples": ["quantile(gamma(1, 2), 0.5)   // compute the median of gamma(1,2)"],
     "description": "Find the point x where the Pr(X < x) = p under the distribution."
 }

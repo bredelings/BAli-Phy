@@ -7,20 +7,20 @@
         {
             "arg_name": "omega",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
 	    "description": "Excess dN/dS"
         },
         {
             "arg_name": "ss",
             "arg_type": "List[Tuple[String,Double]]",
-            "default_value": "zip[letters[getAminoAcids[@a]],~iid[length[letters[getAminoAcids[@a]]],normal[0,0.5]]]",
+            "default_value": "zip(letters(getAminoAcids(@a)),~iid(length(letters(getAminoAcids(@a))),normal(0,0.5)))",
 	    "description": "Scaled selection coefficients (2Ns) of amino acids"
         },
         {
             "arg_name": "submodel",
             "arg_type": "RevCTMC[a]",
             "default_value": "gtr",
-	    "alphabet": "getNucleotides[@a]",
+	    "alphabet": "getNucleotides(@a)",
 	    "description": "Model of neutral nucleotide substitution"
         },
 	{

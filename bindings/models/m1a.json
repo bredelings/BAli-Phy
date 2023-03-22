@@ -8,19 +8,19 @@
         {
             "arg_name": "submodel",
             "arg_type": "Function[Double,RevCTMC[a]]",
-            "default_value": "function[w,gy94[omega=w]]",
+            "default_value": "function(w: gy94(omega=w))",
 	    "description": "The model as a function of dN/dS"
         },
         {
             "arg_name": "omega0",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
 	    "description": "The dN/dS value for conserved sites"
         },
         {
             "arg_name": "p0",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
 	    "description": "The fraction of conserved sites"
         }
     ],
@@ -39,7 +39,7 @@
 		"identifier": [{"type":"doi",
 				"id":"10.1534/genetics.104.031153 "}]
 	       },
-    "examples": ["function[w,gy94[omega=w,pi=f1x4]]+m1a","function[w,mg94[omega=w]]+m1a","function[w,fMutSel0[omega=w]]+m1a"],
+    "examples": ["function(w: gy94(omega=w,pi=f1x4)) +> m1a","function(w: mg94(omega=w)) +> m1a","function(w: fMutSel0(omega=w)) +> m1a"],
     "extract": "all",
     "see": ["m2a","m2a_test"]
 }

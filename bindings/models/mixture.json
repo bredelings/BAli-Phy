@@ -13,7 +13,7 @@
         {
             "arg_name": "frequencies",
             "arg_type": "List[Double]",
-            "default_value": "~symmetric_dirichlet[length[@models],3]",
+            "default_value": "~symmetric_dirichlet(length(@models), 3)",
 	    "description": "The frequencies for each model"
         }
     ],

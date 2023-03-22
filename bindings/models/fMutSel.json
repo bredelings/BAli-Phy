@@ -7,20 +7,20 @@
         {
             "arg_name": "omega",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
 	    "description": "Excess dN/dS"
         },
         {
             "arg_name": "ss",
             "arg_type": "List[Tuple[String,Double]]",
-            "default_value": "zip[letters[@a],~iid[length[letters[@a]],normal[0,0.5]]]",
+            "default_value": "zip(letters(@a),~iid(length(letters(@a)),normal(0,0.5)))",
 	    "description": "Scaled selection coefficients (2Ns) of codons"
         },
         {
             "arg_name": "submodel",
             "arg_type": "RevCTMC[a]",
             "default_value": "gtr",
-	    "alphabet": "getNucleotides[@a]",
+	    "alphabet": "getNucleotides(@a)",
 	    "description": "Model of neutral nucleotide substitution"
         },
 	{
@@ -30,7 +30,7 @@
 	    "description": "The alphabet"
 	}
     ],
-    "description": "The fMutSel model is identical to gtr+x3+mut_sel+dNdS",
+    "description": "The fMutSel model is identical to gtr +> x3 +> mut_sel +> dNdS",
     "extract": "all",
     "citation":{"type": "article",
 		"title": "Mutation-Selection Models of Codon Substitution and Their Use to Estimate Selective Strengths on Codon Usage",

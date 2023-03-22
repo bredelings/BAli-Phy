@@ -9,19 +9,19 @@
         {
             "arg_name": "nuc_model",
             "arg_type": "ExchangeModel[a]",
-            "alphabet": "getNucleotides[@a]",
+            "alphabet": "getNucleotides(@a)",
             "description": "Symmetric exchange rates on nucleotides"
         },
         {
             "arg_name": "omega",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
             "description": "Relative rate of non-synonymous changes relative to synonymous changes"
         },
         {
             "arg_name": "pi",
             "arg_type": "List[Tuple[String,Double]]",
-            "default_value": "~symmetric_dirichlet_on[letters[@a],1]",
+            "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
 	    "description": "Letter frequencies"
         },
         {
@@ -31,8 +31,8 @@
 	    "description": "The codon alphabet"
         }
     ],
-    "description": "This is a version of the gy94 model that has been extended to use user-supplied exchangabilty matrix `nuc_model` on nucleotides.  The original gy94 model distinguishes only between transitions and transversions, and is equivalent to `gy94_ext[hky85_sym]`.",
-    "examples": ["gy94_ext[hky85_sym[kappa=2],omega=2]","gy94_ext[gtr_sym,pi=f1x4]"],
+    "description": "This is a version of the gy94 model that has been extended to use user-supplied exchangabilty matrix `nuc_model` on nucleotides.  The original gy94 model distinguishes only between transitions and transversions, and is equivalent to `gy94_ext(hky85_sym)`.",
+    "examples": ["gy94_ext(hky85_sym(kappa=2),omega=2)","gy94_ext(gtr_sym,pi=f1x4)"],
     "citation": {"type": "article",
 		 "title": "A codon-based model of nucleotide substitution for protein-coding DNA sequences",
 		 "author": [{"name": "Goldman, Nick"},{"name": "Yang, Ziheng"}],

@@ -18,8 +18,8 @@
         }
     ],
     "title": "The +FE frequency model",
-    "description": "This model uses the +F frequency model with equal frequencies.\n\nIt is equivalent to +f[Frequencies.uniform]",
-    "examples": ["wag+fe"],
+    "description": "This model uses the +F frequency model with equal frequencies.\n\nIt is equivalent to  +> f(Frequencies.uniform)",
+    "examples": ["wag +> fe"],
     "extract": "all",
     "see": ["f","Frequencies.uniform"]
 }

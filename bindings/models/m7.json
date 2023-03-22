@@ -14,23 +14,23 @@
         {
             "arg_name": "submodel",
             "arg_type": "Function[Double,RevCTMC[a]]",
-            "default_value": "function[w,gy94[omega=w]]",
+            "default_value": "function(w: gy94(omega=w))",
 	    "description": "The model as a function of dN/dS"
         },
         {
             "arg_name": "mu",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
 	    "description": "The mean of the Beta distribution"
         },
         {
             "arg_name": "gamma",
             "arg_type": "Double",
-            "default_value": "~beta[1,10]",
+            "default_value": "~beta(1,10)",
 	    "description": "The fraction of possible Beta variance given mu"
         }
     ],
-    "description": "A site-heterogeneous model with a discrete Beta distribution on dN/dS values.\n\n  cap = min[ mu/(1+mu), (1-mu)/(2-mu) ]\n  gamma' = gamma*cap\n  n = (1/gamma')-1\n  a = n*mu\n  b = n*(1-mu)",
+    "description": "A site-heterogeneous model with a discrete Beta distribution on dN/dS values.\n\n  cap = min( mu/(1+mu), (1-mu)/(2-mu) )\n  gamma' = gamma*cap\n  n = (1/gamma')-1\n  a = n*mu\n  b = n*(1-mu)",
     "citation": {"type": "article",
 		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
 		 "year": "2000",

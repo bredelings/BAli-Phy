@@ -23,7 +23,7 @@
 	    "description": "The alphabet"
 	}
     ],
-    "examples": ["gtr+x3+mut_sel+dNdS","gtr+x2+mut_sel"],
+    "examples": ["gtr +> x3 +> mut_sel +> dNdS","gtr +> x2 +> mut_sel"],
     "extract": "all",
     "citation":{"type": "article",
 		"title": "Mutation-Selection Models of Codon Substitution and Their Use to Estimate Selective Strengths on Codon Usage",

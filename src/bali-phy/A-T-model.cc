@@ -834,7 +834,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     {
         auto scale_model = scale_names_mapping.unique(i);
         if (scale_model.empty())
-            scale_model = "~gamma[0.5,2]";
+            scale_model = "~gamma(0.5, 2)";
         full_scale_models[i] = get_model(R, "Double", scale_model, "scale model " + std::to_string(i+1));
     }
 
@@ -845,7 +845,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
         if (args.count("branch-lengths"))
             M = args["branch-lengths"].as<string>();
         else
-            M = "~iid[num_branches[tree],gamma[0.5,div[2,num_branches[tree]]]]";
+            M = "~iid(num_branches(tree), gamma(0.5,div(2,num_branches(tree))))";
 
         branch_length_model = get_model(R, "List[Double]", M, "branch length model", {{"tree","Tree"}});
         branch_length_model.code.E = lambda_quantify(var("tree"), branch_length_model.code.E);

@@ -15,7 +15,7 @@
         {
             "arg_name": "ss",
             "arg_type": "List[Tuple[String,Double]]",
-            "default_value": "let[aas=letters[getAminoAcids[@a]],zip[aas,~iid[length[aas],normal[0,1]]]]",
+            "default_value": "aas=letters(getAminoAcids(@a)); zip(aas, ~iid(length(aas), normal(0,1)))",
 	    "description": "Scaled selection coefficients (2Ns)"
         },
 	{
@@ -25,7 +25,7 @@
 	    "description": "The alphabet"
 	}
     ],
-    "examples": ["gtr+x3+dNdS+mut_sel_aa"],
+    "examples": ["gtr +> x3 +> dNdS +> mut_sel_aa"],
     "extract": "all",
     "citation":{"type": "article",
 		"title": "Mutation-Selection Models of Codon Substitution and Their Use to Estimate Selective Strengths on Codon Usage",

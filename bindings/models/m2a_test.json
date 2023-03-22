@@ -8,37 +8,37 @@
         {
             "arg_name": "submodel",
             "arg_type": "Function[Double,RevCTMC[a]]",
-            "default_value": "function[w,gy94[omega=w]]",
+            "default_value": "function(w: gy94(omega=w))",
 	    "description": "The model as a function of dN/dS"
         },
         {
             "arg_name": "omega0",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
 	    "description": "The dN/dS value for conserved sites"
         },
         {
             "arg_name": "p0",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
 	    "description": "The fraction of conserved sites among non-positively selected sites."
         },
         {
             "arg_name": "posP",
             "arg_type": "Double",
-            "default_value": "~beta[1,10]",
+            "default_value": "~beta(1,10)",
             "description": "The fraction of positively selected sites"
         },
         {
             "arg_name": "posW",
             "arg_type": "Double",
-            "default_value": "~log_gamma[4,0.25]",
+            "default_value": "~log_gamma(4,0.25)",
             "description": "The dN\/dS value for positively selected sites"
         },
         {
             "arg_name": "posSelection",
             "arg_type": "Int",
-            "default_value": "~bernoulli[0.5]",
+            "default_value": "~bernoulli(0.5)",
             "description": "The model selector: 1 if positive selection, 0 if not."
         }
     ],
@@ -57,7 +57,7 @@
 		"identifier": [{"type":"doi",
 				"id":"10.1534/genetics.104.031153 "}]
 	       },
-    "examples": ["function[w,gy94[omega=w,pi=f1x4]]+m2a_test","function[w,mg94[omega=w]]+m2a_test","function[w,fMutSel0[omega=w]]+m2a_test"],
+    "examples": ["function(w: gy94(omega=w,pi=f1x4)) +> m2a_test","function(w: mg94(omega=w)) +> m2a_test","function(w: fMutSel0(omega=w)) +> m2a_test"],
     "see": ["m1a","m2a"],
     "extract": "all"
 }

@@ -9,7 +9,7 @@
         {
             "arg_name": "submodel",
             "arg_type": "ExchangeModel[b]",
-            "alphabet": "getNucleotides[@a]",
+            "alphabet": "getNucleotides(@a)",
 	    "description": "The singlet exchange model"
         },
         {
@@ -20,6 +20,6 @@
         }
     ],
     "description": "Exchangability matrix on triplets or codons constructed from an exchangability matrix on nucleotides.\n\nThus function can be used to build up triplet and codon models incrementally.",
-    "examples": ["hky85_sym+x3_sym+f+dNdS      // equivalent to gy94","gtr_sym+x3_sym+f","x3_sym[hky85_sym]"],
+    "examples": ["hky85_sym +> x3_sym +> f +> dNdS      // equivalent to gy94","gtr_sym +> x3_sym +> f","x3_sym(hky85_sym)"],
     "see": ["gy94","gy94_ext"]
 }

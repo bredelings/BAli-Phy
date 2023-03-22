@@ -20,7 +20,7 @@
 		"journal": {"name": "Molecular Biology and Evolution", "volume": "18", "number": "5", "pages": "691--699"},
 		"identifier": [{"type":"doi","id":"10.1093/oxfordjournals.molbev.a003851"}]
 	       },
-    "examples": ["wag+f[wag_frequencies]"],
+    "examples": ["wag +> f(wag_frequencies)"],
     "see": ["wag"],
     "extract": "all"
 }

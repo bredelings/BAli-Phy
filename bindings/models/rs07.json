@@ -16,19 +16,19 @@
         {
             "arg_name": "rate",
             "arg_type": "Double",
-            "default_value": "~log_laplace[-4,0.707]",
+            "default_value": "~log_laplace(-4,0.707)",
             "description": "The insertion-deletion rate"
         },
         {
             "arg_name": "mean_length",
             "arg_type": "Double",
-            "default_value": "~shifted_exponential[10,1]",
+            "default_value": "~shifted_exponential(10,1)",
 	    "description": "The mean indel length"
         },
         {
             "arg_name": "topology",
             "arg_type": "Topology",
-            "default_value": "get_state[topology]"
+            "default_value": "get_state(topology)"
         }
     ],
     "description": "This model allows insertion and deletions (indels) of multiple residues.  Indel lengths are geometrically distributed. Insertions and deletions are symmetric in this model.\nNote that the insertion-deletion rate is normalized to the substitution rate, so that if rate=1.0, then the insertion-deletion rate is the same as the substitution rate.\nNote that the mean indel length must be at least 1.",

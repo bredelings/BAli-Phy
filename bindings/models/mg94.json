@@ -10,13 +10,13 @@
         {
             "arg_name": "omega",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
             "description": "Relative rate of non-synonymous changes relative to synonymous changes"
         },
         {
             "arg_name": "pi",
             "arg_type": "List[Tuple[String,Double]]",
-            "default_value": "~symmetric_dirichlet_on[letters[getNucleotides[@a]],1.0]",
+            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies"
         },
         {
@@ -34,7 +34,7 @@
 	"journal": {"name": "Molecular biology and evolution", "volume": "11", "number": "5", "pages": "715--724"},
 	"link": [{"url":"https://academic.oup.com/mbe/article/11/5/715/1008710"}]
     },
-    "description": "The MG94 model describes codon frequencies in terms of 4 nucleotide frequencies.  It is thus similar to the GY94+F1x4 model where codon frequencies are constructed from 4 nucleotide frequencies.  However, in the MG94 model rates from codon i to codon j only depend on the frequency of the affected nucleotide, and not on the frequencies of its neighbors.\n\nThe original MG94 model did not account for different rates in transitions and transversions.  See the `mg94k` model that is extended to account for a ts/tv rate ratio, and the `mg94_ext model that is extended to use an arbitrary nucleotide rate matrix.\n\nThe MG94 model is equivalent to the following models:\n\n  f81+x3+dNdS\n\n  mg94k[kappa=1]\n\n  mg94_ext[f81]",
+    "description": "The MG94 model describes codon frequencies in terms of 4 nucleotide frequencies.  It is thus similar to the GY94+F1x4 model where codon frequencies are constructed from 4 nucleotide frequencies.  However, in the MG94 model rates from codon i to codon j only depend on the frequency of the affected nucleotide, and not on the frequencies of its neighbors.\n\nThe original MG94 model did not account for different rates in transitions and transversions.  See the `mg94k` model that is extended to account for a ts/tv rate ratio, and the `mg94_ext model that is extended to use an arbitrary nucleotide rate matrix.\n\nThe MG94 model is equivalent to the following models:\n\n  f81 +> x3 +> dNdS\n\n  mg94k[kappa=1]\n\n  mg94_ext(f81)",
     "see": ["mg94k","mg94_ext"],
     "extract": "all"
 }

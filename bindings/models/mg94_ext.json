@@ -8,13 +8,13 @@
         {
             "arg_name": "nuc_model",
             "arg_type": "RevCTMC[a]",
-            "alphabet": "getNucleotides[@a]",
+            "alphabet": "getNucleotides(@a)",
             "description": "Nucleotide substitution rate matrix"
         },
         {
             "arg_name": "omega",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
             "description": "Relative rate of non-synonymous changes relative to synonymous changes"
         },
         {
@@ -33,8 +33,8 @@
 	"journal": {"name": "Molecular biology and evolution", "volume": "11", "number": "5", "pages": "715--724"},
 	"link": [{"url":"https://academic.oup.com/mbe/article/11/5/715/1008710"}]
     },
-    "description": "This is a version of the mg94 model that has been extended to use a user-supplied rate matrix `nuc_model` on nucleotides.  The original mg94 model is equivalent to `mg94_ext[f81]`.",
-    "examples": ["mg94_ext[hky85[kappa=2],omega=2]","mg94_ext[gtr]"],
+    "description": "This is a version of the mg94 model that has been extended to use a user-supplied rate matrix `nuc_model` on nucleotides.  The original mg94 model is equivalent to `mg94_ext(f81)`.",
+    "examples": ["mg94_ext(hky85(kappa=2),omega=2)","mg94_ext(gtr)"],
     "see": ["mg94"],
     "extract": "all"
 }

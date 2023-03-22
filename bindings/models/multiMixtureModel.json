@@ -13,7 +13,7 @@
         {
             "arg_name": "branch_cats",
             "arg_type": "List[Int]",
-            "default_value": "get_state[branch_categories]"
+            "default_value": "get_state(branch_categories)"
         }
     ]
 }

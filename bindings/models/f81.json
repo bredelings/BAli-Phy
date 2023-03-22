@@ -8,7 +8,7 @@
         {
             "arg_name": "pi",
             "arg_type": "List[Tuple[String,Double]]",
-            "default_value": "~symmetric_dirichlet_on[letters[@a],1.0]",
+            "default_value": "~symmetric_dirichlet_on(letters(@a),1.0)",
 	    "description": "Letter frequencies"
         },
         {

@@ -20,5 +20,5 @@
 		"journal": {"name": "Bioinformatics", "volume": "8", "number": "3", "pages": "275--282"},
 		"identifier": [{"type":"doi","id":"10.1093%2Fbioinformatics%2F8.3.275"}]
 	       },
-    "examples": ["jtt","jtt+f"]
+    "examples": ["jtt","jtt +> f"]
 }

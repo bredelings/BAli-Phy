@@ -8,7 +8,7 @@
         {
             "arg_name": "p_inv",
             "arg_type": "Double",
-            "default_value": "~uniform[0,1]",
+            "default_value": "~uniform(0,1)",
             "description": "The fraction of invariable sites."
         },
         {
@@ -17,7 +17,7 @@
         }
     ],
     "title": "Invariable sites model",
-    "examples": ["hky85+inv",
-		 "gtr+Rates.gamma+inv"],
+    "examples": ["hky85 +> inv",
+		 "gtr +> Rates.gamma +> inv"],
     "extract": "all"
 }

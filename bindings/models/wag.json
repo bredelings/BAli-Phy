@@ -12,7 +12,7 @@
             "description": "The alphabet"
         }
     ],
-    "description": "Empirically derived exchangability matrix for general proteins.\n\nThis command only refers to the symmetric part of the WAG model, not the frequencies.  Frequencies are added by using the `+f` command.  Frequencies are estimated by default but can be fixed to the values estimated in the paper using `+f[wag_freq]`.",
+    "description": "Empirically derived exchangability matrix for general proteins.\n\nThis command only refers to the symmetric part of the WAG model, not the frequencies.  Frequencies are added by using the ` +> f` command.  Frequencies are estimated by default but can be fixed to the values estimated in the paper using ` +> f(wag_freq)`.",
     "citation":{"type": "article",
 		"title": "A General Empirical Model of Protein Evolution Derived from Multiple Protein Families Using a Maximum-Likelihood Approach",
 		"year": "2001",	
@@ -20,5 +20,5 @@
 		"journal": {"name": "Molecular Biology and Evolution", "volume": "18", "number": "5", "pages": "691--699"},
 		"identifier": [{"type":"doi","id":"10.1093/oxfordjournals.molbev.a003851"}]
 	       },
-    "examples": ["wag","wag+f","wag+f[wag_freq]"]
+    "examples": ["wag","wag +> f","wag +> f(wag_freq)"]
 }

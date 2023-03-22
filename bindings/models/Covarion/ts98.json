@@ -16,13 +16,13 @@
         {
             "arg_name": "s01",
             "arg_type": "Double",
-	    "default_value":"~exponential[0.5]",
+	    "default_value":"~exponential(0.5)",
 	    "description":"Rate from OFF to ON"
         },
         {
             "arg_name": "s10",
             "arg_type": "Double",
-	    "default_value":"~exponential[0.5]",
+	    "default_value":"~exponential(0.5)",
 	    "description":"Rate from ON to OFF"
         },
         {
@@ -32,6 +32,6 @@
         }
     ],
     "description": "The Tuffley-Steel covarion model splits every state into an ON and an OFF version, increasing the number of states by a factor of 2.  Rates for the ON version are given by the rate matrix Q of the submodel, while rates for the OFF version are 0:\n\n   rate ( (ON , state1) -> (ON , state2) ) = Q(state1, state2)\n   rate ( (OFF, state1) -> (OFF, state2) ) = 0\n\nRates for switching between ON and OFF are given by the s01 and s10 parameters, and are independent of the submodel state.\n\n   rate ( (ON , state ) -> (OFF, state ) ) = s10\n   rate ( (OFF, state ) -> (ON , state ) ) = s01\n\nRates for changing the level (ON,OFF) and the state at the same time are 0.\n\nThe fraction of the time spent in the ON state is:\n\n    pi[ON] = s01/(s10 + s01)",
-    "examples": ["gtr+ts98","gtr+ts98+ts98"],
+    "examples": ["gtr +> ts98","gtr +> ts98 +> ts98"],
     "extract": "all"
 }
