@@ -54,14 +54,9 @@ zz_driver::parse_string (const string& file_contents, const std::string &input_n
   return res;
 }
 
-ptree parse_string(const string& content, const std::string& input_name)
+ptree parse_string(const string& content, const string& input_name)
 {
     zz_driver D;
     D.parse_string(content, input_name);
     return D.result;
-}
-
-ptree parse(const string& content)
-{
-    return parse_string(content, "from string");
 }

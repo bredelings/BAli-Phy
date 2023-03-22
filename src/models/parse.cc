@@ -285,10 +285,10 @@ void handle_positional_args(ptree& model, const Rules& R)
 }
 
 // Parse strings of the form head[args] + head[args] + ... + head[args]
-ptree parse(const Rules& R, const string& s)
+ptree parse(const Rules& R, const string& s, const string& what)
 {
     // 1. Get the last head[args]
-    auto model = parse(s);
+    auto model = parse_string(s, what);
 
     // 2. Fill in keywords where they are not given
     auto f2 = [&](ptree& p) {handle_positional_args(p,R);};

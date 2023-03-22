@@ -56,6 +56,6 @@ public:
     bool check_closing_token() {return prec_close_count > 0;}
 };
 
-ptree parse(const std::string&);
+ptree parse_string(const std::string&, const std::string&);
 #endif // ! DRIVER_HH
 

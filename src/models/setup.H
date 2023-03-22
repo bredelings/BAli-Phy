@@ -124,7 +124,7 @@ public:
 
 void to_json(json& j, const pretty_model_t& m);
 
-model_t get_model(const Rules& R, const std::string& type, const std::string& model,
+model_t get_model(const Rules& R, const std::string& type, const std::string& model, const std::string& what,
                   const std::vector<std::pair<std::string,std::string>>& = {},
                   const std::map<std::string,std::pair<std::string,std::string>>& = {}
     );

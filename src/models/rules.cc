@@ -111,9 +111,6 @@ namespace fs = std::filesystem;
 // Q: fmutsel version of m3, etc.
 // Q: how to share GTR between genes in gtr+gwf?
 
-ptree parse(const Rules&, const string& s);
-ptree parse_type(const string& s);
-
 ptree parse_constraints(const ptree& cc)
 {
     ptree constraints;
@@ -125,7 +122,7 @@ ptree parse_constraints(const ptree& cc)
     return constraints;
 }
 
-ptree convert_rule(const Rules& R, Rule rule)
+ptree convert_rule(const Rules& R, const string& name, Rule rule)
 {
     {
 	ptree& result_type = rule.get_child("result_type");
@@ -148,9 +145,9 @@ ptree convert_rule(const Rules& R, Rule rule)
 	    call = parse_type(call.get_value<string>());
     }
 
-    for(auto& arg_pair: rule.get_child("args"))
+    for(auto& [_,x]: rule.get_child("args"))
     {
-	auto& x = arg_pair.second;
+        string arg_name = x.get_child("arg_name").get_value<string>();
 
 	{
 	    ptree& arg_type = x.get_child("arg_type");
@@ -159,12 +156,12 @@ ptree convert_rule(const Rules& R, Rule rule)
 
 	if (auto default_value = x.get_child_optional("default_value"))
 	{
-	    (*default_value) = parse(R, default_value->get_value<string>());
+	    (*default_value) = parse(R, default_value->get_value<string>(), name + ": default value for '"+arg_name+"'");
 	}
 
 	if (auto alphabet = x.get_child_optional("alphabet"))
 	{
-	    (*alphabet) = parse(R, alphabet->get_value<string>());
+	    (*alphabet) = parse(R, alphabet->get_value<string>(), name + ": default value for '"+arg_name+"'");
 	}
     }
 
@@ -403,10 +400,10 @@ Rules::Rules(const vector<fs::path>& pl)
     }
 
     // 3. Convert the rules - FIXME: should we convert default args in a later step?
-    for(auto& rule: rules)
+    for(auto& [name, rule]: rules)
     {
-	if (rule.second.get_child_optional("synonym")) continue;
-	if (rule.second.get_child_optional("deprecated-synonym")) continue;
-	rule.second = convert_rule(*this, rule.second);
+	if (rule.get_child_optional("synonym")) continue;
+	if (rule.get_child_optional("deprecated-synonym")) continue;
+	rule = convert_rule(*this, name, rule);
     }
 }

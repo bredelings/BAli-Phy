@@ -1401,12 +1401,12 @@ model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& con
     return model_t{model_rep, imports, type, constraints, code};
 }
 
-model_t get_model(const Rules& R, const string& type, const string& model_string,
+model_t get_model(const Rules& R, const string& type, const string& model_string, const string& what,
                   const vector<pair<string,string>>& scope,
                   const map<string,pair<string,string>>& state)
 {
     auto required_type = parse_type(type);
-    auto model_rep = parse(R, model_string);
+    auto model_rep = parse(R, model_string, what);
 //    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
 
     map<string,ptree> typed_scope;

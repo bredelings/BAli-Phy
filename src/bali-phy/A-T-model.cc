@@ -164,8 +164,11 @@ get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping, co
     map<string,pair<string,string>> imodel_states = {{"topology",{"topology","Topology"}}};
 
     vector<model_t> imodels;
-    for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
-        imodels.push_back( get_model(R, "IndelModel", imodel_names_mapping.unique(i), {}, imodel_states) );
+    for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
+    {
+        string what = "indel model " + std::to_string(i+1);
+        imodels.push_back( get_model(R, "IndelModel", imodel_names_mapping.unique(i), what, {}, imodel_states) );
+    }
     return imodels;
 }
 
@@ -518,22 +521,22 @@ bool can_share_imodel(const alphabet& a1, const alphabet& a2)
 }
 
 
-model_t get_smodel(const Rules& R, const std::string& model)
+model_t get_smodel(const Rules& R, const std::string& model, const string& what)
 {
     map<string,pair<string,string>> smodel_states = {{"alphabet",{"alpha","a"}},
                                                      {"branch_categories",{"branch_categories","List[Int]"}}};
 
     try {
-        return get_model(R, "RevCTMC[a]", model, {}, smodel_states);
+        return get_model(R, "RevCTMC[a]", model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
 
     try {
-        return get_model(R, "MixtureModel[a]", model, {}, smodel_states);
+        return get_model(R, "MixtureModel[a]", model, what, {}, smodel_states);
     }
     catch (myexception& e) {};
 
-    return get_model(R, "MultiMixtureModel[a]", model, {}, smodel_states);
+    return get_model(R, "MultiMixtureModel[a]", model, what, {}, smodel_states);
 }
 
 
@@ -555,7 +558,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     // 1. Get smodels for all SPECIFIED smodel names.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
         if (not smodel_names_mapping.unique(i).empty())
-            full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i));
+            full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
 
     //------------- Get alphabet names -------------------
     shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filename_ranges.size());
@@ -795,7 +798,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
             if (smodel_names_mapping.unique(i) == "")
                 throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
 
-            full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i));
+            full_smodels[i] = get_smodel(R, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
         }
     
     // 8. Check that alignment alphabet fits requirements from smodel.
@@ -832,7 +835,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
         auto scale_model = scale_names_mapping.unique(i);
         if (scale_model.empty())
             scale_model = "~gamma[0.5,2]";
-        full_scale_models[i] = get_model(R, "Double", scale_model);
+        full_scale_models[i] = get_model(R, "Double", scale_model, "scale model " + std::to_string(i+1));
     }
 
     //-------------- Branch length model --------------------//
@@ -844,7 +847,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
         else
             M = "~iid[num_branches[tree],gamma[0.5,div[2,num_branches[tree]]]]";
 
-        branch_length_model = get_model(R, "List[Double]", M, {{"tree","Tree"}});
+        branch_length_model = get_model(R, "List[Double]", M, "branch length model", {{"tree","Tree"}});
         branch_length_model.code.E = lambda_quantify(var("tree"), branch_length_model.code.E);
     }
 
