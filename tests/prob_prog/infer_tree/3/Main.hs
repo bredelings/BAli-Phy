@@ -16,8 +16,8 @@ smodel_prior codons = do
     ps     <- symmetric_dirichlet n 2.0
     omegas <- iid n (uniform 0.0 1.0)
 
-    let mut_sel_model w = gtr' sym pi nucleotides & SModel.x3 codons & dNdS w & mut_sel' ws
-        m3_model = mut_sel_model & SModel.m3 ps omegas
+    let mut_sel_model w = gtr' sym pi nucleotides +> SModel.x3 codons +> dNdS w +> mut_sel' ws
+        m3_model = mut_sel_model +> SModel.m3 ps omegas
 
     let loggers = ["gtr:sym" %=% sym,
                    "gtr:pi" %=% pi,
