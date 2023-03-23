@@ -46,7 +46,6 @@ ptree fold_terms(const std::vector<ptree>& terms);
   SEMI          ";"
   COLON         ":"
   EQUAL         "="
-  TILDE         "~"
   OBRACK        "["
   CBRACK        "]"
   OPAREN        "("
@@ -54,9 +53,15 @@ ptree fold_terms(const std::vector<ptree>& terms);
   OCURLY        "{"
   CCURLY        "}"
   COMMA         ","
-  PLUS          "+"
-  STACK         "+>"
   AT            "@"
+
+  TILDE         "~"
+  PLUS          "+"
+  MINUS         "-"
+  TIMES         "*"
+  DIVIDE        "/"
+
+  STACK         "+>"
 ;
 
 %token <std::string> VARID    "VARID"
@@ -85,13 +90,17 @@ ptree fold_terms(const std::vector<ptree>& terms);
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
 
+%left "+>"
+%left "+" "-"
+%left "*" "/"
+%left "~"
+
 %%
 %start unit;
 unit: exp {drv.result = $1;}
 
 
 exp: terms                                    { $$ = fold_terms($1); }
-|    "(" exp ")"                              { $$ = $2; }
 |    varid "=" exp ";" exp                    { $$ = ptree("let",{{$1,$3},{"",$5}}); }
 
 terms: term                 { $$.push_back($1);}
@@ -110,6 +119,14 @@ term: qvarid                      { $$ = ptree($1); }
 |     "{" ditems "}"              { $$ = ptree("List",$2); }
 |     "{" "}"                     { $$ = ptree("List",{}); }
 |    "function" "(" varid ":" exp ")"         { $$ = ptree("function",{{"",ptree($3)},{"",$5}}); }
+|    "(" exp ")"                              { $$ = $2; }
+|     "-" term                    { $$ = ptree("negate",{{"",ptree($2)}}); }
+|     term "+" term               { $$ = ptree("add",{{"",ptree($1)},{"",$3}}); }
+|     term "-" term               { $$ = ptree("sub",{{"",ptree($1)},{"",$3}}); }
+|     term "*" term               { $$ = ptree("mul",{{"",ptree($1)},{"",$3}}); }
+|     term "/" term               { $$ = ptree("div",{{"",ptree($1)},{"",$3}}); }
+
+
 
 ditems: ditem                     { $$.push_back({"",$1}); }
 |       ditems "," ditem          { $$ = $1; $$.push_back({"",$3}); }

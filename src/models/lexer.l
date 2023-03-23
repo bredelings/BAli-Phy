@@ -124,12 +124,15 @@ signed       {negative}?
 "}"      return zz::parser::make_CCURLY (loc);
 ","      return zz::parser::make_COMMA  (loc);
 "="      return zz::parser::make_EQUAL  (loc);
-"+>"     return zz::parser::make_STACK  (loc);
-"+"      return zz::parser::make_PLUS   (loc);
-"@"      return zz::parser::make_AT     (loc);
-"~"      return zz::parser::make_TILDE  (loc);
 ";"      return zz::parser::make_SEMI   (loc);
 ":"      return zz::parser::make_COLON  (loc);
+"+>"     return zz::parser::make_STACK  (loc);
+"@"      return zz::parser::make_AT     (loc);
+"~"      return zz::parser::make_TILDE  (loc);
+"+"      return zz::parser::make_PLUS   (loc);
+"-"      return zz::parser::make_MINUS  (loc);
+"*"      return zz::parser::make_TIMES  (loc);
+"/"      return zz::parser::make_DIVIDE (loc);
 
 
 
@@ -138,9 +141,9 @@ signed       {negative}?
 {varid}       return drv.varid(loc);
 {conid}       return drv.varid(loc);
 
-{signed}{decimal}                              return zz_make_integer10(loc);
+{decimal}                              return zz_make_integer10(loc);
 
-{signed}{floating_point}                       return zz_make_float(loc);
+{floating_point}                       return zz_make_float(loc);
 [\"]({graphicnonqq}|" "|{escape})*[\"]   return zz_make_string(loc);
 
 <*>.          {

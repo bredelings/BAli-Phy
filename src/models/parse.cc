@@ -324,7 +324,7 @@ string unparse(const ptree& p)
     if (s == "let")
     {
 	string name = p[0].first;
-	return name+"="+unparse(p[0].second)+";"+unparse(p[1].second);
+	return name+show_model(p[0].second)+";"+unparse(p[1].second);
     }
     else if (s == "function")
     {
@@ -347,10 +347,20 @@ string unparse(const ptree& p)
     }
     else if (s == "sample")
 	return "~" + unparse(p.begin()->second);
+    else if (s == "negate")
+	return "-" + unparse(p.begin()->second);
+    else if (s == "div")
+        return unparse(p[0].second) + "/" + unparse(p[1].second);
+    else if (s == "mul")
+        return unparse(p[0].second) + "*" + unparse(p[1].second);
+    else if (s == "sub")
+        return unparse(p[0].second) + "-" + unparse(p[1].second);
+    else if (s == "add")
+        return unparse(p[0].second) + "+" + unparse(p[1].second);
 
-    if (s == "intToDouble")
+    else if (s == "intToDouble")
 	return unparse(p.get_child("x"));
-    if (s == "unit_mixture" or s == "multiMixtureModel")
+    else if (s == "unit_mixture" or s == "multiMixtureModel")
 	if (auto child = p.get_child_optional("submodel"))
 	    return unparse(*child);
     vector<string> args;
@@ -376,7 +386,7 @@ string unparse(const ptree& p)
     while (args.size() and args.back() == "")
 	args.pop_back();
     if (not args.empty())
-	s = s + "(" + join(args,',') + ")";
+	s = s + "(" + join(args,", ") + ")";
     if (submodel)
 	s = *submodel + " +> " + s;
     return s;
@@ -457,6 +467,17 @@ string unparse_annotated(const ptree& ann)
     }
     else if (s == "sample")
 	return "~" + unparse_annotated(p.begin()->second);
+    else if (s == "negate")
+	return "-" + unparse_annotated(p.begin()->second);
+    else if (s == "div")
+        return unparse_annotated(p[0].second) + "/" + unparse_annotated(p[1].second);
+    else if (s == "mul")
+        return unparse_annotated(p[0].second) + "*" + unparse_annotated(p[1].second);
+    else if (s == "sub")
+        return unparse_annotated(p[0].second) + "-" + unparse_annotated(p[1].second);
+    else if (s == "add")
+        return unparse_annotated(p[0].second) + "+" + unparse_annotated(p[1].second);
+
     else if (s == "intToDouble")
 	return unparse_annotated(p.get_child("x"));
     else if (s == "unit_mixture" or s == "multiMixtureModel")
@@ -497,7 +518,7 @@ string unparse_annotated(const ptree& ann)
     while (args.size() and args.back() == "")
 	args.pop_back();
     if (not args.empty())
-	s = s + "(" + join(args,',') + ")";
+	s = s + "(" + join(args,", ") + ")";
     if (submodel)
 	s = *submodel + " +> " + s;
     return s;
