@@ -1,0 +1,13 @@
+{
+    "name": "negate",
+    "result_type": "a",
+    "no_log": true,
+    "constraints": ["Num[a]"],
+    "call": "negate[@x]",
+    "args": [
+        {
+            "arg_name": "x",
+            "arg_type": "a"
+        }
+    ]
+}
