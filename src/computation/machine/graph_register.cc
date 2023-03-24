@@ -2800,7 +2800,7 @@ int reg_heap::add_identifier(const var& x)
     return R;
 }
 
-// FIXME: We SHOULD be able to do each module in sequences, since there are no
+// FIXME: We SHOULD be able to do each module in sequence, since there are no
 //        transitive dependencies.
 //
 //        Currently that doesn't work, because things implicitly depend on
@@ -2808,6 +2808,10 @@ int reg_heap::add_identifier(const var& x)
 //
 void reg_heap::allocate_identifiers_for_program()
 {
+    // 0. Free symbol table memory
+    for(auto& M: *program)
+        M->clear_symbol_table();
+
     // 1. Pre-allocate locations for symbols that can be used without being imported.
     for(auto name: special_prelude_symbols)
         add_identifier(var(name));

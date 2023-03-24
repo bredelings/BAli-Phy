@@ -116,6 +116,8 @@ public:
 
     void export_module(const std::string& S);
 
+    void clear_symbol_table();
+
     std::optional<DataConInfo> constructor_info(const std::string& n) const;
 
     /// Add a function

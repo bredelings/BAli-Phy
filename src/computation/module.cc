@@ -762,6 +762,19 @@ void Module::perform_exports()
     exit_on_error(messages);
 }
 
+void Module::clear_symbol_table()
+{
+    symbols.clear();
+    aliases.clear();
+    types.clear();
+    type_aliases.clear();
+    exported_symbols_.clear();
+    exported_types_.clear();
+
+    transitively_imported_modules.clear();
+}
+
+
 map<var,expression_ref> Module::code_defs() const
 {
     map<var, expression_ref> code;
