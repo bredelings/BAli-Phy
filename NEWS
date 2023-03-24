@@ -1,3 +1,8 @@
+* 4.0-beta3
+- Features
+  + Add +,-,*,/ to simple model language.
+
+
 * 4.0-beta2 (Mar 21, 2023)
 - Features
   + Allow sequences names to contain Newick special characters, but give warning.
