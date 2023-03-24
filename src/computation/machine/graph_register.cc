@@ -2839,6 +2839,8 @@ void reg_heap::allocate_identifiers_for_program()
             assert(R != -1);
             set_C(R, preprocess(body) );
         }
+
+        M->value_decls.clear();
     }
 }
 
