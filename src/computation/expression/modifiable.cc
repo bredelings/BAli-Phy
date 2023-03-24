@@ -18,6 +18,7 @@ closure modifiable_op(OperationArgs& Args)
         int m = Args.allocate( {modifiable(),{}} );
 
         // 3. Mark m changeable.
+        M.add_deps_to_reg(m);
         M.mark_reg_changeable(m);
 
         // 4. Mark m unforgettable.

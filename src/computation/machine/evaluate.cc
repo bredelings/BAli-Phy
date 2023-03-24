@@ -374,8 +374,8 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
             int sp = regs[r].created_by.first;
 
-            if (not regs[r].deps_index)
-                regs[r].deps_index = deps.allocate();
+            if (not reg_has_deps(r))
+                add_deps_to_reg(r);
 
             try
             {

@@ -242,6 +242,7 @@ public:
     bool reg_has_deps(int r) const;
     const reg_deps& deps_for_reg(int r) const;
           reg_deps& deps_for_reg(int r);
+    void add_deps_to_reg(int r);
 
     reg_heap* clone() const {std::abort();}
 
@@ -854,6 +855,13 @@ inline void reg_heap::mark_reg_constant_no_force(int r)
 inline bool reg_heap::reg_is_changeable(int r) const
 {
     return regs.access(r).type == reg::type_t::changeable;
+}
+
+inline void reg_heap::add_deps_to_reg(int r)
+{
+    assert( not reg_has_deps(r) );
+
+    regs[r].deps_index = deps.allocate();
 }
 
 inline void reg_heap::mark_reg_changeable(int r)
