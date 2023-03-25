@@ -4,6 +4,8 @@
 
 class reg_heap;
 
+// See effects.H for actual effect objects.
+
 class effect:public Object
 {
 };
