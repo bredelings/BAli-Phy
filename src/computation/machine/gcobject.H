@@ -8,9 +8,9 @@
 class GCObject: public Object
 {
 public:
-    virtual void get_regs(std::vector<int>& regs) const = 0;
+    virtual void get_regs(std::vector<int>& regs) const;
 
-    virtual void update_regs(const std::vector<int>& remap) const = 0;
+    virtual void update_regs(const std::vector<int>& remap) const;
 
     virtual type_constant type() const {return gc_type;}
 };
