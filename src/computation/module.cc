@@ -1321,7 +1321,7 @@ const_symbol_ptr Module::lookup_symbol(const std::string& name) const
         e<<"Identifier '"<<name<<"' is ambiguous!";
         auto range = aliases.equal_range(name);
         for(auto i = range.first; i != range.second ;i++)
-            e<<"\n "<<i->first<<" -> "<<i->second;
+            e<<"\n "<<i->first<<" -> "<<i->second->name;
         throw e;
     }
 }
@@ -1448,7 +1448,7 @@ const_type_ptr Module::lookup_type(const std::string& name) const
         e<<"Type identifier '"<<name<<"' is ambiguous!";
         auto range = type_aliases.equal_range(name);
         for(auto i = range.first; i != range.second ;i++)
-            e<<"\n "<<i->first<<" -> "<<i->second;
+            e<<"\n "<<i->first<<" -> "<<i->second->name;
         throw e;
     }
 }
