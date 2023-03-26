@@ -4,7 +4,7 @@
 #include <algorithm>
 #include "util/range.H"
 #include "mapping.H"
-#include "computation/expression/exchangeable.H"
+#include "computation/expression/interchangeable.H"
 
 using std::string;
 using std::vector;

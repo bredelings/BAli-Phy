@@ -8,7 +8,7 @@
 #include "computation/expression/index_var.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/modifiable.H"
-#include "computation/expression/exchangeable.H"
+#include "computation/expression/interchangeable.H"
 #include "computation/expression/list.H"
 
 using boost::dynamic_pointer_cast;

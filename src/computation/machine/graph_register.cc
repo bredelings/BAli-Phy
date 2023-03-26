@@ -12,7 +12,7 @@
 #include "computation/expression/reg_var.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/modifiable.H"
-#include "computation/expression/exchangeable.H"
+#include "computation/expression/interchangeable.H"
 #include "computation/expression/expression.H" // is_WHNF( )
 #include "computation/operations.H"
 #include "effect.H"

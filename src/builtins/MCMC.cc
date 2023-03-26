@@ -2,7 +2,7 @@
 #include "computation/machine/args.H"
 #include "computation/context.H"
 #include "computation/expression/index_var.H"
-#include "computation/expression/exchangeable.H"
+#include "computation/expression/interchangeable.H"
 #include "util/myexception.H"
 #include "computation/machine/graph_register.H"
 #include "computation/machine/effects.H"
