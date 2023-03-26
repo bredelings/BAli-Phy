@@ -764,7 +764,7 @@ bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)
 {
     if (log_verbose >= 4)
     {
-        std::cerr<<"accept_MH: rho = "<<rho<<endl;
+        std::cerr<<"accept_MH: log(rho) = "<<rho<<endl;
 
         show_parameters(std::cerr,C1);
         std::cerr<<C1.probability()<<" = "<<C1.likelihood()<<" [likelihood] + "<<C1.prior()<<" [prior]"<<endl;
@@ -779,7 +779,7 @@ bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)
 
     bool accept = (ratio >= 1.0 or uniform() < ratio);
 
-    if (log_verbose >=3) std::cerr<<"accept_MH: accept = "<<accept<<endl;
+    if (log_verbose >=3) std::cerr<<"accept_MH: log(ratio) = "<<ratio<<"   accept = "<<accept<<endl;
 
     return accept;
 }
