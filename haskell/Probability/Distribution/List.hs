@@ -8,9 +8,6 @@ independent_densities (d:ds) (x:xs) = densities d x ++ independent_densities ds 
 independent_densities [] []         = []
 independent_densities _  _          = [doubleToLogDouble 0.0]
 
-foreign import bpcall "MCMC:exchange_list_entries" builtin_exchange_list_entries :: [a] -> ContextIndex -> RealWorld -> ()
-exchange_list_entries xs c = makeIO $ builtin_exchange_list_entries xs c
-
 plate n dist_f = independent $ map dist_f [0..n-1]
 
 class HasIndependent d where
@@ -34,7 +31,7 @@ instance HasIndependent Distribution where
                              iid_name = "iid_set "++(dist_name dist)
                              iid_sample = RanSamplingRate (1/sqrt (fromIntegral n)) $ do
                                             dist <- exchangeable $ RanDistribution dist
-                                            xs <- sequence $ repeat $ dist -- `with_tk_effect` (\xs -> add_move $ exchange_list_entries xs)
+                                            xs <- sequence $ repeat $ dist
                                             return $ take n xs
 
 
@@ -48,10 +45,8 @@ instance HasIndependent Random where
                                   return $ zip vs xs
 
     iid_set n dist = lazy $ RanSamplingRate (1/sqrt (fromIntegral n)) $ do
-                       let effect :: [a] -> TKEffects Effect
-                           effect = (\xs -> add_move $ exchange_list_entries xs)
                        dist <- exchangeable dist
-                       xs <- (sequence $ repeat $ dist) `with_tk_effect` effect
+                       xs <- sequence $ repeat $ dist
                        return $ take n xs
 
 {-
