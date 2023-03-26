@@ -44,16 +44,6 @@ changeableIO f = IO (\s -> _changeable_apply (runIO f) s)
 -- Ideally, packaging them in the pair should force the state.
 -- Right now, the caller forces the state.
 
--- We add an extra s2 argument to builtin_exchangeable to prevent floating outside the s2 lambda.
-foreign import bpcall "Modifiables:exchangeable" builtin_exchangeable :: (a->b) -> a -> a -> b
-exchangeableIO :: IO a -> IO (IO a)
--- We also ensure that performing the exchangeable action FORCES the current IO state s2, even though
--- it is not USED.
-exchangeableIO f = IO $ \s1 -> (s1, makeIO $ snd . builtin_exchangeable (runIO f) s1 )
--- PROBLEM: Because the exchangeable function produces a pair, we always end up with a changeable
--- node as the list argument, instead of an exchangeable node as a list argument.
--- Therefore, builtin_function_exchange_list_entries doesn't work.
-
 makeIO f = IO (\s -> let x = s `seq` f s  -- This emulates f forcing s, so the C++ code doesn't have to.
                      in (x `seq` s, x))   -- This ensures that getting the new state forces f to run.
                                           -- But if the pair is strict in the state, then just getting the pair
