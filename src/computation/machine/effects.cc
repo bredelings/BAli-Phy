@@ -57,3 +57,41 @@ string register_likelihood::print() const
 {
     return string("register_likelihood[")+std::to_string(r_dist)+","+std::to_string(r_prob)+","+std::to_string(prob.log())+"]";
 }
+
+//--------------------------------------------------------------------
+
+bool RegisterInterchangeable::operator==(const RegisterInterchangeable& e) const
+{
+    return id == e.id and r_interchangeable == e.r_interchangeable;
+}
+
+bool RegisterInterchangeable::operator==(const Object& O) const
+{
+    if (this == &O) return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    auto* e = dynamic_cast<const RegisterInterchangeable*>(&O);
+
+    return (*this) == *e;
+}
+
+string RegisterInterchangeable::print() const
+{
+    return string("RegisterInterchangeable[")+std::to_string(id)+","+std::to_string(r_interchangeable)+"]";
+}
+
+void RegisterInterchangeable::get_regs(std::vector<int>& regs) const
+{
+    regs = { r_interchangeable };
+}
+
+void RegisterInterchangeable::update_regs(const std::vector<int>& remap) const
+{
+    r_interchangeable = remap[r_interchangeable];
+}
+
+RegisterInterchangeable::RegisterInterchangeable(int i, int r)
+    :id(i), r_interchangeable(r)
+{
+}
