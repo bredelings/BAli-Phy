@@ -425,6 +425,12 @@ void reg_heap::_register_effect_at_reg(int r, int s)
             std::cerr<<E.print()<<":   REGISTER! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()+1<<")\n";
         register_likelihood_(E.as_<register_likelihood>(), s);
     }
+    else if (auto I = E.to<RegisterInterchangeable>())
+    {
+        if (log_verbose >= 5)
+            std::cerr<<E.print()<<":   REGISTER!\n";
+        register_interchangeable(*I, s);
+    }
     else if (E.is_a<constructor>())
     {
         if (has_constructor(E, "Effect.TransitionKernel"))
@@ -479,6 +485,12 @@ void reg_heap::_unregister_effect_at_reg(int r, int s)
         if (log_verbose >= 5)
             std::cerr<<E.print()<<": UNregister! ("<<likelihood_terms.size()<<" -> "<<likelihood_terms.size()-1<<")\n";
         unregister_likelihood_(E.as_<register_likelihood>(), s);
+    }
+    else if (auto I = E.to<RegisterInterchangeable>())
+    {
+        if (log_verbose >= 5)
+            std::cerr<<E.print()<<":   UNREGISTER!\n";
+        unregister_interchangeable(*I, s);
     }
     else if (E.is_a<constructor>())
     {
@@ -1084,6 +1096,30 @@ void reg_heap::unregister_prior(const register_prob& E, int s)
     // FIXME: run these in reverse order?
     for(auto& handler: unregister_prior_handlers)
         handler(E, s);
+}
+
+void reg_heap::register_interchangeable(const RegisterInterchangeable& I, int s)
+{
+    if (not interchangeables.count(I.id))
+        interchangeables.insert({I.id, {}});
+
+    auto& i_regs = interchangeables.at(I.id);
+
+    assert(not i_regs.count(I.r_interchangeable));
+
+    i_regs.insert(I.r_interchangeable);
+}
+
+void reg_heap::unregister_interchangeable(const RegisterInterchangeable& I, int s)
+{
+    auto& i_regs = interchangeables.at(I.id);
+
+    assert(i_regs.count(I.r_interchangeable));
+
+    i_regs.erase(I.r_interchangeable);
+
+    if (i_regs.empty())
+        interchangeables.erase(I.id);
 }
 
 void reg_heap::register_transition_kernel(int r, int s)

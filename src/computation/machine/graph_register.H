@@ -389,6 +389,12 @@ public:
     void   register_prior(const register_prob& e, int s);
     void unregister_prior(const register_prob& e, int s);
 
+    int next_interchangeable_id = 0;
+    std::map<int, std::multiset<int>> interchangeables;
+
+    void   register_interchangeable(const RegisterInterchangeable& I, int s);
+    void unregister_interchangeable(const RegisterInterchangeable& I, int s);
+
     // the list of transition kernels
     std::unordered_set<int> transition_kernels_;
 
