@@ -30,7 +30,7 @@ instance HasIndependent Distribution where
     iid_set n dist = Distribution iid_name (make_densities' $ independent_densities (replicate n dist)) (no_quantile "iid") iid_sample (ListRange $ take n $ repeat $ distRange dist) where
                              iid_name = "iid_set "++(dist_name dist)
                              iid_sample = RanSamplingRate (1/sqrt (fromIntegral n)) $ do
-                                            dist <- exchangeable $ RanDistribution dist
+                                            dist <- interchangeable $ RanDistribution dist
                                             xs <- sequence $ repeat $ dist
                                             return $ take n xs
 
@@ -45,7 +45,7 @@ instance HasIndependent Random where
                                   return $ zip vs xs
 
     iid_set n dist = lazy $ RanSamplingRate (1/sqrt (fromIntegral n)) $ do
-                       dist <- exchangeable dist
+                       dist <- interchangeable dist
                        xs <- sequence $ repeat $ dist
                        return $ take n xs
 
@@ -54,6 +54,6 @@ instance HasIndependent Random where
   strict $ do
     sampling_rate (1/sqrt (fromIntegral n)
     xs <- lazy $ sequence $ repeat dist  -- lazy means no effects (add_move) or rate changes (sample_rate)
-    add_move $ exchange_list_entries xs  -- ideally this is only allowed within strict blocks!  And MCMC-specific blocks?
+    add_move $ interchange_list_entries xs  -- ideally this is only allowed within strict blocks!  And MCMC-specific blocks?
     return $ take n xs
 -}

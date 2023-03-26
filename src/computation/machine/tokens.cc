@@ -108,7 +108,7 @@ void reg_heap::destroy_all_computations_in_token(int t)
 
     tokens[t].vm_force_count.clear();
 
-    tokens[t].exchanges.clear();
+    tokens[t].interchanges.clear();
 }
 
 void reg_heap::release_tip_token(int t)
@@ -194,7 +194,7 @@ void reg_heap::release_tip_token(int t)
     assert(tokens[t].vm_step.empty());
     assert(tokens[t].vm_result.empty());
     assert(tokens[t].vm_force_count.empty());
-    assert(tokens[t].exchanges.empty());
+    assert(tokens[t].interchanges.empty());
 }
 
 // Given parent -> t1 -> t2 -> XXX, make t2 a child of parent instead of t1.
@@ -320,10 +320,10 @@ void reg_heap::merge_split_mappings(const vector<int>& knuckle_tokens)
     }
     unload_map(tokens[child_token].vm_step, prog_temp);
 
-    vector<exchange_op> all_exchanges;
+    vector<interchange_op> all_interchanges;
     for(int t: knuckle_tokens | views::reverse)
-        all_exchanges.insert(all_exchanges.end(), tokens[t].exchanges.begin(), tokens[t].exchanges.end());
-    std::swap( tokens[child_token].exchanges, all_exchanges );
+        all_interchanges.insert(all_interchanges.end(), tokens[t].interchanges.begin(), tokens[t].interchanges.end());
+    std::swap( tokens[child_token].interchanges, all_interchanges );
 }
 
 // Release any knuckle tokens that are BEFORE the child token, and then return the parent of the child token.
@@ -670,7 +670,7 @@ int reg_heap::get_unused_token(token_type type, optional<int> prev_token)
     assert(tokens[t].children.empty());
     assert(tokens[t].vm_step.empty());
     assert(tokens[t].vm_result.empty());
-    assert(tokens[t].exchanges.empty());
+    assert(tokens[t].interchanges.empty());
     assert(not tokens[t].is_referenced());
 
     assert(tokens[t].prev_prog_active_refs.empty());

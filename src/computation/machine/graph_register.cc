@@ -756,11 +756,11 @@ bool reg_heap::simple_set_path_to(int child_token) const
     return true;
 }
 
-vector<set_exchange_op> reg_heap::find_set_regs_on_path(int child_token) const
+vector<set_interchange_op> reg_heap::find_set_regs_on_path(int child_token) const
 {
     assert(token_is_used(child_token));
 
-    vector<set_exchange_op> reg_values;
+    vector<set_interchange_op> reg_values;
     for(int t = child_token; t != root_token; t = tokens[t].parent)
     {
         assert(tokens[t].type != token_type::reverse_set);
@@ -779,12 +779,12 @@ vector<set_exchange_op> reg_heap::find_set_regs_on_path(int child_token) const
 
                 reg_values.push_back(set_op{r, value});
             }
-            else if (is_exchangeable(expression_at(r)))
+            else if (is_interchangeable(expression_at(r)))
             {
                 int r1 = r;
                 assert(tokens[t].vm_step.delta().size() >= 2);
                 auto [r2,_] = tokens[t].vm_step.delta()[1];
-                reg_values.push_back(exchange_op{r1,r2});
+                reg_values.push_back(interchange_op{r1,r2});
             }
         }
     }
@@ -829,10 +829,10 @@ int reg_heap::force_simple_set_path_to_PPET(int c)
                 auto [reg,value] = std::get<set_op>(op);
                 set_reg_value_in_context(reg, std::move(value), c);
             }
-            else if (std::holds_alternative<exchange_op>(op))
+            else if (std::holds_alternative<interchange_op>(op))
             {
-                auto [r1, r2] = std::get<exchange_op>(op);
-                exchange_regs_in_context_(r1, r2, c);
+                auto [r1, r2] = std::get<interchange_op>(op);
+                interchange_regs_in_context_(r1, r2, c);
             }
         }
         t = token_for_context(c);
@@ -1418,16 +1418,16 @@ optional<int> reg_heap::find_precomputed_modifiable_reg_in_context(int r, int c)
 
 // This is an evaluation loop that follows calls instead of results
 // so that it doesn't jump over modifiables.
-optional<int> reg_heap::find_precomputed_exchangeable_reg_in_context(int r, int c)
+optional<int> reg_heap::find_precomputed_interchangeable_reg_in_context(int r, int c)
 {
     reroot_at_context(c);
 
-    return find_precomputed_exchangeable_reg(r);
+    return find_precomputed_interchangeable_reg(r);
 }
 
 // This is an evaluation loop that follows calls instead of results
 // so that it doesn't jump over modifiables.
-optional<int> reg_heap::find_precomputed_exchangeable_reg(int r)
+optional<int> reg_heap::find_precomputed_interchangeable_reg(int r)
 {
     while(true)
     {
@@ -1442,7 +1442,7 @@ optional<int> reg_heap::find_precomputed_exchangeable_reg(int r)
             return {};
         else if (reg_is_changeable(r)) // 3
         {
-            if (is_exchangeable(C.exp))
+            if (is_interchangeable(C.exp))
             {
                 assert(reg_has_call(r));
                 assert(reg_is_forced(r));
@@ -1929,7 +1929,7 @@ int reg_heap::allocate_reg_from_step(int s, closure&& C)
     return r;
 }
 
-void reg_heap::exchange_regs(int r1, int r2, int t)
+void reg_heap::interchange_regs(int r1, int r2, int t)
 {
     assert(r1 != r2);
     assert(reg_is_changeable(r1));
@@ -1941,24 +1941,24 @@ void reg_heap::exchange_regs(int r1, int r2, int t)
     if (not is_root_token(t))
         assert(tokens[t].type == token_type::set);
 
-    // Check that this r1 indeed exchangeable
-    if (not is_exchangeable(expression_at(r1)))
-        throw myexception()<<"exchange_regs: reg1 ["<<r1<<"] = "<<closure_at(r1).print()<<" is not exchangeable!";
+    // Check that this r1 indeed interchangeable
+    if (not is_interchangeable(expression_at(r1)))
+        throw myexception()<<"interchange_regs: reg1 ["<<r1<<"] = "<<closure_at(r1).print()<<" is not interchangeable!";
 
-    // Check that this r2 is indeed exchangeable
-    if (not is_exchangeable(expression_at(r2)))
-        throw myexception()<<"exchange_regs: reg2 ["<<r2<<"] = "<<closure_at(r2).print()<<" is not exchangeable!";
+    // Check that this r2 is indeed interchangeable
+    if (not is_interchangeable(expression_at(r2)))
+        throw myexception()<<"interchange_regs: reg2 ["<<r2<<"] = "<<closure_at(r2).print()<<" is not interchangeable!";
 
-    // Check that we are only exchanging steps for the same computation.
+    // Check that we are only interchanging steps for the same computation.
     if (closure_at(r1) != closure_at(r2))
-        throw myexception()<<"exchange_regs: reg1 ["<<r1<<"] = "<<closure_at(r1).print()<<
+        throw myexception()<<"interchange_regs: reg1 ["<<r1<<"] = "<<closure_at(r1).print()<<
                                         "and reg2 ["<<r2<<"] = "<<closure_at(r2).print()<<" are not the same!";
 
     assert(not is_root_token(t));
 
     assert(is_root_token(parent_token(t)));
 
-    tokens[t].exchanges.push_back({r1,r2});
+    tokens[t].interchanges.push_back({r1,r2});
 
     assert(not children_of_token(t).size());
 }
@@ -2793,18 +2793,18 @@ void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
     set_reg_value(P, std::move(C), t);
 }
 
-void reg_heap::exchange_regs_in_context_(int r1, int r2, int c)
+void reg_heap::interchange_regs_in_context_(int r1, int r2, int c)
 {
     int t = switch_to_child_token(c, token_type::set);
 
-    exchange_regs(r1, r2, t);
+    interchange_regs(r1, r2, t);
 }
 
-void reg_heap::exchange_regs_in_context(int r1, int r2, int c)
+void reg_heap::interchange_regs_in_context(int r1, int r2, int c)
 {
     force_simple_set_path_to_PPET(c);
 
-    exchange_regs_in_context_(r1, r2, c);
+    interchange_regs_in_context_(r1, r2, c);
 }
 
 bool reg_heap::execution_allowed() const

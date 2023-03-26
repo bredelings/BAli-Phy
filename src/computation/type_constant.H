@@ -25,7 +25,7 @@ enum type_constant {null_type,
                     expression_type=200,
                     eptree_type,
                     modifiable_type,
-                    exchangeable_type,
+                    interchangeable_type,
                     trim_type,
                     let_type,
 

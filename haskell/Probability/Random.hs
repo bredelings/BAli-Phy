@@ -102,7 +102,7 @@ data Random a where
     RanMFix :: (a -> Random a) -> Random a
     RanDistribution :: Distribution a -> Random a
     RanSamplingRate :: Double -> Random a -> Random a
-    RanExchangeable :: Random b -> Random (Random b)
+    RanInterchangeable :: Random b -> Random (Random b)
 
 instance Functor Random where
     fmap f r = RanBind r (return . f)
@@ -127,7 +127,7 @@ instance MonadIO Random where
     liftIO = RanLiftIO
 
 lazy = Lazy
-exchangeable = RanExchangeable
+interchangeable = RanInterchangeable
 infixl 2 `with_tk_effect`
 with_tk_effect = WithTKEffect
 
@@ -140,7 +140,7 @@ run_strict (RanBind f g) = do
 run_strict (RanReturn v) = return v
 run_strict (RanLiftIO a) = a
 run_strict (RanSamplingRate _ a) = run_strict a
-run_strict (RanExchangeable r) = return r
+run_strict (RanInterchangeable r) = return r
 -- These are the lazily executed parts of the strict monad.
 run_strict dist@(RanDistribution _) = run_lazy dist
 run_strict e@(WithTKEffect _ _) = run_lazy e
@@ -174,7 +174,7 @@ run_lazy (RanDistribution (Distribution _ _ _ a _)) = unsafeInterleaveIO $ run_l
 run_lazy (PerformTKEffect e) = run_tk_effects 1.0 e
 run_lazy (WithTKEffect action _) = run_lazy action
 run_lazy (Lazy a) = run_lazy a
-run_lazy (RanExchangeable a) = return a
+run_lazy (RanInterchangeable a) = return a
 run_lazy (Observe _ _) = error "run_lazy: observe"
 
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
@@ -187,8 +187,8 @@ run_strict' rate (RanReturn v) = return v
 run_strict' rate (RanLiftIO io) = io
 run_strict' rate (PerformTKEffect e) = run_tk_effects rate e
 run_strict' rate (RanSamplingRate rate2 a) = run_strict' (rate*rate2) a
-run_strict' rate (RanExchangeable r) = fmap liftIO $ exchangeableIO $ run_strict' rate r
 -- These are the lazily executed parts of the strict monad.
+run_strict' rate ix@(RanInterchangeable r) = run_lazy' rate ix
 run_strict' rate dist@(RanDistribution _) = run_lazy' rate dist
 run_strict' rate e@(WithTKEffect _ _) = run_lazy' rate e
 run_strict' rate (RanMFix f) = mfix (run_lazy' rate . f)
@@ -228,7 +228,7 @@ interchange_entries id c = makeIO $ builtin_interchange_entries id c
 
 foreign import bpcall "MCMC:" register_interchangeable :: Int -> a -> Effect
 
-foreign import bpcall "Modifiables:exchangeable" builtin_interchangeable :: (a->b) -> a -> c -> b
+foreign import bpcall "Modifiables:interchangeable" builtin_interchangeable :: (a->b) -> a -> c -> b
 
 interchangeableIO id x s = let e = builtin_interchangeable unsafePerformIO x s
                            in register_interchangeable id e `seq` e
@@ -272,7 +272,7 @@ run_lazy' rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
   result <- unsafeInterleaveIO $ run_lazy' rate action
   run_tk_effects rate $ tk_effect result
   return result
-run_lazy' rate (RanExchangeable r) = do
+run_lazy' rate (RanInterchangeable r) = do
   id <- unsafeInterleaveIO $ getInterchangeableId
   register_transition_kernel rate $ interchange_entries id
   return $ liftIO $ IO (\s -> (s, interchangeableIO id (run_lazy' rate r) s))

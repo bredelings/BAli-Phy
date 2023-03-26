@@ -1,7 +1,7 @@
 #include "exchangeable.H"
 #include "index_var.H"
 
-closure exchangeable_op(OperationArgs& Args)
+closure interchangeable_op(OperationArgs& Args)
 {
     Args.make_changeable();
     
@@ -22,14 +22,14 @@ closure exchangeable_op(OperationArgs& Args)
     return {index_var(0),{r_call}};
 }
 
-exchangeable::exchangeable():
-    Operation(2, exchangeable_op, "exchangeable")
+interchangeable::interchangeable():
+    Operation(2, interchangeable_op, "interchangeable")
 {}
 
-bool is_exchangeable(const expression_ref& E)
+bool is_interchangeable(const expression_ref& E)
 {
-    bool result = E.head().type() == exchangeable_type;
-    assert(result == E.head().is_a<exchangeable>());
+    bool result = E.head().type() == interchangeable_type;
+    assert(result == E.head().is_a<interchangeable>());
     return result;
 }
 

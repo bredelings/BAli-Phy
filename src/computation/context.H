@@ -139,8 +139,8 @@ public:
     /// Set the value of a modifiable
     void set_modifiable_value(int r, const expression_ref&);
 
-    /// Set the value of a modifiable
-    void exchange_regs(int r1, int r2);
+    /// Swap the steps for two modifiables.
+    void interchange_regs(int r1, int r2);
 
     std::optional<int> out_edges_from_dist(int r) const;
     const std::set<int>* out_edges_to_var(int r) const;

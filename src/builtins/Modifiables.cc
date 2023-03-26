@@ -179,13 +179,13 @@ extern "C" closure builtin_function_modifiable_apply(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_exchangeable(OperationArgs& Args)
+extern "C" closure builtin_function_interchangeable(OperationArgs& Args)
 {
     int f_reg = Args.reg_for_slot(0);
     int x_reg = Args.reg_for_slot(1);
 
     // Allocate a reg, and fill it with a modifiable of the correct index
-    expression_ref mod_exp( exchangeable(),{index_var(1), index_var(0)} );
+    expression_ref mod_exp( interchangeable(),{index_var(1), index_var(0)} );
 
     return {mod_exp, {f_reg, x_reg}};
 }

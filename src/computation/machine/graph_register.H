@@ -162,13 +162,13 @@ struct set_op
     closure value;
 };
 
-struct exchange_op
+struct interchange_op
 {
     int r1;
     int r2;
 };
 
-typedef std::variant<set_op, exchange_op> set_exchange_op;
+typedef std::variant<set_op, interchange_op> set_interchange_op;
 
 // These bits are used in evaluation as well as unsharing.
 
@@ -356,7 +356,7 @@ private:
 
     bool simple_set_path_to(int child_token) const;
 
-    std::vector<set_exchange_op> find_set_regs_on_path(int child_token) const;
+    std::vector<set_interchange_op> find_set_regs_on_path(int child_token) const;
 
     int force_simple_set_path_to_PPET(int c);
 
@@ -458,9 +458,9 @@ public:
 
     std::optional<int> find_precomputed_modifiable_reg_in_context(int R, int c);
 
-    std::optional<int> find_precomputed_exchangeable_reg(int R);
+    std::optional<int> find_precomputed_interchangeable_reg(int R);
 
-    std::optional<int> find_precomputed_exchangeable_reg_in_context(int R, int c);
+    std::optional<int> find_precomputed_interchangeable_reg_in_context(int R, int c);
 
     std::optional<int> find_modifiable_reg_in_context(int R, int c);
 
@@ -491,7 +491,7 @@ public:
         mapping vm_step;
         mapping vm_force_count;
 
-        std::vector<exchange_op> exchanges;
+        std::vector<interchange_op> interchanges;
 
         boost::container::small_vector< int, 2> prev_prog_active_refs;
         boost::container::small_vector< int, 2> prev_prog_inactive_refs;
@@ -610,10 +610,10 @@ public:
     const expression_ref& get_reg_value_in_context(int& R, int c);
 
 private:
-    void exchange_regs_in_context_(int r1, int r2, int c);
+    void interchange_regs_in_context_(int r1, int r2, int c);
 
 public:
-    void exchange_regs_in_context(int r1, int r2, int c);
+    void interchange_regs_in_context(int r1, int r2, int c);
 
     void set_reg_value_in_context(int index, closure&& C, int c);
 
@@ -715,7 +715,7 @@ public:
 
     /*----- Graph splitting -----*/
     /// Update the value of a non-constant, non-computed index
-    void exchange_regs(int r1, int r2, int t);
+    void interchange_regs(int r1, int r2, int t);
     void set_reg_value(int index, closure&&, int t);
     bool reg_is_shared(int t, int r) const;
     void check_created_regs_unshared(int t1);

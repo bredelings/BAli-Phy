@@ -1,22 +1,22 @@
-#ifndef EXCHANGEABLE_H
-#define EXCHANGEABLE_H
+#ifndef INTERCHANGEABLE_H
+#define INTERCHANGEABLE_H
 
 #include "computation/closure.H"
 #include "computation/type_constant.H"
 #include "computation/operation.H"
 #include "computation/machine/args.H"
 
-closure exchangeable_op(OperationArgs&);
+closure interchangeable_op(OperationArgs&);
 
-struct exchangeable: public Operation
+struct interchangeable: public Operation
 {
-    exchangeable* clone() const {return new exchangeable(*this);}
+    interchangeable* clone() const {return new interchangeable(*this);}
 
-    type_constant type() const {return exchangeable_type;}
+    type_constant type() const {return interchangeable_type;}
 
-    exchangeable();
+    interchangeable();
 };
 
-bool is_exchangeable(const expression_ref&);
+bool is_interchangeable(const expression_ref&);
 
 #endif

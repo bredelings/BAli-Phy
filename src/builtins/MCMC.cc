@@ -1116,7 +1116,7 @@ extern "C" closure builtin_function_register_interchangeable(OperationArgs& Args
 
     r_ix = M.follow_index_var_no_force(r_ix);
 
-    assert(M.expression_at(r_ix).head().is_a<exchangeable>());
+    assert(M.expression_at(r_ix).head().is_a<interchangeable>());
 
     // 3. Create the effect
     object_ptr<RegisterInterchangeable> e(new RegisterInterchangeable{id, r_ix});
@@ -1133,7 +1133,7 @@ Proposal interchange_regs_proposal(int r1, int r2)
     return [=](context_ref& C)
            {
                // 1. Interchange the regs
-               C.exchange_regs(r1, r2);
+               C.interchange_regs(r1, r2);
 
                // 2. Return the proposal ratio
                return 1.0;
