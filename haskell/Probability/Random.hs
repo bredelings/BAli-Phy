@@ -219,6 +219,20 @@ sample_effect rate dist tk_effect x = do
   return ()
 
 
+
+foreign import bpcall "MCMC:getInterchangeableId" builtin_getInterchangeableId :: RealWorld -> Int
+getInterchangeableId = makeIO $ builtin_getInterchangeableId
+
+foreign import bpcall "MCMC:interchange_entries" builtin_interchange_entries :: Int -> ContextIndex -> RealWorld -> ()
+interchange_entries id c = makeIO $ builtin_interchange_entries id c
+
+foreign import bpcall "MCMC:" register_interchangeable :: Int -> a -> Effect
+
+foreign import bpcall "Modifiables:exchangeable" builtin_interchangeable :: (a->b) -> a -> c -> b
+
+interchangeableIO id x s = let e = builtin_interchangeable unsafePerformIO x s
+                           in register_interchangeable id e `seq` e
+
 -- It seems like we could return raw_x in most cases, except the case of a tree.
 -- But in the tree case, we could return triggered_x.
 
@@ -258,7 +272,10 @@ run_lazy' rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
   result <- unsafeInterleaveIO $ run_lazy' rate action
   run_tk_effects rate $ tk_effect result
   return result
-run_lazy' rate (RanExchangeable r) = fmap liftIO $ exchangeableIO $ run_lazy' rate r
+run_lazy' rate (RanExchangeable r) = do
+  id <- unsafeInterleaveIO $ getInterchangeableId
+  register_transition_kernel rate $ interchange_entries id
+  return $ liftIO $ IO (\s -> (s, interchangeableIO id (run_lazy' rate r) s))
 
 gen_model_no_alphabet m = run_strict' 1.0 m
 mcmc = gen_model_no_alphabet
