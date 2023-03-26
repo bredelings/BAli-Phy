@@ -2,6 +2,7 @@
 #include "computation/machine/args.H"
 #include "computation/context.H"
 #include "computation/expression/index_var.H"
+#include "computation/expression/exchangeable.H"
 #include "util/myexception.H"
 #include "computation/machine/graph_register.H"
 #include "computation/machine/effects.H"
@@ -1091,35 +1092,47 @@ extern "C" closure builtin_function_accept_MH(OperationArgs& Args)
     return {accept};
 }
 
-vector<int> get_exchangeable_list_entries_in_context(int list_reg, context_ref& C, reg_heap& M)
+extern "C" closure builtin_function_getInterchangeableId(OperationArgs& Args)
 {
-    auto list_ptr = context_ptr(C, list_reg);
+    reg_heap& M = Args.memory();
 
-    vector<int> exchange_regs;
-    while(list_ptr.size() != 0)
-    {
-        int r_list = list_ptr.get_reg();
-        int r_element = M.closure_at(r_list).reg_for_slot(0);
+    int id = M.next_interchangeable_id++;
 
-        if (auto e = M.find_precomputed_exchangeable_reg(r_element))
-            exchange_regs.push_back(*e);
-
-        int r_next = M.closure_at(r_list).reg_for_slot(1);
-        r_next = M.follow_index_var(r_next);
-        if (M.reg_is_unevaluated(r_next) or (M.reg_is_changeable(r_next) and not M.reg_is_forced(r_next)))
-            break;
-
-        list_ptr = list_ptr[1];
-    }
-
-    return exchange_regs;
+    return {id};
 }
 
-Proposal exchange_regs_proposal(int r1, int r2)
+
+extern "C" closure builtin_function_register_interchangeable(OperationArgs& Args)
+{
+    // 1. Get the interchangeable id.
+    int id = Args.evaluate(0).as_int();
+
+    // 2. Force the interchangeable and get its address
+    Args.evaluate_(1);
+
+    int r_ix = Args.current_closure().reg_for_slot(1);
+
+    auto& M = Args.memory();
+
+    r_ix = M.follow_index_var_no_force(r_ix);
+
+    assert(M.expression_at(r_ix).head().is_a<exchangeable>());
+
+    // 3. Create the effect
+    object_ptr<RegisterInterchangeable> e(new RegisterInterchangeable{id, r_ix});
+
+    int r_effect = Args.allocate(closure(e));
+
+    Args.set_effect(r_effect);
+
+    return {index_var(0), {r_effect}};
+}
+
+Proposal interchange_regs_proposal(int r1, int r2)
 {
     return [=](context_ref& C)
            {
-               // 1. Exchange the regs
+               // 1. Interchange the regs
                C.exchange_regs(r1, r2);
 
                // 2. Return the proposal ratio
@@ -1146,43 +1159,48 @@ pair<int,int> random_different_element_pair(const vector<int>& v)
 }
 
 
-extern "C" closure builtin_function_exchange_list_entries(OperationArgs& Args)
+extern "C" closure builtin_function_interchange_entries(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
 
     //------------- 1. Get list arguments --------------//
-    int list_reg = Args.reg_for_slot(0);
-
     int c1 = Args.evaluate(1).as_int();
 
-    //------------ 2. Find exchangeable regs ----------//
     context_ref C1(M, c1);
 
-    auto exchange_regs = get_exchangeable_list_entries_in_context(list_reg, C1, M);
+    // int id = Args.evaluate(0).as_int();
+    int id = C1.get_reg_value(Args.reg_for_slot(0)).as_int();
 
-    if (log_verbose >= 3)
+    //------------ 2. Find interchangeable regs ----------//
+    if (M.interchangeables.count(id))
     {
-        std::cerr<<"\n\n[exchange_list_entries] list = <"<<list_reg<<">    exchangeable entries = ";
-        for(auto& r: exchange_regs)
-            std::cerr<<"<"<<r<<"> ";
-        std::cerr<<"\n";
-    }
+        vector<int> interchange_regs;
+        for(int r: M.interchangeables.at(id))
+            interchange_regs.push_back(r);
 
-    if (exchange_regs.size() > 1)
-    {
-        auto [r1, r2] = random_different_element_pair(exchange_regs);
-        if (log_verbose >= 3) std::cerr<<"\n\n[exchange_list_entries] exchanging = <"<<r1<<"> and <"<<r2<<">\n";
-        perform_MH_(M, c1, exchange_regs_proposal(r1, r2));
-    }
+        if (log_verbose >= 3)
+        {
+            std::cerr<<"\n\n[interchange_list_entries] id = <"<<id<<">    interchangeable entries = ";
+            for(auto& r: interchange_regs)
+                std::cerr<<"<"<<r<<"> ";
+            std::cerr<<"\n";
+        }
 
-    // Don't don't this if there are only 2 regs, as we've already permuted them, and don't want to go back.
-    if (exchange_regs.size() >= 4)
-    {
-        int r1 = exchange_regs[ uniform_int(0, exchange_regs.size()-2) ];
-        int r2 = exchange_regs.back();
-        if (log_verbose >= 3) std::cerr<<"\n\n[exchange_list_entries] exchanging = <"<<r1<<"> and <"<<r2<<">\n";
-        perform_MH_(M, c1, exchange_regs_proposal(r1, r2));
+        int n = 0;
+        if (interchange_regs.size() >= 2)
+        {
+            n = sqrt( interchange_regs.size() );
+            if (uniform_int(0,1))
+            n = std::max(0, n-1);
+        }
+
+        for(int i=0;i<n;i++)
+        {
+            auto [r1, r2] = random_different_element_pair(interchange_regs);
+            if (log_verbose >= 3) std::cerr<<"\n\n[interchange_list_entries] interchanging = <"<<r1<<"> and <"<<r2<<">\n";
+            perform_MH_(M, c1, interchange_regs_proposal(r1, r2));
+        }
     }
 
     return constructor("()",0);
