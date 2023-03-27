@@ -1,8 +1,13 @@
 * 4.0-beta3
-- Features
-  + Add +,-,*,/ to command-line model language.
 - Changes
-  + Change model-stacking operator from '+' to '+>' in command-line model language.
+  + Command-line model language
+    - Change model-stacking operator from '+' to '+>'
+    - Add numeric '+', '-', '*', '/'
+    - Functions are now called like f(x) instead of f[x].
+    - Lambda functions are new written like `function(w: E)`.
+    - Allow specifying lists like [x,y], tuples with (x,y).
+    - Allow specifying dictionaries (lists of pairs) like {"A":x,"B",y}.
+    - Allow writing 'x=v; E' for 'let[x=v,E]'.
 
 * 4.0-beta2 (Mar 21, 2023)
 - Features
