@@ -44,13 +44,22 @@ then you may need to install meson through the python package manager "pip" or "
 
 Build BAli-Phy
 --------------
+
+This will build the 4.0-beta2 version of BAli-Phy, which fixes some memory issues in 3.6.
+
 ```
 git clone https://github.com/bredelings/BAli-Phy.git
 cd BAli-Phy
+git checkout 4.0-beta2       # This will complain about detached HEAD.
 meson build --prefix=$HOME/Applications/bali-phy
 ninja -C build install
 ninja -C build test
 ```
+
+If you want to build the latest, unreleased beta version of bali-phy, then remove the `git checkout` line.
+
+After 4.0-beta2, there are some changes to the model language.  Check the NEWS file.
+
 
 Adding bali-phy to your `$PATH`
 ------------------------------
