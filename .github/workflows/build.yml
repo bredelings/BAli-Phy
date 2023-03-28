@@ -19,6 +19,7 @@ jobs:
                ubuntu-gcc-11,
                ubuntu-gcc-12,
                ubuntu-clang-13,
+               macos-xcode-13,
                macos-xcode-14,
                windows
                ]
@@ -79,6 +80,13 @@ jobs:
             os: macos-12
             compiler: xcode
             version: "14"
+            buildtype: "release"
+            arch: "mac64"
+
+          - name: macos-xcode-13
+            os: macos-11
+            compiler: xcode
+            version: "13"
             buildtype: "release"
             arch: "mac64"
 
