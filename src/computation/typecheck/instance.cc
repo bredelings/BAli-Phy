@@ -432,9 +432,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
     pop_note();
 
     // 6. Start adding fields for the superclass dictionaries
-    vector<Hs::Expression> dict_entries;
-    for(auto& wanted: wanteds)
-        dict_entries.push_back(wanted.ev_var);
+    auto dict_entries = dict_vars_from_lie<Core::Exp>(wanteds);
 
     // 7. Construct binds_methods
     Hs::Decls decls;
