@@ -12,7 +12,6 @@ import Control.Monad.IO.Class -- for liftIO
 import Data.IntMap (IntMap)
 import Data.Array (Array)
 
-data SamplingEvent
 
 data AnnotatedDensity a where
     InEdge :: String -> b -> AnnotatedDensity ()
