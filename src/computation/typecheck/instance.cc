@@ -188,10 +188,12 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 
     auto S = symbol_info(dvar.name, instance_dfun_symbol, {}, {}, {});
     S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{eqn.free_tvs,{},TypeCon({noloc,"~"}),{lhs, eqn.rhs}} );
+    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{eqn.free_tvs, lhs, eqn.rhs} );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
     this_mod().local_instances.insert( {dvar, *S.instance_info} );
+    this_mod().local_eq_instances.insert( {dvar, *S.eq_instance_info} );
 
     pop_source_span();
     pop_note();

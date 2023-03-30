@@ -30,6 +30,7 @@ struct OpInfo
 struct VarInfo;
 struct DataConInfo;
 struct InstanceInfo;
+struct EqInstanceInfo;
 
 // Unknown_symbol is for when we add symbol where the only thing we know is fixity.
 // If we create a fixity environment instead, we could avoid that.
@@ -55,6 +56,7 @@ struct symbol_info
     std::shared_ptr<VarInfo> var_info;
     std::shared_ptr<DataConInfo> con_info;
     std::shared_ptr<InstanceInfo> instance_info;
+    std::shared_ptr<EqInstanceInfo> eq_instance_info;
 
     // Set to false if this is just for exporting information about vars like Data.Bool.$v#55 that are created by optimization.
     // Variables like this currently have no type info.

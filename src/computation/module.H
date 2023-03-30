@@ -48,9 +48,6 @@ typedef std::shared_ptr<const symbol_info> const_symbol_ptr;
 typedef std::shared_ptr<type_info> type_ptr;
 typedef std::shared_ptr<const type_info> const_type_ptr;
 
-struct InstanceInfo;
-typedef std::map<Core::Var, InstanceInfo> InstanceEnv;
-
 class Module
 {
     std::map<std::string, symbol_ptr> symbols;
@@ -82,6 +79,7 @@ public:
     std::map<std::string, std::shared_ptr<const Module>> transitively_imported_modules;
 
     InstanceEnv local_instances;
+    EqInstanceEnv local_eq_instances;
 
     CDecls value_decls;
 

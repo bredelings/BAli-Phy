@@ -4,9 +4,14 @@
 
 #include "util/variant.H"
 
-using std::vector;
+#include <range/v3/all.hpp>
 
-vector<Type> Solver::rewrite(ConstraintFlavor flavor, vector<Type> types) const
+namespace views = ranges::views;
+
+using std::vector;
+using std::string;
+
+vector<Type> Solver::rewrite(ConstraintFlavor flavor, vector<Type> types)
 {
     for(auto& type: types)
         type = rewrite(flavor, type);
@@ -51,7 +56,7 @@ Type Solver::rewrite_tv(ConstraintFlavor flavor, const TypeVar& tv) const
     return tv;
 }
 
-Type Solver::rewrite_constrained_type(ConstraintFlavor flavor, const ConstrainedType& C) const
+Type Solver::rewrite_constrained_type(ConstraintFlavor flavor, const ConstrainedType& C)
 {
     auto C2 = C;
     C2.context.constraints = rewrite(flavor, C.context.constraints);
@@ -59,20 +64,53 @@ Type Solver::rewrite_constrained_type(ConstraintFlavor flavor, const Constrained
     return C2;
 }
 
-Type Solver::rewrite_forall(ConstraintFlavor flavor, const ForallType& forall) const
+Type Solver::rewrite_forall(ConstraintFlavor flavor, const ForallType& forall)
 {
     ForallType forall2 = forall;
     forall2.type = rewrite(flavor, forall.type);
     return forall2;
 }
 
-Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, const vector<Type>& args) const
+Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, const vector<Type>& args)
 {
     Type t = make_tyapps(tc, rewrite(flavor, args));
     if (auto t2 = expand_type_synonym(t))
         return rewrite(flavor, *t2);
     else if (auto tfam = is_type_fam_app(t))
     {
+        // This may not be necessary
+        auto& [fam_con, fam_args] = *tfam;
+
+        TypeCon type_eq(Located<string>({},"~"));
+        for(auto& [modid, mod]: this_mod().transitively_imported_modules)
+        {
+            for(auto& [dfun, info]: mod->local_eq_instances)
+            {
+                // if (info.tyfam_tycon != fam_con) continue;
+                
+                // Instantiate with metatyvars
+                auto s = get_subst_for_tv_binders(info.tvs);
+                auto lhs = apply_subst(s, info.lhs);
+                auto rhs = apply_subst(s, info.rhs);
+
+                // If the term matches the lhs, then return the rhs.
+                if (maybe_match(lhs, t)) return rewrite(flavor, rhs);
+            }
+        }
+
+        for(auto& [dfun, info]: this_mod().local_eq_instances)
+        {
+            // if (info.tyfam_tycon != fam_con) continue;
+                
+            // Instantiate with metatyvars
+            auto s = get_subst_for_tv_binders(info.tvs);
+            auto lhs = apply_subst(s, info.lhs);
+            auto rhs = apply_subst(s, info.rhs);
+
+            // If the term matches the lhs, then return the rhs.
+            if (maybe_match(lhs, t)) return rewrite(flavor, rhs);
+        }
+
         for(auto& inert: inerts.tyfam_eqs)
         {
             // Don't allow wanteds to rewrite givens
@@ -84,17 +122,23 @@ Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, co
             // FIXME: this doesn't handle forall types
             if (t == eq->t1) return eq->t2;
         }
+
+        // What about top-level type family equalities?
+        // Suppose we have (Result Normal ~ Double)?
+        //   We might be able to solve that as an instance of  a top-level type fam instance.
+        // How about Num (Result Normal)?
+        //   Here we need to use the top-level type fam instance to rewrite (Result Normal) to Double.
     }
 
     return t;
 }
 
-Type Solver::rewrite_app(ConstraintFlavor flavor, const Type& fun, const Type& arg) const
+Type Solver::rewrite_app(ConstraintFlavor flavor, const Type& fun, const Type& arg)
 {
     return TypeApp(rewrite(flavor, fun), rewrite(flavor, arg));
 }
 
-Type Solver::rewrite(ConstraintFlavor flavor, Type t) const
+Type Solver::rewrite(ConstraintFlavor flavor, Type t)
 {
     t = follow_meta_type_var(t);
 

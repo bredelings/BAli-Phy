@@ -18,6 +18,21 @@ struct InstanceInfo
     Type type() const;
 };
 
+struct EqInstanceInfo
+{
+    // forall tvs. lhs ~ rhs
+
+    std::vector<TypeVar> tvs;
+
+    // TypeCon lhs_tyfam_tycon;
+
+    Type lhs;
+    Type rhs;
+
+    Type type() const;
+};
+
 typedef std::map<Core::Var, InstanceInfo> InstanceEnv;
+typedef std::map<Core::Var, EqInstanceInfo> EqInstanceEnv;
 
 #endif

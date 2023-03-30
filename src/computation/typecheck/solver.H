@@ -119,14 +119,14 @@ struct Solver: public TypeChecker
     bool contains_type(const std::vector<Type>&, const Type&) const;
 
     bool is_rewritable_lhs(Type t) const;
-    Type rewrite(ConstraintFlavor, Type) const;
-    std::vector<Type> rewrite(ConstraintFlavor, std::vector<Type>) const;
+    Type rewrite(ConstraintFlavor, Type);
+    std::vector<Type> rewrite(ConstraintFlavor, std::vector<Type>);
     Type rewrite_mtv(ConstraintFlavor flavor, const MetaTypeVar&) const;
     Type rewrite_tv(ConstraintFlavor flavor, const TypeVar&) const;
-    Type rewrite_constrained_type(ConstraintFlavor flavor, const ConstrainedType&) const;
-    Type rewrite_forall(ConstraintFlavor flavor, const ForallType&) const;
-    Type rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon&, const std::vector<Type>&) const;
-    Type rewrite_app(ConstraintFlavor, const Type&, const Type&) const;
+    Type rewrite_constrained_type(ConstraintFlavor flavor, const ConstrainedType&);
+    Type rewrite_forall(ConstraintFlavor flavor, const ForallType&);
+    Type rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon&, const std::vector<Type>&);
+    Type rewrite_app(ConstraintFlavor, const Type&, const Type&);
     
     std::optional<Type> maybe_break_type_equality_cycle(const CanonicalEquality&, std::bitset<8>);
 
