@@ -192,6 +192,8 @@ run_strict' rate dist@(RanDistribution _) = run_lazy' rate dist
 run_strict' rate e@(WithTKEffect _ _) = run_lazy' rate e
 run_strict' rate (RanMFix f) = mfix (run_lazy' rate . f)
 run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
+run_strict' rate (RandomStructure _ _ _) = error "run_strict': RandomStructure"
+run_strict' rate (RanAtomic _ _) = error "run_strict': RanAtomic"
 
 -- NOTE: In order for (run_lazy') to actually be lazy, we need to avoid returning
 --       SOMETHING `seq` result.  And this means that we need to frequently
