@@ -290,6 +290,8 @@ public:
     void check_wanteds(TidyState&, std::vector<std::shared_ptr<Implication>>& implic_scopes, const WantedConstraints& wanteds);
     void check_wanteds(const WantedConstraints& wanteds);
 
+    substitution_t get_subst_for_tv_binders(const std::vector<TypeVar>& type_var_binders);
+
     std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const ConstraintOrigin& origin, const Type& t);
 
     std::tuple<Core::wrapper, Type> instantiate_emit(const ConstraintOrigin& origin, const Type& t);

@@ -1295,6 +1295,26 @@ TypeChecker::instantiateSigma(const ConstraintOrigin& origin, const Type& polyty
 //
 // Now, actually, we may NOT need this until add type /\s, because the dictionary arguments should be in the right order.
 
+substitution_t TypeChecker::get_subst_for_tv_binders(const vector<TypeVar>& type_var_binders)
+{
+    substitution_t s;
+    for(auto& tv: type_var_binders)
+    {
+        assert(tv.kind);
+        auto new_tv = fresh_meta_type_var(unloc(tv.name), *tv.kind);
+        s = s.insert({tv,new_tv});
+    }
+    return s;
+}
+
+vector<MetaTypeVar> new_meta_type_vars(const substitution_t& s)
+{
+    vector<MetaTypeVar> tvs;
+    for(auto& [tv,new_tv]: s)
+        tvs.push_back(new_tv.as_<MetaTypeVar>());
+    return tvs;
+}
+
 tuple<vector<MetaTypeVar>, LIE, Type> TypeChecker::instantiate(const ConstraintOrigin& origin, const Type& t)
 {
     // 1. Handle foralls
@@ -1304,17 +1324,9 @@ tuple<vector<MetaTypeVar>, LIE, Type> TypeChecker::instantiate(const ConstraintO
 
     if (auto fa = type.to<ForallType>())
     {
-        substitution_t s;
-        for(auto& tv: fa->type_var_binders)
-        {
-            assert(tv.kind);
-            auto new_tv = fresh_meta_type_var(unloc(tv.name), *tv.kind);
-            s = s.insert({tv,new_tv});
-
-            tvs.push_back(new_tv);
-        }
-        type = fa->type;
-        type = apply_subst(s,type);
+        auto s = get_subst_for_tv_binders(fa->type_var_binders);
+        tvs = new_meta_type_vars(s);
+        type = apply_subst(s, fa->type);
     }
 
     // 2. Handle constraints
