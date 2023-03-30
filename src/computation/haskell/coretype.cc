@@ -160,8 +160,8 @@ Type make_arrow_type(const Type& t1, const Type& t2)
 
 Type make_equality_pred(const Type& t1, const Type& t2)
 {
-    static TypeCon type_arrow(Located<string>({},"~"));
-    return TypeApp(TypeApp(type_arrow,t1),t2);
+    static TypeCon type_eq(Located<string>({},"~"));
+    return TypeApp(TypeApp(type_eq,t1),t2);
 }
 
 Type function_type(const vector<Type>& arg_types, const Type& result_type)
