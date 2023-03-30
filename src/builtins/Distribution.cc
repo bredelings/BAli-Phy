@@ -9,6 +9,8 @@
 #include "util/bounds.H"
 #include "util/rng.H"
 
+#include <boost/math/distributions.hpp>
+
 using std::vector;
 using std::string;
 using std::valarray;
@@ -77,6 +79,26 @@ extern "C" closure builtin_function_normal_density(OperationArgs& Args)
     return { normal_pdf(x, a1, a2) };
 }
  
+extern "C" closure builtin_function_normal_cdf(OperationArgs& Args)
+{
+    double mu = Args.evaluate(0).as_double();
+    double sigma = Args.evaluate(1).as_double();
+    double x  = Args.evaluate(2).as_double();
+    assert(sigma >= 0);
+
+    using boost::math::normal_distribution;
+
+    try
+    {
+        return { cdf(normal_distribution<>(mu,sigma),x) };
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr<<"Warning: normal_cdf (x="<<x<<", mu="<<mu<<", sigma="<<sigma<<"), "<<e.what()<<std::endl;
+        return { 0.0 };
+    }
+}
+
 extern "C" closure builtin_function_sample_normal(OperationArgs& Args)
 {
     double a1 = Args.evaluate_(0).as_double();
