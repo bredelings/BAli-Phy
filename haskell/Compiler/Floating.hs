@@ -48,6 +48,14 @@ x0 ^ y0 | y0 < 0 = error "Negative exponent"
 x ^ 1 = x
 x ^ n = x*(x^(n-1))
 
+instance Floating Double
+-- Question: does implementing this type class slow down the code?
+
+
+instance Floating LogDouble
+-- The problem is that only (sqrt, pow) and maybe (exp) really make sense for LogDouble.
+-- (log) can return negatives, as can many of the other functions.
+
 
 x ^^ n = if n >= 0 then x^n else recip (x^(negate n))
 
