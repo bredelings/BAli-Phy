@@ -61,6 +61,27 @@ extern "C" closure builtin_function_sample_beta(OperationArgs& Args)
     return { beta(a1, a2) };
 }
 
+extern "C" closure builtin_function_beta_cdf(OperationArgs& Args)
+{
+    double a = Args.evaluate(0).as_double();
+    double b = Args.evaluate(1).as_double();
+    double x  = Args.evaluate(2).as_double();
+    assert(a >= 0);
+    assert(b >= 0);
+
+    using boost::math::beta_distribution;
+
+    try
+    {
+        return { cdf(beta_distribution<>(a,b),x) };
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr<<"Warning: beta_cdf (x="<<x<<", a="<<a<<", b="<<b<<"), "<<e.what()<<std::endl;
+        return { 0.0 };
+    }
+}
+
 extern "C" closure builtin_function_beta_quantile(OperationArgs& Args)
 {
     double a1 = Args.evaluate(0).as_double();
