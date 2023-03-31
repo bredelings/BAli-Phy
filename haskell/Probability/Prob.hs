@@ -1,4 +1,10 @@
-module Probability.Prob where
+module Probability.Prob (Prob (..),
+                         complement,
+                         logProb,
+                         expToProb,
+                         logOdds,
+                         powProb)
+    where
 
 import Numeric.Log
 import Data.Ratio
@@ -23,7 +29,7 @@ fromProb Zero                 = 0
 fromProb (Odds y) | y < 0     = let e = exp y in e / (1 + e)
 fromProb (Odds y) | otherwise = 1 / (1 + exp(-y))
 fromProb One                  = 1
-fromProb (IOdds y)| y < 0     = let e = exp y in (1 + e) /e
+fromProb (IOdds y)| y < 0     = let e = exp y in (1 + e)/e
                   | otherwise = (1 + exp(-y))
 fromProb Infinity             = 1 / 0
 
@@ -146,5 +152,18 @@ instance Show Prob where
 logOdds (Odds y) = y
 logOdds p = logProb p - logProb (1-p)
 
--- Problem:
--- complement (1/3)  ==> "3 is not a probability"
+
+-- It would be nice if we could write y ** t, but t is not a Prob
+powProb One      t             = One
+powProb y        t | t == 0    = One
+powProb Zero     t | t < 0     = Infinity
+                   | otherwise = Zero      -- t > 0
+powProb Infinity t | t < 0     = Zero
+                   | otherwise = Infinity  -- t > 0
+powProb y        t             = expTo $ ln y * t
+
+instance Pow Prob where
+    ln = logProb
+    pow = powProb
+    expTo = expToProb
+

@@ -22,8 +22,8 @@ class Fractional a => Floating a where { }
 pi = 3.14159265358979323846
 foreign import bpcall "Real:exp" exp :: Double -> Double
 foreign import bpcall "Real:sqrt" sqrt :: Double -> Double
-foreign import bpcall "Real:log" log :: Double -> Double
-foreign import bpcall "Real:pow" (**) :: a -> a -> a
+foreign import bpcall "Real:log" log :: a -> Double
+foreign import bpcall "Real:pow" (**) :: a -> Double -> a
 foreign import bpcall "Real:logBase" logBase :: Double -> Double -> Double
 foreign import bpcall "Real:sin" sin :: Double -> Double
 foreign import bpcall "Real:tan" tan :: Double -> Double
@@ -41,7 +41,6 @@ foreign import bpcall "Real:acosh" acosh :: Double -> Double
 foreign import bpcall "Prelude:expToLogDouble" expToLogDouble :: Double -> LogDouble
 
 infixr 8 `pow`
-foreign import bpcall "Real:pow" pow :: LogDouble -> Double -> LogDouble
 
 
 instance Floating Double
@@ -53,3 +52,17 @@ instance Floating LogDouble
 -- (log) can return negatives, as can many of the other functions.
 
 
+class Fractional a => Pow a where
+    pow :: a -> Double -> a
+    ln  :: a -> Double
+    expTo :: Double -> a
+
+instance Pow Double where
+    pow   = (**)
+    ln    = log
+    expTo = exp
+
+instance Pow LogDouble where
+    pow   = (**)
+    ln    = log
+    expTo = expToLogDouble
