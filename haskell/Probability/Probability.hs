@@ -1,4 +1,4 @@
-module Probability.Probability where
+module Probability.Prob where
 
 import Numeric.Log
 import Data.Ratio
@@ -11,14 +11,14 @@ import Data.Ratio
 -- We could keep track of HOW MANY zeros!
 -- ... | Zero Int | ...
 -- Then we could penalize multiplying by an additional zero.
-data Probability = Zero | Odds Double | One | IOdds Double | Infinity
+data Prob = Zero | Odds Double | One | IOdds Double | Infinity
 
 complement Zero     = One
 complement (Odds y) = (Odds (-y))
 complement One      = Zero
 complement _        = error "complement: not a probability"
 
-fromProb :: Probability -> Double
+fromProb :: Prob -> Double
 fromProb Zero                 = 0
 fromProb (Odds y) | y < 0     = let e = exp y in e / (1 + e)
 fromProb (Odds y) | otherwise = 1 / (1 + exp(-y))
@@ -27,7 +27,7 @@ fromProb (IOdds y)| y < 0     = let e = exp y in (1 + e) /e
                   | otherwise = (1 + exp(-y))
 fromProb Infinity             = 1 / 0
 
-mkProb :: Double -> Probability
+mkProb :: Double -> Prob
 mkProb p | p < 0     = error "Negative Probability!"
          | p == 0    = Zero
          | p < 1     = Odds $ log $ p / (1-p)
@@ -36,7 +36,7 @@ mkProb p | p < 0     = error "Negative Probability!"
 --       | p == Inf  = Infinity
 
 -- Only defined on non-zero probabilities.
-logProb :: Probability -> Double
+logProb :: Prob -> Double
 logProb Zero                 = error "Probability: log(0)"
 logProb (Odds y) | y < 0     = y - log1p (exp y)
                  | otherwise = -log1p (exp (-y))
@@ -44,7 +44,7 @@ logProb One                  = 0
 logProb (IOdds y)            = -logProb (Odds y)
 logProb Infinity             = 1/0
 
-expToProb :: Double -> Probability
+expToProb :: Double -> Prob
 expToProb z | z < 0     = Odds $ z - log1p (-exp z)
             | z == 0    = One
             | z > 0     = let Odds z2 = expToProb (-z) in IOdds z2
@@ -90,7 +90,7 @@ mul (Odds y1) (IOdds y2) | y1 == y2 = One
 mul (IOdds y1) (Odds y2) = mul (Odds y2) (IOdds y1)
 mul (IOdds y1) (IOdds y2) = let (Odds y3) = mul (Odds y1) (Odds y2) in IOdds y3
 
-instance Eq Probability where
+instance Eq Prob where
     (Odds y1)  == (Odds y2)  = y1 == y2
     (IOdds y1) == (IOdds y2) = y1 == y2
     x          == y          = pord x == pord y
@@ -101,12 +101,12 @@ pord One       = 2
 pord (IOdds _) = 3
 pord Infinity  = 4
 
-instance Ord Probability where
+instance Ord Prob where
     (Odds y1) < (Odds y2) = y1 < y2
     (IOdds y1) < (IOdds y2) = y1 > y2
     x < y  = pord x < pord y
 
-instance Num Probability where
+instance Num Prob where
     (+) = plus
     (-) = sub
     (*) = mul
@@ -119,14 +119,14 @@ instance Num Probability where
     fromInteger x | x < 0     = error "Negative Probability!"
                   | otherwise = mkProb $ fromInteger x
 
-instance Real Probability where
+instance Real Prob where
     toRational Zero = 0 % 1
     toRational (Odds y) = toRational $ fromProb (Odds y)
     toRational One  = 1 % 1
     toRational (IOdds y) = toRational $ fromProb (IOdds y)
     toRational Infinity = 1 % 0
 
-instance Fractional Probability where
+instance Fractional Prob where
     recip Zero      = Infinity
     recip (Odds y)  = IOdds y
     recip One       = One
@@ -135,7 +135,7 @@ instance Fractional Probability where
 
     fromRational x = mkProb x
 
-instance Show Probability where
+instance Show Prob where
     show Zero = "0"
     show (Odds y) = show $ fromProb (Odds y)
     show One = "1"
