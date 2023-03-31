@@ -53,7 +53,7 @@ plus Zero      x        = x
 plus x         Zero     = x
 plus Infinity  x        = Infinity
 plus x         Infinity = Infinity
-plus (Odds y1) (Odds y2) | y12 > 0    = mkProb (fromProb x1 + fromProb x2)
+plus (Odds y1) (Odds y2) | y12 > 0    = mkProb (fromProb (Odds y1) + fromProb (Odds y2))
                          | y12 == 0   = One
                          | y12 > (-1) = One - mkProb (expm1 (y12) / (1 + exp y1) / (1 + exp y2) )
                          | otherwise      = mkProb $ fromProb (Odds y1) + fromProb (Odds y2)
