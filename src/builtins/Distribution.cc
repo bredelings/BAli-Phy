@@ -10,38 +10,56 @@
 #include "util/rng.H"
 
 #include <boost/math/distributions.hpp>
+#include <boost/math/special_functions/gamma.hpp>
 
 using std::vector;
 using std::string;
 using std::valarray;
 
-extern "C" closure builtin_function_shifted_gamma_density(OperationArgs& Args)
+extern "C" closure builtin_function_gamma_density(OperationArgs& Args)
 {
     double a1    = Args.evaluate(0).as_double();
     double a2    = Args.evaluate(1).as_double();
-    double shift = Args.evaluate(2).as_double();
-    double x     = Args.evaluate(3).as_double();
+    double x     = Args.evaluate(2).as_double();
   
-    return { gamma_pdf(x-shift, a1, a2) };
+    return { gamma_pdf(x, a1, a2) };
 }
 
-extern "C" closure builtin_function_sample_shifted_gamma(OperationArgs& Args)
+extern "C" closure builtin_function_sample_gamma(OperationArgs& Args)
 {
     double a1    = Args.evaluate_(0).as_double();
     double a2    = Args.evaluate_(1).as_double();
-    double shift = Args.evaluate_(2).as_double();
   
-    return { gamma(a1, a2) + shift };
+    return { gamma(a1, a2) };
 }
 
-extern "C" closure builtin_function_shifted_gamma_quantile(OperationArgs& Args)
+extern "C" closure builtin_function_gamma_quantile(OperationArgs& Args)
 {
     double a1     = Args.evaluate(0).as_double();
     double a2     = Args.evaluate(1).as_double();
-    double shift  = Args.evaluate(2).as_double();
-    double p      = Args.evaluate(3).as_double();
+    double p      = Args.evaluate(2).as_double();
 
-    return { gamma_quantile(p, a1, a2) + shift };
+    return { gamma_quantile(p, a1, a2) };
+}
+
+extern "C" closure builtin_function_gamma_cdf(OperationArgs& Args)
+{
+    double a      = Args.evaluate(0).as_double();
+    double b      = Args.evaluate(1).as_double();
+    double x      = Args.evaluate(3).as_double();
+    assert(a >= 0);
+    assert(b >= 0);
+
+    try
+    {
+        double p = boost::math::gamma_p(a, x/b);
+        return {p};
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr<<"Warning: gamma_cdf (x="<<x<<", a="<<a<<", b="<<b<<"), "<<e.what()<<std::endl;
+        return { 0.0 };
+    }
 }
 
 extern "C" closure builtin_function_beta_density(OperationArgs& Args)

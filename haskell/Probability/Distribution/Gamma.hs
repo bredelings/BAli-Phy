@@ -4,9 +4,10 @@ import Probability.Random
 import Control.Monad.IO.Class
 import MCMC
 
-foreign import bpcall "Distribution:shifted_gamma_density" shifted_gamma_density :: Double -> Double -> Double -> Double -> LogDouble
-foreign import bpcall "Distribution:shifted_gamma_quantile" shifted_gamma_quantile :: Double -> Double -> Double -> Double -> Double
-foreign import bpcall "Distribution:sample_shifted_gamma" builtin_sample_shifted_gamma :: Double -> Double -> Double -> RealWorld -> Double
+foreign import bpcall "Distribution:" gamma_density  :: Double -> Double -> Double -> LogDouble
+foreign import bpcall "Distribution:" gamma_cdf      :: Double -> Double -> Double -> Double
+foreign import bpcall "Distribution:" gamma_quantile :: Double -> Double -> Double -> Double
+foreign import bpcall "Distribution:sample_gamma" builtin_sample_gamma :: Double -> Double -> RealWorld -> Double
 
 gamma_bounds shift = above shift
 gamma_effect shift x = add_move $ slice_sample_real_random_variable x (gamma_bounds shift)
