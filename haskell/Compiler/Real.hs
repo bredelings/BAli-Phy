@@ -2,6 +2,7 @@
 module Compiler.Real where
 
 import Compiler.Num
+import Compiler.Error
 import Data.Ord
 import Compiler.Ratio
 
@@ -14,3 +15,6 @@ instance Real Int where
 
 instance Real Integer where
     toRational n = Ratio n 1
+
+instance Real Double where
+    toRational x = error "undefined"
