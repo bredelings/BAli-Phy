@@ -12,6 +12,9 @@ class Num a => Fractional a where
 -- fromRational :: Rational -> a
     fromRational :: Double -> a
 
+    x / y = x * (recip y)
+    recip y = 1 / y
+
 foreign import bpcall "Prelude:" divide_double :: Double -> Double -> Double
 foreign import bpcall "Prelude:" recip_double :: Double -> Double
 
