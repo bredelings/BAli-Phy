@@ -1,11 +1,16 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Compiler.Integral where
 
+import Compiler.Error
 import Compiler.Enum
 import Compiler.Real
-import Compiler.Num (intToInteger,fromInteger)
+import Compiler.Num -- (intToInteger,fromInteger)
+import Data.Eq
+import Data.Function -- for (.)
+import Data.Ord      -- for (<)
 
 infixl 7 `quot`, `rem`, `div`, `mod`
+infixl 8 ^
 
 class (Real a, Enum a) => Integral a  where
     quot :: a -> a -> a
@@ -42,6 +47,16 @@ instance Integral Integer where
     div = div_integer
     mod = mod_integer
     toInteger x = x
-    
+
     
 fromIntegral x = fromInteger (toInteger x)
+
+even n = n `rem` 2 == 0
+odd = not . even
+
+(^) :: (Num a, Integral b) => a -> b -> a
+x ^ y | y < 0   = error "Negative exponent"
+      | y == 0  = 1
+      | y == 1  = x
+      | even y   = (x*x) ^ (y `quot` 2)        -- y >= 2
+      | otherwise = x * ((x*x) ^ (y `quot` 2)) -- y >= 3

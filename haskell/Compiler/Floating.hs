@@ -4,10 +4,11 @@ module Compiler.Floating where
 import Compiler.Error
 import Compiler.Num -- for LogDouble
 import Compiler.Fractional
+import Compiler.Integral -- for quot, rem
+import Data.Function -- for (.)
 import Data.Ord
 
 infixl 8 **
-infixl 8 ^, ^^
 
 class Fractional a => Floating a where { }
 -- pi :: a
@@ -42,11 +43,6 @@ foreign import bpcall "Prelude:expToLogDouble" expToLogDouble :: Double -> LogDo
 infixr 8 `pow`
 foreign import bpcall "Real:pow" pow :: LogDouble -> Double -> LogDouble
 
--- We need == to use GHC's code directly
-(^) :: Num a => a -> Int -> a
-x0 ^ y0 | y0 < 0 = error "Negative exponent"
-x ^ 1 = x
-x ^ n = x*(x^(n-1))
 
 instance Floating Double
 -- Question: does implementing this type class slow down the code?
@@ -57,6 +53,3 @@ instance Floating LogDouble
 -- (log) can return negatives, as can many of the other functions.
 
 
-x ^^ n = if n >= 0 then x^n else recip (x^(negate n))
-
-                                        
