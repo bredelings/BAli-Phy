@@ -9,7 +9,7 @@ model = do
 
   ys <- iid_set n (exponential 1)
 
-  4 ~> normal (sum ys) 2
+  4 ~> normalDist (sum ys) 2
 
   return ["ys" %=% ys, "n" %=% length ys]
 

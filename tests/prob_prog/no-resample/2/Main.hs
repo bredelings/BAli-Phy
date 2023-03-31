@@ -6,7 +6,7 @@ model x = do
 
     y <- if n > 1 then normal 0.0 1.0 else exponential 1.0
 
-    x ~> normal y 1.0
+    x ~> normalDist y 1.0
 
     return ["n" %=% n, "y" %=% y]
 

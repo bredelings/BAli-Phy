@@ -2,12 +2,12 @@ import           Probability.Random
 import           Probability.Distribution.Normal
 
 observe_data z' = do
-    x <- normal 0.0 1.0
-    y <- normal x   1.0
-    z' ~> normal y 1.0
+    x <- normal 0 1
+    y <- normal x 1
+    z' ~> normalDist y 1
     return ["x" %=% x, "y" %=% y]
 
 main = do
-  let model = observe_data 1.0
+  let model = observe_data 1
 
   mcmc model

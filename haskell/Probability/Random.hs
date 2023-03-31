@@ -2,6 +2,7 @@ module Probability.Random (module Probability.Random,
                            module Range,
                            module Numeric.LogDouble,
                            module Numeric.Prob,
+                           module Probability.Dist,
                            modifiable)
     where
 
@@ -16,6 +17,7 @@ import Data.Array (Array)
 import Numeric.LogDouble
 import Numeric.Prob
 
+import Probability.Dist
 
 data AnnotatedDensity a where
     InEdge :: String -> b -> AnnotatedDensity ()
@@ -59,13 +61,38 @@ make_edges event (PropertyEdge name node) = do register_dist_property event node
 
 -- Define the Distribution type
 data Distribution a = Distribution String (a -> AnnotatedDensity [LogDouble]) (a->Double) (Random a) Range
-dist_name (Distribution n _ _ _ _) = n
-annotated_densities (Distribution _ ds _ _ _) = ds
 densities dist x = get_densities $ annotated_densities dist x
 density dist x = balanced_product (densities dist x)
-quantile (Distribution _ _ q _ _) = q
-sampler (Distribution _ _ _ s _) = s
 distRange (Distribution _ _ _ _ r) = r
+
+-- can we change all of these ^^ functions into member functions?
+
+-- We can observe from these.
+class Dist d => HasAnnotatedPdf d where
+    annotated_densities :: d -> Result d -> AnnotatedDensity [LogDouble]
+
+-- We know how to sample from these -- theres a default effect?
+class Dist d => Sampleable d where
+    sample :: d -> Random (Result d)
+
+instance Dist (Distribution a) where
+    type Result (Distribution a) = a
+    dist_name (Distribution n _ _ _ _) = n
+
+instance HasAnnotatedPdf (Distribution a) where
+    annotated_densities (Distribution _ ds _ _ _) = ds
+
+instance Sampleable (Distribution a) where
+    sample (Distribution _ _ _ s _ ) = s
+
+instance ContDist1D (Distribution Double) where
+    quantile (Distribution _ _ q _ _) = q
+
+
+-- Maybe we would just define `normal mu sigma = sample $ Normal mu sigma`?
+-- How about the effect?
+
+
 
 -- FIXME: We might need GADTS for
 --   Independant :: (Random a, Random b) -> Random (a,b)
@@ -104,6 +131,7 @@ data Random a where
     RanBind :: Random b -> (b -> Random a) -> Random a
     RanMFix :: (a -> Random a) -> Random a
     RanDistribution :: Distribution a -> Random a
+    RanDistribution2 :: (IOSampleable d, HasAnnotatedPdf d) => d -> (Result d -> TKEffects b) -> Random (Result d)
     RanSamplingRate :: Double -> Random a -> Random a
     RanInterchangeable :: Random b -> Random (Random b)
 
@@ -146,9 +174,15 @@ run_strict (RanSamplingRate _ a) = run_strict a
 run_strict (RanInterchangeable r) = return r
 -- These are the lazily executed parts of the strict monad.
 run_strict dist@(RanDistribution _) = run_lazy dist
+run_strict dist@(RanDistribution2 _ _) = run_lazy dist
 run_strict e@(WithTKEffect _ _) = run_lazy e
 run_strict (RanMFix f) = mfix (run_lazy . f)
 run_strict (Lazy r) = unsafeInterleaveIO $ run_lazy r
+run_strict (RandomStructure _ _ _) = error "run_strict: RandomStructure"
+run_strict (RanAtomic _ _) = error "run_strict: RanAtomic"
+run_strict (Observe _ _) = error "run_strict: Observe"
+run_strict (RanInterchangeable _) = error "run_strict: RanInterchangeable"
+run_strict (PerformTKEffect _) = error "run_strict: PerformTKEffect"
 
 add_move m = TKLiftIO $ (\rate -> register_transition_kernel rate m)
 
@@ -174,6 +208,7 @@ run_lazy (RanMFix f) = mfix (run_lazy.f)
 run_lazy (RanSamplingRate _ a) = run_lazy a
 -- Problem: distributions aren't part of the Random monad!
 run_lazy (RanDistribution (Distribution _ _ _ a _)) = unsafeInterleaveIO $ run_lazy a
+run_lazy (RanDistribution2 dist _) = unsafeInterleaveIO $ sampleIO dist
 run_lazy (PerformTKEffect e) = run_tk_effects 1.0 e
 run_lazy (WithTKEffect action _) = run_lazy action
 run_lazy (Lazy a) = run_lazy a
@@ -193,6 +228,7 @@ run_strict' rate (RanSamplingRate rate2 a) = run_strict' (rate*rate2) a
 -- These are the lazily executed parts of the strict monad.
 run_strict' rate ix@(RanInterchangeable r) = run_lazy' rate ix
 run_strict' rate dist@(RanDistribution _) = run_lazy' rate dist
+run_strict' rate dist@(RanDistribution2 _ _) = run_lazy' rate dist
 run_strict' rate e@(WithTKEffect _ _) = run_lazy' rate e
 run_strict' rate (RanMFix f) = mfix (run_lazy' rate . f)
 run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
@@ -260,6 +296,10 @@ run_lazy' rate (RanBind f g) = do
   x <- unsafeInterleaveIO $ run_lazy' rate f
   run_lazy' rate $ g x
 run_lazy' rate (RanReturn v) = return v
+run_lazy' rate (RanDistribution2 dist tk_effect) = do
+  x <- modifiableIO $ sampleIO dist
+  effect <- sample_effect rate dist tk_effect x
+  return (effect `seq` x)
 run_lazy' rate (RanDistribution dist@(Distribution _ _ _ (RanAtomic tk_effect do_sample) range)) = do
   x <- modifiableIO do_sample
   effect <- sample_effect rate dist tk_effect x

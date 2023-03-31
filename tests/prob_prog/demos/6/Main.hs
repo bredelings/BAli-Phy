@@ -31,7 +31,7 @@ model = do
     -- Brownian-bridge-like
     z <- random_walk_n 10 (\mu -> normal mu 1.0) 0.0
 
-    2.0 ~> normal (last z) 1.0
+    2.0 ~> normalDist (last z) 1.0
 
     return ["p" %=% p, "n" %=% n, "q" %=% q, "x" %=% x, "w" %=% w, "y" %=% y, "z" %=% z]
 

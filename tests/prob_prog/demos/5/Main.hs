@@ -11,7 +11,7 @@ model = do
 
     let zs = take 19 walk
 
-    2.0 ~> normal (last zs) 1.0
+    2.0 ~> normalDist (last zs) 1.0
 
     return ["zs" %=% zs]
 
