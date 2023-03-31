@@ -4,7 +4,7 @@ computation_sources = [
   'closure.cc',
   'program.cc',
   'preprocess.cc',
-  'module.cc', 'symbols.cc', 'data_con_info.cc',
+  'module.cc', 'symbols.cc', 'data_con_info.cc', 'instance_info.cc',
   'loader.cc',
   'context.cc',
   'operations.cc',
