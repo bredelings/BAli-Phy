@@ -5,27 +5,55 @@ import Control.Monad.IO.Class
 import MCMC
 
 foreign import bpcall "Distribution:sample_bernoulli" builtin_sample_bernoulli :: Double -> RealWorld -> Int
+sample_bernoulli p = makeIO $ builtin_sample_bernoulli p
+
+data Bernoulli = Bernoulli Prob
+
+instance Dist Bernoulli where
+    type Result Bernoulli = Int
+    dist_name _ = "bernoulli"
+
+instance IOSampleable Bernoulli where
+    sampleIO (Bernoulli p) = sample_bernoulli $ toFloating $ p
+
+
+instance HasPdf Bernoulli where
+    pdf (Bernoulli p) n | n == 0    = toFloating $ 1-p
+                        | n == 1    = toFloating $ p
+                        | otherwise = 0
+
+instance Dist1D Bernoulli where
+    cdf (Bernoulli p) n | n < 0     = 0
+                        | n == 1    = toFloating $ 1-p
+                        | otherwise = 1
+
+instance MaybeMean Bernoulli where
+    maybeMean (Bernoulli p) = Just $ toFloating p
+
+instance Mean Bernoulli
+
+instance MaybeVariance Bernoulli where
+    maybeVariance (Bernoulli p) = Just $ toFloating $ p * (1 - p)
+
+instance Variance Bernoulli
+
+instance HasAnnotatedPdf Bernoulli where
+    annotated_densities dist@(Bernoulli p) n = do
+       in_edge "p" p
+       return [pdf dist n]
+
+instance Sampleable Bernoulli where
+    sample dist = RanDistribution2 dist bernoulli_effect
 
 bernoulli_effect x = add_move (\c -> discrete_uniform_avoid_mh x 0 1 c)
 
-sample_bernoulli p = makeIO $ builtin_sample_bernoulli p
 ran_sample_bernoulli p = RanAtomic bernoulli_effect (sample_bernoulli p)
 
-bernoulli_density2 p q 1 = (doubleToLogDouble p)
-bernoulli_density2 p q 0 = (doubleToLogDouble q)
+bernoulliDist :: Double -> Bernoulli
+bernoulliDist p = Bernoulli (toFloating p)
 
-annotated_bernoulli_density2 p q x = do
-  in_edge "p" p
-  return [bernoulli_density2 p q x]
+bernoulli p = sample $ bernoulliDist p
 
-bernoulli p = bernoulli2 p (1-p)
-rbernoulli q = bernoulli2 (1-q) q
+rbernoulliDist q = Bernoulli (1-toFloating(q))
+rbernoulli q = sample $ rbernoulliDist q
 
-class HasBernoulli d where
-    bernoulli2 :: Double -> Double -> d Int
-
-instance HasBernoulli Distribution where
-    bernoulli2 p q = Distribution "bernoulli" (annotated_bernoulli_density2 p q) (no_quantile "bernoulli") (ran_sample_bernoulli p) (integer_between 0 1)
-
-instance HasBernoulli Random where
-    bernoulli2 p q = RanDistribution (bernoulli2 p q)
