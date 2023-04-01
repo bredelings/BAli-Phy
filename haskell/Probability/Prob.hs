@@ -4,7 +4,9 @@ module Probability.Prob (Prob (..),
                          expToProb,
                          logOdds,
                          powProb,
-                         fromProb)
+                         fromProb,
+                         toProb
+                        )
     where
 
 import Numeric.Log
@@ -34,12 +36,12 @@ fromProb (IOdds y)| y < 0     = let e = expTo y in (1 + e)/e
                   | otherwise = (1 + expTo(-y))
 fromProb Infinity             = 1 / 0
 
-mkProb :: Double -> Prob
-mkProb p | p < 0     = error "Negative Probability!"
+toProb :: Double -> Prob
+toProb p | p < 0     = error "Negative Probability!"
          | p == 0    = Zero
          | p < 1     = Odds $ log $ p / (1-p)
          | p == 1    = One
-         | p > 1     = let (Odds y) = mkProb (1/p) in IOdds y
+         | p > 1     = let (Odds y) = toProb (1/p) in IOdds y
 --       | p == Inf  = Infinity
 
 -- Only defined on non-zero probabilities.
@@ -60,13 +62,13 @@ plus Zero      x        = x
 plus x         Zero     = x
 plus Infinity  x        = Infinity
 plus x         Infinity = Infinity
-plus (Odds y1) (Odds y2) | y12 > 0    = mkProb (fromProb (Odds y1) + fromProb (Odds y2))
+plus (Odds y1) (Odds y2) | y12 > 0    = toProb (fromProb (Odds y1) + fromProb (Odds y2))
                          | y12 == 0   = One
-                         | y12 > (-1) = One - mkProb (expm1 (y12) / (1 + exp y1) / (1 + exp y2) )
-                         | otherwise      = mkProb $ fromProb (Odds y1) + fromProb (Odds y2)
+                         | y12 > (-1) = One - toProb (expm1 (y12) / (1 + exp y1) / (1 + exp y2) )
+                         | otherwise      = toProb $ fromProb (Odds y1) + fromProb (Odds y2)
                          where y12 = y1 + y2
 plus (IOdds y1) (Odds y2) = plus (Odds y2) (IOdds y1)
-plus x1         x2        = mkProb (fromProb x1 + fromProb x2)
+plus x1         x2        = toProb (fromProb x1 + fromProb x2)
 
 
 sub x        Zero        = x
@@ -75,9 +77,9 @@ sub Infinity _           = Infinity
 sub One      One         = Zero
 sub One      (Odds y)   = Odds (-y)
 sub p1@(Odds y1) p2@(Odds y2) | y1 >= y2 = p1 * (One - (p2/p1))
-sub (IOdds y1) (Odds y2) = mkProb (fromProb (IOdds y1) - fromProb (Odds y2))
+sub (IOdds y1) (Odds y2) = toProb (fromProb (IOdds y1) - fromProb (Odds y2))
 sub (IOdds y1) (IOdds y2) | y1 == y2 = Zero
-                          | y1 <  y2 = mkProb (fromProb (IOdds y1) - fromProb (IOdds y2))
+                          | y1 <  y2 = toProb (fromProb (IOdds y1) - fromProb (IOdds y2))
 sub _         _ = error "Negative probability"
 
 -- Done!
@@ -124,7 +126,7 @@ instance Num Prob where
     fromInteger 0 = Zero
     fromInteger 1 = One
     fromInteger x | x < 0     = error "Negative Probability!"
-                  | otherwise = mkProb $ fromInteger x
+                  | otherwise = toProb $ fromInteger x
 
 instance Real Prob where
     toRational Zero = 0 % 1
@@ -140,7 +142,7 @@ instance Fractional Prob where
     recip (IOdds y) = Odds y
     recip Infinity  = Zero
 
-    fromRational x = mkProb x
+    fromRational x = toProb x
 
 instance Show Prob where
     show Zero = "0"
