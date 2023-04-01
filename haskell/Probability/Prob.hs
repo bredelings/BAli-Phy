@@ -150,17 +150,25 @@ instance Show Prob where
 
 -- It WOULD be nice if we could write logOdds y = log (p/(1-p))
 logOdds (Odds y) = y
-logOdds p = logProb p - logProb (1-p)
+logOdds p = ln (p/(1-p))
 
+
+-- regions: (-Inf,-1], (-1, 0), (0,1), [1,Inf)
+-- we need to avoid exp(t*y) when t*y is large and positive.
 
 -- It would be nice if we could write y ** t, but t is not a Prob
-powProb One      t             = One
-powProb y        t | t == 0    = One
-powProb Zero     t | t < 0     = Infinity
-                   | otherwise = Zero      -- t > 0
-powProb Infinity t | t < 0     = Zero
-                   | otherwise = Infinity  -- t > 0
-powProb y        t             = expTo $ ln y * t
+powProb :: Prob -> Double -> Prob
+powProb One       t             = One
+powProb y         t | t == 0    = One
+powProb Zero      t | t < 0     = Infinity
+                    | otherwise = Zero      -- t > 0
+powProb Infinity  t | t < 0     = Zero
+                    | otherwise = Infinity  -- t > 0
+-- This probably works best for t > 1, when exp(tx) < exp(x).
+powProb (Odds y)  t | y > 30    = Odds $ y - log t
+                    | y < 0     = t*y - log ( (1+exp(y))**t - exp(t*y) )
+                    | otherwise = Odds $ negate $ log $ expm1 ( t * log1p ( exp (-y)) )
+powProb (IOdds y) t             = recip $ pow (Odds y) t
 
 instance Pow Prob where
     ln = logProb
