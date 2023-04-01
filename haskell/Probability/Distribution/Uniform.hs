@@ -6,17 +6,57 @@ import MCMC
 
 foreign import bpcall "Distribution:" uniform_density :: Double -> Double -> Double -> LogDouble
 foreign import bpcall "Distribution:sample_uniform" builtin_sample_uniform :: Double -> Double -> Int -> Double
+sample_uniform l u = makeIO $ builtin_sample_uniform l u
+
+data Uniform = Uniform Double Double
+
+instance Dist Uniform where
+    type Result Uniform = Double
+    dist_name _ = "uniform"
+
+instance IOSampleable Uniform where
+    sampleIO (Uniform l u) = sample_uniform l u
+
+instance HasPdf Uniform where
+    pdf (Uniform l u) = uniform_density l u
+
+instance Dist1D Uniform where
+    cdf (Uniform l u) x | x < l     = 0
+                        | x < u     = (x-l)/(u-l)
+                        | otherwise = 1
+
+
+instance ContDist1D Uniform where
+    quantile (Uniform l u) p = l + p*(u-l)
+
+instance MaybeMean Uniform where
+    maybeMean (Uniform l u) = Just $ (l + u)/2
+
+instance Mean Uniform
+
+instance MaybeVariance Uniform where
+    maybeVariance (Uniform l u) = Just $ (l-u)^2/12
+
+instance Variance Uniform
+
+instance HasAnnotatedPdf Uniform where
+    annotated_densities dist@(Uniform l u) x = do
+        in_edge "l" l
+        in_edge "u" u
+        return [pdf dist x]
+
+instance Sampleable Uniform where
+    sample dist@(Uniform l u) = RanDistribution2 dist (uniform_effect l u)
+
+
+uniformDist l u = Uniform l u
+
+uniform l u = sample $ uniformDist l u
 
 uniform_bounds l u = between l u
 uniform_effect l u x = add_move $ slice_sample_real_random_variable x (uniform_bounds l u)
-sample_uniform l u = makeIO $ builtin_sample_uniform l u
-ran_sample_uniform l u = RanAtomic (uniform_effect l u) (sample_uniform l u)
 
-uniform_quantile l u x | x < l      = 0
-                       | x > u      = 1
-                       | otherwise  = (x-l)/(u-l)
-
-
+------------------------------------
 
 uniform_int_quantile l u x | x <= l     = 0
                            | x > u      = 1
@@ -31,13 +71,10 @@ sample_uniform_int l u = makeIO $ builtin_sample_uniform_int l u
 ran_sample_uniform_int l u = RanAtomic (uniform_int_effect l u) (sample_uniform_int l u)
 
 class HasUniform d where
-    uniform :: Double -> Double -> d Double
     uniform_int :: Int -> Int -> d Int
 
 instance HasUniform Distribution where
-    uniform l u = Distribution "uniform" (make_densities $ uniform_density l u) (uniform_quantile l u) (ran_sample_uniform l u) (uniform_bounds l u)
     uniform_int l u = Distribution "uniform_continuous" (make_densities $ uniform_int_density l u) (uniform_int_quantile l u) (ran_sample_uniform_int l u) (integer_between l u)
 
 instance HasUniform Random where
-    uniform l u = RanDistribution $ uniform l u
     uniform_int l u = RanDistribution $ uniform_int l u
