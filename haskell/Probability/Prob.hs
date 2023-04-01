@@ -153,7 +153,10 @@ logOdds (Odds y) = y
 logOdds p = ln (p/(1-p))
 
 
--- regions: (-Inf,-1], (-1, 0), (0,1), [1,Inf)
+-- t regions: (-Inf,-1], (-1, 0), (0,1), [1,Inf)
+-- y regions for t > 1: (-Inf,0),[0,30),[30,Inf)
+--  maybe for t in (0,1) we need different y regions?
+
 -- we need to avoid exp(t*y) when t*y is large and positive.
 
 -- It would be nice if we could write y ** t, but t is not a Prob
@@ -166,7 +169,7 @@ powProb Infinity  t | t < 0     = Zero
                     | otherwise = Infinity  -- t > 0
 -- This probably works best for t > 1, when exp(tx) < exp(x).
 powProb (Odds y)  t | y > 30    = Odds $ y - log t
-                    | y < 0     = t*y - log ( (1+exp(y))**t - exp(t*y) )
+                    | y < 0     = Odds $ t*y - log ( (1+exp(y))**t - exp(t*y) )
                     | otherwise = Odds $ negate $ log $ expm1 ( t * log1p ( exp (-y)) )
 powProb (IOdds y) t             = recip $ pow (Odds y) t
 
