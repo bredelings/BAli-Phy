@@ -12,30 +12,57 @@ independent_densities _  _          = [doubleToLogDouble 0.0]
 
 plate n dist_f = independent $ map dist_f [0..n-1]
 
+-- So we can do this...  but then we only get access to the "dist" part.
+data Independent a = forall b. (Dist b, Result b ~ a) => Independent [b]
+
+-- Its possible to construct something like IID n 
+data IID d = IID Int d
+
+instance Dist d => Dist (IID d) where
+    type Result (IID d) = [Result d]
+    dist_name (IID _ d) = "iid " ++ dist_name d
+
+instance IOSampleable d => (IOSampleable (IID d)) where
+    sampleIO (IID n dist) = take n <$> (sequence $ repeat $ sampleIO dist)
+
+instance HasPdf d => HasPdf (IID d) where
+    pdf (IID n dist) xs | length xs /= n  = 0
+                        | otherwise       = product (map (pdf dist) xs)
+
+instance HasAnnotatedPdf d => HasAnnotatedPdf (IID d) where
+    annotated_densities (IID n dist) = make_densities' $ independent_densities (replicate n dist)
+
+instance Sampleable d => Sampleable (IID d) where
+    sample (IID n dist) = lazy $ RanSamplingRate (1/sqrt (fromIntegral n)) $ do
+                                    dist <- interchangeable $ sample dist
+                                    xs <- sequence $ repeat $ dist
+                                    return $ take n xs
+
+iidDist n dist = IID n dist
+
+iid n dist = sample $ IID n dist
+
+-- OK, so part of the issue here is that we want iid n sampling_action to work,
+-- but we want iid_dist n dist to require dist to be something with a pdf.
+-- So... we want only (iid n (normal 0 1)) and iidDist n (normalDist 0 1), I guess?
+-- ... and then iidDist n is sampleable only if the dist is also sampleable?
+-- that DOES make sense...
+
 class HasIndependent d where
     independent :: [d a] -> d [a]
 --    independent_on :: [(a,d b)] -> d [(a,b)]
-    iid :: Int -> d a -> d [a]
     iid_on :: [a] -> d b -> d [(a,b)]
 
 instance HasIndependent Distribution where
 
     independent dists = Distribution "independent" (make_densities' $ independent_densities dists) (no_quantile "independent") (sequence $ map RanDistribution dists) (ListRange (map distRange dists))
 
-    iid n dist = Distribution iid_name (make_densities' $ independent_densities (replicate n dist)) (no_quantile "iid") iid_sample (ListRange $ take n $ repeat $ distRange dist) where
-                             iid_name = "iid "++(dist_name dist)
-                             iid_sample = do xs <- RanSamplingRate (1/sqrt (fromIntegral n)) $ sequence (repeat $ RanDistribution dist)
-                                             return $ take n xs
     iid_on xs dist = undefined
 
 
 instance HasIndependent Random where
     independent dists = lazy $ sequence dists
 --    independent_on dists_pairs = RanDistribution (independent dists_pairs)
-    iid n dist = lazy $ RanSamplingRate (1/sqrt (fromIntegral n)) $ do
-                       dist <- interchangeable dist
-                       xs <- sequence $ repeat $ dist
-                       return $ take n xs
 
     iid_on vs dist = let n = length vs
                      in lazy $ RanSamplingRate (1/sqrt (fromIntegral n)) $ do
