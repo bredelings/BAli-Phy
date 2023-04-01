@@ -88,6 +88,15 @@ instance Sampleable (Distribution a) where
 instance ContDist1D (Distribution Double) where
     quantile (Distribution _ _ q _ _) = q
 
+instance Dist (Random a) where
+    type Result (Random a) = a
+
+instance IOSampleable (Random a) where
+    sampleIO dist = run_lazy dist
+
+instance Sampleable (Random a) where
+    sample r = r
+
 
 -- Maybe we would just define `normal mu sigma = sample $ Normal mu sigma`?
 -- How about the effect?
