@@ -4,6 +4,7 @@
 
 #include "computation/expression/apply.H"
 #include "computation/expression/tuple.H"
+#include "computation/expression/core.H"
 
 using std::string;
 using std::vector;
@@ -462,8 +463,6 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
         auto op = get_fresh_Var("i"+method_name, true);
 
-        dict_entries.push_back( Core::Apply(make_var(op), dict_vars_from_lie<Core::Exp>(givens)) );
-
         // forall b. Ix b => a -> b -> b
         Type op_type = remove_top_gen(method_type);
         // forall b. Ix b => [x] -> b -> b
@@ -481,17 +480,26 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
         }
         else
         {
-            if (not class_info.default_methods.count(method))
+            if (class_info.default_methods.count(method))
             {
-                record_error( Note() <<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'" );
+                auto dm_var = class_info.default_methods.at(method);
+
+                FD = Hs::simple_decl({noloc,op}, {noloc,dm_var});
+            }
+            else
+            {
+                record_warning( Note() <<"instance "<<inst_decl.constraint<<" is missing method '"<<method_name<<"'" );
+
+                // We could synthesize an actual method to call...
+                // But how do we typecheck the expression (Compiler.Error.error msg) if error isn't in scope?
+                dict_entries.push_back( Core::error("method `" + method.name + "` undefined") );
+
                 pop_note();
                 continue;
             }
-
-            auto dm_var = class_info.default_methods.at(method);
-
-            FD = Hs::simple_decl({noloc,op}, {noloc,dm_var});
         }
+
+        dict_entries.push_back( Core::Apply(make_var(op), dict_vars_from_lie<Core::Exp>(givens)) );
 
         auto decl2 = infer_type_for_single_fundecl_with_sig(*FD, op_type);
         decls.push_back({noloc,decl2});
