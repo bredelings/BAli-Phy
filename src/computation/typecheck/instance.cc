@@ -55,7 +55,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     push_note( Note()<<"In instance '"<<inst.print()<<"':" );
     auto tf_con = desugar(inst.con);
     push_source_span( *(inst.con.loc * range(inst.args) * inst.rhs.loc) );
-    
+
     // 1. Check that the type family exists.
     if (not type_con_is_type_fam( tf_con ) )
     {
@@ -92,6 +92,17 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
             record_error(Note() << "  Trying to declare type instance in class '"<<*associated_class<<" for family '"<<inst.con.print()
                          <<"' associated with class '"<<(*tf_info->associated_class)<<"'");
 
+            pop_source_span();
+            pop_note();
+            return;
+        }
+
+        // 4.5. Check that the type family was given the right number of arguments.
+        if (inst.args.size() != tf_info->args.size())
+        {
+            push_source_span( *(inst.con.loc * range(inst.args)) );
+            record_error(Note() << "  Type family takes "<<tf_info->args.size()<<" arguments, but was given "<<inst.args.size()<<".");
+            pop_source_span();
             pop_source_span();
             pop_note();
             return;
