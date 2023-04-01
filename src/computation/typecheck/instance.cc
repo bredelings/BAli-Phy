@@ -660,6 +660,8 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
             surviving_instances.push_back(matching_instances[i]);
     }
 
+
+    // FIXME: We really should print the instance LOCATIONS!
     if (surviving_instances.size() > 1)
     {
         auto n = Note()<<"Too many matching instances for "<<target_pred<<":\n";
@@ -667,8 +669,6 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
             n<<"  "<<remove_top_gen(type)<<"\n";
         record_error(n);
     }
-
-    assert(surviving_instances.size() == 1);
 
     return surviving_instances[0].first;
 }
