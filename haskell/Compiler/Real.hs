@@ -18,3 +18,16 @@ instance Real Integer where
 
 instance Real Double where
     toRational x = error "undefined"
+
+foreign import bpcall "Prelude:" equals_log_double :: LogDouble -> LogDouble -> Bool
+
+instance Eq LogDouble where
+    (==) = equals_log_double
+
+foreign import bpcall "Prelude:" lessthan_log_double :: LogDouble -> LogDouble -> Bool
+
+instance Ord LogDouble where
+    (<) = lessthan_log_double
+
+instance Real LogDouble where
+    toRational x = error "undefined"

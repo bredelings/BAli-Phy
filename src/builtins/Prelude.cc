@@ -236,6 +236,14 @@ extern "C" closure builtin_function_equals_double(OperationArgs& Args)
     return { x == y };
 }
 
+extern "C" closure builtin_function_equals_log_double(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0).as_log_double();
+    auto y = Args.evaluate(1).as_log_double();
+
+    return { x == y };
+}
+
 extern "C" closure builtin_function_equals_char(OperationArgs& Args)
 {
     auto x = Args.evaluate(0).as_char();
