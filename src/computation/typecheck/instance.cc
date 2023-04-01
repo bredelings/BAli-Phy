@@ -492,7 +492,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var& dfun, const Hs::InstanceD
 
                 // We could synthesize an actual method to call...
                 // But how do we typecheck the expression (Compiler.Error.error msg) if error isn't in scope?
-                dict_entries.push_back( Core::error("method `" + method.name + "` undefined") );
+                dict_entries.push_back( Core::error("method `" + method.name + "` undefined in instance `" + inst_decl.constraint.print() + "`") );
 
                 pop_note();
                 continue;
