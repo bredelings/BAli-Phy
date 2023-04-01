@@ -5,8 +5,14 @@ import Control.Monad.IO.Class
 import MCMC
 import Range
 
-foreign import bpcall "Distribution:geometric_density" geometric_density :: Double -> Double -> Int -> LogDouble
+--foreign import bpcall "Distribution:geometric_density" geometric_density :: Double -> Double -> Int -> LogDouble
 foreign import bpcall "Distribution:sample_geometric" builtin_sample_geometric :: Double -> RealWorld -> Int
+sample_geometric p_success = makeIO $ builtin_sample_geometric p_success
+
+
+geometric_density :: Double -> Double -> Int -> LogDouble
+geometric_density p_fail p_success n | n < 0  = 0
+                                     | otherwise = (fromRational p_success) * pow (fromRational p_fail) (fromIntegral n)
 
 geometric_bounds = integer_above 0
 
@@ -14,7 +20,6 @@ geometric_effect x = do
   add_move $ slice_sample_integer_random_variable x geometric_bounds
   add_move $ inc_dec_mh x geometric_bounds
 
-sample_geometric p_success = makeIO $ builtin_sample_geometric p_success
 ran_sample_geometric p_success = RanAtomic geometric_effect (sample_geometric p_success)
 
 geometric p = geometric2 (1-p) p
