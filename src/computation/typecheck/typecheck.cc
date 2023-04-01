@@ -1650,6 +1650,8 @@ typechecker_result Module::typecheck( FreshVarState& fresh_vars, Hs::ModuleDecls
     // Should we be printing to out_screen instead?
     exit_on_error(tc_state->messages());
 
+    tc_state->messages().clear();
+
     Core::Decls dfun_decls2;
     for(auto& [var,wrap,rhs]: dfun_decls)
         dfun_decls2.push_back({var,wrap(rhs)});
