@@ -7,6 +7,7 @@ import Numeric.LogDouble
 class Dist d where
     type Result d
     dist_name :: d -> String
+    dist_name _ = "unnamed"
 
 -- We can sample from these directly/atomically.
 class Dist d => IOSampleable d where
