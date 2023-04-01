@@ -3,7 +3,8 @@ module Probability.Prob (Prob (..),
                          logProb,
                          expToProb,
                          logOdds,
-                         powProb)
+                         powProb,
+                         fromProb)
     where
 
 import Numeric.Log
@@ -24,13 +25,13 @@ complement (Odds y) = (Odds (-y))
 complement One      = Zero
 complement _        = error "complement: not a probability"
 
-fromProb :: Prob -> Double
+fromProb :: (Real a, Pow a) => Prob -> a
 fromProb Zero                 = 0
-fromProb (Odds y) | y < 0     = let e = exp y in e / (1 + e)
-fromProb (Odds y) | otherwise = 1 / (1 + exp(-y))
+fromProb (Odds y) | y < 0     = let e = expTo y in e / (1 + e)
+fromProb (Odds y) | otherwise = 1 / (1 + expTo(-y))
 fromProb One                  = 1
-fromProb (IOdds y)| y < 0     = let e = exp y in (1 + e)/e
-                  | otherwise = (1 + exp(-y))
+fromProb (IOdds y)| y < 0     = let e = expTo y in (1 + e)/e
+                  | otherwise = (1 + expTo(-y))
 fromProb Infinity             = 1 / 0
 
 mkProb :: Double -> Prob
@@ -127,9 +128,9 @@ instance Num Prob where
 
 instance Real Prob where
     toRational Zero = 0 % 1
-    toRational (Odds y) = toRational $ fromProb (Odds y)
+    toRational (Odds y) = toRational $ (fromProb (Odds y) :: Double)
     toRational One  = 1 % 1
-    toRational (IOdds y) = toRational $ fromProb (IOdds y)
+    toRational (IOdds y) = toRational $ (fromProb (IOdds y) :: Double)
     toRational Infinity = 1 % 0
 
 instance Fractional Prob where
@@ -143,9 +144,9 @@ instance Fractional Prob where
 
 instance Show Prob where
     show Zero = "0"
-    show (Odds y) = show $ fromProb (Odds y)
+    show (Odds y) = show $ (fromProb (Odds y) :: Double)
     show One = "1"
-    show (IOdds y) = show $ fromProb (IOdds y)
+    show (IOdds y) = show $ (fromProb (IOdds y) :: Double)
     show Infinity = "Inf"
 
 -- It WOULD be nice if we could write logOdds y = log (p/(1-p))
