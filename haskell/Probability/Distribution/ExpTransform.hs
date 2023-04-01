@@ -20,16 +20,13 @@ expTransform dist@(Distribution name d q s r) = Distribution name' pdf' q' s' r'
   name' = "log_"++name
 
 class HasLogDists d where
-    log_laplace :: Double -> Double -> d Double
     log_cauchy :: Double -> Double -> d Double
 
 
 instance HasLogDists Distribution where
-    log_laplace m s = expTransform $ laplace m s
     log_cauchy m s = expTransform $ cauchy m s
 
 instance HasLogDists Random where
-    log_laplace m s = RanDistribution $ log_laplace m s
     log_cauchy m s = RanDistribution $ log_cauchy m s
 
 
@@ -57,7 +54,9 @@ instance (Sampleable d, Result d ~ Double) => Sampleable (ExpTransform d) where
 logNormalDist mu sigma = ExpTransform $ normalDist mu sigma
 logExponentialDist mu = ExpTransform $ exponentialDist mu
 logGammaDist a b = ExpTransform $ gammaDist a b
+logLaplace m s = ExpTransform $ laplaceDist m s
 
 log_normal mu sigma = sample $ logNormalDist mu sigma
 log_exponential mu = sample $ logExponentialDist mu
 log_gamma a b = sample $ logGammaDist a b
+log_laplace m s = sample $ logLaplace m s

@@ -6,25 +6,48 @@ import MCMC
 
 foreign import bpcall "Distribution:laplace_density" laplace_density :: Double -> Double -> Double -> LogDouble
 foreign import bpcall "Distribution:sample_laplace" builtin_sample_laplace :: Double -> Double -> RealWorld -> Double
-
-laplace_bounds = realLine
-laplace_effect x = add_move $ slice_sample_real_random_variable x laplace_bounds
 sample_laplace m s = makeIO $ builtin_sample_laplace m s
-ran_sample_laplace m s = RanAtomic laplace_effect $ sample_laplace m s
-
-annotated_laplace_density m s x = do
-  in_edge "m" m
-  in_edge "s" s
-  return [laplace_density m s x]
 
 data Laplace = Laplace Double Double
 
+instance Dist Laplace where
+    type Result Laplace = Double
+    dist_name _ = "Laplace"
 
-class HasLaplace d where
-    laplace :: Double -> Double -> d Double
+instance IOSampleable Laplace where
+    sampleIO (Laplace m s) = sample_laplace m s
 
-instance HasLaplace Distribution where
-    laplace m s = Distribution "laplace" (annotated_laplace_density m s) (error "no quantile") (ran_sample_laplace m s) laplace_bounds
+instance HasPdf Laplace where
+    pdf (Laplace m s) x = laplace_density m s x
 
-instance HasLaplace Random where
-    laplace m s = RanDistribution $ laplace m s
+instance Dist1D Laplace where
+    cdf (Laplace m s) x = undefined
+
+instance ContDist1D Laplace where
+    quantile (Laplace m s) p = undefined
+
+instance MaybeMean Laplace where
+    maybeMean (Laplace m s) = Just m
+
+instance Mean Laplace
+
+instance MaybeVariance Laplace where
+    maybeVariance (Laplace _ s) = Just $ 2*s^2
+
+instance Variance Laplace
+
+instance HasAnnotatedPdf Laplace where
+    annotated_densities dist@(Laplace m s) x = do
+       in_edge "m" m
+       in_edge "s" s
+       return [pdf dist x]
+
+instance Sampleable Laplace where
+    sample dist@(Laplace mu sigma) = RanDistribution2 dist laplace_effect
+
+laplace_bounds = realLine
+laplace_effect x = add_move $ slice_sample_real_random_variable x laplace_bounds
+
+laplaceDist m s = Laplace m s
+
+laplace m s = sample $ laplaceDist m s
