@@ -7,29 +7,6 @@ import Probability.Distribution.Gamma
 import Probability.Distribution.Laplace
 import Probability.Distribution.Cauchy
 
--- This contains exp-transformed functions
-expTransform dist@(Distribution name d q s r) = Distribution name' pdf' q' s' r'
- where
-  pdf' x = do
-    ds <- d x
-    return $ (1 / doubleToLogDouble x):ds
-  q'   = exp . q
-  s'   = do v <- RanDistribution dist
-            return $ exp v
-  r'   = expTransformRange r
-  name' = "log_"++name
-
-class HasLogDists d where
-    log_cauchy :: Double -> Double -> d Double
-
-
-instance HasLogDists Distribution where
-    log_cauchy m s = expTransform $ cauchy m s
-
-instance HasLogDists Random where
-    log_cauchy m s = RanDistribution $ log_cauchy m s
-
-
 data ExpTransform d = ExpTransform d
 
 instance (Dist d, Result d ~ Double) => Dist (ExpTransform d) where
@@ -55,8 +32,10 @@ logNormalDist mu sigma = ExpTransform $ normalDist mu sigma
 logExponentialDist mu = ExpTransform $ exponentialDist mu
 logGammaDist a b = ExpTransform $ gammaDist a b
 logLaplace m s = ExpTransform $ laplaceDist m s
+logCauchy m s = ExpTransform $ cauchyDist m s
 
 log_normal mu sigma = sample $ logNormalDist mu sigma
 log_exponential mu = sample $ logExponentialDist mu
 log_gamma a b = sample $ logGammaDist a b
 log_laplace m s = sample $ logLaplace m s
+log_cauchy m s = sample $ logCauchy m s

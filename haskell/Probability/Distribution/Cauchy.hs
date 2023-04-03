@@ -9,33 +9,76 @@ import MCMC
 foreign import bpcall "Distribution:cauchy_density" cauchy_density :: Double -> Double -> Double -> LogDouble
 foreign import bpcall "Distribution:cauchy_quantile" cauchy_quantile :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:sample_cauchy" builtin_sample_cauchy :: Double -> Double -> RealWorld -> Double
+sample_cauchy m s = makeIO $ builtin_sample_cauchy m s
 
 cauchy_bounds = realLine
 cauchy_effect x = add_move $ slice_sample_real_random_variable x cauchy_bounds
-sample_cauchy m s = makeIO $ builtin_sample_cauchy m s
-ran_sample_cauchy m s = RanAtomic cauchy_effect (sample_cauchy m s)
 
-class HasCauchy d where
-    cauchy :: Double -> Double -> d Double
-    half_cauchy :: Double -> Double -> d Double
+data Cauchy = Cauchy Double Double
 
-instance HasCauchy Distribution where
-    cauchy m s = Distribution "cauchy" (make_densities $ cauchy_density m s) (cauchy_quantile m s) (ran_sample_cauchy m s) cauchy_bounds
-    half_cauchy m s = Distribution "half_cauchy" (make_densities $ half_cauchy_density m s) (half_cauchy_quantile m s) (sample_half_cauchy m s) (half_cauchy_bounds m)
+instance Dist Cauchy where
+    type Result Cauchy = Double
+    dist_name _ = "Cauchy"
 
-instance HasCauchy Random where
-    cauchy m s = RanDistribution (cauchy m s)
-    half_cauchy m s = RanDistribution $ half_cauchy m s
+instance IOSampleable Cauchy where
+    sampleIO (Cauchy m s) = sample_cauchy m s
+
+instance HasPdf Cauchy where
+    pdf (Cauchy m s) x = cauchy_density m s x
+
+instance Dist1D Cauchy where
+    cdf (Cauchy m s) x = undefined
+
+instance ContDist1D Cauchy where
+    quantile (Cauchy m s) p = cauchy_quantile m s p
+
+instance HasAnnotatedPdf Cauchy where
+    annotated_densities dist@(Cauchy m s) x = do
+       in_edge "m" m
+       in_edge "s" s
+       return [pdf dist x]
+
+instance Sampleable Cauchy where
+    sample dist@(Cauchy mu sigma) = RanDistribution2 dist cauchy_effect
+
+cauchyDist m s = Cauchy m s
+
+cauchy m s = sample $ cauchyDist m s
 
 ---- half_cauchy
 
-half_cauchy_density m s x | x < m     = 0
-                          | otherwise = 2 * cauchy_density m s x
+-- Let's assume that the distribution is (i) continuous and (ii) symmetric around 0.
 
-sample_half_cauchy m s = do
-  x <- cauchy m s
-  return $ abs(x-m) + m
+data Half d = (Result d ~ Double) => Half d
 
-half_cauchy_quantile m s p = cauchy_quantile m s ((p+1)/2)
-half_cauchy_bounds m = above m
+instance Dist d => Dist (Half d) where
+    type Result (Half d) = Double
+    dist_name dist = "Half" ++ dist_name dist
+
+instance IOSampleable d => IOSampleable (Half d) where
+    sampleIO (Half dist) = abs <$> sampleIO dist
+
+-- Ignoring 0 assumes the distribution is continuous.
+instance HasPdf d => HasPdf (Half d) where
+    pdf (Half dist) x | x < 0     = 0
+                      | x == 0    = pdf dist x
+                      | otherwise = pdf dist x + pdf dist (-x)
+
+instance Dist1D d => Dist1D (Half d) where
+    cdf (Half dist) x  | x > 0     = cdf dist x - cdf dist (-x)
+                       | otherwise = 0
+
+-- This assumes that dist is symmetric around 0.
+instance ContDist1D d => ContDist1D (Half d) where
+    quantile (Half dist) p = quantile dist ((p+1)/2)
+
+instance HasPdf d => HasAnnotatedPdf (Half d) where
+    annotated_densities dist x = return [pdf dist x]
+
+instance Sampleable d => Sampleable (Half d) where
+    sample (Half dist) = abs <$> sample dist
+
+halfCauchyDist s = Half $ cauchyDist 0 s
+
+half_cauchy s = sample $ halfCauchyDist s
 

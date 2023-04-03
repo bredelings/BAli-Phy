@@ -1,7 +1,6 @@
 module Probability.Distribution.Normal where
 
 import Probability.Random
-import Probability.Dist
 import Control.Monad.IO.Class
 import MCMC
 
