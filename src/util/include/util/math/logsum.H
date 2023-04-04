@@ -21,6 +21,7 @@
 #define LOGSUM_H
 
 #include <cmath>
+#include <numbers>
 #include "util/assert.hh"
 
 constexpr double max_float = 3.40282347e+38F;
@@ -56,7 +57,7 @@ inline double log1pexp(double x)
 inline double log1mexp(double x)
 {
     assert(x <= 0);
-    if (x > M_LN2)
+    if (x > std::numbers::ln2) // log(2)
         return log(-expm1(x));
     else
         return log1p(-exp(x));
