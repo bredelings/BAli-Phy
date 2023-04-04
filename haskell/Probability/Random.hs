@@ -1,5 +1,6 @@
 module Probability.Random (module Probability.Random,
                            module Range,
+                           module Numeric.LogDouble,
                            modifiable)
     where
 
@@ -11,6 +12,7 @@ import Effect
 import Control.Monad.IO.Class -- for liftIO
 import Data.IntMap (IntMap)
 import Data.Array (Array)
+import Numeric.LogDouble
 
 
 data AnnotatedDensity a where

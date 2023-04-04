@@ -8,6 +8,7 @@ import Data.Foldable
 import Data.Matrix
 import Data.Array
 import Foreign.Vector
+import Numeric.LogDouble
 
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap

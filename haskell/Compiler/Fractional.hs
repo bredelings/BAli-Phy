@@ -23,13 +23,3 @@ instance Fractional Double where
     recip = recip_double
     fromRational x = x
 
-foreign import bpcall "Prelude:" divide_logdouble :: LogDouble -> LogDouble -> LogDouble
-foreign import bpcall "Prelude:" recip_logdouble :: LogDouble -> LogDouble
-foreign import bpcall "Prelude:doubleToLogDouble" doubleToLogDouble :: Double -> LogDouble
-
-instance Fractional LogDouble where
-    (/) = divide_logdouble
-    recip = recip_logdouble
-    fromRational = doubleToLogDouble
-
-

@@ -2,6 +2,7 @@ module Bio.Alignment.Pairwise where
 
 import Data.BitVector
 import Control.DeepSeq
+import Numeric.LogDouble
 
 data PairHMM
 

@@ -3,6 +3,7 @@ module Parameters where
 import Range
 import Foreign.String     -- for list_to_string
 import Effect             -- for Effect
+import Numeric.LogDouble  -- for LogDouble
 
 -- An Effect may be a node in a graph??
 

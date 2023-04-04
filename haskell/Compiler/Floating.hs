@@ -2,7 +2,6 @@
 module Compiler.Floating where
 
 import Compiler.Error
-import Compiler.Num -- for LogDouble
 import Compiler.Fractional
 import Compiler.Integral -- for quot, rem
 import Data.Function -- for (.)
@@ -58,8 +57,6 @@ instance Floating Double where
     atanh = atanh_double
     acosh = acosh_double
 
-foreign import bpcall "Prelude:expToLogDouble" expToLogDouble :: Double -> LogDouble
-
 infixr 8 `pow`
 
 class Fractional a => Pow a where
@@ -71,8 +68,3 @@ instance Pow Double where
     pow   = pow_a
     ln    = log_a
     expTo = exp_double
-
-instance Pow LogDouble where
-    pow   = pow_a
-    ln    = log_a
-    expTo = expToLogDouble

@@ -74,7 +74,3 @@ zip' = zipWith' (,)
 
 foreign import bpcall "Data:readFile" builtin_readFile :: CPPString -> RealWorld -> CPPString
 readFile filename = makeIO $ builtin_readFile (list_to_string $ filename)
-
-
-instance Show LogDouble where
-    show x = show $ exp $ ln x

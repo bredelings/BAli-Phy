@@ -4,6 +4,7 @@ import Foreign.Vector
 import Range
 import Effect
 import Tree
+import Numeric.LogDouble
 
 type ContextIndex = Int
 

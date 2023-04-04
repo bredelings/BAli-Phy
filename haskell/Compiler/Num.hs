@@ -88,24 +88,6 @@ instance Num Double where
     signum = signum_double
     fromInteger = integerToDouble
 
-data LogDouble
-
-foreign import bpcall "Num:" add_logdouble :: LogDouble -> LogDouble -> LogDouble
-foreign import bpcall "Num:" subtract_logdouble :: LogDouble -> LogDouble -> LogDouble
-foreign import bpcall "Num:" multiply_logdouble :: LogDouble -> LogDouble -> LogDouble
-foreign import bpcall "Num:" signum_logdouble :: LogDouble -> LogDouble
-foreign import bpcall "Num:" integerToLogDouble :: Integer -> LogDouble
-
-instance Num LogDouble where
-    (+) = add_logdouble
-    (-) = subtract_logdouble
-    (*) = multiply_logdouble
-    abs x = x
-    negate = error "negate LogDouble"
-    signum = signum_logdouble
-    fromInteger = integerToLogDouble
-
-
 -- These may get used in other modules...
 foreign import bpcall "Num:" intToInteger :: Int -> Integer
 foreign import bpcall "Num:" intToDouble :: Int -> Double
