@@ -7,6 +7,14 @@ import MCMC
 foreign import bpcall "Distribution:sample_bernoulli" builtin_sample_bernoulli :: Double -> RealWorld -> Int
 sample_bernoulli p = makeIO $ builtin_sample_bernoulli p
 
+-- Could we allow this to return Int, Integer, Bool, etc?
+
+-- Could we allow this to store the probability in an arbitrary Fractional or Pow type?
+
+-- Should we put the result into the distribution class, a la (Dist Bernoulli Int)?
+
+-- we could use fromRational... but converting to rationals seems like a terrible idea.
+
 data Bernoulli = Bernoulli Prob
 
 instance Dist Bernoulli where
