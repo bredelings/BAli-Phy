@@ -6,22 +6,46 @@ import MCMC
 
 foreign import bpcall "Distribution:binomial_density" binomial_density :: Int -> Double -> Int -> LogDouble
 foreign import bpcall "Distribution:sample_binomial" builtin_sample_binomial :: Int -> Double -> RealWorld -> Int
+sample_binomial n p = makeIO $ builtin_sample_binomial n p
 
+data Binomial = Binomial Int Prob
+
+instance Dist Binomial where
+    type Result Binomial = Int
+    dist_name _ = "binomial"
+
+instance IOSampleable Binomial where
+    sampleIO (Binomial n p) = sample_binomial n (toFloating p)
+
+instance HasPdf Binomial where
+    pdf (Binomial n p) x = binomial_density n (toFloating p) x
+
+instance Dist1D Binomial where
+    cdf (Binomial n p) x  = undefined
+
+instance MaybeMean Binomial where
+    maybeMean (Binomial n p) = Just $ fromIntegral n * (toFloating p)
+
+instance Mean Binomial
+
+instance MaybeVariance Binomial where
+    maybeVariance (Binomial n p) = Just $ toFloating $ fromIntegral n * p * (1-p)
+
+instance Variance Binomial
+
+instance HasAnnotatedPdf Binomial where
+    annotated_densities dist x = return [ pdf dist x ]
+
+instance Sampleable Binomial where
+    sample dist@(Binomial n _) = RanDistribution2 dist (binomial_effect n)
+
+binomialDist :: Int -> Double -> Binomial
+binomialDist n p = Binomial n (toFloating p)
+
+binomial n p = sample $ binomialDist n p
+                                   
 binomial_bounds n = integer_between 0 n
 
 binomial_effect n x = do
   add_move $ slice_sample_integer_random_variable x (binomial_bounds n)
   add_move $ inc_dec_mh x (binomial_bounds n)
-
-sample_binomial n p = makeIO $ builtin_sample_binomial n p
-ran_sample_binomial n p = RanAtomic (binomial_effect n) (sample_binomial n p)
-
-class HasBinomial d where
-    binomial :: Int -> Double -> d Int
-
-instance HasBinomial Distribution where
-    binomial n p = Distribution "binomial" (make_densities $ binomial_density n p) (no_quantile "binomial") (ran_sample_binomial n p) (binomial_bounds n)
-
-
-instance HasBinomial Random where
-    binomial n p = RanDistribution (binomial n p)
