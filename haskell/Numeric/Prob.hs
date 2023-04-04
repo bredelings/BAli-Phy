@@ -83,6 +83,7 @@ sub _         _ = error "Negative probability"
 
 -- Done!
 mul Zero      Infinity  = error "0 * Inf is undefined"
+mul Infinity  Zero      = error "Inf * 0 is undefined"
 mul Zero      x         = Zero
 mul x         Zero      = Zero
 mul One       x         = x
@@ -150,9 +151,12 @@ instance Show Prob where
     show (IOdds y) = show $ (fromProb (IOdds y) :: Double)
     show Infinity = "Inf"
 
--- It WOULD be nice if we could write logOdds y = log (p/(1-p))
+
 logOdds (Odds y) = y
-logOdds p = ln (p/(1-p))
+logOdds Zero = -1/0
+logOdds One = 1/0
+logOdds (IOdds _) = error "logOdds(x) where x > 1"
+logOdds Infinity = error "logOdds Infinity"
 
 
 -- t regions: (-Inf,-1], (-1, 0), (0,1), [1,Inf)
