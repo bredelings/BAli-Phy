@@ -33,4 +33,4 @@ foreign import bpcall "Real:" expm1 :: Double -> Double
 foreign import bpcall "Real:" log1p :: Double -> Double
 foreign import bpcall "Real:" log1pexp :: Double -> Double
 foreign import bpcall "Real:" log1mexp :: Double -> Double
-foreign import bpcall "Real:" log1mexpx :: Double -> Double
+

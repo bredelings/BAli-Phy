@@ -53,19 +53,13 @@ inline double log1pexp(double x)
 
 // log(1 - exp(x)) = log(-expm1(x)) = log1p(-exp(x))
 // domain: (-Inf, 0]
-inline double log1mexpx(double x)
+inline double log1mexp(double x)
 {
+    assert(x <= 0);
     if (x > M_LN2)
         return log(-expm1(x));
     else
         return log1p(-exp(x));
-}
-
-// log(1 - exp(-x)) = log(-expm1(-x)) = log1p(-exp(-x))
-// domain: [0, Inf)
-inline double log1mexp(double x)
-{
-    return log1mexpx(-x);
 }
 
 inline double logsum_nocheck(double x, double y) {
