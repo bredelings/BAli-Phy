@@ -10,10 +10,11 @@ independent_densities (d:ds) (x:xs) = densities d x ++ independent_densities ds 
 independent_densities [] []         = []
 independent_densities _  _          = [doubleToLogDouble 0.0]
 
-plate n dist_f = independent $ map dist_f [0..n-1]
+independent_pdf (d:ds) (x:xs) = pdf d x * independent_pdf ds xs
+independent_pdf [] []         = 1
+independent_pdf _  _          = 0
 
--- So we can do this...  but then we only get access to the "dist" part.
-data Independent a = forall b. (Dist b, Result b ~ a) => Independent [b]
+plate n dist_f = independent $ map dist_f [0..n-1]
 
 -- Its possible to construct something like IID n 
 data IID d = IID Int d
@@ -48,20 +49,42 @@ iid n dist = sample $ IID n dist
 -- ... and then iidDist n is sampleable only if the dist is also sampleable?
 -- that DOES make sense...
 
+-- So we can do this...  but then we only get access to the "dist" part.
+data Independent d = Independent [d]
+
+instance Dist d => Dist (Independent d) where
+    type Result (Independent d) = [Result d]
+    dist_name dist = "independent " ++ dist_name dist
+
+instance IOSampleable d => IOSampleable (Independent d) where
+    sampleIO (Independent dists) = sequence $ map sampleIO dists
+
+instance HasPdf d => HasPdf (Independent d) where
+    pdf (Independent ds) xs = independent_pdf ds xs
+
+instance HasAnnotatedPdf d => HasAnnotatedPdf (Independent d) where
+    annotated_densities (Independent dists) = make_densities' $ independent_densities dists
+
+instance Sampleable d => Sampleable (Independent d) where
+    sample (Independent dists) = lazy $ sequence $ map sample dists
+
+
+independentDist dists = Independent dists
+
+independent dists = sample $ independentDist dists
+
+
+-----
 class HasIndependent d where
-    independent :: [d a] -> d [a]
 --    independent_on :: [(a,d b)] -> d [(a,b)]
     iid_on :: [a] -> d b -> d [(a,b)]
 
 instance HasIndependent Distribution where
 
-    independent dists = Distribution "independent" (make_densities' $ independent_densities dists) (no_quantile "independent") (sequence $ map RanDistribution dists) (ListRange (map distRange dists))
-
     iid_on xs dist = undefined
 
 
 instance HasIndependent Random where
-    independent dists = lazy $ sequence dists
 --    independent_on dists_pairs = RanDistribution (independent dists_pairs)
 
     iid_on vs dist = let n = length vs
