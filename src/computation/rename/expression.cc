@@ -351,6 +351,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         auto R = E.as_<Hs::RecStmt>();
         for(auto& stmt: R.stmts.stmts)
             add(binders, rename_stmt(stmt, bound, binders, free_vars));
+
         E = R;
     }
     else if (E.is_a<Hs::Do>())
@@ -359,6 +360,11 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         auto D = E.as_<Hs::Do>();
         for(auto& stmt: D.stmts.stmts)
             add(binders, rename_stmt(stmt, bound, binders, free_vars));
+
+        auto& last = D.stmts.stmts.back();
+        if (not unloc(last).is_a<Hs::SimpleQual>())
+            error(last.loc, Note()<<"Do block does not end in an expression.");
+
         E = D;
     }
     else if (E.is_a<Hs::MDo>())
