@@ -8,40 +8,63 @@ foreign import bpcall "Distribution:dirichlet_density" builtin_dirichlet_density
 dirichlet_density as ps = builtin_dirichlet_density (list_to_vector as) (list_to_vector ps)
 
 -- The `dirichlet` does not handle cases where the number of as changes in a ungraceful way: all entries are resampled!
-sample_dirichlet as = RanSamplingRate (1/sqrt(fromIntegral $ length as)) $ do vs <- mapM (\a-> gamma a 1.0) as
-                                                                              return $ map (/(sum vs)) vs
+sample_dirichlet as = do vs <- mapM (\a-> gamma a 1) as
+                         return $ map (/(sum vs)) vs
 
--- independent is a Distribution ... so shouldn't this fail because of a lack of a monad instance?
+data Dirichlet = Dirichlet [Double]
 
--- The `v_dirichlet` takes an infinite list of as, and a number of them to keep.
-sample_v_dirichlet n as = RanSamplingRate (1/sqrt(fromIntegral n)) $ do vs <- independent [ gamma a 1.0 | a <- as ]
-                                                                        let ws = take n vs
-                                                                        return $ map (/(sum ws)) ws
+instance Dist Dirichlet where
+    type Result Dirichlet = [Double]
+    dist_name _ = "dirichlet"
+
+instance IOSampleable Dirichlet where
+    sampleIO (Dirichlet as) = sampleIO $ sample_dirichlet as
+
+instance HasPdf Dirichlet where
+    pdf (Dirichlet as) ps = dirichlet_density as ps
+
+instance HasAnnotatedPdf Dirichlet where
+    annotated_densities dist ps = return [pdf dist ps]
+
+instance Sampleable Dirichlet where
+    sample dist@(Dirichlet as) = RanSamplingRate (1/sqrt(fromIntegral $ length as)) $ sample_dirichlet as
+
+
+dirichletDist as = Dirichlet as
+
+dirichlet as = sample $ dirichletDist as
 
 symmetric_dirichlet n a = do
   ws <- iid n (gamma a 1)
   return $ map (/sum ws) ws
 
-sample_dirichlet_on items as = do ps <- sample_dirichlet as
-                                  return $ zip items ps
 
-dirichlet_on_density as item_ps = dirichlet_density as ps where
-    ps = map (\(item,p) -> p) item_ps
+-----
+
+data DirichletOn a = DirichletOn [a] [Double]
+
+instance Dist (DirichletOn a) where
+    type Result (DirichletOn a) = [(a,Double)]
+    dist_name _ = "dirichlet_on"
+
+instance IOSampleable (DirichletOn a) where
+    sampleIO (DirichletOn items as) = do ps <- sampleIO $ dirichletDist as
+                                         return $ zip items ps
+
+instance HasPdf (DirichletOn a) where
+    pdf (DirichletOn _ as) item_ps = pdf (Dirichlet as) ps where ps = map snd item_ps
+
+
+instance HasAnnotatedPdf (DirichletOn a) where
+    annotated_densities dist item_ps = return $ [pdf dist item_ps]
+
+instance Sampleable (DirichletOn a) where
+    sample (DirichletOn items as) = do ps <- dirichlet as
+                                       return $ zip items ps
+
+dirichletOnDist items ps = DirichletOn items ps
+
+dirichlet_on items ps = sample $ dirichletOnDist items ps
 
 symmetric_dirichlet_on items a = dirichlet_on items (replicate (length items) a)
 
-class HasDirichlet d where
-    dirichlet :: [Double] -> d [Double]
-    dirichlet_on :: [a] -> [Double] -> d [(a,Double)]
-    v_dirichlet :: Int -> [Double] -> d [Double]
-
-instance HasDirichlet Distribution where
-    dirichlet as = Distribution "dirichlet" (make_densities $ dirichlet_density as) (no_quantile "dirichlet") (sample_dirichlet as) (Simplex (length as) 1.0)
-    dirichlet_on items as = Distribution "dirichlet_on" (make_densities $ dirichlet_on_density as) (no_quantile "dirichlet_on") (sample_dirichlet_on items as) NoRange
-    v_dirichlet n as = Distribution "v_dirichlet" (make_densities $ dirichlet_density (take n as)) (no_quantile "v_dirichlet") (sample_v_dirichlet n as) (Simplex n 1.0)
-
-
-instance HasDirichlet Random where
-    dirichlet as = RanDistribution (dirichlet as)
-    dirichlet_on items as = RanDistribution (dirichlet_on items as)
-    v_dirichlet n as = RanDistribution (v_dirichlet n as)
