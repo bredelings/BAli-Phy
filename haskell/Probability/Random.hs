@@ -13,6 +13,7 @@ import Control.Monad.IO.Class -- for liftIO
 import Data.IntMap (IntMap)
 import Data.Array (Array)
 import Numeric.LogDouble
+import Probability.Prob
 
 
 data AnnotatedDensity a where

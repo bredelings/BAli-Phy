@@ -2,6 +2,7 @@ module Numeric.LogDouble where
 
 import Compiler.Floating
 import Compiler.Real
+import Data.Floating.Types
 
 data LogDouble
 
@@ -47,6 +48,16 @@ instance Pow LogDouble where
     expTo = expToLogDouble
 
 instance Show LogDouble where
-    show x = show $ exp $ ln x
+    show x = show (toFloating x :: Double)
 
-            
+instance FloatConvert LogDouble Double where
+    toFloating x = exp $ ln x
+
+instance FloatConvert Double LogDouble where
+    toFloating x = expTo $ log x
+
+instance FloatConvert Int LogDouble where
+    toFloating i = toFloating (toFloating i :: Double)
+
+instance FloatConvert Integer LogDouble where
+    toFloating i = toFloating (toFloating i :: Double)

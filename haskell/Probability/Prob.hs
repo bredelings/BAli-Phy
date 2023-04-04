@@ -5,12 +5,16 @@ module Probability.Prob (Prob (..),
                          logOdds,
                          powProb,
                          fromProb,
-                         toProb
+                         toProb,
+                         toFloating,
+                         LogDouble
                         )
     where
 
 import Numeric.Log
+import Numeric.LogDouble
 import Data.Ratio
+import Data.Floating.Types
 
 {- We need to handle numbers that are > 1 in the following cases:
      1/2   (2 > 1)
@@ -181,3 +185,20 @@ instance Pow Prob where
     pow = powProb
     expTo = expToProb
 
+instance FloatConvert Prob Double where
+    toFloating = fromProb
+
+instance FloatConvert Prob LogDouble where
+    toFloating = fromProb
+
+instance FloatConvert LogDouble Prob where
+    toFloating = expTo . ln
+
+instance FloatConvert Double Prob where
+    toFloating = toProb
+
+instance FloatConvert Integer Prob where
+    toFloating i = toFloating (toFloating i :: Double)
+
+instance FloatConvert Int Prob where
+    toFloating i = toFloating (toFloating i :: Double)
