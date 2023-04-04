@@ -11,13 +11,13 @@ random_walk_n n next x0 = do
 
 model = do
 
-    p <- beta 10.0 1.0
+    p <- beta 10 1
 
-    n <- geometric p
+    n <- geometric (toProb p)
 
-    q <- cauchy 0.0 1.0
+    q <- cauchy 0 1
 
-    x <- iid 10 (normal 0.0 1.0)
+    x <- iid 10 (normal 0 1)
 
     c <- iid 10 (categorical (replicate 10 0.1))
 
@@ -29,9 +29,9 @@ model = do
     y <- independent [ normal (x !! i) 1.0 | i <- [0 .. 9] ]
 
     -- Brownian-bridge-like
-    z <- random_walk_n 10 (\mu -> normal mu 1.0) 0.0
+    z <- random_walk_n 10 (\mu -> normal mu 1) 0
 
-    2.0 ~> normalDist (last z) 1.0
+    2.0 ~> normalDist (last z) 1
 
     return ["p" %=% p, "n" %=% n, "q" %=% q, "x" %=% x, "w" %=% w, "y" %=% y, "z" %=% z]
 
