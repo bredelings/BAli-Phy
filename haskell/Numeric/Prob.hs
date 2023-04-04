@@ -1,14 +1,9 @@
-module Probability.Prob (Prob (..),
-                         complement,
-                         logProb,
-                         expToProb,
-                         logOdds,
-                         powProb,
-                         fromProb,
-                         toProb,
-                         toFloating,
-                         LogDouble
-                        )
+module Numeric.Prob (Prob (..),
+                     complement,
+                     logOdds,
+                     toFloating,
+                     LogDouble
+                    )
     where
 
 import Numeric.Log
