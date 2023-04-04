@@ -77,4 +77,4 @@ readFile filename = makeIO $ builtin_readFile (list_to_string $ filename)
 
 
 instance Show LogDouble where
-    show x = show $ exp $ log x
+    show x = show $ exp $ ln x
