@@ -47,11 +47,6 @@ instance Floating Double
 -- Question: does implementing this type class slow down the code?
 
 
-instance Floating LogDouble
--- The problem is that only (sqrt, pow) and maybe (exp) really make sense for LogDouble.
--- (log) can return negatives, as can many of the other functions.
-
-
 class Fractional a => Pow a where
     pow :: a -> Double -> a
     ln  :: a -> Double
