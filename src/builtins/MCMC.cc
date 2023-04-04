@@ -41,19 +41,6 @@ extern "C" closure builtin_function_register_transition_kernel(OperationArgs& Ar
     return {index_var(0), {r_effect}};
 }
 
-// The idea here is to propose new values of X, and evaluate them by summing over each Y_i \in {True,False}.
-// Then the Y_i are resampled.  
-
-double log1pexp(double x)
-{
-    if (x < 18.0)
-	return log1p(exp(x));
-    else if (x < 33.3)
-	return x + exp(-x);
-    else
-	return x;
-}
-
 log_double_t get_multiplier(context_ref& C1, const vector<int>& I_regs)
 {
     // So, why is this sum allowed?

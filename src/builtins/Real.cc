@@ -10,7 +10,7 @@ extern "C" closure builtin_function_exp(OperationArgs& Args)
     auto x = Args.evaluate(0);
 
     if (not x.is_double())
-        throw myexception()<<"log1p: object '"<<x.print()<<"' is not double!";
+        throw myexception()<<"exp: object '"<<x.print()<<"' is not double!";
 
     double xx = x.as_double();
 
@@ -22,7 +22,7 @@ extern "C" closure builtin_function_expm1(OperationArgs& Args)
     auto x = Args.evaluate(0);
 
     if (not x.is_double())
-        throw myexception()<<"log1p: object '"<<x.print()<<"' is not double!";
+        throw myexception()<<"expm1: object '"<<x.print()<<"' is not double!";
 
     double xx = x.as_double();
     return {expm1(xx)};
@@ -59,6 +59,47 @@ extern "C" closure builtin_function_log1p(OperationArgs& Args)
     double xx = x.as_double();
     assert(xx >= -1.0);
     return {log1p(xx)};
+}
+
+extern "C" closure builtin_function_log1pexp(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+
+    if (not x.is_double())
+        throw myexception()<<"log1p: object '"<<x.print()<<"' is not double!";
+
+    // QUESTION: should we implement this for logdouble?
+
+    double xx = x.as_double();
+    return {log1pexp(xx)};
+}
+
+extern "C" closure builtin_function_log1mexp(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+
+    if (not x.is_double())
+        throw myexception()<<"log1p: object '"<<x.print()<<"' is not double!";
+
+    // QUESTION: should we implement this for logdouble?
+
+    double xx = x.as_double();
+    assert(xx >= 0);
+    return {log1mexp(xx)};
+}
+
+extern "C" closure builtin_function_log1mexpx(OperationArgs& Args)
+{
+    auto x = Args.evaluate(0);
+
+    if (not x.is_double())
+        throw myexception()<<"log1p: object '"<<x.print()<<"' is not double!";
+
+    // QUESTION: should we implement this for logdouble?
+
+    double xx = x.as_double();
+    assert(xx <= 0);
+    return {log1mexpx(xx)};
 }
 
 extern "C" closure builtin_function_pow(OperationArgs& Args)

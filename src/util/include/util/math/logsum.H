@@ -39,6 +39,35 @@ constexpr double log_0 = -max_float;
 // HMM... the long doubles have 64 bits of precision...
 constexpr double NATS = 40;
 
+// log(1 + exp(x))
+// domain: [0, Inf)
+inline double log1pexp(double x)
+{
+    if (x < 18.0)
+	return log1p(exp(x));
+    else if (x < 33.3)
+	return x + exp(-x);
+    else
+	return x;
+}
+
+// log(1 - exp(x)) = log(-expm1(x)) = log1p(-exp(x))
+// domain: (-Inf, 0]
+inline double log1mexpx(double x)
+{
+    if (x > M_LN2)
+        return log(-expm1(x));
+    else
+        return log1p(-exp(x));
+}
+
+// log(1 - exp(-x)) = log(-expm1(-x)) = log1p(-exp(-x))
+// domain: [0, Inf)
+inline double log1mexp(double x)
+{
+    return log1mexpx(-x);
+}
+
 inline double logsum_nocheck(double x, double y) {
     if (std::abs(x-y) > NATS)
 	return ((x > y) ? x : y);
