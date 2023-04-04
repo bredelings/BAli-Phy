@@ -21,7 +21,6 @@ annotated_bernoulli_density2 p q x = do
 bernoulli p = bernoulli2 p (1-p)
 rbernoulli q = bernoulli2 (1-q) q
 
-
 class HasBernoulli d where
     bernoulli2 :: Double -> Double -> d Int
 
