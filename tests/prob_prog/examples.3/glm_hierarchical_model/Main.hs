@@ -11,17 +11,17 @@ model floor_values county_code_values log_radon_data = do
   let n_counties = length $ nub $ county_code_values
 
   mu_a <- normal 0 (100**2)
-  sigma_a <- half_cauchy 0 5
+  sigma_a <- half_cauchy 5
 
   mu_b <- normal 0 (100**2)
-  sigma_b <- half_cauchy 0 5
+  sigma_b <- half_cauchy 5
 
   -- This basically associates 0..(n-1) with normal a/b
   a <- iid n_counties (normal' mu_a sigma_a)
   b <- iid n_counties (normal' mu_b sigma_b)
 
   -- This constructs the distribution of predicted values given county_code and floor
-  eps <- half_cauchy 0 5
+  eps <- half_cauchy 5
   let dist county_code floor = normal (a!!county_code + b!!county_code*floor) eps
 
   let loggers = ["mu_a" %=% mu_a, "sigma_a" %=% sigma_a, "mu_b" %=% mu_b, "sigma_b" %=% sigma_b]
