@@ -18,7 +18,9 @@ sample_v_dirichlet n as = RanSamplingRate (1/sqrt(fromIntegral n)) $ do vs <- in
                                                                         let ws = take n vs
                                                                         return $ map (/(sum ws)) ws
 
-symmetric_dirichlet n a = v_dirichlet n (repeat a)
+symmetric_dirichlet n a = do
+  ws <- iid n (gamma a 1)
+  return $ map (/sum ws) ws
 
 sample_dirichlet_on items as = do ps <- sample_dirichlet as
                                   return $ zip items ps
