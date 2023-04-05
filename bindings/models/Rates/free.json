@@ -8,13 +8,13 @@
         {
             "arg_name": "rates",
             "arg_type": "List[Double]",
-            "default_value": "~symmetric_dirichlet(@n,2)",
+            "default_value": "~symmetric_dirichlet(@n, 1)",
 	    "description" : "Rates for each category"
         },
         {
             "arg_name": "frequencies",
             "arg_type": "List[Double]",
-            "default_value": "~symmetric_dirichlet(@n,3)",
+            "default_value": "~symmetric_dirichlet(@n, 1)",
 	    "description" : "Frequencies for each category"
         },
         {
