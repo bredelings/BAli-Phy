@@ -1,7 +1,6 @@
 import Probability
 import Data.Frame
 import Data.Array
-import qualified Data.Map as M
 
 -- When we get polymorphism, maybe we can create an temporary array as a view on xs'
 -- I presume that using n directly is more efficient that using [length xs']
