@@ -59,12 +59,23 @@ instance Floating Double where
 
 infixr 8 `pow`
 
+-- How about log1p, exmp1, log1pexp, and log1mexp?
+
 class Fractional a => Pow a where
-    pow :: a -> Double -> a
     ln  :: a -> Double
     expTo :: Double -> a
+    lnBase :: a -> a -> Double
+
+    sq_rt :: a -> a
+    pow :: a -> Double -> a
+
+    sq_rt x = pow x 0.5
+    lnBase x y = ln x / ln y
 
 instance Pow Double where
-    pow   = pow_a
     ln    = log_a
     expTo = exp_double
+
+    sq_rt  = sqrt_a
+    pow   = pow_a
+

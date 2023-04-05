@@ -57,16 +57,20 @@ expToProb z | z < 0     = Odds $ z - log1p (-exp z)
             | z == 0    = One
             | z > 0     = let Odds z2 = expToProb (-z) in IOdds z2
 
-plus Zero      x        = x
-plus x         Zero     = x
-plus Infinity  x        = Infinity
-plus x         Infinity = Infinity
+-- If y12 is only slightly more than zero, we should be able to do better
 plus (Odds y1) (Odds y2) | y12 > 0    = toProb (fromProb (Odds y1) + fromProb (Odds y2))
                          | y12 == 0   = One
                          | y12 > (-1) = One - toProb (expm1 (y12) / (1 + exp y1) / (1 + exp y2) )
                          | otherwise      = toProb $ fromProb (Odds y1) + fromProb (Odds y2)
                          where y12 = y1 + y2
+plus (Odds y)   One      | y < 0     = IOdds $ log1p(exp(y)) - y
+                         | otherwise = IOdds $ log1p(exp(-y))
 plus (IOdds y1) (Odds y2) = plus (Odds y2) (IOdds y1)
+plus One        (Odds y)  = plus (Odds y) One
+plus Zero      x        = x
+plus x         Zero     = x
+plus Infinity  x        = Infinity
+plus x         Infinity = Infinity
 plus x1         x2        = toProb (fromProb x1 + fromProb x2)
 
 
@@ -75,21 +79,13 @@ sub Infinity Infinity    = error "Inf - Inf is undefined"
 sub Infinity _           = Infinity
 sub One      One         = Zero
 sub One      (Odds y)   = Odds (-y)
-sub p1@(Odds y1) p2@(Odds y2) | y1 >= y2 = p1 * (One - (p2/p1))
-sub (IOdds y1) (Odds y2) = toProb (fromProb (IOdds y1) - fromProb (Odds y2))
-sub (IOdds y1) (IOdds y2) | y1 == y2 = Zero
-                          | y1 <  y2 = toProb (fromProb (IOdds y1) - fromProb (IOdds y2))
+sub p1@(Odds y1) p2@(Odds y2) | y1 >= y2  = p1 * (One - (p2/p1))
+sub (IOdds y1) (Odds y2)                  = toProb (fromProb (IOdds y1) - fromProb (Odds y2))
+sub (IOdds y1) (IOdds y2)     | y1 == y2  = Zero
+                              | y1 <  y2  = toProb (fromProb (IOdds y1) - fromProb (IOdds y2))
 sub _         _ = error "Negative probability"
 
--- Done!
-mul Zero      Infinity  = error "0 * Inf is undefined"
-mul Infinity  Zero      = error "Inf * 0 is undefined"
-mul Zero      x         = Zero
-mul x         Zero      = Zero
-mul One       x         = x
-mul x         One       = x
-mul Infinity  x         = Infinity
-mul x         Infinity  = Infinity
+
 mul (Odds y1) (Odds y2) | y1 > y2   = Odds $ y2 - log1p( exp(y2-y1) + exp(-y1) )
                         | otherwise = Odds $ y1 - log1p( exp(y1-y2) + exp(-y2) )
 mul (Odds y1) (IOdds y2) | y1 == y2 = One
@@ -98,6 +94,14 @@ mul (Odds y1) (IOdds y2) | y1 == y2 = One
 
 mul (IOdds y1) (Odds y2) = mul (Odds y2) (IOdds y1)
 mul (IOdds y1) (IOdds y2) = let (Odds y3) = mul (Odds y1) (Odds y2) in IOdds y3
+mul Zero      Infinity  = error "0 * Inf is undefined"
+mul Infinity  Zero      = error "Inf * 0 is undefined"
+mul Zero      x         = Zero
+mul x         Zero      = Zero
+mul One       x         = x
+mul x         One       = x
+mul Infinity  x         = Infinity
+mul x         Infinity  = Infinity
 
 instance Eq Prob where
     (Odds y1)  == (Odds y2)  = y1 == y2
