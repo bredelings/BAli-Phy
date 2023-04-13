@@ -165,7 +165,7 @@ std::optional<k_substitution_t> kunify(const Hs::Kind& k1, const Hs::Kind& k2)
     else if (auto kv1 = k1.to<KindVar>())
     {
         if (auto kv2 = k2.to<KindVar>(); kv2 and *kv1 == *kv2)
-            return {{}};
+            return {k_substitution_t{}};
         if (occurs_check(*kv1, k2)) return {};
 
         k_substitution_t s;
@@ -182,9 +182,9 @@ std::optional<k_substitution_t> kunify(const Hs::Kind& k1, const Hs::Kind& k2)
         return s;
     }
     else if (k1.is_a<KindStar>() and k2.is_a<KindStar>())
-        return {{}};
+        return {k_substitution_t{}};
     else if (k1.is_a<KindConstraint>() and k2.is_a<KindConstraint>())
-        return {{}};
+        return {k_substitution_t{}};
     else
         return {};
 }
