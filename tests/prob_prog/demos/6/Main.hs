@@ -13,7 +13,7 @@ model = do
 
     p <- beta 10 1
 
-    n <- geometric (toProb p)
+    n <- geometric p
 
     q <- cauchy 0 1
 
