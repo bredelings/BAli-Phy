@@ -66,7 +66,17 @@ instance IOSampleable PoissonProcess where
        xs <- sampleIO $ iidDist n (uniform t1 t2)
        return $ sort xs
 
+instance HasPdf PoissonProcess where
+    pdf (PoissonProcess rate t1 t2) = poisson_process_density rate t1 t2
 
+instance Sampleable PoissonProcess where
+    sample (PoissonProcess rate t1 t2) = do
+       n <- sample $ poissonDist (rate * (t2-t1))
+       xs <- sample $ iidDist n (uniform t1 t2)
+       return $ sort xs
+
+instance HasAnnotatedPdf PoissonProcess where
+    annotated_densities (PoissonProcess rate t1 t2) = make_densities $ poisson_process_density rate t1 t2
 
 --- Poisson process, constant rate --
 poisson_process_density' rate t1 t2 n = expTo $ (-rate*(t2-t1)) + (fromIntegral n * log rate)
@@ -77,6 +87,26 @@ sample_poisson_process rate t1 t2 = do
   return $ sort xs
 
 --- Poisson process, piecewise constant
+
+poissonProcessDist rate t1 t2 = PoissonProcess rate t1 t2
+poisson_process rate t1 t2 = sample $ poissonProcessDist rate t1 t2
+
+
+------------------------------------------------------------
+data PoissonProcesses = PoissonProcesses [(Double,Double,Double)]
+
+instance Dist PoissonProcesses where
+    type Result PoissonProcesses = [Double]
+    dist_name _ = "poisson_processes"
+
+instance HasPdf PoissonProcesses where
+    pdf dist = density dist
+
+instance HasAnnotatedPdf PoissonProcesses where
+    annotated_densities (PoissonProcesses intervals) = make_densities' $ poisson_processes_densities intervals
+
+instance Sampleable PoissonProcesses where
+    sample (PoissonProcesses intervals) = sample_poisson_processes intervals
 
 dropCount p xs = go p 0 xs where
     go p n [] = (n,[])
@@ -95,15 +125,7 @@ sample_poisson_processes ((rate,t1,t2):intervals) = do
   -- FIXME - this doesn't seem very efficient!
   return $ points1 ++ points2
 
-class HasPoisson d where
-    poisson_process :: Double -> Double -> Double -> d [Double]
-    poisson_processes :: [(Double,Double,Double)] -> d [Double]
 
-instance HasPoisson Distribution where
-    poisson_process rate t1 t2 = Distribution "poisson_process" (make_densities $ poisson_process_density rate t1 t2) (no_quantile "poisson_process") (sample_poisson_process rate t1 t2) NoRange
+poissonProcessesDist intervals = PoissonProcesses intervals
+poisson_processes intervals = sample $ poissonProcessesDist intervals
 
-    poisson_processes intervals = Distribution "poisson_processes" (make_densities' $ poisson_processes_densities intervals) (no_quantile "poisson_processes") (sample_poisson_processes intervals) NoRange
-
-instance HasPoisson Random where
-    poisson_process rate t1 t2 = RanDistribution $ poisson_process rate t1 t2
-    poisson_processes intervals = RanDistribution $ poisson_processes intervals
