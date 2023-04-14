@@ -11,7 +11,7 @@ model xs ys = do
 
     let f x = b * x + a
 
-    ys ~> independent [ normal (f x) sigma | x <- xs ]
+    ys ~> independentDist [ normalDist (f x) sigma | x <- xs ]
 
     return ["b" %=% b, "a" %=% a, "sigma" %=% sigma]
 
