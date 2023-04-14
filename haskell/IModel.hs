@@ -36,7 +36,7 @@ rs07_relaxed_rates_model tree = do
   
    alpha <- gamma 2.0 (1.0/6.0)
 
-   category <- RanDistribution $ crp alpha n_branches delta
+   category <- crp alpha n_branches delta
 
    z <- iid n_branches (normal 0.0 1.0)
 
