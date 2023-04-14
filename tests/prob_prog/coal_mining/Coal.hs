@@ -27,7 +27,7 @@ model (t1,t2) times = do
 
   let intervals = get_intervals g s t2
 
-  times ~> poisson_processes intervals
+  times ~> poissonProcessesDist intervals
 
   return [ "n" %=% n, "s" %=% s, "g" %=% g, "intervals" %=% intervals]
 
