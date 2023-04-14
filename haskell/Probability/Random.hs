@@ -324,7 +324,6 @@ prefix %>% subvalue = (toJSONKey $ prefix ++ "/", log_to_json subvalue)
 log_to_json loggers = J.Object $ loggers
 
 -- Define some helper functions
-no_quantile name = error ("Distribution '"++name++"' has no quantile function")
 make_densities density x = return [density x]
 make_densities' densities x = return $ densities x
 pair_apply f (x:y:t) = f x y : pair_apply f t
