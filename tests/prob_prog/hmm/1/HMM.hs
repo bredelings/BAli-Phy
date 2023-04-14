@@ -3,9 +3,8 @@ import Probability
 
 transition_matrix s = categorical $ [[0.7, 0.3], [0.3, 0.7]] !! s
 
-emission_matrix s = categorical $ [[0.9, 0.1], [0.1, 0.9]] !! s
+emission_matrix s = categoricalDist $ [[0.9, 0.1], [0.1, 0.9]] !! s
 
-markov :: (a->Random a) -> a -> Random [a]
 markov f state0 = lazy $ do state1 <- f state0
                             states <- markov f state1
                             return (state0:states)
@@ -18,7 +17,7 @@ n_diffs []     []                 = 0 :: Int
 n_diffs (x:xs) (y:ys) | x == y    =     n_diffs xs ys
                       | otherwise = 1 + n_diffs xs ys
 
-hmm emission states = independent $ map emission states
+hmm emission states = independentDist $ map emission states
 
 model n = do
   hidden_states <- take n <$> markov transition_matrix 1
