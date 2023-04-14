@@ -38,6 +38,40 @@ stick (p:ps) (x:xs) = do keep <- bernoulli p
 --                                 else go_log ps xs q'
 
 
+--
+dpm_lognormal n alpha mean_dist noise_dist = dpm n alpha sample_dist
+    where sample_dist = do mean <- mean_dist
+                           sigma_over_mu <- noise_dist
+                           let sample_log_normal = do z <- normal 0 1
+                                                      return $ mean*safe_exp (z*sigma_over_mu)
+                           return sample_log_normal
+
+-- In theory we could implement `dpm` in terms of `dp`:
+--   dpm n alpha sample_dist = sequence $ dp n alpha sample_dist
+-- I think the problem with that is that it might not be lazy in n.
+-- I need the take to be at the end:
+--   liftM (take n) $ sequence $ dp alpha sample_dist
+
+dpm n alpha sample_dist = lazy $ do
+
+  dists  <- sequence $ repeat $ sample_dist
+
+  breaks <- sequence $ repeat $ beta 1 alpha
+
+-- stick selects a distribution from the list, and join then samples from the distribution
+  iid n (join $ stick breaks dists)
+
+dp :: Int -> Double -> Random a -> Random [a]
+dp n alpha dist = lazy $ do
+
+  atoms  <- sequence $ repeat $ dist
+
+  breaks <- sequence $ repeat $ beta 1 alpha
+
+  iid n (stick breaks atoms)
+
+---
+
 normalize v = map (/total) v where total=sum v
 
 do_crp alpha n d = do_crp'' alpha n bins (replicate bins 0) where bins=n+d
@@ -74,44 +108,26 @@ safe_exp x = if (x < (-20)) then
              else
                exp x
 
-dpm_lognormal n alpha mean_dist noise_dist = dpm n alpha sample_dist
-    where sample_dist = do mean <- mean_dist
-                           sigma_over_mu <- noise_dist
-                           let sample_log_normal = do z <- normal 0 1
-                                                      return $ mean*safe_exp (z*sigma_over_mu)
-                           return sample_log_normal
 
--- In theory we could implement `dpm` in terms of `dp`:
---   dpm n alpha sample_dist = sequence $ dp n alpha sample_dist
--- I think the problem with that is that it might not be lazy in n.
--- I need the take to be at the end:
---   liftM (take n) $ sequence $ dp alpha sample_dist
+data CRP = CRP Double Int Int
 
-dpm n alpha sample_dist = lazy $ do
+instance Dist CRP where
+    type Result CRP = [Int]
+    dist_name _ = "crp"
 
-  dists  <- sequence $ repeat $ sample_dist
+instance IOSampleable CRP where
+    sampleIO (CRP alpha n d) = sample_crp alpha n d
 
-  breaks <- sequence $ repeat $ beta 1 alpha
+instance HasPdf CRP where
+    pdf (CRP alpha n d) = crp_density alpha n d
 
--- stick selects a distribution from the list, and join then samples from the distribution
-  iid n (join $ stick breaks dists)
+instance HasAnnotatedPdf CRP where
+    annotated_densities dist xs = return [pdf dist xs]
 
-dp :: Int -> Double -> Random a -> Random [a]
-dp n alpha dist = lazy $ do
+instance Sampleable CRP where
+    sample dist@(CRP alpha n d) = RanDistribution3 dist (crp_effect n d) (triggered_modifiable_list n) (ran_sample_crp alpha n d)
 
-  atoms  <- sequence $ repeat $ dist
+crpDist = CRP
 
-  breaks <- sequence $ repeat $ beta 1 alpha
+crp alpha n d = sample $ crpDist alpha n d
 
-  iid n (stick breaks atoms)
-
-class HasCRP d where
-    crp :: Double -> Int -> Int -> d [Int]
-
-instance HasCRP Distribution where
-    crp alpha n d = Distribution "crp" (make_densities $ density) (no_quantile "crp") (RandomStructure (crp_effect n d) (triggered_modifiable_list n) (ran_sample_crp alpha n d)) NoRange
-                  where subrange = integer_between 0 (n+d-1)
-                        density = crp_density alpha n d
-
-instance HasCRP Random where
-    crp alpha n d = RanDistribution $ crp alpha n d
