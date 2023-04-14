@@ -20,7 +20,7 @@ model xs = do
 
   params <- dp n_points alpha cluster_dist
 
-  xs ~> independent [normal mean sigma | (mean,sigma) <- params]
+  xs ~> independentDist [normalDist mean sigma | (mean,sigma) <- params]
 
   let loggers = ["alpha" %=% alpha, "params" %=% params]
 
