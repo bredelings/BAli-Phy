@@ -130,7 +130,6 @@ instance Monad TKEffects where
 
 data Random a where
     RandomStructure :: (a->TKEffects b) -> (a -> (a -> IO ()) -> a) -> Random a -> Random a
-    RanAtomic :: (a -> TKEffects b) -> IO a -> Random a
     Observe :: Distribution b -> b -> Random ()
     Lazy :: Random a -> Random a
     WithTKEffect :: Random a -> (a -> TKEffects b) -> Random a
@@ -190,7 +189,6 @@ run_strict e@(WithTKEffect _ _) = run_lazy e
 run_strict (RanMFix f) = mfix (run_lazy . f)
 run_strict (Lazy r) = unsafeInterleaveIO $ run_lazy r
 run_strict (RandomStructure _ _ _) = error "run_strict: RandomStructure"
-run_strict (RanAtomic _ _) = error "run_strict: RanAtomic"
 run_strict (Observe _ _) = error "run_strict: Observe"
 run_strict (RanInterchangeable _) = error "run_strict: RanInterchangeable"
 run_strict (PerformTKEffect _) = error "run_strict: PerformTKEffect"
@@ -209,7 +207,6 @@ run_tk_effects rate (SamplingRate rate2 a) = run_tk_effects (rate*rate2) a
 
 run_lazy :: Random a -> IO a
 run_lazy (RandomStructure _ _ a) = run_lazy a
-run_lazy (RanAtomic _ a) = a
 run_lazy (RanBind f g) = do
   x <- unsafeInterleaveIO $ run_lazy f
   run_lazy $ g x
@@ -246,7 +243,6 @@ run_strict' rate e@(WithTKEffect _ _) = run_lazy' rate e
 run_strict' rate (RanMFix f) = mfix (run_lazy' rate . f)
 run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
 run_strict' rate (RandomStructure _ _ _) = error "run_strict': RandomStructure"
-run_strict' rate (RanAtomic _ _) = error "run_strict': RanAtomic"
 
 -- NOTE: In order for (run_lazy') to actually be lazy, we need to avoid returning
 --       SOMETHING `seq` result.  And this means that we need to frequently
@@ -317,10 +313,6 @@ run_lazy' rate (RanDistribution3 dist tk_effect structure do_sample) = do
  -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy do_sample
   return $ structure value (sample_effect rate dist tk_effect)
-run_lazy' rate (RanDistribution dist@(Distribution _ _ _ (RanAtomic tk_effect do_sample) range)) = do
-  x <- modifiableIO do_sample
-  effect <- sample_effect rate dist tk_effect x
-  return (effect `seq` x)
 run_lazy' rate (RanDistribution dist@(Distribution _ _ _ (RandomStructure tk_effect structure do_sample) range)) = do
  -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ run_lazy do_sample
