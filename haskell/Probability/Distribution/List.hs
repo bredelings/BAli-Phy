@@ -54,7 +54,7 @@ data Independent d = Independent [d]
 
 instance Dist d => Dist (Independent d) where
     type Result (Independent d) = [Result d]
-    dist_name dist = "independent " ++ dist_name dist
+    dist_name dist = "independent"
 
 instance IOSampleable d => IOSampleable (Independent d) where
     sampleIO (Independent dists) = sequence $ map sampleIO dists
