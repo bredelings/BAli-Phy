@@ -60,10 +60,8 @@ make_edges event (PropertyEdge name node) = do register_dist_property event node
                                                return ()
 
 -- Define the Distribution type
-data Distribution a = Distribution String (a -> AnnotatedDensity [LogDouble]) (a->Double) (Random a) Range
 densities dist x = get_densities $ annotated_densities dist x
 density dist x = balanced_product (densities dist x)
-distRange (Distribution _ _ _ _ r) = r
 
 -- can we change all of these ^^ functions into member functions?
 
@@ -74,19 +72,6 @@ class Dist d => HasAnnotatedPdf d where
 -- We know how to sample from these -- theres a default effect?
 class Dist d => Sampleable d where
     sample :: d -> Random (Result d)
-
-instance Dist (Distribution a) where
-    type Result (Distribution a) = a
-    dist_name (Distribution n _ _ _ _) = n
-
-instance HasAnnotatedPdf (Distribution a) where
-    annotated_densities (Distribution _ ds _ _ _) = ds
-
-instance Sampleable (Distribution a) where
-    sample (Distribution _ _ _ s _ ) = s
-
-instance ContDist1D (Distribution Double) where
-    quantile (Distribution _ _ q _ _) = q
 
 instance Dist (Random a) where
     type Result (Random a) = a
