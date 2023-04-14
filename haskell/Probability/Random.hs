@@ -141,6 +141,7 @@ data Random a where
     RanMFix :: (a -> Random a) -> Random a
     RanDistribution :: Distribution a -> Random a
     RanDistribution2 :: (IOSampleable d, HasAnnotatedPdf d) => d -> (Result d -> TKEffects b) -> Random (Result d)
+    RanDistribution3 :: HasAnnotatedPdf d => d -> ((Result d)->TKEffects b) -> ((Result d) -> ((Result d) -> IO ()) -> (Result d)) -> Random (Result d) -> Random (Result d)
     RanSamplingRate :: Double -> Random a -> Random a
     RanInterchangeable :: Random b -> Random (Random b)
 
@@ -184,6 +185,7 @@ run_strict (RanInterchangeable r) = return r
 -- These are the lazily executed parts of the strict monad.
 run_strict dist@(RanDistribution _) = run_lazy dist
 run_strict dist@(RanDistribution2 _ _) = run_lazy dist
+run_strict dist@(RanDistribution3 _ _ _ _) = run_lazy dist
 run_strict e@(WithTKEffect _ _) = run_lazy e
 run_strict (RanMFix f) = mfix (run_lazy . f)
 run_strict (Lazy r) = unsafeInterleaveIO $ run_lazy r
@@ -218,6 +220,7 @@ run_lazy (RanSamplingRate _ a) = run_lazy a
 -- Problem: distributions aren't part of the Random monad!
 run_lazy (RanDistribution (Distribution _ _ _ a _)) = unsafeInterleaveIO $ run_lazy a
 run_lazy (RanDistribution2 dist _) = unsafeInterleaveIO $ sampleIO dist
+run_lazy (RanDistribution3 _ _ _ do_sample) = unsafeInterleaveIO $ run_lazy do_sample
 run_lazy (PerformTKEffect e) = run_tk_effects 1.0 e
 run_lazy (WithTKEffect action _) = run_lazy action
 run_lazy (Lazy a) = run_lazy a
@@ -238,6 +241,7 @@ run_strict' rate (RanSamplingRate rate2 a) = run_strict' (rate*rate2) a
 run_strict' rate ix@(RanInterchangeable r) = run_lazy' rate ix
 run_strict' rate dist@(RanDistribution _) = run_lazy' rate dist
 run_strict' rate dist@(RanDistribution2 _ _) = run_lazy' rate dist
+run_strict' rate dist@(RanDistribution3 _ _ _ _) = run_lazy' rate dist
 run_strict' rate e@(WithTKEffect _ _) = run_lazy' rate e
 run_strict' rate (RanMFix f) = mfix (run_lazy' rate . f)
 run_strict' rate (Lazy r) = unsafeInterleaveIO $ run_lazy' rate r
@@ -309,6 +313,10 @@ run_lazy' rate (RanDistribution2 dist tk_effect) = do
   x <- modifiableIO $ sampleIO dist
   effect <- sample_effect rate dist tk_effect x
   return (effect `seq` x)
+run_lazy' rate (RanDistribution3 dist tk_effect structure do_sample) = do
+ -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
+  value <- unsafeInterleaveIO $ run_lazy do_sample
+  return $ structure value (sample_effect rate dist tk_effect)
 run_lazy' rate (RanDistribution dist@(Distribution _ _ _ (RanAtomic tk_effect do_sample) range)) = do
   x <- modifiableIO do_sample
   effect <- sample_effect rate dist tk_effect x
