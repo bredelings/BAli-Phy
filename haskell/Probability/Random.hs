@@ -1,6 +1,7 @@
 module Probability.Random (module Probability.Random,
                            module Range,
                            module Numeric.LogDouble,
+                           module Numeric.Prob,
                            modifiable)
     where
 
