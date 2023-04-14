@@ -1090,23 +1090,29 @@ void TypeChecker::unify(const Type& t1, const Type& t2, const ConstraintOrigin& 
     unify_solve_(orig, t1, t2);
 }
 
-bool TypeChecker::maybe_match(const Type& t1, const Type& t2)
+optional<substitution_t> TypeChecker::maybe_match(const Type& t1, const Type& t2) const
 {
     unification_env env;
-
-    return maybe_unify_(false, env, t1, t2);
+    substitution_t s;
+    if (maybe_unify_(false, env, t1, t2, s))
+        return s;
+    else
+        return {};
 }
 
-void TypeChecker::match(const Type& t1, const Type& t2, const myexception& e)
+substitution_t TypeChecker::match(const Type& t1, const Type& t2, const myexception& e) const
 {
-    if (not maybe_match(t1,t2))
+    auto subst = maybe_match(t1,t2);
+    if (not subst)
         throw e;
+    else
+        return *subst;
 }
 
-void TypeChecker::match(const Type& t1, const Type& t2)
+substitution_t TypeChecker::match(const Type& t1, const Type& t2) const
 {
     auto e = myexception()<<"match failed: "<<t1<<" !~ "<<t2;
-    match(t1,t2,e);
+    return match(t1,t2,e);
 }
 
 
@@ -1303,6 +1309,19 @@ substitution_t TypeChecker::get_subst_for_tv_binders(const vector<TypeVar>& type
         assert(tv.kind);
         auto new_tv = fresh_meta_type_var(unloc(tv.name), *tv.kind);
         s = s.insert({tv,new_tv});
+    }
+    return s;
+}
+
+substitution_t TypeChecker::fresh_tv_binders(vector<TypeVar>& type_var_binders)
+{
+    substitution_t s;
+    for(auto& tv: type_var_binders)
+    {
+        assert(tv.kind);
+        auto new_tv = fresh_other_type_var(unloc(tv.name), *tv.kind);
+        s = s.insert({tv,new_tv});
+        tv = new_tv;
     }
     return s;
 }

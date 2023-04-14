@@ -544,17 +544,10 @@ pair<Hs::Binds, vector<tuple<Core::Var, Core::wrapper, Core::Exp>>> TypeChecker:
     return {instance_method_decls, dfun_decls};
 }
 
-bool TypeChecker::instance_matches(const Type& type1, const Type& type2)
-{
-    auto [_1, _2, head1] = instantiate(InstanceOrigin(), type1);
-    auto [_3, _4, head2] = instantiate(InstanceOrigin(), type2);
-    return maybe_match(head1, head2);
-}
-
 bool TypeChecker::more_specific_than(const Type& type1, const Type& type2)
 {
     // We can get type1 by constraining type2, so type1 is more specific than type2.
-    return instance_matches(type2, type1) and not instance_matches(type1, type2);
+    return maybe_match(type2, type1) and not maybe_match(type1, type2);
 }
 
 bool is_type_variable(const Type& t)
@@ -591,6 +584,22 @@ bool possible_instance_for(Type t)
         return false;
 }
 
+InstanceInfo TypeChecker::freshen(InstanceInfo info)
+{
+    auto s = fresh_tv_binders(info.tvs);
+    info.args = apply_subst(s, info.args);
+    info.constraints = apply_subst(s, info.constraints);
+    return info;
+}
+
+EqInstanceInfo TypeChecker::freshen(EqInstanceInfo info)
+{
+    auto s = fresh_tv_binders(info.tvs);
+    info.lhs = apply_subst(s, info.lhs);
+    info.rhs = apply_subst(s, info.rhs);
+    return info;
+}
+
 // 1. An instance looks like (forall as.Q1(as) => Q2(as))
 // 2. We have some constraints Q3.
 // 3. We instantiate the instance with substitutions [as->gs].
@@ -605,7 +614,7 @@ bool possible_instance_for(Type t)
 // FIXME! Change this to take a Constraint, which includes the tc_state for the constraint we are trying to satisfy.
 optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pred)
 {
-    vector<pair<pair<Core::Exp, LIE>,Type>> matching_instances;
+    vector<tuple<pair<Core::Exp, LIE>,Type,Type>> matching_instances;
 
     TypeCon target_class = get_class_for_constraint(target_pred);
 
@@ -614,51 +623,65 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
 
     for(auto& [modid, mod]: this_mod().transitively_imported_modules)
     {
-        for(auto& [dfun, info]: mod->local_instances)
+        for(auto& [dfun, info_]: mod->local_instances)
         {
-            if (info.class_con != target_class) continue;
+            if (info_.class_con != target_class) continue;
 
-            auto type = info.type();
+            auto info = freshen(info_);
 
-            auto [_, wanteds, instance_head] = instantiate(InstanceOrigin(), type);
+            auto instance_head = type_apply(info.class_con, info.args);
 
-            if (not maybe_match(instance_head, target_pred)) continue;
+            if (auto subst = maybe_match(instance_head, target_pred))
+            {
+                auto preds = apply_subst(*subst, info.constraints);
+
+                auto wanteds = preds_to_constraints(InstanceOrigin(), Wanted, preds);
+
+                auto type = apply_subst(*subst, instance_head);
+                
+                auto dfun_exp = Core::Apply(dfun, dict_vars_from_lie<Core::Exp>(wanteds));
+
+                matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head});
+            }
+        }
+    }
+    for(auto& [dfun, info_]: this_mod().local_instances)
+    {
+        if (info_.class_con != target_class) continue;
+
+        auto info = freshen(info_);
+
+        auto instance_head = type_apply(info.class_con, info.args);
+
+        if (auto subst = maybe_match(instance_head, target_pred))
+        {
+            auto preds = apply_subst(*subst, info.constraints);
+
+            auto wanteds = preds_to_constraints(InstanceOrigin(), Wanted, preds);
+
+            auto type = apply_subst(*subst, instance_head);
 
             auto dfun_exp = Core::Apply(dfun, dict_vars_from_lie<Core::Exp>(wanteds));
 
-            matching_instances.push_back({{dfun_exp, wanteds}, type});
+            matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head});
         }
-    }
-    for(auto& [dfun, info]: this_mod().local_instances)
-    {
-        if (info.class_con != target_class) continue;
-
-        auto type = info.type();
-
-        auto [_, wanteds, instance_head] = instantiate(InstanceOrigin(), type);
-
-        if (not maybe_match(instance_head, target_pred)) continue;
-
-        auto dfun_exp = Core::Apply(dfun, dict_vars_from_lie<Core::Exp>(wanteds));
-
-        matching_instances.push_back({{dfun_exp, wanteds}, type});
     }
 
     if (matching_instances.size() == 0)
         return {}; // No matching instances
 
-    vector<pair<pair<Core::Exp, LIE>,Type>> surviving_instances;
+    vector<tuple<pair<Core::Exp, LIE>,Type,Type>> surviving_instances;
 
     for(int i=0;i<matching_instances.size();i++)
     {
-        auto type_i = matching_instances[i].second;
+        auto& [_1,_2, type_i] = matching_instances[i];
 
         bool keep = true;
         for(int j=0;keep and j<matching_instances.size();j++)
         {
             if (i == j) continue;
 
-            auto type_j = matching_instances[j].second;
+            auto& [_3, _4, type_j] = matching_instances[j];
 
             if (more_specific_than(type_j, type_i))
                 keep = false;
@@ -673,12 +696,12 @@ optional<pair<Core::Exp,LIE>> TypeChecker::lookup_instance(const Type& target_pr
     if (surviving_instances.size() > 1)
     {
         auto n = Note()<<"Too many matching instances for "<<target_pred<<":\n";
-        for(auto& [_,type]: surviving_instances)
-            n<<"  "<<remove_top_gen(type)<<"\n";
+        for(auto& [_,type1,type2]: surviving_instances)
+            n<<"  "<<remove_top_gen(type1)<<"\n";
         record_error(n);
     }
 
-    return surviving_instances[0].first;
+    return std::get<0>(surviving_instances[0]);
 }
 
 bool TypeChecker::find_type_eq_instance_1way(const Type& t1, const Type& t2)

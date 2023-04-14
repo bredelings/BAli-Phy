@@ -88,19 +88,23 @@ vector<pair<Core::Var, Type>> TypeChecker::superclass_constraints(const Type& co
     for(auto& [dvar, type]: info_for_class(class_name)->superclass_extractors)
     {
         // forall a.Klass a => Superklass a
-        auto [_, wanteds, superclass_constraint] = instantiate( SuperclassOrigin(), type );
+        auto [tvs, preds, superclass_constraint] = peel_top_gen(type);
+        auto s = fresh_tv_binders(tvs);
+        preds = apply_subst(s, preds);
+        superclass_constraint = apply_subst(s, superclass_constraint);
 
-        // Constraints like a ~ (Arg a -> Result a) violate this.
+        // Constraints like a ~ (Arg a -> Result a) violate this:
         // assert(constraint_is_hnf(superclass_constraint));
 
-        assert(wanteds.size() == 1);
+        assert(preds.size() == 1);
+        auto class_constraint = preds[0];
 
-        auto class_constraint = wanteds[0].pred;
-
-        // The premise doesn't match the current class;
-        if (not maybe_match(class_constraint, constraint)) continue;
-
-        constraints.push_back( { dvar, superclass_constraint } );
+        // The premise matches the current class;
+        if (auto subst = maybe_match(class_constraint, constraint))
+        {
+            superclass_constraint = apply_subst(*subst, superclass_constraint);
+            constraints.push_back( { dvar, superclass_constraint } );
+        }
     }
 
     return constraints;

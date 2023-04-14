@@ -78,37 +78,30 @@ Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, co
         return rewrite(flavor, *t2);
     else if (auto tfam = is_type_fam_app(t))
     {
-        // This may not be necessary
-        auto& [fam_con, fam_args] = *tfam;
+        // auto& [fam_con, fam_args] = *tfam;
 
         TypeCon type_eq(Located<string>({},"~"));
         for(auto& [modid, mod]: this_mod().transitively_imported_modules)
         {
-            for(auto& [dfun, info]: mod->local_eq_instances)
+            for(auto& [dfun, info_]: mod->local_eq_instances)
             {
                 // if (info.tyfam_tycon != fam_con) continue;
-                
-                // Instantiate with metatyvars
-                auto s = get_subst_for_tv_binders(info.tvs);
-                auto lhs = apply_subst(s, info.lhs);
-                auto rhs = apply_subst(s, info.rhs);
+                auto info = freshen(info_);
 
                 // If the term matches the lhs, then return the rhs.
-                if (maybe_match(lhs, t)) return rewrite(flavor, rhs);
+                if (auto S = maybe_match(info.lhs, t))
+                    return rewrite(flavor, apply_subst(*S, info.rhs));
             }
         }
 
-        for(auto& [dfun, info]: this_mod().local_eq_instances)
+        for(auto& [dfun, info_]: this_mod().local_eq_instances)
         {
             // if (info.tyfam_tycon != fam_con) continue;
+            auto info = freshen(info_);
                 
-            // Instantiate with metatyvars
-            auto s = get_subst_for_tv_binders(info.tvs);
-            auto lhs = apply_subst(s, info.lhs);
-            auto rhs = apply_subst(s, info.rhs);
-
             // If the term matches the lhs, then return the rhs.
-            if (maybe_match(lhs, t)) return rewrite(flavor, rhs);
+            if (auto S = maybe_match(info.lhs, t))
+                return rewrite(flavor, apply_subst(*S, info.rhs));
         }
 
         for(auto& inert: inerts.tyfam_eqs)

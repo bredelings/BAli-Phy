@@ -166,8 +166,47 @@ void TypeChecker::unify_solve_(const ConstraintOrigin& origin, const Type& t1, c
         unify_defer(origin, t1, t2);
 }
 
+bool TypeChecker::maybe_unify_var_(bool both_ways, const unification_env& env, const TypeVar& tv1, const Type& t2, substitution_t& s) const
+{
+    // translate using env
+
+    // Handle if tv1 is bound
+    if (auto type1 = s.find(tv1))
+    {
+        if (both_ways)
+            return maybe_unify_(both_ways, env, *type1, t2, s);
+        else
+            return same_type(*type1, t2);
+    }
+
+    if (auto s2 = expand_type_synonym(t2))
+        return maybe_unify_var_(both_ways, env, tv1, *s2, s);
+
+    if (auto tv2 = t2.to<TypeVar>())
+    {
+        assert(not env.mapping2.count(*tv2));
+
+        if (tv1 == *tv2) return true;
+
+        if (auto type2 = s.find(*tv2))
+            return maybe_unify_var_(both_ways, env, tv1, *type2, s);
+    }
+
+    assert(not s.count(tv1));
+
+    // avoid unifying (forall a. b) ~ (forall a. [a])
+    // we cannot unify b := [a] because a is local
+
+    if (occurs_check(tv1, t2)) return false;
+
+    // ghc does not occurs check when matching
+    s = s.insert({tv1,t2});
+
+    return true;
+}
+
 // Is there a better way to implement this?
-bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const Type& t1, const Type& t2)
+bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const Type& t1, const Type& t2, substitution_t& s) const
 {
     // Translate rigid type variables
     if (auto tv1 = t1.to<TypeVar>(); tv1 and env.mapping1.count(*tv1))
@@ -176,7 +215,7 @@ bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const
         auto tv1_remapped = env.mapping1.at(*tv1);
         assert(tv1_remapped.is_skolem_constant());
         assert(not env.mapping1.count(tv1_remapped));
-        return maybe_unify_(both_ways, env, tv1_remapped, t2);
+        return maybe_unify_(both_ways, env, tv1_remapped, t2, s);
     }
     else if (auto tv2 = t2.to<TypeVar>(); tv2 and env.mapping2.count(*tv2))
     {
@@ -184,47 +223,42 @@ bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const
         auto tv2_remapped = env.mapping2.at(*tv2);
         assert(tv2_remapped.is_skolem_constant());
         assert(not env.mapping2.count(tv2_remapped));
-        return maybe_unify_(both_ways, env, t1, tv2_remapped);
+        return maybe_unify_(both_ways, env, t1, tv2_remapped, s);
     }
     else if (auto tt1 = filled_meta_type_var(t1))
-        return maybe_unify_(both_ways, env, *tt1, t2);
+        return maybe_unify_(both_ways, env, *tt1, t2, s);
     else if (auto tt2 = filled_meta_type_var(t2))
-        return maybe_unify_(both_ways, env, t1, *tt2);
+        return maybe_unify_(both_ways, env, t1, *tt2, s);
 
     else if (auto s1 = expand_type_synonym(t1))
-        return maybe_unify_(both_ways, env, *s1,  t2);
+        return maybe_unify_(both_ways, env, *s1,  t2, s);
     else if (auto s2 = expand_type_synonym(t2))
-        return maybe_unify_(both_ways, env,  t1, *s2);
+        return maybe_unify_(both_ways, env,  t1, *s2, s);
 
     else if (auto tv1 = t1.to<MetaTypeVar>())
     {
-        return try_insert(*tv1, t2);
-    }
-    else if (auto tv2 = t2.to<MetaTypeVar>(); tv2 and both_ways)
-    {
-        return try_insert(*tv2, t1);
+        return same_type_no_syns(t1,t2);
     }
     else if (auto tv1 = t1.to<TypeVar>())
     {
         if (auto tv2 = t2.to<TypeVar>(); tv2 and *tv1 == *tv2)
             return true;
-        else
-            return false;
+
+        return maybe_unify_var_(both_ways, env, *tv1, t2, s);
     }
-    else if (auto tv2 = t2.to<TypeVar>())
+    else if (auto tv2 = t2.to<TypeVar>(); tv2 and both_ways)
     {
-        if (auto tv1 = t1.to<TypeVar>(); tv1 and *tv1 == *tv2)
-            return true;
-        else
-            return false;
+        auto env2 = env;
+        std::swap(env2.mapping1, env2.mapping2);
+        return maybe_unify_var_(both_ways, env2, *tv2, t1, s);
     }
     else if (t1.is_a<TypeApp>() and t2.is_a<TypeApp>())
     {
         auto& app1 = t1.as_<TypeApp>();
         auto& app2 = t2.as_<TypeApp>();
 
-        return maybe_unify_(both_ways, env, app1.head, app2.head) and
-               maybe_unify_(both_ways, env, app1.arg , app2.arg );
+        return maybe_unify_(both_ways, env, app1.head, app2.head, s) and
+               maybe_unify_(both_ways, env, app1.arg , app2.arg, s);
     }
     else if (t1.is_a<TypeCon>() and
              t2.is_a<TypeCon>() and
@@ -239,9 +273,9 @@ bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const
         if (c1->context.constraints.size() != c2->context.constraints.size())
             return false;
         for(int i=0;i< c1->context.constraints.size();i++)
-            if (not maybe_unify_(both_ways, env, c1->context.constraints[i], c2->context.constraints[i]))
+            if (not maybe_unify_(both_ways, env, c1->context.constraints[i], c2->context.constraints[i], s))
                 return false;
-        return maybe_unify_(both_ways, env, c1->type, c2->type);
+        return maybe_unify_(both_ways, env, c1->type, c2->type, s);
     }
     else if (t1.is_a<ForallType>() and t2.is_a<ForallType>())
     {
@@ -264,7 +298,7 @@ bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const
             env2.mapping2 = env2.mapping2.insert({tv2,v});
         }
 
-        return maybe_unify_(both_ways, env2, fa1->type, fa2->type);
+        return maybe_unify_(both_ways, env2, fa1->type, fa2->type, s);
     }
     else if (t1.is_a<StrictType>() or t1.is_a<LazyType>() or t2.is_a<StrictType>() or t2.is_a<LazyType>())
     {
@@ -389,4 +423,3 @@ bool TypeChecker::same_types(bool keep_syns, const RenameTyvarEnv2& env, const v
 
     return true;
 }
-

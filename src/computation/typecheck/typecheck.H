@@ -249,10 +249,10 @@ public:
 
     void unify_solve_(const ConstraintOrigin& origin, const Type& t1, const Type& t2);
 
-    bool maybe_unify_(bool both_ways, const unification_env& env, const Type& t1, const Type& t2);
-
+    // calls unify_solve_ with UnifyOrigin(t1,t2)
     void unify(const Type& t1, const Type& t2);
 
+    // calls unify_solve_
     void unify(const Type& t1, const Type& t2, const ConstraintOrigin& orig);
 
     bool try_insert(const MetaTypeVar& tv, Type type) const;
@@ -261,18 +261,24 @@ public:
 
     bool occurs_check(const TypeVar& tv, const Type& t) const;
 
-    bool maybe_match(const Type& t1, const Type& t2);
-
-    void match(const Type& t1, const Type& t2, const myexception& e);
-
-    void match(const Type& t1, const Type& t2);
-
     std::pair<Type, Type> unify_function(const Type& t);
 
     std::pair<Type, Type> unify_function(const Type& t, const ConstraintOrigin& o);
 
     std::tuple<Type, Type, Type> unify_two_arg_function(const Type& t);
 
+    // The pure unifier
+    bool maybe_unify_(bool both_ways, const unification_env& env, const Type& t1, const Type& t2, substitution_t& s) const;
+
+    bool maybe_unify_var_(bool both_ways, const unification_env& env, const TypeVar& tv1, const Type& t2, substitution_t& s) const;
+
+    std::optional<substitution_t> maybe_match(const Type& t1, const Type& t2) const;
+
+    substitution_t match(const Type& t1, const Type& t2, const myexception& e) const;
+
+    substitution_t match(const Type& t1, const Type& t2) const;
+    // end pure unifier.
+    
     DataConInfo constructor_info(const Hs::Con&);
 
     bool candidates(const MetaTypeVar& tv, const LIE& tv_lie);
@@ -291,6 +297,9 @@ public:
     void check_wanteds(const WantedConstraints& wanteds);
 
     substitution_t get_subst_for_tv_binders(const std::vector<TypeVar>& type_var_binders);
+    substitution_t fresh_tv_binders(std::vector<TypeVar>& type_var_binders);
+    InstanceInfo freshen(InstanceInfo);
+    EqInstanceInfo freshen(EqInstanceInfo);
 
     std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const ConstraintOrigin& origin, const Type& t);
 
@@ -501,23 +510,18 @@ public:
     // Express lie2 in terms of gie (functions) and lie1 (arguments to this dfun, I think).
     LIE preds_to_constraints(const ConstraintOrigin&, ConstraintFlavor, const std::vector<Type>&);
 
-    // FIXME: this should be  const
     std::vector<std::pair<Core::Var, Type>> superclass_constraints(const Type& constraint);
 
-    // FIXME: this should be  const
     std::optional<std::vector<Core::Var>>
     is_superclass_of(const Type&, const Type&);
 
-    // FIXME: this should be  const
     std::optional<Core::Decls>
-    entails_by_superclass(const Constraint& to_keep,
-                          const Constraint& to_remove);
+    entails_by_superclass(const Constraint& to_keep, const Constraint& to_remove);
 
     Core::Decls simplify(const LIE& givens, LIE& wanteds);
 
     Core::Decls entails(const LIE& lie1, WantedConstraints& lie2);
 
-    bool instance_matches(const Type&, const Type&);
     bool more_specific_than(const Type&, const Type&);
     std::optional<std::pair<Core::Exp,LIE>> lookup_instance(const Type& constraint);
 
