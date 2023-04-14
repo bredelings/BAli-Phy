@@ -23,7 +23,7 @@ model xs = do
 
   let n_points = length xs
 
-  xs ~> iid n_points (mixture w [ normal m s | (m, s) <- zip mu tau])
+  xs ~> iidDist n_points (mixtureDist w [ normalDist m s | (m, s) <- zip mu tau])
 
   return loggers
 
