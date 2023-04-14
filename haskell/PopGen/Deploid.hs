@@ -12,54 +12,50 @@ type Panel = EVector (EVector Int)
 type Sites = EVector Int
 type ContextIndex = Int
 
-foreign import bpcall "SMC:sample_haplotype01_from_plaf" builtin_sample_haplotype01_from_plaf :: EVector Double -> RealWorld -> EVector Int
-sample_haplotype01_from_plaf plafs = let raw_action = builtin_sample_haplotype01_from_plaf (list_to_vector plafs)
-                                     in RanAtomic do_nothing (makeIO $ raw_action)
-
-foreign import bpcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability :: EVector Double -> EVector Int -> LogDouble
+foreign import bpcall "SMC:sample_haplotype01_from_plaf" builtin_sample_haplotype01_from_plaf :: EVector Double -> RealWorld -> Haplotype
+foreign import bpcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability :: EVector Double -> Haplotype -> LogDouble
 haplotype01_from_plaf_probability plaf hap = builtin_haplotype01_from_plaf_probability (list_to_vector plaf) hap
 
+data Haplotype01FromPLAF = Haplotype01FromPLAF [Double]
 
-annotated_haplotype01_from_plaf_probability plafs haplotype = do
-  in_edge "PLAFs" plafs
-  return [haplotype01_from_plaf_probability plafs haplotype]
+instance Dist Haplotype01FromPLAF where
+    type Result (Haplotype01FromPLAF) = Haplotype
+    dist_name _ = "haplotype01_from_plaf"
 
-haplotype01_from_plaf plafs = Distribution
-                              "haplotype01_from_plaf"
-                              (annotated_haplotype01_from_plaf_probability plafs)
-                              (error "no quantile")
-                              (sample_haplotype01_from_plaf plafs)
-                              undefined
+instance IOSampleable Haplotype01FromPLAF where
+    sampleIO (Haplotype01FromPLAF plafs) = makeIO $ builtin_sample_haplotype01_from_plaf (list_to_vector plafs)
 
--- This version does not use the builtins above, and also produces a list, not a vector.
---haplotype01_from_plaf plafs = independent [ bernoulli f | f <- plafs ]
+instance HasAnnotatedPdf Haplotype01FromPLAF where
+    annotated_densities dist@(Haplotype01FromPLAF plafs) haplotype = do
+       in_edge "PLAFs" plafs
+       return [haplotype01_from_plaf_probability plafs haplotype]
 
-foreign import bpcall "SMC:sample_reads01" builtin_sample_reads01 :: EVector Int -> EVector Double -> EVector (EVector Int) -> Double -> Double -> Double -> RealWorld -> EVector (EPair Int Int)
-sample_reads01 counts weights haplotypes error_rate c outlier_frac =
-    makeIO $ f . builtin_sample_reads01 counts' weights' haplotypes' error_rate c outlier_frac
-    where counts'     = list_to_vector counts
-          weights'    = list_to_vector weights
-          haplotypes' = list_to_vector haplotypes
-          f reads = map pair_from_c $ list_from_vector reads
+instance Sampleable Haplotype01FromPLAF where
+    sample dist@(Haplotype01FromPLAF plafs) = RanDistribution2 dist do_nothing
 
-random_structure_reads01 counts weights haplotypes error_rate c outlier_frac =
-    RanAtomic do_nothing $ sample_reads01 counts weights haplotypes error_rate c outlier_frac
+haplotype01FromPLAFDist plafs = Haplotype01FromPLAF plafs
 
-foreign import bpcall "SMC:probability_of_reads01" builtin_probability_of_reads01 :: EVector Int -> EVector Double -> EVector (EVector Int) -> Double -> Double -> Double -> Reads -> LogDouble
-probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads = builtin_probability_of_reads01 counts' weights' haplotypes' error_rate c outlier_frac reads'
-    where counts'     = list_to_vector counts
-          weights'    = list_to_vector weights
-          haplotypes' = list_to_vector haplotypes
-          reads'      = list_to_vector $ map (\(x,y) -> c_pair x y) reads
+haplotype01_from_plaf plafs = sample $ haplotype01FromPLAFDist plafs
 
+-----------------------------------------------
 
-data Reads01Properties = Reads01Properties { emission_prs :: EVector Int -> Matrix LogDouble}
-foreign import bpcall "SMC:emission_pr_for_reads01" builtin_emission_pr_for_reads01 :: ContextIndex -> EVector Int -> Reads -> [Haplotype] -> EVector Double -> Double -> Double -> Double -> LogDouble
-emission_pr_for_reads01 ks reads haplotypes weights error_rate concentration outlier_frac context =
-    builtin_emission_pr_for_reads01 context (list_to_vector ks) haplotypes weights error_rate concentration outlier_frac
+data Reads01FromHaps = Reads01FromHaps
+                         [Int]          -- counts
+                         [Double]       -- weights
+                         [Haplotype]    -- haplotypes
+                         Double         -- error_rate
+                         Double         -- c
+                         Double         -- outlier_frac
 
--- We can't sample from this because we are using the random data to tell us the coverage at each position.
-annotated_probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads = do
+instance Dist Reads01FromHaps where
+    type Result Reads01FromHaps = [(Int,Int)]
+    dist_name _ = "reads01_from_haps"
+
+instance IOSampleable Reads01FromHaps where
+    sampleIO (Reads01FromHaps counts weights haplotypes error_rate c outlier_frac) = sample_reads01 counts weights haplotypes error_rate c outlier_frac
+
+instance HasAnnotatedPdf Reads01FromHaps where
+    annotated_densities dist@(Reads01FromHaps counts weights haplotypes error_rate c outlier_frac) reads = do
                           in_edge "counts" counts
                           in_edge "weights" weights
                           in_edge "haplotypes" haplotypes
@@ -68,14 +64,41 @@ annotated_probability_of_reads01 counts weights haplotypes error_rate c outlier_
                           in_edge "outlier_frac" outlier_frac
 --                          let emit_pr_func ks = emission_prs ks reads haplotypes weights error_rate c outlier_frac
 --                          property "properties" (Reads01Properties emit_pr_func)
+                          error "Does this work?"
                           return [probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads]
 
-reads01_from_haps counts weights haplotypes error_rate c outlier_frac = Distribution
-                                                                 "reads01_from_haps"
-                                                                 (annotated_probability_of_reads01 counts weights haplotypes error_rate c outlier_frac)
-                                                                 (error "no quantile")
-                                                                 (random_structure_reads01 counts weights haplotypes error_rate c outlier_frac)
-                                                                 NoRange
+instance Sampleable Reads01FromHaps where
+    sample dist@(Reads01FromHaps counts weights haplotypes error_rate c outlier_frac) = RanDistribution2 dist do_nothing
+
+
+-- This version does not use the builtins above, and also produces a list, not a vector.
+--haplotype01_from_plaf plafs = independent [ bernoulli f | f <- plafs ]
+
+foreign import bpcall "SMC:sample_reads01" builtin_sample_reads01 :: EVector Int -> EVector Double -> EVector Haplotype -> Double -> Double -> Double -> RealWorld -> Reads
+sample_reads01 counts weights haplotypes error_rate c outlier_frac =
+    makeIO $ f . builtin_sample_reads01 counts' weights' haplotypes' error_rate c outlier_frac
+    where counts'     = list_to_vector counts
+          weights'    = list_to_vector weights
+          haplotypes' = list_to_vector haplotypes
+          f reads = map pair_from_c $ list_from_vector reads
+
+foreign import bpcall "SMC:probability_of_reads01" builtin_probability_of_reads01 :: EVector Int -> EVector Double -> EVector Haplotype -> Double -> Double -> Double -> Reads -> LogDouble
+probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads = builtin_probability_of_reads01 counts' weights' haplotypes' error_rate c outlier_frac reads'
+    where counts'     = list_to_vector counts
+          weights'    = list_to_vector weights
+          haplotypes' = list_to_vector haplotypes
+          reads'      = list_to_vector $ map (\(x,y) -> c_pair x y) reads
+
+data Reads01Properties = Reads01Properties { emission_prs :: EVector Int -> Matrix LogDouble}
+foreign import bpcall "SMC:emission_pr_for_reads01" builtin_emission_pr_for_reads01 :: ContextIndex -> EVector Int -> Reads -> [Haplotype] -> EVector Double -> Double -> Double -> Double -> LogDouble
+emission_pr_for_reads01 ks reads haplotypes weights error_rate concentration outlier_frac context =
+    builtin_emission_pr_for_reads01 context (list_to_vector ks) haplotypes weights error_rate concentration outlier_frac
+
+
+reads01_from_haps_dist counts weights haplotypes error_rate c outlier_frac = Reads01FromHaps counts weights haplotypes error_rate c outlier_frac
+
+reads01_from_haps counts weights haplotypes error_rate c outlier_frac = sample $ reads01_from_haps_dist counts weights haplotypes error_rate c outlier_frac
+
 
 ---
 foreign import bpcall "SMC:propose_haplotypes_from_plaf" propose_haplotypes_from_plaf'' :: ContextIndex -> [Int] -> [Haplotype] -> EVector Double -> EVector Double -> EVector (EPair Int Int) -> Double -> Double -> Double -> RealWorld -> LogDouble
@@ -131,30 +154,38 @@ load_reads filename = do
   return (sites, reads)
 
 
+data Haplotype01FromPanel = Haplotype01FromPanel [Haplotype] [Int] Double Double
+
+instance Dist Haplotype01FromPanel where
+    type Result Haplotype01FromPanel = Haplotype
+    dist_name _ = "haplotype01_from_panel"
+
 foreign import bpcall "SMC:sample_haplotype01_from_panel" builtin_sample_haplotype01_from_panel :: Panel -> Sites -> Double -> Double -> RealWorld -> Haplotype
-sample_haplotype01_from_panel (p_sites,p_haps) switch_rate flip_prob = let raw_action s = builtin_sample_haplotype01_from_panel p_haps' p_sites' switch_rate flip_prob s
-                                                                           p_haps' = list_to_vector p_haps
-                                                                           p_sites' = list_to_vector p_sites
-                                                                       in RanAtomic do_nothing (makeIO $ raw_action)
+
+instance IOSampleable Haplotype01FromPanel where
+    sampleIO (Haplotype01FromPanel p_haps p_sites switch_rate flip_prob) = makeIO $ builtin_sample_haplotype01_from_panel p_haps' p_sites' switch_rate flip_prob
+        where p_haps' = list_to_vector p_haps
+              p_sites' = list_to_vector p_sites
+
+instance HasAnnotatedPdf Haplotype01FromPanel where
+    annotated_densities dist@(Haplotype01FromPanel haps sites switch_rate miscopy_prob) haplotype = do
+        let panel = (sites,haps)
+        in_edge "panel" panel
+        in_edge "switch_rate" switch_rate
+        in_edge "miscopy_prob" miscopy_prob
+        return [haplotype01_from_panel_probability panel switch_rate miscopy_prob haplotype]
+
+instance Sampleable Haplotype01FromPanel where
+    sample dist@(Haplotype01FromPanel p_haps p_sites switch_rate flip_prob) = RanDistribution2 dist do_nothing
 
 foreign import bpcall "SMC:haplotype01_from_panel_probability" builtin_haplotype01_from_panel_probability :: Panel -> Sites -> Double -> Double -> Haplotype -> LogDouble
 haplotype01_from_panel_probability (p_sites,p_haps) switch_rate flip_prob hap = builtin_haplotype01_from_panel_probability p_haps' p_sites' switch_rate flip_prob hap
     where p_haps' = list_to_vector p_haps
           p_sites' = list_to_vector p_sites
 
-annotated_haplotype01_from_panel_probability panel switch_rate miscopy_prob haplotype = do
-  in_edge "panel" panel
-  in_edge "switch_rate" switch_rate
-  in_edge "miscopy_prob" miscopy_prob
-  return [haplotype01_from_panel_probability panel switch_rate miscopy_prob haplotype]
-
-haplotype01_from_panel panel switch_rate flip_prob  = Distribution
-                                                      "haplotype01_from_panel"
-                                                      (annotated_haplotype01_from_panel_probability panel switch_rate flip_prob)
-                                                      (error "no quantile")
-                                                      (sample_haplotype01_from_panel panel switch_rate flip_prob)
-                                                      NoRange
-
+haplotype01_from_panel_dist (sites, haps) switch_rate flip_prob = Haplotype01FromPanel haps sites switch_rate flip_prob
+haplotype01_from_panel panel switch_rate flip_prob = sample $ haplotype01_from_panel_dist panel switch_rate flip_prob
+                                                      
 foreign import bpcall "SMC:resample_haplotypes_from_panel" resample_haplotypes_from_panel'' :: ContextIndex -> [Int] -> [Haplotype] -> Panel -> Sites -> Double -> Double -> EVector Double -> Reads -> Double -> Double -> Double -> RealWorld -> ()
 
 resample_haplotypes_from_panel' indices (p_sites, p_haps) switch_rate flip_prob weights reads haplotypes error_rate c outlier_frac context io_state =
