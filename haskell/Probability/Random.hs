@@ -103,11 +103,6 @@ instance Sampleable (Random a) where
 
 
 
--- FIXME: We might need GADTS for
---   Independant :: (Random a, Random b) -> Random (a,b)
---   Observe :: b -> (Distribution b) -> Random ()
---   AddMove :: b -> Random ()
-
 -- FIXME: the Random constructor here seems a bit weird.
 --        presumably this indicates that its an IO action versus a Random a
 --        but its only used inside Distribution...
@@ -129,7 +124,6 @@ instance Monad TKEffects where
     f >>= g  = TKBind f g
 
 data Random a where
-    Observe :: Distribution b -> b -> Random ()
     Lazy :: Random a -> Random a
     WithTKEffect :: Random a -> (a -> TKEffects b) -> Random a
     PerformTKEffect :: TKEffects a -> Random a
@@ -185,7 +179,6 @@ run_strict dist@(RanDistribution3 _ _ _ _) = run_lazy dist
 run_strict e@(WithTKEffect _ _) = run_lazy e
 run_strict (RanMFix f) = mfix (run_lazy . f)
 run_strict (Lazy r) = unsafeInterleaveIO $ run_lazy r
-run_strict (Observe _ _) = error "run_strict: Observe"
 run_strict (RanInterchangeable _) = error "run_strict: RanInterchangeable"
 run_strict (PerformTKEffect _) = error "run_strict: PerformTKEffect"
 
@@ -216,7 +209,6 @@ run_lazy (PerformTKEffect e) = run_tk_effects 1.0 e
 run_lazy (WithTKEffect action _) = run_lazy action
 run_lazy (Lazy a) = run_lazy a
 run_lazy (RanInterchangeable a) = return a
-run_lazy (Observe _ _) = error "run_lazy: observe"
 
 -- Also, shouldn't the modifiable function actually be some kind of monad, to prevent let x=modifiable 0;y=modifiable 0 from merging x and y?
 
