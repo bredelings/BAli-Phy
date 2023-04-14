@@ -18,9 +18,9 @@ model xs = do
   ps <- symmetric_dirichlet n 0.5
 
   let n_points = length xs
-      dists = [normal mean sigma | (mean,sigma) <- clusters]
+      dists = [normalDist mean sigma | (mean,sigma) <- clusters]
 
-  xs ~> iidDist n_points (mixture ps dists)
+  xs ~> iidDist n_points (mixtureDist ps dists)
 
   return ["n_clusters" %=% n, "weights" %=% ps, "clusters" %=% clusters]
 
