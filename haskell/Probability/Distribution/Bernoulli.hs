@@ -55,8 +55,6 @@ instance Sampleable Bernoulli where
 
 bernoulli_effect x = add_move (\c -> discrete_uniform_avoid_mh x 0 1 c)
 
-ran_sample_bernoulli p = RanAtomic bernoulli_effect (sample_bernoulli p)
-
 bernoulliDist :: Double -> Bernoulli
 bernoulliDist p = Bernoulli (toFloating p)
 
