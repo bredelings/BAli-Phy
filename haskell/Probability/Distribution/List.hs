@@ -75,23 +75,20 @@ independent dists = sample $ independentDist dists
 
 
 -----
-class HasIndependent d where
---    independent_on :: [(a,d b)] -> d [(a,b)]
-    iid_on :: [a] -> d b -> d [(a,b)]
+data IIDOn a d = IIDOn [a] d
 
-instance HasIndependent Distribution where
+instance Dist d => Dist (IIDOn a d) where
+    type Result (IIDOn a d) = [(a, Result d)]
 
-    iid_on xs dist = undefined
+instance Sampleable d => Sampleable (IIDOn a d) where
+    sample (IIDOn vs dist) = let n = length vs
+                             in lazy $ RanSamplingRate (1/sqrt (fromIntegral n)) $ do
+                                  dist <- interchangeable $ sample dist
+                                  xs <- sequence $ repeat $ dist
+                                  return $ zip vs xs
 
-
-instance HasIndependent Random where
---    independent_on dists_pairs = RanDistribution (independent dists_pairs)
-
-    iid_on vs dist = let n = length vs
-                     in lazy $ RanSamplingRate (1/sqrt (fromIntegral n)) $ do
-                       dist <- interchangeable dist
-                       xs <- sequence $ repeat $ dist
-                       return $ zip vs xs
+iid_on_dist items dist = IIDOn items dist
+iid_on items dist = sample $ iid_on_dist items dist
 
 {-
   could we do i.e.
