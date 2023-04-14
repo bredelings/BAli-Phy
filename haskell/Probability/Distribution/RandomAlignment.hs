@@ -115,17 +115,19 @@ annotated_alignment_prs tree hmms model alignment = do
   return $ prs
 
 
-class HasRandomAlignment d where
-    random_alignment:: (LabelledTree t, Tree t) => BranchLengthTreeImp t -> IModel -> Map.Map Text Int -> d (AlignmentOnTree (BranchLengthTreeImp t))
 
+data RandomAlignment t = (LabelledTree t, Tree t) => RandomAlignment (BranchLengthTreeImp t) IModel (Map.Map Text Int) (IntMap PairHMM)
 
-instance HasRandomAlignment Distribution where
-    random_alignment tree model tip_lengths = Distribution "random_alignment"
-                                                 (annotated_alignment_prs tree hmms model)
-                                                 (no_quantile "random_alignment")
-                                                 (RandomStructure do_nothing triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths))
-                                                 NoRange
-        where hmms = branch_hmms model (branch_lengths tree) (numBranches tree)
+instance Dist (RandomAlignment t) where
+    type Result (RandomAlignment t) = AlignmentOnTree (BranchLengthTreeImp t)
 
-instance HasRandomAlignment Random where
-    random_alignment tree model tip_lengths = RanDistribution $ random_alignment tree model tip_lengths
+instance Sampleable (RandomAlignment t) where
+    sample dist@(RandomAlignment tree model tip_lengths hmms) = RanDistribution3 dist do_nothing triggered_modifiable_alignment (sample_alignment tree hmms tip_lengths)
+
+instance HasAnnotatedPdf (RandomAlignment t) where
+    annotated_densities dist@(RandomAlignment tree model tip_lengths hmms) = annotated_alignment_prs tree hmms model
+
+random_alignment_dist tree model tip_lengths = RandomAlignment tree model tip_lengths hmms
+    where hmms = branch_hmms model (branch_lengths tree) (numBranches tree)
+
+random_alignment tree model tip_lengths = sample $ random_alignment_dist tree model tip_lengths
