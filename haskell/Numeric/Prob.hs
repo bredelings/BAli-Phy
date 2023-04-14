@@ -200,8 +200,6 @@ instance FloatConvert LogDouble Prob where
 instance FloatConvert Double Prob where
     toFloating = toProb
 
-instance FloatConvert Integer Prob where
-    toFloating i = toFloating (toFloating i :: Double)
-
-instance FloatConvert Int Prob where
+-- Handle Int, Integer, and anything else that we can get a double from.
+instance FloatConvert a Double => FloatConvert a Prob where
     toFloating i = toFloating (toFloating i :: Double)
