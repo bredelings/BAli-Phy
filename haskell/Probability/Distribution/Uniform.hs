@@ -57,24 +57,36 @@ uniform_bounds l u = between l u
 uniform_effect l u x = add_move $ slice_sample_real_random_variable x (uniform_bounds l u)
 
 ------------------------------------
+foreign import bpcall "Distribution:uniform_int_density" uniform_int_density :: Int -> Int -> Int -> LogDouble
+foreign import bpcall "Distribution:sample_uniform_int" builtin_sample_uniform_int :: Int -> Int -> Int -> Int
+sample_uniform_int l u = makeIO $ builtin_sample_uniform_int l u
+
+data UniformInt = UniformInt Int Int
+
+instance Dist UniformInt where
+    type Result UniformInt = Int
+    dist_name _ = "uniform_int"
+
+instance IOSampleable UniformInt where
+    sampleIO (UniformInt l u) = sample_uniform_int l u
+
+instance HasPdf UniformInt where
+    pdf (UniformInt l u) = uniform_int_density l u
+
+instance HasAnnotatedPdf UniformInt where
+    annotated_densities dist x = return [ pdf dist x ]
+
+instance Sampleable UniformInt where
+    sample dist@(UniformInt l u) = RanDistribution2 dist (uniform_int_effect l u)
 
 uniform_int_quantile l u x | x <= l     = 0
                            | x > u      = 1
                            | otherwise  = fromIntegral (x-l) / fromIntegral (u-l+1)
 
-foreign import bpcall "Distribution:uniform_int_density" uniform_int_density :: Int -> Int -> Int -> LogDouble
-foreign import bpcall "Distribution:sample_uniform_int" builtin_sample_uniform_int :: Int -> Int -> Int -> Int
-
 uniform_int_bounds l u = integer_between l u
 uniform_int_effect l u x = add_move $ slice_sample_integer_random_variable x (uniform_int_bounds l u)
-sample_uniform_int l u = makeIO $ builtin_sample_uniform_int l u
-ran_sample_uniform_int l u = RanAtomic (uniform_int_effect l u) (sample_uniform_int l u)
 
-class HasUniform d where
-    uniform_int :: Int -> Int -> d Int
 
-instance HasUniform Distribution where
-    uniform_int l u = Distribution "uniform_continuous" (make_densities $ uniform_int_density l u) (uniform_int_quantile l u) (ran_sample_uniform_int l u) (integer_between l u)
+uniformIntDist l u = UniformInt l u
 
-instance HasUniform Random where
-    uniform_int l u = RanDistribution $ uniform_int l u
+uniform_int l u = sample $ uniformIntDist l u
