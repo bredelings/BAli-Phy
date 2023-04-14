@@ -361,10 +361,14 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         for(auto& stmt: D.stmts.stmts)
             add(binders, rename_stmt(stmt, bound, binders, free_vars));
 
-        auto& last = D.stmts.stmts.back();
-        if (not unloc(last).is_a<Hs::SimpleQual>())
-            error(last.loc, Note()<<"Do block does not end in an expression.");
-
+        if (D.stmts.stmts.empty())
+            error(loc, Note()<<"Empty do block.");
+        else
+        {
+            auto& last = D.stmts.stmts.back();
+            if (not unloc(last).is_a<Hs::SimpleQual>())
+                error(last.loc, Note()<<"Do block does not end in an expression.");
+        }
         E = D;
     }
     else if (E.is_a<Hs::MDo>())
