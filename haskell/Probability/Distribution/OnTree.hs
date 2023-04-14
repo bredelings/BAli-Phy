@@ -99,9 +99,19 @@ annotated_subst_like_on_tree tree alignment smodel sequences = do
 
   return [likelihood]
 
-ctmc_on_tree tree alignment smodel =
-    Distribution "ctmc_on_tree" (annotated_subst_like_on_tree tree alignment smodel) (no_quantile "ctmc_on_tree") undefined undefined
+data CTMCOnTree t s = CTMCOnTree t (AlignmentOnTree t) s
 
+
+instance Dist (CTMCOnTree t s) where
+    type Result (CTMCOnTree t s) = [Sequence]
+    dist_name _ = "ctmc_on_tree"
+
+instance (LabelledTree t,BranchLengthTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTree t s) where
+    annotated_densities (CTMCOnTree tree alignment smodel) = annotated_subst_like_on_tree tree alignment smodel
+
+ctmc_on_tree tree alignment smodel = CTMCOnTree tree alignment smodel
+
+----------------------------------------
 annotated_subst_likelihood_fixed_A tree smodel sequences = do
   let subst_root = modifiable (numNodes tree - 1)
 
@@ -156,5 +166,13 @@ annotated_subst_likelihood_fixed_A tree smodel sequences = do
 
   return [likelihood]
 
-ctmc_on_tree_fixed_A tree smodel =
-    Distribution "ctmc_on_tree_fixed_A" (annotated_subst_likelihood_fixed_A tree smodel) (no_quantile "ctmc_on_tree_fixed_A") undefined undefined
+data CTMCOnTreeFixedA t s = CTMCOnTreeFixedA t s
+
+instance Dist (CTMCOnTreeFixedA t s) where
+    type Result (CTMCOnTreeFixedA t s) = [Sequence]
+    dist_name _ = "ctmc_on_tree_fixed_A"
+
+instance (LabelledTree t,BranchLengthTree t, SimpleSModel s) => HasAnnotatedPdf (CTMCOnTreeFixedA t s) where
+    annotated_densities (CTMCOnTreeFixedA tree smodel) = annotated_subst_likelihood_fixed_A tree smodel
+
+ctmc_on_tree_fixed_A tree smodel = CTMCOnTreeFixedA tree smodel
