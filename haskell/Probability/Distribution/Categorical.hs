@@ -11,7 +11,6 @@ import Foreign.Vector
 categorical_effect n x = add_move (\c -> gibbs_sample_categorical x n c)
 foreign import bpcall "Distribution:sample_categorical" builtin_sample_categorical :: EVector Double -> RealWorld -> Int
 sample_categorical ps = makeIO $ builtin_sample_categorical (array_to_vector ps)
-ran_sample_categorical ps = RanAtomic (categorical_effect (length ps)) (sample_categorical ps)
 
 data Categorical = Categorical (Array Int Double)
 
