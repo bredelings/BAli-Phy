@@ -22,11 +22,11 @@ model floor_values county_code_values log_radon_data = do
 
   -- This constructs the distribution of predicted values given county_code and floor
   eps <- half_cauchy 5
-  let dist county_code floor = normal (a!!county_code + b!!county_code*floor) eps
+  let dist county_code floor = normalDist (a!!county_code + b!!county_code*floor) eps
 
   let loggers = ["mu_a" %=% mu_a, "sigma_a" %=% sigma_a, "mu_b" %=% mu_b, "sigma_b" %=% sigma_b]
 
-  log_radon_data ~> independent [ dist county_code floor | (floor,county_code) <- zip floor_values county_code_values]
+  log_radon_data ~> independentDist [ dist county_code floor | (floor,county_code) <- zip floor_values county_code_values]
 
   return loggers
 
