@@ -93,7 +93,6 @@ foreign import bpcall "Distribution:sample_CRP" sample_crp_vector :: Double -> I
 sample_crp alpha n d = do v <- makeIO $ sample_crp_vector alpha n d
                           return $ list_from_vector_of_size v n
 ran_sample_crp alpha n d = liftIO $ sample_crp alpha n d
---crp alpha n d = Distribution "crp" (make_densities $ crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1))
 triggered_modifiable_list n value effect = let raw_list = mapn n modifiable value
                                                effect' = unsafePerformIO $ effect raw_list
                                                triggered_list = mapn n (effect' `seq`) raw_list
