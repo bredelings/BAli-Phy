@@ -238,35 +238,53 @@ sample_coalescent_tree theta n_leaves = do
       node_times = IntMap.fromList $ zip [0..] times
   return (time_tree topology node_times)
 
+-------------------------------------------------------------
+data UniformTopology = UniformTopology Int
 
-class HasTreeDistributions d where
-    uniform_topology :: Int -> d TreeImp
-    uniform_time_tree :: Double -> Int -> d (TimeTreeImp (RootedTreeImp TreeImp))
-    coalescent_tree :: Double -> Int -> d (TimeTreeImp (RootedTreeImp TreeImp))
+instance Dist UniformTopology where
+    type Result UniformTopology = TreeImp
+    dist_name _ = "uniform_topology"
 
-instance HasTreeDistributions Distribution where
-    uniform_topology n = Distribution "uniform_topology"
-                                      (\tree -> return [uniform_topology_pr n])
-                                      (no_quantile "uniform_topology")
-                                      (RandomStructure uniform_topology_effect triggered_modifiable_tree (sample_uniform_topology n))
-                                      (TreeRange n)
+instance HasAnnotatedPdf UniformTopology where
+    annotated_densities (UniformTopology n) _ = return [uniform_topology_pr n]
 
-    -- FIXME -- maybe we should incorporate the "age" reg directly, here?
-    uniform_time_tree age n = Distribution "uniform_time_tree"
-                                           (make_densities' $ uniform_time_tree_pr age n)
-                                           (no_quantile "uniform_time_tree")
-                                           (RandomStructure uniform_time_tree_effect triggered_modifiable_time_tree (sample_uniform_time_tree age n))
-                                           (TreeRange n)
+instance Sampleable UniformTopology where
+    sample dist@(UniformTopology n) = RanDistribution3 dist uniform_topology_effect triggered_modifiable_tree (sample_uniform_topology n)
+
+uniform_topology_dist n = UniformTopology n
+
+uniform_topology n = sample $ uniform_topology_dist n
 
 
 
-    coalescent_tree theta n = Distribution "coalescent_tree"
-                                           (make_densities' $ coalescent_tree_pr_factors theta n)
-                                           (no_quantile "coalescent")
-                                           (RandomStructure coalescent_tree_effect triggered_modifiable_time_tree (sample_coalescent_tree theta n))
-                                           (TreeRange n)
+-------------------------------------------------------------
+data UniformTimeTree = UniformTimeTree Double Int
 
-instance HasTreeDistributions Random where
-    uniform_topology n = RanDistribution $ uniform_topology n
-    uniform_time_tree age n = RanDistribution $ uniform_time_tree age n
-    coalescent_tree theta n = RanDistribution $ coalescent_tree theta n
+instance Dist UniformTimeTree where
+    type Result UniformTimeTree = TimeTreeImp (RootedTreeImp TreeImp)
+    dist_name _ = "uniform_time_tree"
+
+instance HasAnnotatedPdf UniformTimeTree where
+    annotated_densities (UniformTimeTree age n) tree = return $ uniform_time_tree_pr age n tree
+
+instance Sampleable UniformTimeTree where
+    sample dist@(UniformTimeTree age n) = RanDistribution3 dist uniform_time_tree_effect triggered_modifiable_time_tree (sample_uniform_time_tree age n)
+
+uniform_time_tree_dist age n = UniformTimeTree age n
+uniform_time_tree age n = sample $ uniform_time_tree_dist age n
+
+-------------------------------------------------------------
+data CoalescentTree = CoalescentTree Double Int
+
+instance Dist CoalescentTree where
+    type Result CoalescentTree = TimeTreeImp (RootedTreeImp TreeImp)
+    dist_name _ = "uniform_time_tree"
+
+instance HasAnnotatedPdf CoalescentTree where
+    annotated_densities (CoalescentTree theta n) tree = return $ coalescent_tree_pr_factors theta n tree
+
+instance Sampleable CoalescentTree where
+    sample dist@(CoalescentTree theta n) = RanDistribution3 dist coalescent_tree_effect triggered_modifiable_time_tree (sample_coalescent_tree theta n)
+
+coalescent_tree_dist theta n = CoalescentTree theta n
+coalescent_tree theta n = sample $ coalescent_tree_dist theta n
