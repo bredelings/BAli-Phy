@@ -9,10 +9,6 @@ mixture_pdf []     []           _ = 0
 mixture_density (p:ps) (dist:dists) x = (doubleToLogDouble p)*(density dist x) + (mixture_density ps dists x)
 mixture_density []     []           _ = 0
 
-sample_mixture :: [Double] -> [Distribution a] -> Random a
-sample_mixture weights dists = do cat <- categorical weights
-                                  RanDistribution $ dists !! cat
-
 data Mixture d = Mixture [Double] [d]
 
 instance Dist (Mixture d) where
