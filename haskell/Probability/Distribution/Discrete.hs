@@ -86,3 +86,20 @@ instance Sampleable (Discrete a) where
 discreteDist pairs = Discrete pairs
 
 discrete pairs = sample $ discreteDist pairs
+
+instance Functor Discrete where
+    fmap f (Discrete pairs) = Discrete [(f x,p) | (x,p) <- pairs]
+
+instance Applicative Discrete where
+    pure x = Discrete [(x,1)]
+
+    (Discrete fs) <*> (Discrete xs) = Discrete $ do
+       (x, px) <- xs
+       (f, pf) <- fs
+       return (f x, px * pf)
+
+instance Monad Discrete where
+    (Discrete xs) >>= f = Discrete $ do
+       (x, px) <- xs
+       (y, py) <- unpackDiscrete $ f x
+       return (y, px * py)
