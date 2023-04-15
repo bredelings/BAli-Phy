@@ -8,7 +8,7 @@
 #include "util/range.H" // for reverse( )
 #include "rules.H"
 #include "setup.H"
-#include "driver.hh"
+#include "models/driver.hh"
 
 using std::vector;
 using std::list;
@@ -298,6 +298,23 @@ ptree parse(const Rules& R, const string& s, const string& what)
 }
 
 
+optional<ptree> peel_sample(ptree p)
+{
+    if (p.has_value<string>() and p.get_value<string>() == "sample")
+	return p[0].second;
+    else
+	return {};
+}
+
+optional<ptree> peel_sample_annotated(ptree p)
+{
+    auto v = p.get_child("value");
+    if (v.has_value<string>() and v.get_value<string>() == "sample")
+	return v[0].second;
+    else
+	return {};
+}
+
 string unparse(const ptree& p)
 {
     using namespace std::string_literals;
@@ -365,23 +382,27 @@ string unparse(const ptree& p)
 	    return unparse(*child);
     vector<string> args;
     optional<string> submodel;
+    bool positional = true;
     for(const auto& [arg_name, arg]: p)
     {
 	if (arg.is_null())
-	{
-	    args.push_back("");
-	    continue;
-	}
+            positional = false;
+
 	// Don't print submodel arguments: move out to submodel + <this>
 	else if (arg_name == "submodel")
 	{
+            positional = false;
 	    assert(not submodel);
 	    submodel = unparse(arg);
-	    args.push_back("");
 	}
-	else
+	else if (positional)
 	    args.push_back( unparse(arg) );
-	// FIXME: don't print get_state[state_name] if its a default value?
+        else if (auto arg2 = peel_sample(arg))
+            args.push_back( arg_name + "~" + unparse(*arg2));
+        else
+            args.push_back( arg_name + "=" + unparse(arg));
+
+	// With annotations, we don't print get_state[state_name] if its a default value.
     }
     while (args.size() and args.back() == "")
 	args.pop_back();
@@ -485,35 +506,30 @@ string unparse_annotated(const ptree& ann)
 	    return unparse_annotated(*child);
     vector<string> args;
     optional<string> submodel;
+    bool positional = true;
     for(const auto& [arg_name, arg]: p)
     {
 	if (arg.is_null())
-	{
-	    args.push_back("");
-	    continue;
-	}
+            positional = false;
+
 	// Don't print submodel arguments: move out to submodel + <this>
 	else if (arg_name == "submodel")
 	{
+            positional = false;
 	    assert(not submodel);
 	    submodel = unparse_annotated(arg);
-	    args.push_back("");
-            continue;
 	}
 
-        auto arg_value = arg.get_child("value");
-	if (arg_value.has_value<string>() and arg_value.get_value<string>() == "get_state" and arg.get_child("is_default_value") == true)
-	{
-	    args.push_back("");
-	    continue;
-	}
-	else if (arg.get_child_optional("suppress_default") and arg.get_child("suppress_default")== true and arg.get_child("is_default_value") == true)
-	{
-	    args.push_back("");
-	    continue;
-	}
-	else
+	else if (arg.get_child("value").has_value<string>() and arg.get_child("value").get_value<string>() == "get_state" and arg.get_child("is_default_value") == true)
+            positional = false;
+	else if (auto suppress = arg.get_child_optional("suppress_default"); suppress and (*suppress == true) and arg.get_child("is_default_value") == true)
+            positional = false;
+	else if (positional)
 	    args.push_back( unparse_annotated(arg) );
+        else if (auto arg2 = peel_sample_annotated(arg))
+            args.push_back( arg_name + "~" + unparse_annotated(*arg2));
+        else
+            args.push_back( arg_name + "=" + unparse_annotated(arg));
     }
     while (args.size() and args.back() == "")
 	args.pop_back();
@@ -533,23 +549,6 @@ string unparse_type(const ptree& p)
     if (not args.empty())
 	s = s + "[" + join(args,',') + "]";
     return s;
-}
-
-optional<ptree> peel_sample(ptree p)
-{
-    if (p.has_value<string>() and p.get_value<string>() == "sample")
-	return p[0].second;
-    else
-	return {};
-}
-
-optional<ptree> peel_sample_annotated(ptree p)
-{
-    auto v = p.get_child("value");
-    if (v.has_value<string>() and v.get_value<string>() == "sample")
-	return v[0].second;
-    else
-	return {};
 }
 
 string unparse_abbrev(ptree p, int length)
