@@ -2,11 +2,14 @@ module Probability.Distribution.Discrete where
 
 import Probability.Random
 import Data.List -- for foldl'
+import Probability.Distribution.Uniform
 
 uniformQuantiles q n = map (\i -> q ((2*(fromIntegral i)+1)/fromIntegral n) ) (take n [1..])
 
+-- this is a join
 mix fs ds = [(p*f, x) | (f, d) <- zip' fs ds, (p, x) <- d]
 
+-- This is BACKWARD from Discrete, below.
 certainly x = [(1, x)]
 
 extendDiscreteDistribution d p x = mix [p, 1-p] [certainly x, d]
@@ -17,3 +20,69 @@ uniformGrid n = [( 1/n', (2*i'+1)/(2*n') ) | i <- take n [0..], let n' = fromInt
 
 uniformDiscretize dist n = [(p, quantile dist x) | (p,x) <- uniformGrid n]
 
+-- See https://dennybritz.com/posts/probability-monads-from-scratch/
+
+-- map from a -> probability
+data Discrete a = Discrete [(a, Double)]
+
+unpackDiscrete (Discrete pairs) = pairs
+
+-- Note that we can't handle infinitely long discrete distributions.
+-- (i) we'd need to store the weights as Prob
+-- (ii) we'd need to store the sum of weights as Prob
+-- (iiia) we'd need to allow a single uniform to have infinite precision, or
+-- (iiib) we'd need to sample a new uniform for each item.
+
+choose u total ((item,p):rest) | u < total+p  = item
+                               | otherwise    = choose u (total+p) rest
+choose u total []                           = error $ "choose failed!  total = " ++ show total
+
+instance Dist (Discrete a) where
+    type Result (Discrete a) = a
+    dist_name _ = "discrete"
+
+instance IOSampleable (Discrete a) where
+    sampleIO (Discrete pairs) = do
+      u <- sampleIO $ Uniform 0 1
+      return $ choose u 0 pairs
+
+instance Eq a => HasPdf (Discrete a) where
+    pdf (Discrete pairs) x = sum [ doubleToLogDouble p | (item,p) <- pairs, item == x]
+
+instance Dist1D (Discrete Double) where
+    cdf (Discrete pairs) x = sum [ p | (item, p) <- pairs, item < x ]
+
+instance MaybeMean (Discrete Double) where
+    maybeMean (Discrete pairs) = Just $ sum [ p * item | (item,p) <- pairs]
+
+instance Mean (Discrete Double)
+
+instance MaybeVariance (Discrete Double) where
+    maybeVariance dist@(Discrete pairs) = Just $ sum [ p * (item - m)^2 | (item,p) <- pairs] where m = mean dist
+
+instance Variance (Discrete Double)
+
+instance Dist1D (Discrete Int) where
+    cdf (Discrete pairs) x = sum [ p | (item, p) <- pairs, fromIntegral item < x]
+
+instance MaybeMean (Discrete Int) where
+    maybeMean (Discrete pairs) = Just $ sum [ p * fromIntegral item | (item,p) <- pairs]
+
+instance Mean (Discrete Int)
+
+instance MaybeVariance (Discrete Int) where
+    maybeVariance dist@(Discrete pairs) = Just $ sum [ p * (fromIntegral item - m)^2 | (item,p) <- pairs] where m = mean dist
+
+instance Variance (Discrete Int)
+
+instance Eq a => HasAnnotatedPdf (Discrete a) where
+    annotated_densities dist x = return [pdf dist x]
+
+instance Sampleable (Discrete a) where
+    sample dist@(Discrete pairs) = do
+      u <- sample $ Uniform 0 1
+      return $ choose u 0 pairs
+
+discreteDist pairs = Discrete pairs
+
+discrete pairs = sample $ discreteDist pairs
