@@ -14,12 +14,6 @@
     "import": ["SModel"],
     "args": [
         {
-            "arg_name": "submodel",
-            "arg_type": "Function[Double,RevCTMC[a]]",
-            "default_value": "function(w:gy94(omega=w))",
-	    "description": "The model, as a function of dN/dS"
-        },
-        {
             "arg_name": "fs",
             "arg_type": "List[Double]",
             "default_value": "~symmetric_dirichlet(2,1)",
@@ -48,6 +42,12 @@
             "arg_type": "Int",
             "default_value": "~bernoulli(0.5)",
 	    "description": "The model indicator: if 0, the sites only switch to neutrality on the foreground branches.\n If 1 then sites may switch to dN/dS=posW."
+        },
+        {
+            "arg_name": "submodel",
+            "arg_type": "Function[Double,RevCTMC[a]]",
+            "default_value": "function(w:gy94(omega=w))",
+	    "description": "The model, as a function of dN/dS"
         },
         {
             "arg_name": "branch_cats",
