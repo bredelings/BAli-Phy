@@ -55,11 +55,9 @@ instance Sampleable Bernoulli where
 
 bernoulli_effect x = add_move (\c -> discrete_uniform_avoid_mh x 0 1 c)
 
-bernoulliDist :: Double -> Bernoulli
-bernoulliDist p = Bernoulli (toFloating p)
+bernoulli :: Double -> Bernoulli
+bernoulli p = Bernoulli (toFloating p)
 
-bernoulli p = sample $ bernoulliDist p
+rbernoulli q = Bernoulli (1-toFloating(q))
 
-rbernoulliDist q = Bernoulli (1-toFloating(q))
-rbernoulli q = sample $ rbernoulliDist q
 

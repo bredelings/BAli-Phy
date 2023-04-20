@@ -31,18 +31,18 @@ rs07_relaxed_rates_model tree = do
    let n_branches = numBranches tree
        delta = 4
 
-   mean <- iid (n_branches + delta) (laplace (-4.0) (1.0/sqrt 2.0))
-   sigma <- iid (n_branches + delta) (gamma 1.05 0.05)
+   mean <- sample $ iid (n_branches + delta) (laplace (-4.0) (1.0/sqrt 2.0))
+   sigma <- sample $ iid (n_branches + delta) (gamma 1.05 0.05)
   
-   alpha <- gamma 2.0 (1.0/6.0)
+   alpha <- sample $ gamma 2.0 (1.0/6.0)
 
-   category <- crp alpha n_branches delta
+   category <- sample $ crp alpha n_branches delta
 
-   z <- iid n_branches (normal 0.0 1.0)
+   z <- sample $ iid n_branches (normal 0.0 1.0)
 
    let logLambdas = [ mean!!k + z!!i * sigma!!k | i <- take n_branches [0..], let k=category!!i]
 
-   meanIndelLengthMinus1 <- exponential 10.0
+   meanIndelLengthMinus1 <- sample $ exponential 10.0
     
    let epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1)
        lambdas = map exp logLambdas

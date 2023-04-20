@@ -127,7 +127,6 @@ instance Sampleable (RandomAlignment t) where
 instance HasAnnotatedPdf (RandomAlignment t) where
     annotated_densities dist@(RandomAlignment tree model tip_lengths hmms) = annotated_alignment_prs tree hmms model
 
-random_alignment_dist tree model tip_lengths = RandomAlignment tree model tip_lengths hmms
+random_alignment tree model tip_lengths = RandomAlignment tree model tip_lengths hmms
     where hmms = branch_hmms model (branch_lengths tree) (numBranches tree)
 
-random_alignment tree model tip_lengths = sample $ random_alignment_dist tree model tip_lengths

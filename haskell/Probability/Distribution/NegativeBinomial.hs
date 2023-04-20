@@ -44,7 +44,5 @@ negative_binomial_effect r x = do
     add_move $ slice_sample_integer_random_variable x negative_binomial_bounds
     add_move $ inc_dec_mh x negative_binomial_bounds
 
-negativeBinomialDist :: Int -> Double -> NegativeBinomial
-negativeBinomialDist r p = NegativeBinomial r (toFloating p)
-
-negative_binomial r p = sample $ negativeBinomialDist r p
+negativeBinomial :: Int -> Double -> NegativeBinomial
+negativeBinomial r p = NegativeBinomial r (toFloating p)

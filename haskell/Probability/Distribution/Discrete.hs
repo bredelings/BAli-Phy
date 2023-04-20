@@ -83,9 +83,7 @@ instance Sampleable (Discrete a) where
       u <- sample $ Uniform 0 1
       return $ choose u 0 pairs
 
-discreteDist pairs = Discrete pairs
-
-discrete pairs = sample $ discreteDist pairs
+discrete pairs = Discrete pairs
 
 instance Functor Discrete where
     fmap f (Discrete pairs) = Discrete [(f x,p) | (x,p) <- pairs]

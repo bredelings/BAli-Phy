@@ -48,6 +48,4 @@ instance Sampleable Laplace where
 laplace_bounds = realLine
 laplace_effect x = add_move $ slice_sample_real_random_variable x laplace_bounds
 
-laplaceDist m s = Laplace m s
-
-laplace m s = sample $ laplaceDist m s
+laplace m s = Laplace m s

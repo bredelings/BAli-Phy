@@ -28,14 +28,8 @@ instance (ContDist1D d, Result d ~ Double) => ContDist1D (ExpTransform d) where
 instance (Sampleable d, Result d ~ Double) => Sampleable (ExpTransform d) where
     sample (ExpTransform dist) = exp <$> sample dist
 
-logNormalDist mu sigma = ExpTransform $ normalDist mu sigma
-logExponentialDist mu = ExpTransform $ exponentialDist mu
-logGammaDist a b = ExpTransform $ gammaDist a b
-logLaplace m s = ExpTransform $ laplaceDist m s
-logCauchy m s = ExpTransform $ cauchyDist m s
-
-log_normal mu sigma = sample $ logNormalDist mu sigma
-log_exponential mu = sample $ logExponentialDist mu
-log_gamma a b = sample $ logGammaDist a b
-log_laplace m s = sample $ logLaplace m s
-log_cauchy m s = sample $ logCauchy m s
+log_normal mu sigma = ExpTransform $ normal mu sigma
+log_exponential mu = ExpTransform $ exponential mu
+log_gamma a b = ExpTransform $ gamma a b
+log_laplace m s = ExpTransform $ laplace m s
+log_cauchy m s = ExpTransform $ cauchy m s

@@ -38,9 +38,7 @@ instance HasAnnotatedPdf Categorical where
 instance Sampleable Categorical where
     sample dist@(Categorical ps) = RanDistribution2 dist $ categorical_effect (length ps)
 
-categoricalDist ps = Categorical $ listArray' ps
-
-categorical ps = sample $ categoricalDist ps
+categorical ps = Categorical $ listArray' ps
 
 ---
 
@@ -74,10 +72,6 @@ instance Sampleable (CategoricalOn a) where
         return $ xs!i
 
 
-categoricalOnDist pairs = CategoricalOn (listArray' xs) (listArray' ps)
+categorical_on pairs = CategoricalOn (listArray' xs) (listArray' ps)
     where xs = map fst pairs
           ps = map snd pairs
-
-categorical_on :: [(a,Double)] -> Random a
-categorical_on pairs = sample $ categoricalOnDist pairs
-

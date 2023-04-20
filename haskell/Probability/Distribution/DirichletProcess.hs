@@ -24,7 +24,7 @@ import MCMC -- for GibbsSampleCategorical
 -- Select one element from the (possibly infinite) list of values.
 -- This version performs `n` bernoulli choices to select category `n`.
 stick :: [Double] -> [a] -> Random a
-stick (p:ps) (x:xs) = do keep <- bernoulli p
+stick (p:ps) (x:xs) = do keep <- sample $ bernoulli p
                          if keep == 1 then
                              return x
                          else
@@ -40,9 +40,9 @@ stick (p:ps) (x:xs) = do keep <- bernoulli p
 
 --
 dpm_lognormal n alpha mean_dist noise_dist = dpm n alpha sample_dist
-    where sample_dist = do mean <- mean_dist
-                           sigma_over_mu <- noise_dist
-                           let sample_log_normal = do z <- normal 0 1
+    where sample_dist = do mean <- sample $ mean_dist
+                           sigma_over_mu <- sample $ noise_dist
+                           let sample_log_normal = do z <- sample $ normal 0 1
                                                       return $ mean*safe_exp (z*sigma_over_mu)
                            return sample_log_normal
 
@@ -54,21 +54,21 @@ dpm_lognormal n alpha mean_dist noise_dist = dpm n alpha sample_dist
 
 dpm n alpha sample_dist = lazy $ do
 
-  dists  <- sequence $ repeat $ sample_dist
+  dists  <- sequence $ repeat $ sample $ sample_dist
 
-  breaks <- sequence $ repeat $ beta 1 alpha
+  breaks <- sequence $ repeat $ sample $ beta 1 alpha
 
 -- stick selects a distribution from the list, and join then samples from the distribution
-  iid n (join $ stick breaks dists)
+  sample $ iid n (join $ stick breaks dists)
 
 dp :: Int -> Double -> Random a -> Random [a]
 dp n alpha dist = lazy $ do
 
   atoms  <- sequence $ repeat $ dist
 
-  breaks <- sequence $ repeat $ beta 1 alpha
+  breaks <- sequence $ repeat $ sample $ beta 1 alpha
 
-  iid n (stick breaks atoms)
+  sample $ iid n (stick breaks atoms)
 
 ---
 
@@ -83,7 +83,7 @@ do_crp'' alpha n bins counts = let inc (c:cs) 0 = (c+1:cs)
                                    f 0 = alpha/fromIntegral nzeros
                                    f i = fromIntegral i
                                in 
-                               do c <- categorical (p alpha counts)
+                               do c <- sample $ categorical (p alpha counts)
                                   cs <- do_crp'' alpha (n-1) bins (inc counts c) 
                                   return (c:cs)
 
@@ -126,7 +126,5 @@ instance HasAnnotatedPdf CRP where
 instance Sampleable CRP where
     sample dist@(CRP alpha n d) = RanDistribution3 dist (crp_effect n d) (triggered_modifiable_list n) (ran_sample_crp alpha n d)
 
-crpDist = CRP
-
-crp alpha n d = sample $ crpDist alpha n d
+crp = CRP
 

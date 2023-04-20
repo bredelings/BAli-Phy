@@ -32,9 +32,9 @@ multinomial_density n ps ks = builtin_multinomial_density n ps' ks'
 sample_multinomial n [] = return []
 sample_multinomial n (p:ps) = do
   let normalize xs = map (/sum xs) xs
-  m <- binomial n p
+  m <- sample $ binomial n p
   ms <- sample_multinomial (n-m) (normalize ps)
   return (m:ms)
 
-multinomialDist ps = Multinomial (length ps) ps
-multinomial ps = sample $ multinomialDist ps
+multinomial ps = Multinomial (length ps) ps
+

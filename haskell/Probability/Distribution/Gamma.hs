@@ -53,6 +53,4 @@ instance Sampleable Gamma where
 gamma_bounds = between 0 1
 gamma_effect x = add_move $ slice_sample_real_random_variable x gamma_bounds
 
-gammaDist a b = Gamma a b
-
-gamma a b = sample $ gammaDist a b
+gamma a b = Gamma a b

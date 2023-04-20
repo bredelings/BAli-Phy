@@ -36,10 +36,8 @@ instance HasAnnotatedPdf d => HasAnnotatedPdf (Mixture (Discrete d)) where
     annotated_densities (Mixture (Discrete pairs)) x = return $ [sum [doubleToLogDouble p * density dist x | (dist,p) <- pairs]]
 
 
-mixtureDist ps dists | length ps /= length dists  = error "mixture distribution has different number of weights and distributions"
-                     | otherwise                  = Mixture $ Discrete $ zip dists ps 
-
-mixture ps dists = sample $ mixtureDist ps dists
+mixture ps dists | length ps /= length dists  = error "mixture distribution has different number of weights and distributions"
+                 | otherwise                  = Mixture $ Discrete $ zip dists ps 
 
 ----------------------------------------------------------
 

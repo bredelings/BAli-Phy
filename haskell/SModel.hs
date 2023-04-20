@@ -66,11 +66,11 @@ m3_test_omega_dist ps omegas posP posW _ = m3p_omega_dist ps omegas posP posW
 
 -- The M7 is just a beta distribution
 -- gamma' = var(x)/(mu*(1-mu)) = 1/(a+b+1) = 1/(n+1)
-m7_omega_dist mu gamma n_bins = uniformDiscretize (betaDist a b) n_bins where cap = min (mu/(1+mu)) ((1-mu)/(2-mu))
-                                                                              gamma' = gamma*cap
-                                                                              n = (1/gamma')-1
-                                                                              a = n*mu
-                                                                              b = n*(1 - mu)
+m7_omega_dist mu gamma n_bins = uniformDiscretize (beta a b) n_bins where cap = min (mu/(1+mu)) ((1-mu)/(2-mu))
+                                                                          gamma' = gamma*cap
+                                                                          n = (1/gamma')-1
+                                                                          a = n*mu
+                                                                          b = n*(1 - mu)
 
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
 m8_omega_dist mu gamma n_bins posP posW = extendDiscreteDistribution (m7_omega_dist mu gamma n_bins) posP posW
@@ -115,13 +115,13 @@ branch_site_test fs ws posP posW posSelection branch_cats model_func = branch_si
     where posW' = if (posSelection == 1) then posW else 1
 
 
-gamma_rates_dist alpha = gammaDist alpha (1/alpha)
+gamma_rates_dist alpha = gamma alpha (1/alpha)
 
 gamma_rates alpha n base = rate_mixture_unif_bins base (gamma_rates_dist alpha) n
 
-log_normal_rates_dist sigmaOverMu = logNormalDist lmu lsigma where x = log(1+sigmaOverMu^2)
-                                                                   lmu = -0.5*x
-                                                                   lsigma = sqrt x
+log_normal_rates_dist sigmaOverMu = log_normal lmu lsigma where x = log(1+sigmaOverMu^2)
+                                                                lmu = -0.5*x
+                                                                lsigma = sqrt x
 
 log_normal_rates sigmaOverMu n base = rate_mixture_unif_bins base (log_normal_rates_dist sigmaOverMu) n
 

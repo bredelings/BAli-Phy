@@ -8,7 +8,7 @@ foreign import bpcall "Distribution:dirichlet_density" builtin_dirichlet_density
 dirichlet_density as ps = builtin_dirichlet_density (list_to_vector as) (list_to_vector ps)
 
 -- The `dirichlet` does not handle cases where the number of as changes in a ungraceful way: all entries are resampled!
-sample_dirichlet as = do vs <- mapM (\a-> gamma a 1) as
+sample_dirichlet as = do vs <- mapM (\a-> sample $ gamma a 1) as
                          return $ map (/(sum vs)) vs
 
 data Dirichlet = Dirichlet [Double]
@@ -30,12 +30,10 @@ instance Sampleable Dirichlet where
     sample dist@(Dirichlet as) = RanSamplingRate (1/sqrt(fromIntegral $ length as)) $ sample_dirichlet as
 
 
-dirichletDist as = Dirichlet as
-
-dirichlet as = sample $ dirichletDist as
+dirichlet as = Dirichlet as
 
 symmetric_dirichlet n a = do
-  ws <- iid n (gamma a 1)
+  ws <- sample $ iid n (gamma a 1)
   return $ map (/sum ws) ws
 
 
@@ -48,7 +46,7 @@ instance Dist (DirichletOn a) where
     dist_name _ = "dirichlet_on"
 
 instance IOSampleable (DirichletOn a) where
-    sampleIO (DirichletOn items as) = do ps <- sampleIO $ dirichletDist as
+    sampleIO (DirichletOn items as) = do ps <- sampleIO $ dirichlet as
                                          return $ zip items ps
 
 instance HasPdf (DirichletOn a) where
@@ -59,12 +57,10 @@ instance HasAnnotatedPdf (DirichletOn a) where
     annotated_densities dist item_ps = return $ [pdf dist item_ps]
 
 instance Sampleable (DirichletOn a) where
-    sample (DirichletOn items as) = do ps <- dirichlet as
+    sample (DirichletOn items as) = do ps <- sample $ dirichlet as
                                        return $ zip items ps
 
-dirichletOnDist items ps = DirichletOn items ps
-
-dirichlet_on items ps = sample $ dirichletOnDist items ps
+dirichlet_on items ps = DirichletOn items ps
 
 symmetric_dirichlet_on items a = dirichlet_on items (replicate (length items) a)
 

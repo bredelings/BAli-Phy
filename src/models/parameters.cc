@@ -1489,7 +1489,7 @@ std::string generate_atmodel_program(int n_sequences,
             var leaf_sequence_lengths("sequence_lengths" + part_suffix);
             expression_ref alphabet = {var("getAlphabet"),smodel};
             program.let(leaf_sequence_lengths, {var("get_sequence_lengths"), alphabet,  sequence_data_var});
-            program.perform(alignment_on_tree, {var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths});
+            program.perform(alignment_on_tree, {var("sample"),{var("random_alignment"), branch_dist_tree, imodel, leaf_sequence_lengths}});
         }
 
         // Model.Partition.3. Observe the sequence data from the distribution

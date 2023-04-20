@@ -39,11 +39,9 @@ instance HasAnnotatedPdf Binomial where
 instance Sampleable Binomial where
     sample dist@(Binomial n _) = RanDistribution2 dist (binomial_effect n)
 
-binomialDist :: Int -> Double -> Binomial
-binomialDist n p = Binomial n (toFloating p)
+binomial :: Int -> Double -> Binomial
+binomial n p = Binomial n (toFloating p)
 
-binomial n p = sample $ binomialDist n p
-                                   
 binomial_bounds n = integer_between 0 n
 
 binomial_effect n x = do

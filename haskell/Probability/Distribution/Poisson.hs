@@ -49,9 +49,7 @@ poisson_effect x = do
    add_move $ slice_sample_integer_random_variable x poisson_bounds
    add_move $ inc_dec_mh x poisson_bounds
 
-poissonDist mu = Poisson mu
-
-poisson mu = sample $ poissonDist mu
+poisson mu = Poisson mu
 
 ------------------------------------------------------------
 data PoissonProcess = PoissonProcess Double Double Double
@@ -62,8 +60,8 @@ instance Dist PoissonProcess where
 
 instance IOSampleable PoissonProcess where
     sampleIO (PoissonProcess rate t1 t2) = do
-       n <- sampleIO $ poissonDist (rate * (t2-t1))
-       xs <- sampleIO $ iidDist n (uniform t1 t2)
+       n <- sampleIO $ poisson (rate * (t2-t1))
+       xs <- sampleIO $ iid n (uniform t1 t2)
        return $ sort xs
 
 instance HasPdf PoissonProcess where
@@ -71,8 +69,8 @@ instance HasPdf PoissonProcess where
 
 instance Sampleable PoissonProcess where
     sample (PoissonProcess rate t1 t2) = do
-       n <- sample $ poissonDist (rate * (t2-t1))
-       xs <- sample $ iidDist n (uniform t1 t2)
+       n <- sample $ poisson (rate * (t2-t1))
+       xs <- sample $ iid n (uniform t1 t2)
        return $ sort xs
 
 instance HasAnnotatedPdf PoissonProcess where
@@ -82,15 +80,13 @@ instance HasAnnotatedPdf PoissonProcess where
 poisson_process_density' rate t1 t2 n = expTo $ (-rate*(t2-t1)) + (fromIntegral n * log rate)
 poisson_process_density  rate t1 t2 points = poisson_process_density' rate t1 t2 n where n = length points
 sample_poisson_process rate t1 t2 = do
-  n <- poisson (rate * (t2-t1))
-  xs <- iid n (uniform t1 t2)
+  n <- sample $ poisson (rate * (t2-t1))
+  xs <- sample $ iid n (uniform t1 t2)
   return $ sort xs
 
 --- Poisson process, piecewise constant
 
-poissonProcessDist rate t1 t2 = PoissonProcess rate t1 t2
-poisson_process rate t1 t2 = sample $ poissonProcessDist rate t1 t2
-
+poisson_process rate t1 t2 = PoissonProcess rate t1 t2
 
 ------------------------------------------------------------
 data PoissonProcesses = PoissonProcesses [(Double,Double,Double)]
@@ -126,6 +122,5 @@ sample_poisson_processes ((rate,t1,t2):intervals) = do
   return $ points1 ++ points2
 
 
-poissonProcessesDist intervals = PoissonProcesses intervals
-poisson_processes intervals = sample $ poissonProcessesDist intervals
+poisson_processeses intervals = PoissonProcesses intervals
 

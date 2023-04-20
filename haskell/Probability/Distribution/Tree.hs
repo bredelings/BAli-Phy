@@ -19,7 +19,7 @@ pick_index i (h : t) = let (x, t2) = pick_index (i - 1) t in (x, h : t2)
 
 remove_one []   = error "Cannot remove one from empty list"
 remove_one list = do
-    i <- uniform_int 0 (length list - 1)
+    i <- sample $ uniform_int 0 (length list - 1)
     return $ pick_index i list
 
 remove_n 0 list = return ([], list)
@@ -75,7 +75,7 @@ uniform_topology_effect tree = do
   add_move $ walk_tree_sample_NNI tree         -- does this handle situations with no data partitions?
 
 uniform_labelled_topology taxa = do
-  topology <- uniform_topology (length taxa)
+  topology <- sample $ uniform_topology (length taxa)
   return $ add_labels (zip [0..] taxa) topology
 
 add_alignment_moves tree = do
@@ -108,7 +108,7 @@ uniform_labelled_tree taxa branch_lengths_dist = do
   -- These lines should be under SamplingRate 0.0 -- but then the polytomy trees won't work
   topology <- RanSamplingRate 0.0 $ uniform_labelled_topology taxa
   -- Q. How can we do walk_tree and then run the MCMC kernels that affect a given branch?
-  branch_lengths <- independent [branch_lengths_dist topology b | b <- [0..numBranches topology-1]]
+  branch_lengths <- sample $ independent [branch_lengths_dist topology b | b <- [0..numBranches topology-1]]
   let tree = branch_length_tree topology branch_lengths
   return tree `with_tk_effect` add_tree_alignment_moves
 
@@ -138,7 +138,7 @@ sample_uniform_ordered_tree n = do
 
 sample_uniform_time_tree age n = do
   topology <- sample_uniform_ordered_tree n
-  times <- sort <$> iid (n-2) (uniform 0.0 age)
+  times <- sort <$> (sample $ iid (n-2) (uniform 0.0 age))
   let all_times = replicate n 0.0 ++ times ++ [age]
       all_node_times = IntMap.fromList $ zip [0..] all_times
   return $ time_tree topology all_node_times
@@ -232,8 +232,8 @@ sample_coalescent_tree theta n_leaves = do
   topology <- sample_uniform_ordered_tree n_leaves
 
   let rate = 2/theta
-  dts <- sequence [ exponential (1 / (rate* n_choose_2) )| n <- reverse [2..n_leaves],
-                                                             let n_choose_2 = fromIntegral $ n*(n-1) `div` 2]
+  dts <- sequence [ sample $ exponential (1 / (rate* n_choose_2) )| n <- reverse [2..n_leaves],
+                                                                    let n_choose_2 = fromIntegral $ n*(n-1) `div` 2]
   let times = (replicate n_leaves 0) ++ (scanl1 (+) dts)
       node_times = IntMap.fromList $ zip [0..] times
   return (time_tree topology node_times)
@@ -251,9 +251,7 @@ instance HasAnnotatedPdf UniformTopology where
 instance Sampleable UniformTopology where
     sample dist@(UniformTopology n) = RanDistribution3 dist uniform_topology_effect triggered_modifiable_tree (sample_uniform_topology n)
 
-uniform_topology_dist n = UniformTopology n
-
-uniform_topology n = sample $ uniform_topology_dist n
+uniform_topology n = UniformTopology n
 
 
 
@@ -270,8 +268,7 @@ instance HasAnnotatedPdf UniformTimeTree where
 instance Sampleable UniformTimeTree where
     sample dist@(UniformTimeTree age n) = RanDistribution3 dist uniform_time_tree_effect triggered_modifiable_time_tree (sample_uniform_time_tree age n)
 
-uniform_time_tree_dist age n = UniformTimeTree age n
-uniform_time_tree age n = sample $ uniform_time_tree_dist age n
+uniform_time_tree age n = UniformTimeTree age n
 
 -------------------------------------------------------------
 data CoalescentTree = CoalescentTree Double Int
@@ -286,5 +283,4 @@ instance HasAnnotatedPdf CoalescentTree where
 instance Sampleable CoalescentTree where
     sample dist@(CoalescentTree theta n) = RanDistribution3 dist coalescent_tree_effect triggered_modifiable_time_tree (sample_coalescent_tree theta n)
 
-coalescent_tree_dist theta n = CoalescentTree theta n
-coalescent_tree theta n = sample $ coalescent_tree_dist theta n
+coalescent_tree theta n = CoalescentTree theta n

@@ -41,9 +41,7 @@ instance HasAnnotatedPdf Cauchy where
 instance Sampleable Cauchy where
     sample dist@(Cauchy mu sigma) = RanDistribution2 dist cauchy_effect
 
-cauchyDist m s = Cauchy m s
-
-cauchy m s = sample $ cauchyDist m s
+cauchy m s = Cauchy m s
 
 ---- half_cauchy
 
@@ -78,7 +76,5 @@ instance HasPdf d => HasAnnotatedPdf (Half d) where
 instance Sampleable d => Sampleable (Half d) where
     sample (Half dist) = abs <$> sample dist
 
-halfCauchyDist s = Half $ cauchyDist 0 s
-
-half_cauchy s = sample $ halfCauchyDist s
+half_cauchy s = Half $ cauchy 0 s
 

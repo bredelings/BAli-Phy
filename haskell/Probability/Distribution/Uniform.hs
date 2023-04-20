@@ -49,9 +49,7 @@ instance Sampleable Uniform where
     sample dist@(Uniform l u) = RanDistribution2 dist (uniform_effect l u)
 
 
-uniformDist l u = Uniform l u
-
-uniform l u = sample $ uniformDist l u
+uniform l u = Uniform l u
 
 uniform_bounds l u = between l u
 uniform_effect l u x = add_move $ slice_sample_real_random_variable x (uniform_bounds l u)
@@ -87,6 +85,4 @@ uniform_int_bounds l u = integer_between l u
 uniform_int_effect l u x = add_move $ slice_sample_integer_random_variable x (uniform_int_bounds l u)
 
 
-uniformIntDist l u = UniformInt l u
-
-uniform_int l u = sample $ uniformIntDist l u
+uniform_int l u = UniformInt l u

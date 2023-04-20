@@ -50,6 +50,4 @@ instance Sampleable Beta where
 beta_bounds = between 0 1
 beta_effect x = add_move $ slice_sample_real_random_variable x beta_bounds
 
-betaDist a b = Beta a b
-
-beta a b = sample $ betaDist a b
+beta a b = Beta a b

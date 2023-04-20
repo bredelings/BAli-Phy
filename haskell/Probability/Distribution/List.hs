@@ -39,9 +39,7 @@ instance Sampleable d => Sampleable (IID d) where
                                     xs <- sequence $ repeat $ dist
                                     return $ take n xs
 
-iidDist n dist = IID n dist
-
-iid n dist = sample $ IID n dist
+iid n dist = IID n dist
 
 -- OK, so part of the issue here is that we want iid n sampling_action to work,
 -- but we want iid_dist n dist to require dist to be something with a pdf.
@@ -69,10 +67,7 @@ instance Sampleable d => Sampleable (Independent d) where
     sample (Independent dists) = lazy $ sequence $ map sample dists
 
 
-independentDist dists = Independent dists
-
-independent dists = sample $ independentDist dists
-
+independent dists = Independent dists
 
 -----
 data IIDOn a d = IIDOn [a] d
@@ -87,8 +82,7 @@ instance Sampleable d => Sampleable (IIDOn a d) where
                                   xs <- sequence $ repeat $ dist
                                   return $ zip vs xs
 
-iid_on_dist items dist = IIDOn items dist
-iid_on items dist = sample $ iid_on_dist items dist
+iid_on items dist = IIDOn items dist
 
 {-
   could we do i.e.
@@ -100,7 +94,7 @@ iid_on items dist = sample $ iid_on_dist items dist
 -}
 
 
-iid2 n dist1 dist2 = iid n $ (,) <$> dist1 <*> dist2
+iid2 n dist1 dist2 = sample $ iid n $ (,) <$> sample dist1 <*> sample dist2
 
 iid_mixture_dist n weight_dist item_dist = do
     (ps, items) <- unzip <$> iid2 n weight_dist item_dist
@@ -110,7 +104,7 @@ dirichlet_mixture_dist n a item_dist = iid_mixture_dist n (gamma a 1) item_dist
 
 
 even_sorted_on_iid f n dist = do let n_all = 2*n+1
-                                 xs' <- iid n_all dist
+                                 xs' <- sample $ iid n_all dist
                                  let xs = listArray n_all $ sortOn f xs'
                                  return [xs!(2*i-1) | i <- [1..n]]
 
@@ -118,7 +112,7 @@ even_sorted_iid = even_sorted_on_iid id
 
 
 odd_sorted_on_iid f n dist = do let n_all = max (2*n-1) 0
-                                xs' <- iid n_all dist
+                                xs' <- sample $ iid n_all dist
                                 let xs = listArray n_all $ sortOn f xs'
                                 return [xs!(2*i) | i <- [0..n-1]]
 
