@@ -945,7 +945,7 @@ expression_ref make_call(const ptree& call, const map<string,expression_ref>& si
     for(int i=0;i<call.size();i++)
     {
         if (i == call.size()-1 and call[i].second == "@submodel")
-            E = {var("&"), make_call(call[i].second, simple_args),E};
+            E = {var("+>"), make_call(call[i].second, simple_args),E};
         else
             E = {E, make_call(call[i].second, simple_args)};
     }
