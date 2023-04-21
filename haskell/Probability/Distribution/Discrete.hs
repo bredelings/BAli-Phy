@@ -7,10 +7,9 @@ import Probability.Distribution.Uniform
 -- this is a join
 mix fs ds = Discrete [(x, p*f) | (f, d) <- zip' fs ds, (x, p) <- unpackDiscrete d]
 
--- This is BACKWARD from Discrete, below.
 certainly x = Discrete [(x, 1)]
 
-extendDiscreteDistribution d p x = mix [p, 1-p] [certainly x, d]
+extendDiscrete d p x = mix [p, 1-p] [certainly x, d]
 
 uniformGrid n = Discrete [( (2*i'+1)/(2*n'), 1/n' ) | i <- take n [0..], let n' = fromIntegral n, let i'=fromIntegral i]
 
