@@ -1,7 +1,6 @@
 module Probability.Distribution.Discrete where
 
 import Probability.Random
-import Data.List -- for foldl'
 import Probability.Distribution.Uniform
 
 -- this is a join
