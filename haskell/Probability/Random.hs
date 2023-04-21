@@ -133,12 +133,12 @@ instance Monad Random where
     f >>= g  = RanBind f g
     mfix f   = RanMFix f
 
-observe dist datum = liftIO $ do
+observe datum dist = liftIO $ do
                        s <- register_dist_observe (dist_name dist)
                        register_out_edge s datum
                        density_terms <- make_edges s $ annotated_densities dist datum
                        sequence_ [register_likelihood s term | term <- density_terms]
-x ~> dist = observe dist x
+x ~> dist = x `observe` dist
 infix 0 ~>
 
 instance MonadIO Random where
