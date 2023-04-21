@@ -50,14 +50,14 @@ infixl 2 +>
 submodel +> model = model submodel
 
 --
-m1a_omega_dist f1 w1 = [(f1,w1), (1-f1, 1)]
+m1a_omega_dist f1 w1 = Discrete [(w1, f1), (1, 1-f1)]
 
 m2a_omega_dist f1 w1 posP posW = extendDiscreteDistribution (m1a_omega_dist f1 w1) posP posW
 
 m2a_test_omega_dist f1 w1 posP posW 0 = m2a_omega_dist f1 w1 posP 1
 m2a_test_omega_dist f1 w1 posP posW _ = m2a_omega_dist f1 w1 posP posW
 
-m3_omega_dist ps omegas = zip' ps omegas
+m3_omega_dist ps omegas = Discrete $ zip' omegas ps
 
 m3p_omega_dist ps omegas posP posW = extendDiscreteDistribution (m3_omega_dist ps omegas) posP posW
 
@@ -103,9 +103,9 @@ m8a_test mu gamma n_bins posP posW posSelection model_func = parameter_mixture_u
 -- OK, so if I change this from [Mixture Omega] to Mixture [Omega] or Mixture (\Int -> Omega), how do I apply the function model_func to all the omegas?
 branch_site fs ws posP posW branch_cats model_func = MixtureModels branch_cats [bg_mixture,fg_mixture]
 -- background omega distribution -- where the last omega is 1 (neutral)
-    where bg_dist = zip fs (ws ++ [1])
+    where bg_dist = Discrete $ zip (ws ++ [1]) fs
 -- accelerated omega distribution -- posW for all categories
-          accel_dist = zip fs (repeat posW)
+          accel_dist = Discrete $ zip (repeat posW) fs
 -- background branches always use the background omega distribution              
           bg_mixture = parameter_mixture_unit (mix [1-posP, posP] [bg_dist, bg_dist]) model_func
 -- foreground branches use the foreground omega distribution with probability posP

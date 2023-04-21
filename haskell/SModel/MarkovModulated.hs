@@ -30,7 +30,7 @@ modulated_markov models rates_between level_probs = reversible_markov a smap q p
     smap = modulated_markov_smap smaps
 
 markov_modulate_mixture nu (MixtureModel dist) = modulated_markov models rates_between level_probs where
-    (level_probs,models) = unzip dist
+    (models, level_probs) = unzip $ unpackDiscrete dist
     rates_between = Markov.equ (length models) nu
 
 -- We need to rescale submodels to have substitution rate `1`.
@@ -42,37 +42,35 @@ tuffley_steel_98_unscaled s01 s10 q = modulated_markov [scale 0 q, q] rates_betw
 
 tuffley_steel_98 s01 s10 q = tuffley_steel_98_unscaled s01 s10 (rescale 1 q)
 
-huelsenbeck_02 s01 s10 model = MixtureModel [(p, tuffley_steel_98_unscaled s01 s10 q) | (p,q) <- dist] where
-    MixtureModel dist = rescale 1 model
+huelsenbeck_02 s01 s10 model = MixtureModel $ fmap (tuffley_steel_98_unscaled s01 s10) dist
+    where MixtureModel dist = rescale 1 model
 
 galtier_01_ssrv nu model = modulated_markov models rates_between level_probs where
     MixtureModel dist = rescale 1 model
-    level_probs = map fst dist
-    models = map snd dist
-    n_levels = length dist
+    (models, level_probs) = unzip $ unpackDiscrete dist
+    n_levels = length models
     -- This is really a generic gtr...  We should be able to get this with f81
     rates_between = (Markov.equ n_levels nu) %*% (plus_f_matrix $ list_to_vector level_probs)
 
-galtier_01 nu pi model = parameter_mixture_unit [(1-pi, 0), (pi, nu)] (\nu' -> galtier_01_ssrv nu' model)
+galtier_01 nu pi model = parameter_mixture_unit (Discrete [(0, 1-pi), (nu, pi)]) (\nu' -> galtier_01_ssrv nu' model)
 
 wssr07_ssrv s01 s10 nu model = tuffley_steel_98 s01 s10 $ galtier_01_ssrv nu model
 
-wssr07 s01 s10 nu pi model = parameter_mixture_unit [(1-pi, 0), (pi, nu)] (\nu' -> wssr07_ssrv s01 s10 nu' model)
+wssr07 s01 s10 nu pi model = parameter_mixture_unit (Discrete [(0, 1-pi), (nu, pi)]) (\nu' -> wssr07_ssrv s01 s10 nu' model)
 
 -- Instead of passing rates_between+level_probs, could we just pass a q matrix?
 covarion_gtr_ssrv nu exchange model = modulated_markov models rates_between level_probs where
-    MixtureModel dist = rescale 1 model
-    level_probs = map fst dist
-    models = map snd dist
+    MixtureModel (Discrete dist) = rescale 1 model
+    (models, level_probs) = unzip dist
     -- This is really a gtr rate matrix, just without the alphabet / smap!
     rates_between = (scaleMatrix nu exchange) %*% (plus_f_matrix $ list_to_vector level_probs)
 
-covarion_gtr nu exchange pi model = parameter_mixture_unit [(1-pi, 0), (pi, nu)] (\nu' -> covarion_gtr_ssrv nu' exchange model)
+covarion_gtr nu exchange pi model = parameter_mixture_unit (Discrete [(0,1-pi), (nu, pi)]) (\nu' -> covarion_gtr_ssrv nu' exchange model)
 
 covarion_gtr_sym :: Matrix Double -> MixtureModel -> ReversibleMarkov
 covarion_gtr_sym sym model = modulated_markov models rates_between level_probs where
     MixtureModel dist = rescale 1 model
-    (level_probs, models) = unzip dist
+    (models, level_probs) = unzip $ unpackDiscrete dist
     rates_between = sym %*% (plus_f_matrix $ list_to_vector level_probs)
 
 

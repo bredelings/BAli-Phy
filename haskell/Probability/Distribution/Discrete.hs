@@ -4,21 +4,17 @@ import Probability.Random
 import Data.List -- for foldl'
 import Probability.Distribution.Uniform
 
-uniformQuantiles q n = map (\i -> q ((2*(fromIntegral i)+1)/fromIntegral n) ) (take n [1..])
-
 -- this is a join
-mix fs ds = [(p*f, x) | (f, d) <- zip' fs ds, (p, x) <- d]
+mix fs ds = Discrete [(x, p*f) | (f, d) <- zip' fs ds, (x, p) <- unpackDiscrete d]
 
 -- This is BACKWARD from Discrete, below.
-certainly x = [(1, x)]
+certainly x = Discrete [(x, 1)]
 
 extendDiscreteDistribution d p x = mix [p, 1-p] [certainly x, d]
 
-average l = foldl' (\x y->(x+(fst y)*(snd y))) 0 l
+uniformGrid n = Discrete [( (2*i'+1)/(2*n'), 1/n' ) | i <- take n [0..], let n' = fromIntegral n, let i'=fromIntegral i]
 
-uniformGrid n = [( 1/n', (2*i'+1)/(2*n') ) | i <- take n [0..], let n' = fromIntegral n, let i'=fromIntegral i]
-
-uniformDiscretize dist n = [(p, quantile dist x) | (p,x) <- uniformGrid n]
+uniformDiscretize dist n = fmap (quantile dist) (uniformGrid n)
 
 -- See https://dennybritz.com/posts/probability-monads-from-scratch/
 
