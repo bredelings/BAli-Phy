@@ -82,6 +82,7 @@ instance IOSampleable (Random a) where
 instance Sampleable (Random a) where
     sample r = r
 
+prior = sample
 
 -- Maybe we would just define `normal mu sigma = sample $ Normal mu sigma`?
 -- How about the effect?
