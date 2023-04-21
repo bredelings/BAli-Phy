@@ -122,5 +122,5 @@ sample_poisson_processes ((rate,t1,t2):intervals) = do
   return $ points1 ++ points2
 
 
-poisson_processeses intervals = PoissonProcesses intervals
+poisson_processes intervals = PoissonProcesses intervals
 
