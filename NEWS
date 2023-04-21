@@ -1,13 +1,19 @@
-* 4.0-beta3
+* 4.0-beta3 (Apr 21, 2023)
 - Changes
   + Command-line model language
     - Change model-stacking operator from '+' to '+>'
     - Add numeric '+', '-', '*', '/'
     - Functions are now called like f(x) instead of f[x].
-    - Lambda functions are new written like `function(w: E)`.
-    - Allow specifying lists like [x,y], tuples with (x,y).
+    - Lambda functions are now written `function(w: E)`.
+    - Allow specifying lists with [x,y], tuples with (x,y).
     - Allow specifying dictionaries (lists of pairs) like {"A":x,"B",y}.
     - Allow writing 'x=v; E' for 'let[x=v,E]'.
+    - Don't allow 'f(,2)' anymore.
+  + Improve MCMC mixing when inferring number of clusters.
+  + New numeric type Prob that handles numbers very close to 1 by storing the log-odds.
+  + Improve handling of numeric types.
+  + Refactor how probability distribution work in Haskell.
+  + Bug fixes for the Haskell typechecker.
 
 * 4.0-beta2 (Mar 21, 2023)
 - Features
