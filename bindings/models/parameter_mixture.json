@@ -1,7 +1,7 @@
 {
     "name": "parameter_mixture",
     "result_type": "MixtureModel[a]",
-    "call": "SModel.parameter_mixture[zip[@frequencies,@values],@submodel]",
+    "call": "SModel.parameter_mixture[Discrete[zip[@values,@frequencies]],@submodel]",
     "import": ["SModel"],
     "args": [
         {
