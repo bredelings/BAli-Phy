@@ -41,7 +41,7 @@ model seq_data = do
 
     let loggers = ["tree" %=% write_newick (make_rooted tree), "scale" %=% scale, "S1" %>% sloggers]
 
-    seq_data ~> ctmc_on_tree_fixed_A tree smodel
+    observe seq_data $ ctmc_on_tree_fixed_A tree smodel
 
     return loggers
 

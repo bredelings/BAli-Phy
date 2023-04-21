@@ -12,7 +12,7 @@ model x = do
     xs <- lazy $ my_iid n (sample $ normal 0 1)
     let total = sum xs
     let loggers = ["n" %=% n, "xs" %=% xs]
-    x ~> normal total 1
+    observe x $ normal total 1
     return loggers
 
 main = do

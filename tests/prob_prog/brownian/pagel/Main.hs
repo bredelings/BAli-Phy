@@ -50,7 +50,7 @@ model topology lengths = do
 
       lengths2 = branch_lengths_from_node_times
 
-  xs ~> phylo_brownian topology lengths2 sigma
+  observe xs $ phylo_brownian topology lengths2 sigma
 
   return ["lambda" %=% lambda, "H" %=% h]
   

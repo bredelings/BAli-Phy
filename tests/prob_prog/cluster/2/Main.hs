@@ -20,7 +20,7 @@ model xs = do
   let n_points = length xs
       dists = [normal mean sigma | (mean,sigma) <- clusters]
 
-  xs ~> iid n_points (mixture ps dists)
+  observe xs $ iid n_points (mixture ps dists)
 
   return ["n_clusters" %=% n, "weights" %=% ps, "clusters" %=% clusters]
 

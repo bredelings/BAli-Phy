@@ -138,8 +138,8 @@ observe datum dist = liftIO $ do
                        register_out_edge s datum
                        density_terms <- make_edges s $ annotated_densities dist datum
                        sequence_ [register_likelihood s term | term <- density_terms]
-x ~> dist = x `observe` dist
-infix 0 ~>
+
+infix 0 `observe`
 
 instance MonadIO Random where
     liftIO = RanLiftIO

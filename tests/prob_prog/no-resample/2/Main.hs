@@ -6,7 +6,7 @@ model x = do
 
     y <- if n > 1 then sample $ normal 0 1 else sample $ exponential 1
 
-    x ~> normal y 1.0
+    observe x $ normal y 1
 
     return ["n" %=% n, "y" %=% y]
 

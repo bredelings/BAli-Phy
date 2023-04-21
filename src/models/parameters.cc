@@ -1,3 +1,4 @@
+
 /*
   Copyright (C) 2004-2012 Benjamin Redelings
 
@@ -1498,7 +1499,7 @@ std::string generate_atmodel_program(int n_sequences,
             distribution = {var("ctmc_on_tree"), branch_dist_tree, alignment_on_tree, smodel};
         else
             distribution = {var("ctmc_on_tree_fixed_A"), branch_dist_tree, smodel};
-        program.perform({var("~>"),sequence_data_var,distribution});
+        program.perform({var("observe"),sequence_data_var,distribution});
 
         program.empty_stmt();
     }

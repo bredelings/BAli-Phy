@@ -26,7 +26,7 @@ model floor_values county_code_values log_radon_data = do
 
   let loggers = ["mu_a" %=% mu_a, "sigma_a" %=% sigma_a, "mu_b" %=% mu_b, "sigma_b" %=% sigma_b]
 
-  log_radon_data ~> independent [ dist county_code floor | (floor,county_code) <- zip floor_values county_code_values]
+  observe log_radon_data $ independent [ dist county_code floor | (floor,county_code) <- zip floor_values county_code_values]
 
   return loggers
 
