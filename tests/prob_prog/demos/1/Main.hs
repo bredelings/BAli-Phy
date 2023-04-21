@@ -2,9 +2,9 @@ import           Probability
 
 model = do
 
-    p <- beta 5.0 1.0
+    p <- sample $ beta 5.0 1.0
 
-    n <- geometric p
+    n <- sample $ geometric p
 
     return ["p" %=% p, "n" %=% n]
 

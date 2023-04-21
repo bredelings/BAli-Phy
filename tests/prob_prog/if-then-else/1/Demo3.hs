@@ -3,9 +3,9 @@ module Demo3 where
 import           Probability
 
 model = do
-    i <- bernoulli 0.5
-    y <- normal 0.0 1.0
-    z <- exponential 0.1
+    i <- prior $ bernoulli 0.5
+    y <- prior $ normal 0 1
+    z <- prior $ exponential 0.1
     let x = if i == 1 then y else z
     return ["x" %=% x]
 

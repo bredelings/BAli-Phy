@@ -1,7 +1,7 @@
 import           Probability
 
 model = do
-    xs <- crp 2.0 10 2
+    xs <- sample $ crp 2 10 2
     return ["xs" %=% xs]
 
 main = mcmc model

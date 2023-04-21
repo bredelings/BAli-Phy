@@ -10,9 +10,9 @@ import           PopGen              -- for li_stephens_2003
 
 model locs sequence_data = do
 
-  rho <- log_laplace 0.01 2.0
+  rho <- sample $ log_laplace 0.01 2
 
-  sequence_data ~> li_stephens_2003 locs rho
+  observe sequence_data $ li_stephens_2003 locs rho
 
   return ["rho" %=% rho ]
 

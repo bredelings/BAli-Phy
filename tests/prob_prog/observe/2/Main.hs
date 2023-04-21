@@ -2,9 +2,9 @@ import           Probability.Random
 import           Probability.Distribution.Normal
 
 observe_data z' = do
-    x <- normal 0 1
-    y <- normal x 1
-    z' ~> normalDist y 1
+    x <- prior $ normal 0 1
+    y <- prior $ normal x 1
+    observe z'$ normal y 1
     return ["x" %=% x, "y" %=% y]
 
 main = do

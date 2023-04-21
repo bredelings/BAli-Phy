@@ -4,7 +4,7 @@ import           Tree
 import           Tree.Newick
 
 model = do
-    tree <- uniform_topology 5
+    tree <- sample $ uniform_topology 5
     return ["tree" %=% write_newick (make_rooted tree)]
 
 main = do

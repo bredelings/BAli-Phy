@@ -5,7 +5,7 @@ cumsum xs = go 0 xs  where
     go acc (y : ys) = let acc' = acc + y in acc' : go acc' ys
 
 model = do
-    z1 <- iid 3 (poisson 1.0)
+    z1 <- sample $ iid 3 (poisson 1.0)
     let z2 = [1 .. 3] :: [Int]
     let z3 = replicate 3 0 :: [Int]
 

@@ -11,7 +11,7 @@ allStrings = [ c : s | s <- "" : allStrings, c <- ['a'..'j'] ]
 allTexts = fmap Text.pack allStrings
 
 model = do
-    tree <- uniform_time_tree 1.0 n_leaves
+    tree <- sample $ uniform_time_tree 1.0 n_leaves
     let labels = take n_leaves $ zip [0..] allTexts
         ltree = add_labels labels tree
     let pr = uniform_time_tree_pr 1.0 n_leaves ltree
@@ -21,7 +21,7 @@ model = do
     rec let mu node = case parentNode tree node of
                 Nothing   -> 0.0
                 Just node -> xs !! node
-        xs <- independent [ normal (mu node) 1.0 | node <- nodes tree ]
+        xs <- sample $ independent [ normal (mu node) 1.0 | node <- nodes tree ]
   -- can we _observe_ from this? -- why or why not?
 
     return ["tree" %=% write_newick tree] --,"pr" %=% pr, "xs" %=% xs, "ps" %=% ps]

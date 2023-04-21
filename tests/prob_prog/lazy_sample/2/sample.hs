@@ -1,11 +1,11 @@
 import           Probability
 
 model z' = do
-    x  <- normal 0.0 1.0
-    ys <- lazy $ independent $ repeat $ normal 0.0 1.0
+    x  <- sample $ normal 0 1
+    ys <- lazy $ sample $ independent $ repeat $ normal 0 1
     let zs = (x * x) : (take 10 ys)
-    z' ~> normalDist (zs !! 2) 1.0
+    observe z' $ normal (zs !! 2) 1
     return ["zs" %=% zs]
 
 main = do
-  mcmc $ model 10.0
+  mcmc $ model 10

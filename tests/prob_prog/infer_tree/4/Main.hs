@@ -11,15 +11,16 @@ model seq_data = do
 
     let taxa = zip [0..] $ map sequence_name seq_data
 
-    age    <- gamma 0.5 2.0
-    tree   <- add_labels taxa <$> uniform_time_tree age (length taxa)
+    age    <- sample $ gamma 0.5 2
+    tree   <- add_labels taxa <$> sample (uniform_time_tree age (length taxa))
 
-    freqs  <- symmetric_dirichlet_on ["A", "C", "G", "T"] 1.0
-    kappa1 <- log_normal 0.0 1.0
-    kappa2 <- log_normal 0.0 1.0
+    freqs  <- sample $ symmetric_dirichlet_on ["A", "C", "G", "T"] 1
+    kappa1 <- sample $ log_normal 0 1
+    kappa2 <- sample $ log_normal 0 1
+
     let tn93_model = tn93' dna kappa1 kappa2 freqs
 
-    seq_data ~> ctmc_on_tree_fixed_A tree tn93_model
+    observe seq_data $ ctmc_on_tree_fixed_A tree tn93_model
 
     return ["tree" %=% write_newick (make_rooted tree),
             "age" %=% age,

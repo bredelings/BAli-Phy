@@ -2,7 +2,7 @@ import           Probability.Random
 import           Probability.Distribution.Normal
 
 observe_data x = do
-    x ~> normalDist 0 1
+    observe x $ normal 0 1
     return []
 
 main = do

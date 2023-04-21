@@ -2,8 +2,8 @@ import           Probability.Random
 import           Probability.Distribution.Normal
 
 model = do
-  x <- normal 0.0 1.0
-  y <- normal x   1.0
+  x <- sample $ normal 0 1
+  y <- sample $ normal x 1
   return []
 
 main = do

@@ -1,7 +1,7 @@
 import           Probability
 
 random_walk next x0 = lazy $ do
-    x1 <- next x0
+    x1 <- sample $ next x0
     xs <- random_walk next x1
     return (x0 : xs)
 
@@ -11,7 +11,7 @@ model = do
 
     let zs = take 19 walk
 
-    2.0 ~> normalDist (last zs) 1.0
+    observe 2.0 $ normal (last zs) 1.0
 
     return ["zs" %=% zs]
 

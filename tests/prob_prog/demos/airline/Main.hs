@@ -2,15 +2,15 @@ import           Probability
 
 model fatalities = do
 
-    alpha <- cauchy 0 1
-    beta  <- cauchy 0 1
+    alpha <- prior $ cauchy 0 1
+    beta  <- prior $ cauchy 0 1
 
     let loggers = ["alpha" %=% alpha, "beta" %=% beta]
 
     -- Poisson regression with mass = e^(a + b*i)
-    let dist i = poissonDist $ safe_exp (alpha + beta * (fromIntegral i))
+    let dist i = poisson $ safe_exp (alpha + beta * (fromIntegral i))
 
-    fatalities ~> independentDist [ dist i | i <- [0 .. length fatalities - 1] ]
+    observe fatalities $ independent [ dist i | i <- [0 .. length fatalities - 1] ]
 
     return loggers
 

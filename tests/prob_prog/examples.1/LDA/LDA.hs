@@ -6,25 +6,25 @@ vocabulary = ["bear", "wolf", "python", "prolog"];
 
 ntopics = 2
 
-word_frequencies_dist = symmetric_dirichlet_on vocabulary 1.0
+word_frequencies_dist = sample $ symmetric_dirichlet_on vocabulary 1.0
 
 word_dist_for_doc word_frequencies_for_topic nwords = do
-  topic_frequencies <- symmetric_dirichlet ntopics 1
-  topics  <- iid nwords $ categorical topic_frequencies
-  let word_dist = independentDist [ categoricalOnDist $ word_frequencies_for_topic!!topic | topic <- topics ]
+  topic_frequencies <- sample $ symmetric_dirichlet ntopics 1
+  topics  <- sample $ iid nwords $ categorical topic_frequencies
+  let word_dist = independent [ categorical_on $ word_frequencies_for_topic!!topic | topic <- topics ]
   return (word_dist, topic_frequencies)
 
 model docs = do
   let doc_lengths = map length docs
 
-  word_frequencies_for_topic <- iid ntopics word_frequencies_dist
+  word_frequencies_for_topic <- sample $ iid ntopics word_frequencies_dist
 
-  (word_dists, topic_frequencies) <- unzip <$> sample (independentDist [word_dist_for_doc word_frequencies_for_topic nwords | nwords <- doc_lengths])
+  (word_dists, topic_frequencies) <- unzip <$> sample (independent [word_dist_for_doc word_frequencies_for_topic nwords | nwords <- doc_lengths])
 
   let loggers = ["word_frequencies_for_topic" %=% word_frequencies_for_topic,
                  "topic_frequencies_for_doc" %=% topic_frequencies]
 
-  docs ~> independentDist word_dists
+  observe docs $ independent word_dists
 
   return loggers
 

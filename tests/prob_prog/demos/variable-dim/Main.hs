@@ -1,9 +1,9 @@
 import           Probability
 
 model = do
-    n <- geometric 0.5
-    ys <- iid n (exponential 1)
-    3 ~> normalDist (sum ys) 1
+    n <- sample $ geometric 0.5
+    ys <- sample $ iid n (exponential 1)
+    observe 3 $ normal (sum ys) 1
     return ["n" %=% n, "ys" %=% ys]
 
 main = do

@@ -9,12 +9,12 @@ import           System.Environment  -- for getArgs
 
 smodel_prior codons = do
     let nucleotides = getNucleotides codons
-    sym <- symmetric_dirichlet_on (letter_pair_names nucleotides) 1.0
-    pi  <- symmetric_dirichlet_on (letters nucleotides) 1.0
-    ws   <- zip (letters codons) <$> iid (length (letters codons)) (normal 0.0 1.0)
+    sym <- prior $ symmetric_dirichlet_on (letter_pair_names nucleotides) 1.0
+    pi  <- prior $ symmetric_dirichlet_on (letters nucleotides) 1.0
+    ws   <- zip (letters codons) <$> prior (iid (length (letters codons)) (normal 0 1))
     let n  = 4
-    ps     <- symmetric_dirichlet n 2.0
-    omegas <- iid n (uniform 0.0 1.0)
+    ps     <- prior $ symmetric_dirichlet n 2.0
+    omegas <- prior $ iid n (uniform 0.0 1.0)
 
     let mut_sel_model w = gtr' sym pi nucleotides +> SModel.x3 codons +> dNdS w +> mut_sel' ws
         m3_model = mut_sel_model +> SModel.m3 ps omegas
@@ -33,9 +33,9 @@ model seq_data = do
 
     let taxa = map sequence_name seq_data
 
-    scale <- gamma 0.5 2.0
+    scale <- prior $ gamma 0.5 2.0
 
-    tree <- scale_branch_lengths scale <$> uniform_labelled_tree taxa branch_length_dist
+    tree <- scale_branch_lengths scale <$> prior (uniform_labelled_tree taxa branch_length_dist)
 
     (smodel, sloggers    ) <- smodel_prior (codons dna standard_code)
 

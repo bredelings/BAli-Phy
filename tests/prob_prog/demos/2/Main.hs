@@ -2,7 +2,7 @@ import           Probability
 
 model = do
 
-    xs <- iid 10 (normal 0.0 1.0)
+    xs <- sample $ iid 10 (normal 0 1)
 
     let ys = map (\x -> x * x) xs
 

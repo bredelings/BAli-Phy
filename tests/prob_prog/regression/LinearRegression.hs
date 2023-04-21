@@ -3,15 +3,15 @@ import           Data.Frame
 
 model xs ys = do
 
-    b     <- normal 0 1
+    b     <- prior $ normal 0 1
 
-    a     <- normal 0 1
+    a     <- prior $ normal 0 1
 
-    sigma <- exponential 1
+    sigma <- prior $ exponential 1
 
     let f x = b * x + a
 
-    ys ~> independentDist [ normalDist (f x) sigma | x <- xs ]
+    observe ys $ independent [ normal (f x) sigma | x <- xs ]
 
     return ["b" %=% b, "a" %=% a, "sigma" %=% sigma]
 

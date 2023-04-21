@@ -2,12 +2,12 @@ import           Probability
 
 model x = do
 
-    n <- geometric 0.33
+    n <- sample $ geometric 0.33
 
-    y <- if n > 1 then normal 0.0 1.0 else exponential 1.0
+    y <- if n > 1 then sample $ normal 0 1 else sample $ exponential 1
 
-    x ~> normalDist y 1.0
+    x ~> normal y 1.0
 
     return ["n" %=% n, "y" %=% y]
 
-main = mcmc $ model 3.0
+main = mcmc $ model 3

@@ -8,12 +8,12 @@ my_iid n dist =
     in  if n == 0 then return [] else body
 
 model x = do
-    n  <- min 100 <$> geometric 0.25
-    xs <- lazy $ my_iid n (normal 0.0 1.0)
+    n  <- min 100 <$> sample (geometric 0.25)
+    xs <- lazy $ my_iid n (sample $ normal 0 1)
     let total = sum xs
     let loggers = ["n" %=% n, "xs" %=% xs]
-    x ~> normalDist total 1.0
+    x ~> normal total 1
     return loggers
 
 main = do
-  mcmc $ model 20.0
+  mcmc $ model 20

@@ -5,22 +5,22 @@ import Probability
 import Data.Frame
 
 cluster_dist = do
-  mean <- cauchy 0.0 1.0
-  sigma <- exponential 1.0
+  mean <- sample $ cauchy 0.0 1.0
+  sigma <- sample $ exponential 1.0
   return (mean, sigma)
 
 model xs = do
 
-  n <- (1+) <$> geometric 0.33
+  n <- (1+) <$> sample (geometric 0.33)
 
-  clusters <- iid n cluster_dist
+  clusters <- sample $ iid n cluster_dist
 
-  ps <- symmetric_dirichlet n 0.5
+  ps <- sample $ symmetric_dirichlet n 0.5
 
   let n_points = length xs
-      dists = [normalDist mean sigma | (mean,sigma) <- clusters]
+      dists = [normal mean sigma | (mean,sigma) <- clusters]
 
-  xs ~> iidDist n_points (mixtureDist ps dists)
+  xs ~> iid n_points (mixture ps dists)
 
   return ["n_clusters" %=% n, "weights" %=% ps, "clusters" %=% clusters]
 
