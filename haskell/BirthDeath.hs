@@ -7,16 +7,22 @@ import Probability
 
 type Time = Double
 
-data Event = Birth Next Next |
-             Sample Next |
+-- If we're going to make the tree traversable or foldable, then we'd need to
+-- store some data on each node.  Should we consider the Time to be such data?
+-- Maybe, but we could, in theory annotate the tree with additional data.
+
+data Event = Start1 Tree |
+             Start2 Tree Tree |
+             Birth Tree Tree |
+             Sample Tree |
              Death |
              Finish
 
 -- We could also include events Start1 and Start2.
 
-data Next = Next Time Event (Either BD Next)
+data Tree = Tree Time Event (Maybe Tree)
 
-data BD = Start Time Next | Start2 Time Next Next
+
 
 {- * If we store the branch duration, then we could shift a subtree by shrinking one branch.
        We could shrink one branch and lengthen child branches to move just one node.
@@ -34,39 +40,47 @@ bd1 lambda mu t1 t2 prev = do
   death <- sample (bernoulli (mu/(lambda+mu)))
 
   if t > t2 then
-     return $ Next t2 Finish prev
+     return $ Tree t2 Finish prev
   else if death == 1 then
-     return $ Next t Death prev
+     return $ Tree t Death prev
   else
-      do rec tree1 <- bd1 lambda mu t t2 (Right node)
-             tree2 <- bd1 lambda mu t t2 (Right node)
-             let node = Next t (Birth tree1 tree2) prev
+      do rec tree1 <- bd1 lambda mu t t2 (Just node)
+             tree2 <- bd1 lambda mu t t2 (Just node)
+             let node = Tree t (Birth tree1 tree2) prev
          return node
 
 
 bd lambda mu t1 t2 = do
-  rec next <- bd1 lambda mu t1 t2 (Left start)
-      let start = (Start t1 next)
-  return start
+  rec next <- bd1 lambda mu t1 t2 (Just tree)
+      let tree = Tree t1 (Start1 next) Nothing
+  return tree
 
 bd2 lambda mu t1 t2 = do
-  rec next1 <- bd1 lambda mu t1 t2 (Left start)
-      next2 <- bd1 lambda mu t1 t2 (Left start)
-      let start = Start2 t1 next1 next2
-  return start
+  rec next1 <- bd1 lambda mu t1 t2 (Just tree)
+      next2 <- bd1 lambda mu t1 t2 (Just tree)
+      let tree = Tree t1 (Start2 next1 next2) Nothing
+  return tree
 
 
-type Node = Either BD Next
+type Node = Tree
 
 data Edge = Edge Node Bool
 
-numBranches (Start _ next) = 1 + numBranchesBelow next
-numBranches (Start2 _ next1 next2) = 1 + numBranchesBelow next1 + numBranchesBelow next2
-numBranchesBelow (Next _ Death _ ) = 1
-numBranchesBelow (Next _ Finish _) = 1
-numBranchesBelow (Next _ (Sample next) _ ) = 1 + numBranchesBelow next
-numBranchesBelow (Next _ (Birth next1 next2) _) = 1 + numBranchesBelow next1 + numBranchesBelow next2
+--- Hmm... in both of these cases, we walk the tree and sum an integer for each node.
 
+numBranches (Tree _ (Start1 next) _) = 1 + numBranches next
+numBranches (Tree _ (Start2 next1 next2) _) = 1 + numBranches next1 + numBranches next2
+numBranches (Tree _ Death _ ) = 1
+numBranches (Tree _ Finish _) = 1
+numBranches (Tree _ (Sample next) _ ) = 1 + numBranches next
+numBranches (Tree _ (Birth next1 next2) _) = 1 + numBranches next1 + numBranches next2
+
+numLeaves (Tree _ (Start1 next) _) = numLeaves next
+numLeaves (Tree _ (Start2 next1 next2) _) = numLeaves next1 + numLeaves next2
+numLeaves (Tree _ Death _) = 1
+numLeaves (Tree _ Finish _) = 1
+numLeaves (Tree _ (Sample next) _ ) = numLeaves next
+numLeaves (Tree _ (Birth next1 next2) _) = numLeaves next1 + numLeaves next2
          
 {-
   -- findNode :: t -> Node -> Array Int Edge
@@ -129,10 +143,10 @@ the bottom node, plus whether the edge points up or down?
 So, this requires generalizing the Node and Edge types.
 I guess we wouldn't NEED an IntMap IntEdge.
 
-data Node = Root Time Next | NonRoot Next
+data Node = Root Time Tree | NonRoot Tree
 
 parent (Root _ _) = Nothing
-parent node@(NonRoot (Next _ _ prev)) = case prev of Right node2 -> node2
+parent node@(NonRoot (Tree _ _ prev)) = case prev of Right node2 -> node2
                                                      Left time -> Root time node
 
 PROBLEM: currently I've put IntSet into the definition of Tree.
