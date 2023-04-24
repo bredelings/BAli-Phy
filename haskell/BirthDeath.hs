@@ -103,11 +103,28 @@ node_out_edges (Right n1@(Next _ (Sample n2) _)) = listArray' [Edge n1 ToRoot, E
 node_out_edges (Right n@(Next _ Finish _)) = listArray' [Edge n ToRoot]
 node_out_edges (Right n@(Next _ Death _)) = listArray' [Edge n ToRoot]
 
-e_source_node (Edge node ToRoot) = Right node
-e_source_node (Edge (Next _ _ parent) FromRoot) = parent
+sourceNode :: Edge a -> Node a
+sourceNode (Edge node ToRoot) = Right node
+sourceNode (Edge (Next _ _ parent) FromRoot) = parent
 
-e_target_node (Edge node FromRoot) = Right node
-e_target_node (Edge (Next _ _ parent) ToRoot) = parent
+targetNode :: Edge a -> Node a
+targetNode (Edge node FromRoot) = Right node
+targetNode (Edge (Next _ _ parent) ToRoot) = parent
+
+reverse_edge :: Edge a -> Edge a
+reverse_edge (Edge node FromRoot) = Edge node ToRoot
+reverse_edge (Edge node ToRoot) = Edge node FromRoot
+
+is_leaf_node (Right (Next _ Finish _)) = True
+is_leaf_node (Right (Next _ Death  _)) = True
+is_leaf_node _                         = False
+
+is_internal_node n = not $ is_leaf_node n
+
+is_internal_branch b = is_internal_node (sourceNode b) && is_internal_node (targetNode b)
+
+is_leaf_branch b = not $ is_internal_branch b
+
 
 {-
 
