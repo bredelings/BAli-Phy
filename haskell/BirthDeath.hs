@@ -11,18 +11,16 @@ type Time = Double
 -- store some data on each node.  Should we consider the Time to be such data?
 -- Maybe, but we could, in theory annotate the tree with additional data.
 
-data Event = Start1 Tree |
-             Start2 Tree Tree |
-             Birth Tree Tree |
-             Sample Tree |
-             Death |
-             Finish
+data Event a = Birth (Next a) (Next a) |
+               Sample (Next a) |
+               Death |
+               Finish
 
 -- We could also include events Start1 and Start2.
 
-data Tree = Tree Time Event (Maybe Tree)
+data Next a = Next a (Event a) (Either (Tree a) (Next a))
 
-
+data Tree a = Start1 a (Next a) | Start2 a (Next a) (Next a)
 
 {- * If we store the branch duration, then we could shift a subtree by shrinking one branch.
        We could shrink one branch and lengthen child branches to move just one node.
@@ -32,7 +30,7 @@ data Tree = Tree Time Event (Maybe Tree)
        But if we want to shift an entire subtree, then we have to visit all the times and update them.
 -}
 
-bd1 lambda mu t1 t2 prev = do
+bd1' lambda mu t1 t2 prev = do
   -- Get the time of the next event
   t <- (t1 +) <$> (sample (exponential (1/(lambda+mu))))
 
@@ -40,48 +38,46 @@ bd1 lambda mu t1 t2 prev = do
   death <- sample (bernoulli (mu/(lambda+mu)))
 
   if t > t2 then
-     return $ Tree t2 Finish prev
+     return $ Next t2 Finish prev
   else if death == 1 then
-     return $ Tree t Death prev
+     return $ Next t Death prev
   else
-      do rec tree1 <- bd1 lambda mu t t2 (Just node)
-             tree2 <- bd1 lambda mu t t2 (Just node)
-             let node = Tree t (Birth tree1 tree2) prev
+      do rec tree1 <- bd1' lambda mu t t2 (Right node)
+             tree2 <- bd1' lambda mu t t2 (Right node)
+             let node = Next t (Birth tree1 tree2) prev
          return node
 
 
-bd lambda mu t1 t2 = do
-  rec next <- bd1 lambda mu t1 t2 (Just tree)
-      let tree = Tree t1 (Start1 next) Nothing
+bd1 lambda mu t1 t2 = do
+  rec next <- bd1' lambda mu t1 t2 (Left tree)
+      let tree = Start1 t1 next
   return tree
 
 bd2 lambda mu t1 t2 = do
-  rec next1 <- bd1 lambda mu t1 t2 (Just tree)
-      next2 <- bd1 lambda mu t1 t2 (Just tree)
-      let tree = Tree t1 (Start2 next1 next2) Nothing
+  rec next1 <- bd1' lambda mu t1 t2 (Left tree)
+      next2 <- bd1' lambda mu t1 t2 (Left tree)
+      let tree = Start2 t1 next1 next2
   return tree
 
 
-type Node = Tree
+type Node a = Either (Tree a) (Next a)
 
-data Edge = Edge Node Bool
+data Edge a = Edge (Node a) Bool
 
 --- Hmm... in both of these cases, we walk the tree and sum an integer for each node.
 
-numBranches (Tree _ (Start1 next) _) = 1 + numBranches next
-numBranches (Tree _ (Start2 next1 next2) _) = 1 + numBranches next1 + numBranches next2
-numBranches (Tree _ Death _ ) = 1
-numBranches (Tree _ Finish _) = 1
-numBranches (Tree _ (Sample next) _ ) = 1 + numBranches next
-numBranches (Tree _ (Birth next1 next2) _) = 1 + numBranches next1 + numBranches next2
+fmapish f prev (Next y event _) = let p = Next (f y) (go p event) prev in p
+    where go p (Birth n1 n2) = Birth (fmapish f (Right p) n1) (fmapish f (Right p) n2)
+          go p (Sample n1)   = Sample (fmapish f (Right p) n1)
+          go p Death         = Death
+          go p Finish        = Finish
+                                                  
+instance Functor Tree where
+    fmap f tree@(Start1 x n1)    = let start = Start1 (f x) (fmapish f (Left start) n1) in start
+    fmap f tree@(Start2 x n1 n2) = let start = Start2 (f x) (fmapish f (Left start) n1) (fmapish f (Left start) n2) in start
 
-numLeaves (Tree _ (Start1 next) _) = numLeaves next
-numLeaves (Tree _ (Start2 next1 next2) _) = numLeaves next1 + numLeaves next2
-numLeaves (Tree _ Death _) = 1
-numLeaves (Tree _ Finish _) = 1
-numLeaves (Tree _ (Sample next) _ ) = numLeaves next
-numLeaves (Tree _ (Birth next1 next2) _) = numLeaves next1 + numLeaves next2
-         
+
+
 {-
   -- findNode :: t -> Node -> Array Int Edge
    --  where Edge knows its source, target, reverse_edge, and label
