@@ -17,16 +17,17 @@ data Tree = Start1 Tree |
 
 -- Start birth-death process at time t0 and run until
 bd' lambda mu t1 t0 = do
-    t'    <- (t0 +) `liftM` exponential (1.0 / (lambda + mu))
-    death <- bernoulli (mu / (lambda + mu))
-    if t' > t1
-        then return (t1, Finish)
-        else if death == 1
-            then return (t', Death)
-            else do
-                tree1 <- bd' lambda mu t1 t'
-                tree2 <- bd' lambda mu t1 t'
-                return (t', Birth tree1 tree2)
+    t'    <- (t0 +) `liftM` sample $ exponential (1.0 / (lambda + mu))
+    death <- sample $ bernoulli (mu / (lambda + mu))
+    if t' > t1 then
+        return (t1, Finish)
+    else if death == 1 then
+        return (t', Death)
+    else
+        do
+          tree1 <- bd' lambda mu t1 t'
+          tree2 <- bd' lambda mu t1 t'
+          return (t', Birth tree1 tree2)
 
 bd2 lambda mu t1 = do
     tree1 <- bd' lambda mu t1 0.0
