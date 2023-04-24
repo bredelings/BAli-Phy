@@ -1015,6 +1015,9 @@ Core::Var TypeChecker::fresh_dvar(const Type& pred, bool qualified)
 
 Core::Var TypeChecker::add_wanted(const ConstraintOrigin& origin, const Type& pred)
 {
+//    if (context()->locs.empty())
+//        std::cerr<<"No location -- add wanted!";
+
     auto dvar = fresh_dvar(pred);
 
     current_wanteds().simple.push_back( {origin, Wanted, dvar, pred, context()} );
@@ -1477,6 +1480,9 @@ LIE TypeChecker::preds_to_constraints(const ConstraintOrigin& origin, Constraint
     LIE ordered_lie;
     for(auto& constraint: constraints)
     {
+//        if (context()->locs.empty())
+//            std::cerr<<"No location - preds to constraints!";
+
         auto dvar = fresh_dvar(constraint);
         ordered_lie.push_back({origin, flavor, dvar, constraint, context()});
     }
