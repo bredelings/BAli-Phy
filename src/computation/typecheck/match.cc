@@ -27,9 +27,9 @@ void TypeChecker::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int i)
     }
     else
     {
-        push_source_span(*rhs.body.loc);
+        if (rhs.body.loc) push_source_span(*rhs.body.loc);
         tcRho(rhs.body, exp_type);
-        pop_source_span();
+        if (rhs.body.loc) pop_source_span();
     }
 }
 
