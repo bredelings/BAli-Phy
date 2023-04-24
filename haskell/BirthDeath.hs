@@ -157,6 +157,16 @@ node_time node (Left (Start1 t _)) = t
 node_time node (Left (Start2 t _ _)) = t
 node_time node (Right (Next t _ _)) = t
 
+branch_duration edge = abs (node_time (sourceNode edge) - node_time (targetNode edge))
+
+nodes node@(Left (Start1 _ next)) = node:nodes (Right next)
+nodes node@(Left (Start2 _ next1 next2)) = node:nodes (Right next1) ++ nodes (Right next2)
+nodes node@(Right (Next _ (Birth next1 next2) _)) = node:nodes (Right next1) ++ nodes (Right next2)
+nodes node@(Right (Next _ (Sample next) _)) = node:nodes (Right next)
+nodes node@(Right (Next _ Finish _)) = [node]
+nodes node@(Right (Next _ Death _)) = [node]
+
+numLeaves tree = sum [ if is_leaf_node node then 1 else 0 | node <- nodes tree]
 
 {-
 
